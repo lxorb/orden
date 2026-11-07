@@ -211,27 +211,30 @@ fn may_schedule() -> bool {
     true
 }
 
-#[tauri::command(async)]
-pub fn reminders_set(
+#[tauri::command]
+pub async fn reminders_set(
     webview: tauri::Webview,
     app: AppHandle,
     reminders: Vec<Planned>,
     words: Words,
 ) -> Result<bool, String> {
-    crate::agents::from_the_app(&webview)?;
-    if !may_schedule() {
-        return Ok(true);
-    }
+    crate::lane::off_the_runtime(move || -> Result<bool, String> {
+        crate::agents::from_the_app(&webview)?;
+        if !may_schedule() {
+            return Ok(true);
+        }
 
-    let now = now_ms();
-    let (wanted, moved) = in_state(|state| {
-        let kept = kept(state, &app);
-        let moved = moved(kept, &reminders);
-        let wanted = merge(kept, reminders, now, fresh_nonce);
-        save(&app, kept);
-        (wanted, moved)
-    });
-    Ok(handed(&app, &wanted, &moved, &words, now))
+        let now = now_ms();
+        let (wanted, moved) = in_state(|state| {
+            let kept = kept(state, &app);
+            let moved = moved(kept, &reminders);
+            let wanted = merge(kept, reminders, now, fresh_nonce);
+            save(&app, kept);
+            (wanted, moved)
+        });
+        Ok(handed(&app, &wanted, &moved, &words, now))
+    })
+    .await
 }
 
 fn handed(

@@ -14,20 +14,23 @@ pub fn shortcuts_offered() -> bool {
     }
 }
 
-#[tauri::command(async)]
-pub fn open_shortcuts() -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("/usr/bin/open")
-            .args(["-b", "com.apple.shortcuts"])
-            .spawn()
-            .map(drop)
-            .map_err(|error| format!("could not open Shortcuts: {error}"))
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        Err("there is no Shortcuts app here".to_owned())
-    }
+#[tauri::command]
+pub async fn open_shortcuts() -> Result<(), String> {
+    crate::lane::off_the_runtime(|| -> Result<(), String> {
+        #[cfg(target_os = "macos")]
+        {
+            std::process::Command::new("/usr/bin/open")
+                .args(["-b", "com.apple.shortcuts"])
+                .spawn()
+                .map(drop)
+                .map_err(|error| format!("could not open Shortcuts: {error}"))
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            Err("there is no Shortcuts app here".to_owned())
+        }
+    })
+    .await
 }
 
 #[tauri::command(async)]

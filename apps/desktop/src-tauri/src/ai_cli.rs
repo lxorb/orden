@@ -233,32 +233,35 @@ pub struct Status {
     said: Said,
 }
 
-#[tauri::command(async)]
-pub fn ai_cli_status(
+#[tauri::command]
+pub async fn ai_cli_status(
     webview: Webview,
     tool: Tool,
     account: Option<String>,
 ) -> Result<Option<Status>, String> {
-    owner(&webview)?;
-    offered(tool)?;
-    let Some(program) = program::find(tool) else {
-        return Ok(None);
-    };
-    let home = home_for(webview.app_handle(), tool, account.as_deref())?;
-    let folder = workroom(webview.app_handle())?;
-    let mut said = run::run_to_end(
-        command(&program, args::status(tool), &folder, home.as_ref()),
-        TELLING,
-    )
-    .map_err(|error| error.to_string())?;
-    if tool == Tool::Gemini && !said.ended.timed_out {
-        said.out = gemini::standing(home.as_ref()).to_string();
-    }
-    Ok(Some(Status {
-        program: program.exe.to_string_lossy().into_owned(),
-        home: home.map(|one| one.dir().to_string_lossy().into_owned()),
-        said,
-    }))
+    crate::lane::off_the_runtime(move || -> Result<Option<Status>, String> {
+        owner(&webview)?;
+        offered(tool)?;
+        let Some(program) = program::find(tool) else {
+            return Ok(None);
+        };
+        let home = home_for(webview.app_handle(), tool, account.as_deref())?;
+        let folder = workroom(webview.app_handle())?;
+        let mut said = run::run_to_end(
+            command(&program, args::status(tool), &folder, home.as_ref()),
+            TELLING,
+        )
+        .map_err(|error| error.to_string())?;
+        if tool == Tool::Gemini && !said.ended.timed_out {
+            said.out = gemini::standing(home.as_ref()).to_string();
+        }
+        Ok(Some(Status {
+            program: program.exe.to_string_lossy().into_owned(),
+            home: home.map(|one| one.dir().to_string_lossy().into_owned()),
+            said,
+        }))
+    })
+    .await
 }
 
 pub fn keep_enrolled(app: &AppHandle) {
@@ -277,21 +280,24 @@ pub fn ai_cli_enroll_write(webview: Webview, on: bool) -> Result<(), String> {
     enroll::turned(webview.app_handle(), on)
 }
 
-#[tauri::command(async)]
-pub fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Result<(), String> {
-    owner(&webview)?;
-    offered(tool)?;
-    let Some(home) = home_for(webview.app_handle(), tool, Some(&account))? else {
-        return Ok(());
-    };
-    if let Some(program) = program::find(tool).filter(|_| !args::logout(tool).is_empty()) {
-        let folder = workroom(webview.app_handle())?;
-        let _ = run::run_to_end(
-            command(&program, args::logout(tool), &folder, Some(&home)),
-            TELLING,
-        );
-    }
-    home::removed(&home)
+#[tauri::command]
+pub async fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        owner(&webview)?;
+        offered(tool)?;
+        let Some(home) = home_for(webview.app_handle(), tool, Some(&account))? else {
+            return Ok(());
+        };
+        if let Some(program) = program::find(tool).filter(|_| !args::logout(tool).is_empty()) {
+            let folder = workroom(webview.app_handle())?;
+            let _ = run::run_to_end(
+                command(&program, args::logout(tool), &folder, Some(&home)),
+                TELLING,
+            );
+        }
+        home::removed(&home)
+    })
+    .await
 }
 
 fn sent(output: &Channel<Value>, message: Message) {
@@ -300,8 +306,8 @@ fn sent(output: &Channel<Value>, message: Message) {
     }
 }
 
-#[tauri::command(async)]
-pub fn ai_cli_ask(
+#[tauri::command]
+pub async fn ai_cli_ask(
     webview: Webview,
     id: String,
     tool: Tool,
@@ -310,77 +316,80 @@ pub fn ai_cli_ask(
     prompt: String,
     output: Channel<Value>,
 ) -> Result<(), String> {
-    let owner = owner(&webview)?;
-    usable(&id)?;
-    offered(tool)?;
-    if tool != Tool::ClaudeCode {
-        return Err("asked through a session".to_owned());
-    }
-    let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
-    let app = webview.app_handle().clone();
-    let home = home_for(&app, tool, account.as_deref())?;
-    let folder = workroom(&app)?;
-    let model = model.filter(|one| !one.trim().is_empty());
-    let args = args::ask(model.as_deref(), &caps_of(&program, &folder))?;
-
-    let asks = webview.state::<Asks>();
-    let opening = next_opening();
-    {
-        let mut running = lock(&asks.running);
-        if running.contains_key(&id) {
-            return Err(format!("{id} is already being asked"));
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        let owner = owner(&webview)?;
+        usable(&id)?;
+        offered(tool)?;
+        if tool != Tool::ClaudeCode {
+            return Err("asked through a session".to_owned());
         }
-        running.insert(
-            id.clone(),
-            Held {
-                owner,
-                opening,
-                running: None,
-                stopped: false,
+        let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
+        let app = webview.app_handle().clone();
+        let home = home_for(&app, tool, account.as_deref())?;
+        let folder = workroom(&app)?;
+        let model = model.filter(|one| !one.trim().is_empty());
+        let args = args::ask(model.as_deref(), &caps_of(&program, &folder))?;
+
+        let asks = webview.state::<Asks>();
+        let opening = next_opening();
+        {
+            let mut running = lock(&asks.running);
+            if running.contains_key(&id) {
+                return Err(format!("{id} is already being asked"));
+            }
+            running.insert(
+                id.clone(),
+                Held {
+                    owner,
+                    opening,
+                    running: None,
+                    stopped: false,
+                },
+            );
+        }
+
+        let name = id.clone();
+        let started = run::start(
+            command(&program, &args, &folder, home.as_ref()),
+            prompt.into_bytes(),
+            ASKING,
+            move |heard| {
+                let message = match heard {
+                    Heard::Line(line) => Message::Line { line },
+                    Heard::End(ended) => {
+                        if let Some(asks) = app.try_state::<Asks>() {
+                            let mut running = lock(&asks.running);
+                            if running.get(&name).is_some_and(|one| one.opening == opening) {
+                                running.remove(&name);
+                            }
+                        }
+                        Message::End(ended)
+                    }
+                };
+                sent(&output, message);
             },
         );
-    }
 
-    let name = id.clone();
-    let started = run::start(
-        command(&program, &args, &folder, home.as_ref()),
-        prompt.into_bytes(),
-        ASKING,
-        move |heard| {
-            let message = match heard {
-                Heard::Line(line) => Message::Line { line },
-                Heard::End(ended) => {
-                    if let Some(asks) = app.try_state::<Asks>() {
-                        let mut running = lock(&asks.running);
-                        if running.get(&name).is_some_and(|one| one.opening == opening) {
-                            running.remove(&name);
-                        }
-                    }
-                    Message::End(ended)
+        let mut running = lock(&asks.running);
+        let mine = running.get(&id).is_some_and(|one| one.opening == opening);
+        let started = match started {
+            Ok(started) => started,
+            Err(error) => {
+                if mine {
+                    running.remove(&id);
                 }
-            };
-            sent(&output, message);
-        },
-    );
-
-    let mut running = lock(&asks.running);
-    let mine = running.get(&id).is_some_and(|one| one.opening == opening);
-    let started = match started {
-        Ok(started) => started,
-        Err(error) => {
-            if mine {
-                running.remove(&id);
+                return Err(format!("{} could not be started: {error}", tool.command()));
             }
-            return Err(format!("{} could not be started: {error}", tool.command()));
+        };
+        if let Some(held) = running.get_mut(&id).filter(|_| mine) {
+            if held.stopped {
+                started.stop();
+            }
+            held.running = Some(started);
         }
-    };
-    if let Some(held) = running.get_mut(&id).filter(|_| mine) {
-        if held.stopped {
-            started.stop();
-        }
-        held.running = Some(started);
-    }
-    Ok(())
+        Ok(())
+    })
+    .await
 }
 
 #[tauri::command(async)]
@@ -448,108 +457,111 @@ pub struct Opening {
     without: Vec<String>,
 }
 
-#[tauri::command(async)]
-pub fn ai_cli_open(
+#[tauri::command]
+pub async fn ai_cli_open(
     webview: Webview,
     id: String,
     opening: Opening,
     output: Channel<Value>,
 ) -> Result<(), String> {
-    let owner = owner(&webview)?;
-    usable(&id)?;
-    offered(opening.tool)?;
-    if let Some(thread) = &opening.thread {
-        usable(thread)?;
-    }
-    let tool = opening.tool;
-    let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
-    let app = webview.app_handle().clone();
-    let folder = workroom(&app)?;
-    let model = opening
-        .model
-        .as_deref()
-        .filter(|one| !one.trim().is_empty());
-    let model = args::checked_model(model)?;
-    let token = opening
-        .mode
-        .map(|mode| crate::ai_agent::lend(&app, &opening.agent, mode))
-        .transpose()?;
-    let home = home_for(&app, tool, opening.account.as_deref())?;
-
-    let claude = match tool {
-        Tool::ClaudeCode => Some(claude_command(
-            &program,
-            &folder,
-            &opening,
-            model,
-            token.as_deref(),
-            home.as_ref(),
-        )?),
-        Tool::Codex | Tool::Gemini => None,
-    };
-
-    let asks = webview.state::<Asks>();
-    if lock(&asks.sessions).contains_key(&id) {
-        return Err(format!("{id} is already open"));
-    }
-    let number = next_opening();
-    let ended = Arc::new(AtomicBool::new(false));
-    let output = session_output(&app, &id, number, output, &ended);
-
-    let on = match (tool, claude) {
-        (Tool::ClaudeCode, Some(command)) => {
-            let output = Arc::clone(&output);
-            let claude = Claude::start(command, IDLE, move |message| output(message))
-                .map_err(|error| format!("{} could not be started: {error}", tool.command()))?;
-            On::Claude(claude)
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        let owner = owner(&webview)?;
+        usable(&id)?;
+        offered(opening.tool)?;
+        if let Some(thread) = &opening.thread {
+            usable(thread)?;
         }
-        (Tool::ClaudeCode, None) => return Err("missing".to_owned()),
-        (Tool::Codex, _) => {
-            let key = HostKey {
-                owner: owner.clone(),
-                agent: opening.mode.map(|mode| (opening.agent.id.clone(), mode)),
-                home: home.clone(),
-            };
-            let host = host_for(&asks, key, &program, &folder, token.as_deref())?;
-            let from = codex_app::From {
-                fork_of: opening.fork_of.as_deref(),
-                thread: opening.thread.as_deref(),
-                without: &opening.without,
-            };
-            host.open(&id, output, opening.mode, model, opening.effort, from)?;
-            On::Codex(host)
+        let tool = opening.tool;
+        let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
+        let app = webview.app_handle().clone();
+        let folder = workroom(&app)?;
+        let model = opening
+            .model
+            .as_deref()
+            .filter(|one| !one.trim().is_empty());
+        let model = args::checked_model(model)?;
+        let token = opening
+            .mode
+            .map(|mode| crate::ai_agent::lend(&app, &opening.agent, mode))
+            .transpose()?;
+        let home = home_for(&app, tool, opening.account.as_deref())?;
+
+        let claude = match tool {
+            Tool::ClaudeCode => Some(claude_command(
+                &program,
+                &folder,
+                &opening,
+                model,
+                token.as_deref(),
+                home.as_ref(),
+            )?),
+            Tool::Codex | Tool::Gemini => None,
+        };
+
+        let asks = webview.state::<Asks>();
+        if lock(&asks.sessions).contains_key(&id) {
+            return Err(format!("{id} is already open"));
         }
-        (Tool::Gemini, _) => {
-            if opening.effort.is_some() {
-                return Err("Gemini CLI has no effort to set".to_owned());
+        let number = next_opening();
+        let ended = Arc::new(AtomicBool::new(false));
+        let output = session_output(&app, &id, number, output, &ended);
+
+        let on = match (tool, claude) {
+            (Tool::ClaudeCode, Some(command)) => {
+                let output = Arc::clone(&output);
+                let claude = Claude::start(command, IDLE, move |message| output(message))
+                    .map_err(|error| format!("{} could not be started: {error}", tool.command()))?;
+                On::Claude(claude)
             }
-            let nib = match opening.mode {
-                Some(_) => Some(crate::mcp::program::program()?),
-                None => None,
-            };
-            let caps = caps_of(&program, &folder);
-            let room = folder.clone();
-            let launch = gemini::Launch {
-                base: Box::new(move |args: &[String]| {
-                    command(&program, args, &room, home.as_ref())
-                }),
-                folder,
-                caps,
-                token,
-                thread: opening.thread.clone(),
-                mode: opening.mode,
-                without: opening.without.clone(),
-            };
-            let gemini = Gemini::start(launch, &id, model, IDLE, nib.as_deref(), output)?;
-            On::Gemini(Box::new(gemini))
-        }
-    };
-    let session = Session {
-        owner,
-        opening: number,
-        on: Arc::new(on),
-    };
-    kept(&asks, id, session, &ended)
+            (Tool::ClaudeCode, None) => return Err("missing".to_owned()),
+            (Tool::Codex, _) => {
+                let key = HostKey {
+                    owner: owner.clone(),
+                    agent: opening.mode.map(|mode| (opening.agent.id.clone(), mode)),
+                    home: home.clone(),
+                };
+                let host = host_for(&asks, key, &program, &folder, token.as_deref())?;
+                let from = codex_app::From {
+                    fork_of: opening.fork_of.as_deref(),
+                    thread: opening.thread.as_deref(),
+                    without: &opening.without,
+                };
+                host.open(&id, output, opening.mode, model, opening.effort, from)?;
+                On::Codex(host)
+            }
+            (Tool::Gemini, _) => {
+                if opening.effort.is_some() {
+                    return Err("Gemini CLI has no effort to set".to_owned());
+                }
+                let nib = match opening.mode {
+                    Some(_) => Some(crate::mcp::program::program()?),
+                    None => None,
+                };
+                let caps = caps_of(&program, &folder);
+                let room = folder.clone();
+                let launch = gemini::Launch {
+                    base: Box::new(move |args: &[String]| {
+                        command(&program, args, &room, home.as_ref())
+                    }),
+                    folder,
+                    caps,
+                    token,
+                    thread: opening.thread.clone(),
+                    mode: opening.mode,
+                    without: opening.without.clone(),
+                };
+                let gemini = Gemini::start(launch, &id, model, IDLE, nib.as_deref(), output)?;
+                On::Gemini(Box::new(gemini))
+            }
+        };
+        let session = Session {
+            owner,
+            opening: number,
+            on: Arc::new(on),
+        };
+        kept(&asks, id, session, &ended)
+    })
+    .await
 }
 
 fn kept(asks: &Asks, id: String, session: Session, ended: &AtomicBool) -> Result<(), String> {
@@ -670,46 +682,49 @@ pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command(async)]
-pub fn ai_cli_models(
+#[tauri::command]
+pub async fn ai_cli_models(
     webview: Webview,
     tool: Tool,
     account: Option<String>,
 ) -> Result<Value, String> {
-    let owner = owner(&webview)?;
-    offered(tool)?;
-    let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
-    let home = home_for(webview.app_handle(), tool, account.as_deref())?;
-    let folder = workroom(webview.app_handle())?;
-    match tool {
-        Tool::ClaudeCode => {
-            let caps = caps_of(&program, &folder);
-            let claude = Claude::start(
-                command(
-                    &program,
-                    &args::claude_listing(&caps),
-                    &folder,
-                    home.as_ref(),
-                ),
-                TELLING,
-                |_| {},
-            )
-            .map_err(|error| error.to_string())?;
-            let listed = claude.ask(serde_json::json!({ "subtype": "list_models" }), TELLING);
-            claude.close_input();
-            listed
+    crate::lane::off_the_runtime(move || -> Result<Value, String> {
+        let owner = owner(&webview)?;
+        offered(tool)?;
+        let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
+        let home = home_for(webview.app_handle(), tool, account.as_deref())?;
+        let folder = workroom(webview.app_handle())?;
+        match tool {
+            Tool::ClaudeCode => {
+                let caps = caps_of(&program, &folder);
+                let claude = Claude::start(
+                    command(
+                        &program,
+                        &args::claude_listing(&caps),
+                        &folder,
+                        home.as_ref(),
+                    ),
+                    TELLING,
+                    |_| {},
+                )
+                .map_err(|error| error.to_string())?;
+                let listed = claude.ask(serde_json::json!({ "subtype": "list_models" }), TELLING);
+                claude.close_input();
+                listed
+            }
+            Tool::Codex => {
+                let asks = webview.state::<Asks>();
+                let key = HostKey {
+                    owner,
+                    agent: None,
+                    home,
+                };
+                host_for(&asks, key, &program, &folder, None)?.models(TELLING)
+            }
+            Tool::Gemini => Err("Gemini CLI names its models by alias".to_owned()),
         }
-        Tool::Codex => {
-            let asks = webview.state::<Asks>();
-            let key = HostKey {
-                owner,
-                agent: None,
-                home,
-            };
-            host_for(&asks, key, &program, &folder, None)?.models(TELLING)
-        }
-        Tool::Gemini => Err("Gemini CLI names its models by alias".to_owned()),
-    }
+    })
+    .await
 }
 
 #[cfg(test)]

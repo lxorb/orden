@@ -467,32 +467,35 @@ pub fn agents_resume(
     Ok(())
 }
 
-#[tauri::command(async)]
-pub fn agents_dialog_path(
+#[tauri::command]
+pub async fn agents_dialog_path(
     webview: tauri::Webview,
     app: AppHandle,
     agent: String,
     path: String,
     write: bool,
 ) -> Answer {
-    if let Err(why) = from_the_app(&webview) {
-        return Answer::error(Code::NotGranted, why);
-    }
-    let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
-        return Answer::error(Code::NotGranted, "there is no such agent");
-    };
-    let op = if write {
-        verbs::FilesOp::Write
-    } else {
-        verbs::FilesOp::Read
-    };
-    match files::reachable(&app, &Caller::Agent(Box::new(grant)), &path, op) {
-        Ok(path) => {
-            crate::paths::picked_for_an_agent(&app, &files::pick_reach(&app, &path));
-            Answer::ok(serde_json::json!({ "path": path.display().to_string() }))
+    crate::lane::off_the_runtime(move || -> Answer {
+        if let Err(why) = from_the_app(&webview) {
+            return Answer::error(Code::NotGranted, why);
         }
-        Err(answer) => answer,
-    }
+        let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
+            return Answer::error(Code::NotGranted, "there is no such agent");
+        };
+        let op = if write {
+            verbs::FilesOp::Write
+        } else {
+            verbs::FilesOp::Read
+        };
+        match files::reachable(&app, &Caller::Agent(Box::new(grant)), &path, op) {
+            Ok(path) => {
+                crate::paths::picked_for_an_agent(&app, &files::pick_reach(&app, &path));
+                Answer::ok(serde_json::json!({ "path": path.display().to_string() }))
+            }
+            Err(answer) => answer,
+        }
+    })
+    .await
 }
 
 #[tauri::command(async)]
@@ -675,8 +678,8 @@ pub fn agents_peek(
     }
 }
 
-#[tauri::command(async)]
-pub fn agents_capture(
+#[tauri::command]
+pub async fn agents_capture(
     webview: tauri::Webview,
     app: AppHandle,
     agent: Option<String>,
@@ -685,26 +688,29 @@ pub fn agents_capture(
     full_page: Option<bool>,
     page: Option<crate::pdf::PdfPage>,
 ) -> Answer {
-    if let Err(why) = from_the_app(&webview) {
-        return Answer::error(Code::NotGranted, why);
-    }
-    let caller = match agent {
-        None => Caller::Reader,
-        Some(id) => match state(&app).grants.by_id(&app, &id) {
-            Some(grant) => Caller::Agent(Box::new(grant)),
-            None => return Answer::error(Code::NotGranted, "there is no such agent"),
-        },
-    };
-    capture::answer(
-        &app,
-        &caller,
-        &tab,
-        capture::Asked {
-            shape,
-            full_page: full_page.unwrap_or(false),
-            paper: page,
-        },
-    )
+    crate::lane::off_the_runtime(move || -> Answer {
+        if let Err(why) = from_the_app(&webview) {
+            return Answer::error(Code::NotGranted, why);
+        }
+        let caller = match agent {
+            None => Caller::Reader,
+            Some(id) => match state(&app).grants.by_id(&app, &id) {
+                Some(grant) => Caller::Agent(Box::new(grant)),
+                None => return Answer::error(Code::NotGranted, "there is no such agent"),
+            },
+        };
+        capture::answer(
+            &app,
+            &caller,
+            &tab,
+            capture::Asked {
+                shape,
+                full_page: full_page.unwrap_or(false),
+                paper: page,
+            },
+        )
+    })
+    .await
 }
 
 #[cfg(test)]

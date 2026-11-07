@@ -310,28 +310,31 @@ pub fn remote_keep(webview: Webview, kept: Kept) -> Result<Kept, String> {
     Ok(kept)
 }
 
-#[tauri::command(async)]
-pub fn remote_config_open(webview: Webview) -> Result<(), String> {
-    super::owner(&webview)?;
-    let path = places(&webview)?.config;
-    if !path.is_file() {
-        return Err("there is no ssh config".to_owned());
-    }
+#[tauri::command]
+pub async fn remote_config_open(webview: Webview) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        super::owner(&webview)?;
+        let path = places(&webview)?.config;
+        if !path.is_file() {
+            return Err("there is no ssh config".to_owned());
+        }
 
-    let mut command = if cfg!(windows) {
-        let mut notepad = std::process::Command::new("notepad.exe");
-        notepad.arg(&path);
-        notepad
-    } else if cfg!(target_os = "macos") {
-        let mut open = std::process::Command::new("open");
-        open.arg("-t").arg(&path);
-        open
-    } else {
-        let mut open = std::process::Command::new("xdg-open");
-        open.arg(&path);
-        open
-    };
-    command.spawn().map(drop).map_err(|error| error.to_string())
+        let mut command = if cfg!(windows) {
+            let mut notepad = std::process::Command::new("notepad.exe");
+            notepad.arg(&path);
+            notepad
+        } else if cfg!(target_os = "macos") {
+            let mut open = std::process::Command::new("open");
+            open.arg("-t").arg(&path);
+            open
+        } else {
+            let mut open = std::process::Command::new("xdg-open");
+            open.arg(&path);
+            open
+        };
+        command.spawn().map(drop).map_err(|error| error.to_string())
+    })
+    .await
 }
 
 #[cfg(test)]

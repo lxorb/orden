@@ -186,9 +186,12 @@ pub async fn page_carry_end() {
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
         .take();
-    #[cfg(feature = "cef")]
-    shown::forget();
-    let _ = tauri::async_runtime::spawn_blocking(move || drop_untaken(carried)).await;
+    crate::lane::off_the_runtime(move || {
+        #[cfg(feature = "cef")]
+        shown::forget();
+        drop_untaken(carried);
+    })
+    .await;
 }
 
 #[cfg(feature = "cef")]

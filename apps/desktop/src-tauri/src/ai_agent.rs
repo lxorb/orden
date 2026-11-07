@@ -159,20 +159,23 @@ fn listed(grant: &Grant, window: Option<&BTreeSet<String>>, mode: Mode) -> Vec<V
         .collect()
 }
 
-#[tauri::command(async)]
-pub fn ai_agent_tools(
+#[tauri::command]
+pub async fn ai_agent_tools(
     webview: tauri::Webview,
     app: AppHandle,
     agent: Builtin,
     mode: Mode,
 ) -> Result<Value, String> {
-    crate::agents::from_the_app(&webview)?;
-    let grant = grant_for(&app, &agent)?;
-    let window = window_verbs(&app);
-    Ok(json!({
-        "instructions": host::instructions(),
-        "tools": listed(&grant, window.as_ref(), mode),
-    }))
+    crate::lane::off_the_runtime(move || -> Result<Value, String> {
+        crate::agents::from_the_app(&webview)?;
+        let grant = grant_for(&app, &agent)?;
+        let window = window_verbs(&app);
+        Ok(json!({
+            "instructions": host::instructions(),
+            "tools": listed(&grant, window.as_ref(), mode),
+        }))
+    })
+    .await
 }
 
 fn asked_for(tool: &str, args: &Value, thread: Option<&str>) -> Value {
@@ -183,8 +186,8 @@ fn asked_for(tool: &str, args: &Value, thread: Option<&str>) -> Value {
     asked
 }
 
-#[tauri::command(async)]
-pub fn ai_agent_call(
+#[tauri::command]
+pub async fn ai_agent_call(
     webview: tauri::Webview,
     app: AppHandle,
     agent: Builtin,
@@ -193,49 +196,55 @@ pub fn ai_agent_call(
     args: Value,
     thread: Option<String>,
 ) -> Result<Value, String> {
-    crate::agents::from_the_app(&webview)?;
-    let grant = grant_for(&app, &agent)?;
-    let window = window_verbs(&app);
-    let shown = listed(&grant, window.as_ref(), mode);
-    if !shown.iter().any(|one| one["name"] == tool.as_str()) {
-        return Err(format!("{tool} is not a tool in this mode"));
-    }
-    let args = host::with_defaults(&tool, if args.is_object() { args } else { json!({}) });
-    let asked = asked_for(&tool, &args, thread.as_deref());
-    let caller = Caller::Agent(Box::new(supervised(grant, mode)));
-    let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
-    let mut rendered = host::rendered(&tool, &args, status, &body);
-    host::categorized(&mut rendered, crate::agents::question_category);
-    Ok(rendered)
+    crate::lane::off_the_runtime(move || -> Result<Value, String> {
+        crate::agents::from_the_app(&webview)?;
+        let grant = grant_for(&app, &agent)?;
+        let window = window_verbs(&app);
+        let shown = listed(&grant, window.as_ref(), mode);
+        if !shown.iter().any(|one| one["name"] == tool.as_str()) {
+            return Err(format!("{tool} is not a tool in this mode"));
+        }
+        let args = host::with_defaults(&tool, if args.is_object() { args } else { json!({}) });
+        let asked = asked_for(&tool, &args, thread.as_deref());
+        let caller = Caller::Agent(Box::new(supervised(grant, mode)));
+        let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
+        let mut rendered = host::rendered(&tool, &args, status, &body);
+        host::categorized(&mut rendered, crate::agents::question_category);
+        Ok(rendered)
+    })
+    .await
 }
 
 const CONTEXT: &str = "get_context";
 
-#[tauri::command(async)]
-pub fn ai_agent_context(
+#[tauri::command]
+pub async fn ai_agent_context(
     webview: tauri::Webview,
     app: AppHandle,
     agent: Builtin,
     thread: Option<String>,
 ) -> Result<Vec<Value>, String> {
-    crate::agents::from_the_app(&webview)?;
-    let grant = grant_for(&app, &agent)?;
-    let window = window_verbs(&app);
-    let reached: BTreeSet<String> = host::listed(&grant, window.as_ref())
-        .into_iter()
-        .map(|tool| tool.name.clone())
-        .collect();
-    let caller = Caller::Agent(Box::new(grant));
-    Ok(Some(CONTEXT)
-        .filter(|verb| reached.contains(*verb))
-        .map(|verb| {
-            let args = json!({});
-            let asked = asked_for(verb, &args, thread.as_deref());
-            let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
-            host::rendered(verb, &args, status, &body)
-        })
-        .into_iter()
-        .collect())
+    crate::lane::off_the_runtime(move || -> Result<Vec<Value>, String> {
+        crate::agents::from_the_app(&webview)?;
+        let grant = grant_for(&app, &agent)?;
+        let window = window_verbs(&app);
+        let reached: BTreeSet<String> = host::listed(&grant, window.as_ref())
+            .into_iter()
+            .map(|tool| tool.name.clone())
+            .collect();
+        let caller = Caller::Agent(Box::new(grant));
+        Ok(Some(CONTEXT)
+            .filter(|verb| reached.contains(*verb))
+            .map(|verb| {
+                let args = json!({});
+                let asked = asked_for(verb, &args, thread.as_deref());
+                let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
+                host::rendered(verb, &args, status, &body)
+            })
+            .into_iter()
+            .collect())
+    })
+    .await
 }
 
 #[cfg(test)]

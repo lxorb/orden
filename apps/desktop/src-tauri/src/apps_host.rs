@@ -172,58 +172,64 @@ fn usable(key: &str) -> Result<(), String> {
     }
 }
 
-#[tauri::command(async)]
-pub fn apps_installed(webview: Webview) -> Result<Vec<installed::Listed>, String> {
-    owner(&webview)?;
-    Ok(installed::installed())
+#[tauri::command]
+pub async fn apps_installed(webview: Webview) -> Result<Vec<installed::Listed>, String> {
+    crate::lane::off_the_runtime(move || -> Result<Vec<installed::Listed>, String> {
+        owner(&webview)?;
+        Ok(installed::installed())
+    })
+    .await
 }
 
-#[tauri::command(async)]
-pub fn apps_start(
+#[tauri::command]
+pub async fn apps_start(
     webview: Webview,
     key: String,
     run: Run,
     view: View,
     events: Channel<Said>,
 ) -> Result<(), String> {
-    owner(&webview)?;
-    usable(&key)?;
-    let hosted = webview.state::<Hosted>();
-    if let Some(running) = hosted.apps().get(&key).cloned() {
-        *running
-            .events
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events.clone());
-        running.tell(Said::RUNNING);
-        return Ok(());
-    }
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        owner(&webview)?;
+        usable(&key)?;
+        let hosted = webview.state::<Hosted>();
+        if let Some(running) = hosted.apps().get(&key).cloned() {
+            *running
+                .events
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events.clone());
+            running.tell(Said::RUNNING);
+            return Ok(());
+        }
 
-    let (argv, cwd) = match &run {
-        Run::Installed { id } => {
-            let entry = installed::find(id).ok_or("missing")?;
-            if entry.packaged {
-                return Err("packaged".to_owned());
+        let (argv, cwd) = match &run {
+            Run::Installed { id } => {
+                let entry = installed::find(id).ok_or("missing")?;
+                if entry.packaged {
+                    return Err("packaged".to_owned());
+                }
+                (entry.argv, entry.cwd)
             }
-            (entry.argv, entry.cwd)
-        }
-        Run::Path { path, args, cwd } => {
-            if !installed::on_path(path) {
-                return Err("missing".to_owned());
+            Run::Path { path, args, cwd } => {
+                if !installed::on_path(path) {
+                    return Err("missing".to_owned());
+                }
+                let mut argv = vec![path.clone()];
+                argv.extend(args.iter().cloned());
+                (argv, cwd.clone())
             }
-            let mut argv = vec![path.clone()];
-            argv.extend(args.iter().cloned());
-            (argv, cwd.clone())
+        };
+        if !cfg!(any(target_os = "linux", target_os = "windows")) {
+            return Err("isolation".to_owned());
         }
-    };
-    if !cfg!(any(target_os = "linux", target_os = "windows")) {
-        return Err("isolation".to_owned());
-    }
-    if let Run::Path { path, args, cwd } = &run {
-        if !allowed_here(webview.app_handle(), &hosted, path, args, cwd.as_deref()) {
-            return Err("refused".to_owned());
+        if let Run::Path { path, args, cwd } = &run {
+            if !allowed_here(webview.app_handle(), &hosted, path, args, cwd.as_deref()) {
+                return Err("refused".to_owned());
+            }
         }
-    }
-    run_on_its_display(webview.app_handle().clone(), key, argv, cwd, view, events)
+        run_on_its_display(webview.app_handle().clone(), key, argv, cwd, view, events)
+    })
+    .await
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "windows")))]
@@ -417,41 +423,54 @@ fn run_on_its_display(
     Ok(())
 }
 
-#[tauri::command(async)]
-pub fn apps_watch(webview: Webview, key: String, events: Channel<Said>) -> Result<bool, String> {
-    owner(&webview)?;
-    usable(&key)?;
-    let Some(running) = webview.state::<Hosted>().apps().get(&key).cloned() else {
-        return Ok(false);
-    };
-    *running
-        .events
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events);
-    running.tell(Said::RUNNING);
-    Ok(true)
+#[tauri::command]
+pub async fn apps_watch(
+    webview: Webview,
+    key: String,
+    events: Channel<Said>,
+) -> Result<bool, String> {
+    crate::lane::off_the_runtime(move || -> Result<bool, String> {
+        owner(&webview)?;
+        usable(&key)?;
+        let Some(running) = webview.state::<Hosted>().apps().get(&key).cloned() else {
+            return Ok(false);
+        };
+        *running
+            .events
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events);
+        running.tell(Said::RUNNING);
+        Ok(true)
+    })
+    .await
 }
 
-#[tauri::command(async)]
-pub fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
-    owner(&webview)?;
-    usable(&key)?;
-    let running = webview.state::<Hosted>().apps().get(&key).cloned();
-    if let Some(running) = running {
-        end(&running, std::time::Duration::from_secs(3));
-    }
-    Ok(())
+#[tauri::command]
+pub async fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        owner(&webview)?;
+        usable(&key)?;
+        let running = webview.state::<Hosted>().apps().get(&key).cloned();
+        if let Some(running) = running {
+            end(&running, std::time::Duration::from_secs(3));
+        }
+        Ok(())
+    })
+    .await
 }
 
-#[tauri::command(async)]
-pub fn apps_view(webview: Webview, key: String, view: View) -> Result<(), String> {
-    owner(&webview)?;
-    usable(&key)?;
-    let running = webview.state::<Hosted>().apps().get(&key).cloned();
-    if let Some(running) = running {
-        view_here(&running, view);
-    }
-    Ok(())
+#[tauri::command]
+pub async fn apps_view(webview: Webview, key: String, view: View) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        owner(&webview)?;
+        usable(&key)?;
+        let running = webview.state::<Hosted>().apps().get(&key).cloned();
+        if let Some(running) = running {
+            view_here(&running, view);
+        }
+        Ok(())
+    })
+    .await
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "windows")))]
@@ -491,11 +510,18 @@ fn view_here(running: &Running, view: View) {
     }
 }
 
-#[tauri::command(async)]
-pub fn apps_signal(webview: Webview, key: String, data: String) -> Result<Option<String>, String> {
-    owner(&webview)?;
-    usable(&key)?;
-    Ok(signal_here(&webview.state::<Hosted>(), &key, &data))
+#[tauri::command]
+pub async fn apps_signal(
+    webview: Webview,
+    key: String,
+    data: String,
+) -> Result<Option<String>, String> {
+    crate::lane::off_the_runtime(move || -> Result<Option<String>, String> {
+        owner(&webview)?;
+        usable(&key)?;
+        Ok(signal_here(&webview.state::<Hosted>(), &key, &data))
+    })
+    .await
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "windows")))]
