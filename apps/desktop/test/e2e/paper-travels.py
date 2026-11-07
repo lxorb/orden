@@ -196,7 +196,12 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
     say(f"[v{version}] the owner holds {NOTE} as {note}")
     if version == 2:
         tree = owner.evaluate(ENGINE)
-        files = [one[1] for space in tree for one in space["entries"] if one[0] == "file" and not one[3]]
+        files = [
+            one[1]
+            for space in tree
+            for one in space["entries"]
+            if one[0] == "file" and not one[3] and (one[1] or one[2] is not None)
+        ]
         if files:
             failed(f"[v2] the paper is a file of the tree beside its note: {files}")
 

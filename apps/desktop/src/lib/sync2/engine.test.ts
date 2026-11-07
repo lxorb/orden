@@ -15,7 +15,7 @@ import { Refused } from './transport'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
-import { numbersRow, wantedRow } from './records'
+import { GONE_KEPT, numbersRow, wantedRow } from './records'
 import { seedUpdate } from '@orden/sync-core/seed'
 import type { Disk, World } from './world'
 import type { SpaceChange, SpaceNews } from '../space-watch'
@@ -823,6 +823,44 @@ describe('an outbox folded while offline', () => {
     expect(names).toEqual(['Ideas.md'])
     expect(here.engine.waiting(SPACE)).toBe(false)
     expect(here.store.rows('outbox')).toEqual([])
+  })
+
+  test('a folder and a note made and deleted here before they went up go once no undo can bring them back', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account)
+    here.online = false
+    const space = here.engine.core.spaces.get(SPACE)
+    if (!space) throw new Error('no space')
+
+    await here.disk.mkdir(`${ROOT}/Tmp`)
+    await here.engine.created(`${ROOT}/Tmp`, true)
+    await here.disk.write(`${ROOT}/Tmp/Draft.md`, 'draft')
+    await here.engine.created(`${ROOT}/Tmp/Draft.md`, false)
+    const early = [space.at('Tmp')?.id, space.at('Tmp/Draft.md')?.id]
+    await here.disk.remove(`${ROOT}/Tmp`)
+    await here.engine.removed(`${ROOT}/Tmp`)
+
+    here.online = true
+    await here.engine.pass(SPACE)
+    const ids = () => here.store.rows('entries').map((entry) => entry.id)
+    expect(ids()).toEqual(expect.arrayContaining(early))
+
+    here.online = false
+    for (let at = 0; at < GONE_KEPT; at++) {
+      await here.disk.write(`${ROOT}/N${String(at)}.md`, 'n')
+      await here.engine.created(`${ROOT}/N${String(at)}.md`, false)
+      await here.disk.remove(`${ROOT}/N${String(at)}.md`)
+      await here.engine.removed(`${ROOT}/N${String(at)}.md`)
+    }
+    here.online = true
+    await here.engine.pass(SPACE)
+
+    for (const id of early) expect(ids()).not.toContain(id)
+    expect(ids()).toHaveLength(SEEDED.length + GONE_KEPT)
+    expect(here.store.rows('outbox')).toEqual([])
+    here.engine.stop()
+    const again = await here.launch()
+    expect(again.core.spaces.get(SPACE)?.entries.size).toBe(SEEDED.length + GONE_KEPT)
   })
 
   test('a note made in a new folder in the same millisecond keeps its folder across a relaunch', async () => {
