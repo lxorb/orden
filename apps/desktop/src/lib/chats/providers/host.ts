@@ -4,6 +4,7 @@ import { toBase64 } from '../../bytes'
 import { Channel } from '../../native'
 import { isRecord } from '../../stored'
 import { invoke, isDesktop } from '../../tauri'
+import { parsedOffThread } from './mail-parse'
 
 let opened = 0
 
@@ -46,6 +47,7 @@ export const host: Host = {
   secret: (name) => readSecret(name),
   keepSecret: (name, value) => (value === null ? forgetKey(name, true) : writeSecret(name, value)),
   ...(isDesktop ? { socket } : {}),
+  parseMessage: parsedOffThread,
   fetch: (...args) => fetch(...args),
   now: () => Date.now(),
 }

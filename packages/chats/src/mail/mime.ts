@@ -136,7 +136,7 @@ export function idsOf(text: string | undefined): string[] {
 
 function decodeBody(bytes: Uint8Array, encoding: string): Uint8Array {
   const how = encoding.trim().toLowerCase()
-  if (how === 'base64') return fromBase64(latin(bytes))
+  if (how === 'base64') return fromBase64(bytes)
   if (how === 'quoted-printable') {
     return fromLatin(
       latin(bytes)
@@ -150,10 +150,50 @@ function decodeBody(bytes: Uint8Array, encoding: string): Uint8Array {
 }
 
 function split(bytes: Uint8Array): { head: string; body: Uint8Array } {
-  const text = latin(bytes)
-  const found = /\r?\n\r?\n/.exec(text)
-  if (!found) return { head: text, body: new Uint8Array(0) }
-  return { head: text.slice(0, found.index), body: bytes.subarray(found.index + found[0].length) }
+  for (let at = bytes.indexOf(10); at >= 0; at = bytes.indexOf(10, at + 1)) {
+    const next = bytes[at + 1] === 13 ? at + 2 : at + 1
+    if (bytes[next] !== 10) continue
+    const start = at > 0 && bytes[at - 1] === 13 ? at - 1 : at
+    return { head: latin(bytes.subarray(0, start)), body: bytes.subarray(next + 1) }
+  }
+  return { head: latin(bytes), body: new Uint8Array(0) }
+}
+
+function found(bytes: Uint8Array, word: Uint8Array, from: number): number {
+  const first = word[0] ?? 0
+  for (let at = bytes.indexOf(first, from); at >= 0; at = bytes.indexOf(first, at + 1)) {
+    let one = 1
+    while (one < word.length && bytes[at + one] === word[one]) one++
+    if (one === word.length) return at
+  }
+  return -1
+}
+
+function pieces(body: Uint8Array, boundary: string): Uint8Array[] {
+  const word = ascii(`--${boundary}`)
+  const closed = found(body, ascii(`--${boundary}--`), 0) >= 0
+  const out: Uint8Array[] = []
+  let from = 0
+  for (let at = found(body, word, 0); at >= 0; at = found(body, word, from)) {
+    let start = at
+    if (body[start - 1] === 10 && start - 1 >= from) start--
+    if (body[start - 1] === 13 && start - 1 >= from) start--
+    let end = at + word.length
+    if (body[end] === 45 && body[end + 1] === 45) end += 2
+    while (body[end] === 32 || body[end] === 9) end++
+    if (body[end] === 13) end++
+    if (body[end] === 10) end++
+    out.push(body.subarray(from, start))
+    from = end
+  }
+  out.push(body.subarray(from))
+  return closed ? out.slice(1, -1) : out.slice(1)
+}
+
+const BLANK = new Set([9, 10, 11, 12, 13, 32, 160])
+
+function blank(bytes: Uint8Array): boolean {
+  return bytes.every((one) => BLANK.has(one))
 }
 
 function walk(bytes: Uint8Array, path: string, into: Part[], fallback = 'text/plain'): void {
@@ -162,14 +202,9 @@ function walk(bytes: Uint8Array, path: string, into: Part[], fallback = 'text/pl
   const type = valueWithParams(headers.get('content-type')?.[0] ?? fallback)
   const disposition = valueWithParams(headers.get('content-disposition')?.[0] ?? '')
   if (type.value.startsWith('multipart/') && type.params.boundary) {
-    const boundary = `--${type.params.boundary}`
-    const text = latin(body)
-    const pieces = text.split(new RegExp(`\\r?\\n?${escape(boundary)}(?:--)?[ \\t]*\\r?\\n?`))
-    const inner = text.includes(`${boundary}--`) ? pieces.slice(1, -1) : pieces.slice(1)
     const child = type.value === 'multipart/digest' ? 'message/rfc822' : 'text/plain'
-    inner.forEach((piece, at) => {
-      if (piece.trim())
-        walk(fromLatin(piece), path ? `${path}.${at + 1}` : String(at + 1), into, child)
+    pieces(body, type.params.boundary).forEach((piece, at) => {
+      if (!blank(piece)) walk(piece, path ? `${path}.${at + 1}` : String(at + 1), into, child)
     })
     return
   }
@@ -182,10 +217,6 @@ function walk(bytes: Uint8Array, path: string, into: Part[], fallback = 'text/pl
     filename: name === null ? null : decodeWords(name),
     bytes: decodeBody(body, headers.get('content-transfer-encoding')?.[0] ?? '7bit'),
   })
-}
-
-function escape(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function textOfHtml(html: string): string {

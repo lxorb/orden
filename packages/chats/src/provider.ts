@@ -1,3 +1,5 @@
+import type { Parsed } from './mail/mime'
+
 export type ConversationKind = 'direct' | 'group' | 'channel' | 'thread'
 
 export interface ConnectField {
@@ -86,6 +88,7 @@ export interface Host {
   secret(name: string): Promise<string | null>
   keepSecret(name: string, value: string | null): Promise<void>
   socket?: (ask: SocketAsk) => Promise<Socket>
+  parseMessage?: (bytes: Uint8Array) => Promise<Parsed>
   fetch: typeof fetch
   now(): number
 }

@@ -1,7 +1,7 @@
 import type { Socket, SocketAsk } from '../provider'
 import { ascii, concat, fromLatin, latin, Reader, toBase64 } from './bytes'
 
-export type Value = string | null | Value[]
+export type Value = string | null | Uint8Array | Value[]
 
 export interface Untagged {
   kind: string
@@ -10,7 +10,11 @@ export interface Untagged {
   line: string
 }
 
-export function parseValues(text: string): Value[] {
+export function parseValues(
+  text: string,
+  literals: ReadonlyMap<number, Uint8Array> = new Map(),
+  base = 0,
+): Value[] {
   let at = 0
   const list = (): Value[] => {
     const out: Value[] = []
@@ -38,8 +42,13 @@ export function parseValues(text: string): Value[] {
         const close = text.indexOf('}', at)
         const count = Number.parseInt(text.slice(at + 1, close), 10)
         at = close + 1
-        out.push(text.slice(at, at + count))
-        at += count
+        const held = literals.get(base + at)
+        if (held) {
+          out.push(held)
+        } else {
+          out.push(text.slice(at, at + count))
+          at += count
+        }
       } else {
         let value = ''
         while (at < text.length && !' ()'.includes(text[at] ?? ' ')) {
@@ -61,24 +70,31 @@ export function parseValues(text: string): Value[] {
   return list()
 }
 
-export function untaggedOf(text: string): Untagged {
+export function untaggedOf(
+  text: string,
+  literals: ReadonlyMap<number, Uint8Array> = new Map(),
+): Untagged {
   const rest = text.slice(2)
   const head = /^(\d+) ([A-Za-z]+)/.exec(rest)
   if (head) {
     return {
       kind: (head[2] ?? '').toUpperCase(),
       number: Number(head[1]),
-      values: safely(rest.slice(head[0].length)),
+      values: safely(rest.slice(head[0].length), literals, 2 + head[0].length),
       line: text,
     }
   }
   const word = /^[A-Za-z]+/.exec(rest)?.[0] ?? ''
-  return { kind: word.toUpperCase(), values: safely(rest.slice(word.length)), line: text }
+  return {
+    kind: word.toUpperCase(),
+    values: safely(rest.slice(word.length), literals, 2 + word.length),
+    line: text,
+  }
 }
 
-function safely(text: string): Value[] {
+function safely(text: string, literals: ReadonlyMap<number, Uint8Array>, base: number): Value[] {
   try {
-    return parseValues(text)
+    return parseValues(text, literals, base)
   } catch {
     return []
   }
@@ -122,6 +138,7 @@ export class Imap {
 
   private readonly reader = new Reader()
   private building = ''
+  private literals = new Map<number, Uint8Array>()
   private wanting: number | null = null
   private counter = 0
   private pending: Pending | null = null
@@ -249,7 +266,7 @@ export class Imap {
       if (this.wanting !== null) {
         const literal = this.reader.take(this.wanting)
         if (!literal) return
-        this.building += latin(literal)
+        this.literals.set(this.building.length, literal)
         this.wanting = null
       }
       const line = this.reader.line()
@@ -261,12 +278,14 @@ export class Imap {
         continue
       }
       const whole = this.building
+      const literals = this.literals
       this.building = ''
-      this.response(whole)
+      this.literals = new Map()
+      this.response(whole, literals)
     }
   }
 
-  private response(text: string): void {
+  private response(text: string, literals: ReadonlyMap<number, Uint8Array>): void {
     if (this.greeted) {
       const greeted = this.greeted
       this.greeted = null
@@ -280,7 +299,7 @@ export class Imap {
       return
     }
     if (text.startsWith('* ')) {
-      const one = untaggedOf(text)
+      const one = untaggedOf(text, literals)
       if (one.kind === 'CAPABILITY' || /\[CAPABILITY /i.test(text)) this.readCapabilities(text)
       this.pending?.untagged.push(one)
       this.hear(one)
@@ -328,5 +347,11 @@ export class Imap {
 }
 
 export function bytesOf(value: Value | undefined): Uint8Array {
+  if (value instanceof Uint8Array) return value
   return typeof value === 'string' ? fromLatin(value) : new Uint8Array(0)
+}
+
+export function textOf(value: Value | undefined): string {
+  if (value instanceof Uint8Array) return latin(value)
+  return typeof value === 'string' ? value : ''
 }
