@@ -34,7 +34,9 @@ import { attach, attachPlane, type PlaneJoin } from './binding'
 import { carry, uncarry } from './carry'
 import { kindOfName } from './create'
 import { MINE } from './docs'
-import { Engine } from './engine'
+import { Engine, type AwayFile } from './engine'
+import type { Query } from '@orden/scan/search/query'
+import type { Found } from '@orden/scan/search/walk'
 import { type Leadership, leadSync } from './lead'
 import { forgetMadeDeviceId, madeDeviceId } from './made-device'
 import { Owed, type Owing, takeOwed } from './owed'
@@ -1010,6 +1012,8 @@ class Runner {
 
   private awayOwed = false
 
+  private awaySaid = ''
+
   private async awayHeard(engine: Engine, told: boolean) {
     if (isNative || this.current !== engine) return
     if (engine.core.handPaths.length) {
@@ -1030,6 +1034,13 @@ class Runner {
       }
     }
     const back = keptAway.keep(files, (path) => this.fetchAway(engine, path))
+    const said = files
+      .map((one) => `${one.id}\0${one.path}\0${String(one.size)}\0${String(one.modified)}`)
+      .join('\n')
+    if (said !== this.awaySaid) {
+      this.awaySaid = said
+      this.sayAway(files)
+    }
     if (this.indexing) keptAway.answeredBy(this.indexing.scans(), this.indexing.search)
     if (back.length || files.length !== was.size) this.treeStale()
     for (const path of back) void workspace.arrived(path)
@@ -1346,6 +1357,11 @@ class Runner {
         this.lastError = (said.lastError as string | null) ?? null
         this.lastSyncedAt = (said.lastSyncedAt as number | null) ?? null
       }),
+      this.hear('sync-away', (said) => {
+        if (this.engine) return
+        this.leaderIs(said.from)
+        this.heardAway(said.files)
+      }),
       this.hear('sync-rows', (said) => {
         if (this.engine) return
         this.leaderIs(said.from)
@@ -1425,6 +1441,11 @@ class Runner {
     }
     if (said.what === 'holds') return await this.holds(args.path ?? '')
     if (said.what === 'id-at') return await this.idAt(args.path ?? '')
+    if (said.what === 'fetch-away') {
+      const engine = this.current
+      return engine ? await this.fetchAway(engine, args.path ?? '') : false
+    }
+    if (said.what === 'search-away') return await searchedAway(said.args)
     if (said.what === 'forget') {
       await this.forget(args.root ?? '')
       this.sayRows()
@@ -1438,7 +1459,31 @@ class Runner {
 
   private sayAll() {
     this.sayRows()
+    if (this.engine) this.sayAway(this.engine.awayFiles())
     this.say('sync-light', this.light())
+  }
+
+  private sayAway(files: readonly AwayFile[]) {
+    if (isNative || windows.alone) return
+    this.say('sync-away', {
+      files: files.map(({ id, path, size, modified }) => ({ id, path, size, modified })),
+    })
+  }
+
+  private heardAway(said: unknown) {
+    if (!Array.isArray(said)) return
+    const files = (said as unknown[]).filter(isAway)
+    const had = keptAway.all().length
+    const back = keptAway.keep(
+      files,
+      async (path) => (await this.ask('fetch-away', { path })) === true,
+    )
+    keptAway.answeredBy(new Map(), async (root, query, terms, limit, onFound, excluded) => {
+      const found = await this.ask('search-away', { root, query, terms, limit, excluded })
+      if (Array.isArray(found)) for (const one of found) onFound(one as Found)
+    })
+    if (back.length || files.length !== had) this.treeStale()
+    for (const path of back) void workspace.arrived(path)
   }
 
   private sayRows() {
@@ -1649,6 +1694,40 @@ owesAtTheEnd(() => runner.parting())
 const SENDING_ROUNDS = 4
 
 const SETTLING = 1_500
+
+async function searchedAway(args: unknown): Promise<Found[]> {
+  const asked = (args ?? {}) as {
+    root?: string
+    query?: Query
+    terms?: string[]
+    limit?: number
+    excluded?: string[]
+  }
+  if (!asked.query || typeof asked.root !== 'string') return []
+  const found: Found[] = []
+  await keptAway.search(
+    asked.root,
+    asked.query,
+    asked.terms ?? [],
+    asked.limit ?? 0,
+    (one) => found.push(one),
+    asked.excluded ?? [],
+  )
+  return found
+}
+
+function isAway(
+  value: unknown,
+): value is { id: string; path: string; size: number; modified: number } {
+  if (typeof value !== 'object' || value === null) return false
+  const one = value as Record<string, unknown>
+  return (
+    typeof one.id === 'string' &&
+    typeof one.path === 'string' &&
+    typeof one.size === 'number' &&
+    typeof one.modified === 'number'
+  )
+}
 
 async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
   const notes: V1Listing['notes'][number][] = []

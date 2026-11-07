@@ -200,6 +200,7 @@ describe('the engine’s window', () => {
     core: { spaces: new Map(), store: { close: () => Promise.resolve() } },
     saved: vi.fn(() => Promise.resolve()),
     entryAt: () => null,
+    awayFiles: () => [],
     quit: () => Promise.resolve(),
     stop: () => undefined,
   })
