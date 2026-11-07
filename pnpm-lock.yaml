@@ -10,10 +10,10 @@ overrides:
 
 patchedDependencies:
   '@lezer/markdown@1.7.2':
-    hash: faf62e6e9dbc4914529931b72e7ed512159ccf208b12512140f3218bcbae5594
+    hash: 266bd173d958b30ce9713d0171992ac95b9ac9297eb4b27b4612db64d946e74f
     path: patches/@lezer__markdown@1.7.2.patch
   marked@18.0.11:
-    hash: fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959
+    hash: 50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f
     path: patches/marked@18.0.11.patch
 
 importers:
@@ -156,7 +156,7 @@ importers:
         version: 1.40.0
       marked:
         specifier: ^18.0.11
-        version: 18.0.11(patch_hash=fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959)
+        version: 18.0.11(patch_hash=50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f)
       mermaid:
         specifier: ^11.17.2
         version: 11.17.2
@@ -312,7 +312,7 @@ importers:
         version: 1.5.4
       '@lezer/markdown':
         specifier: ^1.7.2
-        version: 1.7.2(patch_hash=faf62e6e9dbc4914529931b72e7ed512159ccf208b12512140f3218bcbae5594)
+        version: 1.7.2(patch_hash=266bd173d958b30ce9713d0171992ac95b9ac9297eb4b27b4612db64d946e74f)
       '@orden/markdown':
         specifier: workspace:*
         version: link:../markdown
@@ -373,7 +373,7 @@ importers:
         version: link:../markdown
       marked:
         specifier: ^18.0.11
-        version: 18.0.11(patch_hash=fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959)
+        version: 18.0.11(patch_hash=50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f)
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
@@ -432,7 +432,7 @@ importers:
         version: 1.40.0
       marked:
         specifier: ^18.0.11
-        version: 18.0.11(patch_hash=fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959)
+        version: 18.0.11(patch_hash=50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f)
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
@@ -4152,7 +4152,7 @@ snapshots:
       '@codemirror/state': 6.7.2
       '@codemirror/view': 6.43.11
       '@lezer/common': 1.5.2
-      '@lezer/markdown': 1.7.2(patch_hash=faf62e6e9dbc4914529931b72e7ed512159ccf208b12512140f3218bcbae5594)
+      '@lezer/markdown': 1.7.2(patch_hash=266bd173d958b30ce9713d0171992ac95b9ac9297eb4b27b4612db64d946e74f)
 
   '@codemirror/lang-php@6.0.2':
     dependencies:
@@ -4829,7 +4829,7 @@ snapshots:
     dependencies:
       '@lezer/common': 1.5.2
 
-  '@lezer/markdown@1.7.2(patch_hash=faf62e6e9dbc4914529931b72e7ed512159ccf208b12512140f3218bcbae5594)':
+  '@lezer/markdown@1.7.2(patch_hash=266bd173d958b30ce9713d0171992ac95b9ac9297eb4b27b4612db64d946e74f)':
     dependencies:
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
@@ -6469,7 +6469,7 @@ snapshots:
 
   marked@16.4.2: {}
 
-  marked@18.0.11(patch_hash=fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959): {}
+  marked@18.0.11(patch_hash=50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f): {}
 
   mdn-data@2.27.1: {}
 

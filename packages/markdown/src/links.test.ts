@@ -903,3 +903,46 @@ describe('a closing fence an older build named', () => {
     expect(blockIds(note).map((one) => one.id)).toEqual(ids)
   })
 })
+
+describe('a line of links nothing closes', () => {
+  const quick = (source: string) => {
+    const started = performance.now()
+    const html = renderMarkdown(source)
+    expect(performance.now() - started).toBeLessThan(1500)
+    return html
+  }
+
+  test('renders in linear time', () => {
+    expect(quick('[a]('.repeat(25_000))).not.toContain('<a ')
+    expect(quick('![a]('.repeat(20_000))).not.toContain('<img')
+    expect(quick('[a](x ('.repeat(15_000))).not.toContain('<a ')
+    expect(quick('[a](<'.repeat(20_000))).not.toContain('<a ')
+    expect(quick('[a](<x>'.repeat(15_000))).not.toContain('<a ')
+    expect(quick('[a](x)'.repeat(16_000)).split('<a ').length - 1).toBe(16_000)
+  })
+
+  test('reads a link that closes as before', () => {
+    const cases: [string, string][] = [
+      ['[a](b)', '<a href="b">a</a>'],
+      ['[a](<b c>)', '<a href="b%20c">a</a>'],
+      ['[a](b "t")', '<a href="b" title="t">a</a>'],
+      ['[a](b (t))', '<a href="b" title="t">a</a>'],
+      ['[a](b(c))', '<a href="b(c)">a</a>'],
+      ['[a](b\\)c)', '<a href="b)c">a</a>'],
+      ['[a]( b )', '<a href="b">a</a>'],
+      ['[a]()', 'a'],
+      ['[a](b)c)', '<a href="b">a</a>c)'],
+      ['[a [b] c](d)', '<a href="d">a [b] c</a>'],
+      ['![i](data:image/png;base64,AAAA)', '<img src="data:image/png;base64,AAAA" alt="i">'],
+    ]
+    for (const [source, link] of cases) expect(renderMarkdown(source)).toBe(`<p>${link}</p>\n`)
+  })
+
+  test('is no link where its parentheses do not close, as in cmark', () => {
+    expect(renderMarkdown('[a](b (t(u)))')).not.toContain('<a ')
+    expect(renderMarkdown('[a](((b)c d)')).not.toContain('<a ')
+    expect(renderMarkdown('[a](b( "t")')).not.toContain('<a ')
+    expect(renderMarkdown(`[a](${'('.repeat(33)}b${')'.repeat(33)})`)).not.toContain('<a ')
+    expect(renderMarkdown(`[a](${'('.repeat(32)}b${')'.repeat(32)})`)).toContain('<a ')
+  })
+})

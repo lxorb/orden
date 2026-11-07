@@ -1,8 +1,8 @@
 diff --git a/lib/marked.esm.js b/lib/marked.esm.js
-index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..2d0dcfc591e2042c2fc26da495f7ac408fca2676 100644
+index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..f01ae1d181ea1912a57d70e449ecc1ec76652772 100644
 --- a/lib/marked.esm.js
 +++ b/lib/marked.esm.js
-@@ -78 +78,125 @@
+@@ -78 +78,225 @@
  //# sourceMappingURL=marked.esm.js.map
 +
 +// Patched (pnpm patch, see docs/patches.md): emphasis that cannot close is
@@ -127,4 +127,104 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..2d0dcfc591e2042c2fc26da495f7ac40
 +  const token = emStrong.call(this, src, masked, before)
 +  emDepth--
 +  return token
++}
++
++// Patched (pnpm patch, see docs/patches.md): a link's destination is read as
++// cmark reads it before the link rule is run, and the rule only over the link.
++//
++// The rule's destination is `[^ \t\n\x00-\x1f]+`, which runs to the next space
++// and backs off a character at a time, so a line of `[a](` without spaces read
++// the rest of the line at every bracket: 2 seconds at 64 KB. Here it is read
++// once: up to the closing parenthesis outside any other, or a space with every
++// parenthesis closed, 32 deep at most; then an optional title, which in
++// parentheses holds no other unescaped opening one, and the closing one. The
++// rule then runs on the text up to there, so what it makes of a link is as
++// before; a destination nothing closes, or one with an unclosed parenthesis
++// before a space, is no link, as in cmark.
++const LINK_DEEPEST = 32
++const LINK_HEADS = new WeakMap()
++const LINK_SPACE = /\s/u
++
++function linkHeadOf(rule) {
++  let head = LINK_HEADS.get(rule)
++  if (head === undefined) {
++    const at = rule.source.indexOf('\\]\\(\\s*(')
++    head = at === -1 ? null : new RegExp(rule.source.slice(0, at) + '\\]\\(\\s*', rule.flags)
++    LINK_HEADS.set(rule, head)
++  }
++  return head
++}
++
++function linkClosedAfter(src, at) {
++  while (at < src.length && LINK_SPACE.test(src[at])) at++
++  return src[at] === ')' ? at + 1 : -1
++}
++
++function linkTitleEnd(src, at) {
++  const open = src[at]
++  const close = open === '(' ? ')' : open
++  for (let i = at + 1; i < src.length; i++) {
++    const c = src[i]
++    if (c === '\\') {
++      if (src[i + 1] === close || (open === '(' && src[i + 1] === '(')) i++
++    } else if (c === close) return i + 1
++    else if (open === '(' && c === '(') return -1
++  }
++  return -1
++}
++
++function linkRestEnd(src, at) {
++  let i = at
++  while (src[i] === ' ' || src[i] === '\t') i++
++  if (src[i] === '\n') {
++    i++
++    while (src[i] === ' ' || src[i] === '\t') i++
++  }
++  if (i > at && (src[i] === '"' || src[i] === "'" || src[i] === '(')) {
++    const title = linkTitleEnd(src, i)
++    const end = title === -1 ? -1 : linkClosedAfter(src, title)
++    if (end !== -1) return end
++  }
++  return linkClosedAfter(src, at)
++}
++
++function linkEndOf(src, at) {
++  if (src[at] === '<') {
++    let i = at + 1
++    for (; i < src.length; i++) {
++      const c = src[i]
++      if (c === '\\' && i + 1 < src.length && src[i + 1] !== '\n') i++
++      else if (c === '>' || c === '<' || c === '\n') break
++    }
++    if (src[i] === '>' && i > at + 1) {
++      const end = linkRestEnd(src, i + 1)
++      if (end !== -1) return end
++    }
++  }
++  let depth = 0
++  let i = at
++  for (; i < src.length; i++) {
++    const c = src.charCodeAt(i)
++    if (c <= 0x20) break
++    if (c === 92) {
++      if (i + 1 < src.length && src.charCodeAt(i + 1) > 0x20) i++
++    } else if (c === 40) {
++      if (++depth > LINK_DEEPEST) return -1
++    } else if (c === 41) {
++      if (depth === 0) return i + 1
++      depth--
++    }
++  }
++  return depth > 0 ? -1 : linkRestEnd(src, i)
++}
++
++const link = y.prototype.link
++y.prototype.link = function (src) {
++  const head = this.options.pedantic ? null : linkHeadOf(this.rules.inline.link)
++  if (!head) return link.call(this, src)
++  const found = head.exec(src)
++  if (!found) return
++  const end = linkEndOf(src, found[0].length)
++  if (end === -1) return
++  return link.call(this, end === src.length ? src : src.slice(0, end))
 +}

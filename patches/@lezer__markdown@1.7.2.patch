@@ -1,5 +1,5 @@
 diff --git a/dist/index.js b/dist/index.js
-index e5725e7b76c21832da1a3d2ed188ae042c06224c..ed993b305afb0042168eccb1184611cda6a83a44 100644
+index e5725e7b76c21832da1a3d2ed188ae042c06224c..65c38797d2d97530d31ee3d2211665707c67c0e6 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -1506,8 +1506,11 @@ const DefaultInline = {
@@ -15,7 +15,63 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..ed993b305afb0042168eccb1184611cd
                          if (p instanceof InlineDelimiter && p.type == LinkStart)
                              p.side = 0 /* Mark.None */;
                      }
-@@ -2243,9 +2246,11 @@ const Autolink = {
+@@ -1578,7 +1581,9 @@ function parseURL(text, start, offset) {
+                 escaped = false;
+             }
+             else if (ch == 40 /* '(' */) {
+-                depth++;
++                // Nested 32 deep at most, as cmark reads it, so a line of `[a](` is not read to its end at every bracket.
++                if (++depth > 32)
++                    return false;
+             }
+             else if (ch == 41 /* ')' */) {
+                 if (!depth)
+@@ -1603,6 +1608,9 @@ function parseLinkTitle(text, start, offset) {
+             escaped = false;
+         else if (ch == end)
+             return elt(Type.LinkTitle, start + offset, pos + 1 + offset);
++        // A title in parentheses holds no other opening one unescaped, so it ends at the next.
++        else if (next == 40 && ch == 40)
++            return false;
+         else if (ch == 92 /* '\\' */)
+             escaped = true;
+     }
+@@ -1708,6 +1716,9 @@ class InlineContext {
+     appropriate node and updating the content of this.parts. @internal
+     */
+     resolveMarkers(from) {
++        // Where the last search for an opener failed, by the closer's kind, as cmark's
++        // openers_bottom: a line of closers nothing opens is read once, not once per closer.
++        let bottoms = new Map();
+         // Scan forward, looking for closing tokens
+         for (let i = from; i < this.parts.length; i++) {
+             let close = this.parts[i];
+@@ -1715,9 +1726,11 @@ class InlineContext {
+                 continue;
+             let emp = close.type == EmphasisUnderscore || close.type == EmphasisAsterisk;
+             let closeSize = close.to - close.from;
++            let kind = emp ? (close.type == EmphasisAsterisk ? 10 : 20) + (close.side & 1 /* Mark.Open */) * 3 + closeSize % 3 : close.type;
++            let bottom = Math.max(from, bottoms.get(kind) ?? from);
+             let open, j = i - 1;
+             // Continue scanning for a matching opening token
+-            for (; j >= from; j--) {
++            for (; j >= bottom; j--) {
+                 let part = this.parts[j];
+                 if (part instanceof InlineDelimiter && (part.side & 1 /* Mark.Open */) && part.type == close.type &&
+                     // Ignore emphasis delimiters where the character count doesn't match
+@@ -1727,8 +1740,10 @@ class InlineContext {
+                     break;
+                 }
+             }
+-            if (!open)
++            if (!open) {
++                bottoms.set(kind, i);
+                 continue;
++            }
+             let type = close.type.resolve, content = [];
+             let start = open.from, end = close.to;
+             // Emphasis marker effect depends on the character count. Size consumed is minimum of the two
+@@ -2243,9 +2258,11 @@ const Autolink = {
                      return -1;
                  if (m[1] || m[2]) { // www., http://
                      end = autolinkURLEnd(cx.text, pos + m[0].length);
