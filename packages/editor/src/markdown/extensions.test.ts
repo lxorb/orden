@@ -561,6 +561,30 @@ describe('a long paragraph', () => {
     }
   })
 
+  test('a line of list or quote marks thousands deep parses in time that grows with its length', () => {
+    const timed = (unit: string, length: number) => {
+      const doc = `${unit.repeat(Math.ceil(length / unit.length))}x\n`
+      let least = Infinity
+      for (let round = 0; round < 2; round++) {
+        const start = performance.now()
+        nibMarkdownParser.parse(doc)
+        least = Math.min(least, performance.now() - start)
+      }
+      return least
+    }
+    for (const unit of ['- ', '* ', '1. ', '> ', '> - ']) {
+      timed(unit, 4_000)
+      expect(timed(unit, 64_000) / timed(unit, 16_000), unit).toBeLessThan(9)
+    }
+  }, 30_000)
+
+  test('reads lists and quotes 100 deep, as the page is drawn', () => {
+    const items = (doc: string) => tree(doc).match(/^\s*ListItem /gm)?.length ?? 0
+    expect(items(`${'- '.repeat(150)}x\n`)).toBe(100)
+    expect(items(`${'- '.repeat(99)}x\n`)).toBe(99)
+    expect(tree(`${'> '.repeat(150)}x\n`).match(/^\s*Blockquote /gm)).toHaveLength(100)
+  })
+
   test('still reads a hard break, and the brackets an address keeps', () => {
     expect(tree('a   \nb')).toContain('HardBreak')
     expect(tree('a \nb')).not.toContain('HardBreak')

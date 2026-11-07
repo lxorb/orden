@@ -1,8 +1,11 @@
 diff --git a/lib/marked.esm.js b/lib/marked.esm.js
-index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..f01ae1d181ea1912a57d70e449ecc1ec76652772 100644
+index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..0cf5a3c5edfc6b1506a15f2e13989cb98766f518 100644
 --- a/lib/marked.esm.js
 +++ b/lib/marked.esm.js
-@@ -78 +78,225 @@
+@@ -58 +58 @@
+-`+r.text,this.inlineQueue.pop(),this.inlineQueue.at(-1).src=o.text):t.push(r);continue}if(e){this.infiniteLoopError(e.charCodeAt(0));break}}return this.state.top=!0,t}inline(e,t=[]){return this.inlineQueue.push({src:e,tokens:t}),t}linkInText(e){if(!e.includes("["))return!1;let t=this.tokenizer.rules.inline.link;for(let n of e.matchAll(this.tokenizer.rules.inline.blockSkip))if(t.test(n[0])&&e.charAt(n.index-1)!=="!")return!0;for(let n of e.matchAll(this.tokenizer.rules.inline.reflinkSearch)){let s=n[0],r=s.lastIndexOf("[");if(!(s.charAt(0)==="!"||!Object.hasOwn(this.tokens.links,s.slice(r+1,-1)))&&!(r>1&&this.linkInText(s.slice(1,r-1))))return!0}return!1}inlineTokens(e,t=[]){this.tokenizer.lexer=this;let n=e;if(this.tokens.links&&e.includes("[")){let o=this.tokenizer.rules.inline.reflinkSearch,u=a=>{let p=a.lastIndexOf("[");if(!Object.hasOwn(this.tokens.links,a.slice(p+1,-1)))return a;if(p>1&&a.charAt(0)!=="!"){let c=a.slice(1,p-1);if(this.linkInText(c))return"["+c.replace(o,u)+"]["+"a".repeat(a.length-p-2)+"]"}return"["+"a".repeat(a.length-2)+"]"};n=n.replace(o,u)}n=n.replace(this.tokenizer.rules.inline.anyPunctuation,o=>"+".repeat(o.length)),n=n.replace(this.tokenizer.rules.inline.blockSkip,(o,u,a)=>{let p=a?a.length:0;return o.slice(0,p)+"["+"a".repeat(o.length-p-2)+"]"}),n=this.options.hooks?.emStrongMask?.call({lexer:this},n)??n;let s=!1,r="",i=1/0;for(;e;){if(e.length<i)i=e.length;else{this.infiniteLoopError(e.charCodeAt(0));break}s||(r=""),s=!1;let o;if(this.options.extensions?.inline?.some(a=>(o=a.call({lexer:this},e,t))?(e=e.substring(o.raw.length),t.push(o),!0):!1))continue;if(o=this.tokenizer.escape(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.tag(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.link(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.reflink(e,this.tokens.links)){e=e.substring(o.raw.length);let a=t.at(-1);o.type==="text"&&a?.type==="text"?(a.raw+=o.raw,a.text+=o.text):t.push(o);continue}if(o=this.tokenizer.emStrong(e,n,r)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.codespan(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.br(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.del(e,n,r)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.autolink(e)){e=e.substring(o.raw.length),t.push(o);continue}if(!this.state.inLink&&(o=this.tokenizer.url(e))){e=e.substring(o.raw.length),t.push(o);continue}let u=e;if(this.options.extensions?.startInline){let a=1/0,p=e.slice(1),c;this.options.extensions.startInline.forEach(h=>{c=h.call({lexer:this},p),typeof c=="number"&&c>=0&&(a=Math.min(a,c))}),a<1/0&&a>=0&&(u=e.substring(0,a+1))}if(o=this.tokenizer.inlineText(u)){e=e.substring(o.raw.length),o.raw.slice(-1)!=="_"&&(r=o.raw.slice(-1)),s=!0;let a=t.at(-1);a?.type==="text"?(a.raw+=o.raw,a.text+=o.text):t.push(o);continue}if(e){this.infiniteLoopError(e.charCodeAt(0));break}}return t}infiniteLoopError(e){let t="Infinite loop on byte: "+e;if(this.options.silent)console.error(t);else throw new Error(t)}};var P=class{options;parser;constructor(e){this.options=e||R}space(e){return""}code({text:e,lang:t,escaped:n}){let s=(t||"").match(m.notSpaceStart)?.[0],r=e.replace(m.endingNewline,"")+`
++`+r.text,this.inlineQueue.pop(),this.inlineQueue.at(-1).src=o.text):t.push(r);continue}if(e){this.infiniteLoopError(e.charCodeAt(0));break}}return this.state.top=!0,t}inline(e,t=[]){return this.inlineQueue.push({src:e,tokens:t}),t}linkInText(e){if(!e.includes("["))return!1;let t=this.tokenizer.rules.inline.link;for(let n of e.matchAll(this.tokenizer.rules.inline.blockSkip))if(t.test(n[0])&&e.charAt(n.index-1)!=="!")return!0;for(let n of e.matchAll(this.tokenizer.rules.inline.reflinkSearch)){let s=n[0],r=s.lastIndexOf("[");if(!(s.charAt(0)==="!"||!Object.hasOwn(this.tokens.links,s.slice(r+1,-1)))&&!(r>1&&this.linkInText(s.slice(1,r-1))))return!0}return!1}inlineTokens(e,t=[]){this.tokenizer.lexer=this;let n=e;if(this.tokens.links&&e.includes("[")){let o=this.tokenizer.rules.inline.reflinkSearch,u=a=>{let p=a.lastIndexOf("[");if(!Object.hasOwn(this.tokens.links,a.slice(p+1,-1)))return a;if(p>1&&a.charAt(0)!=="!"){let c=a.slice(1,p-1);if(this.linkInText(c))return"["+c.replace(o,u)+"]["+"a".repeat(a.length-p-2)+"]"}return"["+"a".repeat(a.length-2)+"]"};n=n.replace(o,u)}n=n.replace(this.tokenizer.rules.inline.anyPunctuation,o=>"+".repeat(o.length)),n=n.replace(this.tokenizer.rules.inline.blockSkip,(o,u,a)=>{let p=a?a.length:0;return o.slice(0,p)+"["+"a".repeat(o.length-p-2)+"]"}),n=this.options.hooks?.emStrongMask?.call({lexer:this},n)??n;let s=!1,r="",i=1/0;for(;e;){if(e.length<i)i=e.length;else{this.infiniteLoopError(e.charCodeAt(0));break}s||(r=""),s=!1;let o;if(this.options.extensions?.inline?.some(a=>(o=a.call({lexer:this},e,t))?(e=e.substring(o.raw.length),t.push(o),!0):!1))continue;if(o=this.tokenizer.escape(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.tag(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.link(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.reflink(e,this.tokens.links)){e=e.substring(o.raw.length);let a=t.at(-1);o.type==="text"&&a?.type==="text"?(a.raw+=o.raw,a.text+=o.text):t.push(o);continue}if(o=this.tokenizer.emStrong(e,n,r)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.codespan(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.br(e)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.del(e,n,r)){e=e.substring(o.raw.length),t.push(o);continue}if(o=this.tokenizer.autolink(e)){e=e.substring(o.raw.length),t.push(o);continue}if(!this.state.inLink&&(o=this.tokenizer.url(e,t))){e=e.substring(o.raw.length),t.push(o);continue}let u=e;if(this.options.extensions?.startInline){let a=1/0,p=e.slice(1),c;this.options.extensions.startInline.forEach(h=>{c=h.call({lexer:this},p),typeof c=="number"&&c>=0&&(a=Math.min(a,c))}),a<1/0&&a>=0&&(u=e.substring(0,a+1))}if(o=this.tokenizer.inlineText(u,e,t)){e=e.substring(o.raw.length),o.raw.slice(-1)!=="_"&&(r=o.raw.slice(-1)),s=!0;let a=t.at(-1);a?.type==="text"?(a.raw+=o.raw,a.text+=o.text):t.push(o);continue}if(e){this.infiniteLoopError(e.charCodeAt(0));break}}return t}infiniteLoopError(e){let t="Infinite loop on byte: "+e;if(this.options.silent)console.error(t);else throw new Error(t)}};var P=class{options;parser;constructor(e){this.options=e||R}space(e){return""}code({text:e,lang:t,escaped:n}){let s=(t||"").match(m.notSpaceStart)?.[0],r=e.replace(m.endingNewline,"")+`
+@@ -78 +78,327 @@
  //# sourceMappingURL=marked.esm.js.map
 +
 +// Patched (pnpm patch, see docs/patches.md): emphasis that cannot close is
@@ -70,6 +73,14 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..f01ae1d181ea1912a57d70e449ecc1ec
 +    roles.push(at === 0 ? null : emRoleOf(emSideOf(masked.codePointAt(back), mark), emSideOf(masked.codePointAt(end), mark), mark))
 +    at = masked.indexOf(mark, end)
 +  }
++  // Whether the first mark after a run is the other's double, which the walk steps over.
++  const other = mark === '*' ? '_' : '*'
++  const doubled = new Uint8Array(starts.length)
++  for (let k = 0, next = masked.indexOf(other); k < starts.length; k++) {
++    const end = starts[k] + lengths[k]
++    if (next !== -1 && next < end) next = masked.indexOf(other, end)
++    doubled[k] = next !== -1 && (k + 1 === starts.length || next < starts[k + 1]) && masked[next + 1] === other ? 1 : 0
++  }
 +  const sums = []
 +  const lowest = []
 +  for (let remainder = 0; remainder < 3; remainder++) {
@@ -85,7 +96,7 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..f01ae1d181ea1912a57d70e449ecc1ec
 +    sums.push(sum)
 +    lowest.push(low)
 +  }
-+  return { starts, sums, lowest }
++  return { starts, lengths, doubled, sums, lowest }
 +}
 +
 +// Whether the run of `mark` at `at` in `masked` could close at all.
@@ -97,13 +108,6 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..f01ae1d181ea1912a57d70e449ecc1ec
 +    if (known.size >= EM_READ_MOST) known.delete(known.keys().next().value)
 +    known.set(masked, runs)
 +  }
-+  let length = 0
-+  while (masked[at + length] === mark) length++
-+  // The walk steps over the mark inside `__…*…__` straight after a `*` opener, and
-+  // `**…_…**` after a `_` one, which the counts do not see: left to the walk.
-+  let next = at + length
-+  while (next < masked.length && masked[next] !== '*' && masked[next] !== '_') next++
-+  if (masked.startsWith(mark === '*' ? '__' : '**', next)) return true
 +  const { starts } = runs
 +  let low = 0
 +  let high = starts.length
@@ -112,6 +116,12 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..f01ae1d181ea1912a57d70e449ecc1ec
 +    if (starts[middle] <= at) low = middle + 1
 +    else high = middle
 +  }
++  // The opener is what is left of its run from `at`, read off the runs, not walked
++  // again for every mark of a long run.
++  const length = starts[low - 1] + runs.lengths[low - 1] - at
++  // The walk steps over the mark inside `__…*…__` straight after a `*` opener, and
++  // `**…_…**` after a `_` one, which the counts do not see: left to the walk.
++  if (runs.doubled[low - 1]) return true
 +  if (low >= starts.length) return false
 +  return runs.lowest[length % 3][low + 1] - runs.sums[length % 3][low] <= -length
 +}
@@ -227,4 +237,99 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..f01ae1d181ea1912a57d70e449ecc1ec
 +  const end = linkEndOf(src, found[0].length)
 +  if (end === -1) return
 +  return link.call(this, end === src.length ? src : src.slice(0, end))
++}
++
++// Patched (pnpm patch, see docs/patches.md): the text rule asks whether an address
++// such as `a@b.c` starts after each character it stops at, once per paragraph.
++//
++// The rule stops in front of every mark another rule could start at, and at each
++// stop looks ahead along the characters an address can be made of for an `@`, so a
++// run of `*` ten thousand long, which ends a text at every mark, read the rest of
++// the run at every one of them: a second at 20 KB. The lexer now hands the rule
++// what is left of the paragraph and the list it is filling, and where each run of
++// those characters ends, and whether an `@` is there, is read once per list. Where
++// no run in the text the rule is given reaches an `@`, none of its looks can find
++// one, and the rule without them is run instead; where the run straight after the
++// first character does, inside that text, the rule ends there, after one
++// character. Otherwise the whole rule is run as before.
++const TEXT_QUICK = new WeakMap()
++const TEXT_ASKED = new WeakMap()
++const TEXT_LOOK = /\|\(\?=(\[[^\]]*\])\+@\)/
++const TEXT_AFTER = /\|\[\^[^\]]*\]\(\?=\[[^\]]*\]\+@\)/
++
++function textQuickOf(rule) {
++  let quick = TEXT_QUICK.get(rule)
++  if (quick === undefined) {
++    const look = TEXT_LOOK.exec(rule.source)
++    const after = look && TEXT_AFTER.exec(rule.source)
++    quick = null
++    if (after && look.index < after.index) {
++      const part = new RegExp(look[1])
++      const ascii = new Uint8Array(128)
++      for (let code = 0; code < 128; code++) ascii[code] = part.test(String.fromCharCode(code)) ? 1 : 0
++      const source = rule.source.slice(0, look.index) + rule.source.slice(look.index + look[0].length, after.index) + rule.source.slice(after.index + after[0].length)
++      quick = { rule: new RegExp(source, rule.flags), part, ascii }
++    }
++    TEXT_QUICK.set(rule, quick)
++  }
++  return quick
++}
++
++// For each place in `rest`, `stop`, where the run of an address's characters from
++// there ends, and `first`, the first place at or after it whose run ends at an `@`.
++function textAddressesOf(rest, quick) {
++  const stop = new Int32Array(rest.length + 1)
++  const first = new Int32Array(rest.length + 1)
++  stop[rest.length] = rest.length
++  first[rest.length] = rest.length
++  for (let at = rest.length - 1; at >= 0; at--) {
++    const code = rest.charCodeAt(at)
++    if (code < 128 ? quick.ascii[code] === 1 : quick.part.test(rest[at])) {
++      stop[at] = stop[at + 1]
++      first[at] = rest.charCodeAt(stop[at]) === 64 ? at : first[at + 1]
++    } else {
++      stop[at] = at
++      first[at] = first[at + 1]
++    }
++  }
++  return { length: rest.length, stop, first }
++}
++
++const inlineText = y.prototype.inlineText
++y.prototype.inlineText = function (src, rest, list) {
++  const quick = rest === undefined || list === undefined || src === '' ? null : textQuickOf(this.rules.inline.text)
++  if (!quick) return inlineText.call(this, src)
++  let asked = TEXT_ASKED.get(list)
++  if (!asked || asked.length < rest.length) {
++    asked = textAddressesOf(rest, quick)
++    TEXT_ASKED.set(list, asked)
++  }
++  const from = asked.length - rest.length
++  const end = from + src.length
++  const near = asked.first[from + 1]
++  let raw
++  if (near >= end) raw = quick.rule.exec(src)?.[0]
++  else if (near === from + 1 && asked.stop[near] < end && src[0] !== '`' && src[0] !== '~') raw = src[0]
++  else return inlineText.call(this, src)
++  if (raw === undefined) return inlineText.call(this, src)
++  return { type: 'text', raw, text: raw, escaped: this.lexer.state.inRawBlock }
++}
++
++// Patched (pnpm patch, see docs/patches.md): lists and quotes are read 100 deep at
++// most, as the editor reads them. Each one deeper reads the rest of its line again,
++// so a line of `- - - …` twenty thousand long took seconds; past that depth the
++// line is a paragraph's.
++const NEST_DEEPEST = 100
++let nestDepth = 0
++for (const name of ['list', 'blockquote']) {
++  const read = y.prototype[name]
++  y.prototype[name] = function (src) {
++    if (nestDepth >= NEST_DEEPEST) return
++    nestDepth++
++    try {
++      return read.call(this, src)
++    } finally {
++      nestDepth--
++    }
++  }
 +}

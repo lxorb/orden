@@ -1,4 +1,5 @@
-import { Marked, Renderer, Tokenizer } from 'marked'
+import { Marked, Renderer, type Tokenizer } from 'marked'
+import { backpedal } from './backpedal'
 import { hardBreaks } from './breaks'
 import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
@@ -133,8 +134,52 @@ const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
 
 const PUNCTUATION = /^[!-/:-@[-`{-~]$/
 
-function bareAddress(this: Tokenizer, src: string): Tokens.Link | undefined {
-  const token = Tokenizer.prototype.url.call(this, src)
+const SCHEME = /^(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)/
+
+const MAIL_RUNS = new WeakMap<Token[], { from: number; to: number }>()
+
+function inMail(code: number): boolean {
+  return (
+    (code >= 48 && code <= 57) ||
+    (code >= 65 && code <= 90) ||
+    (code >= 97 && code <= 122) ||
+    code === 46 ||
+    code === 95 ||
+    code === 43 ||
+    code === 45
+  )
+}
+
+function mailAhead(src: string, tokens: Token[] | undefined): boolean {
+  if (!inMail(src.charCodeAt(0))) return false
+
+  const known = tokens ? MAIL_RUNS.get(tokens) : undefined
+  let end = 1
+  if (known && src.length <= known.from && src.length > known.to) end = src.length - known.to
+  else {
+    while (end < src.length && inMail(src.charCodeAt(end))) end++
+    if (tokens) MAIL_RUNS.set(tokens, { from: src.length, to: src.length - end })
+  }
+  return src.charCodeAt(end) === 64
+}
+
+function addressToken(
+  this: Tokenizer,
+  src: string,
+  tokens: Token[] | undefined,
+): Tokens.Link | undefined {
+  if (!SCHEME.test(src) && !mailAhead(src, tokens)) return undefined
+  const found = this.rules.inline.url.exec(src)
+  if (!found) return undefined
+
+  const mail = found[2] === '@'
+  const raw = mail ? found[0] : backpedal(found[0])
+  const href = mail ? `mailto:${raw}` : found[1] === 'www.' ? `http://${raw}` : raw
+  return { type: 'link', raw, text: raw, href, tokens: [{ type: 'text', raw, text: raw }] }
+}
+
+function bareAddress(this: Tokenizer, src: string, tokens?: Token[]): Tokens.Link | undefined {
+  const token = addressToken.call(this, src, tokens)
   if (!token) return undefined
 
   const ends = token.raw.endsWith('\\') && PUNCTUATION.test(src[token.raw.length] ?? '') ? 1 : 0

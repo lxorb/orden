@@ -51,6 +51,8 @@ const BREAK = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/
 
 const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/
 
+const NEST_DEEPEST = 100
+
 function expanded(line: string): string {
   if (!line.includes('\t')) return line
 
@@ -166,7 +168,7 @@ export class CodeBlocks {
   private open(start: string): CodeLine {
     let rest = start
 
-    for (;;) {
+    while (this.containers.length < NEST_DEEPEST) {
       const indent = spacesAt(rest, 0)
       if (indent > 3) break
       const text = rest.slice(indent)
