@@ -71,8 +71,13 @@ export function drivesPointer(event: Pick<PointerEvent, 'isPrimary'>): boolean {
 
 export class HeldKeys {
   private readonly held = new Set<string>()
+  private readonly pressed = new Set<number>()
 
   saw(event: InputEvent): void {
+    if (event.t === 'button') {
+      if (event.down) this.pressed.add(event.button)
+      else this.pressed.delete(event.button)
+    }
     if (event.t !== 'key') return
     if (event.down) this.held.add(event.code)
     else this.held.delete(event.code)
@@ -81,6 +86,16 @@ export class HeldKeys {
   letGo(): InputEvent[] {
     const all = [...this.held].map((code): InputEvent => ({ t: 'key', key: '', code, down: false }))
     this.held.clear()
+    return all
+  }
+
+  letGoButtons(): InputEvent[] {
+    const all = [...this.pressed].map((button): InputEvent => ({
+      t: 'button',
+      button,
+      down: false,
+    }))
+    this.pressed.clear()
     return all
   }
 }
