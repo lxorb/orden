@@ -1,6 +1,6 @@
 import { log } from './log'
+import { onDisk } from './on-disk'
 import { undoToastNotice } from './surfaces.svelte'
-import { invoke } from './tauri'
 import { UNDO_LINGER } from './undo-toast.svelte'
 
 class Unread {
@@ -9,8 +9,7 @@ class Unread {
   private timer: ReturnType<typeof setTimeout> | undefined
 
   async there(path: string): Promise<boolean> {
-    const stamp: unknown = await invoke('file_stamp', { path }).catch(() => null)
-    if (!stamp) return false
+    if (!(await onDisk(path).catch(() => false))) return false
 
     log('warn', `open: ${path} is there and would not read`)
     if (!__EVEN_PLUGIN__) void undoToastNotice.ask()
