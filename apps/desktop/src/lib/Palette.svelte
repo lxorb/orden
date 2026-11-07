@@ -272,6 +272,8 @@
         return row.text
       case 'host':
         return row.host.name
+      case 'group':
+        return row.group
       case 'connect':
         return row.said
       case 'message':
@@ -298,6 +300,8 @@
         return null
       case 'host':
         return row.host.detail
+      case 'group':
+        return t('Open all')
       case 'message':
         return row.where
       case 'command':
@@ -413,6 +417,9 @@
     },
     goto: (line) => ongoto?.(line),
     openHost: (id) => void import('./remote/open').then(({ openRemote }) => openRemote(id)),
+    openHosts: (ids) => {
+      if (!__EVEN_PLUGIN__) void import('./remote/open').then(({ openAll }) => openAll(ids))
+    },
     connect: (wanted) => void import('./remote/open').then(({ connectTo }) => connectTo(wanted)),
     openMessage: (path, message, how) => {
       const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
@@ -602,7 +609,7 @@
                 <span class="mark quiet"><Icon icon={null} fallback={FilePlus} /></span>
               {:else if row.kind === 'message'}
                 <FileMark mark="chat" path={row.path} />
-              {:else if row.kind === 'host' || row.kind === 'connect'}
+              {:else if row.kind === 'host' || row.kind === 'connect' || row.kind === 'group'}
                 {@const colour = row.kind === 'host' ? row.host.colour : null}
                 <span class="mark" style:color={colour ? `var(--canvas-${colour})` : undefined}
                   ><Icon icon={null} fallback={Server} /></span

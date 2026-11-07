@@ -3,6 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let refuse = false
+let front: string | null = null
+let reached: Record<string, unknown> | null = null
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
@@ -19,6 +21,8 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
         file: null,
       })
     }
+    if (command === 'pty_program') return Promise.resolve(front)
+    if (command === 'pty_ssh') return Promise.resolve(reached)
     if (command === 'pty_spawn') {
       return refuse
         ? Promise.reject(new Error('no ssh on this machine'))
@@ -140,6 +144,8 @@ beforeEach(() => {
   asked.length = 0
   written.length = 0
   refuse = false
+  front = null
+  reached = null
   shells.restoring = false
   workspace.panes.collapse()
   workspace.tabs = []
@@ -242,4 +248,83 @@ test('one that will not start is never swapped for a shell on this machine', asy
   expect(spawns().map((one) => one.args.shell)).toEqual(['ssh:pi'])
   expect(readSpec(tab.doc)?.shell).toBe('ssh:pi')
   expect(written.join('')).toContain('Could not connect to pi')
+})
+
+async function local() {
+  workspace.openUnsaved(
+    'terminal',
+    writeSpec({ shell: 'pwsh', folder: null, key: 'here', name: null }),
+    'PowerShell',
+  )
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no tab')
+  await sessionOf(tab).attach(place, false)
+  await vi.waitFor(() => expect(spawns()).toHaveLength(1))
+  return tab
+}
+
+test('ssh to a known host in a local tab makes it that host, with the connection kept', async () => {
+  const tab = await local()
+
+  front = 'ssh'
+  reached = { hostname: 'pi', user: null, port: null }
+  typing?.('ssh pi\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'))
+  expect(readSpec(tab.doc)?.via).toBe('pwsh')
+  await vi.waitFor(() => expect(tab.shown).toBe('pi'))
+  expect(tab.running).toMatchObject({ host: 'pi', colour: '4' })
+  expect(spawns()).toHaveLength(1)
+
+  front = null
+  typing?.('exit\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('pwsh'), { timeout: 2500 })
+  expect(readSpec(tab.doc)?.via).toBeUndefined()
+  expect(tab.running?.host).toBeNull()
+  expect(spawns()).toHaveLength(1)
+})
+
+test('ssh to an address no host has, or with a command, leaves the tab a shell here', async () => {
+  const tab = await local()
+
+  front = 'ssh'
+  reached = { hostname: 'box.example.com', user: 'emil', port: 2222 }
+  typing?.('ssh emil@box.example.com -p 2222\r')
+  await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
+  await new Promise((settle) => setTimeout(settle, 50))
+  expect(readSpec(tab.doc)?.shell).toBe('pwsh')
+
+  reached = null
+  typing?.('ssh pi uptime\r')
+  await new Promise((settle) => setTimeout(settle, 1500))
+  expect(readSpec(tab.doc)?.shell).toBe('pwsh')
+})
+
+test('a local shell that ends under an ssh it was taken for ends as a shell here', async () => {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: '10.0.0.5', user: null, port: null }
+  typing?.('ssh 10.0.0.5\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'))
+
+  exits(1)
+  flushSync()
+  expect(readSpec(tab.doc)?.shell).toBe('pwsh')
+  expect(sessionOf(tab).offline).toBe(false)
+  expect(written.join('')).toContain('Exited with code 1')
+})
+
+test('one taken over and put back by a restart is a remote tab of its own', async () => {
+  const words = writeSpec({ shell: 'ssh:pi', folder: null, key: 'before', name: null, via: 'pwsh' })
+  workspace.openUnsaved('terminal', words, 'pi')
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no tab')
+
+  await sessionOf(tab).attach(place, false)
+  await vi.waitFor(() => expect(sessionOf(tab).offline).toBe(true))
+  expect(spawns()).toHaveLength(0)
+
+  typing?.('\r')
+  await vi.waitFor(() => expect(spawns()).toHaveLength(1))
+  expect(spawns()[0]?.args.shell).toBe('ssh:pi')
+  expect(readSpec(tab.doc)?.via).toBeUndefined()
 })

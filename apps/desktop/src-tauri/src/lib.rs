@@ -515,6 +515,7 @@ macro_rules! desktop_commands {
             terminal::pty_folder,
             terminal::pty_usage,
             terminal::pty_program,
+            terminal::pty_ssh,
             terminal::pty_kill,
             terminal::history::terminal_history_read,
             terminal::history::terminal_history_write,

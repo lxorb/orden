@@ -149,18 +149,174 @@ pub fn busy(shell: Option<u32>, master: &dyn MasterPty) -> bool {
 }
 
 #[cfg(windows)]
-pub fn program(shell: Option<u32>, _master: &dyn MasterPty) -> Option<String> {
+fn front(shell: Option<u32>, _master: &dyn MasterPty) -> Option<(u32, String)> {
     let processes = processes();
-    front_below(shell?, &processes, &started()).map(|one| program_name(&one.name))
+    front_below(shell?, &processes, &started()).map(|one| (one.id, program_name(&one.name)))
 }
 
 #[cfg(unix)]
-pub fn program(shell: Option<u32>, master: &dyn MasterPty) -> Option<String> {
+fn front(shell: Option<u32>, master: &dyn MasterPty) -> Option<(u32, String)> {
     let front = master.process_group_leader()?;
     if i64::from(front) == i64::from(shell?) {
         return None;
     }
-    name_of(u32::try_from(front).ok()?).map(|name| program_name(&name))
+    let pid = u32::try_from(front).ok()?;
+    name_of(pid).map(|name| (pid, program_name(&name)))
+}
+
+pub fn program(shell: Option<u32>, master: &dyn MasterPty) -> Option<String> {
+    front(shell, master).map(|(_, name)| name)
+}
+
+pub fn command(shell: Option<u32>, master: &dyn MasterPty) -> Option<(String, Vec<String>)> {
+    let (pid, name) = front(shell, master)?;
+    Some((name, arguments_of(pid)?))
+}
+
+#[cfg(target_os = "linux")]
+fn arguments_of(pid: u32) -> Option<Vec<String>> {
+    let line = std::fs::read(format!("/proc/{pid}/cmdline")).ok()?;
+    Some(split_arguments(&line, 1))
+}
+
+#[cfg_attr(
+    not(target_os = "linux"),
+    allow(dead_code, reason = "only Linux's kernel answers in this shape")
+)]
+fn split_arguments(bytes: &[u8], skip: usize) -> Vec<String> {
+    bytes
+        .strip_suffix(&[0])
+        .unwrap_or(bytes)
+        .split(|one| *one == 0)
+        .skip(skip)
+        .map(|one| String::from_utf8_lossy(one).into_owned())
+        .collect()
+}
+
+#[cfg(target_os = "macos")]
+#[allow(
+    unsafe_code,
+    reason = "sysctl is the kernel's own call and has no safe wrapper"
+)]
+fn arguments_of(pid: u32) -> Option<Vec<String>> {
+    let pid = libc::c_int::try_from(pid).ok()?;
+    let mut most: libc::c_int = 0;
+    let mut size = std::mem::size_of::<libc::c_int>();
+    let mut name = [libc::CTL_KERN, libc::KERN_ARGMAX];
+    let read = unsafe {
+        libc::sysctl(
+            name.as_mut_ptr(),
+            2,
+            std::ptr::from_mut(&mut most).cast(),
+            &raw mut size,
+            std::ptr::null_mut(),
+            0,
+        )
+    };
+    if read != 0 {
+        return None;
+    }
+
+    let mut buffer = vec![0_u8; usize::try_from(most).ok()?];
+    let mut size = buffer.len();
+    let mut name = [libc::CTL_KERN, libc::KERN_PROCARGS2, pid];
+    let read = unsafe {
+        libc::sysctl(
+            name.as_mut_ptr(),
+            3,
+            buffer.as_mut_ptr().cast(),
+            &raw mut size,
+            std::ptr::null_mut(),
+            0,
+        )
+    };
+    if read != 0 {
+        return None;
+    }
+    procargs(&buffer[..size.min(buffer.len())])
+}
+
+#[cfg_attr(
+    not(target_os = "macos"),
+    allow(dead_code, reason = "only a Mac's kernel answers in this shape")
+)]
+fn procargs(buffer: &[u8]) -> Option<Vec<String>> {
+    let count = usize::try_from(i32::from_ne_bytes(buffer.get(..4)?.try_into().ok()?)).ok()?;
+    let rest = &buffer[4..];
+    let path_end = rest.iter().position(|one| *one == 0)?;
+    let start = rest[path_end..].iter().position(|one| *one != 0)? + path_end;
+    let mut words = rest[start..]
+        .split(|one| *one == 0)
+        .take(count)
+        .map(|one| String::from_utf8_lossy(one).into_owned())
+        .collect::<Vec<_>>();
+    if words.len() < count || words.is_empty() {
+        return None;
+    }
+    words.remove(0);
+    Some(words)
+}
+
+#[cfg(windows)]
+#[allow(
+    unsafe_code,
+    reason = "a process's command line is the kernel's own call and has no safe wrapper"
+)]
+fn arguments_of(pid: u32) -> Option<Vec<String>> {
+    use windows::Wdk::System::Threading::{
+        NtQueryInformationProcess, ProcessCommandLineInformation,
+    };
+    use windows::Win32::Foundation::{CloseHandle, LocalFree, HLOCAL, UNICODE_STRING};
+    use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION};
+    use windows::Win32::UI::Shell::CommandLineToArgvW;
+
+    let mut buffer = vec![0_u64; 4096];
+    let size = u32::try_from(buffer.len() * 8).ok()?;
+    let mut written = 0_u32;
+    let line: Vec<u16> = unsafe {
+        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
+        let status = NtQueryInformationProcess(
+            handle,
+            ProcessCommandLineInformation,
+            buffer.as_mut_ptr().cast(),
+            size,
+            &raw mut written,
+        );
+        let _ = CloseHandle(handle);
+        if status.is_err() {
+            return None;
+        }
+        let text = &*buffer.as_ptr().cast::<UNICODE_STRING>();
+        let units = usize::from(text.Length / 2);
+        let start = buffer.as_ptr().cast::<u8>();
+        let end = start.add(buffer.len() * 8);
+        let first = text.Buffer.0.cast::<u8>().cast_const();
+        if text.Buffer.is_null() || first < start || first.add(units * 2) > end {
+            return None;
+        }
+        std::slice::from_raw_parts(text.Buffer.0, units).to_vec()
+    };
+
+    let mut line = line;
+    line.push(0);
+    let mut count = 0_i32;
+    unsafe {
+        let words = CommandLineToArgvW(windows::core::PCWSTR(line.as_ptr()), &raw mut count);
+        if words.is_null() {
+            return None;
+        }
+        let found = (0..usize::try_from(count).unwrap_or(0))
+            .skip(1)
+            .map(|at| String::from_utf16_lossy((*words.add(at)).as_wide()))
+            .collect();
+        let _ = LocalFree(HLOCAL(words.cast()));
+        Some(found)
+    }
+}
+
+#[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
+fn arguments_of(_pid: u32) -> Option<Vec<String>> {
+    None
 }
 
 #[cfg(target_os = "linux")]
@@ -427,6 +583,49 @@ mod tests {
             process(20, 0, "pwsh.exe"),
         ];
         assert!(!busy_below(20, &listed, &UNKNOWN));
+    }
+
+    #[test]
+    fn a_command_line_is_split_at_its_nuls() {
+        assert_eq!(
+            split_arguments(b"ssh\0-p\x002222\0pi\0", 1),
+            ["-p", "2222", "pi"]
+        );
+        assert_eq!(split_arguments(b"ssh\0\0pi", 1), ["", "pi"]);
+        assert!(split_arguments(b"ssh", 1).is_empty());
+    }
+
+    #[test]
+    fn a_macs_process_arguments_are_after_its_path() {
+        let mut buffer = 3_i32.to_ne_bytes().to_vec();
+        buffer.extend_from_slice(b"/usr/bin/ssh\0\0\0ssh\0-A\0pi\0TERM=xterm\0");
+        assert_eq!(
+            procargs(&buffer),
+            Some(vec!["-A".to_owned(), "pi".to_owned()])
+        );
+        assert_eq!(procargs(&buffer[..6]), None);
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    #[test]
+    fn the_kernel_says_what_a_process_was_started_with() {
+        let (program, args) = if cfg!(windows) {
+            ("ping", vec!["-n", "5", "127.0.0.1"])
+        } else {
+            ("sleep", vec!["5"])
+        };
+        let mut child = std::process::Command::new(program)
+            .args(&args)
+            .stdout(std::process::Stdio::null())
+            .spawn()
+            .unwrap();
+        let found = arguments_of(child.id());
+        let _ = child.kill();
+        let _ = child.wait();
+        assert_eq!(
+            found,
+            Some(args.iter().map(|one| (*one).to_owned()).collect())
+        );
     }
 
     #[cfg(any(target_os = "linux", target_os = "macos"))]

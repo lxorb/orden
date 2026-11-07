@@ -51,6 +51,111 @@ pub struct Kept {
     pub groups: Vec<String>,
 }
 
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+pub struct Destination {
+    pub user: Option<String>,
+    pub hostname: String,
+    pub port: Option<u16>,
+}
+
+const SSH_VALUED: &[u8] = b"BbcDEeFIiJLlmOoPpQRSWw";
+const SSH_NO_SESSION: &[u8] = b"fGNOQsVW";
+
+pub fn ssh_destination(program: &str, args: &[String]) -> Option<Destination> {
+    if program != "ssh" {
+        return None;
+    }
+
+    let mut user = None;
+    let mut port = None;
+    let mut target = None;
+    let mut words = args.iter();
+    let mut options = true;
+
+    while let Some(word) = words.next() {
+        if options && word == "--" {
+            options = false;
+            continue;
+        }
+        if options && word.len() > 1 && word.starts_with('-') {
+            let flags = &word.as_bytes()[1..];
+            for (at, &flag) in flags.iter().enumerate() {
+                if SSH_NO_SESSION.contains(&flag) {
+                    return None;
+                }
+                if SSH_VALUED.contains(&flag) {
+                    let attached = word.get(2 + at..)?;
+                    let value = if attached.is_empty() {
+                        words.next()?.clone()
+                    } else {
+                        attached.to_owned()
+                    };
+                    match flag {
+                        b'l' => user = Some(value),
+                        b'p' => port = Some(value.parse::<u16>().ok().filter(|one| *one > 0)?),
+                        _ => {}
+                    }
+                    break;
+                }
+            }
+            continue;
+        }
+        if target.is_some() {
+            return None;
+        }
+        target = Some(word.as_str());
+        options = false;
+    }
+
+    let mut destination = destination_of(target?)?;
+    if destination.user.is_none() {
+        destination.user = user;
+    }
+    if destination.port.is_none() {
+        destination.port = port;
+    }
+    let fits = is_address(&destination.hostname) && destination.user.as_deref().is_none_or(is_user);
+    fits.then_some(destination)
+}
+
+fn destination_of(target: &str) -> Option<Destination> {
+    let (rest, uri) = match target.strip_prefix("ssh://") {
+        Some(rest) => (rest, true),
+        None => (target, false),
+    };
+    let (user, address) = match rest.rfind('@') {
+        Some(at) => (Some(rest[..at].to_owned()), &rest[at + 1..]),
+        None => (None, rest),
+    };
+    if !uri {
+        return Some(Destination {
+            user,
+            hostname: address.to_owned(),
+            port: None,
+        });
+    }
+
+    let address = address.strip_suffix('/').unwrap_or(address);
+    let (hostname, port) = if let Some(inner) = address.strip_prefix('[') {
+        let (hostname, after) = inner.split_once(']')?;
+        (hostname, after.strip_prefix(':'))
+    } else {
+        match address.rsplit_once(':') {
+            Some((hostname, port)) if !hostname.contains(':') => (hostname, Some(port)),
+            _ => (address, None),
+        }
+    };
+    let port = match port {
+        Some(port) => Some(port.parse::<u16>().ok().filter(|one| *one > 0)?),
+        None => None,
+    };
+    Some(Destination {
+        user,
+        hostname: hostname.to_owned(),
+        port,
+    })
+}
+
 #[derive(Serialize)]
 pub struct Hosts {
     config: Vec<ConfigHost>,
@@ -475,5 +580,78 @@ mod tests {
         let kept = merged(saving, &before);
         assert_eq!(kept.about["pi"].last, Some(20));
         assert!(kept.about["pi"].pinned);
+    }
+
+    fn ssh(args: &[&str]) -> Option<Destination> {
+        let args: Vec<String> = args.iter().map(|one| (*one).to_owned()).collect();
+        ssh_destination("ssh", &args)
+    }
+
+    fn at(user: Option<&str>, hostname: &str, port: Option<u16>) -> Destination {
+        Destination {
+            user: user.map(str::to_owned),
+            hostname: hostname.to_owned(),
+            port,
+        }
+    }
+
+    #[test]
+    fn an_ssh_session_is_read_off_its_arguments() {
+        assert_eq!(ssh(&["pi"]), Some(at(None, "pi", None)));
+        assert_eq!(
+            ssh(&["emil@10.0.0.5"]),
+            Some(at(Some("emil"), "10.0.0.5", None))
+        );
+        assert_eq!(
+            ssh(&["-p", "2222", "-l", "emil", "box"]),
+            Some(at(Some("emil"), "box", Some(2222)))
+        );
+        assert_eq!(
+            ssh(&["-p2222", "-tt", "box"]),
+            Some(at(None, "box", Some(2222)))
+        );
+        assert_eq!(
+            ssh(&["-A", "-i", "/home/emil/.ssh/id", "-J", "jump", "pi"]),
+            Some(at(None, "pi", None))
+        );
+        assert_eq!(
+            ssh(&["-vl", "emil", "pi"]),
+            Some(at(Some("emil"), "pi", None))
+        );
+        assert_eq!(
+            ssh(&["-l", "root", "emil@pi"]),
+            Some(at(Some("emil"), "pi", None))
+        );
+        assert_eq!(
+            ssh(&["ssh://emil@box.example.com:2222"]),
+            Some(at(Some("emil"), "box.example.com", Some(2222)))
+        );
+        assert_eq!(
+            ssh(&["ssh://[fe80::1]:22"]),
+            Some(at(None, "fe80::1", Some(22)))
+        );
+        assert_eq!(ssh(&["--", "pi"]), Some(at(None, "pi", None)));
+    }
+
+    #[test]
+    fn ssh_that_opens_no_session_here_is_none() {
+        assert_eq!(ssh(&["pi", "uptime"]), None);
+        assert_eq!(ssh(&["-N", "-L", "8080:localhost:80", "pi"]), None);
+        assert_eq!(ssh(&["-fN", "pi"]), None);
+        assert_eq!(ssh(&["-W", "host:22", "jump"]), None);
+        assert_eq!(ssh(&["-G", "pi"]), None);
+        assert_eq!(ssh(&["-V"]), None);
+        assert_eq!(ssh(&["-O", "check", "pi"]), None);
+        assert_eq!(ssh(&[]), None);
+        assert_eq!(ssh(&["-p"]), None);
+        assert_eq!(ssh(&["-p", "zero", "pi"]), None);
+        assert_eq!(ssh(&["-l", "-oProxyCommand=x", "pi"]), None);
+        assert_eq!(ssh(&["--", "-oProxyCommand=x"]), None);
+        assert_eq!(ssh(&["@pi"]), None);
+        assert_eq!(
+            ssh_destination("scp", &["pi".to_owned()]),
+            None,
+            "only ssh itself"
+        );
     }
 }

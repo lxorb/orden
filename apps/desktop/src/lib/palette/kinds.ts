@@ -69,6 +69,8 @@ export function rowKey(row: Row): string | null {
       return `bookmark:${row.mark.kind}:${row.mark.path}#${row.mark.text}`
     case 'host':
       return `host:${row.host.id}`
+    case 'group':
+      return `hosts:${row.group}`
     case 'place':
     case 'make':
     case 'agents':
@@ -252,6 +254,18 @@ export function candidates(world: World): Candidate<Row>[] {
       candidate('host', host.name, { kind: 'host', host }, world, {
         names: host.also,
         also: [host.detail ?? '', host.group ?? ''],
+      }),
+    )
+  }
+
+  const groups = __EVEN_PLUGIN__
+    ? []
+    : [...new Set(world.hosts.flatMap((host) => (host.group ? [host.group] : [])))]
+  for (const group of groups) {
+    const hosts = world.hosts.filter((host) => host.group === group)
+    out.push(
+      candidate('host', group, { kind: 'group', group, hosts }, world, {
+        also: hosts.map((host) => host.name),
       }),
     )
   }

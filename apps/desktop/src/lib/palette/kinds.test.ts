@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { hostsOf, NOTHING_KEPT } from '../remote/hosts'
 import { candidates, headingCandidates, resting, rowKey } from './kinds'
 import { ranked } from './rank'
 import { command, file, named, NOW, ROOT, setting, tab, visit, world } from './world.fixture'
@@ -267,5 +268,26 @@ describe('a website of the space', () => {
 
   test('and not by an address it does not have', () => {
     expect(top('ethz', {}, 1)).not.toEqual(['Moodle.url'])
+  })
+})
+
+describe('hosts', () => {
+  const hosts = hostsOf(
+    [
+      { id: 'pi', also: [], group: 'Home' },
+      { id: 'nas', also: [], group: 'Home' },
+      { id: 'build', also: [] },
+    ],
+    NOTHING_KEPT,
+  )
+
+  test('a group is a row of its own that opens all of it, found by its name', () => {
+    const all = candidates(world({ hosts }))
+    expect(ranked('home', all).map(named)).toEqual(['hosts Home', 'host pi', 'host nas'])
+
+    const group = all.find((one) => one.item.kind === 'group')?.item
+    expect(group?.kind === 'group' && group.hosts.map((one) => one.id)).toEqual(['pi', 'nas'])
+    expect(group && rowKey(group)).toBe('hosts:Home')
+    expect(all.filter((one) => one.item.kind === 'group')).toHaveLength(1)
   })
 })

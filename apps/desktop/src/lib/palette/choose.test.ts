@@ -28,6 +28,7 @@ function hands(): { asked: string[]; hands: Hands } {
       agents: say('agents'),
       goto: say('goto'),
       openHost: say('host'),
+      openHosts: say('hosts'),
       connect: say('connect'),
       openMessage: say('message'),
     },
@@ -233,7 +234,8 @@ describe('another machine', () => {
     expect(choose({ kind: 'connect', wanted, said: 'emil@box:2222' }, undefined, hand)).toBe(
       'close',
     )
-    expect(asked).toEqual(['host ["pi"]', `connect [${JSON.stringify(wanted)}]`])
+    expect(choose({ kind: 'group', group: 'Home', hosts: [host] }, undefined, hand)).toBe('close')
+    expect(asked).toEqual(['host ["pi"]', `connect [${JSON.stringify(wanted)}]`, 'hosts [["pi"]]'])
   })
 })
 

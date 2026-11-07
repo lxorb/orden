@@ -2,8 +2,10 @@ import { describe, expect, test } from 'vitest'
 import {
   type ConfigHost,
   destinationOf,
+  groupHosts,
   groupsOf,
   hostFor,
+  hostReached,
   hostsOf,
   type Kept,
   mayBeDestination,
@@ -59,6 +61,14 @@ describe('the list', () => {
     const hosts = hostsOf(CONFIG, NOTHING_KEPT)
     expect(groupsOf(hosts, NOTHING_KEPT)).toEqual(['Home', 'Work'])
     expect(groupsOf(hosts, kept({ groups: ['Work', 'Gone'] }))).toEqual(['Work', 'Home'])
+  })
+})
+
+describe('a group', () => {
+  test('is every host in it, wherever the picker shows them', () => {
+    const hosts = hostsOf(CONFIG, kept({ about: { nas: { pinned: true } } }))
+    expect(groupHosts(hosts, 'Home').map((one) => one.id)).toEqual(['pi', 'nas'])
+    expect(groupHosts(hosts, 'Nowhere')).toEqual([])
   })
 })
 
@@ -139,6 +149,17 @@ describe('a destination typed', () => {
     expect(hostFor(hosts, { user: null, hostname: 'raspberry', port: null })?.id).toBe('pi')
     expect(hostFor(hosts, { user: 'emil', hostname: '10.0.0.5', port: null })?.id).toBe('pi')
     expect(hostFor(hosts, { user: 'root', hostname: '10.0.0.5', port: null })).toBeNull()
+  })
+
+  test('ssh reaching a host is that host, by what the host already says of itself', () => {
+    const hosts = hostsOf(CONFIG, NOTHING_KEPT)
+    expect(hostReached(hosts, { user: null, hostname: 'pi', port: null })?.id).toBe('pi')
+    expect(hostReached(hosts, { user: 'emil', hostname: 'pi', port: null })?.id).toBe('pi')
+    expect(hostReached(hosts, { user: 'emil', hostname: '10.0.0.5', port: 22 })?.id).toBe('pi')
+    expect(hostReached(hosts, { user: null, hostname: 'office', port: 2222 })?.id).toBe('office')
+    expect(hostReached(hosts, { user: 'root', hostname: 'pi', port: null })).toBeNull()
+    expect(hostReached(hosts, { user: null, hostname: 'office', port: 22 })).toBeNull()
+    expect(hostReached(hosts, { user: null, hostname: 'elsewhere', port: null })).toBeNull()
   })
 
   test('typing that could still become one', () => {

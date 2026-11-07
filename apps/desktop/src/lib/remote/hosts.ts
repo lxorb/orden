@@ -209,6 +209,23 @@ export function hostFor(hosts: readonly Host[], wanted: Destination): Host | nul
   )
 }
 
+export function hostReached(hosts: readonly Host[], reached: Destination): Host | null {
+  return (
+    hostFor(hosts, reached) ??
+    hosts.find(
+      (host) =>
+        (host.name === reached.hostname || host.also.includes(reached.hostname)) &&
+        (reached.user === null || reached.user === host.user) &&
+        (reached.port === null || reached.port === (host.port ?? 22)),
+    ) ??
+    null
+  )
+}
+
+export function groupHosts(hosts: readonly Host[], group: string): Host[] {
+  return hosts.filter((host) => host.group === group)
+}
+
 export function said(wanted: Destination): string {
   const at = (address: string) => (wanted.user ? `${wanted.user}@${address}` : address)
   if (wanted.port === null) return at(wanted.hostname)
