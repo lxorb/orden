@@ -2,10 +2,10 @@ use base64::Engine;
 
 pub const SIDE: u32 = 32;
 
-#[cfg(any(target_os = "linux", target_os = "macos", test))]
+#[cfg(any(target_os = "linux", test))]
 pub const MOST_FILE: u64 = 4 * 1024 * 1024;
 
-#[cfg(any(target_os = "linux", target_os = "macos", test))]
+#[cfg(any(target_os = "linux", test))]
 pub const MOST_SVG: usize = 35 * 1024;
 
 pub fn data_url(kind: &str, bytes: &[u8]) -> String {
