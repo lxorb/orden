@@ -310,6 +310,12 @@
     cursor: default;
   }
 
+  .list li,
+  .sheet li {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 30px;
+  }
+
   .list li .text {
     flex: 1;
     overflow: hidden;
