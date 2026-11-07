@@ -17,6 +17,7 @@ import {
   type View,
   wipe,
 } from './paint'
+import { hunksOf } from '@orden/markdown/canvas-merge'
 
 export const TILE = 256
 
@@ -97,16 +98,9 @@ function changed(
   was: readonly InkStroke[],
   now: readonly InkStroke[],
 ): { gone: InkStroke[]; added: InkStroke[] } {
-  const shortest = Math.min(was.length, now.length)
-  let head = 0
-  while (head < shortest && was[head] === now[head]) head++
-  let tail = 0
-  while (tail < shortest - head && was[was.length - 1 - tail] === now[now.length - 1 - tail]) {
-    tail++
-  }
-
-  const before = was.slice(head, was.length - tail)
-  const after = now.slice(head, now.length - tail)
+  const hunks = hunksOf(was, now)
+  const before = hunks.flatMap((hunk) => hunk.was)
+  const after = hunks.flatMap((hunk) => hunk.is)
   const had = new Set(before)
   const has = new Set(after)
 

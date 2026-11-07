@@ -541,6 +541,40 @@ describe('writing on a plane already painted', () => {
     check(made, now, whole, strokes.slice(1500, 1560))
   })
 
+  test('strokes rubbed out far apart in the stack weigh only themselves, not the stack between', () => {
+    const strokes = plane(3_000)
+    const { made, make } = surfaces()
+    const tiles = new InkTiles(make)
+    const layer = context()
+    settle(() => tiles.paint(layer.ctx, strokes, whole, palette))
+
+    const cut = new Set(['s3', 's1500', 's2996'])
+    const left = strokes.filter((one) => !cut.has(one.id))
+    const add = Object.getOwnPropertyDescriptor(Set.prototype, 'add')?.value as (
+      this: Set<unknown>,
+      value: unknown,
+    ) => Set<unknown>
+    let held = 0
+    Set.prototype.add = function (this: Set<unknown>, value: unknown) {
+      held += 1
+      return add.call(this, value)
+    }
+    try {
+      tiles.paint(layer.ctx, left, whole, palette)
+    } finally {
+      Set.prototype.add = add
+    }
+
+    expect(held).toBeLessThan(200)
+    settle(() => tiles.paint(layer.ctx, left, whole, palette))
+    check(
+      made,
+      left,
+      whole,
+      strokes.filter((one) => cut.has(one.id)),
+    )
+  })
+
   test('a lasso that moves many strokes repairs where they were and where they went', () => {
     const strokes = plane(3_000)
     const { made, make } = surfaces()
