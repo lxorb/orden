@@ -12,7 +12,7 @@
   import { editTask } from './act'
   import { type Kit, notePath } from './kit'
   import { descriptionOf } from './task-body'
-  import { changeOf, prefillFor } from './task-edit'
+  import { changeOf, editorRoot, prefillFor } from './task-edit'
   import { labelsOf } from './task-meta'
 
   const {
@@ -31,7 +31,9 @@
     onsize?: ((tall: number) => void) | undefined
   } = $props()
 
-  const root = $derived(workspace.activeSpace?.root ?? null)
+  const root = $derived(
+    editorRoot(into, row, workspace.spaces, workspace.activeSpace?.root ?? null),
+  )
   const notes = $derived(root ? noteNames(root) : [])
   const tags = $derived(labelsOf(kit.live.rows))
 

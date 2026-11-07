@@ -148,10 +148,9 @@ export interface NewNote {
   open?: boolean
 }
 
-function idFor(base: Base): Record<string, string> {
+function idFor(base: Base, space: { name: string }): Record<string, string> {
   const id = base.nib.id
-  const space = workspace.activeSpace
-  if (!id || !space) return {}
+  if (!id) return {}
   const mine = rows.of(space.name)
   const context = contextFor({ rows: mine, today: todayHere(), now: nowHere() })
   const own = rowsInBase(base, mine, context)
@@ -188,7 +187,7 @@ export async function addNote(
     props[bare(group.property)] = key
   }
   for (const [name, value] of Object.entries(made.properties ?? {})) props[name] = plainValue(value)
-  Object.assign(props, idFor(base))
+  Object.assign(props, idFor(base, space))
 
   const title = noteName(made.title ?? 'Untitled')
   const name = await workspace.freeNameOnDisk(dir, `${title}.md`)
