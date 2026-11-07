@@ -252,8 +252,12 @@ def upgraded(exe: pathlib.Path, out: pathlib.Path, name: str, wrong: list[str], 
     print(f"{name}: the space is at {root}", flush=True)
     if not isinstance(root, str) or NEW not in root:
         wrong.append(f"{name}: the space is not under {NEW}: {root}")
-    print(f"{name}: inside {json.dumps(app.eval(DIAGNOSE))}", flush=True)
+    inside = app.eval(DIAGNOSE)
+    print(f"{name}: inside {json.dumps(inside)}", flush=True)
     listing(name)
+    spaces = inside.get("spaces") if isinstance(inside, dict) else None
+    if not isinstance(spaces, list) or len(spaces) != 1:
+        wrong.append(f"{name}: the update left other spaces than the one: {spaces}")
     words = ["ship the carry", "buy oat milk", *more]
     text = wait_for(app, words)
     print(f"{name}: the todos {text}", flush=True)
@@ -311,7 +315,14 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     wrong: list[str] = []
     for name, drive in (
-        ("moved", lambda: (old_profile(args.old_exe, args.out, wrong), upgraded(args.new_exe, args.out, "moved", wrong, []))),
+        (
+            "moved",
+            lambda: (
+                old_profile(args.old_exe, args.out, wrong),
+                upgraded(args.new_exe, args.out, "moved", wrong, []),
+                upgraded(args.new_exe, args.out, "moved-again", wrong, []),
+            ),
+        ),
         ("half", lambda: half_moved(args.old_exe, args.new_exe, args.out, wrong)),
     ):
         clean()

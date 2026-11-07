@@ -5,11 +5,12 @@ import { locksHere, locksWork } from '../locks'
 import { log } from '../log'
 import { invoke as crate } from '../native'
 import { joinPath, platform } from '../tauri'
+import { samePath } from '../space-paths'
 import type { HoldsSpaces } from '../workspace/spaces'
 import { folderBytes } from './bytes'
 import { InternalFolder } from './folder'
 import { mountOf } from './roots'
-import { CONVERTING, freeName, HOME, keptFrom, mountKept } from './spaces'
+import { CONVERTING, freeName, HOME, keptCameFrom, keptFrom, mountKept } from './spaces'
 
 interface Listed {
   name: string
@@ -274,7 +275,64 @@ async function converting(ws: HoldsSpaces, id: string, told: Told): Promise<bool
   }
 }
 
-export async function convertAll(ws: HoldsSpaces): Promise<void> {
+async function sameAsSource(root: string, from: string): Promise<boolean> {
+  const folder = mountOf(root)?.mount.folder
+  if (!folder) return false
+  const source = await contents(from).catch(() => null)
+  if (!source) return false
+  const files = source.filter((one) => !one.dir).map((one) => one.path)
+  const held = (await folder.list()).filter((one) => one.entry.key !== null)
+  if (held.length !== files.length) return false
+  for (const path of files) {
+    const bytes = await bytesAt(joinPath(from, path)).catch(() => null)
+    if (!bytes || !same(bytes, await folder.read(path))) return false
+  }
+  return true
+}
+
+interface Twins extends HoldsSpaces {
+  deleteSpace(id: string, keep?: boolean): Promise<void>
+}
+
+export async function retireTwins(ws: Twins): Promise<void> {
+  const made = await keptCameFrom()
+  const groups: { root: string; from: string }[][] = []
+  for (const one of made) {
+    const group = groups.find((all) => samePath(all[0]?.from ?? '', one.from))
+    if (group) group.push(one)
+    else groups.push([one])
+  }
+  for (const group of groups) {
+    if (group.length < 2) continue
+    const named = group
+      .map((one) => ({ ...one, space: ws.spaces.find((space) => samePath(space.root, one.root)) }))
+      .sort((a, b) => (a.space?.name ?? '').length - (b.space?.name ?? '').length)
+    const spare: typeof named = []
+    for (const one of named.slice(1)) if (await sameAsSource(one.root, one.from)) spare.push(one)
+    for (const one of spare) {
+      if (!one.space) continue
+      log(
+        'warn',
+        `${one.space.name} was a second copy of ${one.from}, which is still there; it went to the trash`,
+      )
+      await ws.deleteSpace(one.space.id, true)
+    }
+    const left = named
+      .filter((one) => !spare.includes(one))
+      .map((one) => one.space?.name ?? one.root)
+    if (left.length > 1) {
+      log(
+        'warn',
+        `${left.join(', ')} were all made from ${group[0]?.from ?? ''} and differ, so each is kept`,
+      )
+    }
+  }
+}
+
+export async function convertAll(ws: Twins): Promise<void> {
+  await retireTwins(ws).catch((error: unknown) =>
+    log('warn', `twin spaces not looked at: ${String(error)}`),
+  )
   const done = new Set(await keptFrom())
   const failed: string[] = []
   for (const space of [...ws.spaces]) {

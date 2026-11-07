@@ -41,6 +41,69 @@ pub fn carry_home() {
         repoint(&config.join(crate::paths::SPACES_KEPT), old, new);
         rebase_kept(&config.join(crate::kept::FOLDER), old, new);
     }
+    let pairs = places();
+    for spaces in spaces_folders(&config) {
+        rebase_spaces_home(&spaces.join(".orden"), &pairs);
+    }
+}
+
+fn spaces_folders(config: &Path) -> Vec<PathBuf> {
+    let mut out: Vec<PathBuf> = [
+        crate::paths::folder_named(std::env::var_os(crate::paths::SPACES_DIR).as_deref()),
+        fs::read_to_string(config.join(crate::paths::SPACES_KEPT))
+            .ok()
+            .and_then(|said| crate::paths::folder_named(Some(std::ffi::OsStr::new(said.trim())))),
+        dirs::data_local_dir().map(|dir| dir.join(NEW).join(crate::paths::SPACES)),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    out.sort();
+    out.dedup();
+    out
+}
+
+fn line_moved(line: &str, pairs: &[(PathBuf, PathBuf)]) -> Option<String> {
+    pairs.iter().find_map(|(old, new)| {
+        let rest = Path::new(line).strip_prefix(old).ok()?;
+        let moved = if rest.as_os_str().is_empty() {
+            new.clone()
+        } else {
+            new.join(rest)
+        };
+        Some(moved.to_string_lossy().into_owned())
+    })
+}
+
+fn rebase_lines(file: &Path, pairs: &[(PathBuf, PathBuf)]) {
+    let Ok(text) = fs::read_to_string(file) else {
+        return;
+    };
+    let moved: Vec<String> = text
+        .lines()
+        .map(|line| line_moved(line.trim(), pairs).unwrap_or_else(|| line.to_owned()))
+        .collect();
+    let mut out = moved.join("\n");
+    if text.ends_with('\n') {
+        out.push('\n');
+    }
+    if out != text {
+        let _ = crate::paths::write_atomically(file, out.as_bytes());
+    }
+}
+
+fn rebase_spaces_home(home: &Path, pairs: &[(PathBuf, PathBuf)]) {
+    let Ok(children) = fs::read_dir(home) else {
+        return;
+    };
+    rebase_lines(&home.join(".retired"), pairs);
+    for child in children.flatten() {
+        let path = child.path();
+        if path.is_dir() {
+            rebase_lines(&path.join(".from"), pairs);
+            rebase_lines(&path.join(".converting"), pairs);
+        }
+    }
 }
 
 fn after_move() -> Option<PathBuf> {
@@ -400,6 +463,54 @@ mod tests {
         assert!(merged(&old, &new, false));
         assert!(new.join("Spaces/web/a.md").is_file());
         assert!(new.join("Spaces/web/b.md").is_file());
+    }
+
+    #[test]
+    fn a_kept_space_says_it_came_from_the_folder_where_it_is_now() {
+        let root = tempfile::tempdir().unwrap();
+        let (old, new) = (root.path().join(OLD), root.path().join(NEW));
+        let home = new.join("Spaces/.orden");
+        fs::create_dir_all(home.join("Work")).unwrap();
+        fs::create_dir_all(home.join("Else")).unwrap();
+        let was = old.join("Spaces/Work");
+        fs::write(home.join("Work/.from"), was.to_string_lossy().as_bytes()).unwrap();
+        fs::write(home.join("Else/.from"), "/home/ada/Notes").unwrap();
+        let backup = home.join(".backups/Work 1");
+        fs::write(
+            home.join("Work/.converting"),
+            format!("{}\n{}\n", was.display(), backup.display()),
+        )
+        .unwrap();
+        fs::write(
+            home.join(".retired"),
+            format!("{}\n", old.join("Spaces/Gone").display()),
+        )
+        .unwrap();
+
+        let pairs = vec![(old.clone(), new.clone())];
+        rebase_spaces_home(&home, &pairs);
+        rebase_spaces_home(&home, &pairs);
+
+        assert_eq!(
+            fs::read_to_string(home.join("Work/.from")).unwrap(),
+            new.join("Spaces/Work").to_string_lossy()
+        );
+        assert_eq!(
+            fs::read_to_string(home.join("Else/.from")).unwrap(),
+            "/home/ada/Notes"
+        );
+        assert_eq!(
+            fs::read_to_string(home.join("Work/.converting")).unwrap(),
+            format!(
+                "{}\n{}\n",
+                new.join("Spaces/Work").display(),
+                backup.display()
+            )
+        );
+        assert_eq!(
+            fs::read_to_string(home.join(".retired")).unwrap(),
+            format!("{}\n", new.join("Spaces/Gone").display())
+        );
     }
 
     #[test]
