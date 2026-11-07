@@ -1266,7 +1266,9 @@
     inset-inline: 0 auto;
     z-index: var(--z-drawer);
     transform: translateX(calc(var(--dir) * -100%));
-    transition: transform var(--dur-base) var(--ease-out);
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
     box-shadow: var(--shadow-lg);
     background:
       linear-gradient(var(--side-ground), var(--side-ground)),
@@ -1325,8 +1327,15 @@
     width: min(86%, 20rem);
     z-index: var(--z-drawer);
     box-shadow: var(--shadow-lg);
-    transition: transform var(--dur-base) var(--ease-out);
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
     transform: translateX(calc(var(--dir) * 100%));
+  }
+
+  :global([data-drawer]) .panels:not(.open, .dragging, .settling),
+  :global([data-drawer][data-narrow]) .panels.right:not(.open, .dragging, .settling) {
+    box-shadow: none;
   }
 
   :global([data-drawer][data-narrow]) .panels.right.open {
