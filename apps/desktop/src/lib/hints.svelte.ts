@@ -52,6 +52,10 @@ class Hints {
     else this.pick()
   }
 
+  aside(hint: Hint) {
+    if (this.showing === hint) this.show(null)
+  }
+
   dismiss(hint: Hint) {
     if (this.showing === hint) this.show(null)
     if (this.put.includes(hint)) return

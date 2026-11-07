@@ -31,10 +31,21 @@
     hints.dismiss(hint)
     onpress?.()
   }
+
+  let bubble = $state<HTMLDivElement>()
+
+  function busy(event: Event) {
+    if (hints.current !== hint) return
+    if (event.target instanceof Node && bubble?.contains(event.target)) return
+    hints.aside(hint)
+  }
 </script>
+
+<svelte:window onpointerdowncapture={busy} onkeydowncapture={busy} />
 
 {#if hints.current === hint}
   <div
+    bind:this={bubble}
     class="nib-bubble is-pressable hint"
     role="status"
     use:hang={{ side, gap: 4, inset: '--space-2' }}
