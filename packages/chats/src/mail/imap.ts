@@ -145,14 +145,18 @@ export class Imap {
   private continued: (() => void) | null = null
   private queue: Promise<unknown> = Promise.resolve()
   private greeted: ((line: string) => void) | null = null
+  private readonly greeting: Promise<string>
   private closed = false
-  private readonly stop: () => void
+  private stop: () => void = () => undefined
 
   private constructor(private readonly socket: Socket) {
-    this.stop = socket.read(
+    this.greeting = new Promise((resolve) => (this.greeted = resolve))
+    const stop = socket.read(
       (bytes) => this.arrived(bytes),
       (reason) => this.end(reason),
     )
+    this.stop = stop
+    if (this.closed) stop()
   }
 
   static async open(
@@ -164,7 +168,7 @@ export class Imap {
     const socket = await open(ask)
     const imap = new Imap(socket)
     try {
-      const greeting = await imap.greeting()
+      const greeting = await imap.greeting
       if (/^\* BYE/i.test(greeting)) throw new ImapError(greeting, 'BYE')
       imap.readCapabilities(greeting)
       if (!imap.capabilities.size) await imap.command('CAPABILITY')
@@ -187,10 +191,6 @@ export class Imap {
       await imap.close()
       throw error
     }
-  }
-
-  private greeting(): Promise<string> {
-    return new Promise((resolve) => (this.greeted = resolve))
   }
 
   private async login(user: string, password: string): Promise<void> {
@@ -326,7 +326,7 @@ export class Imap {
     this.stop()
     this.pending?.failed(new ImapError(reason ?? 'the connection closed', 'closed'))
     this.pending = null
-    this.greeted?.('* BYE')
+    this.greeted?.(`* BYE ${reason ?? 'the connection closed'}`)
     this.ended(reason)
   }
 

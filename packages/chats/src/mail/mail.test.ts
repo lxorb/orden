@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Host, ProviderEvent } from '../provider'
+import type { Host, ProviderEvent, Socket, SocketAsk } from '../provider'
 import { secretName } from '../provider'
 import fc from 'fast-check'
 import { ascii, base64Lines, fromBase64, fromLatin, latin, Reader, toBase64 } from './bytes'
@@ -477,6 +477,60 @@ describe('a mailbox, end to end against a server', () => {
     expect([...(server.boxes.get('INBOX')?.[1]?.flags ?? [])]).toContain('\\Seen')
     expect([...(server.boxes.get('Sent')?.[1]?.flags ?? [])]).not.toContain('\\Seen')
     await connection.close()
+  })
+
+  test('a greeting that came before anyone listened is the greeting, as the desktop app hands it on', async () => {
+    const heldUntilRead = async (ask: SocketAsk): Promise<Socket> => {
+      const socket = await nodeSocket(ask)
+      const early: Uint8Array[] = []
+      let hear: ((bytes: Uint8Array) => void) | null = null
+      let heard: () => void = () => undefined
+      const greeted = new Promise<void>((resolve) => (heard = resolve))
+      socket.read(
+        (bytes) => {
+          if (hear) hear(bytes)
+          else early.push(bytes)
+          heard()
+        },
+        () => undefined,
+      )
+      await greeted
+      return {
+        ...socket,
+        read: (listener) => {
+          hear = listener
+          for (const bytes of early.splice(0)) listener(bytes)
+          return () => (hear = null)
+        },
+      }
+    }
+    const connection = await mailProvider.connect(config(), { ...host, socket: heldUntilRead })
+    const conversations = await connection.conversations()
+    expect(conversations.map((one) => one.title).sort()).toEqual(['Angebote für dich', 'Lunch'])
+    await connection.send('lunch@example.org', { text: 'On my way' })
+    expect(server.boxes.get('Sent')).toHaveLength(2)
+    await connection.close()
+  })
+
+  test('a connection that ended before anyone listened says so, and is not left open', async () => {
+    const closed: string[] = []
+    const ended = (): Promise<Socket> =>
+      Promise.resolve({
+        write: () => Promise.reject(new Error('closed')),
+        read: (_hear, end) => {
+          end('the server closed the connection')
+          return () => undefined
+        },
+        startTls: () => Promise.reject(new Error('closed')),
+        close: () => {
+          closed.push('closed')
+          return Promise.resolve()
+        },
+      })
+    await expect(mailProvider.connect(config(), { ...host, socket: ended })).rejects.toThrow(
+      'the server closed the connection',
+    )
+    expect(closed.length).toBeGreaterThan(0)
   })
 
   test('a reply is kept in the sent mail even where the crate carries writes out of order', async () => {
