@@ -58,7 +58,13 @@ async function renamed(role: string, shown = true) {
   open.local = false
   open.current = engineWith('/spaces/Work')
 
-  await runner.follow({ op: 'moved', kind: 'space', from: '/spaces/Work', to: '/spaces/Job' })
+  await runner.follow({
+    op: 'moved',
+    kind: 'space',
+    from: '/spaces/Work',
+    to: '/spaces/Job',
+    root: null,
+  })
   await vi.dynamicImportSettled()
   for (let turn = 0; turn < 10; turn++) await Promise.resolve()
   return sent
