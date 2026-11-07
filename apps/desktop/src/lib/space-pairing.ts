@@ -43,6 +43,13 @@ async function untouchedDefault(): Promise<string | null> {
   )
 }
 
+async function endsSettled(token: string, who: string): Promise<Set<string>> {
+  const { endsOwed, settleEnds } = await import('./space-ends')
+  const owed = endsOwed(who)
+  if (owed.size) await settleEnds(token, who)
+  return owed
+}
+
 async function pairOnce(token: string, pairing: Pairing): Promise<void> {
   const seeded = seedSpaceRoot()
   const who = account.user?.id ?? null
@@ -50,16 +57,21 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
   if (!isNative && workspace.spaces.some((space) => theirs(space.root))) {
     await workspace.loadSpaces()
   }
+  const mirrors = pairing.pairs()
+  const ending = who === null ? new Set<string>() : await endsSettled(token, who)
+  const kept = new Set(mirrors.map((one) => one.spaceId))
   const plan = planSpaces({
     local: workspace.spaces
       .filter((space) => !theirs(space.root))
       .map((space) => ({ name: space.name, root: space.root })),
-    remote: account.spaces.map((space) => ({
-      id: space.id,
-      name: space.name,
-      shared: space.role !== 'owner',
-    })),
-    mirrors: pairing.pairs(),
+    remote: account.spaces
+      .filter((space) => !ending.has(space.id) || kept.has(space.id))
+      .map((space) => ({
+        id: space.id,
+        name: space.name,
+        shared: space.role !== 'owner',
+      })),
+    mirrors,
     deleted: account.deletedSpaces,
     untouched: await untouchedDefault(),
   })

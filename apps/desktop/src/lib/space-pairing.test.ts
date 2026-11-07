@@ -7,6 +7,8 @@ const world = vi.hoisted(() => ({
   spaces: [] as { id: string; name: string; root: string }[],
   made: [] as string[],
   icons: [] as string[],
+  ended: [] as string[],
+  online: true,
   adopted: [] as { name: string; fresh: boolean }[],
 }))
 
@@ -18,6 +20,16 @@ vi.mock('./api', async (importOriginal) => ({
       return Promise.resolve({ space: { id: `made-${name}`, name } })
     },
     setSpaceIcon: () => Promise.resolve(),
+    deleteSpace: (_token: string, id: string) => {
+      if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
+      world.ended.push(`delete ${id}`)
+      return Promise.resolve({ ok: true })
+    },
+    leaveSpace: (_token: string, id: string) => {
+      if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
+      world.ended.push(`leave ${id}`)
+      return Promise.resolve({ ok: true })
+    },
     saveBookmarks: () => Promise.resolve(),
   },
 }))
@@ -62,6 +74,7 @@ vi.mock('./workspace.svelte', () => ({
 const { account } = await import('./account.svelte')
 const { pairSpaces } = await import('./space-pairing')
 const { leaveSpaces, leftBy } = await import('./left-spaces')
+const { endSpace, endsOwed } = await import('./space-ends')
 
 function pairing() {
   const pairs: { root: string; spaceId: string; shared: boolean }[] = []
@@ -93,6 +106,8 @@ beforeEach(() => {
   world.made = []
   world.adopted = []
   world.icons = []
+  world.ended = []
+  world.online = true
 })
 
 describe('signing in on a device another account signed out of', () => {
@@ -136,5 +151,44 @@ describe('a space sync keeps under another spelling of its folder', () => {
     expect(world.icons).toEqual(['C:\\Users\\Ada\\Work'])
     expect(world.made).toEqual([])
     expect(pairs).toHaveLength(1)
+  })
+})
+
+describe('a space deleted while the account could not be reached', () => {
+  test('is not brought back down, and the account is told once it answers', async () => {
+    world.spaces = [{ id: '2', name: 'Fresh', root: '/Fresh' }]
+    signedIn('a', ['Fresh', 'Gone'])
+    world.online = false
+    await endSpace('token-a', 'a', 'a-Gone', 'delete')
+    expect(endsOwed('a')).toEqual(new Set(['a-Gone']))
+
+    const { pairs, pairing: held } = pairing()
+    pairs.push({ root: '/Fresh', spaceId: 'a-Fresh', shared: false })
+    await pairSpaces('token-a', held)
+
+    expect(world.adopted).toEqual([])
+    expect(endsOwed('a')).toEqual(new Set(['a-Gone']))
+
+    world.online = true
+    await pairSpaces('token-a', held)
+
+    expect(world.adopted).toEqual([])
+    expect(world.ended).toEqual(['delete a-Gone'])
+    expect(endsOwed('a')).toEqual(new Set())
+  })
+
+  test('and one left is left once the account answers, for that account only', async () => {
+    world.spaces = []
+    signedIn('a', ['Theirs'])
+    world.online = false
+    await endSpace('token-a', 'a', 'a-Theirs', 'leave')
+    expect(endsOwed('b')).toEqual(new Set())
+
+    world.online = true
+    const { pairing: held } = pairing()
+    await pairSpaces('token-a', held)
+
+    expect(world.ended).toEqual(['leave a-Theirs'])
+    expect(world.adopted).toEqual([])
   })
 })

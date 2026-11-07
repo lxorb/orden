@@ -303,11 +303,11 @@ class Sync {
     }
 
     const token = account.token
-    if (!token || (!theirs && !mine)) return
+    const accountId = account.user?.id
+    if (!token || !accountId || (!theirs && !mine)) return
 
-    const letting = theirs ? api.leaveSpace(token, spaceId) : api.deleteSpace(token, spaceId)
-
-    await letting.catch(() => undefined)
+    const { endSpace } = await import('./space-ends')
+    await endSpace(token, accountId, spaceId, theirs ? 'leave' : 'delete')
   }
 
   async pushIcon(root: string, icon: string | null, tint: string | null = null) {
