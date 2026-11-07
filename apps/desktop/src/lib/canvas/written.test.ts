@@ -46,4 +46,77 @@ describe('what changed between two writes of a plane', () => {
   test('is not worked out for two files laid out differently', () => {
     expect(changesBetween(written([head, tail]), [head, ink, tail])).toBeNull()
   })
+
+  const listed = (ids: readonly number[]) =>
+    ids.flatMap((id, at) =>
+      at ? [',\n\t\t\t', `{"id": "s${String(id)}"}`] : [`{"id": "s${String(id)}"}`],
+    )
+  const strokes = (count: number) => listed(Array.from({ length: count }, (_, at) => at))
+
+  test('is a small piece for each stroke rubbed out, however far apart they lie', () => {
+    const ink = strokes(1000)
+    const kept = Array.from({ length: 1000 }, (_, at) => at).filter((at) => at !== 3 && at !== 990)
+    const after = [head, listed(kept), tail]
+    const changes = changesBetween(written([head, ink, tail]), after) ?? []
+
+    expect(changes).toHaveLength(2)
+    expect(changes.every((one) => one.to - one.from < 20 && one.insert === '')).toBe(true)
+    expect(applied(text([head, ink, tail]), changes)).toBe(text(after))
+  })
+
+  test('is a small piece for each stroke cut in two, however far apart they lie', () => {
+    const ink = strokes(1000)
+    const cut = ink.flatMap((one) =>
+      one === '{"id": "s5"}' || one === '{"id": "s700"}' ? [one, ',\n\t\t\t', `${one}b`] : [one],
+    )
+    const changes = changesBetween(written([head, ink, tail]), [head, cut, tail]) ?? []
+
+    expect(changes).toHaveLength(2)
+    expect(changes.reduce((sum, one) => sum + one.insert.length, 0)).toBeLessThan(60)
+    expect(applied(text([head, ink, tail]), changes)).toBe(text([head, cut, tail]))
+  })
+
+  test('carries nothing but the strokes rubbed out, however many and wherever they lie', () => {
+    let seed = 5
+    const random = (below: number) => {
+      seed = (seed * 16807) % 2147483647
+      return seed % below
+    }
+    const all = Array.from({ length: 400 }, (_, at) => at)
+
+    for (let round = 0; round < 50; round++) {
+      const gone = new Set(Array.from({ length: 1 + random(30) }, () => random(400)))
+      const after = [head, listed(all.filter((at) => !gone.has(at))), tail]
+      const changes = changesBetween(written([head, listed(all), tail]), after) ?? []
+
+      expect(changes.length).toBeLessThanOrEqual(gone.size)
+      expect(changes.every((one) => one.insert === '')).toBe(true)
+      expect(applied(text([head, listed(all), tail]), changes)).toBe(text(after))
+    }
+  })
+
+  test('always writes what the plane now is, whatever was moved, taken or added', () => {
+    let seed = 11
+    const random = (below: number) => {
+      seed = (seed * 16807) % 2147483647
+      return seed % below
+    }
+    const words = ['a', 'b', 'c', ',', ',\n', 'dd', '']
+
+    for (let round = 0; round < 400; round++) {
+      const was = Array.from({ length: random(12) }, () => words[random(words.length)] ?? '')
+      const now = [...was]
+      for (let edit = random(6); edit > 0; edit--) {
+        const where = random(now.length + 1)
+        if (random(2)) now.splice(where, 1)
+        else now.splice(where, 0, words[random(words.length)] ?? '')
+      }
+      const changes = changesBetween(written([head, was, tail]), [head, now, tail]) ?? []
+
+      expect(applied(text([head, was, tail]), changes)).toBe(text([head, now, tail]))
+      expect(changes.every((one, at) => at === 0 || (changes[at - 1]?.to ?? 0) <= one.from)).toBe(
+        true,
+      )
+    }
+  })
 })
