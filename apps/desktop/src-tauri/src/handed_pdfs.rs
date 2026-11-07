@@ -2,7 +2,7 @@ use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Mutex, PoisonError};
 
 use tauri::{AppHandle, Manager, Url};
 
@@ -11,7 +11,9 @@ use crate::paths::{a_space, cannot, files_in, folded, inside, is_pdf, write_atom
 const LONGEST: usize = 32 * 1024;
 
 #[derive(Default)]
-pub struct Handed(Mutex<Vec<PathBuf>>);
+pub struct Handed(Mutex<Vec<PathBuf>>, Mutex<bool>);
+
+static WRITING: Mutex<()> = Mutex::new(());
 
 const KEPT: &str = "handed-pdfs.json";
 
@@ -38,6 +40,25 @@ impl Handed {
 
     fn listed(&self) -> Vec<PathBuf> {
         self.0.lock().map(|held| held.clone()).unwrap_or_default()
+    }
+
+    fn load(&self, kept: impl FnOnce() -> Vec<PathBuf>) {
+        let mut loaded = self.1.lock().unwrap_or_else(PoisonError::into_inner);
+        if *loaded {
+            return;
+        }
+        let kept = kept();
+        if let Ok(mut held) = self.0.lock() {
+            let mut all: Vec<PathBuf> = kept
+                .into_iter()
+                .filter(|old| !held.iter().any(|new| same_handed(old, new)))
+                .collect();
+            all.append(&mut held);
+            let over = all.len().saturating_sub(MOST_KEPT);
+            all.drain(..over);
+            *held = all;
+        }
+        *loaded = true;
     }
 }
 
@@ -74,31 +95,42 @@ fn write_handed_list(at: &Path, pdfs: &[PathBuf]) -> Result<(), String> {
 
 fn handed_set(app: &AppHandle) -> tauri::State<'_, Handed> {
     if app.try_state::<Handed>().is_none() {
-        let kept = handed_list_at(app)
-            .map(|at| read_handed_list(&at))
-            .unwrap_or_default();
-        app.manage(Handed(Mutex::new(kept)));
+        app.manage(Handed::default());
     }
     app.state::<Handed>()
+}
+
+fn loaded_set(app: &AppHandle) -> tauri::State<'_, Handed> {
+    let handed = handed_set(app);
+    handed.load(|| {
+        handed_list_at(app)
+            .map(|at| read_handed_list(&at))
+            .unwrap_or_default()
+    });
+    handed
 }
 
 pub fn admit_handed(app: &AppHandle, pdfs: Vec<PathBuf>) -> Vec<String> {
     if pdfs.is_empty() {
         return Vec::new();
     }
-    let handed = handed_set(app);
-    let said = handed.admit(pdfs);
+    let said = handed_set(app).admit(pdfs);
     if let Some(at) = handed_list_at(app) {
-        if let Err(error) = write_handed_list(&at, &handed.listed()) {
-            crate::logs::say(app, "warn", &format!("handed PDFs: {error}"));
-        }
+        let app = app.clone();
+        std::thread::spawn(move || {
+            let handed = loaded_set(&app);
+            let _writing = WRITING.lock().unwrap_or_else(PoisonError::into_inner);
+            if let Err(error) = write_handed_list(&at, &handed.listed()) {
+                crate::logs::say(&app, "warn", &format!("handed PDFs: {error}"));
+            }
+        });
     }
     said
 }
 
 pub fn handed_pdf(app: &AppHandle, path: &str) -> Option<PathBuf> {
     let path = folded(Path::new(path));
-    handed_set(app).holds(&path).then_some(path)
+    loaded_set(app).holds(&path).then_some(path)
 }
 
 pub fn pdfs_in<A: AsRef<OsStr>>(args: &[A], cwd: &Path) -> Vec<PathBuf> {
@@ -321,6 +353,21 @@ mod tests {
         write_handed_list(&at, &[one.clone(), gone]).expect("written");
         assert_eq!(read_handed_list(&at), vec![one]);
         assert!(read_handed_list(&dir.path().join("none.json")).is_empty());
+    }
+
+    #[test]
+    fn papers_handed_before_the_list_is_read_are_kept_after_the_ones_it_holds() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let paper = |name: &str| dir.path().join(name);
+        let handed = Handed::default();
+        handed.admit(vec![paper("new.pdf"), paper("both.pdf")]);
+        handed.load(|| vec![paper("old.pdf"), paper("both.pdf")]);
+        handed.load(|| vec![paper("never.pdf")]);
+
+        assert_eq!(
+            handed.listed(),
+            vec![paper("old.pdf"), paper("new.pdf"), paper("both.pdf")]
+        );
     }
 
     #[test]
