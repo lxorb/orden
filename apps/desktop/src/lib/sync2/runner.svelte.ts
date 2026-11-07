@@ -66,6 +66,8 @@ type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
 const ASKS_AT_MOST = 30_000
 
+const SEARCH_QUIET_AT_MOST = 120_000
+
 const SIGN_OUT_WAITS = 10_000
 
 const NUDGE = 2_000
@@ -1295,19 +1297,35 @@ class Runner {
   private readonly asked = new Map<string, (value: unknown) => void>()
   private taking: Promise<unknown> = Promise.resolve()
 
-  private ask(what: string, args: Record<string, unknown>): Promise<unknown> {
+  private readonly parts = new Map<string, (value: unknown) => void>()
+
+  private ask(
+    what: string,
+    args: Record<string, unknown>,
+    part?: (value: unknown) => void,
+  ): Promise<unknown> {
     if (!this.leaderId) return Promise.resolve(null)
     return new Promise((resolve) => {
       const id = crypto.randomUUID()
-      const timer = setTimeout(() => {
-        this.asked.delete(id)
-        resolve(null)
-      }, ASKS_AT_MOST)
-      this.asked.set(id, (value) => {
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const done = (value: unknown) => {
         clearTimeout(timer)
         this.asked.delete(id)
+        this.parts.delete(id)
         resolve(value)
-      })
+      }
+      const wait = () => {
+        clearTimeout(timer)
+        timer = setTimeout(() => done(null), part ? SEARCH_QUIET_AT_MOST : ASKS_AT_MOST)
+      }
+      wait()
+      this.asked.set(id, done)
+      if (part) {
+        this.parts.set(id, (value) => {
+          wait()
+          part(value)
+        })
+      }
       this.say('sync-ask', { id, what, args })
     })
   }
@@ -1348,6 +1366,11 @@ class Runner {
       this.hear('sync-said', (said) => {
         if (said.to === windows.me && typeof said.id === 'string') {
           this.asked.get(said.id)?.(said.value)
+        }
+      }),
+      this.hear('sync-part', (said) => {
+        if (said.to === windows.me && typeof said.id === 'string') {
+          this.parts.get(said.id)?.(said.value)
         }
       }),
       this.hear('sync-light', (said) => {
@@ -1393,15 +1416,7 @@ class Runner {
       this.hear('sync-mergeable', (said) => {
         if (typeof said.path === 'string') this.mergeables.add(said.path)
       }),
-      this.hear('sync-ask', (said) => {
-        this.inTurn(async () => {
-          this.say('sync-said', {
-            id: said.id,
-            to: said.from,
-            value: await this.answering(said).catch(() => null),
-          })
-        })
-      }),
+      this.hear('sync-ask', (said) => this.heardAsk(said)),
       this.hear('sync-hello', () => {
         this.sayAll()
         if (!isNative && engine.core.world.lazy) this.kick()
@@ -1420,6 +1435,18 @@ class Runner {
         log('error', `sync: ${String(error)}`)
       })
     }
+  }
+
+  private heardAsk(said: Said) {
+    const answer = async () => {
+      this.say('sync-said', {
+        id: said.id,
+        to: said.from,
+        value: await this.answering(said).catch(() => null),
+      })
+    }
+    if (said.what === 'search-away') void answer()
+    else this.inTurn(answer)
   }
 
   private inTurn(run: () => Promise<void>) {
@@ -1445,7 +1472,11 @@ class Runner {
       const engine = this.current
       return engine ? await this.fetchAway(engine, args.path ?? '') : false
     }
-    if (said.what === 'search-away') return await searchedAway(said.args)
+    if (said.what === 'search-away') {
+      return await searchedAway(said.args, (found) => {
+        this.say('sync-part', { id: said.id, to: said.from, value: found })
+      })
+    }
     if (said.what === 'forget') {
       await this.forget(args.root ?? '')
       this.sayRows()
@@ -1479,8 +1510,16 @@ class Runner {
       async (path) => (await this.ask('fetch-away', { path })) === true,
     )
     keptAway.answeredBy(new Map(), async (root, query, terms, limit, onFound, excluded) => {
-      const found = await this.ask('search-away', { root, query, terms, limit, excluded })
-      if (Array.isArray(found)) for (const one of found) onFound(one as Found)
+      let told = 0
+      const found = await this.ask(
+        'search-away',
+        { root, query, terms, limit, excluded },
+        (one) => {
+          told += 1
+          onFound(one as Found)
+        },
+      )
+      if (Array.isArray(found)) for (const one of found.slice(told)) onFound(one as Found)
     })
     if (back.length || files.length !== had) this.treeStale()
     for (const path of back) void workspace.arrived(path)
@@ -1695,7 +1734,7 @@ const SENDING_ROUNDS = 4
 
 const SETTLING = 1_500
 
-async function searchedAway(args: unknown): Promise<Found[]> {
+async function searchedAway(args: unknown, part: (found: Found) => void): Promise<Found[]> {
   const asked = (args ?? {}) as {
     root?: string
     query?: Query
@@ -1710,7 +1749,10 @@ async function searchedAway(args: unknown): Promise<Found[]> {
     asked.query,
     asked.terms ?? [],
     asked.limit ?? 0,
-    (one) => found.push(one),
+    (one) => {
+      found.push(one)
+      part(one)
+    },
     asked.excluded ?? [],
   )
   return found
