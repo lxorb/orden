@@ -130,6 +130,34 @@ describe('a browser that keeps only the words it uses', () => {
     ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
   })
 
+  test('fetches every note it keeps none of under a folder in one ask', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const other = await fresh(account, 'o', { lazy: false })
+    await other.engine.pass(SPACE)
+    await other.disk.mkdir(`${ROOT}/F`)
+    await other.engine.created(`${ROOT}/F`, true)
+    for (const name of ['a.md', 'b.md', 'c.md']) {
+      await other.disk.write(`${ROOT}/F/${name}`, `# ${name}\n`)
+      await other.engine.created(`${ROOT}/F/${name}`, false, `# ${name}\n`)
+    }
+    await other.engine.pass(SPACE)
+
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    const before = browser.routes.filter((one) => one === 'pull').length
+    expect(await browser.engine.fetch(`${ROOT}/F`)).toBe(true)
+
+    expect(browser.routes.filter((one) => one === 'pull').length - before).toBe(1)
+    expect(browser.disk.files.get(`${ROOT}/F/b.md`)).toBe('# b.md\n')
+    expect(
+      browser.engine
+        .awayFiles()
+        .map((one) => one.path)
+        .sort(),
+    ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
+    expect(await browser.engine.fetch(`${ROOT}/Nothing`)).toBe(false)
+  })
+
   test('puts what it makes in a folder it keeps no words of into that folder, not a new one of its name', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const other = await fresh(account, 'o', { lazy: false })

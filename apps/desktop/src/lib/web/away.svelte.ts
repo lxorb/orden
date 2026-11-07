@@ -89,6 +89,26 @@ class KeptAway {
     void this.bringBack(path)
   }
 
+  async bringBackUnder(path: string): Promise<boolean> {
+    const base = normalise(path)
+    const paths = this.under(base).map((one) => normalise(one.path))
+    if (!paths.length) return true
+    if (!this.fetch) return false
+    for (const one of paths) this.fetching.add(one)
+    try {
+      const here = await this.fetch(base)
+      this.offline = !here
+      const brought = new Set(paths)
+      if (here) this.files = new Map([...this.files].filter(([one]) => !brought.has(one)))
+      return here
+    } catch {
+      this.offline = true
+      return false
+    } finally {
+      for (const one of paths) this.fetching.delete(one)
+    }
+  }
+
   async bringBack(path: string): Promise<boolean> {
     const at = normalise(path)
     if (!this.files.has(at) || !this.fetch) return false

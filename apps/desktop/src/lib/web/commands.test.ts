@@ -1309,16 +1309,31 @@ describe('reading a whole space for the link index', () => {
 })
 
 describe('a note kept away', () => {
-  function away(offline = { yes: false }) {
+  function away(offline = { yes: false }, paths = ['/Notes/Plan.md']) {
     const asked: string[] = []
-    keptAway.keep([{ id: 'n1', path: '/Notes/Plan.md', size: 12, modified: 5 }], (path) => {
-      asked.push(path)
-      if (offline.yes) return Promise.resolve(false)
-      disk.files.set(path, { path, content: 'Ship Monday', created: 5, modified: 5 })
-      return Promise.resolve(true)
-    })
+    keptAway.keep(
+      paths.map((path, at) => ({ id: `n${String(at + 1)}`, path, size: 12, modified: 5 })),
+      (path) => {
+        asked.push(path)
+        if (offline.yes) return Promise.resolve(false)
+        for (const one of paths.filter((each) => each === path || each.startsWith(`${path}/`))) {
+          disk.files.set(one, { path: one, content: 'Ship Monday', created: 5, modified: 5 })
+        }
+        return Promise.resolve(true)
+      },
+    )
     return asked
   }
+
+  test('of a folder are fetched together, in one ask, before the folder goes to Recently deleted', async () => {
+    const asked = away({ yes: false }, ['/Notes/Plan.md', '/Notes/Deep/Idea.md', '/Other/x.md'])
+    const entry = await webInvoke<{ id: string }>('trash_item', { path: '/Notes', kind: 'folder' })
+    expect(asked).toEqual(['/Notes'])
+    expect(keptAway.under('/Notes')).toEqual([])
+    expect(keptAway.at('/Other/x.md')).not.toBeNull()
+    await webInvoke('restore_trash', { id: entry.id })
+    expect(disk.files.get('/Notes/Deep/Idea.md')?.content).toBe('Ship Monday')
+  })
 
   test('is listed with its cloud, and counts as there', async () => {
     await write('/Notes/Idea.md', 'idea')
