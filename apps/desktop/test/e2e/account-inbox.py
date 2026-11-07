@@ -78,6 +78,10 @@ def opened(browser, name: str, missing: bool = False) -> Page:
     page = context.new_page()
     page.set_default_timeout(20000)
     page.on("pageerror", lambda error: wrong(f"[{name}] page error: {error}"))
+    page.on(
+        "console",
+        lambda one: wrong(f"[{name}] {one.text}") if "of the account inbox" in one.text else None,
+    )
     page.asked = []  # type: ignore[attr-defined]
     page.on(
         "request",
@@ -195,6 +199,11 @@ def main() -> int:
         same(desk, phone, "after both joined")
         once(desk, "desk")
 
+        phone.evaluate(TICK, "Desk before signing in")
+        holds(desk, "desk", "x Desk before signing in")
+        phone.evaluate("() => window.ordenApp.workspace.undoFileAction()")
+        holds(phone, "phone", "  Desk before signing in")
+        holds(desk, "desk", "  Desk before signing in")
         phone.evaluate(TICK, "Desk before signing in")
         holds(desk, "desk", "x Desk before signing in")
         add(desk, "Desk at once")

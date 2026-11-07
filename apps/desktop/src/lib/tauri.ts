@@ -1,3 +1,4 @@
+import { isAccountInbox } from '@orden/bases/inbox'
 import { assetRoute, assetStorePath } from './web/asset-route'
 
 const PHONES = new Set<string>(['android', 'ios'])
@@ -33,14 +34,16 @@ export const internal: {
   routed: ((command: string, args?: Record<string, unknown>) => boolean) | null
   file: ((path: string) => string | null) | null
   flush: (() => Promise<void>) | null
-  answered: ((command: string, args?: Record<string, unknown>) => Promise<unknown> | null) | null
-} = { routed: null, file: null, flush: null, answered: null }
+} = { routed: null, file: null, flush: null }
 
 const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
 
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
-  const answer = internal.answered?.(command, args)
-  if (answer) return answer as Promise<T>
+  const path = args?.path
+  if (typeof path === 'string' && isAccountInbox(path)) {
+    console.warn(`${command} was asked of the account inbox, which is no file`)
+    throw new Error('the account inbox is kept by the account, not in a file')
+  }
   if (!isNative) {
     const { webInvoke } = await import('./web/commands')
     return webInvoke<T>(command, args)

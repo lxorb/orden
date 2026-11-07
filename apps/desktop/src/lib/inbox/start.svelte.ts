@@ -1,40 +1,14 @@
-import { ACCOUNT_INBOX, isAccountInbox } from '@orden/bases/inbox'
+import { ACCOUNT_INBOX } from '@orden/bases/inbox'
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { links } from '../link-index.svelte'
 import { homeRoot } from '../rows/home.svelte'
 import { insideSpace } from '../space-paths'
-import { internal } from '../tauri'
 import { keep, storedText } from '../stored'
 import { accountInbox } from './account.svelte'
 import { inboxServer } from './server'
 
 const LOOK_AGAIN = 60_000
-
-const refused = () => Promise.reject(new Error('the inbox is kept by the account, not in a file'))
-
-internal.answered = (command, args) => {
-  const path = args?.path
-  if (typeof path !== 'string' || !isAccountInbox(path)) return null
-  switch (command) {
-    case 'read_note':
-      return accountInbox.text()
-    case 'write_note':
-      return accountInbox
-        .write(typeof args?.content === 'string' ? args.content : '')
-        .then(() => null)
-    case 'file_stamp':
-      return accountInbox.stamp()
-    case 'path_exists':
-    case 'file_there':
-      return Promise.resolve(true)
-    case 'snapshot_note':
-    case 'let_go_note':
-      return Promise.resolve(null)
-    default:
-      return refused()
-  }
-}
 
 const DEVICE = 'orden:inbox-device'
 

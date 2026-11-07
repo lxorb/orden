@@ -26,7 +26,6 @@ export class AccountInbox {
   private exchanging: Promise<boolean> | null = null
   private again = false
   private channel: BroadcastChannel | null = null
-  private changedAt = 0
   private readonly listeners: (() => void)[] = []
   private began: () => void = () => undefined
   private readonly started = new Promise<void>((begin) => {
@@ -97,7 +96,6 @@ export class AccountInbox {
   }
 
   private told(): void {
-    this.changedAt = Date.now()
     this.changes += 1
     for (const listener of [...this.listeners]) listener()
   }
@@ -122,11 +120,6 @@ export class AccountInbox {
 
   async text(): Promise<string> {
     return (await this.ready()).text()
-  }
-
-  async stamp(): Promise<{ modified: number; len: number }> {
-    const text = await this.text()
-    return { modified: this.changedAt, len: text.length }
   }
 
   private wrote(): void {
