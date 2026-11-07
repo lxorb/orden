@@ -518,6 +518,41 @@ describe('a long paragraph', () => {
     expect(long.took / short.took).toBeLessThan(9)
   })
 
+  test('repeating what opens a link or emphasis parses in time that grows with its length', () => {
+    const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
+      .parser
+    const timed = (unit: string, length: number) => {
+      const doc = `${unit.repeat(Math.ceil(length / unit.length))}\n`
+      let least = Infinity
+      for (let round = 0; round < 2; round++) {
+        const start = performance.now()
+        parser.parse(doc)
+        least = Math.min(least, performance.now() - start)
+      }
+      return least
+    }
+    for (const unit of ['[a](', '![a](', '[a](x (', '*[a', '_[a', '*a_ [b ', '==a ', '%%a ']) {
+      timed(unit, 4_000)
+      expect(timed(unit, 64_000) / timed(unit, 16_000), unit).toBeLessThan(9)
+    }
+  })
+
+  test('reads a link and emphasis that close as before', () => {
+    expect(
+      tree('[a](b(c)) [d](e (f)) *g [h](i)* **j**').match(/(URL|LinkTitle|\w*Emphasis) ".*"/g),
+    ).toEqual([
+      'URL "b(c)"',
+      'URL "e"',
+      'LinkTitle "(f)"',
+      'Emphasis "*g [h](i)*"',
+      'URL "i"',
+      'StrongEmphasis "**j**"',
+    ])
+    expect(tree('[a](b (c(d)))')).not.toContain('LinkTitle')
+    expect(tree(`[a](${'('.repeat(33)}b${')'.repeat(33)})`)).not.toContain('URL')
+    expect(tree(`[a](${'('.repeat(32)}b${')'.repeat(32)})`)).toContain('URL')
+  })
+
   test('still ends an address at the bracket of the link it is in', () => {
     expect(tree('[a [b](c) www.example.com] and [see www.example.com]').match(/URL ".*"/g)).toEqual(
       ['URL "c"', 'URL "www.example.com"', 'URL "www.example.com"'],

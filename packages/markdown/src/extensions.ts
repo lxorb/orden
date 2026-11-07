@@ -254,7 +254,8 @@ export const definitionLists: MarkedExtension = {
 const DEFINITION = /\*\[[^\]\n]+\]:/y
 
 function definition(src: string, at: number): number | null {
-  return matchesAt(DEFINITION, src, at) ? at : null
+  const line = lineStart(src, at, { orString: true })
+  return line !== null && matchesAt(DEFINITION, src, at) ? line : null
 }
 
 export const abbreviations: MarkedExtension = {

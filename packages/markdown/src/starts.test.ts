@@ -131,6 +131,10 @@ describe('a mark in the middle of a sentence leaves the sentence alone', () => {
     expect(html).toBe('<p>Text with <em><a href="https://x">a link</a></em> in it.</p>\n')
   })
 
+  test('a definition that is not on a line of its own', () => {
+    expect(renderMarkdown('Text with *[HTML]: in it.\n')).toBe('<p>Text with *[HTML]: in it.</p>\n')
+  })
+
   test('an embed that is not on a line of its own', () => {
     const html = renderMarkdown('Text with ![[Note]] in it.\n', {
       resolveEmbed: () => '# Note\n\nwords\n',
@@ -189,6 +193,8 @@ describe('a paragraph of many breaks', () => {
     quick('!a '.repeat(66_000))
     quick('[[a '.repeat(25_000))
     quick('==a '.repeat(25_000))
+    quick('*[a '.repeat(25_000))
+    quick('[^a '.repeat(25_000))
     expect(quick('!#a '.repeat(25_000))).not.toContain('class="tag"')
   })
 
