@@ -9,6 +9,7 @@ import {
   isOnView,
   lookingAt,
   NEAREST,
+  overlooking,
   pinched,
   showing,
   toCanvas,
@@ -140,4 +141,56 @@ test('fingers handed over in few, large turns are followed smoothly, frame by fr
     const leap = Math.abs(Math.log(aimed(0.5, turn).zoom / 0.5))
     expect(sharpest).toBeLessThan(leap * 0.5)
   }
+})
+
+test('opens further out than the space alone, never as far as everything, and never too small to read', () => {
+  const room = { x: 56, y: 88, w: 1200, h: 700 }
+  const here = { x: 0, y: 0, w: 1200, h: 700 }
+  const whole = { x: -3600, y: -2100, w: 8400, h: 4900 }
+  const alone = lookingAt(here, room).zoom
+  const everything = lookingAt(whole, room).zoom
+  const camera = overlooking(here, whole, room, 500)
+  expect(camera.zoom).toBeLessThan(alone)
+  expect(camera.zoom).toBeGreaterThan(everything)
+  expect(camera.zoom * 500).toBeGreaterThanOrEqual(239.999)
+  const centre = toCanvas(camera, { x: room.x + room.w / 2, y: room.y + room.h / 2 })
+  expect(centre.x).toBeCloseTo(600)
+  expect(centre.y).toBeCloseTo(350)
+})
+
+test('more spaces open further out, a bigger window nearer to what it holds', () => {
+  const room = { x: 0, y: 0, w: 1200, h: 700 }
+  const here = { x: 0, y: 0, w: 1200, h: 700 }
+  const few = overlooking(here, { x: 0, y: 0, w: 2600, h: 700 }, room, 1000)
+  const many = overlooking(here, { x: -2400, y: -1400, w: 6000, h: 3500 }, room, 1000)
+  expect(many.zoom).toBeLessThan(few.zoom)
+  const wide = overlooking(
+    here,
+    { x: 0, y: 0, w: 2600, h: 700 },
+    { ...room, w: 2400, h: 1400 },
+    1000,
+  )
+  expect(wide.zoom).toBeGreaterThan(few.zoom)
+})
+
+test('one space alone opens on it, and what fits is shown whole, not off to one side', () => {
+  const room = { x: 0, y: 0, w: 1200, h: 700 }
+  const here = { x: 100, y: 50, w: 600, h: 350 }
+  expect(overlooking(here, here, room, 300)).toEqual(lookingAt(here, room))
+  const whole = { x: 100, y: 50, w: 1100, h: 350 }
+  const camera = overlooking(here, whole, room, 1000)
+  const left = whole.x * camera.zoom + camera.x
+  const right = (whole.x + whole.w) * camera.zoom + camera.x
+  expect(left).toBeGreaterThanOrEqual(-0.001)
+  expect(right).toBeLessThanOrEqual(room.w + 0.001)
+  expect(left).toBeCloseTo(room.w - right)
+})
+
+test('opening at the edge of everything shows no empty side', () => {
+  const room = { x: 0, y: 0, w: 1000, h: 600 }
+  const here = { x: 0, y: 0, w: 1000, h: 600 }
+  const whole = { x: 0, y: 0, w: 9000, h: 600 }
+  const camera = overlooking(here, whole, room, 300)
+  expect(camera.x).toBeCloseTo(0)
+  expect(isOnView(camera, here, room)).toBe(true)
 })

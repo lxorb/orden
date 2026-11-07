@@ -20,6 +20,7 @@
     eased,
     isOnView,
     lookingAt,
+    overlooking,
     pinched,
     type Point,
     showing,
@@ -97,6 +98,7 @@
   )
 
   let camera = $state<Camera>({ x: 0, y: 0, zoom: 1 })
+  let unmoved = false
 
   function lookAtSpace() {
     placeNew([spaceKey])
@@ -104,7 +106,12 @@
     camera = lookingAt(place, screenRoom)
     const cell = cellBoxes.find((one) => one.key === spaceKey)
     if (!all || !cell) return
-    camera = lookingAt(wholeOf([cell]), screenRoom)
+    camera = overlooking(wholeOf([cell]), wholeOf(cellBoxes), screenRoom, windowWide())
+  }
+
+  function windowWide(): number {
+    const wide = resting.map((one) => one.w).sort((a, b) => a - b)
+    return wide[Math.floor(wide.length / 2)] ?? screenRoom.w * WIDEST
   }
 
   function wholeOf(cells: readonly Cell[]): Box {
@@ -224,6 +231,7 @@
   }
 
   function handTakes() {
+    unmoved = false
     flyGoal = null
     cancelAnimationFrame(flyFrame)
     flyFrame = 0
@@ -266,6 +274,7 @@
       placeNew(keys)
       for (const key of keys) places.place(key, { w: screenRoom.w, h: screenRoom.h })
       apartAll()
+      if (unmoved && shown && out) lookAtSpace()
     })
   })
 
@@ -868,11 +877,15 @@
       void holding?.finally(() => (stood = true))
       measure()
       lookAtSpace()
+      unmoved = true
       const kept = places.camera
       const front =
         slots.find((one) => one.id === workspace.activeTabId) ??
         cellBoxes.find((one) => one.key === spaceKey)?.box
-      if (kept && (!front || isOnView(kept, front, screenRoom))) camera = kept
+      if (kept && (!front || isOnView(kept, front, screenRoom))) {
+        camera = kept
+        unmoved = false
+      }
       panesAsWindows.clear()
       riders.clear()
       const asWindows: Record<string, true> = {}
@@ -1342,6 +1355,7 @@
     if (!next) return
     event.preventDefault()
     at = next.tab.id
+    unmoved = false
     camera = showing(camera, next.slot, screenRoom)
     elements.get(next.tab.id)?.window.focus({ preventScroll: true })
   }
