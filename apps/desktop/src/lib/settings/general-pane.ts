@@ -462,7 +462,7 @@ export function generalPane(): Pane {
                     'Every tab but the one in front shows only its icon; pointing at one shows its name.',
                   ),
                   words: ['icon', 'compact', 'pinned', 'title', 'tabs'],
-                  initial: true,
+                  initial: false,
                   get: () => iconTabs.on,
                   set: (on) => iconTabs.set(on),
                 },

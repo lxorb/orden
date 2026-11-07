@@ -50,6 +50,7 @@ Element.prototype.scrollIntoView = () => undefined
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { iconTabs } = await import('../../src/lib/tab-strip/icon-tabs.svelte')
+const untouched = iconTabs.on
 const { OPENED_LEAST, WIDTH } = await import('../../src/lib/tab-strip/layout')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default
 await import('../../src/lib/tab-strip/closing.svelte')
@@ -96,6 +97,10 @@ function point(id: string, how: 'pointerenter' | 'pointerleave') {
   box(id)?.dispatchEvent(event)
   flushSync()
 }
+
+test('off until someone turns it on', () => {
+  expect(untouched).toBe(false)
+})
 
 test('every tab but the one in front is its mark alone, the name kept for a screen reader', async () => {
   const [front, ...rest] = await strip()
