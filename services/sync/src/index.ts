@@ -63,6 +63,7 @@ import { recheckDomains } from './spaces/proof'
 import { expireRequests, sharedWithMe } from './spaces/share'
 import { themes } from './themes'
 import { time } from './time'
+import { inbox } from './inbox'
 import { pad } from './pad'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
@@ -250,6 +251,8 @@ app.route('/v2/admin', syncAdmin)
 app.route('/v2/push', push)
 
 app.route('/v2/time', time)
+
+app.route('/v2/inbox', inbox)
 
 app.route('/v2/pad', pad)
 

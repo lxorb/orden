@@ -114,6 +114,8 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['push_reminders', 'delete from push_reminders where user_id = ?1'],
   ['time_entries', 'delete from time_entries where user_id = ?1'],
   ['time_cursor', 'delete from time_cursor where user_id = ?1'],
+  ['inbox_items', 'delete from inbox_items where user_id = ?1'],
+  ['inbox_cursor', 'delete from inbox_cursor where user_id = ?1'],
   ['pad_updates', 'delete from pad_updates where user_id = ?1'],
   [
     'machine_events',
