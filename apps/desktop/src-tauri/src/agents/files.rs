@@ -642,27 +642,45 @@ fn searched(relative: &str, file: &FileEntry, glob: Option<&str>, text: Option<&
 }
 
 fn globbed(glob: &[u8], name: &[u8]) -> bool {
-    match (glob.first(), name.first()) {
+    matched(glob, name, (0, 0), &mut std::collections::HashSet::new())
+}
+
+fn matched(
+    glob: &[u8],
+    name: &[u8],
+    (g, n): (usize, usize),
+    failed: &mut std::collections::HashSet<(usize, usize)>,
+) -> bool {
+    if failed.contains(&(g, n)) {
+        return false;
+    }
+    let found = match (glob.get(g), name.get(n)) {
         (None, None) => true,
-        (Some(b'*'), _) if glob.get(1) == Some(&b'*') => {
-            let rest = glob.get(2..).unwrap_or_default();
-            let rest = rest.strip_prefix(b"/").unwrap_or(rest);
-            (0..=name.len()).any(|at| globbed(rest, &name[at..]))
+        (Some(b'*'), _) if glob.get(g + 1) == Some(&b'*') => {
+            let rest = if glob.get(g + 2) == Some(&b'/') {
+                g + 3
+            } else {
+                g + 2
+            };
+            (n..=name.len()).any(|at| matched(glob, name, (rest, at), failed))
         }
         (Some(b'*'), _) => {
-            let rest = &glob[1..];
-            let run = name
+            let run = name[n..]
                 .iter()
                 .position(|one| *one == b'/')
-                .unwrap_or(name.len());
-            (0..=run).any(|at| globbed(rest, &name[at..]))
+                .map_or(name.len(), |at| n + at);
+            (n..=run).any(|at| matched(glob, name, (g + 1, at), failed))
         }
-        (Some(b'?'), Some(one)) if *one != b'/' => globbed(&glob[1..], &name[1..]),
+        (Some(b'?'), Some(one)) if *one != b'/' => matched(glob, name, (g + 1, n + 1), failed),
         (Some(want), Some(one)) if want.eq_ignore_ascii_case(one) => {
-            globbed(&glob[1..], &name[1..])
+            matched(glob, name, (g + 1, n + 1), failed)
         }
         _ => false,
+    };
+    if !found {
+        failed.insert((g, n));
     }
+    found
 }
 
 #[cfg(test)]
@@ -680,6 +698,11 @@ mod tests {
         assert!(globbed(b"src/**/mod.rs", b"src/agents/mod.rs"));
         assert!(!globbed(b"src/*/mod.rs", b"src/a/b/mod.rs"));
         assert!(globbed(b"README*", b"readme.md"));
+        let started = std::time::Instant::now();
+        let many = "a".repeat(200);
+        assert!(!globbed(b"*a*a*a*a*a*a*a*a*a*a*a*a*b", many.as_bytes()));
+        assert!(!globbed(b"**a**a**a**a**a**a**a**a**b", many.as_bytes()));
+        assert!(started.elapsed() < std::time::Duration::from_secs(1));
     }
 
     fn temp() -> PathBuf {
