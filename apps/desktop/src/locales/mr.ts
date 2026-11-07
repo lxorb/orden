@@ -3492,9 +3492,7 @@ export const mr: Dictionary = {
   'You said': 'तुम्ही सांगितलेले',
   Privacy: 'गोपनीयता',
   'Send crash and freeze reports': 'क्रॅश आणि अडकण्याचे अहवाल पाठवा',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden क्रॅश झाल्यावर किंवा अडकल्यावर, ते काय करत होते आणि स्वतःच्या कोडमध्ये कुठे होते हे नावे, पथ, पत्ते आणि पासवर्ड काढून पाठवते. तुमच्या नोट्स कधीच नाहीत.',
-  'Turn off in Settings': 'सेटिंग्जमध्ये बंद करा',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden क्रॅश किंवा अडकल्यावर काय करत होते ते पाठवते; नोट्स, नावे, पथ किंवा पासवर्ड कधीच नाही.',
+  'Send crash reports to help improve Orden': 'Orden सुधारण्यास मदत करण्यासाठी क्रॅश अहवाल पाठवा',
 }

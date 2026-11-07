@@ -3561,9 +3561,8 @@ export const fil: Dictionary = {
   'You said': 'Sinabi mo',
   Privacy: 'Privacy',
   'Send crash and freeze reports': 'Magpadala ng ulat ng pag-crash at pag-freeze',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Kapag nag-crash o nag-freeze ang Orden, ipinapadala nito kung ano ang ginagawa nito at kung saan sa sarili nitong code, nang walang mga pangalan, path, address at password. Hindi kailanman ang iyong mga tala.',
-  'Turn off in Settings': 'I-off sa Settings',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Ipinapadala kung ano ang ginagawa ng Orden nang mag-crash o mag-freeze; hindi kailanman tala, pangalan, path o password.',
+  'Send crash reports to help improve Orden':
+    'Magpadala ng mga ulat ng pag-crash para makatulong na mapabuti ang Orden',
 }

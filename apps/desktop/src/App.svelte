@@ -76,8 +76,8 @@
     undoToastNotice,
     keysMovedNotice,
     outsideNotice,
-    crashNotice,
-    CRASHES_TOLD,
+    crashAsk,
+    crashAskDue,
     OUTSIDE,
   } from './lib/surfaces.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
@@ -120,8 +120,8 @@
 
   if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE) !== null) void outsideNotice.ask()
 
-  if (isDesktop && !__EVEN_PLUGIN__ && storedText(CRASHES_TOLD) === null) {
-    setTimeout(() => void crashNotice.ask(), 5000)
+  if (isDesktop && !__EVEN_PLUGIN__ && crashAskDue()) {
+    void startup.turn('rooms').then(() => crashAsk.ask())
   }
 
   $effect(() => {
@@ -945,11 +945,6 @@
         <OutsideFolder />
       {/await}
     {/if}
-    {#if crashNotice.asked}
-      {#await crashNotice.asked then CrashNotice}
-        <CrashNotice />
-      {/await}
-    {/if}
     {#if renamed.showing && renameNotice.asked}
       {#await renameNotice.asked then RenameNotice}
         <RenameNotice />
@@ -1059,6 +1054,11 @@
 {#if quickSheet.asked}
   {#await quickSheet.asked then QuickQuestion}
     <QuickQuestion />
+  {/await}
+{/if}
+{#if crashAsk.asked}
+  {#await crashAsk.asked then CrashAsk}
+    <CrashAsk />
   {/await}
 {/if}
 {#if promptSheet.asked}

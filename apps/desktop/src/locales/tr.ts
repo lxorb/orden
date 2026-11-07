@@ -3514,9 +3514,8 @@ export const tr: Dictionary = {
   'You said': 'Belirttiğiniz',
   Privacy: 'Gizlilik',
   'Send crash and freeze reports': 'Çökme ve donma raporları gönder',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden çöktüğünde ya da donduğunda, ne yaptığını ve kendi kodunun neresinde olduğunu adlar, yollar, adresler ve parolalar çıkarılmış olarak gönderir. Notlarınızı asla göndermez.',
-  'Turn off in Settings': 'Ayarlar’dan kapat',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden çöktüğünde ya da donduğunda ne yaptığını gönderir; asla not, ad, yol veya parola göndermez.',
+  'Send crash reports to help improve Orden':
+    'Orden’ı geliştirmeye yardımcı olmak için çökme raporları gönder',
 }

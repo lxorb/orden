@@ -3535,9 +3535,8 @@ export const sw: Dictionary = {
   'You said': 'Ulichosema',
   Privacy: 'Faragha',
   'Send crash and freeze reports': 'Tuma ripoti za kuharibika na kukwama',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ikiharibika au kukwama, hutuma ilichokuwa ikifanya na mahali ilipokuwa katika msimbo wake, bila majina, njia, anwani na manenosiri. Kamwe si madokezo yako.',
-  'Turn off in Settings': 'Zima katika Mipangilio',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Hutuma Orden ilichokuwa ikifanya ilipoharibika au kukwama; kamwe si madokezo, majina, njia au manenosiri.',
+  'Send crash reports to help improve Orden':
+    'Tuma ripoti za kuharibika ili kusaidia kuboresha Orden',
 }

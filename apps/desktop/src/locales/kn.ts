@@ -3530,9 +3530,8 @@ export const kn: Dictionary = {
   'You said': 'ನೀವು ಹೇಳಿದ್ದು',
   Privacy: 'ಗೌಪ್ಯತೆ',
   'Send crash and freeze reports': 'ಕ್ರ್ಯಾಶ್ ಮತ್ತು ಸ್ಥಗಿತ ವರದಿಗಳನ್ನು ಕಳುಹಿಸಿ',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ಕ್ರ್ಯಾಶ್ ಆದಾಗ ಅಥವಾ ಸ್ಥಗಿತಗೊಂಡಾಗ, ಅದು ಏನು ಮಾಡುತ್ತಿತ್ತು ಮತ್ತು ತನ್ನದೇ ಕೋಡ್‌ನಲ್ಲಿ ಎಲ್ಲಿತ್ತು ಎಂಬುದನ್ನು ಹೆಸರುಗಳು, ಪಥಗಳು, ವಿಳಾಸಗಳು ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್‌ಗಳನ್ನು ತೆಗೆದು ಕಳುಹಿಸುತ್ತದೆ. ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಎಂದಿಗೂ ಇಲ್ಲ.',
-  'Turn off in Settings': 'ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಆಫ್ ಮಾಡಿ',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ಕ್ರ್ಯಾಶ್ ಅಥವಾ ಸ್ಥಗಿತಗೊಂಡಾಗ ಏನು ಮಾಡುತ್ತಿತ್ತು ಎಂಬುದನ್ನು ಕಳುಹಿಸುತ್ತದೆ; ಟಿಪ್ಪಣಿಗಳು, ಹೆಸರುಗಳು, ಪಥಗಳು ಅಥವಾ ಪಾಸ್‌ವರ್ಡ್‌ಗಳನ್ನು ಎಂದಿಗೂ ಇಲ್ಲ.',
+  'Send crash reports to help improve Orden':
+    'Orden ಅನ್ನು ಸುಧಾರಿಸಲು ನೆರವಾಗಲು ಕ್ರ್ಯಾಶ್ ವರದಿಗಳನ್ನು ಕಳುಹಿಸಿ',
 }

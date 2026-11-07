@@ -3423,9 +3423,8 @@ export const my: Dictionary = {
   'You said': 'သင်ပြောထားသည်',
   Privacy: 'ကိုယ်ရေးလုံခြုံမှု',
   'Send crash and freeze reports': 'ပျက်ကျမှုနှင့် ရပ်တန့်မှု အစီရင်ခံစာများ ပို့ရန်',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ပျက်ကျ သို့မဟုတ် ရပ်တန့်သွားသောအခါ ၎င်းဘာလုပ်နေသည်နှင့် ၎င်း၏ကုဒ်ထဲ ဘယ်နေရာတွင်ရှိသည်ကို အမည်များ၊ လမ်းကြောင်းများ၊ လိပ်စာများနှင့် စကားဝှက်များ ဖယ်ရှားပြီး ပို့သည်။ သင့်မှတ်စုများကို ဘယ်တော့မှ မပို့ပါ။',
-  'Turn off in Settings': 'ဆက်တင်များတွင် ပိတ်ရန်',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ပျက်ကျ သို့မဟုတ် ရပ်တန့်ချိန်တွင် ဘာလုပ်နေသည်ကို ပို့သည်၊ မှတ်စု၊ အမည်၊ လမ်းကြောင်း သို့မဟုတ် စကားဝှက်များကို ဘယ်တော့မှ မပို့ပါ။',
+  'Send crash reports to help improve Orden':
+    'Orden ကို ပိုကောင်းအောင် ကူညီရန် ပျက်ကျမှု အစီရင်ခံစာများ ပို့ရန်',
 }

@@ -3408,9 +3408,7 @@ export const ja: Dictionary = {
   'You said': '自己申告',
   Privacy: 'プライバシー',
   'Send crash and freeze reports': 'クラッシュとフリーズのレポートを送信',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden がクラッシュまたはフリーズしたとき、何をしていて自身のコードのどこにいたかを、名前、パス、アドレス、パスワードを除いて送信します。メモは決して送りません。',
-  'Turn off in Settings': '設定でオフにする',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'クラッシュやフリーズ時に Orden が何をしていたかを送信します。メモ、名前、パス、パスワードは送りません。',
+  'Send crash reports to help improve Orden': 'クラッシュレポートを送信して Orden の改善に協力する',
 }

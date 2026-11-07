@@ -3389,9 +3389,7 @@ export const ko: Dictionary = {
   'You said': '직접 입력',
   Privacy: '개인 정보',
   'Send crash and freeze reports': '충돌 및 멈춤 보고서 보내기',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden이 충돌하거나 멈추면, 무엇을 하고 있었는지와 자체 코드의 어디에 있었는지를 이름, 경로, 주소, 비밀번호를 뺀 채 보냅니다. 메모는 절대 보내지 않습니다.',
-  'Turn off in Settings': '설정에서 끄기',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden이 충돌하거나 멈췄을 때 하던 일을 보냅니다. 메모, 이름, 경로, 비밀번호는 보내지 않습니다.',
+  'Send crash reports to help improve Orden': '충돌 보고서를 보내 Orden 개선에 도움 주기',
 }
