@@ -124,8 +124,8 @@ export type Effect =
   | { do: 'pull'; tool: PutTool; from: Point; to: Point }
   | { do: 'place'; tool: PutTool; at: Point }
   | { do: 'stroke'; stroke: PendingStroke }
-  | { do: 'rub'; at: Point; reach: number }
-  | { do: 'cut'; at: Point; reach: number }
+  | { do: 'rub'; ats: Point[]; reach: number }
+  | { do: 'cut'; ats: Point[]; reach: number }
   | { do: 'catch'; lasso: Point[]; cards?: boolean }
   | { do: 'unmenu' }
   | { do: 'ink'; dx: number; dy: number; scale: number; turn: number; about: Point }
@@ -228,8 +228,8 @@ function rubbing(context: Context, shift: boolean, touch: boolean) {
   return { whole, reach: (whole ? stroke : context.eraser.size) / context.scale }
 }
 
-function rubbed(rub: { whole: boolean; reach: number }, at: Point): Effect {
-  return { do: rub.whole ? 'rub' : 'cut', at, reach: rub.reach }
+function rubbed(rub: { whole: boolean; reach: number }, ats: Point[]): Effect[] {
+  return ats.length ? [{ do: rub.whole ? 'rub' : 'cut', ats, reach: rub.reach }] : []
 }
 
 function rubbingOut(held: Machine, input: Down, context: Context): Step {
@@ -246,7 +246,7 @@ function rubbingOut(held: Machine, input: Down, context: Context): Step {
         lastScreen: input.screen,
       },
     },
-    effects: [rubbed(rub, input.at)],
+    effects: rubbed(rub, [input.at]),
   }
 }
 
@@ -765,12 +765,10 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
           ...machine,
           gesture: { ...one, last: input.at, lastScreen: input.screen },
         },
-        effects: rubbedBetween(
-          { at: one.last, screen: one.lastScreen },
-          input,
-          context.scale,
-          rub.reach,
-        ).map((at) => rubbed(rub, at)),
+        effects: rubbed(
+          rub,
+          rubbedBetween({ at: one.last, screen: one.lastScreen }, input, context.scale, rub.reach),
+        ),
       }
     }
 
@@ -961,12 +959,15 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       return {
         machine: rest,
         effects: moved
-          ? rubbedBetween(
-              { at: one.last, screen: one.lastScreen },
-              input,
-              context.scale,
-              rub.reach,
-            ).map((at) => rubbed(rub, at))
+          ? rubbed(
+              rub,
+              rubbedBetween(
+                { at: one.last, screen: one.lastScreen },
+                input,
+                context.scale,
+                rub.reach,
+              ),
+            )
           : [],
       }
     }

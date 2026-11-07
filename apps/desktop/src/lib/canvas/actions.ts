@@ -3,7 +3,6 @@ import {
   connected,
   copied,
   coloured,
-  cutInk,
   grouped,
   locking,
   movedBy,
@@ -11,6 +10,7 @@ import {
   placedAt,
   reattached,
   removed,
+  rubbedOut,
   ungrouped,
   withEnds,
   withGroup,
@@ -29,15 +29,7 @@ import {
   type Side,
 } from './format'
 import { bounds, type Box, boxOf, facingSide, GRID, type Point, rectBetween } from './geometry'
-import {
-  cardsInLasso,
-  erased,
-  INK_STYLES,
-  nearStroke,
-  strokeBox,
-  strokesInLasso,
-  tidied,
-} from './ink'
+import { cardsInLasso, INK_STYLES, strokeBox, strokesInLasso, tidied } from './ink'
 import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
@@ -147,17 +139,12 @@ export const run = {
     store.edit({ ...store.canvas, ink: [] })
   },
 
-  rub(store: CanvasStore, at: Point, reach: number, run?: string) {
-    const next = cutInk(store.canvas, (stroke) => (nearStroke(stroke, at, reach) ? [] : [stroke]))
-    store.edit(next, run)
+  rub(store: CanvasStore, ats: readonly Point[], reach: number, run?: string) {
+    store.edit(rubbedOut(store.canvas, ats, reach, true), run)
   },
 
-  cut(store: CanvasStore, at: Point, reach: number, run?: string) {
-    const next = cutInk(store.canvas, (stroke) =>
-      nearStroke(stroke, at, reach) ? erased(stroke, at, reach) : [stroke],
-    )
-
-    store.edit(next, run)
+  cut(store: CanvasStore, ats: readonly Point[], reach: number, run?: string) {
+    store.edit(rubbedOut(store.canvas, ats, reach, false), run)
   },
 
   lasso(store: CanvasStore, points: readonly Point[], partly = false, cards = false) {

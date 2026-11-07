@@ -18,15 +18,22 @@
     turnOf,
   } from './camera'
   import { putWords, toolPressed, wordsAt } from './canvas/actions'
-  import { coloured, copied, movedBy, pickedBox, removed, sized, withText } from './canvas/edits'
+  import {
+    coloured,
+    copied,
+    movedBy,
+    pickedBox,
+    removed,
+    rubbedOut,
+    sized,
+    withText,
+  } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
   import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
   import { hand } from './canvas/hand.svelte'
   import {
     cardsInLasso,
-    erased,
     leadPoint,
-    nearStroke,
     penFelt,
     rubbedBetween,
     strokesInLasso,
@@ -448,7 +455,7 @@
         last: point,
         lastScreen: screenAt(event),
       }
-      rub(point, gesture.run)
+      rub([point], gesture.run)
       return
     }
 
@@ -706,7 +713,7 @@
     if (one.kind === 'erase') {
       const now = { at: point, screen: screenAt(event) }
       const before = { at: one.last, screen: one.lastScreen }
-      for (const at of rubbedBetween(before, now, camera.scale, pens.rub * unit)) rub(at, one.run)
+      rub(rubbedBetween(before, now, camera.scale, pens.rub * unit), one.run)
       gesture = { ...one, last: now.at, lastScreen: now.screen }
       return
     }
@@ -806,23 +813,8 @@
     }
   }
 
-  function rub(at: Point, run: string) {
-    const reach = pens.rub * unit
-    let changed = false
-    const ink: InkStroke[] = []
-
-    for (const stroke of canvas.ink) {
-      const left = nearStroke(stroke, at, reach) ? erased(stroke, at, reach) : [stroke]
-      if (left.length === 1 && left[0] === stroke) {
-        ink.push(stroke)
-        continue
-      }
-
-      changed = true
-      ink.push(...left)
-    }
-
-    if (changed) store.edit({ ...canvas, ink }, run)
+  function rub(ats: readonly Point[], run: string) {
+    store.edit(rubbedOut(canvas, ats, pens.rub * unit, false), run)
   }
 
   function madePage() {
