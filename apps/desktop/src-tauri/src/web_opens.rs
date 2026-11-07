@@ -164,7 +164,7 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 const PRESSED_IN: &str = "orden-pressed";
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 const BLOCKED: &str = "orden-popup-blocked";
 
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
@@ -185,9 +185,11 @@ pub const PAGE_SCRIPT: &str = r"(function () {
         said(active ? 'orden-open-tab' : 'orden-popup-blocked', args[0])
         return null
       }
-      var opened = Reflect.apply(engine, self, args)
-      if (!opened && !active) said('orden-popup-blocked', args[0])
-      return opened
+      if (!active) {
+        said('orden-popup-blocked', args[0])
+        return null
+      }
+      return Reflect.apply(engine, self, args)
     }
   })
 })()";
@@ -264,9 +266,10 @@ pub const SCRIPT: &str = r"(function () {
     if (typeof event.detail === 'string') open(event.detail, 'orden-front')
   })
   addEventListener('orden-popup-blocked', function (event) {
+    if (typeof event.detail !== 'string') return
     var asking = globalThis.ordenAsked
-    if (typeof event.detail === 'string' && typeof asking === 'function')
-      asking(JSON.stringify([event.detail, 'orden-popup-blocked']))
+    if (typeof asking === 'function') asking(JSON.stringify([event.detail, 'orden-popup-blocked']))
+    else open(event.detail, 'orden-popup-blocked')
   })
 
   last('keydown', function (event, stopped) {
@@ -472,6 +475,7 @@ mod heard {
 
     use super::{
         actual, chord, passed, placed, played, sought, taken_as_a_person_s, Heard, Held, Waiting,
+        BLOCKED,
     };
 
     thread_local! {
@@ -494,6 +498,7 @@ mod heard {
             || sought(name).is_some()
             || chord(name).is_some()
             || actual(name)
+            || name == BLOCKED
     }
 
     #[allow(
@@ -543,8 +548,11 @@ mod heard {
         host: HWND,
         name: &str,
         user: bool,
+        uri: &str,
     ) {
-        if let Some(payload) = crate::web_swipe::named(name) {
+        if name == BLOCKED {
+            crate::web_tabs::popup_blocked(app, window, asking, uri);
+        } else if let Some(payload) = crate::web_swipe::named(name) {
             crate::web_swipe::heard(app, window, asking, payload);
         } else if let Some(key) = sought(name) {
             let (since, focused) = typing_here(host);
@@ -611,7 +619,7 @@ mod heard {
                             ..Heard::default()
                         },
                     );
-                    by_name(&app, &window, &asking, host, &name, user.as_bool());
+                    by_name(&app, &window, &asking, host, &name, user.as_bool(), &uri);
                     return Ok(());
                 }
 
@@ -775,6 +783,17 @@ mod tests {
         said: None,
         unasked: true,
     };
+
+    #[test]
+    fn a_page_without_the_reader_s_press_never_reaches_the_engine_s_window_open() {
+        let gate = super::PAGE_SCRIPT.find("if (!active) {").expect("the gate");
+        let engine = super::PAGE_SCRIPT
+            .rfind("Reflect.apply(engine")
+            .expect("the engine");
+        assert!(gate < engine);
+        assert!(super::PAGE_SCRIPT[gate..engine].contains("return null"));
+        assert!(SCRIPT.contains("else open(event.detail, 'orden-popup-blocked')"));
+    }
 
     #[test]
     fn a_storm_of_opens_keeps_each_request_s_own_verdict() {
