@@ -10,7 +10,7 @@ function movedId(id: string, from: string, to: string): string {
   return id
 }
 
-export function movedOrder(base: Base, from: string, to: string): Base | null {
+function movedOrder(base: Base, from: string, to: string): Base | null {
   let changed = false as boolean
   const views = base.views.map((view) => {
     const order = view.nib.order

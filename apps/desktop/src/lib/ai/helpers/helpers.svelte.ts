@@ -9,7 +9,7 @@ export const DEPTH = 2
 export const PER_ROOT = 4
 export const MINUTES = 15
 
-export type HelperState = 'running' | 'done' | 'failed' | 'stopped'
+type HelperState = 'running' | 'done' | 'failed' | 'stopped'
 
 export interface Helper {
   id: string
@@ -26,7 +26,7 @@ export interface Helper {
   started: number
 }
 
-export interface Asked {
+interface Asked {
   parent: Thread | null
   space: string
   prompt: string
@@ -37,7 +37,7 @@ export interface Asked {
   instructions?: string
 }
 
-export interface Roads {
+interface Roads {
   offered(): Promise<Offered[]>
   run(thread: Thread, text: string, signal: AbortSignal): Promise<Ended>
 }

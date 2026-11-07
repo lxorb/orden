@@ -19,7 +19,7 @@ interface Context {
   chips: Mention[]
 }
 
-export interface Said {
+interface Said {
   role: 'you' | 'model'
   text: string
 }

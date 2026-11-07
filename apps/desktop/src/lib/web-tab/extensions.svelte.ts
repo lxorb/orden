@@ -28,7 +28,7 @@ export interface Extension {
   pending: boolean
 }
 
-export interface Asking {
+interface Asking {
   link: string
   name: string
   gaps: Gaps
@@ -61,7 +61,7 @@ export function readExtension(value: unknown): Extension | null {
   }
 }
 
-export function readGaps(value: unknown): Gaps | null {
+function readGaps(value: unknown): Gaps | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
   const words = (field: unknown) =>
@@ -77,7 +77,7 @@ export const GAP_WORDS: Record<string, string> = {
   hiddenTabs: 'Tabs it hides stay in the tab bar.',
 }
 
-export function readDone(
+function readDone(
   value: unknown,
 ): { asks: { name: string; gaps: Gaps } } | { theme: BrowserTheme } | null {
   if (typeof value !== 'object' || value === null) return null
@@ -109,7 +109,7 @@ export interface Popped {
   store: string | null | undefined
 }
 
-export interface PopupRect {
+interface PopupRect {
   x: number
   y: number
   width: number

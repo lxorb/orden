@@ -1,0 +1,83 @@
+diff --git a/dist/typescript/visitors/calls.js b/dist/typescript/visitors/calls.js
+index 503b03739a4520eee763e1340459f3c7b423800e..5301fa4bf2bc282b6456c8d714df1a47e1d7d47e 100644
+--- a/dist/typescript/visitors/calls.js
++++ b/dist/typescript/visitors/calls.js
+@@ -218,7 +218,9 @@ export function handleCallExpression(node, s) {
+         const _import = s.localImportMap.get(name);
+         if (_import?.isNamespace) {
+             const internalImport = s.internal.get(_import.filePath);
+-            if (internalImport)
++            if (internalImport && _import.isDynamicImport)
++                addValue(internalImport.import, OPAQUE, s.filePath);
++            else if (internalImport)
+                 internalImport.refs.add(name);
+         }
+     };
+diff --git a/dist/typescript/visitors/walk.js b/dist/typescript/visitors/walk.js
+index 96398526381d52c9fcd9310f95c3edd3d76488a9..e4ddb33ad60ca21947d92e270afc8feff97e1ee8 100644
+--- a/dist/typescript/visitors/walk.js
++++ b/dist/typescript/visitors/walk.js
+@@ -573,6 +573,52 @@ const coreVisitorObject = {
+         }
+     },
+ };
++const _escapeDynamic = (node) => {
++    if (node?.type !== 'Identifier')
++        return;
++    const _import = state.localImportMap.get(node.name);
++    if (!_import?.isDynamicImport || !_import.isNamespace)
++        return;
++    const internalImport = state.internal.get(_import.filePath);
++    if (internalImport)
++        addValue(internalImport.import, OPAQUE, state.filePath);
++};
++const dynamicEscapeVisitorObject = {
++    ReturnStatement(node) {
++        _escapeDynamic(node.argument);
++    },
++    AssignmentExpression(node) {
++        _escapeDynamic(node.right);
++    },
++    ArrowFunctionExpression(node) {
++        _escapeDynamic(node.body);
++    },
++    Property(node) {
++        _escapeDynamic(node.value);
++    },
++    SpreadElement(node) {
++        _escapeDynamic(node.argument);
++    },
++    ArrayExpression(node) {
++        for (const element of node.elements ?? [])
++            _escapeDynamic(element);
++    },
++    VariableDeclarator(node) {
++        _escapeDynamic(node.init);
++    },
++    ConditionalExpression(node) {
++        _escapeDynamic(node.consequent);
++        _escapeDynamic(node.alternate);
++    },
++    LogicalExpression(node) {
++        _escapeDynamic(node.left);
++        _escapeDynamic(node.right);
++    },
++    NewExpression(node) {
++        for (const arg of node.arguments ?? [])
++            _escapeDynamic(arg);
++    },
++};
+ const localRefsVisitorObject = {
+     ClassDeclaration(node) {
+         if (node.superClass?.type === 'Identifier')
+@@ -803,8 +849,8 @@ export function buildVisitor(pluginVisitorObjects, includeLocalRefs) {
+             handlerLists.set(key, [fn]);
+     }
+     const extras = includeLocalRefs
+-        ? [localRefsVisitorObject, ...pluginVisitorObjects]
+-        : pluginVisitorObjects;
++        ? [dynamicEscapeVisitorObject, localRefsVisitorObject, ...pluginVisitorObjects]
++        : [dynamicEscapeVisitorObject, ...pluginVisitorObjects];
+     for (const obj of extras) {
+         for (const key in obj) {
+             const fn = obj[key];

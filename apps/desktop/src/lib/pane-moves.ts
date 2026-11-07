@@ -9,7 +9,7 @@ export function movePane(toward: Toward): void {
   if (next) keyboardInto(next.id)
 }
 
-export function keyboardInto(paneId: string): void {
+function keyboardInto(paneId: string): void {
   const tab = workspace.showing(paneId)
   if (tab?.kind === 'web' && isDesktop) {
     void invoke('keyboard_back', { tab: tab.id }).catch(() => undefined)

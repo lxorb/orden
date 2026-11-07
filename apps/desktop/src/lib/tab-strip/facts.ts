@@ -1,7 +1,7 @@
 import type { Usage } from '@orden/online/apps'
 import type { Tab } from '../workspace.svelte'
 
-export const EVERY = 1000
+const EVERY = 1000
 
 export function usageLine(usage: Usage, size: (bytes: number) => string): string {
   const parts = [`CPU ${Math.round(usage.cpu)}%`, `RAM ${size(usage.memory)}`]

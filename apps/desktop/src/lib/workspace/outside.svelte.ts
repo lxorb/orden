@@ -110,7 +110,7 @@ export async function heardChange(change: SpaceChange): Promise<void> {
   }
 }
 
-export async function lookAtAll(): Promise<void> {
+async function lookAtAll(): Promise<void> {
   await Promise.all(workspace.documents.flatMap((one) => one.path ?? []).map(lookAt))
 }
 

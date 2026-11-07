@@ -25,12 +25,9 @@ import type { Agent } from './presence'
 import { type NoteRead, readNote } from './read'
 
 export type { Agent } from './presence'
-export type { NoteAt } from './desk'
-export type { NoteEdited } from './edit'
 export type { NoteRead } from './read'
-export { DocError, type Problem } from './problem'
+export { DocError } from './problem'
 export { onTracks, trackedAgents, tracksAside, tracksOf } from './edit'
-export type { Span } from './track'
 
 workspace.fileOps.follow((op) => {
   if (op.op === 'moved') tracksMoved(op.from, op.to, op.root ?? undefined)
