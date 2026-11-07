@@ -1201,6 +1201,124 @@ mod tests {
     }
 
     #[test]
+    fn a_method_of_a_trait_is_followed_to_what_implements_it() {
+        let source = concat!(
+            "pub trait Machine {\n    fn look(&self) -> bool;\n\n    fn twice(&self) -> bool {\n        fs::read(one).is_ok()\n    }\n}\n\n",
+            "pub struct Real;\n\nimpl Machine for Real {\n    fn look(&self) -> bool {\n        fs::metadata(one).is_ok()\n    }\n}\n\n",
+            "pub struct Quiet;\n\nimpl Machine for Quiet {\n    fn look(&self) -> bool {\n        false\n    }\n}\n\n",
+            "pub struct Reading<F: Machine> {\n    machine: F,\n}\n\n",
+            "type Kept = Box<dyn Machine + Send>;\n\n",
+            "pub struct Holding {\n    kept: Kept,\n}\n\n",
+            "#[tauri::command]\npub fn by_impl(machine: &impl Machine) -> bool {\n    machine.look()\n}\n\n",
+            "#[tauri::command]\npub fn by_dyn(machine: &dyn Machine) -> bool {\n    machine.look()\n}\n\n",
+            "#[tauri::command]\npub fn by_box(machine: Box<dyn Machine>) -> bool {\n    machine.look()\n}\n\n",
+            "#[tauri::command]\npub fn by_generic<M: Machine>(machine: &M) -> bool {\n    machine.look()\n}\n\n",
+            "#[tauri::command]\npub fn by_where<M>(machine: &M) -> bool\nwhere\n    M: Machine,\n{\n    machine.look()\n}\n\n",
+            "#[tauri::command]\npub fn by_field<F: Machine>(reading: &Reading<F>) -> bool {\n    reading.machine.look()\n}\n\n",
+            "#[tauri::command]\npub fn by_alias(holding: &Holding) -> bool {\n    holding.kept.look()\n}\n\n",
+            "#[tauri::command]\npub fn by_path(real: &Real) -> bool {\n    Machine::look(real)\n}\n\n",
+            "#[tauri::command]\npub fn defaulted(quiet: &Quiet) -> bool {\n    quiet.twice()\n}\n\n",
+            "#[tauri::command]\npub fn calm(quiet: &Quiet) -> bool {\n    quiet.look()\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let waits = own.waiting(&WAITS, &[]);
+        for loud in [
+            "crate::by_impl",
+            "crate::by_dyn",
+            "crate::by_box",
+            "crate::by_generic",
+            "crate::by_where",
+            "crate::by_field",
+            "crate::by_alias",
+            "crate::by_path",
+            "crate::defaulted",
+        ] {
+            assert!(waits.contains(loud), "{loud} was not followed");
+        }
+        assert!(
+            !waits.contains("crate::calm"),
+            "another type's method was taken for a type's own"
+        );
+    }
+
+    #[test]
+    fn a_closure_kept_in_a_field_is_followed_to_where_it_is_called() {
+        let source = concat!(
+            "pub struct Hook {\n    then: Box<dyn Fn() + Send>,\n    calm: Box<dyn Fn() + Send>,\n}\n\n",
+            "pub fn made() -> Hook {\n    Hook {\n        then: Box::new(|| {\n            fs::write(one, two);\n        }),\n        calm: Box::new(|| {}),\n    }\n}\n\n",
+            "#[tauri::command]\npub fn fired(hook: &Hook) {\n    (hook.then)();\n}\n\n",
+            "#[tauri::command]\npub fn calm(hook: &Hook) {\n    (hook.calm)();\n}\n\n",
+            "pub struct Later {\n    then: Mutex<Option<Box<dyn FnOnce() + Send>>>,\n    all: Mutex<Vec<Box<dyn Fn() + Send>>>,\n    first: Box<dyn Fn() + Send>,\n}\n\n",
+            "impl Later {\n    pub fn new(first: impl Fn() + Send + 'static) -> Self {\n        Self {\n            then: Mutex::new(None),\n            all: Mutex::new(Vec::new()),\n            first: Box::new(first),\n        }\n    }\n}\n\n",
+            "pub fn kept() -> Later {\n    let later = Later::new(|| {\n        fs::read(three);\n    });\n    *later.then.lock().unwrap() = Some(Box::new(|| {\n        fs::read(four);\n    }));\n    later.all.lock().unwrap().push(Box::new(|| {\n        fs::read(five);\n    }));\n    later\n}\n\n",
+            "#[tauri::command]\npub fn taken(later: &Later) {\n    if let Some(then) = later.then.lock().unwrap().take() {\n        then();\n    }\n}\n\n",
+            "#[tauri::command]\npub fn each(later: &Later) {\n    for one in later.all.lock().unwrap().iter() {\n        one();\n    }\n}\n\n",
+            "#[tauri::command]\npub fn first(later: &Later) {\n    (later.first)();\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let waits = own.waiting(&WAITS, &[]);
+        for loud in [
+            "crate::fired",
+            "crate::taken",
+            "crate::each",
+            "crate::first",
+        ] {
+            assert!(waits.contains(loud), "{loud} was not followed");
+        }
+        assert!(!waits.contains("crate::calm"));
+    }
+
+    #[test]
+    fn a_value_let_go_where_it_ends_runs_its_drop_there() {
+        let source = concat!(
+            "pub struct Gone;\n\nimpl Gone {\n    pub fn new() -> Self {\n        Self\n    }\n\n    pub fn finish(self) {}\n}\n\n",
+            "impl Drop for Gone {\n    fn drop(&mut self) {\n        fs::remove_file(one);\n    }\n}\n\n",
+            "pub struct Holds {\n    gone: Option<Gone>,\n}\n\n",
+            "#[tauri::command]\npub fn scoped() {\n    let gone = Gone::new();\n}\n\n",
+            "#[tauri::command]\npub fn unit() {\n    let _gone = Gone;\n}\n\n",
+            "#[tauri::command]\npub fn ignored() {\n    let _ = Gone::new();\n}\n\n",
+            "#[tauri::command]\npub fn replaced(kept: &Mutex<Option<Gone>>) {\n    *kept.lock().unwrap() = None;\n}\n\n",
+            "#[tauri::command]\npub fn removed(map: &Mutex<HashMap<String, Holds>>) {\n    map.lock().unwrap().remove(\"a\");\n}\n\n",
+            "#[tauri::command]\npub fn cleared(map: &Mutex<HashMap<String, Gone>>) {\n    map.lock().unwrap().clear();\n}\n\n",
+            "#[tauri::command]\npub fn taken(holds: &mut Holds) {\n    if let Some(gone) = holds.gone.take() {\n        let _ = 1;\n    }\n}\n\n",
+            "#[tauri::command]\npub fn consumed(gone: Gone) {}\n\n",
+            "#[tauri::command]\npub fn finished() {\n    Gone::new().finish();\n}\n\n",
+            "#[tauri::command]\npub fn handed_back() -> Gone {\n    let gone = Gone::new();\n    gone\n}\n\n",
+            "#[tauri::command]\npub fn sent_away() {\n    let gone = Gone::new();\n    std::thread::spawn(move || drop(gone));\n}\n\n",
+            "#[tauri::command]\npub fn looked(map: &HashMap<String, Gone>) {\n    let one = map.get(\"a\");\n}\n\n",
+            "#[tauri::command]\npub fn lent(gone: &Gone) {}\n\n",
+            "#[tauri::command]\npub fn stored(holds: &mut Vec<Gone>) {\n    let gone = Gone::new();\n    holds.push(gone);\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let waits = own.waiting(&WAITS, &[]);
+        for loud in [
+            "crate::scoped",
+            "crate::unit",
+            "crate::ignored",
+            "crate::replaced",
+            "crate::removed",
+            "crate::cleared",
+            "crate::taken",
+            "crate::consumed",
+            "crate::finished",
+        ] {
+            assert!(
+                waits.contains(loud),
+                "{loud} was not followed into its drop"
+            );
+        }
+        for quiet in [
+            "crate::handed_back",
+            "crate::sent_away",
+            "crate::looked",
+            "crate::lent",
+            "crate::stored",
+        ] {
+            assert!(!waits.contains(quiet), "{quiet} lets nothing go");
+        }
+    }
+
+    #[test]
     fn a_guard_given_up_is_not_held() {
         let source = concat!(
             "static SAID: Mutex<u8> = Mutex::new(0);\n\nstatic HEARD: Condvar = Condvar::new();\n\n",
