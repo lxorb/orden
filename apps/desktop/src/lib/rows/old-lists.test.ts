@@ -5,10 +5,18 @@ import { scanNote, type SpaceLinks } from '@orden/scan/note'
 
 const ROOT = '/space'
 
-const held = vi.hoisted(() => ({
-  disk: new Map<string, string>(),
-  folders: new Set<string>(),
-}))
+const { held, relativeNotes } = vi.hoisted(() => {
+  const held = {
+    disk: new Map<string, string>(),
+    folders: new Set<string>(),
+    open: '/space' as string | null,
+  }
+  const relativeNotes = (root: string) =>
+    [...held.disk.keys()]
+      .filter((path) => path.startsWith(`${root}/`))
+      .map((path) => ({ path: path.slice(root.length + 1) }))
+  return { held, relativeNotes }
+})
 
 const stored = new Map<string, string>()
 vi.stubGlobal('localStorage', {
@@ -18,7 +26,23 @@ vi.stubGlobal('localStorage', {
 })
 
 vi.mock('../link-index.svelte', () => ({
-  links: { scanned: () => Promise.resolve(), rootOf: () => ROOT, held: () => [] },
+  links: {
+    scanned: () => Promise.resolve(),
+    rootOf: () => held.open,
+    held: () => (held.open === null ? [] : relativeNotes(held.open)),
+  },
+}))
+
+vi.mock('../tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../tauri')>()),
+  invoke: (command: string, args: { root: string }) =>
+    command === 'scan_links'
+      ? Promise.resolve({ notes: relativeNotes(args.root), files: [] })
+      : Promise.reject(new Error(`no ${command}`)),
+}))
+
+vi.mock('../on-disk', () => ({
+  onDisk: (path: string) => Promise.resolve(held.folders.has(path)),
 }))
 
 vi.mock('../workspace.svelte', async () => {
@@ -27,7 +51,9 @@ vi.mock('../workspace.svelte', async () => {
     workspace: {
       itemMeta: new ItemMetaStore(() => ROOT),
       get notes() {
-        return [...held.disk.keys()].map((path) => ({ path, name: path.split('/').pop() }))
+        return [...held.disk.keys()]
+          .map((path) => ({ path, name: path.split('/').pop() ?? path }))
+          .filter((note) => note.name !== '.Later.md')
       },
       rootHolding: () => ROOT,
       entryAt: (path: string) => (held.folders.has(path) ? { path, is_dir: true } : null),
@@ -104,6 +130,7 @@ const OLD_TASKS = [
 beforeEach(() => {
   held.disk.clear()
   held.folders.clear()
+  held.open = ROOT
   stored.clear()
   workspace.itemMeta.forget(ROOT)
 })
@@ -243,5 +270,53 @@ describe('a space made before todo lists were marked (#1333)', () => {
 
     expect(listedAt(ROOT, 'Projects/Garden.md')).toBe(false)
     expect(listedAt(ROOT, 'Projects/Work/Work.md')).toBe(true)
+  })
+
+  test('a space shown in Todos but never opened is marked too, keeping the same lists and todos', async () => {
+    seed(OLD_SPACE)
+    held.open = '/elsewhere'
+    const store = await rowsStore()
+    expect(tasks(store.of())).toEqual(OLD_TASKS)
+
+    markOldListsSoon(ROOT, true, workspace)
+    await settled()
+
+    expect(workspace.itemMeta.listsMarked(ROOT)).toBe(true)
+    expect(workspace.itemMeta.of(`${ROOT}/Projects/Work/Hiring.md`)).toEqual({
+      'todo-list': 'yes',
+    })
+    expect(workspace.itemMeta.of(`${ROOT}/Projects`)).toEqual({ 'todo-lists': 'marked' })
+    expect(workspace.itemMeta.of(`${ROOT}/Diary.md`)).toBeNull()
+    expect(tasks(store.of())).toEqual(OLD_TASKS)
+  })
+
+  test('marks a note the link index holds even when the file tree hides it', async () => {
+    seed({ ...OLD_SPACE, 'Projects/.Later.md': '- [ ] Some day\n' })
+    const before = listedAt(ROOT, 'Projects/.Later.md')
+
+    markOldListsSoon(ROOT, true, workspace)
+    await settled()
+
+    expect(before).toBe(true)
+    expect(listedAt(ROOT, 'Projects/.Later.md')).toBe(true)
+  })
+
+  test('marks the spaces one after another, each exactly once', async () => {
+    seed(OLD_SPACE)
+    held.disk.set('/other/Projects/Trip.md', '- [ ] Book the train\n')
+    held.folders.add('/other/Projects')
+    held.open = null
+
+    markOldListsSoon(ROOT, true, workspace)
+    markOldListsSoon('/other', true, workspace)
+    markOldListsSoon(ROOT, true, workspace)
+    await settled()
+
+    expect(workspace.itemMeta.listsMarked(ROOT)).toBe(true)
+    expect(workspace.itemMeta.listsMarked('/other')).toBe(true)
+    expect(workspace.itemMeta.of('/other/Projects/Trip.md', '/other')).toEqual({
+      'todo-list': 'yes',
+    })
+    workspace.itemMeta.forget('/other')
   })
 })

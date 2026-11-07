@@ -46,6 +46,12 @@ class Session {
 
   restoring = $state(false)
 
+  private lookedFor: () => void = () => undefined
+
+  readonly looked = new Promise<void>((done) => {
+    this.lookedFor = done
+  })
+
   readonly signedIn = $derived(!!this.token && (!!this.user || !!this.guest))
   readonly accountToken = $derived(this.user ? this.token : null)
   readonly name = $derived(this.user ? called(this.user) : (this.guest?.name ?? null))
@@ -69,6 +75,7 @@ class Session {
       await this.lookForSession()
     } finally {
       this.restoring = false
+      this.lookedFor()
     }
   }
 
@@ -78,6 +85,7 @@ class Session {
 
     keep(STORAGE_KEY, saved)
     this.token = saved
+    this.lookedFor()
 
     for (const pause of [0, ...TRIES]) {
       if (pause) await waited(pause)

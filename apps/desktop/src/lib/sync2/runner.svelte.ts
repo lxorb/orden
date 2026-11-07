@@ -917,6 +917,23 @@ class Runner {
     await core.commit(changes)
     this.watched?.follow()
     for (const id of core.spaces.keys()) this.due.add(id)
+    void this.unpairedHeard(core).catch((error: unknown) =>
+      log('warn', `sync: spaces kept on this device not heard: ${String(error)}`),
+    )
+  }
+
+  private async unpairedHeard(core: Engine['core']) {
+    const synced = [...core.spaces.values()].map((space) => space.row.root)
+    const unpaired = workspace.shownSpaces
+      .map((space) => space.root)
+      .filter((root) => !synced.some((one) => samePath(one, root)))
+    if (!unpaired.length) return
+    const { markOldListsSoon } = await import('../rows/old-lists')
+    const { moveOwnKeysSoon } = await import('../workspace/own-keys-moved')
+    for (const root of unpaired) {
+      markOldListsSoon(root, true, workspace)
+      moveOwnKeysSoon(root, workspace, false)
+    }
   }
 
   private readonly telling: Telling = {
