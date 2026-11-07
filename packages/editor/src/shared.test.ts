@@ -4,6 +4,7 @@ import {
   EditorSelection,
   EditorState,
   Text,
+  Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
@@ -38,15 +39,29 @@ class Pane implements DocView {
     return this.held.selection.main.head
   }
 
-  edit(changes: ChangeSpec, cursor: number) {
+  edit(changes: ChangeSpec, cursor: number, userEvent = 'input.type') {
     const made = this.held.update({
       changes,
       selection: EditorSelection.cursor(cursor),
-      userEvent: 'input.type',
+      userEvent,
     })
 
     this.held = made.state
-    documentOf(this)?.local(made.changes, made.state.selection, this)
+    documentOf(this)?.local(
+      made.changes,
+      made.state.selection,
+      this,
+      made.annotation(Transaction.userEvent),
+    )
+  }
+
+  select(anchor: number, head: number) {
+    const made = this.held.update({
+      selection: EditorSelection.range(anchor, head),
+      userEvent: 'select',
+    })
+    this.held = made.state
+    documentOf(this)?.selected(made.state.selection, made.annotation(Transaction.userEvent))
   }
 
   type(at: number, insert: string) {
@@ -687,5 +702,41 @@ describe('half of one character', () => {
     note.arrived([{ from: 1, to: 1, insert: grin }])
 
     expect(note.text.toString()).toBe(`a${grin}b`)
+  })
+})
+
+describe('the steps undo takes back in a document', () => {
+  test('keep a paste apart from the typing right before it', () => {
+    const note = new SharedDoc('one')
+    const pane = new Pane(note, 3)
+    pane.type(3, '!')
+    pane.edit({ from: 4, insert: ' pasted words' }, 17, 'input.paste')
+
+    expect(note.undo(pane)).toBe(true)
+    expect(note.text.toString()).toBe('one!')
+    expect(note.undo(pane)).toBe(true)
+    expect(note.text.toString()).toBe('one')
+  })
+
+  test('keep words deleted after selecting them apart from the typing before', () => {
+    const note = new SharedDoc('one')
+    const pane = new Pane(note, 3)
+    pane.type(3, ' two')
+    pane.select(0, 7)
+    pane.edit({ from: 0, to: 7 }, 0, 'delete.selection')
+
+    expect(note.undo(pane)).toBe(true)
+    expect(note.text.toString()).toBe('one two')
+    expect(note.undo(pane)).toBe(true)
+    expect(note.text.toString()).toBe('one')
+  })
+
+  test('still take back a run of typing at once', () => {
+    const note = new SharedDoc('')
+    const pane = new Pane(note)
+    for (const [at, letter] of ['w', 'o', 'r', 'd', 's'].entries()) pane.type(at, letter)
+
+    expect(note.undo(pane)).toBe(true)
+    expect(note.text.toString()).toBe('')
   })
 })

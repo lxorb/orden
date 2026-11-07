@@ -1,7 +1,7 @@
 import { history } from '@codemirror/commands'
 import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
-import { EditorState, type Extension, Prec, type Text } from '@codemirror/state'
+import { EditorState, type Extension, Prec, type Text, Transaction } from '@codemirror/state'
 import type { Cover } from '@orden/markdown/cover'
 import {
   crosshairCursor,
@@ -176,10 +176,15 @@ export function editorState(options: StateOptions): EditorState {
       keymap.of(unclaimedKeymap),
       EditorView.updateListener.of((update) => {
         const pushed = update.transactions.some((one) => one.annotation(external))
-        if (update.docChanged && !pushed) {
+        if (!pushed && (update.docChanged || update.selectionSet)) {
           const document = documentOf(update.view)
-          if (document) document.local(update.changes, update.state.selection, update.view)
-          else onChange?.(update.state.doc)
+          const userEvent = update.transactions
+            .map((one) => one.annotation(Transaction.userEvent))
+            .find((one) => one !== undefined)
+          if (!update.docChanged) document?.selected(update.state.selection, userEvent)
+          else if (document) {
+            document.local(update.changes, update.state.selection, update.view, userEvent)
+          } else onChange?.(update.state.doc)
         }
         if (
           update.selectionSet ||
