@@ -210,7 +210,7 @@ pub fn copy_held(from: &Path, to: &Path) {
         }
         let paper = paper_of(from);
         let copied = paper_of(to);
-        if paper.exists() && !copied.exists() && fs::copy(&paper, &copied).is_ok() {
+        if paper.exists() && crate::carry::copy_whole(&paper, &copied).is_ok() {
             copy_held(&paper, &copied);
         }
         return;
