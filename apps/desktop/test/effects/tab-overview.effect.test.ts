@@ -503,3 +503,14 @@ test('the sides are not opened or shut while it is up, by their buttons, keys or
   expect(workspace.panel).not.toBe(panel)
   workspace.toggleSidebar()
 })
+
+test('a launcher or top button that comes while the overview is open is under it from the start (#1493)', async () => {
+  const pane = (await import('../../src/lib/Pane.svelte?raw')).default
+  const overview = (await import('../../src/lib/overview/Overview.svelte?raw')).default
+  expect(pane).toMatch(
+    /\.pane:has\(> :global\(\.here\)\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/,
+  )
+  expect(overview).toMatch(
+    /\[data-box\] \*\s+\)\s+\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/,
+  )
+})

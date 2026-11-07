@@ -1777,7 +1777,7 @@
         [data-box] *
       )
   ) {
-    opacity: calc(1 - var(--overview-open, 0));
+    opacity: calc(1 - var(--overview-open, 1));
     pointer-events: none;
   }
 
