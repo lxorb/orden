@@ -985,8 +985,16 @@ class Runner {
 
   private awayPaths = new Map<string, string>()
 
+  private awayOwed = false
+
   private async awayHeard(engine: Engine, told: boolean) {
     if (isNative || this.current !== engine) return
+    if (engine.core.handPaths.length) {
+      this.awayOwed ||= told
+      return
+    }
+    told ||= this.awayOwed
+    this.awayOwed = false
     const files = engine.awayFiles()
     const now = new Map(files.map((one) => [one.id, one.path]))
     const was = this.awayPaths
