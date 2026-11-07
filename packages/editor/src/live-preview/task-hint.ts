@@ -48,7 +48,11 @@ class HintWidget extends NibWidget {
 const hinted = StateField.define<Hint | null>({
   create: hintAt,
   update: (value, transaction: Transaction) =>
-    transaction.docChanged || transaction.selection ? hintAt(transaction.state) : value,
+    transaction.docChanged ||
+    transaction.selection ||
+    transaction.startState.facet(noteIndex).tasks !== transaction.state.facet(noteIndex).tasks
+      ? hintAt(transaction.state)
+      : value,
   provide: (field) =>
     EditorView.decorations.from(field, (hint): DecorationSet => {
       if (!hint) return Decoration.none

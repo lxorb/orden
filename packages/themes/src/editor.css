@@ -692,11 +692,13 @@
   pointer-events: none;
 }
 
-.nib-comment-chips .nib-task-chip {
+.nib-comment-chips .nib-task-chip,
+.nib-task-chips-still .nib-task-chip {
   cursor: text;
 }
 
-.nib-comment-chips .nib-task-chip:hover {
+.nib-comment-chips .nib-task-chip:hover,
+.nib-task-chips-still .nib-task-chip:hover {
   background: none;
   color: inherit;
 }

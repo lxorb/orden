@@ -14,9 +14,21 @@ import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { tickLines } from '../task-tick'
-import { noteIndex, type TaskHelp } from '../wikilink/notes'
+import {
+  noteIndex,
+  noteIndexEffect,
+  noteIndexExtension,
+  type NoteIndex,
+  type TaskHelp,
+} from '../wikilink/notes'
 import { buildDecorations, loadTaskChips } from './decorate'
-import { chipsOf, CommentChipsWidget, commentDrawing, TaskChipsWidget } from './task-chips'
+import {
+  chipsOf,
+  CommentChipsWidget,
+  commentDrawing,
+  type TaskChip,
+  TaskChipsWidget,
+} from './task-chips'
 import { dayWords } from '../task-days'
 import { takeHint, taskHint } from './task-hint'
 import { livePreview } from '.'
@@ -301,5 +313,64 @@ describe('a chip pressed', () => {
     picked({ priority: 1 })
     expect(view.state.doc.toString()).toBe('new\n- [ ] first ⏫\n- [ ] second 🔺\n\nend')
     view.destroy()
+  })
+})
+
+describe('a note made a todo list, or no longer one, while it is open', () => {
+  const plain: NoteIndex = {
+    notes: [],
+    files: [],
+    path: 'Plan.md',
+    read: () => Promise.resolve(null),
+  }
+  const listed: NoteIndex = { ...plain, tasks: HELP }
+
+  function opened(doc: string, cursor: number) {
+    return parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(cursor),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          taskHint,
+          noteIndexExtension(plain),
+        ],
+      }),
+    )
+  }
+
+  function picks(state: EditorState): boolean[] {
+    const out: boolean[] = []
+    buildDecorations(state).decorations.between(0, state.doc.length, (_from, _to, value) => {
+      if (value.spec.widget instanceof TaskChipsWidget) out.push(value.spec.widget.picks)
+    })
+    return out
+  }
+
+  test('offers the day typed at the end at once, with no key pressed, and takes it back', () => {
+    const note = '- [ ] Call mum tomorrow'
+    const state = opened(note, note.length)
+    expect(state.field(taskHint)).toBeNull()
+
+    const made = state.update({ effects: noteIndexEffect(listed) }).state
+    expect(made.field(taskHint)?.day.due).toBe('2026-10-08')
+
+    const stopped = made.update({ effects: noteIndexEffect(plain) }).state
+    expect(stopped.field(taskHint)).toBeNull()
+  })
+
+  test('draws its chips to be pressed only while it is a list', () => {
+    const state = opened(PARKED, PARKED.length)
+    expect(picks(state)).toEqual([false])
+
+    const made = state.update({ effects: noteIndexEffect(listed) }).state
+    expect(picks(made)).toEqual([true])
+    expect(picks(made.update({ effects: noteIndexEffect(plain) }).state)).toEqual([false])
+  })
+
+  test('and a chip drawn for a list is not the one drawn for a plain note', () => {
+    const chips: TaskChip[] = [{ field: 'date', text: 'Tue 6 Oct' }]
+    expect(new TaskChipsWidget(chips, true).eq(new TaskChipsWidget(chips, false))).toBe(false)
+    expect(new TaskChipsWidget(chips, true).eq(new TaskChipsWidget(chips))).toBe(true)
   })
 })
