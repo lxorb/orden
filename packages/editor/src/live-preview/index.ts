@@ -6,7 +6,7 @@ import { dragFreeze } from './dragging'
 import { footnoteReading } from './footnotes'
 import { imageExtension } from './image'
 import { runExtension } from '../run/door'
-import { pointerSnap } from './snap'
+import { dropSpacing, pointerSnap } from './snap'
 
 export function livePreview(): Extension {
   return [
@@ -14,6 +14,7 @@ export function livePreview(): Extension {
     dragFreeze,
     footnoteReading,
     pointerSnap,
+    dropSpacing,
     livePreviewDecorations,
     blockDecorations,
     imageExtension,
