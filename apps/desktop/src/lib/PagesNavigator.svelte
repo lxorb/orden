@@ -2,7 +2,7 @@
   import { moved, removed, reshaped } from '@orden/markdown/pages'
   import type { Canvas } from './canvas/format'
   import { PAPER_NAMES, PATTERNS, type PageNode, type Paper, type Pattern } from './canvas/format'
-  import { paintInk } from './canvas/paint'
+  import { paintSketch } from './canvas/paint'
   import { readPalette } from './canvas/palette'
   import { carryPage, draggedPage, dropOver, isPageDrag } from './drag-paths'
   import { t } from './i18n.svelte'
@@ -231,7 +231,7 @@
     }
 
     const into = paper ? inked.getContext('2d') : ctx
-    if (into) paintInk(into, canvas.ink, view, palette)
+    if (into) paintSketch(into, sheet.ink, view, palette)
 
     if (!paper) return
 

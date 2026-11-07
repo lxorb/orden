@@ -3,13 +3,20 @@ import type { InkStroke } from './format'
 
 class CountingPath {
   held = 0
+  moves = 0
+  lines = 0
+  curves = 0
 
   moveTo() {
-    return undefined
+    this.moves += 1
+  }
+
+  lineTo() {
+    this.lines += 1
   }
 
   quadraticCurveTo() {
-    return undefined
+    this.curves += 1
   }
 
   closePath() {
@@ -24,7 +31,13 @@ class CountingPath {
 function context() {
   const fills: { strokes: number; colour: string; alpha: number; blend: string }[] = []
   const transforms: number[][] = []
+  const lines: { path: CountingPath; width: number }[] = []
   const ctx = {
+    lineWidth: 1,
+    lineCap: 'butt',
+    lineJoin: 'miter',
+    strokeStyle: '',
+    stroke: (path: CountingPath) => lines.push({ path, width: ctx.lineWidth }),
     globalAlpha: 1,
     globalCompositeOperation: 'source-over',
     fillStyle: '',
@@ -40,14 +53,15 @@ function context() {
       }),
   }
 
-  return { ctx: ctx as unknown as CanvasRenderingContext2D, fills, transforms }
+  return { ctx: ctx as unknown as CanvasRenderingContext2D, fills, lines, transforms }
 }
 
 beforeAll(() => {
   vi.stubGlobal('Path2D', CountingPath)
 })
 
-const { fillInk, firstSeen, origin, paintInk, paintLive, strokesFilled } = await import('./paint')
+const { fillInk, firstSeen, origin, paintLive, paintSketch, strokesFilled } =
+  await import('./paint')
 
 function stroke(id: string, x: number, overrides: Partial<InkStroke> = {}): InkStroke {
   return {
@@ -152,11 +166,40 @@ describe('a thumbnail', () => {
   test('paints what is in view in one go, once per kind', () => {
     const inside = Array.from({ length: 50 }, (_, one) => stroke(`in${one}`, one * 4))
     const outside = Array.from({ length: 50 }, (_, one) => stroke(`out${one}`, 50_000 + one * 4))
-    const { ctx, fills } = context()
+    const { ctx, lines } = context()
 
-    paintInk(ctx, [...inside, ...outside], view(100, 100), {})
+    paintSketch(ctx, [...inside, ...outside], view(100, 100), {})
 
-    expect(fills).toHaveLength(1)
-    expect(fills[0]?.strokes).toBe(50)
+    expect(lines).toHaveLength(1)
+    expect(lines[0]?.path.moves).toBe(50)
+  })
+
+  test('draws a stroke as a line through points a pixel apart, not its outline', () => {
+    const points = Array.from({ length: 400 }, (_, at) => ({
+      x: at,
+      y: 100 + (at % 2),
+      pressure: 0.5,
+      tiltX: 0,
+      tiltY: 0,
+      t: at,
+    }))
+    const long = { ...stroke('long', 0), size: 6, points }
+    const { ctx, lines } = context()
+
+    paintSketch(ctx, [long], view(200, 100, 0.1), {})
+
+    expect(lines[0]?.path.lines).toBeLessThanOrEqual(50)
+    expect(lines[0]?.path.lines).toBeGreaterThanOrEqual(35)
+    expect(lines[0]?.path.curves).toBe(0)
+    expect(lines[0]?.width).toBe(6)
+  })
+
+  test('a dot is still drawn', () => {
+    const dot = { ...stroke('dot', 0), points: [stroke('dot', 0).points[0]!] }
+    const { ctx, lines } = context()
+
+    paintSketch(ctx, [dot], view(0, 100, 0.1), {})
+
+    expect(lines[0]?.path.lines).toBe(1)
   })
 })
