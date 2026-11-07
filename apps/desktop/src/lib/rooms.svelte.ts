@@ -45,6 +45,7 @@ interface Engine {
 class Rooms {
   present = $state<Record<string, number>>({})
   seen = $state<Record<string, Seen>>({})
+  surfaces = $state.raw<ReadonlyMap<string, PlaneSurface>>(new Map())
 
   heard(key: string, count: number, seen?: Seen) {
     this.present = count ? { ...this.present, [key]: count } : without(this.present, key)
@@ -130,6 +131,7 @@ class Rooms {
   drawing(key: string, surface: PlaneSurface | null) {
     if (surface) this.planes.set(key, surface)
     else this.planes.delete(key)
+    this.surfaces = new Map(this.planes)
     this.drawn?.()
 
     this.follow(this.open)

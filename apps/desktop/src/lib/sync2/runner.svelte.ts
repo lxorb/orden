@@ -46,7 +46,7 @@ import { Owed, type Owing, takeOwed } from './owed'
 import { placesOf } from './placing'
 import { type Holding, spend } from '../sync/holding'
 import type { Carried } from '../pages/carried'
-import { holdsDocument, joinsAs, turn, unixLines } from './kinds'
+import { holdsDocument, joinsAs, shapeOf, turn, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import {
@@ -1678,8 +1678,10 @@ class Runner {
       $effect(() => {
         const open = workspace.openNotes
         const seen = this.seenAt
+        const surfaces = rooms.surfaces
         untrack(() => {
-          if (!this.engine) this.mirrors.follow(open, (path) => seen.get(pathKey(path))?.id ?? null)
+          if (!this.engine)
+            this.mirrors.follow(open, (path) => seen.get(pathKey(path))?.id ?? null, surfaces)
         })
       })
     })
@@ -1698,13 +1700,16 @@ class Runner {
 
   private async liveMeet(from: string, args: unknown): Promise<unknown> {
     const engine = this.current
-    const { id, mine } = (args ?? {}) as { id?: unknown; mine?: unknown }
-    if (!engine || typeof id !== 'string' || typeof mine !== 'string') return null
+    const { id, mine, plane } = (args ?? {}) as { id?: unknown; mine?: unknown; plane?: unknown }
+    if (!engine || typeof id !== 'string') return null
+    const shape = shapeOf(engine.core.entry(id)?.kind ?? '')
+    if (shape !== (plane === true ? 'plane' : 'words')) return null
+    if (shape === 'words' && typeof mine !== 'string') return null
     if (this.relay.meeting(from, id)) this.rebind()
     await this.binding
     const doc = engine.core.docs.get(id)
     if (this.current !== engine || !doc?.live || !engine.core.pinned.has(id)) return null
-    if (!(await meetWords(engine, id, doc, mine))) return null
+    if (typeof mine === 'string' && !(await meetWords(engine, id, doc, mine))) return null
     this.relay.follow((one) => this.liveOf(engine, one))
     const live = this.liveOf(engine, id)
     const gen = this.relay.genOf(id)
@@ -1754,7 +1759,7 @@ class Runner {
     }
     const own = new Set([...wanted.values()].map((one) => one.id))
     for (const id of this.relay.ids()) {
-      if (!own.has(id) && engine.core.hasDoc(id) && engine.core.entry(id)?.kind === 'note')
+      if (!own.has(id) && engine.core.hasDoc(id) && relayable(engine.core.entry(id)?.kind))
         wanted.set(`${RELAY}${id}`, { id, on: { relay: true }, arrivals: () => 0 })
     }
 
@@ -1884,6 +1889,11 @@ function signedIn(): boolean {
 type On = { note: NoteDoc } | { surface: PlaneSurface } | { relay: true }
 
 const RELAY = 'relay:'
+
+function relayable(kind: string | undefined): boolean {
+  const shape = shapeOf(kind ?? '')
+  return shape === 'words' || shape === 'plane'
+}
 
 function unreachable(error: unknown): boolean {
   if (error instanceof ApiError) return error.status === 429 || error.status >= 500

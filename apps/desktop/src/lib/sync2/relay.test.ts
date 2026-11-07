@@ -1,8 +1,11 @@
 import { SharedDoc } from '@orden/editor'
 import { TEXT } from '@orden/rooms'
+import { pushPlane, readPlane, seedPlane } from '@orden/rooms/plane'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness'
 import * as Y from 'yjs'
+import { type Canvas, type CanvasNode, emptyCanvas } from '../canvas/format'
+import type { Hand, PlaneSurface, SharedPlane } from '../canvas/shared'
 import { rooms } from '../rooms.svelte'
 import { bind } from '../rooms/bind'
 import type { NoteDoc } from '../workspace/documents.svelte'
@@ -60,6 +63,14 @@ class Device {
     return mirrors
   }
 
+  drawn(canvas: Canvas) {
+    this.live = new Y.Doc()
+    this.live.transact(() => seedPlane(this.live, canvas), 'room')
+    this.awareness = new Awareness(this.live)
+    this.relay.roomCame(ID, this.awareness)
+    this.follow()
+  }
+
   replace(words: string) {
     this.live = new Y.Doc()
     this.live.getText(TEXT).insert(0, words)
@@ -104,7 +115,50 @@ function type(note: NoteDoc, at: number, words: string) {
   note.live.edit([{ from: at, to: at, insert: words }])
 }
 
+class Surface implements PlaneSurface {
+  shared: SharedPlane | null = null
+  hands: readonly Hand[] = []
+
+  constructor(public canvas: Canvas) {}
+
+  arrived(canvas: Canvas) {
+    this.canvas = canvas
+  }
+
+  handsAre(hands: readonly Hand[]) {
+    this.hands = hands
+  }
+
+  historyIs() {
+    return undefined
+  }
+
+  edit(next: Canvas) {
+    const before = this.canvas
+    this.canvas = next
+    this.shared?.push(before, next)
+  }
+}
+
+function card(id: string): CanvasNode {
+  return { id, type: 'text', x: 0, y: 0, width: 250, height: 60, text: id }
+}
+
+function board(...ids: string[]): Canvas {
+  return { ...emptyCanvas(), nodes: ids.map(card) }
+}
+
+function drawingOf(key: string, surface: Surface) {
+  rooms.planes.set(key, surface)
+  return {
+    key,
+    path: 'Boards/plan.canvas',
+    note: { key, path: 'Boards/plan.canvas', shared: null, kind: 'canvas' } as unknown as NoteDoc,
+  }
+}
+
 beforeEach(() => {
+  rooms.planes.clear()
   rooms.present = {}
   rooms.seen = {}
   rooms.carried.clear()
@@ -218,5 +272,62 @@ describe('a note open in a window that does not sync', () => {
 
     expect(device.words).toBe('old!')
     expect(note.latest).toBe('old!')
+  })
+})
+
+describe('a canvas open in a window that does not sync', () => {
+  test('draws live through the one document the syncing window holds, both ways', async () => {
+    const device = new Device('')
+    device.drawn(board('a'))
+    const surface = new Surface(board('a'))
+    device.window('w2').follow([drawingOf('k1', surface)], () => ID)
+    await settled()
+
+    expect(surface.shared).not.toBeNull()
+    surface.edit(board('a', 'from the tab'))
+    expect(readPlane(device.live).nodes.map((one) => one.id)).toEqual(['a', 'from the tab'])
+
+    const there = readPlane(device.live)
+    device.live.transact(() =>
+      pushPlane(device.live, there, { ...there, nodes: [...there.nodes, card('b')] }),
+    )
+    expect(surface.canvas.nodes.map((one) => one.id)).toContain('b')
+  })
+
+  test('brings what it drew while apart into the document', async () => {
+    const device = new Device('')
+    device.drawn(board('a'))
+    const surface = new Surface(board('a', 'drawn before'))
+    device.window('w2').follow([drawingOf('k1', surface)], () => ID)
+    await settled()
+
+    expect(readPlane(device.live).nodes.map((one) => one.id)).toEqual(['a', 'drawn before'])
+  })
+
+  test('shows its hand to the room and the room’s hands to it, and lets go when closed', async () => {
+    const device = new Device('')
+    device.drawn(board('a'))
+    const surface = new Surface(board('a'))
+    const window = device.window('w2')
+    window.follow([drawingOf('k1', surface)], () => ID)
+    await settled()
+
+    surface.shared?.hand({ x: 4, y: 5 }, null)
+    const theirs = [...device.awareness.getStates().entries()].filter(
+      ([client]) => client !== device.live.clientID,
+    )
+    expect(theirs.some(([, state]) => (state as { hand?: unknown }).hand)).toBe(true)
+
+    const remote = new Awareness(new Y.Doc())
+    remote.setLocalStateField('who', { name: 'Mac', accent: 'red', id: 'u2', person: 'Ana' })
+    remote.setLocalStateField('hand', { x: 1, y: 2 })
+    applyAwarenessUpdate(device.awareness, encodeAwarenessUpdate(remote, [remote.clientID]), 'room')
+    expect(surface.hands.map((one) => one.at)).toEqual([{ x: 1, y: 2 }])
+
+    rooms.planes.delete('k1')
+    window.follow([], () => ID)
+    expect(surface.shared).toBeNull()
+    expect(surface.hands).toEqual([])
+    expect(device.awareness.getStates().size).toBe(2)
   })
 })
