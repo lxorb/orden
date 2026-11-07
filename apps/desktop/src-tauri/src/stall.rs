@@ -1,10 +1,10 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use tauri::AppHandle;
-#[cfg(feature = "cef")]
 use tauri::Manager as _;
 
 use crate::logs::say;
@@ -18,6 +18,10 @@ const LOOK: Duration = Duration::from_millis(500);
 const MARKER: &str = "not-responding.json";
 
 static DOING: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+const PAGE: &str = "main";
+
+static PAGE_UP: AtomicBool = AtomicBool::new(false);
 
 pub struct Doing(());
 
@@ -74,6 +78,7 @@ fn watch_once(app: &AppHandle, watched: &Watched) {
     let what = match how {
         Late::Stuck => now_doing(),
         Late::Nested => format!("{}, in a nested loop", now_doing()),
+        Late::Page => format!("{}, its page not answering", now_doing()),
     };
     say(
         app,
@@ -172,6 +177,7 @@ enum Late {
     )]
     Stuck,
     Nested,
+    Page,
 }
 
 struct Watched {
@@ -200,9 +206,38 @@ impl Watched {
             Answer::Answered => {}
             other => return other,
         }
-        match self.looped(within.saturating_sub(asked.elapsed())) {
+        let answer = match self.looped(within.saturating_sub(asked.elapsed())) {
+            Answer::Answered => self.paged(within.saturating_sub(asked.elapsed())),
+            other => other,
+        };
+        match answer {
             Answer::Late(_) if self.held_by_the_person() => Answer::Answered,
             other => other,
+        }
+    }
+
+    fn paged(&self, within: Duration) -> Answer {
+        let Some(page) = self.app.get_webview(PAGE) else {
+            return Answer::Answered;
+        };
+        let (told, heard) = std::sync::mpsc::channel();
+        if page
+            .eval_with_callback("0", move |_| {
+                let _ = told.send(());
+            })
+            .is_err()
+        {
+            return Answer::Answered;
+        }
+        match heard.recv_timeout(within) {
+            Ok(()) => {
+                PAGE_UP.store(true, Ordering::Relaxed);
+                Answer::Answered
+            }
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) if PAGE_UP.load(Ordering::Relaxed) => {
+                Answer::Late(Late::Page)
+            }
+            Err(_) => Answer::Answered,
         }
     }
 
