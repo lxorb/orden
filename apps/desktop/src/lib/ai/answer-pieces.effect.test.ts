@@ -88,3 +88,47 @@ test('what is drawn above the screen keeps the reader where they were', () => {
   expect(top).toBe(0)
   box.remove()
 })
+
+test('long answers drawn at once in one list measure it once a step, not once an answer', () => {
+  const box = document.createElement('div')
+  box.style.overflowY = 'auto'
+  const first = document.createElement('div')
+  const second = document.createElement('div')
+  box.append(first, second)
+  document.body.append(box)
+  let height = 1_000
+  let top = 400
+  let reads = 0
+  Object.defineProperty(box, 'scrollHeight', {
+    get: () => {
+      reads++
+      return height
+    },
+  })
+  Object.defineProperty(box, 'scrollTop', { get: () => top, set: (to: number) => (top = to) })
+  for (const node of [first, second]) {
+    const prepend = node.prepend.bind(node)
+    node.prepend = (...nodes) => {
+      prepend(...nodes)
+      height += 300
+    }
+    node.getBoundingClientRect = () => ({ top: -500, height: 0 }) as DOMRect
+  }
+  box.getBoundingClientRect = () => ({ top: 0 }) as DOMRect
+
+  const alone = steps()
+  drawInPieces(document.createElement('div'), long, alone.later)
+  const stepsOfOne = alone.run()
+
+  const { later, run } = steps()
+  drawInPieces(first, long, later)
+  drawInPieces(second, long, later)
+  const ran = run()
+
+  expect(ran).toBe(stepsOfOne)
+  expect(reads).toBe(2 * ran)
+  expect(first.innerHTML).toBe(long)
+  expect(second.innerHTML).toBe(long)
+  expect(height - top).toBe(600)
+  box.remove()
+})
