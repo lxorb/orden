@@ -15,9 +15,12 @@ const opened: string[] = []
 
 const peeked: string[] = []
 
+const listedPaths: string[] = []
+
 vi.mock('./commands', () => ({
   CHANGED: 'explorer://changed',
   listFolder: (path: string): Promise<Listing> => {
+    listedPaths.push(path)
     const names = DISK[path]
     if (!names) return Promise.reject(new Error(`${path}: No such file or directory`))
     return Promise.resolve({
@@ -90,6 +93,8 @@ const changed: string[] = []
 const { workspace } = await import('../workspace.svelte')
 const ExplorerTab = (await import('./ExplorerTab.svelte')).default
 const { viewOf } = await import('./view.svelte')
+
+const columnSettled = () => new Promise((resolve) => setTimeout(resolve, 200))
 
 const settled = async () => {
   for (let round = 0; round < 5; round++) await new Promise((resolve) => setTimeout(resolve))
@@ -342,6 +347,7 @@ describe('a file explorer', () => {
       await settled()
       press('ArrowDown')
       press('ArrowDown')
+      await columnSettled()
       await settled()
       const drawn = target.querySelectorAll('.column li')
       expect(drawn.length).toBeGreaterThan(0)
@@ -366,6 +372,21 @@ describe('a file explorer', () => {
     press('ArrowLeft')
     await settled()
     expect(view.folder).toBe('/home/me')
+    explorerPrefs.show('list')
+  })
+
+  test('in columns, a folder the keyboard only passes over is not read', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    await explorer()
+    press('3', { ctrlKey: true })
+    await settled()
+    await columnSettled()
+    listedPaths.length = 0
+    press('ArrowDown')
+    press('ArrowDown')
+    await columnSettled()
+    await settled()
+    expect(listedPaths.filter((path) => path !== '/home/me')).toEqual(['/home/me/Pictures'])
     explorerPrefs.show('list')
   })
 })

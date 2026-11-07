@@ -14,23 +14,27 @@
     lit = null,
   }: { view: ExplorerView; folder: string; lit?: string | null } = $props()
 
-  let entries = $state<Entry[]>([])
+  let entries = $state.raw<Entry[]>([])
   let listed = $state<string | null>(null)
+  const SETTLED_MS = 120
 
   $effect(() => {
     const at = folder
     let gone = false
-    void listFolder(at)
-      .then((listing) => {
-        if (gone) return
-        entries = listing.entries
-        listed = listing.path
-      })
-      .catch(() => {
-        if (!gone) entries = []
-      })
+    const waiting = setTimeout(() => {
+      void listFolder(at)
+        .then((listing) => {
+          if (gone) return
+          entries = listing.entries
+          listed = listing.path
+        })
+        .catch(() => {
+          if (!gone) entries = []
+        })
+    }, SETTLED_MS)
     return () => {
       gone = true
+      clearTimeout(waiting)
     }
   })
 
