@@ -59,7 +59,7 @@ pub struct Destination {
 }
 
 const SSH_VALUED: &[u8] = b"BbcDEeFIiJLlmOoPpQRSWw";
-const SSH_NO_SESSION: &[u8] = b"fFGNOPQsVW";
+const SSH_NO_SESSION: &[u8] = b"fFGNOPQSsVW";
 
 pub fn ssh_destination(program: &str, args: &[String]) -> Option<Destination> {
     if program != "ssh" {
@@ -106,7 +106,9 @@ pub fn ssh_destination(program: &str, args: &[String]) -> Option<Destination> {
                         (b'o', "sessiontype") if !value.eq_ignore_ascii_case("default") => {
                             return None
                         }
-                        (b'o', "remotecommand") if !value.eq_ignore_ascii_case("none") => {
+                        (b'o', "controlpath" | "proxycommand" | "remotecommand")
+                            if !value.eq_ignore_ascii_case("none") =>
+                        {
                             return None
                         }
                         (b'o', "forkafterauthentication") if value.eq_ignore_ascii_case("yes") => {
@@ -714,6 +716,13 @@ mod tests {
         assert_eq!(ssh(&["-oForkAfterAuthentication=yes", "pi"]), None);
         assert_eq!(ssh(&["-F", "/home/emil/work.conf", "pi"]), None);
         assert_eq!(ssh(&["-P", "work", "pi"]), None);
+        assert_eq!(ssh(&["-S", "/tmp/sock-for-a", "pi"]), None);
+        assert_eq!(ssh(&["-oControlPath=/tmp/sock", "pi"]), None);
+        assert_eq!(ssh(&["-o", "ProxyCommand=ssh -W a:22 jump", "pi"]), None);
+        assert_eq!(
+            ssh(&["-oControlPath=none", "-oProxyCommand=none", "pi"]),
+            Some(at(None, "pi", None))
+        );
         assert_eq!(ssh(&["-o", "User"]), None);
         assert_eq!(ssh(&["-N", "-L", "8080:localhost:80", "pi"]), None);
         assert_eq!(ssh(&["-fN", "pi"]), None);

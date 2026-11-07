@@ -136,6 +136,7 @@ const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
 const { openRemote } = await import('../../src/lib/remote/open')
 const { shells } = await import('../../src/lib/terminal/shells.svelte')
 const { renameTerminal } = await import('../../src/lib/terminal/rename')
+const { setTerminalIcon } = await import('../../src/lib/icon-target')
 const TerminalTab = (await import('../../src/lib/terminal/TerminalTab.svelte')).default
 
 const spawns = () => asked.filter((one) => one.command === 'pty_spawn')
@@ -404,4 +405,26 @@ test('the prompt of the other machine landing while it is asked does not stop it
   await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
   channels.at(-1)?.onmessage?.(new TextEncoder().encode('\x1b]133;A\x07pi$ ').buffer)
   await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'))
+})
+
+test('an address looked up once is looked up again the next time ssh starts', async () => {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: '10.0.0.9', user: null, port: null }
+  typing?.('ssh 10.0.0.9\r')
+  await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
+
+  front = null
+  typing?.('exit\r')
+  await new Promise((settle) => setTimeout(settle, 1200))
+  front = 'ssh'
+  reached = { hostname: 'pi', user: null, port: null }
+  typing?.('ssh pi\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'), { timeout: 2500 })
+})
+
+test('an icon chosen while it is a host keeps the shell under it', async () => {
+  const tab = await adopted()
+  setTerminalIcon(tab.id, 'star', null)
+  expect(readSpec(tab.doc)).toMatchObject({ shell: 'ssh:pi', via: 'pwsh', icon: 'star' })
 })

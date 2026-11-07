@@ -239,7 +239,7 @@ started with - `/proc/<pid>/cmdline` on Linux, `KERN_PROCARGS2` on a Mac, the pr
 line on Windows - and reads it as `ssh` does: the options that take a value, before the host and
 after it, `-l`, `-p` and `-o User` or `Port`, the first of each winning over the next and over
 the destination's own, which is `user@host` or `ssh://user@host:port`; a `-o HostName`, another
-config (`-F`) or a tag (`-P`) is left a program, since the tab would name a machine it may not be
+config (`-F`), a tag (`-P`), a socket (`-S`, `ControlPath`) or a `ProxyCommand` is left a program, since the tab would name a machine it may not be
 on, and so is a `SessionType`, `RemoteCommand` or `ForkAfterAuthentication` that opens no session. Only the destination goes to the window,
 never the arguments, which can name a key. An `ssh` that opens no session here - a command after
 the host, `-N`, `-W`, `-f`, `-G` - is left a program (`ssh_destination` in

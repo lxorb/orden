@@ -357,8 +357,10 @@ class Session {
     this.front.looked(found)
     this.named()
 
-    if (found !== 'ssh') this.giveBack()
-    else if (this.underneath !== null || hostIdOf(this.spec().shell) === null)
+    if (found !== 'ssh') {
+      this.unmatched = null
+      this.giveBack()
+    } else if (this.underneath !== null || hostIdOf(this.spec().shell) === null)
       void this.adopt(pty, source)
   }
 

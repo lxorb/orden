@@ -619,13 +619,18 @@ mod tests {
             .stdout(std::process::Stdio::null())
             .spawn()
             .unwrap();
-        let found = arguments_of(child.id());
+        let wanted: Vec<String> = args.iter().map(|one| (*one).to_owned()).collect();
+        let mut found = None;
+        for _ in 0..50 {
+            found = arguments_of(child.id());
+            if found.as_ref() == Some(&wanted) {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
         let _ = child.kill();
         let _ = child.wait();
-        assert_eq!(
-            found,
-            Some(args.iter().map(|one| (*one).to_owned()).collect())
-        );
+        assert_eq!(found, Some(wanted));
     }
 
     #[cfg(any(target_os = "linux", target_os = "macos"))]
