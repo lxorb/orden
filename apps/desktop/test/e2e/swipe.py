@@ -193,7 +193,7 @@ PAGE = f"""<!doctype html>
 <script>
   window.said = []
   window.open = (url, name) => {{
-    if (String(name).startsWith('orden-swipe:')) window.said.push(JSON.parse(String(name).slice(10)))
+    if (String(name).startsWith('orden-swipe:')) window.said.push(JSON.parse(String(name).slice('orden-swipe:'.length)))
     return null
   }}
   document.getElementById('row').scrollLeft = 200
@@ -262,6 +262,14 @@ def page_script(browser: Browser) -> None:
         wrong(f"a page that keeps its overscroll did not keep it: {json.dumps(contained)}")
     else:
         say("ok   overscroll-behavior-x: none keeps the swipe out")
+    page.close()
+    page = DRIVE.page(browser, viewport={"width": 800, "height": 600})
+    page.set_content(PAGE.replace("<script>window.said", "<script>window.requestAnimationFrame = () => 0\n  window.said", 1))
+    unpainted = heard("#words", 100)
+    if not unpainted:
+        wrong("a page that draws no frames, hidden behind its picture, said nothing of a sweep")
+    else:
+        say(f"ok   a page that draws no frames still says a sweep ({len(unpainted)} reports)")
     page.close()
     page = DRIVE.page(browser, viewport={"width": 800, "height": 600})
     page.set_content(PAGE)
