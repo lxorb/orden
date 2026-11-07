@@ -165,17 +165,7 @@ describe('the sidebar button', () => {
 })
 
 describe('the row across the top of the app', () => {
-  test('is one row tall, and nothing in it is pinned to the top of it', () => {
-    const menu = named('lib/AppMenu.svelte')
-    const trigger = /\.trigger\s*\{([^}]*)\}/.exec(declarations(menu.style))?.[1] ?? ''
-
-    expect(trigger).toMatch(/align-self\s*:\s*center/)
-
-    expect(menu.text).toMatch(/class="nib-glyph trigger"/)
-    expect(trigger).not.toMatch(/height\s*:/)
-  })
-
-  test('and the bar itself is the header height', () => {
+  test('is the header height', () => {
     const style = declarations(named('lib/Titlebar.svelte').style)
     expect(style).toMatch(/height\s*:\s*var\(--header-height\)/)
   })

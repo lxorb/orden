@@ -566,17 +566,15 @@ halves of the pair on their own.
 
 ## The row along the top
 
-Three things, in the order a thumb reaches them.
+Two things, in the order a thumb reaches them.
 
 | | |
 | --- | --- |
 | Left | The button that opens and shuts the file list - `SidebarToggle.svelte`, the same one the desktop title bar has, with the panel's edge sliding out of the window as the list arrives |
 | Middle | The document's name, with the mark its kind wears in every list that shows it |
-| Right | Three dots, which open the menu the desktop's menu bar holds: the same groups, the same rows, the same submenus, as one sheet - `AppMenu.svelte` with `dots` |
 
-There is no hamburger on a phone or a tablet: the bars are the desktop's, at the
-left of its title bar, and a touch screen reaches the same menu through the dots
-at the other end of this row.
+There is no hamburger and no menu of the whole app in this row, on a phone or a
+tablet, as there is none in the desktop's title bar.
 
 The sidebar button is one component and one drawing, wherever it appears. Where
 the sidebar is a drawer it covers the bar this button sits in, so the drawer's
