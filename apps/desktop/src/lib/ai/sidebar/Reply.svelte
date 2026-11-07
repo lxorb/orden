@@ -5,6 +5,7 @@
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Answer from '../Answer.svelte'
+  import LiveAnswer from './LiveAnswer.svelte'
   import { answerHtml } from '../drawn'
   import { citationLinks, citedIn, linkedAnswer } from '../retrieve'
   import type { Part, Turn } from '../chat/types'
@@ -213,7 +214,16 @@
 {#snippet one(block: Block)}
   {#if block.kind === 'words'}
     {@const still = live && block.at === blocks.at(-1)?.at}
-    <Answer html={drawn(block.text, still)} live={still} onfollow={follow} onpicture={show} />
+    {#if still}
+      <LiveAnswer
+        text={block.text}
+        draw={(text: string) => drawn(text, true)}
+        onfollow={follow}
+        onpicture={show}
+      />
+    {:else}
+      <Answer html={drawn(block.text, false)} onfollow={follow} onpicture={show} />
+    {/if}
   {:else if block.kind === 'notice' && block.notice.code === 'tasks'}
     <TaskRows said={block.notice.text} />
   {:else if block.kind === 'notice'}
