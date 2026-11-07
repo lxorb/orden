@@ -1627,6 +1627,95 @@ describe('an answer on its way', () => {
     expect(JSON.stringify(live)).not.toContain('stale')
   })
 
+  test('started in two windows at once is answered in one, and the other asks after it', async () => {
+    type Granted = (lock: { name: string } | null) => unknown
+    const held = new Map<string, (() => void)[]>()
+    const locks = {
+      request: async (
+        name: string,
+        options: { ifAvailable?: boolean } | Granted,
+        given?: Granted,
+      ) => {
+        const callback = typeof options === 'function' ? options : given
+        const ifAvailable = typeof options === 'function' ? false : !!options.ifAvailable
+        if (!callback) throw new Error('no callback')
+        await Promise.resolve()
+        const waiting = held.get(name)
+        if (waiting && ifAvailable) return callback(null)
+        if (waiting) await new Promise<void>((free) => waiting.push(free))
+        held.set(name, held.get(name) ?? [])
+        try {
+          return await callback({ name })
+        } finally {
+          const next = held.get(name)?.shift()
+          if (next) next()
+          else held.delete(name)
+        }
+      },
+    }
+    const had = Object.getOwnPropertyDescriptor(navigator, 'locks')
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: locks })
+    try {
+      const { keepThread, newThread, readThread } = await import('../chat/threads')
+      const thread = newThread('work', 'p', 'm')
+      thread.turns = [
+        { id: 'y', role: 'you', at: 1, parts: [], draft: { text: 'Hi', attachments: [] } },
+        { id: 'm', role: 'model', at: 2, parts: [{ kind: 'text', text: 'Hello' }] },
+      ]
+      await keepThread(thread)
+      const ends: (() => void)[] = []
+      engine.send.mockReset()
+      engine.send.mockImplementation(
+        (asked: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
+          new Promise<void>((resolve) => {
+            const at = asked.turns.length
+            const you: Turn = { id: `you-${at}`, role: 'you', at: 3, parts: [], draft }
+            const model: Turn = { id: `model-${at}`, role: 'model', at: 4, parts: [] }
+            asked.turns.push(you, model)
+            on({ type: 'turn', turn: you })
+            on({ type: 'turn', turn: model })
+            ends.push(() => {
+              on({ type: 'done', stop: 'end' })
+              resolve()
+            })
+          }),
+      )
+      const one = await launched()
+      one.here('work')
+      const mine = await readThread('work', thread.id)
+      if (!mine) throw new Error('no thread')
+      one.adopt(mine, true)
+      const two = await launched()
+      two.here('work')
+      const theirs = await readThread('work', thread.id)
+      if (!theirs) throw new Error('no thread')
+      two.adopt(theirs, true)
+
+      one.send('From the first window')
+      two.send('From the second window')
+
+      await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+      await vi.waitFor(() => expect(two.running).toEqual([]), 3000)
+      await new Promise((resolve) => setTimeout(resolve, 200))
+      expect(engine.send).toHaveBeenCalledTimes(1)
+
+      ends.shift()?.()
+      await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
+      const second = engine.send.mock.calls[1]
+      expect(second?.[1].text).toContain('From the second window')
+      expect(second?.[0].turns.slice(0, 4).map((turn) => turn.id)).toEqual([
+        'y',
+        'm',
+        'you-2',
+        'model-2',
+      ])
+      ends.shift()?.()
+    } finally {
+      if (had) Object.defineProperty(navigator, 'locks', had)
+      else Reflect.deleteProperty(navigator, 'locks')
+    }
+  })
+
   test('in another window is not asked again from this one', async () => {
     const chat = await launched()
     chat.here('work')
