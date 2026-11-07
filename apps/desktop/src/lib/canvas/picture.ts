@@ -1,7 +1,7 @@
 import { escapeAll } from '@orden/markdown/html'
 import { assetsOf, inlineImages, localSources, SHEET_POLICY } from '../export'
 import { writtenPdf } from '../export/print'
-import { printWithPictures } from '../export/sheet'
+import { printWithPictures, wholeSheet } from '../export/sheet'
 import { chooseTarget, download, handOver } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
 import {
@@ -415,8 +415,8 @@ export async function exportCanvasPng(drawing: Drawing) {
   return name
 }
 
-async function sheetOf(drawing: Drawing, inline: boolean) {
-  const drawn = canvasSvg(
+function sheetOf(drawing: Drawing) {
+  const svg = canvasSvg(
     drawing.canvas,
     paletteOf('light'),
     drawing.path,
@@ -424,7 +424,6 @@ async function sheetOf(drawing: Drawing, inline: boolean) {
     false,
     drawing.trusted,
   )
-  const svg = inline ? await inlinedSvg(drawn) : drawn
   const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
   const width = Number(size?.[3] ?? 800)
   const height = Number(size?.[4] ?? 600)
@@ -435,7 +434,7 @@ async function sheetOf(drawing: Drawing, inline: boolean) {
 }
 
 export async function printCanvas(drawing: Drawing) {
-  const { html, page } = await sheetOf(drawing, false)
+  const { html, page } = sheetOf(drawing)
   await printWithPictures(html, fromAsset, page)
 }
 
@@ -443,11 +442,11 @@ export async function exportCanvasPdf(drawing: Drawing) {
   const native = isDesktop && (await invoke<boolean>('pdf_supported').catch(() => false))
   const target = native ? await chooseTarget(drawing.name, 'pdf', 'PDF') : null
 
+  const { html, page } = sheetOf(drawing)
+
   if (target) {
-    const { html, page } = await sheetOf(drawing, true)
-    if (await writtenPdf(html, target, page)) return target
+    if (await writtenPdf(await wholeSheet(html, fromAsset), target, page)) return target
   }
 
-  const { html, page } = await sheetOf(drawing, false)
   await printWithPictures(html, fromAsset, page)
 }

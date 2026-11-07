@@ -5,6 +5,7 @@ import { sourcesOf } from '@orden/markdown/sources'
 import { exportCss, themeCss } from '@orden/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from './accents'
 import { busy } from './busy.svelte'
+import { pageBytes } from './bytes'
 import { type Fence, prepareEmbeds, prepareFences } from './before-render'
 import { titleOf } from './export/document'
 import { inlinePictures, type Picture, swapSources } from './export/pictures'
@@ -187,15 +188,9 @@ export function printsInFrame(): boolean {
   return !(isDesktop && platform() === 'macos')
 }
 
-async function bytesOf(html: string | Blob): Promise<Uint8Array> {
-  return typeof html === 'string'
-    ? new TextEncoder().encode(html)
-    : new Uint8Array(await html.arrayBuffer())
-}
-
 export function printInFrame(html: string | Blob, page?: PaperInches): Promise<void> {
   if (!printsInFrame()) {
-    return bytesOf(html)
+    return pageBytes(html)
       .then((bytes) => invoke('print_page', { bytes, page: page ?? null }))
       .then(
         () => undefined,

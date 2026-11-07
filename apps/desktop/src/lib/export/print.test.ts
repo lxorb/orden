@@ -5,7 +5,7 @@ const world = vi.hoisted(() => ({ asked: [] as unknown[], refuse: null as string
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
-    world.asked.push({ command, output: args?.output })
+    world.asked.push({ command, output: args?.output, bytes: args?.bytes })
     return world.refuse ? Promise.reject(new Error(world.refuse)) : Promise.resolve(undefined)
   },
 }))
@@ -34,7 +34,22 @@ afterEach(() => {
 describe('writing a PDF straight to a file', () => {
   test('asks the machine to print to the file that was chosen', async () => {
     expect(await writtenPdf('<p>hello</p>', '/home/plan.pdf', PAGE)).toBe(true)
-    expect(world.asked).toEqual([{ command: 'print_pdf', output: '/home/plan.pdf' }])
+    expect(world.asked).toEqual([
+      {
+        command: 'print_pdf',
+        output: '/home/plan.pdf',
+        bytes: new TextEncoder().encode('<p>hello</p>'),
+      },
+    ])
+  })
+
+  test('hands a page built in pieces over as bytes, never as one long string', async () => {
+    const page = new Blob(['<p>', new Blob(['h\u00e9llo']), '</p>'])
+    expect(await writtenPdf(page, '/home/plan.pdf', PAGE)).toBe(true)
+
+    const sent = (world.asked[0] as { bytes?: unknown }).bytes
+    expect(sent).toBeInstanceOf(Uint8Array)
+    expect(new TextDecoder().decode(sent as Uint8Array)).toBe('<p>h\u00e9llo</p>')
   })
 
   test('says nothing on the line when it works', async () => {

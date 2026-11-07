@@ -74,6 +74,16 @@ async function inlined(
   return new Map([...found].map(([src, data]) => [src, new Blob([data])]))
 }
 
+export async function wholeSheet(
+  html: string,
+  resolve: ((src: string) => string) | undefined,
+): Promise<string | Blob> {
+  const sources = resolve ? localOf(html) : []
+  if (!resolve || !sources.length) return html
+
+  return new Blob(placed(html, await inlined(sources, resolve)), { type: 'text/html' })
+}
+
 export async function printWithPictures(
   html: string,
   resolve: ((src: string) => string) | undefined,
@@ -86,8 +96,7 @@ export async function printWithPictures(
   }
 
   if (!printsInFrame()) {
-    const pieces = placed(html, await inlined(sources, resolve))
-    await printInFrame(new Blob(pieces, { type: 'text/html' }), page)
+    await printInFrame(await wholeSheet(html, resolve), page)
     return
   }
 

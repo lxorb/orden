@@ -39,6 +39,12 @@ export function parseDataUri(uri: string): { mime: string; bytes: Uint8Array } |
   return { mime, bytes: match[2] ? fromBase64(body) : new TextEncoder().encode(decodeURI(body)) }
 }
 
+export async function pageBytes(page: string | Blob): Promise<Uint8Array> {
+  return typeof page === 'string'
+    ? new TextEncoder().encode(page)
+    : new Uint8Array(await page.arrayBuffer())
+}
+
 export async function fileBytes(path: string): Promise<Uint8Array> {
   if (isNative) return new Uint8Array(await invoke<ArrayBuffer>('read_file', { path }))
 
