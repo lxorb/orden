@@ -16,7 +16,8 @@ const drawn = vi.fn()
 vi.stubGlobal('document', {
   createElement: () => ({
     getContext: () => ({ drawImage: drawn }),
-    toDataURL: () => 'data:image/png;base64,AAAA',
+    toBlob: (done: (png: Blob) => void) =>
+      done(new Blob([new Uint8Array([0])], { type: 'image/png' })),
   }),
 })
 
@@ -29,7 +30,7 @@ const AT = { file: 'Paper.pdf', note: '/n/P.pages', root: '/n' }
 
 test('a page let go of on the way is drawn again', async () => {
   paper.widths = [0, 100]
-  expect(await paperPicture(AT, 1)).toBe('data:image/png;base64,AAAA')
+  expect(await paperPicture(AT, 1)).toBe('data:image/png;base64,AA==')
   expect(paper.asked).toBe(2)
   expect(drawn).toHaveBeenCalledTimes(1)
 })

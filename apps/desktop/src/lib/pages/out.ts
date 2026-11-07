@@ -14,6 +14,7 @@ import { drawnNode, inlinedSvg, styles } from '../canvas/picture'
 import { inkSvg } from '../canvas/svg'
 import { type Box } from '../canvas/geometry'
 import { busy } from '../busy.svelte'
+import { pngData } from '../png-off'
 import { fileBytes } from '../bytes'
 import { chooseTarget, download, writeFile } from '../export/save'
 import { zipOf } from '../export/zip'
@@ -653,7 +654,7 @@ export async function printPages(out: PagesOut): Promise<void> {
       if (context) {
         await page.render({ canvas, canvasContext: context, viewport }).promise
         sheets.push({
-          src: canvas.toDataURL('image/png'),
+          src: (await pngData(canvas)) ?? 'data:,',
           width: natural.width,
           height: natural.height,
         })
