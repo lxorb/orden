@@ -324,7 +324,7 @@ def on_a_phone(browser: Browser) -> None:
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(500)
 
-    page.locator("button.toggle.right").first.click(force=True)
+    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
     wait_for(page, "document.querySelector('aside[data-region=\"right\"] [role=\"tab\"]')", "[phone] the right drawer's tabs")
     tabs = page.evaluate(
         "() => [...document.querySelectorAll('aside[data-region=\"right\"] [role=\"tab\"]')]"

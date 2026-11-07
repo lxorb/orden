@@ -483,8 +483,8 @@ def drive_pane(browser: Browser) -> None:
         "() => [...document.querySelectorAll('.nib-action')].map((one) => one.textContent.trim())"
     )
     say(f"[pane] the kinds offered: {adds}")
-    if len(adds) != 3:
-        wrong(f"[pane] three kinds were expected, not {len(adds)}: {adds}")
+    if adds != ["Add Claude", "Add OpenAI", "Add Gemini", "Add OpenAI-compatible"]:
+        wrong(f"[pane] Claude, OpenAI, Gemini and OpenAI-compatible were expected: {adds}")
 
     page.locator(".nib-action").last.click()
     page.wait_for_timeout(300)
