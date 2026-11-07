@@ -42,7 +42,13 @@ async function fresh(
     lazy = true,
     index = true,
     work,
-  }: { lazy?: boolean; index?: { on: boolean } | boolean; work?: ReferenceAccount } = {},
+    few,
+  }: {
+    lazy?: boolean
+    index?: { on: boolean } | boolean
+    work?: ReferenceAccount
+    few?: number
+  } = {},
 ): Promise<Device> {
   const store = new MemoryStore(id)
   const seeding = store.open()
@@ -80,6 +86,9 @@ async function fresh(
           made.pulled.push(...asked.map((one) => one.id))
         }
         const answer = unframe(await to.handle(id, route, frame(body))) as Record<string, unknown>
+        if (route === 'pull' && few !== undefined && Array.isArray(answer.docs)) {
+          return { ...answer, docs: answer.docs.slice(0, few) }
+        }
         return route === 'feed' && saying.on ? { ...answer, index: true } : answer
       },
     },
@@ -156,6 +165,27 @@ describe('a browser that keeps only the words it uses', () => {
         .sort(),
     ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
     expect(await browser.engine.fetch(`${ROOT}/Nothing`)).toBe(false)
+  })
+
+  test('fetches a folder whole from an account that answers a pull a note at a time', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const other = await fresh(account, 'o', { lazy: false })
+    await other.engine.pass(SPACE)
+    await other.disk.mkdir(`${ROOT}/F`)
+    await other.engine.created(`${ROOT}/F`, true)
+    const names = ['a.md', 'b.md', 'c.md', 'd.md', 'e.md', 'f.md']
+    for (const name of names) {
+      await other.disk.write(`${ROOT}/F/${name}`, `# ${name}\n`)
+      await other.engine.created(`${ROOT}/F/${name}`, false, `# ${name}\n`)
+    }
+    await other.engine.pass(SPACE)
+
+    const browser = await fresh(account, 'b', { few: 1 })
+    await browser.engine.pass(SPACE)
+    expect(await browser.engine.fetch(`${ROOT}/F`)).toBe(true)
+    for (const name of names) {
+      expect(browser.disk.files.get(`${ROOT}/F/${name}`)).toBe(`# ${name}\n`)
+    }
   })
 
   test('puts what it makes in a folder it keeps no words of into that folder, not a new one of its name', async () => {
