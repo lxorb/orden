@@ -1,4 +1,6 @@
-export const TRIAL_MS = 300
+import { backtracksWildly } from '@orden/markdown/pattern-cost'
+
+const TRIAL_MS = 300
 
 export function scanPattern(source: string, flags: string, text: string, lines: boolean): number {
   const pattern = new RegExp(source, flags)
@@ -54,7 +56,7 @@ function shut(one: Worker) {
 
 function once(source: string, flags: string, text: string, lines: boolean): Promise<boolean> {
   const away = open()
-  if (!away) return Promise.resolve(true)
+  if (!away) return Promise.resolve(!backtracksWildly(source, flags))
 
   const id = ++asked
   return new Promise<boolean>((settle) => {

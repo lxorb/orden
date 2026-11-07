@@ -1,4 +1,5 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { backtracksWildly } from '@orden/markdown/pattern-cost'
 import { taskAt } from '@orden/markdown/tasks'
 import { lineAt, lineStarts } from './lines'
 import { isEmpty, type Query, type Unit } from './query'
@@ -475,7 +476,7 @@ export class Matcher {
 
     let made: RegExp | null
     try {
-      made = new RegExp(source, folded ? 'gi' : 'g')
+      made = backtracksWildly(source) ? null : new RegExp(source, folded ? 'gi' : 'g')
     } catch {
       made = null
     }
