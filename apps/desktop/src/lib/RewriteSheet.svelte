@@ -21,7 +21,7 @@
     <div class="verbs">
       {#each VERBS as verb (verb.id)}
         <button
-          class="nib-chip"
+          class="orden-chip"
           class:is-on={rewriting.verb === verb.id}
           onclick={() => rewriting.run(verb.id)}
         >
@@ -71,8 +71,9 @@
 
   {#if answer}
     <div class="answers">
-      <button class="nib-button is-quiet" onclick={() => rewriting.close()}>{t('Discard')}</button>
-      <button class="nib-button" disabled={rewriting.running} onclick={() => rewriting.accept()}>
+      <button class="orden-button is-quiet" onclick={() => rewriting.close()}>{t('Discard')}</button
+      >
+      <button class="orden-button" disabled={rewriting.running} onclick={() => rewriting.accept()}>
         {t('Replace')}
       </button>
     </div>

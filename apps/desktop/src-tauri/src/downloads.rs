@@ -1164,7 +1164,7 @@ mod tests {
     }
 
     fn tmp() -> PathBuf {
-        std::env::temp_dir().join("nib-downloads-test-that-does-not-exist")
+        std::env::temp_dir().join("orden-downloads-test-that-does-not-exist")
     }
 
     #[test]

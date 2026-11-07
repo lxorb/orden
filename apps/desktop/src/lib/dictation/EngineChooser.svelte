@@ -88,7 +88,7 @@
 
 <div
   bind:this={layer}
-  class="nib-layer chooser"
+  class="orden-layer chooser"
   style:right={place.right}
   style:top={place.top}
   style:bottom={place.bottom}
@@ -102,7 +102,7 @@
     {@const one = said(engine)}
     <button
       type="button"
-      class="nib-row road"
+      class="orden-row road"
       onpointerdown={(event) => event.preventDefault()}
       onclick={() => choose(engine)}
     >

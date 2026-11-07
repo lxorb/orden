@@ -107,7 +107,7 @@ if opened != "opened":
 elif not until(heard):
     fail("the presenter's window was never heard: it is not in the app's profile")
 
-heard = hears("nib-quick-add", "hello")
+heard = hears("orden-quick-add", "hello")
 subprocess.run([APP, "--quick-add"], check=False, timeout=30, capture_output=True)
 if not until(heard):
     fail("the quick add window was never heard: it is not in the app's profile")

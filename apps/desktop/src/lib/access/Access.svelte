@@ -142,7 +142,7 @@
         {#if anything}
           <div class="card">
             {#each listed as grant (grant.id)}
-              <button class="nib-setting agent" onclick={() => (chosen = grant.id)}>
+              <button class="orden-setting agent" onclick={() => (chosen = grant.id)}>
                 <AgentMark name={grant.name} />
                 <span class="name">
                   {grant.name}
@@ -152,7 +152,7 @@
                     )}
                   </small>
                 </span>
-                <svg class="chevron nib-mirror" viewBox="0 0 16 16" aria-hidden="true"
+                <svg class="chevron orden-mirror" viewBox="0 0 16 16" aria-hidden="true"
                   ><path d="M6 3l5 5-5 5" /></svg
                 >
               </button>
@@ -161,7 +161,7 @@
             {#if account.user}
               {#each connectors.clients as one (one.id)}
                 <div
-                  class="nib-setting connected"
+                  class="orden-setting connected"
                   transition:slide={{ duration: dur(180), easing: cubicOut }}
                 >
                   <AgentMark name={one.name} />
@@ -169,7 +169,7 @@
                     {one.name}
                     <small>{access(one.readOnly)} {when(one.lastUsedAt)}</small>
                   </span>
-                  <button class="nib-chip is-quiet" onclick={() => connectors.disconnect(one.id)}>
+                  <button class="orden-chip is-quiet" onclick={() => connectors.disconnect(one.id)}>
                     {t('Disconnect')}
                   </button>
                 </div>
@@ -177,7 +177,7 @@
 
               {#if connectors.token?.exists}
                 <div
-                  class="nib-setting connected"
+                  class="orden-setting connected"
                   transition:slide={{ duration: dur(180), easing: cubicOut }}
                 >
                   <AgentMark name={t('Pasted token')} />
@@ -189,7 +189,7 @@
                     >
                   </span>
                   <button
-                    class="nib-chip is-quiet"
+                    class="orden-chip is-quiet"
                     disabled={connectors.busy}
                     onclick={() => connectors.revokeToken()}
                   >
@@ -204,7 +204,7 @@
         {#if enrolled !== null}
           <div class="card">
             <div
-              class="nib-setting pressable"
+              class="orden-setting pressable"
               role="switch"
               tabindex="0"
               aria-checked={enrolled}
@@ -212,7 +212,7 @@
               onkeydown={pressed}
             >
               <span class="name"
-                ><span class="nib-named"
+                ><span class="orden-named"
                   >{t('Agents on this computer connect on their own')}<Hint
                     text={t(
                       'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.',
@@ -220,7 +220,7 @@
                   /></span
                 ></span
               >
-              <span class="nib-switch" class:on={enrolled} aria-hidden="true"></span>
+              <span class="orden-switch" class:on={enrolled} aria-hidden="true"></span>
             </div>
           </div>
         {/if}
@@ -228,7 +228,7 @@
         {#if shortcuts}
           <div class="card">
             <button
-              class="nib-setting agent"
+              class="orden-setting agent"
               onclick={() => void invoke('open_shortcuts').catch(() => undefined)}
             >
               <AgentMark name={t('Apple Shortcuts')} />
@@ -236,7 +236,7 @@
                 {t('Apple Shortcuts')}
                 <small>{t('Add task')}</small>
               </span>
-              <svg class="chevron nib-mirror" viewBox="0 0 16 16" aria-hidden="true"
+              <svg class="chevron orden-mirror" viewBox="0 0 16 16" aria-hidden="true"
                 ><path d="M5 11l6-6M6 5h5v5" /></svg
               >
             </button>
@@ -245,7 +245,7 @@
 
         {#if choice && (!local || pane?.ready)}
           <h3>{anything ? t('Connect another') : t('Connect')}</h3>
-          <div class="nib-segmented" role="tablist" use:segmented>
+          <div class="orden-segmented" role="tablist" use:segmented>
             {#each offered as one (one)}
               <button
                 role="tab"
@@ -301,14 +301,14 @@
     width: 100%;
   }
 
-  .agents :global(.nib-setting .name) {
+  .agents :global(.orden-setting .name) {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 1px;
   }
 
-  .agents :global(.nib-setting .name small) {
+  .agents :global(.orden-setting .name small) {
     font-size: var(--text-xs);
     color: var(--muted);
   }
@@ -336,14 +336,14 @@
   }
 
   @media (hover: hover) {
-    .agents :global(button.nib-setting:hover),
-    .agents :global(.nib-setting.pressable:hover) {
+    .agents :global(button.orden-setting:hover),
+    .agents :global(.orden-setting.pressable:hover) {
       color: var(--text-strong);
     }
   }
 
-  .agents :global(button.nib-setting:focus-visible),
-  .agents :global(.nib-setting.pressable:focus-visible) {
+  .agents :global(button.orden-setting:focus-visible),
+  .agents :global(.orden-setting.pressable:focus-visible) {
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }

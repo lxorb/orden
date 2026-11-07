@@ -112,9 +112,9 @@ WRITTEN = """
   for (const line of lines) {
     const type = line.dataset.callout
     if (seen.has(type)) continue
-    const label = line.querySelector('.nib-callout-label')
+    const label = line.querySelector('.orden-callout-label')
     seen.set(type, {
-      look: [...line.classList].find((one) => one.startsWith('nib-callout-')) ?? null,
+      look: [...line.classList].find((one) => one.startsWith('orden-callout-')) ?? null,
       accent: getComputedStyle(line).borderLeftColor,
       icon: !!line.querySelector('.callout-icon'),
       words: label ? label.textContent : null,
@@ -170,8 +170,8 @@ def drive(browser: Browser, scheme: str) -> None:
         if not one:
             wrong(f"{kind} is not marked as a callout in the editor")
             continue
-        if one["look"] != f"nib-callout-{LOOKS[kind]}":
-            wrong(f"{kind} wears {one['look']} rather than nib-callout-{LOOKS[kind]}")
+        if one["look"] != f"orden-callout-{LOOKS[kind]}":
+            wrong(f"{kind} wears {one['look']} rather than orden-callout-{LOOKS[kind]}")
         if not one["icon"]:
             wrong(f"{kind} has no icon")
 
@@ -220,8 +220,8 @@ def drive(browser: Browser, scheme: str) -> None:
     say(f"[{scheme}] other names: {json.dumps({k: v['look'] for k, v in others.items()})}")
     shot(page, f"04-aliases-{scheme}")
     for name, look in ALIASES.items():
-        if others.get(name, {}).get("look") != f"nib-callout-{look}":
-            wrong(f"{name} does not wear nib-callout-{look}: {others.get(name)}")
+        if others.get(name, {}).get("look") != f"orden-callout-{look}":
+            wrong(f"{name} does not wear orden-callout-{look}: {others.get(name)}")
 
     open_note(page, "Callouts")
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
@@ -257,7 +257,7 @@ def drive(browser: Browser, scheme: str) -> None:
 
 FOLDED = """
 () => ({
-  marks: document.querySelectorAll('.nib-folded').length,
+  marks: document.querySelectorAll('.orden-folded').length,
   shown: [...document.querySelectorAll('.cm-content .cm-line')]
     .map((line) => line.textContent.trim())
     .filter((text) => text.length),
@@ -287,7 +287,7 @@ def fold(page: Page, scheme: str) -> None:
     if not any("In front of the sign" in one for one in written["shown"]):
         wrong("a plus shut a callout it should have left open")
 
-    page.locator(".cm-line[data-callout] .nib-fold-hinge").first.click()
+    page.locator(".cm-line[data-callout] .orden-fold-hinge").first.click()
     page.wait_for_timeout(500)
     opened = page.evaluate(FOLDED)
     say(f"[{scheme}] after the chevron: {opened['marks']} marks")

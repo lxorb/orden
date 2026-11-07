@@ -65,7 +65,7 @@
 {#if shown}
   {#key shown.id}
     <div
-      class="card nib-layer"
+      class="card orden-layer"
       bind:this={layer}
       bind:clientWidth={width}
       bind:clientHeight={height}
@@ -128,7 +128,7 @@
       {/if}
       {#if mine}
         <button
-          class="nib-chip edit"
+          class="orden-chip edit"
           onclick={() => {
             close()
             settings.show('account')

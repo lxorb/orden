@@ -31,7 +31,7 @@
 </script>
 
 <SpacePlace {place} {typed} {held}><SpaceBadge {space} {on} /></SpacePlace>
-<span class="nib-row-label"
+<span class="orden-row-label"
   ><bdi
     >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b
         >{:else}{piece.text}{/if}{/each}</bdi

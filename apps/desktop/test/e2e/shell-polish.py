@@ -117,7 +117,7 @@ BADGES = """
   const round = (value) => Math.round(value * 100) / 100
   const out = []
 
-  for (const badge of document.querySelectorAll('.spaces .nib-badge')) {
+  for (const badge of document.querySelectorAll('.spaces .orden-badge')) {
     const box = badge.getBoundingClientRect()
 
     // Down to what is really drawn. A box that is centred can still hold a glyph
@@ -135,7 +135,7 @@ BADGES = """
     // Where the ink is, which for a stroked mark is tighter than its box.
     const ink = drawn.tagName.toLowerCase() === 'svg' ? drawn.getBBox?.() : null
     out.push({
-      row: badge.closest('.nib-row')?.textContent.trim() ?? '?',
+      row: badge.closest('.orden-row')?.textContent.trim() ?? '?',
       kind: drawn === badge ? 'letter' : drawn.tagName.toLowerCase(),
       badge: [round(box.width), round(box.height)],
       mark: [round(inner.width), round(inner.height)],
@@ -294,8 +294,8 @@ FOOT = """
 
 FORMAT_BAR = """
 () => {
-  const docked = document.querySelector('.nib-bar.docked')
-  const callout = document.querySelector('.nib-bar-at')
+  const docked = document.querySelector('.orden-bar.docked')
+  const callout = document.querySelector('.orden-bar-at')
   const one = docked ?? callout
   if (!one) return { none: true }
 
@@ -342,7 +342,7 @@ SHARED = """
   for (const one of found) {
     const style = getComputedStyle(one)
     seen.push({
-      where: one.closest('.nib-row, .row, .name')?.textContent.trim() ?? '?',
+      where: one.closest('.orden-row, .row, .name')?.textContent.trim() ?? '?',
       tag: one.tagName.toLowerCase(),
       klass: one.className,
       marks: one.querySelectorAll('svg').length,
@@ -393,12 +393,12 @@ TREE_MARKS = """
 
 SEGMENTED = """
 () => {
-  const track = document.querySelector('.nib-segmented')
+  const track = document.querySelector('.orden-segmented')
   if (!track) return { none: true }
 
   // The surface belongs to the thumb wherever one slides, and to the chosen
-  // button where none does; see `.nib-segmented.has-thumb button.on`.
-  const raised = track.querySelector('.nib-segmented-thumb') ?? track.querySelector('button.on')
+  // button where none does; see `.orden-segmented.has-thumb button.on`.
+  const raised = track.querySelector('.orden-segmented-thumb') ?? track.querySelector('button.on')
   if (!raised) return { none: true }
 
   const lit = (css) => {
@@ -428,7 +428,7 @@ SEGMENTED = """
 
 FORMAT_MARKS = """
 () => {
-  const bar = document.querySelector('.nib-bar.docked') ?? document.querySelector('.nib-bar-at')
+  const bar = document.querySelector('.orden-bar.docked') ?? document.querySelector('.orden-bar-at')
   if (!bar) return { none: true }
 
   const ink = document.createElement('canvas').getContext('2d')
@@ -486,7 +486,7 @@ FORMAT_MARKS = """
 
 FORMAT_BOXES = """
 () => {
-  const bar = document.querySelector('.nib-bar.docked') ?? document.querySelector('.nib-bar-at')
+  const bar = document.querySelector('.orden-bar.docked') ?? document.querySelector('.orden-bar-at')
   return bar
     ? [...bar.querySelectorAll('button')].map((one) => {
         const box = one.getBoundingClientRect()
@@ -833,7 +833,7 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         say(f"[{label}] the segmented control: {segment}")
         check(not segment["none"], f"[{label}] the appearance pane draws a segmented control")
         if not segment["none"]:
-            page.locator(".nib-segmented").first.screenshot(
+            page.locator(".orden-segmented").first.screenshot(
                 path=str(SHOTS / f"segmented-{label}.png")
             )
             say(f"[{label}] wrote segmented-{label}.png")

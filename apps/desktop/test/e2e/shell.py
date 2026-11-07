@@ -98,7 +98,7 @@ LANGUAGES = """
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-LAYERS = "[role=menu], .palette, .nib-screen.sheet"
+LAYERS = "[role=menu], .palette, .orden-screen.sheet"
 
 def dismiss(page) -> None:
     for _ in range(4):
@@ -282,7 +282,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
 
     page.evaluate("() => window.nibApp.settings.show()")
-    page.wait_for_selector(".nib-screen.sheet, .sheet", state="visible", timeout=8000)
+    page.wait_for_selector(".orden-screen.sheet, .sheet", state="visible", timeout=8000)
     shot("settings")
 
     page.evaluate(

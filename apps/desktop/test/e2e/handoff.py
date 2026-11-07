@@ -18,7 +18,7 @@ OLD = f"http://rebrand-old.localhost:{PORT}"
 NEW = f"http://rebrand-new.localhost:{PORT}"
 ELSEWHERE = f"http://rebrand-elsewhere.localhost:{PORT}"
 
-ROW = '.nib-setting:has-text("Notes from nibeditor.com")'
+ROW = '.orden-setting:has-text("Notes from nibeditor.com")'
 
 UNANSWERED = (
     "try { if (!sessionStorage.getItem('drive-unanswered')) {"

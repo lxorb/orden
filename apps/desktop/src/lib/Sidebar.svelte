@@ -579,7 +579,7 @@
       {#if !phoneTabs}
         <div
           bind:this={tablist}
-          class="nib-segmented panels"
+          class="orden-segmented panels"
           data-region={side === 'left' ? 'panels' : undefined}
           use:roving={{
             across: true,
@@ -676,7 +676,7 @@
         {#if holdable || showing === 'links'}
           {#if holdable}
             <button
-              class="nib-glyph tool"
+              class="orden-glyph tool"
               class:active={held}
               title={held ? t('Follow the open note') : t('Stay on this note')}
               aria-label={held ? t('Follow the open note') : t('Stay on this note')}
@@ -689,7 +689,7 @@
           {#if showing === 'links'}
             {#if graphing}
               <button
-                class="nib-glyph depth"
+                class="orden-glyph depth"
                 title={t('Depth')}
                 aria-label={t('Depth')}
                 onclick={() =>
@@ -702,7 +702,7 @@
               </button>
             {/if}
             <button
-              class="nib-glyph tool"
+              class="orden-glyph tool"
               class:active={graphing}
               title={t('Graph')}
               aria-label={t('Graph')}
@@ -716,7 +716,7 @@
         {#if showing === 'tree' && listing}
           {#if workspace.unfolded}
             <button
-              class="nib-glyph tool"
+              class="orden-glyph tool"
               title={shortcuts.tooltip(t('Collapse the file list'), 'app.fold-list')}
               aria-label={t('Collapse the file list')}
               onclick={() => workspace.foldList()}
@@ -726,7 +726,7 @@
             </button>
           {/if}
           <button
-            class="nib-glyph tool"
+            class="orden-glyph tool"
             title={t('Order of the files')}
             aria-label={t('Order of the files')}
             aria-haspopup="menu"
@@ -737,7 +737,7 @@
         {/if}
         {#if showing === 'search'}
           <button
-            class="nib-glyph tool"
+            class="orden-glyph tool"
             title={t('Sort')}
             aria-label={t('Sort')}
             aria-haspopup="menu"
@@ -748,7 +748,7 @@
         {/if}
         {#if showing === 'ask'}
           <button
-            class="nib-glyph tool fresh"
+            class="orden-glyph tool fresh"
             title={t('New chat')}
             aria-label={t('New chat')}
             onclick={() => {
@@ -759,7 +759,7 @@
             <svg viewBox="0 0 13 13"><path d={FRESH_MARK} /></svg>
           </button>
           <button
-            class="nib-glyph tool"
+            class="orden-glyph tool"
             title={shortcuts.tooltip(t('Chats'), 'app.ask')}
             aria-label={t('Chats')}
             onclick={() => {
@@ -795,7 +795,7 @@
             {#if listing}
               <Bookmarks onsearch={runBookmarked} />
 
-              <p class="nib-section">{t('Files')}</p>
+              <p class="orden-section">{t('Files')}</p>
 
               <Tree tree={listing} />
 
@@ -845,7 +845,7 @@
                 {#each workspace.headings as heading, index (index)}
                   <li>
                     <button
-                      class="nib-row is-short row heading"
+                      class="orden-row is-short row heading"
                       class:is-on={index === current}
                       class:above={dropAt === index && dropAbove}
                       class:below={dropAt === index && !dropAbove}
@@ -863,7 +863,7 @@
                       ondragend={endSection}
                       ondrop={(event) => dropSection(event, index)}
                     >
-                      <span class="nib-row-label"><bdi>{heading.text}</bdi></span>
+                      <span class="orden-row-label"><bdi>{heading.text}</bdi></span>
                     </button>
                   </li>
                 {/each}
@@ -871,17 +871,17 @@
             {/if}
 
             {#if workspace.footnotes.length}
-              <p class="nib-section">{t('Footnotes')}<span>{workspace.footnotes.length}</span></p>
+              <p class="orden-section">{t('Footnotes')}<span>{workspace.footnotes.length}</span></p>
               <ul>
                 {#each workspace.footnotes as note (note.id)}
                   <li>
                     <button
-                      class="nib-row is-short row note"
+                      class="orden-row is-short row note"
                       class:is-quiet={!note.used}
                       onclick={() => jump(note.line)}
                     >
-                      <span class="nib-row-mark note-id">{note.id}</span>
-                      <span class="nib-row-label"><bdi>{note.text}</bdi></span>
+                      <span class="orden-row-mark note-id">{note.id}</span>
+                      <span class="orden-row-label"><bdi>{note.text}</bdi></span>
                     </button>
                   </li>
                 {/each}
@@ -1093,7 +1093,7 @@
     padding-top: calc(var(--space-2) + var(--inset-top));
   }
 
-  .switch .nib-segmented {
+  .switch .orden-segmented {
     flex: 0 1 auto;
     min-width: 0;
   }
@@ -1102,15 +1102,15 @@
     padding: 0 var(--space-2);
   }
 
-  .switch .nib-segmented button {
+  .switch .orden-segmented button {
     min-width: 0;
   }
 
-  :global([data-touch]) .switch .nib-segmented button {
+  :global([data-touch]) .switch .orden-segmented button {
     min-width: var(--touch-target);
   }
 
-  .switch .nib-segmented button svg {
+  .switch .orden-segmented button svg {
     flex: none;
   }
 

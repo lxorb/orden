@@ -67,16 +67,16 @@ opened = run("(() => { const mark = document.querySelector('[data-opens=\"site\"
 if not opened:
     fail("there is no site mark to open the popover from")
 time.sleep(1)
-said = run("document.querySelector('.site.nib-bubble')?.innerText ?? ''") or ""
+said = run("document.querySelector('.site.orden-bubble')?.innerText ?? ''") or ""
 if "Connection is secure" not in said:
     fail(f"the popover does not say the connection is secure: {said!r}")
 
-pressed = run("(() => { const one = document.querySelector('.site.nib-bubble button.how'); if (!one) return false; one.click(); return true })()")
+pressed = run("(() => { const one = document.querySelector('.site.orden-bubble button.how'); if (!one) return false; one.click(); return true })()")
 if not pressed:
     fail("the line saying the connection is secure cannot be pressed")
 chain = []
 for _ in range(20):
-    chain = run("[...document.querySelectorAll('.site.nib-bubble .chain button')].map((one) => [one.dataset.role, one.querySelector('.name')?.innerText ?? ''])") or []
+    chain = run("[...document.querySelectorAll('.site.orden-bubble .chain button')].map((one) => [one.dataset.role, one.querySelector('.name')?.innerText ?? ''])") or []
     if chain:
         break
     time.sleep(0.5)
@@ -87,10 +87,10 @@ subprocess.run(["grim", str(OUT / "certificate.png")], check=False)
 print("the popover's chain:")
 for role, name in chain:
     print(f"  {role}: {name}")
-if run("!!document.querySelector('.site.nib-bubble .certificate .note')"):
+if run("!!document.querySelector('.site.orden-bubble .certificate .note')"):
     fail("the chain was read separately, not from the page's own connection")
 
-details = run("document.querySelector('.site.nib-bubble .details')?.innerText ?? ''") or ""
+details = run("document.querySelector('.site.orden-bubble .details')?.innerText ?? ''") or ""
 (OUT / "certificate.txt").write_text(details)
 print("the popover's certificate:")
 print(details)

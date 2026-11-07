@@ -60,16 +60,16 @@
   <div class="rows">
     {#if approval.category === 'takeover'}
       {#if approval.tab !== undefined}
-        <button class="nib-button is-quiet" onclick={goThere}>{t('Open')}</button>
+        <button class="orden-button is-quiet" onclick={goThere}>{t('Open')}</button>
       {/if}
-      <button class="nib-button" disabled={answering} onclick={() => void answer(true)}>
+      <button class="orden-button" disabled={answering} onclick={() => void answer(true)}>
         {t('Done')}
       </button>
     {:else}
-      <button class="nib-button is-quiet" disabled={answering} onclick={() => void answer(false)}>
+      <button class="orden-button is-quiet" disabled={answering} onclick={() => void answer(false)}>
         {t('Don’t allow')}
       </button>
-      <button class="nib-button" disabled={answering} onclick={() => void answer(true)}>
+      <button class="orden-button" disabled={answering} onclick={() => void answer(true)}>
         {t('Allow')}
       </button>
     {/if}

@@ -104,11 +104,11 @@
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div class="nib-scrim is-clear scrim" onclick={onclose}></div>
+<div class="orden-scrim is-clear scrim" onclick={onclose}></div>
 
 <div
   bind:this={bubble}
-  class="nib-layer bubble"
+  class="orden-layer bubble"
   role="dialog"
   aria-label={t('Save')}
   style:top="{at.top}px"
@@ -119,7 +119,7 @@
 >
   <form onsubmit={save}>
     <input
-      class="nib-field"
+      class="orden-field"
       bind:this={named}
       bind:value={name}
       aria-label={t('Name')}
@@ -130,7 +130,7 @@
     {#if choosing}
       <!-- svelte-ignore a11y_autofocus -->
       <input
-        class="nib-field"
+        class="orden-field"
         bind:value={query}
         aria-label={t('Save to')}
         spellcheck="false"
@@ -143,7 +143,7 @@
           <li>
             <button
               type="button"
-              class="nib-row is-short"
+              class="orden-row is-short"
               class:is-on={index === cursor}
               onmouseenter={() => (cursor = index)}
               onclick={() => pick(index)}
@@ -153,7 +153,7 @@
               {:else if option.mark}
                 <FileMark mark={option.mark} path={option.id} />
               {/if}
-              <span class="nib-row-label">{option.label}</span>
+              <span class="orden-row-label">{option.label}</span>
             </button>
           </li>
         {/each}
@@ -161,7 +161,7 @@
     {:else if place}
       <button
         type="button"
-        class="nib-field where"
+        class="orden-field where"
         aria-label={t('Save to')}
         onclick={() => (choosing = true)}
       >
@@ -170,7 +170,7 @@
         {:else if place.mark}
           <FileMark mark={place.mark} path={place.id} />
         {/if}
-        <span class="nib-row-label">{place.label}</span>
+        <span class="orden-row-label">{place.label}</span>
         <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true"
           ><path d="M3 4.5 6 7.5 9 4.5" /></svg
         >
@@ -178,7 +178,7 @@
     {/if}
 
     <div class="row">
-      <button type="submit" class="nib-button">{t('Save')}</button>
+      <button type="submit" class="orden-button">{t('Save')}</button>
     </div>
   </form>
 </div>

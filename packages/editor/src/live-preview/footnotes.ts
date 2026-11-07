@@ -119,7 +119,7 @@ function revealed(state: EditorState, part: FootnotePart): boolean {
   return state.selection.ranges.some((range) => range.from <= part.to && range.to >= part.from)
 }
 
-const numberMark = Decoration.mark({ class: 'nib-footnote-number' })
+const numberMark = Decoration.mark({ class: 'orden-footnote-number' })
 
 function numbers(view: EditorView): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>()
@@ -159,7 +159,7 @@ const footnoteClicks = EditorView.domEventHandlers({
   mousedown(event, view) {
     if (event.button !== 0 || event.shiftKey || event.altKey) return false
     const target = event.target
-    const number = target instanceof Element ? target.closest('.nib-footnote-number') : null
+    const number = target instanceof Element ? target.closest('.orden-footnote-number') : null
     if (!number) return false
 
     const part = footnoteAt(view.state, view.posAtDOM(number, 0), 1)
@@ -188,15 +188,15 @@ const footnotePreviews = hoverTooltip(
       above: true,
       create: () => {
         const dom = document.createElement('div')
-        dom.className = 'nib-note-preview nib-footnote-preview'
+        dom.className = 'orden-note-preview orden-footnote-preview'
 
         const name = document.createElement('div')
-        name.className = 'nib-note-preview-name'
+        name.className = 'orden-note-preview-name'
         name.textContent = part.label
         dom.append(name)
 
         const body = document.createElement('div')
-        body.className = 'nib-note-preview-body nib-write'
+        body.className = 'orden-note-preview-body orden-write'
         body.textContent = words
         dom.append(body)
 

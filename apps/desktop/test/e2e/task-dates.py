@@ -130,8 +130,8 @@ def drive(browser: Browser) -> None:
         wrong(f"the Inbox is {inbox}: a start date to come should keep a task out of it")
 
     page.evaluate("window.nibApp.workspace.showPanel('tasks')")
-    wait_for(page, "document.querySelector('.tasks .nib-row')", "the Tasks panel")
-    if not page.evaluate("!!document.querySelector('.tasks .nib-row-meta.late')"):
+    wait_for(page, "document.querySelector('.tasks .orden-row')", "the Tasks panel")
+    if not page.evaluate("!!document.querySelector('.tasks .orden-row-meta.late')"):
         wrong("the Tasks count is not in the danger tone while a deadline has passed")
 
     open_builtin(page, "today")
@@ -169,7 +169,7 @@ def drive(browser: Browser) -> None:
         page.locator(row(words)).hover()
         page.locator(f"{row(words)} .act[aria-label='Schedule']").click()
         wait_for(page, "document.querySelector('.scheduler')", "the scheduler")
-        page.locator(".scheduler .quick .nib-row", has_text="Tomorrow").click()
+        page.locator(".scheduler .quick .orden-row", has_text="Tomorrow").click()
         try:
             wait_for(
                 page,

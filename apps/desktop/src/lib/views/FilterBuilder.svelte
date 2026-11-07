@@ -76,7 +76,7 @@
     typeof filter === 'string' ? filter : JSON.stringify(filter)
 </script>
 
-<div class="nib-field query">
+<div class="orden-field query">
   <input
     bind:value={typed}
     aria-label={t('Filter')}
@@ -93,7 +93,7 @@
 {#if kinds !== 'notes'}
   <button
     type="button"
-    class="nib-chip completed"
+    class="orden-chip completed"
     class:is-on={view?.nib.showCompleted === true}
     aria-pressed={view?.nib.showCompleted === true}
     onclick={() =>
@@ -103,7 +103,7 @@
 {/if}
 
 {#if rows.rows.length > 1}
-  <div class="nib-segmented join" role="tablist">
+  <div class="orden-segmented join" role="tablist">
     <button
       type="button"
       role="tab"
@@ -149,7 +149,7 @@
       />
       {#if takesValue(row.op)}
         <input
-          class="nib-field value"
+          class="orden-field value"
           value={row.value}
           aria-label={t('Value')}
           onchange={(event) => changeRow(at, { ...row, value: event.currentTarget.value })}
@@ -158,7 +158,7 @@
     {/if}
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       title={t('Remove')}
       aria-label={t('Remove')}
       onclick={() => write({ ...rows, rows: rows.rows.filter((_, index) => index !== at) })}
@@ -167,8 +167,8 @@
   </div>
 {/each}
 
-<button type="button" class="nib-row is-short adder" onclick={add}>
-  <span class="nib-row-label">{t('Add a filter')}</span>
+<button type="button" class="orden-row is-short adder" onclick={add}>
+  <span class="orden-row-label">{t('Add a filter')}</span>
 </button>
 
 <style>
@@ -210,7 +210,7 @@
     min-width: 0;
   }
 
-  .adder .nib-row-label {
+  .adder .orden-row-label {
     color: var(--muted);
   }
 </style>

@@ -11,21 +11,21 @@ describe('what a theme may declare', () => {
 
     expect(found).toMatchObject({ id: 'blur', label: 'Blur', kind: 'range', min: 0, max: 40 })
     expect(found?.initial).toBe(18)
-    expect(found?.paint(24, 'dark')).toEqual({ '--nib-blur': '24px' })
+    expect(found?.paint(24, 'dark')).toEqual({ '--orden-blur': '24px' })
   })
 
   test('and a bare number, which is what a multiplier is', () => {
     const found = settingOf('weight', 'range "Weight" 0 2 1')
 
-    expect(found?.paint(1.5, 'dark')).toEqual({ '--nib-weight': '1.5' })
+    expect(found?.paint(1.5, 'dark')).toEqual({ '--orden-weight': '1.5' })
   })
 
   test('a switch, which writes a one or a nought so CSS can do sums with it', () => {
     const found = settingOf('paper', 'switch "Frosted paper" off')
 
     expect(found).toMatchObject({ kind: 'switch', initial: false })
-    expect(found?.paint(true, 'dark')).toEqual({ '--nib-paper': '1' })
-    expect(found?.paint(false, 'dark')).toEqual({ '--nib-paper': '0' })
+    expect(found?.paint(true, 'dark')).toEqual({ '--orden-paper': '1' })
+    expect(found?.paint(false, 'dark')).toEqual({ '--orden-paper': '0' })
   })
 
   test('a choice, whose first option is where it starts', () => {
@@ -104,15 +104,15 @@ describe('what a theme may not', () => {
 
   test('and writes one property, named after itself, whatever it was handed', () => {
     const found = settingOf('glow', 'colour "Glow" "Violet" #7c6bf5')
-    expect(Object.keys(found?.paint('#7c6bf5', 'dark') ?? {})).toEqual(['--nib-glow'])
+    expect(Object.keys(found?.paint('#7c6bf5', 'dark') ?? {})).toEqual(['--orden-glow'])
   })
 })
 
 describe('a stylesheet, read', () => {
   const CSS = `
     :root {
-      --nib-setting-tint: range "Tint" 60 100 82 %;
-      --nib-setting-blur: range "Blur" 0 40 20 px;
+      --orden-setting-tint: range "Tint" 60 100 82 %;
+      --orden-setting-blur: range "Blur" 0 40 20 px;
       --colour: #fff;
     }
   `
@@ -121,8 +121,8 @@ describe('a stylesheet, read', () => {
     const found = declaredIn(
       CSS,
       page({
-        '--nib-setting-tint': ' range "Tint" 60 100 82 % ',
-        '--nib-setting-blur': 'range "Blur" 0 40 20 px',
+        '--orden-setting-tint': ' range "Tint" 60 100 82 % ',
+        '--orden-setting-blur': 'range "Blur" 0 40 20 px',
       }),
     )
 
@@ -131,7 +131,7 @@ describe('a stylesheet, read', () => {
   })
 
   test('takes the value off the page and not out of the file, so a scheme can differ', () => {
-    const found = declaredIn(CSS, page({ '--nib-setting-tint': 'range "Tint" 60 100 95 %' }))
+    const found = declaredIn(CSS, page({ '--orden-setting-tint': 'range "Tint" 60 100 95 %' }))
 
     expect(found).toHaveLength(1)
     expect(found[0]?.initial).toBe(95)
@@ -141,8 +141,8 @@ describe('a stylesheet, read', () => {
     const found = declaredIn(
       CSS,
       page({
-        '--nib-setting-tint': 'range "Tint" 60 100 82 %',
-        '--nib-setting-blur': 'wobble "Blur" a lot',
+        '--orden-setting-tint': 'range "Tint" 60 100 82 %',
+        '--orden-setting-blur': 'wobble "Blur" a lot',
       }),
     )
 
@@ -155,9 +155,9 @@ describe('a stylesheet, read', () => {
 
   test('stops at six, which is a theme and not a control panel', () => {
     const names = Array.from({ length: 9 }, (_one, at) => `d${at}`)
-    const css = names.map((id) => `--nib-setting-${id}: x;`).join('\n')
+    const css = names.map((id) => `--orden-setting-${id}: x;`).join('\n')
     const answers = Object.fromEntries(
-      names.map((id) => [`--nib-setting-${id}`, `range "${id}" 0 10 5`]),
+      names.map((id) => [`--orden-setting-${id}`, `range "${id}" 0 10 5`]),
     )
 
     expect(declaredIn(css, page(answers)).map((one) => one.id)).toEqual(names.slice(0, 6))

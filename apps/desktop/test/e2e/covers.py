@@ -40,19 +40,19 @@ async (starts) => {
 """
 
 DECODED = (
-    "(() => { const one = document.querySelector('#write .nib-cover img');"
+    "(() => { const one = document.querySelector('#write .orden-cover img');"
     " return !!one && one.complete && one.naturalWidth > 0 })()"
 )
 
 BANNER = """
 () => {
   const host = document.querySelector('#write')
-  const cover = host?.querySelector('.nib-cover')
+  const cover = host?.querySelector('.orden-cover')
   const picture = cover?.querySelector('img')
   const heading = host?.querySelector('h1, .cm-line')
   return {
     there: !!cover,
-    handle: !!cover?.querySelector('.nib-cover-drag'),
+    handle: !!cover?.querySelector('.orden-cover-drag'),
     position: picture ? getComputedStyle(picture).objectPosition : null,
     tall: picture ? Math.round(picture.getBoundingClientRect().height) : 0,
     loaded: !!picture && picture.complete && picture.naturalWidth > 0,
@@ -123,7 +123,7 @@ def the_editor(page: Page) -> None:
 
 def the_drag(page: Page) -> None:
     open_note(page, "Covered")
-    handle = page.locator("#write .nib-cover-drag").first
+    handle = page.locator("#write .orden-cover-drag").first
     box = handle.bounding_box()
     if not box:
         wrong("the banner has no handle to drag")

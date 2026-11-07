@@ -20,7 +20,7 @@
 </script>
 
 <div class="rub">
-  <div class="nib-segmented">
+  <div class="orden-segmented">
     {#each WAYS as one (one.whole)}
       <button
         type="button"

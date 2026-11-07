@@ -10,6 +10,7 @@ import {
 } from './api'
 import { invoke } from './tauri'
 import { theme } from './theme.svelte'
+import { carriedCss } from './themes/carried'
 import { account } from './account.svelte'
 import { sha256 } from './bytes'
 import { isDomainStatus, keepAsking } from './domain-status'
@@ -202,7 +203,9 @@ class Publish {
     const file = theme.files.find((one) => one.name === this.themeName && one.path)
     if (!file?.path) return kept
 
-    const css = await invoke<string>('read_theme', { path: file.path }).catch(() => '')
+    const css = await invoke<string>('read_theme', { path: file.path })
+      .then(carriedCss)
+      .catch(() => '')
     if (!css) return kept
 
     const { pageSheet } = await import('./themes/page-sheet')

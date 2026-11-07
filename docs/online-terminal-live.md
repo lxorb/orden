@@ -70,7 +70,7 @@ tunnel's route again, so Access can also be added later.
 
 1. `POST /v2/online/admin/machines/<id>/host {"host": "hetzner"}` (the id is in the admin
    answer's `machines`). If the container is awake it is saved one last time - a snapshot,
-   and the home to `nib-homes` whatever the last backup's age - and stopped. Its 17 GB home
+   and the home to `orden-homes` whatever the last backup's age - and stopped. Its 17 GB home
    is in R2 under the row's `backup_key` from then on.
 2. Open an online terminal (Ctrl+T, Escape to leave the address field, then O). The first start makes the tunnel, the hostname,
    the firewall and the server; the terminal says _Starting machine…_ for the five to ten
@@ -101,8 +101,8 @@ tunnel's route again, so Access can also be added later.
 
 ### 7. The old home, by hand
 
-The container's home is a `.tar.zst` in `nib-homes` (EU). To put it on the server:
-`pnpm wrangler r2 object get "nib-homes/<backup_key>" --jurisdiction eu --remote --file home.tar.zst`
+The container's home is a `.tar.zst` in `orden-homes` (EU). To put it on the server:
+`pnpm wrangler r2 object get "orden-homes/<backup_key>" --jurisdiction eu --remote --file home.tar.zst`
 on this computer, then either the emergency SSH key (below) and
 `scp home.tar.zst nib@<server ip>:` followed by `tar --zstd -xf home.tar.zst -C ~`, or any
 file host the terminal can `curl` from.
@@ -130,9 +130,9 @@ file host the terminal can `curl` from.
 | Workers Paid | **active** ($5 a month), which Containers needs; nothing else to buy |
 | Containers | the API answers; **no application yet** |
 | registry | `registry.cloudflare.com`, the account's default, already there (made 2026-08-31) |
-| R2 | R2 Paid on; `nib-notes` exists; **`nib-homes` does not**, and no bucket is in the `eu` jurisdiction yet |
+| R2 | R2 Paid on; `orden-notes` exists; **`orden-homes` does not**, and no bucket is in the `eu` jurisdiction yet |
 
-So no plan change is needed. Two resources are made at going live: the `nib-homes` bucket,
+So no plan change is needed. Two resources are made at going live: the `orden-homes` bucket,
 and the container application, which the first `wrangler deploy` of the machines config makes
 (and builds and pushes the image to the registry for).
 
@@ -163,7 +163,7 @@ and the container application, which the first `wrangler deploy` of the machines
    (the tag matches the pinned `@cloudflare/sandbox` 1.0.0). In the Dockerfile since 2026-10-05,
    and checked by the machine workflow.
 3. **The bucket** (EU):
-   `wrangler r2 bucket create nib-homes --jurisdiction eu`
+   `wrangler r2 bucket create orden-homes --jurisdiction eu`
 4. **The migration** on the real database:
    `pnpm --filter @orden/sync migrate:remote` (applies `0045_machines.sql`; Emil's account
    `78180341-d10b-4bea-92dc-f327035ebfac` is on the allow-list and is the admin from it).
@@ -180,7 +180,7 @@ and the container application, which the first `wrangler deploy` of the machines
    `wrangler d1 execute nib --remote --command "update online_service set value = 'on' where key = 'online'"`
    or `POST /v2/online/admin/service {"online": true}` signed in as Emil.
 8. **Prove on the real host** what could not be proved locally: a cold start and the link
-   to `nibd` within the link's 10 seconds; a sleep writing the home to `nib-homes` and a
+   to `nibd` within the link's 10 seconds; a sleep writing the home to `orden-homes` and a
    snapshot; a wake restoring from the snapshot, and (with `snapshot_at` set back 31 days)
    from the backup; egress as chosen above. Then a week of Emil's own use before the
    allow-list grows.

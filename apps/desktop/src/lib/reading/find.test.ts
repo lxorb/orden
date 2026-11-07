@@ -96,25 +96,25 @@ describe('painting the places found', () => {
     const left = {}
     const right = {}
 
-    paint(left, 'nib-find', [range(1), range(2)])
-    paint(right, 'nib-find', [range(3)])
-    expect(painted('nib-find')).toEqual([range(1), range(2), range(3)])
+    paint(left, 'orden-find', [range(1), range(2)])
+    paint(right, 'orden-find', [range(3)])
+    expect(painted('orden-find')).toEqual([range(1), range(2), range(3)])
 
-    paint(right, 'nib-find', [])
-    expect(painted('nib-find')).toEqual([range(1), range(2)])
+    paint(right, 'orden-find', [])
+    expect(painted('orden-find')).toEqual([range(1), range(2)])
 
-    paint(left, 'nib-find', [])
-    expect(highlights.has('nib-find')).toBe(false)
+    paint(left, 'orden-find', [])
+    expect(highlights.has('orden-find')).toBe(false)
   })
 
   test('a page painting again replaces only its own', () => {
     const left = {}
     const right = {}
 
-    paint(left, 'nib-find', [range(1)])
-    paint(right, 'nib-find', [range(2)])
-    paint(left, 'nib-find', [range(4)])
-    expect(painted('nib-find')).toHaveLength(2)
-    expect(painted('nib-find')).toEqual(expect.arrayContaining([range(2), range(4)]))
+    paint(left, 'orden-find', [range(1)])
+    paint(right, 'orden-find', [range(2)])
+    paint(left, 'orden-find', [range(4)])
+    expect(painted('orden-find')).toHaveLength(2)
+    expect(painted('orden-find')).toEqual(expect.arrayContaining([range(2), range(4)]))
   })
 })

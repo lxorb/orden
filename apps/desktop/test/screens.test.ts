@@ -43,11 +43,11 @@ const layers = files(SOURCE).flatMap((path) => {
     [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1]).join('\n'),
   )
   const name = path.slice(SOURCE.length).replace(/\\/g, '/')
-  const fixed = /class="nib-screen(?: is-[a-z]+)* ([a-z-]+)"/.exec(text)?.[1]
+  const fixed = /class="orden-screen(?: is-[a-z]+)* ([a-z-]+)"/.exec(text)?.[1]
   if (fixed) return [{ name, css, selector: `.${fixed}` }]
 
-  const sometimes = /class="([a-z-]+)[^"]*"[^>]*?class:nib-screen=/.exec(text)?.[1]
-  return sometimes ? [{ name, css, selector: `.${sometimes}.nib-screen` }] : []
+  const sometimes = /class="([a-z-]+)[^"]*"[^>]*?class:orden-screen=/.exec(text)?.[1]
+  return sometimes ? [{ name, css, selector: `.${sometimes}.orden-screen` }] : []
 })
 
 describe('the scale', () => {
@@ -63,7 +63,7 @@ describe('the scale', () => {
 })
 
 describe('the rule', () => {
-  const screen = rule(base, '.nib-screen') ?? ''
+  const screen = rule(base, '.orden-screen') ?? ''
 
   test('hangs a layer from one line, holds it inside the window, and takes a width of the scale', () => {
     expect(screen).toContain('top: var(--screen-top)')
@@ -74,9 +74,9 @@ describe('the rule', () => {
 
   test('gives a desktop its heights, and leaves a phone to each sheet', () => {
     for (const selector of [
-      ':root:not([data-touch]) .nib-screen',
-      ':root:not([data-touch]) .nib-screen.is-centred',
-      ':root:not([data-touch]) .nib-screen.is-steady',
+      ':root:not([data-touch]) .orden-screen',
+      ':root:not([data-touch]) .orden-screen.is-centred',
+      ':root:not([data-touch]) .orden-screen.is-steady',
     ]) {
       const body = rule(base, selector)
       expect(body, selector).not.toBeNull()

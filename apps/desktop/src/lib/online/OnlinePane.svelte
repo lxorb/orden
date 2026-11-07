@@ -162,7 +162,7 @@
 <div class="online">
   {#if known?.machine}
     <div class="card">
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name">
           {t('Machine')}
           {#if spec}<small>{spec}</small>{/if}
@@ -170,7 +170,7 @@
         <div class="row">
           <span class="hint">{stateWords}</span>
           <button
-            class="nib-chip"
+            class="orden-chip"
             disabled={machine.busy || state === 'stopping' || (server && state === 'starting')}
             onclick={() => void machine.startStop(!awake)}
             >{awake ? (server ? t('Restart') : t('Stop')) : t('Start')}</button
@@ -184,16 +184,16 @@
     <div class="card">
       {#each rows as row (row.key)}
         {@const file = files.get(row.key) ?? null}
-        <div class="nib-setting setting">
+        <div class="orden-setting setting">
           <span class="name">
             {row.name ?? t('Terminal')}
             {#if detail(row)}<small>{detail(row)}</small>{/if}
           </span>
           <div class="row">
             {#if file}
-              <button class="nib-chip" onclick={() => void open(file)}>{t('Open')}</button>
+              <button class="orden-chip" onclick={() => void open(file)}>{t('Open')}</button>
             {/if}
-            <button class="nib-chip" onclick={() => void end(row)}>{t('End')}</button>
+            <button class="orden-chip" onclick={() => void end(row)}>{t('End')}</button>
           </div>
         </div>
       {/each}
@@ -210,7 +210,7 @@
               <span class="words">{meter.words}</span>
             </div>
             <div
-              class="nib-meter"
+              class="orden-meter"
               class:is-near={meter.near}
               role="meter"
               aria-label={meter.label}
@@ -218,7 +218,7 @@
               aria-valuemax={100}
               aria-valuenow={Math.round(meter.share * 100)}
             >
-              <div class="nib-meter-fill" style:width={`${meter.share * 100}%`}></div>
+              <div class="orden-meter-fill" style:width={`${meter.share * 100}%`}></div>
             </div>
           </div>
         {/each}

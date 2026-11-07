@@ -112,7 +112,7 @@
         <div class="row">
           <span class="name">{FORMATS['apple-notes']}</span>
           <button
-            class="nib-chip"
+            class="orden-chip"
             onclick={() => void importing.readMac()}
             disabled={importing.stage === 'reading'}
           >
@@ -121,7 +121,7 @@
         </div>
         {#if importing.noAccess}
           <p class="hint">{t('Turn Orden on under Full Disk Access, then ask again.')}</p>
-          <button class="nib-chip" onclick={() => void importing.openAccess()}>
+          <button class="orden-chip" onclick={() => void importing.openAccess()}>
             {t('Open the setting')}
           </button>
         {/if}
@@ -143,7 +143,7 @@
           }}
         />
         <button
-          class="nib-chip"
+          class="orden-chip"
           onclick={() => void readTodoist()}
           disabled={!token.trim() || importing.stage === 'reading'}
         >
@@ -151,13 +151,13 @@
         </button>
       </div>
       <button
-        class="nib-row"
+        class="orden-row"
         role="switch"
         aria-checked={withDone}
         onclick={() => (withDone = !withDone)}
       >
-        <span class="nib-row-label">{t('Done tasks too')}</span>
-        <span class="nib-switch" class:on={withDone} aria-hidden="true"></span>
+        <span class="orden-row-label">{t('Done tasks too')}</span>
+        <span class="orden-switch" class:on={withDone} aria-hidden="true"></span>
       </button>
     </div>
 
@@ -177,7 +177,7 @@
     {#if importing.needsPandoc}
       {#if settings.pandoc}
         <p class="note">{t('Pandoc reads this one, from the file on your disk.')}</p>
-        <button class="nib-button" onclick={() => void importing.readWithPandoc()}>
+        <button class="orden-button" onclick={() => void importing.readWithPandoc()}>
           {t('Read it with pandoc')}
         </button>
       {:else}
@@ -187,7 +187,7 @@
       {/if}
     {:else}
       {#if importing.format === 'table'}
-        <div class="nib-segmented" role="radiogroup" aria-label={t('Rows')} use:segmented>
+        <div class="orden-segmented" role="radiogroup" aria-label={t('Rows')} use:segmented>
           <button
             type="button"
             role="radio"
@@ -212,7 +212,7 @@
       <div class="card">
         <div class="row">
           <span class="name">{t('Into')}</span>
-          <button class="nib-chip" onclick={() => void importing.chooseTarget()}>{target}</button>
+          <button class="orden-chip" onclick={() => void importing.chooseTarget()}>{target}</button>
         </div>
         <div class="row">
           <span class="name">{t('Under')}</span>
@@ -249,9 +249,9 @@
             })}
           </p>
         {/if}
-        <button class="nib-button" onclick={() => importing.close()}>{t('Done')}</button>
+        <button class="orden-button" onclick={() => importing.close()}>{t('Done')}</button>
       {:else}
-        <button class="nib-button" disabled={!ready} onclick={() => void importing.run()}>
+        <button class="orden-button" disabled={!ready} onclick={() => void importing.run()}>
           {importing.stage === 'writing' ? t('Importing') : t('Import')}
         </button>
         {#if importing.stage === 'writing'}

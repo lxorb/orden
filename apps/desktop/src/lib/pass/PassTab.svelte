@@ -187,7 +187,7 @@
           {#if wide && columns === 1}
             <div class="wide-column">
               <button
-                class="nib-glyph"
+                class="orden-glyph"
                 type="button"
                 aria-label={t('Back')}
                 title={t('Back')}
@@ -287,7 +287,7 @@
     height: 100%;
   }
 
-  .wide-column > .nib-glyph {
+  .wide-column > .orden-glyph {
     flex: none;
     margin: var(--space-2) var(--space-2) 0;
   }

@@ -44,7 +44,7 @@ test('a risky service is only connected once its warning is accepted, and its co
   const phone = target.querySelector<HTMLInputElement>('input[type="tel"]')
   expect(phone).not.toBeNull()
   expect(target.querySelector('.note')?.textContent).toContain('nothing leaves this device')
-  for (const field of target.querySelectorAll<HTMLInputElement>('input.nib-field'))
+  for (const field of target.querySelectorAll<HTMLInputElement>('input.orden-field'))
     typeInto(field, '+41790000000')
   const go = target.querySelector<HTMLButtonElement>('button[type="submit"]')
   expect(target.querySelector('.warning')?.textContent).toContain('banned')
@@ -70,7 +70,7 @@ test('cancelling while a code is asked stops connecting without an error', async
   accounts.offer(fake)
   const target = document.body.appendChild(document.createElement('div'))
   const drawn = mount(ConnectForm, { target, props: { providers: [fake], done: () => undefined } })
-  for (const field of target.querySelectorAll<HTMLInputElement>('input.nib-field'))
+  for (const field of target.querySelectorAll<HTMLInputElement>('input.orden-field'))
     typeInto(field, '+1')
   target.querySelector<HTMLButtonElement>('button[type="submit"]')?.click()
   await vi.waitFor(() => expect(target.querySelector('.ask')).not.toBeNull())
@@ -93,7 +93,7 @@ test('a QR code is drawn while the service waits to be paired', async () => {
     target,
     props: { providers: [fake], done: () => (finished = true) },
   })
-  for (const field of target.querySelectorAll<HTMLInputElement>('input.nib-field'))
+  for (const field of target.querySelectorAll<HTMLInputElement>('input.orden-field'))
     typeInto(field, 'x')
   target.querySelector<HTMLButtonElement>('button[type="submit"]')?.click()
   await vi.waitFor(() => expect(target.querySelector('.square svg')).not.toBeNull())

@@ -48,7 +48,7 @@ async function drawMermaid(code: string, scheme: Scheme, where: DiagramFor): Pro
     ...(where === 'page' ? { htmlLabels: false } : {}),
   })
 
-  const { svg } = await mermaid.render(`nib-export-${sequence++}`, code)
+  const { svg } = await mermaid.render(`orden-export-${sequence++}`, code)
   return svg
 }
 

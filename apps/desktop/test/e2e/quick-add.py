@@ -34,7 +34,7 @@ def drive(browser: Browser) -> None:
     page.keyboard.type("add task", delay=15)
     wait_for(
         page,
-        "[...document.querySelectorAll('.palette .nib-row')].some((one) => one.textContent.includes('Add task'))",
+        "[...document.querySelectorAll('.palette .orden-row')].some((one) => one.textContent.includes('Add task'))",
         "the Add task row",
     )
     page.keyboard.press("Enter")
@@ -132,8 +132,8 @@ def drive(browser: Browser) -> None:
     page.evaluate(
         "() => { const view = window.nib; view.dispatch({ selection: { anchor: 0 } }); view.focus() }"
     )
-    wait_for(page, "document.querySelectorAll('.nib-task-chips').length === 1", "the chips in the note")
-    drawn = page.evaluate("() => document.querySelector('.nib-task-chips').textContent")
+    wait_for(page, "document.querySelectorAll('.orden-task-chips').length === 1", "the chips in the note")
+    drawn = page.evaluate("() => document.querySelector('.orden-task-chips').textContent")
     words = page.evaluate("() => document.querySelectorAll('.cm-line')[1].textContent")
     say(f"the second task reads {words!r}")
     if not drawn.endswith("⏫") or "📅" in words:
@@ -147,11 +147,11 @@ def drive(browser: Browser) -> None:
     )
     wait_for(
         page,
-        "document.querySelectorAll('.nib-query-block input[data-task]').length === 2",
+        "document.querySelectorAll('.orden-query-block input[data-task]').length === 2",
         "the tasks fence's two rows",
     )
     rows = page.evaluate(
-        "() => [...document.querySelectorAll('.nib-query-block .nib-row')].map((one) => one.textContent)"
+        "() => [...document.querySelectorAll('.orden-query-block .orden-row')].map((one) => one.textContent)"
     )
     say(f"the tasks fence: {rows}")
     if rows != ["Call mum tomorrow", "Pay rent"]:

@@ -276,8 +276,8 @@ LOG = """
 })()
 """
 TAKE = "(() => { const got = window.__ov; window.__ov = null; return got })()"
-TOGGLE = "document.querySelector('button.nib-glyph.overview')?.click(); return true"
-SHOWN = "document.querySelector('button.nib-glyph.overview')?.getAttribute('aria-pressed') === 'true'"
+TOGGLE = "document.querySelector('button.orden-glyph.overview')?.click(); return true"
+SHOWN = "document.querySelector('button.orden-glyph.overview')?.getAttribute('aria-pressed') === 'true'"
 
 def toggled(app: App, desk: Desk, up: bool, pressed: list[tuple[float, str]]) -> str:
 
@@ -482,7 +482,7 @@ def main() -> int:
     config.mkdir(parents=True)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-overview-spaces-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-overview-spaces-"))
     Desk.moving()
     said = open(args.out / "app.log", "wb")
     process = subprocess.Popen([str(args.exe)], env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent), stdout=said, stderr=subprocess.STDOUT)

@@ -11,7 +11,7 @@ NOTE = "# Chapter one\n\nThe first words.\n\n- a list item\n  - a child of it\n 
 
 DOC = "() => window.nib.state.doc.toString()"
 MODE = "() => window.nibApp.modes.vimModeOf(window.nib)"
-FOLDED = "() => document.querySelectorAll('.nib-folded').length"
+FOLDED = "() => document.querySelectorAll('.orden-folded').length"
 IN_NOTE = "() => !!document.activeElement?.closest('.cm-content')"
 
 CARET_TO = """
@@ -47,7 +47,7 @@ def drive(browser: Browser) -> None:
     DRIVE.open_note(page, "Chapter one")
 
     page.evaluate("() => window.nibApp.modes.setVimKeys(true)")
-    wait_for(page, "document.querySelector('.cm-editor.nib-vim')", "modal editing")
+    wait_for(page, "document.querySelector('.cm-editor.orden-vim')", "modal editing")
 
     caret_to(page, "Chapter one")
     normal(page)

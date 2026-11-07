@@ -45,5 +45,5 @@ export function coverFigure(cover: Cover | null): string {
   const src = attributeUrl(cover.src)
   const position = `object-position: 50% ${cover.position}%`
 
-  return `<div class="nib-cover"><img src="${src}" alt="" loading="eager" style="${escape(position)}"></div>`
+  return `<div class="orden-cover"><img src="${src}" alt="" loading="eager" style="${escape(position)}"></div>`
 }

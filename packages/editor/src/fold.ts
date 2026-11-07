@@ -297,12 +297,12 @@ class FoldWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const slot = document.createElement('span')
-    slot.className = 'nib-fold'
+    slot.className = 'orden-fold'
     slot.contentEditable = 'false'
 
     const hinge = document.createElement('button')
     hinge.type = 'button'
-    hinge.className = 'nib-fold-hinge'
+    hinge.className = 'orden-fold-hinge'
     hinge.dataset.folded = String(this.folded)
     hinge.setAttribute('aria-label', label(this.folded ? 'unfold' : 'fold'))
     hinge.tabIndex = -1
@@ -337,7 +337,7 @@ class FoldWidget extends NibWidget {
 
 function placeholder(view: EditorView, onclick: (event: Event) => void): HTMLElement {
   const more = document.createElement('span')
-  more.className = 'nib-folded'
+  more.className = 'orden-folded'
   more.setAttribute('aria-label', label('unfold'))
   more.textContent = '⋯'
 

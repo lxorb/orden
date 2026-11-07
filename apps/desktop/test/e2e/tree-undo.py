@@ -59,7 +59,7 @@ def row(page: Page, at: str):
     return page.locator(f"aside .row[data-path$='/{at}']").first
 
 def entry(page: Page, label: str) -> None:
-    item = page.locator(".menu .nib-row", has_text=re.compile(rf"^\s*{re.escape(label)}\s*$")).first
+    item = page.locator(".menu .orden-row", has_text=re.compile(rf"^\s*{re.escape(label)}\s*$")).first
     item.wait_for(state="visible", timeout=PATIENCE * 1000)
     item.click()
 

@@ -197,7 +197,7 @@ def space_names(page: Page) -> list[str]:
 
 def open_the_switcher(page: Page) -> None:
     page.locator("aside .name").first.click(force=True)
-    page.wait_for_selector(".spaces .line button.nib-row", timeout=5000)
+    page.wait_for_selector(".spaces .line button.orden-row", timeout=5000)
 
 def open_the_list(page: Page) -> None:
     page.evaluate("() => (window.nibApp.workspace.panel = 'tree')")
@@ -272,7 +272,7 @@ def main() -> int:
 
         was = space_names(page)
         open_the_switcher(page)
-        hold_for(page, ".spaces .line button.nib-row", 1, "Move up", "phone")
+        hold_for(page, ".spaces .line button.orden-row", 1, "Move up", "phone")
 
         offered = [
             one.strip() for one in page.locator('[role="menuitem"]').all_inner_texts()
@@ -309,7 +309,7 @@ def main() -> int:
 
         page.keyboard.press("Escape")
         open_the_switcher(page)
-        hold_for(page, ".spaces .line button.nib-row", 1, "Move up", "dark")
+        hold_for(page, ".spaces .line button.orden-row", 1, "Move up", "dark")
         page.wait_for_timeout(250)
         page.screenshot(path=str(SHOTS / "touch-move-spaces-dark.png"))
         say("photographed all three in the dark")

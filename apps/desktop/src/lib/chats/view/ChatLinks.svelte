@@ -40,11 +40,11 @@
 </script>
 
 {#if hits.length}
-  <p class="nib-section">{t('Chats')}<span>{hits.length}</span></p>
+  <p class="orden-section">{t('Chats')}<span>{hits.length}</span></p>
   {#each hits as hit (hit.message.id)}
-    <button type="button" class="nib-row" onclick={() => open(hit)}>
+    <button type="button" class="orden-row" onclick={() => open(hit)}>
       <FileMark mark="chat" path={store().entry(hit.chat)?.path ?? undefined} />
-      <span class="nib-row-label">{firstLine(hit.message.body)}</span>
+      <span class="orden-row-label">{firstLine(hit.message.body)}</span>
       <span class="where">#{store().entry(hit.chat)?.name ?? ''}</span>
     </button>
   {/each}

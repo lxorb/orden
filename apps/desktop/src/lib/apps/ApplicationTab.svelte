@@ -378,14 +378,14 @@
     <div class="bar">
       <button
         type="button"
-        class="nib-button"
+        class="orden-button"
         aria-pressed={overlay}
         onclick={() => (overlay = !overlay)}>{t('Stream stats')}</button
       >
-      <button type="button" class="nib-button" onclick={() => session.run('restart')}
+      <button type="button" class="orden-button" onclick={() => session.run('restart')}
         >{t('Restart')}</button
       >
-      <button type="button" class="nib-button" onclick={() => session.run('stop')}
+      <button type="button" class="orden-button" onclick={() => session.run('stop')}
         >{t('Stop')}</button
       >
     </div>
@@ -421,18 +421,20 @@
       <p class="quiet">{t('{device} did not answer.', { device })}</p>
     {/if}
     {#if status.is === 'signed-out'}
-      <button type="button" class="nib-button" onclick={() => account.ask()}>{t('Sign in')}</button>
+      <button type="button" class="orden-button" onclick={() => account.ask()}
+        >{t('Sign in')}</button
+      >
     {:else if again}
       {#if status.is === 'outside'}
-        <button type="button" class="nib-button" onclick={() => settings.show('sync')}
+        <button type="button" class="orden-button" onclick={() => settings.show('sync')}
           >{t('Sync settings')}</button
         >
       {/if}
-      <button type="button" class="nib-button is-quiet" onclick={() => session.retry()}
+      <button type="button" class="orden-button is-quiet" onclick={() => session.retry()}
         >{t('Try again')}</button
       >
     {:else if status.is === 'held'}
-      <button type="button" class="nib-button" onclick={() => session.take()}
+      <button type="button" class="orden-button" onclick={() => session.take()}
         >{status.holder.taken ? t('Take back') : t('Take over')}</button
       >
     {:else if status.is === 'here' && status.state === 'running'}
@@ -442,15 +444,15 @@
         <div class="sweep"><Sweep /></div>
       {/if}
       <div class="row">
-        <button type="button" class="nib-button" onclick={() => session.run('restart')}
+        <button type="button" class="orden-button" onclick={() => session.run('restart')}
           >{t('Restart')}</button
         >
-        <button type="button" class="nib-button" onclick={() => session.run('stop')}
+        <button type="button" class="orden-button" onclick={() => session.run('stop')}
           >{t('Stop')}</button
         >
       </div>
     {:else if status.is === 'here' && status.why !== 'isolation' && (status.state !== 'starting' || status.unanswered)}
-      <button type="button" class="nib-button" onclick={() => session.run('start')}
+      <button type="button" class="orden-button" onclick={() => session.run('start')}
         >{t('Start')}</button
       >
     {:else if waiting}

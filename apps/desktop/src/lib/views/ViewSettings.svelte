@@ -103,19 +103,19 @@
 </script>
 
 {#snippet setting(label: string, on: boolean, run: () => void)}
-  <div class="nib-setting pressable" role="switch" tabindex="0" {...toggle(on, run)}>
+  <div class="orden-setting pressable" role="switch" tabindex="0" {...toggle(on, run)}>
     <span class="name">{label}</span>
-    <span class="nib-switch" class:on aria-hidden="true"></span>
+    <span class="orden-switch" class:on aria-hidden="true"></span>
   </div>
 {/snippet}
 
 <div class="settings">
-  <p class="nib-section">{t('Layout')}</p>
+  <p class="orden-section">{t('Layout')}</p>
   <div class="layouts">
     {#each offered as one (one)}
       <button
         type="button"
-        class="nib-chip"
+        class="orden-chip"
         class:is-on={layout === one}
         aria-pressed={layout === one}
         onclick={() => pick(one)}>{layoutName(one)}</button
@@ -124,7 +124,7 @@
   </div>
 
   {#if groups}
-    <p class="nib-section">{t('Group')}</p>
+    <p class="orden-section">{t('Group')}</p>
     <ArrangeBuilder {kit} part="group" />
   {/if}
 
@@ -139,8 +139,8 @@
         setViewNib(one, at, 'hideEmpty', view?.nib.hideEmpty ? undefined : true),
       ),
     )}
-    <p class="nib-section">{t('Card size')}</p>
-    <div class="nib-segmented" role="radiogroup" aria-label={t('Card size')} use:segmented>
+    <p class="orden-section">{t('Card size')}</p>
+    <div class="orden-segmented" role="radiogroup" aria-label={t('Card size')} use:segmented>
       {#each CARD_SIZES as size (size)}
         {@const on = sizeOf(view?.nib.cardSize, (view?.nib.rows ?? 'notes') === 'notes') === size}
         <button
@@ -156,8 +156,8 @@
   {/if}
 
   {#if kit.spec.builtin === undefined}
-    <p class="nib-section">{t('Rows')}</p>
-    <div class="nib-segmented" role="radiogroup" aria-label={t('Rows')} use:segmented>
+    <p class="orden-section">{t('Rows')}</p>
+    <div class="orden-segmented" role="radiogroup" aria-label={t('Rows')} use:segmented>
       {#each KINDS as one (one.kind)}
         <button
           type="button"
@@ -173,7 +173,7 @@
     </div>
   {/if}
 
-  <p class="nib-section">{board ? t('Shown on cards') : t('Properties')}</p>
+  <p class="orden-section">{board ? t('Shown on cards') : t('Properties')}</p>
   <div class="shown">
     {#each listed as one (one)}
       {@const on = live.columns.includes(one)}
@@ -185,7 +185,7 @@
           onpointerdown={(event) => on && carry(event, one)}>⠿</span
         >
         <div
-          class="nib-setting pressable"
+          class="orden-setting pressable"
           role="switch"
           tabindex="0"
           {...toggle(on, () => shows(one, !on))}
@@ -193,19 +193,19 @@
           <span class="name"
             >{propertyName(one, live.base ? displayName(live.base, one) : undefined)}</span
           >
-          <span class="nib-switch" class:on aria-hidden="true"></span>
+          <span class="orden-switch" class:on aria-hidden="true"></span>
         </div>
       </div>
     {/each}
   </div>
 
   {#if more().some(Boolean)}
-    <p class="nib-section">{t('More')}</p>
+    <p class="orden-section">{t('More')}</p>
     {#each more() as entry, at (at)}
       {#if entry}
         <button
           type="button"
-          class="nib-row is-short"
+          class="orden-row is-short"
           class:danger={entry.danger}
           disabled={entry.disabled}
           onclick={(event) => {
@@ -213,7 +213,7 @@
             now?.run()
           }}
         >
-          <span class="nib-row-label">{entry.label}</span>
+          <span class="orden-row-label">{entry.label}</span>
           {#if entry.checked}<span class="tick" aria-hidden="true">✓</span>{/if}
         </button>
       {/if}
@@ -231,11 +231,11 @@
     overflow-y: auto;
   }
 
-  .nib-section {
+  .orden-section {
     margin: var(--space-2) 0 0;
   }
 
-  .nib-section:first-child {
+  .orden-section:first-child {
     margin-top: 0;
   }
 
@@ -245,7 +245,7 @@
     gap: var(--space-1);
   }
 
-  .nib-segmented {
+  .orden-segmented {
     width: 100%;
   }
 
@@ -275,7 +275,7 @@
     gap: var(--space-1);
   }
 
-  .property .nib-setting {
+  .property .orden-setting {
     flex: 1;
     min-width: 0;
   }
@@ -297,7 +297,7 @@
     color: var(--accent);
   }
 
-  .danger .nib-row-label {
+  .danger .orden-row-label {
     color: var(--danger);
   }
 </style>

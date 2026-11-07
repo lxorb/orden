@@ -91,7 +91,7 @@ function key(event: KeyboardEvent) {
   }
   if (event.key !== 'Escape' || mod || event.shiftKey || event.altKey) return
   if (active.id !== tab.id || !target) return
-  if (target.closest('input, textarea, select, [role=dialog], .nib-layer')) return
+  if (target.closest('input, textarea, select, [role=dialog], .orden-layer')) return
   event.preventDefault()
   if (target.isContentEditable) {
     target.blur()

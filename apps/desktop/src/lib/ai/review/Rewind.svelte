@@ -103,11 +103,11 @@
   transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
 >
   {#if plan}
-    <button class="nib-row is-short is-quiet asked" onclick={back}>
-      <svg class="nib-mirror back" viewBox="0 0 13 13" aria-hidden="true"
+    <button class="orden-row is-short is-quiet asked" onclick={back}>
+      <svg class="orden-mirror back" viewBox="0 0 13 13" aria-hidden="true"
         ><path d="M8 3.2L4.7 6.5 8 9.8" /></svg
       >
-      <span class="nib-row-label">{plan.turn.draft?.text ?? ''}</span>
+      <span class="orden-row-label">{plan.turn.draft?.text ?? ''}</span>
       {#if plan.changes.length}
         <Tally
           added={plan.changes.reduce((sum, one) => sum + one.added, 0)}
@@ -117,14 +117,14 @@
     </button>
     {#each plan.choices as choice, index (choice)}
       <button
-        class="nib-row is-short"
+        class="orden-row is-short"
         class:is-on={lit === index}
         disabled={busy}
         onclick={() => void choose(choice)}
         onpointerenter={() => (lit = index)}
       >
-        <span class="nib-row-label">{LABELS[choice]()}</span>
-        <kbd class="nib-row-meta">{index + 1}</kbd>
+        <span class="orden-row-label">{LABELS[choice]()}</span>
+        <kbd class="orden-row-meta">{index + 1}</kbd>
       </button>
     {/each}
     {#if plan.lasting}
@@ -136,12 +136,12 @@
   {:else}
     {#each messages as turn, index (turn.id)}
       <button
-        class="nib-row is-short"
+        class="orden-row is-short"
         class:is-on={lit === index}
         onclick={() => pick(index)}
         onpointerenter={() => (lit = index)}
       >
-        <span class="nib-row-label">{wordsOf(index)}</span>
+        <span class="orden-row-label">{wordsOf(index)}</span>
       </button>
     {/each}
   {/if}

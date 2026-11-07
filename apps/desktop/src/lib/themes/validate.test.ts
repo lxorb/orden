@@ -47,11 +47,11 @@ describe('what a theme may set', () => {
   })
 
   test('takes a selector list apart rather than dropping the rule', () => {
-    const reviewed = review('#write h1, .nib-bar { color: #111; }')
+    const reviewed = review('#write h1, .orden-bar { color: #111; }')
 
     expect(reviewed.css).toContain('#write h1 {')
-    expect(reviewed.css).not.toContain('.nib-bar')
-    expect(reviewed.refused).toEqual(['.nib-bar is not a selector a theme may set'])
+    expect(reviewed.css).not.toContain('.orden-bar')
+    expect(reviewed.refused).toEqual(['.orden-bar is not a selector a theme may set'])
   })
 })
 
@@ -289,8 +289,8 @@ describe('the stamp an installed theme carries', () => {
   test('is absent from a theme somebody wrote by hand', () => {
     expect(stampOf(tokens('--bg: #000;'))).toBeNull()
     expect(stampOf('/* just a comment */')).toBeNull()
-    expect(stampOf('/*! nib-theme {not json} */')).toBeNull()
-    expect(stampOf('/*! nib-theme {"id":"a"} */')).toBeNull()
+    expect(stampOf('/*! orden-theme {not json} */')).toBeNull()
+    expect(stampOf('/*! orden-theme {"id":"a"} */')).toBeNull()
   })
 
   test('is only read from the front of the file', () => {

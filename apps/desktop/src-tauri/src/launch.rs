@@ -465,7 +465,7 @@ mod tests {
         assert!(is_document_window("main"));
         assert!(is_document_window("nib-2"));
         assert!(is_document_window("nib-12"));
-        assert!(!is_document_window("nib-presenter"));
+        assert!(!is_document_window("orden-presenter"));
         assert!(!is_document_window("nib-"));
         assert!(!is_document_window("web-1"));
     }

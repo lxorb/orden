@@ -73,7 +73,7 @@ MARKS = {
 
 SHOWING = "() => window.nibApp.pages.current?.store.showing ?? null"
 
-ROWS = "() => [...(document.querySelector('.navigator')?.querySelectorAll('.contents .row .nib-row-label') ?? [])].map((one) => one.textContent.trim())"
+ROWS = "() => [...(document.querySelector('.navigator')?.querySelectorAll('.contents .row .orden-row-label') ?? [])].map((one) => one.textContent.trim())"
 
 MARKED = """
 () => {

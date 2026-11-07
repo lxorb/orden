@@ -9,7 +9,7 @@
     const words = JSON.stringify(said)
     const bound = globalThis.nibSwiped
     if (typeof bound === 'function') bound(words)
-    else open('about:blank', 'nib-swipe:' + words)
+    else open('about:blank', 'orden-swipe:' + words)
   }
 
   function takes(from) {

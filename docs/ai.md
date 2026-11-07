@@ -680,7 +680,7 @@ Every surface that shows a model's words - the panel, the quick question, a chat
 writes in - draws them the way a note is read (#1122): through `markdown-view.svelte.ts`,
 which is the reading view's renderer with its fences (`fenceFrom` in `before-render.ts`:
 the same coloured blocks and drawn diagrams), the formula engine, footnotes, and the note
-page's own stylesheet (`nib-write`) at the panel's size. An `ai` block's answer is note text
+page's own stylesheet (`orden-write`) at the panel's size. An `ai` block's answer is note text
 and is drawn by the note itself.
 
 - **One spelling of maths.** A model writes `\(…\)` and `\[…\]` as often as `$…$` and

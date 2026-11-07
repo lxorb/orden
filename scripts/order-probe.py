@@ -41,7 +41,7 @@ def wrong(words: str) -> None:
     print(f"  WRONG: {words}", flush=True)
 
 def spaces_root() -> pathlib.Path:
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-order-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-order-probe-"))
     os.environ[SPACES_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made

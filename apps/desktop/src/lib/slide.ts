@@ -34,7 +34,7 @@ export function letGo(_node: Element, { ms = SWAP }: { ms?: number } = {}): Tran
 
 export function segmented(node: HTMLElement) {
   const thumb = document.createElement('span')
-  thumb.className = 'nib-segmented-thumb'
+  thumb.className = 'orden-segmented-thumb'
   thumb.setAttribute('aria-hidden', 'true')
 
   node.prepend(thumb)

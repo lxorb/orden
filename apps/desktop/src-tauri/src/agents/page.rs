@@ -18,7 +18,7 @@ use super::verbs::{
 };
 use crate::pdf::{printing, PdfPage};
 
-const WORLD: &str = "nib-agent";
+const WORLD: &str = "orden-agent";
 
 const NAVIGATION_STARTS: Duration = Duration::from_millis(50);
 
@@ -301,7 +301,7 @@ fn hears_a_press(said: &Value) -> bool {
         })
 }
 
-const SECRETS: &str = "nib-agent-secrets";
+const SECRETS: &str = "orden-agent-secrets";
 
 static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
     [

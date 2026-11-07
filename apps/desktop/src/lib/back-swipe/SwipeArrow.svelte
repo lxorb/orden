@@ -54,7 +54,7 @@
 {#if swiping.room && seen}
   <div
     class="track"
-    class:nib-swipe-room={swiping.stage !== 'went'}
+    class:orden-swipe-room={swiping.stage !== 'went'}
     style:left="{swiping.room.x}px"
     style:top="{swiping.room.y}px"
     style:width="{swiping.room.width}px"
@@ -62,7 +62,7 @@
     aria-hidden="true"
   >
     <div
-      class="nib-swipe"
+      class="orden-swipe"
       class:armed={swiping.progress >= 1 || swiping.stage === 'went'}
       class:went={swiping.stage === 'went'}
       class:stayed={swiping.stage === 'stayed'}
@@ -90,7 +90,7 @@
     pointer-events: none;
   }
 
-  .nib-swipe {
+  .orden-swipe {
     --size: 40px;
     position: absolute;
     top: 0;
@@ -117,7 +117,7 @@
     stroke-linejoin: round;
   }
 
-  .nib-swipe.right .arrow {
+  .orden-swipe.right .arrow {
     transform: scaleX(-1);
   }
 
@@ -134,7 +134,7 @@
     stroke-dasharray: 1;
   }
 
-  .nib-swipe.right .ring {
+  .orden-swipe.right .ring {
     transform: rotate(-90deg);
   }
 
@@ -146,13 +146,13 @@
     scale: 1.15;
   }
 
-  .nib-swipe.armed {
+  .orden-swipe.armed {
     border-color: var(--accent);
     background: var(--accent);
     color: var(--accent-ink);
   }
 
-  .nib-swipe.went {
+  .orden-swipe.went {
     scale: 1.2;
     transition:
       opacity var(--dur-base) var(--ease-out),
@@ -170,7 +170,7 @@
     transition: scale var(--dur-base) var(--ease-out);
   }
 
-  .nib-swipe.stayed {
+  .orden-swipe.stayed {
     transition:
       transform var(--dur-base) var(--ease-out),
       opacity var(--dur-base) var(--ease-out);

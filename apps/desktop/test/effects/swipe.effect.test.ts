@@ -99,7 +99,7 @@ function letGo() {
   flushSync()
 }
 
-const arrow = () => document.querySelector('.nib-swipe')
+const arrow = () => document.querySelector('.orden-swipe')
 
 function found(selector: string): HTMLElement {
   const one = document.querySelector<HTMLElement>(selector)

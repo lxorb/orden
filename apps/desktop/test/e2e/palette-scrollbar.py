@@ -9,10 +9,10 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 STATE = """() => {
   const list = document.querySelector('.palette ul')
-  const bar = document.querySelector('.palette .nib-scrollbar')
+  const bar = document.querySelector('.palette .orden-scrollbar')
   return list && {
     over: list.scrollHeight - list.clientHeight,
-    own: list.classList.contains('nib-scrolls'),
+    own: list.classList.contains('orden-scrolls'),
     needed: !!bar?.classList.contains('is-needed'),
     lit: !!bar?.classList.contains('is-lit'),
   }

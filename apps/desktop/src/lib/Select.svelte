@@ -118,13 +118,13 @@
         >*</span
       >{/if}</span
   >
-  {#if option.note}<span class="nib-said">{option.note}</span>{/if}
+  {#if option.note}<span class="orden-said">{option.note}</span>{/if}
 {/snippet}
 
 <div class="select" class:plain class:open bind:this={host}>
   <button
     type="button"
-    class="trigger nib-field is-value"
+    class="trigger orden-field is-value"
     {disabled}
     role="combobox"
     aria-haspopup="listbox"
@@ -141,7 +141,7 @@
 
   {#if open && viewport.touch}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="nib-scrim scrim" transition:fade={{ duration: dur(130) }} onclick={close}></div>
+    <div class="orden-scrim scrim" transition:fade={{ duration: dur(130) }} onclick={close}></div>
 
     <div class="sheet" transition:fly={{ y: 32, duration: dur(220), easing: cubicOut }}>
       {#if label}<p class="heading">{label}</p>{/if}
@@ -167,7 +167,7 @@
   {:else if open}
     <ul
       {id}
-      class="nib-layer list"
+      class="orden-layer list"
       class:above
       role="listbox"
       aria-label={label}

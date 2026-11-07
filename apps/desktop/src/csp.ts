@@ -1,6 +1,6 @@
 const THEME_SCRIPT = "'sha256-Au923IYcH7+6qRdLlrmSj5UNUZVgm5uFPwfJTwhC2b4='"
 
-const FRAME_SCRIPT = "'sha256-UbMWxIrbtKcJ1D+PYnMVHHSMulvzvKPmSd348Qc5i9k='"
+const FRAME_SCRIPT = "'sha256-HV5vDK5S+uKO/Vt31r3LBvvz8RNMQ3OtANNKdqC4k7U='"
 
 const DECK_LAYOUT = "'sha256-7EyWWoiOaEITiSnztLnl41c924jo2MevGJiwDThhx64='"
 

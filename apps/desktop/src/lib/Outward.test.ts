@@ -32,12 +32,12 @@ describe('the arrow', () => {
   const body = render(Outward).body
 
   test('is the shared mark, glued to the word before it', () => {
-    expect(body).toContain('nib-mark')
+    expect(body).toContain('orden-mark')
     expect(body).toContain('⁠<svg')
   })
 
   test('points along the line, and is turned over the other way', () => {
-    expect(body).toMatch(/<svg class="nib-mirror\b/)
+    expect(body).toMatch(/<svg class="orden-mirror\b/)
     expect(body).toContain('d="M6 3h7v7M13 3L5 11"')
   })
 
@@ -78,17 +78,17 @@ describe('the mark', () => {
   const base = read('../../../../packages/themes/src/base.css')
 
   test('sits on the middle of the letters, and takes no room on the line', () => {
-    const glyph = rule(base, '.nib-mark > :first-child')
+    const glyph = rule(base, '.orden-mark > :first-child')
     expect(glyph).toContain('vertical-align: middle')
     expect(glyph).toContain('margin-inline-start: calc(-1 * var(--mark-size, 16px))')
-    expect(rule(base, '.nib-mark')).toContain('white-space: nowrap')
-    expect(rule(base, ':has(> .nib-mark)')).toContain('padding-inline-end')
+    expect(rule(base, '.orden-mark')).toContain('white-space: nowrap')
+    expect(rule(base, ':has(> .orden-mark)')).toContain('padding-inline-end')
   })
 
   test('is what the `?` and the arrow are, with no placing of their own', () => {
     for (const path of ['./Hint.svelte', './Outward.svelte']) {
       const text = read(path)
-      expect(text, path).toMatch(/class="[^"]*\bnib-mark\b/)
+      expect(text, path).toMatch(/class="[^"]*\borden-mark\b/)
       expect(text, path).not.toMatch(/vertical-align|margin-inline-start/)
     }
   })

@@ -86,7 +86,7 @@
   }}
 >
   <input
-    class="nib-field title"
+    class="orden-field title"
     bind:value={title}
     aria-label={t('Name')}
     placeholder={t('Untitled')}
@@ -106,7 +106,7 @@
       {#if kind === 'checkbox'}
         <input
           type="checkbox"
-          class="nib-checkbox"
+          class="orden-checkbox"
           aria-label={propertyName(field, base ? displayName(base, field) : undefined)}
           checked={values[field] === true}
           onchange={(event) => (values = { ...values, [field]: event.currentTarget.checked })}
@@ -123,7 +123,7 @@
         />
       {:else}
         <input
-          class="nib-field"
+          class="orden-field"
           aria-label={propertyName(field, base ? displayName(base, field) : undefined)}
           type={kind === 'number' ? 'number' : kind === 'date' ? 'date' : 'text'}
           value={typeof values[field] === 'string' ? values[field] : ''}
@@ -138,12 +138,12 @@
       {@const made = sent}
       <button
         type="button"
-        class="nib-chip made"
+        class="orden-chip made"
         onclick={() => void workspace.openAside(made.path)}>✓ {made.name}</button
       >
     {/if}
     <span class="spring"></span>
-    <button type="submit" class="nib-button" disabled={sending || !kit.adds}>{t('Send')}</button>
+    <button type="submit" class="orden-button" disabled={sending || !kit.adds}>{t('Send')}</button>
   </div>
 </form>
 

@@ -25,8 +25,8 @@ const MOST: Record<Kind, number> = {
   scheme: 21,
   key: 305,
   variable: 18,
-  dashed: 5241,
-  word: 3910,
+  dashed: 870,
+  word: 3904,
 }
 
 const ALIASES_SHIP_IN = 'v0.21.0'

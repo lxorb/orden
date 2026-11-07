@@ -306,7 +306,7 @@ def overview(app: App, hwnd: int, hole: tuple[int, int, int, int], out: pathlib.
     app.eval(OPENING)
     film = Film(client_box(hwnd))
     time.sleep(0.4)
-    toggle = "document.querySelector('button.nib-glyph.overview')?.click()"
+    toggle = "document.querySelector('button.orden-glyph.overview')?.click()"
     for _ in range(2):
         if by_keys:
             alt_twice()
@@ -415,7 +415,7 @@ def main() -> int:
     config.mkdir(parents=True)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-under-spaces-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-under-spaces-"))
     user32.SystemParametersInfoW(0x1043, 0, ctypes.c_void_p(1), 0x3)
 
     env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces), **({"ORDEN_PAGES_WINDOWED": "1"} if args.windowed else {})}
@@ -507,7 +507,7 @@ def main() -> int:
         if not near(colour_at(shot, *middle), COLOUR):
             wrong.append(f"the page is not drawn in its hole: {colour_at(shot, *middle)} at {middle}")
         app.eval(
-            "const one = document.createElement('div'); one.className = 'nib-layer'; one.id = 'drive-layer';"
+            "const one = document.createElement('div'); one.className = 'orden-layer'; one.id = 'drive-layer';"
             f"Object.assign(one.style, {{ position: 'fixed', left: '{pane['x'] + 600 - 60}px',"
             f" top: '{pane['y'] + 470 - 60}px', width: '120px', height: '120px',"
             " background: 'rgb(0,160,0)', zIndex: 9999 }); document.body.append(one); return true"

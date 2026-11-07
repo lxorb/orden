@@ -89,7 +89,7 @@ describe('a footnote', () => {
 
   test('is followed by a press on its number, drawn as one', () => {
     const view = viewOf(NOTE)
-    const numbers = [...view.dom.querySelectorAll('.nib-footnote-number')]
+    const numbers = [...view.dom.querySelectorAll('.orden-footnote-number')]
     expect(numbers.map((one) => one.textContent)).toEqual(['a', 'a', '2', 'a', '2'])
 
     const [, , two] = numbers
@@ -99,7 +99,7 @@ describe('a footnote', () => {
 
   test('leaves a press alone where the caret already shows the mark as written', () => {
     const view = viewOf(NOTE, NOTE.indexOf('[^2]') + 1)
-    const two = [...view.dom.querySelectorAll('.nib-footnote-number')][2]
+    const two = [...view.dom.querySelectorAll('.orden-footnote-number')][2]
     if (two) press(two)
     expect(view.state.selection.main.head).not.toBe(NOTE.indexOf('**Bold**'))
   })

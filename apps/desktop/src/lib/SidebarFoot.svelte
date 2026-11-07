@@ -34,7 +34,7 @@
     onclick={showAccount}
   >
     <AccountBadge />
-    <span class="nib-row-label">{who ?? t('Sign in')}</span>
+    <span class="orden-row-label">{who ?? t('Sign in')}</span>
   </button>
 
   {#if arriving.showing}
@@ -46,7 +46,7 @@
   <div class="acts">
     {#if !isNative && !__EVEN_PLUGIN__ && !viewport.touch}
       <button
-        class="nib-glyph act"
+        class="orden-glyph act"
         title={t('Download the app')}
         aria-label={t('Download the app')}
         onclick={() => void openExternal(DOWNLOAD_URL)}
@@ -56,7 +56,7 @@
     {/if}
 
     <button
-      class="nib-glyph act"
+      class="orden-glyph act"
       title={t('Send feedback')}
       aria-label={t('Send feedback')}
       onclick={showFeedback}
@@ -70,7 +70,7 @@
 
     {#if !viewport.touch}
       <button
-        class="nib-glyph act"
+        class="orden-glyph act"
         title={theme.current === 'dark' ? t('Light') : t('Dark')}
         aria-label={theme.current === 'dark' ? t('Light') : t('Dark')}
         aria-disabled={!theme.switchable}
@@ -94,7 +94,7 @@
 
     {#if viewport.touch && !__EVEN_PLUGIN__}
       <button
-        class="nib-glyph act"
+        class="orden-glyph act"
         class:is-on={pad.on}
         aria-pressed={pad.on}
         title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
@@ -106,7 +106,7 @@
     {/if}
 
     <button
-      class="nib-glyph act"
+      class="orden-glyph act"
       title={shortcuts.tooltip(t('Settings'), 'app.settings')}
       aria-label={t('Settings')}
       onclick={() => settings.show()}
@@ -171,7 +171,7 @@
     color: var(--text-strong);
   }
 
-  .who .nib-row-label {
+  .who .orden-row-label {
     flex: 0 1 auto;
   }
 

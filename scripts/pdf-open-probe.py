@@ -102,7 +102,7 @@ def main() -> int:
     note.write_text(f"# {NOTE}\n\nA note to open the space on.\n", encoding="utf-8")
     paper(space / "Papers" / "Inside.pdf", "inside")
 
-    outside_dir = pathlib.Path(tempfile.mkdtemp(prefix="nib-pdf-probe-downloads-"))
+    outside_dir = pathlib.Path(tempfile.mkdtemp(prefix="orden-pdf-probe-downloads-"))
     atexit.register(shutil.rmtree, outside_dir, ignore_errors=True)
     first = paper(outside_dir / "Paper.pdf", "first")
     second = paper(outside_dir / "Second paper.pdf", "second")

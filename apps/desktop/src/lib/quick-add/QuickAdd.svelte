@@ -525,7 +525,7 @@
         {#each offered as one, index (one)}
           <button
             type="button"
-            class="nib-row is-short"
+            class="orden-row is-short"
             class:is-on={index === active}
             role="option"
             aria-selected={index === active}
@@ -534,10 +534,10 @@
             onmousedown={keepFocus}
             onclick={() => take(one)}
           >
-            <span class="nib-row-mark"
+            <span class="orden-row-mark"
               ><Glyph icon={token?.sign === '>' ? Inbox : token?.sign === '/' ? Hash : Tag} /></span
             >
-            <span class="nib-row-label">{one}</span>
+            <span class="orden-row-label">{one}</span>
           </button>
         {/each}
       </div>

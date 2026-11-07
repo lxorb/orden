@@ -64,7 +64,7 @@ def drive(browser) -> None:
         })"""
     )
     check("the logos are drawn in the text's colour", len(inked) == 3 and all(inked))
-    adding = sheet.locator("button.nib-action", has_text="Add")
+    adding = sheet.locator("button.orden-action", has_text="Add")
     check(
         "every Add wears its provider's mark",
         adding.count() > 0 and adding.locator(".mark").count() == adding.count(),

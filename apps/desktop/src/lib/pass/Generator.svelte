@@ -72,7 +72,7 @@
   <div class="dial">
     <span class="name">{label}</span>
     <input
-      class="nib-slider"
+      class="orden-slider"
       type="range"
       min={range.min}
       max={range.max}
@@ -87,15 +87,20 @@
 {/snippet}
 
 {#snippet foot()}
-  <button type="button" class="nib-button is-quiet is-soft" onclick={copy}>{t('Copy')}</button>
+  <button type="button" class="orden-button is-quiet is-soft" onclick={copy}>{t('Copy')}</button>
   {#if asked?.use}
-    <button type="button" class="nib-button use" data-lands onclick={use}>{t('Use')}</button>
+    <button type="button" class="orden-button use" data-lands onclick={use}>{t('Use')}</button>
   {/if}
 {/snippet}
 
 <Sheet {open} title={t('Generate password')} onclose={close} {foot}>
   <div class="generator">
-    <div class="nib-segmented" role="radiogroup" aria-label={t('Generate password')} use:segmented>
+    <div
+      class="orden-segmented"
+      role="radiogroup"
+      aria-label={t('Generate password')}
+      use:segmented
+    >
       {#each MODES as mode (mode)}
         <button
           type="button"
@@ -111,7 +116,7 @@
       <GeneratedText text={result} />
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         aria-label={t('Regenerate')}
         title={t('Regenerate')}
         onclick={() => turn++}
@@ -236,7 +241,7 @@
     min-width: 0;
   }
 
-  .nib-glyph {
+  .orden-glyph {
     flex: none;
     color: var(--muted-strong);
   }
@@ -269,7 +274,7 @@
     min-width: 6rem;
   }
 
-  .nib-slider {
+  .orden-slider {
     flex: 1;
     min-width: 0;
   }

@@ -65,7 +65,7 @@ describe('a mark that fills the box it was given', () => {
     const row = named('lib/SpaceRow.svelte')
 
     expect(badge.text.match(/<SpaceMark /g)).toHaveLength(1)
-    expect(badge.text).toMatch(/class="nib-badge"[\s\S]{0,200}<SpaceMark/)
+    expect(badge.text).toMatch(/class="orden-badge"[\s\S]{0,200}<SpaceMark/)
     expect(switcher.text).not.toContain('<SpaceMark ')
     expect(switcher.text.match(/<SpaceBadge /g)).toHaveLength(1)
     expect(row.text.match(/<SpaceBadge /g)).toHaveLength(1)

@@ -40,7 +40,7 @@ function when(): string {
 }
 
 const everyPage = {
-  postcssPlugin: 'nib-every-page',
+  postcssPlugin: 'orden-every-page',
   Rule(rule: { selector: string }) {
     const wide = everySurface(rule.selector)
     if (wide !== rule.selector) rule.selector = wide

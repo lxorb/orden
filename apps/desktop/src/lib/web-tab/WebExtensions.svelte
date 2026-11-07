@@ -41,7 +41,7 @@
 
 <div
   bind:this={bubble}
-  class="extensions nib-bubble is-pressable"
+  class="extensions orden-bubble is-pressable"
   style:right="{right}px"
   role="dialog"
   aria-label={t('Extensions')}
@@ -52,7 +52,7 @@
       {#each extensions.list as one (one.id)}
         <li class:off={!one.enabled}>
           <button
-            class="nib-row name"
+            class="orden-row name"
             disabled={!one.enabled || (!one.popup && !one.options)}
             title={one.name}
             onclick={() => onpress(one)}
@@ -70,7 +70,7 @@
           </button>
           {#if one.action && one.enabled}
             <button
-              class="nib-glyph"
+              class="orden-glyph"
               class:is-on={one.pinned}
               title={one.pinned ? t('Unpin') : t('Pin')}
               aria-label={one.pinned ? t('Unpin') : t('Pin')}
@@ -91,7 +91,7 @@
 
   <form onsubmit={add}>
     <input
-      class="nib-field"
+      class="orden-field"
       type="url"
       bind:value={link}
       placeholder={t('Paste a Chrome Web Store or Firefox Add-ons link')}
@@ -110,7 +110,7 @@
   {/if}
 
   <button
-    class="nib-row manage"
+    class="orden-row manage"
     onclick={() => {
       onclose()
       settings.show('general')

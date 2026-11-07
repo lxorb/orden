@@ -22,7 +22,7 @@ UNLANDED = """
 MOVED_ON = """
 document.fonts.status === 'loaded'
   && document.getAnimations().every((one) => one.playState !== 'running')
-  && !document.querySelector('.nib-scrollbar.is-lit, .nib-scrollbar.is-settling')
+  && !document.querySelector('.orden-scrollbar.is-lit, .orden-scrollbar.is-settling')
 """
 STILL = f"() => {LANDED} && {MOVED_ON}"
 

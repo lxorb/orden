@@ -55,7 +55,7 @@
           if (automation.off) Reflect.deleteProperty(next, 'off')
           else next.off = true
           change(at, next)
-        }}><span class="nib-switch" class:on={!automation.off} aria-hidden="true"></span></button
+        }}><span class="orden-switch" class:on={!automation.off} aria-hidden="true"></span></button
       >
       <Select
         label={t('Automations')}
@@ -72,7 +72,7 @@
       />
       {#if 'property' in when}
         <input
-          class="nib-field"
+          class="orden-field"
           value={when.is ?? ''}
           aria-label={t('Value')}
           placeholder="="
@@ -89,7 +89,7 @@
       {/if}
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         title={t('Remove')}
         aria-label={t('Remove')}
         onclick={() => write(automations.filter((_, index) => index !== at))}
@@ -114,7 +114,7 @@
             })}
         />
         <input
-          class="nib-field"
+          class="orden-field"
           {value}
           aria-label={t('Value')}
           onchange={(event) =>
@@ -125,7 +125,7 @@
         />
         <button
           type="button"
-          class="nib-glyph"
+          class="orden-glyph"
           title={t('Remove')}
           aria-label={t('Remove')}
           onclick={() =>
@@ -140,26 +140,26 @@
       <span class="mark" aria-hidden="true">→</span>
       <button
         type="button"
-        class="nib-row is-short adder"
+        class="orden-row is-short adder"
         onclick={() => {
           const key = keys.find((one) => !(one in automation.set)) ?? 'status'
           change(at, { ...automation, set: { ...automation.set, [key]: '' } })
         }}
       >
-        <span class="nib-row-label">{t('Add')}</span>
+        <span class="orden-row-label">{t('Add')}</span>
       </button>
     </div>
     <div class="row then">
       <span class="mark" aria-hidden="true">→</span>
       <input
-        class="nib-field"
+        class="orden-field"
         value={automation.move ?? ''}
         aria-label={t('Move to')}
         placeholder={t('Move to')}
         onchange={(event) => change(at, said(automation, 'move', event.currentTarget.value))}
       />
       <input
-        class="nib-field"
+        class="orden-field"
         value={automation.notify ?? ''}
         aria-label={t('Notifications')}
         placeholder={t('Notifications')}
@@ -169,8 +169,8 @@
   </div>
 {/each}
 
-<button type="button" class="nib-row is-short adder" onclick={add}>
-  <span class="nib-row-label">{t('Add')}</span>
+<button type="button" class="orden-row is-short adder" onclick={add}>
+  <span class="orden-row-label">{t('Add')}</span>
 </button>
 
 <style>
@@ -216,7 +216,7 @@
     grid-column: 2 / 4;
   }
 
-  .adder .nib-row-label {
+  .adder .orden-row-label {
     color: var(--muted);
   }
 </style>

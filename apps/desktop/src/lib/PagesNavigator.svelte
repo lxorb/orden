@@ -353,12 +353,12 @@
         {#each store.outline as part, index (index)}
           <li>
             <button
-              class="nib-row is-short row"
+              class="orden-row is-short row"
               style:--level={part.level}
               onclick={() => store.turnToPaper(part.page)}
             >
-              <span class="nib-row-label"><bdi>{part.title}</bdi></span>
-              <span class="nib-row-meta">{part.page}</span>
+              <span class="orden-row-label"><bdi>{part.title}</bdi></span>
+              <span class="orden-row-meta">{part.page}</span>
             </button>
           </li>
         {/each}

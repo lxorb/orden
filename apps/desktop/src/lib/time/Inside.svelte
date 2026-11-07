@@ -74,7 +74,7 @@
   {#if entry}
     <div class="entry">
       <select
-        class="nib-field"
+        class="orden-field"
         aria-label={t('Activity')}
         value={entry.activity ?? ''}
         onchange={(event) =>
@@ -87,14 +87,14 @@
       </select>
       <div class="clocks">
         <input
-          class="nib-field"
+          class="orden-field"
           type="time"
           aria-label={t('Start time')}
           value={clockOf(entry.start)}
           onchange={(event) => moved('start', event.currentTarget.value)}
         />
         <input
-          class="nib-field"
+          class="orden-field"
           type="time"
           aria-label={t('End time')}
           value={entry.end === null ? '' : clockOf(entry.end)}
@@ -103,7 +103,7 @@
         />
       </div>
       <input
-        class="nib-field"
+        class="orden-field"
         aria-label={t('Note')}
         placeholder={t('Note')}
         value={entry.note}
@@ -112,12 +112,12 @@
       <div class="acts">
         <button
           type="button"
-          class="nib-chip"
+          class="orden-chip"
           onclick={() => entry.activity && time.start(entry.activity)}>{t('Continue')}</button
         >
         <button
           type="button"
-          class="nib-chip"
+          class="orden-chip"
           onclick={() => {
             time.removeSpan(entry.id)
             onpick({ ...picked, span: null })
@@ -126,12 +126,12 @@
       </div>
     </div>
   {:else if !whole}
-    <p class="nib-section">{t('Record this as')}</p>
+    <p class="orden-section">{t('Record this as')}</p>
     <div class="chips">
       {#each time.latest().slice(0, 8) as one (one.id)}
         <button
           type="button"
-          class="nib-chip as"
+          class="orden-chip as"
           style:--tint={tintOf(one.id)}
           onclick={() => recordAs(one.id)}><span class="dot"></span>{one.name}</button
         >
@@ -139,20 +139,20 @@
     </div>
   {/if}
 
-  <p class="nib-section">{t('Active')}<span>{length(found.active)}</span></p>
+  <p class="orden-section">{t('Active')}<span>{length(found.active)}</span></p>
   <div
-    class="nib-meter"
+    class="orden-meter"
     role="meter"
     aria-label={t('Active')}
     aria-valuemin="0"
     aria-valuemax="100"
     aria-valuenow={Math.round(share(found.active) * 100)}
   >
-    <div class="nib-meter-fill" style:width="{share(found.active) * 100}%"></div>
+    <div class="orden-meter-fill" style:width="{share(found.active) * 100}%"></div>
   </div>
 
   {#if found.said.length && !entry}
-    <p class="nib-section">{t('You said')}<span>{length(found.saidMs)}</span></p>
+    <p class="orden-section">{t('You said')}<span>{length(found.saidMs)}</span></p>
     <ul>
       {#each found.said as total (total.activity)}
         <li>
@@ -165,7 +165,7 @@
   {/if}
 
   {#each groups as group (group.lane)}
-    <p class="nib-section">{group.label}</p>
+    <p class="orden-section">{group.label}</p>
     <ul>
       {#each group.list as place (place.key)}
         <li>
@@ -184,17 +184,17 @@
   {/each}
 
   {#if loose.length && whole}
-    <p class="nib-section">{t('Not said')}</p>
+    <p class="orden-section">{t('Not said')}</p>
     <ul>
       {#each loose as stretch (stretch.from)}
         <li>
           <button
             type="button"
-            class="nib-row is-short"
+            class="orden-row is-short"
             onclick={() => onpick({ from: stretch.from, to: stretch.to, span: null })}
           >
-            <span class="nib-row-label">{clock(stretch.from)}–{clock(stretch.to)}</span>
-            <span class="nib-row-meta">{length(stretch.to - stretch.from)}</span>
+            <span class="orden-row-label">{clock(stretch.from)}–{clock(stretch.to)}</span>
+            <span class="orden-row-meta">{length(stretch.to - stretch.from)}</span>
           </button>
         </li>
       {/each}

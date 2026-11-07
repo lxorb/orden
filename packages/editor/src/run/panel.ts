@@ -167,21 +167,21 @@ class RunPanelWidget extends NibWidget {
   toDOM(view: EditorView) {
     const panel = this.panel
     const host = document.createElement('div')
-    host.className = 'nib-run-panel'
+    host.className = 'orden-run-panel'
     host.dataset.status = panel.status
     host.contentEditable = 'false'
 
     const bar = document.createElement('div')
-    bar.className = 'nib-run-bar'
+    bar.className = 'orden-run-bar'
     host.append(bar)
 
     const state = document.createElement('span')
-    state.className = 'nib-run-state'
+    state.className = 'orden-run-state'
     state.textContent = this.stateText()
     bar.append(state)
 
     const time = document.createElement('span')
-    time.className = 'nib-run-time'
+    time.className = 'orden-run-time'
     bar.append(time)
 
     const tick = () => {
@@ -196,7 +196,7 @@ class RunPanelWidget extends NibWidget {
       this.onDestroy(host, () => window.clearInterval(ticker))
 
       const stop = document.createElement('button')
-      stop.className = 'nib-run-stop'
+      stop.className = 'orden-run-stop'
       stop.type = 'button'
       stop.textContent = label('stop')
       const halt = () =>
@@ -217,7 +217,7 @@ class RunPanelWidget extends NibWidget {
     }
 
     const dismiss = document.createElement('button')
-    dismiss.className = 'nib-run-dismiss'
+    dismiss.className = 'orden-run-dismiss'
     dismiss.type = 'button'
     dismiss.title = label('dismiss')
     dismiss.setAttribute('aria-label', label('dismiss'))
@@ -232,17 +232,17 @@ class RunPanelWidget extends NibWidget {
     bar.append(dismiss)
 
     const output = document.createElement('div')
-    output.className = 'nib-run-output'
+    output.className = 'orden-run-output'
     host.append(output)
 
     for (const line of panel.lines) {
       const row = document.createElement('div')
-      row.className = 'nib-run-line'
+      row.className = 'orden-run-line'
       row.dataset.level = line.level
 
       if (line.level === 'result') {
         const tag = document.createElement('span')
-        tag.className = 'nib-run-tag'
+        tag.className = 'orden-run-tag'
         tag.textContent = label('result')
         row.append(tag)
       }
@@ -253,7 +253,7 @@ class RunPanelWidget extends NibWidget {
 
     if (panel.truncated) {
       const note = document.createElement('div')
-      note.className = 'nib-run-note'
+      note.className = 'orden-run-note'
       note.textContent = fill(label('outputTruncated'), 'count', MAX_RUN_LINES)
       output.append(note)
     }

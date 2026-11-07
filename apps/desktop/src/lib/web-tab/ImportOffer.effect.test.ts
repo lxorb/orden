@@ -72,7 +72,7 @@ async function draw() {
 }
 
 function chips(): string[] {
-  return [...target.querySelectorAll('.nib-chip')].map((one) => one.textContent.trim())
+  return [...target.querySelectorAll('.orden-chip')].map((one) => one.textContent.trim())
 }
 
 describe('the offer to bring another browser’s data on a new web tab', () => {
@@ -94,7 +94,7 @@ describe('the offer to bring another browser’s data on a new web tab', () => {
   test('a browser with one profile imports at once and is not asked again', async () => {
     found.browsers = [CHROME]
     await draw()
-    target.querySelector<HTMLButtonElement>('.nib-chip')?.click()
+    target.querySelector<HTMLButtonElement>('.orden-chip')?.click()
     await tick()
     expect(offer.answered).toHaveBeenCalledOnce()
     expect(migrating.browser).toHaveBeenCalledWith(CHROME)
@@ -109,7 +109,7 @@ describe('the offer to bring another browser’s data on a new web tab', () => {
       migrating.browserProfiles = found.browsers[0]?.profiles ?? null
     })
     await draw()
-    target.querySelector<HTMLButtonElement>('.nib-chip')?.click()
+    target.querySelector<HTMLButtonElement>('.orden-chip')?.click()
     await new Promise((done) => setTimeout(done, 0))
     expect(settings.show).toHaveBeenCalledWith('import')
   })

@@ -210,7 +210,7 @@ def the_pointer(page: Page) -> None:
 
 
 def the_format_bar(page: Page) -> None:
-    bar = "() => !!document.querySelector('.nib-bar-at')"
+    bar = "() => !!document.querySelector('.orden-bar-at')"
     line = page.locator(".cm-line", has_text="The last line")
     line.click()
     page.keyboard.press("End")

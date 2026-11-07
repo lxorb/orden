@@ -252,7 +252,7 @@ test('the page is hidden while a layer of the app is over it, and comes back whe
   expect(pages.of(tab.id).live).toBe(true)
 
   asked.length = 0
-  const menu = layer('nib-layer')
+  const menu = layer('orden-layer')
   const off = overlays.show(() => undefined)
   await frames()
 
@@ -279,7 +279,7 @@ test('a layer that is not over the page leaves it alone', async () => {
   const { app } = await opened('https://example.com/beside')
 
   asked.length = 0
-  const card = layer('nib-bubble', { x: 820, y: 10, width: 200, height: 120 })
+  const card = layer('orden-bubble', { x: 820, y: 10, width: 200, height: 120 })
   const off = overlays.show(() => undefined)
   await frames()
 
@@ -298,7 +298,7 @@ test('a menu over the page is cut out of it, and the page stays', async () => {
   const { app } = await opened('https://example.com/cut')
 
   asked.length = 0
-  const menu = layer('nib-layer', { x: 100, y: 140, width: 240, height: 200 })
+  const menu = layer('orden-layer', { x: 100, y: 140, width: 240, height: 200 })
   const off = overlays.show(() => undefined)
   await frames()
 
@@ -388,7 +388,7 @@ test('a layer that grows while it is open is cut out of the page at its new size
       } | null
     )?.hollows[0]
 
-  const suggest = layer('nib-layer', { x: 100, y: 60, width: 400, height: 40 })
+  const suggest = layer('orden-layer', { x: 100, y: 60, width: 400, height: 40 })
   const off = overlays.show(() => undefined)
   await frames()
   expect(hollow()).toMatchObject({ height: 40 })
@@ -428,8 +428,8 @@ test('a sheet over the page covers all of it at once, picture or none', async ()
   pages.of(tab.id).shot = null
 
   asked.length = 0
-  const scrim = layer('nib-scrim', { x: 0, y: 0, width: 800, height: 600 })
-  const sheet = layer('nib-screen', { x: 200, y: 100, width: 400, height: 300 })
+  const scrim = layer('orden-scrim', { x: 0, y: 0, width: 800, height: 600 })
+  const sheet = layer('orden-screen', { x: 200, y: 100, width: 400, height: 300 })
   await settle()
 
   const placed = asked.filter((one) => one.command === 'web_place')
@@ -459,7 +459,7 @@ describe('a layer is answered in the frame it is first drawn in, however it came
       name: 'put in, in a shape of the theme',
       all: false,
       ready: () => null,
-      show: () => layer('nib-layer', box),
+      show: () => layer('orden-layer', box),
       take: (shown) => shown.remove(),
     },
     {
@@ -477,7 +477,7 @@ describe('a layer is answered in the frame it is first drawn in, however it came
       name: 'a clear scrim put in, as a menu’s and the overview’s canvas are',
       all: true,
       ready: () => null,
-      show: () => layer('nib-scrim is-clear', whole),
+      show: () => layer('orden-scrim is-clear', whole),
       take: (shown) => shown.remove(),
     },
     {
@@ -502,7 +502,7 @@ describe('a layer is answered in the frame it is first drawn in, however it came
       name: 'shown and hidden by its style, as the overview’s ground is',
       all: true,
       ready: () => {
-        const made = layer('nib-scrim', whole)
+        const made = layer('orden-scrim', whole)
         made.style.visibility = 'hidden'
         return made
       },
@@ -945,7 +945,7 @@ describe('a page drawn under the app', () => {
 
     asked.length = 0
     document.querySelector('.hole')?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
-    const menu = layer('nib-layer', { x: 100, y: 140, width: 240, height: 200 })
+    const menu = layer('orden-layer', { x: 100, y: 140, width: 240, height: 200 })
     const off = overlays.show(() => undefined)
     await frames()
 
@@ -958,7 +958,7 @@ describe('a page drawn under the app', () => {
     })
     expect(asked.map((one) => one.command)).not.toContain('web_shot')
 
-    const scrim = layer('nib-scrim', { x: 0, y: 0, width: 800, height: 600 })
+    const scrim = layer('orden-scrim', { x: 0, y: 0, width: 800, height: 600 })
     await frames()
     expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
       visible: true,

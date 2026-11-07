@@ -24,7 +24,7 @@ export:
 
 [toc]
 
-Prose with **strong**, ==marked==, H~2~O, $E=mc^2$, a [link](https://nib.dev) and <https://bare.dev>.
+Prose with **strong**, ==marked==, H~2~O, $E=mc^2$, a [link](https://orden.dev) and <https://bare.dev>.
 
 ## Lists
 
@@ -135,7 +135,7 @@ describe('a styled export', () => {
 
   test('tells a bare link from a worded one', () => {
     expect(html).toContain('<a class="url" href="https://bare.dev">')
-    expect(html).toContain('<a href="https://nib.dev">link</a>')
+    expect(html).toContain('<a href="https://orden.dev">link</a>')
   })
 
   test('leaves front matter out', () => {

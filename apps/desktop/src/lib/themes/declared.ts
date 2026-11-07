@@ -162,7 +162,7 @@ export function readProperty(property: string): string {
 
 function namesIn(css: string): string[] {
   const found = new Set<string>()
-  for (const [, id] of css.matchAll(/--nib-setting-([a-z0-9-]+)\s*:/gi)) {
+  for (const [, id] of css.matchAll(/--orden-setting-([a-z0-9-]+)\s*:/gi)) {
     if (id) found.add(id.toLowerCase())
   }
 

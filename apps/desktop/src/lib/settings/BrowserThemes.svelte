@@ -55,10 +55,10 @@
   }
 </script>
 
-<div class="nib-setting">
+<div class="orden-setting">
   <span class="name">{t('Import')}</span>
   {#each BROWSERS as browser (browser)}
-    <button class="nib-chip" disabled={!found[browser]?.length} onclick={() => (shown = browser)}
+    <button class="orden-chip" disabled={!found[browser]?.length} onclick={() => (shown = browser)}
       >{browser}</button
     >
   {/each}
@@ -67,13 +67,13 @@
 {#if shown}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim scrim"
+    class="orden-scrim scrim"
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => (shown = null)}
   ></div>
 
   <div
-    class="nib-screen is-centred themes"
+    class="orden-screen is-centred themes"
     use:trap
     role="dialog"
     aria-modal="true"

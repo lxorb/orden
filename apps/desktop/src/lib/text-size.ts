@@ -11,7 +11,7 @@ export function sizeStepFor(
 }
 
 function overNote(target: EventTarget | null): boolean {
-  return target instanceof Element && !!target.closest('.nib-write')
+  return target instanceof Element && !!target.closest('.orden-write')
 }
 
 export function watchTextSize(): () => void {

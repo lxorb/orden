@@ -118,7 +118,7 @@ export class Images {
 
   private async writtenAs(user: User, name: string, bytes: Uint8Array): Promise<string | null> {
     if (!this.has(SETPRIV)) return null
-    const command = asUser(user, ['/bin/sh', '-c', AS_USER_SCRIPT, 'nib-image', name])
+    const command = asUser(user, ['/bin/sh', '-c', AS_USER_SCRIPT, 'orden-image', name])
     const [file = SETPRIV, ...args] = command
     const env = { HOME: user.home, PATH: '/usr/local/bin:/usr/bin:/bin' }
     const { code, out } = await this.run(file, args, env, bytes)

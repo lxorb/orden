@@ -15,8 +15,8 @@
   import { trap } from './trap'
   import Cross from './Cross.svelte'
 
-  const STYLE_ID = 'nib-theme-miniatures'
-  const PALETTE_ID = 'nib-theme-palettes'
+  const STYLE_ID = 'orden-theme-miniatures'
+  const PALETTE_ID = 'orden-theme-palettes'
 
   const SWATCHES = [
     '--bg',
@@ -111,13 +111,13 @@
 {#if store.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim scrim"
+    class="orden-scrim scrim"
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => store.close()}
   ></div>
 
   <div
-    class="nib-screen is-centred is-steady sheet"
+    class="orden-screen is-centred is-steady sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -127,14 +127,14 @@
     <header role="presentation">
       {#if store.chosen}
         <button
-          class="nib-glyph back"
+          class="orden-glyph back"
           onclick={() => {
             store.opened = null
             previewing = null
           }}
           aria-label={t('Back')}
         >
-          <svg class="nib-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
+          <svg class="orden-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
         </button>
         <p class="title">{store.chosen.name}</p>
       {:else}
@@ -158,7 +158,7 @@
         </div>
       {/if}
 
-      <button class="nib-glyph shut" onclick={() => store.close()} aria-label={t('Close')}>
+      <button class="orden-glyph shut" onclick={() => store.close()} aria-label={t('Close')}>
         <Cross />
       </button>
     </header>
@@ -189,7 +189,7 @@
             >
               <div class="frame {FRAME}" data-palette={one.id} data-theme={schemeOf(one)}>
                 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                <div class="nib-mini-page">{@html sample}</div>
+                <div class="orden-mini-page">{@html sample}</div>
               </div>
 
               <div class="label">
@@ -241,7 +241,7 @@
         style:--mini-page="{FULL_HEIGHT}px"
       >
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        <div class="nib-mini-page">{@html fullSample}</div>
+        <div class="orden-mini-page">{@html fullSample}</div>
       </div>
 
       {#if one.variants.length > 1}
@@ -280,18 +280,18 @@
       <div class="row">
         {#if store.installed(one.id) && !store.updatable(one)}
           <button
-            class="nib-button"
+            class="orden-button"
             disabled={store.using(one.id) || store.working !== null}
             onclick={() => store.use(one.id)}>{store.using(one.id) ? t('In use') : t('Use')}</button
           >
           <button
-            class="nib-button is-quiet"
+            class="orden-button is-quiet"
             disabled={store.working !== null}
             onclick={() => void store.remove(one.id)}>{t('Remove')}</button
           >
         {:else}
           <button
-            class="nib-button"
+            class="orden-button"
             disabled={store.working !== null}
             onclick={() => void store.install(one)}
             >{store.updatable(one) ? t('Update') : t('Install')}</button

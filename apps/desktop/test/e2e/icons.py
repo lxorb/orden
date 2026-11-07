@@ -100,14 +100,14 @@ CANVAS_ICON = """
 """
 
 def pick(page: Page, label: str, words: str) -> None:
-    page.locator(".sheet input.nib-field").fill(words)
+    page.locator(".sheet input.orden-field").fill(words)
     cell = page.locator(f'.sheet button[aria-label="{words}"]:has(svg)').first
     cell.wait_for(state="visible", timeout=PATIENCE * 1000)
     cell.click()
     say(f"[{label}] picked {words}")
 
 def sets(page: Page, label: str, where: str) -> None:
-    page.locator(".sheet input.nib-field").fill("")
+    page.locator(".sheet input.orden-field").fill("")
     wait_for(
         page,
         "() => document.querySelectorAll('.sheet .cell').length > 8",
@@ -117,19 +117,19 @@ def sets(page: Page, label: str, where: str) -> None:
     page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{where}.png"))
     say(f"[{label}] wrote picker-{where}.png")
     check(
-        page.locator(".sheet .nib-segmented:not(.variant)").count() == 0,
+        page.locator(".sheet .orden-segmented:not(.variant)").count() == 0,
         f"[{label}] the picker has no tabs",
     )
 
     for words, what in (("rocket", "line"), ("orden", "Orden's own mark")):
-        page.locator(".sheet input.nib-field").fill(words)
+        page.locator(".sheet input.orden-field").fill(words)
         found = page.locator(f'.sheet button[aria-label="{words}"], .sheet button[aria-label="Orden"]')
         try:
             found.first.wait_for(state="visible", timeout=PATIENCE * 1000)
         except Exception:
             check(False, f"[{label}] a search for {words} finds {what}")
         page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{words}-{where}.png"))
-    page.locator(".sheet input.nib-field").fill("")
+    page.locator(".sheet input.orden-field").fill("")
 
 GEOMETRY = """
 () => {
@@ -172,7 +172,7 @@ LOOKS = """
 """
 
 def aligned(page: Page, label: str) -> None:
-    page.locator(".sheet input.nib-field").fill("")
+    page.locator(".sheet input.orden-field").fill("")
     wait_for(page, "() => document.querySelectorAll('.sheet .grid .emoji').length > 8", f"[{label}] the emoji")
     page.wait_for_timeout(250)
     seen = page.evaluate(GEOMETRY)
@@ -184,7 +184,7 @@ def aligned(page: Page, label: str) -> None:
     )
     check(seen["walked"] == 0, f"[{label}] no cell is marked before a key is pressed")
 
-    field = page.locator(".sheet input.nib-field")
+    field = page.locator(".sheet input.orden-field")
     field.press("ArrowRight")
     field.press("ArrowRight")
     walked = page.evaluate(LOOKS, ".sheet .cell.at")
@@ -214,13 +214,13 @@ def outline(page: Page, label: str, where: str) -> None:
     sheet = page.locator(".sheet")
     sheet.wait_for(state="visible", timeout=PATIENCE * 1000)
     sheet.locator(".variant button").nth(1).click()
-    sheet.locator("input.nib-field").fill("thinking face")
+    sheet.locator("input.orden-field").fill("thinking face")
     sheet.locator(".tint").nth(3).click()
     cell = sheet.locator('button.cell[aria-label="thinking face"]:has(svg.drawn)').first
     cell.wait_for(state="visible", timeout=PATIENCE * 1000)
     page.wait_for_timeout(400)
     check(
-        sheet.locator("input.nib-field").input_value() == "thinking face",
+        sheet.locator("input.orden-field").input_value() == "thinking face",
         f"[{label}] a colour painted keeps the search",
     )
     sheet.screenshot(path=str(SHOTS / f"picker-outline-{where}.png"))
@@ -254,7 +254,7 @@ def outline(page: Page, label: str, where: str) -> None:
         f"[{label}] the picker opens on outlines for a row that wears one",
     )
     sheet.locator(".variant button").nth(0).click()
-    sheet.locator("input.nib-field").fill("thinking face")
+    sheet.locator("input.orden-field").fill("thinking face")
     sheet.locator('button.cell[aria-label="thinking face"]:has(.emoji)').first.click()
     worn = wait_for(
         page,

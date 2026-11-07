@@ -43,15 +43,15 @@
 </script>
 
 <div class="card">
-  <div class="nib-setting setting">
+  <div class="orden-setting setting">
     <span class="name"
-      ><span class="nib-named"
+      ><span class="orden-named"
         >{t('Do with AI')}<Hint
           text={t('Whether a task done with AI asks before each change or makes them on its own.')}
         /></span
       ></span
     >
-    <div class="nib-setting-value">
+    <div class="orden-setting-value">
       <Select
         value={tasked}
         options={MODES.filter((one) => one !== 'plan').map((one) => ({
@@ -67,12 +67,12 @@
   {#each TASK_TOOLS as tool (tool)}
     {@const words = TOOL_WORDS[tool]}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="nib-setting setting pressable" onclick={() => turnTaskTool(tool)}>
+    <div class="orden-setting setting pressable" onclick={() => turnTaskTool(tool)}>
       <span class="name"
-        ><span class="nib-named">{t(words.label)}<Hint text={t(words.hint)} /></span></span
+        ><span class="orden-named">{t(words.label)}<Hint text={t(words.hint)} /></span></span
       >
       <span
-        class="nib-switch"
+        class="orden-switch"
         class:on={taskTools[tool]}
         role="switch"
         tabindex="0"
@@ -86,9 +86,9 @@
       ></span>
     </div>
   {/each}
-  <label class="nib-setting setting asking">
+  <label class="orden-setting setting asking">
     <span class="name"
-      ><span class="nib-named"
+      ><span class="orden-named"
         >{t('Instructions')}<Hint
           text={t(
             'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.',
@@ -97,7 +97,7 @@
       ></span
     >
     <textarea
-      class="nib-field ask"
+      class="orden-field ask"
       rows="3"
       value={taskWords}
       placeholder={DEFAULT_ASK}

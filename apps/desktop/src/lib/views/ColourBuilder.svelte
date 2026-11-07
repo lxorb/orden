@@ -58,7 +58,7 @@
     <code class="kept">{written}</code>
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       title={t('Remove')}
       aria-label={t('Remove')}
       onclick={() => write([])}><Cross small /></button
@@ -98,7 +98,7 @@
         />
         {#if takesValue(shown.op)}
           <input
-            class="nib-field"
+            class="orden-field"
             value={shown.value}
             aria-label={t('Value')}
             onchange={(event) =>
@@ -113,7 +113,7 @@
       {/if}
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         title={t('Remove')}
         aria-label={t('Remove')}
         onclick={() => write(rules.filter((_, index) => index !== at))}><Cross small /></button
@@ -121,8 +121,8 @@
     </div>
   {/each}
 
-  <button type="button" class="nib-row is-short adder" onclick={add}>
-    <span class="nib-row-label">{t('Add')}</span>
+  <button type="button" class="orden-row is-short adder" onclick={add}>
+    <span class="orden-row-label">{t('Add')}</span>
   </button>
 {/if}
 
@@ -144,7 +144,7 @@
     white-space: nowrap;
   }
 
-  .adder .nib-row-label {
+  .adder .orden-row-label {
     color: var(--muted);
   }
 </style>

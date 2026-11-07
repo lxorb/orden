@@ -27,7 +27,7 @@ BROWSE = """
 
 MENU = """
 () => {
-  const row = [...document.querySelectorAll('.nib-row:has(.nib-row-label)')].find((one) => one.checkVisibility())
+  const row = [...document.querySelectorAll('.orden-row:has(.orden-row-label)')].find((one) => one.checkVisibility())
   if (!row) return false
   const box = row.getBoundingClientRect()
   row.dispatchEvent(new MouseEvent('contextmenu', {

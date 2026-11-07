@@ -11,7 +11,7 @@ NAMES = {"2024 report": ("2024", "report"), "(draft) plan": ("(draft)", "plan"),
 
 PLACES = {
     "tab": "[data-strip] .tab .label",
-    "file list": ".row[data-path] .nib-row-label",
+    "file list": ".row[data-path] .orden-row-label",
 }
 
 ORDER = """([selector, name, first, second]) => {

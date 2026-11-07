@@ -263,7 +263,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 ## 10. Search
 
 - [x] Find `Ctrl+F`, find next/previous. Orden's own bar rather than CodeMirror's
-      panel: one `.nib-field` under the tab strip with the three flags inside it,
+      panel: one `.orden-field` under the tab strip with the three flags inside it,
       a live count beside it, the two steps and a cross, at the row scale so a
       thumb gets a finger-sized target. The same component the reading view and a
       PDF already used, which is what makes finding one thing wherever you are

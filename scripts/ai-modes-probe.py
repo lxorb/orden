@@ -209,7 +209,7 @@ def agent_acts_and_undo_restores(page: Session, space: pathlib.Path, shots: path
         if listed:
             say("the changes list holds the rename and the delete")
         page.value(
-            "[...document.querySelectorAll('.bar .nib-chip')].find((one) => one.textContent.trim() === 'Undo').click()"
+            "[...document.querySelectorAll('.bar .orden-chip')].find((one) => one.textContent.trim() === 'Undo').click()"
         )
     back = until(
         lambda: (space / "Herons.md").exists()

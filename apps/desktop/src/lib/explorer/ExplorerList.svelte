@@ -412,7 +412,7 @@
         {#if entry}
           <!-- svelte-ignore a11y_click_events_have_key_events -->
           <div
-            class="nib-row entry"
+            class="orden-row entry"
             class:tile={grid}
             class:is-picked={view.picked.names.has(entry.name)}
             class:is-taking={taking === entry.name}
@@ -450,7 +450,7 @@
               {/if}
               {#if view.renaming === entry.name}
                 <input
-                  class="nib-field rename"
+                  class="orden-field rename"
                   value={entry.name}
                   aria-label={t('Rename')}
                   spellcheck="false"
@@ -462,15 +462,16 @@
                   ondblclick={(event) => event.stopPropagation()}
                 />
               {:else}
-                <span class="nib-row-label"
+                <span class="orden-row-label"
                   ><bdi>{view.search ? nameOf(entry.name) : entry.name}</bdi></span
                 >
               {/if}
             </span>
             {#if !grid}
-              <span class="nib-row-meta modified">{when(entry.modified, 'short')}</span>
-              <span class="nib-row-meta size">{entry.folder ? '' : readableSize(entry.size)}</span>
-              <span class="nib-row-meta kind"
+              <span class="orden-row-meta modified">{when(entry.modified, 'short')}</span>
+              <span class="orden-row-meta size">{entry.folder ? '' : readableSize(entry.size)}</span
+              >
+              <span class="orden-row-meta kind"
                 >{view.search ? folderOf(entry.name) : kindOf(entry)}</span
               >
             {/if}

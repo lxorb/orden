@@ -7,7 +7,7 @@
   const face = $derived(account.user?.avatar && `${BASE}/i/${account.user.avatar.s}.webp`)
 </script>
 
-<span class="nib-badge" class:person={!!who} aria-hidden="true">
+<span class="orden-badge" class:person={!!who} aria-hidden="true">
   {#if face}
     <img src={face} alt="" draggable="false" />
   {:else if who}

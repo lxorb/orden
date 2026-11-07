@@ -38,12 +38,12 @@ WRAPPED = """
   const LABELS = [
     'button',
     '[role="switch"] .name .what',
-    '.nib-setting .name .what',
-    '.nib-segmented button',
+    '.orden-setting .name .what',
+    '.orden-segmented button',
     '.key',
-    '.nib-row-label',
-    '.nib-button',
-    '.nib-action',
+    '.orden-row-label',
+    '.orden-button',
+    '.orden-action',
     'select',
     'kbd',
   ].join(',')
@@ -70,7 +70,7 @@ WRAPPED = """
   // A row that is itself a button holds a name and a control, each of which is
   // judged on its own; the row is allowed its two lines of name and value.
   const isRow = (element) =>
-    element.matches('button.setting, button.nib-setting, .nib-row:has(.nib-row-label)')
+    element.matches('button.setting, button.orden-setting, .orden-row:has(.orden-row-label)')
 
   const wrapped = []
   for (const element of root.querySelectorAll(LABELS)) {
@@ -116,18 +116,18 @@ SETTINGS = '[role="dialog"][aria-label="Settings"]'
 FRAME = """
 () => {
   const body = document.querySelector('[role="dialog"][aria-label="Settings"] .body')
-  const rows = [...body.querySelectorAll('.nib-setting')]
+  const rows = [...body.querySelectorAll('.orden-setting')]
   if (rows.some((row) => row.textContent.includes('Orden’s own'))) return 'real'
-  const mode = rows.find((row) => row.querySelector('.nib-segmented'))
+  const mode = rows.find((row) => row.querySelector('.orden-segmented'))
   if (!mode) return null
   const row = mode.cloneNode(true)
   row.dataset.stand = 'frame'
   // The sliding surface is the action's, which a copy does not have: without it the
   // chosen half draws its own, which is what a control without the action looks like.
-  row.querySelector('.nib-segmented-thumb')?.remove()
-  row.querySelector('.nib-segmented')?.classList.remove('has-thumb')
+  row.querySelector('.orden-segmented-thumb')?.remove()
+  row.querySelector('.orden-segmented')?.classList.remove('has-thumb')
   row.querySelector('.name .what').firstChild.textContent = 'Frame'
-  const halves = [...row.querySelectorAll('.nib-segmented button')]
+  const halves = [...row.querySelectorAll('.orden-segmented button')]
   halves.slice(2).forEach((one) => one.remove())
   halves[0].textContent = 'Orden’s own'
   halves[1].textContent = 'The system’s'

@@ -6,7 +6,7 @@ import type { Env, Space } from '../types'
 import { proofName } from './addresses'
 
 export function newProof(): string {
-  return `nib-verify=${randomToken()}`
+  return `orden-verify=${randomToken()}`
 }
 
 const PROVED_FOR = 7 * 24 * 60 * 60 * 1000

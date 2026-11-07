@@ -75,7 +75,7 @@
           {#each remote.hosts as one, at (one.id)}
             {@const about = [one.detail, one.group].filter(Boolean).join(' · ')}
             <div
-              class="nib-setting row"
+              class="orden-setting row"
               class:landing={dropAt === at}
               role="group"
               aria-label={one.name}
@@ -100,7 +100,7 @@
                 </span>
               </button>
               <button
-                class="nib-glyph"
+                class="orden-glyph"
                 disabled={at === 0}
                 title={t('Move up')}
                 aria-label={t('Move up')}
@@ -109,7 +109,7 @@
                 <svg viewBox="0 0 16 16"><path d="M4.5 9.5L8 6l3.5 3.5" /></svg>
               </button>
               <button
-                class="nib-glyph"
+                class="orden-glyph"
                 disabled={at === remote.hosts.length - 1}
                 title={t('Move down')}
                 aria-label={t('Move down')}
@@ -119,8 +119,8 @@
               </button>
             </div>
           {/each}
-          <button class="nib-setting row add" onclick={() => void add()}>
-            <span class="nib-setting-mark plus" aria-hidden="true"
+          <button class="orden-setting row add" onclick={() => void add()}>
+            <span class="orden-setting-mark plus" aria-hidden="true"
               ><svg viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" /></svg></span
             >
             <span class="name">{t('Add host')}</span>
@@ -162,14 +162,14 @@
     width: 100%;
   }
 
-  .remote :global(.nib-setting .name) {
+  .remote :global(.orden-setting .name) {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 1px;
   }
 
-  .remote :global(.nib-setting .name small) {
+  .remote :global(.orden-setting .name small) {
     font-size: var(--text-xs);
     color: var(--muted);
   }

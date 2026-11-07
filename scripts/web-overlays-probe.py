@@ -259,14 +259,14 @@ def main() -> int:
             print("FAIL: a site asked for where you are and no bubble went up")
 
         said["the answers can be pressed"] = app.ask(
-            "JSON.stringify([...document.querySelectorAll('.ask .nib-button')].map((one) => {"
+            "JSON.stringify([...document.querySelectorAll('.ask .orden-button')].map((one) => {"
             " const box = one.getBoundingClientRect();"
             " const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);"
             " return hit !== null && one.contains(hit) }))"
         )
         if said["the answers can be pressed"] != [True, True]:
             print("FAIL: a pointer over the bubble's answers lands on something else")
-        app.ask("document.querySelectorAll('.ask .nib-button')[0].click()")
+        app.ask("document.querySelectorAll('.ask .orden-button')[0].click()")
 
         told = ""
         until = time.perf_counter() + 20

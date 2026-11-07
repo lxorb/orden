@@ -31,13 +31,13 @@
 {#snippet folders(vault: Vault, parent: string | null, depth: number)}
   {#each childrenOf(vault, parent) as folder (folder.id)}
     <button
-      class="nib-row"
+      class="orden-row"
       type="button"
       style:padding-inline-start="calc(var(--row-pad) + {depth} * var(--row-indent))"
       onclick={() => void moved(vault.id, folder.id)}
     >
-      <Glyph icon={FolderMark} class="nib-row-mark" />
-      <span class="nib-row-label">{folder.name}</span>
+      <Glyph icon={FolderMark} class="orden-row-mark" />
+      <span class="orden-row-label">{folder.name}</span>
     </button>
     {@render folders(vault, folder.id, depth + 1)}
   {/each}
@@ -50,9 +50,9 @@
 >
   <div class="targets">
     {#each pass.vaults as vault (vault.id)}
-      <button class="nib-row vault" type="button" onclick={() => void moved(vault.id, null)}>
+      <button class="orden-row vault" type="button" onclick={() => void moved(vault.id, null)}>
         <VaultMark color={vault.color} icon={vault.icon} />
-        <span class="nib-row-label">{vault.name}</span>
+        <span class="orden-row-label">{vault.name}</span>
       </button>
       {@render folders(vault, null, 1)}
     {/each}

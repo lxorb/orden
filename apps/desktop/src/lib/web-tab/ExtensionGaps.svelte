@@ -22,10 +22,10 @@
   {#if asking && extensions.asking}
     {@const link = extensions.asking.link}
     <div class="choices">
-      <button class="nib-chip" onclick={() => void extensions.install(link, true)}>
+      <button class="orden-chip" onclick={() => void extensions.install(link, true)}>
         {t('Install anyway')}
       </button>
-      <button class="nib-chip is-quiet" onclick={() => (extensions.asking = null)}>
+      <button class="orden-chip is-quiet" onclick={() => (extensions.asking = null)}>
         {t('Cancel')}
       </button>
     </div>

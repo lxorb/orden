@@ -1074,13 +1074,13 @@ describe('installed themes', () => {
   test('a written theme is listed, read back, and taken away again', async () => {
     const path = await webInvoke<string>('write_theme', {
       id: 'warm-paper',
-      css: '/*! nib-theme */',
+      css: '/*! orden-theme */',
     })
 
     expect(await webInvoke('list_themes')).toEqual([
       { id: 'file:warm-paper', name: 'Warm paper', path },
     ])
-    expect(await webInvoke('read_theme', { path })).toBe('/*! nib-theme */')
+    expect(await webInvoke('read_theme', { path })).toBe('/*! orden-theme */')
 
     await webInvoke('remove_theme', { id: 'warm-paper' })
     expect(await webInvoke('list_themes')).toEqual([])

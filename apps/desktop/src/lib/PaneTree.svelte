@@ -40,7 +40,7 @@
     handle.setPointerCapture(event.pointerId)
     workspace.panes.sliding = split.id
     document.body.style.cursor = along === 'row' ? 'col-resize' : 'row-resize'
-    document.body.classList.add('nib-unselectable')
+    document.body.classList.add('orden-unselectable')
 
     const move = (moved: PointerEvent) => {
       const room = along === 'row' ? box.width : box.height
@@ -57,7 +57,7 @@
       handle.removeEventListener('pointercancel', stop)
 
       document.body.style.cursor = ''
-      document.body.classList.remove('nib-unselectable')
+      document.body.classList.remove('orden-unselectable')
       workspace.panes.settle()
     }
 

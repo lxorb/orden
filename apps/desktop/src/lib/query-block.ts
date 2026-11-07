@@ -44,14 +44,14 @@ function row(hit: Hit): string {
   const task = taskOf(hit)
 
   if (!task) {
-    return `<button type="button" class="nib-row is-short" ${where}>${marked(hit.text, hit.ranges)}</button>`
+    return `<button type="button" class="orden-row is-short" ${where}>${marked(hit.text, hit.ranges)}</button>`
   }
 
   const box =
-    `<input type="checkbox" class="nib-checkbox" data-task ${where}` +
+    `<input type="checkbox" class="orden-checkbox" data-task ${where}` +
     `${task.done ? ' checked' : ''} aria-label="${escapeAll(task.text)}">`
 
-  return `<button type="button" class="nib-row is-short" ${where}>${box}${marked(task.text, task.ranges)}</button>`
+  return `<button type="button" class="orden-row is-short" ${where}>${box}${marked(task.text, task.ranges)}</button>`
 }
 
 export async function queryRowsHtml(
@@ -74,17 +74,17 @@ export async function queryRowsHtml(
   ]).catch(() => undefined)
 
   if (!hits.length)
-    return `<div class="nib-query"><p class="nib-query-none">${escapeAll(nothing)}</p></div>`
+    return `<div class="orden-query"><p class="orden-query-none">${escapeAll(nothing)}</p></div>`
 
   const groups = grouped(hits)
     .map((group) => {
       const rows = group.hits.map(row).join('')
 
-      return `<p class="nib-section">${escapeAll(shownName(group.name))}<span>${group.hits.length}</span></p>${rows}`
+      return `<p class="orden-section">${escapeAll(shownName(group.name))}<span>${group.hits.length}</span></p>${rows}`
     })
     .join('')
 
-  return `<div class="nib-query">${groups}</div>`
+  return `<div class="orden-query">${groups}</div>`
 }
 
 async function openQueryRow(path: string, line: number): Promise<void> {

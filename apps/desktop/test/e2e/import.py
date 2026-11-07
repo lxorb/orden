@@ -144,7 +144,7 @@ def bring_in(page, shot, tag: str, path: Path) -> dict:
         page.click("button.drop")
     chooser.value.set_files(str(path))
 
-    page.wait_for_selector("button.nib-button", timeout=20000)
+    page.wait_for_selector("button.orden-button", timeout=20000)
     page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=30000)
     said = page.evaluate(
         """() => ({
@@ -156,7 +156,7 @@ def bring_in(page, shot, tag: str, path: Path) -> dict:
     )
     shot(f"{tag}-preview")
 
-    page.click("button.nib-button")
+    page.click("button.orden-button")
     page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=60000)
     shot(f"{tag}-done")
 
@@ -250,7 +250,7 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     shot("table-preview")
 
     say(f"[{name}] as a table: {page.evaluate('() => window.nibApp.importing.counts')}")
-    choices = page.locator('[role="dialog"] .nib-segmented button')
+    choices = page.locator('[role="dialog"] .orden-segmented button')
     say(f"[{name}] the groove has {choices.count()} choices")
     choices.nth(1).click()
     page.wait_for_function(
@@ -260,7 +260,7 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     shot("table-rows")
     say(f"[{name}] one note per row: {page.evaluate('() => window.nibApp.importing.counts')}")
 
-    page.click("button.nib-button")
+    page.click("button.orden-button")
     page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=30000)
     page.evaluate("() => window.nibApp.importing.close()")
     page.wait_for_timeout(300)
@@ -280,7 +280,7 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
 
 def main() -> int:
     out = DRIVE.shots
-    with tempfile.TemporaryDirectory(prefix="nib-import-") as held, DRIVE.session() as browser:
+    with tempfile.TemporaryDirectory(prefix="orden-import-") as held, DRIVE.session() as browser:
         fixtures = Path(held)
         for one in DEVICES:
             say(f"--- {one[0]} ---")

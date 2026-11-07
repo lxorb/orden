@@ -212,7 +212,7 @@
       {#if message.body}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <div
-          class="body nib-rendered"
+          class="body orden-rendered"
           class:big
           dir="auto"
           use:words={{
@@ -306,10 +306,10 @@
     {/if}
     {#if message.refused}
       <span class="refused">
-        <button type="button" class="nib-chip" onclick={() => page.retry(message.id)}
+        <button type="button" class="orden-chip" onclick={() => page.retry(message.id)}
           >{t('Try again')}</button
         >
-        <button type="button" class="nib-chip is-quiet" onclick={() => page.discard(message.id)}
+        <button type="button" class="orden-chip is-quiet" onclick={() => page.discard(message.id)}
           >{t('Delete')}</button
         >
       </span>

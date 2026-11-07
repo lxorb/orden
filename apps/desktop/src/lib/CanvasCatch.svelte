@@ -10,7 +10,7 @@
 </script>
 
 <div class="catch">
-  <div class="nib-segmented">
+  <div class="orden-segmented">
     {#each WAYS as one (one.box)}
       <button
         type="button"

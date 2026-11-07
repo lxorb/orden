@@ -23,9 +23,9 @@ function files(dir: string): string[] {
 describe('every page a note is on', () => {
   test('is reached by a rule about `#write`, at the id’s own weight', () => {
     expect(everySurface('#write h1, #write > p')).toBe(
-      ':is(#write, .nib-write) h1, :is(#write, .nib-write) > p',
+      ':is(#write, .orden-write) h1, :is(#write, .orden-write) > p',
     )
-    expect(everySurface('.editor #write')).toBe('.editor :is(#write, .nib-write)')
+    expect(everySurface('.editor #write')).toBe('.editor :is(#write, .orden-write)')
   })
 
   test('and widening it twice is widening it once', () => {

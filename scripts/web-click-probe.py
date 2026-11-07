@@ -98,7 +98,7 @@ def free_port() -> int:
 
 def space(port: int) -> pathlib.Path:
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-click-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-click-probe-"))
     os.environ["ORDEN_SPACES_DIR"] = str(root)
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     made = root / SPACE

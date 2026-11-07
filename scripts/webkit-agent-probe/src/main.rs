@@ -1,4 +1,3 @@
-
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -374,7 +373,7 @@ mod platform {
 
     fn world() -> Retained<WKContentWorld> {
         let mtm = MainThreadMarker::new().expect("the main thread");
-        unsafe { WKContentWorld::worldWithName(&NSString::from_str("nib-probe"), mtm) }
+        unsafe { WKContentWorld::worldWithName(&NSString::from_str("orden-probe"), mtm) }
     }
 
     fn picture(web: &WKWebView, log: Log) {
@@ -695,7 +694,7 @@ mod platform {
     fn scripted(way: &mut Way, web: &webkit2gtk::WebView) {
         let (a, b) = (web.clone(), web.clone());
         way.world_press = Some(Box::new(move |log| {
-            evaluate(&a, WORLD_PRESS, Some("nib-probe"), log, "world press")
+            evaluate(&a, WORLD_PRESS, Some("orden-probe"), log, "world press")
         }));
         way.picture = Some(Box::new(move |log| picture(&b, log)));
         way.native_input = Some(Box::new(|log| {

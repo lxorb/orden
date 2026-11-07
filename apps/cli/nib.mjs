@@ -208,7 +208,7 @@ async function endpoint() {
 }
 
 async function screenshot(asked) {
-  const out = asked.out ?? join(tmpdir(), 'nib-window.png')
+  const out = asked.out ?? join(tmpdir(), 'orden-window.png')
   const rect = await ask('window', {}, [])
   if (!rect.ok) return show(rect, asked)
 

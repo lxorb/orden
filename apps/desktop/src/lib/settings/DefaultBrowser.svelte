@@ -57,7 +57,7 @@
     <path d="M3 8.5l3.2 3.2L13 5" />
   </svg>
 {:else if is === false}
-  <button class="nib-chip" in:fade={{ duration: dur(120) }} onclick={() => void make()}>
+  <button class="orden-chip" in:fade={{ duration: dur(120) }} onclick={() => void make()}>
     {t('Make default')}
   </button>
 {/if}

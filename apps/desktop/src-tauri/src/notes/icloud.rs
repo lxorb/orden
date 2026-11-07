@@ -189,7 +189,7 @@ mod tests {
     }
 
     fn tempfile_path() -> PathBuf {
-        std::env::temp_dir().join(format!("nib-dataless-{}.md", std::process::id()))
+        std::env::temp_dir().join(format!("orden-dataless-{}.md", std::process::id()))
     }
 
     #[test]

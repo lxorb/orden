@@ -81,7 +81,7 @@
       {t('Protected, not encrypted: this only keeps it from being opened by accident.')}
     </p>
     <div class="actions">
-      <button class="nib-button" type="submit" disabled={!ready || busy}>
+      <button class="orden-button" type="submit" disabled={!ready || busy}>
         {choosing ? t('Protect') : t('Unlock')}
       </button>
     </div>

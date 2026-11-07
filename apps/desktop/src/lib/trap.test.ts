@@ -109,7 +109,7 @@ describe('the keyboard while a layer is open', () => {
 
     const row = fake('BUTTON')
     const menu = layer([row])
-    menu.matches = (selector) => selector.startsWith('.nib-host')
+    menu.matches = (selector) => selector.startsWith('.orden-host')
     open(menu)
     expect(menu.focused).toBe(1)
     expect(row.focused).toBe(0)

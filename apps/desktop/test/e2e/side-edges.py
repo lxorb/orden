@@ -35,7 +35,7 @@ TOGGLES = """
   return {
     side: one.dataset.sideToggle,
     bar: !!one.closest('header[data-chrome="top"]'),
-    seen: !one.classList.contains('nib-said') && box.width > 4 && !one.closest('[inert]'),
+    seen: !one.classList.contains('orden-said') && box.width > 4 && !one.closest('[inert]'),
     x: box.left + box.width / 2,
     y: box.top + box.height / 2,
   }
@@ -134,7 +134,7 @@ def pointer(page: Any) -> None:
         wrong(f"the right side stayed out after the pointer left it: {sides(page)}")
 
 def keyboard(page: Any) -> None:
-    page.focus("header .nib-glyph.overview")
+    page.focus("header .orden-glyph.overview")
     page.keyboard.press("Tab")
     page.wait_for_timeout(200)
     if not page.evaluate("() => !!document.activeElement?.matches('header [data-side-toggle=\"left\"]')"):
@@ -168,7 +168,7 @@ def told(page: Any) -> None:
     page.mouse.move(640, 400)
     if not DRIVE.waited(
         page,
-        "[...document.querySelectorAll('.nib-bubble.hint[role=status]')].some((one) => one.textContent.includes('edge'))",
+        "[...document.querySelectorAll('.orden-bubble.hint[role=status]')].some((one) => one.textContent.includes('edge'))",
         "the hint that the edge brings the file list out",
         patience=40,
     ):
@@ -177,7 +177,7 @@ def told(page: Any) -> None:
     page.mouse.move(400, 400)
     page.mouse.move(0, 400)
     page.wait_for_timeout(300)
-    gone = page.evaluate("() => !document.querySelector('.nib-bubble.hint[role=status]')")
+    gone = page.evaluate("() => !document.querySelector('.orden-bubble.hint[role=status]')")
     if not gone:
         wrong("the hint stayed once the edge had brought the file list out")
     away(page)
@@ -192,7 +192,7 @@ def in_bar(page: Any, state: str) -> None:
 
 def flip(page: Any, on: bool) -> None:
     page.evaluate("() => window.nibApp.settings.show('appearance')")
-    row = page.locator(".nib-setting", has_text=SETTING).first
+    row = page.locator(".orden-setting", has_text=SETTING).first
     row.wait_for(timeout=5000)
     switch = row.locator("[role=switch]")
     if (switch.get_attribute("aria-checked") == "true") != on:
@@ -253,7 +253,7 @@ def by_default(browser: Any) -> None:
     page.wait_for_timeout(500)
 
     in_the_bar(page, "off")
-    if page.evaluate("() => !!document.querySelector('.nib-bubble.hint[role=status]')"):
+    if page.evaluate("() => !!document.querySelector('.orden-bubble.hint[role=status]')"):
         wrong("the edge's hint is up with the buttons in the bar")
 
     flip(page, True)

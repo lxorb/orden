@@ -19,9 +19,9 @@ test('a language typed for a code block reaches the note when the block is taken
   document.body.append(dom)
 
   dom
-    .querySelector('.nib-fence-language')
+    .querySelector('.orden-fence-language')
     ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
-  const field = dom.querySelector<HTMLInputElement>('.nib-fence-language-input')
+  const field = dom.querySelector<HTMLInputElement>('.orden-fence-language-input')
   if (!field) throw new Error('no field to type the language into')
   field.value = 'python'
 

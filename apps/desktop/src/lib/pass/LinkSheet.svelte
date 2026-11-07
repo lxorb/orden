@@ -82,27 +82,27 @@
       </p>
       <div class="made">
         <input
-          class="nib-field is-value is-mono"
+          class="orden-field is-value is-mono"
           readonly
           value={url}
           aria-label={t('Secure link')}
           data-link-url
           onfocus={(event) => event.currentTarget.select()}
         />
-        <button class="nib-button" type="button" onclick={() => void copied()}>
+        <button class="orden-button" type="button" onclick={() => void copied()}>
           <Glyph icon={Copy} />
           {t('Copy')}
         </button>
       </div>
       <div class="buttons">
-        <button class="nib-button is-quiet" type="button" onclick={close}>{t('Done')}</button>
+        <button class="orden-button is-quiet" type="button" onclick={close}>{t('Done')}</button>
       </div>
     {:else}
       <form class="form" onsubmit={made}>
         <p class="quiet">
           {t('Anybody with the link sees this item without an account. Its attachments stay out.')}
         </p>
-        <div class="nib-setting row">
+        <div class="orden-setting row">
           <span class="name">{t('Expires after')}</span>
           <div class="pick">
             <Select
@@ -113,10 +113,10 @@
             />
           </div>
         </div>
-        <label class="nib-setting row">
+        <label class="orden-setting row">
           <span class="name">{t('Max views')}</span>
           <input
-            class="nib-field is-value views"
+            class="orden-field is-value views"
             type="text"
             inputmode="numeric"
             autocomplete="off"
@@ -132,8 +132,8 @@
         {/if}
         {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
         <div class="buttons">
-          <button class="nib-button is-quiet" type="button" onclick={close}>{t('Cancel')}</button>
-          <button class="nib-button" type="submit" disabled={busy || !fits}>{t('Create')}</button>
+          <button class="orden-button is-quiet" type="button" onclick={close}>{t('Cancel')}</button>
+          <button class="orden-button" type="submit" disabled={busy || !fits}>{t('Create')}</button>
         </div>
       </form>
     {/if}

@@ -333,7 +333,7 @@ test('every page stands still from before the first frame to after the last, and
   expect(pages.still).toBe(true)
   await tick()
   expect(layersOver(hole).some((one) => layer()?.contains(one.node ?? null))).toBe(false)
-  expect(layer()?.classList.contains('nib-scrim')).toBe(false)
+  expect(layer()?.classList.contains('orden-scrim')).toBe(false)
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()

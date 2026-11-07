@@ -80,9 +80,9 @@ def opened(browser: Browser, scheme: str, motion: str = "reduce") -> tuple[Page,
     return page, ids
 
 def switcher(page: Page) -> None:
-    if not page.locator(".nib-layer.spaces").count():
+    if not page.locator(".orden-layer.spaces").count():
         page.locator("aside button.name").first.click()
-    wait_for(page, "document.querySelector('.nib-layer.spaces')", "the list of spaces")
+    wait_for(page, "document.querySelector('.orden-layer.spaces')", "the list of spaces")
 
 def space_menu(page: Page, name: str) -> None:
     switcher(page)
@@ -92,7 +92,7 @@ def space_menu(page: Page, name: str) -> None:
 
 def no_row(page: Page, scheme: str) -> None:
     space_menu(page, "Notes")
-    rows = page.locator(".menu [role=menuitem] .nib-row-label").all_inner_texts()
+    rows = page.locator(".menu [role=menuitem] .orden-row-label").all_inner_texts()
     say(f"[{scheme}] the space's menu: {rows}")
     if "Tabs" in rows:
         wrong(f"the space's menu still has a Tabs row: {rows}")
@@ -103,7 +103,7 @@ def no_row(page: Page, scheme: str) -> None:
 
 def switch(page: Page, name: str) -> None:
     switcher(page)
-    page.locator(".spaces .line .nib-row").filter(has_text=name).click()
+    page.locator(".spaces .line .orden-row").filter(has_text=name).click()
     wait_for(page, f"window.nibApp.workspace.activeSpace?.name === {json.dumps(name)}", f"{name} on screen")
     DRIVE.settled(page)
 

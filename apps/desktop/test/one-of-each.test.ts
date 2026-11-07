@@ -85,8 +85,8 @@ test('the scan finds the components', () => {
 describe('the row a list is made of', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
-    expect(shared).toContain('.nib-row')
-    expect(draw(/\.nib-row(?![\w-])/)).toEqual([])
+    expect(shared).toContain('.orden-row')
+    expect(draw(/\.orden-row(?![\w-])/)).toEqual([])
   })
 
   test('and no list paints a hover or a press of its own', () => {
@@ -107,7 +107,7 @@ describe('the row a list is made of', () => {
   test('and the row every list wears is the one in the themes package', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
 
-    for (const state of ['.nib-row.is-on', '.nib-row.is-picked', '.nib-row:active']) {
+    for (const state of ['.orden-row.is-on', '.orden-row.is-picked', '.orden-row:active']) {
       expect(shared, `${state} is not stated`).toContain(state)
     }
   })
@@ -126,7 +126,7 @@ describe('the row a list is made of', () => {
     ]
 
     const missing = lists.filter(
-      (name) => !components.find((one) => one.name === name)?.text.includes('nib-row'),
+      (name) => !components.find((one) => one.name === name)?.text.includes('orden-row'),
     )
 
     expect(missing, `these draw a list without the row: ${missing.join(', ')}`).toEqual([])
@@ -217,13 +217,13 @@ describe('the ring a keyboard leaves', () => {
   test('and the two surfaces that answer another way are drawn in the themes package', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
 
-    expect(shared).toContain('.nib-host:focus-visible')
-    expect(shared).toContain('.nib-field :is(input, textarea):focus-visible')
+    expect(shared).toContain('.orden-host:focus-visible')
+    expect(shared).toContain('.orden-field :is(input, textarea):focus-visible')
   })
 
   test('and the surfaces that hold the keyboard for what is in them wear the class', () => {
     const wearing = components
-      .filter((one) => one.text.includes('nib-host'))
+      .filter((one) => one.text.includes('orden-host'))
       .map((one) => one.name)
       .sort()
 
@@ -261,16 +261,16 @@ describe('the box a caret sits in', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
 
-    expect(shared).toContain('.nib-field {')
-    expect(draw(/\.nib-field(?![\w-])/)).toEqual([])
+    expect(shared).toContain('.orden-field {')
+    expect(draw(/\.orden-field(?![\w-])/)).toEqual([])
   })
 
   test('and so are the words inside one, and the mark in front of them', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
 
-    expect(shared).toContain('.nib-field :is(input, textarea) {')
-    expect(shared).toContain('.nib-field-mark {')
-    expect(draw(/\.nib-field-mark(?![\w-])/)).toEqual([])
+    expect(shared).toContain('.orden-field :is(input, textarea) {')
+    expect(shared).toContain('.orden-field-mark {')
+    expect(draw(/\.orden-field-mark(?![\w-])/)).toEqual([])
   })
 })
 
@@ -278,13 +278,13 @@ describe('the badge in front of a name', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
 
-    expect(shared).toContain('.nib-badge')
-    expect(draw(/\.nib-badge/)).toEqual([])
+    expect(shared).toContain('.orden-badge')
+    expect(draw(/\.orden-badge/)).toEqual([])
   })
 
   test('and the surfaces that show one wear the class', () => {
     const wearing = components
-      .filter((one) => one.text.includes('class="nib-badge'))
+      .filter((one) => one.text.includes('class="orden-badge'))
       .map((one) => one.name)
       .sort()
 
@@ -323,14 +323,14 @@ describe('the switch', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
 
-    expect(shared).toContain('.nib-switch')
-    expect(shared).toContain('[data-touch] .nib-switch')
-    expect(draw(/nib-switch/)).toEqual([])
+    expect(shared).toContain('.orden-switch')
+    expect(shared).toContain('[data-touch] .orden-switch')
+    expect(draw(/orden-switch/)).toEqual([])
   })
 
   test('and every surface that has one wears the class', () => {
     const wearing = components
-      .filter((one) => one.text.includes('nib-switch'))
+      .filter((one) => one.text.includes('orden-switch'))
       .map((one) => one.name)
       .sort()
 
@@ -424,9 +424,9 @@ describe('the cross that shuts something', () => {
 describe('the button with words in it', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
-    expect(shared).toContain('.nib-button')
+    expect(shared).toContain('.orden-button')
 
-    expect(draw(/\.nib-button/)).toEqual(['lib/UpdateNotice.svelte'])
+    expect(draw(/\.orden-button/)).toEqual(['lib/UpdateNotice.svelte'])
   })
 
   test('and no component draws a primary of its own', () => {
@@ -441,35 +441,35 @@ describe('the button with words in it', () => {
 describe('the action in a card', () => {
   test('is drawn in the themes package', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
-    expect(shared).toContain('.nib-action')
-    expect(shared).toContain('[data-touch] .nib-action')
+    expect(shared).toContain('.orden-action')
+    expect(shared).toContain('[data-touch] .orden-action')
   })
 
   test('and laid into a grouped card on a phone by the one sheet that has those', () => {
-    expect(draw(/\.nib-action|\.action\b/)).toEqual(['lib/SettingsPanel.svelte'])
+    expect(draw(/\.orden-action|\.action\b/)).toEqual(['lib/SettingsPanel.svelte'])
   })
 })
 
 describe('the small action at the end of a row', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
-    expect(shared).toContain('.nib-chip')
-    expect(shared).toContain('[data-touch] .nib-chip')
-    expect(draw(/\.nib-chip|\.pill\b/)).toEqual([])
+    expect(shared).toContain('.orden-chip')
+    expect(shared).toContain('[data-touch] .orden-chip')
+    expect(draw(/\.orden-chip|\.pill\b/)).toEqual([])
   })
 })
 
 describe('the bar of what is used', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
-    expect(shared).toContain('.nib-meter')
-    expect(draw(/\.nib-meter/)).toEqual([])
+    expect(shared).toContain('.orden-meter')
+    expect(draw(/\.orden-meter/)).toEqual([])
   })
 
   test('and every bar that says how much is used wears it', () => {
     const own = components
       .filter((one) => /role="(meter|progressbar)"/.test(one.text))
-      .filter((one) => !one.text.includes('class="nib-meter"'))
+      .filter((one) => !one.text.includes('class="orden-meter"'))
       .map((one) => one.name)
 
     expect(own).toEqual([])
@@ -500,8 +500,8 @@ describe('the fade on something refused', () => {
 describe('the segmented control', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
-    expect(shared).toContain('.nib-segmented')
-    expect(draw(/\.nib-segmented|\.segmented\b/)).toEqual([])
+    expect(shared).toContain('.orden-segmented')
+    expect(draw(/\.orden-segmented|\.segmented\b/)).toEqual([])
   })
 
   test('is the class every one of them wears', () => {
@@ -540,13 +540,13 @@ describe('how a surface swaps what it is showing', () => {
   test('the sliding surface is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
 
-    expect(shared).toContain('.nib-segmented-thumb')
-    expect(draw(/\.nib-segmented-thumb/)).toEqual([])
+    expect(shared).toContain('.orden-segmented-thumb')
+    expect(draw(/\.orden-segmented-thumb/)).toEqual([])
   })
 
   test('and every segmented control in the shell asks for it', () => {
     const without = components
-      .filter((one) => one.text.includes('class="nib-segmented"'))
+      .filter((one) => one.text.includes('class="orden-segmented"'))
       .filter((one) => !one.text.includes('use:segmented'))
       .map((one) => one.name)
       .sort()
@@ -568,13 +568,13 @@ describe('a value beside its copy button', () => {
 describe('the bubble a sentence appears in', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
-    expect(shared).toContain('.nib-bubble')
-    expect(draw(/\.nib-bubble/)).toEqual([])
+    expect(shared).toContain('.orden-bubble')
+    expect(draw(/\.orden-bubble/)).toEqual([])
   })
 
   test('and the fourteen that show one wear the class rather than a card of their own', () => {
     const own = components
-      .filter((one) => one.text.includes('nib-bubble'))
+      .filter((one) => one.text.includes('orden-bubble'))
       .map((one) => one.name)
       .sort()
 

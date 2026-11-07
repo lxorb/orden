@@ -93,9 +93,9 @@
 
 <div class="corner" bind:this={corner}>
   {#if open}
-    <div class="nib-layer card">
+    <div class="orden-layer card">
       <input
-        class="nib-field"
+        class="orden-field"
         type="text"
         value={settings.filter}
         placeholder={t('Name, path or tag')}
@@ -107,29 +107,29 @@
       />
 
       <button
-        class="nib-row"
+        class="orden-row"
         role="switch"
         aria-checked={settings.orphans}
         onclick={() => workspace.graphSettings.set({ orphans: !settings.orphans })}
       >
-        <span class="nib-row-label">{t('Orphans')}</span>
-        <span class="nib-switch" class:on={settings.orphans} aria-hidden="true"></span>
+        <span class="orden-row-label">{t('Orphans')}</span>
+        <span class="orden-switch" class:on={settings.orphans} aria-hidden="true"></span>
       </button>
 
       <button
-        class="nib-row"
+        class="orden-row"
         role="switch"
         aria-checked={settings.attachments}
         onclick={() => workspace.graphSettings.set({ attachments: !settings.attachments })}
       >
-        <span class="nib-row-label">{t('Attachments')}</span>
-        <span class="nib-switch" class:on={settings.attachments} aria-hidden="true"></span>
+        <span class="orden-row-label">{t('Attachments')}</span>
+        <span class="orden-switch" class:on={settings.attachments} aria-hidden="true"></span>
       </button>
 
       <div class="dial">
         <span>{t('Depth')}</span>
         <input
-          class="nib-slider"
+          class="orden-slider"
           type="range"
           min={SHALLOWEST}
           max={DEEPEST}
@@ -155,7 +155,7 @@
           ></button>
 
           <input
-            class="nib-field"
+            class="orden-field"
             type="text"
             value={group.query}
             placeholder={t('Name, path or tag')}
@@ -178,16 +178,16 @@
       {/each}
 
       {#if settings.groups.length < MOST_GROUPS}
-        <button class="nib-row" onclick={addGroup}>
-          <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
-          <span class="nib-row-label">{t('Colour a group')}</span>
+        <button class="orden-row" onclick={addGroup}>
+          <svg class="orden-row-mark" viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
+          <span class="orden-row-label">{t('Colour a group')}</span>
         </button>
       {/if}
 
       <div class="rule"></div>
 
-      <button class="nib-row" aria-expanded={forcing} onclick={() => (forcing = !forcing)}>
-        <span class="nib-row-label">{t('Forces')}</span>
+      <button class="orden-row" aria-expanded={forcing} onclick={() => (forcing = !forcing)}>
+        <span class="orden-row-label">{t('Forces')}</span>
         <span class="chevron"><Twist open={forcing} /></span>
       </button>
 
@@ -195,7 +195,7 @@
         <div class="dial">
           <span>{t('Spread')}</span>
           <input
-            class="nib-slider"
+            class="orden-slider"
             type="range"
             min={LEAST_SPREAD}
             max={MOST_SPREAD}
@@ -211,7 +211,7 @@
         <div class="dial">
           <span>{t('Link distance')}</span>
           <input
-            class="nib-slider"
+            class="orden-slider"
             type="range"
             min={LEAST_DISTANCE}
             max={MOST_DISTANCE}
@@ -229,7 +229,7 @@
         <div class="dial">
           <span>{t('Push')}</span>
           <input
-            class="nib-slider"
+            class="orden-slider"
             type="range"
             min={LEAST_PUSH}
             max={MOST_PUSH}
@@ -243,20 +243,20 @@
         </div>
 
         <button
-          class="nib-row"
+          class="orden-row"
           role="switch"
           aria-checked={settings.gather}
           onclick={() => workspace.graphSettings.set({ gather: !settings.gather })}
         >
-          <span class="nib-row-label">{t('Gather')}</span>
-          <span class="nib-switch" class:on={settings.gather} aria-hidden="true"></span>
+          <span class="orden-row-label">{t('Gather')}</span>
+          <span class="orden-switch" class:on={settings.gather} aria-hidden="true"></span>
         </button>
       {/if}
 
       <div class="dial">
         <span>{t('Lines')}</span>
         <input
-          class="nib-slider"
+          class="orden-slider"
           type="range"
           min={LEAST_LINES}
           max={MOST_LINES}
@@ -272,7 +272,7 @@
       <div class="dial">
         <span>{t('Text fade')}</span>
         <input
-          class="nib-slider"
+          class="orden-slider"
           type="range"
           min={LEAST_FADE}
           max={MOST_FADE}
@@ -286,23 +286,23 @@
       </div>
 
       <button
-        class="nib-row"
+        class="orden-row"
         role="switch"
         aria-checked={settings.arrows}
         onclick={() => workspace.graphSettings.set({ arrows: !settings.arrows })}
       >
-        <span class="nib-row-label">{t('Arrows')}</span>
-        <span class="nib-switch" class:on={settings.arrows} aria-hidden="true"></span>
+        <span class="orden-row-label">{t('Arrows')}</span>
+        <span class="orden-switch" class:on={settings.arrows} aria-hidden="true"></span>
       </button>
 
       <button
-        class="nib-row"
+        class="orden-row"
         role="switch"
         aria-checked={settings.sized}
         onclick={() => workspace.graphSettings.set({ sized: !settings.sized })}
       >
-        <span class="nib-row-label">{t('Size by links')}</span>
-        <span class="nib-switch" class:on={settings.sized} aria-hidden="true"></span>
+        <span class="orden-row-label">{t('Size by links')}</span>
+        <span class="orden-switch" class:on={settings.sized} aria-hidden="true"></span>
       </button>
 
       {#if span}
@@ -321,7 +321,7 @@
           </button>
 
           <input
-            class="nib-slider"
+            class="orden-slider"
             type="range"
             min={span.from}
             max={span.to}
@@ -336,12 +336,12 @@
 
       <div class="rule"></div>
 
-      <button class="nib-row" onclick={() => void keepView()}>
-        <span class="nib-row-label">{t('Add view to Essentials')}</span>
+      <button class="orden-row" onclick={() => void keepView()}>
+        <span class="orden-row-label">{t('Add view to Essentials')}</span>
       </button>
 
-      <button class="nib-row" onclick={() => workspace.graphSettings.reset()}>
-        <span class="nib-row-label">{t('Reset')}</span>
+      <button class="orden-row" onclick={() => workspace.graphSettings.reset()}>
+        <span class="orden-row-label">{t('Reset')}</span>
       </button>
     </div>
   {/if}

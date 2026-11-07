@@ -77,9 +77,9 @@ async ([paint, side]) => {
 
 STAND_ON = """
 ([desk, material]) => {
-  document.getElementById('nib-desk')?.remove()
+  document.getElementById('orden-desk')?.remove()
   const style = document.createElement('style')
-  style.id = 'nib-desk'
+  style.id = 'orden-desk'
   style.textContent = `html { background: ${desk} !important; background-attachment: fixed !important; }`
   document.head.append(style)
   if (material) document.documentElement.dataset.translucent = material
@@ -110,7 +110,7 @@ BOXES = """
 () => {
   const bar = document.querySelector('[data-chrome="top"], .titlebar, header')?.getBoundingClientRect()
   const side = document.querySelector('.sidebar, aside')?.getBoundingClientRect()
-  const tree = [...document.querySelectorAll('.nib-row')].map((one) => one.getBoundingClientRect())
+  const tree = [...document.querySelectorAll('.orden-row')].map((one) => one.getBoundingClientRect())
   const lowest = Math.max(0, ...tree.filter((r) => side && r.left < side.right).map((r) => r.bottom))
   const lines = [...document.querySelectorAll('.cm-line')].map((one) => one.getBoundingClientRect())
   const editor = document.querySelector('.cm-editor')?.getBoundingClientRect()
@@ -247,7 +247,7 @@ def wallpaper(browser: Any, scheme: str) -> None:
     before = page.evaluate("() => localStorage.getItem('orden:theme-settings')")
     page.evaluate("() => window.nibApp.theme.try('dim', 70)")
     page.wait_for_timeout(200)
-    shown = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--nib-dim').trim()")
+    shown = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--orden-dim').trim()")
     after = page.evaluate("() => localStorage.getItem('orden:theme-settings')")
     (say if shown == "70%" and before == after else wrong)(
         f"wallpaper {scheme}: a dial being dragged shows {shown} and keeps nothing ({before == after})"
@@ -256,7 +256,7 @@ def wallpaper(browser: Any, scheme: str) -> None:
 
     page.evaluate(TAKE, [PICTURES["dark"], "dark"])
     page.wait_for_timeout(600)
-    sheet = page.evaluate("() => document.getElementById('nib-user-theme')?.textContent ?? ''")
+    sheet = page.evaluate("() => document.getElementById('orden-user-theme')?.textContent ?? ''")
     (say if ":root[data-theme='dark']" in sheet else wrong)(f"wallpaper {scheme}: the dark side has a picture of its own")
     keep_shot(page, f"wallpaper-{scheme}-own-dark")
 

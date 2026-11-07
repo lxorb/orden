@@ -580,7 +580,7 @@ mod tests {
         const EVERYTHING: u32 = 0x1000_0000;
 
         let name: Vec<u16> = format!(
-            "nib-foreground-test-{}-{}",
+            "orden-foreground-test-{}-{}",
             std::process::id(),
             u8::from(which)
         )

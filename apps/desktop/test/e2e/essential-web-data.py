@@ -102,7 +102,7 @@ def press_tile(app: Any, name: str) -> Any:
     return ask(
         app,
         f"""
-        const tile = await wait(() => document.querySelector('.nib-tile[aria-label={json.dumps(name)}]'))
+        const tile = await wait(() => document.querySelector('.orden-tile[aria-label={json.dumps(name)}]'))
         if (!tile) return 'no tile'
         tile.click()
         return true

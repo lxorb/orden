@@ -97,7 +97,7 @@ test('Alt+3 is the third tab and Alt+0 the last, from inside a note', () => {
 test('Alt+2 is the second tab from the file list too', () => {
   const list = document.createElement('ul')
   const row = document.createElement('button')
-  row.className = 'nib-row'
+  row.className = 'orden-row'
   row.textContent = 'Two'
   list.append(row)
   document.body.append(list)

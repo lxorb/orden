@@ -75,7 +75,7 @@
 
 <div
   bind:this={bubble}
-  class="popup nib-bubble"
+  class="popup orden-bubble"
   class:sized={size !== null}
   style:right="{right}px"
   role="dialog"

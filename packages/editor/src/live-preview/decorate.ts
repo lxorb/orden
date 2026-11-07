@@ -46,14 +46,14 @@ import {
 } from './widgets'
 
 const LINE_CLASS: Record<string, string> = {
-  Table: 'nib-table',
-  FrontMatter: 'nib-frontmatter',
-  FootnoteDef: 'nib-footnote',
-  DefinitionDetail: 'nib-definition',
-  AbbrevDef: 'nib-abbrev',
+  Table: 'orden-table',
+  FrontMatter: 'orden-frontmatter',
+  FootnoteDef: 'orden-footnote',
+  DefinitionDetail: 'orden-definition',
+  AbbrevDef: 'orden-abbrev',
 }
 
-for (const [name, level] of Object.entries(HEADING_LEVEL)) LINE_CLASS[name] = `nib-h${level}`
+for (const [name, level] of Object.entries(HEADING_LEVEL)) LINE_CLASS[name] = `orden-h${level}`
 
 const LINKED = new Set(['Link', 'Image', 'Wikilink'])
 
@@ -114,11 +114,11 @@ class Decorator {
       case 'FencedCode':
         return this.fence(node)
       case 'CodeBlock':
-        this.markLines(node, 'nib-code')
+        this.markLines(node, 'orden-code')
         this.numberLines(node.from, node.to, false)
         return true
       case 'ListItem':
-        this.markLines(node, 'nib-li', true)
+        this.markLines(node, 'orden-li', true)
         this.commentFields(this.state.doc.lineAt(node.from))
         return true
       case 'HeaderMark':
@@ -135,7 +135,7 @@ class Decorator {
         this.taskMarker(node)
         return true
       case 'HorizontalRule':
-        if (this.slideBreak(node)) this.markLines(node, 'nib-slide-break', true)
+        if (this.slideBreak(node)) this.markLines(node, 'orden-slide-break', true)
         this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from))
         return true
       case 'Image':
@@ -164,7 +164,7 @@ class Decorator {
         this.tableDelimiter(node)
         return true
       case 'InlineCode':
-        this.marks.push(Decoration.mark({ class: 'nib-inline-code' }).range(node.from, node.to))
+        this.marks.push(Decoration.mark({ class: 'orden-inline-code' }).range(node.from, node.to))
         return true
       case 'Link':
         this.link(node)
@@ -187,10 +187,10 @@ class Decorator {
         this.highlight(node)
         return true
       case 'Subscript':
-        this.marks.push(Decoration.mark({ class: 'nib-sub' }).range(node.from, node.to))
+        this.marks.push(Decoration.mark({ class: 'orden-sub' }).range(node.from, node.to))
         return true
       case 'Superscript':
-        this.marks.push(Decoration.mark({ class: 'nib-sup' }).range(node.from, node.to))
+        this.marks.push(Decoration.mark({ class: 'orden-sup' }).range(node.from, node.to))
         return true
       default:
         if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
@@ -253,10 +253,10 @@ class Decorator {
     this.marks.push(
       Decoration.mark({
         class: missing
-          ? 'nib-link nib-link-missing'
+          ? 'orden-link orden-link-missing'
           : archived
-            ? 'nib-link nib-link-archived'
-            : 'nib-link',
+            ? 'orden-link orden-link-archived'
+            : 'orden-link',
         attributes: { 'data-note': linkTarget(link), title: noteLinkTitle(link, missing) },
       }).range(from, to),
     )
@@ -282,12 +282,12 @@ class Decorator {
     if (from >= to) return
     const href = hrefOf(target)
     const spec = href
-      ? { class: 'nib-link', attributes: { 'data-href': href, title: linkTitle(href) } }
-      : { class: 'nib-link' }
+      ? { class: 'orden-link', attributes: { 'data-href': href, title: linkTitle(href) } }
+      : { class: 'orden-link' }
     this.marks.push(Decoration.mark(spec).range(from, to))
   }
 
-  private static readonly VERBATIM = ['nib-code', 'nib-frontmatter', 'nib-math-source']
+  private static readonly VERBATIM = ['orden-code', 'orden-frontmatter', 'orden-math-source']
 
   private blockNames(from: number, to: number) {
     const doc = this.state.doc
@@ -326,7 +326,7 @@ class Decorator {
     const inner = this.state.doc.sliceString(open.to, close.from)
     const { colour, from } = readHighlight(inner)
     this.marks.push(
-      Decoration.mark({ class: `nib-highlight ${colour.className}`.trim() }).range(
+      Decoration.mark({ class: `orden-highlight ${colour.className}`.trim() }).range(
         node.from,
         node.to,
       ),
@@ -342,15 +342,15 @@ class Decorator {
   }
 
   private blockquote(node: SyntaxNode) {
-    this.markLines(node, 'nib-quote')
+    this.markLines(node, 'orden-quote')
 
     const first = this.state.doc.lineAt(node.from)
     const opened = first.text.indexOf('[!')
     const found = opened < 0 ? null : calloutOf(first.text.slice(opened))
     if (!found) return
 
-    this.markLines(node, 'nib-callout')
-    if (found.look) this.markLines(node, `nib-callout-${found.look}`)
+    this.markLines(node, 'orden-callout')
+    if (found.look) this.markLines(node, `orden-callout-${found.look}`)
     this.markLines(node, '', false, { 'data-callout': found.type })
 
     const from = first.from + opened
@@ -373,11 +373,11 @@ class Decorator {
       (language !== 'chart' || readChart(fenceCode(this.state, node)) !== null)
     if (drawn && !overlaps(this.state, node.from, node.to)) return false
 
-    this.markLines(node, 'nib-code')
+    this.markLines(node, 'orden-code')
     const doc = this.state.doc
     const open = doc.lineAt(node.from)
-    this.addLineClass(open.from, 'nib-code-open')
-    this.addLineClass(doc.lineAt(node.to).from, 'nib-code-close')
+    this.addLineClass(open.from, 'orden-code-open')
+    this.addLineClass(doc.lineAt(node.to).from, 'orden-code-close')
     this.numberLines(node.from, node.to, true)
 
     const info = node.getChild('CodeInfo')
@@ -410,7 +410,7 @@ class Decorator {
 
   private blockMath(node: SyntaxNode): boolean {
     if (overlaps(this.state, node.from, node.to)) {
-      this.markLines(node, 'nib-math-source')
+      this.markLines(node, 'orden-math-source')
       return true
     }
     return false
@@ -421,7 +421,7 @@ class Decorator {
 
     const ordered = /\d/.test(this.state.doc.sliceString(node.from, node.to))
     if (ordered) {
-      this.marks.push(Decoration.mark({ class: 'nib-ordered-mark' }).range(node.from, node.to))
+      this.marks.push(Decoration.mark({ class: 'orden-ordered-mark' }).range(node.from, node.to))
       return
     }
 
@@ -441,7 +441,7 @@ class Decorator {
       ),
     )
 
-    if (checked) this.addLineClass(this.state.doc.lineAt(node.from).from, 'nib-task-done')
+    if (checked) this.addLineClass(this.state.doc.lineAt(node.from).from, 'orden-task-done')
     this.taskFields(this.state.doc.lineAt(node.from))
   }
 
@@ -510,7 +510,7 @@ class Decorator {
       this.conceal(next.from, next.to, shown)
       this.claimed.push({ from: next.from, to: next.to })
       if (node.to < next.from) {
-        this.marks.push(Decoration.mark({ class: 'nib-underline' }).range(node.to, next.from))
+        this.marks.push(Decoration.mark({ class: 'orden-underline' }).range(node.to, next.from))
       }
       return true
     }
@@ -566,7 +566,7 @@ class Decorator {
   }
 
   private tableDelimiter(node: SyntaxNode) {
-    this.marks.push(Decoration.mark({ class: 'nib-table-pipe' }).range(node.from, node.to))
+    this.marks.push(Decoration.mark({ class: 'orden-table-pipe' }).range(node.from, node.to))
   }
 
   private eatSpace(pos: number): number {

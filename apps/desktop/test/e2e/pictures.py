@@ -145,8 +145,8 @@ DRAWN = """
     images: seen,
     // The editor's own placeholder, which is what a picture that did not load
     // leaves behind. Nothing here should be wearing it.
-    broken: document.querySelectorAll('.nib-image-frame.is-broken').length,
-    loading: document.querySelectorAll('.nib-image-frame.is-loading').length,
+    broken: document.querySelectorAll('.orden-image-frame.is-broken').length,
+    loading: document.querySelectorAll('.orden-image-frame.is-loading').length,
   }
 }
 """
@@ -306,7 +306,7 @@ def imported(page: Page, where: str, zip_path: Path) -> None:
 
     page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=30000)
     say(f"[{where}] the sheet read a {page.evaluate('() => window.nibApp.importing.format')}")
-    page.click("button.nib-button")
+    page.click("button.orden-button")
     page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=60000)
     page.evaluate("() => window.nibApp.importing.close()")
     page.wait_for_timeout(400)

@@ -111,9 +111,9 @@ it, stay in the class.
 ### The theme package is the vocabulary
 
 `packages/themes/src/base.css` holds the shapes more than one component wears:
-`.nib-scrim` behind a layer, `.nib-layer` for a thing that floats, `.nib-screen`
-for one that replaces part of the screen, `.nib-row` for a row somebody presses,
-`.nib-setting` for a row they read. A scrim's place in the stack and its ink come
+`.orden-scrim` behind a layer, `.orden-layer` for a thing that floats, `.orden-screen`
+for one that replaces part of the screen, `.orden-row` for a row somebody presses,
+`.orden-setting` for a row they read. A scrim's place in the stack and its ink come
 in as `--scrim-z`, `--scrim-ink` and `--scrim-blur`, and `.is-clear` is the one
 that only catches a tap.
 

@@ -254,7 +254,7 @@
 {:else if editor === 'checkbox' && typeof value === 'boolean'}
   <input
     type="checkbox"
-    class="nib-checkbox"
+    class="orden-checkbox"
     checked={value}
     disabled={!writable}
     aria-label={bare(property)}
@@ -266,7 +266,7 @@
 {:else if editor === 'button'}
   <button
     type="button"
-    class="nib-chip press"
+    class="orden-chip press"
     disabled={!kit.writes(row)}
     onclick={(event) => {
       event.stopPropagation()

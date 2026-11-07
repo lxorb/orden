@@ -607,10 +607,10 @@ Discord's channel list has, at the touch scale:
 | --- | --- |
 | The head | The sidebar button, then the space - its own mark in its badge, then the name at `--text-head`, then a chevron beside the word - and nothing after them. The mark and the name are what say where you are, and together they are the switcher: pressing them drops the other spaces out of the header as rows inside the panel, each with the same mark in the same badge, and making one is a row at the foot of that list |
 | The tabs | Files, outline, search and links, as the segmented control the settings sheet uses, so the tab you are on is filled the way the note you have open is, and the fill slides between them rather than blinking |
-| The search | A pill, and the door to the Search panel. Inside that panel the panel's own field stands in the same place, at the same height, in the same `.nib-field` box: one control that becomes editable rather than two that look alike |
+| The search | A pill, and the door to the Search panel. Inside that panel the panel's own field stands in the same place, at the same height, in the same `.orden-field` box: one control that becomes editable rather than two that look alike |
 
 Then the list, with a word in capitals over each group and the note you have
-open filled - `.nib-row.is-on`, the same fill its tab wears on a desktop.
+open filled - `.orden-row.is-on`, the same fill its tab wears on a desktop.
 
 Under the list, `SidebarFoot.svelte`: who is at this device as a face and a name,
 and the theme and the settings at the other end. It is `--header-height` tall, so
@@ -774,7 +774,7 @@ none, which is what a command pressed in a hurry has to do. See
 **What it looks like while it runs.** One pill, in the middle of the bottom edge: a
 red dot, the time so far, and a stop. It is not inside the status bar's own footer,
 which is a hover away and so never appears on a phone at all - a red dot somebody
-started has to be there to be pressed. It wears `.nib-bar`, the same shape as every
+started has to be there to be pressed. It wears `.orden-bar`, the same shape as every
 other floating bar, so its stop is a thumb's width there without a number of its own.
 
 **What needs the network.** The recording does not: it is the platform's own

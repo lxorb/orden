@@ -5,11 +5,11 @@ import { declares, paintOf, paintsOver, type ThemeSetting, valueOf } from './set
 describe('whether the grammar is wanted at all', () => {
   test('is no for the app’s own tokens and for a theme that only states colours', () => {
     expect(declares('')).toBe(false)
-    expect(declares(':root { --bg: #000; --nib-tint: 82%; }')).toBe(false)
+    expect(declares(':root { --bg: #000; --orden-tint: 82%; }')).toBe(false)
   })
 
   test('and yes for one that declares a dial', () => {
-    expect(declares(':root { --nib-setting-blur: range "Blur" 0 40 20 px; }')).toBe(true)
+    expect(declares(':root { --orden-setting-blur: range "Blur" 0 40 20 px; }')).toBe(true)
   })
 })
 
@@ -73,13 +73,13 @@ describe('what goes onto the page', () => {
 
   test('is every setting at once, so there is one thing to put on and take off', () => {
     expect(paintOf(settings, { blur: 30, paper: false }, 'dark')).toEqual({
-      '--nib-blur': '30px',
-      '--nib-paper': '0',
+      '--orden-blur': '30px',
+      '--orden-paper': '0',
     })
   })
 
   test('with the theme’s own answer wherever nobody has chosen one', () => {
-    expect(paintOf(settings, {}, 'dark')).toEqual({ '--nib-blur': '18px', '--nib-paper': '1' })
+    expect(paintOf(settings, {}, 'dark')).toEqual({ '--orden-blur': '18px', '--orden-paper': '1' })
   })
 })
 

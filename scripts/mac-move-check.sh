@@ -7,8 +7,8 @@ cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
 support="$HOME/Library/Application Support/$identifier"
 export ORDEN_ENDPOINT="$support/automation.json"
 name="$(basename "$built")"
-image=/tmp/nib-move.dmg
-mount=/tmp/nib-move
+image=/tmp/orden-move.dmg
+mount=/tmp/orden-move
 
 rm -f "$image"
 hdiutil create -quiet -srcfolder "$built" -format UDZO "$image"

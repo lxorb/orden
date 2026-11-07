@@ -60,7 +60,7 @@ foreach ($t in $n.GetScheduledToastNotifications()) {
 """
 
 def schedule_script() -> pathlib.Path:
-    path = pathlib.Path(tempfile.gettempdir()) / "nib-reminders-probe-schedule.ps1"
+    path = pathlib.Path(tempfile.gettempdir()) / "orden-reminders-probe-schedule.ps1"
     path.write_text(SCHEDULE_PS1, encoding="utf-8")
     return path
 
@@ -124,7 +124,7 @@ def main() -> int:
     refuse_updating(exe)
 
     at = datetime.datetime.now() + datetime.timedelta(minutes=OUT_MINUTES)
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-reminders-spaces-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-reminders-spaces-"))
     space = spaces / SPACE
     space.mkdir(parents=True)
     (space / "Plan.md").write_text(

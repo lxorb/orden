@@ -145,7 +145,7 @@
 
 <div class="timeline">
   <div class="bar-head">
-    <div class="nib-segmented scales" role="tablist">
+    <div class="orden-segmented scales" role="tablist">
       {#each SCALES as one (one)}
         <button
           type="button"

@@ -144,7 +144,7 @@ def main() -> int:
 
     probe.wipe(args.identifier)
     site = f"http://127.0.0.1:{serve()}/chat"
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-web-note-mark-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-web-note-mark-"))
     os.environ["ORDEN_SPACES_DIR"] = str(root / "spaces")
     space = root / "spaces" / SPACE
     space.mkdir(parents=True)

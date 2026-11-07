@@ -124,9 +124,9 @@ def texts(page: Page, selector: str) -> list[str]:
 
 def the_panel(page: Page) -> None:
     page.evaluate("window.nibApp.workspace.showPanel('tasks')")
-    wait_for(page, "document.querySelector('.tasks .nib-row')", "the Tasks panel")
+    wait_for(page, "document.querySelector('.tasks .orden-row')", "the Tasks panel")
     quiet(page)
-    rows = texts(page, ".tasks .nib-row")
+    rows = texts(page, ".tasks .orden-row")
     say(f"[panel] {json.dumps(rows, ensure_ascii=False)}")
     for wanted in ["Tasks", "admin"]:
         if not any(one.startswith(wanted) for one in rows):
@@ -134,7 +134,7 @@ def the_panel(page: Page) -> None:
     for gone in ["Inbox", "Upcoming", "Completed", "Thesis"]:
         if any(one.startswith(gone) for one in rows):
             wrong(f"the panel still has a {gone} row")
-    late = page.evaluate("!!document.querySelector('.tasks .nib-row-meta.late')")
+    late = page.evaluate("!!document.querySelector('.tasks .orden-row-meta.late')")
     if not late:
         wrong("Todos' count is not in the danger tone while something is overdue")
     shot(page, "01-panel")
@@ -256,12 +256,12 @@ def the_note(page: Page) -> None:
     )
     if not DRIVE.waited(
         page,
-        "document.querySelectorAll('.cm-content .nib-base-block .frame').length === 2",
+        "document.querySelectorAll('.cm-content .orden-base-block .frame').length === 2",
         "the fence and the embed drawn as views in the note",
     ):
         return
     quiet(page)
-    inside = texts(page, ".cm-content .nib-base-block .line .words, .cm-content .nib-base-block .card .words")
+    inside = texts(page, ".cm-content .orden-base-block .line .words, .cm-content .orden-base-block .card .words")
     say(f"[note] {json.dumps(inside, ensure_ascii=False)}")
     if not any("Glass" in one for one in inside):
         wrong("the base in the note shows no rows")
@@ -359,7 +359,7 @@ def at_phone_width(browser: Browser) -> None:
     page.locator(".view-tab .head [aria-label=Settings]").first.click()
     wait_for(page, "document.querySelector('.view-tab .settings')", "the view's settings")
     if page.evaluate(
-        "[...document.querySelectorAll('.view-tab .settings .layouts .nib-chip')].some((one) => one.textContent.trim() === 'Timeline')"
+        "[...document.querySelectorAll('.view-tab .settings .layouts .orden-chip')].some((one) => one.textContent.trim() === 'Timeline')"
     ):
         wrong("the timeline is offered at phone width")
     page.keyboard.press("Escape")

@@ -261,7 +261,7 @@ def main() -> int:
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     say(f"serving a page on http://127.0.0.1:{PORT}")
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-new-tabs-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-new-tabs-"))
     (spaces / SPACE).mkdir(parents=True, exist_ok=True)
     (spaces / SPACE / "A note.md").write_text("# A note\n\nWords.\n", encoding="utf-8")
     say(f"spaces root {spaces}")

@@ -201,7 +201,7 @@ describe('the field keeps the keyboard', () => {
 
   test('a row pressed with the mouse does not take the focus', () => {
     open()
-    const row = document.querySelector<HTMLButtonElement>('.nib-row')
+    const row = document.querySelector<HTMLButtonElement>('.orden-row')
     const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
     row?.dispatchEvent(down)
     expect(down.defaultPrevented).toBe(true)

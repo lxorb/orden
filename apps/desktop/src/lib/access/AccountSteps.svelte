@@ -136,7 +136,7 @@
               onclick={() => connectors.setReadOnly(!connectors.readOnly)}
             >
               <span class="name">{t('Let it write to my notes, not only read them')}</span>
-              <span class="nib-switch" class:on={!connectors.readOnly} aria-hidden="true"></span>
+              <span class="orden-switch" class:on={!connectors.readOnly} aria-hidden="true"></span>
             </button>
 
             {#if connectors.freshToken}
@@ -146,7 +146,7 @@
               </div>
             {:else}
               <button
-                class="nib-button"
+                class="orden-button"
                 disabled={connectors.busy}
                 onclick={() => connectors.createToken()}
               >
@@ -331,7 +331,7 @@
     color: var(--muted-strong);
   }
 
-  .nib-button {
+  .orden-button {
     align-self: flex-start;
   }
 

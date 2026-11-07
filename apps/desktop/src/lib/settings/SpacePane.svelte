@@ -87,7 +87,7 @@
 
 {#if field}
   <div class="card">
-    <label class="nib-setting setting tall">
+    <label class="orden-setting setting tall">
       <span class="name"
         >{t('Agent instructions')}{#if name}<small>{name}</small>{/if}</span
       >

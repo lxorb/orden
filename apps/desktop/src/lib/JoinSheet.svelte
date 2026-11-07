@@ -27,10 +27,10 @@
 
 {#if joining.shown}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={close}></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={close}></div>
 
   <div
-    class="nib-screen panel"
+    class="orden-screen panel"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -59,7 +59,7 @@
           autofocus
           required
         />
-        <button class="nib-button" type="submit" disabled={joining.busy || !joining.told.trim()}>
+        <button class="orden-button" type="submit" disabled={joining.busy || !joining.told.trim()}>
           {joining.busy ? t('Asking') : t('Ask to join')}
         </button>
       </form>
@@ -69,22 +69,22 @@
         {t('Waiting for {who}', { who })}
       </p>
       <div class="actions">
-        <button type="button" class="nib-button is-quiet" onclick={() => void joining.cancel()}
+        <button type="button" class="orden-button is-quiet" onclick={() => void joining.cancel()}
           >{t('Cancel')}</button
         >
-        <button type="button" class="nib-button is-quiet" onclick={() => joining.close()}
+        <button type="button" class="orden-button is-quiet" onclick={() => joining.close()}
           >{t('Close')}</button
         >
       </div>
     {:else if joining.step === 'declined'}
       <p class="quiet">{t('{who} did not let you in', { who })}</p>
-      <button type="button" class="nib-button is-quiet" onclick={() => joining.dismiss()}
+      <button type="button" class="orden-button is-quiet" onclick={() => joining.dismiss()}
         >{t('Done')}</button
       >
     {:else}
       <p class="quiet">{t('That link does not open anything')}</p>
       <button
-        class="nib-button"
+        class="orden-button"
         type="button"
         onclick={() => {
           joining.dismiss()

@@ -105,7 +105,7 @@ function withoutWhatTheGlassesCannotUse() {
   const noFrames = '\0nib-no-frame-script'
 
   return {
-    name: 'nib-even-without',
+    name: 'orden-even-without',
     enforce: 'pre' as const,
     async resolveId(source: string, importer: string | undefined, options: object) {
       if (LEFT_OUT.has(source)) return absent
@@ -174,7 +174,7 @@ function onlyTheRowsItAsksFor(): Plugin {
   const placeholder = new RegExp(`\\[\\s*(["'\`])${KEYS_MARK}\\1\\s*\\]`)
 
   return {
-    name: 'nib-even-rows',
+    name: 'orden-even-rows',
     transform(code, id) {
       if (!CATALOGUE.test(id.replace(/\\/g, '/'))) return null
 
@@ -202,7 +202,7 @@ function whatWentIn(file: string | undefined): Plugin {
   const repo = resolve(import.meta.dirname, '../..').replace(/\\/g, '/')
 
   return {
-    name: 'nib-even-contents',
+    name: 'orden-even-contents',
     generateBundle(_options, bundle) {
       if (!file) return
 

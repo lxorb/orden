@@ -187,7 +187,7 @@ describe('code line numbers', () => {
       full.length,
       (from, to, value) => {
         const spec = value.spec as Spec
-        if (from !== to || spec.widget || !spec.class?.split(' ').includes('nib-code')) return
+        if (from !== to || spec.widget || !spec.class?.split(' ').includes('orden-code')) return
         out.push({
           number: spec.attributes?.['data-code-number'] ?? null,
           digits: spec.attributes?.style,
@@ -452,13 +452,13 @@ describe('extensions', () => {
   })
 
   test('marks a callout with the look it wears, an alias resolved', () => {
-    expect(lineClasses('> [!tldr]\n> the short of it')).toContain('nib-callout-abstract')
+    expect(lineClasses('> [!tldr]\n> the short of it')).toContain('orden-callout-abstract')
   })
 
   test('marks a type it has never heard of as a callout, with no look at all', () => {
     const classes = lineClasses('> [!recipe]\n> flour and water')
-    expect(classes).toContain('nib-callout')
-    expect(classes.some((one) => one.startsWith('nib-callout-'))).toBe(false)
+    expect(classes).toContain('orden-callout')
+    expect(classes.some((one) => one.startsWith('orden-callout-'))).toBe(false)
   })
 
   test('carries the type as written, so a theme can reach any of them', () => {
@@ -467,7 +467,7 @@ describe('extensions', () => {
   })
 
   test('leaves a quote that names no type a quote', () => {
-    expect(lineClasses('> just a quote')).not.toContain('nib-callout')
+    expect(lineClasses('> just a quote')).not.toContain('orden-callout')
   })
 
   test('hides an HTML comment, block or inline', () => {
@@ -579,11 +579,11 @@ describe('definition lists and abbreviations', () => {
 
 describe('inline code', () => {
   test('frames the span so it reads apart from prose', () => {
-    expect(marked('run `npm test` now', 'nib-inline-code')).toEqual(['`npm test`'])
+    expect(marked('run `npm test` now', 'orden-inline-code')).toEqual(['`npm test`'])
   })
 
   test('leaves a fenced block to the block styling', () => {
-    expect(marked('```\nnpm test\n```', 'nib-inline-code')).toEqual([])
+    expect(marked('```\nnpm test\n```', 'orden-inline-code')).toEqual([])
   })
 
   test('still hides its backticks when the caret is away', () => {
@@ -594,21 +594,21 @@ describe('inline code', () => {
 describe('headings', () => {
   test('every depth styles its line as that depth', () => {
     for (let depth = 1; depth <= 6; depth++) {
-      expect(lineClasses(`${'#'.repeat(depth)} Title`)).toContain(`nib-h${depth}`)
+      expect(lineClasses(`${'#'.repeat(depth)} Title`)).toContain(`orden-h${depth}`)
     }
   })
 
   test('a line with = or - under it is no heading, only a hash makes one', () => {
     for (const doc of ['Title\n=====', 'Title\n-----', 'Title\n-', 'Title\n- item']) {
       expect(
-        lineClasses(doc).filter((one) => one.startsWith('nib-h')),
+        lineClasses(doc).filter((one) => one.startsWith('orden-h')),
         doc,
       ).toEqual([])
     }
   })
 
   test('seven hashes are not a heading', () => {
-    expect(lineClasses('####### Title').filter((one) => one.startsWith('nib-h'))).toEqual([])
+    expect(lineClasses('####### Title').filter((one) => one.startsWith('orden-h'))).toEqual([])
   })
 })
 
@@ -620,13 +620,13 @@ describe('an unclosed fence', () => {
   })
 
   test('does not restyle the lines below it as code', () => {
-    expect(lineClasses(doc)).not.toContain('nib-code')
-    expect(lineClasses(doc)).toContain('nib-h1')
+    expect(lineClasses(doc)).not.toContain('orden-code')
+    expect(lineClasses(doc)).toContain('orden-h1')
   })
 
   test('is styled as code once closed', () => {
-    expect(lineClasses('```\n# Title\n```')).toContain('nib-code')
-    expect(lineClasses('```\n# Title\n```')).not.toContain('nib-h1')
+    expect(lineClasses('```\n# Title\n```')).toContain('orden-code')
+    expect(lineClasses('```\n# Title\n```')).not.toContain('orden-h1')
   })
 })
 
@@ -638,7 +638,7 @@ describe('links', () => {
       0,
       full.length,
       (from, to, value) => {
-        if (value.spec.class === 'nib-link') {
+        if (value.spec.class === 'orden-link') {
           out.push({
             text: full.slice(from, to),
             href: value.spec.attributes?.['data-href'] ?? null,
@@ -708,7 +708,7 @@ describe('links', () => {
 describe('underline', () => {
   test('hides both tags and underlines the text between them', () => {
     expect(concealed('a <u>under lined</u> b')).toEqual(['<u>', '</u>'])
-    expect(marked('a <u>under lined</u> b', 'nib-underline')).toEqual(['under lined'])
+    expect(marked('a <u>under lined</u> b', 'orden-underline')).toEqual(['under lined'])
   })
 
   test('shows the tags while the caret is between them', () => {
@@ -718,12 +718,12 @@ describe('underline', () => {
 
   test('pairs nested underlines from the inside out', () => {
     expect(concealed('<u>a <u>b</u> c</u>')).toEqual(['<u>', '<u>', '</u>', '</u>'])
-    expect(marked('<u>a <u>b</u> c</u>', 'nib-underline')).toEqual(['a <u>b</u> c', 'b'])
+    expect(marked('<u>a <u>b</u> c</u>', 'orden-underline')).toEqual(['a <u>b</u> c', 'b'])
   })
 
   test('leaves an opener without a closer alone', () => {
     expect(concealed('a <u>open b')).toEqual([])
-    expect(marked('a <u>open b', 'nib-underline')).toEqual([])
+    expect(marked('a <u>open b', 'orden-underline')).toEqual([])
   })
 
   test('leaves other inline tags alone', () => {

@@ -37,13 +37,13 @@ ROWS = """
 () => [...document.querySelectorAll('.body .line')].map((line) => {
   const row = line.querySelector('.row')
   return {
-    label: row?.querySelector('.nib-row-label')?.textContent ?? '',
-    note: row?.querySelector('.nib-row-meta')?.textContent ?? null,
+    label: row?.querySelector('.orden-row-label')?.textContent ?? '',
+    note: row?.querySelector('.orden-row-meta')?.textContent ?? null,
     twist: !!line.querySelector('.twist'),
     open: line.querySelector('.twist')?.getAttribute('aria-expanded') ?? null,
     // Where the name starts, which is what the eye reads the nesting off.
     left: Math.round(
-      row?.querySelector('.nib-row-label')?.getBoundingClientRect().left ?? 0,
+      row?.querySelector('.orden-row-label')?.getBoundingClientRect().left ?? 0,
     ),
   }
 })
@@ -164,18 +164,18 @@ def drive_block(browser: Browser) -> None:
     line = page.locator(".cm-line", has_text="The paragraph that gets a bookmark").first
     line.hover()
     page.wait_for_timeout(250)
-    line.locator(".nib-block-handle").click()
+    line.locator(".orden-block-handle").click()
     page.wait_for_timeout(500)
 
     labels = page.evaluate(
-        "() => [...document.querySelectorAll('.rows .nib-row')].map((row) => row.textContent.trim())"
+        "() => [...document.querySelectorAll('.rows .orden-row')].map((row) => row.textContent.trim())"
     )
     say(f"[block] the menu: {json.dumps(labels[:8], ensure_ascii=False)}")
     shot(page, "10-the-menu")
     if not any("Add block to Essentials" in one for one in labels):
         wrong("the block's menu does not offer to bookmark it")
 
-    page.locator(".rows .nib-row", has_text="Add block to Essentials").first.click()
+    page.locator(".rows .orden-row", has_text="Add block to Essentials").first.click()
     page.wait_for_timeout(600)
 
     kept = page.evaluate(
@@ -210,7 +210,7 @@ def drive_block(browser: Browser) -> None:
         """() => ({
           note: window.nibApp.workspace.active?.name ?? null,
           line: window.nibApp.workspace.active?.line ?? null,
-          marked: [...document.querySelectorAll('.cm-line.nib-landed')].map((one) =>
+          marked: [...document.querySelectorAll('.cm-line.orden-landed')].map((one) =>
             one.textContent.trim().slice(0, 40),
           ),
         })"""
@@ -226,7 +226,7 @@ def drive_block(browser: Browser) -> None:
         wrong(f"the mark is on the wrong block: {landed['marked']}")
 
     page.wait_for_timeout(1600)
-    if page.evaluate("() => document.querySelectorAll('.cm-line.nib-landed').length"):
+    if page.evaluate("() => document.querySelectorAll('.cm-line.orden-landed').length"):
         wrong("the mark is still there long after it was seen")
     shot(page, "13-mark-gone")
 
@@ -251,7 +251,7 @@ def drive_finger(browser: Browser) -> None:
 
     sizes = page.evaluate(
         """() => [...document.querySelectorAll('.body .line')].map((line) => ({
-          label: line.querySelector('.nib-row-label')?.textContent ?? '',
+          label: line.querySelector('.orden-row-label')?.textContent ?? '',
           tall: Math.round(line.getBoundingClientRect().height),
           twist: Math.round(line.querySelector('.twist')?.getBoundingClientRect().height ?? 0),
         }))"""
@@ -266,7 +266,7 @@ def drive_finger(browser: Browser) -> None:
     page.locator(".body .twist").first.tap()
     page.wait_for_timeout(500)
     left = page.evaluate(
-        "() => [...document.querySelectorAll('.body .line .nib-row-label')]"
+        "() => [...document.querySelectorAll('.body .line .orden-row-label')]"
         ".map((one) => one.textContent)"
     )
     say(f"[phone] after the tap: {json.dumps(left, ensure_ascii=False)}")

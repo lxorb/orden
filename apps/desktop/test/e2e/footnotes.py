@@ -41,7 +41,7 @@ LINE = """
 }
 """
 
-NUMBERS = "#write .cm-line .nib-footnote-number"
+NUMBERS = "#write .cm-line .orden-footnote-number"
 
 def is_true(claim: bool, what: str) -> None:
     if not claim:
@@ -51,13 +51,13 @@ def the_card(page: Page) -> None:
     page.locator("#write .cm-line", has_text="Where the words").click()
     quiet(page)
     page.locator(NUMBERS).first.hover()
-    wait_for(page, "document.querySelector('.nib-footnote-preview')", "the footnote's card")
+    wait_for(page, "document.querySelector('.orden-footnote-preview')", "the footnote's card")
     quiet(page)
-    card = page.inner_text(".nib-footnote-preview")
+    card = page.inner_text(".orden-footnote-preview")
     say(f"[card] {card!r}")
     is_true("what the first one says" in card, f"the card says {card!r}")
     is_true(
-        page.evaluate("() => !!document.querySelector('.nib-footnote-preview strong')"),
+        page.evaluate("() => !!document.querySelector('.orden-footnote-preview strong')"),
         "the card shows the definition's markdown rather than drawing it",
     )
     shot(page, "01-card")
@@ -74,7 +74,7 @@ def the_jump(page: Page) -> None:
 
     page.locator("#write .cm-line", has_text="what the second").click()
     quiet(page)
-    page.locator("#write .cm-line", has_text="what the").first.locator(".nib-footnote-number").click()
+    page.locator("#write .cm-line", has_text="what the").first.locator(".orden-footnote-number").click()
     quiet(page)
     said = page.evaluate(LINE)
     is_true(

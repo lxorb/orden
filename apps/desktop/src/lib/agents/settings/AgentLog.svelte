@@ -53,7 +53,7 @@
   {#each sessions.slice(0, shown) as session (session.start)}
     {@const open = opened === session.start}
     <button
-      class="nib-setting session"
+      class="orden-setting session"
       aria-expanded={open}
       onclick={() => (opened = open ? null : session.start)}
     >
@@ -63,7 +63,7 @@
           {plural(session.calls.length, { one: '{count} call', other: '{count} calls' })}
         </small>
       </span>
-      <svg class="chevron nib-mirror" class:open viewBox="0 0 16 16" aria-hidden="true"
+      <svg class="chevron orden-mirror" class:open viewBox="0 0 16 16" aria-hidden="true"
         ><path d="M6 3l5 5-5 5" /></svg
       >
     </button>
@@ -79,7 +79,7 @@
             </li>
           {/each}
         </ol>
-        <button class="nib-chip keep" onclick={() => void keep(session)}>
+        <button class="orden-chip keep" onclick={() => void keep(session)}>
           {front === null ? t('Save as a note') : t('Add to {name}', { name: front })}
         </button>
       </div>
@@ -89,10 +89,10 @@
   {/each}
 
   {#if sessions.length > shown || pane.earlier}
-    <button class="nib-action" onclick={() => void earlier()}>{t('Show earlier')}</button>
+    <button class="orden-action" onclick={() => void earlier()}>{t('Show earlier')}</button>
   {/if}
   {#if sessions.length}
-    <button class="nib-action is-danger" onclick={() => void clear()}>{t('Clear')}</button>
+    <button class="orden-action is-danger" onclick={() => void clear()}>{t('Clear')}</button>
   {/if}
 </div>
 

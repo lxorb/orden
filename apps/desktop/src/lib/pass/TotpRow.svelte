@@ -67,7 +67,7 @@
       <text x="12" y="12">{now?.remaining ?? ''}</text>
     </svg>
     <button
-      class="nib-glyph"
+      class="orden-glyph"
       type="button"
       aria-label={t('Copy {field}', { field: label })}
       title={t('Copy {field}', { field: label })}

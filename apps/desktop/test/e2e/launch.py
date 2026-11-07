@@ -440,7 +440,7 @@ def main() -> int:
     kept: dict[str, list[dict]] = {}
     summary: list[str] = []
     corpora = ["empty", "big"] if told.corpus == "both" else [told.corpus]
-    with tempfile.TemporaryDirectory(prefix="nib-launch-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="orden-launch-") as scratch:
         for kind in corpora:
             spaces = pathlib.Path(scratch) / kind
             corpus(kind, spaces)

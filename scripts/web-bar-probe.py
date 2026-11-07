@@ -86,7 +86,7 @@ def bar(app) -> object:
 
     return app.ask(
         """JSON.stringify({
-  glyph: document.querySelectorAll('.webbar .nib-glyph')[2]?.getAttribute('aria-label'),
+  glyph: document.querySelectorAll('.webbar .orden-glyph')[2]?.getAttribute('aria-label'),
   focused: document.activeElement?.getAttribute('aria-label') ?? null,
   presenting: !!document.querySelector('.deck, .present'),
 })"""
@@ -183,7 +183,7 @@ def main() -> int:
         time.sleep(1)
         said["while /slow is coming"] = bar(app)
         app.ask(
-            "(() => { document.querySelectorAll('.webbar .nib-glyph')[2]?.click();"
+            "(() => { document.querySelectorAll('.webbar .orden-glyph')[2]?.click();"
             " return JSON.stringify(true) })()"
         )
         time.sleep(1)
@@ -201,7 +201,7 @@ def main() -> int:
         said["trail"] = invoke(app, "web_trail", {"tab": tab})
         app.ask(
             """(() => {
-  const back = document.querySelector('.webbar .nib-glyph')
+  const back = document.querySelector('.webbar .orden-glyph')
   const box = back.getBoundingClientRect()
   back.dispatchEvent(new MouseEvent('contextmenu', {
     bubbles: true, cancelable: true, clientX: box.left + 4, clientY: box.bottom + 2,
@@ -248,7 +248,7 @@ def main() -> int:
 
         count = app.ask("JSON.stringify(nib.workspace.tabs.length)")
         app.ask(
-            "(() => { document.querySelectorAll('.webbar .nib-glyph')[2]?.dispatchEvent("
+            "(() => { document.querySelectorAll('.webbar .orden-glyph')[2]?.dispatchEvent("
             "new MouseEvent('auxclick', { button: 1, bubbles: true, cancelable: true }));"
             " return JSON.stringify(true) })()"
         )

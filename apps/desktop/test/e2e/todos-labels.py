@@ -85,8 +85,8 @@ def carry(page: Page, source, target) -> None:  # type: ignore[no-untyped-def]
 
 def the_grouping(page: Page) -> None:
     page.evaluate("window.nibApp.workspace.showPanel('tasks')")
-    wait_for(page, "document.querySelector('.tasks .nib-row')", "the Tasks panel")
-    page.locator(".tasks .nib-row", has_text="Tasks").first.click(modifiers=["Control"])
+    wait_for(page, "document.querySelector('.tasks .orden-row')", "the Tasks panel")
+    page.locator(".tasks .orden-row", has_text="Tasks").first.click(modifiers=["Control"])
     wait_for(page, "document.querySelector('.view-tab .task')", "Todos")
     display(page, "Grouping", "Label")
     wait_for(page, "document.querySelectorAll('.view-tab .head .fold').length >= 3", "the label heads")
@@ -113,11 +113,11 @@ def after_a_reload(page: Page) -> None:
 
 def carried(page: Page) -> None:
     rows = page.locator(".view-tab [data-item^='row:']:has-text('Alpha')")
-    carry(page, rows.nth(1), page.locator(".view-tab .nib-section.head:has-text('c')").first)
+    carry(page, rows.nth(1), page.locator(".view-tab .orden-section.head:has-text('c')").first)
     if DRIVE.waited(page, f"() => ({TAGS})()?.join() === 'a,c'", "b swapped for c, a kept"):
         say(f"[carried] {page.evaluate(TAGS)}")
     rows = page.locator(".view-tab [data-item^='row:']:has-text('Alpha')")
-    carry(page, rows.nth(0), page.locator(".view-tab .nib-section.head").last)
+    carry(page, rows.nth(0), page.locator(".view-tab .orden-section.head").last)
     if DRIVE.waited(page, f"() => ({TAGS})()?.join() === 'c'", "a taken off, c kept"):
         say(f"[carried] {page.evaluate(TAGS)}")
     page.evaluate(WRITE, ["Errands.md", NOTE.format(today=page.evaluate(TODAY))])

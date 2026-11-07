@@ -36,9 +36,9 @@ def open_note(page: Page, starts: str) -> None:
     page.wait_for_timeout(700)
 
 LINKS = """
-() => [...document.querySelectorAll('.cm-content .nib-link')].map((one) => ({
+() => [...document.querySelectorAll('.cm-content .orden-link')].map((one) => ({
   words: one.textContent,
-  missing: one.classList.contains('nib-link-missing'),
+  missing: one.classList.contains('orden-link-missing'),
 }))
 """
 
@@ -67,7 +67,7 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(900)
     shot(page, "02-backlinks")
     panel = page.evaluate(
-        "() => [...document.querySelectorAll('aside .hit .nib-row-label')].map((one) => one.textContent)"
+        "() => [...document.querySelectorAll('aside .hit .orden-row-label')].map((one) => one.textContent)"
     )
     say(f"[panel] {json.dumps(panel)}")
     if "Other" not in panel:

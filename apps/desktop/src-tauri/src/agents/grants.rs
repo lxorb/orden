@@ -669,7 +669,7 @@ mod tests {
             "helpers": true,
         })
         .to_string();
-        let dir = std::env::temp_dir().join(format!("nib-grants-orden-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("orden-grants-orden-{}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("dir");
         let path = dir.join("agents.json");
         std::fs::write(&path, text).expect("write");
@@ -715,7 +715,7 @@ mod tests {
             token: hashed("t"),
         };
         let text = serde_json::json!({ "agents": [kept(&own), kept(&other)] }).to_string();
-        let dir = std::env::temp_dir().join(format!("nib-grants-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("orden-grants-{}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("dir");
         let path = dir.join("agents.json");
         std::fs::write(&path, text).expect("write");

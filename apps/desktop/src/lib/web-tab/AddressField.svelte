@@ -40,7 +40,7 @@
 
   type Offer = { kind: 'page'; visit: Visit } | { kind: 'note'; note: WebNote }
 
-  const NOTE = 'nib-note:'
+  const NOTE = 'orden-note:'
 
   const {
     resting,
@@ -336,7 +336,7 @@
 <div class="field">
   <input
     bind:this={field}
-    class="nib-field"
+    class="orden-field"
     type="text"
     spellcheck="false"
     autocapitalize="off"
@@ -401,7 +401,7 @@
     display: flex;
   }
 
-  .nib-field {
+  .orden-field {
     flex: 1;
     min-width: 0;
   }

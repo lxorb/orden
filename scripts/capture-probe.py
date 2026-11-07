@@ -58,8 +58,8 @@ _spec.loader.exec_module(mcp)
 PORT_FROM = 23640
 PORT_TO = 23659
 
-CLIENT = {"name": "nib-capture-probe", "title": "Capture probe", "version": "1"}
-OTHER = {"name": "nib-capture-probe-other", "title": "Capture probe other", "version": "1"}
+CLIENT = {"name": "orden-capture-probe", "title": "Capture probe", "version": "1"}
+OTHER = {"name": "orden-capture-probe-other", "title": "Capture probe other", "version": "1"}
 
 SPACE = "Capture probe"
 
@@ -326,7 +326,7 @@ def main() -> int:
 
     port = free_port()
     site = serve(port)
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-capture-probe-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-capture-probe-"))
     (spaces / SPACE).mkdir()
     (spaces / SPACE / "Plan.md").write_text("# Plan\n\nRead about herons.\n", encoding="utf-8")
     (spaces / SPACE / "Herons.url").write_text(

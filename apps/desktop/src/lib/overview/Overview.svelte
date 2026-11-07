@@ -1581,7 +1581,7 @@
 {#if shown}
   {#if modes.overviewBlur}
     <div
-      class="nib-scrim ground is-blurred"
+      class="orden-scrim ground is-blurred"
       style:top="{barBottom}px"
       aria-hidden="true"
       bind:this={ground}
@@ -1663,7 +1663,7 @@
           label={t('Spaces')}
         />
       {/if}
-      <button class="nib-button is-quiet tidy" type="button" onclick={() => void tidy()}
+      <button class="orden-button is-quiet tidy" type="button" onclick={() => void tidy()}
         >{t('Tidy up')}</button
       >
     </div>
@@ -2040,7 +2040,7 @@
       transform var(--dur-fast) var(--ease-out);
   }
 
-  .closer :global(.nib-cross) {
+  .closer :global(.orden-cross) {
     width: 12px;
     height: 12px;
     stroke-width: 2.25;

@@ -132,12 +132,12 @@ function linkMarks(doc: string, cursor?: number, notes = SPACE) {
     full.length,
     (from, to, value) => {
       const classes = String(value.spec.class ?? '')
-      if (!classes.includes('nib-link')) return
+      if (!classes.includes('orden-link')) return
 
       out.push({
         text: full.slice(from, to),
         note: value.spec.attributes?.['data-note'] ?? null,
-        missing: classes.includes('nib-link-missing'),
+        missing: classes.includes('orden-link-missing'),
       })
     },
   )
@@ -169,7 +169,7 @@ describe('a link into a note the space has archived', () => {
       full.length,
       (from, to, value) => {
         const classes = String(value.spec.class ?? '')
-        if (classes.includes('nib-link')) out[full.slice(from, to)] = classes
+        if (classes.includes('orden-link')) out[full.slice(from, to)] = classes
       },
     )
     return out
@@ -177,9 +177,9 @@ describe('a link into a note the space has archived', () => {
 
   test('still resolves, and is drawn marked rather than missing', () => {
     expect(looks('[[Plan]] and [[Spark]] and [[Gone]]')).toEqual({
-      Plan: 'nib-link nib-link-archived',
-      Spark: 'nib-link',
-      Gone: 'nib-link nib-link-missing',
+      Plan: 'orden-link orden-link-archived',
+      Spark: 'orden-link',
+      Gone: 'orden-link orden-link-missing',
     })
   })
 })

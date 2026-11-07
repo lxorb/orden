@@ -268,7 +268,7 @@ def main() -> int:
     at = serve()
     site = f"http://127.0.0.1:{at}/shop"
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-extensions-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-extensions-probe-"))
     os.environ["ORDEN_SPACES_DIR"] = str(root / "spaces")
     space = root / "spaces" / SPACE
     space.mkdir(parents=True)
@@ -357,7 +357,7 @@ def main() -> int:
                 time.sleep(3)
                 popup = page_target(web_port, f"chrome-extension://{ident}/")
                 one["popup"] = bool(popup) and page_says(popup, "document.body ? document.body.innerText.trim().length + document.body.querySelectorAll('*').length : 0")
-                one["bubble"] = app.ask("JSON.stringify((() => { const b = document.querySelector('.popup.nib-bubble'); if (!b) return null; const r = b.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)] })())")
+                one["bubble"] = app.ask("JSON.stringify((() => { const b = document.querySelector('.popup.orden-bubble'); if (!b) return null; const r = b.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)] })())")
                 if args.shots:
                     shoot(interface(args.identifier), args.shots / f"popup-{ident}-bubble.png")
                     shoot(popup or None, args.shots / f"popup-{ident}.png")

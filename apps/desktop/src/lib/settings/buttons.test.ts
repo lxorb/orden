@@ -15,9 +15,10 @@ function svelteFiles(dir: string): string[] {
 
 const PANES = svelteFiles(LIB)
   .map((path) => ({ path: path.slice(LIB.length), source: readFileSync(path, 'utf8') }))
-  .filter((one) => one.source.includes('nib-setting') && !one.path.startsWith('views/'))
+  .filter((one) => one.source.includes('orden-setting') && !one.path.startsWith('views/'))
 
-const SHARED = /\b(nib-chip|nib-button|nib-action|nib-glyph|nib-tag|nib-row|nib-setting)\b/
+const SHARED =
+  /\b(orden-chip|orden-button|orden-action|orden-glyph|orden-tag|orden-row|orden-setting)\b/
 
 const OWN: Record<string, RegExp> = {
   'Swatches.svelte': /class="swatch/,
@@ -52,7 +53,7 @@ describe('a button in Settings', () => {
   })
 
   test('at the end of a row is never a dialog’s soft button', () => {
-    const soft = PANES.filter(({ source }) => source.includes('nib-button is-quiet is-soft'))
+    const soft = PANES.filter(({ source }) => source.includes('orden-button is-quiet is-soft'))
     expect(soft.map((one) => one.path)).toEqual([])
   })
 })
@@ -60,11 +61,11 @@ describe('a button in Settings', () => {
 describe('Settings > Import', () => {
   const source = readFileSync(join(LIB, 'MigrateRows.svelte'), 'utf8')
   const markup = source.slice(source.indexOf('</script>'), source.indexOf('{#snippet mark'))
-  const rows = markup.split('<div class="nib-setting">').slice(1)
+  const rows = markup.split('<div class="orden-setting">').slice(1)
 
   test('answers every source with the row’s button', () => {
     for (const row of rows) {
-      for (const tag of buttons(row)) expect(tag).toMatch(/class="nib-chip( is-quiet)?"/)
+      for (const tag of buttons(row)) expect(tag).toMatch(/class="orden-chip( is-quiet)?"/)
     }
   })
 

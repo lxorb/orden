@@ -126,7 +126,7 @@ SIZES = """
 () => {
   const out = []
   for (const [what, selector] of [
-    ['the field', '.findbar .nib-field'],
+    ['the field', '.findbar .orden-field'],
     ['a step', '.findbar .act'],
     ['a flag', '.findbar .flag'],
   ]) {
@@ -211,8 +211,8 @@ def drive(browser: Browser, label: str, scheme: str) -> None:
 
         check(page.evaluate(PANEL) == 0, f"[{label}] and no library panel with it")
         check(
-            "nib-field" in bar["field"],
-            f"[{label}] the query sits in one .nib-field ({bar['field']})",
+            "orden-field" in bar["field"],
+            f"[{label}] the query sits in one .orden-field ({bar['field']})",
         )
         check(bar["flags"] == 3, f"[{label}] with three flags inside it ({bar['flags']})")
         check(bar["query"].strip().lower() == "wind", f"[{label}] on the word the caret was on")

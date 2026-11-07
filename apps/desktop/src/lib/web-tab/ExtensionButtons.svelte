@@ -26,7 +26,7 @@
 
 {#each pinned as one (one.id)}
   <button
-    class="nib-glyph extension"
+    class="orden-glyph extension"
     data-extension={one.id}
     class:is-on={open === one.id}
     class:is-wrong={one.problem !== null}
@@ -50,7 +50,7 @@
 
 {#if addable}
   <button
-    class="nib-chip add"
+    class="orden-chip add"
     disabled={extensions.installing !== null}
     title={t('Add extension')}
     onclick={(event) => onadd(event.currentTarget)}
@@ -66,7 +66,7 @@
 {/if}
 
 <button
-  class="nib-glyph"
+  class="orden-glyph"
   data-opens="extensions"
   title={t('Extensions')}
   aria-label={t('Extensions')}

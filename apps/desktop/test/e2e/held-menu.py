@@ -9,7 +9,7 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-MENU = ".nib-layer.menu[role=menu]"
+MENU = ".orden-layer.menu[role=menu]"
 OPEN = f"!!document.querySelector('{MENU}') && window.nibApp.overlays.depth > 0"
 
 LISTEN = """() => {
@@ -17,7 +17,7 @@ LISTEN = """() => {
   for (const type of ['pointerdown', 'mousedown', 'contextmenu', 'pointerup', 'mouseup', 'click', 'auxclick']) {
     window.addEventListener(type, (event) => window.__heard.push(
       `${type}:${event.button}/${event.buttons}${event.ctrlKey ? '+ctrl' : ''}${
-        document.querySelector('.nib-layer.menu') ? ' (open)' : ''}`), true)
+        document.querySelector('.orden-layer.menu') ? ' (open)' : ''}`), true)
   }
 }"""
 

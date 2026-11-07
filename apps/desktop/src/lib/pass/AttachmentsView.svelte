@@ -52,14 +52,14 @@
 
 {#if item.attachments.length}
   <section class="card" aria-label={t('Attachments')}>
-    <h3 class="nib-section">{t('Attachments')}</h3>
+    <h3 class="orden-section">{t('Attachments')}</h3>
     {#each item.attachments as file (file.id)}
       <div class="line" data-file={file.name}>
         <Glyph icon={Paperclip} />
         <span class="name">{file.name}</span>
         <span class="meta">{readableSize(file.size)}</span>
         <button
-          class="nib-glyph"
+          class="orden-glyph"
           type="button"
           aria-label={t('Download {name}', { name: file.name })}
           title={t('Download')}
@@ -71,7 +71,7 @@
         </button>
         {#if editable}
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             type="button"
             aria-label={t('Remove {name}', { name: file.name })}
             title={t('Remove')}
@@ -93,7 +93,7 @@
     overflow: hidden;
   }
 
-  .card > .nib-section {
+  .card > .orden-section {
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }

@@ -124,7 +124,7 @@ function fileGlyph(): SVGSVGElement {
 
 function flyer(at: Point, cut: boolean): HTMLElement {
   const node = document.createElement('div')
-  if (cut) node.className = 'nib-flight'
+  if (cut) node.className = 'orden-flight'
   node.setAttribute('aria-hidden', 'true')
   node.dataset.flight = ''
   Object.assign(node.style, {

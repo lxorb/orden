@@ -87,13 +87,13 @@
         <span class="name">{t('All set')}</span>
         <span class="pair">
           <button
-            class="nib-button is-quiet is-soft"
+            class="orden-button is-quiet is-soft"
             type="button"
             onclick={() => (settings.setup = 0)}
           >
             {t('Personalize')}
           </button>
-          <button class="nib-glyph shut" type="button" aria-label={t('Done')} onclick={finish}>
+          <button class="orden-glyph shut" type="button" aria-label={t('Done')} onclick={finish}>
             <Cross small />
           </button>
         </span>
@@ -102,7 +102,7 @@
       {@const one = asked(question)}
       {@const held = one.get()}
       <span class="name">{one.label}</span>
-      <div class="nib-segmented" role="radiogroup" aria-label={one.label} use:segmented>
+      <div class="orden-segmented" role="radiogroup" aria-label={one.label} use:segmented>
         {#each one.options as option (option.value)}
           <button
             type="button"
@@ -122,10 +122,10 @@
           {/each}
         </span>
         <span class="pair">
-          <button class="nib-button is-quiet is-soft" type="button" onclick={finish}>
+          <button class="orden-button is-quiet is-soft" type="button" onclick={finish}>
             {t('Done')}
           </button>
-          <button class="nib-button" type="button" onclick={next}>
+          <button class="orden-button" type="button" onclick={next}>
             {t('Next')}
           </button>
         </span>

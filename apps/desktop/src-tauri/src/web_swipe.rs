@@ -13,7 +13,7 @@ pub fn script() -> &'static str {
 pub const BINDING: &str = "nibSwiped";
 
 #[cfg(any(not(feature = "cef"), test))]
-const NAMED: &str = "nib-swipe:";
+const NAMED: &str = "orden-swipe:";
 
 #[cfg(any(not(feature = "cef"), test))]
 pub fn named(name: &str) -> Option<&str> {
@@ -159,13 +159,13 @@ mod tests {
     #[test]
     fn a_swipe_said_as_a_window_name_is_read_off_the_name() {
         assert_eq!(
-            named(r#"nib-swipe:{"k":"e","t":1}"#),
+            named(r#"orden-swipe:{"k":"e","t":1}"#),
             Some(r#"{"k":"e","t":1}"#)
         );
-        assert_eq!(named("nib-find"), None);
-        assert_eq!(named("nib-swipe"), None);
+        assert_eq!(named("orden-find"), None);
+        assert_eq!(named("orden-swipe"), None);
         assert_eq!(named(""), None);
-        let said = named(r#"nib-swipe:{"k":"w","dx":-3,"dy":0,"t":2,"l":false,"r":false}"#)
+        let said = named(r#"orden-swipe:{"k":"w","dx":-3,"dy":0,"t":2,"l":false,"r":false}"#)
             .and_then(|payload| read("t1", payload));
         assert_eq!(said.map(|one| one.kind), Some("wheel"));
     }

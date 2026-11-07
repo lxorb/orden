@@ -52,8 +52,8 @@ export type ChosenSettings = Record<string, Record<string, ThemeValue>>
 
 export const SHARED = '*'
 
-export const DECLARES = '--nib-setting-'
-export const WRITES = '--nib-'
+export const DECLARES = '--orden-setting-'
+export const WRITES = '--orden-'
 
 export function declares(css: string): boolean {
   return css.includes(DECLARES)

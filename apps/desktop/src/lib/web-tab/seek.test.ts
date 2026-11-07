@@ -140,7 +140,7 @@ function page(own: number | null = null) {
 describe('the script in every page', () => {
   test('asks for the find on Ctrl+F nothing in the page took, and keeps the engine off it', () => {
     expect(page().press({ keyCode: 70, ctrlKey: true })).toEqual({
-      opened: ['nib-find'],
+      opened: ['orden-find'],
       prevented: true,
     })
   })
@@ -150,17 +150,17 @@ describe('the script in every page', () => {
     expect(one.press({ keyCode: 70, ctrlKey: true })).toEqual({ opened: [], prevented: true })
     expect(one.press({ keyCode: 70, ctrlKey: true }).opened).toEqual([])
     expect(one.own()).toBe(2)
-    expect(one.press({ keyCode: 71, ctrlKey: true }).opened).toEqual(['nib-find-next'])
+    expect(one.press({ keyCode: 71, ctrlKey: true }).opened).toEqual(['orden-find-next'])
   })
 
   test('steps on Ctrl+G and F3, back with Shift', () => {
     const one = page()
-    expect(one.press({ keyCode: 71, ctrlKey: true }).opened).toEqual(['nib-find-next'])
+    expect(one.press({ keyCode: 71, ctrlKey: true }).opened).toEqual(['orden-find-next'])
     expect(one.press({ keyCode: 71, ctrlKey: true, shiftKey: true }).opened).toEqual([
-      'nib-find-previous',
+      'orden-find-previous',
     ])
-    expect(one.press({ keyCode: 114 }).opened).toEqual(['nib-find-next'])
-    expect(one.press({ keyCode: 114, shiftKey: true }).opened).toEqual(['nib-find-previous'])
+    expect(one.press({ keyCode: 114 }).opened).toEqual(['orden-find-next'])
+    expect(one.press({ keyCode: 114, shiftKey: true }).opened).toEqual(['orden-find-previous'])
   })
 
   test('leaves every other key alone', () => {
@@ -185,13 +185,13 @@ describe('the script in every page', () => {
 
   test('asks for the address field on Ctrl+L and Alt+D nothing in the page took', () => {
     const one = page()
-    expect(one.press({ keyCode: 76, ctrlKey: true }).opened).toEqual(['nib-address'])
-    expect(one.press({ keyCode: 68, altKey: true }).opened).toEqual(['nib-address'])
+    expect(one.press({ keyCode: 76, ctrlKey: true }).opened).toEqual(['orden-address'])
+    expect(one.press({ keyCode: 68, altKey: true }).opened).toEqual(['orden-address'])
   })
 
   test('asks for a hundred per cent on Ctrl+0 nothing in the page took, row or number pad', () => {
     const one = page()
-    const actual = { opened: ['nib-actual-size'], prevented: true }
+    const actual = { opened: ['orden-actual-size'], prevented: true }
     expect(one.press({ keyCode: 48, ctrlKey: true })).toEqual(actual)
     expect(one.press({ keyCode: 96, ctrlKey: true })).toEqual(actual)
     for (const key of [
@@ -225,7 +225,7 @@ describe('a modifier tapped twice in a page', () => {
   test('asks for the palette on the second release', () => {
     const one = page()
     expect(tap(one, 0)).toEqual([])
-    expect(tap(one, 150)).toEqual(['nib-twice-shift'])
+    expect(tap(one, 150)).toEqual(['orden-twice-shift'])
   })
 
   test('by the same rules as the app: too slow, a letter between, or a click is not one', () => {
@@ -247,13 +247,13 @@ describe('a modifier tapped twice in a page', () => {
   test('once for five presses, which Windows reads as Sticky Keys', () => {
     const one = page()
     const asked = [0, 100, 200, 300, 400].flatMap((at) => tap(one, at))
-    expect(asked).toEqual(['nib-twice-shift'])
+    expect(asked).toEqual(['orden-twice-shift'])
   })
 
   test('for Ctrl as well, under a name of its own', () => {
     const one = page()
     tap(one, 0, 'Control')
-    expect(tap(one, 150, 'Control')).toEqual(['nib-twice-ctrl'])
+    expect(tap(one, 150, 'Control')).toEqual(['orden-twice-ctrl'])
   })
 
   test('not where the page took the Shift for itself, and never for a synthetic one', () => {

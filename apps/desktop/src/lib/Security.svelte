@@ -155,12 +155,13 @@
   <p class="hint">{t('This service cannot keep a second factor.')}</p>
 {:else}
   <div class="card">
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name">{t('Ask for a code from an app')}</span>
       {#if factor?.on}
         <span class="text">{t('On')}</span>
       {:else}
-        <button class="nib-chip" disabled={busy} onclick={() => void begin()}>{t('Turn on')}</button
+        <button class="orden-chip" disabled={busy} onclick={() => void begin()}
+          >{t('Turn on')}</button
         >
       {/if}
     </div>
@@ -174,10 +175,10 @@
         <figure class="square">{@html square}</figure>
       {/if}
       <Copyable value={secret.secret} label={t('Secret')} />
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name">{t('Code from the app')}</span>
         <input
-          class="nib-field is-value narrow"
+          class="orden-field is-value narrow"
           bind:value={code}
           placeholder="000000"
           aria-label={t('Code from the app')}
@@ -185,7 +186,7 @@
           autocomplete="one-time-code"
           spellcheck="false"
         />
-        <button class="nib-chip" disabled={busy} onclick={() => void confirm()}
+        <button class="orden-chip" disabled={busy} onclick={() => void confirm()}
           >{t('Confirm')}</button
         >
       </div>
@@ -208,14 +209,14 @@
 
   {#if factor?.on}
     <div class="card">
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name">{t('Recovery codes left')}</span>
         <span class="text">{factor.codesLeft}</span>
       </div>
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name">{t('Code to change sign-in')}</span>
         <input
-          class="nib-field is-value"
+          class="orden-field is-value"
           bind:value={code}
           placeholder="000000"
           aria-label={t('Code to change sign-in')}
@@ -224,10 +225,10 @@
           spellcheck="false"
         />
       </div>
-      <button class="nib-action" disabled={busy} onclick={() => void freshCodes()}>
+      <button class="orden-action" disabled={busy} onclick={() => void freshCodes()}>
         {t('New recovery codes')}
       </button>
-      <button class="nib-action is-danger" disabled={busy} onclick={() => void turnOff()}>
+      <button class="orden-action is-danger" disabled={busy} onclick={() => void turnOff()}>
         {t('Turn off')}
       </button>
     </div>
@@ -242,21 +243,21 @@
 
 <div class="card">
   {#each sessions as session (session.id)}
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name">
         {session.name || t('A device')}
         {#if session.current}<small>{t('this one')}</small>{/if}
       </span>
       <span class="text">{when(session.lastUsedAt)}</span>
       {#if !session.current}
-        <button class="nib-chip" onclick={() => void end(session)}>{t('End')}</button>
+        <button class="orden-chip" onclick={() => void end(session)}>{t('End')}</button>
       {/if}
     </div>
   {/each}
 </div>
 
 {#if sessions.length > 1}
-  <button class="nib-action is-danger" onclick={() => void endOthers()}>
+  <button class="orden-action is-danger" onclick={() => void endOthers()}>
     {t('End every other session')}
   </button>
 {/if}

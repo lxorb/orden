@@ -55,7 +55,7 @@ export function drawInto(into: Element, html: string) {
   into.replaceChildren(root)
 }
 
-const NAME = 'nib-overview-faces'
+const NAME = 'orden-overview-faces'
 const STORE = 'face'
 
 const held = heldDatabase(NAME, 2, (request, oldVersion) => {

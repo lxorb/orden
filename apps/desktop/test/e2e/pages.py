@@ -789,9 +789,9 @@ def check_adding(page: Page, label: str) -> None:
     rows.nth(0).evaluate(
         """(row) => {
           const carried = new DataTransfer()
-          carried.setData('application/nib-page', '1')
-          carried.setData('text/nib-page', JSON.stringify({ note: '/elsewhere/Other.pages', page: 'p1' }))
-          carried.setData('text/nib-from-another-window', 'text/nib-page')
+          carried.setData('application/orden-page', '1')
+          carried.setData('text/orden-page', JSON.stringify({ note: '/elsewhere/Other.pages', page: 'p1' }))
+          carried.setData('text/orden-from-another-window', 'text/orden-page')
           const box = row.getBoundingClientRect()
           const at = { bubbles: true, cancelable: true, dataTransfer: carried, clientX: box.left + 4, clientY: box.top + 2 }
           row.dispatchEvent(new DragEvent('dragover', at))

@@ -297,7 +297,7 @@
     <div class="acts">
       {#if answered}
         <button
-          class="nib-glyph act"
+          class="orden-glyph act"
           title={t('Copy')}
           aria-label={t('Copy')}
           onclick={() => void copy()}
@@ -313,7 +313,7 @@
           </svg>
         </button>
         <button
-          class="nib-glyph act"
+          class="orden-glyph act"
           title={t('Insert at the caret')}
           aria-label={t('Insert at the caret')}
           disabled={!view || view.state.readOnly}
@@ -324,7 +324,7 @@
       {/if}
       {#if last && ai.providers.length && !chat.answeredElsewhere}
         <button
-          class="nib-glyph act"
+          class="orden-glyph act"
           title={t('Ask again')}
           aria-label={t('Ask again')}
           aria-haspopup="menu"
@@ -334,7 +334,7 @@
         </button>
       {/if}
       <button
-        class="nib-glyph act"
+        class="orden-glyph act"
         title={t('More')}
         aria-label={t('More')}
         aria-haspopup="menu"

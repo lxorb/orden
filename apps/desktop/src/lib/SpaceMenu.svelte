@@ -73,7 +73,7 @@
 <div class="catch" data-covers="all" onclick={close} onpointerdown={spendClick} out:letGo></div>
 
 <div
-  class="nib-layer spaces"
+  class="orden-layer spaces"
   data-spaces-open
   role="menu"
   aria-label={t('Spaces')}
@@ -99,17 +99,17 @@
   <hr />
 
   <button
-    class="nib-row"
+    class="orden-row"
     role="menuitem"
     onclick={() => {
       close()
       void newSpace()
     }}
   >
-    <span class="nib-badge is-quiet" aria-hidden="true">
+    <span class="orden-badge is-quiet" aria-hidden="true">
       <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
     </span>
-    <span class="nib-row-label">{t('New space')}</span>
+    <span class="orden-row-label">{t('New space')}</span>
   </button>
 
   {#if archived.length}
@@ -121,7 +121,7 @@
       {#each archived as space (space.id)}
         <div class="line" role="none">
           <button
-            class="nib-row"
+            class="orden-row"
             role="menuitem"
             title={t('Unarchive')}
             onclick={() => void bringBack(space)}
@@ -129,7 +129,7 @@
             use:longPress={(event) => aboutArchived(event, space)}
           >
             <SpaceBadge {space} />
-            <span class="nib-row-label">{space.name}</span>
+            <span class="orden-row-label">{space.name}</span>
           </button>
           <RowMore onclick={(event: MouseEvent) => aboutArchived(event, space)} />
         </div>
@@ -147,7 +147,7 @@
         {#each group.items as item (item.id)}
           <div class="line" role="none">
             <button
-              class="nib-row"
+              class="orden-row"
               class:is-on={workspace.showingShared(item.id)}
               role="menuitem"
               title={item.name}
@@ -158,10 +158,10 @@
               oncontextmenu={(event) => aboutShared(event, item)}
               use:longPress={(event) => aboutShared(event, item)}
             >
-              <span class="nib-badge is-quiet" aria-hidden="true">
+              <span class="orden-badge is-quiet" aria-hidden="true">
                 <FileMark mark={fileMark(item.path)} />
               </span>
-              <span class="nib-row-label">{item.name}</span>
+              <span class="orden-row-label">{item.name}</span>
               <SharedMark label={t('Shared with you')} />
             </button>
 
@@ -197,7 +197,7 @@
     align-items: center;
   }
 
-  .line .nib-row {
+  .line .orden-row {
     flex: 1;
     min-width: 0;
   }

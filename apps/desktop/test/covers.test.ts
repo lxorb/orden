@@ -20,7 +20,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
     'fixed only as a drawer, which is a phone or a tablet, and those build no native page',
   'App.svelte .panels.right': 'the right drawer: see .panels',
   'App.svelte .scrim': 'the drawers’ scrim, shown only where there are drawers: see .panels',
-  'lib/Select.svelte .sheet': 'a touch screen only, and over its own .nib-scrim',
+  'lib/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
   'lib/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
   'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
   'lib/overview/Offstage.svelte .offstage': 'drawn off the window, where no page is',
@@ -219,7 +219,7 @@ const PLACED_INSIDE: Record<string, string> = {
 }
 
 test('every bubble is placed in the window, where nothing that holds it can cut it', () => {
-  const OWN = new Set(['nib-bubble', 'is-pressable', 'nib-host'])
+  const OWN = new Set(['orden-bubble', 'is-pressable', 'orden-host'])
   const bubbles: string[] = []
   const cut: string[] = []
   for (const path of components(SRC)) {
@@ -232,9 +232,9 @@ test('every bubble is placed in the window, where nothing that holds it can cut 
     }))
     for (const { node } of elements(tree.fragment)) {
       const classes = classesOf(node)
-      if (!classes.includes('nib-bubble')) continue
+      if (!classes.includes('orden-bubble')) continue
       const own = classes.filter((one) => !OWN.has(one))
-      const key = `${file} .${own.join('.') || 'nib-bubble'}`
+      const key = `${file} .${own.join('.') || 'orden-bubble'}`
       bubbles.push(key)
       if (key in PLACED_INSIDE) continue
       const bodies = placing

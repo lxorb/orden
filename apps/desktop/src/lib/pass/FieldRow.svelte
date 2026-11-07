@@ -51,7 +51,7 @@
   {/if}
   {#if hidden && !sealed}
     <button
-      class="nib-glyph"
+      class="orden-glyph"
       type="button"
       aria-pressed={shown}
       aria-label={shown ? t('Hide') : t('Show')}
@@ -63,7 +63,7 @@
   {/if}
   {#if !sealed}
     <button
-      class="nib-glyph"
+      class="orden-glyph"
       type="button"
       aria-label={t('Copy {field}', { field: label })}
       title={t('Copy {field}', { field: label })}
@@ -130,14 +130,14 @@
     overflow-wrap: anywhere;
   }
 
-  .nib-glyph {
+  .orden-glyph {
     opacity: 0.7;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
 
-  .field:hover .nib-glyph,
-  .nib-glyph:focus-visible,
-  .nib-glyph[aria-pressed='true'] {
+  .field:hover .orden-glyph,
+  .orden-glyph:focus-visible,
+  .orden-glyph[aria-pressed='true'] {
     opacity: 1;
   }
 

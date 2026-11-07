@@ -687,8 +687,8 @@ used to hide every page in the window behind its still picture: a tab's hover ca
 the strip, a menu over the file list, the address field's suggestions. A page with no
 picture yet - and a picture is thrown away whenever the page changes size, which the
 notices row did as a toast came and went - was a blank pane for as long as the layer
-was up. Now each page asks which of the app's layers are over _it_ (`.nib-layer`,
-`.nib-bubble`, `.nib-screen`, `.nib-scrim` and the notices row's cards,
+was up. Now each page asks which of the app's layers are over _it_ (`.orden-layer`,
+`.orden-bubble`, `.orden-screen`, `.orden-scrim` and the notices row's cards,
 `web-tab/covers.ts`): one beside the page
 leaves it alone, and one over it is cut out of the page's window in its own rounded shape
 (`SetWindowRgn`, `src-tauri/src/web_cut.rs`), so the page stays live round it - scrolling,
@@ -1036,7 +1036,7 @@ exactly what sites that look for automation look for. The crate reads it into nu
 tab's own Back or Forward, along the same trail the arrows walk.
 
 **The arrow over a page** stands over the page's picture while the fingers are on: the room
-it comes in over covers the page the way a sheet's scrim does (`nib-swipe-room` in
+it comes in over covers the page the way a sheet's scrim does (`orden-swipe-room` in
 `covers.ts`), so the page's window is given an empty shape for the gesture and the arrow is
 the app's own HTML over a still of the page, soft edge, shadow and all. A picture older than
 a moment is put aside as the swipe begins and a fresh one taken (`freshen`); until it is in,
@@ -1172,8 +1172,8 @@ desktop app leaves its web notes' tabs out (`tabsAlong`).
 
 ## The bar
 
-Back, forward, reload, the address, the dots. The same `.nib-glyph`
-squares the find bar is made of, the same `.nib-field`, the same row scale, in the
+Back, forward, reload, the address, the dots. The same `.orden-glyph`
+squares the find bar is made of, the same `.orden-field`, the same row scale, in the
 same place under the tab strip - a bar over the page would cover the first line of
 it.
 
@@ -2223,13 +2223,13 @@ the camera.
 
 **The bubble answers the pointer and holds the keyboard.** Emil, 2026-09-28, of a mail
 site asking to show notifications: _"and this thing here is not clickable."_ For two
-weeks it was not. The card is `.nib-bubble`, the shape a one-sentence hint is drawn in,
+weeks it was not. The card is `.orden-bubble`, the shape a one-sentence hint is drawn in,
 and a hint lets every press through to the row it sits over - so both answers were
 drawn over the page's hole and every press landed on the hole. The native side was
 never in the way: the page is hidden while the bubble is up, and Windows sends a click
 there to the app's own webview. Every probe had pressed the buttons with `click()`,
 which skips the hit test a hand goes through. A bubble with something to press in it is
-now `.nib-bubble.is-pressable` - the site's question, the site information and the
+now `.orden-bubble.is-pressable` - the site's question, the site information and the
 downloads - and `bubble.test.ts` reads every component to keep it that way. The keyboard
 had the same shape of trouble: the page that asked held it, and a hidden webview keeps
 it, so Escape went to a page nobody could see. The bubble takes the keyboard back to the

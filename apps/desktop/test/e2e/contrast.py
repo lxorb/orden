@@ -80,7 +80,7 @@ RATIOS = """
 CODE = """
 () => {
   const found = {}
-  for (const span of document.querySelectorAll('.cm-line.nib-code span')) {
+  for (const span of document.querySelectorAll('.cm-line.orden-code span')) {
     const name = [...span.classList].find((one) => one.startsWith('ͼ')) ?? span.className
     if (name && !found[name]) found[name] = getComputedStyle(span).color
   }
@@ -238,7 +238,7 @@ def drive_scheme(browser: Browser, which: str, at: int) -> None:
 def drive_settings(browser: Browser) -> None:
     page = fresh(browser, "settings")
     page.evaluate("() => window.nibApp.settings.show('appearance')")
-    page.wait_for_selector(".nib-screen.sheet", timeout=15000)
+    page.wait_for_selector(".orden-screen.sheet", timeout=15000)
     page.wait_for_timeout(600)
     shot(page, "20-appearance")
 

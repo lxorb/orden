@@ -46,10 +46,10 @@ export class TocWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const nav = document.createElement('nav')
-    nav.className = 'nib-toc'
+    nav.className = 'orden-toc'
 
     if (!this.entries.length) {
-      nav.classList.add('nib-toc-empty')
+      nav.classList.add('orden-toc-empty')
       return nav
     }
 

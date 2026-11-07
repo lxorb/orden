@@ -243,12 +243,12 @@ def buttons(where):
     print(f"buttons ({where}): median {found[f'buttons-{where}']['median_high_by_px']} px high, {len(measured)} buttons")
 
 def settings_open():
-    if run("!!document.querySelector('.nib-field.search input')"):
+    if run("!!document.querySelector('.orden-field.search input')"):
         return True
     tell(f"chord ctrl {COMMA}")
     for _ in range(12):
         time.sleep(0.25)
-        if run("!!document.querySelector('.nib-field.search input')"):
+        if run("!!document.querySelector('.orden-field.search input')"):
             return True
     run(
         "(() => { const b = [...document.querySelectorAll('button[title], [role=button][title]')]"
@@ -256,12 +256,12 @@ def settings_open():
     )
     for _ in range(12):
         time.sleep(0.25)
-        if run("!!document.querySelector('.nib-field.search input')"):
+        if run("!!document.querySelector('.orden-field.search input')"):
             return True
     return False
 
 SEARCH_SETUP = """
-const input = document.querySelector('.nib-field.search input')
+const input = document.querySelector('.orden-field.search input')
 input.focus()
 const m = { frames: [], keys: [], on: true }
 window.__nib418 = m
@@ -281,7 +281,7 @@ return document.activeElement === input
 """
 
 SEARCH_SET = """
-const input = document.querySelector('.nib-field.search input')
+const input = document.querySelector('.orden-field.search input')
 const twoFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
 const took = []
 for (const word of ['f', 'fo', 'fon', 'font', '', 't', 'th', 'the', 'them', 'theme', '']) {
@@ -325,7 +325,7 @@ def search():
         return
     time.sleep(1.0)
     field = run(
-        "(() => { const r = document.querySelector('.nib-field.search input').getBoundingClientRect();"
+        "(() => { const r = document.querySelector('.orden-field.search input').getBoundingClientRect();"
         " return { x: r.x + r.width / 2, y: r.y + r.height / 2 } })()"
     )
     if isinstance(field, dict):

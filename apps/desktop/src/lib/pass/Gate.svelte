@@ -83,7 +83,7 @@
     color: var(--danger);
   }
 
-  .card :global(.nib-action) {
+  .card :global(.orden-action) {
     width: auto;
     align-self: center;
   }

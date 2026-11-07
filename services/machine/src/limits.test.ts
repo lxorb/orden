@@ -17,7 +17,7 @@ test('as root, a shell runs as the user, under the process limit, as a login she
       '/bin/sh',
       '-c',
       '/usr/bin/prlimit --nproc=4096 --pid $$ 2>/dev/null; exec "$@"',
-      'nib-shell',
+      'orden-shell',
       '/bin/bash',
       '-l',
     ],
@@ -30,7 +30,7 @@ test('as anybody else, it runs as them, still under the limit', () => {
     args: [
       '-c',
       '/usr/bin/prlimit --nproc=64 --pid $$ 2>/dev/null; exec "$@"',
-      'nib-shell',
+      'orden-shell',
       '/bin/zsh',
       '-l',
     ],

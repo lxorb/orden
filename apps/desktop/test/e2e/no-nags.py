@@ -40,7 +40,7 @@ CHROME_TEXT = """
 
 OPEN_LEFT = "() => { const ws = window.nibApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }"
 
-HINT = "() => document.querySelector('.nib-bubble.hint')?.innerText.trim() ?? null"
+HINT = "() => document.querySelector('.orden-bubble.hint')?.innerText.trim() ?? null"
 
 def nags_in(page: Any) -> list[str]:
     return [one for one in page.evaluate(CHROME_TEXT) if NAG.search(one)]
@@ -110,7 +110,7 @@ def settled_with_nothing_left(browser: Browser, device: str) -> None:
     DRIVE.settled(page)
     DRIVE.shot(page, f"{device}-nothing-left")
 
-    hint = page.evaluate("() => document.querySelector('.nib-bubble.hint')?.textContent.trim() ?? null")
+    hint = page.evaluate("() => document.querySelector('.orden-bubble.hint')?.textContent.trim() ?? null")
     say(f"[{device}] the hint with the feature hints put away: {hint!r}")
     if hint is not None:
         wrong(f"[{device}] a card came up with nothing left to point at: {hint!r}")

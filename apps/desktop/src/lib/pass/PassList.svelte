@@ -144,7 +144,7 @@
   <header class="head">
     {#if heading}
       <button
-        class="nib-glyph"
+        class="orden-glyph"
         type="button"
         aria-label={t('Back')}
         title={t('Back')}
@@ -154,7 +154,7 @@
       </button>
     {:else if stepped}
       <button
-        class="nib-glyph"
+        class="orden-glyph"
         type="button"
         aria-label={t('Back')}
         title={t('Back')}
@@ -164,7 +164,7 @@
       </button>
     {:else if onside}
       <button
-        class="nib-glyph"
+        class="orden-glyph"
         type="button"
         aria-label={t('Vaults')}
         title={t('Vaults')}
@@ -173,8 +173,8 @@
         <Glyph icon={Menu} />
       </button>
     {/if}
-    <label class="nib-field search">
-      <Glyph icon={Search} class="nib-field-mark" />
+    <label class="orden-field search">
+      <Glyph icon={Search} class="orden-field-mark" />
       <input
         type="search"
         bind:this={ui.searchField}
@@ -200,39 +200,39 @@
       >
       {#if trash}
         <button
-          class="nib-button is-quiet"
+          class="orden-button is-quiet"
           type="button"
           disabled={!picked.length}
           onclick={() => void restorePicked(picked)}>{t('Restore')}</button
         >
         <button
-          class="nib-button is-quiet danger"
+          class="orden-button is-quiet danger"
           type="button"
           disabled={!picked.length}
           onclick={() => void removePicked(picked)}>{t('Delete')}</button
         >
       {:else}
         <button
-          class="nib-button is-quiet"
+          class="orden-button is-quiet"
           type="button"
           disabled={!picked.length}
           onclick={() => (ui.sheet = { kind: 'move', ids: picked })}>{t('Move')}</button
         >
         <button
-          class="nib-button is-quiet danger"
+          class="orden-button is-quiet danger"
           type="button"
           disabled={!picked.length}
           onclick={() => void trashPicked(picked)}>{t('Trash')}</button
         >
       {/if}
-      <button class="nib-button is-quiet is-soft" type="button" onclick={() => (ui.picked = null)}
+      <button class="orden-button is-quiet is-soft" type="button" onclick={() => (ui.picked = null)}
         >{t('Done')}</button
       >
     </div>
   {:else}
     <div class="bar">
       {#if heading === null}
-        <button class="nib-chip is-quiet" type="button" onclick={showFilters}>
+        <button class="orden-chip is-quiet" type="button" onclick={showFilters}>
           <span class="chip-words">
             <Glyph icon={ListFilter} />
             {filterName(view.filter)}
@@ -240,7 +240,7 @@
           </span>
         </button>
       {/if}
-      <button class="nib-chip is-quiet" type="button" onclick={showSorts}>
+      <button class="orden-chip is-quiet" type="button" onclick={showSorts}>
         <span class="chip-words">
           <Glyph icon={ArrowUpDown} />
           {sortName(view.sort)}
@@ -248,13 +248,13 @@
       </button>
       <span class="gap"></span>
       {#if trash && rows.length}
-        <button class="nib-chip is-quiet danger" type="button" onclick={() => void emptyTrash()}
+        <button class="orden-chip is-quiet danger" type="button" onclick={() => void emptyTrash()}
           >{t('Empty trash')}</button
         >
       {/if}
       {#if rows.length && heading === null}
         <button
-          class="nib-glyph"
+          class="orden-glyph"
           type="button"
           aria-label={t('Select items')}
           title={t('Select items')}
@@ -291,7 +291,7 @@
   <div class="rows" role="list" bind:this={list} onkeydown={stepTo} data-scrolls>
     {#each rows as item (item.id)}
       <button
-        class="nib-row item"
+        class="orden-row item"
         class:is-on={view.item === item.id && picked === null}
         class:is-picked={pickedSet.has(item.id)}
         type="button"
@@ -304,7 +304,7 @@
           <span class="tick" class:on={pickedSet.has(item.id)} aria-hidden="true"></span>
         {/if}
         <ItemMark content={item.content} />
-        <span class="nib-row-label">
+        <span class="orden-row-label">
           <span class="name">{item.content.title || t('Untitled')}</span>
           <span class="sub">{subtitleOf(item)}</span>
         </span>
@@ -319,7 +319,7 @@
           <p>{t('Nothing here')}</p>
         {:else}
           <p>{t('Nothing here yet')}</p>
-          <button class="nib-button" type="button" onclick={() => void ui.newItem(blank('login'))}
+          <button class="orden-button" type="button" onclick={() => void ui.newItem(blank('login'))}
             >{t('New login')}</button
           >
         {/if}
@@ -466,7 +466,7 @@
     min-height: calc(var(--touch-row) + var(--space-2));
   }
 
-  .item .nib-row-label {
+  .item .orden-row-label {
     flex: 1;
     min-width: 0;
     display: flex;

@@ -139,7 +139,9 @@ describe("an agent's session", () => {
 
     expect(target.querySelector('.name')?.textContent).toBe('Claude Code')
     expect(target.querySelector('.doing')?.textContent.trim()).toBe('Pressing · Shop')
-    const pages = [...target.querySelectorAll('.tabs .nib-row-label')].map((one) => one.textContent)
+    const pages = [...target.querySelectorAll('.tabs .orden-row-label')].map(
+      (one) => one.textContent,
+    )
     expect(pages).toEqual(['Shop'])
     expect(target.querySelector('img, .picture')).toBeNull()
   })
@@ -181,10 +183,10 @@ describe("an agent's session", () => {
     const rows = [...target.querySelectorAll('.call .word')].map((one) => one.textContent)
     expect(rows).toEqual(['Pressing', 'Opening'])
 
-    target.querySelector<HTMLButtonElement>('.head .nib-glyph')?.click()
+    target.querySelector<HTMLButtonElement>('.head .orden-glyph')?.click()
     await settled()
     expect(fake.asked.at(-1)).toEqual({ command: 'stop', args: ['claude'] })
-    expect(target.querySelector('.head .nib-glyph')?.getAttribute('aria-label')).toBe('Continue')
+    expect(target.querySelector('.head .orden-glyph')?.getAttribute('aria-label')).toBe('Continue')
   })
 })
 

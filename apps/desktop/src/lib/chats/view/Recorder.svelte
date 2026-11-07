@@ -93,14 +93,14 @@
 <div class="recorder" role="status">
   {#if refused}
     <span class="refused">{refused}</span>
-    <button type="button" class="nib-glyph" aria-label={t('Close')} onclick={ondone}
+    <button type="button" class="orden-glyph" aria-label={t('Close')} onclick={ondone}
       ><Glyph name="close" /></button
     >
   {:else}
     <span class="dot" aria-hidden="true"></span>
     <span class="time">{clock(started ? (now - started) / 1000 : 0)}</span>
     <span class="grow"></span>
-    <button type="button" class="nib-glyph" aria-label={t('Delete')} onclick={cancel}
+    <button type="button" class="orden-glyph" aria-label={t('Delete')} onclick={cancel}
       ><Glyph name="close" /></button
     >
     <button

@@ -18,7 +18,7 @@ const META = 'meta'
 const MINUTES = 'minutes'
 
 const nameFor = (owner: string | null): string =>
-  owner === null ? 'nib-time' : `nib-time:${owner}`
+  owner === null ? 'orden-time' : `orden-time:${owner}`
 
 function settled<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {

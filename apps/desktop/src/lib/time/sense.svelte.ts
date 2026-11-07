@@ -29,7 +29,7 @@ let leading = false
 const locks = 'locks' in navigator ? navigator.locks : null
 
 if (locks) {
-  void locks.request('nib-time-sense', () => {
+  void locks.request('orden-time-sense', () => {
     leading = true
     return new Promise<never>(() => undefined)
   })

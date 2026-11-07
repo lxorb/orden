@@ -131,9 +131,9 @@ MEASURE = """
 
 STAND_ON = """
 ([desk, material]) => {
-  document.getElementById('nib-desk')?.remove()
+  document.getElementById('orden-desk')?.remove()
   const style = document.createElement('style')
-  style.id = 'nib-desk'
+  style.id = 'orden-desk'
   style.textContent = `html { background: ${desk} !important; background-attachment: fixed !important; }`
   document.head.append(style)
   if (material) document.documentElement.dataset.translucent = material
@@ -188,7 +188,7 @@ FIRST_FRAME = """
   const look = () => {
     const app = document.getElementById('app')
     if (!app || !app.childElementCount) return requestAnimationFrame(look)
-    const sheet = document.getElementById('nib-user-theme')
+    const sheet = document.getElementById('orden-user-theme')
     window.__glassFirstFrame = !!sheet && sheet.textContent.includes('--glass-chrome')
   }
   requestAnimationFrame(look)
@@ -415,7 +415,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.evaluate("() => window.nibApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     rows = page.evaluate(
-        "() => [...document.querySelectorAll('.nib-setting')].map((one) => one.textContent.trim())"
+        "() => [...document.querySelectorAll('.orden-setting')].map((one) => one.textContent.trim())"
     )
     shows(
         f"[{scheme}] Appearance has no Translucency row",
@@ -424,7 +424,7 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     shot(page, f"{scheme}-glass-settings")
 
-    row = page.locator(".nib-setting", has_text="Tint colour")
+    row = page.locator(".orden-setting", has_text="Tint colour")
     shows(f"[{scheme}] the pair row offers seven and two of one's own", row.locator(".swatch").count(), 9)
     row.scroll_into_view_if_needed()
     shot(page, f"{scheme}-glass-pairs", clip=row.bounding_box())

@@ -50,10 +50,10 @@ export class CoverWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const host = document.createElement('div')
-    host.className = 'nib-cover-block'
+    host.className = 'orden-cover-block'
 
     const band = document.createElement('div')
-    band.className = 'nib-cover'
+    band.className = 'orden-cover'
     host.append(band)
 
     const picture = document.createElement('img')
@@ -64,7 +64,7 @@ export class CoverWidget extends NibWidget {
     band.append(picture)
 
     const handle = document.createElement('div')
-    handle.className = 'nib-cover-drag'
+    handle.className = 'orden-cover-drag'
     handle.tabIndex = 0
     handle.setAttribute('role', 'slider')
     handle.title = label('dragCover')

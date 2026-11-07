@@ -34,10 +34,10 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={onclose}></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={onclose}></div>
 
   <div
-    class="nib-screen sheet"
+    class="orden-screen sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -47,10 +47,10 @@
   >
     <div class="head">
       {#if mark}
-        <span class="nib-badge" aria-hidden="true">{@render mark()}</span>
+        <span class="orden-badge" aria-hidden="true">{@render mark()}</span>
       {/if}
       <h2 class="title">{title}</h2>
-      <button class="nib-glyph shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
+      <button class="orden-glyph shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
         <Cross />
       </button>
     </div>

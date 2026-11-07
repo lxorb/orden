@@ -36,10 +36,10 @@ async ([note]) => {
 """
 
 CAPTIONS = """
-() => [...document.querySelectorAll('.cm-line.nib-code-open')].map((line) => {
+() => [...document.querySelectorAll('.cm-line.orden-code-open')].map((line) => {
   const box = line.getBoundingClientRect()
-  const said = line.querySelector('.nib-fence-caption')
-  const language = line.querySelector('.nib-fence-language')
+  const said = line.querySelector('.orden-fence-caption')
+  const language = line.querySelector('.orden-fence-language')
   const mark = said?.getBoundingClientRect() ?? null
   const style = getComputedStyle(line)
 
@@ -171,7 +171,7 @@ def drive_editor(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
     page.wait_for_timeout(300)
 
-    page.locator(".nib-fence-language").first.click()
+    page.locator(".orden-fence-language").first.click()
     page.wait_for_timeout(300)
     page.keyboard.type("tsx")
     page.keyboard.press("Enter")

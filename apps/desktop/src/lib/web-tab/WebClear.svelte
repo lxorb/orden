@@ -100,15 +100,15 @@
           }}
         >
           <span class="name">{kind.label}</span>
-          <span class="nib-switch" class:on={kind.on} aria-hidden="true"></span>
+          <span class="orden-switch" class:on={kind.on} aria-hidden="true"></span>
         </div>
       {/each}
     </div>
 
     {#snippet foot()}
-      <button class="nib-button is-quiet" onclick={onclose}>{t('Cancel')}</button>
+      <button class="orden-button is-quiet" onclick={onclose}>{t('Cancel')}</button>
       <button
-        class="nib-button is-danger"
+        class="orden-button is-danger"
         disabled={busy || !(history || site || cache)}
         onclick={() => void go()}
       >

@@ -67,8 +67,8 @@ def texts(page: Page, selector: str) -> list[str]:
 
 def open_from_panel(page: Page) -> None:
     page.evaluate("window.nibApp.workspace.showPanel('tasks')")
-    wait_for(page, "document.querySelector('.tasks .nib-row')", "the Tasks panel")
-    page.locator(".tasks .nib-row", has_text="Tasks").first.click(modifiers=["Control"])
+    wait_for(page, "document.querySelector('.tasks .orden-row')", "the Tasks panel")
+    page.locator(".tasks .orden-row", has_text="Tasks").first.click(modifiers=["Control"])
     wait_for(page, "document.querySelector('.view-tab .task, .view-tab .card')", "Todos")
     quiet(page)
 
@@ -94,7 +94,7 @@ def carry(page: Page, source: str, target: str) -> None:
 
 def the_one_view(page: Page) -> None:
     open_from_panel(page)
-    rows = texts(page, ".tasks .nib-row")
+    rows = texts(page, ".tasks .orden-row")
     say(f"[panel] {json.dumps(rows, ensure_ascii=False)}")
     for gone in ("Inbox", "Upcoming", "Completed"):
         if any(one.startswith(gone) for one in rows):
@@ -116,7 +116,7 @@ def the_display(page: Page) -> None:
     page.locator(".view-tab .display-button").first.click()
     wait_for(page, "document.querySelector('.pop .display')", "the Display popover")
     shot(page, "02-display")
-    page.locator(".pop .nib-setting[role=switch]").first.click()
+    page.locator(".pop .orden-setting[role=switch]").first.click()
     wait_for(
         page,
         "[...document.querySelectorAll('.view-tab .task .words')].some((one) => one.textContent.trim() === 'Bread')",
@@ -125,7 +125,7 @@ def the_display(page: Page) -> None:
     if display_label(page) != "Display: 1":
         wrong(f"Display says {display_label(page)!r} with Completed tasks on")
     choose(page, "Grouping", "Priority")
-    page.locator(".pop .nib-segmented [role=radio]", has_text="Board").click()
+    page.locator(".pop .orden-segmented [role=radio]", has_text="Board").click()
     wait_for(page, "document.querySelector('.view-tab .column .head.circled .circle')", "the board's heads")
     page.keyboard.press("Escape")
     label = display_label(page)
@@ -189,7 +189,7 @@ def at_phone_width(browser: Browser) -> None:
     if page.evaluate("!!document.querySelector('.pop .display')"):
         wrong("Display is a popover at phone width, not a sheet")
     shot(page, "06-phone-display")
-    page.locator("[role=dialog] .nib-segmented [role=radio]", has_text="Board").click()
+    page.locator("[role=dialog] .orden-segmented [role=radio]", has_text="Board").click()
     page.keyboard.press("Escape")
     wait_for(page, "document.querySelector('.view-tab .strip .switch')", "the board's pages")
     first = texts(page, ".view-tab .strip .switch[aria-selected=true]")

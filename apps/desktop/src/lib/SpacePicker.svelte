@@ -27,13 +27,13 @@
 {#if typing}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim"
+    class="orden-scrim"
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => spacePicker.dismiss()}
   ></div>
 
   <div
-    class="nib-screen is-centred is-steady picker"
+    class="orden-screen is-centred is-steady picker"
     style:--rows={workspace.shownSpaces.length}
     data-spaces-open
     role="menu"

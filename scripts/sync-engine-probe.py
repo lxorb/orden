@@ -68,8 +68,8 @@ def api(path: str, token: str) -> object:
 class Worker:
     def __init__(self, log: pathlib.Path) -> None:
         self.log = log
-        self.state = pathlib.Path(tempfile.mkdtemp(prefix="nib-sync-engine-worker-"))
-        self.assets = pathlib.Path(tempfile.mkdtemp(prefix="nib-sync-engine-assets-"))
+        self.state = pathlib.Path(tempfile.mkdtemp(prefix="orden-sync-engine-worker-"))
+        self.assets = pathlib.Path(tempfile.mkdtemp(prefix="orden-sync-engine-assets-"))
         (self.assets / "index.html").write_text("<!doctype html><title>probe</title>", encoding="utf-8")
         self.process: subprocess.Popen[bytes] | None = None
         self.opened = None
@@ -233,7 +233,7 @@ class Computer:
         self.exe = exe
         self.token = token
         self.identifier = IDENTIFIERS[label]
-        self.spaces = pathlib.Path(tempfile.mkdtemp(prefix=f"nib-sync-engine-{label.lower()}-"))
+        self.spaces = pathlib.Path(tempfile.mkdtemp(prefix=f"orden-sync-engine-{label.lower()}-"))
         if seeded:
             space = self.spaces / SPACE
             space.mkdir(parents=True)

@@ -52,7 +52,7 @@ def drive(browser: Browser) -> None:
     DRIVE.open_note(page, "Chores")
 
     page.evaluate("() => window.nibApp.modes.setVimKeys(true)")
-    wait_for(page, "document.querySelector('.cm-editor.nib-vim')", "modal editing")
+    wait_for(page, "document.querySelector('.cm-editor.orden-vim')", "modal editing")
 
     caret_to(page, "Wash up")
     normal(page)

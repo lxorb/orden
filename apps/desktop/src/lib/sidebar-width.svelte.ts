@@ -93,7 +93,7 @@ export class SidebarWidth {
     handle.setPointerCapture(event.pointerId)
     this.dragging = true
     document.body.style.cursor = 'col-resize'
-    document.body.classList.add('nib-unselectable')
+    document.body.classList.add('orden-unselectable')
 
     const move = (moved: PointerEvent) => {
       const moving = (moved.clientX - startX) * this.towards
@@ -110,7 +110,7 @@ export class SidebarWidth {
 
       this.dragging = false
       document.body.style.cursor = ''
-      document.body.classList.remove('nib-unselectable')
+      document.body.classList.remove('orden-unselectable')
       if (this.pixels !== null) write(this.side, this.pixels)
     }
 

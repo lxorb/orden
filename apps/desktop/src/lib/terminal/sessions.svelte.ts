@@ -169,7 +169,7 @@ class Session {
   constructor(readonly tab: Tab) {
     this.online = isOnlineTab(tab)
     this.live = !this.online
-    this.host.className = 'nib-terminal'
+    this.host.className = 'orden-terminal'
     const conpty = windowsPty()
     this.term = new Terminal({
       allowProposedApi: true,

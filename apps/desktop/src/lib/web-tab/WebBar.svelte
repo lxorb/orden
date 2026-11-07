@@ -157,7 +157,7 @@
   style:--web-ground={ground?.colour}
 >
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     title={shortcuts.tooltip(t('Back'), 'app.back')}
     aria-label={t('Back')}
     disabled={!page.back}
@@ -166,7 +166,7 @@
     oncontextmenu={(event) => onhistory(false, event)}
     use:longPress={(event) => onhistory(false, event)}
   >
-    <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
+    <svg class="orden-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowLeft as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />
       {/each}
@@ -174,7 +174,7 @@
   </button>
 
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     title={shortcuts.tooltip(t('Forward'), 'app.forward')}
     aria-label={t('Forward')}
     disabled={!page.forward}
@@ -183,7 +183,7 @@
     oncontextmenu={(event) => onhistory(true, event)}
     use:longPress={(event) => onhistory(true, event)}
   >
-    <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
+    <svg class="orden-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowRight as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />
       {/each}
@@ -191,7 +191,7 @@
   </button>
 
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     title={page.loading
       ? shortcuts.tooltip(t('Stop'), 'web.stop')
       : shortcuts.tooltip(t('Reload'), 'web.reload')}
@@ -213,7 +213,7 @@
   </button>
 
   <button
-    class="nib-glyph site"
+    class="orden-glyph site"
     data-opens="site"
     title={t('Site information')}
     aria-label={t('Site information')}
@@ -254,7 +254,7 @@
 
   {#if downloads.list.length > 0}
     <button
-      class="nib-glyph saving"
+      class="orden-glyph saving"
       data-opens="downloads"
       data-tab={tab}
       class:is-on={progress !== null}
@@ -289,7 +289,7 @@
   {/if}
 
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     title={t('More')}
     aria-label={t('More')}
     aria-haspopup="menu"
@@ -368,7 +368,7 @@
     position: relative;
   }
 
-  .nib-glyph > .ring {
+  .orden-glyph > .ring {
     position: absolute;
     top: 2px;
     left: 2px;
@@ -384,12 +384,12 @@
     transition: stroke-dashoffset var(--dur-base) var(--ease-out);
   }
 
-  .nib-glyph > .ring.sweeping {
+  .orden-glyph > .ring.sweeping {
     animation: turn 1s linear infinite;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .nib-glyph > .ring.sweeping {
+    .orden-glyph > .ring.sweeping {
       animation: none;
     }
   }

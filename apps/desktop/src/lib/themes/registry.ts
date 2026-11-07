@@ -1,5 +1,6 @@
 import { BASE } from '../api'
 import { isRecord, isString, stringList } from '../stored'
+import { carriedToken } from './carried'
 import { usablePaletteValue } from './validate'
 import type { Scheme } from '../theme.svelte'
 
@@ -37,7 +38,8 @@ function paletteOf(value: unknown): Palette {
   for (const [token, one] of Object.entries(value)) {
     if (Object.keys(out).length >= MOST_TOKENS) break
     if (!/^--[a-z0-9-]+$/i.test(token)) continue
-    if (isString(one) && one.length <= LONGEST_VALUE && usablePaletteValue(one)) out[token] = one
+    if (isString(one) && one.length <= LONGEST_VALUE && usablePaletteValue(one))
+      out[carriedToken(token)] = one
   }
 
   return out

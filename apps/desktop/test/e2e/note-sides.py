@@ -148,7 +148,7 @@ def dictionary(page: Page) -> None:
 
     page.mouse.click(place["x"], place["y"], button="right")
     page.wait_for_timeout(600)
-    rows = page.evaluate("() => [...document.querySelectorAll('.nib-row')].map((one) => one.textContent.trim())")
+    rows = page.evaluate("() => [...document.querySelectorAll('.orden-row')].map((one) => one.textContent.trim())")
     adding = [one for one in rows if "dictionary" in one]
     say(f"[menu] {json.dumps(adding)}")
     shot(page, "06-menu")
@@ -159,7 +159,7 @@ def dictionary(page: Page) -> None:
 
     page.evaluate(
         """() => {
-          const row = [...document.querySelectorAll('.nib-row')]
+          const row = [...document.querySelectorAll('.orden-row')]
             .find((one) => one.textContent.includes('dictionary'))
           row.click()
         }"""
@@ -168,7 +168,7 @@ def dictionary(page: Page) -> None:
 
     words = page.evaluate("() => window.nibApp.modes.spellWords")
     quiet = page.evaluate(
-        """() => [...document.querySelectorAll('.nib-known-word')].map((one) => ({
+        """() => [...document.querySelectorAll('.orden-known-word')].map((one) => ({
           word: one.textContent,
           spellcheck: one.getAttribute('spellcheck'),
         }))"""

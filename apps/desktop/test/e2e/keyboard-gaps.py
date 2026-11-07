@@ -48,7 +48,7 @@ WHERE = """
 }
 """
 
-SAID = "() => document.querySelector('p.nib-said[role=status]')?.textContent ?? ''"
+SAID = "() => document.querySelector('p.orden-said[role=status]')?.textContent ?? ''"
 
 AXE_RULES = """
 async () => {
@@ -155,7 +155,7 @@ def row_deleted(page: Page) -> None:
     quiet(page)
     at = where(page)
     say(f"[delete] after a row's Delete the keyboard is on {at}")
-    if not at.startswith("list|button.nib-row"):
+    if not at.startswith("list|button.orden-row"):
         wrong(f"the keyboard went with the deleted row: {at}")
 
 def open_row_deleted(page: Page) -> None:
@@ -172,7 +172,7 @@ def open_row_deleted(page: Page) -> None:
     quiet(page)
     at = where(page)
     say(f"[delete] after the open note's row went the keyboard is on {at}")
-    if not at.startswith("list|button.nib-row"):
+    if not at.startswith("list|button.orden-row"):
         wrong(f"the keyboard did not stay in the list: {at}")
     press(page, "Control+z")
     wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")

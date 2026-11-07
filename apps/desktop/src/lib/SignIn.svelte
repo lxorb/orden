@@ -94,10 +94,10 @@
 
 {#if account.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={close}></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={close}></div>
 
   <div
-    class="nib-screen panel"
+    class="orden-screen panel"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -132,7 +132,7 @@
           spellcheck="false"
           required
         />
-        <button class="nib-button" type="submit" disabled={account.busy}>
+        <button class="orden-button" type="submit" disabled={account.busy}>
           {account.busy ? t('Sending') : t('Continue')}
         </button>
       </form>
@@ -172,7 +172,8 @@
               autocapitalize="off"
               autocorrect="off"
             />
-            <button class="nib-button" type="submit" disabled={account.busy}>{t('Continue')}</button
+            <button class="orden-button" type="submit" disabled={account.busy}
+              >{t('Continue')}</button
             >
           </form>
         {:else}

@@ -172,13 +172,13 @@ class Preview implements PluginValue {
 
   constructor(private readonly view: EditorView) {
     const dom = document.createElement('div')
-    dom.className = 'nib-maths-preview'
+    dom.className = 'orden-maths-preview'
     dom.setAttribute('aria-hidden', 'true')
     dom.hidden = true
     this.body = document.createElement('div')
-    this.body.className = 'nib-maths-preview-body'
+    this.body.className = 'orden-maths-preview-body'
     this.error = document.createElement('div')
-    this.error.className = 'nib-maths-preview-error'
+    this.error.className = 'orden-maths-preview-error'
     this.error.hidden = true
     dom.append(this.body, this.error)
     view.dom.append(dom)
@@ -291,12 +291,12 @@ class Preview implements PluginValue {
       this.drawnTex = target.tex
       this.error.hidden = true
       this.error.textContent = ''
-      this.dom.classList.remove('nib-maths-preview-stale')
+      this.dom.classList.remove('orden-maths-preview-stale')
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       this.error.textContent = message.replace(/^KaTeX parse error:\s*/, '')
       this.error.hidden = false
-      this.dom.classList.toggle('nib-maths-preview-stale', this.drawnTex !== null)
+      this.dom.classList.toggle('orden-maths-preview-stale', this.drawnTex !== null)
     }
     this.slow = performance.now() - started > SLOW_MS
     this.measure()
@@ -377,7 +377,7 @@ class Preview implements PluginValue {
       return
     }
     this.above = placement.above
-    dom.classList.toggle('nib-maths-preview-below', !placement.above)
+    dom.classList.toggle('orden-maths-preview-below', !placement.above)
     if (placement.maxHeight !== null) dom.style.maxHeight = `${placement.maxHeight}px`
     dom.style.top = `${placement.top - editor.top}px`
     dom.style.left = `${placement.left - editor.left}px`

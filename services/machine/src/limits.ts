@@ -66,7 +66,7 @@ export function shellCommand(
   let command = [shell, '-l']
   if (has(PRLIMIT)) {
     const fence = `${PRLIMIT} --nproc=${String(pidsMax)} --pid $$ 2>/dev/null; exec "$@"`
-    command = ['/bin/sh', '-c', fence, 'nib-shell', ...command]
+    command = ['/bin/sh', '-c', fence, 'orden-shell', ...command]
   }
   if (user && has(SETPRIV)) command = asUser(user, command)
   const [file = shell, ...args] = command

@@ -31,7 +31,7 @@
 <section class="settings" aria-label={t('Settings')}>
   <header class="head">
     <h2 class="title">{t('Settings')}</h2>
-    <div class="nib-segmented tabs" role="tablist" aria-label={t('Settings')}>
+    <div class="orden-segmented tabs" role="tablist" aria-label={t('Settings')}>
       {#each SETTINGS_TABS as one (one)}
         <button
           type="button"

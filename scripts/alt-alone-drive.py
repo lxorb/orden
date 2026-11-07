@@ -131,7 +131,7 @@ def main() -> int:
     config.mkdir(parents=True, exist_ok=True)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-alt-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-alt-"))
     (spaces / "Alt").mkdir()
     (spaces / "Alt" / "A note.md").write_text("# A note\n\nWords.\n", encoding="utf-8")
     process = subprocess.Popen([str(args.exe)], env={**drive.os.environ, "ORDEN_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))

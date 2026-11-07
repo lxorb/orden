@@ -36,7 +36,7 @@ MACHINE = ROOT / "services" / "machine"
 MACHINE_BUNDLE = MACHINE / "dist" / "machine.bin"
 SHOTS = HERE / "shots"
 
-POINTED = ".nib-build"
+POINTED = ".orden-build"
 
 SEED_PATH = "/seed.html"
 SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
@@ -839,7 +839,7 @@ class Drive:
     def reading(self, page: Any, patience: float = PATIENCE) -> None:
         page.evaluate("() => window.nibApp.workspace.toggleReading()")
         self.wait_for(
-            page, "document.querySelector('article.nib-write')?.childElementCount", "the reading view", patience
+            page, "document.querySelector('article.orden-write')?.childElementCount", "the reading view", patience
         )
         self.settled(page)
 
@@ -1217,7 +1217,7 @@ def identifier_of(exe: Path, given: str | None = None) -> str | None:
     said = given or os.environ.get("ORDEN_PROBE_IDENTIFIER")
     if said:
         return said
-    beside = exe.parent / "nib-probe-identifier.json"
+    beside = exe.parent / "orden-probe-identifier.json"
     with contextlib.suppress(OSError, ValueError, KeyError, TypeError):
         return str(json.loads(beside.read_text(encoding="utf-8"))["identifier"])
     return None

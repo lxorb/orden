@@ -72,7 +72,7 @@ Contents (`tab.cc` `UpdateIconVisibility`, `tab.h`):
 ### A tab with no file
 
 **A new note, plane or page note is a tab with no file, and a dot after its name says
-so** - `.nib-unsaved` in the themes package, drawn by `UnsavedDot.svelte` in the strip,
+so** - `.orden-unsaved` in the themes package, drawn by `UnsavedDot.svelte` in the strip,
 the bar over a phone's note and the palette's row, and on the mark's shoulder for a tab
 that is only its mark. The press on the dot is Save, as Ctrl+S is: a small layer under
 the tab, Chrome's bookmark bubble, with the name its first line offers and the places the

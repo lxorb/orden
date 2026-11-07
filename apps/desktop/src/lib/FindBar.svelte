@@ -96,13 +96,13 @@
 <div class="findbar" transition:arrive>
   <div class="line">
     <div class="box">
-      <svg class="nib-field-mark mag" viewBox="0 0 13 13" aria-hidden="true"
+      <svg class="orden-field-mark mag" viewBox="0 0 13 13" aria-hidden="true"
         ><path d={SEARCH_MARK} /></svg
       >
 
       <input
         bind:this={field}
-        class="nib-field query"
+        class="orden-field query"
         class:flagged={!!flags}
         type="text"
         value={query}
@@ -170,7 +170,7 @@
       {/if}
 
       <button
-        class="nib-glyph act"
+        class="orden-glyph act"
         title={shortcuts.tooltip(t('Previous'), 'edit.find-previous')}
         aria-label={t('Previous')}
         disabled={!count}
@@ -179,7 +179,7 @@
         <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M3.2 8.2 6.5 4.9l3.3 3.3" /></svg>
       </button>
       <button
-        class="nib-glyph act"
+        class="orden-glyph act"
         title={shortcuts.tooltip(t('Next'), 'edit.find-next')}
         aria-label={t('Next')}
         disabled={!count}
@@ -190,7 +190,7 @@
 
       {#if writable}
         <button
-          class="nib-glyph act"
+          class="orden-glyph act"
           class:on={replacing}
           title={shortcuts.tooltip(t('Replace'), 'edit.replace')}
           aria-label={t('Replace')}
@@ -206,7 +206,7 @@
       {/if}
 
       <button
-        class="nib-glyph act shut"
+        class="orden-glyph act shut"
         title={shortcuts.tooltip(t('Close'), 'fixed.escape')}
         aria-label={t('Close')}
         onclick={onclose}
@@ -221,7 +221,7 @@
       <div class="box">
         <input
           bind:this={replaceField}
-          class="nib-field"
+          class="orden-field"
           type="text"
           value={replacement}
           placeholder={t('Replace with')}

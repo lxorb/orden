@@ -53,9 +53,9 @@ describe('what a fence answers with', () => {
     answering = [hit(), hit({ line: 9, text: 'and the plan again', ranges: [] })]
 
     const html = (await answered('plan')) ?? ''
-    expect(html).toContain('class="nib-section"')
+    expect(html).toContain('class="orden-section"')
     expect(html).toContain('Plan<span>2</span>')
-    expect(html).toContain('class="nib-row is-short"')
+    expect(html).toContain('class="orden-row is-short"')
     expect(html).toContain('data-path="/space/Plan.md"')
     expect(html).toContain('data-line="3"')
     expect(html).toContain('<mark>plan</mark>')
@@ -87,14 +87,14 @@ describe('what a fence answers with', () => {
     answering = [hit(), hit({ line: 4 }), hit({ path: '/space/Ink.md', name: 'Ink.md' })]
 
     const html = (await answered('plan')) ?? ''
-    expect(html.match(/nib-section/g)).toHaveLength(2)
+    expect(html.match(/orden-section/g)).toHaveLength(2)
   })
 
   test('and shows only a handful of lines from any one note', async () => {
     answering = Array.from({ length: 20 }, (_one, index) => hit({ line: index }))
 
     const html = (await answered('plan')) ?? ''
-    expect(html.match(/nib-row/g)).toHaveLength(5)
+    expect(html.match(/orden-row/g)).toHaveLength(5)
   })
 })
 
@@ -135,7 +135,7 @@ describe('a row whose line is a task', () => {
     answering = [hit({ text: '- [ ] write the plan', ranges: [] })]
 
     const html = (await answered('plan')) ?? ''
-    expect(html).toContain('class="nib-checkbox" data-task')
+    expect(html).toContain('class="orden-checkbox" data-task')
     expect(html).toContain('>write the plan<')
     expect(html).not.toContain('- [ ]')
   })

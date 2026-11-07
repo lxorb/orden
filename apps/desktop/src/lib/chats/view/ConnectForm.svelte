@@ -100,7 +100,7 @@
         <button
           type="button"
           role="radio"
-          class="nib-chip service"
+          class="orden-chip service"
           class:is-on={index === chosen}
           aria-checked={index === chosen}
           disabled={busy}
@@ -117,7 +117,7 @@
         <span>{labels[field.key] ?? t(field.label)}</span>
         {#if field.kind === 'select'}
           <select
-            class="nib-field"
+            class="orden-field"
             value={valueOf(field)}
             disabled={busy}
             onchange={(event) =>
@@ -129,7 +129,7 @@
           </select>
         {:else}
           <input
-            class="nib-field"
+            class="orden-field"
             type={typeOf(field)}
             inputmode={field.kind === 'phone' ? 'tel' : undefined}
             autocomplete={field.kind === 'password'
@@ -160,8 +160,8 @@
   {#if busy}<SignIn />{/if}
   {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
   <div class="actions">
-    <button class="nib-button is-quiet" type="button" onclick={stop}>{t('Cancel')}</button>
-    <button class="nib-button" type="submit" disabled={!ready || busy}
+    <button class="orden-button is-quiet" type="button" onclick={stop}>{t('Cancel')}</button>
+    <button class="orden-button" type="submit" disabled={!ready || busy}
       >{busy ? t('Connecting…') : t('Connect')}</button
     >
   </div>

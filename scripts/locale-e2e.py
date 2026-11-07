@@ -218,7 +218,7 @@ MIRRORED = """
   // for an element it is not drawing, and answers `none` for every one of the
   // chevrons a desktop hides, which is not the same as a mark facing the wrong
   // way.
-  const marks = [...document.querySelectorAll('.nib-mirror')]
+  const marks = [...document.querySelectorAll('.orden-mirror')]
     .filter((one) => one.getBoundingClientRect().width > 1)
     .map((one) => ({
       where: [...one.classList].filter((name) => !name.startsWith('s-')).join('.'),
@@ -367,7 +367,7 @@ def walk(page, shots: Shots, mod: str) -> list[str]:
         nonlocal groups
         page.click("button.trigger", timeout=4000)
         page.wait_for_timeout(400)
-        groups = page.locator(".groups .nib-row").count()
+        groups = page.locator(".groups .orden-row").count()
 
     reach("menu", menu)
 
@@ -375,7 +375,7 @@ def walk(page, shots: Shots, mod: str) -> list[str]:
         def group(at=index):
             page.click("button.trigger", timeout=4000)
             page.wait_for_timeout(300)
-            page.locator(".groups .nib-row").nth(at).click()
+            page.locator(".groups .orden-row").nth(at).click()
             page.wait_for_timeout(300)
 
         reach(f"menu-{index + 1}", group)
@@ -517,7 +517,7 @@ def main() -> int:
 
                         away(page)
                         if page.locator(".panels").evaluate("one => one.clientWidth") < 2:
-                            page.click(".nib-glyph.toggle", timeout=4000)
+                            page.click(".orden-glyph.toggle", timeout=4000)
                             page.wait_for_timeout(500)
 
                         shots.take("shell-open")

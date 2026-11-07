@@ -128,7 +128,7 @@
   </button>
   <button
     type="button"
-    class="nib-glyph"
+    class="orden-glyph"
     aria-label={t('Pinned')}
     use:tip={() => t('Pinned')}
     onclick={(event) => void showPins(event.currentTarget)}><Glyph name="pin" /></button
@@ -142,7 +142,7 @@
   />
   <button
     type="button"
-    class="nib-glyph"
+    class="orden-glyph"
     aria-label={t('Search this chat')}
     use:tip={() => shortcuts.tooltip(t('Search this chat'), 'chat.search')}
     onclick={() => page.search()}><Glyph name="search" /></button
@@ -156,27 +156,27 @@
   label={showing?.what === 'pins' ? t('Pinned') : t('Members')}
   onclose={() => (showing = null)}
 >
-  <div class="list nib-scrolls">
+  <div class="list orden-scrolls">
     {#if showing?.what === 'members'}
       {#each members as one (one.who)}
         {@const id = accountOf(one.who)}
         <button
           type="button"
-          class="nib-row"
+          class="orden-row"
           onclick={(event) => {
             if (id) showProfile(id, event.currentTarget, space)
           }}
         >
-          <span class="nib-row-mark">
+          <span class="orden-row-mark">
             <Avatar
               face={faceOf(one.who, page.members, space)}
               size={24}
               presence={id ? (people.of(id)?.presence ?? null) : null}
             />
           </span>
-          <span class="nib-row-label">{nameOf(one.who, page.members, space)}</span>
+          <span class="orden-row-label">{nameOf(one.who, page.members, space)}</span>
           {#if id && people.of(id)?.status?.emoji}
-            <span class="nib-row-meta">{people.of(id)?.status?.emoji}</span>
+            <span class="orden-row-meta">{people.of(id)?.status?.emoji}</span>
           {/if}
         </button>
       {/each}

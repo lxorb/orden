@@ -218,7 +218,7 @@ async () => {
 """
 
 ROWS = """() =>
-  [...document.querySelectorAll('#nib-palette-list .nib-row-label')].map((row) =>
+  [...document.querySelectorAll('#orden-palette-list .orden-row-label')].map((row) =>
     row.textContent.trim(),
   )
 """

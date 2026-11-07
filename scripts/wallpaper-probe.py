@@ -49,7 +49,7 @@ def launches(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
             time.sleep(7.0)
             if theme == "wallpaper" and not best.get("photographed"):
                 best["photographed"] = 1
-                sheet = glass.ran(held, "document.getElementById('nib-user-theme')?.textContent.includes('--wallpaper-picture:')")
+                sheet = glass.ran(held, "document.getElementById('orden-user-theme')?.textContent.includes('--wallpaper-picture:')")
                 (glass.say if sheet is True else glass.wrong)(f"the relaunch wears the picture: {sheet}")
                 glass.photographed(app.pid, "wallpaper-relaunch")
                 glass.pressed(held, "themes", settle=1.5)
@@ -84,7 +84,7 @@ def main() -> int:
     said = parser.parse_args()
 
     glass.wipe(said.identifier)
-    with tempfile.TemporaryDirectory(prefix="nib-wallpaper-probe-") as spaces:
+    with tempfile.TemporaryDirectory(prefix="orden-wallpaper-probe-") as spaces:
         space = pathlib.Path(spaces) / "Notes"
         space.mkdir()
         (space / "Under a picture.md").write_text(glass.NOTE, encoding="utf-8")

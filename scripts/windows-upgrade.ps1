@@ -137,7 +137,7 @@ $hadDesktop = Test-Path "$desktop\$before.lnk"
 switch ($Scenario) {
   'updater' { Run $built.Setup '/P /UPDATE' | Out-Null; $want = $dir }
   'silent' { Run $built.Setup '/S' | Out-Null; $want = $dir }
-  'elsewhere' { $want = 'C:\nib-elsewhere'; Run $built.Setup "/S /D=$want" | Out-Null }
+  'elsewhere' { $want = 'C:\orden-elsewhere'; Run $built.Setup "/S /D=$want" | Out-Null }
   'msi' { Run 'msiexec.exe' "/i `"$($built.Msi)`" /passive /norestart /l*v `"$env:RUNNER_TEMP\new-msi.log`"" | Out-Null; $want = $dir }
 }
 Show 'after'

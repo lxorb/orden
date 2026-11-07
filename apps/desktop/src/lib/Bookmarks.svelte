@@ -376,7 +376,7 @@
     {#if tiles.length || offered}
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
       <ul
-        class="nib-tiles tiles"
+        class="orden-tiles tiles"
         class:is-taking={(landing?.at ?? null) !== null && !tiles.length}
         class:is-floating={!tiles.length}
         data-bookmark-drop
@@ -417,7 +417,7 @@
     {/if}
 
     {#if rows.length}
-      <p class="nib-section">{t('Essentials')}</p>
+      <p class="orden-section">{t('Essentials')}</p>
 
       <ul class="list" data-bookmark-drop={workspace.device.essentialTiles ? undefined : ''}>
         {#each rows as row (`${row.mark.kind}:${row.mark.path}:${row.mark.text}`)}
@@ -437,7 +437,7 @@
                 </button>
               {/if}
               <button
-                class="nib-row row"
+                class="orden-row row"
                 class:is-quiet={row.mark.kind === 'folder'}
                 class:is-on={row.active}
                 class:is-unloaded={row.unloaded}
@@ -466,12 +466,12 @@
                 {:else if row.kind}
                   <FileMark mark={row.kind} />
                 {:else if row.mark.kind === 'graph'}
-                  <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
+                  <svg class="orden-row-mark" viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
                 {:else if row.mark.kind !== 'group'}
-                  <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+                  <svg class="orden-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
                 {/if}
-                <span class="nib-row-label"><bdi>{row.label}</bdi></span>
-                {#if row.note}<span class="nib-row-meta">{row.note}</span>{/if}
+                <span class="orden-row-label"><bdi>{row.label}</bdi></span>
+                {#if row.note}<span class="orden-row-meta">{row.note}</span>{/if}
               </button>
             </div>
           </li>
@@ -498,8 +498,8 @@
     font-size: var(--text-xs);
   }
 
-  .tiles.is-floating + .nib-section,
-  .bookmarks:has(> .is-floating:only-child) + :global(.nib-section) {
+  .tiles.is-floating + .orden-section,
+  .bookmarks:has(> .is-floating:only-child) + :global(.orden-section) {
     margin-top: 0;
     visibility: hidden;
   }

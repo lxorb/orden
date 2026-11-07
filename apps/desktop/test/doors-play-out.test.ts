@@ -112,7 +112,7 @@ describe('a component fetched through a door', () => {
 
 describe('a popup', () => {
   test('moves as one transition, which turns round where it is', () => {
-    const popup = /class="[^"]*\bnib-layer\b|role="(?:menu|dialog|listbox)"/
+    const popup = /class="[^"]*\borden-layer\b|role="(?:menu|dialog|listbox)"/
     const wrong: string[] = []
 
     for (const file of components()) {

@@ -43,7 +43,7 @@ function* elements(node: unknown, inRow = false): Generator<{ node: Node; inRow:
   let under = inRow
   if (one.type === 'RegularElement') {
     yield { node: one, inRow }
-    under = inRow || classesOf(one).includes('nib-setting')
+    under = inRow || classesOf(one).includes('orden-setting')
   }
   for (const [key, value] of Object.entries(one)) {
     if (key !== 'attributes' && value && typeof value === 'object') yield* elements(value, under)
@@ -57,7 +57,7 @@ test('no row of settings ends in an action that is as wide as a card', () => {
   const wide = files.flatMap((file) => {
     const tree = parse(readFileSync(file, 'utf8'), { modern: true })
     return [...elements(tree.fragment)]
-      .filter((one) => one.inRow && classesOf(one.node).includes('nib-action'))
+      .filter((one) => one.inRow && classesOf(one.node).includes('orden-action'))
       .map(() => file.slice(SRC.length).replaceAll('\\', '/'))
   })
 
@@ -96,7 +96,7 @@ test('the words a row of settings is named by are its .name', () => {
   const bare = components(SRC).flatMap((file) => {
     const tree = parse(readFileSync(file, 'utf8'), { modern: true })
     return [...elements(tree.fragment)]
-      .filter(({ node }) => classesOf(node).includes('nib-setting'))
+      .filter(({ node }) => classesOf(node).includes('orden-setting'))
       .flatMap(({ node }) => [...children(node.fragment)])
       .filter((child) => WORDS.has(child.name ?? '') && says(child))
       .filter((child) => !classesOf(child).some((one) => VALUES.has(one)))
@@ -121,12 +121,12 @@ test("a row's name keeps a readable width and what does not fit beside it wraps 
     'utf8',
   )
 
-  expect(ruleOf(sheet, '.nib-setting')).toMatch(/flex-wrap:\s*wrap/)
-  expect(ruleOf(sheet, '.nib-setting > .name')).toMatch(
+  expect(ruleOf(sheet, '.orden-setting')).toMatch(/flex-wrap:\s*wrap/)
+  expect(ruleOf(sheet, '.orden-setting > .name')).toMatch(
     /min-inline-size:\s*min\(\d+(\.\d+)?rem,\s*100%\)\s*!important/,
   )
-  expect(ruleOf(sheet, '.nib-setting > .name + *')).toMatch(/margin-inline-start:\s*auto/)
-  expect(ruleOf(sheet, '.nib-setting > .name ~ *')).toMatch(/max-inline-size:\s*100%/)
+  expect(ruleOf(sheet, '.orden-setting > .name + *')).toMatch(/margin-inline-start:\s*auto/)
+  expect(ruleOf(sheet, '.orden-setting > .name ~ *')).toMatch(/max-inline-size:\s*100%/)
 })
 
 test('a dropdown in a row and a pane in the list are as long as their words', () => {
@@ -136,9 +136,9 @@ test('a dropdown in a row and a pane in the list are as long as their words', ()
     'utf8',
   )
 
-  expect(ruleOf(sheet, '.nib-setting-value')).toMatch(
+  expect(ruleOf(sheet, '.orden-setting-value')).toMatch(
     /min-inline-size:\s*min\(var\(--setting-value\),\s*100%\)/,
   )
-  expect(ruleOf(sheet, '.nib-setting-value')).not.toMatch(/[\s;](inline-size|width):/)
-  expect(ruleOf(panel, '  .item .nib-row-label')).toMatch(/white-space:\s*normal/)
+  expect(ruleOf(sheet, '.orden-setting-value')).not.toMatch(/[\s;](inline-size|width):/)
+  expect(ruleOf(panel, '  .item .orden-row-label')).toMatch(/white-space:\s*normal/)
 })

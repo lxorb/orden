@@ -83,7 +83,7 @@ def handle(page, words):
     page.wait_for_timeout(120)
     grip = page.evaluate(
         """(y) => {
-            const all = [...document.querySelectorAll('.nib-block-handle')]
+            const all = [...document.querySelectorAll('.orden-block-handle')]
                 .map((one) => one.getBoundingClientRect())
                 .filter((one) => one.width > 0)
             all.sort((a, b) => Math.abs(a.y - y) - Math.abs(b.y - y))
@@ -107,7 +107,7 @@ def pasting(page):
     paste(page, text="a\tb\nc\td")
     holds(page, "cells pasted in a line are a table", f"abc\n\n{table}\n\ndef")
     caret(page, "def")
-    if page.locator("table.nib-table").count() != 1:
+    if page.locator("table.orden-table").count() != 1:
         wrong("the pasted cells are not drawn as a table")
 
     note(page, "abc def\n")
@@ -175,7 +175,7 @@ def keys(page):
     page.keyboard.press("Alt+ArrowDown")
     page.wait_for_timeout(100)
     holds(page, "Alt Down steps over a table", "| x |\n| - |\n| 1 |\n\nstart\n\nb")
-    if page.locator("table.nib-table").count() != 1:
+    if page.locator("table.orden-table").count() != 1:
         wrong("the table stopped being one")
 
 SECTION = (
@@ -216,7 +216,7 @@ def menus(page):
     else:
         say("ok: a fence an older build named keeps its name")
 
-    if page.locator(".cm-content table.nib-table td", has_text="^").count():
+    if page.locator(".cm-content table.orden-table td", has_text="^").count():
         wrong("a table grew a cell with the name in it")
 
 def tap(page, locator):

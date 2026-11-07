@@ -147,13 +147,13 @@ def click_round(page: Page, where: str, words: list[str]) -> None:
 def picture_in(page: Page) -> bool:
     return bool(
         page.evaluate(
-            "() => { const one = document.querySelector('#write .nib-cover img');"
+            "() => { const one = document.querySelector('#write .orden-cover img');"
             " return !!one && one.complete && one.naturalWidth > 0 }"
         )
     )
 
 def band(page: Page) -> int:
-    return round(page.evaluate("() => document.querySelector('#write .nib-cover').getBoundingClientRect().height"))
+    return round(page.evaluate("() => document.querySelector('#write .orden-cover').getBoundingClientRect().height"))
 
 def scrolled_round(page: Page, where: str) -> None:
     page.evaluate(SCROLL, 900)
@@ -174,7 +174,7 @@ def drive(browser: Browser) -> None:
     page.evaluate("() => document.documentElement.style.setProperty('--cover-height', 'auto')")
     DRIVE.seed(page, NOTE.format(origin=DRIVE.origin))
     DRIVE.open_note(page, "Banner")
-    wait_for(page, "document.querySelector('#write .nib-cover img')", "the cover")
+    wait_for(page, "document.querySelector('#write .orden-cover img')", "the cover")
 
     near = WORDS[:4]
 
@@ -186,7 +186,7 @@ def drive(browser: Browser) -> None:
     held.let_go()
     wait_for(
         page,
-        "(() => { const one = document.querySelector('#write .nib-cover img');"
+        "(() => { const one = document.querySelector('#write .orden-cover img');"
         " return !!one && one.complete && one.naturalWidth > 0 })()",
         "the cover's picture",
     )

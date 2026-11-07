@@ -55,7 +55,7 @@ async ([paint]) => {
 }
 """
 
-SHEET = "document.getElementById('nib-user-theme')?.textContent ?? ''"
+SHEET = "document.getElementById('orden-user-theme')?.textContent ?? ''"
 
 FILTERS = """
 () => [...document.querySelectorAll('*')]
@@ -70,7 +70,7 @@ EMPTY = """
 () => {
   const bar = document.querySelector('[data-chrome="top"], .titlebar, header')?.getBoundingClientRect()
   const side = document.querySelector('.sidebar, aside')?.getBoundingClientRect()
-  const tree = [...document.querySelectorAll('.nib-row')].map((one) => one.getBoundingClientRect())
+  const tree = [...document.querySelectorAll('.orden-row')].map((one) => one.getBoundingClientRect())
   const lowest = Math.max(0, ...tree.filter((r) => side && r.left < side.right).map((r) => r.bottom))
   const ink = (name) => {
     const probe = document.createElement('span')
@@ -114,7 +114,7 @@ def worst(image: Image.Image, box: list[float], ink: tuple[int, int, int]) -> fl
 
 HOVERED = """
 () => {
-  const row = [...document.querySelectorAll('aside .nib-row')].find((one) => !one.classList.contains('is-on'))
+  const row = [...document.querySelectorAll('aside .orden-row')].find((one) => !one.classList.contains('is-on'))
   if (!row) return null
   const box = row.getBoundingClientRect()
   return { x: box.left + box.width / 2, y: box.top + box.height / 2, box: [box.right - 30, box.top + 3, box.right - 6, box.bottom - 3] }
@@ -216,7 +216,7 @@ def drive(browser: Any) -> None:
                   const look = () => {
                     const app = document.getElementById('app')
                     if (!app || !app.childElementCount) return requestAnimationFrame(look)
-                    const sheet = document.getElementById('nib-user-theme')
+                    const sheet = document.getElementById('orden-user-theme')
                     window.__firstFramePicture = !!sheet && sheet.textContent.includes('--wallpaper-picture:')
                   }
                   requestAnimationFrame(look)

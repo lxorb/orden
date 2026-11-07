@@ -63,7 +63,7 @@ def drive(browser: Browser) -> None:
     wait_for(page, f"() => window.nibApp.workspace.activeSpace?.id === {json.dumps(ids['home'])}", "Home again")
     both(page, "from Home again")
 
-    page.locator(".tasks > .nib-row.adder").click()
+    page.locator(".tasks > .orden-row.adder").click()
     field = ".sheet .quick input.field"
     if DRIVE.waited(page, f"!!document.querySelector('{field}')", "quick add from the panel"):
         page.keyboard.type("Pay the rent", delay=15)

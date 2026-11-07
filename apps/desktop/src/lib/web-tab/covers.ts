@@ -21,8 +21,8 @@ const NOTICES = '[data-notices]'
 const CARDS = `${NOTICES} > *`
 
 export const COVERS = {
-  floating: ['nib-layer', 'nib-bubble', 'nib-screen', 'nib-swipe', 'nib-flight'],
-  whole: ['nib-scrim', 'nib-swipe-room'],
+  floating: ['orden-layer', 'orden-bubble', 'orden-screen', 'orden-swipe', 'orden-flight'],
+  whole: ['orden-scrim', 'orden-swipe-room'],
 } as const
 
 const FLOATING = [

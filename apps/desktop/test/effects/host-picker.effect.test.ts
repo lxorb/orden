@@ -95,10 +95,10 @@ afterEach(() => {
 })
 
 const dialog = () => target.querySelector<HTMLElement>('[role="menu"]')
-const rows = () => [...(dialog()?.querySelectorAll<HTMLButtonElement>('.nib-row') ?? [])]
+const rows = () => [...(dialog()?.querySelectorAll<HTMLButtonElement>('.orden-row') ?? [])]
 const names = () =>
   rows().map((one) => {
-    const label = one.querySelector('.nib-row-label')?.cloneNode(true) as HTMLElement | undefined
+    const label = one.querySelector('.orden-row-label')?.cloneNode(true) as HTMLElement | undefined
     label?.querySelector('.detail')?.remove()
     return label?.textContent
   })
@@ -149,7 +149,7 @@ test('no field: the pinned host, the recent one, then the rest by group, numbere
   ).toEqual(['Home'])
   expect(dialog()?.querySelectorAll('hr').length).toBe(2)
   expect(rows()[3]?.querySelector('.detail')?.textContent).toBe('emil@10.0.0.5')
-  expect(rows()[1]?.querySelector('.nib-row-meta')).not.toBe(null)
+  expect(rows()[1]?.querySelector('.orden-row-meta')).not.toBe(null)
   expect(document.activeElement).toBe(rows()[0])
 })
 
@@ -208,7 +208,7 @@ test('Escape and the scrim put it away, and a digit no host has is refused', asy
   expect(hostPicker.open).toBe(true)
   expect(names()).toHaveLength(4)
 
-  target.querySelector<HTMLElement>('.nib-scrim')?.click()
+  target.querySelector<HTMLElement>('.orden-scrim')?.click()
   flushSync()
   expect(hostPicker.open).toBe(false)
   expect(workspace.tabs).toHaveLength(0)

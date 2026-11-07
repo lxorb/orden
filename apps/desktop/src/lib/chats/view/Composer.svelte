@@ -437,7 +437,7 @@
       </span>
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         aria-label={t('Cancel')}
         onclick={() => (page.aside = null)}><Glyph name="close" /></button
       >
@@ -469,7 +469,7 @@
     </div>
   {/if}
 
-  <div class="box nib-field" class:editing={aside?.kind === 'edit'}>
+  <div class="box orden-field" class:editing={aside?.kind === 'edit'}>
     {#if recording}
       <Recorder onsend={sendFile} ondone={() => ((recording = false), focus())} />
     {:else}
@@ -595,7 +595,7 @@
     line-height: 1.45;
   }
 
-  .editor :global(.cm-content:is(#write, .nib-write)) {
+  .editor :global(.cm-content:is(#write, .orden-write)) {
     max-width: none;
     margin: 0;
     padding: 5px 0;

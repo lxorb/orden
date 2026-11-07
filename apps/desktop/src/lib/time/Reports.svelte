@@ -172,7 +172,7 @@
   </div>
 
   <section class="activities">
-    <p class="nib-section">{t('Activity')}</p>
+    <p class="orden-section">{t('Activity')}</p>
     {#if !totals.length}
       <p class="none">{t('Nothing recorded yet.')}</p>
     {/if}
@@ -184,12 +184,12 @@
         <li>
           <button
             type="button"
-            class="nib-row"
+            class="orden-row"
             oncontextmenu={(event) => activityMenu(event, activity)}
             onclick={(event) => activityMenu(event, activity)}
           >
             <span class="dot" style:background={tintOf(total.activity)}></span>
-            <span class="nib-row-label">
+            <span class="orden-row-label">
               <bdi>{nameOf(total.activity, t('No activity'))}</bdi>
               {#if made}<span class="made">{made}</span>{/if}
             </span>
@@ -199,7 +199,8 @@
                 style:background={tintOf(total.activity)}
               ></span></span
             >
-            <span class="nib-row-meta">{length(total.ms)}{goal ? ` / ${length(goal.ms)}` : ''}</span
+            <span class="orden-row-meta"
+              >{length(total.ms)}{goal ? ` / ${length(goal.ms)}` : ''}</span
             >
           </button>
         </li>
@@ -209,21 +210,21 @@
   <div class="columns">
     {#each groups as group (group.lane)}
       <section>
-        <p class="nib-section">{group.label}</p>
+        <p class="orden-section">{group.label}</p>
         <ul>
           {#each group.list as place (place.key)}
             {@const rule = time.ruleFor(group.lane, place.key)}
             <li>
               <button
                 type="button"
-                class="nib-row is-short"
+                class="orden-row is-short"
                 aria-haspopup="menu"
                 title={t('Count as')}
                 onclick={(event) => placeMenu(event, group.lane, place)}
                 oncontextmenu={(event) => placeMenu(event, group.lane, place)}
               >
                 <span class="dot" style:background={placeTint(place.key)}></span>
-                <span class="nib-row-label"><bdi>{place.name}</bdi></span>
+                <span class="orden-row-label"><bdi>{place.name}</bdi></span>
                 {#if rule}<span class="counted" style:color={tintOf(rule.activity)}
                     >{nameOf(rule.activity, '')}</span
                   >{/if}
@@ -233,7 +234,7 @@
                     style:background={placeTint(place.key)}
                   ></span></span
                 >
-                <span class="nib-row-meta">{length(place.ms)}</span>
+                <span class="orden-row-meta">{length(place.ms)}</span>
               </button>
             </li>
           {/each}

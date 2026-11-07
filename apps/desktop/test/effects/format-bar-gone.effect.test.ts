@@ -51,7 +51,7 @@ afterEach(async () => {
   document.body.replaceChildren()
 })
 
-const callout = () => target.querySelector('.nib-bar-at') !== null
+const callout = () => target.querySelector('.orden-bar-at') !== null
 
 test('stands over a selection, and goes when the editor under it does', () => {
   const view = writing()

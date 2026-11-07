@@ -39,7 +39,7 @@ export const imageSelection = ViewPlugin.fromClass(
           for (const { frame, selected, flipped, shift } of marks) {
             frame.classList.toggle('is-selected', selected)
             frame.classList.toggle('is-flipped', flipped)
-            frame.style.setProperty('--nib-tools-shift', `${shift}px`)
+            frame.style.setProperty('--orden-tools-shift', `${shift}px`)
           }
         },
       })
@@ -51,7 +51,7 @@ export const imageSelection = ViewPlugin.fromClass(
       const scroller = view.scrollDOM.getBoundingClientRect()
       const out: Mark[] = []
 
-      for (const frame of view.contentDOM.querySelectorAll<HTMLElement>('.nib-image-frame')) {
+      for (const frame of view.contentDOM.querySelectorAll<HTMLElement>('.orden-image-frame')) {
         const parts = partsOf(frame)
         if (!parts) continue
 
@@ -66,7 +66,7 @@ export const imageSelection = ViewPlugin.fromClass(
           const tools = parts.tools.getBoundingClientRect()
           flipped = box.top - scroller.top < tools.height + 16
 
-          const current = parseFloat(frame.style.getPropertyValue('--nib-tools-shift')) || 0
+          const current = parseFloat(frame.style.getPropertyValue('--orden-tools-shift')) || 0
           const left = tools.left - current
           const right = left + tools.width
           const margin = 8

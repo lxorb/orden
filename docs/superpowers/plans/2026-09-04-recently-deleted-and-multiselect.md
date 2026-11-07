@@ -67,7 +67,7 @@
 
 ### Task 6: Selecting several rows
 
-**Files:** Modify `src/lib/workspace.svelte.ts` (`selection: string[]`, `anchor`, `select(path, { toggle, range, order })`, `selectAll(order)`, `clearSelection()`, `isSelected(path)`, `dragPayload(path): string[]`), `src/lib/Tree.svelte` (click modifiers, `.selected`, drag payload `text/nib-paths`, keyboard on the tree container: Ctrl+A, Escape, Delete/Backspace), `src/lib/Sidebar.svelte` and `src/lib/Rail.svelte` (drop handlers accept `text/nib-paths`), menu bulk entries; Test `src/lib/workspace.test.ts` (selection describe block).
+**Files:** Modify `src/lib/workspace.svelte.ts` (`selection: string[]`, `anchor`, `select(path, { toggle, range, order })`, `selectAll(order)`, `clearSelection()`, `isSelected(path)`, `dragPayload(path): string[]`), `src/lib/Tree.svelte` (click modifiers, `.selected`, drag payload `text/orden-paths`, keyboard on the tree container: Ctrl+A, Escape, Delete/Backspace), `src/lib/Sidebar.svelte` and `src/lib/Rail.svelte` (drop handlers accept `text/orden-paths`), menu bulk entries; Test `src/lib/workspace.test.ts` (selection describe block).
 
 - [ ] Tests: toggle adds and removes; range follows the given order from the anchor; select all; plain select replaces; space change clears; `dragPayload` returns the selection when the row is in it, the row alone otherwise.
 - [ ] Implement; `pnpm --filter @orden/desktop test` and `check`; browser check on an isolated origin; commit `feat: select several notes with ctrl and shift`.

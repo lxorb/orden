@@ -111,7 +111,7 @@ def selection(page: Page) -> None:
     say(f"[bar] {count}")
     if "3" not in count:
         wrong(f"the bar says {count!r}, not three selected")
-    if page.locator(".task-sheet, .nib-screen").count():
+    if page.locator(".task-sheet, .orden-screen").count():
         wrong("a press with Ctrl or Shift opened the task")
     shot(page, "02-selected")
 

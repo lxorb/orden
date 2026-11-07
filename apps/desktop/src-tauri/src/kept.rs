@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn what_was_written_and_taken_away_is_read_back() {
-        let folder = std::env::temp_dir().join(format!("nib-kept-{}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("orden-kept-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         for (key, said) in [
             ("orden:font", Said::Value("Inter".into())),

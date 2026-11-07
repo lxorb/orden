@@ -49,7 +49,7 @@
 
 {#if client === 'other'}
   <button class="disclose" aria-expanded={making} onclick={fold}>
-    <svg class="chevron nib-mirror" class:open={making} viewBox="0 0 16 16" aria-hidden="true"
+    <svg class="chevron orden-mirror" class:open={making} viewBox="0 0 16 16" aria-hidden="true"
       ><path d="M6 3l5 5-5 5" /></svg
     >
     {t('A client on another machine?')}
@@ -76,7 +76,7 @@
             spellcheck="false"
             autocomplete="off"
           />
-          <button class="nib-chip" type="submit" disabled={!name.trim()}
+          <button class="orden-chip" type="submit" disabled={!name.trim()}
             >{t('Create a token')}</button
           >
         </form>

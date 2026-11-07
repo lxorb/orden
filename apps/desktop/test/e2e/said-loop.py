@@ -71,7 +71,7 @@ def main() -> int:
         page.evaluate("() => (window.nibApp.sync.status = 'error')")
         page.wait_for_timeout(1200)
 
-        rows = page.locator("aside .nib-row.row[data-path]")
+        rows = page.locator("aside .orden-row.row[data-path]")
         say(f"tree rows {rows.count()}")
         if rows.count():
             rows.first.click(button="right")

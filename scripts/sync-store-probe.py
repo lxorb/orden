@@ -379,7 +379,7 @@ def main() -> int:
     if not exe.exists():
         raise SystemExit(f"no such exe: {exe}")
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-sync-store-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-sync-store-"))
     space = spaces / SPACE
     space.mkdir(parents=True, exist_ok=True)
     note = space / "Plan.md"

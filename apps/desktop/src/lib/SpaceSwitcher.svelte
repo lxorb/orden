@@ -69,7 +69,7 @@
     onclick={() => (open = !open)}
   >
     {@render mark()}
-    <span class="nib-row-label">{name}</span>
+    <span class="orden-row-label">{name}</span>
     {#if here && isShared(here.root)}
       <SharedMark />
     {/if}
@@ -125,7 +125,7 @@
     grid-area: 1 / 1;
   }
 
-  .name .nib-row-label {
+  .name .orden-row-label {
     flex: 0 1 auto;
   }
 

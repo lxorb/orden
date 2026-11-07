@@ -118,13 +118,13 @@
 {#if typing}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim"
+    class="orden-scrim"
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => hostPicker.dismiss()}
   ></div>
 
   <div
-    class="nib-screen is-centred is-steady picker"
+    class="orden-screen is-centred is-steady picker"
     style:--rows={Math.max(placed.length, 1) + (offer ? 1 : 0)}
     style:--heads={placed.filter((one) => one.head).length}
     style:--parts={placed.filter((one) => one.parted).length}
@@ -148,7 +148,7 @@
         </p>
       {/if}
       <button
-        class="nib-row"
+        class="orden-row"
         role="menuitem"
         bind:this={buttons[at]}
         onclick={() => hostPicker.choose(host)}
@@ -158,33 +158,33 @@
         <SpacePlace place={at} {typed} held={typing.held}
           ><HostMark colour={host.colour} /></SpacePlace
         >
-        <span class="nib-row-label"
+        <span class="orden-row-label"
           >{#each isNumber(typed) ? [{ text: host.name, hit: false }] : pieces(host.name, typed) as piece, index (index)}{#if piece.hit}<b
                 >{piece.text}</b
               >{:else}{piece.text}{/if}{/each}{#if host.detail}<span class="detail"
               >{host.detail}</span
             >{/if}</span
         >
-        {#if host.last !== null}<span class="nib-row-meta">{ago(host.last)}</span>{/if}
+        {#if host.last !== null}<span class="orden-row-meta">{ago(host.last)}</span>{/if}
       </button>
     {/each}
 
     {#if offer}
       <button
-        class="nib-row"
+        class="orden-row"
         role="menuitem"
         bind:this={offerButton}
         onclick={() => hostPicker.connect(offer)}
       >
         <HostMark />
-        <span class="nib-row-label">{said(offer)}</span>
+        <span class="orden-row-label">{said(offer)}</span>
       </button>
     {/if}
 
     {#if empty}
-      <button class="nib-row" role="menuitem" onclick={() => hostPicker.manage()}>
+      <button class="orden-row" role="menuitem" onclick={() => hostPicker.manage()}>
         <HostMark />
-        <span class="nib-row-label">{t('Add host')}</span>
+        <span class="orden-row-label">{t('Add host')}</span>
       </button>
     {/if}
   </div>

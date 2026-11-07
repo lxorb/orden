@@ -310,7 +310,7 @@ describe('proving a domain is yours', () => {
     const record = await wanted()
 
     expect(record.name).toBe(RECORD)
-    expect(record.value).toMatch(/^nib-verify=[a-f0-9]{64}$/)
+    expect(record.value).toMatch(/^orden-verify=[a-f0-9]{64}$/)
   })
 
   test('a token is one space’s own', async () => {
@@ -346,7 +346,7 @@ describe('proving a domain is yours', () => {
 
   test('is not proved by somebody else’s token at the right name', async () => {
     await publish({ domain: 'notes.example.com' })
-    cloudflare.txt(RECORD, ['nib-verify=' + 'f'.repeat(64), 'v=spf1 -all'])
+    cloudflare.txt(RECORD, ['orden-verify=' + 'f'.repeat(64), 'v=spf1 -all'])
 
     expect((await verify()).status).toBe(409)
     expect((await status()).json.state).toBe('unproved')

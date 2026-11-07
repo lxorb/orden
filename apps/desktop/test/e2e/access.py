@@ -183,7 +183,7 @@ UNNAMED = f"""
 
 HEADINGS = """
 () => [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
-  .filter((one) => one.getClientRects().length > 0 || one.classList.contains('nib-said'))
+  .filter((one) => one.getClientRects().length > 0 || one.classList.contains('orden-said'))
   .map((one) => `${one.tagName.toLowerCase()} ${(one.textContent ?? '').trim().slice(0, 28)}`)
 """
 
@@ -432,7 +432,7 @@ def opens(window: Window, how: str, wait: int = 600) -> bool:
 STILL_UP = """
 () => {
   const up = [...document.querySelectorAll(
-    '[role=dialog], [role=menu], .nib-screen, .sheet, .palette',
+    '[role=dialog], [role=menu], .orden-screen, .sheet, .palette',
   )].filter((node) => node.getClientRects().length > 0)
 
   return up.map((node) => (node.className ?? '').toString().split(' ')[0] || node.tagName)
@@ -456,7 +456,7 @@ def layer(window: Window, surface: str, how: str, wait: int = 600) -> None:
 
     try:
         window.page.wait_for_selector(
-            "[role=dialog], [role=menu], .nib-screen, .sheet, .palette",
+            "[role=dialog], [role=menu], .orden-screen, .sheet, .palette",
             state="visible",
             timeout=15000,
         )
@@ -732,7 +732,7 @@ def extras(browser: Browser) -> None:
         say(f"    the floor is {found['floor']}px; under it: {found['small'] or 'nothing'}")
         window.shot("touch-targets")
 
-        left = [one for one in found["small"] if "nib-fold-hinge" not in one]
+        left = [one for one in found["small"] if "orden-fold-hinge" not in one]
         if left:
             wrong(f"under the touch floor: {left[:8]}")
     finally:

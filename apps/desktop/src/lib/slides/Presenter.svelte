@@ -108,7 +108,7 @@
         <div class="stage">
           <div class="slide" data-shape={stage.shape}>
             <!-- eslint-disable-next-line svelte/no-at-html-tags -- the slide the stage sent, already rendered by it -->
-            <div class="nib-write" bind:this={bigPage}>{@html stage.slide}</div>
+            <div class="orden-write" bind:this={bigPage}>{@html stage.slide}</div>
           </div>
         </div>
       </div>
@@ -117,7 +117,7 @@
         <div class="stage">
           <div class="slide" data-shape={stage.nextShape}>
             <!-- eslint-disable-next-line svelte/no-at-html-tags -- the next slide, from the same place -->
-            <div class="nib-write" bind:this={smallPage}>{@html stage.next}</div>
+            <div class="orden-write" bind:this={smallPage}>{@html stage.next}</div>
           </div>
         </div>
       </div>

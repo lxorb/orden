@@ -62,7 +62,7 @@ foreach ($t in $history.GetHistory($Id)) {
 """
 
 def history_script() -> pathlib.Path:
-    path = pathlib.Path(tempfile.gettempdir()) / "nib-chat-notify-probe-history.ps1"
+    path = pathlib.Path(tempfile.gettempdir()) / "orden-chat-notify-probe-history.ps1"
     path.write_text(HISTORY_PS1, encoding="utf-8")
     return path
 
@@ -240,7 +240,7 @@ def main() -> int:
     exe = pathlib.Path(args.exe).resolve()
     refuse_updating(exe)
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-chat-notify-spaces-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-chat-notify-spaces-"))
     failures: list[str] = []
     app = None
     page = None

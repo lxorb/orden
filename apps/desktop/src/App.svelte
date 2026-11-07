@@ -755,9 +755,9 @@
   onpointerdown={() => fullscreen.stir()}
 />
 
-<h1 class="nib-said">{workspace.active?.shown ?? 'Orden'}</h1>
+<h1 class="orden-said">{workspace.active?.shown ?? 'Orden'}</h1>
 
-<p class="nib-said" role="status" aria-live="polite">{said.words}</p>
+<p class="orden-said" role="status" aria-live="polite">{said.words}</p>
 
 <main
   class:focus={modes.focus}
@@ -966,7 +966,7 @@
     {/if}
     {#if reloading.offered}
       <div class="reload" role="alert">
-        <button class="nib-button" onclick={() => location.reload()}>{t('Reload')}</button>
+        <button class="orden-button" onclick={() => location.reload()}>{t('Reload')}</button>
       </div>
     {/if}
   </div>

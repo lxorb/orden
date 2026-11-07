@@ -138,8 +138,8 @@
         <span>{t('New chat')}</span>
       </button>
     {/if}
-    <div class="find nib-field">
-      <svg class="nib-field-mark" viewBox="0 0 13 13" aria-hidden="true"
+    <div class="find orden-field">
+      <svg class="orden-field-mark" viewBox="0 0 13 13" aria-hidden="true"
         ><path d="M5.8 2.2a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 1 0 0-7.2zM8.4 8.4l2.6 2.6" /></svg
       >
       <input
@@ -174,9 +174,9 @@
     {/if}
     {#if archived.length && !archivedShown}
       <li role="presentation">
-        <button class="nib-row is-short shown-archived" onclick={() => (archivedShown = true)}>
-          <span class="nib-row-label">{t('Archived')}</span>
-          <span class="nib-row-meta">{archived.length}</span>
+        <button class="orden-row is-short shown-archived" onclick={() => (archivedShown = true)}>
+          <span class="orden-row-label">{t('Archived')}</span>
+          <span class="orden-row-meta">{archived.length}</span>
         </button>
       </li>
     {/if}
@@ -246,7 +246,7 @@
     list-style: none;
   }
 
-  .shown-archived .nib-row-label {
+  .shown-archived .orden-row-label {
     color: var(--muted);
   }
 
