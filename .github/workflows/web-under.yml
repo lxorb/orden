@@ -12,6 +12,8 @@ on:
       - scripts/web-under-drive.py
       - scripts/overview-drive.py
       - scripts/tools-freeze-drive.py
+      - scripts/alt-alone-drive.py
+      - apps/desktop/src-tauri/src/keyboard.rs
       - apps/desktop/src-tauri/src/terminal/**
       - apps/desktop/src-tauri/src/explorer/**
       - .github/workflows/web-under.yml
@@ -64,6 +66,11 @@ jobs:
         if: always()
         run: |
           python scripts/tools-freeze-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER"
+
+      - name: A tap of Alt or F10 leaves the window answering
+        if: always()
+        run: |
+          python scripts/alt-alone-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER"
 
       - name: Windowed, for UI Automation
         if: always()
