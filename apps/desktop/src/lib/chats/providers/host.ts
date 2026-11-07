@@ -8,6 +8,16 @@ import { parsedOffThread } from './mail-parse'
 
 let opened = 0
 
+export const PIECE = 256 * 1024
+
+export async function writtenInPieces(
+  bytes: Uint8Array,
+  write: (piece: string) => Promise<unknown>,
+): Promise<void> {
+  for (let at = 0; at === 0 || at < bytes.length; at += PIECE)
+    await write(toBase64(bytes.subarray(at, at + PIECE)))
+}
+
 async function socket(ask: SocketAsk): Promise<Socket> {
   const id = `m${Date.now().toString(36)}-${++opened}`
   const output = new Channel<unknown>()
@@ -27,7 +37,7 @@ async function socket(ask: SocketAsk): Promise<Socket> {
   }
   await invoke('mail_socket_open', { id, host: ask.host, port: ask.port, tls: ask.tls, output })
   return {
-    write: (bytes) => invoke('mail_socket_write', { id, data: toBase64(bytes) }),
+    write: (bytes) => writtenInPieces(bytes, (data) => invoke('mail_socket_write', { id, data })),
     read(listener, finished) {
       hear = listener
       end = finished
