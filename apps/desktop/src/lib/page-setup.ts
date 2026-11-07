@@ -114,8 +114,13 @@ const PAPER_INCHES: Record<Paper, [number, number]> = {
   Legal: [8.5, 14],
 }
 
-export function runningDate(source: string, given?: string): string {
-  return given ?? frontMatterValue(source, 'date') ?? new Date().toISOString().slice(0, 10)
+function localDay(at: Date): string {
+  const two = (value: number) => String(value).padStart(2, '0')
+  return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`
+}
+
+export function runningDate(source: string, given?: string, now = new Date()): string {
+  return given ?? frontMatterValue(source, 'date') ?? localDay(now)
 }
 
 export interface PaperInches {

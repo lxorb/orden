@@ -11,6 +11,7 @@ import {
   movedTask,
   newTask,
   quickWords,
+  wallClock,
   queryBase,
   readAt,
   rowPlace,
@@ -281,6 +282,14 @@ describe('lists', () => {
       today: '2026-10-05',
       now: '2026-10-05T01:30:00',
     })
+  })
+
+  test("words like tomorrow read from the wall clock of the account's zone", () => {
+    const wall = wallClock(new Date('2026-10-04T23:30:00Z'), 'Pacific/Auckland')
+    expect([wall.getFullYear(), wall.getMonth() + 1, wall.getDate(), wall.getHours()]).toEqual([
+      2026, 10, 5, 12,
+    ])
+    expect(taskLine(quickWords(['en'], wall)('Call mum tomorrow').fields)).toContain('2026-10-06')
   })
 })
 

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { taskHash } from '@orden/bases'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 import { running } from './room'
@@ -108,6 +108,57 @@ describe('the to-dos, with Orden closed', () => {
       content: `# Thesis\n- [ ] Write the intro #writing ⏫ 📅 ${today}\n  - [x] Outline\n- [ ] Read 🔁 every day 📅 ${today}\n`,
     })
     expect((await metaOf('Thesis.md'))?.['done-on']).toBe(`${taskHash('Outline')}:${day}`)
+  })
+
+  test("the connector's days are the days of the account's time zone, not of UTC", async () => {
+    const at = new Date()
+    at.setUTCHours(23, 30, 0, 0)
+    const next = (days: number) =>
+      new Date(at.getTime() + days * 86_400_000).toISOString().slice(0, 10)
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(at)
+    try {
+      env.db.prepare('update users set zone = ?').run('Pacific/Auckland')
+      const key = await connector()
+      const metaOf = async (path: string) => {
+        const row = env.db.prepare('select id from notes where path = ?').get(path) as {
+          id: string
+        }
+        const page = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
+        const items = (page.json as unknown as { items: { id: string; meta?: object }[] }).items
+        return items.find((one) => one.id === row.id)?.meta as Record<string, string> | undefined
+      }
+      const local = next(1)
+
+      await json(key, 'update_task', {
+        space: 'Work',
+        at: `Shop.md#1:${taskHash('Milk')}`,
+        done: true,
+      })
+      expect((await metaOf('Shop.md'))?.['done-on']).toBe(
+        `${taskHash('Milk')}:${local.replace(/-/g, '')}`,
+      )
+
+      await tool(key, 'write_note', {
+        space: 'Work',
+        path: 'Thesis.md',
+        content: `# Thesis\n- [ ] Write the intro 📅 ${local}\n  - [x] Outline\n- [ ] Read 📅 ${today}\n`,
+      })
+      expect((await metaOf('Thesis.md'))?.['done-on']).toBe(
+        `${taskHash('Outline')}:${local.replace(/-/g, '')}`,
+      )
+
+      const added = await json(key, 'add_task', { space: 'Work', text: 'Call mum tomorrow' })
+      const line = (await read(key, added.path as string))
+        .split('\n')
+        .find((one) => one.includes('Call mum'))
+      expect(line).toContain(next(2))
+
+      const listed = await json(key, 'list_tasks', { view: 'today' })
+      expect(listed.tasks.map((one) => one.text)).toContain('Write the intro')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   test('a task with no note goes to the inbox the space chose, and Inbox lists it (#1469)', async () => {
