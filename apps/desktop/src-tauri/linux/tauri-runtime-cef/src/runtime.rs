@@ -3327,15 +3327,13 @@ impl<T: UserEvent> CefRuntime<T> {
     // Pinned off whenever no transport was actually configured, including the rejected
     // port above: `RemoteDebuggingServer` consults this before it starts a server for
     // either transport, so it also refuses a switch that reaches Chromium another way.
-    if !remote_debugging_enabled {
-      global_preferences.insert(
-        0,
-        (
-          crate::cef_impl::preferences::REMOTE_DEBUGGING_ALLOWED.to_string(),
-          serde_json::Value::Bool(false),
-        ),
-      );
-    }
+    global_preferences.insert(
+      0,
+      (
+        crate::cef_impl::preferences::REMOTE_DEBUGGING_ALLOWED.to_string(),
+        serde_json::Value::Bool(remote_debugging_enabled),
+      ),
+    );
 
     let cache_path = cache_path_override.unwrap_or_else(|| {
       let cache_base = dirs::cache_dir().unwrap_or_else(std::env::temp_dir);
