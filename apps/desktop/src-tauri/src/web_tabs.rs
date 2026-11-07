@@ -768,12 +768,17 @@ mod session {
             true
         });
 
-        if !fresh || store.is_none() {
+        if !fresh {
             return;
         }
 
+        let kept = env.as_raw() as usize;
         let handler = BrowserProcessExitedEventHandler::create(Box::new(move |_env, _args| {
-            ENV.with_borrow_mut(|held| held.remove(&named));
+            ENV.with_borrow_mut(|held| {
+                if held.get(&named).map(|one| one.as_raw() as usize) == Some(kept) {
+                    held.remove(&named);
+                }
+            });
             Ok(())
         }));
         unsafe {
