@@ -134,7 +134,7 @@ export function appMenu(context: Context): MenuGroup[] {
                 ...keyed('app.print'),
                 asks: true,
                 disabled: !printable(workspace.active?.kind),
-                run: () => busy.start(t('Printing'), () => printOpen()),
+                run: () => busy.start(t('Printing'), () => printOpen(), 'print'),
               },
             ]
           : []),

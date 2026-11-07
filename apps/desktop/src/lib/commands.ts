@@ -199,13 +199,17 @@ export function exportCommands(): Command[] {
   }
 
   const run = (id: ExportId) => () =>
-    busy.start(t('Exporting'), async () => {
-      if (kind === 'canvas') await drawingOut(id)
-      else if (kind === 'pages') await pagesOut(id)
-      else if (id === 'slides-html' || id === 'slides-pdf') await slidesOut(id)
-      else if (id === 'copy') await copyOut()
-      else if (isNoteFormat(id)) await noteOut(id)
-    })
+    busy.start(
+      t('Exporting'),
+      async () => {
+        if (kind === 'canvas') await drawingOut(id)
+        else if (kind === 'pages') await pagesOut(id)
+        else if (id === 'slides-html' || id === 'slides-pdf') await slidesOut(id)
+        else if (id === 'copy') await copyOut()
+        else if (isNoteFormat(id)) await noteOut(id)
+      },
+      `export-${id}`,
+    )
 
   const offered = offeredBy(kind)
   const nothing = offered.length === 0
@@ -237,10 +241,14 @@ export function exportCommands(): Command[] {
       label: t('Export as {format}', { format: t(format.label) }),
       disabled: nothing,
       run: () =>
-        busy.start(t('Exporting'), async () => {
-          const m = await import('./export')
-          await m.exportPandoc(source(), name(), format.id, note()?.path ?? null)
-        }),
+        busy.start(
+          t('Exporting'),
+          async () => {
+            const m = await import('./export')
+            await m.exportPandoc(source(), name(), format.id, note()?.path ?? null)
+          },
+          `export-${format.id}`,
+        ),
     })
   }
 
@@ -844,17 +852,21 @@ function spaceCommands(): Command[] {
             id: 'export-space',
             label: t('Export this space as Markdown and folders'),
             run: () =>
-              busy.start(t('Exporting'), async () => {
-                const [{ exportSpace }, { listedAt }] = await Promise.all([
-                  import('./internal/export'),
-                  import('./rows/todo-lists'),
-                ])
-                const items = workspace.itemMeta.itemsOf(space.root)
-                const metaOf = (path: string) => items[path] ?? null
-                await exportSpace(space.root, space.name, metaOf, (path) =>
-                  listedAt(space.root, path, metaOf(path)),
-                )
-              }),
+              busy.start(
+                t('Exporting'),
+                async () => {
+                  const [{ exportSpace }, { listedAt }] = await Promise.all([
+                    import('./internal/export'),
+                    import('./rows/todo-lists'),
+                  ])
+                  const items = workspace.itemMeta.itemsOf(space.root)
+                  const metaOf = (path: string) => items[path] ?? null
+                  await exportSpace(space.root, space.name, metaOf, (path) =>
+                    listedAt(space.root, path, metaOf(path)),
+                  )
+                },
+                'export-space',
+              ),
           },
         ]
       : []),
@@ -1053,7 +1065,7 @@ export function appCommands(view?: EditorView): Command[] {
             label: t('Print'),
             hint: shortcuts.hint('app.print'),
             disabled: !printable(workspace.active?.kind),
-            run: () => busy.start(t('Printing'), () => printOpen()),
+            run: () => busy.start(t('Printing'), () => printOpen(), 'print'),
           },
         ]
       : []),
