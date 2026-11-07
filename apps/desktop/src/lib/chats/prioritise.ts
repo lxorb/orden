@@ -8,7 +8,7 @@ import { ORDEN, ordenConnection } from './providers/orden'
 import { store } from './view/source.svelte'
 import { todayOf } from '@orden/bases'
 import type { Level } from '@orden/chats/priority'
-import type { Connection } from '@orden/chats/provider'
+import type { Connection, ProviderMessage } from '@orden/chats/provider'
 
 const asker = (): Asker | null => {
   const provider = ai.providerFor('ask')
@@ -30,10 +30,11 @@ export function startPriorities(): void {
     if (!linked || !conversation) return
     const key = rowKey(provider, account, conversation.id)
     const title = conversation.title ?? event.message.author.name
-    void considered(key, title, linked.connection, conversation.id)
-      .then((level) => {
-        if (!level || !priorities.notify.includes(level)) return
-        notify(title, `${event.message.author.name}: ${event.message.text}`, key, () =>
+    void consider(key, title, linked.connection, conversation.id)
+      .then((said) => {
+        if (!said?.level || !priorities.notify.includes(said.level)) return
+        const newest = said.newest ?? event.message
+        notify(title, `${newest.author.name}: ${newest.text}`, key, () =>
           openConversation({ provider, account, conversation: conversation.id }, title),
         )
       })
@@ -45,8 +46,40 @@ export function startPriorities(): void {
     if (!priorities.on && !priorities.drafting) return
     const chat = event.message.conversation
     const key = rowKey(ORDEN, ORDEN, chat)
-    void considered(key, store().entry(chat)?.name ?? '', own, chat).catch(() => undefined)
+    void consider(key, store().entry(chat)?.name ?? '', own, chat).catch(() => undefined)
   })
+}
+
+interface Considered {
+  level: Level | null
+  newest: ProviderMessage | undefined
+}
+
+const considering = new Map<string, { again: boolean }>()
+
+async function consider(
+  key: string,
+  title: string,
+  connection: Connection,
+  conversation: string,
+): Promise<Considered | null> {
+  const busy = considering.get(key)
+  if (busy) {
+    busy.again = true
+    return null
+  }
+  const turn = { again: false }
+  considering.set(key, turn)
+  try {
+    let said = await considered(key, title, connection, conversation)
+    while (turn.again) {
+      turn.again = false
+      said = await considered(key, title, connection, conversation)
+    }
+    return said
+  } finally {
+    considering.delete(key)
+  }
 }
 
 async function considered(
@@ -54,10 +87,10 @@ async function considered(
   title: string,
   connection: Connection,
   conversation: string,
-): Promise<Level | null> {
+): Promise<Considered> {
   const page = await connection.history(conversation, { limit: 30 })
   const level = await priorities.heard(key, title, page.messages.slice(-8))
   const mine = page.messages.filter((one) => one.mine && one.text).map((one) => one.text)
   await priorities.suggest(key, title, page.messages.slice(-10), mine, todayOf())
-  return level
+  return { level, newest: page.messages.filter((one) => !one.mine).at(-1) }
 }
