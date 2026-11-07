@@ -62,6 +62,7 @@ import { themes } from './themes'
 import { time } from './time'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
+import { steadyEnv } from './steady'
 import type { Env, Variables, Whoever } from './types'
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -293,7 +294,8 @@ function unframed(response: Response): Response {
 
 const EVERY_MINUTE = '* * * * *'
 
-function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
+function scheduled(event: ScheduledEvent, given: Env, context: ExecutionContext) {
+  const env = steadyEnv(given)
   const at = Date.now()
 
   if (event.cron === EVERY_MINUTE) {
@@ -322,7 +324,7 @@ function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
 
 function serve(request: Request, env: Env, context?: ExecutionContext) {
   if (isMachineHost(new URL(request.url).hostname, machineDomain(env))) return fetch(request)
-  return app.fetch(request, env, context)
+  return app.fetch(request, steadyEnv(env), context)
 }
 
 export default { fetch: serve, scheduled }
