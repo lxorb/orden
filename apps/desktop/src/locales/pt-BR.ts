@@ -2990,6 +2990,8 @@ export const ptBR: Dictionary = {
     '{name} não foi adicionado: um chat aceita imagens e arquivos de texto de até 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} não foi adicionado: uma mensagem aceita até 20 imagens.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} não foi adicionado: uma mensagem aceita até 4 MB de texto no total.',
   'Time tracker': 'Controle de tempo',
   'Start timer': 'Iniciar cronômetro',
   'Stop timer': 'Parar cronômetro',

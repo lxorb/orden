@@ -2961,6 +2961,8 @@ export const kn: Dictionary = {
     '{name} ಸೇರಿಸಲಾಗಲಿಲ್ಲ: ಚಾಟ್ ಚಿತ್ರಗಳನ್ನು ಮತ್ತು 2 MB ವರೆಗಿನ ಪಠ್ಯ ಫೈಲ್‌ಗಳನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} ಸೇರಿಸಲಾಗಲಿಲ್ಲ: ಒಂದು ಸಂದೇಶ ಗರಿಷ್ಠ 20 ಚಿತ್ರಗಳನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} ಸೇರಿಸಲಾಗಲಿಲ್ಲ: ಒಂದು ಸಂದೇಶ ಒಟ್ಟು ಗರಿಷ್ಠ 4 MB ಪಠ್ಯವನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
   'Time tracker': 'ಸಮಯ ಟ್ರ್ಯಾಕರ್',
   'Start timer': 'ಟೈಮರ್ ಆರಂಭಿಸಿ',
   'Stop timer': 'ಟೈಮರ್ ನಿಲ್ಲಿಸಿ',

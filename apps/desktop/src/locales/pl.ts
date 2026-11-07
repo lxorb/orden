@@ -3039,6 +3039,8 @@ export const pl: Dictionary = {
     'Nie dodano {name}: czat przyjmuje obrazy i pliki tekstowe do 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     'Nie dodano {name}: wiadomość przyjmuje najwyżej 20 obrazów.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    'Nie dodano {name}: wiadomość przyjmuje łącznie najwyżej 4 MB tekstu.',
   'Time tracker': 'Śledzenie czasu',
   'Start timer': 'Uruchom licznik',
   'Stop timer': 'Zatrzymaj licznik',

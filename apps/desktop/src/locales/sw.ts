@@ -2968,6 +2968,8 @@ export const sw: Dictionary = {
     '{name} haikuongezwa: gumzo hupokea picha na faili za maandishi hadi MB 2.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} haikuongezwa: ujumbe mmoja hupokea hadi picha 20.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} haikuongezwa: ujumbe mmoja hupokea maandishi hadi MB 4 kwa jumla.',
   'Time tracker': 'Kifuatiliaji cha muda',
   'Start timer': 'Anzisha kipima muda',
   'Stop timer': 'Simamisha kipima muda',

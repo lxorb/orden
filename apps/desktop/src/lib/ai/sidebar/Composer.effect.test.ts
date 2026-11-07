@@ -220,6 +220,22 @@ test('a file too large or not text says why it was not added', async () => {
   expect(panel.trouble).toBeNull()
 })
 
+test('text files dropped all at once stop at as much text as a message takes, and say so', async () => {
+  panel.chips = []
+  panel.trouble = null
+  const field = composer()
+  const big = (name: string) => new File(['x'.repeat(1_500_000)], name, { type: 'text/plain' })
+
+  pasted(field, [big('a.log'), big('b.log'), big('c.log')])
+
+  expect(panel.trouble).toContain('c.log was not added')
+  await vi.waitFor(() => expect(panel.chips).toHaveLength(2))
+  panel.trouble = null
+  pasted(field, [], 'y'.repeat(1_200_000))
+  expect(panel.trouble).toContain('was not added')
+  expect(panel.chips).toHaveLength(2)
+})
+
 test('two files of one name are both added, each with its own words', async () => {
   panel.chips = []
   const field = composer()

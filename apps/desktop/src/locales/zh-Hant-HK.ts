@@ -2812,6 +2812,8 @@ export const zhHantHK: Dictionary = {
     '未加入 {name}：聊天只接受圖片和 2 MB 以內的文字檔。',
   '{name} was not added: a message takes up to 20 pictures.':
     '未加入 {name}：一則訊息最多接受 20 張圖片。',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '未加入 {name}：一則訊息的文字合共最多 4 MB。',
   'Time tracker': '時間記錄',
   'Start timer': '開始計時',
   'Stop timer': '停止計時',

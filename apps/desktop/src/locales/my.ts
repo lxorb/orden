@@ -2898,6 +2898,8 @@ export const my: Dictionary = {
     '{name} ကို မထည့်ရပါ - ချတ်တွင် ပုံများနှင့် 2 MB အထိ စာသားဖိုင်များသာ ထည့်နိုင်သည်။',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} ကို မထည့်ရပါ - မက်ဆေ့ချ်တစ်ခုတွင် ပုံ 20 ပုံအထိသာ ထည့်နိုင်သည်။',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} ကို မထည့်ရပါ - မက်ဆေ့ချ်တစ်ခုတွင် စာသား စုစုပေါင်း 4 MB အထိသာ ထည့်နိုင်သည်။',
   'Time tracker': 'အချိန် မှတ်တမ်း',
   'Start timer': 'အချိန်တိုင်းကိရိယာ စတင်ရန်',
   'Stop timer': 'အချိန်တိုင်းကိရိယာ ရပ်ရန်',

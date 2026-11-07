@@ -2947,6 +2947,8 @@ export const tr: Dictionary = {
     '{name} eklenmedi: sohbet resimleri ve en fazla 2 MB metin dosyalarını kabul eder.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} eklenmedi: bir mesaj en fazla 20 resim kabul eder.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} eklenmedi: bir mesaj toplamda en fazla 4 MB metin kabul eder.',
   'Time tracker': 'Zaman takibi',
   'Start timer': 'Zamanlayıcıyı başlat',
   'Stop timer': 'Zamanlayıcıyı durdur',

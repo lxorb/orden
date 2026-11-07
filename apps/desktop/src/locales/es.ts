@@ -3008,6 +3008,8 @@ export const es: Dictionary = {
     '{name} no se añadió: un chat admite imágenes y archivos de texto de hasta 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} no se añadió: un mensaje admite hasta 20 imágenes.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} no se añadió: un mensaje admite hasta 4 MB de texto en total.',
   'Time tracker': 'Control de tiempo',
   'Start timer': 'Iniciar temporizador',
   'Stop timer': 'Detener temporizador',

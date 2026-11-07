@@ -2877,6 +2877,8 @@ export const vi: Dictionary = {
     'Chưa thêm {name}: cuộc trò chuyện nhận hình ảnh và tệp văn bản tối đa 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     'Chưa thêm {name}: một tin nhắn nhận tối đa 20 hình ảnh.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    'Chưa thêm {name}: một tin nhắn nhận tổng cộng tối đa 4 MB văn bản.',
   'Time tracker': 'Theo dõi thời gian',
   'Start timer': 'Bắt đầu hẹn giờ',
   'Stop timer': 'Dừng hẹn giờ',

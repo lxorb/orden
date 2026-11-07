@@ -2890,6 +2890,8 @@ export const jv: Dictionary = {
     '{name} ora ditambahake: obrolan nampa gambar lan berkas teks nganti 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} ora ditambahake: siji pesen nampa paling akeh 20 gambar.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} ora ditambahake: siji pesen nampa paling akeh 4 MB teks kabeh.',
   'Time tracker': 'Pelacak wektu',
   'Start timer': 'Wiwiti timer',
   'Stop timer': 'Mandhegake timer',

@@ -3024,6 +3024,8 @@ export const fr: Dictionary = {
     '{name} n’a pas été ajouté : une discussion accepte les images et les fichiers texte jusqu’à 2 Mo.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} n’a pas été ajouté : un message accepte jusqu’à 20 images.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} n’a pas été ajouté : un message accepte jusqu’à 4 Mo de texte au total.',
   'Time tracker': 'Suivi du temps',
   'Start timer': 'Lancer le minuteur',
   'Stop timer': 'Arrêter le minuteur',

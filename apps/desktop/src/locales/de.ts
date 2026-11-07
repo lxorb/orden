@@ -2991,6 +2991,8 @@ export const de: Dictionary = {
     '{name} wurde nicht hinzugefügt: Ein Chat nimmt Bilder und Textdateien bis 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} wurde nicht hinzugefügt: Eine Nachricht nimmt höchstens 20 Bilder.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} wurde nicht hinzugefügt: Eine Nachricht nimmt insgesamt höchstens 4 MB Text.',
   'Time tracker': 'Zeiterfassung',
   'Start timer': 'Timer starten',
   'Stop timer': 'Timer anhalten',

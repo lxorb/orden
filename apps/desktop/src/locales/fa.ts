@@ -2932,6 +2932,8 @@ export const fa: Dictionary = {
     '{name} افزوده نشد: گفتگو تصویر و پرونده‌های متنی تا 2 MB را می‌پذیرد.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} افزوده نشد: هر پیام حداکثر 20 تصویر می‌پذیرد.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} افزوده نشد: هر پیام روی هم حداکثر 4 MB متن می‌پذیرد.',
   'Time tracker': 'ثبت زمان',
   'Start timer': 'شروع زمان‌سنج',
   'Stop timer': 'توقف زمان‌سنج',

@@ -2913,6 +2913,8 @@ export const gu: Dictionary = {
     '{name} ઉમેરાયું નહીં: ચેટ ચિત્રો અને 2 MB સુધીની ટેક્સ્ટ ફાઇલો લે છે.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} ઉમેરાયું નહીં: એક સંદેશ વધુમાં વધુ 20 ચિત્રો લે છે.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} ઉમેરાયું નહીં: એક સંદેશ કુલ મળીને વધુમાં વધુ 4 MB લખાણ લે છે.',
   'Time tracker': 'સમય ટ્રૅકર',
   'Start timer': 'ટાઇમર શરૂ કરો',
   'Stop timer': 'ટાઇમર બંધ કરો',

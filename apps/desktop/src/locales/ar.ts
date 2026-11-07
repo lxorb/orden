@@ -3060,6 +3060,8 @@ export const ar: Dictionary = {
     'لم تُضف {name}: تقبل المحادثة الصور والملفات النصية حتى 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     'لم تُضف {name}: تقبل الرسالة 20 صورة على الأكثر.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    'لم تُضف {name}: تقبل الرسالة 4 MB من النص على الأكثر إجمالًا.',
   'Time tracker': 'متتبّع الوقت',
   'Start timer': 'بدء المؤقّت',
   'Stop timer': 'إيقاف المؤقّت',

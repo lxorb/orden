@@ -2937,6 +2937,8 @@ export const pa: Dictionary = {
     '{name} ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ: ਚੈਟ ਵਿੱਚ ਤਸਵੀਰਾਂ ਅਤੇ 2 MB ਤੱਕ ਦੀਆਂ ਟੈਕਸਟ ਫ਼ਾਈਲਾਂ ਹੀ ਜੋੜੀਆਂ ਜਾ ਸਕਦੀਆਂ ਹਨ।',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ: ਇੱਕ ਸੁਨੇਹੇ ਵਿੱਚ ਵੱਧ ਤੋਂ ਵੱਧ 20 ਤਸਵੀਰਾਂ ਜੋੜੀਆਂ ਜਾ ਸਕਦੀਆਂ ਹਨ।',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ: ਇੱਕ ਸੁਨੇਹੇ ਵਿੱਚ ਕੁੱਲ ਵੱਧ ਤੋਂ ਵੱਧ 4 MB ਲਿਖਤ ਜੋੜੀ ਜਾ ਸਕਦੀ ਹੈ।',
   'Time tracker': 'ਸਮਾਂ ਟਰੈਕਰ',
   'Start timer': 'ਟਾਈਮਰ ਸ਼ੁਰੂ ਕਰੋ',
   'Stop timer': 'ਟਾਈਮਰ ਰੋਕੋ',

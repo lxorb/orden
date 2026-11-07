@@ -3,6 +3,12 @@ import { pictureOf } from '../../pictures-away'
 
 export const MOST_CHAT_PICTURES = 20
 
+export const MOST_CHAT_TEXT = 4_000_000
+
+export function textHeld(chips: readonly { kind: string; text?: string }[]): number {
+  return chips.reduce((sum, one) => sum + (one.kind === 'words' ? (one.text?.length ?? 0) : 0), 0)
+}
+
 export interface ChatPicture {
   mime: string
   data: string

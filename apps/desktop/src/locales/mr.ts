@@ -2926,6 +2926,8 @@ export const mr: Dictionary = {
     '{name} जोडले नाही: चॅटमध्ये चित्रे आणि 2 MB पर्यंतच्या मजकूर फाइल्स जोडता येतात.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} जोडले नाही: एका संदेशात जास्तीत जास्त 20 चित्रे जोडता येतात.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} जोडले नाही: एका संदेशात एकूण जास्तीत जास्त 4 MB मजकूर जोडता येतो.',
   'Time tracker': 'वेळ ट्रॅकर',
   'Start timer': 'टायमर सुरू करा',
   'Stop timer': 'टायमर थांबवा',

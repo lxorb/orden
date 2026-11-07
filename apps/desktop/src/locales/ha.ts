@@ -2972,6 +2972,8 @@ export const ha: Dictionary = {
     'Ba a ƙara {name} ba: hira tana karɓar hotuna da fayilolin rubutu har zuwa 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     'Ba a ƙara {name} ba: saƙo ɗaya yana karɓar hotuna har zuwa 20.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    'Ba a ƙara {name} ba: saƙo ɗaya yana karɓar rubutu har zuwa 4 MB gaba ɗaya.',
   'Time tracker': 'Mai bin diddigin lokaci',
   'Start timer': 'Fara agogon lokaci',
   'Stop timer': 'Tsayar da agogon lokaci',

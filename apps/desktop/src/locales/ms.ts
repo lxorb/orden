@@ -2904,6 +2904,8 @@ export const ms: Dictionary = {
     '{name} tidak ditambah: sembang menerima gambar dan fail teks sehingga 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} tidak ditambah: satu mesej menerima paling banyak 20 gambar.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} tidak ditambah: satu mesej menerima paling banyak 4 MB teks secara keseluruhan.',
   'Time tracker': 'Penjejak masa',
   'Start timer': 'Mulakan pemasa',
   'Stop timer': 'Hentikan pemasa',

@@ -26,7 +26,7 @@
   import ModeMark from './ModeMark.svelte'
   import { type Mention, mentionAt, mentionOf, ranked, type Row, sameMention } from './mentions'
   import ModelPicker from './ModelPicker.svelte'
-  import { chatPicture, MOST_CHAT_PICTURES } from './picture'
+  import { chatPicture, MOST_CHAT_PICTURES, MOST_CHAT_TEXT, textHeld } from './picture'
   import { minutes, tokens } from './numbers'
   import Queue from './Queue.svelte'
   import Ring from './Ring.svelte'
@@ -327,6 +327,15 @@
   }
 
   let drawing = 0
+  let reading = 0
+
+  function textRoom(): number {
+    return MOST_CHAT_TEXT - textHeld(chat.chips) - reading
+  }
+
+  function tooMuchText(name: string) {
+    chat.trouble = t('{name} was not added: a message takes up to 4 MB of text in all.', { name })
+  }
 
   function take(file: File) {
     const name = file.name || t('Picture')
@@ -357,6 +366,11 @@
       refused()
       return
     }
+    if (file.size > textRoom()) {
+      tooMuchText(name)
+      return
+    }
+    reading += file.size
     const reader = new FileReader()
     reader.onload = () => {
       const text = typeof reader.result === 'string' ? reader.result : ''
@@ -364,6 +378,7 @@
       else addChip({ kind: 'words', id: crypto.randomUUID(), label: file.name, text })
     }
     reader.onerror = unread
+    reader.onloadend = () => (reading -= file.size)
     reader.readAsText(file)
   }
 
@@ -381,6 +396,10 @@
       chat.trouble = t('{name} was not added: a chat takes pictures, and text files up to 2 MB.', {
         name,
       })
+      return
+    }
+    if (text.length > textRoom()) {
+      tooMuchText(name)
       return
     }
     addChip({ kind: 'words', id: crypto.randomUUID(), label: name, text })

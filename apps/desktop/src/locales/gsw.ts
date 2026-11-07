@@ -2950,6 +2950,8 @@ export const gsw: Dictionary = {
     '{name} isch nöd dezuegfüegt worde: En Chat nimmt Bilder und Textdateie bis 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} isch nöd dezuegfüegt worde: E Nachricht nimmt höchschtens 20 Bilder.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} isch nöd dezuegfüegt worde: E Nachricht nimmt insgesamt höchschtens 4 MB Text.',
   'Time tracker': 'Ziiterfassig',
   'Start timer': 'Timer starte',
   'Stop timer': 'Timer aahalte',

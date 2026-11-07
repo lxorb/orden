@@ -2845,6 +2845,8 @@ export const th: Dictionary = {
     'ไม่ได้เพิ่ม {name}: แชตรับรูปภาพและไฟล์ข้อความขนาดไม่เกิน 2 MB',
   '{name} was not added: a message takes up to 20 pictures.':
     'ไม่ได้เพิ่ม {name}: ข้อความหนึ่งรับรูปภาพได้ไม่เกิน 20 รูป',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    'ไม่ได้เพิ่ม {name}: ข้อความหนึ่งรับข้อความรวมกันได้ไม่เกิน 4 MB',
   'Time tracker': 'ตัวติดตามเวลา',
   'Start timer': 'เริ่มจับเวลา',
   'Stop timer': 'หยุดจับเวลา',

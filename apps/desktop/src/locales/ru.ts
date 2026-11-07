@@ -3039,6 +3039,8 @@ export const ru: Dictionary = {
     '{name} не добавлен: чат принимает изображения и текстовые файлы до 2 МБ.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} не добавлен: сообщение принимает не больше 20 изображений.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} не добавлен: сообщение принимает не больше 4 МБ текста в сумме.',
   'Time tracker': 'Учёт времени',
   'Start timer': 'Запустить таймер',
   'Stop timer': 'Остановить таймер',

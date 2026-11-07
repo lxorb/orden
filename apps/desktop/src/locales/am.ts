@@ -2867,6 +2867,8 @@ export const am: Dictionary = {
     '{name} አልታከለም፦ ውይይት ምስሎችን እና እስከ 2 MB የሆኑ የጽሑፍ ፋይሎችን ይቀበላል።',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} አልታከለም፦ አንድ መልእክት እስከ 20 ምስሎች ይቀበላል።',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} አልታከለም፦ አንድ መልእክት በአጠቃላይ እስከ 4 MB ጽሑፍ ይቀበላል።',
   'Time tracker': 'የጊዜ መከታተያ',
   'Start timer': 'ሰዓት ቆጣሪ ጀምር',
   'Stop timer': 'ሰዓት ቆጣሪ አቁም',

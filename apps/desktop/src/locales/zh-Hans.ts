@@ -2811,6 +2811,8 @@ export const zhHans: Dictionary = {
     '未添加 {name}：聊天只接受图片和 2 MB 以内的文本文件。',
   '{name} was not added: a message takes up to 20 pictures.':
     '未添加 {name}：一条消息最多接受 20 张图片。',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '未添加 {name}：一条消息的文本合计最多 4 MB。',
   'Time tracker': '时间记录',
   'Start timer': '开始计时',
   'Stop timer': '停止计时',

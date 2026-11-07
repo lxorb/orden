@@ -2881,6 +2881,8 @@ export const ja: Dictionary = {
     '{name} は追加されませんでした: チャットに追加できるのは画像と 2 MB までのテキストファイルです。',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} は追加されませんでした: 1 通のメッセージに添付できる画像は 20 枚までです。',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} は追加されませんでした: 1 通のメッセージに添付できるテキストは合計 4 MB までです。',
   'Time tracker': 'タイムトラッカー',
   'Start timer': 'タイマーを開始',
   'Stop timer': 'タイマーを停止',

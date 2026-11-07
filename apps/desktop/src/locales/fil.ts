@@ -2991,6 +2991,8 @@ export const fil: Dictionary = {
     'Hindi naidagdag ang {name}: tumatanggap ang chat ng mga larawan at text file na hanggang 2 MB.',
   '{name} was not added: a message takes up to 20 pictures.':
     'Hindi naidagdag ang {name}: hanggang 20 larawan lang ang tinatanggap ng isang mensahe.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    'Hindi naidagdag ang {name}: hanggang 4 MB na teksto lang sa kabuuan ang tinatanggap ng isang mensahe.',
   'Time tracker': 'Pansubaybay ng oras',
   'Start timer': 'Simulan ang timer',
   'Stop timer': 'Ihinto ang timer',

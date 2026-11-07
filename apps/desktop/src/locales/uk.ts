@@ -3033,6 +3033,8 @@ export const uk: Dictionary = {
     '{name} не додано: чат приймає зображення й текстові файли до 2 МБ.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} не додано: повідомлення приймає щонайбільше 20 зображень.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} не додано: повідомлення приймає загалом щонайбільше 4 МБ тексту.',
   'Time tracker': 'Облік часу',
   'Start timer': 'Запустити таймер',
   'Stop timer': 'Зупинити таймер',

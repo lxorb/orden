@@ -2927,6 +2927,8 @@ export const ps: Dictionary = {
     '{name} ورنه کړل شو: چټ انځورونه او تر 2 MB پورې متني فایلونه مني.',
   '{name} was not added: a message takes up to 20 pictures.':
     '{name} ورنه کړل شو: یو پیغام تر 20 انځورونو پورې مني.',
+  '{name} was not added: a message takes up to 4 MB of text in all.':
+    '{name} ورنه کړل شو: یو پیغام ټول ټال تر 4 MB متن پورې مني.',
   'Time tracker': 'د وخت څارونکی',
   'Start timer': 'ټایمر پیل کړئ',
   'Stop timer': 'ټایمر ودروئ',
