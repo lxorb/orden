@@ -4,6 +4,7 @@ import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { insideSpace, relativeTo, samePath } from '../space-paths'
 import type { ItemMetaStore } from '../workspace/item-meta.svelte'
+import { chosenInbox } from './inbox'
 import { inProjects, projectsOf } from './projects'
 
 export const MARKED_KEY = 'todo-lists'
@@ -23,7 +24,16 @@ export function hearOldLists(then: (paths: readonly string[]) => void): () => vo
   return () => hearing.delete(then)
 }
 
+export function keepInboxListed(root: string, workspace: Lists): void {
+  const inbox = chosenInbox(root)
+  if (inbox === null) return
+  const path = insideSpace(root, inbox)
+  if (workspace.itemMeta.valueOf(path, LIST_KEY, root) === LIST_VALUE) return
+  workspace.itemMeta.set(path, { [LIST_KEY]: LIST_VALUE }, root)
+}
+
 export function markOldListsSoon(root: string, heard: boolean, workspace: Lists): void {
+  if (heard) keepInboxListed(root, workspace)
   if (!heard || marking.has(root) || workspace.itemMeta.listsMarked(root)) return
   marking.add(root)
   void markOldLists(root, workspace)

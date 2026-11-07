@@ -218,4 +218,17 @@ describe('a space made before todo lists were marked (#1333)', () => {
     expect(workspace.itemMeta.listsMarked(ROOT)).toBe(true)
     expect(workspace.itemMeta.itemsOf(ROOT)).toEqual({})
   })
+
+  test('the note chosen as the inbox is marked a list, so the account reads it as one too', async () => {
+    seed({ 'Inbox.md': '- [ ] Call the bank\n' })
+    stored.set('nib:inbox', JSON.stringify({ [ROOT]: 'Inbox.md' }))
+
+    markOldListsSoon(ROOT, false, workspace)
+    await settled()
+    expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toBeNull()
+
+    markOldListsSoon(ROOT, true, workspace)
+    await settled()
+    expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toEqual({ 'todo-list': 'yes' })
+  })
 })
