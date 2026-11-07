@@ -191,6 +191,7 @@ impl Waits {
 pub(crate) struct Crate {
     functions: HashMap<String, Function>,
     commands: Vec<String>,
+    workers: Vec<String>,
     mains: Vec<String>,
     modules: usize,
 }
@@ -198,6 +199,10 @@ pub(crate) struct Crate {
 impl Crate {
     pub(crate) fn commands(&self) -> &[String] {
         &self.commands
+    }
+
+    pub(crate) fn workers(&self) -> &[String] {
+        &self.workers
     }
 
     pub(crate) fn mains(&self) -> &[String] {
@@ -688,6 +693,7 @@ struct Found {
     values: Vec<Passed>,
     said: String,
     command: bool,
+    worker: bool,
     locks: Locks,
     params: Vec<String>,
     shape: Shape,
@@ -1159,6 +1165,7 @@ impl Gathered {
             values,
             said,
             command: command(attrs, sig),
+            worker: worker(attrs, sig),
             locks,
             params,
             shape: Shape {
@@ -1255,6 +1262,7 @@ impl Gathered {
             values,
             said: said_of(tokens),
             command: false,
+            worker: false,
             locks,
             params: Vec::new(),
             shape: Shape::default(),
@@ -1355,6 +1363,9 @@ impl Gathered {
 
             if found.command && !own.commands.contains(&found.path) {
                 own.commands.push(found.path.clone());
+            }
+            if found.worker && !own.workers.contains(&found.path) {
+                own.workers.push(found.path.clone());
             }
             if found.main && !own.mains.contains(&found.path) {
                 own.mains.push(found.path.clone());
@@ -2552,6 +2563,18 @@ fn owner_of(shape: &syn::Type) -> Option<String> {
         return None;
     };
     path.path.segments.last().map(|one| one.ident.to_string())
+}
+
+fn worker(attrs: &[syn::Attribute], sig: &syn::Signature) -> bool {
+    attrs.iter().any(|attr| {
+        let path = attr.path();
+        let said: Vec<String> = path
+            .segments
+            .iter()
+            .map(|one| one.ident.to_string())
+            .collect();
+        said == ["tauri", "command"]
+    }) && !command(attrs, sig)
 }
 
 fn command(attrs: &[syn::Attribute], sig: &syn::Signature) -> bool {

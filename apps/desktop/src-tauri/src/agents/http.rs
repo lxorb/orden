@@ -62,7 +62,12 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: u64)
         }
         reachable(app, grant, hop)
     };
-    tauri::async_runtime::block_on(sent(url, request, &check))
+    std::thread::scope(|scope| {
+        scope
+            .spawn(|| tauri::async_runtime::block_on(sent(url, request, &check)))
+            .join()
+            .unwrap_or_else(|_| Answer::error(Code::Failed, "the request broke off"))
+    })
 }
 
 fn request(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Result<Request, Answer> {

@@ -1103,6 +1103,69 @@ mod tests {
         }
     }
 
+    const BLOCKS_THE_RUNTIME: [&str; 6] = [
+        "block_on(",
+        "blocking_recv(",
+        "blocking_send(",
+        "blocking_lock(",
+        "blocking_read(",
+        "blocking_write(",
+    ];
+
+    #[test]
+    fn a_command_run_on_the_runtime_is_followed_to_what_blocks_on_it() {
+        let source = concat!(
+            "#[tauri::command(async)]\npub fn handed() {\n    fetched();\n}\n\n",
+            "fn fetched() {\n    tauri::async_runtime::block_on(sent());\n}\n\n",
+            "#[tauri::command]\npub async fn awaited() {\n    tauri::async_runtime::block_on(sent());\n}\n\n",
+            "#[tauri::command(async)]\npub fn apart() {\n    std::thread::spawn(|| tauri::async_runtime::block_on(sent()));\n}\n\n",
+            "#[tauri::command]\npub fn here() {\n    fetched();\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let mut workers = own.workers().to_vec();
+        workers.sort();
+        assert_eq!(workers, ["crate::apart", "crate::awaited", "crate::handed"]);
+        let blocks = own.reaching(&BLOCKS_THE_RUNTIME, &[]);
+        assert!(blocks.contains("crate::handed"));
+        assert!(blocks.contains("crate::awaited"));
+        assert!(!blocks.contains("crate::apart"));
+    }
+
+    #[test]
+    fn blocking_on_the_runtime_from_inside_one_of_its_tasks_panics() {
+        let panicked = tauri::async_runtime::block_on(tauri::async_runtime::spawn(async {
+            std::panic::catch_unwind(|| tauri::async_runtime::block_on(async {})).is_err()
+        }))
+        .expect("the task ran");
+        assert!(panicked);
+    }
+
+    #[test]
+    fn nothing_a_command_runs_on_the_runtime_blocks_on_it() {
+        let mut late: Vec<String> = Vec::new();
+        for target in TARGETS {
+            let own = own_on(target);
+            assert!(
+                own.workers().len() > 100,
+                "only {} commands on the runtime",
+                own.workers().len()
+            );
+            let waits = own.waiting(&BLOCKS_THE_RUNTIME, &[]);
+            late.extend(
+                own.workers()
+                    .iter()
+                    .filter(|path| waits.contains(path))
+                    .map(|path| {
+                        format!(
+                            "{target:?} {}",
+                            own.chain(path, &BLOCKS_THE_RUNTIME, &waits).join(" -> ")
+                        )
+                    }),
+            );
+        }
+        assert!(late.is_empty(), "blocks the runtime it runs on: {late:#?}");
+    }
+
     #[test]
     fn nothing_the_window_s_thread_runs_waits() {
         let mut late: Vec<String> = Vec::new();
