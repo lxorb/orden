@@ -19,6 +19,7 @@ class Voice {
   asking = $state.raw<Dictates | null>(null)
 
   private running: Listening | null = null
+  private session: object | null = null
   private settling: Promise<void> | null = null
   private finishWhenOpen = false
 
@@ -38,15 +39,21 @@ class Voice {
     const field = owner.field()
     if (!field) return
 
+    const session = {}
     this.asking = null
     this.owner = owner
+    this.session = session
     this.state = 'opening'
     this.finishWhenOpen = false
     const hooks: Hooks = {
-      level: (level) => (this.level = level),
-      full: () => void this.finish(),
+      level: (level) => {
+        if (this.session === session) this.level = level
+      },
+      full: () => {
+        if (this.session === session) void this.finish()
+      },
       ended: () => {
-        if (this.owner === owner) this.reset()
+        if (this.session === session) this.reset()
       },
       trouble: (said) => this.say(owner, said),
     }
@@ -55,7 +62,7 @@ class Voice {
         engine === 'device'
           ? await (await import('./device')).listenOnDevice(field, hooks)
           : await (await import('./listening')).listen(field, engine, owner.words?.() ?? [], hooks)
-      if (!this.stillOpening(owner)) {
+      if (!this.stillOpening(session)) {
         running.cancel()
         return
       }
@@ -63,7 +70,7 @@ class Voice {
       this.state = 'listening'
       if (this.finishAsked()) void this.finish()
     } catch (error) {
-      if (this.owner === owner) this.reset()
+      if (this.session === session) this.reset()
       this.say(owner, message(error, key('That microphone could not be opened.')))
     }
   }
@@ -77,8 +84,10 @@ class Voice {
 
     this.state = 'finishing'
     this.level = 0
-    const running = this.running
-    this.settling = running.finish().finally(() => this.reset())
+    const session = this.session
+    this.settling = this.running.finish().finally(() => {
+      if (this.session === session) this.reset()
+    })
     return this.settling
   }
 
@@ -91,8 +100,8 @@ class Voice {
     return this.of(owner) === 'idle' ? this.start(owner) : this.finish()
   }
 
-  private stillOpening(owner: Dictates): boolean {
-    return this.owner === owner && this.state === 'opening'
+  private stillOpening(session: object): boolean {
+    return this.session === session && this.state === 'opening'
   }
 
   private finishAsked(): boolean {
@@ -104,6 +113,7 @@ class Voice {
     this.level = 0
     this.owner = null
     this.running = null
+    this.session = null
     this.settling = null
   }
 
