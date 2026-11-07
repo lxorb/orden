@@ -11,7 +11,7 @@ use tauri::{AppHandle, Emitter as _, Manager as _};
 
 use super::bin::{self, Ticket};
 use super::changes::gone;
-use super::listing::{asked, entry, Entry};
+use super::listing::{asked, listed, Entry};
 use super::reach::{Explored, Use};
 use crate::paths::{free_spot, inside};
 
@@ -608,18 +608,18 @@ fn walk_matching(
                 out.cut = true;
                 return;
             }
-            let Some(listed) = entry(&one.path()) else {
+            let Some(item) = listed(&one) else {
                 continue;
             };
-            if listed.hidden && !hidden {
+            if item.hidden && !hidden {
                 continue;
             }
-            if listed.kind == super::listing::Kind::Folder {
+            if item.kind == super::listing::Kind::Folder {
                 waiting.push_back(one.path());
             }
-            if listed.name.to_lowercase().contains(&wanted) {
+            if item.name.to_lowercase().contains(&wanted) {
                 out.found += 1;
-                found(&folder, listed);
+                found(&folder, item);
             }
         }
     }
