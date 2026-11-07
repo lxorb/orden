@@ -805,6 +805,9 @@ export const it: Dictionary = {
   'Command palette': 'Tavolozza comandi',
   Commands: 'Comandi',
   Storage: 'Archiviazione',
+  'Persistent storage': 'Archiviazione persistente',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Se questo browser conserva ciò che Orden tiene qui, comprese le modifiche non inviate, quando lo spazio scarseggia. Premi per chiederlo di nuovo.',
   Dismiss: 'Ignora',
   'Manage storage': 'Gestisci l’archiviazione',
   '{used} of {limit} used.': '{used} di {limit} usati.',

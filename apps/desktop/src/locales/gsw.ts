@@ -790,6 +790,9 @@ export const gsw: Dictionary = {
   'Command palette': 'Befehlspalette',
   Commands: 'Befehl',
   Storage: 'Spycher',
+  'Persistent storage': 'Dauerhafte Speicher',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Öb dä Browser bhaltet, was Orden do speicheret, au nonig gschickti Änderige, wänn em dä Platz knapp wird. Drück, zum nomal z froge.',
   Dismiss: 'Uusblände',
   'Manage storage': 'Spycher verwalte',
   '{used} of {limit} used.': '{used} vo {limit} bruucht.',

@@ -789,6 +789,9 @@ export const bn: Dictionary = {
   'Command palette': 'কমান্ড প্যালেট',
   Commands: 'কমান্ডসমূহ',
   Storage: 'স্টোরেজ',
+  'Persistent storage': 'স্থায়ী স্টোরেজ',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'জায়গা কমে গেলেও এই ব্রাউজার Orden এখানে যা রাখে, না-পাঠানো পরিবর্তনসহ, তা রাখে কি না। আবার চাইতে চাপুন।',
   Dismiss: 'লুকান',
   'Manage storage': 'স্টোরেজ ব্যবস্থাপনা',
   '{used} of {limit} used.': '{limit}-এর {used} ব্যবহৃত।',

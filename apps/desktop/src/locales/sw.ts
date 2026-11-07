@@ -794,6 +794,9 @@ export const sw: Dictionary = {
   'Command palette': 'Paleti ya amri',
   Commands: 'Amri',
   Storage: 'Hifadhi',
+  'Persistent storage': 'Hifadhi ya kudumu',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Kama kivinjari hiki kinahifadhi kile Orden inachoshikilia hapa, pamoja na mabadiliko ambayo hayajatumwa, nafasi inapopungua. Bonyeza ili kuomba tena.',
   Dismiss: 'Ondoa',
   'Manage storage': 'Dhibiti hifadhi',
   '{used} of {limit} used.': '{used} kati ya {limit} zimetumika.',

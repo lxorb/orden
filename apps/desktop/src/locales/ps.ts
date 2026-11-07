@@ -788,6 +788,9 @@ export const ps: Dictionary = {
   'Command palette': 'د کړنو تخته',
   Commands: 'کړنې',
   Storage: 'زېرمه',
+  'Persistent storage': 'دايمي زېرمه',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'آیا دا براوزر هغه څه ساتي چې Orden دلته ساتي، د نه لېږل شویو بدلونونو په ګډون، کله چې ځای کم شي. د بیا غوښتلو لپاره کېکاږئ.',
   Dismiss: 'پرېښودل',
   'Manage storage': 'زېرمه سمبالول',
   '{used} of {limit} used.': 'له {limit} څخه {used} کارول شوی.',

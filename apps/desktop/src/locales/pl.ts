@@ -824,6 +824,9 @@ export const pl: Dictionary = {
   'Command palette': 'Paleta poleceń',
   Commands: 'Polecenia',
   Storage: 'Pamięć',
+  'Persistent storage': 'Trwała pamięć',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Czy ta przeglądarka zachowuje to, co Orden tu przechowuje, także niewysłane zmiany, gdy brakuje jej miejsca. Naciśnij, aby zapytać ponownie.',
   Dismiss: 'Pomiń',
   'Manage storage': 'Zarządzaj pamięcią',
   '{used} of {limit} used.': 'Użyto {used} z {limit}.',

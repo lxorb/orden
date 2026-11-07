@@ -782,6 +782,9 @@ export const ko: Dictionary = {
   'Command palette': '명령 팔레트',
   Commands: '명령',
   Storage: '저장 공간',
+  'Persistent storage': '영구 저장소',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    '공간이 부족할 때도 이 브라우저가 Orden이 여기에 보관한 것(보내지 않은 변경 포함)을 유지하는지 여부입니다. 누르면 다시 요청합니다.',
   Dismiss: '닫기',
   'Manage storage': '저장 공간 관리',
   '{used} of {limit} used.': '{limit} 중 {used} 사용.',

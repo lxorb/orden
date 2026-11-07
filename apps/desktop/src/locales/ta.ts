@@ -789,6 +789,9 @@ export const ta: Dictionary = {
   'Command palette': 'கட்டளைத் தட்டு',
   Commands: 'கட்டளைகள்',
   Storage: 'சேமிப்பிடம்',
+  'Persistent storage': 'நிலையான சேமிப்பகம்',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'இடம் குறையும்போதும் Orden இங்கு வைத்திருப்பதை, அனுப்பாத மாற்றங்கள் உட்பட, இந்த உலாவி வைத்திருக்குமா என்பது. மீண்டும் கேட்க அழுத்தவும்.',
   Dismiss: 'விலக்கு',
   'Manage storage': 'சேமிப்பிடத்தை நிர்வகி',
   '{used} of {limit} used.': '{limit} இல் {used} பயன்படுத்தப்பட்டது.',

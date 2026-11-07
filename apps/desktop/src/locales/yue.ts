@@ -777,6 +777,9 @@ export const yue: Dictionary = {
   'Command palette': '命令面板',
   Commands: '命令',
   Storage: '儲存空間',
+  'Persistent storage': '持久儲存空間',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    '空間唔夠嘅時候，呢個瀏覽器會唔會保留 Orden 喺度儲存嘅嘢（包括未傳送嘅更改）。㩒一下再要求多次。',
   Dismiss: '關閉',
   'Manage storage': '管理儲存空間',
   '{used} of {limit} used.': '已用{used}，共{limit}。',

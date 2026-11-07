@@ -789,6 +789,9 @@ export const te: Dictionary = {
   'Command palette': 'కమాండ్ పాలెట్',
   Commands: 'కమాండ్‌లు',
   Storage: 'స్టోరేజ్',
+  'Persistent storage': 'శాశ్వత నిల్వ',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'స్థలం తక్కువైనప్పుడు కూడా Orden ఇక్కడ ఉంచినవాటిని, పంపని మార్పులతో సహా, ఈ బ్రౌజర్ ఉంచుతుందా అనేది. మళ్లీ అడగడానికి నొక్కండి.',
   Dismiss: 'విస్మరించు',
   'Manage storage': 'స్టోరేజ్ నిర్వహించు',
   '{used} of {limit} used.': '{limit}లో {used} వాడబడింది.',

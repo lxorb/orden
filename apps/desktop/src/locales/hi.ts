@@ -790,6 +790,9 @@ export const hi: Dictionary = {
   'Command palette': 'कमांड पैलेट',
   Commands: 'कमांड',
   Storage: 'स्टोरेज',
+  'Persistent storage': 'स्थायी संग्रहण',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'जगह कम पड़ने पर भी क्या यह ब्राउज़र वह रखता है जो Orden यहाँ रखता है, न भेजे गए बदलाव भी। फिर से माँगने के लिए दबाएँ।',
   Dismiss: 'खारिज करें',
   'Manage storage': 'स्टोरेज प्रबंधित करें',
   '{used} of {limit} used.': '{limit} में {used} उपयोग हुआ।',

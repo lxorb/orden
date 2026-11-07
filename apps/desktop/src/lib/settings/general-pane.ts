@@ -36,6 +36,7 @@ import { dns, PROVIDER_NAMES } from './dns.svelte'
 import { gpu } from './gpu.svelte'
 import { among } from './hold'
 import { versionField } from './version.svelte'
+import { keptForGood } from '../web/kept-for-good.svelte'
 
 function twoWayFields(): Field[] {
   return Object.keys(shells.ways)
@@ -305,6 +306,26 @@ function caption(): { caption?: { text: string; url: string } } {
   return { caption: { text: said.join(' '), url: CATALOGUES_URL } }
 }
 
+function keptGroup(): Group {
+  keptForGood.look()
+  return {
+    title: t('Storage'),
+    fields: [
+      {
+        kind: 'value',
+        label: t('Persistent storage'),
+        hint: t(
+          'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.',
+        ),
+        words: ['storage', 'offline', 'persist', 'evict', 'quota', 'browser', 'kept'],
+        get: () =>
+          keptForGood.held === null ? '…' : keptForGood.held ? t('Allowed') : t('Blocked'),
+        press: () => void keptForGood.again(),
+      },
+    ],
+  }
+}
+
 export function generalPane(): Pane {
   return {
     id: 'general',
@@ -346,6 +367,7 @@ export function generalPane(): Pane {
           },
         ],
       },
+      ...(!__EVEN_PLUGIN__ && keptForGood.able ? [keptGroup()] : []),
       ...(__EVEN_PLUGIN__
         ? []
         : [

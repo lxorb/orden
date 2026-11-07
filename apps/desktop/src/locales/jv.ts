@@ -783,6 +783,9 @@ export const jv: Dictionary = {
   'Command palette': 'Palet printah',
   Commands: 'Printah',
   Storage: 'Panyimpenan',
+  'Persistent storage': 'Panyimpenan permanen',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Apa browser iki nyimpen apa sing disimpen Orden ing kene, kalebu owahan sing durung dikirim, nalika papane meh entek. Pencet kanggo njaluk maneh.',
   Dismiss: 'Tutup',
   'Manage storage': 'Atur panyimpenan',
   '{used} of {limit} used.': '{used} saka {limit} kepakai.',

@@ -791,6 +791,9 @@ export const tr: Dictionary = {
   'Command palette': 'Komut paleti',
   Commands: 'Komutlar',
   Storage: 'Depolama',
+  'Persistent storage': 'Kalıcı depolama',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Bu tarayıcının, yer azaldığında Orden’in burada tuttuklarını, gönderilmemiş değişiklikler dahil, saklayıp saklamadığı. Yeniden istemek için basın.',
   Dismiss: 'Kapat',
   'Manage storage': 'Depolamayı yönet',
   '{used} of {limit} used.': '{limit} içinde {used} kullanıldı.',

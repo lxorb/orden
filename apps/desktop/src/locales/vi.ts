@@ -783,6 +783,9 @@ export const vi: Dictionary = {
   'Command palette': 'Bảng lệnh',
   Commands: 'Lệnh',
   Storage: 'Dung lượng',
+  'Persistent storage': 'Lưu trữ bền vững',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Trình duyệt này có giữ những gì Orden lưu ở đây, kể cả các thay đổi chưa gửi, khi sắp hết dung lượng hay không. Nhấn để yêu cầu lại.',
   Dismiss: 'Bỏ qua',
   'Manage storage': 'Quản lý dung lượng',
   '{used} of {limit} used.': 'Đã dùng {used} trên {limit}.',

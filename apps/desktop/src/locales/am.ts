@@ -782,6 +782,9 @@ export const am: Dictionary = {
   'Command palette': 'የትዕዛዝ ሰሌዳ',
   Commands: 'ትዕዛዞች',
   Storage: 'ማከማቻ',
+  'Persistent storage': 'ቋሚ ማከማቻ',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'ቦታ ሲያንስ ይህ አሳሽ Orden እዚህ የያዘውን፣ ያልተላኩ ለውጦችንም ጨምሮ፣ ይይዝ እንደሆነ። እንደገና ለመጠየቅ ይጫኑ።',
   Dismiss: 'አስወግድ',
   'Manage storage': 'ማከማቻ አስተዳድር',
   '{used} of {limit} used.': 'ከ{limit} {used} ተጠቅሟል።',
