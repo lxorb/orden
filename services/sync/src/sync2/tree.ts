@@ -1,6 +1,8 @@
 import { freePath } from '@orden/markdown/paths'
 import {
   applyOp,
+  heldName,
+  LONGEST_NAME,
   contentChanged,
   type EntryKind,
   kindOfName,
@@ -186,6 +188,7 @@ export class Tree {
     folders: readonly FolderRow[],
     notes: readonly NoteRow[],
     private readonly device: string | undefined,
+    unmarked?: boolean,
   ) {
     const entries: TreeEntry[] = []
     for (const row of folders) entries.push(folderEntry(row))
@@ -202,6 +205,7 @@ export class Tree {
       entries.push(noteEntry(row, row.name))
     }
 
+    if (unmarked !== undefined) this.unmarked = unmarked
     this.state = treeState(entries, next - 1)
     for (const entry of this.state.entries.values()) this.before.set(entry.id, snapshotOf(entry))
     this.heal()
@@ -329,12 +333,15 @@ export class Tree {
 
   private moved(): Map<string, string> {
     const out = new Map<string, string>()
+    const moving: TreeEntry[] = []
     for (const entry of this.state.entries.values()) {
       if (entry.kind === 'folder') continue
       const path = this.pathOf(entry.id)
       if (path === this.paths.get(entry.id)) continue
       out.set(entry.id, path)
-
+      moving.push(entry)
+    }
+    for (const entry of moving) {
       const before = this.before.get(entry.id)
       if (this.rawIds.has(entry.id) || (before && sameAs(entry, before))) {
         entry.seq = this.tick()
@@ -716,25 +723,235 @@ function noteEntry(row: NoteRow, name: string): TreeEntry {
   return entry
 }
 
-export async function readTree(env: Env, spaceId: string, device?: string): Promise<Tree> {
+const FOLDER_COLUMNS =
+  'id, parent_id, name, deleted, seq, updated_by, deleted_in, pos, meta, changes_by'
+
+const NOTE_COLUMNS = `id, kind, folder_id, name, deleted, seq, doc_seq, updated_by, doc_by, deleted_in,
+            placed_seq, placed_by, pos, meta, changes_by, path, epoch`
+
+const KEPT = 'not (deleted = 1 and deleted_at is null)'
+
+async function cursorOf(env: Env, spaceId: string): Promise<number> {
   const cursor = await env.DB.prepare('select next from space_cursor where space_id = ?')
     .bind(spaceId)
     .first<{ next: number }>()
+  return cursor?.next ?? 1
+}
+
+export async function readTree(env: Env, spaceId: string, device?: string): Promise<Tree> {
+  const next = await cursorOf(env, spaceId)
   const folders = await env.DB.prepare(
-    `select id, parent_id, name, deleted, seq, updated_by, deleted_in, pos, meta, changes_by
-       from folders where space_id = ?`,
+    `select ${FOLDER_COLUMNS} from folders where space_id = ? order by id`,
   )
     .bind(spaceId)
     .all<FolderRow>()
   const notes = await env.DB.prepare(
-    `select id, kind, folder_id, name, deleted, seq, doc_seq, updated_by, doc_by, deleted_in,
-            placed_seq, placed_by, pos, meta, changes_by, path, epoch
-       from notes where space_id = ? and not (deleted = 1 and deleted_at is null)`,
+    `select ${NOTE_COLUMNS} from notes where space_id = ? and ${KEPT} order by id`,
   )
     .bind(spaceId)
     .all<NoteRow>()
 
-  return new Tree(spaceId, cursor?.next ?? 1, folders.results, notes.results, device)
+  return new Tree(spaceId, next, folders.results, notes.results, device)
+}
+
+interface Touched {
+  id: string
+  parent?: string | null
+  name?: string
+}
+
+export interface Reach {
+  ids: readonly string[]
+  touched: readonly Touched[]
+  under: readonly string[]
+}
+
+export function reachOf(ops: readonly Op[]): Reach {
+  const ids: string[] = []
+  const touched: Touched[] = []
+  const under: string[] = []
+  for (const op of ops) {
+    ids.push(op.id)
+    if (op.t === 'create' || op.t === 'mkdir') {
+      if (op.parent !== null) ids.push(op.parent)
+      touched.push({ id: op.id, parent: op.parent, name: op.name })
+    } else if (op.t === 'move') {
+      if (op.parent !== null) ids.push(op.parent)
+      touched.push(
+        op.name === undefined
+          ? { id: op.id, parent: op.parent }
+          : { id: op.id, parent: op.parent, name: op.name },
+      )
+    } else if (op.t === 'rename') {
+      touched.push({ id: op.id, name: op.name })
+    } else {
+      touched.push({ id: op.id })
+    }
+    if (op.t === 'move' || op.t === 'rename' || op.t === 'delete' || op.t === 'restore') {
+      under.push(op.id)
+    }
+  }
+  return { ids, touched, under }
+}
+
+class Rows {
+  readonly folders = new Map<string, FolderRow>()
+  readonly notes = new Map<string, NoteRow>()
+
+  constructor(
+    private readonly env: Env,
+    private readonly spaceId: string,
+  ) {}
+
+  async byIds(ids: readonly string[]) {
+    const wanted = [...new Set(ids)].filter((id) => !this.has(id))
+    for (const piece of chunks(wanted, 500)) {
+      const list = JSON.stringify(piece)
+      await this.folderRows(`id in (select value from json_each(?2))`, list)
+      await this.noteRows(`id in (select value from json_each(?2))`, list)
+    }
+  }
+
+  async above() {
+    const starts = new Set<string>()
+    for (const row of this.folders.values()) if (row.parent_id !== null) starts.add(row.parent_id)
+    for (const row of this.notes.values()) if (row.folder_id !== null) starts.add(row.folder_id)
+    const wanted = [...starts].filter((id) => !this.folders.has(id))
+    for (const piece of chunks(wanted, 500)) {
+      await this.folderRows(
+        `id in (with recursive up(id) as (
+                  select value from json_each(?2)
+                  union select f.parent_id from folders f join up on f.id = up.id
+                   where f.space_id = ?1 and f.parent_id is not null)
+                select id from up)`,
+        JSON.stringify(piece),
+      )
+    }
+  }
+
+  async below(ids: readonly string[]) {
+    const roots = [...new Set(ids)].filter((id) => this.folders.has(id))
+    for (const piece of chunks(roots, 100)) {
+      const inside = `(with recursive down(id) as (
+                         select value from json_each(?2)
+                         union select f.id from folders f join down on f.parent_id = down.id
+                          where f.space_id = ?1)
+                       select id from down)`
+      const list = JSON.stringify(piece)
+      await this.folderRows(`id in ${inside}`, list)
+      await this.noteRows(`folder_id in ${inside}`, list)
+    }
+  }
+
+  async named(parent: string | null, name: string) {
+    const prefix = keyPrefix(name)
+    const where = (column: string) =>
+      `coalesce(${column}, '') = ?2 and deleted = 0 and substr(name_key, 1, length(?3)) = ?3`
+    await this.folderRows(where('parent_id'), parent ?? '', prefix)
+    await this.noteRows(where('folder_id'), parent ?? '', prefix)
+  }
+
+  parentOf(id: string): string | null | undefined {
+    const folder = this.folders.get(id)
+    if (folder) return folder.parent_id
+    const note = this.notes.get(id)
+    return note ? note.folder_id : undefined
+  }
+
+  nameOf(id: string): string | null | undefined {
+    return this.folders.get(id)?.name ?? this.notes.get(id)?.name
+  }
+
+  private has(id: string): boolean {
+    return this.folders.has(id) || this.notes.has(id)
+  }
+
+  private async folderRows(where: string, ...values: unknown[]) {
+    const { results } = await this.env.DB.prepare(
+      `select ${FOLDER_COLUMNS} from folders where space_id = ?1 and ${where}`,
+    )
+      .bind(this.spaceId, ...values)
+      .all<FolderRow>()
+    for (const row of results) this.folders.set(row.id, row)
+  }
+
+  private async noteRows(where: string, ...values: unknown[]) {
+    const { results } = await this.env.DB.prepare(
+      `select ${NOTE_COLUMNS} from notes where space_id = ?1 and ${KEPT} and ${where}`,
+    )
+      .bind(this.spaceId, ...values)
+      .all<NoteRow>()
+    for (const row of results) this.notes.set(row.id, row)
+  }
+}
+
+const NUMBERED = 16
+
+function keyPrefix(given: string): string {
+  const name = heldName(given)
+  if (name.length > LONGEST_NAME - NUMBERED) return ''
+  const dot = name.lastIndexOf('.')
+  const key = nameKey(dot > 0 ? name.slice(0, dot) : name)
+  return /[σς]$/u.test(key) ? key.slice(0, -1) : key
+}
+
+async function unhealed(env: Env, spaceId: string): Promise<{ raw: boolean; unmarked: boolean }> {
+  const row = await env.DB.prepare(
+    `select exists(select 1 from notes where space_id = ?1 and name is null and ${KEPT}) as raw,
+            exists(select 1 from notes where space_id = ?1 and epoch = 0
+                     and kind in ${DOCUMENTS_SQL} and ${KEPT}) as unmarked`,
+  )
+    .bind(spaceId)
+    .first<{ raw: number; unmarked: number }>()
+  return { raw: row?.raw === 1, unmarked: row?.unmarked === 1 }
+}
+
+export async function readReach(
+  env: Env,
+  spaceId: string,
+  device: string | undefined,
+  reach: Reach,
+): Promise<Tree> {
+  const next = await cursorOf(env, spaceId)
+  const { raw, unmarked } = await unhealed(env, spaceId)
+  if (raw) return await readTree(env, spaceId, device)
+
+  const rows = new Rows(env, spaceId)
+  await rows.byIds(reach.ids)
+  await rows.above()
+  const revived = [...rows.folders.values()].filter((row) => row.deleted === 1)
+  await rows.below([...reach.under, ...revived.map((row) => row.id)])
+  await rows.above()
+
+  const named = new Map<string, { parent: string | null; name: string }>()
+  const name = (parent: string | null, wanted: string) => {
+    if (wanted) named.set(`${parent ?? ''}\u0000${wanted}`, { parent, name: wanted })
+  }
+  const parents = new Map<string, Set<string | null>>()
+  const names = new Map<string, Set<string>>()
+  const add = <T>(into: Map<string, Set<T>>, id: string, value: T) => {
+    const held = into.get(id) ?? new Set<T>()
+    held.add(value)
+    into.set(id, held)
+  }
+  for (const one of reach.touched) {
+    const parent = rows.parentOf(one.id)
+    const own = rows.nameOf(one.id)
+    if (parent !== undefined) add(parents, one.id, parent)
+    if (own) add(names, one.id, own)
+    if (one.parent !== undefined) add(parents, one.id, one.parent)
+    if (one.name !== undefined) add(names, one.id, one.name)
+  }
+  for (const [id, places] of parents) {
+    for (const parent of places) for (const wanted of names.get(id) ?? []) name(parent, wanted)
+  }
+  for (const row of rows.folders.values()) if (row.deleted === 1) name(row.parent_id, row.name)
+  for (const one of named.values()) await rows.named(one.parent, one.name)
+
+  const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+  const folders = [...rows.folders.values()].sort(byId)
+  const notes = [...rows.notes.values()].sort(byId)
+  return new Tree(spaceId, next, folders, notes, device, unmarked)
 }
 
 export interface Changed<T> {
@@ -753,9 +970,12 @@ export async function changeTree<T>(
   device: string | undefined,
   work: (tree: Tree) => T | Promise<T>,
   opIds: readonly string[] = [],
+  reach?: Reach,
 ): Promise<Changed<T>> {
   for (let attempt = 0; ; attempt++) {
-    const tree = await readTree(env, spaceId, device)
+    const tree = reach
+      ? await readReach(env, spaceId, device, reach)
+      : await readTree(env, spaceId, device)
     if (opIds.length) tree.remember(await answeredBefore(env, spaceId, opIds))
     const value = await work(tree)
     const batch = tree.statements(env)

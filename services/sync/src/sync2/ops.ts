@@ -10,7 +10,7 @@ import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
 import { newId } from '../crypto'
 import type { Env } from '../types'
 import type { Reached } from '../spaces/space'
-import { type Changed, changeTree, type Content, kindOfName, type Tree } from './tree'
+import { type Changed, changeTree, type Content, kindOfName, reachOf, type Tree } from './tree'
 
 const SAW_EVERYTHING = Number.MAX_SAFE_INTEGER
 
@@ -79,6 +79,7 @@ export async function applyOps(
     device,
     (tree) => ops.map((op) => applied(tree, op, context, sizes, taken)),
     ops.map((op) => op.op),
+    reachOf(ops),
   )
 }
 
@@ -217,8 +218,14 @@ export async function describeById(
   meta: MetaPatch,
 ): Promise<Changed<OpResult>> {
   const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
-  return await changeTree(env, spaceId, device, (tree) =>
-    tree.apply({ op: newId(), t: 'meta', id, meta, seen: SAW_EVERYTHING }, context),
+  const op: Op = { op: newId(), t: 'meta', id, meta, seen: SAW_EVERYTHING }
+  return await changeTree(
+    env,
+    spaceId,
+    device,
+    (tree) => tree.apply(op, context),
+    [],
+    reachOf([op]),
   )
 }
 
@@ -230,11 +237,14 @@ export async function deleteById(
   restore = false,
 ): Promise<OpResult> {
   const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
-  const { value } = await changeTree(env, spaceId, device, (tree) =>
-    tree.apply(
-      { op: newId(), t: restore ? 'restore' : 'delete', id, seen: SAW_EVERYTHING },
-      context,
-    ),
+  const op: Op = { op: newId(), t: restore ? 'restore' : 'delete', id, seen: SAW_EVERYTHING }
+  const { value } = await changeTree(
+    env,
+    spaceId,
+    device,
+    (tree) => tree.apply(op, context),
+    [],
+    reachOf([op]),
   )
   return value
 }
@@ -246,10 +256,17 @@ export async function revive(
   id: string,
   own: 'stays deleted' | 'comes back' = 'comes back',
 ): Promise<void> {
-  await changeTree(env, spaceId, device, (tree) => {
-    const entry = tree.entry(id)
-    if (!entry?.deleted) return
-    if (own === 'stays deleted' && device !== undefined && entry.by === device) return
-    tree.touch(id, device)
-  })
+  await changeTree(
+    env,
+    spaceId,
+    device,
+    (tree) => {
+      const entry = tree.entry(id)
+      if (!entry?.deleted) return
+      if (own === 'stays deleted' && device !== undefined && entry.by === device) return
+      tree.touch(id, device)
+    },
+    [],
+    { ids: [id], touched: [{ id }], under: [] },
+  )
 }
