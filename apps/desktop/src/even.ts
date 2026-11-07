@@ -4,6 +4,7 @@ import '@orden/themes'
 import { mount } from 'svelte'
 import App from './App.svelte'
 import { account } from './lib/account.svelte'
+import { holdComposingKeys } from './lib/keys'
 import Glasses from './lib/even/Glasses.svelte'
 import { bridge } from './lib/even/bridge.svelte'
 import { everywhere, seedFlag } from './lib/even/keep'
@@ -14,6 +15,7 @@ import { serveAssets } from './lib/web/asset-worker'
 import { workspace } from './lib/workspace.svelte'
 
 serveAssets()
+holdComposingKeys()
 
 const target = document.getElementById('app')
 if (!target) throw new Error('even.html has no #app to mount into')

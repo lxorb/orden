@@ -239,3 +239,30 @@ export function showCombination(text: string, platform: Platform): string {
 
   return parts.join('+')
 }
+
+const KEEPS_ITS_OWN_KEYS = '.xterm, .cm-editor'
+
+const IME_KEY_CODE = 229
+
+interface ImeCoded {
+  readonly keyCode?: number
+}
+
+function composing(event: KeyboardEvent): boolean {
+  const coded: ImeCoded = event
+  return event.isComposing || event.key === 'Process' || coded.keyCode === IME_KEY_CODE
+}
+
+function plainField(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return false
+  return target.closest(KEEPS_ITS_OWN_KEYS) === null
+}
+
+function hold(event: KeyboardEvent) {
+  if (composing(event) && plainField(event.target)) event.stopImmediatePropagation()
+}
+
+export function holdComposingKeys(within: Window = window): () => void {
+  within.addEventListener('keydown', hold, true)
+  return () => within.removeEventListener('keydown', hold, true)
+}

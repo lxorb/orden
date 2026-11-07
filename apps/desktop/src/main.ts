@@ -7,6 +7,7 @@ import { mark, markPainted, watchFirstInput } from './lib/trace'
 import { serveAssets } from './lib/web/asset-worker'
 import { isDesktop, isMobile, platform } from './lib/tauri'
 import { watchPresses } from './lib/downloads/started'
+import { holdComposingKeys } from './lib/keys'
 
 mark('modules evaluated')
 
@@ -48,6 +49,8 @@ mark('mounting')
 watchFirstInput()
 
 watchPresses()
+
+holdComposingKeys()
 
 const app = mount(App, { target })
 
