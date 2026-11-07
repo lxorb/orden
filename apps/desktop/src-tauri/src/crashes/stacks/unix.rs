@@ -115,7 +115,7 @@ pub fn start() {
     INSTALLED.call_once(|| unsafe {
         let mut action: libc::sigaction = std::mem::zeroed();
         action.sa_sigaction = answer as extern "C" fn(c_int) as usize;
-        action.sa_flags = libc::SA_RESTART | libc::SA_ONSTACK;
+        action.sa_flags = libc::SA_RESTART;
         libc::sigemptyset(&raw mut action.sa_mask);
         libc::sigaction(asking_signal(), &raw const action, std::ptr::null_mut());
     });
@@ -339,4 +339,77 @@ fn own_image(base: *mut c_void) -> bool {
     let mut info: libc::Dl_info = unsafe { std::mem::zeroed() };
     let here = own_image as fn(*mut c_void) -> bool as *const c_void;
     (unsafe { libc::dladdr(here, &raw mut info) } != 0) && info.dli_fbase == base
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use std::process::{Command, Stdio};
+    use std::sync::mpsc;
+    use std::time::Duration;
+
+    const CHILD: &str = "ORDEN_STACKS_TEST_CHILD";
+
+    #[allow(
+        unsafe_code,
+        reason = "the thread is given a small alternate signal stack with a guard below it, as std gives each of its threads one"
+    )]
+    fn small_alternate_stack() {
+        let page = 4096;
+        unsafe {
+            let room = libc::mmap(
+                std::ptr::null_mut(),
+                2 * page,
+                libc::PROT_READ | libc::PROT_WRITE,
+                libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
+                -1,
+                0,
+            );
+            assert_ne!(room, libc::MAP_FAILED);
+            assert_eq!(libc::mprotect(room, page, libc::PROT_NONE), 0);
+            let stack = libc::stack_t {
+                ss_sp: room.cast::<u8>().add(page).cast(),
+                ss_flags: 0,
+                ss_size: page,
+            };
+            assert_eq!(libc::sigaltstack(&raw const stack, std::ptr::null_mut()), 0);
+        }
+    }
+
+    #[test]
+    fn a_thread_is_walked_on_its_own_stack_not_its_small_alternate_one() {
+        if std::env::var_os(CHILD).is_some() {
+            let (told, heard) = mpsc::channel::<()>();
+            let (ready, readied) = mpsc::channel::<()>();
+            let waiter = std::thread::Builder::new()
+                .name("orden small alt".to_owned())
+                .spawn(move || {
+                    small_alternate_stack();
+                    ready.send(()).expect("ready");
+                    let _ = heard.recv();
+                })
+                .expect("a thread");
+            readied.recv().expect("readied");
+            let threads = super::every_thread(Duration::from_secs(10));
+            told.send(()).expect("told");
+            waiter.join().expect("joined");
+            let found = threads
+                .iter()
+                .find(|one| one.name.contains("orden small"))
+                .expect("the thread");
+            assert!(found.ips.len() >= 3, "only {} frames", found.ips.len());
+            return;
+        }
+        let status = Command::new(std::env::current_exe().expect("the tests"))
+            .args([
+                "--exact",
+                "crashes::stacks::unix::tests::a_thread_is_walked_on_its_own_stack_not_its_small_alternate_one",
+                "--test-threads=1",
+            ])
+            .env(CHILD, "1")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .expect("the child ran");
+        assert!(status.success(), "the child ended with {status}");
+    }
 }
