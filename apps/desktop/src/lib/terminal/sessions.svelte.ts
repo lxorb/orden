@@ -152,6 +152,7 @@ class Session {
   private asking: ReturnType<typeof setTimeout> | undefined
   private asked = 0
   private underneath: string | null = null
+  private unmatched: string | null = null
   private readonly unwatch: () => void
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
 
@@ -364,12 +365,15 @@ class Session {
   private async adopt(pty: string, source: PtySource) {
     const reached = await source.ssh()
     if (pty !== this.pty) return
+    const said = JSON.stringify(reached)
+    if (this.underneath === null && (reached === null || said === this.unmatched)) return
     await remote.ready()
     let host = reached && hostReached(remote.hosts, reached)
     if (reached && !host) {
       await remote.refresh()
       host = hostReached(remote.hosts, reached)
     }
+    if (!host) this.unmatched = said
     const still = await source.ssh()
     if (pty !== this.pty || JSON.stringify(still) !== JSON.stringify(reached)) return
     if (this.underneath !== null) {
@@ -378,7 +382,7 @@ class Session {
     }
 
     const spec = this.spec()
-    if (!host || this.front.program !== 'ssh' || hostIdOf(spec.shell) !== null) return
+    if (!host || hostIdOf(spec.shell) !== null) return
     this.underneath = spec.shell
     source.reached = host.id
     remote.reached(host.id)
@@ -706,6 +710,7 @@ class Session {
 
   private async start(): Promise<void> {
     this.underneath = null
+    this.unmatched = null
     const spec = this.spec()
     if (spec.via) {
       delete spec.via

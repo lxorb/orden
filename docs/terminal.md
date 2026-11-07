@@ -238,8 +238,9 @@ left alone. When the program in front is `ssh` (asked as above), the crate reads
 started with - `/proc/<pid>/cmdline` on Linux, `KERN_PROCARGS2` on a Mac, the process's command
 line on Windows - and reads it as `ssh` does: the options that take a value, before the host and
 after it, `-l`, `-p` and `-o User` or `Port`, the first of each winning over the next and over
-the destination's own, which is `user@host` or `ssh://user@host:port`; a `-o HostName` is left a
-program, since the tab would name a machine it is not on. Only the destination goes to the window,
+the destination's own, which is `user@host` or `ssh://user@host:port`; a `-o HostName`, another
+config (`-F`) or a tag (`-P`) is left a program, since the tab would name a machine it may not be
+on, and so is a `SessionType`, `RemoteCommand` or `ForkAfterAuthentication` that opens no session. Only the destination goes to the window,
 never the arguments, which can name a key. An `ssh` that opens no session here - a command after
 the host, `-N`, `-W`, `-f`, `-G` - is left a program (`ssh_destination` in
 `src-tauri/src/terminal/remote.rs`, `pty_ssh`). The window finds the host by its name, another of

@@ -377,3 +377,31 @@ test('a host reached by ssh in a local tab is kept as connected to lately', asyn
     }),
   )
 })
+
+test('an address no host has is looked up once, not every time ssh is asked after', async () => {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: 'box.example.com', user: null, port: null }
+  const lookups = () => asked.filter((one) => one.command === 'remote_hosts').length
+
+  typing?.('ssh box.example.com\r')
+  await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
+  await new Promise((settle) => setTimeout(settle, 100))
+  const after = lookups()
+  typing?.('ls\r')
+  await new Promise((settle) => setTimeout(settle, 1200))
+  typing?.('ls\r')
+  await new Promise((settle) => setTimeout(settle, 1200))
+  expect(lookups()).toBe(after)
+  expect(readSpec(tab.doc)?.shell).toBe('pwsh')
+})
+
+test('the prompt of the other machine landing while it is asked does not stop it', async () => {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: 'pi', user: null, port: null }
+  typing?.('ssh pi\r')
+  await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
+  channels.at(-1)?.onmessage?.(new TextEncoder().encode('\x1b]133;A\x07pi$ ').buffer)
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'))
+})

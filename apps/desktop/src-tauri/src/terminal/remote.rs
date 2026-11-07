@@ -59,7 +59,7 @@ pub struct Destination {
 }
 
 const SSH_VALUED: &[u8] = b"BbcDEeFIiJLlmOoPpQRSWw";
-const SSH_NO_SESSION: &[u8] = b"fGNOQsVW";
+const SSH_NO_SESSION: &[u8] = b"fFGNOPQsVW";
 
 pub fn ssh_destination(program: &str, args: &[String]) -> Option<Destination> {
     if program != "ssh" {
@@ -103,6 +103,15 @@ pub fn ssh_destination(program: &str, args: &[String]) -> Option<Destination> {
                             port.get_or_insert(number);
                         }
                         (b'o', "hostname") => return None,
+                        (b'o', "sessiontype") if !value.eq_ignore_ascii_case("default") => {
+                            return None
+                        }
+                        (b'o', "remotecommand") if !value.eq_ignore_ascii_case("none") => {
+                            return None
+                        }
+                        (b'o', "forkafterauthentication") if value.eq_ignore_ascii_case("yes") => {
+                            return None
+                        }
                         _ => {}
                     }
                     break;
@@ -113,16 +122,21 @@ pub fn ssh_destination(program: &str, args: &[String]) -> Option<Destination> {
         if target.is_some() {
             return None;
         }
-        target = Some(word.as_str());
+        let found = destination_of(word)?;
+        if let Some(one) = found.user.clone() {
+            user.get_or_insert(one);
+        }
+        if let Some(one) = found.port {
+            port.get_or_insert(one);
+        }
+        target = Some(found);
     }
 
-    let mut destination = destination_of(target?)?;
-    if user.is_some() {
-        destination.user = user;
-    }
-    if port.is_some() {
-        destination.port = port;
-    }
+    let destination = Destination {
+        user,
+        port,
+        ..target?
+    };
     let fits = is_address(&destination.hostname) && destination.user.as_deref().is_none_or(is_user);
     fits.then_some(destination)
 }
@@ -658,6 +672,18 @@ mod tests {
         );
         assert_eq!(ssh(&["pi", "-tA"]), Some(at(None, "pi", None)));
         assert_eq!(
+            ssh(&["emil@pi", "-l", "zed", "-oUser=x"]),
+            Some(at(Some("emil"), "pi", None))
+        );
+        assert_eq!(
+            ssh(&["ssh://a@pi:2222", "-p", "1111", "-oPort=33"]),
+            Some(at(Some("a"), "pi", Some(2222)))
+        );
+        assert_eq!(
+            ssh(&["-o", "SessionType=default", "-oRemoteCommand=none", "pi"]),
+            Some(at(None, "pi", None))
+        );
+        assert_eq!(
             ssh(&["-oUser=ou", "-l", "lu", "-o", "Port 5555", "pi"]),
             Some(at(Some("ou"), "pi", Some(5555)))
         );
@@ -683,6 +709,11 @@ mod tests {
         assert_eq!(ssh(&["--", "pi", "-p", "1"]), None);
         assert_eq!(ssh(&["pi", "-N"]), None);
         assert_eq!(ssh(&["-oHostName=10.0.0.5", "pi"]), None);
+        assert_eq!(ssh(&["-o", "SessionType=none", "pi"]), None);
+        assert_eq!(ssh(&["-o", "RemoteCommand=uptime", "pi"]), None);
+        assert_eq!(ssh(&["-oForkAfterAuthentication=yes", "pi"]), None);
+        assert_eq!(ssh(&["-F", "/home/emil/work.conf", "pi"]), None);
+        assert_eq!(ssh(&["-P", "work", "pi"]), None);
         assert_eq!(ssh(&["-o", "User"]), None);
         assert_eq!(ssh(&["-N", "-L", "8080:localhost:80", "pi"]), None);
         assert_eq!(ssh(&["-fN", "pi"]), None);
