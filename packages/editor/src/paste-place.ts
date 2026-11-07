@@ -1,5 +1,10 @@
-import { EditorSelection, type EditorState, type TransactionSpec } from '@codemirror/state'
-import { inserted } from './paste'
+import {
+  EditorSelection,
+  type EditorState,
+  type SelectionRange,
+  type TransactionSpec,
+} from '@codemirror/state'
+import { everywhere, type Landing, plainAt } from './paste'
 
 const LEAD = /^([ \t]*(?:>[ \t]?)*[ \t]*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
 
@@ -10,8 +15,7 @@ const OPENS_BLOCK =
 
 const CLOSES_BLOCK = /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|\$\$)/
 
-function intoEmptyItem(state: EditorState, text: string): TransactionSpec | null {
-  const range = state.selection.main
+function intoEmptyItem(state: EditorState, range: SelectionRange, text: string): Landing | null {
   const line = state.doc.lineAt(range.from)
   if (!range.empty || !AN_ITEM.test(text)) return null
 
@@ -25,17 +29,18 @@ function intoEmptyItem(state: EditorState, text: string): TransactionSpec | null
   const from = line.from + kept.length
   return {
     changes: { from, to: line.to, insert: body },
-    selection: EditorSelection.cursor(from + body.length),
-    scrollIntoView: true,
-    userEvent: 'input.paste',
+    range: EditorSelection.cursor(from + body.length),
   }
 }
 
 export function placed(state: EditorState, text: string): TransactionSpec {
-  const special = intoEmptyItem(state, text)
+  return everywhere(state, (range) => placedAt(state, range, text))
+}
+
+function placedAt(state: EditorState, range: SelectionRange, text: string): Landing {
+  const special = intoEmptyItem(state, range, text)
   if (special) return special
 
-  const range = state.selection.main
   const line = state.doc.lineAt(range.from)
   const end = state.doc.lineAt(range.to)
   const before = line.text.slice(0, range.from - line.from)
@@ -63,7 +68,7 @@ export function placed(state: EditorState, text: string): TransactionSpec {
       : ''
   const over = inFront && !before && first.startsWith('|') && words(line.number - 1) ? '\n' : ''
   const plain = !opens && !closes && !under && !over
-  if (!inFront && plain && (!lead || !text.includes('\n'))) return inserted(state, text)
+  if (!inFront && plain && (!lead || !text.includes('\n'))) return plainAt(range, text)
 
   const from = opens ? line.from + before.trimEnd().length : range.from
   const to = closes ? range.to + (after.length - after.trimStart().length) : range.to
@@ -71,12 +76,10 @@ export function placed(state: EditorState, text: string): TransactionSpec {
 
   return {
     changes: { from, to, insert: head + (closes || (opens && after.trim()) ? gap : '') + under },
-    selection: EditorSelection.cursor(from + head.length),
-    scrollIntoView: true,
-    userEvent: 'input.paste',
+    range: EditorSelection.cursor(from + head.length),
   }
 }
 
 export function plainly(state: EditorState, text: string): TransactionSpec {
-  return intoEmptyItem(state, text) ?? inserted(state, text)
+  return everywhere(state, (range) => intoEmptyItem(state, range, text) ?? plainAt(range, text))
 }

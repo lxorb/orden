@@ -1,6 +1,8 @@
 import {
+  type ChangeSpec,
   EditorSelection,
   type EditorState,
+  type SelectionRange,
   type Extension,
   Transaction,
   type TransactionSpec,
@@ -57,14 +59,27 @@ function copiedHere(html: string, text: string): string | null {
   return text && ourOwn(html) ? text : null
 }
 
-export function inserted(state: EditorState, text: string): TransactionSpec {
-  const range = state.selection.main
+export interface Landing {
+  changes: ChangeSpec
+  range: SelectionRange
+}
+
+export function plainAt(range: SelectionRange, text: string): Landing {
   return {
     changes: { from: range.from, to: range.to, insert: text },
-    selection: EditorSelection.cursor(range.from + text.length),
-    scrollIntoView: true,
-    userEvent: 'input.paste',
+    range: EditorSelection.cursor(range.from + text.length),
   }
+}
+
+export function everywhere(
+  state: EditorState,
+  land: (range: SelectionRange) => Landing,
+): TransactionSpec {
+  return { ...state.changeByRange(land), scrollIntoView: true, userEvent: 'input.paste' }
+}
+
+function inserted(state: EditorState, text: string): TransactionSpec {
+  return everywhere(state, (range) => plainAt(range, text))
 }
 
 function insert(view: EditorView, text: string) {

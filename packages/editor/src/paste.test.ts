@@ -259,6 +259,31 @@ describe('where a paste lands', () => {
   })
 })
 
+describe('a paste with several carets', () => {
+  const pasted = (doc: string, carets: number[], text: string, how = placed) => {
+    const state = EditorState.create({
+      doc,
+      selection: EditorSelection.create(carets.map((at) => EditorSelection.cursor(at))),
+      extensions: EditorState.allowMultipleSelections.of(true),
+    })
+    const next = state.update(how(state, text)).state
+    return { doc: next.doc.toString(), carets: next.selection.ranges.map((one) => one.head) }
+  }
+
+  test('lands at every caret, each placed as one alone would be', () => {
+    expect(pasted('abc \ndef ', [4, 9], '**x**')).toEqual({
+      doc: 'abc **x**\ndef **x**',
+      carets: [9, 19],
+    })
+    expect(pasted('abc \n- ', [4, 7], '## H').doc).toBe('abc\n\n## H\n- ## H')
+  })
+
+  test('and plain text too, a list on each empty item', () => {
+    expect(pasted('- \n\n- ', [2, 6], '- x\n- y', plainly).doc).toBe('- x\n- y\n\n- x\n- y')
+    expect(pasted('a\nb', [1, 3], 'z', plainly)).toEqual({ doc: 'az\nbz', carets: [2, 5] })
+  })
+})
+
 describe('commas that are not a table', () => {
   test('two lines of prose are two lines of prose', () => {
     expect(delimitedToTable('Hello, world, again\nGoodbye, moon, soon')).toBeNull()
