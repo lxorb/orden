@@ -44,9 +44,30 @@ export function metaPatchOf(value: unknown): MetaPatch | null {
   return out
 }
 
+export const MERGED_META_KEYS: ReadonlySet<string> = new Set(['done-on', 'cancelled-on'])
+
+const nameOf = (token: string) => token.slice(0, token.indexOf(':'))
+
+function mergedValue(had: string | undefined, said: string): string {
+  if (had === undefined) return said
+  const told = said.split(' ').filter(Boolean)
+  const names = new Set(told.map(nameOf))
+  let out = told.join(' ')
+  for (const token of had.split(' ')) {
+    if (!token || !token.includes(':') || names.has(nameOf(token))) continue
+    if (out.length + token.length + 1 > LONGEST_META_VALUE) break
+    out = out ? `${out} ${token}` : token
+  }
+  return out
+}
+
 export function patched(had: ItemMeta | undefined, patch: MetaPatch): ItemMeta | undefined {
+  const merged: Record<string, string | null> = { ...patch }
+  for (const [key, said] of Object.entries(patch)) {
+    if (said !== null && MERGED_META_KEYS.has(key)) merged[key] = mergedValue(had?.[key], said)
+  }
   const out: Record<string, string> = Object.fromEntries(
-    Object.entries({ ...had, ...patch }).filter((one): one is [string, string] => one[1] !== null),
+    Object.entries({ ...had, ...merged }).filter((one): one is [string, string] => one[1] !== null),
   )
   const keys = Object.keys(out)
   if (keys.length > MOST_META_KEYS) return had
