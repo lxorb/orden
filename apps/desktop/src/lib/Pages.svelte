@@ -271,7 +271,7 @@
 
     return () => {
       mine = false
-      store.marks = []
+      if (paperPath !== path) store.marks = []
     }
   })
 

@@ -4,6 +4,7 @@ import { account } from '../account.svelte'
 import { keptShaped } from '../internal/roots'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
+import { sheetArrived } from '../pdf/sheets.svelte'
 import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../space-watch'
 import { isMarkdownPath, within, withinSpace } from '../space-paths'
 import { sync } from '../sync.svelte'
@@ -92,6 +93,7 @@ async function came(path: string, dir: boolean) {
 
 export async function heardChange(change: SpaceChange): Promise<void> {
   if (dotted(change.path)) return
+  if (!change.dir) sheetArrived(change.path)
   if (change.kind === 'removed') return gone(change.path, change.dir)
   if (change.kind === 'renamed') {
     await moved(change.from, change.path, change.dir)

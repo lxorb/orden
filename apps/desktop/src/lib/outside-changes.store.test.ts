@@ -446,3 +446,24 @@ describe('from the review', () => {
     expect(workspace.active?.path).toBe('/s/n.md')
   })
 })
+
+describe('the highlights beside a PDF, changed by another program', () => {
+  const stat = { size: 1, mtime: 1, id: null, dir: false }
+
+  test('tell the pages of that PDF, whether written, made or deleted', async () => {
+    const { marksFromOutside } = await import('./pdf/sheets.svelte')
+    const before = marksFromOutside('/s/Paper.pdf')
+
+    await heardChange({ kind: 'modified', path: '/s/Paper.pdf.highlights.json', ...stat })
+    await heardChange({ kind: 'created', path: '/s/Paper.pdf.highlights.json', ...stat })
+    await heardChange({
+      kind: 'removed',
+      path: '/s/Paper.pdf.highlights.json',
+      dir: false,
+      id: null,
+    })
+    await heardChange({ kind: 'modified', path: '/s/Paper.pdf', ...stat })
+
+    expect(marksFromOutside('/s/Paper.pdf')).toBe(before + 3)
+  })
+})
