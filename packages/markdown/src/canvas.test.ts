@@ -141,7 +141,7 @@ describe('reading a canvas somebody else wrote', () => {
     expect(node).toMatchObject({ x: 11, y: -3 })
   })
 
-  test('keeps the first of two nodes sharing an id, which is what every edge meant', () => {
+  test('of two nodes sharing an id, the first keeps it, which is what every edge meant, and the second is kept under its own', () => {
     const canvas = readCanvas(
       JSON.stringify({
         nodes: [
@@ -151,8 +151,10 @@ describe('reading a canvas somebody else wrote', () => {
       }),
     )
 
-    expect(canvas.nodes).toHaveLength(1)
-    expect(canvas.nodes[0]).toMatchObject({ text: 'first' })
+    expect(canvas.nodes).toHaveLength(2)
+    expect(canvas.nodes[0]).toMatchObject({ id: 'a', text: 'first' })
+    expect(canvas.nodes[1]).toMatchObject({ text: 'second' })
+    expect(canvas.nodes[1]?.id).not.toBe('a')
   })
 
   test('drops an edge that names a node the canvas does not hold', () => {
@@ -1085,5 +1087,67 @@ describe('a canvas holding another app’s things', () => {
     const back = JSON.parse(writeCanvas(readCanvas(text))) as Record<string, unknown>
     expect(back.edges).toEqual([])
     expect('orden' in back).toBe(false)
+  })
+})
+
+describe('ids a canvas file uses twice', () => {
+  const card = (id: string, text: string) => ({
+    id,
+    type: 'text',
+    text,
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 40,
+  })
+  const FILE = JSON.stringify({
+    nodes: [card('1', 'first'), card('2', 'second'), card('1', 'third')],
+    edges: [
+      { id: '1', fromNode: '1', toNode: '2', label: 'one to two', weight: 3 },
+      { id: '1', fromNode: '2', toNode: '1', label: 'two to one' },
+    ],
+    orden: {
+      ink: [{ id: '2', tool: 'pen', color: '#000', size: 2, points: [0, 0, 0.5, 0, 0, 0] }],
+    },
+  })
+
+  test('every card, line and stroke is read, each under an id of its own', () => {
+    const canvas = readCanvas(FILE)
+    const ids = [
+      ...canvas.nodes.map((one) => one.id),
+      ...canvas.edges.map((one) => one.id),
+      ...canvas.ink.map((one) => one.id),
+    ]
+
+    expect(canvas.nodes.map((one) => (one.type === 'text' ? one.text : ''))).toEqual([
+      'first',
+      'second',
+      'third',
+    ])
+    expect(canvas.edges.map((one) => one.label)).toEqual(['one to two', 'two to one'])
+    expect(canvas.ink).toHaveLength(1)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  test('and written back, nothing is lost, the fields Orden does not know included', () => {
+    const again = JSON.parse(writeCanvas(readCanvas(FILE))) as {
+      nodes: { text: string }[]
+      edges: { label: string; weight?: number }[]
+    }
+
+    expect(again.nodes.map((one) => one.text)).toEqual(['first', 'second', 'third'])
+    expect(again.edges.map((one) => [one.label, one.weight])).toEqual([
+      ['one to two', 3],
+      ['two to one', undefined],
+    ])
+  })
+
+  test('the same file is read with the same ids each time', () => {
+    expect(readCanvas(FILE)).toEqual(readCanvas(FILE))
+  })
+
+  test('a file whose ids are all its own is read as it is', () => {
+    const plain = JSON.stringify({ nodes: [card('a', 'x')], edges: [] })
+    expect(readCanvas(plain).nodes.map((one) => one.id)).toEqual(['a'])
   })
 })

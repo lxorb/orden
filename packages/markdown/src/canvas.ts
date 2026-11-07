@@ -501,6 +501,43 @@ export function holdsCanvas(text: string): boolean {
   )
 }
 
+function apart(file: Record<string, unknown>): Record<string, unknown> {
+  const taken = new Set<string>()
+
+  const kept = (list: unknown, kind: string): unknown => {
+    if (!Array.isArray(list)) return list
+    const out: unknown[] = list.map((entry: unknown) => {
+      if (!isRecord(entry) || !isString(entry.id) || !entry.id) return entry
+      if (!taken.has(entry.id)) {
+        taken.add(entry.id)
+        return entry
+      }
+      let id = `${entry.id}-${kind}`
+      for (let count = 2; taken.has(id); count++) id = `${entry.id}-${kind}-${String(count)}`
+      taken.add(id)
+      return { ...entry, id }
+    })
+    return out.some((one, at) => one !== list[at]) ? out : list
+  }
+
+  const nodes = kept(file.nodes, 'card')
+  const own = ownOf(file) ?? null
+  const key = own ? Object.keys(file).find((name) => file[name] === own) : undefined
+  const shapes = own ? kept(own.shapes, 'shape') : undefined
+  const edges = kept(file.edges, 'line')
+  const ink = own ? kept(own.ink, 'stroke') : undefined
+
+  const ownChanged = own !== null && (shapes !== own.shapes || ink !== own.ink)
+  if (nodes === file.nodes && edges === file.edges && !ownChanged) return file
+
+  return {
+    ...file,
+    nodes,
+    edges,
+    ...(key && ownChanged ? { [key]: { ...own, shapes, ink } } : {}),
+  }
+}
+
 export function canvasIn(text: string): Canvas | null {
   if (!text.trim()) return emptyCanvas()
 
@@ -512,12 +549,13 @@ export function canvasIn(text: string): Canvas | null {
   }
 
   if (!isRecord(parsed)) return null
+  const file = apart(parsed)
 
   const nodes: CanvasNode[] = []
   const ids = new Set<string>()
 
-  if (Array.isArray(parsed.nodes)) {
-    for (const entry of parsed.nodes) {
+  if (Array.isArray(file.nodes)) {
+    for (const entry of file.nodes) {
       const node = readNode(entry)
       if (!node || ids.has(node.id)) continue
 
@@ -526,7 +564,7 @@ export function canvasIn(text: string): Canvas | null {
     }
   }
 
-  const own = ownOf(parsed) ?? {}
+  const own = ownOf(file) ?? {}
 
   if (Array.isArray(own.words)) {
     const bare = new Set(own.words.filter(isString))
@@ -561,8 +599,8 @@ export function canvasIn(text: string): Canvas | null {
   const edges: CanvasEdge[] = []
   const seen = new Set<string>()
 
-  if (Array.isArray(parsed.edges)) {
-    for (const entry of parsed.edges) {
+  if (Array.isArray(file.edges)) {
+    for (const entry of file.edges) {
       const edge = edgeOf(entry, ids)
       if (!edge || seen.has(edge.id)) continue
 
@@ -596,7 +634,7 @@ export function canvasIn(text: string): Canvas | null {
     }
   }
 
-  const extras = extrasFrom(parsed, ids, seen, inked)
+  const extras = extrasFrom(file, ids, seen, inked)
   return {
     nodes: inOrder(nodes, order),
     edges,
