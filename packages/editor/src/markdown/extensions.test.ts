@@ -612,6 +612,23 @@ describe('a long paragraph', () => {
     }
   })
 
+  test('repeating what closes a link nothing opened parses in time that grows with its length', () => {
+    const timed = (unit: string, length: number) => {
+      const doc = `${unit.repeat(Math.ceil(length / unit.length))}\n`
+      let least = Infinity
+      for (let round = 0; round < 3; round++) {
+        const start = performance.now()
+        nibMarkdownParser.parse(doc)
+        least = Math.min(least, performance.now() - start)
+      }
+      return least
+    }
+    for (const unit of [']*', '_]', '*]', ']$', '`]', 'a] ', '[a] ]*']) {
+      timed(unit, 8_000)
+      expect(timed(unit, 128_000) / timed(unit, 32_000), unit).toBeLessThan(9)
+    }
+  }, 120_000)
+
   test('reads a link and emphasis that close as before', () => {
     expect(
       tree('[a](b(c)) [d](e (f)) *g [h](i)* **j**').match(/(URL|LinkTitle|\w*Emphasis) ".*"/g),
