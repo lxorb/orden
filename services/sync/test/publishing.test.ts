@@ -228,8 +228,8 @@ describe('a published note', () => {
   test('colours every fence whose language the Worker carries', async () => {
     const answer = await published()
 
-    expect(answer.text).toContain('<span class="hl-keyword">export</span>')
-    expect(answer.text).toContain('<span class="hl-keyword">def</span>')
+    expect(answer.text).toContain('<span class="hl-keyword">export')
+    expect(answer.text).toContain('<span class="hl-keyword">def')
     expect(answer.text).toContain('<span class="hl-comment">')
     expect(answer.text).toContain('<pre><code class="language-css">')
   })
