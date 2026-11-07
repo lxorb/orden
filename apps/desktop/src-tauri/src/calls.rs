@@ -284,6 +284,93 @@ impl Crate {
         }
     }
 
+    pub(crate) fn saying(&self, says: impl Fn(&str) -> bool) -> HashSet<String> {
+        let seeds: HashSet<String> = self
+            .functions
+            .iter()
+            .filter(|(_, function)| says(&function.said))
+            .map(|(path, _)| path.clone())
+            .collect();
+        self.reached(&[], &[], &seeds)
+    }
+
+    pub(crate) fn taking_held(
+        &self,
+        says: impl Fn(&str) -> bool,
+        waits: &HashSet<String>,
+        stops: &[&str],
+    ) -> Vec<String> {
+        let mut held: Vec<(String, String)> = self
+            .functions
+            .iter()
+            .flat_map(|(path, function)| {
+                function
+                    .held
+                    .iter()
+                    .filter(|one| {
+                        says(&one.said) || one.called.iter().any(|called| waits.contains(called))
+                    })
+                    .map(|one| (path.clone(), one.lock.clone()))
+            })
+            .collect();
+        held.sort();
+        held.dedup();
+        let takers: HashSet<String> = self
+            .functions
+            .iter()
+            .filter(|(_, function)| {
+                function
+                    .takes
+                    .iter()
+                    .any(|lock| held.iter().any(|(_, one)| same_lock(lock, one)))
+            })
+            .map(|(path, _)| path.clone())
+            .collect();
+        let reached = self.reached(&[], stops, &takers);
+        let mut found: Vec<String> = self
+            .mains
+            .iter()
+            .filter(|main| reached.contains(*main))
+            .map(|main| {
+                let mut path = vec![main.clone()];
+                let mut at = main.clone();
+                let mut seen: HashSet<String> = HashSet::new();
+                while !takers.contains(&at) && seen.insert(at.clone()) {
+                    let Some(next) = self.functions.get(&at).and_then(|function| {
+                        let mut next: Vec<&String> = function
+                            .called
+                            .iter()
+                            .filter(|one| reached.contains(*one))
+                            .collect();
+                        next.sort();
+                        next.first().map(|one| (*one).clone())
+                    }) else {
+                        break;
+                    };
+                    path.push(next.clone());
+                    at = next;
+                }
+                let mut locks: Vec<String> = self
+                    .functions
+                    .get(&at)
+                    .into_iter()
+                    .flat_map(|function| function.takes.iter())
+                    .flat_map(|lock| {
+                        held.iter()
+                            .filter(|(_, one)| same_lock(lock, one))
+                            .map(|(holder, one)| format!("takes {one}, held in {holder}"))
+                    })
+                    .collect();
+                locks.sort();
+                locks.dedup();
+                path.push(locks.join("; "));
+                path.join(" -> ")
+            })
+            .collect();
+        found.sort();
+        found
+    }
+
     pub(crate) fn held_across(
         &self,
         words: &[&str],
@@ -2534,7 +2621,7 @@ fn spoken(stream: TokenStream, said: &mut String) {
     }
 }
 
-fn spaced(word: &str) -> String {
+pub(crate) fn spaced(word: &str) -> String {
     let mut said = String::from(" ");
     for letter in word.chars().filter(|one| !one.is_whitespace()) {
         if letter.is_alphanumeric() || letter == '_' {
