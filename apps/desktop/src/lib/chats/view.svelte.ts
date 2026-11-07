@@ -43,6 +43,8 @@ class Listing implements MessageList {
   protected window: Kept[] = []
   private readonly listeners = new Set<() => void>()
   private drawing = 0
+  private loads = 0
+  private held: Change[] = []
 
   constructor(
     readonly chat: string,
@@ -59,6 +61,11 @@ class Listing implements MessageList {
   }
 
   heard(change: Change): void {
+    if (this.loads > 0) this.held.push(change)
+    else this.take(change)
+  }
+
+  private take(change: Change): void {
     if (change.t === 'outbox') {
       void this.draw()
       return
@@ -173,11 +180,15 @@ class Listing implements MessageList {
   }
 
   private async loadingWith(work: () => Promise<void>): Promise<void> {
+    this.loads += 1
     this.loading = true
     try {
       await work()
     } finally {
-      this.loading = false
+      if (--this.loads === 0) {
+        this.loading = false
+        for (const change of this.held.splice(0)) this.take(change)
+      }
       await this.draw()
     }
   }

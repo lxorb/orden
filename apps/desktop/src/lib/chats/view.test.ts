@@ -12,8 +12,7 @@ afterEach(() => {
   for (const stop of stops.splice(0)) stop()
 })
 
-async function opened(account: Account, readSeq = 0) {
-  const cache = new MemoryCache()
+async function opened(account: Account, readSeq = 0, cache = new MemoryCache()) {
   const engine = new ChatEngine(
     cache,
     account.remote(ME, () => true),
@@ -39,6 +38,16 @@ async function opened(account: Account, readSeq = 0) {
   stops.push(() => view.close())
   await view.open()
   return { view, engine }
+}
+
+class SlowCache extends MemoryCache {
+  gate: Promise<void> | null = null
+
+  override async window(ask: Parameters<MemoryCache['window']>[0]) {
+    const rows = await super.window(ask)
+    await this.gate
+    return rows
+  }
 }
 
 function said(account: Account, count: number, who: Who = 'user:ben') {
@@ -74,6 +83,24 @@ describe('a chat’s window', () => {
     expect(view.atEnd).toBe(false)
     await view.newer()
     expect(view.messages.at(-1)?.seq).toBe(300)
+  })
+
+  test('keeps a message that came while it was opening', async () => {
+    const account = new Account()
+    said(account, 3)
+    const cache = new SlowCache()
+    const { view, engine } = await opened(account, 0, cache)
+    let open: () => void = () => undefined
+    cache.gate = new Promise((done) => (open = done))
+
+    const reopening = view.latest()
+    said(account, 1, 'user:cleo')
+    await engine.sync(CHAT)
+    open()
+    await reopening
+
+    expect(view.messages).toHaveLength(4)
+    expect(view.messages.at(-1)?.author).toBe('user:cleo')
   })
 
   test('draws a post at once and keeps it through its placing', async () => {
