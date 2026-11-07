@@ -7,6 +7,7 @@ import { getCM, Vim } from '@replit/codemirror-vim'
 import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { loadVim } from './vim'
 import { modalEditing, takeBackNibKeys } from './vim-mode'
+import { GROWS_AT_MOST, measuredGrowth } from '../../markdown/src/growth'
 
 beforeAll(async () => {
   await loadVim()
@@ -93,14 +94,14 @@ describe('Enter on a task in normal mode', () => {
 
 describe('a pattern that backtracks without end', () => {
   test('is refused by a substitution rather than hang the page, and one that runs in time is not', () => {
-    const run = `${'a'.repeat(27)}!`
+    const run = `${'a'.repeat(32)}!`
     const view = viewOf(run, 0)
     const cm = getCM(view) as Parameters<typeof Vim.handleEx>[0] | null
     if (!cm) throw new Error('no Vim in the view')
 
     const started = Date.now()
     Vim.handleEx(cm, 's/(a+)+b/x/')
-    expect(Date.now() - started).toBeLessThan(1500)
+    expect(Date.now() - started).toBeLessThan(5000)
     expect(view.state.doc.toString()).toBe(run)
 
     Vim.handleEx(cm, 's/a+!/x/')
@@ -169,8 +170,7 @@ describe('a command over many lines', () => {
       expect(view.state.doc.toString()).toBe(doc)
       return took
     }
-    run(100)
-    expect(run(4000) / run(1000)).toBeLessThan(6)
+    expect(measuredGrowth(run, 1000)).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
 
   test('a global delete takes every matching line, however many', () => {

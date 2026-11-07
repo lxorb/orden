@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from './growth'
 import { lexMarkdown, renderMarkdown } from './index'
 import { isTagName, opensTag, tagAt, tagNameAt } from './tags'
 
@@ -146,19 +147,12 @@ describe('a name a tag can be renamed to', () => {
 
 describe('a long line of a table', () => {
   test('is read for tags in time that grows with its length', () => {
-    const timed = (count: number) => {
+    const read = (count: number) => {
       const text = `| ${'|#a '.repeat(count)}\n${'|#b'.repeat(count)}`
-      let least = Infinity
-      for (let round = 0; round < 4; round++) {
-        const start = performance.now()
-        for (let at = text.indexOf('#'); at !== -1; at = text.indexOf('#', at + 1)) tagAt(text, at)
-        least = Math.min(least, performance.now() - start)
-      }
-      return least
+      for (let at = text.indexOf('#'); at !== -1; at = text.indexOf('#', at + 1)) tagAt(text, at)
     }
-    timed(4_000)
-    expect(timed(16_000) / timed(4_000)).toBeLessThan(9)
-  })
+    expect(growth(read, 4_000)).toBeLessThan(GROWS_AT_MOST)
+  }, 60_000)
 
   test('still tells a row from a line that only holds a bar', () => {
     expect(tagAt('| x |#a', 5)).toBe('a')

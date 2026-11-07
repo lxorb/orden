@@ -4,6 +4,7 @@ import { ensureSyntaxTree, parseLater } from '@codemirror/language'
 import { ChangeSet, EditorState, type Transaction } from '@codemirror/state'
 import { ViewUpdate } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
+import { GROWS_AT_MOST, measuredGrowth } from '../../markdown/src/growth'
 
 function seeded(seed: number): () => number {
   return () => {
@@ -69,8 +70,7 @@ describe('an update of many transactions at once', () => {
       updateOf(transactions)
       return performance.now() - started
     }
-    timed(500)
-    expect(timed(16_000) / timed(4_000)).toBeLessThan(9)
+    expect(measuredGrowth(timed, 4_000)).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
 })
 
@@ -104,8 +104,7 @@ describe('a run of edits joined into one undo step', () => {
         EditorState.create({ doc: 'line\n'.repeat(lines), extensions: [history()] }),
         false,
       ).took
-    timed(500)
-    expect(timed(16_000) / timed(4_000)).toBeLessThan(8)
+    expect(measuredGrowth(timed, 4_000)).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
 })
 
@@ -139,7 +138,6 @@ describe('edits that leave the parse for later', () => {
         }),
         true,
       ).took
-    timed(500)
-    expect(timed(16_000) / timed(4_000)).toBeLessThan(8)
+    expect(measuredGrowth(timed, 4_000)).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
 })

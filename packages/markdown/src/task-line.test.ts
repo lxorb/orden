@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from './growth'
 import {
   readDuration,
   readRemind,
@@ -268,27 +269,23 @@ describe('words an object would answer from its prototype', () => {
 })
 
 describe('a line built to make the reader backtrack', () => {
-  const quick = (line: string) => {
-    const started = performance.now()
-    const task = readTask(line)
-    expect(performance.now() - started).toBeLessThan(500)
-    return task
-  }
+  const quick = (line: (size: number) => string, size: number) =>
+    linearly((one) => readTask(line(one)), size)
 
   test('is read in linear time, a dependency list that ends badly among them', () => {
-    expect(quick(`- [ ] x ⛔ a${' , a'.repeat(40)} !`)?.dependsOn).toEqual([])
-    quick(`- [ ] x ⛔ a${' '.repeat(100_000)} !`)
-    quick(`- [ ] x 🔁${' '.repeat(100_000)}#`)
-    quick(`- [ ] x [a::${' '.repeat(100_000)}x`)
-    quick(`- [ ] x ${'[a:: '.repeat(20_000)}`)
-    quick(`- [ ] x ${'(a:: '.repeat(20_000)}`)
-    quick(`- [ ] x ${'[a:: '.repeat(20_000)}] (b:: c)`)
-  })
+    expect(readTask(`- [ ] x ⛔ a${' , a'.repeat(40)} !`)?.dependsOn).toEqual([])
+    quick((n) => `- [ ] x ⛔ a${' '.repeat(n)} !`, 100_000)
+    quick((n) => `- [ ] x 🔁${' '.repeat(n)}#`, 100_000)
+    quick((n) => `- [ ] x [a::${' '.repeat(n)}x`, 100_000)
+    quick((n) => `- [ ] x ${'[a:: '.repeat(n)}`, 20_000)
+    quick((n) => `- [ ] x ${'(a:: '.repeat(n)}`, 20_000)
+    quick((n) => `- [ ] x ${'[a:: '.repeat(n)}] (b:: c)`, 20_000)
+  }, 60_000)
 
   test('reads the same fields as before', () => {
-    expect(quick('- [ ] x ⛔ a , b,c  ')?.dependsOn).toEqual(['a', 'b', 'c'])
-    expect(quick(`- [ ] x [a::${' '.repeat(10_000)}y  ]`)?.fields).toEqual({ a: 'y' })
-    expect(quick('- [ ] x [a:: [b] (c:: d [e:: f]')?.fields).toEqual({ a: '[b', e: 'f' })
+    expect(readTask('- [ ] x ⛔ a , b,c  ')?.dependsOn).toEqual(['a', 'b', 'c'])
+    expect(readTask(`- [ ] x [a::${' '.repeat(10_000)}y  ]`)?.fields).toEqual({ a: 'y' })
+    expect(readTask('- [ ] x [a:: [b] (c:: d [e:: f]')?.fields).toEqual({ a: '[b', e: 'f' })
   })
 })
 

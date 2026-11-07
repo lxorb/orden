@@ -1,15 +1,9 @@
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from './growth'
 import { renderMarkdown } from './index'
 
-function timed(unit: string, length: number): number {
-  const source = `${unit.repeat(Math.ceil(length / unit.length))}x\n`
-  let least = Infinity
-  for (let round = 0; round < 2; round++) {
-    const started = performance.now()
-    renderMarkdown(source)
-    least = Math.min(least, performance.now() - started)
-  }
-  return least
+function rendered(unit: string): (length: number) => string {
+  return (length) => renderMarkdown(`${unit.repeat(Math.ceil(length / unit.length))}x\n`)
 }
 
 const count = (html: string, tag: string) => html.split(`<${tag}>`).length - 1
@@ -28,8 +22,7 @@ describe('a long run of one mark', () => {
       '> - ',
       'see https://a.b/.,',
     ]) {
-      timed(unit, 4_000)
-      expect(timed(unit, 64_000) / timed(unit, 16_000), unit).toBeLessThan(9)
+      expect(growth(rendered(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
     }
   }, 60_000)
 

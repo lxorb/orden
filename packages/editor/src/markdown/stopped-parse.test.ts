@@ -6,6 +6,7 @@ import { parser as javascript } from '@lezer/javascript'
 import { MarkdownParser } from '@lezer/markdown'
 import { htmlGrammar } from '@orden/lang-html'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
+import { measuredGrowth } from '../../../markdown/src/growth'
 import { nibMarkdownExtensions } from './extensions'
 
 const js = LRLanguage.define({ parser: javascript })
@@ -115,19 +116,12 @@ describe('a long paragraph parsed again after an edit', () => {
     const fragments = TreeFragment.applyChanges(TreeFragment.addTree(tree), [
       { fromA: at, toA: at, fromB: at, toB: at + 1 },
     ])
-    let best = Infinity
-    for (let round = 0; round < 3; round++) {
-      const start = performance.now()
-      parser.parse(next, fragments)
-      best = Math.min(best, performance.now() - start)
-    }
-    return best
+    const start = performance.now()
+    parser.parse(next, fragments)
+    return performance.now() - start
   }
 
   test('takes time in proportion to its length', () => {
-    reparse(1000)
-    const short = reparse(1000)
-    const long = reparse(8000)
-    expect(long / short).toBeLessThan(14)
-  })
+    expect(measuredGrowth(reparse, 1500, 8)).toBeLessThan(14)
+  }, 60_000)
 })

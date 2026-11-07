@@ -4,6 +4,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from '../../../markdown/src/growth'
 import { nibMarkdownExtensions } from './extensions'
 import { parsed } from '../../test/parsed'
 
@@ -276,19 +277,10 @@ describe('fenced code', () => {
   test('many fences that never close are read in time that grows with their number', () => {
     const lines = (count: number) =>
       Array.from({ length: count }, (_, i) => `${'~'.repeat(3 + (i % 7))}a\n`).join('')
-    const timed = (count: number) => {
-      const doc = lines(count)
-      let least = Infinity
-      for (let round = 0; round < 2; round++) {
-        const start = performance.now()
-        nibMarkdownParser.parse(doc)
-        least = Math.min(least, performance.now() - start)
-      }
-      return least
-    }
-    timed(500)
-    expect(timed(8_000) / timed(2_000)).toBeLessThan(9)
-  })
+    expect(growth((count) => nibMarkdownParser.parse(lines(count)), 2_000)).toBeLessThan(
+      GROWS_AT_MOST,
+    )
+  }, 60_000)
 
   test('a fence after ones that never close still closes, by its own marks', () => {
     const found = names(`~~~a\n~~~~b\n\`\`\`\ncode\n\`\`\`\n~~~ c\n> ~~~\n> x\n> ~~~\n`)
@@ -495,86 +487,52 @@ describe('a long paragraph', () => {
       }
       return doc
     }
-    const timed = (doc: string) => {
-      const found = { Link: 0, URL: 0 }
-      let least = Infinity
-      for (let round = 0; round < 2; round++) {
-        found.Link = found.URL = 0
-        const start = performance.now()
-        parser.parse(doc).iterate({
-          enter: (node) => {
-            if (node.name === 'Link' || node.name === 'URL') found[node.name]++
-          },
-        })
-        least = Math.min(least, performance.now() - start)
-      }
-      return { found, took: least }
+    const found = { Link: 0, URL: 0 }
+    const read = (lines: number) => {
+      found.Link = found.URL = 0
+      parser.parse(log(lines)).iterate({
+        enter: (node) => {
+          if (node.name === 'Link' || node.name === 'URL') found[node.name]++
+        },
+      })
     }
-    const short = timed(log(5_000))
-    const long = timed(log(20_000))
-    expect(long.found).toEqual({ Link: 20_000, URL: 20_000 })
-    expect(long.took / short.took).toBeLessThan(9)
-  })
+    expect(growth(read, 5_000)).toBeLessThan(GROWS_AT_MOST)
+    expect(found).toEqual({ Link: 20_000, URL: 20_000 })
+  }, 60_000)
 
   test('full of dollar signs that close nothing parses in time that grows with its length', () => {
     const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
       .parser
-    const timed = (count: number) => {
-      const doc = `${'$5 and '.repeat(count)}or 1$2\n\n$x$\n`
-      let least = Infinity
-      let maths = 0
-      for (let round = 0; round < 2; round++) {
-        maths = 0
-        const start = performance.now()
-        parser.parse(doc).iterate({
-          enter: (node) => {
-            if (node.name === 'InlineMath') maths++
-          },
-        })
-        least = Math.min(least, performance.now() - start)
-      }
-      return { maths, took: least }
+    let maths = 0
+    const read = (count: number) => {
+      maths = 0
+      parser.parse(`${'$5 and '.repeat(count)}or 1$2\n\n$x$\n`).iterate({
+        enter: (node) => {
+          if (node.name === 'InlineMath') maths++
+        },
+      })
     }
-    const short = timed(2_000)
-    const long = timed(8_000)
-    expect(long.maths).toBe(1)
-    expect(long.took / short.took).toBeLessThan(9)
-  })
+    expect(growth(read, 2_000)).toBeLessThan(GROWS_AT_MOST)
+    expect(maths).toBe(1)
+  }, 60_000)
 
   test('a long run of spaces, or of brackets after an address, parses in time that grows with its length', () => {
-    const timed = (doc: string) => {
-      let least = Infinity
-      for (let round = 0; round < 2; round++) {
-        const start = performance.now()
-        nibMarkdownParser.parse(doc)
-        least = Math.min(least, performance.now() - start)
-      }
-      return least
-    }
     const runs = [
       (length: number) => `k${' '.repeat(length)}:\n`,
       (length: number) => `https://a.b/${')'.repeat(length)}\n`,
     ]
     for (const run of runs) {
-      timed(run(2_000))
-      expect(timed(run(64_000)) / timed(run(16_000))).toBeLessThan(9)
+      expect(growth((length) => nibMarkdownParser.parse(run(length)), 16_000)).toBeLessThan(
+        GROWS_AT_MOST,
+      )
     }
-  })
+  }, 60_000)
 
   test('a line of list or quote marks thousands deep parses in time that grows with its length', () => {
-    const timed = (unit: string, length: number) => {
-      const doc = `${unit.repeat(Math.ceil(length / unit.length))}x\n`
-      let least = Infinity
-      for (let round = 0; round < 2; round++) {
-        const start = performance.now()
-        nibMarkdownParser.parse(doc)
-        least = Math.min(least, performance.now() - start)
-      }
-      return least
-    }
+    const parsed = (unit: string) => (length: number) =>
+      nibMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}x\n`)
     for (const unit of ['- ', '* ', '1. ', '> ', '> - ']) {
-      timed(unit, 4_000)
-      expect(timed(unit, 64_000) / timed(unit, 16_000), unit).toBeLessThan(9)
+      expect(growth(parsed(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
     }
   }, 30_000)
 
@@ -596,36 +554,18 @@ describe('a long paragraph', () => {
   test('repeating what opens a link or emphasis parses in time that grows with its length', () => {
     const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
       .parser
-    const timed = (unit: string, length: number) => {
-      const doc = `${unit.repeat(Math.ceil(length / unit.length))}\n`
-      let least = Infinity
-      for (let round = 0; round < 2; round++) {
-        const start = performance.now()
-        parser.parse(doc)
-        least = Math.min(least, performance.now() - start)
-      }
-      return least
-    }
+    const parsed = (unit: string) => (length: number) =>
+      parser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
     for (const unit of ['[a](', '![a](', '[a](x (', '*[a', '_[a', '*a_ [b ', '==a ', '%%a ']) {
-      timed(unit, 4_000)
-      expect(timed(unit, 64_000) / timed(unit, 16_000), unit).toBeLessThan(9)
+      expect(growth(parsed(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
     }
-  })
+  }, 60_000)
 
   test('repeating what closes a link nothing opened parses in time that grows with its length', () => {
-    const timed = (unit: string, length: number) => {
-      const doc = `${unit.repeat(Math.ceil(length / unit.length))}\n`
-      let least = Infinity
-      for (let round = 0; round < 3; round++) {
-        const start = performance.now()
-        nibMarkdownParser.parse(doc)
-        least = Math.min(least, performance.now() - start)
-      }
-      return least
-    }
+    const parsed = (unit: string) => (length: number) =>
+      nibMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
     for (const unit of [']*', '_]', '*]', ']$', '`]', 'a] ', '[a] ]*']) {
-      timed(unit, 8_000)
-      expect(timed(unit, 128_000) / timed(unit, 32_000), unit).toBeLessThan(9)
+      expect(growth(parsed(unit), 32_000), unit).toBeLessThan(GROWS_AT_MOST)
     }
   }, 120_000)
 

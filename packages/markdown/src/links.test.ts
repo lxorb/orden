@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from './growth'
 import { namedBlock } from './block-names'
 import fenceTable from './fence-table.json'
 import { CodeBlocks } from './fences'
@@ -588,11 +589,9 @@ describe('links after code that only looks like a fence', () => {
 
 describe('a markdown link that never closes', () => {
   test('is turned away in linear time, however many blanks follow it', () => {
-    const started = performance.now()
-    expect(findLinks(`[a](b${' '.repeat(100_000)}x`)).toEqual([])
-    expect(findLinks(`[a](<b>${' '.repeat(100_000)}"t" x`)).toEqual([])
-    expect(performance.now() - started).toBeLessThan(500)
-  })
+    expect(linearly((n) => findLinks(`[a](b${' '.repeat(n)}x`), 100_000)).toEqual([])
+    expect(linearly((n) => findLinks(`[a](<b>${' '.repeat(n)}"t" x`), 100_000)).toEqual([])
+  }, 60_000)
 
   test('still reads a title after blanks, and blanks with no title', () => {
     const found = findLinks('[a](One.md   "title"  ) [b](<Two.md>   )')
@@ -905,21 +904,17 @@ describe('a closing fence an older build named', () => {
 })
 
 describe('a line of links nothing closes', () => {
-  const quick = (source: string) => {
-    const started = performance.now()
-    const html = renderMarkdown(source)
-    expect(performance.now() - started).toBeLessThan(1500)
-    return html
-  }
+  const quick = (source: (size: number) => string, size: number) =>
+    linearly((one) => renderMarkdown(source(one)), size)
 
   test('renders in linear time', () => {
-    expect(quick('[a]('.repeat(25_000))).not.toContain('<a ')
-    expect(quick('![a]('.repeat(20_000))).not.toContain('<img')
-    expect(quick('[a](x ('.repeat(15_000))).not.toContain('<a ')
-    expect(quick('[a](<'.repeat(20_000))).not.toContain('<a ')
-    expect(quick('[a](<x>'.repeat(15_000))).not.toContain('<a ')
-    expect(quick('[a](x)'.repeat(16_000)).split('<a ').length - 1).toBe(16_000)
-  })
+    expect(quick((n) => '[a]('.repeat(n), 25_000)).not.toContain('<a ')
+    expect(quick((n) => '![a]('.repeat(n), 20_000)).not.toContain('<img')
+    expect(quick((n) => '[a](x ('.repeat(n), 15_000)).not.toContain('<a ')
+    expect(quick((n) => '[a](<'.repeat(n), 20_000)).not.toContain('<a ')
+    expect(quick((n) => '[a](<x>'.repeat(n), 15_000)).not.toContain('<a ')
+    expect(quick((n) => '[a](x)'.repeat(n), 16_000).split('<a ').length - 1).toBe(16_000)
+  }, 60_000)
 
   test('reads a link that closes as before', () => {
     const cases: [string, string][] = [
