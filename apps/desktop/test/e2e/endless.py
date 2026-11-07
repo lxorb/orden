@@ -62,6 +62,28 @@ document.getElementById('pattern').textContent = 'it ran'
 ;/^(\\w+\\s?)+$/.test('a'.repeat(40) + '!')
 </script>
 
+A block that makes its patterns as it runs:
+
+<div id="madepattern">nothing yet</div>
+<script>
+const tried = []
+const source = ['(\\\\w+', '\\\\s?)+$'].join('')
+const text = 'a'.repeat(40) + '!'
+for (const run of [
+  () => new RegExp(source).test(text),
+  () => text.match(source),
+  () => eval('/' + source + '/').test(text),
+]) {
+  try {
+    run()
+    tried.push('ran')
+  } catch (error) {
+    tried.push(error.name)
+  }
+}
+document.getElementById('madepattern').textContent = tried.join(' ')
+</script>
+
 A block that makes a frame of its own to run what it says:
 
 <div id="nested">nothing yet</div>
@@ -257,7 +279,8 @@ def drive(browser: Browser) -> None:
     block(page)
     made(page)
     refused(page, 2, "pattern", "nothing yet", "with a pattern that backtracks without end")
-    refused(page, 3, "nested", "made a frame", "that makes a frame of its own")
+    refused(page, 3, "madepattern", "SyntaxError SyntaxError SyntaxError", "that makes its patterns as it runs")
+    refused(page, 4, "nested", "made a frame", "that makes a frame of its own")
     context.close()
 
 def main() -> int:

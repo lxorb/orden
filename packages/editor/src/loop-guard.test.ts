@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { createContext, runInContext } from 'node:vm'
 import { describe, expect, test, vi } from 'vitest'
 import { backtracks, guarded, guardedBlock, LOOP_LIMIT } from './loop-guard'
 
@@ -192,5 +193,50 @@ describe('the check the frame runs first', () => {
       clock.mockRestore()
       said.mockRestore()
     }
+  })
+})
+
+describe('a pattern a block makes as it runs', () => {
+  function frame(): (code: string) => unknown {
+    const holder = document.createElement('template')
+    holder.innerHTML = guardedBlock('<script>1</script>')
+    const check = holder.content.querySelector('script')?.textContent ?? ''
+    const context = createContext({ performance, MessageChannel, console })
+    runInContext('var self = globalThis', context)
+    runInContext(check, context)
+    return (code) => runInContext(code, context) as unknown
+  }
+
+  test('is refused where it could backtrack without end, however it is made', () => {
+    const run = frame()
+    for (const code of [
+      'new RegExp("(a+)+$")',
+      'RegExp("(a|a)*$", "i")',
+      'var p = "(\\\\w+\\\\s?)+$"; new RegExp(p)',
+      'new RegExp(/(a*)*$/.source)',
+      '"aaaa!".match("(a+)+$")',
+      '"aaaa!".search("(a|aa)+$")',
+      '[..."aaaa!".matchAll("(a*)*$")]',
+      '/x/.compile("(a+)+$")',
+      'eval("/(a+)+$/.test(1)")',
+      'Function("return /(a|a)+$/")',
+      'new (async () => {}).constructor("return /(a+)+b/")',
+    ]) {
+      expect(() => run(code), code).toThrow(/forever to match/)
+    }
+  })
+
+  test('is made as before where it cannot', () => {
+    const run = frame()
+    expect(run('new RegExp("a+b", "g").flags')).toBe('g')
+    expect(run('RegExp("x") instanceof RegExp')).toBe(true)
+    expect(run('Object.getPrototypeOf(new RegExp("x")) === RegExp.prototype')).toBe(true)
+    expect(run('/(a)/.exec("a")[1]')).toBe('a')
+    expect(run('"a,b".split(/,/).length')).toBe(2)
+    expect(run('[..."abab".matchAll(/a/g)].length')).toBe(2)
+    expect(run('"abc".match("b").index')).toBe(1)
+    expect(run('eval("6 / 2 / 3")')).toBe(1)
+    expect(run('Function("a", "return a / 2 / 1")(8)')).toBe(4)
+    expect(run('eval("/[/]a+b/.test(\'/ab\')")')).toBe(true)
   })
 })
