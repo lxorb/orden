@@ -93,7 +93,7 @@ function shownByTheWorker(one: Notice, options: NotificationOptions): void {
       const said: unknown = event.data
       const pressed =
         typeof said === 'object' && said !== null
-          ? (said as { nibNotice?: unknown }).nibNotice
+          ? (said as { ordenNotice?: unknown }).ordenNotice
           : null
       if (typeof pressed === 'string') byWorker.get(pressed)?.opened?.()
     })
@@ -101,7 +101,9 @@ function shownByTheWorker(one: Notice, options: NotificationOptions): void {
   }
 
   void workers.ready
-    .then((held) => held.showNotification(one.title, { ...options, tag, data: { nibNotice: tag } }))
+    .then((held) =>
+      held.showNotification(one.title, { ...options, tag, data: { ordenNotice: tag } }),
+    )
     .catch(() => undefined)
 }
 

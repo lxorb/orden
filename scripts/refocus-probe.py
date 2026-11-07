@@ -140,7 +140,7 @@ def main() -> int:
             with logged.open("rb") as reading:
                 reading.seek(mark)
                 heard = reading.read().decode("utf-8", "replace").splitlines()
-            said["the rule"] = [line for line in heard if line.startswith("nib: keyboard:")]
+            said["the rule"] = [line for line in heard if line.startswith("orden: keyboard:")]
             if not said["the rule"]:
                 said["what the app said instead"] = heard[-20:]
 
@@ -156,7 +156,7 @@ def main() -> int:
     print(json.dumps(said, indent=2))
     failed = []
     rule = said["the rule"]
-    if rule != ["nib: keyboard: main back to its own page, its own page kept; held"]:
+    if rule != ["orden: keyboard: main back to its own page, its own page kept; held"]:
         failed.append(f"the window's own page was not the keyboard's way back: {rule}")
     before, after = said["before"], said["after"]
     if not isinstance(before, dict) or not isinstance(after, dict):

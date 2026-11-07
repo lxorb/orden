@@ -76,7 +76,7 @@ describe('the document a block of the note’s own HTML runs in', () => {
 })
 
 describe('how tall an interactive block may say it is', () => {
-  const said = (height: unknown) => frameHeight({ nib: 'orden-html-frame', height })
+  const said = (height: unknown) => frameHeight({ orden: 'orden-html-frame', height })
 
   test('what it asked for, within reason', () => {
     expect(said(320)).toBe(320)
@@ -87,7 +87,7 @@ describe('how tall an interactive block may say it is', () => {
 
   test('and nothing at all from a message that is not one of ours', () => {
     expect(frameHeight({ height: 300 })).toBe(null)
-    expect(frameHeight({ nib: 'orden-run', height: 300 })).toBe(null)
+    expect(frameHeight({ orden: 'orden-run', height: 300 })).toBe(null)
     expect(said('300')).toBe(null)
     expect(said(Number.NaN)).toBe(null)
     expect(said(Number.POSITIVE_INFINITY)).toBe(null)

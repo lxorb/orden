@@ -82,14 +82,14 @@ describe('notices in a browser', () => {
         options: expect.objectContaining({
           body: 'The figures are in',
           tag: 'c_2',
-          data: { nibNotice: 'c_2' },
+          data: { ordenNotice: 'c_2' },
         }),
       },
     ])
 
-    world.heard?.({ data: { nibNotice: 'c_2' } })
+    world.heard?.({ data: { ordenNotice: 'c_2' } })
     expect(opened).toHaveBeenCalledOnce()
-    world.heard?.({ data: { nibNotice: 'someone else' } })
+    world.heard?.({ data: { ordenNotice: 'someone else' } })
     world.heard?.({ data: 'c_2' })
     expect(opened).toHaveBeenCalledOnce()
   })
@@ -99,9 +99,9 @@ describe('notices in a browser', () => {
     const opened = vi.fn()
     show({ title: 'Reminder', body: 'Call Ada', opened })
     await settled()
-    const tag = (world.byWorker[0]?.options.data as { nibNotice: string }).nibNotice
+    const tag = (world.byWorker[0]?.options.data as { ordenNotice: string }).ordenNotice
     expect(tag).toMatch(/^[0-9a-f]{16}$/)
-    world.heard?.({ data: { nibNotice: tag } })
+    world.heard?.({ data: { ordenNotice: tag } })
     expect(opened).toHaveBeenCalledOnce()
   })
 })

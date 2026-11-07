@@ -212,7 +212,8 @@ async function rowFor(path) {
 }
 
 self.addEventListener('notificationclick', (event) => {
-  const tag = event.notification.data?.nibNotice
+  const said = event.notification.data
+  const tag = said?.ordenNotice ?? said?.nibNotice
   event.notification.close()
   event.waitUntil(cameBackTo(tag))
 })
@@ -223,5 +224,5 @@ async function cameBackTo(tag) {
   if (!client) return
 
   await client.focus?.().catch(() => undefined)
-  if (typeof tag === 'string') client.postMessage({ nibNotice: tag })
+  if (typeof tag === 'string') client.postMessage({ ordenNotice: tag })
 }

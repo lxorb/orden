@@ -901,7 +901,7 @@ why it may be ignored. A disable comment names its reason and is rare.
 
 A bug fix ships with a test that failed before it. Pure logic gets unit tests;
 routes get harness tests; editor behaviour gets state-level tests without a
-DOM where possible. Widgets extend `NibWidget`; a test enforces it.
+DOM where possible. Widgets extend `OrdenWidget`; a test enforces it.
 
 A test measures the code, not the queue in front of it. Loading a module graph
 is seconds of compiling that belongs to no one test, so a file whose hooks

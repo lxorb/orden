@@ -1,4 +1,4 @@
-export interface NibSystem {
+export interface OrdenSystem {
   insets(): string
   askForTheFrame(): void
   bars(dark: boolean): void
@@ -20,12 +20,12 @@ export interface NibSystem {
   askExactAlarms(): void
 }
 
-export function method<K extends keyof NibSystem>(name: K): NibSystem[K] | undefined {
+export function method<K extends keyof OrdenSystem>(name: K): OrdenSystem[K] | undefined {
   const found: unknown = (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__
   if (typeof found !== 'object' || found === null) return undefined
 
-  const held = (found as Partial<NibSystem>)[name]
-  return typeof held === 'function' ? (held.bind(found) as NibSystem[K]) : undefined
+  const held = (found as Partial<OrdenSystem>)[name]
+  return typeof held === 'function' ? (held.bind(found) as OrdenSystem[K]) : undefined
 }
 
 export function onTheActivity(): boolean {

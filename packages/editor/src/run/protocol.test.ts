@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { parseRunMessage, runnerDocument } from './protocol'
 
 const message = (extra: Record<string, unknown> = {}) => ({
-  nib: 'orden-run',
+  orden: 'orden-run',
   run: 7,
   lines: [{ level: 'log', text: 'hi' }],
   done: false,
@@ -30,7 +30,7 @@ describe('reading a message from the sandbox', () => {
 
   test('ignores anything else on the page that posts messages', () => {
     expect(parseRunMessage({ type: 'webpackHot' }, 7)).toBeNull()
-    expect(parseRunMessage(message({ nib: 'something-else' }), 7)).toBeNull()
+    expect(parseRunMessage(message({ orden: 'something-else' }), 7)).toBeNull()
     expect(parseRunMessage('hello', 7)).toBeNull()
     expect(parseRunMessage(null, 7)).toBeNull()
   })

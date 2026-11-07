@@ -205,7 +205,7 @@ describe('the activity a drive stands in for', () => {
   const BRIDGE = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'mobile', 'bridge.ts')
 
   const declared = new Map<string, string[]>()
-  const block = BRIDGE.slice(BRIDGE.indexOf('export interface NibSystem {'))
+  const block = BRIDGE.slice(BRIDGE.indexOf('export interface OrdenSystem {'))
   for (const found of block.slice(0, block.indexOf('\n}')).matchAll(/^\s*(\w+)\(([^)]*)\)/gm)) {
     declared.set(
       caught(found),
