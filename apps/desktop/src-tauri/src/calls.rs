@@ -27,6 +27,70 @@ const MAIN: [&str; 8] = [
 
 const GUARDS: [&str; 3] = ["MutexGuard", "RwLockReadGuard", "RwLockWriteGuard"];
 
+const TYPED_DEEPEST: usize = 16;
+
+const RELEASING: [&str; 5] = [
+    "wait",
+    "wait_timeout",
+    "wait_while",
+    "wait_timeout_while",
+    "wait_timeout_ms",
+];
+
+const WIDEST: usize = 8;
+
+const DEREFS: [&str; 14] = [
+    "Arc",
+    "Rc",
+    "Box",
+    "State",
+    "Ref",
+    "RefMut",
+    "MutexGuard",
+    "RwLockReadGuard",
+    "RwLockWriteGuard",
+    "LazyLock",
+    "Lazy",
+    "Pin",
+    "ManuallyDrop",
+    "AssertUnwindSafe",
+];
+
+const WRAPS: [&str; 10] = [
+    "Arc", "Rc", "Box", "Mutex", "RwLock", "RefCell", "Cell", "OnceLock", "Pin", "LazyLock",
+];
+
+const SAME: [&str; 22] = [
+    "clone",
+    "to_owned",
+    "as_ref",
+    "as_mut",
+    "deref",
+    "deref_mut",
+    "borrow",
+    "borrow_mut",
+    "by_ref",
+    "unwrap",
+    "expect",
+    "unwrap_or_else",
+    "unwrap_or_default",
+    "unwrap_or",
+    "as_deref",
+    "as_deref_mut",
+    "ok",
+    "map_err",
+    "cloned",
+    "copied",
+    "into_inner",
+    "get_or_init",
+];
+
+const SEQUENCES: [&str; 9] = [
+    "Vec", "VecDeque", "HashSet", "BTreeSet", "[]", "Iter", "Option", "IndexSet", "SmallVec",
+];
+
+const MAPS: [&str; 3] = ["HashMap", "BTreeMap", "IndexMap"];
+
 #[derive(Default)]
 struct Function {
     said: String,
@@ -412,11 +476,16 @@ struct Found {
     mains: Vec<Vec<String>>,
     main: bool,
     passed_to: Option<Vec<String>>,
+    env: Env,
+    methods: Typed,
+    output: Option<syn::Type>,
+    inputs: Vec<Option<syn::Type>>,
+    generics: Vec<String>,
 }
 
 #[derive(Default)]
 struct Locks {
-    takes: Vec<Key>,
+    takes: Vec<(Key, Chain)>,
     passes: Vec<(Vec<String>, Key)>,
     held: Vec<Hold>,
     handed: Vec<Handed>,
@@ -451,28 +520,32 @@ fn locks_in(place: &str, module: &str, visit: impl FnOnce(&mut Taking, &mut Hold
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 enum Key {
     Named(String),
     Path(Vec<String>),
     Call(Vec<String>),
+    Field(Chain, String),
+    Var(String),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 enum Guard {
-    Lock(Key),
-    Through(Vec<String>, Option<Key>),
-    Method(String),
+    Lock(Key, Chain),
+    Through(Vec<String>, Option<Key>, bool),
+    Method(String, Chain, bool),
 }
 
 struct Hold {
-    guard: Guard,
+    guards: Vec<Guard>,
     calls: Vec<Vec<String>>,
+    methods: Typed,
     said: String,
 }
 
 struct Known<'a> {
     relays: &'a HashSet<String>,
+    guarding: &'a HashSet<String>,
     accessors: &'a HashMap<String, Vec<String>>,
     helpers: &'a HashMap<String, Vec<String>>,
 }
@@ -480,6 +553,7 @@ struct Known<'a> {
 struct Handed {
     to: Vec<String>,
     calls: Vec<Vec<String>>,
+    methods: Typed,
     said: String,
 }
 
@@ -490,6 +564,9 @@ struct Gathered {
     owners: HashSet<String>,
     found: Vec<Found>,
     known: HashSet<String>,
+    defs: HashMap<String, Def>,
+    statics: HashMap<String, (String, syn::Type)>,
+    by_path: HashMap<String, Vec<usize>>,
 }
 
 #[derive(Default)]
@@ -605,11 +682,66 @@ impl Gathered {
                     let scope = self.modules.entry(module.to_owned()).or_default();
                     named(&used.tree, Vec::new(), scope);
                 }
+                syn::Item::Struct(_)
+                | syn::Item::Enum(_)
+                | syn::Item::Static(_)
+                | syn::Item::Const(_) => self.shaped(module, item),
                 syn::Item::Mod(inner) if !tested(&inner.attrs) => {
                     self.module(module, inner, files);
                 }
                 _ => {}
             }
+        }
+    }
+
+    fn shaped(&mut self, module: &str, item: &syn::Item) {
+        let named = |at: usize, field: &syn::Field| {
+            field
+                .ident
+                .as_ref()
+                .map_or_else(|| at.to_string(), ToString::to_string)
+        };
+        let mut fields = HashMap::new();
+        let (name, attrs) = match item {
+            syn::Item::Struct(shape) => {
+                for (at, field) in shape.fields.iter().enumerate() {
+                    fields.insert(named(at, field), field.ty.clone());
+                }
+                (&shape.ident, &shape.attrs)
+            }
+            syn::Item::Enum(shape) => {
+                for variant in &shape.variants {
+                    for (at, field) in variant.fields.iter().enumerate() {
+                        let name = format!("{}.{}", variant.ident, named(at, field));
+                        fields.insert(name, field.ty.clone());
+                    }
+                }
+                (&shape.ident, &shape.attrs)
+            }
+            syn::Item::Static(one) => {
+                self.statics.insert(
+                    format!("{module}::{}", one.ident),
+                    (module.to_owned(), (*one.ty).clone()),
+                );
+                return;
+            }
+            syn::Item::Const(one) => {
+                self.statics.insert(
+                    format!("{module}::{}", one.ident),
+                    (module.to_owned(), (*one.ty).clone()),
+                );
+                return;
+            }
+            _ => return,
+        };
+        if !tested(attrs) {
+            self.defs.insert(
+                format!("{module}::{name}"),
+                Def {
+                    module: module.to_owned(),
+                    fields,
+                },
+            );
         }
     }
 
@@ -667,6 +799,7 @@ impl Gathered {
             taking.visit_block(block);
             holding.visit_block(block);
         });
+        let (env, taken) = Bindings::of(sig, block);
         let mut mains = Mains::default();
         mains.visit_block(block);
         for (at, body) in mains.closures.iter().enumerate() {
@@ -675,7 +808,7 @@ impl Gathered {
                 owner,
                 &format!("{path}::main#{at}"),
                 body,
-                &scope,
+                (&scope, &env),
                 None,
             );
         }
@@ -685,7 +818,7 @@ impl Gathered {
                 owner,
                 &format!("{path}::passed#{at}"),
                 body,
-                &scope,
+                (&scope, &env),
                 Some(to.clone()),
             );
         }
@@ -744,6 +877,11 @@ impl Gathered {
             mains: mains.named,
             main: false,
             passed_to: None,
+            env,
+            methods: Methods::of_block(block),
+            output: output_of(sig),
+            inputs: taken,
+            generics: generics_of(sig),
         });
     }
 
@@ -753,7 +891,7 @@ impl Gathered {
         owner: Option<&str>,
         path: &str,
         body: &syn::Expr,
-        scope: &Scope,
+        (scope, env): (&Scope, &Env),
         passed_to: Option<Vec<String>>,
     ) {
         let locks = locks_in(owner.unwrap_or(module), module, |taking, holding| {
@@ -775,11 +913,19 @@ impl Gathered {
             mains: Vec::new(),
             main: passed_to.is_none(),
             passed_to,
+            env: env.clone(),
+            methods: Methods::of_expr(body),
+            output: None,
+            inputs: Vec::new(),
+            generics: Vec::new(),
         });
     }
 
     fn resolved(mut self) -> Crate {
         self.known = self.found.iter().map(|one| one.path.clone()).collect();
+        for (at, found) in self.found.iter().enumerate() {
+            self.by_path.entry(found.path.clone()).or_default().push(at);
+        }
 
         let mut own = Crate {
             modules: self.modules.len(),
@@ -814,9 +960,11 @@ impl Gathered {
                 .flat_map(|path| self.landing(&path, 0))
                 .collect();
 
+            let typed = self.typed(found, &found.methods);
             let function = own.functions.entry(found.path.clone()).or_default();
             function.said.push_str(&found.said);
             function.called.extend(called);
+            function.called.extend(typed);
 
             if found.command && !own.commands.contains(&found.path) {
                 own.commands.push(found.path.clone());
@@ -849,7 +997,10 @@ impl Gathered {
         let mut takes: Vec<Vec<String>> = Vec::new();
         for found in &self.found {
             let mut keys = Vec::new();
-            for key in &found.locks.takes {
+            for (key, receiver) in &found.locks.takes {
+                if self.locks_itself(found, receiver) {
+                    continue;
+                }
                 let key = self.key(found, key);
                 if unknown(&key).is_some_and(|(name, _)| found.params.iter().any(|one| one == name))
                 {
@@ -890,8 +1041,15 @@ impl Gathered {
                     .extend(keys.iter().cloned());
             }
         }
+        let guarding: HashSet<String> = self
+            .found
+            .iter()
+            .filter(|found| found.shape.accessor && relays.contains(&found.path))
+            .map(|found| found.path.clone())
+            .collect();
         let known = Known {
             relays: &relays,
+            guarding: &guarding,
             accessors: &accessors,
             helpers: &helpers,
         };
@@ -905,30 +1063,21 @@ impl Gathered {
     fn held_in(&self, found: &Found, known: &Known<'_>) -> Vec<Held> {
         let mut held = Vec::new();
         for hold in &found.locks.held {
-            let locks: Vec<String> = match &hold.guard {
-                Guard::Lock(key) => vec![self.key(found, key)],
-                Guard::Through(path, first) => {
-                    let called = self.resolve(found, path);
-                    match first {
-                        Some(first) if called.iter().any(|one| known.relays.contains(one)) => {
-                            vec![self.key(found, first)]
-                        }
-                        _ => called
-                            .iter()
-                            .filter_map(|one| known.accessors.get(one))
-                            .flatten()
-                            .cloned()
-                            .collect(),
-                    }
+            let mut locks: Vec<String> = Vec::new();
+            let mut through: Vec<String> = Vec::new();
+            for guard in &hold.guards {
+                let (taken, by) = self.guarded(found, guard, known);
+                if !taken.is_empty() {
+                    locks.extend(taken);
+                    through.extend(by);
                 }
-                Guard::Method(name) => known
-                    .accessors
-                    .iter()
-                    .filter(|(path, _)| path.ends_with(&format!("::{name}")))
-                    .flat_map(|(_, keys)| keys.iter().cloned())
-                    .collect(),
-            };
-            let called = self.resolve_all(found, &hold.calls);
+            }
+            if locks.is_empty() {
+                continue;
+            }
+            let mut called = self.resolve_all(found, &hold.calls);
+            called.extend(self.typed(found, &hold.methods));
+            called.retain(|one| !through.contains(one));
             for lock in locks {
                 held.push(Held {
                     lock,
@@ -945,7 +1094,8 @@ impl Gathered {
                 .flatten()
                 .cloned()
                 .collect();
-            let called = self.resolve_all(found, &handed.calls);
+            let mut called = self.resolve_all(found, &handed.calls);
+            called.extend(self.typed(found, &handed.methods));
             for lock in locks {
                 held.push(Held {
                     lock,
@@ -955,6 +1105,76 @@ impl Gathered {
             }
         }
         held
+    }
+
+    fn guarded(
+        &self,
+        found: &Found,
+        guard: &Guard,
+        known: &Known<'_>,
+    ) -> (Vec<String>, Vec<String>) {
+        match guard {
+            Guard::Lock(_, receiver) if self.locks_itself(found, receiver) => self.guarded(
+                found,
+                &Guard::Method("lock".to_owned(), receiver.clone(), true),
+                known,
+            ),
+            Guard::Lock(key, _) => (vec![self.key(found, key)], Vec::new()),
+            Guard::Through(path, first, strict) => {
+                let called = self.resolve(found, path);
+                let relays = if *strict {
+                    known.guarding
+                } else {
+                    known.relays
+                };
+                let locks = match first {
+                    Some(first) if called.iter().any(|one| relays.contains(one)) => {
+                        vec![self.key(found, first)]
+                    }
+                    _ => called
+                        .iter()
+                        .filter_map(|one| known.accessors.get(one))
+                        .flatten()
+                        .cloned()
+                        .collect(),
+                };
+                (locks, called)
+            }
+            Guard::Method(name, receiver, strict) => {
+                let targets: HashSet<String> = self
+                    .types(found, receiver, &mut Vec::new(), 0)
+                    .iter()
+                    .flat_map(|one| self.targets(one, name))
+                    .collect();
+                if !targets.is_empty() || *strict {
+                    let locks = targets
+                        .iter()
+                        .filter_map(|one| known.accessors.get(one))
+                        .flatten()
+                        .cloned()
+                        .collect();
+                    return (locks, targets.into_iter().collect());
+                }
+                let named: Vec<(&String, &Vec<String>)> = known
+                    .accessors
+                    .iter()
+                    .filter(|(path, _)| path.ends_with(&format!("::{name}")))
+                    .collect();
+                (
+                    named
+                        .iter()
+                        .flat_map(|(_, keys)| keys.iter().cloned())
+                        .collect(),
+                    named.iter().map(|(path, _)| (*path).clone()).collect(),
+                )
+            }
+        }
+    }
+
+    fn locks_itself(&self, found: &Found, receiver: &Chain) -> bool {
+        self.types(found, receiver, &mut Vec::new(), 0)
+            .iter()
+            .any(|one| !self.targets(one, "lock").is_empty())
     }
 
     fn resolve(&self, found: &Found, path: &[String]) -> Vec<String> {
@@ -999,7 +1219,393 @@ impl Gathered {
                     .unwrap_or_else(|| joined(&found.module, path));
                 format!("{called}()")
             }
+            Key::Field(base, name) => self
+                .field_key(found, base, name)
+                .unwrap_or_else(|| unknown_key(name, &found.module)),
+            Key::Var(name) => self
+                .var_key(found, name, &mut Vec::new())
+                .unwrap_or_else(|| format!("?{name}@{}", found.module)),
         }
+    }
+
+    fn field_key(&self, found: &Found, base: &Chain, name: &str) -> Option<String> {
+        self.types(found, base, &mut Vec::new(), 0)
+            .iter()
+            .find_map(|one| self.field_owner(one, name))
+            .map(|owner| format!("{owner}::{name}"))
+    }
+
+    fn var_key(&self, found: &Found, name: &str, visiting: &mut Vec<String>) -> Option<String> {
+        if visiting.iter().any(|one| one == name) || visiting.len() > TYPED_DEEPEST {
+            return None;
+        }
+        visiting.push(name.to_owned());
+        let key = found.env.get(name).into_iter().flatten().find_map(|chain| {
+            let mut steps = chain.steps.as_slice();
+            while let Some((Step::Method(method, _), rest)) = steps.split_last() {
+                if !SAME.contains(&method.as_str()) {
+                    break;
+                }
+                steps = rest;
+            }
+            match (&chain.root, steps.split_last()) {
+                (_, Some((Step::Field(field), rest))) => {
+                    let base = Chain {
+                        root: chain.root.clone(),
+                        steps: rest.to_vec(),
+                    };
+                    self.field_key(found, &base, field)
+                }
+                (Root::Var(other), None) => self.var_key(found, other, visiting),
+                (Root::Path(path), None) => Some(self.key(found, &Key::Path(path.clone()))),
+                _ => None,
+            }
+        });
+        visiting.pop();
+        key
+    }
+
+    fn field_owner(&self, ty: &Ty, name: &str) -> Option<String> {
+        let mut at = Some(ty);
+        while let Some(one) = at {
+            if self
+                .defs
+                .get(&one.name)
+                .is_some_and(|def| def.fields.contains_key(name))
+            {
+                return Some(one.name.clone());
+            }
+            at = one.inside();
+        }
+        None
+    }
+
+    fn typed(&self, found: &Found, methods: &Typed) -> HashSet<String> {
+        let mut called = HashSet::new();
+        for (receiver, method) in methods {
+            for ty in self.types(found, receiver, &mut Vec::new(), 0) {
+                called.extend(self.targets(&ty, method));
+            }
+        }
+        called
+    }
+
+    fn targets(&self, ty: &Ty, method: &str) -> Vec<String> {
+        let mut at = Some(ty);
+        while let Some(one) = at {
+            if self.is_def(&one.name) {
+                let landed = self.landing(&format!("{}::{method}", one.name), 0);
+                if !landed.is_empty() {
+                    return landed;
+                }
+            }
+            at = one.inside();
+        }
+        Vec::new()
+    }
+
+    fn is_def(&self, name: &str) -> bool {
+        self.defs.contains_key(name) || self.owners.contains(name)
+    }
+
+    fn ty_in(&self, place: Place<'_>, raw: &syn::Type, depth: usize) -> Option<Ty> {
+        if depth > TYPED_DEEPEST {
+            return None;
+        }
+        let (module, scope, owner) = place;
+        let inner = |one: &syn::Type| {
+            self.ty_in(place, one, depth + 1)
+                .unwrap_or_else(|| Ty::plain("?"))
+        };
+        match raw {
+            syn::Type::Reference(one) => self.ty_in(place, &one.elem, depth + 1),
+            syn::Type::Paren(one) => self.ty_in(place, &one.elem, depth + 1),
+            syn::Type::Group(one) => self.ty_in(place, &one.elem, depth + 1),
+            syn::Type::Ptr(one) => self.ty_in(place, &one.elem, depth + 1),
+            syn::Type::Tuple(tuple) => Some(Ty {
+                name: "()".to_owned(),
+                args: tuple.elems.iter().map(inner).collect(),
+            }),
+            syn::Type::Array(array) => Some(Ty::wrapping("[]", inner(&array.elem))),
+            syn::Type::Slice(slice) => Some(Ty::wrapping("[]", inner(&slice.elem))),
+            syn::Type::Path(path) if path.qself.is_none() => {
+                let said = segments(&path.path);
+                if said == ["Self"] {
+                    return owner.map(Ty::plain);
+                }
+                let args = match path.path.segments.last().map(|last| &last.arguments) {
+                    Some(syn::PathArguments::AngleBracketed(kinds)) => kinds
+                        .args
+                        .iter()
+                        .filter_map(|one| match one {
+                            syn::GenericArgument::Type(kind) => Some(inner(kind)),
+                            _ => None,
+                        })
+                        .collect(),
+                    _ => Vec::new(),
+                };
+                let name = self
+                    .absolute(module, scope, owner, &said, 0)
+                    .into_iter()
+                    .find(|one| self.is_def(one))
+                    .or_else(|| said.last().cloned())?;
+                Some(Ty { name, args })
+            }
+            _ => None,
+        }
+    }
+
+    fn ty_of(&self, found: &Found, raw: &syn::Type) -> Option<Ty> {
+        self.ty_in(
+            (&found.module, Some(&found.scope), found.owner.as_deref()),
+            raw,
+            0,
+        )
+    }
+
+    fn def_ty(&self, owner: &str, raw: &syn::Type) -> Option<Ty> {
+        let def = self.defs.get(owner)?;
+        self.ty_in((&def.module, None, Some(owner)), raw, 0)
+    }
+
+    fn types(
+        &self,
+        found: &Found,
+        chain: &Chain,
+        visiting: &mut Vec<String>,
+        depth: usize,
+    ) -> Vec<Ty> {
+        if depth > TYPED_DEEPEST {
+            return Vec::new();
+        }
+        let mut tys = self.rooted(found, &chain.root, visiting, depth);
+        for step in &chain.steps {
+            tys = match step {
+                Step::Method(method, kinds) if method == "state" || method == "try_state" => kinds
+                    .first()
+                    .and_then(|kind| self.ty_of(found, kind))
+                    .map(|kind| {
+                        let state = Ty::wrapping("State", kind);
+                        if method == "state" {
+                            state
+                        } else {
+                            Ty::wrapping("Option", state)
+                        }
+                    })
+                    .into_iter()
+                    .collect(),
+                _ => {
+                    let mut next: Vec<Ty> = Vec::new();
+                    for one in &tys {
+                        for stepped in self.stepped(one, step) {
+                            if !next.contains(&stepped) {
+                                next.push(stepped);
+                            }
+                        }
+                    }
+                    next.truncate(WIDEST);
+                    next
+                }
+            };
+            if tys.is_empty() {
+                break;
+            }
+        }
+        tys
+    }
+
+    fn rooted(
+        &self,
+        found: &Found,
+        root: &Root,
+        visiting: &mut Vec<String>,
+        depth: usize,
+    ) -> Vec<Ty> {
+        let place = (&*found.module, Some(&found.scope), found.owner.as_deref());
+        match root {
+            Root::Me => found.owner.as_deref().map(Ty::plain).into_iter().collect(),
+            Root::Var(name) => {
+                let Some(chains) = found.env.get(name) else {
+                    return self.rooted(found, &Root::Path(vec![name.clone()]), visiting, depth);
+                };
+                if visiting.iter().any(|one| one == name) {
+                    return Vec::new();
+                }
+                visiting.push(name.clone());
+                let mut tys: Vec<Ty> = Vec::new();
+                for chain in chains {
+                    for one in self.types(found, chain, visiting, depth + 1) {
+                        if !tys.contains(&one) {
+                            tys.push(one);
+                        }
+                    }
+                }
+                visiting.pop();
+                tys.truncate(WIDEST);
+                tys
+            }
+            Root::Path(path) => self
+                .absolute(place.0, place.1, place.2, path, 0)
+                .iter()
+                .filter_map(|one| self.statics.get(one))
+                .filter_map(|(module, raw)| self.ty_in((module, None, None), raw, 0))
+                .collect(),
+            Root::Call(path, arguments) => self.returned(found, path, arguments, visiting, depth),
+            Root::Raw(raw) => self.ty_of(found, raw).into_iter().collect(),
+            Root::Built(path) => self.def_named(place, path),
+            Root::Unknown => Vec::new(),
+        }
+    }
+
+    fn def_named(&self, place: Place<'_>, path: &[String]) -> Vec<Ty> {
+        self.absolute(place.0, place.1, place.2, path, 0)
+            .into_iter()
+            .find(|one| self.is_def(one))
+            .map(|one| Ty::plain(&one))
+            .into_iter()
+            .collect()
+    }
+
+    fn returned(
+        &self,
+        found: &Found,
+        path: &[String],
+        arguments: &[Chain],
+        visiting: &mut Vec<String>,
+        depth: usize,
+    ) -> Vec<Ty> {
+        let mut tys = Vec::new();
+        for callee in self.resolve(found, path) {
+            for &at in self.by_path.get(&callee).into_iter().flatten() {
+                let called = &self.found[at];
+                let Some(output) = called
+                    .output
+                    .as_ref()
+                    .and_then(|raw| self.ty_of(called, raw))
+                else {
+                    continue;
+                };
+                let mut bound: HashMap<String, Ty> = HashMap::new();
+                if !called.generics.is_empty() {
+                    for (input, argument) in called.inputs.iter().zip(arguments) {
+                        let Some(input) = input.as_ref().and_then(|raw| self.ty_of(called, raw))
+                        else {
+                            continue;
+                        };
+                        if let Some(given) =
+                            self.types(found, argument, visiting, depth + 1).first()
+                        {
+                            unify(&input, given, &called.generics, &mut bound);
+                        }
+                    }
+                }
+                tys.push(substituted(&output, &bound));
+            }
+        }
+        if !tys.is_empty() {
+            return tys;
+        }
+        let mut first = || {
+            arguments
+                .first()
+                .and_then(|one| self.types(found, one, visiting, depth + 1).first().cloned())
+                .unwrap_or_else(|| Ty::plain("?"))
+        };
+        match path {
+            [one] if one == "Some" => return vec![Ty::wrapping("Option", first())],
+            [one] if one == "Ok" => return vec![Ty::wrapping("Result", first())],
+            [.., kind, made] if WRAPS.contains(&kind.as_str()) && made == "new" => {
+                return vec![Ty::wrapping(kind, first())];
+            }
+            _ => {}
+        }
+        let place = (&*found.module, Some(&found.scope), found.owner.as_deref());
+        match path {
+            [.., last] if last.starts_with(char::is_uppercase) => self.def_named(place, path),
+            [shape @ .., last] if !shape.is_empty() && (last == "default" || last == "new") => {
+                self.def_named(place, shape)
+            }
+            _ => Vec::new(),
+        }
+    }
+
+    fn stepped(&self, ty: &Ty, step: &Step) -> Vec<Ty> {
+        let mut at = Some(ty);
+        while let Some(one) = at {
+            if let Some(next) = self.step_on(one, step) {
+                return next;
+            }
+            at = one.inside();
+        }
+        match step {
+            Step::Method(method, _) if SAME.contains(&method.as_str()) => vec![ty.clone()],
+            Step::Variant(variant, 0) if variant == "Some" || variant == "Ok" => vec![ty.clone()],
+            Step::Tried => vec![ty.clone()],
+            _ => Vec::new(),
+        }
+    }
+
+    fn step_on(&self, ty: &Ty, step: &Step) -> Option<Vec<Ty>> {
+        let kind = ty.last();
+        let def = self.defs.get(&ty.name);
+        let field = |name: &str| {
+            def.and_then(|def| def.fields.get(name))
+                .and_then(|raw| self.def_ty(&ty.name, raw))
+                .map(|one| vec![one])
+        };
+        match step {
+            Step::Field(name) if kind == "()" => name
+                .parse::<usize>()
+                .ok()
+                .and_then(|at| ty.arg(at))
+                .map(|one| vec![one]),
+            Step::Field(name) => field(name),
+            Step::Named(variant, name) => {
+                field(name).or_else(|| field(&format!("{variant}.{name}")))
+            }
+            Step::Variant(variant, at) => match (kind, variant.as_str()) {
+                ("Option" | "Result", "Some" | "Ok") => ty.arg(0).map(|one| vec![one]),
+                ("Result", "Err") => ty.arg(1).map(|one| vec![one]),
+                _ => field(&format!("{variant}.{at}"))
+                    .or_else(|| (kind == variant).then(|| field(&at.to_string())).flatten()),
+            },
+            Step::Item if MAPS.contains(&kind) && ty.args.len() == 2 => Some(vec![Ty {
+                name: "()".to_owned(),
+                args: ty.args.clone(),
+            }]),
+            Step::Item => SEQUENCES
+                .contains(&kind)
+                .then(|| ty.args.last().cloned())
+                .flatten()
+                .map(|one| vec![one]),
+            Step::Tried => ["Option", "Result"]
+                .contains(&kind)
+                .then(|| ty.arg(0))
+                .flatten()
+                .map(|one| vec![one]),
+            Step::Method(method, _) => self.method_on(ty, method),
+        }
+    }
+
+    fn method_on(&self, ty: &Ty, method: &str) -> Option<Vec<Ty>> {
+        if self.is_def(&ty.name) {
+            let tys: Vec<Ty> = self
+                .landing(&format!("{}::{method}", ty.name), 0)
+                .iter()
+                .flat_map(|one| self.by_path.get(one).into_iter().flatten())
+                .filter_map(|&at| {
+                    let called = &self.found[at];
+                    called
+                        .output
+                        .as_ref()
+                        .and_then(|raw| self.ty_of(called, raw))
+                })
+                .collect();
+            if !tys.is_empty() {
+                return Some(tys);
+            }
+        }
+        std_method(ty, method).map(|one| vec![one])
     }
 
     fn absolute(
@@ -1057,7 +1663,11 @@ impl Gathered {
             .collect();
 
         let here = joined(module, segments);
-        if self.owners.contains(&format!("{module}::{first}")) || self.known.contains(&here) {
+        let owner = format!("{module}::{first}");
+        if self.owners.contains(&owner)
+            || self.defs.contains_key(&owner)
+            || self.known.contains(&here)
+        {
             found.push(here);
         }
         if !found.is_empty() {
@@ -1418,22 +2028,19 @@ fn key_of(expr: &syn::Expr, owner: &str, module: &str) -> Key {
     let unknown = |name: &str| Key::Named(format!("?{name}@{module}"));
     match expr {
         syn::Expr::Field(field) => {
-            let name = match &field.member {
-                syn::Member::Named(name) => name.to_string(),
-                syn::Member::Unnamed(index) => index.index.to_string(),
-            };
+            let name = member_name(&field.member);
             if matches!(&*field.base, syn::Expr::Path(base) if base.path.is_ident("self")) {
                 Key::Named(format!("{owner}::{name}"))
-            } else if matches!(field.member, syn::Member::Unnamed(_)) {
-                Key::Named("?".to_owned())
             } else {
-                unknown(&name)
+                Key::Field(chain_of(&field.base), name)
             }
         }
         syn::Expr::Path(path) => {
             let path = segments(&path.path);
             match path.as_slice() {
-                [one] if one.starts_with(|letter: char| letter.is_lowercase()) => unknown(one),
+                [one] if one.starts_with(|letter: char| letter.is_lowercase()) => {
+                    Key::Var(one.clone())
+                }
                 _ => Key::Path(path),
             }
         }
@@ -1471,14 +2078,20 @@ fn guard_of(expr: &syn::Expr, owner: &str, module: &str) -> Option<Guard> {
         }
     }
     match at {
-        syn::Expr::MethodCall(call) if call.method == "lock" && call.args.is_empty() => {
-            Some(Guard::Lock(key_of(&call.receiver, owner, module)))
-        }
-        syn::Expr::MethodCall(call) => Some(Guard::Method(call.method.to_string())),
+        syn::Expr::MethodCall(call) if locked(call) => Some(Guard::Lock(
+            key_of(&call.receiver, owner, module),
+            chain_of(&call.receiver),
+        )),
+        syn::Expr::MethodCall(call) => Some(Guard::Method(
+            call.method.to_string(),
+            chain_of(&call.receiver),
+            false,
+        )),
         syn::Expr::Call(call) => match &*call.func {
             syn::Expr::Path(path) => Some(Guard::Through(
                 segments(&path.path),
                 call.args.first().map(|first| key_of(first, owner, module)),
+                false,
             )),
             _ => None,
         },
@@ -1505,15 +2118,17 @@ fn dropped(statement: &syn::Stmt, name: Option<&str>) -> bool {
 struct Taking<'o> {
     owner: &'o str,
     module: &'o str,
-    takes: Vec<Key>,
+    takes: Vec<(Key, Chain)>,
     passes: Vec<(Vec<String>, Key)>,
 }
 
 impl<'a> Visit<'a> for Taking<'_> {
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
-        if call.method == "lock" && call.args.is_empty() {
-            self.takes
-                .push(key_of(&call.receiver, self.owner, self.module));
+        if locked(call) {
+            self.takes.push((
+                key_of(&call.receiver, self.owner, self.module),
+                chain_of(&call.receiver),
+            ));
         }
         if AWAY.iter().any(|one| call.method == one) {
             self.visit_expr(&call.receiver);
@@ -1541,17 +2156,47 @@ impl<'a> Visit<'a> for Taking<'_> {
     fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
 }
 
-#[derive(Default)]
-struct Temporaries {
-    found: Vec<syn::Expr>,
+struct Temporaries<'o> {
+    owner: &'o str,
+    module: &'o str,
+    found: Vec<Guard>,
 }
 
-impl<'a> Visit<'a> for Temporaries {
+impl<'a> Visit<'a> for Temporaries<'_> {
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
-        if call.method == "lock" && call.args.is_empty() {
-            self.found.push((*call.receiver).clone());
+        if locked(call) {
+            self.found.push(Guard::Lock(
+                key_of(&call.receiver, self.owner, self.module),
+                chain_of(&call.receiver),
+            ));
+        } else if !AWAY.iter().any(|one| call.method == one) {
+            self.found.push(Guard::Method(
+                call.method.to_string(),
+                chain_of(&call.receiver),
+                true,
+            ));
+        }
+        if RELEASING.iter().any(|one| call.method == one) {
+            self.visit_expr(&call.receiver);
+            for argument in call.args.iter().skip(1) {
+                self.visit_expr(argument);
+            }
+            return;
         }
         syn::visit::visit_expr_method_call(self, call);
+    }
+
+    fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
+        if let syn::Expr::Path(path) = &*call.func {
+            self.found.push(Guard::Through(
+                segments(&path.path),
+                call.args
+                    .first()
+                    .map(|first| key_of(first, self.owner, self.module)),
+                true,
+            ));
+        }
+        syn::visit::visit_expr_call(self, call);
     }
 
     fn visit_block(&mut self, _: &'a syn::Block) {}
@@ -1575,21 +2220,30 @@ struct Holding<'o> {
 }
 
 impl Holding<'_> {
-    fn hold(&mut self, guard: Guard, tokens: TokenStream) {
+    fn hold(&mut self, guards: Vec<Guard>, tokens: TokenStream, methods: Typed) {
         self.held.push(Hold {
-            guard,
+            guards,
             calls: found_calls(tokens.clone()),
+            methods,
             said: said_of(tokens),
         });
     }
 
     fn temporaries(&mut self, expr: &syn::Expr) {
-        let mut temporaries = Temporaries::default();
+        let mut temporaries = Temporaries {
+            owner: self.owner,
+            module: self.module,
+            found: Vec::new(),
+        };
         temporaries.visit_expr(expr);
-        for receiver in temporaries.found {
-            let key = key_of(&receiver, self.owner, self.module);
-            self.hold(Guard::Lock(key), expr.to_token_stream());
+        if temporaries.found.is_empty() {
+            return;
         }
+        self.hold(
+            temporaries.found,
+            expr.to_token_stream(),
+            Methods::of_expr(expr),
+        );
     }
 }
 
@@ -1603,12 +2257,20 @@ impl<'a> Visit<'a> for Holding<'_> {
                     };
                     if let Some(guard) = guard_of(&init.expr, self.owner, self.module) {
                         let name = bound(&local.pat);
-                        let rest: TokenStream = block.stmts[at + 1..]
+                        let kept = block.stmts[at + 1..]
                             .iter()
                             .take_while(|one| !dropped(one, name.as_deref()))
-                            .map(ToTokens::to_token_stream)
-                            .collect();
-                        self.hold(guard, rest);
+                            .count();
+                        let mut kept = block.stmts[at + 1..at + 1 + kept].to_vec();
+                        if let Some(name) = &name {
+                            let mut released = Released { name };
+                            for statement in &mut kept {
+                                released.visit_stmt_mut(statement);
+                            }
+                        }
+                        let rest: TokenStream =
+                            kept.iter().map(ToTokens::to_token_stream).collect();
+                        self.hold(vec![guard], rest, Methods::of_statements(&kept));
                     }
                     self.temporaries(&init.expr);
                 }
@@ -1636,6 +2298,7 @@ impl<'a> Visit<'a> for Holding<'_> {
                     self.handed.push(Handed {
                         to: segments(&path.path),
                         calls: found_calls(tokens.clone()),
+                        methods: Methods::of_expr(&closure.body),
                         said: said_of(tokens),
                     });
                 }
@@ -1708,4 +2371,524 @@ impl<'a> Visit<'a> for Mains {
     fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
 
     fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+}
+
+#[derive(Clone)]
+enum Root {
+    Me,
+    Var(String),
+    Path(Vec<String>),
+    Call(Vec<String>, Vec<Chain>),
+    Raw(Box<syn::Type>),
+    Built(Vec<String>),
+    Unknown,
+}
+
+#[derive(Clone)]
+enum Step {
+    Field(String),
+    Method(String, Vec<syn::Type>),
+    Variant(String, usize),
+    Named(String, String),
+    Item,
+    Tried,
+}
+
+#[derive(Clone)]
+struct Chain {
+    root: Root,
+    steps: Vec<Step>,
+}
+
+impl Chain {
+    fn rooted(root: Root) -> Self {
+        Self {
+            root,
+            steps: Vec::new(),
+        }
+    }
+
+    fn then(mut self, step: Step) -> Self {
+        self.steps.push(step);
+        self
+    }
+}
+
+type Env = HashMap<String, Vec<Chain>>;
+
+type Typed = Vec<(Chain, String)>;
+
+#[derive(Clone, PartialEq)]
+struct Ty {
+    name: String,
+    args: Vec<Ty>,
+}
+
+impl Ty {
+    fn plain(name: &str) -> Self {
+        Self {
+            name: name.to_owned(),
+            args: Vec::new(),
+        }
+    }
+
+    fn wrapping(name: &str, inner: Ty) -> Self {
+        Self {
+            name: name.to_owned(),
+            args: vec![inner],
+        }
+    }
+
+    fn last(&self) -> &str {
+        self.name.rsplit("::").next().unwrap_or(&self.name)
+    }
+
+    fn arg(&self, at: usize) -> Option<Ty> {
+        self.args.get(at).cloned()
+    }
+
+    fn inside(&self) -> Option<&Ty> {
+        DEREFS
+            .contains(&self.last())
+            .then(|| self.args.first())
+            .flatten()
+    }
+}
+
+struct Def {
+    module: String,
+    fields: HashMap<String, syn::Type>,
+}
+
+fn member_name(member: &syn::Member) -> String {
+    match member {
+        syn::Member::Named(name) => name.to_string(),
+        syn::Member::Unnamed(index) => index.index.to_string(),
+    }
+}
+
+fn kinds_of(turbofish: Option<&syn::AngleBracketedGenericArguments>) -> Vec<syn::Type> {
+    turbofish
+        .map(|kinds| {
+            kinds
+                .args
+                .iter()
+                .filter_map(|one| match one {
+                    syn::GenericArgument::Type(kind) => Some(kind.clone()),
+                    _ => None,
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn chain_of(expr: &syn::Expr) -> Chain {
+    match expr {
+        syn::Expr::Path(path) if path.qself.is_none() => {
+            let said = segments(&path.path);
+            match said.as_slice() {
+                [one] if one == "self" => Chain::rooted(Root::Me),
+                [one] if one.starts_with(|letter: char| letter.is_lowercase() || letter == '_') => {
+                    Chain::rooted(Root::Var(one.clone()))
+                }
+                _ => Chain::rooted(Root::Path(said)),
+            }
+        }
+        syn::Expr::Field(field) => {
+            chain_of(&field.base).then(Step::Field(member_name(&field.member)))
+        }
+        syn::Expr::MethodCall(call) => chain_of(&call.receiver).then(Step::Method(
+            call.method.to_string(),
+            kinds_of(call.turbofish.as_ref()),
+        )),
+        syn::Expr::Call(call) => match &*call.func {
+            syn::Expr::Path(path) if path.qself.is_none() => Chain::rooted(Root::Call(
+                segments(&path.path),
+                call.args.iter().map(chain_of).collect(),
+            )),
+            _ => Chain::rooted(Root::Unknown),
+        },
+        syn::Expr::Reference(inner) => chain_of(&inner.expr),
+        syn::Expr::Paren(inner) => chain_of(&inner.expr),
+        syn::Expr::Group(inner) => chain_of(&inner.expr),
+        syn::Expr::Await(inner) => chain_of(&inner.base),
+        syn::Expr::Unary(inner) if matches!(inner.op, syn::UnOp::Deref(_)) => chain_of(&inner.expr),
+        syn::Expr::Try(inner) => chain_of(&inner.expr).then(Step::Tried),
+        syn::Expr::Index(inner) => chain_of(&inner.expr).then(Step::Item),
+        syn::Expr::Struct(built) if built.qself.is_none() => {
+            Chain::rooted(Root::Built(segments(&built.path)))
+        }
+        syn::Expr::Cast(cast) => Chain::rooted(Root::Raw(cast.ty.clone())),
+        syn::Expr::Block(block) => match block.block.stmts.last() {
+            Some(syn::Stmt::Expr(last, None)) => chain_of(last),
+            _ => Chain::rooted(Root::Unknown),
+        },
+        _ => Chain::rooted(Root::Unknown),
+    }
+}
+
+fn bind(pattern: &syn::Pat, chain: &Chain, env: &mut Env) {
+    match pattern {
+        syn::Pat::Ident(name) => {
+            env.entry(name.ident.to_string())
+                .or_default()
+                .push(chain.clone());
+            if let Some((_, inner)) = &name.subpat {
+                bind(inner, chain, env);
+            }
+        }
+        syn::Pat::Type(typed) => bind(&typed.pat, &Chain::rooted(Root::Raw(typed.ty.clone())), env),
+        syn::Pat::Reference(inner) => bind(&inner.pat, chain, env),
+        syn::Pat::Paren(inner) => bind(&inner.pat, chain, env),
+        syn::Pat::Or(cases) => {
+            for case in &cases.cases {
+                bind(case, chain, env);
+            }
+        }
+        syn::Pat::Tuple(tuple) => {
+            for (at, one) in tuple.elems.iter().enumerate() {
+                bind(one, &chain.clone().then(Step::Field(at.to_string())), env);
+            }
+        }
+        syn::Pat::TupleStruct(tuple) => {
+            let variant = segments(&tuple.path).pop().unwrap_or_default();
+            for (at, one) in tuple.elems.iter().enumerate() {
+                bind(
+                    one,
+                    &chain.clone().then(Step::Variant(variant.clone(), at)),
+                    env,
+                );
+            }
+        }
+        syn::Pat::Struct(shape) => {
+            let variant = segments(&shape.path).pop().unwrap_or_default();
+            for field in &shape.fields {
+                bind(
+                    &field.pat,
+                    &chain
+                        .clone()
+                        .then(Step::Named(variant.clone(), member_name(&field.member))),
+                    env,
+                );
+            }
+        }
+        syn::Pat::Slice(slice) => {
+            for one in &slice.elems {
+                bind(one, &chain.clone().then(Step::Item), env);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn macro_arguments(called: &syn::Macro) -> Vec<syn::Expr> {
+    called
+        .parse_body_with(Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated)
+        .map(|arguments| arguments.into_iter().collect())
+        .unwrap_or_default()
+}
+
+#[derive(Default)]
+struct Bindings {
+    env: Env,
+}
+
+impl Bindings {
+    fn of(sig: &syn::Signature, block: &syn::Block) -> (Env, Vec<Option<syn::Type>>) {
+        let mut bindings = Self::default();
+        let mut taken = Vec::new();
+        for input in &sig.inputs {
+            match input {
+                syn::FnArg::Typed(typed) => {
+                    bind(
+                        &typed.pat,
+                        &Chain::rooted(Root::Raw(typed.ty.clone())),
+                        &mut bindings.env,
+                    );
+                    taken.push(Some((*typed.ty).clone()));
+                }
+                syn::FnArg::Receiver(_) => taken.push(None),
+            }
+        }
+        bindings.visit_block(block);
+        (bindings.env, taken)
+    }
+}
+
+impl<'a> Visit<'a> for Bindings {
+    fn visit_local(&mut self, local: &'a syn::Local) {
+        let chain = local
+            .init
+            .as_ref()
+            .map_or(Chain::rooted(Root::Unknown), |init| chain_of(&init.expr));
+        bind(&local.pat, &chain, &mut self.env);
+        syn::visit::visit_local(self, local);
+    }
+
+    fn visit_expr_let(&mut self, matched: &'a syn::ExprLet) {
+        bind(&matched.pat, &chain_of(&matched.expr), &mut self.env);
+        syn::visit::visit_expr_let(self, matched);
+    }
+
+    fn visit_expr_match(&mut self, matched: &'a syn::ExprMatch) {
+        let chain = chain_of(&matched.expr);
+        for arm in &matched.arms {
+            bind(&arm.pat, &chain, &mut self.env);
+        }
+        syn::visit::visit_expr_match(self, matched);
+    }
+
+    fn visit_expr_for_loop(&mut self, looped: &'a syn::ExprForLoop) {
+        bind(
+            &looped.pat,
+            &chain_of(&looped.expr).then(Step::Item),
+            &mut self.env,
+        );
+        syn::visit::visit_expr_for_loop(self, looped);
+    }
+
+    fn visit_expr_closure(&mut self, closure: &'a syn::ExprClosure) {
+        for input in &closure.inputs {
+            bind(input, &Chain::rooted(Root::Unknown), &mut self.env);
+        }
+        syn::visit::visit_expr_closure(self, closure);
+    }
+
+    fn visit_macro(&mut self, called: &'a syn::Macro) {
+        for argument in macro_arguments(called) {
+            self.visit_expr(&argument);
+        }
+    }
+
+    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
+
+    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
+
+    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+}
+
+#[derive(Default)]
+struct Methods {
+    found: Typed,
+}
+
+impl Methods {
+    fn of_expr(expr: &syn::Expr) -> Typed {
+        let mut methods = Self::default();
+        methods.visit_expr(expr);
+        methods.found
+    }
+
+    fn of_block(block: &syn::Block) -> Typed {
+        let mut methods = Self::default();
+        methods.visit_block(block);
+        methods.found
+    }
+
+    fn of_statements(statements: &[syn::Stmt]) -> Typed {
+        let mut methods = Self::default();
+        for statement in statements {
+            methods.visit_stmt(statement);
+        }
+        methods.found
+    }
+}
+
+impl<'a> Visit<'a> for Methods {
+    fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
+        if !matches!(&*call.receiver, syn::Expr::Path(path) if path.path.is_ident("self")) {
+            self.found
+                .push((chain_of(&call.receiver), call.method.to_string()));
+        }
+        if AWAY.iter().any(|one| call.method == one) {
+            self.visit_expr(&call.receiver);
+            return;
+        }
+        syn::visit::visit_expr_method_call(self, call);
+    }
+
+    fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
+        if matches!(&*call.func, syn::Expr::Path(path) if path.path.segments.last().is_some_and(|one| AWAY.iter().any(|away| one.ident == away)))
+        {
+            return;
+        }
+        syn::visit::visit_expr_call(self, call);
+    }
+
+    fn visit_macro(&mut self, called: &'a syn::Macro) {
+        for argument in macro_arguments(called) {
+            self.visit_expr(&argument);
+        }
+    }
+
+    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
+
+    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
+
+    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+}
+
+type Place<'a> = (&'a str, Option<&'a Scope>, Option<&'a str>);
+
+fn unknown_key(name: &str, module: &str) -> String {
+    if name.starts_with(|letter: char| letter.is_ascii_digit()) {
+        "?".to_owned()
+    } else {
+        format!("?{name}@{module}")
+    }
+}
+
+fn unify(input: &Ty, given: &Ty, generics: &[String], bound: &mut HashMap<String, Ty>) {
+    if input.args.is_empty() && generics.contains(&input.name) {
+        bound
+            .entry(input.name.clone())
+            .or_insert_with(|| given.clone());
+        return;
+    }
+    if input.last() == given.last() {
+        for (one, other) in input.args.iter().zip(&given.args) {
+            unify(one, other, generics, bound);
+        }
+    } else if let Some(inside) = given.inside() {
+        unify(input, inside, generics, bound);
+    }
+}
+
+fn substituted(ty: &Ty, bound: &HashMap<String, Ty>) -> Ty {
+    if ty.args.is_empty() {
+        if let Some(one) = bound.get(&ty.name) {
+            return one.clone();
+        }
+    }
+    Ty {
+        name: ty.name.clone(),
+        args: ty.args.iter().map(|one| substituted(one, bound)).collect(),
+    }
+}
+
+fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
+    let kind = ty.last();
+    let first = ty.arg(0);
+    let element = ty.args.last().cloned();
+    let optional = |inner: Ty| Ty::wrapping("Option", inner);
+    let mapped = MAPS.contains(&kind);
+    let sequence = SEQUENCES.contains(&kind) && kind != "Option";
+    match (kind, method) {
+        (
+            "Option" | "Result",
+            "unwrap" | "expect" | "unwrap_or_else" | "unwrap_or_default" | "unwrap_or"
+            | "unwrap_unchecked",
+        )
+        | (
+            "Mutex" | "RwLock",
+            "lock" | "read" | "write" | "try_lock" | "try_read" | "try_write" | "blocking_lock"
+            | "blocking_read" | "blocking_write" | "get_mut" | "into_inner",
+        )
+        | (
+            "RefCell",
+            "borrow" | "borrow_mut" | "try_borrow" | "try_borrow_mut" | "get_mut" | "into_inner",
+        )
+        | ("Cell", "get" | "take" | "replace")
+        | ("OnceLock" | "OnceCell", "get_or_init" | "get_or_try_init")
+        | ("Entry", "or_insert" | "or_insert_with" | "or_default" | "or_insert_with_key") => first,
+        (
+            "Option" | "Result",
+            "as_ref" | "as_mut" | "as_deref" | "as_deref_mut" | "cloned" | "copied" | "take"
+            | "clone" | "or" | "or_else" | "filter" | "inspect" | "map_err",
+        )
+        | (
+            "Iter",
+            "filter" | "rev" | "skip" | "take" | "cloned" | "copied" | "peekable" | "by_ref"
+            | "fuse" | "step_by" | "skip_while" | "take_while" | "chain" | "inspect",
+        ) => Some(ty.clone()),
+        ("Result", "ok") | ("OnceLock" | "OnceCell", "get" | "get_mut") => first.map(optional),
+        ("Weak", "upgrade") => first.map(|inner| optional(Ty::wrapping("Arc", inner))),
+        ("Iter", "enumerate") => first.map(|inner| {
+            Ty::wrapping(
+                "Iter",
+                Ty {
+                    name: "()".to_owned(),
+                    args: vec![Ty::plain("usize"), inner],
+                },
+            )
+        }),
+        (_, "get" | "get_mut" | "remove") if mapped => element.map(optional),
+        (_, "values" | "values_mut" | "into_values") if mapped => {
+            element.map(|inner| Ty::wrapping("Iter", inner))
+        }
+        (_, "keys" | "into_keys") if mapped => first.map(|inner| Ty::wrapping("Iter", inner)),
+        (_, "entry") if mapped => element.map(|inner| Ty::wrapping("Entry", inner)),
+        (_, "iter" | "iter_mut" | "into_iter" | "drain") if mapped && ty.args.len() == 2 => {
+            Some(Ty::wrapping(
+                "Iter",
+                Ty {
+                    name: "()".to_owned(),
+                    args: ty.args.clone(),
+                },
+            ))
+        }
+        (
+            _,
+            "get" | "get_mut" | "first" | "last" | "pop" | "pop_front" | "pop_back" | "first_mut"
+            | "last_mut" | "next" | "find" | "nth" | "max_by_key" | "min_by_key" | "max_by"
+            | "min_by" | "next_back",
+        ) if sequence => element.map(optional),
+        (_, "iter" | "iter_mut" | "into_iter" | "drain") if sequence || kind == "Option" => {
+            element.map(|inner| Ty::wrapping("Iter", inner))
+        }
+        _ => None,
+    }
+}
+
+fn locked(call: &syn::ExprMethodCall) -> bool {
+    call.method == "lock"
+        && call.args.is_empty()
+        && !matches!(&*call.receiver, syn::Expr::Path(path) if path.path.is_ident("self"))
+}
+
+struct Released<'a> {
+    name: &'a str,
+}
+
+impl VisitMut for Released<'_> {
+    fn visit_block_mut(&mut self, block: &mut syn::Block) {
+        if let Some(at) = block
+            .stmts
+            .iter()
+            .position(|one| dropped(one, Some(self.name)))
+        {
+            block.stmts.truncate(at);
+        }
+        syn::visit_mut::visit_block_mut(self, block);
+    }
+
+    fn visit_expr_mut(&mut self, expr: &mut syn::Expr) {
+        if let syn::Expr::MethodCall(call) = expr {
+            let handed = matches!(call.args.first(), Some(syn::Expr::Path(path)) if path.path.is_ident(self.name));
+            if handed && RELEASING.iter().any(|one| call.method == one) {
+                let rest: Punctuated<syn::Expr, syn::Token![,]> =
+                    call.args.iter().skip(1).cloned().collect();
+                *expr = syn::Expr::Tuple(syn::ExprTuple {
+                    attrs: Vec::new(),
+                    paren_token: syn::token::Paren::default(),
+                    elems: rest,
+                });
+            }
+        }
+        syn::visit_mut::visit_expr_mut(self, expr);
+    }
+}
+
+fn output_of(sig: &syn::Signature) -> Option<syn::Type> {
+    match &sig.output {
+        syn::ReturnType::Type(_, output) => Some((**output).clone()),
+        syn::ReturnType::Default => None,
+    }
+}
+
+fn generics_of(sig: &syn::Signature) -> Vec<String> {
+    sig.generics
+        .type_params()
+        .map(|one| one.ident.to_string())
+        .collect()
 }
