@@ -65,7 +65,7 @@ export interface Pair {
 }
 
 export interface Transferred {
-  done: Pair[]
+  done: (Pair & { stayed?: boolean })[]
   replaced: OutsideTicket[]
   skipped: string[]
   failed: { path: string; why: string }[]
@@ -109,8 +109,9 @@ export function transfer(
   folder: string,
   how: 'copy' | 'move',
   clash: Clash,
+  staying: readonly string[] = [],
 ): Promise<Transferred> {
-  return invoke<Transferred>('explorer_transfer', { job, sources, folder, how, clash })
+  return invoke<Transferred>('explorer_transfer', { job, sources, folder, how, clash, staying })
 }
 
 export function put(
