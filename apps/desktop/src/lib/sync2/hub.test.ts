@@ -135,7 +135,7 @@ describe('a device’s hub socket', () => {
 
     first.events.closed(1006)
     expect(hub.state).toBe('off')
-    await vi.advanceTimersByTimeAsync(30_000)
+    await vi.advanceTimersByTimeAsync(1_000)
     await open()
 
     expect(sockets).toHaveLength(2)
@@ -165,6 +165,55 @@ describe('a device’s hub socket', () => {
     expect(socket.closed).toBe(true)
     expect(hub.state).toBe('off')
     expect(ticks).toHaveLength(0)
+  })
+})
+
+describe('a hub socket that stops answering', () => {
+  test('is given up when it does not open in time, and another is opened', async () => {
+    const hub = new Hub(world())
+    hub.follow('token-1')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(sockets).toHaveLength(1)
+
+    await vi.advanceTimersByTimeAsync(9_000)
+    expect(sockets[0]?.closed).toBe(false)
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(sockets[0]?.closed).toBe(true)
+    expect(hub.state).toBe('off')
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    const again = await open()
+    expect(sockets).toHaveLength(2)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(again.closed).toBe(false)
+    expect(hub.state).toBe('open')
+  })
+
+  test('is dropped once its beats go unanswered, and another is opened', async () => {
+    const hub = new Hub(world())
+    const again = vi.fn()
+    hub.opened(again)
+    hub.follow('token-1')
+    const socket = await open()
+
+    for (let beat = 0; beat < 10; beat++) {
+      for (const tick of [...ticks]) tick()
+      socket.events.heard('ok')
+    }
+    expect(socket.closed).toBe(false)
+
+    for (const tick of [...ticks]) tick()
+    for (const tick of [...ticks]) tick()
+    expect(socket.closed).toBe(false)
+    for (const tick of [...ticks]) tick()
+    expect(socket.closed).toBe(true)
+    expect(hub.state).toBe('off')
+    expect(ticks).toHaveLength(0)
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    await open()
+    expect(sockets).toHaveLength(2)
+    expect(again).toHaveBeenCalledTimes(2)
   })
 })
 

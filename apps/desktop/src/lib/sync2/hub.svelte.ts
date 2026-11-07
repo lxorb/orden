@@ -20,6 +20,10 @@ export type HubState = 'off' | 'connecting' | 'open'
 
 const ENDED = 1008
 
+const OPEN_WITHIN = 10_000
+
+const SILENT_BEATS = 3
+
 export interface HubSocket {
   readonly open: boolean
   send(text: string): void
@@ -63,6 +67,8 @@ export class Hub {
   private tries = 0
   private retry: ReturnType<typeof setTimeout> | undefined
   private stopBeat: (() => void) | null = null
+  private opening: ReturnType<typeof setTimeout> | undefined
+  private quiet = 0
   private leading = false
   private electing = false
   private channel: HubChannel | null = null
@@ -177,12 +183,15 @@ export class Hub {
     try {
       socket = this.world.socket(url, [`nib.token.${token}`, `nib.device.${device}`], {
         opened: () => {
+          clearTimeout(this.opening)
           this.tries = 0
+          this.quiet = 0
           void this.hello()
           this.stopBeat?.()
-          this.stopBeat = this.world.every(BEAT_EVERY, () => this.write(BEAT))
+          this.stopBeat = this.world.every(BEAT_EVERY, () => this.beat(socket))
         },
         heard: (text) => {
+          if (this.socket === socket) this.quiet = 0
           const frame = readHubFrame(text)
           if (!frame) return
           this.hear(frame)
@@ -190,10 +199,7 @@ export class Hub {
         },
         closed: (code) => {
           if (this.socket !== socket) return
-          this.socket = null
-          this.stopBeat?.()
-          this.stopBeat = null
-          this.setState('off')
+          this.lost(null)
           if (code !== ENDED) this.again()
         },
       })
@@ -202,6 +208,35 @@ export class Hub {
       return
     }
     this.socket = socket
+    const made = socket
+    clearTimeout(this.opening)
+    this.opening = setTimeout(() => {
+      if (this.socket === made && !made.open) {
+        this.lost(made)
+        this.again()
+      }
+    }, OPEN_WITHIN)
+  }
+
+  private beat(socket: HubSocket | null): void {
+    if (!socket || this.socket !== socket) return
+    this.quiet += 1
+    if (this.quiet >= SILENT_BEATS) {
+      this.lost(socket)
+      this.again()
+      return
+    }
+    this.write(BEAT)
+  }
+
+  private lost(socket: HubSocket | null): void {
+    clearTimeout(this.opening)
+    this.opening = undefined
+    this.socket = null
+    this.stopBeat?.()
+    this.stopBeat = null
+    socket?.close()
+    this.setState('off')
   }
 
   private async hello(): Promise<void> {
@@ -262,13 +297,7 @@ export class Hub {
     clearTimeout(this.retry)
     this.retry = undefined
     this.tries = 0
-    this.stopBeat?.()
-    this.stopBeat = null
-
-    const socket = this.socket
-    this.socket = null
-    socket?.close()
-    this.setState('off')
+    this.lost(this.socket)
   }
 }
 
