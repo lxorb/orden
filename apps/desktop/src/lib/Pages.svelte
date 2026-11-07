@@ -41,7 +41,7 @@
   } from './canvas/ink'
   import { DEFAULT_INK, readPalette } from './canvas/palette'
   import { pens } from './canvas/pens.svelte'
-  import { inks, type Tool } from './canvas/pointer'
+  import { FORGIVING, inks, type Tool } from './canvas/pointer'
   import { tick } from './canvas/tick'
   import { tools } from './canvas/tools.svelte'
   import { type Point } from './canvas/geometry'
@@ -335,7 +335,15 @@
 
   type Gesture =
     | { kind: 'draw'; id: number; page: string; stroke: InkStroke; began: number; on: Camera }
-    | { kind: 'erase'; id: number; run: string; last: Point; lastScreen: Point }
+    | {
+        kind: 'erase'
+        id: number
+        run: string
+        last: Point
+        lastScreen: Point
+        whole: boolean
+        reach: number
+      }
     | { kind: 'lasso'; id: number; points: Point[]; cards?: boolean }
     | { kind: 'armed'; id: number; at: Point; screen: Point }
     | {
@@ -501,14 +509,19 @@
     }
 
     if (tool === 'erase') {
-      gesture = {
-        kind: 'erase',
+      const whole = pens.whole || event.shiftKey
+      const wide = whole ? pens.strokeRub + (kind === 'touch' ? FORGIVING : 0) : pens.rub
+      const erasing = {
+        kind: 'erase' as const,
         id: event.pointerId,
         run: freshId(),
         last: point,
         lastScreen: screenAt(event),
+        whole,
+        reach: wide * unit,
       }
-      rub([point], gesture.run)
+      gesture = erasing
+      rub([point], erasing)
       return
     }
 
@@ -766,7 +779,7 @@
     if (one.kind === 'erase') {
       const now = { at: point, screen: screenAt(event) }
       const before = { at: one.last, screen: one.lastScreen }
-      rub(rubbedBetween(before, now, camera.scale, pens.rub * unit), one.run)
+      rub(rubbedBetween(before, now, camera.scale, one.reach), one)
       gesture = { ...one, last: now.at, lastScreen: now.screen }
       return
     }
@@ -866,8 +879,8 @@
     }
   }
 
-  function rub(ats: readonly Point[], run: string) {
-    store.edit(rubbedOut(canvas, ats, pens.rub * unit, false), run)
+  function rub(ats: readonly Point[], by: { run: string; reach: number; whole: boolean }) {
+    store.edit(rubbedOut(canvas, ats, by.reach, by.whole), by.run)
   }
 
   function madePage() {

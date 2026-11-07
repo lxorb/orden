@@ -89,6 +89,36 @@ def scrolled_under(page: Page) -> None:
     if len(left) != 1:
         wrong(f"a held eraser cut {len(left)} pieces out of ink it never touched")
 
+def whole_stroke(page: Page, maker: str) -> None:
+    say(f"the eraser held with Shift on a {maker} takes the whole stroke it touches")
+    page.evaluate(
+        "async ([maker, name]) => { const ws = window.nibApp.workspace; await ws[maker](ws.activeSpace.root, name) }",
+        [maker, f"whole-{maker}"],
+    )
+    page.wait_for_selector(".canvas, .pages")
+    box = page.locator(".canvas, .pages").first.bounding_box()
+    x, y = box["x"] + (300 if maker == "createCanvas" else box["width"] / 2 - 100), box["y"] + 200
+
+    page.keyboard.press("d")
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(x + 200, y + 60, steps=12)
+    page.mouse.up()
+
+    page.keyboard.press("e")
+    page.keyboard.down("Shift")
+    page.mouse.move(x + 100, y + 30)
+    page.mouse.down()
+    page.mouse.move(x + 101, y + 31)
+    page.mouse.up()
+    page.keyboard.up("Shift")
+    page.keyboard.press("v")
+
+    left = strokes(page)
+    say(f"  {len(left)} strokes left")
+    if left:
+        wrong(f"the whole-stroke eraser on a {maker} left {len(left)} pieces of the stroke")
+
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -97,6 +127,8 @@ def drive(browser: Browser) -> None:
     pass_over(page, "slow", "createPages")
     pass_over(page, "quick", "createPages")
     scrolled_under(page)
+    whole_stroke(page, "createCanvas")
+    whole_stroke(page, "createPages")
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))
