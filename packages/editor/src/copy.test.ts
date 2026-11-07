@@ -1,6 +1,6 @@
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { copiedFlavours, readyToCopy } from './copy'
+import { copiedFlavours, MOST_DRAWN, readyToCopy } from './copy'
 
 beforeAll(() => readyToCopy())
 
@@ -19,6 +19,14 @@ describe('what a copy leaves on the clipboard', () => {
 
   test('and the same words as HTML, for whatever reads that instead', () => {
     expect(copiedFlavours(state('a **bold** word', 0, 15))?.html).toContain('<strong>bold</strong>')
+  })
+
+  test('a note too long to draw at once leaves its words alone, not a frozen window', () => {
+    const long = 'a line with *some* words in it\n'.repeat(Math.ceil(MOST_DRAWN / 20))
+    const flavours = copiedFlavours(state(long, 0, long.length))
+
+    expect(flavours?.text).toBe(long)
+    expect(flavours?.html).toBeNull()
   })
 
   test('a heading and a list arrive as a heading and a list', () => {

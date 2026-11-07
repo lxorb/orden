@@ -4,6 +4,8 @@ import { door } from '@orden/markdown/door'
 
 const OURS = 'data-nib="markdown"'
 
+export const MOST_DRAWN = 256 * 1024
+
 let render: ((source: string) => string) | null = null
 
 const fetchRenderer = door(async () => {
@@ -32,6 +34,7 @@ export function copiedFlavours(
   if (cut && state.readOnly) return null
 
   const text = state.doc.sliceString(range.from, range.to)
+  if (text.length > MOST_DRAWN) return { text, html: null }
   if (!render) void fetchRenderer()
   return { text, html: render ? `<div ${OURS}>${render(text)}</div>` : null }
 }
