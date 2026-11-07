@@ -565,15 +565,44 @@ describe('a tab closed while its page is in front', () => {
   })
 })
 
+describe('a tab that has closed', () => {
+  test('is not given a page again by anything that asks after it', async () => {
+    const shown = pages.show('closed', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+
+    pages.forget('closed')
+    await settle()
+    pages.of('closed').shot = 'data:image/webp;base64,'
+    await pages.go('closed', 'https://example.com/later')
+
+    expect(pages.peek('closed')).toBeUndefined()
+    expect(pages.each().map(([id]) => id)).not.toContain('closed')
+    expect(commands()).not.toContain('web_navigate')
+  })
+
+  test('nor when it closed before its page was ever asked for', () => {
+    pages.forget('never')
+    pages.of('never').title = 'late'
+
+    expect(pages.peek('never')).toBeUndefined()
+  })
+})
+
 describe('where a page keeps what the site stores', () => {
   test('a private page is built private, in the store every space shares', async () => {
-    const page = pages.of('a')
+    const page = pages.of('private')
     page.inPrivate = true
     page.space = 'w'
-    const shown = pages.show('a', SITE, PANE)
+    const shown = pages.show('private', SITE, PANE)
     ;(await asked())()
     await shown
-    expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: null, private: true } })
+    expect(last('web_open')).toMatchObject({
+      tab: 'private',
+      profile: { store: null, private: true },
+    })
+    pages.forget('private')
   })
 
   test('in the store every page shares, until its web note keeps its own', async () => {
@@ -586,16 +615,16 @@ describe('where a page keeps what the site stores', () => {
   })
 
   test('a web note kept apart is built in its own store', async () => {
-    pages.of('a').own = '3f9a0c17e2b4d685'
-    const shown = pages.show('a', SITE, PANE)
+    pages.of('apart').own = '3f9a0c17e2b4d685'
+    const shown = pages.show('apart', SITE, PANE)
     ;(await asked())()
     await shown
 
     expect(last('web_open')).toMatchObject({
-      tab: 'a',
+      tab: 'apart',
       profile: { store: 'note_3f9a0c17e2b4d685', private: false },
     })
-    pages.of('a').own = null
+    pages.forget('apart')
   })
 
   test('a note turned apart builds its open page again in its own store, and says so', async () => {
