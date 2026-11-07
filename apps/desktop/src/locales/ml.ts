@@ -3552,4 +3552,8 @@ export const ml: Dictionary = {
   'Move to {space}?': '{space}-ലേക്ക് നീക്കണോ?',
   'macOS can start dictation with this key too.':
     'ഈ കീ ഉപയോഗിച്ച് macOS ഡിക്റ്റേഷനും തുടങ്ങിയേക്കാം.',
+  'QR code': 'QR കോഡ്',
+  'Waiting…': 'കാത്തിരിക്കുന്നു…',
+  Service: 'സേവനം',
+  'I understand and want to connect anyway': 'ഞാൻ മനസ്സിലാക്കുന്നു, എങ്കിലും ബന്ധിപ്പിക്കണം',
 }

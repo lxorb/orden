@@ -5,6 +5,8 @@ import { isRecord } from '../../stored'
 import { invoke, isDesktop } from '../../tauri'
 import { authorize, builtWith, post } from './authorize'
 import { parsedOffThread } from './mail-parse'
+import { screens } from './screens.svelte'
+import { sealedStore } from './sealed'
 
 let opened = 0
 
@@ -66,4 +68,7 @@ export const host: Host = {
     googleClientSecret: import.meta.env.VITE_ORDEN_GOOGLE_CLIENT_SECRET,
     microsoftClientId: import.meta.env.VITE_ORDEN_MICROSOFT_CLIENT_ID,
   }),
+  ask: screens.ask,
+  show: screens.show,
+  sealed: sealedStore({ read: readSecret, write: (name, value) => host.keepSecret(name, value) }),
 }

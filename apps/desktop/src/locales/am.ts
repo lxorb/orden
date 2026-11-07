@@ -3437,4 +3437,8 @@ export const am: Dictionary = {
   'Send crash reports to help improve Orden': 'Ordenን ለማሻሻል እንዲረዳ የብልሽት ሪፖርቶችን ላክ',
   'Move to {space}?': 'ወደ {space} ይዛወር?',
   'macOS can start dictation with this key too.': 'macOS በዚህ ቁልፍም ቃል መጻፍን ሊጀምር ይችላል።',
+  'QR code': 'QR ኮድ',
+  'Waiting…': 'በመጠበቅ ላይ…',
+  Service: 'አገልግሎት',
+  'I understand and want to connect anyway': 'ተረድቻለሁ፣ ቢሆንም መገናኘት እፈልጋለሁ',
 }

@@ -3584,4 +3584,8 @@ export const ptBR: Dictionary = {
   'Move to {space}?': 'Mover para {space}?',
   'macOS can start dictation with this key too.':
     'O macOS também pode iniciar o ditado com esta tecla.',
+  'QR code': 'Código QR',
+  'Waiting…': 'Aguardando…',
+  Service: 'Serviço',
+  'I understand and want to connect anyway': 'Entendo e quero conectar mesmo assim',
 }

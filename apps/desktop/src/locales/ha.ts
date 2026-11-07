@@ -3552,4 +3552,8 @@ export const ha: Dictionary = {
   'Move to {space}?': 'A matsar zuwa {space}?',
   'macOS can start dictation with this key too.':
     'macOS na iya fara rubutu da murya da wannan maɓallin ma.',
+  'QR code': 'Lambar QR',
+  'Waiting…': 'Ana jira…',
+  Service: 'Sabis',
+  'I understand and want to connect anyway': 'Na fahimta kuma ina so in haɗa duk da haka',
 }

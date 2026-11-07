@@ -3513,4 +3513,8 @@ export const pa: Dictionary = {
   'Move to {space}?': 'ਕੀ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
   'macOS can start dictation with this key too.':
     'macOS ਇਸ ਕੁੰਜੀ ਨਾਲ ਡਿਕਟੇਸ਼ਨ ਵੀ ਸ਼ੁਰੂ ਕਰ ਸਕਦਾ ਹੈ।',
+  'QR code': 'QR ਕੋਡ',
+  'Waiting…': 'ਉਡੀਕ ਹੋ ਰਹੀ ਹੈ…',
+  Service: 'ਸੇਵਾ',
+  'I understand and want to connect anyway': 'ਮੈਂ ਸਮਝਦਾ ਹਾਂ ਅਤੇ ਫਿਰ ਵੀ ਜੋੜਨਾ ਚਾਹੁੰਦਾ ਹਾਂ',
 }

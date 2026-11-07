@@ -3330,4 +3330,8 @@ export const yue: Dictionary = {
   'Send crash reports to help improve Orden': '傳送當機報告，幫手改善 Orden',
   'Move to {space}?': '搬去 {space}？',
   'macOS can start dictation with this key too.': 'macOS 用呢個掣都可能會開始聽寫。',
+  'QR code': 'QR 碼',
+  'Waiting…': '等緊…',
+  Service: '服務',
+  'I understand and want to connect anyway': '我明白，都係想連接',
 }

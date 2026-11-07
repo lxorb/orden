@@ -3398,4 +3398,8 @@ export const ko: Dictionary = {
   'Send crash reports to help improve Orden': '충돌 보고서를 보내 Orden 개선에 도움 주기',
   'Move to {space}?': '{space}(으)로 옮길까요?',
   'macOS can start dictation with this key too.': 'macOS가 이 키로 받아쓰기도 시작할 수 있습니다.',
+  'QR code': 'QR 코드',
+  'Waiting…': '기다리는 중…',
+  Service: '서비스',
+  'I understand and want to connect anyway': '이해했으며 그래도 연결하겠습니다',
 }

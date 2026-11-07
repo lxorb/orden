@@ -3562,4 +3562,8 @@ export const ta: Dictionary = {
   'Move to {space}?': '{space}-க்கு நகர்த்தவா?',
   'macOS can start dictation with this key too.':
     'இந்த விசையால் macOS குரல் தட்டச்சையும் தொடங்கலாம்.',
+  'QR code': 'QR குறியீடு',
+  'Waiting…': 'காத்திருக்கிறது…',
+  Service: 'சேவை',
+  'I understand and want to connect anyway': 'புரிகிறது, இருந்தாலும் இணைக்க விரும்புகிறேன்',
 }

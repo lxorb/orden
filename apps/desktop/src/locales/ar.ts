@@ -3693,4 +3693,8 @@ export const ar: Dictionary = {
   'Move to {space}?': 'النقل إلى {space}؟',
   'macOS can start dictation with this key too.':
     'قد يبدأ macOS الإملاء الصوتي بهذا المفتاح أيضًا.',
+  'QR code': 'رمز QR',
+  'Waiting…': 'في الانتظار…',
+  Service: 'الخدمة',
+  'I understand and want to connect anyway': 'أفهم ذلك وأريد الاتصال على أي حال',
 }

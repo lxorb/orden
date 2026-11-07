@@ -3434,4 +3434,8 @@ export const my: Dictionary = {
   'Move to {space}?': '{space} သို့ ရွှေ့မလား?',
   'macOS can start dictation with this key too.':
     'macOS သည် ဤခလုတ်ဖြင့် အသံဖြင့်စာရိုက်ခြင်းကိုလည်း စတင်နိုင်သည်။',
+  'QR code': 'QR ကုဒ်',
+  'Waiting…': 'စောင့်နေသည်…',
+  Service: 'ဝန်ဆောင်မှု',
+  'I understand and want to connect anyway': 'နားလည်ပါသည်၊ သို့သော် ချိတ်ဆက်လိုပါသည်',
 }

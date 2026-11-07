@@ -3375,4 +3375,8 @@ export const th: Dictionary = {
   'Send crash reports to help improve Orden': 'ส่งรายงานการขัดข้องเพื่อช่วยปรับปรุง Orden',
   'Move to {space}?': 'ย้ายไปที่ {space} ไหม?',
   'macOS can start dictation with this key too.': 'macOS อาจเริ่มการป้อนตามคำบอกด้วยปุ่มนี้ด้วย',
+  'QR code': 'คิวอาร์โค้ด',
+  'Waiting…': 'กำลังรอ…',
+  Service: 'บริการ',
+  'I understand and want to connect anyway': 'เข้าใจแล้วและยังต้องการเชื่อมต่อ',
 }

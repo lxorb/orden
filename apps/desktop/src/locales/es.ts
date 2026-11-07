@@ -3604,4 +3604,8 @@ export const es: Dictionary = {
   'Move to {space}?': '¿Mover a {space}?',
   'macOS can start dictation with this key too.':
     'macOS también puede iniciar el dictado con esta tecla.',
+  'QR code': 'Código QR',
+  'Waiting…': 'Esperando…',
+  Service: 'Servicio',
+  'I understand and want to connect anyway': 'Lo entiendo y quiero conectar de todos modos',
 }

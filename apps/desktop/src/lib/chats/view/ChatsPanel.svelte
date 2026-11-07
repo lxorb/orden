@@ -17,10 +17,10 @@
   import { connected, type Linked } from '../connected.svelte'
   import { ORDEN } from '../providers/orden'
   import { newestFirst } from '@orden/chats/provider'
-  import { PROVIDERS } from '../accounts.svelte'
   import { host } from '../providers/host'
   import { accounts, openConversation } from '../linked'
   import ConnectForm from './ConnectForm.svelte'
+  import SignIn from './SignIn.svelte'
   import { byPriority, LEVELS, isLevel } from '@orden/chats/priority'
   import { priorities, rowKey } from '../priorities.svelte'
   import { startPriorities } from '../prioritise'
@@ -44,7 +44,7 @@
       .flatMap((row) => byId.get(row.conversation.id) ?? [])
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
   })
-  const offered = PROVIDERS.filter((one) => one.available(host))
+  const offered = $derived(accounts.offered.filter((one) => one.available(host)))
   let connecting = $state(false)
 
   let arranged = $state<'service' | 'priority'>('service')
@@ -340,8 +340,10 @@
           onclick={() => (connecting = !connecting)}><Glyph name="attach" /></button
         >
       </div>
-      {#if connecting && offered[0]}
-        <ConnectForm provider={offered[0]} done={() => (connecting = false)} />
+      {#if connecting}
+        <ConnectForm providers={offered} done={() => (connecting = false)} />
+      {:else}
+        <SignIn />
       {/if}
       {#each accounts.failed as one (`${one.provider}:${one.account}`)}
         <p class="nib-row failed" title={one.reason}>

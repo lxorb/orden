@@ -3498,4 +3498,8 @@ export const ur: Dictionary = {
     'Orden کو بہتر بنانے میں مدد کے لیے کریش رپورٹیں بھیجیں',
   'Move to {space}?': '{space} میں منتقل کریں؟',
   'macOS can start dictation with this key too.': 'macOS اس کلید سے ڈکٹیشن بھی شروع کر سکتا ہے۔',
+  'QR code': 'QR کوڈ',
+  'Waiting…': 'انتظار ہو رہا ہے…',
+  Service: 'سروس',
+  'I understand and want to connect anyway': 'میں سمجھتا ہوں اور پھر بھی جوڑنا چاہتا ہوں',
 }

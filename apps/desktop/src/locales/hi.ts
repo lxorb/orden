@@ -3504,4 +3504,8 @@ export const hi: Dictionary = {
     'Orden को बेहतर बनाने में मदद के लिए क्रैश रिपोर्ट भेजें',
   'Move to {space}?': '{space} में ले जाएँ?',
   'macOS can start dictation with this key too.': 'macOS इस कुंजी से डिक्टेशन भी शुरू कर सकता है।',
+  'QR code': 'QR कोड',
+  'Waiting…': 'प्रतीक्षा हो रही है…',
+  Service: 'सेवा',
+  'I understand and want to connect anyway': 'मैं समझता हूँ और फिर भी जोड़ना चाहता हूँ',
 }

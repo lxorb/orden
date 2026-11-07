@@ -3501,4 +3501,8 @@ export const mr: Dictionary = {
   'Send crash reports to help improve Orden': 'Orden सुधारण्यास मदत करण्यासाठी क्रॅश अहवाल पाठवा',
   'Move to {space}?': '{space} मध्ये हलवायचे?',
   'macOS can start dictation with this key too.': 'macOS या कीने डिक्टेशनही सुरू करू शकते.',
+  'QR code': 'QR कोड',
+  'Waiting…': 'प्रतीक्षा करत आहे…',
+  Service: 'सेवा',
+  'I understand and want to connect anyway': 'मला समजले आणि तरीही जोडायचे आहे',
 }

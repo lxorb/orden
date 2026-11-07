@@ -3418,4 +3418,8 @@ export const ja: Dictionary = {
   'Move to {space}?': '{space} に移動しますか？',
   'macOS can start dictation with this key too.':
     'macOS はこのキーで音声入力も始めることがあります。',
+  'QR code': 'QR コード',
+  'Waiting…': '待機中…',
+  Service: 'サービス',
+  'I understand and want to connect anyway': '理解したうえで接続します',
 }

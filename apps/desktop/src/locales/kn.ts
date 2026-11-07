@@ -3541,4 +3541,8 @@ export const kn: Dictionary = {
   'Move to {space}?': '{space} ಗೆ ಸರಿಸುವುದೇ?',
   'macOS can start dictation with this key too.':
     'macOS ಈ ಕೀಲಿಯಿಂದ ಡಿಕ್ಟೇಶನ್ ಅನ್ನೂ ಪ್ರಾರಂಭಿಸಬಹುದು.',
+  'QR code': 'QR ಕೋಡ್',
+  'Waiting…': 'ಕಾಯಲಾಗುತ್ತಿದೆ…',
+  Service: 'ಸೇವೆ',
+  'I understand and want to connect anyway': 'ನನಗೆ ಅರ್ಥವಾಗಿದೆ, ಆದರೂ ಸಂಪರ್ಕಿಸಲು ಬಯಸುತ್ತೇನೆ',
 }

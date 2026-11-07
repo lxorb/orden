@@ -3646,4 +3646,8 @@ export const ru: Dictionary = {
     'Отправлять отчёты о сбоях, чтобы помочь улучшить Orden',
   'Move to {space}?': 'Переместить в {space}?',
   'macOS can start dictation with this key too.': 'macOS может запускать этой клавишей и диктовку.',
+  'QR code': 'QR-код',
+  'Waiting…': 'Ожидание…',
+  Service: 'Сервис',
+  'I understand and want to connect anyway': 'Я понимаю и всё равно хочу подключить',
 }
