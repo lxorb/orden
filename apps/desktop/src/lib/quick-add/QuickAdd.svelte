@@ -19,6 +19,7 @@
   import { dictating } from '../dictation/keys'
   import type { Dictates } from '../dictation/voice.svelte'
   import { t } from '../i18n.svelte'
+  import { longPaste } from '../long-paste'
   import type { Provider } from '../ai/providers'
   import type { MenuEntry } from '../menu-item'
   import type { Entry, Prefill } from './entry'
@@ -427,12 +428,20 @@
     clear()
   }
 
+  const LONG_TITLE = 10_000
+
   function onpaste(event: ClipboardEvent) {
-    if (mode !== 'add') return
-    const lines = pastedLines(event.clipboardData?.getData('text/plain') ?? '')
-    if (lines.length < 2) return
-    event.preventDefault()
-    pasted = lines
+    if (mode === 'add') {
+      const lines = pastedLines(event.clipboardData?.getData('text/plain') ?? '')
+      if (lines.length >= 2) {
+        event.preventDefault()
+        pasted = lines
+        return
+      }
+    }
+    const long = longPaste(event, LONG_TITLE)
+    if (long === null) return
+    description = description ? `${description}\n\n${long}` : long
   }
 
   function openDescription() {

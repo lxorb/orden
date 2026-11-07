@@ -15,6 +15,7 @@ vi.mock('../ai/quick.svelte', () => ({
     running: false,
     trouble: null,
     context: { kind: 'note', name: 'Quarterly plan' },
+    texts: [],
     close: () => undefined,
     ask: () => undefined,
     stop: () => undefined,
