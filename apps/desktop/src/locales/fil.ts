@@ -3620,6 +3620,9 @@ export const fil: Dictionary = {
     'Nagdaragdag ng mga chat sa mga tao sa iyong mga space at sa mail, Telegram, Slack, WhatsApp at Signal; kapag pinatay, nananatili ang iyong mga mensahe at account.',
   'Chats are off. Turn them on in Settings.':
     'Naka-off ang mga chat. I-on ang mga ito sa Settings.',
+  Databases: 'Mga database',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'Nagdadagdag ng mga database, mga tala na nagpapakita ng ibang tala bilang table, board o kalendaryo; kapag pinatay, nananatili ang mga file.',
   'User token': 'User token',
   'App-level token': 'App-level token',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

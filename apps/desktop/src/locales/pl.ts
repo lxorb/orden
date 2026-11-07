@@ -3692,6 +3692,9 @@ export const pl: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Dodaje czaty z osobami z Twoich przestrzeni oraz pocztę, Telegram, Slack, WhatsApp i Signal; wyłączenie zachowuje wiadomości i konta.',
   'Chats are off. Turn them on in Settings.': 'Czaty są wyłączone. Włącz je w Ustawieniach.',
+  Databases: 'Bazy danych',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'Dodaje bazy danych, notatki pokazujące inne notatki jako tabelę, tablicę lub kalendarz; wyłączenie zachowuje pliki.',
   'User token': 'Token użytkownika',
   'App-level token': 'Token aplikacji',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

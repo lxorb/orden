@@ -3418,6 +3418,9 @@ export const th: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'เพิ่มแชตกับผู้คนในสเปซของคุณ และกับอีเมล, Telegram, Slack, WhatsApp และ Signal ปิดแล้วข้อความและบัญชีของคุณยังอยู่',
   'Chats are off. Turn them on in Settings.': 'แชตปิดอยู่ เปิดได้ในการตั้งค่า',
+  Databases: 'ฐานข้อมูล',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'เพิ่มฐานข้อมูล ซึ่งเป็นโน้ตที่แสดงโน้ตอื่นเป็นตาราง บอร์ด หรือปฏิทิน และการปิดจะยังเก็บไฟล์ไว้',
   'User token': 'โทเค็นผู้ใช้',
   'App-level token': 'โทเค็นแอป',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

@@ -3,6 +3,7 @@
   import { typeAhead } from './palette/type-ahead'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@orden/editor'
+  import { isBaseTarget } from '@orden/markdown/links'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
   import Server from 'lucide/dist/esm/icons/server.mjs'
@@ -34,7 +35,7 @@
   import { preferences } from './preferences'
   import { search } from './search.svelte'
   import { paletteWords } from './surfaces.svelte'
-  import { chatsOn, hiddenKinds, settings } from './settings.svelte'
+  import { basesOn, chatsOn, hiddenKinds, settings } from './settings.svelte'
   import { landing } from './settings/landing.svelte'
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
@@ -119,7 +120,7 @@
 
     return {
       root: root ?? '',
-      files: workspace.files,
+      files: basesOn() ? workspace.files : workspace.files.filter((one) => !isBaseTarget(one.path)),
       tabs,
       active: workspace.activeTabId,
       focused: workspace.active?.kind ?? null,

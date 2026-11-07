@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
+  import { basesOn } from '../settings.svelte'
   import { kitFor } from './kit'
   import { LiveView } from './live.svelte'
   import { fenceSource, fileSource, rowAt } from './source'
@@ -30,12 +31,16 @@
     return { live, kit: kitFor(live, view === undefined ? {} : { view }, file, true) }
   })
 
-  $effect(() => untrack(() => made.live.start()))
+  $effect(() => {
+    if (basesOn()) return untrack(() => made.live.start())
+  })
 </script>
 
-<div class="base-block">
-  <ViewFrame kit={made.kit} {title} />
-</div>
+{#if basesOn()}
+  <div class="base-block">
+    <ViewFrame kit={made.kit} {title} />
+  </div>
+{/if}
 
 <style>
   .base-block {

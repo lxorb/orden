@@ -3651,6 +3651,9 @@ export const es: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Añade chats con las personas de tus espacios y con correo, Telegram, Slack, WhatsApp y Signal; al desactivarlo se conservan tus mensajes y cuentas.',
   'Chats are off. Turn them on in Settings.': 'Los chats están desactivados. Actívalos en Ajustes.',
+  Databases: 'Bases de datos',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'Añade bases de datos, notas que muestran otras notas como tabla, tablero o calendario; desactivarlas conserva los archivos.',
   'User token': 'Token de usuario',
   'App-level token': 'Token de la app',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

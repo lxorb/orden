@@ -1,13 +1,14 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { isAccountInbox } from '@orden/bases/inbox'
 import { account } from './account.svelte'
-import { hiddenKinds, settings } from './settings.svelte'
+import { basesOn, hiddenKinds, settings } from './settings.svelte'
 import { modes } from './modes.svelte'
 import { arriving } from './arriving.svelte'
 import { keptAway } from './web/away.svelte'
 import {
   blockIds,
   isApplicationTarget,
+  isBaseTarget,
   isCanvasTarget,
   isPagesTarget,
   isPdfTarget,
@@ -526,11 +527,14 @@ class Workspace {
 
     const root = coming.path
     const coder = modes.coder
+    const bases = basesOn()
     const listed = withoutRows(
       coming,
       (entry) =>
         !entry.is_dir &&
-        (isInstructions(root, entry.path) || (!coder && isApplicationTarget(entry.path))),
+        (isInstructions(root, entry.path) ||
+          (!coder && isApplicationTarget(entry.path)) ||
+          (!bases && isBaseTarget(entry.path))),
     )
     return orderedTree(this.unkept(this.unarchived(listed)), this.sortMode, (folder) =>
       this.arranged.listOf(folder),
@@ -2015,7 +2019,7 @@ class Workspace {
         await this.openCanvas(path, options)
         return
       case 'view': {
-        if (__EVEN_PLUGIN__) return
+        if (__EVEN_PLUGIN__ || !basesOn()) return
         const { openBaseFile } = await import('./views/open')
         openBaseFile(path, options)
         return

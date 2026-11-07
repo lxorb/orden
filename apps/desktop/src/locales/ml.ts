@@ -3599,6 +3599,9 @@ export const ml: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'നിങ്ങളുടെ സ്പേസുകളിലെ ആളുകളുമായും മെയിൽ, Telegram, Slack, WhatsApp, Signal എന്നിവയുമായും ചാറ്റുകൾ ചേർക്കുന്നു; ഓഫാക്കിയാലും സന്ദേശങ്ങളും അക്കൗണ്ടുകളും നിലനിൽക്കും.',
   'Chats are off. Turn them on in Settings.': 'ചാറ്റുകൾ ഓഫാണ്. ക്രമീകരണങ്ങളിൽ ഓണാക്കുക.',
+  Databases: 'ഡാറ്റാബേസുകൾ',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'ഡാറ്റാബേസുകൾ ചേർക്കുന്നു, മറ്റ് കുറിപ്പുകളെ പട്ടിക, ബോർഡ് അല്ലെങ്കിൽ കലണ്ടർ ആയി കാണിക്കുന്ന കുറിപ്പുകൾ; ഓഫാക്കിയാലും ഫയലുകൾ നിലനിൽക്കും.',
   'User token': 'ഉപയോക്തൃ ടോക്കൺ',
   'App-level token': 'ആപ്പ്-തല ടോക്കൺ',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

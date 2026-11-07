@@ -10,6 +10,8 @@ vi.mock('./sharing.svelte', async (importOriginal) => ({
 
 const { workspace } = await import('./workspace.svelte')
 const { appCommands } = await import('./commands')
+const { BASES_WORD, hiddenKinds } = await import('./settings.svelte')
+hiddenKinds.hidden = [BASES_WORD]
 
 const SPACE = '/Theirs'
 const MAKING = ['new-unique', 'new-canvas', 'new-pages', 'new-database', 'new-from-template']

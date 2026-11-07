@@ -3546,6 +3546,9 @@ export const mr: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'तुमच्या स्पेसमधील लोकांशी आणि मेल, Telegram, Slack, WhatsApp व Signal शी चॅट जोडते; बंद केल्यास तुमचे संदेश आणि खाती राहतात.',
   'Chats are off. Turn them on in Settings.': 'चॅट बंद आहेत. सेटिंग्जमध्ये चालू करा.',
+  Databases: 'डेटाबेस',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'डेटाबेस जोडते, इतर नोंदी टेबल, बोर्ड किंवा कॅलेंडर म्हणून दाखवणाऱ्या नोंदी; बंद केल्यावर फायली राहतात.',
   'User token': 'वापरकर्ता टोकन',
   'App-level token': 'ॲप-स्तर टोकन',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

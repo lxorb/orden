@@ -3546,6 +3546,9 @@ export const ps: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'ستاسو د ځایونو له خلکو او له برېښنالیک، Telegram، Slack، WhatsApp او Signal سره چیټونه زیاتوي؛ بندول یې ستاسو پیغامونه او حسابونه ساتي.',
   'Chats are off. Turn them on in Settings.': 'چیټونه بند دي. په امستنو کې یې چالان کړئ.',
+  Databases: 'ډېټابېسونه',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'ډېټابېسونه زیاتوي، هغه یادښتونه چې نور یادښتونه د جدول، تختې یا جنتري په توګه ښيي؛ بندول یې فایلونه ساتي.',
   'User token': 'د کارن ټوکن',
   'App-level token': 'د اپ کچې ټوکن',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

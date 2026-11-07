@@ -3486,6 +3486,9 @@ export const id: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Menambahkan obrolan dengan orang di ruang Anda dan dengan email, Telegram, Slack, WhatsApp, dan Signal; mematikannya tetap menyimpan pesan dan akun Anda.',
   'Chats are off. Turn them on in Settings.': 'Obrolan nonaktif. Aktifkan di Pengaturan.',
+  Databases: 'Database',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'Menambahkan database, catatan yang menampilkan catatan lain sebagai tabel, papan, atau kalender; mematikannya tetap menyimpan berkasnya.',
   'User token': 'Token pengguna',
   'App-level token': 'Token aplikasi',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

@@ -3611,6 +3611,9 @@ export const ta: Dictionary = {
     'உங்கள் இடங்களில் உள்ளவர்களுடனும் மின்னஞ்சல், Telegram, Slack, WhatsApp, Signal ஆகியவற்றுடனும் அரட்டைகளைச் சேர்க்கிறது; அணைத்தாலும் உங்கள் செய்திகளும் கணக்குகளும் இருக்கும்.',
   'Chats are off. Turn them on in Settings.':
     'அரட்டைகள் அணைக்கப்பட்டுள்ளன. அமைப்புகளில் இயக்கவும்.',
+  Databases: 'தரவுத்தளங்கள்',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'தரவுத்தளங்களைச் சேர்க்கிறது, மற்ற குறிப்புகளை அட்டவணை, பலகை அல்லது நாட்காட்டியாகக் காட்டும் குறிப்புகள்; அணைத்தாலும் கோப்புகள் இருக்கும்.',
   'User token': 'பயனர் டோக்கன்',
   'App-level token': 'ஆப்-நிலை டோக்கன்',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

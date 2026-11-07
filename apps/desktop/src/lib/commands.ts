@@ -83,7 +83,7 @@ import { archiveEntry, DIVIDER, listEntry } from './menu.svelte'
 import { lockAllEntry, protectEntries } from './protect/entries'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
-import { chatsOn, type KindName, passOn, settings, timeOn } from './settings.svelte'
+import { basesOn, chatsOn, type KindName, passOn, settings, timeOn } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
 import { showCombination } from './keys'
@@ -978,12 +978,16 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: readOnly,
       run: () => void workspace.createPages(),
     },
-    {
-      id: 'new-database',
-      label: t('New database'),
-      disabled: readOnly,
-      run: () => void import('./views/new-database').then((one) => one.createDatabase()),
-    },
+    ...(basesOn()
+      ? [
+          {
+            id: 'new-database',
+            label: t('New database'),
+            disabled: readOnly,
+            run: () => void import('./views/new-database').then((one) => one.createDatabase()),
+          },
+        ]
+      : []),
     {
       id: 'new-from-template',
       label: t('New note from template'),

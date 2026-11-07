@@ -6,6 +6,7 @@ import { inTurn } from '../locks'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
 import { noteRowsOf, type RowsChange } from '../rows/store'
+import { basesOn } from '../settings.svelte'
 import { canWriteAt } from '../sharing.svelte'
 import { insideSpace, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
@@ -66,7 +67,7 @@ export async function readHeld(path: string): Promise<void> {
   const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
   try {
     const base = readBase(await invoke<string>('read_note', { path }))
-    if (space && (base.orden.id || readAutomations(base).length)) {
+    if (basesOn() && space && (base.orden.id || readAutomations(base).length)) {
       held.set(path, {
         name: path.replace(/^.*[\\/]/, '').replace(/\.base$/i, ''),
         space: space.name,

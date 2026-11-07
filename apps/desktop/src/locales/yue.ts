@@ -3370,6 +3370,9 @@ export const yue: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     '加入同你空間入面嘅人傾偈，同埋郵件、Telegram、Slack、WhatsApp 同 Signal；閂咗都會保留你嘅訊息同帳戶。',
   'Chats are off. Turn them on in Settings.': '傾偈已經閂咗。去設定開返。',
+  Databases: '資料庫',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    '加入資料庫，即係用表格、看板或者日曆顯示其他筆記嘅筆記；關咗都會保留檔案。',
   'User token': '用戶權杖',
   'App-level token': 'App 層級權杖',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

@@ -3619,6 +3619,9 @@ export const de: Dictionary = {
     'Fügt Chats mit Leuten in deinen Spaces und mit Mail, Telegram, Slack, WhatsApp und Signal hinzu. Ausschalten behält deine Nachrichten und Konten.',
   'Chats are off. Turn them on in Settings.':
     'Chats sind aus. Schalte sie in den Einstellungen ein.',
+  Databases: 'Datenbanken',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'Fügt Datenbanken hinzu, Notizen, die andere Notizen als Tabelle, Board oder Kalender zeigen; Ausschalten behält die Dateien.',
   'User token': 'Benutzer-Token',
   'App-level token': 'App-Token',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

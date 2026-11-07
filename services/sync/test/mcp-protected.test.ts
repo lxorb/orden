@@ -31,6 +31,11 @@ beforeEach(async () => {
     body: { protected: { Diary: 'password' } },
   })
   key = (await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json.token
+  await call(env, '/v1/settings', {
+    method: 'PATCH',
+    token,
+    body: { hiddenKinds: ['shown-bases'] },
+  })
 })
 
 afterEach(() => env.close())

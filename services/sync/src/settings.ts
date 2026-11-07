@@ -304,6 +304,11 @@ function parse(raw: string | undefined): AccountSettings {
   return objectIn(raw) ?? {}
 }
 
+export async function turnedOn(env: Env, userId: string, word: string): Promise<boolean> {
+  const hidden = (await settingsOf(env, userId)).hiddenKinds
+  return Array.isArray(hidden) && hidden.includes(word)
+}
+
 export const settings = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 settings.get('/', async (context) => {

@@ -3738,6 +3738,9 @@ export const ar: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'يضيف محادثات مع الأشخاص في مساحاتك ومع البريد وTelegram وSlack وWhatsApp وSignal؛ إيقافه يحتفظ برسائلك وحساباتك.',
   'Chats are off. Turn them on in Settings.': 'المحادثات متوقفة. شغّلها من الإعدادات.',
+  Databases: 'قواعد البيانات',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'يضيف قواعد البيانات، وهي ملاحظات تعرض ملاحظات أخرى كجدول أو لوحة أو تقويم؛ إيقافها يُبقي الملفات.',
   'User token': 'رمز المستخدم',
   'App-level token': 'رمز التطبيق',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

@@ -125,7 +125,6 @@ describe('turning a kind off', () => {
       'New note',
       'New page note',
       'New web note',
-      'New database',
     ])
     expect(newKinds().map((one) => one.kind)).toContain('canvas')
   })

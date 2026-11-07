@@ -1,5 +1,6 @@
 import type { Said } from '../../automation/args'
 import type { AgentAnswer, Caller } from '../../automation/caller'
+import { basesOn } from '../../settings.svelte'
 import { workspace } from '../../workspace.svelte'
 import { askReader } from './ask'
 import { bookmarks } from './bookmarks'
@@ -48,7 +49,20 @@ function listSpaces(call: Call): AgentAnswer {
   )
 }
 
-const VERBS: Record<string, (call: Call) => AgentAnswer | Promise<AgentAnswer>> = {
+type Verb = (call: Call) => AgentAnswer | Promise<AgentAnswer>
+
+function withBases(verb: Verb): Verb {
+  return (call) => {
+    if (!basesOn())
+      throw new Refused(
+        'not_granted',
+        'databases are turned off; the reader turns them on in Settings, General, Databases',
+      )
+    return verb(call)
+  }
+}
+
+const VERBS: Record<string, Verb> = {
   get_context: getContext,
   list_spaces: listSpaces,
   list_notes: listNotes,
@@ -67,10 +81,10 @@ const VERBS: Record<string, (call: Call) => AgentAnswer | Promise<AgentAnswer>> 
   list_tasks: listTasks,
   add_task: addTask,
   update_task: updateTask,
-  query_base: queryBase,
-  add_row: addRow,
+  query_base: withBases(queryBase),
+  add_row: withBases(addRow),
   edit_rows: editRows,
-  edit_base: editBase,
+  edit_base: withBases(editBase),
   create_note: createNote,
   restore_version: restoreVersion,
   edit_canvas: editCanvas,

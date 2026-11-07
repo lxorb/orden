@@ -103,6 +103,11 @@ test('a folder of a base cannot name its way out of the space', async () => {
     'T.base',
     'filters:\n  and:\n    - file.inFolder("../../Other")\nviews:\n  - type: table\n    name: V\n',
   )
+  await call(env, '/v1/settings', {
+    method: 'PATCH',
+    token,
+    body: { hiddenKinds: ['shown-bases'] },
+  })
   const said = await tool('add_row', { base: 'T.base', title: 'pwn' })
   expect(said).toContain('not a note path')
   const { read, raw } = await feed()

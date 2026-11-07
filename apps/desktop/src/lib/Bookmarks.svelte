@@ -4,6 +4,7 @@
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
   import { door } from '@orden/markdown/door'
+  import { isBaseTarget } from '@orden/markdown/links'
   import BookmarkTile from './BookmarkTile.svelte'
   import { fileMark, type FileMark as Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
@@ -24,6 +25,7 @@
     draggedBookmark,
     isTreeDrag,
   } from './drag-paths'
+  import { basesOn } from './settings.svelte'
   import { insideSpace, samePath } from './space-paths'
   import { type Bookmark, isTile, sameBookmark } from './workspace/bookmarks.svelte'
   import type { Entry } from './workspace.svelte'
@@ -84,7 +86,7 @@
 
     const inside = mark.kind === 'block' ? (mark.path.split('#')[0] ?? '') : mark.path
     const entry = byPath.get(insideSpace(root, inside))
-    if (!entry) return null
+    if (!entry || (!basesOn() && isBaseTarget(entry.path))) return null
 
     const named = mark.kind === 'heading' || mark.kind === 'block'
     return {

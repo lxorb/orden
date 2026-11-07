@@ -3594,6 +3594,9 @@ export const sw: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Huongeza gumzo na watu katika nafasi zako na barua pepe, Telegram, Slack, WhatsApp na Signal; kuizima huhifadhi ujumbe na akaunti zako.',
   'Chats are off. Turn them on in Settings.': 'Gumzo zimezimwa. Ziwashe katika Mipangilio.',
+  Databases: 'Hifadhidata',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'Huongeza hifadhidata, madokezo yanayoonyesha madokezo mengine kama jedwali, ubao au kalenda; kuzizima kunahifadhi faili.',
   'User token': 'Tokeni ya mtumiaji',
   'App-level token': 'Tokeni ya programu',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

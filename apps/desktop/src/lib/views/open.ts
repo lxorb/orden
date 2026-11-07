@@ -1,6 +1,7 @@
 import { writeBase } from '@orden/bases'
 import type { OpenHow } from '../new-tab'
 import { nameOf, samePath } from '../space-paths'
+import { basesOn } from '../settings.svelte'
 import { workspace } from '../workspace.svelte'
 import { type Builtin, readSpec, sameView, type ViewSpec, writeSpec } from './spec'
 import { setLayout } from './edit'
@@ -64,6 +65,7 @@ export function openLabel(tag: string, how: OpenHow = {}, space?: string) {
 }
 
 export function openBaseFile(path: string, how: OpenHow = {}, view?: string) {
+  if (!basesOn()) return null
   const name = nameOf(path).replace(/\.base$/i, '')
   return openSpec(view === undefined ? {} : { view }, name, path, how)
 }

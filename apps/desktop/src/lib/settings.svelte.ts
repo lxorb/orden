@@ -243,3 +243,9 @@ export const CHATS_WORD = 'shown-chats'
 export function chatsOn(): boolean {
   return !__EVEN_PLUGIN__ && hiddenKinds.hidden.includes(CHATS_WORD)
 }
+
+export const BASES_WORD = 'shown-bases'
+
+export function basesOn(): boolean {
+  return hiddenKinds.hidden.includes(BASES_WORD)
+}

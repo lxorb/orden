@@ -64,6 +64,14 @@ async function json(key: string, name: string, args: Record<string, unknown> = {
   }
 }
 
+async function basesTurned(on: boolean) {
+  await call(env, '/v1/settings', {
+    method: 'PATCH',
+    token,
+    body: { hiddenKinds: on ? ['shown-bases'] : null },
+  })
+}
+
 const read = async (key: string, path: string) => tool(key, 'read_note', { space: 'Work', path })
 
 describe('the to-dos, with Orden closed', () => {
@@ -196,13 +204,21 @@ describe('the to-dos, with Orden closed', () => {
     expect((await json(key, 'list_tasks', { limit: 1 })).tasks).toHaveLength(1)
   })
 
-  test('are listed with the tools', async () => {
-    const response = await call<RpcView>(env, '/mcp', {
-      token: await connector(),
-      body: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
-    })
-    const names = response.json.result.tools.map((one: { name: string }) => one.name)
-    expect(names).toEqual(
+  test('are listed with the tools, and the base tools only once databases are turned on', async () => {
+    const key = await connector()
+    const names = async () => {
+      const response = await call<RpcView>(env, '/mcp', {
+        token: key,
+        body: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+      })
+      return response.json.result.tools.map((one: { name: string }) => one.name)
+    }
+    const off = await names()
+    expect(off).toEqual(expect.arrayContaining(['list_tasks', 'add_task', 'update_task']))
+    expect(off).not.toContain('query_base')
+    expect(off).not.toContain('add_row')
+    await basesTurned(true)
+    expect(await names()).toEqual(
       expect.arrayContaining(['list_tasks', 'add_task', 'update_task', 'query_base', 'add_row']),
     )
   })
@@ -453,8 +469,31 @@ const BOOKS = [
 ].join('\n')
 
 describe('bases, with Orden closed', () => {
+  test('refused while databases are off, and the base left as it was', async () => {
+    await baseFile('Books.base', BOOKS)
+    const key = await connector()
+    const off = async (name: string, args: Record<string, unknown>) => {
+      const response = await call<RpcView>(env, '/mcp', {
+        token: key,
+        body: { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } },
+      })
+      expect(response.json.result.isError).toBe(true)
+      expect(response.json.result.content[0]?.text).toContain('Databases are turned off')
+    }
+    await off('query_base', { space: 'Work', path: 'Books.base' })
+    await off('add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
+    expect(await read(key, 'Books/Emma.md')).not.toContain('status')
+    await basesTurned(true)
+    expect(await json(key, 'query_base', { space: 'Work', path: 'Books.base' })).toMatchObject({
+      total: 1,
+    })
+    await basesTurned(false)
+    await off('query_base', { space: 'Work', path: 'Books.base' })
+  })
+
   test('a view queried, and a row added in the folder it looks in', async () => {
     await baseFile('Books.base', BOOKS)
+    await basesTurned(true)
     const key = await connector()
     expect(await json(key, 'query_base', { space: 'Work', path: 'Books.base' })).toMatchObject({
       total: 1,
@@ -473,6 +512,7 @@ describe('bases, with Orden closed', () => {
 
   test('a base said as yaml', async () => {
     const yaml = BOOKS.replace('file.inFolder("Books")', 'status == "reading"')
+    await basesTurned(true)
     expect(await json(await connector(true), 'query_base', { space: 'Work', yaml })).toMatchObject({
       total: 1,
     })

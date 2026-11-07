@@ -1,6 +1,7 @@
 import { type Base, writeBase } from '@orden/bases'
 import { folderNotePath } from '../folder-notes'
 import { t } from '../i18n.svelte'
+import { basesOn } from '../settings.svelte'
 import { samePath } from '../space-paths'
 import { joinPath } from '../tauri'
 import { writeFile } from '../workspace/write-file'
@@ -67,7 +68,7 @@ export function databaseName(named: string | undefined): string {
 
 export async function createDatabase(folder?: string, named?: string): Promise<void> {
   const dir = folder ?? workspace.activeSpace?.root
-  if (!dir) return
+  if (!dir || !basesOn()) return
   if (named === undefined && workspace.startNaming('database', dir)) return
 
   const path = folderNotePath(joinPath(dir, await freeFolder(dir, databaseName(named))))

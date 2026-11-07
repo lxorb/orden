@@ -3452,6 +3452,9 @@ export const vi: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Thêm trò chuyện với mọi người trong không gian của bạn và với thư, Telegram, Slack, WhatsApp và Signal; tắt đi vẫn giữ tin nhắn và tài khoản của bạn.',
   'Chats are off. Turn them on in Settings.': 'Trò chuyện đang tắt. Hãy bật trong Cài đặt.',
+  Databases: 'Cơ sở dữ liệu',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'Thêm cơ sở dữ liệu, ghi chú hiển thị các ghi chú khác dưới dạng bảng, bảng Kanban hoặc lịch; tắt đi vẫn giữ tệp.',
   'User token': 'Mã người dùng',
   'App-level token': 'Mã ứng dụng',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

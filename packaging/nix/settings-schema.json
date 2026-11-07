@@ -261,6 +261,11 @@
     "default": false,
     "description": "Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit."
   },
+  "general.databases": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files."
+  },
   "general.developerMode": {
     "type": "boolean",
     "default": true,

@@ -1,6 +1,6 @@
 import { foreignCopy } from '@orden/sync-core/foreign'
 import { folderNote, nestedIn } from './folder-notes'
-import { hiddenKinds, type KindName } from './settings.svelte'
+import { basesOn, hiddenKinds, type KindName } from './settings.svelte'
 import { kindLabel } from './kind-words'
 import { key, plural, t } from './i18n.svelte'
 import {
@@ -322,7 +322,7 @@ export function newFileRows(inside?: string): MenuEntry[] {
       const run = inside ? () => void workspace.createInside(inside, make) : () => void make()
       return [{ label: kindLabel(kind), run }]
     }),
-    ...(__EVEN_PLUGIN__ || inside
+    ...(__EVEN_PLUGIN__ || inside || !basesOn()
       ? []
       : [
           {

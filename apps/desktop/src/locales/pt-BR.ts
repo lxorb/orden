@@ -3631,6 +3631,9 @@ export const ptBR: Dictionary = {
     'Adiciona conversas com as pessoas dos seus espaços e com e-mail, Telegram, Slack, WhatsApp e Signal; desativar mantém suas mensagens e contas.',
   'Chats are off. Turn them on in Settings.':
     'As conversas estão desativadas. Ative-as nas Configurações.',
+  Databases: 'Bancos de dados',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'Adiciona bancos de dados, notas que mostram outras notas como tabela, quadro ou calendário; desligá-los mantém os arquivos.',
   'User token': 'Token de usuário',
   'App-level token': 'Token do app',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

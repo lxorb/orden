@@ -32,6 +32,8 @@ import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
 import { setWord } from '../kind-choice'
 import {
+  BASES_WORD,
+  basesOn,
   CHATS_WORD,
   chatsOn,
   hiddenKinds,
@@ -748,6 +750,24 @@ export function generalPane(): Pane {
               ],
             },
           ]),
+      {
+        title: t('Databases'),
+        fields: [
+          {
+            kind: 'switch' as const,
+            key: 'general.databases',
+            store: { ...among(hiddenKinds, 'hidden', BASES_WORD), shared: 'hiddenKinds' },
+            label: t('Databases'),
+            hint: t(
+              'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.',
+            ),
+            words: ['database', 'databases', 'base', 'bases', 'table', 'board', 'kanban', 'notion'],
+            initial: false,
+            get: () => basesOn(),
+            set: (on: boolean) => setWord(BASES_WORD, on),
+          },
+        ],
+      },
       ...(__EVEN_PLUGIN__
         ? []
         : [

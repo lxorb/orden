@@ -1,3 +1,4 @@
+import { basesOn } from '../settings.svelte'
 import { canWriteAt } from '../sharing.svelte'
 import { joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
@@ -14,7 +15,7 @@ function baseFileName(name: string): string {
 
 export function copiesToBase(): boolean {
   const root = workspace.activeSpace?.root
-  return root !== undefined && canWriteAt(root)
+  return basesOn() && root !== undefined && canWriteAt(root)
 }
 
 export async function copyToBase(yaml: string, name: string): Promise<string | null> {

@@ -498,6 +498,7 @@ let log: unknown[] = []
 
 const { runAgentVerb, AGENT_VERBS, answerTheCrate } = await import('./index')
 const { forgetIndexes } = await import('./links')
+const { BASES_WORD, hiddenKinds } = await import('../../settings.svelte')
 
 const EVERY = [
   'context',
@@ -549,6 +550,7 @@ beforeEach(() => {
   answer = { status: 'ok', result: {} }
   reads({})
   forgetIndexes()
+  hiddenKinds.hidden = [BASES_WORD]
   vi.clearAllMocks()
 })
 
@@ -1828,6 +1830,30 @@ describe('to-dos and bases', () => {
     expect(await call('update_task', { space: 'Work', at: 'nothing' })).toMatchObject({
       code: 'bad_arguments',
     })
+    expect(docs.writeNote).not.toHaveBeenCalled()
+  })
+
+  test('a base is refused while databases are off, and left as it was', async () => {
+    const yaml = 'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n'
+    files.set('/s/Home/Books.base', yaml)
+    hiddenKinds.hidden = []
+    const off = {
+      code: 'not_granted',
+      message: expect.stringContaining('databases are turned off'),
+    }
+    expect(await call('query_base', { space: 'Home', path: 'Books.base' })).toMatchObject(off)
+    expect(
+      await call('add_row', { space: 'Home', base: 'Books.base', title: 'Emma' }),
+    ).toMatchObject(off)
+    expect(
+      await call('edit_base', {
+        space: 'Home',
+        path: 'Books.base',
+        ops: [{ op: 'add_view', type: 'cards', name: 'Wall' }],
+      }),
+    ).toMatchObject(off)
+    expect(files.get('/s/Home/Books.base')).toBe(yaml)
+    expect(files.has('/s/Home/Books/Emma.md')).toBe(false)
     expect(docs.writeNote).not.toHaveBeenCalled()
   })
 

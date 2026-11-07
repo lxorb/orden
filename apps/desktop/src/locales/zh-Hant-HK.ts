@@ -3378,6 +3378,9 @@ export const zhHantHK: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     '加入與你空間中的人的聊天，以及郵件、Telegram、Slack、WhatsApp 和 Signal；關閉後你的訊息和帳戶仍會保留。',
   'Chats are off. Turn them on in Settings.': '聊天已關閉。請在設定中開啟。',
+  Databases: '資料庫',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    '加入資料庫，即以表格、看板或日曆顯示其他筆記的筆記；關閉後仍保留檔案。',
   'User token': '用戶權杖',
   'App-level token': '應用程式層級權杖',
   'Optional: with Socket Mode on in your own app, messages arrive at once':

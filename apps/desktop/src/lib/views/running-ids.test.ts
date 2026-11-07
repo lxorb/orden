@@ -34,6 +34,8 @@ vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 vi.mock('../workspace/write-file', () => ({ writeFile: async () => undefined }))
 
 const { readHeld } = await import('./running')
+const { BASES_WORD, hiddenKinds } = await import('../settings.svelte')
+hiddenKinds.hidden = [BASES_WORD]
 const { withoutIds } = await import('./copied')
 
 test("a copy is written without the ids its space's bases number by, and nothing else", async () => {

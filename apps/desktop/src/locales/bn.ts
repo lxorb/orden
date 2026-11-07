@@ -3543,6 +3543,9 @@ export const bn: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'আপনার স্পেসের মানুষদের সঙ্গে এবং মেইল, Telegram, Slack, WhatsApp ও Signal-এ চ্যাট যোগ করে; বন্ধ করলে আপনার বার্তা ও অ্যাকাউন্ট থেকে যায়।',
   'Chats are off. Turn them on in Settings.': 'চ্যাট বন্ধ আছে। সেটিংসে চালু করুন।',
+  Databases: 'ডেটাবেস',
+  'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
+    'ডেটাবেস যোগ করে, এমন নোট যা অন্য নোটগুলো টেবিল, বোর্ড বা ক্যালেন্ডার হিসেবে দেখায়; বন্ধ করলে ফাইলগুলো থেকে যায়।',
   'User token': 'ব্যবহারকারী টোকেন',
   'App-level token': 'অ্যাপ-স্তরের টোকেন',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
