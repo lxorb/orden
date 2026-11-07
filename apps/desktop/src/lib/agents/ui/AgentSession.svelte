@@ -4,6 +4,7 @@
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from '../../i18n.svelte'
   import { dur } from '../../motion'
+  import { afterQuiet } from '../../timing'
   import { workspace } from '../../workspace.svelte'
   import { ACTIVE_FOR } from './marks'
   import { asking } from './asking.svelte'
@@ -47,16 +48,18 @@
 
   const latest = $derived(activity.seen.doing[agent]?.at ?? 0)
 
-  let reading: ReturnType<typeof setTimeout> | undefined
+  const readSoon = afterQuiet(
+    () => void activity.readLog().catch(() => undefined),
+    LOG_EVERY,
+    LOG_EVERY,
+  )
   $effect(() => {
-    if (latest === 0) return
-    clearTimeout(reading)
-    reading = setTimeout(() => void activity.readLog().catch(() => undefined), LOG_EVERY)
+    if (latest !== 0) readSoon()
   })
 
   onMount(() => {
     void activity.readLog().catch(() => undefined)
-    return () => clearTimeout(reading)
+    return () => readSoon.cancel()
   })
 
   function titleOf(tab: string): string | null {

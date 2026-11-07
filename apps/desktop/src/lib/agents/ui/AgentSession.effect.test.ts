@@ -119,3 +119,21 @@ test("the day's log is read on from where the last read stopped, not whole each 
   expect(activity.lines).toEqual(fake.lines)
   close()
 })
+
+test('an agent that never pauses still has its calls read in, about once a second', async () => {
+  vi.useFakeTimers()
+  try {
+    const { fake, tab, close } = await drawn()
+    const reads = () => fake.asked.filter((one) => one.command === 'log').length
+    const before = reads()
+    for (let at = 0; at < 12; at++) {
+      fake.act('claude-code', tab.id, 'browser_click')
+      flushSync()
+      await vi.advanceTimersByTimeAsync(400)
+    }
+    expect(reads() - before).toBeGreaterThanOrEqual(4)
+    close()
+  } finally {
+    vi.useRealTimers()
+  }
+})
