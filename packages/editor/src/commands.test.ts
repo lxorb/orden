@@ -733,6 +733,14 @@ describe('Tab on a list item', () => {
     expect(at(outdentItems, '- x\n    - y', 9)).toBe('- x\n- y')
   })
 
+  test('inside quotes keeps the quotes, and a line quoted 28 deep costs no time', () => {
+    expect(at(indentItems, '> > - x\n> > - y', 13)).toBe('> > - x\n> >   - y')
+    const deep = `${'> '.repeat(28)}x`
+    const started = Date.now()
+    expect(at(indentItems, `${deep}\n${deep}`, deep.length + 3)).toBe(`${deep}\n  ${deep}`)
+    expect(Date.now() - started).toBeLessThan(1000)
+  })
+
   test('leaves words and code to the plain indent', () => {
     expect(at(indentItems, 'words', 1)).toBe('  words')
     expect(at(outdentItems, '  words', 3)).toBe('words')
