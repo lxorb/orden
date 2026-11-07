@@ -26,6 +26,8 @@ export const OUTLINE_WEIGHT = 8
 
 export const FILE_WEIGHT = 0.25
 
+const FRAME_TIME = 6
+
 const KEPT = 2
 
 const MOST_PATCHES = 8
@@ -323,14 +325,17 @@ export class InkTiles {
   }
 
   #fill(wanted: readonly Spot[], palette: Palette): boolean {
+    const started = performance.now()
     let spent = this.#file()
     if (this.#unfiled.length) return true
+
+    const late = () => performance.now() - started >= FRAME_TIME
 
     const ready = (strokes: readonly InkStroke[]) => {
       let unready = 0
       for (const stroke of strokes) {
         if (outlined(stroke)) continue
-        if (spent + OUTLINE_WEIGHT <= FILLED_A_FRAME) {
+        if (spent + OUTLINE_WEIGHT <= FILLED_A_FRAME && (!spent || !late())) {
           pathOf(stroke)
           spent += OUTLINE_WEIGHT
         } else {
@@ -341,7 +346,7 @@ export class InkTiles {
       return unready === 0
     }
 
-    const affords = (cost: number) => !spent || spent + cost <= FILLED_A_FRAME
+    const affords = (cost: number) => !spent || (spent + cost <= FILLED_A_FRAME && !late())
 
     const order = [...wanted].sort((one, other) => this.#urgency(one) - this.#urgency(other))
 
