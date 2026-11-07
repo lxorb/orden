@@ -1203,13 +1203,13 @@ class Runner {
 
   private async named(spaceId: string, root: string) {
     const token = account.token
+    const accountId = account.user?.id
     const listed = account.spaces.find((one) => one.id === spaceId)
     const name = workspace.spaces.find((one) => samePath(one.root, root))?.name
-    if (!token || listed?.role !== 'owner' || !name || listed.name === name) return
-    await api.renameSpace(token, spaceId, name).then(
-      () => account.loadSpaces().catch(() => undefined),
-      (error: unknown) => log('warn', `sync: space name not sent - ${String(error)}`),
-    )
+    if (!token || !accountId || listed?.role !== 'owner' || !name || listed.name === name) return
+    const { sendName } = await import('../space-owed')
+    await sendName(token, accountId, spaceId, name)
+    await account.loadSpaces().catch(() => undefined)
   }
 
   remoteIdFor(root: string): string | null {

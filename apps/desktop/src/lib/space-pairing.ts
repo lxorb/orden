@@ -44,7 +44,8 @@ async function untouchedDefault(): Promise<string | null> {
 }
 
 async function endsSettled(token: string, who: string): Promise<Set<string>> {
-  const { endsOwed, settleEnds } = await import('./space-owed')
+  const { endsOwed, settleEnds, settleNames } = await import('./space-owed')
+  await settleNames(token, who)
   const owed = endsOwed(who)
   if (owed.size) await settleEnds(token, who)
   return owed

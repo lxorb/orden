@@ -68,6 +68,11 @@ const icons = new Shelf<Icon>(
     (value.tint === null || typeof value.tint === 'string'),
 )
 
+const names = new Shelf<string>(
+  'orden:space-names-owed',
+  (value): value is string => typeof value === 'string',
+)
+
 function unreachable(error: unknown): boolean {
   if (error instanceof ApiError) return error.status === 429 || error.status >= 500
   return true
@@ -118,5 +123,21 @@ export async function sendIcon(
   icons.put(accountId, spaceId, icon)
   if (await settled(api.setSpaceIcon(token, spaceId, icon.icon, icon.tint))) {
     icons.paid(accountId, spaceId, icon)
+  }
+}
+
+export async function sendName(
+  token: string,
+  accountId: string,
+  spaceId: string,
+  name: string,
+): Promise<void> {
+  names.put(accountId, spaceId, name)
+  if (await settled(api.renameSpace(token, spaceId, name))) names.paid(accountId, spaceId, name)
+}
+
+export async function settleNames(token: string, accountId: string): Promise<void> {
+  for (const [spaceId, name] of Object.entries(names.of(accountId))) {
+    await sendName(token, accountId, spaceId, name)
   }
 }
