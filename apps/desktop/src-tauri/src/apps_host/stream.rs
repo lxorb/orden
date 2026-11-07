@@ -30,6 +30,8 @@ const LARGEST_FRAME: usize = 16 * 1024 * 1024;
 const FRAME_PAUSE: Duration = Duration::from_millis(2);
 const WHOLE_AT_MOST: Duration = Duration::from_millis(500);
 const DUE_AT_ONCE: usize = 4;
+const SAMPLE_EVERY: Duration = Duration::from_secs(1);
+const SAMPLED_AFTER_A_PING: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -104,6 +106,9 @@ struct Shared {
     audio: Option<(Mid, Pt)>,
     sound: Option<String>,
     sounds: Stage,
+    working: &'static [Encoder],
+    pinged: Option<Instant>,
+    usage: Option<crate::usage::Usage>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -219,6 +224,9 @@ impl Peer {
                 audio: None,
                 sound,
                 sounds: Stage::Waiting,
+                working,
+                pinged: None,
+                usage: None,
             }),
             ended: AtomicBool::new(false),
             screen,
@@ -463,7 +471,7 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
                 })
                 .unwrap_or_default();
             let decodes: Vec<Made> = offered.iter().map(|&(made, _)| made).collect();
-            let chosen = encoder::chosen(encoder::working(), &decodes);
+            let chosen = encoder::chosen(shared.working, &decodes);
             let pt = chosen.and_then(|one| {
                 offered
                     .iter()
@@ -506,13 +514,14 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
             match event {
                 InputEvent::Share { clipboard } => shared.sharing = clipboard,
                 InputEvent::Ping { at } => {
-                    let usage = shared.group.and_then(|group| {
-                        crate::usage::sample(
-                            &format!("app:{group}"),
-                            crate::usage::Whose::Group(group),
-                        )
-                    });
-                    let pong = pong_text(at, shared.began_wall, wall_now(), shared.video, usage);
+                    shared.pinged = Some(Instant::now());
+                    let pong = pong_text(
+                        at,
+                        shared.began_wall,
+                        wall_now(),
+                        shared.video,
+                        shared.usage,
+                    );
                     write_channel(shared, &pong);
                 }
                 InputEvent::Clipboard { text } => {
@@ -640,9 +649,18 @@ fn listen(inner: &Arc<Inner>, socket: &UdpSocket) {
 }
 
 fn keep_time(inner: &Arc<Inner>) {
+    let mut sampled: Option<Instant> = None;
     while !inner.over() {
         let now = Instant::now();
         let mut shared = inner.lock();
+        let sampling = shared
+            .group
+            .filter(|_| {
+                shared
+                    .pinged
+                    .is_some_and(|at| now.duration_since(at) < SAMPLED_AFTER_A_PING)
+            })
+            .filter(|_| sampled.is_none_or(|at| now.duration_since(at) >= SAMPLE_EVERY));
         let mut goes_on = shared.rtc.is_alive();
         if goes_on && now >= shared.next {
             goes_on = shared.rtc.handle_input(Input::Timeout(now)).is_ok() && drive(&mut shared);
@@ -656,6 +674,12 @@ fn keep_time(inner: &Arc<Inner>) {
         if !goes_on {
             inner.end();
             return;
+        }
+        if let Some(group) = sampling {
+            sampled = Some(now);
+            let usage =
+                crate::usage::sample(&format!("app:{group}"), crate::usage::Whose::Group(group));
+            inner.lock().usage = usage;
         }
         std::thread::sleep(wait.clamp(Duration::from_millis(1), LONGEST_WAIT));
     }
