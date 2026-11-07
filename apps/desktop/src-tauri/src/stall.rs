@@ -230,10 +230,7 @@ impl Watched {
         reason = "a thread's state is asked through GetGUIThreadInfo"
     )]
     fn held_by_the_person(&self) -> bool {
-        use windows::Win32::UI::WindowsAndMessaging::{
-            GetGUIThreadInfo, GUITHREADINFO, GUI_INMENUMODE, GUI_INMOVESIZE, GUI_POPUPMENUMODE,
-            GUI_SYSTEMMENUMODE,
-        };
+        use windows::Win32::UI::WindowsAndMessaging::{GetGUIThreadInfo, GUITHREADINFO};
         let mut info = GUITHREADINFO {
             cbSize: u32::try_from(std::mem::size_of::<GUITHREADINFO>()).unwrap_or(0),
             ..Default::default()
@@ -241,8 +238,7 @@ impl Watched {
         if unsafe { GetGUIThreadInfo(self.thread, &raw mut info) }.is_err() {
             return false;
         }
-        let held = GUI_INMOVESIZE.0 | GUI_INMENUMODE.0 | GUI_POPUPMENUMODE.0 | GUI_SYSTEMMENUMODE.0;
-        info.flags.0 & held != 0
+        held(info.flags.0, || menu_shown(self.thread))
     }
 
     #[cfg(not(windows))]
@@ -253,6 +249,51 @@ impl Watched {
     fn held_by_the_person(&self) -> bool {
         false
     }
+}
+
+#[cfg_attr(
+    not(windows),
+    allow(
+        dead_code,
+        reason = "only Windows can ask a thread whether a hand holds it"
+    )
+)]
+fn held(flags: u32, menu_shown: impl FnOnce() -> bool) -> bool {
+    const MOVE_SIZE: u32 = 0x0000_0002;
+    const MENUS: u32 = 0x0000_0004 | 0x0000_0008 | 0x0000_0010;
+    flags & MOVE_SIZE != 0 || (flags & MENUS != 0 && menu_shown())
+}
+
+#[cfg(windows)]
+#[allow(
+    unsafe_code,
+    reason = "a thread's windows are walked through EnumThreadWindows, which only the Win32 API has"
+)]
+fn menu_shown(thread: u32) -> bool {
+    use windows::Win32::Foundation::{BOOL, HWND, LPARAM};
+    use windows::Win32::UI::WindowsAndMessaging::{
+        EnumThreadWindows, GetClassNameW, IsWindowVisible,
+    };
+
+    unsafe extern "system" fn each(window: HWND, found: LPARAM) -> BOOL {
+        let mut name = [0u16; 8];
+        let length = unsafe { GetClassNameW(window, &mut name) };
+        let said = name
+            .get(..usize::try_from(length).unwrap_or(0))
+            .unwrap_or_default();
+        let menu = String::from_utf16_lossy(said) == "#32768";
+        if menu && unsafe { IsWindowVisible(window) }.as_bool() {
+            unsafe { *(found.0 as *mut bool) = true };
+            return BOOL(0);
+        }
+        BOOL(1)
+    }
+
+    let mut found = false;
+    unsafe {
+        let _ = EnumThreadWindows(thread, Some(each), LPARAM(&raw mut found as isize));
+    }
+    found
 }
 
 #[cfg(windows)]
@@ -374,8 +415,18 @@ pub fn page_gone(label: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{doing, last_run, marked, now_doing, seconds};
+    use super::{doing, held, last_run, marked, now_doing, seconds};
     use std::time::Duration;
+
+    #[test]
+    fn a_hand_holds_the_thread_in_a_move_or_a_menu_it_can_see_but_not_in_a_menu_with_none_shown() {
+        assert!(held(0x2, || false));
+        assert!(held(0x4 | 0x10, || true));
+        assert!(held(0x4 | 0x8, || true));
+        assert!(!held(0x4, || false));
+        assert!(!held(0x4 | 0x8, || false));
+        assert!(!held(0x0, || true));
+    }
 
     #[test]
     fn a_stall_is_said_in_tenths_below_a_minute() {
