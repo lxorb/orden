@@ -847,6 +847,10 @@
     "type": "string",
     "description": "The key that runs Previous section, as the keys file writes it; empty for none."
   },
+  "shortcuts.app-reload": {
+    "type": "string",
+    "description": "The key that runs Reload Orden, as the keys file writes it; empty for none."
+  },
   "shortcuts.app-reopen": {
     "type": "string",
     "description": "The key that runs Reopen closed tab, as the keys file writes it; empty for none."

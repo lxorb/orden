@@ -806,6 +806,14 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => askQuickly(),
   },
   {
+    id: 'app.reload',
+    label: () => t('Reload Orden'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-r',
+    run: () => location.reload(),
+  },
+  {
     id: 'app.scratchpad',
     label: () => t('Scratchpad'),
     category: 'view',

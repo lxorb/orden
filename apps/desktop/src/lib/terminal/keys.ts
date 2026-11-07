@@ -43,6 +43,8 @@ const APP_KEYS = new Set([
 
 const NEITHER = new Set(['app.close-window'])
 
+const SHELL_FIRST = new Set(['app.reload'])
+
 const SHELL_KEYS = new Set([
   'pane.focus-left',
   'pane.focus-down',
@@ -88,6 +90,7 @@ export function routeKey(
   const zoom = ZOOM[command]
   if (zoom) return zoom
   if (NEITHER.has(command) || SHELL_KEYS.has(command)) return 'shell'
+  if (SHELL_FIRST.has(command)) return shellReads(event) ? 'shell' : 'app'
   if (shellReads(event)) return key === 'c' ? 'shell' : 'ask'
   if (APP_KEYS.has(command) || command.startsWith('app.note-')) return 'app'
   if (!mac && event.ctrlKey && event.altKey) return 'app'

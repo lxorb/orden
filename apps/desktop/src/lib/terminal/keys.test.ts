@@ -55,6 +55,11 @@ describe('on Windows and Linux', () => {
     expect(routeKey(press('F5'), 'win', null, false)).toBe('shell')
   })
 
+  test('Ctrl+R, which reloads Orden, stays the shell’s search in a terminal', () => {
+    expect(routeKey(press('r', ctrl), 'win', 'app.reload', false)).toBe('shell')
+    expect(routeKey(press('r', ctrl), 'linux', 'app.reload', false)).toBe('shell')
+  })
+
   test('every app command on a key a shell reads is both, and asked about', () => {
     for (const [key, command] of [
       ['t', 'app.new-kind'],
@@ -152,6 +157,7 @@ describe('on a Mac', () => {
     expect(routeKey(press('w', cmd), 'mac', 'app.close', false)).toBe('app')
     expect(routeKey(press('t', cmd), 'mac', 'app.new-kind', false)).toBe('app')
     expect(routeKey(press('n', cmd), 'mac', 'app.scratchpad', false)).toBe('app')
+    expect(routeKey(press('r', cmd), 'mac', 'app.reload', false)).toBe('app')
     expect(routeKey(press('Tab', ctrl), 'mac', 'app.next-note', false)).toBe('app')
   })
 
