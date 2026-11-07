@@ -325,11 +325,14 @@ class Decorator {
 
     const inner = this.state.doc.sliceString(open.to, close.from)
     const { colour, from } = readHighlight(inner)
+    this.marks.push(
+      Decoration.mark({ class: `nib-highlight ${colour.className}`.trim() }).range(
+        node.from,
+        node.to,
+      ),
+    )
     if (colour.className === '') return
 
-    this.marks.push(
-      Decoration.mark({ class: `nib-mark ${colour.className}` }).range(node.from, node.to),
-    )
     this.conceal(open.to, open.to + from, overlaps(this.state, node.from, node.to))
   }
 
