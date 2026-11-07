@@ -508,34 +508,52 @@ pub async fn explorer_put(
             count: judged.len(),
             said: None,
         };
-        for (from, to) in judged {
-            if running.stopped() {
-                out.cancelled = true;
-                break;
-            }
-            if fs::symlink_metadata(&to).is_ok() {
-                out.failed
-                    .push(failed(&from, format!("{} is there already", to.display())));
-                continue;
-            }
-            match carried(&from, &to, how, &running, &mut meter) {
-                Ok(()) => out.done.push(Moved {
-                    from: from.display().to_string(),
-                    to: to.display().to_string(),
-                    stayed: false,
-                }),
-                Err(Stop::Cancelled) => {
-                    out.cancelled = true;
-                    break;
-                }
-                Err(Stop::Failed(why)) => out.failed.push(failed(&from, why)),
-            }
-            meter.items += 1;
-        }
+        put_all(judged, how, &running, &mut meter, &mut out);
         meter.say(true);
         Ok(out)
     })
     .await
+}
+
+fn put_all(
+    judged: Vec<(PathBuf, PathBuf)>,
+    how: How,
+    running: &Job,
+    meter: &mut Meter,
+    out: &mut Transferred,
+) {
+    for (from, to) in judged {
+        if running.stopped() {
+            out.cancelled = true;
+            break;
+        }
+        if fs::symlink_metadata(&to).is_ok() {
+            out.failed
+                .push(failed(&from, format!("{} is there already", to.display())));
+            continue;
+        }
+        if to
+            .parent()
+            .is_some_and(|folder| crate::carry::goes_into_itself(&from, folder))
+        {
+            out.failed
+                .push(failed(&from, "a folder cannot go inside itself".to_owned()));
+            continue;
+        }
+        match carried(&from, &to, how, running, meter) {
+            Ok(()) => out.done.push(Moved {
+                from: from.display().to_string(),
+                to: to.display().to_string(),
+                stayed: false,
+            }),
+            Err(Stop::Cancelled) => {
+                out.cancelled = true;
+                break;
+            }
+            Err(Stop::Failed(why)) => out.failed.push(failed(&from, why)),
+        }
+        meter.items += 1;
+    }
 }
 
 #[derive(Serialize, Default)]
@@ -693,7 +711,8 @@ fn walk_matching(
 #[cfg(test)]
 mod tests {
     use super::{
-        carried, planned, walk_matching, Clash, How, Job, Meter, Searched, Stop, Transferred,
+        carried, planned, put_all, walk_matching, Clash, How, Job, Meter, Searched, Stop,
+        Transferred,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -778,6 +797,25 @@ mod tests {
             count: 0,
             said: None,
         }
+    }
+
+    #[test]
+    fn a_put_back_never_copies_a_folder_into_itself() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let folder = dir.path().join("f");
+        fs::create_dir_all(folder.join("deeper")).expect("folders");
+        let running = Job::begin("test-put-inside");
+        let mut out = Transferred::default();
+        put_all(
+            vec![(folder.clone(), folder.join("deeper").join("f"))],
+            How::Copy,
+            &running,
+            &mut meter(),
+            &mut out,
+        );
+        assert_eq!(out.failed.len(), 1);
+        assert!(out.done.is_empty());
+        assert!(!folder.join("deeper").join("f").exists());
     }
 
     #[test]
