@@ -1,8 +1,8 @@
 """A terminal on another machine in the packaged app, against a stand-in `ssh`.
 
 Windows only, and never a real machine: there is no `sshd` here to reach, and a reader's
-own hosts are theirs. `NIB_SSH` points the crate at `scripts/fake-ssh.py` (through a
-one-line `.cmd`) and `NIB_SSH_CONFIG` at a config written here, so what is checked is
+own hosts are theirs. `ORDEN_SSH` points the crate at `scripts/fake-ssh.py` (through a
+one-line `.cmd`) and `ORDEN_SSH_CONFIG` at a config written here, so what is checked is
 everything on Orden's side of `ssh`:
 
 * the crate reads the config's hosts - a pattern and a `Match` left out, an `Include`
@@ -145,9 +145,9 @@ def main() -> int:
     tabs.wipe(args.identifier)
     environment = {
         **os.environ,
-        "NIB_SPACES_DIR": str(spaces),
-        "NIB_SSH": str(shim),
-        "NIB_SSH_CONFIG": str(config),
+        "ORDEN_SPACES_DIR": str(spaces),
+        "ORDEN_SSH": str(shim),
+        "ORDEN_SSH_CONFIG": str(config),
         "FAKE_SSH_LOG": str(log),
     }
 

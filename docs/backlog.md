@@ -157,7 +157,7 @@ id (80b9de44) landed; two faults are left.
 
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
-| One harness for the 61 drives that each carry their own HTTP server: build once, serve, seed, wait on the handle, `NIB_SPACES_DIR` in a temp folder | batches, 2026-09-17 | every drive on it, `run-all.py` faster, new drives start from it | L | high | none |
+| One harness for the 61 drives that each carry their own HTTP server: build once, serve, seed, wait on the handle, `ORDEN_SPACES_DIR` in a temp folder | batches, 2026-09-17 | every drive on it, `run-all.py` faster, new drives start from it | L | high | none |
 | A nightly and on-demand CI job running `run-all.py` on the web build, shots uploaded, red on a failed drive | batches 2026-09-17 ("no CI job had ever run the drives"); only `smoke.py` runs | a nightly result nobody has to ask for | M | high | the harness |
 | Hygiene: `space-rename.py` hangs in teardown, `speed.py`'s canvas part times out after a full run, per-test budgets for `account.test.ts`, `canvas/ink.test.ts` and the Worker's `share-items.test.ts` | batches #116, 2026-09-14, 2026-09-17 | green alone and under load | S | med | none |
 

@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from 'vitest'
 
-const KEY = process.env.NIB_OPENAI_LIVE_KEY ?? ''
+const KEY = process.env.ORDEN_OPENAI_LIVE_KEY ?? ''
 
 vi.mock('../keys', () => ({
-  readKey: () => Promise.resolve(process.env.NIB_OPENAI_LIVE_KEY ?? ''),
+  readKey: () => Promise.resolve(process.env.ORDEN_OPENAI_LIVE_KEY ?? ''),
 }))
 
 const { createApiEngine } = await import('./engine')

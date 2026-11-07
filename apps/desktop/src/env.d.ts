@@ -13,10 +13,10 @@ declare const __APP_COMMIT__: string
 declare const __CLAUDE_CODE__: boolean
 
 interface ImportMetaEnv {
-  readonly VITE_NIB_API?: string
-  readonly VITE_NIB_THEMES?: string
-  readonly VITE_NIB_WEB?: string
-  readonly VITE_NIB_LEGACY_WEB?: string
+  readonly VITE_ORDEN_API?: string
+  readonly VITE_ORDEN_THEMES?: string
+  readonly VITE_ORDEN_WEB?: string
+  readonly VITE_ORDEN_LEGACY_WEB?: string
   readonly VITE_ORDEN_CHANNEL?: string
   readonly VITE_ORDEN_GOOGLE_CLIENT_ID?: string
   readonly VITE_ORDEN_GOOGLE_CLIENT_SECRET?: string

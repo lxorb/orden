@@ -1671,7 +1671,7 @@ desktop engines.
   `web_download_show` open only a file the crate itself saved and saw finish.
 - **A name is made safe on every platform**: no separators, nothing a file system
   refuses, no device name, no dot at either end, at most 180 characters with the
-  extension kept. `NIB_DOWNLOADS_DIR` points a probe at a folder of its own.
+  extension kept. `ORDEN_DOWNLOADS_DIR` points a probe at a folder of its own.
 - **Progress is `WebView2`'s and `WKWebView`'s.** On Windows `downloads::progress`
   listens to the operation the engine hands out a second time, after wry's handler, and
   matches it by the path that handler chose; it is also what Cancel reaches. On macOS wry
@@ -2435,7 +2435,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-freeze-probe.py`                         | the drive for the freeze: the pump, the window's own answers, and the log                                                                                                                                                                              |
 | `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                          |
 | `scripts/no-reload-probe.py` | the drive for Ctrl+Tab round ten pages: loads, the freeze, typed fields, memory, and Memory saver |
-| `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                |
+| `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `ORDEN_PERF=1`                                                                                                |
 | `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one, a `localStorage` token and a partitioned cookie a widget from another site set, read back out of the page, all four kept; the widget's own site never sees its cookie, and a planted copy without the partition is gone after the next page; and an `IndexedDB` record, a service worker, a notification permission granted in Orden's bubble and the site's zoom, all still there after the restart |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
 | `scripts/globals-drive.py`                             | the same question on Linux, on every run of wayland.yml: a page and a frame may declare `ipc` and hold nothing of the app's, the app's page keeps the channel and a command goes down it, and quick add and the presenter's window are heard from the app's profile |

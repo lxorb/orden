@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import { completion, suggested } from './omnibox'
 import { MOST_VISITS, type Visit } from './visits'
 
-const CLOCKED = process.env.NIB_PERF === '1'
+const CLOCKED = process.env.ORDEN_PERF === '1'
 
 const NOW = Date.UTC(2026, 8, 27)
 

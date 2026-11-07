@@ -95,7 +95,7 @@ def wrong(what: str) -> None:
 
 
 def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
+    if os.environ.get("ORDEN_SKIP_BUILD") and (DIST / "index.html").exists():
         say("reusing the build that is there")
         return
 
@@ -474,7 +474,7 @@ def alt_numbers(page: Page, scheme: str) -> None:
     if worn != wanted:
         wrong(f"[{scheme}] the numbers read {worn}, not {wanted}")
     shot(page, f"09-numbers-{scheme}")
-    SCRATCH = os.environ.get("NIB_SHOTS_TOO")
+    SCRATCH = os.environ.get("ORDEN_SHOTS_TOO")
     if SCRATCH:
         shutil.copy(SHOTS / f"09-numbers-{scheme}.png", Path(SCRATCH) / f"numbers-{scheme}.png")
 

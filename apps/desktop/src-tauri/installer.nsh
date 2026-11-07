@@ -1,16 +1,16 @@
-!define NIB_OLD_NAME_1 "Nib"
-!define NIB_OLD_NAME_2 "nibeditor"
-!define NIB_NAME "Orden"
-!define NIB_UNINSTKEYS "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+!define ORDEN_OLD_NAME_1 "Nib"
+!define ORDEN_OLD_NAME_2 "nibeditor"
+!define ORDEN_NAME "Orden"
+!define ORDEN_UNINSTKEYS "Software\Microsoft\Windows\CurrentVersion\Uninstall"
 
 Var NibOldDir
 Var NibOldAsked
 
 !define MUI_CUSTOMFUNCTION_GUIINIT NibFindOldInstall
 
-!macro NIB_FIND_UNDER OLD ID
+!macro ORDEN_FIND_UNDER OLD ID
   StrCmp $NibOldDir "" 0 nib_find_${ID}_done
-  ReadRegStr $NibOldDir SHCTX "${NIB_UNINSTKEYS}\${OLD}" "InstallLocation"
+  ReadRegStr $NibOldDir SHCTX "${ORDEN_UNINSTKEYS}\${OLD}" "InstallLocation"
   StrCpy $R9 $NibOldDir 1
   StrCmp $R9 '"' 0 nib_find_${ID}_unquoted
     StrCpy $NibOldDir $NibOldDir "" 1
@@ -28,16 +28,16 @@ Function NibFindOldInstall
 
   Push $R9
   StrCpy $NibOldDir ""
-  !insertmacro NIB_FIND_UNDER "${NIB_OLD_NAME_2}" 2
-  !insertmacro NIB_FIND_UNDER "${NIB_OLD_NAME_1}" 1
+  !insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_2}" 2
+  !insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_1}" 1
   Pop $R9
   StrCmp $NibOldDir "" nib_find_done
-    StrCmp $INSTDIR "$LOCALAPPDATA\${NIB_NAME}" 0 nib_find_done
+    StrCmp $INSTDIR "$LOCALAPPDATA\${ORDEN_NAME}" 0 nib_find_done
     StrCpy $INSTDIR $NibOldDir
   nib_find_done:
 FunctionEnd
 
-!macro NIB_RENAME_SHORTCUT DIR OLD ID
+!macro ORDEN_RENAME_SHORTCUT DIR OLD ID
   IfFileExists "${DIR}\${OLD}.lnk" 0 nib_lnk_${ID}_done
   !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
   Pop $0
@@ -56,7 +56,7 @@ FunctionEnd
   nib_lnk_${ID}_done:
 !macroend
 
-!macro NIB_FORGET_OLD_BROWSER OLD ID
+!macro ORDEN_FORGET_OLD_BROWSER OLD ID
   ReadRegStr $R7 SHCTX "Software\Clients\StartMenuInternet\${OLD}\shell\open\command" ""
   StrCmp $R7 "" nib_browser_${ID}_done
   StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe"' nib_browser_${ID}_forget
@@ -70,15 +70,15 @@ FunctionEnd
   nib_browser_${ID}_done:
 !macroend
 
-!macro NIB_FORGET_OLD_NAME OLD ID
-  !insertmacro NIB_RENAME_SHORTCUT "$SMPROGRAMS" "${OLD}" start_${ID}
-  !insertmacro NIB_RENAME_SHORTCUT "$DESKTOP" "${OLD}" desktop_${ID}
-  DeleteRegKey SHCTX "${NIB_UNINSTKEYS}\${OLD}"
+!macro ORDEN_FORGET_OLD_NAME OLD ID
+  !insertmacro ORDEN_RENAME_SHORTCUT "$SMPROGRAMS" "${OLD}" start_${ID}
+  !insertmacro ORDEN_RENAME_SHORTCUT "$DESKTOP" "${OLD}" desktop_${ID}
+  DeleteRegKey SHCTX "${ORDEN_UNINSTKEYS}\${OLD}"
   DeleteRegKey SHCTX "Software\${MANUFACTURER}\${OLD}"
-  !insertmacro NIB_FORGET_OLD_BROWSER "${OLD}" install_${ID}
+  !insertmacro ORDEN_FORGET_OLD_BROWSER "${OLD}" install_${ID}
 !macroend
 
-!macro NIB_FORGET_OLD_MSI
+!macro ORDEN_FORGET_OLD_MSI
   IfSilent nib_msi_done
   StrCpy $R8 0
   nib_msi_loop:
@@ -87,8 +87,8 @@ FunctionEnd
     IntOp $R8 $R8 + 1
     ReadRegStr $R6 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R7" "DisplayName"
     ReadRegStr $R5 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R7" "Publisher"
-    StrCmp "$R6$R5" "${NIB_OLD_NAME_1}${MANUFACTURER}" nib_msi_old
-    StrCmp "$R6$R5" "${NIB_OLD_NAME_2}${MANUFACTURER}" nib_msi_old nib_msi_loop
+    StrCmp "$R6$R5" "${ORDEN_OLD_NAME_1}${MANUFACTURER}" nib_msi_old
+    StrCmp "$R6$R5" "${ORDEN_OLD_NAME_2}${MANUFACTURER}" nib_msi_old nib_msi_loop
     nib_msi_old:
     ReadRegStr $R6 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R7" "UninstallString"
     ${StrCase} $R5 $R6 "L"
@@ -116,10 +116,10 @@ FunctionEnd
     RMDir "$NibOldDir"
   nib_pre_moved:
 
-  !insertmacro NIB_FORGET_OLD_MSI
+  !insertmacro ORDEN_FORGET_OLD_MSI
 !macroend
 
-!macro NIB_FORGET_EXTENSION EXT
+!macro ORDEN_FORGET_EXTENSION EXT
   ReadRegStr $R0 SHCTX "Software\Classes\.${EXT}" ""
   StrCmp $R0 "Markdown" 0 nib_forget_${EXT}_backup
     ReadRegStr $R1 SHCTX "Software\Classes\.${EXT}" "Markdown_backup"
@@ -132,15 +132,15 @@ FunctionEnd
   DeleteRegValue SHCTX "Software\Classes\.${EXT}" "Markdown_backup"
 !macroend
 
-!macro NIB_FORGET_FILES
+!macro ORDEN_FORGET_FILES
   ReadRegStr $R2 SHCTX "Software\Classes\Markdown\shell\open\command" ""
   StrCmp $R2 '$INSTDIR\${MAINBINARYNAME}.exe "%1"' nib_forget_extensions
   StrCmp $R2 "" nib_forget_extensions nib_forget_progid_kept
   nib_forget_extensions:
-    !insertmacro NIB_FORGET_EXTENSION "md"
-    !insertmacro NIB_FORGET_EXTENSION "markdown"
-    !insertmacro NIB_FORGET_EXTENSION "mdown"
-    !insertmacro NIB_FORGET_EXTENSION "mkd"
+    !insertmacro ORDEN_FORGET_EXTENSION "md"
+    !insertmacro ORDEN_FORGET_EXTENSION "markdown"
+    !insertmacro ORDEN_FORGET_EXTENSION "mdown"
+    !insertmacro ORDEN_FORGET_EXTENSION "mkd"
     StrCmp $R2 "" nib_forget_progid_kept
       DeleteRegKey SHCTX "Software\Classes\Markdown"
   nib_forget_progid_kept:
@@ -152,7 +152,7 @@ FunctionEnd
   ClearErrors
 !macroend
 
-!macro NIB_PDF_OPEN_WITH
+!macro ORDEN_PDF_OPEN_WITH
   WriteRegStr SHCTX "Software\Classes\NibPDF" "" "${PRODUCTNAME} PDF"
   WriteRegStr SHCTX "Software\Classes\NibPDF\Application" "ApplicationName" "${PRODUCTNAME}"
   WriteRegStr SHCTX "Software\Classes\NibPDF\Application" "ApplicationIcon" "$INSTDIR\${MAINBINARYNAME}.exe,0"
@@ -161,7 +161,7 @@ FunctionEnd
   WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF" ""
 !macroend
 
-!macro NIB_PDF_FORGET
+!macro ORDEN_PDF_FORGET
   ReadRegStr $R7 SHCTX "Software\Classes\NibPDF\shell\open\command" ""
   StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"' 0 nib_pdf_kept
     DeleteRegKey SHCTX "Software\Classes\NibPDF"
@@ -171,7 +171,7 @@ FunctionEnd
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
-  !insertmacro NIB_PDF_OPEN_WITH
+  !insertmacro ORDEN_PDF_OPEN_WITH
 
   WriteRegStr SHCTX "Software\Classes\NibURL" "" "${PRODUCTNAME} URL"
   WriteRegStr SHCTX "Software\Classes\NibURL\Application" "ApplicationName" "${PRODUCTNAME}"
@@ -190,19 +190,19 @@ FunctionEnd
   WriteRegStr SHCTX "Software\Clients\StartMenuInternet\${PRODUCTNAME}\Capabilities\URLAssociations" "https" "NibURL"
   WriteRegStr SHCTX "Software\RegisteredApplications" "${PRODUCTNAME}" "Software\Clients\StartMenuInternet\${PRODUCTNAME}\Capabilities"
 
-  !insertmacro NIB_FORGET_FILES
+  !insertmacro ORDEN_FORGET_FILES
 
-  !insertmacro NIB_FORGET_OLD_NAME "${NIB_OLD_NAME_1}" 1
-  !insertmacro NIB_FORGET_OLD_NAME "${NIB_OLD_NAME_2}" 2
+  !insertmacro ORDEN_FORGET_OLD_NAME "${ORDEN_OLD_NAME_1}" 1
+  !insertmacro ORDEN_FORGET_OLD_NAME "${ORDEN_OLD_NAME_2}" 2
   ClearErrors
 
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)'
 !macroend
 
 !macro NSIS_HOOK_POSTUNINSTALL
-  !insertmacro NIB_PDF_FORGET
+  !insertmacro ORDEN_PDF_FORGET
 
-  !insertmacro NIB_FORGET_FILES
+  !insertmacro ORDEN_FORGET_FILES
 
   ReadRegStr $R7 SHCTX "Software\Classes\NibURL\shell\open\command" ""
   StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe" --url "%1"' 0 nib_browser_kept
@@ -210,8 +210,8 @@ FunctionEnd
     DeleteRegKey SHCTX "Software\Classes\NibURL"
     DeleteRegValue SHCTX "Software\RegisteredApplications" "${PRODUCTNAME}"
   nib_browser_kept:
-  !insertmacro NIB_FORGET_OLD_BROWSER "${NIB_OLD_NAME_1}" uninstall_1
-  !insertmacro NIB_FORGET_OLD_BROWSER "${NIB_OLD_NAME_2}" uninstall_2
+  !insertmacro ORDEN_FORGET_OLD_BROWSER "${ORDEN_OLD_NAME_1}" uninstall_1
+  !insertmacro ORDEN_FORGET_OLD_BROWSER "${ORDEN_OLD_NAME_2}" uninstall_2
   ClearErrors
 
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)'

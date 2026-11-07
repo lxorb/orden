@@ -233,7 +233,7 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
     };
 
     let chosen = if crate::placement::asked_away() {
-        match std::env::var("NIB_PROBE_NOT_RESPONDING").as_deref() {
+        match std::env::var("ORDEN_PROBE_NOT_RESPONDING").as_deref() {
             Ok("end") => IDOK,
             Ok("wait") => {
                 let until = std::time::Instant::now() + std::time::Duration::from_secs(20);

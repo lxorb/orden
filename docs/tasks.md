@@ -913,7 +913,7 @@ than closed after it. The key is `app.quick-add`, registered by the window that 
 that page for the space's notes and hands it the task over a broadcast channel (`channel.ts`),
 so it is granted nothing and writes nothing itself. The global shortcut plugin is added once
 for it and the agents' stop (`hotkeys.rs`). A probe never registers the reader's key: under
-`NIB_OFF_SCREEN` the key is `NIB_QUICK_ADD_KEY` or none. Neither quick add nor the rows store
+`ORDEN_OFF_SCREEN` the key is `ORDEN_QUICK_ADD_KEY` or none. Neither quick add nor the rows store
 is in the glasses' plugin, whose package had ten kilobytes to spare.
 
 ### 5.7 A task in the editor

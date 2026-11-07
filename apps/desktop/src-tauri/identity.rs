@@ -7,8 +7,8 @@ pub fn say() {
             .unwrap_or_default()
             .to_owned()
     };
-    println!("cargo:rustc-env=NIB_IDENTIFIER={}", said("identifier"));
-    println!("cargo:rustc-env=NIB_VERSION={}", said("version"));
+    println!("cargo:rustc-env=ORDEN_IDENTIFIER={}", said("identifier"));
+    println!("cargo:rustc-env=ORDEN_VERSION={}", said("version"));
 }
 
 fn config() -> serde_json::Value {

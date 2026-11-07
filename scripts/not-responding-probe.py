@@ -18,7 +18,7 @@ launches it again three times, each through `run_probe`, off the screen:
     python scripts/not-responding-probe.py --exe path/to/nib.exe \\
         --identifier ch.emilvinu.nib.probe.<name>
 
-The answer the question would get is `NIB_PROBE_NOT_RESPONDING`: a probe never shows it.
+The answer the question would get is `ORDEN_PROBE_NOT_RESPONDING`: a probe never shows it.
 Only processes this probe started are suspended, resumed or waited on, by number.
 """
 
@@ -115,7 +115,7 @@ def first(exe: pathlib.Path, env: dict[str, str]):
     return app, hwnd
 
 def second(exe: pathlib.Path, env: dict[str, str], answer: str):
-    return run_probe(exe, env={**env, "NIB_PROBE_NOT_RESPONDING": answer}, quiet=True)
+    return run_probe(exe, env={**env, "ORDEN_PROBE_NOT_RESPONDING": answer}, quiet=True)
 
 def gone(app) -> None:
     if app.poll() is None and not close_app(app, seconds=20):
@@ -139,7 +139,7 @@ def main() -> int:
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-not-responding-"))
     (spaces / "Notes").mkdir()
     (spaces / "Notes" / "A note.md").write_text("# A note\n", encoding="utf-8")
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
 
     started: list = []
     try:

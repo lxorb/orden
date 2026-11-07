@@ -36,7 +36,7 @@ was doing and a count says what the code did.
 The two search walks that keep a clock on themselves are timed here and nowhere
 else. Both count what the code did, and those counts are their test; each also has
 one wall-clock bound on its worst case, which a loaded machine misses for reasons
-that are nothing to do with the code. So they ask for `NIB_PERF=1` before they
+that are nothing to do with the code. So they ask for `ORDEN_PERF=1` before they
 believe their own clock, this drive is the only thing that sets it, and it is asked
 before a browser exists. `--no-clock` leaves it out. See `clocked`.
 
@@ -1345,7 +1345,7 @@ def clocked() -> str:
     asked = subprocess.run(
         [npx, "vitest", "run", *CLOCKED],
         cwd=APP,
-        env={**os.environ, "NIB_PERF": "1"},
+        env={**os.environ, "ORDEN_PERF": "1"},
         capture_output=True,
         text=True,
         encoding="utf-8",

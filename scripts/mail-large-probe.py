@@ -17,7 +17,7 @@ the bytes the page sent.
       --identifier ch.emilvinu.nib.probe.mail
 
 Every launch goes through `run_probe`, off the screen and without the keyboard; the spaces
-are made in a temp folder named by `NIB_SPACES_DIR`.
+are made in a temp folder named by `ORDEN_SPACES_DIR`.
 """
 
 from __future__ import annotations

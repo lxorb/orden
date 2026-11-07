@@ -19,7 +19,7 @@ What it checks, through the app's own automation endpoint:
   save: its file id never changes and nothing is left beside it. A save that put a new
   file under the name is what Proton Drive kept as a "Name clash" copy, once per save.
 
-The spaces are made in a temp folder named by `NIB_SPACES_DIR`, so the run touches
+The spaces are made in a temp folder named by `ORDEN_SPACES_DIR`, so the run touches
 nothing of anybody's; see docs/automation.md. Every launch goes through `run_probe`,
 off the screen and without the keyboard; see probe_app.py.
 
@@ -51,7 +51,7 @@ import urllib.request
 
 from probe_app import close_app, main_window, refuse_updating, run_probe
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 SPACE = "Autosave probe"
 
 KILL_AFTER = 0.7

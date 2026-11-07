@@ -11,7 +11,7 @@ use crate::paths::is_reserved;
 
 const MOVED: &str = "nib://web-download";
 
-const DOWNLOADS_DIR: &str = "NIB_DOWNLOADS_DIR";
+const DOWNLOADS_DIR: &str = "ORDEN_DOWNLOADS_DIR";
 
 const LONGEST_NAME: usize = 180;
 

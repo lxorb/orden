@@ -674,10 +674,10 @@ describe('what nib claims to open', () => {
     for (const line of writes) {
       expect(line).not.toMatch(/Nib\.markdown|FileAssociations|Classes\\\.m/)
     }
-    expect(install).toContain('!insertmacro NIB_FORGET_FILES')
-    expect(uninstall).toContain('!insertmacro NIB_FORGET_FILES')
+    expect(install).toContain('!insertmacro ORDEN_FORGET_FILES')
+    expect(uninstall).toContain('!insertmacro ORDEN_FORGET_FILES')
     for (const ext of ['md', 'markdown', 'mdown', 'mkd']) {
-      expect(script).toContain(`!insertmacro NIB_FORGET_EXTENSION "${ext}"`)
+      expect(script).toContain(`!insertmacro ORDEN_FORGET_EXTENSION "${ext}"`)
     }
     expect(script).toContain(String.raw`DeleteRegKey SHCTX "Software\Classes\Nib.markdown"`)
   })

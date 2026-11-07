@@ -284,7 +284,7 @@ def main() -> int:
         (space / name).write_text(words, encoding="utf-8")
 
     server, origin = serve()
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": SWITCHES}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": SWITCHES}
     app = run_probe(given.exe, env=env, quiet=True)
     try:
         page = main_page()

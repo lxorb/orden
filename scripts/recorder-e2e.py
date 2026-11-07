@@ -45,7 +45,7 @@ def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
     SPACES.mkdir(parents=True, exist_ok=True)
     return run_probe(
         app,
-        env={**os.environ, "NIB_SPACES_DIR": str(SPACES), "NIB_TRACE_STARTUP": "1"},
+        env={**os.environ, "ORDEN_SPACES_DIR": str(SPACES), "ORDEN_TRACE_STARTUP": "1"},
     )
 
 def trace_of(identifier: str) -> list[str]:

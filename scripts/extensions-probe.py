@@ -269,7 +269,7 @@ def main() -> int:
     site = f"http://127.0.0.1:{at}/shop"
 
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-extensions-probe-"))
-    os.environ["NIB_SPACES_DIR"] = str(root / "spaces")
+    os.environ["ORDEN_SPACES_DIR"] = str(root / "spaces")
     space = root / "spaces" / SPACE
     space.mkdir(parents=True)
     (space / f"{NOTE}.md").write_text(f"# {NOTE}\n\nA note.\n", encoding="utf-8")

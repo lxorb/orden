@@ -53,12 +53,12 @@ pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
 pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy};
 
-    let sandbox = match from_run("NIB_CEF_SANDBOX").unwrap_or_default().as_str() {
+    let sandbox = match from_run("ORDEN_CEF_SANDBOX").unwrap_or_default().as_str() {
         "required" => SandboxPolicy::Required,
         "disabled" | "off" => SandboxPolicy::Disabled,
         _ => SandboxPolicy::Auto,
     };
-    let debugging = from_run("NIB_CEF_DEBUG_PORT")
+    let debugging = from_run("ORDEN_CEF_DEBUG_PORT")
         .and_then(|port| port.parse::<u16>().ok())
         .filter(|port| *port >= 1024)
         .map_or(RemoteDebugging::Disabled, |port| RemoteDebugging::Port {
@@ -67,7 +67,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         });
 
     let (swipe_feature, swipe_switch, swipe_off) = ENGINE_SWIPE;
-    let mut asked = switches(&from_run("NIB_CEF_ARGS").unwrap_or_default());
+    let mut asked = switches(&from_run("ORDEN_CEF_ARGS").unwrap_or_default());
     let firefox = cef_root()
         .and_then(|root| Some(root.parent()?.join("extensions")))
         .map(|root| crate::extensions::library::firefox_folders(&root))

@@ -10,6 +10,7 @@ const CLI = join(import.meta.dirname, '../../cli/nib.mjs')
 
 async function sent(
   words: string[],
+  variable = 'ORDEN_ENDPOINT',
 ): Promise<{ verb: string; args: Record<string, unknown>; rest: string[] }> {
   let body = ''
   const server = createServer((request, response) => {
@@ -22,7 +23,7 @@ async function sent(
   writeFileSync(file, JSON.stringify({ port, secret: 's', pid: 1 }))
 
   const child = spawn(process.execPath, [CLI, ...words], {
-    env: { ...process.env, NIB_ENDPOINT: file },
+    env: { ...process.env, [variable]: file },
   })
   await new Promise((settle) => child.on('close', settle))
   server.close()
@@ -57,4 +58,8 @@ test('after a bare -- every word is a word, flag-shaped or not', async () => {
     args: {},
     rest: ['--json', '-h'],
   })
+})
+
+test('the old NIB_ENDPOINT still finds the app for one release', async () => {
+  expect((await sent(['search', 'plan'], 'NIB_ENDPOINT')).verb).toBe('search')
 })

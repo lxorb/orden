@@ -418,7 +418,7 @@ def main() -> int:
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-under-spaces-"))
     user32.SystemParametersInfoW(0x1043, 0, ctypes.c_void_p(1), 0x3)
 
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces), **({"NIB_PAGES_WINDOWED": "1"} if args.windowed else {})}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces), **({"ORDEN_PAGES_WINDOWED": "1"} if args.windowed else {})}
     said = open(args.out / "app.log", "wb")
     process = subprocess.Popen([str(args.exe)], env=env, cwd=str(args.exe.parent), stdout=said, stderr=subprocess.STDOUT)
     wrong: list[str] = []

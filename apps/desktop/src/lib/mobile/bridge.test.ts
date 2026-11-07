@@ -10,7 +10,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   asked = 0
   vi.stubGlobal('window', globalThis)
-  vi.stubGlobal('__NIB_SYSTEM__', {
+  vi.stubGlobal('__ORDEN_SYSTEM__', {
     insets: () => '{}',
     askForTheFrame: () => {
       asked++
@@ -65,7 +65,7 @@ test('two callers at once are one question', async () => {
 })
 
 test('nothing to ask is no word, at once', async () => {
-  vi.stubGlobal('__NIB_SYSTEM__', undefined)
+  vi.stubGlobal('__ORDEN_SYSTEM__', undefined)
   const { frameWord } = await import('./bridge')
 
   expect(await frameWord()).toBe('')
@@ -73,7 +73,7 @@ test('nothing to ask is no word, at once', async () => {
 
 test('an ask that throws is no word, and is asked again next time', async () => {
   let throwing = true
-  vi.stubGlobal('__NIB_SYSTEM__', {
+  vi.stubGlobal('__ORDEN_SYSTEM__', {
     insets: () => '{}',
     askForTheFrame: () => {
       asked++
@@ -120,7 +120,7 @@ test('a method handed out of the bridge is still called on the bridge', async ()
       return '{}'
     },
   }
-  vi.stubGlobal('__NIB_SYSTEM__', bridge)
+  vi.stubGlobal('__ORDEN_SYSTEM__', bridge)
   const { method } = await import('./bridge')
 
   expect(method('insets')?.()).toBe('{}')

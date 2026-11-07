@@ -259,7 +259,7 @@ class Computer:
 
     def launch(self) -> None:
         wipe(self.identifier)
-        env = {**os.environ, "NIB_SPACES_DIR": str(self.spaces)}
+        env = {**os.environ, "ORDEN_SPACES_DIR": str(self.spaces)}
         self.process = run_probe(self.exe, env=env, quiet=True)
         self.endpoint()
         if not close_app(self.process):

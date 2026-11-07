@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Orden among the programs "Open with" offers for a PDF, for an install from the
-     MSI: the lines installer.nsh writes in NIB_PDF_OPEN_WITH (src/handed_pdfs.rs holds
+     MSI: the lines installer.nsh writes in ORDEN_PDF_OPEN_WITH (src/handed_pdfs.rs holds
      the two together), in the installing person's own hive, and taken away again when
      the MSI is uninstalled. The extension's own default is never written: the reader
      somebody chose for PDFs stays theirs.

@@ -356,10 +356,10 @@ def main() -> int:
     serve(port)
 
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-downloads-probe-"))
-    os.environ["NIB_SPACES_DIR"] = str(root / "spaces")
+    os.environ["ORDEN_SPACES_DIR"] = str(root / "spaces")
     arrive = root / "downloads"
     arrive.mkdir()
-    os.environ["NIB_DOWNLOADS_DIR"] = str(arrive)
+    os.environ["ORDEN_DOWNLOADS_DIR"] = str(arrive)
     folder: pathlib.Path = args.watch or arrive
     for stale in ours(folder):
         (folder / stale).unlink(missing_ok=True)

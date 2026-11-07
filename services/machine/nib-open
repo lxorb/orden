@@ -16,7 +16,7 @@ case "$url" in
     exit 3
     ;;
 esac
-body=$(jq -cn --arg url "$url" --arg session "${NIB_SESSION:-}" '{url: $url, session: $session}')
+body=$(jq -cn --arg url "$url" --arg session "${ORDEN_SESSION:-}" '{url: $url, session: $session}')
 said=$(curl -sS --max-time 5 --unix-socket "${NIBD_OPEN:-/run/nibd/open.sock}" \
   -o /dev/null -w '%{http_code}' -H 'content-type: application/json' \
   --data-binary "$body" http://nibd/open 2>/dev/null)

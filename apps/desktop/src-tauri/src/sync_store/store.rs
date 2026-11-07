@@ -865,7 +865,7 @@ mod tests {
     }
 
     const CHILD: &str = "sync_store::store::tests::a_child_writes_and_waits_to_be_killed";
-    const CHILD_STORE: &str = "NIB_SYNC_STORE_CHILD";
+    const CHILD_STORE: &str = "ORDEN_SYNC_STORE_CHILD";
 
     #[test]
     #[ignore = "the child half of `a_kill_between_write_and_checkpoint_loses_nothing`"]

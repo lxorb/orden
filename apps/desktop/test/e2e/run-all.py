@@ -84,7 +84,7 @@ def run(drive: Path, patience: int, environment: dict[str, str], echo: bool) -> 
         process = harness.spawn(
             [sys.executable, "-u", str(drive)],
             cwd=harness.ROOT,
-            env={**environment, "NIB_HANG_AFTER": str(max(30, patience - 30))},
+            env={**environment, "ORDEN_HANG_AFTER": str(max(30, patience - 30))},
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
@@ -150,14 +150,14 @@ def main() -> int:
     began = time.monotonic()
     environment = {
         **os.environ,
-        "NIB_SKIP_BUILD": "1",
+        "ORDEN_SKIP_BUILD": "1",
         "PYTHONIOENCODING": "utf-8",
         "PYTHONUNBUFFERED": "1",
     }
     if not said.no_build:
-        os.environ.pop("NIB_SKIP_BUILD", None)
+        os.environ.pop("ORDEN_SKIP_BUILD", None)
     else:
-        os.environ["NIB_SKIP_BUILD"] = "1"
+        os.environ["ORDEN_SKIP_BUILD"] = "1"
     if harness.OWN_BUILD:
         harness.build()
 

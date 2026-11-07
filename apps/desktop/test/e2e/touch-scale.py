@@ -19,7 +19,7 @@ window.__TAURI_OS_PLUGIN_INTERNALS__ = {
   platform: 'android', family: 'unix', os_type: 'android',
   version: '15.0.0', arch: 'aarch64', exe_extension: '', eol: '\\n',
 };
-window.__NIB_SYSTEM__ = {
+window.__ORDEN_SYSTEM__ = {
   insets: () => JSON.stringify({ top: 24, right: 0, bottom: 24, left: 0 }),
   bars: () => {},
 };

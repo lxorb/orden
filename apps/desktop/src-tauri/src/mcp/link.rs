@@ -451,7 +451,7 @@ impl Link {
 }
 
 fn handed() -> Option<String> {
-    std::env::var("NIB_MCP_TOKEN")
+    std::env::var("ORDEN_MCP_TOKEN")
         .ok()
         .filter(|token| !token.is_empty() && token.bytes().all(|one| one.is_ascii_alphanumeric()))
 }
@@ -466,7 +466,7 @@ fn thread_handed() -> Option<String> {
     })
 }
 
-const THREAD_VAR: &str = "NIB_MCP_THREAD";
+const THREAD_VAR: &str = "ORDEN_MCP_THREAD";
 
 fn grant_of(endpoint: &Endpoint, token: &str) -> Result<Grant, Refusal> {
     let asked = json!({ "verb": "agent_status", "args": {} });

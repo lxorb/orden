@@ -60,7 +60,7 @@ def serve(port: int) -> Server:
 def spaces_root() -> pathlib.Path:
 
     made = pathlib.Path(tempfile.mkdtemp(prefix="nib-browser-probe-"))
-    os.environ["NIB_SPACES_DIR"] = str(made)
+    os.environ["ORDEN_SPACES_DIR"] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made
 

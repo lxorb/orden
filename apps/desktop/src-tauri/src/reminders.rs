@@ -206,7 +206,7 @@ fn save(app: &AppHandle, kept: &HashMap<String, Kept>) {
 
 fn may_schedule() -> bool {
     if crate::placement::away().is_some() {
-        return std::env::var_os("NIB_PROBE_REMINDERS").is_some();
+        return std::env::var_os("ORDEN_PROBE_REMINDERS").is_some();
     }
     true
 }

@@ -53,7 +53,7 @@ jobs:
       - name: End to end through the Worker
         if: ${{ !cancelled() && steps.image.outcome == 'success' }}
         run: |
-          docker run -d --name nib-e2e -e NIBD_SECRET=dev -e NIB_AGENTS=0 \
+          docker run -d --name nib-e2e -e NIBD_SECRET=dev -e ORDEN_AGENTS=0 \
             -p 127.0.0.1:7680:7680 nib-machine:ci
           node scripts/online-e2e.mjs
 

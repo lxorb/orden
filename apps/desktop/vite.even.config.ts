@@ -232,7 +232,7 @@ export default defineConfig({
     svelte(),
     withoutWhatTheGlassesCannotUse(),
     onlyTheRowsItAsksFor(),
-    whatWentIn(process.env.NIB_EVEN_CONTENTS),
+    whatWentIn(process.env.ORDEN_EVEN_CONTENTS),
   ],
   define: {
     __EVEN_BUILD__: JSON.stringify(`${manifest.version} even`),

@@ -70,6 +70,7 @@ mod firefox_profiles;
 mod fonts;
 #[cfg(desktop)]
 mod foreground;
+pub mod former_name;
 mod front_matter;
 #[cfg(desktop)]
 mod full_screen;

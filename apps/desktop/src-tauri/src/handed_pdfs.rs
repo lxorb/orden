@@ -411,7 +411,7 @@ mod tests {
     fn windows_offers_nib_for_a_pdf_and_claims_nothing() {
         let script = source("installer.nsh");
         let (install, uninstall) = script
-            .split_once("!macro NIB_PDF_FORGET")
+            .split_once("!macro ORDEN_PDF_FORGET")
             .expect("a macro that forgets");
         for line in [
             r#"WriteRegStr SHCTX "Software\Classes\NibPDF\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'"#,
@@ -435,8 +435,8 @@ mod tests {
         let (installing, uninstalling) = hooks
             .split_once("!macro NSIS_HOOK_POSTUNINSTALL")
             .expect("an uninstall hook");
-        assert!(installing.contains("!insertmacro NIB_PDF_OPEN_WITH"));
-        assert!(uninstalling.contains("!insertmacro NIB_PDF_FORGET"));
+        assert!(installing.contains("!insertmacro ORDEN_PDF_OPEN_WITH"));
+        assert!(uninstalling.contains("!insertmacro ORDEN_PDF_FORGET"));
         assert!(!script.contains(r#"WriteRegStr SHCTX "Software\Classes\.pdf" """#));
 
         let fragment = source("wix/pdf.wxs");

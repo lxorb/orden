@@ -735,7 +735,7 @@ async def sweep() -> list[Browser]:
         if ENGINE == "webkit":
             browser = await play.webkit.launch()
         else:
-            browser = await play.chromium.launch(channel=os.environ.get("NIB_BROWSER", "chromium"))
+            browser = await play.chromium.launch(channel=os.environ.get("ORDEN_BROWSER", "chromium"))
         try:
             results = await asyncio.gather(*(sweep_one(one, browser) for one in kinds), return_exceptions=True)
         finally:

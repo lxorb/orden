@@ -42,7 +42,7 @@ use windows_com::Win32::UI::WindowsAndMessaging::{
 
 pub(crate) fn pages_drawn_under() -> bool {
     static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *ON.get_or_init(|| std::env::var_os("NIB_PAGES_WINDOWED").is_none_or(|said| said != "1"))
+    *ON.get_or_init(|| std::env::var_os("ORDEN_PAGES_WINDOWED").is_none_or(|said| said != "1"))
 }
 
 fn drawn_under(label: &str) -> bool {

@@ -15,7 +15,7 @@ const NAME: &str = "orden";
 
 const OLD_NAME: &str = "nib";
 
-const TEST_HOME: &str = "NIB_ENROLL_HOME";
+const TEST_HOME: &str = "ORDEN_ENROLL_HOME";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct Kept {

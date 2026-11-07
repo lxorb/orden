@@ -3,7 +3,7 @@ import { isRecord, isString, stringList } from '../stored'
 import { usablePaletteValue } from './validate'
 import type { Scheme } from '../theme.svelte'
 
-const ROOT: string = import.meta.env.VITE_NIB_THEMES ?? `${BASE}/themes`
+const ROOT: string = import.meta.env.VITE_ORDEN_THEMES ?? `${BASE}/themes`
 
 const ID = /^[a-z0-9][a-z0-9-]{0,38}$/
 

@@ -57,7 +57,7 @@ function readOptions(raw: unknown): SelectOption[] | undefined {
   })
 }
 
-const NIB_VIEW_KEYS = [
+const ORDEN_VIEW_KEYS = [
   'rows',
   'subGroupBy',
   'order',
@@ -111,7 +111,7 @@ function readNibView(raw: unknown): NibView {
   if (typeof raw.noneFirst === 'boolean') nib.noneFirst = raw.noneFirst
   if (typeof raw.hideEmpty === 'boolean') nib.hideEmpty = raw.hideEmpty
   if (typeof raw.colourColumns === 'boolean') nib.colourColumns = raw.colourColumns
-  nib.kept = rest(raw, NIB_VIEW_KEYS)
+  nib.kept = rest(raw, ORDEN_VIEW_KEYS)
   return nib
 }
 

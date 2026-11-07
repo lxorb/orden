@@ -6,7 +6,7 @@ import { type Host, RowsStore } from './store'
 
 vi.mock('@orden/markdown/task-line', { spy: true })
 
-const CLOCKED = process.env.NIB_PERF === '1'
+const CLOCKED = process.env.ORDEN_PERF === '1'
 
 const NOTES = 5_000
 const TASKS_EACH = 2
