@@ -12,8 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from carry_page import NOTE, PANE, TITLES, WORDS, field_of, heard, into_field, put_note, row_box, wrong_drop, zone_of  # noqa: E402
 
 OUT, APP = Path(sys.argv[1]), sys.argv[2]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
-CARRIED = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "so.orden.Orden" / "carried"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
+CARRIED = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / os.environ.get("DRIVEN_ID", "so.orden.Orden") / "carried"
 POINTER = OUT / "pointer.fifo"
 URL = "http://127.0.0.1:8765/carry.html"
 

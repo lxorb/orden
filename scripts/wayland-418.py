@@ -15,7 +15,7 @@ from PIL import Image
 
 OUT = Path(sys.argv[1])
 APP = sys.argv[2]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 POINTER = OUT / "pointer.fifo"
 SITE = "http://127.0.0.1:8765"
 found = {}

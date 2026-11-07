@@ -463,6 +463,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ./packages/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
+      - name: The id the edge build keeps its files under
+        run: |
+          id=$(grep -aoE '"identifier": ?"[^"]+"' /usr/bin/nib | head -1 | sed -E 's/.*"([^"]+)"$/\1/')
+          test -n "$id"
+          echo "DRIVEN_ID=$id" >> "$GITHUB_ENV"
+          echo "the edge build is $id"
       - name: What
         env:
           OUT: wayland-out/418-webkitgtk

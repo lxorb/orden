@@ -5,12 +5,13 @@ dmg="$1"
 where="$2"
 expect="$3"
 cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
-support="$HOME/Library/Application Support/so.orden.Orden"
-endpoint="$support/automation.json"
 mount="/tmp/orden-image-$where"
 
 hdiutil attach -nobrowse -readonly -mountpoint "$mount" "$dmg" >/dev/null
 source_app="$(find "$mount" -maxdepth 1 -name '*.app' | head -1)"
+id="${DRIVEN_ID:-$(defaults read "$source_app/Contents/Info" CFBundleIdentifier)}"
+support="$HOME/Library/Application Support/$id"
+endpoint="$support/automation.json"
 name="$(basename "$source_app")"
 case "$where" in
   applications) folder=/Applications ;;
@@ -51,7 +52,7 @@ launch() {
 }
 
 quit_app() {
-  osascript -e 'quit app id "so.orden.Orden"' >/dev/null 2>&1 || true
+  osascript -e "quit app id \"$id\"" >/dev/null 2>&1 || true
   for _ in $(seq 20); do running "$app" || return 0; sleep 1; done
   pkill -f "$app/Contents/MacOS/" || true
   sleep 2
@@ -79,7 +80,7 @@ case "$version" in *"$expect"*)
 esac
 
 logs() {
-  for log in "$HOME/Library/Logs/so.orden.Orden"/*; do
+  for log in "$HOME/Library/Logs/$id"/*; do
     [ -f "$log" ] && { echo "--- $log"; tail -40 "$log"; }
   done
 }
@@ -95,7 +96,7 @@ done
 echo "notice: $notice"
 case "$notice" in *"$expect"*) ;; *) echo "no notice offered $expect"; logs; quit_app; exit 1 ;; esac
 
-log_before="$(ls -t "$HOME/Library/Logs/so.orden.Orden" 2>/dev/null | head -1)"
+log_before="$(ls -t "$HOME/Library/Logs/$id" 2>/dev/null | head -1)"
 say_eval "[...document.querySelectorAll('.notice .orden-button')].at(-1).click(), 'pressed'"
 
 for _ in $(seq 60); do running "$app" || break; sleep 1; done

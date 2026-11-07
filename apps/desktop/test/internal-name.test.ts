@@ -23,10 +23,10 @@ const MOST: Record<Kind, number> = {
   package: 0,
   identifier: 8,
   scheme: 21,
-  key: 126,
+  key: 129,
   variable: 18,
   dashed: 753,
-  word: 3383,
+  word: 3380,
 }
 
 const ALIASES_SHIP_IN = 'v0.21.0'
