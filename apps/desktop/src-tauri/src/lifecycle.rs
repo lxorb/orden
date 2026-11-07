@@ -154,6 +154,16 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
 
         RunEvent::WindowEvent {
             label,
+            event: WindowEvent::Focused(true),
+            ..
+        } => {
+            if let Some(window) = app.get_window(&label) {
+                crate::keyboard::no_hidden_menu(&window);
+            }
+        }
+
+        RunEvent::WindowEvent {
+            label,
             event: WindowEvent::Destroyed,
             ..
         } => {
