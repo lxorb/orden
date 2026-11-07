@@ -396,9 +396,12 @@ fn carried(from: &Path, to: &Path, how: How, running: &Job, meter: &mut Meter) -
             return Ok(());
         }
     }
-    let copied = copied(from, to, running, meter);
+    let mut made = false;
+    let copied = copied(from, to, running, meter, &mut made);
     if copied.is_err() {
-        let _ = gone(to);
+        if made {
+            let _ = gone(to);
+        }
         return copied;
     }
     if how == How::Move {
@@ -407,20 +410,35 @@ fn carried(from: &Path, to: &Path, how: How, running: &Job, meter: &mut Meter) -
     Ok(())
 }
 
-fn copied(from: &Path, to: &Path, running: &Job, meter: &mut Meter) -> Result<(), Stop> {
+fn copied(
+    from: &Path,
+    to: &Path,
+    running: &Job,
+    meter: &mut Meter,
+    made: &mut bool,
+) -> Result<(), Stop> {
     let fail = |why: std::io::Error| Stop::Failed(format!("{}: {why}", from.display()));
     let meta = fs::symlink_metadata(from).map_err(fail)?;
     if meta.file_type().is_symlink() {
         let target = fs::read_link(from).map_err(fail)?;
-        return crate::agents::files::linked(from, &target, to).map_err(fail);
+        crate::agents::files::linked(from, &target, to).map_err(fail)?;
+        *made = true;
+        return Ok(());
     }
     if meta.is_dir() {
         fs::create_dir(to).map_err(fail)?;
+        *made = true;
         for one in fs::read_dir(from).map_err(fail)?.flatten() {
             if running.stopped() {
                 return Err(Stop::Cancelled);
             }
-            copied(&one.path(), &to.join(one.file_name()), running, meter)?;
+            copied(
+                &one.path(),
+                &to.join(one.file_name()),
+                running,
+                meter,
+                &mut true,
+            )?;
         }
         let _ = fs::set_permissions(to, meta.permissions());
         return Ok(());
@@ -431,6 +449,7 @@ fn copied(from: &Path, to: &Path, running: &Job, meter: &mut Meter) -> Result<()
         .unwrap_or_default();
     let mut source = fs::File::open(from).map_err(fail)?;
     let mut target = fs::File::create_new(to).map_err(fail)?;
+    *made = true;
     let mut buffer = vec![0; CHUNK];
     loop {
         if running.stopped() {
@@ -842,6 +861,30 @@ mod tests {
             all += 1;
         });
         assert_eq!(all, 2);
+    }
+
+    #[test]
+    fn a_copy_that_finds_its_place_taken_says_it_made_nothing() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let running = Job::begin("test-taken");
+        let mut counted = meter();
+        let (file, folder) = (dir.path().join("a.txt"), dir.path().join("f"));
+        fs::write(&file, "new").expect("a file");
+        fs::create_dir(&folder).expect("a folder");
+        let (theirs, their_folder) = (dir.path().join("b.txt"), dir.path().join("g"));
+        fs::write(&theirs, "theirs").expect("their file");
+        fs::create_dir(&their_folder).expect("their folder");
+
+        for (from, to) in [(&file, &theirs), (&folder, &their_folder)] {
+            let mut made = false;
+            assert!(super::copied(from, to, &running, &mut counted, &mut made).is_err());
+            assert!(!made, "{} was taken for the copy's own", to.display());
+        }
+        let mut made = false;
+        let fresh = dir.path().join("c.txt");
+        assert!(super::copied(&file, &fresh, &running, &mut counted, &mut made).is_ok());
+        assert!(made);
+        assert_eq!(fs::read_to_string(&theirs).expect("kept"), "theirs");
     }
 
     #[test]
