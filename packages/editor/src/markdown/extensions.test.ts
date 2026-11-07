@@ -541,6 +541,34 @@ describe('a long paragraph', () => {
     expect(long.took / short.took).toBeLessThan(9)
   })
 
+  test('a long run of spaces, or of brackets after an address, parses in time that grows with its length', () => {
+    const timed = (doc: string) => {
+      let least = Infinity
+      for (let round = 0; round < 2; round++) {
+        const start = performance.now()
+        nibMarkdownParser.parse(doc)
+        least = Math.min(least, performance.now() - start)
+      }
+      return least
+    }
+    const runs = [
+      (length: number) => `k${' '.repeat(length)}:\n`,
+      (length: number) => `https://a.b/${')'.repeat(length)}\n`,
+    ]
+    for (const run of runs) {
+      timed(run(2_000))
+      expect(timed(run(64_000)) / timed(run(16_000))).toBeLessThan(9)
+    }
+  })
+
+  test('still reads a hard break, and the brackets an address keeps', () => {
+    expect(tree('a   \nb')).toContain('HardBreak')
+    expect(tree('a \nb')).not.toContain('HardBreak')
+    expect(tree('a    b  \nc')).toContain('HardBreak "  \\n"')
+    expect(tree('see https://a.b/(x)) and')).toContain('URL "https://a.b/(x)"')
+    expect(tree('see https://a.b/x).')).toContain('URL "https://a.b/x"')
+  })
+
   test('repeating what opens a link or emphasis parses in time that grows with its length', () => {
     const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
       .parser
