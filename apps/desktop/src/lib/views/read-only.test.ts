@@ -41,6 +41,12 @@ vi.mock('../workspace/write-file', () => ({
     disk.set(path, content)
     return Promise.resolve()
   },
+  writeIfAbsent: (path: string, content: string) => {
+    if (disk.has(path)) return Promise.resolve(false)
+    written.push(path)
+    disk.set(path, content)
+    return Promise.resolve(true)
+  },
 }))
 
 vi.mock('../workspace/note-text', () => ({

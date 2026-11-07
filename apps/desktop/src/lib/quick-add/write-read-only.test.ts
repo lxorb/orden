@@ -57,6 +57,10 @@ vi.mock('../workspace/write-file', () => ({
     made.push(path)
     return Promise.resolve()
   },
+  writeIfAbsent: (path: string) => {
+    made.push(path)
+    return Promise.resolve(true)
+  },
 }))
 vi.mock('../rows/inbox-note', () => ({
   inboxNote: (root: string) => {

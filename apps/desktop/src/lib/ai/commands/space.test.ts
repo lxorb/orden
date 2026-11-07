@@ -20,9 +20,10 @@ vi.mock('../../workspace.svelte', () => ({
   },
 }))
 vi.mock('../../workspace/write-file', () => ({
-  writeFile: (path: string, text: string) => {
+  writeIfAbsent: (path: string, text: string) => {
+    if (disk.files.has(path)) return Promise.resolve(false)
     disk.files.set(path, text)
-    return Promise.resolve()
+    return Promise.resolve(true)
   },
 }))
 vi.mock('../../on-disk', () => ({

@@ -28,6 +28,12 @@ vi.mock('../workspace/write-file', () => ({
     written.push(path)
     disk.set(path, content)
   },
+  writeIfAbsent: async (path: string, content: string) => {
+    if (disk.has(path)) return false
+    written.push(path)
+    disk.set(path, content)
+    return true
+  },
 }))
 vi.mock('../workspace/note-text', () => ({
   noteText: async (_ws: unknown, path: string) => disk.get(path) ?? null,

@@ -1,8 +1,7 @@
 import { t } from '../../i18n.svelte'
-import { onDisk } from '../../on-disk'
 import { canWriteAt } from '../../sharing.svelte'
 import { workspace } from '../../workspace.svelte'
-import { writeFile } from '../../workspace/write-file'
+import { writeIfAbsent } from '../../workspace/write-file'
 import type { Thread } from '../chat/types'
 import { found, foundNamed, fromOthers, rootOfSpace } from './found'
 import { type Host, sendHere } from './host'
@@ -26,8 +25,7 @@ export async function memory(host: Host, thread: Thread | null, args: string): P
   const root = rootOf(thread)
   if (!root) return
   const path = `${root}/${AGENTS}`
-  if (canWriteAt(path) && !(await onDisk(path))) {
-    await writeFile(path, '# AGENTS\n\n## Memory\n')
+  if (canWriteAt(path) && (await writeIfAbsent(path, '# AGENTS\n\n## Memory\n'))) {
     if (root === workspace.activeSpace?.root) await workspace.loadTree()
     await workspace.fileCame(path, 'file')
     const { sync } = await import('../../sync.svelte')
