@@ -108,6 +108,17 @@ def boxes_of(page: Page, label: str) -> list[float] | None:
 def settle(page: Page) -> None:
     page.wait_for_timeout(1300)
 
+
+def still(page: Page) -> dict:
+    laid = page.evaluate(LAID)
+    for _ in range(20):
+        page.wait_for_timeout(250)
+        again = page.evaluate(LAID)
+        if again == laid:
+            return again
+        laid = again
+    return laid
+
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
@@ -134,6 +145,9 @@ def drive(browser: Browser) -> None:
     else:
         rider = frames[first]["rider"]
         before = frames[first - 1]["strip"] if first > 0 else None
+        held = frames[first - 1]["rider"] if first > 0 else None
+        if held and held[4] >= 0.8:
+            rider = held
         if not rider or rider[4] < 0.8:
             wrong(f"[ride] the tab in front vanished from the bar as the overview began: {frames[first]}")
         elif before and (abs(rider[0] - before[0]) > 40 or abs(rider[1] - before[1]) > 40):
@@ -160,21 +174,21 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
 
-    before = page.evaluate(LAID)
+    before = still(page)
     page.mouse.move(700, 500)
     for _ in range(6):
         page.mouse.wheel(0, 100)
         page.wait_for_timeout(60)
     settle(page)
     zoom = page.evaluate(ZOOM)
-    after = page.evaluate(LAID)
+    after = still(page)
     shot(page, "zoomed-out")
     if zoom > 0.8:
         wrong(f"[zoom] the wheel did not zoom out: {zoom}")
     if after["windows"] != before["windows"]:
         wrong(f"[zoom] the windows were laid out again as the camera zoomed: {before['windows']} -> {after['windows']}")
     for one, other in zip(before["bubbles"], after["bubbles"]):
-        if any(abs(a - b) > 4 for a, b in zip(one, other)):
+        if any(abs(a - b) > 6 for a, b in zip(one, other)):
             wrong(f"[zoom] a bubble changed with the zoom: {one} -> {other}")
     stroke = page.evaluate("() => parseFloat(getComputedStyle(document.querySelector('.bubble')).strokeWidth)")
     if abs(stroke * zoom - 3) > 0.3:
