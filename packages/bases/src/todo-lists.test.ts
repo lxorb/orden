@@ -10,6 +10,7 @@ import {
   LIST_KEY,
   LIST_VALUE,
   withDates,
+  writtenDates,
 } from './todo-lists'
 
 const rows = (text: string) => rowsOfText('Mine', 'Errands.md', text)
@@ -83,5 +84,27 @@ describe('done dates kept as the list’s metadata (#1228)', () => {
     const text = datesText(many) ?? ''
     expect(text.length).toBeLessThanOrEqual(2048)
     expect([...datesOf(text).values()]).toContain('2026-12-01')
+  })
+})
+
+describe('a list taken out of Orden (#1229)', () => {
+  test('has its kept done and cancelled dates written as ✅ and ❌, its own marks kept', () => {
+    const text = '# Errands\n- [x] Post it\n- [-] Gym\n- [x] Old one ✅ 2026-01-02\n- [ ] Milk\n'
+    const hash = (line: string) => rows(line)[1]?.anchor?.hash ?? ''
+    const meta = {
+      [DONE_KEY]:
+        datesText(
+          new Map([
+            [hash('- [x] Post it\n'), '2026-11-01'],
+            [hash('- [x] Old one ✅ 2026-01-02\n'), '2026-11-02'],
+          ]),
+        ) ?? '',
+      [CANCELLED_KEY]: datesText(new Map([[hash('- [-] Gym\n'), '2026-11-03']])) ?? '',
+    }
+    expect(writtenDates(text, meta)).toBe(
+      '# Errands\n- [x] Post it ✅ 2026-11-01\n- [-] Gym ❌ 2026-11-03\n- [x] Old one ✅ 2026-01-02\n- [ ] Milk\n',
+    )
+    expect(writtenDates('- [x] Post it\r\n', meta)).toBe('- [x] Post it ✅ 2026-11-01\r\n')
+    expect(writtenDates(text, null)).toBe(text)
   })
 })
