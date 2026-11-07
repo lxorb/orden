@@ -25,7 +25,7 @@ export async function renameTerminal(tab: Tab, typed: string): Promise<void> {
 
   const name = typed.trim().slice(0, NAME_MOST) || null
   if (name === before.name) return
-  const called = name ?? (await shellCalled(before.shell))
+  const called = name ?? (await shellCalled(before.via ?? before.shell))
 
   const spec = readSpec(tab.doc) ?? before
   tab.name = called

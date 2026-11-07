@@ -21,6 +21,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
         file: null,
       })
     }
+    if (command === 'remote_keep') return Promise.resolve(args.kept)
     if (command === 'pty_program') return Promise.resolve(front)
     if (command === 'pty_ssh') return Promise.resolve(reached)
     if (command === 'pty_spawn') {
@@ -134,6 +135,7 @@ const { readSpec, writeSpec } = await import('../../src/lib/terminal/spec')
 const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
 const { openRemote } = await import('../../src/lib/remote/open')
 const { shells } = await import('../../src/lib/terminal/shells.svelte')
+const { renameTerminal } = await import('../../src/lib/terminal/rename')
 const TerminalTab = (await import('../../src/lib/terminal/TerminalTab.svelte')).default
 
 const spawns = () => asked.filter((one) => one.command === 'pty_spawn')
@@ -327,4 +329,51 @@ test('one taken over and put back by a restart is a remote tab of its own', asyn
   await vi.waitFor(() => expect(spawns()).toHaveLength(1))
   expect(spawns()[0]?.args.shell).toBe('ssh:pi')
   expect(readSpec(tab.doc)?.via).toBeUndefined()
+})
+
+async function adopted() {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: 'pi', user: null, port: null }
+  typing?.('ssh pi\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'))
+  return tab
+}
+
+test('another ssh in front after the first is asked again, and an unknown one gives the tab back', async () => {
+  const tab = await adopted()
+
+  reached = { hostname: 'box.example.com', user: null, port: null }
+  typing?.('exit; ssh box.example.com\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('pwsh'), { timeout: 2500 })
+  expect(tab.running?.host).toBeNull()
+})
+
+test('a name cleared while it is a host gives the tab the local shell back as its name', async () => {
+  const tab = await adopted()
+  await renameTerminal(tab, 'mine')
+  await renameTerminal(tab, '')
+  expect(tab.name).toBe('PowerShell')
+})
+
+test('a split or duplicate of a local terminal is a terminal of its own, not the same words', async () => {
+  const tab = await adopted()
+  const { duplicateTab } = await import('../../src/lib/tab-strip/ops')
+  duplicateTab(tab.id)
+  const copy = workspace.tabs.at(-1)
+  if (!copy || copy === tab) throw new Error('no copy')
+
+  expect(copy.note).not.toBe(tab.note)
+  expect(readSpec(copy.doc)).toMatchObject({ shell: 'ssh:pi', key: '' })
+  expect(readSpec(copy.doc)?.via).toBeUndefined()
+  expect(readSpec(tab.doc)?.via).toBe('pwsh')
+})
+
+test('a host reached by ssh in a local tab is kept as connected to lately', async () => {
+  await adopted()
+  await vi.waitFor(() =>
+    expect(asked.find((one) => one.command === 'remote_keep')?.args).toMatchObject({
+      kept: { about: { pi: { last: expect.any(Number) as number } } },
+    }),
+  )
 })

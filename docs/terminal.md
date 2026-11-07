@@ -200,7 +200,8 @@ group of Orden's own, which goes before the config's.
 the window, no field, every host numbered, a digit connecting at once where only one host can
 be meant, letters finding a host by its name, its other names or its address and waiting for
 Enter, Backspace taking one back. The pinned hosts first, then the five connected to most lately
-(newest first), then the rest under their groups' names, a line between; when each was last
+(newest first) - never the last of a group's own, so a group keeps its name and its Open all -
+then the rest under their groups' names, a line between; when each was last
 connected to at the row's end, quietly. An address typed that no host has - `emil@10.0.0.5`,
 `box:2222` - is a row of its own, and choosing it keeps it as a host made in Orden, the way a
 browser keeps what was typed in its history. A digit is always a host's number, so an address
@@ -235,8 +236,10 @@ and the host is what the tab is.
 **`ssh` typed in a local tab** makes the tab that host's while it runs, with the connection
 left alone. When the program in front is `ssh` (asked as above), the crate reads what it was
 started with - `/proc/<pid>/cmdline` on Linux, `KERN_PROCARGS2` on a Mac, the process's command
-line on Windows - and reads it as `ssh` does: the options that take a value, `-l` and `-p`, the
-destination as `user@host` or `ssh://user@host:port`. Only the destination goes to the window,
+line on Windows - and reads it as `ssh` does: the options that take a value, before the host and
+after it, `-l`, `-p` and `-o User` or `Port`, the first of each winning over the next and over
+the destination's own, which is `user@host` or `ssh://user@host:port`; a `-o HostName` is left a
+program, since the tab would name a machine it is not on. Only the destination goes to the window,
 never the arguments, which can name a key. An `ssh` that opens no session here - a command after
 the host, `-N`, `-W`, `-f`, `-G` - is left a program (`ssh_destination` in
 `src-tauri/src/terminal/remote.rs`, `pty_ssh`). The window finds the host by its name, another of
@@ -248,7 +251,9 @@ under it is still this machine's, so it is asked after as before, and when `ssh`
 in front - `exit`, a dropped connection - the words are the local shell's again and the tab is
 what it was, with no Reconnect. Whatever starts it again - a restart, Reopen closed tab,
 Duplicate, a split, Open another - starts `ssh` for the host, as a remote tab of its own: the
-local shell that was under it belonged to that one run (`adopt` and `giveBack` in
+local shell that was under it belonged to that one run. A duplicate or a split of a terminal on
+this machine is words of its own, never the original's, so `ssh` in one pane leaves the other
+what it is (`copyOf` in `lib/workspace.svelte.ts`) (`adopt` and `giveBack` in
 `lib/terminal/sessions.svelte.ts`).
 
 **A connection that drops** - `ssh` ending with anything but 0 - leaves its lines readable and a

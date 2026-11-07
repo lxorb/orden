@@ -105,6 +105,15 @@ describe('the picker', () => {
   })
 })
 
+describe('a group in the picker', () => {
+  test('keeps a host under its heading however many of them were connected to lately', () => {
+    const hosts = hostsOf(CONFIG, kept({ about: { pi: { last: 2 }, nas: { last: 1 } } }))
+    const order = pickerOrder(hosts, kept())
+    expect(order.map((one) => one.host.id)).toEqual(['pi', 'build', 'nas', 'office'])
+    expect(order.find((one) => one.head === 'Home')?.host.id).toBe('nas')
+  })
+})
+
 describe('a destination typed', () => {
   test('read as ssh takes it', () => {
     expect(destinationOf('pi')).toEqual({ user: null, hostname: 'pi', port: null })

@@ -90,9 +90,19 @@ pub fn ssh_destination(program: &str, args: &[String]) -> Option<Destination> {
                     } else {
                         attached.to_owned()
                     };
-                    match flag {
-                        b'l' => user = Some(value),
-                        b'p' => port = Some(value.parse::<u16>().ok().filter(|one| *one > 0)?),
+                    let (key, value) = match flag {
+                        b'o' => ssh_setting(&value)?,
+                        _ => (String::new(), value),
+                    };
+                    match (flag, key.as_str()) {
+                        (b'l', _) | (b'o', "user") => {
+                            user.get_or_insert(value);
+                        }
+                        (b'p', _) | (b'o', "port") => {
+                            let number = value.parse::<u16>().ok().filter(|one| *one > 0)?;
+                            port.get_or_insert(number);
+                        }
+                        (b'o', "hostname") => return None,
                         _ => {}
                     }
                     break;
@@ -104,18 +114,30 @@ pub fn ssh_destination(program: &str, args: &[String]) -> Option<Destination> {
             return None;
         }
         target = Some(word.as_str());
-        options = false;
     }
 
     let mut destination = destination_of(target?)?;
-    if destination.user.is_none() {
+    if user.is_some() {
         destination.user = user;
     }
-    if destination.port.is_none() {
+    if port.is_some() {
         destination.port = port;
     }
     let fits = is_address(&destination.hostname) && destination.user.as_deref().is_none_or(is_user);
     fits.then_some(destination)
+}
+
+fn ssh_setting(setting: &str) -> Option<(String, String)> {
+    let setting = setting.trim_start();
+    let at = setting.find(|one: char| one == '=' || one.is_whitespace())?;
+    let key = setting[..at].to_ascii_lowercase();
+    let value = setting[at..]
+        .trim_start_matches(|one: char| one.is_whitespace())
+        .strip_prefix('=')
+        .unwrap_or_else(|| setting[at..].trim_start())
+        .trim()
+        .to_owned();
+    Some((key, value))
 }
 
 fn destination_of(target: &str) -> Option<Destination> {
@@ -620,7 +642,28 @@ mod tests {
         );
         assert_eq!(
             ssh(&["-l", "root", "emil@pi"]),
-            Some(at(Some("emil"), "pi", None))
+            Some(at(Some("root"), "pi", None))
+        );
+        assert_eq!(
+            ssh(&["-p", "1111", "ssh://pi:2222"]),
+            Some(at(None, "pi", Some(1111)))
+        );
+        assert_eq!(
+            ssh(&["-l", "a", "-l", "b", "-p", "1111", "-p", "3333", "pi"]),
+            Some(at(Some("a"), "pi", Some(1111)))
+        );
+        assert_eq!(
+            ssh(&["pi", "-p", "4444", "-l", "zed"]),
+            Some(at(Some("zed"), "pi", Some(4444)))
+        );
+        assert_eq!(ssh(&["pi", "-tA"]), Some(at(None, "pi", None)));
+        assert_eq!(
+            ssh(&["-oUser=ou", "-l", "lu", "-o", "Port 5555", "pi"]),
+            Some(at(Some("ou"), "pi", Some(5555)))
+        );
+        assert_eq!(
+            ssh(&["-o", "port = 22", "-oProxyJump=jump", "pi"]),
+            Some(at(None, "pi", Some(22)))
         );
         assert_eq!(
             ssh(&["ssh://emil@box.example.com:2222"]),
@@ -636,6 +679,11 @@ mod tests {
     #[test]
     fn ssh_that_opens_no_session_here_is_none() {
         assert_eq!(ssh(&["pi", "uptime"]), None);
+        assert_eq!(ssh(&["pi", "-v", "uptime"]), None);
+        assert_eq!(ssh(&["--", "pi", "-p", "1"]), None);
+        assert_eq!(ssh(&["pi", "-N"]), None);
+        assert_eq!(ssh(&["-oHostName=10.0.0.5", "pi"]), None);
+        assert_eq!(ssh(&["-o", "User"]), None);
         assert_eq!(ssh(&["-N", "-L", "8080:localhost:80", "pi"]), None);
         assert_eq!(ssh(&["-fN", "pi"]), None);
         assert_eq!(ssh(&["-W", "host:22", "jump"]), None);

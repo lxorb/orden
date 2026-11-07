@@ -357,22 +357,31 @@ class Session {
     this.named()
 
     if (found !== 'ssh') this.giveBack()
-    else if (this.underneath === null && hostIdOf(this.spec().shell) === null)
+    else if (this.underneath !== null || hostIdOf(this.spec().shell) === null)
       void this.adopt(pty, source)
   }
 
   private async adopt(pty: string, source: PtySource) {
     const reached = await source.ssh()
-    if (reached === null || pty !== this.pty) return
-    await remote.refresh()
-    const host = hostReached(remote.hosts, reached)
-    const spec = this.spec()
-    if (!host || pty !== this.pty || this.front.program !== 'ssh' || hostIdOf(spec.shell) !== null)
-      return
+    if (pty !== this.pty) return
+    await remote.ready()
+    let host = reached && hostReached(remote.hosts, reached)
+    if (reached && !host) {
+      await remote.refresh()
+      host = hostReached(remote.hosts, reached)
+    }
+    const still = await source.ssh()
+    if (pty !== this.pty || JSON.stringify(still) !== JSON.stringify(reached)) return
+    if (this.underneath !== null) {
+      if (host?.id === source.reached) return
+      this.giveBack()
+    }
 
+    const spec = this.spec()
+    if (!host || this.front.program !== 'ssh' || hostIdOf(spec.shell) !== null) return
     this.underneath = spec.shell
     source.reached = host.id
-    remote.connected(host.id)
+    remote.reached(host.id)
     this.respec({ ...spec, shell: hostShell(host.id), via: spec.shell })
   }
 

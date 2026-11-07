@@ -288,10 +288,10 @@ fn arguments_of(pid: u32) -> Option<Vec<String>> {
         }
         let text = &*buffer.as_ptr().cast::<UNICODE_STRING>();
         let units = usize::from(text.Length / 2);
-        let start = buffer.as_ptr().cast::<u8>();
-        let end = start.add(buffer.len() * 8);
-        let first = text.Buffer.0.cast::<u8>().cast_const();
-        if text.Buffer.is_null() || first < start || first.add(units * 2) > end {
+        let start = buffer.as_ptr() as usize;
+        let end = start + buffer.len() * 8;
+        let first = text.Buffer.0 as usize;
+        if text.Buffer.is_null() || first < start || first.checked_add(units * 2)? > end {
             return None;
         }
         std::slice::from_raw_parts(text.Buffer.0, units).to_vec()
