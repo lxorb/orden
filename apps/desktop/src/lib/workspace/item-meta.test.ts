@@ -1,5 +1,6 @@
 import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { keeping } from './file-ops'
 import { type Describing, ItemMetaStore, STORAGE_KEY } from './item-meta.svelte'
 
 function memoryStorage(): Storage {
@@ -122,6 +123,56 @@ describe("a note's own metadata", () => {
     meta.set('/space/Plan.md', { icon: 'rocket' })
     meta.set('/space/Plan.md', { icon: 'rocket' })
     expect(heard).toEqual(['/space/Plan.md'])
+  })
+})
+
+describe('a note or folder deleted and put back', () => {
+  test('comes back with what Orden kept about it, wherever it is put back', () => {
+    meta.set('/space/Groceries.md', { 'todo-list': 'yes', icon: 'cart' })
+    const follow = keeping(meta)
+    void follow({
+      op: 'removed',
+      path: '/space/Groceries.md',
+      kind: 'file',
+      root: ROOT,
+      back: 'b1',
+    })
+    expect(meta.of('/space/Groceries.md')).toBeNull()
+
+    void follow({
+      op: 'created',
+      path: '/space/Groceries 2.md',
+      kind: 'file',
+      root: ROOT,
+      back: 'b1',
+      putBack: true,
+    })
+    expect(meta.of('/space/Groceries 2.md')).toEqual({ 'todo-list': 'yes', icon: 'cart' })
+  })
+
+  test('a folder brings back its own and everything in it, after a restart too', () => {
+    meta.set('/space/Projects', { 'todo-lists': 'marked' })
+    meta.set('/space/Projects/Trip.md', { 'todo-list': 'yes' })
+    meta.set('/space/Plan.md', { icon: 'rocket' })
+    meta.gone('/space/Projects', ROOT, 'b2')
+
+    const again = new ItemMetaStore(rootOf)
+    again.cameBack('/space/Projects', ROOT, 'b2')
+    expect(again.of('/space/Projects')).toEqual({ 'todo-lists': 'marked' })
+    expect(again.of('/space/Projects/Trip.md')).toEqual({ 'todo-list': 'yes' })
+    expect(again.of('/space/Plan.md')).toEqual({ icon: 'rocket' })
+  })
+
+  test('is put back once, and never over what the item has since', () => {
+    meta.set('/space/A.md', { icon: 'a' })
+    meta.gone('/space/A.md', ROOT, 'b3')
+    meta.set('/space/A.md', { icon: 'new' })
+    meta.cameBack('/space/A.md', ROOT, 'b3')
+    expect(meta.of('/space/A.md')).toEqual({ icon: 'new' })
+
+    meta.gone('/space/A.md', ROOT)
+    meta.cameBack('/space/A.md', ROOT, 'b3')
+    expect(meta.of('/space/A.md')).toBeNull()
   })
 })
 

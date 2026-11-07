@@ -8,11 +8,15 @@ import {
 } from '@orden/sync-core/meta'
 import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
 import { joinPath } from '../tauri'
-import { isRecord, keepJson } from '../stored'
+import { isRecord, keepJson, stored } from '../stored'
 import { filledIn, readSpaces, without, withOrWithout } from '../records'
 import { carried, type Moving, moving } from './file-ops'
 
 export const STORAGE_KEY = 'nib:item-meta'
+
+const BURIED_KEY = 'nib:item-meta-buried'
+
+const MOST_BURIED = 200
 
 export interface Describing {
   describedIn(root: string): Readonly<Record<string, ItemMeta>> | null
@@ -63,6 +67,33 @@ function whole(meta: ItemMeta): MetaPatch {
 
 function merged(one: MetaPatch | undefined, other: MetaPatch): MetaPatch {
   return { ...one, ...other }
+}
+
+type Buried = Record<string, Record<string, ItemMeta>>
+
+function readBuried(): Buried {
+  const saved = stored(BURIED_KEY)
+  if (!isRecord(saved)) return {}
+  const out: Buried = {}
+  for (const [back, items] of Object.entries(saved)) {
+    if (!isRecord(items)) continue
+    const kept: Record<string, ItemMeta> = {}
+    for (const [at, one] of Object.entries(items)) {
+      const meta = at === '' || insideItsSpace(at) ? metaOf(one) : null
+      if (meta && Object.keys(meta).length) kept[at] = meta
+    }
+    if (Object.keys(kept).length) out[back] = kept
+  }
+  return out
+}
+
+function itemsUnder(items: Record<string, ItemMeta>, at: string, root: string) {
+  const out: Record<string, ItemMeta> = {}
+  for (const [path, meta] of Object.entries(items)) {
+    const rest = within(at, path, root)
+    if (rest !== null) out[rest] = meta
+  }
+  return out
 }
 
 const EMPTY: Kept = { items: {}, unsent: {}, adopted: false, moved: false, lists: false }
@@ -298,17 +329,40 @@ export class ItemMetaStore {
     void this.send(move.there)
   }
 
-  gone(path: string, root = this.rootOf(path)) {
+  gone(path: string, root = this.rootOf(path), back?: string) {
     if (root === null) return
     const at = relativeTo(root, path)
     if (!at) return
     const held = this.kept(root)
+    if (back) this.bury(back, itemsUnder(held.items, at, root))
     const kept = <T>(map: Record<string, T>) =>
       Object.fromEntries(Object.entries(map).filter(([one]) => within(at, one, root) === null))
     const items = kept(held.items)
     if (Object.keys(items).length === Object.keys(held.items).length) return
     this.spaces = { ...this.spaces, [root]: { ...held, items, unsent: kept(held.unsent) } }
     this.write()
+  }
+
+  cameBack(path: string, root = this.rootOf(path), back?: string) {
+    if (root === null || !back) return
+    const buried = readBuried()
+    const items = buried[back]
+    if (!items) return
+    const at = relativeTo(root, path)
+    if (!at) return
+    const patches: Record<string, MetaPatch> = {}
+    for (const [rest, meta] of Object.entries(items)) {
+      const landed = rest ? `${at}/${rest}` : at
+      if (insideItsSpace(landed) && !this.kept(root).items[landed]) patches[landed] = whole(meta)
+    }
+    keepJson(BURIED_KEY, without(buried, back))
+    this.setMany(root, patches)
+  }
+
+  private bury(back: string, items: Record<string, ItemMeta>) {
+    if (!Object.keys(items).length) return
+    const buried = Object.entries({ ...without(readBuried(), back), [back]: items })
+    keepJson(BURIED_KEY, Object.fromEntries(buried.slice(-MOST_BURIED)))
   }
 
   spaceMoved(from: string, to: string) {
