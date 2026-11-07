@@ -114,6 +114,32 @@ describe('presenting in a browser', () => {
     expect(present.on).toBe(false)
   })
 
+  test('stopped and begun again at once, still ends when the browser gives the screen back', async () => {
+    present.start()
+    await settled()
+    present.stop()
+    present.start()
+    await settled()
+    expect(present.on).toBe(true)
+    expect(world.full).toBe(true)
+
+    world.page.fullscreenElement = null
+    world.page.dispatchEvent(new Event('fullscreenchange'))
+    expect(present.on).toBe(false)
+  })
+
+  test('stopped while it fills the screen, hears nothing after', async () => {
+    const heard = vi.spyOn(world.page, 'addEventListener')
+    const dropped = vi.spyOn(world.page, 'removeEventListener')
+    present.start()
+    present.stop()
+    await settled()
+
+    expect(present.on).toBe(false)
+    expect(world.full).toBe(false)
+    expect(heard.mock.calls.length).toBe(dropped.mock.calls.length)
+  })
+
   test('begun in a full screen already, ends with it too', async () => {
     world.full = true
     world.page.fullscreenElement = {}
