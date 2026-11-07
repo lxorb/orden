@@ -3,6 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { fade, fly, scale } from 'svelte/transition'
   import Answer from './ai/Answer.svelte'
+  import LiveAnswer from './ai/sidebar/LiveAnswer.svelte'
   import { answerHtml } from './ai/drawn'
   import type { ContextKind } from './ai/quick'
   import { dollarMaths } from '@orden/markdown/streamed'
@@ -179,16 +180,21 @@
           {#if turn.role === 'you'}
             <p class="said" in:fly={{ y: 6, duration: dur(150), easing: cubicOut }}>{turn.text}</p>
           {:else}
-            <Answer
-              html={answerHtml(turn.text, {
-                copy: t('Copy code'),
-                live: quick.running && at === turns.length - 1,
-                shown: pictures,
-              })}
-              live={quick.running && at === turns.length - 1}
-              onfollow={follow}
-              onpicture={show}
-            />
+            {#if quick.running && at === turns.length - 1}
+              <LiveAnswer
+                text={turn.text}
+                draw={(text: string) =>
+                  answerHtml(text, { copy: t('Copy code'), live: true, shown: pictures })}
+                onfollow={follow}
+                onpicture={show}
+              />
+            {:else}
+              <Answer
+                html={answerHtml(turn.text, { copy: t('Copy code'), shown: pictures })}
+                onfollow={follow}
+                onpicture={show}
+              />
+            {/if}
           {/if}
         {/each}
 
