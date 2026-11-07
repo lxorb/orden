@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import base64
 import json
 import os
 import subprocess
@@ -82,9 +83,23 @@ if not root:
     sys.exit("::error::no space is open")
 folder = Path(root)
 lecture, leaflet, sketch = folder / "Lecture.pdf", folder / "Leaflet.pdf", folder / "Sketch.pages"
-lecture.write_bytes(pdf("Lecture"))
-leaflet.write_bytes(pdf("Leaflet"))
-sketch.write_text('{"nodes":[],"edges":[]}')
+def put(path, bytes_):
+    said = run(
+        f"nib.invoke('write_bytes', {{ path: {json.dumps(str(path))}, base64: {json.dumps(base64.b64encode(bytes_).decode())} }})"
+        ".then(() => 'done', (error) => 'refused: ' + error)"
+    )
+    if said != "done":
+        sys.exit(f"::error::the app put no {path.name} in the space: {said}")
+
+put(lecture, pdf("Lecture"))
+put(leaflet, pdf("Leaflet"))
+BLANK = json.dumps('{"nodes":[],"edges":[]}')
+made_sketch = run(
+    f"nib.invoke('write_note', {{ path: {json.dumps(str(sketch))}, content: {BLANK} }})"
+    ".then(() => 'done', (error) => 'refused: ' + error)"
+)
+if made_sketch != "done":
+    sys.exit(f"::error::the app put no Sketch.pages in the space: {made_sketch}")
 print(f"pdf mark: two PDFs and a blank page note put in {root}")
 
 LISTED = "void nib.workspace.loadTree(), "
@@ -99,7 +114,7 @@ made = str(folder / "Lecture.pages")
 run(f"nib.workspace.openPdf({json.dumps(str(lecture))}); true")
 if not until(f"{LISTED}nib.workspace.entryAt({json.dumps(made)})?.path ?? null"):
     sys.exit("::error::opening the PDF made no page note")
-print(f"pdf mark: Lecture.pdf opened, and is {made} now, holding its paper: {(folder / 'Lecture.pages.pdf').is_file()}")
+print(f"pdf mark: Lecture.pdf opened, and is {made} now, holding its paper: {run(f"nib.invoke('path_exists', {{ path: {json.dumps(str(folder / 'Lecture.pages.pdf'))} }})")}")
 time.sleep(1.5)
 
 pdf_mark, made_mark, blank_mark = mark(str(leaflet)), mark(made), mark(str(sketch))
