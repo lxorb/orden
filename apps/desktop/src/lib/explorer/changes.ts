@@ -291,13 +291,13 @@ export async function renameMany(
   if (!moving.length || !changeable(view)) return
   const folder = view.listing?.path ?? ''
   if (inASpace(folder)) {
-    try {
-      await workspace.undone.batch(async () => {
-        for (const { from, name } of moving) await workspace.rename(from, name)
-      })
-    } catch (error) {
-      view.tell(message(error, 'could not rename this'))
-    }
+    let failed: unknown = null
+    await workspace.undone.batch(async () => {
+      for (const { from, name } of moving) {
+        await workspace.rename(from, name).catch((error: unknown) => (failed ??= error))
+      }
+    })
+    if (failed !== null) view.tell(message(failed, 'could not rename this'))
     await view.reload()
     return
   }

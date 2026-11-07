@@ -74,6 +74,7 @@ export type Kept = Omit<Extract<FileAction, { kind: 'delete' }>, 'kind' | 'path'
 export interface Binning {
   source?: string | undefined
   madeHere?: boolean
+  settled?: boolean
 }
 
 export interface Copied {

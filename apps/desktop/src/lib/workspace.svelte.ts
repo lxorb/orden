@@ -2854,13 +2854,39 @@ class Workspace {
 
   async removeMany(paths: string[]) {
     const writable = await this.writableOf(this.deletable(paths))
-    await this.undone.batch(async () => {
-      for (const path of writable) {
-        const entry = this.entryAt(path)
-        if (entry) await this.remove(path, entry.is_dir)
-      }
+    const going = writable.flatMap((path) => {
+      const entry = this.entryAt(path)
+      return entry ? [{ path, isFolder: entry.is_dir }] : []
     })
     this.clearSelection()
+    if (!going.length) return
+
+    for (const { path } of going) this.hideEntry(path)
+    const stayed: string[] = []
+    await this.undone.batch(async () => {
+      await this.savingSettled()
+      try {
+        for (const { path, isFolder } of going) {
+          try {
+            const kept = await this.bin(path, isFolder, { settled: true })
+            if (kept) this.undone.record({ kind: 'delete', path, ...kept })
+            await this.fileGone(path, isFolder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
+          } catch (error) {
+            log('warn', `${path} not deleted - ${String(error)}`)
+            stayed.push(path)
+          }
+        }
+      } finally {
+        await this.loadTree()
+        for (const folder of new Set(going.map(({ path }) => folderOf(path)))) {
+          await this.unnest(folder)
+        }
+      }
+    })
+    if (!stayed.length) return
+
+    const { failed } = await import('./views/failed.svelte')
+    failed.tell(() => void this.removeMany(stayed))
   }
 
   private async writableAt(...paths: string[]): Promise<boolean> {
@@ -3406,10 +3432,14 @@ class Workspace {
     })
   }
 
-  async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
-    const { source, madeHere = false } = how
+  private async savingSettled() {
     this.saving.wordsNow()
     await Promise.race([this.saving.settled(), waited(GIVE_UP)])
+  }
+
+  async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
+    const { source, madeHere = false, settled = false } = how
+    if (!settled) await this.savingSettled()
     const words = !isFolder && !isPdfTarget(path)
     let content: string | null = null
     if (words) {

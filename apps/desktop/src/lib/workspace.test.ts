@@ -766,10 +766,11 @@ describe('selecting several rows', () => {
   test('deleting several knows which are folders', async () => {
     const removed: [string, boolean][] = []
     const spy = vi
-      .spyOn(workspace, 'remove')
-      .mockImplementation(
-        async (path: string, isFolder: boolean) => void removed.push([path, isFolder]),
-      )
+      .spyOn(workspace, 'bin')
+      .mockImplementation(async (path: string, isFolder: boolean) => {
+        removed.push([path, isFolder])
+        return null
+      })
     await workspace.removeMany(['/space/f', '/space/f/c.md', '/space/d.md'])
     expect(removed).toEqual([
       ['/space/f', true],
@@ -779,9 +780,7 @@ describe('selecting several rows', () => {
   })
 
   test('and deleting several is one step to undo', async () => {
-    const spy = vi.spyOn(workspace, 'remove').mockImplementation(async (path: string) => {
-      workspace.undone.record({ kind: 'delete', path, content: '' })
-    })
+    const spy = vi.spyOn(workspace, 'bin').mockResolvedValue({ content: '' })
     await workspace.removeMany(['/space/a.md', '/space/d.md'])
 
     expect(workspace.undone.last).toEqual({
@@ -793,6 +792,43 @@ describe('selecting several rows', () => {
     })
     expect(workspace.undoLabel).toBe('Undo the deletion')
     spy.mockRestore()
+  })
+
+  test('every picked row goes at once, waiting on saving once, even past one that will not go', async () => {
+    const { failed } = await import('./views/failed.svelte')
+    const told = vi.spyOn(failed, 'tell').mockImplementation(() => undefined)
+    const { Saving } = await import('./workspace/saving.svelte')
+    const settling = vi.spyOn(Saving.prototype, 'settled')
+    let letGo: () => void = () => undefined
+    const held = new Promise<void>((go) => (letGo = go))
+    const binned: string[] = []
+    const spy = vi.spyOn(workspace, 'bin').mockImplementation(async (path: string) => {
+      binned.push(path)
+      if (path === '/space/a.md') {
+        await held
+        throw new Error('locked')
+      }
+      return { content: '' }
+    })
+    workspace.select('/space/a.md')
+    workspace.toggleSelect('/space/f')
+    workspace.toggleSelect('/space/d.md')
+
+    const going = workspace.removeMany([...workspace.selection])
+    await vi.waitFor(() => expect(binned).toEqual(['/space/a.md']))
+    expect(workspace.entryAt('/space/a.md')).toBeNull()
+    expect(workspace.entryAt('/space/f')).toBeNull()
+    expect(workspace.entryAt('/space/d.md')).toBeNull()
+    expect(workspace.selection).toEqual([])
+
+    letGo()
+    await going
+    expect(binned).toEqual(['/space/a.md', '/space/f', '/space/d.md'])
+    expect(settling).toHaveBeenCalledTimes(1)
+    expect(told).toHaveBeenCalledTimes(1)
+    spy.mockRestore()
+    settling.mockRestore()
+    told.mockRestore()
   })
 
   test('the selection empties with the space', async () => {

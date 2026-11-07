@@ -294,4 +294,17 @@ describe("a file explorer's changes", () => {
     expect(view_.tell).toHaveBeenCalledWith('b.md is already there')
     expect(view_.reload).toHaveBeenCalled()
   })
+
+  test('a rename of many in a space renames every other one past one that fails', async () => {
+    const view_ = view('/home/me/Orden/Work')
+    workspace.rename.mockImplementationOnce(() => Promise.reject(new Error('locked')))
+    await renameMany(view_ as never, [
+      { from: '/home/me/Orden/Work/a.md', name: 'x.md' },
+      { from: '/home/me/Orden/Work/b.md', name: 'y.md' },
+      { from: '/home/me/Orden/Work/c.md', name: 'z.md' },
+    ])
+    expect(workspace.rename).toHaveBeenCalledTimes(3)
+    expect(workspace.rename).toHaveBeenLastCalledWith('/home/me/Orden/Work/c.md', 'z.md')
+    expect(view_.tell).toHaveBeenCalledWith('locked')
+  })
 })
