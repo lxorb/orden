@@ -223,7 +223,7 @@ export class AppSession {
       if (turn !== this.turn || this.over()) return
       if ('none' in found) {
         this.blocked = found.none
-        if (found.none !== 'old-sync') this.later(turn, () => void this.connect())
+        this.later(turn, () => void this.connect())
         return
       }
       if (!found.own) {
@@ -397,8 +397,15 @@ export class AppSession {
   }
 }
 
+function onOldSync(): boolean {
+  return !!account.user && account.user.syncVersion !== 2
+}
+
 export async function find(path: string, until: number): Promise<Found> {
-  if (account.user && account.user.syncVersion !== 2) return { none: 'old-sync' }
+  if (onOldSync()) {
+    await account.reread()
+    if (onOldSync()) return { none: 'old-sync' }
+  }
   const { runner } = await import('../sync2/runner.svelte')
   for (;;) {
     const found = await runner.idAt(path)

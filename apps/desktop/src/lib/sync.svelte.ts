@@ -93,12 +93,37 @@ class Sync {
 
   start() {
     this.generation++
+    const mine = this.generation
     this.leaveLocal()
+    const stopping = this.leaveEngine()
+    if (!stopping) {
+      this.begin()
+      return
+    }
+    void stopping.then(() => {
+      if (mine === this.generation) this.begin()
+    })
+  }
+
+  private begin() {
     if (this.wantsV2()) {
       this.startV2()
       return
     }
     this.startV1()
+  }
+
+  private leaveEngine(): Promise<void> | null {
+    if (this.timer) clearTimeout(this.timer)
+    this.timer = null
+    document.removeEventListener('visibilitychange', this.onVisibility)
+    window.removeEventListener('focus', this.onReturn)
+    if (!V2 || !this.v2) return null
+    const runner = this.v2
+    this.v2 = null
+    this.unmirror?.()
+    this.unmirror = null
+    return runner.stop()
   }
 
   private startV2() {
@@ -184,20 +209,8 @@ class Sync {
   stop() {
     this.generation++
     const mine = this.generation
-    let stopping: Promise<void> = Promise.resolve()
-    if (V2 && this.v2) {
-      const runner = this.v2
-      this.v2 = null
-      this.unmirror?.()
-      this.unmirror = null
-      stopping = runner.stop()
-    }
+    const stopping = this.leaveEngine() ?? Promise.resolve()
     void stopping.then(() => this.startLocal(mine))
-    if (this.timer) clearTimeout(this.timer)
-    this.timer = null
-
-    document.removeEventListener('visibilitychange', this.onVisibility)
-    window.removeEventListener('focus', this.onReturn)
 
     this.status = 'off'
   }
