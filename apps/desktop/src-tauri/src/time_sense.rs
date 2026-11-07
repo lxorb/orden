@@ -154,11 +154,7 @@ fn linux_memory(info: &str) -> Option<f32> {
 #[cfg(target_os = "linux")]
 mod platform {
     use std::path::Path;
-    use std::sync::{LazyLock, Mutex, PoisonError};
 
-    use x11rb::connection::Connection as _;
-    use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _, Window};
-    use x11rb::rust_connection::RustConnection;
     use zbus::blocking::Connection;
     use zbus::zvariant::OwnedValue;
 
@@ -232,63 +228,8 @@ mod platform {
         }
     }
 
-    struct X {
-        connection: RustConnection,
-        root: Window,
-        active: u32,
-        class: u32,
-    }
-
-    static X: LazyLock<Mutex<Option<X>>> = LazyLock::new(|| Mutex::new(opened()));
-
-    fn opened() -> Option<X> {
-        std::env::var_os("DISPLAY")?;
-        let (connection, screen) = x11rb::connect(None).ok()?;
-        let root = connection.setup().roots.get(screen)?.root;
-        let active = connection
-            .intern_atom(false, b"_NET_ACTIVE_WINDOW")
-            .ok()?
-            .reply()
-            .ok()?
-            .atom;
-        Some(X {
-            connection,
-            root,
-            active,
-            class: AtomEnum::WM_CLASS.into(),
-        })
-    }
-
-    fn asked(x: &X) -> Option<String> {
-        let window = x
-            .connection
-            .get_property(false, x.root, x.active, AtomEnum::WINDOW, 0, 1)
-            .ok()?
-            .reply()
-            .ok()?
-            .value32()?
-            .next()
-            .filter(|one| *one != 0)?;
-        let class = x
-            .connection
-            .get_property(false, window, x.class, AtomEnum::STRING, 0, 256)
-            .ok()?
-            .reply()
-            .ok()?
-            .value;
-        let mut parts = class.split(|one| *one == 0).filter(|one| !one.is_empty());
-        let instance = parts.next();
-        let named = parts.next().or(instance)?;
-        Some(String::from_utf8_lossy(named).into_owned())
-    }
-
     pub fn front_app() -> Option<String> {
-        let mut held = X.lock().unwrap_or_else(PoisonError::into_inner);
-        let found = held.as_ref().and_then(asked);
-        if found.is_none() && held.as_ref().is_none_or(|x| x.connection.flush().is_err()) {
-            *held = opened();
-        }
-        found
+        crate::front_x::front_class()
     }
 }
 

@@ -4,7 +4,7 @@ import { invoke, isDesktop } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { timeOn } from '../settings.svelte'
 import { MinuteFold, SAMPLE_EVERY } from './minutes'
-import { type Sensed, sensedOf } from './sensed'
+import { type Sensed, sensedOf, withIdle } from './sensed'
 import { time } from './time.svelte'
 import { type Place, siteOf, Tracker } from './tracker'
 
@@ -61,7 +61,7 @@ const shown = () => document.visibilityState === 'visible'
 async function sense(): Promise<Sensed> {
   if (isDesktop) {
     const said = sensedOf(await invoke<unknown>('time_sense').catch(() => null))
-    if (said) return said
+    if (said) return withIdle(said, Date.now() - lastInput)
   }
   return {
     idleMs: Date.now() - lastInput,

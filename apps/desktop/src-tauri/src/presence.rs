@@ -141,7 +141,23 @@ mod platform {
     }
 }
 
-#[cfg(not(any(windows, target_os = "macos")))]
+#[cfg(target_os = "linux")]
+mod platform {
+    use super::Input;
+
+    pub fn system_input() -> Option<Input> {
+        crate::front_x::input().map(|said| Input {
+            idle_ms: said.idle_ms,
+            front: said.front,
+        })
+    }
+
+    pub fn computer_name() -> Option<String> {
+        None
+    }
+}
+
+#[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
 mod platform {
     use super::Input;
 
