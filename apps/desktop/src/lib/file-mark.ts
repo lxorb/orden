@@ -25,6 +25,8 @@ import Table from 'lucide/dist/esm/icons/table-2.mjs'
 import { isMarkdownPath } from './space-paths'
 import { type TabKind, TAB_KINDS } from './workspace/tab-kinds'
 
+const PLAIN_TEXT = /\.(txt|text)$/i
+
 const Workflow: IconNode = [
   ['rect', { width: '9', height: '9', x: '2', y: '2', rx: '2.25' }],
   ['path', { d: 'M6.5 11v4.25a2.25 2.25 0 0 0 2.25 2.25H13' }],
@@ -92,7 +94,7 @@ export function fileMark(name: string): FileMark {
   if (isTermTarget(name)) return 'terminal'
   if (isApplicationTarget(name)) return 'application'
   if (isImageTarget(name)) return 'picture'
-  if (isMarkdownPath(name)) return 'note'
+  if (isMarkdownPath(name) || PLAIN_TEXT.test(name)) return 'note'
   return 'file'
 }
 

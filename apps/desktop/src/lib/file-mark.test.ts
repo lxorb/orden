@@ -38,8 +38,13 @@ describe('the mark a file wears', () => {
     }
   })
 
+  test('plain text is a note, since it opens as one', () => {
+    expect(fileMark('notes.txt')).toBe('note')
+    expect(fileMark('READ.TXT')).toBe('note')
+    expect(fileMark('words.text')).toBe('note')
+  })
+
   test('and anything else is a plain file', () => {
-    expect(fileMark('notes.txt')).toBe('file')
     expect(fileMark('data.json')).toBe('file')
     expect(fileMark('archive.zip')).toBe('file')
   })

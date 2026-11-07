@@ -32,9 +32,9 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
   return [
     {
       label: t('Open'),
-      run: () => (entry.folder ? void view.go(path) : void openFile(path, entry.name)),
+      run: () => (entry.folder ? void view.go(path) : void openFile(path)),
     },
-    ...(!entry.folder && inASpace(path) && ordenOpens(entry.name)
+    ...(!entry.folder && ordenOpens(path)
       ? [{ label: t('Open with the system app'), run: () => void openWithSystem(path) }]
       : []),
     { label: t(showLabel()), run: () => void showInSystem(path) },

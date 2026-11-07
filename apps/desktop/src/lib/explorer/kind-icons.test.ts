@@ -14,6 +14,7 @@ vi.mock('../tauri', async (original) => ({
 
 const { KindIcons, kindOf } = await import('./kind-icons')
 const EntryMark = (await import('./EntryMark.svelte')).default
+const { workspace } = await import('../workspace.svelte')
 
 const settled = async () => {
   for (let turn = 0; turn < 10; turn++) await Promise.resolve()
@@ -86,21 +87,21 @@ describe("the system's icons for kinds of file", () => {
 
 describe('a row of the file explorer', () => {
   test("wears Orden's own mark for what Orden opens and asks the system only for the rest", async () => {
-    for (const name of ['Plan.md', 'paper.pdf', 'board.canvas', 'photo.png', 'book.pages']) {
-      const body = render(EntryMark, { props: { name, folder: false } }).body
-      expect(body).toContain('<svg')
+    workspace.spaces = [{ id: 's', name: 'Me', root: '/me' }]
+    const drawn = (path: string, folder = false) =>
+      render(EntryMark, { props: { path, folder } }).body
+    for (const name of ['Plan.md', 'notes.txt', 'paper.pdf', 'board.canvas', 'book.pages']) {
+      expect(drawn(`/me/${name}`)).toContain('<svg')
     }
-    render(EntryMark, { props: { name: 'Folder.docx', folder: true } })
+    drawn('/me/Folder.docx', true)
     await settled()
     expect(askedOf).toEqual([])
 
-    expect(render(EntryMark, { props: { name: 'Budget.xlsx', folder: false } }).body).toContain(
-      '<svg',
-    )
+    expect(drawn('/me/Budget.xlsx')).toContain('<svg')
+    drawn('/me/photo.png')
+    drawn('/elsewhere/Plan.md')
     await settled()
-    expect(askedOf).toEqual(['xlsx'])
-    expect(render(EntryMark, { props: { name: 'Q3.xlsx', folder: false } }).body).toContain(
-      '<img src="data:image/png;base64,xlsx"',
-    )
+    expect(askedOf).toEqual(['xlsx', 'png', 'md'])
+    expect(drawn('/me/Q3.xlsx')).toContain('<img src="data:image/png;base64,xlsx"')
   })
 })

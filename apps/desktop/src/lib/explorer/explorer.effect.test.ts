@@ -185,6 +185,24 @@ describe('a file explorer', () => {
     expect(opened).toEqual(['/home/me/plan.pdf'])
   })
 
+  test('opens plain text in a space in Orden, as it does a note', async () => {
+    const taken = vi.spyOn(workspace, 'openEntry').mockResolvedValue(undefined)
+    workspace.spaces = [{ id: 'me', name: 'Me', root: '/home/me' }]
+    try {
+      await explorer()
+      const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) =>
+        one.textContent.includes('notes.txt'),
+      )
+      row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+      await settled()
+      expect(taken).toHaveBeenCalledWith('/home/me/notes.txt')
+      expect(opened).toEqual([])
+    } finally {
+      workspace.spaces = []
+      taken.mockRestore()
+    }
+  })
+
   test('goes where a path typed into the bar says', async () => {
     const { view } = await explorer()
     target.querySelector<HTMLElement>('.past')?.click()
