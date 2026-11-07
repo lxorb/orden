@@ -273,6 +273,29 @@ describe('fenced code', () => {
     )
   })
 
+  test('many fences that never close are read in time that grows with their number', () => {
+    const lines = (count: number) =>
+      Array.from({ length: count }, (_, i) => `${'~'.repeat(3 + (i % 7))}a\n`).join('')
+    const timed = (count: number) => {
+      const doc = lines(count)
+      let least = Infinity
+      for (let round = 0; round < 2; round++) {
+        const start = performance.now()
+        nibMarkdownParser.parse(doc)
+        least = Math.min(least, performance.now() - start)
+      }
+      return least
+    }
+    timed(500)
+    expect(timed(8_000) / timed(2_000)).toBeLessThan(9)
+  })
+
+  test('a fence after ones that never close still closes, by its own marks', () => {
+    const found = names(`~~~a\n~~~~b\n\`\`\`\ncode\n\`\`\`\n~~~ c\n> ~~~\n> x\n> ~~~\n`)
+    expect(found.filter((one) => one === 'FencedCode')).toHaveLength(2)
+    expect(tree('~~~a\n\n~~~~\nx\n~~~~\n')).toContain('FencedCode "~~~a\\n\\n~~~~"')
+  })
+
   test('leaves a fence on the last line as a paragraph', () => {
     expect(tree('# Title\n\n```')).toBe(
       [
