@@ -131,16 +131,20 @@
   }
 
   const subtasks = $derived(subtaskCounts(live.rows))
-  const countsOf = (row: Row) =>
-    row.anchor ? subtasks.get(taskKey(row.space, row.path, row.anchor.line)) : undefined
+  const countsIn = (counts: typeof subtasks, row: Row) =>
+    row.anchor && counts.size
+      ? counts.get(taskKey(row.space, row.path, row.anchor.line))
+      : undefined
+  const countsOf = (row: Row) => countsIn(subtasks, row)
 
-  const lines = $derived(
-    items.map((item) => {
+  const lines = $derived.by(() => {
+    const [on, today, placed, counts] = [dated, live.today, where, subtasks]
+    return items.map((item) => {
       const task = item.kind === 'row' ? item.row.task : undefined
       if (!task || item.kind !== 'row') return 1
-      return lineCount(task, hasMeta(task, dated, countsOf(item.row), live.today), where)
-    }),
-  )
+      return lineCount(task, hasMeta(task, on, countsIn(counts, item.row), today), placed)
+    })
+  })
 
   let list = $state<HTMLElement>()
   let probe = $state<HTMLElement>()
@@ -169,19 +173,25 @@
     grown = now ? { ...grown, [id]: now } : without(grown, id)
   }
 
-  function restingHeight(item: (typeof items)[number], many: number): number {
-    const row = win.row || 28
-    const { head, line, foot, card } = pitch
+  type Pitch = typeof pitch
+  function restingHeight(
+    item: (typeof items)[number],
+    many: number,
+    row = win.row || 28,
+    { head, line, foot, card }: Pitch = pitch,
+  ): number {
     if (item.kind !== 'row' || !item.row.task) return row
     return card + head + (many - 1) * line + (many > 1 ? foot : 0)
   }
 
-  const heights = $derived.by(
-    () =>
-      new Heights(
-        items.map((item, at) => restingHeight(item, lines[at] ?? 1) + (grown[item.id] ?? 0)),
+  const heights = $derived.by(() => {
+    const [row, sizes, more, many] = [win.row || 28, { ...pitch }, grown, lines]
+    return new Heights(
+      items.map(
+        (item, at) => restingHeight(item, many[at] ?? 1, row, sizes) + (more[item.id] ?? 0),
       ),
-  )
+    )
+  })
   $effect(() => {
     if (onnearend && items.length && shown.last >= items.length - 12) untrack(onnearend)
   })
