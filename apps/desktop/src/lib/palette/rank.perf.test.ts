@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { candidates } from './kinds'
-import { MOST, ranked } from './rank'
+import { LONGEST, MOST, ranked } from './rank'
 import { command, file, setting, visit, world } from './world.fixture'
 
 const CLOCKED = process.env.NIB_PERF === '1'
@@ -60,4 +60,15 @@ test('a word nothing has pays for one more pass, not more', () => {
 
   expect(ranked('qwertz', all)).toEqual([])
   if (CLOCKED) expect(each).toBeLessThan(120)
+})
+
+test('a long paste is weighed by the length a name can have, so each key stays quick', () => {
+  const all = candidates(BIG)
+  for (const unit of ['lecture 12 ', 'The heron stands still in the shallows. ']) {
+    const pasted = unit.repeat(4_000)
+    const each = timed(() => ranked(pasted, all), 1)
+
+    expect(ranked(pasted, all)).toEqual(ranked(pasted.slice(0, LONGEST), all))
+    expect(each).toBeLessThan(2_000)
+  }
 })

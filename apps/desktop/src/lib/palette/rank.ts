@@ -49,6 +49,19 @@ const MOST_USE = 40
 
 export const MOST = 50
 
+export const LONGEST = 256
+
+interface Typed {
+  words: readonly string[]
+  typed: string
+  short: boolean
+}
+
+function typedOf(term: string): Typed {
+  const words = term.split(/\s+/).filter(Boolean)
+  return { words, typed: words.join(' '), short: term.replace(/\s/g, '').length <= 2 }
+}
+
 const ideal = (word: string) => 6 + 8 * (word.length - 1)
 
 function quality(words: readonly string[], reading: string, slips: boolean): number | null {
@@ -73,10 +86,11 @@ function usePoints(use: number): number {
   return Math.min(MOST_USE, 12 * Math.log2(1 + use))
 }
 
-function scored<T>(term: string, one: Candidate<T>, slips = false): number | null {
-  const words = term.split(/\s+/).filter(Boolean)
-  const short = term.replace(/\s/g, '').length <= 2
-
+function scored<T>(
+  { words, typed, short }: Typed,
+  one: Candidate<T>,
+  slips: boolean,
+): number | null {
   let found = quality(words, one.name, slips)
   let raw = found
   const weigh = (readings: readonly string[], weight: number) => {
@@ -94,7 +108,6 @@ function scored<T>(term: string, one: Candidate<T>, slips = false): number | nul
   if (found === null || raw === null || found <= 0) return null
   if (raw < (STRONG[one.kind] ?? 0) && one.use <= 0) return null
 
-  const typed = words.join(' ')
   const naming = one.name === typed ? EXACT : one.name.startsWith(typed) ? PREFIX : 0
 
   return (
@@ -108,13 +121,14 @@ function scored<T>(term: string, one: Candidate<T>, slips = false): number | nul
 }
 
 export function ranked<T>(term: string, candidates: readonly Candidate<T>[], most = MOST): T[] {
-  const folded = foldName(term.trim())
+  const folded = foldName(term.trim().slice(0, LONGEST))
   if (!folded) return candidates.slice(0, most).map((one) => one.item)
+  const typed = typedOf(folded)
 
   const pass = (slips: boolean) => {
     const out: { item: T; score: number }[] = []
     for (const one of candidates) {
-      const score = scored(folded, one, slips)
+      const score = scored(typed, one, slips)
       if (score !== null) out.push({ item: one.item, score })
     }
     return out

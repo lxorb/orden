@@ -1,9 +1,11 @@
 import { foldName } from '@orden/markdown/links'
 
 export function fuzzy(query: string, text: string): number | null {
-  if (!query) return 0
+  return query ? foldedFuzzy(foldName(query), text) : 0
+}
 
-  const score = walked(foldName(query), foldName(text), 0)
+function foldedFuzzy(folded: string, text: string): number | null {
+  const score = walked(folded, foldName(text), 0)
   return score === null ? null : score - Math.floor(text.length / 12)
 }
 
@@ -29,9 +31,14 @@ export function walked(needle: string, haystack: string, first: number, at?: num
 }
 
 export function fuzzyAny(query: string, texts: readonly string[]): number | null {
+  if (query) return foldedAny(foldName(query), texts)
+  return texts.length ? 0 : null
+}
+
+function foldedAny(folded: string, texts: readonly string[]): number | null {
   let best: number | null = null
   for (const text of texts) {
-    const score = fuzzy(query, text)
+    const score = foldedFuzzy(folded, text)
     if (score !== null && (best === null || score > best)) best = score
   }
 
@@ -43,11 +50,14 @@ export function rank<T>(
   items: readonly T[],
   label: (item: T) => string | readonly string[],
 ): T[] {
+  const folded = foldName(query)
+  const score = (said: string | readonly string[]) => {
+    if (typeof said === 'string') return query ? foldedFuzzy(folded, said) : 0
+    if (query) return foldedAny(folded, said)
+    return said.length ? 0 : null
+  }
   return items
-    .map((item) => {
-      const said = label(item)
-      return { item, score: typeof said === 'string' ? fuzzy(query, said) : fuzzyAny(query, said) }
-    })
+    .map((item) => ({ item, score: score(label(item)) }))
     .filter((entry): entry is { item: T; score: number } => entry.score !== null)
     .sort((a, b) => b.score - a.score)
     .map((entry) => entry.item)
