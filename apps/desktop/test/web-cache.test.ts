@@ -40,4 +40,8 @@ describe('the web app’s built files, which stay readable offline', () => {
     expect(channels).toContain('differs between the two builds')
     expect(channels).toContain('! -name _headers')
   })
+
+  test('and the glasses’ package, which no server reads them from, leaves them out', () => {
+    expect(read('../../../scripts/even-stage.mjs')).toContain("'_headers',")
+  })
 })

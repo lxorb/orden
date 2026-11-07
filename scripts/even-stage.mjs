@@ -38,6 +38,7 @@ for (const stray of [
   'pass-192.png',
   'pass-256.png',
   'pass-512.png',
+  '_headers',
 ]) {
   rmSync(join(to, stray), { force: true })
 }
