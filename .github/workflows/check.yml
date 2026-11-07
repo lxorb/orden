@@ -296,6 +296,12 @@ jobs:
           export LD_LIBRARY_PATH="$PWD/apps/desktop/src-tauri/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
+      - name: The window's thread, alone
+        if: runner.os == 'Windows'
+        timeout-minutes: 10
+        run: |
+          cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --test window_thread -- --ignored
+
       - name: Latency, alone
         if: runner.os == 'Linux'
         timeout-minutes: 10
