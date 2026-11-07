@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { promptFor } from './prompt'
-import { loginLine } from './signin'
+import { loginLine, signingShell } from './signin'
 import { saidIn, standingOf } from './standing'
 import { troubleOf } from './trouble'
 import { modelsIn } from './models'
@@ -152,6 +152,21 @@ describe('the line a terminal signs in with', () => {
     expect(loginLine('codex', '/usr/bin/codex', false, true, "/home/o'n/ai/homes/codex-2")).toBe(
       String.raw`CODEX_HOME='/home/o'\''n/ai/homes/codex-2' '/usr/bin/codex' logout`,
     )
+  })
+})
+
+describe('the shell a sign-in is typed into', () => {
+  const shell = (id: string) => ({ id })
+  const list = [shell('/usr/bin/pwsh'), shell('/usr/bin/nu'), shell('/bin/zsh'), shell('/bin/bash')]
+
+  test('is one that reads the line as written, whatever shell is chosen for new tabs', () => {
+    expect(signingShell(list, shell('/usr/bin/pwsh'), false)?.id).toBe('/bin/zsh')
+    expect(signingShell(list, shell('/bin/tcsh'), false)?.id).toBe('/bin/zsh')
+    expect(signingShell(list, shell('/opt/homebrew/bin/fish'), false)?.id).toBe(
+      '/opt/homebrew/bin/fish',
+    )
+    expect(signingShell(list, shell('/bin/bash'), false)?.id).toBe('/bin/bash')
+    expect(signingShell([shell('cmd'), shell('pwsh')], shell('pwsh'), true)?.id).toBe('cmd')
   })
 })
 

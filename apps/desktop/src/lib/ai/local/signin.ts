@@ -38,6 +38,18 @@ export function loginLine(
     : `${HOME_VARIABLE[kind]}=${posix(home)} ${line}`
 }
 
+const SAYS_POSIX = /^(?:ba|z|da|k|mk)?sh$|^fish$/
+
+export function signingShell<T extends { id: string }>(
+  list: readonly T[],
+  chosen: T | undefined,
+  windows: boolean,
+): T | undefined {
+  if (windows) return list.find((one) => one.id === 'cmd') ?? chosen
+  const posix = (one: T) => SAYS_POSIX.test(one.id.split('/').pop() ?? '')
+  return chosen && posix(chosen) ? chosen : (list.find(posix) ?? chosen)
+}
+
 export async function signIn(
   kind: LocalKind,
   program: string,
@@ -69,7 +81,7 @@ async function typeInTerminal(
 
   const windows = platform() === 'windows'
   const list = await shells.ask()
-  const shell = (windows ? list.find((one) => one.id === 'cmd') : undefined) ?? shells.chosen
+  const shell = signingShell(list, shells.chosen, windows)
   if (!shell) return false
 
   await openTerminal(shell.id, { folder: null })
