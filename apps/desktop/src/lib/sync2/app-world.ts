@@ -50,7 +50,7 @@ function diskOf(telling: Telling): Disk {
       await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(() => undefined)
       const write = () => invoke('write_note', { path, content: text, arrived: true })
       await (telling.writing ? telling.writing(path, text, write) : write())
-      links.noteSaved(path, text)
+      links.noteSaved(path, text, true)
       telling.written(path, fresh)
     },
     keep: (path, text) =>

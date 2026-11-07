@@ -22,7 +22,7 @@ export interface Desk {
   owed(note: NoteDoc): void
   draftOf(note: NoteDoc): void
   joined(note: NoteDoc): Joined | null
-  noteSaved(path: string, text: string): void
+  noteSaved(path: string, text: string, arrived?: boolean): void
   read(path: string): Promise<string | null>
   exists(path: string): Promise<boolean>
   reachable(path: string): Promise<boolean>
@@ -193,7 +193,7 @@ export class Across {
   }
 
   private async heardWords(path: string, text: string) {
-    this.desk.noteSaved(path, text)
+    this.desk.noteSaved(path, text, true)
     const note = this.desk.documents.find((one) => samePath(one.path, path))
     if (!note) return
     await this.fromDisk(note, path)
@@ -268,7 +268,7 @@ export async function startAcross(): Promise<Across> {
       workspace.scheduleSession()
     },
     joined: (note) => sync.engine?.joinedOf(note) ?? null,
-    noteSaved: (path, text) => links.noteSaved(path, text),
+    noteSaved: (path, text, arrived) => links.noteSaved(path, text, arrived),
     read: (path) => invoke<string>('read_note', { path }).catch(() => null),
     exists: onDisk,
     reachable: (path) => {

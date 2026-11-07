@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 const notes = new Map([['/s/Plan.md', '# Plan\n']])
 const renames: Record<string, unknown>[] = []
 const trashed: Record<string, unknown>[] = []
+const saved: unknown[][] = []
 
 vi.mock('../tauri', () => ({
   isNative: false,
@@ -12,6 +13,10 @@ vi.mock('../tauri', () => ({
   invoke: (command: string, args?: { path?: string; from?: string; to?: string }) => {
     const path = args?.path ?? ''
     if (command === 'create_folder') return Promise.resolve()
+    if (command === 'write_note') {
+      notes.set(path, (args as { content: string }).content)
+      return Promise.resolve()
+    }
     if (command === 'rename_note') {
       renames.push({ ...args })
       const holder = args?.to?.replace(/\.pdf$/i, '')
@@ -48,7 +53,9 @@ vi.mock('../tauri', () => ({
   },
 }))
 vi.mock('../api', () => ({ api: {}, BASE: '' }))
-vi.mock('../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }))
+vi.mock('../link-index.svelte', () => ({
+  links: { noteSaved: (...said: unknown[]) => saved.push(said) },
+}))
 vi.mock('../space-watch', () => ({ scanSpace: () => Promise.resolve([]) }))
 
 const { appWorld } = await import('./app-world')
@@ -67,6 +74,17 @@ describe("the browser's disk, as the v2 engine sees it", () => {
 
     expect(await disk.exists('/s/Plan.md')).toBe(true)
     expect(await disk.exists('/s/Gone.md')).toBe(false)
+  })
+})
+
+describe('a note another device wrote', () => {
+  test('is told to the app as heard, so no device but the one that wrote it dates its todos', async () => {
+    const telling = { written: () => undefined } as unknown as Parameters<typeof appWorld>[1]
+
+    await appWorld(() => null, telling).disk.write('/s/Errands.md', '- [x] Post the letter\n')
+
+    expect(notes.get('/s/Errands.md')).toBe('- [x] Post the letter\n')
+    expect(saved).toEqual([['/s/Errands.md', '- [x] Post the letter\n', true]])
   })
 })
 

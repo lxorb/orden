@@ -25,14 +25,8 @@ import { carriedOwn, meansInbox } from '@orden/bases/inbox'
 import {
   CANCELLED_KEY,
   DONE_KEY,
-  inOldFolder,
-  isTodoList,
   LIST_KEY,
   LIST_VALUE,
-  MARKED_KEY,
-  MARKED_VALUE,
-  type Meta,
-  OLD_FOLDER,
   STOPPED_VALUE,
   withDates,
 } from '@orden/bases/todo-lists'
@@ -59,6 +53,7 @@ import {
   spaceSource,
   spacesFor,
 } from './tools'
+import { dated, listsBy } from './dated'
 import type { TokenRow } from './tokens'
 
 const MOST_READ = 2000
@@ -174,37 +169,6 @@ async function notesOf(env: Env, space: Space): Promise<Held[]> {
     .bind(space.id, MOST_READ)
     .all<Held>()
   return results
-}
-
-interface Lists {
-  listed: (path: string, meta: Meta) => boolean
-  home: string
-}
-
-const DEEPEST = 64
-
-async function listsBy(env: Env, spaceId: string): Promise<Lists> {
-  const { results } = await env.DB.prepare(
-    `with recursive up(meta, parent, path, depth) as (
-       select meta, parent_id, name, 0 from folders
-        where space_id = ?1 and deleted = 0 and meta like ?2
-       union all
-       select up.meta, f.parent_id, f.name || '/' || up.path, up.depth + 1
-         from up join folders f on f.id = up.parent
-        where f.space_id = ?1 and f.deleted = 0 and up.depth < ?3
-     )
-     select meta, path from up where parent is null`,
-  )
-    .bind(spaceId, `%${MARKED_KEY}%`, DEEPEST)
-    .all<{ meta: string | null; path: string }>()
-  const marked = results
-    .filter((one) => metaFromText(one.meta)?.[MARKED_KEY] === MARKED_VALUE)
-    .map((one) => one.path)
-    .sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))
-  return {
-    listed: (path, meta) => isTodoList(path, meta) || inOldFolder(path, meta, marked.length > 0),
-    home: marked[0] ?? OLD_FOLDER,
-  }
 }
 
 async function rowsOf(
@@ -521,6 +485,15 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   return { ...said, ...(await listNote(env, space, readAt(at).path, listing)) }
 }
 
+function daysOf(space: Writable, path: string, text: string, note: Note | null, hash: string) {
+  const meta = note ? metaFromText(note.meta) : undefined
+  const row = withDates(rowsOfText(space.name, path, text), meta).find(
+    (one) => one.anchor?.hash === hash,
+  )
+  return (_: string, cancelled: boolean) =>
+    (cancelled ? row?.task?.cancelledOn : row?.task?.completed) ?? undefined
+}
+
 async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
   const anchor = readAt(args.at)
   const path = notePath(anchor.path)
@@ -545,7 +518,9 @@ async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
   if (moveTo === undefined || moveTo === null) {
     return await edits(async () => {
       const { held, edited, said } = await editing()
-      if (edited.text !== held.words) await written(env, space, path, edited.text, held.note)
+      if (edited.text === held.words) return said
+      await written(env, space, path, edited.text, held.note)
+      await dated(env, space, path, held.words, edited.text, held.note, today)
       return said
     })
   }
@@ -564,15 +539,16 @@ async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
       into === path ? { words: source, note: held.note } : await readOf(env, space, into)
     const before = there?.words ?? ''
     const placed = placeIn(before, block.lines, under)
-    const landed = await written(
-      env,
-      space,
-      into,
-      appliedEdits(before, [placedEdit(placed)]),
-      there?.note ?? null,
-      place.made,
-    )
-    return { said, at: `${landed}#${placed.line}:${readAt(edited.at).hash}` }
+    const after = appliedEdits(before, [placedEdit(placed)])
+    const landed = await written(env, space, into, after, there?.note ?? null, place.made)
+    const hash = readAt(edited.at).hash
+    const note = there?.note ?? (await readOf(env, space, into).catch(() => null))?.note
+    if (note) {
+      const was = into === path ? held.words : before
+      const days = daysOf(space, path, held.words, held.note, hash)
+      await dated(env, space, into, was, after, note, today, days)
+    }
+    return { said, at: `${landed}#${placed.line}:${hash}` }
   })
   if (into === path) return { ...placedIn.said, at: placedIn.at }
 
@@ -586,7 +562,9 @@ async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
       }
       throw error
     }
-    await written(env, space, path, taken(read.edited).source, read.held.note)
+    const rest = taken(read.edited).source
+    await written(env, space, path, rest, read.held.note)
+    await dated(env, space, path, read.held.words, rest, read.held.note, today)
     return null
   }).catch((error: unknown) => {
     if (!(error instanceof Said)) throw error

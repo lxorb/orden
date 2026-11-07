@@ -18,6 +18,7 @@ import { noteKind, readsAs } from '../rooms/kind'
 import { fits } from '../storage'
 import { hashOfBytes } from '../sync2/files'
 import type { Env, Note } from '../types'
+import { dated } from './dated'
 import type { TokenRow } from './tokens'
 import { PROTECTED, type Shut, shutFor } from '../protected'
 
@@ -329,9 +330,15 @@ async function writeNote(
 
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'
+  const held = await noteRead(env, space.id, path)
   const put = await putNote(env, space, path, asked ?? '', device)
   if (put === MOVED) return changedWhileWriting(path)
-  return typeof put === 'string' ? put : `Saved ${put.path}.`
+  if (typeof put === 'string') return put
+  if (held && held !== MOVED) {
+    const today = new Date().toISOString().slice(0, 10)
+    await dated(env, space, put.path, held.words, asked ?? '', held.note, today)
+  }
+  return `Saved ${put.path}.`
 }
 
 export function changedWhileWriting(path: string): string {

@@ -587,6 +587,24 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
     expect(done?.task?.text).toBe('Post the letter')
   })
 
+  test('a todo ticked on another device takes no day here: the device that ticked it keeps it', async () => {
+    const path = `${WORK}/Errands.md`
+    const { store, answer, settled, dated, disk } = listed({
+      [path]: '- [ ] Post the letter\n- [ ] Call mom\n',
+    })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+    disk.set(path, '- [x] Post the letter\n- [ ] Call mom\n')
+    store.saved(path, '- [x] Post the letter\n- [ ] Call mom\n', false)
+    disk.set(path, '- [x] Post the letter\n- [x] Call mom\n')
+    await store.follow({ op: 'created', path, kind: 'file', root: WORK, heard: true })
+    await settled()
+    expect(dated).toEqual([])
+    expect(tasks(store.of())).toHaveLength(2)
+  })
+
   test('two todos with the same words keep their own dates, ticked here or on another device (#1401)', async () => {
     const path = `${WORK}/Errands.md`
     const first = new Date(2026, 10, 1, 12).getTime()
