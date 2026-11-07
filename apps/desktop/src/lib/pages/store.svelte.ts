@@ -135,13 +135,14 @@ export class PagesStore extends CanvasStore {
 
   turnToPaper(paper: number) {
     const at = this.pages.findIndex((one) => one.page === paper)
-    this.halt()
     this.turnTo(at >= 0 ? at + 1 : paper)
   }
 
   turnTo(number: number) {
     const page = this.pages[Math.min(Math.max(1, Math.round(number)), this.pages.length) - 1]
     if (!page) return
+
+    this.halt()
 
     const down = this.pane.height / this.camera.scale
     this.camera = this.held({
@@ -154,6 +155,7 @@ export class PagesStore extends CanvasStore {
     const scale = this.fitted
     if (!scale || !this.pane.height) return
 
+    this.halt()
     const down = this.pane.height / scale
     const y = keepTop ? this.top + down / 2 : down / 2 - MARGIN / scale
     this.camera = this.held({ x: 0, y, scale })
@@ -162,12 +164,14 @@ export class PagesStore extends CanvasStore {
   zoomBy(by: number) {
     const { width, height } = this.pane
     this.theirs()
+    this.halt()
     this.camera = this.held(zoomed(this.camera, width, height, width / 2, height / 2, by))
   }
 
   zoomAt(at: { x: number; y: number }, by: number) {
     const { width, height } = this.pane
     this.theirs()
+    this.halt()
     this.camera = this.held(zoomed(this.camera, width, height, at.x, at.y, by))
   }
 
@@ -183,6 +187,7 @@ export class PagesStore extends CanvasStore {
     if (!page || !this.pane.width || !this.pane.height) return
 
     this.theirs()
+    this.halt()
     const scale = clampScale(
       Math.min(
         (this.pane.width - 2 * MARGIN) / page.width,
@@ -196,6 +201,7 @@ export class PagesStore extends CanvasStore {
     if (!this.pane.height) return
 
     this.theirs()
+    this.halt()
     const wanted = clampScale(scale)
     this.camera = this.held({
       ...this.camera,
