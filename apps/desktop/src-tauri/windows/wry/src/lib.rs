@@ -404,6 +404,9 @@ pub use self::webview2::ScrollBarStyle;
 /// Orden's patch (lxorb/orden#1137); see `webview2::host_as_visual`.
 #[cfg(target_os = "windows")]
 pub use self::webview2::host_as_visual;
+/// Orden's patch (lxorb/orden#1304); see `webview2::still_open`.
+#[cfg(target_os = "windows")]
+pub use self::webview2::still_open;
 #[cfg(target_os = "windows")]
 use self::webview2::*;
 #[cfg(target_os = "windows")]

@@ -101,6 +101,15 @@ fn pump_until<T>(rx: &mpsc::Receiver<T>, within: std::time::Duration) -> Option<
   }
 }
 
+/// Orden's patch (lxorb/orden#1304): whether a webview has not been closed. A new window
+/// handed to a page whose webview was closed meanwhile (`put_NewWindow`) read its gone profile
+/// and ended the app with an access violation; a closed webview answers every call with
+/// `ERROR_INVALID_STATE`.
+pub fn still_open(webview: &ICoreWebView2) -> bool {
+  let mut browser = 0_u32;
+  unsafe { webview.BrowserProcessId(&mut browser) }.is_ok()
+}
+
 fn gave_up() -> Error {
   Error::WebView2Error(webview2_com::Error::TaskCanceled)
 }
@@ -923,19 +932,29 @@ impl InnerWebView {
           // Use `dispatch_handler` to schedule the run on the message loop after this callback completes,
           // this is needed for `new_window_req_handler` to create new webviews for `NewWindowResponse::Create`
           // or it will deadlock, see https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/threading-model#reentrancy
-          Self::dispatch_handler(hwnd, move || match new_window_req_handler(uri, features) {
-            NewWindowResponse::Allow => {
-              let _ = args.SetHandled(false);
-              let _ = deferral.Complete();
-            }
-            NewWindowResponse::Create { webview } => {
-              let _ = args.SetHandled(true);
-              let _ = args.SetNewWindow(&webview);
-              let _ = deferral.Complete();
-            }
-            NewWindowResponse::Deny => {
+          let opener = webview.clone();
+          Self::dispatch_handler(hwnd, move || {
+            if !still_open(&opener) {
               let _ = args.SetHandled(true);
               let _ = deferral.Complete();
+              return;
+            }
+            match new_window_req_handler(uri, features) {
+              NewWindowResponse::Allow => {
+                let _ = args.SetHandled(false);
+                let _ = deferral.Complete();
+              }
+              NewWindowResponse::Create { webview } => {
+                let _ = args.SetHandled(true);
+                if still_open(&opener) && still_open(&webview) {
+                  let _ = args.SetNewWindow(&webview);
+                }
+                let _ = deferral.Complete();
+              }
+              NewWindowResponse::Deny => {
+                let _ = args.SetHandled(true);
+                let _ = deferral.Complete();
+              }
             }
           });
         } else {
