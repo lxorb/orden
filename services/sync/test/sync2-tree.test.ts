@@ -176,6 +176,39 @@ describe('preparing a space', () => {
     expect(page.items.map((item) => item.id)).toContain(a)
     expect(row(a).epoch).toBe(1)
   })
+
+  test('lets the feed pass a note an old device wrote while it was prepared only once the note has a name', async () => {
+    const a = await made('a.md')
+    await prepare()
+    const unnamed = (id: string, path: string) => {
+      const { next } = env.db
+        .prepare('select next from space_cursor where space_id = ?')
+        .get(space) as { next: number }
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+           values (?, ?, ?, ?, 1, 1, 0, 0, '')`,
+        )
+        .run(id, space, path, next)
+      env.db.prepare('update space_cursor set next = ? where space_id = ?').run(next + 1, space)
+    }
+    unnamed('early', 'Early/e.md')
+    env.justBefore(/update spaces set prepared_at/, () => {
+      unnamed('late', 'Late/b.md')
+    })
+
+    const heard: string[] = []
+    let since = 0
+    for (let page = 0; page < 5; page += 1) {
+      const read = await feed(since)
+      heard.push(...read.items.map((item) => item.id))
+      since = read.cursor
+      if (!read.more) break
+    }
+
+    expect(heard).toEqual(expect.arrayContaining([a, 'early', 'late']))
+    expect(row('late')).toMatchObject({ name: 'b.md', path: 'Late/b.md' })
+  })
 })
 
 describe('tree operations', () => {

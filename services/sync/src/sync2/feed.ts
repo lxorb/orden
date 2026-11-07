@@ -52,7 +52,9 @@ export async function feedPage(
     rows = await changedSince(env, spaceId, since)
   }
 
-  const page = rows.slice(0, FEED_PAGE)
+  const whole = rows.slice(0, FEED_PAGE)
+  const unnamed = whole.findIndex((row) => row.name === null)
+  const page = unnamed === -1 ? whole : whole.slice(0, unnamed)
   const safe = (row: Row) =>
     row.deleted === 1 || (isEntryId(row.id) && (row.parent === null || isEntryId(row.parent)))
   return {
@@ -62,7 +64,7 @@ export async function feedPage(
         : [{ ...itemOf(row, row.name), name: heldName(row.name) }],
     ),
     cursor: page.at(-1)?.seq ?? since,
-    more: rows.length > FEED_PAGE,
+    more: unnamed === -1 ? rows.length > FEED_PAGE : page.length > 0,
     order: true,
     meta: true,
     index: true,
