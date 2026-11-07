@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { lexMarkdown, renderMarkdown } from './index'
-import { isTagName, opensTag, tagNameAt } from './tags'
+import { isTagName, opensTag, tagAt, tagNameAt } from './tags'
 
 function drawn(source: string, options: Parameters<typeof renderMarkdown>[1] = {}): string[] {
   const html = renderMarkdown(source, options)
@@ -142,4 +142,29 @@ describe('a name a tag can be renamed to', () => {
       expect(isTagName(name)).toBe(false)
     },
   )
+})
+
+describe('a long line of a table', () => {
+  test('is read for tags in time that grows with its length', () => {
+    const timed = (count: number) => {
+      const text = `| ${'|#a '.repeat(count)}\n${'|#b'.repeat(count)}`
+      let least = Infinity
+      for (let round = 0; round < 4; round++) {
+        const start = performance.now()
+        for (let at = text.indexOf('#'); at !== -1; at = text.indexOf('#', at + 1)) tagAt(text, at)
+        least = Math.min(least, performance.now() - start)
+      }
+      return least
+    }
+    timed(4_000)
+    expect(timed(16_000) / timed(4_000)).toBeLessThan(9)
+  })
+
+  test('still tells a row from a line that only holds a bar', () => {
+    expect(tagAt('| x |#a', 5)).toBe('a')
+    expect(tagAt('  | x |#a', 7)).toBe('a')
+    expect(tagAt('x |#a', 3)).toBeNull()
+    expect(tagAt('| x\nx |#a', 7)).toBeNull()
+    expect(tagAt('x\n| y |#a', 7)).toBe('a')
+  })
 })

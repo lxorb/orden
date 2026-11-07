@@ -92,13 +92,25 @@ export function opensTag(before: string): boolean {
   return opensTagAt(before, before.length)
 }
 
+const LEADING_SPACE = /\s*/y
+
+const lastRow = { text: '', from: -1, to: -1, row: false }
+
 function rowAt(text: string, at: number): boolean {
-  let start = at
-  while (start > 0 && text.charAt(start - 1) !== '\n') start--
-  return text
-    .slice(start, at + 1)
-    .trimStart()
-    .startsWith('|')
+  if (lastRow.text === text && at >= lastRow.from && at <= lastRow.to) return lastRow.row
+
+  const from = text.lastIndexOf('\n', at - 1) + 1
+  const next = text.indexOf('\n', at)
+  LEADING_SPACE.lastIndex = from
+  LEADING_SPACE.exec(text)
+  const first = Math.min(LEADING_SPACE.lastIndex, at)
+  Object.assign(lastRow, {
+    text,
+    from,
+    to: next === -1 ? text.length : next,
+    row: text.charAt(first) === '|',
+  })
+  return lastRow.row
 }
 
 export function tagNameAt(text: string, at: number): string | null {

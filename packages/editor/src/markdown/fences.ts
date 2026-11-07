@@ -34,7 +34,23 @@ interface LineReadingState {
   stack: object[]
 }
 
+const unclosed = new WeakMap<BlockContext, Map<number, number>>()
+
 function closerAhead(cx: BlockContext, line: Line, mark: number, length: number): boolean {
+  const atTop = cx.depth === 1
+  const shortest = atTop ? unclosed.get(cx)?.get(mark) : undefined
+  if (shortest !== undefined && length >= shortest) return false
+
+  const found = scanForCloser(cx, line, mark, length)
+  if (!found && atTop) {
+    const seen = unclosed.get(cx) ?? new Map<number, number>()
+    seen.set(mark, Math.min(seen.get(mark) ?? length, length))
+    unclosed.set(cx, seen)
+  }
+  return found
+}
+
+function scanForCloser(cx: BlockContext, line: Line, mark: number, length: number): boolean {
   const state = cx as unknown as LineReadingState
   const context = { ...state }
   const { markers, ...fields } = state.line
