@@ -48,7 +48,7 @@ describe('pictures carried to another machine', () => {
         [picture(1)],
         'powershell',
       ),
-    ).toBe(`"${kept}"`)
+    ).toBe(`'${kept}'`)
     expect(
       await carried(
         machine(() => kept),
