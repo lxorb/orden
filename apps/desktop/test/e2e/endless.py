@@ -95,6 +95,28 @@ document.body.append(child)
 document.getElementById('nested').textContent = 'made a frame'
 </script>
 
+A block that reaches into a frame it makes, for the eval and patterns there:
+
+<div id="reached">nothing yet</div>
+<script>
+const reached = []
+const inner = document.createElement('iframe')
+document.body.append(inner)
+for (const run of [
+  () => inner.contentWindow.eval('while (true) {}'),
+  () => new inner.contentWindow.RegExp('^(\\w+\\s?)+$').test('a'.repeat(40) + '!'),
+  () => window[0].Function('for (;;) {}')(),
+]) {
+  try {
+    run()
+    reached.push('ran')
+  } catch (error) {
+    reached.push(error.name)
+  }
+}
+document.getElementById('reached').textContent = reached.join(' ')
+</script>
+
 The end.
 """
 
@@ -281,6 +303,7 @@ def drive(browser: Browser) -> None:
     refused(page, 2, "pattern", "nothing yet", "with a pattern that backtracks without end")
     refused(page, 3, "madepattern", "SyntaxError SyntaxError SyntaxError", "that makes its patterns as it runs")
     refused(page, 4, "nested", "made a frame", "that makes a frame of its own")
+    refused(page, 5, "reached", "SecurityError SecurityError SecurityError", "that reaches into a frame it makes")
     context.close()
 
 def main() -> int:
