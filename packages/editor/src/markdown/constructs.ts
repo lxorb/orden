@@ -30,6 +30,7 @@ const PercentComment: MarkdownConfig = {
   parseInline: [
     {
       name: 'PercentComment',
+      triggers: '%',
       before: 'Emphasis',
       parse(cx, next, pos) {
         if (next !== PERCENT || cx.char(pos + 1) !== PERCENT) return -1
@@ -49,6 +50,7 @@ const Highlight: MarkdownConfig = {
   parseInline: [
     {
       name: 'Highlight',
+      triggers: '=',
       after: 'Emphasis',
       parse(cx, next, pos) {
         if (next !== EQUALS || cx.char(pos + 1) !== EQUALS) return -1
@@ -63,6 +65,7 @@ const Wikilink: MarkdownConfig = {
   parseInline: [
     {
       name: 'Wikilink',
+      triggers: '![',
       before: 'Link',
       parse(cx, next, pos) {
         const embed = next === BANG
@@ -103,6 +106,7 @@ const Hashtag: MarkdownConfig = {
   parseInline: [
     {
       name: 'Hashtag',
+      triggers: '#',
       parse(cx, next, pos) {
         if (next !== HASH) return -1
 
@@ -155,6 +159,7 @@ const InlineMath: MarkdownConfig = {
   parseInline: [
     {
       name: 'InlineMath',
+      triggers: '$',
       before: 'Escape',
       parse(cx, next, pos) {
         if (next !== DOLLAR || cx.char(pos + 1) === DOLLAR) return -1
@@ -244,6 +249,7 @@ const Footnote: MarkdownConfig = {
   parseInline: [
     {
       name: 'FootnoteRef',
+      triggers: '[',
       before: 'Link',
       parse(cx, next, pos) {
         if (next !== BRACKET_OPEN || cx.char(pos + 1) !== CARET) return -1

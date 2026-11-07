@@ -94,7 +94,11 @@ const openFences = new WeakMap<Tree, readonly number[]>()
 
 let declining: number[] | null = null
 
-function watchDeclines(parse: PartialParse): PartialParse {
+interface Outer {
+  readonly baseParse?: PartialParse | null | undefined
+}
+
+function watchDeclines(parse: PartialParse): PartialParse & Outer {
   const found: number[] = []
 
   return {
@@ -103,6 +107,9 @@ function watchDeclines(parse: PartialParse): PartialParse {
     },
     get stoppedAt() {
       return parse.stoppedAt
+    },
+    get baseParse() {
+      return (parse as Outer).baseParse
     },
     stopAt(pos: number) {
       parse.stopAt(pos)

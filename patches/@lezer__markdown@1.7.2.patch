@@ -1,5 +1,39 @@
+diff --git a/dist/index.d.cts b/dist/index.d.cts
+index 24325c8bd1340397080d209d9c6b0ff9cc0f60fb..f09cb428da74781030a38841a5aaf2bdfddb8a7d 100644
+--- a/dist/index.d.cts
++++ b/dist/index.d.cts
+@@ -216,6 +216,12 @@ interface InlineParser {
+     */
+     parse(cx: InlineContext, next: number, pos: number): number;
+     /**
++    Patched (pnpm patch, see docs/patches.md): the characters, all
++    ASCII, at which `parse` can return anything but -1. When given,
++    it is not asked at any other.
++    */
++    triggers?: string;
++    /**
+     When given, this parser will be installed directly before the
+     parser with the given name. The default configuration defines
+     inline parsers with names Escape, Entity, InlineCode, HTMLTag,
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index 24325c8bd1340397080d209d9c6b0ff9cc0f60fb..f09cb428da74781030a38841a5aaf2bdfddb8a7d 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -216,6 +216,12 @@ interface InlineParser {
+     */
+     parse(cx: InlineContext, next: number, pos: number): number;
+     /**
++    Patched (pnpm patch, see docs/patches.md): the characters, all
++    ASCII, at which `parse` can return anything but -1. When given,
++    it is not asked at any other.
++    */
++    triggers?: string;
++    /**
+     When given, this parser will be installed directly before the
+     parser with the given name. The default configuration defines
+     inline parsers with names Escape, Entity, InlineCode, HTMLTag,
 diff --git a/dist/index.js b/dist/index.js
-index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e23445d357 100644
+index e5725e7b76c21832da1a3d2ed188ae042c06224c..184b2850aefa0fa773280362b5f4203582a96292 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -316,6 +316,19 @@ function isHorizontalRule(line, cx, breaking) {
@@ -49,7 +83,58 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
          let size = isOrderedList(line, cx, false);
          if (size < 0)
              return false;
-@@ -1391,6 +1410,7 @@ try {
+@@ -1198,6 +1217,8 @@ class MarkdownParser extends Parser {
+         }
+         if (nonEmpty(config.parseInline)) {
+             for (let spec of config.parseInline) {
++                if (spec.triggers != null)
++                    triggeredBy(spec.parse, spec.triggers);
+                 let found = inlineNames.indexOf(spec.name);
+                 if (found > -1) {
+                     inlineParsers[found] = spec.parse;
+@@ -1230,21 +1251,34 @@ class MarkdownParser extends Parser {
+     */
+     parseInline(text, offset) {
+         let cx = new InlineContext(this, text, offset);
++        // Patched (pnpm patch, see docs/patches.md): a parser that names the characters
++        // it starts at is asked only at those, so plain text is not offered to all twenty.
++        let table = this.inlineTable || (this.inlineTable = inlineTable(this.inlineParsers));
+         outer: for (let pos = offset; pos < cx.end;) {
+             let next = cx.char(pos);
+-            for (let token of this.inlineParsers)
+-                if (token) {
+-                    let result = token(cx, next, pos);
+-                    if (result >= 0) {
+-                        pos = result;
+-                        continue outer;
+-                    }
++            for (let token of table[next < 128 ? next : 128]) {
++                let result = token(cx, next, pos);
++                if (result >= 0) {
++                    pos = result;
++                    continue outer;
+                 }
++            }
+             pos++;
+         }
+         return cx.resolveMarkers(0);
+     }
+ }
++function inlineTable(parsers) {
++    let table = [];
++    for (let code = 0; code <= 128; code++)
++        table.push(parsers.filter(parse => parse && (typeof parse.triggers != "string" || /[^\0-\x7f]/.test(parse.triggers) ||
++            code < 128 && parse.triggers.indexOf(String.fromCharCode(code)) > -1)));
++    return table;
++}
++function triggeredBy(parse, triggers) {
++    parse.triggers = triggers;
++    return parse;
++}
+ function nonEmpty(a) {
+     return a != null && a.length > 0;
+ }
+@@ -1391,6 +1425,7 @@ try {
      Punctuation = new RegExp("[\\p{S}|\\p{P}]", "u");
  }
  catch (_) { }
@@ -57,7 +142,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
  const DefaultInline = {
      Escape(cx, next, start) {
          if (next != 92 /* '\\' */ || start == cx.end - 1)
-@@ -1473,8 +1493,16 @@ const DefaultInline = {
+@@ -1473,8 +1508,16 @@ const DefaultInline = {
              return cx.append(elt(Type.HardBreak, start, start + 2));
          if (next == 32) {
              let pos = start + 1;
@@ -76,7 +161,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
              if (cx.char(pos) == 10 && pos >= start + 2)
                  return cx.append(elt(Type.HardBreak, start, pos + 1));
          }
-@@ -1491,7 +1519,11 @@ const DefaultInline = {
+@@ -1491,7 +1534,11 @@ const DefaultInline = {
          if (next != 93 /* ']' */)
              return -1;
          // Scanning back to the next link/image start marker
@@ -89,7 +174,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
              let part = cx.parts[i];
              if (part instanceof InlineDelimiter && (part.type == LinkStart || part.type == ImageStart)) {
                  // If this one has been set invalid (because it would produce
-@@ -1506,14 +1538,18 @@ const DefaultInline = {
+@@ -1506,17 +1553,24 @@ const DefaultInline = {
                  let link = cx.parts[i] = finishLink(cx, content, part.type == LinkStart ? Type.Link : Type.Image, part.from, start + 1);
                  // Set any open-link markers before this link to invalid.
                  if (part.type == LinkStart)
@@ -109,7 +194,13 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
          return -1;
      }
  };
-@@ -1578,7 +1614,9 @@ function parseURL(text, start, offset) {
++for (let [name, triggers] of [["Escape", "\\"], ["Entity", "&"], ["InlineCode", "`"], ["HTMLTag", "<"], ["Emphasis", "_*"],
++    ["HardBreak", "\\ "], ["Link", "["], ["Image", "!"], ["LinkEnd", "]"]])
++    triggeredBy(DefaultInline[name], triggers);
+ function finishLink(cx, content, type, start, startPos) {
+     let { text } = cx, next = cx.char(startPos), endPos = startPos;
+     content.unshift(elt(Type.LinkMark, start, start + (type == Type.Image ? 2 : 1)));
+@@ -1578,7 +1632,9 @@ function parseURL(text, start, offset) {
                  escaped = false;
              }
              else if (ch == 40 /* '(' */) {
@@ -120,7 +211,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
              }
              else if (ch == 41 /* ')' */) {
                  if (!depth)
-@@ -1603,6 +1641,9 @@ function parseLinkTitle(text, start, offset) {
+@@ -1603,6 +1659,9 @@ function parseLinkTitle(text, start, offset) {
              escaped = false;
          else if (ch == end)
              return elt(Type.LinkTitle, start + offset, pos + 1 + offset);
@@ -130,15 +221,16 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
          else if (ch == 92 /* '\\' */)
              escaped = true;
      }
-@@ -1654,6 +1695,7 @@ class InlineContext {
+@@ -1654,6 +1713,8 @@ class InlineContext {
          @internal
          */
          this.parts = [];
 +        this.linkBottom = 0;
++        this.atSign = null;
      }
      /**
      Get the character code at the given (document-relative)
-@@ -1708,6 +1750,9 @@ class InlineContext {
+@@ -1708,6 +1769,9 @@ class InlineContext {
      appropriate node and updating the content of this.parts. @internal
      */
      resolveMarkers(from) {
@@ -148,7 +240,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
          // Scan forward, looking for closing tokens
          for (let i = from; i < this.parts.length; i++) {
              let close = this.parts[i];
-@@ -1715,9 +1760,11 @@ class InlineContext {
+@@ -1715,9 +1779,11 @@ class InlineContext {
                  continue;
              let emp = close.type == EmphasisUnderscore || close.type == EmphasisAsterisk;
              let closeSize = close.to - close.from;
@@ -161,7 +253,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
                  let part = this.parts[j];
                  if (part instanceof InlineDelimiter && (part.side & 1 /* Mark.Open */) && part.type == close.type &&
                      // Ignore emphasis delimiters where the character count doesn't match
-@@ -1727,8 +1774,10 @@ class InlineContext {
+@@ -1727,8 +1793,10 @@ class InlineContext {
                      break;
                  }
              }
@@ -173,7 +265,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
              let type = close.type.resolve, content = [];
              let start = open.from, end = close.to;
              // Emphasis marker effect depends on the character count. Size consumed is minimum of the two
-@@ -1791,6 +1840,8 @@ class InlineContext {
+@@ -1791,6 +1859,8 @@ class InlineContext {
      takeContent(startIndex) {
          let content = this.resolveMarkers(startIndex);
          this.parts.length = startIndex;
@@ -182,7 +274,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
          return content;
      }
      /**
-@@ -1883,7 +1934,9 @@ class FragmentCursor {
+@@ -1883,7 +1953,9 @@ class FragmentCursor {
              c.firstChild();
          }
          let rPos = pos + this.fragment.offset;
@@ -193,7 +285,27 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
              if (!c.parent())
                  return false;
          for (;;) {
-@@ -2205,11 +2258,15 @@ function autolinkURLEnd(text, from) {
+@@ -2038,6 +2110,7 @@ const Strikethrough = {
+         }],
+     parseInline: [{
+             name: "Strikethrough",
++            triggers: "~",
+             parse(cx, next, pos) {
+                 if (next != 126 /* '~' */ || cx.char(pos + 1) != 126 || cx.char(pos + 2) == 126)
+                     return -1;
+@@ -2199,17 +2272,27 @@ function count(str, from, to, ch) {
+             result++;
+     return result;
+ }
++function atSignAfter(cx, pos) {
++    let memo = cx.atSign;
++    if (!memo || pos < memo.from || memo.at > -1 && memo.at < pos)
++        memo = cx.atSign = { from: pos, at: cx.text.indexOf("@", pos) };
++    return memo.at;
++}
+ function autolinkURLEnd(text, from) {
+     urlRE.lastIndex = from;
+     let m = urlRE.exec(text);
      if (!m || lastTwoDomainWords.exec(m[0])[0].indexOf("_") > -1)
          return -1;
      let end = from + m[0].length;
@@ -211,7 +323,23 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
          else if (last == ";" && (m = /&(?:#\d+|#x[a-f\d]+|\w+);$/.exec(text.slice(from, end))))
              end = from + m.index;
          else
-@@ -2243,9 +2300,11 @@ const Autolink = {
+@@ -2237,15 +2320,27 @@ const Autolink = {
+                 let pos = absPos - cx.offset;
+                 if (pos && /\w/.test(cx.text[pos - 1]))
+                     return -1;
++                // Patched (pnpm patch, see docs/patches.md): only `www.`, `http`, `mailto:`
++                // and `xmpp:` start here without an `@` at most a hundred characters on, and
++                // the next `@` is looked up once, not read for at every word.
++                if (next != 119 && next != 104 && next != 109 && next != 120) {
++                    if (!/[\w.+-]/.test(cx.text[pos]))
++                        return -1;
++                    let at = atSignAfter(cx, pos);
++                    if (at < 0 || at - pos > 100)
++                        return -1;
++                }
+                 autolinkRE.lastIndex = pos;
+                 let m = autolinkRE.exec(cx.text), end = -1;
+                 if (!m)
                      return -1;
                  if (m[1] || m[2]) { // www., http://
                      end = autolinkURLEnd(cx.text, pos + m[0].length);
@@ -225,3 +353,29 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e2
                      }
                  }
                  else if (m[3]) { // email address
+@@ -2274,7 +2369,7 @@ Extension bundle containing [`Table`](#Table),
+ */
+ const GFM = [Table, TaskList, Strikethrough, Autolink];
+ function parseSubSuper(ch, node, mark) {
+-    return (cx, next, pos) => {
++    return triggeredBy((cx, next, pos) => {
+         if (next != ch || cx.char(pos + 1) == ch)
+             return -1;
+         let elts = [cx.elt(mark, pos, pos + 1)];
+@@ -2288,7 +2383,7 @@ function parseSubSuper(ch, node, mark) {
+                 break;
+         }
+         return -1;
+-    };
++    }, String.fromCharCode(ch));
+ }
+ /**
+ Extension providing
+@@ -2328,6 +2423,7 @@ const Emoji = {
+     defineNodes: [{ name: "Emoji", style: tags.character }],
+     parseInline: [{
+             name: "Emoji",
++            triggers: ":",
+             parse(cx, next, pos) {
+                 let match;
+                 if (next != 58 /* ':' */ || !(match = /^[a-zA-Z_0-9]+:/.exec(cx.slice(pos + 1, cx.end))))
