@@ -40,18 +40,38 @@ impl Family {
                 end_job(job);
                 return;
             }
-            let _ =
-                quiet(Command::new("taskkill").args(["/T", "/F", "/PID", &self.pid.to_string()]))
-                    .status();
+            let pid = self.pid.to_string();
+            std::thread::spawn(move || {
+                let _ = quiet(Command::new("taskkill").args(["/T", "/F", "/PID", &pid])).status();
+            });
         }
-        #[cfg(unix)]
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        end_group(self.pid);
+        #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
         {
-            let _ = quiet(Command::new("kill").args(["-KILL", "--", &format!("-{}", self.pid)]))
-                .status();
+            let group = format!("-{}", self.pid);
+            std::thread::spawn(move || {
+                let _ = quiet(Command::new("kill").args(["-KILL", "--", &group])).status();
+            });
         }
     }
 }
 
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[allow(
+    unsafe_code,
+    reason = "killpg is the system's own call and has no safe wrapper in the crates nib uses"
+)]
+fn end_group(pid: u32) {
+    let Ok(group) = libc::pid_t::try_from(pid) else {
+        return;
+    };
+    if group > 0 {
+        let _ = unsafe { libc::killpg(group, libc::SIGKILL) };
+    }
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 fn quiet(command: &mut Command) -> &mut Command {
     use std::process::Stdio;
 

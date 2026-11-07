@@ -167,7 +167,10 @@ impl Gemini {
             running.stop();
         }
         drop(running);
-        let _ = std::fs::remove_dir_all(&self.files);
+        let files = self.files.clone();
+        std::thread::spawn(move || {
+            let _ = std::fs::remove_dir_all(files);
+        });
     }
 }
 
