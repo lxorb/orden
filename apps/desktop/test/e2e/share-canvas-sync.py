@@ -45,7 +45,7 @@ def device(browser: Browser, label: str, at: str, token: str | None = None, phon
         options.update(is_mobile=True, has_touch=True, device_scale_factor=2)
     context = browser.new_context(**options)
     if token:
-        context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+        context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(at, wait_until="domcontentloaded")

@@ -99,7 +99,7 @@ def hears(channel, kind):
     )
     return f"window.__{name}"
 
-heard = hears("nib:presenter", "here")
+heard = hears("orden:presenter", "here")
 opened = run("window.__TAURI_INTERNALS__.invoke('presenter_open', {}).then(() => 'opened', (error) => String(error))")
 print(f"globals: the presenter's window: {opened}")
 if opened != "opened":

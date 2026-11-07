@@ -8,7 +8,7 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 PATIENCE = 30
-HINTS = "try { localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
+HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
 
 SEED = """
 async () => {

@@ -6,7 +6,7 @@ import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from '.
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { carried, type Moving, moving } from './file-ops'
 
-export const STORAGE_KEY = 'nib:arranged'
+export const STORAGE_KEY = 'orden:arranged'
 
 export const MOST_ARRANGED = 200
 
@@ -407,9 +407,9 @@ function withList(
   return names.length ? { ...held, [folder]: names } : without(held, folder)
 }
 
-export const SORT_KEY = 'nib:sorting'
+export const SORT_KEY = 'orden:sorting'
 
-const BEFORE = 'nib:list-order'
+const BEFORE = 'orden:list-order'
 
 interface Sorted extends Folded {
   mode: SortMode

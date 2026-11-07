@@ -3,7 +3,7 @@ import { api, type AccountSettings } from './api'
 import { keepJson, stored } from './stored'
 import { type Space, workspace } from './workspace.svelte'
 
-const OWED_KEY = 'nib:archived-spaces-owed'
+const OWED_KEY = 'orden:archived-spaces-owed'
 
 let heard: readonly string[] | null = null
 

@@ -58,7 +58,7 @@ def ask(tab, number):
     )
 
 BUBBLE = "document.querySelector('.ask[role=\"dialog\"]') !== null"
-STORED = "localStorage.getItem('nib:web-grants') || ''"
+STORED = "localStorage.getItem('orden:web-grants') || ''"
 
 failures = []
 

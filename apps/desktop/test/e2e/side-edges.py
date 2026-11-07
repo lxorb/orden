@@ -14,9 +14,9 @@ TABLET_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-OTHERS_SEEN = "localStorage.setItem('nib:hints', JSON.stringify(['drawer', 'graph', 'palette']))"
+OTHERS_SEEN = "localStorage.setItem('orden:hints', JSON.stringify(['drawer', 'graph', 'palette']))"
 
-INSIDE = "localStorage.setItem('nib:side-toggles-inside', 'yes')"
+INSIDE = "localStorage.setItem('orden:side-toggles-inside', 'yes')"
 
 SETTING = "Sidebar toggles inside the sidebars"
 

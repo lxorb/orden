@@ -66,7 +66,7 @@ beforeAll(async () => {
   await workspace.open(`${OLD}/${NOTE}`)
 
   localStorage.setItem(
-    'nib:mirrors',
+    'orden:mirrors',
     JSON.stringify({
       account: null,
       seen: true,

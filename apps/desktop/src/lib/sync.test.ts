@@ -926,7 +926,7 @@ describe('the mirrors this machine remembers', () => {
 
   test('belong to one account, and another one starts from nothing', async () => {
     localStorage.setItem(
-      'nib:mirrors',
+      'orden:mirrors',
       JSON.stringify({
         account: 'somebody-else',
         mirrors: { '/Theirs': { spaceId: 's-Theirs', root: '/Theirs', shared: true } },
@@ -943,7 +943,7 @@ describe('the mirrors this machine remembers', () => {
 
   test('stay the account’s they were for when written down after it signed out', async () => {
     localStorage.setItem(
-      'nib:mirrors',
+      'orden:mirrors',
       JSON.stringify({
         account: 'u1',
         mirrors: { '/Notes': { spaceId: 's-Notes', root: '/Notes' } },
@@ -955,7 +955,7 @@ describe('the mirrors this machine remembers', () => {
       await account.signOut()
       await sync.renamed('/Notes', '/Renamed', 'Renamed')
 
-      const written = JSON.parse(localStorage.getItem('nib:mirrors') ?? '{}') as {
+      const written = JSON.parse(localStorage.getItem('orden:mirrors') ?? '{}') as {
         account?: unknown
         mirrors?: Record<string, unknown>
       }
@@ -968,7 +968,7 @@ describe('the mirrors this machine remembers', () => {
 
   test('are kept by a machine that wrote them before there was an account beside them', async () => {
     localStorage.setItem(
-      'nib:mirrors',
+      'orden:mirrors',
       JSON.stringify({ '/Notes': { spaceId: 's-Notes', root: '/Notes' } }),
     )
 
@@ -983,7 +983,7 @@ describe('the mirrors this machine remembers', () => {
   describe('are read again when the rest of the storage lands', () => {
     function landed(notes: Record<string, { id: string; version: number; hash: string }>) {
       localStorage.setItem(
-        'nib:mirrors',
+        'orden:mirrors',
         JSON.stringify({
           account: 'u1',
           seen: true,
@@ -1054,7 +1054,7 @@ describe('the mirrors this machine remembers', () => {
         ]),
       )
 
-      localStorage.removeItem('nib:mirrors')
+      localStorage.removeItem('orden:mirrors')
       await started()
       try {
         expect(sync.tracked('/Notes/note 0.md')).toBeNull()
@@ -1080,10 +1080,10 @@ describe('the mirrors this machine remembers', () => {
         landed({ 'one.md': { id: 'n1', version: 3, hash: 'aaa' } })
         sync.reread()
 
-        const written = localStorage.getItem('nib:mirrors')
+        const written = localStorage.getItem('orden:mirrors')
         sync.reread()
 
-        expect(localStorage.getItem('nib:mirrors')).toBe(written)
+        expect(localStorage.getItem('orden:mirrors')).toBe(written)
       } finally {
         stopped()
       }
@@ -1093,7 +1093,7 @@ describe('the mirrors this machine remembers', () => {
       await started()
       try {
         localStorage.setItem(
-          'nib:mirrors',
+          'orden:mirrors',
           JSON.stringify({
             account: 'somebody-else',
             mirrors: { '/Theirs': { spaceId: 's-Theirs', root: '/Theirs' } },
@@ -1131,7 +1131,7 @@ describe('a storage with no room left for the note caches', () => {
   function written(): {
     mirrors: Record<string, { cursor?: number; notes?: object; dropped?: boolean }>
   } {
-    const held = localStorage.getItem('nib:mirrors')
+    const held = localStorage.getItem('orden:mirrors')
     expect(held).not.toBeNull()
     return JSON.parse(held ?? '{}') as ReturnType<typeof written>
   }
@@ -1177,7 +1177,7 @@ describe('a storage with no room left for the note caches', () => {
     vi.stubGlobal('localStorage', cramped(0))
 
     await expect(sync.pass()).resolves.not.toThrow()
-    expect(localStorage.getItem('nib:mirrors')).toBeNull()
+    expect(localStorage.getItem('orden:mirrors')).toBeNull()
     expect(sync.remoteIdFor('/Account')).toBe('s-Account')
 
     vi.unstubAllGlobals()
@@ -1674,7 +1674,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
     accountWithNotes()
     await signIn()
     account.settled()
-    localStorage.setItem('nib:sync-version', '2')
+    localStorage.setItem('orden:sync-version', '2')
     const v1 = countingV1()
 
     try {
@@ -1683,13 +1683,13 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
 
       expect(walkBack).toHaveBeenCalledTimes(1)
       expect(sync.status).toBe('offline')
-      expect(localStorage.getItem('nib:sync-version')).toBe('2')
+      expect(localStorage.getItem('orden:sync-version')).toBe('2')
       await vi.advanceTimersByTimeAsync(60_000)
       expect(v1.asked).toBe(0)
 
       walk(true)
       await until(() => v1.asked > 0)
-      expect(localStorage.getItem('nib:sync-version')).toBe('1')
+      expect(localStorage.getItem('orden:sync-version')).toBe('1')
       expect(sync.version).toBe(1)
       expect(v1.asked).toBeGreaterThan(0)
     } finally {
@@ -1706,7 +1706,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
     accountWithNotes()
     await signIn()
     account.settled()
-    localStorage.setItem('nib:sync-version', '2')
+    localStorage.setItem('orden:sync-version', '2')
     const v1 = countingV1()
 
     try {
@@ -1716,7 +1716,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
       walk(false)
       await vi.advanceTimersByTimeAsync(60_000)
       expect(v1.asked).toBe(0)
-      expect(localStorage.getItem('nib:sync-version')).toBe('2')
+      expect(localStorage.getItem('orden:sync-version')).toBe('2')
     } finally {
       v1.restore()
       vi.doUnmock('./sync2/runner.svelte')
@@ -1817,7 +1817,7 @@ describe('what the account holds of a file', () => {
       held[path] = { id: `n-${path}`, version: 1, hash: await sha256(words) }
     }
     localStorage.setItem(
-      'nib:mirrors',
+      'orden:mirrors',
       JSON.stringify({
         account: 'u1',
         mirrors: { '/Notes': { spaceId: 's-Notes', root: '/Notes', files: tracked, notes: held } },

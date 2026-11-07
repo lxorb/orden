@@ -76,15 +76,15 @@ describe('the store', () => {
 
     expect(frecency.worth('note:/a.md', NOW)).toBe(1)
     expect(frecency.last('note:/a.md')).toBe(NOW)
-    expect(reads).toContain('nib:palette-picks')
+    expect(reads).toContain('orden:palette-picks')
   })
 
   test('takes the commands the palette kept before, newest first, and forgets their list', async () => {
-    held.set('nib:palette-used', JSON.stringify(['reopen', 'print']))
+    held.set('orden:palette-used', JSON.stringify(['reopen', 'print']))
     const { frecency } = await import('./frecency')
 
     expect(frecency.latest('command:', 8)).toEqual(['command:reopen', 'command:print'])
-    expect(held.has('nib:palette-used')).toBe(false)
+    expect(held.has('orden:palette-used')).toBe(false)
   })
 
   test('writes itself down, and forgets a thing on request', async () => {
@@ -93,7 +93,7 @@ describe('the store', () => {
     frecency.use('command:print', NOW)
     frecency.use('command:print', NOW)
     frecency.flush()
-    const written = JSON.parse(held.get('nib:palette-picks') ?? '{}') as Record<string, unknown>
+    const written = JSON.parse(held.get('orden:palette-picks') ?? '{}') as Record<string, unknown>
     expect(written['command:print']).toEqual([2, NOW])
 
     frecency.forget('command:print')

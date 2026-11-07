@@ -240,7 +240,7 @@ def main() -> int:
         ask(run.app, "for (const one of [...ws.tabs]) ws.close(one.id); return true")
         space = ask(run.app, "return ws.spaces.find((one) => one.name === %s)?.id" % json.dumps(SPACE))
         said["space"] = space
-        ask(run.app, "localStorage.setItem('nib:web-data', JSON.stringify({ %s: 'space' })); return true" % json.dumps(space))
+        ask(run.app, "localStorage.setItem('orden:web-data', JSON.stringify({ %s: 'space' })); return true" % json.dumps(space))
     finally:
         run.close()
     last = run.port
@@ -266,8 +266,8 @@ def main() -> int:
         here_b = go(args.identifier, f"{b}/check")
         said["new: 127.0.0.1"] = here_a
         said["new: localhost"] = here_b
-        said["new: merged"] = ask(run.app, "return localStorage.getItem('nib:web-data-merged')")
-        said["new: choice left"] = ask(run.app, "return localStorage.getItem('nib:web-data')")
+        said["new: merged"] = ask(run.app, "return localStorage.getItem('orden:web-data-merged')")
+        said["new: choice left"] = ask(run.app, "return localStorage.getItem('orden:web-data')")
 
         said["apart"] = ask(run.app, OWN % r"'\r\nNib-Data=3f9a0c17e2b4d685\r\n'" + STORE_OF, 40)
         said["apart: 127.0.0.1"] = go(args.identifier, f"{a}/check")

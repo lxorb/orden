@@ -831,7 +831,7 @@ describe('a replacement put back with another window here', () => {
       locks: {
         request: async (name: string, ...rest: unknown[]) => {
           const run = rest.at(-1) as (lock: unknown) => unknown
-          if (!name.startsWith('nib:file:')) return run({ name })
+          if (!name.startsWith('orden:file:')) return run({ name })
           await new Promise((go) => turns.push(() => go(undefined)))
           inTurn = true
           try {

@@ -173,10 +173,10 @@ describe('the page a note is read on', () => {
   })
 
   test('says how long it took, under a name a profiler can read', async () => {
-    performance.clearMeasures('nib:reading')
+    performance.clearMeasures('orden:reading')
     await readingHtml(note('# One\n\nWords.\n'), 'light', true)
 
-    expect(performance.getEntriesByName('nib:reading')).toHaveLength(1)
+    expect(performance.getEntriesByName('orden:reading')).toHaveLength(1)
   })
 })
 

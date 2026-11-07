@@ -27,7 +27,7 @@ export function withPictures(html: string, note: Note): string {
   return mapSources(html, (src) => notePicture(src, note.path, note.text))
 }
 
-const MEASURE = 'nib:reading'
+const MEASURE = 'orden:reading'
 
 export const tagAnchor: TagHref = (tag) => `#${tag}`
 

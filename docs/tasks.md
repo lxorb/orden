@@ -43,7 +43,7 @@ Nothing here loosens any of them.
    Bases expression language, filters, formulas, sort, group, summaries. A note is a row whose
    columns are its front matter; a task is a row whose columns are its fields. Todoist's
    filter language (`today & #work | overdue`) compiles to the same tree.
-5. **Views are `.base` files**, Obsidian's format, with Orden's additions under one key, `nib:`,
+5. **Views are `.base` files**, Obsidian's format, with Orden's additions under one key, `orden:`,
    that Obsidian leaves alone. Table, list, cards, board, calendar, timeline and chart; the
    built-in Inbox, Today and Upcoming are bases Orden ships and a reader can copy and change.
 6. **A Tasks panel on the left** beside the files and the search: the one Todos view of
@@ -1130,7 +1130,7 @@ and the reading view), so the first paint carries the panel's tab mark and nothi
   `BoardNew`, `board-menus.ts`, pure helpers in `board.ts`), `CalendarLayout` (month, week, three days, day; the
   tray; hours with duration; a pulled edge writes the duration; repeats faded),
   `UpcomingLayout`, `TimelineLayout` (start to due, or `nib.date` to `nib.end`;
-  dependency arrows from `⛔`), `ChartLayout` (settings under the view's `nib:`). A
+  dependency arrows from `⛔`), `ChartLayout` (settings under the view's `orden:`). A
   phone gets `PhoneRows`, `AgendaLayout`, and no timeline.
 - **Builders**: `FilterBuilder` reads Todoist's language into the tree (`fromTodoist`)
   and the tree into rows of property, operator and value (`filter-rows.ts`); a filter it
@@ -1231,7 +1231,7 @@ reading reminder times), and Emil decided to build it (8.5).
 
 ### 5.11 `.base` files, and Orden's key
 
-A base Orden writes is a base Obsidian reads. Orden's additions go under one key, `nib:`, at the
+A base Orden writes is a base Obsidian reads. Orden's additions go under one key, `orden:`, at the
 top level and inside a view, and every key Orden does not know is kept on a round trip in the
 order it was written. Obsidian ignores what it does not understand; lane 1 proves that with
 fixtures opened in Obsidian 1.14 (if the top-level key were refused, the additions move into
@@ -1775,7 +1775,7 @@ lane 6 `docs/agent-native.md` 5.3, `docs/automation.md`, `docs/import.md` and `d
 
 ### 7.3 Risks
 
-- **Obsidian and the `nib:` key.** Proved by lane 1 on day one, with the fallback of 5.11.
+- **Obsidian and the `orden:` key.** Proved by lane 1 on day one, with the fallback of 5.11.
 - **Obsidian 1.14's own keys.** The kanban's `type` and the cards' option names are read off
   files Obsidian itself writes, kept as fixtures, never guessed from the help pages.
 - **The Tasks plugin's parser and Orden's bracket fields.** Proved by round-tripping the

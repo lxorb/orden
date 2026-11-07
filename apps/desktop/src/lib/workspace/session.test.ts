@@ -446,7 +446,7 @@ describe('writing the session down', () => {
     const written = tightStorage(1)
 
     try {
-      expect(writeSession('nib:workspace', session())).toBe(true)
+      expect(writeSession('orden:workspace', session())).toBe(true)
 
       const saved = JSON.parse(written[0] ?? '{}') as Session
       const tabs = saved.layout ? (panesOf(saved.layout.frame)[0]?.tabs ?? []) : []
@@ -461,7 +461,7 @@ describe('writing the session down', () => {
     const written = tightStorage(2)
 
     try {
-      expect(writeSession('nib:workspace', session())).toBe(true)
+      expect(writeSession('orden:workspace', session())).toBe(true)
 
       const saved = JSON.parse(written[0] ?? '{}') as Session
       const tabs = saved.layout ? (panesOf(saved.layout.frame)[0]?.tabs ?? []) : []
@@ -476,7 +476,7 @@ describe('writing the session down', () => {
     const written = tightStorage(0)
 
     try {
-      writeSession('nib:workspace', session())
+      writeSession('orden:workspace', session())
       const back = readSession(JSON.parse(written[0] ?? '{}'))
 
       expect(back?.closed).toHaveLength(1)
@@ -491,7 +491,7 @@ describe('writing the session down', () => {
     const written = tightStorage(0)
 
     try {
-      writeSession('nib:workspace', session())
+      writeSession('orden:workspace', session())
       expect(JSON.parse(written[0] ?? '{}')).toMatchObject({ version: 2 })
     } finally {
       vi.unstubAllGlobals()
@@ -506,7 +506,7 @@ describe('writing the session down', () => {
     })
 
     try {
-      expect(writeSession('nib:workspace', session())).toBe(false)
+      expect(writeSession('orden:workspace', session())).toBe(false)
     } finally {
       vi.unstubAllGlobals()
     }

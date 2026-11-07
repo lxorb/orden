@@ -56,7 +56,7 @@ def flared(label: str, one: dict, corner: float | None = None) -> None:
 
 def opened(browser: Browser, *scripts: str) -> Page:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 700})
-    for script in ("localStorage.setItem('nib:icon-tabs', 'no')", *scripts):
+    for script in ("localStorage.setItem('orden:icon-tabs', 'no')", *scripts):
         page.add_init_script(script)
     DRIVE.open(page)
     DRIVE.seed(page, "# Alpha\n\nWords.\n")
@@ -69,7 +69,7 @@ def split(page: Page, along: str) -> list[str]:
     return pane_ids(page)
 
 def drive(browser: Browser) -> None:
-    for mode, scripts in (("fit", ()), ("uniform", ("localStorage.setItem('nib:fit-tabs', 'no')",))):
+    for mode, scripts in (("fit", ()), ("uniform", ("localStorage.setItem('orden:fit-tabs', 'no')",))):
         page = opened(browser, *scripts)
         page.evaluate(
             """() => {
@@ -106,7 +106,7 @@ def drive(browser: Browser) -> None:
         DRIVE.shot(page, f"{mode}-column")
         page.close()
 
-    page = opened(browser, "localStorage.setItem('nib:language', 'ar')")
+    page = opened(browser, "localStorage.setItem('orden:language', 'ar')")
     wait_for(page, "document.documentElement.dir === 'rtl'", "the words running from the right")
     _first, second = split(page, "row")
     flush("right to left, row, the second strip", strips(page)[second], squared=True)

@@ -34,7 +34,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const KEY = 'nib:test'
+const KEY = 'orden:test'
 
 beforeEach(() => localStorage.clear())
 
@@ -56,7 +56,7 @@ describe('reading every space back', () => {
 
     localStorage.setItem(KEY, '[1, 2]')
     expect(readSpaces(KEY, () => ({}))).toEqual({})
-    expect(readSpaces('nib:never-written', () => ({}))).toEqual({})
+    expect(readSpaces('orden:never-written', () => ({}))).toEqual({})
   })
 })
 

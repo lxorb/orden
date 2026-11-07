@@ -1,9 +1,9 @@
 import { forget, isNumber, isRecord, keepJson, stored, stringList } from './stored'
 import { afterQuiet } from './timing'
 
-const KEY = 'nib:palette-picks'
+const KEY = 'orden:palette-picks'
 
-const USED_KEY = 'nib:palette-used'
+const USED_KEY = 'orden:palette-used'
 
 const DAY = 24 * 60 * 60 * 1000
 

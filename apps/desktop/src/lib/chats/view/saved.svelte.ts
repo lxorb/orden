@@ -1,7 +1,7 @@
 import type { Message } from '@orden/chats'
 import { isNumber, isRecord, isString, keepJson, stored } from '../../stored'
 
-const KEY = 'nib:chats-saved'
+const KEY = 'orden:chats-saved'
 
 interface SavedMessage {
   chat: string

@@ -65,7 +65,7 @@ def opened(
         device_scale_factor=scale,
     )
     if off:
-        page.add_init_script("localStorage.setItem('nib:swipe', 'off')")
+        page.add_init_script("localStorage.setItem('orden:swipe', 'off')")
     page.add_init_script("performance.setResourceTimingBufferSize(10000)")
     DRIVE.open(page)
     DRIVE.seed(page, "# Alpha\n\nThe first note.\n", "# Beta\n\nThe second note.\n")

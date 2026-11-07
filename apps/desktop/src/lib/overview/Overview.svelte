@@ -251,7 +251,7 @@
 
   const tabsOf = (paneId: string) => workspace.tabsIn(paneId).map((tab) => tab.id)
 
-  const ALL = 'nib:overview-spaces'
+  const ALL = 'orden:overview-spaces'
   let all = $state(storedText(ALL) !== 'this')
 
   function showAll(on: boolean) {

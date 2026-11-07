@@ -110,7 +110,7 @@ def no_room(browser: Browser) -> None:
     c.add_init_script(
         "const put = Storage.prototype.setItem;"
         "Storage.prototype.setItem = function (k, v) {"
-        "  if (String(k).startsWith('nib:workspace')) throw new DOMException('full', 'QuotaExceededError');"
+        "  if (String(k).startsWith('orden:workspace')) throw new DOMException('full', 'QuotaExceededError');"
         "  return put.call(this, k, v) }"
     )
     c.goto(DRIVE.origin)
@@ -140,7 +140,7 @@ def stale(browser: Browser, gone: bool) -> None:
     type_in(a, "OLD-FROM-A ")
     a.evaluate(f"()=>{WS}.persist()")
     held = a.evaluate(
-        "()=>JSON.parse(localStorage.getItem('nib:workspace')).layout.frame.pane.tabs"
+        "()=>JSON.parse(localStorage.getItem('orden:workspace')).layout.frame.pane.tabs"
         ".find(t=>t.name.startsWith('Both'))"
     )
     if not held.get("dirty") or held.get("base") != "# Both\n\nbase line\n":
@@ -209,7 +209,7 @@ def rewrite_in_turn(browser: Browser) -> None:
     hub = f"{root}/Hub.md"
     c = another(ctx, a.url)
     c.evaluate(
-        "(p)=>{navigator.locks.request('nib:file:'+p,()=>new Promise(go=>{window.letGo=go}));"
+        "(p)=>{navigator.locks.request('orden:file:'+p,()=>new Promise(go=>{window.letGo=go}));"
         "return new Promise(r=>setTimeout(r,50))}",
         hub,
     )
@@ -235,7 +235,7 @@ def busy_launch(browser: Browser) -> None:
         "const ask = LockManager.prototype.request; let once = false;"
         "LockManager.prototype.request = function (name, ...rest) {"
         "  const answer = ask.call(this, name, ...rest);"
-        "  if (!once && String(name).startsWith('nib:probe:')) { once = true;"
+        "  if (!once && String(name).startsWith('orden:probe:')) { once = true;"
         "    const until = Date.now() + 2300; while (Date.now() < until); }"
         "  return answer }"
     )

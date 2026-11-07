@@ -364,15 +364,15 @@ describe('what the phone app keeps', () => {
     put(host)
 
     const store = await connectStore()
-    await store?.write('nib:session', 'token')
+    await store?.write('orden:session', 'token')
 
-    expect(host.held.get('nib:session')).toBe('token')
-    expect(await store?.read('nib:session')).toBe('token')
+    expect(host.held.get('orden:session')).toBe('token')
+    expect(await store?.read('orden:session')).toBe('token')
   })
 
   test('reads a key that was never written as nothing, not as an empty token', async () => {
     put(new Keeper())
-    expect(await (await connectStore())?.read('nib:session')).toBeNull()
+    expect(await (await connectStore())?.read('orden:session')).toBeNull()
   })
 
   test('reads a cleared key as nothing, because the host cannot take one away', async () => {
@@ -380,10 +380,10 @@ describe('what the phone app keeps', () => {
     put(host)
 
     const store = await connectStore()
-    await store?.write('nib:session', 'token')
-    await store?.write('nib:session', '')
+    await store?.write('orden:session', 'token')
+    await store?.write('orden:session', '')
 
-    expect(await store?.read('nib:session')).toBeNull()
+    expect(await store?.read('orden:session')).toBeNull()
   })
 })
 
@@ -443,8 +443,8 @@ describe('a host that never answers', () => {
       error: SILENT,
     })
     expect(await settled(glasses.leave())).toEqual({ value: undefined })
-    expect(await settled(store.read('nib:session'))).toEqual({ value: null })
-    expect(await settled(store.write('nib:session', 'token'))).toEqual({ value: false })
+    expect(await settled(store.read('orden:session'))).toEqual({ value: null })
+    expect(await settled(store.write('orden:session', 'token'))).toEqual({ value: false })
     vi.useRealTimers()
   })
 

@@ -4,7 +4,7 @@ import { isNumber, isRecord, isString, stored } from './stored'
 import { mark } from './trace'
 import type { Draft, Session } from './workspace/session'
 
-export const KEY = 'nib:first-screen'
+export const KEY = 'orden:first-screen'
 
 const PATIENCE = 8000
 

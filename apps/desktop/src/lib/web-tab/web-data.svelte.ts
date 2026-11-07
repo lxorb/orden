@@ -1,4 +1,4 @@
-export const HISTORY = 'nib:web-visits'
+export const HISTORY = 'orden:web-visits'
 
 export function ownStore(own: string | null | undefined): string | null {
   return own ? `note_${own}` : null

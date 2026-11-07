@@ -85,7 +85,7 @@ def fresh(browser: Browser, token: str, label: str) -> Page:
 
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1100, "height": 700})
-    context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
 
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))

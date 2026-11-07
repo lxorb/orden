@@ -363,7 +363,7 @@ def main() -> int:
         time.sleep(1)
         running, app = launch(args.exe, args.identifier, unlike=app.port)
 
-        app.ask("(localStorage.setItem('nib:language', 'en'), location.reload(), 1)")
+        app.ask("(localStorage.setItem('orden:language', 'en'), location.reload(), 1)")
         time.sleep(4)
         app.act("open", {"path": "Idea.md", "space": SPACE})
         time.sleep(2)
@@ -445,7 +445,7 @@ def main() -> int:
     await new Promise((done) => setTimeout(done, 1500))
   }}
   const zoomed = await size('Zoom in')
-  const kept = localStorage.getItem('nib:web-zooms')
+  const kept = localStorage.getItem('orden:web-zooms')
   await go('http://localhost:{port}/find', 'Find page')
   const elsewhere = await size(null)
   await go('http://127.0.0.1:{port}/find', 'Find page')
@@ -471,7 +471,7 @@ def main() -> int:
   )
   row?.click()
   const muted = await wait(() => (glyph()?.getAttribute('aria-label') === 'Muted' ? 'Muted' : null), 10000)
-  return {{ loaded: true, playing, row: !!row, muted, kept: localStorage.getItem('nib:web-muted') }}
+  return {{ loaded: true, playing, row: !!row, muted, kept: localStorage.getItem('orden:web-muted') }}
 """,
         )
 

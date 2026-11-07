@@ -131,7 +131,7 @@ def drive(browser: Any) -> None:
     check(page, "07-narrow")
 
     rtl = DRIVE.page(browser, viewport={"width": 1280, "height": 760})
-    rtl.add_init_script("localStorage.setItem('nib:language', 'ar')")
+    rtl.add_init_script("localStorage.setItem('orden:language', 'ar')")
     DRIVE.open(rtl)
     DRIVE.seed(rtl, "# Plan\n\nWhat we are doing.\n")
     DRIVE.open_note(rtl, "Plan")

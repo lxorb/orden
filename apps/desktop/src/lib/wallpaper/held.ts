@@ -2,8 +2,8 @@ import type { Rgb, Span } from '../legibility'
 import { isNumber, isRecord, isString, parsed, storedText } from '../stored'
 
 export const WALLPAPER_THEME = 'wallpaper'
-export const WALLPAPER_KEY = 'nib:wallpaper'
-export const DARK_KEY = 'nib:wallpaper-dark'
+export const WALLPAPER_KEY = 'orden:wallpaper'
+export const DARK_KEY = 'orden:wallpaper-dark'
 
 export type Scheme = 'dark' | 'light'
 

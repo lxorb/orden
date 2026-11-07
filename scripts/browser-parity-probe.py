@@ -194,7 +194,7 @@ def history_rows(app: App) -> list[str]:
     return said if isinstance(said, list) else []
 
 def visits(app: App) -> list[str]:
-    said = app.ask("(JSON.parse(localStorage.getItem('nib:web-visits') || '[]')).map((one) => one.url)")
+    said = app.ask("(JSON.parse(localStorage.getItem('orden:web-visits') || '[]')).map((one) => one.url)")
     return said if isinstance(said, list) else []
 
 def main() -> int:
@@ -371,7 +371,7 @@ def main() -> int:
         )
 
         app.ask(
-            "localStorage.setItem('nib:search-engine', JSON.stringify({ id: 'custom',"
+            "localStorage.setItem('orden:search-engine', JSON.stringify({ id: 'custom',"
             f" custom: '{site}/search?q=%s' }})); true"
         )
         close_app(running)

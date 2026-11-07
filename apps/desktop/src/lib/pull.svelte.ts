@@ -4,7 +4,7 @@ import { runnable } from './shortcuts/registry'
 import { viewport } from './viewport.svelte'
 import { forget, isString, keep, storedText } from './stored'
 
-const STORAGE_KEY = 'nib:pull'
+const STORAGE_KEY = 'orden:pull'
 
 export const DEFAULT_PULL = 'app.refresh'
 

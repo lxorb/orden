@@ -1,3 +1,4 @@
+import { carryKeys } from '../former-keys'
 import { keep, storedText } from '../stored'
 
 export const WEB: string = import.meta.env.VITE_ORDEN_WEB ?? 'https://orden.so'
@@ -230,4 +231,5 @@ export async function unpack(handoff: Handoff): Promise<void> {
   for (const [key, value] of handoff.local) {
     if (!keep(key, value)) throw new Error('this browser keeps no more site data')
   }
+  carryKeys(localStorage)
 }

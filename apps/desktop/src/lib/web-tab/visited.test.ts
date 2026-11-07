@@ -20,28 +20,28 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { visited } = await import('./visited')
 
 test('a space that keeps its web data apart keeps its history apart', () => {
-  visited.saw('nib:web-visits', 'a', 'https://ethz.ch/', 'ETH')
-  visited.saw('nib:web-visits:0-work', 'b', 'https://moodle-app2.let.ethz.ch/', 'Moodle')
+  visited.saw('orden:web-visits', 'a', 'https://ethz.ch/', 'ETH')
+  visited.saw('orden:web-visits:0-work', 'b', 'https://moodle-app2.let.ethz.ch/', 'Moodle')
 
-  expect(visited.suggest('nib:web-visits', 'moodle')).toEqual([])
-  expect(visited.suggest('nib:web-visits:0-work', 'moodle').map((one) => one.url)).toEqual([
+  expect(visited.suggest('orden:web-visits', 'moodle')).toEqual([])
+  expect(visited.suggest('orden:web-visits:0-work', 'moodle').map((one) => one.url)).toEqual([
     'https://moodle-app2.let.ethz.ch/',
   ])
-  expect(localStorage.getItem('nib:web-visits:0-work')).toContain('moodle-app2')
-  expect(localStorage.getItem('nib:web-visits')).not.toContain('moodle-app2')
+  expect(localStorage.getItem('orden:web-visits:0-work')).toContain('moodle-app2')
+  expect(localStorage.getItem('orden:web-visits')).not.toContain('moodle-app2')
 })
 
 test("says what a page called itself, whatever the address's fragment", () => {
-  visited.saw('nib:web-visits:titles', 'c', 'https://svelte.dev/docs', 'Svelte docs')
+  visited.saw('orden:web-visits:titles', 'c', 'https://svelte.dev/docs', 'Svelte docs')
 
-  expect(visited.titleOf('nib:web-visits:titles', 'https://svelte.dev/docs#intro')).toBe(
+  expect(visited.titleOf('orden:web-visits:titles', 'https://svelte.dev/docs#intro')).toBe(
     'Svelte docs',
   )
-  expect(visited.titleOf('nib:web-visits:titles', 'https://svelte.dev/blog')).toBe('')
+  expect(visited.titleOf('orden:web-visits:titles', 'https://svelte.dev/blog')).toBe('')
 })
 
 test("folds another browser's history in, read row by row, and the same twice once", () => {
-  const book = 'nib:web-visits:brought'
+  const book = 'orden:web-visits:brought'
   visited.saw(book, 'd', 'https://ethz.ch/', 'ETH')
   const rows = [
     { url: 'https://ethz.ch/#news', title: 'ETH Zürich', visits: 9, typed: 2, last: 1 },

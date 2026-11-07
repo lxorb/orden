@@ -259,7 +259,7 @@ test('leaving glass takes every colour and word it put on the window away', asyn
   expect(document.documentElement.hasAttribute('data-tinted')).toBe(false)
   expect(tint()).toBe('')
   expect(chrome.theme).toBeUndefined()
-  expect(localStorage.getItem('nib:glass-chrome')).toBeNull()
+  expect(localStorage.getItem('orden:glass-chrome')).toBeNull()
 })
 
 test('the next launch opens on the colour it was left on, before anything is worked out', async () => {
@@ -267,12 +267,12 @@ test('the next launch opens on the colour it was left on, before anything is wor
   grounds.said(black, BLACK, '#0f0f0f')
   workspace.activate(black)
   await settle()
-  const kept = localStorage.getItem('nib:glass-chrome')
+  const kept = localStorage.getItem('orden:glass-chrome')
   expect(kept).toContain('#0f0f0f')
 
   chrome.sleep()
   vi.resetModules()
-  localStorage.setItem('nib:glass-chrome', kept ?? '')
+  localStorage.setItem('orden:glass-chrome', kept ?? '')
   const fresh = (await import('../../src/lib/glass/chrome.svelte')).chrome
   fresh.wake('light')
   expect(tint()).toBe('#0f0f0f')
@@ -284,13 +284,13 @@ test('the next launch opens on the colour it was left on, before anything is wor
 test('the next launch opens on the pair it was left on', async () => {
   workspace.openBlank('Notes', '# Notes')
   await settle()
-  const kept = localStorage.getItem('nib:glass-chrome')
+  const kept = localStorage.getItem('orden:glass-chrome')
   expect(kept).toContain('#eed7f2')
 
   chrome.sleep()
   expect(pair()).toBeNull()
   vi.resetModules()
-  localStorage.setItem('nib:glass-chrome', kept ?? '')
+  localStorage.setItem('orden:glass-chrome', kept ?? '')
   const fresh = (await import('../../src/lib/glass/chrome.svelte')).chrome
   fresh.wake('light')
   expect(pair()).toEqual(['#d2e7fc', '#eed7f2'])

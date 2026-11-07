@@ -3,7 +3,7 @@ import { isString, keepJson } from '../stored'
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { carried, moving } from './file-ops'
 
-export const STORAGE_KEY = 'nib:excluded'
+export const STORAGE_KEY = 'orden:excluded'
 
 export const MOST_EXCLUDED = 200
 

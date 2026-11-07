@@ -1,7 +1,7 @@
 import { isRecord, isString, keepJson, stored } from '../stored'
 import { type Layout, readLayout, withoutText } from './session'
 
-const STORAGE_KEY = 'nib:layouts'
+const STORAGE_KEY = 'orden:layouts'
 
 const MOST = 20
 const LONGEST_NAME = 60

@@ -40,7 +40,7 @@ async function bundle(): Promise<string> {
 }
 
 const THEME_JS =
-  "try{var t=localStorage.getItem('nib:site-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}"
+  "try{var t=localStorage.getItem('orden:site-theme')||localStorage.getItem('nib:site-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}"
 
 export async function siteScript(): Promise<string> {
   const code = await bundle()

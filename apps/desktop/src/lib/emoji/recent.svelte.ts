@@ -1,8 +1,8 @@
 import { isNumber, keepJson, stored, stringList } from '../stored'
 import type { Tone } from './tones'
 
-const RECENT_KEY = 'nib:emoji-recent'
-const TONE_KEY = 'nib:emoji-tone'
+const RECENT_KEY = 'orden:emoji-recent'
+const TONE_KEY = 'orden:emoji-tone'
 
 const MOST_RECENT = 16
 

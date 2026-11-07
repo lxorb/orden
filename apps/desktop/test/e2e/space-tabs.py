@@ -65,7 +65,7 @@ FRAMES = "() => { cancelAnimationFrame(window.__watching); return window.__frame
 def look(page: Page) -> dict:
     return page.evaluate(LOOK)
 
-HINTS_SEEN = "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
+HINTS_SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 
 def opened(browser: Browser, scheme: str, motion: str = "reduce") -> tuple[Page, dict]:
     context = browser.new_context(viewport=SIZE, color_scheme=scheme, reduced_motion=motion)

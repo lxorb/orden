@@ -31,10 +31,10 @@ import { saveFront } from './save-place/door'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
 
-const STORAGE_KEY = 'nib:shortcuts'
+const STORAGE_KEY = 'orden:shortcuts'
 
 const WRITE_CHORD = 'Mod-s'
-const PRESET_KEY = 'nib:preset'
+const PRESET_KEY = 'orden:preset'
 
 const MOST_OVERRIDES = 200
 

@@ -20,7 +20,7 @@ synced copy can still find its way back. An earlier branch here wrote the mark i
 file; that changed the modified time, needed a second store for folders anyway, and
 could not mark a PDF or a note shared to be read.
 
-So each space keeps one map beside it, `nib:archived`, the way it keeps its folder icons
+So each space keeps one map beside it, `orden:archived`, the way it keeps its folder icons
 and its exclusions: a path as the space speaks it, to a moment. Positive while the path
 is archived; negative once it was taken back. A folder stands for everything under it.
 See `apps/desktop/src/lib/workspace/archive.svelte.ts`.
@@ -96,7 +96,7 @@ were; a link or a bookmark into it still opens. It waits under **Archived**, at 
 foot of the switcher, and a press on its row takes it back - in its place in the order,
 and open - as does Unarchive on the row's menu.
 
-Which spaces are archived is the device's (`nib:archived-spaces`, by folder; see
+Which spaces are archived is the device's (`orden:archived-spaces`, by folder; see
 `workspace/archived-spaces.svelte.ts`), and for a space the account has, the account's
 too: the `archivedSpaces` setting, a list of space ids. On the account rather than on
 the space, because it is per person: a space somebody shared with you is yours to put

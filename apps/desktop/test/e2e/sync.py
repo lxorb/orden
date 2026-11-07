@@ -101,7 +101,7 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
         device_scale_factor=2,
     )
 
-    context.add_init_script(f"try {{ localStorage.setItem('nib:session', '{token}') }} catch {{}}")
+    context.add_init_script(f"try {{ localStorage.setItem('orden:session', '{token}') }} catch {{}}")
 
     page = context.new_page()
     page.set_default_timeout(20000)

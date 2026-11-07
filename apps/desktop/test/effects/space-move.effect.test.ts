@@ -343,7 +343,7 @@ describe('the session', () => {
 
     await moveToSpace([draft.id], 'uni')
     workspace.persist()
-    const written = localStorage.getItem('nib:workspace') ?? ''
+    const written = localStorage.getItem('orden:workspace') ?? ''
     expect(written).toContain('"space":"uni"')
   })
 })

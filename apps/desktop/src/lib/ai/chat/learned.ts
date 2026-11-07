@@ -2,7 +2,7 @@ import { isBoolean, isNumber, isRecord, keepJson, recordOf, stored } from '../..
 import { isEffort } from './effort'
 import type { Effort } from './types'
 
-const STORAGE_KEY = 'nib:ai-chat'
+const STORAGE_KEY = 'orden:ai-chat'
 
 export interface Learnt {
   refused?: Effort[]

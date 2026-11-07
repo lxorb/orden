@@ -82,7 +82,7 @@ def note_console(label: str, message) -> None:
 
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
-    context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
 
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
@@ -123,7 +123,7 @@ def opened(page: Page, label: str, name: str, note_id: str) -> None:
                     "  return { tree: walk(window.nibApp.workspace.tree),"
                     "    spaces: window.nibApp.workspace.spaces,"
                     "    active: window.nibApp.workspace.activeSpaceId,"
-                    "    mirrors: JSON.parse(localStorage.getItem('nib:mirrors') ?? 'null') } }"
+                    "    mirrors: JSON.parse(localStorage.getItem('orden:mirrors') ?? 'null') } }"
                 )
             )[:2000]
         )

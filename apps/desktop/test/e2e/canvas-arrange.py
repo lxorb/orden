@@ -752,7 +752,7 @@ def check_bar_docks(page: Page) -> None:
         page.mouse.up()
         page.wait_for_timeout(500)
 
-        held = page.evaluate("() => JSON.parse(localStorage.getItem('nib:pens') ?? '{}').dock")
+        held = page.evaluate("() => JSON.parse(localStorage.getItem('orden:pens') ?? '{}').dock")
         if held != edge:
             fail(f"the bar let go by the {edge} edge went to {held}")
         else:
@@ -886,7 +886,7 @@ def drive_tablet(browser) -> None:
         has_touch=True,
         device_scale_factor=1,
     )
-    context.add_init_script(PREPARE + "\nlocalStorage.setItem('nib:pen-seen', 'yes');")
+    context.add_init_script(PREPARE + "\nlocalStorage.setItem('orden:pen-seen', 'yes');")
     page = context.new_page()
     page.on("pageerror", lambda error: fail(f"[tablet] page error: {error}"))
 
@@ -1136,7 +1136,7 @@ def drive_turning(browser) -> None:
         has_touch=True,
         device_scale_factor=1,
     )
-    context.add_init_script(PREPARE + "\nlocalStorage.setItem('nib:pen-seen', 'yes');")
+    context.add_init_script(PREPARE + "\nlocalStorage.setItem('orden:pen-seen', 'yes');")
     page = context.new_page()
     page.on("pageerror", lambda error: fail(f"[turning] page error: {error}"))
     cdp = context.new_cdp_session(page)

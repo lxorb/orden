@@ -250,7 +250,7 @@ describe('a space made before todo lists were marked (#1333)', () => {
 
   test('the note chosen as the inbox is marked a list, so the account reads it as one too', async () => {
     seed({ 'Inbox.md': '- [ ] Call the bank\n' })
-    stored.set('nib:inbox', JSON.stringify({ [ROOT]: 'Inbox.md' }))
+    stored.set('orden:inbox', JSON.stringify({ [ROOT]: 'Inbox.md' }))
 
     markOldListsSoon(ROOT, false, workspace)
     await settled()
@@ -264,7 +264,7 @@ describe('a space made before todo lists were marked (#1333)', () => {
   test('the inbox a device chose is marked for every device and the account, and only one is (#1469)', async () => {
     seed({ 'Inbox.md': '- [ ] Call the bank\n', 'Todoist/Inbox.md': '- [ ] Old\n' })
     workspace.itemMeta.set(`${ROOT}/Todoist/Inbox.md`, { 'todo-list': 'yes', inbox: 'yes' }, ROOT)
-    stored.set('nib:inbox', JSON.stringify({ [ROOT]: 'Inbox.md' }))
+    stored.set('orden:inbox', JSON.stringify({ [ROOT]: 'Inbox.md' }))
 
     markOldListsSoon(ROOT, true, workspace)
     await settled()
@@ -274,7 +274,7 @@ describe('a space made before todo lists were marked (#1333)', () => {
     expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toEqual({ 'todo-list': 'yes', inbox: 'yes' })
     expect(workspace.itemMeta.of(`${ROOT}/Todoist/Inbox.md`)).toEqual({ 'todo-list': 'yes' })
 
-    stored.delete('nib:inbox')
+    stored.delete('orden:inbox')
     expect(chosenInbox(ROOT)).toBeNull()
     inboxMarkedBy((root) => markedInbox(Object.entries(workspace.itemMeta.itemsOf(root))))
     try {

@@ -593,7 +593,7 @@ describe('what may be done before the account has listed its spaces', () => {
   test('takes a role an older build kept, which says nothing of who else is in, as shared', () => {
     world.locals = ['Team', 'Local']
     account.user = null
-    storage.setItem('nib:space-roles', JSON.stringify({ Team: 'owner' }))
+    storage.setItem('orden:space-roles', JSON.stringify({ Team: 'owner' }))
 
     expect(roleOf('Team')).toBe('owner')
     expect(reachedByOthers('Team/weekly.md')).toBe(true)
@@ -816,7 +816,7 @@ describe('a space somebody has left', () => {
   test('takes what an older build kept as shared as once shared', async () => {
     world.mirrors = { Home: 'space-1' }
     storage.setItem(
-      'nib:space-roles',
+      'orden:space-roles',
       JSON.stringify({ Home: { role: 'owner', shared: true, items: [] } }),
     )
     account.spaces = [remote('space-1', 'owner')]

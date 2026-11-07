@@ -107,7 +107,7 @@ test('flips a switch where it stands, and stays up to show it', () => {
 test('tries a mode on while the arrows are on it, and takes it off on the way out', () => {
   const was = theme.scheme
   const other = was === 'dark' ? 'light' : 'dark'
-  const before = localStorage.getItem('nib:theme-scheme')
+  const before = localStorage.getItem('orden:theme-scheme')
 
   type(`mode ${other}`)
   expect(labels()[0]?.toLowerCase()).toBe(`mode: ${other}`)
@@ -116,5 +116,5 @@ test('tries a mode on while the arrows are on it, and takes it off on the way ou
   overlays.escape()
   flushSync()
   expect(theme.scheme).toBe(was)
-  expect(localStorage.getItem('nib:theme-scheme')).toBe(before)
+  expect(localStorage.getItem('orden:theme-scheme')).toBe(before)
 })

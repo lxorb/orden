@@ -11,11 +11,11 @@ type Order = 'newest' | 'name'
 
 const FRESH_FOR = 5 * 60 * 1000
 
-export const PAINT = 'nib:themes'
+export const PAINT = 'orden:themes'
 
 export const GIVEN_THEMES = ['graphite', 'rose', 'warm-paper'] as const
 
-const GIVEN_KEY = 'nib:themes-given'
+const GIVEN_KEY = 'orden:themes-given'
 
 function matches(one: StoreTheme, needle: string): boolean {
   return [one.name, one.author, one.description, ...one.tags].some((text) =>

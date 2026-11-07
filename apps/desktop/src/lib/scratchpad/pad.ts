@@ -9,7 +9,7 @@ import { writeFile } from '../workspace/write-file'
 import { closeScratchpad, shown } from './is.svelte'
 import { difference, joined } from './words'
 
-const WRITING = 'nib:scratchpad-writing'
+const WRITING = 'orden:scratchpad-writing'
 
 interface Owed {
   words: string

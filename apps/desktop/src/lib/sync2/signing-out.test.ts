@@ -67,7 +67,7 @@ describe('signing out', () => {
     const stopping = runner.stop()
     await Promise.all([leaving, stopping])
 
-    const kept = JSON.parse(localStorage.getItem('nib:mirrors') ?? 'null') as {
+    const kept = JSON.parse(localStorage.getItem('orden:mirrors') ?? 'null') as {
       account: string
       mirrors: Record<string, { spaceId: string }>
     } | null

@@ -117,7 +117,7 @@ def drive(browser, token: str) -> dict[str, float]:
     page.wait_for_function("() => window.nibApp.workspace.spaces.length === 0", timeout=60000)
     page.wait_for_timeout(1500)
 
-    page.evaluate(f"() => localStorage.setItem('nib:session', {json.dumps(token)})")
+    page.evaluate(f"() => localStorage.setItem('orden:session', {json.dumps(token)})")
     slow(page)
 
     page.reload(wait_until="commit")

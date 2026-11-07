@@ -9,9 +9,9 @@ import { isRecord, isString, keep, keepJson, stored, storedText, stringList } fr
 import { invoke, isDesktop, isNative } from './tauri'
 import { viewport } from './viewport.svelte'
 
-const PAGE_KEY = 'nib:page'
-const APPEARANCE_KEY = 'nib:export-appearance'
-const NOTE_ID_KEY = 'nib:note-id'
+const PAGE_KEY = 'orden:page'
+const APPEARANCE_KEY = 'orden:export-appearance'
+const NOTE_ID_KEY = 'orden:note-id'
 
 type ExportAppearance = 'light' | 'dark' | 'app'
 
@@ -155,7 +155,7 @@ class Settings {
 
 export const settings = new Settings()
 
-export const KINDS_KEY = 'nib:hidden-kinds'
+export const KINDS_KEY = 'orden:hidden-kinds'
 
 export type KindName =
   | 'note'

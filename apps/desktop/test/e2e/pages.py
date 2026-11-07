@@ -87,8 +87,8 @@ AS_PHONE = """
 """
 
 NO_PEN_YET = """
-try { localStorage.setItem('nib:pen-seen', 'no') } catch {}
-try { localStorage.setItem('nib:finger-draws', 'no') } catch {}
+try { localStorage.setItem('orden:pen-seen', 'no') } catch {}
+try { localStorage.setItem('orden:finger-draws', 'no') } catch {}
 """
 
 def opened(page: Page, label: str, device: str | None = None) -> None:

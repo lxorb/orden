@@ -23,7 +23,7 @@ export interface GeneratorPrefs {
   username: UsernameRule
 }
 
-const KEY = 'nib:pass-generator'
+const KEY = 'orden:pass-generator'
 
 const DEFAULT_PREFS: GeneratorPrefs = {
   mode: 'random',

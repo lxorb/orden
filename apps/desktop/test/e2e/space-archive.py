@@ -9,7 +9,7 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-HINTS_SEEN = "try { localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
+HINTS_SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
 
 SEED = """
 async () => {

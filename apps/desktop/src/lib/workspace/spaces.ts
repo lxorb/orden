@@ -104,7 +104,7 @@ export function applySpaceOrder(ws: HoldsSpaces, names: string[]): boolean {
   return true
 }
 
-export const TABS_KEY = 'nib:space-tabs'
+export const TABS_KEY = 'orden:space-tabs'
 
 export const tabSets = { fetched: false }
 

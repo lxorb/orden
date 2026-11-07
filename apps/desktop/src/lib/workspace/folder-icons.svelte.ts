@@ -11,7 +11,7 @@ import {
 } from '../records'
 import { carried, type Moving, moving } from './file-ops'
 
-export const STORAGE_KEY = 'nib:folder-icons'
+export const STORAGE_KEY = 'orden:folder-icons'
 
 export const MOST_FOLDER_ICONS = 400
 

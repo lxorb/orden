@@ -23,12 +23,12 @@ async function launched() {
 beforeEach(() => held.clear())
 
 test('is said to an install an earlier version wrote settings into', async () => {
-  held.set('nib:theme', 'dark')
+  held.set('orden:theme', 'dark')
   expect((await launched()).showing).toBe(true)
 })
 
 test('is said once, however many launches follow', async () => {
-  held.set('nib:session', '{}')
+  held.set('orden:session', '{}')
   const first = await launched()
   first.dismiss()
   expect(first.showing).toBe(false)
@@ -39,7 +39,7 @@ test('is said once, however many launches follow', async () => {
 test('is never said to a fresh install, on this launch or the next', async () => {
   expect((await launched()).showing).toBe(false)
 
-  held.set('nib:theme', 'dark')
+  held.set('orden:theme', 'dark')
   expect((await launched()).showing).toBe(false)
 })
 

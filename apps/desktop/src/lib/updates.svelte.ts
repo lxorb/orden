@@ -16,13 +16,13 @@ const EVERY = 6 * 60 * 60 * 1000
 
 const TICK = 10 * 60 * 1000
 
-const CHANNEL_KEY = 'nib:channel'
+const CHANNEL_KEY = 'orden:channel'
 
 function keepChannel(channel: Channel) {
   keep(CHANNEL_KEY, channel)
 }
 
-const TOLD_KEY = 'nib:update-told'
+const TOLD_KEY = 'orden:update-told'
 
 const QUIET = 5000
 

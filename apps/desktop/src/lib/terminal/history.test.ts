@@ -219,21 +219,21 @@ test('Restore history turned off forgets every file and every closed tab', async
 describe('the lines this page kept before the crate did', () => {
   test('move into files for the terminals that are open, and the entry goes', async () => {
     store.set(
-      'nib:terminal-lines',
+      'orden:terminal-lines',
       JSON.stringify({ k1: { at: 7, text: 'open one' }, gone: { at: 8, text: 'closed long ago' } }),
     )
     moveLegacy([place, { space: null, key: 'never-written' }])
     await written()
 
-    expect(store.has('nib:terminal-lines')).toBe(false)
+    expect(store.has('orden:terminal-lines')).toBe(false)
     expect(files.get('s1/k1')).toEqual({ cols: 0, rows: 0, at: 7, text: 'open one' })
     expect(files.size).toBe(1)
   })
 
   test('and an entry that is not a record of them just goes', () => {
-    store.set('nib:terminal-lines', '["not", "a record"]')
+    store.set('orden:terminal-lines', '["not", "a record"]')
     moveLegacy([place])
-    expect(store.has('nib:terminal-lines')).toBe(false)
+    expect(store.has('orden:terminal-lines')).toBe(false)
     expect(said).toEqual([])
   })
 })

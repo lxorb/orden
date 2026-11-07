@@ -3,13 +3,13 @@ import type { Camera } from './camera'
 import type { Box } from './layout'
 import { type Keyed, lastingKeys } from './tab-keys'
 
-const KEY = 'nib:overview-places'
+const KEY = 'orden:overview-places'
 
-const WINDOWS = 'nib:overview-windows-2'
+const WINDOWS = 'orden:overview-windows-2'
 
-const WINDOWS_BEFORE = 'nib:overview-windows'
+const WINDOWS_BEFORE = 'orden:overview-windows'
 
-const CAMERA = 'nib:overview-camera'
+const CAMERA = 'orden:overview-camera'
 
 const APART = 360
 

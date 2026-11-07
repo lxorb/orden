@@ -46,7 +46,7 @@ export type ThemeSetting = Common &
     | { kind: 'switch'; initial: boolean }
   )
 
-export const SETTINGS_KEY = 'nib:theme-settings'
+export const SETTINGS_KEY = 'orden:theme-settings'
 
 export type ChosenSettings = Record<string, Record<string, ThemeValue>>
 

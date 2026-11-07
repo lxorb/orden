@@ -98,7 +98,7 @@ describe('the model here', () => {
     await local.open()
     expect(local.pace).toBe(0.07)
     expect(local.keepsUp).toBe(true)
-    expect(world.stored.get('nib:dictation-local-pace')).toBe('0.07')
+    expect(world.stored.get('orden:dictation-local-pace')).toBe('0.07')
     world.answers.set('dictation_local_open', () => ({ pace: KEEPS_UP * 2 }))
     await local.open()
     expect(local.keepsUp).toBe(false)
@@ -107,11 +107,11 @@ describe('the model here', () => {
   test('once removed is gone, with its pace', async () => {
     local.machine = { ...MACHINE, fit: 'fits', installed: true }
     local.pace = 0.1
-    world.stored.set('nib:dictation-local-pace', '0.1')
+    world.stored.set('orden:dictation-local-pace', '0.1')
     await local.remove()
     expect(world.calls).toEqual(['dictation_local_remove'])
     expect(local.ready).toBe(false)
     expect(local.pace).toBeNull()
-    expect(world.stored.has('nib:dictation-local-pace')).toBe(false)
+    expect(world.stored.has('orden:dictation-local-pace')).toBe(false)
   })
 })

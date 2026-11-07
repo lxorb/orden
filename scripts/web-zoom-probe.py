@@ -86,7 +86,7 @@ const menuSize = async () => {
   return said ?? null
 }
 const words = () => document.documentElement.style.getPropertyValue('--zoom')
-const kept = () => JSON.parse(localStorage.getItem('nib:web-zooms') ?? '{}')
+const kept = () => JSON.parse(localStorage.getItem('orden:web-zooms') ?? '{}')
 const go = async (url, title) => {
   await invoke('web_navigate', { tab: front().id, url })
   await wait(() => bar()?.value.includes(title) && !document.querySelector('.webbar .turning'))
@@ -130,7 +130,7 @@ def main() -> int:
         page_probe.allow_eval(args.identifier)
         time.sleep(1)
         running, app = page_probe.launch(args.exe, args.identifier, unlike=app.port)
-        app.ask("(localStorage.setItem('nib:language', 'en'), location.reload(), 1)")
+        app.ask("(localStorage.setItem('orden:language', 'en'), location.reload(), 1)")
         time.sleep(4)
         window = main_window(running.pid)
         sized(window, *scroll_probe.SIZE)

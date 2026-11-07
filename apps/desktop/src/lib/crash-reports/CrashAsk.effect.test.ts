@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-const SENDING = 'nib:crash-reports'
-const ASKED = 'nib:crash-reports-told'
+const SENDING = 'orden:crash-reports'
+const ASKED = 'orden:crash-reports-told'
 
 let target: HTMLElement
 let shown: Record<string, unknown> | null = null

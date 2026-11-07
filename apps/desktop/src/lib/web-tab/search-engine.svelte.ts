@@ -2,7 +2,7 @@ import { isRecord, isString, keepJson, stored } from '../stored'
 import { SEARCH } from './typed'
 import { engineById, engineHome, isEngineAddress } from './engines'
 
-const KEY = 'nib:search-engine'
+const KEY = 'orden:search-engine'
 
 export const CUSTOM = 'custom'
 

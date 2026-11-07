@@ -1,8 +1,8 @@
 import { withOrWithout } from '../records'
 import { isNumber, recordOf, Shared, stringList } from '../stored'
 
-const muted = new Shared('nib:web-muted', (value) => new Set(stringList(value) ?? []))
-const zooms = new Shared('nib:web-zooms', (value) => recordOf(value, isNumber))
+const muted = new Shared('orden:web-muted', (value) => new Set(stringList(value) ?? []))
+const zooms = new Shared('orden:web-zooms', (value) => recordOf(value, isNumber))
 
 const asides = new Map<string, { muted: Map<string, boolean>; zooms: Map<string, number> }>()
 

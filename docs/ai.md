@@ -247,11 +247,11 @@ switch started with no providers while every key was still in the keychain. Ever
 and every space read the same file; a write names the stamp of the text it changed, is refused over a newer one
 and made again over it, and is heard by every window. A build under another identifier (a
 probe) has a file of its own, which is what keeps a test away from the reader's accounts.
-The window still keeps a copy (`nib:ai-accounts`) to start from before the crate answers;
+The window still keeps a copy (`orden:ai-accounts`) to start from before the crate answers;
 a browser has only that.
 
 Nobody signs in or types a key again for any of this. The first window that finds no file
-writes it out of the rows it kept before (`nib:ai`, which is left alone for an older
+writes it out of the rows it kept before (`orden:ai`, which is left alone for an older
 build), each row keeping its id, so its key is found under that id, its grant (`nib-<id>`)
 is the same grant and every thread still names it. A second profile that kept rows of its
 own adds the ones the file lacks, once.

@@ -186,7 +186,7 @@ describe('a code that is refused', () => {
     expect(await account.verify('000000')).toBe(false)
     expect(account.signedIn).toBe(false)
     expect(account.error).toBe('that code is not right')
-    expect(localStorage.getItem('nib:session')).toBeNull()
+    expect(localStorage.getItem('orden:session')).toBeNull()
   })
 })
 
@@ -197,7 +197,7 @@ describe('a code that is accepted', () => {
     expect(account.signedIn).toBe(true)
     expect(account.settling).toBe(true)
     expect(account.syncable).toBe(false)
-    expect(localStorage.getItem('nib:session')).toBe('session')
+    expect(localStorage.getItem('orden:session')).toBe('session')
 
     account.settled()
     expect(account.syncable).toBe(true)
@@ -212,7 +212,7 @@ describe('a code that is accepted', () => {
     expect(account.signedIn).toBe(false)
     expect(account.token).toBeNull()
     expect(account.spaces).toEqual([])
-    expect(localStorage.getItem('nib:session')).toBeNull()
+    expect(localStorage.getItem('orden:session')).toBeNull()
   })
 
   test('signing out takes what was read for that account with it', async () => {
@@ -308,7 +308,7 @@ describe('restoring a session', () => {
   }
 
   test('has looked for the session once its token is read, before the account answers', async () => {
-    localStorage.setItem('nib:session', 'session')
+    localStorage.setItem('orden:session', 'session')
     server.meFails = Infinity
 
     vi.useFakeTimers()
@@ -325,28 +325,28 @@ describe('restoring a session', () => {
   })
 
   test('keeps a token the account could not be asked about', async () => {
-    localStorage.setItem('nib:session', 'session')
+    localStorage.setItem('orden:session', 'session')
     server.meFails = Infinity
 
     await restore()
 
     expect(account.signedIn).toBe(false)
-    expect(localStorage.getItem('nib:session')).toBe('session')
+    expect(localStorage.getItem('orden:session')).toBe('session')
   })
 
   test('settles into signed in when the first try came too early', async () => {
-    localStorage.setItem('nib:session', 'session')
+    localStorage.setItem('orden:session', 'session')
     server.meFails = 2
 
     await restore()
 
     expect(account.signedIn).toBe(true)
     expect(server.meCalls).toBe(3)
-    expect(localStorage.getItem('nib:session')).toBe('session')
+    expect(localStorage.getItem('orden:session')).toBe('session')
   })
 
   test('signs in later in the same launch once the account can be reached again', async () => {
-    localStorage.setItem('nib:session', 'session')
+    localStorage.setItem('orden:session', 'session')
     server.meFails = 6
 
     vi.useFakeTimers()
@@ -369,7 +369,7 @@ describe('restoring a session', () => {
   })
 
   test('stops asking about a session that was signed out meanwhile', async () => {
-    localStorage.setItem('nib:session', 'session')
+    localStorage.setItem('orden:session', 'session')
     server.meFails = Infinity
 
     vi.useFakeTimers()
@@ -388,25 +388,25 @@ describe('restoring a session', () => {
   })
 
   test('signs out only when the account refuses the token', async () => {
-    localStorage.setItem('nib:session', 'session')
+    localStorage.setItem('orden:session', 'session')
     server.meFails = Infinity
     server.meStatus = 401
 
     await restore()
 
     expect(account.signedIn).toBe(false)
-    expect(localStorage.getItem('nib:session')).toBeNull()
+    expect(localStorage.getItem('orden:session')).toBeNull()
     expect(server.meCalls).toBe(1)
   })
 
   test('keeps the session when the spaces cannot be listed', async () => {
-    localStorage.setItem('nib:session', 'session')
+    localStorage.setItem('orden:session', 'session')
     server.spacesFail = true
 
     await restore()
 
     expect(account.signedIn).toBe(true)
-    expect(localStorage.getItem('nib:session')).toBe('session')
+    expect(localStorage.getItem('orden:session')).toBe('session')
   })
 })
 
@@ -432,7 +432,7 @@ describe('a host that keeps the token too', () => {
 
     expect(account.token).toBe('from-the-host')
     expect(account.signedIn).toBe(true)
-    expect(localStorage.getItem('nib:session')).toBe('from-the-host')
+    expect(localStorage.getItem('orden:session')).toBe('from-the-host')
   })
 
   test('says it is still looking while the stores are being asked', async () => {
@@ -458,7 +458,7 @@ describe('a host that keeps the token too', () => {
   })
 
   test('lets the stores decide between them, rather than the page alone', async () => {
-    localStorage.setItem('nib:session', 'session')
+    localStorage.setItem('orden:session', 'session')
     account.alsoKeepIn(vault({ token: 'from-the-host' }))
 
     await account.restore()
@@ -467,7 +467,7 @@ describe('a host that keeps the token too', () => {
   })
 
   test('falls back to the page when there is no vault at all', async () => {
-    localStorage.setItem('nib:session', 'session')
+    localStorage.setItem('orden:session', 'session')
 
     await account.restore()
 
@@ -489,7 +489,7 @@ describe('a host that keeps the token too', () => {
 describe('a session a share link handed out', () => {
   test('is a guest: signed in, with no account behind it', async () => {
     server.meIsAGuest = true
-    localStorage.setItem('nib:session', 'guest-session')
+    localStorage.setItem('orden:session', 'guest-session')
 
     await account.restore()
 
@@ -502,7 +502,7 @@ describe('a session a share link handed out', () => {
 
   test('hands itself to the sign-in, so what a link lent it follows it in', async () => {
     server.meIsAGuest = true
-    localStorage.setItem('nib:session', 'guest-session')
+    localStorage.setItem('orden:session', 'guest-session')
     await account.restore()
 
     expect(await account.verify('123456')).toBe(true)
@@ -522,7 +522,7 @@ describe('a session a share link handed out', () => {
     await account.arrive('guest-session', { guest: { id: 'g1', name: 'iPhone lark' } })
 
     expect(account.signedIn).toBe(true)
-    expect(localStorage.getItem('nib:session')).toBe('guest-session')
+    expect(localStorage.getItem('orden:session')).toBe('guest-session')
     expect(account.settling).toBe(false)
     expect(account.syncable).toBe(true)
   })
@@ -537,7 +537,7 @@ describe('a session a share link handed out', () => {
 
   test('is nobody again once the session is let go of', async () => {
     server.meIsAGuest = true
-    localStorage.setItem('nib:session', 'guest-session')
+    localStorage.setItem('orden:session', 'guest-session')
     await account.restore()
 
     await account.signOut()

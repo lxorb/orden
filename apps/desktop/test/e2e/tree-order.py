@@ -108,7 +108,7 @@ WHAT_IS_KEPT = """
   return {
     mode: ws.sortMode,
     arranged: ws.arranged.of(ws.activeSpace.root),
-    stored: JSON.parse(localStorage.getItem('nib:sorting') ?? 'null'),
+    stored: JSON.parse(localStorage.getItem('orden:sorting') ?? 'null'),
   }
 }
 """

@@ -304,7 +304,7 @@ class Computer:
         raise SystemExit(f"gave up waiting for {self.label}: {what}")
 
     def sign_in(self) -> None:
-        self.ask(f"localStorage.setItem('nib:session', {json.dumps(self.token)}); location.reload(); true")
+        self.ask(f"localStorage.setItem('orden:session', {json.dumps(self.token)}); location.reload(); true")
         time.sleep(4)
         self.wait("window.nibApp?.sync.version === 2 && !!window.nibApp.sync.engine", "v2 to start")
 

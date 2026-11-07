@@ -112,7 +112,7 @@ describe('a piece that did not arrive', () => {
     await vi.advanceTimersByTimeAsync(1)
     expect(reload).toHaveBeenCalledOnce()
     expect(reloading.offered).toBe(false)
-    expect(storage.get('nib:reloaded-for')).toBe('/assets/index-new.js')
+    expect(storage.get('orden:reloaded-for')).toBe('/assets/index-new.js')
   })
 
   test('asks the site once however many pieces failed', async () => {
@@ -230,7 +230,7 @@ describe('a piece that did not arrive', () => {
   })
 
   test('under a build a reload already went for, offers rather than reloading again', async () => {
-    storage.set('nib:reloaded-for', '/assets/index-new.js')
+    storage.set('orden:reloaded-for', '/assets/index-new.js')
     const { reloading } = await watching()
 
     failedImport()

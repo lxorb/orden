@@ -2,14 +2,14 @@ import { ifFree, locksHere, locksWork } from '../locks'
 import { forget, keep } from '../stored'
 import { readSession, type Session } from './session'
 
-export const FIRST_SESSION = 'nib:workspace'
-const REMEMBERED = 'nib:window-slot'
+export const FIRST_SESSION = 'orden:workspace'
+const REMEMBERED = 'orden:window-slot'
 
 const MOST_SLOTS = 64
 
 const RELOAD_AT_MOST = 1_500
 
-export const slotLock = (slot: number) => `nib:window:${slot}`
+export const slotLock = (slot: number) => `orden:window:${slot}`
 
 export const sessionOf = (slot: number) => (slot === 0 ? FIRST_SESSION : `${FIRST_SESSION}:${slot}`)
 
@@ -40,7 +40,7 @@ function remember(slot: number) {
 
 export const LEAVING_GRACE = 10_000
 
-const leavingMark = (slot: number) => `nib:window-left:${slot}`
+const leavingMark = (slot: number) => `orden:window-left:${slot}`
 
 export function leftLately(slot: number, storage: Storage, now = Date.now()): boolean {
   const at = Number(storage.getItem(leavingMark(slot)))

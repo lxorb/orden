@@ -22,13 +22,13 @@ KEEP = """
   g.addColorStop(0, '#0b1a3a'); g.addColorStop(0.5, '#e86a3a'); g.addColorStop(1, '#fff3c4')
   c.fillStyle = g; c.fillRect(0, 0, 183, 114)
   const side = (floor, ground) => ({ floor, ground })
-  localStorage.setItem('nib:wallpaper', JSON.stringify({
+  localStorage.setItem('orden:wallpaper', JSON.stringify({
     picture: canvas.toDataURL('image/png'),
     blur: 28,
     dark: side(0.62, '#3a2a2a'),
     light: side(0.6, '#e9dcd2'),
   }))
-  return localStorage.getItem('nib:wallpaper').length
+  return localStorage.getItem('orden:wallpaper').length
 })()
 """
 

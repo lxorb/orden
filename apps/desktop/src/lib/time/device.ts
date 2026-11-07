@@ -1,6 +1,6 @@
 import { keep, storedText } from '../stored'
 
-const KEY = 'nib:time-device'
+const KEY = 'orden:time-device'
 
 export function timeDevice(): string {
   const held = storedText(KEY)

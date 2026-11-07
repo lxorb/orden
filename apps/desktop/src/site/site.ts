@@ -4,7 +4,9 @@ import { neighbours } from '../lib/graph-walk'
 import { Layout } from '../lib/graph-layout'
 import { paint, radiusOf } from '../lib/graph-paint'
 
-const THEME_KEY = 'nib:site-theme'
+const THEME_KEY = 'orden:site-theme'
+
+const OLD_THEME_KEY = 'nib:site-theme'
 
 const HOVER_IN = 320
 const HOVER_OUT = 180
@@ -47,7 +49,7 @@ function themeToggle() {
 
   let held = (() => {
     try {
-      return localStorage.getItem(THEME_KEY) ?? 'system'
+      return localStorage.getItem(THEME_KEY) ?? localStorage.getItem(OLD_THEME_KEY) ?? 'system'
     } catch {
       return 'system'
     }
@@ -64,6 +66,7 @@ function themeToggle() {
     try {
       if (held === 'system') localStorage.removeItem(THEME_KEY)
       else localStorage.setItem(THEME_KEY, held)
+      localStorage.removeItem(OLD_THEME_KEY)
     } catch {
       // Nothing to do and nobody to tell.
     }

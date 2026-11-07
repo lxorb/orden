@@ -12,7 +12,7 @@ import {
 import { forget, isRecord, isString, keepJson, stored } from '../stored'
 import type { KeptByPath } from '../workspace/file-ops'
 
-const STORAGE_KEY = 'nib:projects'
+const STORAGE_KEY = 'orden:projects'
 
 const PROJECTS = 'Projects'
 

@@ -87,7 +87,7 @@ STRIP = """(async () => {
     mark: src.slice(0, 22) || 'globe',
     drawn,
     live,
-    kept: (localStorage.getItem('nib:favicons') ?? '').includes('/page'),
+    kept: (localStorage.getItem('orden:favicons') ?? '').includes('/page'),
   })
 })()"""
 

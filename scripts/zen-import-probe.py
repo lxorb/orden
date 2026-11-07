@@ -108,9 +108,9 @@ HELD = """JSON.stringify({
   spaces: nib.workspace.spaces.map((one) => one.name),
   open: nib.workspace.activeSpace?.name ?? null,
   busy: document.querySelector('.busy, [role="status"]')?.textContent?.trim() ?? null,
-  arranged: JSON.parse(localStorage.getItem('nib:arranged') ?? '{}'),
-  bookmarks: JSON.parse(localStorage.getItem('nib:bookmarks') ?? '{}'),
-  icons: JSON.parse(localStorage.getItem('nib:icons') ?? '{}'),
+  arranged: JSON.parse(localStorage.getItem('orden:arranged') ?? '{}'),
+  bookmarks: JSON.parse(localStorage.getItem('orden:bookmarks') ?? '{}'),
+  icons: JSON.parse(localStorage.getItem('orden:icons') ?? '{}'),
 })"""
 
 def files_under(root: pathlib.Path) -> list[str]:

@@ -2,7 +2,7 @@ import { type Rgb, rgbOf } from '../legibility'
 import { isNumber, isRecord, isString, keepJson, stored } from '../stored'
 import { keysOf } from '../web-tab/pages.svelte'
 
-const KEY = 'nib:glass-grounds'
+const KEY = 'orden:glass-grounds'
 
 const MOST = 300
 

@@ -34,7 +34,7 @@ export function placeMark(place: Place): IconNode {
   return SHOWN[place.kind].mark
 }
 
-const PINNED = 'nib:explorer-pinned'
+const PINNED = 'orden:explorer-pinned'
 
 class Places {
   list = $state<Place[]>([])

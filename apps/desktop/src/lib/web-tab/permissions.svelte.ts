@@ -3,7 +3,7 @@ import { withOrWithout } from '../records'
 import { isRecord, Shared } from '../stored'
 import { originKey } from './address'
 
-const STORAGE_KEY = 'nib:web-grants'
+const STORAGE_KEY = 'orden:web-grants'
 
 export const ASKS = [
   'camera',

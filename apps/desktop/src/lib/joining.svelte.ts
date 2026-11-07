@@ -9,7 +9,7 @@ import { workspace } from './workspace.svelte'
 
 const PATH = /^\/join\/([a-f0-9]{16,128})$/
 
-const WAITING_KEY = 'nib:waiting'
+const WAITING_KEY = 'orden:waiting'
 
 const ASK_EVERY = 3000
 

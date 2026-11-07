@@ -116,7 +116,7 @@ tab is lost: the set the Global spaces shared becomes the own set of the space i
 screen in, or, where it was out of sight, of the first space that shared it and has no
 set yet - and where every space has one, its tabs join the set on screen. Every other
 space starts from what it last showed. The device's record of which spaces kept their
-own (`nib:space-tabs`) is read for this and forgotten (`handOver` in sets.svelte.ts).
+own (`orden:space-tabs`) is read for this and forgotten (`handOver` in sets.svelte.ts).
 
 - **What a set is**: the tabs - notes, tabs with no file, web tabs, terminals, pinned
   and previewed ones - their order, the panes and splits, which tab is in front in each

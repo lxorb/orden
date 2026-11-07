@@ -134,8 +134,8 @@ def drive_groups(browser: Browser) -> None:
 
     kept = page.evaluate(
         """() => ({
-          groups: JSON.parse(localStorage.getItem('nib:expanded-groups') ?? '{}'),
-          list: JSON.parse(localStorage.getItem('nib:bookmarks') ?? '{}'),
+          groups: JSON.parse(localStorage.getItem('orden:expanded-groups') ?? '{}'),
+          list: JSON.parse(localStorage.getItem('orden:bookmarks') ?? '{}'),
         })"""
     )
     say(f"[groups] written down: {json.dumps(kept['groups'])}")

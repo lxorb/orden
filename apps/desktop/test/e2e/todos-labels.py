@@ -166,7 +166,7 @@ def renamed(page: Page) -> None:
     if "task.tags" not in spec["yaml"]:
         wrong("the tab lost its grouping in the rename")
     kept = page.evaluate(
-        "(name) => { const all = JSON.parse(localStorage.getItem('nib:todos-views') ?? '{}'); return Object.keys(all) }",
+        "(name) => { const all = JSON.parse(localStorage.getItem('orden:todos-views') ?? '{}'); return Object.keys(all) }",
         name,
     )
     say(f"[kept] {kept}")

@@ -174,7 +174,7 @@ function systemCatalogue(): string {
   return preferredCatalogue(asked)
 }
 
-const STORAGE_KEY = 'nib:language'
+const STORAGE_KEY = 'orden:language'
 
 /* eslint-disable svelte/prefer-svelte-reactivity */
 const dates = new Map<string, Intl.DateTimeFormat>()

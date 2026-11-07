@@ -114,7 +114,7 @@ work, which all rewrite the same files.
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
 | History: every page a space's web data has visited, searchable, open, remove; Ctrl+H and a row in the dots | browser vision 2026-09-13; `docs/web-tabs.md` "What is left" | Chrome's shape, the per-space history rule kept, virtualised | M | high | #40 #41 #46 |
-| Delete browsing data: cookies, cache, site data and history for a time range, per space store or all | same | cleared through the engine's own call (WebView2 `ClearBrowsingDataAsync`, `WKWebsiteDataStore`), `nib:web-visits` cleared with it | M | high | same |
+| Delete browsing data: cookies, cache, site data and history for a time range, per space store or all | same | cleared through the engine's own call (WebView2 `ClearBrowsingDataAsync`, `WKWebsiteDataStore`), `orden:web-visits` cleared with it | M | high | same |
 | A private tab: an ephemeral profile that writes no history, visits or places, marked on the tab | power-user "Later"; browser vision "incognito as an ephemeral profile" | nothing it saw survives closing it; the key per Q3 | L | high | same |
 | A search engine choice: Google is hard-coded in `lib/web-tab/address.ts` | browser vision "address bar and search engine choice" | one row, Chrome's list plus a custom `%s` | S | med | none |
 | Dragging a link or a picture out of a page onto the strip (a tab) or the file list (a web note, a picture copied in) | power-user "Later" | both drops work; nothing else leaves the page | L | med | #40 #46 |
@@ -131,7 +131,7 @@ id (80b9de44) landed; two faults are left.
 | --- | --- | --- | --- | --- | --- |
 | One path value with one comparison and one normalisation (separators, case, composition) for `documentAt`, `everyPath`, positions, arranged, excluded, folder icons, bookmarks and the link index | batches, identity round 2026-09-17 ("remaining hole") | `Plan.md` and `plan.md` on Windows and macOS are one document everywhere; the bare `===` comparisons gone, a scan test holds it | L | high | #38 #39 #45, sync v2's mirror lane |
 | One file-operation event (created, moved, removed, with the old and new path) every store listens to, instead of the hand-written notifications per operation | batches, architecture verdict 2026-09-17 | a new store cannot forget a rename; the tests prove each store follows | L | high | same |
-| The three finished migrations out: `nib:pinned` to bookmarks, the theme-side and contrast reads, the legacy mirror shapes | batches #122, 2026-09-13 | deleted per Q17; the mirror one with sync v2 | S | low | Q17 |
+| The three finished migrations out: `orden:pinned` to bookmarks, the theme-side and contrast reads, the legacy mirror shapes | batches #122, 2026-09-13 | deleted per Q17; the mirror one with sync v2 | S | low | Q17 |
 | `lib/search/tags.ts` reads the front matter block through the shared reader, the last copy | batches #91, 2026-09-12 | one reader | S | low | none |
 
 ## 6. tabs-hints - tabs and hints like Chrome

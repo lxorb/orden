@@ -6,7 +6,7 @@ import { relativeTo, samePath } from '../space-paths'
 import { keepJson, stored } from '../stored'
 import { type HoldsNotes, noteText, replaceInNotes } from './note-text'
 
-export const SETEXT_GONE = 'nib:setext-gone'
+export const SETEXT_GONE = 'orden:setext-gone'
 
 export const SETEXT_KEY = 'setext'
 

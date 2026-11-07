@@ -184,7 +184,7 @@ def shoot(identifier: str, out: pathlib.Path) -> None:
         session.close()
 
 def settings_shot(app, identifier: str, scheme: str, shots: pathlib.Path) -> None:
-    ask(app, f"localStorage.setItem('nib:theme-scheme', {json.dumps(scheme)}) || 'kept'")
+    ask(app, f"localStorage.setItem('orden:theme-scheme', {json.dumps(scheme)}) || 'kept'")
     ask(app, "(location.reload(), 'reloading')", 10)
     time.sleep(3)
     until(lambda: ask(app, "nib.workspace.restored") is True, 60)
@@ -245,8 +245,8 @@ def main() -> int:
         work, home = str(ids["Work"]), str(ids["Home"])
         say(f"Work {work}, Home {home}")
 
-        ask(app, f"localStorage.setItem('nib:space-tabs', {json.dumps(json.dumps({work: 'space'}))}) || 'kept'")
-        ask(app, "localStorage.setItem('nib:hidden-tabs', '\"run\"') || 'kept'")
+        ask(app, f"localStorage.setItem('orden:space-tabs', {json.dumps(json.dumps({work: 'space'}))}) || 'kept'")
+        ask(app, "localStorage.setItem('orden:hidden-tabs', '\"run\"') || 'kept'")
 
         to_space(app, home)
         to_space(app, work)
@@ -288,7 +288,7 @@ def main() -> int:
         to_space(app, work)
         check(shown(app).get("tabs") == in_work.get("tabs"), "Work comes back with its three tabs")
         to_space(app, home)
-        ask(app, "localStorage.setItem('nib:hidden-tabs', '\"pause\"') || 'kept'")
+        ask(app, "localStorage.setItem('orden:hidden-tabs', '\"pause\"') || 'kept'")
 
         first = app.port
         if not close_app(running):

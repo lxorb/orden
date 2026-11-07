@@ -372,7 +372,7 @@ export class Saving {
           this.ws.freeName(folder, candidate) !== candidate,
       )
       const path = joinPath(folder, name)
-      const release = await holdIfFree(`nib:claim:${path}`)
+      const release = await holdIfFree(`orden:claim:${path}`)
       if (release === null) {
         found.push(name)
         continue

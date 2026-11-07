@@ -283,7 +283,7 @@ def main() -> int:
         )
         said["what the engine told the page"] = told
         said["what the site is allowed now"] = app.ask(
-            "JSON.stringify(JSON.parse(localStorage.getItem('nib:web-grants') ?? '{}'))"
+            "JSON.stringify(JSON.parse(localStorage.getItem('orden:web-grants') ?? '{}'))"
         )
         shoot(hwnd, "a-site-answered")
         if "refused 1" not in told:

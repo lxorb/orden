@@ -13,7 +13,7 @@ interface SettingsFile {
 
 type Value = boolean | number | string
 
-const OWN_KEY = 'nib:declared-own'
+const OWN_KEY = 'orden:declared-own'
 
 interface Own {
   value: unknown

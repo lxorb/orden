@@ -3,7 +3,7 @@ import { workspace } from './workspace.svelte'
 import type { Tab } from './workspace/documents.svelte'
 import { Walk } from './workspace/recency'
 
-const KEY = 'nib:tab-order'
+const KEY = 'orden:tab-order'
 
 class TabCycle {
   byUse = $state(storedText(KEY) === 'use')

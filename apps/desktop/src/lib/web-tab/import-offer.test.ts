@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { dayOf, keptOffer, OFFER_DAYS, offerDue } from './import-offer.svelte'
 
-const KEY = 'nib:browser-import-offer'
+const KEY = 'orden:browser-import-offer'
 
 const kept = new Map<string, string>()
 

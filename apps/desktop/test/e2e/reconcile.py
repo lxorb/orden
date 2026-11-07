@@ -84,7 +84,7 @@ def drive(browser, token: str) -> dict[str, object]:
 
     before = len(asked)
 
-    page.evaluate(f"() => localStorage.setItem('nib:session', {json.dumps(token)})")
+    page.evaluate(f"() => localStorage.setItem('orden:session', {json.dumps(token)})")
     page.reload(wait_until="commit")
 
     page.wait_for_function("() => !!window.nibApp", timeout=60000)

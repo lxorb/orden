@@ -30,8 +30,8 @@ describe('what the picker remembers', () => {
   })
 
   test('and not the tab it was left on, whose key goes at the first launch', async () => {
-    store.set('nib:icon-set', 'emoji')
+    store.set('orden:icon-set', 'emoji')
     await launch()
-    expect(store.has('nib:icon-set')).toBe(false)
+    expect(store.has('orden:icon-set')).toBe(false)
   })
 })

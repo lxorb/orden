@@ -23,7 +23,7 @@ ROW = '.nib-setting:has-text("Notes from nibeditor.com")'
 UNANSWERED = (
     "try { if (!sessionStorage.getItem('drive-unanswered')) {"
     " sessionStorage.setItem('drive-unanswered', '1');"
-    " localStorage.removeItem('nib:first-visit') } } catch {}"
+    " localStorage.removeItem('orden:first-visit') } } catch {}"
 )
 
 SESSION = "handed-over-token"
@@ -94,8 +94,8 @@ def brought(browser: Browser) -> None:
         wrong("the old address offers to bring notes from itself")
     old.keyboard.press("Escape")
     DRIVE.seed(old, "# Carried over\n\nWritten at the old address.\n")
-    old.evaluate("(session) => localStorage.setItem('nib:session', session)", SESSION)
-    old.evaluate("() => localStorage.setItem('nib:font-size', '19')")
+    old.evaluate("(session) => localStorage.setItem('orden:session', session)", SESSION)
+    old.evaluate("() => localStorage.setItem('orden:font-size', '19')")
     before = files(old)
     if not any(name.startswith("Carried over") for name in before):
         wrong(f"the note was never written at the old address: {before}")
@@ -120,18 +120,18 @@ def brought(browser: Browser) -> None:
     if not popup.url.startswith(f"{OLD}/handoff"):
         wrong(f"the popup went to {popup.url}")
 
-    wait_for(new, "localStorage.getItem('nib:font-size') === '19' && !window.driveBefore", "the page to start again")
+    wait_for(new, "localStorage.getItem('orden:font-size') === '19' && !window.driveBefore", "the page to start again")
     DRIVE.ready(new)
 
     after = files(new)
     if not any(name.startswith("Carried over") for name in after):
         wrong(f"the note did not come over: {after}")
-    session = new.evaluate("() => localStorage.getItem('nib:session')")
+    session = new.evaluate("() => localStorage.getItem('orden:session')")
     if session != SESSION:
         wrong(f"the session did not come over: {session}")
-    if new.evaluate("() => localStorage.getItem('nib:font-size')") != "19":
+    if new.evaluate("() => localStorage.getItem('orden:font-size')") != "19":
         wrong("the settings did not come over")
-    if new.evaluate("() => localStorage.getItem('nib:first-visit')") != "answered":
+    if new.evaluate("() => localStorage.getItem('orden:first-visit')") != "answered":
         wrong("the first visit is not over after the handoff")
     import_pane(new)
     if new.locator(ROW).count():
@@ -160,7 +160,7 @@ def elsewhere(browser: Browser) -> None:
     made = context(browser)
 
     old = opened(made, OLD)
-    old.evaluate("(session) => localStorage.setItem('nib:session', session)", SESSION)
+    old.evaluate("(session) => localStorage.setItem('orden:session', session)", SESSION)
     old.close()
 
     page = made.new_page()

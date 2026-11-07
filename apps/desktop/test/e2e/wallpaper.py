@@ -51,7 +51,7 @@ async ([paint]) => {
   const blob = await new Promise((done) => canvas.toBlob(done, 'image/png'))
   const started = performance.now()
   const taken = await window.nibApp.wallpaper.take(blob)
-  return { taken, ms: Math.round(performance.now() - started), stored: localStorage.getItem('nib:wallpaper')?.length ?? 0 }
+  return { taken, ms: Math.round(performance.now() - started), stored: localStorage.getItem('orden:wallpaper')?.length ?? 0 }
 }
 """
 
@@ -202,7 +202,7 @@ def drive(browser: Any) -> None:
             wait_for(page, "window.nibApp.wallpaper.held.main?.blur === 56", "the picture made at the new blur")
             wait_for(
                 page,
-                "JSON.parse(localStorage.getItem('nib:wallpaper')).blur === 56",
+                "JSON.parse(localStorage.getItem('orden:wallpaper')).blur === 56",
                 "the new blur kept once the dial rests",
             )
             after = page.evaluate("() => window.nibApp.wallpaper.held.main.picture.length")

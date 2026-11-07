@@ -21,7 +21,7 @@ TABS = """() => [...document.querySelectorAll('.tab')].map((one) => {
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1600, "height": 800})
-    page.add_init_script("localStorage.setItem('nib:icon-tabs', 'no')")
+    page.add_init_script("localStorage.setItem('orden:icon-tabs', 'no')")
     DRIVE.open(page)
     long = "A note whose name is far longer than any tab is wide"
     DRIVE.seed(page, "# Orden\n\nWords.\n", f"# {long}\n\nWords.\n")
@@ -45,7 +45,7 @@ def drive(browser: Browser) -> None:
     if abs(far["width"] - STANDARD) > 1:
         wrong(f"the long name's tab is {far['width']:.0f}, not the standard {STANDARD}")
 
-    page.add_init_script("localStorage.setItem('nib:fit-tabs', 'no')")
+    page.add_init_script("localStorage.setItem('orden:fit-tabs', 'no')")
     page.reload()
     page.wait_for_timeout(1500)
     for name in ("Orden", long):

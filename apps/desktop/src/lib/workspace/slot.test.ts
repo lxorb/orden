@@ -17,7 +17,7 @@ describe('a window takes a session of its own', () => {
   test('the first window writes the entry an older build wrote', async () => {
     expect(await takeSlot(fakeLocks())).toBe(0)
     expect(sessionOf(0)).toBe(FIRST_SESSION)
-    expect(FIRST_SESSION).toBe('nib:workspace')
+    expect(FIRST_SESSION).toBe('orden:workspace')
   })
 
   test('the next takes the next, and a slot let go is taken again', async () => {
@@ -25,9 +25,9 @@ describe('a window takes a session of its own', () => {
     expect(await takeSlot(locks)).toBe(0)
     expect(await takeSlot(locks)).toBe(1)
     expect(await takeSlot(locks)).toBe(2)
-    locks.held.delete('nib:window:1')
+    locks.held.delete('orden:window:1')
     expect(await takeSlot(locks)).toBe(1)
-    expect(sessionOf(1)).toBe('nib:workspace:1')
+    expect(sessionOf(1)).toBe('orden:workspace:1')
   })
 
   test('without locks there is the one', async () => {
@@ -37,9 +37,9 @@ describe('a window takes a session of its own', () => {
   })
 
   test('only a slot entry reads as one', () => {
-    expect(slotOf('nib:workspace')).toBe(0)
-    expect(slotOf('nib:workspace:3')).toBe(3)
-    expect(slotOf('nib:workspace:x')).toBeNull()
-    expect(slotOf('nib:workspaces')).toBeNull()
+    expect(slotOf('orden:workspace')).toBe(0)
+    expect(slotOf('orden:workspace:3')).toBe(3)
+    expect(slotOf('orden:workspace:x')).toBeNull()
+    expect(slotOf('orden:workspaces')).toBeNull()
   })
 })

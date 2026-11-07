@@ -184,8 +184,8 @@ const PLACEHOLDER: Record<NewKind, string> = {
 
 export type { Heading } from './outline'
 
-const STORAGE_KEY = 'nib:workspace'
-const TREE_KEY = 'nib:tree'
+const STORAGE_KEY = 'orden:workspace'
+const TREE_KEY = 'orden:tree'
 const SESSION_DELAY = 400
 const WORDS_KEPT = 1_000_000
 

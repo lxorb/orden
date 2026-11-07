@@ -1,7 +1,7 @@
 import type { Camera } from '../camera'
 import { isRecord, keepJson, stored } from '../stored'
 
-const STORAGE_KEY = 'nib:canvas-views'
+const STORAGE_KEY = 'orden:canvas-views'
 
 const KEEPS = 300
 

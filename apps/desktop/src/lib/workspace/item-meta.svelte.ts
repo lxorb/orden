@@ -12,9 +12,9 @@ import { isRecord, keepJson, stored } from '../stored'
 import { filledIn, readSpaces, without, withOrWithout } from '../records'
 import { carried, type Moving, moving } from './file-ops'
 
-export const STORAGE_KEY = 'nib:item-meta'
+export const STORAGE_KEY = 'orden:item-meta'
 
-const BURIED_KEY = 'nib:item-meta-buried'
+const BURIED_KEY = 'orden:item-meta-buried'
 
 const MOST_BURIED = 200
 

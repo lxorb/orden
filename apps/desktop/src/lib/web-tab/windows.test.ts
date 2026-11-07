@@ -23,7 +23,7 @@ beforeEach(() => {
   vi.resetModules()
 })
 
-const BOOK = 'nib:web-visits'
+const BOOK = 'orden:web-visits'
 
 async function twice<T>(load: () => Promise<T>): Promise<[T, T]> {
   const a = await load()
@@ -82,7 +82,7 @@ test('permissions reset in one window are not answered back by the other', async
   a.forget('one.example')
   b.remember('two.example', 'camera', 'block')
 
-  const kept = disk.getItem('nib:web-grants') ?? ''
+  const kept = disk.getItem('orden:web-grants') ?? ''
   expect(kept).not.toContain('one.example')
   expect(kept).toContain('two.example')
   expect(b.said('one.example', 'camera')).toBeNull()

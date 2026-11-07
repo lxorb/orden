@@ -475,7 +475,7 @@ def drive(browser) -> None:
         user_agent=DESKTOP_AGENT,
         color_scheme="dark",
     )
-    context.add_init_script("localStorage.setItem('nib:hidden-kinds', JSON.stringify(['shown-pass']))")
+    context.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-pass']))")
     page = context.new_page()
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"page error: {error}"))

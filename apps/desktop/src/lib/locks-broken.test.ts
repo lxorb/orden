@@ -36,13 +36,13 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
 
   test('what is held for the life of a window runs all the same', async () => {
     const run = vi.fn(() => new Promise<void>(() => undefined))
-    heldForLife('nib:test', run)
+    heldForLife('orden:test', run)
     await vi.advanceTimersByTimeAsync(10_000)
     expect(run).toHaveBeenCalledTimes(1)
   })
 
   test('a name is free to claim', async () => {
-    const held = holdIfFree('nib:test')
+    const held = holdIfFree('orden:test')
     await vi.advanceTimersByTimeAsync(10_000)
     expect(await held).toBeTypeOf('function')
   })
@@ -63,7 +63,7 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
 
   test("a kept space's index is written, once", async () => {
     const run = vi.fn(() => Promise.resolve('index'))
-    const written = inTurn(() => 'nib:internal:space', run, 10_000)
+    const written = inTurn(() => 'orden:internal:space', run, 10_000)
     await vi.advanceTimersByTimeAsync(10_000)
     expect(await written).toBe('index')
     expect(run).toHaveBeenCalledTimes(1)
@@ -130,7 +130,7 @@ describe('with locks that work', () => {
       },
     })
     const run = vi.fn(() => Promise.resolve('index'))
-    const written = inTurn(() => 'nib:internal:space', run, 10_000)
+    const written = inTurn(() => 'orden:internal:space', run, 10_000)
     await vi.advanceTimersByTimeAsync(9_000)
     expect(run).not.toHaveBeenCalled()
     await vi.advanceTimersByTimeAsync(2_000)
@@ -140,13 +140,13 @@ describe('with locks that work', () => {
 
   test('a name one window holds is not free to the next, until it lets go', async () => {
     vi.stubGlobal('navigator', { locks: working() })
-    const first = await holdIfFree('nib:claim:/s/Plan.md')
+    const first = await holdIfFree('orden:claim:/s/Plan.md')
     expect(first).toBeTypeOf('function')
-    expect(await holdIfFree('nib:claim:/s/Plan.md')).toBeNull()
-    expect(await holdIfFree('nib:claim:/s/Other.md')).toBeTypeOf('function')
+    expect(await holdIfFree('orden:claim:/s/Plan.md')).toBeNull()
+    expect(await holdIfFree('orden:claim:/s/Other.md')).toBeTypeOf('function')
     first?.()
     await vi.advanceTimersByTimeAsync(0)
-    expect(await holdIfFree('nib:claim:/s/Plan.md')).toBeTypeOf('function')
+    expect(await holdIfFree('orden:claim:/s/Plan.md')).toBeTypeOf('function')
   })
 })
 
@@ -167,7 +167,7 @@ describe('a main thread busy past the timer', () => {
   })
 
   test('a free lock too', async () => {
-    const answer = ifFree(slow(2_001), 'nib:window:1', () => Promise.resolve())
+    const answer = ifFree(slow(2_001), 'orden:window:1', () => Promise.resolve())
     await vi.advanceTimersByTimeAsync(5_000)
     expect(await answer).toBe('held')
   })
@@ -186,11 +186,11 @@ describe('a main thread busy past the timer', () => {
     vi.stubGlobal('navigator', { locks })
     const requested = vi.spyOn(locks, 'request')
     const run = vi.fn(() => new Promise<void>(() => undefined))
-    heldForLife('nib:hub', run)
+    heldForLife('orden:hub', run)
     await vi.advanceTimersByTimeAsync(3_000)
     expect(run).not.toHaveBeenCalled()
     await vi.advanceTimersByTimeAsync(10_000)
-    expect(requested.mock.calls.some(([name]) => name === 'nib:hub')).toBe(true)
+    expect(requested.mock.calls.some(([name]) => name === 'orden:hub')).toBe(true)
   })
 })
 
@@ -220,7 +220,7 @@ describe('locks that never answer and many files', () => {
     })
     await oneWriteAt('/s/a.md', () => Promise.resolve())
     await oneWriteAt('/s//a.md', () => Promise.resolve())
-    const files = names.filter((name) => name.startsWith('nib:file:'))
+    const files = names.filter((name) => name.startsWith('orden:file:'))
     expect(files[0]).toBe(files[1])
   })
 })

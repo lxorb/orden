@@ -1,7 +1,7 @@
 import { account } from '../account.svelte'
 import { keepJson, stored } from '../stored'
 
-const KEY = 'nib:chat-own-pointers'
+const KEY = 'orden:chat-own-pointers'
 
 let current: string | null = null
 

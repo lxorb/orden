@@ -85,7 +85,7 @@ test('keeps three hundred canvases and forgets the oldest', () => {
 
 test('reads nothing out of nonsense', () => {
   localStorage.setItem(
-    'nib:canvas-views',
+    'orden:canvas-views',
     JSON.stringify({
       '/good.canvas': { x: 1, y: 2, scale: 3 },
       '/no-scale.canvas': { x: 1, y: 2 },

@@ -212,7 +212,7 @@ said about something else.
 **The zoom is the reader's, and it is kept.** Until somebody has zoomed, the paper
 stays fitted across the pane: the sidebar opening, a pane splitting, a phone
 turning. Once they have, nothing takes it off them - including the app being
-started again, which used to. The camera came back from `nib:canvas-views` and the
+started again, which used to. The camera came back from `orden:canvas-views` and the
 fact that the zoom was chosen did not, so the first measurement fitted the paper
 again and threw it away. A `chose` key beside the camera is the whole fix; see
 `KeptView` in `apps/desktop/src/lib/canvas/place.ts`.

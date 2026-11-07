@@ -19,7 +19,7 @@ globalThis.ResizeObserver = NoLayout
 
 const { default: WebHistory } = await import('../../src/lib/web-tab/WebHistory.svelte')
 
-const BOOK = 'nib:web-visits:history-test'
+const BOOK = 'orden:web-visits:history-test'
 
 let target: HTMLElement
 let close: (() => void) | undefined

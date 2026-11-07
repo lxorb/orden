@@ -107,7 +107,7 @@ def fresh(
 ) -> Page:
     context = browser.new_context(**(device or {"viewport": viewport or {"width": 1180, "height": 760}}))
     if token:
-        context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+        context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
 
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
@@ -748,7 +748,7 @@ def main() -> int:
         else:
             say("the file beside it is a file that does not exist")
 
-        held = alone.evaluate("() => localStorage.getItem('nib:session')")
+        held = alone.evaluate("() => localStorage.getItem('orden:session')")
         phone = fresh(browser, "phone", token=held, viewport=PHONE)
         shared_with_you(phone, "phone")
         settled(phone, "phone")

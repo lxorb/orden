@@ -6,7 +6,7 @@ import { invoke } from '../tauri'
 import type { FileOp } from '../workspace/file-ops'
 import type { Answer, Clash } from './conflicts'
 
-const STORAGE_KEY = 'nib:sync-log'
+const STORAGE_KEY = 'orden:sync-log'
 
 const KEPT = 60
 

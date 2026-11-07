@@ -31,9 +31,9 @@ import { accountsAre } from './switching'
 import { type Provider, type ProviderKind, transcribes, usable } from './providers'
 import { stuck } from './stuck'
 
-const EARLIER = 'nib:ai'
+const EARLIER = 'orden:ai'
 
-const MOVED = 'nib:ai-moved'
+const MOVED = 'orden:ai-moved'
 
 const TRIES = 3
 

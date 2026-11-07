@@ -111,7 +111,7 @@ function sentToOneWindow(): Set<string> {
   const events = new Set<string>()
   for (const file of filesUnder(crate, /\.rs$/)) {
     const source = readFileSync(file, 'utf8')
-    for (const [, name] of source.matchAll(/emit_to\(\s*[^,]+,\s*([A-Z_]+|"nib:[^"]+")\s*,/g)) {
+    for (const [, name] of source.matchAll(/emit_to\(\s*[^,]+,\s*([A-Z_]+|"orden:[^"]+")\s*,/g)) {
       if (name?.startsWith('"')) {
         events.add(name.replaceAll('"', ''))
         continue

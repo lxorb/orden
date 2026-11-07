@@ -78,11 +78,11 @@ describe('a session across two launches of a packed plugin', () => {
 
     const writing = everywhere.write('a-token')
     await vi.advanceTimersByTimeAsync(500)
-    expect(phone.held.get('nib:session')).toBeUndefined()
+    expect(phone.held.get('orden:session')).toBeUndefined()
 
     await vi.advanceTimersByTimeAsync(CHANNEL_AT)
     await writing
-    expect(phone.held.get('nib:session')).toBe('a-token')
+    expect(phone.held.get('orden:session')).toBe('a-token')
 
     done()
   })
@@ -103,7 +103,7 @@ describe('a session across two launches of a packed plugin', () => {
   })
 
   test('does not answer before the phone app has had its say', async () => {
-    phone.held.set('nib:session', 'a-token')
+    phone.held.set('orden:session', 'a-token')
     const { everywhere, done } = await launch()
 
     const reading = everywhere.read()
@@ -120,7 +120,7 @@ describe('a session across two launches of a packed plugin', () => {
   })
 
   test('puts a token back into the stores that lost it', async () => {
-    phone.held.set('nib:session', 'a-token')
+    phone.held.set('orden:session', 'a-token')
     const { everywhere, done } = await launch()
 
     const reading = everywhere.read()
@@ -128,7 +128,7 @@ describe('a session across two launches of a packed plugin', () => {
     expect(await reading).toBe('a-token')
 
     await vi.advanceTimersByTimeAsync(100)
-    expect(localStorage.getItem('nib:session')).toBe('a-token')
+    expect(localStorage.getItem('orden:session')).toBe('a-token')
 
     done()
   })
@@ -141,14 +141,14 @@ describe('a session across two launches of a packed plugin', () => {
     await vi.advanceTimersByTimeAsync(CHANNEL_AT + 2000)
     await writing
 
-    expect(phone.held.get('nib:session')).toBe('a-token')
+    expect(phone.held.get('orden:session')).toBe('a-token')
     expect(phone.refusals).toBe(0)
 
     done()
   })
 
   test('says which store kept it and which lost it', async () => {
-    phone.held.set('nib:session', 'a-token')
+    phone.held.set('orden:session', 'a-token')
     const { everywhere, done } = await launch()
     const { read } = await import('./keep')
 

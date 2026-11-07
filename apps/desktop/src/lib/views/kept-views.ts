@@ -2,10 +2,10 @@ import { type Base, placeOfKey, readBase, writeBase } from '@orden/bases'
 import { isRecord, keepJson, stored, stringList } from '../stored'
 import type { ViewSpec } from './spec'
 
-const FOLDS = 'nib:view-folds'
-const PROJECTS = 'nib:project-views'
-const TODOS = 'nib:todos-views'
-const RENAMES = 'nib:space-renames'
+const FOLDS = 'orden:view-folds'
+const PROJECTS = 'orden:project-views'
+const TODOS = 'orden:todos-views'
+const RENAMES = 'orden:space-renames'
 
 export const EVERY_SPACE = ''
 

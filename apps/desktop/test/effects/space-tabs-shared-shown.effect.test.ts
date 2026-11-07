@@ -53,12 +53,12 @@ test('the shared set on screen becomes the space on screen’s own', async () =>
     workspace.persist()
   }
 
-  const session = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+  const session = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
     sets: { on: string }
   }
   session.sets.on = 'global'
-  localStorage.setItem('nib:workspace', JSON.stringify(session))
-  localStorage.setItem('nib:space-tabs', JSON.stringify({ work: 'space' }))
+  localStorage.setItem('orden:workspace', JSON.stringify(session))
+  localStorage.setItem('orden:space-tabs', JSON.stringify({ work: 'space' }))
 
   await vi.dynamicImportSettled()
   vi.resetModules()

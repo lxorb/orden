@@ -1,6 +1,6 @@
 import { keep, storedText } from '../stored'
 
-const KEY = 'nib:icon-tabs'
+const KEY = 'orden:icon-tabs'
 
 class IconTabs {
   on = $state(storedText(KEY) !== 'no')
@@ -13,7 +13,7 @@ class IconTabs {
 
 export const iconTabs = new IconTabs()
 
-const FIT_KEY = 'nib:fit-tabs'
+const FIT_KEY = 'orden:fit-tabs'
 
 class FitTabs {
   on = $state(storedText(FIT_KEY) !== 'no')

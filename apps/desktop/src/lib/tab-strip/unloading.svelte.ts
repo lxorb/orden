@@ -9,7 +9,7 @@ import { type Tab, workspace } from '../workspace.svelte'
 import { closedAround } from '../workspace/closing-around'
 import type { TabKind } from '../workspace/tab-kinds'
 
-const KEY = 'nib:unload-tabs'
+const KEY = 'orden:unload-tabs'
 
 class UnloadTabs {
   on = $state(storedText(KEY) === 'yes')

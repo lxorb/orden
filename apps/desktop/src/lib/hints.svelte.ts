@@ -4,7 +4,7 @@ import { keepJson, stored, stringList } from './stored'
 export const HINTS = ['drawer', 'edge', 'graph', 'palette'] as const
 export type Hint = (typeof HINTS)[number]
 
-const KEY = 'nib:hints'
+const KEY = 'orden:hints'
 
 class Hints {
   seen = $state<Hint[]>([])

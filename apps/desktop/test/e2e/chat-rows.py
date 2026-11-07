@@ -42,7 +42,7 @@ def near(one: float, other: float) -> bool:
 def drive(browser: Browser) -> None:
     for width in (240, 420):
         context = browser.new_context(viewport={"width": 1400, "height": 820})
-        context.add_init_script(f"localStorage.setItem('nib:sidebar-width-right', '{width}')")
+        context.add_init_script(f"localStorage.setItem('orden:sidebar-width-right', '{width}')")
         page = context.new_page()
         DRIVE.open(page)
         page.keyboard.press("Control+Shift+A")

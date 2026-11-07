@@ -1,12 +1,12 @@
 import { keep, storedText } from './stored'
 
-const KEY = 'nib:renamed'
+const KEY = 'orden:renamed'
 
 function usedBefore(): boolean {
   try {
     for (let at = 0; at < localStorage.length; at++) {
       const key = localStorage.key(at)
-      if (key !== null && key !== KEY && key.startsWith('nib:')) return true
+      if (key !== null && key !== KEY && key.startsWith('orden:')) return true
     }
   } catch {
     // No site data allowed: nothing is remembered, so nothing is said every run.
