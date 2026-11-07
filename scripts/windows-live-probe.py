@@ -136,7 +136,18 @@ def main() -> int:
         (computer.root() / CANVAS).write_text(json.dumps(BOARD), encoding="utf-8")
         say("the app starts with a note and a canvas, signs in on sync v2")
         computer.launch()
-        computer.sign_in()
+        computer.ask(f"localStorage.setItem('orden:session', {json.dumps(token)}); location.reload(); true")
+        until = time.perf_counter() + 150
+        state = None
+        while time.perf_counter() < until:
+            time.sleep(5)
+            state = computer.ask("JSON.stringify({ o: !!window.ordenApp, n: !!window.nibApp, user: !!window.nibApp?.account?.user, v: window.nibApp?.sync?.version, e: !!window.nibApp?.sync?.engine, s: window.nibApp?.sync?.status, err: window.nibApp?.sync?.lastError ?? null })")
+            say(f"signing in: {state}")
+            if isinstance(state, str) and '"v":2' in state and '"e":true' in state:
+                break
+        else:
+            wrong(f"the app never ran sync v2: {state}")
+            return 1
         computer.wait(
             f"!!window.nibApp.sync.remoteIdFor(window.nibApp.workspace.spaces.find((one) => one.name === {json.dumps(probe.SPACE)})?.root ?? '')",
             "the space on the account",
