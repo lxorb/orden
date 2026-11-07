@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use tauri::AppHandle;
 
 const PAUSE: &str = "document.querySelectorAll('audio, video').forEach(function (one) { if (!one.paused) { one.pause(); one.setAttribute('data-nib-paused', '') } })";
@@ -5,6 +7,8 @@ const PAUSE: &str = "document.querySelectorAll('audio, video').forEach(function 
 const PLAY: &str = "document.querySelectorAll('[data-nib-paused]').forEach(function (one) { one.removeAttribute('data-nib-paused'); one.play().catch(function () {}) })";
 
 type Said = tauri::async_runtime::Sender<bool>;
+
+const PATIENCE: Duration = Duration::from_secs(3);
 
 #[tauri::command]
 pub async fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<bool, String> {
@@ -17,7 +21,15 @@ pub async fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<bool
     }
     let (said, mut heard) = tauri::async_runtime::channel::<bool>(1);
     engine::lull(&view, paused, said)?;
-    Ok(heard.recv().await.unwrap_or(false))
+    Ok(answered(&mut heard, PATIENCE).await)
+}
+
+async fn answered(heard: &mut tauri::async_runtime::Receiver<bool>, patience: Duration) -> bool {
+    tokio::time::timeout(patience, heard.recv())
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(false)
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
@@ -44,6 +56,9 @@ mod engine {
 
             if paused {
                 let then = ExecuteScriptCompletedHandler::create(Box::new(move |_, _| {
+                    if said.is_closed() {
+                        return Ok(());
+                    }
                     let done = TrySuspendCompletedHandler::create(Box::new(move |done, frozen| {
                         let _ = said.try_send(done.is_ok() && frozen);
                         Ok(())
@@ -113,7 +128,29 @@ mod engine {
 
 #[cfg(test)]
 mod tests {
-    use super::{PAUSE, PLAY};
+    use super::{answered, PAUSE, PLAY};
+
+    #[test]
+    fn a_page_that_never_answers_is_not_waited_on() {
+        let (said, mut heard) = tauri::async_runtime::channel::<bool>(1);
+        let patience = std::time::Duration::from_millis(200);
+        let started = std::time::Instant::now();
+        let paused = tauri::async_runtime::block_on(answered(&mut heard, patience));
+        assert!(!paused);
+        assert!(started.elapsed() < patience * 10);
+        assert!(!said.is_closed());
+        drop(heard);
+        assert!(said.is_closed());
+    }
+
+    #[test]
+    fn a_page_that_answers_is_heard() {
+        let (said, mut heard) = tauri::async_runtime::channel::<bool>(1);
+        said.try_send(true).expect("sent");
+        let patience = std::time::Duration::from_secs(5);
+        let paused = tauri::async_runtime::block_on(answered(&mut heard, patience));
+        assert!(paused);
+    }
 
     #[test]
     fn what_is_paused_is_marked_and_only_that_plays_again() {
