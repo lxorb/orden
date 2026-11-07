@@ -3485,4 +3485,5 @@ export const gu: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ક્રેશ અથવા અટકી ગયું ત્યારે શું કરતું હતું તે મોકલે છે; નોંધો, નામ, પાથ કે પાસવર્ડ ક્યારેય નહીં.',
   'Send crash reports to help improve Orden': 'Orden ને સુધારવામાં મદદ કરવા ક્રેશ રિપોર્ટ મોકલો',
+  'Move to {space}?': '{space} માં ખસેડવું છે?',
 }

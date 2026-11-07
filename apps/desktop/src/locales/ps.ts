@@ -3500,4 +3500,5 @@ export const ps: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'لېږي چې Orden د ماتېدو یا درېدو پر مهال څه کول؛ هېڅکله یادښتونه، نومونه، لارې یا پټنومونه نه.',
   'Send crash reports to help improve Orden': 'د Orden د ښه کولو لپاره د ماتیدو راپورونه ولېږه',
+  'Move to {space}?': '{space} ته یې ولیږدوئ؟',
 }

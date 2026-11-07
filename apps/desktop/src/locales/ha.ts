@@ -3549,4 +3549,5 @@ export const ha: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Yana aika abin da Orden ke yi lokacin da ya faɗi ko ya daskare; ba bayanai, sunaye, hanyoyi ko kalmomin sirri ba.',
   'Send crash reports to help improve Orden': 'Aika rahotannin faɗuwa don taimakawa inganta Orden',
+  'Move to {space}?': 'A matsar zuwa {space}?',
 }

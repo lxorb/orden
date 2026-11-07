@@ -3581,4 +3581,5 @@ export const ptBR: Dictionary = {
     'Envia o que o Orden fazia ao falhar ou travar; nunca notas, nomes, caminhos ou senhas.',
   'Send crash reports to help improve Orden':
     'Enviar relatórios de falhas para ajudar a melhorar o Orden',
+  'Move to {space}?': 'Mover para {space}?',
 }

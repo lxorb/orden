@@ -3569,4 +3569,5 @@ export const fil: Dictionary = {
     'Ipinapadala kung ano ang ginagawa ng Orden nang mag-crash o mag-freeze; hindi kailanman tala, pangalan, path o password.',
   'Send crash reports to help improve Orden':
     'Magpadala ng mga ulat ng pag-crash para makatulong na mapabuti ang Orden',
+  'Move to {space}?': 'Ilipat sa {space}?',
 }

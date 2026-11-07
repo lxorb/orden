@@ -3435,4 +3435,5 @@ export const am: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ሲበላሽ ወይም ሲቆም ምን እየሰራ እንደነበር ይልካል፤ ማስታወሻዎች፣ ስሞች፣ መንገዶች ወይም የይለፍ ቃሎች አይላኩም።',
   'Send crash reports to help improve Orden': 'Ordenን ለማሻሻል እንዲረዳ የብልሽት ሪፖርቶችን ላክ',
+  'Move to {space}?': 'ወደ {space} ይዛወር?',
 }

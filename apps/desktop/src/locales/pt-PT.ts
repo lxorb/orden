@@ -3598,4 +3598,5 @@ export const ptPT: Dictionary = {
     'Envia o que o Orden fazia ao falhar ou bloquear; nunca notas, nomes, caminhos ou palavras-passe.',
   'Send crash reports to help improve Orden':
     'Enviar relatórios de falhas para ajudar a melhorar o Orden',
+  'Move to {space}?': 'Mover para {space}?',
 }

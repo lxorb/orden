@@ -3496,4 +3496,5 @@ export const ur: Dictionary = {
     'Orden کریش یا رکنے پر کیا کر رہا تھا یہ بھیجتا ہے؛ نوٹس، نام، راستے یا پاس ورڈ کبھی نہیں۔',
   'Send crash reports to help improve Orden':
     'Orden کو بہتر بنانے میں مدد کے لیے کریش رپورٹیں بھیجیں',
+  'Move to {space}?': '{space} میں منتقل کریں؟',
 }

@@ -3415,4 +3415,5 @@ export const ja: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'クラッシュやフリーズ時に Orden が何をしていたかを送信します。メモ、名前、パス、パスワードは送りません。',
   'Send crash reports to help improve Orden': 'クラッシュレポートを送信して Orden の改善に協力する',
+  'Move to {space}?': '{space} に移動しますか？',
 }

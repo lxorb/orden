@@ -3644,4 +3644,5 @@ export const pl: Dictionary = {
     'Wysyła, co robił Orden podczas awarii lub zawieszenia; nigdy notatek, nazw, ścieżek ani haseł.',
   'Send crash reports to help improve Orden':
     'Wysyłaj raporty o awariach, aby pomóc ulepszać Orden',
+  'Move to {space}?': 'Przenieść do {space}?',
 }

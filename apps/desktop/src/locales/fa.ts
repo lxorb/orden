@@ -3505,4 +3505,5 @@ export const fa: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'می‌فرستد Orden هنگام خرابی یا هنگ چه می‌کرد؛ هرگز یادداشت، نام، مسیر یا گذرواژه.',
   'Send crash reports to help improve Orden': 'ارسال گزارش خرابی برای کمک به بهبود Orden',
+  'Move to {space}?': 'به {space} منتقل شود؟',
 }

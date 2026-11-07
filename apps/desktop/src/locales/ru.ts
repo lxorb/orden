@@ -3644,4 +3644,5 @@ export const ru: Dictionary = {
     'Отправляет, что делал Orden при сбое или зависании; никогда заметки, имена, пути или пароли.',
   'Send crash reports to help improve Orden':
     'Отправлять отчёты о сбоях, чтобы помочь улучшить Orden',
+  'Move to {space}?': 'Переместить в {space}?',
 }

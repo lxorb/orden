@@ -3438,4 +3438,5 @@ export const id: Dictionary = {
     'Mengirim apa yang dilakukan Orden saat crash atau macet; tidak pernah catatan, nama, jalur, atau kata sandi.',
   'Send crash reports to help improve Orden':
     'Kirim laporan crash untuk membantu meningkatkan Orden',
+  'Move to {space}?': 'Pindahkan ke {space}?',
 }

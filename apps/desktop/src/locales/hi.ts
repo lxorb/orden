@@ -3502,4 +3502,5 @@ export const hi: Dictionary = {
     'Orden के क्रैश या अटकने पर वह क्या कर रहा था, यह भेजता है; नोट, नाम, पाथ या पासवर्ड कभी नहीं।',
   'Send crash reports to help improve Orden':
     'Orden को बेहतर बनाने में मदद के लिए क्रैश रिपोर्ट भेजें',
+  'Move to {space}?': '{space} में ले जाएँ?',
 }

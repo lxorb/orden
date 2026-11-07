@@ -3405,4 +3405,5 @@ export const vi: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Gửi việc Orden đang làm khi gặp sự cố hoặc bị treo; không bao giờ gửi ghi chú, tên, đường dẫn hay mật khẩu.',
   'Send crash reports to help improve Orden': 'Gửi báo cáo sự cố để giúp cải thiện Orden',
+  'Move to {space}?': 'Chuyển đến {space}?',
 }

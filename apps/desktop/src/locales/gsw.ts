@@ -3524,4 +3524,5 @@ export const gsw: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Schickt, was Orden bim Absturz oder Hänger gmacht het; nie Notize, Näme, Pfäd oder Passwörter.',
   'Send crash reports to help improve Orden': 'Absturzbricht schicke, zum Orden besser mache',
+  'Move to {space}?': 'Nach {space} verschiebe?',
 }

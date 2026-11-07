@@ -3616,4 +3616,5 @@ export const it: Dictionary = {
     'Invia cosa faceva Orden quando si è arrestato o bloccato; mai note, nomi, percorsi o password.',
   'Send crash reports to help improve Orden':
     'Invia i rapporti sugli arresti anomali per aiutare a migliorare Orden',
+  'Move to {space}?': 'Spostare in {space}?',
 }

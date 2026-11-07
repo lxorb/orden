@@ -3338,4 +3338,5 @@ export const zhHant: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     '傳送 Orden 當機或凍結時正在做什麼；絕不傳送筆記、名稱、路徑或密碼。',
   'Send crash reports to help improve Orden': '傳送當機報告，協助改善 Orden',
+  'Move to {space}?': '移動到 {space}？',
 }

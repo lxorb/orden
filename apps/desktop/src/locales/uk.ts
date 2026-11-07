@@ -3639,4 +3639,5 @@ export const uk: Dictionary = {
     'Надсилає, що робив Orden під час збою чи зависання; ніколи нотатки, імена, шляхи чи паролі.',
   'Send crash reports to help improve Orden':
     'Надсилати звіти про збої, щоб допомогти покращити Orden',
+  'Move to {space}?': 'Перемістити в {space}?',
 }
