@@ -30,6 +30,8 @@ struct Held {
     session: Mutex<Option<String>>,
     running: Mutex<Option<Running>>,
     ended: AtomicBool,
+    starting: AtomicBool,
+    hushed: AtomicBool,
 }
 
 fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -82,8 +84,13 @@ impl Gemini {
                 self.turn(&text)
             }
             Say::Interrupt => {
-                if let Some(running) = lock(&self.held.running).as_ref() {
-                    running.stop();
+                let running = lock(&self.held.running);
+                match running.as_ref() {
+                    Some(running) => running.stop(),
+                    None => self
+                        .held
+                        .hushed
+                        .store(self.held.starting.load(Ordering::SeqCst), Ordering::SeqCst),
                 }
                 Ok(())
             }
@@ -102,13 +109,35 @@ impl Gemini {
     }
 
     fn turn(&self, text: &str) -> Result<(), String> {
+        {
+            let running = lock(&self.held.running);
+            if self.held.ended.load(Ordering::SeqCst) {
+                return Err("Gemini CLI has been closed".into());
+            }
+            if running.is_some() || self.held.starting.swap(true, Ordering::SeqCst) {
+                return Err("Gemini CLI is still answering".into());
+            }
+            self.held.hushed.store(false, Ordering::SeqCst);
+        }
+        let started = self.started(text);
         let mut running = lock(&self.held.running);
+        self.held.starting.store(false, Ordering::SeqCst);
+        let (started, finished) = started?;
         if self.held.ended.load(Ordering::SeqCst) {
+            drop(running);
+            started.stop();
             return Err("Gemini CLI has been closed".into());
         }
-        if running.is_some() {
-            return Err("Gemini CLI is still answering".into());
+        if !finished.load(Ordering::SeqCst) {
+            if self.held.hushed.swap(false, Ordering::SeqCst) {
+                started.stop();
+            }
+            *running = Some(started);
         }
+        Ok(())
+    }
+
+    fn started(&self, text: &str) -> Result<(Running, Arc<AtomicBool>), String> {
         let session = lock(&self.held.session).clone();
         let model = lock(&self.model).clone();
         let command = self.command(model.as_deref(), session.as_deref())?;
@@ -116,6 +145,8 @@ impl Gemini {
         let held = Arc::clone(&self.held);
         let output = Arc::clone(&self.output);
         let answered = Arc::new(AtomicBool::new(false));
+        let finished = Arc::new(AtomicBool::new(false));
+        let over = Arc::clone(&finished);
         let started = run::open(command, self.idle, move |heard| match heard {
             Heard::Line(line) => {
                 if let Some(said) = said_in(&line) {
@@ -129,6 +160,7 @@ impl Gemini {
                 output(Message::Line { line });
             }
             Heard::End(ended) => {
+                over.store(true, Ordering::SeqCst);
                 lock(&held.running).take();
                 if ended.stopped || !answered.load(Ordering::SeqCst) {
                     output(Message::End(ended));
@@ -140,8 +172,7 @@ impl Gemini {
             .write_line(text)
             .map_err(|error| format!("Gemini CLI is not listening: {error}"))?;
         started.close_input();
-        *running = Some(started);
-        Ok(())
+        Ok((started, finished))
     }
 
     fn command(&self, model: Option<&str>, session: Option<&str>) -> Result<Command, String> {
@@ -324,5 +355,53 @@ mod tests {
         assert!(lock(&gemini.held.running).is_none());
         std::thread::sleep(Duration::from_millis(200));
         assert!(!started.load(Ordering::SeqCst));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn stopping_waits_for_no_turn_that_is_still_starting() {
+        let (entered, starting) = std::sync::mpsc::channel();
+        let (go, gate) = std::sync::mpsc::channel::<()>();
+        let gate = Mutex::new(gate);
+        let launch = Launch {
+            base: Box::new(move |_: &[String]| {
+                let _ = entered.send(());
+                let _ = lock(&gate).recv_timeout(Duration::from_secs(5));
+                let mut command = Command::new("sh");
+                command.args(["-c", "cat"]);
+                command
+            }),
+            folder: dir("starting"),
+            caps: Caps::from_help("--output-format"),
+            token: None,
+            thread: None,
+            mode: None,
+            without: Vec::new(),
+        };
+        let output: Output = Arc::new(|_| {});
+        let gemini = Arc::new(
+            Gemini::start(launch, "one", None, Duration::from_secs(30), None, output)
+                .expect("started"),
+        );
+        let turning = Arc::clone(&gemini);
+        let turn = std::thread::spawn(move || {
+            turning.say(Say::Turn {
+                text: "hello".into(),
+                images: Vec::new(),
+            })
+        });
+        starting
+            .recv_timeout(Duration::from_secs(5))
+            .expect("the turn starts");
+        let asked = std::time::Instant::now();
+        gemini.stop();
+        assert!(
+            asked.elapsed() < Duration::from_secs(2),
+            "stopping waited for the turn to start"
+        );
+        go.send(()).expect("the turn goes on");
+        let said = turn.join().expect("the turn");
+        assert!(said.is_err_and(|why| why.contains("closed")));
+        assert!(lock(&gemini.held.running).is_none());
     }
 }
