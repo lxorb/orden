@@ -148,7 +148,7 @@ export function canShareItem(path: string | null | undefined): boolean {
 
 export function othersIn(path: string): boolean {
   for (const tab of workspace.tabs) {
-    if (tab.path === path && (rooms.present[tab.note.key] ?? 0) > 0) return true
+    if (tab.path === path && (rooms.seen[tab.note.key]?.people.length ?? 0) > 0) return true
   }
 
   return false
