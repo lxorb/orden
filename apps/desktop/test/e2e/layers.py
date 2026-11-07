@@ -111,7 +111,7 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         color_scheme="light",
         device_scale_factor=2,
     )
-    context.add_init_script(f"try {{ localStorage.setItem('nib:session', '{token}') }} catch {{}}")
+    context.add_init_script(f"try {{ localStorage.setItem('orden:session', '{token}') }} catch {{}}")
 
     page = context.new_page()
     page.set_default_timeout(20000)

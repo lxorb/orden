@@ -343,8 +343,8 @@ and not by a folder on one disk - and `SpaceSorting` in `workspace/arranged.svel
 the space's folder so the list is drawn before the account answers. Met the way the
 graph's settings are: the first time an account sees a space, this machine's choice
 stands where the account has none and is sent up; after that the account's is taken.
-What a machine chose before, under `nib:list-order`, is read over once. It used to be
-one choice for the whole app, in `nib:tree`; a value written there by an older build
+What a machine chose before, under `orden:list-order`, is read over once. It used to be
+one choice for the whole app, in `orden:tree`; a value written there by an older build
 is ignored.
 
 **Nothing is read off the disk to change it.** The listing in memory is the

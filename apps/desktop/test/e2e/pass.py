@@ -94,7 +94,7 @@ def drive(browser: Browser) -> None:
         reduced_motion="reduce",
         permissions=["clipboard-read", "clipboard-write"],
     )
-    context.add_init_script("localStorage.setItem('nib:hidden-kinds', JSON.stringify(['shown-pass']))")
+    context.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-pass']))")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.on(

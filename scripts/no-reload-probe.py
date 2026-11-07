@@ -276,7 +276,7 @@ def main() -> int:
         switch.allow_eval(args.identifier)
         time.sleep(1)
         running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
-        ask(app, "localStorage.setItem('nib:memory-saver', 'off') || 'kept'")
+        ask(app, "localStorage.setItem('orden:memory-saver', 'off') || 'kept'")
 
         say("ten pages")
         open_all(app)
@@ -321,7 +321,7 @@ def main() -> int:
         memory(running.pid, "after the round")
 
         say("Memory saver at Maximum, a launch later")
-        ask(app, "localStorage.setItem('nib:memory-saver', 'maximum') || 'kept'")
+        ask(app, "localStorage.setItem('orden:memory-saver', 'maximum') || 'kept'")
         ask(app, "(nib.workspace.tabs.filter((one) => one.kind === 'web').forEach((one) => nib.workspace.close(one.id)), 'closed')")
         time.sleep(2)
         first = app.port

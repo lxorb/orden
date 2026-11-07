@@ -13,8 +13,8 @@ import { carried, moving } from '../workspace/file-ops'
 import type { Cost } from './scrypt'
 import { unlocks } from './unlocked.svelte'
 
-export const STORAGE_KEY = 'nib:protected'
-const PASSWORD_KEY = 'nib:protect-password'
+export const STORAGE_KEY = 'orden:protected'
+const PASSWORD_KEY = 'orden:protect-password'
 
 export type Way = 'password' | 'device'
 

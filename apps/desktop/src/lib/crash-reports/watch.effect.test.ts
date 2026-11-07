@@ -48,7 +48,7 @@ test('nothing waiting is sent before the first-launch question is answered', asy
 })
 
 test('once it is answered, waiting reports go at start', () => {
-  localStorage.setItem('nib:crash-reports-told', 'true')
+  localStorage.setItem('orden:crash-reports-told', 'true')
   stop = watchForCrashes(true)
   flushSync()
   expect(world.sent).toBe(1)

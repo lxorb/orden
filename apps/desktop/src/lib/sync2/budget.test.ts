@@ -8,7 +8,7 @@ afterEach(() => {
 
 function locks(others: number) {
   const held: { name: string; mode: string }[] = Array.from({ length: others }, () => ({
-    name: 'nib:window',
+    name: 'orden:window',
     mode: 'shared',
   }))
   return {

@@ -151,7 +151,7 @@ mod tests {
     #[test]
     fn a_key_is_a_file_name_and_back() {
         let folder = Path::new("/kept");
-        for key in ["nib:session", "nib:font/ui", "ü ✓", ""] {
+        for key in ["orden:session", "orden:font/ui", "ü ✓", ""] {
             let file = kept_file(folder, key);
             let name = file
                 .file_name()
@@ -172,9 +172,9 @@ mod tests {
         let folder = std::env::temp_dir().join(format!("nib-kept-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         for (key, said) in [
-            ("nib:font", Said::Value("Inter".into())),
-            ("nib:draft", Said::Value("words".into())),
-            ("nib:old", Said::Gone),
+            ("orden:font", Said::Value("Inter".into())),
+            ("orden:draft", Said::Value("words".into())),
+            ("orden:old", Said::Gone),
         ] {
             write_down(&Write {
                 folder: folder.clone(),
@@ -185,20 +185,20 @@ mod tests {
         }
         write_down(&Write {
             folder: folder.clone(),
-            key: "nib:font".into(),
+            key: "orden:font".into(),
             said: Said::Value("Lato".into()),
         })
         .expect("written");
         let kept: Kept = read_back(&folder);
         assert_eq!(
-            kept.values.get("nib:font").map(String::as_str),
+            kept.values.get("orden:font").map(String::as_str),
             Some("Lato")
         );
         assert_eq!(
-            kept.values.get("nib:draft").map(String::as_str),
+            kept.values.get("orden:draft").map(String::as_str),
             Some("words")
         );
-        assert_eq!(kept.gone, vec!["nib:old".to_string()]);
+        assert_eq!(kept.gone, vec!["orden:old".to_string()]);
         let _ = std::fs::remove_dir_all(&folder);
     }
 

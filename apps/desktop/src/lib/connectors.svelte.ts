@@ -3,8 +3,8 @@ import { account } from './account.svelte'
 import { message } from './i18n.svelte'
 import { isRecord, keep, keepJson, stored, storedText } from './stored'
 
-const STORAGE_KEY = 'nib:llm'
-const CLIENT_KEY = 'nib:llm-client'
+const STORAGE_KEY = 'orden:llm'
+const CLIENT_KEY = 'orden:llm-client'
 
 export type Client = 'claude' | 'chatgpt' | 'other'
 

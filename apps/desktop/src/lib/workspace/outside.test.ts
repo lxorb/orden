@@ -42,8 +42,8 @@ beforeEach(() => {
 
 describe('a folder outside, taken in', () => {
   test('is followed by everything stored under each space, once, and then settled', async () => {
-    localStorage.setItem('nib:workspace', SESSION)
-    localStorage.setItem('nib:recent', JSON.stringify(['/Vault/Workshop/a.md']))
+    localStorage.setItem('orden:workspace', SESSION)
+    localStorage.setItem('orden:recent', JSON.stringify(['/Vault/Workshop/a.md']))
     answer.taken = {
       folder: '/Vault',
       moved: [{ from: '/Vault/Work', to: '/Spaces/Work 2' }],
@@ -52,13 +52,13 @@ describe('a folder outside, taken in', () => {
 
     expect(await takeIn()).toBe(true)
 
-    const session = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+    const session = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
       spaces: { id: string; root: string }[]
       tabs: { path: string }[]
     }
     expect(session.spaces).toEqual([{ id: 'kept-id', name: 'Work', root: '/Spaces/Work 2' }])
     expect(session.tabs).toEqual([{ path: '/Spaces/Work 2/Plans.md' }])
-    expect(localStorage.getItem('nib:recent')).toBe(JSON.stringify(['/Vault/Workshop/a.md']))
+    expect(localStorage.getItem('orden:recent')).toBe(JSON.stringify(['/Vault/Workshop/a.md']))
     expect(asked).toContainEqual({
       command: 'rehome_snapshots',
       args: { from: '/Vault/Work', to: '/Spaces/Work 2' },
@@ -77,7 +77,7 @@ describe('a folder outside, taken in', () => {
   })
 
   test('is not settled while a space of it could not be copied, nor started over twice', async () => {
-    localStorage.setItem('nib:workspace', SESSION)
+    localStorage.setItem('orden:workspace', SESSION)
     answer.taken = {
       folder: '/Vault',
       moved: [{ from: '/Vault/Work', to: '/Spaces/Work 2' }],

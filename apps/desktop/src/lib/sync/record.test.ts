@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { Clash } from './conflicts'
 
-const KEY = 'nib:sync-log'
+const KEY = 'orden:sync-log'
 
 const spaces = [{ root: '/Work' }]
 

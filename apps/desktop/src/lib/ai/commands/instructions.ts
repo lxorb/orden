@@ -20,7 +20,7 @@ export const STYLES: Readonly<Record<string, string>> = {
     'Teach rather than do: explain the idea, show one small step, and leave the next one for the reader to try.',
 }
 
-const MEMORY_KEY = 'nib:ai-memory'
+const MEMORY_KEY = 'orden:ai-memory'
 
 function remembers(): boolean {
   const value = stored(MEMORY_KEY)

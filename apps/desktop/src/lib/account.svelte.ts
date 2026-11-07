@@ -5,7 +5,7 @@ import { called } from './person'
 import { forget, keep, storedText } from './stored'
 import { waited } from './timing'
 
-const STORAGE_KEY = 'nib:session'
+const STORAGE_KEY = 'orden:session'
 
 export type Step = 'email' | 'code' | 'second'
 

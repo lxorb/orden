@@ -39,7 +39,7 @@ import { chatName, findPointers, makePointer, type Place, readPointer } from './
 import { forgetMoves, keepOwnPointer, ownPointer, ownPointers, startedFor } from './places'
 import { type Host, View } from './view.svelte'
 
-const RECEIPTS = 'nib:chat-receipts'
+const RECEIPTS = 'orden:chat-receipts'
 
 const WIKILINK = /\[\[([^\]|#^]+)/g
 

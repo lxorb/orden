@@ -268,11 +268,11 @@ def drive_offered(browser: Browser) -> None:
         wrong("a system asking for more contrast was not answered")
     if page.evaluate("() => window.nibApp.theme.id") != "contrast":
         wrong("the launch did not choose the contrast theme")
-    if page.evaluate("() => localStorage.getItem('nib:theme')") != "contrast":
+    if page.evaluate("() => localStorage.getItem('orden:theme')") != "contrast":
         wrong("the choice was not written down, so the next launch would forget it")
     if page.evaluate("() => window.nibApp.settings.section") != "appearance":
         wrong("Appearance did not open on the row the theme was chosen from")
-    if page.evaluate("() => localStorage.getItem('nib:contrast-offered')") != "yes":
+    if page.evaluate("() => localStorage.getItem('orden:contrast-offered')") != "yes":
         wrong("the answer was not written down, so it would be given again")
     said = ratios(page)
     say(f"[offered] {json.dumps(said)}")

@@ -97,7 +97,7 @@ interface Kept {
   partly: boolean
 }
 
-const KEY = 'nib:pens'
+const KEY = 'orden:pens'
 
 function blank(): Kept {
   return {

@@ -135,7 +135,7 @@ test('a tab closed within the pause: once the write has landed the entry holds n
   await workspace.writesSettled()
   expect(disk.current?.files.get(PATH)).toBe('base\nCHANGED-MY-MIND\n')
   const session = JSON.parse(
-    (workspace.persist(), localStorage.getItem('nib:workspace')) ?? 'null',
+    (workspace.persist(), localStorage.getItem('orden:workspace')) ?? 'null',
   ) as { closed?: { draft: { dirty: boolean; doc: string } }[] } | null
   if (session?.closed?.length) {
     expect(session.closed.at(-1)?.draft).toMatchObject({ dirty: false, doc: '' })

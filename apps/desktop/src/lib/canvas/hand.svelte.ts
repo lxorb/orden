@@ -1,7 +1,7 @@
 import { keep, storedText } from '../stored'
 
-const SEEN = 'nib:pen-seen'
-const DRAWS = 'nib:finger-draws'
+const SEEN = 'orden:pen-seen'
+const DRAWS = 'orden:finger-draws'
 
 function saved(key: string): boolean {
   return storedText(key) === 'yes'

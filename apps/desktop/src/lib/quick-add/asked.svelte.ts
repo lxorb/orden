@@ -1,8 +1,8 @@
 import { keep, storedText } from '../stored'
 import type { Prefill } from './entry'
 
-const SMART = 'nib:quick-add-smart'
-const ANYWHERE = 'nib:quick-add-anywhere'
+const SMART = 'orden:quick-add-smart'
+const ANYWHERE = 'orden:quick-add-anywhere'
 
 class QuickAddAsk {
   open = $state(false)

@@ -1,6 +1,6 @@
 import { forget, keep, storedText } from './stored'
 
-const KEY = 'nib:seeded'
+const KEY = 'orden:seeded'
 
 export interface Remembers {
   read(): Promise<boolean>
@@ -32,7 +32,7 @@ export async function markSeeded(): Promise<void> {
   await elsewhere?.write().catch(() => undefined)
 }
 
-const SPACE_KEY = 'nib:seed-space'
+const SPACE_KEY = 'orden:seed-space'
 
 export function markSeedSpace(root: string): void {
   keep(SPACE_KEY, root)

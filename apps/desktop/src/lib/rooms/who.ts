@@ -5,7 +5,7 @@ import { isNative, platform } from '../tauri'
 import { browserName } from './browser'
 import { appleHandheld } from '../device'
 
-const KEY = 'nib:device-colour'
+const KEY = 'orden:device-colour'
 
 const NAMES: Record<string, string> = {
   windows: 'Windows',

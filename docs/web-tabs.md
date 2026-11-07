@@ -110,7 +110,7 @@ writing is `web-tab/favicons.ts`, fetched with the first mark.
 **What is _not_ in the file is where the reading was on the page, or the trail behind
 the tab.** A scroll offset is about this screen at this width and a trail is a
 session's own walk, so both live in this device's own storage, keyed by the file's
-path - `nib:web-places`, beside the other things a device decides for itself. See
+path - `orden:web-places`, beside the other things a device decides for itself. See
 `lib/web-tab/place.ts`. The rule in one line: **the address is the document, and the
 place is the device's.**
 
@@ -2005,7 +2005,7 @@ quiet: a window nobody pressed for is not opened from its pages, and a framed wi
 browser process opens on its own is closed as it appears (`extensions/welcome.rs`). The
 extension is installed and runs; its options page is in Settings.
 
-**History is one list** (`nib:web-visits`, `visited.ts`), a note kept apart included, as
+**History is one list** (`orden:web-visits`, `visited.ts`), a note kept apart included, as
 Firefox keeps one history across containers. **Delete browsing data** clears the shared
 store and the own store of every web note kept apart that is open.
 
@@ -2027,7 +2027,7 @@ before its first page is built (`web-tab/merged.ts`, `web_merge` in
 - **the space's history** folded into the one history;
 - **nothing deleted**: the old stores stay on disk as they were.
 
-It is marked done (`nib:web-data-merged`) only once every store has merged, so a launch cut
+It is marked done (`orden:web-data-merged`) only once every store has merged, so a launch cut
 short tries again. Proved by
 `scripts/web-data-probe.py`, which signs a local site in through the build from before, in
 the shared store and in a space kept apart, and then opens the same note in the build after:
@@ -2244,7 +2244,7 @@ because everything the engine hands out there belongs to the window's thread, so
 requests waiting for an answer live in a thread local on it and `web_answer` posts
 itself there; and the window deciding, because what a site was allowed belongs where
 the reader's other choices live. Grants are per origin and per kind, on the device and
-never on the account, in `nib:web-grants`. A private tab's answers are not among them
+never on the account, in `orden:web-grants`. A private tab's answers are not among them
 (#787): they are kept in memory for the private session, every private tab of the run,
 and forgotten when the last private tab closes, and they never answer a normal tab. A
 private tab is given what a normal one blocked and not what it allowed, Chrome's rule

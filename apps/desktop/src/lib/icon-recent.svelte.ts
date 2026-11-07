@@ -1,8 +1,8 @@
 import { forget, keepJson, stored, stringList } from './stored'
 
-const RECENT_KEY = 'nib:icons-recent'
+const RECENT_KEY = 'orden:icons-recent'
 
-const OLD_SET_KEY = 'nib:icon-set'
+const OLD_SET_KEY = 'orden:icon-set'
 forget(OLD_SET_KEY)
 
 const MOST_RECENT = 12

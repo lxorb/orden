@@ -49,8 +49,8 @@ STATE = """
 () => ({
   id: window.nibApp.theme.id,
   scheme: document.documentElement.dataset.theme,
-  kept: localStorage.getItem('nib:theme'),
-  keptScheme: localStorage.getItem('nib:theme-scheme'),
+  kept: localStorage.getItem('orden:theme'),
+  keptScheme: localStorage.getItem('orden:theme-scheme'),
   open: !!document.querySelector('[role="dialog"][aria-label="Themes"]'),
 })
 """

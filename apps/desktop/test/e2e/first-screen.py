@@ -32,8 +32,8 @@ const topOf = (content) => {
   return line ? { text: line.textContent, y: Math.round(line.getBoundingClientRect().top * 10) / 10 } : null
 }
 if (sessionStorage.getItem('first-screen-other-words')) {
-  const kept = JSON.parse(localStorage.getItem('nib:first-screen') ?? 'null')
-  if (kept) localStorage.setItem('nib:first-screen', JSON.stringify({ ...kept, words: '0:other' }))
+  const kept = JSON.parse(localStorage.getItem('orden:first-screen') ?? 'null')
+  if (kept) localStorage.setItem('orden:first-screen', JSON.stringify({ ...kept, words: '0:other' }))
 }
 new MutationObserver(() => {
   const now = performance.now()
@@ -86,7 +86,7 @@ EDITOR_TOP = r"""() => {
   return line ? { text: line.textContent, y: Math.round(line.getBoundingClientRect().top * 10) / 10 } : null
 }"""
 
-KEPT = "() => !!localStorage.getItem('nib:first-screen')"
+KEPT = "() => !!localStorage.getItem('orden:first-screen')"
 
 def left_alone(page: Page) -> None:
     page.wait_for_timeout(1500)

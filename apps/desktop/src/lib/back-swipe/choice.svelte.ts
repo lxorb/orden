@@ -1,6 +1,6 @@
 import { keep, storedText } from '../stored'
 
-const KEY = 'nib:swipe'
+const KEY = 'orden:swipe'
 
 class SwipeChoice {
   on = $state(storedText(KEY) !== 'off')

@@ -144,7 +144,7 @@ export class InternalFolder {
     private readonly world: InternalWorld,
   ) {
     this.channel =
-      world.channel?.(`nib:internal:${name}`, (message) => {
+      world.channel?.(`orden:internal:${name}`, (message) => {
         this.fromAnother(message)
       }) ?? null
   }
@@ -233,7 +233,7 @@ export class InternalFolder {
       this.channel?.post({ gen: this.gen, changes: changes ?? [] })
       this.tell(changes ?? [])
     }
-    await (this.world.exclusive ? this.world.exclusive(`nib:internal:${this.name}`, run) : run())
+    await (this.world.exclusive ? this.world.exclusive(`orden:internal:${this.name}`, run) : run())
   }
 
   private async persist() {

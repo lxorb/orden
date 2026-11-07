@@ -1,6 +1,6 @@
 import { isRecord, keepJson, stored } from '../stored'
 
-const STORAGE_KEY = 'nib:web-places'
+const STORAGE_KEY = 'orden:web-places'
 
 const KEEPS = 200
 

@@ -125,7 +125,7 @@ function freshDisk() {
 function freshRound(session: object = SESSION) {
   freshDisk()
   localStorage.clear()
-  localStorage.setItem('nib:workspace', JSON.stringify(session))
+  localStorage.setItem('orden:workspace', JSON.stringify(session))
 }
 
 async function newWindow() {
@@ -136,7 +136,7 @@ async function newWindow() {
 
 type Workspace = Awaited<ReturnType<typeof newWindow>>
 
-const session = () => localStorage.getItem('nib:workspace') ?? ''
+const session = () => localStorage.getItem('orden:workspace') ?? ''
 
 function kept(words: string, path?: string) {
   return session().includes(words.trim()) || (path ? d.files.get(path)?.includes(words) : false)

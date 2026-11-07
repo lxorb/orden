@@ -80,7 +80,7 @@ def desktop(browser: Browser) -> None:
     )
     DRIVE.shot(page, "desktop-account")
 
-SEEN = "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
+SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 
 SETTLED = "() => performance.now() > performance.getEntriesByName('nib: start')[0].startTime + 21_000"
 

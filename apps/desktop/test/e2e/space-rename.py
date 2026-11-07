@@ -66,7 +66,7 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
 
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1100, "height": 700})
-    context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
 
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
@@ -218,14 +218,14 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
 
     wait_for(
         page,
-        "() => (localStorage.getItem('nib:workspace') ?? '').includes"
+        "() => (localStorage.getItem('orden:workspace') ?? '').includes"
         f"({json.dumps(CANVAS)})",
         "[restored] the session to be written down",
     )
 
     page.evaluate(
         "() => {"
-        "  const held = JSON.parse(localStorage.getItem('nib:workspace'));"
+        "  const held = JSON.parse(localStorage.getItem('orden:workspace'));"
         "  const walk = (value) => {"
         "    if (Array.isArray(value)) { value.forEach(walk); return }"
         "    if (!value || typeof value !== 'object') return;"
@@ -235,7 +235,7 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
         "    Object.values(value).forEach(walk)"
         "  };"
         "  walk(held);"
-        "  localStorage.setItem('nib:workspace', JSON.stringify(held))"
+        "  localStorage.setItem('orden:workspace', JSON.stringify(held))"
         "}"
     )
 

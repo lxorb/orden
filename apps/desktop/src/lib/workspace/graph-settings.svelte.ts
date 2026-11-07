@@ -1,7 +1,7 @@
 import { isBoolean, isNumber, isRecord, isString, keepJson } from '../stored'
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 
-export const STORAGE_KEY = 'nib:graph'
+export const STORAGE_KEY = 'orden:graph'
 
 export const MOST_GROUPS = 6
 

@@ -199,8 +199,8 @@ def main() -> int:
         work, home = str(ids["Work"]), str(ids["Home"])
         say(f"Work {work}, Home {home}")
 
-        ask(app, f"localStorage.setItem('nib:space-tabs', {json.dumps(json.dumps({work: 'space', home: 'space'}))}) || 'kept'")
-        ask(app, "localStorage.setItem('nib:hidden-tabs', '\"run\"') || 'kept'")
+        ask(app, f"localStorage.setItem('orden:space-tabs', {json.dumps(json.dumps({work: 'space', home: 'space'}))}) || 'kept'")
+        ask(app, "localStorage.setItem('orden:hidden-tabs', '\"run\"') || 'kept'")
         tabs_probe.to_space(app, home)
         tabs_probe.to_space(app, work)
 

@@ -62,7 +62,7 @@ export async function fileStamp(path: string): Promise<Stamp | null> {
     : null
 }
 
-export const MIRRORS_KEY = 'nib:mirrors'
+export const MIRRORS_KEY = 'orden:mirrors'
 
 export interface Saved {
   whose: string | null

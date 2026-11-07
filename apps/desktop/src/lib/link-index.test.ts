@@ -1457,7 +1457,7 @@ describe('another window writing the file as a link is rewritten', () => {
     try {
       let letGo = (): unknown => undefined
       const held = locks.request(
-        `nib:file:${path}`,
+        `orden:file:${path}`,
         () => new Promise((go) => (letGo = () => go(undefined))),
       )
       const working = work()

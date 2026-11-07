@@ -131,7 +131,7 @@ def window(browser: Browser, scheme: str, size: dict, phone: bool = False, langu
     page = context.new_page()
     page.add_init_script(HIDE_CARET)
     if language:
-        page.add_init_script(f"localStorage.setItem('nib:language', {json.dumps(language)})")
+        page.add_init_script(f"localStorage.setItem('orden:language', {json.dumps(language)})")
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.on(
         "console",

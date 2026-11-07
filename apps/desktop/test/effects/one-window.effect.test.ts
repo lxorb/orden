@@ -23,7 +23,7 @@ vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => un
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { heldElsewhere } = await import('../../src/lib/web-tab/one-window.svelte')
 
-const other = new BroadcastChannel('nib:web-notes')
+const other = new BroadcastChannel('orden:web-notes')
 const heard: Record<string, unknown>[] = []
 other.onmessage = (event: MessageEvent<Record<string, unknown>>) => {
   heard.push(event.data)

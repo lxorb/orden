@@ -116,7 +116,7 @@ async ({ count, root }) => {
     ask.onsuccess = () => resolve(ask.result)
     ask.onerror = () => reject(ask.error)
   })
-  new BroadcastChannel('nib:rows').postMessage({ rows, gone: [] })
+  new BroadcastChannel('orden:rows').postMessage({ rows, gone: [] })
 
   return { ms: Math.round(performance.now() - began), bytes }
 }

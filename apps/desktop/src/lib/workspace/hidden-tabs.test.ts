@@ -64,7 +64,7 @@ describe('until somebody has answered', () => {
     expect(asked.count).toBe(1)
     expect(hiddenTabs.choice).toBe('pause')
     expect(await paused()).toEqual([['a', true]])
-    expect(localStorage.getItem('nib:hidden-tabs')).toBe('"pause"')
+    expect(localStorage.getItem('orden:hidden-tabs')).toBe('"pause"')
   })
 
   test('a question dismissed lets the pages run, and the next switch asks again', async () => {

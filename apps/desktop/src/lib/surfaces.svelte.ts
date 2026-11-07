@@ -207,16 +207,16 @@ export const keysMovedNotice = latched(() => {
   return import('./ai/KeysMoved.svelte')
 })
 
-export const OUTSIDE = 'nib:outside-folder'
+export const OUTSIDE = 'orden:outside-folder'
 
 export const outsideNotice = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no spaces folder in the Even Realities plugin')
   return import('./OutsideFolder.svelte')
 })
 
-export const CRASH_REPORTS = 'nib:crash-reports'
+export const CRASH_REPORTS = 'orden:crash-reports'
 
-export const CRASHES_ASKED = 'nib:crash-reports-told'
+export const CRASHES_ASKED = 'orden:crash-reports-told'
 
 export const crashAskDue = (): boolean =>
   storedText(CRASHES_ASKED) === null && storedText(CRASH_REPORTS) === null

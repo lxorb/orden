@@ -197,7 +197,7 @@ def dial(page: Any, id: str, value: Any) -> None:
 
 def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a picture") -> Any:
     page = DRIVE.page(browser, viewport={"width": 1240, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
-    page.add_init_script("localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette']))")
+    page.add_init_script("localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette']))")
     DRIVE.open(page)
     DRIVE.seed(page, note)
     DRIVE.open_note(page, name)
@@ -244,11 +244,11 @@ def wallpaper(browser: Any, scheme: str) -> None:
             measure(page, f"wallpaper {scheme} fit {fit}")
         dial(page, "fit", "fill")
 
-    before = page.evaluate("() => localStorage.getItem('nib:theme-settings')")
+    before = page.evaluate("() => localStorage.getItem('orden:theme-settings')")
     page.evaluate("() => window.nibApp.theme.try('dim', 70)")
     page.wait_for_timeout(200)
     shown = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--nib-dim').trim()")
-    after = page.evaluate("() => localStorage.getItem('nib:theme-settings')")
+    after = page.evaluate("() => localStorage.getItem('orden:theme-settings')")
     (say if shown == "70%" and before == after else wrong)(
         f"wallpaper {scheme}: a dial being dragged shows {shown} and keeps nothing ({before == after})"
     )
@@ -277,7 +277,7 @@ def wallpaper(browser: Any, scheme: str) -> None:
         page.mouse.up()
         page.wait_for_timeout(500)
         focus = page.evaluate("() => window.nibApp.wallpaper.held.main?.focus")
-        kept = page.evaluate("() => JSON.parse(localStorage.getItem('nib:wallpaper') || '{}').focus")
+        kept = page.evaluate("() => JSON.parse(localStorage.getItem('orden:wallpaper') || '{}').focus")
         near = focus and abs(focus[0] - 0.15) < 0.05 and abs(focus[1] - 0.85) < 0.05
         (say if near and kept == focus else wrong)(f"wallpaper {scheme}: a drag on the thumbnail moved the focal point to {focus}, kept {kept}")
     else:

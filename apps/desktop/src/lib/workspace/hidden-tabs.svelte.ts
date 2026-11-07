@@ -5,7 +5,7 @@ import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
 import { type HiddenTabs, isHiddenTabs, onLeaving } from './sets'
 
-const STORAGE_KEY = 'nib:hidden-tabs'
+const STORAGE_KEY = 'orden:hidden-tabs'
 
 function read(): HiddenTabs {
   const kept = stored(STORAGE_KEY)

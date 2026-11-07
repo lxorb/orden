@@ -97,7 +97,7 @@ export const THIS_PAGE: readonly Keep[] = [page, cookie, shelf]
 
 const KEEPS: readonly Keep[] = [...THIS_PAGE, hostKeep]
 
-const SESSION = 'nib:session'
+const SESSION = 'orden:session'
 
 export interface Held {
   name: string
@@ -137,7 +137,7 @@ async function clearAll(key: string): Promise<void> {
   await Promise.all(KEEPS.map((keep) => keep.clear(key).catch(() => undefined)))
 }
 
-const SEEDED = 'nib:seeded'
+const SEEDED = 'orden:seeded'
 
 export const seedFlag = {
   async read() {

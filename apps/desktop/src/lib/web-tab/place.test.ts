@@ -68,7 +68,7 @@ test('keeps two hundred notes and forgets the oldest', () => {
 
 test('reads nothing out of nonsense', () => {
   localStorage.setItem(
-    'nib:web-places',
+    'orden:web-places',
     JSON.stringify({
       '/good.url': { url: 'https://a.example/', x: 0, y: 4 },
       '/no-url.url': { x: 0, y: 4 },

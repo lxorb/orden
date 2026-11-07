@@ -98,7 +98,7 @@ def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     page = context.new_page()
     page.add_init_script(
-        "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
+        "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
     )
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     try:

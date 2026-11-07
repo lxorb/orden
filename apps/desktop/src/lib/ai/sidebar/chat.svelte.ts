@@ -132,9 +132,9 @@ function headOf(thread: Thread): Head {
   }
 }
 
-const SWITCH_KEY = 'nib:ai-switch-asks'
+const SWITCH_KEY = 'orden:ai-switch-asks'
 
-const PARENTS_KEY = 'nib:ai-helpers-parented'
+const PARENTS_KEY = 'orden:ai-helpers-parented'
 
 class Chat implements Panel {
   every = $state.raw<Listed[]>([])

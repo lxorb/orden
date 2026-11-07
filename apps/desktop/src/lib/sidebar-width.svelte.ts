@@ -3,7 +3,7 @@ import { readingFactor } from './direction'
 import { forget, isNumber, keepJson, stored } from './stored'
 import { viewport } from './viewport.svelte'
 
-const STORAGE_KEY = 'nib:sidebar-width'
+const STORAGE_KEY = 'orden:sidebar-width'
 const NARROWEST = 180
 const WIDEST = 520
 

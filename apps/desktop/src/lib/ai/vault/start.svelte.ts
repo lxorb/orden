@@ -18,9 +18,9 @@ const EVERY = 5 * 60_000
 
 const keyed = (kind: ProviderKind) => !isLocal(kind) && kind !== 'chatgpt'
 
-const baseKey = (id: string) => `nib:ai-vault-base:${id}`
+const baseKey = (id: string) => `orden:ai-vault-base:${id}`
 
-const BROWSER_KEY = 'nib:ai-vault-browser'
+const BROWSER_KEY = 'orden:ai-vault-browser'
 
 export const browserVault = $state({ on: storedText(BROWSER_KEY) === 'yes' })
 

@@ -77,11 +77,11 @@ export class Windows {
 }
 
 export const windows = /* @__PURE__ */ new Windows(() =>
-  typeof BroadcastChannel === 'function' ? new BroadcastChannel('nib:windows') : null,
+  typeof BroadcastChannel === 'function' ? new BroadcastChannel('orden:windows') : null,
 )
 
 const FILE_TURN_AT_MOST = 3_000
 
 export function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
-  return inTurn(() => `nib:file:${pathKey(path)}`, run, FILE_TURN_AT_MOST)
+  return inTurn(() => `orden:file:${pathKey(path)}`, run, FILE_TURN_AT_MOST)
 }

@@ -23,7 +23,7 @@ const MOST: Record<Kind, number> = {
   package: 0,
   identifier: 294,
   scheme: 21,
-  key: 1262,
+  key: 305,
   variable: 18,
   dashed: 5241,
   word: 3910,

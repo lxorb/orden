@@ -54,7 +54,7 @@ def drive(browser: Browser) -> None:
     say(f"next launch: {tabs}")
     if not any("ONLY IN WINDOW A" in one for one in tabs):
         wrong("the first window's draft is gone")
-    if not c.evaluate("()=>localStorage.getItem('nib:workspace:1')===null"):
+    if not c.evaluate("()=>localStorage.getItem('orden:workspace:1')===null"):
         wrong("the second window's entry stayed behind its words")
     c.reload()
     DRIVE.ready(c)

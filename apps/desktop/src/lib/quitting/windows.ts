@@ -3,7 +3,7 @@ import { waited } from '../timing'
 import { jump } from './jump'
 import { type Row, rowsHere } from './rows'
 
-const CHANNEL = 'nib:quitting'
+const CHANNEL = 'orden:quitting'
 
 const WAITS = 800
 

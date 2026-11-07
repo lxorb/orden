@@ -172,7 +172,7 @@ describe('read-only mode', () => {
 
 describe('the glasses settings', () => {
   const saved = () =>
-    JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
+    JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
 
   test('start a page at H2 and above, with the note’s own line numbers', () => {
     expect(modes.glassesBreak).toBe(2)
@@ -181,7 +181,7 @@ describe('the glasses settings', () => {
 
   test('carry no scroll mode, and drop one an older version wrote down', async () => {
     localStorage.setItem(
-      'nib:modes',
+      'orden:modes',
       JSON.stringify({ glassesScroll: 'native', glassesLineNumbers: false }),
     )
 
@@ -254,12 +254,12 @@ describe('smart punctuation', () => {
   })
 
   test('stays off for a reader who never chose', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ focus: true }))
+    localStorage.setItem('orden:modes', JSON.stringify({ focus: true }))
     expect((await restarted()).punctuation).toBe(false)
   })
 
   test('and stays on for one who turned it on', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ punctuation: true }))
+    localStorage.setItem('orden:modes', JSON.stringify({ punctuation: true }))
     expect((await restarted()).punctuation).toBe(true)
   })
 
@@ -281,15 +281,15 @@ describe('the ligature scope', () => {
   })
 
   test('reads a switch written by an older build', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ ligatures: true }))
+    localStorage.setItem('orden:modes', JSON.stringify({ ligatures: true }))
     expect((await restarted()).ligatures).toBe('all')
 
-    localStorage.setItem('nib:modes', JSON.stringify({ ligatures: false }))
+    localStorage.setItem('orden:modes', JSON.stringify({ ligatures: false }))
     expect((await restarted()).ligatures).toBe('off')
   })
 
   test('falls back to off for a scope it does not know', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ ligatures: 'sometimes' }))
+    localStorage.setItem('orden:modes', JSON.stringify({ ligatures: 'sometimes' }))
     expect((await restarted()).ligatures).toBe('off')
   })
 
@@ -354,21 +354,21 @@ describe('modal editing', () => {
     })
 
     test('on a machine whose entry was written before there was such a setting', async () => {
-      localStorage.setItem('nib:modes', JSON.stringify({ zoom: 1.1, focus: true }))
+      localStorage.setItem('orden:modes', JSON.stringify({ zoom: 1.1, focus: true }))
 
       const store = await restarted()
       expect(store.vim).toBe(false)
     })
 
     test('on a machine that wrote it down as off', async () => {
-      localStorage.setItem('nib:modes', JSON.stringify({ vim: false }))
+      localStorage.setItem('orden:modes', JSON.stringify({ vim: false }))
 
       const store = await restarted()
       expect(store.vim).toBe(false)
     })
 
     test('with an entry that says null, which is not a choice either', async () => {
-      localStorage.setItem('nib:modes', JSON.stringify({ vim: null }))
+      localStorage.setItem('orden:modes', JSON.stringify({ vim: null }))
 
       const store = await restarted()
       expect(store.vim).toBe(false)
@@ -423,11 +423,11 @@ describe('turning a canvas with two fingers (#351)', () => {
   })
 
   test('takes no off from an older build, which wrote it down for everybody', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ canvasTurns: false, vim: true }))
+    localStorage.setItem('orden:modes', JSON.stringify({ canvasTurns: false, vim: true }))
     const back = await restarted()
     expect(back.canvasTurns).toBe(true)
     expect(back.vim).toBe(true)
-    expect(localStorage.getItem('nib:modes')).not.toContain('"canvasTurns"')
+    expect(localStorage.getItem('orden:modes')).not.toContain('"canvasTurns"')
   })
 
   test('snaps to its right angles unless that is turned off (#487)', async () => {
@@ -567,7 +567,7 @@ describe('source mode, per tab', () => {
   })
 
   test('opens where the one switch for the window was left by an older build', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ source: true }))
+    localStorage.setItem('orden:modes', JSON.stringify({ source: true }))
 
     expect((await restarted()).opensInSource).toBe(true)
   })
@@ -991,7 +991,7 @@ describe('where a pasted picture goes', () => {
     modes.setAttachments('sideways')
     expect(modes.attachments).toBe('space')
 
-    localStorage.setItem('nib:modes', JSON.stringify({ attachments: 'sideways' }))
+    localStorage.setItem('orden:modes', JSON.stringify({ attachments: 'sideways' }))
     expect((await restarted()).attachments).toBe('space')
   })
 })
@@ -1038,7 +1038,7 @@ describe('the paper new page notes start on', () => {
   })
 
   test('and a word nobody wrote is A4 again', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ pagesPaper: 'foolscap' }))
+    localStorage.setItem('orden:modes', JSON.stringify({ pagesPaper: 'foolscap' }))
     expect((await restarted()).pagesPaper).toBe('a4')
   })
 })
@@ -1063,14 +1063,14 @@ describe('the window’s own frame', () => {
     modes.setFrame('nonsense')
     expect(modes.frame).toBe('nib')
 
-    localStorage.setItem('nib:modes', JSON.stringify({ frame: 'nonsense' }))
+    localStorage.setItem('orden:modes', JSON.stringify({ frame: 'nonsense' }))
     expect((await restarted()).frame).toBe('nib')
   })
 })
 
 describe('translucency, which the glass theme is now', () => {
   const saved = () =>
-    JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
+    JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
 
   async function restartedAsking() {
     vi.resetModules()
@@ -1085,7 +1085,7 @@ describe('translucency, which the glass theme is now', () => {
   })
 
   test('a reader who had it on is handed to the theme, and the switch is written away', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ translucent: true }))
+    localStorage.setItem('orden:modes', JSON.stringify({ translucent: true }))
     const adopt = await restartedAsking()
 
     expect(adopt).toHaveBeenCalledOnce()
@@ -1094,7 +1094,7 @@ describe('translucency, which the glass theme is now', () => {
   })
 
   test('and one who had it off is left alone', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ translucent: false }))
+    localStorage.setItem('orden:modes', JSON.stringify({ translucent: false }))
 
     expect(await restartedAsking()).not.toHaveBeenCalled()
     expect(saved()).not.toHaveProperty('translucent')
@@ -1103,7 +1103,7 @@ describe('translucency, which the glass theme is now', () => {
 
 describe('the front matter', () => {
   const saved = () =>
-    JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
+    JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
 
   test('is no setting at all: what older builds wrote down about it is dropped', async () => {
     for (const old of [
@@ -1111,7 +1111,7 @@ describe('the front matter', () => {
       { frontMatter: 'source', vim: true },
       { properties: 'properties', vim: true },
     ]) {
-      localStorage.setItem('nib:modes', JSON.stringify(old))
+      localStorage.setItem('orden:modes', JSON.stringify(old))
       const back = await restarted()
       expect(back.vim).toBe(true)
       expect('properties' in back).toBe(false)

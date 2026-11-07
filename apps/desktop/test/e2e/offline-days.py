@@ -42,7 +42,7 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
 
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1100, "height": 700})
-    context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
     page = context.new_page()
     page.set_default_timeout(30000)
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))

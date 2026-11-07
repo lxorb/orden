@@ -74,7 +74,7 @@ describe('the dictionaries on nib’s own Chromium', () => {
 
   test('are written down, under their own name', () => {
     row('Svenska').set(true)
-    const held = JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
+    const held = JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
     expect(held.spellLanguages).toEqual(modes.spellLanguages)
     expect(held.spellLanguages).toContain('sv-SE')
     expect('spellLanguage' in held).toBe(false)

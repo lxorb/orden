@@ -84,7 +84,7 @@ vi.mock('../busy.svelte', () => ({ busy: { failed: (line: string) => void said.p
 vi.mock('../web-tab/visited', () => ({
   visited: { brought: (book: string, rows: unknown) => void brought.push({ book, rows }) },
 }))
-vi.mock('../web-tab/web-data.svelte', () => ({ webData: { history: () => 'nib:web-visits' } }))
+vi.mock('../web-tab/web-data.svelte', () => ({ webData: { history: () => 'orden:web-visits' } }))
 vi.mock('../web-tab/search-engine.svelte', () => ({
   CUSTOM: 'custom',
   searchEngine: {
@@ -210,7 +210,7 @@ describe('a Firefox profile brought into nib', () => {
     expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe(
       'data:image/png;base64,iVBORw0KGgo=',
     )
-    expect(brought).toEqual([{ book: 'nib:web-visits', rows: history }])
+    expect(brought).toEqual([{ book: 'orden:web-visits', rows: history }])
     expect(engine).toMatchObject({ id: 'duckduckgo', chosen: true })
   })
 

@@ -199,7 +199,7 @@ export function heard(
   else waiting.set(key, { space, path, removed: before, at })
 }
 
-const MAKING = 'nib:repeat-templates'
+const MAKING = 'orden:repeat-templates'
 
 const MAKING_PATIENCE = 60_000
 

@@ -79,7 +79,7 @@ const NUDGE = 2_000
 const FALLBACK = 30_000
 const HIDDEN_FALLBACK = 5 * 60_000
 
-const MIRRORS = 'nib:mirrors'
+const MIRRORS = 'orden:mirrors'
 
 const FIRST = 'first:'
 

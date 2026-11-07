@@ -138,7 +138,7 @@ export async function installStaged(closing = false): Promise<boolean> {
   }
 }
 
-const HANDING = 'nib:update-handed'
+const HANDING = 'orden:update-handed'
 
 function handOn() {
   const channel = new BroadcastChannel(HANDING)

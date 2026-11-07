@@ -23,7 +23,7 @@ export function locksWork(locks: LockManager | undefined = locksHere()): Promise
       }
       try {
         locks
-          .request(`nib:probe:${crypto.randomUUID()}`, { ifAvailable: true }, (lock) => {
+          .request(`orden:probe:${crypto.randomUUID()}`, { ifAvailable: true }, (lock) => {
             said(lock !== null)
             return undefined
           })

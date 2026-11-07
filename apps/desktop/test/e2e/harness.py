@@ -42,9 +42,9 @@ SEED_PATH = "/seed.html"
 SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 
 BUILT_IN = (
-    "try { if (localStorage.getItem('nib:theme') === null) {"
-    " localStorage.setItem('nib:theme', 'default'); localStorage.setItem('nib:theme-moved', 'yes') }"
-    " if (localStorage.getItem('nib:renamed') === null) localStorage.setItem('nib:renamed', 'told') }"
+    "try { if (localStorage.getItem('orden:theme') === null) {"
+    " localStorage.setItem('orden:theme', 'default'); localStorage.setItem('orden:theme-moved', 'yes') }"
+    " if (localStorage.getItem('orden:renamed') === null) localStorage.setItem('orden:renamed', 'told') }"
     " catch {}"
 )
 

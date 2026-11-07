@@ -87,35 +87,35 @@ describe('saying a stored path again under the new folder', () => {
   })
 
   test('goes through every key of the app, and none of anybody else', () => {
-    localStorage.setItem('nib:workspace', JSON.stringify({ spaces: [{ root: `${OLD}/Notes` }] }))
-    localStorage.setItem('nib:recent', JSON.stringify([`${OLD}/Notes/a.md`]))
-    localStorage.setItem('nib:theme', 'dark')
+    localStorage.setItem('orden:workspace', JSON.stringify({ spaces: [{ root: `${OLD}/Notes` }] }))
+    localStorage.setItem('orden:recent', JSON.stringify([`${OLD}/Notes/a.md`]))
+    localStorage.setItem('orden:theme', 'dark')
     localStorage.setItem('other', JSON.stringify([`${OLD}/Notes/a.md`]))
 
     expect(restate(OLD, NEW)).toBe(2)
-    expect(localStorage.getItem('nib:recent')).toBe(JSON.stringify([`${NEW}/Notes/a.md`]))
-    expect(localStorage.getItem('nib:theme')).toBe('dark')
+    expect(localStorage.getItem('orden:recent')).toBe(JSON.stringify([`${NEW}/Notes/a.md`]))
+    expect(localStorage.getItem('orden:theme')).toBe('dark')
     expect(localStorage.getItem('other')).toBe(JSON.stringify([`${OLD}/Notes/a.md`]))
   })
 })
 
 describe('settling where the folder is', () => {
   test('a move rewrites what was stored, notes the new folder and says so', () => {
-    localStorage.setItem('nib:mirrors', JSON.stringify({ [`${OLD}/Notes`]: { spaceId: 's1' } }))
+    localStorage.setItem('orden:mirrors', JSON.stringify({ [`${OLD}/Notes`]: { spaceId: 's1' } }))
 
     expect(settleRoot(NEW, [`${OLD}/Notes`], [`${NEW}/Notes`])).toBe(OLD)
-    expect(JSON.parse(localStorage.getItem('nib:mirrors')!)).toEqual({
+    expect(JSON.parse(localStorage.getItem('orden:mirrors')!)).toEqual({
       [`${NEW}/Notes`]: { spaceId: 's1' },
     })
     expect(localStorage.getItem(SPACES_ROOT)).toBe(NEW)
   })
 
   test('no move notes the folder and rewrites nothing', () => {
-    localStorage.setItem('nib:recent', JSON.stringify([`${NEW}/Notes/a.md`]))
+    localStorage.setItem('orden:recent', JSON.stringify([`${NEW}/Notes/a.md`]))
 
     expect(settleRoot(NEW, [`${NEW}/Notes`], [`${NEW}/Notes`])).toBeNull()
     expect(localStorage.getItem(SPACES_ROOT)).toBe(NEW)
-    expect(localStorage.getItem('nib:recent')).toBe(JSON.stringify([`${NEW}/Notes/a.md`]))
+    expect(localStorage.getItem('orden:recent')).toBe(JSON.stringify([`${NEW}/Notes/a.md`]))
   })
 
   test('the second launch after a move has nothing left to do', () => {

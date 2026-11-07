@@ -111,7 +111,7 @@ function storedPictures(): string[] {
   const out: string[] = []
   for (let at = 0; at < localStorage.length; at++) {
     const key = localStorage.key(at) ?? ''
-    if (key.startsWith('nib:favicon:')) out.push(localStorage.getItem(key) ?? '')
+    if (key.startsWith('orden:favicon:')) out.push(localStorage.getItem(key) ?? '')
   }
   return out
 }
@@ -172,9 +172,9 @@ describe('forgetting', () => {
     const { favicons, saw } = await fresh()
     const { visited } = await import('./visited')
     saw('https://secret.example/a', mark(1))
-    visited.saw('nib:web-visits', 'tab', 'https://secret.example/a', 'Secret')
+    visited.saw('orden:web-visits', 'tab', 'https://secret.example/a', 'Secret')
 
-    visited.remove('nib:web-visits', 'https://secret.example/a')
+    visited.remove('orden:web-visits', 'https://secret.example/a')
 
     expect(favicons.of('https://secret.example/a')).toBeNull()
   })
@@ -199,7 +199,7 @@ describe('which mark is drawn', () => {
   })
 
   test('and a store that cannot be read is an empty cache, not an error', async () => {
-    localStorage.setItem('nib:favicons', '{"pages":{"https://a.example/":[4,"x"]},"sizes":[]}')
+    localStorage.setItem('orden:favicons', '{"pages":{"https://a.example/":[4,"x"]},"sizes":[]}')
     const { siteMark } = await fresh()
 
     expect(siteMark(null, 'https://a.example/', mark(3))).toBe(mark(3))

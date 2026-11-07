@@ -1,7 +1,7 @@
 import { samePath } from '../space-paths'
 import { keepJson, stored, stringList } from '../stored'
 
-const KEY = 'nib:archived-spaces'
+const KEY = 'orden:archived-spaces'
 
 const MOST = 500
 

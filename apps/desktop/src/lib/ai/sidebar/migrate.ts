@@ -3,7 +3,7 @@ import type { Thread, Turn } from '../chat/types'
 import { newThread } from '../chat/threads'
 import type { Cited, Source } from './citations'
 
-export const OLD_KEY = 'nib:ask'
+export const OLD_KEY = 'orden:ask'
 
 function sourceIn(value: unknown): Source | null {
   if (!isRecord(value)) return null

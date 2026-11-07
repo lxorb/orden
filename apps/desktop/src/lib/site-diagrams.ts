@@ -88,7 +88,7 @@ export async function drawnBoth(
   return out
 }
 
-const remembered = (spaceId: string) => `nib:diagrams:${spaceId}`
+const remembered = (spaceId: string) => `orden:diagrams:${spaceId}`
 
 function alreadySent(spaceId: string): Set<string> {
   const held = stored(remembered(spaceId))

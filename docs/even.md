@@ -1191,7 +1191,7 @@ the ones that work. See `src/lib/even/keep.ts`.
 **Which of the two a key rides in is a decision, and for one release it was an
 accident of size.** Everything device-local goes through one map written to both
 stores, and what the cookie could not hold was chosen by filling it smallest first.
-`nib:mirrors` - what the syncing knows about every note it has seen - is 133 bytes
+`orden:mirrors` - what the syncing knows about every note it has seen - is 133 bytes
 plus the path per note: **4,408 bytes for Emil's twenty notes, 7,706 once the
 cookie's own URI encoding is counted, against a 3,500 byte budget**. From about
 fourteen notes on it did not fit, and being the largest value it was the first thing
@@ -1200,8 +1200,8 @@ nothing, and written back as nothing: the syncing then believed it had never see
 those notes.
 
 So `HOST_ONLY` in `local.ts` names the keys the cookie is not for -
-`nib:mirrors`, `nib:recovery`, `nib:recent`, `nib:expanded`, `nib:expanded-tags`,
-`nib:icons` - all of them bookkeeping, none of them painted from, every one with a
+`orden:mirrors`, `orden:recovery`, `orden:recent`, `orden:expanded`, `orden:expanded-tags`,
+`orden:icons` - all of them bookkeeping, none of them painted from, every one with a
 reader that can be asked to read again. They ride the host store alone, and they are
 **not seeded from the cookie either**: a cookie an older build wrote holds a
 truncated one, `fillFrom` only fills in what nothing has written, so half a table

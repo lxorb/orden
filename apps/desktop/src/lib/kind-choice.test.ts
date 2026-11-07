@@ -130,11 +130,11 @@ describe('turning a kind off', () => {
 
   test('is undone by turning it on, and the default is stored as nothing', () => {
     setKind('canvas', false)
-    expect(JSON.parse(store.get('nib:hidden-kinds') ?? '[]')).toEqual(['canvas'])
+    expect(JSON.parse(store.get('orden:hidden-kinds') ?? '[]')).toEqual(['canvas'])
 
     setKind('canvas', true)
     expect(hiddenKinds.offers('canvas')).toBe(true)
-    expect(store.has('nib:hidden-kinds')).toBe(false)
+    expect(store.has('orden:hidden-kinds')).toBe(false)
   })
 
   test('is refused for the last kind offered', () => {
@@ -176,7 +176,7 @@ describe('the account', () => {
 
     receive({ hiddenKinds: null })
     expect(hiddenKinds.offers('canvas')).toBe(true)
-    expect(store.has('nib:hidden-kinds')).toBe(false)
+    expect(store.has('orden:hidden-kinds')).toBe(false)
   })
 
   test('that never heard of it takes this machine’s list', () => {

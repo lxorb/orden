@@ -1,7 +1,7 @@
 import { afterQuiet } from '../timing'
 import { hostKeep, cookieOf, writeCookie } from './keep'
 
-const KEY = 'nib:local'
+const KEY = 'orden:local'
 
 const COOKIE_ROOM = 3500
 
@@ -26,16 +26,16 @@ function parsed(written: string | null): Record<string, string> {
 }
 
 const HOST_ONLY = new Set([
-  'nib:mirrors',
-  'nib:recovery',
-  'nib:recent',
-  'nib:expanded',
-  'nib:expanded-tags',
-  'nib:icons',
-  'nib:folder-icons',
-  'nib:item-meta',
-  'nib:icon-tints',
-  'nib:archived',
+  'orden:mirrors',
+  'orden:recovery',
+  'orden:recent',
+  'orden:expanded',
+  'orden:expanded-tags',
+  'orden:icons',
+  'orden:folder-icons',
+  'orden:item-meta',
+  'orden:icon-tints',
+  'orden:archived',
 ])
 
 export function forTheCookie(all: Record<string, string>): Record<string, string> {

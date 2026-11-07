@@ -15,7 +15,7 @@ export type Payload =
       relink?: (landed: ReadonlyMap<string, string>) => string | Uint8Array
     }
 
-const FOLDER_KEY = 'nib:export-folder'
+const FOLDER_KEY = 'orden:export-folder'
 
 const EXPORTS = 'Exports'
 

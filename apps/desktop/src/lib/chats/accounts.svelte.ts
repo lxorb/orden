@@ -6,7 +6,7 @@ import { keepJson, stored, isRecord, isString } from '../stored'
 import { connected, type Connected } from './connected.svelte'
 import { telegram } from './providers/telegram'
 
-const KEY = 'nib:chat-accounts'
+const KEY = 'orden:chat-accounts'
 
 const PROVIDERS: readonly ChatProvider[] = [
   mailProvider,

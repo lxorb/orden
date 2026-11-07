@@ -118,9 +118,9 @@ describe('storage that arrives after the store was built', () => {
     expect(view.iconOf('/Uni')).toBeNull()
     expect(view.recent).toEqual([])
 
-    store.setItem('nib:icons', JSON.stringify({ '/Uni': 'GraduationCap' }))
-    store.setItem('nib:recent', JSON.stringify(['/Uni/Lecture.md']))
-    store.setItem('nib:expanded', JSON.stringify({ '/Uni': true }))
+    store.setItem('orden:icons', JSON.stringify({ '/Uni': 'GraduationCap' }))
+    store.setItem('orden:recent', JSON.stringify(['/Uni/Lecture.md']))
+    store.setItem('orden:expanded', JSON.stringify({ '/Uni': true }))
     view.reread()
 
     expect(view.iconOf('/Uni')).toBe('GraduationCap')
@@ -137,7 +137,7 @@ describe('storage that arrives after the store was built', () => {
   })
 
   test('reads nonsense as nothing written', () => {
-    store.setItem('nib:icons', '{oh no')
+    store.setItem('orden:icons', '{oh no')
     const view = new DeviceView()
 
     expect(view.icons).toEqual({})
@@ -154,7 +154,7 @@ describe('folding the whole list', () => {
     view.foldUnder('/Notes')
 
     expect(view.expanded).toEqual({ '/Other/C': true })
-    expect(JSON.parse(store.getItem('nib:expanded') ?? '{}')).toEqual({ '/Other/C': true })
+    expect(JSON.parse(store.getItem('orden:expanded') ?? '{}')).toEqual({ '/Other/C': true })
   })
 
   test('does not take a space whose name only starts the same way', () => {

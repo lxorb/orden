@@ -53,7 +53,7 @@ import { currentWindow, invoke, isDesktop } from './tauri'
 import { theme } from './theme.svelte'
 import { opening } from './workspace/documents.svelte'
 
-const STORAGE_KEY = 'nib:modes'
+const STORAGE_KEY = 'orden:modes'
 
 const MOST_SPELL_WORDS = 500
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]

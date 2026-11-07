@@ -89,7 +89,7 @@ def typed(page: Page, text: str, at_start: bool = False) -> None:
 
 
 def signed_in(page: Page, token: str) -> None:
-    page.evaluate(f"() => localStorage.setItem('nib:session', {json.dumps(token)})")
+    page.evaluate(f"() => localStorage.setItem('orden:session', {json.dumps(token)})")
     page.reload(wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp?.account.user", timeout=60000)
     show_pad(page)

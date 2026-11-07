@@ -681,7 +681,7 @@ TYPING = r"""
 READING = r"""
 async () => {
   const ws = window.nibApp.workspace
-  performance.clearMeasures('nib:reading')
+  performance.clearMeasures('orden:reading')
   const started = window.__since()
   ws.toggleReading()
 
@@ -694,7 +694,7 @@ async () => {
     if (document.querySelector('.read #write')?.childElementCount) break
   }
   const painted = await window.__painted()
-  const render = performance.getEntriesByName('nib:reading').at(-1)?.duration ?? 0
+  const render = performance.getEntriesByName('orden:reading').at(-1)?.duration ?? 0
 
   return {
     reading: painted - started,

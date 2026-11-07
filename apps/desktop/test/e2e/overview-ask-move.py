@@ -20,7 +20,7 @@ async () => {
   ws.openBlank('Plan', '# Plan')
   ws.openBlank('Draft', '# Draft')
   ws.openPage('https://example.com/')
-  localStorage.setItem('nib:overview-spaces', 'all')
+  localStorage.setItem('orden:overview-spaces', 'all')
   await new Promise((go) => setTimeout(go, 600))
   return { home: home.id, work: work.id }
 }

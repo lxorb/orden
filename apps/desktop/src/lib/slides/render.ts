@@ -12,7 +12,7 @@ export interface StageSlide {
   from: number
 }
 
-const MEASURE = 'nib:deck'
+const MEASURE = 'orden:deck'
 
 export async function deckHtml(
   note: Note,

@@ -378,7 +378,7 @@ class Browser:
             service_workers="block" if ENGINE == "webkit" else "allow",
         )
         if self.signed_in:
-            await context.add_init_script("try { localStorage.setItem('nib:session', 'sweep') } catch {}")
+            await context.add_init_script("try { localStorage.setItem('orden:session', 'sweep') } catch {}")
         own = re.escape(urlsplit(DRIVE.origin).netloc)
         await context.route(re.compile(rf"^https?://(?!{own}/)"), self.answer)
         with_sockets = getattr(context, "route_web_socket", None)

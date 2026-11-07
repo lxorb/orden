@@ -1175,7 +1175,7 @@ since opening a file starts a program.
   a file or folder in the file manager. Both ask as `process` does, under *the terminal*
   (Full permissions asks nothing). An address is the web's, mail's or a telephone's -
   `http`, `https`, `mailto`, `tel` - never `file:`, which a path says, and never Orden's
-  own `nib:` and `orden:` links, which run the app's commands as the reader. The system's
+  own `orden:` and `orden:` links, which run the app's commands as the reader. The system's
   browser is the reader's, cookies and all, so a site the grant denies or keeps to the
   agent's own store is not opened there, by any spelling of its name (8.13), in any
   mode. A path is never in Orden's own folders, by its name or by where its links lead

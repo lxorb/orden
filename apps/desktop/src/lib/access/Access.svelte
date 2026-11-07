@@ -22,7 +22,7 @@
 
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
 
-  const CHOICE_KEY = 'nib:access-choice'
+  const CHOICE_KEY = 'orden:access-choice'
 
   const local = !__EVEN_PLUGIN__ && reach.offered
   const pane = local ? new AgentsPane(reach.standIn ?? tauriCrate) : null

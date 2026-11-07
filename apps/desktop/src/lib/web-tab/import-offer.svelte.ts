@@ -1,6 +1,6 @@
 import { keepJson, stored } from '../stored'
 
-const KEY = 'nib:browser-import-offer'
+const KEY = 'orden:browser-import-offer'
 
 export const OFFER_DAYS = 3
 

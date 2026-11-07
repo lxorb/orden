@@ -279,7 +279,7 @@ describe('a map that lands after the store was built', () => {
     expect(icons.iconOf('/space/Work')).toBeNull()
 
     localStorage.setItem(
-      'nib:folder-icons',
+      'orden:folder-icons',
       JSON.stringify({ [ROOT]: { icons: { Work: 'briefcase' }, colors: {}, account: null } }),
     )
     icons.reread()
@@ -291,7 +291,7 @@ describe('a map that lands after the store was built', () => {
     icons.set('/space/Reading', 'book')
 
     localStorage.setItem(
-      'nib:folder-icons',
+      'orden:folder-icons',
       JSON.stringify({ [ROOT]: { icons: { Work: 'briefcase' }, colors: {}, account: null } }),
     )
     icons.reread()
@@ -303,7 +303,7 @@ describe('a map that lands after the store was built', () => {
     icons.set('/space/Reading', 'book')
 
     localStorage.setItem(
-      'nib:folder-icons',
+      'orden:folder-icons',
       JSON.stringify({
         [ROOT]: { icons: {}, colors: {}, account: null },
         '/other': { icons: { Notes: 'file-text' }, colors: {}, account: null },

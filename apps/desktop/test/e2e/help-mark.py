@@ -183,7 +183,7 @@ def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch
          scheme: str = "light") -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860}, device_scale_factor=scale)
     page.context.add_init_script(
-        f"localStorage.setItem('nib:language', {language!r}); localStorage.setItem('nib:access-choice', 'claude')"
+        f"localStorage.setItem('orden:language', {language!r}); localStorage.setItem('orden:access-choice', 'claude')"
     )
     DRIVE.open(page)
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")

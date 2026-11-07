@@ -38,7 +38,7 @@ export function roleOf(root: string): SpaceRole | null {
   return id ? null : 'owner'
 }
 
-const ROLES_KEY = 'nib:space-roles'
+const ROLES_KEY = 'orden:space-roles'
 
 function kept(root: string): unknown {
   return keptRoles()[root]

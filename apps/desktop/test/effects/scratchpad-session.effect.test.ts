@@ -37,7 +37,7 @@ test('a session’s scratchpad tab comes back, and is the scratchpad while it is
   disk.current.files.set(PAD, 'Old words\n')
   localStorage.clear()
   localStorage.setItem(
-    'nib:workspace',
+    'orden:workspace',
     JSON.stringify({
       version: 2,
       spaces: [{ id: 'work', name: 'Work', root: '/spaces/Work' }],

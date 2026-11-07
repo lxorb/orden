@@ -1,6 +1,6 @@
 import { keep, storedText } from '../stored'
 
-const KEY = 'nib:apps-clipboard'
+const KEY = 'orden:apps-clipboard'
 
 class ClipboardSharing {
   on = $state(storedText(KEY) !== 'no')

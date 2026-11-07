@@ -4,7 +4,7 @@ import type { Provider } from '../providers'
 import { FIRST_MODE, type Mode, modeIn } from '../modes'
 import { isRecord, isString, keepJson, stored } from '../../stored'
 
-const STORAGE_KEY = 'nib:ai-sidebar'
+const STORAGE_KEY = 'orden:ai-sidebar'
 
 const FIRST_TASK_MODE: Mode = 'auto'
 

@@ -15,7 +15,7 @@ import {
 import type { ProviderMessage } from '@orden/chats/provider'
 import { isNumber, isRecord, isString, keepJson, stored } from '../stored'
 
-const KEY = 'nib:chat-priorities'
+const KEY = 'orden:chat-priorities'
 const MOST_LESSONS = 50
 
 export type Asker = (messages: { role: 'system' | 'user'; content: string }[]) => Promise<string>

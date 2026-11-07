@@ -216,7 +216,7 @@ function thisWindow(): string {
   }
 }
 
-const WINDOW_KEY = 'nib:ai-window'
+const WINDOW_KEY = 'orden:ai-window'
 const THIS_PAGE = crypto.randomUUID()
 
 function answeredElsewhere(value: Record<string, unknown>): boolean {

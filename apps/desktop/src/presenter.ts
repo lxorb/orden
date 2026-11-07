@@ -1,3 +1,4 @@
+import './lib/former-keys'
 import '@orden/themes'
 import { mount } from 'svelte'
 import Presenter from './lib/slides/Presenter.svelte'

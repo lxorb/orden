@@ -42,7 +42,7 @@ STATE = """
 
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
-    context.add_init_script(f"localStorage.setItem('nib:shortcuts', {json.dumps(json.dumps(CTRL_D))})")
+    context.add_init_script(f"localStorage.setItem('orden:shortcuts', {json.dumps(json.dumps(CTRL_D))})")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.on(

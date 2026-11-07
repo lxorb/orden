@@ -21,7 +21,7 @@ const keyOf = (hit: Hit) => `${hit.path}:${hit.line}`
 
 export type SearchSort = 'relevance' | 'name' | 'modified' | 'created'
 
-const SORT_KEY = 'nib:search-sort'
+const SORT_KEY = 'orden:search-sort'
 
 interface Ordering {
   sort: SearchSort

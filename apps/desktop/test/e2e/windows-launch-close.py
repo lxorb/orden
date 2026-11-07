@@ -31,7 +31,7 @@ WATCH = """
     if (!ws) return;
     if (armed === 'persist') {
       ws.persist();
-      const session = localStorage.getItem('nib:workspace') ?? '';
+      const session = localStorage.getItem('orden:workspace') ?? '';
       if (!session.includes('ONLY-IN-THE-SESSION') || !session.includes('WORDS-IN-A-SET-OUT-OF-SIGHT')) {
         sessionStorage.setItem('launch-lost', '1');
       }

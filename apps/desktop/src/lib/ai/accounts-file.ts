@@ -3,7 +3,7 @@ import { invoke, isNative } from '../tauri'
 
 const EVENT = 'orden://ai-accounts'
 
-export const COPY = 'nib:ai-accounts'
+export const COPY = 'orden:ai-accounts'
 
 export interface Kept {
   text: string | null

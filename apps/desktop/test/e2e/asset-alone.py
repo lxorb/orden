@@ -38,7 +38,7 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     wait_for(page, "window.nibApp && window.nibApp.workspace.active", "the app")
     wait_for(page, "navigator.serviceWorker.controller", "the asset worker")
-    page.evaluate("() => localStorage.setItem('nib:drive-secret', 'kept')")
+    page.evaluate("() => localStorage.setItem('orden:drive-secret', 'kept')")
     page.evaluate(
         PUT,
         [{"path": path, "type": kind, "data": base64.b64encode(body.encode()).decode(), "modified": 1} for path, (kind, body) in FILES.items()],

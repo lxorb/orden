@@ -96,10 +96,10 @@ def ended(app) -> None:
 
 CHOOSE = """
 (() => {
-  const kept = JSON.parse(localStorage.getItem('nib:theme-settings') || '{}')
+  const kept = JSON.parse(localStorage.getItem('orden:theme-settings') || '{}')
   kept.glass = { ...kept.glass, material: %s }
-  localStorage.setItem('nib:theme-settings', JSON.stringify(kept))
-  localStorage.setItem('nib:theme', 'glass')
+  localStorage.setItem('orden:theme-settings', JSON.stringify(kept))
+  localStorage.setItem('orden:theme', 'glass')
   setTimeout(() => location.reload(), 50)
   return true
 })()

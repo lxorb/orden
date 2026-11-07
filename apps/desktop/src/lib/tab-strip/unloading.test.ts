@@ -70,7 +70,7 @@ afterEach(() => {
 
 describe('the setting', () => {
   test('is off out of the box, and off the menu offers none of it', () => {
-    localStorage.removeItem('nib:unload-tabs')
+    localStorage.removeItem('orden:unload-tabs')
     unloadTabs.set(false)
     const [one] = three()
 

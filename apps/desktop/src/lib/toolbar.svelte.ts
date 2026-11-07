@@ -5,7 +5,7 @@ import { api, type AccountSettings } from './api'
 import { BY_ID, runnable } from './shortcuts/registry'
 import { forget, isString, keepJson, stored } from './stored'
 
-const STORAGE_KEY = 'nib:toolbar'
+const STORAGE_KEY = 'orden:toolbar'
 
 const MOST_BUTTONS = 24
 

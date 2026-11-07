@@ -43,7 +43,7 @@ describe('the shells', () => {
 
     shells.choose('cmd')
     expect(shells.chosen?.id).toBe('cmd')
-    expect(store.get('nib:terminal-shell')).toBe('cmd')
+    expect(store.get('orden:terminal-shell')).toBe('cmd')
 
     shells.choose('wsl:Gone')
     expect(shells.chosen?.id).toBe('pwsh')
@@ -61,7 +61,7 @@ describe('the shells', () => {
     expect(shells.size).toBe(SIZES.least)
     shells.setSize(14.4)
     expect(shells.size).toBe(14)
-    expect(store.get('nib:terminal-size')).toBe('14')
+    expect(store.get('orden:terminal-size')).toBe('14')
   })
 })
 
@@ -71,13 +71,13 @@ describe('the keys that are both', () => {
 
     shells.setWay('app.scratchpad', 'shell')
     expect(shells.ways['app.scratchpad']).toBe('shell')
-    expect(JSON.parse(store.get('nib:terminal-keys') ?? '{}')).toEqual({
+    expect(JSON.parse(store.get('orden:terminal-keys') ?? '{}')).toEqual({
       'app.scratchpad': 'shell',
     })
 
     shells.setWay('app.scratchpad', null)
     expect(shells.ways['app.scratchpad']).toBeUndefined()
-    expect(JSON.parse(store.get('nib:terminal-keys') ?? '{}')).toEqual({})
+    expect(JSON.parse(store.get('orden:terminal-keys') ?? '{}')).toEqual({})
   })
 
   test('are read rather than trusted', () => {

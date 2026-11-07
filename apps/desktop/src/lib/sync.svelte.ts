@@ -34,7 +34,7 @@ export const STORAGE_KEY = MIRRORS_KEY
 
 export type Status = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
-const VERSION = 'nib:sync-version'
+const VERSION = 'orden:sync-version'
 
 type Runner = (typeof import('./sync2/runner.svelte'))['runner']
 

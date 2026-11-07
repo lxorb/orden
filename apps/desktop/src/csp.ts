@@ -1,4 +1,4 @@
-const THEME_SCRIPT = "'sha256-iR2Aqj1jRJSx35wTBtrVLSatm9gSp55tpjHpCB3GAHs='"
+const THEME_SCRIPT = "'sha256-Au923IYcH7+6qRdLlrmSj5UNUZVgm5uFPwfJTwhC2b4='"
 
 const FRAME_SCRIPT = "'sha256-UbMWxIrbtKcJ1D+PYnMVHHSMulvzvKPmSd348Qc5i9k='"
 

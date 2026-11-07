@@ -50,7 +50,7 @@ Written by hand, a path with a space or an ampersand in it has to be
 percent-encoded, and `+` means a space. **Copy link to this note** in the palette
 writes a correct one for whatever is open, with the heading the caret is in on it.
 
-Both spellings work: `orden://open?…` and `nib:open?…`. So does
+Both spellings work: `orden://open?…` and `orden:open?…`. So does
 `orden://x-callback-url/open?…`, which is how the tools that invented the callbacks
 below write it.
 

@@ -198,7 +198,7 @@ def names(page: Page, tag: str) -> None:
 
 def look(browser: Browser, tag: str, language: str = "en") -> None:
     page = DRIVE.page(browser, viewport={"width": DRIVE_WIDTH, "height": 860})
-    page.context.add_init_script(f"localStorage.setItem('nib:language', {language!r})")
+    page.context.add_init_script(f"localStorage.setItem('orden:language', {language!r})")
     DRIVE.open(page)
     page.evaluate(f"() => {{ window.__whole = {WHOLE} }}")
     names(page, tag)

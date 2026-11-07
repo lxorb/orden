@@ -113,7 +113,7 @@ ENGINE = """() => {
 def device(browser: Browser, label: str, at: str, token: str | None = None) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 900})
     if token:
-        context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+        context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
     page = context.new_page()
     page.on("pageerror", lambda error: failed(f"[{label}] page error: {error}"))
     page.goto(at, wait_until="domcontentloaded")

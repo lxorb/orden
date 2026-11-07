@@ -184,7 +184,7 @@ def composer(browser: Browser) -> None:
 def dark(browser: Browser) -> None:
     say("=== the composer in the dark ===")
     page, _heard = opened(browser, dark=True)
-    page.evaluate("() => localStorage.setItem('nib:dictation-engine', 'provider')")
+    page.evaluate("() => localStorage.setItem('orden:dictation-engine', 'provider')")
     page.reload()
     DRIVE.open(page)
     wait_for(page, "window.nibApp.ai?.transcriber", "the provider again")
@@ -200,7 +200,7 @@ def quick_add(browser: Browser) -> None:
     say("=== quick add ===")
     page, heard = opened(browser)
     page.keyboard.press("Escape")
-    page.evaluate("() => localStorage.setItem('nib:dictation-engine', 'provider')")
+    page.evaluate("() => localStorage.setItem('orden:dictation-engine', 'provider')")
     page.reload()
     DRIVE.open(page)
     wait_for(page, "window.nibApp.ai?.transcriber", "the provider again")

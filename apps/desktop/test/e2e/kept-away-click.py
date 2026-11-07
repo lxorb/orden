@@ -111,7 +111,7 @@ def main() -> int:
 
         def device():
             context = browser.new_context(viewport={"width": 1100, "height": 560})
-            context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+            context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
             return context
 
         a = window_for(device(), "A")

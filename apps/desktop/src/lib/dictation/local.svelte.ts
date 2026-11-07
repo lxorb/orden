@@ -15,7 +15,7 @@ interface Fetched {
   total: number
 }
 
-const PACE = 'nib:dictation-local-pace'
+const PACE = 'orden:dictation-local-pace'
 
 export const KEEPS_UP = 0.3
 

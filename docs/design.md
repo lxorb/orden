@@ -292,10 +292,10 @@ and can still be offered the contrast theme; the accent is, because it follows t
 reader to whatever theme they choose next. An install an older build left on the
 built-in - which it wrote down for everybody, chosen or not - is moved to glass once,
 keeping its accent and scheme (the first look's accent only where it never chose one),
-and `nib:theme-moved` says so, so picking the built-in again sticks (Emil, 2026-10-13).
+and `orden:theme-moved` says so, so picking the built-in again sticks (Emil, 2026-10-13).
 The built-in is called Classic now that it is not the default; its id stays `default`,
 which stored choices, theme files and the registry name. And the accent the first look
-gives is kept as given (`nib:accent-given`) until one is picked, so a later first look's
+gives is kept as given (`orden:accent-given`) until one is picked, so a later first look's
 accent replaces it once and never replaces a pick; an install from the yellow day,
 before that key, counts its yellow as given only while its theme was never written down
 and no older build kept an accent under the old key. See `FIRST_LOOK` in
@@ -1010,7 +1010,7 @@ Orden explains nothing in its own text, so a feature somebody has not found gets
 beside the control it lives behind, the way Google Docs and Notion point at theirs:
 one line saying what it does, pressed to do it, and a cross to put it away. At most
 one a session, not before the window has been open twenty seconds, never again once
-put away (`nib:hints`, per device), and none at all in Silent mode (Settings > General,
+put away (`orden:hints`, per device), and none at all in Silent mode (Settings > General,
 off out of the box, an account setting). There are two, in order: the graph, and the
 palette's keys. The store is `hints.svelte.ts`, the card `HintCard.svelte`, and both
 are fetched through a door, since no launch draws one.

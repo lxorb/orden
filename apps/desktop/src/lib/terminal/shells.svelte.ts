@@ -8,12 +8,12 @@ export interface Shell {
   name: string
 }
 
-const SHELL_KEY = 'nib:terminal-shell'
-const SIZE_KEY = 'nib:terminal-size'
-const RESTORE_KEY = 'nib:terminal-restore'
-const WARN_KEY = 'nib:terminal-quit-warn'
-const WAYS_KEY = 'nib:terminal-keys'
-const THEMED_KEY = 'nib:terminal-themed'
+const SHELL_KEY = 'orden:terminal-shell'
+const SIZE_KEY = 'orden:terminal-size'
+const RESTORE_KEY = 'orden:terminal-restore'
+const WARN_KEY = 'orden:terminal-quit-warn'
+const WAYS_KEY = 'orden:terminal-keys'
+const THEMED_KEY = 'orden:terminal-themed'
 
 export type Way = 'app' | 'shell'
 

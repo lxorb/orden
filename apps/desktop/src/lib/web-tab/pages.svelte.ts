@@ -1124,8 +1124,8 @@ class Pages {
 
 export const pages = new Pages()
 
-export const MARKS = 'nib:favicons'
-export const MARK = 'nib:favicon:'
+export const MARKS = 'orden:favicons'
+export const MARK = 'orden:favicon:'
 
 export function drawable(picture: string): boolean {
   return (

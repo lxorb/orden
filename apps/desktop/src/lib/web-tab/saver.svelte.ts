@@ -1,7 +1,7 @@
 import { keep, storedText } from '../stored'
 import { isSaver, type Saver } from './resting'
 
-const KEY = 'nib:memory-saver'
+const KEY = 'orden:memory-saver'
 
 class MemorySaver {
   mode = $state<Saver>(read())

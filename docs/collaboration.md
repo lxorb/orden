@@ -581,7 +581,7 @@ polled and no second protocol: every three seconds for two minutes, then at the
 pace syncing keeps (`pollDelay`), slower while the tab is hidden. A poll says
 `again`, and a request that is gone by then (the month a request lasts ran out)
 is answered 410 rather than made anew, so the owner is not knocked on twice. The
-link is remembered under `nib:waiting`, so closing the tab while the owner thinks
+link is remembered under `orden:waiting`, so closing the tab while the owner thinks
 about it goes back to waiting rather than to nothing, out of sight.
 
 The wait is never a lock. Close, Escape or the scrim put the sheet aside and a
@@ -595,7 +595,7 @@ through it the same way: a request through a link that no longer exists is not
 one to accept. Signing out ends the wait too.
 
 **A guest persists, and can be claimed.** The guest token lives in the same
-store as an account's - `nib:session`, and the plugin's vault with it - so a guest
+store as an account's - `orden:session`, and the plugin's vault with it - so a guest
 who closes the tab comes back as the same guest with the same name. Two things
 turn one into an account, and both are the same person turning up: the **device**
 signing in, which the app says by handing its guest token to `POST

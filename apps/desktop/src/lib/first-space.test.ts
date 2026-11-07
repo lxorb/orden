@@ -144,7 +144,7 @@ describe('a fresh start', () => {
   })
 
   test('on a device introduced before, a space and no welcome note', async () => {
-    localStorage.setItem('nib:seeded', 'yes')
+    localStorage.setItem('orden:seeded', 'yes')
 
     await firstSpace.start(FRESH)
 

@@ -54,14 +54,14 @@ describe('the ground a launch paints before it has read anything', () => {
   })
 
   test.each([
-    ['nib:theme-scheme', 'which side of the theme was chosen'],
-    ['nib:ground', 'the colour the window last stood on'],
+    ['orden:theme-scheme', 'which side of the theme was chosen'],
+    ['orden:ground', 'the colour the window last stood on'],
   ])('reads %s (%s) from the same key the app writes', (key) => {
     expect(HTML).toContain(`localStorage.getItem('${key}')`)
   })
 
   test('and ground.ts writes the one it does not share with the theme', () => {
-    expect(GROUND).toContain("const KEY = 'nib:ground'")
+    expect(GROUND).toContain("const KEY = 'orden:ground'")
   })
 
   test('has nothing in the head but tags, comments and the three with bodies', () => {

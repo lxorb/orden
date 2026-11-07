@@ -20,7 +20,7 @@ export type Message =
   | { kind: 'here' }
   | { kind: 'gone' }
 
-const CHANNEL = 'nib:presenter'
+const CHANNEL = 'orden:presenter'
 const LABEL = 'nib-presenter'
 
 function messageOf(value: unknown): Message | null {

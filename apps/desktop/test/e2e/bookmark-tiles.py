@@ -278,7 +278,7 @@ def drive_hands(browser: Browser) -> None:
     if page.locator(".tiles").count() or len(listed) != 7:
         wrong(f"the list did not come back: {listed}")
     sidebar(page, "12-as-a-list")
-    page.evaluate("() => localStorage.setItem('nib:essentials-look', 'tiles')")
+    page.evaluate("() => localStorage.setItem('orden:essentials-look', 'tiles')")
     reload(page)
     page.evaluate(SHOW)
     wait_for(page, "document.querySelectorAll('.tiles .tile').length > 0", "the tiles")

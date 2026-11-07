@@ -47,7 +47,7 @@ def came(page: Page, script: str, what: str, arg: object = None, patience: float
 
 def signed_in(browser: Browser, token: str, label: str) -> tuple[BrowserContext, Page]:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
-    context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
     page = context.new_page()
     page.on(
         "console",

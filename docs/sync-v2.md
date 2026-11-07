@@ -85,7 +85,7 @@ Emil, 2026-09-30:
 | | what it does | where |
 | --- | --- | --- |
 | the pass | pulls a page of changes since a cursor, then pushes every file whose hash moved, whole, naming the version it edited | `apps/desktop/src/lib/sync/mirror.ts`, `sync.svelte.ts` |
-| the mirror | per space: cursor, and per path `{id, version, hash}` plus the writes in the air | `localStorage` key `nib:mirrors` |
+| the mirror | per space: cursor, and per path `{id, version, hash}` plus the writes in the air | `localStorage` key `orden:mirrors` |
 | the loop | a pass every 20 s after activity, doubling to 2 min, 10 min when hidden; a nudge 2 s after a save | `backoff.ts` |
 | the conflict rule | `both` (a copy beside), `newest` (file time against the account's), `ask` (held for the Sync pane) | `sync/conflicts.ts`, `sync/record.svelte.ts` |
 | rooms | live collaboration: one Durable Object per open file holding a Yjs document (a CRDT; OT was weighed and rejected in `collaboration.md`), joined by every device that has the file open; the device keeps no Yjs state once it closes; settles markdown into D1 and R2 1.2 s after typing stops | `services/sync/src/rooms`, `apps/desktop/src/lib/rooms` |
@@ -95,7 +95,7 @@ Emil, 2026-09-30:
 | files that are not notes | PDFs and `publish.css/js` go up as blobs for publishing and never come down; pasted pictures go to the account's blob store when signed in, beside the note otherwise; sound and dropped files stay beside the note and never travel | `mirror.ts` `pushFiles`, `assets.ts` |
 | files changed by other programs | nothing is watched: Orden opens nothing from outside its spaces, and a space's notes follow a pass (`refresh` in `sync.svelte.ts`) | - |
 | web data | a WebView2 user data folder (or WebKit store) per Global, Space or Site store, on this device only; session cookies given a 400-day expiry | `web_stores.rs`, `web_cookies.rs`, `web-tab/web-data.ts` |
-| web notes | a `.url` file (`URL`, which follows the reading two seconds after it settles, `Title`, `Nib-Added`, `Nib-Home`, `Nib-Icon` as a `data:` PNG); syncs as a small note and is never in a room; the scroll and the trail stay on the device (`nib:web-places`) | `@orden/scan/shortcut`, `web-tab/keep.ts`, `web-tab/place.ts` |
+| web notes | a `.url` file (`URL`, which follows the reading two seconds after it settles, `Title`, `Nib-Added`, `Nib-Home`, `Nib-Icon` as a `data:` PNG); syncs as a small note and is never in a room; the scroll and the trail stay on the device (`orden:web-places`) | `@orden/scan/shortcut`, `web-tab/keep.ts`, `web-tab/place.ts` |
 
 ### Every road to a second file, or to lost work
 
@@ -826,7 +826,7 @@ Durable Object that does not exist yet.
 
 The pass shrinks to the tree and the documents the feed names (section 7), and the whole of
 `join.ts`, `apart.ts`, `conflicts.ts`, the `keptBeside` and `noteBeside` copies, `offered`,
-`dropped`, `held` and the `nib:mirrors` blob go (after the v1 fallback is retired).
+`dropped`, `held` and the `orden:mirrors` blob go (after the v1 fallback is retired).
 
 ### 5.11 Space and account settings
 
@@ -931,7 +931,7 @@ needs the lease; one device holds it for all of its tabs. Opening a Calendar not
 Gmail note is in use on the laptop shows `Open on Laptop`, because it is. With the idle rule
 below this is rare: people use one computer at a time.
 
-The store choice (`Global`, `Space`, `Site`) moves from the device (`nib:web-data`) to the
+The store choice (`Global`, `Space`, `Site`) moves from the device (`orden:web-data`) to the
 space on the account, so every computer puts a space's pages in the same store and the same
 logins follow it (open question 3).
 
@@ -1027,7 +1027,7 @@ continues where it left off. Each row, and whether it travels:
 | IndexedDB, per origin | yes | **yes, up to 16 MB per database**; larger ones are left and noted | WhatsApp's keys, offline apps; the limit keeps a mail cache from being a hundred megabytes a handover |
 | the tab's back and forward trail and scroll position | yes | **yes, for web notes** (`place.ts`) | "the exact same page you had open" |
 | zoom per site | yes | **yes** (`sites.ts`) | |
-| site permissions Orden granted | yes | **yes** (`nib:web-grants`) | asked once, not per computer |
+| site permissions Orden granted | yes | **yes** (`orden:web-grants`) | asked once, not per computer |
 | Cache Storage, service workers | yes | no | the site registers and fills them again on its next visit |
 | the HTTP cache | yes | no | a cache |
 | Origin Private File System | yes | no, for now | rare; the same page-script route can add it |
@@ -1290,7 +1290,7 @@ the files beside it), where it adds to or decides what sections 4 and 6 leave op
 **Removed (#393).** All of it but the one socket per device and the beat's worker clock:
 
 - **The switch.** `users.web_sync` (migration `0043`), answered by `/v1/me` as `webSync` and
-  read nowhere else; the app keeps the last answer (`nib:web-sync`) so a launch goes by it
+  read nowhere else; the app keeps the last answer (`orden:web-sync`) so a launch goes by it
   until the account has spoken. Off, nothing of the lease is even fetched
   (`lib/sync2/connect.svelte.ts`); the hub socket itself opens for every signed-in device.
 - **One socket per device, not per window.** The first window takes a Web Lock and holds
@@ -1684,7 +1684,7 @@ here as they were planned.
 | `src-tauri/src/sync_store.rs` | the sync store (SQLite through `rusqlite`, bundled, now on every target) and its batched commands | store |
 | `src-tauri/src/space_watch.rs` | the space folder watcher (`notify`), debounced, with file identities | store |
 | `lib/web/sync-store.ts` | the same store over IndexedDB for the browser build | store |
-| `lib/sync2/` | the engine: documents (confirmed, pending), the pass (feed, pull, push, ops), projection to files, ingest of foreign edits, held notes, migration from `nib:mirrors`, the v1 fallback | engine |
+| `lib/sync2/` | the engine: documents (confirmed, pending), the pass (feed, pull, push, ops), projection to files, ingest of foreign edits, held notes, migration from `orden:mirrors`, the v1 fallback | engine |
 | `lib/sync2/hub.svelte.ts` | the one hub socket: hello, beats, reconnects, and a typed `on(type)` the engine's pokes and the leases both use | web-lease |
 | `lib/sync2/Diverged.svelte` and the mark, toast, Sync pane | the modal and everything a reader sees | ux |
 | `lib/web-tab/lease.svelte.ts`, `WebLocked.svelte`, `activity.ts`, `WebApprove.svelte` | leases, the lock surface, activity, approval | web-lease |
@@ -1736,9 +1736,9 @@ What the build settled that the above leaves open:
   `ACK` moves the pushed updates to confirmed, and `EPOCH` (with 4001) starts a three-way
   merge against the confirmed text. App.svelte joins v1's rooms only under v1.
 - **Choosing the engine.** `sync.svelte.ts` keeps the account's last word in
-  `nib:sync-version`, so an offline launch never starts v1 over files v2 has been keeping;
+  `orden:sync-version`, so an offline launch never starts v1 over files v2 has been keeping;
   the runner is fetched at the launch's `rooms` turn. An account moved back to 1 has its
-  `nib:mirrors` written from the store first, every note with the hash the account holds,
+  `orden:mirrors` written from the store first, every note with the hash the account holds,
   so v1 meets each as one it knows.
 - **The light** is hollow when the account cannot be reached; the pass log is the store's
   `log` table.
@@ -1886,7 +1886,7 @@ the file's row - so the browser keeps the tree whole and only the words it uses 
    settle as today.
 2. **A device moving to v2** (its account flipped to 2), on its first v2 pass per space:
    1. asks the account to prepare the space (folders backfilled from paths);
-   2. reads `nib:mirrors` for the space. For each tracked note:
+   2. reads `orden:mirrors` for the space. For each tracked note:
       - the file still reads as the tracked hash, and that is `epoch_base`: the document is
         the seed of that text, **built locally, nothing downloaded**;
       - the file still reads as the tracked hash, and the account moved on: the seed of the
@@ -1901,7 +1901,7 @@ the file's row - so the browser keeps the tree whole and only the words it uses 
         is held and asks;
    3. untracked files become creates, tracked files that are gone become deletes (with the
       edit-beats-delete rule on the account);
-   4. writes `nib:mirrors` back untouched: it is the rollback path.
+   4. writes `orden:mirrors` back untouched: it is the rollback path.
 3. **Rooms at the switch.** Preparing a space marks its notes epoch 1 with their current
    bodies' hashes. A room that still holds a document from before (a v1 room) and wakes,
    is joined, or settles, and finds its note at epoch 1, **seeds epoch 1 from the current
@@ -1919,7 +1919,7 @@ the file's row - so the browser keeps the tree whole and only the words it uses 
   turned on for an account, and web logins that travel were taken out (#393, section 6):
   Google binds its sessions to the device, so a carried Google login stopped working on the
   other computer within minutes. Nothing reads the column now, and no app asks for it.
-- **Rollback**: setting 1 again makes the client rebuild `nib:mirrors` from the store (each
+- **Rollback**: setting 1 again makes the client rebuild `orden:mirrors` from the store (each
   note's id, version and the hash of its confirmed text) before the v1 loop starts, so v1
   resumes without a conflict copy.
 - **Flipping**: `scripts/sync-flip.mjs` through `/v2/admin/sync-version`, which refuses 2

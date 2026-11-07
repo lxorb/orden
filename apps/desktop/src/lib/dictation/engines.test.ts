@@ -124,7 +124,7 @@ describe('the road taken', () => {
     world.token = 'a token'
     engines.choose('account')
     expect(engines.now()).toBe('account')
-    expect(world.stored.get('nib:dictation-engine')).toBe('account')
+    expect(world.stored.get('orden:dictation-engine')).toBe('account')
   })
 
   test('is none again once the chosen one cannot be taken, rather than another', () => {

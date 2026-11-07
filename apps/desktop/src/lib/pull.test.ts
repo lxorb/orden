@@ -98,13 +98,13 @@ describe('which command it runs', () => {
     pull.choose('app.palette')
     expect(pull.id).toBe('app.palette')
     expect(pull.changed).toBe(true)
-    expect(localStorage.getItem('nib:pull')).toBe('app.palette')
+    expect(localStorage.getItem('orden:pull')).toBe('app.palette')
   })
 
   test('choosing the one it offers anyway is choosing nothing', () => {
     pull.choose(DEFAULT_PULL)
     expect(pull.changed).toBe(false)
-    expect(localStorage.getItem('nib:pull')).toBeNull()
+    expect(localStorage.getItem('orden:pull')).toBeNull()
   })
 
   test('or no gesture at all, which is a choice', () => {

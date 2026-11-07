@@ -100,7 +100,7 @@ export class PadSync {
   ) {}
 
   exchange(owner: string, server: PadServer): Promise<Traded> {
-    return this.inTurn(`nib:pad:${owner}`, () => this.traded(owner, server))
+    return this.inTurn(`orden:pad:${owner}`, () => this.traded(owner, server))
   }
 
   private async traded(owner: string, server: PadServer): Promise<Traded> {

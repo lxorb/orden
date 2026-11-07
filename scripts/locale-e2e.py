@@ -59,7 +59,7 @@ MOD = {"desktop": "Control", "phone": "Meta"}
 
 SEED = """
 async ([path, text, language]) => {
-  localStorage.setItem('nib:language', language)
+  localStorage.setItem('orden:language', language)
 
   // Whatever version the app itself has made, rather than a number written down
   // here: naming one that has fallen behind is a VersionError and no note.

@@ -56,14 +56,14 @@ interface ThemeFile {
   path: string
 }
 
-const STORAGE_KEY = 'nib:theme'
-const SCHEME_KEY = 'nib:theme-scheme'
+const STORAGE_KEY = 'orden:theme'
+const SCHEME_KEY = 'orden:theme-scheme'
 const STYLE_ID = 'nib-user-theme'
 const CUSTOM_ID = 'nib-custom-css'
 
-const ACCENT_KEY = 'nib:accent'
-const SHEET_KEY = 'nib:theme-sheet'
-const OFFERED_KEY = 'nib:contrast-offered'
+const ACCENT_KEY = 'orden:accent'
+const SHEET_KEY = 'orden:theme-sheet'
+const OFFERED_KEY = 'orden:contrast-offered'
 const CONTRAST_THEME = 'contrast'
 
 const DEFAULT_ID = 'default'
@@ -113,9 +113,9 @@ const GLASS: ThemeInfo = {
 }
 
 const FIRST_LOOK = __EVEN_PLUGIN__ ? null : { theme: GLASS_THEME, accent: 'green' }
-const GIVEN_KEY = 'nib:accent-given'
+const GIVEN_KEY = 'orden:accent-given'
 const GIVEN_BEFORE = 'yellow'
-const MOVED_KEY = 'nib:theme-moved'
+const MOVED_KEY = 'orden:theme-moved'
 
 const WALLPAPER: ThemeInfo = {
   id: 'wallpaper',
