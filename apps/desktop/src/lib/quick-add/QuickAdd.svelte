@@ -549,6 +549,7 @@
       bind:this={words}
       bind:value={description}
       use:dictating={voiceField}
+      dir="auto"
       class="words"
       onfocus={() => (spoken = words)}
       rows="2"

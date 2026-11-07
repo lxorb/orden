@@ -214,7 +214,7 @@
             </div>
           {/if}
           <div class="held">
-            <p class="bubble">{words}</p>
+            <p class="bubble" dir="auto">{words}</p>
             {#if thread && !turn.steered}
               <span class="tools">
                 <button
@@ -278,11 +278,11 @@
     {/if}
 
     {#if pending !== undefined}
-      <div class="said is-pending"><p class="bubble">{pending}</p></div>
+      <div class="said is-pending"><p class="bubble" dir="auto">{pending}</p></div>
     {/if}
 
     {#each steering as words, at (at)}
-      <div class="said steered is-pending"><p class="bubble">{words}</p></div>
+      <div class="said steered is-pending"><p class="bubble" dir="auto">{words}</p></div>
     {/each}
 
     {#if waiting}
