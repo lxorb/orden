@@ -70,6 +70,7 @@ const {
   keepThread,
   listThreads,
   newThread,
+  otherWindowDeleted,
   readThread,
   threadIn,
   unreadOf,
@@ -573,5 +574,50 @@ describe('a chat’s unread mark (#1064)', () => {
       head('orphan', { parent: 'gone', answered: 3 }),
     ]
     expect([...unreadOf(heads)].sort()).toEqual(['never', 'new', 'orphan', 'parent'])
+  })
+})
+
+describe('a thread two windows hold', () => {
+  test('changed in one with nothing answering is told to the others, so none writes it back as it was', async () => {
+    const heard: unknown[] = []
+    const stop = other.hear('thread-written', (said) => heard.push(said.id))
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [{ id: 'y1', role: 'you', at: 1, parts: [] }]
+    await keepThread(thread)
+    thread.title = 'Herons'
+    await keepThread(thread)
+    expect(heard).toEqual([thread.id, thread.id])
+    stop()
+  })
+
+  test('deleted here is told to the others', async () => {
+    const heard: unknown[] = []
+    const stop = other.hear('thread-deleted', (said) => heard.push([said.id, said.space]))
+    const thread = newThread('work', 'p', 'm')
+    await keepThread(thread)
+    await deleteThread('work', thread.id)
+    expect(heard).toEqual([[thread.id, 'work']])
+    stop()
+  })
+
+  test('deleted in another is not written again from here, though a write was under way', async () => {
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [{ id: 'y1', role: 'you', at: 1, parts: [] }]
+    await keepThread(thread)
+    const gone: string[] = []
+    const stop = otherWindowDeleted((id) => gone.push(id))
+    let go: () => void = () => undefined
+    slowly = new Promise<void>((resolve) => (go = resolve))
+    const writingHere = keepThread({ ...thread, title: 'Herons' })
+    disk.delete(`work/${thread.id}`)
+    other.say('thread-deleted', { id: thread.id, space: 'work' })
+    go()
+    await writingHere
+    await vi.waitFor(() => expect(disk.has(`work/${thread.id}`)).toBe(false))
+    const before = writes.length
+    await keepThread({ ...thread, title: 'Herons again' })
+    expect(writes).toHaveLength(before)
+    expect(gone).toEqual([thread.id])
+    stop()
   })
 })

@@ -23,6 +23,7 @@ import {
   listEveryThread,
   type Listed,
   newThread,
+  otherWindowDeleted,
   otherWindowWrote,
   readThread,
 } from '../chat/threads'
@@ -220,6 +221,7 @@ class Chat implements Panel {
     }
     this.started = true
     otherWindowWrote((id) => this.heardWritten(id))
+    otherWindowDeleted((id) => this.heardDeleted(id))
     this.listing = false
     this.popover = null
     if (!this.open) this.show(this.fresh())
@@ -1398,24 +1400,38 @@ class Chat implements Panel {
       () => false,
     )
     this.relist()
+    this.stopAll(id)
+    if (!(await deleting)) {
+      this.relist()
+      await this.refreshHeads()
+      return
+    }
+    this.forgetThread(id)
+    await this.refreshHeads()
+  }
+
+  heardDeleted(id: string): void {
+    this.stopAll(id)
+    this.forgetThread(id)
+    this.relist()
+  }
+
+  private stopAll(id: string): void {
     this.stoppers.get(id)?.abort()
     this.unwait(id)
     this.forgetEdit(id)
     for (const one of this.queued[id] ?? [])
       one.settle?.({ stop: 'stopped', turn: null, usage: null })
     this.queued = without(this.queued, id)
-    if (!(await deleting)) {
-      this.relist()
-      await this.refreshHeads()
-      return
-    }
+  }
+
+  private forgetThread(id: string): void {
     void import('../helpers/helpers.svelte').then(({ helpers }) => {
       helpers.stopUnder(id)
       helpers.forget(id)
     })
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()
-    await this.refreshHeads()
   }
 }
 

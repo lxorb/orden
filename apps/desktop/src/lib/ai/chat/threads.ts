@@ -286,6 +286,18 @@ export function otherWindowWrote(listener: (id: string) => void): () => void {
   })
 }
 
+export function otherWindowDeleted(listener: (id: string) => void): () => void {
+  return windows.hear('thread-deleted', (said) => {
+    const { id, space } = said
+    if (!isString(id) || !isString(space)) return
+    removed.add(id)
+    const held = writing.get(id)
+    if (held)
+      void held.done.catch(() => undefined).then(() => deleted(space, id).catch(() => undefined))
+    listener(id)
+  })
+}
+
 function ownFields(thread: Thread): Record<string, unknown> {
   const fields = {
     ...thread,
@@ -556,6 +568,7 @@ export function deleteThread(space: string, id: string): Promise<void> {
     try {
       await writing.get(id)?.done.catch(() => undefined)
       await deleted(space, id)
+      windows.say('thread-deleted', { id, space })
     } catch (error) {
       removed.delete(id)
       throw error
@@ -609,10 +622,8 @@ export function keepThread(thread: Thread): Promise<void> {
     if (Object.keys(fields).length) windows.say('thread-fields', { id: thread.id, fields })
     return Promise.resolve()
   }
-  const answered = answeringHere.has(thread.id)
   if (thread.answering) answeringHere.set(thread.id, thread)
   else answeringHere.delete(thread.id)
-  const tell = answered || !!thread.answering
   const held = writing.get(thread.id)
   if (held) {
     held.next = true
@@ -626,7 +637,7 @@ export function keepThread(thread: Thread): Promise<void> {
         entry.next = false
         const latest = entry.thread
         await writeThread(latest)
-        if (tell || latest.answering) windows.say('thread-written', { id: latest.id })
+        windows.say('thread-written', { id: latest.id })
       } while (again(entry) && !removed.has(thread.id))
     } finally {
       writing.delete(thread.id)
