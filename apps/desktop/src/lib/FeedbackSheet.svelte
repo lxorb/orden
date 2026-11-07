@@ -11,13 +11,13 @@
   import { followHref } from './open-link'
   import { overlays } from './overlays'
   import { trap } from './trap'
+  import { chooseFiles } from './choose-files'
 
   let text = $state('')
   let pictures = $state<Picture[]>([])
   let sending = $state(false)
   let error = $state<string | null>(null)
   let pictureError = $state<string | null>(null)
-  let picker = $state<HTMLInputElement | null>(null)
 
   const received = $derived(feedback.received)
 
@@ -178,19 +178,9 @@
             type="button"
             class="nib-chip is-quiet"
             disabled={sending || pictures.length >= MOST_PICTURES}
-            onclick={() => picker?.click()}>{t('Add images')}</button
+            onclick={() => void chooseFiles({ accept: 'image/*', multiple: true }).then(add)}
+            >{t('Add images')}</button
           >
-          <input
-            bind:this={picker}
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-            onchange={(event) => {
-              const input = event.currentTarget
-              void add(input.files ?? []).finally(() => (input.value = ''))
-            }}
-          />
         </div>
 
         {#if pictureError}

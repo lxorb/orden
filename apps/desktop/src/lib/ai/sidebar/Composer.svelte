@@ -3,6 +3,7 @@
   import { fly } from 'svelte/transition'
   import { i18n, t } from '../../i18n.svelte'
   import Cross from '../../Cross.svelte'
+  import { chooseFiles } from '../../choose-files'
   import { links } from '../../link-index.svelte'
   import { DIVIDER, menu } from '../../menu.svelte'
   import { dur } from '../../motion'
@@ -41,7 +42,6 @@
   let lit = $state(0)
   let hushed = $state('')
   let commands = $state<readonly PanelCommand[]>([])
-  let picker = $state<HTMLInputElement>()
   const here = hostHere()
 
   const voiceField: Dictates = {
@@ -393,7 +393,7 @@
 
   function plusMenu(event: MouseEvent) {
     menu.show(event, [
-      { label: t('Add photos and files'), asks: true, run: () => picker?.click() },
+      { label: t('Add photos and files'), asks: true, run: chooseAndTake },
       DIVIDER,
       { label: t('Web search'), checked: searching, run: toggleWeb },
       ...(canDictate() ? [{ label: t('Dictate'), run: () => void dictation.toggle(true) }] : []),
@@ -410,11 +410,11 @@
     place(at + typed.length)
   }
 
-  function picked(event: Event) {
-    const input = event.currentTarget as HTMLInputElement
-    for (const file of input.files ?? []) take(file)
-    input.value = ''
-    chat.focus()
+  function chooseAndTake() {
+    void chooseFiles({ multiple: true }).then((files) => {
+      for (const file of files) take(file)
+      chat.focus()
+    })
   }
 
   const button = $derived.by((): 'stop' | 'send' => (busy && !chat.text.trim() ? 'stop' : 'send'))
@@ -649,7 +649,6 @@
         {/if}
       </div>
     </div>
-    <input class="files" type="file" multiple bind:this={picker} onchange={picked} tabindex="-1" />
   </div>
 </div>
 
@@ -975,10 +974,6 @@
   .go .square {
     fill: currentColor;
     stroke: none;
-  }
-
-  .files {
-    display: none;
   }
 
   :global([data-touch]) .composer textarea {
