@@ -28,6 +28,7 @@ const secret = { id: 'secret', name: 'Secret', root: '/s/Secret' }
 const files = new Map<string, string>()
 const folders = new Set<string>()
 const unreadable = new Set<string>()
+const appearing = new Map<string, string>()
 
 interface Entry {
   name: string
@@ -194,8 +195,14 @@ function crate(command: string, args: Record<string, unknown> = {}): Promise<unk
       if (unreadable.has(path))
         return Promise.reject(new Error('stream did not contain valid UTF-8'))
       return files.has(path) ? Promise.resolve(files.get(path)) : Promise.reject(new Error('gone'))
-    case 'path_exists':
+    case 'path_exists': {
+      const came = appearing.get(path)
+      if (came !== undefined) {
+        appearing.delete(path)
+        files.set(path, came)
+      }
       return Promise.resolve(files.has(path) || unreadable.has(path) || folders.has(path))
+    }
     case 'write_note':
       files.set(path, String(args.content))
       return Promise.resolve()
@@ -525,6 +532,7 @@ beforeEach(() => {
   files.clear()
   folders.clear()
   unreadable.clear()
+  appearing.clear()
   readOnly.clear()
   files.set('/s/Work/Plan.md', '# Plan\n')
   files.set('/s/Work/Pinned.md', '# Pinned\n')
@@ -1310,6 +1318,18 @@ describe('the notes, on the road', () => {
       result: { path: 'Broth.md', created: true },
     })
     expect(files.get('/s/Home/Broth.md')).toBe('# Broth\n')
+  })
+
+  test('a task added as another window makes its note goes into that note, over nothing', async () => {
+    appearing.set('/s/Home/.Inbox.md', '- [ ] Water the plants\n')
+    docs.writeNote.mockClear()
+    expect(await call('add_task', { space: 'Home', text: 'Call mum' })).toMatchObject({
+      result: { space: 'Home' },
+    })
+    expect(files.get('/s/Home/.Inbox.md')).toBe('- [ ] Water the plants\n')
+    expect(docs.writeNote.mock.calls.map((one) => one[2])).toEqual([
+      expect.stringMatching(/- \[ \] Water the plants\n[\s\S]*- \[ \] Call mum/),
+    ])
   })
 
   test('a note that is there and will not read is refused, and never made again over itself', async () => {
