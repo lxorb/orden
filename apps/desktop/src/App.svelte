@@ -415,7 +415,7 @@
 
   if (__DRIVEABLE__) {
     Object.assign(window, {
-      nibApp: {
+      ordenApp: {
         account,
         arriving,
         busy,
@@ -443,6 +443,7 @@
         views,
       },
     })
+    Object.assign(window, { nibApp: (window as unknown as { ordenApp: object }).ordenApp })
 
     void Promise.all([
       import('./lib/importing.svelte'),
@@ -464,7 +465,7 @@
         { wallpaper },
         { store },
       ]) => {
-        Object.assign((window as unknown as { nibApp: object }).nibApp, {
+        Object.assign((window as unknown as { ordenApp: object }).ordenApp, {
           tasks: () =>
             Promise.all([
               import('./lib/rows/rows.svelte'),

@@ -67,7 +67,7 @@ series:
 
 SEED = """
 async ([deep, monday, html, callouts, charts]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -92,17 +92,17 @@ ROWS = """
 
 FRESH_LINE = """
 () => {
-  const doc = window.nib.state.doc
-  window.nib.dispatch({
+  const doc = window.orden.state.doc
+  window.orden.dispatch({
     changes: { from: doc.length, insert: '\\n\\n' },
     selection: { anchor: doc.length + 2 },
   })
-  window.nib.focus()
+  window.orden.focus()
 }
 """
 
 def doc(page: Page) -> str:
-    return page.evaluate("() => window.nib.state.doc.toString()")
+    return page.evaluate("() => window.orden.state.doc.toString()")
 
 def rows(page: Page) -> list[str]:
     return page.evaluate(ROWS)
@@ -119,7 +119,7 @@ def rows_holding(page: Page, holds: str, patience: float = 12) -> list[str]:
 
 def open_note(page: Page, path: str) -> None:
     page.evaluate(
-        "(path) => window.nibApp.workspace.openEntry(path, { activate: true })",
+        "(path) => window.ordenApp.workspace.openEntry(path, { activate: true })",
         path,
     )
     page.wait_for_timeout(900)
@@ -150,14 +150,14 @@ def fresh(browser: Browser) -> tuple[Page, dict[str, str]]:
     DRIVE.open(page)
     paths = page.evaluate(SEED, [DEEP, MONDAY, HTML_NOTE, CALLOUTS, CHARTS])
     say(f"the space holds {json.dumps(sorted(paths))}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
 
     open_note(page, paths["monday"])
     return page, paths
 
 def format_to(page: Page, spelling: str) -> None:
-    page.evaluate("(one) => window.nibApp.modes.setLinkFormat(one)", spelling)
+    page.evaluate("(one) => window.ordenApp.modes.setLinkFormat(one)", spelling)
     page.wait_for_timeout(250)
 
 def picked_link(page: Page, typed: str, label: str) -> str:
@@ -245,21 +245,21 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
 
     page.evaluate(
         """() => {
-          const doc = window.nib.state.doc
+          const doc = window.orden.state.doc
           const line = '\\n\\nSee [[Deep note]] here.\\n'
-          window.nib.dispatch({
+          window.orden.dispatch({
             changes: { from: doc.length, insert: line },
             selection: { anchor: 0 },
           })
-          window.nib.focus()
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(700)
 
     where = page.evaluate(
         """() => {
-          const at = window.nib.state.doc.toString().indexOf('Deep note')
-          const box = window.nib.coordsAtPos(at + 4)
+          const at = window.orden.state.doc.toString().indexOf('Deep note')
+          const box = window.orden.coordsAtPos(at + 4)
           return box ? { x: Math.round((box.left + box.right) / 2), y: Math.round((box.top + box.bottom) / 2) } : null
         }"""
     )
@@ -323,7 +323,7 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
         wrong("Escape did not put the card away")
 
     said = page.evaluate(
-        "(path) => window.nibApp.workspace.noteText(path)",
+        "(path) => window.ordenApp.workspace.noteText(path)",
         paths["deep"],
     )
     say(f"[the linked note] {json.dumps((said or '')[:80])}")
@@ -332,13 +332,13 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
 
 INDENTED = """
 () => {
-  const doc = window.nib.state.doc
+  const doc = window.orden.state.doc
   const text = '\\n\\n  an indented block\\n  a second line\\n  a third\\n'
-  window.nib.dispatch({
+  window.orden.dispatch({
     changes: { from: doc.length, insert: text },
     selection: { anchor: doc.length + 4 },
   })
-  window.nib.focus()
+  window.orden.focus()
 }
 """
 
@@ -365,12 +365,12 @@ def drive_fold(page: Page, paths: dict[str, str]) -> None:
     if not indented[0]["fold"]:
         wrong("the indented block has no chevron in the margin")
 
-    lines = page.evaluate("() => window.nib.state.doc.lines")
+    lines = page.evaluate("() => window.orden.state.doc.lines")
     page.evaluate(
         """() => {
-          const text = window.nib.state.doc.toString()
-          window.nib.dispatch({ selection: { anchor: text.indexOf('an indented') } })
-          window.nib.focus()
+          const text = window.orden.state.doc.toString()
+          window.orden.dispatch({ selection: { anchor: text.indexOf('an indented') } })
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(200)
@@ -461,7 +461,7 @@ def drive_canvas(page: Page) -> None:
             ],
             edges: [],
           }
-          window.nibApp.workspace.openShared(
+          window.ordenApp.workspace.openShared(
             { id: 'plane', name: 'Plane.canvas', path: 'Plane.canvas' },
             JSON.stringify(plane),
           )
@@ -516,13 +516,13 @@ def drive_bulk(page: Page, paths: dict[str, str]) -> None:
 
     page.evaluate(
         """() => {
-          const doc = window.nib.state.doc
+          const doc = window.orden.state.doc
           const text = 'one\\n\\ntwo\\n\\nthree\\n'
-          window.nib.dispatch({
+          window.orden.dispatch({
             changes: { from: 0, to: doc.length, insert: text },
             selection: { anchor: 0, head: text.indexOf('three') + 5 },
           })
-          window.nib.focus()
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(500)
@@ -646,9 +646,9 @@ def drive_callouts(page: Page, paths: dict[str, str]) -> None:
 
     page.evaluate(
         """() => {
-          const text = window.nib.state.doc.toString()
-          window.nib.dispatch({ selection: { anchor: text.indexOf('Read this one') } })
-          window.nib.focus()
+          const text = window.orden.state.doc.toString()
+          window.orden.dispatch({ selection: { anchor: text.indexOf('Read this one') } })
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(300)

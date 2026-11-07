@@ -51,12 +51,12 @@ def wait(page: Page, script: str, what: str) -> object:
     raise SystemExit(f"gave up waiting for {what}")
 
 def board(page: Page, label: str) -> str:
-    wait(page, "() => !!window.nibApp?.workspace?.activeSpace && typeof window.nibApp.tasks === 'function'", f"[{label}] the app")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    wait(page, "() => !!window.ordenApp?.workspace?.activeSpace && typeof window.ordenApp.tasks === 'function'", f"[{label}] the app")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     path = f"{root}/Board.canvas"
     page.evaluate(
-        "async (path) => { const ws = window.nibApp.workspace;"
-        " await window.nibApp.tasks().then((t) => t.writeFile(path, JSON.stringify({ nodes: [], edges: [] })));"
+        "async (path) => { const ws = window.ordenApp.workspace;"
+        " await window.ordenApp.tasks().then((t) => t.writeFile(path, JSON.stringify({ nodes: [], edges: [] })));"
         " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
         path,
     )
@@ -79,8 +79,8 @@ def pasted(page: Page, label: str, path: str) -> None:
     say(f"ok   [{label}] the pasted picture loaded: {said[0]['src'][:80]}")
 
     page.reload(wait_until="domcontentloaded")
-    wait(page, "() => !!window.nibApp?.workspace?.activeSpace", f"[{label}] the app again")
-    page.evaluate("async (path) => { await window.nibApp.workspace.openEntry(path, { activate: true }) }", path)
+    wait(page, "() => !!window.ordenApp?.workspace?.activeSpace", f"[{label}] the app again")
+    page.evaluate("async (path) => { await window.ordenApp.workspace.openEntry(path, { activate: true }) }", path)
     try:
         wait(page, f"() => ({PICTURES})().some((one) => one.loaded)", f"[{label}] the picture after a reload")
         say(f"ok   [{label}] and after the canvas is opened again")
@@ -90,12 +90,12 @@ def pasted(page: Page, label: str, path: str) -> None:
 HASH = hashlib.sha256(base64.b64decode(PICTURE)).hexdigest()
 
 def written_before(page: Page, label: str, signed: bool) -> None:
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     path = f"{root}/Before.canvas"
     card = {"id": "old", "type": "file", "file": f"i/{HASH}.png", "x": 0, "y": 0, "width": 320, "height": 224}
     page.evaluate(
-        "async ([path, text]) => { const ws = window.nibApp.workspace;"
-        " await window.nibApp.tasks().then((t) => t.writeFile(path, text));"
+        "async ([path, text]) => { const ws = window.ordenApp.workspace;"
+        " await window.ordenApp.tasks().then((t) => t.writeFile(path, text));"
         " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
         [path, json.dumps({"nodes": [card], "edges": []})],
     )

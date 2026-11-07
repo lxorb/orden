@@ -29,7 +29,7 @@ def shortcut(url: str, title: str, icon: str | None) -> str:
 
 SEED = """
 async (site) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
 
   for (const one of [...ws.tabs]) ws.close(one.id)
@@ -54,7 +54,7 @@ async (site) => {
 
 OPEN = """
 async (where) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
 
   await ws.openEntry(where.plan, {})
@@ -126,7 +126,7 @@ STRIP = """
 
 PIN = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const other = ws.tabs.find((one) => !(one.name ?? '').startsWith('Plan'))
   ws.activate(other.id)
 }
@@ -134,9 +134,9 @@ PIN = """
 
 CHOOSE = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const canvas = ws.files.find((one) => one.name === 'Roadmap.canvas')
-  window.nibApp.iconChoice.file(canvas.path)
+  window.ordenApp.iconChoice.file(canvas.path)
   return canvas.path
 }
 """
@@ -217,7 +217,7 @@ def chooses(page: Page, scheme: str) -> None:
     cell.wait_for(state="visible", timeout=30_000)
     cell.click()
     page.wait_for_timeout(900)
-    page.evaluate("() => window.nibApp.iconChoice.close()")
+    page.evaluate("() => window.ordenApp.iconChoice.close()")
     page.wait_for_timeout(400)
 
     strip = page.evaluate(STRIP)

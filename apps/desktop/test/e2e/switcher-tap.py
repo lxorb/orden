@@ -47,11 +47,11 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     page = DRIVE.page(browser, **options)
     DRIVE.open(page)
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace; const first = ws.activeSpaceId;"
+        "async () => { const ws = window.ordenApp.workspace; const first = ws.activeSpaceId;"
         " await ws.addSpace('Second'); if (ws.activeSpaceId !== first) await ws.showSpace(first) }"
     )
     DRIVE.seed(page, *[f"# Row {n}\n\nA note.\n" for n in range(1, 13)])
-    page.evaluate("() => { window.nibApp.workspace.panel = 'tree' }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'tree' }")
     wait_for(page, f"document.querySelector('{BUTTON}')", f"[{label}] the switcher")
     DRIVE.settled(page)
     box = page.locator(BUTTON).first.bounding_box()
@@ -78,13 +78,13 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     size = page.viewport_size or {"width": 800, "height": 800}
     row = page.evaluate(ROW_BELOW)
     at = (row["x"], row["y"]) if row else (x, size["height"] - 40)
-    before = page.evaluate("() => window.nibApp.workspace.active?.path ?? null")
+    before = page.evaluate("() => window.ordenApp.workspace.active?.path ?? null")
     press(page, at[0], at[1], touch)
     if is_open(page):
         wrong(f"[{label}] a press past the list did not close it")
     else:
         say(f"ok   [{label}] a press past it closes it")
-    after = page.evaluate("() => window.nibApp.workspace.active?.path ?? null")
+    after = page.evaluate("() => window.ordenApp.workspace.active?.path ?? null")
     if row and after != before:
         wrong(f"[{label}] the press past the list opened the row under it: {after}")
     elif row:

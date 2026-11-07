@@ -17,7 +17,7 @@ DESKTOP_AGENT = (
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom('# Kestrel notes\\n\\nA kestrel hangs on the wind above the field.\\n\\nThe words here are what the size is about.', undefined)
   const first = ws.notes.find((one) => one.name.startsWith('Kestrel'))
   if (first) await ws.openEntry(first.path, { activate: true })
@@ -31,7 +31,7 @@ SIZE = """
   const badge = document.querySelector('.size')
   return {
     zoom: getComputedStyle(root).getPropertyValue('--zoom').trim(),
-    kept: window.nibApp.modes.zoom,
+    kept: window.ordenApp.modes.zoom,
     badge: badge ? badge.textContent.trim() : null,
     // What the app must never be doing: the page's own scale, which a webview
     // zoom would move.
@@ -69,7 +69,7 @@ def drive(browser) -> None:
     say(f"the space holds {page.evaluate(SEED)} files")
     page.wait_for_timeout(600)
 
-    page.evaluate("() => window.nibApp.modes.resetZoom()")
+    page.evaluate("() => window.ordenApp.modes.resetZoom()")
     page.wait_for_timeout(400)
     say(f"at rest: {page.evaluate(SIZE)}")
 
@@ -90,24 +90,24 @@ def drive(browser) -> None:
     say(f"a moment later: {page.evaluate(SIZE)}")
 
     say("--- what must not change it ---")
-    before = page.evaluate("() => window.nibApp.modes.zoom")
+    before = page.evaluate("() => window.ordenApp.modes.zoom")
     wheel(page, "#write", ctrl=False, up=True)
-    say(f"a notch without Ctrl: {before} -> {page.evaluate('() => window.nibApp.modes.zoom')}")
+    say(f"a notch without Ctrl: {before} -> {page.evaluate('() => window.ordenApp.modes.zoom')}")
 
     page.keyboard.press("Control+Shift+L")
     page.wait_for_timeout(500)
     wheel(page, "[data-region='list']", ctrl=True, up=True)
-    say(f"a notch over the file list: {page.evaluate('() => window.nibApp.modes.zoom')}")
+    say(f"a notch over the file list: {page.evaluate('() => window.ordenApp.modes.zoom')}")
 
     say("--- the keys ---")
 
     def focus() -> None:
         page.evaluate(
-            "() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()"
+            "() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()"
         )
 
     def size() -> float:
-        return page.evaluate("() => window.nibApp.modes.zoom")
+        return page.evaluate("() => window.ordenApp.modes.zoom")
 
     def line() -> str:
         return page.evaluate(LINE)
@@ -117,12 +117,12 @@ def drive(browser) -> None:
         page.wait_for_timeout(260)
 
     focus()
-    page.evaluate("() => window.nibApp.modes.resetZoom()")
+    page.evaluate("() => window.ordenApp.modes.resetZoom()")
     page.wait_for_timeout(300)
 
     page.evaluate(
         """() => {
-          const view = window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)
+          const view = window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)
           view?.dispatch({ selection: { anchor: 6 } })
         }"""
     )
@@ -223,7 +223,7 @@ def drive(browser) -> None:
 
 LINE = """
 () => {
-  const view = window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)
+  const view = window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)
   if (!view) return ''
   const line = view.state.doc.lineAt(view.state.selection.main.head)
   return line.text.slice(0, 40)

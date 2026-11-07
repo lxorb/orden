@@ -32,9 +32,9 @@ def fresh(browser: Browser, label: str, theme: str = "light") -> Page:
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
 
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
+    wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     wait_for(page, "() => document.documentElement.hasAttribute('data-touch')", "a touch layout")
-    wait_for(page, "() => !!window.nibApp.workspace.active", f"[{label}] the app's own note")
+    wait_for(page, "() => !!window.ordenApp.workspace.active", f"[{label}] the app's own note")
     return page
 
 PRESS = """
@@ -169,7 +169,7 @@ def seed(page: Page) -> None:
     page.evaluate(
         """
         async () => {
-          const app = window.nibApp
+          const app = window.ordenApp
           await app.workspace.createCanvas('/Notes/Work', 'Board.canvas')
           await app.workspace.addSpace('Uni')
           const notes = app.workspace.spaces.find((one) => one.name === 'Notes')
@@ -177,10 +177,10 @@ def seed(page: Page) -> None:
         }
         """
     )
-    wait_for(page, "() => window.nibApp.workspace.activeSpace?.name === 'Notes'", "Notes to open")
+    wait_for(page, "() => window.ordenApp.workspace.activeSpace?.name === 'Notes'", "Notes to open")
     wait_for(
         page,
-        "() => window.nibApp.workspace.spaces.some((one) => one.name === 'Uni')",
+        "() => window.ordenApp.workspace.spaces.some((one) => one.name === 'Uni')",
         "the second space",
     )
 
@@ -188,19 +188,19 @@ def tree_paths(page: Page) -> list[str]:
     return page.evaluate(
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-        "  return walk(window.nibApp.workspace.tree)"
+        "  return walk(window.ordenApp.workspace.tree)"
         "}"
     )
 
 def space_names(page: Page) -> list[str]:
-    return page.evaluate("() => window.nibApp.workspace.spaces.map((one) => one.name)")
+    return page.evaluate("() => window.ordenApp.workspace.spaces.map((one) => one.name)")
 
 def open_the_switcher(page: Page) -> None:
     page.locator("aside .name").first.click(force=True)
     page.wait_for_selector(".spaces .line button.orden-row", timeout=5000)
 
 def open_the_list(page: Page) -> None:
-    page.evaluate("() => (window.nibApp.workspace.panel = 'tree')")
+    page.evaluate("() => (window.ordenApp.workspace.panel = 'tree')")
     page.wait_for_selector(".row[data-path$='.md']", timeout=5000)
 
 def main() -> int:
@@ -244,20 +244,20 @@ def main() -> int:
             page,
             "() => {"
             "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-            "  return walk(window.nibApp.workspace.tree).some((one) => one.includes('/Work/') && one.endsWith('.md'))"
+            "  return walk(window.ordenApp.workspace.tree).some((one) => one.includes('/Work/') && one.endsWith('.md'))"
             "}",
             "the note to land in Work",
         )
         say(f"{moved} moved into Work")
 
-        label = page.evaluate("() => window.nibApp.workspace.undoLabel ?? null")
+        label = page.evaluate("() => window.ordenApp.workspace.undoLabel ?? null")
         say(f"undo offers {label!r}")
-        page.evaluate("() => window.nibApp.workspace.undoFileAction()")
+        page.evaluate("() => window.ordenApp.workspace.undoFileAction()")
         wait_for(
             page,
             "() => {"
             "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-            "  return !walk(window.nibApp.workspace.tree).some((one) => one.includes('/Work/') && one.endsWith('.md'))"
+            "  return !walk(window.ordenApp.workspace.tree).some((one) => one.includes('/Work/') && one.endsWith('.md'))"
             "}",
             "the move to be undone",
         )
@@ -284,7 +284,7 @@ def main() -> int:
         page.get_by_role("menuitem", name="Move up", exact=True).first.click()
         wait_for(
             page,
-            "() => window.nibApp.workspace.spaces.map((one) => one.name).join() !== "
+            "() => window.ordenApp.workspace.spaces.map((one) => one.name).join() !== "
             + json.dumps(",".join(was)),
             "the list of spaces to reorder",
         )

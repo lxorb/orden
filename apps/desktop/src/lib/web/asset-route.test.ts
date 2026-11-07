@@ -91,7 +91,7 @@ describe('the worker and the page agree', () => {
   })
 
   test('on where the rows are', () => {
-    expect(source).toContain(`const DATABASE = 'nib'`)
+    expect(source).toContain(`const DATABASE = 'orden'`)
     expect(source).toContain(`const STORE = 'assets'`)
   })
 

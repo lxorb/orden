@@ -18,7 +18,7 @@ PHONE_AGENT = (
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom('# Kestrel notes\\n\\nA kestrel hangs on the wind above the field.', undefined)
   const first = ws.notes.find((one) => one.name.startsWith('Kestrel'))
   if (first) await ws.openEntry(first.path, { activate: true })
@@ -28,7 +28,7 @@ async () => {
 
 KEYS = """
 (pixels) => {
-  const seen = window.nibApp.viewport
+  const seen = window.ordenApp.viewport
   seen.keyboard = pixels
   seen.typing = pixels > 0
   return { keyboard: seen.keyboard, typing: seen.typing }
@@ -54,7 +54,7 @@ BAR = """
 
 CARET = """
 () => {
-  const view = window.nib
+  const view = window.orden
   if (!view) return null
   const line = view.state.doc.line(1)
   view.dispatch({ selection: { anchor: line.to } })
@@ -64,7 +64,7 @@ CARET = """
 """
 
 LINES = """
-() => window.nib.state.doc.toString().split('\\n').slice(0, 4)
+() => window.orden.state.doc.toString().split('\\n').slice(0, 4)
 """
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -91,7 +91,7 @@ def drive(browser) -> None:
     page.wait_for_timeout(700)
 
     say("--- the bar as it arrives ---")
-    page.evaluate("() => window.nibApp.toolbar.reset()")
+    page.evaluate("() => window.ordenApp.toolbar.reset()")
     page.evaluate(CARET)
     say(f"the keyboard: {page.evaluate(KEYS, 320)}")
     page.wait_for_timeout(400)
@@ -108,7 +108,7 @@ def drive(browser) -> None:
 
     say("--- the reader's own list ---")
     page.evaluate(
-        "() => { const bar = window.nibApp.toolbar; bar.reset();"
+        "() => { const bar = window.ordenApp.toolbar; bar.reset();"
         " bar.add('paragraph.task-list'); bar.add('app.reading'); bar.remove('format.clear');"
         " bar.move(bar.ids.length - 1, 0); return bar.ids }"
     )
@@ -120,11 +120,11 @@ def drive(browser) -> None:
     page.evaluate(CARET)
     page.click('.orden-bar.docked button[aria-label="Reading"]')
     page.wait_for_timeout(400)
-    say(f"Reading from the bar turned the note: {page.evaluate('() => window.nibApp.workspace.active.reading')}")
+    say(f"Reading from the bar turned the note: {page.evaluate('() => window.ordenApp.workspace.active.reading')}")
 
     say("--- the pane it is put together in ---")
     page.evaluate(KEYS, 0)
-    page.evaluate("() => window.nibApp.settings.show('mobile')")
+    page.evaluate("() => window.ordenApp.settings.show('mobile')")
     page.wait_for_timeout(700)
     say(f"the pane says: {page.evaluate(PANE)}")
     page.screenshot(path=str(SHOTS / "pane.png"))
@@ -135,22 +135,22 @@ def drive(browser) -> None:
     say(f"the list offers: {page.evaluate(OFFERS)}")
     page.click('button[aria-label="Put it on the bar"]')
     page.wait_for_timeout(400)
-    say(f"after adding from the list: {page.evaluate('() => window.nibApp.toolbar.ids')}")
+    say(f"after adding from the list: {page.evaluate('() => window.ordenApp.toolbar.ids')}")
     page.screenshot(path=str(SHOTS / "added.png"))
     say("shot added.png")
 
     page.click('button[aria-label="Move down"]')
     page.wait_for_timeout(300)
-    say(f"after one press of Move down: {page.evaluate('() => window.nibApp.toolbar.ids')}")
+    say(f"after one press of Move down: {page.evaluate('() => window.ordenApp.toolbar.ids')}")
 
     page.click('button[aria-label="Take it off"]')
     page.wait_for_timeout(300)
-    say(f"after Take it off: {page.evaluate('() => window.nibApp.toolbar.ids')}")
+    say(f"after Take it off: {page.evaluate('() => window.ordenApp.toolbar.ids')}")
 
     say("--- pulling the note down past its top ---")
-    page.evaluate("() => (window.nibApp.settings.open = false)")
+    page.evaluate("() => (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(500)
-    say(f"the pull runs {page.evaluate('() => window.nibApp.pull.id')}")
+    say(f"the pull runs {page.evaluate('() => window.ordenApp.pull.id')}")
 
     say(f"a short pull: {pulling(page, 40)}")
     say(f"a long pull:  {pulling(page, 200, hold=True)}")
@@ -165,14 +165,14 @@ def drive(browser) -> None:
 
     say(f"a sideways drag: {pulling(page, 30, across=90)}")
     say(f"a scroll upwards: {pulling(page, -60)}")
-    say(f"nothing is left held: {page.evaluate('() => window.nibApp.pull.at === 0')}")
+    say(f"nothing is left held: {page.evaluate('() => window.ordenApp.pull.at === 0')}")
 
-    page.evaluate("() => window.nibApp.settings.show('mobile')")
+    page.evaluate("() => window.ordenApp.settings.show('mobile')")
     page.wait_for_timeout(600)
     page.click('button:text("Reset the bar")')
     page.wait_for_timeout(400)
-    say(f"after the reset: {page.evaluate('() => window.nibApp.toolbar.ids')}")
-    say(f"and the account is told: {page.evaluate('() => window.nibApp.toolbar.changed')}")
+    say(f"after the reset: {page.evaluate('() => window.ordenApp.toolbar.ids')}")
+    say(f"and the account is told: {page.evaluate('() => window.ordenApp.toolbar.changed')}")
     page.screenshot(path=str(SHOTS / "reset.png"))
     say("shot reset.png")
 
@@ -185,12 +185,12 @@ OFFERS = """
 """
 
 PANEL = """
-() => window.nibApp.workspace.panel
+() => window.ordenApp.workspace.panel
 """
 
 PULL = """
 async ({ down, across, hold }) => {
-  const view = window.nib
+  const view = window.orden
   const scroller = view.scrollDOM
   scroller.scrollTop = 0
 
@@ -220,8 +220,8 @@ async ({ down, across, hold }) => {
     await new Promise((done) => requestAnimationFrame(done))
   }
 
-  const at = window.nibApp.pull.at
-  const ready = window.nibApp.pull.ready
+  const at = window.ordenApp.pull.at
+  const ready = window.ordenApp.pull.ready
   // Held, so the mark can be looked at: the lift is `LIFT`, next door.
   if (!hold) send('touchend', null)
   window.__pullFinger = () => send('touchend', null)
@@ -233,7 +233,7 @@ async ({ down, across, hold }) => {
 LIFT = """
 () => {
   window.__pullFinger?.()
-  return window.nibApp.workspace.panel
+  return window.ordenApp.workspace.panel
 }
 """
 

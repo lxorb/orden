@@ -47,11 +47,11 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     page.set_default_timeout(30000)
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp?.account.user", f"[{label}] the account")
+    wait_for(page, "() => !!window.ordenApp?.account.user", f"[{label}] the account")
     return page
 
 def settled(page: Page, what: str) -> None:
-    wait_for(page, "() => window.nibApp.sync.status !== 'syncing'", f"{what} to settle")
+    wait_for(page, "() => window.ordenApp.sync.status !== 'syncing'", f"{what} to settle")
     page.wait_for_timeout(1200)
 
 def name(index: int) -> str:
@@ -74,7 +74,7 @@ def rewrite(index: int, who: str) -> str:
 def edit(page: Page, note: str, old: str, new: str) -> bool:
     opened = page.evaluate(
         """async ([space, name]) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const found = ws.spaces.find((one) => one.name === space)
           if (!found) return false
           if (ws.activeSpaceId !== found.id) await ws.selectSpace(found.id)
@@ -89,13 +89,13 @@ def edit(page: Page, note: str, old: str, new: str) -> bool:
         failed(f"{note} did not open to write {new[:40]!r}")
         return False
     page.wait_for_function(
-        "(name) => window.nibApp.workspace.active?.name === name && !!window.nib",
+        "(name) => window.ordenApp.workspace.active?.name === name && !!window.orden",
         arg=note,
         timeout=15000,
     )
     done = page.evaluate(
         """([old, now]) => {
-          const view = window.nib
+          const view = window.orden
           const at = view.state.doc.toString().indexOf(old)
           if (at < 0) return false
           view.dispatch({ changes: { from: at, to: at + old.length, insert: now } })
@@ -104,7 +104,7 @@ def edit(page: Page, note: str, old: str, new: str) -> bool:
         [old, new],
     )
     page.wait_for_timeout(150)
-    page.evaluate("async () => { await window.nibApp.workspace.writeNow() }")
+    page.evaluate("async () => { await window.ordenApp.workspace.writeNow() }")
     if not done:
         failed(f"{note} did not hold {old!r} to write over")
     return bool(done)
@@ -112,7 +112,7 @@ def edit(page: Page, note: str, old: str, new: str) -> bool:
 def notes_here(page: Page) -> dict[str, str]:
     return page.evaluate(
         """async (space) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           await ws.loadTree()
           const out = {}
           for (const note of ws.notes) out[note.name] = (await ws.noteText(note.path)) ?? ''
@@ -122,7 +122,7 @@ def notes_here(page: Page) -> dict[str, str]:
     )
 
 def held_here(page: Page) -> list[str]:
-    return page.evaluate("() => (window.nibApp.sync.engine?.heldNotes ?? []).map((one) => one.name)")
+    return page.evaluate("() => (window.ordenApp.sync.engine?.heldNotes ?? []).map((one) => one.name)")
 
 def notes_there(worker: Worker, token: str, space_id: str) -> dict[str, str]:
     listed = worker.request(f"/v1/spaces/{space_id}/changes?since=0", token=token)
@@ -142,16 +142,16 @@ def main() -> int:
         worker.sql(f"update users set sync_version = 2 where email = '{EMAIL}'")
 
         owner = signed_in(browser, token, "owner")
-        wait_for(owner, "() => !!window.nibApp.workspace.activeSpace", "a space")
+        wait_for(owner, "() => !!window.ordenApp.workspace.activeSpace", "a space")
         owner.evaluate(
-            "async (name) => { const ws = window.nibApp.workspace; await ws.addSpace(name);"
+            "async (name) => { const ws = window.ordenApp.workspace; await ws.addSpace(name);"
             " const space = ws.spaces.find((one) => one.name === name);"
             " await ws.selectSpace(space.id) }",
             SPACE,
         )
         space_id = wait_for(
             owner,
-            "() => window.nibApp.sync.remoteIdFor(window.nibApp.workspace.activeSpace.root)",
+            "() => window.ordenApp.sync.remoteIdFor(window.ordenApp.workspace.activeSpace.root)",
             "the space to reach the account",
         )
         settled(owner, "the first push")
@@ -168,21 +168,21 @@ def main() -> int:
 
         pages = {which: signed_in(browser, token, which) for which in ("away", "stays")}
         for which, page in pages.items():
-            if page.evaluate("() => window.nibApp.sync.version") != 2:
+            if page.evaluate("() => window.ordenApp.sync.version") != 2:
                 failed(f"[{which}] started v1 on an account on v2")
             wait_for(
                 page,
-                f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+                f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
                 f"[{which}] the space",
             )
             page.evaluate(
-                "async (name) => { const ws = window.nibApp.workspace;"
+                "async (name) => { const ws = window.ordenApp.workspace;"
                 " await ws.selectSpace(ws.spaces.find((one) => one.name === name).id) }",
                 SPACE,
             )
             wait_for(
                 page,
-                f"async () => (await window.nibApp.workspace.loadTree(), window.nibApp.workspace.notes.length >= {NOTES})",
+                f"async () => (await window.ordenApp.workspace.loadTree(), window.ordenApp.workspace.notes.length >= {NOTES})",
                 f"[{which}] all {NOTES} notes",
             )
             settled(page, f"[{which}] the first pass")
@@ -190,7 +190,7 @@ def main() -> int:
         away, stays = pages["away"], pages["stays"]
         kept = away.evaluate(
             """async () => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               let read = 0
               for (const note of ws.notes) if ((await ws.noteText(note.path)) !== null) read += 1
               return read
@@ -230,17 +230,17 @@ def main() -> int:
             typed[index] = words
 
         for page in pages.values():
-            page.evaluate("() => { for (const tab of [...window.nibApp.workspace.tabs]) window.nibApp.workspace.close(tab.id) }")
-        stays.evaluate("() => window.nibApp.sync.nudge()")
+            page.evaluate("() => { for (const tab of [...window.ordenApp.workspace.tabs]) window.ordenApp.workspace.close(tab.id) }")
+        stays.evaluate("() => window.ordenApp.sync.nudge()")
         settled(stays, "the machine that stayed")
 
         began = time.monotonic()
         away.context.set_offline(False)
         away.wait_for_timeout(1500)
-        away.evaluate("() => window.nibApp.sync.nudge()")
+        away.evaluate("() => window.ordenApp.sync.nudge()")
         settled(away, "the machine that came back")
         for page in pages.values():
-            page.evaluate("() => window.nibApp.sync.nudge()")
+            page.evaluate("() => window.ordenApp.sync.nudge()")
             page.wait_for_timeout(4000)
             settled(page, "the last pass")
         say(f"the machine that came back settled in {time.monotonic() - began:.1f}s")
@@ -278,13 +278,13 @@ def main() -> int:
         for note in held:
             away.evaluate(
                 """(name) => {
-                  const engine = window.nibApp.sync.engine
+                  const engine = window.ordenApp.sync.engine
                   const one = engine.heldNotes.find((held) => held.name === name)
                   return one ? engine.answer(one.id, 'mine') : null
                 }""",
                 note,
             )
-        away.evaluate("() => window.nibApp.sync.nudge()")
+        away.evaluate("() => window.ordenApp.sync.nudge()")
         away.wait_for_timeout(4000)
         settled(away, "the answers")
         there = notes_there(worker, token, space_id)
@@ -296,9 +296,9 @@ def main() -> int:
 
         for which, page in pages.items():
             page.screenshot(path=str(SHOTS / f"{which}.png"))
-            status = page.evaluate("() => window.nibApp.sync.status")
+            status = page.evaluate("() => window.ordenApp.sync.status")
             if status == "error":
-                failed(f"[{which}] sync is in error: {page.evaluate('() => window.nibApp.sync.lastError')}")
+                failed(f"[{which}] sync is in error: {page.evaluate('() => window.ordenApp.sync.lastError')}")
 
     if wrong:
         print(f"\n{len(wrong)} thing(s) wrong:", flush=True)

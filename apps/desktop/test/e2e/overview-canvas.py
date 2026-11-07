@@ -9,7 +9,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const home = ws.activeSpace
   for (const name of ['Work', 'Ideas', 'Lab']) {
     if (!ws.spaces.some((one) => one.name === name)) await ws.addSpace(name)
@@ -28,7 +28,7 @@ async () => {
 SAMPLE = """
 () => {
   const frames = []
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const front = ws.activeTabId
   const seen = (node) => {
     if (!node) return null
@@ -83,7 +83,7 @@ ZOOM = "() => Number(/scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.under
 
 CELLS = "() => [...document.querySelectorAll('.bubble')].map((one) => { const b = one.getBoundingClientRect(); return [b.x, b.y, b.width, b.height] })"
 
-FRONTS = "() => { const ws = window.nibApp.workspace; return [ws.activeTabId, ...ws.panes.all.map((one) => one.activeTabId)] }"
+FRONTS = "() => { const ws = window.ordenApp.workspace; return [ws.activeTabId, ...ws.panes.all.map((one) => one.activeTabId)] }"
 
 CROSSED = """
 () => {

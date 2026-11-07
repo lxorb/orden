@@ -22,7 +22,7 @@ PHONE_AGENT = (
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom('# Kestrel notes\\n\\n## What went in\\n\\nA kestrel over the field.\\n\\n### Wind\\n\\nSteady all week.', undefined)
   await ws.noteFrom('# Read me\\n\\nA markdown editor.', undefined)
   await ws.loadTree()
@@ -57,7 +57,7 @@ MEASURED = """
 
 SIDES = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return { right: [...ws.right], left: ws.panel, rightOpen: ws.rightPanel }
 }
 """
@@ -112,7 +112,7 @@ def onDesktop(browser) -> None:
         page.screenshot(path=str(SHOTS / f"desktop-{tag}.png"))
         say(f"    shot desktop-{tag}.png")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
 
     before = page.evaluate(MEASURED)
@@ -121,9 +121,9 @@ def onDesktop(browser) -> None:
     shot("nothing-moved")
 
     say("--- a panel moved over ---")
-    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
     page.wait_for_timeout(400)
-    page.evaluate("() => window.nibApp.workspace.movePanel('search', 'right')")
+    page.evaluate("() => window.ordenApp.workspace.movePanel('search', 'right')")
     page.wait_for_timeout(700)
 
     say(f"the sides say: {page.evaluate(SIDES)}")
@@ -133,13 +133,13 @@ def onDesktop(browser) -> None:
     say(f"the note is now {moved['editor']} (it was {before['editor']})")
     shot("search-on-the-right")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
     say(f"both sides open: {page.evaluate(SIDES)}")
     shot("both-sides")
 
     say("--- F6 reaches it ---")
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.wait_for_timeout(200)
     walked = []
     for _ in range(10):
@@ -150,17 +150,17 @@ def onDesktop(browser) -> None:
     say(f"and where it stopped: {page.evaluate(WHERE)}")
 
     say("--- the window remembers which side ---")
-    page.evaluate("() => window.nibApp.workspace.flush?.()")
+    page.evaluate("() => window.ordenApp.workspace.flush?.()")
     page.wait_for_timeout(400)
     page.reload(wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=20000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    page.wait_for_function("() => !!window.ordenApp", timeout=20000)
+    page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=20000)
     page.wait_for_timeout(1200)
     say(f"after a restart: {page.evaluate(SIDES)}")
     shot("after-a-restart")
 
     say("--- and moved back ---")
-    page.evaluate("() => window.nibApp.workspace.movePanel('search', 'left')")
+    page.evaluate("() => window.ordenApp.workspace.movePanel('search', 'left')")
     page.wait_for_timeout(700)
     after = page.evaluate(MEASURED)
     say(f"the sides say: {page.evaluate(SIDES)}")
@@ -181,7 +181,7 @@ def onPhone(browser) -> None:
         say(f"    shot phone-{tag}.png")
 
     say("--- a drawer from the right ---")
-    page.evaluate("() => window.nibApp.workspace.movePanel('outline', 'right')")
+    page.evaluate("() => window.ordenApp.workspace.movePanel('outline', 'right')")
     page.wait_for_timeout(500)
     say(f"the sides say: {page.evaluate(SIDES)}")
 
@@ -199,12 +199,12 @@ def onPhone(browser) -> None:
     say(f"after the scrim: {page.evaluate(SIDES)}")
     shot("drawer-shut")
 
-    page.evaluate("() => window.nibApp.workspace.toggleSidebar()")
+    page.evaluate("() => window.ordenApp.workspace.toggleSidebar()")
     page.wait_for_timeout(700)
     say(f"the left drawer still opens: {page.evaluate(SIDES)}")
     shot("left-drawer")
 
-    page.evaluate("() => window.nibApp.workspace.closePanel()")
+    page.evaluate("() => window.ordenApp.workspace.closePanel()")
     page.wait_for_timeout(700)
 
     say("--- and a thumb drags it out ---")
@@ -227,8 +227,8 @@ def onPhone(browser) -> None:
     shot("drag-shut")
 
     say("--- the left drawer's drag is what it was ---")
-    page.evaluate("() => window.nibApp.workspace.closePanel()")
-    page.evaluate("() => window.nibApp.workspace.closePanel('right')")
+    page.evaluate("() => window.ordenApp.workspace.closePanel()")
+    page.evaluate("() => window.ordenApp.workspace.closePanel('right')")
     page.wait_for_timeout(700)
     say(f"from shut: {page.evaluate(SIDES)}")
     left = page.evaluate(DRAG, {"from": 30, "to": 300, "y": 420, "steps": 9, "hold": True})

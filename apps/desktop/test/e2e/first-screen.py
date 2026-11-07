@@ -119,7 +119,7 @@ def drive(browser: Browser) -> None:
     cdp = page.context.new_cdp_session(page)
     DRIVE.open(page)
     DRIVE.seed(page, NOTE)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     DRIVE.open_note(page, "Long walk")
     page.evaluate(
         "() => { const s = [...document.querySelectorAll('.cm-scroller')].pop(); s.scrollTop = s.scrollHeight / 2 }"

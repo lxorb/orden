@@ -9,7 +9,7 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-WS = "window.nibApp.workspace"
+WS = "window.ordenApp.workspace"
 MODES = {
     "hang": "LockManager.prototype.request = function(){ return new Promise(()=>{}) }",
     "reject": "LockManager.prototype.request = function(){ return Promise.reject(new DOMException('no','SecurityError')) }",

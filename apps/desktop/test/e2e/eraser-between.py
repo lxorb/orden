@@ -11,8 +11,8 @@ say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 def strokes(page: Page) -> list[list[float]]:
     return page.evaluate(
         """async () => {
-          await window.nibApp.workspace.writeNow()
-          const words = window.nibApp.workspace.active.note.latest
+          await window.ordenApp.workspace.writeNow()
+          const words = window.ordenApp.workspace.active.note.latest
           return (JSON.parse(words).orden?.ink ?? []).map((one) => one.points)
         }"""
     )
@@ -20,7 +20,7 @@ def strokes(page: Page) -> list[list[float]]:
 def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     say(f"a {kind} pass across the middle of a line, on a {maker}, cuts a hole in it")
     page.evaluate(
-        "async ([maker, name]) => { const ws = window.nibApp.workspace; await ws[maker](ws.activeSpace.root, name) }",
+        "async ([maker, name]) => { const ws = window.ordenApp.workspace; await ws[maker](ws.activeSpace.root, name) }",
         [maker, f"{kind}-{maker}"],
     )
     page.wait_for_selector(".canvas, .pages")
@@ -56,15 +56,15 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     DRIVE.wait_for(
         page,
         """async () => {
-          await window.nibApp.workspace.writeNow()
-          return (JSON.parse(window.nibApp.workspace.active.note.latest).orden?.ink ?? []).length === 1
+          await window.ordenApp.workspace.writeNow()
+          return (JSON.parse(window.ordenApp.workspace.active.note.latest).orden?.ink ?? []).length === 1
         }""",
         "the line whole again after one undo",
     )
 
 def scrolled_under(page: Page) -> None:
     say("a page scrolled under a held eraser cuts nothing it did not touch")
-    page.evaluate("async () => { const ws = window.nibApp.workspace; await ws.createPages(ws.activeSpace.root, 'scrolled') }")
+    page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createPages(ws.activeSpace.root, 'scrolled') }")
     page.wait_for_selector(".pages, .canvas")
     box = page.locator(".pages, .canvas").first.bounding_box()
     x, y = box["x"] + box["width"] / 2, box["y"] + 200
@@ -92,7 +92,7 @@ def scrolled_under(page: Page) -> None:
 def whole_stroke(page: Page, maker: str) -> None:
     say(f"the eraser held with Shift on a {maker} takes the whole stroke it touches")
     page.evaluate(
-        "async ([maker, name]) => { const ws = window.nibApp.workspace; await ws[maker](ws.activeSpace.root, name) }",
+        "async ([maker, name]) => { const ws = window.ordenApp.workspace; await ws[maker](ws.activeSpace.root, name) }",
         [maker, f"whole-{maker}"],
     )
     page.wait_for_selector(".canvas, .pages")

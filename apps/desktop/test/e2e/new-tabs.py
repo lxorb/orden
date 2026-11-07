@@ -16,7 +16,7 @@ DESKTOP_AGENT = (
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom('# Kestrel notes\\n\\nA kestrel hangs on the wind above the field.', undefined)
   const first = ws.files.find((one) => one.name.startsWith('Kestrel'))
   if (first) await ws.openEntry(first.path, { activate: true })
@@ -26,7 +26,7 @@ async () => {
 
 STATE = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return {
     tabs: ws.tabs.map((one) => ({ kind: one.kind, path: one.path, shown: one.shown })),
     files: ws.files.map((one) => one.name),
@@ -37,14 +37,14 @@ STATE = """
 
 DOTTED = """
 () => {
-  const id = window.nibApp.workspace.active?.id
+  const id = window.ordenApp.workspace.active?.id
   return !!document.querySelector(`[data-tab="${id}"] .orden-unsaved`)
 }
 """
 
 LINE = """
 () => {
-  const view = window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)
+  const view = window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)
   if (!view) return ''
   const line = view.state.doc.lineAt(view.state.selection.main.head)
   return line.text.slice(0, 40)
@@ -60,7 +60,7 @@ FIELD = """
 
 NEW_TAB = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const tab = ws.active
   const pane = document.querySelector(`[data-pane="${ws.panes.focusedId}"]`)
   const here = pane?.querySelector('[data-new-here]')
@@ -79,7 +79,7 @@ NEW_TAB = """
 
 CALLED = """
 () => {
-  const id = window.nibApp.workspace.active?.id
+  const id = window.ordenApp.workspace.active?.id
   const label = document.querySelector(`[data-tab="${id}"] .label`)?.textContent.trim()
   return { label, title: document.title.split(' - ')[0] }
 }
@@ -142,7 +142,7 @@ def palette(page) -> None:
     if not settles(page, f"() => ({FIELD})() === null"):
         wrong("Escape did not close the palette")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     row = page.locator(".orden-row").first
     if row.count():
@@ -165,7 +165,7 @@ def heading_key(page) -> None:
 
     page.evaluate(
         """() => {
-          const view = window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)
+          const view = window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)
           view?.dispatch({ selection: { anchor: 6 } })
           view?.focus()
         }"""
@@ -236,7 +236,7 @@ def chooser(page) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
     page.keyboard.press("KeyC")
-    if not settles(page, "() => window.nibApp.workspace.active?.kind === 'canvas'"):
+    if not settles(page, "() => window.ordenApp.workspace.active?.kind === 'canvas'"):
         wrong(f"C after Escape made no plane: {page.evaluate(STATE)['active']}")
     state = page.evaluate(STATE)
     if len(state["tabs"]) != before + 1 or any(one["kind"] == "web" for one in state["tabs"]):
@@ -258,9 +258,9 @@ def chooser(page) -> None:
         say("the plus               -> a new tab, no menu")
 
     page.locator('[data-new-here] .kind:has-text("New web note")').first.click()
-    settles(page, f"() => window.nibApp.workspace.active?.kind === 'web' && !({NEW_TAB})().newTab")
+    settles(page, f"() => window.ordenApp.workspace.active?.kind === 'web' && !({NEW_TAB})().newTab")
     state = page.evaluate(STATE)
-    address = page.evaluate("() => window.nibApp.workspace.active?.address ?? ''")
+    address = page.evaluate("() => window.ordenApp.workspace.active?.address ?? ''")
     if (
         len(state["tabs"]) != before + 1
         or page.evaluate(NEW_TAB)["newTab"]
@@ -301,7 +301,7 @@ def saving(page) -> None:
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const tab = ws.tabs.find((one) => one.kind === 'canvas')
           if (tab) ws.activate(tab.id)
         }"""
@@ -318,9 +318,9 @@ def saving(page) -> None:
     else:
         say("Control+S on a plane   -> asked where, nothing written")
 
-    page.evaluate("() => window.nibApp.workspace.openBlank()")
+    page.evaluate("() => window.ordenApp.workspace.openBlank()")
     page.wait_for_timeout(400)
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.type("Plan for Monday")
     page.wait_for_timeout(1200)
 
@@ -340,7 +340,7 @@ def saving(page) -> None:
     page.keyboard.press("Enter")
     DRIVE.wait_for(
         page,
-        "() => (window.nibApp.workspace.active?.path ?? '').endsWith('/Plan for Monday.md')",
+        "() => (window.ordenApp.workspace.active?.path ?? '').endsWith('/Plan for Monday.md')",
         "the note saved",
     )
     say(f"Control+S, Enter       -> {offered!r} saved as Plan for Monday.md")
@@ -354,7 +354,7 @@ def saving(page) -> None:
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const tab = ws.tabs.find((one) => one.kind === 'web' && one.path === null)
           if (tab) ws.activate(tab.id)
         }"""
@@ -367,7 +367,7 @@ def saving(page) -> None:
     page.keyboard.press("Enter")
     DRIVE.wait_for(
         page,
-        "() => (window.nibApp.workspace.active?.path ?? '').endsWith('.url')",
+        "() => (window.ordenApp.workspace.active?.path ?? '').endsWith('.url')",
         "the web tab saved",
     )
     say(f"Control+S on a web tab -> {page.evaluate(STATE)['active']['path']}")
@@ -377,7 +377,7 @@ def nothing_open(page) -> None:
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const tab of [...ws.tabs]) ws.close(tab.id)
         }"""
     )
@@ -441,21 +441,21 @@ def held_over_the_buttons(page) -> None:
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const tab of [...ws.tabs]) ws.close(tab.id)
         }"""
     )
     page.wait_for_timeout(800)
 
     page.keyboard.press("KeyP")
-    if not settles(page, "() => window.nibApp.workspace.active?.kind === 'pages'"):
+    if not settles(page, "() => window.ordenApp.workspace.active?.kind === 'pages'"):
         wrong(f"P over an empty pane made no page note: {page.evaluate(STATE)['active']}")
     else:
         say("P                      -> a page note")
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const tab of [...ws.tabs]) ws.close(tab.id)
         }"""
     )
@@ -484,12 +484,12 @@ def drive(browser) -> None:
 
     say(f"{page.evaluate(SEED)} file(s) in the space")
     page.wait_for_timeout(500)
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.wait_for_timeout(200)
 
     palette(page)
     heading_key(page)
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     chooser(page)
     unsaved(page)
     saving(page)

@@ -60,7 +60,7 @@ ORIGIN = DRIVE.side(Model)
 
 SETUP = """
 async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: 'fake-small' })
@@ -69,7 +69,7 @@ async (base) => {
 """
 
 STATE = """async () => {
-  const chat = await window.nibApp.aiChats()
+  const chat = await window.ordenApp.aiChats()
   return { running: [...chat.running], open: chat.head?.id ?? null, ids: chat.every.map((one) => one.id),
     archived: chat.every.filter((one) => one.archived).map((one) => one.id),
     stop: !!document.querySelector('.ask .go[aria-label="Stop"]'), trouble: chat.trouble }

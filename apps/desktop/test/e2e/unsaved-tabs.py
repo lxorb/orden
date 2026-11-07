@@ -14,7 +14,7 @@ QUESTION = "() => !!document.querySelector('[role=\"dialog\"][aria-label^=\"Save
 
 STATE = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const front = ws.active
   return {
     tabs: ws.tabs.map((one) => ({ kind: one.kind, path: one.path, shown: one.shown })),
@@ -38,9 +38,9 @@ def late(page: Page) -> None:
     page.route("**/assets/carrying-*.js", held)
 
 def typed(page: Page, words: str) -> None:
-    page.evaluate("() => window.nibApp.workspace.openBlank()")
+    page.evaluate("() => window.ordenApp.workspace.openBlank()")
     wait_for(page, "document.querySelector('.cm-content')", "the editor")
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.type(words)
     page.wait_for_timeout(900)
 
@@ -49,7 +49,7 @@ def drive(browser: Browser, scheme: str) -> None:
     late(page)
     DRIVE.open(page)
     DRIVE.seed(page, "# Trips\n\nWhere we went.\n")
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
 
     say(f"--- {scheme}: the dot ---")
     typed(page, "Groceries\nmilk, eggs, bread")
@@ -60,7 +60,7 @@ def drive(browser: Browser, scheme: str) -> None:
         wrong("the new note wears no dot")
     say(f"typed into a new note -> no file, dot: {now['dotted']}")
 
-    page.evaluate("() => window.nibApp.workspace.openWebsite()")
+    page.evaluate("() => window.ordenApp.workspace.openWebsite()")
     page.wait_for_timeout(400)
     if state(page)["dotted"]:
         wrong("a new web tab wears the dot")
@@ -68,7 +68,7 @@ def drive(browser: Browser, scheme: str) -> None:
         say("a new web tab          -> no dot")
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.tabs.find((one) => one.kind === 'note' && one.path === null)
           if (note) ws.activate(note.id)
         }"""
@@ -90,7 +90,7 @@ def drive(browser: Browser, scheme: str) -> None:
     DRIVE.shot(page, f"{scheme}-03-places")
     page.keyboard.press("Enter")
     page.keyboard.press("Enter")
-    wait_for(page, "(window.nibApp.workspace.active?.path ?? '').endsWith('Trips/Groceries.md')", "the save")
+    wait_for(page, "(window.ordenApp.workspace.active?.path ?? '').endsWith('Trips/Groceries.md')", "the save")
     now = state(page)
     if now["dotted"]:
         wrong("the saved note still wears the dot")
@@ -100,7 +100,7 @@ def drive(browser: Browser, scheme: str) -> None:
 
     say(f"--- {scheme}: dropped on the list ---")
     typed(page, "Dropped here")
-    tab = page.evaluate("() => window.nibApp.workspace.active.id")
+    tab = page.evaluate("() => window.ordenApp.workspace.active.id")
     grip = page.locator(f'[data-tab="{tab}"]').bounding_box()
     rest = page.locator("[data-space-rest]").bounding_box()
     if grip and rest:
@@ -111,7 +111,7 @@ def drive(browser: Browser, scheme: str) -> None:
         page.wait_for_timeout(300)
         DRIVE.shot(page, f"{scheme}-05-dropping")
         page.mouse.up()
-        if DRIVE.waited(page, "(window.nibApp.workspace.tabs.find((one) => one.doc === 'Dropped here')?.path ?? '').endsWith('/Dropped here.md')", "the drop"):
+        if DRIVE.waited(page, "(window.ordenApp.workspace.tabs.find((one) => one.doc === 'Dropped here')?.path ?? '').endsWith('/Dropped here.md')", "the drop"):
             say("a tab dropped below the rows -> saved at the root of the space")
     else:
         wrong("no tab or no stretch below the rows to drag between")
@@ -127,20 +127,20 @@ def drive(browser: Browser, scheme: str) -> None:
     DRIVE.shot(page, f"{scheme}-06-asked")
     page.keyboard.press("Escape")
     wait_for(page, f"!({QUESTION})()", "the question gone")
-    if page.evaluate("() => window.nibApp.workspace.active?.path") is not None or not page.evaluate(
-        "() => window.nibApp.workspace.tabs.some((one) => one.path === null && one.note.blank === false && one.shown.startsWith('Scratch'))"
+    if page.evaluate("() => window.ordenApp.workspace.active?.path") is not None or not page.evaluate(
+        "() => window.ordenApp.workspace.tabs.some((one) => one.path === null && one.note.blank === false && one.shown.startsWith('Scratch'))"
     ):
         wrong("Cancel did not keep the tab with its words")
     else:
         say("Ctrl+W, Escape         -> asked, and kept")
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+KeyW")
     wait_for(page, QUESTION, "the question again")
     page.locator(f"{SHEET} button", has_text="Don’t save").click()
     wait_for(page, f"!({QUESTION})()", "the question answered")
     page.evaluate(
         """() => {
-          const { settings } = window.nibApp
+          const { settings } = window.ordenApp
           settings.section = 'trash'
           settings.open = true
         }"""
@@ -153,9 +153,9 @@ def drive(browser: Browser, scheme: str) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
 
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+Shift+KeyT")
-    wait_for(page, "window.nibApp.workspace.active?.doc === 'Scratch thought'", "the tab back")
+    wait_for(page, "window.ordenApp.workspace.active?.doc === 'Scratch thought'", "the tab back")
     say("Ctrl+Shift+T           -> back with its words")
 
     say(f"--- {scheme}: closed with Save ---")
@@ -168,24 +168,24 @@ def drive(browser: Browser, scheme: str) -> None:
     page.keyboard.press("Enter")
     wait_for(
         page,
-        "!window.nibApp.workspace.tabs.some((one) => one.shown.startsWith('Kept thought'))"
-        " && window.nibApp.workspace.files.some((one) => one.path.endsWith('/Kept thought.md'))",
+        "!window.ordenApp.workspace.tabs.some((one) => one.shown.startsWith('Kept thought'))"
+        " && window.ordenApp.workspace.files.some((one) => one.path.endsWith('/Kept thought.md'))",
         "the note saved and its tab closed",
     )
     say("Ctrl+W, Save, Enter    -> Kept thought.md, and the tab closed")
 
     say(f"--- {scheme}: a restart ---")
-    page.evaluate("() => window.nibApp.workspace.persist()")
+    page.evaluate("() => window.ordenApp.workspace.persist()")
     page.reload(wait_until="domcontentloaded")
     DRIVE.ready(page)
     wait_for(
         page,
-        "window.nibApp.workspace.tabs.some((one) => one.path === null && one.doc === 'Scratch thought')",
+        "window.ordenApp.workspace.tabs.some((one) => one.path === null && one.doc === 'Scratch thought')",
         "the unsaved note back",
     )
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const tab = ws.tabs.find((one) => one.path === null && one.doc === 'Scratch thought')
           if (tab) ws.activate(tab.id)
         }"""
@@ -199,12 +199,12 @@ def drive(browser: Browser, scheme: str) -> None:
     say(f"--- {scheme}: one tab per web note ---")
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           await ws.createWebsite(ws.activeSpace.root, 'Svelte.url')
         }"""
     )
-    wait_for(page, "(window.nibApp.workspace.active?.path ?? '').endsWith('Svelte.url')", "the web note")
-    page.evaluate("() => window.nibApp.workspace.split('row')")
+    wait_for(page, "(window.ordenApp.workspace.active?.path ?? '').endsWith('Svelte.url')", "the web note")
+    page.evaluate("() => window.ordenApp.workspace.split('row')")
     page.wait_for_timeout(400)
     tabs = state(page)["tabs"]
     held = [one for one in tabs if (one["path"] or "").endswith("Svelte.url")]

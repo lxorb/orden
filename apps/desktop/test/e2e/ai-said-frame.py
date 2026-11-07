@@ -17,7 +17,7 @@ THEMES = ("default", "glass", "wallpaper", "contrast")
 SCHEMES = ("light", "dark")
 SHEET = "document.getElementById('orden-user-theme')?.textContent ?? ''"
 SETUP = """(base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: 'fake-small' })
@@ -83,8 +83,8 @@ class Model(http.server.BaseHTTPRequestHandler):
             return
 
 def look(page: Page, theme: str, scheme: str) -> None:
-    page.evaluate(f"() => window.nibApp.theme.select('{theme}')")
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.select('{theme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     if theme == "wallpaper":
         wait_for(page, f"{SHEET}.includes('--wallpaper-field')", "the wallpaper's sheet")
     page.wait_for_timeout(400)
@@ -134,11 +134,11 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     DRIVE.seed(page, "# Herons\n\nA heron stands still.\n")
     page.evaluate(SETUP, origin)
-    wait_for(page, "window.nibApp.wallpaper", "the wallpaper store on the handle")
+    wait_for(page, "window.ordenApp.wallpaper", "the wallpaper store on the handle")
     DRIVE.open_note(page, "Herons")
 
     say("the side's chat")
-    page.evaluate("() => window.nib.focus()")
+    page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control+Shift+A")
     page.wait_for_selector(".ask textarea")
     page.locator(".ask textarea").click()
@@ -156,7 +156,7 @@ def drive(browser: Browser) -> None:
 
     say("the quick question")
     DRIVE.open_note(page, "Herons")
-    page.evaluate("() => window.nib.focus()")
+    page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control")
     page.keyboard.press("Control")
     wait_for(page, "document.querySelector('.quick textarea')", "the quick question")

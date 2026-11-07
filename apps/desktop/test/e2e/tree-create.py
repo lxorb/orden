@@ -24,7 +24,7 @@ def fresh(browser: Browser, scheme: str = "light") -> Page:
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -40,7 +40,7 @@ NAMES = """
 () => {
   const walk = (entry) => entry.children.flatMap((one) =>
     one.is_dir ? [one.name + '/', ...walk(one)] : [one.name])
-  return walk(window.nibApp.workspace.tree)
+  return walk(window.ordenApp.workspace.tree)
 }
 """
 
@@ -99,7 +99,7 @@ def drive(browser: Browser) -> None:
 
         wait_for(
             page,
-            "() => window.nibApp.workspace.tree.children.length >= 4",
+            "() => window.ordenApp.workspace.tree.children.length >= 4",
             "the four new rows",
         )
         page.wait_for_timeout(400)
@@ -120,7 +120,7 @@ def drive(browser: Browser) -> None:
             """() => {
               const walk = (entry) => entry.children.flatMap((one) =>
                 one.is_dir ? [[one.name, one.children.map((child) => child.name)], ...walk(one)] : [])
-              return Object.fromEntries(walk(window.nibApp.workspace.tree))
+              return Object.fromEntries(walk(window.ordenApp.workspace.tree))
             }"""
         )
         say(f"the rows that hold rows hold {held}")

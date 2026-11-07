@@ -9,7 +9,7 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 SEED = """
 async (names) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   for (const tab of [...ws.tabs]) ws.close(tab.id)
   for (const name of names) {
@@ -42,7 +42,7 @@ MANY = 80
 
 WIDE = 4200
 
-ACTIVATE = "(at) => { const ws = window.nibApp.workspace; ws.activate(ws.tabs.at(at).id) }"
+ACTIVATE = "(at) => { const ws = window.ordenApp.workspace; ws.activate(ws.tabs.at(at).id) }"
 
 def names(count: int, start: int = 0) -> list[str]:
     return [f"Note {at + 1:02d}" for at in range(start, start + count)]
@@ -189,7 +189,7 @@ def closing(page: Page) -> None:
     settle(page)
     to_the_end(page, "before closing")
     page.evaluate(
-        "() => { const ws = window.nibApp.workspace; for (const tab of ws.tabs.slice(3)) ws.close(tab.id) }"
+        "() => { const ws = window.ordenApp.workspace; for (const tab of ws.tabs.slice(3)) ws.close(tab.id) }"
     )
     wait_for(page, "document.querySelectorAll('.tabs .tab').length === 3", "three tabs left")
     settle(page)

@@ -8,8 +8,8 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 SIDES = """() => ({
-  left: window.nibApp.workspace.panel,
-  right: window.nibApp.workspace.rightPanel,
+  left: window.ordenApp.workspace.panel,
+  right: window.ordenApp.workspace.rightPanel,
   leftDrawn: !!document.querySelector('aside[data-sidebar]:not(.right) [role=tablist]'),
   rightDrawn: !!document.querySelector('aside.right [role=tablist]'),
 })"""
@@ -32,17 +32,17 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    page.evaluate("() => { const ws = window.nibApp.workspace; ws.showPanel('tree') }")
-    wait_for(page, "() => window.nibApp.workspace.panel === 'tree'", "the file list")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; ws.showPanel('tree') }")
+    wait_for(page, "() => window.ordenApp.workspace.panel === 'tree'", "the file list")
     wait_for(page, "() => !!document.querySelector('aside[data-sidebar]:not(.right) [role=tablist]')", "the left side's tabs")
 
     pressed(page, "left", "Files", "tree", "the folder pressed while it is in front")
     pressed(page, "left", "Files", "tree", "and again")
 
-    page.evaluate("() => window.nibApp.workspace.toggleSidebar('right')")
-    wait_for(page, "() => window.nibApp.workspace.rightPanel !== null", "the right side")
+    page.evaluate("() => window.ordenApp.workspace.toggleSidebar('right')")
+    wait_for(page, "() => window.ordenApp.workspace.rightPanel !== null", "the right side")
     page.wait_for_timeout(300)
-    right = page.evaluate("() => window.nibApp.workspace.rightPanel")
+    right = page.evaluate("() => window.ordenApp.workspace.rightPanel")
     if right:
         label = page.evaluate(
             "() => document.querySelector('aside.right [role=tab][aria-selected=true]')?.getAttribute('aria-label')"
@@ -65,10 +65,10 @@ def drive(browser: Browser) -> None:
         tab(page, "left", "Files").click()
         page.wait_for_timeout(300)
 
-    page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
-    wait_for(page, "() => window.nibApp.workspace.panel === null", "the left side shut by its own button")
-    page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
-    wait_for(page, "() => window.nibApp.workspace.panel === 'tree'", "the left side open again")
+    page.evaluate("() => window.ordenApp.workspace.toggleSidebar('left')")
+    wait_for(page, "() => window.ordenApp.workspace.panel === null", "the left side shut by its own button")
+    page.evaluate("() => window.ordenApp.workspace.toggleSidebar('left')")
+    wait_for(page, "() => window.ordenApp.workspace.panel === 'tree'", "the left side open again")
     context.close()
 
 if __name__ == "__main__":

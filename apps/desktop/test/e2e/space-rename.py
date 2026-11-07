@@ -75,7 +75,7 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     page.on("websocket", lambda ws: sockets[label].append(ws.url))
     page.goto(ORIGIN, wait_until="domcontentloaded")
 
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
+    wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     return page
 
 def note_console(label: str, message) -> None:
@@ -85,39 +85,39 @@ def note_console(label: str, message) -> None:
 def opened(page: Page, label: str, note_id: str) -> None:
     wait_for(
         page,
-        f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+        f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
         f"[{label}] the space to arrive",
     )
 
     listed = (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-        "  return walk(window.nibApp.workspace.tree)"
+        "  return walk(window.ordenApp.workspace.tree)"
         f"    .includes('/{SPACE}/{NOTE}')"
         "}"
     )
     wait_for(page, listed, f"[{label}] the note to arrive")
 
-    page.evaluate(f"() => window.nibApp.workspace.open('/{SPACE}/{NOTE}')")
+    page.evaluate(f"() => window.ordenApp.workspace.open('/{SPACE}/{NOTE}')")
     wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
     wait_for(
         page,
-        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
+        f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] the note to join its room",
     )
 
 def words(page: Page) -> str:
     return page.evaluate(
-        "() => { window.nibApp.workspace.flush();"
-        " return window.nibApp.workspace.active?.doc ?? '' }"
+        "() => { window.ordenApp.workspace.flush();"
+        " return window.ordenApp.workspace.active?.doc ?? '' }"
     )
 
 def type_at(page: Page, at: int, said: str) -> None:
     page.click(".cm-content")
     page.evaluate(
         "(at) => {"
-        "  window.nib.dispatch({ selection: { anchor: Math.min(at, window.nib.state.doc.length) } });"
-        "  window.nib.focus()"
+        "  window.orden.dispatch({ selection: { anchor: Math.min(at, window.orden.state.doc.length) } });"
+        "  window.orden.focus()"
         "}",
         at,
     )
@@ -142,8 +142,8 @@ def crosses(one: Page, two: Page, said: str, label: str) -> None:
 def state(page: Page) -> str:
     return page.evaluate(
         "() => {"
-        "  const rooms = window.nibApp.rooms;"
-        "  return `path ${window.nibApp.workspace.active?.path ?? '-'},"
+        "  const rooms = window.ordenApp.rooms;"
+        "  return `path ${window.ordenApp.workspace.active?.path ?? '-'},"
         " present ${JSON.stringify(rooms.present)}`"
         "}"
     )
@@ -165,13 +165,13 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
 
     wait_for(
         page,
-        "() => window.nibApp.workspace.spaces.some("
+        "() => window.ordenApp.workspace.spaces.some("
         f"  (one) => one.name === {json.dumps(RENAMED)})",
         "[restored] the account’s space to arrive",
     )
     page.evaluate(
         "async () => {"
-        "  const workspace = window.nibApp.workspace;"
+        "  const workspace = window.ordenApp.workspace;"
         f"  const space = workspace.spaces.find((one) => one.name === {json.dumps(RENAMED)});"
         "  await workspace.showSpace(space.id)"
         "}"
@@ -180,7 +180,7 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
     looking = (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-        f"  return walk(window.nibApp.workspace.tree).find((path) => path.endsWith('/{CANVAS}')) ?? ''"
+        f"  return walk(window.ordenApp.workspace.tree).find((path) => path.endsWith('/{CANVAS}')) ?? ''"
         "}"
     )
 
@@ -197,9 +197,9 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
             "() => {"
             "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
             "  return JSON.stringify({"
-            "    spaces: window.nibApp.workspace.spaces.map((one) => one.root),"
-            "    active: window.nibApp.workspace.activeSpaceId,"
-            "    tree: walk(window.nibApp.workspace.tree)"
+            "    spaces: window.ordenApp.workspace.spaces.map((one) => one.root),"
+            "    active: window.ordenApp.workspace.activeSpaceId,"
+            "    tree: walk(window.ordenApp.workspace.tree)"
             "  })"
             "}"
         )
@@ -208,11 +208,11 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
 
     say(f"[restored] the canvas came down as {board}")
 
-    page.evaluate(f"async () => {{ await window.nibApp.workspace.openEntry({json.dumps(board)}) }}")
+    page.evaluate(f"async () => {{ await window.ordenApp.workspace.openEntry({json.dumps(board)}) }}")
     wait_for(
         page,
-        f"() => window.nibApp.workspace.active?.path === {json.dumps(board)}"
-        " && window.nibApp.workspace.active?.kind === 'canvas'",
+        f"() => window.ordenApp.workspace.active?.path === {json.dumps(board)}"
+        " && window.ordenApp.workspace.active?.kind === 'canvas'",
         "[restored] the canvas to open as one",
     )
 
@@ -240,15 +240,15 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
     )
 
     page.reload(wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp", "[restored] the app to start again")
+    wait_for(page, "() => !!window.ordenApp", "[restored] the app to start again")
     wait_for(
         page,
-        f"() => !!window.nibApp.workspace.documents.find((one) => one.path === {json.dumps(board)})",
+        f"() => !!window.ordenApp.workspace.documents.find((one) => one.path === {json.dumps(board)})",
         "[restored] the canvas tab to come back",
     )
 
     kind = page.evaluate(
-        "() => window.nibApp.workspace.documents.find("
+        "() => window.ordenApp.workspace.documents.find("
         f"  (one) => one.path === {json.dumps(board)}).kind"
     )
     if kind != "canvas":
@@ -289,26 +289,26 @@ def main() -> int:
         crosses(one, two, "\nbefore the rename\n", "before the rename, one to two")
 
         which = one.evaluate(
-            "() => window.nibApp.workspace.spaces.find("
+            "() => window.ordenApp.workspace.spaces.find("
             f"  (one) => one.name === {json.dumps(SPACE)}).id"
         )
         one.evaluate(
             "async ([id, name]) => {"
-            "  const workspace = window.nibApp.workspace;"
+            "  const workspace = window.ordenApp.workspace;"
             "  const space = workspace.spaces.find((one) => one.id === id);"
             "  const from = space.root;"
             "  await workspace.renameSpace(id, name);"
-            "  await window.nibApp.sync.renamed(from, space.root, space.name)"
+            "  await window.ordenApp.sync.renamed(from, space.root, space.name)"
             "}",
             [which, RENAMED],
         )
         wait_for(
             one,
-            "() => window.nibApp.workspace.spaces.some("
+            "() => window.ordenApp.workspace.spaces.some("
             f"  (one) => one.name === {json.dumps(RENAMED)})",
             "[one] the space to be renamed",
         )
-        moved = one.evaluate("() => window.nibApp.workspace.active?.path ?? ''")
+        moved = one.evaluate("() => window.ordenApp.workspace.active?.path ?? ''")
         say(f"the space is renamed and the open note is now at {moved}")
         say(f"the renamer has opened {len(sockets['one'])} room sockets so far")
         if f"/{RENAMED}/" not in moved:
@@ -317,7 +317,7 @@ def main() -> int:
         try:
             wait_for(
                 one,
-                f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
+                f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
                 "the renamed note to be in its room again",
             )
         except SystemExit:

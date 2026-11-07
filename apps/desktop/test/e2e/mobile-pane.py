@@ -19,7 +19,7 @@ LISTED = """
 """
 
 def listed(page: Page) -> list[str]:
-    page.evaluate("() => { window.nibApp.settings.show('general'); window.nibApp.settings.listing = true }")
+    page.evaluate("() => { window.ordenApp.settings.show('general'); window.ordenApp.settings.listing = true }")
     wait_for(page, "() => !!document.querySelector('[role=\"dialog\"][aria-label=\"Settings\"] nav button')",
              "the settings' sections")
     wait_for(page, f"() => {LANDED}", "the settings' sheets")
@@ -36,7 +36,7 @@ def laptop(browser: Browser) -> None:
         wrong("[laptop] the other sections went with it")
     DRIVE.shot(page, "laptop")
 
-    page.evaluate("() => { window.nibApp.modes.mobileSeen = true }")
+    page.evaluate("() => { window.ordenApp.modes.mobileSeen = true }")
     page.wait_for_timeout(300)
     sections = page.evaluate(LISTED)
     say(f"[laptop, a phone on the account] sections: {sections}")

@@ -12,7 +12,7 @@ OFFERED = """() => [...document.querySelectorAll('.here[role=group] [data-kind]'
 
 AS_PHONE = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.viewport.device = 'phone'
   app.viewport.portrait = true
   const root = document.documentElement
@@ -31,18 +31,18 @@ SWITCHES = """() => [...document.querySelectorAll('[role=switch]')].map((one) =>
 
 def new_tab(page: Page, label: str, phone: bool) -> list[str]:
     if phone:
-        page.evaluate("() => window.nibApp.workspace.newTab()")
+        page.evaluate("() => window.ordenApp.workspace.newTab()")
     else:
         page.locator(".cm-content").first.click()
         page.keyboard.press("Control+t")
     wait_for(page, "document.querySelector('.here[role=group] [data-kind]')", f"[{label}] the new tab's kinds")
     offered = list(page.evaluate(OFFERED))
     say(f"[{label}] the new tab offers {offered}")
-    page.evaluate("() => window.nibApp.workspace.closeActive()")
+    page.evaluate("() => window.ordenApp.workspace.closeActive()")
     return offered
 
 def settings(page: Page) -> None:
-    page.evaluate("() => window.nibApp.settings.show('kinds')")
+    page.evaluate("() => window.ordenApp.settings.show('kinds')")
     wait_for(page, "document.querySelectorAll('[role=switch]').length > 1", "Settings › Note types")
 
 def closed(page: Page) -> None:

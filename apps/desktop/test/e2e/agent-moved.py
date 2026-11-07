@@ -16,14 +16,14 @@ TOUCHED = "await import('/src/lib/agents/docs/touched.ts')"
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     DRIVE.seed(page, "# Heron\n\nA heron strikes fast.\n")
     DRIVE.open_note(page, "Heron")
     page.evaluate(
         f"async () => {{ const docs = {DOCS}; await docs.notes.editNote({AGENT}, {{ path: 'Heron.md' }}, [{{ at: {{ quote: 'strikes' }}, replace: 'STRIKES' }}]) }}"
     )
-    page.evaluate("async (root) => window.nibApp.workspace.rename(root + '/Heron.md', 'Bird.md')", root)
-    wait_for(page, "window.nibApp.workspace.active?.path?.endsWith('Bird.md')", "the new name")
+    page.evaluate("async (root) => window.ordenApp.workspace.rename(root + '/Heron.md', 'Bird.md')", root)
+    wait_for(page, "window.ordenApp.workspace.active?.path?.endsWith('Bird.md')", "the new name")
 
     tracked = page.evaluate(f"async () => [...({DOCS}).tracksOf('orden-moved').keys()]")
     who = page.evaluate(f"async (path) => ({TOUCHED}).touchedBy(path).map((one) => one.id)", f"{root}/Bird.md")
@@ -36,7 +36,7 @@ def drive(browser: Browser) -> None:
     undone = page.evaluate(
         f"async (path) => ({DOCS}).undoAgentIn({AGENT}, path)", f"{root}/Bird.md"
     )
-    words = page.evaluate("() => window.nibApp.workspace.active.note.latest")
+    words = page.evaluate("() => window.ordenApp.workspace.active.note.latest")
     say(f"undone {undone}, words {json.dumps(words)}")
     if undone != {"undone": 1} or "strikes" not in words:
         wrong(f"the edit stayed: {undone}, {words!r}")

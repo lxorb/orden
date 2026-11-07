@@ -19,7 +19,7 @@ SECOND = "# Second\n\nThe second note says quinine and nothing else.\n"
 
 SEED = """
 async ([first, second]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(first, ws.activeSpace.root)
   await ws.noteFrom(second, ws.activeSpace.root)
   await ws.loadTree()
@@ -32,7 +32,7 @@ async ([first, second]) => {
 
 SHOW = """
 async (start) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const tab = ws.tabs.find((one) => one.note?.name?.startsWith(start))
   if (!tab) return null
   ws.activate(tab.id)
@@ -46,7 +46,7 @@ def show(page: Page, start: str) -> None:
 
     wait_for(
         page,
-        f"window.nibApp.workspace.active?.note?.name?.startsWith({json.dumps(start)})",
+        f"window.ordenApp.workspace.active?.note?.name?.startsWith({json.dumps(start)})",
         f"the {start} tab to come forward",
     )
     page.wait_for_timeout(120)
@@ -82,7 +82,7 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, [FIRST, SECOND])} notes")
     wait_for(page, "document.querySelector('.cm-content')", "the writing surface")
     stamp = page.evaluate("() => window.nibBuild || 'unstamped'")
@@ -120,7 +120,7 @@ def drive(browser: Browser) -> None:
     typed = page.evaluate(
         """
         () => {
-          const view = window.nib
+          const view = window.orden
           if (!view) return false
           view.dispatch({ selection: { anchor: view.state.doc.length } })
           view.focus()
@@ -201,7 +201,7 @@ def drive(browser: Browser) -> None:
         show(page, name)
         drawn = page.evaluate("() => document.querySelector('.cm-content')?.innerText ?? ''")
         held = page.evaluate(
-            "() => window.nibApp.workspace.active?.note?.live?.text?.toString() ?? ''"
+            "() => window.ordenApp.workspace.active?.note?.live?.text?.toString() ?? ''"
         )
         if mine not in drawn:
             wrong(f"the {name} tab does not show its own words")
@@ -215,7 +215,7 @@ def drive(browser: Browser) -> None:
     held = page.evaluate(
         """
         () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           return ws.notes.map((one) => one.name).sort()
         }
         """
@@ -225,17 +225,17 @@ def drive(browser: Browser) -> None:
     say(f"the tabs kept their own words; the space holds {json.dumps(held)}")
     shot(page, "03-switched")
 
-    page.evaluate("() => { window.nibApp.workspace.showPanel('tree') }")
+    page.evaluate("() => { window.ordenApp.workspace.showPanel('tree') }")
     page.wait_for_timeout(350)
     before_rows = rows_now(page)
 
     page.reload(wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp", "the app after a reload")
-    wait_for(page, "window.nibApp.workspace.activeSpace", "the space after a reload")
+    wait_for(page, "window.ordenApp", "the app after a reload")
+    wait_for(page, "window.ordenApp.workspace.activeSpace", "the space after a reload")
     wait_for(page, "document.querySelector('.cm-content')", "the writing surface after a reload")
     page.wait_for_timeout(400)
 
-    panel = page.evaluate("() => window.nibApp.workspace.panel")
+    panel = page.evaluate("() => window.ordenApp.workspace.panel")
     if before_rows and panel != "tree":
         say(f"the app came back with panel {json.dumps(panel)}; not asking about rows")
     elif before_rows and not rows_now(page):

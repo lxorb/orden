@@ -1,6 +1,16 @@
 import { describe, expect, test } from 'vitest'
 import type { Turn } from '../chat/types'
-import { answered, byNote, changesOf, changesSince, type Edit, linesOf } from './changes'
+import {
+  agentOf,
+  agentsOf,
+  answered,
+  byNote,
+  changesOf,
+  changesSince,
+  type Edit,
+  linesOf,
+  providerOf,
+} from './changes'
 import { forkAt, cutForEdit, switchBranch, type Branched } from './branches'
 import { fileChangesOf, verbOf } from './files'
 import { planFor } from './plan'
@@ -202,5 +212,15 @@ describe('an edited message', () => {
     expect(switchBranch(branched, 'm2', 1)).toBe(true)
     expect(branched.turns.map((one) => one.id)).toEqual(['m1', 'a1', 'm2b', 'a2b'])
     expect(forkAt(branched, 'm1')).toBeNull()
+  })
+})
+
+describe('the agent an edit was made by', () => {
+  test('is the built-in provider under the new name and under the one an older version wrote', () => {
+    expect(agentOf('anthropic')).toBe('orden-anthropic')
+    expect(agentsOf('anthropic')).toEqual(['orden-anthropic', 'nib-anthropic'])
+    expect(providerOf('orden-anthropic')).toBe('anthropic')
+    expect(providerOf('nib-anthropic')).toBe('anthropic')
+    expect(providerOf('claude-code')).toBeNull()
   })
 })

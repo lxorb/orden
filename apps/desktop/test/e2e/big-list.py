@@ -79,7 +79,7 @@ IN_VIEW = """
 SLIDE = """
 async (twist) => {
   const ul = document.querySelector('aside [data-region="list"] ul')
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const seen = []
 
   ws.toggleFolder(twist)
@@ -95,12 +95,12 @@ async (twist) => {
 SCROLL_TO = '(at) => { document.querySelector(\'aside [data-region="list"]\').scrollTop = at }'
 
 FIRST_FOLDER = """
-() => window.nibApp.workspace.tree.children.find((one) => one.is_dir).path
+() => window.ordenApp.workspace.tree.children.find((one) => one.is_dir).path
 """
 
 ALL_OPEN = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const open = (entry) => {
     for (const child of entry.children) {
       if (!child.is_dir) continue
@@ -116,7 +116,7 @@ ALL_OPEN = """
 
 FAR_NOTE = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const notes = ws.tree.children.filter((one) => !one.is_dir)
   return notes[Math.min(600, notes.length - 1)].path
 }
@@ -124,9 +124,9 @@ FAR_NOTE = """
 
 def ready(page: Page, origin: str) -> None:
     page.goto(origin, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=60000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.wait_for_function("() => !!window.ordenApp", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=60000)
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .row", timeout=60000)
     page.wait_for_timeout(2500)
 
@@ -187,7 +187,7 @@ def main() -> int:
 
         page.evaluate(
             """async () => {
-                const ws = window.nibApp.workspace
+                const ws = window.ordenApp.workspace
                 await ws.openEntry(ws.notes[ws.notes.length - 1].path)
             }"""
         )
@@ -196,7 +196,7 @@ def main() -> int:
         say(f"  in view:      {page.evaluate(IN_VIEW)}")
 
         far = page.evaluate(FAR_NOTE)
-        page.evaluate("(path) => window.nibApp.workspace.startRenaming(path)", far)
+        page.evaluate("(path) => window.ordenApp.workspace.startRenaming(path)", far)
         page.wait_for_timeout(700)
         said = page.evaluate(f'() => !!document.querySelector({LIST!r} + " input")')
         say(f"renaming a row  600 down: field in the page = {said}")
@@ -209,7 +209,7 @@ def main() -> int:
         ready(page, origin)
         page.wait_for_timeout(1500)
         say(f"after a reload: {page.evaluate(COUNT)}")
-        say(f"                panel = {page.evaluate('() => window.nibApp.workspace.panel')}")
+        say(f"                panel = {page.evaluate('() => window.ordenApp.workspace.panel')}")
 
         say(f"every note open: {page.evaluate(ALL_OPEN)} rows in the list")
         page.wait_for_timeout(1200)

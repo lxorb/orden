@@ -12,7 +12,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   for (const name of ['One', 'Two']) ws.openBlank(name, `# ${name}\\n\\nSome words of ${name}.`)
   ws.openPage('https://example.com/')
   if (ws.panel !== 'tree') ws.showPanel('tree')
@@ -40,7 +40,7 @@ CLOCK = """
 WEB_DRAWN = """
 () => {
   if (!document.querySelector('.canvas')) return null
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const drawn = []
   for (const pane of ws.panes.all) {
     const tab = ws.tabs.find((one) => one.id === pane.activeTabId)

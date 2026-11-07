@@ -39,7 +39,7 @@ def opened(browser: Browser, language: str) -> Page:
     DRIVE.seed(page, *[f"# {name}\n\nWords.\n" for name in NAMES])
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const note of ws.notes) await ws.openEntry(note.path, 'behind')
           ws.showPanel('tree')
         }"""

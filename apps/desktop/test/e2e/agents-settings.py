@@ -15,8 +15,8 @@ LOOKS = [("light", "en"), ("dark", "en"), ("light", "ar")]
 
 OPEN = """
 async () => {
-  window.agentsFake = window.nibApp.agents.standIn()
-  window.nibApp.settings.show('agents')
+  window.agentsFake = window.ordenApp.agents.standIn()
+  window.ordenApp.settings.show('agents')
 }
 """
 
@@ -141,7 +141,7 @@ def look(browser, scheme: str, language: str) -> None:
     except SystemExit:
         shot(page, f"{name}-stuck")
         raise
-    DRIVE.wait_for(page, "window.nibApp.agents", "the agents")
+    DRIVE.wait_for(page, "window.ordenApp.agents", "the agents")
 
     page.evaluate(OPEN)
     page.wait_for_selector(".agents .agent")

@@ -139,7 +139,7 @@ def launch(exe: pathlib.Path, environment: dict[str, str], identifier: str, was:
 
 TYPE = """
 (async () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   const view = app.views.of(app.workspace.panes.focusedId)
   if (!view) return 'no editor'
   view.focus()
@@ -153,7 +153,7 @@ TYPE = """
 
 OPEN = """
 (async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const note = ws.files.find((one) => one.name === %s)
   if (!note) return 'no such note'
   await ws.openEntry(note.path, { activate: true })
@@ -161,11 +161,11 @@ OPEN = """
 })()
 """
 
-BLANK = "(() => { window.nibApp.workspace.openBlank(); return true })()"
+BLANK = "(() => { window.ordenApp.workspace.openBlank(); return true })()"
 
 PLACE = """
 (async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return await ws.save(ws.tabs.find((one) => one.id === ws.activeTabId) ?? ws.active)
 })()
 """
@@ -183,7 +183,7 @@ CTRL_S = """
 ASKED = "(() => document.querySelectorAll('[role=\"dialog\"]').length)()"
 
 DRAFTS = """
-(() => window.nibApp.workspace.tabs
+(() => window.ordenApp.workspace.tabs
   .filter((one) => one.kind === 'note' && one.path === null)
   .map((one) => one.doc))()
 """

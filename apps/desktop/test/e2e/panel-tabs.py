@@ -38,7 +38,7 @@ MEASURE = """
     tools: box(tools),
     tabs,
     toolButtons,
-    showing: window.nibApp.workspace.rightPanel,
+    showing: window.ordenApp.workspace.rightPanel,
   }
 }
 """
@@ -48,10 +48,10 @@ def fresh(browser: Browser, scheme: str) -> Page:
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{scheme}] page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "() => !!window.nibApp.workspace.active", f"[{scheme}] the app's own note")
+    wait_for(page, "() => !!window.ordenApp.workspace.active", f"[{scheme}] the app's own note")
     page.evaluate(
         """async (text) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           await ws.noteFrom(text, ws.activeSpace.root)
           await ws.loadTree()
         }""",
@@ -102,20 +102,20 @@ def judge(at: str, row: dict) -> None:
 def drive(browser: Browser, scheme: str) -> None:
     page = fresh(browser, scheme)
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('ask')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('ask')")
     page.wait_for_timeout(500)
     for pixels in (180, 300, 520):
         width(page, pixels)
         at = f"{scheme} {pixels} own"
         judge(at, page.evaluate(MEASURE))
         shot(page, f"{scheme}-{pixels}-own", clip=strip_clip(page))
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     shot(page, f"{scheme}-window")
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const one of ['tree', 'tasks']) ws.movePanel(one, 'right')
           ws.showPanel('ask')
         }"""

@@ -24,7 +24,7 @@ def fresh(browser: Browser, label: str, scheme: str) -> Page:
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -56,7 +56,7 @@ RULE = """
 
 TYPED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const path = await ws.noteFrom('# Deck\\n\\nthe first slide\\n\\n', root)
   await ws.openEntry(path)
@@ -103,14 +103,14 @@ def shoot(browser: Browser, scheme: str) -> None:
             return
 
         say(f"[{scheme}] wrote {page.evaluate(TYPED)}")
-        page.evaluate("() => window.nibApp.modes.punctuation || window.nibApp.modes.togglePunctuation()")
+        page.evaluate("() => window.ordenApp.modes.punctuation || window.ordenApp.modes.togglePunctuation()")
         content = page.locator(".cm-content")
         content.click()
         page.keyboard.press("Control+End")
         page.keyboard.type("---")
         page.wait_for_timeout(200)
 
-        text = page.evaluate("() => window.nib.state.doc.toString()")
+        text = page.evaluate("() => window.orden.state.doc.toString()")
         lines = [line for line in text.split("\n") if line.strip()]
         typed = lines[-1] if lines else ""
         say(f"[{scheme}] the last line reads {typed!r}")
@@ -120,7 +120,7 @@ def shoot(browser: Browser, scheme: str) -> None:
         page.keyboard.type("\n\nthe second slide\n")
         page.wait_for_timeout(300)
 
-        written = page.evaluate("() => window.nib.state.doc.toString()")
+        written = page.evaluate("() => window.orden.state.doc.toString()")
         say(f"[{scheme}] the note now reads {written!r}")
         if "\n---\n" not in written:
             raise SystemExit(f"[{scheme}] no rule survived in {written!r}")

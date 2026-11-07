@@ -244,12 +244,12 @@ SUGGEST = """(() => {
 })()"""
 
 TOAST = """(() => {
-  const one = nibApp.workspace.tree.children.find((entry) => entry.name.startsWith('Idea'))
-  void nibApp.workspace.remove(one.path, false)
+  const one = ordenApp.workspace.tree.children.find((entry) => entry.name.startsWith('Idea'))
+  void ordenApp.workspace.remove(one.path, false)
   return 'ok'
 })()"""
 
-SETTINGS = "nibApp.settings.show(), setTimeout(() => (nibApp.settings.open = false), 1300), 'ok'"
+SETTINGS = "ordenApp.settings.show(), setTimeout(() => (ordenApp.settings.open = false), 1300), 'ok'"
 
 def main() -> int:
     if sys.platform != "win32":
@@ -322,8 +322,8 @@ def main() -> int:
 
         said["resize"] = [resize(hwnd, page, own) for _ in range(3)]
         for turn in range(2):
-            said[f"sidebar open {turn + 1}"] = slide(app, page, own, "nibApp.workspace.showPanel('tree'), 'ok'")
-            said[f"sidebar shut {turn + 1}"] = slide(app, page, own, "nibApp.workspace.closePanel(), 'ok'")
+            said[f"sidebar open {turn + 1}"] = slide(app, page, own, "ordenApp.workspace.showPanel('tree'), 'ok'")
+            said[f"sidebar shut {turn + 1}"] = slide(app, page, own, "ordenApp.workspace.closePanel(), 'ok'")
         said["resize with the sidebar open"] = resize(hwnd, page, own)
 
         x, y, right, bottom = rect(page)

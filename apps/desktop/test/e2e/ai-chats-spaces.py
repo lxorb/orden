@@ -12,12 +12,12 @@ TALK = ".ask .talk"
 
 SETUP = """
 async () => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: 'http://127.0.0.1:9', model: 'fake-small' })
   ai.setDefault(made.id)
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const work = ws.activeSpaceId
   if (!ws.spaces.some((one) => one.name === 'Home')) await ws.addSpace('Home')
   const home = ws.spaces.find((one) => one.name === 'Home').id
@@ -50,7 +50,7 @@ STATE = """
     title: document.querySelector('.ask .title')?.textContent?.trim() ?? null,
     field: document.querySelector('.ask textarea')?.value ?? null,
     scroll: talk ? Math.round(talk.scrollTop) : null,
-    space: window.nibApp.workspace.activeSpace?.name ?? null,
+    space: window.ordenApp.workspace.activeSpace?.name ?? null,
     // In the page is not on the screen: a shut side keeps its panel built, and inert.
     seen: !!document.querySelector('.ask')?.checkVisibility({ visibilityProperty: true }),
   }
@@ -68,8 +68,8 @@ def drive(browser: Browser, scheme: str) -> None:
     DRIVE.open(page)
     made = page.evaluate(SETUP)
 
-    DRIVE.wait_for(page, "window.nib", "the note's editor")
-    page.evaluate("() => window.nib.focus()")
+    DRIVE.wait_for(page, "window.orden", "the note's editor")
+    page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control+Shift+A")
     DRIVE.waited(page, f"document.querySelector('{FIELD}')", "the panel's field")
     page.evaluate("(id) => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => chat.openThread(id, false))", made["plan"])
@@ -81,8 +81,8 @@ def drive(browser: Browser, scheme: str) -> None:
     before = page.evaluate(STATE)
     shot(page, f"{scheme}-1-work")
 
-    page.evaluate("(id) => window.nibApp.workspace.selectSpace(id)", made["home"])
-    DRIVE.waited(page, "window.nibApp.workspace.activeSpace?.name === 'Home'", "the other space")
+    page.evaluate("(id) => window.ordenApp.workspace.selectSpace(id)", made["home"])
+    DRIVE.waited(page, "window.ordenApp.workspace.activeSpace?.name === 'Home'", "the other space")
     page.wait_for_timeout(600)
     after = page.evaluate(STATE)
     shot(page, f"{scheme}-2-home")
@@ -99,14 +99,14 @@ def drive(browser: Browser, scheme: str) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    page.evaluate("(id) => window.nibApp.workspace.selectSpace(id)", made["work"])
-    DRIVE.waited(page, "window.nibApp.workspace.activeSpace?.name !== 'Home'", "back to the first space")
+    page.evaluate("(id) => window.ordenApp.workspace.selectSpace(id)", made["work"])
+    DRIVE.waited(page, "window.ordenApp.workspace.activeSpace?.name !== 'Home'", "back to the first space")
     page.wait_for_timeout(500)
     back = page.evaluate(STATE)
     check(f"[{scheme}] and back again, still the same: {back['title']!r}", back["title"] == "Quarterly plan" and back["field"] == "and the budget for the second quarter" and back["seen"])
 
-    page.evaluate("(id) => window.nibApp.workspace.selectSpace(id)", made["home"])
-    DRIVE.waited(page, "window.nibApp.workspace.activeSpace?.name === 'Home'", "the other space")
+    page.evaluate("(id) => window.ordenApp.workspace.selectSpace(id)", made["home"])
+    DRIVE.waited(page, "window.ordenApp.workspace.activeSpace?.name === 'Home'", "the other space")
     space = page.evaluate("() => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => { chat.newThread(); return chat.thread?.space })")
     check(f"[{scheme}] a new chat starts in the space in front", space == made["home"])
     page.context.close()

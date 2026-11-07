@@ -16,7 +16,7 @@ import type {
 } from '../chat/types'
 import { always, type Answers, crateAnswers } from '../chat/approvals'
 import { KIND_NAMES, type LocalKind, type Message, type Provider } from '../providers'
-import { agentOf } from '../review/changes'
+import { agentsOf } from '../review/changes'
 import { PLANS } from './ask'
 import {
   GOAL_CLEARED,
@@ -440,10 +440,10 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     }
     running.set(thread.id, { thread, on, pending: 0, steered })
 
-    const agent = agentOf(provider.id)
+    const agents = agentsOf(provider.id)
     const unhear = await answers
       .asked((asked) => {
-        if (asked.agent !== agent) return
+        if (!agents.includes(asked.agent)) return
         const at = turn.parts.findIndex(
           (one) => one.kind === 'tool' && one.state === 'running' && one.verb === asked.verb,
         )

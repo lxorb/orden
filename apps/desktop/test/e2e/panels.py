@@ -29,7 +29,7 @@ Words nobody is looking for.
 
 SEED = """
 async ([left, right]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom(left, root)
   await ws.noteFrom(right, root)
@@ -51,7 +51,7 @@ PANEL = """
   holding: document.querySelector(`${side} .body .holding`)?.textContent ?? null,
   held: document.querySelector(hold)?.getAttribute('aria-pressed') ?? null,
   tools: document.querySelectorAll(`${side} .tools .tool`).length,
-  active: window.nibApp.workspace.active?.name ?? null,
+  active: window.ordenApp.workspace.active?.name ?? null,
 })
 """
 
@@ -86,7 +86,7 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith(starts))
           await ws.openEntry(note.path, { activate: true })
         }""",
@@ -101,7 +101,7 @@ def drive_holding(browser: Browser) -> None:
     page = fresh(browser, "desktop")
 
     open_note(page, "The left note")
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
 
     following = panel(page)
@@ -117,7 +117,7 @@ def drive_holding(browser: Browser) -> None:
 
     page.locator(HOLD).first.click()
     page.wait_for_timeout(400)
-    page.evaluate("() => window.nibApp.workspace.split('row')")
+    page.evaluate("() => window.ordenApp.workspace.split('row')")
     page.wait_for_timeout(600)
     open_note(page, "The right note")
 
@@ -138,8 +138,8 @@ def drive_holding(browser: Browser) -> None:
     page.wait_for_timeout(600)
     landed = page.evaluate(
         """() => ({
-          note: window.nibApp.workspace.active?.name ?? null,
-          line: window.nibApp.workspace.active?.line ?? null,
+          note: window.ordenApp.workspace.active?.name ?? null,
+          line: window.ordenApp.workspace.active?.line ?? null,
         })"""
     )
     say(f"[desktop] after pressing a row: {json.dumps(landed)}")
@@ -149,7 +149,7 @@ def drive_holding(browser: Browser) -> None:
 
     page.locator(HOLD).first.click()
     page.wait_for_timeout(300)
-    page.evaluate("() => window.nibApp.workspace.panes.focusNext()")
+    page.evaluate("() => window.ordenApp.workspace.panes.focusNext()")
     page.wait_for_timeout(600)
     freed = panel(page)
     say(f"[desktop] following again: {json.dumps(freed, ensure_ascii=False)}")
@@ -164,7 +164,7 @@ def drive_holding(browser: Browser) -> None:
 def drive_links(browser: Browser) -> None:
     page = fresh(browser, "links")
     open_note(page, "The left note")
-    page.evaluate("() => window.nibApp.workspace.showPanel('links')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('links')")
     page.wait_for_timeout(500)
 
     tools = page.evaluate("(side) => document.querySelectorAll(`${side} .tools .tool`).length", SIDE)
@@ -178,7 +178,7 @@ def drive_links(browser: Browser) -> None:
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
     open_note(page, "The left note")
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
 
     tools = page.evaluate("(hold) => document.querySelectorAll(hold).length", HOLD)

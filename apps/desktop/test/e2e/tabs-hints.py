@@ -27,11 +27,11 @@ NAMES = ["Alpha", "Beta", "Gamma", "Delta"]
 
 SEED = """
 async (names) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   // The first run's questions put by, as Done does: the card a first visit puts up
   // beside the welcome note is a `.card` too, which `card_up` took for a tab's.
-  window.nibApp.settings.setup = null
+  window.ordenApp.settings.setup = null
   for (const one of [...ws.tabs]) ws.close(one.id)
 
   for (const name of names) {
@@ -50,7 +50,7 @@ async (names) => {
 
 STRIP = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return ws.panes.all.map((pane) => ({
     id: pane.id,
     tabs: ws.tabsIn(pane.id).map((one) => one.shown),
@@ -83,7 +83,7 @@ SHOWN = """
 }
 """
 
-FRONT = "() => window.nibApp.workspace.tabs.find((one) => one.id === window.nibApp.workspace.activeTabId)?.shown"
+FRONT = "() => window.ordenApp.workspace.tabs.find((one) => one.id === window.ordenApp.workspace.activeTabId)?.shown"
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
@@ -201,14 +201,14 @@ def tooltips(page: Page) -> None:
     keyed(page, '[data-region="panels"] [role="tab"]', "Files", "Ctrl+Shift+E")
     keyed(page, '.foot button[aria-label="Settings"]', "Settings", "Ctrl+,")
 
-    page.evaluate("() => window.nibApp.shortcuts.set('app.sidebar', 'Mod-Alt-j')")
+    page.evaluate("() => window.ordenApp.shortcuts.set('app.sidebar', 'Mod-Alt-j')")
     page.wait_for_timeout(60)
     keyed(page, "header .toggle", "Hide left sidebar", "Ctrl+Alt+J")
-    page.evaluate("() => window.nibApp.shortcuts.set('app.sidebar', null)")
+    page.evaluate("() => window.ordenApp.shortcuts.set('app.sidebar', null)")
     page.wait_for_timeout(60)
     if title(page, "header .toggle") != "Hide left sidebar":
         wrong("a key taken away still shows in the sidebar toggle's tooltip")
-    page.evaluate("() => window.nibApp.shortcuts.reset('app.sidebar')")
+    page.evaluate("() => window.ordenApp.shortcuts.reset('app.sidebar')")
 
     page.locator('.cm-line:has-text("Words about")').first.dblclick()
     if wait_for(page, "document.querySelector('.orden-bar-at')", "the format bar", 10):
@@ -224,7 +224,7 @@ def tooltips(page: Page) -> None:
         keyed(page, '.findbar button[aria-label="Close"]', "Close", "Esc")
         page.keyboard.press("Escape")
 
-    page.evaluate("() => window.nibApp.workspace.openPage('https://example.com/', 'plain')")
+    page.evaluate("() => window.ordenApp.workspace.openPage('https://example.com/', 'plain')")
     if wait_for(page, "document.querySelector('.webbar')", "a web tab's bar", 15):
         keyed(page, '.webbar button[aria-label="Back"]', "Back", "Alt+←")
         keyed(page, '.webbar button[aria-label="Forward"]', "Forward", "Alt+→")
@@ -233,15 +233,15 @@ def tooltips(page: Page) -> None:
             wrong(f"the web bar's reload says {reload!r}")
         else:
             say(reload)
-    page.evaluate("() => window.nibApp.workspace.closeActive()")
+    page.evaluate("() => window.ordenApp.workspace.closeActive()")
 
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }"
+        "async () => { const ws = window.ordenApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }"
     )
     if wait_for(page, "document.querySelector('.scroller')", "the canvas bar", 20):
         keyed(page, '.scroller button[aria-label="Select"]', "Select", "V")
         keyed(page, '.scroller button[aria-label="Undo"]', "Undo", "Ctrl+Z")
-    page.evaluate("() => window.nibApp.workspace.closeActive()")
+    page.evaluate("() => window.ordenApp.workspace.closeActive()")
     shot(page, "01-tooltips")
 
 
@@ -350,7 +350,7 @@ def several(page: Page) -> None:
     if sorted(now["picked"]) != ["Alpha", "Delta", "Gamma"]:
         wrong(f"the pick did not survive its drag: {now['picked']}")
 
-    page.evaluate("() => window.nibApp.workspace.split('row', window.nibApp.workspace.tabs.find((one) => one.shown === 'Beta').id)")
+    page.evaluate("() => window.ordenApp.workspace.split('row', window.ordenApp.workspace.tabs.find((one) => one.shown === 'Beta').id)")
     page.wait_for_timeout(500)
     page.locator(tab("Alpha")).first.click()
     page.locator(tab("Gamma")).first.click(modifiers=["Control"])
@@ -380,7 +380,7 @@ def several(page: Page) -> None:
     say(f"Ctrl+W on the pick: {after}")
     if any("Gamma" in one for one in after):
         wrong(f"Ctrl+W did not close the whole pick: {after}")
-    page.evaluate("() => window.nibApp.workspace.reopenClosed()")
+    page.evaluate("() => window.ordenApp.workspace.reopenClosed()")
     page.wait_for_timeout(500)
     again = [one["tabs"] for one in strip(page)]
     say(f"reopened: {again}")
@@ -416,7 +416,7 @@ def ctrl_drag(browser, scheme: str) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space", 40)
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space", 40)
     page.evaluate(SEED, NAMES)
     page.wait_for_timeout(500)
 
@@ -452,7 +452,7 @@ def ctrl_drag(browser, scheme: str) -> None:
 def alt_numbers(page: Page, scheme: str) -> None:
     say(f"[{scheme}] the numbers while Alt is held")
     page.emulate_media(color_scheme=scheme)
-    page.evaluate('() => window.nibApp.workspace.collapsePanes()')
+    page.evaluate('() => window.ordenApp.workspace.collapsePanes()')
     page.wait_for_timeout(400)
     page.mouse.move(640, 500)
     page.locator(".cm-content").first.click()
@@ -523,9 +523,9 @@ def main() -> int:
             page.on("pageerror", lambda error: wrong(f"page error: {error}"))
             page.on("console", lambda message: say(f"console {message.type}: {message.text[:200]}") if message.type in ("error", "warning") else None)
             page.goto(ORIGIN, wait_until="domcontentloaded")
-            if not wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space", 40):
+            if not wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space", 40):
                 shot(page, "00-no-space")
-                say(page.evaluate("() => [location.href, document.readyState, document.body.innerText.slice(0, 300), !!window.nibApp]"))
+                say(page.evaluate("() => [location.href, document.readyState, document.body.innerText.slice(0, 300), !!window.ordenApp]"))
                 raise SystemExit(1)
             say(f"seeded {page.evaluate(SEED, NAMES)}")
             page.wait_for_timeout(500)

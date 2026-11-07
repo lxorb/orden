@@ -92,8 +92,8 @@ def compare(page: Any, name: str, selector: str) -> None:
         wrong(f"{name}: what is under the sidebar shows through it, {changed} pixels")
 
 def wallpaper(page: Any) -> None:
-    wait_for(page, "window.nibApp.wallpaper", "the wallpaper store on the handle")
-    page.evaluate("() => window.nibApp.theme.select('wallpaper')")
+    wait_for(page, "window.ordenApp.wallpaper", "the wallpaper store on the handle")
+    page.evaluate("() => window.ordenApp.theme.select('wallpaper')")
     wait_for(page, f"{SHEET}.includes('--wallpaper-field')", "the wallpaper's sheet")
 
 def handheld(browser: Any, name: str, width: int, height: int, agent: str, insets: dict, theme: str, side: str) -> None:
@@ -113,11 +113,11 @@ def handheld(browser: Any, name: str, width: int, height: int, agent: str, inset
         wallpaper(page)
     wait_for(page, "document.documentElement.hasAttribute('data-drawer')", "the sidebar a drawer")
     if side == "left":
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         wait_for(page, "document.querySelector('.panels:not(.right)')?.classList.contains('open')", "the left drawer open")
         selector = ".panels:not(.right)"
     else:
-        page.evaluate("() => { window.nibApp.workspace.movePanel('outline', 'right'); window.nibApp.workspace.showPanel('outline') }")
+        page.evaluate("() => { window.ordenApp.workspace.movePanel('outline', 'right'); window.ordenApp.workspace.showPanel('outline') }")
         wait_for(page, "document.querySelector('.panels.right')?.classList.contains('open')", "the right drawer open")
         selector = ".panels.right"
     page.wait_for_timeout(700)
@@ -131,8 +131,8 @@ def desktop(browser: Any, theme: str) -> None:
     page.evaluate(SEED)
     if theme == "wallpaper":
         wallpaper(page)
-    page.evaluate("() => { window.nibApp.workspace.showPanel('tree'); window.nibApp.workspace.panel = null }")
-    wait_for(page, "window.nibApp.workspace.panel === null", "the list shut")
+    page.evaluate("() => { window.ordenApp.workspace.showPanel('tree'); window.ordenApp.workspace.panel = null }")
+    wait_for(page, "window.ordenApp.workspace.panel === null", "the list shut")
     page.mouse.move(640, 400)
     page.wait_for_timeout(400)
     page.mouse.move(0, 400)

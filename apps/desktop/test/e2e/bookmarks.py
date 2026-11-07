@@ -24,7 +24,7 @@ OTHER = "# Other\n\nA second note.\n"
 
 SEED = """
 async ([plan, other]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom(plan, root)
   await ws.noteFrom(other, root)
@@ -79,13 +79,13 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('The plan'))
           await ws.openEntry(note.path, {})
           if (ws.panel !== 'tree') ws.showPanel('tree')
         }"""
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", f"[{label}] the editor")
     page.wait_for_timeout(600)
     return page
 
@@ -94,7 +94,7 @@ def drive_groups(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const name of ['The plan.md', 'Other.md']) {
             const note = ws.notes.find((one) => one.name === name)
             ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: note.path, is_dir: false }))
@@ -144,7 +144,7 @@ def drive_groups(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const group = ws.bookmarks.list.find((one) => one.kind === 'group')
           ws.bookmarks.remove(group)
         }"""
@@ -179,7 +179,7 @@ def drive_block(browser: Browser) -> None:
     page.wait_for_timeout(600)
 
     kept = page.evaluate(
-        """() => (window.nibApp.workspace.bookmarks.list.find((one) => one.kind === 'block') ?? null)"""
+        """() => (window.ordenApp.workspace.bookmarks.list.find((one) => one.kind === 'block') ?? null)"""
     )
     say(f"[block] the bookmark: {json.dumps(kept, ensure_ascii=False)}")
     shot(page, "11-bookmarked")
@@ -191,12 +191,12 @@ def drive_block(browser: Browser) -> None:
     elif kept["text"] != "The paragraph that gets a bookmark of its own.":
         wrong(f"the bookmark cannot be read in a list: {kept['text']!r}")
 
-    if "^" not in page.evaluate("() => window.nib.state.doc.toString()"):
+    if "^" not in page.evaluate("() => window.orden.state.doc.toString()"):
         wrong("the block was not given a name to point at")
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name === 'Other.md')
           await ws.openEntry(note.path, {})
         }"""
@@ -208,8 +208,8 @@ def drive_block(browser: Browser) -> None:
 
     landed = page.evaluate(
         """() => ({
-          note: window.nibApp.workspace.active?.name ?? null,
-          line: window.nibApp.workspace.active?.line ?? null,
+          note: window.ordenApp.workspace.active?.name ?? null,
+          line: window.ordenApp.workspace.active?.line ?? null,
           marked: [...document.querySelectorAll('.cm-line.orden-landed')].map((one) =>
             one.textContent.trim().slice(0, 40),
           ),
@@ -237,7 +237,7 @@ def drive_finger(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name === 'The plan.md')
           ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: note.path, is_dir: false }))
           const group = ws.bookmarks.addGroup('Work')

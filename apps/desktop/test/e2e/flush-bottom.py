@@ -61,15 +61,15 @@ def opened(browser: Browser, on: bool) -> Page:
     return page
 
 def split(page: Page, along: str, count: int) -> None:
-    page.evaluate(f"() => window.nibApp.workspace.split('{along}')")
+    page.evaluate(f"() => window.ordenApp.workspace.split('{along}')")
     wait_for(page, f"document.querySelectorAll('[data-pane]').length === {count}", f"the {along} split")
 
 def ids(page: Page) -> list[str]:
-    return page.evaluate("() => window.nibApp.workspace.panes.all.map((one) => one.id)")
+    return page.evaluate("() => window.ordenApp.workspace.panes.all.map((one) => one.id)")
 
 def toggle(page: Page, want: bool) -> None:
-    page.evaluate("() => window.nibApp.modes.toggleFlushBottom()")
-    wait_for(page, f"window.nibApp.modes.flushBottom === {'true' if want else 'false'}", "the setting")
+    page.evaluate("() => window.ordenApp.modes.toggleFlushBottom()")
+    wait_for(page, f"window.ordenApp.modes.flushBottom === {'true' if want else 'false'}", "the setting")
 
 def drive(browser: Browser) -> None:
     page = opened(browser, on=False)
@@ -89,7 +89,7 @@ def drive(browser: Browser) -> None:
     toggle(page, True)
     grounded("turned on again, one pane", panes(page)[one["id"]])
 
-    page.evaluate("() => { window.nibApp.workspace.showPanel('tree'); window.nibApp.workspace.showPanel('outline') }")
+    page.evaluate("() => { window.ordenApp.workspace.showPanel('tree'); window.ordenApp.workspace.showPanel('outline') }")
     wait_for(page, "document.querySelectorAll('aside').length > 0", "the sidebars docked")
     docked = panes(page)[one["id"]]
     grounded("on, sidebars docked", docked)
@@ -97,26 +97,26 @@ def drive(browser: Browser) -> None:
         wrong(f"[on, sidebars docked] no sidebar beside the pane: {docked}")
     DRIVE.shot(page, "on-one-sidebars-docked")
 
-    page.evaluate("() => { window.nibApp.workspace.closePanel('left'); window.nibApp.workspace.closePanel('right') }")
-    wait_for(page, "window.nibApp.workspace.panel === null", "the sidebar hidden")
+    page.evaluate("() => { window.ordenApp.workspace.closePanel('left'); window.ordenApp.workspace.closePanel('right') }")
+    wait_for(page, "window.ordenApp.workspace.panel === null", "the sidebar hidden")
     grounded("on, sidebar hidden", panes(page)[one["id"]])
     DRIVE.shot(page, "on-one-sidebar-hidden")
 
     for theme in ("glass", "wallpaper"):
-        page.evaluate(f"() => window.nibApp.theme.select('{theme}')")
-        wait_for(page, f"window.nibApp.theme.id === '{theme}'", f"the {theme} theme")
+        page.evaluate(f"() => window.ordenApp.theme.select('{theme}')")
+        wait_for(page, f"window.ordenApp.theme.id === '{theme}'", f"the {theme} theme")
         grounded(f"on, {theme}", panes(page)[one["id"]])
         DRIVE.shot(page, f"on-one-{theme}")
-    page.evaluate("() => window.nibApp.theme.select('default')")
+    page.evaluate("() => window.ordenApp.theme.select('default')")
 
-    page.evaluate("() => window.nibApp.fullscreen.enter(window.nibApp.workspace.panes)")
-    wait_for(page, "window.nibApp.fullscreen.on", "full screen")
+    page.evaluate("() => window.ordenApp.fullscreen.enter(window.ordenApp.workspace.panes)")
+    wait_for(page, "window.ordenApp.fullscreen.on", "full screen")
     full = panes(page)[one["id"]]
     say(f"[on, full screen] {full}")
     if full["footStart"] != 0 or full["bottom"] > full["height"] + 0.5:
         wrong(f"[on, full screen] the card is {full}")
-    page.evaluate("() => window.nibApp.fullscreen.leave()")
-    wait_for(page, "!window.nibApp.fullscreen.on", "full screen left")
+    page.evaluate("() => window.ordenApp.fullscreen.leave()")
+    wait_for(page, "!window.ordenApp.fullscreen.on", "full screen left")
     page.close()
 
     page = opened(browser, on=True)
@@ -141,7 +141,7 @@ def drive(browser: Browser) -> None:
     grounded("on, row, the right pane", seen[right])
     DRIVE.shot(page, "on-row")
 
-    page.evaluate(f"() => window.nibApp.workspace.focusPane('{right}')")
+    page.evaluate(f"() => window.ordenApp.workspace.focusPane('{right}')")
     split(page, "column", 3)
     under = next(one for one in ids(page) if one not in (left, right))
     seen = panes(page)

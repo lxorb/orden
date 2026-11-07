@@ -83,7 +83,7 @@ def fresh(browser: Browser, label: str, theme: str = "light") -> Page:
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
 
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
+    wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     return page
 
 def on_a_bad_line(page: Page) -> None:
@@ -103,12 +103,12 @@ def tree_paths(page: Page) -> list[str]:
     return page.evaluate(
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-        "  return walk(window.nibApp.workspace.tree)"
+        "  return walk(window.ordenApp.workspace.tree)"
         "}"
     )
 
 def space_names(page: Page) -> list[str]:
-    return page.evaluate("() => window.nibApp.workspace.spaces.map((one) => one.name)")
+    return page.evaluate("() => window.ordenApp.workspace.spaces.map((one) => one.name)")
 
 def surface(page: Page) -> str:
     return page.evaluate(
@@ -130,7 +130,7 @@ def surface(page: Page) -> str:
 def state(page: Page) -> str:
     return page.evaluate(
         "() => {"
-        "  const app = window.nibApp;"
+        "  const app = window.ordenApp;"
         "  return JSON.stringify({"
         "    signedIn: app.account.signedIn,"
         "    settling: app.account.settling,"
@@ -149,14 +149,14 @@ WATCH = """
 () => {
   window.__nib = []
   const tick = () => {
-    const store = window.nibApp.arriving
+    const store = window.ordenApp.arriving
     window.__nib.push([
       Math.round(performance.now()),
       store.showing ? 1 : 0,
       document.querySelector('.arriving') ? 1 : 0,
-      window.nibApp.account.signedIn ? 1 : 0,
-      window.nibApp.account.settling ? 1 : 0,
-      window.nibApp.sync.status,
+      window.ordenApp.account.signedIn ? 1 : 0,
+      window.ordenApp.account.settling ? 1 : 0,
+      window.ordenApp.sync.status,
       // What the foot actually said, which is the thing under test: the store
       // being right and the row being wrong are two different failures.
       (document.querySelector('aside .foot .coming')?.innerText ?? '').trim(),
@@ -258,17 +258,17 @@ def main() -> int:
         page = fresh(browser, "reader")
         on_a_bad_line(page)
 
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_selector("aside .foot", timeout=10_000)
 
         page.evaluate(WATCH)
-        page.evaluate("() => (window.nibApp.account.open = true)")
+        page.evaluate("() => (window.ordenApp.account.open = true)")
         page.locator("input[type=email]").wait_for(timeout=10_000)
         sign_in(page, worker, "reader", PERSON)
 
         say("waiting for the state to go up")
         try:
-            wait_for(page, "() => window.nibApp.arriving.showing", "the state", 30)
+            wait_for(page, "() => window.ordenApp.arriving.showing", "the state", 30)
         except SystemExit:
             raise SystemExit(
                 f"the state never went up. the app says: {state(page)}\n"
@@ -298,7 +298,7 @@ def main() -> int:
         say("waiting for the state to go")
         wait_for(
             page,
-            "() => !window.nibApp.arriving.showing",
+            "() => !window.ordenApp.arriving.showing",
             "the state to go",
             patience=90,
         )
@@ -317,7 +317,7 @@ def main() -> int:
         page.screenshot(path=str(SHOTS / "signed-in.png"))
         say("photographed the app once the state had lifted")
 
-        counted = page.evaluate("() => window.nibApp.arriving.done")
+        counted = page.evaluate("() => window.ordenApp.arriving.done")
         if counted != len(wanted):
             wrong(f"the state counted {counted} of the {len(wanted)} notes")
         else:
@@ -326,14 +326,14 @@ def main() -> int:
         for name in SPACES:
             page.evaluate(
                 "(wanted) => {"
-                "  const space = window.nibApp.workspace.spaces.find((one) => one.name === wanted);"
-                "  if (space) window.nibApp.workspace.showSpace(space.id)"
+                "  const space = window.ordenApp.workspace.spaces.find((one) => one.name === wanted);"
+                "  if (space) window.ordenApp.workspace.showSpace(space.id)"
                 "}",
                 name,
             )
             wait_for(
                 page,
-                "() => window.nibApp.workspace.tree?.path === "
+                "() => window.ordenApp.workspace.tree?.path === "
                 + json.dumps(f"/{name}"),
                 f"{name}'s file list",
             )
@@ -345,17 +345,17 @@ def main() -> int:
             else:
                 say(f"{name} holds all {len(theirs)} of its notes, with no reload")
 
-        page.evaluate("() => window.nibApp.sync.nudge()")
+        page.evaluate("() => window.ordenApp.sync.nudge()")
         page.wait_for_timeout(1500)
         if page.locator(".arriving").count() or page.evaluate(
-            "() => window.nibApp.arriving.showing"
+            "() => window.ordenApp.arriving.showing"
         ):
             wrong("a later pass put the state back up")
         else:
             say("a later pass says nothing: the sync light is the whole report")
 
-        page.evaluate("() => window.nibApp.account.signOut()")
-        wait_for(page, "() => !window.nibApp.account.signedIn", "the sign-out")
+        page.evaluate("() => window.ordenApp.account.signOut()")
+        wait_for(page, "() => !window.ordenApp.account.signedIn", "the sign-out")
         page.wait_for_timeout(400)
         if page.locator(".arriving").count():
             wrong("signing out left the state up")

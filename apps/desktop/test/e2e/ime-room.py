@@ -9,12 +9,12 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 ELSEWHERE = """
 ([at, insert]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   ws.documentAt(ws.active.path).live.arrived([{ from: at, to: at, insert }])
 }
 """
 
-WORDS = "() => window.nibApp.workspace.documentAt(window.nibApp.workspace.active.path).live.text.toString()"
+WORDS = "() => window.ordenApp.workspace.documentAt(window.ordenApp.workspace.active.path).live.text.toString()"
 SHOWN = "() => document.querySelector('.cm-content').innerText.trim()"
 
 def composing(page: Page, line: str, at: int, other: int, insert: str, expected: str, label: str) -> None:

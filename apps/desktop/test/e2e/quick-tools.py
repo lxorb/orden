@@ -18,7 +18,7 @@ PLAN = "# Plan\n\nThe first line.\n\nThe heron line we ask about.\n\nThe last li
 
 SETUP = """
 async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   if (!base) return ai.ready
   const made = ai.add('compatible')
@@ -28,17 +28,17 @@ async (base) => {
 }
 """ % MODEL
 
-ACTIVE = "() => window.nibApp.workspace.active?.path ?? ''"
-TEXT = "() => window.nibApp.workspace.active?.note.latest ?? ''"
+ACTIVE = "() => window.ordenApp.workspace.active?.path ?? ''"
+TEXT = "() => window.ordenApp.workspace.active?.note.latest ?? ''"
 PAD_TEXT = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const tab = ws.tabs.find((one) => /Scratchpad\\.md$/.test(one.path ?? ''))
   if (tab) return tab.note.latest
   return (await ws.noteText('/.nib/Scratchpad.md')) ?? ''
 }
 """
-FOCUS_NOTE = "() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()"
+FOCUS_NOTE = "() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()"
 PAD_TAB = '[data-tab="scratchpad"]'
 CARD = "[data-scratchpad-card] .cm-content"
 
@@ -99,7 +99,7 @@ def twice_ctrl(page: Page) -> None:
     page.keyboard.press("Control")
     page.keyboard.press("Control")
 
-CHATS = "() => window.nibApp.aiChats()"
+CHATS = "() => window.ordenApp.aiChats()"
 
 def last_messages() -> str:
     if not Model.seen:
@@ -175,7 +175,7 @@ def asked(page: Page) -> None:
     DRIVE.open_note(page, "Plan")
     page.evaluate(
         """() => {
-          const view = window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)
+          const view = window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)
           const text = view.state.doc.toString()
           const from = text.indexOf('heron line')
           view.dispatch({ selection: { anchor: from, head: from + 'heron line'.length } })
@@ -194,7 +194,7 @@ def asked(page: Page) -> None:
     page.keyboard.type("What is this?")
     page.keyboard.press("Enter")
     listed = page.evaluate(
-        "(before) => new Promise((done) => setTimeout(done, 50)).then(() => window.nibApp.aiChats())"
+        "(before) => new Promise((done) => setTimeout(done, 50)).then(() => window.ordenApp.aiChats())"
         ".then((chat) => chat.every.some((one) => one.id !== before && (chat.running.includes(one.id)"
         " || one.words.includes('What is this?'))))",
         open_before,
@@ -244,7 +244,7 @@ def asked(page: Page) -> None:
 
     page.evaluate(FOCUS_NOTE)
     page.keyboard.press("Control+D")
-    wait_for(page, "!window.nibApp.workspace.active", "nothing in front")
+    wait_for(page, "!window.ordenApp.workspace.active", "nothing in front")
     Model.words = ["Jotted."]
     twice_ctrl(page)
     wait_for(page, "document.querySelector('.quick textarea')", "the field")

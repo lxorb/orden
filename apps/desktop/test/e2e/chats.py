@@ -47,9 +47,9 @@ def composer_type(page: Page, words: str) -> None:
 
 def desktop(page: Page, scheme: str) -> None:
     DRIVE.open(page)
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.evaluate(START)
-    page.evaluate("() => window.nibApp.workspace.showPanel('chats')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
     page.evaluate(OPEN, THESIS)
     if not wait_for(page, "document.querySelectorAll('.chat-tab .message').length > 4", "the chat's rows"):
         return
@@ -214,7 +214,7 @@ def big(page: Page) -> None:
 
 def phone(page: Page, scheme: str) -> None:
     DRIVE.open(page)
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.evaluate(START)
     page.evaluate(OPEN, THESIS)
     if not wait_for(page, "document.querySelectorAll('.chat-tab .message').length > 4", "the chat's rows"):

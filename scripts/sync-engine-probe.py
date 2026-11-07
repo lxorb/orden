@@ -306,7 +306,7 @@ class Computer:
     def sign_in(self) -> None:
         self.ask(f"localStorage.setItem('orden:session', {json.dumps(self.token)}); location.reload(); true")
         time.sleep(4)
-        self.wait("window.nibApp?.sync.version === 2 && !!window.nibApp.sync.engine", "v2 to start")
+        self.wait("window.ordenApp?.sync.version === 2 && !!window.ordenApp.sync.engine", "v2 to start")
 
     def root(self) -> pathlib.Path:
         return self.spaces / SPACE
@@ -314,7 +314,7 @@ class Computer:
     def write_line(self, words: str) -> None:
         opened = self.ask(
             """(async () => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               const space = ws.spaces.find((one) => one.name === %s)
               if (ws.activeSpaceId !== space.id) await ws.selectSpace(space.id)
               await ws.loadTree()
@@ -330,7 +330,7 @@ class Computer:
         time.sleep(1.5)
         said = self.ask(
             """(async () => {
-              const app = window.nibApp
+              const app = window.ordenApp
               const view = app.views.of(app.workspace.panes.focusedId)
               if (!view) return 'no editor'
               view.dispatch({ changes: { from: view.state.doc.length, insert: %s }, userEvent: 'input.type' })
@@ -344,9 +344,9 @@ class Computer:
         time.sleep(1.5)
 
     def settled(self) -> None:
-        self.ask("window.nibApp.sync.nudge(); true")
+        self.ask("window.ordenApp.sync.nudge(); true")
         time.sleep(3)
-        self.wait("window.nibApp.sync.status === 'idle' && !window.nibApp.sync.passing", "a quiet pass", 120)
+        self.wait("window.ordenApp.sync.status === 'idle' && !window.ordenApp.sync.passing", "a quiet pass", 120)
 
     def files(self) -> dict[str, bytes]:
         out: dict[str, bytes] = {}
@@ -389,7 +389,7 @@ def main() -> int:
         a.launch()
         a.sign_in()
         a.wait(
-            f"!!window.nibApp.sync.remoteIdFor(window.nibApp.workspace.spaces.find((one) => one.name === {json.dumps(SPACE)})?.root ?? '')",
+            f"!!window.ordenApp.sync.remoteIdFor(window.ordenApp.workspace.spaces.find((one) => one.name === {json.dumps(SPACE)})?.root ?? '')",
             "the space on the account",
         )
         a.settled()
@@ -403,7 +403,7 @@ def main() -> int:
             held = b.files()
             if held.get(NOTE) == OPENING.encode() and held.get("photo.png") == PICTURE:
                 break
-            b.ask("window.nibApp.sync.nudge(); true")
+            b.ask("window.ordenApp.sync.nudge(); true")
             time.sleep(1)
         held = b.files()
         measured["B signed in to both files on its disk, s"] = round(time.perf_counter() - started, 1)
@@ -415,8 +415,8 @@ def main() -> int:
 
         say("B's network goes; both write a line at the end of the note")
         road.cut()
-        b.ask("window.nibApp.sync.nudge(); true")
-        light = b.wait("window.nibApp.sync.status === 'offline' ? 'offline' : ''", "the hollow light", 60)
+        b.ask("window.ordenApp.sync.nudge(); true")
+        light = b.wait("window.ordenApp.sync.status === 'offline' ? 'offline' : ''", "the hollow light", 60)
         measured["B's light while away"] = light
         dot = b.ask("document.querySelector('.act.offline') ? 'hollow dot drawn' : 'no hollow dot'")
         measured["B's corner"] = dot
@@ -434,7 +434,7 @@ def main() -> int:
             if all(all(line in note for line in expected) for note in notes):
                 break
             for one in computers:
-                one.ask("window.nibApp.sync.nudge(); true")
+                one.ask("window.ordenApp.sync.nudge(); true")
             time.sleep(1)
         measured["back online to both lines on both disks, s"] = round(time.perf_counter() - started, 1)
         for one in computers:
@@ -449,15 +449,15 @@ def main() -> int:
             copies = [name for name in one.files() if COPY in name]
             if copies:
                 wrong(f"{one.label} has a copy beside the note: {copies}")
-            held_notes = one.ask("(window.nibApp.sync.engine?.heldNotes ?? []).length")
+            held_notes = one.ask("(window.ordenApp.sync.engine?.heldNotes ?? []).length")
             if held_notes:
                 wrong(f"{one.label} asks about {held_notes} note(s)")
-            status = one.ask("window.nibApp.sync.status")
+            status = one.ask("window.ordenApp.sync.status")
             if status != "idle":
                 wrong(f"{one.label}'s light says {status}")
 
         space_id = a.ask(
-            f"window.nibApp.sync.remoteIdFor(window.nibApp.workspace.spaces.find((one) => one.name === {json.dumps(SPACE)}).root)"
+            f"window.ordenApp.sync.remoteIdFor(window.ordenApp.workspace.spaces.find((one) => one.name === {json.dumps(SPACE)}).root)"
         )
         listed = api(f"/v1/spaces/{space_id}/changes?since=0", token_a)
         names = [one["path"] for one in listed.get("notes", []) if not one.get("deleted")] if isinstance(listed, dict) else []

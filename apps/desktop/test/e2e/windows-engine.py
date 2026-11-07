@@ -63,14 +63,14 @@ def main() -> int:
             page.set_default_timeout(30000)
             page.on("pageerror", lambda error: failed(f"[{label}] page error: {error}"))
             page.goto(ORIGIN, wait_until="domcontentloaded")
-            wait_for(page, "() => !!window.nibApp?.account.user", f"[{label}] the account")
+            wait_for(page, "() => !!window.ordenApp?.account.user", f"[{label}] the account")
             wait_for(
                 page,
-                f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+                f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
                 f"[{label}] the space",
             )
             page.evaluate(
-                "(name) => { const ws = window.nibApp.workspace;"
+                "(name) => { const ws = window.ordenApp.workspace;"
                 " ws.showSpace(ws.spaces.find((one) => one.name === name).id) }",
                 SPACE,
             )
@@ -80,26 +80,26 @@ def main() -> int:
         path = f"/{SPACE}/{ITEM}"
         listed = (
             "() => { const walk = (e) => (e ? [e.path, ...(e.children ?? []).flatMap(walk)] : []);"
-            f" return walk(window.nibApp.workspace.tree).includes({json.dumps(path)}) }}"
+            f" return walk(window.ordenApp.workspace.tree).includes({json.dumps(path)}) }}"
         )
         wait_for(a, listed, "[A] the note")
-        wait_for(a, "() => !!window.nibApp.sync.engine?.engine", "[A] the engine")
+        wait_for(a, "() => !!window.ordenApp.sync.engine?.engine", "[A] the engine")
         b = window("B")
         wait_for(b, listed, "[B] the note")
 
-        engines = "() => !!window.nibApp.sync.engine?.engine"
+        engines = "() => !!window.ordenApp.sync.engine?.engine"
         if b.evaluate(engines):
             failed("the second window runs an engine as well")
-        wait_for(b, "() => window.nibApp.sync.status !== 'off'", "[B] the light said over")
+        wait_for(b, "() => window.ordenApp.sync.status !== 'off'", "[B] the light said over")
         wait_for(
             b,
-            f"() => window.nibApp.sync.remoteIdFor({json.dumps('/' + SPACE)}) === {json.dumps(space['id'])}",
+            f"() => window.ordenApp.sync.remoteIdFor({json.dumps('/' + SPACE)}) === {json.dumps(space['id'])}",
             "[B] which space is which, from the engine's window",
         )
         say("one engine, and the other window hears the light and the rows")
 
         for page in (a, b):
-            page.evaluate("(p) => window.nibApp.workspace.openEntry(p)", path)
+            page.evaluate("(p) => window.ordenApp.workspace.openEntry(p)", path)
             wait_for(page, "() => !!document.querySelector('.cm-content')", "the editor")
 
         def account() -> str:
@@ -116,25 +116,25 @@ def main() -> int:
         type_at_end(b, "FROM-B ")
         if not on_account("FROM-B"):
             failed(f"what the second window typed never reached the account: {account()!r}")
-        wait_for(a, "() => window.nibApp.workspace.active.note.latest.includes('FROM-B')", "[A] B's words")
+        wait_for(a, "() => window.ordenApp.workspace.active.note.latest.includes('FROM-B')", "[A] B's words")
         type_at_end(a, "FROM-A ")
         if not on_account("FROM-A"):
             failed(f"what the engine's window typed never reached the account: {account()!r}")
-        wait_for(b, "() => window.nibApp.workspace.active.note.latest.includes('FROM-A')", "[B] A's words")
+        wait_for(b, "() => window.ordenApp.workspace.active.note.latest.includes('FROM-A')", "[B] A's words")
         if "FROM-B" not in account():
             failed(f"B's words went when A's arrived: {account()!r}")
         say(f"both typed: {account()!r}")
 
         b.bring_to_front()
         b.evaluate(
-            "async (f) => { const ws = window.nibApp.workspace;"
+            "async (f) => { const ws = window.ordenApp.workspace;"
             " await ws.createNote(f, 'Fresh one.md');"
             " await ws.fileCame(f + '/Fresh one.md', 'file');"
             " await ws.fileCame(f + '/Fresh one.md', 'file') }",
             f"/{SPACE}",
         )
         made = (
-            "() => [...window.nibApp.sync.engine.engine.core.spaces.values()]"
+            "() => [...window.ordenApp.sync.engine.engine.core.spaces.values()]"
             ".flatMap((one) => [...one.entries.values()])"
             ".filter((one) => one.name.startsWith('Fresh') && !one.deleted && one.seq !== null)"
             ".map((one) => one.name)"
@@ -149,8 +149,8 @@ def main() -> int:
         a.close(run_before_unload=True)
         wait_for(b, engines, "[B] the engine, handed over")
         say("the first window closed, the second runs the engine")
-        b.evaluate("(p) => window.nibApp.workspace.openEntry(p)", path)
-        wait_for(b, "() => window.nibApp.workspace.active.note.latest.includes('FROM-A')", "[B] the note")
+        b.evaluate("(p) => window.ordenApp.workspace.openEntry(p)", path)
+        wait_for(b, "() => window.ordenApp.workspace.active.note.latest.includes('FROM-A')", "[B] the note")
         type_at_end(b, "AFTER-HANDOVER ")
         if not on_account("AFTER-HANDOVER"):
             failed(f"after the hand-over nothing reached the account: {account()!r}")
@@ -161,9 +161,9 @@ def main() -> int:
 
         c = window("C")
         c.bring_to_front()
-        c.evaluate("() => window.nibApp.account.signOut()")
-        wait_for(b, "() => !window.nibApp.account.user", "[B] signed out with the other window")
-        wait_for(b, "() => !window.nibApp.sync.engine?.engine", "[B] the engine gone")
+        c.evaluate("() => window.ordenApp.account.signOut()")
+        wait_for(b, "() => !window.ordenApp.account.user", "[B] signed out with the other window")
+        wait_for(b, "() => !window.ordenApp.sync.engine?.engine", "[B] the engine gone")
         say("signed out in the window with no engine: every window is")
         context.close()
     for one in wrong:

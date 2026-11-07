@@ -9,7 +9,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 EDGE = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   // The card's own element, docked in the right side on a desktop and the one note on a
   // phone: the side showing it, and it drawn.
   const card = document.querySelector('[data-scratchpad-card]')
@@ -63,7 +63,7 @@ def desktop(browser: Browser) -> None:
     DRIVE.seed(page, "# Kestrel notes\n\n## What went in\n\nA kestrel.\n\n## Wind\n\nSteady.\n")
     DRIVE.open_note(page, "Kestrel")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
     shot(page, "01-outline")
 
@@ -98,19 +98,19 @@ def desktop(browser: Browser) -> None:
     if not now["pad"] or now["side"] is not None:
         wrong(f"the right side did not open again on the card it showed: {now}")
 
-    page.evaluate("() => window.nibApp.workspace.closeRight()")
+    page.evaluate("() => window.ordenApp.workspace.closeRight()")
     page.wait_for_timeout(400)
     if edge(page)["pad"]:
         wrong("the card stayed when the side shut")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(300)
     page.evaluate(f"() => {PRESS_PAD}")
     page.wait_for_timeout(500)
-    page.evaluate("() => window.nibApp.workspace.flush?.()")
+    page.evaluate("() => window.ordenApp.workspace.flush?.()")
     page.wait_for_timeout(400)
     page.reload(wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp?.workspace.activeSpace", "the app after a reload")
+    wait_for(page, "() => !!window.ordenApp?.workspace.activeSpace", "the app after a reload")
     page.wait_for_timeout(1500)
     now = edge(page)
     say(f"after a reload: {now}")
@@ -135,11 +135,11 @@ def phone(browser: Browser) -> None:
     DRIVE.seed(page, "# Kestrel notes\n\n## What went in\n\nA kestrel.\n")
     DRIVE.open_note(page, "Kestrel")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
     shot(page, "05-phone-drawer")
 
-    page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
+    page.evaluate("() => window.ordenApp.workspace.toggleSidebar('left')")
     wait_for(page, f"document.querySelector('{YOU}')", "the drawer's head")
     page.wait_for_timeout(400)
     page.locator(YOU).tap()
@@ -153,7 +153,7 @@ def phone(browser: Browser) -> None:
         wrong(f"on a phone the drawer and the card stood together: {now}, drawer open {drawer}")
     shot(page, "06-phone-card")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
     now = edge(page)
     if now != {"side": "outline", "kept": "outline", "pad": False}:

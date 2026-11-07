@@ -12,16 +12,16 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 STATE = """
 () => ({
-  depth: window.nibApp.overlays.depth,
-  settings: window.nibApp.settings.open,
-  store: window.nibApp.themeStore.open,
+  depth: window.ordenApp.overlays.depth,
+  settings: window.ordenApp.settings.open,
+  store: window.ordenApp.themeStore.open,
 })
 """
 
 BROWSE = """
 () => {
-  window.nibApp.settings.show('appearance')
-  window.nibApp.themeStore.show()
+  window.ordenApp.settings.show('appearance')
+  window.ordenApp.themeStore.show()
 }
 """
 
@@ -44,7 +44,7 @@ def shortcut_over_a_menu(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[menu] page error: {error}"))
     DRIVE.open(page)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     wait_for(page, f"({MENU})()", "a row in the file list to hold a menu")
     wait_for(page, f"({MENUS})() > 0", "the row's menu")
     page.keyboard.press("Control+Comma")
@@ -75,10 +75,10 @@ def drive(browser: Browser, phone: bool) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{kind}] page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.themeStore", "the theme store")
+    wait_for(page, "window.ordenApp.themeStore", "the theme store")
 
     page.evaluate(BROWSE)
-    wait_for(page, "window.nibApp.overlays.depth === 2", "Settings and the theme store, both up")
+    wait_for(page, "window.ordenApp.overlays.depth === 2", "Settings and the theme store, both up")
     say(f"[{kind}] Settings and the store at once: {state(page)}")
 
     if phone:

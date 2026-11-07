@@ -9,14 +9,14 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 NOTE = "# Chapter one\n\nThe first words.\n\n- a list item\n  - a child of it\n  - another child\n- the last item\n\n# Chapter two\n\nThe second chapter.\n"
 
-DOC = "() => window.nib.state.doc.toString()"
-MODE = "() => window.nibApp.modes.vimModeOf(window.nib)"
+DOC = "() => window.orden.state.doc.toString()"
+MODE = "() => window.ordenApp.modes.vimModeOf(window.orden)"
 FOLDED = "() => document.querySelectorAll('.orden-folded').length"
 IN_NOTE = "() => !!document.activeElement?.closest('.cm-content')"
 
 CARET_TO = """
 (words) => {
-  const view = window.nib
+  const view = window.orden
   const at = view.state.doc.toString().indexOf(words)
   view.dispatch({ selection: { anchor: at + 2 } })
   view.focus()
@@ -46,7 +46,7 @@ def drive(browser: Browser) -> None:
     DRIVE.seed(page, NOTE)
     DRIVE.open_note(page, "Chapter one")
 
-    page.evaluate("() => window.nibApp.modes.setVimKeys(true)")
+    page.evaluate("() => window.ordenApp.modes.setVimKeys(true)")
     wait_for(page, "document.querySelector('.cm-editor.orden-vim')", "modal editing")
 
     caret_to(page, "Chapter one")

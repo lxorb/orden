@@ -51,7 +51,7 @@ async ([notePath, note, longPath, long]) => {
   // keep in step with web/store.ts: the page has already opened the database by the
   // time this runs, so the stores are there.
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib')
+    const request = indexedDB.open('orden')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -150,21 +150,21 @@ def wait_for(page: Page, script: str, what: str, patience: float = 30):
 
 LISTED = """(path) => {
   const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : [])
-  return walk(window.nibApp.workspace.tree).includes(path)
+  return walk(window.ordenApp.workspace.tree).includes(path)
 }
 """
 
 def opened(page: Page, path: str) -> None:
     wait_for(page, f"() => ({LISTED})({json.dumps(path)})", f"{path} to be listed")
-    page.evaluate(f"() => window.nibApp.workspace.open({json.dumps(path)})")
-    wait_for(page, "() => !!window.nib && !!document.querySelector('.cm-content')", f"{path} to open")
+    page.evaluate(f"() => window.ordenApp.workspace.open({json.dumps(path)})")
+    wait_for(page, "() => !!window.orden && !!document.querySelector('.cm-content')", f"{path} to open")
     page.wait_for_timeout(600)
 
 def select(page: Page, anchor: int, head: int) -> list[dict]:
     page.evaluate(
         "([anchor, head]) => {"
-        "  window.nib.focus();"
-        "  window.nib.dispatch({ selection: { anchor, head }, scrollIntoView: true })"
+        "  window.orden.focus();"
+        "  window.orden.dispatch({ selection: { anchor, head }, scrollIntoView: true })"
         "}",
         [anchor, head],
     )
@@ -174,7 +174,7 @@ def select(page: Page, anchor: int, head: int) -> list[dict]:
 
 def at(page: Page, words: str, offset: int = 0) -> int:
     found = page.evaluate(
-        "(words) => window.nib.state.doc.toString().indexOf(words)",
+        "(words) => window.orden.state.doc.toString().indexOf(words)",
         words,
     )
     if found < 0:
@@ -203,7 +203,7 @@ def shot(page: Page, name: str, blocks: list[dict], pad: int = 14) -> None:
 
 def closeup(page: Page, name: str, room: int = 40) -> None:
     end = page.evaluate(
-        "() => { const at = window.nib.coordsAtPos(window.nib.state.selection.main.to);"
+        "() => { const at = window.orden.coordsAtPos(window.orden.state.selection.main.to);"
         " return at && { left: at.left, top: at.top, bottom: at.bottom } }"
     )
     if not end:
@@ -249,12 +249,12 @@ def behaves(page: Page) -> None:
     box = blocks[0]
     page.mouse.click(box["left"] + box["width"] / 2, box["top"] + box["height"] / 2)
     page.wait_for_timeout(200)
-    if not page.evaluate("() => window.nib.state.selection.main.empty"):
+    if not page.evaluate("() => window.orden.state.selection.main.empty"):
         raise SystemExit("a click inside the selection did not reach the text")
     say("a click inside the block reaches the text under it")
 
 def scheme(page: Page, which: str) -> None:
-    page.evaluate(f"() => window.nibApp.theme.select({json.dumps(which)})")
+    page.evaluate(f"() => window.ordenApp.theme.select({json.dumps(which)})")
     page.wait_for_timeout(300)
 
 def frames(page: Page) -> dict[str, list[float]]:
@@ -269,7 +269,7 @@ def frames(page: Page) -> dict[str, list[float]]:
 
     measured: dict[str, list[float]] = {}
     for label, pressed in (("idle", False), ("dragging", True)):
-        page.evaluate("() => window.nib.dispatch({ selection: { anchor: 0 }, scrollIntoView: true })")
+        page.evaluate("() => window.orden.dispatch({ selection: { anchor: 0 }, scrollIntoView: true })")
         page.wait_for_timeout(300)
         page.mouse.move(x, top)
         if pressed:
@@ -290,8 +290,8 @@ def frames(page: Page) -> dict[str, list[float]]:
 
         measured[label] = page.evaluate("() => window.__frames.slice(1)")
         lines = page.evaluate(
-            "() => { const { from, to } = window.nib.state.selection.main;"
-            " return window.nib.state.doc.lineAt(to).number - window.nib.state.doc.lineAt(from).number }"
+            "() => { const { from, to } = window.orden.state.selection.main;"
+            " return window.orden.state.doc.lineAt(to).number - window.orden.state.doc.lineAt(from).number }"
         )
         drawn = page.evaluate(DRAWN)
         say(
@@ -336,11 +336,11 @@ def main() -> int:
             page = context.new_page()
             page.on("pageerror", lambda error: say(f"page error: {error}"))
             page.goto(origin, wait_until="domcontentloaded")
-            wait_for(page, "() => !!window.nibApp", "the app to start")
-            wait_for(page, "() => !!window.nibApp.workspace.activeSpace", "the space")
+            wait_for(page, "() => !!window.ordenApp", "the app to start")
+            wait_for(page, "() => !!window.ordenApp.workspace.activeSpace", "the space")
             page.evaluate(SEED, [NOTE_PATH, NOTE, "/Notes/Long.md", LONG])
             page.reload(wait_until="domcontentloaded")
-            wait_for(page, "() => !!window.nibApp", "the app to start again")
+            wait_for(page, "() => !!window.ordenApp", "the app to start again")
             opened(page, NOTE_PATH)
             radius = page.evaluate(
                 "() => getComputedStyle(document.querySelector('.cm-content'))"
@@ -388,18 +388,18 @@ def main() -> int:
                 start = at(page, "עברית")
                 shot(page, f"{name}-right-to-left", select(page, start, start + 30))
 
-            page.evaluate("() => window.nibApp.modes.toggleRightToLeft(window.nib)")
+            page.evaluate("() => window.ordenApp.modes.toggleRightToLeft(window.orden)")
             page.wait_for_timeout(300)
             start = at(page, "עברית")
             shot(page, "light-right-to-left-mode", select(page, start - 40, start + 30))
-            page.evaluate("() => window.nibApp.modes.toggleRightToLeft(window.nib)")
+            page.evaluate("() => window.ordenApp.modes.toggleRightToLeft(window.orden)")
 
             scheme(page, "dark")
-            page.evaluate("() => window.nibApp.modes.setZoom(1.6)")
+            page.evaluate("() => window.ordenApp.modes.setZoom(1.6)")
             page.wait_for_timeout(400)
             start = at(page, "long enough that")
             shot(page, "dark-zoomed", select(page, start, start + 60))
-            page.evaluate("() => window.nibApp.modes.setZoom(1)")
+            page.evaluate("() => window.ordenApp.modes.setZoom(1)")
 
             behaves(page)
 

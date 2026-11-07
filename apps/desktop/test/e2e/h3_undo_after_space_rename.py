@@ -5,7 +5,7 @@ say, wrong = DRIVE.say, DRIVE.wrong
 
 JS = r"""
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const { invoke } = await import('/src/lib/tauri.ts')
   const { modes } = await import('/src/lib/modes.svelte.ts')
   const listing = async (base) => {

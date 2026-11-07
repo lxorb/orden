@@ -22,12 +22,12 @@ A [[Wiki]] link
 end
 """
 
-DOC = "() => window.nib.state.doc.toString()"
-HEAD = "() => window.nib.state.selection.main.head"
+DOC = "() => window.orden.state.doc.toString()"
+HEAD = "() => window.orden.state.selection.main.head"
 
 PLACE = """
 ([words, offset]) => {
-  const view = window.nib
+  const view = window.orden
   const at = view.state.doc.toString().indexOf(words) + offset
   view.dispatch({ selection: { anchor: at } })
   view.focus()
@@ -37,7 +37,7 @@ PLACE = """
 
 PUT_BACK = """
 (text) => {
-  const view = window.nib
+  const view = window.orden
   view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } })
 }
 """

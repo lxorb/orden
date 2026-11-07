@@ -31,7 +31,7 @@ def drive(browser: Browser) -> None:
     texts = ["# Heron\n\nThe target.\n"] + [f"# Bird {n:03d}\n\nSee [[Heron]] for the line about bird {n}.\n" for n in range(400)]
     DRIVE.seed(page, *texts)
     DRIVE.open_note(page, "Heron")
-    page.evaluate("() => window.nibApp.workspace.showPanel('links')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('links')")
     wait_for(page, "document.querySelectorAll('.hit').length > 5", "the backlinks")
     page.wait_for_timeout(500)
     say(f"at the top: {page.evaluate(HOLES)}")

@@ -122,7 +122,7 @@ The end.
 
 SEED = """
 async ([note, name]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith(name))
@@ -157,9 +157,9 @@ def typed_lands(page: Page, words: str) -> bool:
     try:
         page.wait_for_function(
             """(words) => {
-              const end = window.nib.state.doc.length
-              window.nib.dispatch({ changes: { from: end, insert: words } })
-              return window.nib.state.doc.toString().endsWith(words)
+              const end = window.orden.state.doc.length
+              window.orden.dispatch({ changes: { from: end, insert: words } })
+              return window.orden.state.doc.toString().endsWith(words)
             }""",
             arg=words,
             timeout=3000,
@@ -172,9 +172,9 @@ def typed_lands(page: Page, words: str) -> bool:
 def fence(page: Page) -> None:
     page.evaluate(
         """() => {
-          const at = window.nib.state.doc.toString().indexOf("console.log('started')")
-          window.nib.focus()
-          window.nib.dispatch({ selection: { anchor: at + 3 } })
+          const at = window.orden.state.doc.toString().indexOf("console.log('started')")
+          window.orden.focus()
+          window.orden.dispatch({ selection: { anchor: at + 3 } })
         }"""
     )
     page.wait_for_timeout(300)
@@ -294,7 +294,7 @@ def drive(browser: Browser) -> None:
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page, origin=ORIGIN)
     say(f"the space holds {page.evaluate(SEED, [NOTE, 'Endless'])}")
-    DRIVE.wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    DRIVE.wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
 
     fence(page)

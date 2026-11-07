@@ -10,7 +10,7 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
-WS = "window.nibApp.workspace"
+WS = "window.ordenApp.workspace"
 SEED = int(os.environ.get("FUZZ_SEED", "1"))
 OPS = int(os.environ.get("FUZZ_OPS", "300"))
 

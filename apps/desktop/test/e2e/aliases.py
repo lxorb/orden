@@ -14,7 +14,7 @@ OTHER = "# Other\n\nSee [[Roadmap]] and [[The plan]] and [[Nothing]].\n"
 
 SEED = """
 async ([plan, other]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom(plan, root)
   await ws.noteFrom(other, root)
@@ -26,13 +26,13 @@ async ([plan, other]) => {
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith(starts))
           await ws.openEntry(note.path, { activate: true })
         }""",
         starts,
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
 
 LINKS = """
@@ -63,7 +63,7 @@ def drive(browser: Browser) -> None:
         wrong("a name nothing answers to is no longer drawn as one")
 
     open_note(page, "Plan")
-    page.evaluate("() => window.nibApp.workspace.showPanel('links')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('links')")
     page.wait_for_timeout(900)
     shot(page, "02-backlinks")
     panel = page.evaluate(
@@ -76,12 +76,12 @@ def drive(browser: Browser) -> None:
     open_note(page, "Other")
     page.evaluate(
         """() => {
-          const doc = window.nib.state.doc
-          window.nib.dispatch({
+          const doc = window.orden.state.doc
+          window.orden.dispatch({
             changes: { from: doc.length, insert: '\\n\\n' },
             selection: { anchor: doc.length + 2 },
           })
-          window.nib.focus()
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(300)
@@ -104,7 +104,7 @@ def drive(browser: Browser) -> None:
 
     page.keyboard.press("Enter")
     page.wait_for_timeout(500)
-    written = page.evaluate("() => window.nib.state.doc.toString()")
+    written = page.evaluate("() => window.orden.state.doc.toString()")
     if "[[Roadmap]]" not in written:
         wrong(f"choosing the alias did not write it: {json.dumps(written[-40:])}")
     shot(page, "04-written")

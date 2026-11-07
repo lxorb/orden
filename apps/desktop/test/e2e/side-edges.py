@@ -7,7 +7,7 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-WS = "window.nibApp.workspace"
+WS = "window.ordenApp.workspace"
 
 TABLET_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -191,7 +191,7 @@ def in_bar(page: Any, state: str) -> None:
             wrong(f"[{state}] the {side} sidebar has a button of its own: {found}")
 
 def flip(page: Any, on: bool) -> None:
-    page.evaluate("() => window.nibApp.settings.show('appearance')")
+    page.evaluate("() => window.ordenApp.settings.show('appearance')")
     row = page.locator(".orden-setting", has_text=SETTING).first
     row.wait_for(timeout=5000)
     switch = row.locator("[role=switch]")

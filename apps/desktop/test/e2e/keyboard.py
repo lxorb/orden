@@ -25,7 +25,7 @@ DEVICES = [
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const join = (dir, name) => (dir.endsWith('/') ? dir + name : dir + '/' + name)
 
@@ -99,7 +99,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     DRIVE.open(page)
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     say(f"[{name}] the space holds {page.evaluate(SEED)}")
     page.wait_for_timeout(700)
@@ -120,13 +120,13 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         return page.evaluate("() => document.activeElement?.closest('[data-region]')?.dataset.region ?? '-'")
 
     def open_panel() -> None:
-        if not page.evaluate("() => !!window.nibApp.workspace.panel"):
+        if not page.evaluate("() => !!window.ordenApp.workspace.panel"):
             page.keyboard.press("Control+Shift+L")
             page.wait_for_timeout(400)
 
     say(f"[{name}] --- the regions, walked with F6 ---")
     open_panel()
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.wait_for_timeout(200)
     say(f"    the note has it     -> {page.evaluate(WHERE)}")
 
@@ -179,9 +179,9 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     into_tree()
     page.keyboard.press("End")
     page.wait_for_timeout(200)
-    before = page.evaluate("() => window.nibApp.workspace.active?.name ?? '-'")
+    before = page.evaluate("() => window.ordenApp.workspace.active?.name ?? '-'")
     step("Enter", 700)
-    after = page.evaluate("() => window.nibApp.workspace.active?.name ?? '-'")
+    after = page.evaluate("() => window.ordenApp.workspace.active?.name ?? '-'")
     say(f"    the note went from {before!r} to {after!r}")
 
     say(f"[{name}] --- Escape hands the keyboard back to the note ---")
@@ -200,7 +200,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.keyboard.press(chord)
         page.wait_for_timeout(500)
         showing = page.evaluate(
-            "(one) => window.nibApp.workspace.openOn(window.nibApp.workspace.sideOf(one))", panel
+            "(one) => window.ordenApp.workspace.openOn(window.ordenApp.workspace.sideOf(one))", panel
         )
         say(f"    {chord:<18} -> panel {showing!r} (wanted {panel!r}), {page.evaluate(WHERE)}")
     shot("panels-links")
@@ -215,7 +215,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     for key in ["ArrowRight", "ArrowRight", "ArrowLeft", "End", "Home"]:
         page.keyboard.press(key)
         page.wait_for_timeout(320)
-        panel = page.evaluate("() => window.nibApp.workspace.panel")
+        panel = page.evaluate("() => window.ordenApp.workspace.panel")
         say(f"    {key:<18} -> panel {panel!r}")
     shot("panel-tabs-ring")
 
@@ -244,13 +244,13 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot("tabs-ring")
         for key in ["ArrowRight", "ArrowRight", "ArrowLeft", "Enter"]:
             step(key, 400)
-        say(f"    the note in front is {page.evaluate('() => window.nibApp.workspace.active?.name')!r}")
+        say(f"    the note in front is {page.evaluate('() => window.ordenApp.workspace.active?.name')!r}")
 
         say(f"[{name}] --- Ctrl+Tab round the strip ---")
         for _ in range(2):
             page.keyboard.press("Control+Tab")
             page.wait_for_timeout(400)
-            say(f"    Ctrl+Tab            -> {page.evaluate('() => window.nibApp.workspace.active?.name')!r}")
+            say(f"    Ctrl+Tab            -> {page.evaluate('() => window.ordenApp.workspace.active?.name')!r}")
 
     say(f"[{name}] --- the layers: opened, trapped, closed, and given back ---")
     layers = [
@@ -269,7 +269,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.keyboard.press(chord)
         page.wait_for_timeout(600)
         inside = page.evaluate(WHERE)
-        depth = page.evaluate("() => window.nibApp.overlays?.depth ?? -1")
+        depth = page.evaluate("() => window.ordenApp.overlays?.depth ?? -1")
         page.keyboard.press("Tab")
         page.wait_for_timeout(200)
         held = page.evaluate(

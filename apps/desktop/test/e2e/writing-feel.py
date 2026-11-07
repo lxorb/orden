@@ -34,7 +34,7 @@ NOTE = (
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('Tags'))
@@ -66,7 +66,7 @@ def is_true(claim: bool, what: str) -> None:
 def reading(page: Page, on: bool) -> None:
     if bool(page.evaluate("() => !!document.querySelector('article#write')")) == on:
         return
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     if on:
         wait_for(page, "document.querySelector('article#write .tag')", "the reading view")
     else:
@@ -117,26 +117,26 @@ def the_caret_in_a_tag(page: Page) -> None:
 
 
 def pressing_a_tag(page: Page) -> None:
-    page.evaluate("() => window.nibApp.search.ask('')")
+    page.evaluate("() => window.ordenApp.search.ask('')")
     tag = page.locator(".cm-content .tag[data-tag='work/nib']")
     tag.click(modifiers=["Control"])
-    wait_for(page, "window.nibApp.search.text === 'tag:work/nib'", "the search to be asked")
+    wait_for(page, "window.ordenApp.search.text === 'tag:work/nib'", "the search to be asked")
     is_true(
-        page.evaluate("() => window.nibApp.workspace.openOn(window.nibApp.workspace.sideOf('search'))")
+        page.evaluate("() => window.ordenApp.workspace.openOn(window.ordenApp.workspace.sideOf('search'))")
         == "search",
         "the search panel is not showing",
     )
     shot(page, "03-editor-press")
 
     reading(page, True)
-    page.evaluate("() => window.nibApp.search.ask('')")
+    page.evaluate("() => window.ordenApp.search.ask('')")
     page.locator("article#write a.tag[data-tag='reading']").click()
-    wait_for(page, "window.nibApp.search.text === 'tag:reading'", "the reading view's press")
+    wait_for(page, "window.ordenApp.search.text === 'tag:reading'", "the reading view's press")
 
-    page.evaluate("() => window.nibApp.search.ask('')")
+    page.evaluate("() => window.ordenApp.search.ask('')")
     page.locator("article#write a.tag[data-tag='item']").focus()
     page.keyboard.press("Enter")
-    wait_for(page, "window.nibApp.search.text === 'tag:item'", "Enter on a tag")
+    wait_for(page, "window.ordenApp.search.text === 'tag:item'", "Enter on a tag")
     is_true(
         page.evaluate("() => location.hash") == "",
         f"a press took the window to {page.evaluate('() => location.hash')}",
@@ -147,8 +147,8 @@ def pressing_a_tag(page: Page) -> None:
 def the_schemes(page: Page) -> None:
     looks = [("default", "light"), ("default", "dark"), ("contrast", "light"), ("contrast", "dark")]
     for theme, scheme in looks:
-        page.evaluate("(id) => window.nibApp.theme.select(id)", theme)
-        page.evaluate("(which) => window.nibApp.theme.setScheme(which)", scheme)
+        page.evaluate("(id) => window.ordenApp.theme.select(id)", theme)
+        page.evaluate("(which) => window.ordenApp.theme.setScheme(which)", scheme)
         page.wait_for_timeout(300)
         label = f"{theme}-{scheme}"
 
@@ -160,8 +160,8 @@ def the_schemes(page: Page) -> None:
         shot(page, f"04-reading-{label}")
         reading(page, False)
 
-    page.evaluate("() => window.nibApp.theme.select('default')")
-    page.evaluate("() => window.nibApp.theme.setScheme('dark')")
+    page.evaluate("() => window.ordenApp.theme.select('default')")
+    page.evaluate("() => window.ordenApp.theme.setScheme('dark')")
     page.wait_for_timeout(300)
 
 
@@ -234,7 +234,7 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
     wait_for(page, "document.querySelector('.cm-content .tag')", "the tags to be drawn")
     quiet(page)

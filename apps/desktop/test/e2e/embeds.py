@@ -57,7 +57,7 @@ not a chart at all
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('Embeds'))
@@ -143,7 +143,7 @@ def fresh(browser: Browser, finger: bool) -> Page:
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
     return page
 
@@ -194,7 +194,7 @@ def drive(browser: Browser) -> None:
     if outside:
         wrong(f"opening the note fetched from outside: {outside[:4]}")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(900)
     read = page.evaluate(COUNTS)
     say(f"[reading] {json.dumps(read)}")
@@ -239,7 +239,7 @@ def drive(browser: Browser) -> None:
         if frame["height"] < 100 or abs(frame["width"] / max(1, frame["height"]) - 16 / 9) > 0.2:
             wrong(f"the frame is not the shape the card was: {frame}")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
     page.context.close()
 
@@ -257,7 +257,7 @@ def finger(browser: Browser) -> None:
         if box["left"] < 0 or box["left"] + box["width"] > 420:
             wrong(f"on a phone the {name} runs off the screen: {box}")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(900)
     read = page.evaluate(COUNTS)
     phone_boxes = page.evaluate(BOXES)

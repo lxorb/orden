@@ -78,7 +78,7 @@ def fresh(browser: Browser, token: str, label: str) -> Page:
     page = signed_in(browser, token, label)
     wait_for(
         page,
-        f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+        f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
         f"[{label}] the space to arrive",
     )
     return page
@@ -92,7 +92,7 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
 
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
+    wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     return page
 
 def note_console(label: str, message) -> None:
@@ -102,33 +102,33 @@ def note_console(label: str, message) -> None:
 def opened(page: Page, label: str, note_id: str) -> None:
     wait_for(
         page,
-        f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+        f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
         f"[{label}] the space to arrive",
     )
 
     listed = (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-        "  return walk(window.nibApp.workspace.tree)"
+        "  return walk(window.ordenApp.workspace.tree)"
         f"    .includes('/{SPACE}/{NOTE}')"
         "}"
     )
     wait_for(page, listed, f"[{label}] the note to arrive")
 
-    page.evaluate(f"() => window.nibApp.workspace.open('/{SPACE}/{NOTE}')")
+    page.evaluate(f"() => window.ordenApp.workspace.open('/{SPACE}/{NOTE}')")
     wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
     wait_for(
         page,
-        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
+        f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] the note to join its room",
     )
 
 def words(page: Page) -> str:
     return page.evaluate(
-        "() => { window.nibApp.workspace.flush(); return window.nibApp.workspace.active?.doc ?? '' }"
+        "() => { window.ordenApp.workspace.flush(); return window.ordenApp.workspace.active?.doc ?? '' }"
     )
 
-FRONT = "window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)"
+FRONT = "window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)"
 
 def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[str]) -> None:
     other.evaluate(
@@ -190,8 +190,8 @@ def place(page: Page, at: int) -> None:
     page.click(".cm-content")
     page.evaluate(
         "(at) => {"
-        "  window.nib.dispatch({ selection: { anchor: Math.min(at, window.nib.state.doc.length) } });"
-        "  window.nib.focus()"
+        "  window.orden.dispatch({ selection: { anchor: Math.min(at, window.orden.state.doc.length) } });"
+        "  window.orden.focus()"
         "}",
         at,
     )
@@ -205,8 +205,8 @@ def echo(one: Page, two: Page, at: int, said: str, label: str) -> float:
         "(wanted) => {"
         "  window.__arrived = null;"
         "  const look = () => {"
-        "    window.nibApp.workspace.flush();"
-        "    if ((window.nibApp.workspace.active?.doc ?? '').includes(wanted)) {"
+        "    window.ordenApp.workspace.flush();"
+        "    if ((window.ordenApp.workspace.active?.doc ?? '').includes(wanted)) {"
         "      window.__arrived = Date.now();"
         "      return"
         "    }"
@@ -335,7 +335,7 @@ def main() -> int:
         for page, label in ((one, "one"), (two, "two")):
             wait_for(
                 page,
-                "() => Object.values(window.nibApp.rooms.present).some((n) => n > 0)",
+                "() => Object.values(window.ordenApp.rooms.present).some((n) => n > 0)",
                 f"[{label}] the other device to appear",
             )
         say("each browser can see that the other is there")
@@ -379,7 +379,7 @@ def main() -> int:
             if took > CEILING:
                 failures.append(f"a letter took {took:.0f} ms {way}, past {CEILING} ms")
 
-        two.evaluate("() => { window.nib.dispatch({ selection: { anchor: 3 } }); window.nib.focus() }")
+        two.evaluate("() => { window.orden.dispatch({ selection: { anchor: 3 } }); window.orden.focus() }")
         one.wait_for_selector(".cm-nib-caret", timeout=10_000)
         one.wait_for_timeout(120)
         one.locator(".cm-editor").first.screenshot(path=str(SHOTS / "remote-caret.png"))
@@ -415,16 +415,16 @@ def main() -> int:
             joining,
             "() => {"
             "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-            f"  return walk(window.nibApp.workspace.tree).includes('/{SPACE}/long.md')"
+            f"  return walk(window.ordenApp.workspace.tree).includes('/{SPACE}/long.md')"
             "}",
             "[three] the long note to arrive",
         )
 
         started = time.perf_counter()
-        joining.evaluate(f"() => window.nibApp.workspace.open('/{SPACE}/long.md')")
+        joining.evaluate(f"() => window.ordenApp.workspace.open('/{SPACE}/long.md')")
         wait_for(
             joining,
-            f"() => window.nibApp.rooms.carries({json.dumps(long['id'])})",
+            f"() => window.ordenApp.rooms.carries({json.dumps(long['id'])})",
             "[three] the long note to join its room",
         )
         took = (time.perf_counter() - started) * 1000
@@ -436,14 +436,14 @@ def main() -> int:
             one,
             "() => {"
             "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-            f"  return walk(window.nibApp.workspace.tree).includes('/{SPACE}/long.md')"
+            f"  return walk(window.ordenApp.workspace.tree).includes('/{SPACE}/long.md')"
             "}",
             "[one] the long note to arrive",
         )
-        one.evaluate(f"() => window.nibApp.workspace.open('/{SPACE}/long.md')")
+        one.evaluate(f"() => window.ordenApp.workspace.open('/{SPACE}/long.md')")
         wait_for(
             one,
-            f"() => window.nibApp.rooms.carries({json.dumps(long['id'])})",
+            f"() => window.ordenApp.rooms.carries({json.dumps(long['id'])})",
             "[one] the long note to join its room",
         )
         held_at_edge(one, joining, "below", "desktop", failures)

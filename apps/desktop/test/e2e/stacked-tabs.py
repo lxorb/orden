@@ -20,7 +20,7 @@ NOTES = [(f"{name}.md", f"# {name}\n\nThe words of the {name.lower()} note.\n") 
 
 SEED = """
 async (notes) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   for (const [, text] of notes) await ws.noteFrom(text, ws.activeSpace.root)
   await ws.loadTree()
 
@@ -90,9 +90,9 @@ def opened(browser: Browser, finger: bool = False) -> tuple[BrowserContext, Page
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     say(f"the space holds {json.dumps(page.evaluate(SEED, NOTES))}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     quiet(page)
     return context, page
 
@@ -106,17 +106,17 @@ def off_by_default(page: Page) -> None:
     is_true(not said["stacked"], "a pane opens stacked")
     is_true(said["plain"] == 1, f"a pane that is not stacked has {said['plain']} editors")
     is_true(
-        not page.evaluate("() => window.nibApp.workspace.stacked()"),
+        not page.evaluate("() => window.ordenApp.workspace.stacked()"),
         "the pane says it is stacked before anybody asked",
     )
     is_true(
-        page.evaluate("() => window.nibApp.workspace.canStack()"),
+        page.evaluate("() => window.ordenApp.workspace.canStack()"),
         "a pane holding three notes says it cannot stack them",
     )
     shot(page, "01-off")
 
 def the_columns(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.toggleStacked()")
+    page.evaluate("() => window.ordenApp.workspace.toggleStacked()")
     quiet(page)
 
     said = stack(page)
@@ -161,18 +161,18 @@ def the_spine(page: Page) -> None:
     say(f"[spine] the active column is now {said['active']}")
     is_true(said["active"] == 0, "pressing the first spine did not make it the active column")
     is_true(
-        page.evaluate("() => window.nibApp.workspace.active?.shown") == "First",
+        page.evaluate("() => window.ordenApp.workspace.active?.shown") == "First",
         "the pane is showing something other than the note whose spine was pressed",
     )
     shot(page, "03-first-active")
 
 def a_pane_of_its_own(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.split('row')")
+    page.evaluate("() => window.ordenApp.workspace.split('row')")
     quiet(page)
 
-    panes = page.evaluate("() => window.nibApp.workspace.panes.all.map((one) => one.id)")
+    panes = page.evaluate("() => window.ordenApp.workspace.panes.all.map((one) => one.id)")
     stacks = page.evaluate(
-        "() => window.nibApp.workspace.panes.all.map((one) => one.stacked)",
+        "() => window.ordenApp.workspace.panes.all.map((one) => one.stacked)",
     )
     say(f"[split] the panes are {json.dumps(panes)} and say {json.dumps(stacks)}")
 
@@ -180,13 +180,13 @@ def a_pane_of_its_own(page: Page) -> None:
     is_true(stacks.count(True) == 1, f"both panes say {json.dumps(stacks)}")
     shot(page, "04-split")
 
-    page.evaluate("() => window.nibApp.workspace.persist()")
+    page.evaluate("() => window.ordenApp.workspace.persist()")
     page.reload(wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp", "the app again")
-    wait_for(page, "window.nibApp.workspace.active", "a note again")
+    wait_for(page, "window.ordenApp", "the app again")
+    wait_for(page, "window.ordenApp.workspace.active", "a note again")
     quiet(page)
 
-    kept = page.evaluate("() => window.nibApp.workspace.panes.all.map((one) => one.stacked)")
+    kept = page.evaluate("() => window.ordenApp.workspace.panes.all.map((one) => one.stacked)")
     say(f"[restored] the panes say {json.dumps(kept)}")
     is_true(kept.count(True) == 1, f"the arrangement came back as {json.dumps(kept)}")
     shot(page, "05-restored")
@@ -195,7 +195,7 @@ def a_handheld(browser: Browser) -> None:
     context, page = opened(browser, finger=True)
 
     is_true(
-        not page.evaluate("() => window.nibApp.workspace.canStack()"),
+        not page.evaluate("() => window.ordenApp.workspace.canStack()"),
         "a phone says its pane can stack its notes",
     )
     is_true(not stack(page)["stacked"], "a phone drew columns")

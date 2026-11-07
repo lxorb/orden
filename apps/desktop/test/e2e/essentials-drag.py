@@ -12,7 +12,7 @@ HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'g
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
   if (ws.panel !== 'tree') ws.showPanel('tree')
@@ -26,7 +26,7 @@ async () => {
 
 STATE = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return {
     kept: ws.bookmarks.list.filter((one) => one.kind === 'note').map((one) => one.path).sort(),
     rows: [...document.querySelectorAll('aside .row[data-path]')].map((one) => one.dataset.path
@@ -87,10 +87,10 @@ def drag(page: Page, source, target, what: str) -> None:
     page.wait_for_timeout(40)
 
 def keys(page: Page, chord: str) -> None:
-    marked = "() => { window.__mark = window.nibApp.workspace.undone.last }"
+    marked = "() => { window.__mark = window.ordenApp.workspace.undone.last }"
     page.evaluate(marked)
     page.keyboard.press(chord)
-    wait_for(page, "() => window.nibApp.workspace.undone.last !== window.__mark", f"{chord} landed", PATIENCE)
+    wait_for(page, "() => window.ordenApp.workspace.undone.last !== window.__mark", f"{chord} landed", PATIENCE)
 
 def walk(browser: Browser, reduced: bool) -> None:
     context = browser.new_context(
@@ -104,7 +104,7 @@ def walk(browser: Browser, reduced: bool) -> None:
     try:
         DRIVE.open(page)
         say(f"{tag}the space is {page.evaluate(SEED)}")
-        page.evaluate("() => window.nibApp.workspace.device.expand(window.nibApp.workspace.activeSpace.root + '/Work')")
+        page.evaluate("() => window.ordenApp.workspace.device.expand(window.ordenApp.workspace.activeSpace.root + '/Work')")
         wait_for(page, "() => !!document.querySelector(\"aside .row[data-path$='/Work/Gamma.md']\")", "the rows")
         page.wait_for_timeout(500)
 

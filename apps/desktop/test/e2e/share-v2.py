@@ -48,14 +48,14 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     page.set_default_timeout(30000)
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp?.account.user", f"[{label}] the account")
-    if page.evaluate("() => window.nibApp.sync.version") != 2:
+    wait_for(page, "() => !!window.ordenApp?.account.user", f"[{label}] the account")
+    if page.evaluate("() => window.ordenApp.sync.version") != 2:
         failed(f"[{label}] started v1 on an account on v2")
     return page
 
 def words(page: Page) -> str:
     return page.evaluate(
-        "() => { window.nibApp.workspace.flush(); return window.nibApp.workspace.active?.doc ?? '' }"
+        "() => { window.ordenApp.workspace.flush(); return window.ordenApp.workspace.active?.doc ?? '' }"
     )
 
 def main() -> int:
@@ -77,11 +77,11 @@ def main() -> int:
         owner = signed_in(browser, owner_token, "owner")
         wait_for(
             owner,
-            f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+            f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
             "[owner] the space",
         )
         owner.evaluate(
-            "(name) => { const ws = window.nibApp.workspace;"
+            "(name) => { const ws = window.ordenApp.workspace;"
             " const space = ws.spaces.find((one) => one.name === name); ws.showSpace(space.id) }",
             SPACE,
         )
@@ -89,11 +89,11 @@ def main() -> int:
         listed = (
             "() => {"
             "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-            f"  return walk(window.nibApp.workspace.tree).includes({json.dumps(path)})"
+            f"  return walk(window.ordenApp.workspace.tree).includes({json.dumps(path)})"
             "}"
         )
         wait_for(owner, listed, "[owner] the note in the tree")
-        owner.evaluate("(path) => window.nibApp.workspace.openEntry(path)", path)
+        owner.evaluate("(path) => window.ordenApp.workspace.openEntry(path)", path)
         wait_for(owner, "() => !!document.querySelector('.cm-content')", "[owner] the editor")
         epoch = 0
         until = time.monotonic() + PATIENCE
@@ -113,18 +113,18 @@ def main() -> int:
         )
 
         alone = signed_in(browser, alone_token, "alone")
-        wait_for(alone, "() => window.nibApp.sharedWithYou.items.length === 1", "[alone] the shared file")
-        alone.evaluate("() => window.nibApp.sharedWithYou.open(window.nibApp.sharedWithYou.items[0])")
-        wait_for(alone, "() => !!window.nibApp.workspace.active?.note.shared", "[alone] the shared tab")
+        wait_for(alone, "() => window.ordenApp.sharedWithYou.items.length === 1", "[alone] the shared file")
+        alone.evaluate("() => window.ordenApp.sharedWithYou.open(window.ordenApp.sharedWithYou.items[0])")
+        wait_for(alone, "() => !!window.ordenApp.workspace.active?.note.shared", "[alone] the shared tab")
         wait_for(
             alone,
-            f"() => window.nibApp.rooms.carries({json.dumps(note['id'])})",
+            f"() => window.ordenApp.rooms.carries({json.dumps(note['id'])})",
             "[alone] the shared note to join its room",
         )
         say("the shared note is in its room under v2")
 
         alone.click(".cm-content")
-        alone.evaluate("() => { window.nib.dispatch({ selection: { anchor: 0 } }); window.nib.focus() }")
+        alone.evaluate("() => { window.orden.dispatch({ selection: { anchor: 0 } }); window.orden.focus() }")
         alone.keyboard.type(TYPED, delay=12)
 
         try:

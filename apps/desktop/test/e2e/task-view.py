@@ -33,7 +33,7 @@ ERRANDS = """# Errands
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
@@ -45,9 +45,9 @@ WRITE = """async ([files]) => {
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words)?.task ?? null"
 
 NOTE = """async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  return await window.nibApp.workspace.noteText(`${root}/Errands.md`)
+  return await window.ordenApp.workspace.noteText(`${root}/Errands.md`)
 }"""
 
 PHONE_AGENT = (
@@ -56,8 +56,8 @@ PHONE_AGENT = (
 )
 
 def seed(page: Page) -> None:
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
     page.evaluate(WRITE, [[["Errands.md", ERRANDS.format(**days)]]])
     wait_for(page, f"() => !!({TASK})('Water the plants')", "the seeded rows")
@@ -229,7 +229,7 @@ def the_view(page: Page) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.sheet')", "the view put away")
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace; await ws.open(ws.activeSpace.root.replace(/[\\\\/]+$/, '') + '/Errands.md') }"
+        "async () => { const ws = window.ordenApp.workspace; await ws.open(ws.activeSpace.root.replace(/[\\\\/]+$/, '') + '/Errands.md') }"
     )
     wait_for(page, "document.querySelector('.cm-content .orden-comment-chips')", "the comment's chip in the note")
     shown = page.locator(".cm-content .orden-comment-chips").first.inner_text()

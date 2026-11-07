@@ -25,7 +25,7 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n\n## Today\n\n## Later\n")
     page.evaluate(
-        "async () => (await window.nibApp.tasks()).makeList(window.nibApp.workspace.notes.find((one) => one.name === 'Plan.md').path)"
+        "async () => (await window.ordenApp.tasks()).makeList(window.ordenApp.workspace.notes.find((one) => one.name === 'Plan.md').path)"
     )
     DRIVE.open_note(page, "Plan")
 
@@ -103,12 +103,12 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     wait_for(page, f"!document.querySelector('{FIELD}')", "quick add put away")
 
-    wait_for(page, "window.nibApp.tasks", "the rows on the handle")
+    wait_for(page, "window.ordenApp.tasks", "the rows on the handle")
     inbox = page.evaluate(
         """async () => {
-          const { rows } = await window.nibApp.tasks()
+          const { rows } = await window.ordenApp.tasks()
           const path = await rows.inbox()
-          await window.nibApp.workspace.openEntry(path, { activate: true })
+          await window.ordenApp.workspace.openEntry(path, { activate: true })
           return path
         }"""
     )
@@ -117,11 +117,11 @@ def drive(browser: Browser) -> None:
         wrong(f"the inbox is {inbox!r}, not Orden's own .Inbox.md")
     wait_for(
         page,
-        f"window.nibApp.workspace.active?.path === {json.dumps(inbox)} && document.querySelector('.cm-content')",
+        f"window.ordenApp.workspace.active?.path === {json.dumps(inbox)} && document.querySelector('.cm-content')",
         "the inbox open",
     )
     DRIVE.settled(page)
-    text = page.evaluate("() => window.nib.state.doc.toString()")
+    text = page.evaluate("() => window.orden.state.doc.toString()")
     say(f"Inbox: {text!r}")
     lines = [line for line in text.splitlines() if line.strip()]
     if not lines or lines[0] != "- [ ] Call mum tomorrow #family 🔺":
@@ -130,7 +130,7 @@ def drive(browser: Browser) -> None:
         wrong(f"the second task is {lines[1:2]}, not Pay rent with its day and priority")
 
     page.evaluate(
-        "() => { const view = window.nib; view.dispatch({ selection: { anchor: 0 } }); view.focus() }"
+        "() => { const view = window.orden; view.dispatch({ selection: { anchor: 0 } }); view.focus() }"
     )
     wait_for(page, "document.querySelectorAll('.orden-task-chips').length === 1", "the chips in the note")
     drawn = page.evaluate("() => document.querySelector('.orden-task-chips').textContent")
@@ -143,7 +143,7 @@ def drive(browser: Browser) -> None:
     DRIVE.seed(page, "# Board\n\n```tasks\nnot done\nsort by priority\n```\n")
     DRIVE.open_note(page, "Board")
     page.evaluate(
-        "() => { const view = window.nib; view.dispatch({ selection: { anchor: 0 } }); view.focus() }"
+        "() => { const view = window.orden; view.dispatch({ selection: { anchor: 0 } }); view.focus() }"
     )
     wait_for(
         page,

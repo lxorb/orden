@@ -64,7 +64,7 @@ def drive(browser) -> None:
 
     page.route("https://generativelanguage.googleapis.com/v1beta/models?*", models)
     DRIVE.open(page)
-    page.evaluate("window.nibApp.settings.show('ai')")
+    page.evaluate("window.ordenApp.settings.show('ai')")
     page.wait_for_selector("text=Accounts")
     quiet(page)
     shot(page, "01-accounts")
@@ -134,8 +134,8 @@ def drive(browser) -> None:
 
     page.keyboard.press("Escape")
     page.wait_for_selector(".sheet", state="detached")
-    page.evaluate("async () => { window.agentsFake = await window.nibApp.agents.standIn() }")
-    page.evaluate("window.nibApp.settings.show('agents')")
+    page.evaluate("async () => { window.agentsFake = await window.ordenApp.agents.standIn() }")
+    page.evaluate("window.ordenApp.settings.show('agents')")
     page.wait_for_selector("text=Accounts")
     tab = page.get_by_role("tab", name="Antigravity")
     try:

@@ -34,7 +34,7 @@ def drive(browser) -> None:
         f"localStorage.setItem('orden:ai-accounts', {json.dumps(json.dumps(ACCOUNTS))})"
     )
     DRIVE.open(page)
-    page.evaluate("window.nibApp.settings.show('ai')")
+    page.evaluate("window.ordenApp.settings.show('ai')")
     page.wait_for_selector("text=Accounts")
     quiet(page)
     shot(page, "01-accounts")
@@ -107,7 +107,7 @@ def drive(browser) -> None:
     check("the palette offers each Claude account", rows.count() == 2)
 
     page.keyboard.press("Escape")
-    page.evaluate("window.nibApp.settings.show('agents')")
+    page.evaluate("window.ordenApp.settings.show('agents')")
     quiet(page)
     check("an old link to Agents lands on AI", page.locator(".sheet").get_by_text("Accounts", exact=True).count() == 1)
 

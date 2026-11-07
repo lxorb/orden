@@ -9,7 +9,7 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-WS = "window.nibApp.workspace"
+WS = "window.ordenApp.workspace"
 ON_SCREEN = "ONLY-IN-THE-SESSION"
 IN_A_SET = "WORDS-IN-A-SET-OUT-OF-SIGHT"
 
@@ -27,7 +27,7 @@ WATCH = """
     location.reload();
   };
   const every = setInterval(() => {
-    const ws = window.nibApp && window.nibApp.workspace;
+    const ws = window.ordenApp && window.ordenApp.workspace;
     if (!ws) return;
     if (armed === 'persist') {
       ws.persist();

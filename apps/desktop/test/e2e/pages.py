@@ -62,7 +62,7 @@ window.__TAURI_OS_PLUGIN_INTERNALS__ = {
 
 AS_TABLET = """
 () => {
-  const app = window.nibApp;
+  const app = window.ordenApp;
   app.viewport.device = 'tablet';
   app.viewport.portrait = false;
   const root = document.documentElement;
@@ -75,7 +75,7 @@ AS_TABLET = """
 
 AS_PHONE = """
 () => {
-  const app = window.nibApp;
+  const app = window.ordenApp;
   app.viewport.device = 'phone';
   app.viewport.portrait = true;
   const root = document.documentElement;
@@ -92,17 +92,17 @@ try { localStorage.setItem('orden:finger-draws', 'no') } catch {}
 """
 
 def opened(page: Page, label: str, device: str | None = None) -> None:
-    wait_for(page, "!!window.nibApp", f"[{label}] the app to start")
-    wait_for(page, "window.nibApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
+    wait_for(page, "!!window.ordenApp", f"[{label}] the app to start")
+    wait_for(page, "window.ordenApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
 
     if device == "tablet":
         page.evaluate(AS_TABLET)
     elif device == "phone":
         page.evaluate(AS_PHONE)
 
-    there = "window.nibApp.workspace.active?.path?.endsWith('.pages')"
+    there = "window.ordenApp.workspace.active?.path?.endsWith('.pages')"
     for _try in range(4):
-        page.evaluate("() => window.nibApp.workspace.createPages()")
+        page.evaluate("() => window.ordenApp.workspace.createPages()")
         page.wait_for_timeout(700)
         if page.evaluate(f"() => !!({there})"):
             break
@@ -118,17 +118,17 @@ def surface(page: Page) -> dict:
     return box
 
 def settled(page: Page) -> None:
-    page.evaluate("() => window.nibApp.pages.current?.store.part()")
+    page.evaluate("() => window.ordenApp.pages.current?.store.part()")
     page.wait_for_timeout(250)
 
 def file_of(page: Page) -> dict:
     settled(page)
-    return page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc)")
+    return page.evaluate("() => JSON.parse(window.ordenApp.workspace.active.doc)")
 
 def pages_of(page: Page) -> list[dict]:
     return page.evaluate(
         """() => {
-          const held = window.nibApp.pages?.current
+          const held = window.ordenApp.pages?.current
           return held ? held.store.pages.map((one) => ({
             id: one.id,
             y: one.y,
@@ -143,10 +143,10 @@ def pages_of(page: Page) -> list[dict]:
     )
 
 def panel_of(page: Page) -> str | None:
-    return page.evaluate("() => window.nibApp.workspace.panel")
+    return page.evaluate("() => window.ordenApp.workspace.panel")
 
 def store_call(page: Page, call: str) -> None:
-    page.evaluate(f"() => {{ const s = window.nibApp.pages.current.store; {call} }}")
+    page.evaluate(f"() => {{ const s = window.ordenApp.pages.current.store; {call} }}")
     page.wait_for_timeout(350)
 
 def tool(page: Page, key: str) -> None:
@@ -216,7 +216,7 @@ def finger(page: Page, cdp, points: list[tuple[float, float]]) -> None:
     page.wait_for_timeout(300)
 
 def ink_count(page: Page) -> int:
-    return page.evaluate("() => window.nibApp.pages.current.store.canvas.ink.length")
+    return page.evaluate("() => window.ordenApp.pages.current.store.canvas.ink.length")
 
 def check_opens(page: Page, label: str) -> None:
     say("--- the first page ---")
@@ -234,7 +234,7 @@ def check_opens(page: Page, label: str) -> None:
     if one["y"] != 0:
         fail(f"[{label}] the first page starts at y={one['y']} rather than the origin")
 
-    scale = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
+    scale = page.evaluate("() => window.ordenApp.pages.current.store.camera.scale")
     box = surface(page)
     wanted = (box["width"] - 56) / 794
     if abs(scale - wanted) > 0.02:
@@ -248,13 +248,13 @@ def check_opens(page: Page, label: str) -> None:
 def check_refits(page: Page, label: str) -> None:
     say("--- the paper stays across the pane ---")
 
-    was = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
-    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    was = page.evaluate("() => window.ordenApp.pages.current.store.camera.scale")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(800)
 
     narrowed = page.evaluate(
         """() => {
-          const s = window.nibApp.pages.current.store
+          const s = window.ordenApp.pages.current.store
           return { scale: s.camera.scale, width: s.pane.width, widest: s.widest }
         }"""
     )
@@ -269,28 +269,28 @@ def check_refits(page: Page, label: str) -> None:
     shot(page, f"{label}-refitted")
 
     store_call(page, "s.zoomBy(2)")
-    theirs = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
-    page.evaluate("() => { window.nibApp.workspace.panel = null }")
+    theirs = page.evaluate("() => window.ordenApp.pages.current.store.camera.scale")
+    page.evaluate("() => { window.ordenApp.workspace.panel = null }")
     page.wait_for_timeout(800)
 
-    still = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
+    still = page.evaluate("() => window.ordenApp.pages.current.store.camera.scale")
     if abs(still - theirs) > 0.001:
         fail(f"[{label}] a zoom the reader chose was taken away by a resize ({theirs} -> {still})")
 
     store_call(page, "s.fitAgain()")
-    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(800)
 
     after = page.evaluate(
         """() => {
-          const s = window.nibApp.pages.current.store
+          const s = window.ordenApp.pages.current.store
           return { scale: s.camera.scale, width: s.pane.width, widest: s.widest }
         }"""
     )
     if after["widest"] * after["scale"] > after["width"]:
         fail(f"[{label}] Fit did not hand the fitting back")
 
-    page.evaluate("() => { window.nibApp.workspace.panel = null }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = null }")
     page.wait_for_timeout(500)
 
 def check_pen(page: Page, cdp, label: str) -> None:
@@ -315,7 +315,7 @@ def check_pen(page: Page, cdp, label: str) -> None:
     first = pages_of(page)[0]
     on = page.evaluate(
         """(box) => {
-          const ink = window.nibApp.pages.current.store.canvas.ink
+          const ink = window.ordenApp.pages.current.store.canvas.ink
           const one = ink[ink.length - 1]
           const at = one.points[0]
           return at.x >= box.x && at.x <= box.x + box.width
@@ -328,7 +328,7 @@ def check_pen(page: Page, cdp, label: str) -> None:
 
     varied = page.evaluate(
         """() => {
-          const ink = window.nibApp.pages.current.store.canvas.ink
+          const ink = window.ordenApp.pages.current.store.canvas.ink
           const one = ink[ink.length - 1]
           return new Set(one.points.map((p) => p.pressure)).size
         }"""
@@ -351,11 +351,11 @@ def check_lasso(page: Page, cdp, label: str) -> None:
     x0, y0 = box["x"] + box["width"] / 2 - 120, box["y"] + 320
     stroke(page, cdp, [(x0 + n * 12, y0 + (n % 4) * 9) for n in range(22)])
     drawn = page.evaluate(
-        "() => { const ink = window.nibApp.pages.current.store.canvas.ink;"
+        "() => { const ink = window.ordenApp.pages.current.store.canvas.ink;"
         " return ink[ink.length - 1].id }"
     )
     first = (
-        "(id) => { const store = window.nibApp.pages.current.store;"
+        "(id) => { const store = window.ordenApp.pages.current.store;"
         " const one = store.canvas.ink.find((s) => s.id === id);"
         " return { x: one.points[0].x, y: one.points[0].y, scale: store.camera.scale } }"
     )
@@ -389,14 +389,14 @@ def check_lasso(page: Page, cdp, label: str) -> None:
         if wanted not in bar:
             fail(f"[{label}] the bar over lassoed ink has no {wanted} ({bar})")
     shot(page, f"{label}-lasso-bar")
-    picked = "() => window.nibApp.pages.current.store.picked.slice()"
+    picked = "() => window.ordenApp.pages.current.store.picked.slice()"
     if "Colour" in bar:
         page.locator(".over button[aria-label='Colour']").first.click()
         page.wait_for_timeout(300)
         page.locator(".over button[aria-label='Colour 1']").first.click()
         page.wait_for_timeout(300)
         colour = page.evaluate(
-            "(id) => window.nibApp.pages.current.store.canvas.ink.find((s) => s.id === id)?.color", drawn
+            "(id) => window.ordenApp.pages.current.store.canvas.ink.find((s) => s.id === id)?.color", drawn
         )
         if colour != "1":
             fail(f"[{label}] Colour 1 on the bar left the lassoed ink {colour}")
@@ -412,7 +412,7 @@ def check_lasso(page: Page, cdp, label: str) -> None:
         if ink_count(page) != count or page.evaluate(picked):
             fail(f"[{label}] Delete on the bar did not take the copy away")
     say(f"[{label}] the bar over lassoed ink colours, copies and deletes it")
-    page.evaluate("(id) => window.nibApp.pages.current.store.pick(id)", drawn)
+    page.evaluate("(id) => window.ordenApp.pages.current.store.pick(id)", drawn)
     page.locator(".pages").first.focus()
     page.keyboard.press("Delete")
     page.wait_for_timeout(200)
@@ -470,7 +470,7 @@ def check_lasso_held(page: Page, cdp, label: str) -> None:
     x0, y0 = box["x"] + box["width"] / 2 - 120, box["y"] + 420
     stroke(page, cdp, [(x0 + n * 12, y0 + (n % 4) * 9) for n in range(22)])
     drawn = page.evaluate(
-        "() => { const ink = window.nibApp.pages.current.store.canvas.ink; return ink[ink.length - 1].id }"
+        "() => { const ink = window.ordenApp.pages.current.store.canvas.ink; return ink[ink.length - 1].id }"
     )
 
     page.keyboard.down("q")
@@ -484,17 +484,17 @@ def check_lasso_held(page: Page, cdp, label: str) -> None:
     page.keyboard.up("q")
     page.wait_for_timeout(300)
 
-    picked = page.evaluate("() => window.nibApp.pages.current.store.picked.slice()")
+    picked = page.evaluate("() => window.ordenApp.pages.current.store.picked.slice()")
     back = page.evaluate(
         "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
     )
     say(f"[{label}] held: in hand {back} again after, picked {len(picked)}")
-    page.evaluate("() => { window.nibApp.viewport.device = 'desktop' }")
+    page.evaluate("() => { window.ordenApp.viewport.device = 'desktop' }")
     page.keyboard.down("q")
     page.wait_for_timeout(400)
     mouse = page.evaluate("() => getComputedStyle(document.querySelector('.pages')).cursor")
     page.keyboard.up("q")
-    page.evaluate("() => { window.nibApp.viewport.device = 'tablet' }")
+    page.evaluate("() => { window.ordenApp.viewport.device = 'tablet' }")
     page.wait_for_timeout(100)
     if held not in ("auto", "default") or mouse != "crosshair":
         fail(f"[{label}] the held lasso's cursor is {mouse} with a mouse, {held} on glass")
@@ -513,7 +513,7 @@ def check_upright(page: Page, cdp, label: str) -> None:
     import math
 
     say("--- paper stays upright ---")
-    page.evaluate("() => window.nibApp.modes.setCanvasTurns(true)")
+    page.evaluate("() => window.ordenApp.modes.setCanvasTurns(true)")
     box = surface(page)
     middle = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
 
@@ -529,8 +529,8 @@ def check_upright(page: Page, cdp, label: str) -> None:
         cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": at(math.radians(40 * step / 12))})
     cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
     page.wait_for_timeout(300)
-    turn = page.evaluate("() => window.nibApp.pages.current.store.camera.turn ?? 0")
-    page.evaluate("() => window.nibApp.modes.setCanvasTurns(false)")
+    turn = page.evaluate("() => window.ordenApp.pages.current.store.camera.turn ?? 0")
+    page.evaluate("() => window.ordenApp.modes.setCanvasTurns(false)")
     if turn:
         fail(f"[{label}] two fingers turned a page note by {turn}")
     else:
@@ -550,7 +550,7 @@ def check_gutter(page: Page, cdp, label: str) -> None:
 
     fits = page.evaluate(
         """(gutter) => {
-          const s = window.nibApp.pages.current.store
+          const s = window.ordenApp.pages.current.store
           const down = s.pane.height / s.camera.scale
           return Math.abs(s.camera.y - gutter) < 1 && down < 40
         }""",
@@ -562,7 +562,7 @@ def check_gutter(page: Page, cdp, label: str) -> None:
 
     where = page.evaluate(
         """() => {
-          const s = window.nibApp.pages.current.store
+          const s = window.ordenApp.pages.current.store
           return { y: s.camera.y, scale: s.camera.scale, down: s.pane.height / s.camera.scale }
         }"""
     )
@@ -586,7 +586,7 @@ def check_gutter(page: Page, cdp, label: str) -> None:
 def check_palm(page: Page, cdp, label: str) -> None:
     say("--- two hands and a pen ---")
 
-    seen = page.evaluate("() => window.nibApp.canvasHand?.penSeen ?? null")
+    seen = page.evaluate("() => window.ordenApp.canvasHand?.penSeen ?? null")
     if seen is None:
         say("the hand store is not reachable from the page; checking through the surface")
 
@@ -686,7 +686,7 @@ def check_rulings(page: Page, label: str) -> None:
     for pattern in ("blank", "lines", "grid", "dots"):
         page.evaluate(
             """(pattern) => {
-              const s = window.nibApp.pages.current.store
+              const s = window.ordenApp.pages.current.store
               const first = s.pages[0]
               s.edit({
                 ...s.canvas,
@@ -710,7 +710,7 @@ def check_adding(page: Page, label: str) -> None:
 
     was = len(pages_of(page))
 
-    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(700)
 
     add = page.locator(f"{NAVIGATOR} .add")
@@ -739,7 +739,7 @@ def check_adding(page: Page, label: str) -> None:
     second = pages[1]
     page.evaluate(
         """(page) => {
-          const s = window.nibApp.pages.current.store
+          const s = window.ordenApp.pages.current.store
           s.edit({
             ...s.canvas,
             ink: [...s.canvas.ink, {
@@ -762,7 +762,7 @@ def check_adding(page: Page, label: str) -> None:
     shot(page, f"{label}-second-page")
 
     before_y = page.evaluate(
-        "() => window.nibApp.pages.current.store.canvas.ink.find((o) => o.id === 'driven').points[0].y"
+        "() => window.ordenApp.pages.current.store.canvas.ink.find((o) => o.id === 'driven').points[0].y"
     )
 
     rows = page.locator(f"{NAVIGATOR} .page")
@@ -778,7 +778,7 @@ def check_adding(page: Page, label: str) -> None:
         fail(f"[{label}] the page moved to the front is not at the front")
 
     after_y = page.evaluate(
-        "() => window.nibApp.pages.current.store.canvas.ink.find((o) => o.id === 'driven').points[0].y"
+        "() => window.ordenApp.pages.current.store.canvas.ink.find((o) => o.id === 'driven').points[0].y"
     )
     if after_y >= before_y:
         fail(f"[{label}] the ink did not move with its page ({before_y} -> {after_y})")
@@ -805,7 +805,7 @@ def check_adding(page: Page, label: str) -> None:
 def check_papers(page: Page, label: str) -> None:
     say("--- the three papers ---")
 
-    page.evaluate("async () => window.nibApp.workspace.createPages(undefined, 'Papers.pages')")
+    page.evaluate("async () => window.ordenApp.workspace.createPages(undefined, 'Papers.pages')")
     page.wait_for_timeout(900)
     page.wait_for_selector(".pages", timeout=15000)
 
@@ -850,7 +850,7 @@ def check_papers(page: Page, label: str) -> None:
 
     made = page.evaluate(
         """async (paper) => {
-          const app = window.nibApp
+          const app = window.ordenApp
           app.modes.setPagesPaper(paper)
           await app.workspace.createPages(undefined, 'On Letter.pages')
           await new Promise((resolve) => setTimeout(resolve, 700))
@@ -871,10 +871,10 @@ def check_papers(page: Page, label: str) -> None:
             say(f"[{label}] a new page note on the chosen paper: {made}")
 
     shot(page, f"{label}-new-on-letter")
-    page.evaluate("() => window.nibApp.modes.setPagesPaper('a4')")
+    page.evaluate("() => window.ordenApp.modes.setPagesPaper('a4')")
 
 def paper_menu(page: Page, at: int, disabled: bool = False) -> list[str]:
-    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(500)
 
     thumb = page.locator(f"{NAVIGATOR} .page").nth(at)
@@ -985,7 +985,7 @@ def check_turn_while_drawing(page: Page, cdp, label: str) -> None:
 
     first = held[0]
     ys = page.evaluate(
-        "(count) => window.nibApp.pages.current.store.canvas.ink.slice(count).flatMap((one) => one.points.map((p) => p.y))",
+        "(count) => window.ordenApp.pages.current.store.canvas.ink.slice(count).flatMap((one) => one.points.map((p) => p.y))",
         before,
     )
     if not ys:
@@ -1002,7 +1002,7 @@ def check_long_page(page: Page, label: str) -> None:
 
     page.evaluate(
         """() => {
-          const s = window.nibApp.pages.current.store
+          const s = window.ordenApp.pages.current.store
           const first = s.pages[0]
           s.edit({
             ...s.canvas,
@@ -1018,7 +1018,7 @@ def check_long_page(page: Page, label: str) -> None:
 
     page.evaluate(
         """(tall) => {
-          const s = window.nibApp.pages.current.store
+          const s = window.ordenApp.pages.current.store
           s.edit({
             ...s.canvas,
             ink: [...s.canvas.ink, {
@@ -1066,7 +1066,7 @@ def check_file(page: Page, label: str) -> None:
             fail(f"[{label}] a page record names no node: {record['id']}")
 
     if written.get("orden", {}).get("ink") is None and page.evaluate(
-        "() => window.nibApp.pages.current.store.canvas.ink.length > 0"
+        "() => window.ordenApp.pages.current.store.canvas.ink.length > 0"
     ):
         fail(f"[{label}] there is ink on the pages and none under nib.ink")
 
@@ -1077,7 +1077,7 @@ def check_as_canvas(page: Page, label: str) -> None:
 
     held = page.evaluate(
         """() => {
-          const s = window.nibApp.pages.current.store
+          const s = window.ordenApp.pages.current.store
           return { nodes: s.canvas.nodes.length, ink: s.canvas.ink.length, pages: s.pages.length }
         }"""
     )
@@ -1087,7 +1087,7 @@ def check_as_canvas(page: Page, label: str) -> None:
 
     renamed = page.evaluate(
         """async () => {
-          const workspace = window.nibApp.workspace
+          const workspace = window.ordenApp.workspace
           const path = workspace.active?.path
           if (!path) return null
 
@@ -1101,12 +1101,12 @@ def check_as_canvas(page: Page, label: str) -> None:
         fail(f"[{label}] the note did not rename to a canvas ({renamed!r})")
         return
 
-    kind = page.evaluate("() => window.nibApp.workspace.active?.kind ?? null")
+    kind = page.evaluate("() => window.ordenApp.workspace.active?.kind ?? null")
     if kind != "canvas":
         say(f"the renamed file is still open as {kind!r}; reopening it")
-        page.evaluate("async (path) => window.nibApp.workspace.openEntry(path)", renamed)
+        page.evaluate("async (path) => window.ordenApp.workspace.openEntry(path)", renamed)
         page.wait_for_timeout(800)
-        kind = page.evaluate("() => window.nibApp.workspace.active?.kind ?? null")
+        kind = page.evaluate("() => window.ordenApp.workspace.active?.kind ?? null")
 
     if kind != "canvas":
         fail(f"[{label}] a renamed page note opens as {kind!r} rather than a canvas")
@@ -1120,7 +1120,7 @@ def check_as_canvas(page: Page, label: str) -> None:
 
     drawn = page.evaluate(
         """() => {
-          const written = JSON.parse(window.nibApp.workspace.active.doc)
+          const written = JSON.parse(window.ordenApp.workspace.active.doc)
           return { nodes: written.nodes.length, ink: (written.orden?.ink ?? []).length }
         }"""
     )
@@ -1159,9 +1159,9 @@ async ({ base64, name }) => {
   const bytes = new Uint8Array(binary.length)
   for (let at = 0; at < binary.length; at++) bytes[at] = binary.charCodeAt(at)
 
-  const importing = window.nibApp.importing
+  const importing = window.ordenApp.importing
   importing.show()
-  importing.root = window.nibApp.workspace.activeSpace.root
+  importing.root = window.ordenApp.workspace.activeSpace.root
   await importing.take([new File([bytes], name, { type: 'application/pdf' })])
 
   const format = importing.format
@@ -1170,7 +1170,7 @@ async ({ base64, name }) => {
 
   await importing.run()
   importing.close()
-  await window.nibApp.workspace.loadTree()
+  await window.ordenApp.workspace.loadTree()
 
   return { format, error: importing.error, stage: importing.stage, folder: importing.folder }
 }
@@ -1234,7 +1234,7 @@ def check_paper(page: Page, label: str) -> None:
 
     opened_note = page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.files.find((one) => one.name === 'Lecture 4.pages')
           if (!note) return null
           await ws.openEntry(note.path, { activate: true })
@@ -1246,7 +1246,7 @@ def check_paper(page: Page, label: str) -> None:
         return
 
     beside = page.evaluate(
-        "() => window.nibApp.workspace.files.filter((one) => one.name.startsWith('Lecture 4')).map((one) => one.name)"
+        "() => window.ordenApp.workspace.files.filter((one) => one.name.startsWith('Lecture 4')).map((one) => one.name)"
     )
     if beside != ["Lecture 4.pages"]:
         fail(f"[{label}] the import shows {beside} in the list rather than the page note alone")
@@ -1277,7 +1277,7 @@ def check_paper(page: Page, label: str) -> None:
 
     shot(page, f"{label}-paper")
 
-    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(3000)
     thumbs = page.evaluate(DARK_ON_THUMBS)
     say(f"[{label}] the thumbnails: {thumbs}")
@@ -1290,7 +1290,7 @@ def check_paper(page: Page, label: str) -> None:
 
     page.evaluate(
         """async (paper) => {
-          const open = indexedDB.open('nib')
+          const open = indexedDB.open('orden')
           const db = await new Promise((resolve, reject) => {
             open.onsuccess = () => resolve(open.result)
             open.onerror = () => reject(open.error)
@@ -1302,7 +1302,7 @@ def check_paper(page: Page, label: str) -> None:
             write.oncomplete = () => resolve()
             write.onerror = () => reject(write.error)
           })
-          const store = window.nibApp.pages.current.store
+          const store = window.ordenApp.pages.current.store
           const first = store.pages[0]
           store.edit({
             ...store.canvas,

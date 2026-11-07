@@ -14,7 +14,7 @@ SIZE = {"width": 1280, "height": 800}
 
 ARRANGE = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const notes = ws.activeSpace
   await ws.noteFrom('# Plan\\n\\nWhat we are doing.\\n', notes.root)
   await ws.noteFrom('# Ideas\\n\\nWhat we might do.\\n', notes.root)
@@ -35,7 +35,7 @@ async () => {
 
 LOOK = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return {
     space: ws.activeSpace?.name ?? null,
     panes: ws.panes.all.map((pane) => ({
@@ -104,7 +104,7 @@ def no_row(page: Page, scheme: str) -> None:
 def switch(page: Page, name: str) -> None:
     switcher(page)
     page.locator(".spaces .line .orden-row").filter(has_text=name).click()
-    wait_for(page, f"window.nibApp.workspace.activeSpace?.name === {json.dumps(name)}", f"{name} on screen")
+    wait_for(page, f"window.ordenApp.workspace.activeSpace?.name === {json.dumps(name)}", f"{name} on screen")
     DRIVE.settled(page)
 
 def drive(browser: Browser) -> None:
@@ -122,9 +122,9 @@ def drive(browser: Browser) -> None:
     if len(home["panes"]) != 1:
         wrong(f"Home is not one pane of its own: {home}")
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace; const food = ws.notes.find((one) => one.name.startsWith('Food')); await ws.openEntry(food.path, { activate: true }) }"
+        "async () => { const ws = window.ordenApp.workspace; const food = ws.notes.find((one) => one.name.startsWith('Food')); await ws.openEntry(food.path, { activate: true }) }"
     )
-    wait_for(page, "window.nibApp.workspace.active?.shown?.startsWith('Food')", "Food in Home")
+    wait_for(page, "window.ordenApp.workspace.active?.shown?.startsWith('Food')", "Food in Home")
     quiet(page)
     DRIVE.steady(page, "light-03-home")
 
@@ -142,13 +142,13 @@ def drive(browser: Browser) -> None:
 
     page.reload(wait_until="domcontentloaded")
     DRIVE.ready(page)
-    wait_for(page, "window.nibApp.workspace.restored", "the session")
+    wait_for(page, "window.ordenApp.workspace.restored", "the session")
     after = look(page)
     say(f"after the restart: {json.dumps(after)}")
     if after["space"] != "Home" or [pane["tabs"] for pane in after["panes"]] != [["Food"]]:
         wrong(f"the restart did not come back on Home's own tabs: {after}")
     switch(page, "Notes")
-    wait_for(page, "window.nibApp.workspace.panes.count === 2", "Notes' split after the restart")
+    wait_for(page, "window.ordenApp.workspace.panes.count === 2", "Notes' split after the restart")
     again = look(page)
     say(f"Notes after the restart: {json.dumps(again)}")
     if [pane["tabs"] for pane in again["panes"]] != [pane["tabs"] for pane in before["panes"]]:
@@ -158,12 +158,12 @@ def drive(browser: Browser) -> None:
     page, ids = opened(browser, "light", motion="no-preference")
     switch(page, "Home")
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace; const food = ws.notes.find((one) => one.name.startsWith('Food')); await ws.openEntry(food.path, { activate: true }) }"
+        "async () => { const ws = window.ordenApp.workspace; const food = ws.notes.find((one) => one.name.startsWith('Food')); await ws.openEntry(food.path, { activate: true }) }"
     )
-    wait_for(page, "window.nibApp.workspace.active?.shown?.startsWith('Food')", "Food in Home")
+    wait_for(page, "window.ordenApp.workspace.active?.shown?.startsWith('Food')", "Food in Home")
     page.evaluate(WATCH)
-    page.evaluate(f"() => window.nibApp.workspace.showSpace({json.dumps(ids['notes'])})")
-    wait_for(page, "window.nibApp.workspace.panes.count === 2", "Notes' split")
+    page.evaluate(f"() => window.ordenApp.workspace.showSpace({json.dumps(ids['notes'])})")
+    wait_for(page, "window.ordenApp.workspace.panes.count === 2", "Notes' split")
     page.wait_for_timeout(400)
     frames = list(page.evaluate(FRAMES))
     seen = list(dict.fromkeys(frames))
@@ -178,22 +178,22 @@ def drive(browser: Browser) -> None:
 
     page, ids = opened(browser, "light")
     switch(page, "Home")
-    page.evaluate("() => window.nibApp.workspace.openWebsite()")
-    wait_for(page, "window.nibApp.workspace.tabs.some((tab) => tab.kind === 'web')", "a web tab in Home")
-    page.evaluate(f"() => window.nibApp.workspace.deleteSpace({json.dumps(ids['home'])})")
+    page.evaluate("() => window.ordenApp.workspace.openWebsite()")
+    wait_for(page, "window.ordenApp.workspace.tabs.some((tab) => tab.kind === 'web')", "a web tab in Home")
+    page.evaluate(f"() => window.ordenApp.workspace.deleteSpace({json.dumps(ids['home'])})")
     wait_for(
         page,
-        f"window.nibApp.workspace.activeSpaceId === {json.dumps(ids['notes'])}",
+        f"window.ordenApp.workspace.activeSpaceId === {json.dumps(ids['notes'])}",
         "Notes on screen after Home is deleted",
     )
-    left = "window.nibApp.workspace.tabs.filter((tab) => tab.kind === 'web').length"
+    left = "window.ordenApp.workspace.tabs.filter((tab) => tab.kind === 'web').length"
     if page.evaluate(left) != 0:
         wrong("a web tab of the deleted space stayed open out of sight")
-    page.evaluate("() => window.nibApp.workspace.persist()")
+    page.evaluate("() => window.ordenApp.workspace.persist()")
     page.reload(wait_until="domcontentloaded")
     DRIVE.ready(page)
-    wait_for(page, "window.nibApp.workspace.restored", "the session")
-    wait_for(page, "window.nibApp.workspace.panes.count === 2", "Notes' split after the restart")
+    wait_for(page, "window.ordenApp.workspace.restored", "the session")
+    wait_for(page, "window.ordenApp.workspace.panes.count === 2", "Notes' split after the restart")
     if page.evaluate(left) != 0:
         wrong("a web tab of the deleted space came back with the restart")
     page.context.close()

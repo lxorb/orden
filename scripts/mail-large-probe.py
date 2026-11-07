@@ -2,7 +2,7 @@
 
 Windows only. A plain IMAP and SMTP server of its own runs on 127.0.0.1, holding one mail
 with a 20 MB file in it; the app links a mail account to it through the drive build's
-`nibApp.linked`, opens the mail's conversation as a tab, reads the file back, and answers
+`ordenApp.linked`, opens the mail's conversation as a tab, reads the file back, and answers
 with a 20 MB file of its own. The page watches its own long tasks the whole time
 (`PerformanceObserver`, `longtask`): reading or sending a large mail must never hold the
 window's JS thread for long. What arrives over SMTP, and what is filed in Sent, must be
@@ -338,8 +338,8 @@ globalThis.__mailProbeWatch.observe({ type: 'longtask' })
 def watched(code: str) -> str:
     return f"""(async () => {{
 {LONG_TASKS}
-while (!globalThis.nibApp?.linked) await new Promise((done) => setTimeout(done, 100))
-const {{ connected, accounts, host, openConversation }} = await nibApp.linked()
+while (!globalThis.ordenApp?.linked) await new Promise((done) => setTimeout(done, 100))
+const {{ connected, accounts, host, openConversation }} = await ordenApp.linked()
 const said = await (async () => {{ {code} }})()
 await new Promise((done) => setTimeout(done, 500))
 return {{ ...said, long: globalThis.__mailProbeLong.slice() }}

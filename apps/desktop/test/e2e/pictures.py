@@ -73,7 +73,7 @@ Paste one here:
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('Pictures'))
@@ -178,10 +178,10 @@ async () => {
 FIXTURES = Path(tempfile.gettempdir())
 
 def started(page: Page) -> dict:
-    wait_for(page, "window.nibApp", "the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
-    return page.evaluate("() => ({ root: window.nibApp.workspace.activeSpace.root })")
+    wait_for(page, "window.ordenApp", "the app")
+    wait_for(page, "window.ordenApp.workspace.activeSpace", "a space")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
+    return page.evaluate("() => ({ root: window.ordenApp.workspace.activeSpace.root })")
 
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
@@ -207,7 +207,7 @@ def fresh(browser: Browser, finger: bool) -> Page:
     started(page)
     seeded = page.evaluate(SEED, NOTE)
     say(f"the space {seeded['root']} holds {seeded['name']}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(600)
     return page
 
@@ -215,12 +215,12 @@ def paste_into_note(page: Page, where: str) -> str:
     page.evaluate(PASTE, [PASTED, "pasted.png", ".cm-content"])
     wait_for(
         page,
-        "window.nibApp.workspace.active.doc.includes('](assets/')",
+        "window.ordenApp.workspace.active.doc.includes('](assets/')",
         f"[{where}] the paste to reach the note",
     )
 
     written = page.evaluate(
-        "() => /!\\[\\]\\(([^)]+)\\)/.exec(window.nibApp.workspace.active.doc)?.[1] ?? ''"
+        "() => /!\\[\\]\\(([^)]+)\\)/.exec(window.ordenApp.workspace.active.doc)?.[1] ?? ''"
     )
     say(f"[{where}] the note now says ![]({written})")
     if not written.startswith("assets/"):
@@ -250,7 +250,7 @@ def expect_drawn(page: Page, where: str, most: int, wide: int | None = None) -> 
 
 THREE = """
 (relative) => {
-  const view = window.nib
+  const view = window.orden
   const name = relative.split('/').pop()
   const text = [
     '# Pictures',
@@ -276,16 +276,16 @@ THREE = """
 
 def three_ways(page: Page, where: str, relative: str) -> None:
     name = relative.split("/")[-1]
-    page.evaluate("() => window.nibApp.workspace.loadTree()")
-    page.evaluate("() => window.nibApp.links.build(window.nibApp.workspace.activeSpace.root)")
-    wait_for(page, f"window.nibApp.links.fileNamed('{name}')", f"[{where}] the index to know it")
+    page.evaluate("() => window.ordenApp.workspace.loadTree()")
+    page.evaluate("() => window.ordenApp.links.build(window.ordenApp.workspace.activeSpace.root)")
+    wait_for(page, f"window.ordenApp.links.fileNamed('{name}')", f"[{where}] the index to know it")
 
     page.evaluate(THREE, relative)
     page.wait_for_timeout(1200)
 
 OPEN_NAMED = """
 async (stem) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith(stem))
   if (!found) return null
@@ -295,8 +295,8 @@ async (stem) => {
 """
 
 def imported(page: Page, where: str, zip_path: Path) -> None:
-    page.wait_for_function("() => !!window.nibApp.importing", timeout=20000)
-    page.evaluate("() => window.nibApp.importing.show()")
+    page.wait_for_function("() => !!window.ordenApp.importing", timeout=20000)
+    page.evaluate("() => window.ordenApp.importing.show()")
     page.wait_for_selector("button.drop", timeout=20000)
     page.wait_for_timeout(450)
 
@@ -304,11 +304,11 @@ def imported(page: Page, where: str, zip_path: Path) -> None:
         page.click("button.drop")
     chooser.value.set_files(str(zip_path))
 
-    page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=30000)
-    say(f"[{where}] the sheet read a {page.evaluate('() => window.nibApp.importing.format')}")
+    page.wait_for_function("() => window.ordenApp.importing.stage === 'ready'", timeout=30000)
+    say(f"[{where}] the sheet read a {page.evaluate('() => window.ordenApp.importing.format')}")
     page.click("button.orden-button")
-    page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=60000)
-    page.evaluate("() => window.nibApp.importing.close()")
+    page.wait_for_function("() => window.ordenApp.importing.stage === 'done'", timeout=60000)
+    page.evaluate("() => window.ordenApp.importing.close()")
     page.wait_for_timeout(400)
 
     opened = page.evaluate(OPEN_NAMED, "Kit list")
@@ -317,11 +317,11 @@ def imported(page: Page, where: str, zip_path: Path) -> None:
         return
 
     page.wait_for_timeout(1200)
-    say(f"[{where}] {opened} says {page.evaluate('() => window.nibApp.workspace.active.doc')!r}")
+    say(f"[{where}] {opened} says {page.evaluate('() => window.ordenApp.workspace.active.doc')!r}")
 
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
 
     relative = paste_into_note(page, "editor")
     shot(page, "01-editor-pasted")
@@ -331,7 +331,7 @@ def drive(browser: Browser) -> None:
     shot(page, "02-editor-three-ways")
     expect_drawn(page, "editor three ways", 3)
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "03-reading-three-ways")
     expect_drawn(page, "reading", 3)
@@ -342,7 +342,7 @@ def drive(browser: Browser) -> None:
     shot(page, "04-editor-after-reload")
     expect_drawn(page, "editor after a reload", 3)
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "05-reading-after-reload")
     expect_drawn(page, "reading after a reload", 3)
@@ -372,7 +372,7 @@ def drive(browser: Browser) -> None:
     elif chunk["status"] != 200 or "javascript" not in (chunk["type"] or ""):
         wrong(f"the worker answered for the app's own code: {chunk}")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
 
     imported(page, "import", notion_zip(FIXTURES))
@@ -389,16 +389,16 @@ def drive(browser: Browser) -> None:
     if asked["cache"] != "no-cache":
         wrong(f"a picture named by a person was offered for keeping: {asked['cache']!r}")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "07-reading-imported")
     expect_drawn(page, "the imported note, read", 1)
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(400)
 
-    opened = "window.nibApp.workspace.active?.path?.endsWith('.canvas')"
+    opened = "window.ordenApp.workspace.active?.path?.endsWith('.canvas')"
     for _try in range(4):
-        page.evaluate("() => window.nibApp.workspace.createCanvas()")
+        page.evaluate("() => window.ordenApp.workspace.createCanvas()")
         page.wait_for_timeout(700)
         if page.evaluate(f"() => !!({opened})"):
             break
@@ -444,7 +444,7 @@ def finger(browser: Browser) -> None:
     expect_drawn(page, "phone editor", 1, wide=420)
 
     three_ways(page, "phone", relative)
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, "11-phone-reading")
     expect_drawn(page, "phone reading", 3, wide=420)
@@ -455,18 +455,18 @@ def finger(browser: Browser) -> None:
     shot(page, "12-phone-after-reload")
     expect_drawn(page, "phone editor after a reload", 3, wide=420)
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "13-phone-reading-after-reload")
     expect_drawn(page, "phone reading after a reload", 3, wide=420)
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(400)
 
     imported(page, "phone import", notion_zip(FIXTURES))
     shot(page, "14-phone-imported")
     expect_drawn(page, "the imported note on a phone", 1, wide=420)
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "15-phone-reading-imported")
     expect_drawn(page, "the imported note read on a phone", 1, wide=420)

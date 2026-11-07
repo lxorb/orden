@@ -21,7 +21,7 @@ HOLD = 900
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const home = ws.activeSpace
   await ws.addSpace('Work')
   const work = ws.spaces.find((one) => one.name === 'Work')
@@ -35,7 +35,7 @@ async () => {
 }
 """
 
-THERE = "async (path) => (await window.nibApp.workspace.noteText(path).catch(() => null)) !== null"
+THERE = "async (path) => (await window.ordenApp.workspace.noteText(path).catch(() => null)) !== null"
 
 def join(root: str, name: str) -> str:
     return f"{root.rstrip('/')}/{name}"
@@ -114,20 +114,20 @@ def desktop(browser: Browser) -> None:
     carry_to_switcher(page, row_of(join(home, "Plan.md")))
     drop_on(page, work, "note")
     moved(page, "note", ids, "Plan.md")
-    page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
+    page.evaluate("async () => { await window.ordenApp.workspace.undoFileAction() }")
     page.wait_for_timeout(600)
     if there(page, join(home, "Plan.md")) and not there(page, join(ids["work"]["root"], "Plan.md")):
         say("ok   [note] one Ctrl+Z put it back in Home")
     else:
         wrong("[note] Undo did not put Plan back in Home")
-    page.evaluate("async () => { await window.nibApp.workspace.loadTree() }")
+    page.evaluate("async () => { await window.ordenApp.workspace.loadTree() }")
     DRIVE.settled(page)
 
     carry_to_switcher(page, row_of(join(home, "Trip")))
     drop_on(page, work, "folder")
     moved(page, "folder", ids, "Trip/Map.md")
 
-    page.evaluate("async () => { await window.nibApp.workspace.loadTree() }")
+    page.evaluate("async () => { await window.ordenApp.workspace.loadTree() }")
     DRIVE.settled(page)
     plan = row_of(join(home, "Plan.md"))
     bx, by = carry_to_switcher(page, plan)
@@ -157,16 +157,16 @@ def desktop(browser: Browser) -> None:
         say("ok   [escape] Escape closes the list, and nothing moves")
 
     page.evaluate(
-        "async (path) => { await window.nibApp.workspace.open(path) }",
+        "async (path) => { await window.ordenApp.workspace.open(path) }",
         join(home, "Draft.md"),
     )
-    wait_for(page, "!!window.nibApp.workspace.active?.path?.endsWith('Draft.md')", "[tab] Draft open")
-    tab = page.evaluate("() => window.nibApp.workspace.active.id")
+    wait_for(page, "!!window.ordenApp.workspace.active?.path?.endsWith('Draft.md')", "[tab] Draft open")
+    tab = page.evaluate("() => window.ordenApp.workspace.active.id")
     DRIVE.settled(page)
     carry_to_switcher(page, f'[data-tab="{tab}"]')
     drop_on(page, work, "tab")
     moved(page, "tab", ids, "Draft.md")
-    path = page.evaluate("(id) => window.nibApp.workspace.tabs.find((one) => one.id === id)?.path ?? null", tab)
+    path = page.evaluate("(id) => window.ordenApp.workspace.tabs.find((one) => one.id === id)?.path ?? null", tab)
     if path != join(ids["work"]["root"], "Draft.md"):
         wrong(f"[tab] the tab did not go with its file: {path}")
     else:
@@ -182,9 +182,9 @@ def desktop(browser: Browser) -> None:
         wrong(f"[menu] the row's right-click menu still offers a move: {said}")
     else:
         say("ok   [menu] the row's right-click menu offers no Move")
-    page.evaluate("async (path) => { await window.nibApp.workspace.open(path) }", join(home, "Plan.md"))
-    wait_for(page, "!!window.nibApp.workspace.active?.path?.endsWith('Plan.md')", "[menu] Plan open")
-    plan_tab = page.evaluate("() => window.nibApp.workspace.active.id")
+    page.evaluate("async (path) => { await window.ordenApp.workspace.open(path) }", join(home, "Plan.md"))
+    wait_for(page, "!!window.ordenApp.workspace.active?.path?.endsWith('Plan.md')", "[menu] Plan open")
+    plan_tab = page.evaluate("() => window.ordenApp.workspace.active.id")
     page.locator(f'[data-tab="{plan_tab}"]').first.click(button="right")
     page.wait_for_timeout(300)
     said = page.evaluate("() => [...document.querySelectorAll('.menu [role=menuitem]')].map((one) => one.textContent.trim())")
@@ -208,7 +208,7 @@ def phone(browser: Browser) -> None:
     page.add_init_script(HINTS_SEEN)
     DRIVE.open(page)
     ids = page.evaluate(SEED)
-    page.evaluate("() => { window.nibApp.workspace.panel = 'tree' }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'tree' }")
     plan = row_of(join(ids["home"]["root"], "Plan.md"))
     wait_for(page, f"document.querySelector({json.dumps(plan)})", "[phone] Plan's row")
     DRIVE.settled(page)
@@ -222,7 +222,7 @@ def phone(browser: Browser) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    page.evaluate("() => window.nibApp.workspace.setSort('manual')")
+    page.evaluate("() => window.ordenApp.workspace.setSort('manual')")
     page.wait_for_timeout(300)
     DRIVE.settled(page)
     cdp = page.context.new_cdp_session(page)

@@ -36,7 +36,7 @@ ERRANDS = """# Errands
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
@@ -53,8 +53,8 @@ PHONE_AGENT = (
 )
 
 def seed(page: Page) -> None:
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
     page.evaluate(WRITE, [[["Errands.md", ERRANDS.format(**days)]]])
     wait_for(page, f"() => !!({TASK})('Read a book')", "the seeded rows")
@@ -66,7 +66,7 @@ def texts(page: Page, selector: str) -> list[str]:
     )
 
 def open_from_panel(page: Page) -> None:
-    page.evaluate("window.nibApp.workspace.showPanel('tasks')")
+    page.evaluate("window.ordenApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .orden-row')", "the Tasks panel")
     page.locator(".tasks .orden-row", has_text="Tasks").first.click(modifiers=["Control"])
     wait_for(page, "document.querySelector('.view-tab .task, .view-tab .card')", "Todos")
@@ -156,7 +156,7 @@ def the_display(page: Page) -> None:
 
 def kept(page: Page) -> None:
     page.evaluate(
-        "(() => { const ws = window.nibApp.workspace; const tab = ws.tabs.find((one) => one.kind === 'view'); if (tab) ws.close(tab.id) })()"
+        "(() => { const ws = window.ordenApp.workspace; const tab = ws.tabs.find((one) => one.kind === 'view'); if (tab) ws.close(tab.id) })()"
     )
     wait_for(page, "!document.querySelector('.view-tab')", "Todos closed")
     open_from_panel(page)

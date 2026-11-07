@@ -32,7 +32,7 @@ def strips(page: Page) -> dict[str, dict]:
     return {one["id"]: one for one in page.evaluate(LOOK)}
 
 def pane_ids(page: Page) -> list[str]:
-    return page.evaluate("() => window.nibApp.workspace.panes.all.map((one) => one.id)")
+    return page.evaluate("() => window.ordenApp.workspace.panes.all.map((one) => one.id)")
 
 def flush(label: str, one: dict, squared: bool) -> None:
     say(f"[{label}] {one}")
@@ -64,7 +64,7 @@ def opened(browser: Browser, *scripts: str) -> Page:
     return page
 
 def split(page: Page, along: str) -> list[str]:
-    page.evaluate(f"() => window.nibApp.workspace.split('{along}')")
+    page.evaluate(f"() => window.ordenApp.workspace.split('{along}')")
     wait_for(page, "document.querySelectorAll('[data-pane]').length === 2", "the split")
     return pane_ids(page)
 
@@ -73,7 +73,7 @@ def drive(browser: Browser) -> None:
         page = opened(browser, *scripts)
         page.evaluate(
             """() => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               const pane = ws.panes.focused
               ws.activate(ws.tabsIn(pane.id)[0].id)
             }"""
@@ -89,12 +89,12 @@ def drive(browser: Browser) -> None:
         flush(f"{mode}, row, the second strip", seen[right], squared=True)
         DRIVE.shot(page, f"{mode}-row")
 
-        page.evaluate(f"() => window.nibApp.workspace.newTab('{right}')")
+        page.evaluate(f"() => window.ordenApp.workspace.newTab('{right}')")
         wait_for(
             page,
-            f"window.nibApp.workspace.tabsIn('{right}').length === 2"
-            f" && window.nibApp.workspace.panes.at('{right}').activeTabId"
-            f" === window.nibApp.workspace.tabsIn('{right}')[1].id",
+            f"window.ordenApp.workspace.tabsIn('{right}').length === 2"
+            f" && window.ordenApp.workspace.panes.at('{right}').activeTabId"
+            f" === window.ordenApp.workspace.tabsIn('{right}')[1].id",
             "a second tab in front in the second pane",
         )
         flared(f"{mode}, row, the second tab in front", strips(page)[right], card)

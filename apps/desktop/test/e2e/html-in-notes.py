@@ -67,7 +67,7 @@ COLOURED = """
 """
 
 OPEN = """async (text) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const path = await ws.noteFrom(text)
   if (path) await ws.openEntry(path, { activate: true })
 }"""
@@ -84,7 +84,7 @@ def drive(browser, out: Path, scheme: str) -> None:
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{scheme}] page error: {error}"))
     DRIVE.open(page)
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(400)
 
     def shot(tag: str) -> None:
@@ -113,14 +113,14 @@ def drive(browser, out: Path, scheme: str) -> None:
     page.wait_for_timeout(1600)
     page.evaluate(
         """() => {
-          const view = window.nib
+          const view = window.orden
           view.dispatch({ selection: { anchor: view.state.doc.line(4).to } })
           view.focus()
         }"""
     )
     page.keyboard.type("<em>")
     page.wait_for_timeout(700)
-    say(f"[{scheme}] typed: {page.evaluate('() => window.nib.state.doc.toString()')!r}")
+    say(f"[{scheme}] typed: {page.evaluate('() => window.orden.state.doc.toString()')!r}")
     shot("typed")
 
     context.close()

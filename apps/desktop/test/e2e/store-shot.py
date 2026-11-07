@@ -41,7 +41,7 @@ def kestrel(wind):
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 

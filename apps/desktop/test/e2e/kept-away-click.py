@@ -37,7 +37,7 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: i
     failed(f"gave up waiting for {what}")
     return None
 
-MISSING = "(paths) => paths.filter((one) => !window.nibApp.workspace.entryAt(one))"
+MISSING = "(paths) => paths.filter((one) => !window.ordenApp.workspace.entryAt(one))"
 
 ROW = """(path) => document.querySelector(`.row[data-path="${CSS.escape(path)}"]`)"""
 
@@ -46,26 +46,26 @@ def window_for(context, label: str) -> Page:
     page.set_default_timeout(30000)
     page.on("pageerror", lambda error: failed(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp?.account.user", f"[{label}] the account")
+    wait_for(page, "() => !!window.ordenApp?.account.user", f"[{label}] the account")
     wait_for(
         page,
-        "(name) => window.nibApp.workspace.spaces.some((one) => one.name === name)",
+        "(name) => window.ordenApp.workspace.spaces.some((one) => one.name === name)",
         f"[{label}] the space",
         SPACE,
     )
     page.evaluate(
-        "(name) => { const ws = window.nibApp.workspace;"
+        "(name) => { const ws = window.ordenApp.workspace;"
         " ws.showSpace(ws.spaces.find((one) => one.name === name).id) }",
         SPACE,
     )
     wait_for(
         page,
-        f"""(paths) => window.nibApp.arriving.coming.size === 0 && !({MISSING})(paths).length""",
+        f"""(paths) => window.ordenApp.arriving.coming.size === 0 && !({MISSING})(paths).length""",
         f"[{label}] every note listed",
         NOTES,
     )
-    wait_for(page, "() => !!window.nibApp.sync.engine?.engine", f"[{label}] the engine")
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
+    wait_for(page, "() => !!window.ordenApp.sync.engine?.engine", f"[{label}] the engine")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     wait_for(page, "() => !!document.querySelector('[role=tree] .row')", f"[{label}] the file list")
     return page
 
@@ -90,7 +90,7 @@ def scroll_to(page: Page, path: str) -> None:
 
 def kept_away(page: Page, path: str) -> bool:
     return page.evaluate(
-        "(path) => window.nibApp.sync.engine.engine.awayFiles().some((one) => one.path === path)",
+        "(path) => window.ordenApp.sync.engine.engine.awayFiles().some((one) => one.path === path)",
         path,
     )
 
@@ -123,7 +123,7 @@ def main() -> int:
             failed("A keeps the words of Note 35 before anything asked for them")
         scroll_to(a, f"{ROOT}/Note 30.md")
         a.locator(f'.row[data-path="{reading}"]').click()
-        wait_for(a, "(path) => window.nibApp.workspace.active?.path === path", "[A] Note 35 open", reading)
+        wait_for(a, "(path) => window.ordenApp.workspace.active?.path === path", "[A] Note 35 open", reading)
         lost: set[str] = set()
         for _ in range(16):
             lost.update(a.evaluate(MISSING, NOTES))
@@ -132,7 +132,7 @@ def main() -> int:
             failed(f"notes left A's list after a row was clicked: {sorted(lost)}")
         if kept_away(a, reading):
             failed("Note 35, open on A, is still kept away")
-        words = a.evaluate("() => window.nibApp.workspace.active?.note?.latest ?? null")
+        words = a.evaluate("() => window.ordenApp.workspace.active?.note?.latest ?? null")
         if "# Note 35.md" not in (words or ""):
             failed(f"Note 35 opened on A with other words: {words!r}")
         say(f"A clicked Note 35: it opened, and {60 - len(lost)} of 60 notes stayed listed")
@@ -141,11 +141,11 @@ def main() -> int:
         if not kept_away(b, going):
             failed("B keeps the words of Note 36 before anything asked for them")
         try:
-            b.evaluate("(path) => window.nibApp.workspace.remove(path, false)", going)
+            b.evaluate("(path) => window.ordenApp.workspace.remove(path, false)", going)
         except Exception as error:
             failed(f"B could not delete Note 36, which it keeps no words of: {error}")
-        wait_for(b, "(paths) => !window.nibApp.workspace.entryAt(paths[0])", "[B] Note 36 gone", [going])
-        wait_for(a, "(paths) => !window.nibApp.workspace.entryAt(paths[0])", "[A] Note 36 gone", [going])
+        wait_for(b, "(paths) => !window.ordenApp.workspace.entryAt(paths[0])", "[B] Note 36 gone", [going])
+        wait_for(a, "(paths) => !window.ordenApp.workspace.entryAt(paths[0])", "[A] Note 36 gone", [going])
         rest = [one for one in NOTES if one != going]
         for label, page in (("A", a), ("B", b)):
             missing = page.evaluate(MISSING, rest)

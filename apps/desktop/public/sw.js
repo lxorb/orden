@@ -1,5 +1,6 @@
 const ROUTE = '/asset/'
-const DATABASE = 'nib'
+const DATABASE = 'orden'
+const FORMER_DATABASE = 'nib'
 const STORE = 'assets'
 
 const TYPES = {
@@ -159,40 +160,43 @@ function decode(base64) {
   }
 }
 
-let opening = null
+const opening = new Map()
 
-function database() {
-  if (opening) return opening
+function database(name) {
+  const held = opening.get(name)
+  if (held) return held
 
-  opening = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DATABASE)
+  const asked = new Promise((resolve, reject) => {
+    const request = indexedDB.open(name)
 
+    request.onupgradeneeded = () => request.transaction?.abort()
     request.onsuccess = () => {
       const db = request.result
       db.onversionchange = () => {
         db.close()
-        opening = null
+        opening.delete(name)
       }
       db.onclose = () => {
-        opening = null
+        opening.delete(name)
       }
       resolve(db)
     }
     request.onerror = () => {
-      opening = null
+      opening.delete(name)
       reject(request.error || new Error('the store would not open'))
     }
     request.onblocked = () => {
-      opening = null
+      opening.delete(name)
       reject(new Error('the store is busy'))
     }
   })
 
-  return opening
+  opening.set(name, asked)
+  return asked
 }
 
-async function rowFor(path) {
-  const db = await database()
+async function rowIn(name, path) {
+  const db = await database(name)
   if (!db.objectStoreNames.contains(STORE)) return null
 
   return new Promise((resolve, reject) => {
@@ -200,6 +204,11 @@ async function rowFor(path) {
     request.onsuccess = () => resolve(request.result || null)
     request.onerror = () => reject(request.error || new Error('the row would not be read'))
   })
+}
+
+async function rowFor(path) {
+  const row = await rowIn(DATABASE, path).catch(() => null)
+  return row || rowIn(FORMER_DATABASE, path)
 }
 
 self.addEventListener('notificationclick', (event) => {

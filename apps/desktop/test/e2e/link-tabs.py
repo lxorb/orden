@@ -20,7 +20,7 @@ NOTE = (
 
 SEED = f"""
 async () => {{
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom('{NOTE}', undefined)
   const first = ws.files.find((one) => one.name.startsWith('Kestrel'))
   if (first) await ws.openEntry(first.path, {{ activate: true }})
@@ -30,7 +30,7 @@ async () => {{
 
 STATE = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return {
     tabs: ws.tabs.map((one) => ({ kind: one.kind, address: one.address ?? null })),
     active: ws.active ? { kind: ws.active.kind, address: ws.active.address ?? null } : null,
@@ -59,7 +59,7 @@ def close_pages(page) -> None:
     page.evaluate(
         """
         () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const one of [...ws.tabs]) if (one.kind === 'web') ws.close(one.id)
         }
         """
@@ -174,7 +174,7 @@ def the_menu(page) -> None:
 def a_locked_note(page) -> None:
     say("--- a locked note ---")
 
-    page.evaluate("() => window.nibApp.modes.toggleReadOnly(undefined)")
+    page.evaluate("() => window.ordenApp.modes.toggleReadOnly(undefined)")
     page.wait_for_timeout(400)
 
     press(page, ".orden-link[data-href^='https']")
@@ -185,13 +185,13 @@ def a_locked_note(page) -> None:
         say("plain click           -> the page, in front")
     close_pages(page)
 
-    page.evaluate("() => window.nibApp.modes.toggleReadOnly(undefined)")
+    page.evaluate("() => window.ordenApp.modes.toggleReadOnly(undefined)")
     page.wait_for_timeout(400)
 
 def the_reading_view(page) -> None:
     say("--- the reading view ---")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(700)
 
     anchor = '.read a[href^="https"]'
@@ -242,7 +242,7 @@ def the_reading_view(page) -> None:
         say("Shift+click           -> the page, in front, and nothing left the app")
     close_pages(page)
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
 
 def drive(browser) -> None:

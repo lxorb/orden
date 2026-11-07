@@ -20,7 +20,7 @@ NOTE = (
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const wrapped = ws.notes.find((one) => one.name.startsWith('Wrapping'))
@@ -38,12 +38,12 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
     wait_for(
         page,
-        "window.nib && document.querySelector('.cm-content')"
-        " && window.nibApp.workspace.active?.note?.name?.startsWith('Wrapping')",
+        "window.orden && document.querySelector('.cm-content')"
+        " && window.ordenApp.workspace.active?.note?.name?.startsWith('Wrapping')",
         "the wrapped note to be the one open",
     )
     shot(page, "01-written")

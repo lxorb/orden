@@ -11,7 +11,7 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 ARRANGE = """async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const notes = ws.activeSpace
   const write = async (root, path, text) => {
     const at = `${root.replace(/[\\\\/]+$/, '')}/${path}`
@@ -43,24 +43,24 @@ def both(page: Page, where: str, more: list[str] | None = None) -> None:
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     ids = page.evaluate(ARRANGE)
     wait_for(
         page,
         "() => ['Call the bank', 'Water the plants'].every((text) => window.tasks.rows.of().some((one) => one.task?.text === text))",
         "both spaces' rows",
     )
-    page.evaluate("window.nibApp.workspace.showPanel('tasks')")
+    page.evaluate("window.ordenApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .chosen .task')", "the list in the panel")
     both(page, "from Home")
     DRIVE.shot(page, "01-from-home")
 
-    page.evaluate(f"() => window.nibApp.workspace.showSpace({json.dumps(ids['notes'])})")
-    wait_for(page, f"() => window.nibApp.workspace.activeSpace?.id === {json.dumps(ids['notes'])}", "the first space")
+    page.evaluate(f"() => window.ordenApp.workspace.showSpace({json.dumps(ids['notes'])})")
+    wait_for(page, f"() => window.ordenApp.workspace.activeSpace?.id === {json.dumps(ids['notes'])}", "the first space")
     both(page, f"from {ids['first']}")
-    page.evaluate(f"() => window.nibApp.workspace.showSpace({json.dumps(ids['home'])})")
-    wait_for(page, f"() => window.nibApp.workspace.activeSpace?.id === {json.dumps(ids['home'])}", "Home again")
+    page.evaluate(f"() => window.ordenApp.workspace.showSpace({json.dumps(ids['home'])})")
+    wait_for(page, f"() => window.ordenApp.workspace.activeSpace?.id === {json.dumps(ids['home'])}", "Home again")
     both(page, "from Home again")
 
     page.locator(".tasks > .orden-row.adder").click()
@@ -91,26 +91,26 @@ def drive(browser: Browser) -> None:
         "() => window.tasks.rows.of().some((one) => one.task?.text === 'Call the bank' && one.task.done)",
         "the first space's task ticked from Home",
     )
-    text = page.evaluate(f"async () => await window.nibApp.workspace.noteText({json.dumps(root + '/Errands.md')})")
+    text = page.evaluate(f"async () => await window.ordenApp.workspace.noteText({json.dumps(root + '/Errands.md')})")
     say(f"[ticked] {text!r}")
     if "- [x] Call the bank" not in (text or ""):
         wrong("ticking the first space's task from Home did not write its note")
-    if page.evaluate("() => window.nibApp.workspace.activeSpace?.name") != "Home":
+    if page.evaluate("() => window.ordenApp.workspace.activeSpace?.name") != "Home":
         wrong("ticking a task of another space switched the space")
     DRIVE.shot(page, "03-ticked")
 
     page.locator(".tasks .chosen .task:has(.words:text-is('Pay the rent')) button.where").click()
     DRIVE.waited(
         page,
-        f"() => window.nibApp.workspace.activeSpace?.name === {json.dumps(ids['first'])}",
+        f"() => window.ordenApp.workspace.activeSpace?.name === {json.dumps(ids['first'])}",
         "the task's own space, opened from its place",
     )
     DRIVE.waited(
         page,
-        "() => window.nibApp.workspace.tabs.some((one) => /Inbox/.test(one.path ?? ''))",
+        "() => window.ordenApp.workspace.tabs.some((one) => /Inbox/.test(one.path ?? ''))",
         "the task's inbox open",
     )
-    say(f"[opened] {page.evaluate('() => window.nibApp.workspace.activeSpace?.name')}")
+    say(f"[opened] {page.evaluate('() => window.ordenApp.workspace.activeSpace?.name')}")
     after = listed(page)
     say(f"[after opening it] {json.dumps(after)}")
     if after != ["Pay the rent", "Water the plants"]:

@@ -45,32 +45,32 @@ def main() -> int:
             page,
             "panel tabs   ",
             [
-                "window.nibApp.workspace.showPanel('tree')",
-                "window.nibApp.workspace.showPanel('outline')",
-                "window.nibApp.workspace.showPanel('links')",
-                "window.nibApp.workspace.showPanel('tree')",
+                "window.ordenApp.workspace.showPanel('tree')",
+                "window.ordenApp.workspace.showPanel('outline')",
+                "window.ordenApp.workspace.showPanel('links')",
+                "window.ordenApp.workspace.showPanel('tree')",
             ],
         )
 
-        page.evaluate("() => window.nibApp.settings.show()")
+        page.evaluate("() => window.ordenApp.settings.show()")
         page.wait_for_selector(".orden-screen.sheet", timeout=15000)
         page.wait_for_timeout(500)
         run(
             page,
             "settings pane",
             [
-                "window.nibApp.settings.section = 'editor'",
-                "window.nibApp.settings.section = 'appearance'",
-                "window.nibApp.settings.section = 'markdown'",
-                "window.nibApp.settings.section = 'general'",
+                "window.ordenApp.settings.section = 'editor'",
+                "window.ordenApp.settings.section = 'appearance'",
+                "window.ordenApp.settings.section = 'markdown'",
+                "window.ordenApp.settings.section = 'general'",
             ],
         )
-        page.evaluate("() => (window.nibApp.settings.open = false)")
+        page.evaluate("() => (window.ordenApp.settings.open = false)")
         page.wait_for_timeout(400)
 
-        tabs = page.evaluate("() => window.nibApp.workspace.tabsIn(window.nibApp.workspace.panes.focusedId).map((one) => one.id)")
+        tabs = page.evaluate("() => window.ordenApp.workspace.tabsIn(window.ordenApp.workspace.panes.focusedId).map((one) => one.id)")
         say(f"tabs open: {len(tabs)}")
-        switches = [f"window.nibApp.workspace.activate('{one}')" for one in tabs]
+        switches = [f"window.ordenApp.workspace.activate('{one}')" for one in tabs]
         run(page, "note tab     ", switches)
 
         page.click(".cm-content")

@@ -12,7 +12,7 @@ say, wrong, shot, wait_for, waited = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.w
 
 SEED = """
 async ({ path, data }) => {
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -25,8 +25,8 @@ async ({ path, data }) => {
     write.oncomplete = () => resolve()
     write.onerror = () => reject(write.error)
   })
-  await window.nibApp.workspace.loadTree()
-  return window.nibApp.workspace.files.some((one) => one.path === path)
+  await window.ordenApp.workspace.loadTree()
+  return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
 
@@ -71,7 +71,7 @@ MARKS = {
     ],
 }
 
-SHOWING = "() => window.nibApp.pages.current?.store.showing ?? null"
+SHOWING = "() => window.ordenApp.pages.current?.store.showing ?? null"
 
 ROWS = "() => [...(document.querySelector('.navigator')?.querySelectorAll('.contents .row .orden-row-label') ?? [])].map((one) => one.textContent.trim())"
 
@@ -97,26 +97,26 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "typeof window.nibApp.tasks === 'function'", "the app's handles")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     pdf = f"{root}/Paper.pdf"
     if not page.evaluate(SEED, {"path": pdf, "data": base64.b64encode(paper()).decode("ascii")}):
         wrong("the PDF never reached the space")
         return
     page.evaluate(
-        "async ([path, text]) => { await window.nibApp.tasks().then((t) => t.writeFile(path, text)) }",
+        "async ([path, text]) => { await window.ordenApp.tasks().then((t) => t.writeFile(path, text)) }",
         [f"{pdf}.highlights.json", json.dumps(MARKS)],
     )
 
-    page.evaluate("(path) => window.nibApp.workspace.openPdf(path, 1)", pdf)
-    wait_for(page, "window.nibApp.pages.current?.store.count === 3", "the page note")
-    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", pdf)
+    wait_for(page, "window.ordenApp.pages.current?.store.count === 3", "the page note")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
 
     want = [title for title, _, _ in HEADINGS]
     if waited(page, f"JSON.stringify(({ROWS})()) === {json.dumps(json.dumps(want, separators=(',', ':')))}", "the PDF's contents beside its pages", patience=15):
         say(f"ok   the outline lists {page.evaluate(ROWS)}")
     else:
-        say(f"  it lists {page.evaluate(ROWS)}, the store holds {page.evaluate('() => window.nibApp.pages.current?.store.outline.length')} rows, panel {page.evaluate('() => window.nibApp.workspace.panel')}")
+        say(f"  it lists {page.evaluate(ROWS)}, the store holds {page.evaluate('() => window.ordenApp.pages.current?.store.outline.length')} rows, panel {page.evaluate('() => window.ordenApp.workspace.panel')}")
         shot(page, "no-contents")
 
     page.locator(".navigator .contents .row", has_text="Data").first.click()
@@ -125,7 +125,7 @@ def drive(browser: Browser) -> None:
     else:
         say(f"  it shows page {page.evaluate(SHOWING)}")
 
-    page.evaluate("() => window.nibApp.pages.current.store.turnTo(1)")
+    page.evaluate("() => window.ordenApp.pages.current.store.turnTo(1)")
     if waited(page, f"!!({MARKED})()", "the PDF's highlight on page 1", patience=15):
         box = page.evaluate(MARKED)
         say(f"ok   the highlight shows at {box}")
@@ -134,7 +134,7 @@ def drive(browser: Browser) -> None:
     else:
         shot(page, "no-mark")
 
-    page.evaluate("() => { window.nibApp.pages.current.store.readOnly = true }")
+    page.evaluate("() => { window.ordenApp.pages.current.store.readOnly = true }")
     page.wait_for_timeout(300)
     nav = page.locator(".navigator").first
     nav.locator(".page").first.click(button="right")

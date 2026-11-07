@@ -10,7 +10,7 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 UP = "!!document.querySelector('.picker[data-spaces-open]')"
 NAMES = ["Journal", "ETH", "Lab", "Reading", "Recipes", "Taxes", "Travel", "Uni", "VIS", "Work", "Zettel"]
 
-HERE = "() => window.nibApp.workspace.activeSpace?.name"
+HERE = "() => window.ordenApp.workspace.activeSpace?.name"
 ROWS = """() => [...document.querySelectorAll('.picker .orden-row')].map((one) => [
   one.querySelector('.place')?.textContent,
   one.querySelector('.orden-row-label')?.textContent,
@@ -33,15 +33,15 @@ def switching(page: Page, scheme: str) -> None:
     page.emulate_media(color_scheme=scheme)
     first = page.evaluate(HERE)
     page.evaluate(
-        "async (names) => { for (const name of names) await window.nibApp.workspace.addSpace(name) }",
+        "async (names) => { for (const name of names) await window.ordenApp.workspace.addSpace(name) }",
         NAMES,
     )
     page.evaluate(
-        "async (name) => { const ws = window.nibApp.workspace; await ws.showSpace(ws.spaces[0].id) }",
+        "async (name) => { const ws = window.ordenApp.workspace; await ws.showSpace(ws.spaces[0].id) }",
         first,
     )
-    wait_for(page, "window.nibApp.workspace.spaces.length >= 12", f"[{scheme}] twelve spaces")
-    names = page.evaluate("() => window.nibApp.workspace.spaces.map((one) => one.name)")
+    wait_for(page, "window.ordenApp.workspace.spaces.length >= 12", f"[{scheme}] twelve spaces")
+    names = page.evaluate("() => window.ordenApp.workspace.spaces.map((one) => one.name)")
     say(f"[{scheme}] spaces: {names}")
 
     opened(page, scheme, "the first look")
@@ -141,7 +141,7 @@ def switching(page: Page, scheme: str) -> None:
     if page.evaluate(HERE) != names[11]:
         wrong(f"[{scheme}] closing it changed the space")
 
-    page.evaluate("() => { window.nibApp.workspace.panel = null }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = null }")
     opened(page, scheme, "with the panel shut")
     page.keyboard.press("Escape")
     gone(page, scheme, "with the panel shut")
@@ -152,7 +152,7 @@ STANDING = """() => {
 }"""
 
 def walking(page: Page, scheme: str) -> None:
-    names = page.evaluate("() => window.nibApp.workspace.shownSpaces.map((one) => one.name)")
+    names = page.evaluate("() => window.ordenApp.workspace.shownSpaces.map((one) => one.name)")
     here = page.evaluate(HERE)
     at = names.index(here)
 
@@ -177,10 +177,10 @@ def walking(page: Page, scheme: str) -> None:
         wrong(f"[{scheme}] Escape after the arrows went to {page.evaluate(HERE)!r}")
 
     page.evaluate(
-        "() => { const ws = window.nibApp.workspace;"
+        "() => { const ws = window.ordenApp.workspace;"
         " ws.movePanel('outline', 'right'); ws.showPanel('outline'); ws.closePanel('left') }"
     )
-    sides = "() => [window.nibApp.workspace.panel, window.nibApp.workspace.openOn('right')]"
+    sides = "() => [window.ordenApp.workspace.panel, window.ordenApp.workspace.openOn('right')]"
     before = page.evaluate(sides)
     opened(page, scheme, "Enter on a row")
     page.keyboard.press("ArrowDown")
@@ -194,7 +194,7 @@ def walking(page: Page, scheme: str) -> None:
     if after != before:
         wrong(f"[{scheme}] the switch changed the sides of the window: {before} -> {after}")
 
-    names = page.evaluate("() => window.nibApp.workspace.shownSpaces.map((one) => one.name)")
+    names = page.evaluate("() => window.ordenApp.workspace.shownSpaces.map((one) => one.name)")
     at = names.index(page.evaluate(HERE))
     opened(page, scheme, "the arrows with the key held")
     page.keyboard.down("Control")

@@ -5,7 +5,7 @@ say, wrong = DRIVE.say, DRIVE.wrong
 
 JS = r"""
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const sid = ws.activeSpace.id
   const docs = await import('/src/lib/agents/docs/index.ts')

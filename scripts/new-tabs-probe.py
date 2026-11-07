@@ -217,7 +217,7 @@ FIELD = """
 
 STATE = """
 (() => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return JSON.stringify({
     tabs: ws.tabs.map((one) => ({ kind: one.kind, path: one.path, shown: one.shown })),
     files: ws.files.map((one) => one.name),
@@ -305,7 +305,7 @@ def main() -> int:
         else:
             say("from a note            -> '>' with the caret after it")
         shoot(app.pid, shots / "commands.png")
-        ran(port, secret, "(() => { window.nibApp.overlays.escape(); return true })()")
+        ran(port, secret, "(() => { window.ordenApp.overlays.escape(); return true })()")
         time.sleep(0.5)
 
         say("--- Ctrl+T ---")
@@ -321,15 +321,15 @@ def main() -> int:
         else:
             say("the keyboard           -> on New note")
         shoot(app.pid, shots / "chooser.png")
-        ran(port, secret, "(() => { window.nibApp.overlays.escape(); return true })()")
+        ran(port, secret, "(() => { window.ordenApp.overlays.escape(); return true })()")
         time.sleep(0.4)
 
         say("--- a tab of each kind, and nothing on disk ---")
         before = sorted(one.name for one in (spaces / SPACE).iterdir())
         for kind, code in (
-            ("canvas", "window.nibApp.workspace.newCanvas()"),
-            ("pages", "window.nibApp.workspace.newPages()"),
-            ("web", "window.nibApp.workspace.openWebsite()"),
+            ("canvas", "window.ordenApp.workspace.newCanvas()"),
+            ("pages", "window.ordenApp.workspace.newPages()"),
+            ("web", "window.ordenApp.workspace.openWebsite()"),
         ):
             ran(port, secret, f"(() => {{ void {code}; return true }})()")
             time.sleep(1.2)
@@ -349,7 +349,7 @@ def main() -> int:
         ran(
             port,
             secret,
-            f"(() => {{ const ws = window.nibApp.workspace;"
+            f"(() => {{ const ws = window.ordenApp.workspace;"
             f" const tab = ws.tabs.find((o) => o.kind === 'web'); if (!tab) return false;"
             f" ws.activate(tab.id); ws.webWalked(tab, 'http://127.0.0.1:{PORT}/');"
             f" return true }})()",
@@ -361,7 +361,7 @@ def main() -> int:
         aimed = ran(
             port,
             secret,
-            "(() => { const ws = window.nibApp.workspace;"
+            "(() => { const ws = window.ordenApp.workspace;"
             " const tab = ws.tabs.find((o) => o.kind === 'web');"
             " return tab ? (tab.address ?? '') : '' })()",
         )
@@ -376,14 +376,14 @@ def main() -> int:
         else:
             say("over a page            -> '>' as well, the app's key wins")
         shoot(app.pid, shots / "commands-over-page.png")
-        ran(port, secret, "(() => { window.nibApp.overlays.escape(); return true })()")
+        ran(port, secret, "(() => { window.ordenApp.overlays.escape(); return true })()")
         time.sleep(0.5)
 
         say("--- keeping the website ---")
         ran(
             port,
             secret,
-            "(() => { const ws = window.nibApp.workspace;"
+            "(() => { const ws = window.ordenApp.workspace;"
             " const tab = ws.tabs.find((o) => o.kind === 'web');"
             " if (tab) void ws.save(tab); return true })()",
         )

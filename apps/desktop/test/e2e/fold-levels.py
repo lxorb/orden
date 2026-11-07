@@ -32,7 +32,7 @@ The last words.
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('Chapter'))
@@ -44,7 +44,7 @@ async (note) => {
 STATE = """
 () => ({
   marks: document.querySelectorAll('.orden-folded').length,
-  folds: window.nibApp.workspace.active?.folds ?? [],
+  folds: window.ordenApp.workspace.active?.folds ?? [],
   shown: [...document.querySelectorAll('.cm-content .cm-line')]
     .map((line) => line.textContent.trim())
     .filter((text) => text.length),
@@ -72,7 +72,7 @@ def fresh(browser: Browser) -> Page:
     )
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(800)
     return page
 

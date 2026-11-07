@@ -13,7 +13,7 @@ PASSWORD = "tulip ladder"
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom('# Diary\\n\\nThe secret words.\\n', root)
   await ws.loadTree()
@@ -25,7 +25,7 @@ async () => {
 """
 
 PROTECTED = """
-(where) => window.nibApp.workspace.protection.own(where.root, where.path)?.way ?? null
+(where) => window.ordenApp.workspace.protection.own(where.root, where.path)?.way ?? null
 """
 
 

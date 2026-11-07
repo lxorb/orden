@@ -25,7 +25,7 @@ NOTE = (
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('Where the words'))
@@ -36,7 +36,7 @@ async (note) => {
 
 LINE = """
 () => {
-  const view = window.nib
+  const view = window.orden
   return view.state.doc.lineAt(view.state.selection.main.head).text
 }
 """
@@ -84,7 +84,7 @@ def the_jump(page: Page) -> None:
     shot(page, "03-back")
 
 def the_outline(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     quiet(page)
     rows = page.evaluate(
         "() => [...document.querySelectorAll('.body .row.note')].map((one) => one.textContent)"
@@ -103,9 +103,9 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     quiet(page)
 
     the_card(page)

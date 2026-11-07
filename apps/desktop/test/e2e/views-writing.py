@@ -21,13 +21,13 @@ def note(page, words):
     page.wait_for_timeout(250)
 
 def body(page):
-    whole = page.evaluate("() => window.nib.state.doc.toString()")
+    whole = page.evaluate("() => window.orden.state.doc.toString()")
     return whole.split("\n\n", 1)[1]
 
 def caret(page, words, offset=0):
     page.evaluate(
         """([words, offset]) => {
-            const view = window.nib
+            const view = window.orden
             view.focus()
             view.dispatch({ selection: { anchor: view.state.doc.toString().indexOf(words) + offset } })
         }""",
@@ -38,7 +38,7 @@ def caret(page, words, offset=0):
 def select(page, words):
     page.evaluate(
         """(words) => {
-            const view = window.nib
+            const view = window.orden
             const at = view.state.doc.toString().indexOf(words)
             view.focus()
             view.dispatch({ selection: { anchor: at, head: at + words.length } })
@@ -73,7 +73,7 @@ def handle(page, words):
     caret(page, words)
     spot = page.evaluate(
         """(words) => {
-            const view = window.nib
+            const view = window.orden
             const at = view.state.doc.toString().indexOf(words)
             return view.coordsAtPos(view.state.doc.lineAt(at).from)
         }""",
@@ -154,7 +154,7 @@ def keys(page):
     note(page, "seed\n")
     page.evaluate(
         """() => {
-            const view = window.nib
+            const view = window.orden
             const insert = '---\\ntitle: x\\n---\\n\\npara\\n\\n| a |\\n| - |\\n| 1 |\\n\\nlast ^abc123\\n'
             view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert } })
         }"""
@@ -164,7 +164,7 @@ def keys(page):
     page.keyboard.press("Control+a")
     page.keyboard.press("Control+b")
     page.wait_for_timeout(250)
-    got = page.evaluate("() => window.nib.state.doc.toString()")
+    got = page.evaluate("() => window.orden.state.doc.toString()")
     if got != "---\ntitle: x\n---\n\n**para**\n\n| a |\n| - |\n| 1 |\n\n**last** ^abc123\n":
         wrong(f"bold over a whole note: {got!r}")
     else:
@@ -233,8 +233,8 @@ def phone(browser):
     )
     page = context.new_page()
     DRIVE.open(page)
-    tabs = "window.nibApp.workspace.tabs"
-    named = "window.nibApp.workspace.notes.some((one) => one.name.includes(%r))"
+    tabs = "window.ordenApp.workspace.tabs"
+    named = "window.ordenApp.workspace.notes.some((one) => one.name.includes(%r))"
 
     tap(page, page.locator("button.fab"))
     page.keyboard.type("Shopping list")
@@ -254,9 +254,9 @@ def phone(browser):
     page.locator(".cm-content").first.click()
     page.keyboard.type("Second thought")
     page.wait_for_timeout(1000)
-    if page.evaluate("() => window.nib.state.doc.toString()") != "Second thought":
+    if page.evaluate("() => window.orden.state.doc.toString()") != "Second thought":
         wrong("what is typed after the plus did not land")
-    page.evaluate("() => window.nibApp.workspace.open(window.nibApp.workspace.notes[0].path)")
+    page.evaluate("() => window.ordenApp.workspace.open(window.ordenApp.workspace.notes[0].path)")
     DRIVE.wait_for(page, f"() => {named % 'Second thought'}", "the second draft to be written down")
     say("ok: and so is one left by opening another")
     context.close()

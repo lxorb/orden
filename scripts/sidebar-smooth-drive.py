@@ -17,7 +17,7 @@ CHROME_HOME = pathlib.Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
 SEED = """
 async (rows) => {
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib')
+    const request = indexedDB.open('orden')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -52,12 +52,12 @@ async () => {
   requestAnimationFrame(tick)
   await new Promise((go) => setTimeout(go, 100))
   const from = performance.now()
-  window.nibApp.workspace.toggleSidebar()
+  window.ordenApp.workspace.toggleSidebar()
   await new Promise((go) => setTimeout(go, 700))
   going = false
   const gaps = []
   for (let i = 1; i < stamps.length; i++) if (stamps[i] > from) gaps.push(stamps[i] - stamps[i - 1])
-  return { gaps, open: !!window.nibApp.workspace.panel }
+  return { gaps, open: !!window.ordenApp.workspace.panel }
 }
 """
 
@@ -80,7 +80,7 @@ async () => {
     pen.fill()
   }
   const picture = await new Promise((done) => canvas.toBlob(done, 'image/jpeg', 0.9))
-  await window.nibApp.wallpaper.take(picture)
+  await window.ordenApp.wallpaper.take(picture)
 }
 """
 
@@ -196,10 +196,10 @@ def main() -> None:
             for theme in asked.themes:
                 if theme == "wallpaper":
                     page.evaluate(PICTURE)
-                page.evaluate(f"() => window.nibApp.theme.select({json.dumps(theme)})")
+                page.evaluate(f"() => window.ordenApp.theme.select({json.dumps(theme)})")
                 page.wait_for_timeout(2500)
-                if not page.evaluate("() => !!window.nibApp.workspace.panel"):
-                    page.evaluate("() => window.nibApp.workspace.toggleSidebar()")
+                if not page.evaluate("() => !!window.ordenApp.workspace.panel"):
+                    page.evaluate("() => window.ordenApp.workspace.toggleSidebar()")
                     page.wait_for_timeout(1500)
 
                 browser.start_tracing(page=page, categories=CATEGORIES)

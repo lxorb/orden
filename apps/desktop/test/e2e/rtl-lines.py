@@ -7,9 +7,9 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
-HEAD = "() => window.nib.state.selection.main.head"
-SET = "(text) => { const v = window.nib; v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: text } }) }"
-CARET = "(at) => { const v = window.nib; v.dispatch({ selection: { anchor: at } }); v.focus() }"
+HEAD = "() => window.orden.state.selection.main.head"
+SET = "(text) => { const v = window.orden; v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: text } }) }"
+CARET = "(at) => { const v = window.orden; v.dispatch({ selection: { anchor: at } }); v.focus() }"
 
 RTL = "# عنوان\n\nمرحبا بالعالم\n\n- عنصر واحد\n\nplain words\n"
 

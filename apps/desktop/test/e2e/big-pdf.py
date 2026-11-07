@@ -49,7 +49,7 @@ new PerformanceObserver((list) => {
 
 SEED = """
 async ({ path, data }) => {
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -62,8 +62,8 @@ async ({ path, data }) => {
     write.oncomplete = () => resolve()
     write.onerror = () => reject(write.error)
   })
-  await window.nibApp.workspace.loadTree()
-  return window.nibApp.workspace.files.some((one) => one.path === path)
+  await window.ordenApp.workspace.loadTree()
+  return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
 
@@ -74,7 +74,7 @@ SHEETS = """
 """
 
 DRAWN = f"""
-(count, number) => window.nibApp.pages.current?.store.count === count &&
+(count, number) => window.ordenApp.pages.current?.store.count === count &&
   ({SHEETS.strip()})().some(
     (one) => one.querySelector('.number')?.textContent === String(number) &&
       one.querySelector('canvas.there'),
@@ -85,12 +85,12 @@ OPEN = f"""
 async ({{ path, count, patience }}) => {{
   const started = performance.now()
   const drawn = {DRAWN.strip()}
-  void window.nibApp.workspace.openPdf(path, 1)
+  void window.ordenApp.workspace.openPdf(path, 1)
   let shown = null
-  const landed = () => window.nibApp.pages.current?.store.showing || 1
+  const landed = () => window.ordenApp.pages.current?.store.showing || 1
   while (!drawn(count, landed())) {{
     await new Promise((resolve) => requestAnimationFrame(resolve))
-    if (shown === null && window.nibApp.pages.current?.store.count === count) {{
+    if (shown === null && window.ordenApp.pages.current?.store.count === count) {{
       shown = performance.now() - started
     }}
     if (performance.now() - started > patience) return {{ started, shown, first: null }}
@@ -104,7 +104,7 @@ async ({{ count, patience }}) => {{
   const started = performance.now()
   const drawn = {DRAWN.strip()}
   const sheets = {SHEETS.strip()}
-  const store = window.nibApp.pages.current?.store
+  const store = window.ordenApp.pages.current?.store
   if (!store) return {{ started, last: null, mounted: 0 }}
   store.turnTo(count)
   while (!drawn(count, count)) {{
@@ -210,11 +210,11 @@ def main() -> int:
         context.add_init_script(OBSERVE)
         page: Page = context.new_page()
         page.goto(ORIGIN, wait_until="domcontentloaded")
-        wait_for(page, "window.nibApp?.workspace?.activeSpace", "a space")
-        wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+        wait_for(page, "window.ordenApp?.workspace?.activeSpace", "a space")
+        wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
 
         made = paper(PAGES)
-        root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+        root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
         path = f"{root}/Thick.pdf"
         thin = f"{root}/Thin.pdf"
         for one, body in ((thin, paper(2)), (path, made)):
@@ -246,13 +246,13 @@ def main() -> int:
         mounted = page.evaluate(f"() => ({SHEETS.strip()})().length")
 
         closing = page.evaluate("() => performance.now()")
-        page.evaluate("() => window.nibApp.workspace.closeActive()")
+        page.evaluate("() => window.ordenApp.workspace.closeActive()")
         page.wait_for_timeout(1500)
         reopened = page.evaluate(OPEN, {"path": f"{root}/Thick.pages", "count": PAGES, "patience": 60000})
         page.wait_for_timeout(SETTLE)
         tasks = page.evaluate("() => window.__longTasks")
 
-        page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+        page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
         page.wait_for_timeout(SETTLE)
         listed = page.evaluate(THUMBNAILS)
         holding = page.evaluate(HOLD_FIRST)
@@ -262,7 +262,7 @@ def main() -> int:
         kept = page.evaluate(HELD)
         page.keyboard.press("Enter")
         page.wait_for_timeout(SETTLE)
-        turned = page.evaluate("() => window.nibApp.pages.current?.store.showing ?? null")
+        turned = page.evaluate("() => window.ordenApp.pages.current?.store.showing ?? null")
         context.close()
 
     failed = False

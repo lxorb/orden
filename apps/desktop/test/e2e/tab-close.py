@@ -13,7 +13,7 @@ PARTED = 3
 
 SEED = """
 async (names) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   for (const tab of [...ws.tabs]) ws.close(tab.id)
   for (const name of names) {
@@ -113,8 +113,8 @@ def closing(page: Page, look: str, icons: bool) -> None:
 
     page.mouse.down()
     page.mouse.up()
-    wait_for(page, "!window.nibApp.workspace.tabs.some((one) => one.shown === 'Note E')", "Note E to close")
-    left = page.evaluate("() => window.nibApp.workspace.tabs.map((one) => one.shown)")
+    wait_for(page, "!window.ordenApp.workspace.tabs.some((one) => one.shown === 'Note E')", "Note E to close")
+    left = page.evaluate("() => window.ordenApp.workspace.tabs.map((one) => one.shown)")
     say(f"[{scheme}] after two presses in one place: {left}")
     if "Note D" in left or "Note E" in left or len(left) != len(NAMES) - 2:
         wrong(f"[{scheme}] two presses did not close the two tabs: {left}")

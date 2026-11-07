@@ -9,7 +9,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   for (const name of ['One', 'Two', 'Three']) ws.openBlank(name, `# ${name}\\n\\nSome words of ${name}.`)
   if (ws.panel !== 'tree') ws.showPanel('tree')
   await new Promise((go) => setTimeout(go, 400))
@@ -33,7 +33,7 @@ SAMPLE = """
   let going = true
   const look = () => {
     if (!going) return
-    const ws = window.nibApp.workspace
+    const ws = window.ordenApp.workspace
     const fronts = new Set(ws.panes.all.map((one) => one.activeTabId))
     const tabs = ws.tabs.filter((one) => ws.panes.at(one.paneId)).map((tab) => {
       const window = [...document.querySelectorAll('.window')].find((one) => one.getAttribute('aria-label') === tab.shown)

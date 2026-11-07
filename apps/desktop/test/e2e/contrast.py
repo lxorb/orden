@@ -32,7 +32,7 @@ function shout(word) { return `${word}!` }
 
 SEED = """
 async ([note]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   return ws.notes.map((one) => one.path)
@@ -155,23 +155,23 @@ def launched(browser: Browser, label: str, forced: bool = False) -> Page:
     listen(page, label)
     page.goto(ORIGIN, wait_until="domcontentloaded")
 
-    wait_for(page, "window.nibApp", f"[{label}] the app")
+    wait_for(page, "window.ordenApp", f"[{label}] the app")
     return page
 
 def fresh(browser: Browser, label: str, forced: bool = False) -> Page:
     page = launched(browser, label, forced)
 
-    wait_for(page, "window.nibApp.workspace.activeSpace", f"[{label}] a space")
+    wait_for(page, "window.ordenApp.workspace.activeSpace", f"[{label}] a space")
     say(f"[{label}] the space holds {page.evaluate(SEED, [NOTE])}")
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('What contrast'))
           await ws.openEntry(note.path, { activate: true })
         }"""
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", f"[{label}] the editor")
     page.wait_for_timeout(600)
     return page
 
@@ -183,14 +183,14 @@ def ratios(page: Page) -> dict:
         return {}
 
 def wear_the_theme(page: Page) -> None:
-    page.evaluate("() => window.nibApp.theme.select('contrast')")
+    page.evaluate("() => window.ordenApp.theme.select('contrast')")
     page.wait_for_timeout(400)
 
-    if page.evaluate("() => window.nibApp.theme.id") != "contrast":
+    if page.evaluate("() => window.ordenApp.theme.id") != "contrast":
         wrong("the built-in contrast theme could not be chosen")
 
 def scheme(page: Page, which: str) -> None:
-    page.evaluate("(which) => window.nibApp.theme.setScheme(which)", which)
+    page.evaluate("(which) => window.ordenApp.theme.setScheme(which)", which)
     page.wait_for_timeout(400)
 
 def check(page: Page, label: str, floors: dict) -> dict:
@@ -237,7 +237,7 @@ def drive_scheme(browser: Browser, which: str, at: int) -> None:
 
 def drive_settings(browser: Browser) -> None:
     page = fresh(browser, "settings")
-    page.evaluate("() => window.nibApp.settings.show('appearance')")
+    page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_selector(".orden-screen.sheet", timeout=15000)
     page.wait_for_timeout(600)
     shot(page, "20-appearance")
@@ -253,7 +253,7 @@ def drive_settings(browser: Browser) -> None:
     if page.get_by_role("switch", name="More contrast").count():
         wrong("the More contrast switch is back")
 
-    offered = page.evaluate("() => window.nibApp.theme.all.map((one) => one.id)")
+    offered = page.evaluate("() => window.ordenApp.theme.all.map((one) => one.id)")
     say(f"[settings] the Style row offers {json.dumps(offered)}")
     if offered[:2] != ["default", "contrast"]:
         wrong(f"the two the app ships with are not the first two offered: {offered}")
@@ -264,13 +264,13 @@ def drive_offered(browser: Browser) -> None:
     page = launched(browser, "offered", forced=True)
     page.wait_for_timeout(800)
 
-    if not page.evaluate("() => window.nibApp.theme.offerContrast"):
+    if not page.evaluate("() => window.ordenApp.theme.offerContrast"):
         wrong("a system asking for more contrast was not answered")
-    if page.evaluate("() => window.nibApp.theme.id") != "contrast":
+    if page.evaluate("() => window.ordenApp.theme.id") != "contrast":
         wrong("the launch did not choose the contrast theme")
     if page.evaluate("() => localStorage.getItem('orden:theme')") != "contrast":
         wrong("the choice was not written down, so the next launch would forget it")
-    if page.evaluate("() => window.nibApp.settings.section") != "appearance":
+    if page.evaluate("() => window.ordenApp.settings.section") != "appearance":
         wrong("Appearance did not open on the row the theme was chosen from")
     if page.evaluate("() => localStorage.getItem('orden:contrast-offered')") != "yes":
         wrong("the answer was not written down, so it would be given again")
@@ -284,14 +284,14 @@ def drive_offered(browser: Browser) -> None:
     LEAVING.add(page)
     with page.expect_request("**/assets/Palette-*.js", timeout=30_000):
         page.reload(wait_until="domcontentloaded")
-        wait_for(page, "window.nibApp", "[offered] the app again")
+        wait_for(page, "window.ordenApp", "[offered] the app again")
     page.wait_for_load_state("networkidle")
 
-    if page.evaluate("() => window.nibApp.theme.offerContrast"):
+    if page.evaluate("() => window.ordenApp.theme.offerContrast"):
         wrong("the answer was given a second time")
     if page.evaluate("() => !!document.querySelector('.notices .reload')"):
         wrong("a piece of the app did not arrive on the second launch")
-    if page.evaluate("() => window.nibApp.theme.id") != "contrast":
+    if page.evaluate("() => window.ordenApp.theme.id") != "contrast":
         wrong("the theme chosen by the first launch did not survive the second")
     shot(page, "31-not-asked-again")
 

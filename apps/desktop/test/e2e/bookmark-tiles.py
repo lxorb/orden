@@ -25,10 +25,10 @@ FILES = {
 
 SEED = """
 async (files) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/\\/+$/, '')
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib')
+    const request = indexedDB.open('orden')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -55,7 +55,7 @@ async (files) => {
 
 SHOW = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   if (ws.panel !== 'tree') ws.showPanel('tree')
 }
 """
@@ -80,7 +80,7 @@ ROWS = """
 () => [...document.querySelectorAll('.bookmarks .row .orden-row-label')].map((one) => one.textContent)
 """
 
-ORDER = "() => window.nibApp.workspace.bookmarks.list.map((one) => one.path || one.text)"
+ORDER = "() => window.ordenApp.workspace.bookmarks.list.map((one) => one.path || one.text)"
 
 RELOADING: set[Page] = set()
 
@@ -124,11 +124,11 @@ def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = Fa
     page.evaluate(SHOW)
     wait_for(page, "document.querySelectorAll('.tiles .tile').length > 0", "the tiles")
     page.locator(".tiles .tile").first.click()
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     wait_for(page, "document.querySelectorAll('.tiles .tile').length === 5", f"[{label}] the tiles")
     wait_for(
         page,
-        "/Plan\\.md$/.test(window.nibApp.workspace.active?.essential ?? '')",
+        "/Plan\\.md$/.test(window.ordenApp.workspace.active?.essential ?? '')",
         f"[{label}] Plan open in place",
     )
     page.wait_for_timeout(500)
@@ -185,18 +185,18 @@ def drive_look(browser: Browser) -> None:
 
     for theme in ("default", "glass"):
         for scheme in ("light", "dark"):
-            page.evaluate(f"() => window.nibApp.theme.select('{theme}')")
-            page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+            page.evaluate(f"() => window.ordenApp.theme.select('{theme}')")
+            page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
             page.wait_for_timeout(500)
             page.mouse.move(900, 600)
             sidebar(page, f"03-{theme}-{scheme}")
-    page.evaluate("() => window.nibApp.theme.select('default')")
-    page.evaluate("() => window.nibApp.theme.setScheme('light')")
+    page.evaluate("() => window.ordenApp.theme.select('default')")
+    page.evaluate("() => window.ordenApp.theme.setScheme('light')")
     page.wait_for_timeout(300)
 
     page.locator(".tiles .tile", has=page.locator(".orden-tile-letter", has_text="I")).click()
     page.wait_for_timeout(500)
-    if page.evaluate("() => window.nibApp.workspace.active?.name") != "Inbox.md":
+    if page.evaluate("() => window.ordenApp.workspace.active?.name") != "Inbox.md":
         wrong("pressing a tile did not open its note")
     lifted = [one["name"] for one in page.evaluate(TILES) if one["on"]]
     if lifted != ["Inbox"]:
@@ -205,12 +205,12 @@ def drive_look(browser: Browser) -> None:
 
     if page.locator(".tab", has_text="Inbox").count():
         wrong("pressing a tile put a tab in the strip")
-    shown = page.evaluate("() => window.nibApp.workspace.active?.id")
+    shown = page.evaluate("() => window.ordenApp.workspace.active?.id")
     page.locator(".body [data-path$='Loose.md']").first.dblclick()
     page.wait_for_timeout(500)
     page.locator(".tiles .tile", has=page.locator(".orden-tile-letter", has_text="I")).click()
     page.wait_for_timeout(400)
-    back = page.evaluate("() => window.nibApp.workspace.active?.id")
+    back = page.evaluate("() => window.ordenApp.workspace.active?.id")
     if back != shown:
         wrong("pressing the tile again made a new view rather than coming back to its own")
     shot(page, "05-in-place")
@@ -260,7 +260,7 @@ def drive_hands(browser: Browser) -> None:
     if below != expected:
         wrong(f"ArrowDown did not walk down the grid: {below}, not {expected}")
 
-    page.evaluate("() => window.nibApp.settings.show()")
+    page.evaluate("() => window.ordenApp.settings.show()")
     page.wait_for_timeout(600)
     page.fill(".sheet .search input", "bookmarks")
     page.wait_for_timeout(500)
@@ -271,7 +271,7 @@ def drive_hands(browser: Browser) -> None:
         shot(page, "11-settings")
         found.first.click()
         page.wait_for_timeout(300)
-    page.evaluate("() => (window.nibApp.settings.open = false)")
+    page.evaluate("() => (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(500)
     listed = page.evaluate(ROWS)
     say(f"[hands] as a list: {listed}")
@@ -289,7 +289,7 @@ def drive_hands(browser: Browser) -> None:
     if page.locator("p.orden-section", has_text="Essentials").count() != 1:
         wrong("the rows under the tiles are not headed Essentials")
 
-    page.evaluate("() => window.nibApp.workspace.bookmarks.toggle(window.nibApp.workspace.bookmarks.list[0])")
+    page.evaluate("() => window.ordenApp.workspace.bookmarks.toggle(window.ordenApp.workspace.bookmarks.list[0])")
     page.locator(".body [data-path$='Loose.md']").first.dblclick()
     page.wait_for_timeout(500)
     tab = page.locator(".tab", has_text="Loose").first.bounding_box()
@@ -316,8 +316,8 @@ def drive_hands(browser: Browser) -> None:
 
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
-    wait_for(page, "window.nibApp.workspace.panel === null", "the drawer put away")
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    wait_for(page, "window.ordenApp.workspace.panel === null", "the drawer put away")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
     tiles = page.evaluate(TILES)
     say(f"[phone] tiles: {json.dumps(tiles)}")
@@ -328,7 +328,7 @@ def drive_finger(browser: Browser) -> None:
 
     page.locator(".tiles .tile").nth(2).tap()
     page.wait_for_timeout(600)
-    if page.evaluate("() => window.nibApp.workspace.active?.name") != "Svelte docs.url":
+    if page.evaluate("() => window.ordenApp.workspace.active?.name") != "Svelte docs.url":
         say("[phone] a tap on the web tile opened something else (a web build cannot open a site)")
     page.context.close()
 

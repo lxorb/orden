@@ -18,10 +18,10 @@ FILES = {
 
 SEED = """
 async (files) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/\\/+$/, '')
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib')
+    const request = indexedDB.open('orden')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -44,7 +44,7 @@ async (files) => {
 
 LISTED = "() => [...document.querySelectorAll('.row[data-path]')].map((row) => row.dataset.path.split('/').pop())"
 TILED = "() => [...document.querySelectorAll('.tiles .tile')].map((tile) => tile.getAttribute('aria-label'))"
-KEEP = "(name) => { const ws = window.nibApp.workspace; const root = ws.activeSpace.root.replace(/\\/+$/, ''); ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: `${root}/${name}`, is_dir: false })) }"
+KEEP = "(name) => { const ws = window.ordenApp.workspace; const root = ws.activeSpace.root.replace(/\\/+$/, ''); ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: `${root}/${name}`, is_dir: false })) }"
 
 def press_row(page: Page, label: str) -> bool:
     try:

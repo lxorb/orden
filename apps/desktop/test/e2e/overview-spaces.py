@@ -10,7 +10,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = r"""
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const home = ws.activeSpace
   const bee = await ws.addSpace('Bee')
   await ws.showSpace(home.id)
@@ -34,7 +34,7 @@ async () => {
 """
 
 TAB = """(name) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const tab = ws.tabs.find((one) => one.shown === name)
   return tab ? { path: tab.path, here: !!ws.panes.at(tab.paneId) } : null
 }"""
@@ -121,7 +121,7 @@ def drive(browser: Browser) -> None:
     page.get_by_role("option", name="This space").click()
     page.wait_for_timeout(600)
     close_overview(page)
-    page.evaluate("async (id) => { await window.nibApp.workspace.showSpace(id) }", ids["bee"])
+    page.evaluate("async (id) => { await window.ordenApp.workspace.showSpace(id) }", ids["bee"])
     page.wait_for_timeout(400)
     open_overview(page)
     visible = on_screen(page)
@@ -133,7 +133,7 @@ def drive(browser: Browser) -> None:
     page.get_by_role("option", name="All spaces").click()
     page.wait_for_timeout(400)
     close_overview(page)
-    page.evaluate("async (id) => { await window.nibApp.workspace.showSpace(id) }", ids["home"])
+    page.evaluate("async (id) => { await window.ordenApp.workspace.showSpace(id) }", ids["home"])
     page.wait_for_timeout(400)
 
     open_overview(page)
@@ -146,11 +146,11 @@ def drive(browser: Browser) -> None:
     if not keyboard(page).startswith("canvas"):
         wrong(f"a drop left the keyboard on {keyboard(page)}")
     page.keyboard.press("Control+z")
-    wait_for(page, "window.nibApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "Ctrl+Z from the view")
+    wait_for(page, "window.ordenApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "Ctrl+Z from the view")
     page.wait_for_timeout(400)
     carry(page, box(page, "A2"), box(page, "B2"))
     page.locator(".toast button.undo").click()
-    wait_for(page, "window.nibApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "the toast's Undo")
+    wait_for(page, "window.ordenApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "the toast's Undo")
     page.wait_for_timeout(500)
     say(f"after the toast's Undo the keyboard is on {keyboard(page)}")
     if not keyboard(page).startswith("canvas"):
@@ -167,17 +167,17 @@ def drive(browser: Browser) -> None:
     all_spaces(page)
     carry(page, box(page, "A2"), box(page, "B2"))
     close_overview(page)
-    page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
+    page.evaluate("async () => { await window.ordenApp.workspace.undoFileAction() }")
     moved = tab(page, "A2")
     say(f"undone: {moved}")
     if not moved["path"].startswith(ids["homeRoot"]) or not moved["here"]:
         wrong(f"undone, the file and its tab are not back together: {moved}")
-    page.evaluate("async () => { await window.nibApp.workspace.redoFileAction() }")
+    page.evaluate("async () => { await window.ordenApp.workspace.redoFileAction() }")
     moved = tab(page, "A2")
     say(f"redone: {moved}")
     if not moved["path"].startswith(ids["beeRoot"]) or moved["here"]:
         wrong(f"redone, the file and its tab did not go together: {moved}")
-    page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
+    page.evaluate("async () => { await window.ordenApp.workspace.undoFileAction() }")
 
     page.evaluate(
         """async (root) => {
@@ -218,14 +218,14 @@ def drive(browser: Browser) -> None:
 
     page.evaluate(
         """async ([id, home]) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           ws.close(ws.tabs.find((one) => one.shown === 'B1').id)
           await ws.showSpace(home)
           await ws.reopenClosed()
         }""",
         [ids["bee"], ids["home"]],
     )
-    space = page.evaluate("() => window.nibApp.workspace.activeSpaceId")
+    space = page.evaluate("() => window.ordenApp.workspace.activeSpaceId")
     back = tab(page, "B1")
     say(f"reopened: {back} in {space}")
     if space != ids["bee"] or not back or not back["here"]:

@@ -65,7 +65,7 @@ FOLD_NOTE = (
 
 SEED = """
 async (notes) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   for (const one of notes) await ws.noteFrom(one, root)
   await ws.loadTree()
@@ -96,13 +96,13 @@ def fresh(browser: Browser, scheme: str) -> Page:
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith(starts))
           await ws.openEntry(note.path, { activate: true })
         }""",
         starts,
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
 
 WRITTEN = """
@@ -224,7 +224,7 @@ def drive(browser: Browser, scheme: str) -> None:
             wrong(f"{name} does not wear orden-callout-{look}: {others.get(name)}")
 
     open_note(page, "Callouts")
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, f"05-reading-{scheme}")
     read = page.evaluate(READ)
@@ -240,7 +240,7 @@ def drive(browser: Browser, scheme: str) -> None:
             wrong(f"{one['type']} is called {one['title']!r} in the reading view")
 
     open_note(page, "The odd ones")
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, f"06-reading-odd-{scheme}")
     odd_read = page.evaluate(READ)
@@ -295,7 +295,7 @@ def fold(page: Page, scheme: str) -> None:
     if opened["marks"]:
         wrong("the chevron did not open a callout the note said was shut")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, f"09-fold-reading-{scheme}")
     disclosed = page.evaluate(DISCLOSED)

@@ -86,7 +86,7 @@ def note_pictures(browser: Browser) -> None:
             wrong(f"empty paper under the note: {seen['height']} tall, the last mark at {seen['last']}")
 
         say("  Appearance dark is dark paper with light words")
-        page.evaluate("() => { window.nibApp.settings.exportAppearance = 'dark' }")
+        page.evaluate("() => { window.ordenApp.settings.exportAppearance = 'dark' }")
         seen = looked_at(page, "Export as PNG")
         if not dark(seen["corner"]):
             wrong(f"a dark export has paper of {seen['corner']}")
@@ -98,7 +98,7 @@ def canvas_pictures(browser: Browser) -> None:
     page = context.new_page()
     DRIVE.open(page)
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Plane.canvas') }"
+        "async () => { const ws = window.ordenApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Plane.canvas') }"
     )
     page.wait_for_selector(".canvas")
     box = page.locator(".canvas").bounding_box()
@@ -117,7 +117,7 @@ def canvas_pictures(browser: Browser) -> None:
     if seen["dark"] < 50:
         wrong(f"a canvas's PNG under Appearance light has no dark ink: {seen['dark']} pixels")
 
-    page.evaluate("() => { window.nibApp.settings.exportAppearance = 'app' }")
+    page.evaluate("() => { window.ordenApp.settings.exportAppearance = 'app' }")
     seen = looked_at(page, "Export as PNG")
     say(f"  Appearance as the app is: {seen}")
     if not dark(seen["corner"]):
@@ -154,7 +154,7 @@ def page_note_at_once(browser: Browser) -> None:
     say("a page note exported straight after a stroke has the stroke")
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
-    page.evaluate("async () => { const ws = window.nibApp.workspace; await ws.createPages(ws.activeSpace.root) }")
+    page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createPages(ws.activeSpace.root) }")
     page.wait_for_selector(".pages, .canvas")
     box = page.locator(".pages, .canvas").first.bounding_box()
     x, y = box["x"] + box["width"] / 2, box["y"] + 250

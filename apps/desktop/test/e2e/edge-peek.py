@@ -14,7 +14,7 @@ SIZE = {"width": 1280, "height": 800}
 
 ARRANGE = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom('# Plan\\n\\nWhat we are doing, and why it matters.\\n', root)
   await ws.noteFrom('# Other\\n\\nA note beside it.\\n', root)
@@ -99,7 +99,7 @@ def drive(browser: Browser) -> None:
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
     page.evaluate(ARRANGE)
-    wait_for(page, "window.nibApp.workspace.panel === null", "the list shut")
+    wait_for(page, "window.ordenApp.workspace.panel === null", "the list shut")
     page.mouse.move(640, 400)
     quiet(page)
     page.evaluate(WATCH)

@@ -23,10 +23,10 @@ const MOST: Record<Kind, number> = {
   package: 0,
   identifier: 8,
   scheme: 21,
-  key: 129,
+  key: 128,
   variable: 18,
-  dashed: 753,
-  word: 3380,
+  dashed: 749,
+  word: 3040,
 }
 
 const ALIASES_SHIP_IN = 'v0.21.0'
@@ -95,6 +95,24 @@ const ALIASES: Record<string, readonly string[]> = {
   'scripts/nib-sync.mjs': ['NIB_API', 'NIB_TOKEN'],
   'services/machine/nib-update': ['NIB_ORIGIN'],
   'services/machine/test/update.test.ts': ['NIB_ORIGIN'],
+  '.github/workflows/check.yml': ['nibApp'],
+  'apps/desktop/public/sw.js': ["'nib'"],
+  'apps/desktop/src-tauri/src/agents/grants.rs': ['"nib-"'],
+  'apps/desktop/src-tauri/src/ai_agent.rs': ['BUILT_IN_BEFORE'],
+  'apps/desktop/src/App.svelte': ['nibApp'],
+  'apps/desktop/src/lib/Editor.svelte': ["'nib'"],
+  'apps/desktop/src/lib/ai/review/changes.test.ts': ['nib-anthropic'],
+  'apps/desktop/src/lib/ai/review/changes.ts': ["'nib-'"],
+  'apps/desktop/src/lib/automation/eval.test.ts': ['nib.'],
+  'apps/desktop/src/lib/automation/eval.ts': ["'nib'"],
+  'apps/desktop/src/lib/sync2/lead.ts': ["'nib-sync'"],
+  'apps/desktop/src/lib/web/database-former.test.ts': ['nib'],
+  'apps/desktop/src/lib/web/handoff.test.ts': ['nib-handoff'],
+  'apps/desktop/src/lib/web/handoff.ts': ["'nib-handoff'", "'nib'"],
+  'apps/desktop/src/lib/web/store.ts': ["'nib'"],
+  'apps/desktop/src/lib/web/sw.test.ts': ["'nib'"],
+  'apps/desktop/src/lib/web/sync-store.ts': ['nib-sync:'],
+  'apps/desktop/test/drive-handle.test.ts': ['nibApp', "'nib'"],
 }
 
 describe('the old name inside the repo', () => {

@@ -142,16 +142,16 @@ def fresh(browser: Browser, scheme: str) -> Page:
         reduced_motion="reduce",
     )
     DRIVE.open(page)
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
-    page.evaluate("() => window.nibApp.theme.select('glass')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
+    page.evaluate("() => window.ordenApp.theme.select('glass')")
     wait_for(page, "document.documentElement.hasAttribute('data-tinted')", "glass")
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     DRIVE.settled(page)
     return page
 
 def open_site(page: Page, name: str) -> None:
     address = f"{DRIVE.origin}/glass/{name}.html"
-    page.evaluate("(address) => window.nibApp.workspace.openPage(address)", address)
+    page.evaluate("(address) => window.ordenApp.workspace.openPage(address)", address)
     wait_for(page, "document.querySelector('.web .card .orden-button')", f"the {name} card")
     page.click(".web .card .orden-button")
     wait_for(page, f"document.querySelector('iframe[data-web-tab]')?.src?.endsWith('/glass/{name}.html')", "the frame")

@@ -34,7 +34,7 @@ Say something
 
 SEED = """
 async ([first, second]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom(first, root)
   await ws.noteFrom(second, root)
@@ -45,7 +45,7 @@ async ([first, second]) => {
 
 OPEN = """
 async (name) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const note = ws.notes.find((one) => one.name.startsWith(name))
   await ws.openEntry(note.path, { activate: true })
 }
@@ -53,7 +53,7 @@ async (name) => {
 
 SETUP = """
 async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: '%s' })
@@ -64,13 +64,13 @@ async (base) => {
 
 STATE = """
 () => {
-  const text = window.nib?.state.doc.toString() ?? ''
+  const text = window.orden?.state.doc.toString() ?? ''
   const glyph = document.querySelector('.orden-fence-run')
   return {
     text,
     glyph: glyph ? glyph.title : null,
     glyphs: document.querySelectorAll('.orden-fence-run').length,
-    trouble: window.nibApp.busy.trouble,
+    trouble: window.ordenApp.busy.trouble,
   }
 }
 """
@@ -332,7 +332,7 @@ def drive_refusal(browser: Browser) -> None:
 
 def drive_no_provider(browser: Browser) -> None:
     page = fresh(browser, "empty")
-    page.evaluate("() => { const ai = window.nibApp.ai; for (const one of [...ai.providers]) ai.remove(one.id) }")
+    page.evaluate("() => { const ai = window.ordenApp.ai; for (const one of [...ai.providers]) ai.remove(one.id) }")
     page.evaluate(OPEN, "Plain")
     page.wait_for_timeout(400)
 
@@ -362,11 +362,11 @@ def drive_rewrite(browser: Browser) -> None:
 
     picked = page.evaluate(
         """() => {
-          const text = window.nib.state.doc.toString()
+          const text = window.orden.state.doc.toString()
           const from = text.indexOf('A heron stands')
           const to = text.indexOf('\\n', from)
-          window.nib.dispatch({ selection: { anchor: from, head: to } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: from, head: to } })
+          window.orden.focus()
           return text.slice(from, to)
         }"""
     )
@@ -374,10 +374,10 @@ def drive_rewrite(browser: Browser) -> None:
 
     Model.seen.clear()
     Model.words = ["A heron ", "waits."]
-    page.evaluate("() => window.nibApp.rewriting.show(window.nib)")
+    page.evaluate("() => window.ordenApp.rewriting.show(window.orden)")
     page.wait_for_timeout(300)
 
-    if not page.evaluate("() => window.nibApp.rewriting.open"):
+    if not page.evaluate("() => window.ordenApp.rewriting.open"):
         wrong("[rewrite] the sheet did not open on a selection")
         page.context.close()
         return
@@ -433,7 +433,7 @@ def drive_rewrite(browser: Browser) -> None:
         wrong("[rewrite] the rewrite was not written over the selection")
     if "A heron stands still in the shallows" in after["text"]:
         wrong("[rewrite] the old sentence is still there")
-    if page.evaluate("() => window.nibApp.rewriting.open"):
+    if page.evaluate("() => window.ordenApp.rewriting.open"):
         wrong("[rewrite] the sheet stayed open after the rewrite was kept")
 
     page.context.close()
@@ -447,14 +447,14 @@ def drive_discard(browser: Browser) -> None:
     before = state(page)["text"]
     page.evaluate(
         """() => {
-          const text = window.nib.state.doc.toString()
+          const text = window.orden.state.doc.toString()
           const from = text.indexOf('A heron stands')
           const to = text.indexOf('\\n', from)
-          window.nib.dispatch({ selection: { anchor: from, head: to } })
+          window.orden.dispatch({ selection: { anchor: from, head: to } })
         }"""
     )
     Model.words = ["Something ", "else."]
-    page.evaluate("() => window.nibApp.rewriting.show(window.nib)")
+    page.evaluate("() => window.ordenApp.rewriting.show(window.orden)")
     page.wait_for_timeout(200)
     page.locator(".verbs button").first.click()
     page.wait_for_timeout(1000)
@@ -466,15 +466,15 @@ def drive_discard(browser: Browser) -> None:
     after = state(page)["text"]
     if after != before:
         wrong("[discard] discarding a rewrite changed the note")
-    if page.evaluate("() => window.nibApp.rewriting.open"):
+    if page.evaluate("() => window.ordenApp.rewriting.open"):
         wrong("[discard] the sheet stayed open after discarding")
 
     page.context.close()
 
 def drive_pane(browser: Browser) -> None:
     page = fresh(browser, "pane")
-    page.evaluate("() => { const ai = window.nibApp.ai; for (const one of [...ai.providers]) ai.remove(one.id) }")
-    page.evaluate("() => window.nibApp.settings.show('ai')")
+    page.evaluate("() => { const ai = window.ordenApp.ai; for (const one of [...ai.providers]) ai.remove(one.id) }")
+    page.evaluate("() => window.ordenApp.settings.show('ai')")
     page.wait_for_selector(".orden-screen.sheet", timeout=15000)
     page.wait_for_timeout(400)
     shot(page, "60-pane-empty")
@@ -491,7 +491,7 @@ def drive_pane(browser: Browser) -> None:
 
     page.evaluate(
         """(base) => {
-          const ai = window.nibApp.ai
+          const ai = window.ordenApp.ai
           ai.update(ai.providers[0].id, { name: 'Fake', baseUrl: base })
         }""",
         MODEL_ORIGIN,
@@ -502,7 +502,7 @@ def drive_pane(browser: Browser) -> None:
     page.wait_for_timeout(900)
     shot(page, "61-models-listed")
 
-    chosen = page.evaluate("() => window.nibApp.ai.providers[0].model")
+    chosen = page.evaluate("() => window.ordenApp.ai.providers[0].model")
     offered = page.evaluate(
         "() => [...document.querySelectorAll('.pick button, .pick select option')]"
         ".map((one) => one.textContent.trim())"
@@ -510,7 +510,7 @@ def drive_pane(browser: Browser) -> None:
     say(f"[pane] the model chosen for it: {chosen!r}, from {offered}")
     if chosen not in {MODEL, "fake-large"}:
         wrong(f"[pane] listing the models did not choose one: {chosen!r}")
-    if not page.evaluate("() => window.nibApp.ai.ready"):
+    if not page.evaluate("() => window.ordenApp.ai.ready"):
         wrong("[pane] the provider is not usable after being set up")
 
     key_field = page.locator("input[type=password]")

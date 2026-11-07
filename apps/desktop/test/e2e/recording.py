@@ -46,7 +46,7 @@ Record one here:
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('Recordings'))
@@ -57,7 +57,7 @@ async (note) => {
 
 SIGNED_IN = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.account.token = 'a-drive-session'
   app.account.user = { id: 'drive', email: 'drive@example.com', name: 'Drive' }
   app.account.settling = false
@@ -172,12 +172,12 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     page.route("**/v1/ask/heard*", whisper.listen)
 
     DRIVE.open(page)
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     wait_for(page, "navigator.serviceWorker.controller", "the asset worker")
 
     seeded = page.evaluate(SEED, NOTE)
     say(f"the space {seeded['root']} holds {seeded['name']}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(500)
     return page, whisper
 
@@ -211,7 +211,7 @@ def run_command(page: Page, words: str) -> None:
     page.wait_for_timeout(200)
 
 def trouble(page: Page) -> str:
-    return page.evaluate("() => window.nibApp.settings.error ?? ''")
+    return page.evaluate("() => window.ordenApp.settings.error ?? ''")
 
 def pill(page: Page) -> dict:
     return page.evaluate(
@@ -229,7 +229,7 @@ def pill(page: Page) -> dict:
     )
 
 def note_says(page: Page) -> str:
-    return page.evaluate("() => window.nibApp.workspace.active?.doc ?? ''")
+    return page.evaluate("() => window.ordenApp.workspace.active?.doc ?? ''")
 
 def drive(browser: Browser) -> None:
     page, whisper = fresh(browser)
@@ -255,7 +255,7 @@ def drive(browser: Browser) -> None:
 
     page.click(".recording button")
     wait_for(page, "!document.querySelector('.recording')", "the pill to go")
-    wait_for(page, "window.nibApp.workspace.active.doc.includes('![[recording-')", "the embed")
+    wait_for(page, "window.ordenApp.workspace.active.doc.includes('![[recording-')", "the embed")
 
     said = note_says(page)
     embed = said[said.index("![[") : said.index("]]") + 2]
@@ -302,7 +302,7 @@ def drive(browser: Browser) -> None:
     else:
         shot(page, "menu")
         page.get_by_role("menuitem", name="Transcribe").click()
-        wait_for(page, "window.nibApp.workspace.active.doc.includes('[!quote]')", "the transcript")
+        wait_for(page, "window.ordenApp.workspace.active.doc.includes('[!quote]')", "the transcript")
 
         said = note_says(page)
         if "> [!quote] Transcript (German)" not in said:
@@ -326,7 +326,7 @@ def drive(browser: Browser) -> None:
 
 OWN_TRANSCRIBER = """
 async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'On this machine', baseUrl: base, model: 'llama' })
@@ -341,13 +341,13 @@ def byok(browser: Browser) -> None:
     own = Byok()
     page.route("**/v1/audio/transcriptions", own.listen)
 
-    wait_for(page, "window.nibApp.ai", "the AI providers")
+    wait_for(page, "window.ordenApp.ai", "the AI providers")
     made = page.evaluate(OWN_TRANSCRIBER, "http://127.0.0.1:23305/v1")
     say(f"the provider is set up: {json.dumps(made)}")
     if not made["transcriber"]:
         wrong("a compatible provider is not read as a transcriber")
 
-    if page.evaluate("() => !!window.nibApp.account.accountToken"):
+    if page.evaluate("() => !!window.ordenApp.account.accountToken"):
         wrong("this check is about having no account, and there is one")
 
     page.click(".cm-content")
@@ -358,7 +358,7 @@ def byok(browser: Browser) -> None:
     page.wait_for_timeout(3200)
     page.click(".recording button")
     wait_for(page, "!document.querySelector('.recording')", "the pill to go")
-    wait_for(page, "window.nibApp.workspace.active.doc.includes('![[recording-')", "the embed")
+    wait_for(page, "window.ordenApp.workspace.active.doc.includes('![[recording-')", "the embed")
 
     page.keyboard.press("Control+Home")
     page.wait_for_timeout(1400)
@@ -385,7 +385,7 @@ def byok(browser: Browser) -> None:
 
     shot(page, "byok-menu")
     page.get_by_role("menuitem", name="Transcribe").click()
-    wait_for(page, "window.nibApp.workspace.active.doc.includes('[!quote]')", "the transcript")
+    wait_for(page, "window.ordenApp.workspace.active.doc.includes('[!quote]')", "the transcript")
 
     said = note_says(page)
     if HEARD not in said:
@@ -420,7 +420,7 @@ OFFERED = """
 
 OPEN_OLD = """
 async (text) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const path = await ws.noteFrom(text, ws.activeSpace.root)
   await ws.openEntry(path, { activate: true })
   return { kind: ws.active?.kind, path: ws.active?.path ?? '' }
@@ -432,7 +432,7 @@ def old_meeting(browser: Browser) -> None:
     page, _whisper = fresh(browser)
 
     opened = page.evaluate(OPEN_OLD, OLD_MEETING)
-    wait_for(page, "window.nibApp.workspace.active?.doc.includes('## Transcript')", "the old note")
+    wait_for(page, "window.ordenApp.workspace.active?.doc.includes('## Transcript')", "the old note")
     said = note_says(page)
     say(f"the old meeting note opens as a {opened['kind']}: {opened['path']}")
     if opened["kind"] != "note":
@@ -457,7 +457,7 @@ def phone(browser: Browser) -> None:
     say("--- a finger ---")
     page, _whisper = fresh(browser, finger=True)
 
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
     page.wait_for_timeout(450)
 
     page.evaluate(
@@ -478,7 +478,7 @@ def phone(browser: Browser) -> None:
         wrong(f"the phone's space menu still offers a meeting: {rows}")
     shot(page, "phone-kinds")
     page.keyboard.press("Escape")
-    page.evaluate("() => window.nibApp.workspace.closePanel()")
+    page.evaluate("() => window.ordenApp.workspace.closePanel()")
     page.wait_for_timeout(450)
 
     run_command(page, "Record")
@@ -514,7 +514,7 @@ def phone(browser: Browser) -> None:
     page.click(".recording button")
     wait_for(
         page,
-        "window.nibApp.workspace.active?.doc.includes('![[recording-')",
+        "window.ordenApp.workspace.active?.doc.includes('![[recording-')",
         "the embed on a phone",
     )
     said = note_says(page)

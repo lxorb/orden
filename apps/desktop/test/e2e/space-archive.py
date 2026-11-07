@@ -13,7 +13,7 @@ HINTS_SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const at = new Date()
   const two = (v) => String(v).padStart(2, '0')
   const today = `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`
@@ -22,14 +22,14 @@ async () => {
   await ws.addSpace('Old')
   const trip = await ws.noteFrom(`# Trip\\n\\nThe mountains, and a lighthouse.\\n\\n- [ ] Pack the bags 🛫 ${today}\\n`, ws.activeSpace.root)
   await ws.loadTree()
-  window.tasks = await window.nibApp.tasks()
+  window.tasks = await window.ordenApp.tasks()
   if (trip) window.tasks.makeList(trip)
   if (ws.panel !== 'tree') ws.showPanel('tree')
   return ws.spaces.map((one) => one.name)
 }
 """
 
-HERE = "() => window.nibApp.workspace.activeSpace?.name ?? null"
+HERE = "() => window.ordenApp.workspace.activeSpace?.name ?? null"
 
 SWITCHER_ROWS = """() => [...document.querySelectorAll('.orden-layer.spaces > .line .orden-row-label')]
   .map((one) => one.textContent.trim())"""
@@ -43,7 +43,7 @@ PICKER_ROWS = """() => [...document.querySelectorAll('.picker .orden-row-label')
 TASK = "() => window.tasks.rows.of().some((one) => one.task?.text === 'Pack the bags')"
 
 FOUND = """async () => {
-  const { search, workspace } = window.nibApp
+  const { search, workspace } = window.ordenApp
   workspace.showPanel('search')
   search.ask('lighthouse')
   await new Promise((done) => setTimeout(done, 900))
@@ -52,10 +52,10 @@ FOUND = """async () => {
   return hits
 }"""
 
-PALETTE = """() => window.nibApp.workspace.shownSpaces.map((one) => one.name)"""
+PALETTE = """() => window.ordenApp.workspace.shownSpaces.map((one) => one.name)"""
 
 def switcher(page: Page) -> None:
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     page.wait_for_timeout(200)
     if not page.locator(".orden-layer.spaces").count():
         page.locator("aside button.name").first.click()
@@ -115,7 +115,7 @@ def drive(browser: Browser) -> None:
     say(f"the search for Old's word: {hits} hits")
     if hits:
         wrong(f"the search found {hits} of Old's words")
-    if page.evaluate("() => window.nibApp.workspace.spaces.some((one) => one.name === 'Old')") is not True:
+    if page.evaluate("() => window.ordenApp.workspace.spaces.some((one) => one.name === 'Old')") is not True:
         wrong("Old is gone from the spaces themselves")
 
     switcher(page)
@@ -133,7 +133,7 @@ def drive(browser: Browser) -> None:
     say(f"the search in Old again: {hits} hits")
     if not hits:
         wrong("the search does not find Old's words once it is back")
-    notes = page.evaluate("() => window.nibApp.workspace.notes.map((one) => one.name)")
+    notes = page.evaluate("() => window.ordenApp.workspace.notes.map((one) => one.name)")
     say(f"Old's notes: {json.dumps(notes)}")
     if "Trip.md" not in notes:
         wrong("Old's note is not where it was")

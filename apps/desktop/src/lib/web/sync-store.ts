@@ -14,6 +14,7 @@ import {
   type SyncStore,
   type TableName,
 } from '../sync2/store'
+import { carryDatabase } from './carry-database'
 import { keptForGood } from './kept-for-good.svelte'
 
 const SCHEMA = 1
@@ -23,7 +24,8 @@ const NAMES = Object.keys(TABLES) as TableName[]
 const BY_SPACE = 'space'
 const BY_AGE = 'age'
 
-const nameOf = (account: string) => `nib-sync:${account}`
+const nameOf = (account: string) => `orden-sync:${account}`
+const formerNameOf = (account: string) => `nib-sync:${account}`
 
 export async function openWeb(account: string, made?: string): Promise<SyncStore> {
   const db = await database(account)
@@ -45,9 +47,13 @@ export async function openWeb(account: string, made?: string): Promise<SyncStore
   }
 }
 
-export function deviceWeb(account: string): Promise<string | null> {
+export async function deviceWeb(account: string): Promise<string | null> {
+  return (await deviceIn(nameOf(account))) ?? deviceIn(formerNameOf(account))
+}
+
+function deviceIn(name: string): Promise<string | null> {
   return new Promise((resolve) => {
-    const request = indexedDB.open(nameOf(account))
+    const request = indexedDB.open(name)
     request.onupgradeneeded = () => request.transaction?.abort()
     request.onerror = () => resolve(null)
     request.onblocked = () => resolve(null)
@@ -73,15 +79,21 @@ export function deviceWeb(account: string): Promise<string | null> {
   })
 }
 
-export function forgetWeb(account: string): Promise<void> {
+export async function forgetWeb(account: string): Promise<void> {
+  await forget(formerNameOf(account))
+  await forget(nameOf(account))
+}
+
+function forget(name: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.deleteDatabase(nameOf(account))
+    const request = indexedDB.deleteDatabase(name)
     request.onsuccess = () => resolve()
     request.onerror = () => reject(request.error ?? new StoreError('the sync store stayed'))
   })
 }
 
-function database(account: string): Promise<IDBDatabase> {
+async function database(account: string): Promise<IDBDatabase> {
+  await carryDatabase(formerNameOf(account), nameOf(account)).catch(() => undefined)
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(nameOf(account), SCHEMA)
     request.onupgradeneeded = () => made(request.result)

@@ -11,14 +11,14 @@ PASSWORD = "tulip ladder seven"
 
 SEEN = """() => ({
   tab: !!document.querySelector('.pass'),
-  tabs: window.nibApp.workspace.tabs.filter((one) => one.kind === 'pass').length,
+  tabs: window.ordenApp.workspace.tabs.filter((one) => one.kind === 'pass').length,
 })"""
 
 PALETTE = """() => [...document.querySelectorAll('.palette ul li')].map((one) => one.textContent.trim())"""
 
 
 def switch(page: Page, on: bool) -> None:
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     row = page.locator('[role=switch][aria-label="Password manager"]')
     row.wait_for(state="visible", timeout=15_000)
     if (row.get_attribute("aria-checked") == "true") != on:
@@ -53,7 +53,7 @@ def none_of_it(page: Page, when: str) -> None:
     rows = offered(page)
     if rows:
         wrong(f"{when}: the palette offers {rows}")
-    page.evaluate("() => { const ws = window.nibApp.workspace; for (const one of [...ws.tabs]) ws.close(one.id, false) }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; for (const one of [...ws.tabs]) ws.close(one.id, false) }")
     wait_for(page, "document.querySelector('.here .kind')", "the empty pane's kinds")
     cards = page.evaluate("() => [...document.querySelectorAll('.here .kind .orden-row-label')].map((one) => one.textContent.trim())")
     if not cards:

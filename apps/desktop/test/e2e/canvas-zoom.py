@@ -10,7 +10,7 @@ DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 ACTUAL = '.cluster button.actual'
-SCALE = "() => window.nibApp.workspace.active?.camera?.scale ?? null"
+SCALE = "() => window.ordenApp.workspace.active?.camera?.scale ?? null"
 
 def reading(page: Page) -> str | None:
     found = page.locator(ACTUAL)
@@ -30,12 +30,12 @@ def wheel_in(page: Page, times: int) -> None:
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
-    wait_for(page, "typeof window.nibApp.tasks === 'function'", "the app's handles")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     path = f"{root}/Board.canvas"
     page.evaluate(
-        "async ([path, text]) => { const ws = window.nibApp.workspace;"
-        " await window.nibApp.tasks().then((t) => t.writeFile(path, text));"
+        "async ([path, text]) => { const ws = window.ordenApp.workspace;"
+        " await window.ordenApp.tasks().then((t) => t.writeFile(path, text));"
         " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
         [path, json.dumps({"nodes": [], "edges": []})],
     )
@@ -61,7 +61,7 @@ def drive(browser: Browser) -> None:
         say("ok   [back] pressed, the plane is at 100% and the reading is gone")
 
     page.evaluate(
-        "() => { const tab = window.nibApp.workspace.active; tab.camera = { ...tab.camera, scale: 4 } }"
+        "() => { const tab = window.ordenApp.workspace.active; tab.camera = { ...tab.camera, scale: 4 } }"
     )
     page.wait_for_timeout(300)
     page.locator(".cluster button.pen").first.click()
@@ -75,7 +75,7 @@ def drive(browser: Browser) -> None:
         page.mouse.move(x + step * 8, y + (step % 3) * 3)
     page.mouse.up()
     page.wait_for_timeout(2500)
-    written = page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc)")
+    written = page.evaluate("() => JSON.parse(window.ordenApp.workspace.active.doc)")
     ink = written.get("orden", {}).get("ink", [])
     if not ink:
         wrong(f"[pen] no stroke was written: {json.dumps(written)[:200]}")
@@ -89,7 +89,7 @@ def drive(browser: Browser) -> None:
             say("ok   [pen] zoomed in, the stroke is as wide as it shows")
 
     page.evaluate(
-        "() => { const tab = window.nibApp.workspace.active; tab.camera = { ...tab.camera, scale: 0.25 } }"
+        "() => { const tab = window.ordenApp.workspace.active; tab.camera = { ...tab.camera, scale: 0.25 } }"
     )
     page.wait_for_timeout(300)
     page.mouse.move(x, y + 120)
@@ -98,7 +98,7 @@ def drive(browser: Browser) -> None:
         page.mouse.move(x + step * 8, y + 120 + (step % 3) * 3)
     page.mouse.up()
     page.wait_for_timeout(2500)
-    written = page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc)")
+    written = page.evaluate("() => JSON.parse(window.ordenApp.workspace.active.doc)")
     ink = written.get("orden", {}).get("ink", [])
     drawn = ink[-1].get("size") if len(ink) > 1 else None
     say(f"[pen] a pen of 3 wrote a stroke {drawn} wide at 25%")

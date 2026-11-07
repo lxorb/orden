@@ -38,7 +38,7 @@ CHROME_TEXT = """
 }
 """
 
-OPEN_LEFT = "() => { const ws = window.nibApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }"
+OPEN_LEFT = "() => { const ws = window.ordenApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }"
 
 HINT = "() => document.querySelector('.orden-bubble.hint')?.innerText.trim() ?? null"
 
@@ -46,7 +46,7 @@ def nags_in(page: Any) -> list[str]:
     return [one for one in page.evaluate(CHROME_TEXT) if NAG.search(one)]
 
 def signed_out(page: Any, device: str) -> None:
-    if page.evaluate("() => window.nibApp.account.signedIn"):
+    if page.evaluate("() => window.ordenApp.account.signedIn"):
         wrong(f"[{device}] a fresh browser is signed in, so the drive asks nothing")
 
 def desktop(browser: Browser) -> None:
@@ -71,7 +71,7 @@ def desktop(browser: Browser) -> None:
     say(f"[desktop] the account row: {row!r}")
     if row != "Sign in":
         wrong(f"[desktop] the account row says {row!r}, not Sign in")
-    page.evaluate("() => window.nibApp.settings.show('account')")
+    page.evaluate("() => window.ordenApp.settings.show('account')")
     wait_for(
         page,
         """() => [...document.querySelectorAll('[role="dialog"][aria-label="Settings"] button')]

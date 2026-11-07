@@ -7,7 +7,7 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-WS = "window.nibApp.workspace"
+WS = "window.ordenApp.workspace"
 LIVE = f"()=>{WS}.active.note.latest"
 READ = f"(p)=>{WS}.noteText(p)"
 

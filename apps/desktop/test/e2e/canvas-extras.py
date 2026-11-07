@@ -29,10 +29,10 @@ VAULT = {
 
 SEED = """
 async (text) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const path = `${root}/Vault board.canvas`
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -54,8 +54,8 @@ async (text) => {
 
 READ = """
 async (path) => {
-  await window.nibApp.workspace.writeNow?.()
-  const open = indexedDB.open('nib')
+  await window.ordenApp.workspace.writeNow?.()
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve) => { open.onsuccess = () => resolve(open.result) })
   const row = await new Promise((resolve) => {
     const asked = db.transaction('files').objectStore('files').get(path)
@@ -85,7 +85,7 @@ def drive(browser: Browser) -> None:
     page = browser.new_page(viewport={"width": 1280, "height": 800})
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.spaces.length > 0", "a space")
+    wait_for(page, "window.ordenApp.workspace.spaces.length > 0", "a space")
     path = page.evaluate(SEED, json.dumps(VAULT, indent="\t") + "\n")
     wait_for(page, "() => !!document.querySelector('.canvas')", "the canvas")
     page.wait_for_timeout(600)

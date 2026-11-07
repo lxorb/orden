@@ -28,7 +28,7 @@ FILES = {
 MOVED = ["Plan.md", "Trip", "Board.canvas", "Lecture.pages"]
 
 FILES_OF = """(name) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const space = ws.spaces.find((one) => one.name === name)
   if (!space) return null
   if (ws.activeSpace?.id !== space.id) return null
@@ -58,12 +58,12 @@ def device(browser: Browser, label: str, token: str) -> Page:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait(page, "() => !!window.nibApp?.workspace?.activeSpace", f"[{label}] the app")
+    wait(page, "() => !!window.ordenApp?.workspace?.activeSpace", f"[{label}] the app")
     return page
 
 def shown(page: Page, name: str) -> list[str]:
     page.evaluate(
-        "async (name) => { const ws = window.nibApp.workspace; const s = ws.spaces.find((o) => o.name === name);"
+        "async (name) => { const ws = window.ordenApp.workspace; const s = ws.spaces.find((o) => o.name === name);"
         " if (s && ws.activeSpace?.id !== s.id) await ws.showSpace(s.id); await ws.loadTree() }",
         name,
     )
@@ -88,10 +88,10 @@ def check(label: str, home: list[str], work: list[str]) -> None:
 
 def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, str]) -> None:
     desk = device(browser, "desk", token)
-    wait(desk, "() => window.nibApp.workspace.spaces.length >= 2", "[desk] both spaces")
+    wait(desk, "() => window.ordenApp.workspace.spaces.length >= 2", "[desk] both spaces")
     wait(
         desk,
-        "(n) => window.nibApp.workspace.spaces.some((s) => s.name === 'Home')",
+        "(n) => window.ordenApp.workspace.spaces.some((s) => s.name === 'Home')",
         "[desk] Home",
     )
     until = time.monotonic() + PATIENCE
@@ -99,25 +99,25 @@ def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, s
         desk.wait_for_timeout(500)
     say(f"[desk] Home holds {shown(desk, 'Home')}")
 
-    work_root = desk.evaluate("() => window.nibApp.workspace.spaces.find((s) => s.name === 'Work').root")
-    home_root = desk.evaluate("() => window.nibApp.workspace.spaces.find((s) => s.name === 'Home').root")
+    work_root = desk.evaluate("() => window.ordenApp.workspace.spaces.find((s) => s.name === 'Work').root")
+    home_root = desk.evaluate("() => window.ordenApp.workspace.spaces.find((s) => s.name === 'Home').root")
     shown(desk, "Home")
-    desk.evaluate("async (path) => { await window.nibApp.workspace.open(path) }", f"{home_root}/Plan.md")
+    desk.evaluate("async (path) => { await window.ordenApp.workspace.open(path) }", f"{home_root}/Plan.md")
     wait(desk, "() => !!document.querySelector('.cm-content')", "[desk] Plan open")
     desk.locator(".cm-content").first.click()
     desk.keyboard.press("Control+End")
     desk.keyboard.type(" Typed before the move.")
     desk.wait_for_timeout(3000)
     desk.evaluate(
-        "async ([from, into]) => { await window.nibApp.workspace.moveMany(from, into) }",
+        "async ([from, into]) => { await window.ordenApp.workspace.moveMany(from, into) }",
         [[f"{home_root}/{name}" for name in MOVED], work_root],
     )
     check("desk, at once", shown(desk, "Home"), shown(desk, "Work"))
-    tab = desk.evaluate("() => window.nibApp.workspace.tabs.map((one) => one.path)")
+    tab = desk.evaluate("() => window.ordenApp.workspace.tabs.map((one) => one.path)")
     if f"{work_root}/Plan.md" not in tab:
         wrong(f"[desk] Plan's tab did not follow it into Work: {tab}")
 
-    desk.evaluate("async (path) => { await window.nibApp.workspace.open(path) }", f"{work_root}/Plan.md")
+    desk.evaluate("async (path) => { await window.ordenApp.workspace.open(path) }", f"{work_root}/Plan.md")
     wait(desk, "() => !!document.querySelector('.cm-content')", "[desk] Plan open in Work")
     desk.locator(".cm-content").first.click()
     desk.keyboard.press("Control+End")
@@ -125,22 +125,22 @@ def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, s
     desk.wait_for_timeout(3000)
 
     for _ in range(3):
-        desk.evaluate("() => window.nibApp.sync.nudge?.()")
+        desk.evaluate("() => window.ordenApp.sync.nudge?.()")
         desk.wait_for_timeout(4000)
     check("desk, after sync", shown(desk, "Home"), shown(desk, "Work"))
     check("the account", on_account(worker, ids["Home"]), on_account(worker, ids["Work"]))
 
     desk.reload(wait_until="domcontentloaded")
-    wait(desk, "() => !!window.nibApp?.workspace?.activeSpace", "[desk] the app again")
+    wait(desk, "() => !!window.ordenApp?.workspace?.activeSpace", "[desk] the app again")
     desk.wait_for_timeout(6000)
     check("desk, relaunched", shown(desk, "Home"), shown(desk, "Work"))
 
     other = device(browser, "other", token)
-    wait(other, "() => window.nibApp.workspace.spaces.length >= 2", "[other] both spaces")
+    wait(other, "() => window.ordenApp.workspace.spaces.length >= 2", "[other] both spaces")
     other.wait_for_timeout(10000)
     check("another device", shown(other, "Home"), shown(other, "Work"))
     words = other.evaluate(
-        "async () => { const ws = window.nibApp.workspace; const s = ws.spaces.find((o) => o.name === 'Work');"
+        "async () => { const ws = window.ordenApp.workspace; const s = ws.spaces.find((o) => o.name === 'Work');"
         " return await ws.noteText(`${s.root}/Plan.md`) }"
     )
     say(f"[another device] Work/Plan.md says {words!r}")
@@ -151,7 +151,7 @@ def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, s
 
     try:
         desk.evaluate(
-            "async ([from, into]) => { await window.nibApp.workspace.moveMany(from, into) }",
+            "async ([from, into]) => { await window.ordenApp.workspace.moveMany(from, into) }",
             [[f"{work_root}/{name}" for name in MOVED], home_root],
         )
     except Exception as error:  # noqa: BLE001 - a refused move is the finding, not a crash
@@ -161,10 +161,10 @@ def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, s
     for name in MOVED:
         if holds(back[0], name) or not holds(back[1], name):
             wrong(f"[desk, moved back] {name} is not back in Home: Home {back[1]}, Work {back[0]}")
-    desk.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
+    desk.evaluate("async () => { await window.ordenApp.workspace.undoFileAction() }")
     check("desk, undone", shown(desk, "Home"), shown(desk, "Work"))
     for _ in range(3):
-        desk.evaluate("() => window.nibApp.sync.nudge?.()")
+        desk.evaluate("() => window.ordenApp.sync.nudge?.()")
         desk.wait_for_timeout(4000)
     check("desk, undone and synced", shown(desk, "Home"), shown(desk, "Work"))
     check("the account, undone", on_account(worker, ids["Home"]), on_account(worker, ids["Work"]))

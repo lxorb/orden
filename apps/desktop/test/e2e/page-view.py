@@ -8,7 +8,7 @@ DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 CAMERA = """() => {
-  const tab = window.nibApp.workspace.active
+  const tab = window.ordenApp.workspace.active
   return tab?.camera ? { ...tab.camera } : null
 }"""
 
@@ -21,7 +21,7 @@ def near(one: dict | None, other: dict | None) -> bool:
     return all(abs(one[k] - other[k]) <= max(2, abs(other[k]) * 0.02) for k in ("x", "y", "scale"))
 
 def open_path(page: Page, path: str) -> None:
-    page.evaluate("async (path) => { await window.nibApp.workspace.openEntry(path, { activate: true }) }", path)
+    page.evaluate("async (path) => { await window.ordenApp.workspace.openEntry(path, { activate: true }) }", path)
     page.wait_for_timeout(900)
 
 def moved(page: Page, surface: str) -> dict:
@@ -52,8 +52,8 @@ def check(page: Page, label: str, path: str, surface: str, other: str) -> None:
     else:
         wrong(f"[{label}] another tab and back: {camera(page)}, left at {left}")
 
-    tab = page.evaluate("() => window.nibApp.workspace.active.id")
-    page.evaluate("async (id) => { await window.nibApp.workspace.close(id, false) }", tab)
+    tab = page.evaluate("() => window.ordenApp.workspace.active.id")
+    page.evaluate("async (id) => { await window.ordenApp.workspace.close(id, false) }", tab)
     page.wait_for_timeout(400)
     open_path(page, path)
     if near(camera(page), left):
@@ -74,20 +74,20 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
     DRIVE.seed(page, "# Other\n\nAnother note.\n")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     other = f"{root}/Other.md"
 
     for _ in range(4):
-        page.evaluate("() => window.nibApp.workspace.createPages()")
+        page.evaluate("() => window.ordenApp.workspace.createPages()")
         page.wait_for_timeout(700)
-        if page.evaluate("() => !!window.nibApp.workspace.active?.path?.endsWith('.pages')"):
+        if page.evaluate("() => !!window.ordenApp.workspace.active?.path?.endsWith('.pages')"):
             break
     wait_for(page, "!!document.querySelector('.pages')", "the page note")
     page.wait_for_timeout(600)
-    pages = page.evaluate("() => window.nibApp.workspace.active.path")
+    pages = page.evaluate("() => window.ordenApp.workspace.active.path")
     check(page, "page note", pages, ".pages", other)
 
-    page.evaluate("() => window.nibApp.pages.current?.store.fitAgain()")
+    page.evaluate("() => window.ordenApp.pages.current?.store.fitAgain()")
     page.wait_for_timeout(300)
     box = page.locator(".pages").first.bounding_box()
     assert box
@@ -110,10 +110,10 @@ def drive(browser: Browser) -> None:
     else:
         wrong(f"[page note] scrolled, not zoomed: left at {left}, back {back}, restarted {again}")
 
-    page.evaluate("async () => { const ws = window.nibApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }")
+    page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }")
     wait_for(page, "!!document.querySelector('.canvas')", "the canvas")
     page.wait_for_timeout(600)
-    board = page.evaluate("() => window.nibApp.workspace.active.path")
+    board = page.evaluate("() => window.ordenApp.workspace.active.path")
     check(page, "canvas", board, ".canvas", other)
     page.close()
 

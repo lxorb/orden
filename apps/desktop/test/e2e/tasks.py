@@ -87,7 +87,7 @@ Words after them.
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
@@ -97,8 +97,8 @@ WRITE = """async ([files]) => {
 }"""
 
 def seed(page: Page) -> dict[str, str]:
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
     files = [
         ["Errands.md", ERRANDS.format(**days)],
@@ -123,7 +123,7 @@ def texts(page: Page, selector: str) -> list[str]:
     )
 
 def the_panel(page: Page) -> None:
-    page.evaluate("window.nibApp.workspace.showPanel('tasks')")
+    page.evaluate("window.ordenApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .orden-row')", "the Tasks panel")
     quiet(page)
     rows = texts(page, ".tasks .orden-row")
@@ -167,7 +167,7 @@ def today_and_upcoming(page: Page) -> None:
 def open_base(page: Page, view: str) -> None:
     page.evaluate(
         """async (view) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const tab of ws.tabs.filter((one) => one.kind === 'view' && one.path)) await ws.closeAsking(tab.id)
           const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
           window.tasks.openBaseFile(`${root}/Bugs.base`, {}, view)
@@ -249,7 +249,7 @@ def the_table(page: Page) -> None:
 def the_note(page: Page) -> None:
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('Dashboard'))
           await ws.openEntry(note.path, { activate: true })
         }"""
@@ -270,8 +270,8 @@ def the_note(page: Page) -> None:
 def the_big_board(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     lines = "\n".join(f"- [ ] Card number {at} #big" for at in range(2000))
     page.evaluate(WRITE, [[["Big.md", f"# Big\n\n{lines}\n"]]])
     wait_for(
@@ -280,7 +280,7 @@ def the_big_board(browser: Browser) -> None:
         "two thousand rows",
     )
     page.evaluate(
-        """() => window.tasks.openProject(window.nibApp.workspace.activeSpace.name, 'Big.md', 'kanban')"""
+        """() => window.tasks.openProject(window.ordenApp.workspace.activeSpace.name, 'Big.md', 'kanban')"""
     )
     wait_for(page, "document.querySelector('.view-tab .card')", "the big board")
     quiet(page)

@@ -69,7 +69,7 @@ def look(page, name: str, tag: str) -> None:
     page.screenshot(path=str(SHOTS / f"{name}-{tag}.png"))
 
 def panel(page) -> None:
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .name", timeout=30000)
 
 def held(page, row) -> None:
@@ -127,17 +127,17 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
     )
 
     page.goto(origin, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=40000)
-    page.wait_for_function("() => !!window.nibApp.account.user", timeout=40000)
+    page.wait_for_function("() => !!window.ordenApp", timeout=40000)
+    page.wait_for_function("() => !!window.ordenApp.account.user", timeout=40000)
     page.wait_for_function(
-        "() => window.nibApp.workspace.activeSpace && window.nibApp.sync.status !== 'off'",
+        "() => window.ordenApp.workspace.activeSpace && window.ordenApp.sync.status !== 'off'",
         timeout=60000,
     )
-    page.wait_for_function("() => window.nibApp.workspace.spaces.length >= 2", timeout=60000)
+    page.wait_for_function("() => window.ordenApp.workspace.spaces.length >= 2", timeout=60000)
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           await ws.noteFrom('# Kestrel notes\\n\\nA kestrel hangs on the wind.', ws.activeSpace.root)
           await ws.loadTree()
         }"""
@@ -146,9 +146,9 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
     panel(page)
     page.wait_for_timeout(900)
     say(
-        f"[{name}] {page.evaluate('() => window.nibApp.workspace.spaces.length')} spaces,"
-        f" sync is {page.evaluate('() => window.nibApp.sync.status')},"
-        f" panel is {page.evaluate('() => window.nibApp.workspace.panel')!r}"
+        f"[{name}] {page.evaluate('() => window.ordenApp.workspace.spaces.length')} spaces,"
+        f" sync is {page.evaluate('() => window.ordenApp.sync.status')},"
+        f" panel is {page.evaluate('() => window.ordenApp.workspace.panel')!r}"
     )
 
     switcher = page.locator("aside .name")

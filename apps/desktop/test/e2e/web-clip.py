@@ -11,7 +11,7 @@ URL = "https://example.com/clipped"
 
 SOURCED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.loadTree()
   const out = []
   for (const one of ws.files.filter((file) => file.name.endsWith('.md'))) {
@@ -26,11 +26,11 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
 
-    page.evaluate(f"() => window.nibApp.workspace.openPage({URL!r}, 'plain')")
+    page.evaluate(f"() => window.ordenApp.workspace.openPage({URL!r}, 'plain')")
     wait_for(page, "document.querySelector('.webbar')", "the web tab's bar")
     wait_for(
         page,
-        "window.nibApp.workspace.active?.kind === 'web'",
+        "window.ordenApp.workspace.active?.kind === 'web'",
         "the web tab in front",
     )
 

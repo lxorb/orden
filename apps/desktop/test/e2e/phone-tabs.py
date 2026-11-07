@@ -40,14 +40,14 @@ def bar_seen(page: Page) -> bool:
 
 def tab(page: Page, name: str) -> None:
     page.locator(f"[data-phone-tabs] [data-tab={name}]").tap()
-    wait_for(page, f"window.nibApp.workspace.panel === {name!r}", f"the {name} tab")
+    wait_for(page, f"window.ordenApp.workspace.panel === {name!r}", f"the {name} tab")
     page.wait_for_timeout(400)
 
 
 def laptop(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(300)
     if page.locator("[data-phone-tabs]").count():
         wrong("[laptop] a phone's tab bar on a laptop")
@@ -71,7 +71,7 @@ def phone(browser: Browser, dark: bool) -> None:
     DRIVE.open(page)
     DRIVE.seed(page, "# Groceries\n\n- [ ] milk\n- [ ] eggs", lists=True)
     DRIVE.seed(page, "# Ideas\n\nA thought")
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
 
     if page.locator('.panels:not(.right) [role="tablist"][aria-label="Panels"]').count():
@@ -85,8 +85,8 @@ def phone(browser: Browser, dark: bool) -> None:
     DRIVE.shot(page, f"{tag}notes")
 
     page.locator("[data-panel=tree]").get_by_text("Groceries").first.tap()
-    wait_for(page, "window.nibApp.workspace.active?.note?.name?.startsWith('Groceries')", "the note")
-    wait_for(page, "window.nibApp.workspace.panel === null", "the note on its own")
+    wait_for(page, "window.ordenApp.workspace.active?.note?.name?.startsWith('Groceries')", "the note")
+    wait_for(page, "window.ordenApp.workspace.panel === null", "the note on its own")
     page.wait_for_timeout(500)
     if bar_seen(page):
         wrong("[phone] the tab bar is over the note")
@@ -95,7 +95,7 @@ def phone(browser: Browser, dark: bool) -> None:
     page.locator(".cm-content").tap()
     page.keyboard.press("Control+End")
     page.keyboard.type("\nbread")
-    wait_for(page, "window.nibApp.workspace.active?.doc?.includes('bread')", "the line written")
+    wait_for(page, "window.ordenApp.workspace.active?.doc?.includes('bread')", "the line written")
     DRIVE.shot(page, f"{tag}note")
 
     if page.locator("header .search").is_visible():
@@ -105,14 +105,14 @@ def phone(browser: Browser, dark: bool) -> None:
     page.wait_for_timeout(300)
     DRIVE.shot(page, f"{tag}note-more")
     page.locator('[role="menuitem"]:has-text("Outline")').tap()
-    wait_for(page, "window.nibApp.workspace.openOn('right') === 'outline'", "the outline")
+    wait_for(page, "window.ordenApp.workspace.openOn('right') === 'outline'", "the outline")
     page.wait_for_timeout(400)
     DRIVE.shot(page, f"{tag}note-outline")
-    page.evaluate("() => window.nibApp.workspace.closeRight()")
+    page.evaluate("() => window.ordenApp.workspace.closeRight()")
     page.wait_for_timeout(400)
 
     page.locator("[data-phone-back]").tap()
-    wait_for(page, "window.nibApp.workspace.panel === 'tree'", "back on the notes")
+    wait_for(page, "window.ordenApp.workspace.panel === 'tree'", "back on the notes")
     page.wait_for_timeout(400)
     if not bar_seen(page):
         wrong("[phone] back did not bring the tab bar")
@@ -122,7 +122,7 @@ def phone(browser: Browser, dark: bool) -> None:
     page.locator("[data-panel=tasks] [role=checkbox]").first.tap()
     wait_for(
         page,
-        "window.nibApp.workspace.tabs.some((one) => one.note?.name?.startsWith('Groceries') && one.doc.includes('- [x]'))",
+        "window.ordenApp.workspace.tabs.some((one) => one.note?.name?.startsWith('Groceries') && one.doc.includes('- [x]'))",
         "a task ticked off",
     )
     page.wait_for_timeout(300)
@@ -131,10 +131,10 @@ def phone(browser: Browser, dark: bool) -> None:
     DRIVE.shot(page, f"{tag}tasks")
 
     page.locator("[data-panel=tasks] .where").last.tap()
-    wait_for(page, "window.nibApp.workspace.panel === null", "the task's note")
+    wait_for(page, "window.ordenApp.workspace.panel === null", "the task's note")
     page.wait_for_timeout(400)
     page.locator("[data-phone-back]").tap()
-    wait_for(page, "window.nibApp.workspace.panel === 'tasks'", "back on the tasks, where it came from")
+    wait_for(page, "window.ordenApp.workspace.panel === 'tasks'", "back on the tasks, where it came from")
 
     tab(page, "search")
     field = page.locator("[data-panel=search] input").first
@@ -144,28 +144,28 @@ def phone(browser: Browser, dark: bool) -> None:
     page.wait_for_timeout(300)
     DRIVE.shot(page, f"{tag}search")
     page.locator("[data-panel=search] .hit").first.tap()
-    wait_for(page, "window.nibApp.workspace.active?.note?.name?.startsWith('Ideas')", "the note found")
+    wait_for(page, "window.ordenApp.workspace.active?.note?.name?.startsWith('Ideas')", "the note found")
 
     page.locator("[data-phone-back]").tap()
-    wait_for(page, "window.nibApp.workspace.panel === 'search'", "back on the search")
+    wait_for(page, "window.ordenApp.workspace.panel === 'search'", "back on the search")
     tab(page, "tree")
     if page.locator('[data-region="foot"]').count():
         wrong("[phone] the desktop's sidebar foot is still drawn")
-    before = page.evaluate("window.nibApp.workspace.active?.id")
+    before = page.evaluate("window.ordenApp.workspace.active?.id")
     page.locator(".panels:not(.right) button[aria-label='New note']").tap()
     wait_for(
         page,
-        f"window.nibApp.workspace.panel === null && window.nibApp.workspace.active?.id !== {before!r}"
-        " && window.nibApp.workspace.active?.doc === ''",
+        f"window.ordenApp.workspace.panel === null && window.ordenApp.workspace.active?.id !== {before!r}"
+        " && window.ordenApp.workspace.active?.doc === ''",
         "a new note",
     )
     page.wait_for_timeout(500)
     page.keyboard.type("Kestrel")
-    wait_for(page, "window.nibApp.workspace.active?.doc?.includes('Kestrel')", "the new note written")
+    wait_for(page, "window.ordenApp.workspace.active?.doc?.includes('Kestrel')", "the new note written")
     DRIVE.shot(page, f"{tag}new-note")
 
     page.locator("[data-phone-back]").tap()
-    wait_for(page, "window.nibApp.workspace.panel === 'tree'", "back on the notes")
+    wait_for(page, "window.ordenApp.workspace.panel === 'tree'", "back on the notes")
     page.wait_for_timeout(300)
     page.locator("[data-phone-you]").tap()
     page.locator('[role="menuitem"]:has-text("Settings")').wait_for(state="visible", timeout=5000)

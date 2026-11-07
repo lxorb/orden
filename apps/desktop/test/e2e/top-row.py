@@ -107,7 +107,7 @@ def drive(browser: Any) -> None:
     DRIVE.open(page)
     DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n", "# Kestrel\n\nA bird.\n")
     DRIVE.open_note(page, "Plan")
-    ws = "window.nibApp.workspace"
+    ws = "window.ordenApp.workspace"
 
     check(page, "01-one")
     page.evaluate(f"() => {ws}.split('row')")

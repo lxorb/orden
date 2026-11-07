@@ -65,7 +65,7 @@ document.body.style.height = '300px'
 
 SEED = """
 async ([note, name]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith(name))
@@ -168,7 +168,7 @@ def fresh(browser: Browser) -> Page:
     page.on("console", noticed)
     DRIVE.open(page, origin=ORIGIN)
     say(f"the space holds {page.evaluate(SEED, [NOTE, 'Frames'])}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
     return page
 
@@ -199,9 +199,9 @@ def drive(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const at = window.nib.state.doc.toString().indexOf("console.log('the fence ran')")
-          window.nib.focus()
-          window.nib.dispatch({ selection: { anchor: at + 3 } })
+          const at = window.orden.state.doc.toString().indexOf("console.log('the fence ran')")
+          window.orden.focus()
+          window.orden.dispatch({ selection: { anchor: at + 3 } })
         }"""
     )
     page.wait_for_timeout(300)
@@ -228,7 +228,7 @@ def drive(browser: Browser) -> None:
     if not any("42" in (line or "") for line in lines):
         wrong("the js fence gave back no value")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     try:
         wait_for(page, "document.querySelectorAll('.embed-web').length >= 3", "the cards", 15)
     except SystemExit:
@@ -318,7 +318,7 @@ def block_frame(page: Page) -> Frame | None:
 def slides(page: Page) -> None:
     say(f"the space holds {page.evaluate(SEED, [DECK, 'Deck'])}")
     page.wait_for_timeout(600)
-    page.evaluate("() => window.nibApp.present.start()")
+    page.evaluate("() => window.ordenApp.present.start()")
     wait_for(page, "document.querySelector('.deck .stage .embed-html')", "the deck's block")
     page.wait_for_timeout(400)
     page.click(".deck .stage .embed-html")
@@ -332,7 +332,7 @@ def slides(page: Page) -> None:
     elif ran["asked"].strip() not in {"300px", "301px"}:
         wrong(f"the slide's block asked for {ran['asked']!r}, so its script did not run")
 
-    page.evaluate("() => window.nibApp.present.stop()")
+    page.evaluate("() => window.ordenApp.present.stop()")
 
 def main() -> int:
     global engine, ORIGIN

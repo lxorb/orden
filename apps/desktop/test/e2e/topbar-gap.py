@@ -56,8 +56,8 @@ def drive(browser: Any) -> None:
 
     note = row(page, "01-note")
 
-    page.evaluate("() => window.nibApp.workspace.openWebsite()")
-    wait_for(page, "window.nibApp.workspace.active?.note?.kind === 'web'", "the web tab")
+    page.evaluate("() => window.ordenApp.workspace.openWebsite()")
+    wait_for(page, "window.ordenApp.workspace.active?.note?.kind === 'web'", "the web tab")
     web = row(page, "02-web-tab")
     if note["right"] is None or web["right"] is None:
         wrong(f"the right side's button is not in the bar: {note['right']}, {web['right']}")
@@ -65,18 +65,18 @@ def drive(browser: Any) -> None:
         wrong(f"the right side's button moves between a note and a web tab: {note['right']} -> {web['right']}")
 
     DRIVE.open_note(page, "Plan")
-    page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
+    page.evaluate("() => window.ordenApp.workspace.toggleSidebar('left')")
     row(page, "03-left-toggled")
-    page.evaluate("() => window.nibApp.workspace.toggleSidebar('right')")
+    page.evaluate("() => window.ordenApp.workspace.toggleSidebar('right')")
     row(page, "04-right-toggled")
-    page.evaluate("() => window.nibApp.workspace.toggleSidebar('right')")
+    page.evaluate("() => window.ordenApp.workspace.toggleSidebar('right')")
 
     page.set_viewport_size({"width": 640, "height": 760})
     row(page, "05-narrow")
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (let i = 0; i < 14; i++) {
             const path = await ws.noteFrom(`# Tab ${i}\\n\\nWords.\\n`, ws.activeSpace.root)
             await ws.openEntry(path, { activate: true })
@@ -88,12 +88,12 @@ def drive(browser: Any) -> None:
     row(page, "06-narrow-many-tabs")
 
     page.set_viewport_size({"width": 1180, "height": 760})
-    page.evaluate("() => window.nibApp.workspace.split('row')")
+    page.evaluate("() => window.ordenApp.workspace.split('row')")
     row(page, "07-split")
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           ws.panes.fills = ws.panes.focusedId
         }"""
     )

@@ -9,7 +9,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = r"""
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const home = ws.activeSpace
   const other = await ws.addSpace('Other')
   await ws.showSpace(home.id)
@@ -42,7 +42,7 @@ def drive(browser: Browser) -> None:
     toggle(page)
     page.wait_for_selector(".canvas .window", timeout=8000)
     page.wait_for_timeout(1200)
-    page.evaluate("async (id) => { await window.nibApp.workspace.showSpace(id) }", other)
+    page.evaluate("async (id) => { await window.ordenApp.workspace.showSpace(id) }", other)
     wait_for(page, f"({LAUNCHERS})().length > 0", "the launcher of the space gone to")
     page.wait_for_timeout(800)
     seen = page.evaluate(LAUNCHERS)

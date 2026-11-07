@@ -21,7 +21,7 @@ NOTE = (
 
 FACES = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return ws.panes.all.map((pane) => {
     const words = document.querySelector(`[data-pane="${pane.id}"] .cm-content`)?.innerText ?? ''
     return { raw: words.includes('**bold**'), source: ws.showing(pane.id)?.source ?? null }
@@ -45,9 +45,9 @@ def drive(browser: Browser) -> None:
     DRIVE.seed(page, NOTE)
     DRIVE.open_note(page, "Plan")
 
-    page.evaluate("() => window.nibApp.workspace.split('row')")
+    page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelectorAll('.pane .cm-content').length === 2", "two editors")
-    right = page.evaluate("() => window.nibApp.workspace.panes.focusedId")
+    right = page.evaluate("() => window.ordenApp.workspace.panes.focusedId")
     page.evaluate(f"() => document.querySelector('[data-pane=\"{right}\"] .cm-content').focus()")
     page.keyboard.press("Control+/")
     wait_for(page, f"({FACES})()[1]?.raw", "the right pane in source mode")
@@ -61,7 +61,7 @@ def drive(browser: Browser) -> None:
     page.reload()
     wait_for(
         page,
-        "window.nibApp?.workspace.panes.count === 2"
+        "window.ordenApp?.workspace.panes.count === 2"
         " && document.querySelectorAll('.pane .cm-content').length === 2",
         "both panes after the reload",
     )
@@ -72,7 +72,7 @@ def drive(browser: Browser) -> None:
         wrong(f"the two faces did not survive a reload: {seen}")
     shot(page, "02-after-reload")
 
-    page.evaluate("() => window.nibApp.settings.show('markdown')")
+    page.evaluate("() => window.ordenApp.settings.show('markdown')")
     row = page.get_by_role("switch", name="Open notes in source mode")
     row.wait_for()
     row.scroll_into_view_if_needed()
@@ -85,12 +85,12 @@ def drive(browser: Browser) -> None:
     seen = faces(page)
     if seen != [{"raw": False, "source": False}, {"raw": True, "source": True}]:
         wrong(f"Settings changed a tab that was already open: {seen}")
-    page.evaluate("() => window.nibApp.workspace.focusPane(window.nibApp.workspace.panes.all[0].id)")
+    page.evaluate("() => window.ordenApp.workspace.focusPane(window.ordenApp.workspace.panes.all[0].id)")
     DRIVE.seed(page, "# Fresh\n\nA **new** note.\n")
     DRIVE.open_note(page, "Fresh")
     fresh = page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const plan = ws.tabs.filter((one) => one.name === 'Plan.md').map((one) => one.source)
           return { fresh: ws.active.source, plan }
         }"""

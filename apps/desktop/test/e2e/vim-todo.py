@@ -11,19 +11,19 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 NOTE = "# Chores\n\n- [ ] Wash up\n- [ ] Water the plants\n- [ ] Post the letter\n\nA plain line.\nAnd the one under it.\n"
 
-DOC = "() => window.nib.state.doc.toString()"
-MODE = "() => window.nibApp.modes.vimModeOf(window.nib)"
+DOC = "() => window.orden.state.doc.toString()"
+MODE = "() => window.ordenApp.modes.vimModeOf(window.orden)"
 
 CARET_TO = """
 (words) => {
-  const view = window.nib
+  const view = window.orden
   const at = view.state.doc.toString().indexOf(words)
   view.dispatch({ selection: { anchor: at } })
   view.focus()
 }
 """
 
-LINE = "() => window.nib.state.doc.lineAt(window.nib.state.selection.main.head).text"
+LINE = "() => window.orden.state.doc.lineAt(window.orden.state.selection.main.head).text"
 
 def line_of(page: Page, words: str) -> str:
     return next(one for one in page.evaluate(DOC).split("\n") if words in one)
@@ -39,7 +39,7 @@ def normal(page: Page) -> None:
 def becomes(page: Page, words: str, line: str, what: str) -> None:
     if not DRIVE.waited(
         page,
-        f"window.nib.state.doc.toString().split('\\n').some((one) => one.startsWith({json.dumps(line)}))",
+        f"window.orden.state.doc.toString().split('\\n').some((one) => one.startsWith({json.dumps(line)}))",
         what,
         patience=10,
     ):
@@ -51,7 +51,7 @@ def drive(browser: Browser) -> None:
     DRIVE.seed(page, NOTE)
     DRIVE.open_note(page, "Chores")
 
-    page.evaluate("() => window.nibApp.modes.setVimKeys(true)")
+    page.evaluate("() => window.ordenApp.modes.setVimKeys(true)")
     wait_for(page, "document.querySelector('.cm-editor.orden-vim')", "modal editing")
 
     caret_to(page, "Wash up")

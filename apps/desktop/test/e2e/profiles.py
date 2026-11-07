@@ -75,15 +75,15 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     )
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp && window.nibApp.account.signedIn", f"[{label}] the session")
+    wait_for(page, "() => !!window.ordenApp && window.ordenApp.account.signedIn", f"[{label}] the session")
     return page
 
 def folder_for(page: Page, label: str, space_id: str) -> str:
     return wait_for(
         page,
         "() => {"
-        "  const space = window.nibApp.workspace.spaces.find("
-        f"    (one) => window.nibApp.sync.remoteIdFor(one.root) === {json.dumps(space_id)});"
+        "  const space = window.ordenApp.workspace.spaces.find("
+        f"    (one) => window.ordenApp.sync.remoteIdFor(one.root) === {json.dumps(space_id)});"
         "  return space ? space.name : null"
         "}",
         f"[{label}] a folder for the shared space",
@@ -93,19 +93,19 @@ def open_note(page: Page, label: str, folder: str, note_id: str) -> None:
     listed = (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-        f"  return walk(window.nibApp.workspace.tree).some((path) => path.endsWith('/{folder}/{NOTE}'))"
+        f"  return walk(window.ordenApp.workspace.tree).some((path) => path.endsWith('/{folder}/{NOTE}'))"
         "}"
     )
     page.evaluate(
-        "(name) => { const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
-        " if (space) return window.nibApp.workspace.showSpace(space.id) }",
+        "(name) => { const space = window.ordenApp.workspace.spaces.find((one) => one.name === name);"
+        " if (space) return window.ordenApp.workspace.showSpace(space.id) }",
         folder,
     )
     wait_for(page, listed, f"[{label}] the note to arrive")
     opening = (
-        "(name) => { const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
-        f" void window.nibApp.workspace.open(space.root + '/{NOTE}');"
-        f" return window.nibApp.rooms.carries({json.dumps(note_id)}) }}"
+        "(name) => { const space = window.ordenApp.workspace.spaces.find((one) => one.name === name);"
+        f" void window.ordenApp.workspace.open(space.root + '/{NOTE}');"
+        f" return window.ordenApp.rooms.carries({json.dumps(note_id)}) }}"
     )
     wait_for(page, opening, f"[{label}] the room", folder, patience=PATIENCE * 2)
 
@@ -138,7 +138,7 @@ def main() -> int:
         say(f"{MEMBER} is in {SPACE}")
 
         owner = signed_in(browser, owner_token, "owner")
-        owner.evaluate("() => window.nibApp.settings.show('account')")
+        owner.evaluate("() => window.ordenApp.settings.show('account')")
         change = owner.get_by_role("button", name="Change", exact=True)
         change.wait_for(timeout=30_000)
         change.click()
@@ -162,7 +162,7 @@ def main() -> int:
 
         face = wait_for(
             owner,
-            "() => window.nibApp.account.user?.avatar ?? null",
+            "() => window.ordenApp.account.user?.avatar ?? null",
             "[owner] the face to be worn",
         )
         say(f"the owner wears {face['s'][:12]}… and {face['l'][:12]}…")
@@ -183,8 +183,8 @@ def main() -> int:
         owner.wait_for_timeout(300)
 
         owner.evaluate(
-            "(name) => { const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
-            " return window.nibApp.share.show(space) }",
+            "(name) => { const space = window.ordenApp.workspace.spaces.find((one) => one.name === name);"
+            " return window.ordenApp.share.show(space) }",
             SPACE,
         )
         share = owner.get_by_role("dialog")
@@ -206,7 +206,7 @@ def main() -> int:
         theirs = folder_for(member, "member", space["id"])
         open_note(member, "member", theirs, note["id"])
         open_note(owner, "owner", SPACE, note["id"])
-        owner.evaluate("() => { window.nib.dispatch({ selection: { anchor: 4 } }); window.nib.focus() }")
+        owner.evaluate("() => { window.orden.dispatch({ selection: { anchor: 4 } }); window.orden.focus() }")
 
         wait_for(
             member,
@@ -227,7 +227,7 @@ def main() -> int:
             member.locator(".strip").first.screenshot(path=str(SHOTS / "tab-face.png"))
             say("and on the tab")
 
-        owner_id = owner.evaluate("() => window.nibApp.account.user.id")
+        owner_id = owner.evaluate("() => window.ordenApp.account.user.id")
         until = time.monotonic() + PATIENCE
         state = None
         while time.monotonic() < until:

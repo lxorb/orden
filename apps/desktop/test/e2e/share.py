@@ -114,18 +114,18 @@ def fresh(
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(at, wait_until="domcontentloaded")
 
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
+    wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     return page
 
 def words(page: Page) -> str:
     return page.evaluate(
-        "() => { window.nibApp.workspace.flush(); return window.nibApp.workspace.active?.doc ?? '' }"
+        "() => { window.ordenApp.workspace.flush(); return window.ordenApp.workspace.active?.doc ?? '' }"
     )
 
 def joined(page: Page, label: str, space_id: str, role: str) -> str:
     wait_for(
         page,
-        "() => (window.nibApp.account.spaces.find("
+        "() => (window.ordenApp.account.spaces.find("
         f"  (one) => one.id === {json.dumps(space_id)}"
         f") ?? {{}}).role === {json.dumps(role)}",
         f"[{label}] the shared space to arrive at {role}",
@@ -134,8 +134,8 @@ def joined(page: Page, label: str, space_id: str, role: str) -> str:
     return wait_for(
         page,
         "() => {"
-        "  const space = window.nibApp.workspace.spaces.find("
-        f"    (one) => window.nibApp.sync.remoteIdFor(one.root) === {json.dumps(space_id)});"
+        "  const space = window.ordenApp.workspace.spaces.find("
+        f"    (one) => window.ordenApp.sync.remoteIdFor(one.root) === {json.dumps(space_id)});"
         "  return space ? space.name : null"
         "}",
         f"[{label}] a folder for the shared space",
@@ -145,19 +145,19 @@ def open_the_file(page: Page, label: str, note_id: str, path: str) -> None:
     listed = (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-        f"  return walk(window.nibApp.workspace.tree).includes({json.dumps(path)})"
+        f"  return walk(window.ordenApp.workspace.tree).includes({json.dumps(path)})"
         "}"
     )
     show_space(page, path.split("/")[1])
     wait_for(page, listed, f"[{label}] {path} to arrive")
 
-    page.evaluate("(path) => window.nibApp.workspace.openEntry(path)", path)
+    page.evaluate("(path) => window.ordenApp.workspace.openEntry(path)", path)
     if not path.endswith(".canvas"):
         wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
 
     wait_for(
         page,
-        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
+        f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] {path} to join its room",
     )
 
@@ -172,7 +172,7 @@ def dismiss(page: Page) -> None:
             return
 
 def space_row(page: Page, name: str = SPACE):
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
 
     header = page.locator("aside .head button.name")
     header.wait_for(state="visible", timeout=10_000)
@@ -188,10 +188,10 @@ def space_row(page: Page, name: str = SPACE):
 def open_the_share_sheet(page: Page, name: str = SPACE):
     wait_for(
         page,
-        "() => { const space = window.nibApp.workspace.spaces.find("
+        "() => { const space = window.ordenApp.workspace.spaces.find("
         f"  (one) => one.name === {json.dumps(name)});"
-        " return !!space && !!window.nibApp.account.user"
-        "  && !!window.nibApp.sync.remoteIdFor(space.root) }",
+        " return !!space && !!window.ordenApp.account.user"
+        "  && !!window.ordenApp.sync.remoteIdFor(space.root) }",
         f"{name} to be the account's",
     )
     space_row(page, name).locator(".more").click()
@@ -214,7 +214,7 @@ def let_in(page: Page, label: str, keeps: bool = False) -> None:
         except Exception:
             say(f"[{label}] nothing was asked about the notes already here")
 
-    wait_for(page, "() => window.nibApp.account.signedIn", f"[{label}] the session")
+    wait_for(page, "() => window.ordenApp.account.signedIn", f"[{label}] the session")
 
 def asked_nothing(page: Page, label: str, wrong) -> None:
     for what, selector in (
@@ -229,7 +229,7 @@ def settled(page: Page, label: str) -> None:
     page.wait_for_timeout(250)
 
 def rename(page: Page, name: str) -> None:
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
 
     who = page.locator("aside .foot button.who")
     who.wait_for(state="visible", timeout=10_000)
@@ -246,7 +246,7 @@ def rename(page: Page, name: str) -> None:
 
     wait_for(
         page,
-        f"() => window.nibApp.account.guest?.name === {json.dumps(name)}",
+        f"() => window.ordenApp.account.guest?.name === {json.dumps(name)}",
         f"the guest to be called {name}",
     )
 
@@ -271,14 +271,14 @@ def set_item_link(token: str, space_id: str, note_id: str, role: str, mode: str)
 def show_space(page: Page, name: str) -> None:
     page.evaluate(
         "(name) => {"
-        "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
-        "  if (space) window.nibApp.workspace.showSpace(space.id)"
+        "  const space = window.ordenApp.workspace.spaces.find((one) => one.name === name);"
+        "  if (space) window.ordenApp.workspace.showSpace(space.id)"
         "}",
         name,
     )
 
 def tree_row(page: Page, path: str):
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
 
     row = page.locator(f'.row[data-path="{path}"]')
     row.wait_for(state="visible", timeout=10_000)
@@ -287,7 +287,7 @@ def tree_row(page: Page, path: str):
 def open_the_file_sheet(page: Page, path: str):
     wait_for(
         page,
-        f"() => !!window.nibApp.sync.tracked({json.dumps(path)})",
+        f"() => !!window.ordenApp.sync.tracked({json.dumps(path)})",
         f"the account to hold {path}",
     )
 
@@ -305,19 +305,19 @@ def open_the_file_sheet(page: Page, path: str):
 def shared_with_you(page: Page, label: str, count: int = 1) -> None:
     wait_for(
         page,
-        f"() => window.nibApp.sharedWithYou.items.length === {count}",
+        f"() => window.ordenApp.sharedWithYou.items.length === {count}",
         f"[{label}] a file shared on its own",
     )
 
 def landed_alone(page: Page, label: str, note_id: str, wrong) -> None:
     wait_for(
         page,
-        f"() => window.nibApp.workspace.active?.note.shared === {json.dumps(note_id)}",
+        f"() => window.ordenApp.workspace.active?.note.shared === {json.dumps(note_id)}",
         f"[{label}] the shared file to open by itself",
     )
     wait_for(
         page,
-        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
+        f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] the file to join its room",
     )
     settled(page, label)
@@ -333,7 +333,7 @@ def landed_alone(page: Page, label: str, note_id: str, wrong) -> None:
 def guest_corner(page: Page, label: str, wrong):
     corner = page.locator(".guest-corner button.who")
     corner.wait_for(state="visible", timeout=10_000)
-    name = page.evaluate("() => window.nibApp.account.guest?.name ?? ''")
+    name = page.evaluate("() => window.ordenApp.account.guest?.name ?? ''")
     if corner.inner_text().strip() != name.strip()[:1].upper():
         wrong(f"[{label}] the corner says {corner.inner_text()!r} for a guest called {name!r}")
 
@@ -354,8 +354,8 @@ def typed(page: Page, at: int, said: str) -> None:
     page.click(".cm-content")
     page.evaluate(
         "(at) => {"
-        "  window.nib.dispatch({ selection: { anchor: Math.min(at, window.nib.state.doc.length) } });"
-        "  window.nib.focus()"
+        "  window.orden.dispatch({ selection: { anchor: Math.min(at, window.orden.state.doc.length) } });"
+        "  window.orden.focus()"
         "}",
         at,
     )
@@ -373,8 +373,8 @@ def agree(one: Page, two: Page, wanted: str) -> None:
 def moved(page: Page, at: int) -> None:
     page.evaluate(
         "(at) => {"
-        "  window.nib.dispatch({ selection: { anchor: at } });"
-        "  window.nib.focus()"
+        "  window.orden.dispatch({ selection: { anchor: at } });"
+        "  window.orden.focus()"
         "}",
         at,
     )
@@ -428,7 +428,7 @@ def main() -> int:
         owner = fresh(browser, "owner", token=owner_token)
         wait_for(
             owner,
-            f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+            f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
             "[owner] the space to arrive",
         )
 
@@ -456,12 +456,12 @@ def main() -> int:
         writer.screenshot(path=str(SHOTS / "invited-straight-in.png"))
         say(f"{WRITER} is in {SPACE} without having typed a thing")
 
-        held = writer.evaluate("() => window.nibApp.account.user?.email ?? null")
+        held = writer.evaluate("() => window.ordenApp.account.user?.email ?? null")
         if held != WRITER:
             wrong(f"the link opened {held!r} rather than {WRITER}")
 
         shared = writer.evaluate(
-            "(id) => window.nibApp.account.spaces.find((one) => one.id === id)?.shared",
+            "(id) => window.ordenApp.account.spaces.find((one) => one.id === id)?.shared",
             space["id"],
         )
         if shared is not True:
@@ -471,7 +471,7 @@ def main() -> int:
         spent.get_by_text("That link does not open anything").wait_for(timeout=15_000)
         spent.wait_for_timeout(250)
         spent.screenshot(path=str(SHOTS / "used-link.png"))
-        if spent.evaluate("() => window.nibApp.account.signedIn"):
+        if spent.evaluate("() => window.ordenApp.account.signedIn"):
             wrong("a used invitation opened a second session")
         say("the same link twice says so once, with the code behind it")
         spent.close()
@@ -529,10 +529,10 @@ def main() -> int:
         mine = joined(guest, "guest", space["id"], "write")
         say(f"the link put a guest in {SPACE}, to write")
 
-        if guest.evaluate("() => window.nibApp.account.user"):
+        if guest.evaluate("() => window.ordenApp.account.user"):
             wrong("the link made an account rather than a guest")
 
-        named = guest.evaluate("() => window.nibApp.account.guest?.name ?? null")
+        named = guest.evaluate("() => window.ordenApp.account.guest?.name ?? null")
         if not named or not re.fullmatch(r"[\w .+-]+ \w+", named):
             wrong(f"the guest is called {named!r} rather than after its device")
         else:
@@ -627,7 +627,7 @@ def main() -> int:
         say("the visitor gave a name and is waiting on a page that says so")
 
         if waiting.evaluate(
-            "(id) => window.nibApp.account.spaces.some((one) => one.id === id)",
+            "(id) => window.ordenApp.account.spaces.some((one) => one.id === id)",
             space["id"],
         ):
             wrong("somebody waiting to be let in already holds the space")
@@ -686,15 +686,15 @@ def main() -> int:
         say(f"{ALONE} is in, holding one file")
 
         held = alone.evaluate(
-            "(id) => window.nibApp.account.spaces.some((one) => one.id === id)",
+            "(id) => window.ordenApp.account.spaces.some((one) => one.id === id)",
             solo["id"],
         )
         if held:
             wrong("one shared note brought the space it came out of with it")
 
         folder = alone.evaluate(
-            "(id) => window.nibApp.workspace.spaces.some("
-            "  (one) => window.nibApp.sync.remoteIdFor(one.root) === id)",
+            "(id) => window.ordenApp.workspace.spaces.some("
+            "  (one) => window.ordenApp.sync.remoteIdFor(one.root) === id)",
             solo["id"],
         )
         if folder:
@@ -713,12 +713,12 @@ def main() -> int:
         row.locator(".orden-row").click()
         wait_for(
             alone,
-            "() => !!window.nibApp.workspace.active?.note.shared",
+            "() => !!window.ordenApp.workspace.active?.note.shared",
             "[alone] the shared note to open in a tab",
         )
         wait_for(
             alone,
-            f"() => window.nibApp.rooms.carries({json.dumps(one['id'])})",
+            f"() => window.ordenApp.rooms.carries({json.dumps(one['id'])})",
             "[alone] the shared note to join its room",
         )
         alone.wait_for_timeout(250)
@@ -738,7 +738,7 @@ def main() -> int:
         reachable = alone.evaluate(
             "async (id) => {"
             "  const answer = await fetch(`/v1/notes/${id}`,"
-            "    { headers: { authorization: `Bearer ${window.nibApp.account.token}` } });"
+            "    { headers: { authorization: `Bearer ${window.ordenApp.account.token}` } });"
             "  return answer.status"
             "}",
             plane["id"],
@@ -759,7 +759,7 @@ def main() -> int:
         shared_row(phone, ITEM[:-3]).locator(".orden-row").click()
         wait_for(
             phone,
-            "() => !!window.nibApp.workspace.active?.note.shared",
+            "() => !!window.ordenApp.workspace.active?.note.shared",
             "[phone] the shared note to open",
         )
         phone.wait_for_timeout(400)
@@ -778,18 +778,18 @@ def main() -> int:
         let_in(drawer, "drawer")
         asked_nothing(drawer, "drawer", wrong)
         shared_with_you(drawer, "drawer")
-        if drawer.evaluate("() => window.nibApp.account.user"):
+        if drawer.evaluate("() => window.ordenApp.account.user"):
             wrong("a link to one canvas made an account rather than a guest")
 
         landed_alone(drawer, "drawer", plane["id"], wrong)
         drawer.screenshot(path=str(SHOTS / "shared-canvas.png"))
         say("a guest with no account is drawing on one shared canvas, and sees nothing else")
 
-        if drawer.evaluate("() => window.nibApp.account.spaces.length"):
+        if drawer.evaluate("() => window.ordenApp.account.spaces.length"):
             wrong("a link to one canvas handed over a space as well")
 
         drawer.reload(wait_until="domcontentloaded")
-        wait_for(drawer, "() => !!window.nibApp", "[drawer] the app to start again")
+        wait_for(drawer, "() => !!window.ordenApp", "[drawer] the app to start again")
         landed_alone(drawer, "drawer", plane["id"], wrong)
         say("the guest who came back is back in the canvas, alone")
 
@@ -837,7 +837,7 @@ def main() -> int:
         field.press("Enter")
         wait_for(
             named,
-            "() => window.nibApp.account.guest?.name === 'Grace'",
+            "() => window.ordenApp.account.guest?.name === 'Grace'",
             "[named] the guest to be called Grace",
         )
         if corner.inner_text().strip() != "G":
@@ -910,10 +910,10 @@ def main() -> int:
         ).group(1)
         named.locator(".digits input").first.fill(code)
         let_in(named, "named", keeps=True)
-        wait_for(named, "() => !!window.nibApp.account.user", "[named] the account")
+        wait_for(named, "() => !!window.ordenApp.account.user", "[named] the account")
         wait_for(
             named,
-            f"() => window.nibApp.workspace.active?.note.shared === {json.dumps(one['id'])}",
+            f"() => window.ordenApp.workspace.active?.note.shared === {json.dumps(one['id'])}",
             "[named] the shared note to still be open once signed in",
         )
         settled(named, "named")
@@ -930,12 +930,12 @@ def main() -> int:
 
         wait_for(
             alone,
-            "() => window.nibApp.sharedWithYou.items.length === 0",
+            "() => window.ordenApp.sharedWithYou.items.length === 0",
             "[alone] the row to go once it was taken back",
         )
         wait_for(
             alone,
-            "() => !window.nibApp.workspace.tabs.some((tab) => tab.note.shared)",
+            "() => !window.ordenApp.workspace.tabs.some((tab) => tab.note.shared)",
             "[alone] the tab on it to close",
         )
         alone.wait_for_timeout(300)

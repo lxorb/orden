@@ -124,12 +124,12 @@ def main_page() -> Session | None:
 
 SETUP = """
 (async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: 'fake' })
   ai.setDefault(made.id)
-  window.nibApp.workspace.showPanel('ask')
+  window.ordenApp.workspace.showPanel('ask')
   // Whether a question was ever drawn in the thread, however briefly.
   window.__asked = 0
   new MutationObserver(() => {
@@ -291,7 +291,7 @@ def main() -> int:
         if page is None:
             return 1
         until(
-            lambda: page.value("!!window.nibApp?.ai && !!window.nibApp.workspace.activeSpace"),
+            lambda: page.value("!!window.ordenApp?.ai && !!window.ordenApp.workspace.activeSpace"),
             "the space and the AI store",
         )
         page.value(SETUP % json.dumps(origin))

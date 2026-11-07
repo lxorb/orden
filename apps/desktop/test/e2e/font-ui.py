@@ -57,7 +57,7 @@ def look(browser, language: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, device_scale_factor=SCALE)
     page.context.add_init_script(f"localStorage.setItem('orden:language', {language!r})")
     DRIVE.open(page)
-    page.evaluate("() => window.nibApp.settings.show('appearance')")
+    page.evaluate("() => window.ordenApp.settings.show('appearance')")
     quiet(page)
     page.wait_for_timeout(600)
     shot(page, f"{language}-settings")

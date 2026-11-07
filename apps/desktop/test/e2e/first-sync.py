@@ -57,14 +57,14 @@ def body(at: int) -> str:
 
 STATE = """
 () => {
-  const ws = window.nibApp?.workspace
+  const ws = window.ordenApp?.workspace
   if (!ws) return { app: false }
 
   return {
     spaces: ws.spaces.map((one) => one.name),
     open: ws.activeSpace?.name ?? null,
     notes: ws.notes.length,
-    coming: window.nibApp.arriving.coming?.size ?? null,
+    coming: window.ordenApp.arriving.coming?.size ?? null,
     rows: document.querySelectorAll('aside .row').length,
     // How many rows the tree has, as against how many of them are drawn: the list
     // draws the ones that fit. See Tree.svelte.
@@ -72,7 +72,7 @@ STATE = """
       document.querySelector('aside [aria-setsize]')?.getAttribute('aria-setsize') ?? 0,
     ),
     waiting: !!document.querySelector('.arriving'),
-    sync: window.nibApp.sync.status,
+    sync: window.ordenApp.sync.status,
   }
 }
 """
@@ -107,14 +107,14 @@ def drive(browser, token: str) -> dict[str, float]:
     page.on("pageerror", lambda error: say(f"page error: {error}"))
 
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=60000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.wait_for_function("() => !!window.ordenApp", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=60000)
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace;"
+        "async () => { const ws = window.ordenApp.workspace;"
         " for (const one of [...ws.spaces]) await ws.deleteSpace(one.id) }"
     )
-    page.wait_for_function("() => window.nibApp.workspace.spaces.length === 0", timeout=60000)
+    page.wait_for_function("() => window.ordenApp.workspace.spaces.length === 0", timeout=60000)
     page.wait_for_timeout(1500)
 
     page.evaluate(f"() => localStorage.setItem('orden:session', {json.dumps(token)})")
@@ -130,13 +130,13 @@ def drive(browser, token: str) -> dict[str, float]:
     )
     unblocked = when(
         page,
-        "() => !!window.nibApp && !document.querySelector('.arriving')",
+        "() => !!window.ordenApp && !document.querySelector('.arriving')",
         "the app to be usable",
     )
     words = when(
         page,
-        f"() => window.nibApp.workspace.notes.length >= {NOTES}"
-        " && (window.nibApp.arriving.coming?.size ?? 0) === 0",
+        f"() => window.ordenApp.workspace.notes.length >= {NOTES}"
+        " && (window.ordenApp.arriving.coming?.size ?? 0) === 0",
         "every body to land",
     )
 

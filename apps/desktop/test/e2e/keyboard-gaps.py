@@ -17,7 +17,7 @@ AXE = harness.APP / "node_modules" / "axe-core" / "axe.min.js"
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const join = (dir, name) => (dir.endsWith('/') ? dir + name : dir + '/' + name)
   const folder = join(root, 'Field notes')
@@ -142,7 +142,7 @@ def tab_says(page: Page) -> None:
     )
     say(f"[strip] {seen}")
     current = [name for name, said in seen if said]
-    if len(current) != 1 or not page.evaluate("(name) => window.nibApp.workspace.active?.shown === name", current[0]):
+    if len(current) != 1 or not page.evaluate("(name) => window.ordenApp.workspace.active?.shown === name", current[0]):
         wrong(f"the strip does not say which tab is in front: {seen}")
 
 def row_deleted(page: Page) -> None:
@@ -151,7 +151,7 @@ def row_deleted(page: Page) -> None:
     choose(page, "Delete")
     if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
         press(page, "Enter")
-    wait_for(page, "!window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note to go")
+    wait_for(page, "!window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note to go")
     quiet(page)
     at = where(page)
     say(f"[delete] after a row's Delete the keyboard is on {at}")
@@ -160,7 +160,7 @@ def row_deleted(page: Page) -> None:
 
 def open_row_deleted(page: Page) -> None:
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Damson')).path, { activate: true }) }"
+        "async () => { const ws = window.ordenApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Damson')).path, { activate: true }) }"
     )
     quiet(page)
     to_row(page, "Damson")
@@ -168,14 +168,14 @@ def open_row_deleted(page: Page) -> None:
     choose(page, "Delete")
     if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
         press(page, "Enter")
-    wait_for(page, "!window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the open note to go")
+    wait_for(page, "!window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the open note to go")
     quiet(page)
     at = where(page)
     say(f"[delete] after the open note's row went the keyboard is on {at}")
     if not at.startswith("list|button.orden-row"):
         wrong(f"the keyboard did not stay in the list: {at}")
     press(page, "Control+z")
-    wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
+    wait_for(page, "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
 
 def toast_keys(page: Page) -> None:
@@ -196,7 +196,7 @@ def toast_keys(page: Page) -> None:
         wrong(f"Tab reached the note before Undo: {at}")
 
     at = press(page, "Enter")
-    wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
+    wait_for(page, "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
     say(f"[toast] Undo pressed: the keyboard is on {where(page)}, it came from {came_from}")
     if where(page) == "body":
@@ -208,7 +208,7 @@ def toast_keys(page: Page) -> None:
     if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
         press(page, "Enter")
     wait_for(page, "document.querySelector('.toast .undo')", "the toast again")
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Shift+F6")
     at = where(page)
     say(f"[toast] Shift+F6 from the note: {at}")
@@ -230,7 +230,7 @@ def toast_keys(page: Page) -> None:
         if not at.startswith(region):
             wrong(f"{key} beside Undo went to {at}, not {region}: F6, Tab and the list disagree")
     press(page, "Enter")
-    wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
+    wait_for(page, "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
     at = where(page)
     say(f"[toast] Undo: the keyboard is on {at}")
@@ -249,20 +249,20 @@ def hand_back_hidden(page: Page) -> None:
     at = where(page)
     if not at.endswith("|Undo"):
         wrong(f"F6 three times from the list (foot, strip, card) did not reach Undo: {at}")
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.openOn('left')) ws.toggleSidebar('left') }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.openOn('left')) ws.toggleSidebar('left') }")
     page.keyboard.press("Enter")
-    wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
+    wait_for(page, "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
     at = where(page)
     say(f"[toast] Undo with the sidebar shut since: {at}")
     if at == "body":
         wrong("the keyboard fell to the page: what it came from is hidden")
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
     quiet(page)
 
 def enter_after_going(page: Page) -> None:
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Damson')).path, { activate: true }) }"
+        "async () => { const ws = window.ordenApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Damson')).path, { activate: true }) }"
     )
     quiet(page)
     to_row(page, "Damson")
@@ -270,19 +270,19 @@ def enter_after_going(page: Page) -> None:
     choose(page, "Delete")
     if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
         press(page, "Enter")
-    wait_for(page, "!window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note to go")
+    wait_for(page, "!window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note to go")
     quiet(page)
     at = press(page, "Enter")
     say(f"[caret] Enter on the row that took the keyboard: {at}")
     if not at.startswith("editor|"):
         wrong(f"Enter on the row left the keyboard off the note: {at}")
-    page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
-    wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
+    page.evaluate("async () => { await window.ordenApp.workspace.undoFileAction() }")
+    wait_for(page, "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
 
     for name in ("Alder", "Birch", "Cedar", "Read me"):
         page.evaluate(
-            "async (name) => { const ws = window.nibApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith(name)).path, { activate: true }); ws.keep(ws.activeTabId) }",
+            "async (name) => { const ws = window.ordenApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith(name)).path, { activate: true }); ws.keep(ws.activeTabId) }",
             name,
         )
     quiet(page)
@@ -306,9 +306,9 @@ def enter_after_going(page: Page) -> None:
 
 def tab_closed(page: Page) -> None:
     into_region(page, "tabs")
-    before = page.evaluate("() => window.nibApp.workspace.tabs.length")
+    before = page.evaluate("() => window.ordenApp.workspace.tabs.length")
     at = press(page, "Delete")
-    wait_for(page, f"window.nibApp.workspace.tabs.length < {before}", "the tab to close")
+    wait_for(page, f"window.ordenApp.workspace.tabs.length < {before}", "the tab to close")
     quiet(page)
     at = where(page)
     say(f"[tab] after Delete on the strip the keyboard is on {at}")
@@ -326,7 +326,7 @@ def note_menu(page: Page) -> None:
     said = "# Menu key\n\nfirst para here\n\n\n\nlast words go here now"
     page.evaluate(
         """async (said) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           await ws.noteFrom(said, ws.activeSpace.root)
           await ws.loadTree()
           await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Menu key')).path, { activate: true })
@@ -371,13 +371,13 @@ def note_menu(page: Page) -> None:
     caret_on("first para")
     press(page, "Shift+F10")
     choose(page, "Duplicate")
-    words = page.evaluate("() => window.nibApp.workspace.active?.note?.latest ?? ''")
+    words = page.evaluate("() => window.ordenApp.workspace.active?.note?.latest ?? ''")
     say(f"[note menu] after Duplicate: {words!r}")
     if words.count("first para here") != 2 or words.count("last words go here now") != 1:
         wrong(f"Duplicate from the key did not act on the caret's block: {words!r}")
 
 def named_sides(page: Page) -> None:
-    page.evaluate("() => { const ws = window.nibApp.workspace; ws.showPanel('search'); ws.movePanel('search', 'right'); ws.showPanel('tree') }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; ws.showPanel('search'); ws.movePanel('search', 'right'); ws.showPanel('tree') }")
     wait_for(page, "document.querySelectorAll('aside[data-sidebar]').length === 2", "both sidebars")
     quiet(page)
     names = page.evaluate("() => [...document.querySelectorAll('aside[data-sidebar]')].map((one) => one.getAttribute('aria-label'))")
@@ -386,7 +386,7 @@ def named_sides(page: Page) -> None:
         wrong(f"the two sidebars share a name: {names}")
 
 def divider(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.split('row')")
+    page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelector('.divider')", "the divider")
     quiet(page)
     page.evaluate("() => document.querySelector('.divider').focus()")
@@ -422,7 +422,7 @@ def divider(page: Page) -> None:
     press(page, "Enter")
     DRIVE.shot(page, "two-panes")
     axe_says(page, "two panes")
-    page.evaluate("() => window.nibApp.workspace.panes.collapse()")
+    page.evaluate("() => window.ordenApp.workspace.panes.collapse()")
     quiet(page)
 
 def axe_says(page: Page, surface: str) -> None:
@@ -435,12 +435,12 @@ def toggle_order(page: Page) -> None:
     for side, selector in (("left", ".panels:not(.right) aside"), ("right", ".panels.right aside")):
         toggle = f"[data-side-toggle={side}]"
         page.evaluate(
-            "(side) => { const ws = window.nibApp.workspace; if (ws.openOn(side)) ws.toggleSidebar(side) }", side
+            "(side) => { const ws = window.ordenApp.workspace; if (ws.openOn(side)) ws.toggleSidebar(side) }", side
         )
         quiet(page)
         page.evaluate("(toggle) => document.querySelector(toggle).focus()", toggle)
         press(page, "Enter")
-        wait_for(page, f"window.nibApp.workspace.openOn('{side}')", f"the {side} side to open")
+        wait_for(page, f"window.ordenApp.workspace.openOn('{side}')", f"the {side} side to open")
         at = press(page, "Tab")
         inside = page.evaluate("(selector) => !!document.activeElement?.closest(selector)", selector)
         say(f"[toggle] {side}: Tab after opening lands on {at}")
@@ -466,7 +466,7 @@ VERSION = (
 def version_row(page: Page) -> None:
     if not harness.WEBKIT:
         page.context.grant_permissions(["clipboard-read", "clipboard-write"])
-    page.evaluate("() => window.nibApp.settings.show()")
+    page.evaluate("() => window.ordenApp.settings.show()")
     wait_for(page, f"!!{VERSION}", "the version's row")
     quiet(page)
     axe_says(page, "settings")
@@ -490,9 +490,9 @@ def version_row(page: Page) -> None:
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     held = page.evaluate(SEED)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     quiet(page)
     DRIVE.inject(page, AXE)
     page.wait_for_function("() => !!window.axe", timeout=20000)

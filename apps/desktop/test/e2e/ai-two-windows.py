@@ -68,7 +68,7 @@ class Model(http.server.BaseHTTPRequestHandler):
 
 SETUP = """
 async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: 'fake-small' })
@@ -78,7 +78,7 @@ async (base) => {
 """
 
 SEED = """async (provider) => {
-  const chat = await window.nibApp.aiChats()
+  const chat = await window.ordenApp.aiChats()
   const { writeThread } = await import('/src/lib/ai/chat/threads.ts')
   const space = chat.space || chat.spaces[0]
   const now = Date.now()
@@ -89,11 +89,11 @@ SEED = """async (provider) => {
   return space
 }"""
 
-OPEN = """async () => { const chat = await window.nibApp.aiChats(); await chat.openThread('twin', false); return chat.thread?.title }"""
+OPEN = """async () => { const chat = await window.ordenApp.aiChats(); await chat.openThread('twin', false); return chat.thread?.title }"""
 STORED = """async (space) => { const { readThread } = await import('/src/lib/ai/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? { title: t.title, pinned: !!t.pinned, archived: !!t.archived } : null }"""
 STORED_TURNS = """async (space) => { const { readThread } = await import('/src/lib/ai/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? t.turns.map((turn) => turn.role === 'you' ? 'you' : 'model:' + turn.parts.map((part) => part.text || '').join('')) : null }"""
-BUSY = """async () => (await window.nibApp.aiChats()).running.length > 0"""
-HEADS = """async () => (await window.nibApp.aiChats()).heads.map((one) => one.id)"""
+BUSY = """async () => (await window.ordenApp.aiChats()).running.length > 0"""
+HEADS = """async () => (await window.ordenApp.aiChats()).heads.map((one) => one.id)"""
 
 
 def drive(browser: Browser) -> None:
@@ -109,15 +109,15 @@ def drive(browser: Browser) -> None:
     b.keyboard.press("Control+Shift+A")
     b.wait_for_timeout(800)
     say(f"A opened {a.evaluate(OPEN)!r}, B opened {b.evaluate(OPEN)!r}")
-    a.evaluate("async () => (await window.nibApp.aiChats()).rename('Herons at night', 'twin')")
+    a.evaluate("async () => (await window.ordenApp.aiChats()).rename('Herons at night', 'twin')")
     a.wait_for_timeout(600)
-    b.evaluate("async () => (await window.nibApp.aiChats()).pin('twin')")
+    b.evaluate("async () => (await window.ordenApp.aiChats()).pin('twin')")
     b.wait_for_timeout(600)
     kept = a.evaluate(STORED, space)
     say(f"after a rename in A and a pin in B: {kept}")
     if not kept or kept["title"] != "Herons at night" or not kept["pinned"]:
         wrong(f"one window wrote over the other: {kept}")
-    asks = "async (words) => (await window.nibApp.aiChats()).send(words)"
+    asks = "async (words) => (await window.ordenApp.aiChats()).send(words)"
     a.evaluate(asks, "Asked in A")
     b.evaluate(asks, "Asked in B")
     for _ in range(100):
@@ -133,7 +133,7 @@ def drive(browser: Browser) -> None:
         wrong(f"a message sent in one window was lost: {told}")
     a.evaluate("async (space) => { const { deleteThread } = await import('/src/lib/ai/chat/threads.ts'); await deleteThread(space, 'twin') }", space)
     a.wait_for_timeout(600)
-    b.evaluate("async () => (await window.nibApp.aiChats()).pin('twin', false)")
+    b.evaluate("async () => (await window.ordenApp.aiChats()).pin('twin', false)")
     b.wait_for_timeout(600)
     gone = a.evaluate(STORED, space)
     say(f"after a delete in A and an unpin in B: stored {gone}, B lists {b.evaluate(HEADS)}")

@@ -72,7 +72,7 @@ beforeEach(() => {
 describe('what the old address holds', () => {
   test('is every database, every store and every key', async () => {
     at(before)
-    const db = await opened('nib', 2, notesShape)
+    const db = await opened('orden', 2, notesShape)
     await write(db, 'files', { path: '/Notes/Mine.md', content: 'written in a browser' })
     await write(db, 'meta', 'yes', 'seeded')
     await write(db, 'snapshots', { notePath: '/Notes/Mine.md', content: 'earlier' })
@@ -83,7 +83,7 @@ describe('what the old address holds', () => {
 
     expect(isHandoff(handoff)).toBe(true)
     expect(isEmpty(handoff)).toBe(false)
-    const notes = handoff.databases.find((one) => one.name === 'nib')
+    const notes = handoff.databases.find((one) => one.name === 'orden')
     expect(notes?.version).toBe(2)
     expect(notes?.stores.map((store) => store.name).sort()).toEqual(['files', 'meta', 'snapshots'])
     expect(notes?.stores.find((store) => store.name === 'snapshots')?.indexes).toEqual([
@@ -104,7 +104,7 @@ describe('what the old address holds', () => {
 describe('the new address, given it', () => {
   test('holds what the old one held, in place of its own welcome note', async () => {
     at(before)
-    const old = await opened('nib', 2, notesShape)
+    const old = await opened('orden', 2, notesShape)
     await write(old, 'files', { path: '/Notes/Mine.md', content: 'written in a browser' })
     await write(old, 'meta', 'yes', 'seeded')
     await write(old, 'snapshots', { notePath: '/Notes/Mine.md', content: 'earlier' })
@@ -113,7 +113,7 @@ describe('the new address, given it', () => {
     const handoff = await pack()
 
     at(now)
-    const fresh = await opened('nib', 2, notesShape)
+    const fresh = await opened('orden', 2, notesShape)
     await write(fresh, 'files', { path: '/Notes/Read me.md', content: '# Welcome to Orden' })
     now.local.set('orden:language', 'de')
 
@@ -133,13 +133,13 @@ describe('the new address, given it', () => {
 
   test('lists what came over, when the old address had no listing of its own', async () => {
     at(before)
-    const old = await opened('nib', 1, notesShape)
+    const old = await opened('orden', 1, notesShape)
     await write(old, 'files', { path: '/Notes/Mine.md', content: 'old words', modified: 5 })
     old.close()
     const handoff = await pack()
 
     at(now)
-    const fresh = await opened('nib', 2, (db) => {
+    const fresh = await opened('orden', 2, (db) => {
       notesShape(db)
       db.createObjectStore('assets', { keyPath: 'path' })
       db.createObjectStore('stats', { keyPath: 'path' })
@@ -178,10 +178,11 @@ describe('the new address, given it', () => {
 
 describe('a message', () => {
   test('is a handoff only when it says so', () => {
+    expect(isHandoff({ kind: 'orden-handoff', databases: [], local: [] })).toBe(true)
     expect(isHandoff({ kind: 'nib-handoff', databases: [], local: [] })).toBe(true)
     expect(isHandoff({ kind: 'something-else', databases: [], local: [] })).toBe(false)
-    expect(isHandoff({ kind: 'nib-handoff' })).toBe(false)
-    expect(isHandoff('nib-handoff')).toBe(false)
+    expect(isHandoff({ kind: 'orden-handoff' })).toBe(false)
+    expect(isHandoff('orden-handoff')).toBe(false)
     expect(isHandoff(null)).toBe(false)
   })
 })

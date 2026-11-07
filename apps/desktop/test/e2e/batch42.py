@@ -32,7 +32,7 @@ DEVICES = [
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
   await ws.noteFrom('# Thursday\\n\\nWhat the morning holds.', undefined)
@@ -44,7 +44,7 @@ async () => {
 
 STATE = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   const root = document.documentElement
   return {
     device: root.dataset.device,
@@ -77,7 +77,7 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const notes = ws.notes.map((one) => one.path)
           await ws.openEntry(notes[0], { activate: true })
           await ws.openEntry(notes[1], { activate: true })
@@ -88,10 +88,10 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
     say(f"[{name}] {json.dumps(state)}")
     shot(page, f"{name}-open")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
     shot(page, f"{name}-list")
-    page.evaluate("() => window.nibApp.workspace.closePanel?.() ?? (window.nibApp.workspace.panel = null)")
+    page.evaluate("() => window.ordenApp.workspace.closePanel?.() ?? (window.ordenApp.workspace.panel = null)")
     page.wait_for_timeout(400)
 
     trigger = page.locator("header button[aria-label]").last if state["touch"] else None
@@ -103,13 +103,13 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
         page.wait_for_timeout(300)
 
     page.evaluate(
-        "() => window.nibApp.fullscreen.toggle(window.nibApp.workspace.panes)"
+        "() => window.ordenApp.fullscreen.toggle(window.ordenApp.workspace.panes)"
     )
     page.wait_for_timeout(500)
     shot(page, f"{name}-full")
     full = page.evaluate(
         """() => ({
-          on: window.nibApp.fullscreen.on,
+          on: window.ordenApp.fullscreen.on,
           bar: !!document.querySelector('header'),
           rail: !!document.querySelector('nav'),
           status: !!document.querySelector('footer'),
@@ -120,15 +120,15 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
 
     page.wait_for_timeout(3000)
     shot(page, f"{name}-full-idle")
-    page.evaluate("() => window.nibApp.fullscreen.leave()")
+    page.evaluate("() => window.ordenApp.fullscreen.leave()")
     page.wait_for_timeout(400)
     shot(page, f"{name}-back")
 
-    page.evaluate("() => window.nibApp.workspace.createCanvas()")
+    page.evaluate("() => window.ordenApp.workspace.createCanvas()")
     page.wait_for_timeout(900)
     shot(page, f"{name}-canvas")
     page.evaluate(
-        "() => window.nibApp.fullscreen.toggle(window.nibApp.workspace.panes)"
+        "() => window.ordenApp.fullscreen.toggle(window.ordenApp.workspace.panes)"
     )
     page.wait_for_timeout(700)
     shot(page, f"{name}-canvas-full")
@@ -136,7 +136,7 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
         f"[{name}] the canvas keeps its bar: "
         + str(page.evaluate("() => !!document.querySelector('.bar, .canvas-bar, [data-canvas-bar]')"))
     )
-    page.evaluate("() => window.nibApp.fullscreen.leave()")
+    page.evaluate("() => window.ordenApp.fullscreen.leave()")
     page.wait_for_timeout(300)
 
     context.close()

@@ -29,7 +29,7 @@ NOTE = f"""# Embeds, sandboxed
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('Embeds'))
@@ -134,9 +134,9 @@ def opened(browser: Browser, same_origin: bool, logs: list[str]) -> Page:
 
     DRIVE.open(page)
     page.evaluate(SEED, NOTE)
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     return page
 

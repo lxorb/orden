@@ -3,7 +3,7 @@
   "doc": "7.3",
   "steps": [
     {
-      "reader_eval": "nib.workspace.openPage('{site}/together'); await new Promise((go) => setTimeout(go, 2000)); return nib.workspace.activeTabId",
+      "reader_eval": "orden.workspace.openPage('{site}/together'); await new Promise((go) => setTimeout(go, 2000)); return orden.workspace.activeTabId",
       "save": {
         "reader": "result"
       }
@@ -162,7 +162,7 @@
       }
     },
     {
-      "reader_eval": "const here = nib.workspace.activeSpaceId; localStorage.setItem('orden:space-tabs', JSON.stringify({ [here]: 'space' })); await nib.workspace.addSpace('Elsewhere'); await new Promise((go) => setTimeout(go, 1500)); return { here, now: nib.workspace.activeSpaceId }",
+      "reader_eval": "const here = orden.workspace.activeSpaceId; localStorage.setItem('orden:space-tabs', JSON.stringify({ [here]: 'space' })); await orden.workspace.addSpace('Elsewhere'); await new Promise((go) => setTimeout(go, 1500)); return { here, now: orden.workspace.activeSpaceId }",
       "save": {
         "here": "result.here",
         "elsewhere": "result.now"
@@ -222,7 +222,7 @@
       "keyboard": "unchanged"
     },
     {
-      "reader_eval": "await nib.workspace.selectSpace('{here}'); localStorage.removeItem('orden:space-tabs'); await new Promise((go) => setTimeout(go, 1000)); nib.workspace.close('{reader}'); return nib.workspace.activeSpaceId"
+      "reader_eval": "await orden.workspace.selectSpace('{here}'); localStorage.removeItem('orden:space-tabs'); await new Promise((go) => setTimeout(go, 1000)); orden.workspace.close('{reader}'); return orden.workspace.activeSpaceId"
     }
   ]
 }

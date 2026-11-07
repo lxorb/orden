@@ -67,7 +67,7 @@ async ([path, text]) => {
   // keep in step with web/store.ts: the page has already opened the database by the
   // time this runs, so the stores are there.
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib')
+    const request = indexedDB.open('orden')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })

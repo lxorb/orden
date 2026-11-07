@@ -36,7 +36,7 @@ DEVICES = [
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const join = (dir, name) => (dir.endsWith('/') ? dir + name : dir + '/' + name)
 
@@ -172,7 +172,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     DRIVE.open(page)
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     if os.environ.get("ORDEN_FIRST_LOOK"):
         DRIVE.wait_for(
@@ -183,7 +183,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     say(f"[{name}] the space holds {page.evaluate(SEED)}")
     page.wait_for_timeout(600)
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
     shot("files")
 
@@ -191,17 +191,17 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     if finger:
         strip("drawerhead", "aside .head")
-        page.evaluate("() => window.nibApp.workspace.closePanel()")
+        page.evaluate("() => window.ordenApp.workspace.closePanel()")
         page.wait_for_timeout(500)
         strip("titlebar", ".document header")
         shot("note")
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
     else:
-        page.evaluate("() => window.nibApp.workspace.closePanel()")
+        page.evaluate("() => window.ordenApp.workspace.closePanel()")
         page.wait_for_timeout(500)
         strip("collapsed", "header")
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
 
     switcher = page.locator("aside .name")
@@ -224,11 +224,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             say(f"[{name}] no row menu: {why}")
         dismiss(page)
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
     shot("outline")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
     page.wait_for_timeout(400)
     box = page.locator("aside input").first
     if box.count():
@@ -239,14 +239,14 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             say(f"[{name}] nothing to type in: {why}")
     shot("search")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('links')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('links')")
     page.wait_for_timeout(600)
     shot("links")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
 
-    page.evaluate("() => window.nibApp.workspace.openGraph()")
+    page.evaluate("() => window.ordenApp.workspace.openGraph()")
     try:
         page.wait_for_selector(".graph", timeout=20000)
         page.wait_for_timeout(1400)
@@ -263,7 +263,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const first = ws.notes.find((one) => one.name.startsWith('Kestrel'))
           if (first) await ws.openEntry(first.path, { activate: true })
         }"""
@@ -279,31 +279,31 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     dismiss(page)
 
     if finger:
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
 
-    page.evaluate("() => window.nibApp.settings.show()")
+    page.evaluate("() => window.ordenApp.settings.show()")
     page.wait_for_selector(".orden-screen.sheet, .sheet", state="visible", timeout=8000)
     shot("settings")
 
     page.evaluate(
-        "() => { window.nibApp.settings.section = 'appearance'; window.nibApp.settings.listing = false }"
+        "() => { window.ordenApp.settings.section = 'appearance'; window.ordenApp.settings.listing = false }"
     )
     page.wait_for_selector(".sheet .segmented, .sheet", state="visible", timeout=8000)
     shot("settings-appearance")
 
     page.evaluate(
-        "() => { window.nibApp.settings.section = 'general'; window.nibApp.settings.listing = false }"
+        "() => { window.ordenApp.settings.section = 'general'; window.ordenApp.settings.listing = false }"
     )
     page.wait_for_timeout(300)
     say(f"[{name}] the language list: {page.evaluate(LANGUAGES)}")
     shot("settings-language")
 
-    page.evaluate("() => window.nibApp.settings.hide?.() ?? (window.nibApp.settings.open = false)")
+    page.evaluate("() => window.ordenApp.settings.hide?.() ?? (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(400)
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const path = await ws.noteFrom('# A table\\n\\n| Platform | Sync | Publish |\\n| --- | --- | --- |\\n| Desktop | yes | yes |\\n| Phone | yes | no |\\n| Tablet | yes | yes |\\n')
           if (path) await ws.openEntry(path, { activate: true })
         }"""

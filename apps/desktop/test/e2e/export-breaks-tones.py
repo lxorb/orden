@@ -24,7 +24,7 @@ NOTE = (
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const written = ws.notes.find((one) => one.name.startsWith('Breaking'))
@@ -45,7 +45,7 @@ OVERRULING = (
 
 SEED_NAMED = """
 async ([note, prefix]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const written = ws.notes.find((one) => one.name.startsWith(prefix))
@@ -56,15 +56,15 @@ async ([note, prefix]) => {
 
 BREAKS = """
 () => {
-  if (!window.nibApp.modes.hardBreaks) window.nibApp.modes.toggleHardBreaks()
-  return window.nibApp.modes.hardBreaks
+  if (!window.ordenApp.modes.hardBreaks) window.ordenApp.modes.toggleHardBreaks()
+  return window.ordenApp.modes.hardBreaks
 }
 """
 
 PAGE = """
 (patch) => {
-  window.nibApp.settings.setPage(patch)
-  return window.nibApp.settings.page
+  window.ordenApp.settings.setPage(patch)
+  return window.ordenApp.settings.page
 }
 """
 
@@ -218,7 +218,7 @@ def the_paper_a_note_asks_for(page: Page) -> None:
     say(f"the space holds {page.evaluate(SEED_NAMED, [OVERRULING, 'Legally'])}")
     wait_for(
         page,
-        "window.nibApp.workspace.active?.note?.name?.startsWith('Legally')",
+        "window.ordenApp.workspace.active?.note?.name?.startsWith('Legally')",
         "the overruling note to be the one open",
     )
     page.wait_for_timeout(300)
@@ -247,12 +247,12 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
     wait_for(
         page,
-        "window.nib && document.querySelector('.cm-content')"
-        " && window.nibApp.workspace.active?.note?.name?.startsWith('Breaking')",
+        "window.orden && document.querySelector('.cm-content')"
+        " && window.ordenApp.workspace.active?.note?.name?.startsWith('Breaking')",
         "the note to be the one open",
     )
 

@@ -36,7 +36,7 @@ def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
 
 AS_PHONE = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.viewport.device = 'phone'
   app.viewport.portrait = true
   app.viewport.narrow = true
@@ -51,7 +51,7 @@ AS_PHONE = """
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
 
   if (ws.panel !== 'tree') ws.showPanel('tree')
@@ -67,7 +67,7 @@ async () => {
 
 NEST = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -82,7 +82,7 @@ async () => {
 
 UNNEST = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -107,7 +107,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         if where == "phone":
             page.evaluate(AS_PHONE)
             page.evaluate(
-                "() => { const ws = window.nibApp.workspace;"
+                "() => { const ws = window.ordenApp.workspace;"
                 " if (!ws.panel) ws.showPanel('tree') }"
             )
             page.wait_for_timeout(350)
@@ -127,7 +127,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
 
         check(
             page.evaluate(
-                "() => window.nibApp.workspace.notes.some((one) =>"
+                "() => window.ordenApp.workspace.notes.some((one) =>"
                 " one.path.endsWith('Launch/Launch.md'))"
             ),
             f"[{label}] the note moved into the folder under its own name",
@@ -160,7 +160,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
 
         check(
             page.evaluate(
-                "() => window.nibApp.workspace.notes.some((one) =>"
+                "() => window.ordenApp.workspace.notes.some((one) =>"
                 " one.path.endsWith('/Launch.md'))"
             ),
             f"[{label}] the note came back up as a plain note",

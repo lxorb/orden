@@ -113,8 +113,8 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
         else None,
     )
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=40000)
-    page.wait_for_function("() => !!window.nibApp.account.user", timeout=40000)
+    page.wait_for_function("() => !!window.ordenApp", timeout=40000)
+    page.wait_for_function("() => !!window.ordenApp.account.user", timeout=40000)
 
     return context, page
 
@@ -128,64 +128,64 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
         say(f"shot {name}-{tag}.png")
 
     page.wait_for_function(
-        "() => window.nibApp.workspace.activeSpace && window.nibApp.sync.status !== 'off'",
+        "() => window.ordenApp.workspace.activeSpace && window.ordenApp.sync.status !== 'off'",
         timeout=40000,
     )
 
-    space = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    space = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     made = page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           return await ws.noteFrom('# The plan\\n\\nThe first words.', ws.activeSpace.root)
         }"""
     )
     say(f"[{name}] wrote {made.replace(chr(92), '/').split('/')[-1]}")
 
-    page.evaluate("() => window.nibApp.sync.nudge()")
+    page.evaluate("() => window.ordenApp.sync.nudge()")
     page.wait_for_function(
-        "(path) => !!window.nibApp.sync.tracked(path)", arg=made, timeout=40000
+        "(path) => !!window.ordenApp.sync.tracked(path)", arg=made, timeout=40000
     )
 
-    tracked = page.evaluate("(path) => window.nibApp.sync.tracked(path)", made)
+    tracked = page.evaluate("(path) => window.ordenApp.sync.tracked(path)", made)
     held = request(f"/v1/notes/{tracked['id']}/versions", token)
     say(f"[{name}] the account holds {len(held.get('versions', []))} version(s): {held.get('versions')}")
 
     worker.sql("update note_versions set at = at - 600000;")
     page.evaluate(
         """async (path) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.path === path)
           if (note) await ws.open(note.path)
-          window.nibApp.workspace.replace('# The plan\\n\\nSomething else entirely.')
+          window.ordenApp.workspace.replace('# The plan\\n\\nSomething else entirely.')
           await ws.writeNow()
         }""",
         made,
     )
-    page.evaluate("() => window.nibApp.sync.nudge()")
+    page.evaluate("() => window.ordenApp.sync.nudge()")
     page.wait_for_timeout(4000)
 
     held = request(f"/v1/notes/{tracked['id']}/versions", token)
     say(f"[{name}] and now {len(held.get('versions', []))}, by {[one['by'] for one in held.get('versions', [])]}")
 
-    page.evaluate("() => (window.nibApp.settings.historyOpen = true)")
+    page.evaluate("() => (window.ordenApp.settings.historyOpen = true)")
     page.wait_for_timeout(900)
     shot("history")
     rows = page.evaluate("() => [...document.querySelectorAll('.versions button')].map((one) => one.textContent.trim())")
     say(f"[{name}] the history sheet lists: {rows}")
-    page.evaluate("() => (window.nibApp.settings.historyOpen = false)")
+    page.evaluate("() => (window.ordenApp.settings.historyOpen = false)")
     page.wait_for_timeout(400)
 
-    page.evaluate("() => window.nibApp.settings.show('sync')")
+    page.evaluate("() => window.ordenApp.settings.show('sync')")
     page.wait_for_timeout(900)
     shot("pane")
 
-    page.evaluate("() => window.nibApp.modes.setConflicts('newest')")
+    page.evaluate("() => window.ordenApp.modes.setConflicts('newest')")
     page.wait_for_timeout(1200)
     settings = request("/v1/settings", token)
     say(f"[{name}] the account's conflict rule is {settings.get('settings', {}).get('conflicts')!r}")
 
     say(f"[{name}] the pane offers: {pane_rows(page)}")
-    page.evaluate("() => window.nibApp.modes.setKeepVersions(365)")
+    page.evaluate("() => window.ordenApp.modes.setKeepVersions(365)")
     page.wait_for_timeout(1200)
     kept = request("/v1/settings", token).get("settings", {}).get("keepVersions")
     say(f"[{name}] the account keeps versions for {kept} days")
@@ -198,25 +198,25 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
             f" 'aged-{age}', 120, 'the drive');"
         )
 
-    page.evaluate("() => (window.nibApp.settings.historyOpen = true)")
+    page.evaluate("() => (window.ordenApp.settings.historyOpen = true)")
     page.wait_for_timeout(1500)
     months = page.evaluate(
         "() => [...document.querySelectorAll('.versions .month')].map((one) => one.textContent.trim())"
     )
     say(f"[{name}] with a year kept the sheet is cut up by month: {months}")
     shot("history-by-month")
-    page.evaluate("() => (window.nibApp.settings.historyOpen = false)")
+    page.evaluate("() => (window.ordenApp.settings.historyOpen = false)")
     page.wait_for_timeout(300)
-    page.evaluate("() => window.nibApp.settings.show('sync')")
+    page.evaluate("() => window.ordenApp.settings.show('sync')")
     page.wait_for_timeout(600)
 
-    passes = page.evaluate("() => window.nibApp.sync.status")
+    passes = page.evaluate("() => window.ordenApp.sync.status")
     log = page.evaluate(
         """() => [...document.querySelectorAll('.pass')].map((one) => one.textContent.replace(/\\s+/g, ' ').trim())"""
     )
     say(f"[{name}] sync is {passes}; the log says: {log[:3]}")
 
-    page.evaluate("() => window.nibApp.settings.show('account')")
+    page.evaluate("() => window.ordenApp.settings.show('account')")
     page.wait_for_timeout(900)
 
     turn = page.query_selector('button:has-text("Turn on")')
@@ -231,11 +231,11 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
 
     say(f"[{name}] the account pane says: {pane_rows(page)}")
     shot("account")
-    page.evaluate("() => window.nibApp.settings.show('sync')")
+    page.evaluate("() => window.ordenApp.settings.show('sync')")
     page.wait_for_timeout(300)
 
     remote = page.evaluate(
-        "() => window.nibApp.sync.remoteIdFor(window.nibApp.workspace.activeSpace.root)"
+        "() => window.ordenApp.sync.remoteIdFor(window.ordenApp.workspace.activeSpace.root)"
     )
     asked = request(
         f"/v1/spaces/{remote}/rollback",
@@ -329,7 +329,7 @@ def page_note(browser, token: str, space: str) -> None:
         page.wait_for_function(
             """() => {
               const walk = (one) => (one ? [one.path, ...(one.children ?? []).flatMap(walk)] : [])
-              return walk(window.nibApp.workspace.tree)
+              return walk(window.ordenApp.workspace.tree)
                 .some((path) => path.endsWith('Journal.pages'))
             }""",
             timeout=60000,

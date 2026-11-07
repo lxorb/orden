@@ -16,7 +16,7 @@ HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'pal
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
   if (ws.panel !== 'tree') ws.showPanel('tree')
@@ -42,7 +42,7 @@ BOXES = f"""
 """
 
 OPEN = f"() => document.querySelector(\"{ROW}\")?.getAttribute('aria-expanded')"
-FRONT = "() => window.nibApp.workspace.active?.path ?? null"
+FRONT = "() => window.ordenApp.workspace.active?.path ?? null"
 
 def settled(page: Page, what: str) -> dict:
     wait_for(page, LANDED, "the sheets")
@@ -110,7 +110,7 @@ def desk(browser: Browser) -> None:
 
         page.locator(f"{ROW} .orden-row-label").click()
         try:
-            wait_for(page, "() => (window.nibApp.workspace.active?.path ?? '').includes('/Work')", "the folder opened", 10)
+            wait_for(page, "() => (window.ordenApp.workspace.active?.path ?? '').includes('/Work')", "the folder opened", 10)
         except BaseException:
             wrong(f"pressing the name did not open the row; in front is {page.evaluate(FRONT)}")
         DRIVE.shot(page, "tree-caret", clip={"x": row["x"], "y": row["y"] - 4, "width": row["w"], "height": row["h"] + 8})
@@ -134,7 +134,7 @@ def thumb(browser: Browser) -> None:
             say("this page is not a touch page; the thumb's half is left out")
             return
         page.evaluate(SEED)
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         wait_for(page, f"() => !!document.querySelector(\"{ROW} .twist svg\")", "the folder's twist under a thumb")
         boxes = settled(page, "the folder's row under a thumb")
         say(f"under a thumb: {boxes}")
@@ -148,16 +148,16 @@ def thumb(browser: Browser) -> None:
 
 TAGS = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom('# Tagged\\n\\n#work/plan #work/ideas\\n', ws.activeSpace.root)
-  window.nibApp.search.text = ''
+  window.ordenApp.search.text = ''
   ws.showPanel('search')
 }
 """
 
 TAG = "aside .line:has(.twist) .twist"
 TAG_OPEN = f"() => document.querySelector(\"{TAG}\")?.getAttribute('aria-expanded')"
-SEARCHED = "() => window.nibApp.search.text"
+SEARCHED = "() => window.ordenApp.search.text"
 
 def tags(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 760})

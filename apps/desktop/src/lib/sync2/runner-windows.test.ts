@@ -171,7 +171,7 @@ describe('a window with no engine and nobody who has one', () => {
 describe('what a window owes', () => {
   test('is bounded, and one note is owed once', async () => {
     signedInAs('a')
-    locks.busy('nib-sync:a')
+    locks.busy('orden-sync:a')
     void runner.start()
     await flush()
     const held = runner as unknown as { owed: { size: number } }
@@ -184,8 +184,8 @@ describe('what a window owes', () => {
 
   test('goes with the account: nothing of A is said once B is here', async () => {
     signedInAs('a')
-    locks.busy('nib-sync:a')
-    locks.busy('nib-sync:b')
+    locks.busy('orden-sync:a')
+    locks.busy('orden-sync:b')
     void runner.start()
     await flush()
     await runner.wrote('/s/secret.md', 'words of A')
@@ -250,7 +250,7 @@ describe('the engine’s window', () => {
     vi.useFakeTimers()
     try {
       signedInAs('a')
-      locks.busy('nib-sync:a')
+      locks.busy('orden-sync:a')
       void runner.start()
       await flush()
       other.say('sync-leader', { account: 'a' })
@@ -270,8 +270,8 @@ describe('the engine’s window', () => {
 describe('signing out in a window with no engine', () => {
   test('tells nothing to delete under the engine: the store goes once its window let go', async () => {
     signedInAs('a')
-    locks.busy('nib-sync:local')
-    locks.busy('nib-sync:a')
+    locks.busy('orden-sync:local')
+    locks.busy('orden-sync:a')
     void runner.start()
     await flush()
 
@@ -279,8 +279,8 @@ describe('signing out in a window with no engine', () => {
     await flush()
     expect(opening.forgotten).toEqual([])
 
-    locks.free('nib-sync:a')
-    locks.free('nib-sync:local')
+    locks.free('orden-sync:a')
+    locks.free('orden-sync:local')
     await leaving
     expect(opening.forgotten).toEqual(['a'])
     expect(windows).toBeDefined()
@@ -301,7 +301,7 @@ describe('signing out, asked, in a window with no engine', () => {
     test(`asks the engine's window, and asks the reader only when changes are unsent (${String(unsent)})`, async () => {
       leaving.asked = 0
       signedInAs('a')
-      locks.busy('nib-sync:a')
+      locks.busy('orden-sync:a')
       void runner.start()
       await flush()
       other.say('sync-leader', { account: 'a' })
