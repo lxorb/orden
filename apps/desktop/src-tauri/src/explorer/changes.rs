@@ -46,7 +46,7 @@ pub async fn explorer_write(
     app: AppHandle,
     request: tauri::ipc::Request<'_>,
 ) -> Result<String, String> {
-    let (said, bytes) = crate::notes::raw_sent(request.headers(), request.body())?;
+    let (said, bytes): (Written, _) = crate::notes::raw_sent(request.headers(), request.body())?;
     let bytes = bytes.into_owned();
     crate::lane::off_the_runtime(move || {
         let folder = asked(&app, &said.folder, Use::Into)?;
