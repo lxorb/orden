@@ -164,7 +164,7 @@ export interface SeenKey {
 }
 
 export function documentWindows(labels: string[]): number {
-  return labels.filter((label) => label === 'main' || /^nib-\d+$/.test(label)).length
+  return labels.filter((label) => label === 'main' || /^orden-\d+$/.test(label)).length
 }
 
 export type KeyboardAt = 'note' | 'page' | 'away'

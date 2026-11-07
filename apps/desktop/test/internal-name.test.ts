@@ -25,8 +25,8 @@ const MOST: Record<Kind, number> = {
   scheme: 21,
   key: 126,
   variable: 18,
-  dashed: 780,
-  word: 3441,
+  dashed: 753,
+  word: 3383,
 }
 
 const ALIASES_SHIP_IN = 'v0.21.0'
@@ -48,6 +48,7 @@ const ALIASES: Record<string, readonly string[]> = {
   ],
   'apps/desktop/src-tauri/src/main.rs': ['former_name'],
   'apps/desktop/src-tauri/src/reminders/link.rs': ['nib://'],
+  'apps/desktop/src-tauri/src/secrets.rs': ['"nibeditor"'],
   'apps/desktop/src-tauri/src/uris.rs': ['"nib:"', 'nib://', 'NIB://'],
   'apps/desktop/src-tauri/tauri.conf.json': ['"orden", "nib"'],
   'apps/desktop/src-tauri/tauri.macos.conf.json': ['"orden", "nib"'],
@@ -58,6 +59,8 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src/lib/automation/uri.test.ts': ['nib:'],
   'apps/desktop/src/lib/automation/uri.ts': ["'nib:'", 'web+nib'],
   'apps/desktop/src/lib/canvas-rewrite.ts': ["'nib'"],
+  'apps/desktop/src/lib/modes.svelte.ts': ["'nib'"],
+  'apps/desktop/src/lib/modes.test.ts': ["frame: 'nib'"],
   'apps/desktop/src/lib/open-link.test.ts': ['NIB://'],
   'apps/desktop/src/lib/open-link.ts': ['|nib)'],
   'apps/desktop/src/lib/sync/aside.test.ts': ['.nib-moving-'],

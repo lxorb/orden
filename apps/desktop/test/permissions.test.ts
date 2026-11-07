@@ -234,9 +234,9 @@ describe('webview labels', () => {
     new RegExp(`^${pattern.replace(/\[0-9\]/g, '\\d').replace(/\*/g, '.*')}$`).test(label)
 
   test('the label the crate hands out is covered', () => {
-    expect(labelShape()).toBe('nib-{}')
+    expect(labelShape()).toBe('orden-{}')
 
-    for (const label of ['main', 'nib-2', 'nib-3', 'nib-17', 'nib-1000']) {
+    for (const label of ['main', 'orden-2', 'orden-3', 'orden-17', 'orden-1000']) {
       expect(
         (capabilities.webviews ?? []).some((pattern) => matches(pattern, label)),
         `${label} is granted nothing`,

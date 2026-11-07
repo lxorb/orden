@@ -63,7 +63,7 @@
   const maximized = $derived(shape.maximized)
 
   const mac = isDesktop && platform() === 'macos'
-  const lights = $derived(mac && modes.frame === 'nib' && !shape.fullscreen)
+  const lights = $derived(mac && modes.frame === 'orden' && !shape.fullscreen)
 
   $effect(() => {
     if (lights) document.documentElement.dataset.lights = ''
@@ -78,7 +78,7 @@
     lights && (i18n.direction === 'rtl' || !(workspace.panel && !viewport.drawer)),
   )
   const bare = $derived(
-    !(isDesktop && !mac && modes.frame === 'nib') && !(cornered && i18n.direction === 'rtl'),
+    !(isDesktop && !mac && modes.frame === 'orden') && !(cornered && i18n.direction === 'rtl'),
   )
 
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
@@ -166,7 +166,7 @@
 
 {#snippet windowButtons()}
   {#if isDesktop && !mac}
-    {#if modes.frame === 'nib'}
+    {#if modes.frame === 'orden'}
       <div class="controls" data-overview-keeps>
         <button onclick={minimize} aria-label={t('Minimize')}>
           <svg viewBox="0 0 10 10"><path d="M0 5h10" /></svg>

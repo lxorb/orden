@@ -1044,9 +1044,9 @@ describe('the paper new page notes start on', () => {
 })
 
 describe('the window’s own frame', () => {
-  test('is nib’s own until somebody says otherwise', () => {
-    expect(modes.frame).toBe('nib')
-    expect(root.dataset.frame).toBe('nib')
+  test('is Orden’s own until somebody says otherwise', () => {
+    expect(modes.frame).toBe('orden')
+    expect(root.dataset.frame).toBe('orden')
   })
 
   test('is remembered, and said on the root for the shell to read', async () => {
@@ -1061,10 +1061,16 @@ describe('the window’s own frame', () => {
 
   test('and a word nobody wrote leaves it alone', async () => {
     modes.setFrame('nonsense')
-    expect(modes.frame).toBe('nib')
+    expect(modes.frame).toBe('orden')
 
     localStorage.setItem('orden:modes', JSON.stringify({ frame: 'nonsense' }))
-    expect((await restarted()).frame).toBe('nib')
+    expect((await restarted()).frame).toBe('orden')
+  })
+
+  test('kept under the old name is Orden’s own still', async () => {
+    modes.setFrame('system')
+    localStorage.setItem('orden:modes', JSON.stringify({ frame: 'nib' }))
+    expect((await restarted()).frame).toBe('orden')
   })
 })
 

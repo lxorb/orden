@@ -37,10 +37,10 @@
   "appearance.frame": {
     "type": "string",
     "enum": [
-      "nib",
+      "orden",
       "system"
     ],
-    "default": "nib",
+    "default": "orden",
     "description": "Orden’s own title bar, or the window frame of your system."
   },
   "appearance.mode": {

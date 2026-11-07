@@ -1332,7 +1332,7 @@ export function appCommands(view?: EditorView): Command[] {
           {
             id: 'window-frame',
             label: t('Window frame'),
-            run: () => modes.setFrame(modes.frame === 'system' ? 'nib' : 'system'),
+            run: () => modes.setFrame(modes.frame === 'system' ? 'orden' : 'system'),
           },
         ]
       : []),

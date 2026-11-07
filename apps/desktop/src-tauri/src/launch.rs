@@ -355,7 +355,7 @@ pub fn document_windows(app: &AppHandle) -> Vec<tauri::Window> {
 pub(crate) fn is_document_window(label: &str) -> bool {
     label == MAIN
         || label
-            .strip_prefix("nib-")
+            .strip_prefix("orden-")
             .is_some_and(|number| !number.is_empty() && number.bytes().all(|b| b.is_ascii_digit()))
 }
 
@@ -408,7 +408,7 @@ fn receiver(windows: &[Seen], launched: bool) -> Handover {
 
 fn free_label(app: &AppHandle) -> String {
     loop {
-        let label = format!("nib-{}", WINDOWS.fetch_add(1, Ordering::Relaxed) + 2);
+        let label = format!("orden-{}", WINDOWS.fetch_add(1, Ordering::Relaxed) + 2);
         if app.get_window(&label).is_none() {
             return label;
         }
@@ -432,17 +432,17 @@ mod tests {
 
     #[test]
     fn pages_go_to_the_window_in_front() {
-        let windows = [window("main", false, true), window("nib-2", true, true)];
-        assert_eq!(receiver(&windows, true), Handover::To("nib-2".into()));
+        let windows = [window("main", false, true), window("orden-2", true, true)];
+        assert_eq!(receiver(&windows, true), Handover::To("orden-2".into()));
     }
 
     #[test]
     fn with_nothing_in_front_the_first_window_takes_them() {
-        let windows = [window("nib-3", false, true), window("main", false, true)];
+        let windows = [window("orden-3", false, true), window("main", false, true)];
         assert_eq!(receiver(&windows, true), Handover::To("main".into()));
 
-        let windows = [window("nib-3", false, true)];
-        assert_eq!(receiver(&windows, true), Handover::To("nib-3".into()));
+        let windows = [window("orden-3", false, true)];
+        assert_eq!(receiver(&windows, true), Handover::To("orden-3".into()));
     }
 
     #[test]
@@ -450,8 +450,8 @@ mod tests {
         let windows = [window("main", true, false)];
         assert_eq!(receiver(&windows, true), Handover::Hold);
 
-        let windows = [window("main", true, false), window("nib-2", false, true)];
-        assert_eq!(receiver(&windows, true), Handover::To("nib-2".into()));
+        let windows = [window("main", true, false), window("orden-2", false, true)];
+        assert_eq!(receiver(&windows, true), Handover::To("orden-2".into()));
     }
 
     #[test]
@@ -463,10 +463,11 @@ mod tests {
     #[test]
     fn a_document_window_is_main_or_a_numbered_one() {
         assert!(is_document_window("main"));
-        assert!(is_document_window("nib-2"));
-        assert!(is_document_window("nib-12"));
+        assert!(is_document_window("orden-2"));
+        assert!(is_document_window("orden-12"));
         assert!(!is_document_window("orden-presenter"));
-        assert!(!is_document_window("nib-"));
+        assert!(!is_document_window("orden-"));
+        assert!(!is_document_window("orden-presenter-2"));
         assert!(!is_document_window("web-1"));
     }
 
@@ -505,10 +506,10 @@ mod tests {
     #[test]
     fn a_window_that_went_listens_for_nothing() {
         let pending = Pending::default();
-        pending.take(Handed::Pages, "nib-2");
+        pending.take(Handed::Pages, "orden-2");
 
-        pending.forget("nib-2");
-        assert!(!pending.is_listening("nib-2"));
+        pending.forget("orden-2");
+        assert!(!pending.is_listening("orden-2"));
     }
 
     #[test]
