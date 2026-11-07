@@ -4,12 +4,13 @@ import { answer } from '@orden/bases/answer'
 import { rowsOfText } from '@orden/bases/rows'
 import { freePath } from '@orden/markdown/paths'
 
-const { added, written, taken, on, held } = vi.hoisted(() => ({
+const { added, written, taken, on, held, ids } = vi.hoisted(() => ({
   added: [] as string[],
   written: new Map<string, string>(),
   taken: new Set<string>(),
   on: { root: '/s/Shared' },
   held: new Map<string, string[]>(),
+  ids: new Map<string, string>(),
 }))
 
 vi.mock('../workspace.svelte', async () => {
@@ -69,7 +70,7 @@ vi.mock('../rows/rows.svelte', () => ({
         space,
         path,
         file: { basename: (path.split('/').pop() ?? path).replace(/\.md$/i, '') },
-        note: {},
+        note: ids.has(`${space}/${path}`) ? { id: ids.get(`${space}/${path}`) } : {},
       })),
   },
 }))
@@ -87,6 +88,7 @@ const inFolder = (folder: string) =>
 beforeEach(() => {
   on.root = '/s/Shared'
   held.clear()
+  ids.clear()
   written.clear()
   taken.clear()
 })
@@ -152,6 +154,23 @@ describe('a note added to a base with a template, from a tab of another space', 
     const path = await addNote(journal(), 0, '/s/Shared/Board.base', undefined, { open: false })
 
     expect(written.get(path ?? '')).toContain('the shared journal')
+  })
+})
+
+describe('a numbered note added to a base from a tab of another space', () => {
+  test("takes the next number of the base's own space, not of the one on screen", async () => {
+    on.root = '/s/Private'
+    held.set('Shared', ['One.md'])
+    held.set('Mine', ['Mine.md'])
+    ids.set('Shared/One.md', 'BUG-7')
+    ids.set('Mine/Mine.md', 'BUG-40')
+    const bugs = readBase(
+      'nib:\n  id: { property: id, prefix: BUG }\nviews:\n  - type: table\n    name: T\n',
+    )
+
+    const path = await addNote(bugs, 0, '/s/Shared/Bugs.base', undefined, { open: false })
+
+    expect(written.get(path ?? '')).toContain('id: BUG-8')
   })
 })
 
