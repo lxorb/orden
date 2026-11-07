@@ -1,6 +1,5 @@
 import { type Usage, usageOf } from '@orden/online/apps'
 import type { DownReason, ImageKind } from '@orden/online/wire'
-import { toBase64 } from '../bytes'
 import { Channel } from '../native'
 import { isNumber, isRecord } from '../stored'
 import { invoke } from '../tauri'
@@ -90,9 +89,8 @@ export class PtySource implements Source {
 
   async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {
     const host = hostIdOf(this.shell)
-    const base64 = toBase64(bytes)
-    if (host === null) return invoke<string>('local_image', { kind, base64 })
-    return invoke<string>('remote_image', { host, kind, base64 })
+    if (host === null) return invoke<string>('local_image', { kind, bytes })
+    return invoke<string>('remote_image', { host, kind, bytes })
   }
 
   async program(): Promise<string | null | undefined> {

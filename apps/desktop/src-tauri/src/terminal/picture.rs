@@ -5,8 +5,6 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, SystemTime};
 
-use base64::engine::general_purpose::STANDARD as BASE64;
-use base64::Engine as _;
 use tauri::{Manager as _, Webview};
 
 const KINDS: [(&str, &str); 4] = [
@@ -93,15 +91,19 @@ fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, St
     }
 }
 
-fn picture_of(kind: &str, base64: &str) -> Result<(&'static str, Vec<u8>), String> {
+#[derive(serde::Deserialize)]
+struct Pasted {
+    kind: String,
+    #[serde(default)]
+    host: Option<String>,
+}
+
+fn picture_of(kind: &str, bytes: &[u8]) -> Result<&'static str, String> {
     let end = end_of(kind).ok_or_else(|| format!("{kind} is not a picture an agent reads"))?;
-    if base64.len() > MOST_BYTES.div_ceil(3) * 4 {
+    if bytes.len() > MOST_BYTES {
         return Err("the picture is larger than a paste carries".to_owned());
     }
-    let bytes = BASE64
-        .decode(base64.as_bytes())
-        .map_err(|error| format!("the picture is not base64: {error}"))?;
-    Ok((end, bytes))
+    Ok(end)
 }
 
 fn is_ours(name: &str) -> bool {
@@ -147,9 +149,10 @@ fn kept(folder: &Path, name: &str, bytes: &[u8]) -> Result<PathBuf, String> {
 }
 
 #[tauri::command(async)]
-pub fn local_image(webview: Webview, kind: String, base64: String) -> Result<String, String> {
+pub fn local_image(webview: Webview, request: tauri::ipc::Request<'_>) -> Result<String, String> {
     super::owner(&webview)?;
-    let (end, bytes) = picture_of(&kind, &base64)?;
+    let (Pasted { kind, .. }, bytes) = crate::notes::raw_sent(request.headers(), request.body())?;
+    let end = picture_of(&kind, &bytes)?;
     let folder = webview
         .path()
         .app_cache_dir()
@@ -160,25 +163,29 @@ pub fn local_image(webview: Webview, kind: String, base64: String) -> Result<Str
 }
 
 #[tauri::command(async)]
-pub fn remote_image(
-    webview: Webview,
-    host: String,
-    kind: String,
-    base64: String,
-) -> Result<String, String> {
+pub fn remote_image(webview: Webview, request: tauri::ipc::Request<'_>) -> Result<String, String> {
     super::owner(&webview)?;
-    let (end, bytes) = picture_of(&kind, &base64)?;
+    let (Pasted { kind, host }, bytes) = crate::notes::raw_sent(request.headers(), request.body())?;
+    let host = host.ok_or("a picture for another machine needs which machine")?;
+    let end = picture_of(&kind, &bytes)?;
 
     let (program, reach) = super::remote::reach(&webview, &host)?;
     let mut args = Vec::from(OPTIONS.map(String::from));
     args.extend(reach);
     args.push(script(&fresh_name(end)?));
-    carried(&program, &args, bytes)
+    carried(&program, &args, bytes.into_owned())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_picture_comes_as_its_bytes_and_no_larger_than_a_paste_carries() {
+        assert_eq!(picture_of("png", &[1, 2, 3]), Ok("png"));
+        assert!(picture_of("png", &vec![0; MOST_BYTES + 1]).is_err());
+        assert!(picture_of("svg", &[1]).is_err());
+    }
 
     #[test]
     fn only_the_pictures_an_agent_reads_are_carried() {

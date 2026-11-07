@@ -39,18 +39,11 @@ pub fn explorer_make(
 }
 
 #[tauri::command(async)]
-pub fn explorer_write(
-    app: AppHandle,
-    folder: String,
-    under: String,
-    bytes: String,
-) -> Result<String, String> {
-    use base64::Engine as _;
+pub fn explorer_write(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<String, String> {
+    let (Written { folder, under }, bytes) =
+        crate::notes::raw_sent(request.headers(), request.body())?;
     let folder = asked(&app, &folder, Use::Into)?;
     let path = placed(&folder, &under)?;
-    let bytes = base64::engine::general_purpose::STANDARD
-        .decode(bytes)
-        .map_err(|why| why.to_string())?;
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|why| format!("{}: {why}", parent.display()))?;
     }
@@ -59,6 +52,12 @@ pub fn explorer_write(
     std::io::Write::write_all(&mut file, &bytes)
         .map_err(|why| format!("{}: {why}", path.display()))?;
     Ok(path.display().to_string())
+}
+
+#[derive(serde::Deserialize)]
+struct Written {
+    folder: String,
+    under: String,
 }
 
 pub(super) fn placed(folder: &Path, under: &str) -> Result<PathBuf, String> {
