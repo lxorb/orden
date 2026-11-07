@@ -33,7 +33,11 @@ describe('emphasis that closes, again and again', () => {
   }, 120_000)
 
   test('holds nothing aside in a weak map for each emphasis it reads', () => {
-    const set = WeakMap.prototype.set
+    const set = Object.getOwnPropertyDescriptor(WeakMap.prototype, 'set')?.value as (
+      this: WeakMap<object, unknown>,
+      key: object,
+      value: unknown,
+    ) => WeakMap<object, unknown>
     const keys = new Map<object, Set<object>>()
     let kept = 0
     const spy = vi.spyOn(WeakMap.prototype, 'set').mockImplementation(function (
@@ -54,6 +58,25 @@ describe('emphasis that closes, again and again', () => {
     }
     expect(kept).toBeLessThan(100)
   })
+})
+
+describe('a long paragraph rendered again', () => {
+  test('takes about as long as the first time, not a look through all of it at each emphasis', () => {
+    const lines = Array.from({ length: 20_000 }, (_, at) => `foo ${at} some *word* here\n`).join('')
+    const timed = (text: string) => {
+      const started = performance.now()
+      renderMarkdown(text)
+      return performance.now() - started
+    }
+    let first = Infinity
+    let again = Infinity
+    for (let round = 0; round < 4; round++) {
+      const text = `${round} ${lines}`
+      first = Math.min(first, timed(text))
+      again = Math.min(again, timed(text.split('').join('')))
+    }
+    expect(again).toBeLessThan(first * 2)
+  }, 60_000)
 })
 
 describe('emphasis that closes', () => {

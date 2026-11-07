@@ -34,7 +34,7 @@ patchedDependencies:
     hash: a8e34d0aec1f986637e502d0e6586e9830bcb9f3be8d10fa4a5967f72160c39b
     path: patches/knip@6.44.1.patch
   marked@18.0.11:
-    hash: 83083325e58a1cf44a32673076e428ccdeebd918cc0807f21ef875fc9b09a896
+    hash: af44fdf26aa3ebafee0b3f816b1100c42f22ff41e372204410e913c2452a8581
     path: patches/marked@18.0.11.patch
   style-mod@4.1.3:
     hash: 9bd7b503353269b4b53eb5c263d11325b11038bca50e388890668f7383e20d50
@@ -210,7 +210,7 @@ importers:
         version: 1.40.0
       marked:
         specifier: ^18.0.11
-        version: 18.0.11(patch_hash=83083325e58a1cf44a32673076e428ccdeebd918cc0807f21ef875fc9b09a896)
+        version: 18.0.11(patch_hash=af44fdf26aa3ebafee0b3f816b1100c42f22ff41e372204410e913c2452a8581)
       mermaid:
         specifier: ^11.17.2
         version: 11.17.2
@@ -446,7 +446,7 @@ importers:
         version: link:../markdown
       marked:
         specifier: ^18.0.11
-        version: 18.0.11(patch_hash=83083325e58a1cf44a32673076e428ccdeebd918cc0807f21ef875fc9b09a896)
+        version: 18.0.11(patch_hash=af44fdf26aa3ebafee0b3f816b1100c42f22ff41e372204410e913c2452a8581)
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
@@ -505,7 +505,7 @@ importers:
         version: 1.40.0
       marked:
         specifier: ^18.0.11
-        version: 18.0.11(patch_hash=83083325e58a1cf44a32673076e428ccdeebd918cc0807f21ef875fc9b09a896)
+        version: 18.0.11(patch_hash=af44fdf26aa3ebafee0b3f816b1100c42f22ff41e372204410e913c2452a8581)
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
@@ -7166,7 +7166,7 @@ snapshots:
 
   marked@16.4.2: {}
 
-  marked@18.0.11(patch_hash=83083325e58a1cf44a32673076e428ccdeebd918cc0807f21ef875fc9b09a896): {}
+  marked@18.0.11(patch_hash=af44fdf26aa3ebafee0b3f816b1100c42f22ff41e372204410e913c2452a8581): {}
 
   math-intrinsics@1.1.0: {}
 

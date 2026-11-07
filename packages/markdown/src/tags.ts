@@ -160,16 +160,21 @@ function nextTag(src: string): number | undefined {
 
 export type TagHref = (tag: string) => string | null
 
-type Holding = Record<symbol, unknown>
+const HELD = Symbol('held')
 
-function heldOn<T>(list: object, slot: symbol): T | undefined {
-  return (list as Holding)[slot] as T | undefined
+interface Holding {
+  [HELD]?: Record<symbol, unknown>
+}
+
+function heldOn(list: object, slot: symbol): unknown {
+  return (list as Holding)[HELD]?.[slot]
 }
 
 function holdOn(list: object, slot: symbol, value: unknown): void {
   const holder = list as Holding
-  if (slot in holder) holder[slot] = value
-  else Object.defineProperty(holder, slot, { value, writable: true })
+  const held = holder[HELD]
+  if (held) held[slot] = value
+  else Object.defineProperty(holder, HELD, { value: { [slot]: value } })
 }
 
 export function hashtags(href?: TagHref): MarkedExtension {
@@ -182,7 +187,7 @@ export function hashtags(href?: TagHref): MarkedExtension {
         level: 'inline',
         start: nextTag,
         tokenizer(src: string, tokens: Token[]) {
-          const before = heldOn<string>(tokens, seen)
+          const before = heldOn(tokens, seen) as string | undefined
           holdOn(tokens, seen, src)
           if (this.lexer.state.inLink || !src.startsWith(HASH)) return undefined
 
@@ -234,7 +239,7 @@ function remembered(extension: TokenizerAndRendererExtension): TokenizerAndRende
     start(src) {
       if (tokens === null || src.length !== length - 1) return start.call(this, src)
 
-      const known = heldOn<number>(tokens, answer)
+      const known = heldOn(tokens, answer) as number | undefined
       if (known === -1) return undefined
       if (known !== undefined && src.length >= known) return src.length - known
 
