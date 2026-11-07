@@ -5285,3 +5285,48 @@ describe('the tab a pane comes back to', () => {
     expect(recent?.slice(0, 2).map((at) => names[at])).toEqual(['a.md', 'c.md'])
   })
 })
+
+describe('a closed tab brought back while its pane goes', () => {
+  beforeEach(() => {
+    onePane()
+  })
+
+  afterEach(() => {
+    holding.read = null
+    holding.readPath = ''
+    workspace.collapsePanes()
+  })
+
+  test('comes back in a pane that is there, not the one that went meanwhile', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+    await workspace.open('/space/c.md')
+    const going = workspace.active
+    if (going?.path !== '/space/c.md') throw new Error('c did not open beside')
+    workspace.close(going.id)
+
+    let release: () => void = () => undefined
+    holding.readPath = '/space/c.md'
+    holding.read = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const asked = given.length
+    const back = workspace.reopenClosed()
+    await vi.waitFor(() => {
+      expect(
+        given
+          .slice(asked)
+          .some((one) => one.command === 'read_note' && pathOf(one.args) === '/space/c.md'),
+      ).toBe(true)
+    })
+
+    await workspace.closePane()
+    release()
+    await back
+
+    const again = workspace.tabs.find((one) => one.path === '/space/c.md')
+    expect(again && workspace.panes.at(again.paneId)).toBeTruthy()
+    expect(workspace.tabs.every((one) => workspace.panes.at(one.paneId))).toBe(true)
+    expect(workspace.activeTabId).toBe(again?.id)
+  })
+})

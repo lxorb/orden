@@ -716,7 +716,11 @@ class Workspace {
   }
 
   private async tabsFrom(drafts: Draft[], paneId: string): Promise<Tab[]> {
-    return [...new Set(await this.tabsAlong(drafts, paneId))].filter((one) => one !== null)
+    const made = [...new Set(await this.tabsAlong(drafts, paneId))].filter((one) => one !== null)
+    if (this.panes.at(paneId)) return made
+
+    for (const tab of made) if (tab.paneId === paneId) tab.paneId = this.panes.focusedId
+    return made
   }
 
   private async tabsAlong(drafts: Draft[], paneId: string): Promise<(Tab | null)[]> {
@@ -923,8 +927,9 @@ class Workspace {
   private async restoreStrip(drafts: Draft[], active: number) {
     const paneId = this.panes.focusedId
     const restored = await this.tabsFrom(drafts, paneId)
+    const shown = restored[active] ?? restored[0]
 
-    this.panes.activate(paneId, (restored[active] ?? restored[0])?.id ?? null)
+    this.panes.activate(shown?.paneId ?? paneId, shown?.id ?? null)
     this.tabs = [
       ...restored,
       ...this.tabs.filter((tab) => !restored.some((one) => one.note === tab.note)),
@@ -2589,14 +2594,14 @@ class Workspace {
         const [tab] = await this.tabsFrom([draft], paneId)
         if (!tab) continue
 
-        const there = this.tabsIn(paneId).find((one) => one.note === tab.note)
+        const there = this.tabsIn(tab.paneId).find((one) => one.note === tab.note)
         if (there) {
-          back = { tab: there, paneId }
+          back = { tab: there, paneId: tab.paneId }
           continue
         }
 
-        this.tabs = this.placed(tab, paneId, closed.at)
-        back = { tab, paneId }
+        this.tabs = this.placed(tab, tab.paneId, tab.paneId === paneId ? closed.at : null)
+        back = { tab, paneId: tab.paneId }
       }
       if (!back) continue
 
