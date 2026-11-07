@@ -422,7 +422,8 @@ def image_of(pid: int) -> str:
 
 def whose(look: Look, pids: Collection[int]) -> list[str]:
 
-    assert user32 is not None
+    if user32 is None:
+        return []
     living = parents()
     found: list[str] = []
     for one in look.windows:
