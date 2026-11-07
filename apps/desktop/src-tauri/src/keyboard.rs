@@ -126,6 +126,13 @@ pub fn closed(page: &str) {
     native::let_go_of(page);
 }
 
+pub fn no_hidden_menu<R: tauri::Runtime>(window: &tauri::Window<R>) {
+    #[cfg(windows)]
+    watching::no_hidden_menu(window);
+    #[cfg(not(windows))]
+    let _ = window;
+}
+
 #[cfg(windows)]
 fn left(window: &str) {
     if let Some(page) = native::holding(window) {
@@ -248,10 +255,29 @@ fn moment(message: u32, wparam: usize) -> Moment {
     not(windows),
     allow(dead_code, reason = "a window's messages are Windows' own")
 )]
-fn menu_by_a_key_alone(message: u32, wparam: usize, lparam: isize) -> bool {
+fn key_menu(message: u32, wparam: usize, lparam: isize) -> KeyMenu {
     const SYS_COMMAND: u32 = 0x0112;
     const KEY_MENU: usize = 0xF100;
-    message == SYS_COMMAND && wparam & 0xFFF0 == KEY_MENU && lparam == 0
+    const SPACE: isize = 0x20;
+    if message != SYS_COMMAND || wparam & 0xFFF0 != KEY_MENU {
+        return KeyMenu::Not;
+    }
+    match lparam {
+        0 => KeyMenu::Alone,
+        SPACE => KeyMenu::WindowMenu,
+        _ => KeyMenu::Not,
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(
+    not(windows),
+    allow(dead_code, reason = "a window's messages are Windows' own")
+)]
+enum KeyMenu {
+    Not,
+    Alone,
+    WindowMenu,
 }
 
 #[cfg(windows)]
@@ -265,9 +291,11 @@ mod watching {
     use windows::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass};
     use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, IsChild, WM_NCDESTROY};
 
-    use super::{left, menu_by_a_key_alone, moment, returned, Moment};
+    use super::{key_menu, left, moment, returned, KeyMenu, Moment};
 
     const OURS: usize = 0x6b65_7973;
+
+    const QUIET: usize = 0x6d65_6e75;
 
     thread_local! {
         static WINDOWS: RefCell<HashMap<isize, String>> = RefCell::new(HashMap::new());
@@ -288,6 +316,106 @@ mod watching {
         }
         unsafe {
             let _ = SetWindowSubclass(HWND(hwnd as *mut core::ffi::c_void), Some(heard), OURS, 0);
+        }
+    }
+
+    #[allow(
+        unsafe_code,
+        reason = "a key's menu is heard through a Win32 subclass, which only the Win32 API installs"
+    )]
+    pub fn no_hidden_menu<R: tauri::Runtime>(window: &tauri::Window<R>) {
+        let Ok(hwnd) = window.hwnd() else {
+            return;
+        };
+        unsafe {
+            let _ = SetWindowSubclass(
+                HWND(hwnd.0 as isize as *mut core::ffi::c_void),
+                Some(quiet),
+                QUIET,
+                0,
+            );
+        }
+    }
+
+    #[allow(
+        unsafe_code,
+        reason = "the subclass's own procedure, called by Win32 with the message's words"
+    )]
+    unsafe extern "system" fn quiet(
+        hwnd: HWND,
+        message: u32,
+        wparam: WPARAM,
+        lparam: LPARAM,
+        _id: usize,
+        _data: usize,
+    ) -> LRESULT {
+        match key_menu(message, wparam.0, lparam.0) {
+            KeyMenu::Alone => return LRESULT(0),
+            KeyMenu::WindowMenu => {
+                window_menu(hwnd);
+                return LRESULT(0);
+            }
+            KeyMenu::Not => {}
+        }
+        let answer = unsafe { DefSubclassProc(hwnd, message, wparam, lparam) };
+        if message == WM_NCDESTROY {
+            unsafe {
+                let _ = RemoveWindowSubclass(hwnd, Some(quiet), QUIET);
+            }
+        }
+        answer
+    }
+
+    #[allow(
+        unsafe_code,
+        reason = "the window's own menu is Win32's, shown and answered through its calls"
+    )]
+    fn window_menu(hwnd: HWND) {
+        use windows::Win32::Foundation::RECT;
+        use windows::Win32::UI::WindowsAndMessaging::{
+            EnableMenuItem, GetSystemMenu, GetWindowLongW, GetWindowRect, IsIconic, IsZoomed,
+            PostMessageW, TrackPopupMenu, GWL_STYLE, MF_BYCOMMAND, MF_ENABLED, MF_GRAYED,
+            SC_MAXIMIZE, SC_MINIMIZE, SC_MOVE, SC_RESTORE, SC_SIZE, TPM_RETURNCMD, TPM_RIGHTBUTTON,
+            WM_SYSCOMMAND, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_THICKFRAME,
+        };
+
+        unsafe {
+            let menu = GetSystemMenu(hwnd, false);
+            if menu.is_invalid() {
+                return;
+            }
+            let style = u32::from_ne_bytes(GetWindowLongW(hwnd, GWL_STYLE).to_ne_bytes());
+            let (zoomed, iconic) = (IsZoomed(hwnd).as_bool(), IsIconic(hwnd).as_bool());
+            let placed = !zoomed && !iconic;
+            for (item, on) in [
+                (SC_RESTORE, zoomed || iconic),
+                (SC_MOVE, placed),
+                (SC_SIZE, placed && style & WS_THICKFRAME.0 != 0),
+                (SC_MINIMIZE, !iconic && style & WS_MINIMIZEBOX.0 != 0),
+                (SC_MAXIMIZE, !zoomed && style & WS_MAXIMIZEBOX.0 != 0),
+            ] {
+                let _ = EnableMenuItem(
+                    menu,
+                    item,
+                    MF_BYCOMMAND | if on { MF_ENABLED } else { MF_GRAYED },
+                );
+            }
+            let mut at = RECT::default();
+            if GetWindowRect(hwnd, &raw mut at).is_err() {
+                return;
+            }
+            let chosen = TrackPopupMenu(
+                menu,
+                TPM_RETURNCMD | TPM_RIGHTBUTTON,
+                at.left,
+                at.top,
+                0,
+                hwnd,
+                None,
+            );
+            if let Some(command) = usize::try_from(chosen.0).ok().filter(|one| *one != 0) {
+                let _ = PostMessageW(hwnd, WM_SYSCOMMAND, WPARAM(command), LPARAM(0));
+            }
         }
     }
 
@@ -324,9 +452,6 @@ mod watching {
         _id: usize,
         _data: usize,
     ) -> LRESULT {
-        if menu_by_a_key_alone(message, wparam.0, lparam.0) {
-            return LRESULT(0);
-        }
         let now = moment(message, wparam.0);
         let window = match now {
             Moment::Nothing => None,
@@ -626,7 +751,7 @@ pub use native::x11_took;
 
 #[cfg(test)]
 mod tests {
-    use super::{menu_by_a_key_alone, moment, Back, Homes, Moment, OWED_MS};
+    use super::{key_menu, moment, Back, Homes, KeyMenu, Moment, OWED_MS};
 
     fn typing_in(window: &str, page: &str) -> Homes {
         let mut homes = Homes::default();
@@ -780,13 +905,13 @@ mod tests {
     }
 
     #[test]
-    fn alt_or_f10_alone_opens_no_menu_loop_and_alt_space_still_opens_the_window_menu() {
-        assert!(menu_by_a_key_alone(0x0112, 0xF100, 0));
-        assert!(menu_by_a_key_alone(0x0112, 0xF102, 0));
-        assert!(!menu_by_a_key_alone(0x0112, 0xF100, 0x20));
-        assert!(!menu_by_a_key_alone(0x0112, 0xF100, 0x66));
-        assert!(!menu_by_a_key_alone(0x0112, 0xF060, 0));
-        assert!(!menu_by_a_key_alone(0x0112, 0xF020, 0));
-        assert!(!menu_by_a_key_alone(0x0105, 0x12, 0));
+    fn alt_or_f10_alone_opens_no_menu_loop_and_alt_space_opens_the_window_menu_alone() {
+        assert_eq!(key_menu(0x0112, 0xF100, 0), KeyMenu::Alone);
+        assert_eq!(key_menu(0x0112, 0xF102, 0), KeyMenu::Alone);
+        assert_eq!(key_menu(0x0112, 0xF100, 0x20), KeyMenu::WindowMenu);
+        assert_eq!(key_menu(0x0112, 0xF100, 0x66), KeyMenu::Not);
+        assert_eq!(key_menu(0x0112, 0xF060, 0), KeyMenu::Not);
+        assert_eq!(key_menu(0x0112, 0xF020, 0), KeyMenu::Not);
+        assert_eq!(key_menu(0x0105, 0x12, 0), KeyMenu::Not);
     }
 }
