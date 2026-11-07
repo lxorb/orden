@@ -127,10 +127,28 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
         if colour != colours["mark"]:
             wrong(f"[{scheme}] the highlight {words!r} is painted {colour}, not the system's mark {colours['mark']}")
 
+    edge = page.evaluate(
+        "() => { const s = getComputedStyle(document.querySelector('.cm-line.nib-code-open'), '::after'); return [s.borderTopStyle, s.borderTopColor, s.borderLeftStyle] }"
+    )
+    if edge[0] != "solid" or edge[1] != colours["text"] or edge[2] != "solid":
+        wrong(f"[{scheme}] the code block has no edge of its own to tell it from the words: {edge}")
+
     for one in page.evaluate(SPACERS):
         for side, colour in one["sides"]:
             if colour != colours["canvas"]:
                 wrong(f"[{scheme}] {one['line']}: the room on its {side.lower()} is drawn as a bar of {colour}, not the window's {colours['canvas']}")
+
+    page.evaluate("() => window.nibApp.settings.show('appearance')")
+    page.wait_for_timeout(400)
+    field = page.locator("[role=dialog] input[type=search], [role=dialog] input").first
+    field.focus()
+    page.keyboard.type("x")
+    ring = page.evaluate(
+        "() => { const on = document.activeElement; const held = on.closest('.nib-field') ?? on; const s = getComputedStyle(held); return [s.outlineStyle, s.outlineColor] }"
+    )
+    if ring[0] == "none" or ring[1] != colours["highlight"]:
+        wrong(f"[{scheme}] the field being typed in looks like every other field: {ring}")
+    page.keyboard.press("Backspace")
 
     for pane in ("appearance", "editor"):
         page.evaluate("(pane) => window.nibApp.settings.show(pane)", pane)
