@@ -593,12 +593,11 @@ fn follow(window: &Window) {
     let Some(kept) = window.try_state::<Placements>() else {
         return;
     };
+    let maximized = window.is_maximized().unwrap_or(false);
+    let bounds = if maximized { None } else { bounds(window) };
     let Ok(mut windows) = kept.windows.lock() else {
         return;
     };
-
-    let maximized = window.is_maximized().unwrap_or(false);
-    let bounds = if maximized { None } else { bounds(window) };
     windows
         .entry(window.label().to_owned())
         .or_insert_with(|| Followed::starting(kept.remembered.lock().ok().and_then(|was| *was)))
