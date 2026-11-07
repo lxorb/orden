@@ -1716,6 +1716,41 @@ describe('an answer on its way', () => {
     }
   })
 
+  test('written in another window draws again only the turns that changed', async () => {
+    const chat = await launched()
+    chat.here('work')
+    const { keepThread, newThread, readThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [
+      { id: 'y', role: 'you', at: 1, parts: [], draft: { text: 'Hi', attachments: [] } },
+      { id: 'm', role: 'model', at: 2, parts: [{ kind: 'text', text: 'Hello' }] },
+      { id: 'y2', role: 'you', at: 3, parts: [], draft: { text: 'More', attachments: [] } },
+      { id: 'm2', role: 'model', at: 4, parts: [{ kind: 'text', text: 'Some' }] },
+    ]
+    await keepThread(thread)
+    const mine = await readThread('work', thread.id)
+    if (!mine) throw new Error('no thread')
+    chat.adopt(mine, true)
+    const before = chat.turns
+
+    const theirs = await readThread('work', thread.id)
+    if (!theirs) throw new Error('no thread')
+    theirs.turns[3] = {
+      id: 'm2',
+      role: 'model',
+      at: 4,
+      parts: [{ kind: 'text', text: 'Some more' }],
+    }
+    await keepThread(theirs)
+    ;(chat as unknown as { heardWritten(id: string): void }).heardWritten(thread.id)
+
+    await vi.waitFor(() =>
+      expect(chat.turns[3]?.parts).toEqual([{ kind: 'text', text: 'Some more' }]),
+    )
+    expect(chat.turns.slice(0, 3)).toEqual(before.slice(0, 3))
+    chat.turns.slice(0, 3).forEach((turn, at) => expect(turn).toBe(before[at]))
+  })
+
   test('in another window is not asked again from this one', async () => {
     const chat = await launched()
     chat.here('work')
