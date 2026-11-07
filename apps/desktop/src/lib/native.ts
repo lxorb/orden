@@ -4,7 +4,14 @@ export { Channel } from '@tauri-apps/api/core'
 
 const ARGS_HEADER = 'Orden-Args'
 
-const RAW = new Set(['write_bytes', 'save_asset', 'explorer_write', 'local_image', 'remote_image'])
+const RAW = new Set([
+  'write_bytes',
+  'save_asset',
+  'explorer_write',
+  'local_image',
+  'remote_image',
+  'mail_socket_write',
+])
 
 export function invoke<T>(command: string, args?: InvokeArgs, options?: InvokeOptions): Promise<T> {
   if (RAW.has(command) && args && !Array.isArray(args) && !ArrayBuffer.isView(args)) {

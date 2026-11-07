@@ -5,7 +5,6 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
-use base64::Engine as _;
 use rustls::pki_types::ServerName;
 use rustls::{ClientConfig, ClientConnection, StreamOwned};
 use rustls_platform_verifier::BuilderVerifierExt;
@@ -258,11 +257,15 @@ pub fn mail_socket_open(
     Ok(())
 }
 
+#[derive(serde::Deserialize)]
+struct Written {
+    id: String,
+}
+
 #[tauri::command(async)]
-pub fn mail_socket_write(webview: Webview, id: String, data: String) -> Result<(), String> {
-    let bytes = base64::engine::general_purpose::STANDARD
-        .decode(data)
-        .map_err(|error| error.to_string())?;
+pub fn mail_socket_write(webview: Webview, request: tauri::ipc::Request<'_>) -> Result<(), String> {
+    let (Written { id }, bytes) = crate::notes::raw_sent(request.headers(), request.body())?;
+    let bytes = bytes.into_owned();
     ask(&webview, &id, |answer| Order::Write(bytes, answer))
 }
 

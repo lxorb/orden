@@ -1,6 +1,5 @@
 import type { Host, Socket, SocketAsk } from '@orden/chats/provider'
 import { forgetKey, readSecret, writeSecret } from '../../ai/keys'
-import { toBase64 } from '../../bytes'
 import { Channel } from '../../native'
 import { isRecord } from '../../stored'
 import { invoke, isDesktop } from '../../tauri'
@@ -12,10 +11,10 @@ export const PIECE = 256 * 1024
 
 export async function writtenInPieces(
   bytes: Uint8Array,
-  write: (piece: string) => Promise<unknown>,
+  write: (piece: Uint8Array) => Promise<unknown>,
 ): Promise<void> {
   for (let at = 0; at === 0 || at < bytes.length; at += PIECE)
-    await write(toBase64(bytes.subarray(at, at + PIECE)))
+    await write(bytes.subarray(at, at + PIECE))
 }
 
 async function socket(ask: SocketAsk): Promise<Socket> {
@@ -37,7 +36,8 @@ async function socket(ask: SocketAsk): Promise<Socket> {
   }
   await invoke('mail_socket_open', { id, host: ask.host, port: ask.port, tls: ask.tls, output })
   return {
-    write: (bytes) => writtenInPieces(bytes, (data) => invoke('mail_socket_write', { id, data })),
+    write: (bytes) =>
+      writtenInPieces(bytes, (piece) => invoke('mail_socket_write', { id, bytes: piece })),
     read(listener, finished) {
       hear = listener
       end = finished
