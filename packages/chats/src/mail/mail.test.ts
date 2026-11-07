@@ -4,7 +4,7 @@ import { secretName } from '../provider'
 import fc from 'fast-check'
 import { ascii, base64Lines, fromBase64, fromLatin, latin, Reader, toBase64 } from './bytes'
 import { FakeMail, nodeSocket } from './fake-server'
-import { bytesOf, itemsOf, parseValues, textOf, untaggedOf } from './imap'
+import { bytesOf, itemsOf, parseValues, SILENCE, textOf, untaggedOf } from './imap'
 import {
   addressesOf,
   buildMessage,
@@ -14,7 +14,7 @@ import {
   withoutQuote,
 } from './mime'
 import { configOf, guessServers, mailProvider, sentBox } from './provider'
-import { dotStuffed } from './smtp'
+import { dotStuffed, sendMail, SMTP_SILENCE } from './smtp'
 import { bareSubject, threadsOf } from './threads'
 
 describe('IMAP responses', () => {
@@ -236,6 +236,86 @@ describe('threads', () => {
     expect(threads.get('c')).toBe('a@x')
     expect(threads.get('z')).toBe('z@x')
     expect(bareSubject('Re: AW: Fwd: Lunch')).toBe('Lunch')
+  })
+})
+
+describe('a mail server that stops answering', () => {
+  const silent = (greeting: string, closed: string[]) => (): Promise<Socket> =>
+    Promise.resolve({
+      write: () => Promise.resolve(),
+      read: (hear) => {
+        queueMicrotask(() => hear(ascii(`${greeting}\r\n`)))
+        return () => undefined
+      },
+      startTls: () => Promise.reject(new Error('plain only')),
+      close: () => {
+        closed.push('closed')
+        return Promise.resolve()
+      },
+    })
+  const host: Host = {
+    secret: () => Promise.resolve(null),
+    keepSecret: () => Promise.resolve(),
+    fetch: globalThis.fetch,
+    now: () => 0,
+  }
+  const config = {
+    address: 'emil@example.org',
+    password: 'right horse',
+    imapHost: '127.0.0.1',
+    imapPort: '1143',
+    imapSecurity: 'none',
+    smtpHost: '127.0.0.1',
+    smtpPort: '1025',
+    smtpSecurity: 'none',
+  }
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('is let go of after a while, and its connection closed, not waited on for ever', async () => {
+    vi.useFakeTimers()
+    const closed: string[] = []
+    const socket = silent('* OK [CAPABILITY IMAP4rev1 AUTH=PLAIN SASL-IR] ready', closed)
+    const linking = mailProvider.connect(config, { ...host, socket })
+    const failed = expect(linking).rejects.toThrow('the mail server stopped answering')
+    await vi.advanceTimersByTimeAsync(SILENCE - 20_000)
+    expect(closed).toEqual([])
+    await vi.advanceTimersByTimeAsync(40_000)
+    await failed
+    expect(closed.length).toBeGreaterThan(0)
+  })
+
+  test('that never greets is let go of too', async () => {
+    vi.useFakeTimers()
+    const socket = (): Promise<Socket> =>
+      Promise.resolve({
+        write: () => Promise.resolve(),
+        read: () => () => undefined,
+        startTls: () => Promise.reject(new Error('plain only')),
+        close: () => Promise.resolve(),
+      })
+    const linking = mailProvider.connect(config, { ...host, socket })
+    const failed = expect(linking).rejects.toThrow('the mail server stopped answering')
+    await vi.advanceTimersByTimeAsync(SILENCE + 20_000)
+    await failed
+  })
+
+  test('while a mail is sent says so, rather than sending for ever', async () => {
+    vi.useFakeTimers()
+    const closed: string[] = []
+    const sending = sendMail(
+      silent('220 ready', closed),
+      { host: '127.0.0.1', port: 1025, tls: 'none' },
+      { user: 'emil', password: 'right horse' },
+      { from: 'emil@example.org', to: ['lucile@example.org'] },
+      ascii('Subject: Hi\r\n\r\nHello\r\n'),
+    )
+    const failed = expect(sending).rejects.toThrow('the mail server stopped answering')
+    await vi.advanceTimersByTimeAsync(SMTP_SILENCE + 20_000)
+    await failed
+    expect(closed.length).toBeGreaterThan(0)
   })
 })
 
