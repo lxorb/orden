@@ -239,6 +239,20 @@ class Windows:
         user32.mouse_event(0x0004, 0, 0, 0, 0)
         time.sleep(0.4)
 
+    def wheel(self, at: tuple[float, float], turn: int, ctrl: bool = False) -> None:
+        user32 = self.user32
+        user32.SetCursorPos(round(at[0]), round(at[1]))
+        time.sleep(0.2)
+        if ctrl:
+            user32.keybd_event(0x11, 0, 0, 0)
+            time.sleep(0.05)
+        for _ in range(3):
+            user32.mouse_event(0x0800, 0, 0, turn, 0)
+            time.sleep(0.08)
+        if ctrl:
+            user32.keybd_event(0x11, 0, 0x0002, 0)
+        time.sleep(0.5)
+
     def _device(self, kind: int) -> Any:
         if kind not in self.devices:
             made = self.user32.CreateSyntheticPointerDevice(kind, 1, 1)
@@ -390,13 +404,14 @@ def main() -> int:
         app.eval(HEAR)
         box = line(3)
         middle = box["y"] + box["height"] / 2
-        engine.drag(screen(box["x"] + 1, middle), screen(box["x"] + box["width"] - 1, middle))
-        said = chosen()
-        print(f"the mouse dragged over line 3: {said!r}; heard {app.eval(HEARD)}", flush=True)
-        if not said:
-            engine.drag(screen(box["x"] + 1, middle), screen(box["x"] + box["width"] - 1, middle))
+        said = ""
+        for attempt in range(3):
+            engine.drag(screen(box["x"] + 1, middle), screen(box["x"] + box["width"] + 4, middle))
             said = chosen()
-            print(f"the first press only closed what lay over the app; dragged again: {said!r}; heard {app.eval(HEARD)}", flush=True)
+            print(f"the mouse dragged over line 3 ({attempt + 1}): {said!r}; heard {app.eval(HEARD)}; menu {menu()}", flush=True)
+            if said:
+                break
+            shut_menu()
         if "Line 3: the kestrel hangs above the field." not in said:
             wrong.append(f"a mouse drag over a line of the PDF chose {said!r}")
         shut_menu()
@@ -431,6 +446,22 @@ def main() -> int:
                 unverified.append(f"pen and touch could not be made on this machine: {error}")
         else:
             unverified.append("a Mac has no pen or touch to make from outside the app; only the mouse was driven")
+
+        if isinstance(engine, Windows):
+            sheet = "(() => { const b = document.querySelector('.pages .sheet').getBoundingClientRect(); return { top: b.top, width: b.width } })()"
+            host = app.eval("(() => { const b = document.querySelector('.pages').getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 } })()")
+            before = app.eval(sheet)
+            engine.wheel(screen(host["x"], host["y"]), -120)
+            after = app.eval(sheet)
+            print(f"a mouse wheel over the page note, with two-finger pans heard: {before} -> {after}", flush=True)
+            if after["top"] >= before["top"]:
+                wrong.append(f"a mouse wheel no longer scrolls a page note: {before} -> {after}")
+            before = after
+            engine.wheel(screen(host["x"], host["y"]), 120, ctrl=True)
+            after = app.eval(sheet)
+            print(f"Ctrl and the wheel, as a touchpad's pinch comes: {before} -> {after}", flush=True)
+            if after["width"] <= before["width"]:
+                wrong.append(f"Ctrl and the wheel no longer zoom a page note: {before} -> {after}")
 
         for wanted in (8, 16, 32):
             first = app.eval(CLOSE)

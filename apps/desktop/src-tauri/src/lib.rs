@@ -646,6 +646,7 @@ macro_rules! desktop_commands {
             presence::input_idle,
             presence::device_name,
             time_sense::time_sense,
+            touchpad::touchpad_pan,
         ]
     };
 }

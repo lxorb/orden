@@ -100,6 +100,7 @@
   import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { RightPan } from './canvas/right-pan'
+  import { freeScroll, holdFreeScroll } from './canvas/free-scroll'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -1184,8 +1185,11 @@
       return
     }
 
-    store.camera = panned(camera, -event.deltaX, -event.deltaY)
+    const by = freeScroll.wheel(event)
+    store.camera = panned(camera, -by.x, -by.y)
   }
+
+  $effect(() => holdFreeScroll())
 
   function onDoubleClick(event: MouseEvent) {
     if (touchMultiTapAt > 0 && performance.now() - touchMultiTapAt < 300) return

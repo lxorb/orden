@@ -61,6 +61,7 @@
   } from './pages/paper'
   import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './pages/choose'
   import { RightPan } from './canvas/right-pan'
+  import { freeScroll, holdFreeScroll } from './canvas/free-scroll'
   import { copyText } from './clipboard'
   import { placesOf } from './reading/find'
   import type { Highlight } from './pdf/highlights'
@@ -453,6 +454,8 @@
   const contacts = new Contacts()
 
   const right = new RightPan()
+
+  $effect(() => holdFreeScroll())
 
   function kindOf(event: PointerEvent) {
     return penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
@@ -1166,16 +1169,18 @@
       return
     }
 
+    const by = freeScroll.wheel(event)
+
     const now = Date.now()
     if (!pull.holding && now - pull.at > A_PAUSE) {
       pull = began(pull, startedNearEnd(store.viewBottom, store.last), now)
     }
 
-    const wanted = camera.y + event.deltaY / camera.scale
+    const wanted = camera.y + by.y / camera.scale
     const bottom = store.bottom
     store.camera = store.held({
       ...camera,
-      x: camera.x + event.deltaX / camera.scale,
+      x: camera.x + by.x / camera.scale,
       y: wanted,
     })
 
