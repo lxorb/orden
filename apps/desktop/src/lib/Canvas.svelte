@@ -848,6 +848,9 @@
       case 'cut':
         run.cut(store, effect.ats, effect.reach, `rub:${gestures}`)
         break
+      case 'unrub':
+        store.takeBack(`rub:${gestures}`)
+        break
       case 'catch':
         run.lasso(store, effect.lasso, pens.partly, effect.cards ?? false)
         break
