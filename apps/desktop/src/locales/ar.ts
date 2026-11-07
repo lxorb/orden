@@ -2200,6 +2200,7 @@ export const ar: Dictionary = {
   },
   'Quick question': 'سؤال سريع',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'إعادة تحميل Orden',
   'Add to note': 'إضافة إلى الملاحظة',
   Extensions: 'الإضافات',
   'Add extension': 'إضافة إضافة',

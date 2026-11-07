@@ -2039,6 +2039,7 @@ export const th: Dictionary = {
   '{count} calls': '{count} การเรียก',
   'Quick question': 'คำถามด่วน',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'โหลด Orden ใหม่',
   'Add to note': 'เพิ่มลงในโน้ต',
   Extensions: 'ส่วนขยาย',
   'Add extension': 'เพิ่มส่วนขยาย',

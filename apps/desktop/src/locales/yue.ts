@@ -2020,6 +2020,7 @@ export const yue: Dictionary = {
   '{count} calls': '{count} 次呼叫',
   'Quick question': '快問',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': '重新載入 Orden',
   'Add to note': '加入筆記',
   Extensions: '擴充功能',
   'Add extension': '加入擴充功能',

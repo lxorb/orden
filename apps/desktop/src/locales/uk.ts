@@ -2165,6 +2165,7 @@ export const uk: Dictionary = {
   },
   'Quick question': 'Швидке запитання',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Перезавантажити Orden',
   'Add to note': 'Додати до нотатки',
   Extensions: 'Розширення',
   'Add extension': 'Додати розширення',

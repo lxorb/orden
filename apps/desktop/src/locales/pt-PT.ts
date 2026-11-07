@@ -2140,6 +2140,7 @@ export const ptPT: Dictionary = {
   },
   'Quick question': 'Pergunta rápida',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Recarregar o Orden',
   'Add to note': 'Adicionar à nota',
   Extensions: 'Extensões',
   'Add extension': 'Adicionar extensão',

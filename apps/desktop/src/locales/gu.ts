@@ -2074,6 +2074,7 @@ export const gu: Dictionary = {
   },
   'Quick question': 'ઝડપી પ્રશ્ન',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden ફરી લોડ કરો',
   'Add to note': 'નોંધમાં ઉમેરો',
   Extensions: 'એક્સ્ટેન્શન',
   'Add extension': 'એક્સ્ટેન્શન ઉમેરો',

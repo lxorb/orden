@@ -2108,6 +2108,7 @@ export const kn: Dictionary = {
   },
   'Quick question': 'ತ್ವರಿತ ಪ್ರಶ್ನೆ',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden ಅನ್ನು ಮರುಲೋಡ್ ಮಾಡಿ',
   'Add to note': 'ಟಿಪ್ಪಣಿಗೆ ಸೇರಿಸಿ',
   Extensions: 'ವಿಸ್ತರಣೆಗಳು',
   'Add extension': 'ವಿಸ್ತರಣೆ ಸೇರಿಸಿ',

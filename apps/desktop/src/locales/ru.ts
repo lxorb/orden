@@ -2172,6 +2172,7 @@ export const ru: Dictionary = {
   },
   'Quick question': 'Быстрый вопрос',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Перезагрузить Orden',
   'Add to note': 'Добавить в заметку',
   Extensions: 'Расширения',
   'Add extension': 'Добавить расширение',

@@ -2054,6 +2054,7 @@ export const am: Dictionary = {
   },
   'Quick question': 'ፈጣን ጥያቄ',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden ን እንደገና ጫን',
   'Add to note': 'ወደ ማስታወሻ አክል',
   Extensions: 'ቅጥያዎች',
   'Add extension': 'ቅጥያ አክል',

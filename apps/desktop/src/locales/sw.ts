@@ -2115,6 +2115,7 @@ export const sw: Dictionary = {
   },
   'Quick question': 'Swali la haraka',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Pakia upya Orden',
   'Add to note': 'Ongeza kwenye dokezo',
   Extensions: 'Viendelezi',
   'Add extension': 'Ongeza kiendelezi',

@@ -2082,6 +2082,7 @@ export const hi: Dictionary = {
   },
   'Quick question': 'छोटा सवाल',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden फिर से लोड करें',
   'Add to note': 'नोट में जोड़ें',
   Extensions: 'एक्सटेंशन',
   'Add extension': 'एक्सटेंशन जोड़ें',

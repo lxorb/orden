@@ -2127,6 +2127,7 @@ export const de: Dictionary = {
   },
   'Quick question': 'Schnelle Frage',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden neu laden',
   'Add to note': 'Zur Notiz hinzufügen',
   Extensions: 'Erweiterungen',
   'Add extension': 'Erweiterung hinzufügen',

@@ -2088,6 +2088,7 @@ export const pa: Dictionary = {
   },
   'Quick question': 'ਛੋਟਾ ਸਵਾਲ',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden ਮੁੜ ਲੋਡ ਕਰੋ',
   'Add to note': 'ਨੋਟ ਵਿੱਚ ਜੋੜੋ',
   Extensions: 'ਐਕਸਟੈਂਸ਼ਨਾਂ',
   'Add extension': 'ਐਕਸਟੈਂਸ਼ਨ ਸ਼ਾਮਲ ਕਰੋ',

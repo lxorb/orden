@@ -2083,6 +2083,7 @@ export const ur: Dictionary = {
   },
   'Quick question': 'فوری سوال',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden دوبارہ لوڈ کریں',
   'Add to note': 'نوٹ میں شامل کریں',
   Extensions: 'ایکسٹینشنز',
   'Add extension': 'ایکسٹینشن شامل کریں',

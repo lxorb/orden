@@ -2086,6 +2086,7 @@ export const mr: Dictionary = {
   },
   'Quick question': 'झटपट प्रश्न',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden पुन्हा लोड करा',
   'Add to note': 'नोंदीत जोडा',
   Extensions: 'विस्तार',
   'Add extension': 'विस्तार जोडा',

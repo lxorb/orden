@@ -2068,6 +2068,7 @@ export const ja: Dictionary = {
   '{count} calls': '{count} 件の呼び出し',
   'Quick question': 'ちょっと質問',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden を再読み込み',
   'Add to note': 'ノートに追加',
   Extensions: '拡張機能',
   'Add extension': '拡張機能を追加',

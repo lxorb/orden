@@ -2143,6 +2143,7 @@ export const es: Dictionary = {
   },
   'Quick question': 'Pregunta rápida',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Recargar Orden',
   'Add to note': 'Añadir a la nota',
   Extensions: 'Extensiones',
   'Add extension': 'Añadir extensión',

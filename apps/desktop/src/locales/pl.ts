@@ -2172,6 +2172,7 @@ export const pl: Dictionary = {
   },
   'Quick question': 'Szybkie pytanie',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Wczytaj Orden ponownie',
   'Add to note': 'Dodaj do notatki',
   Extensions: 'Rozszerzenia',
   'Add extension': 'Dodaj rozszerzenie',

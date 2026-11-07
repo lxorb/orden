@@ -2086,6 +2086,7 @@ export const fa: Dictionary = {
   },
   'Quick question': 'پرسش کوتاه',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'بارگذاری دوبارهٔ Orden',
   'Add to note': 'افزودن به یادداشت',
   Extensions: 'افزونه‌ها',
   'Add extension': 'افزودن افزونه',

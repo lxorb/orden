@@ -2129,6 +2129,7 @@ export const fil: Dictionary = {
   },
   'Quick question': 'Mabilis na tanong',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'I-reload ang Orden',
   'Add to note': 'Idagdag sa tala',
   Extensions: 'Mga extension',
   'Add extension': 'Magdagdag ng extension',

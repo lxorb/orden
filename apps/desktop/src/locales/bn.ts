@@ -2083,6 +2083,7 @@ export const bn: Dictionary = {
   },
   'Quick question': 'ছোট প্রশ্ন',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden আবার লোড করুন',
   'Add to note': 'নোটে যোগ করুন',
   Extensions: 'এক্সটেনশন',
   'Add extension': 'এক্সটেনশন যোগ করুন',

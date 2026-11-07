@@ -2066,6 +2066,7 @@ export const jv: Dictionary = {
   '{count} calls': '{count} panggilan',
   'Quick question': 'Pitakon cepet',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Muat ulang Orden',
   'Add to note': 'Tambahake menyang cathetan',
   Extensions: 'Ekstensi',
   'Add extension': 'Tambah ekstensi',

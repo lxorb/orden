@@ -2068,6 +2068,7 @@ export const my: Dictionary = {
   '{count} calls': 'ခေါ်ဆိုမှု {count} ခု',
   'Quick question': 'အမြန်မေးခွန်း',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden ကို ပြန်ဖွင့်ပါ',
   'Add to note': 'မှတ်စုထဲ ထည့်',
   Extensions: 'တိုးချဲ့မှုများ',
   'Add extension': 'တိုးချဲ့မှု ထည့်ရန်',

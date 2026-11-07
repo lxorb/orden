@@ -86,6 +86,7 @@ import { modes } from './modes.svelte'
 import { chatsOn, type KindName, passOn, settings, timeOn } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
+import { showCombination } from './keys'
 import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'
 import { fullscreen } from './fullscreen.svelte'
@@ -1475,6 +1476,12 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Quick question'),
       hint: shortcuts.hint('app.quick-question'),
       run: () => askQuickly(),
+    },
+    {
+      id: 'reload-app',
+      label: t('Reload Orden'),
+      hint: showCombination('Mod-r', shortcuts.platform),
+      run: () => location.reload(),
     },
     {
       id: 'scratchpad',

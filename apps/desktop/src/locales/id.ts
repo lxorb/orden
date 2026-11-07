@@ -2074,6 +2074,7 @@ export const id: Dictionary = {
   '{count} calls': '{count} panggilan',
   'Quick question': 'Pertanyaan cepat',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Muat ulang Orden',
   'Add to note': 'Tambahkan ke catatan',
   Extensions: 'Ekstensi',
   'Add extension': 'Tambahkan ekstensi',

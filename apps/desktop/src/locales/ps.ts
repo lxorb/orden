@@ -2085,6 +2085,7 @@ export const ps: Dictionary = {
   },
   'Quick question': 'چټکه پوښتنه',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden بیا پورته کړئ',
   'Add to note': 'یادښت ته ورزیاتول',
   Extensions: 'غځونې',
   'Add extension': 'غځونه زیاته کړئ',

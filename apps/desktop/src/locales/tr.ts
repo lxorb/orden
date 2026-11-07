@@ -2095,6 +2095,7 @@ export const tr: Dictionary = {
   },
   'Quick question': 'Hızlı soru',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden’ı yeniden yükle',
   'Add to note': 'Nota ekle',
   Extensions: 'Uzantılar',
   'Add extension': 'Uzantı ekle',

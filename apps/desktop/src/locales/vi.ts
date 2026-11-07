@@ -2060,6 +2060,7 @@ export const vi: Dictionary = {
   '{count} calls': '{count} lượt gọi',
   'Quick question': 'Câu hỏi nhanh',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Tải lại Orden',
   'Add to note': 'Thêm vào ghi chú',
   Extensions: 'Tiện ích',
   'Add extension': 'Thêm tiện ích',

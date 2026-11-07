@@ -2023,6 +2023,7 @@ export const zhHantHK: Dictionary = {
   '{count} calls': '{count} 次呼叫',
   'Quick question': '快速提問',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': '重新載入 Orden',
   'Add to note': '加入筆記',
   Extensions: '擴充功能',
   'Add extension': '新增擴充功能',

@@ -2115,6 +2115,7 @@ export const ha: Dictionary = {
   },
   'Quick question': 'Tambaya mai sauri',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Sake loda Orden',
   'Add to note': 'Ƙara a bayanin kula',
   Extensions: 'Ƙarin shirye-shirye',
   'Add extension': 'Ƙara ƙarin shiri',

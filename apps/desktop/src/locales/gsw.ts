@@ -2096,6 +2096,7 @@ export const gsw: Dictionary = {
   },
   'Quick question': 'Schnälli Frag',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden nöi lade',
   'Add to note': 'Zur Notiz hinzuefüege',
   Extensions: 'Erwiiterige',
   'Add extension': 'Erwiiterig hinzuefüege',

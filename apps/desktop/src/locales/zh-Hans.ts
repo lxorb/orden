@@ -2024,6 +2024,7 @@ export const zhHans: Dictionary = {
   '{count} calls': '{count} 次调用',
   'Quick question': '快速提问',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': '重新加载 Orden',
   'Add to note': '添加到笔记',
   Extensions: '扩展程序',
   'Add extension': '添加扩展程序',

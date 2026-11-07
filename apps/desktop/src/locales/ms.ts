@@ -2075,6 +2075,7 @@ export const ms: Dictionary = {
   '{count} calls': '{count} panggilan',
   'Quick question': 'Soalan pantas',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Muat semula Orden',
   'Add to note': 'Tambah pada nota',
   Extensions: 'Sambungan',
   'Add extension': 'Tambah sambungan',

@@ -2115,6 +2115,7 @@ export const ml: Dictionary = {
   },
   'Quick question': 'പെട്ടെന്നുള്ള ചോദ്യം',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden വീണ്ടും ലോഡ് ചെയ്യുക',
   'Add to note': 'കുറിപ്പിലേക്ക് ചേർക്കുക',
   Extensions: 'എക്സ്റ്റൻഷനുകൾ',
   'Add extension': 'എക്സ്റ്റൻഷൻ ചേർക്കുക',

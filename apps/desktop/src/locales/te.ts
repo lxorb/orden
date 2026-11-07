@@ -2095,6 +2095,7 @@ export const te: Dictionary = {
   },
   'Quick question': 'చిన్న ప్రశ్న',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden ను మళ్లీ లోడ్ చేయండి',
   'Add to note': 'నోట్‌కు జోడించు',
   Extensions: 'ఎక్స్‌టెన్షన్‌లు',
   'Add extension': 'ఎక్స్‌టెన్షన్ జోడించు',

@@ -2050,6 +2050,7 @@ export const ko: Dictionary = {
   '{count} calls': '호출 {count}회',
   'Quick question': '빠른 질문',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden 새로고침',
   'Add to note': '노트에 추가',
   Extensions: '확장 프로그램',
   'Add extension': '확장 프로그램 추가',

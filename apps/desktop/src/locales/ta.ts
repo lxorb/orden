@@ -2118,6 +2118,7 @@ export const ta: Dictionary = {
   },
   'Quick question': 'விரைவுக் கேள்வி',
   Scratchpad: 'Scratchpad',
+  'Reload Orden': 'Orden ஐ மீண்டும் ஏற்று',
   'Add to note': 'குறிப்பில் சேர்',
   Extensions: 'நீட்டிப்புகள்',
   'Add extension': 'நீட்டிப்பைச் சேர்',
