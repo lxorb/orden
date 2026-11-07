@@ -493,9 +493,9 @@ again() {
 }
 if [ "$status" = 0 ] && [ "${WATCH:-0}" = 1 ]; then
   sleep 5
-  space=$(find "$NIB_SPACES_DIR" -mindepth 1 -maxdepth 1 -type d ! -name '.*' | head -1)
-  if [ -z "$space" ]; then
-    echo "::error::the app made no space in $NIB_SPACES_DIR"
+  space=$(python3 "$here/watch-drive.py" "$out" where - | tail -1)
+  if [ -z "$space" ] || [ ! -d "$space" ]; then
+    echo "::error::the app made no working folder for its space in $NIB_SPACES_DIR: $space"
     status=1
   else
     echo "the space: $space"

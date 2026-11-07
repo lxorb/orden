@@ -1,11 +1,17 @@
 import { links } from '../link-index.svelte'
 import { search } from '../search.svelte'
 import { settings } from '../settings.svelte'
+import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { pages } from '../web-tab/pages.svelte'
 
+async function working(path: string): Promise<string | null> {
+  const { workingFolder } = await import('../internal/work')
+  return workingFolder(path)
+}
+
 function surface(): Record<string, unknown> {
-  return { workspace, links, search, settings, pages }
+  return { workspace, links, search, settings, pages, invoke, working }
 }
 
 export async function evaluate(code: string): Promise<unknown> {

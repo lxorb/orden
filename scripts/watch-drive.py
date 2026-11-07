@@ -47,7 +47,7 @@ def run(code):
 
 ARM = """(() => { window.nibHeard = []; const internals = window.__TAURI_INTERNALS__;
   const id = internals.transformCallback((raw) => { if (raw && 'message' in raw) window.nibHeard.push(raw.message) });
-  return internals.invoke('space_watch', { roots: [ROOT], news: '__CHANNEL__:' + id })
+  return internals.invoke('working_watch', { root: ROOT, news: '__CHANNEL__:' + id })
     .then(() => 'armed', (error) => 'refused: ' + error) })()"""
 
 def heard():
@@ -59,6 +59,24 @@ for _ in range(120):
     time.sleep(0.5)
 else:
     fail("the launch never finished")
+if PHASE == "where":
+    root = None
+    for _ in range(80):
+        root = run("nib.workspace.activeSpace && nib.workspace.activeSpace.root")
+        if root:
+            break
+        time.sleep(0.25)
+    working = run(f"nib.working({json.dumps(root)})") if root else None
+    print(f"where: the space {root!r} works in {working!r}", file=sys.stderr)
+    print(working or "")
+    sys.exit(0 if working else 1)
+settled = None
+for _ in range(80):
+    settled = run("nib.workspace.activeSpace ? nib.working(nib.workspace.activeSpace.root) : null")
+    if settled:
+        break
+    time.sleep(0.25)
+print(f"{PHASE}: the app keeps its working folder at {settled!r}, so its own watch is armed before this one")
 armed = run(ARM.replace("ROOT", json.dumps(str(SPACE))))
 print(f"{PHASE}: the space's watch: {armed}")
 if armed != "armed":
