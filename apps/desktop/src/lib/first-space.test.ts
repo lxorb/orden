@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Listed } from './seed-space'
 
 const notes = new Map<string, string>()
+let reading: (() => void) | null = null
 const made: { name: string; path: string }[] = []
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -35,6 +36,7 @@ vi.mock('./tauri', async (importOriginal) => ({
         return { name: 'space', path: root, is_dir: true, modified: 0, created: 0, children }
       }
       case 'read_note':
+        reading?.()
         return notes.get(path) ?? ''
       case 'write_note':
         notes.set(path, text(args?.content))
@@ -105,6 +107,19 @@ describe('a fresh start', () => {
     const page = workspace.openPage('https://example.com/', 'front')
     await starting
 
+    expect(workspace.active?.id).toBe(page)
+    expect(workspace.tabs.map((one) => one.path)).toContain(welcome)
+  })
+
+  test('leaves a page opened while the welcome note is read in front', async () => {
+    let page: string | null = null
+    reading = () => {
+      reading = null
+      page = workspace.openPage('https://example.com/', 'front')
+    }
+    await firstSpace.start(FRESH)
+
+    expect(page).not.toBeNull()
     expect(workspace.active?.id).toBe(page)
     expect(workspace.tabs.map((one) => one.path)).toContain(welcome)
   })

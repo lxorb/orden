@@ -615,7 +615,7 @@ class Workspace {
 
       if (!this.tabs.length) {
         const first = this.files[0]
-        if (first) await this.openEntry(first.path)
+        if (first) await this.openFirst(first.path)
       }
 
       void this.takeWhatWasLeft(slot)
@@ -1959,6 +1959,12 @@ class Workspace {
 
     await this.openEntry(next, { activate: true })
     this.close(only.id)
+  }
+
+  async openFirst(path: string) {
+    await this.openEntry(path, { activate: false })
+    const only = this.tabs.length === 1 ? this.tabs[0] : null
+    if (only && samePath(only.path, path)) this.front(only.id)
   }
 
   front(id: string) {
