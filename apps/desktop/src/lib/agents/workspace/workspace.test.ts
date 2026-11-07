@@ -101,6 +101,7 @@ const workspace = {
   rootHolding: (path: string) =>
     [work, home, secret].find((one) => path.startsWith(`${one.root}/`))?.root ?? null,
   itemMeta: {
+    listsMarked: () => true,
     of: (path: string) => (lists.has(path) ? { 'todo-list': 'yes' } : null),
     set: (path: string, patch: Record<string, string | null>) =>
       patch['todo-list'] ? lists.add(path) : lists.delete(path),
