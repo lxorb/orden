@@ -91,7 +91,8 @@ fn handed_as_pdfs(app: &AppHandle, paths: &[PathBuf]) {
 pub fn dropped(app: &AppHandle, paths: &[PathBuf]) {
     let_dropped_be_read(paths, Instant::now());
     seen_where_dropped(app, paths);
-    handed_as_pdfs(app, paths);
+    let pdfs: Vec<PathBuf> = paths.iter().filter(|one| is_pdf(one)).cloned().collect();
+    crate::handed_pdfs::admit_handed(app, pdfs);
 }
 
 #[tauri::command(async)]

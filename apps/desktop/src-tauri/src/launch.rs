@@ -153,12 +153,15 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
     }
 
     hand_over(app, Handed::Pages, handed_by(argv));
-    let pdfs = crate::handed_pdfs::pdfs_in(argv, std::path::Path::new(cwd));
-    hand_over(
-        app,
-        Handed::Pdfs,
-        crate::handed_pdfs::admit_handed(app, pdfs),
-    );
+    let (app, argv, cwd) = (app.clone(), argv.clone(), cwd.to_owned());
+    std::thread::spawn(move || {
+        let pdfs = crate::handed_pdfs::pdfs_in(&argv, std::path::Path::new(&cwd));
+        hand_over(
+            &app,
+            Handed::Pdfs,
+            crate::handed_pdfs::admit_handed(&app, pdfs),
+        );
+    });
 }
 
 pub fn page_up(app: &AppHandle, label: &str) -> bool {
