@@ -144,9 +144,28 @@ fn moved_by(
     Ok(())
 }
 
+pub fn goes_into_itself(source: &Path, target: &Path) -> bool {
+    if crate::paths::inside(source, target) {
+        return true;
+    }
+    if !fs::symlink_metadata(source).is_ok_and(|kind| kind.is_dir()) {
+        return false;
+    }
+    let (Some(parent), Some(name)) = (target.parent(), target.file_name()) else {
+        return false;
+    };
+    match (fs::canonicalize(source), fs::canonicalize(parent)) {
+        (Ok(source), Ok(parent)) => crate::paths::inside(&source, &parent.join(name)),
+        _ => false,
+    }
+}
+
 fn copy_or_nothing(source: &Path, target: &Path, links: Links) -> Result<(), String> {
     if fs::symlink_metadata(target).is_ok() {
         return Err("something already lives there".into());
+    }
+    if goes_into_itself(source, target) {
+        return Err(format!("{} cannot go inside itself", source.display()));
     }
 
     copy_all(source, target, links).inspect_err(|_| {
@@ -279,7 +298,9 @@ impl Drop for Unreadable {
 
 #[cfg(test)]
 mod tests {
-    use super::{copy_whole, move_whole, moved_by, rename_new, taken_away, unreadable};
+    use super::{
+        copy_whole, goes_into_itself, move_whole, moved_by, rename_new, taken_away, unreadable,
+    };
     use crate::paths::link_to;
     use std::fs;
     use std::io;
@@ -460,6 +481,28 @@ mod tests {
         } else {
             assert!(!target.exists());
         }
+    }
+
+    #[test]
+    fn a_folder_never_goes_inside_itself() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = trip(dir.path());
+        let deeper = source.join("assets").join("Trip");
+
+        assert!(copy_whole(&source, &deeper).is_err());
+        assert!(moved_by(&source, &deeper, "move", across, taken_away).is_err());
+        assert!(!deeper.exists(), "a copy began inside itself");
+        whole_trip(&source);
+
+        let seen = dir.path().join("Seen");
+        if link_to(&source, &seen) {
+            assert!(goes_into_itself(&source, &seen.join("assets").join("Trip")));
+            assert!(!goes_into_itself(
+                &seen,
+                &source.join("assets").join("Link")
+            ));
+        }
+        assert!(!goes_into_itself(&source, &dir.path().join("Trip 2")));
     }
 
     #[test]

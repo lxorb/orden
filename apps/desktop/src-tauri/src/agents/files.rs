@@ -428,8 +428,8 @@ fn done(
         FilesOp::List => list(path, &mut out)?,
         FilesOp::Stat => out.entries.push(entry(path)?),
         FilesOp::Mkdir => fs::create_dir_all(path).map_err(|why| why.to_string())?,
-        FilesOp::Move => moved(path, needed(to)?)?,
-        FilesOp::Copy => copied(path, needed(to)?)?,
+        FilesOp::Move => moved(path, outside_of(path, needed(to)?)?)?,
+        FilesOp::Copy => copied(path, outside_of(path, needed(to)?)?)?,
         FilesOp::Delete => deleted(path)?,
         FilesOp::Search => {
             if asked.glob.is_none() && asked.text.is_none() {
@@ -450,6 +450,13 @@ fn done(
 
 fn needed(to: Option<&Path>) -> Result<&Path, String> {
     to.ok_or_else(|| "say where it goes, as to".to_owned())
+}
+
+fn outside_of<'a>(from: &Path, to: &'a Path) -> Result<&'a Path, String> {
+    if crate::carry::goes_into_itself(from, to) {
+        return Err(format!("{} cannot go inside itself", from.display()));
+    }
+    Ok(to)
 }
 
 fn content(asked: &Files) -> Result<Vec<u8>, String> {
@@ -740,6 +747,14 @@ mod tests {
 
         done(&files(FilesOp::Delete, &copy), &copy, None, &[]).expect("deleted");
         assert!(!copy.exists());
+
+        let elsewhere = root.join("elsewhere");
+        let inside = elsewhere.join("deeper");
+        for op in [FilesOp::Copy, FilesOp::Move] {
+            let refused = done(&files(op, &elsewhere), &elsewhere, Some(&inside), &[]);
+            assert!(refused.is_err_and(|why| why.contains("inside itself")));
+            assert!(!inside.exists() && moved_to.exists());
+        }
         let _ = fs::remove_dir_all(&root);
     }
 
