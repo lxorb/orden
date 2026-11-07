@@ -3628,4 +3628,18 @@ export const fil: Dictionary = {
   'Slack does not know that emoji': 'Hindi kilala ng Slack ang emoji na iyan',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Mag-paste ng Slack user token, hindi makakapag-sign in sa browser ang build na ito',
+  'Delete for everyone': 'Burahin para sa lahat',
+  'Delete for me': 'Burahin para sa akin',
+  Forwarded: 'Ipinasa',
+  Delivered: 'Naihatid',
+  Sticker: 'Sticker',
+  GIF: 'GIF',
+  'New conversation': 'Bagong usapan',
+  'Add people': 'Magdagdag ng tao',
+  'Leave {chat}?': 'Umalis sa {chat}?',
+  'Remove as admin': 'Alisin bilang admin',
+  'Make admin': 'Gawing admin',
+  'Remove from chat': 'Alisin sa chat',
+  'Sign in again': 'Mag-sign in ulit',
+  'Finish signing in in your browser': 'Tapusin ang pag-sign in sa iyong browser',
 }

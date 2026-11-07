@@ -3,12 +3,39 @@ import { chatLink } from '@orden/chats/links'
 import { copyText } from '../../clipboard'
 import { t } from '../../i18n.svelte'
 import { paletteWords } from '../../surfaces.svelte'
-import type { ChatEntry, ChatView, Shown } from '../api'
+import type { ChatAbilities, ChatEntry, ChatView, Service, Shown } from '../api'
 import { trimmed } from './compose'
 import { type Item, rowsOf } from './rows'
 import { saved } from './saved.svelte'
 import { store } from './source.svelte'
 import { dayOf } from './when'
+
+export const ORDEN_CAN: ChatAbilities = {
+  files: true,
+  maxFile: null,
+  voice: true,
+  polls: true,
+  quote: true,
+  threads: true,
+  react: 'any',
+  editFor: Infinity,
+  removeFor: Infinity,
+  removeForMe: false,
+  pin: true,
+  vote: true,
+  markUnread: true,
+  members: true,
+  topic: true,
+  mute: true,
+  search: true,
+  link: true,
+  schedule: true,
+  unsend: true,
+  nib: true,
+  stickers: false,
+  gifs: false,
+  formatting: 'markdown',
+}
 
 export type Aside = { kind: 'quote'; message: Message } | { kind: 'edit'; message: Message } | null
 
@@ -25,7 +52,27 @@ export class ChatPage {
   }
 
   get me(): Who | null {
-    return store().me
+    const own = this.view.me
+    return own === undefined ? store().me : own
+  }
+
+  get can(): ChatAbilities {
+    return this.view.can ?? ORDEN_CAN
+  }
+
+  get service(): Service | null {
+    return this.view.service ?? null
+  }
+
+  mayEdit(message: Message): boolean {
+    const window = this.can.editFor
+    return window !== null && Date.now() - message.at <= window
+  }
+
+  mayRemoveForAll(message: Message): boolean {
+    const window = this.can.removeFor
+    if (window === null) return false
+    return this.me !== null && message.author === this.me ? Date.now() - message.at <= window : true
   }
 
   get entry(): ChatEntry | null {
@@ -132,8 +179,13 @@ export class ChatPage {
     else void store().edit(this.id, message.id, body)
   }
 
-  remove(message: string): void {
-    void store().remove(this.id, message)
+  remove(message: string, everyone?: boolean): void {
+    if (everyone === undefined) void store().remove(this.id, message)
+    else void store().remove(this.id, message, everyone)
+  }
+
+  sticker(ref: string): void {
+    void store().post(this.id, { body: '', sticker: ref })
   }
 
   react(message: Message, emoji: string): void {
@@ -167,12 +219,14 @@ export class ChatPage {
   }
 
   addAsTask(message: Message): void {
-    void import('./keep').then((keep) => keep.addAsTask(this, message, this.entry?.space ?? null))
+    void import('./keep').then((keep) =>
+      keep.addAsTask(this, message, this.service ? null : (this.entry?.space ?? null)),
+    )
   }
 
   async saveAsNote(message: Message): Promise<void> {
     const keep = await import('./keep')
-    await keep.saveAsNote(this, message, this.entry?.space ?? null)
+    await keep.saveAsNote(this, message, this.service ? null : (this.entry?.space ?? null))
   }
 
   isSaved(message: Message): boolean {
@@ -189,6 +243,7 @@ export class ChatPage {
   }
 
   async pinned(): Promise<Message[]> {
+    if (this.service) return this.messages.filter((one) => one.pinned && !one.deleted)
     const found = await store().search('has:pin', this.id)
     return found.map((one) => one.message)
   }
@@ -197,7 +252,7 @@ export class ChatPage {
     const me = this.me
     for (let at = this.messages.length - 1; at >= 0; at--) {
       const one = this.messages[at]
-      if (one?.author === me && !one.deleted && !one.poll) return one
+      if (one?.author === me && !one.deleted && !one.poll) return this.mayEdit(one) ? one : null
     }
     return null
   }

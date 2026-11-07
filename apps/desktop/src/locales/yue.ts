@@ -3380,4 +3380,18 @@ export const yue: Dictionary = {
   'Slack does not know that emoji': 'Slack 唔識呢個表情符號',
   'Paste a Slack user token, this build cannot sign in through the browser':
     '請貼上 Slack 用戶權杖，呢個版本唔可以喺瀏覽器登入',
+  'Delete for everyone': '為所有人刪除',
+  'Delete for me': '只喺我度刪除',
+  Forwarded: '已轉寄',
+  Delivered: '已送達',
+  Sticker: '貼圖',
+  GIF: 'GIF',
+  'New conversation': '新對話',
+  'Add people': '加人',
+  'Leave {chat}?': '離開 {chat}？',
+  'Remove as admin': '取消管理員',
+  'Make admin': '設為管理員',
+  'Remove from chat': '移出聊天',
+  'Sign in again': '再登入',
+  'Finish signing in in your browser': '喺你嘅瀏覽器完成登入',
 }

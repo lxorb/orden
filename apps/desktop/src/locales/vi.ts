@@ -3462,4 +3462,18 @@ export const vi: Dictionary = {
   'Slack does not know that emoji': 'Slack không biết biểu tượng cảm xúc đó',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Hãy dán mã người dùng Slack, bản dựng này không thể đăng nhập qua trình duyệt',
+  'Delete for everyone': 'Xóa với mọi người',
+  'Delete for me': 'Xóa với tôi',
+  Forwarded: 'Đã chuyển tiếp',
+  Delivered: 'Đã nhận',
+  Sticker: 'Nhãn dán',
+  GIF: 'GIF',
+  'New conversation': 'Cuộc trò chuyện mới',
+  'Add people': 'Thêm người',
+  'Leave {chat}?': 'Rời {chat}?',
+  'Remove as admin': 'Gỡ quyền quản trị',
+  'Make admin': 'Đặt làm quản trị viên',
+  'Remove from chat': 'Xóa khỏi cuộc trò chuyện',
+  'Sign in again': 'Đăng nhập lại',
+  'Finish signing in in your browser': 'Hoàn tất đăng nhập trong trình duyệt của bạn',
 }

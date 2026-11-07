@@ -3390,4 +3390,18 @@ export const zhHant: Dictionary = {
   'Slack does not know that emoji': 'Slack 不認得這個表情符號',
   'Paste a Slack user token, this build cannot sign in through the browser':
     '請貼上 Slack 使用者權杖，此版本無法在瀏覽器中登入',
+  'Delete for everyone': '為所有人刪除',
+  'Delete for me': '僅為我刪除',
+  Forwarded: '已轉傳',
+  Delivered: '已送達',
+  Sticker: '貼圖',
+  GIF: 'GIF',
+  'New conversation': '新對話',
+  'Add people': '新增成員',
+  'Leave {chat}?': '離開 {chat}？',
+  'Remove as admin': '取消管理員',
+  'Make admin': '設為管理員',
+  'Remove from chat': '移出聊天',
+  'Sign in again': '重新登入',
+  'Finish signing in in your browser': '在瀏覽器中完成登入',
 }

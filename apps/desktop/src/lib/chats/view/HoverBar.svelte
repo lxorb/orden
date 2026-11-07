@@ -10,6 +10,9 @@
     message,
     top,
     canPost,
+    react = 'any',
+    threads = true,
+    quote = true,
     onreact,
     onpicker,
     onreply,
@@ -19,12 +22,19 @@
     message: Message
     top: number
     canPost: boolean
+    react?: 'any' | 'one' | readonly string[] | null
+    threads?: boolean
+    quote?: boolean
     onreact: (emoji: string) => void
     onpicker: (from: HTMLElement) => void
     onreply: () => void
     onquote: () => void
     onmenu: (event: MouseEvent) => void
   } = $props()
+
+  const quick = $derived(
+    react === null ? [] : typeof react === 'string' ? emojiRecent.first(3) : react.slice(0, 6),
+  )
 </script>
 
 <div
@@ -35,32 +45,38 @@
   transition:fade={{ duration: dur(100) }}
 >
   {#if canPost}
-    {#each emojiRecent.first(3) as emoji (emoji)}
+    {#each quick as emoji (emoji)}
       <button type="button" class="one emoji" aria-label={emoji} onclick={() => onreact(emoji)}
         >{emoji}</button
       >
     {/each}
-    <button
-      type="button"
-      class="one"
-      aria-label={t('Add reaction')}
-      use:tip={() => t('Add reaction')}
-      onclick={(event) => onpicker(event.currentTarget)}><Glyph name="react" /></button
-    >
-    <button
-      type="button"
-      class="one"
-      aria-label={t('Reply')}
-      use:tip={() => t('Reply')}
-      onclick={onreply}><Glyph name="reply" /></button
-    >
-    <button
-      type="button"
-      class="one"
-      aria-label={t('Quote')}
-      use:tip={() => t('Quote')}
-      onclick={onquote}><Glyph name="quote" /></button
-    >
+    {#if typeof react === 'string'}
+      <button
+        type="button"
+        class="one"
+        aria-label={t('Add reaction')}
+        use:tip={() => t('Add reaction')}
+        onclick={(event) => onpicker(event.currentTarget)}><Glyph name="react" /></button
+      >
+    {/if}
+    {#if threads}
+      <button
+        type="button"
+        class="one"
+        aria-label={t('Reply')}
+        use:tip={() => t('Reply')}
+        onclick={onreply}><Glyph name="reply" /></button
+      >
+    {/if}
+    {#if quote}
+      <button
+        type="button"
+        class="one"
+        aria-label={t('Quote')}
+        use:tip={() => t('Quote')}
+        onclick={onquote}><Glyph name="quote" /></button
+      >
+    {/if}
   {/if}
   <button
     type="button"

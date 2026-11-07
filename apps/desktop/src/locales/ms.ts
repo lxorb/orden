@@ -3494,4 +3494,18 @@ export const ms: Dictionary = {
   'Slack does not know that emoji': 'Slack tidak mengenali emoji itu',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Tampal token pengguna Slack, binaan ini tidak boleh log masuk melalui pelayar',
+  'Delete for everyone': 'Padam untuk semua',
+  'Delete for me': 'Padam untuk saya',
+  Forwarded: 'Dimajukan',
+  Delivered: 'Dihantar',
+  Sticker: 'Pelekat',
+  GIF: 'GIF',
+  'New conversation': 'Perbualan baharu',
+  'Add people': 'Tambah orang',
+  'Leave {chat}?': 'Tinggalkan {chat}?',
+  'Remove as admin': 'Buang sebagai pentadbir',
+  'Make admin': 'Jadikan pentadbir',
+  'Remove from chat': 'Keluarkan daripada sembang',
+  'Sign in again': 'Log masuk semula',
+  'Finish signing in in your browser': 'Selesaikan log masuk dalam pelayar anda',
 }

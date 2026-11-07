@@ -3608,4 +3608,18 @@ export const ha: Dictionary = {
   'Slack does not know that emoji': 'Slack bai san wannan emoji ba',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Liƙa alamar mai amfani ta Slack, wannan sigar ba za ta iya shiga ta burauza ba',
+  'Delete for everyone': 'Goge ga kowa',
+  'Delete for me': 'Goge a gare ni',
+  Forwarded: 'An tura',
+  Delivered: 'An isar',
+  Sticker: 'Sitika',
+  GIF: 'GIF',
+  'New conversation': 'Sabuwar tattaunawa',
+  'Add people': 'Ƙara mutane',
+  'Leave {chat}?': 'Bar {chat}?',
+  'Remove as admin': 'Cire daga mai gudanarwa',
+  'Make admin': 'Mayar da mai gudanarwa',
+  'Remove from chat': 'Cire daga hira',
+  'Sign in again': 'Sake shiga',
+  'Finish signing in in your browser': 'Kammala shiga a cikin burauzarka',
 }

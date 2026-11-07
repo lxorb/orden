@@ -3657,4 +3657,18 @@ export const ptPT: Dictionary = {
   'Slack does not know that emoji': 'O Slack não conhece esse emoji',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Cole um token de utilizador do Slack, esta versão não consegue iniciar sessão no navegador',
+  'Delete for everyone': 'Eliminar para todos',
+  'Delete for me': 'Eliminar para mim',
+  Forwarded: 'Reencaminhada',
+  Delivered: 'Entregue',
+  Sticker: 'Autocolante',
+  GIF: 'GIF',
+  'New conversation': 'Nova conversa',
+  'Add people': 'Adicionar pessoas',
+  'Leave {chat}?': 'Sair de {chat}?',
+  'Remove as admin': 'Remover como administrador',
+  'Make admin': 'Tornar administrador',
+  'Remove from chat': 'Remover do chat',
+  'Sign in again': 'Iniciar sessão novamente',
+  'Finish signing in in your browser': 'Termine o início de sessão no seu navegador',
 }

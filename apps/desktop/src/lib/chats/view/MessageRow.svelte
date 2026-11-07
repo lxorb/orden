@@ -12,6 +12,7 @@
   import { links } from '../../link-index.svelte'
   import { workspace } from '../../workspace.svelte'
   import { bodyHtml, firstLine, onlyEmoji } from './body'
+  import { plainHtml } from '../formats'
   import { drawing } from '../../markdown-view.svelte'
   import type { ChatPage } from './chat.svelte'
   import Gallery from './Gallery.svelte'
@@ -92,13 +93,14 @@
       from: string | null
       version: number
       drawn: number
+      plain: boolean
     },
   ) {
     let untip: { destroy: () => void } | null = null
-    const draw = (next: { body: string; edited: boolean; from: string | null }) => {
+    const draw = (next: { body: string; edited: boolean; from: string | null; plain: boolean }) => {
       untip?.destroy()
       untip = null
-      node.innerHTML = bodyHtml(next.body, next.from)
+      node.innerHTML = next.plain ? plainHtml(next.body) : bodyHtml(next.body, next.from)
       markMentions(node, callable)
       if (!next.edited) return
       const mark = document.createElement('span')
@@ -148,6 +150,7 @@
   class:lit
   class:flash={flashed}
   class:pending
+  class:system={message.system}
   data-message={message.id}
   oncontextmenu={(event) => onmenu(event, message)}
   in:fly={{
@@ -185,6 +188,13 @@
       <span class="pinned corner" aria-label={t('Pinned')}><Glyph name="pin" /></span>
     {/if}
 
+    {#if message.forwarded}
+      <p class="forwarded"><Glyph name="reply" />{t('Forwarded')}</p>
+    {/if}
+    {#if message.subject && !message.deleted}
+      <p class="subject" dir="auto">{message.subject}</p>
+    {/if}
+
     {#if message.quote !== undefined}
       <button
         type="button"
@@ -220,6 +230,7 @@
             from: home,
             version: links.version,
             drawn: drawing.version,
+            plain: page.can.formatting === 'plain',
           }}
           onclick={follow}
         ></div>
@@ -280,19 +291,20 @@
       {/if}
 
       {#if message.poll}
-        <PollCard {message} {page} {space} canVote={canPost} />
+        <PollCard {message} {page} {space} canVote={canPost && page.can.vote} />
       {/if}
 
       <Reactions
         {message}
         {page}
         {space}
-        canReact={canPost && !pending}
+        canReact={canPost && !pending && page.can.react !== null}
+        more={typeof page.can.react === 'string'}
         onmore={(from: HTMLElement) => onreact(message, from)}
       />
     {/if}
 
-    {#if message.replies > 0 && !inReplies}
+    {#if message.replies > 0 && !inReplies && page.can.threads}
       <button type="button" class="replies" onclick={() => onreply(message)}>
         <Glyph name="replies" />
         <span class="count">{amount(message.replies)}</span>
@@ -302,6 +314,22 @@
 
     {#if pending}
       <span class="sending" aria-label={t('Sending')}><Glyph name="clock" /></span>
+    {:else if mine && message.delivery && message.delivery !== 'failed' && message.delivery !== 'sending'}
+      <span
+        class="delivery"
+        class:read={message.delivery === 'read'}
+        aria-label={message.delivery === 'read'
+          ? t('Read')
+          : message.delivery === 'delivered'
+            ? t('Delivered')
+            : t('Sent')}
+        use:tip={() =>
+          message.delivery === 'read'
+            ? t('Read')
+            : message.delivery === 'delivered'
+              ? t('Delivered')
+              : t('Sent')}>{message.delivery === 'sent' ? '✓' : '✓✓'}</span
+      >
     {/if}
     {#if message.refused}
       <span class="refused">
@@ -342,6 +370,39 @@
 
   .message.head {
     padding-top: var(--space-3);
+  }
+
+  .message.system .body {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    font-style: italic;
+  }
+
+  .forwarded {
+    --glyph-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--text-xs);
+  }
+
+  .subject {
+    margin: 0;
+    color: var(--text-strong);
+    font-weight: var(--weight-strong);
+  }
+
+  .delivery {
+    margin-inline-start: var(--space-1);
+    color: var(--muted);
+    font-size: var(--text-xs);
+    letter-spacing: -0.2em;
+  }
+
+  .delivery.read {
+    color: var(--accent);
   }
 
   @media (hover: hover) {

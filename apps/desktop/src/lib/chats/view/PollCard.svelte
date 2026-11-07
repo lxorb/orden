@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { Message, Who } from '@orden/chats'
+  import type { Who } from '@orden/chats'
+  import type { Shown } from '../api'
   import { amount, i18n } from '../../i18n.svelte'
   import type { ChatPage } from './chat.svelte'
   import Glyph from './Glyph.svelte'
@@ -11,7 +12,7 @@
     page,
     space,
     canVote,
-  }: { message: Message; page: ChatPage; space: string | null; canVote: boolean } = $props()
+  }: { message: Shown; page: ChatPage; space: string | null; canVote: boolean } = $props()
 
   const poll = $derived(message.poll)
   const ended = $derived(poll?.ends !== undefined && poll.ends < Date.now())
@@ -20,7 +21,8 @@
   const counts = $derived(
     (poll?.answers ?? []).map((_, index) => voters.filter(([, chose]) => chose.includes(index))),
   )
-  const most = $derived(Math.max(1, ...counts.map((one) => one.length)))
+  const tally = $derived(message.tally ? [...message.tally] : counts.map((one) => one.length))
+  const most = $derived(Math.max(1, ...tally))
 
   function choose(index: number) {
     if (!poll || ended || !canVote) return
@@ -50,9 +52,9 @@
         use:tip={() => who.map(([one]) => nameOf(one, page.members, space)).join(', ')}
         onclick={() => choose(index)}
       >
-        <span class="fill" style:width="{(who.length / most) * 100}%"></span>
+        <span class="fill" style:width="{((tally[index] ?? 0) / most) * 100}%"></span>
         <span class="words">{answer}</span>
-        <span class="count">{amount(who.length)}</span>
+        <span class="count">{amount(tally[index] ?? 0)}</span>
       </button>
     {/each}
     {#if poll.ends !== undefined}

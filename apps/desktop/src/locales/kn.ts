@@ -3596,4 +3596,18 @@ export const kn: Dictionary = {
   'Slack does not know that emoji': 'Slack ಗೆ ಆ ಎಮೋಜಿ ತಿಳಿದಿಲ್ಲ',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Slack ಬಳಕೆದಾರ ಟೋಕನ್ ಅಂಟಿಸಿ, ಈ ಬಿಲ್ಡ್ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಲಾಗದು',
+  'Delete for everyone': 'ಎಲ್ಲರಿಗೂ ಅಳಿಸಿ',
+  'Delete for me': 'ನನಗಾಗಿ ಅಳಿಸಿ',
+  Forwarded: 'ಫಾರ್ವರ್ಡ್ ಮಾಡಲಾಗಿದೆ',
+  Delivered: 'ತಲುಪಿದೆ',
+  Sticker: 'ಸ್ಟಿಕ್ಕರ್',
+  GIF: 'GIF',
+  'New conversation': 'ಹೊಸ ಸಂಭಾಷಣೆ',
+  'Add people': 'ಜನರನ್ನು ಸೇರಿಸಿ',
+  'Leave {chat}?': '{chat} ತೊರೆಯುವುದೇ?',
+  'Remove as admin': 'ನಿರ್ವಾಹಕರಿಂದ ತೆಗೆದುಹಾಕಿ',
+  'Make admin': 'ನಿರ್ವಾಹಕರನ್ನಾಗಿ ಮಾಡಿ',
+  'Remove from chat': 'ಚಾಟ್‌ನಿಂದ ತೆಗೆದುಹಾಕಿ',
+  'Sign in again': 'ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ',
+  'Finish signing in in your browser': 'ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸೈನ್ ಇನ್ ಮುಗಿಸಿ',
 }

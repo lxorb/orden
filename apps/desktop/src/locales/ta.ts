@@ -3619,4 +3619,18 @@ export const ta: Dictionary = {
   'Slack does not know that emoji': 'அந்த ஈமோஜி Slack-க்குத் தெரியாது',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Slack பயனர் டோக்கனை ஒட்டவும், இந்த பில்டால் உலாவியில் உள்நுழைய முடியாது',
+  'Delete for everyone': 'அனைவருக்கும் நீக்கு',
+  'Delete for me': 'எனக்கு நீக்கு',
+  Forwarded: 'முன்னனுப்பப்பட்டது',
+  Delivered: 'சென்றடைந்தது',
+  Sticker: 'ஸ்டிக்கர்',
+  GIF: 'GIF',
+  'New conversation': 'புதிய உரையாடல்',
+  'Add people': 'நபர்களைச் சேர்',
+  'Leave {chat}?': '{chat} இலிருந்து வெளியேறவா?',
+  'Remove as admin': 'நிர்வாகியிலிருந்து நீக்கு',
+  'Make admin': 'நிர்வாகியாக்கு',
+  'Remove from chat': 'அரட்டையிலிருந்து நீக்கு',
+  'Sign in again': 'மீண்டும் உள்நுழைக',
+  'Finish signing in in your browser': 'உங்கள் உலாவியில் உள்நுழைவை முடிக்கவும்',
 }

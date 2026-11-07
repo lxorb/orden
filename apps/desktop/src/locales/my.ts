@@ -3488,4 +3488,18 @@ export const my: Dictionary = {
   'Slack does not know that emoji': 'Slack သည် ထို အီမိုဂျီကို မသိပါ',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Slack အသုံးပြုသူ တိုကင်ကို ကူးထည့်ပါ၊ ဤဗားရှင်းသည် ဘရောက်ဇာမှ မဝင်နိုင်ပါ',
+  'Delete for everyone': 'အားလုံးအတွက် ဖျက်မည်',
+  'Delete for me': 'ကျွန်ုပ်အတွက် ဖျက်မည်',
+  Forwarded: 'ထပ်ဆင့်ပို့ထားသည်',
+  Delivered: 'ရောက်ရှိပြီး',
+  Sticker: 'စတစ်ကာ',
+  GIF: 'GIF',
+  'New conversation': 'စကားဝိုင်းအသစ်',
+  'Add people': 'လူများ ထည့်မည်',
+  'Leave {chat}?': '{chat} မှ ထွက်မလား?',
+  'Remove as admin': 'စီမံသူမှ ဖယ်ရှားမည်',
+  'Make admin': 'စီမံသူ ဖြစ်စေမည်',
+  'Remove from chat': 'ချတ်မှ ဖယ်ရှားမည်',
+  'Sign in again': 'ပြန်ဝင်ပါ',
+  'Finish signing in in your browser': 'သင့်ဘရောက်ဇာတွင် ဝင်ရောက်ခြင်းကို ပြီးဆုံးပါ',
 }

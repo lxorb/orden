@@ -3556,4 +3556,18 @@ export const ps: Dictionary = {
   'Slack does not know that emoji': 'Slack دا ایموجي نه پېژني',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'د Slack د کارن ټوکن ولګوئ، دا جوړښت په براوزر کې نشي ننوتلی',
+  'Delete for everyone': 'د ټولو لپاره ړنګ کړئ',
+  'Delete for me': 'زما لپاره ړنګ کړئ',
+  Forwarded: 'لېږدول شوی',
+  Delivered: 'ورسید',
+  Sticker: 'سټیکر',
+  GIF: 'GIF',
+  'New conversation': 'نوې خبرې',
+  'Add people': 'خلک زیات کړئ',
+  'Leave {chat}?': '{chat} پرېږدئ؟',
+  'Remove as admin': 'له مدیرانو لرې کړئ',
+  'Make admin': 'مدیر یې کړئ',
+  'Remove from chat': 'له چټ څخه لرې کړئ',
+  'Sign in again': 'بیا ننوځئ',
+  'Finish signing in in your browser': 'په خپل براوزر کې ننوتل بشپړ کړئ',
 }

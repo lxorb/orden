@@ -101,9 +101,21 @@ export class Accounts {
     }
   }
 
+  given(providerId: string, account: string): Record<string, string> {
+    const provider = this.providerOf(providerId)
+    const saved = this.saved.find((one) => one.provider === providerId && one.account === account)
+    const out: Record<string, string> = {}
+    for (const field of provider?.fields ?? []) {
+      const value = saved?.config[field.key]
+      if (!field.secret && value !== undefined) out[field.key] = value
+    }
+    return out
+  }
+
   async connect(
     providerId: string,
     values: Readonly<Record<string, string>>,
+    replacing?: string,
   ): Promise<string | null> {
     const provider = this.providerOf(providerId)
     if (!provider) return 'unknown service'
@@ -122,6 +134,11 @@ export class Accounts {
         ...this.saved.filter((one) => one.provider !== provider.id || one.account !== account),
         { provider: provider.id, account, config },
       ])
+      this.failed = this.failed.filter(
+        (it) => it.provider !== provider.id || (it.account !== account && it.account !== replacing),
+      )
+      if (replacing !== undefined && replacing !== account)
+        await this.disconnect(provider.id, replacing)
       return null
     } catch (error) {
       return reasonOf(error)

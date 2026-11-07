@@ -3386,4 +3386,18 @@ export const zhHans: Dictionary = {
   'Slack does not know that emoji': 'Slack 不认识这个表情',
   'Paste a Slack user token, this build cannot sign in through the browser':
     '请粘贴 Slack 用户令牌，此版本无法在浏览器中登录',
+  'Delete for everyone': '为所有人删除',
+  'Delete for me': '仅为我删除',
+  Forwarded: '已转发',
+  Delivered: '已送达',
+  Sticker: '贴纸',
+  GIF: 'GIF',
+  'New conversation': '新对话',
+  'Add people': '添加成员',
+  'Leave {chat}?': '退出 {chat}？',
+  'Remove as admin': '取消管理员',
+  'Make admin': '设为管理员',
+  'Remove from chat': '移出聊天',
+  'Sign in again': '重新登录',
+  'Finish signing in in your browser': '在浏览器中完成登录',
 }

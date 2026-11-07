@@ -3568,4 +3568,18 @@ export const pa: Dictionary = {
   'Slack does not know that emoji': 'Slack ਇਸ ਇਮੋਜੀ ਨੂੰ ਨਹੀਂ ਜਾਣਦਾ',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Slack ਵਰਤੋਂਕਾਰ ਟੋਕਨ ਪੇਸਟ ਕਰੋ, ਇਹ ਬਿਲਡ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸਾਈਨ ਇਨ ਨਹੀਂ ਕਰ ਸਕਦਾ',
+  'Delete for everyone': 'ਸਾਰਿਆਂ ਲਈ ਮਿਟਾਓ',
+  'Delete for me': 'ਮੇਰੇ ਲਈ ਮਿਟਾਓ',
+  Forwarded: 'ਅੱਗੇ ਭੇਜਿਆ',
+  Delivered: 'ਪਹੁੰਚ ਗਿਆ',
+  Sticker: 'ਸਟਿੱਕਰ',
+  GIF: 'GIF',
+  'New conversation': 'ਨਵੀਂ ਗੱਲਬਾਤ',
+  'Add people': 'ਲੋਕ ਜੋੜੋ',
+  'Leave {chat}?': '{chat} ਛੱਡਣਾ ਹੈ?',
+  'Remove as admin': 'ਐਡਮਿਨ ਤੋਂ ਹਟਾਓ',
+  'Make admin': 'ਐਡਮਿਨ ਬਣਾਓ',
+  'Remove from chat': 'ਚੈਟ ਤੋਂ ਹਟਾਓ',
+  'Sign in again': 'ਦੁਬਾਰਾ ਸਾਈਨ ਇਨ ਕਰੋ',
+  'Finish signing in in your browser': 'ਆਪਣੇ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸਾਈਨ ਇਨ ਪੂਰਾ ਕਰੋ',
 }

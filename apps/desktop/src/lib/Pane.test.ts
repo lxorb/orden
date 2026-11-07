@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { conversationKey } from './chats/conversation-key'
+import { isRemote } from './chats/remotes'
 import { TAB_KINDS } from './workspace/tab-kinds'
 
 const SOURCE = readFileSync(join(import.meta.dirname, './Pane.svelte'), 'utf8')
@@ -14,7 +15,6 @@ describe('a surface a pane is filled with', () => {
       'applicationSurface',
       'canvasSurface',
       'chatSurface',
-      'conversationSurface',
       'emptySurface',
       'explorerSurface',
       'graphSurface',
@@ -28,11 +28,11 @@ describe('a surface a pane is filled with', () => {
     ])
   })
 
-  test("tells another service's conversation by the words its tab is opened with", () => {
-    const surfaces = readFileSync(join(import.meta.dirname, './surfaces.svelte.ts'), 'utf8')
+  test("opens another service's conversation in the one chat surface, not a second one", () => {
     const key = conversationKey({ provider: 'mail', account: 'a', conversation: 'c' })
-    const head = key.slice(0, key.indexOf('\n'))
-    expect(surfaces).toContain(`words.startsWith('${head}\\n')`)
+    expect(isRemote(key)).toBe(true)
+    expect(isRemote('/spaces/Team/General.chat')).toBe(false)
+    expect(SOURCE).not.toContain('ConversationTab')
   })
 
   test('offers a reload where it could not be fetched, rather than a blank pane', () => {

@@ -3475,4 +3475,18 @@ export const ja: Dictionary = {
   'Slack does not know that emoji': 'Slack はその絵文字を知りません',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Slack のユーザートークンを貼り付けてください。このビルドはブラウザでサインインできません',
+  'Delete for everyone': '全員から削除',
+  'Delete for me': '自分から削除',
+  Forwarded: '転送',
+  Delivered: '配信済み',
+  Sticker: 'スタンプ',
+  GIF: 'GIF',
+  'New conversation': '新しい会話',
+  'Add people': 'メンバーを追加',
+  'Leave {chat}?': '{chat} から退出しますか？',
+  'Remove as admin': '管理者から外す',
+  'Make admin': '管理者にする',
+  'Remove from chat': 'チャットから外す',
+  'Sign in again': 'もう一度サインイン',
+  'Finish signing in in your browser': 'ブラウザでサインインを完了してください',
 }

@@ -3542,4 +3542,18 @@ export const gu: Dictionary = {
   'Slack does not know that emoji': 'Slack આ ઇમોજી ઓળખતું નથી',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Slack વપરાશકર્તા ટોકન પેસ્ટ કરો, આ બિલ્ડ બ્રાઉઝરમાં સાઇન ઇન કરી શકતું નથી',
+  'Delete for everyone': 'બધા માટે કાઢી નાખો',
+  'Delete for me': 'મારા માટે કાઢી નાખો',
+  Forwarded: 'આગળ મોકલેલ',
+  Delivered: 'પહોંચ્યું',
+  Sticker: 'સ્ટીકર',
+  GIF: 'GIF',
+  'New conversation': 'નવી વાતચીત',
+  'Add people': 'લોકો ઉમેરો',
+  'Leave {chat}?': '{chat} છોડવું છે?',
+  'Remove as admin': 'એડમિનમાંથી દૂર કરો',
+  'Make admin': 'એડમિન બનાવો',
+  'Remove from chat': 'ચેટમાંથી દૂર કરો',
+  'Sign in again': 'ફરી સાઇન ઇન કરો',
+  'Finish signing in in your browser': 'તમારા બ્રાઉઝરમાં સાઇન ઇન પૂર્ણ કરો',
 }

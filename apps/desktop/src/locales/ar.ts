@@ -3747,4 +3747,18 @@ export const ar: Dictionary = {
   'Slack does not know that emoji': 'لا يعرف Slack هذا الرمز التعبيري',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'الصق رمز مستخدم Slack، هذا الإصدار لا يستطيع تسجيل الدخول عبر المتصفح',
+  'Delete for everyone': 'حذف لدى الجميع',
+  'Delete for me': 'حذف لدي',
+  Forwarded: 'معاد توجيهها',
+  Delivered: 'تم التسليم',
+  Sticker: 'ملصق',
+  GIF: 'GIF',
+  'New conversation': 'محادثة جديدة',
+  'Add people': 'إضافة أشخاص',
+  'Leave {chat}?': 'مغادرة {chat}؟',
+  'Remove as admin': 'إزالة من المشرفين',
+  'Make admin': 'تعيين مشرفًا',
+  'Remove from chat': 'إزالة من الدردشة',
+  'Sign in again': 'سجّل الدخول مجددًا',
+  'Finish signing in in your browser': 'أكمل تسجيل الدخول في متصفحك',
 }

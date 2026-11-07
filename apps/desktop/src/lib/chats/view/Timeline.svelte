@@ -284,22 +284,24 @@
     const mine = one.author === page.me
     switch (event.key.toLowerCase()) {
       case 'r':
-        return canPost ? act(() => onreply(one)) : undefined
+        return canPost && page.can.threads ? act(() => onreply(one)) : undefined
       case 'q':
-        return canPost ? act(() => onquote(one)) : undefined
+        return canPost && page.can.quote ? act(() => onquote(one)) : undefined
       case 'e':
-        return mine ? act(() => onedit(one)) : undefined
+        return mine && page.mayEdit(one) ? act(() => onedit(one)) : undefined
       case 'p':
-        return act(() => page.pin(one))
+        return page.can.pin ? act(() => page.pin(one)) : undefined
       case 's':
         return act(() => page.save(one))
       case 't':
         return act(() => page.addAsTask(one))
       case 'delete':
       case 'backspace':
-        return mine ? act(() => page.remove(one.id)) : undefined
+        if (!mine) return undefined
+        if (!page.service) return act(() => page.remove(one.id))
+        return page.mayRemoveForAll(one) ? act(() => page.remove(one.id, true)) : undefined
       case '+':
-        return canPost
+        return canPost && page.can.react !== null
           ? act(() => {
               const row = content?.querySelector(`[data-message="${one.id}"]`)
               if (row instanceof HTMLElement) onpicker(one, row)
@@ -402,6 +404,9 @@
           message={hoveredMessage}
           top={hovered.top}
           {canPost}
+          react={page.can.react}
+          threads={page.can.threads}
+          quote={page.can.quote}
           onreact={(emoji: string) => page.react(hoveredMessage, emoji)}
           onpicker={(from: HTMLElement) => onpicker(hoveredMessage, from)}
           onreply={() => onreply(hoveredMessage)}

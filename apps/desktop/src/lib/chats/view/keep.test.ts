@@ -37,6 +37,7 @@ vi.stubGlobal('fetch', () => Promise.resolve(new Response(new ArrayBuffer(4))))
 
 const { saveAsNote } = await import('./keep')
 const { messageMenu } = await import('./message-menu')
+const { ORDEN_CAN } = await import('./chat.svelte')
 
 const page = {
   id: 'c1',
@@ -44,6 +45,10 @@ const page = {
   members: [],
   entry: { path: '/theirs/Team.chat', name: 'Team' },
   view: { meta: { posting: 'everyone' } },
+  can: ORDEN_CAN,
+  service: null,
+  mayEdit: () => true,
+  mayRemoveForAll: () => true,
   isSaved: () => false,
 }
 const message = {

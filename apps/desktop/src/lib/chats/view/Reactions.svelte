@@ -13,12 +13,14 @@
     page,
     space,
     canReact,
+    more = true,
     onmore,
   }: {
     message: Message
     page: ChatPage
     space: string | null
     canReact: boolean
+    more?: boolean
     onmore: (from: HTMLElement) => void
   } = $props()
 
@@ -45,7 +47,7 @@
         <span class="count">{amount(who.length)}</span>
       </button>
     {/each}
-    {#if canReact}
+    {#if canReact && more}
       <button
         type="button"
         class="chip more"

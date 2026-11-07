@@ -3582,4 +3582,18 @@ export const gsw: Dictionary = {
   'Slack does not know that emoji': 'Slack kennt das Emoji nöd',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Füeg es Slack-Benutzer-Token ii, dä Build cha sich nöd im Browser aamälde',
+  'Delete for everyone': 'Für alli lösche',
+  'Delete for me': 'Für mich lösche',
+  Forwarded: 'Witergleitet',
+  Delivered: 'Zuegstellt',
+  Sticker: 'Sticker',
+  GIF: 'GIF',
+  'New conversation': 'Nöii Unterhaltig',
+  'Add people': 'Lüüt hinzuefüege',
+  'Leave {chat}?': '{chat} verlaa?',
+  'Remove as admin': 'Als Admin entferne',
+  'Make admin': 'Zum Admin mache',
+  'Remove from chat': 'Us em Chat entferne',
+  'Sign in again': 'Wider aamälde',
+  'Finish signing in in your browser': 'Schliess d Aamäldig i dim Browser ab',
 }

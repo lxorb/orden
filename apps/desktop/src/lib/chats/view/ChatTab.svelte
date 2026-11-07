@@ -24,6 +24,10 @@
   import { store } from './source.svelte'
   import Timeline from './Timeline.svelte'
   import Tip from './Tip.svelte'
+  import { isRemote } from '../remotes'
+  import { connected } from '../connected.svelte'
+  import { conversationKeyOf } from '../conversation-key'
+  import { accounts } from '../linked'
 
   const { tab }: { tab: Tab } = $props()
 
@@ -46,14 +50,46 @@
   let polling = $state<((poll: Poll) => void) | null>(null)
   let dropping = $state(false)
 
-  const space = $derived(page?.entry?.space ?? null)
+  const space = $derived(page?.service ? null : (page?.entry?.space ?? null))
+  const remoteChat = $derived(isRemote(tab.note.text) ? tab.note.text : null)
+  const remoteKey = $derived(remoteChat ? conversationKeyOf(remoteChat) : null)
+  const linked = $derived(
+    remoteKey ? connected.find(remoteKey.provider, remoteKey.account) : undefined,
+  )
+  const failure = $derived(
+    remoteKey
+      ? accounts.failed.find(
+          (one) => one.provider === remoteKey.provider && one.account === remoteKey.account,
+        )
+      : undefined,
+  )
+
+  $effect(() => {
+    if (remoteChat) accounts.start()
+  })
+
+  $effect(() => {
+    const chat = remoteChat
+    if (!chat) return
+    const here = linked !== undefined && store().entry(chat) !== null
+    untrack(() => {
+      if (!here) {
+        missing = linked !== undefined
+        return
+      }
+      missing = false
+      if (page?.id === chat) return
+      page?.close()
+      page = new ChatPage(chat)
+    })
+  })
   const lentName = $derived(tab.note.shared ? chatName(tab.note.name) : null)
   const phone = $derived(viewport.device === 'phone')
 
   $effect(() => {
     const path = tab.path
     const lent = tab.note.shared ? (chatOf(tab.note.text)?.chat ?? null) : null
-    if ((!path && !lent) || !store().ready) return
+    if (remoteChat || (!path && !lent) || !store().ready) return
     untrack(() => {
       void (path ? store().chatAt(path) : Promise.resolve(lent)).then((id) => {
         missing = !id
@@ -173,6 +209,13 @@
     {@const open = page}
     <div class="main" class:hidden={phone && open.replying !== null}>
       <ChatHead page={open} {space} named={lentName} />
+      {#if linked && (linked.status === 'offline' || linked.status === 'signed-out')}
+        <p class="status" role="status">
+          {linked.status === 'offline' ? t('Offline') : t('Signed out')}{linked.reason
+            ? `: ${linked.reason}`
+            : ''}
+        </p>
+      {/if}
       {#if open.ready}
         <Timeline
           bind:this={timeline}
@@ -221,6 +264,22 @@
         />
       {/key}
     {/if}
+  {:else if remoteChat && failure}
+    <p class="state">
+      {t('Signed out')}: {failure.reason}
+      <button
+        class="orden-button is-quiet"
+        type="button"
+        onclick={() => {
+          const saved = accounts.saved.find(
+            (one) => one.provider === failure.provider && one.account === failure.account,
+          )
+          if (saved) void accounts.relink(saved)
+        }}>{t('Retry')}</button
+      >
+    </p>
+  {:else if remoteChat && !linked}
+    <p class="state">{t('Connecting…')}</p>
   {:else if missing}
     <p class="missing"><Glyph name="hash" /></p>
   {/if}
@@ -296,6 +355,20 @@
 
   .waiting {
     flex: 1;
+  }
+
+  .status {
+    flex: none;
+    margin: 0;
+    padding: var(--space-1) var(--space-4);
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+
+  .state {
+    margin: auto;
+    color: var(--muted);
+    font-size: var(--text-sm);
   }
 
   .missing {
