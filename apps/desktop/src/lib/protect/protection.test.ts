@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { Protection, protectedMap, SPACE, STORAGE_KEY } from './protection.svelte'
+import { unlocks } from './unlocked.svelte'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -137,5 +138,27 @@ describe('what the account holds of it', () => {
     expect(protection.password?.hash).toBe('bmV3ZXI=')
     expect(protection.adoptPassword({ ...older, at: 2 })).toBe(true)
     expect(protection.password?.hash).toBe('bmV3ZXI=')
+  })
+})
+
+describe('what is locked', () => {
+  test('follows each lock, unlock and lock again, as many notes are asked', () => {
+    const notes = Array.from({ length: 2000 }, (_, at) => `${ROOT}/Inside/note ${at}.md`)
+    const shut = () => notes.filter((one) => protection.locked(one)).length
+    expect(shut()).toBe(0)
+    protection.set(ROOT, at('Inside'), 'password')
+    expect(shut()).toBe(2000)
+    expect(protection.locked(at('Outside.md'))).toBe(false)
+    expect(protection.locked(`${OTHER}/Inside/note 1.md`)).toBe(false)
+    const locks = protection.covering(at('Inside/note 1.md'))
+    unlocks.unlock(locks)
+    expect(shut()).toBe(0)
+    protection.set(ROOT, at('Inside/note 7.md'), 'device')
+    expect(notes.filter((one) => protection.locked(one))).toEqual([at('Inside/note 7.md')])
+    unlocks.close(locks)
+    expect(shut()).toBe(2000)
+    protection.set(ROOT, at('Inside'), null)
+    protection.set(ROOT, at('Inside/note 7.md'), null)
+    expect(shut()).toBe(0)
   })
 })
