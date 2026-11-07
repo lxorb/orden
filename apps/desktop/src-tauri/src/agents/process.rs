@@ -107,7 +107,7 @@ struct Stream {
 impl Stream {
     fn push(&mut self, chunk: &[u8]) {
         self.bytes.extend_from_slice(chunk);
-        if self.bytes.len() > KEPT {
+        if self.bytes.len() > 2 * KEPT {
             let over = self.bytes.len() - KEPT;
             self.bytes.drain(..over);
             self.dropped += u64::try_from(over).unwrap_or(u64::MAX);
@@ -802,10 +802,27 @@ mod tests {
 
         let mut long = Stream::default();
         long.push(&vec![b'a'; KEPT + 10]);
-        assert_eq!(long.dropped, 10);
+        assert_eq!(long.dropped, 0);
+        long.push(&vec![b'a'; KEPT]);
+        assert_eq!(long.dropped, u64::try_from(KEPT + 10).expect("small"));
+        assert_eq!(long.bytes.len(), KEPT);
         let (_, _, skipped) = long.after(0);
         assert!(skipped);
         assert!(long.end().1);
+    }
+
+    #[test]
+    fn a_program_printing_without_end_keeps_its_last_words_and_counts_the_rest() {
+        let mut stream = Stream::default();
+        let chunk = [b'a'; 8192];
+        for _ in 0..1_024 {
+            stream.push(&chunk);
+        }
+        assert_eq!(stream.total(), 1_024 * 8192);
+        assert!(stream.bytes.len() >= KEPT && stream.bytes.len() <= 2 * KEPT);
+        let (_, next, skipped) = stream.after(0);
+        assert!(skipped);
+        assert!(next > stream.dropped);
     }
 
     #[test]
