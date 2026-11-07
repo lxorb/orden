@@ -6,6 +6,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const world = vi.hoisted(() => ({
   spaces: [] as { id: string; name: string; root: string }[],
   made: [] as string[],
+  icons: [] as string[],
   adopted: [] as { name: string; fresh: boolean }[],
 }))
 
@@ -25,6 +26,8 @@ vi.mock('./tauri', () => ({
   invoke: () => Promise.reject(new Error('no disk here')),
   isNative: true,
   isDesktop: true,
+  platform: () => 'windows',
+  joinPath: (...parts: string[]) => parts.join('/'),
 }))
 
 vi.mock('./seeded', () => ({ seedSpaceRoot: () => null, forgetSeedSpace: () => undefined }))
@@ -47,7 +50,10 @@ vi.mock('./workspace.svelte', () => ({
       world.spaces.push({ id: root, name: `${name} 2`, root })
       return Promise.resolve(root)
     },
-    applyIcon: () => null,
+    applyIcon: (root: string) => {
+      world.icons.push(root)
+      return null
+    },
     bookmarks: { adopt: () => null, said: () => undefined },
     applySpaceOrder: () => undefined,
   },
@@ -86,6 +92,7 @@ beforeEach(() => {
   ]
   world.made = []
   world.adopted = []
+  world.icons = []
 })
 
 describe('signing in on a device another account signed out of', () => {
@@ -114,5 +121,20 @@ describe('signing in on a device another account signed out of', () => {
     expect(pairs).toContainEqual({ root: '/Hunt out', spaceId: 'a-Hunt out', shared: false })
     expect(world.made).toEqual(['Fresh'])
     expect(leftBy('/Hunt out')).toBe('a')
+  })
+})
+
+describe('a space sync keeps under another spelling of its folder', () => {
+  test('wears its icon under the folder this device shows', async () => {
+    world.spaces = [{ id: '1', name: 'Work', root: 'C:\\Users\\Ada\\Work' }]
+    signedIn('a', ['Work'])
+    const { pairs, pairing: held } = pairing()
+    pairs.push({ root: 'c:/users/ada/work/', spaceId: 'a-Work', shared: false })
+
+    await pairSpaces('token-a', held)
+
+    expect(world.icons).toEqual(['C:\\Users\\Ada\\Work'])
+    expect(world.made).toEqual([])
+    expect(pairs).toHaveLength(1)
   })
 })

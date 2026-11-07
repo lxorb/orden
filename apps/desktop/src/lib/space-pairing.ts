@@ -121,8 +121,9 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
   for (const remote of account.spaces) {
     const pair = paired().find((one) => one.spaceId === remote.id)
     if (!pair) continue
+    const root = workspace.spaces.find((one) => samePath(one.root, pair.root))?.root ?? pair.root
 
-    const unsaid = workspace.applyIcon(pair.root, remote.icon ?? null, remote.tint)
+    const unsaid = workspace.applyIcon(root, remote.icon ?? null, remote.tint)
     if (unsaid && remote.role === 'owner') {
       await api.setSpaceIcon(token, remote.id, remote.icon ?? null, unsaid).catch(() => undefined)
       await account.loadSpaces().catch(() => undefined)
@@ -131,13 +132,13 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     pairing.share(pair.root, remote.role !== 'owner')
 
     if (accountId === null || remote.role === 'read') continue
-    const merged = workspace.bookmarks.adopt(pair.root, remote.bookmarks, accountId)
+    const merged = workspace.bookmarks.adopt(root, remote.bookmarks, accountId)
     if (merged) {
       const landed = await api.saveBookmarks(token, remote.id, merged).then(
         () => true,
         () => false,
       )
-      workspace.bookmarks.said(pair.root, landed, merged)
+      workspace.bookmarks.said(root, landed, merged)
     }
   }
 
