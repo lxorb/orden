@@ -1,5 +1,5 @@
 import type { Core } from './core'
-import { holdsDocument } from './kinds'
+import { holdsDocument, unixLines } from './kinds'
 import type { SpaceState } from './places'
 import { keepingRow, type Keeping } from './records'
 import { put, type Change, type EntryRow } from './store'
@@ -96,17 +96,24 @@ export async function trim(core: Core, budget: number, how: LettingGo): Promise<
   for (const one of kept) {
     if (total <= budget) break
     if (!mayLetGo(core, one.space, one.entry)) continue
-    await letGo(core, one.space, one.entry, how)
+    if (!(await letGo(core, one.space, one.entry, how))) continue
     total -= one.size
     went += 1
   }
   return went
 }
 
-async function letGo(core: Core, space: SpaceState, entry: EntryRow, how: LettingGo) {
+async function letGo(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  how: LettingGo,
+): Promise<boolean> {
   const full = core.world.join(space.row.root, entry.local_path)
+  const text = await core.world.disk.read(full)
+  if (text !== null && (await core.world.digest(unixLines(text))) !== entry.written_hash)
+    return false
   if (how.leaving) {
-    const text = await core.world.disk.read(full)
     const docSeq = core.numbers.get(entry.id)?.pulled ?? 0
     if (text !== null) {
       await how.leaving({
@@ -119,7 +126,7 @@ async function letGo(core: Core, space: SpaceState, entry: EntryRow, how: Lettin
       })
     }
   }
-  if (!mayLetGo(core, space, entry)) return
+  if (!mayLetGo(core, space, entry)) return false
 
   const numbers = core.numbers.get(entry.id)
   const changes = core.forgetChanges(entry.id)
@@ -137,6 +144,7 @@ async function letGo(core: Core, space: SpaceState, entry: EntryRow, how: Lettin
     keepingChange(space),
   ])
   await finishGoing(core, space, how)
+  return true
 }
 
 async function finishGoing(core: Core, space: SpaceState, how: LettingGo) {

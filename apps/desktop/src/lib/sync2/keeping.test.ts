@@ -301,6 +301,21 @@ describe('a browser that keeps only the words it uses', () => {
     expect((await account.view()).texts[PLAN]).toMatch(/^Mine\. /)
   })
 
+  test('never lets go of a note whose file holds words it has not taken in', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    await browser.engine.fetch(`${ROOT}/Plan.md`)
+    await browser.engine.fetch(`${ROOT}/Ideas.md`)
+    const ideas = `${SEEDED[1]?.text ?? ''}\nwritten by the app\n`
+    await browser.disk.write(`${ROOT}/Ideas.md`, ideas)
+
+    const { how } = letting(browser.disk)
+    expect(await browser.engine.trim(0, how)).toBe(1)
+    expect(browser.disk.files.get(`${ROOT}/Ideas.md`)).toBe(ideas)
+    expect(browser.disk.files.has(`${ROOT}/Plan.md`)).toBe(false)
+  })
+
   test('a let-go cut short drops the rest of the row at the next trim', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
