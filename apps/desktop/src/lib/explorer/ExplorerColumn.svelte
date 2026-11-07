@@ -36,6 +36,24 @@
 
   const rows = $derived(ordered(entries, explorerPrefs.sort, explorerPrefs.hidden))
 
+  const SPARE = 8
+  let scrollTop = $state(0)
+  let height = $state(0)
+  let rowHeight = $state(28)
+  let scroller = $state<HTMLElement>()
+
+  const drawn = $derived.by(() => {
+    const first = Math.max(0, Math.floor(scrollTop / rowHeight) - SPARE)
+    const last = Math.min(rows.length, Math.ceil((scrollTop + height) / rowHeight) + SPARE)
+    const at: number[] = []
+    for (let one = first; one < last; one++) at.push(one)
+    return at
+  })
+
+  function measure(node: HTMLElement) {
+    if (node.offsetHeight > 0) rowHeight = node.offsetHeight
+  }
+
   function press(entry: Entry) {
     const path = joinPath(listed ?? folder, entry.name)
     if (entry.folder) void view.go(path)
@@ -43,22 +61,32 @@
   }
 </script>
 
-<ul class="column">
-  {#each rows as entry (entry.name)}
-    <li>
-      <button
-        class="nib-row"
-        class:is-on={lit === entry.name}
-        class:is-quiet={entry.hidden}
-        tabindex="-1"
-        onclick={() => press(entry)}
-      >
-        <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
-        <span class="nib-row-label">{entry.name}</span>
-      </button>
-    </li>
-  {/each}
-</ul>
+<div
+  class="column"
+  bind:this={scroller}
+  bind:clientHeight={height}
+  onscroll={() => (scrollTop = scroller?.scrollTop ?? 0)}
+>
+  <ul class="room" style:height="{rows.length * rowHeight}px">
+    {#each drawn as index (rows[index]?.name ?? index)}
+      {@const entry = rows[index]}
+      {#if entry}
+        <li style:top="{index * rowHeight}px" use:measure>
+          <button
+            class="nib-row"
+            class:is-on={lit === entry.name}
+            class:is-quiet={entry.hidden}
+            tabindex="-1"
+            onclick={() => press(entry)}
+          >
+            <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
+            <span class="nib-row-label">{entry.name}</span>
+          </button>
+        </li>
+      {/if}
+    {/each}
+  </ul>
+</div>
 
 <style>
   .column {
@@ -68,6 +96,17 @@
     padding: var(--space-1);
     overflow-y: auto;
     border-inline-end: 1px solid var(--line);
+  }
+
+  .room {
+    position: relative;
+    margin: 0;
+    padding: 0;
     list-style: none;
+  }
+
+  .room > li {
+    position: absolute;
+    inset-inline: 0;
   }
 </style>
