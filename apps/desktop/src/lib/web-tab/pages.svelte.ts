@@ -291,6 +291,10 @@ class Pages {
     return [...this.held.entries()]
   }
 
+  peek(tabId: string): Page | undefined {
+    return this.held.get(tabId)
+  }
+
   of(tabId: string): Page {
     const found = this.held.get(tabId)
     if (found) return found
