@@ -789,6 +789,9 @@ export const fa: Dictionary = {
   'Command palette': 'تخته فرمان',
   Commands: 'فرمان‌ها',
   Storage: 'انبار',
+  'Persistent storage': 'فضای ذخیره‌سازی ماندگار',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'آیا این مرورگر آنچه Orden اینجا نگه می‌دارد، از جمله تغییرات ارسال‌نشده، را وقتی جا کم می‌آورد نگه می‌دارد. برای درخواست دوباره فشار دهید.',
   Dismiss: 'کنار گذاشتن',
   'Manage storage': 'مدیریت انبار',
   '{used} of {limit} used.': '{used} از {limit} به کار رفته.',

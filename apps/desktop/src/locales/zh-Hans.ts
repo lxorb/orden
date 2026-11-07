@@ -777,6 +777,9 @@ export const zhHans: Dictionary = {
   'Command palette': '命令面板',
   Commands: '命令',
   Storage: '存储',
+  'Persistent storage': '持久存储',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    '空间不足时，此浏览器是否保留 Orden 在此保存的内容（包括未发送的更改）。按下可再次请求。',
   Dismiss: '忽略',
   'Manage storage': '管理存储',
   '{used} of {limit} used.': '已用{used}，共{limit}。',

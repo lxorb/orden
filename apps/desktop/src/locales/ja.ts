@@ -783,6 +783,9 @@ export const ja: Dictionary = {
   'Command palette': 'コマンドパレット',
   Commands: 'コマンド',
   Storage: 'ストレージ',
+  'Persistent storage': '永続ストレージ',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'このブラウザが、容量が足りなくなったときも Orden がここに保持しているもの（未送信の変更を含む）を残すかどうか。押すともう一度依頼します。',
   Dismiss: '閉じる',
   'Manage storage': 'ストレージを管理',
   '{used} of {limit} used.': '{limit} 中 {used} を使用中。',

@@ -805,6 +805,9 @@ export const ptPT: Dictionary = {
   'Command palette': 'Paleta de comandos',
   Commands: 'Comandos',
   Storage: 'Armazenamento',
+  'Persistent storage': 'Armazenamento persistente',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Se este navegador mantém o que o Orden guarda aqui, incluindo alterações por enviar, quando fica sem espaço. Prima para voltar a pedir.',
   Dismiss: 'Descartar',
   'Manage storage': 'Gerir o armazenamento',
   '{used} of {limit} used.': '{used} de {limit} em uso.',

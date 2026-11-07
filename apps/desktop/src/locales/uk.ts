@@ -823,6 +823,9 @@ export const uk: Dictionary = {
   'Command palette': 'Палітра команд',
   Commands: 'Команди',
   Storage: 'Сховище',
+  'Persistent storage': 'Постійне сховище',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Чи зберігає цей браузер те, що Orden тримає тут, зокрема ненадіслані зміни, коли йому бракує місця. Натисніть, щоб попросити знову.',
   Dismiss: 'Сховати',
   'Manage storage': 'Керування сховищем',
   '{used} of {limit} used.': 'Зайнято {used} з {limit}.',

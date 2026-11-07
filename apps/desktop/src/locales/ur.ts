@@ -789,6 +789,9 @@ export const ur: Dictionary = {
   'Command palette': 'کمانڈ پیلیٹ',
   Commands: 'کمانڈز',
   Storage: 'ذخیرہ',
+  'Persistent storage': 'مستقل اسٹوریج',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'کیا جگہ کم ہونے پر بھی یہ براؤزر وہ رکھتا ہے جو Orden یہاں رکھتا ہے، نہ بھیجی گئی تبدیلیاں بھی۔ دوبارہ مانگنے کے لیے دبائیں۔',
   Dismiss: 'نظرانداز کریں',
   'Manage storage': 'ذخیرہ منظم کریں',
   '{used} of {limit} used.': '{limit} میں سے {used} استعمال ہوا۔',

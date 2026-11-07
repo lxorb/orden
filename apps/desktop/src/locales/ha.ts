@@ -793,6 +793,9 @@ export const ha: Dictionary = {
   'Command palette': 'Fanon umarni',
   Commands: 'Umarni',
   Storage: "Ma'aji",
+  'Persistent storage': 'Ma’aji na dindindin',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Ko wannan burauzar tana adana abin da Orden ke riƙe a nan, har da canje-canjen da ba a aika ba, idan wuri ya yi ƙaranci. Danna don sake nema.',
   Dismiss: 'Kau da',
   'Manage storage': "Sarrafa ma'aji",
   '{used} of {limit} used.': 'An yi amfani da {used} daga {limit}.',

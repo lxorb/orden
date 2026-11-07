@@ -14,6 +14,7 @@ import {
   type SyncStore,
   type TableName,
 } from '../sync2/store'
+import { keptForGood } from './kept-for-good.svelte'
 
 const SCHEMA = 1
 
@@ -222,7 +223,15 @@ async function written(db: IDBDatabase, changes: readonly Change[]): Promise<num
     if (logged) trim(tx.objectStore('log'))
   })
 
+  if (checked.some(unsent)) void keptForGood.ask()
   return counts
+}
+
+function unsent(change: Change): boolean {
+  if (change.table === 'outbox') return change.t === 'put'
+  if (change.table !== 'docs') return false
+  if (change.t === 'put') return change.row.pending != null
+  return change.t === 'patch' && change.set.pending != null
 }
 
 function spaceKeys(

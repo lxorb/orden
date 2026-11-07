@@ -796,6 +796,9 @@ export const ml: Dictionary = {
   'Command palette': 'കമാൻഡ് പാലറ്റ്',
   Commands: 'കമാൻഡുകൾ',
   Storage: 'സ്റ്റോറേജ്',
+  'Persistent storage': 'സ്ഥിര സംഭരണം',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'ഇടം കുറയുമ്പോഴും Orden ഇവിടെ സൂക്ഷിക്കുന്നത്, അയയ്ക്കാത്ത മാറ്റങ്ങൾ ഉൾപ്പെടെ, ഈ ബ്രൗസർ സൂക്ഷിക്കുമോ എന്ന്. വീണ്ടും ചോദിക്കാൻ അമർത്തുക.',
   Dismiss: 'ഒഴിവാക്കുക',
   'Manage storage': 'സ്റ്റോറേജ് കൈകാര്യം ചെയ്യുക',
   '{used} of {limit} used.': '{limit}ൽ {used} ഉപയോഗിച്ചു.',

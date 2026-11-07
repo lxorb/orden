@@ -795,6 +795,9 @@ export const de: Dictionary = {
   'Command palette': 'Befehlspalette',
   Commands: 'Befehle',
   Storage: 'Speicher',
+  'Persistent storage': 'Dauerhafter Speicher',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Ob dieser Browser behält, was Orden hier speichert, auch nicht gesendete Änderungen, wenn ihm der Platz knapp wird. Drücken, um erneut zu fragen.',
   Dismiss: 'Ausblenden',
   'Manage storage': 'Speicher verwalten',
   '{used} of {limit} used.': '{used} von {limit} belegt.',

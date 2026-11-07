@@ -824,6 +824,9 @@ export const ru: Dictionary = {
   'Command palette': 'Палитра команд',
   Commands: 'Команды',
   Storage: 'Хранилище',
+  'Persistent storage': 'Постоянное хранилище',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Сохраняет ли этот браузер то, что Orden держит здесь, включая неотправленные изменения, когда ему не хватает места. Нажмите, чтобы запросить снова.',
   Dismiss: 'Скрыть',
   'Manage storage': 'Управление хранилищем',
   '{used} of {limit} used.': 'Занято {used} из {limit}.',

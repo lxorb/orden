@@ -795,6 +795,9 @@ export const kn: Dictionary = {
   'Command palette': 'ಕಮಾಂಡ್ ಪ್ಯಾಲೆಟ್',
   Commands: 'ಕಮಾಂಡ್‌ಗಳು',
   Storage: 'ಸಂಗ್ರಹಣೆ',
+  'Persistent storage': 'ಶಾಶ್ವತ ಸಂಗ್ರಹಣೆ',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'ಸ್ಥಳ ಕಡಿಮೆಯಾದಾಗಲೂ Orden ಇಲ್ಲಿ ಇಟ್ಟಿರುವುದನ್ನು, ಕಳುಹಿಸದ ಬದಲಾವಣೆಗಳೂ ಸೇರಿ, ಈ ಬ್ರೌಸರ್ ಉಳಿಸುತ್ತದೆಯೇ ಎಂಬುದು. ಮತ್ತೆ ಕೇಳಲು ಒತ್ತಿ.',
   Dismiss: 'ನಿರ್ಲಕ್ಷಿಸಿ',
   'Manage storage': 'ಸಂಗ್ರಹಣೆ ನಿರ್ವಹಿಸಿ',
   '{used} of {limit} used.': '{limit}ರಲ್ಲಿ {used} ಬಳಸಲಾಗಿದೆ.',

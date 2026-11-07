@@ -788,6 +788,9 @@ export const gu: Dictionary = {
   'Command palette': 'આદેશ પટ',
   Commands: 'આદેશો',
   Storage: 'સંગ્રહ',
+  'Persistent storage': 'કાયમી સ્ટોરેજ',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'જગ્યા ઓછી પડે ત્યારે પણ આ બ્રાઉઝર Orden અહીં જે રાખે છે, ન મોકલેલા ફેરફારો સહિત, તે રાખે છે કે નહીં. ફરી માગવા માટે દબાવો.',
   Dismiss: 'હટાવો',
   'Manage storage': 'સંગ્રહ સંભાળો',
   '{used} of {limit} used.': '{limit}માંથી {used} વપરાયું.',

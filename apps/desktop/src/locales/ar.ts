@@ -837,6 +837,9 @@ export const ar: Dictionary = {
   'Command palette': 'لوحة الأوامر',
   Commands: 'الأوامر',
   Storage: 'التخزين',
+  'Persistent storage': 'تخزين دائم',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'هل يحتفظ هذا المتصفح بما يحفظه Orden هنا، ومنه التغييرات غير المرسلة، عندما تضيق مساحته. اضغط لطلب ذلك مجددًا.',
   Dismiss: 'تجاهل',
   'Manage storage': 'إدارة التخزين',
   '{used} of {limit} used.': 'استُخدم {used} من {limit}.',

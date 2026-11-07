@@ -786,6 +786,9 @@ export const my: Dictionary = {
   'Command palette': 'အမိန့်စာရင်း',
   Commands: 'အမိန့်များ',
   Storage: 'သိုလှောင်မှု',
+  'Persistent storage': 'အမြဲတမ်း သိုလှောင်မှု',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'နေရာ နည်းလာသောအခါ Orden ဤနေရာတွင် သိမ်းထားသည်များကို မပို့ရသေးသော ပြောင်းလဲမှုများ အပါအဝင် ဤဘရောက်ဇာက ဆက်ထားမထား။ ထပ်မံတောင်းရန် နှိပ်ပါ။',
   Dismiss: 'ပယ်',
   'Manage storage': 'သိုလှောင်မှုစီမံ',
   '{used} of {limit} used.': '{limit} အထဲ {used} သုံးပြီး။',

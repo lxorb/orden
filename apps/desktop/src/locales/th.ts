@@ -780,6 +780,9 @@ export const th: Dictionary = {
   'Command palette': 'พาเลตคำสั่ง',
   Commands: 'คำสั่ง',
   Storage: 'ที่เก็บข้อมูล',
+  'Persistent storage': 'พื้นที่จัดเก็บถาวร',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'เบราว์เซอร์นี้เก็บสิ่งที่ Orden เก็บไว้ที่นี่ รวมถึงการเปลี่ยนแปลงที่ยังไม่ได้ส่ง ไว้หรือไม่เมื่อพื้นที่ใกล้เต็ม กดเพื่อขออีกครั้ง',
   Dismiss: 'ปิดไป',
   'Manage storage': 'จัดการที่เก็บข้อมูล',
   '{used} of {limit} used.': 'ใช้ {used} จาก {limit}',

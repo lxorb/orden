@@ -777,6 +777,9 @@ export const zhHantHK: Dictionary = {
   'Command palette': '命令面板',
   Commands: '命令',
   Storage: '儲存空間',
+  'Persistent storage': '持久儲存空間',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    '空間不足時，此瀏覽器會否保留 Orden 在此儲存的內容（包括未傳送的變更）。按下可再次要求。',
   Dismiss: '關閉',
   'Manage storage': '管理儲存空間',
   '{used} of {limit} used.': '已用{used}，共{limit}。',

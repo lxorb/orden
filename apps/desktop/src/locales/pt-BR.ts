@@ -800,6 +800,9 @@ export const ptBR: Dictionary = {
   'Command palette': 'Paleta de comandos',
   Commands: 'Comandos',
   Storage: 'Armazenamento',
+  'Persistent storage': 'Armazenamento persistente',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Se este navegador mantém o que o Orden guarda aqui, inclusive alterações não enviadas, quando falta espaço. Toque para pedir de novo.',
   Dismiss: 'Descartar',
   'Manage storage': 'Gerenciar o armazenamento',
   '{used} of {limit} used.': '{used} de {limit} em uso.',

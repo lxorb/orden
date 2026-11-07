@@ -791,6 +791,9 @@ export const pa: Dictionary = {
   'Command palette': 'ਹੁਕਮ ਪੱਟੀ',
   Commands: 'ਹੁਕਮ',
   Storage: 'ਸੰਭਾਲ',
+  'Persistent storage': 'ਸਥਾਈ ਸਟੋਰੇਜ',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'ਥਾਂ ਘੱਟ ਹੋਣ ’ਤੇ ਵੀ ਕੀ ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਉਹ ਰੱਖਦਾ ਹੈ ਜੋ Orden ਇੱਥੇ ਰੱਖਦਾ ਹੈ, ਨਾ ਭੇਜੀਆਂ ਤਬਦੀਲੀਆਂ ਵੀ। ਦੁਬਾਰਾ ਮੰਗਣ ਲਈ ਦਬਾਓ।',
   Dismiss: 'ਹਟਾਓ',
   'Manage storage': 'ਸੰਭਾਲ ਸੰਭਾਲੋ',
   '{used} of {limit} used.': '{limit} ਵਿੱਚੋਂ {used} ਵਰਤਿਆ।',

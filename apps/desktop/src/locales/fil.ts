@@ -795,6 +795,9 @@ export const fil: Dictionary = {
   'Command palette': 'Palette ng utos',
   Commands: 'Mga utos',
   Storage: 'Imbakan',
+  'Persistent storage': 'Permanenteng storage',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Kung itinatabi ng browser na ito ang hawak ng Orden dito, pati ang mga pagbabagong hindi pa naipapadala, kapag kumakaunti ang espasyo. Pindutin para hilingin ulit.',
   Dismiss: 'Isantabi',
   'Manage storage': 'Pamahalaan ang imbakan',
   '{used} of {limit} used.': '{used} sa {limit} ang gamit.',

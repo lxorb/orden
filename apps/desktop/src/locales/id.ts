@@ -782,6 +782,9 @@ export const id: Dictionary = {
   'Command palette': 'Palet perintah',
   Commands: 'Perintah',
   Storage: 'Penyimpanan',
+  'Persistent storage': 'Penyimpanan persisten',
+  'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.':
+    'Apakah browser ini menyimpan apa yang disimpan Orden di sini, termasuk perubahan yang belum terkirim, saat ruangnya hampir habis. Tekan untuk meminta lagi.',
   Dismiss: 'Tutup',
   'Manage storage': 'Kelola penyimpanan',
   '{used} of {limit} used.': '{used} dari {limit} terpakai.',
