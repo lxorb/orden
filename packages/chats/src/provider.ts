@@ -136,6 +136,7 @@ export interface Outgoing {
   attachments?: readonly OutgoingFile[]
   poll?: { question: string; answers: readonly string[]; several: boolean }
   sticker?: string
+  broadcast?: boolean
 }
 
 export interface Sticker {
@@ -216,6 +217,14 @@ export interface Posted {
   body: string
 }
 
+export interface NativeAsk {
+  url: string
+  method?: 'GET' | 'POST'
+  bearer?: string
+  type?: string
+  body?: Uint8Array
+}
+
 export interface Host {
   secret(name: string): Promise<string | null>
   keepSecret(name: string, value: string | null): Promise<void>
@@ -230,6 +239,7 @@ export interface Host {
   post?: (url: string, form: Readonly<Record<string, string>>) => Promise<Posted>
   wire?: (ask: WireAsk) => Promise<WireSocket>
   sidecar?: (program: string, args: readonly string[]) => Promise<Stream>
+  request?: (ask: NativeAsk) => Promise<Uint8Array>
   build?: Readonly<Record<string, string>>
 }
 

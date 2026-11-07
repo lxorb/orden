@@ -3562,4 +3562,20 @@ export const tr: Dictionary = {
   'Password manager': 'Parola yöneticisi',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Parolaları saklayan ve web sitelerinde dolduran Pass’i ekler. Kapatmak kasalarınızı korur.',
+  'User token': 'Kullanıcı jetonu',
+  'App-level token': 'Uygulama jetonu',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Tarayıcıda oturum açmak için boş bırakın ya da kendi Slack uygulamanızın kullanıcı jetonunu yapıştırın',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'İsteğe bağlı: kendi uygulamanızda Socket Mode açıkken mesajlar hemen gelir',
+  'Signed out of Slack. Connect again.': 'Slack oturumu kapandı. Yeniden bağlanın.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Bu bir Slack kullanıcı jetonu değil. xoxp- ile başlar',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Bu bir Slack uygulama jetonu değil. xapp- ile başlar',
+  'Slack removes messages for everyone': 'Slack mesajları herkes için siler',
+  'Slack files need the desktop app': 'Slack dosyaları masaüstü uygulamasını gerektirir',
+  'Slack does not know that emoji': 'Slack bu emojiyi tanımıyor',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Bir Slack kullanıcı jetonu yapıştırın, bu sürüm tarayıcıda oturum açamaz',
 }

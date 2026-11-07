@@ -13,6 +13,7 @@ const RAW = new Set([
   'mail_socket_write',
   'print_page',
   'print_pdf',
+  'chat_request',
 ])
 
 export function invoke<T>(command: string, args?: InvokeArgs, options?: InvokeOptions): Promise<T> {

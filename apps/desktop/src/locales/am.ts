@@ -3473,4 +3473,20 @@ export const am: Dictionary = {
   'Password manager': 'የይለፍ ቃል አቀናባሪ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Passን ያክላል፤ የይለፍ ቃላትን ያስቀምጣል በድር ጣቢያዎችም ይሞላል። ማጥፋቱ ካዝናዎችዎን ይጠብቃል።',
+  'User token': 'የተጠቃሚ ቶከን',
+  'App-level token': 'የመተግበሪያ ደረጃ ቶከን',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'በአሳሽ ለመግባት ባዶ ይተዉት፣ ወይም የራስዎን Slack መተግበሪያ የተጠቃሚ ቶከን ይለጥፉ',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'አማራጭ፦ በራስዎ መተግበሪያ Socket Mode ሲበራ መልዕክቶች ወዲያው ይደርሳሉ',
+  'Signed out of Slack. Connect again.': 'ከSlack ወጥተዋል። እንደገና ያገናኙ።',
+  'That is not a Slack user token. It starts with xoxp-':
+    'ይህ የSlack የተጠቃሚ ቶከን አይደለም። በ xoxp- ይጀምራል',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'ይህ የSlack የመተግበሪያ ደረጃ ቶከን አይደለም። በ xapp- ይጀምራል',
+  'Slack removes messages for everyone': 'Slack መልዕክቶችን ለሁሉም ይሰርዛል',
+  'Slack files need the desktop app': 'የSlack ፋይሎች የዴስክቶፕ መተግበሪያ ያስፈልጋቸዋል',
+  'Slack does not know that emoji': 'Slack ያንን ኢሞጂ አያውቅም',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'የSlack የተጠቃሚ ቶከን ይለጥፉ፣ ይህ ስሪት በአሳሽ መግባት አይችልም',
 }

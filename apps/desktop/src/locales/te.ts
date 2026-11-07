@@ -3558,4 +3558,20 @@ export const te: Dictionary = {
   'Password manager': 'పాస్‌వర్డ్ మేనేజర్',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'పాస్‌వర్డ్‌లను ఉంచి వెబ్‌సైట్లలో నింపే Pass ను జోడిస్తుంది. ఆఫ్ చేసినా మీ వాల్ట్‌లు అలాగే ఉంటాయి.',
+  'User token': 'వినియోగదారు టోకెన్',
+  'App-level token': 'యాప్-స్థాయి టోకెన్',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'బ్రౌజర్‌లో సైన్ ఇన్ చేయడానికి ఖాళీగా ఉంచండి, లేదా మీ సొంత Slack యాప్ వినియోగదారు టోకెన్‌ను అతికించండి',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'ఐచ్ఛికం: మీ యాప్‌లో Socket Mode ఆన్‌లో ఉంటే సందేశాలు వెంటనే వస్తాయి',
+  'Signed out of Slack. Connect again.': 'Slack నుండి సైన్ అవుట్ అయ్యారు. మళ్లీ కనెక్ట్ చేయండి.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'ఇది Slack వినియోగదారు టోకెన్ కాదు. ఇది xoxp- తో మొదలవుతుంది',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'ఇది Slack యాప్-స్థాయి టోకెన్ కాదు. ఇది xapp- తో మొదలవుతుంది',
+  'Slack removes messages for everyone': 'Slack సందేశాలను అందరికీ తొలగిస్తుంది',
+  'Slack files need the desktop app': 'Slack ఫైల్‌లకు డెస్క్‌టాప్ యాప్ అవసరం',
+  'Slack does not know that emoji': 'Slack కు ఆ ఎమోజీ తెలియదు',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Slack వినియోగదారు టోకెన్‌ను అతికించండి, ఈ బిల్డ్ బ్రౌజర్‌లో సైన్ ఇన్ చేయలేదు',
 }

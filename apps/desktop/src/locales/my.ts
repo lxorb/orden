@@ -3472,4 +3472,20 @@ export const my: Dictionary = {
   'Password manager': 'စကားဝှက် စီမံသူ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'စကားဝှက်များကို သိမ်းပြီး ဝဘ်ဆိုက်များတွင် ဖြည့်ပေးသော Pass ကို ထည့်သည်။ ပိတ်ထားလည်း သင့်သေတ္တာများ ကျန်ရှိနေမည်။',
+  'User token': 'အသုံးပြုသူ တိုကင်',
+  'App-level token': 'အက်ပ် တိုကင်',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'ဘရောက်ဇာမှ ဝင်ရန် လွတ်ထားပါ၊ သို့မဟုတ် သင့်ကိုယ်ပိုင် Slack အက်ပ်၏ အသုံးပြုသူ တိုကင်ကို ကူးထည့်ပါ',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'ရွေးချယ်နိုင်သည်- သင့်အက်ပ်တွင် Socket Mode ဖွင့်ထားလျှင် မက်ဆေ့ချ်များ ချက်ချင်းရောက်သည်',
+  'Signed out of Slack. Connect again.': 'Slack မှ ထွက်သွားပြီ။ ပြန်ချိတ်ပါ။',
+  'That is not a Slack user token. It starts with xoxp-':
+    '၎င်းသည် Slack အသုံးပြုသူ တိုကင် မဟုတ်ပါ။ xoxp- ဖြင့် စသည်',
+  'That is not a Slack app-level token. It starts with xapp-':
+    '၎င်းသည် Slack အက်ပ် တိုကင် မဟုတ်ပါ။ xapp- ဖြင့် စသည်',
+  'Slack removes messages for everyone': 'Slack သည် မက်ဆေ့ချ်များကို လူတိုင်းအတွက် ဖျက်သည်',
+  'Slack files need the desktop app': 'Slack ဖိုင်များအတွက် ဒက်စ်တော့ အက်ပ် လိုသည်',
+  'Slack does not know that emoji': 'Slack သည် ထို အီမိုဂျီကို မသိပါ',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Slack အသုံးပြုသူ တိုကင်ကို ကူးထည့်ပါ၊ ဤဗားရှင်းသည် ဘရောက်ဇာမှ မဝင်နိုင်ပါ',
 }

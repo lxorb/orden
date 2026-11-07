@@ -3537,4 +3537,20 @@ export const ur: Dictionary = {
   'Password manager': 'پاس ورڈ مینیجر',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass شامل کرتا ہے، جو پاس ورڈ رکھتا ہے اور ویب سائٹس پر بھرتا ہے۔ بند کرنے سے آپ کے والٹ برقرار رہتے ہیں۔',
+  'User token': 'صارف ٹوکن',
+  'App-level token': 'ایپ لیول ٹوکن',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'براؤزر میں سائن ان کرنے کے لیے خالی چھوڑیں، یا اپنی Slack ایپ کا صارف ٹوکن چسپاں کریں',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'اختیاری: اپنی ایپ میں Socket Mode آن ہو تو پیغامات فوراً آتے ہیں',
+  'Signed out of Slack. Connect again.': 'Slack سے سائن آؤٹ ہو گئے۔ دوبارہ جوڑیں۔',
+  'That is not a Slack user token. It starts with xoxp-':
+    'یہ Slack صارف ٹوکن نہیں ہے۔ یہ xoxp- سے شروع ہوتا ہے',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'یہ Slack ایپ لیول ٹوکن نہیں ہے۔ یہ xapp- سے شروع ہوتا ہے',
+  'Slack removes messages for everyone': 'Slack پیغامات سب کے لیے حذف کرتا ہے',
+  'Slack files need the desktop app': 'Slack فائلوں کے لیے ڈیسک ٹاپ ایپ درکار ہے',
+  'Slack does not know that emoji': 'Slack اس ایموجی کو نہیں جانتا',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Slack صارف ٹوکن چسپاں کریں، یہ بلڈ براؤزر میں سائن ان نہیں کر سکتا',
 }

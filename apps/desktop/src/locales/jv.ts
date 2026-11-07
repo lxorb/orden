@@ -3463,4 +3463,20 @@ export const jv: Dictionary = {
   'Password manager': 'Pangatur tembung sandi',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Nambahaké Pass, sing nyimpen tembung sandi lan ngisi ing situs web. Yen dipatèni, brankasmu tetep disimpen.',
+  'User token': 'Token pangguna',
+  'App-level token': 'Token aplikasi',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Kosongna kanggo mlebu liwat browser, utawa tempel token pangguna saka aplikasi Slack sampeyan dhewe',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'Pilihan: kanthi Socket Mode urip ing aplikasi sampeyan, pesen langsung teka',
+  'Signed out of Slack. Connect again.': 'Wis metu saka Slack. Sambungake maneh.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Kuwi dudu token pangguna Slack. Diwiwiti nganggo xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Kuwi dudu token aplikasi Slack. Diwiwiti nganggo xapp-',
+  'Slack removes messages for everyone': 'Slack mbusak pesen kanggo kabeh wong',
+  'Slack files need the desktop app': 'Berkas Slack butuh aplikasi desktop',
+  'Slack does not know that emoji': 'Slack ora ngerti emoji kuwi',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Tempel token pangguna Slack, versi iki ora bisa mlebu liwat browser',
 }

@@ -3593,4 +3593,20 @@ export const ml: Dictionary = {
   'Password manager': 'പാസ്‌വേഡ് മാനേജർ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'പാസ്‌വേഡുകൾ സൂക്ഷിക്കുകയും വെബ്‌സൈറ്റുകളിൽ നിറയ്ക്കുകയും ചെയ്യുന്ന Pass ചേർക്കുന്നു. ഓഫാക്കിയാലും നിങ്ങളുടെ വോൾട്ടുകൾ നിലനിൽക്കും.',
+  'User token': 'ഉപയോക്തൃ ടോക്കൺ',
+  'App-level token': 'ആപ്പ്-തല ടോക്കൺ',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'ബ്രൗസറിൽ സൈൻ ഇൻ ചെയ്യാൻ ശൂന്യമായി വിടുക, അല്ലെങ്കിൽ നിങ്ങളുടെ സ്വന്തം Slack ആപ്പിന്റെ ഉപയോക്തൃ ടോക്കൺ ഒട്ടിക്കുക',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'ഐച്ഛികം: നിങ്ങളുടെ ആപ്പിൽ Socket Mode ഓണാണെങ്കിൽ സന്ദേശങ്ങൾ ഉടൻ എത്തും',
+  'Signed out of Slack. Connect again.': 'Slack-ൽ നിന്ന് സൈൻ ഔട്ട് ആയി. വീണ്ടും ബന്ധിപ്പിക്കുക.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'ഇത് Slack ഉപയോക്തൃ ടോക്കൺ അല്ല. ഇത് xoxp- ൽ തുടങ്ങുന്നു',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'ഇത് Slack ആപ്പ്-തല ടോക്കൺ അല്ല. ഇത് xapp- ൽ തുടങ്ങുന്നു',
+  'Slack removes messages for everyone': 'Slack സന്ദേശങ്ങൾ എല്ലാവർക്കും നീക്കംചെയ്യുന്നു',
+  'Slack files need the desktop app': 'Slack ഫയലുകൾക്ക് ഡെസ്ക്ടോപ്പ് ആപ്പ് വേണം',
+  'Slack does not know that emoji': 'Slack-ന് ആ ഇമോജി അറിയില്ല',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'ഒരു Slack ഉപയോക്തൃ ടോക്കൺ ഒട്ടിക്കുക, ഈ ബിൽഡിന് ബ്രൗസറിൽ സൈൻ ഇൻ ചെയ്യാനാവില്ല',
 }

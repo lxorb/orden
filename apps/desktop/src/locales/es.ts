@@ -3645,4 +3645,20 @@ export const es: Dictionary = {
   'Password manager': 'Gestor de contraseñas',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Añade Pass, que guarda contraseñas y las rellena en los sitios web. Desactivarlo conserva tus bóvedas.',
+  'User token': 'Token de usuario',
+  'App-level token': 'Token de la app',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Déjalo vacío para iniciar sesión en el navegador, o pega el token de usuario de tu propia app de Slack',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'Opcional: con Socket Mode activado en tu propia app, los mensajes llegan al instante',
+  'Signed out of Slack. Connect again.': 'Sesión de Slack cerrada. Vuelve a conectar.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Eso no es un token de usuario de Slack. Empieza por xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Eso no es un token de app de Slack. Empieza por xapp-',
+  'Slack removes messages for everyone': 'Slack elimina los mensajes para todos',
+  'Slack files need the desktop app': 'Los archivos de Slack necesitan la app de escritorio',
+  'Slack does not know that emoji': 'Slack no conoce ese emoji',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Pega un token de usuario de Slack, esta versión no puede iniciar sesión en el navegador',
 }

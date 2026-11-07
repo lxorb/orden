@@ -3458,4 +3458,21 @@ export const ja: Dictionary = {
   'Password manager': 'パスワードマネージャー',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'パスワードを保管し、ウェブサイトで入力する Pass を追加します。オフにしても保管庫は残ります。',
+  'User token': 'ユーザートークン',
+  'App-level token': 'アプリレベルトークン',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'ブラウザでサインインするには空のままにするか、自分の Slack アプリのユーザートークンを貼り付けてください',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    '任意：自分のアプリで Socket Mode をオンにすると、メッセージがすぐに届きます',
+  'Signed out of Slack. Connect again.':
+    'Slack からサインアウトしました。もう一度接続してください。',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Slack のユーザートークンではありません。xoxp- で始まります',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Slack のアプリレベルトークンではありません。xapp- で始まります',
+  'Slack removes messages for everyone': 'Slack はメッセージを全員から削除します',
+  'Slack files need the desktop app': 'Slack のファイルにはデスクトップアプリが必要です',
+  'Slack does not know that emoji': 'Slack はその絵文字を知りません',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Slack のユーザートークンを貼り付けてください。このビルドはブラウザでサインインできません',
 }

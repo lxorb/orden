@@ -3552,4 +3552,20 @@ export const pa: Dictionary = {
   'Password manager': 'ਪਾਸਵਰਡ ਮੈਨੇਜਰ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ਜੋੜਦਾ ਹੈ, ਜੋ ਪਾਸਵਰਡ ਰੱਖਦਾ ਹੈ ਅਤੇ ਵੈੱਬਸਾਈਟਾਂ ’ਤੇ ਭਰਦਾ ਹੈ। ਬੰਦ ਕਰਨ ’ਤੇ ਤੁਹਾਡੇ ਵਾਲਟ ਰਹਿੰਦੇ ਹਨ।',
+  'User token': 'ਵਰਤੋਂਕਾਰ ਟੋਕਨ',
+  'App-level token': 'ਐਪ-ਪੱਧਰ ਟੋਕਨ',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸਾਈਨ ਇਨ ਕਰਨ ਲਈ ਖਾਲੀ ਛੱਡੋ, ਜਾਂ ਆਪਣੀ Slack ਐਪ ਦਾ ਵਰਤੋਂਕਾਰ ਟੋਕਨ ਪੇਸਟ ਕਰੋ',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'ਵਿਕਲਪਿਕ: ਆਪਣੀ ਐਪ ਵਿੱਚ Socket Mode ਚਾਲੂ ਹੋਣ ਤੇ ਸੁਨੇਹੇ ਤੁਰੰਤ ਆਉਂਦੇ ਹਨ',
+  'Signed out of Slack. Connect again.': 'Slack ਤੋਂ ਸਾਈਨ ਆਊਟ ਹੋ ਗਏ। ਮੁੜ ਕਨੈਕਟ ਕਰੋ।',
+  'That is not a Slack user token. It starts with xoxp-':
+    'ਇਹ Slack ਵਰਤੋਂਕਾਰ ਟੋਕਨ ਨਹੀਂ ਹੈ। ਇਹ xoxp- ਨਾਲ ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'ਇਹ Slack ਐਪ-ਪੱਧਰ ਟੋਕਨ ਨਹੀਂ ਹੈ। ਇਹ xapp- ਨਾਲ ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ',
+  'Slack removes messages for everyone': 'Slack ਸੁਨੇਹੇ ਸਾਰਿਆਂ ਲਈ ਮਿਟਾਉਂਦਾ ਹੈ',
+  'Slack files need the desktop app': 'Slack ਫ਼ਾਈਲਾਂ ਲਈ ਡੈਸਕਟਾਪ ਐਪ ਚਾਹੀਦੀ ਹੈ',
+  'Slack does not know that emoji': 'Slack ਇਸ ਇਮੋਜੀ ਨੂੰ ਨਹੀਂ ਜਾਣਦਾ',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Slack ਵਰਤੋਂਕਾਰ ਟੋਕਨ ਪੇਸਟ ਕਰੋ, ਇਹ ਬਿਲਡ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸਾਈਨ ਇਨ ਨਹੀਂ ਕਰ ਸਕਦਾ',
 }

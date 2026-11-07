@@ -3480,4 +3480,20 @@ export const id: Dictionary = {
   'Password manager': 'Pengelola kata sandi',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Menambahkan Pass, yang menyimpan kata sandi dan mengisinya di situs web. Mematikannya tetap menyimpan brankas Anda.',
+  'User token': 'Token pengguna',
+  'App-level token': 'Token aplikasi',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Kosongkan untuk masuk lewat peramban, atau tempel token pengguna dari aplikasi Slack Anda sendiri',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'Opsional: dengan Socket Mode aktif di aplikasi Anda, pesan langsung tiba',
+  'Signed out of Slack. Connect again.': 'Keluar dari Slack. Hubungkan lagi.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Itu bukan token pengguna Slack. Awalnya xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Itu bukan token aplikasi Slack. Awalnya xapp-',
+  'Slack removes messages for everyone': 'Slack menghapus pesan untuk semua orang',
+  'Slack files need the desktop app': 'Berkas Slack memerlukan aplikasi desktop',
+  'Slack does not know that emoji': 'Slack tidak mengenal emoji itu',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Tempel token pengguna Slack, versi ini tidak dapat masuk lewat peramban',
 }

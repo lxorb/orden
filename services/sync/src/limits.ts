@@ -244,3 +244,10 @@ export async function mailNotSent(env: Env, address: string): Promise<void> {
   await uncount(env, 'mail-to-day', address)
   await uncount(env, SENT, thisHour())
 }
+
+const SLACK_SIGN_INS_AN_HOUR = 30
+
+export function maySignInToSlack(env: Env, machine: string | null): Promise<boolean> {
+  if (!machine) return Promise.resolve(true)
+  return within(env, 'slack', machine, SLACK_SIGN_INS_AN_HOUR, AN_HOUR)
+}

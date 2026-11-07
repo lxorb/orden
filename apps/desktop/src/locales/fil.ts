@@ -3612,4 +3612,20 @@ export const fil: Dictionary = {
   'Password manager': 'Password manager',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Idinadagdag ang Pass, na nagtatago ng mga password at pinupunan ang mga ito sa mga website. Kapag pinatay, mananatili ang iyong mga vault.',
+  'User token': 'User token',
+  'App-level token': 'App-level token',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Iwanang blangko para mag-sign in sa browser, o i-paste ang user token ng sarili mong Slack app',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'Opsyonal: kapag naka-on ang Socket Mode sa sarili mong app, agad dumarating ang mga mensahe',
+  'Signed out of Slack. Connect again.': 'Naka-sign out sa Slack. Kumonekta ulit.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Hindi iyan Slack user token. Nagsisimula ito sa xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Hindi iyan Slack app-level token. Nagsisimula ito sa xapp-',
+  'Slack removes messages for everyone': 'Binubura ng Slack ang mga mensahe para sa lahat',
+  'Slack files need the desktop app': 'Kailangan ng desktop app para sa mga file ng Slack',
+  'Slack does not know that emoji': 'Hindi kilala ng Slack ang emoji na iyan',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Mag-paste ng Slack user token, hindi makakapag-sign in sa browser ang build na ito',
 }

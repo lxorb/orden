@@ -3537,4 +3537,20 @@ export const bn: Dictionary = {
   'Password manager': 'পাসওয়ার্ড ম্যানেজার',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass যোগ করে, যা পাসওয়ার্ড রাখে এবং ওয়েবসাইটে সেগুলো পূরণ করে। বন্ধ করলেও আপনার ভল্টগুলো থেকে যায়।',
+  'User token': 'ব্যবহারকারী টোকেন',
+  'App-level token': 'অ্যাপ-স্তরের টোকেন',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'ব্রাউজারে সাইন ইন করতে খালি রাখুন, অথবা নিজের Slack অ্যাপের ব্যবহারকারী টোকেন পেস্ট করুন',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'ঐচ্ছিক: নিজের অ্যাপে Socket Mode চালু থাকলে বার্তা সঙ্গে সঙ্গে আসে',
+  'Signed out of Slack. Connect again.': 'Slack থেকে সাইন আউট হয়েছে। আবার সংযোগ করুন।',
+  'That is not a Slack user token. It starts with xoxp-':
+    'এটি Slack ব্যবহারকারী টোকেন নয়। এটি xoxp- দিয়ে শুরু হয়',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'এটি Slack অ্যাপ-স্তরের টোকেন নয়। এটি xapp- দিয়ে শুরু হয়',
+  'Slack removes messages for everyone': 'Slack সবার জন্য বার্তা মুছে দেয়',
+  'Slack files need the desktop app': 'Slack ফাইলের জন্য ডেস্কটপ অ্যাপ লাগে',
+  'Slack does not know that emoji': 'Slack এই ইমোজি চেনে না',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'একটি Slack ব্যবহারকারী টোকেন পেস্ট করুন, এই বিল্ড ব্রাউজারে সাইন ইন করতে পারে না',
 }

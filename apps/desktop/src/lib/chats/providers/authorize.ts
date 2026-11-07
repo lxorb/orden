@@ -1,4 +1,4 @@
-import type { Posted } from '@orden/chats/provider'
+import type { NativeAsk, Posted } from '@orden/chats/provider'
 import { invoke, openExternal } from '../../tauri'
 
 interface Opened {
@@ -21,6 +21,17 @@ export async function authorize(
 
 export function post(url: string, form: Readonly<Record<string, string>>): Promise<Posted> {
   return invoke<Posted>('oauth_post', { url, form })
+}
+
+export async function request(ask: NativeAsk): Promise<Uint8Array> {
+  const answer = await invoke<ArrayBuffer>('chat_request', {
+    url: ask.url,
+    method: ask.method ?? 'GET',
+    bearer: ask.bearer ?? null,
+    type: ask.type ?? null,
+    bytes: ask.body ?? new Uint8Array(0),
+  })
+  return new Uint8Array(answer)
 }
 
 export function builtWith(

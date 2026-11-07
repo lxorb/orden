@@ -3,7 +3,8 @@ import { forgetKey, readSecret, writeSecret } from '../../ai/keys'
 import { Channel } from '../../native'
 import { isRecord } from '../../stored'
 import { invoke, isDesktop } from '../../tauri'
-import { authorize, builtWith, post } from './authorize'
+import { BASE } from '../../api'
+import { authorize, builtWith, post, request } from './authorize'
 import { parsedOffThread } from './mail-parse'
 import { screens } from './screens.svelte'
 import { sealedStore } from './sealed'
@@ -59,7 +60,7 @@ async function socket(ask: SocketAsk): Promise<Socket> {
 export const host: Host = {
   secret: (name) => readSecret(name),
   keepSecret: (name, value) => (value === null ? forgetKey(name, true) : writeSecret(name, value)),
-  ...(isDesktop ? { socket, authorize, post } : {}),
+  ...(isDesktop ? { socket, authorize, post, request } : {}),
   parseMessage: parsedOffThread,
   fetch: (...args) => fetch(...args),
   now: () => Date.now(),
@@ -69,6 +70,8 @@ export const host: Host = {
     microsoftClientId: import.meta.env.VITE_ORDEN_MICROSOFT_CLIENT_ID,
     telegramApiId: import.meta.env.VITE_ORDEN_TELEGRAM_API_ID,
     telegramApiHash: import.meta.env.VITE_ORDEN_TELEGRAM_API_HASH,
+    slackClientId: import.meta.env.VITE_ORDEN_SLACK_CLIENT_ID,
+    ordenServer: BASE,
   }),
   ask: screens.ask,
   show: screens.show,

@@ -3540,4 +3540,20 @@ export const ps: Dictionary = {
   'Password manager': 'د پټنوم مدیر',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ورزیاتوي چې پټنومونه ساتي او په وېبپاڼو کې يې ډکوي. بندول يې ستاسو خزانې ساتي.',
+  'User token': 'د کارن ټوکن',
+  'App-level token': 'د اپ کچې ټوکن',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'په براوزر کې د ننوتلو لپاره یې تش پرېږدئ، یا د خپل Slack اپ د کارن ټوکن ولګوئ',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'اختیاري: که ستاسو په اپ کې Socket Mode چالان وي، پیغامونه سمدستي رسېږي',
+  'Signed out of Slack. Connect again.': 'له Slack څخه ووتلئ. بیا یې وصل کړئ.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'دا د Slack د کارن ټوکن نه دی. په xoxp- پیلېږي',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'دا د Slack د اپ کچې ټوکن نه دی. په xapp- پیلېږي',
+  'Slack removes messages for everyone': 'Slack پیغامونه د ټولو لپاره ړنګوي',
+  'Slack files need the desktop app': 'د Slack فایلونو ته د ډیسکټاپ اپ اړتیا ده',
+  'Slack does not know that emoji': 'Slack دا ایموجي نه پېژني',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'د Slack د کارن ټوکن ولګوئ، دا جوړښت په براوزر کې نشي ننوتلی',
 }

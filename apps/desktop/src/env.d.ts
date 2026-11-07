@@ -23,6 +23,7 @@ interface ImportMetaEnv {
   readonly VITE_ORDEN_MICROSOFT_CLIENT_ID?: string
   readonly VITE_ORDEN_TELEGRAM_API_ID?: string
   readonly VITE_ORDEN_TELEGRAM_API_HASH?: string
+  readonly VITE_ORDEN_SLACK_CLIENT_ID?: string
 }
 
 declare module 'virtual:noto-outlines' {

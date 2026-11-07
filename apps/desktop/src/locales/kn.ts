@@ -3580,4 +3580,20 @@ export const kn: Dictionary = {
   'Password manager': 'ಪಾಸ್‌ವರ್ಡ್ ನಿರ್ವಾಹಕ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ಅನ್ನು ಸೇರಿಸುತ್ತದೆ, ಅದು ಪಾಸ್‌ವರ್ಡ್‌ಗಳನ್ನು ಇಟ್ಟುಕೊಂಡು ವೆಬ್‌ಸೈಟ್‌ಗಳಲ್ಲಿ ತುಂಬುತ್ತದೆ. ಆಫ್ ಮಾಡಿದರೂ ನಿಮ್ಮ ವಾಲ್ಟ್‌ಗಳು ಉಳಿಯುತ್ತವೆ.',
+  'User token': 'ಬಳಕೆದಾರ ಟೋಕನ್',
+  'App-level token': 'ಆ್ಯಪ್-ಮಟ್ಟದ ಟೋಕನ್',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಲು ಖಾಲಿ ಬಿಡಿ, ಅಥವಾ ನಿಮ್ಮ ಸ್ವಂತ Slack ಆ್ಯಪ್‌ನ ಬಳಕೆದಾರ ಟೋಕನ್ ಅಂಟಿಸಿ',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'ಐಚ್ಛಿಕ: ನಿಮ್ಮ ಆ್ಯಪ್‌ನಲ್ಲಿ Socket Mode ಆನ್ ಇದ್ದರೆ ಸಂದೇಶಗಳು ತಕ್ಷಣ ಬರುತ್ತವೆ',
+  'Signed out of Slack. Connect again.': 'Slack ನಿಂದ ಸೈನ್ ಔಟ್ ಆಗಿದೆ. ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'ಇದು Slack ಬಳಕೆದಾರ ಟೋಕನ್ ಅಲ್ಲ. ಇದು xoxp- ನಿಂದ ಆರಂಭವಾಗುತ್ತದೆ',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'ಇದು Slack ಆ್ಯಪ್-ಮಟ್ಟದ ಟೋಕನ್ ಅಲ್ಲ. ಇದು xapp- ನಿಂದ ಆರಂಭವಾಗುತ್ತದೆ',
+  'Slack removes messages for everyone': 'Slack ಸಂದೇಶಗಳನ್ನು ಎಲ್ಲರಿಗೂ ಅಳಿಸುತ್ತದೆ',
+  'Slack files need the desktop app': 'Slack ಫೈಲ್‌ಗಳಿಗೆ ಡೆಸ್ಕ್‌ಟಾಪ್ ಆ್ಯಪ್ ಬೇಕು',
+  'Slack does not know that emoji': 'Slack ಗೆ ಆ ಎಮೋಜಿ ತಿಳಿದಿಲ್ಲ',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Slack ಬಳಕೆದಾರ ಟೋಕನ್ ಅಂಟಿಸಿ, ಈ ಬಿಲ್ಡ್ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಲಾಗದು',
 }
