@@ -34,10 +34,14 @@ export class Today {
     }))
   }
 
+  private asked = 0
+
   fresh(): void {
+    const mine = ++this.asked
     void this.host
       .load()
       .then((tasks) => {
+        if (mine !== this.asked) return
         this.held = tasks.map((one) => ({
           id: `${one.space}\n${one.at}`,
           text: one.text,

@@ -122,4 +122,20 @@ describe('today on the glasses', () => {
     expect(spokenTask('Task, call Mum tomorrow at four.')).toBe('call Mum tomorrow at four')
     expect(spokenTask('Aufgabe: Milch kaufen')).toBe('Milch kaufen')
   })
+
+  test('opened twice quickly, it shows what the later reading found, whichever answers last', async () => {
+    const answers: ((tasks: { at: string; space: string; text: string }[]) => void)[] = []
+    const today = new Today({
+      load: () => new Promise((done) => answers.push(done)),
+      tick: () => Promise.resolve(null),
+      redraw: () => undefined,
+    })
+    today.fresh()
+    today.fresh()
+    answers[1]?.([{ at: 'Inbox.md#0:a1', space: 'Home', text: 'Now' }])
+    await settled()
+    answers[0]?.([{ at: 'Inbox.md#0:b2', space: 'Home', text: 'Before' }])
+    await settled()
+    expect(today.rows().map((one) => one.label)).toEqual(['□ Now'])
+  })
 })
