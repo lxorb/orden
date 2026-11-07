@@ -78,10 +78,12 @@ function entryOf(value: unknown): Entry | null {
   return holds(name, key, held) ? { map: name, key, value: held } : null
 }
 
-function folderAt(tree: Tree, path: string): string | null {
+type Child = ReturnType<Tree['lookup']>
+
+function folderAt(child: Child, path: string): string | null {
   let parent: string | null = null
   for (const name of path.split('/')) {
-    const found = tree.child(parent, name)
+    const found = child(parent, name)
     if (found?.kind !== 'folder') return null
     parent = found.id
   }
@@ -312,6 +314,7 @@ export async function v1Wrote(env: Env, space: Space, map: MapName, value: unkno
 }
 
 function entriesFromV1(map: MapName, value: unknown, tree: Tree, mine: readonly Kept[]): Entry[] {
+  const child = tree.lookup()
   switch (map) {
     case 'bookmark': {
       const left = [...mine]
@@ -336,7 +339,7 @@ function entriesFromV1(map: MapName, value: unknown, tree: Tree, mine: readonly 
         tints?: Record<string, string>
       }
       return Object.entries(icons ?? {}).map(([path, icon]) => {
-        const folder = folderAt(tree, path)
+        const folder = folderAt(child, path)
         const tint = tints?.[path]
         return {
           map,
@@ -348,11 +351,11 @@ function entriesFromV1(map: MapName, value: unknown, tree: Tree, mine: readonly 
     case 'order': {
       const out: Entry[] = []
       for (const [folder, names] of Object.entries(isRecord(value) ? value : {})) {
-        const parent = folder === '' ? null : folderAt(tree, folder)
+        const parent = folder === '' ? null : folderAt(child, folder)
         ;(Array.isArray(names) ? names : []).forEach((name: unknown, index) => {
           if (typeof name !== 'string') return
-          const child = folder === '' || parent !== null ? tree.child(parent, name) : undefined
-          out.push({ map, key: child?.id ?? `${PATH}${folder}/${name}`, value: index + 1 })
+          const placed = folder === '' || parent !== null ? child(parent, name) : undefined
+          out.push({ map, key: placed?.id ?? `${PATH}${folder}/${name}`, value: index + 1 })
         })
       }
       return out

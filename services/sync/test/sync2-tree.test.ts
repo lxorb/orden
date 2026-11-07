@@ -139,6 +139,31 @@ describe('preparing a space', () => {
     expect(env.db.prepare('select id, seq from notes order by id').all()).toEqual(seqs)
   })
 
+  test('places many notes in many folders in time that grows with them, not their square', async () => {
+    const seed = await made('F0/S0/seed.md')
+    const columns = (
+      env.db.prepare('pragma table_info(notes)').all() as unknown as { name: string }[]
+    ).map((one) => one.name)
+    const picked = columns.map((one) =>
+      one === 'id'
+        ? "printf('m%05d', value)"
+        : one === 'path'
+          ? "printf('F%02d/S%d/n%05d.md', value % 40, value % 7, value)"
+          : one,
+    )
+    env.db.exec(
+      `with recursive seq(value) as (select 1 union all select value + 1 from seq where value < 6000)
+       insert into notes (${columns.join(', ')})
+       select ${picked.join(', ')} from seq, notes where notes.id = '${seed}'`,
+    )
+
+    const started = performance.now()
+    await prepare()
+    expect(performance.now() - started).toBeLessThan(15_000)
+    expect(folders()).toHaveLength(2 + 40 + 40 * 7)
+    expect(row('m00123')).toMatchObject({ name: 'n00123.md', path: 'F03/S4/n00123.md' })
+  })
+
   test('joins folders a Linux device spelled two ways, and numbers the later of two notes', async () => {
     const a = await made('Work/a.md')
     const b = await made('work/b.md')
