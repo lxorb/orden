@@ -53,4 +53,25 @@ describe('translating a sequence fence', () => {
   test('takes an empty message', () => {
     expect(lines('A->B:')[1]).toBe('  A->>B: ')
   })
+
+  test('reads a long line that is no message in time that grows with its length', () => {
+    const timed = (length: number) => {
+      const source = [`a${'-'.repeat(length)}b`, `a:${'-'.repeat(length)}b`, 'a-b'.repeat(length)]
+      let least = Infinity
+      for (let round = 0; round < 2; round++) {
+        const start = performance.now()
+        for (const one of source) sequenceToMermaid(one)
+        least = Math.min(least, performance.now() - start)
+      }
+      return least
+    }
+    timed(500)
+    expect(timed(16_000) / timed(4_000)).toBeLessThan(9)
+  })
+
+  test('still reads a message whose names or words hold dashes and colons', () => {
+    expect(lines('A->B-2: a: b')[1]).toBe('  A->>B-2: a: b')
+    expect(lines('A-B')[1]).toBeUndefined()
+    expect(lines('A-:')[1]).toBeUndefined()
+  })
 })

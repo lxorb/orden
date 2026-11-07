@@ -33,6 +33,8 @@ function asParticipant(line: string): string {
 }
 
 function asMessage(line: string): string | null {
+  const dash = line.indexOf('-', 1)
+  if (dash === -1 || line.lastIndexOf(':') < dash + 2) return null
   const match = /^(.+?)(-->>|->>|-->|->|--|-)\s*(.+?)\s*:\s*(.*)$/.exec(line)
   if (!match) return null
 
