@@ -59,13 +59,51 @@ export interface AnswerOptions {
   shown?: ReadonlySet<string>
 }
 
+export const LINES_A_GROUP = 50
+
+const CODE_INSIDE = /(<pre><code[^>]*>)([\s\S]*?)(<\/code><\/pre>)/g
+
+function openSpan(html: string): string {
+  const opened = html.lastIndexOf('<span')
+  if (opened === -1 || opened < html.lastIndexOf('</span>')) return ''
+  return html.slice(opened, html.indexOf('>', opened) + 1)
+}
+
+function lineGroups(code: string): string {
+  let out = ''
+  let from = 0
+  let lines = 0
+  let carried = ''
+  const group = (to: number) => {
+    const piece = carried + code.slice(from, to)
+    carried = openSpan(piece)
+    out += `<span class="code-lines">${piece}${carried ? '</span>' : ''}</span>`
+    from = to
+  }
+
+  for (let at = code.indexOf('\n'); at !== -1; at = code.indexOf('\n', at + 1)) {
+    if (++lines % LINES_A_GROUP === 0) group(at + 1)
+  }
+  if (lines < LINES_A_GROUP) return code
+  if (from < code.length) group(code.length)
+  return out
+}
+
+export function inLineGroups(html: string): string {
+  return html.replace(
+    CODE_INSIDE,
+    (_, open: string, code: string, close: string) => open + lineGroups(code) + close,
+  )
+}
+
 export function answerHtml(markdown: string, options: AnswerOptions = {}): string {
   const render: RenderOptions = { escapeHtml: true }
   if (options.resolveLink) render.resolveLink = options.resolveLink
-  const html = pictures(
+  const drawn = pictures(
     viewHtml(markdown, render, { live: options.live === true }).replace(MEDIA, ''),
     options.from ?? null,
     options.shown ?? new Set(),
   )
+  const html = options.live ? inLineGroups(drawn) : drawn
   return options.copy ? withCodeBars(html, options.copy) : html
 }

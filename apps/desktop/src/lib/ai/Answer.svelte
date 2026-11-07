@@ -7,6 +7,7 @@
 <script lang="ts">
   import { copyText } from '../clipboard'
   import { mathsWaiting } from '../markdown-view.svelte'
+  import { patchHtml } from './patch-html'
 
   const {
     html,
@@ -58,17 +59,27 @@
   }
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div
-  class="words nib-write nib-answer"
-  class:live
-  class:waiting
-  onclick={press}
-  onauxclick={(event) => onfollow?.(event)}
->
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -- the renderer escapes every tag the model wrote; see ai/drawn.ts -->
-  {@html html}
-</div>
+{#if live}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div
+    class="words nib-write nib-answer live"
+    class:waiting
+    onclick={press}
+    onauxclick={(event) => onfollow?.(event)}
+    {@attach (node: HTMLDivElement) => patchHtml(node, html)}
+  ></div>
+{:else}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div
+    class="words nib-write nib-answer"
+    class:waiting
+    onclick={press}
+    onauxclick={(event) => onfollow?.(event)}
+  >
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- the renderer escapes every tag the model wrote; see ai/drawn.ts -->
+    {@html html}
+  </div>
+{/if}
 
 <style>
   .words:global(:is(#write, .nib-write)) {
@@ -122,6 +133,10 @@
     border-radius: 0;
     background: none;
     white-space: pre;
+  }
+
+  .words :global(.code-lines) {
+    display: block;
   }
 
   .words :global(.code-bar) {
