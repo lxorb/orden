@@ -1,3 +1,5 @@
+use std::collections::{HashMap, VecDeque};
+
 use serde::Serialize;
 
 use crate::web_keys::{Held, Pressed, PRESSED};
@@ -6,6 +8,57 @@ use crate::web_keys::{Held, Pressed, PRESSED};
 pub enum Asked {
     Behind,
     Front,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Heard {
+    pub ours: bool,
+    pub said: Option<Asked>,
+    pub unasked: bool,
+}
+
+const WAITING: usize = 64;
+
+#[derive(Debug)]
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
+pub struct Waiting<T> {
+    tabs: HashMap<String, VecDeque<(String, T)>>,
+}
+
+impl<T> Default for Waiting<T> {
+    fn default() -> Self {
+        Self {
+            tabs: HashMap::new(),
+        }
+    }
+}
+
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
+impl<T> Waiting<T> {
+    pub fn heard(&mut self, tab: &str, uri: &str, what: T) {
+        let waiting = self.tabs.entry(tab.to_string()).or_default();
+        if waiting.len() >= WAITING {
+            waiting.pop_front();
+        }
+        waiting.push_back((uri.to_string(), what));
+    }
+
+    pub fn taken(&mut self, tab: &str, url: &str) -> Option<T> {
+        let waiting = self.tabs.get_mut(tab)?;
+        let found = waiting
+            .iter()
+            .position(|(uri, _)| same_address(uri, url))
+            .and_then(|at| waiting.remove(at));
+        if waiting.is_empty() {
+            self.tabs.remove(tab);
+        }
+        found.map(|(_, what)| what)
+    }
+}
+
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
+fn same_address(heard: &str, url: &str) -> bool {
+    heard == url || tauri::Url::parse(heard).is_ok_and(|heard| heard.as_str() == url)
 }
 
 const BEHIND: &str = "orden-behind";
@@ -384,7 +437,7 @@ pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
-pub use heard::{closing, listen, ours, taken, unasked};
+pub use heard::{closing, heard, listen};
 
 #[cfg(all(windows, not(feature = "cef")))]
 mod heard {
@@ -408,26 +461,23 @@ mod heard {
     use windows::Win32::UI::WindowsAndMessaging::IsChild;
     use windows_core::Interface;
 
-    use super::{actual, chord, passed, placed, played, sought, taken_as_a_person_s, Asked, Held};
+    use super::{
+        actual, chord, passed, placed, played, sought, taken_as_a_person_s, Heard, Held, Waiting,
+    };
 
     thread_local! {
-        static SAID: RefCell<HashMap<String, Option<Asked>>> = RefCell::new(HashMap::new());
+        static HEARD: RefCell<Waiting<Heard>> = RefCell::new(Waiting::default());
         static MENU: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
-        static OURS: RefCell<std::collections::HashSet<String>> =
-            RefCell::new(std::collections::HashSet::new());
-        static UNASKED: RefCell<std::collections::HashSet<String>> =
-            RefCell::new(std::collections::HashSet::new());
     }
 
-    fn noted(tab: &str, said: Option<Asked>, user: bool) {
-        SAID.with_borrow_mut(|all| all.insert(tab.to_string(), said));
-        if !user {
-            UNASKED.with_borrow_mut(|all| all.insert(tab.to_string()));
-        }
+    fn noted(tab: &str, uri: &str, what: Heard) {
+        HEARD.with_borrow_mut(|heard| heard.heard(tab, uri, what));
     }
 
-    pub fn unasked(tab: &str) -> bool {
-        UNASKED.with_borrow_mut(|unasked| unasked.remove(tab))
+    pub fn heard(tab: &str, url: &tauri::Url) -> Heard {
+        HEARD
+            .with_borrow_mut(|heard| heard.taken(tab, url.as_str()))
+            .unwrap_or_default()
     }
 
     fn ordens_own(name: &str) -> bool {
@@ -435,10 +485,6 @@ mod heard {
             || sought(name).is_some()
             || chord(name).is_some()
             || actual(name)
-    }
-
-    pub fn ours(tab: &str) -> bool {
-        OURS.with_borrow_mut(|ours| ours.remove(tab))
     }
 
     #[allow(
@@ -457,10 +503,6 @@ mod heard {
             let mut token = 0i64;
             let _ = core.add_WindowCloseRequested(&closed, &raw mut token);
         }
-    }
-
-    pub fn taken(tab: &str) -> Option<Asked> {
-        SAID.with_borrow_mut(|said| said.remove(tab)).flatten()
     }
 
     #[allow(
@@ -482,6 +524,30 @@ mod heard {
             let focus = GetFocus();
             let here = !focus.is_invalid() && (focus == host || IsChild(host, focus).as_bool());
             (since, here)
+        }
+    }
+
+    fn by_name(
+        app: &tauri::AppHandle,
+        window: &str,
+        asking: &str,
+        host: HWND,
+        name: &str,
+        user: bool,
+    ) {
+        if let Some(payload) = crate::web_swipe::named(name) {
+            crate::web_swipe::heard(app, window, asking, payload);
+        } else if let Some(key) = sought(name) {
+            let (since, focused) = typing_here(host);
+            if key.wanted_by(window) && taken_as_a_person_s(key, user, since, focused) {
+                passed(app, window, asking, key);
+            }
+        } else if let Some(key) = chord(name) {
+            if user {
+                played(app, window, key);
+            }
+        } else if actual(name) && user {
+            crate::web_page::actual_size(app, window, asking);
         }
     }
 
@@ -528,31 +594,15 @@ mod heard {
                     .unwrap_or_default();
 
                 if ordens_own(&name) {
-                    OURS.with_borrow_mut(|ours| ours.insert(asking.clone()));
-                }
-                if let Some(payload) = crate::web_swipe::named(&name) {
-                    crate::web_swipe::heard(&app, &window, &asking, payload);
-                    return Ok(());
-                }
-                if let Some(key) = sought(&name) {
-                    let (since, focused) = typing_here(host);
-                    if key.wanted_by(&window)
-                        && taken_as_a_person_s(key, user.as_bool(), since, focused)
-                    {
-                        passed(&app, &window, &asking, key);
-                    }
-                    return Ok(());
-                }
-                if let Some(key) = chord(&name) {
-                    if user.as_bool() {
-                        played(&app, &window, key);
-                    }
-                    return Ok(());
-                }
-                if actual(&name) {
-                    if user.as_bool() {
-                        crate::web_page::actual_size(&app, &window, &asking);
-                    }
+                    noted(
+                        &asking,
+                        &uri,
+                        Heard {
+                            ours: true,
+                            ..Heard::default()
+                        },
+                    );
+                    by_name(&app, &window, &asking, host, &name, user.as_bool());
                     return Ok(());
                 }
 
@@ -566,8 +616,12 @@ mod heard {
                 };
                 noted(
                     &asking,
-                    placed(&name, user.as_bool(), keys, menu),
-                    user.as_bool(),
+                    &uri,
+                    Heard {
+                        ours: false,
+                        said: placed(&name, user.as_bool(), keys, menu),
+                        unasked: !user.as_bool(),
+                    },
                 );
                 Ok(())
             }));
@@ -673,25 +727,78 @@ pub fn listen(
 }
 
 #[cfg(any(not(windows), feature = "cef"))]
-pub fn taken(_tab: &str) -> Option<Asked> {
-    None
-}
-
-#[cfg(any(not(windows), feature = "cef"))]
-pub fn ours(_tab: &str) -> bool {
-    false
-}
-
-#[cfg(any(not(windows), feature = "cef"))]
-pub fn unasked(_tab: &str) -> bool {
-    false
+pub fn heard(_tab: &str, _url: &tauri::Url) -> Heard {
+    Heard::default()
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        actual, chord, placed, sought, taken_as_a_person_s, Ask, Asked, Held, Passed, SCRIPT,
+        actual, chord, placed, sought, taken_as_a_person_s, Ask, Asked, Heard, Held, Passed,
+        Waiting, SCRIPT, WAITING,
     };
+
+    const UNASKED: Heard = Heard {
+        ours: false,
+        said: None,
+        unasked: true,
+    };
+
+    #[test]
+    fn a_storm_of_opens_keeps_each_request_s_own_verdict() {
+        let mut waiting = Waiting::default();
+        let asked = Heard {
+            said: Some(Asked::Front),
+            ..Heard::default()
+        };
+        waiting.heard("tab", "https://one.example/", UNASKED);
+        waiting.heard("tab", "https://two.example/", asked);
+        waiting.heard("tab", "https://three.example/", UNASKED);
+        waiting.heard("other", "https://one.example/", asked);
+
+        assert_eq!(waiting.taken("tab", "https://one.example/"), Some(UNASKED));
+        assert_eq!(waiting.taken("tab", "https://two.example/"), Some(asked));
+        assert_eq!(
+            waiting.taken("tab", "https://three.example/"),
+            Some(UNASKED)
+        );
+        assert_eq!(waiting.taken("tab", "https://three.example/"), None);
+        assert_eq!(waiting.taken("other", "https://one.example/"), Some(asked));
+    }
+
+    #[test]
+    fn every_unasked_open_of_a_burst_to_one_address_stays_unasked() {
+        let mut waiting = Waiting::default();
+        for _ in 0..20 {
+            waiting.heard("tab", "https://same.example/", UNASKED);
+        }
+        for _ in 0..20 {
+            assert_eq!(waiting.taken("tab", "https://same.example/"), Some(UNASKED));
+        }
+        assert_eq!(waiting.taken("tab", "https://same.example/"), None);
+    }
+
+    #[test]
+    fn a_request_is_found_by_the_address_the_engine_parsed() {
+        let mut waiting = Waiting::default();
+        waiting.heard("tab", "HTTPS://Example.com", UNASKED);
+        assert_eq!(waiting.taken("tab", "https://example.com/"), Some(UNASKED));
+    }
+
+    #[test]
+    fn requests_never_answered_do_not_pile_up() {
+        let mut waiting = Waiting::default();
+        for at in 0..WAITING * 3 {
+            waiting.heard("tab", &format!("https://example.com/{at}"), at);
+        }
+        assert_eq!(waiting.taken("tab", "https://example.com/0"), None);
+        let last = WAITING * 3 - 1;
+        assert_eq!(
+            waiting.taken("tab", &format!("https://example.com/{last}")),
+            Some(last)
+        );
+        assert_eq!(waiting.tabs["tab"].len(), WAITING - 1);
+    }
 
     const NONE: Held = Held {
         ctrl: false,

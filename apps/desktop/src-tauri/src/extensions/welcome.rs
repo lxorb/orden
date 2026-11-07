@@ -41,7 +41,7 @@ pub use engine::{adding, listen, taken};
 #[cfg(windows)]
 mod engine {
     use std::cell::RefCell;
-    use std::collections::{BTreeMap, HashSet};
+    use std::collections::BTreeMap;
     use std::sync::{Mutex, PoisonError};
     use std::time::{Duration, Instant};
 
@@ -64,7 +64,8 @@ mod engine {
     const EVERY: Duration = Duration::from_millis(200);
 
     thread_local! {
-        static HUSHED: RefCell<HashSet<String>> = RefCell::new(HashSet::new());
+        static HUSHED: RefCell<crate::web_opens::Waiting<bool>> =
+            RefCell::new(crate::web_opens::Waiting::default());
     }
 
     pub fn adding(store: &str, browser: u32) {
@@ -75,8 +76,10 @@ mod engine {
         watch(browser);
     }
 
-    pub fn taken(tab: &str) -> bool {
-        HUSHED.with_borrow_mut(|hushed| hushed.remove(tab))
+    pub fn taken(tab: &str, url: &tauri::Url) -> bool {
+        HUSHED
+            .with_borrow_mut(|hushed| hushed.taken(tab, url.as_str()))
+            .unwrap_or(false)
     }
 
     #[allow(
@@ -92,6 +95,9 @@ mod engine {
             let Some(args) = args else {
                 return Ok(());
             };
+            let mut uri = windows_core::PWSTR::null();
+            unsafe { args.Uri(&raw mut uri)? };
+            let uri = webview2_com::take_pwstr(uri);
             let mut user = windows_core::BOOL::default();
             let _ = unsafe { args.IsUserInitiated(&raw mut user) };
             let hushed = QUIET.lock().unwrap_or_else(PoisonError::into_inner).hushed(
@@ -99,13 +105,7 @@ mod engine {
                 user.as_bool(),
                 Instant::now(),
             );
-            HUSHED.with_borrow_mut(|all| {
-                if hushed {
-                    all.insert(tab.clone());
-                } else {
-                    all.remove(&tab);
-                }
-            });
+            HUSHED.with_borrow_mut(|all| all.heard(&tab, &uri, hushed));
             Ok(())
         }));
         unsafe {
