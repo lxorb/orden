@@ -63,7 +63,7 @@ describe('a chat’s socket', () => {
       const socket = new ChatSocket(CHAT, 'token', null, () => 0, ears, dial)
       sockets[0]?.on.opened()
       sockets[0]?.on.closed(1006)
-      vi.advanceTimersByTime(60_000)
+      vi.advanceTimersByTime(1_000)
       expect(sockets).toHaveLength(2)
 
       sockets[1]?.on.opened()
@@ -72,6 +72,46 @@ describe('a chat’s socket', () => {
       expect(sockets).toHaveLength(2)
       expect(ears.calls.at(-1)).toBe('ended []')
       expect(socket.open).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('a socket that stops answering its beats is dropped and dialled again', () => {
+    vi.useFakeTimers()
+    try {
+      const { sockets, dial } = dialed()
+      const ears = heard()
+      const socket = new ChatSocket(CHAT, 'token', null, () => 0, ears, dial)
+      sockets[0]?.on.opened()
+      for (let beat = 0; beat < 6; beat++) {
+        vi.advanceTimersByTime(10_000)
+        sockets[0]?.on.heard('ok')
+      }
+      expect(sockets[0]?.closed).toBe(false)
+      expect(socket.open).toBe(true)
+
+      vi.advanceTimersByTime(30_000)
+      expect(sockets[0]?.closed).toBe(true)
+      expect(ears.calls.at(-1)).toBe('state [false]')
+      vi.advanceTimersByTime(1_000)
+      expect(sockets).toHaveLength(2)
+      socket.close()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('a socket that never opens is given up on and dialled again', () => {
+    vi.useFakeTimers()
+    try {
+      const { sockets, dial } = dialed()
+      const socket = new ChatSocket(CHAT, 'token', null, () => 0, heard(), dial)
+      vi.advanceTimersByTime(10_000)
+      expect(sockets[0]?.closed).toBe(true)
+      vi.advanceTimersByTime(1_000)
+      expect(sockets).toHaveLength(2)
+      socket.close()
     } finally {
       vi.useRealTimers()
     }
