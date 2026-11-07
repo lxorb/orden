@@ -91,11 +91,36 @@ describe('randomPassword', () => {
 
 describe('memorablePassword', () => {
   it('joins capitalised words with one number', () => {
-    const password = memorablePassword(DEFAULT_MEMORABLE, WORDS)
-    const parts = password.split('-')
-    expect(parts).toHaveLength(5)
-    for (const part of parts) expect(part).toMatch(/^[A-Z][a-z-]*[2-9]?$/)
-    expect(parts.filter((part) => /[2-9]$/.test(part))).toHaveLength(1)
+    for (let seed = 0; seed < 2000; seed++) {
+      const parts = memorablePassword(DEFAULT_MEMORABLE, WORDS, seeded(seed)).split('-')
+      expect(parts).toHaveLength(5)
+      for (const part of parts) expect(part).toMatch(/^[A-Z][a-z]*[2-9]?$/)
+      expect(parts.filter((part) => /[2-9]$/.test(part))).toHaveLength(1)
+    }
+  })
+
+  it('shows as many words as asked, whatever word and separator', () => {
+    const marks = { hyphen: '-', space: ' ', period: '.', comma: ',', underscore: '_' } as const
+    const wrong: string[] = []
+    for (const [separator, mark] of Object.entries(marks) as [keyof typeof marks, string][])
+      for (const word of WORDS) {
+        const rule = { words: 3, separator, capitalize: true, numbers: true }
+        const password = memorablePassword(rule, [word], seeded(word.length))
+        const parts = password.split(mark).map((part) => part.replace(/[2-9]$/, '').toLowerCase())
+        if (parts.join(' ') !== `${word} ${word} ${word}`) wrong.push(password)
+      }
+    const rule = {
+      words: 4,
+      separator: 'digitOrSymbol',
+      capitalize: false,
+      numbers: false,
+    } as const
+    for (const word of WORDS) {
+      const password = memorablePassword(rule, [word], seeded(word.length))
+      if (password.split(/[^a-z]/).join(' ') !== `${word} ${word} ${word} ${word}`)
+        wrong.push(password)
+    }
+    expect(wrong).toEqual([])
   })
 
   it('takes words from the list it is given', () => {
