@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import pathlib
 import time
 from collections.abc import Callable
 from typing import Any
@@ -78,6 +77,13 @@ PANE = (
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
 
+def put_note(ask: Callable[[str], Any], root: str) -> Any:
+    there = root.rstrip("/\\") + ("\\" if "\\" in root else "/") + NOTE
+    return ask(
+        f"return nib.workspace.entryAt({json.dumps(there)}) ? {json.dumps(there)}"
+        f" : await nib.workspace.noteFrom({json.dumps(WORDS)}, {json.dumps(root)})"
+    )
+
 def wrong_drop(said: dict[str, Any]) -> list[str]:
     files = said.get("files")
     if not isinstance(files, list) or not files:
@@ -117,9 +123,10 @@ def carried(
     root = until("nib.workspace.activeSpace && nib.workspace.activeSpace.root")
     if not isinstance(root, str):
         return [f"[carry {name}] no space is open: {root}"], unverified
-    note = pathlib.Path(root) / NOTE
-    note.write_bytes(WORDS.encode("utf-8"))
-    if not until(f"void nib.workspace.loadTree(); return !!nib.workspace.entryAt({json.dumps(str(note))})"):
+    note = put_note(ask, root)
+    if not isinstance(note, str):
+        return [f"[carry {name}] the app put no note in the space: {note}"], unverified
+    if not until(f"void nib.workspace.loadTree(); return !!nib.workspace.entryAt({json.dumps(note)})"):
         return [f"[carry {name}] the file list never showed the note put in the space"], unverified
     ask(f"nib.workspace.openPage({json.dumps(url)}); return true")
     if not until(f"return ({TITLES}) !== ''", 40):
@@ -127,7 +134,7 @@ def carried(
         return [f"[carry {name}] the page never loaded: {seen}"], unverified
     time.sleep(2)
     pane = until(f"return {PANE}")
-    row = until(f"return {row_box(str(note))}")
+    row = until(f"return {row_box(note)}")
     if not isinstance(pane, dict) or not isinstance(row, dict):
         rows = ask("return [...document.querySelectorAll('.row[data-path]')].map((one) => [one.dataset.path, JSON.stringify(one.getBoundingClientRect())])")
         return [f"[carry {name}] no page or no row to drag: page {pane}, row {row}, rows {rows}"], unverified
