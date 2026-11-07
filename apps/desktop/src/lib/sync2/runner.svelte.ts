@@ -1165,7 +1165,10 @@ class Runner {
       } else if (op.op === 'moved') {
         if (op.kind === 'space') {
           const space = spaceRooted(engine.core.spaces.values(), op.from)
-          if (space) await engine.core.commit(engine.core.rootMoved(space.id, op.to))
+          if (space) {
+            await engine.core.commit(engine.core.rootMoved(space.id, op.to))
+            void this.named(space.id, op.to)
+          }
         } else {
           await engine.moved(op.from, op.to)
         }
@@ -1196,6 +1199,17 @@ class Runner {
       log('error', `sync: saved ${path} - ${String(error)}`)
     })
     this.nudge()
+  }
+
+  private async named(spaceId: string, root: string) {
+    const token = account.token
+    const listed = account.spaces.find((one) => one.id === spaceId)
+    const name = workspace.spaces.find((one) => samePath(one.root, root))?.name
+    if (!token || listed?.role !== 'owner' || !name || listed.name === name) return
+    await api.renameSpace(token, spaceId, name).then(
+      () => account.loadSpaces().catch(() => undefined),
+      (error: unknown) => log('warn', `sync: space name not sent - ${String(error)}`),
+    )
   }
 
   remoteIdFor(root: string): string | null {

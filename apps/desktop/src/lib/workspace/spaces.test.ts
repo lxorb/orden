@@ -117,18 +117,18 @@ describe('reading the spaces folder', () => {
 describe('the order the switcher shows', () => {
   test('takes the account’s, and says it moved', () => {
     const { ws } = store([WORK, HOME])
-    expect(applySpaceOrder(ws, ['Home', 'Work'])).toBe(true)
+    expect(applySpaceOrder(ws, [HOME.root, WORK.root])).toBe(true)
     expect(ws.spaces.map((one) => one.name)).toEqual(['Home', 'Work'])
   })
 
   test('and stays quiet where the account says what is already on show', () => {
     const { ws } = store([WORK, HOME])
-    expect(applySpaceOrder(ws, ['Work', 'Home'])).toBe(false)
+    expect(applySpaceOrder(ws, [WORK.root, HOME.root])).toBe(false)
   })
 
   test('and keeps the place of a space the account has never heard of', () => {
     const { ws } = store([WORK, HOME, { id: 'l', name: 'Local', root: '/spaces/Local' }])
-    applySpaceOrder(ws, ['Home', 'Work'])
+    applySpaceOrder(ws, [HOME.root, WORK.root])
 
     expect(ws.spaces.map((one) => one.name)).toEqual(['Home', 'Work', 'Local'])
   })

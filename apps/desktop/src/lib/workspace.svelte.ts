@@ -2114,8 +2114,8 @@ class Workspace {
     return spaces.moveSpace(this, id, beforeId)
   }
 
-  applySpaceOrder(names: string[]): boolean {
-    return spaces.applySpaceOrder(this, names)
+  applySpaceOrder(roots: string[]): boolean {
+    return spaces.applySpaceOrder(this, roots)
   }
 
   async selectSpace(id: string) {

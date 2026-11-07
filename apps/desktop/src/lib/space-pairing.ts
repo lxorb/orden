@@ -162,5 +162,11 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     )
   }
 
-  workspace.applySpaceOrder(account.spaces.map((space) => space.name))
+  const order = paired()
+  workspace.applySpaceOrder(
+    account.spaces.flatMap((space) => {
+      const pair = order.find((one) => one.spaceId === space.id)
+      return pair ? [pair.root] : []
+    }),
+  )
 }

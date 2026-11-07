@@ -1,6 +1,7 @@
 import { spacesAhead } from './ahead'
 import { account } from '../account.svelte'
 import { identifier } from '../identifier'
+import { samePath } from '../space-paths'
 import { invoke, isDesktop, isNative } from '../tauri'
 import type { Entry, Naming, Space } from '../workspace.svelte'
 import type { Tab } from './documents.svelte'
@@ -88,13 +89,15 @@ function sameOrder(ws: HoldsSpaces, next: readonly Space[]): boolean {
   return next.every((space, index) => space.id === ws.spaces[index]?.id)
 }
 
-export function applySpaceOrder(ws: HoldsSpaces, names: string[]): boolean {
-  const rank = new Map(names.map((name, index) => [name, index]))
-  const at = (name: string) => rank.get(name) ?? Number.MAX_SAFE_INTEGER
+export function applySpaceOrder(ws: HoldsSpaces, roots: string[]): boolean {
+  const at = (root: string) => {
+    const index = roots.findIndex((one) => samePath(one, root))
+    return index < 0 ? Number.MAX_SAFE_INTEGER : index
+  }
 
   const next = ws.spaces
     .map((space, index) => ({ space, index }))
-    .sort((a, b) => at(a.space.name) - at(b.space.name) || a.index - b.index)
+    .sort((a, b) => at(a.space.root) - at(b.space.root) || a.index - b.index)
     .map((entry) => entry.space)
 
   if (sameOrder(ws, next)) return false

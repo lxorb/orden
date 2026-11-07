@@ -8,6 +8,7 @@ const world = vi.hoisted(() => ({
   made: [] as string[],
   icons: [] as string[],
   ended: [] as string[],
+  order: [] as string[],
   online: true,
   adopted: [] as { name: string; fresh: boolean }[],
 }))
@@ -67,7 +68,9 @@ vi.mock('./workspace.svelte', () => ({
       return null
     },
     bookmarks: { adopt: () => null, said: () => undefined },
-    applySpaceOrder: () => undefined,
+    applySpaceOrder: (roots: string[]) => {
+      world.order = roots
+    },
   },
 }))
 
@@ -190,5 +193,22 @@ describe('a space deleted while the account could not be reached', () => {
 
     expect(world.ended).toEqual(['leave a-Theirs'])
     expect(world.adopted).toEqual([])
+  })
+})
+
+describe('the order the account keeps', () => {
+  test('is put on the spaces it pairs, whatever each is called on this device', async () => {
+    world.spaces = [
+      { id: '1', name: 'Job', root: '/Job' },
+      { id: '2', name: 'Home', root: '/Home' },
+    ]
+    signedIn('a', ['Home', 'Work'])
+    const { pairs, pairing: held } = pairing()
+    pairs.push({ root: '/Job', spaceId: 'a-Work', shared: false })
+    pairs.push({ root: '/Home', spaceId: 'a-Home', shared: false })
+
+    await pairSpaces('token-a', held)
+
+    expect(world.order).toEqual(['/Home', '/Job'])
   })
 })
