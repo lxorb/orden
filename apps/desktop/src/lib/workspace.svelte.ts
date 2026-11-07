@@ -1,4 +1,5 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
+import { isAccountInbox } from '@orden/bases/inbox'
 import { account } from './account.svelte'
 import { hiddenKinds, settings } from './settings.svelte'
 import { modes } from './modes.svelte'
@@ -2238,6 +2239,13 @@ class Workspace {
 
   async open(asked: string, options: OpenHow & { blank?: boolean; asNote?: boolean } = {}) {
     const path = this.spelled(asked)
+    if (isAccountInbox(path)) {
+      if (!__EVEN_PLUGIN__ && options.activate !== false) {
+        const { openBuiltin } = await import('./views/open')
+        openBuiltin('inbox')
+      }
+      return
+    }
     if (isScratchpad(path) && !options.asNote && !this.opened.at(path)) {
       const { scratchpad } = await import('./scratchpad/pad')
       scratchpad.show()

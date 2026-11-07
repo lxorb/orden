@@ -1,5 +1,7 @@
+import { isAccountInbox } from '@orden/bases/inbox'
 import { onDisk } from './on-disk'
 import { invoke } from './tauri'
+import { readText } from './workspace/in-turn'
 
 class Unreadable extends Error {
   constructor(readonly path: string) {
@@ -9,6 +11,7 @@ class Unreadable extends Error {
 }
 
 export async function readIfThere(path: string): Promise<string | null> {
+  if (isAccountInbox(path)) return readText(path)
   try {
     return await invoke<string>('read_note', { path })
   } catch {

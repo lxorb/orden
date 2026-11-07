@@ -8,6 +8,7 @@ import { insideSpace, samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { keeping } from '../workspace/file-ops'
+import { readText } from '../workspace/in-turn'
 import '../inbox/start.svelte'
 import { INBOX } from './inbox'
 import { projectFolders } from './projects'
@@ -21,7 +22,7 @@ import { type RowChange, writeRow } from './write'
 
 const store = new RowsStore({
   scan: (root) => invoke<SpaceLinks>('scan_links', { root }).catch(() => null),
-  read: (path) => invoke<string>('read_note', { path }).catch(() => null),
+  read: readText,
   open: () => ({
     root: links.rootOf(),
     scanned: () => links.scanned(),

@@ -53,7 +53,7 @@ import { invoke } from './tauri'
 import { coveredBy } from './workspace/archive.svelte'
 import type { NoteDoc } from './workspace/documents.svelte'
 import type { FileOp } from './workspace/file-ops'
-import { inFileTurn, writeEdited, writeInTurn } from './workspace/in-turn'
+import { inFileTurn, keepVersion, readText, writeEdited, writeInTurn } from './workspace/in-turn'
 import { log } from './log'
 
 export interface Reference {
@@ -857,9 +857,7 @@ class Links {
     const held = this.read.get(relative)
     if (held !== undefined) return held
 
-    const text = await invoke<string>('read_note', {
-      path: insideSpace(root, relative),
-    }).catch(() => null)
+    const text = await readText(insideSpace(root, relative))
     if (text === null) return null
 
     if (this.read.size >= CACHED) {
@@ -1251,8 +1249,7 @@ class Links {
           : retargetLinks(before, source, to)
         return words === null || words === before ? null : { before, words }
       }
-      const keepIt = (before: string) =>
-        invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
+      const keepIt = (before: string) => keepVersion(target, before)
       const refused = (error: unknown) => {
         log('warn', `a link in ${target} could not be rewritten: ${String(error)}`)
         return null
@@ -1310,7 +1307,7 @@ class Links {
       doc.flush()
       return doc.text
     }
-    return invoke<string>('read_note', { path: file }).catch(() => null)
+    return readText(file)
   }
 
   async searchBlocks(text: string, most: number, root = this.root): Promise<SpaceBlock[]> {
@@ -1374,8 +1371,7 @@ class Links {
 
       const id = named.id
       const after = named.source
-      const keepIt = () =>
-        invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
+      const keepIt = () => keepVersion(absolute, before)
 
       const edit = oneEdit(before, after)
       if (doc) {

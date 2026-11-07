@@ -14,11 +14,10 @@ import {
   endingsLike,
   reverse,
 } from '../search/replace'
-import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { FileAction, FileActions } from './undo.svelte'
-import { inFileTurn, writeEdited, writeInTurn } from './in-turn'
+import { inFileTurn, keepVersion, readText, writeEdited, writeInTurn } from './in-turn'
 
 export interface HoldsNotes {
   readonly activeSpace: Space | null
@@ -66,7 +65,7 @@ export async function noteText(ws: HoldsNotes, path: string): Promise<string | n
   const open = ws.documentAt(path)
   if (open) return open.text
 
-  return invoke<string>('read_note', { path }).catch(() => null)
+  return readText(path)
 }
 
 export function toggleTaskAt(
@@ -159,8 +158,7 @@ export interface Keeping {
 async function keep(path: string, content: string, keeping: Keeping) {
   if (keeping.snapshot === false) return
 
-  const source = keeping.source === undefined ? {} : { source: keeping.source }
-  await invoke('snapshot_note', { path, content, ...source }).catch(() => undefined)
+  await keepVersion(path, content, keeping.source)
 }
 
 export async function replaceInNotes(
@@ -216,7 +214,7 @@ async function writeClosed(
   keeping: Keeping,
 ): Promise<Undone | null> {
   const turn = await inFileTurn(change.path, async () => {
-    const read = await invoke<string>('read_note', { path: change.path }).catch(() => null)
+    const read = await readText(change.path)
     if (read === null) return null
 
     const now = endingsLike(read, change.before)

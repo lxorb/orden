@@ -107,21 +107,13 @@ def drive(browser: Browser) -> None:
     inbox = page.evaluate(
         """async () => {
           const { rows } = await window.ordenApp.tasks()
-          const path = await rows.inbox()
-          await window.ordenApp.workspace.openEntry(path, { activate: true })
-          return path
+          return rows.inbox()
         }"""
     )
     say(f"inbox: {inbox}")
     if not inbox or not inbox.replace("\\", "/").endswith("/.orden-inbox.md"):
         wrong(f"the inbox is {inbox!r}, not the account's own")
-    wait_for(
-        page,
-        f"window.ordenApp.workspace.active?.path === {json.dumps(inbox)} && document.querySelector('.cm-content')",
-        "the inbox open",
-    )
-    DRIVE.settled(page)
-    text = page.evaluate("() => window.orden.state.doc.toString()")
+    text = page.evaluate("async (path) => (await window.ordenApp.workspace.noteText(path)) ?? ''", inbox)
     say(f"Inbox: {text!r}")
     lines = [line for line in text.splitlines() if line.strip()]
     if not lines or lines[0] != "- [ ] Call mum tomorrow #family 🔺":
@@ -129,16 +121,29 @@ def drive(browser: Browser) -> None:
     if len(lines) < 2 or not lines[1].startswith("- [ ] Pay rent ⏫ 🛫 "):
         wrong(f"the second task is {lines[1:2]}, not Pay rent with its day and priority")
 
+    page.evaluate("async (path) => window.ordenApp.workspace.openEntry(path, { activate: true })", inbox)
+    wait_for(
+        page,
+        "[...document.querySelectorAll('.view-tab .task .words')].map((one) => one.textContent).join('|').includes('Call mum')",
+        "the Inbox view, not a note, opened for the inbox",
+    )
+    if page.evaluate("() => window.ordenApp.workspace.tabs.some((one) => /orden-inbox/.test(one.note?.path ?? ''))"):
+        wrong("the inbox opened as a note")
+    shot(page, "03-inbox")
+
+    DRIVE.seed(page, "# Copied\n\n" + "\n".join(lines) + "\n")
+    DRIVE.open_note(page, "Copied")
+    DRIVE.settled(page)
     page.evaluate(
-        "() => { const view = window.orden; view.dispatch({ selection: { anchor: 0 } }); view.focus() }"
+        "() => { const view = window.orden; view.dispatch({ selection: { anchor: view.state.doc.toString().indexOf('- [ ] Call') } }); view.focus() }"
     )
     wait_for(page, "document.querySelectorAll('.orden-task-chips').length === 1", "the chips in the note")
     drawn = page.evaluate("() => document.querySelector('.orden-task-chips').textContent")
-    words = page.evaluate("() => document.querySelectorAll('.cm-line')[1].textContent")
+    words = page.evaluate("() => document.querySelectorAll('.cm-line')[3].textContent")
     say(f"the second task reads {words!r}")
     if not drawn.endswith("⏫") or "📅" in words:
         wrong(f"the second task's fields are not hidden behind its chips: {words!r}")
-    shot(page, "03-inbox")
+    shot(page, "03-copied")
 
     DRIVE.seed(page, "# Board\n\n```tasks\nnot done\nsort by priority\n```\n")
     DRIVE.open_note(page, "Board")

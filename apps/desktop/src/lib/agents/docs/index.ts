@@ -8,6 +8,7 @@ import { theme } from '../../theme.svelte'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
+import { keepVersion } from '../../workspace/in-turn'
 import { type Desk, located, type NoteAt, SCRATCHPAD_TAB } from './desk'
 import {
   editNote,
@@ -68,9 +69,7 @@ const desk: Desk = {
   linksOf: (path) => links.outgoing(path),
   backlinksOf: (path) => links.backlinks(path),
   metaOf: (path) => workspace.itemMeta.of(path),
-  snapshot: async (path, content, source) => {
-    await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
-  },
+  snapshot: (path, content, source) => keepVersion(path, content, source),
   draftIn(id) {
     const tab = workspace.tabs.find((one) => one.id === id)
     return tab?.kind === 'note' && isDraft(tab.note) ? tab.note : null

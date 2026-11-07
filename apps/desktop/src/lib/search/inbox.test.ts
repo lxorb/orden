@@ -1,12 +1,13 @@
 import { expect, test, vi } from 'vitest'
 
 const ROOT = '/spaces/Work'
-const disk = new Map([
-  [`${ROOT}/.orden-inbox.md`, '- [ ] Call the dentist\n- [ ] Buy milk\n'],
-  ['/spaces/Other/.orden-inbox.md', '- [ ] Call the dentist\n'],
-])
+const disk = new Map([['/spaces/Other/Notes.md', 'nothing here\n']])
 
 vi.mock('../rows/home.svelte', () => ({ homeRoot: () => ROOT }))
+vi.mock('../inbox/start.svelte', () => ({}))
+vi.mock('../inbox/account.svelte', () => ({
+  accountInbox: { text: () => Promise.resolve('- [ ] Call the dentist\n- [ ] Buy milk\n') },
+}))
 
 vi.mock('../tauri', async (original) => ({
   ...(await original<typeof import('../tauri')>()),

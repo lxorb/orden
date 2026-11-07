@@ -14,7 +14,7 @@ import type { NoteDoc } from './documents.svelte'
 import type { Kind } from './file-ops'
 import type { Binning, FileAction, FileActions, Kept } from './undo.svelte'
 import type { Bookmark } from './bookmarks.svelte'
-import { inFileTurn, writeEdited, writeInTurn } from './in-turn'
+import { inFileTurn, readText, writeEdited, writeInTurn } from './in-turn'
 import { writeFile } from './write-file'
 
 export interface PutsBack {
@@ -312,7 +312,7 @@ async function unarchive(
 async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'replace' }>) {
   for (const note of action.notes) {
     if (ws.documentAt(note.path)) continue
-    const now = await invoke<string>('read_note', { path: note.path }).catch(() => null)
+    const now = await readText(note.path)
     if (now === null) throw new Error(`${note.path} will not read, so nothing is written over it`)
   }
 
@@ -328,7 +328,7 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
     }
 
     const down = await inFileTurn(note.path, async () => {
-      const file = await invoke<string>('read_note', { path: note.path }).catch(() => null)
+      const file = await readText(note.path)
       if (file === null)
         throw new Error(`${note.path} will not read, so nothing is written over it`)
       const now = endingsLike(file, note.after)
