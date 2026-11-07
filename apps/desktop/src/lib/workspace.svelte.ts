@@ -992,7 +992,7 @@ class Workspace {
           const at = Math.max(this.tabsIn(tab.paneId).indexOf(tab), 0)
           this.closed.record({ draft: this.draftOf(tab), paneId: tab.paneId, at, batch })
         }
-        if (tab.kind === 'web') pages.forget(tab.id)
+        pages.forget(tab.id)
       }
     }
 
@@ -2543,7 +2543,7 @@ class Workspace {
       if (last && isDraft(tab.note)) void this.trashWords(tab.note)
     }
 
-    if (tab.kind === 'web') pages.forget(tab.id)
+    pages.forget(tab.id)
 
     this.tabs = this.tabs.filter((one) => one.id !== id)
     if (this.previewTabId === id) this.previewTabId = null
