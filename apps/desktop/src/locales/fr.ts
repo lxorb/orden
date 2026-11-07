@@ -3622,4 +3622,5 @@ export const fr: Dictionary = {
     'Envoie ce que faisait Orden lors d’un plantage ou d’un blocage ; jamais de notes, noms, chemins ni mots de passe.',
   'Send crash reports to help improve Orden':
     'Envoyer les rapports de plantage pour aider à améliorer Orden',
+  'Move to {space}?': 'Déplacer vers {space} ?',
 }

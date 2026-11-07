@@ -3499,4 +3499,5 @@ export const mr: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden क्रॅश किंवा अडकल्यावर काय करत होते ते पाठवते; नोट्स, नावे, पथ किंवा पासवर्ड कधीच नाही.',
   'Send crash reports to help improve Orden': 'Orden सुधारण्यास मदत करण्यासाठी क्रॅश अहवाल पाठवा',
+  'Move to {space}?': '{space} मध्ये हलवायचे?',
 }

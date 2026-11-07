@@ -3601,4 +3601,5 @@ export const es: Dictionary = {
     'Envía qué hacía Orden al fallar o bloquearse; nunca notas, nombres, rutas ni contraseñas.',
   'Send crash reports to help improve Orden':
     'Enviar informes de fallos para ayudar a mejorar Orden',
+  'Move to {space}?': '¿Mover a {space}?',
 }

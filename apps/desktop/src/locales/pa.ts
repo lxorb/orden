@@ -3510,4 +3510,5 @@ export const pa: Dictionary = {
     'Orden ਕ੍ਰੈਸ਼ ਜਾਂ ਰੁਕਣ ਵੇਲੇ ਕੀ ਕਰ ਰਿਹਾ ਸੀ ਇਹ ਭੇਜਦਾ ਹੈ; ਨੋਟ, ਨਾਂ, ਪਾਥ ਜਾਂ ਪਾਸਵਰਡ ਕਦੇ ਨਹੀਂ।',
   'Send crash reports to help improve Orden':
     'Orden ਨੂੰ ਬਿਹਤਰ ਬਣਾਉਣ ਵਿੱਚ ਮਦਦ ਲਈ ਕ੍ਰੈਸ਼ ਰਿਪੋਰਟਾਂ ਭੇਜੋ',
+  'Move to {space}?': 'ਕੀ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
 }

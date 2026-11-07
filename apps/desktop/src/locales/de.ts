@@ -3568,4 +3568,5 @@ export const de: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Sendet, was Orden beim Absturz oder Hänger tat; nie Notizen, Namen, Pfade oder Passwörter.',
   'Send crash reports to help improve Orden': 'Absturzberichte senden, um Orden zu verbessern',
+  'Move to {space}?': 'Nach {space} verschieben?',
 }

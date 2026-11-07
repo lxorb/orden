@@ -3328,4 +3328,5 @@ export const yue: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     '傳送 Orden 當機或凍結時做緊乜；永遠唔傳筆記、名、路徑或密碼。',
   'Send crash reports to help improve Orden': '傳送當機報告，幫手改善 Orden',
+  'Move to {space}?': '搬去 {space}？',
 }

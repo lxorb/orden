@@ -17,6 +17,7 @@ export interface TabKindTraits {
   readonly outsideTitle: boolean
   readonly preview: 'reading' | 'scrollback' | 'photograph' | 'drawn' | 'picture' | 'mark'
   readonly panels: readonly TabPanel[]
+  readonly asksToMove: boolean
 }
 
 export type TabPanel = 'outline' | 'links'
@@ -39,6 +40,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'reading',
     panels: ['outline', 'links'],
+    asksToMove: true,
   },
   graph: {
     words: false,
@@ -57,6 +59,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'drawn',
     panels: [],
+    asksToMove: false,
   },
   pdf: {
     words: false,
@@ -75,6 +78,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'drawn',
     panels: ['outline', 'links'],
+    asksToMove: false,
   },
   canvas: {
     words: true,
@@ -93,6 +97,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'drawn',
     panels: ['links'],
+    asksToMove: true,
   },
   pages: {
     words: true,
@@ -111,6 +116,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'drawn',
     panels: ['outline', 'links'],
+    asksToMove: true,
   },
   web: {
     words: false,
@@ -129,6 +135,7 @@ export const TAB_KINDS = {
     outsideTitle: true,
     preview: 'photograph',
     panels: [],
+    asksToMove: false,
   },
   terminal: {
     words: false,
@@ -147,6 +154,7 @@ export const TAB_KINDS = {
     outsideTitle: true,
     preview: 'scrollback',
     panels: [],
+    asksToMove: false,
   },
   view: {
     words: false,
@@ -165,6 +173,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'drawn',
     panels: [],
+    asksToMove: false,
   },
   chat: {
     words: false,
@@ -183,6 +192,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'drawn',
     panels: [],
+    asksToMove: true,
   },
   channel: {
     words: false,
@@ -201,6 +211,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'drawn',
     panels: [],
+    asksToMove: false,
   },
   application: {
     words: false,
@@ -219,6 +230,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'picture',
     panels: [],
+    asksToMove: false,
   },
   explorer: {
     words: false,
@@ -237,6 +249,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'drawn',
     panels: [],
+    asksToMove: false,
   },
   pass: {
     words: false,
@@ -255,6 +268,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'mark',
     panels: [],
+    asksToMove: false,
   },
   time: {
     words: false,
@@ -273,6 +287,7 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'drawn',
     panels: [],
+    asksToMove: false,
   },
 } as const satisfies Record<string, TabKindTraits>
 

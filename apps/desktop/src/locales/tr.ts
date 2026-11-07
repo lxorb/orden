@@ -3522,4 +3522,5 @@ export const tr: Dictionary = {
     'Orden çöktüğünde ya da donduğunda ne yaptığını gönderir; asla not, ad, yol veya parola göndermez.',
   'Send crash reports to help improve Orden':
     'Orden’ı geliştirmeye yardımcı olmak için çökme raporları gönder',
+  'Move to {space}?': '{space} alanına taşınsın mı?',
 }

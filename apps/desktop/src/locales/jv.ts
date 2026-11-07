@@ -3422,4 +3422,5 @@ export const jv: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Ngirim apa sing ditindakake Orden nalika crash utawa macet; ora tau cathetan, jeneng, path utawa sandhi.',
   'Send crash reports to help improve Orden': 'Kirim laporan crash kanggo mbantu nambah apik Orden',
+  'Move to {space}?': 'Pindhah menyang {space}?',
 }

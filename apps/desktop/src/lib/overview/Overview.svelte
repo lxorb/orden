@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick as laidOut, untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { t } from '../i18n.svelte'
+  import { key, t } from '../i18n.svelte'
   import { chorded } from '../keys'
   import { stillness } from '../motion'
   import { overlays } from '../overlays'
@@ -10,6 +10,7 @@
   import { tabOverview } from '../surfaces.svelte'
   import TabMark from '../TabMark.svelte'
   import { trap } from '../trap'
+  import { prompt } from '../prompt.svelte'
   import { pages } from '../web-tab/pages.svelte'
   import { isDraft } from '../workspace/drafts'
   import { type Tab, workspace } from '../workspace.svelte'
@@ -38,6 +39,7 @@
   import { canWriteAt } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { mayCarry } from '../workspace/chat-carry'
+  import { TAB_KINDS } from '../workspace/tab-kinds'
   import type { Frame } from '../workspace/pane-tree'
   import { movingOf, spacesFor } from '../workspace/space-move'
   import { faces } from './faces.svelte'
@@ -1216,6 +1218,7 @@
     const hand = held
     if (!hand) return
     dragged = true
+    const before = places.windows
     const lying = laid.slots
     const pushed = Object.entries(aside)
     aside = {}
@@ -1237,7 +1240,7 @@
           [hand.whole]: { ...place, x: place.x + box.x - was.x, y: place.y + box.y - was.y },
         })
       void settleApart(hand.whole, true)
-    } else if (hand.landing) drop(ids, hand.landing)
+    } else if (hand.landing) void carry(ids, hand.landing, before)
     else if (box) {
       void settleApart(hand.from, false)
       const own = lying.filter((one) => cellOf.get(one.id) === spaceKey)
@@ -1300,6 +1303,31 @@
     held = null
     aside = {}
     aimAll()
+  }
+
+  async function carry(
+    ids: readonly string[],
+    landing: Landing & { kind: 'space' },
+    before: Readonly<Record<string, Box>>,
+  ) {
+    const asks = ids.some((id) => {
+      const tab = byId.get(id)
+      return !!tab && TAB_KINDS[tab.kind].asksToMove
+    })
+    if (asks) {
+      for (const id of ids) {
+        const box = before[id]
+        if (box) places.keepWindows({ [id]: box }, workspace.tabs)
+        else places.forgetWindow(id, workspace.tabs)
+      }
+      const space = workspace.spaces.find((one) => one.id === landing.key)?.name ?? ''
+      const sure = await prompt.confirm({
+        title: t('Move to {space}?', { space }),
+        confirmLabel: key('Move'),
+      })
+      if (!sure) return
+    }
+    drop(ids, landing)
   }
 
   function drop(ids: readonly string[], landing: Landing) {

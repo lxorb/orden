@@ -3543,4 +3543,5 @@ export const sw: Dictionary = {
     'Hutuma Orden ilichokuwa ikifanya ilipoharibika au kukwama; kamwe si madokezo, majina, njia au manenosiri.',
   'Send crash reports to help improve Orden':
     'Tuma ripoti za kuharibika ili kusaidia kuboresha Orden',
+  'Move to {space}?': 'Ihamishe kwenda {space}?',
 }

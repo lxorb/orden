@@ -3373,4 +3373,5 @@ export const th: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'ส่งสิ่งที่ Orden ทำอยู่ตอนขัดข้องหรือค้าง ไม่ส่งโน้ต ชื่อ พาธ หรือรหัสผ่าน',
   'Send crash reports to help improve Orden': 'ส่งรายงานการขัดข้องเพื่อช่วยปรับปรุง Orden',
+  'Move to {space}?': 'ย้ายไปที่ {space} ไหม?',
 }

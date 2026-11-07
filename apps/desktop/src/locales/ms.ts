@@ -3435,4 +3435,5 @@ export const ms: Dictionary = {
     'Menghantar apa yang dilakukan Orden semasa ranap atau beku; tidak sekali-kali nota, nama, laluan atau kata laluan.',
   'Send crash reports to help improve Orden':
     'Hantar laporan ranap untuk membantu menambah baik Orden',
+  'Move to {space}?': 'Alihkan ke {space}?',
 }

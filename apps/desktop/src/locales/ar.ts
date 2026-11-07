@@ -3690,4 +3690,5 @@ export const ar: Dictionary = {
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'يرسل ما كان Orden يفعله عند تعطّله أو تجمّده؛ دون الملاحظات أو الأسماء أو المسارات أو كلمات المرور.',
   'Send crash reports to help improve Orden': 'إرسال تقارير الأعطال للمساعدة في تحسين Orden',
+  'Move to {space}?': 'النقل إلى {space}؟',
 }
