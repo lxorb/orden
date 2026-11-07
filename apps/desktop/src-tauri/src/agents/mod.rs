@@ -610,6 +610,17 @@ pub fn agents_log(
 }
 
 #[tauri::command(async)]
+pub fn agents_log_after(
+    webview: tauri::Webview,
+    app: AppHandle,
+    day: String,
+    from: u64,
+) -> Result<log::After, String> {
+    from_the_app(&webview)?;
+    Ok(log::read_after(&app, &day, from))
+}
+
+#[tauri::command(async)]
 pub fn agents_log_days(webview: tauri::Webview, app: AppHandle) -> Result<Vec<String>, String> {
     from_the_app(&webview)?;
     Ok(log::days(&app))

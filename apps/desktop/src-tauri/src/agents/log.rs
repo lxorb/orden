@@ -1,6 +1,6 @@
 use std::cell::Cell;
 use std::fs::{self, OpenOptions};
-use std::io::Write as _;
+use std::io::{Read as _, Seek as _, SeekFrom, Write as _};
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
 
@@ -63,20 +63,71 @@ pub fn write(app: &AppHandle, mut line: Line<'_>) {
     }
 }
 
-pub fn read_day(app: &AppHandle, day: &str) -> Vec<Value> {
-    let Some(path) = is_day(day)
+fn day_path(app: &AppHandle, day: &str) -> Option<PathBuf> {
+    is_day(day)
         .then(|| folder(app).ok())
         .flatten()
         .map(|folder| folder.join(format!("{day}.jsonl")))
-    else {
-        return Vec::new();
-    };
-    fs::read_to_string(path)
+}
+
+pub fn read_day(app: &AppHandle, day: &str) -> Vec<Value> {
+    day_path(app, day)
+        .map(|path| lines_of(&fs::read_to_string(path).unwrap_or_default()))
         .unwrap_or_default()
-        .lines()
+}
+
+fn lines_of(text: &str) -> Vec<Value> {
+    text.lines()
         .filter_map(|line| serde_json::from_str(line).ok())
         .map(shortened)
         .collect()
+}
+
+#[derive(Debug, Serialize)]
+pub struct After {
+    lines: Vec<Value>,
+    to: u64,
+    fresh: bool,
+}
+
+pub fn read_after(app: &AppHandle, day: &str, from: u64) -> After {
+    day_path(app, day).map_or_else(
+        || After {
+            lines: Vec::new(),
+            to: 0,
+            fresh: true,
+        },
+        |path| after_in(&path, from),
+    )
+}
+
+fn after_in(path: &Path, from: u64) -> After {
+    let nothing = |to, fresh| After {
+        lines: Vec::new(),
+        to,
+        fresh,
+    };
+    let Ok(mut file) = fs::File::open(path) else {
+        return nothing(0, true);
+    };
+    let size = file.metadata().map_or(0, |found| found.len());
+    let fresh = from > size;
+    let start = if fresh { 0 } else { from };
+    let mut bytes = Vec::new();
+    if file.seek(SeekFrom::Start(start)).is_err()
+        || file.take(size - start).read_to_end(&mut bytes).is_err()
+    {
+        return nothing(start, fresh);
+    }
+    let whole = bytes
+        .iter()
+        .rposition(|byte| *byte == b'\n')
+        .map_or(0, |at| at + 1);
+    After {
+        lines: lines_of(&String::from_utf8_lossy(&bytes[..whole])),
+        to: start + whole as u64,
+        fresh,
+    }
 }
 
 fn shortened(value: Value) -> Value {
@@ -233,6 +284,36 @@ mod tests {
         assert_eq!(kept["edits"][0]["insert_after"], cut.as_str());
         assert_eq!(kept["count"], 3);
         assert_eq!(shortened(json!("short")), json!("short"));
+    }
+
+    #[test]
+    fn a_day_is_read_on_from_where_the_last_read_stopped() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let path = dir.path().join("2026-11-07.jsonl");
+        fs::write(&path, "{\"n\":1}\n{\"n\":2}\n{\"n\":3").expect("written");
+
+        let first = after_in(&path, 0);
+        assert_eq!(first.lines, [json!({ "n": 1 }), json!({ "n": 2 })]);
+        assert_eq!((first.to, first.fresh), (16, false));
+
+        let none = after_in(&path, first.to);
+        assert!(none.lines.is_empty() && !none.fresh);
+        assert_eq!(none.to, first.to);
+
+        let mut file = OpenOptions::new().append(true).open(&path).expect("open");
+        writeln!(file, "}}").expect("appended");
+        writeln!(file, "{{\"n\":4}}").expect("appended");
+        let more = after_in(&path, first.to);
+        assert_eq!(more.lines, [json!({ "n": 3 }), json!({ "n": 4 })]);
+        assert!(!more.fresh);
+
+        fs::write(&path, "{\"n\":5}\n").expect("cleared");
+        let again = after_in(&path, more.to);
+        assert!(again.fresh);
+        assert_eq!(again.lines, [json!({ "n": 5 })]);
+
+        let gone = after_in(&dir.path().join("2026-11-08.jsonl"), 9);
+        assert!(gone.fresh && gone.lines.is_empty() && gone.to == 0);
     }
 
     #[test]

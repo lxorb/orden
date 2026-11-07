@@ -78,8 +78,23 @@ export class Activity {
     this.now = now
   }
 
-  async readLog(): Promise<void> {
-    this.lines = await this.source.log(today())
+  private logDay = ''
+  private logTo = 0
+  private logging: Promise<void> = Promise.resolve()
+
+  readLog(): Promise<void> {
+    this.logging = this.logging.catch(() => undefined).then(() => this.readMore())
+    return this.logging
+  }
+
+  private async readMore(): Promise<void> {
+    const day = today()
+    const same = day === this.logDay
+    const read = await this.source.log(day, same ? this.logTo : 0)
+    if (!same || read.fresh) this.lines = read.lines
+    else if (read.lines.length) this.lines = [...this.lines, ...read.lines]
+    this.logDay = day
+    this.logTo = read.to
   }
 
   grantOf(agent: string): Grant | undefined {

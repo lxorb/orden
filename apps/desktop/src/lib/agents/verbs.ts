@@ -254,6 +254,7 @@ export const AGENT_COMMANDS = [
   'agents_dialog_path',
   'agents_state',
   'agents_log',
+  'agents_log_after',
   'agents_log_days',
   'agents_log_clear',
   'agents_adopt',
