@@ -278,7 +278,7 @@ fn planned_by(
             })
         };
         let mut to = folder.join(name);
-        if inside(from, folder) {
+        if crate::carry::goes_into_itself(from, folder) {
             out.failed
                 .push(failed(from, "a folder cannot go inside itself".to_owned()));
             continue;
@@ -733,6 +733,20 @@ mod tests {
         );
         assert!(plan.is_empty());
         assert_eq!(out.failed.len(), 1);
+
+        let seen = dir.path().join("seen");
+        if crate::paths::link_to(&folder, &seen) {
+            let mut out = Transferred::default();
+            let plan = planned(
+                std::slice::from_ref(&folder),
+                &seen.join("deeper"),
+                How::Copy,
+                Clash::Skip,
+                &mut out,
+            );
+            assert!(plan.is_empty(), "a folder went inside itself by a link");
+            assert_eq!(out.failed.len(), 1);
+        }
     }
 
     fn meter() -> Meter<'static> {
