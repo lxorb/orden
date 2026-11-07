@@ -168,39 +168,51 @@ fn copy_or_nothing(source: &Path, target: &Path, links: Links) -> Result<(), Str
         return Err(format!("{} cannot go inside itself", source.display()));
     }
 
-    copy_all(source, target, links).inspect_err(|_| {
-        let _ = taken_away(target);
+    let mut made = false;
+    copy_all(source, target, links, &mut made).inspect_err(|_| {
+        if made {
+            let _ = taken_away(target);
+        }
     })
 }
 
-fn copy_all(source: &Path, target: &Path, links: Links) -> Result<(), String> {
+fn copy_all(source: &Path, target: &Path, links: Links, made: &mut bool) -> Result<(), String> {
     let kind = fs::symlink_metadata(source).map_err(|error| cannot("read", source, &error))?;
 
     if kind.is_symlink() {
-        match links {
-            Links::Kept => {
-                let points = fs::read_link(source);
-                return relinked(source, target, points);
-            }
+        let points = match links {
+            Links::Kept => Some(fs::read_link(source)),
             Links::Followed if !source.is_file() => {
-                let points = fs::canonicalize(source).or_else(|_| fs::read_link(source));
-                return relinked(source, target, points);
+                Some(fs::canonicalize(source).or_else(|_| fs::read_link(source)))
             }
-            Links::Followed => {}
+            Links::Followed => None,
+        };
+        if let Some(points) = points {
+            relinked(source, target, points)?;
+            *made = true;
+            return Ok(());
         }
     }
 
     if kind.is_dir() {
-        made(target)?;
+        fs::create_dir(target).map_err(|error| cannot("create", target, &error))?;
+        *made = true;
         let entries = fs::read_dir(source).map_err(|error| cannot("read", source, &error))?;
         for entry in entries {
             let entry = entry.map_err(|error| cannot("read", source, &error))?;
-            copy_all(&entry.path(), &target.join(entry.file_name()), links)?;
+            copy_all(
+                &entry.path(),
+                &target.join(entry.file_name()),
+                links,
+                &mut true,
+            )?;
         }
         return Ok(());
     }
 
-    fs::copy(source, target)
+    let copied = fs::copy(source, target);
+    *made = copied.is_ok() || fs::symlink_metadata(target).is_ok();
+    copied
         .map(|_| ())
         .map_err(|error| cannot("copy", source, &error))
 }
@@ -243,7 +255,7 @@ fn put_back(copy: &Path, source: &Path) -> Result<(), String> {
         return Ok(());
     }
 
-    copy_all(copy, source, Links::Kept)
+    copy_all(copy, source, Links::Kept, &mut false)
 }
 
 fn taken_away(path: &Path) -> io::Result<()> {
