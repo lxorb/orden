@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { fill, length, pageCss, pageSetupFor, paperInches, withRunningText } from './page-setup'
+import {
+  fill,
+  length,
+  pageCss,
+  pageSetupFor,
+  paperInches,
+  runningDate,
+  withRunningText,
+} from './page-setup'
 import { DEFAULT_PAGE_SETUP } from './paper'
 
 const withMatter = (body: string) => `---\n${body}\n---\n\n# Note\n`
@@ -91,6 +99,11 @@ describe('running text', () => {
 
   test('leaves an unknown placeholder alone', () => {
     expect(fill('${pages}', 'Notes', '2026-09-03')).toBe('${pages}')
+  })
+
+  test("dates a note by the day where it is printed, not by UTC's", () => {
+    expect(runningDate('# Notes', undefined, new Date(2026, 8, 3, 0, 30))).toBe('2026-09-03')
+    expect(runningDate('# Notes', undefined, new Date(2026, 8, 3, 23, 30))).toBe('2026-09-03')
   })
 })
 
