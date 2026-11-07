@@ -3540,6 +3540,9 @@ export const bn: Dictionary = {
   'Password manager': 'পাসওয়ার্ড ম্যানেজার',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass যোগ করে, যা পাসওয়ার্ড রাখে এবং ওয়েবসাইটে সেগুলো পূরণ করে। বন্ধ করলেও আপনার ভল্টগুলো থেকে যায়।',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'আপনার স্পেসের মানুষদের সঙ্গে এবং মেইল, Telegram, Slack, WhatsApp ও Signal-এ চ্যাট যোগ করে; বন্ধ করলে আপনার বার্তা ও অ্যাকাউন্ট থেকে যায়।',
+  'Chats are off. Turn them on in Settings.': 'চ্যাট বন্ধ আছে। সেটিংসে চালু করুন।',
   'User token': 'ব্যবহারকারী টোকেন',
   'App-level token': 'অ্যাপ-স্তরের টোকেন',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

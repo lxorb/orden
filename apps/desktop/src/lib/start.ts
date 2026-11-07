@@ -140,7 +140,17 @@ export function start(): () => void {
       )
   }
 
-  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./chats/start.svelte'))
+  if (!__EVEN_PLUGIN__) {
+    void startup
+      .turn('right')
+      .then(() => import('./feature-gate.svelte'))
+      .then(({ whenChatsOn }) =>
+        whenChatsOn(
+          () => void import('./chats/start.svelte'),
+          () => void import('./chats/linked').then((one) => one.accounts.stop()),
+        ),
+      )
+  }
 
   if (!__EVEN_PLUGIN__) {
     void startup

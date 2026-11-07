@@ -1,6 +1,7 @@
 import { complete } from '../ai/complete'
 import { ai } from '../ai/store.svelte'
 import { notify } from '../notify'
+import { chatsOn } from '../settings.svelte'
 import { connected } from './connected.svelte'
 import { openConversation } from './linked'
 import { type Asker, priorities, rowKey } from './priorities.svelte'
@@ -25,7 +26,7 @@ export function startPriorities(): void {
   started = true
   priorities.useAsker(asker)
   connected.hear((provider, account, event) => {
-    if (event.t !== 'message' || event.message.mine) return
+    if (event.t !== 'message' || event.message.mine || !chatsOn()) return
     if (!priorities.on && !priorities.drafting) return
     const linked = connected.find(provider, account)
     const conversation = linked?.conversations.find((one) => one.id === event.message.conversation)
@@ -45,7 +46,7 @@ export function startPriorities(): void {
   })
   const own = ordenConnection(store)
   own.start((event) => {
-    if (event.t !== 'message' || event.message.mine) return
+    if (event.t !== 'message' || event.message.mine || !chatsOn()) return
     if (!priorities.on && !priorities.drafting) return
     const chat = event.message.conversation
     const key = rowKey(ORDEN, ORDEN, chat)

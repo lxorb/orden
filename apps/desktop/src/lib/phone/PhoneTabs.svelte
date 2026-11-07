@@ -4,7 +4,7 @@
   import UnreadDot from '../ai/UnreadDot.svelte'
   import { t } from '../i18n.svelte'
   import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../panel-marks'
-  import { hiddenKinds } from '../settings.svelte'
+  import { chatsOn, hiddenKinds } from '../settings.svelte'
   import { viewport } from '../viewport.svelte'
   import { workspace } from '../workspace.svelte'
   import { writeNew } from '../write-new'
@@ -27,7 +27,7 @@
       (one) =>
         workspace.offers(one) &&
         workspace.fills(one) &&
-        (one !== 'chats' || (!__EVEN_PLUGIN__ && !!account.accountToken)) &&
+        (one !== 'chats' || (!__EVEN_PLUGIN__ && !!account.accountToken && chatsOn())) &&
         (one !== 'tasks' || !__EVEN_PLUGIN__),
     ),
   )

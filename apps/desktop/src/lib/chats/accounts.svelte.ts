@@ -2,6 +2,7 @@ import type { ChatProvider, Host } from '@orden/chats/provider'
 import { secretName } from '@orden/chats/provider'
 import { mailProvider } from '@orden/chats/mail'
 import { gmailProvider, microsoftProvider } from '@orden/chats/mail-oauth'
+import { chatsOn } from '../settings.svelte'
 import { keepJson, stored, isRecord, isString } from '../stored'
 import { connected, type Connected } from './connected.svelte'
 import { signal } from './providers/signal'
@@ -55,6 +56,7 @@ export class Accounts {
     private readonly host: Host,
     private readonly hub: Connected = connected,
     private readonly providers: readonly ChatProvider[] = PROVIDERS,
+    private readonly on: () => boolean = chatsOn,
   ) {}
 
   extra = $state.raw<readonly ChatProvider[]>([])
@@ -77,15 +79,23 @@ export class Accounts {
   }
 
   start(): void {
-    if (this.started) return
+    if (this.started || !this.on()) return
     this.started = true
     this.saved = savedOf(stored(KEY))
     for (const one of this.saved) void this.relink(one)
   }
 
+  async stop(): Promise<void> {
+    this.started = false
+    this.failed = []
+    await Promise.all(
+      this.hub.linked.map((one) => this.hub.unlink(one.provider.id, one.account.id)),
+    )
+  }
+
   async relink(one: Saved): Promise<void> {
     const provider = this.providerOf(one.provider)
-    if (!provider?.available(this.host)) return
+    if (!this.on() || !provider?.available(this.host)) return
     const values = { ...one.config }
     for (const field of provider.fields) {
       if (!field.secret) continue
@@ -96,7 +106,9 @@ export class Accounts {
       (it) => it.provider !== one.provider || it.account !== one.account,
     )
     try {
-      await this.hub.link(provider, values, this.host, one.account)
+      if (!this.on()) return
+      const linked = await this.hub.link(provider, values, this.host, one.account)
+      if (!this.on()) await this.hub.unlink(provider.id, linked.account.id)
     } catch (error) {
       this.failed = [
         ...this.failed,
@@ -123,6 +135,7 @@ export class Accounts {
   ): Promise<string | null> {
     const provider = this.providerOf(providerId)
     if (!provider) return 'unknown service'
+    if (!this.on()) return 'chats are off'
     try {
       const linked = await this.hub.link(provider, values, this.host)
       const account = linked.account.id

@@ -3645,6 +3645,10 @@ export const ptPT: Dictionary = {
   'Password manager': 'Gestor de palavras-passe',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Adiciona o Pass, que guarda palavras-passe e as preenche nos sites. Desativá-lo mantém os seus cofres.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Adiciona conversas com as pessoas dos seus espaços e com e-mail, Telegram, Slack, WhatsApp e Signal; desativar mantém as suas mensagens e contas.',
+  'Chats are off. Turn them on in Settings.':
+    'As conversas estão desativadas. Ative-as nas Definições.',
   'User token': 'Token de utilizador',
   'App-level token': 'Token da aplicação',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

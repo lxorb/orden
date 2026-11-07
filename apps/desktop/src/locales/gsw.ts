@@ -3570,6 +3570,9 @@ export const gsw: Dictionary = {
   'Password manager': 'Passwortmanager',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Füegt Pass dezue, wo Passwörter ufbewahrt und uf Websites ifüllt. Uusschalte bhaltet dini Tresor.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Füegt Chats mit Lüüt i dine Spaces und mit Mail, Telegram, Slack, WhatsApp und Signal dezue. Uusschalte bhaltet dini Nachrichte und Konte.',
+  'Chats are off. Turn them on in Settings.': 'Chats sind uus. Schalt sie i de Iistellige ii.',
   'User token': 'Benutzer-Token',
   'App-level token': 'App-Token',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

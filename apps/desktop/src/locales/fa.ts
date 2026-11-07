@@ -3549,6 +3549,9 @@ export const fa: Dictionary = {
   'Password manager': 'مدیر گذرواژه',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass را می‌افزاید که گذرواژه‌ها را نگه می‌دارد و در وب‌سایت‌ها پر می‌کند. خاموش کردنش گاوصندوق‌هایتان را نگه می‌دارد.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'گفتگو با افراد فضاهایتان و با ایمیل، Telegram، Slack، WhatsApp و Signal را می‌افزاید؛ خاموش کردنش پیام‌ها و حساب‌هایتان را نگه می‌دارد.',
+  'Chats are off. Turn them on in Settings.': 'گفتگوها خاموش‌اند. در تنظیمات روشنشان کنید.',
   'User token': 'توکن کاربر',
   'App-level token': 'توکن سطح برنامه',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

@@ -8,7 +8,7 @@ from playwright.sync_api import Browser
 
 from harness import Drive
 
-DRIVE = Drive(__file__, dev=True)
+DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 

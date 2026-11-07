@@ -3415,6 +3415,9 @@ export const th: Dictionary = {
   'Password manager': 'ตัวจัดการรหัสผ่าน',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'เพิ่ม Pass ซึ่งเก็บรหัสผ่านและกรอกให้บนเว็บไซต์ ปิดแล้วห้องนิรภัยของคุณยังอยู่',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'เพิ่มแชตกับผู้คนในสเปซของคุณ และกับอีเมล, Telegram, Slack, WhatsApp และ Signal ปิดแล้วข้อความและบัญชีของคุณยังอยู่',
+  'Chats are off. Turn them on in Settings.': 'แชตปิดอยู่ เปิดได้ในการตั้งค่า',
   'User token': 'โทเค็นผู้ใช้',
   'App-level token': 'โทเค็นแอป',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

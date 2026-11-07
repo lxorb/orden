@@ -3616,6 +3616,10 @@ export const fil: Dictionary = {
   'Password manager': 'Password manager',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Idinadagdag ang Pass, na nagtatago ng mga password at pinupunan ang mga ito sa mga website. Kapag pinatay, mananatili ang iyong mga vault.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Nagdaragdag ng mga chat sa mga tao sa iyong mga space at sa mail, Telegram, Slack, WhatsApp at Signal; kapag pinatay, nananatili ang iyong mga mensahe at account.',
+  'Chats are off. Turn them on in Settings.':
+    'Naka-off ang mga chat. I-on ang mga ito sa Settings.',
   'User token': 'User token',
   'App-level token': 'App-level token',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

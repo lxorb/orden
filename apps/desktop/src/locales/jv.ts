@@ -3467,6 +3467,9 @@ export const jv: Dictionary = {
   'Password manager': 'Pangatur tembung sandi',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Nambahaké Pass, sing nyimpen tembung sandi lan ngisi ing situs web. Yen dipatèni, brankasmu tetep disimpen.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Nambahi obrolan karo wong ing papan sampeyan lan karo email, Telegram, Slack, WhatsApp lan Signal; yen dipateni, pesen lan akun sampeyan tetep disimpen.',
+  'Chats are off. Turn them on in Settings.': 'Obrolan dipateni. Uripna ing Setelan.',
   'User token': 'Token pangguna',
   'App-level token': 'Token aplikasi',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

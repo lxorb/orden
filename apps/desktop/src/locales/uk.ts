@@ -3685,6 +3685,9 @@ export const uk: Dictionary = {
   'Password manager': 'Менеджер паролів',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Додає Pass, який зберігає паролі й заповнює їх на сайтах. Якщо вимкнути, ваші сховища залишаться.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Додає чати з людьми з ваших просторів і з поштою, Telegram, Slack, WhatsApp та Signal; вимкнення зберігає повідомлення й облікові записи.',
+  'Chats are off. Turn them on in Settings.': 'Чати вимкнено. Увімкніть їх у налаштуваннях.',
   'User token': 'Токен користувача',
   'App-level token': 'Токен застосунку',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

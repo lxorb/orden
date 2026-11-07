@@ -3591,6 +3591,9 @@ export const sw: Dictionary = {
   'Password manager': 'Kidhibiti cha manenosiri',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Huongeza Pass, inayohifadhi manenosiri na kuyajaza kwenye tovuti. Kuizima huhifadhi makasha yako.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Huongeza gumzo na watu katika nafasi zako na barua pepe, Telegram, Slack, WhatsApp na Signal; kuizima huhifadhi ujumbe na akaunti zako.',
+  'Chats are off. Turn them on in Settings.': 'Gumzo zimezimwa. Ziwashe katika Mipangilio.',
   'User token': 'Tokeni ya mtumiaji',
   'App-level token': 'Tokeni ya programu',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

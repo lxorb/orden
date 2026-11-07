@@ -3596,6 +3596,9 @@ export const ml: Dictionary = {
   'Password manager': 'പാസ്‌വേഡ് മാനേജർ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'പാസ്‌വേഡുകൾ സൂക്ഷിക്കുകയും വെബ്‌സൈറ്റുകളിൽ നിറയ്ക്കുകയും ചെയ്യുന്ന Pass ചേർക്കുന്നു. ഓഫാക്കിയാലും നിങ്ങളുടെ വോൾട്ടുകൾ നിലനിൽക്കും.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'നിങ്ങളുടെ സ്പേസുകളിലെ ആളുകളുമായും മെയിൽ, Telegram, Slack, WhatsApp, Signal എന്നിവയുമായും ചാറ്റുകൾ ചേർക്കുന്നു; ഓഫാക്കിയാലും സന്ദേശങ്ങളും അക്കൗണ്ടുകളും നിലനിൽക്കും.',
+  'Chats are off. Turn them on in Settings.': 'ചാറ്റുകൾ ഓഫാണ്. ക്രമീകരണങ്ങളിൽ ഓണാക്കുക.',
   'User token': 'ഉപയോക്തൃ ടോക്കൺ',
   'App-level token': 'ആപ്പ്-തല ടോക്കൺ',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

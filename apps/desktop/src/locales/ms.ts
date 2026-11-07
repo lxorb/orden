@@ -3482,6 +3482,9 @@ export const ms: Dictionary = {
   'Password manager': 'Pengurus kata laluan',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Menambah Pass, yang menyimpan kata laluan dan mengisinya di laman web. Mematikannya mengekalkan peti besi anda.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Menambah sembang dengan orang dalam ruang anda dan dengan e-mel, Telegram, Slack, WhatsApp dan Signal; mematikannya mengekalkan mesej dan akaun anda.',
+  'Chats are off. Turn them on in Settings.': 'Sembang dimatikan. Hidupkannya dalam Tetapan.',
   'User token': 'Token pengguna',
   'App-level token': 'Token aplikasi',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

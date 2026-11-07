@@ -6,7 +6,7 @@ from playwright.sync_api import Page
 
 from harness import WEBKIT, Drive
 
-DRIVE = Drive(__file__, dev=True)
+DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong = DRIVE.say, DRIVE.wrong
 ORIGIN = DRIVE.origin
 

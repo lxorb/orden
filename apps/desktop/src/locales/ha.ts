@@ -3596,6 +3596,9 @@ export const ha: Dictionary = {
   'Password manager': 'Manajan kalmomin sirri',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     "Yana ƙara Pass, wanda ke adana kalmomin sirri kuma yana cike su a shafukan yanar gizo. Kashe shi yana kiyaye ma'ajiyoyinka.",
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Yana ƙara hira da mutane a wuraren ka da kuma imel, Telegram, Slack, WhatsApp da Signal; kashe shi yana adana saƙonninka da asusunka.',
+  'Chats are off. Turn them on in Settings.': 'Hira a kashe take. Kunna ta a Saituna.',
   'User token': 'Alamar mai amfani',
   'App-level token': 'Alamar manhaja',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

@@ -3543,6 +3543,9 @@ export const ps: Dictionary = {
   'Password manager': 'د پټنوم مدیر',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ورزیاتوي چې پټنومونه ساتي او په وېبپاڼو کې يې ډکوي. بندول يې ستاسو خزانې ساتي.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'ستاسو د ځایونو له خلکو او له برېښنالیک، Telegram، Slack، WhatsApp او Signal سره چیټونه زیاتوي؛ بندول یې ستاسو پیغامونه او حسابونه ساتي.',
+  'Chats are off. Turn them on in Settings.': 'چیټونه بند دي. په امستنو کې یې چالان کړئ.',
   'User token': 'د کارن ټوکن',
   'App-level token': 'د اپ کچې ټوکن',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

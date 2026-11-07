@@ -3540,6 +3540,9 @@ export const ur: Dictionary = {
   'Password manager': 'پاس ورڈ مینیجر',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass شامل کرتا ہے، جو پاس ورڈ رکھتا ہے اور ویب سائٹس پر بھرتا ہے۔ بند کرنے سے آپ کے والٹ برقرار رہتے ہیں۔',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'آپ کی اسپیسز کے لوگوں کے ساتھ اور میل، Telegram، Slack، WhatsApp اور Signal کے ساتھ چیٹس شامل کرتا ہے؛ بند کرنے سے آپ کے پیغامات اور اکاؤنٹس محفوظ رہتے ہیں۔',
+  'Chats are off. Turn them on in Settings.': 'چیٹس بند ہیں۔ انہیں ترتیبات میں آن کریں۔',
   'User token': 'صارف ٹوکن',
   'App-level token': 'ایپ لیول ٹوکن',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

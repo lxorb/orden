@@ -246,6 +246,11 @@
     "default": true,
     "description": "The Add task shortcut works even while another app is in front."
   },
+  "general.chats": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages."
+  },
   "general.crashReports": {
     "type": "boolean",
     "default": true,

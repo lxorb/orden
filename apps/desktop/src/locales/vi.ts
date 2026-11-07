@@ -3449,6 +3449,9 @@ export const vi: Dictionary = {
   'Password manager': 'Trình quản lý mật khẩu',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Thêm Pass, giữ mật khẩu và điền chúng trên các trang web. Tắt đi vẫn giữ các kho của bạn.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Thêm trò chuyện với mọi người trong không gian của bạn và với thư, Telegram, Slack, WhatsApp và Signal; tắt đi vẫn giữ tin nhắn và tài khoản của bạn.',
+  'Chats are off. Turn them on in Settings.': 'Trò chuyện đang tắt. Hãy bật trong Cài đặt.',
   'User token': 'Mã người dùng',
   'App-level token': 'Mã ứng dụng',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

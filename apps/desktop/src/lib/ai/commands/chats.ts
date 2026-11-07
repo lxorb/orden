@@ -1,4 +1,5 @@
 import { t } from '../../i18n.svelte'
+import { chatsOn } from '../../settings.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { Thread } from '../chat/types'
 import type { Host } from './host'
@@ -60,7 +61,14 @@ async function chatInFront(): Promise<string | null> {
   return (await chatsStore()).chatAt(tab.path)
 }
 
+function chatsOff(host: Host, thread: Thread): boolean {
+  if (chatsOn()) return false
+  host.line(thread, t('Chats are off. Turn them on in Settings.'))
+  return true
+}
+
 export async function reply(host: Host, thread: Thread, args: string): Promise<void> {
+  if (chatsOff(host, thread)) return
   const chat = await chatInFront()
   if (!chat) {
     host.line(thread, t('Open a chat first'))
@@ -70,6 +78,7 @@ export async function reply(host: Host, thread: Thread, args: string): Promise<v
 }
 
 export async function catchup(host: Host, thread: Thread, args: string): Promise<void> {
+  if (chatsOff(host, thread)) return
   const chats = await chatsStore()
   const { chatPart } = await import('../../chats/context')
   const named = args.trim().replace(/^#/, '').toLowerCase()

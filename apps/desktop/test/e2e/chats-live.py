@@ -8,7 +8,7 @@ from typing import Any
 from playwright.sync_api import Browser, BrowserContext, Page
 
 import harness
-from harness import Drive
+from harness import CHATS_ON, Drive
 
 DRIVE = Drive(__file__, served=False)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -47,6 +47,7 @@ def came(page: Page, script: str, what: str, arg: object = None, patience: float
 
 def signed_in(browser: Browser, token: str, label: str) -> tuple[BrowserContext, Page]:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
+    context.add_init_script(CHATS_ON)
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
     page = context.new_page()
     page.on(

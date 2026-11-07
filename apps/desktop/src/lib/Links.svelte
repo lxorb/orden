@@ -2,6 +2,7 @@
   import { type NoteGraph, without } from './graph'
   import { neighbourhood } from './graph-walk'
   import { account } from './account.svelte'
+  import { chatsOn } from './settings.svelte'
   import { graphSurface, held } from './surfaces.svelte'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
@@ -117,7 +118,7 @@
     {@render hits(mentions)}
   {/if}
 
-  {#if account.accountToken && !__EVEN_PLUGIN__}
+  {#if account.accountToken && !__EVEN_PLUGIN__ && chatsOn()}
     {#await chatLinks() then ChatLinks}
       <ChatLinks {path} />
     {/await}

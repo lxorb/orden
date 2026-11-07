@@ -18,6 +18,8 @@ vi.mock('../../src/lib/tauri', async (original) => ({
 const { fakeProvider } = await import('@orden/chats/fake-provider')
 const { connected } = await import('../../src/lib/chats/connected.svelte')
 const { accounts } = await import('../../src/lib/chats/linked')
+const { CHATS_WORD, hiddenKinds } = await import('../../src/lib/settings.svelte')
+hiddenKinds.hidden = [CHATS_WORD]
 const ConnectForm = (await import('../../src/lib/chats/view/ConnectForm.svelte')).default
 
 function typeInto(field: HTMLInputElement, words: string) {

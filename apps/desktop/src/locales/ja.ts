@@ -3461,6 +3461,9 @@ export const ja: Dictionary = {
   'Password manager': 'パスワードマネージャー',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'パスワードを保管し、ウェブサイトで入力する Pass を追加します。オフにしても保管庫は残ります。',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'スペースのメンバーとのチャットと、メール、Telegram、Slack、WhatsApp、Signal を追加します。オフにしてもメッセージとアカウントは残ります。',
+  'Chats are off. Turn them on in Settings.': 'チャットはオフです。設定でオンにしてください。',
   'User token': 'ユーザートークン',
   'App-level token': 'アプリレベルトークン',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

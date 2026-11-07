@@ -3689,6 +3689,9 @@ export const ru: Dictionary = {
   'Password manager': 'Менеджер паролей',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Добавляет Pass, который хранит пароли и подставляет их на сайтах. При выключении ваши хранилища сохраняются.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Добавляет чаты с людьми из ваших пространств и с почтой, Telegram, Slack, WhatsApp и Signal; при выключении сообщения и аккаунты сохраняются.',
+  'Chats are off. Turn them on in Settings.': 'Чаты выключены. Включите их в настройках.',
   'User token': 'Токен пользователя',
   'App-level token': 'Токен приложения',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

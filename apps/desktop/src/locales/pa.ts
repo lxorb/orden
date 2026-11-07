@@ -3556,6 +3556,9 @@ export const pa: Dictionary = {
   'Password manager': 'ਪਾਸਵਰਡ ਮੈਨੇਜਰ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ਜੋੜਦਾ ਹੈ, ਜੋ ਪਾਸਵਰਡ ਰੱਖਦਾ ਹੈ ਅਤੇ ਵੈੱਬਸਾਈਟਾਂ ’ਤੇ ਭਰਦਾ ਹੈ। ਬੰਦ ਕਰਨ ’ਤੇ ਤੁਹਾਡੇ ਵਾਲਟ ਰਹਿੰਦੇ ਹਨ।',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'ਤੁਹਾਡੇ ਸਪੇਸ ਦੇ ਲੋਕਾਂ ਨਾਲ ਅਤੇ ਮੇਲ, Telegram, Slack, WhatsApp ਤੇ Signal ਨਾਲ ਚੈਟ ਜੋੜਦਾ ਹੈ; ਬੰਦ ਕਰਨ ਨਾਲ ਤੁਹਾਡੇ ਸੁਨੇਹੇ ਅਤੇ ਖਾਤੇ ਰਹਿੰਦੇ ਹਨ।',
+  'Chats are off. Turn them on in Settings.': 'ਚੈਟ ਬੰਦ ਹਨ। ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਚਾਲੂ ਕਰੋ।',
   'User token': 'ਵਰਤੋਂਕਾਰ ਟੋਕਨ',
   'App-level token': 'ਐਪ-ਪੱਧਰ ਟੋਕਨ',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

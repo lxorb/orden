@@ -43,6 +43,7 @@ vi.mock('../../chats/view/open', () => ({
 }))
 
 const verbs = await import('./chats')
+const { CHATS_WORD, hiddenKinds } = await import('../../settings.svelte')
 const { answerOf } = await import('./problem')
 
 const VERBS: Record<
@@ -89,6 +90,7 @@ let mine: string
 let hidden: string
 
 beforeEach(() => {
+  hiddenKinds.hidden = [CHATS_WORD]
   asked.length = 0
   opened.length = 0
   answer = { status: 'ok', result: {} }
@@ -110,6 +112,24 @@ beforeEach(() => {
 })
 
 describe('the chats an agent sees', () => {
+  test('are none while Chats is off, and nothing is posted', async () => {
+    hiddenKinds.hidden = []
+    for (const verb of Object.keys(VERBS)) {
+      const answered = (await call(verb, {
+        chat: 'thesis',
+        body: 'hi',
+        message: 'm',
+        emoji: '👍',
+      })) as {
+        status: string
+        error?: { message?: string }
+      }
+      expect(answered.status, verb).not.toBe('ok')
+      expect(JSON.stringify(answered), verb).toContain('chats are off')
+    }
+    expect(asked).toEqual([])
+  })
+
   test('by name from a panel thread, are its own space’s first, then the front’s', async () => {
     const twin = store.add('thesis', [{ who: ME, name: 'Emil', role: 'owner' }], {
       root: '/spaces/Secret',

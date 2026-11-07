@@ -3374,6 +3374,9 @@ export const zhHans: Dictionary = {
   'Password manager': '密码管理器',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '添加 Pass，保管密码并在网站上填入。关闭后保险库仍会保留。',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    '添加与你空间中的人的聊天，以及邮件、Telegram、Slack、WhatsApp 和 Signal；关闭后你的消息和账户仍会保留。',
+  'Chats are off. Turn them on in Settings.': '聊天已关闭。请在设置中开启。',
   'User token': '用户令牌',
   'App-level token': '应用级令牌',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

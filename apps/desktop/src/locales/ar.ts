@@ -3735,6 +3735,9 @@ export const ar: Dictionary = {
   'Password manager': 'مدير كلمات المرور',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'يضيف Pass الذي يحفظ كلمات المرور ويملؤها في المواقع. إيقافه يُبقي خزائنك.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'يضيف محادثات مع الأشخاص في مساحاتك ومع البريد وTelegram وSlack وWhatsApp وSignal؛ إيقافه يحتفظ برسائلك وحساباتك.',
+  'Chats are off. Turn them on in Settings.': 'المحادثات متوقفة. شغّلها من الإعدادات.',
   'User token': 'رمز المستخدم',
   'App-level token': 'رمز التطبيق',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser
 
-from harness import Drive
+from harness import CHATS_ON, Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -42,6 +42,7 @@ def near(one: float, other: float) -> bool:
 def drive(browser: Browser) -> None:
     for width in (240, 420):
         context = browser.new_context(viewport={"width": 1400, "height": 820})
+        context.add_init_script(CHATS_ON)
         context.add_init_script(f"localStorage.setItem('orden:sidebar-width-right', '{width}')")
         page = context.new_page()
         DRIVE.open(page)

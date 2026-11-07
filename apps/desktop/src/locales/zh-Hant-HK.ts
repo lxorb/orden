@@ -3375,6 +3375,9 @@ export const zhHantHK: Dictionary = {
   'Password manager': '密碼管理器',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '加入 Pass，保管密碼並在網站上填入。關閉後保險庫仍會保留。',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    '加入與你空間中的人的聊天，以及郵件、Telegram、Slack、WhatsApp 和 Signal；關閉後你的訊息和帳戶仍會保留。',
+  'Chats are off. Turn them on in Settings.': '聊天已關閉。請在設定中開啟。',
   'User token': '用戶權杖',
   'App-level token': '應用程式層級權杖',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

@@ -3607,6 +3607,10 @@ export const ta: Dictionary = {
   'Password manager': 'கடவுச்சொல் நிர்வாகி',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'கடவுச்சொற்களை வைத்து இணையதளங்களில் நிரப்பும் Pass ஐச் சேர்க்கிறது. அணைத்தாலும் உங்கள் பெட்டகங்கள் இருக்கும்.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'உங்கள் இடங்களில் உள்ளவர்களுடனும் மின்னஞ்சல், Telegram, Slack, WhatsApp, Signal ஆகியவற்றுடனும் அரட்டைகளைச் சேர்க்கிறது; அணைத்தாலும் உங்கள் செய்திகளும் கணக்குகளும் இருக்கும்.',
+  'Chats are off. Turn them on in Settings.':
+    'அரட்டைகள் அணைக்கப்பட்டுள்ளன. அமைப்புகளில் இயக்கவும்.',
   'User token': 'பயனர் டோக்கன்',
   'App-level token': 'ஆப்-நிலை டோக்கன்',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

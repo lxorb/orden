@@ -38,6 +38,7 @@ import {
   turnBlocksInto,
 } from '@orden/editor/menu'
 import { account } from './account.svelte'
+import { chatsOn } from './settings.svelte'
 import { canTranscribe } from './ai/hears'
 import { copySelection, copyText, cutSelection } from './clipboard'
 import { copyPicture } from './copy-picture'
@@ -254,7 +255,7 @@ async function rewrite(view: EditorView) {
 function sendEntry(view: EditorView): MenuEntry[] {
   const tab = workspace.active
   const note = tab?.kind === 'note' ? tab.path : null
-  if (__EVEN_PLUGIN__ || !note || !account.accountToken) return []
+  if (__EVEN_PLUGIN__ || !note || !account.accountToken || !chatsOn()) return []
   const run = () => {
     const range = view.state.selection.main
     void import('./chats/send').then(({ sendSelection }) =>

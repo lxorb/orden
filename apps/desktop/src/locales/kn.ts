@@ -3583,6 +3583,9 @@ export const kn: Dictionary = {
   'Password manager': 'ಪಾಸ್‌ವರ್ಡ್ ನಿರ್ವಾಹಕ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ಅನ್ನು ಸೇರಿಸುತ್ತದೆ, ಅದು ಪಾಸ್‌ವರ್ಡ್‌ಗಳನ್ನು ಇಟ್ಟುಕೊಂಡು ವೆಬ್‌ಸೈಟ್‌ಗಳಲ್ಲಿ ತುಂಬುತ್ತದೆ. ಆಫ್ ಮಾಡಿದರೂ ನಿಮ್ಮ ವಾಲ್ಟ್‌ಗಳು ಉಳಿಯುತ್ತವೆ.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'ನಿಮ್ಮ ಸ್ಪೇಸ್‌ಗಳ ಜನರೊಂದಿಗೆ ಮತ್ತು ಮೇಲ್, Telegram, Slack, WhatsApp ಮತ್ತು Signal ಜೊತೆ ಚಾಟ್‌ಗಳನ್ನು ಸೇರಿಸುತ್ತದೆ; ಆಫ್ ಮಾಡಿದರೆ ನಿಮ್ಮ ಸಂದೇಶಗಳು ಮತ್ತು ಖಾತೆಗಳು ಉಳಿಯುತ್ತವೆ.',
+  'Chats are off. Turn them on in Settings.': 'ಚಾಟ್‌ಗಳು ಆಫ್ ಆಗಿವೆ. ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಆನ್ ಮಾಡಿ.',
   'User token': 'ಬಳಕೆದಾರ ಟೋಕನ್',
   'App-level token': 'ಆ್ಯಪ್-ಮಟ್ಟದ ಟೋಕನ್',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

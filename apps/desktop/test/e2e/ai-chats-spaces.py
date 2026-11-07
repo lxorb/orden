@@ -4,7 +4,7 @@ from playwright.sync_api import Browser, Page
 
 from harness import Drive
 
-DRIVE = Drive(__file__, dev=True)
+DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
 FIELD = ".ask textarea"

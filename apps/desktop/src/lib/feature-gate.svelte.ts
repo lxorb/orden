@@ -1,5 +1,5 @@
 import { untrack } from 'svelte'
-import { passOn, timeOn } from './settings.svelte'
+import { chatsOn, passOn, timeOn } from './settings.svelte'
 import type { TabKind } from './workspace/tab-kinds'
 import { workspace } from './workspace.svelte'
 
@@ -37,4 +37,8 @@ export function whenTimeOn(run: () => void): void {
 
 export function whenPassOn(run: () => void, off: () => void): void {
   whenOn(passOn, 'pass', run, off)
+}
+
+export function whenChatsOn(run: () => void, off: () => void): void {
+  whenOn(chatsOn, 'channel', run, off)
 }

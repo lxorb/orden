@@ -2,6 +2,7 @@ import { may, type Message, type Who } from '@orden/chats'
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import type { ChatEntry, Chats } from '../../chats/api'
+import { chatsOn } from '../../settings.svelte'
 import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, text } from './call'
@@ -13,6 +14,9 @@ const MOST_READ = 200
 const MOST_FOUND = 50
 
 async function chatsStore(): Promise<Chats> {
+  if (!chatsOn()) {
+    throw new Refused('not_found', 'chats are off; the user turns them on in Settings')
+  }
   const { chats } = await import('../../chats/store.svelte')
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))

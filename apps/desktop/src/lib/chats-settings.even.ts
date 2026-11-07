@@ -1,3 +1,3 @@
 import type * as Real from './chats-settings'
 
-export const chatsGroups: typeof Real.chatsGroups = () => []
+export const chatsFields: typeof Real.chatsFields = () => []

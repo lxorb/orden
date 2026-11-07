@@ -3529,6 +3529,9 @@ export const gu: Dictionary = {
   'Password manager': 'પાસવર્ડ મેનેજર',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ઉમેરે છે, જે પાસવર્ડ રાખે છે અને વેબસાઇટ પર ભરે છે. બંધ કરવાથી તમારા વૉલ્ટ રહે છે.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'તમારી સ્પેસના લોકો સાથે અને મેઇલ, Telegram, Slack, WhatsApp અને Signal સાથે ચેટ ઉમેરે છે; બંધ કરવાથી તમારા સંદેશા અને એકાઉન્ટ રહે છે.',
+  'Chats are off. Turn them on in Settings.': 'ચેટ બંધ છે. સેટિંગ્સમાં ચાલુ કરો.',
   'User token': 'વપરાશકર્તા ટોકન',
   'App-level token': 'ઍપ-સ્તર ટોકન',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

@@ -132,6 +132,14 @@ RELEASE_IDENTIFIER = "so.orden.Orden"
 
 LAUNCHED = "nib: launch order finished"
 
+CHATS_ON = (
+    "try { const kept = JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]');"
+    " const list = Array.isArray(kept) ? kept : [];"
+    " if (!list.includes('shown-chats'))"
+    " localStorage.setItem('orden:hidden-kinds', JSON.stringify([...list, 'shown-chats'])) }"
+    " catch {}"
+)
+
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
 
@@ -688,8 +696,10 @@ class Drive:
         fresh: bool = True,
         dev: bool = False,
         known: Mapping[str, str] | None = None,
+        chats: bool = False,
     ) -> None:
         self.name = Path(file).stem
+        self.chats = chats
         self.dev = dev
         self.dev_port = free_port() if dev else 0
         self.shots = SHOTS / (shots or self.name)
@@ -770,7 +780,10 @@ class Drive:
         return answering(play.chromium.launch(**options))
 
     def context(self, browser: Any, **options: Any) -> Any:
-        return browser.new_context(**options)
+        context = browser.new_context(**options)
+        if self.chats:
+            context.add_init_script(CHATS_ON)
+        return context
 
     def persistent(self, play: Any, profile: Path, **options: Any) -> Any:
         if WEBKIT:

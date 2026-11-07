@@ -2,6 +2,7 @@ import { untrack } from 'svelte'
 import { CHAT_EXTENSION } from '@orden/chats'
 import { account } from '../account.svelte'
 import { hub } from '../sync2/hub.svelte'
+import { chatsOn } from '../settings.svelte'
 import { isMobile } from '../tauri'
 import { type Entry, workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
@@ -37,12 +38,13 @@ function pointersIn(entry: Entry | null, out: string[] = []): string[] {
 
 $effect.root(() => {
   $effect(() => {
+    if (!chatsOn()) return
     const pointers = pointersIn(workspace.tree)
     const root = workspace.activeSpace?.root ?? null
     untrack(() => chats.pointersSeen(root, pointers))
   })
   $effect(() => {
-    const who = account.user?.id ?? account.guest?.id ?? null
+    const who = chatsOn() ? (account.user?.id ?? account.guest?.id ?? null) : null
     untrack(() => void chats.start(who))
   })
 })

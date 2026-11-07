@@ -3367,6 +3367,9 @@ export const yue: Dictionary = {
   'Password manager': '密碼管理器',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '加入 Pass，幫你保管密碼，喺網站度自動填入。關咗都會保留你嘅保險庫。',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    '加入同你空間入面嘅人傾偈，同埋郵件、Telegram、Slack、WhatsApp 同 Signal；閂咗都會保留你嘅訊息同帳戶。',
+  'Chats are off. Turn them on in Settings.': '傾偈已經閂咗。去設定開返。',
   'User token': '用戶權杖',
   'App-level token': 'App 層級權杖',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

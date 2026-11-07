@@ -3565,6 +3565,9 @@ export const tr: Dictionary = {
   'Password manager': 'Parola yöneticisi',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Parolaları saklayan ve web sitelerinde dolduran Pass’i ekler. Kapatmak kasalarınızı korur.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Alanlarınızdaki kişilerle ve e-posta, Telegram, Slack, WhatsApp ve Signal ile sohbetler ekler; kapatmak mesajlarınızı ve hesaplarınızı korur.',
+  'Chats are off. Turn them on in Settings.': 'Sohbetler kapalı. Ayarlar’dan açın.',
   'User token': 'Kullanıcı jetonu',
   'App-level token': 'Uygulama jetonu',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

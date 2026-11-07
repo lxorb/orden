@@ -3615,6 +3615,10 @@ export const de: Dictionary = {
   'Password manager': 'Passwortmanager',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Fügt Pass hinzu, das Passwörter aufbewahrt und auf Websites einträgt. Ausschalten behält deine Tresore.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'Fügt Chats mit Leuten in deinen Spaces und mit Mail, Telegram, Slack, WhatsApp und Signal hinzu. Ausschalten behält deine Nachrichten und Konten.',
+  'Chats are off. Turn them on in Settings.':
+    'Chats sind aus. Schalte sie in den Einstellungen ein.',
   'User token': 'Benutzer-Token',
   'App-level token': 'App-Token',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

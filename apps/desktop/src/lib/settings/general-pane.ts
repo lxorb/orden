@@ -10,7 +10,7 @@ import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../protect/unloc
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from '../recovery'
 import { recovery } from '../recovery.svelte'
 import { hasTray, residency } from '../reminders/residency.svelte'
-import { chatsGroups } from '../chats-settings'
+import { chatsFields } from '../chats-settings'
 import { tabCycle } from '../tab-cycle.svelte'
 import { fitTabs, iconTabs } from '../tab-strip/icon-tabs.svelte'
 import { PREVIEW_DELAY, previewDelay } from '../tab-strip/preview-delay.svelte'
@@ -31,7 +31,15 @@ import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
 import { setWord } from '../kind-choice'
-import { hiddenKinds, PASS_WORD, passOn, TIME_WORD, timeOn } from '../settings.svelte'
+import {
+  CHATS_WORD,
+  chatsOn,
+  hiddenKinds,
+  PASS_WORD,
+  passOn,
+  TIME_WORD,
+  timeOn,
+} from '../settings.svelte'
 import type { Field, Group, Pane } from './fields'
 import { dns, PROVIDER_NAMES } from './dns.svelte'
 import { gpu } from './gpu.svelte'
@@ -660,6 +668,38 @@ export function generalPane(): Pane {
         ? []
         : [
             {
+              title: t('Chats'),
+              fields: [
+                {
+                  kind: 'switch' as const,
+                  key: 'general.chats',
+                  store: { ...among(hiddenKinds, 'hidden', CHATS_WORD), shared: 'hiddenKinds' },
+                  label: t('Chats'),
+                  hint: t(
+                    'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.',
+                  ),
+                  words: [
+                    'chat',
+                    'chats',
+                    'messages',
+                    'mail',
+                    'telegram',
+                    'slack',
+                    'whatsapp',
+                    'signal',
+                  ],
+                  initial: false,
+                  get: () => chatsOn(),
+                  set: (on: boolean) => setWord(CHATS_WORD, on),
+                },
+                ...(chatsOn() && !isMobile ? chatsFields() : []),
+              ],
+            },
+          ]),
+      ...(__EVEN_PLUGIN__
+        ? []
+        : [
+            {
               title: t('Time tracker'),
               fields: [
                 {
@@ -746,8 +786,6 @@ export function generalPane(): Pane {
       },
 
       ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
-
-      ...(isMobile ? [] : chatsGroups()),
 
       ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder ? [terminalGroup()] : []),
 

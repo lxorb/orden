@@ -56,7 +56,7 @@ beforeEach(() => {
 describe("other services' accounts", () => {
   test('a secret goes to the vault and nowhere else; the rest is kept without it', async () => {
     const hub = new Connected()
-    const accounts = new Accounts(host, hub, [provider])
+    const accounts = new Accounts(host, hub, [provider], () => true)
     expect(await accounts.connect('fake', { address: 'a@x.org', password: 'right' })).toBeNull()
     expect(vault.get(secretName('fake', 'a@x.org', 'password'))).toBe('right')
     expect(accounts.saved).toEqual([
@@ -67,7 +67,7 @@ describe("other services' accounts", () => {
   })
 
   test('a refusal is said, and nothing is kept', async () => {
-    const accounts = new Accounts(host, new Connected(), [provider])
+    const accounts = new Accounts(host, new Connected(), [provider], () => true)
     expect(await accounts.connect('fake', { address: 'a@x.org', password: 'wrong' })).toBe(
       'Invalid credentials',
     )
@@ -76,13 +76,13 @@ describe("other services' accounts", () => {
   })
 
   test('the next launch links them again with the secret from the vault', async () => {
-    await new Accounts(host, new Connected(), [provider]).connect('fake', {
+    await new Accounts(host, new Connected(), [provider], () => true).connect('fake', {
       address: 'a@x.org',
       password: 'right',
     })
     given.length = 0
     const hub = new Connected()
-    const next = new Accounts(host, hub, [provider])
+    const next = new Accounts(host, hub, [provider], () => true)
     next.start()
     await new Promise((resolve) => setTimeout(resolve, 0))
     await new Promise((resolve) => setTimeout(resolve, 0))
@@ -96,12 +96,12 @@ describe("other services' accounts", () => {
   })
 
   test('a saved account the vault no longer opens is listed as failed', async () => {
-    await new Accounts(host, new Connected(), [provider]).connect('fake', {
+    await new Accounts(host, new Connected(), [provider], () => true).connect('fake', {
       address: 'a@x.org',
       password: 'right',
     })
     vault.clear()
-    const accounts = new Accounts(host, new Connected(), [provider])
+    const accounts = new Accounts(host, new Connected(), [provider], () => true)
     accounts.start()
     await new Promise((resolve) => setTimeout(resolve, 10))
     expect(accounts.failed).toMatchObject([{ provider: 'fake', account: 'a@x.org' }])
@@ -121,7 +121,7 @@ describe("other services' accounts", () => {
       },
     }
     const hub = new Connected()
-    const accounts = new Accounts(host, hub, [signedIn])
+    const accounts = new Accounts(host, hub, [signedIn], () => true)
     expect(await accounts.connect('browser', { name: 'Bo' })).toBeNull()
     expect(accounts.saved).toEqual([
       { provider: 'browser', account: 'b@x.org', config: { address: 'b@x.org', name: 'Bo' } },
@@ -129,7 +129,7 @@ describe("other services' accounts", () => {
     expect([...vault.keys()]).toEqual([secretName('browser', 'b@x.org', 'refresh')])
 
     given.length = 0
-    const next = new Accounts(host, new Connected(), [signedIn])
+    const next = new Accounts(host, new Connected(), [signedIn], () => true)
     next.start()
     await new Promise((resolve) => setTimeout(resolve, 10))
     expect(given).toEqual([{ address: 'b@x.org', password: 'right' }])
@@ -155,8 +155,10 @@ describe("other services' accounts", () => {
         return Promise.resolve()
       },
     }
-    await new Accounts(host, new Connected(), [own]).connect('own', { address: 'a@x.org' })
-    const next = new Accounts(host, new Connected(), [own])
+    await new Accounts(host, new Connected(), [own], () => true).connect('own', {
+      address: 'a@x.org',
+    })
+    const next = new Accounts(host, new Connected(), [own], () => true)
     next.start()
     await new Promise((resolve) => setTimeout(resolve, 10))
     expect(known).toEqual([undefined, 'a@x.org'])
@@ -165,13 +167,13 @@ describe("other services' accounts", () => {
   })
 
   test('signing in again after a sign-out offers what was given before, never a secret, and takes the place of the account it replaces', async () => {
-    await new Accounts(host, new Connected(), [provider]).connect('fake', {
+    await new Accounts(host, new Connected(), [provider], () => true).connect('fake', {
       address: 'a@x.org',
       password: 'right',
     })
     vault.clear()
     const hub = new Connected()
-    const accounts = new Accounts(host, hub, [provider])
+    const accounts = new Accounts(host, hub, [provider], () => true)
     accounts.start()
     await new Promise((resolve) => setTimeout(resolve, 10))
     expect(accounts.failed).toMatchObject([{ account: 'a@x.org' }])

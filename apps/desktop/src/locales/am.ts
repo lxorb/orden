@@ -3476,6 +3476,9 @@ export const am: Dictionary = {
   'Password manager': 'የይለፍ ቃል አቀናባሪ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Passን ያክላል፤ የይለፍ ቃላትን ያስቀምጣል በድር ጣቢያዎችም ይሞላል። ማጥፋቱ ካዝናዎችዎን ይጠብቃል።',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'በቦታዎችዎ ካሉ ሰዎች ጋር እና በኢሜይል፣ Telegram፣ Slack፣ WhatsApp እና Signal ውይይቶችን ያክላል፤ ማጥፋቱ መልዕክቶችዎን እና መለያዎችዎን ይጠብቃል።',
+  'Chats are off. Turn them on in Settings.': 'ውይይቶች ጠፍተዋል። በቅንብሮች ውስጥ ያብሯቸው።',
   'User token': 'የተጠቃሚ ቶከን',
   'App-level token': 'የመተግበሪያ ደረጃ ቶከን',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

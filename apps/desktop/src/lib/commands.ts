@@ -83,7 +83,7 @@ import { archiveEntry, DIVIDER, listEntry } from './menu.svelte'
 import { lockAllEntry, protectEntries } from './protect/entries'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
-import { type KindName, passOn, settings, timeOn } from './settings.svelte'
+import { chatsOn, type KindName, passOn, settings, timeOn } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -908,7 +908,7 @@ function spaceCommands(): Command[] {
 function sendToChatCommand(view?: EditorView): Command[] {
   const tab = workspace.active
   const note = tab?.kind === 'note' ? tab.path : null
-  if (__EVEN_PLUGIN__ || !note || !account.accountToken) return []
+  if (__EVEN_PLUGIN__ || !note || !account.accountToken || !chatsOn()) return []
   const run = () => {
     const range = view?.state.selection.main
     void import('./chats/send').then(({ sendSelection, sendToChat }) =>

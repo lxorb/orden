@@ -3561,6 +3561,9 @@ export const te: Dictionary = {
   'Password manager': 'పాస్‌వర్డ్ మేనేజర్',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'పాస్‌వర్డ్‌లను ఉంచి వెబ్‌సైట్లలో నింపే Pass ను జోడిస్తుంది. ఆఫ్ చేసినా మీ వాల్ట్‌లు అలాగే ఉంటాయి.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    'మీ స్పేస్‌లలోని వ్యక్తులతో మరియు మెయిల్, Telegram, Slack, WhatsApp, Signal తో చాట్‌లను జోడిస్తుంది; ఆపివేస్తే మీ సందేశాలు, ఖాతాలు అలాగే ఉంటాయి.',
+  'Chats are off. Turn them on in Settings.': 'చాట్‌లు ఆఫ్‌లో ఉన్నాయి. సెట్టింగ్‌లలో ఆన్ చేయండి.',
   'User token': 'వినియోగదారు టోకెన్',
   'App-level token': 'యాప్-స్థాయి టోకెన్',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

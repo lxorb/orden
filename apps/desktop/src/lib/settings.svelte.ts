@@ -176,7 +176,7 @@ export function kindsHere(): KindName[] {
 
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
-  if (account.accountToken) here.push('chat')
+  if (account.accountToken && chatsOn()) here.push('chat')
   if (isDesktop && modes.coder) here.push('terminal', 'remote')
   if (modes.coder) here.push('online')
   if (modes.coder) here.push('application')
@@ -236,4 +236,10 @@ const passOnly = typeof document !== 'undefined' && document.documentElement.dat
 
 export function passOn(): boolean {
   return !__EVEN_PLUGIN__ && (passOnly || hiddenKinds.hidden.includes(PASS_WORD))
+}
+
+export const CHATS_WORD = 'shown-chats'
+
+export function chatsOn(): boolean {
+  return !__EVEN_PLUGIN__ && hiddenKinds.hidden.includes(CHATS_WORD)
 }

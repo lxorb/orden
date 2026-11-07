@@ -3440,6 +3440,9 @@ export const ko: Dictionary = {
   'Password manager': '비밀번호 관리자',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '비밀번호를 보관하고 웹사이트에 채워 주는 Pass를 추가합니다. 꺼도 보관함은 그대로 남습니다.',
+  'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
+    '스페이스의 사람들과의 채팅, 그리고 메일, Telegram, Slack, WhatsApp, Signal을 추가합니다. 꺼도 메시지와 계정은 그대로 남습니다.',
+  'Chats are off. Turn them on in Settings.': '채팅이 꺼져 있습니다. 설정에서 켜세요.',
   'User token': '사용자 토큰',
   'App-level token': '앱 수준 토큰',
   'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':

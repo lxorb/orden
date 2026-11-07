@@ -2,6 +2,7 @@ import { chatLinkOf } from '@orden/chats/links'
 import { account } from '../../account.svelte'
 import { busy } from '../../busy.svelte'
 import type { OpenHow } from '../../new-tab'
+import { chatsOn } from '../../settings.svelte'
 import { canWriteAt } from '../../sharing.svelte'
 import { nameOf as fileName, samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
@@ -16,11 +17,18 @@ export function takeJump(path: string): string | undefined {
   return message
 }
 
+export function chatsAreOn(): boolean {
+  if (chatsOn()) return true
+  busy.failed(t('Chats are off. Turn them on in Settings.'))
+  return false
+}
+
 export function chatName(path: string): string {
   return fileName(path).replace(/\.chat$/i, '')
 }
 
 export function openChat(path: string, how: OpenHow = {}, message?: string): void {
+  if (!chatsAreOn()) return
   if (message) jumps.set(path, message)
   const open = workspace.tabs.find((one) => one.kind === 'channel' && samePath(one.path, path))
   if (open) {
@@ -33,7 +41,7 @@ export function openChat(path: string, how: OpenHow = {}, message?: string): voi
 
 export async function openChatLink(href: string, how: OpenHow = {}): Promise<void> {
   const link = chatLinkOf(href)
-  if (!link) return
+  if (!link || !chatsAreOn()) return
   const chats = store()
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))
@@ -55,6 +63,7 @@ function jumpOpen(path: string) {
 }
 
 export async function makeChat(folder?: string, named?: string): Promise<void> {
+  if (!chatsAreOn()) return
   if (!account.accountToken) {
     account.ask()
     return

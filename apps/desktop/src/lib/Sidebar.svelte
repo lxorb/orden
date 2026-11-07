@@ -70,7 +70,7 @@
   import { overlays } from './overlays'
   import { fullscreen } from './fullscreen.svelte'
   import { alone } from './alone.svelte'
-  import { hiddenKinds, timeOn } from './settings.svelte'
+  import { chatsOn, hiddenKinds, timeOn } from './settings.svelte'
   import { canWriteAt } from './sharing.svelte'
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
@@ -142,7 +142,13 @@
     const chosen = open ?? (side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown)
     if (open) lastShown = open
     const twin = !open && workspace.openOn(side === 'left' ? 'right' : 'left') === chosen
-    if (!twin && workspace.fills(chosen) && (chosen !== 'time' || timeOn())) return chosen
+    if (
+      !twin &&
+      workspace.fills(chosen) &&
+      (chosen !== 'time' || timeOn()) &&
+      (chosen !== 'chats' || chatsOn())
+    )
+      return chosen
     return mine.find((one) => one.id !== 'scratchpad' && !(twin && one.id === chosen))?.id ?? chosen
   })
 
@@ -278,7 +284,7 @@
           (one) =>
             one.id === id &&
             workspace.fills(id) &&
-            (id !== 'chats' || !!account.accountToken) &&
+            (id !== 'chats' || (!!account.accountToken && chatsOn())) &&
             (id !== 'time' || timeOn()) &&
             (id !== 'ask' || !__EVEN_PLUGIN__),
         ),
@@ -890,7 +896,7 @@
             {#await tasksPanel() then TasksPanel}
               <TasksPanel {side} />
             {/await}
-          {:else if showing === 'chats'}
+          {:else if showing === 'chats' && chatsOn()}
             {#await chatsPanel() then ChatsPanel}
               <ChatsPanel />
             {/await}

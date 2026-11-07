@@ -18,7 +18,7 @@ vi.mock('./api', async (actual) => ({
   },
 }))
 
-const { hiddenKinds, kindsHere, PASS_WORD, shownOf } = await import('./settings.svelte')
+const { CHATS_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } = await import('./settings.svelte')
 const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('./new-kinds')
 const { newFileRows } = await import('./row-menu')
@@ -92,8 +92,10 @@ describe('the kinds a device has', () => {
     expect(kindsHere()).not.toContain('pass')
   })
 
-  test('take the chat in with an account', () => {
+  test('take the chat in with an account, once Chats is turned on', () => {
     token = 'token'
+    expect(kindsHere()).not.toContain('chat')
+    setWord(CHATS_WORD, true)
     expect(kindsHere()).toContain('chat')
   })
 

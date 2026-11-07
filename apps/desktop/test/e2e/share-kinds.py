@@ -8,7 +8,7 @@ import time
 from playwright.sync_api import Browser, Page
 
 import harness
-from harness import Drive
+from harness import CHATS_ON, Drive
 
 DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
@@ -40,6 +40,7 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: f
 
 def device(browser: Browser, label: str, at: str, token: str | None = None) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
+    context.add_init_script(CHATS_ON)
     if token:
         context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
     page = context.new_page()

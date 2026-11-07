@@ -34,7 +34,7 @@
   import { preferences } from './preferences'
   import { search } from './search.svelte'
   import { paletteWords } from './surfaces.svelte'
-  import { hiddenKinds, settings } from './settings.svelte'
+  import { chatsOn, hiddenKinds, settings } from './settings.svelte'
   import { landing } from './settings/landing.svelte'
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
@@ -195,7 +195,7 @@
   })
   $effect(() => {
     const words = term.trim()
-    if (!open || mode !== 'everything' || words.length < 3) {
+    if (!open || mode !== 'everything' || words.length < 3 || !chatsOn()) {
       messages = { rows: [], only: false, term: '' }
       return
     }

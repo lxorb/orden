@@ -1,8 +1,8 @@
 import { flushSync } from 'svelte'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { setWord } from './kind-choice'
-import { hiddenKinds, PASS_WORD, TIME_WORD } from './settings.svelte'
-import { whenPassOn, whenTimeOn } from './feature-gate.svelte'
+import { CHATS_WORD, hiddenKinds, PASS_WORD, TIME_WORD } from './settings.svelte'
+import { whenChatsOn, whenPassOn, whenTimeOn } from './feature-gate.svelte'
 import { openPass } from './pass/open'
 import { workspace } from './workspace.svelte'
 
@@ -52,5 +52,29 @@ describe('a feature turned on and off while the app runs', () => {
     setWord(TIME_WORD, true)
     flushSync()
     expect(ran).toBe(1)
+  })
+
+  test('Chats closes its tabs, a restored one too, and stops when turned off', () => {
+    const said: string[] = []
+    workspace.openView('', 'Team', '/space/Team.chat', {}, 'channel')
+    whenChatsOn(
+      () => void said.push('run'),
+      () => void said.push('off'),
+    )
+    flushSync()
+    expect(workspace.tabs.some((one) => one.kind === 'channel')).toBe(false)
+    expect(said).toEqual([])
+
+    setWord(CHATS_WORD, true)
+    flushSync()
+    workspace.openView('', 'Team', '/space/Team.chat', {}, 'channel')
+    flushSync()
+    expect(workspace.tabs.some((one) => one.kind === 'channel')).toBe(true)
+    expect(said).toEqual(['run'])
+
+    setWord(CHATS_WORD, false)
+    flushSync()
+    expect(workspace.tabs.some((one) => one.kind === 'channel')).toBe(false)
+    expect(said).toEqual(['run', 'off'])
   })
 })

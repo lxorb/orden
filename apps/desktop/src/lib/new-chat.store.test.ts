@@ -111,7 +111,8 @@ const { sync } = await import('./sync.svelte')
 const { account } = await import('./account.svelte')
 const { newKinds, offeredKinds } = await import('./new-kinds')
 const { busy } = await import('./busy.svelte')
-const { makeChat } = await import('./chats/view/open')
+const { makeChat, openChat } = await import('./chats/view/open')
+const { CHATS_WORD, hiddenKinds } = await import('./settings.svelte')
 
 let opened: { path: string | null; name: string; pointer: boolean }[] = []
 
@@ -125,6 +126,7 @@ beforeEach(async () => {
   asked.refused = false
   readOnly.clear()
   opened = []
+  hiddenKinds.hidden = [CHATS_WORD]
 
   Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })
   vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote-space')
@@ -159,6 +161,22 @@ function pointerAt(path: string) {
 const chatName = (path: string) => (path.split('/').pop() ?? '').replace(/\.chat$/, '')
 
 describe('a new chat', () => {
+  test('is nowhere while Chats is off, and opening one says how to turn it on', async () => {
+    hiddenKinds.hidden = []
+    const said = vi.spyOn(busy, 'failed')
+    expect(newKinds().map((one) => one.kind)).not.toContain('chat')
+    expect(offeredKinds().map((one) => one.kind)).not.toContain('chat')
+    await makeChat()
+    openChat('/space/Team.chat')
+    expect(workspace.naming).toBeNull()
+    expect(asked.spaces).toEqual([])
+    expect(workspace.tabs).toHaveLength(0)
+    expect(said).toHaveBeenCalledWith('Chats are off. Turn them on in Settings.')
+
+    hiddenKinds.hidden = [CHATS_WORD]
+    expect(newKinds().map((one) => one.kind)).toContain('chat')
+  })
+
   test("from Ctrl+T's M is a row in the list first, and the name places it", async () => {
     workspace.panel = null
     newKinds()

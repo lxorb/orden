@@ -60,6 +60,8 @@ vi.mock('./connected.svelte', () => ({
 }))
 
 const { priorities } = await import('./priorities.svelte')
+const { CHATS_WORD, hiddenKinds } = await import('../settings.svelte')
+hiddenKinds.hidden = [CHATS_WORD]
 const { startPriorities } = await import('./prioritise')
 
 test('a burst of messages in one chat is weighed once, not once a message', async () => {
