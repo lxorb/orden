@@ -57,7 +57,7 @@ export function scrubbedLog(log: string): string {
   return log
     .replace(ASSET, (whole: string) => path(whole))
     .replace(ADDRESS, (whole: string, scheme: string, host: string, route: string) => {
-      if (THE_APPS.test(route.replace(/(?::\d+)+$/, ''))) return whole
+      if (THE_APPS.test(route.replace(/\)+$/, '').replace(/(?::\d+)+$/, ''))) return whole
       const own = /^\/v\d+\//.test(route)
       return `${scheme}://${host}${own ? route : route.length > 1 ? '/…' : ''}`
     })

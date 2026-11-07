@@ -213,6 +213,13 @@ export const outsideNotice = latched(() => {
   return import('./OutsideFolder.svelte')
 })
 
+export const CRASHES_TOLD = 'nib:crash-reports-told'
+
+export const crashNotice = latched(() => {
+  if (__EVEN_PLUGIN__) throw new Error('no crash reports in the Even Realities plugin')
+  return import('./crash-reports/CrashNotice.svelte')
+})
+
 export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))
 
 export const undoToastNotice = latched(() => {

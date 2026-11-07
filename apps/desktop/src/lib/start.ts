@@ -208,12 +208,21 @@ export function start(): () => void {
       .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))
   }
 
+  let stopCrashes: (() => void) | null = null
+  if (!__EVEN_PLUGIN__ && isDesktop) {
+    void startup
+      .turn('rooms')
+      .then(() => import('./crash-reports/watch.svelte'))
+      .then((one) => (stopCrashes = one.watchForCrashes(!import.meta.env.DEV)))
+  }
+
   let stopPointer: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
     void import('./typing-pointer').then((one) => (stopPointer = one.hidePointerWhileTyping()))
   }
 
   return () => {
+    stopCrashes?.()
     stopPointer?.()
     stopAnywhere?.()
     clearInterval(sweeper)

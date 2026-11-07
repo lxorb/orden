@@ -3539,4 +3539,11 @@ export const ha: Dictionary = {
   Study: 'Nazari',
   'What are you working on?': 'Me kuke yi?',
   'You said': 'Abin da kuka faɗa',
+  Privacy: 'Sirri',
+  'Send crash and freeze reports': 'Aika rahotannin faɗuwa da daskarewa',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Idan Orden ya faɗi ko ya daskare, yana aika abin da yake yi da inda yake a cikin lambarsa, ba tare da sunaye, hanyoyi, adireshi da kalmomin sirri ba. Ba bayananka ba har abada.',
+  'Turn off in Settings': 'Kashe a cikin Saituna',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Yana aika abin da Orden ke yi lokacin da ya faɗi ko ya daskare; ba bayanai, sunaye, hanyoyi ko kalmomin sirri ba.',
 }

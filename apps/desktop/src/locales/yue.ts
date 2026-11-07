@@ -3318,4 +3318,11 @@ export const yue: Dictionary = {
   Study: '溫書',
   'What are you working on?': '你做緊乜？',
   'You said': '你講嘅',
+  Privacy: '私隱',
+  'Send crash and freeze reports': '傳送當機同凍結報告',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Orden 當機或者凍結嗰陣，會傳送佢當時做緊乜同喺自己程式碼邊度，冇名、路徑、地址同密碼。永遠唔會傳你嘅筆記。',
+  'Turn off in Settings': '喺設定度關閉',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    '傳送 Orden 當機或凍結時做緊乜；永遠唔傳筆記、名、路徑或密碼。',
 }

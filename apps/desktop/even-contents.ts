@@ -104,6 +104,7 @@ export const APP_FOLDERS = [
   'automation',
   'back-swipe',
   'canvas',
+  'crash-reports',
   'dictation',
   'downloads',
   'even',

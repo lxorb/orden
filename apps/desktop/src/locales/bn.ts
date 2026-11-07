@@ -3485,4 +3485,11 @@ export const bn: Dictionary = {
   Study: 'পড়াশোনা',
   'What are you working on?': 'আপনি কী নিয়ে কাজ করছেন?',
   'You said': 'আপনি যা বলেছেন',
+  Privacy: 'গোপনীয়তা',
+  'Send crash and freeze reports': 'ক্র্যাশ ও আটকে যাওয়ার রিপোর্ট পাঠান',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Orden ক্র্যাশ করলে বা আটকে গেলে, এটি কী করছিল এবং নিজের কোডের কোথায় ছিল তা পাঠায়, নাম, পাথ, ঠিকানা ও পাসওয়ার্ড বাদ দিয়ে। আপনার নোট কখনো নয়।',
+  'Turn off in Settings': 'সেটিংসে বন্ধ করুন',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Orden ক্র্যাশ বা আটকে গেলে কী করছিল তা পাঠায়; নোট, নাম, পাথ বা পাসওয়ার্ড কখনো নয়।',
 }

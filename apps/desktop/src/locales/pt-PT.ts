@@ -3587,4 +3587,11 @@ export const ptPT: Dictionary = {
   Study: 'Estudo',
   'What are you working on?': 'Em que está a trabalhar?',
   'You said': 'Indicado',
+  Privacy: 'Privacidade',
+  'Send crash and freeze reports': 'Enviar relatórios de falhas e bloqueios',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Quando o Orden falha ou bloqueia, envia o que estava a fazer e onde no próprio código, sem nomes, caminhos, endereços e palavras-passe. Nunca as suas notas.',
+  'Turn off in Settings': 'Desativar nas Definições',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Envia o que o Orden fazia ao falhar ou bloquear; nunca notas, nomes, caminhos ou palavras-passe.',
 }

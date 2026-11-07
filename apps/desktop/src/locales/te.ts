@@ -3505,4 +3505,11 @@ export const te: Dictionary = {
   Study: 'అధ్యయనం',
   'What are you working on?': 'మీరు దేనిపై పని చేస్తున్నారు?',
   'You said': 'మీరు చెప్పినది',
+  Privacy: 'గోప్యత',
+  'Send crash and freeze reports': 'క్రాష్ మరియు ఫ్రీజ్ నివేదికలను పంపు',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Orden క్రాష్ అయినప్పుడు లేదా నిలిచిపోయినప్పుడు, అది ఏమి చేస్తోందో మరియు తన కోడ్‌లో ఎక్కడ ఉందో పేర్లు, మార్గాలు, చిరునామాలు మరియు పాస్‌వర్డ్‌లు తొలగించి పంపుతుంది. మీ నోట్స్ ఎప్పటికీ కాదు.',
+  'Turn off in Settings': 'సెట్టింగ్‌లలో ఆఫ్ చేయండి',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Orden క్రాష్ అయినప్పుడు లేదా నిలిచిపోయినప్పుడు ఏమి చేస్తోందో పంపుతుంది; నోట్స్, పేర్లు, మార్గాలు లేదా పాస్‌వర్డ్‌లు ఎప్పటికీ కాదు.',
 }

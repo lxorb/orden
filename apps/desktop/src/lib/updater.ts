@@ -109,6 +109,7 @@ export async function restartToUpdate(install = true) {
   if (install && !(await installStaged())) return
 
   try {
+    await invoke('crash_leaving').catch(() => undefined)
     const { relaunch } = await import('@tauri-apps/plugin-process')
     await relaunch()
   } catch {
@@ -125,6 +126,7 @@ export async function installStaged(closing = false): Promise<boolean> {
   }
 
   try {
+    await invoke('crash_leaving').catch(() => undefined)
     await staged.install()
     return true
   } catch (error) {

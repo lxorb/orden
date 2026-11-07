@@ -246,6 +246,11 @@
     "default": true,
     "description": "The Add task shortcut works even while another app is in front."
   },
+  "general.crashReports": {
+    "type": "boolean",
+    "default": true,
+    "description": "Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords."
+  },
   "general.ctrlTabByUse": {
     "type": "boolean",
     "default": false,
