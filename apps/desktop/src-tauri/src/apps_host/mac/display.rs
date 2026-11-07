@@ -125,13 +125,7 @@ fn serve(heard: &Receiver<Ask>) {
                 height,
                 dpr,
                 made,
-            } => {
-                let answer = make(width, height, dpr).map(|(id, display)| {
-                    held.push((id, display));
-                    id
-                });
-                let _ = made.send(answer);
-            }
+            } => held.extend(handed(make(width, height, dpr), &made)),
             Ask::Fit {
                 id,
                 width,
@@ -145,6 +139,19 @@ fn serve(heard: &Receiver<Ask>) {
                 }
             }
             Ask::End { id } => held.retain(|(one, _)| *one != id),
+        }
+    }
+}
+
+fn handed<T>(
+    answer: Result<(CGDirectDisplayID, T), String>,
+    made: &Sender<Result<CGDirectDisplayID, String>>,
+) -> Option<(CGDirectDisplayID, T)> {
+    match answer {
+        Ok((id, display)) => made.send(Ok(id)).is_ok().then_some((id, display)),
+        Err(why) => {
+            let _ = made.send(Err(why));
+            None
         }
     }
 }
@@ -287,6 +294,27 @@ mod tests {
         assert_eq!(screen(800.0, 600.0, 2.0), (1600, 1200));
         assert_eq!(screen(801.0, 10.0, 1.0), (800, 64));
         assert_eq!(screen(100_000.0, 500.0, 2.0), (MOST_PIXELS, 1000));
+    }
+
+    #[test]
+    fn a_display_nobody_waits_for_any_more_is_let_go() {
+        struct Held(std::sync::Arc<std::sync::atomic::AtomicBool>);
+        impl Drop for Held {
+            fn drop(&mut self) {
+                self.0.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
+        }
+        let gone = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+
+        let (made, answer) = mpsc::channel();
+        drop(answer);
+        assert!(handed(Ok((7, Held(gone.clone()))), &made).is_none());
+        assert!(gone.load(std::sync::atomic::Ordering::SeqCst));
+
+        let (made, answer) = mpsc::channel();
+        let kept = handed(Ok((8, ())), &made);
+        assert_eq!(kept.map(|(id, ())| id), Some(8));
+        assert_eq!(answer.recv().ok(), Some(Ok(8)));
     }
 
     #[test]
