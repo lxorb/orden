@@ -718,7 +718,7 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
         crate::web_media::script().to_string(),
     ];
     #[cfg(all(not(windows), not(feature = "cef")))]
-    let mut scripts: Vec<String> = Vec::new();
+    let mut scripts = vec![crate::web_opens::GESTURE_SCRIPT.to_string()];
 
     #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     if pass {
@@ -2906,10 +2906,14 @@ mod tests {
 
     #[cfg(all(target_os = "macos", not(feature = "cef")))]
     #[test]
-    fn a_page_on_a_mac_is_handed_pass_s_script_alone() {
+    fn a_page_on_a_mac_is_handed_the_gesture_gate_and_pass_s_script() {
         assert_eq!(
             opening(None, "https://a.example/page", true),
-            format!("{};\n", crate::web_pass::script())
+            format!(
+                "{};\n{};\n",
+                crate::web_opens::GESTURE_SCRIPT,
+                crate::web_pass::script()
+            )
         );
     }
 
