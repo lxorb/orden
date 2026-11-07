@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { linearly } from './growth'
+import { linearly } from '../../../scripts/growth'
 import {
   readDuration,
   readRemind,

@@ -4,7 +4,7 @@ import { ensureSyntaxTree, parseLater } from '@codemirror/language'
 import { ChangeSet, EditorState, type Transaction } from '@codemirror/state'
 import { ViewUpdate } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
-import { GROWS_AT_MOST, measuredGrowth } from '../../markdown/src/growth'
+import { GROWS_AT_MOST, measuredGrowth } from '../../../scripts/growth'
 
 function seeded(seed: number): () => number {
   return () => {

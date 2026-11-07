@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from '../../../../../../scripts/growth'
 import { anchorAt, anchored, Heights } from './window'
 
 const plain = (heights: number[]) => new Heights(heights)
@@ -65,13 +66,23 @@ describe('at the size of a long chat', () => {
     for (let i = 0; i < count; i++) expected += 20 + (i % 7)
     expect(list.total).toBe(expected)
 
-    const started = performance.now()
     for (let i = 0; i < 10_000; i++) {
       const row = (i * 7919) % count
       list.set(row, 40)
       const top = list.top(row)
       expect(list.at(top)).toBe(row)
     }
-    expect(performance.now() - started).toBeLessThan(1000)
+  })
+
+  test('a row set and found costs no more for a longer chat', () => {
+    const walked = (count: number) => {
+      const list = plain(Array.from({ length: count }, (_, i) => 20 + (i % 7)))
+      for (let i = 0; i < count; i++) {
+        const row = (i * 7919) % count
+        list.set(row, 40)
+        if (list.at(list.top(row)) !== row) throw new Error(`row ${row} lost`)
+      }
+    }
+    expect(growth(walked, 10_000)).toBeLessThan(GROWS_AT_MOST)
   })
 })

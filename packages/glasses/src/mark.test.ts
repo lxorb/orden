@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from '../../../scripts/growth'
 import { draws, fold, width } from './firmware'
 import { markLines, MARKS, workDone } from './mark'
 import { BODY_INNER } from './panel'
@@ -582,13 +583,14 @@ describe('what it costs', () => {
     expect(twice.work.searched).toBeLessThan(once.work.searched * 2 + 100)
   })
 
-  test('and does the whole of it in well under a second', () => {
-    const at = performance.now()
-    const marked = markLines(note, { inner: BODY_INNER })
-    const took = performance.now() - at
+  test('and does the whole of it in time in step with its length', () => {
+    const sections = note.split(/(?=^## )/m)
+    const marked = linearly(
+      (count) => markLines(sections.slice(0, count).join(''), { inner: BODY_INNER }),
+      sections.length,
+    )
 
     expect(marked.length).toBeGreaterThan(800)
-    expect(took).toBeLessThan(1_000)
   })
 })
 

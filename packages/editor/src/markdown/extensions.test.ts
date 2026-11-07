@@ -4,7 +4,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { growth, GROWS_AT_MOST } from '../../../markdown/src/growth'
+import { growth, GROWS_AT_MOST } from '../../../../scripts/growth'
 import { nibMarkdownExtensions } from './extensions'
 import { parsed } from '../../test/parsed'
 

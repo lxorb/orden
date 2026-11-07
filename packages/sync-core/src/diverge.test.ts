@@ -2,6 +2,7 @@ import { TEXT } from '@orden/rooms'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
+import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 import { changes, edited, note } from '../test/markdown'
 import { CONTESTED, diverge, excerpt } from './diverge'
 import { analyse } from './merge3'
@@ -834,14 +835,17 @@ describe('diverge', () => {
       while (text.length < 990) text += `${words[Math.floor(next() * words.length)]} `
       return text.slice(0, 990)
     }
-    const paste = () => `${Array.from({ length: 400 }, line).join('\n')}\n`
+    const local = Array.from({ length: 200 }, line)
+    const remote = Array.from({ length: 200 }, line)
     const base = `${line()}\n`
-    const local = paste()
-    const remote = paste()
+    const pasted = (lines: string[], count: number) => `${lines.slice(0, count).join('\n')}\n`
 
-    const started = performance.now()
-    diverge(base, local, remote, LOCAL_NEWER)
-    expect(performance.now() - started).toBeLessThan(2_500)
+    expect(
+      growth(
+        (count) => diverge(base, pasted(local, count), pasted(remote, count), LOCAL_NEWER),
+        50,
+      ),
+    ).toBeLessThan(GROWS_AT_MOST)
   })
 
   test('a word changed at each end of a hundred kilobytes is clean', () => {

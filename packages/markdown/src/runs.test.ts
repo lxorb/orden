@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { growth, GROWS_AT_MOST } from './growth'
+import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 import { renderMarkdown } from './index'
 
 function rendered(unit: string): (length: number) => string {

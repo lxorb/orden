@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { growth, GROWS_AT_MOST } from './growth'
+import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 import { HIGHLIGHT_COLOURS, highlightTone, readHighlight, writeHighlight } from './highlights'
 import { highlight } from './extensions'
 import { renderMarkdown, setHardBreaks } from './index'
