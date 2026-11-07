@@ -170,15 +170,12 @@ pub async fn pty_spawn(
         };
         let (session, started) = session::Session::open(&launch, cols, rows)?;
         let pid = session.pid();
-
-        terminals.lock().insert(
-            id.clone(),
-            Held {
-                owner,
-                session: Arc::new(session),
-                remote,
-            },
-        );
+        let session = Arc::new(session);
+        if !kept_alone(&terminals, &id, owner, &session, remote) {
+            session.end();
+            started.run(Box::new(|_| {}), |_| {});
+            return Err(format!("terminal {id} is already running"));
+        }
 
         let app = webview.app_handle().clone();
         started.run(
@@ -210,6 +207,28 @@ pub async fn pty_spawn(
         Ok(Spawned { pid })
     })
     .await
+}
+
+fn kept_alone(
+    terminals: &Terminals,
+    id: &str,
+    owner: String,
+    session: &Arc<Session>,
+    remote: bool,
+) -> bool {
+    let mut sessions = terminals.lock();
+    if sessions.contains_key(id) {
+        return false;
+    }
+    sessions.insert(
+        id.to_owned(),
+        Held {
+            owner,
+            session: Arc::clone(session),
+            remote,
+        },
+    );
+    true
 }
 
 #[tauri::command]
@@ -331,6 +350,31 @@ mod tests {
         let (session, started) = Session::open(&launch, 80, 24).expect("a shell");
         started.run(Box::new(|_| {}), |_| {});
         session
+    }
+
+    #[test]
+    fn a_second_shell_under_a_name_in_use_never_takes_the_first_ones_place() {
+        let terminals = Terminals::default();
+        let first = Arc::new(idle_shell());
+        let second = Arc::new(idle_shell());
+        assert!(kept_alone(
+            &terminals,
+            "t1",
+            "main".to_owned(),
+            &first,
+            false
+        ));
+        assert!(!kept_alone(
+            &terminals,
+            "t1",
+            "main".to_owned(),
+            &second,
+            false
+        ));
+        let (held, _) = terminals.held("main", "t1").expect("held");
+        assert!(Arc::ptr_eq(&held, &first));
+        first.end();
+        second.end();
     }
 
     #[test]

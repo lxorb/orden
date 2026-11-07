@@ -37,7 +37,7 @@ use mac::{audio, capture, clipboard, input};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard};
 
 use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
@@ -135,8 +135,51 @@ impl Running {
 }
 
 #[derive(Default)]
+struct Starting {
+    keys: Mutex<HashSet<String>>,
+    done: Condvar,
+}
+
+struct Claim<'a> {
+    starting: &'a Starting,
+    key: String,
+}
+
+impl Starting {
+    fn claim(&self, key: &str) -> Claim<'_> {
+        let mut keys = self
+            .keys
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        while keys.contains(key) {
+            keys = self
+                .done
+                .wait(keys)
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+        }
+        keys.insert(key.to_owned());
+        Claim {
+            starting: self,
+            key: key.to_owned(),
+        }
+    }
+}
+
+impl Drop for Claim<'_> {
+    fn drop(&mut self) {
+        self.starting
+            .keys
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .remove(&self.key);
+        self.starting.done.notify_all();
+    }
+}
+
+#[derive(Default)]
 pub struct Hosted {
     apps: Mutex<HashMap<String, Arc<Running>>>,
+    starting: Starting,
     allowed: Mutex<Option<HashSet<String>>>,
     #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     peers: Mutex<HashMap<String, stream::Peer>>,
@@ -206,6 +249,7 @@ pub async fn apps_start(
         owner(&webview)?;
         usable(&key)?;
         let hosted = webview.state::<Hosted>();
+        let _claim = hosted.starting.claim(&key);
         if let Some(running) = hosted.apps().get(&key).cloned() {
             *running
                 .events
@@ -553,7 +597,9 @@ pub async fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
     crate::lane::off_the_runtime(move || -> Result<(), String> {
         owner(&webview)?;
         usable(&key)?;
-        let running = webview.state::<Hosted>().apps().get(&key).cloned();
+        let hosted = webview.state::<Hosted>();
+        let _claim = hosted.starting.claim(&key);
+        let running = hosted.apps().get(&key).cloned();
         if let Some(running) = running {
             end(&running, std::time::Duration::from_secs(3));
         }
@@ -977,6 +1023,33 @@ mod tests {
             ),
             r#""/opt/My App/run" --x "say \"hi\"""#
         );
+    }
+
+    #[test]
+    fn starts_one_program_for_a_key_however_many_ask_at_once() {
+        let starting = Arc::new(Starting::default());
+        let apps = Arc::new(Mutex::new(HashMap::<String, u32>::new()));
+        let started = Arc::new(std::sync::atomic::AtomicU32::new(0));
+        let askers: Vec<_> = (0..8)
+            .map(|_| {
+                let (starting, apps, started) = (starting.clone(), apps.clone(), started.clone());
+                std::thread::spawn(move || {
+                    let _claim = starting.claim("same");
+                    if apps.lock().unwrap().contains_key("same") {
+                        return;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(20));
+                    let pid = started.fetch_add(1, Ordering::SeqCst);
+                    apps.lock().unwrap().insert("same".to_owned(), pid);
+                })
+            })
+            .collect();
+        for one in askers {
+            one.join().unwrap();
+        }
+        assert_eq!(started.load(Ordering::SeqCst), 1);
+        let _other = starting.claim("other");
+        let _same = starting.claim("same");
     }
 
     #[test]
