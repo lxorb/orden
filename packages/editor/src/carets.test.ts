@@ -4,12 +4,15 @@ import type { Decoration } from '@codemirror/view'
 import { EditorView } from '@codemirror/view'
 import {
   agentsOf,
+  caretsAt,
+  inkOn,
   outOfSight,
   type Peer,
   peersOf,
   remoteCarets,
   setAgents,
   setPeers,
+  sideFor,
 } from './carets'
 
 function stateOn(doc: string): EditorState {
@@ -27,8 +30,7 @@ function kindOf(decoration: Decoration): string {
   const spec: unknown = decoration.spec
   if (typeof spec !== 'object' || spec === null) return ''
 
-  const named = spec as { class?: unknown; widget?: unknown }
-  if (named.widget) return 'caret'
+  const named = spec as { class?: unknown }
   return typeof named.class === 'string' ? named.class : ''
 }
 
@@ -49,9 +51,7 @@ function marks(state: EditorState): { from: number; to: number; kind: string }[]
 }
 
 function carets(state: EditorState): number[] {
-  return marks(state)
-    .filter((one) => one.kind === 'caret')
-    .map((one) => one.from)
+  return caretsAt(state).map((one) => one.head)
 }
 
 function ranges(state: EditorState): { from: number; to: number }[] {
@@ -141,6 +141,42 @@ describe('the other people in a note', () => {
 
     expect(marks(after)).toEqual([])
     expect(peersOf(after)).toBe(peersOf(state))
+  })
+
+  test('are drawn beside the words, never as part of a line', () => {
+    const state = withPeers('one\ntwo\n', [MAC])
+
+    expect(marks(state)).toEqual([])
+  })
+})
+
+describe('the name on a caret', () => {
+  test('sits on top of the caret while nothing is written above it', () => {
+    expect(sideFor(true, false, false)).toBe('above')
+    expect(sideFor(true, false, true)).toBe('above')
+  })
+
+  test('goes under the caret when it would cover the words above', () => {
+    expect(sideFor(true, true, false)).toBe('below')
+  })
+
+  test('goes under the caret at the top of the note', () => {
+    expect(sideFor(false, false, false)).toBe('below')
+    expect(sideFor(false, true, true)).toBe('below')
+  })
+
+  test('stays on top when the lines above and below are both full', () => {
+    expect(sideFor(true, true, true)).toBe('above')
+  })
+
+  test('is written in whichever ink reads on the colour', () => {
+    expect(inkOn('#8aa0b8')).toBe('#0b0d10')
+    expect(inkOn('#e5b23c')).toBe('#0b0d10')
+    expect(inkOn('#5b6b7f')).toBe('#ffffff')
+    expect(inkOn('#c01c28')).toBe('#ffffff')
+    expect(inkOn('#5b4be0')).toBe('#ffffff')
+    expect(inkOn('#fff')).toBe('#0b0d10')
+    expect(inkOn('tomato')).toBe('var(--accent-ink)')
   })
 })
 
