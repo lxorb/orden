@@ -60,6 +60,15 @@ describe('highlighting', () => {
     )
   })
 
+  test('draws neighbouring tokens of one colour as one element', async () => {
+    const parsers = await loadParsers(['js'])
+    const html = highlightCode('f(g(1));\n// one\n// two\n', parsers.get('js')!)
+
+    expect(html).toContain('<span class="hl-punctuation">));</span>')
+    expect(html).toContain('<span class="hl-comment">// one\n// two</span>')
+    expect(html.replace(/<[^>]+>/g, '')).toBe('f(g(1));\n// one\n// two\n')
+  })
+
   test('keeps every character of the source', async () => {
     const parsers = await loadParsers(['py'])
     const source = 'def f(n):\n    return n if n < 2 else f(n - 1)\n'

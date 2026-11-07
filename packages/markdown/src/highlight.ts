@@ -41,16 +41,23 @@ function parsed(code: string, parser: Parser): Tree {
   return tree
 }
 
+const BLANK = /^\s*$/
+
 export function highlightCode(code: string, parser: Parser): string {
+  const runs: { from: number; to: number; classes: string }[] = []
+  highlightTree(parsed(code, parser), codeHighlighter, (from, to, classes) => {
+    const before = runs.at(-1)
+    if (before?.classes === classes && BLANK.test(code.slice(before.to, from))) before.to = to
+    else runs.push({ from, to, classes })
+  })
+
   let out = ''
   let last = 0
-
-  highlightTree(parsed(code, parser), codeHighlighter, (from, to, classes) => {
+  for (const { from, to, classes } of runs) {
     out += escapeCode(code.slice(last, from))
     out += `<span class="${classes}">${escapeCode(code.slice(from, to))}</span>`
     last = to
-  })
-
+  }
   return out + escapeCode(code.slice(last))
 }
 
