@@ -18,7 +18,12 @@ function found(name: string): string | null {
   return null
 }
 
-type Shell = { name: string; script: string; lines: (spoken: string[]) => string; args: string[] }
+interface Shell {
+  name: string
+  script: string
+  lines: (spoken: string[]) => string
+  args: string[]
+}
 
 const SHELLS: Shell[] = [
   ...(windows ? [] : ['bash', 'dash', 'zsh', 'ksh', 'fish', 'tcsh']).map((name) => ({

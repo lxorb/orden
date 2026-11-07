@@ -21,17 +21,31 @@ export function imageIn(transfer: DataTransfer | null): File | null {
   return [...transfer.files].find((file) => imageKindOf(file.type) !== null) ?? null
 }
 
-function control(char: string): boolean {
-  const code = char.codePointAt(0) ?? 0
+function controlCode(code: number): boolean {
   return code < 0x20 || (code >= 0x7f && code <= 0x9f)
 }
 
-function typedAsIs(char: string): boolean {
-  return !control(char) || char === '\t' || char === '\n' || char === '\r'
+function control(char: string): boolean {
+  return controlCode(char.charCodeAt(0))
+}
+
+function typedAsIs(code: number): boolean {
+  return !controlCode(code) || code === 0x09 || code === 0x0a || code === 0x0d
+}
+
+function withoutKeys(text: string): string {
+  let out = ''
+  let from = 0
+  for (let at = 0; at < text.length; at++) {
+    if (typedAsIs(text.charCodeAt(at))) continue
+    out += text.slice(from, at)
+    from = at + 1
+  }
+  return from === 0 ? text : out + text.slice(from)
 }
 
 export function pasted(text: string): string {
-  const kept = [...text].filter(typedAsIs).join('')
+  const kept = withoutKeys(text)
   const trimmed = kept.replace(/\s+$/, '')
   return /[\r\n]/.test(trimmed) ? kept : trimmed
 }
@@ -104,7 +118,8 @@ export function spokenPath(path: string, shell: string): string {
   if (unquoted(spoken, speech)) return spoken
   if (speech === 'posix' || speech === 'csh') return posixSpoken(spoken, speech === 'csh')
 
-  const seen = [...spoken].map((char) => (control(char) ? '?' : char)).join('')
+  let seen = ''
+  for (const char of spoken) seen += control(char) ? '?' : char
   if (speech === 'powershell') return `'${seen.replace(/['‘’‚‛]/g, '$&$&')}'`
   if (speech === 'doubled') return `'${seen.replace(/'/g, "''")}'`
   if (speech === 'nu') return seen.includes("'") ? rawNu(seen) : `'${seen}'`

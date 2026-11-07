@@ -50,6 +50,14 @@ describe('a paste into a terminal', () => {
     expect(linesIn('one\x0fline')).toBe(1)
   })
 
+  test('a paste of many megabytes is looked through in one pass', () => {
+    const large = `${'x'.repeat(8_000_000)}\x1b[201~`
+    const began = performance.now()
+    expect(pasted(large)).toHaveLength(8_000_005)
+    expect(pasted('x'.repeat(8_000_000))).toHaveLength(8_000_000)
+    expect(performance.now() - began).toBeLessThan(2000)
+  })
+
   test('asks first only for lines a shell without bracketed paste would run', () => {
     expect(asksFirst('a\nb', false)).toBe(true)
     expect(asksFirst('a\nb', true)).toBe(false)
