@@ -26,6 +26,7 @@ import {
 import { askChat } from './ask'
 import { hubIdOf, reachAs, reachByToken, reaching } from './reach'
 import { SCHEMA } from './schema'
+import { steadyEnv } from '../steady'
 
 export type ChatAsk =
   | 'join'
@@ -121,10 +122,13 @@ export class ChatLog implements DurableObject {
   private signInsAskedAt = 0
   private reachers: { at: number; list: { id: string; guest: boolean }[] } | null = null
 
+  private readonly env: Env
+
   constructor(
     private readonly ctx: DurableObjectState,
-    private readonly env: Env,
+    env: Env,
   ) {
+    this.env = steadyEnv(env)
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(BEAT, BEAT_ANSWER))
   }
 

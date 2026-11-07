@@ -6,6 +6,7 @@ import { markSeen, register } from './devices'
 import { type FromDevice, readFrame, say } from './frames'
 import { keepPresence, presenceOf } from '../people/presence'
 import { type Attached, attach, attachedTo, everySocket, socketOf } from './sockets'
+import { steadyEnv } from '../steady'
 
 const BEAT = 'beat'
 const BEAT_ANSWER = 'ok'
@@ -18,10 +19,13 @@ export interface Joining {
 }
 
 export class AccountHub implements DurableObject {
+  private readonly env: Env
+
   constructor(
     private readonly ctx: DurableObjectState,
-    private readonly env: Env,
+    env: Env,
   ) {
+    this.env = steadyEnv(env)
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(BEAT, BEAT_ANSWER))
   }
 

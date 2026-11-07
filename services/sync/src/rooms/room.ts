@@ -45,6 +45,7 @@ import {
 } from './kind'
 import { RoomState, TOO_LARGE_IN_A_ROOM } from './state'
 import { accessOf } from './access'
+import { steadyEnv } from '../steady'
 
 const SETTLE_DELAY = 1_200
 
@@ -270,10 +271,13 @@ export class NoteRoom implements DurableObject {
   private settling = ''
   private settlingDevice: string | undefined = undefined
 
+  private readonly env: Env
+
   constructor(
     private readonly ctx: DurableObjectState,
-    private readonly env: Env,
+    env: Env,
   ) {
+    this.env = steadyEnv(env)
     this.state = new RoomState(ctx.storage)
     this.awareness = new Awareness(this.state.doc)
     this.listen()

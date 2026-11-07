@@ -57,8 +57,15 @@ function steadyStatement(statement: D1PreparedStatement, sql: string): D1Prepare
   return held
 }
 
+const steadied = new WeakMap<D1Database, D1Database>()
+
+const steadyOnes = new WeakSet<D1Database>()
+
 export function steadyDb(db: D1Database): D1Database {
-  return new Proxy(db, {
+  if (steadyOnes.has(db)) return db
+  const had = steadied.get(db)
+  if (had) return had
+  const held = new Proxy(db, {
     get(target, key) {
       if (key === 'prepare') {
         return (sql: string) => steadyStatement(target.prepare(sql), sql)
@@ -73,8 +80,18 @@ export function steadyDb(db: D1Database): D1Database {
         : value
     },
   })
+  steadied.set(db, held)
+  steadyOnes.add(held)
+  return held
 }
 
 export function steadyEnv(env: Env): Env {
-  return { ...env, DB: steadyDb(env.DB) }
+  return new Proxy(env, {
+    get(target, key) {
+      const value: unknown = Reflect.get(target, key, target)
+      return key === 'DB' && typeof value === 'object' && value !== null
+        ? steadyDb(value as D1Database)
+        : value
+    },
+  })
 }
