@@ -3,6 +3,8 @@ import { isJunk } from './names'
 export interface Picked {
   name: string
   webkitRelativePath?: string
+  size?: number
+  slice?(start: number, end: number): Blob
   arrayBuffer(): Promise<ArrayBuffer>
 }
 
