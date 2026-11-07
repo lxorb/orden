@@ -7,6 +7,7 @@ pub mod shells;
 mod ssh_config;
 
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use serde::Serialize;
@@ -19,6 +20,7 @@ use session::{Out, Session};
 #[derive(Default)]
 pub struct Terminals {
     sessions: Mutex<HashMap<String, Held>>,
+    closing: AtomicBool,
 }
 
 struct Held {
@@ -102,7 +104,11 @@ pub fn end_all(app: &AppHandle) {
     let Some(terminals) = app.try_state::<Terminals>() else {
         return;
     };
-    let ending: Vec<Held> = terminals.lock().drain().map(|(_, held)| held).collect();
+    let ending: Vec<Held> = {
+        let mut sessions = terminals.lock();
+        terminals.closing.store(true, Ordering::SeqCst);
+        sessions.drain().map(|(_, held)| held).collect()
+    };
     for held in ending {
         held.session.end();
     }
@@ -217,7 +223,7 @@ fn kept_alone(
     remote: bool,
 ) -> bool {
     let mut sessions = terminals.lock();
-    if sessions.contains_key(id) {
+    if terminals.closing.load(Ordering::SeqCst) || sessions.contains_key(id) {
         return false;
     }
     sessions.insert(
@@ -373,6 +379,14 @@ mod tests {
         ));
         let (held, _) = terminals.held("main", "t1").expect("held");
         assert!(Arc::ptr_eq(&held, &first));
+        terminals.closing.store(true, Ordering::SeqCst);
+        assert!(!kept_alone(
+            &terminals,
+            "t2",
+            "main".to_owned(),
+            &second,
+            false
+        ));
         first.end();
         second.end();
     }

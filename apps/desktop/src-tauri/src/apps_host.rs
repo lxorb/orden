@@ -179,6 +179,7 @@ impl Drop for Claim<'_> {
 #[derive(Default)]
 pub struct Hosted {
     apps: Mutex<HashMap<String, Arc<Running>>>,
+    closing: AtomicBool,
     starting: Starting,
     allowed: Mutex<Option<HashSet<String>>>,
     #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
@@ -190,6 +191,21 @@ impl Hosted {
         self.apps
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    fn kept(&self, key: &str, running: &Arc<Running>) -> bool {
+        let mut apps = self.apps();
+        if self.closing.load(Ordering::SeqCst) {
+            return false;
+        }
+        apps.insert(key.to_owned(), running.clone());
+        true
+    }
+
+    fn closed(&self) -> Vec<Arc<Running>> {
+        let mut apps = self.apps();
+        self.closing.store(true, Ordering::SeqCst);
+        apps.drain().map(|(_, one)| one).collect()
     }
 
     #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
@@ -354,9 +370,9 @@ fn run_on_its_display(
         })),
         desktop: Mutex::new(Some(desktop)),
     });
-    app.state::<Hosted>()
-        .apps()
-        .insert(key.clone(), running.clone());
+    if !app.state::<Hosted>().kept(&key, &running) {
+        end(&running, std::time::Duration::ZERO);
+    }
     running.tell(Said::RUNNING);
 
     std::thread::spawn(move || {
@@ -442,9 +458,9 @@ fn run_on_its_display(
         display: Mutex::new(Some(display)),
         clipboard: clipboard::Clipboard::open(process),
     });
-    app.state::<Hosted>()
-        .apps()
-        .insert(key.clone(), running.clone());
+    if !app.state::<Hosted>().kept(&key, &running) {
+        end(&running, std::time::Duration::ZERO);
+    }
     running.tell(Said::RUNNING);
 
     std::thread::spawn(move || {
@@ -535,9 +551,9 @@ fn run_on_its_display(
         display: Mutex::new(Some(display)),
         sink: Mutex::new(sink),
     });
-    app.state::<Hosted>()
-        .apps()
-        .insert(key.clone(), running.clone());
+    if !app.state::<Hosted>().kept(&key, &running) {
+        end(&running, std::time::Duration::ZERO);
+    }
     running.tell(Said::RUNNING);
 
     std::thread::spawn(move || {
@@ -824,7 +840,7 @@ pub fn end_all(app: &AppHandle) {
     let Some(hosted) = app.try_state::<Hosted>() else {
         return;
     };
-    let all: Vec<Arc<Running>> = hosted.apps().drain().map(|(_, one)| one).collect();
+    let all = hosted.closed();
     #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     hosted.peers().clear();
     if all.is_empty() {
@@ -1050,6 +1066,33 @@ mod tests {
         assert_eq!(started.load(Ordering::SeqCst), 1);
         let _other = starting.claim("other");
         let _same = starting.claim("same");
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[test]
+    fn nothing_is_kept_once_the_app_has_begun_to_close() {
+        let idle = || {
+            Arc::new(Running {
+                pid: 0,
+                events: Mutex::new(None),
+                stopping: AtomicBool::new(false),
+                screen: Arc::new(Mutex::new(Screen {
+                    display: String::new(),
+                    hz: 60.0,
+                })),
+                #[cfg(target_os = "linux")]
+                display: Mutex::new(None),
+                #[cfg(target_os = "linux")]
+                sink: Mutex::new(None),
+                #[cfg(target_os = "windows")]
+                desktop: Mutex::new(None),
+            })
+        };
+        let hosted = Hosted::default();
+        assert!(hosted.kept("before", &idle()));
+        assert_eq!(hosted.closed().len(), 1);
+        assert!(!hosted.kept("after", &idle()));
+        assert!(hosted.apps().is_empty());
     }
 
     #[test]
