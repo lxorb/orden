@@ -183,6 +183,19 @@ pub const PAGE_SCRIPT: &str = r"(function () {
   })
 })()";
 
+#[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
+pub const GESTURE_SCRIPT: &str = r"(function () {
+  var open = window.open
+  var activation = navigator.userActivation
+  if (typeof open !== 'function' || typeof Proxy !== 'function' || !activation) return
+  window.open = new Proxy(open, {
+    apply: function (engine, self, args) {
+      if (!activation.isActive) return null
+      return Reflect.apply(engine, self, args)
+    }
+  })
+})()";
+
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
