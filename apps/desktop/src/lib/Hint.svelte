@@ -8,6 +8,7 @@
 
   let open = $state(false)
   let host = $state<HTMLElement>()
+  let pressing = false
 
   function outside(event: PointerEvent) {
     if (open && host && !host.contains(event.target as Node)) open = false
@@ -22,14 +23,24 @@
     aria-label={text}
     onclick={(event) => {
       event.stopPropagation()
+      pressing = false
       open = !open
     }}
-    onpointerenter={() => (open = true)}
+    onpointerdown={() => (pressing = true)}
+    onpointercancel={() => (pressing = false)}
+    onpointerenter={(event) => {
+      if (event.pointerType === 'mouse') open = true
+    }}
     onpointerleave={(event) => {
       if (event.pointerType === 'mouse') open = false
     }}
-    onfocus={() => (open = true)}
-    onblur={() => (open = false)}
+    onfocus={() => {
+      if (!pressing) open = true
+    }}
+    onblur={() => {
+      pressing = false
+      open = false
+    }}
     onkeydown={(event) => {
       if (event.key === 'Escape' && open) {
         event.stopPropagation()
