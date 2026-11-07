@@ -1075,6 +1075,25 @@ describe('a chat while it answers', () => {
     expect(kept.get('work')?.get(id)?.body).toContain('my new question')
   })
 
+  test('starts a new chat while the first message of the open one is gathered', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    chat.newThread()
+    const first = String(chat.thread?.id)
+    const go = held()
+    chat.text = 'the first question'
+    chat.submit(around)
+    expect(chat.busy).toBe(true)
+
+    chat.newThread()
+
+    expect(chat.thread?.id).not.toBe(first)
+    go()
+    await settled()
+    expect(words(chat.thread)).toEqual([])
+  })
+
   test('asks nothing of a chat deleted while its message is gathered', async () => {
     const chat = await asked()
     const id = String(chat.thread?.id)
