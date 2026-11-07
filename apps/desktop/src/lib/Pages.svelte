@@ -64,6 +64,7 @@
 
   import { pages as pagesState } from './pages/showing.svelte'
   import { viewport } from './viewport.svelte'
+  import { samePath } from './space-paths'
   import { workspace, type Tab } from './workspace.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
@@ -138,6 +139,29 @@
   $effect(() => {
     store.measured(width, height)
   })
+
+  $effect(() => {
+    const asked = workspace.gotoPage
+    const first = tab.page
+    if (!height || !pages.length || (first === undefined && !asked)) return
+
+    untrack(() => {
+      if (first !== undefined) {
+        tab.page = undefined
+        landOn(first)
+      }
+      if (asked && tab.path && samePath(asked.path, tab.path)) {
+        workspace.gotoPage = null
+        landOn(asked.page)
+      }
+    })
+  })
+
+  function landOn(paper: number) {
+    const at = pages.findIndex((one) => one.page === paper)
+    store.halt()
+    store.turnTo(at >= 0 ? at + 1 : paper)
+  }
 
   $effect(() => {
     pagesState.arrived(tab.note.key, store)
