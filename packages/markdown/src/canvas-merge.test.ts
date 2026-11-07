@@ -359,6 +359,54 @@ describe('what stamping an edit compares', () => {
     expect(after.at.s0).toBe(1000)
   })
 
+  test('and strokes cut far apart are only those strokes, not all that lies between', () => {
+    const { reads, ink } = counted(600)
+    const before = stamped(plane(), plane({ ink }), 1000)
+    const cut = new Set([3, 300, 596])
+    const after = before.ink.flatMap((one, at) =>
+      cut.has(at) ? [stroke(`s${at}`, at + 0.5), stroke(`piece${at}`, at + 0.7)] : [one],
+    )
+    reads.ids = 0
+    const out = stamped(before, { ...before, ink: after }, 2000)
+
+    expect(reads.ids).toBeLessThanOrEqual(ink.length + cut.size * 4)
+    expect(out.at.s3).toBe(2000)
+    expect(out.at.piece300).toBe(2000)
+    expect(out.at.s299).toBe(1000)
+    expect(out.gone).toEqual({})
+    expect(out.moved).toBeUndefined()
+  })
+
+  test('and a stroke rubbed out between others leaves a tombstone, and nothing moved', () => {
+    const before = stamped(
+      plane(),
+      plane({ ink: [stroke('a'), stroke('b'), stroke('c'), stroke('d')] }),
+      1000,
+    )
+    const out = stamped(
+      before,
+      { ...before, ink: [before.ink[0]!, before.ink[2]!, stroke('e')] },
+      2000,
+    )
+
+    expect(out.gone).toEqual({ b: 2000, d: 2000 })
+    expect(out.at).toEqual({ a: 1000, c: 1000, e: 2000 })
+    expect(out.moved).toBeUndefined()
+  })
+
+  test('and strokes laid in a new order are the ones that moved', () => {
+    const before = stamped(
+      plane(),
+      plane({ ink: [stroke('a'), stroke('b'), stroke('c'), stroke('d')] }),
+      1000,
+    )
+    const [a, b, c, d] = before.ink
+    const out = stamped(before, { ...before, ink: [a!, c!, { ...b!, size: 9 }, d!] }, 2000)
+
+    expect(out.at).toEqual({ a: 1000, b: 2000, c: 1000, d: 1000 })
+    expect(Object.keys(out.moved ?? {})).toHaveLength(1)
+  })
+
   test('a plane read from a file gets a time against everything on it', () => {
     const arrived = plane({ nodes: [card('a'), card('b')], at: {} })
     const stampedNow = stamped(arrived, { ...arrived, nodes: [...arrived.nodes, card('c')] }, 3000)

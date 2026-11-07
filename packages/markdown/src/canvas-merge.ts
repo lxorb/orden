@@ -104,19 +104,27 @@ function diff<T extends Thing>(
     return
   }
 
-  const was = byId(wasMiddle)
-  const is = byId(isMiddle)
+  const held = new Set(wasMiddle)
+  const kept = new Set(isMiddle)
+  const fresh = isMiddle.filter((thing) => !held.has(thing))
+  const left = wasMiddle.filter((thing) => !kept.has(thing))
+  const freshIds = new Set(fresh.map((thing) => thing.id))
+  const leftIds = new Set(left.map((thing) => thing.id))
 
-  for (const [id, thing] of is) {
-    if (was.get(id) !== thing) touched.changed.push(id)
+  for (const thing of fresh) touched.changed.push(thing.id)
+  for (const thing of left) {
+    if (!freshIds.has(thing.id)) touched.removed.push(thing.id)
   }
 
-  for (const id of was.keys()) {
-    if (!is.has(id)) touched.removed.push(id)
-  }
+  const was = wasMiddle.filter((thing) => kept.has(thing) || freshIds.has(thing.id))
+  const both = isMiddle.filter((thing) => held.has(thing) || leftIds.has(thing.id))
+  if (
+    was.length === both.length &&
+    was.every((thing, at) => thing === both[at] || thing.id === both[at]?.id)
+  )
+    return
 
-  const places = new Map(wasMiddle.map((thing, index) => [thing.id, index]))
-  const both = isMiddle.filter((thing) => places.has(thing.id))
+  const places = new Map(was.map((thing, index) => [thing.id, index]))
   const stayed = standing(
     both,
     (one, other) => (places.get(one.id) ?? 0) < (places.get(other.id) ?? 0),
