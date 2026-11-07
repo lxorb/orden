@@ -742,7 +742,7 @@ mod session {
     use windows_core::Interface as _;
 
     thread_local! {
-        static ENV: RefCell<HashMap<String, ICoreWebView2Environment>> =
+        static ENV: RefCell<HashMap<String, (ICoreWebView2Environment, u32)>> =
             RefCell::new(HashMap::new());
     }
 
@@ -751,20 +751,68 @@ mod session {
     }
 
     pub fn shared(store: Option<&str>) -> Option<ICoreWebView2Environment> {
-        ENV.with_borrow(|held| held.get(&key(store)).cloned())
+        let named = key(store);
+        let (env, browser) = ENV.with_borrow(|held| held.get(&named).cloned())?;
+        if running(browser) {
+            return Some(env);
+        }
+        ENV.with_borrow_mut(|held| held.remove(&named));
+        None
+    }
+
+    #[allow(
+        unsafe_code,
+        reason = "whether the browser process still runs is Win32's to say"
+    )]
+    fn running(browser: u32) -> bool {
+        use windows::Win32::Foundation::CloseHandle;
+        use windows::Win32::System::Threading::{
+            GetExitCodeProcess, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+        };
+
+        const STILL_ACTIVE: u32 = 259;
+
+        if browser == 0 {
+            return true;
+        }
+        unsafe {
+            let Ok(process) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, browser) else {
+                return false;
+            };
+            let mut code = 0u32;
+            let asked = GetExitCodeProcess(process, &raw mut code);
+            let _ = CloseHandle(process);
+            asked.is_err() || code == STILL_ACTIVE
+        }
+    }
+
+    #[allow(
+        unsafe_code,
+        reason = "the browser process is named by WebView2's COM interface"
+    )]
+    fn browser_of(platform: &tauri::webview::PlatformWebview) -> u32 {
+        let mut browser = 0u32;
+        unsafe {
+            if let Ok(core) = platform.controller().CoreWebView2() {
+                let _ = core.BrowserProcessId(&raw mut browser);
+            }
+        }
+        browser
     }
 
     #[allow(
         unsafe_code,
         reason = "the process ending is WebView2's own event, reached through its COM interfaces"
     )]
-    pub fn keep(store: Option<&str>, env: ICoreWebView2Environment) {
+    pub fn keep(store: Option<&str>, platform: &tauri::webview::PlatformWebview) {
+        let env = platform.environment();
         let named = key(store);
+        let browser = browser_of(platform);
         let fresh = ENV.with_borrow_mut(|held| {
             if held.contains_key(&named) {
                 return false;
             }
-            held.insert(named.clone(), env.clone());
+            held.insert(named.clone(), (env.clone(), browser));
             true
         });
 
@@ -775,7 +823,7 @@ mod session {
         let kept = env.as_raw() as usize;
         let handler = BrowserProcessExitedEventHandler::create(Box::new(move |_env, _args| {
             ENV.with_borrow_mut(|held| {
-                if held.get(&named).map(|one| one.as_raw() as usize) == Some(kept) {
+                if held.get(&named).map(|(one, _)| one.as_raw() as usize) == Some(kept) {
                     held.remove(&named);
                 }
             });
@@ -832,7 +880,7 @@ mod session {
 
         if let Ok(view) = made {
             let _ = view.hide();
-            let _ = view.with_webview(|platform| keep(None, platform.environment()));
+            let _ = view.with_webview(|platform| keep(None, &platform));
         }
     }
 }
@@ -908,7 +956,7 @@ pub(crate) fn on_shared_session(
 
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) fn keep_session(store: Option<&str>, platform: &tauri::webview::PlatformWebview) {
-    session::keep(store, platform.environment());
+    session::keep(store, platform);
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -1200,7 +1248,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     let _ = on_the_page(app, &label_of(tab), move |view| {
         let _ = crate::engine::with_platform!(view, move |platform| {
             #[cfg(all(windows, not(feature = "cef")))]
-            session::keep(store.as_deref(), platform.environment());
+            session::keep(store.as_deref(), &platform);
             #[cfg(all(windows, not(feature = "cef")))]
             crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
             #[cfg(windows)]
