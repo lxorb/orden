@@ -254,8 +254,13 @@ export class ImageWidget extends NibWidget {
     alt.spellcheck = false
     alt.setAttribute('aria-label', uiLabel('describeImage'))
 
+    let held: { image: ImageSpan; text: string } | null = null
+    const stillThere = () => {
+      if (!held) return null
+      return view.state.sliceDoc(held.image.from, held.image.to) === held.text ? held.image : null
+    }
     const commitAlt = () => {
-      const current = imageOfFrame(view, frame)
+      const current = imageOfFrame(view, frame) ?? stillThere()
       if (!current) return
       const next = alt.value.trim()
       if (next === current.alt) return
@@ -273,7 +278,12 @@ export class ImageWidget extends NibWidget {
         view.focus()
       }
     })
+    alt.addEventListener('focus', () => {
+      const image = imageOfFrame(view, frame)
+      held = image ? { image, text: view.state.sliceDoc(image.from, image.to) } : null
+    })
     alt.addEventListener('blur', () => queueMicrotask(commitAlt))
+    this.onDestroy(frame, () => queueMicrotask(commitAlt))
     alt.addEventListener('pointerdown', (event) => event.stopPropagation())
     tools.append(alt)
 

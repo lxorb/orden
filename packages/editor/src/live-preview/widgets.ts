@@ -167,7 +167,7 @@ export class FenceHeaderWidget extends NibWidget {
     label.textContent = this.language || 'plain'
     if (!this.language) label.classList.add('nib-fence-unset')
 
-    const edit = () => this.editLanguage(view, label)
+    const edit = () => this.editLanguage(view, label, bar)
     label.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
@@ -304,7 +304,7 @@ export class FenceHeaderWidget extends NibWidget {
     })
   }
 
-  private editLanguage(view: EditorView, label: HTMLElement) {
+  private editLanguage(view: EditorView, label: HTMLElement, dom: HTMLElement) {
     const field = document.createElement('input')
     field.className = 'nib-fence-language-input'
     field.value = this.language
@@ -312,7 +312,10 @@ export class FenceHeaderWidget extends NibWidget {
     field.spellcheck = false
 
     const written = view.state.sliceDoc(this.infoFrom, this.infoTo)
+    let done = false
     const commit = () => {
+      if (done) return
+      done = true
       const next = field.value.trim().replace(/\s+/g, '')
       field.replaceWith(label)
 
@@ -332,6 +335,7 @@ export class FenceHeaderWidget extends NibWidget {
       }
     })
     field.addEventListener('blur', commit)
+    this.onDestroy(dom, commit)
 
     label.replaceWith(field)
     field.focus()
