@@ -198,7 +198,7 @@
             {@const context = quick.context}
             <span class="chip" class:quoted={context.kind === 'selection'} title={context.name}>
               <svg viewBox="0 0 13 13"><path d={MARKS[context.kind]} /></svg>
-              <span class="what">{context.name}</span>
+              <span class="what" dir="auto">{context.name}</span>
               <button
                 class="drop"
                 title={t('Remove')}
@@ -215,7 +215,7 @@
           {#each quick.texts as one (one.id)}
             <span class="chip" title={one.label}>
               <svg viewBox="0 0 13 13"><path d={MARKS.selection} /></svg>
-              <span class="what">{one.label}</span>
+              <span class="what" dir="auto">{one.label}</span>
               <button
                 class="drop"
                 title={t('Remove')}

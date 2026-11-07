@@ -34,7 +34,7 @@
         <svg class="grip" viewBox="0 0 13 13" aria-hidden="true"
           ><path d="M3.5 4h6M3.5 6.5h6M3.5 9h6" /></svg
         >
-        <button class="words" title={t('Edit')} onclick={() => chat.editQueued(one.id)}
+        <button class="words" dir="auto" title={t('Edit')} onclick={() => chat.editQueued(one.id)}
           >{one.text}</button
         >
         <button

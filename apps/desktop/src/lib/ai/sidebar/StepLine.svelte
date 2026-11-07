@@ -25,7 +25,7 @@
 <button class="line" class:going class:failed aria-expanded={open} onclick={onpress}>
   <svg class="caret" class:open viewBox="0 0 13 13"><path d="M4.8 3.2l3.3 3.3-3.3 3.3" /></svg>
   <span class="verb">{verb}</span>
-  {#if object}<span class="object" class:code>{object}</span>{/if}
+  {#if object}<span class="object" class:code dir="auto">{object}</span>{/if}
   {#if change}<Tally added={change.added} removed={change.removed} />{/if}
 </button>
 

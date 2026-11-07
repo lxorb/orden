@@ -75,7 +75,7 @@
         >{#if logo}<Icon icon={logo} />{/if}</span
       >
       {#if unread}<UnreadDot />{/if}
-      <span class="title">{head.title || t('Untitled')}</span>
+      <span class="title" dir="auto">{head.title || t('Untitled')}</span>
       {#if head.pinned}
         <svg class="pinned" viewBox="0 0 13 13" aria-hidden="true"><path d={PIN} /></svg>
       {/if}

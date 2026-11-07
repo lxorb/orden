@@ -39,7 +39,7 @@
       onclick={() => onpick(index)}
     >
       {#if row.mark}<MentionMark kind={row.mark} />{/if}
-      <span class="label">{row.label}</span>
+      <span class="label" dir="auto">{row.label}</span>
       {#if row.hint}<span class="hint">{row.hint}</span>{/if}
     </button>
   {/each}

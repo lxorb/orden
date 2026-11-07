@@ -99,7 +99,7 @@
     title={t('Model and effort')}
     onclick={toggle}
   >
-    <span>{label || t('Model')}</span>
+    <span dir="auto">{label || t('Model')}</span>
     <svg viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
   </button>
 

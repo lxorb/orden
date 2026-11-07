@@ -551,7 +551,7 @@
           {#if front && frontOn}
             <span class="chip implicit" title={front.path}>
               <MentionMark kind="note" />
-              <span class="name">{front.name}</span>
+              <span class="name" dir="auto">{front.name}</span>
               <button
                 class="drop"
                 aria-label={t('Remove')}
@@ -591,7 +591,7 @@
               {:else}
                 <MentionMark kind={chip.kind} />
               {/if}
-              <span class="name">{chip.label}</span>
+              <span class="name" dir="auto">{chip.label}</span>
               <button
                 class="drop"
                 aria-label={t('Remove')}
