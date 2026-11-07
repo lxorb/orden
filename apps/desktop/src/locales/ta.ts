@@ -3560,4 +3560,6 @@ export const ta: Dictionary = {
   'Send crash reports to help improve Orden':
     'Orden-ஐ மேம்படுத்த உதவ செயலிழப்பு அறிக்கைகளை அனுப்பு',
   'Move to {space}?': '{space}-க்கு நகர்த்தவா?',
+  'macOS can start dictation with this key too.':
+    'இந்த விசையால் macOS குரல் தட்டச்சையும் தொடங்கலாம்.',
 }

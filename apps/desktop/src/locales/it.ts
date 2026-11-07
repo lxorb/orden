@@ -3617,4 +3617,6 @@ export const it: Dictionary = {
   'Send crash reports to help improve Orden':
     'Invia i rapporti sugli arresti anomali per aiutare a migliorare Orden',
   'Move to {space}?': 'Spostare in {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS può avviare la dettatura anche con questo tasto.',
 }

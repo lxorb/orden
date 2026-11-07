@@ -3416,4 +3416,6 @@ export const ja: Dictionary = {
     'クラッシュやフリーズ時に Orden が何をしていたかを送信します。メモ、名前、パス、パスワードは送りません。',
   'Send crash reports to help improve Orden': 'クラッシュレポートを送信して Orden の改善に協力する',
   'Move to {space}?': '{space} に移動しますか？',
+  'macOS can start dictation with this key too.':
+    'macOS はこのキーで音声入力も始めることがあります。',
 }

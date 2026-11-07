@@ -3406,4 +3406,6 @@ export const vi: Dictionary = {
     'Gửi việc Orden đang làm khi gặp sự cố hoặc bị treo; không bao giờ gửi ghi chú, tên, đường dẫn hay mật khẩu.',
   'Send crash reports to help improve Orden': 'Gửi báo cáo sự cố để giúp cải thiện Orden',
   'Move to {space}?': 'Chuyển đến {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS cũng có thể bắt đầu đọc chính tả bằng phím này.',
 }

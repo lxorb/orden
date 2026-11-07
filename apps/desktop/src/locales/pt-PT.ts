@@ -3599,4 +3599,6 @@ export const ptPT: Dictionary = {
   'Send crash reports to help improve Orden':
     'Enviar relatórios de falhas para ajudar a melhorar o Orden',
   'Move to {space}?': 'Mover para {space}?',
+  'macOS can start dictation with this key too.':
+    'O macOS também pode iniciar o ditado com esta tecla.',
 }

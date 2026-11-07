@@ -3329,4 +3329,5 @@ export const yue: Dictionary = {
     '傳送 Orden 當機或凍結時做緊乜；永遠唔傳筆記、名、路徑或密碼。',
   'Send crash reports to help improve Orden': '傳送當機報告，幫手改善 Orden',
   'Move to {space}?': '搬去 {space}？',
+  'macOS can start dictation with this key too.': 'macOS 用呢個掣都可能會開始聽寫。',
 }

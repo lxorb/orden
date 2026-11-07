@@ -3486,4 +3486,5 @@ export const gu: Dictionary = {
     'Orden ક્રેશ અથવા અટકી ગયું ત્યારે શું કરતું હતું તે મોકલે છે; નોંધો, નામ, પાથ કે પાસવર્ડ ક્યારેય નહીં.',
   'Send crash reports to help improve Orden': 'Orden ને સુધારવામાં મદદ કરવા ક્રેશ રિપોર્ટ મોકલો',
   'Move to {space}?': '{space} માં ખસેડવું છે?',
+  'macOS can start dictation with this key too.': 'macOS આ કી વડે ડિક્ટેશન પણ શરૂ કરી શકે છે.',
 }

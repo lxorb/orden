@@ -68,7 +68,7 @@
   let height = $state(window.innerHeight)
 
   const MARGIN = 56
-  const ROW = 50
+  const ROW = 60
 
   let barBottom = $state(0)
 
@@ -643,6 +643,7 @@
   let ground = $state<HTMLElement>()
   let canvasNode = $state<HTMLElement>()
   let top = $state<HTMLElement>()
+  let band = $state<HTMLElement>()
   let under = $state<HTMLElement>()
 
   let opens: HTMLElement[] = []
@@ -661,7 +662,7 @@
 
   function opened(at: number) {
     const value = String(Math.round(at * 1000) / 1000)
-    for (const one of [...opens, under, top]) one?.style.setProperty('--overview-open', value)
+    for (const one of [...opens, under, band, top]) one?.style.setProperty('--overview-open', value)
     for (const one of slides) one.style.setProperty('--overview-slide', value)
     if (ground) {
       ground.style.opacity = value
@@ -1642,6 +1643,14 @@
   >
     <div class="floor" style:top="{barBottom}px" aria-hidden="true"></div>
 
+    <div
+      class="band"
+      style:--overview-top="{barBottom}px"
+      style:--overview-row="{ROW}px"
+      aria-hidden="true"
+      bind:this={band}
+    ></div>
+
     <div class="top" style:--overview-top="{barBottom}px" bind:this={top}>
       {#if spaces.length > 1}
         <Select
@@ -1808,6 +1817,20 @@
     align-items: center;
     translate: -50% calc((1 - var(--overview-open, 0)) * -8px);
     opacity: var(--overview-open, 0);
+  }
+
+  .band {
+    position: fixed;
+    z-index: var(--z-bar);
+    top: var(--overview-top, 0px);
+    inset-inline: 0;
+    height: var(--overview-row);
+    opacity: var(--overview-open, 0);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    -webkit-backdrop-filter: blur(28px);
+    backdrop-filter: blur(28px);
+    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent);
+    mask-image: linear-gradient(to bottom, black 80%, transparent);
   }
 
   .tidy {

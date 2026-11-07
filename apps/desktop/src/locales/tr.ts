@@ -3523,4 +3523,5 @@ export const tr: Dictionary = {
   'Send crash reports to help improve Orden':
     'Orden’ı geliştirmeye yardımcı olmak için çökme raporları gönder',
   'Move to {space}?': '{space} alanına taşınsın mı?',
+  'macOS can start dictation with this key too.': 'macOS bu tuşla dikteyi de başlatabilir.',
 }

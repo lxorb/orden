@@ -3623,4 +3623,6 @@ export const fr: Dictionary = {
   'Send crash reports to help improve Orden':
     'Envoyer les rapports de plantage pour aider à améliorer Orden',
   'Move to {space}?': 'Déplacer vers {space} ?',
+  'macOS can start dictation with this key too.':
+    'macOS peut aussi lancer la dictée avec cette touche.',
 }

@@ -3336,4 +3336,5 @@ export const zhHans: Dictionary = {
     '发送 Orden 崩溃或卡死时正在做什么；绝不发送笔记、名称、路径或密码。',
   'Send crash reports to help improve Orden': '发送崩溃报告，帮助改进 Orden',
   'Move to {space}?': '移动到 {space}？',
+  'macOS can start dictation with this key too.': 'macOS 也可能用这个键开始听写。',
 }

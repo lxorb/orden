@@ -3645,4 +3645,5 @@ export const ru: Dictionary = {
   'Send crash reports to help improve Orden':
     'Отправлять отчёты о сбоях, чтобы помочь улучшить Orden',
   'Move to {space}?': 'Переместить в {space}?',
+  'macOS can start dictation with this key too.': 'macOS может запускать этой клавишей и диктовку.',
 }

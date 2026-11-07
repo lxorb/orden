@@ -3550,4 +3550,6 @@ export const ha: Dictionary = {
     'Yana aika abin da Orden ke yi lokacin da ya faɗi ko ya daskare; ba bayanai, sunaye, hanyoyi ko kalmomin sirri ba.',
   'Send crash reports to help improve Orden': 'Aika rahotannin faɗuwa don taimakawa inganta Orden',
   'Move to {space}?': 'A matsar zuwa {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS na iya fara rubutu da murya da wannan maɓallin ma.',
 }

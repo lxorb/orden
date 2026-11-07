@@ -3374,4 +3374,5 @@ export const th: Dictionary = {
     'ส่งสิ่งที่ Orden ทำอยู่ตอนขัดข้องหรือค้าง ไม่ส่งโน้ต ชื่อ พาธ หรือรหัสผ่าน',
   'Send crash reports to help improve Orden': 'ส่งรายงานการขัดข้องเพื่อช่วยปรับปรุง Orden',
   'Move to {space}?': 'ย้ายไปที่ {space} ไหม?',
+  'macOS can start dictation with this key too.': 'macOS อาจเริ่มการป้อนตามคำบอกด้วยปุ่มนี้ด้วย',
 }

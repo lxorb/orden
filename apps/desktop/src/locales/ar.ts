@@ -3691,4 +3691,6 @@ export const ar: Dictionary = {
     'يرسل ما كان Orden يفعله عند تعطّله أو تجمّده؛ دون الملاحظات أو الأسماء أو المسارات أو كلمات المرور.',
   'Send crash reports to help improve Orden': 'إرسال تقارير الأعطال للمساعدة في تحسين Orden',
   'Move to {space}?': 'النقل إلى {space}؟',
+  'macOS can start dictation with this key too.':
+    'قد يبدأ macOS الإملاء الصوتي بهذا المفتاح أيضًا.',
 }

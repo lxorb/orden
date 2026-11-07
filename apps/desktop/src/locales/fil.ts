@@ -3570,4 +3570,6 @@ export const fil: Dictionary = {
   'Send crash reports to help improve Orden':
     'Magpadala ng mga ulat ng pag-crash para makatulong na mapabuti ang Orden',
   'Move to {space}?': 'Ilipat sa {space}?',
+  'macOS can start dictation with this key too.':
+    'Maaari ring simulan ng macOS ang pagdidikta gamit ang key na ito.',
 }

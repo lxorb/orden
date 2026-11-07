@@ -3503,4 +3503,5 @@ export const hi: Dictionary = {
   'Send crash reports to help improve Orden':
     'Orden को बेहतर बनाने में मदद के लिए क्रैश रिपोर्ट भेजें',
   'Move to {space}?': '{space} में ले जाएँ?',
+  'macOS can start dictation with this key too.': 'macOS इस कुंजी से डिक्टेशन भी शुरू कर सकता है।',
 }

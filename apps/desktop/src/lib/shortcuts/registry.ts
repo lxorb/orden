@@ -1586,6 +1586,12 @@ export const SYSTEM_KEYS: Record<Platform, string[]> = {
   linux: ['Alt-F4', 'Alt-Tab'],
 }
 
+export const DICTATION_TAPS: Record<Platform, string[]> = {
+  mac: ['Ctrl Ctrl'],
+  win: [],
+  linux: [],
+}
+
 export const BROWSER_KEYS = [
   'F12',
   'F5',
