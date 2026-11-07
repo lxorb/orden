@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Host, ProviderEvent } from '../provider'
 import { secretName } from '../provider'
-import { ascii, fromBase64, fromLatin, latin, Reader } from './bytes'
+import fc from 'fast-check'
+import { ascii, base64Lines, fromBase64, fromLatin, latin, Reader, toBase64 } from './bytes'
 import { FakeMail, nodeSocket } from './fake-server'
 import { bytesOf, itemsOf, parseValues, textOf, untaggedOf } from './imap'
 import {
@@ -188,6 +189,37 @@ describe('MIME', () => {
     expect(parsed.text).toBe('Bis morgen\n.\nund dann')
     expect(parsed.attachments[0]?.filename).toBe('Plan ü.txt')
     expect(latin(dotStuffed(ascii('a\n.\nb')))).toBe('a\r\n..\r\nb\r\n.\r\n')
+  })
+})
+
+describe('a large mail on its way out', () => {
+  const stuffedBefore = (message: Uint8Array) => {
+    const text = latin(message).replace(/\r?\n/g, '\r\n')
+    const body = text.replace(/^\./gm, '..')
+    return fromLatin(`${body.endsWith('\r\n') ? body : `${body}\r\n`}.\r\n`)
+  }
+
+  test('dots are doubled and lines ended as the string rewrite did', () => {
+    const bytes = fc
+      .uint8Array({ maxLength: 64 })
+      .map((one) => one.map((at) => [10, 13, 46, 65][at % 4] ?? 65))
+    fc.assert(
+      fc.property(bytes, (message) => {
+        expect([...dotStuffed(message)]).toEqual([...stuffedBefore(message)])
+      }),
+    )
+  })
+
+  test('base64 in lines of 76 is the encoding cut into lines', () => {
+    fc.assert(
+      fc.property(fc.uint8Array({ maxLength: 300 }), (bytes) => {
+        const whole = Buffer.from(bytes).toString('base64')
+        expect(toBase64(bytes)).toBe(whole)
+        const lines = (whole.match(/.{1,76}/g) ?? []).join('\r\n')
+        expect(latin(base64Lines(bytes, 76))).toBe(lines)
+        expect(fromBase64(latin(base64Lines(bytes, 76)))).toEqual(bytes)
+      }),
+    )
   })
 })
 

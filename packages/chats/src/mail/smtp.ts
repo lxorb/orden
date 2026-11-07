@@ -1,5 +1,5 @@
 import type { Socket, SocketAsk } from '../provider'
-import { ascii, concat, fromLatin, latin, Reader, toBase64 } from './bytes'
+import { ascii, Reader, toBase64 } from './bytes'
 
 class SmtpError extends Error {
   constructor(
@@ -75,9 +75,22 @@ class Talk {
 }
 
 export function dotStuffed(message: Uint8Array): Uint8Array {
-  const text = latin(message).replace(/\r?\n/g, '\r\n')
-  const body = text.replace(/^\./gm, '..')
-  return concat([fromLatin(body.endsWith('\r\n') ? body : `${body}\r\n`), ascii('.\r\n')])
+  const out = new Uint8Array(message.length * 2 + 5)
+  let at = 0
+  let start = true
+  for (let read = 0; read < message.length; read++) {
+    const one = message[read] ?? 0
+    if (one === 10 && message[read - 1] !== 13) out[at++] = 13
+    if (start && one === 46) out[at++] = 46
+    out[at++] = one
+    start = one === 10 || one === 13
+  }
+  if (out[at - 2] !== 13 || out[at - 1] !== 10) {
+    out[at++] = 13
+    out[at++] = 10
+  }
+  out.set([46, 13, 10], at)
+  return out.subarray(0, at + 3)
 }
 
 export interface Envelope {

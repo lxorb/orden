@@ -40,15 +40,33 @@ export function concat(parts: readonly Uint8Array[]): Uint8Array {
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 export function toBase64(bytes: Uint8Array): string {
-  let out = ''
-  for (let at = 0; at < bytes.length; at += 3) {
-    const a = bytes[at] ?? 0
-    const b = bytes[at + 1] ?? 0
-    const c = bytes[at + 2] ?? 0
+  return latin(base64Lines(bytes))
+}
+
+export function base64Lines(bytes: Uint8Array, width = 0): Uint8Array {
+  const chars = Math.ceil(bytes.length / 3) * 4
+  const lines = width > 0 && chars > 0 ? Math.ceil(chars / width) : 1
+  const out = new Uint8Array(chars + (lines - 1) * 2)
+  let at = 0
+  let inLine = 0
+  const put = (code: number) => {
+    if (width > 0 && inLine === width) {
+      out[at++] = 13
+      out[at++] = 10
+      inLine = 0
+    }
+    out[at++] = code
+    inLine++
+  }
+  for (let read = 0; read < bytes.length; read += 3) {
+    const a = bytes[read] ?? 0
+    const b = bytes[read + 1] ?? 0
+    const c = bytes[read + 2] ?? 0
     const n = (a << 16) | (b << 8) | c
-    out += B64.charAt((n >> 18) & 63) + B64.charAt((n >> 12) & 63)
-    out += at + 1 < bytes.length ? B64.charAt((n >> 6) & 63) : '='
-    out += at + 2 < bytes.length ? B64.charAt(n & 63) : '='
+    put(B64.charCodeAt((n >> 18) & 63))
+    put(B64.charCodeAt((n >> 12) & 63))
+    put(read + 1 < bytes.length ? B64.charCodeAt((n >> 6) & 63) : 61)
+    put(read + 2 < bytes.length ? B64.charCodeAt(n & 63) : 61)
   }
   return out
 }

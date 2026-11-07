@@ -1,4 +1,4 @@
-import { ascii, decode, fromBase64, fromLatin, latin, toBase64 } from './bytes'
+import { ascii, base64Lines, concat, decode, fromBase64, fromLatin, latin, toBase64 } from './bytes'
 
 export interface Address {
   name: string
@@ -351,26 +351,29 @@ export function buildMessage(
   ]
   const files = mail.attachments ?? []
   if (!files.length) return ascii([...head, ...text, ''].join('\r\n'))
-  const parts = [
-    [
-      ...head,
-      `Content-Type: multipart/mixed; boundary="${boundary}"`,
-      '',
-      `--${boundary}`,
-      ...text,
-    ].join('\r\n'),
-    ...files.map((file) =>
+  const parts: Uint8Array[] = [
+    ascii(
       [
-        `--${boundary}`,
-        `Content-Type: ${file.type || 'application/octet-stream'}; name="${encodeWords(file.name).replace(/"/g, '')}"`,
-        `Content-Disposition: attachment; filename*=utf-8''${encodeURIComponent(file.name)}`,
-        'Content-Transfer-Encoding: base64',
+        ...head,
+        `Content-Type: multipart/mixed; boundary="${boundary}"`,
         '',
-        wrapped(toBase64(file.bytes)),
+        `--${boundary}`,
+        ...text,
       ].join('\r\n'),
     ),
-    `--${boundary}--`,
-    '',
   ]
-  return ascii(parts.join('\r\n'))
+  for (const file of files) {
+    const said = [
+      '',
+      `--${boundary}`,
+      `Content-Type: ${file.type || 'application/octet-stream'}; name="${encodeWords(file.name).replace(/"/g, '')}"`,
+      `Content-Disposition: attachment; filename*=utf-8''${encodeURIComponent(file.name)}`,
+      'Content-Transfer-Encoding: base64',
+      '',
+      '',
+    ]
+    parts.push(ascii(said.join('\r\n')), base64Lines(file.bytes, 76))
+  }
+  parts.push(ascii(`\r\n--${boundary}--\r\n`))
+  return concat(parts)
 }
