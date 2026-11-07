@@ -478,6 +478,14 @@
                   import('./lib/chats/store.svelte'),
                   import('./lib/chats/view/open'),
                 ]).then(([{ chats }, open]) => ({ chats, ...open })),
+          linked: () =>
+            __EVEN_PLUGIN__
+              ? Promise.reject(new Error('no chats in the Even Realities plugin'))
+              : Promise.all([
+                  import('./lib/chats/linked'),
+                  import('./lib/chats/connected.svelte'),
+                  import('./lib/chats/providers/host'),
+                ]).then(([linked, { connected }, { host }]) => ({ ...linked, connected, host })),
           agents: { standIn },
           ai,
           aiChats: () =>
