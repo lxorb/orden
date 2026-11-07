@@ -238,6 +238,27 @@ test('a page s swipe, said by the crate, steps its tab in the window s pixels', 
   expect(pressed).toEqual(['back w1'])
 })
 
+test('a page hidden behind its picture mid swipe hands the rest of the swipe to the window', () => {
+  for (let at = 0; at < 4; at++) {
+    pageSaid({ tab: 'w1', kind: 'wheel', dx: -10, dy: 0, at: at * 8, left: false, right: false })
+  }
+  flushSync()
+  const before = swiping.travel
+  expect(before).toBeGreaterThan(0)
+  sweep(found('.hole'), 5, -10)
+  expect(swiping.travel).toBe(before + 50)
+  sweep(found('.hole'), 20, -10)
+  letGo()
+  expect(pressed).toEqual(['back w1'])
+})
+
+test('the window keeps out of a page s swipe it has no arrow for', () => {
+  sweep(found('.hole'), 40, -10)
+  letGo()
+  expect(swiping.tab).toBeNull()
+  expect(pressed).toEqual([])
+})
+
 test('a page that took the scroll says so, and keeps it', () => {
   for (let at = 0; at < 20; at++) {
     pageSaid({ tab: 'w1', kind: 'wheel', dx: -10, dy: 0, at: at * 8, left: true, right: true })
