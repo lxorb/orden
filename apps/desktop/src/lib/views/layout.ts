@@ -7,7 +7,7 @@ export function switched(base: Base, at: number, layout: Layout, rows: readonly 
   let next = setLayout(base, at, layout)
   const view = next.views[at]
   if (!view) return next
-  const kinds = view.nib.rows ?? 'notes'
+  const kinds = view.orden.rows ?? 'notes'
 
   if (layout === 'kanban' && !view.groupBy) {
     const property =
@@ -19,7 +19,7 @@ export function switched(base: Base, at: number, layout: Layout, rows: readonly 
     next = setGroup(next, at, { property, direction: 'ASC' })
   }
 
-  if ((layout === 'calendar' || layout === 'timeline') && kinds === 'notes' && !view.nib.date) {
+  if ((layout === 'calendar' || layout === 'timeline') && kinds === 'notes' && !view.orden.date) {
     const date = knownProperties(base, kinds, rows).find(
       (one) => one.startsWith('note.') && editorOf(base, one, rows) === 'date',
     )

@@ -227,7 +227,7 @@ def drive(browser: Browser) -> None:
           window.nibApp.account.guest = { id: 'g1', name: 'Chromium wren' }
           window.nibApp.workspace.openShared(
             { id: 'shared-1', name: 'board.canvas', path: '/Boards/board.canvas' },
-            '{"nib":{"version":1},"nodes":[],"edges":[]}',
+            '{"orden":{"version":1},"nodes":[],"edges":[]}',
           )
         }"""
     )

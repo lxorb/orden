@@ -66,7 +66,7 @@ export async function readHeld(path: string): Promise<void> {
   const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
   try {
     const base = readBase(await invoke<string>('read_note', { path }))
-    if (space && (base.nib.id || readAutomations(base).length)) {
+    if (space && (base.orden.id || readAutomations(base).length)) {
       held.set(path, {
         name: path.replace(/^.*[\\/]/, '').replace(/\.base$/i, ''),
         space: space.name,
@@ -86,7 +86,7 @@ function rowsOf(space: string, path: string): readonly Row[] {
 
 function numbering(path: string) {
   const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
-  const bases = space ? heldIn(space.name).filter((one) => one.base.nib.id) : []
+  const bases = space ? heldIn(space.name).filter((one) => one.base.orden.id) : []
   return { space, bases }
 }
 
@@ -99,7 +99,7 @@ function withoutIds(path: string, text: string): string | null {
   const context = contextFor({ rows: rows.of(space.name), today: todayHere(), now: nowHere() })
   const gone: Record<string, null> = {}
   for (const one of bases) {
-    const id = one.base.nib.id
+    const id = one.base.orden.id
     if (id && idNumber(row.note[id.property], id.prefix) !== null && inBase(one.base, row, context))
       gone[id.property] = null
   }

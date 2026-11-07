@@ -59,7 +59,7 @@ describe('a tasks fence', () => {
   test('groups by what the plugin groups by, one level and a second under it', () => {
     const { base } = readTasksQuery('not done\ngroup by filename\ngroup by heading')
     expect(base.views[0]?.groupBy).toEqual({ property: 'file.basename', direction: 'ASC' })
-    expect(base.views[0]?.nib.subGroupBy).toEqual({ property: 'task.section', direction: 'ASC' })
+    expect(base.views[0]?.orden.subGroupBy).toEqual({ property: 'task.section', direction: 'ASC' })
     const result = answer(base, 0, rows, context)
     expect(result.groups.map((group) => group.key)).toEqual(['Home', 'Plan'])
   })

@@ -42,7 +42,7 @@
     if (!base) return []
     const read = (row: Row, property: string): Value => cellValue(base, property, row, live.context)
     return rows.flatMap((row) => {
-      const bar = barOf(row, { start: view?.nib.date, end: view?.nib.end }, read)
+      const bar = barOf(row, { start: view?.orden.date, end: view?.orden.end }, read)
       return bar ? [bar] : []
     })
   })

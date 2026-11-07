@@ -20,7 +20,7 @@ function refiltered(filter: Filter, from: string, to: string): Filter {
 }
 
 function narrowedTo(view: View, from: string, to: string): View {
-  const only = view.nib.kept.only
+  const only = view.orden.kept.only
   if (!isRecord(only)) return view
   const project = typeof only.project === 'string' ? placeOfKey(only.project) : null
   const inSpace = project?.space === from
@@ -30,7 +30,7 @@ function narrowedTo(view: View, from: string, to: string): View {
     ...(only.space === from ? { space: to } : {}),
     ...(inSpace ? { project: `${to}//${project.path}` } : {}),
   }
-  return { ...view, nib: { ...view.nib, kept: { ...view.nib.kept, only: next } } }
+  return { ...view, orden: { ...view.orden, kept: { ...view.orden.kept, only: next } } }
 }
 
 function followed(words: string, from: string, to: string): string {

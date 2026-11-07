@@ -98,19 +98,19 @@ describe('a base changed from the head', () => {
 
   test('keeps nib’s own keys under nib, and takes one away with undefined', () => {
     const shown = setShowCompleted(base, 0, true)
-    expect(shown.views[0]?.nib.showCompleted).toBe(true)
-    expect(setShowCompleted(shown, 0, false).views[0]?.nib).not.toHaveProperty('showCompleted')
+    expect(shown.views[0]?.orden.showCompleted).toBe(true)
+    expect(setShowCompleted(shown, 0, false).views[0]?.orden).not.toHaveProperty('showCompleted')
     const hidden = setHidden(base, 0, 'true', true)
-    expect(hidden.views[0]?.nib.hidden).toEqual(['true'])
-    expect(setHidden(hidden, 0, 'true', false).views[0]?.nib).not.toHaveProperty('hidden')
-    expect(setManualOrder(base, 0, 'To do', ['a.md', 'b.md']).views[0]?.nib.order).toEqual({
+    expect(hidden.views[0]?.orden.hidden).toEqual(['true'])
+    expect(setHidden(hidden, 0, 'true', false).views[0]?.orden).not.toHaveProperty('hidden')
+    expect(setManualOrder(base, 0, 'To do', ['a.md', 'b.md']).views[0]?.orden.order).toEqual({
       'To do': ['a.md', 'b.md'],
     })
   })
 
   test("a reorder of the cards on screen keeps the hidden cards' places", () => {
     const stored = setManualOrder(base, 0, 'To do', ['a', 'h1', 'b', 'h2', 'c'])
-    expect(setManualOrder(stored, 0, 'To do', ['c', 'a', 'b']).views[0]?.nib.order).toEqual({
+    expect(setManualOrder(stored, 0, 'To do', ['c', 'a', 'b']).views[0]?.orden.order).toEqual({
       'To do': ['c', 'h1', 'a', 'h2', 'b'],
     })
     expect(mergedOrder(['a', 'h', 'b'], ['a', 'x', 'b'])).toEqual(['a', 'x', 'h', 'b'])
@@ -132,7 +132,7 @@ describe('a base changed from the head', () => {
     const changed = setLayout(setShowCompleted(base, 0, true), 0, 'calendar')
     const again = readBase(writeBase(changed))
     expect(again.views[0]?.type).toBe('calendar')
-    expect(again.views[0]?.nib.showCompleted).toBe(true)
+    expect(again.views[0]?.orden.showCompleted).toBe(true)
     expect(again.views[0]?.filters).toEqual(base.views[0]?.filters)
   })
 })
@@ -147,7 +147,7 @@ describe('switching layout', () => {
   test('gives a calendar of notes a date to sit on', () => {
     const base = readBase('views:\n  - type: table\n    name: All\n')
     const rows = [noteRow('Trip.md', 'when: 2026-10-08\nwho: Lu')]
-    expect(switched(base, 0, 'calendar', rows).views[0]?.nib.date).toBe('note.when')
+    expect(switched(base, 0, 'calendar', rows).views[0]?.orden.date).toBe('note.when')
   })
 })
 
@@ -171,7 +171,7 @@ describe('the columns', () => {
   })
 
   test('are edited with what their kind asks for, and formulas and files not at all', () => {
-    const base = readBase('nib:\n  properties:\n    status:\n      options: [To do, Done]\n')
+    const base = readBase('orden:\n  properties:\n    status:\n      options: [To do, Done]\n')
     const notes = [noteRow('A.md', 'done: true\ncount: 3\nwhen: 2026-10-01\ntags: [a]')]
     expect(editorOf(base, 'note.status', notes)).toBe('select')
     expect(editorOf(base, 'note.done', notes)).toBe('checkbox')
@@ -251,8 +251,8 @@ describe('a drop into a group', () => {
     expect(dropInto('formula.day', day, vault('- [ ] Pay bill 📅 2026-10-01'), TODAY)).toEqual({
       change: { task: { due: '2026-10-09' } },
     })
-    const nib = taskRow('Bills.md', '- [ ] Pay bill [deadline:: 2026-10-01]', 1)
-    expect(dropInto('formula.day', day, nib, TODAY)).toEqual({
+    const orden = taskRow('Bills.md', '- [ ] Pay bill [deadline:: 2026-10-01]', 1)
+    expect(dropInto('formula.day', day, orden, TODAY)).toEqual({
       change: { task: { deadline: '2026-10-09' } },
     })
     const started = vault('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01')
@@ -530,7 +530,10 @@ describe('the filter builder on empty values', () => {
     ]
     const typed = readBase('properties: {}\nviews: []\n')
     const holds = holdsOf(
-      { ...typed, nib: { ...typed.nib, properties: { size: { format: 'percent', kept: {} } } } },
+      {
+        ...typed,
+        orden: { ...typed.orden, properties: { size: { format: 'percent', kept: {} } } },
+      },
       notes,
     )
     expect(rowOf('!note.cover', holds)).toEqual({ property: 'note.cover', op: 'empty', value: '' })
@@ -680,7 +683,7 @@ describe('the timeline', () => {
 
 describe('the chart', () => {
   const base = readBase(
-    'views:\n  - type: chart\n    groupBy: { property: note.status, direction: ASC }\n    nib: { chart: donut, measure: sum, of: note.points }\n',
+    'views:\n  - type: chart\n    groupBy: { property: note.status, direction: ASC }\n    orden: { chart: donut, measure: sum, of: note.points }\n',
   )
   const rows = [
     noteRow('A.md', 'status: Done\npoints: 3'),

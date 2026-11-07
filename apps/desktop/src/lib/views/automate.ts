@@ -69,7 +69,7 @@ export function planned(
       for (const words of effect.notify) out.notices.push({ row: after, base: held.name, words })
     }
 
-    const id = held.base.nib.id
+    const id = held.base.orden.id
     if (!id) continue
     const { rows: own, partial } = ownRows(held.base, all, context)
     if (partial) continue

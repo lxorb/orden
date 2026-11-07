@@ -67,7 +67,7 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
   const live = kit.live
   const base = live.base
   if (!base) return []
-  const kinds = live.view?.nib.rows ?? 'notes'
+  const kinds = live.view?.orden.rows ?? 'notes'
   const add = (column: string) => kit.change((b, at) => setColumns(b, at, [...columns, column]))
   const others = knownProperties(base, kinds, live.rows)
     .filter((one) => !columns.includes(one))
@@ -87,7 +87,7 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
       )
     },
   }))
-  const ids = base.nib.id
+  const ids = base.orden.id
     ? []
     : [
         {
@@ -150,7 +150,7 @@ export function columnMenu(
   if (!base || !kit.writable) return []
   const view = live.view
   const place = columns.indexOf(column)
-  const frozen = view?.nib.freeze ?? 0
+  const frozen = view?.orden.freeze ?? 0
   const formula = column.startsWith('formula.') ? base.formulas[column.slice(8)] : undefined
   const note = isNoteProperty(column)
   const format = formatOf(base, column)
@@ -187,7 +187,7 @@ export function columnMenu(
             label: t('Options'),
             checked: optionsAt(base, column).length > 0,
             run: () => {
-              if (!optionsAt(base, column).length && base.nib.id?.property !== bare(column)) {
+              if (!optionsAt(base, column).length && base.orden.id?.property !== bare(column)) {
                 const options = optionsFor(valuesOf(live.rows, column))
                 kit.change((b) => setProperty(b, keyOf(column), { options }))
               }
@@ -233,10 +233,10 @@ export function columnMenu(
       ? [
           {
             label: t('Required'),
-            checked: view.nib.required?.includes(bare(column)) === true,
+            checked: view.orden.required?.includes(bare(column)) === true,
             run: () =>
               kit.change((b, i) => {
-                const was = b.views[i]?.nib.required ?? []
+                const was = b.views[i]?.orden.required ?? []
                 const key = bare(column)
                 const next = was.includes(key) ? was.filter((one) => one !== key) : [...was, key]
                 return setViewNib(b, i, 'required', next.length ? next : undefined)

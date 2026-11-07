@@ -16,9 +16,9 @@
   const base = $derived(live.base)
   const view = $derived(live.view)
   const fields = $derived(
-    live.columns.filter((one) => isNoteProperty(one) && bare(one) !== base?.nib.id?.property),
+    live.columns.filter((one) => isNoteProperty(one) && bare(one) !== base?.orden.id?.property),
   )
-  const required = $derived(new Set(view?.nib.required ?? []))
+  const required = $derived(new Set(view?.orden.required ?? []))
 
   let title = $state('')
   let values = $state<Record<string, string | boolean>>({})

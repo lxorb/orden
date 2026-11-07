@@ -848,7 +848,7 @@ const BESIDE = JSON.stringify({
     },
   ],
   edges: [],
-  nib: {
+  orden: {
     version: 1,
     pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }],
     ink: [{ id: 'k1', tool: 'fountain', color: '1', size: 2, points: [0, 10, 0.5, 40, 60, 0.5] }],

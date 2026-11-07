@@ -1056,7 +1056,7 @@ def check_file(page: Page, label: str) -> None:
     if not kinds <= {"group", "file", "text", "link"}:
         fail(f"[{label}] the file holds a node type the spec does not name: {kinds}")
 
-    records = written.get("nib", {}).get("pages", [])
+    records = written.get("orden", {}).get("pages", [])
     if len(records) != len(pages):
         fail(f"[{label}] {len(pages)} pages, {len(records)} records under nib.pages")
 
@@ -1065,7 +1065,7 @@ def check_file(page: Page, label: str) -> None:
         if record["id"] not in ids:
             fail(f"[{label}] a page record names no node: {record['id']}")
 
-    if written.get("nib", {}).get("ink") is None and page.evaluate(
+    if written.get("orden", {}).get("ink") is None and page.evaluate(
         "() => window.nibApp.pages.current.store.canvas.ink.length > 0"
     ):
         fail(f"[{label}] there is ink on the pages and none under nib.ink")
@@ -1121,7 +1121,7 @@ def check_as_canvas(page: Page, label: str) -> None:
     drawn = page.evaluate(
         """() => {
           const written = JSON.parse(window.nibApp.workspace.active.doc)
-          return { nodes: written.nodes.length, ink: (written.nib?.ink ?? []).length }
+          return { nodes: written.nodes.length, ink: (written.orden?.ink ?? []).length }
         }"""
     )
     if drawn["ink"] != held["ink"]:

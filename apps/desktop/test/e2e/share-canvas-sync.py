@@ -20,7 +20,7 @@ CROSSING = 15
 OWNER = "owner-canvas@example.com"
 SPACE = "Boards"
 CANVAS = "board.canvas"
-BLANK = '{"nib":{"version":1},"nodes":[],"edges":[]}'
+BLANK = '{"orden":{"version":1},"nodes":[],"edges":[]}'
 PHONE = {"width": 390, "height": 844}
 V1 = "--v1" in sys.argv
 

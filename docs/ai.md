@@ -512,13 +512,13 @@ and the answer below it is prose.
 Summarise @note in three bullets.
 ```
 
-<!--nib:ai-->
+<!--orden:ai-->
 *answered by claude-sonnet-4-5, 2026-09-12*
 
 - Herons stand still for a long time.
 - Then they do not.
 - That is most of it.
-<!--/nib:ai-->
+<!--/orden:ai-->
 ````
 
 What each part is for:
@@ -529,7 +529,7 @@ What each part is for:
 - **The glyph.** A triangle on the fence's header row, the same one a runnable
   `js` block wears, because it is the same gesture. While an answer is arriving
   it is a square, which stops it.
-- **The two comments.** `<!--nib:ai-->` and `<!--/nib:ai-->` mark where the
+- **The two comments.** `<!--orden:ai-->` and `<!--/orden:ai-->` mark where the
   answer begins and ends, so asking again replaces it instead of stacking a
   second one under it. They are HTML comments, which every renderer hides;
   Orden strips both spellings of a comment before rendering anything, so they show

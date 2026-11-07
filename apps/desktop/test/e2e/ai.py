@@ -194,7 +194,7 @@ def fresh(browser: Browser, label: str) -> Page:
     return page
 
 def answered(text: str) -> str | None:
-    found = re.search(r"<!--nib:ai-->\n(.*?)\n<!--/nib:ai-->", text, re.S)
+    found = re.search(r"<!--orden:ai-->\n(.*?)\n<!--/orden:ai-->", text, re.S)
     return found.group(1) if found else None
 
 def drive_block(browser: Browser) -> None:
@@ -257,8 +257,8 @@ def drive_block(browser: Browser) -> None:
     say(f"[block] asked again, the answer is {second!r}")
     shot(page, "03-asked-again")
 
-    if again["text"].count("<!--nib:ai-->") != 1:
-        wrong(f"[block] a second press left {again['text'].count('<!--nib:ai-->')} answers")
+    if again["text"].count("<!--orden:ai-->") != 1:
+        wrong(f"[block] a second press left {again['text'].count('<!--orden:ai-->')} answers")
     if second is None or "Quite different." not in second:
         wrong(f"[block] the second answer did not replace the first: {second!r}")
     if second is not None and "Herons stand still." in second:
@@ -297,7 +297,7 @@ def drive_stop(browser: Browser) -> None:
         wrong(f"[stop] a stop threw away what had already arrived: {kept!r}")
     if kept is not None and "Five." in kept:
         wrong("[stop] the whole answer arrived, so nothing was actually stopped")
-    if not stopped["text"].endswith("<!--/nib:ai-->\n"):
+    if not stopped["text"].endswith("<!--/orden:ai-->\n"):
         wrong("[stop] the answer was left without its closing mark")
     if stopped["glyph"] is None or stopped["glyph"].lower() in {"stop", "anhalten"}:
         wrong(f"[stop] the glyph stayed a stop after stopping: {stopped['glyph']!r}")
@@ -323,7 +323,7 @@ def drive_refusal(browser: Browser) -> None:
 
     if answered(after["text"]) is not None:
         wrong("[refusal] a refused question still wrote an answer into the note")
-    if "<!--nib:ai-->" in after["text"]:
+    if "<!--orden:ai-->" in after["text"]:
         wrong("[refusal] a refused question left a mark in the note")
     if after["trouble"] != "this key cannot use that model":
         wrong(f"[refusal] the provider's own words were not shown: {after['trouble']!r}")

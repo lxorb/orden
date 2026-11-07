@@ -319,7 +319,7 @@ each has it (✓), partly (~) or not (-).
 | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | ------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Rows and files**                                                                                                       |                              |                                |                      |                                                                                                         |
 | a row is a note                                                                                                          | ✓                            | ✓ (a page)                     | must                 | the rows index (5.3)                                                                                    |
-| a row is a task line                                                                                                     | -                            | ~ (a page)                     | must                 | `nib: { rows: tasks }` on a view (5.11)                                                                 |
+| a row is a task line                                                                                                     | -                            | ~ (a page)                     | must                 | `orden: { rows: tasks }` on a view (5.11)                                                                 |
 | a base as a file                                                                                                         | ✓ `.base`                    | -                              | must                 | Obsidian's YAML, read and written without losing a key Orden does not know                                |
 | a base inside a note                                                                                                     | ✓ ` ```base `                | ✓ inline database              | must                 | the fence, drawn in the editor and the reading view                                                     |
 | embed a base or one view                                                                                                 | ✓ `![[x.base#View]]`         | ✓ linked view                  | must                 | the embed widget                                                                                        |
@@ -327,12 +327,12 @@ each has it (✓), partly (~) or not (-).
 | a row opened in a side peek                                                                                              | -                            | ✓                              | should               | a click opens the note in a split on the right; Ctrl+click in a tab                                     |
 | **Properties (columns)**                                                                                                 |                              |                                |                      |                                                                                                         |
 | text                                                                                                                     | ✓                            | ✓                              | must                 | the Properties panel's controls, in the cell                                                            |
-| number, with formats (currency, percent, progress bar)                                                                   | ✓ (number)                   | ✓                              | must, formats should | `nib.properties.<key>.format`                                                                           |
+| number, with formats (currency, percent, progress bar)                                                                   | ✓ (number)                   | ✓                              | must, formats should | `orden.properties.<key>.format`                                                                           |
 | checkbox                                                                                                                 | ✓                            | ✓                              | must                 |                                                                                                         |
 | date, date and time                                                                                                      | ✓                            | ✓                              | must                 |                                                                                                         |
 | date range                                                                                                               | -                            | ✓                              | should               | two properties, or `start`/`end` named in the view; one bar on the timeline                             |
 | list                                                                                                                     | ✓                            | ✓ multi-select                 | must                 | chips                                                                                                   |
-| select with options and colours                                                                                          | ~ (text)                     | ✓                              | must                 | `nib.properties.<key>.options`, colours from the six tones                                              |
+| select with options and colours                                                                                          | ~ (text)                     | ✓                              | must                 | `orden.properties.<key>.options`, colours from the six tones                                              |
 | status with groups                                                                                                       | -                            | ✓                              | must                 | a select whose options are in three groups; tasks have it by their box                                  |
 | person                                                                                                                   | -                            | ✓                              | should               | a property whose values are members of the shared space                                                 |
 | files and media                                                                                                          | ~ (link)                     | ✓                              | must                 | a link or embed; the gallery's cover                                                                    |
@@ -341,11 +341,11 @@ each has it (✓), partly (~) or not (-).
 | formula                                                                                                                  | ✓                            | ✓                              | must                 | Bases' expression language (5.12)                                                                       |
 | relation, one-way                                                                                                        | ~ (a link)                   | ✓                              | must                 | a property holding wikilinks                                                                            |
 | relation, two-way                                                                                                        | -                            | ✓                              | must                 | the reverse is the link index's backlinks, never a second stored column                                 |
-| relation limited to one                                                                                                  | -                            | ✓                              | should               | `nib.properties.<key>.one: true`                                                                        |
+| relation limited to one                                                                                                  | -                            | ✓                              | should               | `orden.properties.<key>.one: true`                                                                        |
 | rollup                                                                                                                   | ~ (formula)                  | ✓                              | must                 | a formula over the related notes, built from a picker (5.12)                                            |
 | created time, edited time                                                                                                | ✓ `file.ctime`, `file.mtime` | ✓                              | must                 |                                                                                                         |
 | created by, edited by                                                                                                    | -                            | ✓                              | later                | from sync v2's per-version author, once it is kept per file                                             |
-| unique ID with a prefix                                                                                                  | -                            | ✓                              | should               | `nib.id: { property: id, prefix: BUG }`; the next number is written into a new row                      |
+| unique ID with a prefix                                                                                                  | -                            | ✓                              | should               | `orden.id: { property: id, prefix: BUG }`; the next number is written into a new row                      |
 | button                                                                                                                   | -                            | ✓                              | should               | a column whose press runs a palette command or sets properties (5.13)                                   |
 | place                                                                                                                    | ✓ (Maps)                     | ✓                              | later                | with the map view                                                                                       |
 | verification                                                                                                             | -                            | ✓ (wikis)                      | drop                 | a wiki workflow, not a database feature                                                                 |
@@ -357,7 +357,7 @@ each has it (✓), partly (~) or not (-).
 | list                                                                                                                     | ✓                            | ✓                              | must                 |                                                                                                         |
 | cards / gallery, with a cover                                                                                            | ✓                            | ✓                              | must                 | Bases' image property, fit and ratio                                                                    |
 | board / kanban, drag changes the property                                                                                | ✓ (1.14)                     | ✓                              | must                 |                                                                                                         |
-| manual card order within a column                                                                                        | -                            | ✓                              | should               | `nib.order: [paths]` per column, kept in the base                                                       |
+| manual card order within a column                                                                                        | -                            | ✓                              | should               | `orden.order: [paths]` per column, kept in the base                                                       |
 | board columns for empty groups, hidden groups, column order                                                              | ~                            | ✓                              | must                 | the group's options decide the columns, not the rows present                                            |
 | calendar (month, week, day)                                                                                              | -                            | ✓                              | must                 | `type: calendar` (Orden)                                                                                  |
 | timeline / Gantt                                                                                                         | -                            | ✓                              | must                 | `type: timeline` (Orden)                                                                                  |
@@ -379,19 +379,19 @@ each has it (✓), partly (~) or not (-).
 | **Sorting, grouping, summaries**                                                                                         |                              |                                |                      |                                                                                                         |
 | several sorts                                                                                                            | ✓                            | ✓                              | must                 |                                                                                                         |
 | group by                                                                                                                 | ✓                            | ✓                              | must                 |                                                                                                         |
-| sub-group                                                                                                                | -                            | ✓                              | should               | `nib.subGroupBy`                                                                                        |
+| sub-group                                                                                                                | -                            | ✓                              | should               | `orden.subGroupBy`                                                                                        |
 | collapse groups, hide empty, reorder groups                                                                              | ✓ (1.14)                     | ✓                              | must                 |                                                                                                         |
 | limit, load more                                                                                                         | ✓                            | ✓                              | must                 |                                                                                                         |
 | summaries under columns (count, sum, average, median, min, max, range, earliest, latest, checked, empty, filled, unique) | ✓                            | ✓                              | must                 | Bases' defaults and custom summary formulas                                                             |
 | summaries per group                                                                                                      | ~                            | ✓                              | should               | the same row under each group                                                                           |
-| conditional colour                                                                                                       | -                            | ✓                              | should               | `nib.colour: <expression returning a tone>` per view                                                    |
+| conditional colour                                                                                                       | -                            | ✓                              | should               | `orden.colour: <expression returning a tone>` per view                                                    |
 | wrap cells, row height, freeze the first column                                                                          | -                            | ✓                              | should               | view options                                                                                            |
 | **Templates, buttons, automations**                                                                                      |                              |                                |                      |                                                                                                         |
 | templates for new rows                                                                                                   | - (core Templates)           | ✓                              | must                 | a note in the templates folder; Obsidian's `{{date}}`, `{{time}}`, `{{title}}`                          |
-| a default template per base and per view                                                                                 | -                            | ✓                              | must                 | `nib.template: "[[Templates/Bug]]"`                                                                     |
+| a default template per base and per view                                                                                 | -                            | ✓                              | must                 | `orden.template: "[[Templates/Bug]]"`                                                                     |
 | repeating templates                                                                                                      | -                            | ✓                              | should               | a template with `🔁` makes a note on its schedule when Orden runs (5.13)                                  |
 | buttons in a page                                                                                                        | -                            | ✓                              | should               | the button column, and a ` ```button ` fence later                                                      |
-| automation: property set when another changes                                                                            | -                            | ✓                              | should               | rules in `nib.automations`, run where Orden runs                                                          |
+| automation: property set when another changes                                                                            | -                            | ✓                              | should               | rules in `orden.automations`, run where Orden runs                                                          |
 | automation: notification                                                                                                 | -                            | ✓                              | should               | a reminder to the reader                                                                                |
 | automation: webhook, Slack, mail                                                                                         | -                            | ✓                              | later                | needs the Worker to run it while Orden is closed                                                          |
 | automation on a schedule                                                                                                 | -                            | ✓                              | later                | with repeating templates on the Worker                                                                  |
@@ -399,7 +399,7 @@ each has it (✓), partly (~) or not (-).
 | sub-items                                                                                                                | -                            | ✓                              | must                 | nested tasks; for notes a `parent` relation, shown as a tree                                            |
 | dependencies, blocked-by                                                                                                 | -                            | ✓                              | should               | as above; a blocked task dims and says why on hover                                                     |
 | shift dependent dates                                                                                                    | -                            | ✓                              | later                | after the timeline lands                                                                                |
-| lock a view or a base                                                                                                    | -                            | ✓                              | should               | `nib.locked: true`; edits to the view ask first                                                         |
+| lock a view or a base                                                                                                    | -                            | ✓                              | should               | `orden.locked: true`; edits to the view ask first                                                         |
 | copy as CSV, save as CSV                                                                                                 | ✓                            | ✓                              | should               |                                                                                                         |
 | import CSV as a base                                                                                                     | -                            | ✓                              | should               | each row a note, columns as properties (CSV import exists)                                              |
 | duplicate a view                                                                                                         | ✓                            | ✓                              | must                 |                                                                                                         |
@@ -427,7 +427,7 @@ lanes 1, 4 and 7:
 | row                          | mark   | why it waits                                                                                                            |
 | ---------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
 | person                       | should | needs the shared space's members as choices, which the sharing store does not hand the views yet                        |
-| relation limited to one      | should | `nib.properties.<key>.one` is read and kept; a cell still edits a relation as words, with no link picker to hold to one |
+| relation limited to one      | should | `orden.properties.<key>.one` is read and kept; a cell still edits a relation as words, with no link picker to hold to one |
 | AI autofill of a property    | should | the AI sidebar's job (5.15); no column command there yet                                                                |
 | `html` drawn                 | should | `html()` is evaluated and escaped by the engine; no layout draws it as markup yet                                       |
 | move to a folder as one undo | (5.13) | an automation's move is a file operation and undoes on its own, after the edit it followed                              |
@@ -548,7 +548,7 @@ readable. A test holds the writer to the Tasks plugin's own examples.
 - A **filter** is a `.base` file in the space's `Filters/`, made from the Tasks panel's
   Filters plus: a name and a query in Todoist's language, counted as it is typed and marked
   where it cannot be read, read into Bases' filter with the words kept beside it
-  (`nib.todoist`) so its menu edits it as it was typed; each comma list is a view of its
+  (`orden.todoist`) so its menu edits it as it was typed; each comma list is a view of its
   own (`views/filters.ts`, `views/FilterSheet.svelte`). A label's menu renames it or takes
   it off every task (`retagNotes`). Completed (the done lines, by day) narrows to one
   project from Display.
@@ -1018,9 +1018,9 @@ coloured by their option's tone, and their ⋯ menu renames, colours, hides, mov
 deletes the option for this base only, as one undo. A value the notes hold that no option
 does is a quiet column that can become an option or be merged into one. A list property
 puts a card in each of its members' columns, and a drop swaps only the member it was
-dragged from. Column order is the view's own (`nib.groups`, falling back to the options'
-order), and the column of no value comes last unless the view says first (`nib.noneFirst`,
-which a new database sets). Cards are small, medium or large (`nib.cardSize`), show the
+dragged from. Column order is the view's own (`orden.groups`, falling back to the options'
+order), and the column of no value comes last unless the view says first (`orden.noneFirst`,
+which a new database sets). Cards are small, medium or large (`orden.cardSize`), show the
 view's properties in its order, and a checklist count from the note's own tasks. The count
 in a head is a button for the column's calculation. Hidden groups gather in a last column
 that still takes drops. A drop into a sorted column asks once to remove the sort. A failed
@@ -1119,7 +1119,7 @@ and the reading view), so the first paint carries the panel's tab mark and nothi
   (Done), opens again (To do) or writes the box; a day writes the date the task is
   placed by; Today's two halves move a task to today; a heading moves the lines; a note
   property writes the property. A board also keeps its manual order per column
-  (`nib.order`), and a sub-group draws swimlanes.
+  (`orden.order`), and a sub-group draws swimlanes.
 - **The layouts** draw the engine's answer and never filter: `ListLayout` (windowed,
   sub-tasks under parents, the keys of 5.16), `TableLayout` (windowed, Obsidian's
   `columnSize`, header sort, drag to reorder, summaries, spreadsheet keys, cells in
@@ -1129,7 +1129,7 @@ and the reading view), so the first paint carries the panel's tab mark and nothi
   height per card size, each column windowed; `BoardColumn`, `BoardCard`, `BoardHead`,
   `BoardNew`, `board-menus.ts`, pure helpers in `board.ts`), `CalendarLayout` (month, week, three days, day; the
   tray; hours with duration; a pulled edge writes the duration; repeats faded),
-  `UpcomingLayout`, `TimelineLayout` (start to due, or `nib.date` to `nib.end`;
+  `UpcomingLayout`, `TimelineLayout` (start to due, or `orden.date` to `orden.end`;
   dependency arrows from `⛔`), `ChartLayout` (settings under the view's `orden:`). A
   phone gets `PhoneRows`, `AgendaLayout`, and no timeline.
 - **Builders**: `FilterBuilder` reads Todoist's language into the tree (`fromTodoist`)
@@ -1200,7 +1200,7 @@ reading reminder times), and Emil decided to build it (8.5).
   and at least every six hours). `start.svelte.ts` wires it after the rows, out of the
   first paint (`weight.test.ts` unchanged).
 - **Windows**: `src-tauri/src/reminders/toasts.rs` puts each on `ToastNotifier`'s schedule
-  under the app's id, tagged with its id in the group `nib.reminders`; the toast
+  under the app's id, tagged with its id in the group `orden.reminders`; the toast
   (`toast.rs`) is `scenario="reminder"` with the system's own snooze (15 min, 1 h,
   tomorrow 9:00) and Done as a `orden://reminder` link. Proved by
   `scripts/reminders-probe.py` on a probe of its own; where Windows refuses the id, the
@@ -1256,7 +1256,7 @@ views:
       - file.name
       - note.priority
       - formula.age
-    nib:
+    orden:
       subGroupBy: note.assignee
       order:
         To do: [Bugs/Sync loses a rename.md, Bugs/Glass on Linux.md]
@@ -1266,16 +1266,16 @@ views:
       formula.age: Average
   - type: calendar
     name: Due
-    nib:
+    orden:
       date: note.due
   - type: list
     name: Open tasks
-    nib:
+    orden:
       rows: tasks
     filters:
       and:
         - '!task.done'
-nib:
+orden:
   template: '[[Templates/Bug]]'
   id:
     property: id
@@ -1292,7 +1292,7 @@ nib:
 - **What lane 7 added to the key**: on a view `lines`, `freeze`, `colour`, `template`,
   `required` and `locked`; on the base `template`, `id`, `locked`, `properties.<key>`
   (`options`, `format`), `buttons` and `automations` (5.12, 5.13).
-- **`nib.rows`**: `notes` (Bases' own, the default), `tasks`, or `both`. A view of tasks in
+- **`orden.rows`**: `notes` (Bases' own, the default), `tasks`, or `both`. A view of tasks in
   Obsidian shows the notes those tasks are in, which is the graceful version of the same
   question.
 - **orden-only view types** (`calendar`, `timeline`, `chart`, `form`) are drawn by Orden; Obsidian
@@ -1311,7 +1311,7 @@ fence as code, for the reason a ` ```query ` fence stays code (`apps/desktop/src
 - **The controls are the Properties panel's.** One component per type, used by the panel,
   a table cell, a card and a form, so a date is picked the same way everywhere.
 - **The type of a property** is what Obsidian's `types.json` says where the space has one,
-  else what its values look like, else what the base's `nib.properties` says (select options,
+  else what its values look like, else what the base's `orden.properties` says (select options,
   number format, person, URL). Orden writes `types.json` for a property the reader gives a type,
   so Obsidian agrees.
 - **Writes** go through one path: `lib/rows/write.ts`, which edits a note's front matter with
@@ -1357,7 +1357,7 @@ the view's head holds under its name (`live.builder`), opened from a column's me
   word under the caret could be, and the first row's value as it is typed; words that
   do not compile are kept, never written.
 - **Column names**: Rename in a column's menu writes Bases' `properties.<key>.displayName`.
-- **Unique ids**: Unique ID in "Add a column" sets `nib.id` (no prefix, as Notion's
+- **Unique ids**: Unique ID in "Add a column" sets `orden.id` (no prefix, as Notion's
   default) and numbers every row of the base in the order they were made, as one write.
   A row made by the plus, a form or a template gets `nextId`; a note that appears in the
   base without one, made there or moved in, gets the next from the runner. A copy,
@@ -1385,7 +1385,7 @@ the view's head holds under its name (`live.builder`), opened from a column's me
 - **Templates** are notes in a templates folder (`Templates/` unless the space says
   otherwise, as Obsidian's core plugin does), with `{{title}}`, `{{date}}`, `{{time}}` and
   `{{date:YYYY-MM-DD}}` filled in. "New note from template" is a palette row and a choice on
-  the plus; a base's `nib.template` makes every new row from it. A project template is a note
+  the plus; a base's `orden.template` makes every new row from it. A project template is a note
   with tasks whose dates are written relative (`📅 {{date+7d}}`), which is how Todoist's
   project templates are used.
 - **Repeating templates**: a template with `🔁 every Monday` in its front matter's `repeat`
@@ -1394,7 +1394,7 @@ the view's head holds under its name (`live.builder`), opened from a column's me
 - **Buttons**: a property type whose cell is a button with a label and an action: run a palette
   command, set properties on this row, add a task to this note, open a URL. Notion's button,
   without a scripting language.
-- **Automations**, in the base's `nib.automations`: when a row is added, or a property
+- **Automations**, in the base's `orden.automations`: when a row is added, or a property
   changes to a value, set properties, move the note to a folder, add a date, or remind. They
   run where Orden runs, are listed in the base's menu with a switch each, and every run is one
   undoable edit. Webhooks, mail and schedules while Orden is closed need the Worker (later).
@@ -1408,7 +1408,7 @@ the view's head holds under its name (`live.builder`), opened from a column's me
   folder is `.obsidian/templates.json`'s, else `Templates` (`views/templates.ts`). The
   palette's "New note from template" makes one beside the note in front; a view's plus,
   pressed with the other button, makes a row from any template; its Default template
-  (the name's menu) is the view's `nib.template`, falling back to the base's. A new row
+  (the name's menu) is the view's `orden.template`, falling back to the base's. A new row
   of a view of notes (`addNote`) is written where the filter points (`rowPlace`, the
   agents' own), with the pinned values, the group, the template and the next id.
 - **Repeating templates**: `repeat: every Monday` (the Tasks plugin's words) in a
@@ -1416,11 +1416,11 @@ the view's head holds under its name (`live.builder`), opened from a column's me
   runner makes `<Template> <day>.md` in the template's `folder:` (else the root) with
   `missed:` listing the rest, and writes `made:` into the template. Not while the
   template is open in a pane.
-- **Buttons**: `nib.buttons.<name>` with `set`, `task`, `command`, `open`; a column
+- **Buttons**: `orden.buttons.<name>` with `set`, `task`, `command`, `open`; a column
   `button.<name>` (`ButtonBuilder`, "Add a column"). A press (`press.ts`) sets the row's
   properties and adds its task as one write; the command runs as a `orden://` link would
   ask for it (`runCommand(…, 'link')`), and the address opens outside.
-- **Automations**: `nib.automations`, a list of `when` (`added`, or `{ property, is? }`)
+- **Automations**: `orden.automations`, a list of `when` (`added`, or `{ property, is? }`)
   with `set`, `move` and `notify`, and `off`; `AutomationsBuilder` from the name's menu
   of a base file. `added` is a note new to the base: made, or moved in from outside its
   filters or from another space; a rename or a move within it is not, nor an edit that
@@ -1435,17 +1435,17 @@ the view's head holds under its name (`live.builder`), opened from a column's me
   again, so automations never set each other off. A notice rings the way a reminder
   does (`reminders/platform.ts`).
 - **Forms**: `type: form`, offered for views of notes; the view's note properties are
-  the fields, `nib.required` the ones that must be filled (a field's menu toggles it);
+  the fields, `orden.required` the ones that must be filled (a field's menu toggles it);
   Send makes the note through `addNote` without opening it and empties the form.
-- **Locks**: `nib.locked` on the view or the base (the name's menu). Every change to the
+- **Locks**: `orden.locked` on the view or the base (the name's menu). Every change to the
   view's shape goes through `kit.change`, which a lock turns away while the padlock in
   the head shakes; pressing the padlock unlocks both. Rows stay editable, as Notion's.
-- **Table**: Row height (the name's menu) is `nib.lines`, 1, 2 or 4 lines, the words
+- **Table**: Row height (the name's menu) is `orden.lines`, 1, 2 or 4 lines, the words
   wrapping within, every row still one height so the window arithmetic holds; Freeze up
-  to here (a column's menu) is `nib.freeze`, sticky columns from the start; summaries
+  to here (a column's menu) is `orden.freeze`, sticky columns from the start; summaries
   under each group as well as under all.
 - **Conditional colour**: `ColourBuilder`, rules of a filter row and a tone kept as one
-  nested `if` under `nib.colour` (`colourExpression`, `colourRules`); the table, the list,
+  nested `if` under `orden.colour` (`colourExpression`, `colourRules`); the table, the list,
   the cards and the board tint a row in it. Another expression is kept as written.
 - **CSV**: Copy as CSV and Save as CSV in the name's menu (`views/csv.ts`, `csvText`); the
   import sheet's "One note per row" also writes `<Name>.base` over the folder
@@ -1698,10 +1698,10 @@ interface Row {
 type Filter = string | { and: Filter[] } | { or: Filter[] } | { not: Filter[] }
 interface Base { filters?: Filter; formulas: Record<string, string>
   properties: Record<string, PropertyConfig>; summaries: Record<string, string>
-  views: View[]; nib: NibBase; kept: Record<string, unknown> }
+  views: View[]; nib: OrdenBase; kept: Record<string, unknown> }
 interface View { type; name; filters?: Filter; order: string[]; sort: Sort[]
   groupBy?: Sort; limit?: number; summaries: Record<string, string>
-  nib: NibView; options: Record<string, unknown> }   // options: every other key, kept
+  nib: OrdenView; options: Record<string, unknown> }   // options: every other key, kept
 interface Context { today: string; now: string; this?: Row; me?: string; search?: string
   resolve?(target, from: Row): string | null; row?(path, space): Row | undefined
   backlinks?(row: Row): string[] }

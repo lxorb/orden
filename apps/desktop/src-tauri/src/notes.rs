@@ -306,7 +306,7 @@ fn respell(source: &Path, target: &Path) -> Result<(), String> {
 fn stepping_name(source: &Path) -> Option<std::path::PathBuf> {
     let mut name = std::ffi::OsString::from(".");
     name.push(source.file_name()?);
-    name.push(".nib-renaming");
+    name.push(".orden-renaming");
     Some(source.with_file_name(name))
 }
 
@@ -750,7 +750,7 @@ mod tests {
             .expect("the folder")
             .filter_map(Result::ok)
             .map(|entry| entry.file_name().to_string_lossy().to_string())
-            .filter(|name| name.ends_with(".nib.tmp"))
+            .filter(|name| name.ends_with(".orden.tmp"))
             .collect();
 
         assert!(left.is_empty(), "{left:?}");

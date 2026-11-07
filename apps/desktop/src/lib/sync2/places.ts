@@ -472,7 +472,7 @@ export interface Settling {
 }
 
 function aside(path: string, id: string): string {
-  return joined(folderOf(path), `.nib-moving-${hash32(id).toString(36)}`)
+  return joined(folderOf(path), `.orden-moving-${hash32(id).toString(36)}`)
 }
 
 export async function settle(space: SpaceState, how: Settling): Promise<EntryRow[]> {

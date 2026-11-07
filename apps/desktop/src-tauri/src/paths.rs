@@ -870,7 +870,7 @@ fn staged(target: &Path, bytes: &[u8], private: bool) -> Result<PathBuf, String>
         .parent()
         .ok_or_else(|| format!("{} has no folder to write into", target.display()))?;
     let temp = parent.join(format!(
-        ".{}.{}-{}.nib.tmp",
+        ".{}.{}-{}.orden.tmp",
         temp_stem(target),
         std::process::id(),
         WRITES.fetch_add(1, Ordering::Relaxed)

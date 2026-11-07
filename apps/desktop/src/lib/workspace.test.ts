@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const DRAWN =
-  '{\n\t"nodes": [],\n\t"edges": [],\n\t"nib": {\n\t\t"version": 1,\n\t\t"ink": [' +
+  '{\n\t"nodes": [],\n\t"edges": [],\n\t"orden": {\n\t\t"version": 1,\n\t\t"ink": [' +
   '{ "id": "s1", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 10, 10, 0.5, 0, 0, 8] }' +
   ']\n\t}\n}\n'
 
@@ -100,7 +100,7 @@ const BESIDE_PAPER = JSON.stringify({
     },
   ],
   edges: [],
-  nib: { version: 1, pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
+  orden: { version: 1, pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
 })
 
 vi.mock('./prompt.svelte', () => ({
@@ -2772,7 +2772,7 @@ describe('a new tab', () => {
 
   test('a website kept under the name of a web note on its own site is that note', async () => {
     notes['/space/Example.url'] =
-      '[InternetShortcut]\r\nURL=https://www.example.com/\r\nTitle=Example\r\nNib-Added=2026-09-01T00:00:00.000Z\r\nNib-Icon=data:kept\r\n'
+      '[InternetShortcut]\r\nURL=https://www.example.com/\r\nTitle=Example\r\nOrden-Added=2026-09-01T00:00:00.000Z\r\nOrden-Icon=data:kept\r\n'
     try {
       workspace.openWebsite()
       const tab = workspace.active
@@ -2784,8 +2784,8 @@ describe('a new tab', () => {
       expect(tab.path).toBe('/space/Example.url')
       const wrote = written()[0]!.content
       expect(wrote).toContain('URL=https://example.com/b')
-      expect(wrote).toContain('Nib-Added=2026-09-01T00:00:00.000Z')
-      expect(wrote).toContain('Nib-Icon=data:kept')
+      expect(wrote).toContain('Orden-Added=2026-09-01T00:00:00.000Z')
+      expect(wrote).toContain('Orden-Icon=data:kept')
     } finally {
       delete notes['/space/Example.url']
     }
@@ -2801,9 +2801,9 @@ describe('a new tab', () => {
     try {
       await workspace.save(tab, '/space', 'Apart.url')
       const wrote = written()[before]!.content
-      expect(wrote).toMatch(/Nib-Data=[0-9a-f]{16}/)
-      expect(wrote).not.toContain('Nib-Data=0123456789abcdef')
-      const own = /Nib-Data=([0-9a-f]{16})/.exec(wrote)![1]!
+      expect(wrote).toMatch(/Orden-Data=[0-9a-f]{16}/)
+      expect(wrote).not.toContain('Orden-Data=0123456789abcdef')
+      const own = /Orden-Data=([0-9a-f]{16})/.exec(wrote)![1]!
       const copy = sent.findIndex((one) => one.command === 'web_copy')
       const write = sent.findIndex(
         (one) => one.command === 'write_note' && one.path === '/space/Apart.url',
@@ -2836,7 +2836,7 @@ describe('a new tab', () => {
       await workspace.save(tab, '/space', 'Global.url')
       const wrote = written()[before]!
       expect(wrote.path).toBe('/space/Global.url')
-      expect(wrote.content).not.toContain('Nib-Data')
+      expect(wrote.content).not.toContain('Orden-Data')
     } finally {
       delete notes['/space/Global.url']
     }

@@ -2,9 +2,9 @@ import { bare } from './columns'
 import {
   type Base,
   type Filter,
-  type NibBase,
-  type NibProperty,
-  type NibView,
+  type OrdenBase,
+  type OrdenProperty,
+  type OrdenView,
   renamedLiteral,
   type Sort,
   type View,
@@ -18,13 +18,13 @@ function withView(base: Base, at: number, change: (view: View) => View): Base {
   return { ...base, views }
 }
 
-function withNib(view: View, change: { [K in keyof NibView]?: NibView[K] | undefined }): View {
-  const nib: NibView = { ...view.nib }
-  for (const [key, value] of Object.entries(change) as [keyof NibView, unknown][]) {
-    if (value === undefined) Reflect.deleteProperty(nib, key)
-    else Reflect.set(nib, key, value)
+function withNib(view: View, change: { [K in keyof OrdenView]?: OrdenView[K] | undefined }): View {
+  const orden: OrdenView = { ...view.orden }
+  for (const [key, value] of Object.entries(change) as [keyof OrdenView, unknown][]) {
+    if (value === undefined) Reflect.deleteProperty(orden, key)
+    else Reflect.set(orden, key, value)
   }
-  return { ...view, nib }
+  return { ...view, orden }
 }
 
 export const setLayout = (base: Base, at: number, type: string): Base =>
@@ -70,7 +70,7 @@ export function setSummary(base: Base, at: number, property: string, name: strin
 
 export function setHidden(base: Base, at: number, group: string, hidden: boolean): Base {
   return withView(base, at, (view) => {
-    const was = view.nib.hidden ?? []
+    const was = view.orden.hidden ?? []
     const next = hidden ? [...new Set([...was, group])] : was.filter((one) => one !== group)
     return withNib(view, { hidden: next.length ? next : undefined })
   })
@@ -78,7 +78,10 @@ export function setHidden(base: Base, at: number, group: string, hidden: boolean
 
 export function setManualOrder(base: Base, at: number, group: string, ids: string[]): Base {
   return withView(base, at, (view) => {
-    const order = { ...view.nib.order, [group]: mergedOrder(view.nib.order?.[group] ?? [], ids) }
+    const order = {
+      ...view.orden.order,
+      [group]: mergedOrder(view.orden.order?.[group] ?? [], ids),
+    }
     return withNib(view, { order })
   })
 }
@@ -111,7 +114,7 @@ export function setNibOption(base: Base, at: number, key: string, value: unknown
     if (key === 'date' || key === 'end') {
       return withNib(view, { [key]: typeof value === 'string' ? value : undefined })
     }
-    const kept = { ...view.nib.kept }
+    const kept = { ...view.orden.kept }
     if (value === undefined) Reflect.deleteProperty(kept, key)
     else kept[key] = value
     return withNib(view, { kept })
@@ -138,7 +141,7 @@ export function addView(base: Base, at: number, type?: string): Base {
         order: [],
         sort: [],
         summaries: {},
-        nib: { kept: {} },
+        orden: { kept: {} },
         options: {},
       }
   const views = [...base.views]
@@ -166,11 +169,11 @@ export function setViewOption(base: Base, at: number, key: string, value: unknow
   })
 }
 
-export function setViewNib<K extends Exclude<keyof NibView, 'kept'>>(
+export function setViewNib<K extends Exclude<keyof OrdenView, 'kept'>>(
   base: Base,
   at: number,
   key: K,
-  value: NibView[K] | undefined,
+  value: OrdenView[K] | undefined,
 ): Base {
   return withView(base, at, (view) => withNib(view, { [key]: value }))
 }
@@ -178,12 +181,12 @@ export function setViewNib<K extends Exclude<keyof NibView, 'kept'>>(
 export function setBaseNib<K extends 'template' | 'id' | 'locked'>(
   base: Base,
   key: K,
-  value: NibBase[K] | undefined,
+  value: OrdenBase[K] | undefined,
 ): Base {
-  const nib: NibBase = { ...base.nib }
-  if (value === undefined) Reflect.deleteProperty(nib, key)
-  else Reflect.set(nib, key, value)
-  return { ...base, nib }
+  const orden: OrdenBase = { ...base.orden }
+  if (value === undefined) Reflect.deleteProperty(orden, key)
+  else Reflect.set(orden, key, value)
+  return { ...base, orden }
 }
 
 export function setFormula(base: Base, name: string, source: string | null): Base {
@@ -196,18 +199,18 @@ export function setFormula(base: Base, name: string, source: string | null): Bas
 export function setProperty(
   base: Base,
   key: string,
-  change: { [K in keyof NibProperty]?: NibProperty[K] | undefined },
+  change: { [K in keyof OrdenProperty]?: OrdenProperty[K] | undefined },
 ): Base {
-  const next: NibProperty = { ...(base.nib.properties[key] ?? { kept: {} }) }
+  const next: OrdenProperty = { ...(base.orden.properties[key] ?? { kept: {} }) }
   for (const [name, value] of Object.entries(change)) {
     if (value === undefined) Reflect.deleteProperty(next, name)
     else Reflect.set(next, name, value)
   }
-  const properties = { ...base.nib.properties }
+  const properties = { ...base.orden.properties }
   const empty = Object.keys(next).length === 1 && !Object.keys(next.kept).length
   if (empty) Reflect.deleteProperty(properties, key)
   else properties[key] = next
-  return { ...base, nib: { ...base.nib, properties } }
+  return { ...base, orden: { ...base.orden, properties } }
 }
 
 export function freeFormulaName(base: Base, wanted: string): string {
@@ -251,27 +254,27 @@ export function renamedGroup(
   }
   const same = (one: string | undefined) => one !== undefined && bare(one) === name
   const views = base.views.map((view): View => {
-    if (!same(view.groupBy?.property) && !same(view.nib.subGroupBy?.property))
+    if (!same(view.groupBy?.property) && !same(view.orden.subGroupBy?.property))
       return { ...view, ...(view.filters ? { filters: literal(view.filters) } : {}) }
-    const order = view.nib.order
+    const order = view.orden.order
     let moved = order
     if (order && from in order) {
       const { [from]: carried = [], ...rest } = order
       moved = { ...rest, [to]: [...new Set([...(rest[to] ?? []), ...carried])] }
     }
-    const hidden = view.nib.hidden
+    const hidden = view.orden.hidden
       ? merge
-        ? view.nib.hidden.filter((one) => one !== from)
-        : swap(view.nib.hidden)
+        ? view.orden.hidden.filter((one) => one !== from)
+        : swap(view.orden.hidden)
       : undefined
     return {
       ...view,
       ...(view.filters ? { filters: literal(view.filters) } : {}),
-      nib: {
-        ...view.nib,
+      orden: {
+        ...view.orden,
         ...(moved ? { order: moved } : {}),
         ...(hidden ? { hidden } : {}),
-        ...(view.nib.groups ? { groups: swap(view.nib.groups) } : {}),
+        ...(view.orden.groups ? { groups: swap(view.orden.groups) } : {}),
       },
     }
   })
@@ -282,14 +285,14 @@ export function forgottenGroup(base: Base, property: string, value: string): Bas
   const name = bare(property)
   const same = (one: string | undefined) => one !== undefined && bare(one) === name
   const views = base.views.map((view): View => {
-    if (!same(view.groupBy?.property) && !same(view.nib.subGroupBy?.property)) return view
-    const nib = { ...view.nib }
-    if (nib.order && value in nib.order) {
-      nib.order = Object.fromEntries(Object.entries(nib.order).filter(([key]) => key !== value))
+    if (!same(view.groupBy?.property) && !same(view.orden.subGroupBy?.property)) return view
+    const orden = { ...view.orden }
+    if (orden.order && value in orden.order) {
+      orden.order = Object.fromEntries(Object.entries(orden.order).filter(([key]) => key !== value))
     }
-    if (nib.hidden) nib.hidden = nib.hidden.filter((one) => one !== value)
-    if (nib.groups) nib.groups = nib.groups.filter((one) => one !== value)
-    return { ...view, nib }
+    if (orden.hidden) orden.hidden = orden.hidden.filter((one) => one !== value)
+    if (orden.groups) orden.groups = orden.groups.filter((one) => one !== value)
+    return { ...view, orden }
   })
   return { ...base, views }
 }
@@ -312,11 +315,11 @@ export function placeColumn(
 
 export function prunedOrder(base: Base, at: number, group: string, alive: (id: string) => boolean) {
   return withView(base, at, (view) => {
-    const was = view.nib.order?.[group]
+    const was = view.orden.order?.[group]
     if (!was) return view
     const kept = was.filter(alive)
     if (kept.length === was.length) return view
-    const order = { ...view.nib.order }
+    const order = { ...view.orden.order }
     if (kept.length) order[group] = kept
     else Reflect.deleteProperty(order, group)
     return withNib(view, { order: Object.keys(order).length ? order : undefined })

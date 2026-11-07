@@ -76,7 +76,7 @@ def drive(browser: Browser) -> None:
     page.mouse.up()
     page.wait_for_timeout(2500)
     written = page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc)")
-    ink = written.get("nib", {}).get("ink", [])
+    ink = written.get("orden", {}).get("ink", [])
     if not ink:
         wrong(f"[pen] no stroke was written: {json.dumps(written)[:200]}")
     else:
@@ -99,7 +99,7 @@ def drive(browser: Browser) -> None:
     page.mouse.up()
     page.wait_for_timeout(2500)
     written = page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc)")
-    ink = written.get("nib", {}).get("ink", [])
+    ink = written.get("orden", {}).get("ink", [])
     drawn = ink[-1].get("size") if len(ink) > 1 else None
     say(f"[pen] a pen of 3 wrote a stroke {drawn} wide at 25%")
     if not drawn or abs(drawn - 12) > 0.011:

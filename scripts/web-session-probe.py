@@ -240,7 +240,7 @@ def shortcut(url: str, title: str) -> str:
         "[InternetShortcut]\r\n"
         f"URL={url}\r\n"
         f"Title={title}\r\n"
-        "Nib-Added=2026-09-13T08:00:00.000Z\r\n"
+        "Orden-Added=2026-09-13T08:00:00.000Z\r\n"
     )
 
 def space(port: int) -> pathlib.Path:

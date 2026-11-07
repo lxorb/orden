@@ -133,7 +133,7 @@ describe('a note added to a base whose filter names a folder', () => {
 describe('a note added to a base with a template, from a tab of another space', () => {
   const journal = () =>
     readBase(
-      `filters:\n  and:\n    - file.inFolder("Inbox")\nnib:\n  template: "[[Journal]]"\nviews:\n  - type: table\n    name: T\n`,
+      `filters:\n  and:\n    - file.inFolder("Inbox")\norden:\n  template: "[[Journal]]"\nviews:\n  - type: table\n    name: T\n`,
     )
 
   beforeEach(() => {
@@ -165,7 +165,7 @@ describe('a numbered note added to a base from a tab of another space', () => {
     ids.set('Shared/One.md', 'BUG-7')
     ids.set('Mine/Mine.md', 'BUG-40')
     const bugs = readBase(
-      'nib:\n  id: { property: id, prefix: BUG }\nviews:\n  - type: table\n    name: T\n',
+      'orden:\n  id: { property: id, prefix: BUG }\nviews:\n  - type: table\n    name: T\n',
     )
 
     const path = await addNote(bugs, 0, '/s/Shared/Bugs.base', undefined, { open: false })

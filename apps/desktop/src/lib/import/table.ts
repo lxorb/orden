@@ -188,11 +188,11 @@ function baseOf(
         order: ['file.name', ...new Set(order.map((one) => `note.${one}`))],
         sort: [],
         summaries: {},
-        nib: { kept: {} },
+        orden: { kept: {} },
         options: {},
       },
     ],
-    nib: { properties: {}, kept: {} },
+    orden: { properties: {}, kept: {} },
     kept: {},
   }
   return writeBase(base)

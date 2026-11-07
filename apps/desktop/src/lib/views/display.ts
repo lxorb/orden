@@ -170,21 +170,21 @@ export function withGrouping(
     base,
     at,
     (view) => {
-      const nib = { ...view.nib }
-      delete nib.groupOrder
-      delete nib.groups
-      const next: View = { ...view, nib }
+      const orden = { ...view.orden }
+      delete orden.groupOrder
+      delete orden.groups
+      const next: View = { ...view, orden }
       delete next.groupBy
       if (grouping === 'default') {
         if (original?.groupBy) next.groupBy = original.groupBy
-        if (original?.nib.groupOrder) nib.groupOrder = original.nib.groupOrder
-        if (original?.nib.groups) nib.groups = [...original.nib.groups]
+        if (original?.orden.groupOrder) orden.groupOrder = original.orden.groupOrder
+        if (original?.orden.groups) orden.groups = [...original.orden.groups]
         return next
       }
       const property = grouping === 'due' ? `formula.${whenName(base)}` : GROUP_BY[grouping]
       if (property === undefined) return next
-      if (grouping === 'section') nib.groupOrder = 'rows'
-      if (grouping === 'due') nib.groups = [...WHEN_GROUPS]
+      if (grouping === 'section') orden.groupOrder = 'rows'
+      if (grouping === 'due') orden.groups = [...WHEN_GROUPS]
       next.groupBy = { property, direction: 'ASC' }
       return next
     },
@@ -220,7 +220,8 @@ export function changedFrom(
     (grouping === 'default' || grouping === shippedGrouping(original) ? 0 : 1) +
     (sorting === 'default' || sorting === shippedSorting(original) ? 0 : 1)
   const layout = original.type === view.type ? 0 : 1
-  const done = (view.nib.showCompleted ?? false) === (original.nib.showCompleted ?? false) ? 0 : 1
+  const done =
+    (view.orden.showCompleted ?? false) === (original.orden.showCompleted ?? false) ? 0 : 1
   return { sort, filter, total: sort + filter + layout + done }
 }
 
@@ -253,10 +254,10 @@ export function withSorting(
 
 export function withCompleted(base: Base, at: number, shown: boolean): Base {
   return withView(base, at, (view) => {
-    const nib = { ...view.nib }
-    if (shown) nib.showCompleted = true
-    else delete nib.showCompleted
-    return { ...view, nib }
+    const orden = { ...view.orden }
+    if (shown) orden.showCompleted = true
+    else delete orden.showCompleted
+    return { ...view, orden }
   })
 }
 
@@ -271,7 +272,7 @@ function dateOf(value: unknown): Only['date'] {
 }
 
 export function onlyOf(view: View): Only {
-  const kept: unknown = view.nib.kept.only
+  const kept: unknown = view.orden.kept.only
   if (typeof kept !== 'object' || kept === null || Array.isArray(kept)) return {}
   const priority = priorityOf(Reflect.get(kept, 'priority'))
   const label: unknown = Reflect.get(kept, 'label')
@@ -293,10 +294,10 @@ export function onlyOf(view: View): Only {
 
 export function withOnly(base: Base, at: number, only: Only): Base {
   return withView(base, at, (view) => {
-    const kept = { ...view.nib.kept }
+    const kept = { ...view.orden.kept }
     if (Object.keys(only).length) kept.only = { ...only }
     else delete kept.only
-    return { ...view, nib: { ...view.nib, kept } }
+    return { ...view, orden: { ...view.orden, kept } }
   })
 }
 

@@ -393,7 +393,7 @@ describe('a note saved keeps the index up to date', () => {
     links.noteSaved(
       site,
       '[InternetShortcut]\nURL=https://a.example/read\nTitle=A site\n' +
-        'Nib-Icon=https://a.example/icon.png\n',
+        'Orden-Icon=https://a.example/icon.png\n',
     )
 
     expect(links.faviconOf(site)).toBe('https://a.example/icon.png')
@@ -406,11 +406,11 @@ describe('a note saved keeps the index up to date', () => {
 
     links.noteSaved(
       site,
-      '[InternetShortcut]\nURL=https://a.example/\nNib-Icon=https://a/one.png\n',
+      '[InternetShortcut]\nURL=https://a.example/\nOrden-Icon=https://a/one.png\n',
     )
     links.noteSaved(
       site,
-      '[InternetShortcut]\nURL=https://a.example/\nNib-Icon=https://a/two.png\n',
+      '[InternetShortcut]\nURL=https://a.example/\nOrden-Icon=https://a/two.png\n',
     )
 
     expect(links.faviconOf(site)).toBe('https://a/two.png')
@@ -529,7 +529,7 @@ describe('a space still being read', () => {
       JSON.stringify({
         nodes: [{ id: 'a', type: 'file', x: 0, y: 0, width: 1, height: 1, file: 'Plan.md' }],
         edges: [],
-        nib: {
+        orden: {
           version: 1,
           icon: 'rocket',
           ink: Array.from({ length: strokes }, (_, one) => ({ id: `s${String(one)}`, points: [] })),

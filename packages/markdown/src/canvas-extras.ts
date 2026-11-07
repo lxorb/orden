@@ -27,7 +27,18 @@ const EDGE_FIELDS = new Set([
   'label',
 ])
 
-const TOP_FIELDS = new Set(['nodes', 'edges', 'nib'])
+const TOP_FIELDS = new Set(['nodes', 'edges', 'orden', 'nib'])
+
+export function ownOf(file: Record<string, unknown>): Fields | undefined {
+  if (isRecord(file.orden)) return file.orden
+  return isRecord(file.nib) ? file.nib : undefined
+}
+
+function keptOwn(file: Record<string, unknown>, own: Fields | null): void {
+  delete file.nib
+  if (own) file.orden = own
+  else delete file.orden
+}
 
 const ORDEN_FIELDS = new Set([
   'version',
@@ -155,7 +166,8 @@ export function extrasFrom(
   for (const [key, held] of Object.entries(parsed)) {
     if (!TOP_FIELDS.has(key)) out.top[key] = held
   }
-  if (isRecord(parsed.nib)) out.nib = beyond(parsed.nib, ORDEN_FIELDS) ?? {}
+  const own = ownOf(parsed)
+  if (own) out.nib = beyond(own, ORDEN_FIELDS) ?? {}
 
   const unreadIn = (list: unknown, read: ReadonlySet<string>, known: ReadonlySet<string>) => {
     const unread = new Map<string, Fields>()
@@ -175,12 +187,12 @@ export function extrasFrom(
   }
   out.nodes = unreadIn(parsed.nodes, nodes, NODE_FIELDS)
   out.edges = unreadIn(parsed.edges, edges, EDGE_FIELDS)
-  if (isRecord(parsed.nib)) {
-    out.ink = unreadOnly(parsed.nib.ink, ink)
-    out.shapes = unreadOnly(parsed.nib.shapes, nodes)
+  if (own) {
+    out.ink = unreadOnly(own.ink, ink)
+    out.shapes = unreadOnly(own.shapes, nodes)
   }
 
-  const record = isRecord(parsed.nib) ? parsed.nib[RECORD] : undefined
+  const record = own?.[RECORD]
   const said = isRecord(record) ? record : {}
   const now = everyOf(out)
   for (const [name, held] of now) {
@@ -306,7 +318,7 @@ export function withExtras(text: string, extras: Extras | undefined): string {
   file.nodes = nodes
   file.edges = edges
 
-  const own = isRecord(file.nib) ? file.nib : {}
+  const own = ownOf(file) ?? {}
   const kept = { ink: extras.ink, shapes: extras.shapes }
   for (const [key, unread] of Object.entries(kept)) {
     if (!unread.size) continue
@@ -315,7 +327,7 @@ export function withExtras(text: string, extras: Extras | undefined): string {
     for (const [id, entry] of unread) if (!there.has(id)) list.push(entry)
     own[key] = list
   }
-  if (Object.keys(own).length) file.nib = own
+  if (Object.keys(own).length) keptOwn(file, own)
   for (const [key, held] of Object.entries(extras.top)) {
     if (!TOP_FIELDS.has(key)) file[key] = held
   }
@@ -338,13 +350,12 @@ export function withExtras(text: string, extras: Extras | undefined): string {
   for (const [name, generation] of extras.buried) {
     if (!(name in record)) record[name] = `~${String(generation)}`
   }
-  const nib = {
-    ...(isRecord(file.nib) ? file.nib : {}),
+  const section = {
+    ...ownOf(file),
     ...extras.nib,
     ...(Object.keys(record).length ? { [RECORD]: record } : {}),
   }
-  if (Object.keys(nib).length) file.nib = nib
-  else delete file.nib
+  keptOwn(file, Object.keys(section).length ? section : null)
 
   return `${JSON.stringify(file, null, '\t')}\n`
 }

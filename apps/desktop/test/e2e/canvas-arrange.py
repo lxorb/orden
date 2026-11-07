@@ -313,7 +313,7 @@ def check_shape_text(page: Page) -> None:
           tab.note.replace(JSON.stringify({
             nodes: [],
             edges: [],
-            nib: { version: 1, shapes: [
+            orden: { version: 1, shapes: [
               { id: 'dd', shape: 'rhombus', x: -120, y: -80, width: 240, height: 160,
                 text: 'Ready?' },
               { id: 'ee', shape: 'triangle', x: 200, y: -80, width: 200, height: 160 },
@@ -784,7 +784,7 @@ def check_pen_button(page: Page, cdp, tablet: bool = False) -> None:
     ]
 
     def ink() -> list:
-        return canvas_of(page).get("nib", {}).get("ink", [])
+        return canvas_of(page).get("orden", {}).get("ink", [])
 
     wipe(page)
     tool(page, "d")
@@ -852,10 +852,10 @@ def check_sharp_stroke(page: Page, cdp) -> None:
         )
 
     pen_stroke(page, cdp, zigzag)
-    written(page, "(plane.nib?.ink ?? []).length > 0")
+    written(page, "(plane.orden?.ink ?? []).length > 0")
     shot(page, "canvas-sharp-stroke")
 
-    drawn = canvas_of(page).get("nib", {}).get("ink", [])
+    drawn = canvas_of(page).get("orden", {}).get("ink", [])
     if not drawn:
         fail("a stroke that turns sharply left nothing on the plane")
     else:

@@ -40,7 +40,7 @@ describe('the one edit two texts differ by', () => {
       ['', 'something'],
       ['something', ''],
       ['---\nicon: rocket\n---\n', '---\nicon: rocket\nicon-color: violet\n---\n'],
-      ['{\n\t"nodes": []\n}\n', '{\n\t"nodes": [],\n\t"nib": {\n\t\t"icon": "rocket"\n\t}\n}\n'],
+      ['{\n\t"nodes": []\n}\n', '{\n\t"nodes": [],\n\t"orden": {\n\t\t"icon": "rocket"\n\t}\n}\n'],
     ]
 
     for (const [before, after] of pairs) {

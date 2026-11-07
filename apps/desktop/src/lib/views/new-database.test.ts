@@ -38,8 +38,8 @@ describe('a new database', () => {
       'Done',
     ])
     expect(base.views[0]?.type).toBe('kanban')
-    expect(base.views[0]?.nib.cardSize).toBe('medium')
-    expect(base.nib.properties.status?.options?.map((one) => one.tone)).toEqual([
+    expect(base.views[0]?.orden.cardSize).toBe('medium')
+    expect(base.orden.properties.status?.options?.map((one) => one.tone)).toEqual([
       undefined,
       '5',
       '4',

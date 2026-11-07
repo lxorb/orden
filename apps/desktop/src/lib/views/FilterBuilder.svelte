@@ -23,7 +23,7 @@
   const view = $derived(live.view)
   const holds = $derived(live.base ? holdsOf(live.base, live.rows) : undefined)
   const rows = $derived(rowsOf(view?.filters, holds))
-  const kinds = $derived(view?.nib.rows ?? 'notes')
+  const kinds = $derived(view?.orden.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
 
   let typed = $state('')
@@ -94,10 +94,10 @@
   <button
     type="button"
     class="orden-chip completed"
-    class:is-on={view?.nib.showCompleted === true}
-    aria-pressed={view?.nib.showCompleted === true}
+    class:is-on={view?.orden.showCompleted === true}
+    aria-pressed={view?.orden.showCompleted === true}
     onclick={() =>
-      kit.change((base, at) => setShowCompleted(base, at, view?.nib.showCompleted !== true))}
+      kit.change((base, at) => setShowCompleted(base, at, view?.orden.showCompleted !== true))}
     >{t('Show completed')}</button
   >
 {/if}

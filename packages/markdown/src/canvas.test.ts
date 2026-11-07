@@ -275,7 +275,7 @@ describe('writing a canvas', () => {
       icon: null,
       iconColor: null,
     })
-    expect(blankCanvas()).not.toContain('nib')
+    expect(blankCanvas()).not.toContain('orden')
     expect(blankCanvas().endsWith('\n')).toBe(true)
   })
 
@@ -345,7 +345,7 @@ describe('what Orden keeps beyond the spec', () => {
   })
 
   test('keeps everything else under one key of its own', () => {
-    expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'nib'])
+    expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'orden'])
   })
 
   test('reads its own file back exactly, shapes, ink, order and times', () => {
@@ -394,7 +394,7 @@ describe('what Orden keeps beyond the spec', () => {
     const canvas = readCanvas(
       JSON.stringify({
         nodes: [],
-        nib: {
+        orden: {
           shapes: [
             { id: 'a', shape: 'rect', x: 0, y: 0, width: 1, height: 1, text: 7 },
             { id: 'b', shape: 'rect', x: 0, y: 0, width: 1, height: 1, text: '' },
@@ -409,7 +409,7 @@ describe('what Orden keeps beyond the spec', () => {
 
   test('a shape with no size falls back to the same box a card does', () => {
     const canvas = readCanvas(
-      JSON.stringify({ nodes: [], nib: { shapes: [{ id: 'a', shape: 'rect', x: 0, y: 0 }] } }),
+      JSON.stringify({ nodes: [], orden: { shapes: [{ id: 'a', shape: 'rect', x: 0, y: 0 }] } }),
     )
     const card = readCanvas(JSON.stringify({ nodes: [{ id: 'b', type: 'text', text: 'hi' }] }))
 
@@ -427,7 +427,7 @@ describe('what Orden keeps beyond the spec', () => {
     const canvas = readCanvas(
       JSON.stringify({
         nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
-        nib: 'what',
+        orden: 'what',
       }),
     )
 
@@ -439,7 +439,7 @@ describe('what Orden keeps beyond the spec', () => {
     const canvas = readCanvas(
       JSON.stringify({
         nodes: [],
-        nib: {
+        orden: {
           ink: [{ id: 'a', tool: 'pen', color: '1', size: 2, points: [1, 2, 0.5, 0, 0, 0] }],
           shapes: [{ id: 'b', shape: 'blob', x: 0, y: 0, width: 1, height: 1 }],
         },
@@ -462,7 +462,7 @@ describe('what Orden keeps beyond the spec', () => {
     const canvas = readCanvas(
       JSON.stringify({
         nodes: [],
-        nib: { ink: [{ id: 'a', tool: 'pen', color: '1', size: 2, points: [] }] },
+        orden: { ink: [{ id: 'a', tool: 'pen', color: '1', size: 2, points: [] }] },
       }),
     )
 
@@ -486,7 +486,7 @@ describe('how translucent a stroke was drawn', () => {
   const one = (over: Record<string, unknown> = {}) =>
     JSON.stringify({
       nodes: [],
-      nib: {
+      orden: {
         ink: [
           {
             id: 'a',
@@ -511,10 +511,10 @@ describe('how translucent a stroke was drawn', () => {
   test('is written down only by a stroke that has one', () => {
     const canvas = readCanvas(one())
     const plain = JSON.parse(writeCanvas(canvas)) as {
-      nib: { ink: Record<string, unknown>[] }
+      orden: { ink: Record<string, unknown>[] }
     }
 
-    expect(plain.nib.ink[0]).not.toHaveProperty('opacity')
+    expect(plain.orden.ink[0]).not.toHaveProperty('opacity')
   })
 
   test('rides through a whole write and read unchanged', () => {
@@ -580,7 +580,7 @@ describe('a canvas from somewhere else', () => {
     const canvas = readCanvas(
       JSON.stringify({
         nodes: [],
-        nib: {
+        orden: {
           ink: [
             {
               id: 'a',
@@ -604,7 +604,7 @@ describe('a canvas from somewhere else', () => {
       readCanvas(
         JSON.stringify({
           nodes: [],
-          nib: {
+          orden: {
             ink: [
               {
                 id: 'a',
@@ -633,27 +633,27 @@ describe('the icon a canvas wears', () => {
   }
 
   test('is read off the key that already carries the ink', () => {
-    const file = JSON.stringify({ nodes: [], edges: [], nib: { version: 1, icon: 'rocket' } })
+    const file = JSON.stringify({ nodes: [], edges: [], orden: { version: 1, icon: 'rocket' } })
     expect(readCanvas(file).icon).toBe('rocket')
   })
 
   test('and an emoji, which is what a vault out of Iconize holds', () => {
-    expect(readCanvas('{"nib":{"icon":"🚀"}}').icon).toBe('🚀')
+    expect(readCanvas('{"orden":{"icon":"🚀"}}').icon).toBe('🚀')
   })
 
   test('is nothing where the file says nothing it could be drawn from', () => {
     expect(readCanvas('{"nodes":[],"edges":[]}').icon).toBeNull()
-    expect(readCanvas('{"nib":{"icon":"   "}}').icon).toBeNull()
-    expect(readCanvas('{"nib":{"icon":42}}').icon).toBeNull()
+    expect(readCanvas('{"orden":{"icon":"   "}}').icon).toBeNull()
+    expect(readCanvas('{"orden":{"icon":42}}').icon).toBeNull()
     expect(readCanvas('not json').icon).toBeNull()
   })
 
   test('is written first inside the key, and nowhere near the spec half', () => {
     const written = writeCanvas({ ...readCanvas(blankCanvas()), icon: 'rocket' })
-    const parsed = JSON.parse(written) as { nib: Record<string, unknown> }
+    const parsed = JSON.parse(written) as { orden: Record<string, unknown> }
 
-    expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'nib'])
-    expect(Object.keys(parsed.nib)).toEqual(['version', 'icon'])
+    expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'orden'])
+    expect(Object.keys(parsed.orden)).toEqual(['version', 'icon'])
   })
 
   test('rides a write and a read back unchanged', () => {
@@ -692,16 +692,16 @@ describe('the icon a canvas wears', () => {
     const after = applied(before, 'star')
 
     expect(after).not.toBeNull()
-    expect(JSON.parse(after ?? '')).toEqual({ ...vault, nib: { version: 1, icon: 'star' } })
+    expect(JSON.parse(after ?? '')).toEqual({ ...vault, orden: { version: 1, icon: 'star' } })
     expect(applied(after ?? '', null)).toBe(`${JSON.stringify(vault, null, '\t')}\n`)
   })
 
   test('and keeps what a newer build wrote under its own key', () => {
-    const file = JSON.stringify({ nodes: [], edges: [], nib: { version: 1, later: [1, 2] } })
+    const file = JSON.stringify({ nodes: [], edges: [], orden: { version: 1, later: [1, 2] } })
     expect(JSON.parse(applied(file, 'rocket', 'blue') ?? '')).toEqual({
       nodes: [],
       edges: [],
-      nib: { version: 1, icon: 'rocket', iconColor: 'blue', later: [1, 2] },
+      orden: { version: 1, icon: 'rocket', iconColor: 'blue', later: [1, 2] },
     })
   })
 
@@ -749,7 +749,7 @@ describe('the icon a canvas wears', () => {
 
     expect(read.icon).toBe('rocket')
     expect(read.iconColor).toBe('violet')
-    expect(Object.keys((JSON.parse(marked) as { nib: object }).nib)).toEqual([
+    expect(Object.keys((JSON.parse(marked) as { orden: object }).orden)).toEqual([
       'version',
       'icon',
       'iconColor',
@@ -889,13 +889,13 @@ describe('words with no card round them (#421)', () => {
   const written = writeCanvas(canvas)
   const parsed = JSON.parse(written) as {
     nodes: Record<string, unknown>[]
-    nib: { words: string[] }
+    orden: { words: string[] }
   }
 
   test('are a card to anybody reading the spec, and listed as words under nib', () => {
     expect(parsed.nodes.map((node) => node.type)).toEqual(['text', 'text'])
     expect(parsed.nodes.some((node) => 'bare' in node)).toBe(false)
-    expect(parsed.nib.words).toEqual(['words'])
+    expect(parsed.orden.words).toEqual(['words'])
   })
 
   test('come back as words, and the card as a card', () => {
@@ -910,7 +910,7 @@ describe('words with no card round them (#421)', () => {
 
   test('leave no key of ours in a file of plain cards', () => {
     const plain = writeCanvas({ ...canvas, nodes: [canvas.nodes[0]!] })
-    expect(JSON.parse(plain)).not.toHaveProperty('nib')
+    expect(JSON.parse(plain)).not.toHaveProperty('orden')
   })
 })
 
@@ -944,13 +944,13 @@ describe('something locked in place (#643)', () => {
   const written = writeCanvas(canvas)
   const parsed = JSON.parse(written) as {
     nodes: Record<string, unknown>[]
-    nib: { locked: string[]; shapes: Record<string, unknown>[] }
+    orden: { locked: string[]; shapes: Record<string, unknown>[] }
   }
 
   test('is the record it was to anybody reading the spec, and listed as locked under nib', () => {
     expect(parsed.nodes.some((node) => 'locked' in node)).toBe(false)
-    expect(parsed.nib.shapes.some((shape) => 'locked' in shape)).toBe(false)
-    expect(parsed.nib.locked).toEqual(['photo', 'box'])
+    expect(parsed.orden.shapes.some((shape) => 'locked' in shape)).toBe(false)
+    expect(parsed.orden.locked).toEqual(['photo', 'box'])
   })
 
   test('comes back locked, and the rest as it was', () => {
@@ -966,7 +966,7 @@ describe('something locked in place (#643)', () => {
 
   test('leaves no key of ours in a file of plain cards', () => {
     const plain = writeCanvas({ ...canvas, nodes: [canvas.nodes[1]!] })
-    expect(JSON.parse(plain)).not.toHaveProperty('nib')
+    expect(JSON.parse(plain)).not.toHaveProperty('orden')
   })
 
   test('unlocked on one copy later stays unlocked when the two are put together', () => {
@@ -975,7 +975,7 @@ describe('something locked in place (#643)', () => {
     const theirs = writeCanvas({ ...canvas, nodes: free, at: { photo: 200, card: 100, box: 200 } })
     const both = mergeCanvasFiles(ours, theirs, 300)
     expect(readCanvas(both).nodes.some((node) => node.locked)).toBe(false)
-    expect(JSON.parse(both).nib).not.toHaveProperty('locked')
+    expect(JSON.parse(both).orden).not.toHaveProperty('locked')
   })
 })
 
@@ -1034,7 +1034,7 @@ describe('a canvas holding another app’s things', () => {
       {
         nodes: [],
         edges: [],
-        nib: {
+        orden: {
           version: 1,
           ink: [
             { id: 'known', tool: 'pen', color: '#222222', size: 3, points },
@@ -1053,18 +1053,23 @@ describe('a canvas holding another app’s things', () => {
     const read = readCanvas(text)
     expect(read.ink.map((one) => one.id)).toEqual(['known'])
     const edited = writeCanvas({ ...read, ink: [...read.ink, { ...read.ink[0]!, id: 'mine' }] })
-    const back = JSON.parse(edited) as { nib: { ink: { id: string }[]; shapes: { id: string }[] } }
-    expect(back.nib.ink.map((one) => one.id).sort()).toEqual(['known', 'later', 'mine'])
-    expect(back.nib.ink.find((one) => one.id === 'later')).toMatchObject({ tool: 'quill', flow: 2 })
-    expect(back.nib.shapes.map((one) => one.id).sort()).toEqual(['box', 'star'])
+    const back = JSON.parse(edited) as {
+      orden: { ink: { id: string }[]; shapes: { id: string }[] }
+    }
+    expect(back.orden.ink.map((one) => one.id).sort()).toEqual(['known', 'later', 'mine'])
+    expect(back.orden.ink.find((one) => one.id === 'later')).toMatchObject({
+      tool: 'quill',
+      flow: 2,
+    })
+    expect(back.orden.shapes.map((one) => one.id).sort()).toEqual(['box', 'star'])
 
     const again = JSON.parse(writeCanvas(readCanvas(edited))) as typeof back
-    expect(again.nib.ink.map((one) => one.id).sort()).toEqual(['known', 'later', 'mine'])
-    expect(again.nib.shapes.map((one) => one.id).sort()).toEqual(['box', 'star'])
+    expect(again.orden.ink.map((one) => one.id).sort()).toEqual(['known', 'later', 'mine'])
+    expect(again.orden.shapes.map((one) => one.id).sort()).toEqual(['box', 'star'])
 
     const merged = JSON.parse(mergeCanvasFiles(text, edited, 0)) as typeof back
-    expect(merged.nib.ink.map((one) => one.id).sort()).toEqual(['known', 'later', 'mine'])
-    expect(merged.nib.shapes.map((one) => one.id).sort()).toEqual(['box', 'star'])
+    expect(merged.orden.ink.map((one) => one.id).sort()).toEqual(['known', 'later', 'mine'])
+    expect(merged.orden.shapes.map((one) => one.id).sort()).toEqual(['box', 'star'])
   })
 
   test('writes a line to a card the file lacks as nothing, and adds no empty block of its own', () => {
@@ -1079,6 +1084,6 @@ describe('a canvas holding another app’s things', () => {
 
     const back = JSON.parse(writeCanvas(readCanvas(text))) as Record<string, unknown>
     expect(back.edges).toEqual([])
-    expect('nib' in back).toBe(false)
+    expect('orden' in back).toBe(false)
   })
 })

@@ -93,7 +93,7 @@ describe('a folder moved into a new folder that took its old name', () => {
       'Projects/Old/plan.md',
     ])
     expect([...disk.files.keys()]).toEqual(['/r/Projects/Old/plan.md'])
-    expect([...disk.folders].filter((one) => one.includes('.nib-moving'))).toEqual([])
+    expect([...disk.folders].filter((one) => one.includes('.orden-moving'))).toEqual([])
   })
 })
 
@@ -231,9 +231,9 @@ describe('a file waiting aside', () => {
         forget: () => undefined,
       })
 
-      const waiting = moves.find((to) => to.includes('.nib-moving-'))
-      expect(waiting).toMatch(/^\/spaces\/Shared\/\.nib-moving-[a-z0-9]+$/)
-      expect(holder.local_path).toMatch(/^\.nib-moving-[a-z0-9]+$/)
+      const waiting = moves.find((to) => to.includes('.orden-moving-'))
+      expect(waiting).toMatch(/^\/spaces\/Shared\/\.orden-moving-[a-z0-9]+$/)
+      expect(holder.local_path).toMatch(/^\.orden-moving-[a-z0-9]+$/)
     },
   )
 })

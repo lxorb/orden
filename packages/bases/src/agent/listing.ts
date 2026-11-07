@@ -20,11 +20,11 @@ function everything(filters?: Filter): Base {
         order: [],
         sort: [{ property: 'task.date', direction: 'ASC' }],
         summaries: {},
-        nib: { rows: 'tasks', kept: {} },
+        orden: { rows: 'tasks', kept: {} },
         options: {},
       },
     ],
-    nib: { properties: {}, kept: {} },
+    orden: { properties: {}, kept: {} },
     kept: {},
   }
 }

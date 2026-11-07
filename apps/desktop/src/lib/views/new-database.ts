@@ -23,11 +23,11 @@ function databaseBase(status: string, view: string, shown: string): Base {
         sort: [],
         summaries: {},
         groupBy: { property: `note.${status}`, direction: 'ASC' },
-        nib: { kept: {}, noneFirst: true, cardSize: 'medium' },
+        orden: { kept: {}, noneFirst: true, cardSize: 'medium' },
         options: {},
       },
     ],
-    nib: {
+    orden: {
       properties: {
         [status]: {
           options: [

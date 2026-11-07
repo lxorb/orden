@@ -164,11 +164,11 @@ export class LiveView {
     }
   })
 
-  readonly locked = $derived(this.base?.nib.locked === true || this.view?.nib.locked === true)
+  readonly locked = $derived(this.base?.orden.locked === true || this.view?.orden.locked === true)
 
   colourOf(row: Row): string | null {
     const base = this.base
-    const expression = this.view?.nib.colour
+    const expression = this.view?.orden.colour
     if (!base || !expression) return null
     const tone = cellValue(base, expression, row, this.context)
     return typeof tone === 'string' ? toneColour(tone) : null

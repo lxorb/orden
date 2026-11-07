@@ -149,7 +149,7 @@ export interface NewNote {
 }
 
 function idFor(base: Base, space: { name: string }): Record<string, string> {
-  const id = base.nib.id
+  const id = base.orden.id
   if (!id) return {}
   const mine = rows.of(space.name)
   const context = contextFor({ rows: mine, today: todayHere(), now: nowHere() })
@@ -192,7 +192,7 @@ export async function addNote(
   const title = noteName(made.title ?? 'Untitled')
   const name = await workspace.freeNameOnDisk(dir, `${title}.md`)
   const link =
-    made.template === undefined ? (view?.nib.template ?? base.nib.template) : made.template
+    made.template === undefined ? (view?.orden.template ?? base.orden.template) : made.template
   const template = link ? templatePath(link, space) : null
   const words = template === null ? '' : await templateWords(template, name.replace(/.md$/i, ''))
   const path = joinPath(dir, name)

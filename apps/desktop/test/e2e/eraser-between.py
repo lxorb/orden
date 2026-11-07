@@ -13,7 +13,7 @@ def strokes(page: Page) -> list[list[float]]:
         """async () => {
           await window.nibApp.workspace.writeNow()
           const words = window.nibApp.workspace.active.note.latest
-          return (JSON.parse(words).nib?.ink ?? []).map((one) => one.points)
+          return (JSON.parse(words).orden?.ink ?? []).map((one) => one.points)
         }"""
     )
 
@@ -57,7 +57,7 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
         page,
         """async () => {
           await window.nibApp.workspace.writeNow()
-          return (JSON.parse(window.nibApp.workspace.active.note.latest).nib?.ink ?? []).length === 1
+          return (JSON.parse(window.nibApp.workspace.active.note.latest).orden?.ink ?? []).length === 1
         }""",
         "the line whole again after one undo",
     )

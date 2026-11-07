@@ -150,7 +150,7 @@ function viewOver(file: string | null) {
     at: 0,
     today: '2026-10-24',
     context: contextFor({ rows: [], today: '2026-10-24', now: '2026-10-24T12:00' }),
-    view: { type: 'table', groupBy: { property: 'note.status' }, nib: { rows: 'notes' } },
+    view: { type: 'table', groupBy: { property: 'note.status' }, orden: { rows: 'notes' } },
     writtenAt: file,
     locked: false,
     refused: 0,
@@ -286,7 +286,7 @@ function taskBoard() {
   - type: kanban
     name: Board
     groupBy: { property: task.status, direction: ASC }
-    nib: { rows: tasks }
+    orden: { rows: tasks }
 `)
   const rows = [taskRow(PLAN, TASK, 3, { space: 'Mine' })]
   const context = contextFor({ rows, today: '2026-10-24', now: '2026-10-24T12:00' })
@@ -324,7 +324,7 @@ describe('a board of tasks whose adds would land in a space shared to be read', 
   })
 })
 
-const SHIP = readBase(`nib:
+const SHIP = readBase(`orden:
   buttons:
     Ship:
       set: { status: done }
@@ -405,7 +405,7 @@ describe('the runner, in a space shared to be read', () => {
     vi.useFakeTimers()
     try {
       const base = `${THEIRS.root}/Bugs.base`
-      disk.set(base, 'nib:\n  id:\n    property: id\nviews:\n  - type: table\n')
+      disk.set(base, 'orden:\n  id:\n    property: id\nviews:\n  - type: table\n')
       await readHeld(base)
       planning.plan = {
         writes: [{ row, change: { note: { status: 'done' } } }],

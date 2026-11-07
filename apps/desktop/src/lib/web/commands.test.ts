@@ -1245,7 +1245,7 @@ describe('reading a whole space for the link index', () => {
     for (let at = 0; at < 300; at++) {
       await write(`/Notes/note-${String(at).padStart(3, '0')}.md`, `# ${at}\n\n${page}`)
     }
-    const plane = JSON.stringify({ nodes: [], nib: { ink: [], padding: 'x'.repeat(3_000_000) } })
+    const plane = JSON.stringify({ nodes: [], orden: { ink: [], padding: 'x'.repeat(3_000_000) } })
     await write('/Notes/note-150.canvas', plane)
     disk.planes.delete('/Notes/note-150.canvas')
 
@@ -1292,7 +1292,7 @@ describe('reading a whole space for the link index', () => {
     JSON.stringify({
       nodes: [{ id: 'a', type: 'file', x: 0, y: 0, width: 1, height: 1, file: 'note-001.md' }],
       edges: [],
-      nib: { version: 1, icon, ink: [{ id: 's', points: [] }], padding: 'x'.repeat(100_000) },
+      orden: { version: 1, icon, ink: [{ id: 's', points: [] }], padding: 'x'.repeat(100_000) },
     })
 
   test('never reads a plane whose listing says what the index wants of it', async () => {

@@ -13,7 +13,7 @@ function movedId(id: string, from: string, to: string): string {
 function movedOrder(base: Base, from: string, to: string): Base | null {
   let changed = false as boolean
   const views = base.views.map((view) => {
-    const order = view.nib.order
+    const order = view.orden.order
     if (!order) return view
     const next = Object.fromEntries(
       Object.entries(order).map(([group, ids]) => {
@@ -22,7 +22,7 @@ function movedOrder(base: Base, from: string, to: string): Base | null {
         return [group, moved]
       }),
     )
-    return { ...view, nib: { ...view.nib, order: next } }
+    return { ...view, orden: { ...view.orden, order: next } }
   })
   return changed ? { ...base, views } : null
 }

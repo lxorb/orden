@@ -72,7 +72,7 @@ export function isDoneGroup(base: Base | null, property: string | undefined, key
   if (property === 'task.status') return typeof key === 'string' && key.toLowerCase() === 'x'
   if (property === 'task.done') return key === true
   if (!base || !property || typeof key !== 'string') return false
-  const option = base.nib.properties[bare(property)]?.options?.find((one) => one.value === key)
+  const option = base.orden.properties[bare(property)]?.options?.find((one) => one.value === key)
   return option?.group === 'done'
 }
 

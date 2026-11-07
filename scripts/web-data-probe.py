@@ -178,7 +178,7 @@ def go(identifier: str, address: str, seconds: float = 20) -> object:
 OWN = r"""
 const web = ws.tabs.find((one) => one.kind === 'web')
 const doc = ws.documentAt(web.path)
-const words = doc.text.replace(/(\r?\nNib-Data=[0-9a-f]+)?\r?\n$/, '') + %s
+const words = doc.text.replace(/(\r?\nOrden-Data=[0-9a-f]+)?\r?\n$/, '') + %s
 doc.replace(words, false)
 """
 
@@ -269,7 +269,7 @@ def main() -> int:
         said["new: merged"] = ask(run.app, "return localStorage.getItem('orden:web-data-merged')")
         said["new: choice left"] = ask(run.app, "return localStorage.getItem('orden:web-data')")
 
-        said["apart"] = ask(run.app, OWN % r"'\r\nNib-Data=3f9a0c17e2b4d685\r\n'" + STORE_OF, 40)
+        said["apart"] = ask(run.app, OWN % r"'\r\nOrden-Data=3f9a0c17e2b4d685\r\n'" + STORE_OF, 40)
         said["apart: 127.0.0.1"] = go(args.identifier, f"{a}/check")
         said["shared again"] = ask(run.app, OWN % r"'\r\n'" + STORE_OF.replace("note_3f9a0c17e2b4d685", ""), 40)
         said["shared again: 127.0.0.1"] = go(args.identifier, f"{a}/check")

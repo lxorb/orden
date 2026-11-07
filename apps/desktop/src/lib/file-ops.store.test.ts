@@ -753,7 +753,7 @@ describe('a note renamed while a canvas showing it is drawn on and not yet writt
     const store = await drawn({
       nodes: [{ id: 'f', type: 'file', file: 'Plan.md', ...card }],
       edges: [],
-      nib: { version: 1, at: { f: 1 } },
+      orden: { version: 1, at: { f: 1 } },
     })
     store.edit({
       ...store.canvas,
@@ -855,7 +855,7 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
     const { CanvasStore, tab } = await opened({
       nodes: [{ id: 'f', type: 'file', file: 'Plan.md', ...card }],
       edges: [],
-      nib: { version: 1, at: { f: 1 } },
+      orden: { version: 1, at: { f: 1 } },
     })
     const back = new CanvasStore(tab)
     back.part()
@@ -866,7 +866,7 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
           { id: 'n', type: 'text', text: 'theirs', ...card },
         ],
         edges: [],
-        nib: { version: 1, at: { f: 1, n: 5 } },
+        orden: { version: 1, at: { f: 1, n: 5 } },
       }),
       false,
     )
@@ -892,7 +892,7 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
         { id: 'g', type: 'text', text: 'g', ...card },
       ],
       edges: [],
-      nib: { version: 1, at: { f: 1, g: 1 } },
+      orden: { version: 1, at: { f: 1, g: 1 } },
     })
     new CanvasStore(tab).gone()
     const now = new CanvasStore(tab)

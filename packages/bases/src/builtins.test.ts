@@ -213,7 +213,7 @@ describe('a list grouped by labels', () => {
         {
           ...view,
           groupBy: { property: 'task.tags', direction: 'ASC' as const },
-          nib: { ...view.nib, groups: [] },
+          orden: { ...view.orden, groups: [] },
         },
       ],
     }

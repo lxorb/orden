@@ -51,8 +51,8 @@
     return out
   })
 
-  const tall = $derived(view?.nib.lines ?? 1)
-  const frozen = $derived(Math.min(view?.nib.freeze ?? 0, columns.length))
+  const tall = $derived(view?.orden.lines ?? 1)
+  const frozen = $derived(Math.min(view?.orden.freeze ?? 0, columns.length))
 
   const widths = $derived.by((): Record<string, number> => {
     const said = view?.options.columnSize

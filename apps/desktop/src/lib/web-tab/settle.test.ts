@@ -8,15 +8,15 @@ const file = (rows: string[]) => `[InternetShortcut]\r\n${rows.join('\r\n')}\r\n
 const OLDER = file([
   'URL=https://docs.dev/a',
   'Title=Docs',
-  'Nib-Added=2026-09-01T00:00:00.000Z',
-  'Nib-Home=https://docs.dev/',
-  'Nib-Icon=data:older',
+  'Orden-Added=2026-09-01T00:00:00.000Z',
+  'Orden-Home=https://docs.dev/',
+  'Orden-Icon=data:older',
 ])
 const NEWER = file([
   'URL=https://docs.dev/b',
   'Title=Docs, renamed',
-  'Nib-Added=2026-09-05T00:00:00.000Z',
-  'Nib-Home=https://docs.dev/',
+  'Orden-Added=2026-09-05T00:00:00.000Z',
+  'Orden-Home=https://docs.dev/',
 ])
 
 describe('two copies of a web note', () => {
@@ -45,12 +45,12 @@ describe('two copies of a web note', () => {
     const newer = file([
       'URL=https://docs.dev/b',
       'Title=Docs',
-      'Nib-Added=2026-09-01T00:00:00.000Z',
+      'Orden-Added=2026-09-01T00:00:00.000Z',
     ])
     const older = file([
       'URL=https://docs.dev/a',
       'Title=Docs',
-      'Nib-Added=2026-09-02T00:00:00.000Z',
+      'Orden-Added=2026-09-02T00:00:00.000Z',
     ])
 
     expect(settleShortcuts(PATH, older, newer, true)).toBe(newer)

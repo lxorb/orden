@@ -46,7 +46,7 @@ const plane = () =>
         { id: 'a', type: 'text', text: `Card ${HOSTILE}`, x: 0, y: 0, width: 200, height: 100 },
       ],
       edges: [],
-      nib: {
+      orden: {
         shapes: [
           {
             id: 'b',

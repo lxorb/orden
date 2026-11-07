@@ -569,7 +569,7 @@ const AWAY: Record<string, string> = {
   'Board.canvas':
     '{"nodes":[{"id":"a","type":"text","x":0,"y":0,"width":200,"height":80,"text":"On the board"}],"edges":[]}',
   'Lecture.pages':
-    '{"nodes":[{"id":"p1","type":"group","x":-397,"y":0,"width":794,"height":1123,"label":"Page 1"}],"edges":[],"nib":{"version":1,"pages":[{"id":"p1","paper":"a4","pattern":"blank"}]}}',
+    '{"nodes":[{"id":"p1","type":"group","x":-397,"y":0,"width":794,"height":1123,"label":"Page 1"}],"edges":[],"orden":{"version":1,"pages":[{"id":"p1","paper":"a4","pattern":"blank"}]}}',
   'Trip/Trip.md': '# Trip\n\nThe trip.\n',
   'Trip/Map.md': '# Map\n\nThe map.\n',
 }
@@ -578,12 +578,12 @@ const MOVED = ['Board.canvas', 'Lecture.pages', 'Trip']
 function drawn(words: Record<string, string>): Record<string, string> {
   const plain = (name: string, text: string) => {
     if (!/\.(canvas|pages)$/.test(name)) return text
-    const { nodes, edges, nib } = JSON.parse(text) as {
+    const { nodes, edges, orden } = JSON.parse(text) as {
       nodes: unknown
       edges: unknown
-      nib?: { pages?: unknown }
+      orden?: { pages?: unknown }
     }
-    return JSON.stringify({ nodes, edges, pages: nib?.pages })
+    return JSON.stringify({ nodes, edges, pages: orden?.pages })
   }
   return Object.fromEntries(Object.entries(words).map(([name, text]) => [name, plain(name, text)]))
 }

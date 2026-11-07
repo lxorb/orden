@@ -151,7 +151,7 @@ def strokes(page: Page) -> int:
         """() => {
             const text = window.nibApp.workspace.active?.doc ?? ''
             try {
-                return (JSON.parse(text).nib?.ink ?? []).length
+                return (JSON.parse(text).orden?.ink ?? []).length
             } catch {
                 return 0
             }
@@ -546,7 +546,7 @@ def main() -> int:
             held = joining.evaluate(
                 """() => {
                     const text = window.nibApp.workspace.active?.doc ?? ''
-                    try { return (JSON.parse(text).nib?.ink ?? []).length } catch { return 0 }
+                    try { return (JSON.parse(text).orden?.ink ?? []).length } catch { return 0 }
                 }"""
             )
             if held != count:
@@ -586,7 +586,7 @@ def big_canvas(strokes: int, per: int) -> str:
             {
                 "nodes": [],
                 "edges": [],
-                "nib": {
+                "orden": {
                     "version": 1,
                     "ink": ink,
                     "at": {f"s{at}": 1_700_000_000_000 for at in range(strokes)},

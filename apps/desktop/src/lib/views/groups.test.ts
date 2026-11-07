@@ -8,7 +8,7 @@ const base = readBase(`views:
     groupBy:
       property: note.status
       direction: ASC
-    nib:
+    orden:
       order:
         a: [z.md]
         b: [x.md, y.md]
@@ -18,24 +18,24 @@ const base = readBase(`views:
 
 describe('a column renamed, merged or deleted', () => {
   test('a rename keeps its order, its hiding and its place', () => {
-    const nib = renamedGroup(base, 'note.status', 'a', 'd').views[0]?.nib
-    expect(nib?.order).toEqual({ b: ['x.md', 'y.md'], d: ['z.md'] })
-    expect(nib?.hidden).toEqual(['d'])
-    expect(nib?.groups).toEqual(['b', 'd', 'c'])
+    const orden = renamedGroup(base, 'note.status', 'a', 'd').views[0]?.orden
+    expect(orden?.order).toEqual({ b: ['x.md', 'y.md'], d: ['z.md'] })
+    expect(orden?.hidden).toEqual(['d'])
+    expect(orden?.groups).toEqual(['b', 'd', 'c'])
   })
 
   test('a merge keeps both orders, the target first, and does not hide the target', () => {
-    const nib = renamedGroup(base, 'status', 'a', 'b', true).views[0]?.nib
-    expect(nib?.order).toEqual({ b: ['x.md', 'y.md', 'z.md'] })
-    expect(nib?.hidden).toEqual([])
-    expect(nib?.groups).toEqual(['b', 'c'])
+    const orden = renamedGroup(base, 'status', 'a', 'b', true).views[0]?.orden
+    expect(orden?.order).toEqual({ b: ['x.md', 'y.md', 'z.md'] })
+    expect(orden?.hidden).toEqual([])
+    expect(orden?.groups).toEqual(['b', 'c'])
   })
 
   test('a deleted option leaves no key behind', () => {
-    const nib = forgottenGroup(base, 'note.status', 'a').views[0]?.nib
-    expect(nib?.order).toEqual({ b: ['x.md', 'y.md'] })
-    expect(nib?.hidden).toEqual([])
-    expect(nib?.groups).toEqual(['b', 'c'])
+    const orden = forgottenGroup(base, 'note.status', 'a').views[0]?.orden
+    expect(orden?.order).toEqual({ b: ['x.md', 'y.md'] })
+    expect(orden?.hidden).toEqual([])
+    expect(orden?.groups).toEqual(['b', 'c'])
   })
 })
 

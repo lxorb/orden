@@ -90,7 +90,7 @@ function plainText(html: string): string {
 
 const defaults = Renderer.prototype as Renderer
 
-const TOC_MARK = '<!--nib:toc-->'
+const TOC_MARK = '<!--orden:toc-->'
 
 const TOC_AT = /\[toc\][ \t]*(?=\r?\n|$)/iy
 const TOC_NEEDLES = ['c]', 'C]']

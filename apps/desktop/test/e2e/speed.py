@@ -289,7 +289,7 @@ async (plan) => {
       })
     }
 
-    add(`${space}/plane.canvas`, JSON.stringify({ nodes, edges: [], nib: { version: 1, ink } }), notes + 4)
+    add(`${space}/plane.canvas`, JSON.stringify({ nodes, edges: [], orden: { version: 1, ink } }), notes + 4)
   }
 
   // In batches, because one transaction of five thousand puts is a minute of

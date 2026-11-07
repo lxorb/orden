@@ -17,7 +17,7 @@ V1 = "--v1" in sys.argv
 PATIENCE = 60
 
 BLANK_CANVAS = '{"nodes":[],"edges":[]}'
-BLANK_PAGES = '{"nodes":[{"id":"p1","type":"group","x":-397,"y":0,"width":794,"height":1123,"label":"Page 1"}],"edges":[],"nib":{"version":1,"pages":[{"id":"p1","paper":"a4","pattern":"blank"}]}}'
+BLANK_PAGES = '{"nodes":[{"id":"p1","type":"group","x":-397,"y":0,"width":794,"height":1123,"label":"Page 1"}],"edges":[],"orden":{"version":1,"pages":[{"id":"p1","paper":"a4","pattern":"blank"}]}}'
 FILES = {
     "Plan.md": "# Plan\n\nThe plan.\n",
     "Trip/Trip.md": "# Trip\n\nThe trip.\n",

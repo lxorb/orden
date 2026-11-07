@@ -258,13 +258,13 @@ describe('Todos, one list of every space (#1153)', () => {
     const [view] = base.views
     const yaml = writeBase({
       ...base,
-      views: view ? [{ ...view, nib: { ...view.nib, kept: { only: { space: 'Work' } } } }] : [],
+      views: view ? [{ ...view, orden: { ...view.orden, kept: { only: { space: 'Work' } } } }] : [],
     })
     const tab = tabOf(writeSpec({ builtin: 'todos', yaml }))
     keepTodosView('', yaml)
     followSpaceName('Work', 'Job', [tab], [])
     const only = (words: string | undefined) =>
-      readBase(words ?? '').views[0]?.nib.kept.only as { space?: string } | undefined
+      readBase(words ?? '').views[0]?.orden.kept.only as { space?: string } | undefined
     expect(only(readSpec(tab.doc)?.yaml)?.space).toBe('Job')
     expect(only(todosView(''))?.space).toBe('Job')
   })
@@ -275,11 +275,11 @@ describe('Todos, one list of every space (#1153)', () => {
     const yaml = writeBase({
       ...base,
       views: view
-        ? [{ ...view, nib: { ...view.nib, kept: { only: { project: 'Work//Plan.md' } } } }]
+        ? [{ ...view, orden: { ...view.orden, kept: { only: { project: 'Work//Plan.md' } } } }]
         : [],
     })
     keepTodosView('', yaml)
-    const only = () => builtinBase({ builtin: 'todos' }).views[0]?.nib.kept.only
+    const only = () => builtinBase({ builtin: 'todos' }).views[0]?.orden.kept.only
     followSpaceName('Work', 'Job', [], [])
     expect(only()).toEqual({ project: 'Job//Plan.md' })
     forgetSpaceViews('Job')
@@ -307,11 +307,13 @@ describe('what a deleted space kept', () => {
       '',
       writeBase({
         ...base,
-        views: view ? [{ ...view, nib: { ...view.nib, kept: { only: { space: 'Old' } } } }] : [],
+        views: view
+          ? [{ ...view, orden: { ...view.orden, kept: { only: { space: 'Old' } } } }]
+          : [],
       }),
     )
     forgetSpaceViews('Old')
-    expect(builtinBase({ builtin: 'todos' }).views[0]?.nib.kept.only).toBeUndefined()
+    expect(builtinBase({ builtin: 'todos' }).views[0]?.orden.kept.only).toBeUndefined()
   })
 
   test('and a tab of every space narrowed to it keeps the rest of its narrowing', () => {
@@ -320,11 +322,11 @@ describe('what a deleted space kept', () => {
     const only = { space: 'Old', priority: 1 }
     const yaml = writeBase({
       ...base,
-      views: view ? [{ ...view, nib: { ...view.nib, kept: { only } } }] : [],
+      views: view ? [{ ...view, orden: { ...view.orden, kept: { only } } }] : [],
     })
     const tab = tabOf(writeSpec({ builtin: 'todos', yaml }))
     forgetSpaceTabs('Old', [tab])
-    expect(readBase(readSpec(tab.doc)?.yaml ?? '').views[0]?.nib.kept.only).toEqual({
+    expect(readBase(readSpec(tab.doc)?.yaml ?? '').views[0]?.orden.kept.only).toEqual({
       priority: 1,
     })
   })

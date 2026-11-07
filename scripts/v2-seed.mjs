@@ -197,7 +197,7 @@ function pdf(words) {
 }
 
 function shortcut(url, title, when) {
-  return `[InternetShortcut]\r\nURL=${url}\r\nTitle=${title}\r\nNib-Added=${when}\r\n`
+  return `[InternetShortcut]\r\nURL=${url}\r\nTitle=${title}\r\nOrden-Added=${when}\r\n`
 }
 
 function canvas(rng, n) {
@@ -244,7 +244,7 @@ function pages(rng, count) {
     })
     records.push({ id, paper: 'a4', pattern: page % 2 ? 'lined' : 'blank' })
   }
-  return `${JSON.stringify({ nodes, edges: [], nib: { version: 1, pages: records } }, null, '\t')}\n`
+  return `${JSON.stringify({ nodes, edges: [], orden: { version: 1, pages: records } }, null, '\t')}\n`
 }
 
 function scaled(count, scale) {

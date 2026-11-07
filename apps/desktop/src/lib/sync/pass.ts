@@ -435,10 +435,11 @@ function rekey(mirror: Mirror, from: string, to: string) {
   if (offered !== undefined) mirror.offered = { ...mirror.offered, [to]: offered }
 }
 
-const ASIDE = '.nib-moving-'
+const ASIDE = '.orden-moving-'
+const ASIDES = [ASIDE, '.nib-moving-']
 
-function asidePrefix(id: string): string {
-  return `${ASIDE}${hash32(id).toString(36)}-`
+function asidePrefix(id: string, aside = ASIDE): string {
+  return `${aside}${hash32(id).toString(36)}-`
 }
 
 export function asideOf(path: string, id: string): string {
@@ -448,23 +449,29 @@ export function asideOf(path: string, id: string): string {
 
 export function nameSetAside(aside: string, id: string): string {
   const name = nameOf(aside)
-  for (const prefix of [asidePrefix(id), `${ASIDE}${id}-`]) {
-    if (name.startsWith(prefix)) return name.slice(prefix.length)
+  for (const aside of ASIDES) {
+    for (const prefix of [asidePrefix(id, aside), `${aside}${id}-`]) {
+      if (name.startsWith(prefix)) return name.slice(prefix.length)
+    }
   }
-  return name.slice(ASIDE.length)
+  const found = ASIDES.find((one) => name.startsWith(one)) ?? ASIDE
+  return name.slice(found.length)
 }
 
 async function asideFound(root: string, path: string, id: string): Promise<string | null> {
-  const folder = folderOf(path)
-  const older = `${folder ? `${folder}/` : ''}${ASIDE}${id}-${nameOf(path)}`
-  for (const at of isEntryId(id) ? [asideOf(path, id), older] : [asideOf(path, id)]) {
+  const folder = folderOf(path) ? `${folderOf(path)}/` : ''
+  const places = ASIDES.flatMap((aside) => [
+    `${folder}${asidePrefix(id, aside)}${nameOf(path)}`,
+    ...(isEntryId(id) ? [`${folder}${aside}${id}-${nameOf(path)}`] : []),
+  ])
+  for (const at of places) {
     if (await present(joinPath(root, at))) return at
   }
   return null
 }
 
 function isAside(path: string): boolean {
-  return nameOf(path).startsWith(ASIDE)
+  return ASIDES.some((aside) => nameOf(path).startsWith(aside))
 }
 
 async function present(path: string): Promise<boolean> {

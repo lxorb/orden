@@ -12,7 +12,7 @@
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
-  const kinds = $derived(view?.nib.rows ?? 'notes')
+  const kinds = $derived(view?.orden.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
   const options = (current?: string) =>
     (current && !properties.includes(current) ? [current, ...properties] : properties).map(
@@ -99,7 +99,7 @@
   </button>
 {:else}
   {@const group = view?.groupBy}
-  {@const sub = view?.nib.subGroupBy}
+  {@const sub = view?.orden.subGroupBy}
   <div class="row">
     <Select
       label={t('Group')}

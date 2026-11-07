@@ -93,17 +93,17 @@ export interface SelectOption {
   tone?: string
 }
 
-export interface NibProperty {
+export interface OrdenProperty {
   options?: SelectOption[]
   format?: string
   one?: boolean
   kept: Record<string, unknown>
 }
 
-export interface NibBase {
+export interface OrdenBase {
   template?: string
   id?: { property: string; prefix: string }
-  properties: Record<string, NibProperty>
+  properties: Record<string, OrdenProperty>
   locked?: boolean
   kept: Record<string, unknown>
 }
@@ -112,7 +112,7 @@ export type CardSize = 'small' | 'medium' | 'large'
 
 export type RowKinds = 'notes' | 'tasks' | 'both'
 
-export interface NibView {
+export interface OrdenView {
   rows?: RowKinds
   subGroupBy?: Sort
   order?: Record<string, string[]>
@@ -144,7 +144,7 @@ export interface View {
   groupBy?: Sort
   limit?: number
   summaries: Record<string, string>
-  nib: NibView
+  orden: OrdenView
   options: Record<string, unknown>
 }
 
@@ -154,7 +154,7 @@ export interface Base {
   properties: Record<string, PropertyConfig>
   summaries: Record<string, string>
   views: View[]
-  nib: NibBase
+  orden: OrdenBase
   kept: Record<string, unknown>
   guarded?: boolean
 }

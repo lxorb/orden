@@ -65,7 +65,7 @@ views:
     groupBy: { property: note.status, direction: ASC }
   - type: calendar
     name: Due
-    nib: { date: note.due }
+    orden: { date: note.due }
 """
 
 DASHBOARD = """# Dashboard
