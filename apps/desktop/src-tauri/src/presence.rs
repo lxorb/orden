@@ -127,10 +127,11 @@ mod platform {
     }
 
     pub fn computer_name() -> Option<String> {
-        let out = std::process::Command::new("scutil")
-            .args(["--get", "ComputerName"])
-            .output()
-            .ok()?;
+        let out = crate::printed::output(
+            std::process::Command::new("scutil").args(["--get", "ComputerName"]),
+            std::time::Duration::from_secs(3),
+        )
+        .ok()?;
         out.status
             .success()
             .then(|| String::from_utf8_lossy(&out.stdout).into_owned())

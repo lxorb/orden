@@ -147,6 +147,8 @@ mod placement;
 mod presence;
 #[cfg(desktop)]
 mod presenter;
+#[cfg(desktop)]
+mod printed;
 mod query;
 #[cfg(desktop)]
 mod quick_add;

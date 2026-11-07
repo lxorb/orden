@@ -14,6 +14,8 @@ use crate::paths::{chosen, in_spaces, inside, space_root, spaces_dir};
 const READ_AS: &str =
     "markdown_strict+pipe_tables+backtick_code_blocks+strikeout+task_lists+tex_math_dollars";
 
+const CONVERTING: Duration = Duration::from_secs(10 * 60);
+
 const WRITE_FROM: &str = "markdown+tex_math_dollars+pipe_tables+task_lists+footnotes+strikeout";
 
 #[cfg(any(target_os = "macos", all(test, unix)))]
@@ -58,35 +60,13 @@ fn from_login_shell() -> Option<PathBuf> {
 
 #[cfg(target_os = "macos")]
 fn ask_login_shell() -> Option<PathBuf> {
-    use std::io::Read as _;
-
     let shell = std::env::var_os("SHELL").unwrap_or_else(|| "/bin/zsh".into());
-    let mut child = Command::new(shell)
-        .args(["-ilc", "command -v pandoc"])
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .ok()?;
-
-    let deadline = Instant::now() + Duration::from_secs(3);
-    loop {
-        match child.try_wait() {
-            Ok(Some(_)) => break,
-            Ok(None) if Instant::now() < deadline => {
-                std::thread::sleep(Duration::from_millis(25));
-            }
-            _ => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return None;
-            }
-        }
-    }
-
-    let mut printed = String::new();
-    child.stdout.take()?.read_to_string(&mut printed).ok()?;
-    finding::shell_answer(&printed).filter(|program| runs(program))
+    let said = crate::printed::output(
+        Command::new(shell).args(["-ilc", "command -v pandoc"]),
+        Duration::from_secs(3),
+    )
+    .ok()?;
+    finding::shell_answer(&String::from_utf8_lossy(&said.stdout)).filter(|program| runs(program))
 }
 
 #[tauri::command(async)]
@@ -211,11 +191,13 @@ fn import_from(source: &Path) -> Result<Imported, String> {
         .map_err(|error| format!("there was no folder to read the pictures into: {error}"))?;
     let source = source.to_string_lossy().to_string();
 
-    let result = pandoc()
-        .current_dir(media.path())
-        .args(reading(&source, copying == Copying::Safe))
-        .output()
-        .map_err(|error| format!("pandoc could not start: {error}. Is it installed?"))?;
+    let result = crate::printed::output(
+        pandoc()
+            .current_dir(media.path())
+            .args(reading(&source, copying == Copying::Safe)),
+        CONVERTING,
+    )
+    .map_err(|error| not_run(&error))?;
 
     if !result.status.success() {
         return Err(read_refusal(&result.stderr));
@@ -472,6 +454,17 @@ fn carries_pictures(format: &str) -> bool {
     )
 }
 
+fn not_run(error: &std::io::Error) -> String {
+    if error.kind() == std::io::ErrorKind::TimedOut {
+        format!(
+            "pandoc gave no answer within {} minutes",
+            CONVERTING.as_secs() / 60
+        )
+    } else {
+        format!("pandoc could not start: {error}. Is it installed?")
+    }
+}
+
 fn piped(mut command: Command, input: String) -> Result<std::process::Output, String> {
     let mut child = command
         .stdin(Stdio::piped())
@@ -483,9 +476,7 @@ fn piped(mut command: Command, input: String) -> Result<std::process::Output, St
     let mut sink = child.stdin.take().ok_or("could not write to pandoc")?;
     let writer = std::thread::spawn(move || sink.write_all(input.as_bytes()));
 
-    let result = child
-        .wait_with_output()
-        .map_err(|error| format!("pandoc did not finish: {error}"))?;
+    let result = crate::printed::wait_output(child, CONVERTING).map_err(|error| not_run(&error))?;
     let written = writer
         .join()
         .map_err(|_| "the thread feeding pandoc stopped".to_string())?;

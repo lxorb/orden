@@ -59,6 +59,12 @@ impl Shared {
         }
     }
 
+    fn gone(&self) -> bool {
+        self.child()
+            .as_mut()
+            .is_none_or(|child| matches!(child.try_wait(), Ok(Some(_))))
+    }
+
     fn touch(&self) {
         let now = u64::try_from(self.born.elapsed().as_millis()).unwrap_or(u64::MAX);
         self.last.store(now, Ordering::SeqCst);
@@ -158,7 +164,10 @@ fn launch(
         });
     }
 
-    let err = stderr.map(|stderr| thread::spawn(move || tail(stderr)));
+    let err = stderr.map(|stderr| {
+        let ending = Arc::clone(&shared);
+        thread::spawn(move || tail(crate::printed::lapsing(stderr, move || ending.gone())))
+    });
 
     let (done, waiting) = mpsc::channel::<()>();
     let watched = Arc::clone(&shared);
@@ -167,6 +176,8 @@ fn launch(
     let reading = Arc::clone(&shared);
     thread::spawn(move || {
         if let Some(stdout) = stdout {
+            let ending = Arc::clone(&reading);
+            let stdout = crate::printed::lapsing(stdout, move || ending.gone());
             lines(stdout, &|one| {
                 reading.touch();
                 heard(one);
@@ -363,5 +374,20 @@ mod tests {
         assert_eq!(lines.len(), 2);
         assert_eq!(lines[0].len(), 1 << 20);
         assert_eq!(lines[1], "after");
+    }
+
+    #[test]
+    fn a_program_that_leaves_something_holding_its_output_ends_when_it_does() {
+        let mut command = Command::new("sh");
+        command.args(["-c", "sleep 30 & echo said; echo told >&2"]);
+        let started = Instant::now();
+
+        let said = run_to_end(command, Duration::from_secs(20)).unwrap();
+
+        assert_eq!(said.out, "said");
+        assert_eq!(said.ended.err, "told\n");
+        assert_eq!(said.ended.code, Some(0));
+        assert!(!said.ended.timed_out);
+        assert!(started.elapsed() < Duration::from_secs(5));
     }
 }

@@ -123,7 +123,6 @@ fn ask_login_shell() -> Option<OsString> {
 
 #[cfg(unix)]
 fn path_from_shell(shell: &OsStr, patience: std::time::Duration) -> Option<OsString> {
-    use std::io::Read as _;
     use std::os::unix::ffi::OsStringExt as _;
     use std::process::{Command, Stdio};
     use std::sync::mpsc;
@@ -136,16 +135,7 @@ fn path_from_shell(shell: &OsStr, patience: std::time::Duration) -> Option<OsStr
         .stderr(Stdio::null())
         .spawn()
         .ok()?;
-    let mut out = child.stdout.take()?;
-    let (send, heard) = mpsc::channel::<Vec<u8>>();
-    std::thread::spawn(move || {
-        let mut chunk = [0_u8; 4096];
-        while let Ok(read) = out.read(&mut chunk) {
-            if read == 0 || send.send(chunk[..read].to_vec()).is_err() {
-                break;
-            }
-        }
-    });
+    let heard = crate::printed::chunks(child.stdout.take()?);
 
     let started = Instant::now();
     let mut printed = Vec::new();

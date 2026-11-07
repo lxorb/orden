@@ -57,10 +57,11 @@ fn memory() -> Option<u64> {
 
 #[cfg(target_os = "macos")]
 fn memory() -> Option<u64> {
-    let out = std::process::Command::new("/usr/sbin/sysctl")
-        .args(["-n", "hw.memsize"])
-        .output()
-        .ok()?;
+    let out = crate::printed::output(
+        std::process::Command::new("/usr/sbin/sysctl").args(["-n", "hw.memsize"]),
+        std::time::Duration::from_secs(3),
+    )
+    .ok()?;
     String::from_utf8(out.stdout).ok()?.trim().parse().ok()
 }
 

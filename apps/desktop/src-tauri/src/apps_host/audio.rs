@@ -1,5 +1,8 @@
 use std::io::{self, Read};
 use std::process::{Child, ChildStdout, Command, Stdio};
+use std::time::Duration;
+
+const ASKING: Duration = Duration::from_secs(5);
 
 pub fn available() -> bool {
     super::installed::on_path("pactl") && super::installed::on_path("parec")
@@ -16,17 +19,16 @@ impl Sink {
             return None;
         }
         let name = format!("orden_application_{number}");
-        let made = Command::new("pactl")
-            .args([
+        let made = crate::printed::output(
+            Command::new("pactl").args([
                 "load-module",
                 "module-null-sink",
                 &format!("sink_name={name}"),
                 &format!("sink_properties=device.description=Orden_application_{number}"),
-            ])
-            .stdin(Stdio::null())
-            .stderr(Stdio::null())
-            .output()
-            .ok()?;
+            ]),
+            ASKING,
+        )
+        .ok()?;
         if !made.status.success() {
             return None;
         }
@@ -41,12 +43,10 @@ impl Sink {
 
 impl Drop for Sink {
     fn drop(&mut self) {
-        let _ = Command::new("pactl")
-            .args(["unload-module", &self.module.to_string()])
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status();
+        let _ = crate::printed::output(
+            Command::new("pactl").args(["unload-module", &self.module.to_string()]),
+            ASKING,
+        );
     }
 }
 

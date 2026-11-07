@@ -352,11 +352,15 @@ pub(crate) mod linux {
             )
         };
         let gnome = || {
-            let out = std::process::Command::new("gsettings")
-                .args(["get", "org.gnome.desktop.interface", "icon-theme"])
-                .stderr(std::process::Stdio::null())
-                .output()
-                .ok()?;
+            let out = crate::printed::output(
+                std::process::Command::new("gsettings").args([
+                    "get",
+                    "org.gnome.desktop.interface",
+                    "icon-theme",
+                ]),
+                std::time::Duration::from_secs(3),
+            )
+            .ok()?;
             let said = String::from_utf8(out.stdout).ok()?;
             let name = said.trim().trim_matches('\'').to_owned();
             (out.status.success() && !name.is_empty()).then_some(name)

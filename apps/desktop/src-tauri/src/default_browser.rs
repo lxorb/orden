@@ -414,10 +414,15 @@ mod platform {
     }
 
     fn handler_of(scheme: &str) -> Option<String> {
-        let out = Command::new("xdg-mime")
-            .args(["query", "default", &format!("x-scheme-handler/{scheme}")])
-            .output()
-            .ok()?;
+        let out = crate::printed::output(
+            Command::new("xdg-mime").args([
+                "query",
+                "default",
+                &format!("x-scheme-handler/{scheme}"),
+            ]),
+            std::time::Duration::from_secs(5),
+        )
+        .ok()?;
         let entry = String::from_utf8_lossy(&out.stdout).trim().to_owned();
         (!entry.is_empty()).then_some(entry)
     }
