@@ -3527,4 +3527,28 @@ export const my: Dictionary = {
   'The file is damaged': 'ဖိုင် ပျက်စီးနေသည်',
   'WhatsApp is not connected right now': 'WhatsApp ယခု ချိတ်ဆက်မထားပါ',
   'That poll no longer takes votes': 'ထိုစစ်တမ်းသည် မဲများကို လက်မခံတော့ပါ',
+  'Device name': 'စက်ပစ္စည်းအမည်',
+  'How this computer is listed under linked devices in Signal':
+    'Signal ၏ ချိတ်ဆက်ထားသော စက်ပစ္စည်းများတွင် ဤကွန်ပျူတာ ပေါ်မည့်အမည်',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden သည် signal-cli မှတစ်ဆင့် စက်ပစ္စည်းအဖြစ် Signal နှင့် ချိတ်ဆက်သည်။ signal-cli ကို Signal က မပြုလုပ်၊ မထောက်ခံပါ။ ပထမအကြိမ်တွင် Orden သည် signal-cli နှင့် Java (ခန့်မှန်း 190 MB) ကို ဒေါင်းလုဒ်လုပ်သည်။',
+  'Scan this with Signal on your phone': 'သင့်ဖုန်းရှိ Signal ဖြင့် ဤအရာကို စကင်ဖတ်ပါ',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal တွင် - ဆက်တင်များ > ချိတ်ဆက်ထားသော စက်ပစ္စည်းများ > စက်ပစ္စည်းအသစ် ချိတ်ဆက်ရန်',
+  'Signal is sending your contacts and groups':
+    'Signal က သင့်အဆက်အသွယ်များနှင့် အဖွဲ့များကို ပို့နေသည်',
+  'The code ran out before it was scanned. Try again.':
+    'စကင်မဖတ်မီ ကုဒ် သက်တမ်းကုန်သွားသည်။ ထပ်ကြိုးစားပါ။',
+  'Signed out of Signal. Link Orden again.': 'Signal မှ ထွက်ပြီးပါပြီ။ Orden ကို ထပ်ချိတ်ဆက်ပါ။',
+  'Signal changes only your own messages':
+    'Signal သည် သင့်ကိုယ်ပိုင် မက်ဆေ့ချ်များကိုသာ ပြောင်းသည်',
+  'Signal groups have admins, not owners':
+    'Signal အဖွဲ့များတွင် ပိုင်ရှင် မဟုတ်ဘဲ စီမံသူများ ရှိသည်',
+  'That is something only a Signal group has': 'ဤအရာသည် Signal အဖွဲ့တွင်သာ ရှိသည်',
+  'Signal needs the system keyring to keep its keys':
+    'Signal သည် ၎င်း၏ကီးများကို သိမ်းရန် စနစ်၏ ကီးချိန်း လိုအပ်သည်',
+  'Downloading signal-cli': 'signal-cli ကို ဒေါင်းလုဒ်လုပ်နေသည်',
+  'signal-cli does not run on this computer': 'signal-cli သည် ဤကွန်ပျူတာတွင် မလည်ပတ်ပါ',
+  'The download is not the file it should be; nothing was kept':
+    'ဒေါင်းလုဒ်သည် မျှော်လင့်ထားသော ဖိုင် မဟုတ်ပါ၊ ဘာမျှ မသိမ်းထားပါ',
 }

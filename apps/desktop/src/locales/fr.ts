@@ -3721,4 +3721,26 @@ export const fr: Dictionary = {
   'The file is damaged': 'Le fichier est endommagé',
   'WhatsApp is not connected right now': 'WhatsApp n’est pas connecté pour le moment',
   'That poll no longer takes votes': 'Ce sondage n’accepte plus de votes',
+  'Device name': 'Nom de l’appareil',
+  'How this computer is listed under linked devices in Signal':
+    'Le nom de cet ordinateur parmi les appareils associés dans Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden s’associe à Signal comme appareil via signal-cli, que Signal ne développe ni ne cautionne. La première fois, Orden télécharge signal-cli et Java (environ 190 Mo).',
+  'Scan this with Signal on your phone': 'Scannez ceci avec Signal sur votre téléphone',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Dans Signal : Paramètres > Appareils associés > Associer un nouvel appareil',
+  'Signal is sending your contacts and groups': 'Signal envoie vos contacts et vos groupes',
+  'The code ran out before it was scanned. Try again.':
+    'Le code a expiré avant d’être scanné. Réessayez.',
+  'Signed out of Signal. Link Orden again.': 'Déconnecté de Signal. Associez Orden à nouveau.',
+  'Signal changes only your own messages': 'Signal ne modifie que vos propres messages',
+  'Signal groups have admins, not owners':
+    'Les groupes Signal ont des admins, pas de propriétaires',
+  'That is something only a Signal group has': 'Seul un groupe Signal permet cela',
+  'Signal needs the system keyring to keep its keys':
+    'Signal a besoin du trousseau du système pour garder ses clés',
+  'Downloading signal-cli': 'Téléchargement de signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli ne fonctionne pas sur cet ordinateur',
+  'The download is not the file it should be; nothing was kept':
+    'Le téléchargement n’est pas le fichier attendu ; rien n’a été conservé',
 }

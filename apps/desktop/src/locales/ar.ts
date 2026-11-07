@@ -3785,4 +3785,25 @@ export const ar: Dictionary = {
   'The file is damaged': 'الملف تالف',
   'WhatsApp is not connected right now': 'WhatsApp غير متصل الآن',
   'That poll no longer takes votes': 'ذلك الاستطلاع لم يعد يقبل الأصوات',
+  'Device name': 'اسم الجهاز',
+  'How this computer is listed under linked devices in Signal':
+    'الاسم الذي يظهر به هذا الحاسوب ضمن الأجهزة المرتبطة في Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'يرتبط Orden بـ Signal كجهاز عبر signal-cli، الذي لا تصنعه Signal ولا تعتمده. في المرة الأولى ينزّل Orden signal-cli وJava (نحو 190 ميغابايت).',
+  'Scan this with Signal on your phone': 'امسح هذا باستخدام Signal على هاتفك',
+  'In Signal: Settings > Linked devices > Link new device':
+    'في Signal: الإعدادات > الأجهزة المرتبطة > ربط جهاز جديد',
+  'Signal is sending your contacts and groups': 'يرسل Signal جهات اتصالك ومجموعاتك',
+  'The code ran out before it was scanned. Try again.':
+    'انتهت صلاحية الرمز قبل مسحه. حاول مرة أخرى.',
+  'Signed out of Signal. Link Orden again.': 'تم تسجيل الخروج من Signal. اربط Orden مجددًا.',
+  'Signal changes only your own messages': 'لا يغيّر Signal إلا رسائلك أنت',
+  'Signal groups have admins, not owners': 'لمجموعات Signal مشرفون وليس مالكين',
+  'That is something only a Signal group has': 'هذا موجود في مجموعات Signal فقط',
+  'Signal needs the system keyring to keep its keys':
+    'يحتاج Signal إلى سلسلة مفاتيح النظام ليحفظ مفاتيحه',
+  'Downloading signal-cli': 'جارٍ تنزيل signal-cli',
+  'signal-cli does not run on this computer': 'لا يعمل signal-cli على هذا الحاسوب',
+  'The download is not the file it should be; nothing was kept':
+    'الملف المنزّل ليس الملف المتوقع؛ لم يُحفظ شيء',
 }

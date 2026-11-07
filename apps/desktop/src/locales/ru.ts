@@ -3739,4 +3739,25 @@ export const ru: Dictionary = {
   'The file is damaged': 'Файл повреждён',
   'WhatsApp is not connected right now': 'WhatsApp сейчас не подключён',
   'That poll no longer takes votes': 'В этом опросе больше нельзя голосовать',
+  'Device name': 'Имя устройства',
+  'How this computer is listed under linked devices in Signal':
+    'Под каким именем этот компьютер виден в связанных устройствах Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden подключается к Signal как устройство через signal-cli, который Signal не создаёт и не одобряет. В первый раз Orden скачивает signal-cli и Java (около 190 МБ).',
+  'Scan this with Signal on your phone': 'Отсканируйте это в Signal на телефоне',
+  'In Signal: Settings > Linked devices > Link new device':
+    'В Signal: Настройки > Связанные устройства > Связать новое устройство',
+  'Signal is sending your contacts and groups': 'Signal отправляет ваши контакты и группы',
+  'The code ran out before it was scanned. Try again.':
+    'Срок действия кода истёк до сканирования. Попробуйте снова.',
+  'Signed out of Signal. Link Orden again.': 'Выполнен выход из Signal. Свяжите Orden снова.',
+  'Signal changes only your own messages': 'Signal изменяет только ваши собственные сообщения',
+  'Signal groups have admins, not owners': 'В группах Signal есть администраторы, а не владельцы',
+  'That is something only a Signal group has': 'Это есть только у группы Signal',
+  'Signal needs the system keyring to keep its keys':
+    'Signal нужна системная связка ключей, чтобы хранить свои ключи',
+  'Downloading signal-cli': 'Скачивание signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli не работает на этом компьютере',
+  'The download is not the file it should be; nothing was kept':
+    'Загруженный файл не тот, что ожидался; ничего не сохранено',
 }

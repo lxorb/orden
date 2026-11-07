@@ -3466,4 +3466,23 @@ export const th: Dictionary = {
   'The file is damaged': 'ไฟล์เสียหาย',
   'WhatsApp is not connected right now': 'WhatsApp ไม่ได้เชื่อมต่ออยู่ในขณะนี้',
   'That poll no longer takes votes': 'โพลนั้นไม่รับคะแนนโหวตแล้ว',
+  'Device name': 'ชื่ออุปกรณ์',
+  'How this computer is listed under linked devices in Signal':
+    'ชื่อที่คอมพิวเตอร์เครื่องนี้แสดงในอุปกรณ์ที่เชื่อมโยงของ Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden เชื่อมโยงกับ Signal เป็นอุปกรณ์ผ่าน signal-cli ซึ่ง Signal ไม่ได้สร้างหรือรับรอง ครั้งแรก Orden จะดาวน์โหลด signal-cli และ Java (ประมาณ 190 MB)',
+  'Scan this with Signal on your phone': 'สแกนสิ่งนี้ด้วย Signal บนโทรศัพท์ของคุณ',
+  'In Signal: Settings > Linked devices > Link new device':
+    'ใน Signal: การตั้งค่า > อุปกรณ์ที่เชื่อมโยง > เชื่อมโยงอุปกรณ์ใหม่',
+  'Signal is sending your contacts and groups': 'Signal กำลังส่งรายชื่อติดต่อและกลุ่มของคุณ',
+  'The code ran out before it was scanned. Try again.': 'รหัสหมดอายุก่อนถูกสแกน ลองอีกครั้ง',
+  'Signed out of Signal. Link Orden again.': 'ออกจากระบบ Signal แล้ว เชื่อมโยง Orden อีกครั้ง',
+  'Signal changes only your own messages': 'Signal แก้ไขได้เฉพาะข้อความของคุณเอง',
+  'Signal groups have admins, not owners': 'กลุ่ม Signal มีผู้ดูแล ไม่มีเจ้าของ',
+  'That is something only a Signal group has': 'สิ่งนี้มีเฉพาะในกลุ่ม Signal',
+  'Signal needs the system keyring to keep its keys': 'Signal ต้องใช้พวงกุญแจของระบบเพื่อเก็บคีย์',
+  'Downloading signal-cli': 'กำลังดาวน์โหลด signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli ไม่ทำงานบนคอมพิวเตอร์เครื่องนี้',
+  'The download is not the file it should be; nothing was kept':
+    'ไฟล์ที่ดาวน์โหลดไม่ใช่ไฟล์ที่คาดไว้ จึงไม่ได้เก็บสิ่งใดไว้',
 }

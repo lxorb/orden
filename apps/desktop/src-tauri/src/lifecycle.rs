@@ -183,6 +183,9 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(sockets) = app.try_state::<crate::wire_socket::WireSockets>() {
                 sockets.end_where(&label);
             }
+            if let Some(sidecars) = app.try_state::<crate::sidecar::Held>() {
+                sidecars.end_where(&label);
+            }
             crate::ai_cli::window_gone(app, &label);
             let now = state(app).now();
             if (now == ASKING || now == CONFIRMING) && launch::document_windows(app).is_empty() {
@@ -456,7 +459,17 @@ fn leave(app: &AppHandle) {
 fn exit_requested(app: &AppHandle, code: Option<i32>, api: &ExitRequestApi) {
     let quitting = state(app);
     match on_exit(code, quitting.now(), cfg!(target_os = "macos")) {
-        Exit::Pass => quitting.set(LEAVING),
+        Exit::Pass => {
+            quitting.set(LEAVING);
+            let restarting = code == Some(tauri::RESTART_EXIT_CODE);
+            let held = !restarting
+                && app
+                    .try_state::<crate::sidecar::Held>()
+                    .is_some_and(|sidecars| sidecars.hold_exit(app, code.unwrap_or(0)));
+            if held {
+                api.prevent_exit();
+            }
+        }
         Exit::Stay => api.prevent_exit(),
         Exit::Ask => {
             api.prevent_exit();

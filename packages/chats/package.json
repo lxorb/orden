@@ -23,6 +23,7 @@
     "./reduce": "./src/reduce.ts",
     "./roles": "./src/roles.ts",
     "./search": "./src/search.ts",
+    "./signal": "./src/signal/index.ts",
     "./slack": "./src/slack/index.ts",
     "./telegram": "./src/telegram/index.ts",
     "./types": "./src/types.ts",

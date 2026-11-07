@@ -4,6 +4,7 @@ import { mailProvider } from '@orden/chats/mail'
 import { gmailProvider, microsoftProvider } from '@orden/chats/mail-oauth'
 import { keepJson, stored, isRecord, isString } from '../stored'
 import { connected, type Connected } from './connected.svelte'
+import { signal } from './providers/signal'
 import { slack } from './providers/slack'
 import { telegram } from './providers/telegram'
 import { whatsapp } from './providers/whatsapp'
@@ -17,6 +18,7 @@ const PROVIDERS: readonly ChatProvider[] = [
   telegram,
   slack,
   whatsapp,
+  signal,
 ]
 
 export interface Saved {

@@ -3591,4 +3591,24 @@ export const bn: Dictionary = {
   'The file is damaged': 'ফাইলটি নষ্ট হয়ে গেছে',
   'WhatsApp is not connected right now': 'WhatsApp এখন সংযুক্ত নেই',
   'That poll no longer takes votes': 'ওই পোলে আর ভোট নেওয়া হয় না',
+  'Device name': 'ডিভাইসের নাম',
+  'How this computer is listed under linked devices in Signal':
+    'Signal-এর লিঙ্ক করা ডিভাইসে এই কম্পিউটারটি যে নামে দেখায়',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden signal-cli-এর মাধ্যমে একটি ডিভাইস হিসেবে Signal-এ লিঙ্ক হয়, যা Signal তৈরি বা অনুমোদন করে না। প্রথমবার Orden signal-cli ও Java ডাউনলোড করে (প্রায় 190 MB)।',
+  'Scan this with Signal on your phone': 'আপনার ফোনের Signal দিয়ে এটি স্ক্যান করুন',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal-এ: সেটিংস > লিঙ্ক করা ডিভাইস > নতুন ডিভাইস লিঙ্ক করুন',
+  'Signal is sending your contacts and groups': 'Signal আপনার পরিচিতি ও গ্রুপ পাঠাচ্ছে',
+  'The code ran out before it was scanned. Try again.':
+    'স্ক্যান করার আগেই কোডের মেয়াদ শেষ হয়েছে। আবার চেষ্টা করুন।',
+  'Signed out of Signal. Link Orden again.': 'Signal থেকে সাইন আউট হয়েছে। Orden আবার লিঙ্ক করুন।',
+  'Signal changes only your own messages': 'Signal শুধু আপনার নিজের বার্তা বদলায়',
+  'Signal groups have admins, not owners': 'Signal গ্রুপে মালিক নয়, অ্যাডমিন থাকে',
+  'That is something only a Signal group has': 'এটি শুধু Signal গ্রুপে থাকে',
+  'Signal needs the system keyring to keep its keys': 'Signal-এর কী রাখতে সিস্টেম কীচেন দরকার',
+  'Downloading signal-cli': 'signal-cli ডাউনলোড হচ্ছে',
+  'signal-cli does not run on this computer': 'signal-cli এই কম্পিউটারে চলে না',
+  'The download is not the file it should be; nothing was kept':
+    'ডাউনলোডটি প্রত্যাশিত ফাইল নয়; কিছুই রাখা হয়নি',
 }

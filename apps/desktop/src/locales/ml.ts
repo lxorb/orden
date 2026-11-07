@@ -3648,4 +3648,27 @@ export const ml: Dictionary = {
   'The file is damaged': 'ഫയൽ കേടായി',
   'WhatsApp is not connected right now': 'WhatsApp ഇപ്പോൾ കണക്റ്റ് ചെയ്തിട്ടില്ല',
   'That poll no longer takes votes': 'ആ പോൾ ഇനി വോട്ടുകൾ സ്വീകരിക്കില്ല',
+  'Device name': 'ഉപകരണത്തിന്റെ പേര്',
+  'How this computer is listed under linked devices in Signal':
+    'Signal-ലെ ലിങ്ക് ചെയ്ത ഉപകരണങ്ങളിൽ ഈ കമ്പ്യൂട്ടർ കാണുന്ന പേര്',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden signal-cli വഴി ഒരു ഉപകരണമായി Signal-ലേക്ക് ലിങ്ക് ചെയ്യുന്നു; signal-cli Signal നിർമ്മിച്ചതോ അംഗീകരിച്ചതോ അല്ല. ആദ്യ തവണ Orden signal-cli-യും Java-യും ഡൗൺലോഡ് ചെയ്യുന്നു (ഏകദേശം 190 MB).',
+  'Scan this with Signal on your phone': 'നിങ്ങളുടെ ഫോണിലെ Signal ഉപയോഗിച്ച് ഇത് സ്കാൻ ചെയ്യുക',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal-ൽ: ക്രമീകരണങ്ങൾ > ലിങ്ക് ചെയ്ത ഉപകരണങ്ങൾ > പുതിയ ഉപകരണം ലിങ്ക് ചെയ്യുക',
+  'Signal is sending your contacts and groups':
+    'Signal നിങ്ങളുടെ കോൺടാക്റ്റുകളും ഗ്രൂപ്പുകളും അയയ്ക്കുന്നു',
+  'The code ran out before it was scanned. Try again.':
+    'സ്കാൻ ചെയ്യുന്നതിന് മുമ്പ് കോഡിന്റെ കാലാവധി കഴിഞ്ഞു. വീണ്ടും ശ്രമിക്കുക.',
+  'Signed out of Signal. Link Orden again.':
+    'Signal-ൽ നിന്ന് സൈൻ ഔട്ട് ചെയ്തു. Orden വീണ്ടും ലിങ്ക് ചെയ്യുക.',
+  'Signal changes only your own messages': 'Signal നിങ്ങളുടെ സ്വന്തം സന്ദേശങ്ങൾ മാത്രം മാറ്റുന്നു',
+  'Signal groups have admins, not owners': 'Signal ഗ്രൂപ്പുകളിൽ ഉടമകളല്ല, അഡ്മിൻമാരാണ്',
+  'That is something only a Signal group has': 'ഇത് Signal ഗ്രൂപ്പിൽ മാത്രമേയുള്ളൂ',
+  'Signal needs the system keyring to keep its keys':
+    'Signal-ന് അതിന്റെ കീകൾ സൂക്ഷിക്കാൻ സിസ്റ്റം കീചെയിൻ വേണം',
+  'Downloading signal-cli': 'signal-cli ഡൗൺലോഡ് ചെയ്യുന്നു',
+  'signal-cli does not run on this computer': 'signal-cli ഈ കമ്പ്യൂട്ടറിൽ പ്രവർത്തിക്കില്ല',
+  'The download is not the file it should be; nothing was kept':
+    'ഡൗൺലോഡ് പ്രതീക്ഷിച്ച ഫയൽ അല്ല; ഒന്നും സൂക്ഷിച്ചില്ല',
 }

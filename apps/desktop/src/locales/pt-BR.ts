@@ -3677,4 +3677,26 @@ export const ptBR: Dictionary = {
   'The file is damaged': 'O arquivo está danificado',
   'WhatsApp is not connected right now': 'O WhatsApp não está conectado agora',
   'That poll no longer takes votes': 'Essa enquete não aceita mais votos',
+  'Device name': 'Nome do dispositivo',
+  'How this computer is listed under linked devices in Signal':
+    'Como este computador aparece nos aparelhos conectados do Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'O Orden se conecta ao Signal como aparelho por meio do signal-cli, que o Signal não cria nem endossa. Na primeira vez, o Orden baixa o signal-cli e o Java (cerca de 190 MB).',
+  'Scan this with Signal on your phone': 'Escaneie isto com o Signal no seu celular',
+  'In Signal: Settings > Linked devices > Link new device':
+    'No Signal: Configurações > Aparelhos conectados > Conectar novo aparelho',
+  'Signal is sending your contacts and groups': 'O Signal está enviando seus contatos e grupos',
+  'The code ran out before it was scanned. Try again.':
+    'O código expirou antes de ser escaneado. Tente de novo.',
+  'Signed out of Signal. Link Orden again.': 'Desconectado do Signal. Conecte o Orden de novo.',
+  'Signal changes only your own messages': 'O Signal só altera suas próprias mensagens',
+  'Signal groups have admins, not owners':
+    'Grupos do Signal têm administradores, não proprietários',
+  'That is something only a Signal group has': 'Isso só existe em grupos do Signal',
+  'Signal needs the system keyring to keep its keys':
+    'O Signal precisa do chaveiro do sistema para guardar suas chaves',
+  'Downloading signal-cli': 'Baixando o signal-cli',
+  'signal-cli does not run on this computer': 'O signal-cli não funciona neste computador',
+  'The download is not the file it should be; nothing was kept':
+    'O download não é o arquivo esperado; nada foi mantido',
 }

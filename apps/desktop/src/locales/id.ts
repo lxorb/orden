@@ -3535,4 +3535,25 @@ export const id: Dictionary = {
   'The file is damaged': 'File rusak',
   'WhatsApp is not connected right now': 'WhatsApp sedang tidak terhubung',
   'That poll no longer takes votes': 'Polling itu tidak lagi menerima suara',
+  'Device name': 'Nama perangkat',
+  'How this computer is listed under linked devices in Signal':
+    'Nama komputer ini di daftar perangkat tertaut Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden tertaut ke Signal sebagai perangkat melalui signal-cli, yang tidak dibuat atau didukung Signal. Pertama kali, Orden mengunduh signal-cli dan Java (sekitar 190 MB).',
+  'Scan this with Signal on your phone': 'Pindai ini dengan Signal di ponsel Anda',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Di Signal: Pengaturan > Perangkat tertaut > Tautkan perangkat baru',
+  'Signal is sending your contacts and groups': 'Signal sedang mengirim kontak dan grup Anda',
+  'The code ran out before it was scanned. Try again.':
+    'Kode kedaluwarsa sebelum dipindai. Coba lagi.',
+  'Signed out of Signal. Link Orden again.': 'Keluar dari Signal. Tautkan Orden lagi.',
+  'Signal changes only your own messages': 'Signal hanya mengubah pesan Anda sendiri',
+  'Signal groups have admins, not owners': 'Grup Signal memiliki admin, bukan pemilik',
+  'That is something only a Signal group has': 'Itu hanya ada di grup Signal',
+  'Signal needs the system keyring to keep its keys':
+    'Signal memerlukan rantai kunci sistem untuk menyimpan kuncinya',
+  'Downloading signal-cli': 'Mengunduh signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli tidak berjalan di komputer ini',
+  'The download is not the file it should be; nothing was kept':
+    'Unduhan bukan berkas yang diharapkan; tidak ada yang disimpan',
 }

@@ -3613,4 +3613,26 @@ export const te: Dictionary = {
   'The file is damaged': 'ఫైల్ పాడైంది',
   'WhatsApp is not connected right now': 'WhatsApp ప్రస్తుతం కనెక్ట్ అవ్వలేదు',
   'That poll no longer takes votes': 'ఆ పోల్ ఇక ఓట్లను స్వీకరించదు',
+  'Device name': 'పరికరం పేరు',
+  'How this computer is listed under linked devices in Signal':
+    'Signal లో లింక్ చేసిన పరికరాల్లో ఈ కంప్యూటర్ కనిపించే పేరు',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden signal-cli ద్వారా ఒక పరికరంగా Signal కు లింక్ అవుతుంది; signal-cli ను Signal తయారు చేయదు, ఆమోదించదు. మొదటిసారి Orden signal-cli మరియు Java ను డౌన్‌లోడ్ చేస్తుంది (సుమారు 190 MB).',
+  'Scan this with Signal on your phone': 'మీ ఫోన్‌లోని Signal తో దీన్ని స్కాన్ చేయండి',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal లో: సెట్టింగ్‌లు > లింక్ చేసిన పరికరాలు > కొత్త పరికరాన్ని లింక్ చేయండి',
+  'Signal is sending your contacts and groups': 'Signal మీ పరిచయాలను, గ్రూప్‌లను పంపుతోంది',
+  'The code ran out before it was scanned. Try again.':
+    'స్కాన్ చేసే ముందే కోడ్ గడువు ముగిసింది. మళ్లీ ప్రయత్నించండి.',
+  'Signed out of Signal. Link Orden again.':
+    'Signal నుండి సైన్ అవుట్ అయింది. Orden ను మళ్లీ లింక్ చేయండి.',
+  'Signal changes only your own messages': 'Signal మీ సొంత సందేశాలను మాత్రమే మారుస్తుంది',
+  'Signal groups have admins, not owners': 'Signal గ్రూప్‌లలో యజమానులు కాదు, అడ్మిన్‌లు ఉంటారు',
+  'That is something only a Signal group has': 'ఇది Signal గ్రూప్‌లో మాత్రమే ఉంటుంది',
+  'Signal needs the system keyring to keep its keys':
+    'Signal తన కీలను ఉంచుకోవడానికి సిస్టమ్ కీచైన్ అవసరం',
+  'Downloading signal-cli': 'signal-cli డౌన్‌లోడ్ అవుతోంది',
+  'signal-cli does not run on this computer': 'signal-cli ఈ కంప్యూటర్‌లో పనిచేయదు',
+  'The download is not the file it should be; nothing was kept':
+    'డౌన్‌లోడ్ ఆశించిన ఫైల్ కాదు; ఏదీ ఉంచలేదు',
 }

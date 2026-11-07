@@ -3620,4 +3620,25 @@ export const gsw: Dictionary = {
   'The file is damaged': 'D Datei isch kaputt',
   'WhatsApp is not connected right now': 'WhatsApp isch grad nöd verbunde',
   'That poll no longer takes votes': 'Die Umfrag nimmt kei Stimme meh aa',
+  'Device name': 'Gerätename',
+  'How this computer is listed under linked devices in Signal':
+    'So erschiint dä Computer in Signal under de verchnüpfte Grät',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden verchnüpft sich über signal-cli als Grät mit Signal; signal-cli chunnt nöd vo Signal und wird vo Signal nöd understützt. Bim erschte Mal lädt Orden signal-cli und Java abe (öppe 190 MB).',
+  'Scan this with Signal on your phone': 'Scann das mit Signal uf dim Handy',
+  'In Signal: Settings > Linked devices > Link new device':
+    'In Signal: Iistellige > Verchnüpfti Grät > Neus Grät verchnüpfe',
+  'Signal is sending your contacts and groups': 'Signal schickt dini Kontäkt und Gruppe',
+  'The code ran out before it was scanned. Try again.':
+    'De Code isch abglaufe, bevor er gscannt worde isch. Probier s nomal.',
+  'Signed out of Signal. Link Orden again.': 'Vo Signal abgmäldet. Verchnüpf Orden nomal.',
+  'Signal changes only your own messages': 'Signal änderet nur dini eigete Nachrichte',
+  'Signal groups have admins, not owners': 'Signal-Gruppe händ Admins, kei Bsitzer',
+  'That is something only a Signal group has': 'Das gits nur i Signal-Gruppe',
+  'Signal needs the system keyring to keep its keys':
+    'Signal bruucht de Schlüsselbund vom System, zum sini Schlüssel ufzbewahre',
+  'Downloading signal-cli': 'signal-cli wird abeglade',
+  'signal-cli does not run on this computer': 'signal-cli lauft uf däm Computer nöd',
+  'The download is not the file it should be; nothing was kept':
+    'De Download isch nöd d erwarteti Datei; nüt isch bhalte worde',
 }

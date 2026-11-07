@@ -3491,4 +3491,26 @@ export const ko: Dictionary = {
   'The file is damaged': '파일이 손상되었습니다',
   'WhatsApp is not connected right now': 'WhatsApp이 현재 연결되어 있지 않습니다',
   'That poll no longer takes votes': '그 투표는 더 이상 투표를 받지 않습니다',
+  'Device name': '기기 이름',
+  'How this computer is listed under linked devices in Signal':
+    'Signal의 연결된 기기 목록에 이 컴퓨터가 표시되는 이름',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden은 signal-cli를 통해 기기로 Signal에 연결됩니다. signal-cli는 Signal이 만들거나 보증하지 않습니다. 처음에 Orden은 signal-cli와 Java(약 190MB)를 내려받습니다.',
+  'Scan this with Signal on your phone': '휴대전화의 Signal로 이것을 스캔하세요',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal에서: 설정 > 연결된 기기 > 새 기기 연결',
+  'Signal is sending your contacts and groups': 'Signal이 연락처와 그룹을 보내고 있습니다',
+  'The code ran out before it was scanned. Try again.':
+    '스캔하기 전에 코드가 만료되었습니다. 다시 시도하세요.',
+  'Signed out of Signal. Link Orden again.':
+    'Signal에서 로그아웃되었습니다. Orden을 다시 연결하세요.',
+  'Signal changes only your own messages': 'Signal은 내 메시지만 변경합니다',
+  'Signal groups have admins, not owners': 'Signal 그룹에는 소유자가 아니라 관리자가 있습니다',
+  'That is something only a Signal group has': '그것은 Signal 그룹에만 있습니다',
+  'Signal needs the system keyring to keep its keys':
+    'Signal은 키를 보관하기 위해 시스템 키체인이 필요합니다',
+  'Downloading signal-cli': 'signal-cli 내려받는 중',
+  'signal-cli does not run on this computer': '이 컴퓨터에서는 signal-cli를 실행할 수 없습니다',
+  'The download is not the file it should be; nothing was kept':
+    '내려받은 파일이 예상한 파일이 아니어서 아무것도 보관하지 않았습니다',
 }

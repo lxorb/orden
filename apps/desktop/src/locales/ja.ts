@@ -3514,4 +3514,26 @@ export const ja: Dictionary = {
   'The file is damaged': 'ファイルが破損しています',
   'WhatsApp is not connected right now': 'WhatsApp は現在接続されていません',
   'That poll no longer takes votes': 'その投票はもう受け付けていません',
+  'Device name': 'デバイス名',
+  'How this computer is listed under linked devices in Signal':
+    'Signal のリンク済みデバイスでこのコンピューターに表示される名前',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden は signal-cli を通じてデバイスとして Signal にリンクします。signal-cli は Signal が作成・承認したものではありません。初回に Orden は signal-cli と Java（約 190 MB）をダウンロードします。',
+  'Scan this with Signal on your phone': 'スマートフォンの Signal でこれをスキャンしてください',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal で：設定 > リンク済みデバイス > 新しいデバイスをリンク',
+  'Signal is sending your contacts and groups': 'Signal が連絡先とグループを送信しています',
+  'The code ran out before it was scanned. Try again.':
+    'スキャンされる前にコードの有効期限が切れました。もう一度お試しください。',
+  'Signed out of Signal. Link Orden again.':
+    'Signal からサインアウトしました。Orden をもう一度リンクしてください。',
+  'Signal changes only your own messages': 'Signal で変更できるのは自分のメッセージだけです',
+  'Signal groups have admins, not owners': 'Signal グループには所有者ではなく管理者がいます',
+  'That is something only a Signal group has': 'それは Signal グループにしかありません',
+  'Signal needs the system keyring to keep its keys':
+    'Signal は鍵を保管するためにシステムのキーチェーンを必要とします',
+  'Downloading signal-cli': 'signal-cli をダウンロード中',
+  'signal-cli does not run on this computer': 'このコンピューターでは signal-cli を実行できません',
+  'The download is not the file it should be; nothing was kept':
+    'ダウンロードしたファイルが想定と異なるため、何も保存しませんでした',
 }

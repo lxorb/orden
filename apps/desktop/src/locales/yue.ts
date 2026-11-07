@@ -3417,4 +3417,23 @@ export const yue: Dictionary = {
   'The file is damaged': '檔案壞咗',
   'WhatsApp is not connected right now': 'WhatsApp 而家未連線',
   'That poll no longer takes votes': '嗰個投票已經唔再收票',
+  'Device name': '裝置名',
+  'How this computer is listed under linked devices in Signal':
+    '呢部電腦喺 Signal 已連結裝置度顯示嘅名',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden 經 signal-cli 以裝置身份連結 Signal；signal-cli 唔係 Signal 出品，亦冇得到佢認可。第一次用嗰陣，Orden 會下載 signal-cli 同 Java（大約 190 MB）。',
+  'Scan this with Signal on your phone': '用手機上面嘅 Signal 掃呢個碼',
+  'In Signal: Settings > Linked devices > Link new device':
+    '喺 Signal：設定 > 已連結嘅裝置 > 連結新裝置',
+  'Signal is sending your contacts and groups': 'Signal 傳緊你嘅聯絡人同群組',
+  'The code ran out before it was scanned. Try again.': '個碼喺掃之前過咗期。再試一次。',
+  'Signed out of Signal. Link Orden again.': '已經登出 Signal。再連結 Orden 一次。',
+  'Signal changes only your own messages': 'Signal 淨係改到你自己嘅訊息',
+  'Signal groups have admins, not owners': 'Signal 群組得管理員，冇擁有者',
+  'That is something only a Signal group has': '呢樣嘢淨係 Signal 群組先有',
+  'Signal needs the system keyring to keep its keys': 'Signal 要用系統鎖匙圈嚟保存佢嘅鎖匙',
+  'Downloading signal-cli': '下載緊 signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli 喺呢部電腦行唔到',
+  'The download is not the file it should be; nothing was kept':
+    '下載咗嘅唔係預期嘅檔案；乜都冇保留',
 }

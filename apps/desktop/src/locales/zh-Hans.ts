@@ -3423,4 +3423,23 @@ export const zhHans: Dictionary = {
   'The file is damaged': '文件已损坏',
   'WhatsApp is not connected right now': 'WhatsApp 当前未连接',
   'That poll no longer takes votes': '该投票已停止接受投票',
+  'Device name': '设备名称',
+  'How this computer is listed under linked devices in Signal':
+    '此电脑在 Signal 已关联设备中显示的名称',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden 通过 signal-cli 以设备身份关联 Signal；signal-cli 并非 Signal 出品，也未获其认可。首次使用时，Orden 会下载 signal-cli 和 Java（约 190 MB）。',
+  'Scan this with Signal on your phone': '请用手机上的 Signal 扫描此码',
+  'In Signal: Settings > Linked devices > Link new device':
+    '在 Signal 中：设置 > 已关联设备 > 关联新设备',
+  'Signal is sending your contacts and groups': 'Signal 正在发送你的联系人和群组',
+  'The code ran out before it was scanned. Try again.': '二维码在扫描前已过期。请重试。',
+  'Signed out of Signal. Link Orden again.': '已退出 Signal。请重新关联 Orden。',
+  'Signal changes only your own messages': 'Signal 只能修改你自己的消息',
+  'Signal groups have admins, not owners': 'Signal 群组只有管理员，没有所有者',
+  'That is something only a Signal group has': '只有 Signal 群组才有此功能',
+  'Signal needs the system keyring to keep its keys': 'Signal 需要系统钥匙串来保存其密钥',
+  'Downloading signal-cli': '正在下载 signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli 无法在此电脑上运行',
+  'The download is not the file it should be; nothing was kept':
+    '下载的不是预期的文件；未保留任何内容',
 }

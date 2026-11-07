@@ -186,6 +186,8 @@ mod secure_dns;
 mod shell_menu;
 #[cfg(desktop)]
 mod shortcuts;
+#[cfg(desktop)]
+mod sidecar;
 #[cfg(target_os = "macos")]
 mod siri;
 mod space_watch;
@@ -522,6 +524,11 @@ macro_rules! desktop_commands {
             wire_socket::wire_socket_send,
             wire_socket::wire_socket_send_text,
             wire_socket::wire_socket_close,
+            sidecar::sidecar_ready,
+            sidecar::sidecar_fetch,
+            sidecar::sidecar_open,
+            sidecar::sidecar_write,
+            sidecar::sidecar_close,
             terminal::terminal_shells,
             terminal::pty_spawn,
             terminal::pty_write,
@@ -759,6 +766,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.manage(wire_socket::WireSockets::default());
 
     #[cfg(desktop)]
+    let builder = builder.manage(sidecar::Held::default());
+
+    #[cfg(desktop)]
     let builder = builder
         .manage(explorer::reach::Explored::default())
         .manage(explorer::watch::Watching::default());
@@ -841,6 +851,9 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
             }
             if let Some(sockets) = webview.try_state::<wire_socket::WireSockets>() {
                 sockets.end_where(webview.label());
+            }
+            if let Some(sidecars) = webview.try_state::<sidecar::Held>() {
+                sidecars.end_where(webview.label());
             }
         }
     });

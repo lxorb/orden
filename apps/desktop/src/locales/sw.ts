@@ -3642,4 +3642,25 @@ export const sw: Dictionary = {
   'The file is damaged': 'Faili limeharibika',
   'WhatsApp is not connected right now': 'WhatsApp haijaunganishwa kwa sasa',
   'That poll no longer takes votes': 'Kura ya maoni hiyo haipokei tena kura',
+  'Device name': 'Jina la kifaa',
+  'How this computer is listed under linked devices in Signal':
+    'Jina la kompyuta hii katika vifaa vilivyounganishwa vya Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden inaunganishwa na Signal kama kifaa kupitia signal-cli, ambayo Signal haitengenezi wala kuidhinisha. Mara ya kwanza, Orden inapakua signal-cli na Java (takriban MB 190).',
+  'Scan this with Signal on your phone': 'Changanua hii kwa Signal kwenye simu yako',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Katika Signal: Mipangilio > Vifaa vilivyounganishwa > Unganisha kifaa kipya',
+  'Signal is sending your contacts and groups': 'Signal inatuma anwani na vikundi vyako',
+  'The code ran out before it was scanned. Try again.':
+    'Msimbo umeisha muda kabla ya kuchanganuliwa. Jaribu tena.',
+  'Signed out of Signal. Link Orden again.': 'Umetoka kwenye Signal. Unganisha Orden tena.',
+  'Signal changes only your own messages': 'Signal hubadilisha ujumbe wako mwenyewe tu',
+  'Signal groups have admins, not owners': 'Vikundi vya Signal vina wasimamizi, si wamiliki',
+  'That is something only a Signal group has': 'Hilo lipo kwenye kikundi cha Signal tu',
+  'Signal needs the system keyring to keep its keys':
+    'Signal inahitaji mnyororo wa funguo wa mfumo ili kuhifadhi funguo zake',
+  'Downloading signal-cli': 'Inapakua signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli haifanyi kazi kwenye kompyuta hii',
+  'The download is not the file it should be; nothing was kept':
+    'Kilichopakuliwa si faili lililotarajiwa; hakuna kilichohifadhiwa',
 }

@@ -3647,4 +3647,27 @@ export const ha: Dictionary = {
   'The file is damaged': 'Fayil ɗin ya lalace',
   'WhatsApp is not connected right now': 'WhatsApp ba a haɗa shi a yanzu ba',
   'That poll no longer takes votes': "Wannan zaɓen ba ya karɓar ƙuri'u kuma",
+  'Device name': 'Sunan na’ura',
+  'How this computer is listed under linked devices in Signal':
+    'Sunan da wannan kwamfuta ke bayyana da shi a na’urorin da aka haɗa a Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden yana haɗuwa da Signal a matsayin na’ura ta hanyar signal-cli, wanda Signal ba ta ƙirƙira ko amince da shi ba. A karon farko, Orden zai sauke signal-cli da Java (kusan MB 190).',
+  'Scan this with Signal on your phone': 'Duba wannan da Signal a wayarka',
+  'In Signal: Settings > Linked devices > Link new device':
+    'A Signal: Saituna > Na’urorin da aka haɗa > Haɗa sabuwar na’ura',
+  'Signal is sending your contacts and groups':
+    'Signal na aika lambobin sadarwarka da ƙungiyoyinka',
+  'The code ran out before it was scanned. Try again.':
+    'Lambar ta ƙare kafin a duba ta. Sake gwadawa.',
+  'Signed out of Signal. Link Orden again.': 'An fita daga Signal. Sake haɗa Orden.',
+  'Signal changes only your own messages': 'Signal na canza saƙonninka kawai',
+  'Signal groups have admins, not owners':
+    'Ƙungiyoyin Signal suna da masu gudanarwa, ba masu mallaka ba',
+  'That is something only a Signal group has': 'Ƙungiyar Signal ce kaɗai ke da wannan',
+  'Signal needs the system keyring to keep its keys':
+    'Signal na buƙatar ma’ajiyar maɓallan tsarin don adana maɓallansa',
+  'Downloading signal-cli': 'Ana sauke signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli ba ya aiki a wannan kwamfuta',
+  'The download is not the file it should be; nothing was kept':
+    'Abin da aka sauke ba fayil ɗin da ake tsammani ba ne; ba a adana komai ba',
 }

@@ -3695,4 +3695,27 @@ export const ptPT: Dictionary = {
   'The file is damaged': 'O ficheiro está danificado',
   'WhatsApp is not connected right now': 'O WhatsApp não está ligado neste momento',
   'That poll no longer takes votes': 'Essa sondagem já não aceita votos',
+  'Device name': 'Nome do dispositivo',
+  'How this computer is listed under linked devices in Signal':
+    'Como este computador aparece nos dispositivos associados do Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'O Orden associa-se ao Signal como dispositivo através do signal-cli, que o Signal não cria nem apoia. Da primeira vez, o Orden transfere o signal-cli e o Java (cerca de 190 MB).',
+  'Scan this with Signal on your phone': 'Leia isto com o Signal no seu telemóvel',
+  'In Signal: Settings > Linked devices > Link new device':
+    'No Signal: Definições > Dispositivos associados > Associar novo dispositivo',
+  'Signal is sending your contacts and groups': 'O Signal está a enviar os seus contactos e grupos',
+  'The code ran out before it was scanned. Try again.':
+    'O código expirou antes de ser lido. Tente novamente.',
+  'Signed out of Signal. Link Orden again.':
+    'Sessão do Signal terminada. Associe o Orden novamente.',
+  'Signal changes only your own messages': 'O Signal só altera as suas próprias mensagens',
+  'Signal groups have admins, not owners':
+    'Os grupos do Signal têm administradores, não proprietários',
+  'That is something only a Signal group has': 'Isso só existe em grupos do Signal',
+  'Signal needs the system keyring to keep its keys':
+    'O Signal precisa do porta-chaves do sistema para guardar as suas chaves',
+  'Downloading signal-cli': 'A transferir o signal-cli',
+  'signal-cli does not run on this computer': 'O signal-cli não funciona neste computador',
+  'The download is not the file it should be; nothing was kept':
+    'A transferência não é o ficheiro esperado; nada foi guardado',
 }
