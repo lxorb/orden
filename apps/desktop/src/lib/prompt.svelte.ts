@@ -42,7 +42,10 @@ interface Find {
   placeholder?: string
 }
 
-type Pending = { resolve: (answer: unknown) => void } | null
+interface Asked {
+  setup: () => void
+  resolve: (answer: unknown) => void
+}
 
 class Prompt {
   open = $state(false)
@@ -58,91 +61,109 @@ class Prompt {
   tick = $state('')
   ticked = $state(false)
 
-  private pending: Pending = null
+  private pending: Asked | null = null
+  private waiting: Asked[] = []
 
   ask(options: Ask): Promise<string | null> {
-    this.mode = 'text'
-    this.title = options.title
-    this.detail = ''
-    this.value = options.value ?? ''
-    this.placeholder = options.placeholder ?? ''
-    this.confirmLabel = options.confirmLabel ?? 'Create'
-    this.danger = false
-
-    return this.show() as Promise<string | null>
+    return this.show(() => {
+      this.mode = 'text'
+      this.title = options.title
+      this.detail = ''
+      this.value = options.value ?? ''
+      this.placeholder = options.placeholder ?? ''
+      this.confirmLabel = options.confirmLabel ?? 'Create'
+      this.danger = false
+    }) as Promise<string | null>
   }
 
   confirm(options: Confirm): Promise<boolean> {
-    this.mode = 'confirm'
-    this.title = options.title
-    this.detail = options.detail ?? ''
-    this.value = ''
-    this.confirmLabel = options.confirmLabel ?? 'Confirm'
-    this.danger = options.danger ?? false
-    this.lands = options.lands ?? false
-
-    return this.show().then((answer) => answer !== null)
+    return this.show(() => {
+      this.mode = 'confirm'
+      this.title = options.title
+      this.detail = options.detail ?? ''
+      this.value = ''
+      this.confirmLabel = options.confirmLabel ?? 'Confirm'
+      this.danger = options.danger ?? false
+      this.lands = options.lands ?? false
+    }).then((answer) => answer !== null)
   }
 
-  choose(options: Choose): Promise<string | null> {
+  private chosen(options: Choose) {
     this.mode = 'choose'
     this.title = options.title
     this.detail = options.detail ?? ''
     this.value = ''
     this.options = options.options
+  }
 
-    return this.show() as Promise<string | null>
+  choose(options: Choose): Promise<string | null> {
+    return this.show(() => this.chosen(options)) as Promise<string | null>
   }
 
   async chooseTicking(options: ChooseTicking): Promise<{ id: string; ticked: boolean } | null> {
-    const asked = this.choose(options)
-    this.tick = options.tick
-    this.ticked = false
-
-    const id = await asked
+    const id = (await this.show(() => {
+      this.chosen(options)
+      this.tick = options.tick
+      this.ticked = false
+    })) as string | null
     return id === null ? null : { id, ticked: this.ticked }
   }
 
   find(options: Find): Promise<string | null> {
-    this.mode = 'find'
-    this.title = options.title
-    this.detail = ''
-    this.value = ''
-    this.placeholder = options.placeholder ?? ''
-    this.options = options.options
-
-    return this.show() as Promise<string | null>
+    return this.show(() => {
+      this.mode = 'find'
+      this.title = options.title
+      this.detail = ''
+      this.value = ''
+      this.placeholder = options.placeholder ?? ''
+      this.options = options.options
+    }) as Promise<string | null>
   }
 
   pick(id: string) {
-    this.open = false
-    this.pending?.resolve(id)
-    this.pending = null
+    this.answer(id)
   }
 
-  private show(): Promise<unknown> {
-    this.pending?.resolve(null)
-    this.open = true
-    this.tick = ''
-
+  private show(setup: () => void): Promise<unknown> {
     return new Promise((resolve) => {
-      this.pending = { resolve }
+      this.waiting.push({ setup, resolve })
+      if (!this.pending) this.next()
     })
+  }
+
+  private next() {
+    if (this.pending) return
+    const up = this.waiting.shift()
+    if (!up) return
+
+    this.pending = up
+    this.tick = ''
+    up.setup()
+    this.open = true
+  }
+
+  private answer(answer: unknown) {
+    const was = this.pending
+    if (!was) {
+      this.open = false
+      return
+    }
+
+    this.open = false
+    this.pending = null
+    was.resolve(answer)
+    if (this.waiting.length) queueMicrotask(() => this.next())
   }
 
   submit() {
     const typed = this.value.trim()
     if (this.mode === 'text' && !typed) return
 
-    this.open = false
-    this.pending?.resolve(this.mode === 'confirm' ? '' : typed)
-    this.pending = null
+    this.answer(this.mode === 'confirm' ? '' : typed)
   }
 
   dismiss() {
-    this.open = false
-    this.pending?.resolve(null)
-    this.pending = null
+    this.answer(null)
   }
 }
 
