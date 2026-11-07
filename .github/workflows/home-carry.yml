@@ -1,0 +1,78 @@
+name: home-carry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['tmp/ci-*']
+    paths:
+      - apps/desktop/src-tauri/src/old_home.rs
+      - apps/desktop/src-tauri/src/former.js
+      - apps/desktop/src/lib/internal/convert.ts
+      - apps/desktop/src/lib/workspace/former-home.ts
+      - apps/desktop/src/lib/workspace/moved.ts
+      - apps/desktop/src/lib/workspace/item-meta.svelte.ts
+      - scripts/home-carry-drive.py
+      - .github/workflows/home-carry.yml
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - apps/desktop/src-tauri/src/old_home.rs
+      - apps/desktop/src-tauri/src/former.js
+      - apps/desktop/src/lib/internal/convert.ts
+      - apps/desktop/src/lib/workspace/former-home.ts
+      - apps/desktop/src/lib/workspace/moved.ts
+      - apps/desktop/src/lib/workspace/item-meta.svelte.ts
+      - scripts/home-carry-drive.py
+      - .github/workflows/home-carry.yml
+
+concurrency:
+  group: home-carry-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      ROLLING: 'true'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: x86_64-pc-windows-msvc
+
+      - name: The app under its old name and under its new one
+        run: |
+          source scripts/edge-profile.sh
+          read -r old new < <(python scripts/home-carry-drive.py --names)
+          for side in old new; do
+            id=${!side}
+            config='{"identifier":"'"$id"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+            pnpm --filter @orden/desktop exec tauri build --target x86_64-pc-windows-msvc --no-bundle --config "$config"
+            exe=$(ls -S apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/*.exe | head -1)
+            mkdir -p "$RUNNER_TEMP/$side"
+            cp "$exe" "$RUNNER_TEMP/$side/orden-$side.exe"
+          done
+
+      - name: An older profile brought to this build keeps its todos
+        run: |
+          python scripts/home-carry-drive.py \
+            --old-exe "$RUNNER_TEMP/old/orden-old.exe" \
+            --new-exe "$RUNNER_TEMP/new/orden-new.exe" \
+            --out home-carry
+
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: home-carry-windows
+          path: home-carry
+          if-no-files-found: ignore
