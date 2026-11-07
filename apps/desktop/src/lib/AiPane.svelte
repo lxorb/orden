@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { slide } from 'svelte/transition'
   import { accountName, vendorName } from './ai/account-words'
   import { type Account, repeatable } from './ai/accounts'
   import { FEATURES, ai } from './ai/store.svelte'
@@ -22,7 +21,7 @@
   import { glassesKey } from './even/key.svelte'
   import { NoWord, wordSaid } from './mobile/bridge'
   import { message, t } from './i18n.svelte'
-  import { dur } from './motion'
+  import { dur, slide } from './motion'
   import Select from './Select.svelte'
   import { invoke, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'

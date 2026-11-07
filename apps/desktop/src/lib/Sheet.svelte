@@ -1,12 +1,11 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
   import { overlays } from './overlays'
   import { scrollbar } from './scrollbar'
-  import { LAYER } from './motion'
+  import { fade, LAYER, scale } from './motion'
   import { trap } from './trap'
   import Cross from './Cross.svelte'
 

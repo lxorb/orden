@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../backstack.svelte'
   import { i18n, t } from '../i18n.svelte'
-  import { LAYER } from '../motion'
+  import { fly, LAYER } from '../motion'
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
   import { openExternal } from '../tauri'

@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { unarchive } from './archiving'
   import { t } from './i18n.svelte'
-  import { dur } from './motion'
+  import { dur, slide } from './motion'
   import { ARCHIVE_MARK } from './archive-marks'
 
   const { path }: { path: string } = $props()

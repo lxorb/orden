@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
   import { chorded } from './keys'
   import { opensAt, type Walk, walk } from './list-keys'
   import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
-  import { dur } from './motion'
+  import { dur, fade, fly } from './motion'
 
   interface Option {
     value: string

@@ -1,10 +1,9 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { fade, scale } from 'svelte/transition'
   import Spark from '../agents/ui/Spark.svelte'
   import { closeOnBack } from '../backstack.svelte'
   import { key, t } from '../i18n.svelte'
-  import { LAYER } from '../motion'
+  import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import TerminalMark from '../terminal/TerminalMark.svelte'
   import TickBox from '../TickBox.svelte'

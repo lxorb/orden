@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, slide } from '../../motion'
   import { workspace } from '../../workspace.svelte'
   import { insideSpace } from '../../space-paths'
   import type { Part } from '../chat/types'

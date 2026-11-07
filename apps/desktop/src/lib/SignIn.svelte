@@ -2,12 +2,11 @@
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { t } from './i18n.svelte'
-  import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { account } from './account.svelte'
   import { joining } from './joining.svelte'
   import { settleLocalNotes } from './settling'
-  import { dur, LAYER } from './motion'
+  import { dur, fade, fly, LAYER, scale } from './motion'
   import { trap } from './trap'
 
   const LENGTH = 6

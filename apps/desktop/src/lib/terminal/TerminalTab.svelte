@@ -1,11 +1,10 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { fly } from 'svelte/transition'
   import FindBar from '../FindBar.svelte'
   import Outward from '../Outward.svelte'
   import { t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, fly } from '../motion'
   import { hostOf } from '@orden/online/urls'
   import OnlineStatus from '../online/OnlineStatus.svelte'
   import type { Tab } from '../workspace.svelte'

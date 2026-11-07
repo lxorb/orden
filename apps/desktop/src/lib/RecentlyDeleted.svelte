@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { relativeStep } from './ago'
   import { i18n, plural, t } from './i18n.svelte'
   import { settings } from './settings.svelte'
   import { trash, type TrashItem } from './trash.svelte'
   import { rowName } from './note-name'
-  import { dur } from './motion'
+  import { dur, slide } from './motion'
 
   const DAY = 24 * 60 * 60 * 1000
 

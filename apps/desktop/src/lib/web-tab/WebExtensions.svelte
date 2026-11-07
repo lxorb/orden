@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Pin from 'lucide/dist/esm/icons/pin.mjs'
   import PinOff from 'lucide/dist/esm/icons/pin-off.mjs'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import Settings from 'lucide/dist/esm/icons/settings.mjs'
   import { t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
   import ExtensionGaps from './ExtensionGaps.svelte'

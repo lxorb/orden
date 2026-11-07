@@ -5,8 +5,7 @@
 
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { fade } from 'svelte/transition'
-  import { dur } from '../motion'
+  import { dur, fade } from '../motion'
   import { readingHtml, unreadableHtml } from '../reading/render'
   import { trustsHtmlIn } from '../sharing.svelte'
   import TabMark from '../TabMark.svelte'

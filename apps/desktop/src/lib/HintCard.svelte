@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Cross from './Cross.svelte'
   import { type Hint, hints } from './hints.svelte'
   import { t } from './i18n.svelte'
   import { hang } from './portal'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
 
   const {
     hint,

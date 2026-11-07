@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import { insideSpace } from '../../space-paths'
   import { TaskTurns } from '../../task-turns'
   import { workspace } from '../../workspace.svelte'

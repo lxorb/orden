@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { slide } from 'svelte/transition'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import { t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, slide } from '../motion'
   import { settings } from '../settings.svelte'
   import { workspace } from '../workspace.svelte'
   import ExtensionGaps from '../web-tab/ExtensionGaps.svelte'

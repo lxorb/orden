@@ -20,14 +20,13 @@
     writtenIcon,
   } from './icons'
   import { t } from './i18n.svelte'
-  import { dur, LAYER } from './motion'
+  import { dur, fade, LAYER, scale } from './motion'
   import { overlays } from './overlays'
   import { segmented } from './slide'
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { fade, scale } from 'svelte/transition'
 
   const POINTER_CELL = 38
   const TOUCH_CELL = 48

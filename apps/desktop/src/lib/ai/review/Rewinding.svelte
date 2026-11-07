@@ -1,8 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { fly } from 'svelte/transition'
   import { t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import type { Thread } from '../chat/types'
   import Rewind from './Rewind.svelte'
   import { review, type ReviewPanel } from './review.svelte'

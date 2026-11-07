@@ -1,11 +1,10 @@
 <script lang="ts">
   import type { HTMLButtonAttributes } from 'svelte/elements'
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'
   import { MARKS } from './file-mark'
   import Icon from './Icon.svelte'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
   import type { NewKindRow } from './new-kinds'
 
   const {

@@ -2,7 +2,6 @@
   import { untrack } from 'svelte'
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
-  import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import FileMark from './FileMark.svelte'
   import { rank } from './fuzzy'
@@ -13,7 +12,7 @@
   import { selectAll } from './select-all'
   import SpaceMark from './SpaceMark.svelte'
   import TickBox from './TickBox.svelte'
-  import { LAYER } from './motion'
+  import { fade, LAYER, scale } from './motion'
   import { trap } from './trap'
   import { isDesktop, platform } from './tauri'
 

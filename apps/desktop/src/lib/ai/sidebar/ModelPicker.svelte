@@ -1,9 +1,8 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { fly } from 'svelte/transition'
   import { i18n, t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import { segmented } from '../../slide'
   import { ordered } from '../chat/effort'
   import type { Effort } from '../chat/types'

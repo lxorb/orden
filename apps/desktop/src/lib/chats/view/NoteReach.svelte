@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { Member } from '@orden/chats'
-  import { fade } from 'svelte/transition'
   import { t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, fade } from '../../motion'
   import Avatar from '../../people/Avatar.svelte'
   import type { ChatMember } from '../api'
   import { faceOf, nameOf } from './people'

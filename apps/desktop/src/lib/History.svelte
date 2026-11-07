@@ -9,11 +9,10 @@
   import { readableSize } from './usage.svelte'
   import { i18n, t } from './i18n.svelte'
   import { when } from './when'
-  import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { type Tab, workspace } from './workspace.svelte'
   import { type Version, versionsOf, versionText } from './versions'
-  import { LAYER } from './motion'
+  import { fade, LAYER, scale } from './motion'
   import { trap } from './trap'
 
   let { open = $bindable(false) }: { open?: boolean } = $props()

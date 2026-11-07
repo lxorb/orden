@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte'
-  import { fade } from 'svelte/transition'
-  import { LAYER } from '../motion'
+  import { fade, LAYER } from '../motion'
   import { DIVIDER, type MenuEntry, walkableRows } from '../menu-item'
   import { spendClick } from '../spent-click'
 

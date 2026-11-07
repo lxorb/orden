@@ -1,6 +1,5 @@
 <script lang="ts">
   import { vault } from './vault/start.svelte'
-  import { slide } from 'svelte/transition'
   import { USAGE } from './chatgpt'
   import ChatGptMark from './ChatGptMark.svelte'
   import { plans } from './local/status.svelte'
@@ -9,7 +8,7 @@
   import type { LocalKind, Provider } from './providers'
   import { ai } from './store.svelte'
   import { message, t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, slide } from '../motion'
   import { invoke, openExternal } from '../tauri'
 
   interface Props {

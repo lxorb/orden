@@ -1,12 +1,11 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { fade, scale } from 'svelte/transition'
   import { tick } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
   import { i18n, t } from '../i18n.svelte'
   import { longPress } from '../longpress'
   import { menu } from '../menu.svelte'
-  import { LAYER } from '../motion'
+  import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { pieces } from '../palette/pieces'
   import { roving } from '../roving'

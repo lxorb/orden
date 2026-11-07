@@ -1,10 +1,9 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { plural, t } from './i18n.svelte'
   import { focusEditor } from './focus'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
   import { told } from './said.svelte'
   import { reservedName } from './reserved-name.svelte'
   import { back } from './sync2/resurrected.svelte'

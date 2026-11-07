@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import { t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, scale } from '../motion'
   import { extensions, pinnedOf } from './extensions.svelte'
 
   const {

@@ -1,12 +1,11 @@
 <script lang="ts">
   import { dropOver } from './drag-paths'
-  import { fade } from 'svelte/transition'
 
   import { key, plural, t } from './i18n.svelte'
   import { importing, onMac } from './importing.svelte'
   import { droppedFiles, pickFiles } from './import/picking'
   import { type FormatId, worthKnowing } from './import/plan'
-  import { dur } from './motion'
+  import { dur, fade } from './motion'
   import { settings } from './settings.svelte'
   import { segmented } from './slide'
   import { viewport } from './viewport.svelte'

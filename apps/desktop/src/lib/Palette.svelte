@@ -1,7 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte'
   import { typeAhead } from './palette/type-ahead'
-  import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@orden/editor'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
@@ -55,7 +54,7 @@
   import { visitKey } from './web-tab/visits'
   import { webData } from './web-tab/web-data.svelte'
   import { workspace } from './workspace.svelte'
-  import { LAYER } from './motion'
+  import { fade, LAYER, scale } from './motion'
   import { scrollbar } from './scrollbar'
   import { wholeRows } from './whole-rows'
 

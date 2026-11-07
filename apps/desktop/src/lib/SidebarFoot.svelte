@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
   import { showAccount } from './account-menu'
   import AccountBadge from './AccountBadge.svelte'
   import { DOWNLOAD_URL } from './links'
   import { arriving } from './arriving.svelte'
   import { longPress } from './longpress'
-  import { dur } from './motion'
+  import { dur, fade } from './motion'
   import { settings } from './settings.svelte'
   import { showFeedback } from './surfaces.svelte'
   import { t } from './i18n.svelte'

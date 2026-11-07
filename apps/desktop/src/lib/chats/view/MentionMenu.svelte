@@ -1,9 +1,8 @@
 <script lang="ts">
   import type { Member } from '@orden/chats'
   import type { Special } from './compose'
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import Avatar from '../../people/Avatar.svelte'
   import { faceOf, nameOf } from './people'
 

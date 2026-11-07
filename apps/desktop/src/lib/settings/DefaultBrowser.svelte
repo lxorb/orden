@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { fade } from 'svelte/transition'
   import { message, t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, fade } from '../motion'
   import { settings } from '../settings.svelte'
   import { invoke } from '../tauri'
 

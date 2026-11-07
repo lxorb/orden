@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { fade } from 'svelte/transition'
   import Globe from 'lucide/dist/esm/icons/globe.mjs'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
@@ -9,7 +8,7 @@
   import { BROWSER_LOGOS, foundBrowsers, ZEN_LOGO } from '../import/browsers'
   import { zenProfiles } from '../import/zen-profiles'
   import { migrating } from '../migrating.svelte'
-  import { dur } from '../motion'
+  import { dur, fade } from '../motion'
   import { settings } from '../settings.svelte'
   import { importOffer } from './import-offer.svelte'
 

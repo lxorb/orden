@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fade, scale } from 'svelte/transition'
   import { fileMark } from './file-mark'
   import { t } from './i18n.svelte'
   import { shownName } from './note-name'
@@ -14,7 +13,7 @@
   import SpaceMark from './SpaceMark.svelte'
   import { initial } from './icons'
   import type { Face } from './people/face'
-  import { dur } from './motion'
+  import { dur, fade, scale } from './motion'
 
   const ROLES = $derived([
     { value: 'write', label: t('can edit') },

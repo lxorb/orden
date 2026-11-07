@@ -1,8 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { fade, scale } from 'svelte/transition'
   import { t } from '../i18n.svelte'
-  import { LAYER } from '../motion'
+  import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { trap } from '../trap'
   import { crashReports } from './choice.svelte'

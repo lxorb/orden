@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
+  import { fade } from '../../src/lib/motion'
 
   const { ended }: { ended: () => void } = $props()
 

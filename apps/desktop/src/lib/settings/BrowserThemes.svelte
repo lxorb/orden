@@ -1,9 +1,8 @@
 <script lang="ts">
   import tokens from '@orden/themes/tokens.css?raw'
-  import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../i18n.svelte'
-  import { LAYER } from '../motion'
+  import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { prompt } from '../prompt.svelte'
   import { invoke } from '../tauri'

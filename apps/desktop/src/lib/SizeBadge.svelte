@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
-  import { dur } from './motion'
+  import { dur, fade, scale } from './motion'
   import { modes } from './modes.svelte'
 
   const HELD = 900

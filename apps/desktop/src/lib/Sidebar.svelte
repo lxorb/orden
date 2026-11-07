@@ -10,7 +10,6 @@
   import { dropOnList } from './list-landing.svelte'
   import { movesSection } from './sections'
   import { onMount, untrack } from 'svelte'
-  import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
@@ -80,7 +79,7 @@
   import SpaceSwitcher from './SpaceSwitcher.svelte'
   import { dropTarget } from './drop-target.svelte'
   import Tree from './Tree.svelte'
-  import { dur } from './motion'
+  import { dur, fade, fly } from './motion'
 
   const {
     side = 'left',

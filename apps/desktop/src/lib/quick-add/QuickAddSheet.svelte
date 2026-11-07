@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../backstack.svelte'
   import { i18n, t } from '../i18n.svelte'
-  import { LAYER } from '../motion'
+  import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { trap } from '../trap'
   import { workspace } from '../workspace.svelte'

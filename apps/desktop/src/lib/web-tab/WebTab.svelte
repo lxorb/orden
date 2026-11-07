@@ -1,7 +1,6 @@
 <script lang="ts">
   import { dropOver } from '../drag-paths'
   import { onMount, untrack } from 'svelte'
-  import { fade } from 'svelte/transition'
   import { agentMarks } from '../agent-marks.svelte'
   import Cross from '../Cross.svelte'
   import Door from '../Door.svelte'
@@ -9,7 +8,7 @@
   import { chrome, landed } from '../glass/chrome.svelte'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
-  import { dur } from '../motion'
+  import { dur, fade } from '../motion'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../overlays'
   import { hiddenKinds, passOn, settings } from '../settings.svelte'

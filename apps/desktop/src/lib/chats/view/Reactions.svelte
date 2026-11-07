@@ -1,9 +1,8 @@
 <script lang="ts">
   import type { Message } from '@orden/chats'
-  import { scale } from 'svelte/transition'
   import { backOut } from 'svelte/easing'
   import { amount, t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, scale } from '../../motion'
   import type { ChatPage } from './chat.svelte'
   import Glyph from './Glyph.svelte'
   import { nameOf } from './people'

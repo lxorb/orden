@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
-  import { dur } from '../../motion'
+  import { dur, fade } from '../../motion'
   import { tips } from './tips.svelte'
 
   let width = $state(0)

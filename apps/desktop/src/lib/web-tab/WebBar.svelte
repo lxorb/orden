@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
-  import { scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import ArrowDownToLine from 'lucide/dist/esm/icons/arrow-down-to-line.mjs'
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
@@ -12,7 +11,7 @@
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { t } from '../i18n.svelte'
   import { longPress } from '../longpress'
-  import { dur } from '../motion'
+  import { dur, scale } from '../motion'
   import { middleOpens } from '../new-tab'
   import { overlays } from '../overlays'
   import { shortcuts } from '../shortcuts.svelte'

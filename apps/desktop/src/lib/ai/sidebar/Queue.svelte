@@ -2,10 +2,9 @@
   import { dropOver } from '../../drag-paths'
   import { cubicOut } from 'svelte/easing'
   import { flip } from 'svelte/animate'
-  import { fly } from 'svelte/transition'
   import Cross from '../../Cross.svelte'
   import { t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import { chat } from './chat.svelte'
 
   const queue = $derived(chat.queue)

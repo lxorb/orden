@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
   import { takeKeyboard } from '../take-keyboard'
   import { isDesktop } from '../tauri'

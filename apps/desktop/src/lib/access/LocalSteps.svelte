@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Copyable from '../Copyable.svelte'
   import CopyButton from '../CopyButton.svelte'
   import { t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, slide } from '../motion'
   import { type McpClient, mcpLine } from '../agents/mcp'
   import type { AgentsPane } from '../agents/settings/pane.svelte'
 
