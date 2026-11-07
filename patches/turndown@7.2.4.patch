@@ -1,0 +1,94 @@
+diff --git a/lib/turndown.browser.es.js b/lib/turndown.browser.es.js
+index da7f1c4..9203779 100644
+--- a/lib/turndown.browser.es.js
++++ b/lib/turndown.browser.es.js
+@@ -717,7 +717,10 @@ TurndownService.prototype = {
+ 
+ function process(parentNode) {
+   var self = this;
+-  return reduce.call(parentNode.childNodes, function (output, node) {
++  // Joined as parts: reading the end of one growing string flattens it on every child.
++  var parts = [];
++  var trailing = 0;
++  Array.prototype.forEach.call(parentNode.childNodes, function (node) {
+     node = new Node(node, self.options);
+     var replacement = '';
+     if (node.nodeType === 3) {
+@@ -725,8 +728,28 @@ function process(parentNode) {
+     } else if (node.nodeType === 1) {
+       replacement = replacementForNode.call(self, node);
+     }
+-    return join(output, replacement);
+-  }, '');
++    var leading = 0;
++    while (leading < replacement.length && replacement[leading] === '\n') leading++;
++    var nls = Math.max(trailing, leading);
++    while (trailing > 0) {
++      var last = parts[parts.length - 1];
++      if (last.length <= trailing) {
++        parts.pop();
++        trailing -= last.length;
++      } else {
++        parts[parts.length - 1] = last.substring(0, last.length - trailing);
++        trailing = 0;
++      }
++    }
++    var separator = '\n\n'.substring(0, nls);
++    var rest = replacement.substring(leading);
++    if (separator) parts.push(separator);
++    if (rest) parts.push(rest);
++    var end = rest.length;
++    while (end > 0 && rest[end - 1] === '\n') end--;
++    trailing = end > 0 ? rest.length - end : separator.length + rest.length;
++  });
++  return parts.join('');
+ }
+ 
+ /**
+diff --git a/lib/turndown.cjs.js b/lib/turndown.cjs.js
+index 8488044..793cf55 100644
+--- a/lib/turndown.cjs.js
++++ b/lib/turndown.cjs.js
+@@ -696,7 +696,10 @@ TurndownService.prototype = {
+ 
+ function process(parentNode) {
+   var self = this;
+-  return reduce.call(parentNode.childNodes, function (output, node) {
++  // Joined as parts: reading the end of one growing string flattens it on every child.
++  var parts = [];
++  var trailing = 0;
++  Array.prototype.forEach.call(parentNode.childNodes, function (node) {
+     node = new Node(node, self.options);
+     var replacement = '';
+     if (node.nodeType === 3) {
+@@ -704,8 +707,28 @@ function process(parentNode) {
+     } else if (node.nodeType === 1) {
+       replacement = replacementForNode.call(self, node);
+     }
+-    return join(output, replacement);
+-  }, '');
++    var leading = 0;
++    while (leading < replacement.length && replacement[leading] === '\n') leading++;
++    var nls = Math.max(trailing, leading);
++    while (trailing > 0) {
++      var last = parts[parts.length - 1];
++      if (last.length <= trailing) {
++        parts.pop();
++        trailing -= last.length;
++      } else {
++        parts[parts.length - 1] = last.substring(0, last.length - trailing);
++        trailing = 0;
++      }
++    }
++    var separator = '\n\n'.substring(0, nls);
++    var rest = replacement.substring(leading);
++    if (separator) parts.push(separator);
++    if (rest) parts.push(rest);
++    var end = rest.length;
++    while (end > 0 && rest[end - 1] === '\n') end--;
++    trailing = end > 0 ? rest.length - end : separator.length + rest.length;
++  });
++  return parts.join('');
+ }
+ 
+ /**

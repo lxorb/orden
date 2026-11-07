@@ -10,12 +10,13 @@ requests upstream.
 | Package | Patch | What it fixes | Tests |
 | --- | --- | --- | --- |
 | `marked` 18.0.11 | `patches/marked@18.0.11.patch` | `emStrong` no longer walks the paragraph for emphasis nothing can close, and stops 32 deep (#547, #549); `link` reads a destination once, 32 parentheses deep at most, and a title in parentheses ends at another opening one, as cmark does (#1292) | `packages/markdown/src/emphasis.test.ts`, `packages/markdown/src/links.test.ts` |
+| `turndown` 7.2.4 | `patches/turndown@7.2.4.patch` | Each child's Markdown is joined as a part of a list, not onto one growing string whose end is read again for every child, so a long pasted page converts in time that grows with its length (#1349) | `packages/markdown/src/from-html.test.ts` |
 | `@codemirror/view` 6.43.11 | `patches/@codemirror__view@6.43.11.patch` | Reading back what was typed counts the positions of a line's tiles once, not once per hidden mark (#1305); a replaced range that starts under a replaced range of higher precedence, as a long line's gap under a hidden mark, is drawn instead of being added to the other one's tile (#1332); a press in the selection whose first move is 10 px away waits for the browser's drag before selecting, so the words selected are dragged (#1336) | `packages/editor/src/long-line-typing.test.ts`, `packages/editor/src/covered-widget.test.ts`, `packages/editor/src/drag-start.test.ts` |
 | `@lezer/markdown` 1.7.2 | `patches/@lezer__markdown@1.7.2.patch` | Links and addresses in a huge paragraph parse in linear time (#529); a destination is read 32 parentheses deep at most, a title in parentheses ends at another opening one, and a closer nothing opens is looked back for once, as cmark's `openers_bottom` (#1292) | `packages/editor/src/markdown/extensions.test.ts` |
 
 Only the file the app loads is patched: `lib/marked.esm.js`, which marked's
 `exports` gives for `import 'marked'` (the app, vitest and the sync worker all
-load it), and `dist/index.js` of `@lezer/markdown` and `@codemirror/view`. `lib/marked.esm.js` is
+load it), `dist/index.js` of `@lezer/markdown` and `@codemirror/view`, and of turndown `lib/turndown.browser.es.js` (the app) and `lib/turndown.cjs.js` (vitest). `lib/marked.esm.js` is
 minified, so the patch appends its code after the last line and replaces
 `Tokenizer.prototype.emStrong` and `Tokenizer.prototype.link` from there; it calls the class by its minified
 name, which the file's `export{... y as Tokenizer ...}` gives.

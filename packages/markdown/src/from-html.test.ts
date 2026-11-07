@@ -1105,3 +1105,22 @@ describe('what GitHub draws, pasted', () => {
     expect(htmlToMarkdown('<p>x<sup><a href="#top">up</a></sup></p>')).toBe('x^[up](#top)^')
   })
 })
+
+describe('a long paste', () => {
+  test('of one paragraph of thousands of marks is read in time that grows with its length', () => {
+    const words = Array.from({ length: 30_000 }, (_, at) => `<b>w${at}</b> `).join('')
+    const started = performance.now()
+    const markdown = htmlToMarkdown(`<p>${words}</p>`)
+    expect(performance.now() - started).toBeLessThan(4000)
+    expect(markdown.startsWith('**w0** **w1** ')).toBe(true)
+    expect(markdown.endsWith('**w29999**')).toBe(true)
+  })
+
+  test('of thousands of paragraphs keeps one blank line between them', () => {
+    const paragraphs = Array.from({ length: 20_000 }, (_, at) => `<p>p${at}</p>\n`).join('')
+    const started = performance.now()
+    const markdown = htmlToMarkdown(paragraphs)
+    expect(performance.now() - started).toBeLessThan(4000)
+    expect(markdown.split('\n\n')).toHaveLength(20_000)
+  })
+})
