@@ -5,7 +5,6 @@ import {
   buildBody,
   buildStyles,
   type HtmlOptions,
-  inlineImages,
   prepareEmbeds,
   prepareFences,
   renderNote,
@@ -21,7 +20,7 @@ import { toMarkdown } from './markdown'
 import { fileNameFor } from './naming'
 import { writtenPdf } from './print'
 import { type Picture, readPictures, sourcesIn } from './pictures'
-import { printWithPictures } from './sheet'
+import { printWithPictures, wholeSheet } from './sheet'
 import { chooseTarget, deliver, type Payload } from './save'
 import { toPlainText } from './text'
 import { bundleFiles, packEntries } from './textbundle'
@@ -82,8 +81,7 @@ async function exportPdf(note: Note, options: RunOptions): Promise<string | null
   const page = paperInches(pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP))
 
   if (target) {
-    const whole = resolveImage ? await inlineImages(html, resolveImage) : html
-    if (await writtenPdf(whole, target, page)) return target
+    if (await writtenPdf(await wholeSheet(html, resolveImage), target, page)) return target
   }
 
   await printWithPictures(html, resolveImage, page)

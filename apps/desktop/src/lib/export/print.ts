@@ -1,4 +1,5 @@
 import { busy } from '../busy.svelte'
+import { pageBytes } from '../bytes'
 import { t } from '../i18n.svelte'
 import { type PaperInches, pageSetupFor, paperInches } from '../page-setup'
 import { DEFAULT_PAGE_SETUP } from '../paper'
@@ -9,12 +10,12 @@ import { openTarget, renderOptions } from './context'
 export const canPrint = typeof window !== 'undefined' && typeof window.print === 'function'
 
 export async function writtenPdf(
-  html: string,
+  html: string | Blob,
   target: string,
   page: PaperInches,
 ): Promise<boolean> {
   try {
-    await invoke('print_pdf', { html, output: target, page })
+    await invoke('print_pdf', { bytes: await pageBytes(html), output: target, page })
     return true
   } catch {
     busy.failed(t('The file could not be written, so it goes to the print dialog'))

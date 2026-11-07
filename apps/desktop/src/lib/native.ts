@@ -12,6 +12,7 @@ const RAW = new Set([
   'remote_image',
   'mail_socket_write',
   'print_page',
+  'print_pdf',
 ])
 
 export function invoke<T>(command: string, args?: InvokeArgs, options?: InvokeOptions): Promise<T> {

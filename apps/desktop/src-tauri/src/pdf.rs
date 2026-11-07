@@ -82,16 +82,21 @@ fn on_its_side(width: f64, height: f64) -> bool {
     width > height
 }
 
-#[tauri::command]
-pub async fn print_pdf(
-    app: AppHandle,
-    html: String,
+#[derive(Deserialize)]
+struct Writing {
     output: String,
     page: PdfPage,
-) -> Result<(), String> {
+}
+
+#[tauri::command]
+pub async fn print_pdf(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<(), String> {
     if !pdf_supported() {
         return Err("printing to a file is not available here".into());
     }
+    let (Writing { output, page }, bytes) =
+        crate::notes::raw_sent::<Writing>(request.headers(), request.body())?;
+    let html = String::from_utf8(bytes.into_owned())
+        .map_err(|_| "the page to write is not text".to_owned())?;
     let output = chosen(&app, &output)?.to_string_lossy().into_owned();
 
     in_hidden_window(&app, html, PATIENCE, move |webview, done| {

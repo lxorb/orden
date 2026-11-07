@@ -12,7 +12,7 @@ import { proseCss, slidesCss, tokensCss } from '@orden/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../accents'
 import { inlineImages } from '../export'
 import { writtenPdf } from '../export/print'
-import { printWithPictures } from '../export/sheet'
+import { printWithPictures, wholeSheet } from '../export/sheet'
 import { titleOf } from '../export/document'
 import { chooseTarget, download } from '../export/save'
 import { mathCss } from '../math-fonts'
@@ -160,10 +160,13 @@ export async function exportDeckPdf(
 
   const printed = { ...options, interactive: false }
 
+  const html = await deckPage(note, name, printed)
+
   if (target) {
-    if (await writtenPdf(await renderDeck(note, name, printed), target, DECK_PAPER)) return target
+    const whole = await wholeSheet(html, options.resolveImage)
+    if (await writtenPdf(whole, target, DECK_PAPER)) return target
   }
 
-  await printWithPictures(await deckPage(note, name, printed), options.resolveImage, DECK_PAPER)
+  await printWithPictures(html, options.resolveImage, DECK_PAPER)
   return
 }

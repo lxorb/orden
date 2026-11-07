@@ -30,7 +30,7 @@ vi.mock('../export', async (importOriginal) => ({
   },
 }))
 
-const { printWithPictures } = await import('./sheet')
+const { printWithPictures, wholeSheet } = await import('./sheet')
 
 const revoke = URL.revokeObjectURL.bind(URL)
 URL.revokeObjectURL = (link: string) => {
@@ -110,5 +110,20 @@ describe('printing a page with pictures on a Mac', () => {
         `data:image/png;base64,${btoa('/space/b.jpg')}`,
       ),
     )
+  })
+})
+
+describe('a page with pictures written whole, for a PDF file', () => {
+  test('is pieces with each picture written in, never one string', async () => {
+    const page = await wholeSheet(PAGE, resolve)
+
+    expect(page).toBeInstanceOf(Blob)
+    expect(await (page as Blob).text()).toContain(
+      `<img src="data:image/png;base64,${btoa('/space/a.png')}" alt="a">`,
+    )
+  })
+
+  test('is the page as it is when it holds no picture of the space', async () => {
+    expect(await wholeSheet('<p>words</p>', resolve)).toBe('<p>words</p>')
   })
 })
