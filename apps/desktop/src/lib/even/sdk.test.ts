@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
-import { connectGlasses, connectStore, type Input } from './sdk'
+import { connectGlasses, connectStore, type Input, PATIENCE, SILENT } from './sdk'
 
 const fromSdk = vi.hoisted((): { value: unknown } => ({ value: null }))
 
@@ -384,5 +384,78 @@ describe('what the phone app keeps', () => {
     await store?.write('nib:session', '')
 
     expect(await store?.read('nib:session')).toBeNull()
+  })
+})
+
+describe('a host that never answers', () => {
+  class Silent extends Host {
+    private readonly never = new Promise<unknown>(() => undefined)
+
+    override createStartUpPageContainer(): Promise<unknown> {
+      return this.never
+    }
+
+    override rebuildPageContainer(): Promise<unknown> {
+      return this.never
+    }
+
+    override audioControl(): Promise<unknown> {
+      return this.never
+    }
+
+    override textContainerUpgrade(): Promise<unknown> {
+      return this.never
+    }
+
+    override shutDownPageContainer(): Promise<unknown> {
+      return this.never
+    }
+
+    getLocalStorage(): Promise<unknown> {
+      return this.never
+    }
+
+    setLocalStorage(): Promise<unknown> {
+      return this.never
+    }
+  }
+
+  async function settled<T>(asked: Promise<T>): Promise<{ value?: T; error?: string }> {
+    const outcome = asked.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error: error instanceof Error ? error.message : String(error) }),
+    )
+    await vi.advanceTimersByTimeAsync(PATIENCE)
+    return outcome
+  }
+
+  test('lets go of every call once the host has had its time', async () => {
+    vi.useFakeTimers()
+    put(new Silent())
+    const glasses = await connectGlasses()
+    const store = await connectStore()
+    if (!glasses || !store) throw new Error('no glasses')
+
+    expect(await settled(glasses.start({}))).toEqual({ value: 'unknown' })
+    expect(await settled(glasses.rebuild({}))).toEqual({ value: false })
+    expect(await settled(glasses.microphone(true))).toEqual({ value: false })
+    expect(await settled(glasses.words({ id: 5, name: 'nibBody' }, 'hello'))).toEqual({
+      error: SILENT,
+    })
+    expect(await settled(glasses.leave())).toEqual({ value: undefined })
+    expect(await settled(store.read('nib:session'))).toEqual({ value: null })
+    expect(await settled(store.write('nib:session', 'token'))).toEqual({ value: false })
+    vi.useRealTimers()
+  })
+
+  test('does not wait out the time on a host that answers', async () => {
+    vi.useFakeTimers()
+    const host = new Host()
+    put(host)
+    const glasses = await connectGlasses()
+
+    expect(await glasses?.words({ id: 5, name: 'nibBody' }, 'hello')).toBe(true)
+    expect(vi.getTimerCount()).toBe(0)
+    vi.useRealTimers()
   })
 })
