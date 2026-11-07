@@ -416,23 +416,29 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
         .map_err(|error| format!("the page could not be built: {error}"));
         let made = made.and_then(|view| {
             let setting = building.clone();
+            let telling = answered.clone();
             crate::engine::with_platform!(view, move |platform| {
                 crate::web_tabs::keep_session(store.as_deref(), &platform);
                 let Some(core) = cdp::core_of(&platform) else {
+                    let _ = telling.try_send(Ok(()));
                     return;
                 };
-                let _ = crate::web_worlds::cleared(&platform, "");
-                quiet::quieten(&setting, &core, &owner);
-                cdp::follow(&core, &owner.label);
-                listen(&setting, &core, &owner);
-                match going {
-                    Some(url) => navigate_now(&core, &url),
-                    None => quiet::hand_over(&owner.tab, Some(&core)),
-                }
+                crate::web_worlds::cleared(&platform, "", move |_| {
+                    quiet::quieten(&setting, &core, &owner);
+                    cdp::follow(&core, &owner.label);
+                    listen(&setting, &core, &owner);
+                    match going {
+                        Some(url) => navigate_now(&core, &url),
+                        None => quiet::hand_over(&owner.tab, Some(&core)),
+                    }
+                    let _ = telling.try_send(Ok(()));
+                });
             })
             .map_err(|error| format!("the page could not be set up: {error}"))
         });
-        let _ = answered.try_send(made);
+        if made.is_err() {
+            let _ = answered.try_send(made);
+        }
     })
     .map_err(|error| format!("the window could not be reached: {error}"))?;
 

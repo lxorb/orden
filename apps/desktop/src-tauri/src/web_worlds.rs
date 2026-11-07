@@ -158,9 +158,10 @@ mod engine {
         unsafe_code,
         reason = "a page's scripts and settings are WebView2's own, reached through its COM interfaces"
     )]
-    pub fn cleared(webview: &PlatformWebview, scripts: &str) -> Cleared {
+    pub fn cleared(webview: &PlatformWebview, scripts: &str, then: impl FnOnce(Cleared) + 'static) {
         let Ok(core) = (unsafe { webview.controller().CoreWebView2() }) else {
-            return Cleared::default();
+            then(Cleared::default());
+            return;
         };
 
         unsafe {
@@ -170,14 +171,15 @@ mod engine {
             }
         }
 
-        let taken = added(&core, MARK)
-            .as_deref()
-            .and_then(taken_back)
-            .map(|every| {
+        let scripts = scripts.to_string();
+        let sweeping = core.clone();
+        added(&core, MARK, move |last| {
+            let taken = last.as_deref().and_then(taken_back).map(|every| {
                 let mut count = 0usize;
                 for id in every {
                     if unsafe {
-                        core.RemoveScriptToExecuteOnDocumentCreated(&HSTRING::from(id.to_string()))
+                        sweeping
+                            .RemoveScriptToExecuteOnDocumentCreated(&HSTRING::from(id.to_string()))
                     }
                     .is_ok()
                     {
@@ -186,83 +188,111 @@ mod engine {
                 }
                 count
             });
-
-        let ours = scripts.is_empty() || registered(&core, scripts);
-        let frames = scripts.is_empty() || following(&core, scripts);
-        if !scripts.is_empty() {
-            let _ = added(&core, crate::web_opens::PAGE_SCRIPT);
-        }
-        Cleared {
-            swept: taken.is_some(),
-            counted: taken,
-            ours,
-            frames,
-        }
+            let done = move |ours: bool, frames: bool| {
+                then(Cleared {
+                    swept: taken.is_some(),
+                    counted: taken,
+                    ours,
+                    frames,
+                });
+            };
+            if scripts.is_empty() {
+                done(true, true);
+                return;
+            }
+            let following_on = sweeping.clone();
+            let followed = scripts.clone();
+            registered(&sweeping, &scripts, move |ours| {
+                let adding_to = following_on.clone();
+                following(&following_on, &followed, move |frames| {
+                    added(&adding_to, crate::web_opens::PAGE_SCRIPT, move |_| {
+                        done(ours, frames);
+                    });
+                });
+            });
+        });
     }
 
     #[allow(
         unsafe_code,
         reason = "the page is sent to the site through WebView2's own COM interface"
     )]
-    pub fn sent(webview: &PlatformWebview, url: &str, scripts: &str) -> Cleared {
-        let done = cleared(webview, scripts);
-        unsafe {
-            if let Ok(core) = webview.controller().CoreWebView2() {
-                let _ = core.Navigate(&HSTRING::from(url));
+    pub fn sent(
+        webview: &PlatformWebview,
+        url: &str,
+        scripts: &str,
+        then: impl FnOnce(Cleared) + 'static,
+    ) {
+        let going = unsafe { webview.controller().CoreWebView2() }.ok();
+        let url = HSTRING::from(url);
+        cleared(webview, scripts, move |done| {
+            if let Some(core) = going {
+                unsafe {
+                    let _ = core.Navigate(&url);
+                }
             }
-        }
-        done
+            then(done);
+        });
     }
 
     #[allow(
         unsafe_code,
         reason = "a script is registered through WebView2's own COM interface"
     )]
-    fn added(core: &ICoreWebView2, script: &str) -> Option<String> {
-        let said = Rc::new(RefCell::new(String::new()));
-        let kept = Rc::clone(&said);
-        let asked = core.clone();
-        let js = HSTRING::from(script);
-
-        AddScriptToExecuteOnDocumentCreatedCompletedHandler::wait_for_async_operation(
-            Box::new(move |handler| unsafe {
-                asked
-                    .AddScriptToExecuteOnDocumentCreated(&js, &handler)
-                    .map_err(Into::into)
-            }),
-            Box::new(move |error, id| {
-                error?;
-                *kept.borrow_mut() = id;
+    fn added(core: &ICoreWebView2, script: &str, then: impl FnOnce(Option<String>) + 'static) {
+        let then = Rc::new(RefCell::new(Some(then)));
+        let answering = Rc::clone(&then);
+        let handler = AddScriptToExecuteOnDocumentCreatedCompletedHandler::create(Box::new(
+            move |result, id| {
+                let taken = answering.borrow_mut().take();
+                if let Some(then) = taken {
+                    then(result.ok().map(|()| id).filter(|id| !id.is_empty()));
+                }
                 Ok(())
-            }),
-        )
-        .ok()?;
+            },
+        ));
 
-        let id = said.borrow().clone();
-        (!id.is_empty()).then_some(id)
+        let sent =
+            unsafe { core.AddScriptToExecuteOnDocumentCreated(&HSTRING::from(script), &handler) };
+        if sent.is_err() {
+            let taken = then.borrow_mut().take();
+            if let Some(then) = taken {
+                then(None);
+            }
+        }
     }
 
-    fn registered(core: &ICoreWebView2, scripts: &str) -> bool {
-        waited(core, "Page.enable", "{}")
-            && waited(
-                core,
+    fn registered(core: &ICoreWebView2, scripts: &str, then: impl FnOnce(bool) + 'static) {
+        let adding = core.clone();
+        let source = registering(scripts);
+        call(core, "Page.enable", "{}", move |enabled| {
+            if enabled.is_none() {
+                then(false);
+                return;
+            }
+            call(
+                &adding,
                 "Page.addScriptToEvaluateOnNewDocument",
-                &registering(scripts),
-            )
+                &source,
+                move |added| then(added.is_some()),
+            );
+        });
     }
 
     #[allow(
         unsafe_code,
         reason = "the DevTools protocol and its events are WebView2's own, reached through its COM interfaces"
     )]
-    fn following(core: &ICoreWebView2, scripts: &str) -> bool {
+    fn following(core: &ICoreWebView2, scripts: &str, then: impl FnOnce(bool) + 'static) {
         let Ok(sessions) = core.cast::<ICoreWebView2_11>() else {
-            return false;
+            then(false);
+            return;
         };
         let Ok(receiver) = (unsafe {
             core.GetDevToolsProtocolEventReceiver(&HSTRING::from("Target.attachedToTarget"))
         }) else {
-            return false;
+            then(false);
+            return;
         };
 
         let scripts = scripts.to_string();
@@ -301,27 +331,16 @@ mod engine {
         let mut token = 0i64;
         let listening =
             unsafe { receiver.add_DevToolsProtocolEventReceived(&handler, &raw mut token) };
-        listening.is_ok() && waited(core, "Target.setAutoAttach", &attaching(IN_THE_PAGE))
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "the DevTools protocol is WebView2's own, reached through its COM interface"
-    )]
-    fn waited(core: &ICoreWebView2, method: &str, params: &str) -> bool {
-        let asked = core.clone();
-        let method = HSTRING::from(method);
-        let params = HSTRING::from(params);
-
-        CallDevToolsProtocolMethodCompletedHandler::wait_for_async_operation(
-            Box::new(move |handler| unsafe {
-                asked
-                    .CallDevToolsProtocolMethod(&method, &params, &handler)
-                    .map_err(Into::into)
-            }),
-            Box::new(|error, _answer| error),
-        )
-        .is_ok()
+        if listening.is_err() {
+            then(false);
+            return;
+        }
+        call(
+            core,
+            "Target.setAutoAttach",
+            &attaching(IN_THE_PAGE),
+            move |said| then(said.is_some()),
+        );
     }
 
     #[allow(
@@ -558,11 +577,20 @@ mod engine {
 
     use super::{Cleared, CHANNEL, WORLD};
 
+    pub fn sent(
+        webview: &PlatformWebview,
+        url: &str,
+        scripts: &str,
+        then: impl FnOnce(Cleared) + 'static,
+    ) {
+        then(swept(webview, url, scripts));
+    }
+
     #[allow(
         unsafe_code,
         reason = "a WKWebView's user scripts are reached through the Objective-C runtime"
     )]
-    pub fn sent(webview: &PlatformWebview, url: &str, scripts: &str) -> Cleared {
+    fn swept(webview: &PlatformWebview, url: &str, scripts: &str) -> Cleared {
         let Some(mtm) = MainThreadMarker::new() else {
             return Cleared::default();
         };
@@ -625,7 +653,16 @@ mod engine {
 
     use super::{Cleared, CHANNEL, WORLD};
 
-    pub fn sent(webview: &PlatformWebview, url: &str, scripts: &str) -> Cleared {
+    pub fn sent(
+        webview: &PlatformWebview,
+        url: &str,
+        scripts: &str,
+        then: impl FnOnce(Cleared) + 'static,
+    ) {
+        then(swept(webview, url, scripts));
+    }
+
+    fn swept(webview: &PlatformWebview, url: &str, scripts: &str) -> Cleared {
         let view = webview.inner();
         let Some(content) = view.user_content_manager() else {
             view.load_uri(url);

@@ -631,8 +631,9 @@ fn popup(
         let closing = window.clone();
         let _ = crate::engine::with_platform!(window, move |platform| {
             crate::web_opens::closing(&platform, closing);
-            let cleared = crate::web_worlds::cleared(&platform, "");
-            crate::trace::mark(&format!("web popup: {}", cleared.said()));
+            crate::web_worlds::cleared(&platform, "", |cleared| {
+                crate::trace::mark(&format!("web popup: {}", cleared.said()));
+            });
         });
     }
     Some(window)
@@ -1162,8 +1163,9 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
 
             #[cfg(not(feature = "cef"))]
             if let Some((address, scripts)) = onward {
-                let cleared = crate::web_worlds::sent(&platform, address.as_str(), &scripts);
-                crate::trace::mark(&format!("web tab: {}", cleared.said()));
+                crate::web_worlds::sent(&platform, address.as_str(), &scripts, |cleared| {
+                    crate::trace::mark(&format!("web tab: {}", cleared.said()));
+                });
             }
         });
     });
