@@ -275,6 +275,23 @@ def joined(port, email, password):
         fail("the save bubble stayed after Save")
     return True
 
+def pass_turned_on():
+    switch = "document.querySelector('[role=switch][aria-label=\"Password manager\"]')"
+    run("(nib.settings.show('general'), 'shown')")
+    if not until(lambda: app(f"!!{switch}?.getClientRects().length"), 20):
+        fail("Settings shows no Password manager switch")
+        shot("no-switch")
+        return False
+    if app(f"{switch}.getAttribute('aria-checked')") != "true":
+        app(f"({switch}.click(), true)")
+    if not until(lambda: app(f"{switch}?.getAttribute('aria-checked') === 'true'"), 10):
+        fail("the Password manager switch did not turn on")
+        shot("switch-off")
+        return False
+    run("(nib.settings.open = false, 'shut')")
+    time.sleep(0.5)
+    return True
+
 def pass_set_up():
     view = {
         "scope": {"kind": "all"},
@@ -527,7 +544,7 @@ for port in PORTS.values():
 if not until(lambda: run("1 + 1") == 2, 60, 0.5):
     raise SystemExit("::error::pass: the app never answered")
 time.sleep(2)
-if pass_set_up():
+if pass_turned_on() and pass_set_up():
     marked_fill()
     three_pages()
     wrong_password()
