@@ -18,9 +18,6 @@ interface ImportMetaEnv {
   readonly VITE_ORDEN_WEB?: string
   readonly VITE_ORDEN_LEGACY_WEB?: string
   readonly VITE_ORDEN_CHANNEL?: string
-  readonly VITE_ORDEN_GOOGLE_CLIENT_ID?: string
-  readonly VITE_ORDEN_GOOGLE_CLIENT_SECRET?: string
-  readonly VITE_ORDEN_MICROSOFT_CLIENT_ID?: string
   readonly VITE_ORDEN_TELEGRAM_API_ID?: string
   readonly VITE_ORDEN_TELEGRAM_API_HASH?: string
   readonly VITE_ORDEN_SLACK_CLIENT_ID?: string

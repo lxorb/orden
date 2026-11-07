@@ -3673,4 +3673,22 @@ export const ml: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli ഈ കമ്പ്യൂട്ടറിൽ പ്രവർത്തിക്കില്ല',
   'The download is not the file it should be; nothing was kept':
     'ഡൗൺലോഡ് പ്രതീക്ഷിച്ച ഫയൽ അല്ല; ഒന്നും സൂക്ഷിച്ചില്ല',
+  'OAuth client ID': 'OAuth ക്ലയന്റ് ID',
+  'OAuth client secret': 'OAuth ക്ലയന്റ് സീക്രട്ട്',
+  'How to make your own Google client': 'സ്വന്തം Google ക്ലയന്റ് എങ്ങനെ ഉണ്ടാക്കാം',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud-ൽ ഒരു പ്രോജക്റ്റ് സൃഷ്ടിക്കുക, തുടർന്ന് സമ്മത സ്ക്രീൻ External ആയി സജ്ജമാക്കി നിങ്ങളുടെ വിലാസം ടെസ്റ്റ് ഉപയോക്താവായി ചേർക്കുക',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients-ന് കീഴിൽ Desktop app തരത്തിലുള്ള ഒരു ക്ലയന്റ് സൃഷ്ടിച്ച് അതിന്റെ ID-യും സീക്രട്ടും ഇവിടെ ഒട്ടിക്കുക',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'ടെസ്റ്റിംഗിലുള്ള ആപ്പുകൾ 7 ദിവസത്തിന് ശേഷം സൈൻ ഔട്ട് ആകും; സൈൻ ഇൻ ആയി തുടരാൻ ആപ്പ് In production ആക്കുക',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'എളുപ്പവഴി: പകരം നിങ്ങളുടെ Google അക്കൗണ്ടിലെ ആപ്പ് പാസ്‌വേഡ് ഉപയോഗിച്ച് ഇമെയിൽ ബന്ധിപ്പിക്കുക',
+  'How to make your own Microsoft app': 'സ്വന്തം Microsoft ആപ്പ് എങ്ങനെ ഉണ്ടാക്കാം',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra-യിൽ ഏത് ഡയറക്ടറിയിലെയും അക്കൗണ്ടുകൾക്കും വ്യക്തിഗത Microsoft അക്കൗണ്ടുകൾക്കുമായി ഒരു ആപ്പ് രജിസ്റ്റർ ചെയ്യുക',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication-ന് കീഴിൽ റീഡയറക്ട് URI http://localhost ഉപയോഗിച്ച് Mobile and desktop applications ചേർക്കുകയും പബ്ലിക് ക്ലയന്റ് ഫ്ലോകൾ അനുവദിക്കുകയും ചെയ്യുക',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions-ന് കീഴിൽ ഡെലിഗേറ്റഡ് അനുമതികൾ IMAP.AccessAsUser.All, SMTP.Send, offline_access എന്നിവ ചേർക്കുക, തുടർന്ന് Application (client) ID ഇവിടെ ഒട്ടിക്കുക',
 }

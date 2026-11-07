@@ -3665,4 +3665,22 @@ export const sw: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli haifanyi kazi kwenye kompyuta hii',
   'The download is not the file it should be; nothing was kept':
     'Kilichopakuliwa si faili lililotarajiwa; hakuna kilichohifadhiwa',
+  'OAuth client ID': 'Kitambulisho cha mteja cha OAuth',
+  'OAuth client secret': 'Siri ya mteja ya OAuth',
+  'How to make your own Google client': 'Jinsi ya kutengeneza mteja wako wa Google',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Katika Google Cloud, unda mradi, kisha weka skrini ya idhini kama External na uongeze anwani yako kama mtumiaji wa majaribio',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Chini ya Clients, unda mteja wa aina ya Desktop app na ubandike kitambulisho na siri yake hapa',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Programu za majaribio hutolewa baada ya siku 7; weka programu kuwa In production ili ubaki umeingia',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Rahisi zaidi: badala yake unganisha Barua pepe kwa nenosiri la programu kutoka kwenye akaunti yako ya Google',
+  'How to make your own Microsoft app': 'Jinsi ya kutengeneza programu yako ya Microsoft',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Katika Microsoft Entra, sajili programu kwa akaunti katika saraka yoyote na akaunti binafsi za Microsoft',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Chini ya Authentication, ongeza Mobile and desktop applications yenye URI ya kuelekeza http://localhost na uruhusu mitiririko ya mteja wa umma',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'Chini ya API permissions, ongeza ruhusa zilizokabidhiwa IMAP.AccessAsUser.All, SMTP.Send na offline_access, kisha ubandike Application (client) ID hapa',
 }

@@ -3558,4 +3558,22 @@ export const ms: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli tidak berjalan pada komputer ini',
   'The download is not the file it should be; nothing was kept':
     'Muat turun bukan fail yang dijangka; tiada apa-apa disimpan',
+  'OAuth client ID': 'ID klien OAuth',
+  'OAuth client secret': 'Rahsia klien OAuth',
+  'How to make your own Google client': 'Cara membuat klien Google anda sendiri',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Dalam Google Cloud, cipta projek, kemudian sediakan skrin persetujuan sebagai External dan tambah alamat anda sebagai pengguna ujian',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Di bawah Clients, cipta klien jenis Desktop app dan tampal ID serta rahsianya di sini',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Apl dalam ujian dilog keluar selepas 7 hari; tetapkan apl kepada In production untuk kekal log masuk',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Lebih mudah: sambung E-mel dengan kata laluan apl daripada akaun Google anda',
+  'How to make your own Microsoft app': 'Cara membuat apl Microsoft anda sendiri',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Dalam Microsoft Entra, daftarkan apl untuk akaun dalam mana-mana direktori dan akaun Microsoft peribadi',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Di bawah Authentication, tambah Mobile and desktop applications dengan URI ubah hala http://localhost dan benarkan aliran klien awam',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'Di bawah API permissions, tambah kebenaran diwakilkan IMAP.AccessAsUser.All, SMTP.Send dan offline_access, kemudian tampal Application (client) ID di sini',
 }

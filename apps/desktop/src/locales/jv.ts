@@ -3541,4 +3541,22 @@ export const jv: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli ora mlaku ing komputer iki',
   'The download is not the file it should be; nothing was kept':
     'Undhuhan dudu berkas sing dikarepake; ora ana sing disimpen',
+  'OAuth client ID': 'ID klien OAuth',
+  'OAuth client secret': 'Rahasia klien OAuth',
+  'How to make your own Google client': 'Carane nggawe klien Google dhewe',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Ing Google Cloud, gawe proyek, banjur atur layar persetujuan dadi External lan tambahna alamatmu minangka pangguna uji',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Ing Clients, gawe klien jinis Desktop app lan tempelna ID lan rahasiane ing kene',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Aplikasi sing isih diuji metu sawise 7 dina; setel aplikasi dadi In production supaya tetep mlebu',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Luwih gampang: sambungaké Email nganggo tembung sandhi aplikasi saka akun Google-mu',
+  'How to make your own Microsoft app': 'Carane nggawe aplikasi Microsoft dhewe',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Ing Microsoft Entra, daftarna aplikasi kanggo akun ing direktori apa wae lan akun Microsoft pribadi',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Ing Authentication, tambahna Mobile and desktop applications nganggo URI pangalihan http://localhost lan idinana alur klien umum',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'Ing API permissions, tambahna idin delegasi IMAP.AccessAsUser.All, SMTP.Send lan offline_access, banjur tempelna Application (client) ID ing kene',
 }

@@ -3630,4 +3630,22 @@ export const pa: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਨਹੀਂ ਚੱਲਦਾ',
   'The download is not the file it should be; nothing was kept':
     'ਡਾਊਨਲੋਡ ਉਮੀਦ ਵਾਲੀ ਫ਼ਾਈਲ ਨਹੀਂ ਹੈ; ਕੁਝ ਵੀ ਨਹੀਂ ਰੱਖਿਆ ਗਿਆ',
+  'OAuth client ID': 'OAuth ਕਲਾਇੰਟ ID',
+  'OAuth client secret': 'OAuth ਕਲਾਇੰਟ ਸੀਕ੍ਰੇਟ',
+  'How to make your own Google client': 'ਆਪਣਾ Google ਕਲਾਇੰਟ ਕਿਵੇਂ ਬਣਾਉਣਾ ਹੈ',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud ਵਿੱਚ ਇੱਕ ਪ੍ਰੋਜੈਕਟ ਬਣਾਓ, ਫਿਰ ਸਹਿਮਤੀ ਸਕ੍ਰੀਨ ਨੂੰ External ਵਜੋਂ ਸੈੱਟ ਕਰੋ ਅਤੇ ਆਪਣਾ ਪਤਾ ਟੈਸਟ ਵਰਤੋਂਕਾਰ ਵਜੋਂ ਜੋੜੋ',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients ਹੇਠਾਂ Desktop app ਕਿਸਮ ਦਾ ਕਲਾਇੰਟ ਬਣਾਓ ਅਤੇ ਉਸਦਾ ID ਅਤੇ ਸੀਕ੍ਰੇਟ ਇੱਥੇ ਪੇਸਟ ਕਰੋ',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    "ਟੈਸਟਿੰਗ ਵਾਲੀਆਂ ਐਪਾਂ 7 ਦਿਨਾਂ ਬਾਅਦ ਸਾਈਨ ਆਊਟ ਹੋ ਜਾਂਦੀਆਂ ਹਨ; ਸਾਈਨ ਇਨ ਰਹਿਣ ਲਈ ਐਪ ਨੂੰ In production 'ਤੇ ਸੈੱਟ ਕਰੋ",
+  'Simpler: connect Email with an app password from your Google account instead':
+    'ਸੌਖਾ ਤਰੀਕਾ: ਇਸਦੀ ਬਜਾਏ ਆਪਣੇ Google ਖਾਤੇ ਦੇ ਐਪ ਪਾਸਵਰਡ ਨਾਲ ਈਮੇਲ ਕਨੈਕਟ ਕਰੋ',
+  'How to make your own Microsoft app': 'ਆਪਣੀ Microsoft ਐਪ ਕਿਵੇਂ ਬਣਾਉਣੀ ਹੈ',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra ਵਿੱਚ ਕਿਸੇ ਵੀ ਡਾਇਰੈਕਟਰੀ ਦੇ ਖਾਤਿਆਂ ਅਤੇ ਨਿੱਜੀ Microsoft ਖਾਤਿਆਂ ਲਈ ਇੱਕ ਐਪ ਰਜਿਸਟਰ ਕਰੋ',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication ਹੇਠਾਂ ਰੀਡਾਇਰੈਕਟ URI http://localhost ਨਾਲ Mobile and desktop applications ਜੋੜੋ ਅਤੇ ਪਬਲਿਕ ਕਲਾਇੰਟ ਫਲੋਆਂ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions ਹੇਠਾਂ ਡੈਲੀਗੇਟਿਡ ਇਜਾਜ਼ਤਾਂ IMAP.AccessAsUser.All, SMTP.Send ਅਤੇ offline_access ਜੋੜੋ, ਫਿਰ Application (client) ID ਇੱਥੇ ਪੇਸਟ ਕਰੋ',
 }

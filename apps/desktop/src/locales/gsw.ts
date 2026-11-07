@@ -3643,4 +3643,22 @@ export const gsw: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli lauft uf däm Computer nöd',
   'The download is not the file it should be; nothing was kept':
     'De Download isch nöd d erwarteti Datei; nüt isch bhalte worde',
+  'OAuth client ID': 'OAuth-Client-ID',
+  'OAuth client secret': 'OAuth-Client-Secret',
+  'How to make your own Google client': 'So machsch din eigete Google-Client',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Mach in Google Cloud es Projekt, richt dänn de Zuestimmigsbildschirm als External ii und füeg dini Adrässe als Testnutzer dezue',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Mach under Clients en Client vom Typ Desktop app und füeg sini ID und sis Secret da ii',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Apps im Testmodus wärded nach 7 Täg abgmäldet; stell d App uf In production, damit du agmäldet blibsch',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Eifacher: Verbind E-Mail stattdesse mit emene App-Passwort us dim Google-Konto',
+  'How to make your own Microsoft app': 'So machsch dini eigeti Microsoft-App',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Registrier in Microsoft Entra e App für Konte i beliebige Verzeichnis und persönlichi Microsoft-Konte',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Füeg under Authentication Mobile and desktop applications mit de Umleitigs-URI http://localhost dezue und erlaub öffentlichi Client-Flows',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'Füeg under API permissions di delegierte Berächtigunge IMAP.AccessAsUser.All, SMTP.Send und offline_access dezue und füeg dänn d Application (client) ID da ii',
 }

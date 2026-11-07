@@ -3808,4 +3808,22 @@ export const ar: Dictionary = {
   'signal-cli does not run on this computer': 'لا يعمل signal-cli على هذا الحاسوب',
   'The download is not the file it should be; nothing was kept':
     'الملف المنزّل ليس الملف المتوقع؛ لم يُحفظ شيء',
+  'OAuth client ID': 'معرّف عميل OAuth',
+  'OAuth client secret': 'سر عميل OAuth',
+  'How to make your own Google client': 'كيف تنشئ عميل Google خاصًا بك',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'في Google Cloud، أنشئ مشروعًا، ثم اضبط شاشة الموافقة على External وأضف عنوانك كمستخدم اختبار',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'ضمن Clients، أنشئ عميلًا من نوع Desktop app والصق معرّفه وسرّه هنا',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'يتم تسجيل الخروج من التطبيقات قيد الاختبار بعد 7 أيام؛ اضبط التطبيق على In production لتبقى مسجّل الدخول',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'أسهل: اربط البريد بكلمة مرور تطبيق من حساب Google الخاص بك بدلًا من ذلك',
+  'How to make your own Microsoft app': 'كيف تنشئ تطبيق Microsoft خاصًا بك',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'في Microsoft Entra، سجّل تطبيقًا للحسابات في أي دليل وحسابات Microsoft الشخصية',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'ضمن Authentication، أضف Mobile and desktop applications مع عنوان URI لإعادة التوجيه http://localhost واسمح بتدفقات العميل العام',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'ضمن API permissions، أضف الأذونات المفوّضة IMAP.AccessAsUser.All وSMTP.Send وoffline_access، ثم الصق Application (client) ID هنا',
 }

@@ -3617,4 +3617,22 @@ export const ps: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli په دې کمپیوټر نه چلیږي',
   'The download is not the file it should be; nothing was kept':
     'ښکته شوې دوتنه تمه شوې دوتنه نه ده؛ هیڅ ونه ساتل شو',
+  'OAuth client ID': 'د OAuth د پیرودونکي پېژندنه',
+  'OAuth client secret': 'د OAuth د پیرودونکي راز',
+  'How to make your own Google client': 'خپل Google پیرودونکی څنګه جوړ کړئ',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'په Google Cloud کې یوه پروژه جوړه کړئ، بیا د رضایت پاڼه د External په توګه وټاکئ او خپله پته د ازموینې کارن په توګه ورزیاته کړئ',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'د Clients لاندې د Desktop app ډول پیرودونکی جوړ کړئ او پېژندنه او راز یې دلته ولګوئ',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'د ازموینې اپونه له 7 ورځو وروسته وځي؛ د ننوتلي پاتې کېدو لپاره اپ In production ته واړوئ',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'اسانه لار: پر ځای یې برېښنالیک د خپل Google حساب له اپ پټنوم سره وصل کړئ',
+  'How to make your own Microsoft app': 'خپل Microsoft اپ څنګه جوړ کړئ',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'په Microsoft Entra کې د هر لارښود د حسابونو او شخصي Microsoft حسابونو لپاره یو اپ ثبت کړئ',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'د Authentication لاندې Mobile and desktop applications د بیا لېږلو URI http://localhost سره ورزیات کړئ او د عامه پیرودونکي بهیرونو ته اجازه ورکړئ',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'د API permissions لاندې سپارل شوې اجازې IMAP.AccessAsUser.All، SMTP.Send او offline_access ورزیاتې کړئ، بیا Application (client) ID دلته ولګوئ',
 }

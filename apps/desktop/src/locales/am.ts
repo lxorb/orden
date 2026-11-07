@@ -3548,4 +3548,22 @@ export const am: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli በዚህ ኮምፒውተር ላይ አይሠራም',
   'The download is not the file it should be; nothing was kept':
     'የወረደው የሚጠበቀው ፋይል አይደለም፤ ምንም አልተቀመጠም',
+  'OAuth client ID': 'የOAuth ደንበኛ መታወቂያ',
+  'OAuth client secret': 'የOAuth ደንበኛ ሚስጥር',
+  'How to make your own Google client': 'የራስዎን Google ደንበኛ እንዴት እንደሚሠሩ',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'በGoogle Cloud ውስጥ ፕሮጀክት ይፍጠሩ፣ ከዚያ የፈቃድ ማያ ገጹን እንደ External ያዘጋጁ እና አድራሻዎን እንደ የሙከራ ተጠቃሚ ያክሉ',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'በClients ስር የDesktop app ዓይነት ደንበኛ ይፍጠሩ እና መታወቂያውን እና ሚስጥሩን እዚህ ይለጥፉ',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'በሙከራ ላይ ያሉ መተግበሪያዎች ከ7 ቀናት በኋላ ይወጣሉ፤ እንደገቡ ለመቆየት መተግበሪያውን ወደ In production ያቀናብሩ',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'ቀላሉ መንገድ፦ በምትኩ ኢሜይልን ከGoogle መለያዎ በመተግበሪያ የይለፍ ቃል ያገናኙ',
+  'How to make your own Microsoft app': 'የራስዎን Microsoft መተግበሪያ እንዴት እንደሚሠሩ',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'በMicrosoft Entra ውስጥ በማንኛውም ማውጫ ላሉ መለያዎች እና ለግል Microsoft መለያዎች መተግበሪያ ያስመዝግቡ',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'በAuthentication ስር Mobile and desktop applications ን ከማዞሪያ URI http://localhost ጋር ያክሉ እና የሕዝብ ደንበኛ ፍሰቶችን ይፍቀዱ',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'በAPI permissions ስር የተወከሉ ፈቃዶችን IMAP.AccessAsUser.All፣ SMTP.Send እና offline_access ያክሉ፣ ከዚያ Application (client) ID ን እዚህ ይለጥፉ',
 }

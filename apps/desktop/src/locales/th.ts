@@ -3487,4 +3487,22 @@ export const th: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli ไม่ทำงานบนคอมพิวเตอร์เครื่องนี้',
   'The download is not the file it should be; nothing was kept':
     'ไฟล์ที่ดาวน์โหลดไม่ใช่ไฟล์ที่คาดไว้ จึงไม่ได้เก็บสิ่งใดไว้',
+  'OAuth client ID': 'รหัสไคลเอนต์ OAuth',
+  'OAuth client secret': 'ข้อมูลลับไคลเอนต์ OAuth',
+  'How to make your own Google client': 'วิธีสร้างไคลเอนต์ Google ของคุณเอง',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'ใน Google Cloud ให้สร้างโปรเจกต์ แล้วตั้งค่าหน้าจอขอความยินยอมเป็น External และเพิ่มที่อยู่ของคุณเป็นผู้ใช้ทดสอบ',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'ใน Clients ให้สร้างไคลเอนต์ประเภท Desktop app แล้ววางรหัสและข้อมูลลับของไคลเอนต์ที่นี่',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'แอปที่อยู่ในช่วงทดสอบจะออกจากระบบหลังผ่านไป 7 วัน ตั้งค่าแอปเป็น In production เพื่อให้อยู่ในระบบต่อไป',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'ง่ายกว่า: เชื่อมต่ออีเมลด้วยรหัสผ่านแอปจากบัญชี Google ของคุณแทน',
+  'How to make your own Microsoft app': 'วิธีสร้างแอป Microsoft ของคุณเอง',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'ใน Microsoft Entra ให้ลงทะเบียนแอปสำหรับบัญชีในไดเรกทอรีใดก็ได้และบัญชี Microsoft ส่วนตัว',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'ใน Authentication ให้เพิ่ม Mobile and desktop applications ด้วย URI เปลี่ยนเส้นทาง http://localhost และอนุญาตโฟลว์ไคลเอนต์สาธารณะ',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'ใน API permissions ให้เพิ่มสิทธิ์แบบมอบหมาย IMAP.AccessAsUser.All, SMTP.Send และ offline_access แล้ววาง Application (client) ID ที่นี่',
 }

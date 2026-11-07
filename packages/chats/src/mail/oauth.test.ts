@@ -106,7 +106,7 @@ describe('mail signed in with OAuth, end to end against a server', () => {
   let service: OAuthService
   let host: Host
 
-  const build = { googleClientId: 'orden-desktop', googleClientSecret: 'not-really-secret' }
+  const own = { clientId: 'orden-desktop', clientSecret: 'not-really-secret' }
 
   beforeEach(async () => {
     mail = new FakeMail()
@@ -124,7 +124,7 @@ describe('mail signed in with OAuth, end to end against a server', () => {
         'At noon?',
       ].join('\n'),
     )
-    auth = new FakeOAuth(mail, { id: build.googleClientId, secret: build.googleClientSecret })
+    auth = new FakeOAuth(mail, { id: own.clientId, secret: own.clientSecret })
     clock = Date.UTC(2026, 10, 7, 12)
     secrets = new Map()
     answer = (asked) => ({
@@ -154,7 +154,6 @@ describe('mail signed in with OAuth, end to end against a server', () => {
         url === service.token
           ? auth.post(form)
           : Promise.resolve({ status: 404, body: 'not here' }),
-      build,
     }
   })
 
@@ -166,7 +165,7 @@ describe('mail signed in with OAuth, end to end against a server', () => {
 
   test('signs in in the browser with PKCE, and keeps only the lasting token in the vault', async () => {
     const provider = oauthMailProvider(service)
-    const connection = await provider.connect({ name: 'Emil' }, host)
+    const connection = await provider.connect({ ...own, name: 'Emil' }, host)
 
     const asked = auth.asked[0]
     expect(`${asked?.origin ?? ''}${asked?.pathname ?? ''}`).toBe(
@@ -208,20 +207,20 @@ describe('mail signed in with OAuth, end to end against a server', () => {
 
   test('an answer to another sign-in, or a refusal, is not taken', async () => {
     answer = () => ({ code: 'code-1', state: 'someone else' })
-    await expect(oauthMailProvider(service).connect({}, host)).rejects.toThrow(/not for this/)
+    await expect(oauthMailProvider(service).connect(own, host)).rejects.toThrow(/not for this/)
     answer = (asked) => ({
       error: 'access_denied',
       error_description: 'The user said no',
       state: asked.searchParams.get('state') ?? '',
     })
-    await expect(oauthMailProvider(service).connect({}, host)).rejects.toThrow(/said no/)
+    await expect(oauthMailProvider(service).connect(own, host)).rejects.toThrow(/said no/)
     expect(secrets.size).toBe(0)
     expect(auth.forms).toHaveLength(0)
   })
 
   test('a token about to run out is renewed before it is used', async () => {
     auth.rotate = true
-    const connection = await oauthMailProvider(service).connect({}, host)
+    const connection = await oauthMailProvider(service).connect(own, host)
     clock += 3600_000 - 30_000
     await connection.send('lunch@example.org', { text: 'Later' })
     expect(auth.forms.map((one) => one.grant_type)).toEqual(['authorization_code', 'refresh_token'])
@@ -233,7 +232,7 @@ describe('mail signed in with OAuth, end to end against a server', () => {
   })
 
   test('a token the server no longer takes is renewed once, after its refusal is answered', async () => {
-    const connection = await oauthMailProvider(service).connect({}, host)
+    const connection = await oauthMailProvider(service).connect(own, host)
     mail.tokens.clear()
     await connection.send('lunch@example.org', { text: 'Again' })
     expect(mail.sent).toHaveLength(1)
@@ -253,25 +252,29 @@ describe('mail signed in with OAuth, end to end against a server', () => {
     expect(mail.bearers.at(-1)).toBe('access-3')
 
     mail.sasl = false
-    const plain = await oauthMailProvider(service).connect({ address: ADDRESS }, host)
+    const plain = await oauthMailProvider(service).connect({ ...own, address: ADDRESS }, host)
     expect(mail.bearers.at(-1)).toBe('access-4')
     await plain.close()
   })
 
   test('opened again later, it signs in with the kept token and no browser', async () => {
-    const first = await oauthMailProvider(service).connect({}, host)
+    const first = await oauthMailProvider(service).connect(own, host)
     await first.close()
     const opened = auth.asked.length
-    const again = await oauthMailProvider(service).connect({ address: ADDRESS }, host)
+    const again = await oauthMailProvider(service).connect({ ...own, address: ADDRESS }, host)
     expect(auth.asked).toHaveLength(opened)
     expect(again.account.id).toBe(ADDRESS)
-    expect(auth.forms.at(-1)).toMatchObject({ grant_type: 'refresh_token' })
+    expect(auth.forms.at(-1)).toMatchObject({
+      grant_type: 'refresh_token',
+      client_id: 'orden-desktop',
+      client_secret: 'not-really-secret',
+    })
     expect(mail.bearers.at(-1)).toBe('access-2')
     await again.close()
   })
 
   test('a lasting token that is refused signs out, forgets it, and asks to connect again', async () => {
-    const connection = await oauthMailProvider(service).connect({}, host)
+    const connection = await oauthMailProvider(service).connect(own, host)
     const heard: ProviderEvent[] = []
     let out: () => void = () => undefined
     const signedOut = new Promise<void>((resolve) => (out = resolve))
@@ -290,22 +293,43 @@ describe('mail signed in with OAuth, end to end against a server', () => {
     stop()
     await connection.close()
 
-    await expect(oauthMailProvider(service).connect({ address: ADDRESS }, host)).rejects.toThrow(
-      /connect the account again/,
+    await expect(
+      oauthMailProvider(service).connect({ ...own, address: ADDRESS }, host),
+    ).rejects.toThrow(/connect the account again/)
+  })
+
+  test('without your own client it cannot connect, says why, and opens no browser', async () => {
+    const provider = oauthMailProvider(service)
+    await expect(provider.connect({ name: 'Emil' }, host)).rejects.toThrow(
+      'Gmail needs the client ID of your own OAuth client',
     )
+    await expect(provider.connect({ clientId: '  ' }, host)).rejects.toThrow(/client ID/)
+    await expect(provider.connect({ clientId: own.clientId }, host)).rejects.toThrow(
+      'Gmail needs the client secret of your own OAuth client',
+    )
+    await expect(provider.connect({ address: ADDRESS }, host)).rejects.toThrow(/client ID/)
+    expect(auth.asked).toEqual([])
+    expect(secrets.size).toBe(0)
+  })
+
+  test('a client the service does not know is refused, and nothing is kept', async () => {
+    await expect(
+      oauthMailProvider(service).connect({ ...own, clientSecret: 'wrong' }, host),
+    ).rejects.toThrow(/did not sign in/)
+    expect(secrets.size).toBe(0)
   })
 
   test('a mailbox that refuses after signing in keeps nothing in the vault', async () => {
     mail.bearer = false
-    await expect(oauthMailProvider(service).connect({}, host)).rejects.toThrow()
+    await expect(oauthMailProvider(service).connect(own, host)).rejects.toThrow()
     expect(secrets.size).toBe(0)
   })
 
   test('an address the sign-in does not name is not guessed', async () => {
     auth.claims = { sub: '123' }
-    await expect(oauthMailProvider(service).connect({}, host)).rejects.toThrow(/which address/)
+    await expect(oauthMailProvider(service).connect(own, host)).rejects.toThrow(/which address/)
     auth.claims = { preferred_username: ADDRESS }
-    const connection = await oauthMailProvider(service).connect({}, host)
+    const connection = await oauthMailProvider(service).connect(own, host)
     expect(connection.account.id).toBe(ADDRESS)
     await connection.close()
   })
@@ -319,8 +343,7 @@ describe('mail signed in with OAuth, end to end against a server', () => {
     }
     service = microsoft
     auth = new FakeOAuth(mail, { id: 'orden-entra' })
-    host = { ...host, build: { microsoftClientId: 'orden-entra' } }
-    const connection = await oauthMailProvider(microsoft).connect({}, host)
+    const connection = await oauthMailProvider(microsoft).connect({ clientId: 'orden-entra' }, host)
     const asked = auth.asked[0]
     expect(`${asked?.origin ?? ''}${asked?.pathname ?? ''}`).toBe(
       'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
@@ -349,22 +372,36 @@ describe('the OAuth mail services', () => {
     authorize: () => Promise.resolve({}),
   }
 
-  test('are there only where this build has a client and the app can sign in', () => {
-    expect(gmailProvider.available(host)).toBe(false)
-    expect(gmailProvider.available({ ...host, build: { googleClientId: 'x' } })).toBe(true)
-    expect(microsoftProvider.available({ ...host, build: { googleClientId: 'x' } })).toBe(false)
-    expect(microsoftProvider.available({ ...host, build: { microsoftClientId: 'x' } })).toBe(true)
-    const noBrowser: Host = { ...host, build: { microsoftClientId: 'x' } }
+  test('are there wherever the app can sign in, with no client built in', () => {
+    expect(gmailProvider.available(host)).toBe(true)
+    expect(microsoftProvider.available(host)).toBe(true)
+    const noBrowser: Host = { ...host }
     delete noBrowser.authorize
+    expect(gmailProvider.available(noBrowser)).toBe(false)
     expect(microsoftProvider.available(noBrowser)).toBe(false)
   })
 
-  test('ask for nothing but a name, and say where their mail lives', () => {
+  test('ask for your own client, its secret only where the service needs one, and say how to make it', () => {
     expect(gmailProvider).toMatchObject({ id: 'gmail', name: 'Gmail', kept: ['refresh'] })
     expect(microsoftProvider).toMatchObject({ id: 'microsoft', name: 'Microsoft 365' })
-    expect(gmailProvider.fields).toEqual([
-      { key: 'name', label: 'Your name', kind: 'text', optional: true },
+    expect(gmailProvider.fields.map(({ help, ...field }) => ({ ...field, help: !!help }))).toEqual([
+      { key: 'clientId', label: 'OAuth client ID', kind: 'text', help: true },
+      {
+        key: 'clientSecret',
+        label: 'OAuth client secret',
+        kind: 'password',
+        secret: true,
+        help: false,
+      },
+      { key: 'name', label: 'Your name', kind: 'text', optional: true, help: false },
     ])
+    expect(microsoftProvider.fields.map((field) => [field.key, !!field.secret])).toEqual([
+      ['clientId', false],
+      ['name', false],
+    ])
+    expect(gmailProvider.fields[0]?.help?.url).toBe('https://console.cloud.google.com/auth/clients')
+    expect(microsoftProvider.fields[0]?.help?.url).toMatch(/^https:\/\/entra\.microsoft\.com\//)
+    expect(microsoftProvider.fields[0]?.help?.steps?.join(' ')).toContain('http://localhost')
     expect([GOOGLE.imap, GOOGLE.smtp]).toEqual([
       { host: 'imap.gmail.com', port: 993, tls: 'tls' },
       { host: 'smtp.gmail.com', port: 465, tls: 'tls' },
@@ -379,7 +416,6 @@ describe('the OAuth mail services', () => {
     let seen: { url: string; init: RequestInit | undefined } | null = null
     const posting: Host = {
       ...host,
-      build: { googleClientId: 'id' },
       fetch: (url, init) => {
         seen = { url: url instanceof Request ? url.url : url.toString(), init }
         return Promise.resolve(
@@ -391,7 +427,9 @@ describe('the OAuth mail services', () => {
         return Promise.resolve({ code: 'a b', state })
       },
     }
-    await expect(gmailProvider.connect({}, posting)).rejects.toThrow(/invalid_grant/)
+    await expect(
+      gmailProvider.connect({ clientId: 'id', clientSecret: 'shh' }, posting),
+    ).rejects.toThrow(/invalid_grant/)
     const sent = seen as { url: string; init: RequestInit | undefined } | null
     expect(sent?.url).toBe('https://oauth2.googleapis.com/token')
     expect(sent?.init?.method).toBe('POST')

@@ -3637,4 +3637,22 @@ export const te: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli ఈ కంప్యూటర్‌లో పనిచేయదు',
   'The download is not the file it should be; nothing was kept':
     'డౌన్‌లోడ్ ఆశించిన ఫైల్ కాదు; ఏదీ ఉంచలేదు',
+  'OAuth client ID': 'OAuth క్లయింట్ ID',
+  'OAuth client secret': 'OAuth క్లయింట్ సీక్రెట్',
+  'How to make your own Google client': 'మీ సొంత Google క్లయింట్‌ను ఎలా తయారు చేయాలి',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud‌లో ఒక ప్రాజెక్ట్ సృష్టించి, ఆపై సమ్మతి స్క్రీన్‌ను External గా సెట్ చేసి, మీ చిరునామాను టెస్ట్ యూజర్‌గా జోడించండి',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients కింద Desktop app రకం క్లయింట్‌ను సృష్టించి, దాని ID మరియు సీక్రెట్‌ను ఇక్కడ పేస్ట్ చేయండి',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'టెస్టింగ్‌లో ఉన్న యాప్‌లు 7 రోజుల తర్వాత సైన్ అవుట్ అవుతాయి; సైన్ ఇన్‌లో ఉండటానికి యాప్‌ను In production కు సెట్ చేయండి',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'సులభమైన మార్గం: బదులుగా మీ Google ఖాతాలోని యాప్ పాస్‌వర్డ్‌తో ఇమెయిల్‌ను కనెక్ట్ చేయండి',
+  'How to make your own Microsoft app': 'మీ సొంత Microsoft యాప్‌ను ఎలా తయారు చేయాలి',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra‌లో ఏ డైరెక్టరీలోని ఖాతాలకైనా మరియు వ్యక్తిగత Microsoft ఖాతాలకు ఒక యాప్‌ను నమోదు చేయండి',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication కింద రీడైరెక్ట్ URI http://localhost తో Mobile and desktop applications జోడించి, పబ్లిక్ క్లయింట్ ఫ్లోలను అనుమతించండి',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions కింద డెలిగేటెడ్ అనుమతులు IMAP.AccessAsUser.All, SMTP.Send మరియు offline_access జోడించి, ఆపై Application (client) ID ని ఇక్కడ పేస్ట్ చేయండి',
 }

@@ -3444,4 +3444,22 @@ export const zhHans: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli 无法在此电脑上运行',
   'The download is not the file it should be; nothing was kept':
     '下载的不是预期的文件；未保留任何内容',
+  'OAuth client ID': 'OAuth 客户端 ID',
+  'OAuth client secret': 'OAuth 客户端密钥',
+  'How to make your own Google client': '如何创建自己的 Google 客户端',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    '在 Google Cloud 中创建项目，然后将同意屏幕设置为 External，并将你的地址添加为测试用户',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    '在 Clients 下创建 Desktop app 类型的客户端，并将其 ID 和密钥粘贴到这里',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    '测试中的应用会在 7 天后退出登录；将应用设为 In production 即可保持登录',
+  'Simpler: connect Email with an app password from your Google account instead':
+    '更简单：改用 Google 账号中的应用专用密码连接邮件',
+  'How to make your own Microsoft app': '如何创建自己的 Microsoft 应用',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    '在 Microsoft Entra 中为任何目录中的账户和个人 Microsoft 账户注册应用',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    '在 Authentication 下添加 Mobile and desktop applications，重定向 URI 为 http://localhost，并允许公共客户端流',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    '在 API permissions 下添加委托权限 IMAP.AccessAsUser.All、SMTP.Send 和 offline_access，然后将 Application (client) ID 粘贴到这里',
 }

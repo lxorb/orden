@@ -1,4 +1,4 @@
-import type { ChatProvider, Host, Posted, SocketAsk } from '../provider'
+import type { ChatProvider, ConnectField, ConnectHelp, Host, Posted, SocketAsk } from '../provider'
 import { secretName } from '../provider'
 import { fromBase64, toBase64 } from './bytes'
 import { type Bearer, linkedMail, SignedOut } from './provider'
@@ -12,8 +12,8 @@ export interface OAuthService {
   authorize: string
   token: string
   scope: string
-  client: string
-  secret?: string
+  secret: boolean
+  help: ConnectHelp
   renewScope?: boolean
   extra: Readonly<Record<string, string>>
   imap: SocketAsk
@@ -28,8 +28,17 @@ export const GOOGLE: OAuthService = {
   authorize: 'https://accounts.google.com/o/oauth2/v2/auth',
   token: 'https://oauth2.googleapis.com/token',
   scope: 'https://mail.google.com/ openid email',
-  client: 'googleClientId',
-  secret: 'googleClientSecret',
+  secret: true,
+  help: {
+    url: 'https://console.cloud.google.com/auth/clients',
+    label: 'How to make your own Google client',
+    steps: [
+      'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user',
+      'Under Clients, create a client of type Desktop app and paste its ID and secret here',
+      'Testing apps are signed out after 7 days; set the app to In production to stay signed in',
+      'Simpler: connect Email with an app password from your Google account instead',
+    ],
+  },
   extra: { access_type: 'offline', prompt: 'consent' },
   imap: { host: 'imap.gmail.com', port: 993, tls: 'tls' },
   smtp: { host: 'smtp.gmail.com', port: 465, tls: 'tls' },
@@ -44,7 +53,16 @@ export const MICROSOFT: OAuthService = {
   token: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   scope:
     'https://outlook.office.com/IMAP.AccessAsUser.All https://outlook.office.com/SMTP.Send offline_access openid email',
-  client: 'microsoftClientId',
+  secret: false,
+  help: {
+    url: 'https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade',
+    label: 'How to make your own Microsoft app',
+    steps: [
+      'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts',
+      'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows',
+      'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here',
+    ],
+  },
   renewScope: true,
   extra: { prompt: 'select_account' },
   imap: { host: 'outlook.office365.com', port: 993, tls: 'tls' },
@@ -205,11 +223,30 @@ class Session implements Bearer {
   }
 }
 
-function clientOf(service: OAuthService, host: Host): Client {
-  const id = host.build?.[service.client]
-  if (!id) throw new Error(`this build of Orden cannot sign in to ${service.name}`)
-  const secret = service.secret ? host.build?.[service.secret] : undefined
+function clientOf(service: OAuthService, values: Readonly<Record<string, string>>): Client {
+  const id = (values.clientId ?? '').trim()
+  if (!id) throw new Error(`${service.name} needs the client ID of your own OAuth client`)
+  const secret = (values.clientSecret ?? '').trim()
+  if (service.secret && !secret)
+    throw new Error(`${service.name} needs the client secret of your own OAuth client`)
   return { id, ...(secret ? { secret } : {}) }
+}
+
+function fieldsOf(service: OAuthService): ConnectField[] {
+  return [
+    { key: 'clientId', label: 'OAuth client ID', kind: 'text', help: service.help },
+    ...(service.secret
+      ? [
+          {
+            key: 'clientSecret',
+            label: 'OAuth client secret',
+            kind: 'password',
+            secret: true,
+          } satisfies ConnectField,
+        ]
+      : []),
+    { key: 'name', label: 'Your name', kind: 'text', optional: true },
+  ]
 }
 
 async function signIn(
@@ -264,14 +301,14 @@ export function oauthMailProvider(service: OAuthService): ChatProvider {
     id: service.id,
     name: service.name,
     icon: service.icon,
-    fields: [{ key: 'name', label: 'Your name', kind: 'text', optional: true }],
+    fields: fieldsOf(service),
     can: { send: true, attachments: true, live: true, replies: false },
     kept: ['refresh'],
-    available: (host) => !!host.socket && !!host.authorize && !!host.build?.[service.client],
+    available: (host) => !!host.socket && !!host.authorize,
     async connect(values, host) {
       const open = host.socket
       if (!open) throw new Error('mail needs the desktop app')
-      const client = clientOf(service, host)
+      const client = clientOf(service, values)
       const name = (values.name ?? '').trim()
       const known = (values.address ?? '').trim()
       let address = known

@@ -3690,4 +3690,22 @@ export const fil: Dictionary = {
   'signal-cli does not run on this computer': 'Hindi tumatakbo ang signal-cli sa computer na ito',
   'The download is not the file it should be; nothing was kept':
     'Hindi ang inaasahang file ang na-download; walang itinago',
+  'OAuth client ID': 'OAuth client ID',
+  'OAuth client secret': 'OAuth client secret',
+  'How to make your own Google client': 'Paano gumawa ng sarili mong Google client',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Sa Google Cloud, gumawa ng project, tapos i-set up ang consent screen bilang External at idagdag ang address mo bilang test user',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Sa Clients, gumawa ng client na Desktop app ang uri at i-paste dito ang ID at secret nito',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Nasa-sign out ang mga app na nasa testing pagkalipas ng 7 araw; i-set ang app sa In production para manatiling naka-sign in',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Mas simple: ikonekta na lang ang Email gamit ang app password mula sa Google account mo',
+  'How to make your own Microsoft app': 'Paano gumawa ng sarili mong Microsoft app',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Sa Microsoft Entra, mag-register ng app para sa mga account sa anumang directory at mga personal na Microsoft account',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Sa Authentication, idagdag ang Mobile and desktop applications na may redirect URI na http://localhost at payagan ang public client flows',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'Sa API permissions, idagdag ang delegated permissions na IMAP.AccessAsUser.All, SMTP.Send at offline_access, tapos i-paste dito ang Application (client) ID',
 }

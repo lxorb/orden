@@ -3538,4 +3538,22 @@ export const ja: Dictionary = {
   'signal-cli does not run on this computer': 'このコンピューターでは signal-cli を実行できません',
   'The download is not the file it should be; nothing was kept':
     'ダウンロードしたファイルが想定と異なるため、何も保存しませんでした',
+  'OAuth client ID': 'OAuth クライアント ID',
+  'OAuth client secret': 'OAuth クライアントシークレット',
+  'How to make your own Google client': '自分の Google クライアントを作る方法',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud でプロジェクトを作成し、同意画面を External に設定して、自分のアドレスをテストユーザーに追加します',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients で Desktop app タイプのクライアントを作成し、その ID とシークレットをここに貼り付けます',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'テスト中のアプリは 7 日後にサインアウトされます。サインインしたままにするには、アプリを In production に設定してください',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'もっと簡単な方法: 代わりに Google アカウントのアプリ パスワードでメールを接続します',
+  'How to make your own Microsoft app': '自分の Microsoft アプリを作る方法',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra で、任意のディレクトリのアカウントと個人の Microsoft アカウント向けにアプリを登録します',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication で、リダイレクト URI http://localhost を指定して Mobile and desktop applications を追加し、パブリック クライアント フローを許可します',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions で、委任されたアクセス許可 IMAP.AccessAsUser.All、SMTP.Send、offline_access を追加し、Application (client) ID をここに貼り付けます',
 }

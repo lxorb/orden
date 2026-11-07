@@ -3438,4 +3438,22 @@ export const yue: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli 喺呢部電腦行唔到',
   'The download is not the file it should be; nothing was kept':
     '下載咗嘅唔係預期嘅檔案；乜都冇保留',
+  'OAuth client ID': 'OAuth 用戶端 ID',
+  'OAuth client secret': 'OAuth 用戶端密鑰',
+  'How to make your own Google client': '點樣整你自己嘅 Google 用戶端',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    '喺 Google Cloud 開個專案，然後將同意畫面設做 External，再將你嘅地址加做測試用戶',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    '喺 Clients 度開一個 Desktop app 類型嘅用戶端，再將佢嘅 ID 同密鑰貼喺度',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    '測試緊嘅 App 會喺 7 日後登出；將 App 設做 In production 就可以保持登入',
+  'Simpler: connect Email with an app password from your Google account instead':
+    '簡單啲：改用你 Google 帳戶嘅 App 密碼連接電郵',
+  'How to make your own Microsoft app': '點樣整你自己嘅 Microsoft App',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    '喺 Microsoft Entra 為任何目錄嘅帳戶同個人 Microsoft 帳戶註冊一個 App',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    '喺 Authentication 度加入 Mobile and desktop applications，重新導向 URI 用 http://localhost，再允許公用用戶端流程',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    '喺 API permissions 度加入委派權限 IMAP.AccessAsUser.All、SMTP.Send 同 offline_access，然後將 Application (client) ID 貼喺度',
 }

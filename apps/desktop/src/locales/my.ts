@@ -3553,4 +3553,22 @@ export const my: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli သည် ဤကွန်ပျူတာတွင် မလည်ပတ်ပါ',
   'The download is not the file it should be; nothing was kept':
     'ဒေါင်းလုဒ်သည် မျှော်လင့်ထားသော ဖိုင် မဟုတ်ပါ၊ ဘာမျှ မသိမ်းထားပါ',
+  'OAuth client ID': 'OAuth client ID',
+  'OAuth client secret': 'OAuth client secret',
+  'How to make your own Google client': 'ကိုယ်ပိုင် Google client ပြုလုပ်နည်း',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud တွင် ပရောဂျက်တစ်ခု ဖန်တီးပါ၊ ထို့နောက် သဘောတူညီချက် စခရင်ကို External အဖြစ် သတ်မှတ်ပြီး သင့်လိပ်စာကို စမ်းသပ်အသုံးပြုသူအဖြစ် ထည့်ပါ',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients အောက်တွင် Desktop app အမျိုးအစား client တစ်ခု ဖန်တီးပြီး ၎င်း၏ ID နှင့် secret ကို ဤနေရာတွင် ကူးထည့်ပါ',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'စမ်းသပ်ဆဲ အက်ပ်များသည် 7 ရက်အကြာတွင် အကောင့်ထွက်သွားသည်၊ ဝင်ထားရန် အက်ပ်ကို In production သို့ သတ်မှတ်ပါ',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'ပိုလွယ်သည်- ၎င်းအစား သင့် Google အကောင့်မှ အက်ပ်စကားဝှက်ဖြင့် အီးမေးလ်ကို ချိတ်ဆက်ပါ',
+  'How to make your own Microsoft app': 'ကိုယ်ပိုင် Microsoft အက်ပ် ပြုလုပ်နည်း',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra တွင် မည်သည့် directory မဆို အကောင့်များနှင့် ကိုယ်ပိုင် Microsoft အကောင့်များအတွက် အက်ပ်တစ်ခု မှတ်ပုံတင်ပါ',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication အောက်တွင် redirect URI http://localhost ဖြင့် Mobile and desktop applications ကို ထည့်ပြီး public client flow များကို ခွင့်ပြုပါ',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions အောက်တွင် delegated ခွင့်ပြုချက် IMAP.AccessAsUser.All၊ SMTP.Send နှင့် offline_access ကို ထည့်ပါ၊ ထို့နောက် Application (client) ID ကို ဤနေရာတွင် ကူးထည့်ပါ',
 }

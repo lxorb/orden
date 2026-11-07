@@ -3758,4 +3758,22 @@ export const uk: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli не працює на цьому комп’ютері',
   'The download is not the file it should be; nothing was kept':
     'Завантажений файл не той, що очікувався; нічого не збережено',
+  'OAuth client ID': 'Ідентифікатор клієнта OAuth',
+  'OAuth client secret': 'Секрет клієнта OAuth',
+  'How to make your own Google client': 'Як створити власний клієнт Google',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'У Google Cloud створіть проєкт, потім налаштуйте екран згоди як External і додайте свою адресу як тестового користувача',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'У розділі Clients створіть клієнт типу Desktop app і вставте сюди його ID та секрет',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Тестові застосунки виходять з облікового запису через 7 днів; переведіть застосунок у In production, щоб лишатися в системі',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Простіше: під’єднайте пошту з паролем застосунку з облікового запису Google',
+  'How to make your own Microsoft app': 'Як створити власний застосунок Microsoft',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'У Microsoft Entra зареєструйте застосунок для облікових записів у будь-якому каталозі та особистих облікових записів Microsoft',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'У розділі Authentication додайте Mobile and desktop applications з URI переспрямування http://localhost і дозвольте потоки публічних клієнтів',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'У розділі API permissions додайте делеговані дозволи IMAP.AccessAsUser.All, SMTP.Send і offline_access, потім вставте сюди Application (client) ID',
 }

@@ -3684,4 +3684,22 @@ export const ta: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli இந்தக் கணினியில் இயங்காது',
   'The download is not the file it should be; nothing was kept':
     'பதிவிறக்கம் எதிர்பார்த்த கோப்பு அல்ல; எதுவும் வைக்கப்படவில்லை',
+  'OAuth client ID': 'OAuth கிளையன்ட் ID',
+  'OAuth client secret': 'OAuth கிளையன்ட் சீக்ரெட்',
+  'How to make your own Google client': 'உங்கள் சொந்த Google கிளையன்டை உருவாக்குவது எப்படி',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud-இல் ஒரு திட்டத்தை உருவாக்கி, ஒப்புதல் திரையை External ஆக அமைத்து, உங்கள் முகவரியைச் சோதனைப் பயனராகச் சேர்க்கவும்',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients-இன் கீழ் Desktop app வகை கிளையன்டை உருவாக்கி, அதன் ID மற்றும் சீக்ரெட்டை இங்கே ஒட்டவும்',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'சோதனையில் உள்ள ஆப்கள் 7 நாட்களுக்குப் பிறகு வெளியேற்றப்படும்; உள்நுழைந்திருக்க ஆப்பை In production-க்கு அமைக்கவும்',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'எளிதான வழி: பதிலாக உங்கள் Google கணக்கின் ஆப் கடவுச்சொல்லுடன் மின்னஞ்சலை இணைக்கவும்',
+  'How to make your own Microsoft app': 'உங்கள் சொந்த Microsoft ஆப்பை உருவாக்குவது எப்படி',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra-இல் எந்த டைரக்டரியிலும் உள்ள கணக்குகளுக்கும் தனிப்பட்ட Microsoft கணக்குகளுக்கும் ஒரு ஆப்பைப் பதிவுசெய்யவும்',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication-இன் கீழ் திருப்பிவிடும் URI http://localhost உடன் Mobile and desktop applications-ஐச் சேர்த்து, பொது கிளையன்ட் ஓட்டங்களை அனுமதிக்கவும்',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions-இன் கீழ் ஒப்படைக்கப்பட்ட அனுமதிகள் IMAP.AccessAsUser.All, SMTP.Send மற்றும் offline_access-ஐச் சேர்த்து, பிறகு Application (client) ID-ஐ இங்கே ஒட்டவும்',
 }

@@ -3617,4 +3617,22 @@ export const mr: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli या संगणकावर चालत नाही',
   'The download is not the file it should be; nothing was kept':
     'डाउनलोड अपेक्षित फाइल नाही; काहीही ठेवले नाही',
+  'OAuth client ID': 'OAuth क्लायंट ID',
+  'OAuth client secret': 'OAuth क्लायंट सीक्रेट',
+  'How to make your own Google client': 'आपला स्वतःचा Google क्लायंट कसा बनवायचा',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud मध्ये एक प्रोजेक्ट तयार करा, मग संमती स्क्रीन External म्हणून सेट करा आणि आपला पत्ता चाचणी वापरकर्ता म्हणून जोडा',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients मध्ये Desktop app प्रकारचा क्लायंट तयार करा आणि त्याचा ID आणि सीक्रेट येथे पेस्ट करा',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'चाचणीतील ॲप्स 7 दिवसांनी साइन आउट होतात; साइन इन राहण्यासाठी ॲप In production वर सेट करा',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'सोपा मार्ग: त्याऐवजी ईमेल आपल्या Google खात्यातील ॲप पासवर्डने कनेक्ट करा',
+  'How to make your own Microsoft app': 'आपले स्वतःचे Microsoft ॲप कसे बनवायचे',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra मध्ये कोणत्याही डिरेक्टरीतील खाती आणि वैयक्तिक Microsoft खात्यांसाठी ॲप नोंदणी करा',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication मध्ये रीडायरेक्ट URI http://localhost सह Mobile and desktop applications जोडा आणि सार्वजनिक क्लायंट फ्लोंना परवानगी द्या',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions मध्ये प्रतिनिधी परवानग्या IMAP.AccessAsUser.All, SMTP.Send आणि offline_access जोडा, मग Application (client) ID येथे पेस्ट करा',
 }

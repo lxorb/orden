@@ -3659,4 +3659,22 @@ export const kn: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಚಲಿಸುವುದಿಲ್ಲ',
   'The download is not the file it should be; nothing was kept':
     'ಡೌನ್‌ಲೋಡ್ ನಿರೀಕ್ಷಿತ ಫೈಲ್ ಅಲ್ಲ; ಏನನ್ನೂ ಉಳಿಸಿಲ್ಲ',
+  'OAuth client ID': 'OAuth ಕ್ಲೈಂಟ್ ID',
+  'OAuth client secret': 'OAuth ಕ್ಲೈಂಟ್ ಸೀಕ್ರೆಟ್',
+  'How to make your own Google client': 'ನಿಮ್ಮದೇ Google ಕ್ಲೈಂಟ್ ಮಾಡುವುದು ಹೇಗೆ',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud ನಲ್ಲಿ ಒಂದು ಪ್ರಾಜೆಕ್ಟ್ ರಚಿಸಿ, ನಂತರ ಸಮ್ಮತಿ ಪರದೆಯನ್ನು External ಎಂದು ಹೊಂದಿಸಿ ಮತ್ತು ನಿಮ್ಮ ವಿಳಾಸವನ್ನು ಪರೀಕ್ಷಾ ಬಳಕೆದಾರರಾಗಿ ಸೇರಿಸಿ',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients ಅಡಿಯಲ್ಲಿ Desktop app ಪ್ರಕಾರದ ಕ್ಲೈಂಟ್ ರಚಿಸಿ ಮತ್ತು ಅದರ ID ಮತ್ತು ಸೀಕ್ರೆಟ್ ಅನ್ನು ಇಲ್ಲಿ ಅಂಟಿಸಿ',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'ಪರೀಕ್ಷೆಯಲ್ಲಿರುವ ಆ್ಯಪ್‌ಗಳು 7 ದಿನಗಳ ನಂತರ ಸೈನ್ ಔಟ್ ಆಗುತ್ತವೆ; ಸೈನ್ ಇನ್ ಆಗಿರಲು ಆ್ಯಪ್ ಅನ್ನು In production ಗೆ ಹೊಂದಿಸಿ',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'ಸುಲಭ ಮಾರ್ಗ: ಬದಲಿಗೆ ನಿಮ್ಮ Google ಖಾತೆಯ ಆ್ಯಪ್ ಪಾಸ್‌ವರ್ಡ್‌ನೊಂದಿಗೆ ಇಮೇಲ್ ಸಂಪರ್ಕಿಸಿ',
+  'How to make your own Microsoft app': 'ನಿಮ್ಮದೇ Microsoft ಆ್ಯಪ್ ಮಾಡುವುದು ಹೇಗೆ',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra ನಲ್ಲಿ ಯಾವುದೇ ಡೈರೆಕ್ಟರಿಯ ಖಾತೆಗಳು ಮತ್ತು ವೈಯಕ್ತಿಕ Microsoft ಖಾತೆಗಳಿಗಾಗಿ ಆ್ಯಪ್ ನೋಂದಾಯಿಸಿ',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication ಅಡಿಯಲ್ಲಿ ಮರುನಿರ್ದೇಶನ URI http://localhost ಜೊತೆಗೆ Mobile and desktop applications ಸೇರಿಸಿ ಮತ್ತು ಸಾರ್ವಜನಿಕ ಕ್ಲೈಂಟ್ ಫ್ಲೋಗಳನ್ನು ಅನುಮತಿಸಿ',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions ಅಡಿಯಲ್ಲಿ ನಿಯೋಜಿತ ಅನುಮತಿಗಳು IMAP.AccessAsUser.All, SMTP.Send ಮತ್ತು offline_access ಸೇರಿಸಿ, ನಂತರ Application (client) ID ಅನ್ನು ಇಲ್ಲಿ ಅಂಟಿಸಿ',
 }

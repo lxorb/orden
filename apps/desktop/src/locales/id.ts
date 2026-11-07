@@ -3558,4 +3558,22 @@ export const id: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli tidak berjalan di komputer ini',
   'The download is not the file it should be; nothing was kept':
     'Unduhan bukan berkas yang diharapkan; tidak ada yang disimpan',
+  'OAuth client ID': 'ID klien OAuth',
+  'OAuth client secret': 'Rahasia klien OAuth',
+  'How to make your own Google client': 'Cara membuat klien Google sendiri',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Di Google Cloud, buat proyek, lalu atur layar persetujuan sebagai External dan tambahkan alamat Anda sebagai pengguna uji',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Di Clients, buat klien bertipe Desktop app lalu tempel ID dan rahasianya di sini',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Aplikasi dalam pengujian dikeluarkan setelah 7 hari; atur aplikasi ke In production agar tetap masuk',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Lebih mudah: hubungkan Email dengan kata sandi aplikasi dari akun Google Anda',
+  'How to make your own Microsoft app': 'Cara membuat aplikasi Microsoft sendiri',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Di Microsoft Entra, daftarkan aplikasi untuk akun di direktori mana pun dan akun Microsoft pribadi',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Di Authentication, tambahkan Mobile and desktop applications dengan URI pengalihan http://localhost dan izinkan alur klien publik',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'Di API permissions, tambahkan izin terdelegasi IMAP.AccessAsUser.All, SMTP.Send, dan offline_access, lalu tempel Application (client) ID di sini',
 }

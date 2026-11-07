@@ -3615,4 +3615,22 @@ export const ur: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli اس کمپیوٹر پر نہیں چلتا',
   'The download is not the file it should be; nothing was kept':
     'ڈاؤن لوڈ متوقع فائل نہیں ہے؛ کچھ محفوظ نہیں کیا گیا',
+  'OAuth client ID': 'OAuth کلائنٹ ID',
+  'OAuth client secret': 'OAuth کلائنٹ سیکرٹ',
+  'How to make your own Google client': 'اپنا Google کلائنٹ کیسے بنائیں',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud میں ایک پروجیکٹ بنائیں، پھر رضامندی کی اسکرین کو External کے طور پر سیٹ کریں اور اپنا پتہ ٹیسٹ صارف کے طور پر شامل کریں',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients کے تحت Desktop app قسم کا ایک کلائنٹ بنائیں اور اس کا ID اور سیکرٹ یہاں پیسٹ کریں',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'ٹیسٹنگ والی ایپس 7 دن بعد سائن آؤٹ ہو جاتی ہیں؛ سائن ان رہنے کے لیے ایپ کو In production پر سیٹ کریں',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'آسان طریقہ: اس کے بجائے ای میل کو اپنے Google اکاؤنٹ کے ایپ پاس ورڈ سے جوڑیں',
+  'How to make your own Microsoft app': 'اپنی Microsoft ایپ کیسے بنائیں',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra میں کسی بھی ڈائریکٹری کے اکاؤنٹس اور ذاتی Microsoft اکاؤنٹس کے لیے ایک ایپ رجسٹر کریں',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication کے تحت ری ڈائریکٹ URI http://localhost کے ساتھ Mobile and desktop applications شامل کریں اور پبلک کلائنٹ فلوز کی اجازت دیں',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions کے تحت تفویض کردہ اجازتیں IMAP.AccessAsUser.All، SMTP.Send اور offline_access شامل کریں، پھر Application (client) ID یہاں پیسٹ کریں',
 }

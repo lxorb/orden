@@ -3639,4 +3639,22 @@ export const tr: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli bu bilgisayarda çalışmıyor',
   'The download is not the file it should be; nothing was kept':
     'İndirilen dosya beklenen dosya değil; hiçbir şey saklanmadı',
+  'OAuth client ID': 'OAuth istemci kimliği',
+  'OAuth client secret': 'OAuth istemci gizli anahtarı',
+  'How to make your own Google client': 'Kendi Google istemcinizi oluşturma',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud’da bir proje oluşturun, ardından izin ekranını External olarak ayarlayın ve adresinizi test kullanıcısı olarak ekleyin',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients altında Desktop app türünde bir istemci oluşturun ve kimliğini ve gizli anahtarını buraya yapıştırın',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Test aşamasındaki uygulamaların oturumu 7 gün sonra kapanır; oturumun açık kalması için uygulamayı In production olarak ayarlayın',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Daha kolayı: E-postayı bunun yerine Google hesabınızdan bir uygulama parolasıyla bağlayın',
+  'How to make your own Microsoft app': 'Kendi Microsoft uygulamanızı oluşturma',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra’da herhangi bir dizindeki hesaplar ve kişisel Microsoft hesapları için bir uygulama kaydedin',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication altında http://localhost yönlendirme URI’siyle Mobile and desktop applications ekleyin ve genel istemci akışlarına izin verin',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions altında IMAP.AccessAsUser.All, SMTP.Send ve offline_access temsilci izinlerini ekleyin, ardından Application (client) ID’yi buraya yapıştırın',
 }

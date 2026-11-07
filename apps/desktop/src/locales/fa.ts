@@ -3623,4 +3623,22 @@ export const fa: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli روی این رایانه اجرا نمی‌شود',
   'The download is not the file it should be; nothing was kept':
     'فایل بارگیری‌شده همان فایل مورد انتظار نیست؛ چیزی نگه داشته نشد',
+  'OAuth client ID': 'شناسهٔ کلاینت OAuth',
+  'OAuth client secret': 'رمز کلاینت OAuth',
+  'How to make your own Google client': 'چگونه کلاینت Google خودتان را بسازید',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'در Google Cloud یک پروژه بسازید، سپس صفحهٔ رضایت را روی External تنظیم کنید و نشانی خود را به‌عنوان کاربر آزمایشی بیفزایید',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'در بخش Clients یک کلاینت از نوع Desktop app بسازید و شناسه و رمز آن را اینجا بچسبانید',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'برنامه‌های در حال آزمایش پس از 7 روز خارج می‌شوند؛ برای وارد ماندن، برنامه را روی In production بگذارید',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'ساده‌تر: به‌جای آن، رایانامه را با گذرواژهٔ برنامه از حساب Google خود وصل کنید',
+  'How to make your own Microsoft app': 'چگونه برنامهٔ Microsoft خودتان را بسازید',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'در Microsoft Entra برنامه‌ای برای حساب‌های هر فهرست و حساب‌های شخصی Microsoft ثبت کنید',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'در بخش Authentication، گزینهٔ Mobile and desktop applications را با نشانی بازگشت http://localhost بیفزایید و جریان‌های کلاینت عمومی را مجاز کنید',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'در بخش API permissions مجوزهای واگذارشدهٔ IMAP.AccessAsUser.All، SMTP.Send و offline_access را بیفزایید، سپس Application (client) ID را اینجا بچسبانید',
 }

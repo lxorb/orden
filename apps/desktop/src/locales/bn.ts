@@ -3613,4 +3613,22 @@ export const bn: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli এই কম্পিউটারে চলে না',
   'The download is not the file it should be; nothing was kept':
     'ডাউনলোডটি প্রত্যাশিত ফাইল নয়; কিছুই রাখা হয়নি',
+  'OAuth client ID': 'OAuth ক্লায়েন্ট ID',
+  'OAuth client secret': 'OAuth ক্লায়েন্ট সিক্রেট',
+  'How to make your own Google client': 'নিজের Google ক্লায়েন্ট কীভাবে বানাবেন',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud-এ একটি প্রকল্প তৈরি করুন, তারপর সম্মতি স্ক্রিন External হিসেবে সেট করুন এবং আপনার ঠিকানা পরীক্ষামূলক ব্যবহারকারী হিসেবে যোগ করুন',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients-এ Desktop app ধরনের একটি ক্লায়েন্ট তৈরি করুন এবং এর ID ও সিক্রেট এখানে পেস্ট করুন',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'পরীক্ষাধীন অ্যাপ 7 দিন পর সাইন আউট হয়ে যায়; সাইন ইন থাকতে অ্যাপটিকে In production-এ সেট করুন',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'সহজ উপায়: এর বদলে আপনার Google অ্যাকাউন্টের অ্যাপ পাসওয়ার্ড দিয়ে ইমেইল সংযুক্ত করুন',
+  'How to make your own Microsoft app': 'নিজের Microsoft অ্যাপ কীভাবে বানাবেন',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra-তে যেকোনো ডিরেক্টরির অ্যাকাউন্ট ও ব্যক্তিগত Microsoft অ্যাকাউন্টের জন্য একটি অ্যাপ নিবন্ধন করুন',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication-এ রিডাইরেক্ট URI http://localhost সহ Mobile and desktop applications যোগ করুন এবং পাবলিক ক্লায়েন্ট ফ্লো চালু করুন',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions-এ ডেলিগেটেড অনুমতি IMAP.AccessAsUser.All, SMTP.Send ও offline_access যোগ করুন, তারপর Application (client) ID এখানে পেস্ট করুন',
 }

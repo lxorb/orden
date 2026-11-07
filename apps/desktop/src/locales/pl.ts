@@ -3762,4 +3762,22 @@ export const pl: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli nie działa na tym komputerze',
   'The download is not the file it should be; nothing was kept':
     'Pobrany plik nie jest oczekiwanym plikiem; nic nie zachowano',
+  'OAuth client ID': 'Identyfikator klienta OAuth',
+  'OAuth client secret': 'Klucz tajny klienta OAuth',
+  'How to make your own Google client': 'Jak utworzyć własnego klienta Google',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'W Google Cloud utwórz projekt, potem skonfiguruj ekran zgody jako External i dodaj swój adres jako użytkownika testowego',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'W Clients utwórz klienta typu Desktop app i wklej tutaj jego identyfikator i klucz tajny',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Aplikacje w trybie testowym są wylogowywane po 7 dniach; ustaw aplikację na In production, aby pozostać zalogowanym',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Prościej: połącz zamiast tego e-mail za pomocą hasła do aplikacji z konta Google',
+  'How to make your own Microsoft app': 'Jak utworzyć własną aplikację Microsoft',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'W Microsoft Entra zarejestruj aplikację dla kont w dowolnym katalogu i osobistych kont Microsoft',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'W Authentication dodaj Mobile and desktop applications z identyfikatorem URI przekierowania http://localhost i zezwól na przepływy klientów publicznych',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'W API permissions dodaj uprawnienia delegowane IMAP.AccessAsUser.All, SMTP.Send i offline_access, a następnie wklej tutaj Application (client) ID',
 }

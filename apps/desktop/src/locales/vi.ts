@@ -3524,4 +3524,22 @@ export const vi: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli không chạy trên máy tính này',
   'The download is not the file it should be; nothing was kept':
     'Tệp tải về không phải tệp mong đợi; không giữ lại gì',
+  'OAuth client ID': 'ID ứng dụng khách OAuth',
+  'OAuth client secret': 'Khóa bí mật ứng dụng khách OAuth',
+  'How to make your own Google client': 'Cách tạo ứng dụng khách Google của riêng bạn',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Trong Google Cloud, hãy tạo một dự án, rồi thiết lập màn hình đồng ý là External và thêm địa chỉ của bạn làm người dùng thử nghiệm',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Trong Clients, hãy tạo một ứng dụng khách loại Desktop app và dán ID cùng khóa bí mật của nó vào đây',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Ứng dụng đang thử nghiệm sẽ bị đăng xuất sau 7 ngày; hãy đặt ứng dụng thành In production để duy trì đăng nhập',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Đơn giản hơn: hãy kết nối Email bằng mật khẩu ứng dụng từ tài khoản Google của bạn',
+  'How to make your own Microsoft app': 'Cách tạo ứng dụng Microsoft của riêng bạn',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Trong Microsoft Entra, hãy đăng ký một ứng dụng cho tài khoản trong mọi thư mục và tài khoản Microsoft cá nhân',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Trong Authentication, hãy thêm Mobile and desktop applications với URI chuyển hướng http://localhost và cho phép luồng ứng dụng khách công khai',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'Trong API permissions, hãy thêm các quyền ủy quyền IMAP.AccessAsUser.All, SMTP.Send và offline_access, rồi dán Application (client) ID vào đây',
 }

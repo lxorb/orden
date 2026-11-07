@@ -3515,4 +3515,22 @@ export const ko: Dictionary = {
   'signal-cli does not run on this computer': '이 컴퓨터에서는 signal-cli를 실행할 수 없습니다',
   'The download is not the file it should be; nothing was kept':
     '내려받은 파일이 예상한 파일이 아니어서 아무것도 보관하지 않았습니다',
+  'OAuth client ID': 'OAuth 클라이언트 ID',
+  'OAuth client secret': 'OAuth 클라이언트 보안 비밀',
+  'How to make your own Google client': '나만의 Google 클라이언트 만드는 방법',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'Google Cloud에서 프로젝트를 만든 다음 동의 화면을 External로 설정하고 내 주소를 테스트 사용자로 추가하세요',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    'Clients에서 Desktop app 유형의 클라이언트를 만들고 해당 ID와 보안 비밀을 여기에 붙여 넣으세요',
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    '테스트 중인 앱은 7일 후에 로그아웃됩니다. 로그인 상태를 유지하려면 앱을 In production으로 설정하세요',
+  'Simpler: connect Email with an app password from your Google account instead':
+    '더 간단한 방법: 대신 Google 계정의 앱 비밀번호로 이메일을 연결하세요',
+  'How to make your own Microsoft app': '나만의 Microsoft 앱 만드는 방법',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'Microsoft Entra에서 모든 디렉터리의 계정과 개인 Microsoft 계정용 앱을 등록하세요',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    'Authentication에서 리디렉션 URI http://localhost로 Mobile and desktop applications를 추가하고 공용 클라이언트 흐름을 허용하세요',
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'API permissions에서 위임된 권한 IMAP.AccessAsUser.All, SMTP.Send, offline_access를 추가한 다음 Application (client) ID를 여기에 붙여 넣으세요',
 }

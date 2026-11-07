@@ -3672,4 +3672,22 @@ export const ha: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli ba ya aiki a wannan kwamfuta',
   'The download is not the file it should be; nothing was kept':
     'Abin da aka sauke ba fayil ɗin da ake tsammani ba ne; ba a adana komai ba',
+  'OAuth client ID': 'ID na abokin ciniki na OAuth',
+  'OAuth client secret': 'Sirrin abokin ciniki na OAuth',
+  'How to make your own Google client': 'Yadda za ka yi naka abokin ciniki na Google',
+  'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
+    'A Google Cloud, ƙirƙiri aiki, sannan ka saita allon izini a matsayin External kuma ka ƙara adireshinka a matsayin mai amfani na gwaji',
+  'Under Clients, create a client of type Desktop app and paste its ID and secret here':
+    "A ƙarƙashin Clients, ƙirƙiri abokin ciniki na nau'in Desktop app kuma ka liƙa ID da sirrinsa a nan",
+  'Testing apps are signed out after 7 days; set the app to In production to stay signed in':
+    'Manhajojin gwaji suna fita bayan kwanaki 7; saita manhajar zuwa In production don ka ci gaba da kasancewa a ciki',
+  'Simpler: connect Email with an app password from your Google account instead':
+    'Mafi sauƙi: haɗa Imel da kalmar sirrin manhaja daga asusunka na Google maimakon haka',
+  'How to make your own Microsoft app': 'Yadda za ka yi naka manhajar Microsoft',
+  'In Microsoft Entra, register an app for accounts in any directory and personal Microsoft accounts':
+    'A Microsoft Entra, yi rajistar manhaja don asusu a kowane kundin adireshi da asusun Microsoft na kai',
+  'Under Authentication, add Mobile and desktop applications with the redirect URI http://localhost and allow public client flows':
+    "A ƙarƙashin Authentication, ƙara Mobile and desktop applications tare da URI na turawa http://localhost kuma ka ba da izinin hanyoyin abokin ciniki na jama'a",
+  'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
+    'A ƙarƙashin API permissions, ƙara izinin wakilci IMAP.AccessAsUser.All, SMTP.Send da offline_access, sannan ka liƙa Application (client) ID a nan',
 }
