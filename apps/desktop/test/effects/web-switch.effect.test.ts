@@ -699,6 +699,25 @@ async function opened(url: string) {
   return { tab, app }
 }
 
+test('words typed beside a page take no picture of it, a chord still does', async () => {
+  const { app } = await opened('https://example.com/typed-beside')
+  const field = document.createElement('textarea')
+  document.body.append(field)
+  onTestFinished(() => field.remove())
+
+  asked.length = 0
+  for (const key of ['h', 'e', 'y', 'Backspace', 'Enter']) {
+    field.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+    await frames()
+  }
+  expect(asked.map((one) => one.command)).not.toContain('web_shot')
+
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
+  await frames()
+  expect(asked.map((one) => one.command)).toContain('web_shot')
+  void unmount(app)
+})
+
 test('a refused address is not a page that has gone', async () => {
   const { tab, app } = await opened('https://example.com/refused')
 
