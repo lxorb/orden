@@ -1349,6 +1349,22 @@ mod tests {
     }
 
     #[test]
+    fn a_function_handed_on_as_a_value_is_called() {
+        let source = concat!(
+            "fn loud(one: &u8) -> u8 {\n    fs::read(one);\n    1\n}\n\n",
+            "pub struct Shelf;\n\nimpl Shelf {\n    fn read(one: &u8) -> u8 {\n        fs::read(one);\n        2\n    }\n}\n\n",
+            "#[tauri::command]\npub fn each(items: Vec<u8>) {\n    items.iter().for_each(loud);\n}\n\n",
+            "#[tauri::command]\npub fn mapped(item: Option<u8>) -> Option<u8> {\n    item.as_ref().map(Shelf::read)\n}\n\n",
+            "#[tauri::command]\npub fn away() {\n    std::thread::spawn(loud);\n}\n\n",
+            "#[tauri::command]\npub fn named(loud: u8) -> Option<u8> {\n    Some(loud)\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let waits = own.waiting(&WAITS, &[]);
+        assert!(waits.contains("crate::each") && waits.contains("crate::mapped"));
+        assert!(!waits.contains("crate::away") && !waits.contains("crate::named"));
+    }
+
+    #[test]
     fn a_value_let_go_where_it_ends_runs_its_drop_there() {
         let source = concat!(
             "pub struct Gone;\n\nimpl Gone {\n    pub fn new() -> Self {\n        Self\n    }\n\n    pub fn finish(self) {}\n}\n\n",

@@ -627,6 +627,7 @@ struct Found {
     owner: Option<String>,
     scope: Scope,
     calls: Vec<Vec<String>>,
+    values: Vec<Passed>,
     said: String,
     command: bool,
     locks: Locks,
@@ -651,6 +652,16 @@ type Bounds = HashMap<String, Vec<Vec<String>>>;
 struct Enclosing {
     scope: Scope,
     bounds: Bounds,
+}
+
+impl Enclosing {
+    fn with(&self, generics: &syn::Generics) -> Bounds {
+        let mut bounds = self.bounds.clone();
+        for (name, traits) in bounds_of(generics) {
+            bounds.entry(name).or_default().extend(traits);
+        }
+        bounds
+    }
 }
 
 #[derive(Default)]
@@ -1015,10 +1026,7 @@ impl Gathered {
         body.visit_block(block);
         let mut scope = outer.scope.clone();
         scope.joined(&body.scope);
-        let mut bounds = outer.bounds.clone();
-        for (name, traits) in bounds_of(&sig.generics) {
-            bounds.entry(name).or_default().extend(traits);
-        }
+        let bounds = outer.with(&sig.generics);
 
         let tokens = block.to_token_stream();
         let mut found = Vec::new();
@@ -1031,6 +1039,7 @@ impl Gathered {
             holding.visit_block(block);
         });
         let (env, taken) = Bindings::of(sig, block);
+        let values = Values::of(|values| values.visit_block(block), &env);
         let mut mains = Mains::default();
         mains.visit_block(block);
         let site = Site {
@@ -1088,6 +1097,7 @@ impl Gathered {
             owner: owner.map(str::to_owned),
             scope,
             calls: found,
+            values,
             said,
             command: command(attrs, sig),
             locks,
@@ -1176,12 +1186,14 @@ impl Gathered {
         drops.visit_expr(body);
         drops.moved.extend(flows_out(body));
         let tokens = body.to_token_stream();
+        let values = Values::of(|values| values.visit_expr(body), site.env);
         self.found.push(Found {
             path: path.to_owned(),
             module: module.to_owned(),
             owner: owner.map(str::to_owned),
             scope: site.scope.clone(),
             calls: found_calls(tokens.clone()),
+            values,
             said: said_of(tokens),
             command: false,
             locks,
@@ -1264,6 +1276,7 @@ impl Gathered {
 
             let typed = self.typed(found, &found.methods);
             let dropped = self.implicit(found);
+            let passed = self.passed(found);
             let invoked: Vec<String> = found
                 .closures
                 .invoked
@@ -1279,6 +1292,7 @@ impl Gathered {
             function.called.extend(typed);
             function.called.extend(dropped);
             function.called.extend(invoked);
+            function.called.extend(passed);
 
             if found.command && !own.commands.contains(&found.path) {
                 own.commands.push(found.path.clone());
@@ -1304,6 +1318,30 @@ impl Gathered {
         }
 
         own
+    }
+
+    fn passed(&self, found: &Found) -> Vec<String> {
+        found
+            .values
+            .iter()
+            .filter(|one| {
+                let callees: Vec<&Found> = one
+                    .to
+                    .iter()
+                    .flat_map(|to| self.resolve(found, to))
+                    .flat_map(|callee| self.by_path.get(&callee).into_iter().flatten())
+                    .map(|&at| &self.found[at])
+                    .collect();
+                callees.is_empty()
+                    || callees.iter().any(|callee| {
+                        callee
+                            .params
+                            .get(one.at)
+                            .is_some_and(|name| callee.said.contains(&spaced(&format!("{name}("))))
+                    })
+            })
+            .flat_map(|one| self.resolve(found, &one.value))
+            .collect()
     }
 
     fn slots(&self) -> HashMap<String, Vec<String>> {
@@ -3503,6 +3541,82 @@ impl<'a> Visit<'a> for Slots {
             _ => {}
         }
         syn::visit::visit_expr_call(self, call);
+    }
+
+    fn visit_macro(&mut self, called: &'a syn::Macro) {
+        for argument in macro_arguments(called) {
+            self.visit_expr(&argument);
+        }
+    }
+
+    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
+
+    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
+
+    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+}
+
+struct Passed {
+    to: Option<Vec<String>>,
+    at: usize,
+    value: Vec<String>,
+}
+
+#[derive(Default)]
+struct Values {
+    found: Vec<Passed>,
+}
+
+impl Values {
+    fn of(visit: impl FnOnce(&mut Self), env: &Env) -> Vec<Passed> {
+        let mut values = Self::default();
+        visit(&mut values);
+        values
+            .found
+            .into_iter()
+            .filter(|one| !matches!(one.value.as_slice(), [name] if env.contains_key(name) || name == "self"))
+            .collect()
+    }
+
+    fn passed(
+        &mut self,
+        to: Option<Vec<String>>,
+        arguments: &Punctuated<syn::Expr, syn::Token![,]>,
+    ) {
+        for (at, argument) in arguments.iter().enumerate() {
+            if let syn::Expr::Path(path) = argument {
+                if path.qself.is_none() {
+                    self.found.push(Passed {
+                        to: to.clone(),
+                        at,
+                        value: segments(&path.path),
+                    });
+                }
+            }
+        }
+    }
+}
+
+impl<'a> Visit<'a> for Values {
+    fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
+        if is_away(&call.func) {
+            return;
+        }
+        let to = match &*call.func {
+            syn::Expr::Path(path) => Some(segments(&path.path)),
+            _ => None,
+        };
+        self.passed(to, &call.args);
+        syn::visit::visit_expr_call(self, call);
+    }
+
+    fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
+        if AWAY.iter().any(|one| call.method == one) {
+            self.visit_expr(&call.receiver);
+            return;
+        }
+        self.passed(None, &call.args);
+        syn::visit::visit_expr_method_call(self, call);
     }
 
     fn visit_macro(&mut self, called: &'a syn::Macro) {
