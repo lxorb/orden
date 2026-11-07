@@ -12,6 +12,11 @@ export function sharpBelow(screen: number): number {
   return (2 * screen) / LARGEST
 }
 
+export function sharpSide(blur: number, screen: number, most: number): number {
+  if (blur <= 0) return most
+  return Math.min(most, Math.max(LARGEST, Math.round((2 * screen) / blur)))
+}
+
 export interface Toning {
   saturation: number
   tint: number
@@ -112,12 +117,18 @@ export function measured(pixels: Uint8ClampedArray): Span & { mean: Rgb } {
   const count = Math.max(1, Math.floor(pixels.length / 4))
 
   for (let at = 0; at < pixels.length; at += 4) {
-    for (const channel of [0, 1, 2] as const) {
-      const value = pixels[at + channel] ?? 0
-      least[channel] = Math.min(least[channel], value)
-      most[channel] = Math.max(most[channel], value)
-      sum[channel] += value
-    }
+    const r = pixels[at] ?? 0
+    const g = pixels[at + 1] ?? 0
+    const b = pixels[at + 2] ?? 0
+    if (r < least[0]) least[0] = r
+    if (g < least[1]) least[1] = g
+    if (b < least[2]) least[2] = b
+    if (r > most[0]) most[0] = r
+    if (g > most[1]) most[1] = g
+    if (b > most[2]) most[2] = b
+    sum[0] += r
+    sum[1] += g
+    sum[2] += b
   }
 
   return { least, most, mean: [sum[0] / count, sum[1] / count, sum[2] / count] }
