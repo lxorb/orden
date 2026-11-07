@@ -340,6 +340,31 @@ describe('footnotes', () => {
   })
 })
 
+describe('lists', () => {
+  test('nested deeper than Word counts are written, each item numbered at a level Word has', async () => {
+    const deep = (marker: string) =>
+      Array.from({ length: 12 }, (_, at) => `${'    '.repeat(at)}${marker} item ${at}`).join('\n')
+    const source = `${deep('-')}\n\nWords.\n\n${deep('1.')}\n\n> ${deep('-').replace(/\n/g, '\n> ')}\n`
+    const xml = await JSZip.loadAsync(await toDocx(documentOf(source, 'N.md'), [], PAPER)).then(
+      (one) => one.file('word/document.xml')!.async('string'),
+    )
+
+    wellFormed(xml)
+    expect(count(xml, /item 11/g)).toBe(3)
+    const levels = [...xml.matchAll(/<w:ilvl w:val="(\d+)"\/>/g)].map(([, level = '']) =>
+      Number(level),
+    )
+    expect(levels).toHaveLength(36)
+    expect(Math.max(...levels)).toBe(8)
+
+    const numbering = await JSZip.loadAsync(
+      await toDocx(documentOf(deep('1.'), 'N.md'), [], PAPER),
+    ).then((one) => one.file('word/numbering.xml')!.async('string'))
+    for (const level of [5, 6, 7, 8])
+      expect(numbering).toContain(`w:lvlText w:val="%${level + 1}."`)
+  })
+})
+
 const EMU = 9525
 
 async function mediaParts(): Promise<Uint8Array[]> {

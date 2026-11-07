@@ -48,7 +48,9 @@ const STEP = 720
 
 const ORDERED = 'orden-ordered'
 
-const RUNGS = [0, 1, 2, 3, 4]
+const RUNGS = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+const DEEPEST_RUNG = RUNGS.length - 1
 
 const PER_INCH = 96
 
@@ -402,10 +404,11 @@ function itemChildren(
   const check =
     item.checked === null ? [] : [new TextRun({ text: item.checked ? CHECKS.done : CHECKS.open })]
 
+  const rung = Math.min(nesting.level, DEEPEST_RUNG)
   const own = new Paragraph({
     ...(ordered
-      ? { numbering: { reference: ORDERED, level: nesting.level, instance } }
-      : { bullet: { level: nesting.level } }),
+      ? { numbering: { reference: ORDERED, level: rung, instance } }
+      : { bullet: { level: rung } }),
     children: [...check, ...runsOf(item.spans, writer)],
   })
 
