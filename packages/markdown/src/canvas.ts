@@ -596,7 +596,7 @@ export function canvasIn(text: string): Canvas | null {
     }
   }
 
-  const extras = extrasFrom(parsed, ids, seen)
+  const extras = extrasFrom(parsed, ids, seen, inked)
   return {
     nodes: inOrder(nodes, order),
     edges,
