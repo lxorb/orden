@@ -3345,6 +3345,10 @@ impl<T: UserEvent> CefRuntime<T> {
     // becomes of such a profile, is the `downgrade` module; it must run before the first
     // CEF call that opens anything in the directory, which is `cef::initialize` below.
     crate::downgrade::prepare_root_cache_path(&cache_path, downgrade_policy);
+    crate::cef_impl::preferences::local_state_allows_debugging(
+      &cache_path,
+      remote_debugging_enabled,
+    );
 
     // Force X11 usage on Linux.
     //
