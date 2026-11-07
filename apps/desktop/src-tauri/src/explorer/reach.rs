@@ -74,6 +74,11 @@ pub fn judged(
     if !spoken(&path) {
         return Err(format!("{asked} is not a file name"));
     }
+    if cfg!(windows) && path.components().any(stripped_by_win32) {
+        return Err(format!(
+            "{asked} ends a name in a dot or a space, which Windows drops: it would reach another file"
+        ));
+    }
     stored(fences, real, &path)?;
     match using {
         Use::List => {}
@@ -99,6 +104,10 @@ pub fn judged(
         }
     }
     Ok(path)
+}
+
+fn stripped_by_win32(part: Component) -> bool {
+    matches!(part, Component::Normal(name) if name.to_string_lossy().ends_with(['.', ' ']))
 }
 
 fn unseen(path: &Path) -> String {
@@ -169,8 +178,8 @@ fn fenced(
 
 #[cfg(all(test, unix))]
 mod tests {
-    use super::{judged, Explored, Fences, Use};
-    use std::path::{Path, PathBuf};
+    use super::{judged, stripped_by_win32, Explored, Fences, Use};
+    use std::path::{Component, Path, PathBuf};
 
     fn fences() -> Fences {
         Fences {
@@ -231,6 +240,19 @@ mod tests {
             Ok(PathBuf::from("/home/me/Music /a.mp3"))
         );
         assert!(judge(&seen, "/home/me/Music/a.mp3", Use::Look).is_err());
+    }
+
+    #[test]
+    fn a_name_windows_would_cut_short_is_known() {
+        let normal = |name: &'static str| Component::Normal(name.as_ref());
+        for name in ["a.", "a ", "a. .", "..."] {
+            assert!(stripped_by_win32(normal(name)), "{name:?}");
+        }
+        for name in ["a", "a.b", " a", ".a"] {
+            assert!(!stripped_by_win32(normal(name)), "{name:?}");
+        }
+        assert!(!stripped_by_win32(Component::ParentDir));
+        assert!(!stripped_by_win32(Component::CurDir));
     }
 
     #[test]
