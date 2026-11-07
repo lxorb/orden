@@ -516,8 +516,6 @@ jobs:
     permissions:
       contents: read
 
-    env:
-
     concurrency:
       group: deploy
       cancel-in-progress: false

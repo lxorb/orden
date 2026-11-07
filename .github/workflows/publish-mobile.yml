@@ -13,8 +13,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-
 jobs:
   version:
     if: github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')
