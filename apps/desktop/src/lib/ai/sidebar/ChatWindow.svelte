@@ -55,8 +55,10 @@
     return where.follow(ul, rowOf)
   })
 
+  const some = $derived(heads.length > 0)
+
   $effect(() => {
-    if (heads.length && list) where.refresh()
+    if (some && list) where.refresh()
   })
 
   export function reach(index: number): void {
