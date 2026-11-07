@@ -837,6 +837,7 @@ class Pages {
 
     if (!page.live) return
 
+    dropDialogs(tabId)
     try {
       await invoke('web_navigate', { tab: tabId, url })
     } catch {
@@ -856,6 +857,7 @@ class Pages {
     }
     if (!isDesktop || !page?.live) return
     page.upgrade = null
+    if (step !== 'stop') dropDialogs(tabId)
 
     await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
   }

@@ -565,6 +565,46 @@ describe('a tab closed while its page is in front', () => {
   })
 })
 
+describe("a page's dialog still waiting", () => {
+  async function waiting(): Promise<typeof import('./dialogs.svelte')> {
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    await shown
+    const tell = await hearing('nib://web-dialog')
+    tell({
+      payload: { tab: 'a', id: 7, kind: 'alert', message: 'hello', text: '', origin: SITE },
+    })
+    const one = await import('./dialogs.svelte')
+    expect(one.dialogs.open.map((dialog) => dialog.id)).toEqual([7])
+    calls.length = 0
+    return one
+  }
+
+  test('is let go before the page is sent elsewhere', async () => {
+    const { dialogs } = await waiting()
+
+    await pages.go('a', 'https://elsewhere.example/')
+    await settle()
+
+    expect(dialogs.open).toEqual([])
+    expect(commands().sort()).toEqual(['web_dialog_answer', 'web_navigate'])
+    expect(last('web_dialog_answer')).toMatchObject({ id: 7, accept: false })
+  })
+
+  test('is let go before the page is reloaded, but not when it is only stopped', async () => {
+    const { dialogs } = await waiting()
+
+    await pages.step('a', 'stop')
+    await settle()
+    expect(dialogs.open.map((dialog) => dialog.id)).toEqual([7])
+
+    await pages.step('a', 'reload')
+    await settle()
+    expect(dialogs.open).toEqual([])
+    expect(commands().sort()).toEqual(['web_dialog_answer', 'web_step', 'web_step'])
+  })
+})
+
 describe('a tab that has closed', () => {
   test('is not given a page again by anything that asks after it', async () => {
     const shown = pages.show('closed', SITE, PANE)

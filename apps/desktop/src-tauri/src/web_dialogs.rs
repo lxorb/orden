@@ -33,12 +33,20 @@ pub fn web_dialog_answer(app: tauri::AppHandle, id: u64, accept: bool, text: Opt
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
-pub use engine::{forget, listen};
+pub use engine::{forget, leave, listen};
+
+pub fn dismiss(app: &tauri::AppHandle, tab: &str) {
+    #[cfg(feature = "cef")]
+    use tauri::Manager as _;
+
+    let tab = tab.to_owned();
+    let _ = app.run_on_main_thread(move || leave(&tab));
+}
 
 #[cfg(all(windows, not(feature = "cef")))]
 mod engine {
     use std::cell::RefCell;
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet};
     use std::sync::atomic::{AtomicU64, Ordering};
 
     use tauri::webview::PlatformWebview;
@@ -49,7 +57,10 @@ mod engine {
         COREWEBVIEW2_SCRIPT_DIALOG_KIND_BEFOREUNLOAD, COREWEBVIEW2_SCRIPT_DIALOG_KIND_CONFIRM,
         COREWEBVIEW2_SCRIPT_DIALOG_KIND_PROMPT,
     };
-    use webview2_com::ScriptDialogOpeningEventHandler;
+    use webview2_com::{
+        ContentLoadingEventHandler, NavigationCompletedEventHandler,
+        ScriptDialogOpeningEventHandler,
+    };
     use windows_core::{HSTRING, PWSTR};
 
     use super::{Kind, Opened, DIALOG};
@@ -62,6 +73,7 @@ mod engine {
 
     thread_local! {
         static WAITING: RefCell<HashMap<u64, Waiting>> = RefCell::new(HashMap::new());
+        static LEAVING: RefCell<HashSet<String>> = RefCell::new(HashSet::new());
     }
 
     static NEXT: AtomicU64 = AtomicU64::new(1);
@@ -100,10 +112,31 @@ mod engine {
                 return;
             }
 
+            let loading = ContentLoadingEventHandler::create(Box::new({
+                let tab = tab.clone();
+                move |_, _| {
+                    arrived(&tab);
+                    Ok(())
+                }
+            }));
+            let settled = NavigationCompletedEventHandler::create(Box::new({
+                let tab = tab.clone();
+                move |_, _| {
+                    arrived(&tab);
+                    Ok(())
+                }
+            }));
+            let mut token = 0i64;
+            let _ = core.add_ContentLoading(&loading, &raw mut token);
+            let _ = core.add_NavigationCompleted(&settled, &raw mut token);
+
             let handler = ScriptDialogOpeningEventHandler::create(Box::new(move |_, args| {
                 let Some(args) = args else {
                     return Ok(());
                 };
+                if LEAVING.with_borrow(|left| left.contains(&tab)) {
+                    return Ok(());
+                }
                 let deferral = args.GetDeferral()?;
 
                 let mut raw = COREWEBVIEW2_SCRIPT_DIALOG_KIND::default();
@@ -163,6 +196,15 @@ mod engine {
         }
     }
 
+    fn arrived(tab: &str) {
+        LEAVING.with_borrow_mut(|left| left.remove(tab));
+    }
+
+    pub fn leave(tab: &str) {
+        LEAVING.with_borrow_mut(|left| left.insert(tab.to_owned()));
+        forget(tab);
+    }
+
     pub fn forget(tab: &str) {
         let gone: Vec<u64> = WAITING.with_borrow(|held| {
             held.iter()
@@ -187,6 +229,9 @@ pub fn listen(
 
 #[cfg(any(not(windows), feature = "cef"))]
 pub fn forget(_tab: &str) {}
+
+#[cfg(any(not(windows), feature = "cef"))]
+fn leave(_tab: &str) {}
 
 #[cfg(test)]
 mod tests {
