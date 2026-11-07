@@ -215,7 +215,7 @@ fn carried_into(from: &Path, into: &Path, kept: bool) -> Result<PathBuf, String>
         return Err(error);
     }
     if kept && to.file_name() != from.file_name() {
-        let _ = fs::rename(to.join(&name), to.join(leaf_name(&to)));
+        let _ = crate::carry::rename_new(&to.join(&name), &to.join(leaf_name(&to)));
     }
     Ok(to)
 }

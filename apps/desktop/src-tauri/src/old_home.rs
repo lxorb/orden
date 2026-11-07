@@ -60,7 +60,7 @@ fn merged(old: &Path, new: &Path) -> bool {
     if fs::symlink_metadata(old).is_err() {
         return false;
     }
-    if fs::symlink_metadata(new).is_err() && fs::rename(old, new).is_ok() {
+    if crate::carry::rename_new(old, new).is_ok() {
         return true;
     }
     if !old.is_dir() || !new.is_dir() {
@@ -72,7 +72,7 @@ fn merged(old: &Path, new: &Path) -> bool {
     let mut any = false;
     for child in children.flatten() {
         let there = new.join(child.file_name());
-        if fs::symlink_metadata(&there).is_err() && fs::rename(child.path(), &there).is_ok() {
+        if crate::carry::rename_new(&child.path(), &there).is_ok() {
             any = true;
         }
     }

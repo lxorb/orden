@@ -55,7 +55,7 @@ pub fn carry_over() {
     let Some((from, to)) = std::env::current_exe().ok().and_then(|exe| renamed(&exe)) else {
         return;
     };
-    if to.exists() || brewed(&CASKROOMS) || std::fs::rename(&from, &to).is_err() {
+    if brewed(&CASKROOMS) || crate::carry::rename_new(&from, &to).is_err() {
         return;
     }
 

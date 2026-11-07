@@ -511,7 +511,7 @@ fn moved(from: &Path, to: &Path) -> Result<(), String> {
     if let Some(folder) = to.parent() {
         fs::create_dir_all(folder).map_err(|why| why.to_string())?;
     }
-    if fs::rename(from, to).is_ok() {
+    if crate::carry::rename_new(from, to).is_ok() {
         return Ok(());
     }
     copied(from, to)?;

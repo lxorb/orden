@@ -199,7 +199,7 @@ fn rehome_in(root: &Path, from: &str, to: &str) -> usize {
         if there.exists() {
             continue;
         }
-        if fs::rename(&note, &there).is_ok() {
+        if crate::carry::rename_new(&note, &there).is_ok() {
             let _ = fs::write(there.join(ORIGIN), &now);
             moved += 1;
         }
