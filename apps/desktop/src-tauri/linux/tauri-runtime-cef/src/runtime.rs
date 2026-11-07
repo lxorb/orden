@@ -3331,7 +3331,7 @@ impl<T: UserEvent> CefRuntime<T> {
       0,
       (
         crate::cef_impl::preferences::REMOTE_DEBUGGING_ALLOWED.to_string(),
-        serde_json::Value::Bool(remote_debugging_enabled),
+        serde_json::Value::Bool(true),
       ),
     );
 
@@ -3347,7 +3347,7 @@ impl<T: UserEvent> CefRuntime<T> {
     crate::downgrade::prepare_root_cache_path(&cache_path, downgrade_policy);
     crate::cef_impl::preferences::local_state_allows_debugging(
       &cache_path,
-      remote_debugging_enabled,
+      true,
     );
 
     // Force X11 usage on Linux.
