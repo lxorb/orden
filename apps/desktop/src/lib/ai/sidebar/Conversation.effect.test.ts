@@ -181,3 +181,27 @@ test('Show all over a thousand chats draws the rows in sight, not every one', ()
   void shown.close()
   panel.heads = []
 })
+
+test('a long chat draws its last turns first and earlier ones as it is scrolled up', async () => {
+  panel.turns = Array.from({ length: 100 }, (_, at) => ({
+    id: `u${at}`,
+    role: 'you',
+    at,
+    parts: [],
+    draft: { text: `question ${at}`, attachments: [] },
+  }))
+  const shown = draw()
+  const said = () =>
+    [...shown.target.querySelectorAll('.said .bubble')].map((one) => one.textContent)
+  expect(said()).toHaveLength(40)
+  expect(said().at(-1)).toBe('question 99')
+
+  const talk = shown.target.querySelector<HTMLElement>('.talk')
+  talk?.dispatchEvent(new Event('scroll'))
+  flushSync()
+  await Promise.resolve()
+  expect(said()).toHaveLength(60)
+  expect(said()[0]).toBe('question 40')
+  void shown.close()
+  panel.turns = []
+})
