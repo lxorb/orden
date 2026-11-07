@@ -40,7 +40,7 @@ let open: Promise<IDBDatabase> | null = null
 function database(): Promise<IDBDatabase> {
   if (open) return open
 
-  open = new Promise((resolve, reject) => {
+  const opening = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(NAME, VERSION)
 
     request.onupgradeneeded = () => {
@@ -61,11 +61,43 @@ function database(): Promise<IDBDatabase> {
       }
     }
 
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error ?? new Error('could not open the database'))
+    request.onsuccess = () => {
+      const db = request.result
+      db.onversionchange = () => {
+        db.close()
+        lost(opening)
+      }
+      db.onclose = () => lost(opening)
+      resolve(db)
+    }
+    request.onerror = () => {
+      lost(opening)
+      reject(request.error ?? new Error('could not open the database'))
+    }
   })
 
-  return open
+  open = opening
+  return opening
+}
+
+function lost(was: Promise<IDBDatabase>) {
+  if (open === was) open = null
+}
+
+async function begun(
+  stores: string | readonly string[],
+  mode: IDBTransactionMode,
+): Promise<IDBTransaction> {
+  const opening = database()
+  const db = await opening
+  try {
+    return db.transaction(typeof stores === 'string' ? stores : [...stores], mode)
+  } catch (error) {
+    if (!(error instanceof DOMException) || error.name !== 'InvalidStateError') throw error
+    lost(opening)
+    const again = await database()
+    return again.transaction(typeof stores === 'string' ? stores : [...stores], mode)
+  }
 }
 
 function fillStats(change: IDBTransaction | null) {
@@ -97,13 +129,15 @@ function run<T>(
   mode: IDBTransactionMode,
   action: (store: IDBObjectStore) => IDBRequest,
 ): Promise<T> {
-  return database().then(
-    (db) =>
+  return begun(store, mode).then(
+    (transaction) =>
       new Promise<T>((resolve, reject) => {
-        const transaction = db.transaction(store, mode)
         const request = action(transaction.objectStore(store))
 
-        request.onsuccess = () => resolve(request.result as T)
+        if (mode === 'readonly') request.onsuccess = () => resolve(request.result as T)
+        else transaction.oncomplete = () => resolve(request.result as T)
+        transaction.onabort = () =>
+          reject(transaction.error ?? request.error ?? new Error(`${store} was rolled back`))
         request.onerror = () => reject(request.error ?? new Error(`${store} failed`))
       }),
   )
@@ -115,26 +149,28 @@ function batch(
 ): Promise<void> {
   const named = stores.join(' and ')
 
-  return database().then(
-    (db) =>
+  return begun(stores, 'readwrite').then(
+    (transaction) =>
       new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction([...stores], 'readwrite')
-
         transaction.oncomplete = () => resolve()
         transaction.onabort = () =>
           reject(transaction.error ?? new Error(`${named} was rolled back`))
         transaction.onerror = () => reject(transaction.error ?? new Error(`${named} failed`))
 
-        queue(transaction)
+        try {
+          queue(transaction)
+        } catch (error) {
+          transaction.abort()
+          reject(error instanceof Error ? error : new Error(String(error)))
+        }
       }),
   )
 }
 
 function walk(store: string, visit: (row: FileRow) => void): Promise<void> {
-  return database().then(
-    (db) =>
+  return begun(store, 'readonly').then(
+    (transaction) =>
       new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction(store, 'readonly')
         const request = transaction.objectStore(store).openCursor()
 
         request.onsuccess = () => {
@@ -146,6 +182,8 @@ function walk(store: string, visit: (row: FileRow) => void): Promise<void> {
         }
 
         transaction.oncomplete = () => resolve()
+        transaction.onabort = () =>
+          reject(transaction.error ?? new Error(`${store} was rolled back`))
         transaction.onerror = () => reject(transaction.error ?? new Error(`${store} failed`))
       }),
   )
@@ -248,8 +286,11 @@ const ownFiles = {
       change.objectStore('files').delete(path)
       change.objectStore('stats').delete(path)
     }).then(() => announce([], [path])),
-  move: (rows: FileRow[], gone: string[]) =>
-    batch(WITH_STATS, (change) => {
+  move: (rows: FileRow[], gone: string[]) => {
+    const written = rows.map((row) => row.path)
+    const kept = new Set(written)
+    const left = gone.filter((path) => !kept.has(path))
+    return batch(WITH_STATS, (change) => {
       const store = change.objectStore('files')
       const listing = change.objectStore('stats')
 
@@ -258,18 +299,12 @@ const ownFiles = {
         listing.put(statOf(row))
       }
 
-      for (const path of gone) {
-        if (rows.some((row) => row.path === path)) continue
-
+      for (const path of left) {
         store.delete(path)
         listing.delete(path)
       }
-    }).then(() =>
-      announce(
-        rows.map((row) => row.path),
-        gone.filter((path) => !rows.some((row) => row.path === path)),
-      ),
-    ),
+    }).then(() => announce(written, left))
+  },
 }
 
 const ownAssets = {

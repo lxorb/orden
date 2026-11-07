@@ -112,3 +112,42 @@ describe('whether the listing holds a path', () => {
     expect(await stats.holds('/h/Gone.md')).toBe(false)
   })
 })
+
+describe('the notes kept in this browser', () => {
+  test('let another tab delete or upgrade their store, and carry on with it afterwards', async () => {
+    await files.write('/t/kept.md', '# kept', 1)
+    await new Promise<void>((done, failed) => {
+      const request = indexedDB.deleteDatabase('nib')
+      request.onsuccess = () => done()
+      request.onerror = () => failed(request.error ?? new Error('not deleted'))
+    })
+
+    expect(await files.get('/t/kept.md')).toBeUndefined()
+    await files.write('/t/kept.md', '# again', 2)
+    expect(await files.get('/t/kept.md')).toMatchObject({ content: '# again' })
+  })
+
+  test('open their store again when the browser lets the old connection go', async () => {
+    await files.write('/t/lost.md', '# lost', 1)
+    const lost = vi.spyOn(IDBDatabase.prototype, 'transaction').mockImplementationOnce(() => {
+      throw new DOMException('The database connection is closing.', 'InvalidStateError')
+    })
+    try {
+      expect(await files.get('/t/lost.md')).toMatchObject({ content: '# lost' })
+      expect(lost).toHaveBeenCalledTimes(2)
+    } finally {
+      lost.mockRestore()
+    }
+  })
+
+  test('write all of a move or none of it', async () => {
+    await files.write('/t/a.md', '# a', 1)
+    const bad = { path: '/t/c.md', content: (() => 0) as never, created: 1, modified: 1 }
+    await expect(
+      files.move([{ path: '/t/b.md', content: '# b', created: 1, modified: 1 }, bad], ['/t/a.md']),
+    ).rejects.toThrow()
+
+    expect(await files.get('/t/b.md')).toBeUndefined()
+    expect(await files.get('/t/a.md')).toMatchObject({ content: '# a' })
+  })
+})
