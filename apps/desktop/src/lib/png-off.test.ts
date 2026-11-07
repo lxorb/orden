@@ -6,13 +6,19 @@ class Away {
   static failing = false
   onmessage: ((event: MessageEvent) => void) | null = null
   onerror: (() => void) | null = null
-  postMessage(said: { id: number; picture: { width: number } }, moved: unknown[]) {
+  postMessage(said: { id: number; picture: { width: number }; as: string }, moved: unknown[]) {
     sent.push({ id: said.id, moved: moved.length })
     queueMicrotask(() => {
       if (Away.failing) this.onerror?.()
       else
         this.onmessage?.({
-          data: { id: said.id, png: `data:image/png;base64,${said.picture.width}` },
+          data: {
+            id: said.id,
+            png:
+              said.as === 'bytes'
+                ? new Uint8Array([said.picture.width]).buffer
+                : `data:image/png;base64,${said.picture.width}`,
+          },
         } as MessageEvent)
     })
   }
@@ -52,4 +58,34 @@ test('a worker that fails leaves the picture to be encoded here, and later ones 
   expect(sent).toEqual([{ id: 2, moved: 1 }, 'ended'])
   expect(await pngData(canvas(4))).toBe('data:image/png;base64,AQI=')
   expect(sent).toHaveLength(2)
+})
+
+test('a picture drawn for its bytes is drawn off the page and encoded by the worker', async () => {
+  Away.failing = false
+  vi.resetModules()
+  const drawn: number[] = []
+  class Sheet {
+    constructor(
+      readonly width: number,
+      readonly height: number,
+    ) {}
+    getContext() {
+      return { drawImage: () => drawn.push(this.width) }
+    }
+    transferToImageBitmap() {
+      return { width: this.width }
+    }
+  }
+  vi.stubGlobal('OffscreenCanvas', Sheet)
+  const { pngDrawn } = await import('./png-off')
+
+  const png = await pngDrawn(
+    9,
+    4,
+    async () => (drawing) => drawing.drawImage({} as ImageBitmap, 0, 0),
+  )
+
+  expect(drawn).toEqual([9])
+  expect(png).toEqual(new Uint8Array([9]))
+  expect(sent.at(-1)).toEqual({ id: 1, moved: 1 })
 })

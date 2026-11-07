@@ -1,4 +1,4 @@
-import { pngData } from '../png-off'
+import { pngData, pngDrawn } from '../png-off'
 import type { PaperAt } from './paper'
 
 const SIDE = 16384
@@ -11,6 +11,7 @@ export async function svgToPng(
   svg: string,
   width: number,
   height: number,
+  paper: (() => Promise<ImageBitmap | null>) | null = null,
 ): Promise<Uint8Array | null> {
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
 
@@ -23,36 +24,44 @@ export async function svgToPng(
       image.src = url
     })
 
-    const paper = document.createElement('canvas')
     const sharp = sharpness(width, height, 2)
-    paper.width = Math.max(1, Math.round(width * sharp))
-    paper.height = Math.max(1, Math.round(height * sharp))
-
-    const ctx = paper.getContext('2d')
-    if (!ctx) return null
-
-    ctx.drawImage(image, 0, 0, paper.width, paper.height)
-    const blob = await new Promise<Blob | null>((resolve) => paper.toBlob(resolve, 'image/png'))
-    return blob ? new Uint8Array(await blob.arrayBuffer()) : null
+    const wide = Math.max(1, Math.round(width * sharp))
+    const high = Math.max(1, Math.round(height * sharp))
+    return await pngDrawn(wide, high, async () => {
+      const under = paper ? await paper() : null
+      return (drawing) => {
+        if (paper) {
+          drawing.fillStyle = '#ffffff'
+          drawing.fillRect(0, 0, wide, high)
+        }
+        if (under) drawing.drawImage(under, 0, 0, wide, high)
+        drawing.drawImage(image, 0, 0, wide, high)
+      }
+    })
   } finally {
     URL.revokeObjectURL(url)
   }
 }
 
-export async function paperPicture(at: PaperAt, number: number): Promise<string | null> {
+export async function paperUnder(at: PaperAt, number: number): Promise<ImageBitmap | null> {
   const { paperOf } = await import('./paper')
   let paper = await paperOf(at, number)
   if (paper && !paper.image.width) paper = await paperOf(at, number)
-  if (!paper?.image.width) return null
+  return paper?.image.width ? paper.image : null
+}
+
+export async function paperPicture(at: PaperAt, number: number): Promise<string | null> {
+  const image = await paperUnder(at, number)
+  if (!image) return null
 
   const sheet = document.createElement('canvas')
-  sheet.width = paper.image.width
-  sheet.height = paper.image.height
+  sheet.width = image.width
+  sheet.height = image.height
 
   const ctx = sheet.getContext('2d')
   if (!ctx) return null
 
-  ctx.drawImage(paper.image, 0, 0)
+  ctx.drawImage(image, 0, 0)
   return pngData(sheet)
 }
 
