@@ -33,6 +33,7 @@ fn built_window(app: &AppHandle, x: Option<f64>, y: Option<f64>) -> Result<(), S
     }
     let builder =
         WebviewWindowBuilder::new(app, PRESENTER, WebviewUrl::App("presenter.html".into()))
+            .initialization_script(crate::old_home::script())
             .title("Orden")
             .inner_size(WIDTH, HEIGHT)
             .disable_drag_drop_handler();

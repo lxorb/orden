@@ -123,3 +123,33 @@ describe('settling where the folder is', () => {
     expect(settleRoot(NEW, [`${NEW}/Notes`], [`${NEW}/Notes`])).toBeNull()
   })
 })
+
+describe('restating a record kept under both the old and the new folder', () => {
+  test('joins the two, the new one winning where both say something', () => {
+    localStorage.setItem(
+      'orden:item-meta',
+      JSON.stringify({
+        [`${OLD}/Notes`]: { items: { 'a.md': { 'todo-list': 'yes' } }, lists: true },
+        [`${NEW}/Notes`]: { items: { 'b.md': { 'todo-list': 'yes' } }, lists: false },
+      }),
+    )
+
+    expect(restate(OLD, NEW)).toBe(1)
+    expect(JSON.parse(localStorage.getItem('orden:item-meta')!)).toEqual({
+      [`${NEW}/Notes`]: {
+        items: { 'a.md': { 'todo-list': 'yes' }, 'b.md': { 'todo-list': 'yes' } },
+        lists: false,
+      },
+    })
+  })
+
+  test('says a path twice in a list only once', () => {
+    localStorage.setItem(
+      'orden:recent',
+      JSON.stringify([`${NEW}/Notes/a.md`, `${OLD}/Notes/a.md`, 1, 1]),
+    )
+
+    restate(OLD, NEW)
+    expect(JSON.parse(localStorage.getItem('orden:recent')!)).toEqual([`${NEW}/Notes/a.md`, 1, 1])
+  })
+})

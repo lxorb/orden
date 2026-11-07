@@ -1,4 +1,4 @@
-import { movedTo } from '../space-paths'
+import { movedTo, samePath } from '../space-paths'
 import type { Core } from '../sync2/core'
 import type { Change } from '../sync2/store'
 import { forget, isRecord, isString, keepJson, stored } from '../stored'
@@ -38,7 +38,8 @@ export async function followRoots(core: Pick<Core, 'spaces' | 'rootMoved' | 'com
   const changes: Change[] = []
   for (const space of core.spaces.values()) {
     const to = movedRoot(space.row.root, moves)
-    if (to !== null) changes.push(...core.rootMoved(space.id, to))
+    const taken = [...core.spaces.values()].some((one) => samePath(one.row.root, to ?? ''))
+    if (to !== null && !taken) changes.push(...core.rootMoved(space.id, to))
   }
   if (changes.length) await core.commit(changes)
   forget(ROOTS_MOVED)

@@ -353,9 +353,53 @@ describe('a space that is a folder', () => {
       clearSelection: () => undefined,
       loadTree: () => Promise.resolve(),
       persist: () => undefined,
+      deleted: [] as string[],
+      deleteSpace(id: string) {
+        ws.deleted.push(id)
+        ws.spaces = ws.spaces.filter((one) => one.id !== id)
+        return Promise.resolve()
+      },
     }
     return { ws, said }
   }
+
+  async function twinned(edit: (kept: string, twin: string) => Promise<unknown>) {
+    const { convertAll, retireTwins } = await import('./convert')
+    disk.dirs.add('/spaces/Notes')
+    disk.files.set('/spaces/Notes/Plan.md', 'ship it')
+    const { ws } = workspace(['/spaces/Notes'])
+    await convertAll(ws)
+    disk.files.set('/spaces/.orden/Notes/.from', '/old/home/Notes')
+    ws.spaces.push({ id: 's1', name: 'Notes', root: '/spaces/Notes' })
+    await convertAll(ws)
+    const twin = ws.spaces.find((one) => one.id === 's1')?.root ?? ''
+    expect(twin).toBe('/spaces/.orden/Notes 2/Notes 2')
+    disk.files.set('/spaces/.orden/Notes/.from', '/spaces/Notes')
+    await edit('/spaces/.orden/Notes/Notes', twin)
+    await retireTwins(ws)
+    return ws
+  }
+
+  test('made twice from one folder after its home moved, the copy that adds nothing goes to the trash', async () => {
+    const ws = await twinned(() => Promise.resolve())
+    expect(ws.deleted).toEqual(['s1'])
+    expect(ws.spaces.map((one) => one.root)).toEqual(['/spaces/.orden/Notes/Notes'])
+  })
+
+  test('made twice, the first one changed since, still only the bare copy goes', async () => {
+    const ws = await twinned((kept) =>
+      call('write_note', { path: `${kept}/Plan.md`, content: 'ship it today' }),
+    )
+    expect(ws.deleted).toEqual(['s1'])
+  })
+
+  test('made twice, and the copy written in since, both stay', async () => {
+    const ws = await twinned((_, twin) =>
+      call('write_note', { path: `${twin}/Later.md`, content: 'read the letter' }),
+    )
+    expect(ws.deleted).toEqual([])
+    expect(ws.spaces).toHaveLength(2)
+  })
 
   test('is copied whole, checked, and moved to its new root; the folder stays as it was', async () => {
     const { convertAll } = await import('./convert')
@@ -625,6 +669,7 @@ describe('making a folder a kept space, whatever happens on the way', () => {
       clearSelection: () => undefined,
       loadTree: () => Promise.resolve(),
       persist: () => undefined,
+      deleteSpace: () => Promise.resolve(),
     }
     return { ws, said }
   }
