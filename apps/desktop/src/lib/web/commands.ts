@@ -256,6 +256,19 @@ async function textRow(path: string): Promise<FileRow | undefined> {
   return await files.get(at)
 }
 
+function baseName(path: string): string {
+  return normalise(path).split('/').pop() ?? ''
+}
+
+function namedForEveryMachine(path: string): void {
+  const name = baseName(path)
+  if (isReserved(name)) {
+    throw new Error(
+      `${name} is a name Windows keeps for a device, so a note or folder cannot be called it`,
+    )
+  }
+}
+
 async function writeNote(path: string, content: string) {
   await files.write(
     normalise(path),
@@ -958,6 +971,7 @@ export async function webInvoke<T>(
       if (args.arrived !== true && args.raw !== true && keptAway.at(path)) {
         if (!(await keptAway.bringBack(path))) throw new Error(NOT_HERE)
       }
+      if (args.arrived !== true && !(await occupied(normalise(path)))) namedForEveryMachine(path)
       await writeNote(path, args.content as string)
       return undefined as T
 
@@ -980,6 +994,9 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'rename_note':
+      if (args.arrived !== true && baseName(args.from as string) !== baseName(args.to as string)) {
+        namedForEveryMachine(args.to as string)
+      }
       await renameNote(
         args.from as string,
         args.to as string,
@@ -990,10 +1007,12 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'copy_path':
+      namedForEveryMachine(args.to as string)
       await copyPath(args.from as string, args.to as string)
       return undefined as T
 
     case 'create_folder':
+      if (args.arrived !== true) namedForEveryMachine(path)
       await writeNote(join(path, KEEP), '')
       return undefined as T
 
