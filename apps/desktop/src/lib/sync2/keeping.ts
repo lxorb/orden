@@ -1,13 +1,13 @@
 import type { Core } from './core'
 import { holdsDocument, unixLines } from './kinds'
 import type { SpaceState } from './places'
-import { keepingRow, type Keeping } from './records'
+import { keepingRow, Tracked, type Keeping } from './records'
 import { put, type Change, type EntryRow } from './store'
 
 const FEW: ReadonlySet<string> = new Set(['note', 'canvas', 'pages'])
 
 export function emptyKeeping(): Keeping {
-  return { on: false, used: new Map(), going: new Set() }
+  return { on: false, used: new Tracked(), going: new Set() }
 }
 
 function alwaysKept(space: SpaceState, entry: EntryRow): boolean {
