@@ -7,6 +7,7 @@ pub const NOT_JSON: i64 = -32700;
 pub const NOT_A_REQUEST: i64 = -32600;
 pub const NO_SUCH_METHOD: i64 = -32601;
 pub const BAD_PARAMS: i64 = -32602;
+pub const BUSY: i64 = -32000;
 
 #[derive(Debug, PartialEq)]
 pub enum Message {
