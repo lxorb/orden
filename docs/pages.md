@@ -52,7 +52,7 @@ nothing in it is an invention of ours:
 - a page with nothing behind it is a `group` node with a label.
 
 What the spec has no word for - the size preset and the ruling - goes in one
-record per page under `nib.pages`, beside the id it belongs to. A hand-edited file
+record per page under `orden.pages`, beside the id it belongs to. A hand-edited file
 that lost that record loses the ruling and keeps the page as the frame it looks
 like, which is the right way for this to fail.
 

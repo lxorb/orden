@@ -6,7 +6,7 @@ real disk and a real console: the lines written as the window goes and waited fo
 back by the next launch, drawn above a fresh Command Prompt that the pseudo console did not
 paint over, the prompt in the folder the old one was in.
 
-    python scripts/terminal-restore-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
+    python scripts/terminal-restore-probe.py --exe path/to/orden.exe --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch is `run_probe`'s: off the screen,
 never taking the keyboard, with `ORDEN_SPACES_DIR` in a folder of this run's own. The app is
@@ -60,7 +60,7 @@ def check(ok: bool, words: str) -> None:
 
 def strip(window) -> list[list[str]]:
 
-    said = window.run("JSON.stringify(nib.workspace.tabs.map((one) => [one.kind, one.name]))")
+    said = window.run("JSON.stringify(orden.workspace.tabs.map((one) => [one.kind, one.name]))")
     return json.loads(said) if isinstance(said, str) else []
 
 def histories(identifier: str) -> list[pathlib.Path]:
@@ -100,7 +100,7 @@ def main() -> int:
     (spaces / SPACE).mkdir(parents=True, exist_ok=True)
     (spaces / SPACE / "Before.md").write_text("# Before\n\nWords.\n", encoding="utf-8")
     (spaces / SPACE / "After.md").write_text("# After\n\nWords.\n", encoding="utf-8")
-    here = pathlib.Path(tempfile.mkdtemp(prefix="nib restore here "))
+    here = pathlib.Path(tempfile.mkdtemp(prefix="orden restore here "))
     marker = f"orden-marker-{secrets.token_hex(4)}"
     say(f"spaces root {spaces}, shell goes to {here}, marker {marker}")
 
@@ -118,13 +118,13 @@ def main() -> int:
     try:
         say(f"pid {app.pid}, endpoint {port}")
 
-        root = window.run("nib.workspace.activeSpace ? nib.workspace.activeSpace.root : null")
+        root = window.run("nib.workspace.activeSpace ? orden.workspace.activeSpace.root : null")
         for name in ("Before.md", "After.md"):
             window.run(f"nib.workspace.openEntry({json.dumps(str(pathlib.Path(str(root)) / name))}).then(() => true)")
             until(lambda n=name: any(tab[1] == n.removesuffix(".md") for tab in strip(window)), 10)
         cmd = str(
             window.run(
-                "(() => { const ws = nib.workspace; "
+                "(() => { const ws = orden.workspace; "
                 f"ws.openUnsaved('terminal', JSON.stringify({{ shell: 'cmd', folder: {json.dumps(root)}, key: 'probe-restore' }}), "
                 "'Command Prompt', ws.tabs[0].id); return ws.activeTabId })()"
             )
@@ -168,8 +168,8 @@ def main() -> int:
         check(after == before, "every tab is back, in the same place")
 
         back = window.run(
-            "(() => { const tab = nib.workspace.tabs.find((one) => one.kind === 'terminal'); "
-            "if (!tab) return null; nib.workspace.activate(tab.id); return tab.id })()"
+            "(() => { const tab = orden.workspace.tabs.find((one) => one.kind === 'terminal'); "
+            "if (!tab) return null; orden.workspace.activate(tab.id); return tab.id })()"
         )
         check(isinstance(back, str), "the terminal tab comes back")
         if isinstance(back, str):
@@ -207,8 +207,8 @@ def main() -> int:
             window.run("nib.workspace.reopenClosed().then(() => true)")
             again = until(
                 lambda: window.run(
-                    "(() => { const tab = nib.workspace.tabs.find((one) => one.kind === 'terminal'); "
-                    "if (!tab) return null; nib.workspace.activate(tab.id); return tab.id })()"
+                    "(() => { const tab = orden.workspace.tabs.find((one) => one.kind === 'terminal'); "
+                    "if (!tab) return null; orden.workspace.activate(tab.id); return tab.id })()"
                 ),
                 10,
             )

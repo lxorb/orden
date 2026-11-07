@@ -128,7 +128,7 @@ def ask(port: int, secret: str, code: str) -> object:
 
 TABS = r"""
 (() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   const front = ws.tabs.find((one) => one.id === ws.activeTabId)
   const pane = front ? front.paneId : null
   const strip = ws.tabs.filter((one) => one.paneId === pane)

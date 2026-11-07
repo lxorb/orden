@@ -13,7 +13,7 @@ the bytes the page sent.
       --config '{"identifier":"so.orden.Orden.probe.mail","version":"99.0.0",
                  "build":{"beforeBuildCommand":""},
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/mail-large-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
+    python scripts/mail-large-probe.py --exe apps/desktop/src-tauri/target/release/orden.exe \\
       --identifier so.orden.Orden.probe.mail
 
 Every launch goes through `run_probe`, off the screen and without the keyboard; the spaces

@@ -129,12 +129,12 @@ FOCUSLESS = r"""(() => {
   return 'ok'
 })()"""
 
-TABS = """JSON.stringify(nib.workspace.tabs.map((one) => ({
-  name: one.name, kind: one.kind, showing: one.id === nib.workspace.activeTabId,
+TABS = """JSON.stringify(orden.workspace.tabs.map((one) => ({
+  name: one.name, kind: one.kind, showing: one.id === orden.workspace.activeTabId,
 })))"""
 
 SHOT = """(async () => window.__TAURI_INTERNALS__.invoke('web_shot', {
-  tab: nib.workspace.activeTabId,
+  tab: orden.workspace.activeTabId,
 }))()"""
 
 HWND_BOTTOM = 1
@@ -375,7 +375,7 @@ def main() -> int:
             nib = json.loads(str(one.get("nib") or "[]"))
             page = json.loads(str(one.get("page") or "[]"))
             if not NIBS <= set(nib):
-                wrong.append(f"nib's world in {path} has no listeners: {one}")
+                wrong.append(f"Orden's world in {path} has no listeners: {one}")
             if NIBS & set(page):
                 wrong.append(f"the page's own world in {path} has Orden's listeners: {page}")
         added = (
@@ -384,7 +384,7 @@ def main() -> int:
             else []
         )
         if not any(one.get("kind") == "web" and not one.get("showing") for one in added):
-            wrong.append(f"a window asked for from nib's world opened no tab behind: {after}")
+            wrong.append(f"a window asked for from Orden's world opened no tab behind: {after}")
 
         if wrong:
             wrong.append("the dialogs were not asked: this build still hands the page the app's")

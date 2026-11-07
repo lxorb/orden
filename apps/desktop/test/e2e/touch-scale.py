@@ -51,7 +51,7 @@ async () => {
 
   await ws.noteFrom('# Deep work\\n\\n## Mornings\\n\\n### Before eight\\n\\nthe first line\\n', root)
   await ws.noteFrom('# Meeting notes\\n\\nwho said what, and a [[Deep work]] link\\n', root)
-  await ws.noteFrom('# Chapter one\\n\\nreading, #work and #work/nib\\n', at('Reading'))
+  await ws.noteFrom('# Chapter one\\n\\nreading, #work and #work/orden\\n', at('Reading'))
   const paper = await ws.noteFrom('# paper\\n', at('Reading'))
   await ws.rename(paper, 'Deep Learning.pdf')
   await ws.noteFrom('# Archived\\n\\nolder words\\n', at('Reading/Archive'))

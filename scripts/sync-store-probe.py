@@ -26,7 +26,7 @@ Every launch goes through `run_probe`, off the screen and without the keyboard.
       --config '{"identifier":"so.orden.Orden.probe.sync-client-store","version":"99.0.0",
                  "build":{"beforeBuildCommand":""},
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/sync-store-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
+    python scripts/sync-store-probe.py --exe apps/desktop/src-tauri/target/release/orden.exe
 
 This wipes that identifier's settings folder and webview profile at the start of every
 run, and refuses to wipe one whose name does not say `probe`.

@@ -111,15 +111,15 @@ for _ in range(60):
     if run("1 + 1") == 2:
         break
     time.sleep(0.5)
-run("(nib.workspace.openWebsite(), 'opened')")
+run("(orden.workspace.openWebsite(), 'opened')")
 time.sleep(0.5)
 tab = run("nib.workspace.activeTabId")
-run(f"(nib.pages.go({json.dumps(tab)}, 'http://127.0.0.1:{PAGES}/'), 'sent')")
+run(f"(orden.pages.go({json.dumps(tab)}, 'http://127.0.0.1:{PAGES}/'), 'sent')")
 time.sleep(5)
 
 place = None
 for _ in range(40):
-    place = run(f"(() => {{ const page = nib.pages.of({json.dumps(tab)}); return page && page.sent && page.sent.visible ? page.sent.pane : null }})()")
+    place = run(f"(() => {{ const page = orden.pages.of({json.dumps(tab)}); return page && page.sent && page.sent.visible ? page.sent.pane : null }})()")
     if isinstance(place, dict) and place.get("width", 0) > 10:
         break
     time.sleep(0.25)

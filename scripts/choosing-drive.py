@@ -113,21 +113,21 @@ for _ in range(60):
     time.sleep(0.5)
 
 def web_tab(name):
-    run("(nib.workspace.openWebsite(), 'opened')")
+    run("(orden.workspace.openWebsite(), 'opened')")
     time.sleep(0.5)
     tab = run("nib.workspace.activeTabId")
-    run(f"(nib.pages.go({json.dumps(tab)}, '{SITE}/{name}'), 'sent')")
+    run(f"(orden.pages.go({json.dumps(tab)}, '{SITE}/{name}'), 'sent')")
     return tab
 
 LEFT = web_tab("left")
 time.sleep(1)
-run(f"(nib.workspace.split('row', {json.dumps(LEFT)}), 'split')")
+run(f"(orden.workspace.split('row', {json.dumps(LEFT)}), 'split')")
 time.sleep(1)
 RIGHT = web_tab("right")
 time.sleep(4)
 
-PANE_OF = "(id) => nib.workspace.tabs.find((tab) => tab.id === id).paneId"
-WHO = f"JSON.stringify([nib.workspace.activeTabId, nib.workspace.panes.focusedId, ({PANE_OF})({json.dumps(LEFT)}), ({PANE_OF})({json.dumps(RIGHT)})])"
+PANE_OF = "(id) => orden.workspace.tabs.find((tab) => tab.id === id).paneId"
+WHO = f"JSON.stringify([orden.workspace.activeTabId, orden.workspace.panes.focusedId, ({PANE_OF})({json.dumps(LEFT)}), ({PANE_OF})({json.dumps(RIGHT)})])"
 active, focused, LEFT_PANE, RIGHT_PANE = json.loads(run(WHO) or "[null,null,null,null]")
 if not LEFT_PANE or LEFT_PANE == RIGHT_PANE:
     raise SystemExit(f"::error::the two web tabs are not in two panes: {run(WHO)}")
@@ -136,7 +136,7 @@ RATIO = run("devicePixelRatio") or 1
 
 def middle(tab):
     for _ in range(40):
-        sent = run(f"(() => {{ const page = nib.pages.of({json.dumps(tab)}); return page && page.sent && page.sent.visible ? page.sent.pane : null }})()")
+        sent = run(f"(() => {{ const page = orden.pages.of({json.dumps(tab)}); return page && page.sent && page.sent.visible ? page.sent.pane : null }})()")
         if isinstance(sent, dict) and sent.get("width", 0) > 10:
             left, top = window()
             return left + (sent["x"] + sent["width"] / 2) * RATIO, top + (sent["y"] + sent["height"] / 2) * RATIO
@@ -156,7 +156,7 @@ def chosen_after(tab, pane, what):
 
 failures = []
 for round_ in range(1, 4):
-    run(f"(nib.workspace.focusPane({json.dumps(LEFT_PANE)}), 'left')")
+    run(f"(orden.workspace.focusPane({json.dumps(LEFT_PANE)}), 'left')")
     time.sleep(0.5)
     press(*middle(RIGHT))
     chosen_after(RIGHT, RIGHT_PANE, f"round {round_}: the right page pressed with the left pane worked in")
@@ -164,7 +164,7 @@ for round_ in range(1, 4):
     chosen_after(LEFT, LEFT_PANE, f"round {round_}: the left page pressed")
     press(*middle(RIGHT))
     chosen_after(RIGHT, RIGHT_PANE, f"round {round_}: the right page pressed again")
-    run(f"(nib.workspace.focusPane({json.dumps(LEFT_PANE)}), 'left')")
+    run(f"(orden.workspace.focusPane({json.dumps(LEFT_PANE)}), 'left')")
     time.sleep(0.5)
     press(*middle(RIGHT))
     chosen_after(RIGHT, RIGHT_PANE, f"round {round_}: the right page, which had the keyboard, pressed")

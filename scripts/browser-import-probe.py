@@ -290,7 +290,7 @@ def main() -> int:
             said[f"pressed {row}"] = app.ask(zen.PRESS % json.dumps(row))
             zen.until(
                 app,
-                "JSON.stringify(nib.workspace.spaces.map((one) => one.name))",
+                "JSON.stringify(orden.workspace.spaces.map((one) => one.name))",
                 lambda one: isinstance(one, list) and row in one,
                 60,
             )
@@ -311,7 +311,7 @@ def main() -> int:
         bring("Chrome")
         bring("Safari")
         said["again"] = {name: zen.files_under(spaces / name) for name in EXPECTED}
-        said["spaces again"] = app.ask("JSON.stringify(nib.workspace.spaces.map((one) => one.name))")
+        said["spaces again"] = app.ask("JSON.stringify(orden.workspace.spaces.map((one) => one.name))")
     finally:
         if running is not None and not close_app(running):
             running.terminate()

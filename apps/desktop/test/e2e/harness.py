@@ -1041,7 +1041,7 @@ class Worker:
         if self.state is not None:
             return
         build(WORKER_DIST, served_by_worker=True)
-        self.state = Path(tempfile.mkdtemp(prefix=f"nib-{self.drive.name}-worker-"))
+        self.state = Path(tempfile.mkdtemp(prefix=f"orden-{self.drive.name}-worker-"))
         self.drive.later(self.close)
         self.drive.clear()
         self.log.write_bytes(b"")
@@ -1269,7 +1269,7 @@ class Native:
 def needs_of(source: str) -> tuple[str, ...]:
     found = re.search(r"^NEEDS = \(([^)]*)\)", source, re.MULTILINE)
     said = tuple(one.strip().strip("\"'") for one in found.group(1).split(",") if one.strip()) if found else ()
-    if "native" not in said and re.search(r"\bprobe_app\b|\bNative\(DRIVE\b|\"nib\.exe\"", source):
+    if "native" not in said and re.search(r"\bprobe_app\b|\bNative\(DRIVE\b|\"(?:orden|nib)\.exe\"", source):
         said = (*said, "native")
     chromium_only = (
         r"\bnew_cdp_session\b|\bconnect_over_cdp\b|use-fake-device-for-media-stream|new Touch\("

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 const done: string[] = []
 const files = new Map<string, unknown>()
 let system = 'windows'
-const KERNEL_FOLDER = '/Users/me/work/nib'
+const KERNEL_FOLDER = '/Users/me/work/orden'
 let typing: ((data: string) => void) | null = null
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -294,7 +294,7 @@ test('a Mac asks the kernel where the shell went, and the tab remembers it', asy
   await sessionOf(tab).attach(placeFor(), false)
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
 
-  typing?.('cd ~/work/nib\r')
+  typing?.('cd ~/work/orden\r')
   await vi.waitFor(() => expect(done).toContain('pty_folder'), { timeout: 2000 })
   await vi.waitFor(() =>
     expect((JSON.parse(tab.doc) as { folder: string }).folder).toBe(KERNEL_FOLDER),

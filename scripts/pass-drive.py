@@ -226,10 +226,10 @@ def in_page(port, expression, path=""):
         session.close()
 
 def opened(url):
-    run("(nib.workspace.openWebsite(), 'opened')")
+    run("(orden.workspace.openWebsite(), 'opened')")
     time.sleep(0.5)
     tab = run("nib.workspace.activeTabId")
-    run(f"(nib.pages.go({json.dumps(tab)}, {json.dumps(url)}), 'sent')")
+    run(f"(orden.pages.go({json.dumps(tab)}, {json.dumps(url)}), 'sent')")
     port = urllib.parse.urlparse(url).port
     path = urllib.parse.urlparse(url).path
     if not until(lambda: in_page(port, "document.readyState === 'complete'", path), 30):
@@ -284,7 +284,7 @@ def pass_set_up():
         "page": "items",
         "settingsTab": "general",
     }
-    run(f"(nib.workspace.openUnsaved('pass', {json.dumps(json.dumps(view))}, 'Pass'), 'opened')")
+    run(f"(orden.workspace.openUnsaved('pass', {json.dumps(json.dumps(view))}, 'Pass'), 'opened')")
     if not until(lambda: app("!!document.querySelector('input[aria-label=\"Pass password\"]')"), 30):
         fail("the Pass tab shows no setup")
         shot("no-setup")
@@ -348,7 +348,7 @@ def pass_set_up():
         return False
     note("Pass set up, one login made in the Pass tab")
     settings = {**view, "page": "settings"}
-    run(f"(nib.workspace.openUnsaved('pass', {json.dumps(json.dumps(settings))}, 'Pass'), 'opened')")
+    run(f"(orden.workspace.openUnsaved('pass', {json.dumps(json.dumps(settings))}, 'Pass'), 'opened')")
     switch = """[...document.querySelectorAll('button[role=switch]')].find(
       (one) => one.textContent.trim() === 'Sign in automatically' && one.getClientRects().length)"""
     if not until(lambda: app(f"!!({switch})"), 20):

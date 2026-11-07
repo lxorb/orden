@@ -105,8 +105,8 @@ ROWS = """JSON.stringify([...document.querySelectorAll('.orden-setting .name')]
   .map((one) => one.textContent.trim()))"""
 
 HELD = """JSON.stringify({
-  spaces: nib.workspace.spaces.map((one) => one.name),
-  open: nib.workspace.activeSpace?.name ?? null,
+  spaces: orden.workspace.spaces.map((one) => one.name),
+  open: orden.workspace.activeSpace?.name ?? null,
   busy: document.querySelector('.busy, [role="status"]')?.textContent?.trim() ?? null,
   arranged: JSON.parse(localStorage.getItem('orden:arranged') ?? '{}'),
   bookmarks: JSON.parse(localStorage.getItem('orden:bookmarks') ?? '{}'),
@@ -188,7 +188,7 @@ def main() -> int:
         said["a web note"] = guide.read_text(encoding="utf-8") if guide.exists() else None
 
         app.ask(
-            "nib.workspace.showSpace(nib.workspace.spaces.find((one) => one.name === 'Work').id)"
+            "nib.workspace.showSpace(orden.workspace.spaces.find((one) => one.name === 'Work').id)"
             " && 'shown'"
         )
         time.sleep(2)
@@ -201,7 +201,7 @@ def main() -> int:
         app.ask(PRESS % json.dumps("Default (release)"))
         time.sleep(6)
         said["again"] = {name: files_under(spaces / name) for name in ("Home", "Work", "Reading")}
-        said["spaces again"] = app.ask("JSON.stringify(nib.workspace.spaces.map((one) => one.name))")
+        said["spaces again"] = app.ask("JSON.stringify(orden.workspace.spaces.map((one) => one.name))")
     finally:
         if running is not None and not close_app(running):
             running.terminate()

@@ -249,7 +249,7 @@ def where():
 def hole():
     for _ in range(40):
         sent = run(
-            "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
+            "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
             ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
         )
         if isinstance(sent, dict) and sent.get("width", 0) > 10:
@@ -263,11 +263,11 @@ for _ in range(60):
     if run("1 + 1") == 2:
         break
     time.sleep(0.5)
-run("(nib.workspace.openWebsite(), 'opened')")
+run("(orden.workspace.openWebsite(), 'opened')")
 time.sleep(0.5)
 OWN = run("nib.workspace.activeTabId")
 for _ in range(10):
-    run(f"(nib.pages.go({json.dumps(OWN)}, '{SITE}/opener'), 'sent')")
+    run(f"(orden.pages.go({json.dumps(OWN)}, '{SITE}/opener'), 'sent')")
     time.sleep(3)
     if where():
         break
@@ -276,7 +276,7 @@ if not where() or not place:
     raise SystemExit("::error::the page of cases never came up in its tab")
 RATIO = run("devicePixelRatio") or 1
 OTHERS = (
-    "(() => { const ws = nib.workspace; for (const tab of [...ws.tabs])"
+    "(() => { const ws = orden.workspace; for (const tab of [...ws.tabs])"
     f" if (tab.kind === 'web' && tab.id !== {json.dumps(OWN)}) ws.close(tab.id);"
     f" ws.activate({json.dumps(OWN)}); return true }})()"
 )

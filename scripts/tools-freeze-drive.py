@@ -21,7 +21,7 @@ Phases, one app:
 The verdict is the worst answer of each phase and a non-zero exit when the window was
 hung for longer than `--most` seconds, or the page stopped answering.
 
-    python scripts/tools-freeze-drive.py --exe <probe nib.exe> --identifier <probe id>
+    python scripts/tools-freeze-drive.py --exe <probe orden.exe> --identifier <probe id>
 """
 
 from __future__ import annotations
@@ -157,8 +157,8 @@ def main() -> int:
 
         phase("flood")
         flood = (
-            "(async () => { const ts = nib.workspace.tabs.filter((one) => one.kind === 'terminal');"
-            " for (const one of ts) { nib.workspace.activeTabId = one.id;"
+            "(async () => { const ts = orden.workspace.tabs.filter((one) => one.kind === 'terminal');"
+            " for (const one of ts) { orden.workspace.activeTabId = one.id;"
             " await new Promise((r) => setTimeout(r, 300));"
             " const field = document.querySelector('.xterm-helper-textarea');"
             " field && field.dispatchEvent(new InputEvent('input', { data: 'dir /s C:\\\\Windows\\\\System32\\r', inputType: 'insertText', bubbles: true })); }"
@@ -191,7 +191,7 @@ def main() -> int:
         phase("ask")
         ask = (
             "(async () => { const inv = window.__TAURI_INTERNALS__.invoke;"
-            " const ids = nib.workspace.tabs.filter((one) => one.kind === 'terminal').map((one) => JSON.parse(one.doc || '{}').key).filter(Boolean);"
+            " const ids = orden.workspace.tabs.filter((one) => one.kind === 'terminal').map((one) => JSON.parse(one.doc || '{}').key).filter(Boolean);"
             " let n = 0; const until = Date.now() + 15000;"
             " while (Date.now() < until) { await Promise.all(ids.flatMap((id) => [inv('pty_busy', { id }).catch(() => 0), inv('pty_program', { id }).catch(() => 0), inv('pty_folder', { id }).catch(() => 0), inv('pty_write', { id, data: '', binary: false }).catch(() => 0)])); n++ }"
             " return n })()"
@@ -200,7 +200,7 @@ def main() -> int:
 
         phase("resize")
         resize = (
-            "(async () => { const ids = nib.workspace.tabs.filter((one) => one.kind === 'terminal').map((one) => JSON.parse(one.doc || '{}').key).filter(Boolean);"
+            "(async () => { const ids = orden.workspace.tabs.filter((one) => one.kind === 'terminal').map((one) => JSON.parse(one.doc || '{}').key).filter(Boolean);"
             " const inv = window.__TAURI_INTERNALS__.invoke;"
             " for (let i = 0; i < 40; i++) { await Promise.all(ids.map((id) => inv('pty_resize', { id, cols: 40 + (i % 2) * 120, rows: 10 + (i % 2) * 40 }).catch(() => 0))); await new Promise((r) => setTimeout(r, 100)) }"
             " return ids.length })()"
@@ -215,7 +215,7 @@ def main() -> int:
             window.open("cmd", f"C{at}", f"probe-c{at}")
         time.sleep(3)
         close_all = (
-            "(() => { const ws = nib.workspace; const ts = ws.tabs.filter((one) => one.kind === 'terminal');"
+            "(() => { const ws = orden.workspace; const ts = ws.tabs.filter((one) => one.kind === 'terminal');"
             " for (const one of ts) ws.close(one.id); return ts.length })()"
         )
         print("closed", window.run(close_all), flush=True)
@@ -223,7 +223,7 @@ def main() -> int:
 
         phase("explorer")
         explorer = (
-            "(() => { const ws = nib.workspace;"
+            "(() => { const ws = orden.workspace;"
             " ws.openUnsaved('explorer', JSON.stringify({ folder: 'C:\\\\Windows\\\\System32', back: [], ahead: [] }), 'System32');"
             " return ws.activeTabId })()"
         )

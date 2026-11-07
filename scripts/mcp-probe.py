@@ -1,13 +1,13 @@
-"""Does `nib mcp` give an agent's client nib, over real pipes, with nothing of nib in front
+"""Does `orden mcp` give an agent's client nib, over real pipes, with nothing of nib in front
 of anybody?
 
-`nib mcp` is the installed app's own binary as a Model Context Protocol server (see
+`orden mcp` is the installed app's own binary as a Model Context Protocol server (see
 apps/desktop/src-tauri/src/mcp). The release exe is a GUI-subsystem binary, so the first
 thing this drive proves is the one a unit test cannot: that a client which starts it with
 three pipes, the way Claude Code and Codex do, reads JSON-RPC on its stdout and nothing
 else. Then it plays the client through everything the lane promises:
 
-    not running   nib mcp starts the app itself - minimised, off the screen here - and
+    not running   orden mcp starts the app itself - minimised, off the screen here - and
                   asks the reader to pair; the drive answers Allow through the window
     per grant     the browser taken out of the grant and put back: the tool list follows,
                   told by notifications/tools/list_changed
@@ -30,7 +30,7 @@ drive with exit 3.
     pnpm --dir apps/desktop tauri build --no-bundle --config \\
       '{"identifier":"so.orden.Orden.probe.agent-mcp","version":"99.0.0",
         "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/mcp-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
+    python scripts/mcp-probe.py --exe apps/desktop/src-tauri/target/release/orden.exe \\
         --identifier so.orden.Orden.probe.agent-mcp [--claude]
 """
 
@@ -304,7 +304,7 @@ class Client:
                 said = self.lines.get(timeout=0.2)
             except queue.Empty:
                 if self.process.poll() is not None:
-                    raise AssertionError(f"nib mcp ended with {self.process.returncode} before {method}")
+                    raise AssertionError(f"orden mcp ended with {self.process.returncode} before {method}")
                 continue
             if said.get("id") == wanted:
                 return said
@@ -386,7 +386,7 @@ class Drive:
         raise AssertionError("the window never answered")
 
     def not_running(self) -> Client:
-        print("not running: nib mcp starts nib, and pairs", flush=True)
+        print("not running: orden mcp starts nib, and pairs", flush=True)
         started = time.monotonic()
         mcp = self.client(CLIENT)
         pid = self.watch_app()
@@ -412,7 +412,7 @@ class Drive:
         self.check("the token is kept under the client's name", kept.is_file())
 
         hwnd = main_window(pid)
-        self.note("the app nib mcp started", "minimised" if hwnd and user32.IsIconic(hwnd) else "off the screen, not minimised")
+        self.note("the app orden mcp started", "minimised" if hwnd and user32.IsIconic(hwnd) else "off the screen, not minimised")
         self.check("from nothing to paired", True, f"{(time.monotonic() - started):.1f} s")
         return mcp
 
@@ -561,7 +561,7 @@ class Drive:
     def shut(self, mcp: Client) -> None:
         started = time.perf_counter()
         code = mcp.close()
-        self.check("stdin closed, nib mcp ends", code == 0, f"{(time.perf_counter() - started) * 1000:.0f} ms, exit {code}")
+        self.check("stdin closed, orden mcp ends", code == 0, f"{(time.perf_counter() - started) * 1000:.0f} ms, exit {code}")
         self.check("stdout held nothing but JSON-RPC", not mcp.strays, "; ".join(mcp.strays))
 
     def claude(self) -> None:
@@ -629,7 +629,7 @@ def main() -> int:
 
     folder = config_dir(options.identifier)
     if app_pid(folder, exe):
-        raise SystemExit("the probe is running already: this drive starts it through nib mcp")
+        raise SystemExit("the probe is running already: this drive starts it through orden mcp")
     fresh(folder)
 
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-mcp-probe-"))

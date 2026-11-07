@@ -131,7 +131,7 @@ class Mcp:
                 said = self.lines.get(timeout=0.2)
             except queue.Empty:
                 if self.process.poll() is not None:
-                    return {"error": {"message": f"nib mcp ended with {self.process.returncode} before it answered {method}"}}
+                    return {"error": {"message": f"orden mcp ended with {self.process.returncode} before it answered {method}"}}
                 continue
             if "stray" in said:
                 return {"error": {"message": f"not JSON-RPC on stdout: {said['stray']}"}}
@@ -142,7 +142,7 @@ class Mcp:
     def call(self, verb: str, args: dict[str, Any], seconds: float = 60) -> Answer:
         started = time.perf_counter()
         if verb not in self.tools:
-            why = f"agent-mcp: {self.absent}" if self.absent else f"nib mcp lists no tool called {verb}"
+            why = f"agent-mcp: {self.absent}" if self.absent else f"orden mcp lists no tool called {verb}"
             return answer("missing", 0, message=why)
         said = self.request("tools/call", {"name": verb, "arguments": args}, seconds)
         ms = (time.perf_counter() - started) * 1000

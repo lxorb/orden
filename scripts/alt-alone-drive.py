@@ -15,7 +15,7 @@ over its automation endpoint. Both must come back clean. Every window of the app
 shares that thread, so the same taps are made in a second window of its own, the
 presenter's, which runs none of the main window's page.
 
-    python scripts/alt-alone-drive.py --exe <probe nib.exe> --identifier <probe id>
+    python scripts/alt-alone-drive.py --exe <probe orden.exe> --identifier <probe id>
 """
 
 from __future__ import annotations
@@ -139,7 +139,7 @@ def main() -> int:
     try:
         app = drive.endpoint(config, process.pid, secret)
         until = time.monotonic() + 90
-        while time.monotonic() < until and app.eval("!!nib.workspace").get("value") is not True:
+        while time.monotonic() < until and app.eval("!!orden.workspace").get("value") is not True:
             time.sleep(1)
         time.sleep(3)
         hwnd = main_window(process.pid)

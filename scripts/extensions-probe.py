@@ -155,7 +155,7 @@ class App:
             ".then((said) => JSON.stringify({ ok: true, said }), (why) => JSON.stringify({ ok: false, why: String(why) }))"
         )
 
-TABS = """JSON.stringify(nib.workspace.tabs.map((one) => ({ id: one.id, kind: one.kind, name: one.name })))"""
+TABS = """JSON.stringify(orden.workspace.tabs.map((one) => ({ id: one.id, kind: one.kind, name: one.name })))"""
 
 def tabs(app: App) -> list[dict[str, str]]:
     said = app.ask(TABS)

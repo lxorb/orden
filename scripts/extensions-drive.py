@@ -60,7 +60,7 @@ def ours(all_of):
     return [one for one in all_of or [] if one.get("name") == NAME]
 
 def settings_rows():
-    run("(nib.settings.show('general'), 'shown')")
+    run("(orden.settings.show('general'), 'shown')")
     for _ in range(40):
         said = run(
             "(() => { const head = [...document.querySelectorAll('h3')].find((one) => one.innerText.trim() === 'Extensions');"
@@ -72,7 +72,7 @@ def settings_rows():
     return None
 
 def closed():
-    run("(nib.settings.hide ? nib.settings.hide() : (nib.settings.open = false), 'closed')")
+    run("(orden.settings.hide ? orden.settings.hide() : (orden.settings.open = false), 'closed')")
     time.sleep(0.5)
 
 CLASS = os.environ.get("CLASS", "orden")
@@ -102,7 +102,7 @@ def listing(code):
 
 def tabs_at(address):
     return listing(
-        "JSON.stringify(nib.workspace.tabs"
+        "JSON.stringify(orden.workspace.tabs"
         f".filter((tab) => tab.address === {json.dumps(address)}).map((tab) => tab.paneId))"
     )
 
@@ -132,12 +132,12 @@ def opened_as_a_tab(address, pane, what, seconds=20):
 
 def reader_tab():
     find = (
-        "JSON.stringify(nib.workspace.tabs.filter((tab) => (tab.address ?? '').startsWith('http'))"
+        "JSON.stringify(orden.workspace.tabs.filter((tab) => (tab.address ?? '').startsWith('http'))"
         ".map((tab) => [tab.id, tab.paneId]))"
     )
     found = listing(find)
     if not found:
-        run("(nib.workspace.openPage('http://127.0.0.1:8765/', 'front'), 'opened')")
+        run("(orden.workspace.openPage('http://127.0.0.1:8765/', 'front'), 'opened')")
         time.sleep(2)
         found = listing(find)
     if not found:
@@ -150,7 +150,7 @@ def popup_of(one, front):
 
     run("(document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), 'closed')")
     time.sleep(0.5)
-    run(f"(nib.workspace.activate({json.dumps(front)}), 'shown')")
+    run(f"(orden.workspace.activate({json.dumps(front)}), 'shown')")
     time.sleep(1)
     pressed = None
     for _ in range(40):
@@ -201,7 +201,7 @@ if PHASE == "installed":
     print(f"installed: the engine lists {NAME} as {one.get('id')}")
     base = f"chrome-extension://{one['id']}/"
     front, pane = reader_tab()
-    run(f"(nib.workspace.activate({json.dumps(front)}), 'shown')")
+    run(f"(orden.workspace.activate({json.dumps(front)}), 'shown')")
     time.sleep(1)
 
     for _ in range(40):
@@ -244,8 +244,8 @@ if PHASE == "installed":
     )
     subprocess.run(["grim", str(OUT / "extension-tabs.png")], check=False)
     run(
-        f"(nib.workspace.tabs.filter((tab) => (tab.address ?? '').startsWith({json.dumps(base)}))"
-        ".forEach((tab) => nib.workspace.close(tab.id)), 'closed')"
+        f"(orden.workspace.tabs.filter((tab) => (tab.address ?? '').startsWith({json.dumps(base)}))"
+        ".forEach((tab) => orden.workspace.close(tab.id)), 'closed')"
     )
     run("(document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), 'closed')")
 
@@ -335,7 +335,7 @@ elif PHASE == "firefox-run":
         strange.update(strangers())
         welcome = [
             address
-            for address in listing("JSON.stringify(nib.workspace.tabs.map((tab) => tab.address ?? ''))") or []
+            for address in listing("JSON.stringify(orden.workspace.tabs.map((tab) => tab.address ?? ''))") or []
             if address.startswith(base)
         ]
         if welcome:
@@ -345,7 +345,7 @@ elif PHASE == "firefox-run":
     if strange:
         fail(f"windows not under {CLASS}, or Chromium's: {sorted(strange)}")
     front, _ = reader_tab()
-    run(f"(nib.workspace.activate({json.dumps(front)}), 'shown')")
+    run(f"(orden.workspace.activate({json.dumps(front)}), 'shown')")
     time.sleep(1)
     pressed = None
     for _ in range(40):

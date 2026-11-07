@@ -401,7 +401,7 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         time.sleep(1.5)
 
         opened = cli.window(f"""(async () => {{
-  const ws = nib.workspace
+  const ws = orden.workspace
   ws.openWeb({json.dumps(str(made / 'User.url'))})
   await new Promise((go) => setTimeout(go, 2500))
   return {{ tab: ws.activeTabId }}
@@ -642,7 +642,7 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         check.that("a chooser a press opens is answered, never shown", page_now.get("chosen") == "receipt.txt", more)
         check.that("a permission is refused, never asked", str(page_now.get("located", "")).startswith("refused"), more)
         check.that("network idle waits for the slow request", page_now.get("late") not in (None, ""), more)
-        check.that("scripts run in nib's own world by default", more["isolated world"] == "undefined" and more["page world"] == "function", more)
+        check.that("scripts run in Orden's own world by default", more["isolated world"] == "undefined" and more["page world"] == "function", more)
         check.that("basic authentication is refused and said", bool(more["basic auth"]), more)
         unmoved("the rest of the verbs")
 

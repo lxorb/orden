@@ -190,7 +190,7 @@ def main() -> int:
         said["after the cross"] = bar(app)
         time.sleep(7)
         said["the tab's address once /slow would have answered"] = app.ask(
-            "JSON.stringify(nib.workspace.tabs.find((one) => one.id === '"
+            "JSON.stringify(orden.workspace.tabs.find((one) => one.id === '"
             + tab
             + "')?.address ?? null)"
         )
@@ -221,7 +221,7 @@ def main() -> int:
         time.sleep(3)
         said["trail after the second row"] = invoke(app, "web_trail", {"tab": tab})
 
-        count = app.ask("JSON.stringify(nib.workspace.tabs.length)")
+        count = app.ask("JSON.stringify(orden.workspace.tabs.length)")
         app.ask(
             f"""(() => {{
   const field = document.querySelector('.webbar input')
@@ -237,16 +237,16 @@ def main() -> int:
         time.sleep(3)
         said["Alt+Enter: tabs before, after, and the new one's address"] = [
             count,
-            app.ask("JSON.stringify(nib.workspace.tabs.length)"),
-            app.ask("JSON.stringify(nib.workspace.active?.address ?? null)"),
+            app.ask("JSON.stringify(orden.workspace.tabs.length)"),
+            app.ask("JSON.stringify(orden.workspace.active?.address ?? null)"),
         ]
         said["and the first tab's address"] = app.ask(
-            "JSON.stringify(nib.workspace.tabs.find((one) => one.id === '"
+            "JSON.stringify(orden.workspace.tabs.find((one) => one.id === '"
             + tab
             + "')?.address ?? null)"
         )
 
-        count = app.ask("JSON.stringify(nib.workspace.tabs.length)")
+        count = app.ask("JSON.stringify(orden.workspace.tabs.length)")
         app.ask(
             "(() => { document.querySelectorAll('.webbar .orden-glyph')[2]?.dispatchEvent("
             "new MouseEvent('auxclick', { button: 1, bubbles: true, cancelable: true }));"
@@ -255,17 +255,17 @@ def main() -> int:
         time.sleep(2)
         said["middle button on reload: tabs before, after, the one in front"] = [
             count,
-            app.ask("JSON.stringify(nib.workspace.tabs.length)"),
-            app.ask("JSON.stringify(nib.workspace.active?.address ?? null)"),
+            app.ask("JSON.stringify(orden.workspace.tabs.length)"),
+            app.ask("JSON.stringify(orden.workspace.active?.address ?? null)"),
         ]
 
         said["the strip"] = app.ask(
-            "JSON.stringify(nib.workspace.tabsIn(nib.workspace.panes.focusedId)"
+            "JSON.stringify(orden.workspace.tabsIn(orden.workspace.panes.focusedId)"
             ".map((one) => one.name))"
         )
         key_in_app(app, "1", "Digit1", ctrl=True)
         time.sleep(1)
-        said["Ctrl+1: the tab in front"] = app.ask("JSON.stringify(nib.workspace.active?.name)")
+        said["Ctrl+1: the tab in front"] = app.ask("JSON.stringify(orden.workspace.active?.name)")
     finally:
         if running is not None and not close_app(running):
             running.terminate()

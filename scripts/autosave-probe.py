@@ -28,7 +28,7 @@ off the screen and without the keyboard; see probe_app.py.
       --config '{"identifier":"so.orden.Orden.probe.autosave-only","version":"99.0.0",
                  "build":{"beforeBuildCommand":""},
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/autosave-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
+    python scripts/autosave-probe.py --exe apps/desktop/src-tauri/target/release/orden.exe \\
       --identifier so.orden.Orden.probe.autosave-only
 
 This wipes that identifier's settings folder and webview profile at the start of every

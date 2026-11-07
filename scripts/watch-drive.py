@@ -62,7 +62,7 @@ else:
 if PHASE == "where":
     root = None
     for _ in range(80):
-        root = run("nib.workspace.activeSpace && nib.workspace.activeSpace.root")
+        root = run("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
         if root:
             break
         time.sleep(0.25)
@@ -72,7 +72,7 @@ if PHASE == "where":
     sys.exit(0 if working else 1)
 settled = None
 for _ in range(80):
-    settled = run("nib.workspace.activeSpace ? nib.working(nib.workspace.activeSpace.root) : null")
+    settled = run("nib.workspace.activeSpace ? orden.working(orden.workspace.activeSpace.root) : null")
     if settled:
         break
     time.sleep(0.25)

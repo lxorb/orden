@@ -63,16 +63,16 @@ STORED = "localStorage.getItem('orden:web-grants') || ''"
 failures = []
 
 normal = until("nib.workspace.activeTabId")
-if not until(f"(nib.pages.addressOf({json.dumps(normal)}) || '').startsWith('{SITE}')"):
+if not until(f"(orden.pages.addressOf({json.dumps(normal)}) || '').startsWith('{SITE}')"):
     sys.exit("::error::the normal web tab never reached the run's site")
 print(f"grants: the normal tab {normal} is on {SITE}")
 
 run("nib.workspace.openWebsite(true); true")
 private = until(
-    f"(() => {{ const id = nib.workspace.activeTabId; return id !== {json.dumps(normal)} && id }})()"
+    f"(() => {{ const id = orden.workspace.activeTabId; return id !== {json.dumps(normal)} && id }})()"
 )
 run(f"nib.pages.go({json.dumps(private)}, '{SITE}/'); true")
-if not until(f"(nib.pages.addressOf({json.dumps(private)}) || '').startsWith('{SITE}')"):
+if not until(f"(orden.pages.addressOf({json.dumps(private)}) || '').startsWith('{SITE}')"):
     sys.exit("::error::the private tab never reached the run's site")
 inprivate = run(f"nib.pages.of({json.dumps(private)}).inPrivate")
 print(f"grants: a private tab {private} is on {SITE} (inPrivate: {inprivate})")

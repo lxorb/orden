@@ -263,7 +263,7 @@ LOG = """
     if (window.__ov) requestAnimationFrame(look)
   }
   requestAnimationFrame(look)
-  const pages = nib.pages
+  const pages = orden.pages
   if (!pages.__heard) {
     const put = pages.put
     pages.put = function (id, page, one) {
@@ -491,7 +491,7 @@ def main() -> int:
     try:
         app = endpoint(config, process.pid, secret)
         until = time.monotonic() + 90
-        while time.monotonic() < until and app.eval("!!nib.workspace") is not True:
+        while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
         while time.monotonic() < until and not desk.found():
             time.sleep(0.25)
@@ -503,13 +503,13 @@ def main() -> int:
         app.eval(
             "for (const one of document.querySelectorAll('button'))"
             " if (one.textContent.trim() === 'Keep running') one.click();"
-            " for (const tab of [...nib.workspace.tabs]) nib.workspace.close(tab.id, false); return true"
+            " for (const tab of [...nib.workspace.tabs]) orden.workspace.close(tab.id, false); return true"
         )
         time.sleep(1)
         app.eval(
             "for (const name of ['One', 'Two', 'Three'])"
-            " nib.workspace.openBlank(name, `# ${name}\\n\\n` + `Some words of ${name}. `.repeat(40));"
-            " nib.workspace.split('row'); return true"
+            " orden.workspace.openBlank(name, `# ${name}\\n\\n` + `Some words of ${name}. `.repeat(40));"
+            " orden.workspace.split('row'); return true"
         )
         time.sleep(2)
         scale = float(app.eval("devicePixelRatio") or 1)
@@ -528,7 +528,7 @@ def main() -> int:
             time.sleep(0.5)
         time.sleep(3)
         hole = app.eval(
-            "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
+            "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
             ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
         )
         print(f"pages under the app: {app.eval('nib.pages.under')}", flush=True)

@@ -106,7 +106,7 @@ def dragged(start, end, y):
 
 def tree():
     run("""(async () => {
-      const ws = nib.workspace
+      const ws = orden.workspace
       for (const name of ['Lark', 'Plover', 'Wren']) await ws.noteFrom(`# ${name}\\n\\nwords\\n`, ws.activeSpace.root)
       ws.setSort('manual')
       await ws.loadTree()
@@ -118,7 +118,7 @@ def tree():
     print("before", [one["name"] for one in rows])
     moving, under = rows[-1], rows[1]
     dragged(moving, under, 0.1)
-    until(f"(() => !nib.workspace.arranged.dragging && !document.getAnimations().length)()", "the rows settled")
+    until(f"(() => !orden.workspace.arranged.dragging && !document.getAnimations().length)()", "the rows settled")
     now = run(ROWS) or []
     names = [one["name"] for one in now]
     print("reordered", names)
@@ -128,7 +128,7 @@ def tree():
     dragged(now[1], now[2], 0.5)
     paths = until(
         f"""(() => {{
-          const paths = nib.workspace.notes.map((one) => one.path)
+          const paths = orden.workspace.notes.map((one) => one.path)
           return paths.some((one) => one.endsWith('/{now[2]["name"]}/{now[1]["name"]}.md')) ? paths : null
         }})()""",
         f"{now[1]['name']} in {now[2]['name']}",
@@ -239,7 +239,7 @@ WORD = """((word) => {
 
 def words():
     run("""(async () => {
-      const ws = nib.workspace
+      const ws = orden.workspace
       const made = await ws.noteFrom('# Words\\n\\nalpha beta gamma\\n\\ndelta epsilon\\n', ws.activeSpace.root)
       const note = ws.notes.find((one) => one.name.startsWith('Words'))
       await ws.openEntry(note.path, { activate: true })
@@ -303,7 +303,7 @@ def corners(shot, hole, label):
 
 def zoom():
     front = run("""(() => {
-      const ws = nib.workspace
+      const ws = orden.workspace
       const tab = ws.tabs.find((one) => one.kind === 'web')
       if (!tab) return false
       ws.activate(tab.id)

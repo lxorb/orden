@@ -312,7 +312,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     return running, App(port, secret)
 
 PRELUDE = r"""
-const ws = nib.workspace
+const ws = orden.workspace
 const wait = async (ok, ms = 15000) => {
   const until = performance.now() + ms
   for (;;) {

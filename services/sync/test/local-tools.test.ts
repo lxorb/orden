@@ -29,7 +29,7 @@ describe('the local server beside the connector', () => {
     '%s is there under the same name, taking what it takes',
     (name, connector) => {
       const mine = local.find((tool) => tool.name === name)
-      expect(mine, `nib mcp has no ${name}`).toBeDefined()
+      expect(mine, `orden mcp has no ${name}`).toBeDefined()
       if (!mine) return
 
       const theirs = connector.inputSchema.properties ?? {}

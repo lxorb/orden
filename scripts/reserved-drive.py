@@ -60,7 +60,7 @@ def there(path):
 def text_of(path):
     return run(f"nib.invoke('read_note', {{ path: {json.dumps(str(path))} }}).catch(() => null)")
 
-root = until("nib.workspace.activeSpace && nib.workspace.activeSpace.root")
+root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
 folder = Path(root)

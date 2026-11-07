@@ -21,7 +21,7 @@ Each launch also says whether the process that started it could have taken the
 foreground (asked with a lock released at once), and whether the probe said, as it
 started, that it could have: that is what `run_probe` is meant to hand on none of.
 
-    python scripts/probe-foreground-stress.py --exe path/to/nib.exe \\
+    python scripts/probe-foreground-stress.py --exe path/to/orden.exe \\
       --identifier so.orden.Orden.probe.<name>.launch
 
 The build is a release probe, as apps/desktop/test/e2e/launch.py says, whose identifier

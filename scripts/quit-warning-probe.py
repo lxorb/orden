@@ -8,7 +8,7 @@ about the terminal windows ... not just open, but the ones running something, e.
 claude."* A `ping` stands in for Claude Code: a program the shell started, as Claude Code
 is.
 
-    python scripts/quit-warning-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
+    python scripts/quit-warning-probe.py --exe path/to/orden.exe --identifier so.orden.Orden.probe.<name>
 
 Every launch is `run_probe`'s, off the screen and without the keyboard. The window is
 closed the way its close button closes it (WM_CLOSE); the question is answered through
@@ -172,11 +172,11 @@ def main() -> int:
 
         time.sleep(6.0)
         app, window, port = launched(exe, environment, args.identifier, port)
-        back = window.run("JSON.stringify(nib.workspace.tabs.filter((one) => one.kind === 'terminal').length)")
+        back = window.run("JSON.stringify(orden.workspace.tabs.filter((one) => one.kind === 'terminal').length)")
         check(back == "2", f"both terminals come back ({back})")
         window.run(
-            "(() => { const tab = nib.workspace.tabs.find((one) => one.kind === 'terminal' "
-            "&& one.doc.includes('probe-quit-busy')); if (tab) nib.workspace.activate(tab.id); return true })()"
+            "(() => { const tab = orden.workspace.tabs.find((one) => one.kind === 'terminal' "
+            "&& one.doc.includes('probe-quit-busy')); if (tab) orden.workspace.activate(tab.id); return true })()"
         )
         until(lambda: any(row.rstrip().endswith(">") for row in window.rows()), 30)
         restored = any("quit-probe-marker" in row for row in terminal.above(window))

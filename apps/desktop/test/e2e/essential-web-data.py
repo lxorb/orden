@@ -47,7 +47,7 @@ class Site(http.server.BaseHTTPRequestHandler):
         pass
 
 PRELUDE = """
-const ws = nib.workspace
+const ws = orden.workspace
 const wait = async (ok, ms = 30000) => {
   const until = performance.now() + ms
   for (;;) {
@@ -69,8 +69,8 @@ def tab_of(app: Any, name: str) -> dict[str, Any]:
         f"""
         const tab = await wait(() => named({json.dumps(name)}))
         if (!tab) return null
-        await wait(() => nib.pages.of(tab.id).live)
-        const page = nib.pages.of(tab.id)
+        await wait(() => orden.pages.of(tab.id).live)
+        const page = orden.pages.of(tab.id)
         return {{ id: tab.id, store: page.store ?? null, essential: tab.essential, live: page.live,
                  inStrip: ws.tabsIn(tab.paneId).includes(tab) }}
         """,
@@ -88,12 +88,12 @@ def seen(app: Any, tab: str, address: str) -> str:
         app,
         f"""
         const id = {json.dumps(tab)}
-        await nib.pages.go(id, {json.dumps(address)})
+        await orden.pages.go(id, {json.dumps(address)})
         const page = await wait(() => {{
-          const one = nib.pages.of(id)
+          const one = orden.pages.of(id)
           return one.title.endsWith({json.dumps("|" + address.removeprefix(origin_of(address)))}) ? one : null
         }})
-        return page ? page.title.split('|')[0] : `never got there: ${{nib.pages.of(id).url}} ${{nib.pages.of(id).title}}`
+        return page ? page.title.split('|')[0] : `never got there: ${{orden.pages.of(id).url}} ${{orden.pages.of(id).title}}`
         """,
     )
     return str(said)

@@ -29,7 +29,7 @@ async () => {
   const note = (text) => ws.noteFrom(text, undefined)
 
   await note('# This week\\n\\n#work\\n\\n- [ ] write the plan\\n- [x] read the paper\\n- [ ] send the ledger\\n\\nThe plan is the plan.')
-  await note('---\\npages: 150\\ndue: 2026-09-01\\nstatus: done\\n---\\n\\n# Ink\\n\\n#work/nib\\n\\nA study of ink, and the plan behind it.')
+  await note('---\\npages: 150\\ndue: 2026-09-01\\nstatus: done\\n---\\n\\n# Ink\\n\\n#work/orden\\n\\nA study of ink, and the plan behind it.')
   await note('---\\npages: 420\\ndue: 2026-12-24\\n---\\n\\n# Paper\\n\\n#later\\n\\nAbout paper, and the wear of ink on it.')
   await note('# Kestrel\\n\\n#later\\n\\n- [ ] watch the kestrel again\\n\\nA kestrel hangs on the wind above the field.')
   await note('# Everything open\\n\\nWhat is still to do, everywhere:\\n\\n```query\\ntask-todo:\\n```\\n\\nAnd the long papers:\\n\\n```query\\n[pages:>200]\\n```')

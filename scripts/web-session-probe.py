@@ -328,7 +328,7 @@ class App:
                 return value
         return value
 
-TABS = """JSON.stringify(nib.workspace.tabs.map((one) => ({
+TABS = """JSON.stringify(orden.workspace.tabs.map((one) => ({
   id: one.id, kind: one.kind, name: one.name, path: one.path,
 })))"""
 

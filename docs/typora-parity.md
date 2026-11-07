@@ -1335,7 +1335,7 @@ Features Typora does not have, which are the reason this exists.
       visit goes to whoever serves it. Google Analytics is not offered, because its
       install is an inline script and of all of them it is the one whose business
       is the reader
-- [x] A form in a note - a ` ```form ` fence, nib's own grammar since Obsidian has
+- [x] A form in a note - a ` ```form ` fence, Orden's own grammar since Obsidian has
       none - rendered as a real form that posts and comes back, with the answers on
       the account beside the note that asked, read in the publish sheet and
       exported as CSV. No third party, no captcha, nothing kept about the reader

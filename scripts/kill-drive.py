@@ -66,7 +66,7 @@ if PHASE == "write":
     now = scheme()
     if now == was or now not in ("light", "dark"):
         raise SystemExit(f"::error::write: the scheme did not switch ({was} -> {now})")
-    run("(nib.workspace.openBlank(), 'opened')")
+    run("(orden.workspace.openBlank(), 'opened')")
     typed = None
     for _ in range(20):
         time.sleep(0.25)

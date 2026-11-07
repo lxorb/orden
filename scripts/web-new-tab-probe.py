@@ -177,7 +177,7 @@ class App:
 
 STRIP = r"""
 (() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   return JSON.stringify({
     strip: ws.tabs.map((one) => one.address || one.path),
     front: (ws.active && (ws.active.address || ws.active.path)) || null,
@@ -187,7 +187,7 @@ STRIP = r"""
 
 OPEN = r"""
 (() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   for (const one of [...ws.tabs]) { if (one.kind === 'web') ws.close(one.id) }
   ws.openPage(__URL__)
   return 'ok'
@@ -196,7 +196,7 @@ OPEN = r"""
 
 TITLED = r"""
 (() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   const tab = ws.tabs.find((one) => (one.address || '').includes('/asking'))
   const bar = document.querySelector('.webbar input')
   return JSON.stringify({ bar: bar ? bar.value : null, tab: tab ? tab.name : null })

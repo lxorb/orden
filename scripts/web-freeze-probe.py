@@ -29,7 +29,7 @@ Four phases, one app:
 
 1. **launch** - started with nothing. What a healthy window looks like.
 2. **open** - a website opened in a tab, through the app's own automation endpoint,
-   which is the road `nib open` takes and ends in the same `openEntry` a click in
+   which is the road `orden open` takes and ends in the same `openEntry` a click in
    the file list does. The samples go on across it.
 3. **restart** - the app again, on the session it was left with, which is how a web
    tab reaches a pane with nobody pressing anything.
@@ -367,7 +367,7 @@ def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
 
 def main() -> int:
     parsed = argparse.ArgumentParser(description=__doc__)
-    parsed.add_argument("--exe", required=True, help="the built nib.exe")
+    parsed.add_argument("--exe", required=True, help="the built orden.exe")
     parsed.add_argument("--settle", type=float, default=6.0, help="seconds before the tab opens")
     parsed.add_argument("--watch", type=float, default=20.0, help="seconds after it opens")
     parsed.add_argument(

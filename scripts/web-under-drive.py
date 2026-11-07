@@ -357,7 +357,7 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
     try:
         app = endpoint(identifier, process.pid, secret)
         until = time.monotonic() + 90
-        while time.monotonic() < until and app.eval("!!nib.workspace") is not True:
+        while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
         hwnd = 0
         while time.monotonic() < until and not hwnd:
@@ -425,7 +425,7 @@ def main() -> int:
     try:
         app = endpoint(args.identifier, process.pid, secret)
         until = time.monotonic() + 90
-        while time.monotonic() < until and app.eval("!!nib.workspace") is not True:
+        while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
         hwnd = 0
         while time.monotonic() < until and not hwnd:
@@ -458,7 +458,7 @@ def main() -> int:
         if under is not True and not args.windowed:
             wrong.append(f"the crate did not say the page is drawn under the app: {under}")
         pane = app.eval(
-            "(() => { const all = nib.pages.each().map(([, one]) => one.sent)"
+            "(() => { const all = orden.pages.each().map(([, one]) => one.sent)"
             ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
         )
         if not isinstance(pane, dict):

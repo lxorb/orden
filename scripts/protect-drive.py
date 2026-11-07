@@ -84,7 +84,7 @@ def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
 
 FIND = """
 (async () => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   const space = ws.spaces.find((one) => one.name === %(space)s)
   if (!space) return null
   if (ws.activeSpace?.root !== space.root) await ws.showSpace(space.id)
@@ -205,7 +205,7 @@ def main() -> int:
 
     try:
         app = endpoint(config, process.pid, secret)
-        app.until("!!nib.workspace", 90)
+        app.until("!!orden.workspace", 90)
         time.sleep(3)
         app.eval(
             "for (const one of document.querySelectorAll('button'))"

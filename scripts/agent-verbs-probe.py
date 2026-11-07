@@ -1,7 +1,7 @@
-"""Does an agent reach every kind of tab through `nib mcp`, with nothing of nib in front of
+"""Does an agent reach every kind of tab through `orden mcp`, with nothing of nib in front of
 anybody and the reader's screen never moved without `workspace.focus`?
 
-The agent is a real client of `nib mcp` over pipes, paired the way any client is, against
+The agent is a real client of `orden mcp` over pipes, paired the way any client is, against
 a probe build started by `run_probe` (scripts/probe_app.py):
 
     context     the space, every tab with its id and kind, the selected one
@@ -24,7 +24,7 @@ exit 3.
     pnpm --dir apps/desktop tauri build --no-bundle --config \\
       '{"identifier":"so.orden.Orden.probe.agent-verbs","version":"99.0.0",
         "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/agent-verbs-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
+    python scripts/agent-verbs-probe.py --exe apps/desktop/src-tauri/target/release/orden.exe \\
         --identifier so.orden.Orden.probe.agent-verbs
 """
 

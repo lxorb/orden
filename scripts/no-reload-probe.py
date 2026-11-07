@@ -14,7 +14,7 @@ second while it runs, and holding a value typed into its field. Then:
 * **Memory saver at Maximum**, a launch later: ten pages and a round, and the pages
   beyond six are loaded again, which is the old behaviour back.
 
-    python scripts/no-reload-probe.py --exe path/to/nib.exe \\
+    python scripts/no-reload-probe.py --exe path/to/orden.exe \\
         --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch goes through `run_probe`, off
@@ -153,12 +153,12 @@ def ask(app, code: str, seconds: float = 60) -> object:
     return said
 
 STATE = (
-    "JSON.stringify(Object.fromEntries(nib.pages.each().map(([id, one]) => {"
-    " const tab = nib.workspace.tabs.find((each) => each.id === id);"
+    "JSON.stringify(Object.fromEntries(orden.pages.each().map(([id, one]) => {"
+    " const tab = orden.workspace.tabs.find((each) => each.id === id);"
     " return [tab ? tab.name : id, one.onScreen ? 'on screen' : one.frozen ? 'frozen' : 'running'] })))"
 )
 
-ACTIVE = "JSON.stringify(nib.workspace.active ? nib.workspace.active.name : null)"
+ACTIVE = "JSON.stringify(orden.workspace.active ? orden.workspace.active.name : null)"
 
 CTRL_TAB = (
     "(window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', code: 'Tab', ctrlKey: true,"
@@ -292,7 +292,7 @@ def main() -> int:
         check(heard.loads == [1] * PAGES, f"no page loaded again going round twice ({heard.loads})")
 
         say(f"out of sight for {FROZEN_BY} s")
-        ask(app, "(nib.workspace.activate(nib.workspace.tabs.find((one) => one.name.startsWith('Page 0')).id), 'shown')")
+        ask(app, "(orden.workspace.activate(orden.workspace.tabs.find((one) => one.name.startsWith('Page 0')).id), 'shown')")
         time.sleep(FROZEN_BY)
         front = ask(app, ACTIVE)
         moment = time.perf_counter()
@@ -322,7 +322,7 @@ def main() -> int:
 
         say("Memory saver at Maximum, a launch later")
         ask(app, "localStorage.setItem('orden:memory-saver', 'maximum') || 'kept'")
-        ask(app, "(nib.workspace.tabs.filter((one) => one.kind === 'web').forEach((one) => nib.workspace.close(one.id)), 'closed')")
+        ask(app, "(orden.workspace.tabs.filter((one) => one.kind === 'web').forEach((one) => orden.workspace.close(one.id)), 'closed')")
         time.sleep(2)
         first = app.port
         if not close_app(running):

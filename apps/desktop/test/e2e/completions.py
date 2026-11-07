@@ -14,7 +14,7 @@ ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 
 PLAN = """---
-tags: [work/nib]
+tags: [work/orden]
 ---
 
 # Today
@@ -278,7 +278,7 @@ def drive_tags(page: Page) -> None:
     nested = rows(page)
     say(f"[#work/] {json.dumps(nested)}")
     shot(page, "08-nested-tag")
-    if not nested or not all("work/nib" in one for one in nested):
+    if not nested or not all("work/orden" in one for one in nested):
         wrong(f"a slash did not narrow to the tags under it: {nested}")
 
     page.keyboard.press("Enter")
@@ -286,7 +286,7 @@ def drive_tags(page: Page) -> None:
     written = doc(page)
     say(f"[written] {json.dumps(written[-40:])}")
     shot(page, "09-tag-written")
-    if "#work/nib" not in written:
+    if "#work/orden" not in written:
         wrong(f"the tag is not the whole tag: {json.dumps(written[-40:])}")
 
 def drive_quiet(page: Page) -> None:

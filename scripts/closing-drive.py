@@ -81,9 +81,9 @@ else:
 
 if PHASE == "open":
     for page in PAGES:
-        run("(nib.workspace.openWebsite(), 'opened')")
+        run("(orden.workspace.openWebsite(), 'opened')")
         time.sleep(0.3)
-        run(f"(nib.pages.go(nib.workspace.activeTabId, {json.dumps(f'{SITE}/{page}')}), 'sent')")
+        run(f"(orden.pages.go(orden.workspace.activeTabId, {json.dumps(f'{SITE}/{page}')}), 'sent')")
         time.sleep(0.4)
     opened = run(WEB_TABS)
     print(f"open: {opened} web tabs")
@@ -98,7 +98,7 @@ if not restored:
 run(
     "(async () => { for (let i = 0; i < "
     + str(restored)
-    + "; i++) { void nib.workspace.closeActive(); await new Promise((done) => setTimeout(done, 60)) } })()"
+    + "; i++) { void orden.workspace.closeActive(); await new Promise((done) => setTimeout(done, 60)) } })()"
     ".then(() => 'closing')",
     20,
 )

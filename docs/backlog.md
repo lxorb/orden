@@ -10,7 +10,7 @@ branches. There are no TODO or FIXME comments in the code; every hit is Roam's o
 Logseq's `TODO` marker.
 
 Emil's words for the push (2026-09-30): finish every todo he gave, re-add the unfinished
-ones, drop what no longer makes sense, clean up, and above all make nib a really nice
+ones, drop what no longer makes sense, clean up, and above all make Orden a really nice
 digital workspace. So the lanes are ordered by what a person feels first.
 
 Paths: `lib/` = `apps/desktop/src/lib`, `ed/` = `packages/editor/src`, `md/` =
@@ -107,7 +107,7 @@ own colour at 46 ms warm; round 2 was queued for a quiet machine and never ran.
 
 ## 4. browser-parity - Chrome's own features
 
-What `orden-browser-vision.md` (2026-09-13) keeps inside the browser and nib still lacks.
+What `orden-browser-vision.md` (2026-09-13) keeps inside the browser and Orden still lacks.
 Everything here waits for the injection rework, the scroll fix and the default-browser
 work, which all rewrite the same files.
 
@@ -235,7 +235,7 @@ The unmerged branches, all 482 commits behind `main`: `worktree-agent-archive` i
 reference, `worktree-agent-right-sidebar` #47's, `worktree-agent-adf3a62186e99c1e5` (CEF
 batch 2) #46's, and `worktree-agent-crash-recovery` is dropped below.
 
-Gone with nib's own Chromium (#305, #313), which #46's verdict was about: `chrome://`
+Gone with Orden's own Chromium (#305, #313), which #46's verdict was about: `chrome://`
 pages as tabs, Translate, the extension list on the account, PDF export under CEF. Chrome
 extensions came on `WebView2` instead.
 
@@ -305,6 +305,6 @@ reaching the app (904f7a0b), Ctrl+Shift+Z redo, `present` on the drive handle, t
 build drivable (d4bdbad8), the audit fixers A1, A2, B, C1 and C2 (covers, properties, high
 contrast, footnotes, stacked tabs, `content:`, Lines, RSS, the recorder on desktop, window
 frame and translucency, Ctrl+=/-/0, `orden://append`), every power-user batch, links opening
-as nib tabs (f7afb642), the web tab's session login across restarts, the legacy recovery
+as Orden tabs (f7afb642), the web tab's session login across restarts, the legacy recovery
 codes, the old `lxorb/nib` URLs (only the historical winget 0.4.0 manifest keeps them), and
 the unguarded storage reads.

@@ -62,7 +62,7 @@ async (where) => {
   await ws.createPages(root, 'Lecture.pages')
   ws.openGraph()
 
-  // A web note in a browser build opens a browser tab rather than one of nib's
+  // A web note in a browser build opens a browser tab rather than one of Orden's
   // (docs/web-tabs.md), so the two websites come in the way a sitting puts them back:
   // written into the arrangement, as the desktop app's session holds them.
   const layout = ws.layout()

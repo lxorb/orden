@@ -692,7 +692,7 @@ Two roads to the same tools:
   `--tools ""` and `--strict-mcp-config`, so none of its own file, shell or web tools and
   none of the reader's MCP servers; Codex gets `mcp_servers` with `nib` alone, its shell
   tool off, read-only sandbox. This is the road `docs/ai.md` already promises: "One that
-  ever does gets nib's own MCP server (`orden mcp`) with the grant Settings > Agents gives
+  ever does gets Orden's own MCP server (`orden mcp`) with the grant Settings > Agents gives
   it, never a folder." The crate still writes every argument (`apps/desktop/src-tauri/src/ai_cli/args.rs`).
   Neither program prompts in any mode: in the three permission modes every Orden verb is allowed in
   advance (`--permission-mode dontAsk`, Codex's `approvalPolicy: never`), which within a
@@ -958,11 +958,11 @@ with three adapters behind it:
 ```
  ChatPanel ─► thread store ─► engine ─┬─ API adapter: Anthropic Messages, OpenAI Responses
    (lib/ai/sidebar)  (lib/ai/chat)    │     (keys and the ChatGPT plan), chat completions
-                                      │     (compatible); nib's tool loop; tools via the crate
+                                      │     (compatible); Orden's tool loop; tools via the crate
                                       ├─ Claude Code session: one long-lived `claude -p`
                                       │     per running thread, stream-json in and out
                                       └─ Codex session: one `codex app-server` per window,
-                                            a thread per nib thread
+                                            a thread per Orden thread
 ```
 
 `complete()` stays the one-shot seam every other surface uses (`apps/desktop/src/lib/ai/complete.ts`);
@@ -979,7 +979,7 @@ names a tool, a model, an effort, a mode and a thread, never a flag. What change
   stream-json --verbose --include-partial-messages`, `--effort` where the version has it,
   `--mcp-config` naming `orden mcp` alone, `--tools ""`, `--strict-mcp-config`, the mode's
   verbs in `--allowedTools` and the rest in `--disallowedTools`, `--permission-mode
-  dontAsk`, `--permission-prompts none`, `--no-session-persistence`, `--restricted`, nib's
+  dontAsk`, `--permission-prompts none`, `--no-session-persistence`, `--restricted`, Orden's
   system line per mode, and `CLAUDE_CODE_DISABLE_CLAUDE_MDS`. Not `--safe-mode`: measured
   on 2.1.280 it drops the `--mcp-config` server as well. Turns are written to stdin; a
   model change, a stop, the window's fill and the model list are the SDK's control

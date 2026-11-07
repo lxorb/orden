@@ -9,7 +9,7 @@ reads the terminal's own input, as Claude Code does - which is when the pseudo c
 a program's mouse request on to the terminal at all - asks for any-event tracking, and
 nothing switches it off.
 
-    python scripts/terminal-modes-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
+    python scripts/terminal-modes-probe.py --exe path/to/orden.exe --identifier so.orden.Orden.probe.<name>
 
 Every launch is `run_probe`'s, off the screen and without the keyboard; the mouse is the
 page's own events dispatched in the window, never the real one.
@@ -179,8 +179,8 @@ def main() -> int:
         time.sleep(6.0)
         app, window, port = launched(exe, environment, args.identifier, port)
         back = window.run(
-            "(() => { const tab = nib.workspace.tabs.find((one) => one.kind === 'terminal'); "
-            "if (!tab) return null; nib.workspace.activate(tab.id); return tab.id })()"
+            "(() => { const tab = orden.workspace.tabs.find((one) => one.kind === 'terminal'); "
+            "if (!tab) return null; orden.workspace.activate(tab.id); return tab.id })()"
         )
         check(isinstance(back, str), "the terminal comes back")
         before = prompted(window)

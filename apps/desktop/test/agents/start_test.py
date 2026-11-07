@@ -19,22 +19,22 @@ class StartedBare(unittest.TestCase):
             return "the process"
 
         with mock.patch.object(probe_app.subprocess, "Popen", popen):
-            made = probe_app._started_bare(["nib.exe", "--flag"], cwd="here")
+            made = probe_app._started_bare(["orden.exe", "--flag"], cwd="here")
 
         self.assertEqual(made, "the process")
         self.assertEqual(len(asked), 1)
         thread, argv, how = asked[0]
         self.assertNotEqual(thread, threading.get_ident(), "started from the caller's own thread")
-        self.assertEqual(argv, ["nib.exe", "--flag"])
+        self.assertEqual(argv, ["orden.exe", "--flag"])
         self.assertEqual(how, {"cwd": "here"})
 
     def test_a_start_that_fails_fails_in_the_caller(self) -> None:
         def popen(_argv: list[str], **_how: object) -> None:
-            raise FileNotFoundError("no nib.exe")
+            raise FileNotFoundError("no orden.exe")
 
         with mock.patch.object(probe_app.subprocess, "Popen", popen):
             with self.assertRaises(FileNotFoundError):
-                probe_app._started_bare(["nib.exe"])
+                probe_app._started_bare(["orden.exe"])
 
 if __name__ == "__main__":
     unittest.main()

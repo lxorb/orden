@@ -29,7 +29,7 @@ async () => {
   const note = (text) => ws.noteFrom(text, undefined)
 
   await note('# Plan\\n\\n#work\\n\\nThe centre of it: [[Ink]], [[Wind]], [[Paper]] and [[Nothing here]].')
-  await note('# Ink\\n\\n#work/nib\\n\\nBack to the [[Plan]], and across to [[Paper]].')
+  await note('# Ink\\n\\n#work/orden\\n\\nBack to the [[Plan]], and across to [[Paper]].')
   await note('# Wind\\n\\n#work\\n\\nAbout [[Ink]].')
   await note('# Paper\\n\\n#later\\n\\nAbout [[Ink]] and [[Grain]].')
   await note('# Grain\\n\\n#later\\n\\nAbout [[Paper]].')

@@ -8,13 +8,13 @@ import { call, type RpcView, signIn, type TestEnv, testEnv } from './harness'
 let env: TestEnv
 let token: string
 let space: string
-let nib: string
+let orden: string
 
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'rooms@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Rooms' } })).json.space.id
-  nib = (await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json.token
+  orden = (await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json.token
   await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
 })
 
@@ -24,7 +24,7 @@ const LONG = `${'x'.repeat(300)}.md`
 
 async function tool(name: string, args: Record<string, unknown>): Promise<string> {
   const answer = await call<RpcView>(env, '/mcp', {
-    token: nib,
+    token: orden,
     body: {
       jsonrpc: '2.0',
       id: 1,

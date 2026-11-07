@@ -113,7 +113,7 @@ INNER = (
 )
 
 PANE = (
-    "(() => { const all = nib.pages.each().map(([, one]) => one.sent)"
+    "(() => { const all = orden.pages.each().map(([, one]) => one.sent)"
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
 
@@ -249,7 +249,7 @@ def main() -> int:
     try:
         app = endpoint(config, process.pid, secret)
         until = time.monotonic() + 90
-        while time.monotonic() < until and app.eval("!!nib.workspace") is not True:
+        while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
         app.eval("await window.__TAURI_INTERNALS__.invoke('plugin:window|set_focus', { label: 'main' }); return true")
         time.sleep(2)

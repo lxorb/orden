@@ -53,7 +53,7 @@ def launch(switch, exe: pathlib.Path, identifier: str, errors, unlike: int = 0):
 
 def front_tab(app) -> object:
     return app.ask(
-        "JSON.stringify(nib.workspace.tabs.find((one) => one.id === nib.workspace.activeTabId)?.name ?? null)"
+        "JSON.stringify(orden.workspace.tabs.find((one) => one.id === orden.workspace.activeTabId)?.name ?? null)"
     )
 
 def ctrl_tab(app) -> object:
@@ -123,7 +123,7 @@ def main() -> int:
             web = switch.tab_of(app, WEB)
             if web is None:
                 raise SystemExit("the app never opened the web tab")
-            app.ask(f"(nib.workspace.close('{web}'), JSON.stringify(true))")
+            app.ask(f"(orden.workspace.close('{web}'), JSON.stringify(true))")
             time.sleep(2)
             app.open(f"{FIRST}.md")
             time.sleep(1.5)

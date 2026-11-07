@@ -24,7 +24,7 @@ NOTE = (
     "\n"
     "# Tags\n"
     "\n"
-    "Filed under #work/nib and #reading, with `#code` and [a #link](https://nib.dev)"
+    "Filed under #work/orden and #reading, with `#code` and [a #link](https://nib.dev)"
     " left alone.\n"
     "\n"
     "- #item in a list\n"
@@ -79,7 +79,7 @@ def pills_in_the_editor(page: Page, label: str) -> None:
     say(f"[editor {label}] {json.dumps(pills, ensure_ascii=False)}")
 
     is_true(
-        [one["tag"] for one in pills] == ["work/nib", "reading", "item"],
+        [one["tag"] for one in pills] == ["work/orden", "reading", "item"],
         f"[{label}] the editor drew {[one['tag'] for one in pills]} as tags",
     )
     for one in pills:
@@ -91,7 +91,7 @@ def pills_in_the_reading_view(page: Page, label: str) -> None:
     say(f"[reading {label}] {json.dumps(pills, ensure_ascii=False)}")
 
     is_true(
-        [one["tag"] for one in pills] == ["work/nib", "reading", "item"],
+        [one["tag"] for one in pills] == ["work/orden", "reading", "item"],
         f"[{label}] the reading view drew {[one['tag'] for one in pills]} as tags",
     )
     for one in pills:
@@ -109,7 +109,7 @@ def the_caret_in_a_tag(page: Page) -> None:
     pills = {one["tag"]: one for one in page.evaluate(PILLS, ".cm-content")}
     is_true(pills["reading"]["open"], "the tag the caret is in is not open")
     is_true(not pills["reading"]["washed"], "the tag the caret is in still wears its wash")
-    is_true(not pills["work/nib"]["open"], "a tag the caret is not in opened")
+    is_true(not pills["work/orden"]["open"], "a tag the caret is not in opened")
     shot(page, "02-caret-in-a-tag")
 
     page.locator(".cm-line", has_text="The last line").click()
@@ -118,9 +118,9 @@ def the_caret_in_a_tag(page: Page) -> None:
 
 def pressing_a_tag(page: Page) -> None:
     page.evaluate("() => window.ordenApp.search.ask('')")
-    tag = page.locator(".cm-content .tag[data-tag='work/nib']")
+    tag = page.locator(".cm-content .tag[data-tag='work/orden']")
     tag.click(modifiers=["Control"])
-    wait_for(page, "window.ordenApp.search.text === 'tag:work/nib'", "the search to be asked")
+    wait_for(page, "window.ordenApp.search.text === 'tag:work/orden'", "the search to be asked")
     is_true(
         page.evaluate("() => window.ordenApp.workspace.openOn(window.ordenApp.workspace.sideOf('search'))")
         == "search",

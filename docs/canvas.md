@@ -718,7 +718,7 @@ copies of it:
   write the same bytes and a file renamed across the two extensions loses nothing.
 
 The file format is the same format: JSON Canvas, this reader and this writer, with a
-page written as a spec node plus one record under `nib.pages`. `canvas.ts` grew a
+page written as a spec node plus one record under `orden.pages`. `canvas.ts` grew a
 fifth node kind for it - `page` - the way it already had `shape`: a node like any
 other in memory, written under `nib` rather than invented into `nodes`.
 

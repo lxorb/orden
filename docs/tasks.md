@@ -28,7 +28,7 @@ Nothing here loosens any of them.
    Tasks plugin's own emoji format, so a space opened in Obsidian with Tasks installed reads
    every date, priority and recurrence Orden wrote. What Tasks has no field for (a time of day,
    a duration, a deadline, a reminder, an assignee) is a Dataview inline field, `[time::
-16:00]`, which Dataview reads and Tasks keeps as words. No store of nib's own, ever,
+16:00]`, which Dataview reads and Tasks keeps as words. No store of Orden's own, ever,
    bar one hidden note per space: the Inbox (5.1).
 2. **A project is a note, a section is a heading, a label is a tag, a sub-task is an
    indented task.** Comments and descriptions are the indented lines under a task, and an
@@ -1570,7 +1570,7 @@ which joins the registry with the first view rather than the first paint.
 An importer beside the others in `apps/desktop/src/lib/import/`, offered in the Import sheet:
 
 - **From the account**, the complete way: the reader pastes a Todoist API token (Settings >
-  Integrations > Developer in Todoist), nib reads `/api/v1` once (projects, sections, tasks,
+  Integrations > Developer in Todoist), Orden reads `/api/v1` once (projects, sections, tasks,
   labels, comments, reminders, completed tasks if asked) and forgets the token.
 - **From files**: a project's CSV export (`TYPE, CONTENT, DESCRIPTION, PRIORITY, INDENT,
 AUTHOR, RESPONSIBLE, DATE, DATE_LANG, TIMEZONE`, and the deadline and duration columns
@@ -1669,7 +1669,7 @@ interface TaskFields {
   priority: Priority; recurrence?: string /* the rule as written */
   onCompletion?: string; tags: string[] /* no '#' */; assignee?: string
   id?: string; dependsOn: string[]; block?: string
-  fields: Record<string, string>      // inline fields nib has no name for, kept
+  fields: Record<string, string>      // inline fields Orden has no name for, kept
 }
 function readTask(line: string): TaskFields | null
 function parseTask(line: string): ParsedTask | null   // the fields and where each is written
@@ -1678,7 +1678,7 @@ function parseTask(line: string): ParsedTask | null   // the fields and where ea
 type TaskChange = { [K in keyof TaskFields]?: TaskFields[K] | null }  // null removes
 function writeTask(line: string, change: TaskChange): TextEdit[]
 function changedTask(line: string, change: TaskChange): string
-function taskLine(fields: TaskFields, prefix?: string): string        // a new line, nib's order
+function taskLine(fields: TaskFields, prefix?: string): string        // a new line, Orden's order
 
 // @orden/bases: types.ts
 type Value = null | boolean | number | string

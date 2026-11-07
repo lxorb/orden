@@ -208,7 +208,7 @@ class App:
 
 OPEN = r"""
 (async () => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   const path = __PATH__
   const veiled = __VEIL__
   const named = __NAMED__
@@ -247,7 +247,7 @@ OPEN = r"""
 
 CLOSE_ALL = r"""
 (() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   for (const one of [...ws.tabs]) { if (one.kind === 'web') ws.close(one.id) }
   return JSON.stringify({ left: ws.tabs.length })
 })()

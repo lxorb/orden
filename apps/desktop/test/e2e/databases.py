@@ -24,7 +24,7 @@ BASE = """filters: 'file.inFolder("Projects")'
 formulas:
   Tasks: 'file.backlinks.filter(list(value.asFile().properties.project).contains(file))'
   Tasks_count: list(formula.Tasks).length
-nib:
+orden:
   properties:
     status:
       options:
@@ -41,7 +41,7 @@ views:
   - type: table
     name: All
     order: [file.name, note.status, formula.Tasks_count, button.Done]
-    nib:
+    orden:
       lines: 2
       freeze: 1
       colour: 'if(status == "Done", "4", null)'

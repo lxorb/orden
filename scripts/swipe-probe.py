@@ -203,7 +203,7 @@ def app_input(window: int) -> tuple[int, int]:
     return inputs[0], int(user32.GetParent(wintypes.HWND(inputs[0])) or 0)
 
 PRELUDE = r"""
-const ws = nib.workspace
+const ws = orden.workspace
 const wait = async (ok, ms = 15000) => {
   const until = performance.now() + ms
   for (;;) {
@@ -342,7 +342,7 @@ def main() -> int:
             app,
             """
             const tab = await wait(() => ws.tabs.find((one) => one.kind === 'web'))
-            await wait(() => String(nib.pages?.of?.(tab.id)?.url ?? tab.address ?? '').endsWith('/two'), 8000)
+            await wait(() => String(orden.pages?.of?.(tab.id)?.url ?? tab.address ?? '').endsWith('/two'), 8000)
             await new Promise((go) => setTimeout(go, 800))
             return { address: tab.address, active: ws.active?.id === tab.id }
             """,
@@ -418,8 +418,8 @@ def main() -> int:
                 f"""
                 const tab = await wait(() => ws.tabs.find((one) => one.kind === 'web'))
                 ws.activate(tab.id)
-                await wait(() => String(nib.pages?.of?.(tab.id)?.url ?? tab.address ?? '').endsWith('{address}'), 8000)
-                await wait(() => nib.pages?.of?.(tab.id)?.back, 4000)
+                await wait(() => String(orden.pages?.of?.(tab.id)?.url ?? tab.address ?? '').endsWith('{address}'), 8000)
+                await wait(() => orden.pages?.of?.(tab.id)?.back, 4000)
                 await new Promise((go) => setTimeout(go, 500))
                 return true
                 """,

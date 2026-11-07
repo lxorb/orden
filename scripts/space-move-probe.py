@@ -17,7 +17,7 @@ click on the tab, Move to space, its chevron, Home - as a person does it:
 
 The menu with its chevron's list is photographed, in the light and in the dark.
 
-    python scripts/space-move-probe.py --exe path/to/nib.exe \\
+    python scripts/space-move-probe.py --exe path/to/orden.exe \\
         --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch goes through `run_probe` (by
@@ -208,7 +208,7 @@ def main() -> int:
         ask(app, f"nib.workspace.openEntry({idea}).then(() => 'idea')")
         tab = ask(
             app,
-            "(() => { const ws = nib.workspace; "
+            "(() => { const ws = orden.workspace; "
             f"ws.openUnsaved('terminal', JSON.stringify({{ shell: 'cmd', folder: ws.activeSpace.root, key: {json.dumps(KEY)} }}), 'Command Prompt'); "
             "return ws.activeTabId })()",
         )
@@ -244,7 +244,7 @@ def main() -> int:
         in_home = shown(app)
         say(f"Home: {in_home}")
         check("terminal Command Prompt" in in_home.get("tabs", []), "Home holds the terminal")
-        check(ask(app, "nib.workspace.active ? nib.workspace.active.kind : null") == "terminal", "in front")
+        check(ask(app, "nib.workspace.active ? orden.workspace.active.kind : null") == "terminal", "in front")
         kept = until(lambda: MARK in "\n".join(rows(app)), 15)
         check(bool(kept), "with the line it printed still on its screen")
         typed(app, f"echo {AFTER}\r")
@@ -254,7 +254,7 @@ def main() -> int:
         tabs_probe.shoot(args.identifier, shots / "home-terminal.png")
 
         tabs_probe.to_space(app, work)
-        note = ask(app, "(() => { const tab = nib.workspace.tabs.find((one) => one.name === 'Idea.md'); return tab ? tab.id : null })()")
+        note = ask(app, "(() => { const tab = orden.workspace.tabs.find((one) => one.name === 'Idea.md'); return tab ? tab.id : null })()")
         if isinstance(note, str):
             moved_by_menu(app, note, "Home", None, args.identifier)
             check(bool(until(lambda: (root / "Home" / "Idea.md").exists(), 10)), "the note's file is in Home's folder")

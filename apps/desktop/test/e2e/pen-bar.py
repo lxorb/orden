@@ -158,7 +158,7 @@ def stroke(page, cdp, points: list[tuple[float, float]]) -> None:
     send("mouseReleased", last[0], last[1], 0, 0)
     page.wait_for_timeout(250)
 
-INK = "() => JSON.parse(window.ordenApp.workspace.active.note.latest).nib?.ink ?? []"
+INK = "() => JSON.parse(window.ordenApp.workspace.active.note.latest).orden?.ink ?? []"
 
 def ink_of(page: Page) -> list[dict]:
     try:

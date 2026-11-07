@@ -1058,7 +1058,7 @@ def check_file(page: Page, label: str) -> None:
 
     records = written.get("orden", {}).get("pages", [])
     if len(records) != len(pages):
-        fail(f"[{label}] {len(pages)} pages, {len(records)} records under nib.pages")
+        fail(f"[{label}] {len(pages)} pages, {len(records)} records under orden.pages")
 
     ids = {node["id"] for node in written["nodes"]}
     for record in records:

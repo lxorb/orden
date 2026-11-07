@@ -189,7 +189,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         if frame_said(held) != "orden":
             wrong(f"a window came up saying its frame is {frame_said(held)!r}")
         else:
-            say(f"nib's own frame: {bare}px between the window and its client area")
+            say(f"Orden's own frame: {bare}px between the window and its client area")
 
         if not ran(held, "!!document.querySelector('header .controls')"):
             wrong("nib draws its own frame and none of its own window buttons")

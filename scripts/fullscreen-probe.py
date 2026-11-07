@@ -22,7 +22,7 @@ SPACE = "Full screen probe"
 
 STATE = r"""
 (async () => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   const call = window.__TAURI_INTERNALS__.invoke
   const shown = (selector) => [...document.querySelectorAll(selector)]
     .filter((one) => one.getClientRects().length > 0).length

@@ -18,7 +18,7 @@ second that it is still running, and a terminal. Then:
   it was.
 * The Hidden tabs row in Settings, photographed in the light and in the dark.
 
-    python scripts/space-tabs-probe.py --exe path/to/nib.exe \\
+    python scripts/space-tabs-probe.py --exe path/to/orden.exe \\
         --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch goes through `run_probe`, off
@@ -132,10 +132,10 @@ def ask(app, code: str, seconds: float = 60) -> object:
         time.sleep(0.5)
     return said
 
-IDS = "JSON.stringify(Object.fromEntries(nib.workspace.spaces.map((one) => [one.name, one.id])))"
+IDS = "JSON.stringify(Object.fromEntries(orden.workspace.spaces.map((one) => [one.name, one.id])))"
 
 SHOWN = """JSON.stringify((() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   return {
     space: ws.activeSpace ? ws.activeSpace.name : null,
     tabs: ws.panes.all.flatMap((pane) => ws.tabsIn(pane.id).map((one) => one.kind + ' ' + one.name)),
@@ -162,8 +162,8 @@ def ticking(ticks: Ticks, seconds: float) -> int:
 def front(app, kind: str) -> object:
     return ask(
         app,
-        f"(() => {{ const tab = nib.workspace.tabs.find((one) => one.kind === {json.dumps(kind)}); "
-        "if (!tab) return null; nib.workspace.activate(tab.id); return tab.id })()",
+        f"(() => {{ const tab = orden.workspace.tabs.find((one) => one.kind === {json.dumps(kind)}); "
+        "if (!tab) return null; orden.workspace.activate(tab.id); return tab.id })()",
     )
 
 def shoot(identifier: str, out: pathlib.Path) -> None:
@@ -188,7 +188,7 @@ def settings_shot(app, identifier: str, scheme: str, shots: pathlib.Path) -> Non
     ask(app, "(location.reload(), 'reloading')", 10)
     time.sleep(3)
     until(lambda: ask(app, "nib.workspace.restored") is True, 60)
-    ask(app, "(nib.settings.show('general'), 'shown')")
+    ask(app, "(orden.settings.show('general'), 'shown')")
     time.sleep(1.5)
     row = ask(
         app,
@@ -196,7 +196,7 @@ def settings_shot(app, identifier: str, scheme: str, shots: pathlib.Path) -> Non
     )
     check(row is True, f"Settings shows the Hidden tabs row ({scheme})")
     shoot(identifier, shots / f"settings-hidden-tabs-{scheme}.png")
-    ask(app, "(nib.settings.hide ? nib.settings.hide() : (nib.settings.open = false), 'closed')")
+    ask(app, "(orden.settings.hide ? orden.settings.hide() : (orden.settings.open = false), 'closed')")
 
 def main() -> int:
     if sys.platform != "win32":
@@ -257,7 +257,7 @@ def main() -> int:
         check(bool(until(lambda: ticks.since(0) > 3, 30)), "the page in Work runs")
         ask(
             app,
-            "(() => { const ws = nib.workspace; "
+            "(() => { const ws = orden.workspace; "
             f"ws.openUnsaved('terminal', JSON.stringify({{ shell: 'cmd', folder: ws.activeSpace.root, key: 'space-tabs' }}), 'Command Prompt'); "
             "return ws.activeTabId })()",
         )

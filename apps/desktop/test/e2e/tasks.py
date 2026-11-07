@@ -49,7 +49,7 @@ SYNC = "---\nstatus: Doing\ndue: {soon}\npoints: 3\n---\n# Sync loses a rename\n
 GLASS = "---\nstatus: To do\ndue: {near}\npoints: 5\n---\n# Glass on Linux\n"
 
 BASE = """filters: 'file.inFolder("Bugs")'
-nib:
+orden:
   properties:
     status:
       options:

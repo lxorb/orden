@@ -170,7 +170,7 @@ REAL = {
 }
 
 DRAWN = """(async () => {
-  const tab = nib.workspace.tabs.find((one) => one.name.startsWith('%s'))
+  const tab = orden.workspace.tabs.find((one) => one.name.startsWith('%s'))
   if (!tab) return JSON.stringify({ tab: null })
   const img = document.querySelector(`[data-tab="${tab.id}"] .face img`)
   const src = img?.getAttribute('src') ?? ''
@@ -194,7 +194,7 @@ DRAWN = """(async () => {
     size,
     colour: pixel,
     dpr: devicePixelRatio,
-    listed: (nib.links.faviconOf(tab.path) ?? '').slice(0, 22),
+    listed: (orden.links.faviconOf(tab.path) ?? '').slice(0, 22),
   })
 })()"""
 

@@ -255,7 +255,7 @@ class Run:
         )
         self.check("read as text", "browser_read", {"tab": self.tab, "as": "text"}, lambda said: missing(said.get("result", {}).get("text", ""), ["alpha words"]))
         self.check("read as markdown", "browser_read", {"tab": self.tab, "as": "markdown"}, lambda said: missing(said.get("result", {}).get("text", ""), ["Parity form"]))
-        self.check("evaluate in nib's world", "browser_evaluate", {"tab": self.tab, "expression": "1 + 2"}, lambda said: None if said.get("result", {}).get("value") == 3 else f"1 + 2 was {said.get('result')}")
+        self.check("evaluate in Orden's world", "browser_evaluate", {"tab": self.tab, "expression": "1 + 2"}, lambda said: None if said.get("result", {}).get("value") == 3 else f"1 + 2 was {said.get('result')}")
         self.check("evaluate in the page's world", "browser_evaluate", {"tab": self.tab, "expression": "document.title", "world": "page"}, lambda said: None if said.get("result", {}).get("value") == "Parity form" else f"the title was {said.get('result')}")
         self.check("a screenshot", "browser_screenshot", {"tab": self.tab}, png_judge)
 

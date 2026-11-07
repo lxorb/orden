@@ -37,10 +37,10 @@ function freeze(overrides: Record<string, unknown> = {}): Record<string, unknown
         main: true,
         frames: [
           { module: 'ntdll.dll', offset: '0x9d4c4', symbol: 'NtWaitForSingleObject' },
-          { module: 'C:\\Program Files\\Orden\\nib.exe', offset: '0x1a2b3c' },
+          { module: 'C:\\Program Files\\Orden\\orden.exe', offset: '0x1a2b3c' },
         ],
       },
-      { name: 'tokio-runtime-worker', frames: [{ module: 'nib.exe', offset: '0x55' }] },
+      { name: 'tokio-runtime-worker', frames: [{ module: 'orden.exe', offset: '0x55' }] },
     ],
     breadcrumbs: [{ at: 1_699_999_999_000, what: 'opened a web tab' }],
     log: ['a line'],
@@ -141,7 +141,7 @@ describe('a crash report', () => {
     expect(kept.summary).toHaveLength(300)
     expect(kept.log).toHaveLength(200)
     expect(kept.log?.[0]).toHaveLength(2000)
-    expect(kept.threads?.[0]?.frames[1]?.module).toBe('nib.exe')
+    expect(kept.threads?.[0]?.frames[1]?.module).toBe('orden.exe')
   })
 
   test.each([
@@ -244,7 +244,7 @@ describe('grouping', () => {
     const doingElse = await signatureOf(freeze({ doing: 'tab_close' }))
     const stuckElse = await signatureOf(
       freeze({
-        threads: [{ name: 'main', main: true, frames: [{ module: 'nib.exe', offset: '0x99' }] }],
+        threads: [{ name: 'main', main: true, frames: [{ module: 'orden.exe', offset: '0x99' }] }],
       }),
     )
 
@@ -258,8 +258,8 @@ describe('grouping', () => {
         kind: 'crash',
         doing: undefined,
         threads: [
-          { name: 'main', main: true, frames: [{ module: 'nib.exe', offset: '0x1' }] },
-          { name: 'worker', crashed: true, frames: [{ module: 'nib.exe', offset }] },
+          { name: 'main', main: true, frames: [{ module: 'orden.exe', offset: '0x1' }] },
+          { name: 'worker', crashed: true, frames: [{ module: 'orden.exe', offset }] },
         ],
       })
 

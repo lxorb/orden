@@ -17,7 +17,7 @@ drives it:
   over a program's; **F2** with nothing typed gives it back;
 * a name given **survives a restart**.
 
-    python scripts/terminal-names-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
+    python scripts/terminal-names-probe.py --exe path/to/orden.exe --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says; `run_probe` starts it off the screen and
 without the keyboard, and nothing here moves it or presses a real key.
@@ -208,7 +208,7 @@ def main() -> int:
         window = terminal.Window(port, secret)
         until(lambda: window.run("1 + 1") == 2, 30)
         again = window.run(
-            "(() => { const tab = nib.workspace.tabs.find((one) => one.kind === 'terminal'); "
+            "(() => { const tab = orden.workspace.tabs.find((one) => one.kind === 'terminal'); "
             "return tab ? tab.id : null })()"
         )
         check(isinstance(again, str), "the terminal comes back after a restart")

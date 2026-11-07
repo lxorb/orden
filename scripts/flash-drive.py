@@ -139,7 +139,7 @@ def fail(what, name):
 
 TABS = (
     "[...document.querySelectorAll('.tab .pick[data-tab]')].map((one) => { const r = one.getBoundingClientRect();"
-    " return { id: one.dataset.tab, web: nib.pages.each().some(([id]) => id === one.dataset.tab),"
+    " return { id: one.dataset.tab, web: orden.pages.each().some(([id]) => id === one.dataset.tab),"
     " chosen: !!one.closest('.tab.active'), x: r.x, y: r.y, width: r.width, height: r.height } })"
 )
 PANE = (
@@ -172,7 +172,7 @@ time.sleep(3)
 x0, y0 = window()
 scale = ratio()
 hole = run(
-    "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
+    "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
 if not isinstance(hole, dict):

@@ -278,7 +278,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
 
 STRIP = r"""
 (() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   return JSON.stringify({
     tabs: ws.tabs.map((one) => ({ id: one.id, at: one.address || one.path || '' })),
     front: ws.activeTabId,
@@ -288,7 +288,7 @@ STRIP = r"""
 
 FRESH = r"""
 (() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   for (const one of [...ws.tabs]) { if (one.kind === 'web') ws.close(one.id) }
   return ws.openPage(__URL__, 'front')
 })()
@@ -373,7 +373,7 @@ def press_in_page(app: App, identifier: str, base: str, link: str, press: str) -
 
 ROW = r"""
 (async () => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   for (const one of [...ws.tabs]) { if (one.kind === 'web') ws.close(one.id) }
   const note = ws.tabs.find((one) => (one.path || '').endsWith('__NOTE__'))
   if (note) ws.activate(note.id)

@@ -7,7 +7,7 @@ watch in scripts/probe_app.py ends the run the moment anything of the app or of 
 engine under it is on a screen or in front. The keyboard is read before and after every
 scenario, and must not have moved.
 
-    python apps/desktop/test/agents/run.py --exe <probe nib.exe> \\
+    python apps/desktop/test/agents/run.py --exe <probe orden.exe> \\
         --identifier so.orden.Orden.probe.<name> [--via endpoint|mcp] \\
         [--only <word>] [--skip <word>] [--out report.json]
     python apps/desktop/test/agents/run.py ... --launch-cost 3

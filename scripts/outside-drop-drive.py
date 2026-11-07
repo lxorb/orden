@@ -522,7 +522,7 @@ LISTED_PDFS = (
     "const walk = (one) => { if (!one) return;"
     " if (!one.is_dir && /\\.(pdf|pages)$/i.test(one.name)) found.push(one.name);"
     " for (const child of one.children ?? []) walk(child) };"
-    "walk(nib.workspace.tree);"
+    "walk(orden.workspace.tree);"
     "return found"
 )
 
@@ -553,11 +553,11 @@ def main() -> int:
     wrong: list[str] = []
     try:
         app = endpoint(config, process.pid, secret)
-        if not waited(lambda: app.eval("!!nib.workspace") is True, 90):
+        if not waited(lambda: app.eval("!!orden.workspace") is True, 90):
             raise SystemExit("the workspace never came up")
         made = app.eval(
-            "if (!nib.workspace.spaces.length) await nib.workspace.addSpace('Dropped');"
-            "return nib.workspace.activeSpace ? nib.workspace.activeSpace.root : null",
+            "if (!orden.workspace.spaces.length) await orden.workspace.addSpace('Dropped');"
+            "return orden.workspace.activeSpace ? orden.workspace.activeSpace.root : null",
             60,
         )
         if not isinstance(made, str):
@@ -565,7 +565,7 @@ def main() -> int:
         root = pathlib.Path(made)
         print(f"space at {root}", flush=True)
         app.eval("nib.workspace.openBlank('Here', '# Here\\n\\nSome words.'); return true")
-        print(f"tabs: {app.eval('return nib.workspace.tabs.map((one) => one.kind)')}", flush=True)
+        print(f"tabs: {app.eval('return orden.workspace.tabs.map((one) => one.kind)')}", flush=True)
         screen = screen_of(process.pid)
         time.sleep(3)
         app.eval(WATCH)
@@ -575,7 +575,7 @@ def main() -> int:
             return sorted(said) if isinstance(said, list) else [f"the space's list could not be read: {said}"]
 
         def pages_tabs() -> int:
-            said = app.eval("return nib.workspace.tabs.filter((one) => one.kind === 'pages').length")
+            said = app.eval("return orden.workspace.tabs.filter((one) => one.kind === 'pages').length")
             return said if isinstance(said, int) else -1
 
         def dropped(name: str, selector: str, along: float = 0.5) -> tuple[str, str]:
@@ -617,8 +617,8 @@ def main() -> int:
             wrong.append(why)
         elif not waited(lambda: any(one.startswith(name.removesuffix(".pdf")) for one in pdfs_in_space())):
             listed = app.eval(
-                "const tree = nib.workspace.tree;"
-                "return { root: nib.workspace.activeSpace?.root ?? null, tree: tree?.path ?? null,"
+                "const tree = orden.workspace.tree;"
+                "return { root: orden.workspace.activeSpace?.root ?? null, tree: tree?.path ?? null,"
                 " names: (tree?.children ?? []).map((one) => one.name) }"
             )
             wrong.append(f"a PDF dropped on the file list did not land in the space: {pdfs_in_space()}; the list: {listed}")

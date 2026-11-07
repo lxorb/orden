@@ -78,7 +78,7 @@ def mark(path):
         " const mark = row && row.querySelector('.mark svg'); return mark ? mark.innerHTML : null })()"
     )
 
-root = until("nib.workspace.activeSpace && nib.workspace.activeSpace.root")
+root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
 folder = Path(root)
@@ -102,24 +102,24 @@ if made_sketch != "done":
     sys.exit(f"::error::the app put no Sketch.pages in the space: {made_sketch}")
 print(f"pdf mark: two PDFs and a blank page note put in {root}")
 
-LISTED = "void nib.workspace.loadTree(), "
+LISTED = "void orden.workspace.loadTree(), "
 
 if not until(
-    f"{LISTED}!!nib.workspace.entryAt({json.dumps(str(leaflet))}) && !!nib.workspace.entryAt({json.dumps(str(sketch))})"
-    f" && !!nib.workspace.entryAt({json.dumps(str(lecture))})"
+    f"{LISTED}!!orden.workspace.entryAt({json.dumps(str(leaflet))}) && !!orden.workspace.entryAt({json.dumps(str(sketch))})"
+    f" && !!orden.workspace.entryAt({json.dumps(str(lecture))})"
 ):
     sys.exit("::error::the file list never showed the files put in the space")
 
 made = str(folder / "Lecture.pages")
 run(f"nib.workspace.openPdf({json.dumps(str(lecture))}); true")
-if not until(f"{LISTED}nib.workspace.entryAt({json.dumps(made)})?.path ?? null"):
+if not until(f"{LISTED}orden.workspace.entryAt({json.dumps(made)})?.path ?? null"):
     sys.exit("::error::opening the PDF made no page note")
 print(f"pdf mark: Lecture.pdf opened, and is {made} now, holding its paper: {run(f"nib.invoke('path_exists', {{ path: {json.dumps(str(folder / 'Lecture.pages.pdf'))} }})")}")
 time.sleep(1.5)
 
 pdf_mark, made_mark, blank_mark = mark(str(leaflet)), mark(made), mark(str(sketch))
 tab_mark = run(
-    "(() => { const tab = document.querySelector('.pick[data-tab=\"' + nib.workspace.activeTabId + '\"] .mark svg');"
+    "(() => { const tab = document.querySelector('.pick[data-tab=\"' + orden.workspace.activeTabId + '\"] .mark svg');"
     " return tab ? tab.innerHTML : null })()"
 )
 subprocess.run(["grim", str(OUT / "pdf-mark.png")], check=False)
@@ -141,15 +141,15 @@ elif tab_mark != pdf_mark:
 else:
     print("pdf mark: its tab wears the PDF's mark too")
 
-run(f"(() => {{ for (const tab of nib.workspace.tabs) if (tab.path === {json.dumps(made)}) nib.workspace.close(tab.id); return true }})()")
+run(f"(() => {{ for (const tab of orden.workspace.tabs) if (tab.path === {json.dumps(made)}) orden.workspace.close(tab.id); return true }})()")
 time.sleep(1)
-run("void nib.workspace.addSpace('Elsewhere'), true")
-if not until("nib.workspace.activeSpace && nib.workspace.activeSpace.name === 'Elsewhere'"):
+run("void orden.workspace.addSpace('Elsewhere'), true")
+if not until("nib.workspace.activeSpace && orden.workspace.activeSpace.name === 'Elsewhere'"):
     failures.append("the second space never opened")
 else:
-    run(f"void nib.workspace.openPdf({json.dumps(made)}), true")
+    run(f"void orden.workspace.openPdf({json.dumps(made)}), true")
     elsewhere_tab = until(
-        f"(() => {{ const tab = nib.workspace.active; return tab && tab.path === {json.dumps(made)} && tab.id }})()"
+        f"(() => {{ const tab = orden.workspace.active; return tab && tab.path === {json.dumps(made)} && tab.id }})()"
     )
     away_mark = None
     for _ in range(40):
@@ -161,8 +161,8 @@ else:
             break
         time.sleep(0.25)
     subprocess.run(["grim", str(OUT / "pdf-mark-elsewhere.png")], check=False)
-    front = run("nib.workspace.activeSpace && nib.workspace.activeSpace.name")
-    listed = run(f"!!nib.workspace.entryAt({json.dumps(made)})")
+    front = run("nib.workspace.activeSpace && orden.workspace.activeSpace.name")
+    listed = run(f"!!orden.workspace.entryAt({json.dumps(made)})")
     print(f"pdf mark: {front!r} is in front, and its list holds the note: {listed}")
     if front != "Elsewhere" or listed:
         failures.append(f"the note did not open in a tab of the other space: {front!r} in front, listed {listed}")

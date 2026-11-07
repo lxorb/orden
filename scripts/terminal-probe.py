@@ -28,7 +28,7 @@ the window itself, and so reaches what the window reaches; see docs/terminal.md)
 
 A photograph of the window is written to `--shots`, off the app's own window and by pid.
 
-    python scripts/terminal-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
+    python scripts/terminal-probe.py --exe path/to/orden.exe --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says; `run_probe` starts it off the screen and
 without the keyboard, and nothing here moves it or presses a real key.
@@ -136,7 +136,7 @@ class Window:
 
     def open(self, shell: str, label: str, key: str) -> str:
         code = (
-            "(() => { const ws = nib.workspace; const root = ws.activeSpace ? ws.activeSpace.root : null; "
+            "(() => { const ws = orden.workspace; const root = ws.activeSpace ? ws.activeSpace.root : null; "
             f"ws.openUnsaved('terminal', JSON.stringify({{ shell: {json.dumps(shell)}, folder: root, key: {json.dumps(key)} }}), {json.dumps(label)}); "
             "return ws.activeTabId })()"
         )
@@ -176,7 +176,7 @@ class Window:
 
     def spec(self, tab: str) -> dict:
         said = self.run(
-            f"(() => {{ const tab = nib.workspace.tabs.find((one) => one.id === {json.dumps(tab)}); return tab ? tab.doc : null }})()"
+            f"(() => {{ const tab = orden.workspace.tabs.find((one) => one.id === {json.dumps(tab)}); return tab ? tab.doc : null }})()"
         )
         try:
             return json.loads(said) if isinstance(said, str) else {}
@@ -184,7 +184,7 @@ class Window:
             return {}
 
     def open_tabs(self) -> list[str]:
-        said = self.run("JSON.stringify(nib.workspace.tabs.map((one) => one.id))")
+        said = self.run("JSON.stringify(orden.workspace.tabs.map((one) => one.id))")
         return json.loads(said) if isinstance(said, str) else []
 
 def paged(window, key: str, code: int, times: int) -> None:
@@ -353,7 +353,7 @@ def main() -> int:
         check(bool(cards), f"the new tab's cards have the terminal's ({cards})")
         time.sleep(0.4)
         tabs.shoot(app.pid, shots / "terminal-new-kinds.png")
-        window.run("(() => { nib.workspace.close(nib.workspace.activeTabId); return true })()")
+        window.run("(() => { orden.workspace.close(orden.workspace.activeTabId); return true })()")
         time.sleep(0.5)
 
         window.run("(() => { document.querySelector('.strip button.new').click(); return true })()")
@@ -376,7 +376,7 @@ def main() -> int:
             "(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true })()"
         )
         time.sleep(0.4)
-        window.run("(() => { nib.workspace.close(nib.workspace.activeTabId); return true })()")
+        window.run("(() => { orden.workspace.close(orden.workspace.activeTabId); return true })()")
         time.sleep(0.4)
 
         shells = window.invoke("terminal_shells", {})
@@ -439,8 +439,8 @@ def main() -> int:
         until(lambda: window.run("1 + 1") == 2, 30)
 
         back = window.run(
-            "(() => { const tab = nib.workspace.tabs.find((one) => one.kind === 'terminal'); "
-            "if (!tab) return null; nib.workspace.activate(tab.id); return tab.id })()"
+            "(() => { const tab = orden.workspace.tabs.find((one) => one.kind === 'terminal'); "
+            "if (!tab) return null; orden.workspace.activate(tab.id); return tab.id })()"
         )
         check(isinstance(back, str), "the terminal tab comes back after a restart")
         if isinstance(back, str):

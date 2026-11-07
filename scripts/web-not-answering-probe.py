@@ -15,7 +15,7 @@ over the automation endpoint, which only answers when the app's own loop runs, a
 probe asks the window's thread every 100 ms. Then the browser is let go, and both pages
 must come back: the one asked for while it was held loads, the other is shown again.
 
-    python scripts/web-not-answering-probe.py --exe path/to/nib.exe \\
+    python scripts/web-not-answering-probe.py --exe path/to/orden.exe \\
         --identifier so.orden.Orden.probe.<name>
 
 Every launch goes through `run_probe`, off the screen; the browser suspended is the probe's
@@ -48,8 +48,8 @@ kernel32.OpenThread.restype = wintypes.HANDLE
 THREAD_SUSPEND_RESUME = 0x0002
 
 PAGES = (
-    "JSON.stringify(nib.workspace.tabs.filter((t) => t.kind === 'web').map((t) => {"
-    " const p = nib.pages.of(t.id); return [t.name, t.id === nib.workspace.activeTabId, p.live, p.opening] }))"
+    "JSON.stringify(orden.workspace.tabs.filter((t) => t.kind === 'web').map((t) => {"
+    " const p = orden.pages.of(t.id); return [t.name, t.id === orden.workspace.activeTabId, p.live, p.opening] }))"
 )
 
 failures: list[str] = []
@@ -71,7 +71,7 @@ def answered(window, seconds: float = 3) -> float | None:
 
 def front(window, name: str) -> None:
     window.ask(
-        f"(() => {{ const ws = nib.workspace; const t = ws.tabs.find((t) => t.name === {json.dumps(name)}); ws.activate(t.id); return 'ok' }})()",
+        f"(() => {{ const ws = orden.workspace; const t = ws.tabs.find((t) => t.name === {json.dumps(name)}); ws.activate(t.id); return 'ok' }})()",
         seconds=5,
     )
 
@@ -135,7 +135,7 @@ def main() -> int:
 
         pulse = heavy.Pulse(hwnd)
         heard.clear()
-        window.ask(f"(() => {{ nib.workspace.openWeb({json.dumps(str(space / 'Two.url'))}); return 'asked' }})()", seconds=5)
+        window.ask(f"(() => {{ orden.workspace.openWeb({json.dumps(str(space / 'Two.url'))}); return 'asked' }})()", seconds=5)
         times = []
         for name in (None, "One.url", "Two.url", "One.url", "Two.url"):
             if name:

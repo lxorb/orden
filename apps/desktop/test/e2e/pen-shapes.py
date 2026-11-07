@@ -78,7 +78,7 @@ def plane(page: Page) -> dict:
     return box
 
 def ink_of(page: Page) -> list[dict]:
-    return page.evaluate("() => JSON.parse(window.ordenApp.workspace.active.doc).nib?.ink ?? []")
+    return page.evaluate("() => JSON.parse(window.ordenApp.workspace.active.doc).orden?.ink ?? []")
 
 def points_of(stroke: dict) -> list[dict]:
     flat = stroke["points"]

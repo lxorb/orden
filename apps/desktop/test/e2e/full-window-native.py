@@ -60,7 +60,7 @@ HOLE = """(() => {
   return JSON.stringify({
     hole: hole ? [hole.x, hole.y, hole.width, hole.height] : null,
     scale: devicePixelRatio,
-    fills: nib.workspace.panes.fills,
+    fills: orden.workspace.panes.fills,
   })
 })()"""
 

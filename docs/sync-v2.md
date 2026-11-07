@@ -1788,7 +1788,7 @@ create table entries (id text primary key, space_id text not null, kind text not
                       parent text, name text not null, local_path text not null,
                       file_key text, written_hash text, mtime integer, size integer,
                       seq integer, deleted integer not null default 0);
-create table written (id text primary key, text blob not null); -- what nib last wrote, compressed
+create table written (id text primary key, text blob not null); -- what Orden last wrote, compressed
 create table docs (id text primary key, epoch integer not null, client_id integer not null,
                    confirmed blob not null, confirmed_sv blob not null,
                    pending blob, pending_at integer);

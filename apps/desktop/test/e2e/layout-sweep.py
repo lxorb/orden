@@ -54,7 +54,7 @@ ACCOUNT: dict[str, Any] = {
     "/v1/sessions": {
         "sessions": [
             {"id": "a", "name": "Chrome on Windows", "createdAt": NOW - 86_400_000, "lastUsedAt": NOW, "current": True},
-            {"id": "b", "name": "nib on an Android phone", "createdAt": NOW - 9 * 86_400_000, "lastUsedAt": NOW - 3_600_000, "current": False},
+            {"id": "b", "name": "Orden on an Android phone", "createdAt": NOW - 9 * 86_400_000, "lastUsedAt": NOW - 3_600_000, "current": False},
         ]
     },
     "/v1/settings": {"settings": {}, "key": {"set": False, "tail": None}},

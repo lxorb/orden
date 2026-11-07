@@ -68,7 +68,7 @@ def serve(port: int) -> http.server.ThreadingHTTPServer:
     return made
 
 STRIP = """(async () => {
-  const tab = nib.workspace.tabs.find((one) => one.kind === 'web' && (one.address ?? '').includes('/page'))
+  const tab = orden.workspace.tabs.find((one) => one.kind === 'web' && (one.address ?? '').includes('/page'))
   if (!tab) return JSON.stringify({ tab: null })
   const img = document.querySelector(`[data-tab="${tab.id}"] .face img`)
   const src = img?.getAttribute('src') ?? ''
@@ -83,7 +83,7 @@ STRIP = """(async () => {
   return JSON.stringify({
     tab: tab.id,
     path: tab.path,
-    showing: tab.id === nib.workspace.activeTabId,
+    showing: tab.id === orden.workspace.activeTabId,
     mark: src.slice(0, 22) || 'globe',
     drawn,
     live,
@@ -179,7 +179,7 @@ def main() -> int:
             time.sleep(0.5)
         said["before the restart"] = before
         app.ask(
-            "nib.workspace.activate(nib.workspace.tabs.find((one) => one.kind === 'note').id)"
+            "nib.workspace.activate(orden.workspace.tabs.find((one) => one.kind === 'note').id)"
             " || 'note'"
         )
         time.sleep(3)

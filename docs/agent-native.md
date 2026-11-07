@@ -325,7 +325,7 @@ unchanged. Built without the keyboard now, and the harness compares the handle.
          WebView2: agent tabs out of sight, the reader's web tabs
 
  claude.ai / a phone ──https──► services/sync/src/mcp   (the account connector: notes only,
-                                                          no live state, works with nib closed)
+                                                          no live state, works with Orden closed)
 ```
 
 Two rules shape the split:
@@ -518,7 +518,7 @@ goes through: the agent's own tab with `browser`, the reader's with `browser.rea
 space it reaches, never another agent's, and the reader's pause, a dialog the page holds, a
 denied site and the stop answer exactly as they do for a press.
 
-- **Clip**: the clip button's own script (`web_tabs::reader`), run in nib's world and not
+- **Clip**: the clip button's own script (`web_tabs::reader`), run in Orden's world and not
   the page's, its markup unvalued the way `browser_read`'s is (no password field, no
   field's `value`), and made markdown by the clipper's converter in the window. So a clip
   of an agent's tab is the words a clip of the reader's would be, and `browser_read` as
@@ -1377,7 +1377,7 @@ the button goes down. One press is one question, however many times it is looked
 own timer can still swap the target in the moment between that look and the press, which no
 check from outside closes.
 
-**Everything this goes by is read where the page cannot answer**: in a world of nib's own in
+**Everything this goes by is read where the page cannot answer**: in a world of Orden's own in
 that very frame, through each interface's own getters, or from the engine's own lists (`DOM`,
 `Accessibility`, `DOMDebugger`). A page can redefine `contentDocument`, `ownerDocument` or
 `closest` on its own objects, or name a form's field `elements` or `parentNode`, and none of it
@@ -1714,7 +1714,7 @@ gives a new window's page only to a webview it builds itself), `window.close()` 
 tab, and a download goes into the agent's folder through `WKDownload`. It runs no
 extensions, so its tab in the reader's store is in that store itself, with no twin (12.3).
 
-- **Reading.** The snapshot is a script in nib's own `WKContentWorld` (`snapshot.js`, after
+- **Reading.** The snapshot is a script in Orden's own `WKContentWorld` (`snapshot.js`, after
   Playwright's `ariaSnapshot`) that writes the page's accessibility tree in the `DevTools`
   Protocol's shape, so `snapshot.rs` writes it, `browser_find` searches it and the secret
   fields are judged by the same code as on Chromium. A ref is an id the world keeps for as
@@ -1730,7 +1730,7 @@ extensions, so its tab in the reader's store is in that store itself, with no tw
   (`isTrusted` false) and the style's `:hover` does not apply. Every act settles as on
   Chromium, and the reader's keyboard focus inside Orden's window is given back after each
   press and key.
-- **The rest.** `browser_evaluate` is `callAsyncJavaScript` in nib's world or the page's;
+- **The rest.** `browser_evaluate` is `callAsyncJavaScript` in Orden's world or the page's;
   `browser_storage` is the view's `WKHTTPCookieStore` and its site's data records;
   `browser_screenshot` is `takeSnapshot`, every filled secret field painted over; network
   idle is the page loaded and no resource fetched for 500 ms, as `performance` counts them.

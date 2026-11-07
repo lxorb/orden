@@ -38,8 +38,8 @@ tell()
 TITLES = "nib.pages.each().map(([, one]) => one.title).find((one) => (one || '').startsWith('carried ')) || ''"
 
 MIDWAY = (
-    "return { dragging: nib.workspace.panes.dragging, landing: nib.workspace.panes.landing,"
-    " pages: nib.pages.each().map(([id, one]) => [id, one.layering, one.live, one.sent && one.sent.visible,"
+    "return { dragging: orden.workspace.panes.dragging, landing: orden.workspace.panes.landing,"
+    " pages: orden.pages.each().map(([id, one]) => [id, one.layering, one.live, one.sent && one.sent.visible,"
     " one.sent && JSON.stringify(one.sent.cut)]),"
     " zones: [...document.querySelectorAll('.zone')].map((one) => one.className + ':' + one.hasAttribute('data-covers')),"
     " sides: !!document.querySelector('.zones.sides') }"
@@ -73,15 +73,15 @@ def row_box(path: str) -> str:
     )
 
 PANE = (
-    "(() => { const all = nib.pages.each().map(([, one]) => one.sent)"
+    "(() => { const all = orden.pages.each().map(([, one]) => one.sent)"
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
 
 def put_note(ask: Callable[[str], Any], root: str) -> Any:
     there = root.rstrip("/\\") + ("\\" if "\\" in root else "/") + NOTE
     return ask(
-        f"return nib.workspace.entryAt({json.dumps(there)}) ? {json.dumps(there)}"
-        f" : await nib.workspace.noteFrom({json.dumps(WORDS)}, {json.dumps(root)})"
+        f"return orden.workspace.entryAt({json.dumps(there)}) ? {json.dumps(there)}"
+        f" : await orden.workspace.noteFrom({json.dumps(WORDS)}, {json.dumps(root)})"
     )
 
 def where(note: str, root: str) -> str:
@@ -91,9 +91,9 @@ def where(note: str, root: str) -> str:
         " const sep = cut.includes('\\\\') ? '\\\\' : '/';"
         " const work = cut.slice(0, at) + sep + '.work' + sep + cut.slice(at + 1) + note.slice(cut.length);"
         " const asked = async (path) => crate('path_taken', { path }).then((one) => String(one), (e) => 'error ' + e);"
-        " const carried = await crate('page_carry', { files: nib.workspace.dragPayload(note), addresses: [] }).then((one) => 'carried ' + one, (e) => 'refused ' + e);"
+        " const carried = await crate('page_carry', { files: orden.workspace.dragPayload(note), addresses: [] }).then((one) => 'carried ' + one, (e) => 'refused ' + e);"
         " await crate('page_carry_end').catch(() => undefined);"
-        " return { note: await asked(note), work, worked: await asked(work), payload: nib.workspace.dragPayload(note), carried }"
+        " return { note: await asked(note), work, worked: await asked(work), payload: orden.workspace.dragPayload(note), carried }"
         % (json.dumps(note), json.dumps(root))
     )
 
@@ -133,17 +133,17 @@ def carried(
             time.sleep(0.25)
         return None
 
-    root = until("nib.workspace.activeSpace && nib.workspace.activeSpace.root")
+    root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
     if not isinstance(root, str):
         return [f"[carry {name}] no space is open: {root}"], unverified
     note = put_note(ask, root)
     if not isinstance(note, str):
         return [f"[carry {name}] the app put no note in the space: {note}"], unverified
-    if not until(f"void nib.workspace.loadTree(); return !!nib.workspace.entryAt({json.dumps(note)})"):
+    if not until(f"void orden.workspace.loadTree(); return !!orden.workspace.entryAt({json.dumps(note)})"):
         return [f"[carry {name}] the file list never showed the note put in the space"], unverified
     ask(f"nib.workspace.openPage({json.dumps(url)}); return true")
     if not until(f"return ({TITLES}) !== ''", 40):
-        seen = ask("return nib.pages.each().map(([id, one]) => [id, one.url, one.title, one.live])")
+        seen = ask("return orden.pages.each().map(([id, one]) => [id, one.url, one.title, one.live])")
         return [f"[carry {name}] the page never loaded: {seen}"], unverified
     time.sleep(2)
     pane = until(f"return {PANE}")
@@ -170,6 +170,6 @@ def carried(
     print(f"[carry {name}] a field that takes words only got {into_field(said)}", flush=True)
     if WORDS.strip() not in str(said.get("field") or ""):
         unverified.append(f"[carry {name}] a field with no drop of its own was not given the note's words")
-    ask("for (const [id, one] of nib.pages.each()) if ((one.url || '').includes('/carry')) nib.workspace.close(id); return true")
+    ask("for (const [id, one] of orden.pages.each()) if ((one.url || '').includes('/carry')) orden.workspace.close(id); return true")
     time.sleep(2)
     return wrong, unverified

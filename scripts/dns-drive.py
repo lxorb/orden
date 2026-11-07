@@ -70,7 +70,7 @@ if PHASE == "choose":
         print(f"choose: on the system's DNS the tab does not reach {NAME}")
     shot("before")
 
-    run("(nib.settings.show('general'), 'shown')")
+    run("(orden.settings.show('general'), 'shown')")
     row = None
     for _ in range(40):
         row = run("document.querySelector('[role=combobox][aria-label=\"DNS\"]')?.innerText ?? null")
@@ -109,12 +109,12 @@ if PHASE == "choose":
     print(f"choose: kept {kept}")
     if not kept or kept.get("choice") != "custom" or kept.get("custom") != PROVIDER:
         fail(f"the choice kept is {kept}, not {PROVIDER}")
-    run("(nib.settings.hide ? nib.settings.hide() : (nib.settings.open = false), 'closed')")
+    run("(orden.settings.hide ? orden.settings.hide() : (orden.settings.open = false), 'closed')")
     time.sleep(1)
 
     tab = run(
         "[...document.querySelectorAll('.tab .pick[data-tab]')].map((one) => one.dataset.tab)"
-        ".find((id) => nib.pages.each().some(([page]) => page === id)) ?? null"
+        ".find((id) => orden.pages.each().some(([page]) => page === id)) ?? null"
     )
     run(f"window.__TAURI_INTERNALS__.invoke('web_navigate', {{ tab: {json.dumps(tab)}, url: 'http://{NAME}:8765/' }}).then(() => 'sent')")
     if reached(20):

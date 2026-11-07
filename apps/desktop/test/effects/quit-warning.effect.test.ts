@@ -68,8 +68,8 @@ beforeEach(() => {
   others = []
   shells.setWarning('running')
   workspace.tabs = [
-    terminal('a', 'claude · nib', 'claude'),
-    terminal('b', 'PowerShell · nib', null),
+    terminal('a', 'claude · orden', 'claude'),
+    terminal('b', 'PowerShell · orden', null),
   ]
 })
 
@@ -95,7 +95,7 @@ test('only the busy terminal is named, and Quit anyway goes on', async () => {
   const { answered } = await quitting()
 
   expect(sheet()?.querySelector('.title')?.textContent).toBe('Quit Orden?')
-  expect(names()).toEqual(['claude · nib'])
+  expect(names()).toEqual(['claude · orden'])
   expect(asked).toContain('quit_show')
 
   button('Quit anyway')?.click()
@@ -136,7 +136,7 @@ test("Don't ask again is Settings' Never, and the next quit asks nothing", async
 test('Always lists the idle shells as well', async () => {
   shells.setWarning('always')
   const { answered } = await quitting()
-  expect(names()).toEqual(['claude · nib', 'PowerShell · nib'])
+  expect(names()).toEqual(['claude · orden', 'PowerShell · orden'])
   quitAsk.answer('stay')
   await answered
 })

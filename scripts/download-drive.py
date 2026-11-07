@@ -53,7 +53,7 @@ def tab():
     for _ in range(60):
         found = run(
             "[...document.querySelectorAll('.tab .pick[data-tab]')].map((one) => one.dataset.tab)"
-            ".find((id) => nib.pages.each().some(([page]) => page === id)) ?? null"
+            ".find((id) => orden.pages.each().some(([page]) => page === id)) ?? null"
         )
         if found:
             return found

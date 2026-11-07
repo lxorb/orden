@@ -40,13 +40,13 @@ const REPORT = {
   held: 41_200,
   killed: true,
   threads: [
-    { name: 'worker', frames: [{ module: 'nib.exe', offset: '0x10' }] },
+    { name: 'worker', frames: [{ module: 'orden.exe', offset: '0x10' }] },
     {
       name: 'main',
       main: true,
       frames: [
         { module: 'ntdll.dll', offset: '0x9d4c4', symbol: 'NtWaitForSingleObject' },
-        { module: 'nib.exe', offset: '0x1a2b3c' },
+        { module: 'orden.exe', offset: '0x1a2b3c' },
       ],
     },
   ],
@@ -71,7 +71,7 @@ describe('the issue a group becomes', () => {
     expect(body).toContain('Held: 41.2 s')
     expect(body.indexOf('thread "main" (main)')).toBeLessThan(body.indexOf('thread "worker"'))
     expect(body).toContain('#00 ntdll.dll!NtWaitForSingleObject')
-    expect(body).toContain('#01 nib.exe+0x1a2b3c')
+    expect(body).toContain('#01 orden.exe+0x1a2b3c')
     expect(body).toContain('opened a web tab')
     expect(body).toContain('line 99 with')
     expect(body).not.toContain('line 39 with')
@@ -81,27 +81,27 @@ describe('the issue a group becomes', () => {
   test('shows what the symbols say for our frames', () => {
     const symbols = new Map([
       [
-        'nib.exe+0x1a2b3c',
-        { symbol: 'nib_lib::web_tabs::open', location: 'src/web_tabs.rs:120:9' },
+        'orden.exe+0x1a2b3c',
+        { symbol: 'orden_lib::web_tabs::open', location: 'src/web_tabs.rs:120:9' },
       ],
     ])
     expect(tool.issueBody(GROUP, REPORT.id, REPORT, symbols)).toContain(
-      '#01 nib.exe+0x1a2b3c  nib_lib::web_tabs::open (src/web_tabs.rs:120:9)',
+      '#01 orden.exe+0x1a2b3c  orden_lib::web_tabs::open (src/web_tabs.rs:120:9)',
     )
   })
 })
 
 describe('symbolising', () => {
   test('asks only for our own frames that have no name yet', () => {
-    expect([...tool.framesToSymbolize(REPORT, 'C:/build/nib.pdb').entries()]).toEqual([
-      ['nib.exe+0x10', '0x10'],
-      ['nib.exe+0x1a2b3c', '0x1a2b3c'],
+    expect([...tool.framesToSymbolize(REPORT, 'C:/build/orden.pdb').entries()]).toEqual([
+      ['orden.exe+0x10', '0x10'],
+      ['orden.exe+0x1a2b3c', '0x1a2b3c'],
     ])
   })
 
   test('reads what llvm-symbolizer says, unknowns too', () => {
     const output = [
-      'nib_lib::web_tabs::open',
+      'orden_lib::web_tabs::open',
       'C:\\src\\web_tabs.rs:120:9',
       '',
       '??',
@@ -113,7 +113,7 @@ describe('symbolising', () => {
     ].join('\r\n')
 
     expect(tool.parseSymbolized(output)).toEqual([
-      { symbol: 'nib_lib::web_tabs::open', location: 'C:\\src\\web_tabs.rs:120:9' },
+      { symbol: 'orden_lib::web_tabs::open', location: 'C:\\src\\web_tabs.rs:120:9' },
       null,
       { symbol: 'core::panicking::panic', location: '' },
     ])

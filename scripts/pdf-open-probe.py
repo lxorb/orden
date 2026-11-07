@@ -37,7 +37,7 @@ trailer<</Root 1 0 R>>
 
 TABS = r"""
 (() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   const front = ws.tabs.find((one) => one.id === ws.activeTabId)
   const pane = front ? front.paneId : null
   const said = (one) => `${one.kind}:${one.path ?? one.name}`

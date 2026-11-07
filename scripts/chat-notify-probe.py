@@ -22,7 +22,7 @@ skipped and said so.
     pnpm --dir apps/desktop tauri build --no-bundle \\
       --config '{"identifier":"so.orden.Orden.probe.chats-notify","version":"99.0.0",
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/chat-notify-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
+    python scripts/chat-notify-probe.py --exe apps/desktop/src-tauri/target/release/orden.exe
 """
 
 from __future__ import annotations

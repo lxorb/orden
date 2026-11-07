@@ -352,7 +352,7 @@ another device of the same person opens the same file and so the same session.
 ### 4.6 The shared session
 
 ```
-nib (desktop, phone, browser)          Worker                     the machine (microVM)
+Orden (desktop, phone, browser)          Worker                     the machine (microVM)
   xterm.js  ── socket ──►  Machine (Durable Object, eu)  ── one link ──►  ordend
   xterm.js  ── socket ──►     door: role, typing, quotas                 ├ pty 1 + headless xterm
   xterm.js  ── socket ──►     fan-out, presence, sizes                   ├ pty 2 + headless xterm

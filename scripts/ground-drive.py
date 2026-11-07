@@ -139,12 +139,12 @@ def fail(what, name):
 VISIBLE = "nib.pages.each().some(([, page]) => page.sent && page.sent.visible)"
 WEB_TAB = (
     "(() => { const one = [...document.querySelectorAll('.tab .pick[data-tab]')]"
-    ".find((tab) => nib.pages.each().some(([id]) => id === tab.dataset.tab));"
+    ".find((tab) => orden.pages.each().some(([id]) => id === tab.dataset.tab));"
     " if (!one) return null; const r = one.getBoundingClientRect();"
     " return { x: r.x, y: r.y, width: r.width, height: r.height } })()"
 )
 HOLE = (
-    "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
+    "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
 TOGGLE = "button.act[aria-label='Light'], button.act[aria-label='Dark']"

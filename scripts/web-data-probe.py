@@ -105,7 +105,7 @@ def serve() -> int:
     return port
 
 PRELUDE = r"""
-const ws = nib.workspace
+const ws = orden.workspace
 const wait = async (ok, ms = 20000) => {
   const until = performance.now() + ms
   for (;;) {
@@ -184,9 +184,9 @@ doc.replace(words, false)
 
 STORE_OF = """
 const tab = await wait(() => ws.tabs.find((one) => one.kind === 'web'))
-await wait(() => (nib.pages?.of?.(tab.id)?.store ?? '') === 'note_3f9a0c17e2b4d685' && nib.pages?.of?.(tab.id)?.live, 12000)
+await wait(() => (orden.pages?.of?.(tab.id)?.store ?? '') === 'note_3f9a0c17e2b4d685' && orden.pages?.of?.(tab.id)?.live, 12000)
 await new Promise((go) => setTimeout(go, 1500))
-return nib.pages?.of?.(tab.id)?.store ?? ''
+return orden.pages?.of?.(tab.id)?.store ?? ''
 """
 
 def open_site(app, store_check: str | None = None) -> object:
@@ -196,9 +196,9 @@ def open_site(app, store_check: str | None = None) -> object:
         app,
         """
         const tab = await wait(() => ws.tabs.find((one) => one.kind === 'web'))
-        await wait(() => nib.pages?.of?.(tab.id)?.live, 20000)
+        await wait(() => orden.pages?.of?.(tab.id)?.live, 20000)
         await new Promise((go) => setTimeout(go, 1500))
-        return { store: nib.pages?.of?.(tab.id)?.store ?? null, space: nib.pages?.of?.(tab.id)?.space }
+        return { store: orden.pages?.of?.(tab.id)?.store ?? null, space: orden.pages?.of?.(tab.id)?.space }
         """,
     )
     print(f"opened: {said}", file=sys.stderr, flush=True)

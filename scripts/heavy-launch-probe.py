@@ -18,9 +18,9 @@ automation endpoint's `eval`, which the probe turns on in its own identifier's f
 * **use**: a minute of what Emil does - switching spaces, Ctrl+Tab through the tabs,
   terminals printing, the Ask panel - while this probe asks the window's thread and the
   page's main thread every 100 ms whether they answer. A stall is either one away for
-  longer than a frame. What nib's own stall recorder wrote to nib.log is printed after.
+  longer than a frame. What Orden's own stall recorder wrote to nib.log is printed after.
 
-    python scripts/heavy-launch-probe.py --exe path/to/nib.exe \\
+    python scripts/heavy-launch-probe.py --exe path/to/orden.exe \\
         --identifier so.orden.Orden.probe.<name> [--runs 5] [--only prime,launch,use]
 
 Build the exe as `scripts/probe_app.py` says. A few of the web tabs are real public sites
@@ -264,7 +264,7 @@ def until(test, seconds: float, step: float = 0.25):
     return None
 
 def space_ids(app) -> dict[str, str]:
-    said = app.ask("JSON.stringify(Object.fromEntries(nib.workspace.spaces.map((one) => [one.name, one.id])))")
+    said = app.ask("JSON.stringify(Object.fromEntries(orden.workspace.spaces.map((one) => [one.name, one.id])))")
     return said if isinstance(said, dict) else {}
 
 def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[str, list[str]]) -> None:
@@ -292,7 +292,7 @@ def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[s
             if terminals < TERMINALS:
                 terminals += 1
                 window.ask(
-                    "(() => { const ws = nib.workspace; "
+                    "(() => { const ws = orden.workspace; "
                     f"ws.openUnsaved('terminal', JSON.stringify({{ shell: 'cmd', folder: ws.activeSpace.root, key: 'heavy-{terminals}' }}), 'Command Prompt'); "
                     "return ws.activeTabId })()"
                 )
@@ -318,7 +318,7 @@ def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[s
         front = webs[first][0]
         window.ask(f"nib.workspace.openWeb({json.dumps(front)}).then(() => 'opened')")
         time.sleep(5)
-        said = window.ask("JSON.stringify({ tabs: nib.workspace.tabs.length, kinds: nib.workspace.tabs.map((t) => t.kind) })")
+        said = window.ask("JSON.stringify({ tabs: orden.workspace.tabs.length, kinds: orden.workspace.tabs.map((t) => t.kind) })")
         say(f"front set: {said}")
     finally:
         ended(app)
@@ -434,7 +434,7 @@ def use(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, seconds: float
             for _ in range(3):
                 began = time.perf_counter()
                 window.ask(
-                    "(() => { const ws = nib.workspace; const all = ws.tabsIn(ws.panes.focused.id); "
+                    "(() => { const ws = orden.workspace; const all = ws.tabsIn(ws.panes.focused.id); "
                     "const at = all.findIndex((t) => t.id === ws.activeTabId); const next = all[(at + 1) % all.length]; "
                     "if (next) ws.activate(next.id); return next ? next.kind : 'none' })()"
                 )

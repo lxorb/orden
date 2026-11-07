@@ -113,7 +113,7 @@ async (base) => {
 EDIT = """
 async ([provider, quote, replace]) => {
   const docs = await import('/src/lib/agents/docs/index.ts')
-  await docs.notes.editNote({ id: `nib-${provider}`, name: 'Fake' }, { path: 'Herons.md' }, [
+  await docs.notes.editNote({ id: `orden-${provider}`, name: 'Fake' }, { path: 'Herons.md' }, [
     { at: { quote }, replace },
   ])
 }

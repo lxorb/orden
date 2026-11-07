@@ -150,9 +150,9 @@ def until(check, seconds: float = 20, every: float = 0.4):  # type: ignore[no-un
         said = check()
     return said
 
-TABS = """JSON.stringify(nib.workspace.tabs.map((one) => ({
+TABS = """JSON.stringify(orden.workspace.tabs.map((one) => ({
   id: one.id, kind: one.kind, name: one.name, path: one.path, private: one.inPrivate,
-  url: nib.pages.addressOf(one.id), active: one.id === nib.workspace.activeTabId,
+  url: orden.pages.addressOf(one.id), active: one.id === orden.workspace.activeTabId,
 })))"""
 
 def tabs(app: App) -> list[dict[str, object]]:
@@ -295,7 +295,7 @@ def main() -> int:
         inside = read(app, secret_tab)
         said["the private page"] = inside
         said["the private page's state"] = app.ask(
-            f"JSON.stringify((({{ live, openable, url, inPrivate }}) => ({{ live, openable, url, inPrivate }}))(nib.pages.of('{secret_tab}')))"
+            f"JSON.stringify((({{ live, openable, url, inPrivate }}) => ({{ live, openable, url, inPrivate }}))(orden.pages.of('{secret_tab}')))"
         )
         checks["the private page has a store of its own"] = inside.get("cookie") == "private" and inside.get("ls") == "private"
         go(app, tab, f"{site}/plain")
@@ -303,7 +303,7 @@ def main() -> int:
         said["the ordinary page after it"] = outside
         checks["nothing private reaches the ordinary store"] = outside.get("cookie") == "normal" and outside.get("ls") == "normal"
         checks["a private page writes no history"] = not any("/secret" in url for url in visits(app))
-        layout = app.ask("JSON.stringify(nib.workspace.layout())")
+        layout = app.ask("JSON.stringify(orden.workspace.layout())")
         checks["a private tab is not in the session"] = "/secret" not in json.dumps(layout)
         marked = app.ask("document.querySelectorAll('svg.private').length")
         checks["a private tab wears its mark"] = isinstance(marked, int) and marked >= 1
@@ -318,7 +318,7 @@ def main() -> int:
         forgotten = read(app, again_tab)
         said["a private tab after the last one closed"] = forgotten
         checks["closing the last private tab forgets everything"] = forgotten.get("cookie") == "" and forgotten.get("ls") == ""
-        checks["closed, it is not on the closed stack"] = "/secret" not in json.dumps(app.ask("JSON.stringify(nib.workspace.closed.stack)"))
+        checks["closed, it is not on the closed stack"] = "/secret" not in json.dumps(app.ask("JSON.stringify(orden.workspace.closed.stack)"))
         app.ask(f"nib.workspace.close('{again_tab}'); true")
         time.sleep(1)
 
@@ -378,7 +378,7 @@ def main() -> int:
         running, app = launch(args.exe, identifier, unlike=app.port)
         app.act("open", {"path": f"{NOTE}.md", "space": SPACE})
         time.sleep(2)
-        searching = str(app.ask("(nib.workspace.openWebsite(), nib.workspace.activeTabId)"))
+        searching = str(app.ask("(orden.workspace.openWebsite(), orden.workspace.activeTabId)"))
         time.sleep(2)
         app.ask(
             "(() => { const field = document.querySelector('.webbar input');"

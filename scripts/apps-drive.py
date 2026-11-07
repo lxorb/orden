@@ -261,7 +261,7 @@ def main() -> int:
     try:
         app = endpoint(config, process.pid, secret)
         until = time.monotonic() + 90
-        while time.monotonic() < until and app.eval("!!nib.workspace").get("value") is not True:
+        while time.monotonic() < until and app.eval("!!orden.workspace").get("value") is not True:
             time.sleep(1)
         wrong = drive(app, process.pid, args.shot)
     finally:

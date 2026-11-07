@@ -10,7 +10,7 @@ twice the way a chat site does - a badge on, the badge off - through the page's 
 debugging port, which presses nothing. After each, the tab's picture and the row's are
 read off Orden's own page and compared; then the tab is closed and the row read again.
 
-    python scripts/web-note-mark-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
+    python scripts/web-note-mark-probe.py --exe path/to/orden.exe --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says; `run_probe` starts it off the screen and
 without the keyboard.

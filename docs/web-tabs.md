@@ -1477,7 +1477,7 @@ Orden can be the machine's browser, so a link clicked in a mail, a chat, a PDF o
 terminal opens as a web tab. Settings > General > Browser has one row: a Make default
 button while Orden is not the browser, the tick once it is, asked again whenever the
 window gets the keyboard back. No system lets a program make itself the default, so the
-press does what Chrome's does: Windows opens nib's own page under Settings > Default
+press does what Chrome's does: Windows opens Orden's own page under Settings > Default
 apps, a Mac asks its own question, and Linux sets the handler for the two schemes.
 
 Orden claims `http` and `https` and nothing else - not `.htm`, `.html` or `text/html`,
@@ -1520,7 +1520,7 @@ engines say nothing, and what each one does there is said with it.
   the window as `orden://web-chosen`: each engine's word that the page has the keyboard
   (`WebView2`'s `GotFocus`, the X server's `FocusIn` on CEF), the app's own page finding
   the keyboard gone to a page (a Mac's word), and a press heard in the page itself through
-  nib's binding on Orden's own Chromium, for the page that has the keyboard already and of
+  Orden's binding on Orden's own Chromium, for the page that has the keyboard already and of
   which the window system says nothing. `scripts/choosing-drive.py` presses into the page
   of the pane not being worked in, round after round.
 - **Find.** Ctrl+F opens the app's find bar under the bar - the one a note, a note
@@ -1877,7 +1877,7 @@ agent turns `Runtime` on only for the console it asked for. What a page does see
 clickable on cloudflare."_ Cloudflare's sign in button stays disabled until its Turnstile
 widget has an answer, and the widget's frame - from `challenges.cloudflare.com`, so a
 process of its own - works the answer out in a worker it starts. Orden follows such a frame
-to give it nib's world before its first document: it is held at its start, and let go once
+to give it Orden's world before its first document: it is held at its start, and let go once
 the world is in, and its own session is asked to follow its frames the same way
 (`web_worlds.rs`). Asked that, a frame's session holds every worker the frame starts as
 well - without attaching it, because the filter named frames alone - so nothing could ever
@@ -2127,14 +2127,14 @@ prototypes, so neither side can see or break the other. A web tab is built that 
    `alert()` shows - in Orden's own card rather than a window of the engine's; see "The page
    itself".
 
-**Pass's channel is in nib's world only.** The page script that finds sign-in forms
+**Pass's channel is in Orden's world only.** The page script that finds sign-in forms
 (`web_pass.js`, docs/pass.md "In a web tab") talks to the app through a binding named
 `nibPass`, added with `executionContextName: "nib"` on Orden's Chromium and `WebView2` and
 as a script message handler in the `nib` `WKContentWorld` on a Mac. The page's own world
 has no `nibPass` and no `__nibPass`: a site cannot post a form the reader never sent, ask
 for a fill, or learn that Pass is there. The app places every message by the engine's own
 frame tree (the frame and its origin are the engine's, never the page's words), and a fill
-is sent back into that frame's nib world only, after its origin is checked again.
+is sent back into that frame's Orden world only, after its origin is checked again.
 `scripts/pass-drive.py` checks both on the real app.
 
 Measured on the probe on 2026-09-30, `scripts/web-globals-probe.py --real`, on the build
@@ -2177,7 +2177,7 @@ handler is the app's to choose: `cef_helper` runs the renderer in
 `src-tauri/src/engine/renderer.rs`, which writes `ipc` where the frame's address is the
 app's own, `http://tauri.localhost`, and nowhere else: by address, since a renderer cannot be
 told which browser it is drawing for. Nothing else needed it on a page: the app's own commands
-are out of a page's reach without the key, and what nib's world says goes through `DevTools`
+are out of a page's reach without the key, and what Orden's world says goes through `DevTools`
 bindings. Measured 2026-11-03 under Xvfb on the same public sheet, on the build before and
 after: "Loading issue" and `RITZ_initializeModules` undefined; the editor up, no dialog, and
 `window.ipc` Google's own. `scripts/globals-drive.py` asks it on every Linux run of
@@ -2483,7 +2483,7 @@ versions and goes to the trash like every other document.
 - **The place and a step read the page in its own world**, and so does the clip on the two
   `WebKit` engines. They are questions asked when somebody presses something, they leave
   nothing behind, and a page that has wrapped `querySelector` or `history.go` sees them; the
-  site's mark and the clip are read in nib's world on `WebView2` (and the clip on Orden's
+  site's mark and the clip are read in Orden's world on `WebView2` (and the clip on Orden's
   Chromium too) and in the page's own elsewhere.
 - **A page's still picture is Windows and macOS only.** `CapturePreview` and
   `WKWebView`'s `takeSnapshot` are reachable; WebKitGTK's equivalent is not through what

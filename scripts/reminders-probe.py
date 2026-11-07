@@ -16,7 +16,7 @@ started with `ORDEN_PROBE_REMINDERS`, which only this script sets; see reminders
     pnpm --dir apps/desktop tauri build --no-bundle \\
       --config '{"identifier":"so.orden.Orden.probe.reminders","version":"99.0.0",
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/reminders-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
+    python scripts/reminders-probe.py --exe apps/desktop/src-tauri/target/release/orden.exe
 
 The app id is registered for the run the way an installer's Start menu shortcut
 registers the installed app's (`HKCU\\Software\\Classes\\AppUserModelId\\<id>`), which is

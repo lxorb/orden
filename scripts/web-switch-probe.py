@@ -200,9 +200,9 @@ class App:
                 return value
         return value
 
-TABS = """JSON.stringify(nib.workspace.tabs.map((one) => ({
+TABS = """JSON.stringify(orden.workspace.tabs.map((one) => ({
   id: one.id, kind: one.kind, name: one.name, path: one.path,
-  showing: one.id === nib.workspace.activeTabId, address: one.address ?? null,
+  showing: one.id === orden.workspace.activeTabId, address: one.address ?? null,
 })))"""
 
 def tab_of(app: App, name: str) -> str | None:
@@ -395,7 +395,7 @@ def main() -> int:
         time.sleep(5)
         said["bytes with ten"] = memory(running.pid)
         said["live with ten"] = app.ask(
-            "JSON.stringify(nib.workspace.tabs.filter((one) => one.kind === 'web').length)"
+            "JSON.stringify(orden.workspace.tabs.filter((one) => one.kind === 'web').length)"
         )
 
         said["the file"] = (made / f"{WEB}.url").read_text(encoding="utf-8").replace("\r\n", " | ")

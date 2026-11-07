@@ -185,15 +185,15 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         space = ran(
             held,
             "nib.workspace.activeSpace"
-            " ? nib.workspace.activeSpace.name"
-            " : nib.workspace.addSpace('Recordings').then(() => nib.workspace.activeSpace?.name ?? null)",
+            " ? orden.workspace.activeSpace.name"
+            " : orden.workspace.addSpace('Recordings').then(() => orden.workspace.activeSpace?.name ?? null)",
         )
         say(f"the space is {space!r}")
         if not space:
             wrong("no space could be made, so there is nowhere to record into")
             return
 
-        note = ran(held, "nib.workspace.createNote().then(() => nib.workspace.active?.path ?? null)")
+        note = ran(held, "nib.workspace.createNote().then(() => orden.workspace.active?.path ?? null)")
         say(f"recording into {note!r}")
 
         answer = asked(held, "commands.run", {"id": "record"})

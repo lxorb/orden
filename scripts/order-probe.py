@@ -197,11 +197,11 @@ def shot(pid: int, name: str) -> None:
     else:
         say(f"wrote {out.name}: {(done.stdout or '').strip()}")
 
-TOP_NAMES = """JSON.stringify(nib.workspace.shownTree
-  ? nib.workspace.shownTree.children.map((one) => one.name) : [])"""
+TOP_NAMES = """JSON.stringify(orden.workspace.shownTree
+  ? orden.workspace.shownTree.children.map((one) => one.name) : [])"""
 
 MOVE_ZETA_UP = r"""(() => {
-  const path = nib.workspace.activeSpace.root + '\\zeta.md'
+  const path = orden.workspace.activeSpace.root + '\\zeta.md'
   const row = [...document.querySelectorAll('.row[data-path]')].find(
     (one) => one.dataset.path === path,
   )
@@ -213,19 +213,19 @@ MOVE_ZETA_UP = r"""(() => {
 })()"""
 
 KEPT = """JSON.stringify({
-  mode: nib.workspace.sortMode,
-  arranged: nib.workspace.arranged.of(nib.workspace.activeSpace.root),
-  files: nib.workspace.files.length,
+  mode: orden.workspace.sortMode,
+  arranged: orden.workspace.arranged.of(orden.workspace.activeSpace.root),
+  files: orden.workspace.files.length,
 })"""
 
 def showing(app: App) -> None:
-    app.ask("nib.workspace.panel === 'tree' ? true : nib.workspace.showPanel('tree')")
+    app.ask("nib.workspace.panel === 'tree' ? true : orden.workspace.showPanel('tree')")
     time.sleep(0.8)
 
 def ready(app: App) -> None:
     until = time.perf_counter() + 90
     while time.perf_counter() < until:
-        held = app.ask("JSON.stringify(nib.workspace.files.length)")
+        held = app.ask("JSON.stringify(orden.workspace.files.length)")
         if isinstance(held, int) and held >= 50:
             return
         time.sleep(0.5)

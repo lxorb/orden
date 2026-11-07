@@ -151,7 +151,7 @@ def fail(what, name):
 
 def over_the_page():
     pane = run(
-        "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
+        "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
         ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
     )
     if isinstance(pane, dict):
@@ -172,7 +172,7 @@ def answer():
         press(button)
         time.sleep(1)
 
-ACTIVE = "nib.workspace.activeSpace && nib.workspace.activeSpace.name"
+ACTIVE = "nib.workspace.activeSpace && orden.workspace.activeSpace.name"
 SWITCHER = '[data-space-drop="switcher"]'
 SPACES = "[data-spaces-open]"
 
@@ -314,7 +314,7 @@ def pens(round_):
 VISIBLE = "nib.pages.each().some(([, page]) => page.sent && page.sent.visible)"
 WEB_TAB = (
     "(() => { const one = [...document.querySelectorAll('.tab .pick[data-tab]')]"
-    ".find((tab) => nib.pages.each().some(([id]) => id === tab.dataset.tab));"
+    ".find((tab) => orden.pages.each().some(([id]) => id === tab.dataset.tab));"
     " if (!one) return null; const r = one.getBoundingClientRect();"
     " return { x: r.x, y: r.y, width: r.width, height: r.height } })()"
 )
@@ -336,7 +336,7 @@ if (run("nib.workspace.spaces.length") or 0) < 2:
     run("nib.workspace.addSpace('Second space')")
     time.sleep(1.5)
     if run(ACTIVE) != first:
-        run(f"(async () => {{ const one = nib.workspace.spaces.find((s) => s.name === {json.dumps(first)}); if (one) await nib.workspace.selectSpace(one.id) }})()")
+        run(f"(async () => {{ const one = orden.workspace.spaces.find((s) => s.name === {json.dumps(first)}); if (one) await orden.workspace.selectSpace(one.id) }})()")
         time.sleep(1.5)
 other = run(f"nib.workspace.spaces.map((s) => s.name).find((name) => name !== {json.dumps(first)})")
 print(f"{DESK}: spaces {first!r} and {other!r}, the page's ratio {ratio()}")

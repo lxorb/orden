@@ -25,10 +25,10 @@ switch = borrowed()
 
 WORDS = "Probe words, typed and never saved"
 
-IDS = "JSON.stringify(Object.fromEntries(nib.workspace.spaces.map((one) => [one.name, one.id])))"
+IDS = "JSON.stringify(Object.fromEntries(orden.workspace.spaces.map((one) => [one.name, one.id])))"
 
 BACK = """JSON.stringify((() => {
-  const ws = nib.workspace
+  const ws = orden.workspace
   const note = ws.tabs.find((one) => one.kind === 'note' && one.path === null)
   const web = ws.tabs.find((one) => one.kind === 'web' && one.path === null)
   return {
@@ -110,7 +110,7 @@ def main() -> int:
         asked(app, f"nib.workspace.showSpace({json.dumps(work)}).then(() => 'work')")
         app.open("Idea.md", "Work")
         time.sleep(1)
-        asked(app, f"(nib.workspace.openBlank(), nib.workspace.active.note.live.replace({json.dumps(WORDS)}, true), 'typed')")
+        asked(app, f"(orden.workspace.openBlank(), orden.workspace.active.note.live.replace({json.dumps(WORDS)}, true), 'typed')")
         asked(app, f"nib.workspace.openPage({json.dumps(page)}, 'behind') && 'opened'")
         asked(app, f"nib.workspace.showSpace({json.dumps(home)}).then(() => 'home')")
         time.sleep(2)
@@ -134,7 +134,7 @@ def main() -> int:
         asked(app, f"nib.workspace.openWeb({mail}, {{ activate: false }}).then(() => 'opened')")
         owner = asked(
             app,
-            "(() => { const ws = nib.workspace; const tab = ws.tabs.find((one) => (one.path ?? '')"
+            "(() => { const ws = orden.workspace; const tab = ws.tabs.find((one) => (one.path ?? '')"
             ".endsWith('Mail.url')); return tab ? ws.spaceOf(tab.note) : null })()",
         )
         said["web note in its own space"] = owner == home

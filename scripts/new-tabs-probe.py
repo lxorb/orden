@@ -22,7 +22,7 @@ The page is served from here, on a port of its own, so nothing is asked of anybo
 network. The space is made in a temp folder named by `ORDEN_SPACES_DIR`, so the run
 touches nothing of anybody's; see docs/automation.md.
 
-    python scripts/new-tabs-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
+    python scripts/new-tabs-probe.py --exe apps/desktop/src-tauri/target/release/orden.exe
 
 The exe is a probe build, under an identifier of its own:
 

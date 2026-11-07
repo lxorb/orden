@@ -112,7 +112,7 @@ def tabs():
         run(
             "[...document.querySelectorAll('.tab .pick[data-tab]')].map((one) => {"
             " const r = one.getBoundingClientRect();"
-            " return { id: one.dataset.tab, web: nib.pages.each().some(([id]) => id === one.dataset.tab),"
+            " return { id: one.dataset.tab, web: orden.pages.each().some(([id]) => id === one.dataset.tab),"
             " chosen: !!one.closest('.tab.active'), x: r.x + r.width / 2, y: r.y + r.height / 2 } })"
         )
         or []
@@ -132,7 +132,7 @@ def choose(tab):
 def hole():
     for _ in range(60):
         sent = run(
-            "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
+            "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
             ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
         )
         if isinstance(sent, dict) and sent.get("width", 0) > 10:
