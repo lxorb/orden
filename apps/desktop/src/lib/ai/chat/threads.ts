@@ -280,6 +280,41 @@ function answerOthers(): void {
   })
 }
 
+const claims = new Map<string, () => void>()
+
+export function claimAnswer(id: string): Promise<boolean> {
+  const locks = typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
+  if (!locks || claims.has(id)) return Promise.resolve(!claims.has(id))
+  return new Promise<boolean>((resolve) => {
+    locks
+      .request(`orden-ai-answer:${id}`, { ifAvailable: true }, (lock) => {
+        if (!lock || claims.has(id)) {
+          resolve(false)
+          return undefined
+        }
+        resolve(true)
+        return new Promise<void>((release) => claims.set(id, release))
+      })
+      .catch(() => resolve(true))
+  })
+}
+
+export function answerFreed(id: string): Promise<void> {
+  const locks = typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
+  if (!locks) return Promise.resolve()
+  return locks
+    .request(`orden-ai-answer:${id}`, () => undefined)
+    .then(
+      () => undefined,
+      () => undefined,
+    )
+}
+
+export function unclaimAnswer(id: string): void {
+  claims.get(id)?.()
+  claims.delete(id)
+}
+
 export function otherWindowWrote(listener: (id: string) => void): () => void {
   return windows.hear('thread-written', (said) => {
     if (typeof said.id === 'string') listener(said.id)

@@ -10,8 +10,10 @@ import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
 import { nextEffort, within } from '../chat/effort'
 import {
+  answerFreed,
   branchThread,
   chatsOf,
+  claimAnswer,
   deleteThread,
   findParents,
   headOf as listedHeadOf,
@@ -26,6 +28,7 @@ import {
   otherWindowDeleted,
   otherWindowWrote,
   readThread,
+  unclaimAnswer,
 } from '../chat/threads'
 import type {
   Draft,
@@ -337,7 +340,8 @@ class Chat implements Panel {
     }
     this.relist()
     if (thread === this.open) this.head = headOf(thread)
-    if (thread.turns.length) void keepThread(thread).catch(() => undefined)
+    if (thread.turns.length && !this.unclaimed.has(thread.id))
+      void keepThread(thread).catch(() => undefined)
   }
 
   worked(id: string): void {
@@ -602,9 +606,13 @@ class Chat implements Panel {
     if (!listed) void kept.then(() => this.refreshHeads())
   }
 
+  private readonly writtenThere = new Set<string>()
+
   private async readAgain(id: string): Promise<void> {
     const held = this.live.get(id)
+    if (!held) this.writtenThere.delete(id)
     if (!held || this.running.includes(id)) return
+    this.writtenThere.delete(id)
     const fresh = await readThread(held.space, id).catch(() => null)
     if (this.live.get(id) !== held || this.running.includes(id)) return
     if (fresh) {
@@ -617,6 +625,7 @@ class Chat implements Panel {
   }
 
   heardWritten(id: string): void {
+    this.writtenThere.add(id)
     void this.readAgain(id)
     this.headsSoon()
   }
@@ -823,6 +832,10 @@ class Chat implements Panel {
     }
     if (thread === this.open) this.trouble = null
     const stopper = this.begin(thread, text)
+    if (!(await this.claimed(thread))) {
+      this.yielded(thread, send)
+      return
+    }
     const stop = () => stopper.abort()
     once?.signal?.addEventListener('abort', stop)
     const before = { mode: thread.mode, model: thread.model, effort: thread.effort }
@@ -872,8 +885,51 @@ class Chat implements Panel {
     this.text = now ? `${text}\n\n${this.text}` : text
   }
 
+  private readonly unclaimed = new Set<string>()
+
+  private async claimed(thread: Thread): Promise<boolean> {
+    const { id } = thread
+    await this.closing.get(id)?.catch(() => undefined)
+    const won = await claimAnswer(id)
+    this.unclaimed.delete(id)
+    if (won && !this.writtenThere.has(id)) {
+      if (thread.turns.length) void keepThread(thread).catch(() => undefined)
+      return true
+    }
+    if (won) unclaimAnswer(id)
+    else {
+      thread.elsewhere = true
+      this.awaitFreed(id)
+    }
+    return false
+  }
+
+  private readonly awaiting = new Set<string>()
+
+  private awaitFreed(id: string): void {
+    if (this.awaiting.has(id)) return
+    this.awaiting.add(id)
+    void answerFreed(id).then(() => {
+      this.awaiting.delete(id)
+      void this.readAgain(id)
+    })
+  }
+
+  private yielded(thread: Thread, send?: Queued): void {
+    const { id } = thread
+    this.stoppers.delete(id)
+    this.running = this.running.filter((one) => one !== id)
+    this.pending = without(this.pending, id)
+    this.following.delete(id)
+    if (send) this.queued = { ...this.queued, [id]: [send, ...(this.queued[id] ?? [])] }
+    this.relist()
+    if (thread === this.open) this.redraw()
+    if (!thread.elsewhere) void this.readAgain(id)
+  }
+
   private begin(thread: Thread, text?: string): AbortController {
     const stopper = new AbortController()
+    this.unclaimed.add(thread.id)
     this.unwait(thread.id)
     this.owed.delete(thread.id)
     this.stoppers.set(thread.id, stopper)
@@ -887,7 +943,19 @@ class Chat implements Panel {
     return stopper
   }
 
-  private async finish(thread: Thread, replied = false, stop: Stop = 'end'): Promise<void> {
+  private readonly closing = new Map<string, Promise<void>>()
+
+  private finish(thread: Thread, replied = false, stop: Stop = 'end'): Promise<void> {
+    const { id } = thread
+    const done: Promise<void> = this.finished(thread, replied, stop).finally(() => {
+      unclaimAnswer(id)
+      if (this.closing.get(id) === done) this.closing.delete(id)
+    })
+    this.closing.set(id, done)
+    return done
+  }
+
+  private async finished(thread: Thread, replied: boolean, stop: Stop): Promise<void> {
     if (replied && thread.turns.at(-1)?.role === 'model') thread.answered = Date.now()
     delete thread.answering
     this.unkept.delete(thread)
@@ -911,6 +979,7 @@ class Chat implements Panel {
       return
     }
     await keepThread(thread).catch(() => undefined)
+    unclaimAnswer(thread.id)
     if (thread === this.open) rememberOpen(thread.id)
     await this.refreshHeads()
   }
@@ -1094,7 +1163,8 @@ class Chat implements Panel {
     let at = thread.turns.length - 1
     while (at >= 0 && (thread.turns[at]?.role !== 'you' || thread.turns[at]?.steered)) at--
     const asked = thread.turns[at]
-    if (!asked?.draft) return
+    const draft = asked?.draft
+    if (!draft) return
     const provider = ai.provider(thread.provider)
     if (!provider) {
       if (thread === this.open) this.trouble = t('Add an AI provider in Settings first.')
@@ -1103,9 +1173,27 @@ class Chat implements Panel {
     const taken = thread.turns.splice(at)
     this.everything = true
     this.redraw()
-    const stopper = this.begin(thread, asked.draft.text)
+    const stopper = this.begin(thread, draft.text)
+    void this.claimed(thread).then((won) => {
+      if (won) {
+        this.retried(thread, provider, draft, stopper, taken)
+        return
+      }
+      thread.turns.push(...taken)
+      this.yielded(thread)
+    })
+  }
+
+  private retried(
+    thread: Thread,
+    provider: Provider,
+    draft: Draft,
+    stopper: AbortController,
+    taken: Turn[],
+  ): void {
+    const at = thread.turns.length
     let stop: Stop = 'end'
-    void this.sendDraft(thread, provider, asked.draft, stopper)
+    void this.sendDraft(thread, provider, draft, stopper)
       .then((ended) => (stop = ended.stop))
       .catch((error: unknown) => {
         stop = 'error'
@@ -1260,13 +1348,16 @@ class Chat implements Panel {
     void this.compacted(focus)
   }
 
-  private compacted(focus?: string): Promise<void> {
+  private async compacted(focus?: string): Promise<void> {
     const thread = this.open
     const provider = this.provider
-    if (!thread?.turns.length || !provider || this.running.includes(thread.id))
-      return Promise.resolve()
+    if (!thread?.turns.length || !provider || this.running.includes(thread.id)) return
     const stopper = this.begin(thread)
     let stop: Stop = 'end'
+    if (!(await this.claimed(thread))) {
+      this.yielded(thread)
+      return
+    }
     return engineOf(provider.kind)
       .then((engine) => engine.compact(thread, focus))
       .catch((error: unknown) => {
