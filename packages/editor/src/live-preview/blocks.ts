@@ -1,4 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
+import type { SyntaxNode } from '@lezer/common'
 import {
   type ChangeDesc,
   type EditorState,
@@ -72,22 +73,34 @@ function collectEquationLabels(state: EditorState): Map<number, number> {
   return numbers
 }
 
+interface Span {
+  from: number
+  to: number
+}
+
 interface Blocks {
   decorations: DecorationSet
-  spans: readonly { from: number; to: number }[]
+  spans: readonly Span[]
   toc: boolean
   chosen: boolean
 }
 
-function buildBlocks(state: EditorState, reveals = true): Blocks {
-  const ranges: Range<Decoration>[] = []
-  const spans: { from: number; to: number }[] = []
-  let toc = false
+interface Scanned {
+  ranges: Range<Decoration>[]
+  spans: Span[]
+  toc: boolean
+}
+
+function scan(
+  state: EditorState,
+  reveals: boolean,
+  region: Span,
+  equationNumbers: ReadonlyMap<number, number>,
+  out: Scanned,
+) {
+  const { ranges, spans } = out
   const doc = state.doc
-  const numbered = state.facet(numberEquations)
   const kept = keptCover(state)
-  resetEquationLabels()
-  const equationNumbers = numbered ? collectEquationLabels(state) : new Map<number, number>()
 
   const wholeLines = (from: number, to: number) => ({
     from: doc.lineAt(from).from,
@@ -100,14 +113,17 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
     return { ...span, revealed: reveals && overlaps(state, span.from, span.to) }
   }
 
-  if (kept) {
+  if (kept && region.from === 0) {
     ranges.push(
       Decoration.widget({ widget: new CoverWidget(kept), block: true, side: -1 }).range(0),
     )
   }
 
   syntaxTree(state).iterate({
+    from: region.from,
+    to: region.to,
     enter: (node) => {
+      if (node.to < region.from || node.from > region.to) return false
       switch (node.name) {
         case 'BlockMath': {
           if (!standsAlone(state, node.from)) return true
@@ -187,7 +203,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           const span = found(line.from, line.to)
           if (!/^\s*\[toc\]\s*$/i.test(line.text)) return false
 
-          toc = true
+          out.toc = true
           if (span.revealed) return false
 
           ranges.push(
@@ -242,14 +258,159 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
       }
     },
   })
+}
 
-  const wholeNoteParsed = syntaxTree(state).length === doc.length
+function chosenFor(state: EditorState, reveals: boolean, spans: readonly Span[]) {
+  const wholeNoteParsed = syntaxTree(state).length === state.doc.length
+  return reveals || (wholeNoteParsed && !crosses(spans, state.selection.ranges))
+}
+
+function buildBlocks(state: EditorState, reveals = true): Blocks {
+  resetEquationLabels()
+  const numbered = state.facet(numberEquations)
+  const equationNumbers = numbered ? collectEquationLabels(state) : new Map<number, number>()
+  const out: Scanned = { ranges: [], spans: [], toc: false }
+  scan(state, reveals, { from: 0, to: state.doc.length }, equationNumbers, out)
 
   return {
-    decorations: Decoration.set(ranges, true),
-    spans,
-    toc,
-    chosen: reveals || (wholeNoteParsed && !crosses(spans, state.selection.ranges)),
+    decorations: Decoration.set(out.ranges, true),
+    spans: out.spans,
+    toc: out.toc,
+    chosen: chosenFor(state, reveals, out.spans),
+  }
+}
+
+const LISTS = new Set(['BulletList', 'OrderedList'])
+
+function runIn(parent: SyntaxNode, from: number, to: number): Span {
+  const first = parent.childAfter(from - 1)
+  const last = parent.childBefore(to + 1)
+  return {
+    from: first && first.from < from ? first.from : from,
+    to: last && last.to > to ? last.to : to,
+  }
+}
+
+function listAround(parent: SyntaxNode, from: number, to: number): SyntaxNode | null {
+  const inside = parent.childAfter(from - 1)
+  if (!inside || !LISTS.has(inside.name)) return null
+  return inside.from < from && inside.to > to ? inside : null
+}
+
+function settle(transaction: Transaction, region: Span): Span {
+  const changes = transaction.changes
+  const back = changes.invertedDesc
+  const oldTree = syntaxTree(transaction.startState)
+  const newTree = syntaxTree(transaction.state)
+  const oldEnd = transaction.startState.doc.length
+  const newEnd = transaction.state.doc.length
+  let from = Math.min(region.from, region.to)
+  let to = Math.max(region.from, region.to)
+  let newParent = newTree.topNode
+  let oldParent = oldTree.topNode
+
+  if (oldTree.length === oldEnd && newTree.length === newEnd) {
+    for (;;) {
+      const inNew = listAround(newParent, from, to)
+      const inOld = listAround(oldParent, back.mapPos(from, -1), back.mapPos(to, 1))
+      if (!inNew || inOld?.name !== inNew.name) break
+      if (changes.mapPos(inOld.from, -1) !== inNew.from) break
+      if (changes.mapPos(inOld.to, 1) !== inNew.to) break
+      newParent = inNew
+      oldParent = inOld
+    }
+  }
+
+  const topLevel = newParent.parent === null
+  for (;;) {
+    const fresh = runIn(newParent, from, to)
+    const old = runIn(oldParent, back.mapPos(fresh.from, -1), back.mapPos(fresh.to, 1))
+    let nextFrom = Math.min(fresh.from, changes.mapPos(old.from, -1))
+    let nextTo = Math.max(fresh.to, changes.mapPos(old.to, 1))
+    if (
+      topLevel &&
+      (nextTo + 1 >= newTree.length || back.mapPos(nextTo, 1) + 1 >= oldTree.length)
+    ) {
+      nextTo = newEnd
+    }
+    nextFrom = Math.max(0, Math.min(nextFrom, newTree.length, changes.mapPos(oldTree.length, -1)))
+    if (nextFrom === from && nextTo === to) return { from, to }
+    from = nextFrom
+    to = nextTo
+  }
+}
+
+function merged(regions: Span[]): Span[] {
+  const sorted = [...regions].sort((one, other) => one.from - other.from)
+  const out: Span[] = []
+  for (const region of sorted) {
+    const last = out[out.length - 1]
+    if (last && region.from <= last.to + 1) last.to = Math.max(last.to, region.to)
+    else out.push({ ...region })
+  }
+  return out
+}
+
+function touched(regions: readonly Span[], from: number, to: number) {
+  let low = 0
+  let high = regions.length
+  while (low < high) {
+    const middle = (low + high) >> 1
+    if ((regions[middle]?.to ?? to) < from) low = middle + 1
+    else high = middle
+  }
+  const near = regions[low]
+  return near !== undefined && near.from <= to
+}
+
+function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean): Blocks | null {
+  const state = transaction.state
+  if (state.facet(numberEquations)) return null
+  if (value.toc && transaction.docChanged) return null
+
+  const oldTree = syntaxTree(transaction.startState)
+  const newTree = syntaxTree(state)
+  const changes = transaction.changes
+  const oldEnd = changes.mapPos(oldTree.length, 1)
+  if (!transaction.docChanged && oldTree !== newTree && oldEnd === newTree.length) return null
+
+  const wanted: Span[] = []
+  changes.iterChangedRanges((_fromA, _toA, fromB, toB) => wanted.push({ from: fromB, to: toB }))
+  if (oldEnd !== newTree.length) {
+    const from = Math.min(oldEnd, newTree.length)
+    wanted.push({ from, to: state.doc.length })
+  }
+
+  const was = transaction.startState.selection.ranges
+  const now = state.selection.ranges
+  const spans = mapSpans(value.spans, changes)
+  spans.forEach((span, at) => {
+    const before = value.spans[at]
+    if ((before && crosses([before], was)) || crosses([span], now)) wanted.push(span)
+  })
+
+  const regions = merged(wanted.map((region) => settle(transaction, region)))
+  const first = regions[0]
+  const last = regions[regions.length - 1]
+  if (!first || !last) return { ...value, spans, chosen }
+
+  const out: Scanned = { ranges: [], spans: [], toc: value.toc }
+  for (const region of regions) scan(state, chosen, region, new Map(), out)
+
+  const kept = spans.filter((span) => !touched(regions, span.from, span.to))
+  const all = [...kept, ...out.spans].sort((one, other) => one.from - other.from)
+
+  return {
+    decorations: value.decorations.map(changes).update({
+      filter: (from, to) => !touched(regions, from, to),
+      filterFrom: first.from,
+      filterTo: last.to,
+      add: out.ranges,
+      sort: true,
+    }),
+    spans: all,
+    toc: out.toc,
+    chosen: chosenFor(state, chosen, all),
   }
 }
 
@@ -266,10 +427,7 @@ function widgetFor(language: string, code: string, index: NoteIndex) {
   return new DiagramWidget(code, language)
 }
 
-function crosses(
-  spans: readonly { from: number; to: number }[],
-  ranges: readonly SelectionRange[],
-) {
+function crosses(spans: readonly Span[], ranges: readonly SelectionRange[]) {
   return spans.some((span) =>
     ranges.some((range) => range.from <= span.to && range.to >= span.from),
   )
@@ -316,7 +474,7 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
   return ordinary
 }
 
-function mapSpans(spans: readonly { from: number; to: number }[], changes: ChangeDesc) {
+function mapSpans(spans: readonly Span[], changes: ChangeDesc): Span[] {
   return spans.map((span) => ({
     from: changes.mapPos(span.from, 1),
     to: changes.mapPos(span.to, -1),
@@ -366,6 +524,7 @@ export const blockDecorations = StateField.define<Blocks>({
 
     if (!transaction.docChanged && !reparsed) {
       if (!crosses(value.spans, was) && !crosses(value.spans, now)) return value
+      return rebuiltAround(value, transaction, chosen) ?? buildBlocks(transaction.state, chosen)
     }
 
     const parsedOn =
@@ -388,7 +547,7 @@ export const blockDecorations = StateField.define<Blocks>({
       }
     }
 
-    return buildBlocks(transaction.state, chosen)
+    return rebuiltAround(value, transaction, chosen) ?? buildBlocks(transaction.state, chosen)
   },
   provide: (field) => [
     EditorView.decorations.from(field, (value) => value.decorations),
