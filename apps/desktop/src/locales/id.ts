@@ -3427,4 +3427,11 @@ export const id: Dictionary = {
   Study: 'Belajar',
   'What are you working on?': 'Sedang mengerjakan apa?',
   'You said': 'Menurut Anda',
+  Privacy: 'Privasi',
+  'Send crash and freeze reports': 'Kirim laporan crash dan macet',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Saat Orden crash atau macet, ia mengirim apa yang sedang dilakukannya dan di mana dalam kodenya sendiri, tanpa nama, jalur, alamat, dan kata sandi. Tidak pernah catatan Anda.',
+  'Turn off in Settings': 'Matikan di Pengaturan',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Mengirim apa yang dilakukan Orden saat crash atau macet; tidak pernah catatan, nama, jalur, atau kata sandi.',
 }

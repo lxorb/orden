@@ -3605,4 +3605,11 @@ export const it: Dictionary = {
   Study: 'Studio',
   'What are you working on?': 'A cosa stai lavorando?',
   'You said': 'Indicato',
+  Privacy: 'Privacy',
+  'Send crash and freeze reports': 'Invia rapporti di arresti e blocchi',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Quando Orden si arresta o si blocca, invia cosa stava facendo e dove nel proprio codice, senza nomi, percorsi, indirizzi e password. Mai le tue note.',
+  'Turn off in Settings': 'Disattiva nelle Impostazioni',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Invia cosa faceva Orden quando si è arrestato o bloccato; mai note, nomi, percorsi o password.',
 }

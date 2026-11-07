@@ -3548,4 +3548,11 @@ export const ta: Dictionary = {
   Study: 'படிப்பு',
   'What are you working on?': 'நீங்கள் எதில் வேலை செய்கிறீர்கள்?',
   'You said': 'நீங்கள் சொன்னது',
+  Privacy: 'தனியுரிமை',
+  'Send crash and freeze reports': 'செயலிழப்பு மற்றும் உறைவு அறிக்கைகளை அனுப்பு',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Orden செயலிழக்கும்போது அல்லது உறையும்போது, அது என்ன செய்துகொண்டிருந்தது, தன் குறியீட்டில் எங்கே இருந்தது என்பதைப் பெயர்கள், பாதைகள், முகவரிகள், கடவுச்சொற்கள் நீக்கி அனுப்புகிறது. உங்கள் குறிப்புகளை ஒருபோதும் இல்லை.',
+  'Turn off in Settings': 'அமைப்புகளில் அணைக்கவும்',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Orden செயலிழந்தபோது அல்லது உறைந்தபோது என்ன செய்தது என்பதை அனுப்புகிறது; குறிப்புகள், பெயர்கள், பாதைகள், கடவுச்சொற்கள் ஒருபோதும் இல்லை.',
 }

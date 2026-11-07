@@ -129,3 +129,12 @@ test('what is said around a path stays', () => {
     expect(scrubbedLog(line)).toBe(want)
   }
 })
+
+test('an app script named in a stack keeps its place, a page keeps its host', () => {
+  expect(scrubbedLog('    at parse (http://tauri.localhost/assets/index-BKq9x8Yz.js:12:345)')).toBe(
+    '    at parse (http://tauri.localhost/assets/index-BKq9x8Yz.js:12:345)',
+  )
+  expect(scrubbedLog('    at go (https://bank.example.com/app/x.html:5:6)')).toBe(
+    '    at go (https://bank.example.com/…',
+  )
+})

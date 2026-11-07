@@ -76,6 +76,8 @@
     undoToastNotice,
     keysMovedNotice,
     outsideNotice,
+    crashNotice,
+    CRASHES_TOLD,
     OUTSIDE,
   } from './lib/surfaces.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
@@ -117,6 +119,10 @@
   }
 
   if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE) !== null) void outsideNotice.ask()
+
+  if (isDesktop && !__EVEN_PLUGIN__ && storedText(CRASHES_TOLD) === null) {
+    setTimeout(() => void crashNotice.ask(), 5000)
+  }
 
   $effect(() => {
     if (!isDesktop || __EVEN_PLUGIN__ || !modes.coder || !account.accountToken) return
@@ -937,6 +943,11 @@
     {#if outsideNotice.asked}
       {#await outsideNotice.asked then OutsideFolder}
         <OutsideFolder />
+      {/await}
+    {/if}
+    {#if crashNotice.asked}
+      {#await crashNotice.asked then CrashNotice}
+        <CrashNotice />
       {/await}
     {/if}
     {#if renamed.showing && renameNotice.asked}

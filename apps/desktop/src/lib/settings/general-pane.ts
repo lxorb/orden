@@ -3,6 +3,7 @@ import { CATALOGUES_URL, i18n, plural, t } from '../i18n.svelte'
 import { languageOptions, machineSaid } from '../language-options'
 import { method } from '../mobile/bridge'
 import { clipboardSharing } from './apps-clipboard.svelte'
+import { crashReports } from '../crash-reports/choice.svelte'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { isPlugin } from '../plugin'
 import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../protect/unlocked.svelte'
@@ -159,6 +160,27 @@ function gpuGroup(): Group {
         declare: (on: boolean) => {
           gpu.on = on
         },
+      },
+    ],
+  }
+}
+
+function privacyGroup(): Group {
+  return {
+    title: t('Privacy'),
+    fields: [
+      {
+        kind: 'switch',
+        key: 'general.crashReports',
+        store: { on: crashReports, name: 'on' },
+        label: t('Send crash and freeze reports'),
+        hint: t(
+          'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.',
+        ),
+        words: ['crash', 'freeze', 'hang', 'report', 'diagnostics', 'telemetry', 'privacy'],
+        initial: true,
+        get: () => crashReports.on,
+        set: (on) => crashReports.set(on),
       },
     ],
   }
@@ -703,6 +725,8 @@ export function generalPane(): Pane {
         : []),
 
       ...(!__EVEN_PLUGIN__ && isDesktop ? dnsGroups() : []),
+
+      ...(!__EVEN_PLUGIN__ && isDesktop ? [privacyGroup()] : []),
 
       {
         title: t('Updates'),

@@ -3570,4 +3570,11 @@ export const ptBR: Dictionary = {
   Study: 'Estudo',
   'What are you working on?': 'No que você está trabalhando?',
   'You said': 'Informado',
+  Privacy: 'Privacidade',
+  'Send crash and freeze reports': 'Enviar relatórios de falhas e travamentos',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Quando o Orden falha ou trava, ele envia o que estava fazendo e onde no próprio código, sem nomes, caminhos, endereços e senhas. Nunca suas notas.',
+  'Turn off in Settings': 'Desativar nos Ajustes',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Envia o que o Orden fazia ao falhar ou travar; nunca notas, nomes, caminhos ou senhas.',
 }

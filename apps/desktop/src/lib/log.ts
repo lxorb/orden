@@ -1,4 +1,4 @@
-import { invoke, isNative } from './tauri'
+import { invoke, isDesktop, isNative } from './tauri'
 
 export type Level = 'info' | 'warn' | 'error'
 
@@ -29,6 +29,16 @@ function describe(error: unknown): string {
 
 const RESIZE_LOOP = 'ResizeObserver loop'
 
+const NOT_BROKEN = /^(?:AbortError|TypeError: (?:Failed to fetch|NetworkError|Load failed))/
+
+function report(error: unknown) {
+  if (!isDesktop) return
+  const message = error instanceof Error ? `${error.name}: ${error.message}` : describe(error)
+  if (message.startsWith(RESIZE_LOOP) || NOT_BROKEN.test(message)) return
+  const stack = error instanceof Error ? (error.stack ?? '') : ''
+  void invoke('crash_report_js', { message, stack }).catch(() => undefined)
+}
+
 export function collectErrors() {
   let resizeLoopSaid = false
   window.addEventListener('error', (event) => {
@@ -38,8 +48,12 @@ export function collectErrors() {
       resizeLoopSaid = true
     }
     log('error', said)
+    report(event.error ?? event.message)
   })
-  window.addEventListener('unhandledrejection', (event) => log('error', describe(event.reason)))
+  window.addEventListener('unhandledrejection', (event) => {
+    log('error', describe(event.reason))
+    report(event.reason)
+  })
 
   log('info', 'page loaded')
 }

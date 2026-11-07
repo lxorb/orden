@@ -3395,4 +3395,11 @@ export const vi: Dictionary = {
   Study: 'Học',
   'What are you working on?': 'Bạn đang làm gì?',
   'You said': 'Bạn đã nêu',
+  Privacy: 'Quyền riêng tư',
+  'Send crash and freeze reports': 'Gửi báo cáo sự cố và treo',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Khi Orden gặp sự cố hoặc bị treo, ứng dụng gửi việc đang làm và vị trí trong mã của chính nó, đã bỏ tên, đường dẫn, địa chỉ và mật khẩu. Không bao giờ gửi ghi chú của bạn.',
+  'Turn off in Settings': 'Tắt trong Cài đặt',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Gửi việc Orden đang làm khi gặp sự cố hoặc bị treo; không bao giờ gửi ghi chú, tên, đường dẫn hay mật khẩu.',
 }

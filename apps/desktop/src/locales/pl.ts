@@ -3633,4 +3633,11 @@ export const pl: Dictionary = {
   Study: 'Nauka',
   'What are you working on?': 'Nad czym pracujesz?',
   'You said': 'Twoje wpisy',
+  Privacy: 'Prywatność',
+  'Send crash and freeze reports': 'Wysyłaj raporty o awariach i zawieszeniach',
+  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
+    'Gdy Orden ulegnie awarii lub się zawiesi, wysyła, co robił i w którym miejscu własnego kodu, bez nazw, ścieżek, adresów i haseł. Nigdy twoich notatek.',
+  'Turn off in Settings': 'Wyłącz w Ustawieniach',
+  'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
+    'Wysyła, co robił Orden podczas awarii lub zawieszenia; nigdy notatek, nazw, ścieżek ani haseł.',
 }
