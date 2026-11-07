@@ -2,7 +2,10 @@ import { type DatabaseDump, dump, existing, finished, shaped } from './database-
 
 const ANSWERED_WITHIN = 400
 
+const me = crypto.randomUUID()
+
 let alive: Promise<boolean> | null = null
+let answering: BroadcastChannel | null = null
 
 function formerTabOpen(channel: string): Promise<boolean> {
   return (alive ??= askedFormer(channel))
@@ -11,17 +14,18 @@ function formerTabOpen(channel: string): Promise<boolean> {
 function askedFormer(channel: string): Promise<boolean> {
   if (typeof BroadcastChannel !== 'function') return Promise.resolve(false)
   return new Promise((resolve) => {
-    const me = crypto.randomUUID()
     const line = new BroadcastChannel(channel)
     const done = (open: boolean) => {
       clearTimeout(timer)
+      line.postMessage({ kind: 'bye', from: me })
       line.close()
       resolve(open)
     }
     const timer = setTimeout(() => done(false), ANSWERED_WITHIN)
     line.onmessage = (event: MessageEvent<unknown>) => {
       const said = event.data as { kind?: unknown; from?: unknown } | null
-      if (said?.kind !== 'hello' && typeof said?.from === 'string' && said.from !== me) done(true)
+      if (said?.kind === 'hello' || said?.kind === 'bye') return
+      if (typeof said?.from === 'string' && said.from !== me) done(true)
     }
     line.postMessage({ kind: 'hello', from: me })
   })
@@ -29,9 +33,24 @@ function askedFormer(channel: string): Promise<boolean> {
 
 export async function databaseName(from: string, to: string, former: string): Promise<string> {
   if (from === to || typeof indexedDB === 'undefined') return to
-  if (await formerTabOpen(`${former}:windows`)) return (await existing(to).then(closed)) ? to : from
-  await carryDatabase(from, to).catch(() => undefined)
+  const channel = `${former}:windows`
+  if (await formerTabOpen(channel)) {
+    if (await existing(to).then(closed)) return to
+    answerAs(channel)
+    return from
+  }
+  await carryDatabase(from, to, () => askedFormer(channel)).catch(() => undefined)
   return to
+}
+
+function answerAs(channel: string): void {
+  if (answering || typeof BroadcastChannel !== 'function') return
+  const line = new BroadcastChannel(channel)
+  answering = line
+  line.onmessage = (event: MessageEvent<unknown>) => {
+    const said = event.data as { kind?: unknown; from?: unknown } | null
+    if (said?.kind === 'hello' && said.from !== me) line.postMessage({ kind: 'here', from: me })
+  }
 }
 
 function closed(db: IDBDatabase | null): boolean {
@@ -39,7 +58,11 @@ function closed(db: IDBDatabase | null): boolean {
   return db !== null
 }
 
-export async function carryDatabase(from: string, to: string): Promise<void> {
+export async function carryDatabase(
+  from: string,
+  to: string,
+  inUse: () => Promise<boolean> = () => Promise.resolve(false),
+): Promise<void> {
   if (from === to || typeof indexedDB === 'undefined') return
   const old = await dump(from)
   if (!old) return
@@ -47,6 +70,7 @@ export async function carryDatabase(from: string, to: string): Promise<void> {
     await merged(old, to)
     if (!(await holdsAll(old, to))) return
   }
+  if (await inUse()) return
   await removed(from)
 }
 
