@@ -171,6 +171,7 @@ struct Held {
     lock: String,
     said: String,
     called: HashSet<String>,
+    takes: Vec<String>,
 }
 
 #[derive(Default)]
@@ -369,6 +370,63 @@ impl Crate {
             .collect();
         found.sort();
         found
+    }
+
+    pub(crate) fn lock_orders(&self, stops: &[&str]) -> Vec<String> {
+        let mut edges: Vec<(String, String, String)> = Vec::new();
+        for (path, function) in &self.functions {
+            for one in &function.held {
+                for lock in &one.takes {
+                    edges.push((
+                        one.lock.clone(),
+                        lock.clone(),
+                        format!("{path} holds {} and takes {lock} under it", one.lock),
+                    ));
+                }
+                for (taker, lock) in self.taken_below(&one.called, stops) {
+                    edges.push((
+                        one.lock.clone(),
+                        lock,
+                        format!("{path} holds {} and calls on to {taker}", one.lock),
+                    ));
+                }
+            }
+        }
+        let mut found: Vec<String> = Vec::new();
+        for (from, to, why) in &edges {
+            if same_lock(from, to) {
+                found.push(format!("{why}, which takes it again"));
+                continue;
+            }
+            for (back_from, back_to, back) in &edges {
+                if from < to && same_lock(back_from, to) && same_lock(back_to, from) {
+                    found.push(format!(
+                        "{why}, which takes {to}; {back}, which takes {from}"
+                    ));
+                }
+            }
+        }
+        found.sort();
+        found.dedup();
+        found
+    }
+
+    fn taken_below(&self, called: &HashSet<String>, stops: &[&str]) -> Vec<(String, String)> {
+        let mut seen: HashSet<String> = HashSet::new();
+        let mut going: Vec<String> = called.iter().cloned().collect();
+        going.sort();
+        let mut taken = Vec::new();
+        while let Some(at) = going.pop() {
+            if stops.contains(&at.as_str()) || !seen.insert(at.clone()) {
+                continue;
+            }
+            let Some(function) = self.functions.get(&at) else {
+                continue;
+            };
+            taken.extend(function.takes.iter().map(|lock| (at.clone(), lock.clone())));
+            going.extend(function.called.iter().cloned());
+        }
+        taken
     }
 
     pub(crate) fn held_across(
@@ -745,6 +803,7 @@ struct Hold {
     calls: Vec<Vec<String>>,
     methods: Typed,
     said: String,
+    takes: Vec<(Key, Chain)>,
 }
 
 struct Known<'a> {
@@ -1604,11 +1663,18 @@ impl Gathered {
             let mut called = self.resolve_all(found, &hold.calls);
             called.extend(self.typed(found, &hold.methods));
             called.retain(|one| !through.contains(one));
+            let takes: Vec<String> = hold
+                .takes
+                .iter()
+                .filter(|(_, call)| matches!(self.taken_as(found, call), Taken::Lock))
+                .map(|(key, _)| self.key(found, key))
+                .collect();
             for lock in locks {
                 held.push(Held {
                     lock,
                     said: hold.said.clone(),
                     called: called.clone(),
+                    takes: takes.clone(),
                 });
             }
         }
@@ -1627,6 +1693,7 @@ impl Gathered {
                     lock,
                     said: handed.said.clone(),
                     called: called.clone(),
+                    takes: Vec::new(),
                 });
             }
         }
@@ -2917,15 +2984,41 @@ struct Holding<'o> {
 
 impl Holding<'_> {
     fn hold(&mut self, guards: Vec<Guard>, tokens: TokenStream, methods: Typed) {
+        let mut taking = Taking {
+            owner: self.owner,
+            module: self.module,
+            takes: Vec::new(),
+            passes: Vec::new(),
+        };
+        if let Ok(block) = syn::parse2::<syn::Block>(quote::quote!({ #tokens })) {
+            taking.visit_block(&block);
+        }
         self.held.push(Hold {
             guards,
             calls: found_calls(tokens.clone()),
             methods,
             said: said_of(tokens),
+            takes: taking.takes,
         });
     }
 
     fn temporaries(&mut self, expr: &syn::Expr) {
+        match expr {
+            syn::Expr::If(branched) if !matches!(&*branched.cond, syn::Expr::Let(_)) => {
+                self.temporaries(&branched.cond);
+                if let Some((_, other)) = &branched.else_branch {
+                    if matches!(&**other, syn::Expr::If(_)) {
+                        self.temporaries(other);
+                    }
+                }
+                return;
+            }
+            syn::Expr::While(looped) if !matches!(&*looped.cond, syn::Expr::Let(_)) => {
+                self.temporaries(&looped.cond);
+                return;
+            }
+            _ => {}
+        }
         let mut temporaries = Temporaries {
             owner: self.owner,
             module: self.module,
@@ -2935,11 +3028,26 @@ impl Holding<'_> {
         if temporaries.found.is_empty() {
             return;
         }
+        let mut after = expr.clone();
+        LockedFirst.visit_expr_mut(&mut after);
         self.hold(
             temporaries.found,
-            expr.to_token_stream(),
-            Methods::of_expr(expr),
+            after.to_token_stream(),
+            Methods::of_expr(&after),
         );
+    }
+}
+
+struct LockedFirst;
+
+impl VisitMut for LockedFirst {
+    fn visit_expr_method_call_mut(&mut self, call: &mut syn::ExprMethodCall) {
+        if locked(call) {
+            *call.receiver = syn::parse_quote!(locked);
+            call.method = syn::parse_quote!(taken);
+            return;
+        }
+        syn::visit_mut::visit_expr_method_call_mut(self, call);
     }
 }
 
