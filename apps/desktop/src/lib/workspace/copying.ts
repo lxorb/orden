@@ -8,11 +8,13 @@ import { copyName } from '../note-name'
 import { isMarkdownPath, nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import type { Entry } from '../workspace.svelte'
+import type { ItemMetaStore } from './item-meta.svelte'
 import type { Copied, FileActions } from './undo.svelte'
 import { copyPath, writeBytes, writeFile } from './write-file'
 
 export interface Copies {
   readonly undone: FileActions
+  readonly itemMeta: Pick<ItemMetaStore, 'copied' | 'moved'>
   entryAt(path: string): Entry | null
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
@@ -81,9 +83,16 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
     .catch(() => false)
   if (!landed) return false
   await idsLeftBehind(entry, path)
+  ws.itemMeta.copied(entry.path, path)
 
   const own = ownNoteRenamed(entry, path)
-  if (own) await invoke('rename_note', own).catch(() => undefined)
+  const renamed =
+    own !== null &&
+    (await invoke('rename_note', own).then(
+      () => true,
+      () => false,
+    ))
+  if (own && renamed) ws.itemMeta.moved(own.from, own.to)
   await ws.fileCame(path, entry.is_dir ? 'folder' : 'file')
 
   return true
