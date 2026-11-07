@@ -342,6 +342,7 @@ function keptGroup(): Group {
         words: ['storage', 'offline', 'persist', 'evict', 'quota', 'browser', 'kept'],
         get: () =>
           keptForGood.held === null ? '…' : keptForGood.held ? t('Allowed') : t('Blocked'),
+        does: t('Try again'),
         press: () => void keptForGood.again(),
       },
     ],

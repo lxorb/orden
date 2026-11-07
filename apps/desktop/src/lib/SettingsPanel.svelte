@@ -641,7 +641,7 @@
     <div
       class="orden-setting setting pressable"
       class:declared={!!field.declared}
-      title={t('Copy')}
+      title={field.does}
       onclick={() => field.press()}
     >
       {@render named(field, where)}

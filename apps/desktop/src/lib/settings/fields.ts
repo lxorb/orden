@@ -99,6 +99,7 @@ export type Field = Common &
         kind: 'value'
         initial?: undefined
         get(): string
+        does: string
         press(): void
       }
     | {
