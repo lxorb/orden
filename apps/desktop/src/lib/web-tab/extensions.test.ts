@@ -3,11 +3,15 @@ import { expect, test, vi } from 'vitest'
 const asked: { command: string; args: Record<string, unknown> | undefined }[] = []
 let refuse = false
 const builds: (string | null)[] = []
+const lists: Promise<unknown[]>[] = []
+const installs: Promise<unknown>[] = []
 
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
     asked.push({ command, args })
+    if (command === 'extensions_list' && lists.length) return lists.shift()
+    if (command === 'extensions_install' && installs.length) return installs.shift()
     if (command === 'extensions_list') return Promise.resolve([row({ id: 'a', enabled: true })])
     if (command === 'extensions_install' && String(args?.link).includes('theme')) {
       return Promise.resolve({
@@ -240,4 +244,51 @@ test('a popup closed while its browser was busy is never built, and one closed w
   extensions.close()
   await building
   expect(asked.map((one) => one.command)).toEqual(['extension_popup_open', 'extension_popup_close'])
+})
+
+function later<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve: (value: T) => void = () => undefined
+  const promise = new Promise<T>((done) => (resolve = done))
+  return { promise, resolve }
+}
+
+test('an older answer to the list never overwrites a newer one', async () => {
+  const first = later<unknown[]>()
+  const second = later<unknown[]>()
+  lists.push(first.promise, second.promise)
+  const older = extensions.load()
+  const newer = extensions.load()
+  second.resolve([row({ id: 'new' })])
+  await newer
+  first.resolve([row({ id: 'old' })])
+  await older
+  expect(extensions.list.map((one) => one.id)).toEqual(['new'])
+})
+
+test('a list asked before a switch moved does not move it back, and is asked again after', async () => {
+  const before = later<unknown[]>()
+  lists.push(before.promise)
+  const loading = extensions.load()
+  lists.push(Promise.resolve([row({ id: 'a', pinned: false })]))
+  const pinning = extensions.pin('a', false)
+  before.resolve([row({ id: 'a', pinned: true })])
+  await loading
+  expect(extensions.list[0]?.pinned).toBe(false)
+  await pinning
+  expect(extensions.list[0]?.pinned).toBe(false)
+  expect(lists).toHaveLength(0)
+})
+
+test('two installs at once each say they are installing until their own is done', async () => {
+  const one = later<unknown>()
+  const two = later<unknown>()
+  installs.push(one.promise, two.promise)
+  const first = extensions.install('https://chromewebstore.google.com/detail/one')
+  const second = extensions.install('https://chromewebstore.google.com/detail/two')
+  one.resolve(undefined)
+  await first
+  expect(extensions.installing).toBe('https://chromewebstore.google.com/detail/two')
+  two.resolve(undefined)
+  await second
+  expect(extensions.installing).toBeNull()
 })

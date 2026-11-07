@@ -125,6 +125,9 @@ class Extensions {
   popped = $state<Popped | null>(null)
 
   private listening = false
+  private asked = 0
+  private moves = 0
+  private moving: Promise<unknown> = Promise.resolve()
   private readonly problems = new Set<string>()
 
   async start(): Promise<void> {
@@ -137,7 +140,16 @@ class Extensions {
   }
 
   async load(): Promise<void> {
-    const said = await invoke<unknown[]>('extensions_list').catch(() => [])
+    const mine = ++this.asked
+    let said: unknown[]
+    for (;;) {
+      const moves = this.moves
+      said = await invoke<unknown[]>('extensions_list').catch(() => [])
+      if (mine !== this.asked) return
+      if (moves === this.moves) break
+      await this.moving
+      if (mine !== this.asked) return
+    }
     this.list = said.map(readExtension).filter((one): one is Extension => one !== null)
     this.problems.clear()
     this.read = true
@@ -169,24 +181,24 @@ class Extensions {
             : 'that did not work'
       return false
     } finally {
-      this.installing = null
+      if (this.installing === link) this.installing = null
     }
   }
 
   async enable(id: string, enabled: boolean): Promise<void> {
     this.change(id, { enabled })
-    await invoke('extensions_set', { id, enabled }).catch(() => this.load())
+    await this.moved(invoke('extensions_set', { id, enabled }))
   }
 
   async pin(id: string, pinned: boolean): Promise<void> {
     this.change(id, { pinned })
-    await invoke('extensions_set', { id, pinned }).catch(() => this.load())
+    await this.moved(invoke('extensions_set', { id, pinned }))
   }
 
   async remove(id: string): Promise<void> {
     if (this.popped?.id === id) this.close()
     this.list = this.list.filter((one) => one.id !== id)
-    await invoke('extensions_remove', { id }).catch(() => this.load())
+    await this.moved(invoke('extensions_remove', { id }))
   }
 
   async optionsOf(id: string): Promise<string | null> {
@@ -245,6 +257,16 @@ class Extensions {
         return null
       }
     }
+  }
+
+  private async moved(sent: Promise<unknown>): Promise<void> {
+    this.moves++
+    const settled = sent.then(
+      () => true,
+      () => false,
+    )
+    this.moving = Promise.all([this.moving, settled]).then(() => undefined)
+    if (!(await settled)) await this.load()
   }
 
   private change(id: string, fields: Partial<Extension>) {
