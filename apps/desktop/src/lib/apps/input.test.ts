@@ -92,6 +92,17 @@ describe('the keys held', () => {
     expect(held.letGo()).toEqual([{ t: 'key', key: '', code: 'AltLeft', down: false }])
     expect(held.letGo()).toEqual([])
   })
+
+  test('lets go of a button whose press lost its pointer, and of nothing let go already', () => {
+    const held = new HeldKeys()
+    held.saw({ t: 'button', button: 0, down: true })
+    held.saw({ t: 'button', button: 2, down: true })
+    held.saw({ t: 'button', button: 2, down: false })
+    held.saw({ t: 'key', key: 'Shift', code: 'ShiftLeft', down: true })
+    expect(held.letGoButtons()).toEqual([{ t: 'button', button: 0, down: false }])
+    expect(held.letGoButtons()).toEqual([])
+    expect(held.letGo()).toEqual([{ t: 'key', key: '', code: 'ShiftLeft', down: false }])
+  })
 })
 
 describe('the application’s pointer', () => {

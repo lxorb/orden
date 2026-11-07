@@ -298,6 +298,9 @@
   function letGo() {
     for (const one of held.letGo()) session.picture.input(one)
   }
+  function letGoButtons() {
+    for (const one of held.letGoButtons()) session.picture.input(one)
+  }
 
   let overlay = $state(false)
   $effect(() => {
@@ -357,6 +360,8 @@
     onpointermove={(event) => pointer(event, null)}
     onpointerdown={(event) => pointer(event, true)}
     onpointerup={(event) => pointer(event, false)}
+    onpointercancel={letGoButtons}
+    onlostpointercapture={letGoButtons}
     oncontextmenu={(event) => event.preventDefault()}
   ></video>
   <audio bind:this={audio} autoplay></audio>
