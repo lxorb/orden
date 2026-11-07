@@ -2,7 +2,8 @@
   import { onDestroy } from 'svelte'
   import type { PageNode } from './canvas/format'
   import { t } from './i18n.svelte'
-  import { closeUpOf, densityFor, type Part, paperOf } from './pages/paper'
+  import { closeUpOf, densityFor, type Part, paperOf, type PaperView, viewOf } from './pages/paper'
+  import { boxOf, COLOURS, type Highlight, toViewport } from './pdf/highlights'
 
   const {
     page,
@@ -12,6 +13,7 @@
     root,
     shared = null,
     seen = null,
+    marks = [],
   }: {
     page: PageNode
     number: number
@@ -20,6 +22,7 @@
     root: string | null
     shared?: string | null
     seen?: { x: number; y: number; width: number; height: number } | null
+    marks?: readonly Highlight[]
   } = $props()
 
   const LINES = 30
@@ -142,6 +145,40 @@
 
   onDestroy(() => (paper = null))
 
+  let view = $state.raw<PaperView | null>(null)
+
+  $effect(() => {
+    const file = page.file
+    const at = page.page
+    if (!marks.length || !file || !at) return
+
+    let mine = true
+    void viewOf({ file, note: notePath, root, shared }, at).then((found) => {
+      if (mine) view = found
+    })
+    return () => {
+      mine = false
+    }
+  })
+
+  const shownMarks = $derived.by(() => {
+    if (!view?.width || !view.height) return []
+    const { width, height } = view
+    const point = toViewport(view.transform)
+    return marks.flatMap((mark) =>
+      mark.quads.map((quad) => {
+        const box = boxOf(quad, point)
+        return {
+          colour: COLOURS[mark.colour] ?? COLOURS[0],
+          left: (box.left / width) * 100,
+          top: (box.top / height) * 100,
+          width: (box.width / width) * 100,
+          height: (box.height / height) * 100,
+        }
+      }),
+    )
+  })
+
   const ruling = $derived.by(() => {
     switch (page.pattern) {
       case 'lines':
@@ -187,6 +224,16 @@
       ></canvas>
     {/if}
   {/if}
+  {#each shownMarks as mark, index (index)}
+    <span
+      class="mark"
+      style:left="{mark.left}%"
+      style:top="{mark.top}%"
+      style:width="{mark.width}%"
+      style:height="{mark.height}%"
+      style:background={mark.colour}
+    ></span>
+  {/each}
   {#if lost}
     <span class="missing">{t('The paper could not be read')}</span>
   {/if}
@@ -221,6 +268,12 @@
   .sheet canvas.close {
     inset: auto;
     transition: none;
+  }
+
+  .mark {
+    position: absolute;
+    border-radius: calc(1px * var(--unit));
+    opacity: 0.3;
   }
 
   .missing {

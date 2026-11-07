@@ -1,5 +1,6 @@
 import type { OpenPdf } from '../pdf/document'
 import { openBytes, openDocument } from '../pdf/document'
+import { matrixOf, type Transform } from '../pdf/highlights'
 import { type PdfHeading, readOutline } from '../pdf/outline'
 import { PDF_TO_CSS } from '../pdf/pages'
 import { isPagesTarget } from '@orden/markdown/links'
@@ -27,6 +28,7 @@ export interface Paper {
 
 interface Held {
   open: Promise<OpenPdf>
+  place: Promise<string | null>
   drawn: Map<string, Promise<Paper | null>>
   recent: string[]
   pixels: Map<string, number>
@@ -162,6 +164,25 @@ export async function outlineOf(at: PaperAt): Promise<PdfHeading[]> {
   return opened ? await readOutline(opened.doc) : []
 }
 
+export async function paperPathOf(at: PaperAt): Promise<string | null> {
+  return (await heldOf(at)?.place) ?? null
+}
+
+export interface PaperView {
+  transform: Transform
+  width: number
+  height: number
+}
+
+export async function viewOf(at: PaperAt, number: number): Promise<PaperView | null> {
+  const opened = await heldOf(at)?.open.catch(() => null)
+  if (!opened || number < 1 || number > opened.doc.numPages) return null
+
+  const page = await opened.doc.getPage(number)
+  const view = page.getViewport({ scale: 1 })
+  return { transform: matrixOf(view.transform), width: view.width, height: view.height }
+}
+
 export async function paperIsLocked(at: PaperAt): Promise<boolean> {
   const one = heldOf(at)
   if (!one) return false
@@ -175,8 +196,13 @@ function heldOf(at: PaperAt): Held | null {
 
   const known = held.get(key)
   if (known) return known
+  const opening = opened(at)
   const made: Held = {
-    open: opened(at),
+    open: opening.then((one) => one.pdf),
+    place: opening.then(
+      (one) => one.path,
+      () => null,
+    ),
     drawn: new Map(),
     recent: [],
     pixels: new Map(),
@@ -189,20 +215,20 @@ function heldOf(at: PaperAt): Held | null {
   return made
 }
 
-async function opened(at: PaperAt): Promise<OpenPdf> {
+async function opened(at: PaperAt): Promise<{ pdf: OpenPdf; path: string | null }> {
   const places = paperPlaces(at.file, at.note, at.root)
   let last: unknown = new Error(`${at.file} is nowhere this space can read`)
 
   for (const path of places) {
     try {
-      return await openDocument(path)
+      return { pdf: await openDocument(path), path }
     } catch (error) {
       last = error
     }
   }
 
   const fetched = await fromAccount(at).catch(() => null)
-  if (fetched) return await openBytes(fetched)
+  if (fetched) return { pdf: await openBytes(fetched), path: null }
 
   throw last instanceof Error ? last : new Error(String(last))
 }
