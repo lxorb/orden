@@ -7,7 +7,7 @@
   import FileMark from './FileMark.svelte'
   import { rank } from './fuzzy'
   import { offsetOf, type Rows, windowFor } from './row-window'
-  import { ListView } from './row-window.svelte'
+  import { ListView, measuredRow } from './row-window.svelte'
   import { t } from './i18n.svelte'
   import { prompt } from './prompt.svelte'
   import { selectAll } from './select-all'
@@ -57,11 +57,7 @@
   $effect(() => {
     const ul = list
     if (!ul) return
-    return where.follow(ul, (one) => {
-      const row = one.querySelector('li[data-row]')
-      const tall = row instanceof HTMLElement ? row.getBoundingClientRect().height : 0
-      return tall > 0 ? tall : LEAST
-    })
+    return where.follow(ul, (one) => measuredRow(one, LEAST))
   })
 
   function reach(index: number) {
