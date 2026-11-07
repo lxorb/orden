@@ -330,6 +330,26 @@ CHECK = r"""
       say(`${named(kids[kids.length - 1])} stands ${px(foot)} from the foot of ${named(sheet).split(' < ')[0]}, whose top is ${px(top)} in`)
   }
 
+  // ── The tab in front stays in sight in its strip ─────────────────────────
+  // Both sidebars open on a window 520px wide squeezed the one tab to 14px under the
+  // buttons that sit over the strip, and the plus scrolled half out beside it (#1572).
+  for (const lane of visible) {
+    if (lane.dataset.region !== 'tabs') continue
+    const front = lane.querySelector('.tab.active')
+    if (!front || !front.checkVisibility()) continue
+    const box = clipped(front)
+    const width = front.getBoundingClientRect().width
+    if (box.r - box.l < Math.min(width, 38) - 1)
+      say(`the tab in front is left ${px(Math.max(0, box.r - box.l))} of its ${px(width)} in ${named(lane)}`)
+    const plus = lane.querySelector('.new')
+    if (plus && plus.checkVisibility() && lane.scrollWidth <= lane.clientWidth + 1) {
+      const seen = clipped(plus)
+      const cut = seen.r - seen.l
+      if (cut > 1 && cut < plus.getBoundingClientRect().width - 1)
+        say(`the plus is cut to ${px(cut)} at the edge of ${named(lane)}`)
+    }
+  }
+
   // ── A row of settings keeps a name a person can read ───────────────────
   for (const row of visible) {
     if (!row.classList.contains('orden-setting')) continue
@@ -651,9 +671,33 @@ async def quick_question(one: Browser, page: Any, width: int, scheme: str) -> No
         await one.check(page, "quick question / alone", width, scheme, QUICK)
     await shut(page, QUICK)
 
+SIDES = """
+(want) => {
+  const ws = window.nibApp.workspace
+  for (const side of ['left', 'right']) if (!!ws.openOn(side) !== want) ws.toggleSidebar(side)
+}
+"""
+
+async def both_sides(one: Browser, page: Any, width: int, scheme: str) -> None:
+    if one.kind == "phone":
+        return
+    was = await page.evaluate("() => ({ left: window.nibApp.workspace.openOn('left'), right: window.nibApp.workspace.openOn('right') })")
+    await page.evaluate(SIDES, True)
+    await page.wait_for_timeout(400)
+    try:
+        await one.check(page, "both sidebars", width, scheme, "header")
+    finally:
+        await page.evaluate(
+            """(was) => { const ws = window.nibApp.workspace
+              for (const side of ['left', 'right']) if (!!ws.openOn(side) !== was[side]) ws.toggleSidebar(side) }""",
+            was,
+        )
+        await page.wait_for_timeout(400)
+
 async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
     walks = [
         ("the window", one.check(page, "the window", width, scheme)),
+        ("both sidebars", both_sides(one, page, width, scheme)),
         ("panels", panels(one, page, width, scheme)),
         ("menus", menus(one, page, width, scheme)),
         ("palette", palette(one, page, width, scheme)),

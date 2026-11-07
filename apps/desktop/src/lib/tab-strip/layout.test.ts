@@ -13,6 +13,8 @@ import {
   nearestSlot,
   partsFor,
   placed,
+  PLUS,
+  plusFits,
   reorderSlack,
   separated,
   slotAt,
@@ -371,5 +373,24 @@ describe('tabs as wide as their contents', () => {
     expect(trailing({})).toBe(0)
     expect(trailing({ reading: true, draft: true })).toBe(19 + 12)
     expect(fitted(40, trailing({ sound: true }))).toBe(fitted(40) + 19)
+  })
+})
+
+describe('a strip too narrow for a tab and the plus', () => {
+  test('keeps the plus while the tab in front still fits beside it', () => {
+    expect(plusFits(8 + WIDTH.active + PLUS, 8)).toBe(true)
+    expect(plusFits(400, 8)).toBe(true)
+    expect(plusFits(0, 8)).toBe(true)
+  })
+
+  test('drops the plus rather than squeeze the tab in front or scroll the plus half out of sight', () => {
+    expect(plusFits(62, 8)).toBe(false)
+    expect(plusFits(38, 8)).toBe(false)
+    expect(plusFits(8 + WIDTH.active + PLUS - 1, 8)).toBe(false)
+  })
+
+  test('the tab in front gets the room the plus gave up', () => {
+    const [front] = widthsFor([{ icon: false, active: true, fit: 120 }], 62 - 8)
+    expect(front).toBe(54)
   })
 })
