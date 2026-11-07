@@ -108,6 +108,11 @@
       { label: t('Settings'), run: () => hostPicker.manage() },
     ])
   }
+
+  function aboutGroup(event: MouseEvent, group: string) {
+    event.preventDefault()
+    menu.show(event, [{ label: t('Open all'), run: () => hostPicker.chooseGroup(group) }])
+  }
 </script>
 
 {#if typing}
@@ -133,7 +138,15 @@
   >
     {#each shown as { host, head, parted, at } (host.id)}
       {#if parted && !typed}<hr />{/if}
-      {#if head && !typed}<p class="head" role="none">{head}</p>{/if}
+      {#if head && !typed}
+        <p class="head" role="none" oncontextmenu={(event) => aboutGroup(event, head)}>
+          <span>{head}</span><button
+            class="all"
+            tabindex="-1"
+            onclick={() => hostPicker.chooseGroup(head)}>{t('Open all')}</button
+          >
+        </p>
+      {/if}
       <button
         class="nib-row"
         role="menuitem"
@@ -212,6 +225,29 @@
     font-family: var(--font-ui);
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
+  }
+
+  .all {
+    margin-inline-start: auto;
+    padding: 0 var(--space-2);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-weight: var(--weight-row);
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .head:hover .all,
+  .all:focus-visible {
+    opacity: 1;
+  }
+
+  .all:hover {
+    background: var(--surface-hover);
+    color: var(--text-strong);
   }
 
   hr {

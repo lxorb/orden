@@ -98,6 +98,8 @@ export function named(row: Row): string {
       return `go ${row.address}`
     case 'host':
       return `host ${row.host.name}`
+    case 'group':
+      return `hosts ${row.group}`
     case 'connect':
       return `ssh ${row.said}`
     case 'message':

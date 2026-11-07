@@ -24,6 +24,7 @@ import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { tabAsk } from '../new-tab'
 import { owes } from '../parting'
 import { SHORTCUTS, shortcuts } from '../shortcuts.svelte'
+import { hostReached } from '../remote/hosts'
 import { remote } from '../remote/hosts.svelte'
 import { madeNow, markMade } from '../remote/open'
 import { platform } from '../tauri'
@@ -55,7 +56,7 @@ import { setLive, setPty } from './running'
 import { clipboardWrite, type Notice, osc777Notice, osc9Notice } from './signals'
 import { shellName, shells, SIZES } from './shells.svelte'
 import { type Machine, PtySource, type Said, type Source } from './source'
-import { hostIdOf, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
+import { hostIdOf, hostShell, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
 
 const SCROLLBACK = 5000
 
@@ -150,6 +151,8 @@ class Session {
   private front = new Front(false)
   private asking: ReturnType<typeof setTimeout> | undefined
   private asked = 0
+  private underneath: string | null = null
+  private unmatched: string | null = null
   private readonly unwatch: () => void
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
 
@@ -327,8 +330,13 @@ class Session {
     this.named()
   }
 
+  private get reachedHere(): boolean {
+    return this.remote && this.underneath === null
+  }
+
   private askSoon(after = ASK_AFTER) {
-    if (this.asking !== undefined || this.spec().shell.startsWith('wsl:') || this.remote) return
+    if (this.asking !== undefined || this.spec().shell.startsWith('wsl:') || this.reachedHere)
+      return
 
     const wait = Math.max(after, this.asked + ASK_EVERY - Date.now())
     this.asking = setTimeout(() => {
@@ -348,6 +356,51 @@ class Session {
 
     this.front.looked(found)
     this.named()
+
+    if (found !== 'ssh') {
+      this.unmatched = null
+      this.giveBack()
+    } else if (this.underneath !== null || hostIdOf(this.spec().shell) === null)
+      void this.adopt(pty, source)
+  }
+
+  private async adopt(pty: string, source: PtySource) {
+    const reached = await source.ssh()
+    if (pty !== this.pty) return
+    const said = JSON.stringify(reached)
+    if (this.underneath === null && (reached === null || said === this.unmatched)) return
+    const fresh = !remote.read
+    await remote.ready()
+    let host = reached && hostReached(remote.hosts, reached)
+    if (reached && !host && !fresh) {
+      await remote.refresh()
+      host = hostReached(remote.hosts, reached)
+    }
+    if (!host) this.unmatched = said
+    if (this.underneath !== null && host?.id === source.reached) return
+    const still = await source.ssh()
+    if (pty !== this.pty || JSON.stringify(still) !== JSON.stringify(reached)) return
+    if (this.underneath !== null) {
+      if (host?.id === source.reached) return
+      this.giveBack()
+    }
+
+    const spec = this.spec()
+    if (!host || hostIdOf(spec.shell) !== null) return
+    this.underneath = spec.shell
+    source.reached = host.id
+    remote.reached(host.id)
+    this.respec({ ...spec, shell: hostShell(host.id), via: spec.shell })
+  }
+
+  private giveBack() {
+    const shell = this.underneath
+    if (shell === null) return
+    this.underneath = null
+    if (this.source instanceof PtySource) this.source.reached = null
+    const spec: Spec = { ...this.spec(), shell }
+    delete spec.via
+    this.respec(spec)
   }
 
   private spec(): Spec {
@@ -660,7 +713,13 @@ class Session {
   }
 
   private async start(): Promise<void> {
+    this.underneath = null
+    this.unmatched = null
     const spec = this.spec()
+    if (spec.via) {
+      delete spec.via
+      this.respec(spec)
+    }
     this.started += 1
     const id = `${this.tab.id}-${this.started}`
     this.pty = id
@@ -858,9 +917,10 @@ class Session {
     this.marks = true
     this.front.prompted()
     this.named()
+    if (this.underneath !== null) this.askSoon(0)
     this.behind = []
     this.term.write(bytes.subarray(0, end), () => {
-      const off = tidied(this.left(), pastesItself(this.spec().shell))
+      const off = tidied(this.left(), pastesItself(this.underneath ?? this.spec().shell))
       if (off) this.term.write(off)
 
       const waiting = this.behind ?? []
@@ -896,6 +956,7 @@ class Session {
 
     this.pty = null
     setPty(this.tab.id, null)
+    this.giveBack()
     this.front = new Front(false)
     this.named()
 
@@ -934,7 +995,7 @@ class Session {
     this.outgoing.push({ data, binary })
     void this.send()
 
-    if (binary || !data.includes('\r') || this.remote) return
+    if (binary || !data.includes('\r') || this.reachedHere) return
     this.front.entered()
     this.askSoon()
     if (KERNEL_SAYS.includes(platform())) setTimeout(() => void this.lookWhere(), AFTER_ENTER)

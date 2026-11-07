@@ -3841,7 +3841,7 @@ class Workspace {
     const made = this.panes.split(along, tab.paneId)
     if (!made) return
 
-    const beside = new Tab(tab.note, made.id)
+    const beside = this.copyOf(tab, made.id)
     beside.cursor = tab.cursor
     beside.scroll = tab.scroll
     beside.anchor = tab.anchor
@@ -3850,6 +3850,22 @@ class Workspace {
 
     this.add(beside)
     this.persist()
+  }
+
+  copyOf(tab: Tab, paneId: string): Tab {
+    const words =
+      !__EVEN_PLUGIN__ && tab.kind === 'terminal' && tab.path === null ? shellWords(tab.doc) : null
+    if (!words) return new Tab(tab.note, paneId)
+
+    const note = this.document({
+      kind: 'terminal',
+      path: null,
+      name: tab.note.name,
+      text: JSON.stringify({ ...words, key: '', via: undefined }),
+      dirty: false,
+      home: tab.note.home,
+    })
+    return new Tab(note, paneId)
   }
 
   canDuplicateTab(tab: Tab): boolean {
@@ -4038,6 +4054,15 @@ class Workspace {
     )
     if (!(await this.mayClose(going))) return
     await this.applyLayout(layout)
+  }
+}
+
+function shellWords(doc: string): object | null {
+  try {
+    const words: unknown = JSON.parse(doc)
+    return typeof words === 'object' && words !== null && 'shell' in words ? words : null
+  } catch {
+    return null
   }
 }
 

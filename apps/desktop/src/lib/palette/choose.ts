@@ -20,6 +20,7 @@ export interface Hands {
   agents(): void
   goto(line: number): void
   openHost(id: string): void
+  openHosts(ids: readonly string[]): void
   connect(wanted: Destination): void
   openMessage(path: string, message: string, how: OpenHow): void
 }
@@ -78,6 +79,9 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
       return 'close'
     case 'host':
       hands.openHost(row.host.id)
+      return 'close'
+    case 'group':
+      hands.openHosts(row.hosts.map((host) => host.id))
       return 'close'
     case 'connect':
       hands.connect(row.wanted)

@@ -2,8 +2,10 @@ import { describe, expect, test } from 'vitest'
 import {
   type ConfigHost,
   destinationOf,
+  groupHosts,
   groupsOf,
   hostFor,
+  hostReached,
   hostsOf,
   type Kept,
   mayBeDestination,
@@ -62,6 +64,14 @@ describe('the list', () => {
   })
 })
 
+describe('a group', () => {
+  test('is every host in it, wherever the picker shows them', () => {
+    const hosts = hostsOf(CONFIG, kept({ about: { nas: { pinned: true } } }))
+    expect(groupHosts(hosts, 'Home').map((one) => one.id)).toEqual(['pi', 'nas'])
+    expect(groupHosts(hosts, 'Nowhere')).toEqual([])
+  })
+})
+
 describe('the picker', () => {
   test('pinned, then recent newest first, then the hosts in no group, then each group', () => {
     const now = 1_000_000
@@ -92,6 +102,15 @@ describe('the picker', () => {
 
     expect(order.slice(0, RECENT).map((one) => one.host.id)).toEqual(['h6', 'h5', 'h4', 'h3', 'h2'])
     expect(order[RECENT]?.parted).toBe(true)
+  })
+})
+
+describe('a group in the picker', () => {
+  test('keeps a host under its heading however many of them were connected to lately', () => {
+    const hosts = hostsOf(CONFIG, kept({ about: { pi: { last: 2 }, nas: { last: 1 } } }))
+    const order = pickerOrder(hosts, kept())
+    expect(order.map((one) => one.host.id)).toEqual(['pi', 'build', 'nas', 'office'])
+    expect(order.find((one) => one.head === 'Home')?.host.id).toBe('nas')
   })
 })
 
@@ -139,6 +158,17 @@ describe('a destination typed', () => {
     expect(hostFor(hosts, { user: null, hostname: 'raspberry', port: null })?.id).toBe('pi')
     expect(hostFor(hosts, { user: 'emil', hostname: '10.0.0.5', port: null })?.id).toBe('pi')
     expect(hostFor(hosts, { user: 'root', hostname: '10.0.0.5', port: null })).toBeNull()
+  })
+
+  test('ssh reaching a host is that host, by what the host already says of itself', () => {
+    const hosts = hostsOf(CONFIG, NOTHING_KEPT)
+    expect(hostReached(hosts, { user: null, hostname: 'pi', port: null })?.id).toBe('pi')
+    expect(hostReached(hosts, { user: 'emil', hostname: 'pi', port: null })?.id).toBe('pi')
+    expect(hostReached(hosts, { user: 'emil', hostname: '10.0.0.5', port: 22 })?.id).toBe('pi')
+    expect(hostReached(hosts, { user: null, hostname: 'office', port: 2222 })?.id).toBe('office')
+    expect(hostReached(hosts, { user: 'root', hostname: 'pi', port: null })).toBeNull()
+    expect(hostReached(hosts, { user: null, hostname: 'office', port: 22 })).toBeNull()
+    expect(hostReached(hosts, { user: null, hostname: 'elsewhere', port: null })).toBeNull()
   })
 
   test('typing that could still become one', () => {

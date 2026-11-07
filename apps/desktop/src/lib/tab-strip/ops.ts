@@ -3,14 +3,14 @@ import { canWriteAt } from '../sharing.svelte'
 import { folderOf } from '../space-paths'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
-import { Tab } from '../workspace/documents.svelte'
+import type { Tab } from '../workspace/documents.svelte'
 import { nextPane } from '../workspace/pane-tree'
 
 export function duplicateTab(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)
   if (!tab || !workspace.canDuplicateTab(tab)) return
 
-  const copy = new Tab(tab.note, tab.paneId)
+  const copy = workspace.copyOf(tab, tab.paneId)
   copy.cursor = tab.cursor
   copy.scroll = tab.scroll
   copy.anchor = tab.anchor

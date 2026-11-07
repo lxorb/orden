@@ -34,5 +34,6 @@ export type Row =
   | { kind: 'agents' }
   | { kind: 'address'; url: string; address: string }
   | { kind: 'host'; host: Host }
+  | { kind: 'group'; group: string; hosts: readonly Host[] }
   | { kind: 'connect'; wanted: Destination; said: string }
   | { kind: 'message'; chat: string; id: string; path: string; line: string; where: string }
