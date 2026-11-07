@@ -82,6 +82,8 @@
   }
   chat.around = around
 
+  const FRONT_MOST = 12_000
+
   function sentChips(): Mention[] {
     const chips = chat.chips.filter((one) => one.kind !== 'picture' || chat.model?.images !== false)
     return selectionOn && !chips.some((one) => one.kind === 'selection')
@@ -89,10 +91,10 @@
       : chips
   }
 
-  const next = $derived.by(() => {
-    let sum = estimateText(chat.text)
+  const attached = $derived.by(() => {
+    let sum = 0
     if (frontOn && front && head?.mode !== 'approve')
-      sum += Math.min(12_000, estimateText(front.text))
+      sum += Math.min(FRONT_MOST, estimateText(front.text.slice(0, FRONT_MOST * 4)))
     if (selectionOn) sum += estimateText(selection)
     for (const chip of chat.chips) {
       if (chip.text) sum += estimateText(chip.text)
@@ -100,6 +102,8 @@
     }
     return sum
   })
+
+  const next = $derived(estimateText(chat.text) + attached)
 
   const mention = $derived(mentionAt(chat.text, caret))
   const slash = $derived(/^\/[\w-]*$/.test(chat.text) ? chat.text.slice(1) : null)
