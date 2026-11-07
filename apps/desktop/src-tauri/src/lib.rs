@@ -1150,7 +1150,10 @@ mod tests {
             "#[tauri::command]\npub fn by_state(app: AppHandle) {\n    if let Some(asks) = app.try_state::<Asks>() {\n        asks.kept.stop();\n    }\n}\n\n",
             "#[tauri::command]\npub fn by_variant(on: &On) {\n    match on {\n        On::Loud(gemini) => gemini.stop(),\n        On::Calm(quiet) => quiet.stop(),\n    }\n}\n\n",
             "#[tauri::command]\npub fn by_loop(asks: &Asks) {\n    for one in asks.on.lock().unwrap().values() {\n        if let On::Loud(gemini) = one {\n            gemini.stop();\n        }\n    }\n}\n\n",
-            "#[tauri::command]\npub fn calm(asks: &Asks) {\n    asks.calm.stop();\n}\n",
+            "#[tauri::command]\npub fn calm(asks: &Asks) {\n    asks.calm.stop();\n}\n\n",
+            "pub struct Gone;\n\nimpl Drop for Gone {\n    fn drop(&mut self) {\n        fs::remove_file(one);\n    }\n}\n\n",
+            "pub struct Holds {\n    gone: Gone,\n}\n\n",
+            "#[tauri::command]\npub fn dropping(gone: Option<Holds>) {\n    drop(gone);\n}\n",
         );
         let own = calls::of(&[("crate", source)]);
         let waits = own.waiting(&WAITS, &[]);
@@ -1159,6 +1162,7 @@ mod tests {
             "crate::by_state",
             "crate::by_variant",
             "crate::by_loop",
+            "crate::dropping",
         ] {
             assert!(waits.contains(loud), "{loud} was not followed");
         }
