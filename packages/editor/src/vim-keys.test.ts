@@ -141,6 +141,38 @@ describe('a command over many lines', () => {
     expect(view.state.doc.toString()).toBe(doc)
   })
 
+  test('a normal command over every line of prose writes the note once, in time that grows with its lines', () => {
+    const run = (lines: number) => {
+      const doc = Array.from({ length: lines }, (_, at) => `foo ${at}\n`).join('\n')
+      const view = new EditorView({
+        state: EditorState.create({
+          doc,
+          extensions: [markdown({ base: markdownLanguage }), modalEditing(true), history()],
+        }),
+        parent: document.body,
+      })
+      open.push(view)
+      const cm = cmOf(view)
+      let drawn = 0
+      const update = view.update.bind(view)
+      view.update = (transactions) => {
+        drawn++
+        update(transactions)
+      }
+      const started = performance.now()
+      Vim.handleEx(cm, '%norm Ax')
+      const took = performance.now() - started
+
+      expect(view.state.doc.toString()).toBe(doc.replace(/\n/g, 'x\n') + 'x')
+      expect(drawn).toBeLessThan(10)
+      Vim.handleKey(cm, 'u', 'user')
+      expect(view.state.doc.toString()).toBe(doc)
+      return took
+    }
+    run(100)
+    expect(run(4000) / run(1000)).toBeLessThan(6)
+  }, 60_000)
+
   test('a global delete takes every matching line, however many', () => {
     const doc = Array.from({ length: 2000 }, (_, at) =>
       at % 2 ? `keep ${at}` : `drop ${at}`,

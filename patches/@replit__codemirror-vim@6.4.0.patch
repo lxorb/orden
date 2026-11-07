@@ -1,5 +1,5 @@
 diff --git a/dist/index.cjs b/dist/index.cjs
-index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a03e679c4b 100644
+index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..5f8c2c617634ff513318b377cc17daee6ba8b2c5 100644
 --- a/dist/index.cjs
 +++ b/dist/index.cjs
 @@ -98,8 +98,7 @@ catch (_) {
@@ -30,7 +30,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
      }
  }
  var keys = {
-@@ -160,26 +159,59 @@ class CodeMirror {
+@@ -160,26 +159,70 @@ class CodeMirror {
          this._handlers = {};
          this.$lastChangeEndOffset = 0;
          this.virtualSelection = null;
@@ -38,6 +38,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
 +        this.$view = cm6;
 +        this.$batch = undefined;
 +        this.$flushing = false;
++        this.$lastSpecs = null;
          this.onChange = this.onChange.bind(this);
          this.onSelectionChange = this.onSelectionChange.bind(this);
      }
@@ -53,8 +54,13 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
 +    $dispatch(...specs) {
 +        if (this.$batch === undefined || this.$flushing)
 +            return this.$view.dispatch(...specs);
-+        var tr = this.$st.update(...specs);
++        // Patched (pnpm patch, see docs/patches.md): every state of a batch
++        // but its first and its last leaves the parse for later, so a command
++        // over every line parses once rather than once for each line.
++        var later = this.$batch.length > 0;
++        var tr = later ? this.$st.update(...specs, { annotations: language.parseLater.of(true) }) : this.$st.update(...specs);
 +        this.$batch.push(tr);
++        this.$lastSpecs = later ? specs : null;
 +        if (tr.docChanged)
 +            this.onChange({ changes: tr.changes });
 +        if (tr.selection)
@@ -64,6 +70,11 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
 +        var batch = this.$batch;
 +        if (!batch || !batch.length)
 +            return;
++        if (this.$lastSpecs) {
++            var before = batch.length > 1 ? batch[batch.length - 2].state : this.$view.state;
++            batch[batch.length - 1] = before.update(...this.$lastSpecs);
++            this.$lastSpecs = null;
++        }
 +        this.$batch = [];
 +        this.$flushing = true;
 +        try {
@@ -94,7 +105,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          let index = indexFromPos(doc, pos);
          let tmpRanges = state.EditorSelection.create([state.EditorSelection.range(index, index)], 0).ranges;
          view.state.selection.ranges = tmpRanges;
-@@ -188,23 +220,23 @@ class CodeMirror {
+@@ -188,23 +231,23 @@ class CodeMirror {
      }
      firstLine() { return 0; }
      ;
@@ -123,7 +134,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var offset = p == "head" || !p
              ? sel.head
              : p == "anchor"
-@@ -220,8 +252,8 @@ class CodeMirror {
+@@ -220,8 +263,8 @@ class CodeMirror {
      }
      ;
      listSelections() {
@@ -134,7 +145,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
              return {
                  anchor: posFromIndex(doc, r.anchor),
                  head: posFromIndex(doc, r.head),
-@@ -230,7 +262,7 @@ class CodeMirror {
+@@ -230,7 +273,7 @@ class CodeMirror {
      }
      ;
      setSelections(p, primIndex) {
@@ -143,7 +154,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var ranges = p.map(x => {
              var head = indexFromPos(doc, x.head);
              var anchor = indexFromPos(doc, x.anchor);
-@@ -239,7 +271,7 @@ class CodeMirror {
+@@ -239,7 +282,7 @@ class CodeMirror {
                  return state.EditorSelection.cursor(head, 1);
              return state.EditorSelection.range(anchor, head);
          });
@@ -152,7 +163,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
              selection: state.EditorSelection.create(ranges, primIndex)
          });
      }
-@@ -252,10 +284,10 @@ class CodeMirror {
+@@ -252,10 +295,10 @@ class CodeMirror {
      }
      ;
      getLine(row) {
@@ -165,7 +176,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
      }
      ;
      getLineHandle(row) {
-@@ -280,25 +312,25 @@ class CodeMirror {
+@@ -280,25 +323,25 @@ class CodeMirror {
          this.$lineHandleChanges = undefined;
      }
      getRange(s, e) {
@@ -196,7 +207,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var changes = ranges.map((r, i) => {
              return { from: r.from, to: r.to, insert: replacements[i] || "" };
          });
-@@ -315,7 +347,7 @@ class CodeMirror {
+@@ -315,15 +358,15 @@ class CodeMirror {
      }
      ;
      somethingSelected() {
@@ -205,7 +216,8 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
      }
      ;
      getInputField() {
-@@ -323,7 +355,7 @@ class CodeMirror {
+-        return this.cm6.contentDOM;
++        return this.$view.contentDOM;
      }
      ;
      clipPos(p) {
@@ -214,7 +226,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var ch = p.ch;
          var lineNumber = p.line + 1;
          if (lineNumber < 1) {
-@@ -340,7 +372,7 @@ class CodeMirror {
+@@ -340,7 +383,7 @@ class CodeMirror {
      }
      ;
      getValue() {
@@ -223,7 +235,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
      }
      ;
      setValue(text) {
-@@ -364,7 +396,7 @@ class CodeMirror {
+@@ -364,7 +407,7 @@ class CodeMirror {
      }
      ;
      findMatchingBracket(pos, _options) {
@@ -232,7 +244,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var offset = indexFromPos(state.doc, pos);
          var m = language.matchBrackets(state, offset + 1, -1);
          if (m && m.end) {
-@@ -404,7 +436,7 @@ class CodeMirror {
+@@ -404,7 +447,7 @@ class CodeMirror {
              commands.cursorLineBoundaryBackward(this.cm6);
          else if (name == "goLineRight") {
              commands.cursorLineBoundaryForward(this.cm6);
@@ -241,7 +253,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
              let cur = state.selection.main.head;
              if (cur < state.doc.length && state.sliceDoc(cur, cur + 1) !== "\n") {
                  commands.cursorCharBackward(this.cm6);
-@@ -431,7 +463,7 @@ class CodeMirror {
+@@ -431,7 +474,7 @@ class CodeMirror {
              cm6Query.forVim = true;
              this.cm6Query = cm6Query;
              let effect = search.setSearchQuery.of(cm6Query);
@@ -250,7 +262,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
              return cm6Query;
          }
      }
-@@ -441,7 +473,7 @@ class CodeMirror {
+@@ -441,7 +484,7 @@ class CodeMirror {
              return;
          this.cm6Query.forVim = false;
          let effect = search.setSearchQuery.of(this.cm6Query);
@@ -259,7 +271,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
      }
      ;
      getSearchCursor(query, pos) {
-@@ -451,7 +483,7 @@ class CodeMirror {
+@@ -451,7 +494,7 @@ class CodeMirror {
          var afterEmptyMatch = false;
          if (pos.ch == undefined)
              pos.ch = Number.MAX_VALUE;
@@ -268,7 +280,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var source = query.source.replace(/(\\.|{(?:\d+(?:,\d*)?|,\d+)})|[{}]/g, function (a, b) {
              if (!b)
                  return "\\" + a;
-@@ -461,7 +493,7 @@ class CodeMirror {
+@@ -461,7 +504,7 @@ class CodeMirror {
              return new search.RegExpCursor(doc, source, { ignoreCase: query.ignoreCase }, from, to);
          }
          function nextMatch(from) {
@@ -277,7 +289,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
              if (from > doc.length)
                  return null;
              let res = rCursor(doc, from).next();
-@@ -469,7 +501,7 @@ class CodeMirror {
+@@ -469,7 +512,7 @@ class CodeMirror {
          }
          var ChunkSize = 10000;
          function prevMatchInRange(from, to) {
@@ -286,7 +298,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
              for (let size = 1;; size++) {
                  let start = Math.max(from, to - size * ChunkSize);
                  let cursor = rCursor(doc, start, to), range = null;
-@@ -485,7 +517,7 @@ class CodeMirror {
+@@ -485,7 +528,7 @@ class CodeMirror {
              findNext: function () { return this.find(false); },
              findPrevious: function () { return this.find(true); },
              find: function (back) {
@@ -295,7 +307,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
                  if (back) {
                      let endAt = last ? (afterEmptyMatch ? last.to - 1 : last.from) : firstOffset;
                      last = prevMatchInRange(0, endAt);
-@@ -511,7 +543,7 @@ class CodeMirror {
+@@ -511,7 +554,7 @@ class CodeMirror {
                      });
                      last.to = last.from + text.length;
                      if (lastCM5Result) {
@@ -304,7 +316,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
                      }
                  }
              },
-@@ -551,7 +583,7 @@ class CodeMirror {
+@@ -551,7 +594,7 @@ class CodeMirror {
      ;
      charCoords(pos, mode) {
          var rect = this.cm6.contentDOM.getBoundingClientRect();
@@ -313,7 +325,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var coords = this.cm6.coordsAtPos(offset);
          var d = -rect.top;
          return { left: ((coords === null || coords === void 0 ? void 0 : coords.left) || 0) - rect.left, top: ((coords === null || coords === void 0 ? void 0 : coords.top) || 0) + d, bottom: ((coords === null || coords === void 0 ? void 0 : coords.bottom) || 0) + d };
-@@ -560,7 +592,7 @@ class CodeMirror {
+@@ -560,7 +603,7 @@ class CodeMirror {
      coordsChar(coords, mode) {
          var rect = this.cm6.contentDOM.getBoundingClientRect();
          var offset = this.cm6.posAtCoords({ x: coords.left + rect.left, y: coords.top + rect.top }) || 0;
@@ -322,7 +334,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
      }
      ;
      getScrollInfo() {
-@@ -583,12 +615,12 @@ class CodeMirror {
+@@ -583,17 +626,17 @@ class CodeMirror {
      scrollIntoView(pos, margin) {
          if (pos) {
              var offset = this.indexFromPos(pos);
@@ -337,7 +349,13 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          }
      }
      ;
-@@ -619,6 +651,8 @@ class CodeMirror {
+     getWrapperElement() {
+-        return this.cm6.dom;
++        return this.$view.dom;
+     }
+     ;
+     // for tests
+@@ -619,6 +662,8 @@ class CodeMirror {
      }
      ;
      onChange(update) {
@@ -346,7 +364,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          if (this.$lineHandleChanges) {
              this.$lineHandleChanges.push(update);
          }
-@@ -647,6 +681,8 @@ class CodeMirror {
+@@ -647,6 +692,8 @@ class CodeMirror {
      }
      ;
      onSelectionChange() {
@@ -355,7 +373,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var curOp = this.curOp = this.curOp || {};
          if (!curOp.cursorActivityHandlers)
              curOp.cursorActivityHandlers = this._handlers["cursorActivity"] && this._handlers["cursorActivity"].slice();
-@@ -657,10 +693,21 @@ class CodeMirror {
+@@ -657,10 +704,21 @@ class CodeMirror {
          if (!this.curOp)
              this.curOp = { $d: 0 };
          this.curOp.$d++;
@@ -377,7 +395,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
              if (this.curOp) {
                  this.curOp.$d--;
                  if (!this.curOp.$d)
-@@ -710,10 +757,10 @@ class CodeMirror {
+@@ -710,10 +768,10 @@ class CodeMirror {
      getOption(name) {
          switch (name) {
              case "firstLineNumber": return 1;
@@ -392,7 +410,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
              case "textwidth": return this.state.textwidth;
              // for tests
              case "keyMap": return this.state.keyMap || "vim";
-@@ -728,7 +775,7 @@ class CodeMirror {
+@@ -728,7 +786,7 @@ class CodeMirror {
          var _a;
          // only comment|string are needed
          var offset = this.indexFromPos(pos);
@@ -401,7 +419,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var node = tree === null || tree === void 0 ? void 0 : tree.resolve(offset);
          var type = ((_a = node === null || node === void 0 ? void 0 : node.type) === null || _a === void 0 ? void 0 : _a.name) || "";
          if (/comment/i.test(type))
-@@ -739,8 +786,8 @@ class CodeMirror {
+@@ -739,8 +797,8 @@ class CodeMirror {
      }
      ;
      overWriteSelection(text) {
@@ -412,7 +430,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          var ranges = sel.ranges.map(x => {
              if (x.empty) {
                  var ch = x.to < doc.length ? doc.sliceString(x.from, x.to + 1) : "";
-@@ -749,30 +796,30 @@ class CodeMirror {
+@@ -749,30 +807,30 @@ class CodeMirror {
              }
              return x;
          });
@@ -449,7 +467,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          this.virtualSelection = null;
      }
      hardWrap(options) {
-@@ -790,7 +837,7 @@ CodeMirror.commands = {
+@@ -790,7 +848,7 @@ CodeMirror.commands = {
      undo: function (cm) { runHistoryCommand(cm, true); },
      newlineAndIndent: function (cm) {
          commands.insertNewlineAndIndent({
@@ -458,7 +476,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
              dispatch: (tr) => {
                  return dispatchChange(cm, tr);
              }
-@@ -983,7 +1030,7 @@ function findMatchingTag(cm, pos) {
+@@ -983,7 +1041,7 @@ function findMatchingTag(cm, pos) {
  }
  function findEnclosingTag(cm, pos) {
      var _a, _b;
@@ -467,7 +485,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
      var offset = cm.indexFromPos(pos);
      if (offset < state.doc.length) {
          var text = state.sliceDoc(offset, offset + 1);
-@@ -1167,7 +1214,7 @@ class BlockCursorPlugin {
+@@ -1167,7 +1225,7 @@ class BlockCursorPlugin {
          this.setBlinkRate();
      }
      setBlinkRate() {
@@ -476,7 +494,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
          let blinkRate = config.cursorBlinkRate;
          this.cursorLayer.style.animationDuration = blinkRate + "ms";
      }
-@@ -1377,7 +1424,7 @@ const vimPlugin = View.ViewPlugin.fromClass(class {
+@@ -1377,7 +1435,7 @@ const vimPlugin = View.ViewPlugin.fromClass(class {
                  this.updateStatus();
              }
              else {
@@ -486,9 +504,17 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a0
                  });
              }
 diff --git a/dist/index.js b/dist/index.js
-index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad556a83dc9 100644
+index f0b243a40e4c4605811a774078a5a25d1fa5ae54..2a3355593814bb0bc6ecbb568024ce7e233bf43f 100644
 --- a/dist/index.js
 +++ b/dist/index.js
+@@ -1,6 +1,6 @@
+ import { initVim } from '@replit/codemirror-vim-core';
+ import { EditorSelection, MapMode, Prec, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state';
+-import { foldCode, matchBrackets, indentUnit, ensureSyntaxTree, StringStream } from '@codemirror/language';
++import { foldCode, matchBrackets, indentUnit, ensureSyntaxTree, StringStream, parseLater } from '@codemirror/language';
+ import * as View from '@codemirror/view';
+ import { EditorView, runScopeHandlers, Direction, ViewPlugin, Decoration, showPanel } from '@codemirror/view';
+ import { SearchQuery, setSearchQuery, RegExpCursor } from '@codemirror/search';
 @@ -78,8 +78,7 @@ catch (_) {
  }
  // workaround for missing api for merging transactions
@@ -517,7 +543,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
      }
  }
  var keys = {
-@@ -140,26 +139,59 @@ class CodeMirror {
+@@ -140,26 +139,70 @@ class CodeMirror {
          this._handlers = {};
          this.$lastChangeEndOffset = 0;
          this.virtualSelection = null;
@@ -525,6 +551,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
 +        this.$view = cm6;
 +        this.$batch = undefined;
 +        this.$flushing = false;
++        this.$lastSpecs = null;
          this.onChange = this.onChange.bind(this);
          this.onSelectionChange = this.onSelectionChange.bind(this);
      }
@@ -540,8 +567,13 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
 +    $dispatch(...specs) {
 +        if (this.$batch === undefined || this.$flushing)
 +            return this.$view.dispatch(...specs);
-+        var tr = this.$st.update(...specs);
++        // Patched (pnpm patch, see docs/patches.md): every state of a batch
++        // but its first and its last leaves the parse for later, so a command
++        // over every line parses once rather than once for each line.
++        var later = this.$batch.length > 0;
++        var tr = later ? this.$st.update(...specs, { annotations: parseLater.of(true) }) : this.$st.update(...specs);
 +        this.$batch.push(tr);
++        this.$lastSpecs = later ? specs : null;
 +        if (tr.docChanged)
 +            this.onChange({ changes: tr.changes });
 +        if (tr.selection)
@@ -551,6 +583,11 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
 +        var batch = this.$batch;
 +        if (!batch || !batch.length)
 +            return;
++        if (this.$lastSpecs) {
++            var before = batch.length > 1 ? batch[batch.length - 2].state : this.$view.state;
++            batch[batch.length - 1] = before.update(...this.$lastSpecs);
++            this.$lastSpecs = null;
++        }
 +        this.$batch = [];
 +        this.$flushing = true;
 +        try {
@@ -581,7 +618,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          let index = indexFromPos(doc, pos);
          let tmpRanges = EditorSelection.create([EditorSelection.range(index, index)], 0).ranges;
          view.state.selection.ranges = tmpRanges;
-@@ -168,23 +200,23 @@ class CodeMirror {
+@@ -168,23 +211,23 @@ class CodeMirror {
      }
      firstLine() { return 0; }
      ;
@@ -610,7 +647,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var offset = p == "head" || !p
              ? sel.head
              : p == "anchor"
-@@ -200,8 +232,8 @@ class CodeMirror {
+@@ -200,8 +243,8 @@ class CodeMirror {
      }
      ;
      listSelections() {
@@ -621,7 +658,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
              return {
                  anchor: posFromIndex(doc, r.anchor),
                  head: posFromIndex(doc, r.head),
-@@ -210,7 +242,7 @@ class CodeMirror {
+@@ -210,7 +253,7 @@ class CodeMirror {
      }
      ;
      setSelections(p, primIndex) {
@@ -630,7 +667,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var ranges = p.map(x => {
              var head = indexFromPos(doc, x.head);
              var anchor = indexFromPos(doc, x.anchor);
-@@ -219,7 +251,7 @@ class CodeMirror {
+@@ -219,7 +262,7 @@ class CodeMirror {
                  return EditorSelection.cursor(head, 1);
              return EditorSelection.range(anchor, head);
          });
@@ -639,7 +676,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
              selection: EditorSelection.create(ranges, primIndex)
          });
      }
-@@ -232,10 +264,10 @@ class CodeMirror {
+@@ -232,10 +275,10 @@ class CodeMirror {
      }
      ;
      getLine(row) {
@@ -652,7 +689,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
      }
      ;
      getLineHandle(row) {
-@@ -260,25 +292,25 @@ class CodeMirror {
+@@ -260,25 +303,25 @@ class CodeMirror {
          this.$lineHandleChanges = undefined;
      }
      getRange(s, e) {
@@ -683,7 +720,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var changes = ranges.map((r, i) => {
              return { from: r.from, to: r.to, insert: replacements[i] || "" };
          });
-@@ -295,7 +327,7 @@ class CodeMirror {
+@@ -295,15 +338,15 @@ class CodeMirror {
      }
      ;
      somethingSelected() {
@@ -692,7 +729,8 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
      }
      ;
      getInputField() {
-@@ -303,7 +335,7 @@ class CodeMirror {
+-        return this.cm6.contentDOM;
++        return this.$view.contentDOM;
      }
      ;
      clipPos(p) {
@@ -701,7 +739,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var ch = p.ch;
          var lineNumber = p.line + 1;
          if (lineNumber < 1) {
-@@ -320,7 +352,7 @@ class CodeMirror {
+@@ -320,7 +363,7 @@ class CodeMirror {
      }
      ;
      getValue() {
@@ -710,7 +748,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
      }
      ;
      setValue(text) {
-@@ -344,7 +376,7 @@ class CodeMirror {
+@@ -344,7 +387,7 @@ class CodeMirror {
      }
      ;
      findMatchingBracket(pos, _options) {
@@ -719,7 +757,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var offset = indexFromPos(state.doc, pos);
          var m = matchBrackets(state, offset + 1, -1);
          if (m && m.end) {
-@@ -384,7 +416,7 @@ class CodeMirror {
+@@ -384,7 +427,7 @@ class CodeMirror {
              cursorLineBoundaryBackward(this.cm6);
          else if (name == "goLineRight") {
              cursorLineBoundaryForward(this.cm6);
@@ -728,7 +766,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
              let cur = state.selection.main.head;
              if (cur < state.doc.length && state.sliceDoc(cur, cur + 1) !== "\n") {
                  cursorCharBackward(this.cm6);
-@@ -411,7 +443,7 @@ class CodeMirror {
+@@ -411,7 +454,7 @@ class CodeMirror {
              cm6Query.forVim = true;
              this.cm6Query = cm6Query;
              let effect = setSearchQuery.of(cm6Query);
@@ -737,7 +775,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
              return cm6Query;
          }
      }
-@@ -421,7 +453,7 @@ class CodeMirror {
+@@ -421,7 +464,7 @@ class CodeMirror {
              return;
          this.cm6Query.forVim = false;
          let effect = setSearchQuery.of(this.cm6Query);
@@ -746,7 +784,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
      }
      ;
      getSearchCursor(query, pos) {
-@@ -431,7 +463,7 @@ class CodeMirror {
+@@ -431,7 +474,7 @@ class CodeMirror {
          var afterEmptyMatch = false;
          if (pos.ch == undefined)
              pos.ch = Number.MAX_VALUE;
@@ -755,7 +793,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var source = query.source.replace(/(\\.|{(?:\d+(?:,\d*)?|,\d+)})|[{}]/g, function (a, b) {
              if (!b)
                  return "\\" + a;
-@@ -441,7 +473,7 @@ class CodeMirror {
+@@ -441,7 +484,7 @@ class CodeMirror {
              return new RegExpCursor(doc, source, { ignoreCase: query.ignoreCase }, from, to);
          }
          function nextMatch(from) {
@@ -764,7 +802,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
              if (from > doc.length)
                  return null;
              let res = rCursor(doc, from).next();
-@@ -449,7 +481,7 @@ class CodeMirror {
+@@ -449,7 +492,7 @@ class CodeMirror {
          }
          var ChunkSize = 10000;
          function prevMatchInRange(from, to) {
@@ -773,7 +811,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
              for (let size = 1;; size++) {
                  let start = Math.max(from, to - size * ChunkSize);
                  let cursor = rCursor(doc, start, to), range = null;
-@@ -465,7 +497,7 @@ class CodeMirror {
+@@ -465,7 +508,7 @@ class CodeMirror {
              findNext: function () { return this.find(false); },
              findPrevious: function () { return this.find(true); },
              find: function (back) {
@@ -782,7 +820,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
                  if (back) {
                      let endAt = last ? (afterEmptyMatch ? last.to - 1 : last.from) : firstOffset;
                      last = prevMatchInRange(0, endAt);
-@@ -491,7 +523,7 @@ class CodeMirror {
+@@ -491,7 +534,7 @@ class CodeMirror {
                      });
                      last.to = last.from + text.length;
                      if (lastCM5Result) {
@@ -791,7 +829,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
                      }
                  }
              },
-@@ -531,7 +563,7 @@ class CodeMirror {
+@@ -531,7 +574,7 @@ class CodeMirror {
      ;
      charCoords(pos, mode) {
          var rect = this.cm6.contentDOM.getBoundingClientRect();
@@ -800,7 +838,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var coords = this.cm6.coordsAtPos(offset);
          var d = -rect.top;
          return { left: ((coords === null || coords === void 0 ? void 0 : coords.left) || 0) - rect.left, top: ((coords === null || coords === void 0 ? void 0 : coords.top) || 0) + d, bottom: ((coords === null || coords === void 0 ? void 0 : coords.bottom) || 0) + d };
-@@ -540,7 +572,7 @@ class CodeMirror {
+@@ -540,7 +583,7 @@ class CodeMirror {
      coordsChar(coords, mode) {
          var rect = this.cm6.contentDOM.getBoundingClientRect();
          var offset = this.cm6.posAtCoords({ x: coords.left + rect.left, y: coords.top + rect.top }) || 0;
@@ -809,7 +847,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
      }
      ;
      getScrollInfo() {
-@@ -563,12 +595,12 @@ class CodeMirror {
+@@ -563,17 +606,17 @@ class CodeMirror {
      scrollIntoView(pos, margin) {
          if (pos) {
              var offset = this.indexFromPos(pos);
@@ -824,7 +862,13 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          }
      }
      ;
-@@ -599,6 +631,8 @@ class CodeMirror {
+     getWrapperElement() {
+-        return this.cm6.dom;
++        return this.$view.dom;
+     }
+     ;
+     // for tests
+@@ -599,6 +642,8 @@ class CodeMirror {
      }
      ;
      onChange(update) {
@@ -833,7 +877,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          if (this.$lineHandleChanges) {
              this.$lineHandleChanges.push(update);
          }
-@@ -627,6 +661,8 @@ class CodeMirror {
+@@ -627,6 +672,8 @@ class CodeMirror {
      }
      ;
      onSelectionChange() {
@@ -842,7 +886,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var curOp = this.curOp = this.curOp || {};
          if (!curOp.cursorActivityHandlers)
              curOp.cursorActivityHandlers = this._handlers["cursorActivity"] && this._handlers["cursorActivity"].slice();
-@@ -637,10 +673,21 @@ class CodeMirror {
+@@ -637,10 +684,21 @@ class CodeMirror {
          if (!this.curOp)
              this.curOp = { $d: 0 };
          this.curOp.$d++;
@@ -864,7 +908,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
              if (this.curOp) {
                  this.curOp.$d--;
                  if (!this.curOp.$d)
-@@ -690,10 +737,10 @@ class CodeMirror {
+@@ -690,10 +748,10 @@ class CodeMirror {
      getOption(name) {
          switch (name) {
              case "firstLineNumber": return 1;
@@ -879,7 +923,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
              case "textwidth": return this.state.textwidth;
              // for tests
              case "keyMap": return this.state.keyMap || "vim";
-@@ -708,7 +755,7 @@ class CodeMirror {
+@@ -708,7 +766,7 @@ class CodeMirror {
          var _a;
          // only comment|string are needed
          var offset = this.indexFromPos(pos);
@@ -888,7 +932,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var node = tree === null || tree === void 0 ? void 0 : tree.resolve(offset);
          var type = ((_a = node === null || node === void 0 ? void 0 : node.type) === null || _a === void 0 ? void 0 : _a.name) || "";
          if (/comment/i.test(type))
-@@ -719,8 +766,8 @@ class CodeMirror {
+@@ -719,8 +777,8 @@ class CodeMirror {
      }
      ;
      overWriteSelection(text) {
@@ -899,7 +943,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          var ranges = sel.ranges.map(x => {
              if (x.empty) {
                  var ch = x.to < doc.length ? doc.sliceString(x.from, x.to + 1) : "";
-@@ -729,30 +776,30 @@ class CodeMirror {
+@@ -729,30 +787,30 @@ class CodeMirror {
              }
              return x;
          });
@@ -936,7 +980,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          this.virtualSelection = null;
      }
      hardWrap(options) {
-@@ -770,7 +817,7 @@ CodeMirror.commands = {
+@@ -770,7 +828,7 @@ CodeMirror.commands = {
      undo: function (cm) { runHistoryCommand(cm, true); },
      newlineAndIndent: function (cm) {
          insertNewlineAndIndent({
@@ -945,7 +989,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
              dispatch: (tr) => {
                  return dispatchChange(cm, tr);
              }
-@@ -963,7 +1010,7 @@ function findMatchingTag(cm, pos) {
+@@ -963,7 +1021,7 @@ function findMatchingTag(cm, pos) {
  }
  function findEnclosingTag(cm, pos) {
      var _a, _b;
@@ -954,7 +998,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
      var offset = cm.indexFromPos(pos);
      if (offset < state.doc.length) {
          var text = state.sliceDoc(offset, offset + 1);
-@@ -1147,7 +1194,7 @@ class BlockCursorPlugin {
+@@ -1147,7 +1205,7 @@ class BlockCursorPlugin {
          this.setBlinkRate();
      }
      setBlinkRate() {
@@ -963,7 +1007,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad5
          let blinkRate = config.cursorBlinkRate;
          this.cursorLayer.style.animationDuration = blinkRate + "ms";
      }
-@@ -1357,7 +1404,7 @@ const vimPlugin = /*@__PURE__*/ViewPlugin.fromClass(class {
+@@ -1357,7 +1415,7 @@ const vimPlugin = /*@__PURE__*/ViewPlugin.fromClass(class {
                  this.updateStatus();
              }
              else {
