@@ -526,6 +526,21 @@ mod tests {
     }
 
     #[test]
+    fn the_runtime_holds_no_lock_of_its_own_while_a_webview_is_used_built_or_let_go() {
+        let runtime =
+            std::fs::read_to_string(crate::app_dir().join("windows/tauri-runtime-wry/src/lib.rs"))
+                .expect("the runtime's source");
+        assert!(
+            !runtime.contains("self.window_id.lock().unwrap(),"),
+            "a webview's window id is locked for the whole of a call made with it"
+        );
+        assert!(
+            !runtime.contains("self.context_store.lock()"),
+            "a webview let go of while another is built waits on the store the build holds"
+        );
+    }
+
+    #[test]
     fn nothing_pumps_inside_with_webview() {
         let root = crate::app_dir().join("src");
         let mut sources = vec![root];
