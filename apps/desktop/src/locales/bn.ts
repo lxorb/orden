@@ -3201,6 +3201,11 @@ export const bn: Dictionary = {
   'Import from': 'এখান থেকে ইমপোর্ট',
   'No file chosen': 'কোনো ফাইল বাছা হয়নি',
   'Choose a file': 'ফাইল বেছে নিন',
+  'Select your password manager': 'আপনার পাসওয়ার্ড ম্যানেজার বেছে নিন',
+  'In {app}, open {place} and export as {format}.':
+    '{app}-এ {place} খুলুন এবং {format} হিসেবে এক্সপোর্ট করুন।',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'এমন একটি CSV ফাইল এক্সপোর্ট করুন যার প্রথম সারিতে কলামের নাম থাকে, যেমন name, url, username, password এবং note।',
   Passphrase: 'পাসফ্রেজ',
   'Ready to import': 'ইমপোর্টের জন্য প্রস্তুত',
   'A new vault for each': 'প্রতিটির জন্য নতুন ভল্ট',

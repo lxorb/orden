@@ -3191,6 +3191,11 @@ export const gu: Dictionary = {
   'Import from': 'અહીંથી આયાત કરો',
   'No file chosen': 'કોઈ ફાઇલ પસંદ નથી',
   'Choose a file': 'ફાઇલ પસંદ કરો',
+  'Select your password manager': 'તમારો પાસવર્ડ મેનેજર પસંદ કરો',
+  'In {app}, open {place} and export as {format}.':
+    '{app}માં {place} ખોલો અને {format} તરીકે એક્સપોર્ટ કરો.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'એવી CSV ફાઇલ એક્સપોર્ટ કરો જેની પ્રથમ પંક્તિ તેના કૉલમનાં નામ આપે, જેમ કે name, url, username, password અને note.',
   Passphrase: 'પાસફ્રેઝ',
   'Ready to import': 'આયાત માટે તૈયાર',
   'A new vault for each': 'દરેક માટે નવું વૉલ્ટ',

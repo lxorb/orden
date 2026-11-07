@@ -3227,6 +3227,11 @@ export const tr: Dictionary = {
   'Import from': 'Şuradan içe aktar',
   'No file chosen': 'Dosya seçilmedi',
   'Choose a file': 'Dosya seç',
+  'Select your password manager': 'Parola yöneticinizi seçin',
+  'In {app}, open {place} and export as {format}.':
+    '{app} içinde {place} bölümünü açın ve {format} olarak dışa aktarın.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'İlk satırı sütunları adlandıran bir CSV dosyası dışa aktarın; örneğin name, url, username, password ve note.',
   Passphrase: 'Parola ifadesi',
   'Ready to import': 'İçe aktarmaya hazır',
   'A new vault for each': 'Her biri için yeni bir kasa',

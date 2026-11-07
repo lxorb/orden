@@ -3109,6 +3109,10 @@ export const th: Dictionary = {
   'Import from': 'นำเข้าจาก',
   'No file chosen': 'ยังไม่ได้เลือกไฟล์',
   'Choose a file': 'เลือกไฟล์',
+  'Select your password manager': 'เลือกตัวจัดการรหัสผ่านของคุณ',
+  'In {app}, open {place} and export as {format}.': 'ใน {app} เปิด {place} แล้วส่งออกเป็น {format}',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'ส่งออกไฟล์ CSV ที่แถวแรกระบุชื่อคอลัมน์ เช่น name, url, username, password และ note',
   Passphrase: 'วลีรหัสผ่าน',
   'Ready to import': 'พร้อมนำเข้า',
   'A new vault for each': 'ห้องนิรภัยใหม่สำหรับแต่ละรายการ',

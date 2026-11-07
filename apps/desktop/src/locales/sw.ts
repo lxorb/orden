@@ -3249,6 +3249,11 @@ export const sw: Dictionary = {
   'Import from': 'Leta kutoka',
   'No file chosen': 'Hakuna faili iliyochaguliwa',
   'Choose a file': 'Chagua faili',
+  'Select your password manager': 'Chagua kidhibiti chako cha nenosiri',
+  'In {app}, open {place} and export as {format}.':
+    'Katika {app}, fungua {place} kisha hamisha kama {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Hamisha faili ya CSV ambayo safu yake ya kwanza inataja majina ya safuwima, kama name, url, username, password na note.',
   Passphrase: 'Kaulisiri',
   'Ready to import': 'Tayari kuleta',
   'A new vault for each': 'Kasha jipya kwa kila moja',

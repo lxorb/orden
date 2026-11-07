@@ -27,6 +27,7 @@ const OWN: Record<string, RegExp> = {
   'settings/ExtensionRows.svelte': /class="(name|toggle)"/,
   'remote/RemotePane.svelte': /class="(open|link)"/,
   'settings/BrowserThemes.svelte': /class="card"/,
+  'pass/SettingsImport.svelte': /class="source"/,
 }
 
 function buttons(source: string): string[] {

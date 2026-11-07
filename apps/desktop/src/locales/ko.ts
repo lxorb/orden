@@ -3132,6 +3132,11 @@ export const ko: Dictionary = {
   'Import from': '가져올 곳',
   'No file chosen': '선택한 파일 없음',
   'Choose a file': '파일 선택',
+  'Select your password manager': '비밀번호 관리자 선택',
+  'In {app}, open {place} and export as {format}.':
+    '{app}에서 {place}을(를) 열고 {format} 형식으로 내보내세요.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    '첫 행에 열 이름(예: name, url, username, password, note)이 있는 CSV 파일을 내보내세요.',
   Passphrase: '암호 문구',
   'Ready to import': '가져올 준비 완료',
   'A new vault for each': '각각 새 보관함',

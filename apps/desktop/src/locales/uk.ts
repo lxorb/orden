@@ -3324,6 +3324,11 @@ export const uk: Dictionary = {
   'Import from': 'Імпорт з',
   'No file chosen': 'Файл не вибрано',
   'Choose a file': 'Вибрати файл',
+  'Select your password manager': 'Виберіть менеджер паролів',
+  'In {app}, open {place} and export as {format}.':
+    'У {app} відкрийте {place} і експортуйте у форматі {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Експортуйте CSV-файл, перший рядок якого містить назви стовпців, наприклад name, url, username, password і note.',
   Passphrase: 'Парольна фраза',
   'Ready to import': 'Готово до імпорту',
   'A new vault for each': 'Нове сховище для кожного',

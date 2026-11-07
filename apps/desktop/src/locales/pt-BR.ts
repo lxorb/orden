@@ -3277,6 +3277,11 @@ export const ptBR: Dictionary = {
   'Import from': 'Importar de',
   'No file chosen': 'Nenhum arquivo escolhido',
   'Choose a file': 'Escolher um arquivo',
+  'Select your password manager': 'Selecione seu gerenciador de senhas',
+  'In {app}, open {place} and export as {format}.':
+    'No {app}, abra {place} e exporte como {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Exporte um arquivo CSV cuja primeira linha nomeie as colunas, como name, url, username, password e note.',
   Passphrase: 'Frase secreta',
   'Ready to import': 'Pronto para importar',
   'A new vault for each': 'Um novo cofre para cada',

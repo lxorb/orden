@@ -3231,6 +3231,11 @@ export const gsw: Dictionary = {
   'Import from': 'Importiere us',
   'No file chosen': 'Kei Datei gwählt',
   'Choose a file': 'Datei wähle',
+  'Select your password manager': 'Wähl din Passwort-Manager',
+  'In {app}, open {place} and export as {format}.':
+    'Mach in {app} {place} uf und exportier als {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Exportier e CSV-Datei, wo i de erschte Zeile d Spalte benennt, zum Bispiil name, url, username, password und note.',
   Passphrase: 'Passphrase',
   'Ready to import': 'Parat zum Importiere',
   'A new vault for each': 'En neue Tresor für jedi',

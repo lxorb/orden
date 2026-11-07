@@ -3170,6 +3170,11 @@ export const ms: Dictionary = {
   'Import from': 'Import daripada',
   'No file chosen': 'Tiada fail dipilih',
   'Choose a file': 'Pilih fail',
+  'Select your password manager': 'Pilih pengurus kata laluan anda',
+  'In {app}, open {place} and export as {format}.':
+    'Dalam {app}, buka {place} dan eksport sebagai {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Eksport fail CSV yang baris pertamanya menamakan lajurnya, seperti name, url, username, password dan note.',
   Passphrase: 'Frasa laluan',
   'Ready to import': 'Sedia untuk diimport',
   'A new vault for each': 'Peti besi baharu untuk setiap satu',

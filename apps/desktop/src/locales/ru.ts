@@ -3330,6 +3330,11 @@ export const ru: Dictionary = {
   'Import from': 'Импорт из',
   'No file chosen': 'Файл не выбран',
   'Choose a file': 'Выбрать файл',
+  'Select your password manager': 'Выберите менеджер паролей',
+  'In {app}, open {place} and export as {format}.':
+    'В {app} откройте {place} и экспортируйте в формате {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Экспортируйте CSV-файл, первая строка которого содержит названия столбцов, например name, url, username, password и note.',
   Passphrase: 'Парольная фраза',
   'Ready to import': 'Готово к импорту',
   'A new vault for each': 'Новое хранилище для каждого',

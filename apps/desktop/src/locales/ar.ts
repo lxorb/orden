@@ -3357,6 +3357,10 @@ export const ar: Dictionary = {
   'Import from': 'الاستيراد من',
   'No file chosen': 'لم يُختر ملف',
   'Choose a file': 'اختيار ملف',
+  'Select your password manager': 'اختر مدير كلمات المرور',
+  'In {app}, open {place} and export as {format}.': 'في {app}، افتح {place} وصدّر بصيغة {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'صدّر ملف CSV يسمّي صفه الأول أعمدته، مثل name وurl وusername وpassword وnote.',
   Passphrase: 'عبارة المرور',
   'Ready to import': 'جاهز للاستيراد',
   'A new vault for each': 'خزنة جديدة لكل منها',

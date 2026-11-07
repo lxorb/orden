@@ -3216,6 +3216,11 @@ export const pa: Dictionary = {
   'Import from': 'ਇੱਥੋਂ ਅੰਦਰ ਲਿਆਓ',
   'No file chosen': 'ਕੋਈ ਫ਼ਾਈਲ ਨਹੀਂ ਚੁਣੀ',
   'Choose a file': 'ਫ਼ਾਈਲ ਚੁਣੋ',
+  'Select your password manager': 'ਆਪਣਾ ਪਾਸਵਰਡ ਮੈਨੇਜਰ ਚੁਣੋ',
+  'In {app}, open {place} and export as {format}.':
+    '{app} ਵਿੱਚ {place} ਖੋਲ੍ਹੋ ਅਤੇ {format} ਵਜੋਂ ਐਕਸਪੋਰਟ ਕਰੋ।',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'ਅਜਿਹੀ CSV ਫ਼ਾਈਲ ਐਕਸਪੋਰਟ ਕਰੋ ਜਿਸ ਦੀ ਪਹਿਲੀ ਕਤਾਰ ਕਾਲਮਾਂ ਦੇ ਨਾਂ ਦੱਸੇ, ਜਿਵੇਂ name, url, username, password ਅਤੇ note।',
   Passphrase: 'ਪਾਸਫ਼ਰੇਜ਼',
   'Ready to import': 'ਅੰਦਰ ਲਿਆਉਣ ਲਈ ਤਿਆਰ',
   'A new vault for each': 'ਹਰ ਇੱਕ ਲਈ ਨਵਾਂ ਵਾਲਟ',

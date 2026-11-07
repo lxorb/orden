@@ -3274,6 +3274,11 @@ export const fil: Dictionary = {
   'Import from': 'Mag-import mula sa',
   'No file chosen': 'Walang napiling file',
   'Choose a file': 'Pumili ng file',
+  'Select your password manager': 'Piliin ang iyong password manager',
+  'In {app}, open {place} and export as {format}.':
+    'Sa {app}, buksan ang {place} at i-export bilang {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Mag-export ng CSV file na ang unang row ay nagpapangalan sa mga column nito, gaya ng name, url, username, password at note.',
   Passphrase: 'Passphrase',
   'Ready to import': 'Handa nang i-import',
   'A new vault for each': 'Bagong vault para sa bawat isa',

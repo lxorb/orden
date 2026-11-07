@@ -3142,6 +3142,11 @@ export const vi: Dictionary = {
   'Import from': 'Nhập từ',
   'No file chosen': 'Chưa chọn tệp',
   'Choose a file': 'Chọn tệp',
+  'Select your password manager': 'Chọn trình quản lý mật khẩu của bạn',
+  'In {app}, open {place} and export as {format}.':
+    'Trong {app}, mở {place} và xuất dưới dạng {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Xuất một tệp CSV có hàng đầu tiên ghi tên các cột, chẳng hạn name, url, username, password và note.',
   Passphrase: 'Cụm mật khẩu',
   'Ready to import': 'Sẵn sàng nhập',
   'A new vault for each': 'Một kho mới cho mỗi',

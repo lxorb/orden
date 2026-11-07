@@ -1,11 +1,14 @@
 <script lang="ts">
+  import { flushSync } from 'svelte'
   import { guessSource, type Imported, SOURCES, type SourceId } from '@orden/pass/import/index'
   import { message, plural, t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { importedFrom, isSealed } from './import-file'
+  import { kindsOf, markOf, stepsOf } from './import-sources'
   import { pass } from './store.svelte'
 
   let source = $state<SourceId>('proton')
+  let asked = $state(false)
   let file = $state<{ name: string; bytes: Uint8Array } | null>(null)
   let passphrase = $state('')
   let imported = $state.raw<Imported | null>(null)
@@ -16,6 +19,19 @@
   let picker = $state<HTMLInputElement>()
 
   const accept = $derived(SOURCES.find((one) => one.id === source)?.accept.join(',') ?? '')
+  const shown = $derived(SOURCES.find((one) => one.id === source))
+
+  function pick(id: SourceId) {
+    source = id
+    asked = true
+    imported = null
+    done = null
+    wrong = ''
+    file = null
+    passphrase = ''
+    flushSync()
+    picker?.click()
+  }
   const sealed = $derived(file !== null && isSealed(source, file.bytes))
   const counted = $derived(imported?.vaults.reduce((sum, one) => sum + one.items.length, 0) ?? 0)
 
@@ -64,20 +80,43 @@
   }
 </script>
 
+<h3 class="orden-section">{t('Select your password manager')}</h3>
+<div class="sources" role="group" aria-label={t('Select your password manager')}>
+  {#each SOURCES as one (one.id)}
+    {@const mark = markOf(one.id)}
+    <button
+      type="button"
+      class="source"
+      class:on={asked && source === one.id}
+      aria-pressed={asked && source === one.id}
+      data-source={one.id}
+      onclick={() => pick(one.id)}
+    >
+      <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+        <rect width="24" height="24" rx="6" fill={mark.fill} />
+        <text
+          x="12"
+          y="12"
+          dy="0.36em"
+          text-anchor="middle"
+          fill={mark.ink}
+          font-size={mark.letters.length > 2 ? 7.5 : mark.letters.length > 1 ? 10 : 13}
+          >{mark.letters}</text
+        >
+      </svg>
+      <span class="words">
+        <span class="title">{one.name}</span>
+        <span class="kinds">{kindsOf(one)}</span>
+      </span>
+    </button>
+  {/each}
+</div>
+
+{#if asked && shown}
+  <p class="steps" data-steps>{stepsOf(shown)}</p>
+{/if}
+
 <div class="card padded">
-  <div class="orden-setting">
-    <span class="name">{t('Import from')}</span>
-    <Select
-      label={t('Import from')}
-      value={source}
-      options={SOURCES.map((one) => ({ value: one.id, label: one.name }))}
-      onchange={(value: string) => {
-        source = value as SourceId
-        imported = null
-        if (file) void read()
-      }}
-    />
-  </div>
   <div class="orden-setting">
     <span class="name">{file?.name ?? t('No file chosen')}</span>
     <input
@@ -186,6 +225,71 @@
 
   .picker {
     display: none;
+  }
+
+  .sources {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-2);
+  }
+
+  .source {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: var(--space-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+    color: var(--text-strong);
+    font-family: var(--font-ui);
+    text-align: start;
+  }
+
+  .source:hover {
+    background: var(--surface-hover);
+  }
+
+  .source.on {
+    border-color: var(--accent);
+  }
+
+  .mark {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    font-family: var(--font-ui);
+    font-weight: 700;
+  }
+
+  .words {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .kinds {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .title {
+    overflow-wrap: anywhere;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-strong);
+  }
+
+  .kinds {
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+
+  .steps {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-sm);
+    color: var(--muted-strong);
   }
 
   .orden-section {

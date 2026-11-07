@@ -3149,6 +3149,11 @@ export const ja: Dictionary = {
   'Import from': '読み込み元',
   'No file chosen': 'ファイルが選択されていません',
   'Choose a file': 'ファイルを選択',
+  'Select your password manager': 'パスワードマネージャーを選択',
+  'In {app}, open {place} and export as {format}.':
+    '{app}で{place}を開き、{format}形式でエクスポートしてください。',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    '1行目に列名（name、url、username、password、noteなど）がある CSV ファイルをエクスポートしてください。',
   Passphrase: 'パスフレーズ',
   'Ready to import': '読み込みの準備ができました',
   'A new vault for each': 'それぞれに新しい保管庫',

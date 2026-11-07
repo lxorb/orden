@@ -3264,6 +3264,11 @@ export const ta: Dictionary = {
   'Import from': 'இதிலிருந்து இறக்குமதி',
   'No file chosen': 'கோப்பு எதுவும் தேர்ந்தெடுக்கவில்லை',
   'Choose a file': 'கோப்பைத் தேர்ந்தெடு',
+  'Select your password manager': 'உங்கள் கடவுச்சொல் நிர்வாகியைத் தேர்ந்தெடு',
+  'In {app}, open {place} and export as {format}.':
+    '{app} இல் {place} ஐத் திறந்து {format} ஆக ஏற்றுமதி செய்.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'முதல் வரிசையில் நெடுவரிசைப் பெயர்கள் உள்ள CSV கோப்பை ஏற்றுமதி செய், எ.கா. name, url, username, password, note.',
   Passphrase: 'கடவுத்தொடர்',
   'Ready to import': 'இறக்குமதிக்குத் தயார்',
   'A new vault for each': 'ஒவ்வொன்றுக்கும் புதிய பெட்டகம்',

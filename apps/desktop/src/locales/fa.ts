@@ -3212,6 +3212,11 @@ export const fa: Dictionary = {
   'Import from': 'درون‌آوری از',
   'No file chosen': 'فایلی برگزیده نشده',
   'Choose a file': 'برگزیدن فایل',
+  'Select your password manager': 'مدیر گذرواژه‌تان را برگزینید',
+  'In {app}, open {place} and export as {format}.':
+    'در {app}، {place} را باز کنید و با قالب {format} برون‌بری کنید.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'یک فایل CSV برون‌بری کنید که ردیف نخست آن نام ستون‌ها را دارد، مانند name، url، username، password و note.',
   Passphrase: 'عبارت عبور',
   'Ready to import': 'آمادهٔ درون‌آوری',
   'A new vault for each': 'برای هر کدام یک گاوصندوق تازه',

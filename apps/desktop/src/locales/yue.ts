@@ -3064,6 +3064,10 @@ export const yue: Dictionary = {
   'Import from': '匯入來源',
   'No file chosen': '未揀檔案',
   'Choose a file': '揀檔案',
+  'Select your password manager': '揀你嘅密碼管理器',
+  'In {app}, open {place} and export as {format}.': '喺 {app} 打開 {place}，再匯出做 {format}。',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    '匯出一個 CSV 檔案，第一行要寫低欄名，例如 name、url、username、password 同 note。',
   Passphrase: '密碼片語',
   'Ready to import': '可以匯入',
   'A new vault for each': '每個各開一個新保險庫',

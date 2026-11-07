@@ -3158,6 +3158,11 @@ export const jv: Dictionary = {
   'Import from': 'Impor saka',
   'No file chosen': 'Durung ana berkas sing dipilih',
   'Choose a file': 'Pilih berkas',
+  'Select your password manager': 'Pilih pangatur tembung sandhi panjenengan',
+  'In {app}, open {place} and export as {format}.':
+    'Ing {app}, bukak {place} lan ekspor minangka {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Ekspor berkas CSV sing baris kapisané menehi jeneng kolom-kolomé, kayata name, url, username, password lan note.',
   Passphrase: 'Frasa sandhi',
   'Ready to import': 'Siap diimpor',
   'A new vault for each': 'Brankas anyar kanggo saben siji',

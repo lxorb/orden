@@ -3206,6 +3206,11 @@ export const ps: Dictionary = {
   'Import from': 'واردول له',
   'No file chosen': 'دوتنه نه ده ټاکل شوې',
   'Choose a file': 'دوتنه ټاکل',
+  'Select your password manager': 'خپل د پټنوم مدیر وټاکئ',
+  'In {app}, open {place} and export as {format}.':
+    'په {app} کې {place} پرانیزئ او د {format} په توګه یې صادر کړئ.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'یوه CSV دوتنه صادره کړئ چې لومړی قطار یې د ستنو نومونه ولري، لکه name، url، username، password او note.',
   Passphrase: 'پټ عبارت',
   'Ready to import': 'د واردولو لپاره چمتو',
   'A new vault for each': 'د هر یوه لپاره نوې خزانه',

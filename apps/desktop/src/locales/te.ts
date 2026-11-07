@@ -3220,6 +3220,11 @@ export const te: Dictionary = {
   'Import from': 'ఇక్కడి నుండి ఇంపోర్ట్',
   'No file chosen': 'ఫైల్ ఏదీ ఎంచుకోలేదు',
   'Choose a file': 'ఫైల్ ఎంచుకో',
+  'Select your password manager': 'మీ పాస్‌వర్డ్ మేనేజర్‌ను ఎంచుకో',
+  'In {app}, open {place} and export as {format}.':
+    '{app}లో {place} తెరిచి {format}గా ఎగుమతి చేయండి.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'మొదటి వరుసలో నిలువు వరుసల పేర్లు ఉన్న CSV ఫైల్‌ను ఎగుమతి చేయండి, ఉదా. name, url, username, password, note.',
   Passphrase: 'పాస్‌ఫ్రేజ్',
   'Ready to import': 'ఇంపోర్ట్‌కు సిద్ధం',
   'A new vault for each': 'ప్రతి దానికీ కొత్త వాల్ట్',

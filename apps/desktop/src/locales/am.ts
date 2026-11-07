@@ -3143,6 +3143,10 @@ export const am: Dictionary = {
   'Import from': 'አምጣ ከ',
   'No file chosen': 'ምንም ፋይል አልተመረጠም',
   'Choose a file': 'ፋይል ምረጥ',
+  'Select your password manager': 'የይለፍ ቃል አስተዳዳሪዎን ይምረጡ',
+  'In {app}, open {place} and export as {format}.': 'በ{app} ውስጥ {place}ን ይክፈቱ እና እንደ {format} ይላኩ።',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'የመጀመሪያው ረድፉ ዓምዶቹን የሚሰይም የCSV ፋይል ይላኩ፣ ለምሳሌ name, url, username, password እና note።',
   Passphrase: 'የይለፍ ሐረግ',
   'Ready to import': 'ለማምጣት ዝግጁ',
   'A new vault for each': 'ለእያንዳንዱ አዲስ ካዝና',

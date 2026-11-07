@@ -3201,6 +3201,11 @@ export const ur: Dictionary = {
   'Import from': 'امپورٹ کا ذریعہ',
   'No file chosen': 'کوئی فائل نہیں چنی گئی',
   'Choose a file': 'فائل چنیں',
+  'Select your password manager': 'اپنا پاس ورڈ مینیجر چنیں',
+  'In {app}, open {place} and export as {format}.':
+    '{app} میں {place} کھولیں اور {format} کے طور پر ایکسپورٹ کریں۔',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'ایسی CSV فائل ایکسپورٹ کریں جس کی پہلی قطار کالموں کے نام بتائے، جیسے name، url، username، password اور note۔',
   Passphrase: 'پاس فریز',
   'Ready to import': 'امپورٹ کے لیے تیار',
   'A new vault for each': 'ہر ایک کے لیے نیا والٹ',

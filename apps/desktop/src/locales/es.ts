@@ -3295,6 +3295,11 @@ export const es: Dictionary = {
   'Import from': 'Importar desde',
   'No file chosen': 'Ningún archivo elegido',
   'Choose a file': 'Elegir un archivo',
+  'Select your password manager': 'Elige tu gestor de contraseñas',
+  'In {app}, open {place} and export as {format}.':
+    'En {app}, abre {place} y exporta como {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Exporta un archivo CSV cuya primera fila nombre sus columnas, como name, url, username, password y note.',
   Passphrase: 'Frase de contraseña',
   'Ready to import': 'Listo para importar',
   'A new vault for each': 'Una bóveda nueva para cada uno',

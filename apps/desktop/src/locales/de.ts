@@ -3274,6 +3274,11 @@ export const de: Dictionary = {
   'Import from': 'Importieren aus',
   'No file chosen': 'Keine Datei gewählt',
   'Choose a file': 'Datei wählen',
+  'Select your password manager': 'Passwort-Manager wählen',
+  'In {app}, open {place} and export as {format}.':
+    'Öffne in {app} {place} und exportiere als {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Exportiere eine CSV-Datei, deren erste Zeile die Spalten benennt, etwa name, url, username, password und note.',
   Passphrase: 'Passphrase',
   'Ready to import': 'Bereit zum Import',
   'A new vault for each': 'Ein neuer Tresor für jeden',

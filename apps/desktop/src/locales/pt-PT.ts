@@ -3293,6 +3293,11 @@ export const ptPT: Dictionary = {
   'Import from': 'Importar de',
   'No file chosen': 'Nenhum ficheiro escolhido',
   'Choose a file': 'Escolher um ficheiro',
+  'Select your password manager': 'Selecione o seu gestor de palavras-passe',
+  'In {app}, open {place} and export as {format}.':
+    'No {app}, abra {place} e exporte como {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Exporte um ficheiro CSV cuja primeira linha indique os nomes das colunas, como name, url, username, password e note.',
   Passphrase: 'Frase secreta',
   'Ready to import': 'Pronto para importar',
   'A new vault for each': 'Um novo cofre para cada',

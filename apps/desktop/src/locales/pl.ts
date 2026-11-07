@@ -3330,6 +3330,11 @@ export const pl: Dictionary = {
   'Import from': 'Importuj z',
   'No file chosen': 'Nie wybrano pliku',
   'Choose a file': 'Wybierz plik',
+  'Select your password manager': 'Wybierz menedżer haseł',
+  'In {app}, open {place} and export as {format}.':
+    'W {app} otwórz {place} i wyeksportuj jako {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Wyeksportuj plik CSV, którego pierwszy wiersz nazywa kolumny, np. name, url, username, password i note.',
   Passphrase: 'Hasło pliku',
   'Ready to import': 'Gotowe do importu',
   'A new vault for each': 'Nowy sejf dla każdego',

@@ -3071,6 +3071,11 @@ export const zhHans: Dictionary = {
   'Import from': '导入来源',
   'No file chosen': '未选择文件',
   'Choose a file': '选择文件',
+  'Select your password manager': '选择你的密码管理器',
+  'In {app}, open {place} and export as {format}.':
+    '在 {app} 中打开 {place}，然后导出为 {format}。',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    '导出一个 CSV 文件，其第一行为列名，例如 name、url、username、password 和 note。',
   Passphrase: '密码短语',
   'Ready to import': '可以导入',
   'A new vault for each': '每个各建一个新保险库',

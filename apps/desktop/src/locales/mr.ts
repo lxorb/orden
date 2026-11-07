@@ -3205,6 +3205,11 @@ export const mr: Dictionary = {
   'Import from': 'इथून इंपोर्ट करा',
   'No file chosen': 'फाइल निवडलेली नाही',
   'Choose a file': 'फाइल निवडा',
+  'Select your password manager': 'तुमचा पासवर्ड मॅनेजर निवडा',
+  'In {app}, open {place} and export as {format}.':
+    '{app} मध्ये {place} उघडा आणि {format} म्हणून एक्सपोर्ट करा.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'अशी CSV फाइल एक्सपोर्ट करा जिच्या पहिल्या ओळीत स्तंभांची नावे असतील, जसे name, url, username, password आणि note.',
   Passphrase: 'पासफ्रेज',
   'Ready to import': 'इंपोर्टसाठी तयार',
   'A new vault for each': 'प्रत्येकासाठी नवीन व्हॉल्ट',

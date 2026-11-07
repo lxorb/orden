@@ -3253,6 +3253,11 @@ export const ml: Dictionary = {
   'Import from': 'ഇവിടെ നിന്ന് ഇംപോർട്ട്',
   'No file chosen': 'ഫയലൊന്നും തിരഞ്ഞെടുത്തിട്ടില്ല',
   'Choose a file': 'ഫയൽ തിരഞ്ഞെടുക്കുക',
+  'Select your password manager': 'നിങ്ങളുടെ പാസ്‌വേഡ് മാനേജർ തിരഞ്ഞെടുക്കുക',
+  'In {app}, open {place} and export as {format}.':
+    '{app}-ൽ {place} തുറന്ന് {format} ആയി എക്സ്പോർട്ട് ചെയ്യുക.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'ആദ്യ വരിയിൽ കോളങ്ങളുടെ പേരുകളുള്ള ഒരു CSV ഫയൽ എക്സ്പോർട്ട് ചെയ്യുക, ഉദാ. name, url, username, password, note.',
   Passphrase: 'പാസ്‌ഫ്രേസ്',
   'Ready to import': 'ഇംപോർട്ടിന് തയ്യാർ',
   'A new vault for each': 'ഓരോന്നിനും പുതിയ വോൾട്ട്',

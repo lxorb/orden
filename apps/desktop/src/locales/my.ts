@@ -3167,6 +3167,11 @@ export const my: Dictionary = {
   'Import from': 'သွင်းမည့်နေရာ',
   'No file chosen': 'ဖိုင် မရွေးရသေးပါ',
   'Choose a file': 'ဖိုင် ရွေးရန်',
+  'Select your password manager': 'သင့် စကားဝှက် မန်နေဂျာကို ရွေးပါ',
+  'In {app}, open {place} and export as {format}.':
+    '{app} တွင် {place} ကို ဖွင့်ပြီး {format} အဖြစ် ထုတ်ယူပါ။',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'ပထမအတန်းတွင် ကော်လံအမည်များ ပါသော CSV ဖိုင်ကို ထုတ်ယူပါ၊ ဥပမာ name, url, username, password နှင့် note။',
   Passphrase: 'စကားစု',
   'Ready to import': 'သွင်းရန် အသင့်',
   'A new vault for each': 'တစ်ခုစီအတွက် သေတ္တာ အသစ်',

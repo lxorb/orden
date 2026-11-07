@@ -3172,6 +3172,11 @@ export const id: Dictionary = {
   'Import from': 'Impor dari',
   'No file chosen': 'Belum ada file dipilih',
   'Choose a file': 'Pilih file',
+  'Select your password manager': 'Pilih pengelola kata sandi Anda',
+  'In {app}, open {place} and export as {format}.':
+    'Di {app}, buka {place} lalu ekspor sebagai {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Ekspor file CSV yang baris pertamanya menamai kolom-kolomnya, seperti name, url, username, password, dan note.',
   Passphrase: 'Frasa sandi',
   'Ready to import': 'Siap diimpor',
   'A new vault for each': 'Brankas baru untuk masing-masing',

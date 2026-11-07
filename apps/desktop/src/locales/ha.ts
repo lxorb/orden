@@ -3256,6 +3256,11 @@ export const ha: Dictionary = {
   'Import from': 'Shigo daga',
   'No file chosen': 'Ba a zaɓi fayil ba',
   'Choose a file': 'Zaɓi fayil',
+  'Select your password manager': 'Zaɓi manajan kalmar sirrinka',
+  'In {app}, open {place} and export as {format}.':
+    'A {app}, buɗe {place} kuma ka fitar a matsayin {format}.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'Fitar da fayil ɗin CSV wanda layinsa na farko ke sanya sunayen ginshiƙansa, kamar name, url, username, password da note.',
   Passphrase: 'Kalmar wucewa',
   'Ready to import': 'A shirye don shigowa',
   'A new vault for each': "Sabon ma'aji ga kowanne",

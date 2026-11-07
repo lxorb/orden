@@ -3242,6 +3242,11 @@ export const kn: Dictionary = {
   'Import from': 'ಇಲ್ಲಿಂದ ಇಂಪೋರ್ಟ್',
   'No file chosen': 'ಯಾವುದೇ ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿಲ್ಲ',
   'Choose a file': 'ಫೈಲ್ ಆರಿಸಿ',
+  'Select your password manager': 'ನಿಮ್ಮ ಪಾಸ್‌ವರ್ಡ್ ಮ್ಯಾನೇಜರ್ ಆರಿಸಿ',
+  'In {app}, open {place} and export as {format}.':
+    '{app} ನಲ್ಲಿ {place} ತೆರೆಯಿರಿ ಮತ್ತು {format} ಆಗಿ ರಫ್ತು ಮಾಡಿ.',
+  'Export a CSV file whose first row names its columns, such as name, url, username, password and note.':
+    'ಮೊದಲ ಸಾಲು ಕಾಲಮ್‌ಗಳ ಹೆಸರುಗಳನ್ನು ಹೊಂದಿರುವ CSV ಫೈಲ್ ರಫ್ತು ಮಾಡಿ, ಉದಾ. name, url, username, password ಮತ್ತು note.',
   Passphrase: 'ಪಾಸ್‌ಫ್ರೇಸ್',
   'Ready to import': 'ಇಂಪೋರ್ಟ್‌ಗೆ ಸಿದ್ಧ',
   'A new vault for each': 'ಪ್ರತಿಯೊಂದಕ್ಕೂ ಹೊಸ ವಾಲ್ಟ್',
