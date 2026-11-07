@@ -114,11 +114,14 @@ function sameFromEnd(was: Text, now: Text, most: number): number {
   return most
 }
 
-function linesChanged(was: Text, now: Text): string {
+const AROUND = 65_536
+
+function changedLines(was: Text, now: Text, around: number): string {
   const start = sameFromStart(was, now)
   const end = now.length - sameFromEnd(was, now, Math.min(was.length, now.length) - start)
   if (start === was.length && start === now.length) return ''
-  return now.sliceString(now.lineAt(start).from, now.lineAt(end).to)
+  const from = now.lineAt(Math.max(0, start - around)).from
+  return now.sliceString(from, now.lineAt(Math.min(now.length, end + around)).to)
 }
 
 interface Verdict {
@@ -135,18 +138,20 @@ async function verdictOn(
   let base: { doc: Text; spent: number } | null = null
   for (;;) {
     const { doc } = view.state
+    const changed = base ? changedLines(base.doc, doc, lines ? 0 : AROUND) : ''
     const cost: number | null = base
-      ? await trialCost(query.search, flagsOf(query), linesChanged(base.doc, doc), true)
+      ? await trialCost(query.search, flagsOf(query), changed, lines)
       : await costOn(query, doc)
     if (!still()) return null
     if (cost === null) return { doc: view.state.doc, quick: false }
-    const spent: number = cost + (base?.spent ?? 0)
+    const whole = base && !lines ? (cost * doc.length) / Math.max(changed.length, 1) : cost
+    const spent: number = whole + (base?.spent ?? 0)
     if (base && spent > TRIAL_MS) {
       base = null
       continue
     }
     if (view.state.doc === doc) return { doc, quick: true }
-    base = lines ? { doc, spent } : null
+    base = { doc, spent }
   }
 }
 

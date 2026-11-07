@@ -200,4 +200,30 @@ describe('finding in a note that is being written into', () => {
     expect(answered).toBe(true)
     expect(findTally(view.state)).toMatchObject({ slow: true })
   }, 30_000)
+
+  for (const across of ['note\\s+that', 'long[^x]enough', 'while\\na line']) {
+    test(`sets a pattern that may cross lines, ${across}, before the writing stops`, async () => {
+      const view = viewOf(LONG.slice(0, LONG.length >> 2))
+      const answered = await whileWriting(view, () =>
+        setFind(view, { ...NO_FIND, query: across, regexp: true }),
+      )
+
+      expect(answered).toBe(true)
+      expect(getSearchQuery(view.state).search).toBe(across)
+      const ready = await whileWriting(view, () => findReady(view))
+      expect(ready).toBe(true)
+    }, 30_000)
+  }
+
+  test('still refuses a pattern that may cross lines and hangs on what is written', async () => {
+    const view = viewOf(LONG)
+    await setFind(view, { ...NO_FIND, query: '(a+|\\s)+b', regexp: true })
+    expect(findTally(view.state).slow).toBeUndefined()
+
+    view.dispatch({ changes: { from: view.state.doc.length >> 1, insert: `\n${RUN}\n` } })
+    const answered = await whileWriting(view, () => findReady(view))
+
+    expect(answered).toBe(true)
+    expect(findTally(view.state)).toMatchObject({ slow: true })
+  }, 30_000)
 })
