@@ -59,15 +59,20 @@ fn sensed() -> Sensed {
         _ => None,
     };
     held.ticks = ticks;
-    let power = match &held.power {
-        Some((at, power)) if at.elapsed() < POWER_EVERY => power.clone(),
+    let kept = match &held.power {
+        Some((at, power)) if at.elapsed() < POWER_EVERY => Some(power.clone()),
         _ => {
-            let power = platform::power();
-            held.power = Some((Instant::now(), power.clone()));
-            power
+            held.power = Some((Instant::now(), Power::default()));
+            None
         }
     };
     drop(held);
+    let power = kept.unwrap_or_else(|| {
+        let power = platform::power();
+        HELD.lock().unwrap_or_else(PoisonError::into_inner).power =
+            Some((Instant::now(), power.clone()));
+        power
+    });
 
     Sensed {
         idle_ms: input.map(|one| one.idle_ms),
@@ -156,7 +161,7 @@ mod platform {
     use std::path::Path;
 
     use zbus::blocking::Connection;
-    use zbus::zvariant::OwnedValue;
+    use zbus::zvariant::{OwnedObjectPath, OwnedValue};
 
     use super::{linux_memory, linux_ticks, Power, Ticks};
 
@@ -203,19 +208,119 @@ mod platform {
         None
     }
 
-    fn locked() -> Option<bool> {
-        let reply = Connection::system()
-            .ok()?
-            .call_method(
-                Some("org.freedesktop.login1"),
-                "/org/freedesktop/login1/session/auto",
-                Some("org.freedesktop.DBus.Properties"),
-                "Get",
-                &("org.freedesktop.login1.Session", "LockedHint"),
+    const LOGIND: &str = "org.freedesktop.login1";
+
+    fn ask(
+        bus: &Connection,
+        name: &str,
+        path: &str,
+        interface: &str,
+        method: &str,
+        body: &(impl serde::Serialize + zbus::zvariant::DynamicType),
+    ) -> Option<zbus::message::Message> {
+        bus.call_method(Some(name), path, Some(interface), method, body)
+            .ok()
+    }
+
+    fn property(bus: &Connection, path: &str, interface: &str, name: &str) -> Option<OwnedValue> {
+        ask(
+            bus,
+            LOGIND,
+            path,
+            "org.freedesktop.DBus.Properties",
+            "Get",
+            &(interface, name),
+        )?
+        .body()
+        .deserialize()
+        .ok()
+    }
+
+    fn own_session(bus: &Connection) -> Option<String> {
+        let id = std::env::var("XDG_SESSION_ID").ok()?;
+        let path: OwnedObjectPath = ask(
+            bus,
+            LOGIND,
+            "/org/freedesktop/login1",
+            "org.freedesktop.login1.Manager",
+            "GetSession",
+            &(id.as_str(),),
+        )?
+        .body()
+        .deserialize()
+        .ok()?;
+        Some(path.as_str().to_owned())
+    }
+
+    fn display_session(bus: &Connection) -> Option<String> {
+        let shown = property(
+            bus,
+            "/org/freedesktop/login1/user/self",
+            "org.freedesktop.login1.User",
+            "Display",
+        )?;
+        let (_, path): (String, OwnedObjectPath) = shown.try_into().ok()?;
+        (path.as_str() != "/").then(|| path.as_str().to_owned())
+    }
+
+    fn locked_hint(bus: &Connection, path: &str) -> Option<bool> {
+        bool::try_from(property(
+            bus,
+            path,
+            "org.freedesktop.login1.Session",
+            "LockedHint",
+        )?)
+        .ok()
+    }
+
+    fn logind_locked() -> Option<bool> {
+        let bus = Connection::system().ok()?;
+        [own_session(&bus), display_session(&bus)]
+            .into_iter()
+            .flatten()
+            .chain(std::iter::once(
+                "/org/freedesktop/login1/session/auto".to_owned(),
+            ))
+            .find_map(|path| locked_hint(&bus, &path))
+    }
+
+    fn screensaver_locked() -> Option<bool> {
+        let bus = Connection::session().ok()?;
+        [
+            (
+                "org.freedesktop.ScreenSaver",
+                "/org/freedesktop/ScreenSaver",
+            ),
+            ("org.gnome.ScreenSaver", "/org/gnome/ScreenSaver"),
+            ("org.cinnamon.ScreenSaver", "/org/cinnamon/ScreenSaver"),
+            ("org.mate.ScreenSaver", "/org/mate/ScreenSaver"),
+        ]
+        .into_iter()
+        .filter(|(name, _)| {
+            ask(
+                &bus,
+                "org.freedesktop.DBus",
+                "/org/freedesktop/DBus",
+                "org.freedesktop.DBus",
+                "NameHasOwner",
+                &(*name,),
             )
-            .ok()?;
-        let value: OwnedValue = reply.body().deserialize().ok()?;
-        bool::try_from(value).ok()
+            .and_then(|reply| reply.body().deserialize::<bool>().ok())
+            .unwrap_or(false)
+        })
+        .find_map(|(name, path)| {
+            ask(&bus, name, path, name, "GetActive", &())?
+                .body()
+                .deserialize::<bool>()
+                .ok()
+        })
+    }
+
+    fn locked() -> Option<bool> {
+        match logind_locked() {
+            Some(true) => Some(true),
+            hint => screensaver_locked().filter(|active| *active).or(hint),
+        }
     }
 
     pub fn power() -> Power {
