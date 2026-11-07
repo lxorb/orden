@@ -1331,21 +1331,11 @@
   function onPaste(event: ClipboardEvent) {
     if (typing(event.target) || store.editing !== null) return
 
-    const picture = [...(event.clipboardData?.items ?? [])].find(
-      (one) => one.type.startsWith('image/') || one.type === 'application/pdf',
-    )
-
-    if (picture) {
-      const file = picture.getAsFile()
-      if (file) {
-        event.preventDefault()
-        if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
-          void run.dropPdf(store, file, at, tab.path)
-        } else {
-          void run.dropImage(store, file, at, tab.path)
-        }
-        return
-      }
+    const files = filesIn(event.clipboardData).filter(isCanvasFile)
+    if (files.length) {
+      event.preventDefault()
+      placeFiles(files, at)
+      return
     }
 
     const text = event.clipboardData?.getData('text/plain').trim()
@@ -1369,15 +1359,7 @@
     }
 
     const transfer = event.dataTransfer
-    const dropped = [...(transfer?.files ?? [])]
-    if (!dropped.length && transfer) {
-      dropped.push(
-        ...[...transfer.items]
-          .filter((item) => item.kind === 'file')
-          .map((item) => item.getAsFile())
-          .filter((file): file is File => file !== null),
-      )
-    }
+    const dropped = filesIn(transfer)
     const reading = dropped.length ? null : carriedFiles.read(transfer ?? null)
     if (reading) {
       event.preventDefault()
@@ -1389,6 +1371,16 @@
 
     event.preventDefault()
     placeFiles(files, point)
+  }
+
+  function filesIn(transfer: DataTransfer | null | undefined): File[] {
+    if (!transfer) return []
+    const listed = [...transfer.files]
+    if (listed.length) return listed
+    return [...transfer.items]
+      .filter((item) => item.kind === 'file')
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null)
   }
 
   function placeFiles(files: readonly File[], point: { x: number; y: number }) {
