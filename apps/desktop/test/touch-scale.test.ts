@@ -30,7 +30,6 @@ const ROW_SCALE = {
 }
 
 const SURFACES = [
-  'lib/AppMenu.svelte',
   'lib/Bookmarks.svelte',
   'lib/CanvasBar.svelte',
   'lib/ContextMenu.svelte',
