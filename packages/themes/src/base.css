@@ -1742,6 +1742,7 @@ select:focus-visible,
 }
 
 #write pre {
+  direction: ltr;
   font-family: var(--font-mono);
   font-size: 0.86em;
   line-height: 1.6;

@@ -36,3 +36,11 @@ test('a mark a written page places where it stands hangs on its own positioned b
   })
   expect(loose).toEqual([])
 })
+
+test('code on a written page reads left to right, whatever the page around it', () => {
+  expect(
+    rules.some(
+      (rule) => rule.selectors.includes('#write pre') && /direction:\s*ltr/.test(rule.body),
+    ),
+  ).toBe(true)
+})

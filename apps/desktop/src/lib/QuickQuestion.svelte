@@ -139,6 +139,7 @@
           use:grow={quick.question}
           use:dictating={voiceField}
           data-lands
+          dir="auto"
           rows="1"
           placeholder={t('Ask')}
           aria-label={t('Quick question')}
@@ -226,7 +227,9 @@
       <div class="talk" bind:this={talk} use:scrollbar onscroll={onScroll}>
         {#each turns as turn, at (at)}
           {#if turn.role === 'you'}
-            <p class="said" in:fly={{ y: 6, duration: dur(150), easing: cubicOut }}>{turn.text}</p>
+            <p class="said" dir="auto" in:fly={{ y: 6, duration: dur(150), easing: cubicOut }}>
+              {turn.text}
+            </p>
           {:else}
             {#if quick.running && at === turns.length - 1}
               <LiveAnswer

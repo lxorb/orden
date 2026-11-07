@@ -214,6 +214,7 @@
         <div
           class="body nib-rendered"
           class:big
+          dir="auto"
           use:words={{
             body: message.body,
             edited: message.editedAt !== undefined,

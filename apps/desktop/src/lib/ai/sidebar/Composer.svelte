@@ -601,6 +601,7 @@
         use:grow={chat.text}
         use:dictating={voiceField}
         data-entry
+        dir="auto"
         rows="1"
         placeholder={t('Ask anything, @ to add, / for more')}
         aria-label={t('Ask about this space')}
