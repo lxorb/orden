@@ -33,6 +33,15 @@ vi.mock('./store', async (importOriginal) => ({
   },
 }))
 
+const leaving = vi.hoisted(() => ({ asked: 0 }))
+vi.mock('./left', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./left')>()),
+  leaveUnsent: () => {
+    leaving.asked += 1
+    return Promise.resolve(false)
+  },
+}))
+
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -276,4 +285,33 @@ describe('signing out in a window with no engine', () => {
     expect(opening.forgotten).toEqual(['a'])
     expect(windows).toBeDefined()
   })
+})
+
+describe('signing out, asked, in a window with no engine', () => {
+  const leader = (unsent: boolean) => {
+    stops.push(
+      other.hear('sync-ask', (said) => {
+        const value = said.what === 'unsent' ? unsent : said.what === 'pass' ? true : null
+        other.say('sync-said', { account: 'a', id: said.id, to: windows.me, value })
+      }),
+    )
+  }
+
+  for (const unsent of [true, false]) {
+    test(`asks the engine's window, and asks the reader only when changes are unsent (${String(unsent)})`, async () => {
+      leaving.asked = 0
+      signedInAs('a')
+      locks.busy('nib-sync:a')
+      void runner.start()
+      await flush()
+      other.say('sync-leader', { account: 'a' })
+      await flush()
+      leader(unsent)
+
+      const left = await runner.sentBeforeLeaving()
+
+      expect(leaving.asked).toBe(unsent ? 1 : 0)
+      expect(left).toBe(!unsent)
+    })
+  }
 })
