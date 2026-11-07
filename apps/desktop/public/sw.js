@@ -60,13 +60,57 @@ async function answer(request) {
   const bytes = decode(row.data)
   if (!bytes) return missing()
 
-  return new Response(bytes, {
+  const headers = {
+    'Content-Type': typeOf(path, row.type),
+    'Cache-Control': HASHED.test(nameOf(path)) ? FOREVER : EVERY_TIME,
+    'Accept-Ranges': 'bytes',
+  }
+  const asked = request.headers.get('Range')
+  const span = asked === null ? undefined : spanOf(asked, bytes.length)
+
+  if (span === undefined) {
+    return new Response(bytes, {
+      headers: { ...headers, 'Content-Length': String(bytes.length) },
+    })
+  }
+
+  if (span === null) {
+    return new Response(null, {
+      status: 416,
+      statusText: 'Range Not Satisfiable',
+      headers: { ...headers, 'Content-Range': `bytes */${bytes.length}` },
+    })
+  }
+
+  const [start, end] = span
+  const part = bytes.subarray(start, end + 1)
+  return new Response(part, {
+    status: 206,
+    statusText: 'Partial Content',
     headers: {
-      'Content-Type': typeOf(path, row.type),
-      'Content-Length': String(bytes.length),
-      'Cache-Control': HASHED.test(nameOf(path)) ? FOREVER : EVERY_TIME,
+      ...headers,
+      'Content-Range': `bytes ${start}-${end}/${bytes.length}`,
+      'Content-Length': String(part.length),
     },
   })
+}
+
+function spanOf(asked, size) {
+  const match = /^bytes=(\d*)-(\d*)$/i.exec(asked.trim())
+  if (!match || (match[1] === '' && match[2] === '')) return undefined
+
+  if (match[1] === '') {
+    const last = Number(match[2])
+    if (last === 0 || size === 0) return null
+    return [Math.max(0, size - last), size - 1]
+  }
+
+  const start = Number(match[1])
+  if (match[2] !== '' && Number(match[2]) < start) return undefined
+  if (start >= size) return null
+
+  const end = match[2] === '' ? size - 1 : Math.min(Number(match[2]), size - 1)
+  return [start, end]
 }
 
 function missing() {
