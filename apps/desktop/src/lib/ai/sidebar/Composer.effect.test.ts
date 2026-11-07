@@ -162,11 +162,30 @@ test('Ctrl+Enter with nothing running runs a typed command', async () => {
   expect(panel.submit).not.toHaveBeenCalled()
 })
 
-function pasted(field: HTMLTextAreaElement, files: File[]) {
+function pasted(field: HTMLTextAreaElement, files: File[], text = '') {
   const event = new Event('paste', { bubbles: true, cancelable: true })
-  Object.defineProperty(event, 'clipboardData', { value: { files } })
+  Object.defineProperty(event, 'clipboardData', {
+    value: { files, getData: (kind: string) => (kind === 'text/plain' ? text : '') },
+  })
   field.dispatchEvent(event)
+  return event
 }
+
+test('a very long paste comes in as text beside the field, not into it', () => {
+  const field = composer()
+  const long = 'The heron stands still. '.repeat(5_000)
+
+  const event = pasted(field, [], long)
+
+  expect(event.defaultPrevented).toBe(true)
+  expect(panel.chips).toEqual([
+    { kind: 'words', id: expect.any(String), label: 'Text', text: long },
+  ])
+  expect(field.value).toBe('')
+  pasted(field, [], `${long}again`)
+  expect(panel.chips).toHaveLength(2)
+  expect(pasted(field, [], 'a short line').defaultPrevented).toBe(false)
+})
 
 test('a file too large or not text says why it was not added', async () => {
   const field = composer()

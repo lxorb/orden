@@ -357,11 +357,26 @@
     reader.readAsText(file)
   }
 
+  const LONG_PASTE = 100_000
+
   function onPaste(event: ClipboardEvent) {
     const files = [...(event.clipboardData?.files ?? [])]
-    if (!files.length) return
+    if (files.length) {
+      event.preventDefault()
+      files.forEach(take)
+      return
+    }
+    const text = event.clipboardData?.getData('text/plain') ?? ''
+    if (text.length < LONG_PASTE) return
     event.preventDefault()
-    files.forEach(take)
+    const name = t('Text')
+    if (text.length > 2_000_000) {
+      chat.trouble = t('{name} was not added: a chat takes pictures, and text files up to 2 MB.', {
+        name,
+      })
+      return
+    }
+    addChip({ kind: 'words', id: crypto.randomUUID(), label: name, text })
   }
 
   function onDrop(event: DragEvent) {
