@@ -829,6 +829,8 @@ class Runner {
     moveOwnKeysSoon(root, workspace, true)
     const { markOldListsSoon } = await import('../rows/old-lists')
     markOldListsSoon(root, true, workspace)
+    const { keepSetextMarked } = await import('../workspace/setext')
+    keepSetextMarked(workspace, root)
   }
 
   private reorders = -1
