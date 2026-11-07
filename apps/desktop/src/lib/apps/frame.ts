@@ -1,3 +1,5 @@
+import { pngData } from '../png-off'
+
 export interface Frame {
   png: string
   width: number
@@ -28,9 +30,9 @@ export async function frameOf(stream: MediaStream): Promise<Frame | null> {
     const drawing = canvas.getContext('2d')
     if (!drawing) return null
     drawing.drawImage(video, 0, 0, width, height)
-    const url = canvas.toDataURL('image/png')
-    const comma = url.indexOf(',')
-    return comma < 0 ? null : { png: url.slice(comma + 1), width, height }
+    const url = await pngData(canvas)
+    const comma = url?.indexOf(',') ?? -1
+    return !url || comma < 0 ? null : { png: url.slice(comma + 1), width, height }
   } finally {
     video.pause()
     video.srcObject = null
