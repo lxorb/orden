@@ -1,6 +1,6 @@
 import type { SyntaxNode } from '@lezer/common'
 import { parser } from '@lezer/javascript'
-import { backtracksWildly } from '@orden/markdown/pattern-cost'
+import { backtracksWildly, patternJudge } from '@orden/markdown/pattern-cost'
 
 export const LOOP_LIMIT = 3000
 
@@ -66,6 +66,111 @@ const PRELUDE = `;(function () {
       console.error('Orden stopped a loop that ran for ${LOOP_LIMIT / 1000} s')
       return true
     },
+  })
+})()`
+
+const MADE_WILD = 'Orden makes no pattern that could take forever to match: it could not stop it'
+
+const PATTERNS = `;(function () {
+  var wild = (${patternJudge.toString()})().backtracksWildly
+  var Native = RegExp
+  var judging = false
+  var own = function (where, name, value) {
+    Object.defineProperty(where, name, { configurable: true, writable: true, value: value })
+  }
+  function check(source, flags) {
+    if (judging) return
+    judging = true
+    var bad
+    try {
+      bad = wild(String(source), String(flags))
+    } finally {
+      judging = false
+    }
+    if (bad) throw new SyntaxError(${JSON.stringify(MADE_WILD)})
+  }
+  function made(pattern, flags) {
+    var regex = pattern instanceof Native
+    check(
+      regex ? pattern.source : pattern === undefined ? '(?:)' : pattern,
+      flags !== undefined ? flags : regex ? pattern.flags : '',
+    )
+  }
+  function written(code) {
+    if (typeof code !== 'string') return
+    for (var at = code.indexOf('/'); at >= 0; at = code.indexOf('/', at + 1)) {
+      var end = at + 1
+      var inside = false
+      for (; end < code.length && end - at < 4096; end++) {
+        var one = code.charAt(end)
+        if (one === '\\\\') end++
+        else if (one === '\\n' || one === '\\r') break
+        else if (one === '[') inside = true
+        else if (one === ']') inside = false
+        else if (one === '/' && !inside) break
+      }
+      if (code.charAt(end) !== '/') continue
+      var body = code.slice(at + 1, end)
+      var flags = /^[a-z]*/.exec(code.slice(end + 1, end + 9))[0]
+      try {
+        judging = true
+        new Native(body, flags)
+      } catch (error) {
+        continue
+      } finally {
+        judging = false
+      }
+      check(body, flags)
+    }
+  }
+  function Guarded(pattern, flags) {
+    made(pattern, flags)
+    return Reflect.construct(Native, [pattern, flags], new.target || Guarded)
+  }
+  Object.setPrototypeOf(Guarded, Native)
+  Guarded.prototype = Native.prototype
+  own(Native.prototype, 'constructor', Guarded)
+  own(self, 'RegExp', Guarded)
+  var compile = Native.prototype.compile
+  if (compile) {
+    own(Native.prototype, 'compile', function (pattern, flags) {
+      made(pattern, flags)
+      return compile.call(this, pattern, flags)
+    })
+  }
+  ;['match', 'matchAll', 'search'].forEach(function (name) {
+    var native = String.prototype[name]
+    own(String.prototype, name, function (pattern) {
+      if (pattern !== null && pattern !== undefined && !(pattern instanceof Native)) {
+        check(pattern, name === 'matchAll' ? 'g' : '')
+      }
+      return native.apply(this, arguments)
+    })
+  })
+  var evaluate = self.eval
+  own(self, 'eval', function (code) {
+    written(code)
+    return evaluate(code)
+  })
+  ;[() => undefined, async () => undefined, function* () {}, async function* () {}].forEach(
+    function (kind) {
+      var prototype = Object.getPrototypeOf(kind)
+      var Made = prototype.constructor
+      var Checked = function () {
+        written(Array.prototype.map.call(arguments, String).join('\\n'))
+        return Reflect.construct(Made, arguments)
+      }
+      Checked.prototype = prototype
+      own(prototype, 'constructor', Checked)
+      if (prototype === Function.prototype) own(self, 'Function', Checked)
+    },
+  )
+  ;['setTimeout', 'setInterval'].forEach(function (name) {
+    var native = self[name]
+    own(self, name, function (handler) {
+      if (typeof handler !== 'function') written(String(handler))
+      return native.apply(self, arguments)
+    })
   })
 })()`
 
@@ -210,7 +315,7 @@ export function guardedBlock(html: string): string {
     else script.textContent = safe
   }
   const check = document.createElement('script')
-  check.textContent = PRELUDE
+  check.textContent = PRELUDE + PATTERNS
   holder.content.prepend(check)
   return holder.innerHTML
 }
