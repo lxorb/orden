@@ -628,11 +628,11 @@ class Workspace {
     this.positions = new Positions(state.positions ?? {})
     this.closed.restore(state.closed ?? [])
     this.setsRead = state.sets
+    this.right = panels.rightFrom(state.right, state.known)
     if (!this.panelChosen) {
-      this.panel = panels.leftPanelFrom(state.panel)
+      this.panel = panels.leftPanelFrom(state.panel, this.rightHere)
       this.rightPanel = state.rightPanel ?? null
     }
-    this.right = panels.rightFrom(state.right, state.known)
     this.lastRight ??= state.lastRight ?? null
     this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
 
@@ -999,7 +999,7 @@ class Workspace {
     this.tabs = [...made, ...aside]
     if (!asked) this.arriving = null
     this.panes.restore(frame, layout.focused)
-    if (asked || !this.panelChosen) this.panel = layout.panel
+    if (asked || !this.panelChosen) this.panel = panels.leftPanelFrom(layout.panel, this.rightHere)
     this.panelChosen = false
 
     for (const tab of rescued) {

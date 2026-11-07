@@ -224,6 +224,11 @@ describe('the Tasks panel', () => {
     expect(leftPanelFrom('tree')).toBe('tree')
     expect(leftPanelFrom(undefined)).toBeNull()
   })
+
+  test('and one saved on the left that lives on the right now is not put back on the left', () => {
+    expect(leftPanelFrom('outline', ['outline', 'links'])).toBeNull()
+    expect(leftPanelFrom('outline', ['links'])).toBe('outline')
+  })
 })
 
 describe('how many tabs the strip draws', () => {

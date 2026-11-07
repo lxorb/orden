@@ -142,8 +142,9 @@
     const open = workspace.openOn(side)
     const chosen = open ?? (side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown)
     if (open) lastShown = open
-    if (workspace.fills(chosen) && (chosen !== 'time' || timeOn())) return chosen
-    return mine.find((one) => one.id !== 'scratchpad')?.id ?? chosen
+    const twin = !open && workspace.openOn(side === 'left' ? 'right' : 'left') === chosen
+    if (!twin && workspace.fills(chosen) && (chosen !== 'time' || timeOn())) return chosen
+    return mine.find((one) => one.id !== 'scratchpad' && !(twin && one.id === chosen))?.id ?? chosen
   })
 
   let entered = $state(untrack(() => !startup.reached('index')))

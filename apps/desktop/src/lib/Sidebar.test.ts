@@ -334,6 +334,31 @@ describe('a shut side', () => {
   })
 })
 
+describe('a shut side beside an open one', () => {
+  test('is not built on the panel the other side has open, so it is not drawn twice', () => {
+    open('# Head\n\n## Two\n')
+    workspace.rightPanel = null
+    workspace.lastRight = 'outline'
+    workspace.panel = 'outline'
+    const html = render(Sidebar, { props: { side: 'right' as const } }).body
+    workspace.panel = null
+
+    expect(html).toContain('data-panel=')
+    expect(html).not.toContain('data-panel="outline"')
+  })
+
+  test('and an open side draws its panel whatever the other side shows', () => {
+    open('# Head\n\n## Two\n')
+    workspace.rightPanel = 'outline'
+    workspace.panel = 'outline'
+    const html = render(Sidebar, { props: { side: 'right' as const } }).body
+    workspace.panel = null
+    workspace.rightPanel = null
+
+    expect(html).toContain('data-panel="outline"')
+  })
+})
+
 describe('the two sides', () => {
   test('have a name each', () => {
     open('# Head\n')
