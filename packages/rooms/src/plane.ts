@@ -359,7 +359,87 @@ function stacked<T extends Thing>(a: Placed<T>, b: Placed<T>): number {
 
 const NO_NODES: ReadonlySet<string> = new Set<string>()
 
+function extrasOf(doc: Y.Doc, previous?: Canvas) {
+  const text = doc.getMap<string>(EXTRAS).get(HELD)
+  const mine = previous?.extras
+  return text !== undefined && holdsExtras(mine) && extrasText(mine) === text
+    ? mine
+    : extrasRead(text)
+}
+
+function inkChanged(doc: Y.Doc, previous: Canvas, changed: ReadonlySet<string>): Canvas | null {
+  if (changed.size * 8 > previous.ink.length) return null
+
+  const plane = planeOf(doc)
+  const others = new Set([...previous.nodes, ...previous.edges].map((one) => one.id))
+  const fresh: Placed<InkStroke>[] = []
+  for (const id of changed) {
+    if (others.has(id)) return null
+    const record = plane.get(id)
+    if (!record) continue
+    if (record.get(KIND) !== 'ink') return null
+    const thing = read(record, NO_NODES)
+    if (!thing || !isInk(thing)) return null
+    fresh.push({ thing, z: placeOf(record), id })
+  }
+
+  const ink = previous.ink.filter((one) => !changed.has(one.id))
+  const placed = (one: InkStroke): Placed<InkStroke> => {
+    const record = plane.get(one.id)
+    return { thing: one, z: record ? placeOf(record) : Number.MAX_SAFE_INTEGER, id: one.id }
+  }
+  for (const place of fresh.sort(stacked)) {
+    let low = 0
+    let high = ink.length
+    while (low < high) {
+      const middle = (low + high) >> 1
+      const other = ink[middle]
+      if (other && stacked(placed(other), place) < 0) low = middle + 1
+      else high = middle
+    }
+    ink.splice(low, 0, place.thing)
+  }
+
+  const at: Record<string, number> = {}
+  for (const thing of [...previous.nodes, ...previous.edges])
+    at[thing.id] = previous.at[thing.id] ?? 0
+  for (const thing of ink) {
+    const id = thing.id
+    const when = changed.has(id) ? plane.get(id)?.get(AT) : previous.at[id]
+    at[id] = typeof when === 'number' ? when : 0
+  }
+
+  const kept = (times: Record<string, number> = {}) => {
+    const out: Record<string, number> = {}
+    for (const [id, when] of Object.entries(times)) if (!changed.has(id)) out[id] = when
+    return out
+  }
+  const moved = kept(previous.moved)
+  const gone = kept(previous.gone)
+  const buried = buriedOf(doc)
+  for (const id of changed) {
+    const shifted = plane.get(id)?.get(MOVED)
+    if (typeof shifted === 'number') moved[id] = shifted
+    const when = buried.get(id)
+    if (typeof when === 'number') gone[id] = when
+  }
+
+  const extras = extrasOf(doc, previous)
+  return {
+    nodes: previous.nodes,
+    edges: previous.edges,
+    ink,
+    at,
+    gone,
+    ...(Object.keys(moved).length ? { moved } : {}),
+    ...(holdsExtras(extras) ? { extras } : {}),
+  }
+}
+
 export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<string>): Canvas {
+  const quick = previous && changed ? inkChanged(doc, previous, changed) : null
+  if (quick) return quick
+
   const plane = planeOf(doc)
   const kept = previous && changed ? things(previous) : null
   const held = (id: string) => (changed?.has(id) ? undefined : kept?.get(id))
@@ -410,10 +490,7 @@ export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<s
     if (typeof when === 'number') gone[id] = when
   }
 
-  const text = doc.getMap<string>(EXTRAS).get(HELD)
-  const mine = previous?.extras
-  const extras =
-    text !== undefined && holdsExtras(mine) && extrasText(mine) === text ? mine : extrasRead(text)
+  const extras = extrasOf(doc, previous)
 
   return {
     nodes: nodes.map((one) => one.thing),
