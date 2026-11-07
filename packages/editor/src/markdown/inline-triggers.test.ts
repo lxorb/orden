@@ -19,7 +19,7 @@ const Context = InlineContext as unknown as new (
 ) => InlineContext
 
 const parsers: Record<string, MarkdownParser> = {
-  nib: nibMarkdownParser,
+  orden: nibMarkdownParser,
   editor: markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
     .parser as MarkdownParser,
 }
