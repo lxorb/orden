@@ -56,6 +56,9 @@ export class ExplorerView {
   readonly names = $derived(this.rows.map((one) => one.name))
 
   #watched: string | null = null
+  #went = 0
+  #landed = 0
+  #reread = 0
 
   constructor(tab: Tab) {
     this.tab = tab
@@ -103,11 +106,15 @@ export class ExplorerView {
 
   async reload() {
     const folder = this.folder
-    if (!folder) return
+    if (!folder || this.#landed !== this.#went) return
+    const went = this.#went
+    const reread = ++this.#reread
+    const current = () => went === this.#went && reread === this.#reread
     try {
-      this.take(await listFolder(folder))
+      const listing = await listFolder(folder)
+      if (current()) this.take(listing)
     } catch (error) {
-      this.wrong = message(error, 'could not read this folder')
+      if (current()) this.wrong = message(error, 'could not read this folder')
     }
   }
 
@@ -178,13 +185,18 @@ export class ExplorerView {
   }
 
   private async show(folder: string, next: (listed: string) => Spec) {
+    const went = ++this.#went
     let listing: Listing
     try {
       listing = await listFolder(folder)
     } catch (error) {
+      if (went !== this.#went) return
+      this.#landed = went
       this.wrong = message(error, 'could not read this folder')
       return
     }
+    if (went !== this.#went) return
+    this.#landed = went
     const moved = !this.listing || !samePath(listing.path, this.listing.path)
     if (moved) {
       this.picked = NOTHING
