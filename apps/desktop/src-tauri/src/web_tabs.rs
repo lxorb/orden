@@ -2923,6 +2923,20 @@ mod tests {
     }
 
     #[test]
+    fn a_window_no_one_heard_asked_for_is_blocked_not_opened() {
+        let unheard = crate::web_opens::Heard::UNHEARD;
+        assert_eq!(
+            becomes(
+                &at("https://a.example/opened"),
+                false,
+                unheard.said.is_some(),
+                unheard.unasked
+            ),
+            Becomes::Blocked("https://a.example/opened".to_string())
+        );
+    }
+
+    #[test]
     fn nobody_opens_a_tab_on_the_blank_page() {
         assert!(address(BLANK).is_err());
         assert!(handed_over(&at(BLANK)).is_none());
