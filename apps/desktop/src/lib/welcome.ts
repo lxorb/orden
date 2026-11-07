@@ -4,7 +4,9 @@ export const WELCOME_NAME = 'Read me.md'
 
 export const WELCOME_PATH = `/${WELCOME_SPACE}/${WELCOME_NAME}`
 
-const IMPORT_LINE = '\n[Import from Obsidian or Notion](nib://settings/import)\n'
+const IMPORT_LINE = '\n[Import from Obsidian or Notion](orden://settings/import)\n'
+
+const IMPORT_LINES = [IMPORT_LINE, IMPORT_LINE.replace('orden://', 'nib://')]
 
 export const WELCOME = `# Welcome to Orden
 
@@ -40,5 +42,7 @@ const EARLIER = [
 export function isUntouchedWelcome(path: string, content: string): boolean {
   const name = path.split(/[\\/]/u).at(-1) ?? ''
   if (name !== WELCOME_NAME) return false
-  return [WELCOME, ...EARLIER].some((seed) => content === seed || content === seed + IMPORT_LINE)
+  return [WELCOME, ...EARLIER].some(
+    (seed) => content === seed || IMPORT_LINES.some((line) => content === seed + line),
+  )
 }

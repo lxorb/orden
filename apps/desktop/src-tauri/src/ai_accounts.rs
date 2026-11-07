@@ -7,7 +7,7 @@ use tauri::{AppHandle, Emitter, Manager};
 
 use crate::paths::{made, write_privately};
 
-const EVENT: &str = "nib://ai-accounts";
+const EVENT: &str = "orden://ai-accounts";
 
 const MOST_BYTES: usize = 256 * 1024;
 

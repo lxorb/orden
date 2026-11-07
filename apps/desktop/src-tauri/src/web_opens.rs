@@ -33,7 +33,7 @@ const TWICE_CTRL: &str = "nib-twice-ctrl";
 const TWICE_ALT: &str = "nib-twice-alt";
 
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-const PASSED: &str = "nib://web-passed";
+const PASSED: &str = "orden://web-passed";
 
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]

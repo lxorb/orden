@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-const FINGERS: &str = "nib://touchpad";
+const FINGERS: &str = "orden://touchpad";
 
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 pub struct Fingers {

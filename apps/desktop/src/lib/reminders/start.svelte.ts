@@ -120,7 +120,7 @@ $effect.root(() => {
 
 void answerAll()
 if (isDesktop) {
-  void hearHere('nib://reminder', () => void answerAll())
+  void hearHere('orden://reminder', () => void answerAll())
 } else {
   answer('__nibReminders', () => void answerAll())
 }

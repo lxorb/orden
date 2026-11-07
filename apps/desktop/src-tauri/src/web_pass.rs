@@ -29,11 +29,11 @@ const MOST_VALUES: usize = 64;
 
 const MOST_FRAMES: usize = 64;
 
-const FORMS: &str = "nib://pass-forms";
+const FORMS: &str = "orden://pass-forms";
 
-const MARK: &str = "nib://pass-mark";
+const MARK: &str = "orden://pass-mark";
 
-const SUBMITTED: &str = "nib://pass-submitted";
+const SUBMITTED: &str = "orden://pass-submitted";
 
 const FILL: &str =
     "function (asked) { var pass = globalThis.__nibPass; return pass ? pass.fill(asked) : false }";
@@ -952,7 +952,7 @@ mod tests {
         .expect("forms");
         assert_eq!(heard.doc.as_deref(), Some("ab12"));
         let (event, body) = event_told("t1", &place(), &heard.said);
-        assert_eq!(event, "nib://pass-forms");
+        assert_eq!(event, "orden://pass-forms");
         assert_eq!(
             body,
             json!({
@@ -978,7 +978,7 @@ mod tests {
     fn a_mark_pressed_and_a_form_sent_are_told_in_their_own_shapes() {
         let mark = message_read(r#"{"kind":"mark","form":"f1","field":"e3"}"#).expect("mark");
         let (event, body) = event_told("t1", &place(), &mark.said);
-        assert_eq!(event, "nib://pass-mark");
+        assert_eq!(event, "orden://pass-mark");
         assert_eq!(body["form"], "f1");
         assert_eq!(body["field"], "e3");
         assert_eq!(body["secure"], true);
@@ -988,7 +988,7 @@ mod tests {
         )
         .expect("submitted");
         let (event, body) = event_told("t1", &place(), &sent.said);
-        assert_eq!(event, "nib://pass-submitted");
+        assert_eq!(event, "orden://pass-submitted");
         assert_eq!(body["kind"], "change");
         assert_eq!(body["username"], serde_json::Value::Null);
         assert_eq!(body["password"], "old");

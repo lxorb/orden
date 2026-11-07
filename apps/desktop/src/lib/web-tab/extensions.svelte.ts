@@ -131,7 +131,7 @@ class Extensions {
     if (!isDesktop || this.listening) return
     this.listening = true
     const { listen } = await import('@tauri-apps/api/event')
-    await listen('nib://extensions', () => void this.load())
+    await listen('orden://extensions', () => void this.load())
     await this.load()
     this.lookForUpdates()
   }

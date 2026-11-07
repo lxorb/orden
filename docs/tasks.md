@@ -196,7 +196,7 @@ added, property edited or a schedule; forms that write rows.
   timeline, gallery, chart, relations, rollups, sub-groups, calculations, templates, forms,
   buttons and automations, built on the notes.
 - **Leaves**: Karma and streak games; a team admin console; a hundred integrations, where one
-  MCP server, a CLI and `nib://` links are the integration; dashboards as a separate thing
+  MCP server, a CLI and `orden://` links are the integration; dashboards as a separate thing
   (a note embedding several views is a dashboard); anything that needs a store Orden owns.
 
 ## 3. Todoist parity: every feature, mapped
@@ -285,8 +285,8 @@ added, property edited or a schedule; forms that write rows.
 | 77  | Karma                                                            | none                                                                                                                                                        | drop                                   | points for ticking boxes is the opposite of calm                 |
 | 78  | Vacation mode, days off                                          | none                                                                                                                                                        | drop                                   | belongs to Karma                                                 |
 | 79  | Calendar sync (Google, Outlook)                                  | an ICS feed of dated tasks from the Worker, read-only                                                                                                       | later                                  | a feed is cheap; two-way is a product                            |
-| 80  | 100+ integrations                                                | `nib mcp`, the account connector, the CLI and `nib://`                                                                                                      | drop                                   | one surface agents and scripts already use                       |
-| 81  | API                                                              | the CLI's `tasks` verbs and `nib://add-task` (5.15)                                                                                                         | must                                   |                                                                  |
+| 80  | 100+ integrations                                                | `nib mcp`, the account connector, the CLI and `orden://`                                                                                                      | drop                                   | one surface agents and scripts already use                       |
+| 81  | API                                                              | the CLI's `tasks` verbs and `orden://add-task` (5.15)                                                                                                         | must                                   |                                                                  |
 | 82  | MCP server                                                       | `nib mcp` and the account connector (5.15)                                                                                                                  | must                                   | Emil's ask                                                       |
 | 83  | Offline                                                          | files                                                                                                                                                       | must                                   | free                                                             |
 | 84  | Sync                                                             | Orden sync, tasks being notes                                                                                                                                 | must                                   | free                                                             |
@@ -438,7 +438,7 @@ lanes 1, 4 and 7:
 
 **In todo lists, never in any other note (#1229).** A todo list is the space's inbox (Orden's
 own `.Inbox.md`, or the note chosen as the inbox) or a note Orden made a list from Todos:
-a list named in quick add, `add_task`, Shortcuts, share, `nib://add-task`, the CLI or a
+a list named in quick add, `add_task`, Shortcuts, share, `orden://add-task`, the CLI or a
 Todoist import that is not there yet is made in the Projects folder. Orden remembers that a
 note is a list in its own metadata of the note (`todo-list`, #1210), never in its words, so a
 list stays one when it is moved or renamed, and a note written in the Projects folder by hand
@@ -1202,14 +1202,14 @@ reading reminder times), and Emil decided to build it (8.5).
 - **Windows**: `src-tauri/src/reminders/toasts.rs` puts each on `ToastNotifier`'s schedule
   under the app's id, tagged with its id in the group `nib.reminders`; the toast
   (`toast.rs`) is `scenario="reminder"` with the system's own snooze (15 min, 1 h,
-  tomorrow 9:00) and Done as a `nib://reminder` link. Proved by
+  tomorrow 9:00) and Done as a `orden://reminder` link. Proved by
   `scripts/reminders-probe.py` on a probe of its own; where Windows refuses the id, the
   page rings the plan itself while Orden runs (7.3's fallback).
 - **macOS**: `reminders/macos.rs`, `UNCalendarNotificationTrigger` requests in one
   category with Done and two snoozes (15 min, 1 h), the delegate set at launch so a
   press that started the app is heard; a build that is not a bundle answers no and the
   page rings. Compiled and linted on the Mac runner only.
-- **Presses**: every Done and press is a `nib://reminder?act=…&id=…&n=…` link (a Mac's
+- **Presses**: every Done and press is a `orden://reminder?act=…&id=…&n=…` link (a Mac's
   delegate hands them over directly). The nonce is made per reminder and kept in
   `reminders.json` beside the settings for a week after it rang, so no link anybody
   else writes can tick a task. Done ticks through `rows.write` (`lib/reminders/presses.ts`),
@@ -1418,7 +1418,7 @@ the view's head holds under its name (`live.builder`), opened from a column's me
   template is open in a pane.
 - **Buttons**: `nib.buttons.<name>` with `set`, `task`, `command`, `open`; a column
   `button.<name>` (`ButtonBuilder`, "Add a column"). A press (`press.ts`) sets the row's
-  properties and adds its task as one write; the command runs as a `nib://` link would
+  properties and adds its task as one write; the command runs as a `orden://` link would
   ask for it (`runCommand(…, 'link')`), and the address opens outside.
 - **Automations**: `nib.automations`, a list of `when` (`added`, or `{ property, is? }`)
   with `set`, `move` and `notify`, and `off`; `AutomationsBuilder` from the name's menu
@@ -1511,7 +1511,7 @@ its table test reads. Decision 8.3.
 
 **The CLI** (`docs/automation.md`): `orden tasks list [--view V] [--filter F]`, `orden tasks add
 <text>`, `orden tasks done <anchor>`, `orden base query <path> [--view V]`, and the link
-`nib://add-task?text=...`, which the five link verbs gain as their sixth, a write that can
+`orden://add-task?text=...`, which the five link verbs gain as their sixth, a write that can
 only add a line to an inbox.
 
 **As built** (lane 6). The verbs are `lib/agents/workspace/tasks.ts` in the window and
@@ -1528,7 +1528,7 @@ through `lib/task-actions.ts`, which writes the way quick add does (`quick-add/w
 `add_task` reads its words with quick add's grammar (`quickWords`: the reader's language
 and English in the app, English and German on the Worker), the Tasks plugin's own marks
 written in them winning, and `>Note /Heading` choosing where it goes; every way a task
-comes in places its line with one function (`placeIn`, `@orden/bases/tasks`). The CLI's verbs are the same verbs asked as the reader, and `nib://add-task`
+comes in places its line with one function (`placeIn`, `@orden/bases/tasks`). The CLI's verbs are the same verbs asked as the reader, and `orden://add-task`
 takes the words and a space and nothing else.
 
 ### 5.16 Keys
@@ -1760,7 +1760,7 @@ reads a file. The reminders store (lane 5) reads `rows.watch` and nothing else.
 | **3 `quick-add-and-editor`** | `@orden/bases`'s `language/` folder (new); `lib/quick-add/` (new); `packages/editor/src/live-preview/` task chips (a new file, a hook in `decorate.ts`); the quick add window in `src-tauri/src` (new file)                                                                                                                                                  | the en and de grammar tables and the parser (5.6), chips in the field, the pickers; the quick add sheet, palette row, panel row and global window with its key; the editor's chips, pickers, completion of a typed date and the tick with recurrence (5.7); the ` ```tasks ` fence drawn by the engine                                                                                                                                     | parser tests per table row in both languages and the ambiguous cases; editor state tests for chips hidden and shown with the caret, a pick as one edit, a recurring tick as one undo; a drive: quick add from the palette into the Inbox, a chip pressed back to words; the global key tested on a probe through `run_probe` only                     | 2    |
 | **4 `views`**                | `lib/views/` (new); the `'tasks'` panel in `apps/desktop/src/lib/workspace.svelte.ts` and `apps/desktop/src/lib/workspace/panels.ts`; the view tab's kind in `apps/desktop/src/lib/openers.ts`; the base fence and embed; the Properties panel of then (its controls lifted into `apps/desktop/src/lib/properties/PropertyValue.svelte`)                                             | the Tasks panel (5.5); the view tab and its head; list, table, cards, board, calendar, Upcoming, timeline and chart layouts (5.9); inline editing through `rows.write`; drag on every layout; the filter, sort and group builders; saving a view as a `.base`; ` ```base ` and `![[x.base#View]]`; the phone layouts                                                                                                                       | component tests per layout; a drive `test/e2e/tasks.py`: seed tasks and notes, Today and Upcoming right, a board drag writing the property, a calendar drag writing the date, a table cell edit undone with Ctrl+Z, an embedded base in a note; the same at phone width; 2,000-card board scroll measured                                             | 2    |
 | **5 `reminders`**            | `lib/reminders/` (new); `src-tauri/src` reminders module (new); the Android alarm and boot receiver (new Kotlin beside `Widgets.kt`); the tray residency setting                                                                                                                                                                                           | the scheduler (5.10); Windows scheduled toasts and macOS triggers; the notification actions starting nib in the background; Linux and the tray; Android alarms, actions and reboot; the settings rows; the Worker push (8.5)                                                                                                                                                                                                               | scheduler tests (a moved task moves its reminder, a ticked one cancels, a recurring one schedules the next, 64 kept); cargo tests for the scheduling calls behind a trait; a probe with an identifier of its own, never Emil's nib, that a scheduled toast is registered; Android unit tests for the alarm list                                       | 2    |
-| **6 `tasks-everywhere`**     | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/tasks.ts`, new); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` 3.1; the CLI's verbs; `lib/import/todoist.ts` (new); the Even Today screen in `apps/desktop/src/lib/even/`; the widget's Today layout | the verbs of 5.15 on both servers; `/tasks`, `/today` and the `/jobs` rename; the CLI verbs and `nib://add-task`; the Todoist importer from the API and CSV (5.17); the glasses' Today and spoken add (5.18); the share sheet's                                                                                                                                                                              | verb tests through the MCP harness, a grant without the space refused; the AI command table test green with the new rows; importer tests on a recorded API answer and Todoist's documented CSV, with priorities turned round and recurrences re-parsed; Even screen tests within the panel's eight lines                                              | 2    |
+| **6 `tasks-everywhere`**     | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/tasks.ts`, new); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` 3.1; the CLI's verbs; `lib/import/todoist.ts` (new); the Even Today screen in `apps/desktop/src/lib/even/`; the widget's Today layout | the verbs of 5.15 on both servers; `/tasks`, `/today` and the `/jobs` rename; the CLI verbs and `orden://add-task`; the Todoist importer from the API and CSV (5.17); the glasses' Today and spoken add (5.18); the share sheet's                                                                                                                                                                              | verb tests through the MCP harness, a grant without the space refused; the AI command table test green with the new rows; importer tests on a recorded API answer and Todoist's documented CSV, with priorities turned round and recurrences re-parsed; Even screen tests within the panel's eight lines                                              | 2    |
 | **7 `database-extras`**      | `lib/views/` additions agreed with lane 4 (the form layout, the button cell, the rollup picker); `@orden/bases`'s `automations` (new)                                                                                                                                                                                                                        | relations' reverse columns and the rollup picker (5.12); unique ids; select options with tones; conditional colour; forms; buttons; templates and repeating templates; automations; locking; CSV export and CSV import as a base                                                                                                                                                                                                           | engine tests for rollups, id collisions, automations firing once per change and undoing as one; a drive: a form makes a note, a button sets a property, a rollup counts                                                                                                                                                                               | 3    |
 
 **Wave 1** is lanes 1 and 2 together: one is a pure package, the other the crate and the

@@ -776,7 +776,7 @@ Worker and the client (which applies its own ops optimistically):
   device renames its own file to match.
 - **Two creates of one day's note merge.** Some creates mean "this note, made if it is not
   there yet": the append action (`appendNote` in `automation/acts.ts`, which shortcuts and
-  `nib://` links use to add a line to the day's note) and, when it exists, a journal
+  `orden://` links use to add a line to the day's note) and, when it exists, a journal
   command. Those carry `mergeable` and the text they started from (empty, or a template).
   A mergeable create landing on a live note of the same name in the same folder answers
   `merged` with the existing id; the device merges its document into that note three-way

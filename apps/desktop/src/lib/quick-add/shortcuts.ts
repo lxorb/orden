@@ -7,7 +7,7 @@ import { joinPath } from '../tauri'
 
 const TAKING = 'nib:shortcuts-added'
 
-const ADDED = 'nib://shortcuts-added'
+const ADDED = 'orden://shortcuts-added'
 
 export const TAKEN = '.shortcuts'
 

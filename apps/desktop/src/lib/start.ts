@@ -253,13 +253,13 @@ async function guardClose() {
   if (!__EVEN_PLUGIN__ && isDesktop) {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const own = getCurrentWindow()
-    await own.listen('nib://quit', () => void onQuit(window))
-    await own.listen('nib://update-settle', () => {
+    await own.listen('orden://quit', () => void onQuit(window))
+    await own.listen('orden://update-settle', () => {
       settle()
       void settledForInstaller(owed)
     })
     await own.listen(
-      'nib://quit-ask',
+      'orden://quit-ask',
       () => void import('./quitting/ask').then((one) => one.quitAsked()),
     )
     void startup

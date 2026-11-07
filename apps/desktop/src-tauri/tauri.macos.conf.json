@@ -20,7 +20,7 @@
   "plugins": {
     "deep-link": {
       "desktop": [
-        { "schemes": ["nib"] },
+        { "schemes": ["orden", "nib"] },
         { "name": "Web site URL", "schemes": ["http", "https"], "role": "Viewer" }
       ]
     }

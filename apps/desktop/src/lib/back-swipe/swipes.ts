@@ -387,11 +387,11 @@ export function listen(): () => void {
   let stopped = false
   if (isDesktop) {
     void import('../own-window').then(async ({ hearHere }) => {
-      const off = await hearHere('nib://web-swipe', (event) => {
+      const off = await hearHere('orden://web-swipe', (event) => {
         const said = readSaid(event.payload)
         if (said) pageSaid(said)
       })
-      const offPad = await hearHere('nib://touchpad', (event) => {
+      const offPad = await hearHere('orden://touchpad', (event) => {
         const fingers = readFingers(event.payload)
         if (fingers !== null) touchpad(fingers)
       })

@@ -246,7 +246,7 @@ def main() -> int:
         )
 
         key(app, "h", "KeyH")
-        history = until(lambda: next((one for one in tabs(app) if one.get("url") == "nib://history"), None))
+        history = until(lambda: next((one for one in tabs(app) if one.get("url") == "orden://history"), None))
         said["history tab"] = history
         checks["Ctrl+H opens the History page in a tab"] = bool(history) and bool(history.get("active"))  # type: ignore[union-attr]
         rows = until(lambda: history_rows(app))
@@ -256,7 +256,7 @@ def main() -> int:
         key(app, "h", "KeyH")
         time.sleep(1)
         checks["Ctrl+H again keeps the one History tab"] = (
-            len([one for one in tabs(app) if one.get("url") == "nib://history"]) == 1
+            len([one for one in tabs(app) if one.get("url") == "orden://history"]) == 1
         )
 
         app.ask(

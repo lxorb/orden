@@ -227,7 +227,7 @@ makes the second share of the day arrive in the app that is already open -
 Not `VIEW` for a file. A share is a copy into a space, the way Import is: bytes and a
 name arrive and a note is written. A `VIEW` filter for a `.md` is Orden offering itself
 in a file manager's "Open with", and Orden opens nothing from outside its spaces - so
-there is none, and the one `VIEW` left is the `nib://` link. A markdown file shared
+there is none, and the one `VIEW` left is the `orden://` link. A markdown file shared
 to Orden still becomes a note under its own name.
 
 `*/*` on the share filters is deliberate. A note is where anything goes that
@@ -412,7 +412,7 @@ A row hands back the note's path on disk, and the activity that carries it is
 exported - which is what makes a widget tappable at all, and also means anything
 on the phone can send that intent. So the path is a path only once
 `insideAnyOf` has found it under one of this app's own space roots and the rest
-of it has been through `insideOnly`, the same judgement a `nib://` link gets; what
+of it has been through `insideOnly`, the same judgement a `orden://` link gets; what
 is opened is rebuilt from the root rather than taken as it arrived, and a path
 under no space is refused in the log and on screen. See
 `src/lib/space-paths.ts`.

@@ -7,7 +7,7 @@ export function linkTo(space: string, path: string, heading?: string | null): st
   const said = new URLSearchParams({ space, path })
   if (heading) said.set('heading', heading)
 
-  return `nib://open?${said.toString()}`
+  return `orden://open?${said.toString()}`
 }
 
 export async function copyNoteLink(): Promise<boolean> {

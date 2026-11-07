@@ -6,7 +6,7 @@ interface Fetching {
   done: boolean
 }
 
-const EVENT = 'nib://icloud'
+const EVENT = 'orden://icloud'
 
 class ICloud {
   readonly coming = new SvelteSet<string>()

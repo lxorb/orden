@@ -324,7 +324,7 @@ webviews under one label is not a thing that can exist.
 `get_webview_window` only answers for a window whose webviews are all itself, so
 from the moment a web tab puts a second webview in the window it answers nothing at
 all - and everything that asked that way stopped working while a website was open:
-the `nib` command line said the app had no window, a `nib://` link never raised it,
+the `nib` command line said the app had no window, a `orden://` link never raised it,
 and a second launch handed its file over to a window that was never brought
 forward. Nothing in the crate asks that way now; `get_window` is the call, because a
 window is what all of them wanted.
@@ -1031,7 +1031,7 @@ listener is passive and reads, so the page scrolls as it did. It says it the way
 world already asks for the find: on `WebView2` as a window asked for under a name that
 carries it, which the crate reads and never opens. Not a binding: the engine puts one in a world
 only while the protocol's runtime domain is on, and turning that on for every page is
-exactly what sites that look for automation look for. The crate reads it into numbers and says it to the window as `nib://web-swipe`
+exactly what sites that look for automation look for. The crate reads it into numbers and says it to the window as `orden://web-swipe`
 (`web_swipe.rs`), the window runs the gesture (`src/lib/back-swipe`), and the step is the
 tab's own Back or Forward, along the same trail the arrows walk.
 
@@ -1063,7 +1063,7 @@ So the window reads the pad itself (`src-tauri/src/touchpad.rs`). A precision to
 a HID digitizer, and Windows hands any program that asks for them its raw reports: each
 frame says how many contacts it holds and whether each one is touching. A thread of the
 crate's own, with a window that is only a mailbox, puts the reports back into frames and
-says one number as it changes - the fingers on the pad - as `nib://touchpad`, and only
+says one number as it changes - the fingers on the pad - as `orden://touchpad`, and only
 while Orden is in front, but for a lift. Nothing else about the hand leaves the crate. From
 the first time it says so, a touchpad's stream is the time two fingers are down, and only
 their lift decides it (`told` in `gesture.ts`). The same for both of Windows' engines, since
@@ -1318,7 +1318,7 @@ What Chrome keeps inside the browser stays inside nib (Emil, 2026-09-13), and th
 were the ones still missing. Each is Chrome's shape, in Chrome's words, and each one's
 translations are Chromium's own.
 
-**History is a page in a tab, as `chrome://history` is.** Its address is `nib://history`,
+**History is a page in a tab, as `chrome://history` is.** Its address is `orden://history`,
 Orden's own scheme, which no tab may open as a site: a web tab on it draws the History page
 where a site would be and builds no webview (`web-tab/own-pages.ts`). Ctrl+H (Cmd+Y on a
 Mac, where Cmd+H hides the app), the dots' History row and the palette's Browsing history
@@ -1502,8 +1502,8 @@ the space has restored.
 ## The page itself
 
 What a browser does with the page in front of it without being asked, each on
-`WebView2`'s own event or call, and each said to the window as `nib://web-page` or
-`nib://web-found` and landed on the tab's state by `web-tab/heard.ts`. Elsewhere the
+`WebView2`'s own event or call, and each said to the window as `orden://web-page` or
+`orden://web-found` and landed on the tab's state by `web-tab/heard.ts`. Elsewhere the
 engines say nothing, and what each one does there is said with it.
 
 - **The card's corners.** What is open stands in a card with rounded corners (Window
@@ -1517,7 +1517,7 @@ engines say nothing, and what each one does there is said with it.
   keyboard, makes its tab and its pane the ones being worked in, as a press anywhere in
   the app's own page makes its pane's (#1080) - the page is a native view, and the press
   never reaches the app's HTML. One function says it, `page_chosen` in `web_tabs.rs`, heard by
-  the window as `nib://web-chosen`: each engine's word that the page has the keyboard
+  the window as `orden://web-chosen`: each engine's word that the page has the keyboard
   (`WebView2`'s `GotFocus`, the X server's `FocusIn` on CEF), the app's own page finding
   the keyboard gone to a page (a Mac's word), and a press heard in the page itself through
   nib's binding on Orden's own Chromium, for the page that has the keyboard already and of
@@ -1534,7 +1534,7 @@ engines say nothing, and what each one does there is said with it.
   see - listens last and, when nothing in the page took the
   key, asks for the bar under one of the window names `web_opens.rs` reads - find, next,
   previous, and the address field for Ctrl+L and Alt+D - for that tab alone, said to the
-  window as `nib://web-passed`. Never a command name, so a page can reach its own find
+  window as `orden://web-passed`. Never a command name, so a page can reach its own find
   and its own address field and nothing else (see `lib/web-tab/passed.svelte.ts`). The
   script answers after every handler the page has, including the ones the page added
   after it. A page the tab
@@ -1683,7 +1683,7 @@ desktop engines.
   starts and when it ends, the ring sweeps rather than fills, and Cancel only takes the
   row away.
 - **A tab a page opened for a file closes again**, the way Chrome's does: `target="_blank"`
-  on a download link opens a tab through `nib://web-open`, the file starts in it, and the
+  on a download link opens a tab through `orden://web-open`, the file starts in it, and the
   reader is put back on the page that asked. Only a tab a page asked for that never
   showed a document of its own; see `downloaded` in `pages.svelte.ts`.
 - **A page closed while a file is on its way stays until the file is in**, out of sight.
@@ -2330,7 +2330,7 @@ inside the page is judged by, not only what somebody types. A window the page as
 for leaves the app the way every other link does: the system browser - and it is
 judged by the same rule first, because `window.open` names a scheme of the page's
 choosing and the system opens whatever is registered for one. A page is handed
-over; `nib://`, `file:`, `smb:` and whatever else a machine has registered are
+over; `orden://`, `file:`, `smb:` and whatever else a machine has registered are
 dropped, or a site could drive this app through its own links by asking for a
 window it was never going to get.
 

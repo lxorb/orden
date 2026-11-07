@@ -402,7 +402,7 @@ test('a page that lands is photographed once, not once per report', async () => 
   arrive()
   await shown
   await settle()
-  const moved = await hearing('nib://web-tab')
+  const moved = await hearing('orden://web-tab')
   calls.length = 0
 
   const said = { tab: 'a', url: SITE, title: '', back: false, forward: false }
@@ -426,8 +426,8 @@ describe("a page's mark", () => {
     await shown
     await settle()
 
-    const moved = await hearing('nib://web-tab')
-    const iconed = await hearing('nib://web-icon')
+    const moved = await hearing('orden://web-tab')
+    const iconed = await hearing('orden://web-icon')
 
     const load = (loading: boolean) =>
       moved({ payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading } })
@@ -504,8 +504,8 @@ describe("a page's mark", () => {
 
   test('what is not a mark is not heard', async () => {
     const { mark, page } = await loaded()
-    heard.get('nib://web-icon')?.({ payload: { tab: 'a', icon: 7 } })
-    heard.get('nib://web-icon')?.({ payload: null })
+    heard.get('orden://web-icon')?.({ payload: { tab: 'a', icon: 7 } })
+    heard.get('orden://web-icon')?.({ payload: null })
     expect(page.icon).toBeNull()
 
     mark(PLAIN)
@@ -570,7 +570,7 @@ describe("a page's dialog still waiting", () => {
     const shown = pages.show('a', SITE, PANE)
     ;(await asked())()
     await shown
-    const tell = await hearing('nib://web-dialog')
+    const tell = await hearing('orden://web-dialog')
     tell({
       payload: { tab: 'a', id: 7, kind: 'alert', message: 'hello', text: '', origin: SITE },
     })
@@ -611,9 +611,9 @@ describe("a page's question still waiting", () => {
     ;(await asked())()
     await shown
     await settle()
-    const ask = await hearing('nib://web-ask')
+    const ask = await hearing('orden://web-ask')
     ask({ payload: { tab: 'a', id: 11, origin: SITE, kind: 'location' } })
-    const tell = await hearing('nib://web-dialog')
+    const tell = await hearing('orden://web-dialog')
     tell({
       payload: { tab: 'a', id: 12, kind: 'alert', message: 'hello', text: '', origin: SITE },
     })
@@ -622,7 +622,7 @@ describe("a page's question still waiting", () => {
     expect(grants.asking.map((one) => one.id)).toEqual([11])
     expect(dialogs.open.map((one) => one.id)).toEqual([12])
     calls.length = 0
-    return { grants, dialogs, moved: await hearing('nib://web-tab') }
+    return { grants, dialogs, moved: await hearing('orden://web-tab') }
   }
 
   const answered = () =>
@@ -688,10 +688,10 @@ describe("a page's question still waiting", () => {
   test('from a tab not held here is refused, not left waiting', async () => {
     const { grants, dialogs } = await waiting()
 
-    ;(await hearing('nib://web-ask'))({
+    ;(await hearing('orden://web-ask'))({
       payload: { tab: 'nowhere', id: 21, origin: SITE, kind: 'camera' },
     })
-    ;(await hearing('nib://web-dialog'))({
+    ;(await hearing('orden://web-dialog'))({
       payload: { tab: 'nowhere', id: 22, kind: 'alert', message: '', text: '', origin: SITE },
     })
     await settle()
@@ -1303,7 +1303,7 @@ describe('a page a person presses in or types into', () => {
     arrive()
     await shown
 
-    const chosen = await hearing('nib://web-chosen')
+    const chosen = await hearing('orden://web-chosen')
     chosen({ payload: { tab: 'b' } })
     await vi.waitFor(() => expect(did).toEqual(['activate b']))
 
@@ -1313,7 +1313,7 @@ describe('a page a person presses in or types into', () => {
   })
 
   test('chooses no tab it does not hold, and reads nothing else as one', async () => {
-    const chosen = await hearing('nib://web-chosen')
+    const chosen = await hearing('orden://web-chosen')
     chosen({ payload: { tab: 'elsewhere' } })
     chosen({ payload: {} })
     await settle()
@@ -1354,7 +1354,7 @@ describe('a tab that closes itself when its download starts', () => {
     arriveA()
     await shownA
 
-    const opening = await hearing('nib://web-open')
+    const opening = await hearing('orden://web-open')
     opening({ payload: { tab: 'a', url: FILE } })
     await settle()
 
@@ -1365,7 +1365,7 @@ describe('a tab that closes itself when its download starts', () => {
     await shownB
     await settle()
 
-    const download = await hearing('nib://web-download')
+    const download = await hearing('orden://web-download')
     download({ payload: { id, tab: 'b', url: FILE, name: 'slides.pdf', state: 'going' } })
   }
 
@@ -1394,7 +1394,7 @@ describe('a page whose process died', () => {
   }
 
   const crash = async (tab: string) => {
-    const page = await hearing('nib://web-page')
+    const page = await hearing('orden://web-page')
     page({ payload: { tab, said: 'crashed' } })
     await settle()
   }
@@ -1466,7 +1466,7 @@ describe('a page whose process died', () => {
   test('one that did not arrive goes the same way, says why, and comes back with Reload', async () => {
     await livePage('failing')
     calls.length = 0
-    const page = await hearing('nib://web-page')
+    const page = await hearing('orden://web-page')
     page({
       payload: {
         tab: 'failing',
@@ -1498,7 +1498,7 @@ describe('a page whose process died', () => {
 
   test('one the engine could not say the address of keeps the tab where it was going', async () => {
     await livePage('nameless')
-    const page = await hearing('nib://web-page')
+    const page = await hearing('orden://web-page')
     page({
       payload: { tab: 'nameless', said: 'arrived', url: '', failure: 'other', bare: true },
     })
@@ -1511,7 +1511,7 @@ describe('a page whose process died', () => {
 
   test('one an engine drew its own page for stays', async () => {
     await livePage('drawn')
-    const page = await hearing('nib://web-page')
+    const page = await hearing('orden://web-page')
     page({
       payload: { tab: 'drawn', said: 'arrived', url: SITE, failure: 'other', bare: false },
     })

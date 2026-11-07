@@ -1,6 +1,6 @@
 import { invoke, isDesktop } from './tauri'
 
-const PRESSED = 'nib://notice'
+const PRESSED = 'orden://notice'
 
 const KEPT = 64
 

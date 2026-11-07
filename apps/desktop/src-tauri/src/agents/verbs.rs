@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-pub const EVENT: &str = "nib://agent";
+pub const EVENT: &str = "orden://agent";
 
 pub type TabId = String;
 

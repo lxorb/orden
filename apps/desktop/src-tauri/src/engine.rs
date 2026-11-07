@@ -75,7 +75,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     let loading = loaded(&mut asked, &firefox);
     let mut engine = Cef::default()
         .sandbox(sandbox)
-        .deep_link_schemes(["nib"])
+        .deep_link_schemes(["orden", "nib"])
         .on_unhosted_tab(crate::extensions::tabs::opened)
         .disable_features([swipe_feature])
         .command_line_args([(swipe_switch, Some(swipe_off))])

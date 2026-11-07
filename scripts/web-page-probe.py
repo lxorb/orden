@@ -422,7 +422,7 @@ def main() -> int:
   const heard = []
   const I = window.__TAURI_INTERNALS__
   await I.invoke('plugin:event|listen', {{
-    event: 'nib://web-page',
+    event: 'orden://web-page',
     target: {{ kind: 'Any' }},
     handler: I.transformCallback((one) => one.payload.said === 'zoom' && heard.push(one.payload.factor)),
   }})

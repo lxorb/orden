@@ -29,7 +29,7 @@ function origin(url: string, read: (host: string) => string): string {
     return url
   }
 
-  if (parsed.protocol === 'nib:') return url
+  if (parsed.protocol === 'orden:' || parsed.protocol === 'nib:') return url
 
   const host = read(parsed.host).replace(/^www\./i, '')
   return parsed.protocol === 'http:' ? `http://${host}` : host

@@ -59,7 +59,7 @@ fn answering(app: &AppHandle) -> Option<Webview> {
     }
 }
 
-const SAID: &str = "nib://extension-popup";
+const SAID: &str = "orden://extension-popup";
 
 const SMALLEST: f64 = 25.0;
 const WIDEST: f64 = 800.0;

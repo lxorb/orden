@@ -15,7 +15,7 @@ use tauri::{AppHandle, Emitter as _, Manager as _};
     not(any(windows, target_os = "macos")),
     allow(dead_code, reason = "Linux hears no presses")
 )]
-const PRESSED: &str = "nib://notice";
+const PRESSED: &str = "orden://notice";
 
 const LONGEST_TAG: usize = 64;
 

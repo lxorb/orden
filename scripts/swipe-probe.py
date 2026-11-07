@@ -131,7 +131,7 @@ def replay(app, target: int, x: int, y: int, ops: list[list[object]]) -> list[tu
     for op in ops:
         kind = op[0]
         if kind == "fingers":
-            ask(app, f"await window.__TAURI_INTERNALS__.invoke('plugin:event|emit', {{ event: 'nib://touchpad', payload: {{ fingers: {int(op[1])} }} }}); return true")
+            ask(app, f"await window.__TAURI_INTERNALS__.invoke('plugin:event|emit', {{ event: 'orden://touchpad', payload: {{ fingers: {int(op[1])} }} }}); return true")
             time.sleep(0.05)
         elif kind == "sweep":
             for _ in range(int(op[1])):

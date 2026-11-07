@@ -304,7 +304,7 @@ file (2bb7b06f), a rename keeping the note's id on the account (80b9de44), a cho
 reaching the app (904f7a0b), Ctrl+Shift+Z redo, `present` on the drive handle, the shipped
 build drivable (d4bdbad8), the audit fixers A1, A2, B, C1 and C2 (covers, properties, high
 contrast, footnotes, stacked tabs, `content:`, Lines, RSS, the recorder on desktop, window
-frame and translucency, Ctrl+=/-/0, `nib://append`), every power-user batch, links opening
+frame and translucency, Ctrl+=/-/0, `orden://append`), every power-user batch, links opening
 as nib tabs (f7afb642), the web tab's session login across restarts, the legacy recovery
 codes, the old `lxorb/nib` URLs (only the historical winget 0.4.0 manifest keeps them), and
 the unguarded storage reads.

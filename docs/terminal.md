@@ -511,7 +511,7 @@ A shell can do anything the person at the keyboard can, so:
   it, read it or end it.
 - **A shell is an id** the crate itself found. The window cannot name a program, an
   argument or a variable of its own.
-- **No verb of the command line and no `nib://` link** reaches a terminal. _New
+- **No verb of the command line and no `orden://` link** reaches a terminal. _New
   terminal_ is a row the command line may not run (`ownWindow` in
   `apps/desktop/src/lib/commands.ts`, refused by `runCommand` in
   `apps/desktop/src/lib/automation/acts.ts` on both roads), and it is left out of the list

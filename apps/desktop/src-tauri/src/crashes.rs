@@ -20,7 +20,7 @@ use report::{App, Facts, Report, System};
 
 const FOLDER: &str = "crash-reports";
 
-const TOLD: &str = "nib://crash-report";
+const TOLD: &str = "orden://crash-report";
 
 const CLAIM: Duration = Duration::from_secs(120);
 

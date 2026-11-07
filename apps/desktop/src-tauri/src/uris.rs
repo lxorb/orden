@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_deep_link::DeepLinkExt as _;
 
-const OPENED: &str = "nib://open-url";
+const OPENED: &str = "orden://open-url";
 
 #[derive(Default)]
 pub struct Pending(pub Mutex<Vec<String>>);
@@ -135,7 +135,7 @@ pub fn take_startup_uris(pending: tauri::State<'_, Pending>) -> Vec<String> {
     std::mem::take(&mut *urls)
 }
 
-const SCHEME: &str = "nib:";
+const SCHEMES: [&str; 2] = ["orden:", "nib:"];
 
 fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
     urls.iter()
@@ -145,9 +145,11 @@ fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
 }
 
 fn is_ours(url: &str) -> bool {
-    url.trim_start()
-        .get(..SCHEME.len())
-        .is_some_and(|scheme| scheme.eq_ignore_ascii_case(SCHEME))
+    let url = url.trim_start();
+    SCHEMES.iter().any(|ours| {
+        url.get(..ours.len())
+            .is_some_and(|scheme| scheme.eq_ignore_ascii_case(ours))
+    })
 }
 
 #[cfg(test)]
@@ -210,14 +212,14 @@ mod tests {
     #[test]
     fn says_every_link_it_is_given() {
         let urls = vec![
-            "nib://open?path=Idea.md".to_string(),
-            "nib://search".to_string(),
+            "orden://open?path=Idea.md".to_string(),
+            "orden://search".to_string(),
         ];
         assert_eq!(
             said(urls),
             vec![
-                "nib://open?path=Idea.md".to_string(),
-                "nib://search".to_string()
+                "orden://open?path=Idea.md".to_string(),
+                "orden://search".to_string()
             ]
         );
     }
@@ -232,15 +234,21 @@ mod tests {
     fn a_file_the_finder_opened_is_no_link() {
         let urls = vec![
             "file:///Users/me/Notes/Idea.md".to_string(),
-            "nib://open?path=Idea.md".to_string(),
+            "orden://open?path=Idea.md".to_string(),
             "FILE:///Users/me/Other.md".to_string(),
         ];
-        assert_eq!(said(urls), vec!["nib://open?path=Idea.md".to_string()]);
+        assert_eq!(said(urls), vec!["orden://open?path=Idea.md".to_string()]);
+    }
+
+    #[test]
+    fn still_says_a_link_written_before_the_rename() {
+        assert_eq!(said(vec!["nib://open?path=Idea.md".to_string()]).len(), 1);
+        assert_eq!(said(vec!["NIB://search".to_string()]).len(), 1);
     }
 
     #[test]
     fn reads_the_scheme_in_any_case() {
-        assert_eq!(said(vec!["NIB://search".to_string()]).len(), 1);
+        assert_eq!(said(vec!["ORDEN://search".to_string()]).len(), 1);
         assert!(said(vec!["https://orden.so".to_string()]).is_empty());
         assert!(said(vec!["ni".to_string()]).is_empty());
     }

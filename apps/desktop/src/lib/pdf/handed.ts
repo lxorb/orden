@@ -6,7 +6,7 @@ import { arrivalOf } from './arrival'
 
 export async function hearPdfs(): Promise<() => void> {
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
-  const stop = await getCurrentWindow().listen<unknown>('nib://open-pdfs', (event) => {
+  const stop = await getCurrentWindow().listen<unknown>('orden://open-pdfs', (event) => {
     void showPdfs(event.payload)
   })
 

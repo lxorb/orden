@@ -13,7 +13,7 @@ const SHAPED = 2000
 
 const AGAIN = 6 * 60 * 60 * 1000
 
-const TOLD = 'nib://crash-report'
+const TOLD = 'orden://crash-report'
 
 function kindsOf(tabs: readonly { kind: string }[]): Record<string, number> {
   const kinds: Record<string, number> = {}

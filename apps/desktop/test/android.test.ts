@@ -92,6 +92,7 @@ describe('what another app may share with nib', () => {
       .filter((filter) => filter.includes('android.intent.action.VIEW"'))
 
     expect(views).toHaveLength(1)
+    expect(views[0]).toContain('android:scheme="orden"')
     expect(views[0]).toContain('android:scheme="nib"')
     expect(manifest).not.toContain('android:scheme="content"')
     expect(manifest).not.toContain('android:scheme="file"')

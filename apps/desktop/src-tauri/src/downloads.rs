@@ -9,7 +9,7 @@ use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewBuilder};
 
 use crate::paths::is_reserved;
 
-const MOVED: &str = "nib://web-download";
+const MOVED: &str = "orden://web-download";
 
 const DOWNLOADS_DIR: &str = "ORDEN_DOWNLOADS_DIR";
 

@@ -90,7 +90,7 @@ describe('the clearing', () => {
     visited.saw(book, 'a', 'https://a.example/one', 'A')
     visited.saw(book, 'b', 'https://a.example/two', 'A again')
     visited.saw(book, 'c', 'http://b.example:8080/', 'B')
-    visited.saw(book, 'd', 'nib://home', 'Home')
+    visited.saw(book, 'd', 'orden://home', 'Home')
     expect(sitesSince([book], 0).sort()).toEqual(['http://b.example:8080', 'https://a.example'])
     expect(sitesSince([book], Date.now() + HOUR)).toEqual([])
   })

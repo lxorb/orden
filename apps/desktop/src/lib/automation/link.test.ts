@@ -15,12 +15,12 @@ const { readUri } = await import('./uri')
 
 describe('a link to a note', () => {
   test('says the space and the path', () => {
-    expect(linkTo('Work', 'notes/Plan.md')).toBe('nib://open?space=Work&path=notes%2FPlan.md')
+    expect(linkTo('Work', 'notes/Plan.md')).toBe('orden://open?space=Work&path=notes%2FPlan.md')
   })
 
   test('carries the heading when there is one', () => {
     expect(linkTo('Work', 'Plan.md', 'Later this week')).toBe(
-      'nib://open?space=Work&path=Plan.md&heading=Later+this+week',
+      'orden://open?space=Work&path=Plan.md&heading=Later+this+week',
     )
   })
 
