@@ -263,6 +263,11 @@
     long: 'Long page',
   }
 
+  function showMenu(event: MouseEvent, page: PageNode, at: number) {
+    if (!store || store.readOnly) return
+    menu.show(event, pageMenu(page), { title: t('Page {number}', { number: at + 1 }) })
+  }
+
   function pageMenu(page: PageNode): MenuEntry[] {
     return [
       { label: t('Add a page after this'), run: () => add(page.id) },
@@ -302,7 +307,7 @@
   }
 
   function overPage(event: DragEvent, at: number) {
-    if (!isPageDrag(event.dataTransfer)) return
+    if (!isPageDrag(event.dataTransfer) || store?.readOnly) return
 
     event.preventDefault()
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
@@ -368,10 +373,8 @@
             aria-label={t('Page {number}', { number: at + 1 })}
             aria-current={at + 1 === on ? 'true' : undefined}
             onclick={() => store.turnTo(at + 1)}
-            oncontextmenu={(event) =>
-              menu.show(event, pageMenu(page), { title: t('Page {number}', { number: at + 1 }) })}
-            use:longPress={(event) =>
-              menu.show(event, pageMenu(page), { title: t('Page {number}', { number: at + 1 }) })}
+            oncontextmenu={(event) => showMenu(event, page, at)}
+            use:longPress={(event) => showMenu(event, page, at)}
             ondragstart={(event) => start(event, page)}
             use:dropOver={(event) => overPage(event, at)}
             ondragleave={() => (over = null)}
@@ -393,10 +396,12 @@
       {/each}
     </ul>
 
-    <button class="add" onclick={() => add(null)}>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-      {t('Add a page')}
-    </button>
+    {#if store.canAdd}
+      <button class="add" onclick={() => add(null)}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        {t('Add a page')}
+      </button>
+    {/if}
   </div>
 {/if}
 
