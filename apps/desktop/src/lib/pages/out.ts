@@ -22,7 +22,7 @@ import { t } from '../i18n.svelte'
 import { isDesktop } from '../tauri'
 import { paperPlaces } from './held'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
-import { cssColour, paperIsLocked, paperPicture, svgToPng } from './raster'
+import { cssColour, paperIsLocked, paperPicture, sharpness, svgToPng } from './raster'
 import { escapeAll } from '@orden/markdown/html'
 
 function saidLocked(): void {
@@ -113,6 +113,18 @@ function paperPalette(palette: Palette): Palette {
 
 const LINES = 30
 const GRID = 19
+const SHEET = LINES * GRID * 33
+
+function sheetsOf(pages: readonly PageNode[]): PageNode[] {
+  return pages.flatMap((page) => {
+    if (page.file || page.height <= SHEET) return [page]
+    return Array.from({ length: Math.ceil(page.height / SHEET) }, (_, at) => ({
+      ...page,
+      y: page.y + at * SHEET,
+      height: Math.min(SHEET, page.height - at * SHEET),
+    }))
+  })
+}
 
 function rulingSvg(pattern: Pattern, width: number, rule: string): string {
   const tile = (w: number, h: number, body: string) =>
@@ -216,7 +228,7 @@ async function handOver(
 }
 
 export async function exportPagesSvg(out: PagesOut): Promise<string | undefined> {
-  const pages = pagesOf(out.canvas)
+  const pages = sheetsOf(pagesOf(out.canvas))
   if (!pages.length) return
 
   const name = stem(out.name)
@@ -234,7 +246,7 @@ export async function exportPagesSvg(out: PagesOut): Promise<string | undefined>
 
 export async function exportPagesPng(given: PagesOut): Promise<string | undefined> {
   const out = await laidOf(given)
-  const pages = pagesOf(out.canvas)
+  const pages = sheetsOf(pagesOf(out.canvas))
   if (!pages.length) return
 
   const name = stem(out.name)
@@ -261,7 +273,7 @@ export async function exportPagesPdf(out: PagesOut): Promise<string | undefined>
 }
 
 export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
-  const pages = pagesOf(given.canvas)
+  const pages = sheetsOf(pagesOf(given.canvas))
   if (!pages.length) return null
   const out = await laidOf(given)
 
@@ -321,7 +333,10 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
         lib.clip(),
         lib.endPath(),
       )
-      if (ruled) sheet.pushOperators(...rulingPdf(lib, page, palette))
+      if (ruled) {
+        const place = placeOf(scale, turn, x, y)
+        sheet.pushOperators(...rulingPdf(lib, doc, sheet, page, palette, place))
+      }
       for (const [index, card] of cards.entries()) {
         const placed = pictures[index]
         if (placed) {
@@ -374,26 +389,71 @@ type PdfLib = typeof import('pdf-lib')
 type Sheet = import('pdf-lib').PDFPage
 type Font = import('pdf-lib').PDFFont
 
-function rulingPdf(lib: PdfLib, page: PageNode, palette: Palette): import('pdf-lib').PDFOperator[] {
-  const colour = hexOf(palette.dot ?? '')
-  const ops = [lib.setFillingRgbColor(colour.r, colour.g, colour.b)]
+type Six = [number, number, number, number, number, number]
+
+function placeOf(scale: number, turn: number, x: number, y: number): Six {
+  const cos = Math.round(Math.cos((turn * Math.PI) / 180))
+  const sin = Math.round(Math.sin((turn * Math.PI) / 180))
+  return [scale * cos, scale * sin, -scale * sin, scale * cos, x, y]
+}
+
+function cellOf(page: PageNode): { width: number; height: number; body: string } | null {
   const bar = (left: number, top: number, w: number, h: number) =>
-    ops.push(lib.rectangle(left, -(top + h), w, h))
-
-  if (page.pattern === 'lines') {
-    for (let at = LINES - 1; at < page.height; at += LINES) bar(0, at, page.width, 1)
-  } else if (page.pattern === 'grid') {
-    for (let at = GRID - 1; at < page.height; at += GRID) bar(0, at, page.width, 1)
-    for (let at = GRID - 1; at < page.width; at += GRID) bar(at, 0, 1, page.height)
-  } else if (page.pattern === 'dots') {
-    for (let top = GRID / 2; top < page.height; top += GRID) {
-      for (let left = GRID / 2; left < page.width; left += GRID)
-        bar(left - 0.75, top - 0.75, 1.5, 1.5)
-    }
+    `${left} ${-(top + h)} ${w} ${h} re`
+  switch (page.pattern) {
+    case 'lines':
+      return { width: page.width, height: LINES, body: bar(0, LINES - 1, page.width, 1) }
+    case 'grid':
+      return {
+        width: GRID,
+        height: GRID,
+        body: `${bar(0, GRID - 1, GRID, 1)} ${bar(GRID - 1, 0, 1, GRID)}`,
+      }
+    case 'dots':
+      return { width: GRID, height: GRID, body: bar(GRID / 2 - 0.75, GRID / 2 - 0.75, 1.5, 1.5) }
+    case 'blank':
+      return null
   }
+}
 
-  ops.push(lib.fill())
-  return ops
+function rulingPdf(
+  lib: PdfLib,
+  doc: import('pdf-lib').PDFDocument,
+  sheet: Sheet,
+  page: PageNode,
+  palette: Palette,
+  place: Six,
+): import('pdf-lib').PDFOperator[] {
+  const cell = cellOf(page)
+  if (!cell) return []
+
+  const colour = hexOf(palette.dot ?? '')
+  const tile = doc.context.register(
+    doc.context.stream(`${colour.r} ${colour.g} ${colour.b} rg ${cell.body} f`, {
+      Type: 'Pattern',
+      PatternType: 1,
+      PaintType: 1,
+      TilingType: 1,
+      BBox: [0, -cell.height, cell.width, 0],
+      XStep: cell.width,
+      YStep: cell.height,
+      Matrix: place,
+      Resources: {},
+    }),
+  )
+  const { Resources } = sheet.node.normalizedEntries()
+  const named = lib.PDFName.of('Pattern')
+  const patterns = Resources.lookupMaybe(named, lib.PDFDict) ?? doc.context.obj({})
+  Resources.set(named, patterns)
+  const key = patterns.uniqueKey('Ruling')
+  patterns.set(key, tile)
+
+  return [
+    lib.PDFOperator.of(lib.PDFOperatorNames.NonStrokingColorspace, [named]),
+    lib.PDFOperator.of(lib.PDFOperatorNames.NonStrokingColorN, [key]),
+    lib.rectangle(0, -page.height, page.width, page.height),
+    lib.fill(),
+  ]
 }
 
 interface Placed {
@@ -584,7 +644,8 @@ export async function printPages(out: PagesOut): Promise<void> {
     for (let number = 1; number <= doc.numPages; number += 1) {
       const page = await doc.getPage(number)
       const natural = page.getViewport({ scale: PDF_TO_CSS })
-      const viewport = page.getViewport({ scale: PDF_TO_CSS * PRINT_SCALE })
+      const sharp = sharpness(natural.width, natural.height, PRINT_SCALE)
+      const viewport = page.getViewport({ scale: PDF_TO_CSS * sharp })
       const canvas = document.createElement('canvas')
       canvas.width = Math.max(1, Math.round(viewport.width))
       canvas.height = Math.max(1, Math.round(viewport.height))

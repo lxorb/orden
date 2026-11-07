@@ -1,5 +1,11 @@
 import type { PaperAt } from './paper'
 
+const SIDE = 16384
+
+export function sharpness(width: number, height: number, wanted: number): number {
+  return Math.min(wanted, SIDE / Math.max(width, height, 1))
+}
+
 export async function svgToPng(
   svg: string,
   width: number,
@@ -17,8 +23,9 @@ export async function svgToPng(
     })
 
     const paper = document.createElement('canvas')
-    paper.width = Math.max(1, Math.round(width * 2))
-    paper.height = Math.max(1, Math.round(height * 2))
+    const sharp = sharpness(width, height, 2)
+    paper.width = Math.max(1, Math.round(width * sharp))
+    paper.height = Math.max(1, Math.round(height * sharp))
 
     const ctx = paper.getContext('2d')
     if (!ctx) return null
