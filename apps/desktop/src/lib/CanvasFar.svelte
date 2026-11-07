@@ -4,6 +4,7 @@
   import type { CanvasEdge, CanvasNode } from './canvas/format'
   import type { Box } from './canvas/geometry'
   import type { Palette } from './canvas/paint'
+  import { pixelRatio } from './pixel-ratio.svelte'
 
   const {
     nodes,
@@ -34,7 +35,7 @@
   } = $props()
 
   let element = $state<HTMLCanvasElement>()
-  const ratio = typeof window === 'undefined' ? 1 : Math.min(2, window.devicePixelRatio || 1)
+  const ratio = $derived(Math.min(2, pixelRatio.now))
 
   function paint() {
     if (!element) return
@@ -73,6 +74,7 @@
       width,
       height,
       palette,
+      ratio,
     )
     if (!element) return
     if (!painted) {

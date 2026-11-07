@@ -15,6 +15,7 @@
   import { boxOf, COLOURS, type Highlight, toViewport } from './pdf/highlights'
   import { wordsOfRuns } from './pdf/find'
   import { locate } from './reading/find'
+  import { pixelRatio } from './pixel-ratio.svelte'
 
   const {
     page,
@@ -58,7 +59,7 @@
 
   const backed = $derived(!!page.file && !!page.page)
 
-  const wanted = $derived((typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1) / unit)
+  const wanted = $derived(pixelRatio.now / unit)
 
   const density = $derived(densityFor(wanted))
 

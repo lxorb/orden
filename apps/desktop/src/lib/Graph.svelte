@@ -12,6 +12,7 @@
   import { stillness } from './motion'
   import { parseQuery } from '@orden/scan/search/query'
   import { relativeTo } from './space-paths'
+  import { pixelRatio } from './pixel-ratio.svelte'
   import { theme } from './theme.svelte'
   import { workspace } from './workspace.svelte'
   import { MOST_GROUPS } from './workspace/graph-settings.svelte'
@@ -159,6 +160,7 @@
     const element = host
     if (!element) return
 
+    follows(pixelRatio.now)
     const watcher = new ResizeObserver(() => resize())
     watcher.observe(element)
     resize()
@@ -256,7 +258,7 @@
     if (!element || !surface) return
 
     const box = element.getBoundingClientRect()
-    ratio = window.devicePixelRatio || 1
+    ratio = untrack(() => pixelRatio.now)
     const next = { width: Math.round(box.width), height: Math.round(box.height) }
     if (!next.width || !next.height) return
 

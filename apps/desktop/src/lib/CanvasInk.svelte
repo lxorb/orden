@@ -5,6 +5,7 @@
   import { type InkMode, inkLayer, wantedInkMode } from './canvas/backing'
   import { type Palette, paintLive, type View } from './canvas/paint'
   import { InkTiles } from './canvas/tiles'
+  import { pixelRatio } from './pixel-ratio.svelte'
 
   const {
     ink,
@@ -32,7 +33,7 @@
   let below = $state<HTMLCanvasElement>()
   let above = $state<HTMLCanvasElement>()
 
-  const ratio = typeof window === 'undefined' ? 1 : Math.min(2, window.devicePixelRatio || 1)
+  const ratio = $derived(Math.min(2, pixelRatio.now))
 
   const wide = $derived(Math.max(1, width + 2 * MARGIN))
   const tall = $derived(Math.max(1, height + 2 * MARGIN))
@@ -143,6 +144,7 @@
     follows(palette)
     follows(wide)
     follows(tall)
+    follows(ratio)
 
     if (everDrawn) {
       redraw()

@@ -2,6 +2,7 @@
   import type { Box } from './canvas/geometry'
   import { closeUpOf, densityFor, holdPaper, type Paper, paperOf, type Part } from './pages/paper'
   import FileMark from './FileMark.svelte'
+  import { pixelRatio } from './pixel-ratio.svelte'
 
   const {
     file,
@@ -36,9 +37,7 @@
     paper && wide && tall ? Math.min(wide / paper.width, tall / paper.height) : 0,
   )
 
-  const wanted = $derived(
-    fit * scale * (typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1),
-  )
+  const wanted = $derived(fit * scale * pixelRatio.now)
 
   const density = $derived(wanted ? densityFor(wanted) : FIRST)
 
