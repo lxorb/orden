@@ -69,14 +69,6 @@ jobs:
       - name: Dead code and unused dependencies
         run: pnpm knip
 
-      - name: The README opens with the rename
-        run: |
-          expected='> Important: NibEditor is now Orden. We decided to change the name but everything else is still the same :)'
-          if [ "$(head -n 1 README.md)" != "$expected" ]; then
-            echo "README.md must open with: $expected" >&2
-            exit 1
-          fi
-
   walks:
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest

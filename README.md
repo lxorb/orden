@@ -1,5 +1,3 @@
-> Important: NibEditor is now Orden. We decided to change the name but everything else is still the same :)
-
 # Orden
 
 <p align="center">
@@ -35,7 +33,7 @@
 
 If you're also annoyed by all the other Markdown Editors out there, you should probably just use Orden. 
 
-It's extremely fast, lightweight, lets your favorite LLM edit your notes and syncs everything to the cloud - on any platform. 
+It's extremely fast, lets your favorite LLM edit your notes and syncs everything to the cloud - on any platform. 
 
 How much does it cost? Well, it's free. 
 
