@@ -405,8 +405,10 @@ class Chat implements Panel {
 
   private show(thread: Thread): void {
     const left = thread !== this.open && this.changing ? this.letGo() : null
+    const before = this.open
     this.open = thread
     this.live.set(thread.id, thread)
+    if (before && before !== thread) this.spare(before)
     if (left) this.drain(left)
     this.trouble = null
     this.dropped = []
@@ -488,7 +490,9 @@ class Chat implements Panel {
   })
 
   watch(thread: Thread | null): void {
+    const before = this.watching
     this.watching = thread
+    if (before && before !== thread) this.spare(before)
     this.watched = thread ? { id: thread.id, turns: [...thread.turns] } : null
   }
 
@@ -990,7 +994,23 @@ class Chat implements Panel {
     await keepThread(thread).catch(() => undefined)
     unclaimAnswer(thread.id)
     if (thread === this.open) rememberOpen(thread.id)
+    this.spare(thread)
     await this.refreshHeads()
+  }
+
+  private spare(thread: Thread): void {
+    const { id } = thread
+    if (
+      this.live.get(id) !== thread ||
+      thread === this.open ||
+      thread === this.watching ||
+      this.running.includes(id) ||
+      this.stoppers.has(id) ||
+      this.unkept.has(thread) ||
+      this.queued[id]?.length
+    )
+      return
+    this.live.delete(id)
   }
 
   private async ended(

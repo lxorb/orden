@@ -159,6 +159,21 @@ describe('the panel’s chats', () => {
     ])
   })
 
+  test('let go of a chat read once another is open, so a long session holds only what it shows', async () => {
+    const names = Array.from({ length: 12 }, (_, at) => `Chat ${String(at)}`)
+    const made = []
+    for (const [at, name] of names.entries()) made.push(await had('work', name, 1_000 + at))
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    for (const one of made) await chat.openThread(one.id, false)
+
+    const held = (chat as unknown as { live: Map<string, unknown> }).live
+    expect([...held.keys()]).toEqual([made.at(-1)?.id])
+    await chat.openThread(made[0]?.id ?? '', false)
+    expect(chat.thread?.title).toBe('Chat 0')
+  })
+
   test('stay as they are when the space changes: the open one, its draft, its space', async () => {
     const plan = await had('work', 'Quarterly plan', 5_000)
     await had('home', 'Garden', 4_000)
