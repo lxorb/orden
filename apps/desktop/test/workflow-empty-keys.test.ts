@@ -15,7 +15,7 @@ function emptyMappings(text: string): string[] {
   const found: string[] = []
   lines.forEach((line, index) => {
     const key = /^(\s*)(?:- )?([\w-]+):\s*$/.exec(line)
-    if (!key || MAY_BE_EMPTY.has(key[2])) return
+    if (!key || MAY_BE_EMPTY.has(key[2] ?? '')) return
     const next = lines
       .slice(index + 1)
       .find((candidate) => candidate.trim() !== '' && !candidate.trim().startsWith('#'))
