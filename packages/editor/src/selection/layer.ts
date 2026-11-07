@@ -47,7 +47,7 @@ class Shape implements LayerMarker {
 
   draw(): HTMLElement {
     const dom = document.createElement('div')
-    dom.className = 'cm-nib-selection-block'
+    dom.className = 'cm-orden-selection-block'
     this.place(dom)
 
     return dom
@@ -72,7 +72,7 @@ class Shape implements LayerMarker {
 
 const shapes = layer({
   above: false,
-  class: 'cm-nib-selection',
+  class: 'cm-orden-selection',
   update: (update) => update.docChanged || update.selectionSet || update.viewportChanged,
   markers: (view) => {
     const radius = radiusOf(view)
@@ -91,13 +91,13 @@ const shapes = layer({
 })
 
 const style = EditorView.baseTheme({
-  '.cm-nib-selection-block': {
+  '.cm-orden-selection-block': {
     position: 'absolute',
     background: 'var(--selection)',
-    animation: 'cm-nib-selection-in var(--dur-fast, 130ms) var(--ease-out, ease-out)',
+    animation: 'cm-orden-selection-in var(--dur-fast, 130ms) var(--ease-out, ease-out)',
   },
 
-  '@keyframes cm-nib-selection-in': {
+  '@keyframes cm-orden-selection-in': {
     from: { opacity: 0 },
     to: { opacity: 1 },
   },

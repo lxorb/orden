@@ -19,7 +19,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { firstScreen, frontOf, KEY, keptOf, wordsHash } = await import('./first-screen.svelte')
 
-const PATH = 'C:\\Nib\\Work\\Plan.md'
+const PATH = 'C:\\Orden\\Work\\Plan.md'
 const WORDS = '# Plan\n\nWhat we are doing.\n'
 
 const draft = (more: Partial<Draft> = {}): Draft => ({
@@ -163,7 +163,7 @@ describe('the first frame', () => {
     expect(firstScreen.showing).toBeNull()
 
     localStorage.setItem(KEY, JSON.stringify(KEPT))
-    await firstScreen.arm(lone(draft({ path: 'C:\\Nib\\Work\\Other.md' })), words(WORDS))
+    await firstScreen.arm(lone(draft({ path: 'C:\\Orden\\Work\\Other.md' })), words(WORDS))
     expect(firstScreen.showing).toBeNull()
   })
 

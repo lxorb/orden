@@ -75,7 +75,7 @@ async ([notePath, note, longPath, long]) => {
 """
 
 BLOCKS = """() =>
-  [...document.querySelectorAll('.cm-nib-selection-block')].map((block) => {
+  [...document.querySelectorAll('.cm-orden-selection-block')].map((block) => {
     const box = block.getBoundingClientRect()
     return {
       left: box.left,
@@ -102,7 +102,7 @@ WATCH = """() => {
 """
 
 DRAWN = """() => ({
-  blocks: document.querySelectorAll('.cm-nib-selection-block').length,
+  blocks: document.querySelectorAll('.cm-orden-selection-block').length,
   rectangles: [...document.querySelectorAll('.cm-selectionBackground')].filter(
     (one) => getComputedStyle(one).display !== 'none',
   ).length,
@@ -223,14 +223,14 @@ def closeup(page: Page, name: str, room: int = 40) -> None:
 def behaves(page: Page) -> None:
     select(page, at(page, "A closing paragraph"), at(page, "and leave a step", 10))
     eased = page.evaluate(
-        "() => { const block = document.querySelector('.cm-nib-selection-block');"
+        "() => { const block = document.querySelector('.cm-orden-selection-block');"
         " const layer = block.parentElement;"
         " const of = getComputedStyle(block);"
         " return { animation: of.animationName, over: of.animationDuration,"
         "   through: getComputedStyle(layer).pointerEvents, blend: getComputedStyle(layer).mixBlendMode } }"
     )
     say(f"the block: {eased}")
-    if eased["animation"] != "cm-nib-selection-in":
+    if eased["animation"] != "cm-orden-selection-in":
         raise SystemExit("the block does not ease in")
     if eased["through"] != "none":
         raise SystemExit("the layer takes the pointer")
@@ -238,7 +238,7 @@ def behaves(page: Page) -> None:
     page.emulate_media(reduced_motion="reduce")
     page.wait_for_timeout(150)
     still = page.evaluate(
-        "() => getComputedStyle(document.querySelector('.cm-nib-selection-block')).animationDuration"
+        "() => getComputedStyle(document.querySelector('.cm-orden-selection-block')).animationDuration"
     )
     page.emulate_media(reduced_motion="no-preference")
     say(f"asked for less motion, the block eases over {still}")

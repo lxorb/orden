@@ -256,38 +256,38 @@ describe('whether a drop would move anything', () => {
   })
 
   test('and reads a backslash path the same way', () => {
-    expect(movesInto(['C:\\Nib\\Notes\\Work'], 'C:\\Nib\\Notes\\Work\\Deep')).toBe(false)
-    expect(movesInto(['C:\\Nib\\Notes\\loose.md'], 'C:\\Nib\\Notes\\Work')).toBe(true)
+    expect(movesInto(['C:\\Orden\\Notes\\Work'], 'C:\\Orden\\Notes\\Work\\Deep')).toBe(false)
+    expect(movesInto(['C:\\Orden\\Notes\\loose.md'], 'C:\\Orden\\Notes\\Work')).toBe(true)
   })
 })
 
 describe('a path written with backslashes, as a desktop hands them over', () => {
-  const windows = folder('C:\\Nib\\Notes', [
-    folder('C:\\Nib\\Notes\\Work'),
-    note('C:\\Nib\\Notes\\loose.md'),
+  const windows = folder('C:\\Orden\\Notes', [
+    folder('C:\\Orden\\Notes\\Work'),
+    note('C:\\Orden\\Notes\\loose.md'),
   ])
 
   test('finds the folder it sits in all the same', () => {
     const offered = moveTargets({
-      moving: 'C:\\Nib\\Notes\\Work\\one.md',
+      moving: 'C:\\Orden\\Notes\\Work\\one.md',
       tree: windows,
-      spaces: [{ id: 'n', name: 'Notes', root: 'C:\\Nib\\Notes' }],
-      here: 'C:\\Nib\\Notes',
+      spaces: [{ id: 'n', name: 'Notes', root: 'C:\\Orden\\Notes' }],
+      here: 'C:\\Orden\\Notes',
     })
 
-    expect(offered.map((one) => one.id)).toEqual(['C:\\Nib\\Notes', 'C:\\Nib\\Notes\\loose'])
+    expect(offered.map((one) => one.id)).toEqual(['C:\\Orden\\Notes', 'C:\\Orden\\Notes\\loose'])
     expect(offered.map((one) => one.label)).toEqual(['Notes', 'loose'])
   })
 
   test('and will not put a folder into itself', () => {
     const offered = moveTargets({
-      moving: 'C:\\Nib\\Notes\\Work',
+      moving: 'C:\\Orden\\Notes\\Work',
       tree: windows,
-      spaces: [{ id: 'n', name: 'Notes', root: 'C:\\Nib\\Notes' }],
-      here: 'C:\\Nib\\Notes',
+      spaces: [{ id: 'n', name: 'Notes', root: 'C:\\Orden\\Notes' }],
+      here: 'C:\\Orden\\Notes',
     })
 
-    expect(offered).toEqual([{ id: 'C:\\Nib\\Notes\\loose', label: 'loose', mark: 'note' }])
+    expect(offered).toEqual([{ id: 'C:\\Orden\\Notes\\loose', label: 'loose', mark: 'note' }])
   })
 })
 

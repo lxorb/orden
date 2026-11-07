@@ -53,7 +53,7 @@ function marksFor(
     if (head !== anchor) {
       marks.push(
         Decoration.mark({
-          class: 'cm-nib-caret-range',
+          class: 'cm-orden-caret-range',
           attributes: { style: `--peer: ${peer.colour}` },
         }).range(Math.min(anchor, head), Math.max(anchor, head)),
       )
@@ -180,14 +180,14 @@ class CaretMarker implements LayerMarker {
 
   draw(): HTMLElement {
     const caret = document.createElement('div')
-    caret.className = 'cm-nib-caret'
+    caret.className = 'cm-orden-caret'
     if (this.passing) caret.classList.add('is-passing')
 
     const tag = caret.appendChild(document.createElement('span'))
-    tag.className = 'cm-nib-caret-name'
+    tag.className = 'cm-orden-caret-name'
     if (this.face) {
       const face = tag.appendChild(document.createElement('span'))
-      face.className = 'cm-nib-caret-face'
+      face.className = 'cm-orden-caret-face'
       face.style.backgroundImage = `url("${this.face}")`
     }
     tag.append(this.name)
@@ -330,7 +330,7 @@ const style = EditorView.baseTheme({
     pointerEvents: 'none',
   },
 
-  '.cm-nib-caret': {
+  '.cm-orden-caret': {
     position: 'absolute',
     width: '2px',
     marginLeft: '-1px',
@@ -339,12 +339,12 @@ const style = EditorView.baseTheme({
     pointerEvents: 'none',
   },
 
-  '.cm-nib-caret-range': {
+  '.cm-orden-caret-range': {
     backgroundColor: 'color-mix(in srgb, var(--peer) 22%, transparent)',
     borderRadius: '2px',
   },
 
-  '.cm-nib-caret-name': {
+  '.cm-orden-caret-name': {
     position: 'absolute',
     bottom: '100%',
     display: 'flex',
@@ -364,20 +364,20 @@ const style = EditorView.baseTheme({
     WebkitUserSelect: 'none',
     userSelect: 'none',
     pointerEvents: 'none',
-    animation: 'cm-nib-caret-name var(--dur-base) var(--ease-out)',
+    animation: 'cm-orden-caret-name var(--dur-base) var(--ease-out)',
   },
 
-  '.cm-nib-caret.is-below .cm-nib-caret-name': {
+  '.cm-orden-caret.is-below .cm-orden-caret-name': {
     top: '100%',
     bottom: 'auto',
     borderRadius: '0 4px 4px 4px',
   },
 
-  '.cm-nib-caret.is-shifted .cm-nib-caret-name': {
+  '.cm-orden-caret.is-shifted .cm-orden-caret-name': {
     borderRadius: '4px',
   },
 
-  '.cm-nib-caret-face': {
+  '.cm-orden-caret-face': {
     flex: 'none',
     width: '12px',
     height: '12px',
@@ -387,20 +387,20 @@ const style = EditorView.baseTheme({
     backgroundPosition: 'center',
   },
 
-  '.cm-nib-caret.is-passing': {
-    animation: `cm-nib-caret-passing ${AGENT_SHOWN} var(--ease-out) forwards`,
+  '.cm-orden-caret.is-passing': {
+    animation: `cm-orden-caret-passing ${AGENT_SHOWN} var(--ease-out) forwards`,
   },
 
-  '.cm-nib-caret.is-passing .cm-nib-caret-name': {
+  '.cm-orden-caret.is-passing .cm-orden-caret-name': {
     animation: 'none',
   },
 
-  '@keyframes cm-nib-caret-passing': {
+  '@keyframes cm-orden-caret-passing': {
     '0%, 88%': { opacity: 1 },
     to: { opacity: 0 },
   },
 
-  '@keyframes cm-nib-caret-name': {
+  '@keyframes cm-orden-caret-name': {
     from: { opacity: 0 },
   },
 })
@@ -433,14 +433,14 @@ interface Held {
 
 function heldRow(side: 'above' | 'below'): HTMLElement {
   const one = document.createElement('div')
-  one.className = `cm-nib-held is-${side}`
+  one.className = `cm-orden-held is-${side}`
   one.setAttribute('aria-hidden', 'true')
   return one
 }
 
 function pill(one: Peer): HTMLElement {
   const tag = document.createElement('span')
-  tag.className = 'cm-nib-held-name'
+  tag.className = 'cm-orden-held-name'
   tag.dataset.peer = String(one.id)
   tag.style.setProperty('--peer', one.colour)
   tag.style.setProperty('--peer-ink', inkOn(one.colour))
@@ -490,7 +490,7 @@ function heldCarets(): Extension {
         }
 
         private readonly go = (event: MouseEvent) => {
-          const id = (event.target as Element | null)?.closest<HTMLElement>('.cm-nib-held-name')
+          const id = (event.target as Element | null)?.closest<HTMLElement>('.cm-orden-held-name')
             ?.dataset.peer
           const one = peersOf(this.view.state).find((peer) => String(peer.id) === id)
           if (!one) return
@@ -554,7 +554,7 @@ function heldCarets(): Extension {
 }
 
 const heldStyle = EditorView.baseTheme({
-  '.cm-nib-held': {
+  '.cm-orden-held': {
     position: 'absolute',
     zIndex: 3,
     display: 'flex',
@@ -564,9 +564,9 @@ const heldStyle = EditorView.baseTheme({
     pointerEvents: 'none',
   },
 
-  '.cm-nib-held:empty': { display: 'none' },
+  '.cm-orden-held:empty': { display: 'none' },
 
-  '.cm-nib-held-name': {
+  '.cm-orden-held-name': {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '3px',
@@ -582,14 +582,14 @@ const heldStyle = EditorView.baseTheme({
     cursor: 'pointer',
   },
 
-  '.cm-nib-held-name::before': {
+  '.cm-orden-held-name::before': {
     content: '""',
     borderLeft: '4px solid transparent',
     borderRight: '4px solid transparent',
   },
 
-  '.cm-nib-held.is-above .cm-nib-held-name::before': { borderBottom: '5px solid currentColor' },
-  '.cm-nib-held.is-below .cm-nib-held-name::before': { borderTop: '5px solid currentColor' },
+  '.cm-orden-held.is-above .cm-orden-held-name::before': { borderBottom: '5px solid currentColor' },
+  '.cm-orden-held.is-below .cm-orden-held-name::before': { borderTop: '5px solid currentColor' },
 })
 
 export function remoteCarets(): Extension {

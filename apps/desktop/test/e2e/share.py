@@ -382,7 +382,7 @@ def moved(page: Page, at: int) -> None:
 def caret_names(page: Page) -> list[str]:
     return [
         name.strip()
-        for name in page.locator(".cm-nib-caret-name").all_inner_texts()
+        for name in page.locator(".cm-orden-caret-name").all_inner_texts()
         if name.strip()
     ]
 
@@ -487,7 +487,7 @@ def main() -> int:
         say("both of them hold the same words")
 
         moved(writer, 3)
-        owner.wait_for_selector(".cm-nib-caret", timeout=10_000)
+        owner.wait_for_selector(".cm-orden-caret", timeout=10_000)
         owner.wait_for_timeout(150)
         names = caret_names(owner)
         owner.locator(".cm-editor").first.screenshot(path=str(SHOTS / "named-caret.png"))

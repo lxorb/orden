@@ -23,8 +23,8 @@ const world = vi.hoisted((): World => ({
 vi.mock('../workspace.svelte', () => ({
   workspace: {
     spaces: [
-      { id: 'work', name: 'Work', root: 'C:\\Nib\\Work' },
-      { id: 'home', name: 'Home', root: 'C:\\Nib\\Home' },
+      { id: 'work', name: 'Work', root: 'C:\\Orden\\Work' },
+      { id: 'home', name: 'Home', root: 'C:\\Orden\\Home' },
     ],
     get activeSpaceId() {
       return world.active
@@ -95,27 +95,27 @@ test('a PDF from outside every space opens unsaved, and the open space is left a
   await vi.waitFor(() => expect(world.done).toHaveLength(2))
 
   expect(world.done).toEqual([
-    'look for C:\\Users\\me\\Downloads\\a.pdf in C:\\Nib\\Work',
+    'look for C:\\Users\\me\\Downloads\\a.pdf in C:\\Orden\\Work',
     'draft C:\\Users\\me\\Downloads\\a.pdf',
   ])
 })
 
 test('one the open space already holds opens as that copy', async () => {
-  world.same = 'C:\\Nib\\Work\\Papers\\Read.pdf'
+  world.same = 'C:\\Orden\\Work\\Papers\\Read.pdf'
   await showPdfs(['C:\\Users\\me\\Downloads\\a.pdf'])
 
   expect(world.done).toEqual([
-    'look for C:\\Users\\me\\Downloads\\a.pdf in C:\\Nib\\Work',
-    'open C:\\Nib\\Work\\Papers\\Read.pdf',
+    'look for C:\\Users\\me\\Downloads\\a.pdf in C:\\Orden\\Work',
+    'open C:\\Orden\\Work\\Papers\\Read.pdf',
   ])
 })
 
 test('one in another space opens where it is, in that space, while the app runs', async () => {
   await hearPdfs()
-  world.heard?.({ payload: ['C:\\Nib\\Home\\Papers\\b.pdf'] })
+  world.heard?.({ payload: ['C:\\Orden\\Home\\Papers\\b.pdf'] })
   await vi.waitFor(() => expect(world.done).toHaveLength(2))
 
-  expect(world.done).toEqual(['space home', 'open C:\\Nib\\Home\\Papers\\b.pdf'])
+  expect(world.done).toEqual(['space home', 'open C:\\Orden\\Home\\Papers\\b.pdf'])
 })
 
 test('nothing but paths is read', async () => {
@@ -123,24 +123,24 @@ test('nothing but paths is read', async () => {
   await showPdfs('C:\\not-a-list.pdf')
 
   expect(world.done).toEqual([
-    'look for C:\\Users\\me\\Downloads\\big.pdf in C:\\Nib\\Work',
+    'look for C:\\Users\\me\\Downloads\\big.pdf in C:\\Orden\\Work',
     'draft C:\\Users\\me\\Downloads\\big.pdf',
   ])
 })
 
 test('a PDF from outside goes past a space shared to be read, to one that is not', async () => {
-  world.readOnly = ['C:\\Nib\\Work']
+  world.readOnly = ['C:\\Orden\\Work']
   await showPdfs(['C:\\Users\\me\\Downloads\\a.pdf'])
 
   expect(world.done).toEqual([
     'space home',
-    'look for C:\\Users\\me\\Downloads\\a.pdf in C:\\Nib\\Home',
+    'look for C:\\Users\\me\\Downloads\\a.pdf in C:\\Orden\\Home',
     'draft C:\\Users\\me\\Downloads\\a.pdf',
   ])
 })
 
 test('with every space shared to be read, it still opens unsaved', async () => {
-  world.readOnly = ['C:\\Nib\\Work', 'C:\\Nib\\Home']
+  world.readOnly = ['C:\\Orden\\Work', 'C:\\Orden\\Home']
   await showPdfs(['C:\\Users\\me\\Downloads\\a.pdf'])
 
   expect(world.done).toEqual(['draft C:\\Users\\me\\Downloads\\a.pdf'])

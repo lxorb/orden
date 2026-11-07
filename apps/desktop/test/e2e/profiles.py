@@ -210,7 +210,7 @@ def main() -> int:
 
         wait_for(
             member,
-            "() => [...document.querySelectorAll('.cm-nib-caret-face')].some("
+            "() => [...document.querySelectorAll('.cm-orden-caret-face')].some("
             f"  (one) => one.style.backgroundImage.includes({json.dumps(face['s'])}))",
             "[member] the owner's face on the owner's caret",
         )

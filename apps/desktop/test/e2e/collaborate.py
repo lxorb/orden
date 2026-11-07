@@ -143,7 +143,7 @@ def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[
     try:
         wait_for(
             page,
-            f"() => !!document.querySelector('.cm-nib-held.is-{side} .cm-nib-held-name')",
+            f"() => !!document.querySelector('.cm-orden-held.is-{side} .cm-orden-held-name')",
             f"[{label}] the other caret held {side} the page",
         )
     except SystemExit as gave_up:
@@ -152,7 +152,7 @@ def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[
 
     held = page.evaluate(
         f"""() => {{
-            const name = document.querySelector('.cm-nib-held.is-{side} .cm-nib-held-name')
+            const name = document.querySelector('.cm-orden-held.is-{side} .cm-orden-held-name')
             const box = name.getBoundingClientRect()
             const page = {FRONT}.scrollDOM.getBoundingClientRect()
             return {{ name: name.textContent, top: box.top - page.top, bottom: page.bottom - box.bottom,
@@ -168,13 +168,13 @@ def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[
     if held["top" if side == "above" else "bottom"] > 40:
         failures.append(f"[{label}] a caret held {side} the page is not at that edge: {held}")
 
-    page.locator(f".cm-nib-held.is-{side} .cm-nib-held-name").first.click()
+    page.locator(f".cm-orden-held.is-{side} .cm-orden-held-name").first.click()
     try:
         wait_for(
             page,
             f"""() => {{
-                if (document.querySelector('.cm-nib-held.is-{side} .cm-nib-held-name')) return false
-                const caret = document.querySelector('.cm-nib-caret')
+                if (document.querySelector('.cm-orden-held.is-{side} .cm-orden-held-name')) return false
+                const caret = document.querySelector('.cm-orden-caret')
                 if (!caret) return false
                 const box = caret.getBoundingClientRect()
                 const page = {FRONT}.scrollDOM.getBoundingClientRect()
@@ -244,8 +244,8 @@ def contrast(one: str, two: str) -> float:
 
 DRAWN = f"""(at) => {{
     const view = {FRONT}
-    const caret = document.querySelector('.cm-nib-caret')
-    const name = caret?.querySelector('.cm-nib-caret-name')
+    const caret = document.querySelector('.cm-orden-caret')
+    const name = caret?.querySelector('.cm-orden-caret-name')
     if (!caret || !name || getComputedStyle(name).opacity !== '1') return null
     const node = view.domAtPos(at).node
     const line = (node.nodeType === 1 ? node : node.parentElement).closest('.cm-line')
@@ -380,7 +380,7 @@ def main() -> int:
                 failures.append(f"a letter took {took:.0f} ms {way}, past {CEILING} ms")
 
         two.evaluate("() => { window.orden.dispatch({ selection: { anchor: 3 } }); window.orden.focus() }")
-        one.wait_for_selector(".cm-nib-caret", timeout=10_000)
+        one.wait_for_selector(".cm-orden-caret", timeout=10_000)
         one.wait_for_timeout(120)
         one.locator(".cm-editor").first.screenshot(path=str(SHOTS / "remote-caret.png"))
         say(f"the remote caret is in {SHOTS / 'remote-caret.png'}")
@@ -388,7 +388,7 @@ def main() -> int:
         one.wait_for_timeout(1800)
         one.locator(".cm-editor").first.screenshot(path=str(SHOTS / "remote-caret-settled.png"))
         named = one.evaluate(
-            "() => { const name = document.querySelector('.cm-nib-caret-name');"
+            "() => { const name = document.querySelector('.cm-orden-caret-name');"
             " return name ? Number(getComputedStyle(name).opacity) : null }"
         )
         if not named:

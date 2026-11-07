@@ -15,7 +15,7 @@ function arrived(answer: unknown) {
   vi.stubGlobal('window', { nibEarly: Promise.resolve(answer) })
 }
 
-const ROOT = 'C:\\Nib\\Work'
+const ROOT = 'C:\\Orden\\Work'
 const TREE = { name: 'Work', path: ROOT, is_dir: true, modified: 0, created: 0, children: [] }
 
 const READ = {
@@ -55,7 +55,7 @@ describe('what was read ahead', () => {
     arrived(READ)
     const ahead = await fresh()
 
-    expect(await ahead.treeAhead('C:\\Nib\\Home', { showHidden: false })).toBeNull()
+    expect(await ahead.treeAhead('C:\\Orden\\Home', { showHidden: false })).toBeNull()
     expect(await ahead.treeAhead(ROOT, { showHidden: true })).toBeNull()
     expect(await ahead.noteAhead(`${ROOT}\\Other.md`)).toBeNull()
     expect(await ahead.treeAhead(ROOT, { showHidden: false })).toEqual(TREE)
@@ -96,11 +96,11 @@ describe('what the next launch asks for first', () => {
 
     ahead.plan(plan)
     ahead.plan({ ...plan, notes: [...plan.notes] })
-    ahead.plan({ ...plan, root: 'C:\\Nib\\Home' })
+    ahead.plan({ ...plan, root: 'C:\\Orden\\Home' })
 
     expect(sent).toEqual([
       ['remember_launch', { plan }],
-      ['remember_launch', { plan: { ...plan, root: 'C:\\Nib\\Home' } }],
+      ['remember_launch', { plan: { ...plan, root: 'C:\\Orden\\Home' } }],
     ])
   })
 })

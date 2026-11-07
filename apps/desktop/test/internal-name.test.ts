@@ -25,8 +25,8 @@ const MOST: Record<Kind, number> = {
   scheme: 21,
   key: 128,
   variable: 18,
-  dashed: 334,
-  word: 2692,
+  dashed: 275,
+  word: 2638,
 }
 
 const ALIASES_SHIP_IN = 'v0.21.0'
@@ -139,6 +139,11 @@ const ALIASES: Record<string, readonly string[]> = {
 }
 
 describe('the old name inside the repo', () => {
+  test('is looked for in the whole repo, so a checkout without git never passes by finding nothing', () => {
+    const listed = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
+    expect(listed.split('\n').filter(Boolean).length).toBeGreaterThan(1000)
+  })
+
   test('a package moved to @orden is never written under its old name again', () => {
     const written = oldNames(SAYING)
       .filter((one) => one.kind === 'package')

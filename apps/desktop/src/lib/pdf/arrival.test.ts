@@ -1,16 +1,18 @@
 import { expect, test } from 'vitest'
 import { arrivalOf } from './arrival'
 
-const work = { id: 'work', root: 'C:\\Users\\me\\Documents\\Nib\\Work' }
-const home = { id: 'home', root: 'C:\\Users\\me\\Documents\\Nib\\Home' }
+const work = { id: 'work', root: 'C:\\Users\\me\\Documents\\Orden\\Work' }
+const home = { id: 'home', root: 'C:\\Users\\me\\Documents\\Orden\\Home' }
 const spaces = [work, home]
 
 test('a PDF in a space opens where it is, in that space', () => {
-  expect(arrivalOf('C:\\Users\\me\\Documents\\Nib\\Home\\Papers\\a.pdf', spaces, 'work')).toEqual({
-    kind: 'open',
-    spaceId: 'home',
-    path: 'C:\\Users\\me\\Documents\\Nib\\Home\\Papers\\a.pdf',
-  })
+  expect(arrivalOf('C:\\Users\\me\\Documents\\Orden\\Home\\Papers\\a.pdf', spaces, 'work')).toEqual(
+    {
+      kind: 'open',
+      spaceId: 'home',
+      path: 'C:\\Users\\me\\Documents\\Orden\\Home\\Papers\\a.pdf',
+    },
+  )
 })
 
 test('one from anywhere else is brought into the space that is open', () => {
@@ -22,7 +24,7 @@ test('one from anywhere else is brought into the space that is open', () => {
 })
 
 test('a folder beside a space whose name begins the same is not in it', () => {
-  expect(arrivalOf('C:\\Users\\me\\Documents\\Nib\\Workshop\\a.pdf', spaces, 'home')).toEqual({
+  expect(arrivalOf('C:\\Users\\me\\Documents\\Orden\\Workshop\\a.pdf', spaces, 'home')).toEqual({
     kind: 'bring',
     spaceId: 'home',
     root: home.root,
@@ -31,7 +33,7 @@ test('a folder beside a space whose name begins the same is not in it', () => {
 
 test('a path that climbs out of a space is not in it', () => {
   expect(
-    arrivalOf('C:\\Users\\me\\Documents\\Nib\\Work\\..\\..\\a.pdf', spaces, 'work')?.kind,
+    arrivalOf('C:\\Users\\me\\Documents\\Orden\\Work\\..\\..\\a.pdf', spaces, 'work')?.kind,
   ).toBe('bring')
 })
 
@@ -52,7 +54,7 @@ test('a space shared to be read takes nothing: the first that may be written in 
     root: home.root,
   })
   expect(arrivalOf('/tmp/a.pdf', spaces, 'work', () => false)).toBeNull()
-  expect(arrivalOf('C:\\Users\\me\\Documents\\Nib\\Work\\a.pdf', spaces, 'home', mine)?.kind).toBe(
-    'open',
-  )
+  expect(
+    arrivalOf('C:\\Users\\me\\Documents\\Orden\\Work\\a.pdf', spaces, 'home', mine)?.kind,
+  ).toBe('open')
 })

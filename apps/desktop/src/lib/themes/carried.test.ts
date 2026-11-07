@@ -8,6 +8,13 @@ test('a sheet written for the old names styles the app under the new ones', () =
   )
 })
 
+test("the editor's carets and selection are reached under their old names", () => {
+  const old = '.cm-editor .cm-nib-selection, .cm-nib-caret-name { color: red }'
+  expect(carriedCss(old)).toBe(
+    '.cm-editor .cm-orden-selection, .cm-orden-caret-name { color: red }',
+  )
+})
+
 test('only a class, an id or a variable is renamed, never a word or another attribute', () => {
   const kept = 'a.my-nib-row, [data-x="nib-row"], .nibble'
   expect(carriedCss(kept)).toBe(kept)

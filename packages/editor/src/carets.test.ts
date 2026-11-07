@@ -56,7 +56,7 @@ function carets(state: EditorState): number[] {
 
 function ranges(state: EditorState): { from: number; to: number }[] {
   return marks(state)
-    .filter((one) => one.kind === 'cm-nib-caret-range')
+    .filter((one) => one.kind === 'cm-orden-caret-range')
     .map(({ from, to }) => ({ from, to }))
 }
 
