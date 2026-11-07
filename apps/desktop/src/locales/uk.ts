@@ -2194,6 +2194,8 @@ export const uk: Dictionary = {
   'Could not connect to {host}': 'Не вдалося підключитися до {host}',
   'Sending the image': 'Надсилання зображення',
   'Could not send the image': 'Не вдалося надіслати зображення',
+  'A name this shell would misread was left out':
+    'Пропущено назву, яку ця оболонка прочитала б неправильно',
   'and {count} after it': {
     few: 'і ще {count} після неї',
     many: 'і ще {count} після неї',

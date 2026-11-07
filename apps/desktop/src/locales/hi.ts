@@ -2110,6 +2110,7 @@ export const hi: Dictionary = {
   'Could not connect to {host}': '{host} से कनेक्ट नहीं हो सका',
   'Sending the image': 'छवि भेजी जा रही है',
   'Could not send the image': 'छवि नहीं भेजी जा सकी',
+  'A name this shell would misread was left out': 'एक नाम छोड़ दिया गया जिसे यह शेल गलत पढ़ता',
   'and {count} after it': {
     one: 'और उसके बाद का {count}',
     other: 'और उसके बाद के {count}',

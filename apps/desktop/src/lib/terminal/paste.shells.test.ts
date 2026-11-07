@@ -76,6 +76,8 @@ const NAMES = [
   'a\\\\b\\',
   '‘quoted’ ‚low‛',
   'a"b"c',
+  "a'#b'##c",
+  "ends'#",
   ...drawn(200),
 ]
 
@@ -88,7 +90,7 @@ describe('a dropped name, read back by the shell it lands in', () => {
     test.skipIf(program === null)(`${shell.name} reads every name as it is`, () => {
       const root = windows ? 'C:\\t\\' : '/t/'
       const paths = NAMES.map((name) => root + name)
-      const spoken = paths.map((path) => spokenPath(path, program ?? ''))
+      const spoken = paths.map((path) => spokenPath(path, program ?? '') ?? '')
       writeFileSync(join(room, shell.script), shell.lines(spoken))
       const said = spawnSync(program ?? '', [...shell.args, join(room, shell.script)], {
         cwd: room,
@@ -98,5 +100,49 @@ describe('a dropped name, read back by the shell it lands in', () => {
       expect(said.stdout.split(/\r?\n/).slice(0, paths.length), shell.name).toEqual(paths)
       expect(readdirSync(room)).not.toContain('PWNED')
     })
+  }
+})
+
+describe('a dropped name for a host whose shell is not known', () => {
+  const root = '/t/'
+  const kept = NAMES.filter((name) => spokenPath(root + name, 'ssh:box') !== null)
+
+  test('leaves out only a name cmd or nu would act on', () => {
+    expect(kept.length).toBeGreaterThan(20)
+    for (const name of NAMES) if (!kept.includes(name)) expect(name).toMatch(/[&|<>^%"']/)
+  })
+
+  for (const shell of SHELLS) {
+    const program = found(shell.name)
+    const posix = shell.script === 'said.sh'
+    test.skipIf(program === null)(
+      `${shell.name} never runs a name it is given`,
+      () => {
+        const paths = kept.map((name) => root + name)
+        const spoken = paths.map((path) => spokenPath(path, 'ssh:box') ?? '')
+        const each = posix ? [spoken] : spoken.map((one) => [one])
+        const scripts = each.map((lines, at) => {
+          const script = join(room, `${at}-${shell.script}`)
+          writeFileSync(script, shell.lines(lines))
+          return script
+        })
+        const run = (args: string[]) =>
+          spawnSync(program ?? '', [...shell.args, ...args], {
+            cwd: room,
+            encoding: 'utf8',
+            timeout: 60_000,
+          }).stdout
+        const driver = join(room, 'each.ps1')
+        writeFileSync(driver, 'foreach ($f in $args) { try { & $f } catch { } }\n')
+        const heard =
+          shell.script === 'said.ps1'
+            ? [run([driver, ...scripts])]
+            : scripts.map((one) => run([one]))
+        if (posix)
+          expect(heard[0]?.split(/\r?\n/).slice(0, paths.length), shell.name).toEqual(paths)
+        expect(readdirSync(room)).not.toContain('PWNED')
+      },
+      120_000,
+    )
   }
 })

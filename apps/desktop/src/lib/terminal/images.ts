@@ -2,7 +2,7 @@ import { type ImageKind, MOST_IMAGE } from '@orden/online/wire'
 import { busy } from '../busy.svelte'
 import { fileBytes } from '../bytes'
 import { t } from '../i18n.svelte'
-import { imageKindAt, imageKindOf, spokenPath } from './paste'
+import { imageKindAt, imageKindOf, spokenPaths } from './paste'
 import type { Source } from './source'
 
 export interface Picture {
@@ -50,7 +50,9 @@ export async function carried(
       }
       return paths
     })
-    return paths.map((path) => spokenPath(path, shell)).join(' ')
+    const { said, left } = spokenPaths(paths, shell)
+    if (left) busy.failed(t('A name this shell would misread was left out'))
+    return said || null
   } catch {
     busy.failed(t('Could not send the image'))
     return null

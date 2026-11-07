@@ -2088,6 +2088,7 @@ export const vi: Dictionary = {
   'Could not connect to {host}': 'Không thể kết nối tới {host}',
   'Sending the image': 'Đang gửi ảnh',
   'Could not send the image': 'Không thể gửi ảnh',
+  'A name this shell would misread was left out': 'Đã bỏ qua một tên mà shell này sẽ đọc sai',
   'and {count} after it': 'và {count} sau đó',
   'Restore notes and conversation': 'Khôi phục ghi chú và cuộc trò chuyện',
   'Restore conversation': 'Khôi phục cuộc trò chuyện',

@@ -2147,6 +2147,8 @@ export const ta: Dictionary = {
   'Could not connect to {host}': '{host} உடன் இணைக்க முடியவில்லை',
   'Sending the image': 'படத்தை அனுப்புகிறது',
   'Could not send the image': 'படத்தை அனுப்ப முடியவில்லை',
+  'A name this shell would misread was left out':
+    'இந்த ஷெல் தவறாகப் படிக்கும் ஒரு பெயர் விடப்பட்டது',
   'and {count} after it': {
     one: 'மற்றும் அதன் பின் {count}',
     other: 'மற்றும் அதன் பின் {count}',

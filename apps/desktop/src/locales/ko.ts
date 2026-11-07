@@ -2078,6 +2078,7 @@ export const ko: Dictionary = {
   'Could not connect to {host}': '{host}에 연결할 수 없습니다',
   'Sending the image': '이미지 보내는 중',
   'Could not send the image': '이미지를 보낼 수 없습니다',
+  'A name this shell would misread was left out': '이 셸이 잘못 읽을 이름을 뺐습니다',
   'and {count} after it': '및 그 뒤 {count}개',
   'Restore notes and conversation': '노트와 대화 복원',
   'Restore conversation': '대화 복원',

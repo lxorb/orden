@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPath } from './paste'
+import {
+  asksFirst,
+  imageIn,
+  imageKindAt,
+  imageKindOf,
+  linesIn,
+  pasted,
+  spokenPath,
+  spokenPaths,
+} from './paste'
 
 describe('a paste into a terminal', () => {
   test('loses the whitespace after a single line', () => {
@@ -35,6 +44,28 @@ describe('a paste into a terminal', () => {
     expect(spokenPath("/x/a';id;'", '/usr/bin/nu')).toBe("r#'/x/a';id;''#")
     expect(spokenPath('/x/a!1 b', '/bin/tcsh')).toBe("'/x/a'\\!'1 b'")
     expect(spokenPath('/x/a\\b', '/bin/bash')).toBe("'/x/a'\\\\'b'")
+  })
+
+  test('a dropped name for a host whose shell is not known is quoted for every shell or left out', () => {
+    expect(spokenPath('/x/a b!', 'ssh:box')).toBe("'/x/a b'\\!")
+    expect(spokenPath('/x/a&calc', 'ssh:box')).toBeNull()
+    expect(spokenPath('/x/a|b', 'ssh:')).toBeNull()
+    expect(spokenPath('/x/%PATH%', 'ssh:box')).toBeNull()
+    expect(spokenPath('/x/a"b', 'ssh:box')).toBeNull()
+    expect(spokenPath('/x/a^b', 'ssh:box')).toBeNull()
+    expect(spokenPath("/x/a';touch PWNED;#", 'ssh:box')).toBeNull()
+    expect(spokenPath('/x/a,b', 'ssh:box')).toBe("'/x/a,b'")
+    expect(spokenPath('/x/plain-1.0+2', 'ssh:box')).toBe('/x/plain-1.0+2')
+  })
+
+  test('a name with a percent sign never reaches cmd, which expands it even in quotes', () => {
+    expect(spokenPath('C:\\x\\%PATH%.txt', 'cmd')).toBeNull()
+    expect(spokenPath('C:\\x\\100%.txt', 'vs-cmd:66e9e031')).toBeNull()
+    expect(spokenPath('C:\\x\\a&b.txt', 'cmd')).toBe('"C:\\x\\a&b.txt"')
+    expect(spokenPaths(['C:\\a b', 'C:\\%x%', 'C:\\c'], 'cmd')).toEqual({
+      said: '"C:\\a b" C:\\c',
+      left: 1,
+    })
   })
 
   test('a control character in a dropped name reaches the shell as a wildcard, never as a key', () => {

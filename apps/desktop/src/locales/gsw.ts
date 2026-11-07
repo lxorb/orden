@@ -2124,6 +2124,8 @@ export const gsw: Dictionary = {
   'Could not connect to {host}': 'Kei Verbindig zu {host}',
   'Sending the image': 'Bild wird gschickt',
   'Could not send the image': 'Bild het nöd chöne gschickt wärde',
+  'A name this shell would misread was left out':
+    'En Name, wo die Shell falsch läse würd, isch weggloh worde',
   'and {count} after it': {
     one: 'und {count} dänah',
     other: 'und {count} dänah',

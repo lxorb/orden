@@ -2114,6 +2114,7 @@ export const mr: Dictionary = {
   'Could not connect to {host}': '{host} शी कनेक्ट करता आले नाही',
   'Sending the image': 'प्रतिमा पाठवत आहे',
   'Could not send the image': 'प्रतिमा पाठवता आली नाही',
+  'A name this shell would misread was left out': 'हा शेल चुकीचे वाचेल असे एक नाव वगळले',
   'and {count} after it': {
     one: 'आणि त्यानंतरचे {count}',
     other: 'आणि त्यानंतरचे {count}',

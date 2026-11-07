@@ -2155,6 +2155,8 @@ export const ptBR: Dictionary = {
   'Could not connect to {host}': 'Não foi possível conectar a {host}',
   'Sending the image': 'Enviando a imagem',
   'Could not send the image': 'Não foi possível enviar a imagem',
+  'A name this shell would misread was left out':
+    'Um nome que este shell leria errado foi deixado de fora',
   'and {count} after it': {
     many: 'e {count} depois',
     one: 'e {count} depois',

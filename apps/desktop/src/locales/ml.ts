@@ -2144,6 +2144,7 @@ export const ml: Dictionary = {
   'Could not connect to {host}': '{host}-ലേക്ക് കണക്റ്റ് ചെയ്യാനായില്ല',
   'Sending the image': 'ചിത്രം അയയ്ക്കുന്നു',
   'Could not send the image': 'ചിത്രം അയയ്ക്കാനായില്ല',
+  'A name this shell would misread was left out': 'ഈ ഷെൽ തെറ്റായി വായിക്കുന്ന ഒരു പേര് ഒഴിവാക്കി',
   'and {count} after it': {
     one: 'അതിനുശേഷമുള്ള {count} എണ്ണവും',
     other: 'അതിനുശേഷമുള്ള {count} എണ്ണവും',

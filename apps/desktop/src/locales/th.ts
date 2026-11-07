@@ -2067,6 +2067,7 @@ export const th: Dictionary = {
   'Could not connect to {host}': 'เชื่อมต่อกับ {host} ไม่ได้',
   'Sending the image': 'กำลังส่งรูป',
   'Could not send the image': 'ส่งรูปไม่ได้',
+  'A name this shell would misread was left out': 'ข้ามชื่อที่เชลล์นี้จะอ่านผิด',
   'and {count} after it': 'และอีก {count} รายการหลังจากนั้น',
   'Restore notes and conversation': 'กู้คืนโน้ตและบทสนทนา',
   'Restore conversation': 'กู้คืนบทสนทนา',

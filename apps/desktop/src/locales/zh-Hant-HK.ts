@@ -2051,6 +2051,7 @@ export const zhHantHK: Dictionary = {
   'Could not connect to {host}': '無法連線到 {host}',
   'Sending the image': '正在傳送圖片',
   'Could not send the image': '無法傳送圖片',
+  'A name this shell would misread was left out': '已略去一個此 shell 會誤讀的名稱',
   'and {count} after it': '以及之後的 {count} 處',
   'Restore notes and conversation': '還原筆記和對話',
   'Restore conversation': '還原對話',

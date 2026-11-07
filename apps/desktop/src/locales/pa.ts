@@ -2118,6 +2118,8 @@ export const pa: Dictionary = {
   'Could not connect to {host}': '{host} ਨਾਲ ਕਨੈਕਟ ਨਹੀਂ ਹੋ ਸਕਿਆ',
   'Sending the image': 'ਤਸਵੀਰ ਭੇਜ ਰਿਹਾ ਹੈ',
   'Could not send the image': 'ਤਸਵੀਰ ਭੇਜੀ ਨਹੀਂ ਜਾ ਸਕੀ',
+  'A name this shell would misread was left out':
+    'ਇੱਕ ਨਾਮ ਛੱਡ ਦਿੱਤਾ ਗਿਆ ਜਿਸਨੂੰ ਇਹ ਸ਼ੈੱਲ ਗਲਤ ਪੜ੍ਹਦਾ',
   'and {count} after it': {
     one: 'ਅਤੇ ਉਸ ਤੋਂ ਬਾਅਦ ਦਾ {count}',
     other: 'ਅਤੇ ਉਸ ਤੋਂ ਬਾਅਦ ਦੇ {count}',

@@ -2081,6 +2081,7 @@ export const am: Dictionary = {
   'Could not connect to {host}': 'ከ{host} ጋር መገናኘት አልተቻለም',
   'Sending the image': 'ምስሉን በመላክ ላይ',
   'Could not send the image': 'ምስሉን መላክ አልተቻለም',
+  'A name this shell would misread was left out': 'ይህ shell በተሳሳተ መንገድ የሚያነበው ስም ቀርቷል',
   'and {count} after it': {
     one: 'እና ከዚያ በኋላ ያለ {count}',
     other: 'እና ከዚያ በኋላ ያሉ {count}',

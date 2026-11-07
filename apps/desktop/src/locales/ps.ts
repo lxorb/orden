@@ -2114,6 +2114,7 @@ export const ps: Dictionary = {
   'Could not connect to {host}': 'له {host} سره وصل نه شو',
   'Sending the image': 'انځور لېږل',
   'Could not send the image': 'انځور ونه لېږل شو',
+  'A name this shell would misread was left out': 'یو نوم پرېښودل شو چې دا شیل به یې ناسم ولولي',
   'and {count} after it': {
     one: 'او {count} له هغه وروسته',
     other: 'او {count} له هغه وروسته',

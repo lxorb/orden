@@ -2201,6 +2201,8 @@ export const pl: Dictionary = {
   'Could not connect to {host}': 'Nie można połączyć z {host}',
   'Sending the image': 'Wysyłanie obrazu',
   'Could not send the image': 'Nie można wysłać obrazu',
+  'A name this shell would misread was left out':
+    'Pominięto nazwę, którą ta powłoka odczytałaby błędnie',
   'and {count} after it': {
     few: 'i {count} po niej',
     many: 'i {count} po niej',

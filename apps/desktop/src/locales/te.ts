@@ -2123,6 +2123,7 @@ export const te: Dictionary = {
   'Could not connect to {host}': '{host}కి కనెక్ట్ చేయలేకపోయాం',
   'Sending the image': 'చిత్రం పంపుతోంది',
   'Could not send the image': 'చిత్రాన్ని పంపలేకపోయాం',
+  'A name this shell would misread was left out': 'ఈ షెల్ తప్పుగా చదివే ఒక పేరు వదిలివేయబడింది',
   'and {count} after it': {
     one: 'మరియు దాని తర్వాతి {count}',
     other: 'మరియు దాని తర్వాతి {count}',

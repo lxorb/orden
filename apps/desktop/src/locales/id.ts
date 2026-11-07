@@ -2103,6 +2103,7 @@ export const id: Dictionary = {
   'Could not connect to {host}': 'Tidak dapat terhubung ke {host}',
   'Sending the image': 'Mengirim gambar',
   'Could not send the image': 'Tidak dapat mengirim gambar',
+  'A name this shell would misread was left out': 'Nama yang akan salah dibaca shell ini dilewati',
   'and {count} after it': 'dan {count} sesudahnya',
   'Restore notes and conversation': 'Pulihkan catatan dan percakapan',
   'Restore conversation': 'Pulihkan percakapan',

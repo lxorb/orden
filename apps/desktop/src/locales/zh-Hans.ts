@@ -2051,6 +2051,7 @@ export const zhHans: Dictionary = {
   'Could not connect to {host}': '无法连接到 {host}',
   'Sending the image': '正在发送图片',
   'Could not send the image': '无法发送图片',
+  'A name this shell would misread was left out': '已略去一个此 shell 会误读的名称',
   'and {count} after it': '以及之后的 {count} 处',
   'Restore notes and conversation': '恢复笔记和对话',
   'Restore conversation': '恢复对话',

@@ -2097,6 +2097,7 @@ export const ja: Dictionary = {
   'Could not connect to {host}': '{host} に接続できませんでした',
   'Sending the image': '画像を送信中',
   'Could not send the image': '画像を送信できませんでした',
+  'A name this shell would misread was left out': 'このシェルが誤って読む名前を省きました',
   'and {count} after it': 'とその後の {count} 件',
   'Restore notes and conversation': 'ノートと会話を復元',
   'Restore conversation': '会話を復元',

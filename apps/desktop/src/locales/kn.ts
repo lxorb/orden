@@ -2137,6 +2137,7 @@ export const kn: Dictionary = {
   'Could not connect to {host}': '{host} ಗೆ ಸಂಪರ್ಕಿಸಲಾಗಲಿಲ್ಲ',
   'Sending the image': 'ಚಿತ್ರ ಕಳುಹಿಸುತ್ತಿದೆ',
   'Could not send the image': 'ಚಿತ್ರವನ್ನು ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ',
+  'A name this shell would misread was left out': 'ಈ ಶೆಲ್ ತಪ್ಪಾಗಿ ಓದುವ ಒಂದು ಹೆಸರನ್ನು ಬಿಡಲಾಗಿದೆ',
   'and {count} after it': {
     one: 'ಮತ್ತು ಅದರ ನಂತರದ {count}',
     other: 'ಮತ್ತು ಅದರ ನಂತರದ {count}',

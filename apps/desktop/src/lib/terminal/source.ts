@@ -40,6 +40,20 @@ export interface Source {
   usage?(): Promise<Usage | null>
 }
 
+const remoteShells = new Map<string, Promise<string | null>>()
+
+export function remoteShell(host: string): Promise<string | null> {
+  let asked = remoteShells.get(host)
+  if (!asked) {
+    asked = invoke<unknown>('remote_shell', { host }).then(
+      (found) => (typeof found === 'string' && found ? found : null),
+      () => null,
+    )
+    remoteShells.set(host, asked)
+  }
+  return asked
+}
+
 export class PtySource implements Source {
   readonly remote: boolean
   reached: string | null = null

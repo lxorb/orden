@@ -2047,6 +2047,7 @@ export const yue: Dictionary = {
   'Could not connect to {host}': '連唔到 {host}',
   'Sending the image': '正在傳送圖片',
   'Could not send the image': '傳送唔到圖片',
+  'A name this shell would misread was left out': '略過咗一個呢個 shell 會讀錯嘅名',
   'and {count} after it': '同之後嘅 {count} 個',
   'Restore notes and conversation': '還原筆記同對話',
   'Restore conversation': '還原對話',

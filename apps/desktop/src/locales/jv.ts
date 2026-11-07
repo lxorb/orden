@@ -2094,6 +2094,8 @@ export const jv: Dictionary = {
   'Could not connect to {host}': 'Ora bisa nyambung menyang {host}',
   'Sending the image': 'Ngirim gambar',
   'Could not send the image': 'Ora bisa ngirim gambar',
+  'A name this shell would misread was left out':
+    'Jeneng sing bakal salah diwaca shell iki ditinggal',
   'and {count} after it': 'lan {count} sawisé',
   'Restore notes and conversation': 'Balèkaké cathetan lan obrolan',
   'Restore conversation': 'Balèkaké obrolan',

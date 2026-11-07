@@ -2144,6 +2144,8 @@ export const sw: Dictionary = {
   'Could not connect to {host}': 'Imeshindwa kuunganisha na {host}',
   'Sending the image': 'Inatuma picha',
   'Could not send the image': 'Imeshindwa kutuma picha',
+  'A name this shell would misread was left out':
+    'Jina ambalo shell hii ingelisoma vibaya limeachwa',
   'and {count} after it': {
     one: 'na {count} baada yake',
     other: 'na {count} baada yake',

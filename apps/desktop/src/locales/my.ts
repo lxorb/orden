@@ -2097,6 +2097,8 @@ export const my: Dictionary = {
   'Could not connect to {host}': '{host} သို့ ချိတ်ဆက်၍ မရပါ',
   'Sending the image': 'ပုံပို့နေသည်',
   'Could not send the image': 'ပုံကို ပို့၍ မရပါ',
+  'A name this shell would misread was left out':
+    'ဤ shell က မှားဖတ်မည့် အမည်တစ်ခုကို ချန်ထားခဲ့သည်',
   'and {count} after it': 'နှင့် ၎င်းနောက် {count} ခု',
   'Restore notes and conversation': 'မှတ်စုများနှင့် စကားဝိုင်းကို ပြန်ယူရန်',
   'Restore conversation': 'စကားဝိုင်းကို ပြန်ယူရန်',

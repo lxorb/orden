@@ -555,6 +555,7 @@ macro_rules! desktop_commands {
             terminal::remote::remote_config_open,
             terminal::picture::local_image,
             terminal::picture::remote_image,
+            terminal::picture::remote_shell,
             updates::check_update,
             system_update::system_update,
             package_manager::install_manager,

@@ -2144,6 +2144,8 @@ export const ha: Dictionary = {
   'Could not connect to {host}': 'An kasa haɗawa da {host}',
   'Sending the image': 'Ana aika hoton',
   'Could not send the image': 'An kasa aika hoton',
+  'A name this shell would misread was left out':
+    'An bar wani suna da wannan shell zai karanta ba daidai ba',
   'and {count} after it': {
     one: 'da {count} bayansa',
     other: 'da {count} bayansa',

@@ -2178,6 +2178,8 @@ export const it: Dictionary = {
   'Could not connect to {host}': 'Impossibile connettersi a {host}',
   'Sending the image': 'Invio dell’immagine',
   'Could not send the image': 'Impossibile inviare l’immagine',
+  'A name this shell would misread was left out':
+    'È stato omesso un nome che questa shell leggerebbe male',
   'and {count} after it': {
     many: 'e {count} dopo',
     one: 'e {count} dopo',

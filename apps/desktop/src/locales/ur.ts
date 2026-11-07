@@ -2111,6 +2111,7 @@ export const ur: Dictionary = {
   'Could not connect to {host}': '{host} سے نہیں جڑ سکے',
   'Sending the image': 'تصویر بھیجی جا رہی ہے',
   'Could not send the image': 'تصویر نہیں بھیج سکے',
+  'A name this shell would misread was left out': 'ایک نام چھوڑ دیا گیا جسے یہ شیل غلط پڑھتا',
   'and {count} after it': {
     one: 'اور اس کے بعد کا {count}',
     other: 'اور اس کے بعد کے {count}',

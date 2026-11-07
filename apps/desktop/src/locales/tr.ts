@@ -2124,6 +2124,7 @@ export const tr: Dictionary = {
   'Could not connect to {host}': '{host} sunucusuna bağlanılamadı',
   'Sending the image': 'Resim gönderiliyor',
   'Could not send the image': 'Resim gönderilemedi',
+  'A name this shell would misread was left out': 'Bu kabuğun yanlış okuyacağı bir ad atlandı',
   'and {count} after it': {
     one: 've sonrasındaki {count}',
     other: 've sonrasındaki {count}',

@@ -2111,6 +2111,7 @@ export const bn: Dictionary = {
   'Could not connect to {host}': '{host}-এ সংযোগ করা যায়নি',
   'Sending the image': 'ছবি পাঠানো হচ্ছে',
   'Could not send the image': 'ছবি পাঠানো যায়নি',
+  'A name this shell would misread was left out': 'এই শেল ভুল পড়ত এমন একটি নাম বাদ দেওয়া হয়েছে',
   'and {count} after it': {
     one: 'এবং এর পরের {count}টি',
     other: 'এবং এর পরের {count}টি',

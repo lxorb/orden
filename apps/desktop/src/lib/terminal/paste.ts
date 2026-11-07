@@ -58,10 +58,13 @@ export function asksFirst(text: string, bracketed: boolean): boolean {
   return !bracketed && linesIn(text) > 1
 }
 
-type Speech = 'posix' | 'csh' | 'powershell' | 'doubled' | 'nu' | 'cmd'
+type Speech = 'posix' | 'csh' | 'powershell' | 'doubled' | 'nu' | 'cmd' | 'unknown'
+
+const LIVE_SOMEWHERE = /[&|<>^%"']/
 
 function speechOf(shell: string): Speech {
-  if (shell.startsWith('ssh:') || shell.startsWith('wsl:') || shell === 'git-bash') return 'posix'
+  if (shell.startsWith('ssh:')) return 'unknown'
+  if (shell.startsWith('wsl:') || shell === 'git-bash') return 'posix'
   if (shell.startsWith('vs-pwsh:')) return 'powershell'
   if (shell.startsWith('vs-cmd:')) return 'cmd'
   const name = (shell.split(/[\\/]/).pop() ?? '').toLowerCase().replace(/\.exe$/, '')
@@ -74,7 +77,12 @@ function speechOf(shell: string): Speech {
 }
 
 function unquoted(spoken: string, speech: Speech): boolean {
-  const plain = speech === 'posix' || speech === 'csh' ? /^[\w\-./:~+@%,=]+$/ : /^[\w\-./\\:]+$/
+  const plain =
+    speech === 'posix' || speech === 'csh'
+      ? /^[\w\-./:~+@%,=]+$/
+      : speech === 'unknown'
+        ? /^[\w\-./:+]+$/
+        : /^[\w\-./\\:]+$/
   return plain.test(spoken)
 }
 
@@ -104,7 +112,7 @@ function rawNu(spoken: string): string {
   return `r${hashes}'${spoken}'${hashes}`
 }
 
-export function spokenPath(path: string, shell: string): string {
+export function spokenPath(path: string, shell: string): string | null {
   const drive = /^([A-Za-z]):[\\/](.*)$/.exec(path)
   const speech = speechOf(shell)
 
@@ -117,11 +125,21 @@ export function spokenPath(path: string, shell: string): string {
 
   if (unquoted(spoken, speech)) return spoken
   if (speech === 'posix' || speech === 'csh') return posixSpoken(spoken, speech === 'csh')
+  if (speech === 'unknown') return LIVE_SOMEWHERE.test(spoken) ? null : posixSpoken(spoken, true)
 
   let seen = ''
   for (const char of spoken) seen += control(char) ? '?' : char
   if (speech === 'powershell') return `'${seen.replace(/['‘’‚‛]/g, '$&$&')}'`
   if (speech === 'doubled') return `'${seen.replace(/'/g, "''")}'`
   if (speech === 'nu') return seen.includes("'") ? rawNu(seen) : `'${seen}'`
-  return `"${seen.replace(/"/g, '?')}"`
+  return seen.includes('%') ? null : `"${seen.replace(/"/g, '?')}"`
+}
+
+export function spokenPaths(
+  paths: readonly string[],
+  shell: string,
+): { said: string; left: number } {
+  const spoken = paths.map((path) => spokenPath(path, shell))
+  const said = spoken.filter((one) => one !== null)
+  return { said: said.join(' '), left: spoken.length - said.length }
 }

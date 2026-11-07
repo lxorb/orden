@@ -2158,6 +2158,8 @@ export const fil: Dictionary = {
   'Could not connect to {host}': 'Hindi makakonekta sa {host}',
   'Sending the image': 'Ipinapadala ang imahe',
   'Could not send the image': 'Hindi maipadala ang imahe',
+  'A name this shell would misread was left out':
+    'Inalis ang isang pangalang mali ang pagbasa ng shell na ito',
   'and {count} after it': {
     one: 'at {count} pagkatapos nito',
     other: 'at {count} pagkatapos nito',

@@ -2115,6 +2115,8 @@ export const fa: Dictionary = {
   'Could not connect to {host}': 'اتصال به {host} ممکن نشد',
   'Sending the image': 'در حال فرستادن تصویر',
   'Could not send the image': 'فرستادن تصویر ممکن نشد',
+  'A name this shell would misread was left out':
+    'نامی که این پوسته اشتباه می‌خواند کنار گذاشته شد',
   'and {count} after it': {
     one: 'و {count} مورد پس از آن',
     other: 'و {count} مورد پس از آن',

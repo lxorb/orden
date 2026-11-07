@@ -2104,6 +2104,8 @@ export const ms: Dictionary = {
   'Could not connect to {host}': 'Tidak dapat menyambung ke {host}',
   'Sending the image': 'Menghantar imej',
   'Could not send the image': 'Tidak dapat menghantar imej',
+  'A name this shell would misread was left out':
+    'Satu nama yang akan tersalah dibaca oleh shell ini ditinggalkan',
   'and {count} after it': 'dan {count} selepasnya',
   'Restore notes and conversation': 'Pulihkan nota dan perbualan',
   'Restore conversation': 'Pulihkan perbualan',

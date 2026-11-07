@@ -20,6 +20,15 @@ const CARRYING: Duration = Duration::from_secs(60);
 
 const KEPT: Duration = Duration::from_secs(24 * 60 * 60);
 
+const ASKING: Duration = Duration::from_secs(20);
+
+const PROBE: &str = "echo orden-shell $SHELL %COMSPEC%";
+
+const POSIX: [&str; 14] = [
+    "sh", "bash", "rbash", "dash", "ash", "zsh", "ksh", "mksh", "lksh", "pdksh", "oksh", "yash",
+    "busybox", "fish",
+];
+
 const OPTIONS: [&str; 9] = [
     "-T",
     "-o",
@@ -89,6 +98,52 @@ fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, St
             said.trim()
         ))
     }
+}
+
+fn said_shell(out: &str) -> Option<&'static str> {
+    let words: Vec<&str> = out.split_whitespace().collect();
+    let at = words.iter().rposition(|word| *word == "orden-shell")?;
+    match words.get(at + 1..)? {
+        ["%COMSPEC%"] => Some("pwsh"),
+        ["$SHELL", comspec] if comspec.to_ascii_lowercase().ends_with("\\cmd.exe") => Some("cmd"),
+        [shell, "%COMSPEC%"] if shell.starts_with('/') => {
+            let name = shell.rsplit('/').next().unwrap_or_default();
+            if POSIX.contains(&name) {
+                Some("sh")
+            } else if name == "csh" || name == "tcsh" {
+                Some("tcsh")
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+fn shell_of(program: &Path, args: &[String]) -> Option<&'static str> {
+    let mut command = Command::new(program);
+    command
+        .args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null());
+    #[cfg(windows)]
+    command.creation_flags(0x0800_0000);
+    let output = crate::printed::wait_output(command.spawn().ok()?, ASKING).ok()?;
+    said_shell(&String::from_utf8_lossy(&output.stdout))
+}
+
+#[tauri::command]
+pub async fn remote_shell(webview: Webview, host: String) -> Result<Option<String>, String> {
+    super::owner(&webview)?;
+    crate::lane::off_the_runtime(move || {
+        let (program, reach) = super::remote::reach(&webview, &host)?;
+        let mut args = Vec::from(OPTIONS.map(String::from));
+        args.extend(reach);
+        args.push(PROBE.to_owned());
+        Ok(shell_of(&program, &args).map(str::to_owned))
+    })
+    .await
 }
 
 #[derive(serde::Deserialize)]
@@ -257,6 +312,63 @@ mod tests {
         assert_eq!(OPTIONS[0], "-T");
         assert!(OPTIONS.contains(&"BatchMode=yes"));
         assert!(!OPTIONS.contains(&"--"));
+    }
+
+    #[test]
+    fn a_hosts_shell_is_read_off_what_it_echoed_and_anything_else_is_unknown() {
+        assert_eq!(said_shell("orden-shell /bin/bash %COMSPEC%\n"), Some("sh"));
+        assert_eq!(
+            said_shell("motd\norden-shell /usr/bin/fish %COMSPEC%"),
+            Some("sh")
+        );
+        assert_eq!(said_shell("orden-shell /bin/tcsh %COMSPEC%"), Some("tcsh"));
+        assert_eq!(said_shell("orden-shell\r\n%COMSPEC%\r\n"), Some("pwsh"));
+        assert_eq!(
+            said_shell("orden-shell $SHELL C:\\WINDOWS\\system32\\cmd.exe\r\n"),
+            Some("cmd")
+        );
+        assert_eq!(said_shell("orden-shell /usr/bin/xonsh %COMSPEC%"), None);
+        assert_eq!(said_shell("orden-shell %COMSPEC%"), Some("pwsh"));
+        assert_eq!(said_shell("orden-shell $SHELL %COMSPEC%"), None);
+        assert_eq!(said_shell(""), None);
+        assert_eq!(said_shell("orden-shell"), None);
+    }
+
+    #[test]
+    fn a_real_shell_echoes_what_names_it() {
+        let found = |name: &str| {
+            std::env::var_os("PATH").and_then(|path| {
+                std::env::split_paths(&path)
+                    .map(|folder| folder.join(name))
+                    .find(|path| path.is_file())
+            })
+        };
+        let cases: [(&str, &[&str], Option<&str>); 6] = [
+            ("bash", &["-c"], Some("sh")),
+            ("fish", &["-c"], Some("sh")),
+            ("tcsh", &["-c"], Some("tcsh")),
+            ("pwsh", &["-NoProfile", "-Command"], Some("pwsh")),
+            ("cmd.exe", &["/d", "/c"], Some("cmd")),
+            ("nu", &["-c"], None),
+        ];
+        for (name, flags, said) in cases {
+            let Some(program) = found(name) else {
+                continue;
+            };
+            let mut args: Vec<String> = flags.iter().map(|flag| (*flag).to_owned()).collect();
+            args.push(PROBE.to_owned());
+            let mut command = Command::new(&program);
+            command.args(&args);
+            if name != "cmd.exe" {
+                command.env("SHELL", &program);
+            }
+            let output = command.output().expect("the shell ran");
+            assert_eq!(
+                said_shell(&String::from_utf8_lossy(&output.stdout)),
+                said,
+                "{name}"
+            );
+        }
     }
 
     #[cfg(unix)]

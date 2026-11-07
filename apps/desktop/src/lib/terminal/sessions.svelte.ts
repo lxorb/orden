@@ -5,6 +5,7 @@ import { SerializeAddon } from '@xterm/addon-serialize'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { type ITheme, Terminal } from '@xterm/xterm'
 import { chrome } from '../glass/chrome.svelte'
+import { busy } from '../busy.svelte'
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../clipboard'
@@ -51,11 +52,11 @@ import { findColours, monospace, terminalContrast, terminalGround, terminalTheme
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
 import { AddressLinks, chosenText } from './links'
-import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPath } from './paste'
+import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPaths } from './paste'
 import { setLive, setPty } from './running'
 import { clipboardWrite, type Notice, osc777Notice, osc9Notice } from './signals'
 import { shellName, shells, SIZES } from './shells.svelte'
-import { type Machine, PtySource, type Said, type Source } from './source'
+import { type Machine, PtySource, remoteShell, type Said, type Source } from './source'
 import { hostIdOf, hostShell, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
 
 const SCROLLBACK = 5000
@@ -1263,7 +1264,7 @@ class Session {
     if (source === null || !some.length || (this.online && !this.mayType)) return
 
     const { carried } = await import('./images')
-    const paths = await carried(source, some, this.remote ? '/bin/sh' : this.spec().shell)
+    const paths = await carried(source, some, this.online ? '/bin/sh' : await this.speaker())
     if (paths !== null && this.source === source) this.term.paste(paths)
     this.focus()
   }
@@ -1319,14 +1320,28 @@ class Session {
       void import('./images').then(({ pictureAt }) => this.carry(pictures.map(pictureAt)))
       return
     }
-    if (!this.online) this.speak(paths)
+    if (!this.online) void this.speak(paths)
   }
 
-  private speak(paths: readonly string[]) {
-    if (!paths.length || this.pty === null) return
-
+  private async speaker(): Promise<string> {
     const shell = this.spec().shell
-    this.term.paste(paths.map((path) => spokenPath(path, shell)).join(' '))
+    const host = hostIdOf(shell)
+    const source = this.source
+    if (host !== null && this.underneath === null) return (await remoteShell(host)) ?? shell
+    if (!(source instanceof PtySource) || (await source.program()) !== 'ssh')
+      return this.underneath ?? shell
+    return host === null ? 'ssh:' : ((await remoteShell(host)) ?? shell)
+  }
+
+  private async speak(paths: readonly string[]) {
+    const pty = this.pty
+    if (!paths.length || pty === null) return
+
+    const shell = await this.speaker()
+    if (pty !== this.pty) return
+    const { said, left } = spokenPaths(paths, shell)
+    if (said) this.term.paste(said)
+    if (left) busy.failed(t('A name this shell would misread was left out'))
     this.focus()
   }
 

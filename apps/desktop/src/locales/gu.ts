@@ -2103,6 +2103,7 @@ export const gu: Dictionary = {
   'Could not connect to {host}': '{host} સાથે કનેક્ટ થઈ શક્યું નહીં',
   'Sending the image': 'ચિત્ર મોકલે છે',
   'Could not send the image': 'ચિત્ર મોકલી શકાયું નહીં',
+  'A name this shell would misread was left out': 'આ શેલ ખોટું વાંચે એવું એક નામ છોડી દેવાયું',
   'and {count} after it': {
     one: 'અને તેના પછીનું {count}',
     other: 'અને તેના પછીના {count}',

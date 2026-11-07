@@ -2227,6 +2227,7 @@ export const ar: Dictionary = {
   'Could not connect to {host}': 'تعذّر الاتصال بـ {host}',
   'Sending the image': 'إرسال الصورة',
   'Could not send the image': 'تعذّر إرسال الصورة',
+  'A name this shell would misread was left out': 'تُرك اسم كانت هذه الصدفة ستقرؤه خطأً',
   'and {count} after it': {
     few: 'و{count} تعديلات بعده',
     many: 'و{count} تعديلات بعده',

@@ -2201,6 +2201,8 @@ export const ru: Dictionary = {
   'Could not connect to {host}': 'Не удалось подключиться к {host}',
   'Sending the image': 'Отправка изображения',
   'Could not send the image': 'Не удалось отправить изображение',
+  'A name this shell would misread was left out':
+    'Пропущено имя, которое эта оболочка прочла бы неверно',
   'and {count} after it': {
     few: 'и ещё {count} после неё',
     many: 'и ещё {count} после неё',
