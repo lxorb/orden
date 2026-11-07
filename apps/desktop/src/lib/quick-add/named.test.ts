@@ -30,6 +30,10 @@ vi.mock('../workspace/write-file', () => ({
     made.push(path)
     return Promise.resolve()
   },
+  writeIfAbsent: (path: string) => {
+    made.push(path)
+    return Promise.resolve(true)
+  },
 }))
 
 const { addTask } = await import('./write')

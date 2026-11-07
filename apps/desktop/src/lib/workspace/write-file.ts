@@ -1,6 +1,7 @@
 import { links } from '../link-index.svelte'
+import { onDisk } from '../on-disk'
 import { invoke } from '../tauri'
-import { writeTaking, wroteHere } from './in-turn'
+import { inFileTurn, writeInTurn, writeTaking, wroteHere } from './in-turn'
 
 export interface Hearing {
   there(path: string): Promise<boolean>
@@ -27,6 +28,20 @@ export async function writeFile(path: string, content: string): Promise<void> {
     else await ear.made(path)
   }
   wroteHere(path)
+}
+
+export async function writeIfAbsent(path: string, content: string): Promise<boolean> {
+  const ear = hearing
+  const made = await inFileTurn(path, async () => {
+    if (await onDisk(path)) return false
+    await writeInTurn(path, content)
+    return true
+  })
+  if (!made) return false
+  links.noteSaved(path, content)
+  if (ear) await ear.made(path)
+  wroteHere(path)
+  return true
 }
 
 export async function writeBytes(path: string, bytes: Uint8Array): Promise<void> {

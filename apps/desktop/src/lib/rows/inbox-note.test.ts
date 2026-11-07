@@ -28,9 +28,10 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 vi.mock('../workspace/write-file', () => ({
-  writeFile: (path: string, content: string) => {
+  writeIfAbsent: (path: string, content: string) => {
+    if (disk.has(path)) return Promise.resolve(false)
     disk.set(path, content)
-    return Promise.resolve()
+    return Promise.resolve(true)
   },
 }))
 vi.mock('../tauri', async (original) => ({

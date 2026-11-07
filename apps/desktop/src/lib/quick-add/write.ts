@@ -16,7 +16,7 @@ import { readIfThere, toldIfUnreadable } from '../read-if-there'
 import { canWriteAt } from '../sharing.svelte'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
-import { writeFile } from '../workspace/write-file'
+import { writeIfAbsent } from '../workspace/write-file'
 import { type Entry, linesOf, placeIn } from './entry'
 import { isListed, listNamed, listsIn, makeList } from '../rows/todo-lists'
 
@@ -57,8 +57,7 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
     void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
     return null
   }
-  if (await onDisk(path)) return isListed(path) ? path : null
-  await writeFile(path, '')
+  if (!(await writeIfAbsent(path, ''))) return isListed(path) ? path : null
   makeList(path)
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')

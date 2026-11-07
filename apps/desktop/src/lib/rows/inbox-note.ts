@@ -1,6 +1,6 @@
 import { toldIfUnreadable } from '../read-if-there'
 import { workspace } from '../workspace.svelte'
-import { writeFile } from '../workspace/write-file'
+import { writeIfAbsent } from '../workspace/write-file'
 import { pathKey, relativeTo } from '../space-paths'
 import { ensureInbox, isInternalInbox } from './inbox'
 
@@ -20,7 +20,7 @@ async function madeInbox(root: string): Promise<string | null> {
   if (!canWriteAt(root)) return null
   try {
     return await ensureInbox(root, async (path) => {
-      await writeFile(path, '')
+      if (!(await writeIfAbsent(path, ''))) return
       if (!isInternalInbox(relativeTo(root, path))) await workspace.loadTree()
       await workspace.fileCame(path, 'file')
     })
