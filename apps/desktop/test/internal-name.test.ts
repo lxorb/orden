@@ -29,7 +29,7 @@ const MOST: Record<Kind, number> = {
   word: 2222,
 }
 
-const ALIASES_SHIP_IN = 'v0.21.0'
+const ALIASES_GONE_BY = 'v0.22.0'
 
 const ALIASES: Record<string, readonly string[]> = {
   '.github/workflows/check.yml': ['nibApp'],
@@ -166,10 +166,10 @@ describe('the old name inside the repo', () => {
     expect(over, over.join('\n')).toEqual([])
   })
 
-  test(`keeps its aliases for one release: gone once ${ALIASES_SHIP_IN} is tagged`, () => {
+  test(`keeps its aliases through one release: gone before ${ALIASES_GONE_BY} is tagged`, () => {
     const missing = Object.keys(ALIASES).filter((path) => !existsSync(join(ROOT, path)))
     expect(missing, `${missing.join(', ')} moved: name them anew`).toEqual([])
-    const shipped = execFileSync('git', ['tag', '--list', ALIASES_SHIP_IN], {
+    const shipped = execFileSync('git', ['tag', '--list', ALIASES_GONE_BY], {
       cwd: ROOT,
       encoding: 'utf8',
     }).trim()
