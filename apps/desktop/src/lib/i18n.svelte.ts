@@ -179,6 +179,7 @@ const STORAGE_KEY = 'nib:language'
 /* eslint-disable svelte/prefer-svelte-reactivity */
 const dates = new Map<string, Intl.DateTimeFormat>()
 const numbers = new Map<string, Intl.NumberFormat>()
+const plurals = new Map<string, Intl.PluralRules>()
 /* eslint-enable svelte/prefer-svelte-reactivity */
 
 function dateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
@@ -200,8 +201,17 @@ function numberFormat(locale: string): Intl.NumberFormat {
   return made
 }
 
+function pluralRules(locale: string): Intl.PluralRules {
+  const kept = plurals.get(locale)
+  if (kept) return kept
+
+  const made = new Intl.PluralRules(locale)
+  plurals.set(locale, made)
+  return made
+}
+
 function pick(count: number, locale: string, forms: Forms): string {
-  return forms[new Intl.PluralRules(locale).select(count)] ?? forms.other ?? ''
+  return forms[pluralRules(locale).select(count)] ?? forms.other ?? ''
 }
 
 function fill(
