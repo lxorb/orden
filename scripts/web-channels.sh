@@ -42,6 +42,6 @@ if [ -d "$unstable/assets" ]; then
 fi
 
 mkdir "$stable/_unstable"
-find "$unstable" -mindepth 1 -maxdepth 1 ! -name assets -exec cp -R {} "$stable/_unstable/" \;
+find "$unstable" -mindepth 1 -maxdepth 1 ! -name assets ! -name _headers -exec cp -R {} "$stable/_unstable/" \;
 
 echo "unstable: $added files added to assets/, $shared already there, pages in _unstable/"
