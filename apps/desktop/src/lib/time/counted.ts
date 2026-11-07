@@ -1,4 +1,4 @@
-import type { Piece } from './days'
+import { counts, type Piece } from './days'
 import type { Lane, Rule, Span } from './records'
 
 export interface Place {
@@ -35,5 +35,5 @@ export function placesOf(pieces: readonly Piece[], lane: Lane): Place[] {
     place.ms += piece.to - piece.from
     by.set(key, place)
   }
-  return [...by.values()].filter((one) => one.ms > 0).sort((one, other) => other.ms - one.ms)
+  return [...by.values()].filter((one) => counts(one.ms)).sort((one, other) => other.ms - one.ms)
 }

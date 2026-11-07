@@ -285,7 +285,7 @@ mod platform {
     pub fn front_app() -> Option<String> {
         let mut held = X.lock().unwrap_or_else(PoisonError::into_inner);
         let found = held.as_ref().and_then(asked);
-        if found.is_none() && held.as_ref().is_some_and(|x| x.connection.flush().is_err()) {
+        if found.is_none() && held.as_ref().is_none_or(|x| x.connection.flush().is_err()) {
             *held = opened();
         }
         found

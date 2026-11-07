@@ -58,4 +58,21 @@ describe('the spaces and sites time was spent in', () => {
       ['news.org', HOUR],
     ])
   })
+
+  test('leave out what adds up to less than half a minute, which reads as no time', () => {
+    const brief = [
+      ...SPANS,
+      span('glance', 7 * HOUR, 7 * HOUR + 20_000, {
+        source: 'space',
+        place: 'notes',
+        label: 'Notes',
+      }),
+      span('tap', 8 * HOUR, 8 * HOUR + 10_000, { source: 'timer', activity: 'lunch' }),
+    ]
+    const pieces = piecesIn(brief, 0, 24 * HOUR, 24 * HOUR)
+    expect(placesOf(pieces, 'space').map((one) => one.key)).toEqual(['uni-space'])
+    expect(totalsOf(pieces.filter((one) => one.span.source === 'timer'))).toEqual([
+      { activity: 'uni', ms: HOUR },
+    ])
+  })
 })

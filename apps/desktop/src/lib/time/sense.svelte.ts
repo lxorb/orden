@@ -11,8 +11,8 @@ import { type Place, siteOf, Tracker } from './tracker'
 const AWAY = 5 * 60_000
 
 const tracker = new Tracker({
-  opened: (lane, place, at) =>
-    time.addSpan({ start: at, end: at, source: lane, place: place.key, label: place.name }).id,
+  opened: (lane, place, start, end) =>
+    time.addSpan({ start, end, source: lane, place: place.key, label: place.name }).id,
   moved: (id, end) => {
     if (!time.span(id)) return false
     time.changeSpan(id, { end })

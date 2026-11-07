@@ -6,7 +6,7 @@
   import type { Tab } from '../workspace/documents.svelte'
   import { counted, isOwn } from './counted'
   import DayLanes from './DayLanes.svelte'
-  import { dayOf, daysAfter, endOf, piecesIn, startOf, stepped } from './days'
+  import { counts, dayOf, daysAfter, endOf, piecesIn, startOf, stepped } from './days'
   import Inside from './Inside.svelte'
   import { hoursShown, type Picked, unsaid } from './lanes'
   import { clock, length, nameOf, tintOf } from './look'
@@ -58,7 +58,9 @@
     ]),
   )
   const entries = $derived(
-    piecesIn(said, range[0], range[1], now).sort((one, other) => other.from - one.from),
+    piecesIn(said, range[0], range[1], now)
+      .filter((one) => one.span.end === null || counts(one.to - one.from))
+      .sort((one, other) => other.from - one.from),
   )
 
   const loose = $derived(view === 'day' ? unsaid(time.spans, minutes.list, ...range, now) : [])
