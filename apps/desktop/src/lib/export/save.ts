@@ -9,6 +9,7 @@ import { fileNameFor, freeName, stemOf } from './naming'
 export type Payload =
   | { text: string; mime: string }
   | { bytes: Uint8Array; mime: string }
+  | { pieces: Blob }
   | {
       files: readonly { path: string; body: string | Uint8Array }[]
       folder: boolean
@@ -52,9 +53,11 @@ export function download(name: string, payload: Payload) {
   if ('files' in payload) return
 
   const blob =
-    'text' in payload
-      ? new Blob([payload.text], { type: payload.mime })
-      : new Blob([payload.bytes.slice()], { type: payload.mime })
+    'pieces' in payload
+      ? payload.pieces
+      : 'text' in payload
+        ? new Blob([payload.text], { type: payload.mime })
+        : new Blob([payload.bytes.slice()], { type: payload.mime })
 
   handOver(name, blob)
 }
@@ -127,6 +130,11 @@ async function writePayload(target: string, payload: Payload): Promise<void> {
     for (const file of payload.files) {
       if (insideFolder(file.path)) await writeFile(joinPath(target, file.path), file.body)
     }
+    return
+  }
+
+  if ('pieces' in payload) {
+    await writeFile(target, new Uint8Array(await payload.pieces.arrayBuffer()))
     return
   }
 

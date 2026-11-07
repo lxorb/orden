@@ -73,3 +73,20 @@ test("a todo list carries its mark and its todos' done dates out (#1229)", async
   if (!payload || !('text' in payload)) throw new Error('no text was handed over')
   expect(payload.text).toBe('---\ntodo-list: yes\n---\n- [x] Post it ✅ 2026-11-01\n')
 })
+
+test('a page with its pictures goes out in pieces, each picture written in, never one string', async () => {
+  handed.length = 0
+
+  await runExport('html', {
+    source: '# Trip\n\n![a](a.png)\n\n![b](b.png)\n',
+    name: 'Trip.md',
+    path: '/space/Trip.md',
+  })
+
+  const payload = handed[0]
+  if (!payload || !('pieces' in payload)) throw new Error('the page was not handed over in pieces')
+  const page = await payload.pieces.text()
+  expect(page).toContain('src="data:image/png;base64,AQ=="')
+  expect(page).not.toContain('src="a.png"')
+  expect(page).not.toContain('src="b.png"')
+})

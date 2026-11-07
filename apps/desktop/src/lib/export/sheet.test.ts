@@ -30,7 +30,7 @@ vi.mock('../export', async (importOriginal) => ({
   },
 }))
 
-const { printWithPictures, wholeSheet } = await import('./sheet')
+const { pageWith, printWithPictures, wholeSheet } = await import('./sheet')
 
 const revoke = URL.revokeObjectURL.bind(URL)
 URL.revokeObjectURL = (link: string) => {
@@ -125,5 +125,17 @@ describe('a page with pictures written whole, for a PDF file', () => {
 
   test('is the page as it is when it holds no picture of the space', async () => {
     expect(await wholeSheet('<p>words</p>', resolve)).toBe('<p>words</p>')
+  })
+})
+
+describe('a page with its pictures, for an HTML file', () => {
+  test('writes each picture in where it is placed', async () => {
+    const page = pageWith('<img src="a.png"><img src="https://x.test/b.png"><img src="a.png">', [
+      { src: 'a.png', name: 'a.png', mime: 'image/png', bytes: new Uint8Array([1]) },
+    ])
+
+    expect(await page.text()).toBe(
+      '<img src="data:image/png;base64,AQ=="><img src="https://x.test/b.png"><img src="data:image/png;base64,AQ==">',
+    )
   })
 })

@@ -1,7 +1,8 @@
 import { assetsOf, printInFrame, printsInFrame } from '../export'
 import type { PaperInches } from '../page-setup'
 import { assetPath, invoke, isNative } from '../tauri'
-import { mimeOf } from './pictures'
+import { toBase64 } from '../bytes'
+import { mimeOf, type Picture } from './pictures'
 
 const PLACED = /(<(?:img|audio|video|source)\b[^>]*?\bsrc="|<image\b[^>]*?\bhref=")([^"]*)(")/g
 
@@ -29,6 +30,13 @@ function placed(html: string, wanted: ReadonlyMap<string, string | Blob>): (stri
   }
   pieces.push(html.slice(from))
   return pieces
+}
+
+export function pageWith(html: string, pictures: readonly Picture[]): Blob {
+  const wanted = new Map(
+    pictures.map((one) => [one.src, new Blob([`data:${one.mime};base64,`, toBase64(one.bytes)])]),
+  )
+  return new Blob(placed(html, wanted), { type: 'text/html' })
 }
 
 function swapped(html: string, links: ReadonlyMap<string, string>): string {
