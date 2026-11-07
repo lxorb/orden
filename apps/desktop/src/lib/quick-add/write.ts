@@ -59,9 +59,9 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   }
   if (await onDisk(path)) return isListed(path) ? path : null
   await writeFile(path, '')
+  makeList(path)
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
-  makeList(path)
   return path
 }
 
@@ -78,11 +78,27 @@ async function pathFor(entry: Entry, given: string | undefined): Promise<string 
   return inboxNote(into)
 }
 
+let adding: Promise<unknown> = Promise.resolve()
+
 export async function addTask(
   entry: Entry,
   options: { open?: boolean; root?: string } = {},
 ): Promise<{ path: string; line: number } | null> {
-  const path = await pathFor(entry, options.root)
+  const added = adding.then(() => addOne(entry, options.root))
+  adding = added.catch(() => undefined)
+  const landed = await added
+  if (landed && options.open) {
+    await workspace.open(landed.path)
+    workspace.goto = { ...landed }
+  }
+  return landed
+}
+
+async function addOne(
+  entry: Entry,
+  root: string | undefined,
+): Promise<{ path: string; line: number } | null> {
+  const path = await pathFor(entry, root)
   if (path === null) return null
 
   let before: string
@@ -95,10 +111,5 @@ export async function addTask(
   await replaceInNotes(workspace, [
     changeOf(path, before, [{ from: placed.at, to: placed.at, insert: placed.insert }]),
   ])
-
-  if (options.open) {
-    await workspace.open(path)
-    workspace.goto = { path, line: placed.line }
-  }
   return { path, line: placed.line }
 }
