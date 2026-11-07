@@ -49,6 +49,6 @@ export function scryptOffThread(
       if (said.key) resolve(said.key)
       else reject(new Error(said.error ?? 'no key'))
     })
-    away.postMessage({ id, password, salt, cost, length })
+    away.postMessage({ id, password, salt, cost: { n: cost.n, r: cost.r, p: cost.p }, length })
   })
 }

@@ -13,6 +13,7 @@ class Away {
     cost: { n: number; r: number; p: number }
     length: number
   }) {
+    structuredClone(said)
     asked.push(said.id)
     void scrypt(said.password, said.salt, said.cost, said.length).then((key) =>
       this.onmessage?.({ data: { id: said.id, key } } as MessageEvent),
@@ -34,4 +35,12 @@ test('the password is stretched off the window’s thread, to the same key', asy
   const away = await scryptOffThread(password, salt, cost, 32)
   expect(asked).toEqual([1])
   expect([...away]).toEqual([...(await scrypt(password, salt, cost, 32))])
+})
+
+test('a cost read from the app’s own state, a proxy, is sent as plain numbers', async () => {
+  const password = new TextEncoder().encode('tulip')
+  const salt = new Uint8Array([1, 2, 3, 4])
+  const kept = new Proxy({ n: 16, r: 1, p: 1, salt: 'AQIDBA==', hash: '' }, {})
+  const away = await scryptOffThread(password, salt, kept, 32)
+  expect([...away]).toEqual([...(await scrypt(password, salt, { n: 16, r: 1, p: 1 }, 32))])
 })
