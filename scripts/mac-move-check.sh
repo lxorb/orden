@@ -2,7 +2,7 @@
 set -u
 
 built="$1"
-identifier="ch.emilvinu.nib.probe.mac-move"
+identifier="so.orden.Orden.probe.mac-move"
 cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
 support="$HOME/Library/Application Support/$identifier"
 export ORDEN_ENDPOINT="$support/automation.json"

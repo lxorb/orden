@@ -1,4 +1,4 @@
-package ch.emilvinu.nib
+package so.orden.Orden
 
 import android.content.ContentResolver
 import android.content.Context

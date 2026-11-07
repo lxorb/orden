@@ -14,7 +14,7 @@ import time
 from devtools import SWITCHES, Session, port, targets
 from probe_app import close_app, run_probe, spaces_folder
 
-IDENTIFIER = "ch.emilvinu.nib.probe.aimodes"
+IDENTIFIER = "so.orden.Orden.probe.aimodes"
 
 failures: list[str] = []
 

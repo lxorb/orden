@@ -135,7 +135,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.zen-import")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.zen-import")
     parsed.add_argument("--shots", type=pathlib.Path, default=pathlib.Path("."))
     args = parsed.parse_args()
 

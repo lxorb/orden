@@ -329,7 +329,7 @@ mod tests {
 
     #[test]
     fn only_a_stylesheet_in_the_themes_folder_is_a_theme() {
-        let settings = path(&["AppData", "ch.emilvinu.nib"]);
+        let settings = path(&["AppData", "so.orden.Orden"]);
         let themes = settings.join("themes");
 
         assert!(is_a_theme(&themes, &themes.join("warm-paper.css")));

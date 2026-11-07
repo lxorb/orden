@@ -18,7 +18,7 @@ click on the tab, Move to space, its chevron, Home - as a person does it:
 The menu with its chevron's list is photographed, in the light and in the dark.
 
     python scripts/space-move-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name>
+        --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch goes through `run_probe` (by
 web-switch-probe.py's `launch`), off every screen and never taking the keyboard; the app
@@ -163,7 +163,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.space-move")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.space-move")
     parsed.add_argument("--shots", default=str(ROOT / "apps/desktop/test/e2e/shots/space-move-probe"))
     args = parsed.parse_args()
     shots = pathlib.Path(args.shots)

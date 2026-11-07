@@ -293,7 +293,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.globals")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.globals")
     parsed.add_argument("--real", action="store_true", help="also open the real sites")
     parsed.add_argument("--wait", type=float, default=15, help="seconds a real site gets to load")
     parsed.add_argument("--shots", type=pathlib.Path, help="keep a picture of each page here")

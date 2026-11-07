@@ -68,7 +68,7 @@ class WhatIsInView(unittest.TestCase):
     def test_the_windows_kept_for_messages_are_not(self) -> None:
         look = desk(
             window(1, APP, (0, 0, 13, 13), kind="Tao Thread Event Target"),
-            window(2, APP, (0, 0, 13, 13), kind="ch.emilvinu.nib.probe.x-sic"),
+            window(2, APP, (0, 0, 13, 13), kind="so.orden.Orden.probe.x-sic"),
         )
         self.assertEqual(in_view(look, FAMILY), [])
 

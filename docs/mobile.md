@@ -13,7 +13,7 @@ One identity across every build, from `src-tauri/tauri.conf.json`.
 
 | | |
 | --- | --- |
-| Bundle identifier | `ch.emilvinu.nib`, which is also the Android package name |
+| Bundle identifier | `so.orden.Orden`, which is also the Android package name |
 | Name | Orden |
 | Publisher | Emil Vinu |
 | Icons | `src-tauri/icons/android` and `src-tauri/icons/ios`, from `tauri icon` |
@@ -92,7 +92,7 @@ Nothing else changes.
 - Add the team to `tauri.conf.json` as `bundle.iOS.developmentTeam`, or pass it
   as `APPLE_DEVELOPMENT_TEAM`. The workflow passes a placeholder today, which is
   only a field being filled in for a build that signs nothing.
-- Register `ch.emilvinu.nib` as an App ID, and make a distribution certificate
+- Register `so.orden.Orden` as an App ID, and make a distribution certificate
   and a provisioning profile for it.
 - Add `APPLE_CERTIFICATE` (the `.p12` as base64), `APPLE_CERTIFICATE_PASSWORD`,
   `APPLE_PROVISIONING_PROFILE` and `APPLE_DEVELOPMENT_TEAM` as secrets, import
@@ -322,7 +322,7 @@ which is in the repository:
    VAPID_PRIVATE_KEY`, and optionally `VAPID_SUBJECT` (a `mailto:`; `MAIL_FROM`'s address
    otherwise).
 2. **A Firebase project** with Cloud Messaging on, the Android app added under
-   `ch.emilvinu.nib`, and a service account key (Project settings > Service accounts >
+   `so.orden.Orden`, and a service account key (Project settings > Service accounts >
    Generate new private key): `wrangler secret put FCM_SERVICE_ACCOUNT` with the JSON
    file's contents. The app's own `google-services.json` from the same project is what
    the Android client needs.
@@ -903,7 +903,7 @@ pnpm --filter @orden/desktop exec tauri ios build --target aarch64-sim --debug
 
 `tauri ios dev` wants a signing identity even for the simulator, so without an Apple
 account a debug build is the way to run it: `xcrun simctl install booted` the app
-under `gen/apple/build/arm64-sim` and launch `ch.emilvinu.nib`.
+under `gen/apple/build/arm64-sim` and launch `so.orden.Orden`.
 
 A release APK built by hand is unsigned, because there is no
 `gen/android/keystore.properties` on a development machine. `tauri android dev`

@@ -1,4 +1,4 @@
-package ch.emilvinu.nib
+package so.orden.Orden
 
 data class Alarm(
   val id: String,

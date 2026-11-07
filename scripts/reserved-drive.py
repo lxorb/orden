@@ -8,7 +8,7 @@ import urllib.request
 from pathlib import Path
 
 OUT = Path(sys.argv[1])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
 
 def endpoint():
     for _ in range(120):

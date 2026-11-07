@@ -8,7 +8,7 @@ about the terminal windows ... not just open, but the ones running something, e.
 claude."* A `ping` stands in for Claude Code: a program the shell started, as Claude Code
 is.
 
-    python scripts/quit-warning-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
+    python scripts/quit-warning-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
 
 Every launch is `run_probe`'s, off the screen and without the keyboard. The window is
 closed the way its close button closes it (WM_CLOSE); the question is answered through
@@ -101,7 +101,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.quitwarning")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.quitwarning")
     args = parsed.parse_args()
     exe = pathlib.Path(args.exe).resolve()
 

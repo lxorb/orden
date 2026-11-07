@@ -21,7 +21,7 @@ automation endpoint's `eval`, which the probe turns on in its own identifier's f
   longer than a frame. What nib's own stall recorder wrote to nib.log is printed after.
 
     python scripts/heavy-launch-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name> [--runs 5] [--only prime,launch,use]
+        --identifier so.orden.Orden.probe.<name> [--runs 5] [--only prime,launch,use]
 
 Build the exe as `scripts/probe_app.py` says. A few of the web tabs are real public sites
 (they make the network part of the measurement, as it is for Emil); the rest are pages

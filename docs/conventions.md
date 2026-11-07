@@ -421,7 +421,7 @@ What that one import gives it, so that no drive writes any of it again:
 - **A native probe**, `harness.Native(DRIVE, exe)`: through `scripts/probe_app.py`'s
   `run_probe`, off every screen, with `ORDEN_SPACES_DIR` in a temp folder. Never the
   reader's own nib: the installed exe, a build under the release identifier
-  `ch.emilvinu.nib` (whose launch the running Orden would take) or one whose identifier
+  `so.orden.Orden` (whose launch the running Orden would take) or one whose identifier
   nobody said is refused before it starts, and run-all.py skips a native drive
   pointed at one (`ORDEN_PROBE_EXE`, `ORDEN_PROBE_IDENTIFIER`). Nothing is ended by its
   name, only by the number of a process the harness started.
@@ -598,8 +598,8 @@ A slow launch can only be measured on the machine that has one: the disk, the
 antivirus and the webview runtime are the three biggest terms in it and none of
 the three is in this repository. So the app says it itself. Set
 `ORDEN_TRACE_STARTUP` and every launch appends a page to `startup-trace.log` in the
-app's log folder - `%LOCALAPPDATA%\ch.emilvinu.nib\logs` on Windows,
-`~/Library/Logs/ch.emilvinu.nib` on macOS, `~/.local/share/ch.emilvinu.nib/logs`
+app's log folder - `%LOCALAPPDATA%\so.orden.Orden\logs` on Windows,
+`~/Library/Logs/so.orden.Orden` on macOS, `~/.local/share/so.orden.Orden/logs`
 on Linux:
 
 ```powershell

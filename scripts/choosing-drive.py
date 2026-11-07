@@ -13,7 +13,7 @@ import urllib.request
 from pathlib import Path
 
 DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
 POINTER = OUT / "pointer.fifo"
 PAGES = 8771
 SITE = f"http://127.0.0.1:{PAGES}"

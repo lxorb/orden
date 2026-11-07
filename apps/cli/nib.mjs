@@ -17,7 +17,7 @@ function endpointFile() {
   if (process.env.ORDEN_ENDPOINT) return process.env.ORDEN_ENDPOINT
 
   const home = homedir()
-  const identifier = 'ch.emilvinu.nib'
+  const identifier = 'so.orden.Orden'
 
   if (platform() === 'win32') {
     const roaming = process.env.APPDATA ?? join(home, 'AppData', 'Roaming')

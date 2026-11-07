@@ -8,7 +8,7 @@ engine under it is on a screen or in front. The keyboard is read before and afte
 scenario, and must not have moved.
 
     python apps/desktop/test/agents/run.py --exe <probe nib.exe> \\
-        --identifier ch.emilvinu.nib.probe.<name> [--via endpoint|mcp] \\
+        --identifier so.orden.Orden.probe.<name> [--via endpoint|mcp] \\
         [--only <word>] [--skip <word>] [--out report.json]
     python apps/desktop/test/agents/run.py ... --launch-cost 3
     python apps/desktop/test/agents/run.py --list

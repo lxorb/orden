@@ -16,7 +16,7 @@ launches it again three times, each through `run_probe`, off the screen:
   log says what the frozen one was doing and for how long.
 
     python scripts/not-responding-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name>
+        --identifier so.orden.Orden.probe.<name>
 
 The answer the question would get is `ORDEN_PROBE_NOT_RESPONDING`: a probe never shows it.
 Only processes this probe started are suspended, resumed or waited on, by number.

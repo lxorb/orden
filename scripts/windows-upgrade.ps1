@@ -156,7 +156,7 @@ if ($Scenario -eq 'msi') {
   Check "and it is $product $version" ($entries.Count -eq 1 -and $entries[0].DisplayName -ceq $product -and $entries[0].DisplayVersion -eq $version)
   $start = Shortcut "$commonPrograms\$product\$product.lnk"
   Check "the Start menu entry is $product and starts the program" ($start -and $start.Target -eq $exe)
-  Check 'and carries the app id' ($start -and $start.Id -eq 'ch.emilvinu.nib')
+  Check 'and carries the app id' ($start -and $start.Id -eq 'so.orden.Orden')
   foreach ($name in $olds) {
     Check "the $name Start menu entry is gone" (-not (Test-Path "$commonPrograms\$name\$name.lnk"))
     Check "and its folder" (-not (Test-Path "$commonPrograms\$name"))
@@ -180,7 +180,7 @@ if ($Scenario -eq 'msi') {
   Check 'the folder is remembered under the new name' ((Value "$hkcu\Emil Vinu\$product") -eq $want)
   $start = Shortcut "$programs\$product.lnk"
   Check "the Start menu entry is $product and starts the program" ($start -and $start.Target -eq $exe)
-  Check 'and carries the app id' ($start -and $start.Id -eq 'ch.emilvinu.nib')
+  Check 'and carries the app id' ($start -and $start.Id -eq 'so.orden.Orden')
   if ($hadDesktop) {
     $icon = Shortcut "$desktop\$product.lnk"
     Check "the desktop icon is $product and starts the program" ($icon -and $icon.Target -eq $exe)

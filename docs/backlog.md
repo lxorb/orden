@@ -272,7 +272,7 @@ otherwise.
 | Q16 | Ink on an accent fill in dark mode | A per-scheme ink token |
 | Q17 | Delete the three finished migrations | Yes; every v0.5-era install has updated since |
 | Q18 | The display name is nibeditor everywhere a reader sees it, identifiers untouched | Yes, per 2026-09-08 |
-| Q19 | The name is Orden (2026-10-12): Orden and orden.so wherever a reader sees it, nibeditor.com answering the API for good, identifiers (`ch.emilvinu.nib`, `Documents/Nib`, the `nib` binary, the `Nib-` release assets) untouched | Yes, per 2026-10-12 |
+| Q19 | The name is Orden (2026-10-12): Orden and orden.so wherever a reader sees it, nibeditor.com answering the API for good, identifiers (`so.orden.Orden`, `Documents/Nib`, the `nib` binary, the `Nib-` release assets) untouched | Yes, per 2026-10-12 |
 
 ## Dropped
 

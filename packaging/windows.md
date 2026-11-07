@@ -56,7 +56,7 @@ tried, and Chocolatey's is unchanged.
 
 Two things stand in the way of the rename:
 
-- **Scoop's `nib` 0.15.0 uninstaller** is `Remove-Item "$env:APPDATA\ch.emilvinu.nib"
+- **Scoop's `nib` 0.15.0 uninstaller** is `Remove-Item "$env:APPDATA\so.orden.Orden"
   -Force -Recurse`, and that folder is a junction into the app's persist folder. Windows
   PowerShell 5.1 follows a junction with `-Recurse` and deletes what is behind it: the
   themes and the note history. The rename's note told everybody to run `scoop uninstall
@@ -67,7 +67,7 @@ Two things stand in the way of the rename:
   uninstall` and on `scoop update` alike: the first update away from 0.15.0 still runs
   0.15.0's. Under PowerShell 7 that removes the link alone; under Windows PowerShell 5.1
   it is the same risk. Removing the junction first, `cmd /c rmdir
-  "%APPDATA%\ch.emilvinu.nib"` (which never touches what is behind it), makes the old
+  "%APPDATA%\so.orden.Orden"` (which never touches what is behind it), makes the old
   uninstaller find nothing, and the new installer makes the junction again.
 - **Chocolatey's deprecation** of `nib` depends on `orden`. A new package waits for
   moderation on the community repository, and `nib` is trusted and goes through at once,
@@ -82,7 +82,7 @@ On a Windows machine, in Windows PowerShell 5.1 and in PowerShell 7:
    theme in and edit a note, so the persist folder holds something.
 2. Run `scoop update nib` to the release that writes the new `nib.json`, and check that
    `scoop\persist\nib` still holds the theme and the history, and that
-   `%APPDATA%\ch.emilvinu.nib` is a junction to it again.
+   `%APPDATA%\so.orden.Orden` is a junction to it again.
 3. `scoop uninstall nib`, and check the same: the junction gone, the persist folder whole.
 4. `scoop install` from a local copy of the bucket with this run's `orden.json` and
    `deprecated/nib.json` (the `true` road of the Scoop job), and check that `orden` takes
@@ -101,7 +101,7 @@ publish job writes `bucket/orden.json`, removes `bucket/nib.json`, and writes
 note saying where Orden is now: first `scoop update nib`, so that the uninstaller
 that runs next is the safe one, then `scoop uninstall nib` and `scoop install orden`.
 `orden`'s installer takes over what `nib` kept in its persist folder - themes and note
-history, junctioned from `%APPDATA%\ch.emilvinu.nib` - the first time, while its own
+history, junctioned from `%APPDATA%\so.orden.Orden` - the first time, while its own
 persist folder is still empty. Its uninstaller removes that junction as a link alone, so
 the persist folder stays until `scoop uninstall orden --purge`.
 

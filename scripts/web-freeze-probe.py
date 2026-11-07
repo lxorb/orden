@@ -48,7 +48,7 @@ not compile it at all, so it came out of a throwaway CI job on a `windows-11-arm
 runner:
 
     pnpm --filter @orden/desktop exec tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe","version":"99.0.0",
+      --config '{"identifier":"so.orden.Orden.probe","version":"99.0.0",
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
 
 An identifier of its own matters. The probe wipes that identifier's settings folder
@@ -372,7 +372,7 @@ def main() -> int:
     parsed.add_argument("--watch", type=float, default=20.0, help="seconds after it opens")
     parsed.add_argument(
         "--identifier",
-        default="ch.emilvinu.nib.probe",
+        default="so.orden.Orden.probe",
         help="the identifier the exe was built with, which says where its files are",
     )
     parsed.add_argument("--keep", action="store_true", help="leave the app and the space behind")

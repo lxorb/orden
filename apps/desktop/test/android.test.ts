@@ -10,10 +10,10 @@ const SOURCE = join(HERE, '..', 'src')
 const read = (...parts: string[]) => readFileSync(join(...parts), 'utf8')
 
 const manifest = read(ANDROID, 'AndroidManifest.xml')
-const activity = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'MainActivity.kt')
-const shared = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Shared.kt')
-const tiles = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Tiles.kt')
-const widgets = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Widgets.kt')
+const activity = read(ANDROID, 'java', 'so', 'orden', 'Orden', 'MainActivity.kt')
+const shared = read(ANDROID, 'java', 'so', 'orden', 'Orden', 'Shared.kt')
+const tiles = read(ANDROID, 'java', 'so', 'orden', 'Orden', 'Tiles.kt')
+const widgets = read(ANDROID, 'java', 'so', 'orden', 'Orden', 'Widgets.kt')
 const layout = read(ANDROID, 'res', 'layout', 'widget_notes.xml')
 const provider = read(ANDROID, 'res', 'xml', 'widget_notes.xml')
 const proguard = read(HERE, '..', 'src-tauri', 'gen', 'android', 'app', 'proguard-rules.pro')
@@ -127,8 +127,8 @@ describe('the press that started the app', () => {
     const senders = {
       tiles,
       widgets,
-      today: read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'TodayWidget.kt'),
-      reminders: read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Reminders.kt'),
+      today: read(ANDROID, 'java', 'so', 'orden', 'Orden', 'TodayWidget.kt'),
+      reminders: read(ANDROID, 'java', 'so', 'orden', 'Orden', 'Reminders.kt'),
     }
     for (const [name, text] of Object.entries(senders)) {
       const made = text.match(/Intent\(\w+, MainActivity::class\.java\)/g) ?? []
@@ -170,7 +170,7 @@ describe('the quick settings tiles', () => {
   })
 
   test('send only ids the page will run from a press', () => {
-    const today = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'TodayWidget.kt')
+    const today = read(ANDROID, 'java', 'so', 'orden', 'Orden', 'TodayWidget.kt')
     const sent = [
       ...[...tiles.matchAll(/override val command = "([\w.-]+)"/g)].map((one) => one[1]),
       ...[...`${widgets}${today}`.matchAll(/command\(context, "([\w.-]+)"/g)].map((one) => one[1]),
@@ -329,7 +329,7 @@ describe('the bridge the page talks over', () => {
   })
 
   test('is kept whole by a release build', () => {
-    expect(proguard).toContain('class ch.emilvinu.nib.MainActivity$Bridge')
+    expect(proguard).toContain('class so.orden.Orden.MainActivity$Bridge')
     expect(proguard).toContain('@android.webkit.JavascriptInterface <methods>')
   })
 
@@ -366,7 +366,7 @@ describe('what a release build shrinks', () => {
 
 describe('the Today widget', () => {
   const today = read(ANDROID, 'res', 'layout', 'widget_today.xml')
-  const kotlin = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'TodayWidget.kt')
+  const kotlin = read(ANDROID, 'java', 'so', 'orden', 'Orden', 'TodayWidget.kt')
 
   test('is declared, with the provider that describes it', () => {
     expect(manifest).toContain('android:name=".TodayWidget"')

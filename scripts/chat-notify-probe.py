@@ -9,7 +9,7 @@ notifications ask it, and the action centre is read back the way any program on 
 machine can read it, through Windows PowerShell's WinRT.
 
 **It never pops up on anybody's screen.** The app is a probe with an identifier of its
-own (never `ch.emilvinu.nib`), and a probe shows a notice only when started with
+own (never `so.orden.Orden`), and a probe shows a notice only when started with
 `ORDEN_PROBE_NOTICES`, which only this script sets, and then straight into the action centre
 with no banner (`SuppressPopup`). On the way out - pass, fail or crash - every toast of
 that id is taken off and the id's registration removed, and the run fails if one is left.
@@ -20,7 +20,7 @@ at all: the bridge is still asked and must answer, and the action centre's half 
 skipped and said so.
 
     pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.chats-notify","version":"99.0.0",
+      --config '{"identifier":"so.orden.Orden.probe.chats-notify","version":"99.0.0",
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/chat-notify-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
 """
@@ -40,7 +40,7 @@ import time
 from devtools import Session, debugged, port, targets
 from probe_app import close_app, refuse_updating, run_probe
 
-IDENTIFIER = "ch.emilvinu.nib.probe.chats-notify"
+IDENTIFIER = "so.orden.Orden.probe.chats-notify"
 GROUP = "nib.notices"
 CHAT = "c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"
 

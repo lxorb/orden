@@ -1,4 +1,4 @@
-package ch.emilvinu.nib
+package so.orden.Orden
 
 import android.Manifest
 import android.app.Activity
@@ -29,10 +29,10 @@ object Reminders {
   private const val ASKED_SHOWING = "asked-showing"
 
   const val CHANNEL = "reminders"
-  const val ACTION_RING = "ch.emilvinu.nib.reminder.RING"
-  const val ACTION_DONE = "ch.emilvinu.nib.reminder.DONE"
-  const val ACTION_SNOOZE = "ch.emilvinu.nib.reminder.SNOOZE"
-  const val EXTRA_ALARM = "ch.emilvinu.nib.reminder"
+  const val ACTION_RING = "so.orden.Orden.reminder.RING"
+  const val ACTION_DONE = "so.orden.Orden.reminder.DONE"
+  const val ACTION_SNOOZE = "so.orden.Orden.reminder.SNOOZE"
+  const val EXTRA_ALARM = "so.orden.Orden.reminder"
 
   private const val SHOWING = 0x6e6f
 

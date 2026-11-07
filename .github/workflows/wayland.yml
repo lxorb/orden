@@ -124,7 +124,7 @@ jobs:
           DPI: '128'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A light page on its white ground in the app's dark scheme, under sway
         if: always()
@@ -133,7 +133,7 @@ jobs:
           GROUND: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: The editor's text size changed from Settings, under sway
         if: always()
@@ -142,7 +142,7 @@ jobs:
           TEXTSIZE: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: Tabs switched in the dark without a white frame, under sway
         if: always()
@@ -151,7 +151,7 @@ jobs:
           FLASH: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A site's certificate from its popover, under sway
         if: always()
@@ -160,7 +160,7 @@ jobs:
           CERT: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: The pages' DNS chosen in Settings, over HTTPS, under sway
         if: always()
@@ -169,7 +169,7 @@ jobs:
           DNS: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A download stopped on its way, and the same name again, under sway
         if: always()
@@ -178,7 +178,7 @@ jobs:
           DOWNLOAD: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A web tab's extensions in the bar and in Settings, under sway
         if: always()
@@ -187,7 +187,7 @@ jobs:
           EXTENSIONS: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: Pass fills, saves and signs in by itself on a web tab's pages, under sway
         if: always()
@@ -196,7 +196,7 @@ jobs:
           PASS: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A private tab's permission answer kept from normal tabs, under sway
         if: always()
@@ -205,7 +205,7 @@ jobs:
           GRANTS: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A device's name refused for a note and a folder, under sway
         if: always()
@@ -214,7 +214,7 @@ jobs:
           RESERVED: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A page note made from a PDF wears the PDF's mark, under sway
         if: always()
@@ -223,7 +223,7 @@ jobs:
           PDFMARK: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A space watched past a folder nobody may read and past the limit, under sway
         if: always()
@@ -232,7 +232,7 @@ jobs:
           WATCH: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A note let go of on a site in a web tab is a file there, under sway
         if: always()
@@ -241,7 +241,7 @@ jobs:
           CARRY: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib" "$HOME/.cache/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden" "$HOME/.cache/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A web tab's page in the app's scheme, under sway
         if: always()
@@ -250,7 +250,7 @@ jobs:
           SCHEME: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: What the app took in survives a kill, under sway
         if: always()
@@ -259,7 +259,7 @@ jobs:
           KILL: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A web tab's page has its card's rounded corners, under sway
         if: always()
@@ -268,7 +268,7 @@ jobs:
           CORNER: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A press into a web tab's page chooses its tab and its pane, under sway
         if: always()
@@ -277,7 +277,7 @@ jobs:
           CHOOSING: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: Every way a page opens a window does what it asked for, under sway
         if: always()
@@ -286,7 +286,7 @@ jobs:
           OPENS: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: Web tabs closed one after another while their pages come up, under sway
         if: always()
@@ -296,7 +296,7 @@ jobs:
           RUST_BACKTRACE: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A web tab's page has its worker answer it, opened and after a restart, under sway
         if: always()
@@ -305,7 +305,7 @@ jobs:
           WORKER: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A web tab's session cookie is there after a restart, under sway
         if: always()
@@ -314,7 +314,7 @@ jobs:
           SESSION: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: Export PDF writes pages and words and nothing from the disk, under sway
         if: always()
@@ -323,7 +323,7 @@ jobs:
           EXPORTPDF: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: Popups chosen from over a web tab's page, under sway
         if: always()
@@ -332,7 +332,7 @@ jobs:
           POPUP: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: Popups chosen from over a web tab's page, under sway, scaled
         if: always()
@@ -342,7 +342,7 @@ jobs:
           DPI: '128'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: The window moved by its strip and resized by its edge, under sway
         if: always()
@@ -353,7 +353,7 @@ jobs:
         run: |
           echo "left of the runs before:"; pgrep -a nib || true
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: What
         if: always()
@@ -361,7 +361,7 @@ jobs:
           OUT: wayland-out/418-cef
           CHECK: '1'
         run: |
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -405,7 +405,7 @@ jobs:
           POPUP: '1'
           ORDEN_CEF_SANDBOX: disabled
         run: |
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - name: A note dragged in the file list, and the interface zoomed, under KWin
         if: always()
@@ -416,7 +416,7 @@ jobs:
           ZOOM: '1'
           ORDEN_CEF_SANDBOX: disabled
         run: |
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - name: Moved, resized and maximised under KWin
         if: always()
@@ -427,7 +427,7 @@ jobs:
           DRAG: '1'
           ORDEN_CEF_SANDBOX: disabled
         run: |
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

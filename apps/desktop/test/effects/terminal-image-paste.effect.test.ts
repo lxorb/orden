@@ -5,7 +5,7 @@ const carried: Record<string, unknown>[] = []
 let refuse = false
 
 const PATH = '/home/emil/.cache/nib/images/nib-0011223344556677.png'
-const KEPT = '/home/emil/.cache/ch.emilvinu.nib/images/nib-8899aabbccddeeff.png'
+const KEPT = '/home/emil/.cache/so.orden.Orden/images/nib-8899aabbccddeeff.png'
 const kept: Record<string, unknown>[] = []
 let outside: string[] = []
 

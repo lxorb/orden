@@ -312,9 +312,9 @@ to `automation.json` in the app's own config folder:
 
 | Platform | Where |
 | --- | --- |
-| Windows | `%APPDATA%\ch.emilvinu.nib\automation.json` |
-| macOS | `~/Library/Application Support/ch.emilvinu.nib/automation.json` |
-| Linux | `~/.config/ch.emilvinu.nib/automation.json` |
+| Windows | `%APPDATA%\so.orden.Orden\automation.json` |
+| macOS | `~/Library/Application Support/so.orden.Orden/automation.json` |
+| Linux | `~/.config/so.orden.Orden/automation.json` |
 
 It holds the port, the secret, `eval`, and `pid` - which process is listening. The pid
 is written rather than read: the file is rewritten every launch, so the one in it is
@@ -347,7 +347,7 @@ Realities plugin does not carry the code for it at all.
 ## Driving the app without writing into somebody's notes
 
 **A probe says where its notes go, because nothing else does.** Building under an
-identifier of its own - `--config '{"identifier":"ch.emilvinu.nib.probe"}'`, which is
+identifier of its own - `--config '{"identifier":"so.orden.Orden.probe"}'`, which is
 what every drive in `scripts/` does - moves the settings folder and the browsing
 profile, and used to say **nothing at all** about where the spaces are: `spaces_dir`
 resolved `Documents/Nib` whatever the identifier was. So a drive that made itself a space
@@ -379,7 +379,7 @@ the answer never changes under somebody's notes:
 
 | | |
 | --- | --- |
-| a new install | `Spaces` in the app's local data, under the identifier: `%LOCALAPPDATA%\ch.emilvinu.nib\Spaces` on Windows, `~/Library/Application Support/ch.emilvinu.nib/Spaces` on a Mac, `$XDG_DATA_HOME/ch.emilvinu.nib/Spaces` (`~/.local/share/...`) on Linux. Emil, 2026-10-17: the folder is nothing a person should reach directly, but through Orden |
+| a new install | `Spaces` in the app's local data, under the identifier: `%LOCALAPPDATA%\so.orden.Orden\Spaces` on Windows, `~/Library/Application Support/so.orden.Orden/Spaces` on a Mac, `$XDG_DATA_HOME/so.orden.Orden/Spaces` (`~/.local/share/...`) on Linux. Emil, 2026-10-17: the folder is nothing a person should reach directly, but through Orden |
 | an install that already has `Documents/Nib` | `Documents/Nib`, where every space used to be: nobody's spaces are moved |
 | `spaces-folder` there already | the folder it names, whatever appears in Documents later, where that is one of Orden's own (the two above) |
 | `spaces-folder` naming any other folder | written by hand: an Obsidian vault, any folder Orden did not make (#552). It is never used in place. As the page starts, every space in it is copied once into Orden's own folder, checked byte for byte, under a name no space there has, and the folder is left as it was (`outside.rs`, `workspace/outside.ts`). Every path stored under each space is said again under its new root, so ids, tabs, versions and sync follow it, and only then is `spaces-folder` written with Orden's own folder. A line says so once, with the way to Import. A space that did not copy stays only there and is tried again at the next launch |

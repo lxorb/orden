@@ -4,7 +4,7 @@
 <policyconfig>
   <vendor>Orden</vendor>
   <vendor_url>https://orden.so</vendor_url>
-  <action id="ch.emilvinu.nib.unlock">
+  <action id="so.orden.Orden.unlock">
     <description>Open what you protected in Orden</description>
     <message>Orden needs your password to open what you protected.</message>
     <icon_name>nib</icon_name>

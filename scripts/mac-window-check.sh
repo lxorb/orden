@@ -2,7 +2,7 @@
 set -u
 
 app="$1"
-identifier="ch.emilvinu.nib.probe.mac-window"
+identifier="so.orden.Orden.probe.mac-window"
 cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
 support="$HOME/Library/Application Support/$identifier"
 export ORDEN_ENDPOINT="$support/automation.json"

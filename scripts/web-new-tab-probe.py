@@ -257,7 +257,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.new-tab")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.new-tab")
     args = parsed.parse_args()
 
     wipe(args.identifier)

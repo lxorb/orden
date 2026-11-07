@@ -22,10 +22,10 @@ scripts/mcp-probe.py watches it; a window on a screen or in front ends the drive
 exit 3.
 
     pnpm --dir apps/desktop tauri build --no-bundle --config \\
-      '{"identifier":"ch.emilvinu.nib.probe.agent-verbs","version":"99.0.0",
+      '{"identifier":"so.orden.Orden.probe.agent-verbs","version":"99.0.0",
         "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/agent-verbs-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.agent-verbs
+        --identifier so.orden.Orden.probe.agent-verbs
 """
 
 from __future__ import annotations
@@ -199,8 +199,8 @@ def main() -> int:
 
     exe = options.exe.resolve()
     refuse_updating(exe)
-    if not options.identifier.startswith("ch.emilvinu.nib.probe"):
-        raise SystemExit("a probe's identifier starts with ch.emilvinu.nib.probe")
+    if not options.identifier.startswith("so.orden.Orden.probe"):
+        raise SystemExit("a probe's identifier starts with so.orden.Orden.probe")
 
     folder = mcp.config_dir(options.identifier)
     if mcp.app_pid(folder, exe):

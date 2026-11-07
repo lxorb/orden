@@ -22,7 +22,7 @@ foreground (asked with a lock released at once), and whether the probe said, as 
 started, that it could have: that is what `run_probe` is meant to hand on none of.
 
     python scripts/probe-foreground-stress.py --exe path/to/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.<name>.launch
+      --identifier so.orden.Orden.probe.<name>.launch
 
 The build is a release probe, as apps/desktop/test/e2e/launch.py says, whose identifier
 has `.launch` in it: a cold launch wipes the identifier's own folders, and nothing else's.

@@ -21,12 +21,12 @@ const SAYING = ['apps/desktop/test/internal-name.test.ts', 'scripts/old-name.ts'
 
 const MOST: Record<Kind, number> = {
   package: 0,
-  identifier: 294,
+  identifier: 8,
   scheme: 21,
   key: 305,
   variable: 18,
   dashed: 870,
-  word: 3904,
+  word: 3896,
 }
 
 const ALIASES_SHIP_IN = 'v0.21.0'
@@ -44,6 +44,8 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src-tauri/src/uris.rs': ['"nib:"', 'nib://', 'NIB://'],
   'apps/desktop/src-tauri/tauri.conf.json': ['"orden", "nib"'],
   'apps/desktop/src-tauri/tauri.macos.conf.json': ['"orden", "nib"'],
+  'apps/desktop/src/lib/ai/chat/tools.test.ts': ['ch.emilvinu.nib/answer'],
+  'apps/desktop/src/lib/ai/chat/tools.ts': ['ch.emilvinu.nib/answer'],
   'apps/desktop/src/lib/automation/start.test.ts': ['nib://', "'nib')"],
   'apps/desktop/src/lib/automation/start.ts': ["'nib'"],
   'apps/desktop/src/lib/automation/uri.test.ts': ['nib:'],

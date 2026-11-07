@@ -19,7 +19,7 @@ The build is a release build under an identifier of its own, as a version no rel
 passes and looking for updates on a port nothing listens on; see probe_app.py:
 
     pnpm --dir apps/desktop tauri build --no-bundle --config \\
-      '{"identifier":"ch.emilvinu.nib.launch","version":"99.0.0",
+      '{"identifier":"so.orden.Orden.launch","version":"99.0.0",
         "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
 
 Its own identifier rather than a `.probe` one, because the app holds a single-instance
@@ -67,7 +67,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from probe_app import close_app, main_window, run_probe  # noqa: E402
 
-IDENTIFIER = "ch.emilvinu.nib.launch"
+IDENTIFIER = "so.orden.Orden.launch"
 
 EXE = APP / "src-tauri" / "target" / "release" / "nib.exe"
 

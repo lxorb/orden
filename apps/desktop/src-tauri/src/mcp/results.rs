@@ -4,7 +4,7 @@ use super::marks::marked;
 use super::shared;
 use crate::agents::verbs::Dialog;
 
-pub const META: &str = "ch.emilvinu.nib/answer";
+pub const META: &str = "so.orden.Orden/answer";
 
 const CHATS: [&str; 6] = [
     "list_chats",
