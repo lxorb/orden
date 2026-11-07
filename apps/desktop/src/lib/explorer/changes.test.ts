@@ -58,7 +58,8 @@ vi.mock('../prompt.svelte', () => ({
   },
 }))
 
-const { carry, freeName, renameMany, renamePath, removeForGood, trash } = await import('./changes')
+const { carry, freeName, renameMany, renamePath, removeForGood, takenNames, trash } =
+  await import('./changes')
 
 function view(path = '/home/me/Downloads') {
   return {
@@ -80,9 +81,15 @@ beforeEach(() => {
 
 describe("a file explorer's changes", () => {
   test('name a new thing after the first free number', () => {
-    expect(freeName(['a', 'New folder'], 'New folder')).toBe('New folder 2')
-    expect(freeName(['new folder', 'New folder 2'], 'New folder')).toBe('New folder 3')
-    expect(freeName([], 'New folder')).toBe('New folder')
+    expect(freeName(takenNames(['a', 'New folder']), 'New folder')).toBe('New folder 2')
+    expect(freeName(takenNames(['new folder', 'New folder 2']), 'New folder')).toBe('New folder 3')
+    expect(freeName(takenNames([]), 'New folder')).toBe('New folder')
+  })
+
+  test('number a name taken before its extension, so the file still opens as what it is', () => {
+    expect(freeName(takenNames(['photo.jpg']), 'photo.jpg')).toBe('photo 2.jpg')
+    expect(freeName(takenNames(['Photo.JPG', 'photo 2.jpg']), 'photo.JPG')).toBe('photo 3.JPG')
+    expect(freeName(takenNames(['.env']), '.env')).toBe('.env 2')
   })
 
   test('put what is outside the spaces in the system trash, one undo for it', async () => {

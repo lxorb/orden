@@ -21,7 +21,8 @@ vi.mock('./open', () => ({ inASpace: () => false }))
 vi.mock('./changes', () => ({
   carry: () => Promise.resolve(),
   changeable: () => true,
-  freeName: (_taken: string[], name: string) => name,
+  freeName: (_taken: Set<string>, name: string) => name,
+  takenNames: () => new Set(),
 }))
 vi.mock('../workspace.svelte', () => ({ workspace: { undone: { record: vi.fn() } } }))
 

@@ -13,7 +13,7 @@ import type { Picked } from '../import/sources'
 import { invoke, isDesktop, joinPath, platform } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import type { OutsideStep } from '../workspace/undo.svelte'
-import { carry, changeable, freeName } from './changes'
+import { carry, changeable, freeName, takenNames } from './changes'
 import { listFolder } from './commands'
 import { inASpace } from './open'
 import type { ExplorerView } from './view.svelte'
@@ -89,7 +89,7 @@ export async function writeInto(view: ExplorerView, files: readonly Picked[], fo
   }
   const listing = await listFolder(folder).catch(() => null)
   if (!listing) return
-  const taken = listing.entries.map((one) => one.name)
+  const taken = takenNames(listing.entries.map((one) => one.name))
   const tops = new Map<string, string>()
   try {
     for (const file of files) {
@@ -99,7 +99,7 @@ export async function writeInto(view: ExplorerView, files: readonly Picked[], fo
       let name = tops.get(top)
       if (name === undefined) {
         name = freeName(taken, top)
-        taken.push(name)
+        taken.add(name.toLowerCase())
         tops.set(top, name)
       }
       const under = [name, ...rest].join('/')

@@ -7,7 +7,8 @@ vi.mock('./changes', () => ({
     return Promise.resolve()
   },
   changeable: () => true,
-  freeName: (_taken: string[], name: string) => name,
+  freeName: (_taken: Set<string>, name: string) => name,
+  takenNames: () => new Set(),
 }))
 vi.mock('../workspace.svelte', () => ({
   workspace: { spaces: [{ root: '/home/me/Orden/Work' }], undone: { record: vi.fn() } },
