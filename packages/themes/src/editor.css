@@ -2250,4 +2250,16 @@
     background: Mark;
     color: MarkText;
   }
+
+  .cm-line.nib-code::after {
+    border-inline: 1px solid CanvasText;
+  }
+
+  .cm-line.nib-code-open::after {
+    border-top: 1px solid CanvasText;
+  }
+
+  .cm-line.nib-code-close::after {
+    border-bottom: 1px solid CanvasText;
+  }
 }

@@ -2268,6 +2268,15 @@ figure.query {
     outline-offset: -2px;
   }
 
+  :is(
+      textarea,
+      input:not([type='range'], [type='checkbox'], [type='radio'], [type='color'], [type='file'])
+    ):not(.nib-field *):focus,
+  .nib-field:has(:is(input, textarea, [contenteditable]):focus) {
+    outline: 2px solid Highlight;
+    outline-offset: -1px;
+  }
+
   #write mark,
   #write mark[class] {
     background: Mark;
