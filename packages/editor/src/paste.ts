@@ -2,6 +2,7 @@ import {
   EditorSelection,
   type EditorState,
   type Extension,
+  Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
@@ -91,7 +92,7 @@ function later(
     if (!spec) return false
 
     const made = asked.update(spec)
-    note.local(made.changes, made.newSelection, view)
+    note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent))
     return true
   }
 }

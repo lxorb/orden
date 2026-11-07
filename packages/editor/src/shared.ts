@@ -256,8 +256,13 @@ export class SharedDoc {
     this.settle()
   }
 
-  local(changes: ChangeSet, selection: EditorSelection, from: DocView) {
-    const made = this.state.update({ changes, selection, filter: false })
+  local(changes: ChangeSet, selection: EditorSelection, from: DocView, userEvent?: string) {
+    const made = this.state.update({
+      changes,
+      selection,
+      filter: false,
+      ...(userEvent ? { userEvent } : {}),
+    })
     this.state = made.state
 
     this.did()
@@ -265,6 +270,12 @@ export class SharedDoc {
     this.made(changes)
     this.took(made, 'reader')
     this.settle()
+  }
+
+  selected(selection: EditorSelection, userEvent?: string) {
+    const length = this.state.doc.length
+    if (selection.ranges.some((range) => range.to > length)) return
+    this.state = this.state.update({ selection, ...(userEvent ? { userEvent } : {}) }).state
   }
 
   replace(text: string, recorded = true, changes?: readonly Replacement[]) {
