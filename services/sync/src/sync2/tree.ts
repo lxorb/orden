@@ -760,10 +760,17 @@ interface Touched {
   name?: string
 }
 
+interface Walk {
+  id?: string
+  folders: readonly string[]
+  name: string
+}
+
 export interface Reach {
   ids: readonly string[]
   touched: readonly Touched[]
   under: readonly string[]
+  walks?: readonly Walk[]
 }
 
 export function reachOf(ops: readonly Op[]): Reach {
@@ -851,6 +858,18 @@ class Rows {
     await this.noteRows(where('folder_id'), parent ?? '', prefix)
   }
 
+  foldersNamed(parent: string | null, name: string): string[] {
+    const key = nameKey(name)
+    return [...this.folders.values()]
+      .filter(
+        (row) =>
+          (row.parent_id ?? '') === (parent ?? '') &&
+          row.deleted === 0 &&
+          nameKey(row.name) === key,
+      )
+      .map((row) => row.id)
+  }
+
   parentOf(id: string): string | null | undefined {
     const folder = this.folders.get(id)
     if (folder) return folder.parent_id
@@ -933,6 +952,23 @@ export async function readReach(
     const held = into.get(id) ?? new Set<T>()
     held.add(value)
     into.set(id, held)
+  }
+  for (const walk of reach.walks ?? []) {
+    let at: (string | null)[] = [null]
+    for (const folder of walk.folders) {
+      const next: string[] = []
+      for (const parent of at) {
+        await rows.named(parent, folder)
+        next.push(...rows.foldersNamed(parent, folder))
+      }
+      at = next
+      if (!at.length) break
+    }
+    for (const parent of at) {
+      if (walk.id === undefined) await rows.named(parent, walk.name)
+      else add(parents, walk.id, parent)
+    }
+    if (walk.id !== undefined) add(names, walk.id, walk.name)
   }
   for (const one of reach.touched) {
     const parent = rows.parentOf(one.id)

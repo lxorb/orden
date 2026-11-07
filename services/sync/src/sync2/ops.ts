@@ -10,7 +10,15 @@ import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
 import { newId } from '../crypto'
 import type { Env } from '../types'
 import type { Reached } from '../spaces/space'
-import { type Changed, changeTree, type Content, kindOfName, reachOf, type Tree } from './tree'
+import {
+  type Changed,
+  changeTree,
+  type Content,
+  kindOfName,
+  type Reach,
+  reachOf,
+  type Tree,
+} from './tree'
 
 const SAW_EVERYTHING = Number.MAX_SAFE_INTEGER
 
@@ -111,7 +119,12 @@ function applied(
   return result
 }
 
-function foldersFor(tree: Tree, folders: readonly string[], context: OpContext): string | null {
+function foldersFor(
+  tree: Tree,
+  folders: readonly string[],
+  context: OpContext,
+  fresh: () => string,
+): string | null {
   let parent: string | null = null
   for (const name of folders) {
     const found = tree.child(parent, name)
@@ -120,9 +133,9 @@ function foldersFor(tree: Tree, folders: readonly string[], context: OpContext):
       continue
     }
 
-    const id = newId()
+    const id = fresh()
     const made = tree.apply(
-      { op: newId(), t: 'mkdir', id, parent, name, seen: SAW_EVERYTHING },
+      { op: fresh(), t: 'mkdir', id, parent, name, seen: SAW_EVERYTHING },
       context,
     )
     if (!('id' in made)) throw new Error(`a folder could not be made for ${name}`)
@@ -138,8 +151,7 @@ function split(path: string): { folders: string[]; name: string } {
   return { folders, name }
 }
 
-function noteAtPath(tree: Tree, path: string): string | null {
-  const { folders, name } = split(path)
+function noteAtPath(tree: Tree, folders: readonly string[], name: string): string | null {
   let parent: string | null = null
   for (const folder of folders) {
     const found = tree.child(parent, folder)
@@ -150,6 +162,71 @@ function noteAtPath(tree: Tree, path: string): string | null {
   return found && found.kind !== 'folder' ? found.id : null
 }
 
+export interface ByPath<T> {
+  reach: Reach
+  work: (tree: Tree, fresh?: () => string) => T
+}
+
+export function creatingAt(
+  path: string,
+  device: string | undefined,
+  content: Content,
+  meta?: ItemMeta,
+): ByPath<{ made: string } | { taken: string }> {
+  const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
+  const { folders, name } = split(path)
+  return {
+    reach: { ids: [], touched: [], under: [], walks: [{ folders, name }] },
+    work: (tree, fresh = newId) => {
+      const taken = noteAtPath(tree, folders, name)
+      if (taken) return { taken }
+
+      const parent = foldersFor(tree, folders, context, fresh)
+      const id = fresh()
+      const create: CreateOp = {
+        op: fresh(),
+        t: 'create',
+        id,
+        kind: kindOfName(name),
+        parent,
+        name,
+        seen: SAW_EVERYTHING,
+      }
+      tree.apply(create, context)
+      tree.content.set(id, content)
+
+      const entry = tree.entry(id)
+      if (entry) {
+        entry.docSeq = entry.seq
+        if (device === undefined) delete entry.docBy
+        else entry.docBy = device
+        if (meta) entry.meta = meta
+      }
+      return { made: id }
+    },
+  }
+}
+
+export function movingTo(
+  id: string,
+  path: string,
+  device: string | undefined,
+): ByPath<string | null> {
+  const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
+  const { folders, name } = split(path)
+  return {
+    reach: { ids: [id], touched: [{ id }], under: [id], walks: [{ id, folders, name }] },
+    work: (tree, fresh = newId) => {
+      const parent = foldersFor(tree, folders, context, fresh)
+      const result = tree.apply(
+        { op: fresh(), t: 'move', id, parent, name, seen: SAW_EVERYTHING },
+        context,
+      )
+      return 'id' in result ? tree.pathOf(id) : null
+    },
+  }
+}
+
 export async function createByPath(
   env: Env,
   spaceId: string,
@@ -158,35 +235,8 @@ export async function createByPath(
   content: Content,
   meta?: ItemMeta,
 ): Promise<{ made: string } | { taken: string }> {
-  const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
-  const { value } = await changeTree(env, spaceId, device, (tree) => {
-    const taken = noteAtPath(tree, path)
-    if (taken) return { taken }
-
-    const { folders, name } = split(path)
-    const parent = foldersFor(tree, folders, context)
-    const id = newId()
-    const create: CreateOp = {
-      op: newId(),
-      t: 'create',
-      id,
-      kind: kindOfName(name),
-      parent,
-      name,
-      seen: SAW_EVERYTHING,
-    }
-    tree.apply(create, context)
-    tree.content.set(id, content)
-
-    const entry = tree.entry(id)
-    if (entry) {
-      entry.docSeq = entry.seq
-      if (device === undefined) delete entry.docBy
-      else entry.docBy = device
-      if (meta) entry.meta = meta
-    }
-    return { made: id }
-  })
+  const { reach, work } = creatingAt(path, device, content, meta)
+  const { value } = await changeTree(env, spaceId, device, (tree) => work(tree), [], reach)
   return value
 }
 
@@ -197,16 +247,8 @@ export async function moveByPath(
   id: string,
   path: string,
 ): Promise<string | null> {
-  const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
-  const { value } = await changeTree(env, spaceId, device, (tree) => {
-    const { folders, name } = split(path)
-    const parent = foldersFor(tree, folders, context)
-    const result = tree.apply(
-      { op: newId(), t: 'move', id, parent, name, seen: SAW_EVERYTHING },
-      context,
-    )
-    return 'id' in result ? tree.pathOf(id) : null
-  })
+  const { reach, work } = movingTo(id, path, device)
+  const { value } = await changeTree(env, spaceId, device, (tree) => work(tree), [], reach)
   return value
 }
 

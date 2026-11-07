@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { Op, OpContext, TreeEntry } from '@orden/sync-core'
 import { hash32 } from '@orden/sync-core/seed'
+import { type ByPath, creatingAt, movingTo } from '../src/sync2/ops'
 import { changeTree, reachOf, readReach, readTree, type Tree } from '../src/sync2/tree'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { live } from './sync2'
@@ -170,5 +171,97 @@ describe('a tree op that reads only what it reaches', () => {
     const part = await readReach(env, space, 'd1', reachOf([rename]))
     expect(part.state.entries.size).toBeLessThan(20)
     expect(part.apply(rename, context)).toMatchObject({ ok: true, name: 'n70 2.md' })
+  })
+})
+
+const SEGMENTS = ['F', 'f', 'G', 'F 2', 'Ω', 'ω', 'Plan.md']
+
+function aPath(dice: Dice): string {
+  const folders = Array.from({ length: dice.next(3) }, () => dice.pick(SEGMENTS))
+  return [...folders, dice.pick(NAMES.filter((one) => !one.includes('/')))].join('/')
+}
+
+function counter(step: number) {
+  let at = 0
+  return () => `p${String(step)}-${String((at += 1))}`
+}
+
+async function byPathStep<T>(step: number, made: ByPath<T>, device: string | undefined) {
+  const base = await readTree(env, space, device)
+  const whole = await readTree(env, space, device)
+  const part = await readReach(env, space, device, made.reach)
+  expect(made.work(part, counter(step))).toEqual(made.work(whole, counter(step)))
+  whole.statements(env)
+  part.statements(env)
+  expect(JSON.stringify([...changed(base, part)].sort(), null, 1)).toBe(
+    JSON.stringify([...changed(base, whole)].sort(), null, 1),
+  )
+
+  await changeTree(env, space, device, (tree) => made.work(tree, counter(step)), [], made.reach)
+  const stored = await readTree(env, space, device)
+  for (const [id, entry] of whole.state.entries) {
+    const kept = stored.state.entries.get(id)
+    expect(kept && { ...kept }, id).toEqual({ ...entry })
+  }
+  for (const [id, path] of paths()) expect(path, id).toBe(whole.pathOf(id))
+}
+
+const CONTENT = { hash: 'a'.repeat(64), size: 1, front: null, epoch: 1, epochBase: 'a'.repeat(64) }
+
+describe('a note made or moved by its path, reading only what the path reaches', () => {
+  for (const seed of [1, 2, 3, 4]) {
+    test(`changes the space exactly as one that reads the whole space (seed ${String(seed)})`, async () => {
+      const dice = new Dice(seed + 100)
+      for (let step = 0; step < 50; step++) {
+        const device = dice.pick(['d1', 'd2', undefined])
+        const tree = await readTree(env, space)
+        const entries = [...tree.state.entries.values()]
+        const notes = entries.filter((one) => one.kind !== 'folder' && !one.deleted)
+        const roll = dice.next(4)
+        if (roll === 0) {
+          await oneStep([anOp(dice, entries, tree.state.cursor)], device)
+        } else if (roll === 1 && notes.length) {
+          await byPathStep(step, movingTo(dice.pick(notes).id, aPath(dice), device), device)
+        } else {
+          await byPathStep(step, creatingAt(aPath(dice), device, CONTENT), device)
+        }
+      }
+    })
+  }
+
+  test('reads a few rows of a large space to make a note in a folder', async () => {
+    const context: OpContext = { role: 'write', device: 'd1' }
+    const ops: Op[] = [
+      { op: fresh('op'), t: 'mkdir', id: 'deep', parent: null, name: 'Deep', seen: 0 },
+    ]
+    for (let at = 0; at < 300; at++) {
+      ops.push({
+        op: fresh('op'),
+        t: 'create',
+        id: `bulk-${String(at)}`,
+        kind: 'note',
+        parent: at % 2 ? 'deep' : null,
+        name: `n${String(at)}.md`,
+        seen: 0,
+      })
+    }
+    await changeTree(
+      env,
+      space,
+      'd1',
+      (tree) => ops.map((op) => tree.apply(op, context)),
+      [],
+      reachOf(ops),
+    )
+
+    const making = creatingAt('Deep/n7.md', 'd1', CONTENT)
+    const part = await readReach(env, space, 'd1', making.reach)
+    expect(part.state.entries.size).toBeLessThan(20)
+    expect(making.work(part)).toEqual({ taken: 'bulk-7' })
+
+    const moving = movingTo('bulk-8', 'Deep/n71.md', 'd1')
+    const moved = await readReach(env, space, 'd1', moving.reach)
+    expect(moved.state.entries.size).toBeLessThan(20)
+    expect(moving.work(moved)).toBe('Deep/n71 2.md')
   })
 })
