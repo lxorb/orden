@@ -638,7 +638,7 @@ class Runner {
     const engine = this.engine
     if (!engine) {
       await Promise.race([this.passNow().catch(() => false), waited(SIGN_OUT_WAITS)])
-      return true
+      return (await this.ask('unsent', {})) === true ? await leaveUnsent() : true
     }
     const roots = ownRoots(this.accountId)
     const until = Date.now() + SIGN_OUT_WAITS
@@ -1561,6 +1561,12 @@ class Runner {
       const moved = await this.passNow()
       this.sayRows()
       return moved
+    }
+    if (said.what === 'unsent') {
+      const engine = this.current
+      if (!engine) return false
+      const roots = ownRoots(this.accountId)
+      return (await unsentRoots(engine, roots, (id) => this.firstDone(engine, id))).length > 0
     }
     if (said.what === 'holds') return await this.holds(args.path ?? '')
     if (said.what === 'id-at') return await this.idAt(args.path ?? '')
