@@ -1,11 +1,21 @@
 import { describe, expect, test, vi } from 'vitest'
 
-const written: { under: string; size: number; more: boolean }[] = []
+const written: { under: string; size: number; more: boolean; fresh?: boolean }[] = []
+let refused = ''
 
 vi.mock('../tauri', () => ({
-  invoke: (command: string, args: { under: string; bytes: Uint8Array; more?: boolean }) => {
+  invoke: (
+    command: string,
+    args: { under: string; bytes: Uint8Array; more?: boolean; fresh?: boolean },
+  ) => {
     if (command === 'explorer_write') {
-      written.push({ under: args.under, size: args.bytes.length, more: args.more === true })
+      if (args.under.startsWith(refused) && refused) return Promise.reject(new Error('it is there'))
+      written.push({
+        under: args.under,
+        size: args.bytes.length,
+        more: args.more === true,
+        ...(args.fresh ? { fresh: true } : {}),
+      })
     }
     return Promise.resolve('')
   },
@@ -24,7 +34,8 @@ vi.mock('./changes', () => ({
   freeName: (_taken: Set<string>, name: string) => name,
   takenNames: () => new Set(),
 }))
-vi.mock('../workspace.svelte', () => ({ workspace: { undone: { record: vi.fn() } } }))
+const record = vi.fn()
+vi.mock('../workspace.svelte', () => ({ workspace: { undone: { record } } }))
 
 const { WRITTEN_AT_ONCE, writeInto } = await import('./drag')
 
@@ -39,7 +50,7 @@ describe('a file from another app dropped on a file explorer', () => {
     await writeInto(view as never, [file], '/home/me/Videos')
     expect(whole).not.toHaveBeenCalled()
     expect(written).toEqual([
-      { under: 'film.mp4', size: WRITTEN_AT_ONCE, more: false },
+      { under: 'film.mp4', size: WRITTEN_AT_ONCE, more: false, fresh: true },
       { under: 'film.mp4', size: WRITTEN_AT_ONCE, more: true },
       { under: 'film.mp4', size: 5, more: true },
     ])
@@ -50,8 +61,24 @@ describe('a file from another app dropped on a file explorer', () => {
     const bare = { name: 'note.txt', arrayBuffer: () => Promise.resolve(new ArrayBuffer(3)) }
     await writeInto(view as never, [new File([], 'empty.txt'), bare], '/home/me')
     expect(written).toEqual([
-      { under: 'empty.txt', size: 0, more: false },
-      { under: 'note.txt', size: 3, more: false },
+      { under: 'empty.txt', size: 0, more: false, fresh: true },
+      { under: 'note.txt', size: 3, more: false, fresh: true },
     ])
+  })
+
+  test('takes back with an undo only what it made, never a folder that was already there', async () => {
+    written.length = 0
+    record.mockClear()
+    refused = 'Photos/'
+    const picture = {
+      name: 'a.png',
+      webkitRelativePath: 'Photos/a.png',
+      arrayBuffer: () => Promise.resolve(new ArrayBuffer(2)),
+    }
+    await writeInto(view as never, [picture, new File([], 'b.txt')], '/home/me')
+    refused = ''
+    expect(written).toEqual([])
+    expect(record).not.toHaveBeenCalled()
+    expect(view.tell).toHaveBeenCalled()
   })
 })

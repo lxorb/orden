@@ -91,12 +91,14 @@ export async function writeInto(view: ExplorerView, files: readonly Picked[], fo
   if (!listing) return
   const taken = takenNames(listing.entries.map((one) => one.name))
   const tops = new Map<string, string>()
+  const made: string[] = []
   try {
     for (const file of files) {
       const [top = file.name, ...rest] = (
         file.webkitRelativePath?.length ? file.webkitRelativePath : file.name
       ).split('/')
       let name = tops.get(top)
+      let fresh = name === undefined
       if (name === undefined) {
         name = freeName(taken, top)
         taken.add(name.toLowerCase())
@@ -105,14 +107,22 @@ export async function writeInto(view: ExplorerView, files: readonly Picked[], fo
       const under = [name, ...rest].join('/')
       let more = false
       for await (const bytes of pieces(file)) {
-        await invoke('explorer_write', { folder, under, bytes, ...(more ? { more } : {}) })
+        await invoke('explorer_write', {
+          folder,
+          under,
+          bytes,
+          ...(more ? { more } : {}),
+          ...(fresh ? { fresh } : {}),
+        })
+        if (fresh) made.push(name)
+        fresh = false
         more = true
       }
     }
   } catch (error) {
     view.tell(message(error, 'could not copy this'))
   }
-  const steps: OutsideStep[] = [...tops.values()].map((name) => ({
+  const steps: OutsideStep[] = made.map((name) => ({
     op: 'made',
     path: joinPath(listing.path, name),
   }))
