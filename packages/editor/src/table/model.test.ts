@@ -273,3 +273,15 @@ describe('sorting by a column', () => {
     expect(sortRows(model, -1, 'up')).toBe(model)
   })
 })
+
+describe('a table of very many rows', () => {
+  test('is read and written without passing every row as an argument', () => {
+    const rows = Array.from({ length: 300_000 }, (_, at) => `| ${at} | ${at % 3 ? 'b' : 'wider'} |`)
+    const model = parseTable(['| a | b |', '| --- | --- |', ...rows].join('\n'))
+
+    expect(model?.rows).toHaveLength(300_000)
+    expect(model?.header).toHaveLength(2)
+    const written = model ? serializeTable(model) : ''
+    expect(written.split('\n')[2]).toBe('| 0      | wider |')
+  })
+})

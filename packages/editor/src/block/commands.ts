@@ -27,7 +27,8 @@ function runOf(spans: BlockSpan[]): BlockSpan | null {
   const first = spans[0]
   if (!first) return null
 
-  return { from: first.from, to: Math.max(...spans.map((span) => span.to)), kind: first.kind }
+  const to = spans.reduce((most, span) => Math.max(most, span.to), first.to)
+  return { from: first.from, to, kind: first.kind }
 }
 
 export function duplicateBlocks(view: EditorView, pos: number): boolean {

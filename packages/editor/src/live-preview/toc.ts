@@ -53,7 +53,7 @@ export class TocWidget extends NibWidget {
       return nav
     }
 
-    const top = Math.min(...this.entries.map((entry) => entry.level))
+    const top = this.entries.reduce((least, entry) => Math.min(least, entry.level), Infinity)
 
     for (const entry of this.entries) {
       const link = document.createElement('a')

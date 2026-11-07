@@ -32,6 +32,12 @@ function dates(values: readonly Val[]): DateValue[] {
     .filter((one) => one !== null)
 }
 
+const least = (values: readonly number[]) =>
+  values.reduce((low, one) => Math.min(low, one), Infinity)
+
+const most = (values: readonly number[]) =>
+  values.reduce((high, one) => Math.max(high, one), -Infinity)
+
 function median(values: readonly number[]): number | null {
   if (!values.length) return null
   const sorted = [...values].sort((a, b) => a - b)
@@ -50,9 +56,9 @@ function defaultSummary(name: string, values: readonly Val[], scope: Scope): Val
     case 'Sum':
       return sum
     case 'Min':
-      return all.length ? Math.min(...all) : null
+      return all.length ? least(all) : null
     case 'Max':
-      return all.length ? Math.max(...all) : null
+      return all.length ? most(all) : null
     case 'Median':
       return median(all)
     case 'Stddev': {
@@ -66,7 +72,7 @@ function defaultSummary(name: string, values: readonly Val[], scope: Scope): Val
         const sorted = days.map(msOf).sort((a, b) => a - b)
         return { kind: 'duration', ms: (sorted.at(-1) ?? 0) - (sorted[0] ?? 0), months: 0 }
       }
-      return all.length ? Math.max(...all) - Math.min(...all) : null
+      return all.length ? most(all) - least(all) : null
     }
     case 'Earliest':
     case 'Latest': {

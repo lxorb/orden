@@ -74,7 +74,10 @@ export function parseTable(source: string): TableModel | null {
   const align = splitRow(delimiterLine).map(readAlign)
   const rows = bodyLines.map((line) => splitRow(line))
 
-  const columns = Math.max(header.length, align.length, ...rows.map((row) => row.length))
+  const columns = rows.reduce(
+    (most, row) => Math.max(most, row.length),
+    Math.max(header.length, align.length),
+  )
   const fit = (row: string[]) => Array.from({ length: columns }, (_, i) => row[i] ?? '')
 
   return {
@@ -106,10 +109,9 @@ function delimiterCell(align: Align, width: number): string {
 export function serializeTable(model: TableModel): string {
   const columns = Math.max(model.header.length, model.align.length)
   const widths = Array.from({ length: columns }, (_, i) =>
-    Math.max(
-      MIN_CELL,
-      displayWidth(model.header[i] ?? ''),
-      ...model.rows.map((row) => displayWidth(row[i] ?? '')),
+    model.rows.reduce(
+      (most, row) => Math.max(most, displayWidth(row[i] ?? '')),
+      Math.max(MIN_CELL, displayWidth(model.header[i] ?? '')),
     ),
   )
 

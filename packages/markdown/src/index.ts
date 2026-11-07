@@ -495,7 +495,7 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
 export function tableOfContents(headings: Heading[]): string {
   if (!headings.length) return ''
 
-  const top = Math.min(...headings.map((heading) => heading.level))
+  const top = headings.reduce((least, heading) => Math.min(least, heading.level), Infinity)
   const out: string[] = ['<nav class="toc">', '<ul>']
   let depth = 0
   let last = top
