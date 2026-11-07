@@ -1,10 +1,21 @@
 import { toldIfUnreadable } from '../read-if-there'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
-import { relativeTo } from '../space-paths'
+import { pathKey, relativeTo } from '../space-paths'
 import { ensureInbox, isInternalInbox } from './inbox'
 
-export async function inboxNote(root: string): Promise<string | null> {
+const making = new Map<string, Promise<string | null>>()
+
+export function inboxNote(root: string): Promise<string | null> {
+  const key = pathKey(root)
+  const running = making.get(key)
+  if (running) return running
+  const made = madeInbox(root).finally(() => making.delete(key))
+  making.set(key, made)
+  return made
+}
+
+async function madeInbox(root: string): Promise<string | null> {
   const { canWriteAt } = await import('../sharing.svelte')
   if (!canWriteAt(root)) return null
   try {
