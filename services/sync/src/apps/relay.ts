@@ -11,6 +11,7 @@ import type { Env } from '../types'
 import { type Holder, SocketLock } from '../locks/sockets'
 import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
 import { OWNED } from './door'
+import { steadyEnv } from '../steady'
 
 export interface Party extends Holder {
   role: 'host' | 'viewer'
@@ -46,10 +47,13 @@ function aside(at: string, work: Promise<unknown>): void {
 export class AppRelay implements DurableObject {
   private readonly lock: SocketLock<Party>
 
+  readonly env: Env
+
   constructor(
     private readonly ctx: DurableObjectState,
-    readonly env: Env,
+    env: Env,
   ) {
+    this.env = steadyEnv(env)
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('beat', 'ok'))
     this.lock = new SocketLock<Party>({
       ctx,

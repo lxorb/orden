@@ -51,6 +51,7 @@ import { SocketLock } from '../locks/sockets'
 import { reachAgain } from './reach'
 import { stillSignedIn } from '../signins'
 import { serviceOf } from './service'
+import { steadyEnv } from '../steady'
 
 function aside(at: string, work: Promise<unknown>): void {
   work.catch((error: unknown) => {
@@ -197,11 +198,14 @@ export class Machine implements DurableObject {
   private listing: ((sessions: SessionNow[] | null) => void)[] = []
   private readonly lock: SocketLock<Viewer>
 
+  private readonly env: Env
+
   constructor(
     private readonly ctx: DurableObjectState,
-    private readonly env: Env,
+    env: Env,
     host?: MachineHost,
   ) {
+    this.env = steadyEnv(env)
     this.given = host ?? null
     this.lock = new SocketLock<Viewer>({
       ctx,
