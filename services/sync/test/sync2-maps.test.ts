@@ -142,6 +142,56 @@ describe('entries of a map', () => {
   })
 })
 
+describe("a space's columns for older apps", () => {
+  beforeEach(prepare)
+
+  test('are written again only for an op that moves what a map names', async () => {
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token: laptop,
+      body: { path: 'Work/a.md', content: 'a' },
+    })
+    const folder = env.db.prepare('select id from folders where space_id = ?').get(space) as {
+      id: string
+    }
+    await patch(laptop, [{ map: 'icon', key: folder.id, value: { icon: 'briefcase' } }])
+    const ops = (list: object[]) =>
+      call(env, `/v2/spaces/${space}/ops`, { token: phone, body: { ops: list } })
+
+    const wrote = env.losing(/update spaces set bookmarks/)
+    await ops([
+      { op: 'c1', t: 'create', id: 'n1', kind: 'note', parent: null, name: 'c.md', seen: 0 },
+    ])
+    await ops([{ op: 'c2', t: 'move', id: 'n1', parent: folder.id, name: 'c.md', seen: 0 }])
+    await ops([{ op: 'c3', t: 'mkdir', id: 'f2', parent: folder.id, name: 'Inner', seen: 0 }])
+    expect(wrote()).toBe(0)
+
+    await ops([{ op: 'c4', t: 'rename', id: folder.id, name: 'Job', seen: 0 }])
+    expect(wrote()).toBe(1)
+  })
+
+  test('drop the icon of a folder deleted, and show it again once the folder comes back', async () => {
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token: laptop,
+      body: { path: 'Work/Deep/a.md', content: 'a' },
+    })
+    const deep = env.db
+      .prepare("select id from folders where space_id = ? and name = 'Deep'")
+      .get(space) as { id: string }
+    const work = env.db
+      .prepare("select id from folders where space_id = ? and name = 'Work'")
+      .get(space) as { id: string }
+    await patch(laptop, [{ map: 'icon', key: deep.id, value: { icon: 'briefcase' } }])
+    expect((await listed()).icons).toEqual({ 'Work/Deep': 'briefcase' })
+
+    const ops = (list: object[]) =>
+      call(env, `/v2/spaces/${space}/ops`, { token: phone, body: { ops: list } })
+    await ops([{ op: 'd1', t: 'delete', id: work.id, seen: 1_000_000 }])
+    expect((await listed()).icons).toEqual({})
+    await ops([{ op: 'd2', t: 'restore', id: work.id, seen: 0 }])
+    expect((await listed()).icons).toEqual({ 'Work/Deep': 'briefcase' })
+  })
+})
+
 describe('a bookmark that says which entry it points at (#1068)', () => {
   test('follows a rename and a move on another device, and keeps its id through a v1 write', async () => {
     await prepare()
