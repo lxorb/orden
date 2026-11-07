@@ -29,7 +29,7 @@
     "eslint": "^10.10.0",
     "eslint-plugin-svelte": "^3.23.0",
     "globals": "^17.12.0",
-    "knip": "^6.34.0",
+    "knip": "^6.44.1",
     "prettier": "^3.9.6",
     "prettier-plugin-svelte": "^4.1.1",
     "typescript": "^5.9.3",
@@ -65,7 +65,8 @@
       "@replit/codemirror-vim-core@0.1.0": "patches/@replit__codemirror-vim-core@0.1.0.patch",
       "@replit/codemirror-vim@6.4.0": "patches/@replit__codemirror-vim@6.4.0.patch",
       "marked@18.0.11": "patches/marked@18.0.11.patch",
-      "turndown@7.2.4": "patches/turndown@7.2.4.patch"
+      "turndown@7.2.4": "patches/turndown@7.2.4.patch",
+      "knip@6.44.1": "patches/knip@6.44.1.patch"
     }
   }
 }

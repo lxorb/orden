@@ -7,7 +7,7 @@ import { invoke, isDesktop, isMobile, isNative, platform } from './tauri'
 const LOG_LINES = 200
 const LOG_BYTES = 60 * 1024
 
-export function platformLine(): string {
+function platformLine(): string {
   const build = isMobile ? 'phone' : isDesktop ? 'desktop' : 'web'
   const system = isNative ? platform() : navigator.userAgent
   return `${build} · ${system}`.slice(0, 120)

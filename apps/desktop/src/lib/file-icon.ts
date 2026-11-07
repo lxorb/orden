@@ -52,7 +52,7 @@ export async function setFileIcon(
   }
 }
 
-export async function withoutOwnKeys(path: string, keys: readonly string[]): Promise<void> {
+async function withoutOwnKeys(path: string, keys: readonly string[]): Promise<void> {
   const before = await workspace.noteText(path)
   if (before === null) return
   const edit = frontMatterEdits(

@@ -4,7 +4,7 @@ import { workspace } from '../workspace.svelte'
 import { asked, type PassIntent } from './asked.svelte'
 import { FIRST_VIEW, writeView } from './view'
 
-export function passTab(): Tab | null {
+function passTab(): Tab | null {
   return workspace.tabs.find((tab) => tab.kind === 'pass') ?? null
 }
 

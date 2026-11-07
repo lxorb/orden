@@ -8,7 +8,7 @@ import { oneWriteAt, type Windows, windows as theWindows } from '../windows'
 import { type NoteDoc, unixLines } from './documents.svelte'
 import type { FileOp } from './file-ops'
 
-export interface Joined {
+interface Joined {
   text(): string
   put(to: string): void
 }
