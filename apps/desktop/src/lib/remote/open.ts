@@ -32,7 +32,7 @@ export async function openRemote(id: string, where: Where = {}): Promise<string 
   return workspace.openUnsaved('terminal', text, host.name, where.beside ?? null, !where.behind).id
 }
 
-export const ASK_FROM = 10
+const ASK_FROM = 10
 
 export async function openAll(ids: readonly string[]): Promise<void> {
   if (ids.length >= ASK_FROM) {
