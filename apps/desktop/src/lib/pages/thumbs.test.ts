@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { shelvesOf, shownOf } from './thumbs'
+import type { InkStroke, PageNode } from '../canvas/format'
+import { sameSheet, sheetDrawn, shelvesOf, shownOf } from './thumbs'
 
 const A4 = { width: 794, height: 1123 }
 const WIDE = { width: 1123, height: 794 }
@@ -59,5 +60,55 @@ describe('the page list of a long page note', () => {
       above: 0,
       below: 0,
     })
+  })
+})
+
+describe('a page thumbnail drawn again', () => {
+  const page = (id: string, y: number): PageNode => ({
+    id,
+    type: 'page',
+    x: 0,
+    y,
+    width: 794,
+    height: 1123,
+    paper: 'a4',
+    pattern: 'blank',
+  })
+  const stroke = (id: string, y: number): InkStroke => ({
+    id,
+    tool: 'pen',
+    color: 'ink',
+    size: 3,
+    points: [
+      { x: 100, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 },
+      { x: 140, y: y + 10, pressure: 0.5, tiltX: 0, tiltY: 0, t: 8 },
+    ],
+  })
+  const palette = {}
+  const one = page('one', 0)
+  const two = page('two', 1200)
+  const ink = [stroke('a', 100), stroke('b', 1300), stroke('c', 500)]
+
+  test('is the same sheet when only another page was written on', () => {
+    const more = [...ink, stroke('d', 1500)]
+    expect(sameSheet(sheetDrawn(one, ink, palette), sheetDrawn(one, more, palette))).toBe(true)
+    expect(sameSheet(sheetDrawn(two, ink, palette), sheetDrawn(two, more, palette))).toBe(false)
+  })
+
+  test('and another sheet when a stroke on it is rubbed out, moved or recoloured', () => {
+    const drawn = sheetDrawn(one, ink, palette)
+    expect(sameSheet(drawn, sheetDrawn(one, [ink[1]!, ink[2]!], palette))).toBe(false)
+    expect(sameSheet(drawn, sheetDrawn(one, [stroke('a', 140), ink[1]!, ink[2]!], palette))).toBe(
+      false,
+    )
+    expect(sameSheet(drawn, sheetDrawn(one, ink, { ink: '#fff' }))).toBe(false)
+  })
+
+  test('and another sheet when the page itself moved or changed its paper', () => {
+    const drawn = sheetDrawn(one, ink, palette)
+    expect(sameSheet(drawn, sheetDrawn({ ...one, y: 20 }, ink, palette))).toBe(false)
+    expect(sameSheet(drawn, sheetDrawn({ ...one, file: 'X.pdf', page: 2 }, ink, palette))).toBe(
+      false,
+    )
   })
 })

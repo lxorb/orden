@@ -9,7 +9,7 @@
   import { longPress } from './longpress'
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
   import { densityFor, paperOf } from './pages/paper'
-  import { shelvesOf, shownOf } from './pages/thumbs'
+  import { sameSheet, type SheetDrawn, sheetDrawn, shelvesOf, shownOf } from './pages/thumbs'
   import { pages as showing } from './pages/showing.svelte'
   import { ListView } from './row-window.svelte'
   import { roving } from './roving'
@@ -125,6 +125,8 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the draws under way, not anything rendered
   const drawing = new Map<string, AbortController>()
   const painted = new WeakMap<HTMLCanvasElement, Canvas>()
+  const drawnAs = new WeakMap<HTMLCanvasElement, SheetDrawn>()
+  const inks = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
 
   const watcher =
     typeof IntersectionObserver === 'undefined'
@@ -174,6 +176,15 @@
     const canvas = store?.canvas
     if (!canvas) return
 
+    const sheet = sheetDrawn(page, canvas.ink, palette)
+    const was = drawnAs.get(element)
+    if (was && sameSheet(was, sheet)) {
+      drawing.get(page.id)?.abort()
+      drawing.delete(page.id)
+      painted.set(element, canvas)
+      return
+    }
+
     drawing.get(page.id)?.abort()
     const asked = new AbortController()
     drawing.set(page.id, asked)
@@ -181,8 +192,10 @@
     const scale = WIDE / page.width
     const tall = page.height * scale
     const ratio = Math.min(2, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1)
-    element.width = Math.max(1, Math.round(WIDE * ratio))
-    element.height = Math.max(1, Math.round(tall * ratio))
+    const wide = Math.max(1, Math.round(WIDE * ratio))
+    const high = Math.max(1, Math.round(tall * ratio))
+    if (element.width !== wide) element.width = wide
+    if (element.height !== high) element.height = high
 
     const ctx = element.getContext('2d')
     if (!ctx) return
@@ -207,11 +220,14 @@
     if (asked.signal.aborted) return
     drawing.delete(page.id)
     painted.set(element, canvas)
+    if (paper || !page.file || !page.page) drawnAs.set(element, sheet)
+    else drawnAs.delete(element)
 
-    const inked = paper ? document.createElement('canvas') : element
+    const inked = paper ? (inks.get(element) ?? document.createElement('canvas')) : element
     if (paper) {
-      inked.width = element.width
-      inked.height = element.height
+      inks.set(element, inked)
+      if (inked.width !== element.width) inked.width = element.width
+      if (inked.height !== element.height) inked.height = element.height
     }
 
     const into = paper ? inked.getContext('2d') : ctx
