@@ -1,5 +1,5 @@
 diff --git a/dist/index.js b/dist/index.js
-index e5725e7b76c21832da1a3d2ed188ae042c06224c..65c38797d2d97530d31ee3d2211665707c67c0e6 100644
+index e5725e7b76c21832da1a3d2ed188ae042c06224c..521ab423fbf53897675624c9d6822031c6e8f574 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -1506,8 +1506,11 @@ const DefaultInline = {
@@ -71,7 +71,18 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..65c38797d2d97530d31ee3d221166570
              let type = close.type.resolve, content = [];
              let start = open.from, end = close.to;
              // Emphasis marker effect depends on the character count. Size consumed is minimum of the two
-@@ -2243,9 +2258,11 @@ const Autolink = {
+@@ -1883,7 +1898,9 @@ class FragmentCursor {
+             c.firstChild();
+         }
+         let rPos = pos + this.fragment.offset;
+-        while (c.to <= rPos)
++        // Taking nodes may have left the cursor on a block past this position (a list
++        // that cannot be the last one taken), so climb back to a node that holds it.
++        while (c.to <= rPos || c.from > rPos)
+             if (!c.parent())
+                 return false;
+         for (;;) {
+@@ -2243,9 +2260,11 @@ const Autolink = {
                      return -1;
                  if (m[1] || m[2]) { // www., http://
                      end = autolinkURLEnd(cx.text, pos + m[0].length);
