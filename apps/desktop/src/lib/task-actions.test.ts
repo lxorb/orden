@@ -52,8 +52,8 @@ vi.mock('./workspace/note-text', () => ({
 }))
 
 vi.mock('./rows/inbox-note', () => ({
-  inboxNote: (root: string) => {
-    const path = `${root}/Inbox.md`
+  inboxNote: () => {
+    const path = '/s/Home/Inbox.md'
     if (!files.has(path)) files.set(path, '')
     return Promise.resolve(path)
   },
@@ -106,8 +106,8 @@ describe("the reader's own task actions", () => {
     })
     expect(files.has('/s/Work/Inbox.md')).toBe(false)
     expect(await addTask('Given', { root: '/s/Work', typed: false })).toEqual({
-      path: '/s/Work/Inbox.md',
-      line: 0,
+      path: '/s/Home/Inbox.md',
+      line: 2,
     })
   })
 

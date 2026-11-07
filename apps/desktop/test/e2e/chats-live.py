@@ -169,7 +169,8 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     owner.keyboard.press("Enter")
     inbox = wait(
         owner,
-        "async () => { const text = await window.ordenApp.workspace.noteText('/Team/.Inbox.md');"
+        "async () => { const { rows } = await window.ordenApp.tasks();"
+        " const text = await window.ordenApp.workspace.noteText(await rows.inbox());"
         " return text && text.includes('orden://chat/') ? text : null }",
         "[Emil] the task in the inbox, with its link",
     )

@@ -861,8 +861,22 @@ function spaceCommands(): Command[] {
                   ])
                   const items = workspace.itemMeta.itemsOf(space.root)
                   const metaOf = (path: string) => items[path] ?? null
-                  await exportSpace(space.root, space.name, metaOf, (path) =>
-                    listedAt(space.root, path, metaOf(path)),
+                  const { homeRoot } = await import('./rows/home.svelte')
+                  const home = homeRoot()
+                  const inbox =
+                    home !== null && samePath(home, space.root)
+                      ? await (
+                          await import('./inbox/account.svelte')
+                        ).accountInbox
+                          .text()
+                          .catch(() => null)
+                      : null
+                  await exportSpace(
+                    space.root,
+                    space.name,
+                    metaOf,
+                    (path) => listedAt(space.root, path, metaOf(path)),
+                    inbox,
                   )
                 },
                 'export-space',

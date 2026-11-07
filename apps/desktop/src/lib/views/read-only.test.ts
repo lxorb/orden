@@ -515,7 +515,8 @@ describe('the Tasks panel, in a space shared to be read', () => {
 describe('an add whose task would land in a space shared to be read', () => {
   test('makes no inbox there', async () => {
     const { inboxNote } = await import('../rows/inbox-note')
-    expect(await inboxNote(THEIRS.root)).toBeNull()
+    const path = await inboxNote()
+    expect(path?.startsWith(THEIRS.root) ?? false).toBe(false)
     expect(written).toEqual([])
   })
 

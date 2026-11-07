@@ -1,5 +1,5 @@
 import { changedTask, type TaskChange } from '@orden/markdown/task-edits'
-import { carriedOwn } from './inbox'
+import { isInboxPath } from './inbox'
 import { taskRowsOfText } from './task-rows'
 import type { Row } from './types'
 
@@ -24,7 +24,7 @@ const key = (path: string) =>
   path.replace(/\\/g, '/').replace(/^\/+/, '').normalize('NFC').toLowerCase()
 
 export function isTodoList(path: string, meta: Meta, inbox?: string): boolean {
-  if (carriedOwn(path)) return true
+  if (isInboxPath(path)) return true
   if (inbox !== undefined && key(path) === key(inbox)) return true
   return meta?.[LIST_KEY] === LIST_VALUE
 }

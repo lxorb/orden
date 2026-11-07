@@ -69,12 +69,9 @@ async function pathFor(entry: Entry, given: string | undefined): Promise<string 
   const inbox =
     entry.note === undefined ||
     (meansInbox(entry.note) && (root === undefined || named(root, entry.note) === null))
-  const into =
-    inbox && given === undefined ? (await import('../rows/home.svelte')).homeRoot() : root
-  if (into === null || into === undefined || !canWriteAt(into)) return null
-  if (!inbox) return targetOf(entry, into)
-  const { inboxNote } = await import('../rows/inbox-note')
-  return inboxNote(into)
+  if (inbox) return (await import('../rows/inbox-note')).inboxNote()
+  if (root === undefined || !canWriteAt(root)) return null
+  return targetOf(entry, root)
 }
 
 let adding: Promise<unknown> = Promise.resolve()

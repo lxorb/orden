@@ -63,9 +63,11 @@ vi.mock('../workspace/write-file', () => ({
   },
 }))
 vi.mock('../rows/inbox-note', () => ({
-  inboxNote: (root: string) => {
-    made.push(`${root}/.Inbox.md`)
-    return Promise.resolve(`${root}/.Inbox.md`)
+  inboxNote: async () => {
+    const root = (await import('../rows/home.svelte')).homeRoot()
+    if (root === null) return null
+    made.push(`${root}/.orden-inbox.md`)
+    return `${root}/.orden-inbox.md`
   },
 }))
 
@@ -86,24 +88,27 @@ beforeEach(() => {
 describe('a task added', () => {
   test('goes into the inbox of a space that may be written in', async () => {
     expect(await addTask(entry())).not.toBeNull()
-    expect(written).toEqual([`${SPACE}/.Inbox.md`])
+    expect(written).toEqual([`${SPACE}/.orden-inbox.md`])
   })
 
   test('goes into the inbox of the first space that takes it, the one in front shared to be read', async () => {
     readOnly.add(SPACE)
 
-    expect(await addTask(entry())).toEqual({ path: `${MINE}/.Inbox.md`, line: expect.any(Number) })
-    expect(written).toEqual([`${MINE}/.Inbox.md`])
-    expect(made).toEqual([`${MINE}/.Inbox.md`])
+    expect(await addTask(entry())).toEqual({
+      path: `${MINE}/.orden-inbox.md`,
+      line: expect.any(Number),
+    })
+    expect(written).toEqual([`${MINE}/.orden-inbox.md`])
+    expect(made).toEqual([`${MINE}/.orden-inbox.md`])
   })
 
   test('sent to `>Inbox` by name goes into the inbox, and makes no Inbox.md (#1044)', async () => {
     expect(await addTask(entry('Inbox'))).toEqual({
-      path: `${SPACE}/.Inbox.md`,
+      path: `${SPACE}/.orden-inbox.md`,
       line: expect.any(Number),
     })
-    expect(written).toEqual([`${SPACE}/.Inbox.md`])
-    expect(made).toEqual([`${SPACE}/.Inbox.md`])
+    expect(written).toEqual([`${SPACE}/.orden-inbox.md`])
+    expect(made).toEqual([`${SPACE}/.orden-inbox.md`])
   })
 
   test('goes nowhere where no space takes it, and makes no inbox anywhere', async () => {
@@ -124,34 +129,46 @@ describe('a task added', () => {
     expect(written).toEqual([])
   })
 
-  test('goes nowhere in a space it was handed that is shared to be read', async () => {
+  test('handed a space shared to be read, goes into the one inbox of the account', async () => {
     readOnly.add(SPACE)
 
-    expect(await addTask(entry(), { root: SPACE })).toBeNull()
-    expect(written).toEqual([])
+    expect(await addTask(entry(), { root: SPACE })).toEqual({
+      path: `${MINE}/.orden-inbox.md`,
+      line: expect.any(Number),
+    })
+    expect(written).toEqual([`${MINE}/.orden-inbox.md`])
   })
 })
 
 describe('a task that names no note (#1153)', () => {
   test('goes into the reader’s one inbox, whatever space is in front', async () => {
     shared.add(SPACE)
-    expect(await addTask(entry())).toEqual({ path: `${MINE}/.Inbox.md`, line: expect.any(Number) })
+    expect(await addTask(entry())).toEqual({
+      path: `${MINE}/.orden-inbox.md`,
+      line: expect.any(Number),
+    })
     front.root = MINE
-    expect(await addTask(entry())).toEqual({ path: `${MINE}/.Inbox.md`, line: expect.any(Number) })
-    expect(written).toEqual([`${MINE}/.Inbox.md`, `${MINE}/.Inbox.md`])
+    expect(await addTask(entry())).toEqual({
+      path: `${MINE}/.orden-inbox.md`,
+      line: expect.any(Number),
+    })
+    expect(written).toEqual([`${MINE}/.orden-inbox.md`, `${MINE}/.orden-inbox.md`])
   })
 
   test('the first space of the reader’s own where none is theirs alone', async () => {
     shared.add(SPACE)
     shared.add(MINE)
     front.root = MINE
-    expect(await addTask(entry())).toEqual({ path: `${SPACE}/.Inbox.md`, line: expect.any(Number) })
+    expect(await addTask(entry())).toEqual({
+      path: `${SPACE}/.orden-inbox.md`,
+      line: expect.any(Number),
+    })
   })
 
-  test('but one handed a space by its add button goes into that space’s', async () => {
+  test('and one handed a space by its add button goes into the one inbox too', async () => {
     shared.add(SPACE)
     expect(await addTask(entry(), { root: SPACE })).toEqual({
-      path: `${SPACE}/.Inbox.md`,
+      path: `${MINE}/.orden-inbox.md`,
       line: expect.any(Number),
     })
   })

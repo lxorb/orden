@@ -87,17 +87,31 @@ async function bytesOut(
   return written === text ? bytes : new TextEncoder().encode(written)
 }
 
+function inboxName(files: readonly { path: string }[]): string {
+  const taken = new Set(files.map((one) => one.path.toLowerCase()))
+  for (let counter = 1; ; counter += 1) {
+    const name = counter === 1 ? 'Inbox.md' : `Inbox ${String(counter)}.md`
+    if (!taken.has(name.toLowerCase())) return name
+  }
+}
+
 export async function exportSpaceTo(
   root: string,
   name: string,
   picked: string,
   metaOf: MetaOf = () => null,
   listedOf: ListedOf = () => false,
+  inbox: string | null = null,
 ): Promise<string> {
   const into = await freeFolder(picked, name)
-  for (const file of await filesOf(root)) {
+  const files = await filesOf(root)
+  for (const file of files) {
     const path = joinPath(into, file.path)
     await crate('write_bytes', { path, bytes: await bytesOut(file, metaOf, listedOf) })
+  }
+  if (inbox !== null && inbox !== '') {
+    const path = joinPath(into, inboxName(files))
+    await crate('write_bytes', { path, bytes: new TextEncoder().encode(inbox) })
   }
   return into
 }
@@ -107,11 +121,12 @@ export async function exportSpace(
   name: string,
   metaOf: MetaOf = () => null,
   listedOf: ListedOf = () => false,
+  inbox: string | null = null,
 ): Promise<string | null> {
   const given = (await import('../dialog-answer')).dialogAnswer()
   const picked = given
     ? await given(true)
     : await (await import('@tauri-apps/plugin-dialog')).open({ directory: true })
   if (typeof picked !== 'string') return null
-  return exportSpaceTo(root, name, picked, metaOf, listedOf)
+  return exportSpaceTo(root, name, picked, metaOf, listedOf, inbox)
 }

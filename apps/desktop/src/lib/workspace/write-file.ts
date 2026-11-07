@@ -1,3 +1,4 @@
+import { isAccountInbox } from '@orden/bases/inbox'
 import { links } from '../link-index.svelte'
 import { onDisk } from '../on-disk'
 import { invoke } from '../tauri'
@@ -18,8 +19,10 @@ export function hearWrites(one: Hearing): () => void {
   }
 }
 
+const earFor = (path: string): Hearing | null => (isAccountInbox(path) ? null : hearing)
+
 export async function writeFile(path: string, content: string): Promise<void> {
-  const ear = hearing
+  const ear = earFor(path)
   const was = ear ? await ear.there(path) : true
   await writeTaking(path, content)
   links.noteSaved(path, content)
@@ -31,7 +34,7 @@ export async function writeFile(path: string, content: string): Promise<void> {
 }
 
 export async function writeIfAbsent(path: string, content: string): Promise<boolean> {
-  const ear = hearing
+  const ear = earFor(path)
   const made = await inFileTurn(path, async () => {
     if (await onDisk(path)) return false
     await writeInTurn(path, content)

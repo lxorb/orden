@@ -16,7 +16,7 @@ import type { Rows } from './import/table'
 import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
 import { canWriteAt } from './sharing.svelte'
-import { insideSpace, relativeTo } from './space-paths'
+import { relativeTo } from './space-paths'
 import { importSheet } from './surfaces.svelte'
 import { invoke, isDesktop, joinPath, platform } from './tauri'
 import { workspace } from './workspace.svelte'
@@ -287,12 +287,8 @@ async function inboxFrom(plan: ImportPlan, root: string, paths: readonly string[
   const at = plan.inbox === undefined ? -1 : plan.files.findIndex((one) => one.path === plan.inbox)
   const path = paths[at]
   if (path === undefined) return
-  const { INBOX, inboxOf, setInbox } = await import('./rows/inbox')
-  const kept = inboxOf(root)
-  const there = await invoke<string>('read_note', { path: insideSpace(root, kept) }).catch(
-    () => null,
-  )
-  if (kept === INBOX && there === null) setInbox(root, relativeTo(root, path))
+  const { carryInto } = await import('./rows/inbox-moving.svelte')
+  await carryInto(root, path)
 }
 
 export function onMac(): boolean {

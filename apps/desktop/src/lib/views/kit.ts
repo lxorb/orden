@@ -1,4 +1,5 @@
 import { type Base, BUTTON, groupName, type Row, type Value } from '@orden/bases'
+import { isAccountInbox } from '@orden/bases/inbox'
 import type { RowChange } from '../rows/write'
 import { canWriteAt } from '../sharing.svelte'
 import { insideSpace } from '../space-paths'
@@ -83,6 +84,10 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       return to !== null && canWriteAt(to)
     },
     open(row, how = 'aside') {
+      if (isAccountInbox(row.path)) {
+        void import('./open').then((one) => one.openBuiltin('inbox'))
+        return
+      }
       const path = notePath(row)
       if (path === null) return
       const line = row.anchor?.line ?? 0

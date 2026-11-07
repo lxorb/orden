@@ -9,7 +9,7 @@ import {
 } from '@orden/bases/todo-lists'
 import { insideSpace, isMarkdownPath, relativeTo, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
-import { inboxOf } from './inbox'
+import { INBOX } from './inbox'
 import { inProjects, projectsOf } from './projects'
 
 function byFolder(root: string, relative: string, meta: Meta): boolean {
@@ -22,7 +22,7 @@ function byFolder(root: string, relative: string, meta: Meta): boolean {
 
 export function listedAt(root: string, relative: string, meta?: Meta): boolean {
   const said = meta === undefined ? workspace.itemMeta.of(insideSpace(root, relative), root) : meta
-  return isTodoList(relative, said, inboxOf(root)) || byFolder(root, relative, said)
+  return isTodoList(relative, said, INBOX) || byFolder(root, relative, said)
 }
 
 export function isListed(path: string): boolean {

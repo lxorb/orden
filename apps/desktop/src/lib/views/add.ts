@@ -124,7 +124,7 @@ export function prefillOf(
 export async function addTyped(words: string, prefill: Prefill): Promise<boolean> {
   const text = words.trim()
   if (!text) return false
-  const path = prefill.path ?? (await rows.inbox(prefill.root))
+  const path = prefill.path ?? (await rows.inbox())
   if (path === null || !canWriteAt(path)) return false
   return addTask(
     path,

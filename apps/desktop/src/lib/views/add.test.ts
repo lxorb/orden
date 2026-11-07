@@ -63,7 +63,7 @@ vi.mock('../rows/rows.svelte', () => ({
       return this.of
     },
     ready: true,
-    inbox: async (root = on.root) => `${root}/Inbox.md`,
+    inbox: async () => '/s/Private/Inbox.md',
     of: (space: string) =>
       (held.get(space) ?? []).map((path) => ({
         kind: 'note',
@@ -200,7 +200,7 @@ describe('a task added in a group of Todos', () => {
     })
   })
 
-  test('in a tab of another space goes to that space’s inbox, by the add row', async () => {
+  test('in a tab of another space goes to the one inbox, by the add row', async () => {
     added.length = 0
     const prefill = prefillOf(todos, today)
     expect(openQuickAdd(prefill)).toBe(false)

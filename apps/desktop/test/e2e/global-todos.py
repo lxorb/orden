@@ -78,8 +78,8 @@ def drive(browser: Browser) -> None:
         "() => window.tasks.rows.of().filter((one) => one.task?.text === 'Pay the rent').map((one) => `${one.space}/${one.path}`)"
     )
     say(f"[added] {landed}")
-    if landed != [f"{ids['first']}/.Inbox.md"]:
-        wrong(f"the task from the panel landed in {landed}, not the first space's inbox")
+    if len(landed) != 1 or not landed[0].endswith("/.orden-inbox.md"):
+        wrong(f"the task from the panel landed in {landed}, not the account's one inbox")
     both(page, "after the add", ["Pay the rent"])
     DRIVE.shot(page, "02-added")
 
@@ -102,13 +102,8 @@ def drive(browser: Browser) -> None:
     page.locator(".tasks .chosen .task:has(.words:text-is('Pay the rent')) button.where").click()
     DRIVE.waited(
         page,
-        f"() => window.ordenApp.workspace.activeSpace?.name === {json.dumps(ids['first'])}",
-        "the task's own space, opened from its place",
-    )
-    DRIVE.waited(
-        page,
-        "() => window.ordenApp.workspace.tabs.some((one) => /Inbox/.test(one.path ?? ''))",
-        "the task's inbox open",
+        "() => [...document.querySelectorAll('.view-tab')].some((one) => one.textContent.includes('Pay the rent'))",
+        "the Inbox view open, with the task",
     )
     say(f"[opened] {page.evaluate('() => window.ordenApp.workspace.activeSpace?.name')}")
     after = listed(page)

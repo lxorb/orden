@@ -7,7 +7,7 @@ import {
 } from '@orden/markdown/links'
 import { COVER_KEY } from '@orden/markdown/cover'
 import { isTodoList, LIST_KEY, LIST_VALUE } from '@orden/bases/todo-lists'
-import { inboxOf } from './rows/inbox'
+import { INBOX } from './rows/inbox'
 import { inProjects } from './rows/projects'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
@@ -189,7 +189,7 @@ export function listEntry(path: string | null | undefined): MenuEntry[] {
     return []
   }
   const relative = withinSpace(root, path)
-  if (relative === null || isTodoList(relative, null, inboxOf(root))) return []
+  if (relative === null || isTodoList(relative, null, INBOX)) return []
   const said = workspace.itemMeta.valueOf(path, LIST_KEY, root)
   const listed =
     said === LIST_VALUE ||

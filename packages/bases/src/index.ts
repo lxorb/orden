@@ -15,7 +15,7 @@ export {
   WHEN_ASIDE,
   WHEN_GROUPS,
 } from './builtins'
-export { INBOX_PATH } from './inbox'
+export { ACCOUNT_INBOX, INBOX_PATH, isInboxPath } from './inbox'
 export { addDays, addMonths, dayNumber, daysInMonth, todayOf, weekday } from './dates'
 export { nextDate, parseRule, ruleText } from './recurrence'
 export { DEFAULT_SUMMARIES } from './summaries'

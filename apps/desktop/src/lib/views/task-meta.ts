@@ -1,4 +1,4 @@
-import { dayNumber, INBOX_PATH, type Row, type TaskRow } from '@orden/bases'
+import { dayNumber, isInboxPath, type Row, type TaskRow } from '@orden/bases'
 import { dayWords, timeWords } from '@orden/editor/task-days'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { ACCENTS, accentColour, DEFAULT_ACCENT } from '../accents'
@@ -136,7 +136,7 @@ export interface Place {
 export function placeOf(row: Row): Place {
   const under = row.task?.section.at(-1)
   return {
-    inbox: row.path === INBOX_PATH,
+    inbox: isInboxPath(row.path),
     name: row.file.basename,
     section: under === row.file.basename ? undefined : under,
   }

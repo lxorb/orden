@@ -113,8 +113,8 @@ def drive(browser: Browser) -> None:
         }"""
     )
     say(f"inbox: {inbox}")
-    if not inbox or not inbox.replace("\\", "/").endswith("/.Inbox.md"):
-        wrong(f"the inbox is {inbox!r}, not Orden's own .Inbox.md")
+    if not inbox or not inbox.replace("\\", "/").endswith("/.orden-inbox.md"):
+        wrong(f"the inbox is {inbox!r}, not the account's own")
     wait_for(
         page,
         f"window.ordenApp.workspace.active?.path === {json.dumps(inbox)} && document.querySelector('.cm-content')",

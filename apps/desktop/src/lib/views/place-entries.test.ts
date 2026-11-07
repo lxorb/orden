@@ -12,6 +12,7 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
+vi.mock('../rows/home.svelte', () => ({ homeRoot: () => '/s' }))
 vi.mock('./act', () => ({ rewriteNotes: () => Promise.resolve() }))
 vi.mock('../rows/rows.svelte', () => ({ rows: {} }))
 vi.mock('../rows/todo-lists', () => ({

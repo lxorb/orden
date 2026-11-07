@@ -33,11 +33,14 @@ export const internal: {
   routed: ((command: string, args?: Record<string, unknown>) => boolean) | null
   file: ((path: string) => string | null) | null
   flush: (() => Promise<void>) | null
-} = { routed: null, file: null, flush: null }
+  answered: ((command: string, args?: Record<string, unknown>) => Promise<unknown> | null) | null
+} = { routed: null, file: null, flush: null, answered: null }
 
 const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
 
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
+  const answer = internal.answered?.(command, args)
+  if (answer) return answer as Promise<T>
   if (!isNative) {
     const { webInvoke } = await import('./web/commands')
     return webInvoke<T>(command, args)

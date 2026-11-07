@@ -235,7 +235,6 @@ describe('the engine over a space Orden keeps', () => {
     const { watchFolders } = await import('../sync2/watching')
     const { listInternal } = await import('./watch')
     const { searchInternal } = await import('./search')
-    const { inboxHits } = await import('../search/inbox')
     const { parseQuery } = await import('@orden/scan/search/query')
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const root = '/internal-i'
@@ -265,9 +264,6 @@ describe('the engine over a space Orden keeps', () => {
       [],
     )
     expect(walked).toEqual([])
-    expect((await inboxHits(root, parseQuery('kumquats'), 9)).map((one) => one.name)).toEqual([
-      'Inbox',
-    ])
     watched.stop()
   })
 

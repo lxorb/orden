@@ -2,7 +2,8 @@ import type { ScannedNote, SpaceLinks } from '@orden/scan/note'
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
 import { AGENTS_NAME } from '../note-name'
-import { inboxOf } from '../rows/inbox'
+import { homeRoot } from '../rows/home.svelte'
+import { INBOX } from '../rows/inbox'
 import { listedAt } from '../rows/todo-lists'
 import { insideSpace, samePath, within } from '../space-paths'
 import { invoke } from '../tauri'
@@ -51,10 +52,11 @@ export async function todayHere(): Promise<{ at: string; space: string; text: st
     await import('@orden/bases/tasks')
   const shut = (root: string, path: string) => workspace.protection.locked(insideSpace(root, path))
   const rows = []
+  const home = homeRoot()
   for (const space of workspace.shownSpaces) {
     const read = async (path: string) =>
       scanRows((await workspace.noteText(insideSpace(space.root, path))) ?? '').tasks
-    const inbox = inboxOf(space.root)
+    const inbox = INBOX
     const notes = (await notesOf(space.root))
       .filter((note) => /\.(md|markdown)$/i.test(note.path))
       .filter((note) => !samePath(note.path, AGENTS_NAME, space.root))
@@ -63,7 +65,8 @@ export async function todayHere(): Promise<{ at: string; space: string; text: st
     for (const note of notes) {
       rows.push(...scannedTaskRows(space.name, note.path, note.tasks ?? (await read(note.path))))
     }
-    if (!shut(space.root, inbox) && !notes.some((note) => samePath(note.path, inbox, space.root))) {
+    const mine = home !== null && samePath(home, space.root)
+    if (mine && !notes.some((note) => samePath(note.path, inbox, space.root))) {
       rows.push(...scannedTaskRows(space.name, inbox, await read(inbox)))
     }
   }

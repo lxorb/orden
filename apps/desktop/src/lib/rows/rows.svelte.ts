@@ -1,17 +1,18 @@
 import type { Row } from '@orden/bases'
-import { markedInbox } from '@orden/bases/inbox'
+import { isAccountInbox } from '@orden/bases/inbox'
 import { untrack } from 'svelte'
 import { breathe } from '../breathe'
 import { links } from '../link-index.svelte'
 import type { SpaceLinks } from '@orden/scan/note'
-import { insideSpace } from '../space-paths'
+import { insideSpace, samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { keeping } from '../workspace/file-ops'
-import { hearInboxChosen, INBOX, inboxes, inboxMarkedBy, inboxOf } from './inbox'
+import '../inbox/start.svelte'
+import { INBOX } from './inbox'
 import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
-import { hearOldLists, keepInboxListed } from './old-lists'
+import { hearOldLists } from './old-lists'
 import { homeRoot } from './home.svelte'
 import { type RowsListener, RowsStore } from './store'
 import { listedAt, notesAwayBy } from './todo-lists'
@@ -28,38 +29,30 @@ const store = new RowsStore({
   }),
   breathe,
   now: () => Date.now(),
-  own: () => [INBOX],
+  own: (root) => (samePath(root, homeRoot() ?? '') ? [INBOX] : []),
   vault: isVault,
-  meta: (root, path) => workspace.itemMeta.itemsOf(root)[path] ?? null,
+  meta: (root, path) =>
+    isAccountInbox(path) ? null : (workspace.itemMeta.itemsOf(root)[path] ?? null),
   list: (root, path, meta) => listedAt(root, path, meta),
-  dated: (root, path, patch) => workspace.itemMeta.set(insideSpace(root, path), patch, root),
+  dated: (root, path, patch) => {
+    if (!isAccountInbox(path)) workspace.itemMeta.set(insideSpace(root, path), patch, root)
+  },
 })
 
 links.hearSaves((path, content, arrived) => store.saved(path, content, !arrived))
 workspace.itemMeta.hear((path) => store.described(path))
-const marks = new WeakMap<object, string | null>()
-inboxMarkedBy((root) => {
-  const items = workspace.itemMeta.itemsOf(root)
-  if (!marks.has(items)) marks.set(items, markedInbox(Object.entries(items)))
-  return marks.get(items) ?? null
-})
-hearInboxChosen((root) => {
-  keepInboxListed(root, workspace, true)
-  store.again(root)
-})
 hearOldLists((paths) => {
   for (const path of paths) store.described(path)
 })
 links.listsBy((root, relative) => listedAt(root, relative))
 links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
-workspace.fileOps.follow(keeping(inboxes))
 workspace.fileOps.follow(keeping(projectFolders))
 
 if (!__EVEN_PLUGIN__) {
-  let moving: Promise<typeof import('./inbox-moving')> | null = null
+  let moving: Promise<typeof import('./inbox-moving.svelte')> | null = null
   store.watch(
-    (change) => void (moving ??= import('./inbox-moving')).then((one) => one.heard(change)),
+    (change) => void (moving ??= import('./inbox-moving.svelte')).then((one) => one.heard(change)),
   )
 }
 
@@ -74,6 +67,17 @@ $effect.root(() => {
   $effect(() => {
     const spaces = workspace.shownSpaces.map(({ root, name }) => ({ root, name }))
     untrack(() => store.spacesAre(spaces))
+  })
+  let home: string | null = null
+  $effect(() => {
+    const now = homeRoot()
+    untrack(() => {
+      const was = home
+      home = now
+      if (was === null || now === null || samePath(was, now)) return
+      store.again(was)
+      store.again(now)
+    })
   })
 })
 
@@ -98,12 +102,13 @@ export const rows = {
     return writeRow(workspace, insideSpace(root, row.path), row, change)
   },
 
-  async inbox(root: string | null = homeRoot()): Promise<string | null> {
-    if (root === null) return null
-    return inboxNote(root)
+  inbox(): Promise<string | null> {
+    return inboxNote()
   },
 
   inboxes(): { space: string; path: string }[] {
-    return workspace.shownSpaces.map((one) => ({ space: one.name, path: inboxOf(one.root) }))
+    const home = homeRoot()
+    const space = workspace.shownSpaces.find((one) => home !== null && samePath(one.root, home))
+    return space ? [{ space: space.name, path: INBOX }] : []
   },
 }

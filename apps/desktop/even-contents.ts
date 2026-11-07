@@ -112,6 +112,7 @@ export const APP_FOLDERS = [
   'foreign',
   'glass',
   'import',
+  'inbox',
   'internal',
   'mobile',
   'online',

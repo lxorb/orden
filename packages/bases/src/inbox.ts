@@ -2,8 +2,21 @@ export const INBOX_PATH = '.Inbox.md'
 
 export const INBOX_NAME = 'Inbox'
 
+export const ACCOUNT_INBOX = '.orden-inbox.md'
+
+const plain = (relative: string) => relative.replace(/\\/g, '/').replace(/^\/+/, '')
+
+export function isAccountInbox(path: string): boolean {
+  return plain(path).split('/').at(-1) === ACCOUNT_INBOX
+}
+
+export function isInboxPath(relative: string): boolean {
+  const path = plain(relative)
+  return path === INBOX_PATH || path === ACCOUNT_INBOX
+}
+
 export function carriedOwn(relative: string): boolean {
-  return relative.replace(/\\/g, '/').replace(/^\/+/, '') === INBOX_PATH
+  return plain(relative) === INBOX_PATH
 }
 
 export const INBOX_KEY = 'inbox'

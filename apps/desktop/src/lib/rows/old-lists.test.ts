@@ -64,9 +64,7 @@ vi.mock('../workspace.svelte', async () => {
 const { workspace } = await import('../workspace.svelte')
 const { RowsStore } = await import('./store')
 const { listedAt, listNamed, listsIn, unmakeList } = await import('./todo-lists')
-const { hearOldLists, keepInboxListed, markOldListsSoon } = await import('./old-lists')
-const { chosenInbox, inboxMarkedBy, inboxOf } = await import('./inbox')
-const { markedInbox } = await import('@orden/bases/inbox')
+const { hearOldLists, markOldListsSoon } = await import('./old-lists')
 
 const OLD_SPACE = {
   'Projects/Garden.md': '- [ ] Plant the tulips\n- [x] Buy soil\n',
@@ -246,43 +244,6 @@ describe('a space made before todo lists were marked (#1333)', () => {
 
     expect(workspace.itemMeta.listsMarked(ROOT)).toBe(true)
     expect(workspace.itemMeta.itemsOf(ROOT)).toEqual({})
-  })
-
-  test('the note chosen as the inbox is marked a list, so the account reads it as one too', async () => {
-    seed({ 'Inbox.md': '- [ ] Call the bank\n' })
-    stored.set('orden:inbox', JSON.stringify({ [ROOT]: 'Inbox.md' }))
-
-    markOldListsSoon(ROOT, false, workspace)
-    await settled()
-    expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toBeNull()
-
-    markOldListsSoon(ROOT, true, workspace)
-    await settled()
-    expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toEqual({ 'todo-list': 'yes', inbox: 'yes' })
-  })
-
-  test('the inbox a device chose is marked for every device and the account, and only one is (#1469)', async () => {
-    seed({ 'Inbox.md': '- [ ] Call the bank\n', 'Todoist/Inbox.md': '- [ ] Old\n' })
-    workspace.itemMeta.set(`${ROOT}/Todoist/Inbox.md`, { 'todo-list': 'yes', inbox: 'yes' }, ROOT)
-    stored.set('orden:inbox', JSON.stringify({ [ROOT]: 'Inbox.md' }))
-
-    markOldListsSoon(ROOT, true, workspace)
-    await settled()
-    expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toEqual({ 'todo-list': 'yes' })
-
-    keepInboxListed(ROOT, workspace, true)
-    expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toEqual({ 'todo-list': 'yes', inbox: 'yes' })
-    expect(workspace.itemMeta.of(`${ROOT}/Todoist/Inbox.md`)).toEqual({ 'todo-list': 'yes' })
-
-    stored.delete('orden:inbox')
-    expect(chosenInbox(ROOT)).toBeNull()
-    inboxMarkedBy((root) => markedInbox(Object.entries(workspace.itemMeta.itemsOf(root))))
-    try {
-      expect(chosenInbox(ROOT)).toBe('Inbox.md')
-      expect(inboxOf(ROOT)).toBe('Inbox.md')
-    } finally {
-      inboxMarkedBy(() => null)
-    }
   })
 
   test('a Projects note stopped before the marking stays stopped, and is not marked', async () => {

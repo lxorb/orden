@@ -1,6 +1,6 @@
 import { findLinks } from '@orden/markdown/links'
 import { tagsIn } from '@orden/markdown/task-line'
-import { INBOX_NAME, INBOX_PATH } from './inbox'
+import { INBOX_NAME, isInboxPath } from './inbox'
 import { noteValues } from './note-values'
 import { type ScannedTask, scanRows, type Stamp } from './scan'
 import { fileInfo, taskRowsOf } from './task-rows'
@@ -25,7 +25,7 @@ function withoutListKeys(meta: NoteRead['meta']): Record<string, string> {
 }
 
 export function rowsOf(space: string, read: NoteRead): Row[] {
-  const inbox = read.path === INBOX_PATH
+  const inbox = isInboxPath(read.path)
   const file = inbox
     ? { ...fileInfo(read), name: `${INBOX_NAME}.md`, basename: INBOX_NAME }
     : fileInfo(read)

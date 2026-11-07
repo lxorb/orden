@@ -2,7 +2,8 @@ import { folderFor } from '../folder-notes'
 import { projectsFolder } from '../rows/projects'
 import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu.svelte'
-import { inboxOf } from '../rows/inbox'
+import { homeRoot } from '../rows/home.svelte'
+import { INBOX } from '../rows/inbox'
 import { listsIn, makeList } from '../rows/todo-lists'
 import { inboxNote } from '../rows/inbox-note'
 import { isAgentsName } from '../note-name'
@@ -85,7 +86,7 @@ function spaceProjects(root: string, count: (note: string) => number): ProjectNo
   return projectNodes(folder, (path) => workspace.arranged.listOf(path), count)
 }
 
-const inboxNoteAt = (root: string) => insideSpace(root, inboxOf(root))
+const inboxNoteAt = (root: string) => insideSpace(homeRoot() ?? root, INBOX)
 
 export function offersPlaces(root: string | null = workspace.activeSpace?.root ?? null): boolean {
   return root !== null && canWriteAt(root)
@@ -102,7 +103,7 @@ export function placeEntries(
       label: t('Inbox'),
       checked: here(inboxNoteAt(root)),
       run: () =>
-        void inboxNote(root).then(
+        void inboxNote().then(
           (note) => (note === null ? undefined : go(note)),
           () => undefined,
         ),

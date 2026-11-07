@@ -40,7 +40,9 @@ vi.mock('../rows/todo-lists', () => ({
   listedAt: (root: string, path: string) => held.lists.has(`${root}/${path}`),
 }))
 
-vi.mock('../rows/inbox', () => ({ inboxOf: () => '.Inbox.md' }))
+vi.mock('../rows/inbox', () => ({ INBOX: '.orden-inbox.md' }))
+
+vi.mock('../rows/home.svelte', () => ({ homeRoot: () => '/home' }))
 
 vi.mock('../modes.svelte', () => ({ modes: { undatedInToday: false } }))
 
@@ -65,7 +67,8 @@ const { todayHere } = await import('./today-tasks')
 
 describe("the glasses' Today", () => {
   test("lists every shown space's todos due today, as Todos does, and nothing of a shut note", async () => {
-    held.disk.set('/home/.Inbox.md', '- [ ] Call Mum 📅 2020-01-01\n')
+    held.disk.set('/home/.orden-inbox.md', '- [ ] Call Mum 📅 2020-01-01\n')
+    held.disk.set('/work/.orden-inbox.md', '- [ ] Call Mum 📅 2020-01-01\n')
     held.disk.set('/home/Shop.md', '- [ ] Milk 📅 2020-01-02\n')
     held.disk.set('/home/Diary.md', '- [ ] Only a checkbox 📅 2020-01-01\n')
     held.disk.set('/work/Projects/Launch.md', '- [ ] Send the slides 📅 2020-01-03\n')

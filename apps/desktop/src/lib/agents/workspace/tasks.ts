@@ -1,6 +1,6 @@
-import { type Base, type Context, INBOX_PATH, type Row } from '@orden/bases'
+import { ACCOUNT_INBOX, type Base, type Context, isInboxPath, type Row } from '@orden/bases'
 import { readable, seen } from './guarded'
-import { carriedOwn, meansInbox } from '@orden/bases/inbox'
+import { meansInbox } from '@orden/bases/inbox'
 import {
   AgentError,
   clockOf,
@@ -188,7 +188,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const { fields } = read
   const named = maybe(call, 'note') ?? read.note ?? null
   const place = named === null ? await inboxPlace(call, front) : front
-  const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? INBOX_PATH
+  const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? ACCOUNT_INBOX
   const chosen = named === null ? inbox : await namedOrInbox(place, named)
   const path = chosen === inbox || meansInbox(chosen) ? chosen : listNamed(place.space.root, chosen)
   if (path === null)
@@ -229,12 +229,7 @@ async function listNote(
   const place = placeOf(call)
   const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, path)
   const root = place.space.root
-  const { inboxOf } = await import('../../rows/inbox')
-  const inbox = inboxOf(root).normalize('NFC').toLowerCase()
-  if (
-    !listing &&
-    (carriedOwn(note.relative) || note.relative.normalize('NFC').toLowerCase() === inbox)
-  )
+  if (!listing && isInboxPath(note.relative))
     throw new Refused('bad_arguments', `${note.relative} is the inbox, always a to-do list`)
   const full = insideSpace(root, note.relative)
   if ((await workspace.noteText(full)) === null && !(await there(full)))
@@ -313,7 +308,7 @@ async function namedOrInbox(place: Place, named: string): Promise<string> {
     .of(place.space.name)
     .some((row) => row.kind === 'note' && meansInbox(row.path))
   if (theirs) return named
-  return rows.inboxes().find((one) => one.space === place.space.name)?.path ?? INBOX_PATH
+  return rows.inboxes().find((one) => one.space === place.space.name)?.path ?? ACCOUNT_INBOX
 }
 
 async function moved(
