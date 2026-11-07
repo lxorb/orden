@@ -2219,6 +2219,37 @@ describe('run_agent from a narrower grant', () => {
 })
 
 describe('a note the reader protected', () => {
+  test('is no row of a base, no template of one, and no folder a row is made in', async () => {
+    const { protection } = await import('../../protect/protection.svelte')
+    const books = 'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n'
+    files.set('/s/Home/Books.base', books)
+    files.set('/s/Home/Shelf.base', `${books}nib:\n  template: '[[Books/Dune]]'\n`)
+    files.set('/s/Home/Books/Dune.md', '---\nstatus: reading\n---\nthe secret words\n')
+    files.set('/s/Home/Books/Emma.md', '---\nstatus: reading\n---\n')
+    protection.set('/s/Home', '/s/Home/Books/Dune.md', 'password')
+    try {
+      const answer = await call('query_base', { space: 'Home', path: 'Books.base' })
+      expect(answer).toMatchObject({
+        result: { total: 1, groups: [{ rows: [{ path: 'Books/Emma.md' }] }] },
+      })
+      expect(JSON.stringify(answer)).not.toContain('Dune')
+      expect(
+        await call('add_row', { space: 'Home', base: 'Shelf.base', title: 'Copy' }),
+      ).toMatchObject({ code: 'protected' })
+      protection.set('/s/Home', '/s/Home/Books', 'password')
+      expect(
+        await call('add_row', { space: 'Home', base: 'Books.base', title: 'Inside' }),
+      ).toMatchObject({ code: 'protected' })
+      expect(await call('query_base', { space: 'Home', path: 'Books.base' })).toMatchObject({
+        result: { total: 0 },
+      })
+      expect(docs.writeNote).not.toHaveBeenCalled()
+    } finally {
+      protection.set('/s/Home', '/s/Home/Books/Dune.md', null)
+      protection.set('/s/Home', '/s/Home/Books', null)
+    }
+  })
+
   test('is refused to an agent until it is unlocked and agents are let read it', async () => {
     const { protection } = await import('../../protect/protection.svelte')
     const { unlocks } = await import('../../protect/unlocked.svelte')

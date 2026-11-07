@@ -2857,6 +2857,7 @@ export const ha: Dictionary = {
     'AI ɗinka yana rubuta daftarin amsa a salonka kuma yana ba da shawarar aiki, kuma babu abin da za a aika ko a ƙara har sai ka zaɓa.',
   'Use draft': 'Yi amfani da daftari',
   Protected: 'An kare',
+  'A protected note has a reminder': 'Wani bayanin kula da aka kare yana da tunatarwa',
   'Wrong password': 'Kalmar sirri ba daidai ba',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'An kare shi, ba a ɓoye shi ba: yana hana buɗe shi bisa kuskure kawai.',

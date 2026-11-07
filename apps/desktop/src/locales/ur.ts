@@ -2809,6 +2809,7 @@ export const ur: Dictionary = {
     'آپ کا AI آپ کے انداز میں جواب کا مسودہ لکھتا ہے اور ایک کام تجویز کرتا ہے، اور آپ کے چننے تک کچھ نہیں بھیجا یا شامل کیا جاتا۔',
   'Use draft': 'مسودہ استعمال کریں',
   Protected: 'محفوظ',
+  'A protected note has a reminder': 'ایک محفوظ نوٹ میں یاد دہانی ہے',
   'Wrong password': 'غلط پاس ورڈ',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'محفوظ، خفیہ کردہ نہیں: یہ صرف غلطی سے کھلنے سے روکتا ہے۔',

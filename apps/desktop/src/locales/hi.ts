@@ -2814,6 +2814,7 @@ export const hi: Dictionary = {
     'आपका AI आपकी शैली में जवाब का मसौदा लिखता है और एक काम सुझाता है, और आपके चुनने तक कुछ भी भेजा या जोड़ा नहीं जाता।',
   'Use draft': 'मसौदा इस्तेमाल करें',
   Protected: 'सुरक्षित',
+  'A protected note has a reminder': 'एक सुरक्षित नोट में रिमाइंडर है',
   'Wrong password': 'गलत पासवर्ड',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'सुरक्षित, एन्क्रिप्ट नहीं: यह केवल गलती से खुलने से रोकता है।',

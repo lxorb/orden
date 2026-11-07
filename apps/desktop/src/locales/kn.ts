@@ -2848,6 +2848,7 @@ export const kn: Dictionary = {
     'ನಿಮ್ಮ AI ನಿಮ್ಮ ಶೈಲಿಯಲ್ಲಿ ಉತ್ತರದ ಕರಡು ಬರೆದು ಒಂದು ಕಾರ್ಯವನ್ನು ಸೂಚಿಸುತ್ತದೆ, ಮತ್ತು ನೀವು ಆರಿಸುವವರೆಗೆ ಏನನ್ನೂ ಕಳುಹಿಸುವುದಿಲ್ಲ ಅಥವಾ ಸೇರಿಸುವುದಿಲ್ಲ.',
   'Use draft': 'ಕರಡು ಬಳಸಿ',
   Protected: 'ರಕ್ಷಿತ',
+  'A protected note has a reminder': 'ರಕ್ಷಿತ ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಜ್ಞಾಪನೆ ಇದೆ',
   'Wrong password': 'ತಪ್ಪು ಪಾಸ್‌ವರ್ಡ್',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'ರಕ್ಷಿತ, ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಿಲ್ಲ: ಇದು ತಪ್ಪಾಗಿ ತೆರೆಯುವುದನ್ನು ಮಾತ್ರ ತಡೆಯುತ್ತದೆ.',

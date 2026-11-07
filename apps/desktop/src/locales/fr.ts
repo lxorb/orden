@@ -2903,6 +2903,7 @@ export const fr: Dictionary = {
     'Votre IA rédige une réponse dans votre style et suggère une tâche, et rien n’est envoyé ni ajouté tant que vous ne l’avez pas choisi.',
   'Use draft': 'Utiliser le brouillon',
   Protected: 'Protégé',
+  'A protected note has a reminder': 'Une note protégée a un rappel',
   'Wrong password': 'Mot de passe incorrect',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Protégé, pas chiffré : cela évite seulement qu’on l’ouvre par mégarde.',

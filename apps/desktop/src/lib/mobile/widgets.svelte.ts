@@ -108,6 +108,10 @@ export function watchWidgets(): () => void {
 
   const stop = $effect.root(() => {
     $effect(() => {
+      if (!workspace.protection.seen) return
+      reread()
+    })
+    $effect(() => {
       const said = JSON.stringify(widgetState(today))
       if (said === last) return
 

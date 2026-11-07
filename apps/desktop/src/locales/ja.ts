@@ -2788,6 +2788,7 @@ export const ja: Dictionary = {
     'AI があなたの書き方で返信の下書きを作ってタスクを提案し、あなたが選ぶまで何も送信・追加されません。',
   'Use draft': '下書きを使う',
   Protected: '保護中',
+  'A protected note has a reminder': '保護中のノートにリマインダーがあります',
   'Wrong password': 'パスワードが違います',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     '保護はされていますが暗号化ではありません。誤って開かれるのを防ぐだけです。',

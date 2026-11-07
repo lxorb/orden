@@ -2910,6 +2910,7 @@ export const pl: Dictionary = {
     'Twoja SI pisze szkic odpowiedzi w twoim stylu i proponuje zadanie, a nic nie zostanie wysłane ani dodane, dopóki tego nie wybierzesz.',
   'Use draft': 'Użyj szkicu',
   Protected: 'Chronione',
+  'A protected note has a reminder': 'Chroniona notatka ma przypomnienie',
   'Wrong password': 'Złe hasło',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Chronione, nie zaszyfrowane: to tylko zapobiega przypadkowemu otwarciu.',

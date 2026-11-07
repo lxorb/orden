@@ -2800,6 +2800,7 @@ export const gu: Dictionary = {
     'તમારું AI તમારી શૈલીમાં જવાબનો મુસદ્દો લખે છે અને એક કાર્ય સૂચવે છે, અને તમે પસંદ ન કરો ત્યાં સુધી કંઈ મોકલાતું કે ઉમેરાતું નથી.',
   'Use draft': 'મુસદ્દો વાપરો',
   Protected: 'સુરક્ષિત',
+  'A protected note has a reminder': 'સુરક્ષિત નોંધમાં એક રિમાઇન્ડર છે',
   'Wrong password': 'ખોટો પાસવર્ડ',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'સુરક્ષિત, એન્ક્રિપ્ટ કરેલું નથી: આ ફક્ત ભૂલથી ખૂલતું અટકાવે છે.',

@@ -2721,6 +2721,7 @@ export const zhHantHK: Dictionary = {
     '你的 AI 會以你的風格草擬回覆並建議一項工作，在你選擇之前不會傳送或加入任何內容。',
   'Use draft': '使用草稿',
   Protected: '已保護',
+  'A protected note has a reminder': '有一則已保護的筆記有提醒',
   'Wrong password': '密碼錯誤',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     '這是保護，不是加密：只防止被誤開。',

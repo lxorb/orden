@@ -2919,6 +2919,7 @@ export const ar: Dictionary = {
     'يصوغ الذكاء الاصطناعي ردًا بأسلوبك ويقترح مهمة، ولا يُرسل شيء ولا يُضاف حتى تختاره.',
   'Use draft': 'استخدم المسودة',
   Protected: 'محمي',
+  'A protected note has a reminder': 'لملاحظة محمية تذكير',
   'Wrong password': 'كلمة مرور خاطئة',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'محمي وليس مشفّرًا: يمنع فتحه بالخطأ فقط.',

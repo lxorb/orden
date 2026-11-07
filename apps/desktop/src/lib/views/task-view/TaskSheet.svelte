@@ -50,18 +50,18 @@
   const { shown }: { shown: Shown } = $props()
 
   const kit = $derived(shown.kit)
-  let all = $state.raw<readonly Row[]>(untrack(() => rows.of(shown.ref.space)))
+  let all = $state.raw<readonly Row[]>(untrack(() => rows.shown(shown.ref.space)))
   $effect(() =>
     untrack(() =>
       rows.settled(() => {
         const space = viewing.shown?.ref.space
-        if (space !== undefined) all = rows.of(space)
+        if (space !== undefined) all = rows.shown(space)
       }),
     ),
   )
   $effect(() => {
-    const space = shown.ref.space
-    untrack(() => (all = rows.of(space)))
+    const next = rows.shown(shown.ref.space)
+    untrack(() => (all = next))
   })
 
   const row = $derived(rowFor(shown.ref, all))

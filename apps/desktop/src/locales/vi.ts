@@ -2785,6 +2785,7 @@ export const vi: Dictionary = {
     'AI của bạn soạn nháp câu trả lời theo phong cách của bạn và gợi ý một việc cần làm, và không có gì được gửi hay thêm cho đến khi bạn chọn.',
   'Use draft': 'Dùng bản nháp',
   Protected: 'Đã bảo vệ',
+  'A protected note has a reminder': 'Một ghi chú đã bảo vệ có lời nhắc',
   'Wrong password': 'Sai mật khẩu',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Được bảo vệ, không mã hóa: chỉ ngăn việc vô tình mở ra.',

@@ -2796,6 +2796,7 @@ export const jv: Dictionary = {
     'AI sampeyan nggawe draf wangsulan nganggo gaya sampeyan lan ngusulaké tugas, lan ora ana sing dikirim utawa ditambahaké nganti sampeyan milih.',
   'Use draft': 'Nganggo draf',
   Protected: 'Dilindhungi',
+  'A protected note has a reminder': 'Cathetan sing dilindhungi duwe pangeling',
   'Wrong password': 'Sandhi salah',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Dilindhungi, ora dienkripsi: iki mung ngalangi supaya ora kabukak ora sengaja.',

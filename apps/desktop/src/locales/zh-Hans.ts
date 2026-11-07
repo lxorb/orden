@@ -2720,6 +2720,7 @@ export const zhHans: Dictionary = {
     '你的 AI 会用你的风格草拟回复并建议一项任务，在你选择之前不会发送或添加任何内容。',
   'Use draft': '使用草稿',
   Protected: '已保护',
+  'A protected note has a reminder': '一则受保护的笔记有提醒',
   'Wrong password': '密码错误',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     '这是保护，不是加密：只防止被误打开。',

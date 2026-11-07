@@ -2883,6 +2883,7 @@ export const ptPT: Dictionary = {
     'A sua IA escreve um rascunho de resposta no seu estilo e sugere uma tarefa, e nada é enviado nem adicionado até o escolher.',
   'Use draft': 'Usar rascunho',
   Protected: 'Protegido',
+  'A protected note has a reminder': 'Uma nota protegida tem um lembrete',
   'Wrong password': 'Palavra-passe incorreta',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Protegido, não encriptado: só impede que seja aberto por engano.',

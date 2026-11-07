@@ -1,5 +1,5 @@
 import type { Row } from '@orden/bases'
-import { plan, type Reminder, samePlan } from './plan'
+import { type Hidden, MOST, plan, type Reminder, samePlan } from './plan'
 
 export const QUIET = 400
 
@@ -10,6 +10,7 @@ export interface Host {
   ready(): boolean
   watch(listener: () => void): () => void
   auto(): number | null
+  hidden?: Hidden
   now(): number
   hand(plan: readonly Reminder[]): Promise<boolean>
   ring(plan: readonly Reminder[]): void
@@ -63,7 +64,7 @@ export class Scheduler {
     if (!this.host.ready()) return
 
     const now = this.host.now()
-    const wanted = plan(this.host.rows(), now, this.host.auto())
+    const wanted = plan(this.host.rows(), now, this.host.auto(), MOST, this.host.hidden)
     this.host.waiting(wanted.length > 0)
     this.wake(wanted, now)
     if (this.handed && samePlan(this.handed, wanted)) return

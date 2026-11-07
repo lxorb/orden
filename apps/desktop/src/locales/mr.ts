@@ -2813,6 +2813,7 @@ export const mr: Dictionary = {
     'तुमचे AI तुमच्या शैलीत उत्तराचा मसुदा लिहिते आणि एक काम सुचवते, आणि तुम्ही निवडेपर्यंत काहीही पाठवले किंवा जोडले जात नाही.',
   'Use draft': 'मसुदा वापरा',
   Protected: 'संरक्षित',
+  'A protected note has a reminder': 'संरक्षित नोटमध्ये एक स्मरणपत्र आहे',
   'Wrong password': 'चुकीचा पासवर्ड',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'संरक्षित, एन्क्रिप्ट केलेले नाही: हे फक्त चुकून उघडणे रोखते.',

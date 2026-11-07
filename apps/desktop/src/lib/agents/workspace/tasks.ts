@@ -1,5 +1,5 @@
 import { type Base, type Context, INBOX_PATH, type Row } from '@orden/bases'
-import { seen } from './guarded'
+import { readable, seen } from './guarded'
 import { carriedOwn, meansInbox } from '@orden/bases/inbox'
 import {
   AgentError,
@@ -90,6 +90,7 @@ async function baseAt(
   const relative = judgedForWriting(need(call, name))
   if (!/\.base$/i.test(relative))
     throw new Refused('bad_arguments', `${relative} is not a .base file`)
+  readable(onDisk(place, relative), relative)
   const text = await invoke<string>('read_note', { path: onDisk(place, relative) }).catch(
     () => null,
   )
@@ -391,7 +392,7 @@ export async function queryBase(call: Call): Promise<AgentAnswer> {
     const answer = queried(
       base,
       maybe(call, 'view') ?? undefined,
-      rows.of(place.space.name),
+      rows.of(place.space.name).filter((row) => seen(onDisk(place, row.path))),
       await contextOf(),
     )
     return done(answer, sourceOf([place]))
@@ -424,6 +425,7 @@ async function templateOf(place: Place, base: Base, rows: readonly Row[]): Promi
         row.file.basename.toLowerCase() === wanted),
   )
   if (!found) return ''
+  readable(onDisk(place, found.path), found.path)
   return (await workspace.noteText(onDisk(place, found.path))) ?? ''
 }
 
@@ -439,6 +441,7 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   const template = await templateOf(place, base, rows.of(place.space.name))
   const name = noteName(maybe(call, 'title') ?? 'Untitled')
   const path = await freePath(place, folder === '.' ? '' : folder, name)
+  readable(onDisk(place, path), path)
   writableAt(place, onDisk(place, path))
 
   const question = await asked(call, null, `Make ${path} in ${place.space.name}`)

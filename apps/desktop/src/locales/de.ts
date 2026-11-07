@@ -2876,6 +2876,7 @@ export const de: Dictionary = {
     'Deine KI entwirft eine Antwort in deinem Stil und schlägt eine Aufgabe vor, und nichts wird gesendet oder hinzugefügt, bevor du es wählst.',
   'Use draft': 'Entwurf verwenden',
   Protected: 'Geschützt',
+  'A protected note has a reminder': 'Eine geschützte Notiz hat eine Erinnerung',
   'Wrong password': 'Falsches Passwort',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Geschützt, nicht verschlüsselt: Das verhindert nur, dass es versehentlich geöffnet wird.',

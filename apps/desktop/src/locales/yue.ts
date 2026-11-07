@@ -2713,6 +2713,7 @@ export const yue: Dictionary = {
     '你嘅 AI 會用你嘅寫法草擬回覆同建議一項工作，你揀之前乜都唔會發出或者加入。',
   'Use draft': '用草稿',
   Protected: '已保護',
+  'A protected note has a reminder': '有一則已保護嘅筆記有提醒',
   'Wrong password': '密碼錯咗',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     '係保護，唔係加密：只係防止唔小心打開。',

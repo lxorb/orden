@@ -2896,6 +2896,7 @@ export const it: Dictionary = {
     'La tua IA scrive una bozza di risposta nel tuo stile e suggerisce un’attività, e nulla viene inviato o aggiunto finché non lo scegli.',
   'Use draft': 'Usa la bozza',
   Protected: 'Protetto',
+  'A protected note has a reminder': 'Una nota protetta ha un promemoria',
   'Wrong password': 'Password errata',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Protetto, non cifrato: impedisce solo che venga aperto per sbaglio.',

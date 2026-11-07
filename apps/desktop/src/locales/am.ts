@@ -2754,6 +2754,7 @@ export const am: Dictionary = {
     'የእርስዎ AI በራስዎ ዘይቤ ምላሽ ያረቅቃል እና ተግባር ይጠቁማል፣ እርስዎ እስኪመርጡት ድረስም ምንም አይላክም ወይም አይታከልም።',
   'Use draft': 'ረቂቁን ተጠቀም',
   Protected: 'የተጠበቀ',
+  'A protected note has a reminder': 'የተጠበቀ ማስታወሻ አስታዋሽ አለው',
   'Wrong password': 'የተሳሳተ የይለፍ ቃል',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'የተጠበቀ እንጂ የተመሰጠረ አይደለም፦ በስህተት እንዳይከፈት ብቻ ይከለክላል።',

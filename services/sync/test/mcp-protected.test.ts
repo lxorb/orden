@@ -58,4 +58,22 @@ describe('an agent reaching the account', () => {
       await tool('write_note', { space: 'Home', path: 'Diary/Today.md', content: 'gone' }),
     ).toContain('is protected')
   })
+
+  test('cannot reach into it through the to-do tools', async () => {
+    const before = await tool('read_note', { space: 'Home', path: 'Plans.md' })
+    expect(await tool('add_task', { space: 'Home', text: 'Peek', note: 'Diary/Today' })).toContain(
+      'is protected',
+    )
+    expect(
+      await tool('update_task', { space: 'Home', at: 'Diary/Today.md#1:abc', done: true }),
+    ).toContain('is protected')
+    expect(
+      await tool('update_task', { space: 'Home', at: 'Diary/Today.md', todo_list: false }),
+    ).toContain('is protected')
+    expect(await tool('query_base', { space: 'Home', path: 'Diary/Tasks.base' })).toContain(
+      'is protected',
+    )
+    expect(await tool('list_tasks', { space: 'Home' })).not.toContain('Peek')
+    expect(await tool('read_note', { space: 'Home', path: 'Plans.md' })).toBe(before)
+  })
 })

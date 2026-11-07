@@ -4,6 +4,7 @@ import { taskHash } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { readTask } from '@orden/markdown/task-line'
 import { momentOf, plainWords, reminderId, remindTimes } from '@orden/markdown/task-reminders'
+import { type Shut, shutFor } from '../protected'
 import type { Env } from '../types'
 import { liveTarget } from './live'
 import { type Message, push, type Target } from './send'
@@ -19,6 +20,8 @@ const KEPT_FOR = 86_400_000
 export const TRY_AGAIN_AFTER = 300_000
 
 export const MOST_TRIES = 4
+
+export const SHUT_TITLE = 'A protected note has a reminder'
 
 interface Saved {
   id: string
@@ -167,6 +170,7 @@ interface Due {
   note_id: string
   id: string
   user_id: string
+  space_id: string
   at: number
   title: string
   body: string
@@ -191,8 +195,8 @@ export async function sendDue(
     .run()
 
   const { results: due } = await env.DB.prepare(
-    `select r.note_id, r.id, r.user_id, r.at, r.title, r.body, r.path, r.hash, r.line, r.tries,
-            s.name as space
+    `select r.note_id, r.id, r.user_id, r.space_id, r.at, r.title, r.body, r.path, r.hash, r.line,
+            r.tries, s.name as space
        from push_reminders r
        join notes n on n.id = r.note_id and n.deleted = 0
        join spaces s on s.id = r.space_id and s.deleted = 0
@@ -204,6 +208,7 @@ export async function sendDue(
 
   let sent = 0
   const targets = new Map<string, Target[]>()
+  const shuts = new Map<string, Shut>()
   for (const one of due) {
     const claimed = await env.DB.prepare(
       'update push_reminders set sent_at = ? where note_id = ? and id = ? and sent_at is null',
@@ -225,11 +230,18 @@ export async function sendDue(
       targets.set(one.user_id, theirs)
     }
 
+    let shut = shuts.get(one.user_id)
+    if (!shut) {
+      shut = await shutFor(env, one.user_id)
+      shuts.set(one.user_id, shut)
+    }
+    const hidden = shut(one.space_id, one.path)
+
     const message: Message = {
       kind: 'reminder',
       id: one.id,
-      title: one.title,
-      body: one.body,
+      title: hidden ? SHUT_TITLE : one.title,
+      body: hidden ? '' : one.body,
       fields: {
         at: String(one.at),
         space: one.space,
