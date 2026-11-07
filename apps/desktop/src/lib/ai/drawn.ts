@@ -11,23 +11,29 @@ const PICTURE = /<img\b([^>]*)>/gi
 
 const ELSEWHERE = /^(?:[a-z][a-z\d+.-]*:)?\/\//i
 
-const BLOCK = /<pre><code(?: class="language-([^"]*)")?>/g
+const BLOCK = /<pre><code(?: class="language-([^"]*)")?>([\s\S]*?)<\/code><\/pre>/g
 
 const COPY_PATH =
   'M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z'
 
-export function withCodeBars(html: string, copy: string): string {
+function linesIn(code: string): number {
+  let lines = 0
+  for (let at = code.indexOf('\n'); at !== -1; at = code.indexOf('\n', at + 1)) lines++
+  return code.endsWith('\n') ? Math.max(lines, 1) : lines + 1
+}
+
+export function withCodeBars(html: string, copy: string, sized = false): string {
   const label = copy.replace(/[&<>"]/g, (one) => `&#${one.charCodeAt(0)};`)
-  const opened = html.replace(BLOCK, (_, language: string | undefined) => {
+  return html.replace(BLOCK, (_, language: string | undefined, code: string) => {
     const named = language ? ` class="language-${language}"` : ''
+    const size = sized ? ` style="--lines: ${String(linesIn(code))}"` : ''
     return (
-      `<div class="code"><div class="code-bar"><span>${language ?? ''}</span>` +
+      `<div class="code"${size}><div class="code-bar"><span>${language ?? ''}</span>` +
       `<button type="button" class="code-copy" data-copy title="${label}" aria-label="${label}">` +
       `<svg viewBox="0 0 13 13"><path d="${COPY_PATH}"/></svg></button></div>` +
-      `<pre><code${named}>`
+      `<pre><code${named}>${code}</code></pre></div>`
     )
   })
-  return opened === html ? html : opened.replace(/<\/code><\/pre>/g, '</code></pre></div>')
 }
 
 function pictures(html: string, from: string | null, shown: ReadonlySet<string>): string {
@@ -105,5 +111,5 @@ export function answerHtml(markdown: string, options: AnswerOptions = {}): strin
     options.shown ?? new Set(),
   )
   const html = options.live ? inLineGroups(drawn) : drawn
-  return options.copy ? withCodeBars(html, options.copy) : html
+  return options.copy ? withCodeBars(html, options.copy, !options.live) : html
 }
