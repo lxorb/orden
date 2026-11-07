@@ -93,6 +93,65 @@ INNER = (
 )
 
 
+def long_paper(pages: int = 120, lines: int = 70) -> bytes:
+    w, h = 595, 842
+    words = "the kestrel hangs above the field while the river turns slowly under a grey and patient sky"
+    objects: dict[int, bytes] = {1: b"<</Type/Catalog/Pages 2 0 R>>", 3: b"<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>"}
+    kids = []
+    for at in range(pages):
+        page, content = 4 + at * 2, 5 + at * 2
+        kids.append(f"{page} 0 R")
+        stream = "\n".join(f"BT /F1 7 Tf 36 {h - 40 - row * 11} Td (P{at + 1} L{row + 1}: {words}) Tj ET" for row in range(lines)).encode("latin-1")
+        objects[page] = f"<</Type/Page/Parent 2 0 R/MediaBox[0 0 {w} {h}]/Resources<</Font<</F1 3 0 R>>>>/Contents {content} 0 R>>".encode("latin-1")
+        objects[content] = b"<</Length %d>>stream\n" % len(stream) + stream + b"\nendstream"
+    objects[2] = f"<</Type/Pages/Kids[{' '.join(kids)}]/Count {pages}>>".encode("latin-1")
+    out = bytearray(b"%PDF-1.4\n")
+    places: dict[int, int] = {}
+    for number in sorted(objects):
+        places[number] = len(out)
+        out += b"%d 0 obj" % number + objects[number] + b"endobj\n"
+    table = len(out)
+    size = max(objects) + 1
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % size
+    for number in range(1, size):
+        out += b"%010d 00000 n \n" % places[number]
+    out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
+    return bytes(out)
+
+
+SCROLL = """
+const [frames, step, hide] = %s
+document.getElementById('no-words')?.remove()
+if (hide) { const style = document.createElement('style'); style.id = 'no-words'; style.textContent = '.pages .sheet .words { display: none !important }'; document.head.append(style) }
+await new Promise((done) => setTimeout(done, 800))
+const host = document.querySelector('.pages')
+const box = host.getBoundingClientRect()
+const column = host.querySelector('.column')
+const rise = () => new DOMMatrix(getComputedStyle(column).transform).f
+const from = rise()
+const gaps = []
+let built = 0
+const watching = new MutationObserver((changes) => { for (const change of changes) if (change.target.classList?.contains('words')) built += change.addedNodes.length })
+watching.observe(host, { childList: true, subtree: true })
+await new Promise((done) => {
+  let last = 0
+  let count = 0
+  const frame = (now) => {
+    if (last) gaps.push(now - last)
+    last = now
+    host.dispatchEvent(new WheelEvent('wheel', { deltaY: step, deltaMode: 0, bubbles: true, cancelable: true, clientX: box.x + box.width / 2, clientY: box.y + box.height / 2 }))
+    if (++count < frames) requestAnimationFrame(frame)
+    else done()
+  }
+  requestAnimationFrame(frame)
+})
+watching.disconnect()
+document.getElementById('no-words')?.remove()
+const sorted = [...gaps].sort((a, b) => a - b)
+return { mean: gaps.reduce((sum, one) => sum + one, 0) / gaps.length, p95: sorted[Math.floor(sorted.length * 0.95)], long: gaps.filter((one) => one > 50).length, moved: from - rise(), built }
+"""
+
+
 def paper() -> bytes:
     w, h = 595, 842
     lines = [f"BT /F1 9 Tf 40 {h - 60 - row * 12} Td (Line {row + 1}: the kestrel hangs above the field.) Tj ET" for row in range(60)]
@@ -488,6 +547,23 @@ def main() -> int:
                 wrong.append(f"zoomed in, a drag over words chose {said!r}")
         else:
             unverified.append(f"no words under the middle of the page zoomed in: {under}")
+
+        long = f"{root}/Long.pdf"
+        put = app.eval(
+            f"orden.invoke('write_bytes', {{ path: {json.dumps(long)}, base64: {json.dumps(base64.b64encode(long_paper()).decode())} }})"
+            ".then(() => 'done', (error) => 'refused: ' + error)"
+        )
+        app.eval("await orden.workspace.loadTree(); return true")
+        app.eval(f"await orden.workspace.openPdf({json.dumps(long)}, 1); return true")
+        if put != "done" or not app.until("[...document.querySelectorAll('.pages .sheet .words span')].some((one) => one.textContent.startsWith('P1 L1:'))", 60):
+            unverified.append(f"the long PDF was not shown ({put}): {app.eval(LOOKED)}")
+        else:
+            time.sleep(1.5)
+            for step, hide in ((40, False), (40, True), (-40, False), (-40, True)):
+                got = app.eval(SCROLL % json.dumps([300, step, hide]))
+                print(f"a 120-page PDF scrolled {step:+d}px a frame {'without' if hide else 'with'} its words: mean {got['mean']:.1f} ms, p95 {got['p95']:.1f} ms, {got['long']} frames over 50 ms, moved {got['moved']:.0f}, {got['built']} word nodes laid out", flush=True)
+                if got["built"]:
+                    wrong.append(f"words were laid out for {got['built']} nodes while a long PDF scrolled")
     finally:
         process.kill()
         process.wait(20)

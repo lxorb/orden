@@ -27,6 +27,7 @@
     root,
     shared = null,
     seen = null,
+    still = true,
     marks = [],
     selectable = false,
     sought = [],
@@ -40,6 +41,7 @@
     root: string | null
     shared?: string | null
     seen?: { x: number; y: number; width: number; height: number } | null
+    still?: boolean
     marks?: readonly Highlight[]
     selectable?: boolean
     sought?: readonly Sought[]
@@ -179,12 +181,26 @@
   let words = $state<HTMLDivElement>()
   let read = $state.raw<Words | null>(null)
 
+  const inView = $derived(
+    !seen ||
+      (page.x < seen.x + seen.width &&
+        page.x + page.width > seen.x &&
+        page.y < seen.y + seen.height &&
+        page.y + page.height > seen.y),
+  )
+
+  let wordsWanted = $state(false)
+
+  $effect(() => {
+    if (still && inView) wordsWanted = true
+  })
+
   $effect(() => {
     const layer = words
     const file = page.file
     const at = page.page
     const wide = page.width
-    if (!layer || !file || !at || !wide) return
+    if (!wordsWanted || !layer || !file || !at || !wide) return
     paperEdition({ file, note: notePath, root, shared })
 
     const leaving = new AbortController()

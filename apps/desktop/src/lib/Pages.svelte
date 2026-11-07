@@ -153,6 +153,19 @@
 
   const near = $derived(pages.slice(sight.from, sight.to))
 
+  const STILL = 250
+
+  let still = $state(true)
+
+  $effect(() => {
+    const at = view
+    still = false
+    const timer = setTimeout(() => {
+      if (at === view) still = true
+    }, STILL)
+    return () => clearTimeout(timer)
+  })
+
   const seen = $derived.by(() => {
     const turned = turnOf(view) ? Math.hypot(width, height) : 0
     const across = (turned || width) / view.scale / 2
@@ -1321,6 +1334,7 @@
         root={workspace.rootHolding(tab.note.path)}
         shared={tab.note.shared}
         {seen}
+        {still}
         selectable={tools.which === 'select'}
         sought={page.file === backing && page.page ? (soughtOn.get(page.page) ?? NO_HITS) : NO_HITS}
         current={looking && looking.paper === page.page && page.file === backing
