@@ -3680,4 +3680,7 @@ export const ru: Dictionary = {
     'Telegram передаёт группу новому владельцу только в своём приложении',
   'That sticker is no longer available': 'Этот стикер больше недоступен',
   'Telegram is not set up in this build': 'Telegram не настроен в этой сборке',
+  'Password manager': 'Менеджер паролей',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Добавляет Pass, который хранит пароли и подставляет их на сайтах. При выключении ваши хранилища сохраняются.',
 }

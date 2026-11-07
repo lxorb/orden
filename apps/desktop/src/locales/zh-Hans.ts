@@ -3367,4 +3367,7 @@ export const zhHans: Dictionary = {
     'Telegram 只能在自己的应用中把群组转让给新群主',
   'That sticker is no longer available': '该贴纸已不可用',
   'Telegram is not set up in this build': '此版本未设置 Telegram',
+  'Password manager': '密码管理器',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    '添加 Pass，保管密码并在网站上填入。关闭后保险库仍会保留。',
 }

@@ -181,7 +181,7 @@ export function kindsHere(): KindName[] {
   if (modes.coder) here.push('online')
   if (modes.coder) here.push('application')
   if (isDesktop) here.push('explorer')
-  here.push('pass')
+  if (passOn()) here.push('pass')
   if (web) here.push('web')
   if (web && isDesktop) here.push('private')
   return here
@@ -228,4 +228,10 @@ export const TIME_WORD = 'shown-time'
 
 export function timeOn(): boolean {
   return !__EVEN_PLUGIN__ && hiddenKinds.hidden.includes(TIME_WORD)
+}
+
+export const PASS_WORD = 'shown-pass'
+
+export function passOn(): boolean {
+  return !__EVEN_PLUGIN__ && hiddenKinds.hidden.includes(PASS_WORD)
 }

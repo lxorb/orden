@@ -87,7 +87,6 @@ describe('the Note types pane', () => {
       'Page note',
       'Online terminal',
       'Application',
-      'Pass',
       'Web note',
     ])
     expect(kinds && resettable(kinds)).toBe(true)

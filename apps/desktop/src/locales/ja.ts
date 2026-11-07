@@ -3453,4 +3453,7 @@ export const ja: Dictionary = {
     'Telegram はグループの新しいオーナーへの譲渡を自身のアプリでしか行えません',
   'That sticker is no longer available': 'そのステッカーはもう使えません',
   'Telegram is not set up in this build': 'このビルドでは Telegram が設定されていません',
+  'Password manager': 'パスワードマネージャー',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'パスワードを保管し、ウェブサイトで入力する Pass を追加します。オフにしても保管庫は残ります。',
 }

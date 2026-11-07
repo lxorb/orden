@@ -68,6 +68,7 @@ const { configurePass, PassStore } = await import('./store.svelte')
 const { Autofill } = await import('./autofill')
 const { passBubbles } = await import('./fill-bubbles.svelte')
 const { FLOW_WINDOW } = await import('./sign-in-flow')
+const { hiddenKinds, PASS_WORD } = await import('../settings.svelte')
 
 configurePass({ kdf: { m: 64, t: 1, p: 1 }, pinKdf: { m: 64, t: 1, p: 1 } })
 
@@ -164,6 +165,7 @@ beforeEach(async () => {
   heard.fills = true
   heard.aliasFor = []
   clock = 59_000
+  hiddenKinds.hidden = [PASS_WORD]
   passBubbles.clear(TAB)
   store = new PassStore()
   await store.start()
@@ -694,5 +696,49 @@ describe('signing in by itself', () => {
     )
     await new Promise((done) => setTimeout(done, 50))
     expect(heard.filled).toHaveLength(0)
+  })
+})
+
+describe('with the password manager turned off in Settings', () => {
+  beforeEach(() => {
+    store.setSetting('autoLogin', true)
+  })
+
+  test('a page shows no mark, asks to save nothing and signs nobody in', async () => {
+    await kept(login({ username: 'alice', password: 'pw' }))
+    made()
+    hiddenKinds.hidden = []
+    await marked(frameAt(`${BANK}/login`), 'login', ['username', 'password'])
+    await said('submitted', submitted(frameAt(`${BANK}/login`), { username: 'bob', password: 'x' }))
+    await new Promise((done) => setTimeout(done, 50))
+    expect(shown()).toBeNull()
+    expect(heard.filled).toHaveLength(0)
+  })
+
+  test('a sign-in already under way when it is turned off is not taken', async () => {
+    await kept(login({ username: 'alice', password: 'pw' }))
+    const autofill = made(80)
+    await said('forms', forms(frameAt(`${BANK}/login`), 'login', ['username', 'password']))
+    expect(shown()?.kind).toBe('signing')
+    hiddenKinds.hidden = []
+    autofill.quiet()
+    await new Promise((done) => setTimeout(done, 150))
+    expect(shown()).toBeNull()
+    expect(heard.filled).toHaveLength(0)
+  })
+
+  test('turned on again, the logins it kept fill as before', async () => {
+    const item = await kept(login({ username: 'alice', password: 'pw' }))
+    const autofill = made()
+    hiddenKinds.hidden = []
+    store.lock()
+    hiddenKinds.hidden = [PASS_WORD]
+    expect(await store.unlock({ password: 'correct horse battery staple' })).toBe(true)
+    store.setSetting('autoLogin', false)
+    await marked(frameAt(`${BANK}/login`), 'login', ['username', 'password'])
+    const bubble = shown()
+    expect(bubble?.kind === 'choose' && bubble.logins.map((one) => one.id)).toEqual([item.id])
+    await autofill.choose(TAB, item.id)
+    expect(heard.filled[0]).toMatchObject({ values: { e10: 'alice', e11: 'pw' } })
   })
 })

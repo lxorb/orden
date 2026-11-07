@@ -3532,4 +3532,7 @@ export const ur: Dictionary = {
     'Telegram گروپ نئے مالک کو صرف اپنی ایپ سے سونپتا ہے',
   'That sticker is no longer available': 'وہ اسٹیکر اب دستیاب نہیں',
   'Telegram is not set up in this build': 'اس بلڈ میں Telegram سیٹ اپ نہیں ہے',
+  'Password manager': 'پاس ورڈ مینیجر',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass شامل کرتا ہے، جو پاس ورڈ رکھتا ہے اور ویب سائٹس پر بھرتا ہے۔ بند کرنے سے آپ کے والٹ برقرار رہتے ہیں۔',
 }

@@ -3540,4 +3540,7 @@ export const fa: Dictionary = {
     'Telegram گروه را فقط در برنامهٔ خودش به مالک تازه می‌سپارد',
   'That sticker is no longer available': 'آن استیکر دیگر در دسترس نیست',
   'Telegram is not set up in this build': 'Telegram در این نسخه تنظیم نشده است',
+  'Password manager': 'مدیر گذرواژه',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass را می‌افزاید که گذرواژه‌ها را نگه می‌دارد و در وب‌سایت‌ها پر می‌کند. خاموش کردنش گاوصندوق‌هایتان را نگه می‌دارد.',
 }

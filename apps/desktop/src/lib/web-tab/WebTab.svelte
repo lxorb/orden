@@ -12,7 +12,7 @@
   import { dur } from '../motion'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../overlays'
-  import { hiddenKinds, settings } from '../settings.svelte'
+  import { hiddenKinds, passOn, settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
@@ -472,11 +472,12 @@
     })
   })
 
-  onMount(() => {
-    if (isDesktop) void import('../pass/autofill').then(({ autofill }) => autofill.start())
+  $effect(() => {
+    if (isDesktop && passOn())
+      void import('../pass/autofill').then(({ autofill }) => autofill.start())
   })
 
-  const passBubble = $derived(passBubbles.of(tab.id))
+  const passBubble = $derived(passOn() ? passBubbles.of(tab.id) : null)
 
   onMount(() => {
     if (extending) void extensions.start()

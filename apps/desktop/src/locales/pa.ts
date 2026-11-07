@@ -3547,4 +3547,7 @@ export const pa: Dictionary = {
     'Telegram ਗਰੁੱਪ ਨਵੇਂ ਮਾਲਕ ਨੂੰ ਸਿਰਫ਼ ਆਪਣੀ ਐਪ ਤੋਂ ਸੌਂਪਦਾ ਹੈ',
   'That sticker is no longer available': 'ਉਹ ਸਟਿੱਕਰ ਹੁਣ ਉਪਲਬਧ ਨਹੀਂ',
   'Telegram is not set up in this build': 'ਇਸ ਬਿਲਡ ਵਿੱਚ Telegram ਸੈੱਟ ਨਹੀਂ ਹੈ',
+  'Password manager': 'ਪਾਸਵਰਡ ਮੈਨੇਜਰ',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass ਜੋੜਦਾ ਹੈ, ਜੋ ਪਾਸਵਰਡ ਰੱਖਦਾ ਹੈ ਅਤੇ ਵੈੱਬਸਾਈਟਾਂ ’ਤੇ ਭਰਦਾ ਹੈ। ਬੰਦ ਕਰਨ ’ਤੇ ਤੁਹਾਡੇ ਵਾਲਟ ਰਹਿੰਦੇ ਹਨ।',
 }

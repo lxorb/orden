@@ -3368,4 +3368,7 @@ export const zhHantHK: Dictionary = {
     'Telegram 只能在自己的應用程式中把群組轉讓給新擁有者',
   'That sticker is no longer available': '該貼圖已無法使用',
   'Telegram is not set up in this build': '此版本未設定 Telegram',
+  'Password manager': '密碼管理器',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    '加入 Pass，保管密碼並在網站上填入。關閉後保險庫仍會保留。',
 }

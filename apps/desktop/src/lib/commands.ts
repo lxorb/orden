@@ -83,7 +83,7 @@ import { archiveEntry, DIVIDER, listEntry } from './menu.svelte'
 import { lockAllEntry, protectEntries } from './protect/entries'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
-import { type KindName, settings, timeOn } from './settings.svelte'
+import { type KindName, passOn, settings, timeOn } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -1488,7 +1488,7 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.graph'),
       run: () => workspace.openGraph(),
     },
-    ...(__EVEN_PLUGIN__
+    ...(__EVEN_PLUGIN__ || !passOn()
       ? []
       : [
           {

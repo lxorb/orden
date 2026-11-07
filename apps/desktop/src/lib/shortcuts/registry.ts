@@ -14,7 +14,7 @@ import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
 import { showQuickAdd, toggleTabOverview } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/is.svelte'
-import { hiddenKinds, settings, timeOn } from '../settings.svelte'
+import { hiddenKinds, passOn, settings, timeOn } from '../settings.svelte'
 import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
 import { picks } from '../tab-strip/drag.svelte'
@@ -905,6 +905,7 @@ const APP_ENTRIES: Shortcut[] = [
           category: 'view',
           scope: 'app',
           key: 'Mod-Alt-v',
+          shown: () => passOn(),
           run: () => void import('../pass/open').then((one) => one.openPass()),
         } satisfies Shortcut,
       ]),
@@ -1501,6 +1502,7 @@ const PASS_ENTRIES: Shortcut[] = PASS_KEYS.map(([id, label, key]) => ({
   scope: 'panel' as const,
   key,
   contextual: true,
+  shown: () => passOn(),
 }))
 
 export const SHORTCUTS: Shortcut[] = [

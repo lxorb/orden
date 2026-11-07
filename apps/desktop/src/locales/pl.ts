@@ -3680,4 +3680,7 @@ export const pl: Dictionary = {
     'Telegram przekazuje grupę nowemu właścicielowi tylko we własnej aplikacji',
   'That sticker is no longer available': 'Ta naklejka nie jest już dostępna',
   'Telegram is not set up in this build': 'Telegram nie jest skonfigurowany w tej wersji',
+  'Password manager': 'Menedżer haseł',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Dodaje Pass, który przechowuje hasła i wpisuje je na stronach. Wyłączenie zachowuje twoje sejfy.',
 }

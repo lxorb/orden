@@ -3676,4 +3676,7 @@ export const uk: Dictionary = {
     'Telegram передає групу новому власникові лише у власному застосунку',
   'That sticker is no longer available': 'Цей стікер більше не доступний',
   'Telegram is not set up in this build': 'Telegram не налаштовано в цій збірці',
+  'Password manager': 'Менеджер паролів',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Додає Pass, який зберігає паролі й заповнює їх на сайтах. Якщо вимкнути, ваші сховища залишаться.',
 }

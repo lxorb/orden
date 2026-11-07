@@ -243,7 +243,9 @@
     return CATEGORIES.map((category) => ({
       id: category.id,
       label: category.label(),
-      rows: SHORTCUTS.filter((one) => one.category === category.id).filter(
+      rows: SHORTCUTS.filter(
+        (one) => one.category === category.id && one.shown?.() !== false,
+      ).filter(
         (one) =>
           !needle ||
           has(one.label()) ||

@@ -3561,4 +3561,7 @@ export const gsw: Dictionary = {
     'Telegram git e Gruppe nur i de eigene App amne neue Bsitzer wiiter',
   'That sticker is no longer available': 'De Sticker git s nüme',
   'Telegram is not set up in this build': 'Telegram isch i dem Build nöd iigrichtet',
+  'Password manager': 'Passwortmanager',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Füegt Pass dezue, wo Passwörter ufbewahrt und uf Websites ifüllt. Uusschalte bhaltet dini Tresor.',
 }

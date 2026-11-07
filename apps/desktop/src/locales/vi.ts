@@ -3441,4 +3441,7 @@ export const vi: Dictionary = {
     'Telegram chỉ chuyển nhóm cho chủ mới trong ứng dụng của chính nó',
   'That sticker is no longer available': 'Nhãn dán đó không còn nữa',
   'Telegram is not set up in this build': 'Telegram chưa được thiết lập trong bản dựng này',
+  'Password manager': 'Trình quản lý mật khẩu',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Thêm Pass, giữ mật khẩu và điền chúng trên các trang web. Tắt đi vẫn giữ các kho của bạn.',
 }

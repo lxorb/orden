@@ -3532,4 +3532,7 @@ export const bn: Dictionary = {
     'Telegram শুধু নিজের অ্যাপ থেকেই গ্রুপ নতুন মালিককে দেয়',
   'That sticker is no longer available': 'ওই স্টিকারটি আর পাওয়া যায় না',
   'Telegram is not set up in this build': 'এই বিল্ডে Telegram সেট আপ করা নেই',
+  'Password manager': 'পাসওয়ার্ড ম্যানেজার',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass যোগ করে, যা পাসওয়ার্ড রাখে এবং ওয়েবসাইটে সেগুলো পূরণ করে। বন্ধ করলেও আপনার ভল্টগুলো থেকে যায়।',
 }

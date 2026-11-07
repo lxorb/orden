@@ -3653,4 +3653,7 @@ export const it: Dictionary = {
     'Telegram cede un gruppo a un nuovo proprietario solo dalla propria app',
   'That sticker is no longer available': 'Questo sticker non è più disponibile',
   'Telegram is not set up in this build': 'Telegram non è configurato in questa build',
+  'Password manager': 'Gestore di password',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Aggiunge Pass, che conserva le password e le compila sui siti web. Disattivarlo mantiene le tue casseforti.',
 }

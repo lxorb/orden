@@ -3475,4 +3475,7 @@ export const id: Dictionary = {
     'Telegram menyerahkan grup ke pemilik baru hanya dari aplikasinya sendiri',
   'That sticker is no longer available': 'Stiker itu sudah tidak tersedia',
   'Telegram is not set up in this build': 'Telegram belum disiapkan di versi ini',
+  'Password manager': 'Pengelola kata sandi',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Menambahkan Pass, yang menyimpan kata sandi dan mengisinya di situs web. Mematikannya tetap menyimpan brankas Anda.',
 }
