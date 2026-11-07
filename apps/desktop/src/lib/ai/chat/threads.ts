@@ -1,5 +1,6 @@
 import { without } from '../../records'
 import { isNumber, isRecord, isString } from '../../stored'
+import { locksHere, locksWork } from '../../locks'
 import { isNative, invoke } from '../../tauri'
 import { FIRST_MODE, modeIn } from '../modes'
 import { windows } from '../../windows'
@@ -282,43 +283,65 @@ function answerOthers(): void {
 
 const claims = new Map<string, () => void>()
 
-export function claimAnswer(id: string): Promise<boolean> {
-  const locks = typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
-  if (!locks || claims.has(id)) return Promise.resolve(!claims.has(id))
-  return new Promise<boolean>((resolve) => {
-    locks
-      .request(`orden-ai-answer:${id}`, { ifAvailable: true }, (lock) => {
-        if (!lock || claims.has(id)) {
-          resolve(false)
-          return undefined
-        }
-        resolve(true)
-        return new Promise<void>((release) => claims.set(id, release))
-      })
-      .catch(() => resolve(true))
+const LOCK_PATIENCE = 2_000
+
+function inTime<T>(asked: () => Promise<T>, otherwise: T): Promise<T> {
+  return new Promise<T>((resolve) => {
+    const timer = setTimeout(() => resolve(otherwise), LOCK_PATIENCE)
+    const settle = (value: T) => {
+      clearTimeout(timer)
+      resolve(value)
+    }
+    try {
+      asked().then(settle, () => settle(otherwise))
+    } catch {
+      settle(otherwise)
+    }
   })
 }
 
-async function answerHeld(id: string): Promise<boolean | null> {
-  const locks = typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
-  if (!locks) return null
-  try {
-    const { held = [] } = await locks.query()
-    return held.some((one) => one.name === `orden-ai-answer:${id}`)
-  } catch {
-    return null
-  }
+export async function claimAnswer(id: string): Promise<boolean> {
+  if (claims.has(id)) return false
+  const locks = locksHere()
+  if (!locks || !(await locksWork(locks))) return !claims.has(id)
+  let late = false
+  const won = await inTime(
+    () =>
+      new Promise<boolean>((resolve, reject) => {
+        locks
+          .request(`orden-ai-answer:${id}`, { ifAvailable: true }, (lock) => {
+            if (!lock || late || claims.has(id)) {
+              resolve(false)
+              return undefined
+            }
+            resolve(true)
+            return new Promise<void>((release) => claims.set(id, release))
+          })
+          .catch(reject)
+      }),
+    null,
+  )
+  late = true
+  return won ?? !claims.has(id)
 }
 
-export function answerFreed(id: string): Promise<void> {
-  const locks = typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
-  if (!locks) return Promise.resolve()
-  return locks
-    .request(`orden-ai-answer:${id}`, () => undefined)
-    .then(
-      () => undefined,
-      () => undefined,
-    )
+function answerHeld(id: string): Promise<boolean | null> {
+  const locks = locksHere()
+  if (!locks) return Promise.resolve(null)
+  return inTime(async () => {
+    const { held = [] } = await locks.query()
+    return held.some((one) => one.name === `orden-ai-answer:${id}`)
+  }, null)
+}
+
+export async function answerFreed(id: string): Promise<void> {
+  const locks = locksHere()
+  if (!locks || !(await locksWork(locks))) return
+  try {
+    await locks.request(`orden-ai-answer:${id}`, () => undefined)
+  } catch {
+    return
+  }
 }
 
 export function unclaimAnswer(id: string): void {
