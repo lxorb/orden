@@ -3531,4 +3531,30 @@ export const tr: Dictionary = {
   'Some changes have not reached your account yet': 'Bazı değişiklikler henüz hesabınıza ulaşmadı',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'Bu tarayıcıda kalırlar, burada oturum açan başka kimse onları görmez ve yeniden oturum açtığınızda gönderilirler.',
+  'Leave it empty to sign in with a QR code instead':
+    'Bunun yerine QR koduyla girmek için boş bırakın',
+  'Telegram code': 'Telegram kodu',
+  'Sent to Telegram on your other device': 'Diğer cihazınızdaki Telegram’a gönderildi',
+  'Sent by SMS': 'SMS ile gönderildi',
+  'You will get a call with the code': 'Kodu söyleyen bir arama alacaksınız',
+  'The code was wrong. Try again.': 'Kod yanlıştı. Tekrar deneyin.',
+  'The code expired, so Telegram sent a new one.':
+    'Kodun süresi doldu, Telegram yenisini gönderdi.',
+  'Two-step verification password': 'İki adımlı doğrulama parolası',
+  'The password was wrong. Try again.': 'Parola yanlıştı. Tekrar deneyin.',
+  'Scan with Telegram on your phone': 'Telefonunuzdaki Telegram ile tarayın',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Ayarlar > Cihazlar > Masaüstü Cihaz Bağla',
+  'Signing in to Telegram needs the app': 'Telegram’a giriş için uygulama gerekir',
+  'Telegram does not know this phone number': 'Telegram bu telefon numarasını tanımıyor',
+  'Too many tries. Wait a while and try again.': 'Çok fazla deneme. Biraz bekleyip tekrar deneyin.',
+  'Too many wrong tries': 'Çok fazla yanlış deneme',
+  'Signed out of Telegram. Connect again.': 'Telegram oturumu kapandı. Yeniden bağlanın.',
+  'Telegram cannot do that in this conversation': 'Telegram bunu bu konuşmada yapamaz',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram grup ve kanallardaki mesajları herkes için siler',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram bir grubu yeni sahibine yalnızca kendi uygulamasında devreder',
+  'That sticker is no longer available': 'Bu çıkartma artık kullanılamıyor',
+  'Telegram is not set up in this build': 'Telegram bu sürümde ayarlanmamış',
 }

@@ -3549,4 +3549,30 @@ export const kn: Dictionary = {
     'ಕೆಲವು ಬದಲಾವಣೆಗಳು ಇನ್ನೂ ನಿಮ್ಮ ಖಾತೆಯನ್ನು ತಲುಪಿಲ್ಲ',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'ಅವು ಈ ಬ್ರೌಸರ್‌ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ, ಇಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡುವ ಬೇರೆ ಯಾರಿಗೂ ಕಾಣುವುದಿಲ್ಲ, ಮತ್ತು ನೀವು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿದಾಗ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.',
+  'Leave it empty to sign in with a QR code instead':
+    'ಬದಲಿಗೆ QR ಕೋಡ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಮಾಡಲು ಖಾಲಿ ಬಿಡಿ',
+  'Telegram code': 'Telegram ಕೋಡ್',
+  'Sent to Telegram on your other device': 'ನಿಮ್ಮ ಇನ್ನೊಂದು ಸಾಧನದ Telegram‌ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ',
+  'Sent by SMS': 'SMS ಮೂಲಕ ಕಳುಹಿಸಲಾಗಿದೆ',
+  'You will get a call with the code': 'ಕೋಡ್ ಹೇಳುವ ಕರೆ ನಿಮಗೆ ಬರುತ್ತದೆ',
+  'The code was wrong. Try again.': 'ಕೋಡ್ ತಪ್ಪಾಗಿತ್ತು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'The code expired, so Telegram sent a new one.':
+    'ಕೋಡ್ ಅವಧಿ ಮುಗಿದಿದೆ, ಹಾಗಾಗಿ Telegram ಹೊಸದನ್ನು ಕಳುಹಿಸಿದೆ.',
+  'Two-step verification password': 'ಎರಡು ಹಂತದ ಪರಿಶೀಲನೆ ಪಾಸ್‌ವರ್ಡ್',
+  'The password was wrong. Try again.': 'ಪಾಸ್‌ವರ್ಡ್ ತಪ್ಪಾಗಿತ್ತು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'Scan with Telegram on your phone': 'ನಿಮ್ಮ ಫೋನ್‌ನ Telegram‌ನಿಂದ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram‌ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಲು ಆ್ಯಪ್ ಬೇಕು',
+  'Telegram does not know this phone number': 'Telegram‌ಗೆ ಈ ಫೋನ್ ಸಂಖ್ಯೆ ಗೊತ್ತಿಲ್ಲ',
+  'Too many tries. Wait a while and try again.': 'ತುಂಬಾ ಪ್ರಯತ್ನಗಳು. ಸ್ವಲ್ಪ ಕಾದು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'Too many wrong tries': 'ತುಂಬಾ ತಪ್ಪು ಪ್ರಯತ್ನಗಳು',
+  'Signed out of Telegram. Connect again.': 'Telegram‌ನಿಂದ ಸೈನ್ ಔಟ್ ಆಗಿದೆ. ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ.',
+  'Telegram cannot do that in this conversation': 'ಈ ಸಂಭಾಷಣೆಯಲ್ಲಿ Telegram ಅದನ್ನು ಮಾಡಲಾರದು',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram ಗುಂಪುಗಳು ಮತ್ತು ಚಾನೆಲ್‌ಗಳ ಸಂದೇಶಗಳನ್ನು ಎಲ್ಲರಿಗೂ ಅಳಿಸುತ್ತದೆ',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram ಗುಂಪನ್ನು ಹೊಸ ಮಾಲೀಕರಿಗೆ ತನ್ನ ಆ್ಯಪ್‌ನಿಂದ ಮಾತ್ರ ಹಸ್ತಾಂತರಿಸುತ್ತದೆ',
+  'That sticker is no longer available': 'ಆ ಸ್ಟಿಕರ್ ಈಗ ಲಭ್ಯವಿಲ್ಲ',
+  'Telegram is not set up in this build': 'ಈ ಬಿಲ್ಡ್‌ನಲ್ಲಿ Telegram ಹೊಂದಿಸಿಲ್ಲ',
 }

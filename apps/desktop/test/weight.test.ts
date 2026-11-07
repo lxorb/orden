@@ -189,6 +189,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['@lezer/lr', 'the parser runtime under all three'],
     ['@codemirror/autocomplete', 'the completion popup'],
     ['@codemirror/search', 'the search engine'],
+    ['@mtcute/web', 'the Telegram client'],
   ])('does not reach %s (%s)', (asked) => {
     expect([...graph.packages]).not.toContain(asked)
   })
@@ -321,6 +322,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/first-screen/keep.svelte.ts', "what keeps a note's first screen"],
     ['/lib/search/warm.svelte.ts', "the search's hold on the space"],
     ['/markdown/src/index.ts', 'the renderer'],
+    ['/lib/chats/providers/telegram-client.ts', "the Telegram client's door"],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })

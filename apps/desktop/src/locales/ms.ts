@@ -3445,4 +3445,32 @@ export const ms: Dictionary = {
   'Some changes have not reached your account yet': 'Beberapa perubahan belum sampai ke akaun anda',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'Perubahan itu kekal dalam pelayar ini, tidak dilihat oleh sesiapa lagi yang log masuk di sini, dan dihantar apabila anda log masuk semula.',
+  'Leave it empty to sign in with a QR code instead':
+    'Biarkan kosong untuk log masuk dengan kod QR',
+  'Telegram code': 'Kod Telegram',
+  'Sent to Telegram on your other device': 'Dihantar ke Telegram pada peranti anda yang lain',
+  'Sent by SMS': 'Dihantar melalui SMS',
+  'You will get a call with the code': 'Anda akan menerima panggilan dengan kod itu',
+  'The code was wrong. Try again.': 'Kod itu salah. Cuba lagi.',
+  'The code expired, so Telegram sent a new one.':
+    'Kod itu tamat tempoh, jadi Telegram menghantar yang baharu.',
+  'Two-step verification password': 'Kata laluan pengesahan dua langkah',
+  'The password was wrong. Try again.': 'Kata laluan itu salah. Cuba lagi.',
+  'Scan with Telegram on your phone': 'Imbas dengan Telegram pada telefon anda',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Tetapan > Peranti > Pautkan Peranti Desktop',
+  'Signing in to Telegram needs the app': 'Log masuk ke Telegram memerlukan aplikasi',
+  'Telegram does not know this phone number': 'Telegram tidak mengenali nombor telefon ini',
+  'Too many tries. Wait a while and try again.':
+    'Terlalu banyak cubaan. Tunggu sebentar dan cuba lagi.',
+  'Too many wrong tries': 'Terlalu banyak cubaan yang salah',
+  'Signed out of Telegram. Connect again.': 'Dilog keluar daripada Telegram. Sambung semula.',
+  'Telegram cannot do that in this conversation':
+    'Telegram tidak boleh melakukannya dalam perbualan ini',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram memadam mesej dalam kumpulan dan saluran untuk semua orang',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram menyerahkan kumpulan kepada pemilik baharu hanya dari aplikasinya sendiri',
+  'That sticker is no longer available': 'Pelekat itu tidak lagi tersedia',
+  'Telegram is not set up in this build': 'Telegram tidak disediakan dalam binaan ini',
 }

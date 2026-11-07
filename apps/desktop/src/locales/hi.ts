@@ -3511,4 +3511,31 @@ export const hi: Dictionary = {
   'Some changes have not reached your account yet': 'कुछ बदलाव अभी तक आपके खाते तक नहीं पहुँचे',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'वे इसी ब्राउज़र में रहते हैं, यहाँ साइन इन करने वाले किसी और को नहीं दिखते, और आपके दोबारा साइन इन करने पर भेजे जाते हैं।',
+  'Leave it empty to sign in with a QR code instead':
+    'इसके बजाय QR कोड से साइन इन करने के लिए खाली छोड़ें',
+  'Telegram code': 'Telegram कोड',
+  'Sent to Telegram on your other device': 'आपके दूसरे डिवाइस पर Telegram में भेजा गया',
+  'Sent by SMS': 'SMS से भेजा गया',
+  'You will get a call with the code': 'आपको कोड बताने वाली कॉल आएगी',
+  'The code was wrong. Try again.': 'कोड गलत था। फिर से कोशिश करें।',
+  'The code expired, so Telegram sent a new one.':
+    'कोड की अवधि खत्म हो गई, इसलिए Telegram ने नया भेजा।',
+  'Two-step verification password': 'दो-चरणीय सत्यापन पासवर्ड',
+  'The password was wrong. Try again.': 'पासवर्ड गलत था। फिर से कोशिश करें।',
+  'Scan with Telegram on your phone': 'अपने फ़ोन पर Telegram से स्कैन करें',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram में साइन इन करने के लिए ऐप चाहिए',
+  'Telegram does not know this phone number': 'Telegram इस फ़ोन नंबर को नहीं जानता',
+  'Too many tries. Wait a while and try again.':
+    'बहुत ज़्यादा कोशिशें। थोड़ी देर रुककर फिर कोशिश करें।',
+  'Too many wrong tries': 'बहुत ज़्यादा गलत कोशिशें',
+  'Signed out of Telegram. Connect again.': 'Telegram से साइन आउट हो गए। फिर से कनेक्ट करें।',
+  'Telegram cannot do that in this conversation': 'Telegram इस बातचीत में ऐसा नहीं कर सकता',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram ग्रुप और चैनल के संदेश सभी के लिए हटाता है',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram ग्रुप को नए मालिक को केवल अपने ऐप से सौंपता है',
+  'That sticker is no longer available': 'वह स्टिकर अब उपलब्ध नहीं है',
+  'Telegram is not set up in this build': 'इस बिल्ड में Telegram सेट अप नहीं है',
 }

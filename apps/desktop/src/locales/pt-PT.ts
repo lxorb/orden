@@ -3609,4 +3609,31 @@ export const ptPT: Dictionary = {
     'Algumas alterações ainda não chegaram à sua conta',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'Ficam neste navegador, fora da vista de qualquer outra pessoa que inicie sessão aqui, e são enviadas quando voltar a iniciar sessão.',
+  'Leave it empty to sign in with a QR code instead':
+    'Deixe vazio para iniciar sessão com um código QR',
+  'Telegram code': 'Código do Telegram',
+  'Sent to Telegram on your other device': 'Enviado para o Telegram no seu outro dispositivo',
+  'Sent by SMS': 'Enviado por SMS',
+  'You will get a call with the code': 'Vai receber uma chamada com o código',
+  'The code was wrong. Try again.': 'O código estava errado. Tente novamente.',
+  'The code expired, so Telegram sent a new one.':
+    'O código expirou, por isso o Telegram enviou um novo.',
+  'Two-step verification password': 'Palavra-passe da verificação em dois passos',
+  'The password was wrong. Try again.': 'A palavra-passe estava errada. Tente novamente.',
+  'Scan with Telegram on your phone': 'Leia com o Telegram no seu telemóvel',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Definições > Dispositivos > Ligar dispositivo de computador',
+  'Signing in to Telegram needs the app': 'Iniciar sessão no Telegram exige a aplicação',
+  'Telegram does not know this phone number': 'O Telegram não conhece este número de telefone',
+  'Too many tries. Wait a while and try again.':
+    'Demasiadas tentativas. Aguarde um pouco e tente novamente.',
+  'Too many wrong tries': 'Demasiadas tentativas erradas',
+  'Signed out of Telegram. Connect again.': 'Sessão do Telegram terminada. Ligue-se novamente.',
+  'Telegram cannot do that in this conversation': 'O Telegram não pode fazer isso nesta conversa',
+  'Telegram removes messages in groups and channels for everyone':
+    'O Telegram elimina mensagens em grupos e canais para todos',
+  'Telegram hands a group to a new owner only from its own app':
+    'O Telegram só passa um grupo a um novo proprietário na sua própria aplicação',
+  'That sticker is no longer available': 'Esse autocolante já não está disponível',
+  'Telegram is not set up in this build': 'O Telegram não está configurado nesta versão',
 }

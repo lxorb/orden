@@ -309,7 +309,12 @@ export interface ChatProvider {
   readonly warning?: string
   readonly kept?: readonly string[]
   available(host: Host): boolean
-  connect(config: Readonly<Record<string, string>>, host: Host): Promise<Connection>
+  connect(
+    config: Readonly<Record<string, string>>,
+    host: Host,
+    account?: string,
+  ): Promise<Connection>
+  forget?(account: string, host: Host): Promise<void>
 }
 
 export function secretName(provider: string, account: string, field: string): string {

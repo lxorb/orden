@@ -3425,4 +3425,32 @@ export const ja: Dictionary = {
   'Some changes have not reached your account yet': 'まだアカウントに届いていない変更があります',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     '変更はこのブラウザーに残り、ここでサインインするほかの人には見えず、もう一度サインインすると送られます。',
+  'Leave it empty to sign in with a QR code instead':
+    '空欄のままにすると QR コードでサインインします',
+  'Telegram code': 'Telegram のコード',
+  'Sent to Telegram on your other device': 'ほかの端末の Telegram に送信しました',
+  'Sent by SMS': 'SMS で送信しました',
+  'You will get a call with the code': 'コードを伝える電話がかかってきます',
+  'The code was wrong. Try again.': 'コードが違います。もう一度お試しください。',
+  'The code expired, so Telegram sent a new one.':
+    'コードの期限が切れたため、Telegram が新しいコードを送りました。',
+  'Two-step verification password': '2 段階認証のパスワード',
+  'The password was wrong. Try again.': 'パスワードが違います。もう一度お試しください。',
+  'Scan with Telegram on your phone': 'スマートフォンの Telegram でスキャン',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > 設定 > デバイス > デスクトップ端末をリンク',
+  'Signing in to Telegram needs the app': 'Telegram へのサインインにはアプリが必要です',
+  'Telegram does not know this phone number': 'Telegram はこの電話番号を知りません',
+  'Too many tries. Wait a while and try again.':
+    '試行回数が多すぎます。しばらく待ってからもう一度お試しください。',
+  'Too many wrong tries': '間違いが多すぎます',
+  'Signed out of Telegram. Connect again.':
+    'Telegram からサインアウトしました。もう一度接続してください。',
+  'Telegram cannot do that in this conversation': 'この会話では Telegram はそれを行えません',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram はグループとチャンネルのメッセージを全員から削除します',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram はグループの新しいオーナーへの譲渡を自身のアプリでしか行えません',
+  'That sticker is no longer available': 'そのステッカーはもう使えません',
+  'Telegram is not set up in this build': 'このビルドでは Telegram が設定されていません',
 }

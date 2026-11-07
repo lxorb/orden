@@ -3520,4 +3520,31 @@ export const pa: Dictionary = {
   'Some changes have not reached your account yet': 'ਕੁਝ ਬਦਲਾਅ ਹਾਲੇ ਤੁਹਾਡੇ ਖਾਤੇ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚੇ',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'ਉਹ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਰਹਿੰਦੇ ਹਨ, ਇੱਥੇ ਸਾਈਨ ਇਨ ਕਰਨ ਵਾਲੇ ਕਿਸੇ ਹੋਰ ਨੂੰ ਨਹੀਂ ਦਿਸਦੇ, ਅਤੇ ਤੁਹਾਡੇ ਮੁੜ ਸਾਈਨ ਇਨ ਕਰਨ ’ਤੇ ਭੇਜੇ ਜਾਂਦੇ ਹਨ।',
+  'Leave it empty to sign in with a QR code instead':
+    'ਇਸਦੀ ਥਾਂ QR ਕੋਡ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰਨ ਲਈ ਖਾਲੀ ਛੱਡੋ',
+  'Telegram code': 'Telegram ਕੋਡ',
+  'Sent to Telegram on your other device': 'ਤੁਹਾਡੇ ਦੂਜੇ ਡਿਵਾਈਸ ਦੇ Telegram ’ਤੇ ਭੇਜਿਆ',
+  'Sent by SMS': 'SMS ਨਾਲ ਭੇਜਿਆ',
+  'You will get a call with the code': 'ਤੁਹਾਨੂੰ ਕੋਡ ਦੱਸਣ ਵਾਲੀ ਕਾਲ ਆਵੇਗੀ',
+  'The code was wrong. Try again.': 'ਕੋਡ ਗਲਤ ਸੀ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+  'The code expired, so Telegram sent a new one.':
+    'ਕੋਡ ਦੀ ਮਿਆਦ ਮੁੱਕ ਗਈ, ਇਸ ਲਈ Telegram ਨੇ ਨਵਾਂ ਭੇਜਿਆ।',
+  'Two-step verification password': 'ਦੋ-ਪੜਾਵੀ ਪੁਸ਼ਟੀ ਪਾਸਵਰਡ',
+  'The password was wrong. Try again.': 'ਪਾਸਵਰਡ ਗਲਤ ਸੀ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+  'Scan with Telegram on your phone': 'ਆਪਣੇ ਫ਼ੋਨ ਦੇ Telegram ਨਾਲ ਸਕੈਨ ਕਰੋ',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram ਵਿੱਚ ਸਾਈਨ ਇਨ ਲਈ ਐਪ ਚਾਹੀਦੀ ਹੈ',
+  'Telegram does not know this phone number': 'Telegram ਇਸ ਫ਼ੋਨ ਨੰਬਰ ਨੂੰ ਨਹੀਂ ਜਾਣਦਾ',
+  'Too many tries. Wait a while and try again.':
+    'ਬਹੁਤ ਜ਼ਿਆਦਾ ਕੋਸ਼ਿਸ਼ਾਂ। ਥੋੜ੍ਹਾ ਰੁਕ ਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+  'Too many wrong tries': 'ਬਹੁਤ ਜ਼ਿਆਦਾ ਗਲਤ ਕੋਸ਼ਿਸ਼ਾਂ',
+  'Signed out of Telegram. Connect again.': 'Telegram ਤੋਂ ਸਾਈਨ ਆਊਟ ਹੋ ਗਏ। ਦੁਬਾਰਾ ਕਨੈਕਟ ਕਰੋ।',
+  'Telegram cannot do that in this conversation': 'Telegram ਇਸ ਗੱਲਬਾਤ ਵਿੱਚ ਇਹ ਨਹੀਂ ਕਰ ਸਕਦਾ',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram ਗਰੁੱਪਾਂ ਅਤੇ ਚੈਨਲਾਂ ਦੇ ਸੁਨੇਹੇ ਸਭ ਲਈ ਮਿਟਾਉਂਦਾ ਹੈ',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram ਗਰੁੱਪ ਨਵੇਂ ਮਾਲਕ ਨੂੰ ਸਿਰਫ਼ ਆਪਣੀ ਐਪ ਤੋਂ ਸੌਂਪਦਾ ਹੈ',
+  'That sticker is no longer available': 'ਉਹ ਸਟਿੱਕਰ ਹੁਣ ਉਪਲਬਧ ਨਹੀਂ',
+  'Telegram is not set up in this build': 'ਇਸ ਬਿਲਡ ਵਿੱਚ Telegram ਸੈੱਟ ਨਹੀਂ ਹੈ',
 }

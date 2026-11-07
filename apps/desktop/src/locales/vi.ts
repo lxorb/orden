@@ -3416,4 +3416,29 @@ export const vi: Dictionary = {
     'Một số thay đổi chưa đến được tài khoản của bạn',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'Chúng ở lại trong trình duyệt này, không ai khác đăng nhập ở đây nhìn thấy, và được gửi lên khi bạn đăng nhập lại.',
+  'Leave it empty to sign in with a QR code instead': 'Để trống để đăng nhập bằng mã QR',
+  'Telegram code': 'Mã Telegram',
+  'Sent to Telegram on your other device': 'Đã gửi đến Telegram trên thiết bị khác của bạn',
+  'Sent by SMS': 'Đã gửi qua SMS',
+  'You will get a call with the code': 'Bạn sẽ nhận một cuộc gọi đọc mã',
+  'The code was wrong. Try again.': 'Mã không đúng. Hãy thử lại.',
+  'The code expired, so Telegram sent a new one.': 'Mã đã hết hạn nên Telegram đã gửi mã mới.',
+  'Two-step verification password': 'Mật khẩu xác minh hai bước',
+  'The password was wrong. Try again.': 'Mật khẩu không đúng. Hãy thử lại.',
+  'Scan with Telegram on your phone': 'Quét bằng Telegram trên điện thoại',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Cài đặt > Thiết bị > Liên kết thiết bị máy tính',
+  'Signing in to Telegram needs the app': 'Đăng nhập Telegram cần ứng dụng',
+  'Telegram does not know this phone number': 'Telegram không biết số điện thoại này',
+  'Too many tries. Wait a while and try again.': 'Thử quá nhiều lần. Hãy đợi một lúc rồi thử lại.',
+  'Too many wrong tries': 'Sai quá nhiều lần',
+  'Signed out of Telegram. Connect again.': 'Đã đăng xuất khỏi Telegram. Hãy kết nối lại.',
+  'Telegram cannot do that in this conversation':
+    'Telegram không làm được việc đó trong cuộc trò chuyện này',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram xoá tin nhắn trong nhóm và kênh cho mọi người',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram chỉ chuyển nhóm cho chủ mới trong ứng dụng của chính nó',
+  'That sticker is no longer available': 'Nhãn dán đó không còn nữa',
+  'Telegram is not set up in this build': 'Telegram chưa được thiết lập trong bản dựng này',
 }

@@ -3580,4 +3580,31 @@ export const fil: Dictionary = {
     'May mga pagbabagong hindi pa nakakarating sa iyong account',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'Mananatili ang mga ito sa browser na ito, hindi makikita ng sinumang ibang mag-sign in dito, at maipapadala kapag nag-sign in ka ulit.',
+  'Leave it empty to sign in with a QR code instead':
+    'Iwanang blangko para mag-sign in gamit ang QR code',
+  'Telegram code': 'Code ng Telegram',
+  'Sent to Telegram on your other device': 'Ipinadala sa Telegram sa iba mong device',
+  'Sent by SMS': 'Ipinadala sa SMS',
+  'You will get a call with the code': 'Makakatanggap ka ng tawag na may code',
+  'The code was wrong. Try again.': 'Mali ang code. Subukan ulit.',
+  'The code expired, so Telegram sent a new one.':
+    'Nag-expire ang code, kaya nagpadala ang Telegram ng bago.',
+  'Two-step verification password': 'Password ng two-step verification',
+  'The password was wrong. Try again.': 'Mali ang password. Subukan ulit.',
+  'Scan with Telegram on your phone': 'I-scan gamit ang Telegram sa iyong telepono',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Kailangan ang app para mag-sign in sa Telegram',
+  'Telegram does not know this phone number': 'Hindi kilala ng Telegram ang numerong ito',
+  'Too many tries. Wait a while and try again.':
+    'Sobrang dami ng subok. Maghintay muna at subukan ulit.',
+  'Too many wrong tries': 'Sobrang daming maling subok',
+  'Signed out of Telegram. Connect again.': 'Na-sign out sa Telegram. Kumonekta ulit.',
+  'Telegram cannot do that in this conversation': 'Hindi ito magagawa ng Telegram sa usapang ito',
+  'Telegram removes messages in groups and channels for everyone':
+    'Binubura ng Telegram ang mga mensahe sa grupo at channel para sa lahat',
+  'Telegram hands a group to a new owner only from its own app':
+    'Sa sarili lang nitong app ipinapasa ng Telegram ang grupo sa bagong may-ari',
+  'That sticker is no longer available': 'Wala na ang sticker na iyon',
+  'Telegram is not set up in this build': 'Hindi naka-set up ang Telegram sa build na ito',
 }

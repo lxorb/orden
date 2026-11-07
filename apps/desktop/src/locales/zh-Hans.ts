@@ -3344,4 +3344,27 @@ export const zhHans: Dictionary = {
   'Some changes have not reached your account yet': '部分更改尚未到达你的账户',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     '这些更改留在此浏览器中，在此登录的其他人看不到，你再次登录时会上传。',
+  'Leave it empty to sign in with a QR code instead': '留空则改用二维码登录',
+  'Telegram code': 'Telegram 验证码',
+  'Sent to Telegram on your other device': '已发送到你另一台设备上的 Telegram',
+  'Sent by SMS': '已通过短信发送',
+  'You will get a call with the code': '你会接到一个告知验证码的电话',
+  'The code was wrong. Try again.': '验证码错误，请重试。',
+  'The code expired, so Telegram sent a new one.': '验证码已过期，Telegram 已发送新的验证码。',
+  'Two-step verification password': '两步验证密码',
+  'The password was wrong. Try again.': '密码错误，请重试。',
+  'Scan with Telegram on your phone': '用手机上的 Telegram 扫描',
+  'Telegram > Settings > Devices > Link Desktop Device': 'Telegram > 设置 > 设备 > 关联桌面设备',
+  'Signing in to Telegram needs the app': '登录 Telegram 需要应用',
+  'Telegram does not know this phone number': 'Telegram 不认识这个电话号码',
+  'Too many tries. Wait a while and try again.': '尝试次数过多，请稍后再试。',
+  'Too many wrong tries': '错误次数过多',
+  'Signed out of Telegram. Connect again.': '已退出 Telegram，请重新连接。',
+  'Telegram cannot do that in this conversation': 'Telegram 无法在这个对话中这样做',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram 会为所有人删除群组和频道中的消息',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram 只能在自己的应用中把群组转让给新群主',
+  'That sticker is no longer available': '该贴纸已不可用',
+  'Telegram is not set up in this build': '此版本未设置 Telegram',
 }

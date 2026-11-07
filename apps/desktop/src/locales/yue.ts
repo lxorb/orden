@@ -3337,4 +3337,27 @@ export const yue: Dictionary = {
   'Some changes have not reached your account yet': '有啲改動仲未去到你個帳戶',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     '佢哋會留喺呢個瀏覽器，喺度登入嘅其他人睇唔到，你再登入嗰陣就會傳上去。',
+  'Leave it empty to sign in with a QR code instead': '留空就改用 QR 碼登入',
+  'Telegram code': 'Telegram 驗證碼',
+  'Sent to Telegram on your other device': '已經傳咗去你另一部裝置嘅 Telegram',
+  'Sent by SMS': '已經用短訊傳咗',
+  'You will get a call with the code': '你會收到一個講驗證碼嘅電話',
+  'The code was wrong. Try again.': '驗證碼唔啱，請再試吓。',
+  'The code expired, so Telegram sent a new one.': '驗證碼過咗期，所以 Telegram 傳咗個新嘅。',
+  'Two-step verification password': '兩步驗證密碼',
+  'The password was wrong. Try again.': '密碼唔啱，請再試吓。',
+  'Scan with Telegram on your phone': '用手機嘅 Telegram 掃描',
+  'Telegram > Settings > Devices > Link Desktop Device': 'Telegram > 設定 > 裝置 > 連結桌面裝置',
+  'Signing in to Telegram needs the app': '登入 Telegram 要用應用程式',
+  'Telegram does not know this phone number': 'Telegram 唔識呢個電話號碼',
+  'Too many tries. Wait a while and try again.': '試得太多次，等陣再試吓。',
+  'Too many wrong tries': '錯得太多次',
+  'Signed out of Telegram. Connect again.': '已經登出咗 Telegram，請重新連線。',
+  'Telegram cannot do that in this conversation': 'Telegram 喺呢個對話度做唔到',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram 會幫所有人刪除群組同頻道入面嘅訊息',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram 淨係喺自己嘅應用程式先可以將群組轉畀新擁有人',
+  'That sticker is no longer available': '嗰張貼圖已經冇咗',
+  'Telegram is not set up in this build': '呢個版本未設定 Telegram',
 }

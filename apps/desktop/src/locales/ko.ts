@@ -3406,4 +3406,30 @@ export const ko: Dictionary = {
     '아직 계정에 도착하지 않은 변경 사항이 있습니다',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     '변경 사항은 이 브라우저에 남고, 여기서 로그인하는 다른 사람에게는 보이지 않으며, 다시 로그인하면 올라갑니다.',
+  'Leave it empty to sign in with a QR code instead': '비워 두면 QR 코드로 로그인합니다',
+  'Telegram code': 'Telegram 코드',
+  'Sent to Telegram on your other device': '다른 기기의 Telegram으로 보냈습니다',
+  'Sent by SMS': 'SMS로 보냈습니다',
+  'You will get a call with the code': '코드를 알려 주는 전화가 걸려 옵니다',
+  'The code was wrong. Try again.': '코드가 틀렸습니다. 다시 시도하세요.',
+  'The code expired, so Telegram sent a new one.':
+    '코드가 만료되어 Telegram이 새 코드를 보냈습니다.',
+  'Two-step verification password': '2단계 인증 비밀번호',
+  'The password was wrong. Try again.': '비밀번호가 틀렸습니다. 다시 시도하세요.',
+  'Scan with Telegram on your phone': '휴대폰의 Telegram으로 스캔하세요',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > 설정 > 기기 > 데스크톱 기기 연결',
+  'Signing in to Telegram needs the app': 'Telegram에 로그인하려면 앱이 필요합니다',
+  'Telegram does not know this phone number': 'Telegram이 이 전화번호를 모릅니다',
+  'Too many tries. Wait a while and try again.':
+    '시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.',
+  'Too many wrong tries': '틀린 시도가 너무 많습니다',
+  'Signed out of Telegram. Connect again.': 'Telegram에서 로그아웃되었습니다. 다시 연결하세요.',
+  'Telegram cannot do that in this conversation': '이 대화에서는 Telegram이 그렇게 할 수 없습니다',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram은 그룹과 채널의 메시지를 모두에게서 삭제합니다',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram은 자체 앱에서만 그룹을 새 소유자에게 넘깁니다',
+  'That sticker is no longer available': '그 스티커는 더 이상 없습니다',
+  'Telegram is not set up in this build': '이 빌드에는 Telegram이 설정되어 있지 않습니다',
 }
