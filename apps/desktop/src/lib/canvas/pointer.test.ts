@@ -755,13 +755,13 @@ describe('rubbing out', () => {
       context({ tool: 'erase' }),
     )
 
-    expect(effects.at(-1)).toMatchObject({ do: 'cut', at: { x: 9, y: 0 } })
+    expect(effects.at(-1)).toMatchObject({ do: 'cut', ats: [{ x: 9, y: 0 }] })
   })
 
   test('with shift it takes whole strokes instead, as far as the stroke eraser reaches', () => {
     const { effects } = play([down({ shift: true })], context({ tool: 'erase', scale: 2 }))
 
-    expect(effects).toEqual([{ do: 'rub', at: HERE, reach: STROKE_RUB / 2 }])
+    expect(effects).toEqual([{ do: 'rub', ats: [HERE], reach: STROKE_RUB / 2 }])
   })
 
   test('takes whole strokes when the bar says so, with no key held', () => {
@@ -770,7 +770,7 @@ describe('rubbing out', () => {
       context({ tool: 'erase', eraser: { whole: true, size: RUB, stroke: 6 } }),
     )
 
-    expect(effects).toEqual([{ do: 'rub', at: HERE, reach: 6 }])
+    expect(effects).toEqual([{ do: 'rub', ats: [HERE], reach: 6 }])
   })
 
   test('reaches as far as the bar says, in plane units at this zoom', () => {
@@ -779,7 +779,7 @@ describe('rubbing out', () => {
       context({ tool: 'erase', eraser: { whole: false, size: 48, stroke: STROKE_RUB }, scale: 2 }),
     )
 
-    expect(effects).toEqual([{ do: 'cut', at: HERE, reach: 24 }])
+    expect(effects).toEqual([{ do: 'cut', ats: [HERE], reach: 24 }])
   })
 
   test('goes on reaching that far through the whole drag', () => {
@@ -792,12 +792,12 @@ describe('rubbing out', () => {
     )
 
     expect(effects).toEqual([
-      { do: 'cut', at: HERE, reach: 30 },
-      { do: 'cut', at: { x: 5, y: 0 }, reach: 30 },
+      { do: 'cut', ats: [HERE], reach: 30 },
+      { do: 'cut', ats: [{ x: 5, y: 0 }], reach: 30 },
     ])
   })
 
-  test('answers along the way it went between two events, not only at each', () => {
+  test('answers along the way it went between two events, not only at each, in one go', () => {
     const { effects } = play(
       [
         down(),
@@ -814,12 +814,12 @@ describe('rubbing out', () => {
     )
 
     expect(effects).toEqual([
-      { do: 'cut', at: HERE, reach: 10 },
-      { do: 'cut', at: { x: 5, y: 0 }, reach: 10 },
-      { do: 'cut', at: { x: 10, y: 0 }, reach: 10 },
-      { do: 'cut', at: { x: 15, y: 0 }, reach: 10 },
-      { do: 'cut', at: { x: 20, y: 0 }, reach: 10 },
-      { do: 'cut', at: { x: 25, y: 0 }, reach: 10 },
+      { do: 'cut', ats: [HERE], reach: 10 },
+      {
+        do: 'cut',
+        ats: [5, 10, 15, 20, 25].map((x) => ({ x, y: 0 })),
+        reach: 10,
+      },
     ])
   })
 
@@ -840,8 +840,8 @@ describe('rubbing out', () => {
     )
 
     expect(effects).toEqual([
-      { do: 'cut', at: HERE, reach: 10 },
-      { do: 'cut', at: { x: 900, y: 0 }, reach: 10 },
+      { do: 'cut', ats: [HERE], reach: 10 },
+      { do: 'cut', ats: [{ x: 900, y: 0 }], reach: 10 },
     ])
   })
 
@@ -861,7 +861,7 @@ describe('rubbing out', () => {
       context({ tool: 'erase', eraser: { whole: false, size: 10, stroke: STROKE_RUB }, scale: 2 }),
     )
 
-    expect(effects).toHaveLength(5)
+    expect(effects.flatMap((one) => (one.do === 'cut' ? one.ats : []))).toHaveLength(5)
   })
 
   test('takes a whole line 8 px off under a finger, and not under a pen', () => {
@@ -876,7 +876,9 @@ describe('rubbing out', () => {
       play(
         [down({ pointer })],
         context({ tool: 'erase', eraser: { ...context().eraser, whole: true } }),
-      ).effects.some((one) => one.do === 'rub' && nearStroke(line, one.at, one.reach))
+      ).effects.some(
+        (one) => one.do === 'rub' && one.ats.some((at) => nearStroke(line, at, one.reach)),
+      )
 
     expect(reaches('touch')).toBe(true)
     expect(reaches('pen')).toBe(false)
@@ -888,7 +890,7 @@ describe('rubbing out', () => {
       context({ tool: 'draw', eraser: { whole: true, size: RUB, stroke: 6 } }),
     )
 
-    expect(effects).toEqual([{ do: 'rub', at: HERE, reach: 6 }])
+    expect(effects).toEqual([{ do: 'rub', ats: [HERE], reach: 6 }])
   })
 })
 
@@ -1307,7 +1309,7 @@ describe('the pen with its button held', () => {
       context({ tool: 'draw', eraser: { whole: true, size: RUB, stroke: 6 } }),
     )
 
-    expect(effects).toEqual([{ do: 'rub', at: HERE, reach: 6 }])
+    expect(effects).toEqual([{ do: 'rub', ats: [HERE], reach: 6 }])
   })
 
   test('asks for no menu, which belongs to the mouse', () => {
@@ -1392,7 +1394,7 @@ describe('a contact that turns out to be a pen', () => {
       context({ tool: 'draw', eraser: { whole: true, size: RUB, stroke: 6 } }),
     )
 
-    expect(effects.at(-1)).toEqual({ do: 'rub', at: penned.at, reach: 6 })
+    expect(effects.at(-1)).toEqual({ do: 'rub', ats: [penned.at], reach: 6 })
   })
 
   test('leaves a plane that has been panned where the hand put it', () => {

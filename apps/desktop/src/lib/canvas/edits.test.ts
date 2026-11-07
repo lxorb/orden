@@ -11,13 +11,14 @@ import {
   reattached,
   removed,
   resizedPick,
+  rubbedOut,
   subset,
   ungrouped,
   withLabel,
   withNode,
   withText,
 } from './edits'
-import type { Canvas, CanvasNode } from './format'
+import type { Canvas, CanvasNode, InkStroke } from './format'
 import { GRID } from './geometry'
 
 function card(id: string, x = 0, y = 0, width = 100, height = 100): CanvasNode {
@@ -421,5 +422,37 @@ describe('locking in place (#643)', () => {
 
     expect(locking(locked, ['a'], false).nodes[0]).toEqual(card('a'))
     expect(locking(locked, ['a'], true).nodes[0]).toBe(locked.nodes[0])
+  })
+})
+
+describe('rubbing out along a way', () => {
+  const line = (id: string, y: number): InkStroke => ({
+    id,
+    tool: 'pen',
+    color: 'ink',
+    size: 2,
+    points: [0, 100].map((x) => ({ x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })),
+  })
+  const plane = { ...canvasOf([]), ink: [line('a', 0), line('b', 50)] }
+  const way = [10, 40, 70].map((x) => ({ x, y: 0 }))
+
+  test('cuts at every point of the way at once, as one cut after another would', () => {
+    const once = rubbedOut(plane, way, 5, false)
+    const oneByOne = way.reduce((canvas, at) => rubbedOut(canvas, [at], 5, false), plane)
+
+    expect(once.ink.map((stroke) => stroke.points)).toEqual(
+      oneByOne.ink.map((stroke) => stroke.points),
+    )
+    expect(once.ink.filter((stroke) => stroke.id === 'b')).toEqual([plane.ink[1]])
+    expect(once.ink.length).toBe(5)
+  })
+
+  test('takes the whole strokes it passes over', () => {
+    expect(rubbedOut(plane, way, 5, true).ink).toEqual([plane.ink[1]])
+  })
+
+  test('leaves the plane as it was when it passes over nothing', () => {
+    expect(rubbedOut(plane, [{ x: 50, y: 25 }], 5, false)).toBe(plane)
+    expect(rubbedOut(plane, [], 5, true)).toBe(plane)
   })
 })

@@ -837,10 +837,10 @@
         predicted = []
         break
       case 'rub':
-        run.rub(store, effect.at, effect.reach, `rub:${gestures}`)
+        run.rub(store, effect.ats, effect.reach, `rub:${gestures}`)
         break
       case 'cut':
-        run.cut(store, effect.at, effect.reach, `rub:${gestures}`)
+        run.cut(store, effect.ats, effect.reach, `rub:${gestures}`)
         break
       case 'catch':
         run.lasso(store, effect.lasso, pens.partly, effect.cards ?? false)

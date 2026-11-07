@@ -248,11 +248,11 @@ describe('the stroke eraser', () => {
     const { store } = opened()
     store.edit({ ...store.canvas, ink: [line(8), line(20)] })
 
-    run.rub(store, { x: 20, y: 0 }, pens.eraser.stroke)
+    run.rub(store, [{ x: 20, y: 0 }], pens.eraser.stroke)
     expect(store.canvas.ink.map((stroke) => stroke.id)).toEqual(['at8', 'at20'])
 
     pens.rubbing({ strokeRub: 10 })
-    run.rub(store, { x: 20, y: 0 }, pens.eraser.stroke)
+    run.rub(store, [{ x: 20, y: 0 }], pens.eraser.stroke)
     expect(store.canvas.ink.map((stroke) => stroke.id)).toEqual(['at20'])
   })
 })
@@ -572,9 +572,9 @@ describe('something locked in place', () => {
     store.edit(locking({ ...store.canvas, nodes: [card('a')], ink }, ['a'], true))
     const before = store.canvas.nodes
 
-    run.cut(store, { x: 100, y: 30 }, 20)
-    run.rub(store, { x: 10, y: 30 }, 20)
-    run.rub(store, { x: 190, y: 30 }, 20)
+    run.cut(store, [{ x: 100, y: 30 }], 20)
+    run.rub(store, [{ x: 10, y: 30 }], 20)
+    run.rub(store, [{ x: 190, y: 30 }], 20)
     expect(store.canvas.ink).toEqual([])
     expect(store.canvas.nodes).toBe(before)
   })

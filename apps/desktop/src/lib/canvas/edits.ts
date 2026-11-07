@@ -17,10 +17,12 @@ import {
   insideGroup,
   isLineShape,
   keptAspect,
+  overlaps,
+  type Point,
   resizedBox,
   snapped,
 } from './geometry'
-import { strokeBox, transformed } from './ink'
+import { erased, nearStroke, strokeBox, transformed } from './ink'
 
 function replacing(canvas: Canvas, nodes: readonly CanvasNode[]): Canvas {
   if (!nodes.length) return canvas
@@ -254,7 +256,7 @@ export function withStroke(canvas: Canvas, stroke: InkStroke): Canvas {
   return { ...canvas, ink: [...canvas.ink, stroke] }
 }
 
-export function cutInk(canvas: Canvas, cut: (stroke: InkStroke) => InkStroke[]): Canvas {
+function cutInk(canvas: Canvas, cut: (stroke: InkStroke) => InkStroke[]): Canvas {
   let changed = false
   const ink: InkStroke[] = []
 
@@ -270,6 +272,37 @@ export function cutInk(canvas: Canvas, cut: (stroke: InkStroke) => InkStroke[]):
   }
 
   return changed ? { ...canvas, ink } : canvas
+}
+
+export function rubbedOut(
+  canvas: Canvas,
+  ats: readonly Point[],
+  reach: number,
+  whole: boolean,
+): Canvas {
+  const way = bounds(ats.map((at) => ({ ...at, width: 0, height: 0 })))
+  if (!way) return canvas
+
+  return cutInk(canvas, (stroke) => {
+    const box = strokeBox(stroke)
+    const room = reach + stroke.size / 2 + 1
+    const near = {
+      x: way.x - room,
+      y: way.y - room,
+      width: way.width + room * 2,
+      height: way.height + room * 2,
+    }
+    if (!overlaps(box, near)) return [stroke]
+
+    let pieces: InkStroke[] = [stroke]
+    for (const at of ats) {
+      if (!pieces.length) break
+      pieces = pieces.flatMap((piece) =>
+        !nearStroke(piece, at, reach) ? [piece] : whole ? [] : erased(piece, at, reach),
+      )
+    }
+    return pieces
+  })
 }
 
 export function withText(canvas: Canvas, id: string, text: string): Canvas {
