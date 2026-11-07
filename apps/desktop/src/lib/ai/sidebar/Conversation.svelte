@@ -78,16 +78,47 @@
     copying = setTimeout(() => (copied = null), 1600)
   }
 
+  const follows = (..._values: unknown[]) => undefined
+
+  const FIRST_TURNS = 40
+  const MORE_TURNS = 20
+  const NEAR_TOP = 600
+
+  const starts: Record<string, number> = {}
+  let moved = $state(0)
+  const from = $derived.by(() => {
+    follows(moved)
+    const held = starts[id]
+    if (held !== undefined && held < turns.length) return held
+    if (!turns.length) return 0
+    const start = Math.max(0, turns.length - FIRST_TURNS)
+    starts[id] = start
+    return start
+  })
+  const shown = $derived(from ? turns.slice(from) : turns)
+
+  let reaching = false
+  async function earlier(box: HTMLElement) {
+    if (!from || reaching) return
+    reaching = true
+    const below = box.scrollHeight - box.scrollTop
+    starts[id] = Math.max(0, from - MORE_TURNS)
+    moved++
+    await tick()
+    box.scrollTop = box.scrollHeight - below
+    reaching = false
+  }
+
   function onScroll() {
     const box = talk
-    if (box) atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 24
+    if (!box) return
+    atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 24
+    if (from && box.scrollTop < NEAR_TOP) void earlier(box)
   }
 
   function down() {
     talk?.scrollTo({ top: talk.scrollHeight, behavior: 'smooth' })
   }
-
-  const follows = (..._values: unknown[]) => undefined
 
   $effect(() => {
     follows(turns, waiting, chat.trouble, pending, running)
@@ -166,7 +197,8 @@
       </div>
     {/if}
 
-    {#each turns as turn, index (turn.id)}
+    {#each shown as turn, at (turn.id)}
+      {@const index = from + at}
       {#if turn.role === 'you'}
         {@const words = turn.draft?.text ?? ''}
         <div
