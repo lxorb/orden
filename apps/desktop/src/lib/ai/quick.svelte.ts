@@ -41,6 +41,8 @@ class Quick {
   private thread = $state.raw<Thread | null>(null)
   private chat = $state.raw<Chat | null>(null)
   private failed = $state<string | null>(null)
+  private session = 0
+  private loading = false
 
   private target: { view: EditorView; at: number; doc: Text; shows: SharedDoc | null } | null = null
 
@@ -96,6 +98,7 @@ class Quick {
   }
 
   private reset() {
+    this.session += 1
     this.question = ''
     this.context = null
     this.texts = []
@@ -160,29 +163,38 @@ class Quick {
   async ask() {
     const question = this.question.trim()
     const texts = this.texts
-    if ((!question && !texts.length) || this.running || !this.ready) return
+    if ((!question && !texts.length) || this.running || this.loading || !this.ready) return
     this.question = ''
     this.texts = []
 
     this.failed = null
-    const chat = await chatStore()
+    const session = this.session
+    const thread = this.thread
+    const context = thread ? null : this.context
+    if (!thread) this.context = null
+    this.loading = true
+    const chat = await chatStore().finally(() => (this.loading = false))
     this.chat = chat
-    if (!this.open) return
+    const here = session === this.session
+    let asked: Thread
     let ended: Promise<Ended>
-    if (this.thread) ended = chat.sendIn(this.thread, question, texts, nothing())
-    else {
-      const context = this.context
-      this.context = null
+    if (thread) {
+      asked = thread
+      ended = chat.sendIn(thread, question, texts, nothing())
+    } else {
       const chips = [...(context?.chips ?? []), ...texts]
       const started = chat.startHere(question, chips, context?.around ?? nothing())
-      this.thread = started.thread
-      chat.watch(started.thread)
+      asked = started.thread
       ended = started.ended
+      if (here) {
+        this.thread = asked
+        chat.watch(asked)
+      }
     }
-    const thread = this.thread
+    if (!here) return
     const end = await ended
-    if (this.thread !== thread) return
-    void chat.saw(thread.id)
+    if (this.thread !== asked) return
+    void chat.saw(asked.id)
     if (end.stop === 'error' && !end.turn && end.error) this.failed = end.error
   }
 
