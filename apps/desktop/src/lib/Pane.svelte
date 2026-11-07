@@ -49,8 +49,6 @@
     askPanel,
     canvasSurface,
     chatSurface,
-    conversationIn,
-    conversationSurface,
     emptySurface,
     explorerSurface,
     passSurface,
@@ -455,14 +453,6 @@
     {#key tab.id}
       {#await viewSurface() then ViewTab}
         <ViewTab {tab} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
-  {:else if tab?.kind === 'channel' && tab.path === null && conversationIn(tab.note.text)}
-    {#key tab.id}
-      {#await conversationSurface() then ConversationTab}
-        <ConversationTab {tab} />
       {:catch}
         {@render unreachable()}
       {/await}

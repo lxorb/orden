@@ -12,6 +12,7 @@
     "./limits": "./src/limits.ts",
     "./links": "./src/links.ts",
     "./mail": "./src/mail/provider.ts",
+    "./mail-fake": "./src/mail/fake-server.ts",
     "./mail-oauth": "./src/mail/oauth.ts",
     "./mime": "./src/mail/mime.ts",
     "./mentions": "./src/mentions.ts",

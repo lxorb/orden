@@ -3,8 +3,9 @@ import { MOST_FILES } from '@orden/chats/limits'
 import { prepared } from './prepare'
 import { store } from './source.svelte'
 
-export async function put(file: Blob): Promise<string> {
-  const hash = await store().upload(new Uint8Array(await file.arrayBuffer()))
+export async function put(file: Blob, chat?: string): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  const hash = await (chat === undefined ? store().upload(bytes) : store().upload(bytes, chat))
   if (!hash) throw new Error('the file did not go up')
   return hash
 }
@@ -23,6 +24,11 @@ let made = 0
 
 export class Attachments {
   list = $state<Attachment[]>([])
+
+  constructor(
+    private readonly chat?: () => string,
+    private readonly largest?: () => number | null,
+  ) {}
 
   get ready(): boolean {
     return this.list.every((one) => one.ref !== null || one.failed)
@@ -56,6 +62,11 @@ export class Attachments {
         failed: false,
       },
     ]
+    const largest = this.largest?.() ?? null
+    if (largest !== null && file.size > largest) {
+      this.list = this.list.map((one) => (one.id === id ? { ...one, failed: true } : one))
+      return id
+    }
     await this.send(id, file)
     return id
   }
@@ -83,8 +94,8 @@ export class Attachments {
     try {
       const ready = await prepared(file)
       const [hash, preview] = await Promise.all([
-        put(ready.blob),
-        ready.preview ? put(ready.preview) : Promise.resolve(undefined),
+        put(ready.blob, this.chat?.()),
+        ready.preview ? put(ready.preview, this.chat?.()) : Promise.resolve(undefined),
       ])
       const ref: FileRef = {
         hash,

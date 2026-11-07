@@ -3453,4 +3453,18 @@ export const ko: Dictionary = {
   'Slack does not know that emoji': 'Slack이 모르는 이모지입니다',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Slack 사용자 토큰을 붙여 넣으세요. 이 빌드는 브라우저로 로그인할 수 없습니다',
+  'Delete for everyone': '모두에게서 삭제',
+  'Delete for me': '나에게서 삭제',
+  Forwarded: '전달됨',
+  Delivered: '전달됨',
+  Sticker: '스티커',
+  GIF: 'GIF',
+  'New conversation': '새 대화',
+  'Add people': '사람 추가',
+  'Leave {chat}?': '{chat}에서 나갈까요?',
+  'Remove as admin': '관리자에서 제외',
+  'Make admin': '관리자로 지정',
+  'Remove from chat': '채팅에서 내보내기',
+  'Sign in again': '다시 로그인',
+  'Finish signing in in your browser': '브라우저에서 로그인을 마치세요',
 }

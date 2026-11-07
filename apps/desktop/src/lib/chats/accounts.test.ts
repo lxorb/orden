@@ -164,6 +164,33 @@ describe("other services' accounts", () => {
     expect(forgotten).toEqual(['a@x.org'])
   })
 
+  test('signing in again after a sign-out offers what was given before, never a secret, and takes the place of the account it replaces', async () => {
+    await new Accounts(host, new Connected(), [provider]).connect('fake', {
+      address: 'a@x.org',
+      password: 'right',
+    })
+    vault.clear()
+    const hub = new Connected()
+    const accounts = new Accounts(host, hub, [provider])
+    accounts.start()
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(accounts.failed).toMatchObject([{ account: 'a@x.org' }])
+    expect(accounts.given('fake', 'a@x.org')).toEqual({ address: 'a@x.org' })
+
+    expect(
+      await accounts.connect('fake', { address: 'a@x.org', password: 'right' }, 'a@x.org'),
+    ).toBeNull()
+    expect(accounts.failed).toEqual([])
+    expect(accounts.saved.map((one) => one.account)).toEqual(['a@x.org'])
+
+    expect(
+      await accounts.connect('fake', { address: 'b@x.org', password: 'right' }, 'a@x.org'),
+    ).toBeNull()
+    expect(accounts.saved.map((one) => one.account)).toEqual(['b@x.org'])
+    expect(hub.find('fake', 'a@x.org')).toBeUndefined()
+    expect(vault.has(secretName('fake', 'a@x.org', 'password'))).toBe(false)
+  })
+
   test("a conversation tab's words name it, and nothing else reads as one", () => {
     const key = { provider: 'mail', account: 'a@x.org', conversation: 'id\nwith a break@x' }
     expect(conversationKeyOf(conversationKey(key))).toEqual(key)

@@ -3609,4 +3609,18 @@ export const ml: Dictionary = {
   'Slack does not know that emoji': 'Slack-ന് ആ ഇമോജി അറിയില്ല',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'ഒരു Slack ഉപയോക്തൃ ടോക്കൺ ഒട്ടിക്കുക, ഈ ബിൽഡിന് ബ്രൗസറിൽ സൈൻ ഇൻ ചെയ്യാനാവില്ല',
+  'Delete for everyone': 'എല്ലാവർക്കും ഇല്ലാതാക്കുക',
+  'Delete for me': 'എനിക്കായി ഇല്ലാതാക്കുക',
+  Forwarded: 'ഫോർവേഡ് ചെയ്തത്',
+  Delivered: 'എത്തി',
+  Sticker: 'സ്റ്റിക്കർ',
+  GIF: 'GIF',
+  'New conversation': 'പുതിയ സംഭാഷണം',
+  'Add people': 'ആളുകളെ ചേർക്കുക',
+  'Leave {chat}?': '{chat} വിടണോ?',
+  'Remove as admin': 'അഡ്മിൻ സ്ഥാനത്തുനിന്ന് നീക്കുക',
+  'Make admin': 'അഡ്മിനാക്കുക',
+  'Remove from chat': 'ചാറ്റിൽനിന്ന് നീക്കുക',
+  'Sign in again': 'വീണ്ടും സൈൻ ഇൻ ചെയ്യുക',
+  'Finish signing in in your browser': 'നിങ്ങളുടെ ബ്രൗസറിൽ സൈൻ ഇൻ പൂർത്തിയാക്കുക',
 }

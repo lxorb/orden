@@ -3489,4 +3489,18 @@ export const am: Dictionary = {
   'Slack does not know that emoji': 'Slack ያንን ኢሞጂ አያውቅም',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'የSlack የተጠቃሚ ቶከን ይለጥፉ፣ ይህ ስሪት በአሳሽ መግባት አይችልም',
+  'Delete for everyone': 'ለሁሉም ሰርዝ',
+  'Delete for me': 'ለእኔ ሰርዝ',
+  Forwarded: 'የተላለፈ',
+  Delivered: 'ደርሷል',
+  Sticker: 'ተለጣፊ',
+  GIF: 'GIF',
+  'New conversation': 'አዲስ ውይይት',
+  'Add people': 'ሰዎችን አክል',
+  'Leave {chat}?': '{chat}ን ልተው?',
+  'Remove as admin': 'ከአስተዳዳሪነት አስወግድ',
+  'Make admin': 'አስተዳዳሪ አድርግ',
+  'Remove from chat': 'ከውይይቱ አስወግድ',
+  'Sign in again': 'እንደገና ግባ',
+  'Finish signing in in your browser': 'መግባቱን በአሳሽህ ጨርስ',
 }

@@ -24,13 +24,16 @@
 
 {#if single && size}
   {#if isVideo(single)}
-    <!-- svelte-ignore a11y_media_has_caption -->
     <video
       class="one"
       src={fileUrl(chat, single.hash)}
       poster={single.preview ? url(single) : undefined}
-      controls
-      preload="none"
+      controls={!single.loop}
+      autoplay={single.loop}
+      loop={single.loop}
+      muted={single.loop}
+      playsinline={single.loop}
+      preload={single.loop ? 'auto' : 'none'}
       style:width="{size.width}px"
       style:height="{size.height}px"
     ></video>

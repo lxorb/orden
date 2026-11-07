@@ -3428,4 +3428,18 @@ export const th: Dictionary = {
   'Slack does not know that emoji': 'Slack ไม่รู้จักอีโมจินั้น',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'วางโทเค็นผู้ใช้ Slack บิลด์นี้ลงชื่อเข้าใช้ผ่านเบราว์เซอร์ไม่ได้',
+  'Delete for everyone': 'ลบสำหรับทุกคน',
+  'Delete for me': 'ลบสำหรับฉัน',
+  Forwarded: 'ส่งต่อแล้ว',
+  Delivered: 'ส่งถึงแล้ว',
+  Sticker: 'สติกเกอร์',
+  GIF: 'GIF',
+  'New conversation': 'การสนทนาใหม่',
+  'Add people': 'เพิ่มคน',
+  'Leave {chat}?': 'ออกจาก {chat} ไหม',
+  'Remove as admin': 'นำออกจากผู้ดูแล',
+  'Make admin': 'ตั้งเป็นผู้ดูแล',
+  'Remove from chat': 'นำออกจากแชท',
+  'Sign in again': 'ลงชื่อเข้าใช้อีกครั้ง',
+  'Finish signing in in your browser': 'ลงชื่อเข้าใช้ให้เสร็จในเบราว์เซอร์ของคุณ',
 }

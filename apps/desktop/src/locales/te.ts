@@ -3574,4 +3574,18 @@ export const te: Dictionary = {
   'Slack does not know that emoji': 'Slack కు ఆ ఎమోజీ తెలియదు',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Slack వినియోగదారు టోకెన్‌ను అతికించండి, ఈ బిల్డ్ బ్రౌజర్‌లో సైన్ ఇన్ చేయలేదు',
+  'Delete for everyone': 'అందరికీ తొలగించు',
+  'Delete for me': 'నాకు తొలగించు',
+  Forwarded: 'ఫార్వర్డ్ చేయబడింది',
+  Delivered: 'చేరింది',
+  Sticker: 'స్టిక్కర్',
+  GIF: 'GIF',
+  'New conversation': 'కొత్త సంభాషణ',
+  'Add people': 'వ్యక్తులను జోడించు',
+  'Leave {chat}?': '{chat} నుండి నిష్క్రమించాలా?',
+  'Remove as admin': 'అడ్మిన్‌గా తొలగించు',
+  'Make admin': 'అడ్మిన్‌గా చేయి',
+  'Remove from chat': 'చాట్ నుండి తొలగించు',
+  'Sign in again': 'మళ్లీ సైన్ ఇన్ చేయండి',
+  'Finish signing in in your browser': 'మీ బ్రౌజర్‌లో సైన్ ఇన్ పూర్తి చేయండి',
 }

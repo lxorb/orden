@@ -25,6 +25,7 @@ export interface FileRef {
   preview?: string
   seconds?: number
   wave?: number[]
+  loop?: boolean
 }
 
 export interface Preview {

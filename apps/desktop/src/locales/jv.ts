@@ -3479,4 +3479,18 @@ export const jv: Dictionary = {
   'Slack does not know that emoji': 'Slack ora ngerti emoji kuwi',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Tempel token pangguna Slack, versi iki ora bisa mlebu liwat browser',
+  'Delete for everyone': 'Busak kanggo kabèh',
+  'Delete for me': 'Busak kanggo aku',
+  Forwarded: 'Diterusaké',
+  Delivered: 'Wis tekan',
+  Sticker: 'Stiker',
+  GIF: 'GIF',
+  'New conversation': 'Obrolan anyar',
+  'Add people': 'Tambahaké wong',
+  'Leave {chat}?': 'Metu saka {chat}?',
+  'Remove as admin': 'Copot saka admin',
+  'Make admin': 'Dadèkaké admin',
+  'Remove from chat': 'Copot saka obrolan',
+  'Sign in again': 'Mlebu maneh',
+  'Finish signing in in your browser': 'Rampungna mlebu ing browser sampeyan',
 }

@@ -15,6 +15,8 @@ export interface Asking {
 export class Screens {
   waiting = $state.raw<readonly Asking[]>([])
   screen = $state.raw<Screen | null>(null)
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing draws these
+  private readonly stoppers = new Set<() => void>()
 
   get asking(): Asking | null {
     return this.waiting[0] ?? null
@@ -43,8 +45,15 @@ export class Screens {
     this.screen = screen
   }
 
+  readonly whileWaiting = (stop: () => void): (() => void) => {
+    this.stoppers.add(stop)
+    return () => this.stoppers.delete(stop)
+  }
+
   cancelAll(): void {
     for (const one of this.waiting) one.cancel()
+    for (const stop of [...this.stoppers]) stop()
+    this.stoppers.clear()
     this.screen = null
   }
 }

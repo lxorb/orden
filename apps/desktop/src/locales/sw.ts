@@ -3603,4 +3603,18 @@ export const sw: Dictionary = {
   'Slack does not know that emoji': 'Slack haijui emoji hiyo',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Bandika tokeni ya mtumiaji wa Slack, toleo hili haliwezi kuingia kupitia kivinjari',
+  'Delete for everyone': 'Futa kwa wote',
+  'Delete for me': 'Futa kwangu',
+  Forwarded: 'Imesambazwa',
+  Delivered: 'Imefika',
+  Sticker: 'Kibandiko',
+  GIF: 'GIF',
+  'New conversation': 'Mazungumzo mapya',
+  'Add people': 'Ongeza watu',
+  'Leave {chat}?': 'Kuondoka {chat}?',
+  'Remove as admin': 'Ondoa kama msimamizi',
+  'Make admin': 'Fanya msimamizi',
+  'Remove from chat': 'Ondoa kwenye gumzo',
+  'Sign in again': 'Ingia tena',
+  'Finish signing in in your browser': 'Maliza kuingia kwenye kivinjari chako',
 }

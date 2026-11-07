@@ -3578,4 +3578,18 @@ export const tr: Dictionary = {
   'Slack does not know that emoji': 'Slack bu emojiyi tanımıyor',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Bir Slack kullanıcı jetonu yapıştırın, bu sürüm tarayıcıda oturum açamaz',
+  'Delete for everyone': 'Herkesten sil',
+  'Delete for me': 'Benden sil',
+  Forwarded: 'İletildi',
+  Delivered: 'İletildi',
+  Sticker: 'Çıkartma',
+  GIF: 'GIF',
+  'New conversation': 'Yeni sohbet',
+  'Add people': 'Kişi ekle',
+  'Leave {chat}?': '{chat} sohbetinden çıkılsın mı?',
+  'Remove as admin': 'Yöneticilikten çıkar',
+  'Make admin': 'Yönetici yap',
+  'Remove from chat': 'Sohbetten çıkar',
+  'Sign in again': 'Yeniden oturum aç',
+  'Finish signing in in your browser': 'Oturum açmayı tarayıcında tamamla',
 }

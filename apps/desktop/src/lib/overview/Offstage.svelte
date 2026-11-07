@@ -10,8 +10,6 @@
     canvasSurface,
     graphSurface,
     chatSurface,
-    conversationIn,
-    conversationSurface,
     explorerSurface,
     timeSurface,
     pagesSurface,
@@ -114,8 +112,6 @@
         {#await pagesSurface() then Pages}<Pages tab={current} focused={false} />{/await}
       {:else if current.kind === 'view'}
         {#await viewSurface() then ViewTab}<ViewTab tab={current} />{/await}
-      {:else if current.kind === 'channel' && current.path === null && conversationIn(current.note.text)}
-        {#await conversationSurface() then ConversationTab}<ConversationTab tab={current} />{/await}
       {:else if current.kind === 'channel'}
         {#await chatSurface() then ChatTab}<ChatTab tab={current} />{/await}
       {:else if current.kind === 'chat'}

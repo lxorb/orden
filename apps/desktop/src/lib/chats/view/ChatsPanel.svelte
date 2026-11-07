@@ -29,7 +29,11 @@
   import type { Suggestion } from '@orden/chats/priority'
   import type { Priority } from '@orden/markdown/task-line'
   import { showQuickAdd } from '../../surfaces.svelte'
-  import { drafts } from '../drafts'
+  import { conversationKey } from '../conversation-key'
+  import { remoteOf } from '../remotes'
+  import { choosePeople, conversationMenu } from './manage'
+  import { menu } from '../../menu.svelte'
+  import type { Conversation } from '@orden/chats/provider'
 
   let query = $state('')
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
@@ -46,6 +50,13 @@
   })
   const offered = $derived(accounts.offered.filter((one) => one.available(host)))
   let connecting = $state(false)
+  let again = $state<{ provider: string; account: string } | null>(null)
+  const againWith = $derived(again ? accounts.providerOf(again.provider) : undefined)
+
+  function signInAgain(provider: string, account: string) {
+    connecting = false
+    again = { provider, account }
+  }
 
   let arranged = $state<'service' | 'priority'>('service')
 
@@ -120,7 +131,14 @@
       open(store().entry(row.conversation.id) ?? undefined)
       return
     }
-    drafts.set(keyOf(row), reply)
+    store().offer(
+      conversationKey({
+        provider: row.provider,
+        account: row.account,
+        conversation: row.conversation.id,
+      }),
+      reply,
+    )
     openRow(row)
   }
 
@@ -139,6 +157,23 @@
     })
   }
 
+  let opened = $state<string[]>([])
+
+  async function begin(one: Linked) {
+    const remote = remoteOf(
+      conversationKey({ provider: one.provider.id, account: one.account.id, conversation: '-' }),
+    )
+    if (!remote || !one.connection.begin) return
+    const people = await choosePeople(remote, t('New conversation'))
+    if (!people.length) return
+    const made = await one.connection.begin(people).catch(() => null)
+    if (made)
+      openConversation(
+        { provider: one.provider.id, account: one.account.id, conversation: made.id },
+        made.title ?? made.people[0]?.name ?? one.provider.name,
+      )
+  }
+
   const ORDEN_ICON = 'M4 9h16M4 15h16M10 3 8 21M16 3l-2 18'
 
   function conversationsOf(one: Linked) {
@@ -154,7 +189,7 @@
               (person.handle ?? '').toLowerCase().includes(asked),
           ),
       )
-      .sort(newestFirst)
+      .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || newestFirst(a, b))
   }
 
   const mentions = $derived(store().list.reduce((sum, one) => sum + one.mentions, 0))
@@ -172,6 +207,57 @@
 
   const chatOf = (id: string) => store().list.find((one) => one.id === id)
 </script>
+
+{#snippet remoteRow(one: Linked, conversation: Conversation)}
+  {@const muted = conversation.mutedUntil != null && conversation.mutedUntil > now}
+  {@const unread = conversation.unread > 0 && !muted}
+  {@const remote = remoteOf(
+    conversationKey({
+      provider: one.provider.id,
+      account: one.account.id,
+      conversation: conversation.id,
+    }),
+  )}
+  {@const entries = remote ? conversationMenu(remote, conversation) : []}
+  <div class="remote" class:muted>
+    <button
+      type="button"
+      class="orden-row entry"
+      class:unread
+      oncontextmenu={(event) => {
+        if (!entries.length) return
+        event.preventDefault()
+        menu.show(event, entries)
+      }}
+      onclick={() =>
+        openConversation(
+          { provider: one.provider.id, account: one.account.id, conversation: conversation.id },
+          conversation.title ?? conversation.people[0]?.name ?? one.provider.name,
+        )}
+    >
+      <span class="orden-row-label"
+        >{conversation.title ?? conversation.people.map((person) => person.name).join(', ')}</span
+      >
+      {#if conversation.pinned}<span class="orden-row-meta pinned" aria-label={t('Pinned')}
+          ><Glyph name="pin" /></span
+        >{/if}
+      {#if conversation.mentions && !muted}
+        <span class="badge">{amount(conversation.mentions)}</span>
+      {:else if unread}
+        <span class="orden-row-meta count">{amount(conversation.unread)}</span>
+      {/if}
+    </button>
+    {#if entries.length}
+      <button
+        type="button"
+        class="orden-glyph more"
+        aria-label={t('More')}
+        title={t('More')}
+        onclick={(event) => menu.show(event, entries)}><Glyph name="more" /></button
+      >
+    {/if}
+  </div>
+{/snippet}
 
 {#snippet found(chatId: string, message: string, author: Who, line: string)}
   {@const chat = chatOf(chatId)}
@@ -329,18 +415,32 @@
       </button>
     {/each}
 
-    {#if offered.length}
+    {#if offered.length || connected.linked.length || accounts.failed.length}
       <div class="section">
         <p class="orden-section">{t('Accounts')}</p>
-        <button
-          type="button"
-          class="orden-glyph add"
-          aria-label={t('Connect')}
-          title={t('Connect')}
-          onclick={() => (connecting = !connecting)}><Glyph name="attach" /></button
-        >
+        {#if offered.length}
+          <button
+            type="button"
+            class="orden-glyph add"
+            aria-label={t('Connect')}
+            title={t('Connect')}
+            onclick={() => {
+              again = null
+              connecting = !connecting
+            }}><Glyph name="attach" /></button
+          >
+        {/if}
       </div>
-      {#if connecting}
+      {#if again && againWith}
+        {#key `${again.provider}:${again.account}`}
+          <ConnectForm
+            providers={[againWith]}
+            given={accounts.given(again.provider, again.account)}
+            replacing={again.account}
+            done={() => (again = null)}
+          />
+        {/key}
+      {:else if connecting && offered.length}
         <ConnectForm providers={offered} done={() => (connecting = false)} />
       {:else}
         <SignIn />
@@ -349,17 +449,52 @@
         <p class="orden-row failed" title={one.reason}>
           <span class="orden-row-label">{one.account}</span>
           <span class="orden-row-meta">{t('Signed out')}</span>
+          {#if offered.some((it) => it.id === one.provider)}
+            <button
+              type="button"
+              class="orden-glyph add"
+              aria-label={t('Sign in again')}
+              title={t('Sign in again')}
+              onclick={() => signInAgain(one.provider, one.account)}><Glyph name="retry" /></button
+            >
+          {/if}
         </p>
       {/each}
       {#each connected.linked as one (`${one.provider.id}:${one.account.id}`)}
+        {@const waiting = one.conversations.filter(
+          (it) => it.unread > 0 && !(it.mutedUntil != null && it.mutedUntil > now),
+        )}
+        {@const called = waiting.reduce((sum, it) => sum + (it.mentions ?? 0), 0)}
         <div class="account">
           <svg viewBox="0 0 24 24" aria-hidden="true" class="mark"
             ><path d={one.provider.icon} /></svg
           >
           <span class="orden-row-label">{one.account.label}</span>
+          {#if called}<span class="badge">{amount(called)}</span>
+          {:else if waiting.length}<span class="orden-row-meta count">{amount(waiting.length)}</span
+            >{/if}
+          {#if 'begin' in one.connection && 'people' in one.connection}
+            <button
+              type="button"
+              class="orden-glyph add"
+              aria-label={t('New conversation')}
+              title={t('New conversation')}
+              onclick={() => void begin(one)}><Glyph name="pencil" /></button
+            >
+          {/if}
           {#if one.status === 'offline'}<span class="orden-row-meta">{t('Offline')}</span>
           {:else if one.status === 'signed-out'}<span class="orden-row-meta">{t('Signed out')}</span
             >
+            {#if offered.some((it) => it.id === one.provider.id)}
+              <button
+                type="button"
+                class="orden-glyph add"
+                aria-label={t('Sign in again')}
+                title={t('Sign in again')}
+                onclick={() => signInAgain(one.provider.id, one.account.id)}
+                ><Glyph name="retry" /></button
+              >
+            {/if}
           {/if}
           <button
             type="button"
@@ -370,29 +505,34 @@
             ><Glyph name="close" /></button
           >
         </div>
-        {#each conversationsOf(one) as conversation (conversation.id)}
-          {@const unread = conversation.unread > 0}
+        {@const listed = conversationsOf(one)}
+        {#each listed.filter((it) => !it.archived) as conversation (conversation.id)}
+          {@render remoteRow(one, conversation)}
+        {/each}
+        {@const archived = listed.filter((it) => it.archived)}
+        {#if archived.length}
+          {@const key = `${one.provider.id}:${one.account.id}`}
           <button
             type="button"
-            class="orden-row entry"
-            class:unread
+            class="orden-row archived"
+            aria-expanded={opened.includes(key)}
             onclick={() =>
-              openConversation(
-                {
-                  provider: one.provider.id,
-                  account: one.account.id,
-                  conversation: conversation.id,
-                },
-                conversation.title ?? conversation.people[0]?.name ?? one.provider.name,
-              )}
+              (opened = opened.includes(key)
+                ? opened.filter((it) => it !== key)
+                : [...opened, key])}
           >
-            <span class="orden-row-label"
-              >{conversation.title ??
-                conversation.people.map((person) => person.name).join(', ')}</span
+            <span class="orden-row-mark"
+              ><Glyph name={opened.includes(key) ? 'down' : 'right'} /></span
             >
-            {#if unread}<span class="orden-row-meta count">{amount(conversation.unread)}</span>{/if}
+            <span class="orden-row-label">{t('Archived')}</span>
+            <span class="orden-row-meta">{amount(archived.length)}</span>
           </button>
-        {/each}
+          {#if opened.includes(key)}
+            {#each archived as conversation (conversation.id)}
+              {@render remoteRow(one, conversation)}
+            {/each}
+          {/if}
+        {/if}
       {/each}
     {/if}
   {:else}
@@ -526,6 +666,44 @@
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  .remote {
+    display: flex;
+    align-items: center;
+  }
+
+  .remote .entry {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .remote.muted .entry {
+    opacity: 0.55;
+  }
+
+  .remote .more {
+    --glyph-size: 14px;
+    width: 24px;
+    height: 24px;
+    opacity: 0;
+  }
+
+  .remote:hover .more,
+  .remote .more:focus-visible {
+    opacity: 1;
+  }
+
+  :global([data-touch]) .remote .more {
+    opacity: 1;
+  }
+
+  .pinned {
+    --glyph-size: 12px;
+  }
+
+  .archived {
+    color: var(--muted);
   }
 
   .failed {

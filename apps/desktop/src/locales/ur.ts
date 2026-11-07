@@ -3553,4 +3553,18 @@ export const ur: Dictionary = {
   'Slack does not know that emoji': 'Slack اس ایموجی کو نہیں جانتا',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Slack صارف ٹوکن چسپاں کریں، یہ بلڈ براؤزر میں سائن ان نہیں کر سکتا',
+  'Delete for everyone': 'سب کے لیے حذف کریں',
+  'Delete for me': 'میرے لیے حذف کریں',
+  Forwarded: 'آگے بھیجا گیا',
+  Delivered: 'پہنچ گیا',
+  Sticker: 'اسٹیکر',
+  GIF: 'GIF',
+  'New conversation': 'نئی گفتگو',
+  'Add people': 'لوگ شامل کریں',
+  'Leave {chat}?': '{chat} چھوڑیں؟',
+  'Remove as admin': 'ایڈمن سے ہٹائیں',
+  'Make admin': 'ایڈمن بنائیں',
+  'Remove from chat': 'چیٹ سے ہٹائیں',
+  'Sign in again': 'دوبارہ سائن ان کریں',
+  'Finish signing in in your browser': 'اپنے براؤزر میں سائن ان مکمل کریں',
 }

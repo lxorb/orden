@@ -5,7 +5,17 @@
   import { screens } from '../providers/screens.svelte'
   import SignIn from './SignIn.svelte'
 
-  const { providers, done }: { providers: readonly ChatProvider[]; done: () => void } = $props()
+  const {
+    providers,
+    done,
+    given = {},
+    replacing,
+  }: {
+    providers: readonly ChatProvider[]
+    done: () => void
+    given?: Readonly<Record<string, string>>
+    replacing?: string
+  } = $props()
 
   const labels: Record<string, string> = {
     address: t('Email address'),
@@ -60,6 +70,7 @@
   function valueOf(field: ConnectField): string {
     return (
       values[`${provider?.id ?? ''}:${field.key}`] ??
+      given[field.key] ??
       field.initial ??
       field.options?.[0]?.value ??
       ''
@@ -77,7 +88,7 @@
       const value = valueOf(field)
       if (value !== '') asked[field.key] = value
     }
-    const reason = await accounts.connect(provider.id, asked)
+    const reason = await accounts.connect(provider.id, asked, replacing)
     screens.show(null)
     busy = false
     if (mine !== attempt) return

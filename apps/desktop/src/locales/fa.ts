@@ -3561,4 +3561,18 @@ export const fa: Dictionary = {
   'Slack does not know that emoji': 'Slack این شکلک را نمی‌شناسد',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'یک توکن کاربر Slack بچسبانید، این نسخه نمی‌تواند از راه مرورگر وارد شود',
+  'Delete for everyone': 'حذف برای همه',
+  'Delete for me': 'حذف برای من',
+  Forwarded: 'بازارسال‌شده',
+  Delivered: 'تحویل شد',
+  Sticker: 'استیکر',
+  GIF: 'GIF',
+  'New conversation': 'گفتگوی جدید',
+  'Add people': 'افزودن افراد',
+  'Leave {chat}?': 'از {chat} خارج می‌شوید؟',
+  'Remove as admin': 'حذف از مدیران',
+  'Make admin': 'مدیر کردن',
+  'Remove from chat': 'حذف از گفتگو',
+  'Sign in again': 'دوباره وارد شوید',
+  'Finish signing in in your browser': 'ورود را در مرورگر خود تمام کنید',
 }

@@ -3661,4 +3661,18 @@ export const es: Dictionary = {
   'Slack does not know that emoji': 'Slack no conoce ese emoji',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Pega un token de usuario de Slack, esta versión no puede iniciar sesión en el navegador',
+  'Delete for everyone': 'Eliminar para todos',
+  'Delete for me': 'Eliminar para mí',
+  Forwarded: 'Reenviado',
+  Delivered: 'Entregado',
+  Sticker: 'Sticker',
+  GIF: 'GIF',
+  'New conversation': 'Nueva conversación',
+  'Add people': 'Añadir personas',
+  'Leave {chat}?': '¿Salir de {chat}?',
+  'Remove as admin': 'Quitar como administrador',
+  'Make admin': 'Hacer administrador',
+  'Remove from chat': 'Quitar del chat',
+  'Sign in again': 'Volver a iniciar sesión',
+  'Finish signing in in your browser': 'Termina de iniciar sesión en tu navegador',
 }

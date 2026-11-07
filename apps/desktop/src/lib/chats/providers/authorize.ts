@@ -1,5 +1,8 @@
 import type { NativeAsk, Posted } from '@orden/chats/provider'
 import { invoke, openExternal } from '../../tauri'
+import { screens, type Screens } from './screens.svelte'
+
+const FINISH = 'Finish signing in in your browser'
 
 interface Opened {
   id: string
@@ -8,14 +11,22 @@ interface Opened {
 
 export async function authorize(
   make: (loopback: string) => string,
+  shown: Pick<Screens, 'show' | 'whileWaiting'> = screens,
 ): Promise<Record<string, string>> {
   const { id, port } = await invoke<Opened>('oauth_loopback_open')
+  const close = () => invoke('oauth_loopback_close', { id }).catch(() => undefined)
+  const done = shown.whileWaiting(() => void close())
   try {
-    await openExternal(make(`http://127.0.0.1:${port}`))
+    const url = make(`http://127.0.0.1:${port}`)
+    shown.show({ kind: 'link', url, label: FINISH })
+    await openExternal(url)
     return await invoke<Record<string, string>>('oauth_loopback_wait', { id })
   } catch (error) {
-    await invoke('oauth_loopback_close', { id }).catch(() => undefined)
+    await close()
     throw error
+  } finally {
+    done()
+    shown.show(null)
   }
 }
 

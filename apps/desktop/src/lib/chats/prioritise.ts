@@ -6,6 +6,8 @@ import { openConversation } from './linked'
 import { type Asker, priorities, rowKey } from './priorities.svelte'
 import { ORDEN, ordenConnection } from './providers/orden'
 import { store } from './view/source.svelte'
+import { conversationKey } from './conversation-key'
+import { remoteOf } from './remotes'
 import { todayOf } from '@orden/bases'
 import type { Level } from '@orden/chats/priority'
 import type { Connection, ProviderMessage } from '@orden/chats/provider'
@@ -33,6 +35,7 @@ export function startPriorities(): void {
     void consider(key, title, linked.connection, conversation.id)
       .then((said) => {
         if (!said?.level || !priorities.notify.includes(said.level)) return
+        if (quiet(provider, account, conversation.id, event.message)) return
         const newest = said.newest ?? event.message
         notify(title, `${newest.author.name}: ${newest.text}`, key, () =>
           openConversation({ provider, account, conversation: conversation.id }, title),
@@ -48,6 +51,26 @@ export function startPriorities(): void {
     const key = rowKey(ORDEN, ORDEN, chat)
     void consider(key, store().entry(chat)?.name ?? '', own, chat).catch(() => undefined)
   })
+}
+
+export function quiet(
+  provider: string,
+  account: string,
+  conversation: string,
+  message: ProviderMessage,
+  now = Date.now(),
+): boolean {
+  const linked = connected.find(provider, account)
+  const found = linked?.conversations.find((one) => one.id === conversation)
+  if (!found) return true
+  if (found.mutedUntil != null && found.mutedUntil > now) return true
+  const level = remoteOf(conversationKey({ provider, account, conversation }))?.notifies[
+    conversation
+  ]
+  if (level === 'nothing') return true
+  if (level !== 'mentions') return false
+  const self = linked?.account.self?.id
+  return !(self && message.mentions?.includes(self))
 }
 
 interface Considered {

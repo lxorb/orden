@@ -9,6 +9,8 @@ import type {
 } from '@orden/chats/provider'
 import { newestFirst } from '@orden/chats/provider'
 import { conversationOf, ORDEN } from './providers/orden'
+import { Remote } from './remote.svelte'
+import { dropRemote, keepRemote } from './remotes'
 import { store } from './view/source.svelte'
 
 export interface Row {
@@ -44,7 +46,7 @@ function heardInto(linked: Linked, event: ProviderEvent): Linked {
     case 'message': {
       const at = linked.conversations.findIndex((one) => one.id === event.message.conversation)
       const found = linked.conversations[at]
-      if (!found) return linked
+      if (!found || event.message.thread) return linked
       const next = [...linked.conversations]
       next[at] = {
         ...found,
@@ -117,9 +119,16 @@ export class Connected {
     }
     this.linked = [...this.linked, linked]
     const key = `${provider.id}\n${account.id}`
+    const remote = new Remote(
+      { provider: provider.id, account: account.id },
+      () => this.find(provider.id, account.id),
+      (conversation) => this.seen(provider.id, account.id, conversation),
+    )
+    keepRemote(remote)
     this.stops.set(
       key,
       connection.start((event) => {
+        remote.heard(event)
         this.linked = this.linked.map((one) =>
           one.provider.id === provider.id && one.account.id === account.id
             ? heardInto(one, event)
@@ -135,6 +144,7 @@ export class Connected {
     const key = `${provider}\n${account}`
     this.stops.get(key)?.()
     this.stops.delete(key)
+    dropRemote(provider, account)
     const found = this.find(provider, account)
     this.linked = this.linked.filter((one) => one !== found)
     await found?.connection.close().catch(() => undefined)

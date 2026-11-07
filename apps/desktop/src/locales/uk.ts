@@ -3697,4 +3697,18 @@ export const uk: Dictionary = {
   'Slack does not know that emoji': 'Slack не знає цього емодзі',
   'Paste a Slack user token, this build cannot sign in through the browser':
     'Вставте токен користувача Slack, ця збірка не може увійти через браузер',
+  'Delete for everyone': 'Видалити для всіх',
+  'Delete for me': 'Видалити для мене',
+  Forwarded: 'Переслано',
+  Delivered: 'Доставлено',
+  Sticker: 'Стікер',
+  GIF: 'GIF',
+  'New conversation': 'Нова розмова',
+  'Add people': 'Додати людей',
+  'Leave {chat}?': 'Вийти з {chat}?',
+  'Remove as admin': 'Зняти права адміністратора',
+  'Make admin': 'Зробити адміністратором',
+  'Remove from chat': 'Видалити з чату',
+  'Sign in again': 'Увійти знову',
+  'Finish signing in in your browser': 'Завершіть вхід у браузері',
 }
