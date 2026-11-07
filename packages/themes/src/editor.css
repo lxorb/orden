@@ -126,23 +126,23 @@
   text-underline-offset: 0.12em;
 }
 
-.cm-content span.nib-mark.tone-1 {
+.cm-content span.nib-highlight.tone-1 {
   background: var(--mark-1);
 }
 
-.cm-content span.nib-mark.tone-2 {
+.cm-content span.nib-highlight.tone-2 {
   background: var(--mark-2);
 }
 
-.cm-content span.nib-mark.tone-4 {
+.cm-content span.nib-highlight.tone-4 {
   background: var(--mark-4);
 }
 
-.cm-content span.nib-mark.tone-5 {
+.cm-content span.nib-highlight.tone-5 {
   background: var(--mark-5);
 }
 
-.cm-content span.nib-mark.tone-6 {
+.cm-content span.nib-highlight.tone-6 {
   background: var(--mark-6);
 }
 

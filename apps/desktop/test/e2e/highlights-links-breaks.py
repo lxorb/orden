@@ -31,6 +31,8 @@ WRAPPED = (
 )
 
 PLAN = "# The plan\n\nWhat the plan says.\n"
+
+LONG = "# Long mark\n\nA long ==\U0001F7E2 " + "green words " * 40 + "== and the rest.\n"
 JOURNAL = "# Monday\n\nA passage worth lifting out into a note of its own.\n\nAnd the rest.\n"
 
 SEED = """
@@ -45,7 +47,7 @@ async (notes) => {
 
 WRITTEN = """
 () => {
-  const found = [...document.querySelectorAll('.cm-content .nib-mark')]
+  const found = [...document.querySelectorAll('.cm-content .nib-highlight[class*="tone-"]')]
   return found.map((one) => ({
     tone: [...one.classList].find((name) => name.startsWith('tone-')) ?? null,
     paint: getComputedStyle(one).backgroundColor,
@@ -89,7 +91,7 @@ def fresh(browser: Browser, scheme: str) -> Page:
         else None,
     )
     DRIVE.open(page)
-    say(f"the space holds {page.evaluate(SEED, [NOTE, WRAPPED, PLAN, JOURNAL])}")
+    say(f"the space holds {page.evaluate(SEED, [NOTE, WRAPPED, PLAN, JOURNAL, LONG])}")
     page.wait_for_timeout(400)
     return page
 
@@ -180,7 +182,7 @@ def in_the_editor(page: Page) -> None:
     page.wait_for_timeout(300)
     box = page.evaluate(
         """() => {
-          const mark = document.querySelector('.cm-content .nib-mark')
+          const mark = document.querySelector('.cm-content .nib-highlight[class*="tone-"]')
           const box = mark.getBoundingClientRect()
           return { x: box.left + 4, y: box.top + box.height / 2 }
         }"""
@@ -378,9 +380,28 @@ def the_link(page: Page) -> None:
         f"a wikilink and a markdown link reach the same note: {resolved}",
     )
 
+def the_long_mark(page: Page) -> None:
+    open_note(page, "Long mark")
+    select(page, at(page, "and the rest"), at(page, "and the rest"))
+    page.wait_for_timeout(300)
+    laid = page.evaluate(
+        """() => {
+          const mark = document.querySelector('.cm-content .nib-highlight.tone-4')
+          const scroller = document.querySelector('.cm-scroller')
+          return {
+            rows: mark ? new Set([...mark.getClientRects()].map((one) => Math.round(one.top))).size : 0,
+            wide: scroller.scrollWidth,
+            room: scroller.clientWidth,
+          }
+        }"""
+    )
+    is_true(laid["rows"] > 1, f"a long coloured highlight wraps onto more lines: {laid}")
+    is_true(laid["wide"] <= laid["room"] + 1, f"and runs past no edge: {laid}")
+
 def drive(browser: Browser, scheme: str) -> None:
     page = fresh(browser, scheme)
     try:
+        the_long_mark(page)
         in_the_editor(page)
         in_the_reading_view(page)
         the_bar(page)
