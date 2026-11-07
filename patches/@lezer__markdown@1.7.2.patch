@@ -1,8 +1,35 @@
 diff --git a/dist/index.js b/dist/index.js
-index e5725e7b76c21832da1a3d2ed188ae042c06224c..521ab423fbf53897675624c9d6822031c6e8f574 100644
+index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a424e124417 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -1506,8 +1506,11 @@ const DefaultInline = {
+@@ -1391,6 +1391,7 @@ try {
+     Punctuation = new RegExp("[\\p{S}|\\p{P}]", "u");
+ }
+ catch (_) { }
++const spaceRun = { cx: null, from: -1, to: -1 };
+ const DefaultInline = {
+     Escape(cx, next, start) {
+         if (next != 92 /* '\\' */ || start == cx.end - 1)
+@@ -1473,8 +1474,16 @@ const DefaultInline = {
+             return cx.append(elt(Type.HardBreak, start, start + 2));
+         if (next == 32) {
+             let pos = start + 1;
+-            while (cx.char(pos) == 32)
+-                pos++;
++            // A run of spaces is read to its end once, not again from each space in it.
++            if (spaceRun.cx === cx && start > spaceRun.from && start < spaceRun.to)
++                pos = spaceRun.to;
++            else {
++                while (cx.char(pos) == 32)
++                    pos++;
++                spaceRun.cx = cx;
++                spaceRun.from = start;
++                spaceRun.to = pos;
++            }
+             if (cx.char(pos) == 10 && pos >= start + 2)
+                 return cx.append(elt(Type.HardBreak, start, pos + 1));
+         }
+@@ -1506,8 +1515,11 @@ const DefaultInline = {
                  let link = cx.parts[i] = finishLink(cx, content, part.type == LinkStart ? Type.Link : Type.Image, part.from, start + 1);
                  // Set any open-link markers before this link to invalid.
                  if (part.type == LinkStart)
@@ -15,7 +42,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..521ab423fbf53897675624c9d6822031
                          if (p instanceof InlineDelimiter && p.type == LinkStart)
                              p.side = 0 /* Mark.None */;
                      }
-@@ -1578,7 +1581,9 @@ function parseURL(text, start, offset) {
+@@ -1578,7 +1590,9 @@ function parseURL(text, start, offset) {
                  escaped = false;
              }
              else if (ch == 40 /* '(' */) {
@@ -26,7 +53,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..521ab423fbf53897675624c9d6822031
              }
              else if (ch == 41 /* ')' */) {
                  if (!depth)
-@@ -1603,6 +1608,9 @@ function parseLinkTitle(text, start, offset) {
+@@ -1603,6 +1617,9 @@ function parseLinkTitle(text, start, offset) {
              escaped = false;
          else if (ch == end)
              return elt(Type.LinkTitle, start + offset, pos + 1 + offset);
@@ -36,7 +63,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..521ab423fbf53897675624c9d6822031
          else if (ch == 92 /* '\\' */)
              escaped = true;
      }
-@@ -1708,6 +1716,9 @@ class InlineContext {
+@@ -1708,6 +1725,9 @@ class InlineContext {
      appropriate node and updating the content of this.parts. @internal
      */
      resolveMarkers(from) {
@@ -46,7 +73,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..521ab423fbf53897675624c9d6822031
          // Scan forward, looking for closing tokens
          for (let i = from; i < this.parts.length; i++) {
              let close = this.parts[i];
-@@ -1715,9 +1726,11 @@ class InlineContext {
+@@ -1715,9 +1735,11 @@ class InlineContext {
                  continue;
              let emp = close.type == EmphasisUnderscore || close.type == EmphasisAsterisk;
              let closeSize = close.to - close.from;
@@ -59,7 +86,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..521ab423fbf53897675624c9d6822031
                  let part = this.parts[j];
                  if (part instanceof InlineDelimiter && (part.side & 1 /* Mark.Open */) && part.type == close.type &&
                      // Ignore emphasis delimiters where the character count doesn't match
-@@ -1727,8 +1740,10 @@ class InlineContext {
+@@ -1727,8 +1749,10 @@ class InlineContext {
                      break;
                  }
              }
@@ -71,7 +98,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..521ab423fbf53897675624c9d6822031
              let type = close.type.resolve, content = [];
              let start = open.from, end = close.to;
              // Emphasis marker effect depends on the character count. Size consumed is minimum of the two
-@@ -1883,7 +1898,9 @@ class FragmentCursor {
+@@ -1883,7 +1907,9 @@ class FragmentCursor {
              c.firstChild();
          }
          let rPos = pos + this.fragment.offset;
@@ -82,7 +109,25 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..521ab423fbf53897675624c9d6822031
              if (!c.parent())
                  return false;
          for (;;) {
-@@ -2243,9 +2260,11 @@ const Autolink = {
+@@ -2205,11 +2231,15 @@ function autolinkURLEnd(text, from) {
+     if (!m || lastTwoDomainWords.exec(m[0])[0].indexOf("_") > -1)
+         return -1;
+     let end = from + m[0].length;
++    // The brackets are counted once, and each closing one taken off the end is taken off the count.
++    let opens = count(text, from, end, "("), closes = count(text, from, end, ")");
+     for (;;) {
+         let last = text[end - 1], m;
+-        if (/[?!.,:*_~]/.test(last) ||
+-            last == ")" && count(text, from, end, ")") > count(text, from, end, "("))
++        if (/[?!.,:*_~]/.test(last) || last == ")" && closes > opens) {
++            if (last == ")")
++                closes--;
+             end--;
++        }
+         else if (last == ";" && (m = /&(?:#\d+|#x[a-f\d]+|\w+);$/.exec(text.slice(from, end))))
+             end = from + m.index;
+         else
+@@ -2243,9 +2273,11 @@ const Autolink = {
                      return -1;
                  if (m[1] || m[2]) { // www., http://
                      end = autolinkURLEnd(cx.text, pos + m[0].length);
