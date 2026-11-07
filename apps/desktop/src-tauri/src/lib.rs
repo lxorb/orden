@@ -1195,6 +1195,90 @@ mod tests {
         assert!(late.is_empty(), "blocks the runtime it runs on: {late:#?}");
     }
 
+    const HOLDS_A_WORKER: [&str; 16] = [
+        "Command::new",
+        ".wait(",
+        ".wait_timeout(",
+        ".wait_while(",
+        ".wait_timeout_while(",
+        "WaitForSingleObject",
+        "WaitForMultipleObjects",
+        "MsgWaitForMultipleObjects",
+        "wait_for_async_operation",
+        "wait_with_pump",
+        ".recv(",
+        ".recv_timeout(",
+        ".join()",
+        "thread::sleep",
+        "SendMessageW",
+        "TcpStream::connect",
+    ];
+
+    #[test]
+    fn a_command_on_the_runtime_that_waits_is_found_unless_the_wait_is_handed_off() {
+        let source = concat!(
+            "#[tauri::command(async)]\npub fn held(heard: Receiver<u8>) {\n    let _ = heard.recv();\n}\n\n",
+            "#[tauri::command]\npub async fn slept() {\n    asked();\n}\n\n",
+            "fn asked() {\n    std::thread::sleep(Duration::from_secs(3));\n}\n\n",
+            "#[tauri::command]\npub async fn handed() {\n    let _ = tauri::async_runtime::spawn_blocking(asked_later).await;\n}\n\n",
+            "fn asked_later() {\n    tauri::async_runtime::spawn_blocking(|| asked());\n}\n\n",
+            "#[tauri::command]\npub async fn heard(mut heard: tokio::sync::mpsc::Receiver<u8>) {\n    let _ = heard.recv().await;\n}\n\n",
+            "#[tauri::command]\npub async fn timed(mut heard: tokio::sync::mpsc::Receiver<u8>) {\n    let _ = tokio::time::timeout(Duration::from_secs(1), heard.recv()).await;\n}\n\n",
+            "#[tauri::command]\npub async fn off() {\n    let _ = crate::lane::off_the_runtime(asked).await;\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let waits = own.waiting(&HOLDS_A_WORKER, &[]);
+        let mut held: Vec<&String> = own
+            .workers()
+            .iter()
+            .filter(|path| waits.contains(path))
+            .collect();
+        held.sort();
+        assert_eq!(held, ["crate::held", "crate::slept"]);
+    }
+
+    const WAITS_IN_WHAT_IT_HANDS_ON: [&str; 2] =
+        ["crate::pdf::print_pdf", "crate::updates::check_update"];
+
+    const WAITS_UNTIL_THE_MAIL_REWORK: [&str; 2] = [
+        "crate::mail_socket::mail_socket_tls",
+        "crate::mail_socket::mail_socket_write",
+    ];
+
+    #[test]
+    fn no_command_on_the_runtime_waits_on_one_of_its_workers() {
+        let mut late: Vec<String> = Vec::new();
+        for target in TARGETS {
+            let own = own_on(target);
+            for excepted in WAITS_IN_WHAT_IT_HANDS_ON
+                .iter()
+                .chain(&WAITS_UNTIL_THE_MAIL_REWORK)
+            {
+                assert!(
+                    own.workers().iter().any(|one| one == excepted),
+                    "{excepted} is no command on the runtime"
+                );
+            }
+            let waits = own.waiting(&HOLDS_A_WORKER, &[]);
+            late.extend(
+                own.workers()
+                    .iter()
+                    .filter(|path| {
+                        waits.contains(path)
+                            && !WAITS_IN_WHAT_IT_HANDS_ON.contains(&path.as_str())
+                            && !WAITS_UNTIL_THE_MAIL_REWORK.contains(&path.as_str())
+                    })
+                    .map(|path| {
+                        format!(
+                            "{target:?} {}",
+                            own.chain(path, &HOLDS_A_WORKER, &waits).join(" -> ")
+                        )
+                    }),
+            );
+        }
+        assert!(late.is_empty(), "holds a worker of the runtime: {late:#?}");
+    }
+
     #[test]
     fn nothing_the_window_s_thread_runs_waits() {
         let mut late: Vec<String> = Vec::new();

@@ -70,8 +70,12 @@ fn in_login_shell(mut shell: Command, patience: Duration) -> Option<PathBuf> {
     finding::shell_answer(&String::from_utf8_lossy(&said.stdout)).filter(|program| runs(program))
 }
 
-#[tauri::command(async)]
-pub fn has_pandoc() -> bool {
+#[tauri::command]
+pub async fn has_pandoc() -> bool {
+    crate::lane::off_the_runtime(pandoc_runs).await
+}
+
+fn pandoc_runs() -> bool {
     pandoc()
         .arg("--version")
         .stdout(Stdio::null())
@@ -181,9 +185,12 @@ fn reading(source: &str, media: bool) -> Vec<&str> {
     args
 }
 
-#[tauri::command(async)]
-pub fn import_document(app: AppHandle, path: String) -> Result<Imported, String> {
-    import_from(&chosen(&app, &path)?)
+#[tauri::command]
+pub async fn import_document(app: AppHandle, path: String) -> Result<Imported, String> {
+    crate::lane::off_the_runtime(move || -> Result<Imported, String> {
+        import_from(&chosen(&app, &path)?)
+    })
+    .await
 }
 
 fn import_from(source: &Path) -> Result<Imported, String> {
@@ -330,34 +337,37 @@ fn is_format(format: &str) -> bool {
         })
 }
 
-#[tauri::command(async)]
-pub fn run_pandoc(
+#[tauri::command]
+pub async fn run_pandoc(
     app: AppHandle,
     source: String,
     output: String,
     format: String,
     note: Option<String>,
 ) -> Result<Vec<String>, String> {
-    if !is_format(&format) {
-        return Err(format!("{format} is not a format pandoc writes"));
-    }
-    let target = chosen(&app, &output)?;
-    let place = match note {
-        Some(note) => {
-            let note = in_spaces(&app, &note)?;
-            let space = space_root(&spaces_dir(&app)?, &note)
-                .ok_or_else(|| format!("{} is not in a space", note.display()))?;
-            let folder = note
-                .parent()
-                .map_or_else(|| space.clone(), Path::to_path_buf);
-            Some((folder, space))
+    crate::lane::off_the_runtime(move || -> Result<Vec<String>, String> {
+        if !is_format(&format) {
+            return Err(format!("{format} is not a format pandoc writes"));
         }
-        None => None,
-    };
-    let place = place
-        .as_ref()
-        .map(|(folder, space)| Place { folder, space });
-    convert(&source, &target, &format, place.as_ref())
+        let target = chosen(&app, &output)?;
+        let place = match note {
+            Some(note) => {
+                let note = in_spaces(&app, &note)?;
+                let space = space_root(&spaces_dir(&app)?, &note)
+                    .ok_or_else(|| format!("{} is not in a space", note.display()))?;
+                let folder = note
+                    .parent()
+                    .map_or_else(|| space.clone(), Path::to_path_buf);
+                Some((folder, space))
+            }
+            None => None,
+        };
+        let place = place
+            .as_ref()
+            .map(|(folder, space)| Place { folder, space });
+        convert(&source, &target, &format, place.as_ref())
+    })
+    .await
 }
 
 struct Place<'a> {
@@ -705,8 +715,8 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        admitted, carries_pictures, complaint, convert, extracts_safely, has_pandoc, import_from,
-        is_format, left_out, not_found, pandoc, read_refusal, reading, vetted, wrote_outside,
+        admitted, carries_pictures, complaint, convert, extracts_safely, import_from, is_format,
+        left_out, not_found, pandoc, pandoc_runs, read_refusal, reading, vetted, wrote_outside,
         Copying, Imported, Place, DECK_REFUSAL, PICTURES_LEFT_OUT,
     };
     #[cfg(unix)]
@@ -735,7 +745,7 @@ mod tests {
     }
 
     fn pandoc_here() -> bool {
-        let here = has_pandoc();
+        let here = pandoc_runs();
         if !here {
             eprintln!("pandoc is not installed here, so this test checks nothing");
         }

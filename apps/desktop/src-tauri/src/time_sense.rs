@@ -45,8 +45,12 @@ const POWER_EVERY: Duration = Duration::from_secs(30);
 
 const LONGEST_APP: usize = 80;
 
-#[tauri::command(async)]
-pub fn time_sense() -> Sensed {
+#[tauri::command]
+pub async fn time_sense() -> Sensed {
+    crate::lane::off_the_runtime(sensed).await
+}
+
+fn sensed() -> Sensed {
     let input = crate::presence::input_idle();
     let ticks = platform::cpu_ticks();
     let mut held = HELD.lock().unwrap_or_else(PoisonError::into_inner);
@@ -634,8 +638,8 @@ mod tests {
 
     #[test]
     fn the_system_is_asked_without_trouble() {
-        let first = super::time_sense();
-        let again = super::time_sense();
+        let first = super::sensed();
+        let again = super::sensed();
         assert!(again.cpu.is_none_or(|one| (0.0..=1.0).contains(&one)));
         assert!(first.memory.is_none_or(|one| (0.0..=1.0).contains(&one)));
     }

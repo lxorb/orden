@@ -20,9 +20,9 @@ const OLD_NAMES: [&str; 2] = ["Nib", "nibeditor"];
 )]
 const DESCRIPTION: &str = "Notes and the web in one window.";
 
-#[tauri::command(async)]
-pub fn default_browser(app: AppHandle) -> bool {
-    platform::is_default(&app)
+#[tauri::command]
+pub async fn default_browser(app: AppHandle) -> bool {
+    crate::lane::off_the_runtime(move || -> bool { platform::is_default(&app) }).await
 }
 
 #[tauri::command(async)]

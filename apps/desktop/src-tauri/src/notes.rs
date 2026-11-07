@@ -22,11 +22,15 @@ pub const MOST_NOTE_BYTES: u64 = 64 * 1024 * 1024;
 
 pub const TOO_LARGE: &str = "that note is too large";
 
-#[tauri::command(async)]
-pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
-    let target = openable(&app, &path)?;
+#[tauri::command]
+pub async fn read_note(app: AppHandle, path: String) -> Result<String, String> {
+    crate::lane::off_the_runtime(move || note_words(&app, &path)).await
+}
+
+pub fn note_words(app: &AppHandle, path: &str) -> Result<String, String> {
+    let target = openable(app, path)?;
     #[cfg(target_os = "macos")]
-    icloud::fetched(&app, &target)?;
+    icloud::fetched(app, &target)?;
     words_of(&target)
 }
 

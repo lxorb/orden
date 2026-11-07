@@ -1,41 +1,45 @@
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("window_drag.js");
 
-#[tauri::command(async)]
-pub fn window_move_resize(
+#[tauri::command]
+pub async fn window_move_resize(
     webview: tauri::Webview,
     edge: Option<String>,
     at: Option<Pressed>,
 ) -> Result<(), String> {
-    let direction = match edge.as_deref() {
-        None => MOVE,
-        Some(edge) => direction_of(edge).ok_or_else(|| format!("{edge} is not an edge"))?,
-    };
-    #[cfg(feature = "cef")]
-    {
-        use tauri::Manager as _;
-        let window = webview.window();
-        if direction != MOVE
-            && (window.is_maximized().unwrap_or(false) || window.is_fullscreen().unwrap_or(false))
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        let direction = match edge.as_deref() {
+            None => MOVE,
+            Some(edge) => direction_of(edge).ok_or_else(|| format!("{edge} is not an edge"))?,
+        };
+        #[cfg(feature = "cef")]
         {
-            return Ok(());
+            use tauri::Manager as _;
+            let window = webview.window();
+            if direction != MOVE
+                && (window.is_maximized().unwrap_or(false)
+                    || window.is_fullscreen().unwrap_or(false))
+            {
+                return Ok(());
+            }
+            let done = x11::move_resize(&window, direction, at.map(|at| (at.x, at.y)));
+            crate::logs::say(
+                webview.app_handle(),
+                if done.is_ok() { "info" } else { "error" },
+                &match &done {
+                    Ok(said) => format!("window: {said}"),
+                    Err(error) => format!("window: no move or resize ({error})"),
+                },
+            );
+            done.map(|_| ())
         }
-        let done = x11::move_resize(&window, direction, at.map(|at| (at.x, at.y)));
-        crate::logs::say(
-            webview.app_handle(),
-            if done.is_ok() { "info" } else { "error" },
-            &match &done {
-                Ok(said) => format!("window: {said}"),
-                Err(error) => format!("window: no move or resize ({error})"),
-            },
-        );
-        done.map(|_| ())
-    }
-    #[cfg(not(feature = "cef"))]
-    {
-        let _ = (webview, direction, at);
-        Ok(())
-    }
+        #[cfg(not(feature = "cef"))]
+        {
+            let _ = (webview, direction, at);
+            Ok(())
+        }
+    })
+    .await
 }
 
 #[tauri::command(async)]

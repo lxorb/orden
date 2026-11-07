@@ -18,16 +18,19 @@ const MAX_NAME: usize = 120;
 
 pub(crate) const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 
-#[tauri::command(async)]
-pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
-    let target = readable(&app, &path)?;
-    #[cfg(target_os = "macos")]
-    crate::notes::icloud::fetched(&app, &target)?;
-    let Some(bytes) = at_most(&target, FILE_LIMIT)? else {
-        return Err(format!("{path} is too large to open"));
-    };
+#[tauri::command]
+pub async fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
+    crate::lane::off_the_runtime(move || -> Result<tauri::ipc::Response, String> {
+        let target = readable(&app, &path)?;
+        #[cfg(target_os = "macos")]
+        crate::notes::icloud::fetched(&app, &target)?;
+        let Some(bytes) = at_most(&target, FILE_LIMIT)? else {
+            return Err(format!("{path} is too large to open"));
+        };
 
-    Ok(tauri::ipc::Response::new(bytes))
+        Ok(tauri::ipc::Response::new(bytes))
+    })
+    .await
 }
 
 fn readable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {

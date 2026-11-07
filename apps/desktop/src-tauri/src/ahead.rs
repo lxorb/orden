@@ -122,7 +122,7 @@ fn notes_of(app: &AppHandle, paths: &[String]) -> BTreeMap<String, String> {
             Ok(meta) if meta.len() <= LONGEST_NOTE => {}
             _ => continue,
         }
-        let Ok(words) = crate::notes::read_note(app.clone(), path.clone()) else {
+        let Ok(words) = crate::notes::note_words(app, path) else {
             continue;
         };
         if bytes + words.len() > MOST_BYTES {
@@ -135,9 +135,12 @@ fn notes_of(app: &AppHandle, paths: &[String]) -> BTreeMap<String, String> {
     notes
 }
 
-#[tauri::command(async)]
-pub fn launch_ahead(app: AppHandle) -> Option<Answer> {
-    taken().or_else(|| planned(&app).map(|plan| read(&app, plan)))
+#[tauri::command]
+pub async fn launch_ahead(app: AppHandle) -> Option<Answer> {
+    crate::lane::off_the_runtime(move || -> Option<Answer> {
+        taken().or_else(|| planned(&app).map(|plan| read(&app, plan)))
+    })
+    .await
 }
 
 fn taken() -> Option<Answer> {

@@ -89,52 +89,58 @@ fn writable(path: &Path) -> bool {
 const RELAUNCH: &str = r#"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.1; done; /bin/sleep 0.5; exec /usr/bin/open -n "$2""#;
 
 #[cfg(target_os = "macos")]
-#[tauri::command(async)]
-pub fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
-    use std::os::unix::process::CommandExt as _;
-    use std::process::{Command, Stdio};
+#[tauri::command]
+pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        use std::os::unix::process::CommandExt as _;
+        use std::process::{Command, Stdio};
 
-    let from = stuck_bundle().ok_or("this copy can update where it is")?;
-    let name = from.file_name().ok_or("the app has no name")?;
-    let to = applications()
-        .ok_or("there is no Applications folder to move to")?
-        .join(name);
+        let from = stuck_bundle().ok_or("this copy can update where it is")?;
+        let name = from.file_name().ok_or("the app has no name")?;
+        let to = applications()
+            .ok_or("there is no Applications folder to move to")?
+            .join(name);
 
-    if !to.exists() {
-        let copied = Command::new("/usr/bin/ditto")
-            .arg(&from)
-            .arg(&to)
-            .status()
-            .map_err(|error| error.to_string())?;
-        if !copied.success() {
-            let _ = std::fs::remove_dir_all(&to);
-            return Err(format!("could not copy the app to {}", to.display()));
+        if !to.exists() {
+            let copied = Command::new("/usr/bin/ditto")
+                .arg(&from)
+                .arg(&to)
+                .status()
+                .map_err(|error| error.to_string())?;
+            if !copied.success() {
+                let _ = std::fs::remove_dir_all(&to);
+                return Err(format!("could not copy the app to {}", to.display()));
+            }
+            let _ = Command::new("/usr/bin/xattr")
+                .args(["-dr", "com.apple.quarantine"])
+                .arg(&to)
+                .status();
         }
-        let _ = Command::new("/usr/bin/xattr")
-            .args(["-dr", "com.apple.quarantine"])
-            .arg(&to)
-            .status();
-    }
 
-    Command::new("/bin/sh")
-        .args(["-c", RELAUNCH, "sh"])
-        .arg(std::process::id().to_string())
-        .arg(&to)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .process_group(0)
-        .spawn()
-        .map_err(|error| error.to_string())?;
-    crate::lifecycle::quit(&app);
-    Ok(())
+        Command::new("/bin/sh")
+            .args(["-c", RELAUNCH, "sh"])
+            .arg(std::process::id().to_string())
+            .arg(&to)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .process_group(0)
+            .spawn()
+            .map_err(|error| error.to_string())?;
+        crate::lifecycle::quit(&app);
+        Ok(())
+    })
+    .await
 }
 
 #[cfg(not(target_os = "macos"))]
-#[tauri::command(async)]
-pub fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
-    let _ = app;
-    Err("only a Mac moves the app".into())
+#[tauri::command]
+pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        let _ = app;
+        Err("only a Mac moves the app".into())
+    })
+    .await
 }
 
 #[cfg(test)]
