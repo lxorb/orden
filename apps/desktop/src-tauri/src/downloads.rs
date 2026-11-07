@@ -64,7 +64,7 @@ impl Downloads {
         let mut held = self.held.lock().ok()?;
 
         let path = free_path(folder, &name, |one| {
-            one.exists()
+            on_disk(one)
                 || held
                     .iter()
                     .any(|other| other.writing() && same_path(&other.path, one))
@@ -325,6 +325,10 @@ fn split_extension(name: &str) -> (&str, &str) {
     }
 
     (stem, ext)
+}
+
+pub(crate) fn on_disk(path: &Path) -> bool {
+    std::fs::symlink_metadata(path).is_ok()
 }
 
 pub(crate) fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool) -> PathBuf {
@@ -1139,6 +1143,19 @@ mod tests {
         } else {
             PathBuf::from("/Downloads")
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_link_that_leads_nowhere_is_a_name_taken() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let link = dir.path().join("report.pdf");
+        std::os::unix::fs::symlink(dir.path().join("gone"), &link).expect("a link");
+        assert!(super::on_disk(&link));
+        assert_eq!(
+            free_path(dir.path(), "report.pdf", super::on_disk),
+            dir.path().join("report (1).pdf")
+        );
     }
 
     #[test]
