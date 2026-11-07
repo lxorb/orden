@@ -60,6 +60,7 @@ import { recheckDomains } from './spaces/proof'
 import { expireRequests, sharedWithMe } from './spaces/share'
 import { themes } from './themes'
 import { time } from './time'
+import { pad } from './pad'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
 import { steadyEnv } from './steady'
@@ -242,6 +243,8 @@ app.route('/v2/admin', syncAdmin)
 app.route('/v2/push', push)
 
 app.route('/v2/time', time)
+
+app.route('/v2/pad', pad)
 
 app.route('/v2/chats', chats)
 

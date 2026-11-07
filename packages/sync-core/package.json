@@ -11,6 +11,7 @@
     "./merge3": "./src/merge3.ts",
     "./meta": "./src/meta.ts",
     "./order": "./src/order.ts",
+    "./pad": "./src/pad.ts",
     "./outbox": "./src/outbox.ts",
     "./plane-diverge": "./src/plane-diverge.ts",
     "./seed": "./src/seed.ts",
