@@ -3408,4 +3408,8 @@ export const vi: Dictionary = {
   'Move to {space}?': 'Chuyển đến {space}?',
   'macOS can start dictation with this key too.':
     'macOS cũng có thể bắt đầu đọc chính tả bằng phím này.',
+  'QR code': 'Mã QR',
+  'Waiting…': 'Đang chờ…',
+  Service: 'Dịch vụ',
+  'I understand and want to connect anyway': 'Tôi hiểu và vẫn muốn kết nối',
 }

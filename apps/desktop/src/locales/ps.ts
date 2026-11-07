@@ -3502,4 +3502,8 @@ export const ps: Dictionary = {
   'Send crash reports to help improve Orden': 'د Orden د ښه کولو لپاره د ماتیدو راپورونه ولېږه',
   'Move to {space}?': '{space} ته یې ولیږدوئ؟',
   'macOS can start dictation with this key too.': 'macOS ښايي په دې کیلي سره ډیکټیشن هم پیل کړي.',
+  'QR code': 'QR کوډ',
+  'Waiting…': 'انتظار…',
+  Service: 'خدمت',
+  'I understand and want to connect anyway': 'پوهېږم او بیا هم غواړم وصل شم',
 }

@@ -3337,4 +3337,8 @@ export const zhHans: Dictionary = {
   'Send crash reports to help improve Orden': '发送崩溃报告，帮助改进 Orden',
   'Move to {space}?': '移动到 {space}？',
   'macOS can start dictation with this key too.': 'macOS 也可能用这个键开始听写。',
+  'QR code': '二维码',
+  'Waiting…': '正在等待…',
+  Service: '服务',
+  'I understand and want to connect anyway': '我已了解，仍要连接',
 }

@@ -3487,4 +3487,8 @@ export const gu: Dictionary = {
   'Send crash reports to help improve Orden': 'Orden ને સુધારવામાં મદદ કરવા ક્રેશ રિપોર્ટ મોકલો',
   'Move to {space}?': '{space} માં ખસેડવું છે?',
   'macOS can start dictation with this key too.': 'macOS આ કી વડે ડિક્ટેશન પણ શરૂ કરી શકે છે.',
+  'QR code': 'QR કોડ',
+  'Waiting…': 'રાહ જોઈ રહ્યા છીએ…',
+  Service: 'સેવા',
+  'I understand and want to connect anyway': 'હું સમજું છું અને છતાં જોડાવા માંગુ છું',
 }

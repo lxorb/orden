@@ -3438,4 +3438,8 @@ export const ms: Dictionary = {
   'Move to {space}?': 'Alihkan ke {space}?',
   'macOS can start dictation with this key too.':
     'macOS juga boleh memulakan imlak dengan kekunci ini.',
+  'QR code': 'Kod QR',
+  'Waiting…': 'Menunggu…',
+  Service: 'Perkhidmatan',
+  'I understand and want to connect anyway': 'Saya faham dan tetap mahu menyambung',
 }

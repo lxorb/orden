@@ -3527,4 +3527,8 @@ export const gsw: Dictionary = {
   'Move to {space}?': 'Nach {space} verschiebe?',
   'macOS can start dictation with this key too.':
     'macOS cha mit dere Taschte au s Diktiere starte.',
+  'QR code': 'QR-Code',
+  'Waiting…': 'Am Warte…',
+  Service: 'Dienst',
+  'I understand and want to connect anyway': 'Ich ha s verstande und wott trotzdem verbinde',
 }

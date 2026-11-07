@@ -3424,4 +3424,8 @@ export const jv: Dictionary = {
   'Send crash reports to help improve Orden': 'Kirim laporan crash kanggo mbantu nambah apik Orden',
   'Move to {space}?': 'Pindhah menyang {space}?',
   'macOS can start dictation with this key too.': 'macOS uga bisa miwiti dikte nganggo tombol iki.',
+  'QR code': 'Kode QR',
+  'Waiting…': 'Ngenteni…',
+  Service: 'Layanan',
+  'I understand and want to connect anyway': 'Aku ngerti lan tetep pengin nyambung',
 }

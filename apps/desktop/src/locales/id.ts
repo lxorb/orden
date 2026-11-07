@@ -3441,4 +3441,8 @@ export const id: Dictionary = {
   'Move to {space}?': 'Pindahkan ke {space}?',
   'macOS can start dictation with this key too.':
     'macOS juga bisa memulai dikte dengan tombol ini.',
+  'QR code': 'Kode QR',
+  'Waiting…': 'Menunggu…',
+  Service: 'Layanan',
+  'I understand and want to connect anyway': 'Saya mengerti dan tetap ingin menghubungkan',
 }

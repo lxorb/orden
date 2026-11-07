@@ -3497,4 +3497,8 @@ export const bn: Dictionary = {
   'Send crash reports to help improve Orden': 'Orden উন্নত করতে সাহায্য করতে ক্র্যাশ রিপোর্ট পাঠান',
   'Move to {space}?': '{space}-এ সরাবেন?',
   'macOS can start dictation with this key too.': 'macOS এই কী দিয়েও ডিক্টেশন শুরু করতে পারে।',
+  'QR code': 'QR কোড',
+  'Waiting…': 'অপেক্ষা করা হচ্ছে…',
+  Service: 'পরিষেবা',
+  'I understand and want to connect anyway': 'আমি বুঝেছি এবং তবুও সংযুক্ত করতে চাই',
 }

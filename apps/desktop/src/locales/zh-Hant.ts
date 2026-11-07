@@ -3340,4 +3340,8 @@ export const zhHant: Dictionary = {
   'Send crash reports to help improve Orden': '傳送當機報告，協助改善 Orden',
   'Move to {space}?': '移動到 {space}？',
   'macOS can start dictation with this key too.': 'macOS 也可能用這個鍵開始聽寫。',
+  'QR code': 'QR 碼',
+  'Waiting…': '等待中…',
+  Service: '服務',
+  'I understand and want to connect anyway': '我已了解，仍要連接',
 }

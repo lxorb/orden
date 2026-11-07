@@ -3508,4 +3508,8 @@ export const fa: Dictionary = {
   'Move to {space}?': 'به {space} منتقل شود؟',
   'macOS can start dictation with this key too.':
     'macOS ممکن است با این کلید دیکته را هم آغاز کند.',
+  'QR code': 'کد QR',
+  'Waiting…': 'در انتظار…',
+  Service: 'سرویس',
+  'I understand and want to connect anyway': 'متوجه شدم و با این حال می‌خواهم وصل شوم',
 }

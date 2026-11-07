@@ -3642,4 +3642,8 @@ export const uk: Dictionary = {
   'Move to {space}?': 'Перемістити в {space}?',
   'macOS can start dictation with this key too.':
     'macOS може запускати цією клавішею й диктування.',
+  'QR code': 'QR-код',
+  'Waiting…': 'Очікування…',
+  Service: 'Сервіс',
+  'I understand and want to connect anyway': "Я розумію й однаково хочу під'єднати",
 }

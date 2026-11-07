@@ -3518,4 +3518,8 @@ export const te: Dictionary = {
     'Orden ను మెరుగుపరచడంలో సహాయపడటానికి క్రాష్ నివేదికలను పంపు',
   'Move to {space}?': '{space}కి తరలించాలా?',
   'macOS can start dictation with this key too.': 'ఈ కీతో macOS డిక్టేషన్‌ను కూడా ప్రారంభించవచ్చు.',
+  'QR code': 'QR కోడ్',
+  'Waiting…': 'వేచి ఉంది…',
+  Service: 'సేవ',
+  'I understand and want to connect anyway': 'నాకు అర్థమైంది, అయినా కనెక్ట్ చేయాలనుకుంటున్నాను',
 }

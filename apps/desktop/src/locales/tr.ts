@@ -3524,4 +3524,8 @@ export const tr: Dictionary = {
     'Orden’ı geliştirmeye yardımcı olmak için çökme raporları gönder',
   'Move to {space}?': '{space} alanına taşınsın mı?',
   'macOS can start dictation with this key too.': 'macOS bu tuşla dikteyi de başlatabilir.',
+  'QR code': 'QR kodu',
+  'Waiting…': 'Bekleniyor…',
+  Service: 'Hizmet',
+  'I understand and want to connect anyway': 'Anlıyorum ve yine de bağlanmak istiyorum',
 }

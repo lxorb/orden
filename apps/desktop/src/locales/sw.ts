@@ -3546,4 +3546,8 @@ export const sw: Dictionary = {
   'Move to {space}?': 'Ihamishe kwenda {space}?',
   'macOS can start dictation with this key too.':
     'macOS inaweza pia kuanzisha imla kwa kitufe hiki.',
+  'QR code': 'Msimbo wa QR',
+  'Waiting…': 'Inasubiri…',
+  Service: 'Huduma',
+  'I understand and want to connect anyway': 'Ninaelewa na bado nataka kuunganisha',
 }

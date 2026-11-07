@@ -3572,4 +3572,8 @@ export const fil: Dictionary = {
   'Move to {space}?': 'Ilipat sa {space}?',
   'macOS can start dictation with this key too.':
     'Maaari ring simulan ng macOS ang pagdidikta gamit ang key na ito.',
+  'QR code': 'QR code',
+  'Waiting…': 'Naghihintay…',
+  Service: 'Serbisyo',
+  'I understand and want to connect anyway': 'Naiintindihan ko at gusto ko pa ring kumonekta',
 }

@@ -7,7 +7,7 @@ import { connected, type Connected } from './connected.svelte'
 
 const KEY = 'nib:chat-accounts'
 
-export const PROVIDERS: readonly ChatProvider[] = [mailProvider, gmailProvider, microsoftProvider]
+const PROVIDERS: readonly ChatProvider[] = [mailProvider, gmailProvider, microsoftProvider]
 
 export interface Saved {
   provider: string
@@ -45,8 +45,18 @@ export class Accounts {
     private readonly providers: readonly ChatProvider[] = PROVIDERS,
   ) {}
 
+  extra = $state.raw<readonly ChatProvider[]>([])
+
+  get offered(): readonly ChatProvider[] {
+    return [...this.providers, ...this.extra]
+  }
+
+  offer(provider: ChatProvider): void {
+    this.extra = [...this.extra.filter((one) => one.id !== provider.id), provider]
+  }
+
   providerOf(id: string): ChatProvider | undefined {
-    return this.providers.find((one) => one.id === id)
+    return this.offered.find((one) => one.id === id)
   }
 
   private keepSaved(next: readonly Saved[]): void {
