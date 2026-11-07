@@ -102,10 +102,19 @@ walk(json.load(sys.stdin))
 wait_for_views() {
   local want=$1
   for _ in $(seq 120); do
-    [ "$(views | wc -l)" -ge "$want" ] && return 0
+    if [ "$(views | wc -l)" -ge "$want" ]; then
+      [ "$want" = 1 ] && told
+      return 0
+    fi
     sleep 0.5
   done
   return 1
+}
+
+told() {
+  [ "${CRASH_ASK:-0}" = 1 ] && return 0
+  [ -f "$config/automation.json" ] || return 0
+  python3 "$here/crash_told.py" "$config" || true
 }
 
 site_pid=""
@@ -279,6 +288,7 @@ MAKE
   export ORDEN_CEF_ARGS
 fi
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
+[ "${CRASH_ASK:-0}" = 1 ] && endpoint
 [ "${KILL:-0}" = 1 ] && endpoint
 [ "${RESERVED:-0}" = 1 ] && endpoint
 [ "${PDFMARK:-0}" = 1 ] && endpoint
@@ -381,6 +391,10 @@ fi
 if [ "$status" = 0 ] && [ "${GROUND:-0}" = 1 ]; then
   sleep 3
   python3 "$here/ground-drive.py" sway "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${CRASH_ASK:-0}" = 1 ]; then
+  python3 "$here/crash-ask-drive.py" "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${TEXTSIZE:-0}" = 1 ]; then
