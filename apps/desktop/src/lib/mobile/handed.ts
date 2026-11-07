@@ -85,13 +85,28 @@ export function openable(said: string): string | null {
 }
 
 let retaking = false
+let taking: Promise<void> | null = null
+let again = false
+
+function takeOnce(): void {
+  if (taking) {
+    again = true
+    return
+  }
+  taking = take().finally(() => {
+    taking = null
+    if (!again) return
+    again = false
+    takeOnce()
+  })
+}
 
 async function take(): Promise<void> {
   const word = await frameWord()
   if (!word) {
     if (!retaking) {
       retaking = true
-      void wordSaid().then(() => take())
+      void wordSaid().then(takeOnce)
     }
     return
   }
@@ -263,8 +278,8 @@ export function startHanded(): () => void {
 
   const stopWidgets = watchWidgets()
 
-  answer('__nibHanded', () => void take())
-  void take()
+  answer('__nibHanded', takeOnce)
+  takeOnce()
 
   return () => {
     answer('__nibHanded', undefined)
