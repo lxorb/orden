@@ -3582,4 +3582,7 @@ export const sw: Dictionary = {
     'Telegram hukabidhi kikundi kwa mmiliki mpya kutoka programu yake tu',
   'That sticker is no longer available': 'Kibandiko hicho hakipatikani tena',
   'Telegram is not set up in this build': 'Telegram haijawekwa katika toleo hili',
+  'Password manager': 'Kidhibiti cha manenosiri',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Huongeza Pass, inayohifadhi manenosiri na kuyajaza kwenye tovuti. Kuizima huhifadhi makasha yako.',
 }

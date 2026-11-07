@@ -3618,4 +3618,7 @@ export const ptBR: Dictionary = {
     'O Telegram só passa um grupo para um novo dono pelo próprio app',
   'That sticker is no longer available': 'Essa figurinha não está mais disponível',
   'Telegram is not set up in this build': 'O Telegram não está configurado nesta versão',
+  'Password manager': 'Gerenciador de senhas',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Adiciona o Pass, que guarda senhas e as preenche nos sites. Desativá-lo mantém seus cofres.',
 }

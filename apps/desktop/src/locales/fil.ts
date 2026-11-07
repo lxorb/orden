@@ -3607,4 +3607,7 @@ export const fil: Dictionary = {
     'Sa sarili lang nitong app ipinapasa ng Telegram ang grupo sa bagong may-ari',
   'That sticker is no longer available': 'Wala na ang sticker na iyon',
   'Telegram is not set up in this build': 'Hindi naka-set up ang Telegram sa build na ito',
+  'Password manager': 'Password manager',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Idinadagdag ang Pass, na nagtatago ng mga password at pinupunan ang mga ito sa mga website. Kapag pinatay, mananatili ang iyong mga vault.',
 }

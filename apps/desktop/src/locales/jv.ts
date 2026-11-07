@@ -3458,4 +3458,7 @@ export const jv: Dictionary = {
     'Telegram mung masrahaké grup marang pemilik anyar saka aplikasiné dhéwé',
   'That sticker is no longer available': 'Stiker kuwi wis ora ana',
   'Telegram is not set up in this build': 'Telegram durung disiapaké ing versi iki',
+  'Password manager': 'Pangatur tembung sandi',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Nambahaké Pass, sing nyimpen tembung sandi lan ngisi ing situs web. Yen dipatèni, brankasmu tetep disimpen.',
 }

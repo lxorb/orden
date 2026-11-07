@@ -3407,4 +3407,7 @@ export const th: Dictionary = {
     'Telegram โอนกลุ่มให้เจ้าของใหม่ได้จากแอปของตัวเองเท่านั้น',
   'That sticker is no longer available': 'สติกเกอร์นั้นไม่มีแล้ว',
   'Telegram is not set up in this build': 'ยังไม่ได้ตั้งค่า Telegram ในบิลด์นี้',
+  'Password manager': 'ตัวจัดการรหัสผ่าน',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'เพิ่ม Pass ซึ่งเก็บรหัสผ่านและกรอกให้บนเว็บไซต์ ปิดแล้วห้องนิรภัยของคุณยังอยู่',
 }

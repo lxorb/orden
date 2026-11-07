@@ -3661,4 +3661,7 @@ export const fr: Dictionary = {
     'Telegram ne transfère un groupe à un nouveau propriétaire que depuis sa propre application',
   'That sticker is no longer available': 'Cet autocollant n’est plus disponible',
   'Telegram is not set up in this build': 'Telegram n’est pas configuré dans cette version',
+  'Password manager': 'Gestionnaire de mots de passe',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Ajoute Pass, qui garde les mots de passe et les remplit sur les sites web. Le désactiver conserve vos coffres.',
 }

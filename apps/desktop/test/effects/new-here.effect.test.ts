@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import NewHere from '../../src/lib/NewHere.svelte'
+import { hiddenKinds, PASS_WORD } from '../../src/lib/settings.svelte'
 import { viewport } from '../../src/lib/viewport.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
 
@@ -25,6 +26,7 @@ let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
+  hiddenKinds.hidden = [PASS_WORD]
   target = document.createElement('div')
   target.dataset.pane = workspace.panes.focusedId
   document.body.append(target)

@@ -3432,4 +3432,7 @@ export const ko: Dictionary = {
     'Telegram은 자체 앱에서만 그룹을 새 소유자에게 넘깁니다',
   'That sticker is no longer available': '그 스티커는 더 이상 없습니다',
   'Telegram is not set up in this build': '이 빌드에는 Telegram이 설정되어 있지 않습니다',
+  'Password manager': '비밀번호 관리자',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    '비밀번호를 보관하고 웹사이트에 채워 주는 Pass를 추가합니다. 꺼도 보관함은 그대로 남습니다.',
 }

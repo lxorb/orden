@@ -3521,4 +3521,7 @@ export const gu: Dictionary = {
     'Telegram જૂથ નવા માલિકને ફક્ત પોતાની ઍપમાંથી સોંપે છે',
   'That sticker is no longer available': 'તે સ્ટિકર હવે ઉપલબ્ધ નથી',
   'Telegram is not set up in this build': 'આ બિલ્ડમાં Telegram સેટ નથી',
+  'Password manager': 'પાસવર્ડ મેનેજર',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass ઉમેરે છે, જે પાસવર્ડ રાખે છે અને વેબસાઇટ પર ભરે છે. બંધ કરવાથી તમારા વૉલ્ટ રહે છે.',
 }

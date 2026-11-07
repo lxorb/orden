@@ -3538,4 +3538,7 @@ export const hi: Dictionary = {
     'Telegram ग्रुप को नए मालिक को केवल अपने ऐप से सौंपता है',
   'That sticker is no longer available': 'वह स्टिकर अब उपलब्ध नहीं है',
   'Telegram is not set up in this build': 'इस बिल्ड में Telegram सेट अप नहीं है',
+  'Password manager': 'पासवर्ड मैनेजर',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass जोड़ता है, जो पासवर्ड रखता है और वेबसाइटों पर उन्हें भरता है। बंद करने पर आपके वॉल्ट बने रहते हैं।',
 }

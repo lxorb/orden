@@ -701,7 +701,7 @@ pub(crate) fn reader(selection: bool) -> String {
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
 }
 
-fn opening(place: Option<Place>, url: &str) -> String {
+fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
     let want = place.and_then(|one| {
         serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
     });
@@ -721,7 +721,11 @@ fn opening(place: Option<Place>, url: &str) -> String {
     let mut scripts: Vec<String> = Vec::new();
 
     #[cfg(any(windows, feature = "cef", target_os = "macos"))]
-    scripts.push(crate::web_pass::script().to_string());
+    if pass {
+        scripts.push(crate::web_pass::script().to_string());
+    }
+    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
+    let _ = pass;
 
     if let Some(one) = want {
         scripts.push(PLACE.replace("__PLACE__", &one));
@@ -967,6 +971,8 @@ pub struct Profile {
     store: Option<String>,
     #[serde(default)]
     private: bool,
+    #[serde(default)]
+    pass: bool,
 }
 
 impl Profile {
@@ -1007,7 +1013,7 @@ pub async fn web_open(
 
     tabs.restore(&tab, revived.trail, revived.at);
 
-    let scripts = crate::page_style::with(opening(revived.place, &url));
+    let scripts = crate::page_style::with(opening(revived.place, &url, profile.pass));
     let (built_on, onward) = (
         Url::parse(BLANK).map_err(|error| format!("that page could not be opened: {error}"))?,
         Some((address, scripts)),
@@ -2834,8 +2840,12 @@ mod tests {
     #[test]
     fn nib_s_page_scripts_leave_the_page_s_world_alone() {
         for scripts in [
-            opening(None, "https://a.example/page"),
-            opening(Some(Place { x: 0.0, y: 940.0 }), "https://a.example/page"),
+            opening(None, "https://a.example/page", true),
+            opening(
+                Some(Place { x: 0.0, y: 940.0 }),
+                "https://a.example/page",
+                true,
+            ),
         ] {
             for script in scripts.split(";\n").filter(|one| !one.is_empty()) {
                 assert!(script.starts_with("(function () {"), "{script}");
@@ -2861,7 +2871,7 @@ mod tests {
     #[test]
     fn a_page_is_handed_the_keys_script_and_nothing_else() {
         assert_eq!(
-            opening(None, "https://a.example/page"),
+            opening(None, "https://a.example/page", true),
             format!(
                 "{};\n{};\n{};\n",
                 crate::web_opens::SCRIPT,
@@ -2875,7 +2885,7 @@ mod tests {
     #[test]
     fn a_page_on_chromium_is_handed_the_keys_script_and_nothing_else() {
         assert_eq!(
-            opening(None, "https://a.example/page"),
+            opening(None, "https://a.example/page", true),
             format!(
                 "{};
 {};
@@ -2894,9 +2904,18 @@ mod tests {
     #[test]
     fn a_page_on_a_mac_is_handed_pass_s_script_alone() {
         assert_eq!(
-            opening(None, "https://a.example/page"),
+            opening(None, "https://a.example/page", true),
             format!("{};\n", crate::web_pass::script())
         );
+    }
+
+    #[test]
+    fn a_page_opened_while_pass_is_off_is_handed_none_of_pass_s_script() {
+        for place in [None, Some(Place { x: 0.0, y: 940.0 })] {
+            let opened = opening(place, "https://a.example/page", false);
+            assert!(!opened.contains(crate::web_pass::script()));
+            assert!(!opened.contains("__nibPass"));
+        }
     }
 
     #[test]
@@ -2907,11 +2926,15 @@ mod tests {
 
     #[test]
     fn a_revived_page_carries_the_place_it_was_left_at() {
-        let opened = opening(None, "https://a.example/page");
+        let opened = opening(None, "https://a.example/page", true);
         assert!(!opened.contains("__PLACE__"));
         assert!(!opened.contains("scrollTo"));
 
-        let revived = opening(Some(Place { x: 0.0, y: 940.0 }), "https://a.example/page");
+        let revived = opening(
+            Some(Place { x: 0.0, y: 940.0 }),
+            "https://a.example/page",
+            true,
+        );
         assert!(revived.contains("window.scrollTo"));
         assert!(revived.contains("\"url\":\"https://a.example/page\""));
         assert!(revived.contains("940"));

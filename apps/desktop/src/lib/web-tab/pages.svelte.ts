@@ -429,12 +429,13 @@ class Pages {
 
     try {
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
+      const pass = (await import('../settings.svelte')).passOn()
       const said = await invoke<boolean | 'under' | undefined>('web_open', {
         tab: tabId,
         url: page.url,
         pane,
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
-        profile: { store, private: page.inPrivate },
+        profile: { store, private: page.inPrivate, pass },
       })
       heard(page, said)
       page.live = true

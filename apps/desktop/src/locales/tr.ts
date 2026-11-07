@@ -3557,4 +3557,7 @@ export const tr: Dictionary = {
     'Telegram bir grubu yeni sahibine yalnızca kendi uygulamasında devreder',
   'That sticker is no longer available': 'Bu çıkartma artık kullanılamıyor',
   'Telegram is not set up in this build': 'Telegram bu sürümde ayarlanmamış',
+  'Password manager': 'Parola yöneticisi',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Parolaları saklayan ve web sitelerinde dolduran Pass’i ekler. Kapatmak kasalarınızı korur.',
 }

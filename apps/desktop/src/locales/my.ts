@@ -3467,4 +3467,7 @@ export const my: Dictionary = {
     'Telegram သည် အဖွဲ့ကို ပိုင်ရှင်အသစ်ထံ ၎င်း၏ကိုယ်ပိုင်အက်ပ်မှသာ လွှဲပေးသည်',
   'That sticker is no longer available': 'ထိုစတစ်ကာ မရနိုင်တော့ပါ',
   'Telegram is not set up in this build': 'ဤ build တွင် Telegram ကို မသတ်မှတ်ရသေးပါ',
+  'Password manager': 'စကားဝှက် စီမံသူ',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'စကားဝှက်များကို သိမ်းပြီး ဝဘ်ဆိုက်များတွင် ဖြည့်ပေးသော Pass ကို ထည့်သည်။ ပိတ်ထားလည်း သင့်သေတ္တာများ ကျန်ရှိနေမည်။',
 }

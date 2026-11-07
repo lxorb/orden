@@ -3468,4 +3468,7 @@ export const am: Dictionary = {
     'Telegram ቡድንን ለአዲስ ባለቤት የሚያስተላልፈው ከራሱ መተግበሪያ ብቻ ነው',
   'That sticker is no longer available': 'ያ ተለጣፊ ከእንግዲህ አይገኝም',
   'Telegram is not set up in this build': 'Telegram በዚህ ግንባታ አልተዋቀረም',
+  'Password manager': 'የይለፍ ቃል አቀናባሪ',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Passን ያክላል፤ የይለፍ ቃላትን ያስቀምጣል በድር ጣቢያዎችም ይሞላል። ማጥፋቱ ካዝናዎችዎን ይጠብቃል።',
 }

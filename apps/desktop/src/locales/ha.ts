@@ -3587,4 +3587,7 @@ export const ha: Dictionary = {
     'Telegram tana miƙa ƙungiya ga sabon mai shi ne kawai daga manhajarta',
   'That sticker is no longer available': 'Wannan sitika ba ya samuwa yanzu',
   'Telegram is not set up in this build': 'Ba a saita Telegram a wannan ginin ba',
+  'Password manager': 'Manajan kalmomin sirri',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    "Yana ƙara Pass, wanda ke adana kalmomin sirri kuma yana cike su a shafukan yanar gizo. Kashe shi yana kiyaye ma'ajiyoyinka.",
 }

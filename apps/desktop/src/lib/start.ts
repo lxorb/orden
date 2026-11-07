@@ -131,8 +131,13 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
-      .then(() => import('./pass/syncing.svelte'))
-      .then((one) => one.startPassSync())
+      .then(() => import('./feature-gate.svelte'))
+      .then(({ whenPassOn }) =>
+        whenPassOn(
+          () => void import('./pass/syncing.svelte').then((one) => one.startPassSync()),
+          () => void import('./pass/open').then((one) => one.quietPass()),
+        ),
+      )
   }
 
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./chats/start.svelte'))
@@ -140,7 +145,7 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
-      .then(() => import('./time-gate.svelte'))
+      .then(() => import('./feature-gate.svelte'))
       .then(({ whenTimeOn }) => whenTimeOn(() => void import('./time/start.svelte')))
   }
 

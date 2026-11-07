@@ -3575,4 +3575,7 @@ export const kn: Dictionary = {
     'Telegram ಗುಂಪನ್ನು ಹೊಸ ಮಾಲೀಕರಿಗೆ ತನ್ನ ಆ್ಯಪ್‌ನಿಂದ ಮಾತ್ರ ಹಸ್ತಾಂತರಿಸುತ್ತದೆ',
   'That sticker is no longer available': 'ಆ ಸ್ಟಿಕರ್ ಈಗ ಲಭ್ಯವಿಲ್ಲ',
   'Telegram is not set up in this build': 'ಈ ಬಿಲ್ಡ್‌ನಲ್ಲಿ Telegram ಹೊಂದಿಸಿಲ್ಲ',
+  'Password manager': 'ಪಾಸ್‌ವರ್ಡ್ ನಿರ್ವಾಹಕ',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass ಅನ್ನು ಸೇರಿಸುತ್ತದೆ, ಅದು ಪಾಸ್‌ವರ್ಡ್‌ಗಳನ್ನು ಇಟ್ಟುಕೊಂಡು ವೆಬ್‌ಸೈಟ್‌ಗಳಲ್ಲಿ ತುಂಬುತ್ತದೆ. ಆಫ್ ಮಾಡಿದರೂ ನಿಮ್ಮ ವಾಲ್ಟ್‌ಗಳು ಉಳಿಯುತ್ತವೆ.',
 }

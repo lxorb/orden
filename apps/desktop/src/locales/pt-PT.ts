@@ -3636,4 +3636,7 @@ export const ptPT: Dictionary = {
     'O Telegram só passa um grupo a um novo proprietário na sua própria aplicação',
   'That sticker is no longer available': 'Esse autocolante já não está disponível',
   'Telegram is not set up in this build': 'O Telegram não está configurado nesta versão',
+  'Password manager': 'Gestor de palavras-passe',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Adiciona o Pass, que guarda palavras-passe e as preenche nos sites. Desativá-lo mantém os seus cofres.',
 }

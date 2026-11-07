@@ -3535,4 +3535,7 @@ export const ps: Dictionary = {
     'Telegram ډله نوي مالک ته یوازې له خپل اپ څخه سپاري',
   'That sticker is no longer available': 'هغه سټیکر نور شتون نه لري',
   'Telegram is not set up in this build': 'په دې جوړښت کې Telegram نه دی برابر شوی',
+  'Password manager': 'د پټنوم مدیر',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass ورزیاتوي چې پټنومونه ساتي او په وېبپاڼو کې يې ډکوي. بندول يې ستاسو خزانې ساتي.',
 }

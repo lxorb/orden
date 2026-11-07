@@ -31,7 +31,7 @@ import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
 import { setWord } from '../kind-choice'
-import { hiddenKinds, TIME_WORD, timeOn } from '../settings.svelte'
+import { hiddenKinds, PASS_WORD, passOn, TIME_WORD, timeOn } from '../settings.svelte'
 import type { Field, Group, Pane } from './fields'
 import { dns, PROVIDER_NAMES } from './dns.svelte'
 import { gpu } from './gpu.svelte'
@@ -673,6 +673,36 @@ export function generalPane(): Pane {
                   initial: false,
                   get: () => timeOn(),
                   set: (on: boolean) => setWord(TIME_WORD, on),
+                },
+              ],
+            },
+          ]),
+      ...(__EVEN_PLUGIN__
+        ? []
+        : [
+            {
+              title: t('Password manager'),
+              fields: [
+                {
+                  kind: 'switch' as const,
+                  key: 'general.passwordManager',
+                  store: { ...among(hiddenKinds, 'hidden', PASS_WORD), shared: 'hiddenKinds' },
+                  label: t('Password manager'),
+                  hint: t(
+                    'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.',
+                  ),
+                  words: [
+                    'pass',
+                    'password',
+                    'passwords',
+                    'vault',
+                    'autofill',
+                    'login',
+                    'keychain',
+                  ],
+                  initial: false,
+                  get: () => passOn(),
+                  set: (on: boolean) => setWord(PASS_WORD, on),
                 },
               ],
             },

@@ -3598,4 +3598,7 @@ export const ta: Dictionary = {
     'Telegram குழுவைப் புதிய உரிமையாளருக்குத் தன் ஆப்பில் மட்டுமே ஒப்படைக்கிறது',
   'That sticker is no longer available': 'அந்த ஸ்டிக்கர் இனி கிடைக்காது',
   'Telegram is not set up in this build': 'இந்த பில்டில் Telegram அமைக்கப்படவில்லை',
+  'Password manager': 'கடவுச்சொல் நிர்வாகி',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'கடவுச்சொற்களை வைத்து இணையதளங்களில் நிரப்பும் Pass ஐச் சேர்க்கிறது. அணைத்தாலும் உங்கள் பெட்டகங்கள் இருக்கும்.',
 }

@@ -3473,4 +3473,7 @@ export const ms: Dictionary = {
     'Telegram menyerahkan kumpulan kepada pemilik baharu hanya dari aplikasinya sendiri',
   'That sticker is no longer available': 'Pelekat itu tidak lagi tersedia',
   'Telegram is not set up in this build': 'Telegram tidak disediakan dalam binaan ini',
+  'Password manager': 'Pengurus kata laluan',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Menambah Pass, yang menyimpan kata laluan dan mengisinya di laman web. Mematikannya mengekalkan peti besi anda.',
 }

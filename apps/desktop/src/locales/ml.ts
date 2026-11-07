@@ -3588,4 +3588,7 @@ export const ml: Dictionary = {
     'Telegram ഗ്രൂപ്പ് പുതിയ ഉടമയ്ക്ക് സ്വന്തം ആപ്പിൽ നിന്നേ കൈമാറൂ',
   'That sticker is no longer available': 'ആ സ്റ്റിക്കർ ഇനി ലഭ്യമല്ല',
   'Telegram is not set up in this build': 'ഈ ബിൽഡിൽ Telegram സജ്ജമാക്കിയിട്ടില്ല',
+  'Password manager': 'പാസ്‌വേഡ് മാനേജർ',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'പാസ്‌വേഡുകൾ സൂക്ഷിക്കുകയും വെബ്‌സൈറ്റുകളിൽ നിറയ്ക്കുകയും ചെയ്യുന്ന Pass ചേർക്കുന്നു. ഓഫാക്കിയാലും നിങ്ങളുടെ വോൾട്ടുകൾ നിലനിൽക്കും.',
 }

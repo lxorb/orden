@@ -3360,4 +3360,7 @@ export const yue: Dictionary = {
     'Telegram 淨係喺自己嘅應用程式先可以將群組轉畀新擁有人',
   'That sticker is no longer available': '嗰張貼圖已經冇咗',
   'Telegram is not set up in this build': '呢個版本未設定 Telegram',
+  'Password manager': '密碼管理器',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    '加入 Pass，幫你保管密碼，喺網站度自動填入。關咗都會保留你嘅保險庫。',
 }

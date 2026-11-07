@@ -3727,4 +3727,7 @@ export const ar: Dictionary = {
     'لا ينقل Telegram ملكية المجموعة إلى مالك جديد إلا من تطبيقه',
   'That sticker is no longer available': 'هذا الملصق لم يعد متاحًا',
   'Telegram is not set up in this build': 'Telegram غير مُعدّ في هذا الإصدار',
+  'Password manager': 'مدير كلمات المرور',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'يضيف Pass الذي يحفظ كلمات المرور ويملؤها في المواقع. إيقافه يُبقي خزائنك.',
 }
