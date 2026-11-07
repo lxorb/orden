@@ -145,6 +145,11 @@ mod pdf;
 mod pinch;
 #[cfg(desktop)]
 mod placement;
+#[cfg(all(windows, not(feature = "cef")))]
+#[doc(hidden)]
+pub mod window_thread {
+    pub use crate::placement::{managed, note_every_window};
+}
 #[cfg(desktop)]
 mod presence;
 #[cfg(desktop)]
