@@ -1,0 +1,58 @@
+name: inbox-windows
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - apps/desktop/src/lib/inbox/**
+      - scripts/inbox-windows-probe.py
+      - .github/workflows/inbox-windows.yml
+  workflow_dispatch:
+
+concurrency:
+  group: inbox-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drive:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: so.orden.Orden.probe.inbox
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+      - name: The probe
+        run: |
+          source scripts/edge-profile.sh
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          if [ "${{ runner.os }}" = macOS ]; then
+            pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --bundles app --config "$config"
+            app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
+            echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+          else
+            pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --no-bundle --config "$config"
+            echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden.exe" >>"$GITHUB_ENV"
+          fi
+      - name: Two windows, one inbox
+        run: |
+          if [ "${{ runner.os }}" = macOS ]; then py=python3; else py=python; fi
+          $py scripts/inbox-windows-probe.py --exe "$EXE" --identifier "$IDENTIFIER"
