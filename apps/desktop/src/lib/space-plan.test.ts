@@ -321,3 +321,34 @@ describe('the untouched default space', () => {
     expect(apart.upload.map((one) => one.root)).toEqual([NOTES])
   })
 })
+
+describe('a space kept under another spelling of the same folder', () => {
+  const here = { name: 'Work', root: 'C:\\Users\\Ada\\Orden\\Work' }
+  const kept = { root: 'C:/Users/Ada/Orden/Work', spaceId: 'id-Work' }
+
+  test('is the same space, so nothing is dropped and paired again', () => {
+    const result = plan({ local: [here], remote: [remote('Work')], mirrors: [kept] })
+
+    expect(result).toEqual({
+      pair: [],
+      upload: [],
+      adopt: [],
+      drop: [],
+      detach: [],
+      remove: [],
+      discard: [],
+    })
+  })
+
+  test('and is removed by the spelling this machine shows it under', () => {
+    const result = plan({
+      local: [here],
+      remote: [],
+      mirrors: [{ ...kept, shared: true }],
+      deleted: ['id-Work'],
+    })
+
+    expect(result.remove).toEqual([here.root])
+    expect(result.drop).toEqual([])
+  })
+})

@@ -4,6 +4,7 @@ import { leaveSpaces, leftByAnother } from './left-spaces'
 import { forgetSeedSpace, seedSpaceRoot } from './seeded'
 import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'
+import { samePath } from './space-paths'
 import { invoke, isNative } from './tauri'
 import { workspace } from './workspace.svelte'
 
@@ -64,13 +65,13 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
   })
 
   for (const root of plan.remove) {
-    const space = workspace.spaces.find((one) => one.root === root)
+    const space = workspace.spaces.find((one) => samePath(one.root, root))
     pairing.unpair(root)
     if (space) await workspace.deleteSpace(space.id, true)
   }
 
   for (const root of plan.discard) {
-    const space = workspace.spaces.find((one) => one.root === root)
+    const space = workspace.spaces.find((one) => samePath(one.root, root))
     if (space) await workspace.deleteSpace(space.id, true)
     forgetSeedSpace()
   }
@@ -89,7 +90,8 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     }
   }
 
-  if (seeded !== null && pairing.pairs().some((one) => one.root === seeded)) forgetSeedSpace()
+  if (seeded !== null && pairing.pairs().some((one) => samePath(one.root, seeded)))
+    forgetSeedSpace()
 
   const paired = () => pairing.pairs()
   for (const space of plan.adopt) {
@@ -98,7 +100,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
       workspace.spaces.some(
         (one) =>
           one.name === space.name &&
-          (theirs(one.root) || paired().some((pair) => pair.root === one.root)),
+          (theirs(one.root) || paired().some((pair) => samePath(pair.root, one.root))),
       )
 
     const root = await workspace.adoptSpace(space.name, taken)

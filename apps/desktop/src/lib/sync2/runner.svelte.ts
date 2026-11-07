@@ -897,8 +897,7 @@ class Runner {
 
   private spaceOnScreen(engine: Engine): string | null {
     const root = workspace.activeSpace?.root
-    for (const space of engine.core.spaces.values()) if (space.row.root === root) return space.id
-    return null
+    return spaceRooted(engine.core.spaces.values(), root)?.id ?? null
   }
 
   private async pairLocal(engine: Engine) {
@@ -940,11 +939,11 @@ class Runner {
         else changes.push(...core.addSpace(spaceId, root, shared ? 'write' : 'owner'))
       },
       unpair: (root) => {
-        const space = [...core.spaces.values()].find((one) => one.row.root === root)
+        const space = spaceRooted(core.spaces.values(), root)
         if (space) changes.push(...core.forgetSpace(space.id))
       },
       share: (root, shared) => {
-        const space = [...core.spaces.values()].find((one) => one.row.root === root)
+        const space = spaceRooted(core.spaces.values(), root)
         if (!space) return
         const role =
           account.spaces.find((one) => one.id === space.id)?.role ?? (shared ? 'write' : 'owner')
@@ -1165,7 +1164,7 @@ class Runner {
         this.rebind()
       } else if (op.op === 'moved') {
         if (op.kind === 'space') {
-          const space = [...engine.core.spaces.values()].find((one) => one.row.root === op.from)
+          const space = spaceRooted(engine.core.spaces.values(), op.from)
           if (space) await engine.core.commit(engine.core.rootMoved(space.id, op.to))
         } else {
           await engine.moved(op.from, op.to)
@@ -1200,19 +1199,13 @@ class Runner {
   }
 
   remoteIdFor(root: string): string | null {
-    if (!this.engine) return this.seen.spaces.find((one) => one.root === root)?.id ?? null
-    for (const space of this.engine.core.spaces.values()) {
-      if (space.row.root === root) return space.id
-    }
-    return null
+    if (!this.engine) return this.seen.spaces.find((one) => samePath(one.root, root))?.id ?? null
+    return spaceRooted(this.engine.core.spaces.values(), root)?.id ?? null
   }
 
   roleKept(root: string): string | null {
-    if (!this.engine) return this.seen.spaces.find((one) => one.root === root)?.role ?? null
-    for (const space of this.engine.core.spaces.values()) {
-      if (space.row.root === root) return space.row.role
-    }
-    return null
+    if (!this.engine) return this.seen.spaces.find((one) => samePath(one.root, root))?.role ?? null
+    return spaceRooted(this.engine.core.spaces.values(), root)?.row.role ?? null
   }
 
   fileOf(id: string): string | null {
@@ -1275,7 +1268,7 @@ class Runner {
       return
     }
     const engine = this.current
-    const space = [...(engine?.core.spaces.values() ?? [])].find((one) => one.row.root === root)
+    const space = engine ? spaceRooted(engine.core.spaces.values(), root) : undefined
     if (engine && space) await engine.core.commit(engine.core.forgetSpace(space.id))
   }
 
@@ -1879,6 +1872,14 @@ class Runner {
 interface Rows {
   spaces: { id: string; root: string; role: string | null }[]
   notes: { path: string; id: string; version: number; hash: string }[]
+}
+
+function spaceRooted<T extends { row: { root: string } }>(
+  spaces: Iterable<T>,
+  root: string | null | undefined,
+): T | undefined {
+  for (const space of spaces) if (samePath(space.row.root, root)) return space
+  return undefined
 }
 
 function withoutKey(op: FileOp): FileOp {

@@ -66,3 +66,19 @@ describe('the id sync gave a file', () => {
     open.current = null
   })
 })
+
+describe('the space sync keeps for a folder', () => {
+  test('is found under any spelling of that folder', () => {
+    const open = runner as unknown as Open & { local: boolean }
+    const spaces = new Map([
+      ['s1', { id: 's1', row: { root: 'C:\\Users\\Ada\\Orden\\Notes', role: 'read' } }],
+    ])
+    open.local = false
+    open.current = { core: { spaces } }
+
+    expect(runner.remoteIdFor('C:/Users/Ada/Orden/Notes')).toBe('s1')
+    expect(runner.roleKept('C:/Users/Ada/Orden/Notes/')).toBe('read')
+    expect(runner.remoteIdFor('C:/Users/Ada/Orden/Other')).toBeNull()
+    open.current = null
+  })
+})

@@ -1,3 +1,5 @@
+import { samePath } from './space-paths'
+
 export interface LocalSpace {
   name: string
   root: string
@@ -32,7 +34,10 @@ export function planSpaces(input: {
   deleted?: string[]
   untouched?: string | null
 }): Plan {
-  const { local, remote, mirrors, deleted = [], untouched = null } = input
+  const { local, remote, deleted = [] } = input
+  const spelled = (root: string) => local.find((one) => samePath(one.root, root))?.root ?? root
+  const mirrors = input.mirrors.map((one) => ({ ...one, root: spelled(one.root) }))
+  const untouched = input.untouched == null ? null : spelled(input.untouched)
 
   const mirrorByRoot = new Map(mirrors.map((one) => [one.root, one]))
   const remoteById = new Map(remote.map((one) => [one.id, one]))
