@@ -61,9 +61,9 @@ export async function indexItems(
 ): Promise<IndexItem[]> {
   const { results } = await env.DB.prepare(
     `select id, path, kind, hash, seq, doc_seq, updated_at from notes
-      where space_id = ? and deleted = 0 and id in (select value from json_each(?))`,
+      where id in (select value from json_each(?)) and +space_id = ? and deleted = 0`,
   )
-    .bind(spaceId, JSON.stringify([...new Set(ids)]))
+    .bind(JSON.stringify([...new Set(ids)]), spaceId)
     .all<Row>()
 
   const items: IndexItem[] = []

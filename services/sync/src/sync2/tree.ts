@@ -119,6 +119,57 @@ interface NoteRow {
   epoch: number
 }
 
+interface Folders {
+  live?: TreeEntry
+  deleted?: TreeEntry
+}
+
+class Placing {
+  private readonly folders = new Map<string, Folders>()
+  private readonly taken = new Map<string | null, Set<string>>()
+
+  constructor(entries: Iterable<TreeEntry>) {
+    for (const entry of entries) this.add(entry)
+  }
+
+  add(entry: TreeEntry) {
+    const key = nameKey(entry.name)
+    if (!entry.deleted) this.namesIn(entry.parent).add(key)
+    if (entry.kind !== 'folder') return
+    const slot = this.slot(entry.parent, key)
+    if (entry.deleted) slot.deleted ??= entry
+    else slot.live ??= entry
+  }
+
+  folder(parent: string | null, name: string): Folders | undefined {
+    return this.folders.get(`${parent ?? ''}\u0000${nameKey(name)}`)
+  }
+
+  free(parent: string | null, wanted: string): string {
+    const taken = this.namesIn(parent)
+    return freePath(wanted, (candidate) => taken.has(nameKey(candidate)))
+  }
+
+  private slot(parent: string | null, key: string): Folders {
+    const at = `${parent ?? ''}\u0000${key}`
+    let slot = this.folders.get(at)
+    if (!slot) {
+      slot = {}
+      this.folders.set(at, slot)
+    }
+    return slot
+  }
+
+  private namesIn(parent: string | null): Set<string> {
+    let names = this.taken.get(parent)
+    if (!names) {
+      names = new Set()
+      this.taken.set(parent, names)
+    }
+    return names
+  }
+}
+
 export class Tree {
   readonly state: TreeState
   private readonly before = new Map<string, Snapshot>()
@@ -161,39 +212,44 @@ export class Tree {
   }
 
   private heal() {
+    if (!this.raw.length) return
     const rows = [...this.raw].sort((a, b) => a.seq - b.seq)
+    const placing = new Placing(this.state.entries.values())
     for (const row of rows) {
       const parts = row.path.split('/')
       const name = parts.pop() ?? row.path
       const live = row.deleted === 0
 
       let parent: string | null = null
-      for (const part of parts) parent = this.folderFor(parent, part, live, row.seq)
+      for (const part of parts) parent = this.folderFor(placing, parent, part, live, row.seq)
 
-      const placed = live ? this.freeName(parent, name) : name
+      const placed = live ? placing.free(parent, name) : name
       const entry = noteEntry(row, placed)
       entry.parent = parent
       entry.kind = kindIn(row.kind === 'note' ? kindOfName(name) : row.kind, name)
       this.state.entries.set(entry.id, entry)
+      placing.add(entry)
       this.before.set(entry.id, { ...snapshotOf(entry), name: '' })
     }
   }
 
-  private folderFor(parent: string | null, name: string, live: boolean, seq: number): string {
-    const key = nameKey(name)
-    let deleted: TreeEntry | undefined
-    for (const entry of this.state.entries.values()) {
-      if (entry.kind !== 'folder' || entry.parent !== parent || nameKey(entry.name) !== key)
-        continue
-      if (!entry.deleted) return entry.id
-      deleted ??= entry
-    }
+  private folderFor(
+    placing: Placing,
+    parent: string | null,
+    name: string,
+    live: boolean,
+    seq: number,
+  ): string {
+    const found = placing.folder(parent, name)
+    if (found?.live) return found.live.id
 
+    const deleted = found?.deleted
     if (deleted) {
       if (live) {
         deleted.deleted = false
         delete deleted.deletedIn
         deleted.seq = this.tick()
+        placing.add(deleted)
       }
       return deleted.id
     }
@@ -202,22 +258,15 @@ export class Tree {
       id: newId(),
       kind: 'folder',
       parent,
-      name: live ? this.freeName(parent, name) : name,
+      name: live ? placing.free(parent, name) : name,
       deleted: !live,
       seq: this.tick(),
       docSeq: 0,
     }
     if (!live) folder.deletedIn = seq
     this.state.entries.set(folder.id, folder)
+    placing.add(folder)
     return folder.id
-  }
-
-  private freeName(parent: string | null, wanted: string): string {
-    const taken = new Set<string>()
-    for (const entry of this.state.entries.values()) {
-      if (!entry.deleted && entry.parent === parent) taken.add(nameKey(entry.name))
-    }
-    return freePath(wanted, (candidate) => taken.has(nameKey(candidate)))
   }
 
   private tick(): number {
@@ -254,6 +303,15 @@ export class Tree {
       if (!entry.deleted && entry.parent === parent && nameKey(entry.name) === key) return entry
     }
     return undefined
+  }
+
+  lookup(): (parent: string | null, name: string) => TreeEntry | undefined {
+    const live = new Map<string, TreeEntry>()
+    for (const entry of this.state.entries.values()) {
+      const at = `${entry.parent ?? ''}\u0000${nameKey(entry.name)}`
+      if (!entry.deleted && !live.has(at)) live.set(at, entry)
+    }
+    return (parent, name) => live.get(`${parent ?? ''}\u0000${nameKey(name)}`)
   }
 
   pathOf(id: string): string {
@@ -388,7 +446,7 @@ export class Tree {
           db
             .prepare(
               `update folders set name_key = char(0) || id
-                where space_id = ?1 and id in (select value from json_each(?2))`,
+                where id in (select value from json_each(?2)) and +space_id = ?1`,
             )
             .bind(space, JSON.stringify(piece)),
         )
@@ -401,7 +459,7 @@ export class Tree {
           db
             .prepare(
               `update notes set name_key = char(0) || id, path = char(0) || id
-                where space_id = ?1 and id in (select value from json_each(?2))`,
+                where id in (select value from json_each(?2)) and +space_id = ?1`,
             )
             .bind(space, JSON.stringify(piece)),
         )
@@ -505,7 +563,7 @@ function updateFolders(
                       ${field('by')} as by, ${field('pos')} as pos, ${field('meta')} as meta,
                       ${field('changesBy')} as changes_by
                  from json_each(?3)) as c
-        where folders.id = c.fid and folders.space_id = ?1`,
+        where folders.id = c.fid and +folders.space_id = ?1`,
     )
     .bind(space, at, JSON.stringify(rows))
 }
@@ -555,7 +613,7 @@ function updateNotes(
                       ${field('meta')} as meta, ${field('changesBy')} as changes_by,
                       ${field('bump')} as bump
                  from json_each(?3)) as c
-        where notes.id = c.nid and notes.space_id = ?1`,
+        where notes.id = c.nid and +notes.space_id = ?1`,
     )
     .bind(space, at, JSON.stringify(rows))
 }
