@@ -3592,4 +3592,20 @@ export const ha: Dictionary = {
   'Password manager': 'Manajan kalmomin sirri',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     "Yana ƙara Pass, wanda ke adana kalmomin sirri kuma yana cike su a shafukan yanar gizo. Kashe shi yana kiyaye ma'ajiyoyinka.",
+  'User token': 'Alamar mai amfani',
+  'App-level token': 'Alamar manhaja',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Bar shi babu komai don shiga ta burauza, ko liƙa alamar mai amfani ta manhajar Slack ɗinka',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'Zaɓi: idan Socket Mode yana kunne a manhajarka, saƙonni suna isowa nan take',
+  'Signed out of Slack. Connect again.': 'An fita daga Slack. Sake haɗawa.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Wannan ba alamar mai amfani ta Slack ba ce. Tana farawa da xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Wannan ba alamar manhaja ta Slack ba ce. Tana farawa da xapp-',
+  'Slack removes messages for everyone': 'Slack yana goge saƙonni ga kowa',
+  'Slack files need the desktop app': 'Fayilolin Slack suna buƙatar manhajar kwamfuta',
+  'Slack does not know that emoji': 'Slack bai san wannan emoji ba',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Liƙa alamar mai amfani ta Slack, wannan sigar ba za ta iya shiga ta burauza ba',
 }

@@ -3566,4 +3566,20 @@ export const gsw: Dictionary = {
   'Password manager': 'Passwortmanager',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Füegt Pass dezue, wo Passwörter ufbewahrt und uf Websites ifüllt. Uusschalte bhaltet dini Tresor.',
+  'User token': 'Benutzer-Token',
+  'App-level token': 'App-Token',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Läär la, zum di im Browser aamälde, oder s Benutzer-Token vo dinere eigete Slack-App iifüege',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'Optional: Mit Socket Mode i dinere eigete App chömed Nachrichte grad aa',
+  'Signed out of Slack. Connect again.': 'Vo Slack abgmäldet. Verbind di nomal.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Das isch kes Slack-Benutzer-Token. Es fangt mit xoxp- aa',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Das isch kes Slack-App-Token. Es fangt mit xapp- aa',
+  'Slack removes messages for everyone': 'Slack löscht Nachrichte für alli',
+  'Slack files need the desktop app': 'Slack-Dateie bruuched d Desktop-App',
+  'Slack does not know that emoji': 'Slack kennt das Emoji nöd',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Füeg es Slack-Benutzer-Token ii, dä Build cha sich nöd im Browser aamälde',
 }

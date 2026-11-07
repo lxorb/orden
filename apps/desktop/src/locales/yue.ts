@@ -3364,4 +3364,20 @@ export const yue: Dictionary = {
   'Password manager': '密碼管理器',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '加入 Pass，幫你保管密碼，喺網站度自動填入。關咗都會保留你嘅保險庫。',
+  'User token': '用戶權杖',
+  'App-level token': 'App 層級權杖',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    '留空就喺瀏覽器登入，或者貼上你自己個 Slack app 嘅用戶權杖',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    '可選：喺你自己個 app 開咗 Socket Mode，訊息即刻到',
+  'Signed out of Slack. Connect again.': '已經登出 Slack。請再連接。',
+  'That is not a Slack user token. It starts with xoxp-':
+    '呢個唔係 Slack 用戶權杖。佢以 xoxp- 開頭',
+  'That is not a Slack app-level token. It starts with xapp-':
+    '呢個唔係 Slack app 層級權杖。佢以 xapp- 開頭',
+  'Slack removes messages for everyone': 'Slack 會幫所有人刪除訊息',
+  'Slack files need the desktop app': 'Slack 檔案要用桌面 app',
+  'Slack does not know that emoji': 'Slack 唔識呢個表情符號',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    '請貼上 Slack 用戶權杖，呢個版本唔可以喺瀏覽器登入',
 }

@@ -3412,4 +3412,20 @@ export const th: Dictionary = {
   'Password manager': 'ตัวจัดการรหัสผ่าน',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'เพิ่ม Pass ซึ่งเก็บรหัสผ่านและกรอกให้บนเว็บไซต์ ปิดแล้วห้องนิรภัยของคุณยังอยู่',
+  'User token': 'โทเค็นผู้ใช้',
+  'App-level token': 'โทเค็นแอป',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'เว้นว่างไว้เพื่อลงชื่อเข้าใช้ผ่านเบราว์เซอร์ หรือวางโทเค็นผู้ใช้ของแอป Slack ของคุณเอง',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'ไม่บังคับ: เมื่อเปิด Socket Mode ในแอปของคุณ ข้อความจะมาถึงทันที',
+  'Signed out of Slack. Connect again.': 'ออกจากระบบ Slack แล้ว โปรดเชื่อมต่ออีกครั้ง',
+  'That is not a Slack user token. It starts with xoxp-':
+    'นี่ไม่ใช่โทเค็นผู้ใช้ของ Slack โทเค็นขึ้นต้นด้วย xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'นี่ไม่ใช่โทเค็นแอปของ Slack โทเค็นขึ้นต้นด้วย xapp-',
+  'Slack removes messages for everyone': 'Slack ลบข้อความสำหรับทุกคน',
+  'Slack files need the desktop app': 'ไฟล์ของ Slack ต้องใช้แอปบนเดสก์ท็อป',
+  'Slack does not know that emoji': 'Slack ไม่รู้จักอีโมจินั้น',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'วางโทเค็นผู้ใช้ Slack บิลด์นี้ลงชื่อเข้าใช้ผ่านเบราว์เซอร์ไม่ได้',
 }

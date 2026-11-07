@@ -37,6 +37,8 @@ mod bundle_name;
 mod calls;
 mod carry;
 #[cfg(desktop)]
+mod chat_request;
+#[cfg(desktop)]
 mod chatgpt;
 #[cfg(desktop)]
 mod chromium_profiles;
@@ -509,6 +511,7 @@ macro_rules! desktop_commands {
             oauth_loopback::oauth_loopback_wait,
             oauth_loopback::oauth_loopback_close,
             oauth_loopback::oauth_post,
+            chat_request::chat_request,
             terminal::terminal_shells,
             terminal::pty_spawn,
             terminal::pty_write,

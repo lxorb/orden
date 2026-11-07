@@ -3587,4 +3587,20 @@ export const sw: Dictionary = {
   'Password manager': 'Kidhibiti cha manenosiri',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Huongeza Pass, inayohifadhi manenosiri na kuyajaza kwenye tovuti. Kuizima huhifadhi makasha yako.',
+  'User token': 'Tokeni ya mtumiaji',
+  'App-level token': 'Tokeni ya programu',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Acha wazi ili uingie kupitia kivinjari, au bandika tokeni ya mtumiaji ya programu yako ya Slack',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'Si lazima: Socket Mode ikiwa imewashwa kwenye programu yako, ujumbe hufika mara moja',
+  'Signed out of Slack. Connect again.': 'Umetoka kwenye Slack. Unganisha tena.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Hiyo si tokeni ya mtumiaji wa Slack. Huanza na xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Hiyo si tokeni ya programu ya Slack. Huanza na xapp-',
+  'Slack removes messages for everyone': 'Slack hufuta ujumbe kwa kila mtu',
+  'Slack files need the desktop app': 'Faili za Slack zinahitaji programu ya kompyuta',
+  'Slack does not know that emoji': 'Slack haijui emoji hiyo',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Bandika tokeni ya mtumiaji wa Slack, toleo hili haliwezi kuingia kupitia kivinjari',
 }

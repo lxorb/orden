@@ -3545,4 +3545,20 @@ export const fa: Dictionary = {
   'Password manager': 'مدیر گذرواژه',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass را می‌افزاید که گذرواژه‌ها را نگه می‌دارد و در وب‌سایت‌ها پر می‌کند. خاموش کردنش گاوصندوق‌هایتان را نگه می‌دارد.',
+  'User token': 'توکن کاربر',
+  'App-level token': 'توکن سطح برنامه',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'برای ورود از راه مرورگر خالی بگذارید، یا توکن کاربر برنامهٔ Slack خودتان را بچسبانید',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'اختیاری: با روشن بودن Socket Mode در برنامهٔ خودتان، پیام‌ها فوراً می‌رسند',
+  'Signed out of Slack. Connect again.': 'از Slack خارج شدید. دوباره وصل شوید.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'این توکن کاربر Slack نیست. با xoxp- شروع می‌شود',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'این توکن سطح برنامهٔ Slack نیست. با xapp- شروع می‌شود',
+  'Slack removes messages for everyone': 'Slack پیام‌ها را برای همه حذف می‌کند',
+  'Slack files need the desktop app': 'فایل‌های Slack به برنامهٔ دسکتاپ نیاز دارند',
+  'Slack does not know that emoji': 'Slack این شکلک را نمی‌شناسد',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'یک توکن کاربر Slack بچسبانید، این نسخه نمی‌تواند از راه مرورگر وارد شود',
 }

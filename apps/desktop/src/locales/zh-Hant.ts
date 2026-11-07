@@ -3374,4 +3374,20 @@ export const zhHant: Dictionary = {
   'Password manager': '密碼管理器',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '加入 Pass，保管密碼並在網站上填入。關閉後保險庫仍會保留。',
+  'User token': '使用者權杖',
+  'App-level token': '應用程式層級權杖',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    '留空以在瀏覽器中登入，或貼上你自己的 Slack 應用程式的使用者權杖',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    '選用：在你自己的應用程式中開啟 Socket Mode，訊息即時送達',
+  'Signed out of Slack. Connect again.': '已登出 Slack。請重新連線。',
+  'That is not a Slack user token. It starts with xoxp-':
+    '這不是 Slack 使用者權杖。它以 xoxp- 開頭',
+  'That is not a Slack app-level token. It starts with xapp-':
+    '這不是 Slack 應用程式層級權杖。它以 xapp- 開頭',
+  'Slack removes messages for everyone': 'Slack 會為所有人刪除訊息',
+  'Slack files need the desktop app': 'Slack 檔案需要桌面應用程式',
+  'Slack does not know that emoji': 'Slack 不認得這個表情符號',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    '請貼上 Slack 使用者權杖，此版本無法在瀏覽器中登入',
 }

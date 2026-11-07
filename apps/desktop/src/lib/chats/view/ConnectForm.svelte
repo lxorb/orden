@@ -15,6 +15,8 @@
     smtpHost: t('SMTP server'),
     user: t('User name'),
     phone: t('Phone number'),
+    token: t('User token'),
+    appToken: t('App-level token'),
   }
 
   let chosen = $state(0)

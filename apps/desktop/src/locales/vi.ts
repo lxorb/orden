@@ -3446,4 +3446,20 @@ export const vi: Dictionary = {
   'Password manager': 'Trình quản lý mật khẩu',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Thêm Pass, giữ mật khẩu và điền chúng trên các trang web. Tắt đi vẫn giữ các kho của bạn.',
+  'User token': 'Mã người dùng',
+  'App-level token': 'Mã ứng dụng',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Để trống để đăng nhập qua trình duyệt, hoặc dán mã người dùng của ứng dụng Slack của bạn',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'Không bắt buộc: khi bật Socket Mode trong ứng dụng của bạn, tin nhắn đến ngay',
+  'Signed out of Slack. Connect again.': 'Đã đăng xuất khỏi Slack. Hãy kết nối lại.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Đó không phải mã người dùng Slack. Mã bắt đầu bằng xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Đó không phải mã ứng dụng Slack. Mã bắt đầu bằng xapp-',
+  'Slack removes messages for everyone': 'Slack xóa tin nhắn cho mọi người',
+  'Slack files need the desktop app': 'Tệp Slack cần ứng dụng máy tính',
+  'Slack does not know that emoji': 'Slack không biết biểu tượng cảm xúc đó',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Hãy dán mã người dùng Slack, bản dựng này không thể đăng nhập qua trình duyệt',
 }

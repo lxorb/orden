@@ -3603,4 +3603,20 @@ export const ta: Dictionary = {
   'Password manager': 'கடவுச்சொல் நிர்வாகி',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'கடவுச்சொற்களை வைத்து இணையதளங்களில் நிரப்பும் Pass ஐச் சேர்க்கிறது. அணைத்தாலும் உங்கள் பெட்டகங்கள் இருக்கும்.',
+  'User token': 'பயனர் டோக்கன்',
+  'App-level token': 'ஆப்-நிலை டோக்கன்',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'உலாவியில் உள்நுழைய காலியாக விடவும், அல்லது உங்கள் சொந்த Slack ஆப்பின் பயனர் டோக்கனை ஒட்டவும்',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'விருப்பம்: உங்கள் ஆப்பில் Socket Mode இயக்கத்தில் இருந்தால் செய்திகள் உடனே வரும்',
+  'Signed out of Slack. Connect again.': 'Slack-இலிருந்து வெளியேறினீர்கள். மீண்டும் இணைக்கவும்.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'இது Slack பயனர் டோக்கன் அல்ல. இது xoxp- என்று தொடங்கும்',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'இது Slack ஆப்-நிலை டோக்கன் அல்ல. இது xapp- என்று தொடங்கும்',
+  'Slack removes messages for everyone': 'Slack செய்திகளை அனைவருக்கும் நீக்கும்',
+  'Slack files need the desktop app': 'Slack கோப்புகளுக்கு டெஸ்க்டாப் ஆப் தேவை',
+  'Slack does not know that emoji': 'அந்த ஈமோஜி Slack-க்குத் தெரியாது',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Slack பயனர் டோக்கனை ஒட்டவும், இந்த பில்டால் உலாவியில் உள்நுழைய முடியாது',
 }

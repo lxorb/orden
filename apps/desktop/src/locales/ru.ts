@@ -3685,4 +3685,20 @@ export const ru: Dictionary = {
   'Password manager': 'Менеджер паролей',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Добавляет Pass, который хранит пароли и подставляет их на сайтах. При выключении ваши хранилища сохраняются.',
+  'User token': 'Токен пользователя',
+  'App-level token': 'Токен приложения',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'Оставьте пустым, чтобы войти через браузер, или вставьте токен пользователя своего приложения Slack',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'Необязательно: с включённым Socket Mode в своём приложении сообщения приходят сразу',
+  'Signed out of Slack. Connect again.': 'Вы вышли из Slack. Подключитесь снова.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Это не токен пользователя Slack. Он начинается с xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Это не токен приложения Slack. Он начинается с xapp-',
+  'Slack removes messages for everyone': 'Slack удаляет сообщения для всех',
+  'Slack files need the desktop app': 'Для файлов Slack нужно настольное приложение',
+  'Slack does not know that emoji': 'Slack не знает этот эмодзи',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Вставьте токен пользователя Slack, эта сборка не может войти через браузер',
 }

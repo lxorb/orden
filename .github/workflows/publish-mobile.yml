@@ -16,6 +16,7 @@ permissions:
 env:
   VITE_ORDEN_TELEGRAM_API_ID: ${{ secrets.ORDEN_TELEGRAM_API_ID }}
   VITE_ORDEN_TELEGRAM_API_HASH: ${{ secrets.ORDEN_TELEGRAM_API_HASH }}
+  VITE_ORDEN_SLACK_CLIENT_ID: ${{ vars.ORDEN_SLACK_CLIENT_ID }}
 
 jobs:
   version:

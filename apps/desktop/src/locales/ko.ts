@@ -3437,4 +3437,20 @@ export const ko: Dictionary = {
   'Password manager': '비밀번호 관리자',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '비밀번호를 보관하고 웹사이트에 채워 주는 Pass를 추가합니다. 꺼도 보관함은 그대로 남습니다.',
+  'User token': '사용자 토큰',
+  'App-level token': '앱 수준 토큰',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    '브라우저로 로그인하려면 비워 두거나, 직접 만든 Slack 앱의 사용자 토큰을 붙여 넣으세요',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    '선택: 직접 만든 앱에서 Socket Mode를 켜면 메시지가 바로 도착합니다',
+  'Signed out of Slack. Connect again.': 'Slack에서 로그아웃되었습니다. 다시 연결하세요.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'Slack 사용자 토큰이 아닙니다. xoxp-로 시작합니다',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'Slack 앱 수준 토큰이 아닙니다. xapp-로 시작합니다',
+  'Slack removes messages for everyone': 'Slack은 모든 사람에게서 메시지를 삭제합니다',
+  'Slack files need the desktop app': 'Slack 파일에는 데스크톱 앱이 필요합니다',
+  'Slack does not know that emoji': 'Slack이 모르는 이모지입니다',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Slack 사용자 토큰을 붙여 넣으세요. 이 빌드는 브라우저로 로그인할 수 없습니다',
 }

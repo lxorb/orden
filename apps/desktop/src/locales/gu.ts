@@ -3526,4 +3526,20 @@ export const gu: Dictionary = {
   'Password manager': 'પાસવર્ડ મેનેજર',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ઉમેરે છે, જે પાસવર્ડ રાખે છે અને વેબસાઇટ પર ભરે છે. બંધ કરવાથી તમારા વૉલ્ટ રહે છે.',
+  'User token': 'વપરાશકર્તા ટોકન',
+  'App-level token': 'ઍપ-સ્તર ટોકન',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'બ્રાઉઝરમાં સાઇન ઇન કરવા ખાલી રાખો, અથવા તમારી પોતાની Slack ઍપનો વપરાશકર્તા ટોકન પેસ્ટ કરો',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'વૈકલ્પિક: તમારી ઍપમાં Socket Mode ચાલુ હોય તો સંદેશા તરત આવે છે',
+  'Signed out of Slack. Connect again.': 'Slack માંથી સાઇન આઉટ થયા. ફરી કનેક્ટ કરો.',
+  'That is not a Slack user token. It starts with xoxp-':
+    'આ Slack વપરાશકર્તા ટોકન નથી. તે xoxp- થી શરૂ થાય છે',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'આ Slack ઍપ-સ્તર ટોકન નથી. તે xapp- થી શરૂ થાય છે',
+  'Slack removes messages for everyone': 'Slack સંદેશા બધા માટે કાઢી નાખે છે',
+  'Slack files need the desktop app': 'Slack ફાઇલો માટે ડેસ્કટૉપ ઍપ જોઈએ',
+  'Slack does not know that emoji': 'Slack આ ઇમોજી ઓળખતું નથી',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'Slack વપરાશકર્તા ટોકન પેસ્ટ કરો, આ બિલ્ડ બ્રાઉઝરમાં સાઇન ઇન કરી શકતું નથી',
 }

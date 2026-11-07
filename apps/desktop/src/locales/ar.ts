@@ -3732,4 +3732,19 @@ export const ar: Dictionary = {
   'Password manager': 'مدير كلمات المرور',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'يضيف Pass الذي يحفظ كلمات المرور ويملؤها في المواقع. إيقافه يُبقي خزائنك.',
+  'User token': 'رمز المستخدم',
+  'App-level token': 'رمز التطبيق',
+  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
+    'اتركه فارغًا لتسجيل الدخول عبر المتصفح، أو الصق رمز المستخدم لتطبيق Slack الخاص بك',
+  'Optional: with Socket Mode on in your own app, messages arrive at once':
+    'اختياري: مع تشغيل Socket Mode في تطبيقك تصل الرسائل فورًا',
+  'Signed out of Slack. Connect again.': 'تم تسجيل الخروج من Slack. اتصل مرة أخرى.',
+  'That is not a Slack user token. It starts with xoxp-': 'هذا ليس رمز مستخدم Slack. يبدأ بـ xoxp-',
+  'That is not a Slack app-level token. It starts with xapp-':
+    'هذا ليس رمز تطبيق Slack. يبدأ بـ xapp-',
+  'Slack removes messages for everyone': 'يحذف Slack الرسائل لدى الجميع',
+  'Slack files need the desktop app': 'تحتاج ملفات Slack إلى تطبيق سطح المكتب',
+  'Slack does not know that emoji': 'لا يعرف Slack هذا الرمز التعبيري',
+  'Paste a Slack user token, this build cannot sign in through the browser':
+    'الصق رمز مستخدم Slack، هذا الإصدار لا يستطيع تسجيل الدخول عبر المتصفح',
 }
