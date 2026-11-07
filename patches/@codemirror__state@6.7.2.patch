@@ -1,0 +1,110 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 0932d250d6a3a1ede6630d6efbc2d78cc817051c..cb0b3d385ba59d671d1da97b15afc26a9b2c6165 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -2541,6 +2541,30 @@ instance, without modifying the original object.
+ As such, _never_ mutate properties of a state directly. That'll
+ just break things.
+ */
++// Ranges whose changes follow one another, each wholly after the one before and its range, are
++// joined in one pass: composing them one by one costs time that grows with their square.
++function changedInLine(state, results) {
++    let specs = [], ranges = [], delta = 0, last = -1;
++    for (let result of results) {
++        if (asArray(result.effects).length)
++            return null;
++        let set = state.changes(result.changes), range = result.range;
++        let lo = -1, hi = -1;
++        set.iterChangedRanges((fromA, toA) => { if (lo < 0)
++            lo = fromA; hi = toA; });
++        if (lo >= 0 && lo <= last)
++            return null;
++        if (range.from <= last)
++            return null;
++        set.iterChanges((fromA, toA, _fromB, _toB, insert) => specs.push({ from: fromA, to: toA, insert }));
++        let own = set.newLength - set.length;
++        ranges.push(delta ? range.map({ mapPos: pos => pos + delta }) : range);
++        let reach = lo < 0 || range.to < lo ? range.to : Math.max(hi, range.to - own);
++        last = Math.max(last, hi, reach);
++        delta += own;
++    }
++    return { changes: state.changes(specs), ranges };
++}
+ class EditorState {
+     constructor(
+     /**
+@@ -2659,11 +2683,17 @@ class EditorState {
+     */
+     changeByRange(f) {
+         let sel = this.selection;
+-        let result1 = f(sel.ranges[0]);
++        let results = sel.ranges.map(range => f(range));
++        if (results.length >= 32) {
++            let inLine = changedInLine(this, results);
++            if (inLine)
++                return { changes: inLine.changes, selection: EditorSelection.create(inLine.ranges, sel.mainIndex), effects: [] };
++        }
++        let result1 = results[0];
+         let changes = this.changes(result1.changes), ranges = [result1.range];
+         let effects = asArray(result1.effects);
+         for (let i = 1; i < sel.ranges.length; i++) {
+-            let result = f(sel.ranges[i]);
++            let result = results[i];
+             let newChanges = this.changes(result.changes), newMapped = newChanges.map(changes);
+             for (let j = 0; j < i; j++)
+                 ranges[j] = ranges[j].map(newMapped);
+diff --git a/dist/index.js b/dist/index.js
+index df7b8c4fe0b99352b7925383697691724a494f84..31286690ab7d2e5ff153e7f513da87de4a8b013b 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -2537,6 +2537,30 @@ instance, without modifying the original object.
+ As such, _never_ mutate properties of a state directly. That'll
+ just break things.
+ */
++// Ranges whose changes follow one another, each wholly after the one before and its range, are
++// joined in one pass: composing them one by one costs time that grows with their square.
++function changedInLine(state, results) {
++    let specs = [], ranges = [], delta = 0, last = -1;
++    for (let result of results) {
++        if (asArray(result.effects).length)
++            return null;
++        let set = state.changes(result.changes), range = result.range;
++        let lo = -1, hi = -1;
++        set.iterChangedRanges((fromA, toA) => { if (lo < 0)
++            lo = fromA; hi = toA; });
++        if (lo >= 0 && lo <= last)
++            return null;
++        if (range.from <= last)
++            return null;
++        set.iterChanges((fromA, toA, _fromB, _toB, insert) => specs.push({ from: fromA, to: toA, insert }));
++        let own = set.newLength - set.length;
++        ranges.push(delta ? range.map({ mapPos: pos => pos + delta }) : range);
++        let reach = lo < 0 || range.to < lo ? range.to : Math.max(hi, range.to - own);
++        last = Math.max(last, hi, reach);
++        delta += own;
++    }
++    return { changes: state.changes(specs), ranges };
++}
+ class EditorState {
+     constructor(
+     /**
+@@ -2655,11 +2679,17 @@ class EditorState {
+     */
+     changeByRange(f) {
+         let sel = this.selection;
+-        let result1 = f(sel.ranges[0]);
++        let results = sel.ranges.map(range => f(range));
++        if (results.length >= 32) {
++            let inLine = changedInLine(this, results);
++            if (inLine)
++                return { changes: inLine.changes, selection: EditorSelection.create(inLine.ranges, sel.mainIndex), effects: [] };
++        }
++        let result1 = results[0];
+         let changes = this.changes(result1.changes), ranges = [result1.range];
+         let effects = asArray(result1.effects);
+         for (let i = 1; i < sel.ranges.length; i++) {
+-            let result = f(sel.ranges[i]);
++            let result = results[i];
+             let newChanges = this.changes(result.changes), newMapped = newChanges.map(changes);
+             for (let j = 0; j < i; j++)
+                 ranges[j] = ranges[j].map(newMapped);

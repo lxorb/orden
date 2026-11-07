@@ -15,6 +15,9 @@ patchedDependencies:
   '@codemirror/language@6.12.4':
     hash: 1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465
     path: patches/@codemirror__language@6.12.4.patch
+  '@codemirror/state@6.7.2':
+    hash: a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1
+    path: patches/@codemirror__state@6.7.2.patch
   '@codemirror/view@6.43.11':
     hash: 186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992
     path: patches/@codemirror__view@6.43.11.patch
@@ -295,7 +298,7 @@ importers:
     dependencies:
       '@codemirror/state':
         specifier: ^6.7.2
-        version: 6.7.2
+        version: 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
     devDependencies:
       typescript:
         specifier: ^5.9.3
@@ -370,7 +373,7 @@ importers:
         version: 6.7.2
       '@codemirror/state':
         specifier: ^6.7.2
-        version: 6.7.2
+        version: 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view':
         specifier: ^6.43.10
         version: 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
@@ -394,16 +397,16 @@ importers:
         version: link:../rooms
       '@replit/codemirror-lang-nix':
         specifier: ^6.0.1
-        version: 6.0.1(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))(@lezer/common@1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68))(@lezer/highlight@1.2.3)(@lezer/lr@1.4.10)
+        version: 6.0.1(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/state@6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1))(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))(@lezer/common@1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68))(@lezer/highlight@1.2.3)(@lezer/lr@1.4.10)
       '@replit/codemirror-lang-solidity':
         specifier: ^6.0.2
         version: 6.0.2(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))
       '@replit/codemirror-lang-svelte':
         specifier: ^6.0.0
-        version: 6.0.0(@codemirror/autocomplete@6.20.3)(@codemirror/lang-css@6.3.1)(@codemirror/lang-html@6.4.12)(@codemirror/lang-javascript@6.2.5)(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))(@lezer/common@1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68))(@lezer/highlight@1.2.3)(@lezer/javascript@1.5.4)(@lezer/lr@1.4.10)
+        version: 6.0.0(@codemirror/autocomplete@6.20.3)(@codemirror/lang-css@6.3.1)(@codemirror/lang-html@6.4.12)(@codemirror/lang-javascript@6.2.5)(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/state@6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1))(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))(@lezer/common@1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68))(@lezer/highlight@1.2.3)(@lezer/javascript@1.5.4)(@lezer/lr@1.4.10)
       '@replit/codemirror-vim':
         specifier: ^6.4.0
-        version: 6.4.0(patch_hash=25afab2d456e15b23eab1da3f1115dba411880c47482fb44e7e2938e6bcac89c)(@codemirror/commands@6.11.0(patch_hash=d200250c06a20db985c57073f954f2ce7823848efab6d92855555640ec9836cb))(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/search@6.7.2)(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))
+        version: 6.4.0(patch_hash=25afab2d456e15b23eab1da3f1115dba411880c47482fb44e7e2938e6bcac89c)(@codemirror/commands@6.11.0(patch_hash=d200250c06a20db985c57073f954f2ce7823848efab6d92855555640ec9836cb))(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/search@6.7.2)(@codemirror/state@6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1))(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))
       codemirror-lang-elixir:
         specifier: ^4.0.1
         version: 4.0.1
@@ -471,7 +474,7 @@ importers:
         version: 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
       '@codemirror/state':
         specifier: ^6.7.2
-        version: 6.7.2
+        version: 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view':
         specifier: ^6.43.10
         version: 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
@@ -4480,14 +4483,14 @@ snapshots:
   '@codemirror/autocomplete@6.20.3':
     dependencies:
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
 
   '@codemirror/commands@6.11.0(patch_hash=d200250c06a20db985c57073f954f2ce7823848efab6d92855555640ec9836cb)':
     dependencies:
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
 
@@ -4509,7 +4512,7 @@ snapshots:
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/css': 1.3.6
 
@@ -4517,7 +4520,7 @@ snapshots:
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/go': 1.0.1
 
@@ -4527,7 +4530,7 @@ snapshots:
       '@codemirror/lang-css': 6.3.1
       '@codemirror/lang-javascript': 6.2.5
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/css': 1.3.6
@@ -4543,7 +4546,7 @@ snapshots:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
       '@codemirror/lint': 6.9.7
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/javascript': 1.5.4
@@ -4553,7 +4556,7 @@ snapshots:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/lang-html': 6.4.12
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/highlight': 1.2.3
@@ -4577,7 +4580,7 @@ snapshots:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/lang-html': 6.4.12
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/highlight': 1.2.3
@@ -4588,7 +4591,7 @@ snapshots:
       '@codemirror/autocomplete': link:packages/autocomplete
       '@codemirror/lang-html': link:packages/lang-html
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/markdown': 1.7.2(patch_hash=1986f7b0f842c3a776f754ad511ef2b02a7d8f987a215b52f4c9a65f665709f1)
@@ -4597,7 +4600,7 @@ snapshots:
     dependencies:
       '@codemirror/lang-html': 6.4.12
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/php': 1.0.6
 
@@ -4605,7 +4608,7 @@ snapshots:
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/python': 1.1.19
 
@@ -4618,7 +4621,7 @@ snapshots:
     dependencies:
       '@codemirror/lang-css': 6.3.1
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/sass': 1.1.0
 
@@ -4626,7 +4629,7 @@ snapshots:
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.10
@@ -4651,7 +4654,7 @@ snapshots:
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/xml': 1.0.6
@@ -4660,7 +4663,7 @@ snapshots:
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.10
@@ -4694,7 +4697,7 @@ snapshots:
 
   '@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)':
     dependencies:
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/highlight': 1.2.3
@@ -4707,23 +4710,23 @@ snapshots:
 
   '@codemirror/lint@6.9.7':
     dependencies:
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       crelt: 1.0.7
 
   '@codemirror/search@6.7.2':
     dependencies:
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       crelt: 1.0.7
 
-  '@codemirror/state@6.7.2':
+  '@codemirror/state@6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)':
     dependencies:
       '@marijn/find-cluster-break': 1.0.4
 
   '@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)':
     dependencies:
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       crelt: 1.0.7
       style-mod: 4.1.3(patch_hash=9bd7b503353269b4b53eb5c263d11325b11038bca50e388890668f7383e20d50)
       w3c-keyname: 2.2.8
@@ -5591,11 +5594,11 @@ snapshots:
 
   '@protobufjs/utf8@1.1.2': {}
 
-  '@replit/codemirror-lang-nix@6.0.1(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))(@lezer/common@1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68))(@lezer/highlight@1.2.3)(@lezer/lr@1.4.10)':
+  '@replit/codemirror-lang-nix@6.0.1(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/state@6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1))(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))(@lezer/common@1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68))(@lezer/highlight@1.2.3)(@lezer/lr@1.4.10)':
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/highlight': 1.2.3
@@ -5606,14 +5609,14 @@ snapshots:
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
       '@lezer/highlight': 1.2.3
 
-  '@replit/codemirror-lang-svelte@6.0.0(@codemirror/autocomplete@6.20.3)(@codemirror/lang-css@6.3.1)(@codemirror/lang-html@6.4.12)(@codemirror/lang-javascript@6.2.5)(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))(@lezer/common@1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68))(@lezer/highlight@1.2.3)(@lezer/javascript@1.5.4)(@lezer/lr@1.4.10)':
+  '@replit/codemirror-lang-svelte@6.0.0(@codemirror/autocomplete@6.20.3)(@codemirror/lang-css@6.3.1)(@codemirror/lang-html@6.4.12)(@codemirror/lang-javascript@6.2.5)(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/state@6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1))(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))(@lezer/common@1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68))(@lezer/highlight@1.2.3)(@lezer/javascript@1.5.4)(@lezer/lr@1.4.10)':
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/lang-css': 6.3.1
       '@codemirror/lang-html': 6.4.12
       '@codemirror/lang-javascript': 6.2.5
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@lezer/common': 1.5.2(patch_hash=967d34aa7c12a08268e3ed268929b596af53414fafd80caba3f724c5fadf4f68)
       '@lezer/highlight': 1.2.3
@@ -5622,12 +5625,12 @@ snapshots:
 
   '@replit/codemirror-vim-core@0.1.0(patch_hash=154d5ece6f8e5a6a147dc035fe28de5c27022df90c6c99f9b3a85c8be0ecd2a4)': {}
 
-  '@replit/codemirror-vim@6.4.0(patch_hash=25afab2d456e15b23eab1da3f1115dba411880c47482fb44e7e2938e6bcac89c)(@codemirror/commands@6.11.0(patch_hash=d200250c06a20db985c57073f954f2ce7823848efab6d92855555640ec9836cb))(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/search@6.7.2)(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))':
+  '@replit/codemirror-vim@6.4.0(patch_hash=25afab2d456e15b23eab1da3f1115dba411880c47482fb44e7e2938e6bcac89c)(@codemirror/commands@6.11.0(patch_hash=d200250c06a20db985c57073f954f2ce7823848efab6d92855555640ec9836cb))(@codemirror/language@6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465))(@codemirror/search@6.7.2)(@codemirror/state@6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1))(@codemirror/view@6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992))':
     dependencies:
       '@codemirror/commands': 6.11.0(patch_hash=d200250c06a20db985c57073f954f2ce7823848efab6d92855555640ec9836cb)
       '@codemirror/language': 6.12.4(patch_hash=1ca57adf749e0721aa4886342fed99fa392c6273964b622d70c5e93aaf7d1465)
       '@codemirror/search': 6.7.2
-      '@codemirror/state': 6.7.2
+      '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=186f57550f1b3cd4fd615acaef7834ac68c7ab40a2e20804bf9a99764b50e992)
       '@replit/codemirror-vim-core': 0.1.0(patch_hash=154d5ece6f8e5a6a147dc035fe28de5c27022df90c6c99f9b3a85c8be0ecd2a4)
 
