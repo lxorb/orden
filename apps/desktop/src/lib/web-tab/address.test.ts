@@ -33,7 +33,7 @@ describe('what a web tab may open', () => {
     expect(isWebAddress('javascript:alert(1)')).toBe(false)
     expect(isWebAddress('data:text/html,<p>hi')).toBe(false)
     expect(isWebAddress('mailto:someone@example.com')).toBe(false)
-    expect(isWebAddress('nib://open')).toBe(false)
+    expect(isWebAddress('orden://open')).toBe(false)
   })
 
   test('refuses the app itself', () => {
@@ -52,6 +52,8 @@ describe('what a web tab may open', () => {
 describe('the origin, plainly', () => {
   test('is the host', () => {
     expect(plainOrigin('https://svelte.dev/docs/introduction')).toBe('svelte.dev')
+    expect(plainOrigin('orden://history')).toBe('orden://history')
+    expect(plainOrigin('nib://history')).toBe('nib://history')
     expect(plainOrigin('https://docs.example.org:8443/a')).toBe('docs.example.org:8443')
   })
 

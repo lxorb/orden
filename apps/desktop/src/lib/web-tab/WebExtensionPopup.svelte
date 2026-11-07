@@ -38,7 +38,7 @@
     void import('@tauri-apps/api/event')
       .then(({ listen }) =>
         listen<{ kind: string; width?: number; height?: number }>(
-          'nib://extension-popup',
+          'orden://extension-popup',
           ({ payload }) => {
             if (payload.kind === 'closed') extensions.close(popped)
             else if (payload.width && payload.height)

@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-const DIALOG: &str = "nib://web-dialog";
+const DIALOG: &str = "orden://web-dialog";
 
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use tauri::Webview;
 use tauri::{AppHandle, Emitter};
 
-const FOUND: &str = "nib://web-found";
+const FOUND: &str = "orden://web-found";
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]

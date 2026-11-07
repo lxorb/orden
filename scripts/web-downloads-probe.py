@@ -404,7 +404,7 @@ def main() -> int:
             if case in ("blank", "closed"):
                 time.sleep(1)
                 app.ask(
-                    "window.__TAURI_INTERNALS__.invoke('plugin:event|emit', { event: 'nib://web-open',"
+                    "window.__TAURI_INTERNALS__.invoke('plugin:event|emit', { event: 'orden://web-open',"
                     f" payload: {{ tab: '{tab}', url: '{at}/files/{'blank' if case == 'blank' else 'slow'}' }} }})"
                 )
             if case in ("slow", "stop", "closed"):

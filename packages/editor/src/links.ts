@@ -18,8 +18,8 @@ export const linkOpener = Facet.define<
 export function hrefOf(target: string): string | null {
   const trimmed = target.trim()
   if (/^(https?|mailto):/i.test(trimmed)) return trimmed
-  if (/^nib:\/\/chat\//i.test(trimmed)) return trimmed
-  if (/^nib:\/\/settings\/import\/?$/i.test(trimmed)) return trimmed
+  if (/^(orden|nib):\/\/chat\//i.test(trimmed)) return trimmed
+  if (/^(orden|nib):\/\/settings\/import\/?$/i.test(trimmed)) return trimmed
   if (/^www\./i.test(trimmed)) return `https://${trimmed}`
   return null
 }

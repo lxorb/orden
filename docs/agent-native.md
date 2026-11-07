@@ -1780,7 +1780,7 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   with every browser verb's name, arguments and answer as serde types, and
   `lib/agents/verbs.ts` with the window's; `agent-mcp` generates the tool schemas from
   those two files, so a verb and its tool cannot drift.
-- **Events** from the crate to the window, on `nib://agent`, each with its `kind`:
+- **Events** from the crate to the window, on `orden://agent`, each with its `kind`:
   `acting {agent, tab, verb}`, `paused {agent}` (one agent stopped on its own),
   `resumed {agent}` (its stop lifted, or everybody's for an empty agent), `asked {approval}`, `answered {approval}`, `tab {agent, id, url,
 title}`, `closed {agent, id}`, `stopped {closed}`, `connected {agents}` (the agents that

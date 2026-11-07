@@ -58,7 +58,7 @@ fn adopted_label(label: &str) -> bool {
     })
 }
 
-const CHOSEN: &str = "nib://web-chosen";
+const CHOSEN: &str = "orden://web-chosen";
 
 pub(crate) fn page_chosen(app: &AppHandle, window: &str, page: &str) {
     if let Some(tab) = tab_of(page) {
@@ -202,17 +202,17 @@ fn unadopt(tab: &str) {
 
 const MAIN: &str = "main";
 
-const MOVED: &str = "nib://web-tab";
+const MOVED: &str = "orden://web-tab";
 
 #[cfg_attr(
     any(not(any(windows, target_os = "macos")), feature = "cef"),
     allow(dead_code)
 )]
-const ASKED: &str = "nib://web-ask";
+const ASKED: &str = "orden://web-ask";
 
-const OPENED: &str = "nib://web-open";
+const OPENED: &str = "orden://web-open";
 
-const BLOCKED: &str = "nib://web-blocked";
+const BLOCKED: &str = "orden://web-blocked";
 
 const LONGEST_PAGE: usize = 4_000_000;
 
@@ -2546,7 +2546,11 @@ mod tests {
             Becomes::Blocked(site.to_string())
         );
         assert_eq!(becomes(&at(BLANK), false, false, true), Becomes::Nothing);
-        for refused in ["nib://open?x", "file:///etc/passwd", "javascript:alert(1)"] {
+        for refused in [
+            "orden://open?x",
+            "file:///etc/passwd",
+            "javascript:alert(1)",
+        ] {
             assert_eq!(
                 becomes(&at(refused), false, true, false),
                 Becomes::Nothing,
@@ -2683,7 +2687,7 @@ mod tests {
             "blob:http://tauri.localhost/1",
             "file:///C:/notes/Idea.md",
             "http://ipc.localhost/notes",
-            "nib://open?path=a.md",
+            "orden://open?path=a.md",
             "mailto:someone@example.com",
         ] {
             assert!(!frame_may_open(&at(never)), "{never}");
@@ -2721,7 +2725,7 @@ mod tests {
             Some("https://example.com/a".to_string())
         );
 
-        assert!(handed_over(&at("nib://command?id=record")).is_none());
+        assert!(handed_over(&at("orden://command?id=record")).is_none());
         assert!(handed_over(&at("file:///C:/notes/Idea.md")).is_none());
         assert!(handed_over(&at("smb://example.com/share")).is_none());
         assert!(handed_over(&at("ms-officecmd:x")).is_none());

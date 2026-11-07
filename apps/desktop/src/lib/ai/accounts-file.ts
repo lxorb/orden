@@ -1,7 +1,7 @@
 import { keep, storedText } from '../stored'
 import { invoke, isNative } from '../tauri'
 
-const EVENT = 'nib://ai-accounts'
+const EVENT = 'orden://ai-accounts'
 
 export const COPY = 'nib:ai-accounts'
 

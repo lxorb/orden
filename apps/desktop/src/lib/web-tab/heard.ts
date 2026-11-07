@@ -125,22 +125,22 @@ export async function listening(
   crashed: (tab: string) => void,
   failed?: (tab: string, not: NotArrived) => void,
 ): Promise<void> {
-  await listen('nib://web-page', (event) => {
+  await listen('orden://web-page', (event) => {
     const said = readSaid(event.payload)
     const one = said && page(said.tab)
     if (one) heard(one, said, go, crashed, failed)
   })
-  await listen('nib://web-found', (event) => {
+  await listen('orden://web-found', (event) => {
     const said = readFound(event.payload)
     const one = said && page(said.tab)
     if (one) found(one, said)
   })
-  await listen('nib://web-unplayable', (event) => {
+  await listen('orden://web-unplayable', (event) => {
     const tab = readUnplayable(event.payload)
     const one = tab === null ? undefined : page(tab)
     if (one) one.unplayable = true
   })
-  await listen('nib://web-passed', (event) => {
+  await listen('orden://web-passed', (event) => {
     const ask = readAsk(event.payload)
     const one = ask && page(ask.tab)
     if (one) answer(ask.tab, one, ask.key)

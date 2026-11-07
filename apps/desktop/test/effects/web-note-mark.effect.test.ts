@@ -46,7 +46,7 @@ afterEach(() => {
 const drawn = (target: HTMLElement) => target.querySelector('img')?.getAttribute('src') ?? null
 
 async function marks(tab: string, icon: string) {
-  heard.get('nib://web-icon')?.({ payload: { tab, icon } })
+  heard.get('orden://web-icon')?.({ payload: { tab, icon } })
   await vi.dynamicImportSettled()
   flushSync()
 }
@@ -75,7 +75,7 @@ test('the row of an open web note follows its tab’s mark, and keeps the last o
   page.path = PATH
   page.url = CHANNEL
   page.at = CHANNEL
-  await vi.waitFor(() => expect(heard.has('nib://web-icon')).toBe(true))
+  await vi.waitFor(() => expect(heard.has('orden://web-icon')).toBe(true))
   await marks(tab.id, ARRIVED)
   expect(drawn(target)).toBe(ARRIVED)
 
@@ -118,7 +118,7 @@ test('a mark too large for the cache is still the row’s while its tab is open'
   page.path = CHATS
   page.url = WHATSAPP
   page.at = WHATSAPP
-  await vi.waitFor(() => expect(heard.has('nib://web-icon')).toBe(true))
+  await vi.waitFor(() => expect(heard.has('orden://web-icon')).toBe(true))
 
   const large = `data:image/png;base64,${'A'.repeat(30 * 1024)}`
   await marks(tab.id, large)

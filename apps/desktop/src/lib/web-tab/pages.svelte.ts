@@ -1017,7 +1017,7 @@ class Pages {
       const { hearHere: listen } = await import('../own-window')
 
       const { grants, readAsked } = await pagePermissions()
-      await listen('nib://web-ask', (event) => {
+      await listen('orden://web-ask', (event) => {
         const said = readAsked(event.payload)
         const page = said ? this.held.get(said.tab) : undefined
         if (said && page) grants.heard({ ...said, privately: page.inPrivate })
@@ -1025,36 +1025,36 @@ class Pages {
       })
 
       const { dialogs, readDialog } = await pageDialogs()
-      await listen('nib://web-dialog', (event) => {
+      await listen('orden://web-dialog', (event) => {
         const said = readDialog(event.payload)
         if (said && this.held.has(said.tab)) dialogs.heard(said)
         else if (said) dialogs.refused(said.id)
       })
 
-      await listen('nib://web-open', (event) => {
+      await listen('orden://web-open', (event) => {
         const said = readOpening(event.payload)
         if (said && this.held.has(said.tab)) void this.openAsked(said)
       })
-      await listen('nib://web-chosen', (event) => {
+      await listen('orden://web-chosen', (event) => {
         const tab = readChosen(event.payload)
         if (tab !== null && this.held.has(tab)) void chooseTab(tab)
       })
-      await listen('nib://web-blocked', (event) => {
+      await listen('orden://web-blocked', (event) => {
         const said = readOpening(event.payload)
         const page = said && this.held.get(said.tab)
         if (said && page) page.blocked = said.url
       })
       const { readPressed, replay } = await import('./keys')
-      await listen('nib://web-key', (event) => {
+      await listen('orden://web-key', (event) => {
         const one = readPressed(event.payload)
         if (one) replay(one)
       })
       const { downloads, readDownload } = await import('./downloads.svelte')
-      await listen('nib://web-download', (event) => {
+      await listen('orden://web-download', (event) => {
         const said = readDownload(event.payload)
         if (said && downloads.heard(said)) void this.downloaded(said.tab)
       })
-      await listen('nib://web-icon', (event) => {
+      await listen('orden://web-icon', (event) => {
         const said = readIconed(event.payload)
         const page = said ? this.held.get(said.tab) : undefined
         if (!said || !page) return
@@ -1082,7 +1082,7 @@ class Pages {
         (tab) => void this.ended(tab),
         (tab, not) => void this.failed(tab, not),
       )
-      await listen('nib://web-tab', (event) => {
+      await listen('orden://web-tab', (event) => {
         const said = readMoved(event.payload)
         if (!said) return
 

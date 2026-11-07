@@ -17,7 +17,7 @@ const FRONT: &str = "inbox.txt";
 
 const ADDED: &str = "added";
 
-pub const ADDED_EVENT: &str = "nib://shortcuts-added";
+pub const ADDED_EVENT: &str = "orden://shortcuts-added";
 
 static APP: OnceLock<AppHandle> = OnceLock::new();
 

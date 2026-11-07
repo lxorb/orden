@@ -217,7 +217,7 @@ points. What stands in front of all four, and so what a new caller has to keep:
 
 - **The window's own gestures.** The path came from `joinPath` off a space
   root, from the settings files the crate names, or from the file dialog.
-- **The local endpoint and every `nib://` link**, the two roads another
+- **The local endpoint and every `orden://` link**, the two roads another
   program has in. Both are judged by one function, `insideOnly` in
   `apps/desktop/src/lib/automation/inside.ts`: relative, `/` separators, no
   `..`, no drive letter, no control character, no name Windows keeps for a
@@ -252,7 +252,7 @@ points. What stands in front of all four, and so what a new caller has to keep:
 - **The phone**, whose spaces folder is inside the app's own external files
   directory and whose manifest asks for no storage permission. A share hands
   over bytes and a name, never a path, and Orden is no file manager's "Open
-  with": the manifest's one VIEW filter is the `nib://` link. The widget's
+  with": the manifest's one VIEW filter is the `orden://` link. The widget's
   `open` intent extra is an absolute path, judged against the spaces by
   `openable` in `apps/desktop/src/lib/mobile/handed.ts` and by `openable` in
   the crate.

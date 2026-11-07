@@ -91,7 +91,7 @@ fn now() -> u64 {
     u64::try_from(START.elapsed().as_millis()).unwrap_or(u64::MAX)
 }
 
-pub const IN_PAGE: &str = "nib://keyboard-in-page";
+pub const IN_PAGE: &str = "orden://keyboard-in-page";
 
 #[cfg_attr(
     not(any(windows, feature = "cef")),

@@ -2,7 +2,7 @@ use serde::Serialize;
 use tauri::AppHandle;
 
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-const SAID: &str = "nib://web-page";
+const SAID: &str = "orden://web-page";
 
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 #[derive(Clone, Debug, PartialEq, Serialize)]

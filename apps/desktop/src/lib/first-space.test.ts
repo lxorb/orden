@@ -225,10 +225,16 @@ describe('the welcome note, untouched', () => {
   })
 
   test('nor the one that linked to Import', () => {
-    const linked = `${WELCOME}\n[Import from Obsidian or Notion](nib://settings/import)\n`
+    const linked = `${WELCOME}\n[Import from Obsidian or Notion](orden://settings/import)\n`
 
     expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, linked)).toBe(true)
     expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, `${linked}mine\n`)).toBe(false)
+  })
+
+  test('nor the one seeded before the rename, whose link said nib://', () => {
+    const linked = `${WELCOME}\n[Import from Obsidian or Notion](nib://settings/import)\n`
+
+    expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, linked)).toBe(true)
   })
 
   test('suggests no import', () => {

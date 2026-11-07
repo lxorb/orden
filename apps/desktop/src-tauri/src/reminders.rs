@@ -87,7 +87,7 @@ pub struct Pressed {
 
 const ANSWERED_FOR_MS: i64 = 7 * 86_400_000;
 
-const PRESSED: &str = "nib://reminder";
+const PRESSED: &str = "orden://reminder";
 
 static LAUNCHED_QUIETLY: AtomicBool = AtomicBool::new(false);
 
@@ -477,7 +477,7 @@ mod tests {
         let open = link::link(Act::Open, "aa", "bb");
         assert!(quiet_launch(std::slice::from_ref(&done)));
         assert!(!quiet_launch(&[done.clone(), open]));
-        assert!(!quiet_launch(&[done, "nib://open?path=a".into()]));
+        assert!(!quiet_launch(&[done, "orden://open?path=a".into()]));
         assert!(!quiet_launch(&[]));
     }
 

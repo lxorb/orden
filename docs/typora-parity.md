@@ -448,7 +448,7 @@ Still pandoc's, and offered only where pandoc is installed:
 ## 16. System integration
 
 - [x] Multiple windows, and a window that stays over every other application
-- [x] Open from the shell: `nib://` links and the `orden` command, which name a note
+- [x] Open from the shell: `orden://` links and the `orden` command, which name a note
       inside a space. A path on the command line is not read (Emil, 2026-09-30:
       Orden opens nothing from outside its spaces)
 - [ ] ~~File association for `.md`~~ - taken away on purpose, and an install over an
@@ -1157,15 +1157,15 @@ Features Typora does not have, which are the reason this exists.
       anything is written - a model replacing a paragraph is the one gesture here
       that can lose work, and by the time an undo has been read the paragraph is
       off the screen
-- [x] `nib://` links, the way `obsidian://` works, so a shortcut, a launcher or
+- [x] `orden://` links, the way `obsidian://` works, so a shortcut, a launcher or
       another program can open a note, a heading or a block, make a note or add to
       one, search, or run any row the palette knows. On a desktop the installer
       registers the scheme and a second launch hands the link to the window that is
       already open; on Android an intent filter on the one activity; on the web
-      `web+nib://`, which is the only shape a browser lets a page register, handed
+      `web+orden://`, which is the only shape a browser lets a page register, handed
       back as `?nib=` and taken off the address once it has been followed.
       x-callback-url's `x-success`, `x-error` and `x-cancel` are all three real, so
-      a link is a step in a shortcut rather than the end of one - for `nib://new`,
+      a link is a step in a shortcut rather than the end of one - for `orden://new`,
       the one link verb that changes anything; opening, searching and running a
       command answer no callback, because a link's outcome goes to an address the
       link itself chose. A link may ask for

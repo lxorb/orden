@@ -20,7 +20,7 @@ pub fn named(name: &str) -> Option<&str> {
     name.strip_prefix(NAMED)
 }
 
-const SWIPED: &str = "nib://web-swipe";
+const SWIPED: &str = "orden://web-swipe";
 
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub fn binding() -> Value {

@@ -53,7 +53,7 @@ describe('what never becomes a tab', () => {
     expect(place('javascript:alert(1)')).toBe('nowhere')
     expect(place('smb://server/share')).toBe('nowhere')
     expect(place('data:text/html,<p>hi')).toBe('nowhere')
-    expect(place('nib://open?path=x')).toBe('nowhere')
+    expect(place('orden://open?path=x')).toBe('nowhere')
   })
 
   test('the app\u2019s own origins are not somewhere a tab may go', () => {
@@ -115,14 +115,15 @@ describe('reading the press', () => {
 
 describe('a link to a settings pane', () => {
   test('opens Import, however it is spelled', () => {
-    expect(settingsPane('nib://settings/import')).toBe('import')
+    expect(settingsPane('orden://settings/import')).toBe('import')
+    expect(settingsPane(' ORDEN://Settings/Import/ ')).toBe('import')
     expect(settingsPane(' NIB://Settings/Import/ ')).toBe('import')
   })
 
   test('and nothing else is one', () => {
-    expect(settingsPane('nib://settings/account')).toBeNull()
-    expect(settingsPane('nib://settings/import/more')).toBeNull()
+    expect(settingsPane('orden://settings/account')).toBeNull()
+    expect(settingsPane('orden://settings/import/more')).toBeNull()
     expect(settingsPane('https://example.com/settings/import')).toBeNull()
-    expect(settingsPane('nib://open?path=settings/import')).toBeNull()
+    expect(settingsPane('orden://open?path=settings/import')).toBeNull()
   })
 })

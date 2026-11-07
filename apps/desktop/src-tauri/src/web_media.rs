@@ -4,7 +4,7 @@ const SCRIPT: &str = include_str!("web_media.js");
 
 pub const UNPLAYABLE: &str = "nib-media-unplayable";
 
-const HEARD: &str = "nib://web-unplayable";
+const HEARD: &str = "orden://web-unplayable";
 
 pub fn script() -> &'static str {
     SCRIPT.trim().trim_start_matches(';')

@@ -14,7 +14,7 @@ use crate::paths::{config_dir, made, write_privately};
 
 const TAKES: Duration = Duration::from_millis(1500);
 
-const ASKED: &str = "nib://automation";
+const ASKED: &str = "orden://automation";
 
 const MOST_BYTES: usize = 8 * 1024 * 1024;
 

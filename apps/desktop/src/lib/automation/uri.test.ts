@@ -3,7 +3,7 @@ import { callbackKind, isFileUri, isNibUri, readUri, withOutcome } from './uri'
 
 describe('reading a link', () => {
   test('takes the action and the arguments', () => {
-    const link = readUri('nib://open?path=notes/Plan.md&heading=Later')
+    const link = readUri('orden://open?path=notes/Plan.md&heading=Later')
 
     expect(link?.action).toBe('open')
     expect(link?.args).toEqual({ path: 'notes/Plan.md', heading: 'Later' })
@@ -11,34 +11,40 @@ describe('reading a link', () => {
 
   test('reads both ways of writing the scheme, and the browser one', () => {
     expect(readUri('nib:open?path=A.md')?.action).toBe('open')
-    expect(readUri('nib:///open?path=A.md')?.action).toBe('open')
+    expect(readUri('orden:///open?path=A.md')?.action).toBe('open')
+    expect(readUri('web+orden://open?path=A.md')?.action).toBe('open')
+    expect(readUri('ORDEN://Open?path=A.md')?.action).toBe('open')
+  })
+
+  test('still reads a link written before the rename, for one release', () => {
+    expect(readUri('nib://open?path=A.md')?.action).toBe('open')
     expect(readUri('web+nib://open?path=A.md')?.action).toBe('open')
-    expect(readUri('NIB://Open?path=A.md')?.action).toBe('open')
+    expect(isNibUri('NIB://Open')).toBe(true)
   })
 
   test('reads the x-callback-url spelling as the plain action', () => {
-    expect(readUri('nib://x-callback-url/new?name=Idea')?.action).toBe('new')
+    expect(readUri('orden://x-callback-url/new?name=Idea')?.action).toBe('new')
   })
 
   test('undoes the encoding a path with a space in it needs', () => {
-    expect(readUri('nib://open?path=day%20job%2FPlan.md')?.args.path).toBe('day job/Plan.md')
+    expect(readUri('orden://open?path=day%20job%2FPlan.md')?.args.path).toBe('day job/Plan.md')
   })
 
   test('takes the callbacks out of the arguments', () => {
     const link = readUri(
-      'nib://new?name=Idea&x-success=https://example.com/done&x-error=nib://open',
+      'orden://new?name=Idea&x-success=https://example.com/done&x-error=orden://open',
     )
 
     expect(link?.args).toEqual({ name: 'Idea' })
     expect(link?.callbacks).toEqual({
       success: 'https://example.com/done',
-      error: 'nib://open',
+      error: 'orden://open',
       cancel: null,
     })
   })
 
   test('keeps the first of two arguments that say the same thing', () => {
-    expect(readUri('nib://open?path=A.md&path=B.md')?.args.path).toBe('A.md')
+    expect(readUri('orden://open?path=A.md&path=B.md')?.args.path).toBe('A.md')
   })
 
   test('is nothing at all for an address that is not ours', () => {
@@ -49,18 +55,18 @@ describe('reading a link', () => {
   })
 
   test('reads an action written with a dot in it', () => {
-    expect(readUri('nib://files.delete?path=A.md')?.action).toBe('files.delete')
+    expect(readUri('orden://files.delete?path=A.md')?.action).toBe('files.delete')
   })
 
   test('is nothing for an action that is not a word', () => {
-    expect(readUri('nib://?path=A.md')).toBeNull()
-    expect(readUri('nib://../../etc?x=1')).toBeNull()
-    expect(readUri('nib://open files')).toBeNull()
+    expect(readUri('orden://?path=A.md')).toBeNull()
+    expect(readUri('orden://../../etc?x=1')).toBeNull()
+    expect(readUri('orden://open files')).toBeNull()
   })
 
   test('says which strings are ours at all', () => {
-    expect(isNibUri('nib://open')).toBe(true)
-    expect(isNibUri(' web+nib://open ')).toBe(true)
+    expect(isNibUri('orden://open')).toBe(true)
+    expect(isNibUri(' web+orden://open ')).toBe(true)
     expect(isNibUri('file:///etc/passwd')).toBe(false)
   })
 })
@@ -69,7 +75,7 @@ describe('where a link may go afterwards', () => {
   test('the web, and this app itself', () => {
     expect(callbackKind('https://example.com/done')).toBe('external')
     expect(callbackKind('http://127.0.0.1/done')).toBe('external')
-    expect(callbackKind('nib://open?path=A.md')).toBe('nib')
+    expect(callbackKind('orden://open?path=A.md')).toBe('nib')
   })
 
   test('and nowhere else, whatever it is', () => {
@@ -118,7 +124,7 @@ describe('a file the Finder opened', () => {
   test('is a file, not a link', () => {
     expect(isFileUri('file:///Users/me/Notes/Idea.md')).toBe(true)
     expect(isFileUri(' FILE:///Users/me/Idea.md')).toBe(true)
-    expect(isFileUri('nib://open?path=Idea.md')).toBe(false)
+    expect(isFileUri('orden://open?path=Idea.md')).toBe(false)
     expect(isNibUri('file:///Users/me/Notes/Idea.md')).toBe(false)
   })
 })

@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-pub const PRESSED: &str = "nib://web-key";
+pub const PRESSED: &str = "orden://web-key";
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Held {
