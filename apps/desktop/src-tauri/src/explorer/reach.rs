@@ -67,7 +67,7 @@ pub fn judged(
     asked: &str,
     using: Use,
 ) -> Result<PathBuf, String> {
-    let path = folded(Path::new(asked.trim()));
+    let path = folded(Path::new(asked));
     if !path.is_absolute() {
         return Err(format!("{asked} is not a full path"));
     }
@@ -211,6 +211,26 @@ mod tests {
         assert!(judge(&seen, "/home/me/Pictures", Use::Into).is_ok());
         assert!(judge(&seen, "/home/me/Pictures/sub/a.png", Use::Look).is_err());
         assert!(judge(&seen, "/home/me/Pictures/sub", Use::Into).is_err());
+    }
+
+    #[test]
+    fn a_name_with_spaces_at_its_ends_is_that_name_and_not_its_neighbour() {
+        let seen = Explored::default();
+        seen.saw(Path::new("/home/me/Pictures"));
+        for name in ["a.png ", " a.png", "a.png\t", "a.png\n"] {
+            let asked = format!("/home/me/Pictures/{name}");
+            assert_eq!(
+                judge(&seen, &asked, Use::Change),
+                Ok(PathBuf::from(&asked)),
+                "{name:?}"
+            );
+        }
+        seen.saw(Path::new("/home/me/Music "));
+        assert_eq!(
+            judge(&seen, "/home/me/Music /a.mp3", Use::Look),
+            Ok(PathBuf::from("/home/me/Music /a.mp3"))
+        );
+        assert!(judge(&seen, "/home/me/Music/a.mp3", Use::Look).is_err());
     }
 
     #[test]
