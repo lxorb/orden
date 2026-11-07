@@ -13,7 +13,7 @@ from PIL import Image
 OUT = Path(sys.argv[1])
 APP = sys.argv[2]
 COLD = len(sys.argv) > 3 and sys.argv[3] == "cold"
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
 POINTER = OUT / "pointer.fifo"
 SLACK = 3
 failures = []

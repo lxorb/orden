@@ -12,7 +12,7 @@ const SCRIPT: &str = include_str!("kept.js");
 
 const EMPTY: &str = "/* kept */ { values: {}, gone: [] }";
 
-const FOLDER: &str = "kept";
+pub(crate) const FOLDER: &str = "kept";
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]

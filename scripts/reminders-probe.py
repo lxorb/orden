@@ -8,13 +8,13 @@ id, tagged with the reminder's id and in Orden's group - which is read back here
 any program on the machine can read it, through Windows PowerShell's WinRT.
 
 **It never rings on anybody's screen.** The reminder is twenty minutes out, the app is a
-probe with an identifier of its own (never `ch.emilvinu.nib`), and on the way out - pass,
+probe with an identifier of its own (never `so.orden.Orden`), and on the way out - pass,
 fail or crash - every toast on that id's schedule is taken off and the id's registration
 removed, and the run fails if one is left. A probe schedules nothing at all unless it is
 started with `ORDEN_PROBE_REMINDERS`, which only this script sets; see reminders.rs.
 
     pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.reminders","version":"99.0.0",
+      --config '{"identifier":"so.orden.Orden.probe.reminders","version":"99.0.0",
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/reminders-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
 
@@ -37,7 +37,7 @@ import time
 
 from probe_app import close_app, refuse_updating, run_probe
 
-IDENTIFIER = "ch.emilvinu.nib.probe.reminders"
+IDENTIFIER = "so.orden.Orden.probe.reminders"
 GROUP = "nib.reminders"
 SPACE = "Reminders probe"
 

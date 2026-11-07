@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from devtools import Session  # noqa: E402
 
 OUT, STEP = Path(sys.argv[1]), sys.argv[2]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
 DEBUG = os.environ["ORDEN_CEF_DEBUG_PORT"]
 
 def endpoint():

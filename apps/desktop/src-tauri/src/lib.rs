@@ -119,6 +119,8 @@ mod oauth_loopback;
 #[cfg(desktop)]
 mod obsidian_vaults;
 #[cfg(desktop)]
+pub mod old_home;
+#[cfg(desktop)]
 mod outside;
 #[cfg(any(desktop, target_os = "ios"))]
 mod owner;

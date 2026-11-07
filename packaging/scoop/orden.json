@@ -3,7 +3,7 @@
     "description": "Orden, formerly nibeditor: a simple, lightweight markdown editor offering all the features you could ever need.",
     "homepage": "https://orden.so",
     "license": "AGPL-3.0-only",
-    "notes": "Themes and note history live in '%APPDATA%\\ch.emilvinu.nib', which is junctioned into Scoop's persist directory, so they survive updates and uninstalls.",
+    "notes": "Themes and note history live in '%APPDATA%\\so.orden.Orden', which is junctioned into Scoop's persist directory, so they survive updates and uninstalls.",
     "architecture": {
         "64bit": {
             "url": "https://github.com/lxorb/orden/releases/download/v0.19.0/Orden-0.19.0-windows-x64-setup.exe#/dl.7z",
@@ -23,7 +23,7 @@
             "if ((Test-Path $was) -and !(Get-ChildItem -LiteralPath $persist_dir -Force)) {",
             "    Get-ChildItem -LiteralPath $was -Force | Move-Item -Destination \"$persist_dir\" -Force",
             "}",
-            "$appdata = \"$env:APPDATA\\ch.emilvinu.nib\"",
+            "$appdata = \"$env:APPDATA\\so.orden.Orden\"",
             "if (Test-Path $appdata) {",
             "    $item = Get-Item -LiteralPath $appdata -Force",
             "    if ($item.LinkType -eq 'Junction') {",
@@ -46,7 +46,7 @@
     ],
     "uninstaller": {
         "script": [
-            "$appdata = Get-Item -LiteralPath \"$env:APPDATA\\ch.emilvinu.nib\" -Force -ErrorAction 'Ignore'",
+            "$appdata = Get-Item -LiteralPath \"$env:APPDATA\\so.orden.Orden\" -Force -ErrorAction 'Ignore'",
             "# The link alone, so what it points at - the persist folder, kept until --purge - stays.",
             "if ($appdata.LinkType -eq 'Junction') { $appdata.Delete() } elseif ($appdata) { Remove-Item -LiteralPath $appdata.FullName -Force -Recurse }"
         ]

@@ -106,7 +106,7 @@ describe('an answer, as nib mcp writes it', () => {
       outputIn({
         content: [],
         _meta: {
-          'ch.emilvinu.nib/answer': {
+          'so.orden.Orden/answer': {
             status: 'needs_approval',
             approval: 'q1',
             category: 'paying',
@@ -139,7 +139,7 @@ describe('an answer, as nib mcp writes it', () => {
         content: [{ type: 'text', text: 'nib asked the reader.' }],
         isError: false,
         _meta: {
-          'ch.emilvinu.nib/answer': {
+          'so.orden.Orden/answer': {
             status: 'needs_approval',
             approval: 'a17',
             summary: 'Place order',
@@ -147,5 +147,14 @@ describe('an answer, as nib mcp writes it', () => {
         },
       }),
     ).toMatchObject({ approval: 'a17', error: false })
+  })
+
+  test('an answer under the name it had before the rename still reads, for one release', () => {
+    expect(
+      outputIn({
+        content: [],
+        _meta: { 'ch.emilvinu.nib/answer': { status: 'needs_approval', approval: 'a18' } },
+      }),
+    ).toMatchObject({ approval: 'a18' })
   })
 })

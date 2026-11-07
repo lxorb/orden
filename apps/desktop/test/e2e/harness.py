@@ -126,7 +126,7 @@ NEEDS = {
     "tab-stops": "Tab stopping at buttons, which a Mac leaves to Keyboard navigation, off on a runner",
 }
 
-RELEASE_IDENTIFIER = "ch.emilvinu.nib"
+RELEASE_IDENTIFIER = "so.orden.Orden"
 
 LAUNCHED = "nib: launch order finished"
 

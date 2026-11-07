@@ -13,8 +13,8 @@ finish-args:
   - --socket=fallback-x11
   - --device=dri
   - --share=network
-  - --own-name=ch.emilvinu.nib
-  - --own-name=ch.emilvinu.nib.*
+  - --own-name=so.orden.Orden
+  - --own-name=so.orden.Orden.*
   - --filesystem=xdg-documents
 
 modules:

@@ -11,7 +11,7 @@ from typing import Any
 
 Answer = dict[str, Any]
 
-ANSWER_META = "ch.emilvinu.nib/answer"
+ANSWER_META = "so.orden.Orden/answer"
 
 NO_VERB = "there is no verb called"
 

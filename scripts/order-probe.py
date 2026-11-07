@@ -238,7 +238,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.order")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.order")
     args = parsed.parse_args()
 
     if not args.exe.exists():

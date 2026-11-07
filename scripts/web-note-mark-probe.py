@@ -10,7 +10,7 @@ twice the way a chat site does - a badge on, the badge off - through the page's 
 debugging port, which presses nothing. After each, the tab's picture and the row's are
 read off Orden's own page and compared; then the tab is closed and the row read again.
 
-    python scripts/web-note-mark-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
+    python scripts/web-note-mark-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says; `run_probe` starts it off the screen and
 without the keyboard.
@@ -139,7 +139,7 @@ def main() -> int:
         raise SystemExit("this probe is Windows only")
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.web-note-mark")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.web-note-mark")
     args = parsed.parse_args()
 
     probe.wipe(args.identifier)

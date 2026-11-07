@@ -113,7 +113,7 @@ pub(crate) fn delete(app: &AppHandle, account: &str) -> Result<(), String> {
     store::delete(app, account)
 }
 
-const SHIPPED: &str = "ch.emilvinu.nib";
+const SHIPPED: &str = "so.orden.Orden";
 
 #[cfg_attr(target_os = "macos", allow(dead_code))]
 pub(crate) const SERVICE: &str = "nibeditor";
@@ -182,12 +182,12 @@ mod tests {
 
     #[test]
     fn a_build_other_than_the_shipped_one_files_its_secrets_apart() {
-        assert_eq!(filed("openai", "ch.emilvinu.nib").as_deref(), Ok("openai"));
+        assert_eq!(filed("openai", "so.orden.Orden").as_deref(), Ok("openai"));
         assert_eq!(
-            filed("openai", "ch.emilvinu.nib.probe.x").as_deref(),
-            Ok("openai@ch.emilvinu.nib.probe.x")
+            filed("openai", "so.orden.Orden.probe.x").as_deref(),
+            Ok("openai@so.orden.Orden.probe.x")
         );
-        assert!(filed("a b", "ch.emilvinu.nib").is_err());
+        assert!(filed("a b", "so.orden.Orden").is_err());
     }
 
     #[test]

@@ -25,11 +25,11 @@ off the screen and without the keyboard; see probe_app.py.
 
     npx vite build --mode drive                     # in apps/desktop
     pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.autosave-only","version":"99.0.0",
+      --config '{"identifier":"so.orden.Orden.probe.autosave-only","version":"99.0.0",
                  "build":{"beforeBuildCommand":""},
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/autosave-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.autosave-only
+      --identifier so.orden.Orden.probe.autosave-only
 
 This wipes that identifier's settings folder and webview profile at the start of every
 run, and refuses to wipe one whose name does not say `probe`.
@@ -204,7 +204,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.autosave-only")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.autosave-only")
     args = parsed.parse_args()
 
     exe = pathlib.Path(args.exe).resolve()

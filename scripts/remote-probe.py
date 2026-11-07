@@ -15,7 +15,7 @@ everything on Orden's side of `ssh`:
   the Reconnect bar up, which connects again;
 * `exit` (0) closes the tab, as a shell's own `exit` does.
 
-    python scripts/remote-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
+    python scripts/remote-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says; `run_probe` starts it off the screen and
 without the keyboard, and nothing here moves it or presses a real key.
@@ -119,7 +119,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.remote-ssh")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.remote-ssh")
     parsed.add_argument("--shots", default=str(ROOT / "apps/desktop/test/e2e/shots/remote-probe"))
     args = parsed.parse_args()
 

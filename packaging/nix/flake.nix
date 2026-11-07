@@ -439,7 +439,7 @@
           cfg = config.programs.orden;
           inherit (lib) mkOption types;
           system = pkgs.stdenv.hostPlatform.system;
-          folder = "ch.emilvinu.nib";
+          folder = "so.orden.Orden";
           isId = id: builtins.stringLength id <= 39 && builtins.match "[a-z0-9][a-z0-9-]*" id != null;
           stylesheet = types.either types.lines types.path;
           file = value: if builtins.isString value then { text = value; } else { source = value; };
@@ -609,7 +609,7 @@
               }
             ];
           };
-          written = evaluated.config.xdg.configFile."ch.emilvinu.nib/settings.json".text;
+          written = evaluated.config.xdg.configFile."so.orden.Orden/settings.json".text;
           expected = ''{"appearance":{"mode":"dark"},"editor":{"focusMode":true,"textSize":1.1},"general":{"dns":"quad9"},"shortcuts":{"app-focus":"Mod-Alt-f"},"spelling":{"languages":["de-DE","en-US"]},"themes":{"glass":{"material":"mica"},"wallpaper":{"blur":12}}}'';
         in
         {

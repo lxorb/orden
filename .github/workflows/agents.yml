@@ -43,7 +43,7 @@ jobs:
       run:
         shell: bash
     env:
-      IDENTIFIER: ch.emilvinu.nib.probe.nightly
+      IDENTIFIER: so.orden.Orden.probe.nightly
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 

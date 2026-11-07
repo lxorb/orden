@@ -8,7 +8,7 @@ import urllib.request
 from pathlib import Path
 
 OUT, FOLDER, SERVED = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
 WHOLE = 65536 * 200
 failures = []
 

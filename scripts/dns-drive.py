@@ -9,7 +9,7 @@ import urllib.request
 from pathlib import Path
 
 OUT, PHASE, NAME, PROVIDER, SERVED = Path(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4], Path(sys.argv[5])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
 REACHED = "reached by name"
 failures = []
 

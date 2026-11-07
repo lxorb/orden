@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image
 
 WHAT, OUT = sys.argv[1], Path(sys.argv[2])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
 SITE = (255, 0, 255)
 failures = []
 

@@ -66,7 +66,7 @@ const { shortcutKey } = await import('./declared.svelte')
 const { hiddenKinds } = await import('../settings.svelte')
 const { gpu } = await import('./gpu.svelte')
 
-const PATH = '/home/emil/.config/ch.emilvinu.nib/settings.json'
+const PATH = '/home/emil/.config/so.orden.Orden/settings.json'
 
 async function launch(text: string | null) {
   file = text === null ? null : { path: PATH, text }

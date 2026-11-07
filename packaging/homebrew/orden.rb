@@ -18,15 +18,15 @@ cask "orden" do
 
   app "Orden.app"
 
-  uninstall quit: "ch.emilvinu.nib"
+  uninstall quit: "so.orden.Orden"
 
   zap trash: [
-    "~/Library/Application Support/ch.emilvinu.nib",
-    "~/Library/Caches/ch.emilvinu.nib",
-    "~/Library/HTTPStorages/ch.emilvinu.nib",
-    "~/Library/Preferences/ch.emilvinu.nib.plist",
-    "~/Library/Saved Application State/ch.emilvinu.nib.savedState",
-    "~/Library/WebKit/ch.emilvinu.nib",
+    "~/Library/Application Support/so.orden.Orden",
+    "~/Library/Caches/so.orden.Orden",
+    "~/Library/HTTPStorages/so.orden.Orden",
+    "~/Library/Preferences/so.orden.Orden.plist",
+    "~/Library/Saved Application State/so.orden.Orden.savedState",
+    "~/Library/WebKit/so.orden.Orden",
   ]
 
   caveats <<~EOS

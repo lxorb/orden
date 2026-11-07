@@ -1,4 +1,4 @@
--keepclassmembers class ch.emilvinu.nib.MainActivity$Bridge {
+-keepclassmembers class so.orden.Orden.MainActivity$Bridge {
     @android.webkit.JavascriptInterface <methods>;
 }
 

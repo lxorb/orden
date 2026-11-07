@@ -28,7 +28,7 @@ the window itself, and so reaches what the window reaches; see docs/terminal.md)
 
 A photograph of the window is written to `--shots`, off the app's own window and by pid.
 
-    python scripts/terminal-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
+    python scripts/terminal-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says; `run_probe` starts it off the screen and
 without the keyboard, and nothing here moves it or presses a real key.
@@ -222,7 +222,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.terminal")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.terminal")
     parsed.add_argument("--shots", default=str(ROOT / "apps/desktop/test/e2e/shots/terminal-probe"))
     args = parsed.parse_args()
 

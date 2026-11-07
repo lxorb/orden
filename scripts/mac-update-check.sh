@@ -5,7 +5,7 @@ dmg="$1"
 where="$2"
 expect="$3"
 cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
-support="$HOME/Library/Application Support/ch.emilvinu.nib"
+support="$HOME/Library/Application Support/so.orden.Orden"
 endpoint="$support/automation.json"
 mount="/tmp/orden-image-$where"
 
@@ -51,7 +51,7 @@ launch() {
 }
 
 quit_app() {
-  osascript -e 'quit app id "ch.emilvinu.nib"' >/dev/null 2>&1 || true
+  osascript -e 'quit app id "so.orden.Orden"' >/dev/null 2>&1 || true
   for _ in $(seq 20); do running "$app" || return 0; sleep 1; done
   pkill -f "$app/Contents/MacOS/" || true
   sleep 2
@@ -79,7 +79,7 @@ case "$version" in *"$expect"*)
 esac
 
 logs() {
-  for log in "$HOME/Library/Logs/ch.emilvinu.nib"/*; do
+  for log in "$HOME/Library/Logs/so.orden.Orden"/*; do
     [ -f "$log" ] && { echo "--- $log"; tail -40 "$log"; }
   done
 }
@@ -95,7 +95,7 @@ done
 echo "notice: $notice"
 case "$notice" in *"$expect"*) ;; *) echo "no notice offered $expect"; logs; quit_app; exit 1 ;; esac
 
-log_before="$(ls -t "$HOME/Library/Logs/ch.emilvinu.nib" 2>/dev/null | head -1)"
+log_before="$(ls -t "$HOME/Library/Logs/so.orden.Orden" 2>/dev/null | head -1)"
 say_eval "[...document.querySelectorAll('.notice .orden-button')].at(-1).click(), 'pressed'"
 
 for _ in $(seq 60); do running "$app" || break; sleep 1; done

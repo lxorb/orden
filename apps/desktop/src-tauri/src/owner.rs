@@ -168,7 +168,7 @@ mod platform {
     use zbus::blocking::Connection;
     use zbus::zvariant::Value;
 
-    const ACTIONS: [&str; 2] = ["ch.emilvinu.nib.unlock", "org.freedesktop.policykit.exec"];
+    const ACTIONS: [&str; 2] = ["so.orden.Orden.unlock", "org.freedesktop.policykit.exec"];
     const ALLOW_INTERACTION: u32 = 1;
 
     pub(super) fn subject() -> Option<(&'static str, HashMap<&'static str, Value<'static>>)> {

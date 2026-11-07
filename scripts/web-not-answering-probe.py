@@ -16,7 +16,7 @@ probe asks the window's thread every 100 ms. Then the browser is let go, and bot
 must come back: the one asked for while it was held loads, the other is shown again.
 
     python scripts/web-not-answering-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name>
+        --identifier so.orden.Orden.probe.<name>
 
 Every launch goes through `run_probe`, off the screen; the browser suspended is the probe's
 own child, found by its data folder, and every thread is resumed before the probe ends.

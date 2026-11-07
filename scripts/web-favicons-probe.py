@@ -224,7 +224,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe")
     parsed.add_argument("--real", action="store_true", help="also open the real sites")
     parsed.add_argument("--wait", type=float, default=8)
     parsed.add_argument("--only", nargs="*", help="just these cases")

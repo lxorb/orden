@@ -6,7 +6,7 @@ real disk and a real console: the lines written as the window goes and waited fo
 back by the next launch, drawn above a fresh Command Prompt that the pseudo console did not
 paint over, the prompt in the folder the old one was in.
 
-    python scripts/terminal-restore-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
+    python scripts/terminal-restore-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch is `run_probe`'s: off the screen,
 never taking the keyboard, with `ORDEN_SPACES_DIR` in a folder of this run's own. The app is
@@ -88,7 +88,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.terminal-restore")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.terminal-restore")
     parsed.add_argument("--shots", default=str(ROOT / "apps/desktop/test/e2e/shots/terminal-restore-probe"))
     args = parsed.parse_args()
 

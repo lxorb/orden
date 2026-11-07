@@ -23,7 +23,7 @@ Every launch goes through `run_probe`, off the screen and without the keyboard.
 
     npx vite build --mode drive                     # in apps/desktop
     pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.sync-client-store","version":"99.0.0",
+      --config '{"identifier":"so.orden.Orden.probe.sync-client-store","version":"99.0.0",
                  "build":{"beforeBuildCommand":""},
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/sync-store-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
@@ -372,7 +372,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.sync-client-store")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.sync-client-store")
     args = parsed.parse_args()
 
     exe = pathlib.Path(args.exe).resolve()

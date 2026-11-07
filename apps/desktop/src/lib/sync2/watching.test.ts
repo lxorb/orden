@@ -15,7 +15,7 @@ vi.mock('../space-watch', async (original) => ({
   },
 }))
 
-const ROOT = '/home/me/.local/share/ch.emilvinu.nib/Spaces/Two'
+const ROOT = '/home/me/.local/share/so.orden.Orden/Spaces/Two'
 const engine = {
   core: {
     world: { foldsCase: false, blobs: {} },

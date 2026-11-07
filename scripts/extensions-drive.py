@@ -9,7 +9,7 @@ import urllib.request
 from pathlib import Path
 
 OUT, PHASE, NAME = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
 failures = []
 
 FIREFOX = "https://addons.mozilla.org/en-US/firefox/addon/sponsorblock/"
@@ -123,7 +123,7 @@ def opened_as_a_tab(address, pane, what, seconds=20):
     if panes != [pane]:
         fail(f"{what}: not one tab in the reader's pane {pane}, but in {panes}")
         for log in Path.home().rglob("nib.log"):
-            if "ch.emilvinu.nib" in str(log):
+            if "so.orden.Orden" in str(log):
                 said = [line for line in log.read_text(errors="replace").splitlines() if "extensions" in line]
                 print(f"{log}: {said[-10:]}")
         return False

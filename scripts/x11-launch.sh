@@ -40,7 +40,7 @@ if [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${ZOOM:-0}" = 1 ]; then
   set -- "$@" http://127.0.0.1:8765/
 fi
 if [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TREE:-0}" = 1 ] || [ "${ZOOM:-0}" = 1 ]; then
-  config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
+  config="${XDG_CONFIG_HOME:-$HOME/.config}/so.orden.Orden"
   mkdir -p "$config"
   printf '{"port":0,"secret":"%s","eval":true,"pid":0}' "$(python3 -c 'import secrets; print(secrets.token_hex(32))')" > "$config/automation.json"
   chmod 600 "$config/automation.json"
@@ -86,7 +86,7 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
   sleep 15
   python3 "$here/idle-cpu.py" "$app" 20 | tee "$out/idle.txt"
   [ "${PIPESTATUS[0]}" = 0 ] || status=1
-  find "$HOME" -path '*ch.emilvinu.nib*' -name nib.log -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
+  find "$HOME" -path '*so.orden.Orden*' -name nib.log -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
 fi
 
 if [ "$status" = 0 ] && [ "${FLASH:-0}" = 1 ]; then
@@ -114,7 +114,7 @@ wait "$app" 2>/dev/null || true
 [ -n "$wm" ] && kill "$wm" 2>/dev/null || true
 kill "$xvfb" 2>/dev/null || true
 [ -n "$site" ] && kill "$site" 2>/dev/null || true
-find "$HOME" -path '*ch.emilvinu.nib*' -name 'nib.log' -exec cp {} "$out/nib.log" \; 2>/dev/null || true
+find "$HOME" -path '*so.orden.Orden*' -name 'nib.log' -exec cp {} "$out/nib.log" \; 2>/dev/null || true
 [ -f "$out/nib.log" ] && { echo "::group::nib.log"; cat "$out/nib.log"; echo "::endgroup::"; }
 echo "::group::orden's output"
 cat "$out/orden.log"

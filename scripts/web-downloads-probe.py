@@ -345,7 +345,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.downloads")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.downloads")
     parsed.add_argument("--watch", type=pathlib.Path, default=None)
     parsed.add_argument("--only", default="")
     parsed.add_argument("--shots", type=pathlib.Path, default=None)

@@ -19,7 +19,7 @@ second that it is still running, and a terminal. Then:
 * The Hidden tabs row in Settings, photographed in the light and in the dark.
 
     python scripts/space-tabs-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name>
+        --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch goes through `run_probe`, off
 every screen and never taking the keyboard, and the app is driven through its automation
@@ -207,7 +207,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.space-tabs")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.space-tabs")
     parsed.add_argument("--shots", default=str(ROOT / "apps/desktop/test/e2e/shots/space-tabs-probe"))
     args = parsed.parse_args()
     shots = pathlib.Path(args.shots)

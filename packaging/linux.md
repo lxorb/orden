@@ -581,7 +581,7 @@ why:
 - The glasses and the phone's toolbar and pull: they are not on a desktop.
 
 The other three are the files Orden
-leaves to the reader in its settings folder, `~/.config/ch.emilvinu.nib`, and the
+leaves to the reader in its settings folder, `~/.config/so.orden.Orden`, and the
 module writes each only when it is set: a theme stylesheet per name (lower-case
 letters, digits and hyphens, what the app takes for a theme's id), `custom.css`,
 which applies over whichever theme is active, and `snippets.json`, the

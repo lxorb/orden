@@ -28,10 +28,10 @@ scripts/probe_app.py watches its own launches; a window on a screen or in front 
 drive with exit 3.
 
     pnpm --dir apps/desktop tauri build --no-bundle --config \\
-      '{"identifier":"ch.emilvinu.nib.probe.agent-mcp","version":"99.0.0",
+      '{"identifier":"so.orden.Orden.probe.agent-mcp","version":"99.0.0",
         "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/mcp-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.agent-mcp [--claude]
+        --identifier so.orden.Orden.probe.agent-mcp [--claude]
 """
 
 from __future__ import annotations
@@ -77,7 +77,7 @@ CLAUDE = {"name": "claude-code", "title": "Claude Code", "version": "probe"}
 
 PROTOCOL = "2025-06-18"
 
-META = "ch.emilvinu.nib/answer"
+META = "so.orden.Orden/answer"
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 
@@ -624,8 +624,8 @@ def main() -> int:
 
     exe = options.exe.resolve()
     refuse_updating(exe)
-    if not options.identifier.startswith("ch.emilvinu.nib.probe"):
-        raise SystemExit("a probe's identifier starts with ch.emilvinu.nib.probe")
+    if not options.identifier.startswith("so.orden.Orden.probe"):
+        raise SystemExit("a probe's identifier starts with so.orden.Orden.probe")
 
     folder = config_dir(options.identifier)
     if app_pid(folder, exe):

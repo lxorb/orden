@@ -9,7 +9,7 @@ reads the terminal's own input, as Claude Code does - which is when the pseudo c
 a program's mouse request on to the terminal at all - asks for any-event tracking, and
 nothing switches it off.
 
-    python scripts/terminal-modes-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
+    python scripts/terminal-modes-probe.py --exe path/to/nib.exe --identifier so.orden.Orden.probe.<name>
 
 Every launch is `run_probe`'s, off the screen and without the keyboard; the mouse is the
 page's own events dispatched in the window, never the real one.
@@ -135,7 +135,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.terminal-modes")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.terminal-modes")
     args = parsed.parse_args()
     exe = pathlib.Path(args.exe).resolve()
 

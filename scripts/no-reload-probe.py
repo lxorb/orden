@@ -15,7 +15,7 @@ second while it runs, and holding a value typed into its field. Then:
   beyond six are loaded again, which is the old behaviour back.
 
     python scripts/no-reload-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name>
+        --identifier so.orden.Orden.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch goes through `run_probe`, off
 every screen and never taking the keyboard; the app is driven through its automation
@@ -257,7 +257,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.no-reload")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe.no-reload")
     args = parsed.parse_args()
 
     switch.wipe(args.identifier)

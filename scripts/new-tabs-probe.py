@@ -27,7 +27,7 @@ touches nothing of anybody's; see docs/automation.md.
 The exe is a probe build, under an identifier of its own:
 
     pnpm --dir apps/desktop tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe","version":"99.0.0",
+      --config '{"identifier":"so.orden.Orden.probe","version":"99.0.0",
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
 
 This wipes that identifier's settings folder and webview profile at the start of every
@@ -247,7 +247,7 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe")
+    parsed.add_argument("--identifier", default="so.orden.Orden.probe")
     args = parsed.parse_args()
 
     exe = pathlib.Path(args.exe).resolve()

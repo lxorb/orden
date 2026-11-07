@@ -1,4 +1,4 @@
-package ch.emilvinu.nib
+package so.orden.Orden
 
 import android.Manifest
 import android.app.KeyguardManager
@@ -28,16 +28,16 @@ import org.json.JSONObject
 
 class MainActivity : TauriActivity() {
   companion object {
-    const val EXTRA_COMMAND = "ch.emilvinu.nib.command"
+    const val EXTRA_COMMAND = "so.orden.Orden.command"
 
-    const val EXTRA_OPEN = "ch.emilvinu.nib.open"
+    const val EXTRA_OPEN = "so.orden.Orden.open"
 
-    const val EXTRA_TICK = "ch.emilvinu.nib.tick"
-    const val EXTRA_TICK_SPACE = "ch.emilvinu.nib.tick.space"
+    const val EXTRA_TICK = "so.orden.Orden.tick"
+    const val EXTRA_TICK_SPACE = "so.orden.Orden.tick.space"
 
-    private const val EXTRA_READ = "ch.emilvinu.nib.read"
+    private const val EXTRA_READ = "so.orden.Orden.read"
 
-    private const val EXTRA_SEAL = "ch.emilvinu.nib.seal"
+    private const val EXTRA_SEAL = "so.orden.Orden.seal"
     private const val SEALS = "orden-seal"
 
     @Synchronized

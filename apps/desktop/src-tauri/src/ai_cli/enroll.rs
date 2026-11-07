@@ -9,7 +9,7 @@ use super::program::{self, Program};
 use super::run::run_to_end;
 use super::{Tool, TELLING};
 
-const SHIPPED: &str = "ch.emilvinu.nib";
+const SHIPPED: &str = "so.orden.Orden";
 
 const NAME: &str = "orden";
 

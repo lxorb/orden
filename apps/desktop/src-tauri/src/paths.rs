@@ -1059,7 +1059,7 @@ mod tests {
             all.extend_from_slice(parts);
             path(&all)
         };
-        let fresh = root(&["data", "ch.emilvinu.nib", "Spaces"]);
+        let fresh = root(&["data", "so.orden.Orden", "Spaces"]);
         let old = root(&["home", "Documents", "Nib"]);
 
         assert_eq!(super::spaces_folder(None, None, fresh.clone()), fresh);
@@ -1095,7 +1095,7 @@ mod tests {
             all.extend_from_slice(parts);
             path(&all)
         };
-        let fresh = root(&["data", "ch.emilvinu.nib", "Spaces"]);
+        let fresh = root(&["data", "so.orden.Orden", "Spaces"]);
         let nib = root(&["home", "Documents", "Nib"]);
         let own = [Some(fresh.as_path()), Some(nib.as_path())];
         let said = |at: &Path| format!("{}\n", at.to_string_lossy());

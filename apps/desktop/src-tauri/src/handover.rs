@@ -294,7 +294,7 @@ mod tests {
 
     #[test]
     fn nothing_running_is_nothing_to_hand_to() {
-        let names = Names::of("ch.emilvinu.nib.test.nobody-runs-this");
+        let names = Names::of("so.orden.Orden.test.nobody-runs-this");
         assert_eq!(
             handed(&names, &arguments(), Duration::from_millis(50)),
             Found::Nothing

@@ -21,7 +21,7 @@ WM_HOTKEY = 0x0312
 
 KEY_ID = 0x020900B7
 
-IDENTIFIER = "ch.emilvinu.nib.probe.quickadd"
+IDENTIFIER = "so.orden.Orden.probe.quickadd"
 
 HOTKEY_CLASS = "global_hotkey_app"
 

@@ -1,6 +1,6 @@
 use tauri::AppHandle;
 
-const SHIPPED: &str = "ch.emilvinu.nib";
+const SHIPPED: &str = "so.orden.Orden";
 
 #[cfg_attr(
     not(any(windows, test)),
@@ -515,7 +515,7 @@ mod tests {
         assert!(is_ours("Nib.desktop"));
         assert!(is_ours("nibeditor.desktop"));
         assert!(is_ours("Orden.desktop"));
-        assert!(is_ours("ch.emilvinu.nib.desktop"));
+        assert!(is_ours("so.orden.Orden.desktop"));
         assert!(!is_ours("firefox.desktop"));
         assert!(!is_ours("nibbles.desktop"));
         assert!(!is_ours(""));

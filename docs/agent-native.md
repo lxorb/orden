@@ -1585,7 +1585,7 @@ local one writing one note merge instead of overwriting each other.
   a find is snapshot lines, a screenshot an image with one line saying its words are the
   page's; `needs_approval` is not an error and says to carry on; an error is `isError` with
   its code, its sentence and, where it is not obvious, the next step. The contract's answer
-  rides under `_meta["ch.emilvinu.nib/answer"]` for scripts and the harness; no model is
+  rides under `_meta["so.orden.Orden/answer"]` for scripts and the harness; no model is
   shown `_meta`. The six tools shared with the connector answer in its words.
 - **Starting Orden**: on Windows through `cmd /c start /min` with no console, so the app's
   first window takes `SW_SHOWMINNOACTIVE` and none of the client's pipes; on a Mac `open -g

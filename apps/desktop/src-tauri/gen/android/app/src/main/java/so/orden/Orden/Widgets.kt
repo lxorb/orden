@@ -1,4 +1,4 @@
-package ch.emilvinu.nib
+package so.orden.Orden
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager

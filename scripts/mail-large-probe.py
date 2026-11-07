@@ -10,11 +10,11 @@ the bytes the page sent.
 
     npx vite build --mode drive                     # in apps/desktop
     pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.mail","version":"99.0.0",
+      --config '{"identifier":"so.orden.Orden.probe.mail","version":"99.0.0",
                  "build":{"beforeBuildCommand":""},
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/mail-large-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.mail
+      --identifier so.orden.Orden.probe.mail
 
 Every launch goes through `run_probe`, off the screen and without the keyboard; the spaces
 are made in a temp folder named by `ORDEN_SPACES_DIR`.
