@@ -185,12 +185,13 @@ describe('the open tab', () => {
     for (const one of seen()) expect(one.ratio, one.where).toBeGreaterThanOrEqual(FLOOR)
   })
 
-  test("is edged in the strip's own words, and eased in with its fill", () => {
+  test("is edged in the window's own outline, and eased in with its fill (#1499)", () => {
     expect(rule('.strip')).toMatch(/--tab-line: var\(--strip-line, var\(--tab-edge\)\);/)
-    expect(rule('.tab.active .edge')).toMatch(/border-color: var\(--tab-line\);/)
+    expect(rule('.strip')).toMatch(/--tab-rim: var\(--card-edge, var\(--tab-line\)\);/)
+    expect(rule('.tab.active .edge')).toMatch(/border-color: var\(--tab-rim\);/)
     expect(rule('.tab.active .edge')).toMatch(/transition: border-color var\(--dur-fast\)/)
     expect(rule('.tab.active .fill')).toMatch(/opacity var\(--dur-fast\) var\(--ease-out\)/)
-    expect(TABS).toMatch(/var\(--tab-line\) calc\(var\(--tab-foot\) - 1px\)/)
+    expect(TABS).toMatch(/var\(--tab-rim\) calc\(var\(--tab-foot\) - 1px\)/)
     expect(TABS).toMatch(/\.edge::after \{\s+content: '';[^}]*background: var\(--tab-line\);/)
   })
 

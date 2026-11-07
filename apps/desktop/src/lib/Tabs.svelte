@@ -1078,6 +1078,7 @@
     min-width: 0;
     flex: 1 1 0;
     --tab-line: var(--strip-line, var(--tab-edge));
+    --tab-rim: var(--card-edge, var(--tab-line));
   }
 
   .tabs {
@@ -1226,7 +1227,7 @@
     height: var(--tab-foot);
     --rise:
       transparent calc(var(--tab-foot) - 1.5px),
-      var(--tab-line) calc(var(--tab-foot) - 1px) calc(var(--tab-foot) - 0.5px),
+      var(--tab-rim) calc(var(--tab-foot) - 1px) calc(var(--tab-foot) - 0.5px),
       var(--tab-ground) var(--tab-foot);
   }
 
@@ -1250,7 +1251,7 @@
   }
 
   .tab.active .edge {
-    border-color: var(--tab-line);
+    border-color: var(--tab-rim);
     transition: border-color var(--dur-fast) var(--ease-out);
   }
 
