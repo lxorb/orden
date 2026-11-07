@@ -1028,6 +1028,45 @@ describe('a canvas holding another app’s things', () => {
     expect('extras' in readCanvas(writeCanvas(readCanvas(VAULT)))).toBe(true)
   })
 
+  test('keeps the strokes and shapes of a newer Orden it cannot read, through edits and merges', () => {
+    const points = [0, 0, 0.5, 0, 0, 0, 10, 10, 0.5, 0, 0, 8]
+    const text = JSON.stringify(
+      {
+        nodes: [],
+        edges: [],
+        nib: {
+          version: 1,
+          ink: [
+            { id: 'known', tool: 'pen', color: '#222222', size: 3, points },
+            { id: 'later', tool: 'quill', color: '#222222', size: 3, points, flow: 2 },
+          ],
+          shapes: [
+            { id: 'box', shape: 'rect', x: 0, y: 0, width: 50, height: 50 },
+            { id: 'star', shape: 'star', x: 90, y: 0, width: 50, height: 50, arms: 5 },
+          ],
+        },
+      },
+      null,
+      '\t',
+    )
+
+    const read = readCanvas(text)
+    expect(read.ink.map((one) => one.id)).toEqual(['known'])
+    const edited = writeCanvas({ ...read, ink: [...read.ink, { ...read.ink[0]!, id: 'mine' }] })
+    const back = JSON.parse(edited) as { nib: { ink: { id: string }[]; shapes: { id: string }[] } }
+    expect(back.nib.ink.map((one) => one.id).sort()).toEqual(['known', 'later', 'mine'])
+    expect(back.nib.ink.find((one) => one.id === 'later')).toMatchObject({ tool: 'quill', flow: 2 })
+    expect(back.nib.shapes.map((one) => one.id).sort()).toEqual(['box', 'star'])
+
+    const again = JSON.parse(writeCanvas(readCanvas(edited))) as typeof back
+    expect(again.nib.ink.map((one) => one.id).sort()).toEqual(['known', 'later', 'mine'])
+    expect(again.nib.shapes.map((one) => one.id).sort()).toEqual(['box', 'star'])
+
+    const merged = JSON.parse(mergeCanvasFiles(text, edited, 0)) as typeof back
+    expect(merged.nib.ink.map((one) => one.id).sort()).toEqual(['known', 'later', 'mine'])
+    expect(merged.nib.shapes.map((one) => one.id).sort()).toEqual(['box', 'star'])
+  })
+
   test('writes a line to a card the file lacks as nothing, and adds no empty block of its own', () => {
     const text = JSON.stringify(
       {

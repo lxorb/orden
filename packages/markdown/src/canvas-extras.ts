@@ -54,12 +54,14 @@ export interface Extras {
   nib: Fields
   nodes: Map<string, Fields>
   edges: Map<string, Fields>
+  ink: Map<string, Fields>
+  shapes: Map<string, Fields>
   fields: Map<string, Fields>
   generations: Map<string, number>
   buried: Map<string, number>
 }
 
-type Kind = 'node' | 'edge' | 'field' | 'top' | 'nib'
+type Kind = 'node' | 'edge' | 'ink' | 'shape' | 'field' | 'top' | 'nib'
 
 function named(kind: Kind, id: string): string {
   return `${kind}:${id}`
@@ -89,6 +91,8 @@ function none(): Extras {
     nib: {},
     nodes: new Map(),
     edges: new Map(),
+    ink: new Map(),
+    shapes: new Map(),
     fields: new Map(),
     generations: new Map(),
     buried: new Map(),
@@ -120,6 +124,8 @@ function everyOf(extras: Extras): Map<string, unknown> {
   for (const [key, held] of Object.entries(extras.nib)) out.set(named('nib', key), held)
   for (const [id, held] of extras.nodes) out.set(named('node', id), held)
   for (const [id, held] of extras.edges) out.set(named('edge', id), held)
+  for (const [id, held] of extras.ink) out.set(named('ink', id), held)
+  for (const [id, held] of extras.shapes) out.set(named('shape', id), held)
   for (const [id, held] of extras.fields) out.set(named('field', id), held)
   return out
 }
@@ -142,6 +148,7 @@ export function extrasFrom(
   parsed: Fields,
   nodes: ReadonlySet<string>,
   edges: ReadonlySet<string>,
+  ink: ReadonlySet<string> = new Set(),
 ): Extras {
   const out = none()
 
@@ -168,6 +175,10 @@ export function extrasFrom(
   }
   out.nodes = unreadIn(parsed.nodes, nodes, NODE_FIELDS)
   out.edges = unreadIn(parsed.edges, edges, EDGE_FIELDS)
+  if (isRecord(parsed.nib)) {
+    out.ink = unreadOnly(parsed.nib.ink, ink)
+    out.shapes = unreadOnly(parsed.nib.shapes, nodes)
+  }
 
   const record = isRecord(parsed.nib) ? parsed.nib[RECORD] : undefined
   const said = isRecord(record) ? record : {}
@@ -186,6 +197,17 @@ export function extrasFrom(
   return out
 }
 
+function unreadOnly(list: unknown, read: ReadonlySet<string>): Map<string, Fields> {
+  const unread = new Map<string, Fields>()
+  if (!Array.isArray(list)) return unread
+  for (const entry of list) {
+    if (!isRecord(entry)) continue
+    const id = idOf(entry)
+    if (id !== null && !read.has(id) && !unread.has(id)) unread.set(id, entry)
+  }
+  return unread
+}
+
 export function holdsExtras(extras: Extras | undefined): extras is Extras {
   if (!extras) return false
   return (
@@ -193,6 +215,8 @@ export function holdsExtras(extras: Extras | undefined): extras is Extras {
     Object.keys(extras.nib).length > 0 ||
     extras.nodes.size > 0 ||
     extras.edges.size > 0 ||
+    extras.ink.size > 0 ||
+    extras.shapes.size > 0 ||
     extras.fields.size > 0 ||
     extras.buried.size > 0
   )
@@ -241,11 +265,18 @@ export function mergedExtras(ours: Extras = none(), theirs: Extras = none()): Ex
     if (kind === 'top') out.top[id] = value
     else if (kind === 'nib') out.nib[id] = value
     else if (isRecord(value)) {
-      const map = kind === 'node' ? out.nodes : kind === 'edge' ? out.edges : out.fields
-      map.set(id, value)
+      mapOf(out, kind).set(id, value)
     }
   }
   return out
+}
+
+function mapOf(extras: Extras, kind: Kind): Map<string, Fields> {
+  if (kind === 'node') return extras.nodes
+  if (kind === 'edge') return extras.edges
+  if (kind === 'ink') return extras.ink
+  if (kind === 'shape') return extras.shapes
+  return extras.fields
 }
 
 export function withExtras(text: string, extras: Extras | undefined): string {
@@ -274,6 +305,17 @@ export function withExtras(text: string, extras: Extras | undefined): string {
 
   file.nodes = nodes
   file.edges = edges
+
+  const own = isRecord(file.nib) ? file.nib : {}
+  const kept = { ink: extras.ink, shapes: extras.shapes }
+  for (const [key, unread] of Object.entries(kept)) {
+    if (!unread.size) continue
+    const list = Array.isArray(own[key]) ? (own[key] as Fields[]) : []
+    const there = new Set(list.map((one) => idOf(one)))
+    for (const [id, entry] of unread) if (!there.has(id)) list.push(entry)
+    own[key] = list
+  }
+  if (Object.keys(own).length) file.nib = own
   for (const [key, held] of Object.entries(extras.top)) {
     if (!TOP_FIELDS.has(key)) file[key] = held
   }
@@ -285,6 +327,8 @@ export function withExtras(text: string, extras: Extras | undefined): string {
   written.nib = extras.nib
   for (const [id, node] of extras.nodes) if (nodes.includes(node)) written.nodes.set(id, node)
   for (const [id, edge] of extras.edges) if (edges.includes(edge)) written.edges.set(id, edge)
+  written.ink = extras.ink
+  written.shapes = extras.shapes
   const present = new Set([...placed, ...joined])
   for (const [id, more] of extras.fields) if (present.has(id)) written.fields.set(id, more)
   const record: Fields = {}
@@ -313,6 +357,8 @@ export function extrasText(extras: Extras): string {
     nib: extras.nib,
     nodes: sorted(extras.nodes),
     edges: sorted(extras.edges),
+    ink: sorted(extras.ink),
+    shapes: sorted(extras.shapes),
     fields: sorted(extras.fields),
     generations: [...extras.generations].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
     buried: [...extras.buried].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
@@ -347,6 +393,8 @@ export function extrasRead(text: unknown): Extras {
     nib: isRecord(parsed.nib) ? parsed.nib : {},
     nodes: pairs(parsed.nodes),
     edges: pairs(parsed.edges),
+    ink: pairs(parsed.ink),
+    shapes: pairs(parsed.shapes),
     fields: pairs(parsed.fields),
     generations: counts(parsed.generations),
     buried: counts(parsed.buried),
