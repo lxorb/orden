@@ -3445,8 +3445,6 @@ export const ko: Dictionary = {
   'Chats are off. Turn them on in Settings.': '채팅이 꺼져 있습니다. 설정에서 켜세요.',
   'User token': '사용자 토큰',
   'App-level token': '앱 수준 토큰',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    '브라우저로 로그인하려면 비워 두거나, 직접 만든 Slack 앱의 사용자 토큰을 붙여 넣으세요',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     '선택: 직접 만든 앱에서 Socket Mode를 켜면 메시지가 바로 도착합니다',
   'Signed out of Slack. Connect again.': 'Slack에서 로그아웃되었습니다. 다시 연결하세요.',
@@ -3457,8 +3455,6 @@ export const ko: Dictionary = {
   'Slack removes messages for everyone': 'Slack은 모든 사람에게서 메시지를 삭제합니다',
   'Slack files need the desktop app': 'Slack 파일에는 데스크톱 앱이 필요합니다',
   'Slack does not know that emoji': 'Slack이 모르는 이모지입니다',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Slack 사용자 토큰을 붙여 넣으세요. 이 빌드는 브라우저로 로그인할 수 없습니다',
   'Delete for everyone': '모두에게서 삭제',
   'Delete for me': '나에게서 삭제',
   Forwarded: '전달됨',
@@ -3539,11 +3535,25 @@ export const ko: Dictionary = {
     'API permissions에서 위임된 권한 IMAP.AccessAsUser.All, SMTP.Send, offline_access를 추가한 다음 Application (client) ID를 여기에 붙여 넣으세요',
   'API ID': 'API ID',
   'API hash': 'API hash',
-  'From my.telegram.org, under API development tools': 'my.telegram.org의 API development tools에서',
+  'From my.telegram.org, under API development tools':
+    'my.telegram.org의 API development tools에서',
   'How to get your API ID and hash': 'API ID와 hash 받는 방법',
   'Sign in at my.telegram.org with your phone number': '전화번호로 my.telegram.org에 로그인하세요',
   'Open API development tools and create an app with any name':
     'API development tools를 열고 아무 이름으로나 앱을 만드세요',
-  'Copy App api_id and App api_hash into the fields here': 'App api_id와 App api_hash를 여기 칸에 복사하세요',
-  'Paste the API ID and hash from my.telegram.org': 'my.telegram.org의 API ID와 hash를 붙여 넣으세요',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id와 App api_hash를 여기 칸에 복사하세요',
+  'Paste the API ID and hash from my.telegram.org':
+    'my.telegram.org의 API ID와 hash를 붙여 넣으세요',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    '내 Slack 앱의 User OAuth Token, OAuth & Permissions에 있음',
+  'Create your own Slack app': '내 Slack 앱 만들기',
+  'Open the link, pick your workspace and create the app as it is set up':
+    '링크를 열고 워크스페이스를 고른 뒤 설정된 그대로 앱을 만드세요',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App에서 워크스페이스에 설치하고 허용하세요',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token(xoxp-)을 복사해 여기에 붙여 넣으세요',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    '메시지를 바로 받으려면: Basic Information에서 connections:write가 있는 앱 수준 토큰을 만들어 아래에 붙여 넣으세요(xapp-)',
 }

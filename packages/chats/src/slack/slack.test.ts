@@ -4,8 +4,8 @@ import { secretName } from '../provider'
 import { Api, SlackError } from './api'
 import { earlier, kindOfFile, live, slugOf } from './connection'
 import { emoji, emojiIn, nameFor, textFor } from './emoji'
-import { FakeSlack, fakeHost, type FakeHost, urlOf } from './fake'
-import { slackProvider } from './index'
+import { FakeSlack, fakeHost } from './fake'
+import { CREATE_APP, MANIFEST, slackProvider, USER_EVENTS, USER_SCOPES } from './index'
 import { markdownOf, mrkdwnOf } from './text'
 
 const opened: Connection[] = []
@@ -446,85 +446,39 @@ describe('Socket Mode', () => {
   })
 })
 
-describe('signing in through the browser', () => {
-  function oauthHost(given: ReturnType<typeof setup>, refuse = false): FakeHost {
-    const server = 'https://orden.test'
-    const host = given.host
-    host.build = { slackClientId: 'C-ID', ordenServer: server }
-    const slackFetch = host.fetch
-    host.fetch = async (input: string | URL | Request, init?: RequestInit) => {
-      const url = urlOf(input)
-      if (url === `${server}/v1/slack/token`) {
-        const code = (
-          JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as { code: string }
-        ).code
-        const said = (await (
-          await given.slack.fetch('https://slack.com/api/oauth.v2.access', {
-            method: 'POST',
-            body: new URLSearchParams({
-              client_id: 'C-ID',
-              client_secret: 'C-SECRET',
-              code,
-              redirect_uri: `${server}/v1/slack/callback`,
-            }).toString(),
-          })
-        ).json()) as {
-          ok: boolean
-          error?: string
-          authed_user?: { id: string; access_token: string }
-        }
-        if (!said.ok) return Response.json({ error: said.error }, { status: 400 })
-        return Response.json({
-          token: said.authed_user?.access_token,
-          user: said.authed_user?.id,
-          team: 'T1',
-        })
-      }
-      return slackFetch(input, init)
-    }
-    host.authorize = (make) => {
-      const asked = new URL(make('http://127.0.0.1:50123'))
-      expect(asked.origin + asked.pathname).toBe('https://slack.com/oauth/v2/authorize')
-      expect(asked.searchParams.get('client_id')).toBe('C-ID')
-      expect(asked.searchParams.get('redirect_uri')).toBe(`${server}/v1/slack/callback`)
-      expect(asked.searchParams.get('user_scope')).toContain('search:read')
-      expect(asked.searchParams.has('scope')).toBe(false)
-      const state = asked.searchParams.get('state') ?? ''
-      expect(state).toMatch(/^50123\.[A-Za-z0-9_-]{16,}$/)
-      if (refuse) return Promise.resolve({ error: 'access_denied', state })
-      given.slack.codes.set('code-1', 'U1')
-      return Promise.resolve({ code: 'code-1', state })
-    }
-    return host
-  }
-
-  test('the code goes through the Orden server and the token only into the vault', async () => {
+describe('your own Slack app', () => {
+  test('Orden signs in to no app of its own: the token is pasted or nothing connects', async () => {
     const given = setup()
-    const host = oauthHost(given)
-    const connection = await given.provider.connect({}, host)
-    opened.push(connection)
-    expect(connection.account.id).toBe('T1-U1')
-    const kept = host.vault.get(secretName('slack', 'T1-U1', 'token'))
-    expect(kept).toMatch(/^xoxp-granted-/)
-    expect(JSON.stringify(connection.account)).not.toContain('xoxp')
-    await connection.close()
-    live.clear()
-    const again = await given.provider.connect({ token: kept ?? '' }, host, 'T1-U1')
-    opened.push(again)
-    expect(again.account.id).toBe('T1-U1')
+    await expect(given.provider.connect({}, given.host)).rejects.toThrow('xoxp-')
+    expect(given.slack.calls).toHaveLength(0)
+    const token = given.provider.fields.find((one) => one.key === 'token')
+    expect(token).toMatchObject({ secret: true })
+    expect(token?.optional).toBeUndefined()
   })
 
-  test('a refusal or an answer for another sign-in stops it', async () => {
-    const given = setup()
-    const host = oauthHost(given, true)
-    await expect(given.provider.connect({}, host)).rejects.toThrow('access_denied')
-    host.authorize = () => Promise.resolve({ code: 'code-1', state: '50123.someone-elses-state' })
-    await expect(given.provider.connect({}, host)).rejects.toThrow('not for this sign-in')
-    expect(host.vault.size).toBe(0)
+  test('the one-click link creates an app with every user scope, Socket Mode and the user events', () => {
+    const url = new URL(CREATE_APP)
+    expect(url.origin + url.pathname).toBe('https://api.slack.com/apps')
+    expect(url.searchParams.get('new_app')).toBe('1')
+    const manifest = JSON.parse(url.searchParams.get('manifest_json') ?? '') as typeof MANIFEST
+    expect(manifest).toEqual(MANIFEST)
+    expect(manifest.oauth_config.scopes.user).toEqual([...USER_SCOPES])
+    expect(manifest.oauth_config.scopes).not.toHaveProperty('bot')
+    expect(manifest.settings.socket_mode_enabled).toBe(true)
+    expect(manifest.settings.event_subscriptions.user_events).toEqual([...USER_EVENTS])
+    expect(CREATE_APP.length).toBeLessThan(4000)
   })
 
-  test('without a client id the browser sign-in asks for a pasted token instead', async () => {
+  test('every event the app subscribes to is one the connection hears', async () => {
     const given = setup()
-    await expect(given.provider.connect({}, given.host)).rejects.toThrow('Paste a Slack user token')
+    const { connection } = await connect(given)
+    const heard = Object.keys((connection as unknown as { handlers: object }).handlers)
+    const asked = new Set(USER_EVENTS.map((one) => one.replace(/\..*$/, '')))
+    expect([...asked].filter((one) => !heard.includes(one))).toEqual([])
+  })
+
+  test('every scope a call needs is one the app asks for', () => {
+    const needs = ['search:read', 'files:write', 'pins:write', 'reactions:write', 'emoji:read']
+    for (const one of needs) expect(USER_SCOPES).toContain(one)
   })
 })

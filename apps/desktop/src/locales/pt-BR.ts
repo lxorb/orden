@@ -3633,8 +3633,6 @@ export const ptBR: Dictionary = {
     'As conversas estão desativadas. Ative-as nas Configurações.',
   'User token': 'Token de usuário',
   'App-level token': 'Token do app',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'Deixe vazio para entrar pelo navegador, ou cole o token de usuário do seu próprio app do Slack',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'Opcional: com o Socket Mode ativado no seu app, as mensagens chegam na hora',
   'Signed out of Slack. Connect again.': 'Você saiu do Slack. Conecte de novo.',
@@ -3645,8 +3643,6 @@ export const ptBR: Dictionary = {
   'Slack removes messages for everyone': 'O Slack apaga mensagens para todos',
   'Slack files need the desktop app': 'Arquivos do Slack precisam do app para computador',
   'Slack does not know that emoji': 'O Slack não conhece esse emoji',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Cole um token de usuário do Slack, esta versão não consegue entrar pelo navegador',
   'Delete for everyone': 'Apagar para todos',
   'Delete for me': 'Apagar para mim',
   Forwarded: 'Encaminhada',
@@ -3737,4 +3733,15 @@ export const ptBR: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'Copie App api_id e App api_hash para os campos aqui',
   'Paste the API ID and hash from my.telegram.org': 'Cole o ID e o hash da API do my.telegram.org',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'O User OAuth Token do seu próprio app do Slack, em OAuth & Permissions',
+  'Create your own Slack app': 'Crie seu próprio app do Slack',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'Abra o link, escolha seu workspace e crie o app como ele vem configurado',
+  'Under Install App, install it to your workspace and allow it':
+    'Em Install App, instale-o no seu workspace e permita',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'Copie o User OAuth Token (xoxp-) e cole aqui',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'Para mensagens na hora: em Basic Information, gere um token do app com connections:write e cole abaixo (xapp-)',
 }

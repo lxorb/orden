@@ -3561,8 +3561,6 @@ export const pa: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'ਚੈਟ ਬੰਦ ਹਨ। ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਚਾਲੂ ਕਰੋ।',
   'User token': 'ਵਰਤੋਂਕਾਰ ਟੋਕਨ',
   'App-level token': 'ਐਪ-ਪੱਧਰ ਟੋਕਨ',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸਾਈਨ ਇਨ ਕਰਨ ਲਈ ਖਾਲੀ ਛੱਡੋ, ਜਾਂ ਆਪਣੀ Slack ਐਪ ਦਾ ਵਰਤੋਂਕਾਰ ਟੋਕਨ ਪੇਸਟ ਕਰੋ',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'ਵਿਕਲਪਿਕ: ਆਪਣੀ ਐਪ ਵਿੱਚ Socket Mode ਚਾਲੂ ਹੋਣ ਤੇ ਸੁਨੇਹੇ ਤੁਰੰਤ ਆਉਂਦੇ ਹਨ',
   'Signed out of Slack. Connect again.': 'Slack ਤੋਂ ਸਾਈਨ ਆਊਟ ਹੋ ਗਏ। ਮੁੜ ਕਨੈਕਟ ਕਰੋ।',
@@ -3573,8 +3571,6 @@ export const pa: Dictionary = {
   'Slack removes messages for everyone': 'Slack ਸੁਨੇਹੇ ਸਾਰਿਆਂ ਲਈ ਮਿਟਾਉਂਦਾ ਹੈ',
   'Slack files need the desktop app': 'Slack ਫ਼ਾਈਲਾਂ ਲਈ ਡੈਸਕਟਾਪ ਐਪ ਚਾਹੀਦੀ ਹੈ',
   'Slack does not know that emoji': 'Slack ਇਸ ਇਮੋਜੀ ਨੂੰ ਨਹੀਂ ਜਾਣਦਾ',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Slack ਵਰਤੋਂਕਾਰ ਟੋਕਨ ਪੇਸਟ ਕਰੋ, ਇਹ ਬਿਲਡ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸਾਈਨ ਇਨ ਨਹੀਂ ਕਰ ਸਕਦਾ',
   'Delete for everyone': 'ਸਾਰਿਆਂ ਲਈ ਮਿਟਾਓ',
   'Delete for me': 'ਮੇਰੇ ਲਈ ਮਿਟਾਓ',
   Forwarded: 'ਅੱਗੇ ਭੇਜਿਆ',
@@ -3665,4 +3661,15 @@ export const pa: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'App api_id ਅਤੇ App api_hash ਇੱਥੇ ਦੇ ਖਾਨਿਆਂ ਵਿੱਚ ਕਾਪੀ ਕਰੋ',
   'Paste the API ID and hash from my.telegram.org': 'my.telegram.org ਤੋਂ API ID ਅਤੇ hash ਪੇਸਟ ਕਰੋ',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'ਤੁਹਾਡੀ ਆਪਣੀ Slack ਐਪ ਦਾ User OAuth Token, OAuth & Permissions ਹੇਠਾਂ',
+  'Create your own Slack app': 'ਆਪਣੀ Slack ਐਪ ਬਣਾਓ',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'ਲਿੰਕ ਖੋਲ੍ਹੋ, ਆਪਣਾ ਵਰਕਸਪੇਸ ਚੁਣੋ ਅਤੇ ਐਪ ਨੂੰ ਜਿਵੇਂ ਤਿਆਰ ਹੈ ਤਿਵੇਂ ਬਣਾਓ',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App ਹੇਠਾਂ ਇਸਨੂੰ ਆਪਣੇ ਵਰਕਸਪੇਸ ਵਿੱਚ ਇੰਸਟਾਲ ਕਰੋ ਅਤੇ ਇਜਾਜ਼ਤ ਦਿਓ',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) ਕਾਪੀ ਕਰਕੇ ਇੱਥੇ ਪੇਸਟ ਕਰੋ',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'ਸੁਨੇਹੇ ਤੁਰੰਤ ਲਈ: Basic Information ਹੇਠਾਂ connections:write ਵਾਲਾ ਐਪ-ਪੱਧਰ ਟੋਕਨ ਬਣਾਓ ਅਤੇ ਹੇਠਾਂ ਪੇਸਟ ਕਰੋ (xapp-)',
 }

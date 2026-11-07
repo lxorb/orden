@@ -3596,8 +3596,6 @@ export const sw: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'Gumzo zimezimwa. Ziwashe katika Mipangilio.',
   'User token': 'Tokeni ya mtumiaji',
   'App-level token': 'Tokeni ya programu',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'Acha wazi ili uingie kupitia kivinjari, au bandika tokeni ya mtumiaji ya programu yako ya Slack',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'Si lazima: Socket Mode ikiwa imewashwa kwenye programu yako, ujumbe hufika mara moja',
   'Signed out of Slack. Connect again.': 'Umetoka kwenye Slack. Unganisha tena.',
@@ -3608,8 +3606,6 @@ export const sw: Dictionary = {
   'Slack removes messages for everyone': 'Slack hufuta ujumbe kwa kila mtu',
   'Slack files need the desktop app': 'Faili za Slack zinahitaji programu ya kompyuta',
   'Slack does not know that emoji': 'Slack haijui emoji hiyo',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Bandika tokeni ya mtumiaji wa Slack, toleo hili haliwezi kuingia kupitia kivinjari',
   'Delete for everyone': 'Futa kwa wote',
   'Delete for me': 'Futa kwangu',
   Forwarded: 'Imesambazwa',
@@ -3700,4 +3696,15 @@ export const sw: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'Nakili App api_id na App api_hash kwenye sehemu hizi',
   'Paste the API ID and hash from my.telegram.org': 'Bandika API ID na hash kutoka my.telegram.org',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'User OAuth Token ya programu yako ya Slack, chini ya OAuth & Permissions',
+  'Create your own Slack app': 'Unda programu yako ya Slack',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'Fungua kiungo, chagua eneo lako la kazi na uunde programu kama ilivyoandaliwa',
+  'Under Install App, install it to your workspace and allow it':
+    'Chini ya Install App, isakinishe kwenye eneo lako la kazi na uiruhusu',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'Nakili User OAuth Token (xoxp-) na uibandike hapa',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'Ili ujumbe ufike mara moja: chini ya Basic Information, tengeneza tokeni ya programu yenye connections:write na uibandike hapa chini (xapp-)',
 }

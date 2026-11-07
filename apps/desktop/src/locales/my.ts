@@ -3481,8 +3481,6 @@ export const my: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'Chat များ ပိတ်ထားသည်။ ဆက်တင်များတွင် ဖွင့်ပါ။',
   'User token': 'အသုံးပြုသူ တိုကင်',
   'App-level token': 'အက်ပ် တိုကင်',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'ဘရောက်ဇာမှ ဝင်ရန် လွတ်ထားပါ၊ သို့မဟုတ် သင့်ကိုယ်ပိုင် Slack အက်ပ်၏ အသုံးပြုသူ တိုကင်ကို ကူးထည့်ပါ',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'ရွေးချယ်နိုင်သည်- သင့်အက်ပ်တွင် Socket Mode ဖွင့်ထားလျှင် မက်ဆေ့ချ်များ ချက်ချင်းရောက်သည်',
   'Signed out of Slack. Connect again.': 'Slack မှ ထွက်သွားပြီ။ ပြန်ချိတ်ပါ။',
@@ -3493,8 +3491,6 @@ export const my: Dictionary = {
   'Slack removes messages for everyone': 'Slack သည် မက်ဆေ့ချ်များကို လူတိုင်းအတွက် ဖျက်သည်',
   'Slack files need the desktop app': 'Slack ဖိုင်များအတွက် ဒက်စ်တော့ အက်ပ် လိုသည်',
   'Slack does not know that emoji': 'Slack သည် ထို အီမိုဂျီကို မသိပါ',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Slack အသုံးပြုသူ တိုကင်ကို ကူးထည့်ပါ၊ ဤဗားရှင်းသည် ဘရောက်ဇာမှ မဝင်နိုင်ပါ',
   'Delete for everyone': 'အားလုံးအတွက် ဖျက်မည်',
   'Delete for me': 'ကျွန်ုပ်အတွက် ဖျက်မည်',
   Forwarded: 'ထပ်ဆင့်ပို့ထားသည်',
@@ -3589,4 +3585,15 @@ export const my: Dictionary = {
     'App api_id နှင့် App api_hash ကို ဤနေရာရှိ အကွက်များထဲ ကူးထည့်ပါ',
   'Paste the API ID and hash from my.telegram.org':
     'my.telegram.org မှ API ID နှင့် hash ကို ကူးထည့်ပါ',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'သင့်ကိုယ်ပိုင် Slack အက်ပ်၏ User OAuth Token၊ OAuth & Permissions အောက်တွင်',
+  'Create your own Slack app': 'သင့်ကိုယ်ပိုင် Slack အက်ပ် ဖန်တီးပါ',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'လင့်ခ်ကိုဖွင့်၊ workspace ကိုရွေးပြီး သတ်မှတ်ထားသည့်အတိုင်း အက်ပ်ကို ဖန်တီးပါ',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App အောက်တွင် ၎င်းကို သင့် workspace တွင် ထည့်သွင်းပြီး ခွင့်ပြုပါ',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) ကို ကူးပြီး ဤနေရာတွင် ထည့်ပါ',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'မက်ဆေ့ချ်များ ချက်ချင်းရရန်- Basic Information အောက်တွင် connections:write ပါသော app-level token ထုတ်ပြီး အောက်တွင် ထည့်ပါ (xapp-)',
 }

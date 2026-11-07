@@ -3454,8 +3454,6 @@ export const vi: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'Trò chuyện đang tắt. Hãy bật trong Cài đặt.',
   'User token': 'Mã người dùng',
   'App-level token': 'Mã ứng dụng',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'Để trống để đăng nhập qua trình duyệt, hoặc dán mã người dùng của ứng dụng Slack của bạn',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'Không bắt buộc: khi bật Socket Mode trong ứng dụng của bạn, tin nhắn đến ngay',
   'Signed out of Slack. Connect again.': 'Đã đăng xuất khỏi Slack. Hãy kết nối lại.',
@@ -3466,8 +3464,6 @@ export const vi: Dictionary = {
   'Slack removes messages for everyone': 'Slack xóa tin nhắn cho mọi người',
   'Slack files need the desktop app': 'Tệp Slack cần ứng dụng máy tính',
   'Slack does not know that emoji': 'Slack không biết biểu tượng cảm xúc đó',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Hãy dán mã người dùng Slack, bản dựng này không thể đăng nhập qua trình duyệt',
   'Delete for everyone': 'Xóa với mọi người',
   'Delete for me': 'Xóa với tôi',
   Forwarded: 'Đã chuyển tiếp',
@@ -3558,4 +3554,15 @@ export const vi: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'Sao chép App api_id và App api_hash vào các ô ở đây',
   'Paste the API ID and hash from my.telegram.org': 'Dán API ID và hash từ my.telegram.org',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'User OAuth Token của ứng dụng Slack riêng của bạn, trong OAuth & Permissions',
+  'Create your own Slack app': 'Tạo ứng dụng Slack của riêng bạn',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'Mở liên kết, chọn workspace của bạn và tạo ứng dụng như đã thiết lập sẵn',
+  'Under Install App, install it to your workspace and allow it':
+    'Trong Install App, cài nó vào workspace của bạn và cho phép',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'Sao chép User OAuth Token (xoxp-) và dán vào đây',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'Để tin nhắn đến ngay: trong Basic Information, tạo token cấp ứng dụng với connections:write và dán vào bên dưới (xapp-)',
 }

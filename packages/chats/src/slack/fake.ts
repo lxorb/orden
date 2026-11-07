@@ -31,7 +31,6 @@ export class FakeSlack {
   readonly calls: { method: string; form: URLSearchParams }[] = []
   readonly tokens = new Map<string, string>([['xoxp-good', 'U1']])
   readonly appTokens = new Set(['xapp-good'])
-  readonly codes = new Map<string, string>()
   readonly lines: FakeLine[] = []
   readonly limited = new Map<string, number>()
   revoked: string[] = []
@@ -365,7 +364,6 @@ export class FakeSlack {
         },
       )
     }
-    if (method === 'oauth.v2.access') return Response.json(this.access(form))
     const token = form.get('token') ?? ''
     const app = method === 'apps.connections.open'
     if (app ? !this.appTokens.has(token) : !this.tokens.has(token))
@@ -378,21 +376,6 @@ export class FakeSlack {
     } catch (error) {
       if (error instanceof Fail) return Response.json({ ok: false, error: error.code })
       throw error
-    }
-  }
-
-  private access(form: URLSearchParams): Said {
-    if (form.get('client_id') !== 'C-ID' || form.get('client_secret') !== 'C-SECRET')
-      return { ok: false, error: 'invalid_client' }
-    const user = this.codes.get(form.get('code') ?? '')
-    this.codes.delete(form.get('code') ?? '')
-    if (!user) return { ok: false, error: 'invalid_code' }
-    const token = `xoxp-granted-${++this.serial}`
-    this.tokens.set(token, user)
-    return {
-      ok: true,
-      authed_user: { id: user, access_token: token, token_type: 'user' },
-      team: { id: 'T1' },
     }
   }
 
@@ -463,7 +446,7 @@ class Fail extends Error {
   }
 }
 
-export const urlOf = (input: string | URL | Request): string =>
+const urlOf = (input: string | URL | Request): string =>
   typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '')

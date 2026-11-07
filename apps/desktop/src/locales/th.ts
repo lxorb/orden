@@ -3420,8 +3420,6 @@ export const th: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'แชตปิดอยู่ เปิดได้ในการตั้งค่า',
   'User token': 'โทเค็นผู้ใช้',
   'App-level token': 'โทเค็นแอป',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'เว้นว่างไว้เพื่อลงชื่อเข้าใช้ผ่านเบราว์เซอร์ หรือวางโทเค็นผู้ใช้ของแอป Slack ของคุณเอง',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'ไม่บังคับ: เมื่อเปิด Socket Mode ในแอปของคุณ ข้อความจะมาถึงทันที',
   'Signed out of Slack. Connect again.': 'ออกจากระบบ Slack แล้ว โปรดเชื่อมต่ออีกครั้ง',
@@ -3432,8 +3430,6 @@ export const th: Dictionary = {
   'Slack removes messages for everyone': 'Slack ลบข้อความสำหรับทุกคน',
   'Slack files need the desktop app': 'ไฟล์ของ Slack ต้องใช้แอปบนเดสก์ท็อป',
   'Slack does not know that emoji': 'Slack ไม่รู้จักอีโมจินั้น',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'วางโทเค็นผู้ใช้ Slack บิลด์นี้ลงชื่อเข้าใช้ผ่านเบราว์เซอร์ไม่ได้',
   'Delete for everyone': 'ลบสำหรับทุกคน',
   'Delete for me': 'ลบสำหรับฉัน',
   Forwarded: 'ส่งต่อแล้ว',
@@ -3521,4 +3517,15 @@ export const th: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'คัดลอก App api_id และ App api_hash มาใส่ช่องตรงนี้',
   'Paste the API ID and hash from my.telegram.org': 'วาง API ID และ hash จาก my.telegram.org',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'User OAuth Token ของแอป Slack ของคุณเอง ใน OAuth & Permissions',
+  'Create your own Slack app': 'สร้างแอป Slack ของคุณเอง',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'เปิดลิงก์ เลือก workspace แล้วสร้างแอปตามที่ตั้งค่าไว้',
+  'Under Install App, install it to your workspace and allow it':
+    'ใน Install App ติดตั้งลงใน workspace แล้วอนุญาต',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'คัดลอก User OAuth Token (xoxp-) แล้ววางที่นี่',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'เพื่อให้ข้อความมาทันที: ใน Basic Information สร้างโทเค็นระดับแอปที่มี connections:write แล้ววางด้านล่าง (xapp-)',
 }

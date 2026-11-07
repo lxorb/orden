@@ -3690,8 +3690,6 @@ export const uk: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'Чати вимкнено. Увімкніть їх у налаштуваннях.',
   'User token': 'Токен користувача',
   'App-level token': 'Токен застосунку',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'Залиште порожнім, щоб увійти через браузер, або вставте токен користувача власного застосунку Slack',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'Необовʼязково: з увімкненим Socket Mode у власному застосунку повідомлення приходять одразу',
   'Signed out of Slack. Connect again.': 'Ви вийшли зі Slack. Підключіться знову.',
@@ -3702,8 +3700,6 @@ export const uk: Dictionary = {
   'Slack removes messages for everyone': 'Slack видаляє повідомлення для всіх',
   'Slack files need the desktop app': 'Для файлів Slack потрібен настільний застосунок',
   'Slack does not know that emoji': 'Slack не знає цього емодзі',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Вставте токен користувача Slack, ця збірка не може увійти через браузер',
   'Delete for everyone': 'Видалити для всіх',
   'Delete for me': 'Видалити для мене',
   Forwarded: 'Переслано',
@@ -3793,4 +3789,15 @@ export const uk: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'Скопіюйте App api_id і App api_hash у ці поля',
   'Paste the API ID and hash from my.telegram.org': 'Вставте API ID і hash з my.telegram.org',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'User OAuth Token вашого власного застосунку Slack, у розділі OAuth & Permissions',
+  'Create your own Slack app': 'Створіть власний застосунок Slack',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'Відкрийте посилання, виберіть робочий простір і створіть застосунок як є',
+  'Under Install App, install it to your workspace and allow it':
+    'У Install App встановіть його в робочий простір і дозвольте',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'Скопіюйте User OAuth Token (xoxp-) і вставте сюди',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'Щоб повідомлення надходили одразу: у Basic Information створіть токен застосунку з connections:write і вставте нижче (xapp-)',
 }

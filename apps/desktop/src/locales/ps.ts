@@ -3548,8 +3548,6 @@ export const ps: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'چیټونه بند دي. په امستنو کې یې چالان کړئ.',
   'User token': 'د کارن ټوکن',
   'App-level token': 'د اپ کچې ټوکن',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'په براوزر کې د ننوتلو لپاره یې تش پرېږدئ، یا د خپل Slack اپ د کارن ټوکن ولګوئ',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'اختیاري: که ستاسو په اپ کې Socket Mode چالان وي، پیغامونه سمدستي رسېږي',
   'Signed out of Slack. Connect again.': 'له Slack څخه ووتلئ. بیا یې وصل کړئ.',
@@ -3560,8 +3558,6 @@ export const ps: Dictionary = {
   'Slack removes messages for everyone': 'Slack پیغامونه د ټولو لپاره ړنګوي',
   'Slack files need the desktop app': 'د Slack فایلونو ته د ډیسکټاپ اپ اړتیا ده',
   'Slack does not know that emoji': 'Slack دا ایموجي نه پېژني',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'د Slack د کارن ټوکن ولګوئ، دا جوړښت په براوزر کې نشي ننوتلی',
   'Delete for everyone': 'د ټولو لپاره ړنګ کړئ',
   'Delete for me': 'زما لپاره ړنګ کړئ',
   Forwarded: 'لېږدول شوی',
@@ -3652,4 +3648,15 @@ export const ps: Dictionary = {
     'App api_id او App api_hash دلته په ساحو کې کاپي کړئ',
   'Paste the API ID and hash from my.telegram.org':
     'له my.telegram.org څخه API ID او hash دلته ولګوئ',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'ستاسو د خپل Slack اپ User OAuth Token، د OAuth & Permissions لاندې',
+  'Create your own Slack app': 'خپل Slack اپ جوړ کړئ',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'لینک پرانیزئ، خپل ورک سپیس وټاکئ او اپ لکه څنګه چې تنظیم شوی جوړ کړئ',
+  'Under Install App, install it to your workspace and allow it':
+    'د Install App لاندې یې په خپل ورک سپیس کې نصب کړئ او اجازه ورکړئ',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) کاپي او دلته یې ولګوئ',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'د پیغامونو د سمدستي رارسېدو لپاره: د Basic Information لاندې د connections:write سره د اپ کچې ټوکن جوړ کړئ او لاندې یې ولګوئ (xapp-)',
 }

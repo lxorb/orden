@@ -3740,8 +3740,6 @@ export const ar: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'المحادثات متوقفة. شغّلها من الإعدادات.',
   'User token': 'رمز المستخدم',
   'App-level token': 'رمز التطبيق',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'اتركه فارغًا لتسجيل الدخول عبر المتصفح، أو الصق رمز المستخدم لتطبيق Slack الخاص بك',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'اختياري: مع تشغيل Socket Mode في تطبيقك تصل الرسائل فورًا',
   'Signed out of Slack. Connect again.': 'تم تسجيل الخروج من Slack. اتصل مرة أخرى.',
@@ -3751,8 +3749,6 @@ export const ar: Dictionary = {
   'Slack removes messages for everyone': 'يحذف Slack الرسائل لدى الجميع',
   'Slack files need the desktop app': 'تحتاج ملفات Slack إلى تطبيق سطح المكتب',
   'Slack does not know that emoji': 'لا يعرف Slack هذا الرمز التعبيري',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'الصق رمز مستخدم Slack، هذا الإصدار لا يستطيع تسجيل الدخول عبر المتصفح',
   'Delete for everyone': 'حذف لدى الجميع',
   'Delete for me': 'حذف لدي',
   Forwarded: 'معاد توجيهها',
@@ -3841,4 +3837,14 @@ export const ar: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'انسخ App api_id و App api_hash إلى الحقول هنا',
   'Paste the API ID and hash from my.telegram.org': 'الصق معرّف API والـ hash من my.telegram.org',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'رمز User OAuth Token لتطبيق Slack الخاص بك، ضمن OAuth & Permissions',
+  'Create your own Slack app': 'أنشئ تطبيق Slack الخاص بك',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'افتح الرابط واختر مساحة العمل وأنشئ التطبيق كما هو معدّ',
+  'Under Install App, install it to your workspace and allow it':
+    'ضمن Install App، ثبّته في مساحة العمل واسمح له',
+  'Copy the User OAuth Token (xoxp-) and paste it here': 'انسخ User OAuth Token (xoxp-) والصقه هنا',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'لتصل الرسائل فورًا: ضمن Basic Information أنشئ رمزًا على مستوى التطبيق مع connections:write والصقه أدناه (xapp-)',
 }

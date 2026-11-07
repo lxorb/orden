@@ -3613,8 +3613,6 @@ export const ta: Dictionary = {
     'அரட்டைகள் அணைக்கப்பட்டுள்ளன. அமைப்புகளில் இயக்கவும்.',
   'User token': 'பயனர் டோக்கன்',
   'App-level token': 'ஆப்-நிலை டோக்கன்',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'உலாவியில் உள்நுழைய காலியாக விடவும், அல்லது உங்கள் சொந்த Slack ஆப்பின் பயனர் டோக்கனை ஒட்டவும்',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'விருப்பம்: உங்கள் ஆப்பில் Socket Mode இயக்கத்தில் இருந்தால் செய்திகள் உடனே வரும்',
   'Signed out of Slack. Connect again.': 'Slack-இலிருந்து வெளியேறினீர்கள். மீண்டும் இணைக்கவும்.',
@@ -3625,8 +3623,6 @@ export const ta: Dictionary = {
   'Slack removes messages for everyone': 'Slack செய்திகளை அனைவருக்கும் நீக்கும்',
   'Slack files need the desktop app': 'Slack கோப்புகளுக்கு டெஸ்க்டாப் ஆப் தேவை',
   'Slack does not know that emoji': 'அந்த ஈமோஜி Slack-க்குத் தெரியாது',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Slack பயனர் டோக்கனை ஒட்டவும், இந்த பில்டால் உலாவியில் உள்நுழைய முடியாது',
   'Delete for everyone': 'அனைவருக்கும் நீக்கு',
   'Delete for me': 'எனக்கு நீக்கு',
   Forwarded: 'முன்னனுப்பப்பட்டது',
@@ -3721,4 +3717,15 @@ export const ta: Dictionary = {
     'App api_id மற்றும் App api_hash ஐ இங்குள்ள புலங்களில் நகலெடுங்கள்',
   'Paste the API ID and hash from my.telegram.org':
     'my.telegram.org இலிருந்து API ID மற்றும் hash ஐ ஒட்டுங்கள்',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'உங்கள் சொந்த Slack ஆப்பின் User OAuth Token, OAuth & Permissions கீழ்',
+  'Create your own Slack app': 'உங்கள் சொந்த Slack ஆப்பை உருவாக்குங்கள்',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'இணைப்பைத் திறந்து, உங்கள் பணியிடத்தைத் தேர்ந்தெடுத்து, அமைக்கப்பட்டபடியே ஆப்பை உருவாக்குங்கள்',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App கீழ் அதை உங்கள் பணியிடத்தில் நிறுவி அனுமதியுங்கள்',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) ஐ நகலெடுத்து இங்கே ஒட்டுங்கள்',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'செய்திகள் உடனே வர: Basic Information கீழ் connections:write உடன் ஆப்-நிலை டோக்கனை உருவாக்கி கீழே ஒட்டுங்கள் (xapp-)',
 }

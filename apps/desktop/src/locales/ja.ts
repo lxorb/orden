@@ -3466,8 +3466,6 @@ export const ja: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'チャットはオフです。設定でオンにしてください。',
   'User token': 'ユーザートークン',
   'App-level token': 'アプリレベルトークン',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'ブラウザでサインインするには空のままにするか、自分の Slack アプリのユーザートークンを貼り付けてください',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     '任意：自分のアプリで Socket Mode をオンにすると、メッセージがすぐに届きます',
   'Signed out of Slack. Connect again.':
@@ -3479,8 +3477,6 @@ export const ja: Dictionary = {
   'Slack removes messages for everyone': 'Slack はメッセージを全員から削除します',
   'Slack files need the desktop app': 'Slack のファイルにはデスクトップアプリが必要です',
   'Slack does not know that emoji': 'Slack はその絵文字を知りません',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Slack のユーザートークンを貼り付けてください。このビルドはブラウザでサインインできません',
   'Delete for everyone': '全員から削除',
   'Delete for me': '自分から削除',
   Forwarded: '転送',
@@ -3562,11 +3558,25 @@ export const ja: Dictionary = {
     'API permissions で、委任されたアクセス許可 IMAP.AccessAsUser.All、SMTP.Send、offline_access を追加し、Application (client) ID をここに貼り付けます',
   'API ID': 'API ID',
   'API hash': 'API hash',
-  'From my.telegram.org, under API development tools': 'my.telegram.org の API development tools から',
+  'From my.telegram.org, under API development tools':
+    'my.telegram.org の API development tools から',
   'How to get your API ID and hash': 'API ID と hash の入手方法',
   'Sign in at my.telegram.org with your phone number': '電話番号で my.telegram.org にサインイン',
   'Open API development tools and create an app with any name':
     'API development tools を開き、任意の名前でアプリを作成',
-  'Copy App api_id and App api_hash into the fields here': 'App api_id と App api_hash をここの欄にコピー',
-  'Paste the API ID and hash from my.telegram.org': 'my.telegram.org の API ID と hash を貼り付けてください',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id と App api_hash をここの欄にコピー',
+  'Paste the API ID and hash from my.telegram.org':
+    'my.telegram.org の API ID と hash を貼り付けてください',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    '自分の Slack アプリの User OAuth Token(OAuth & Permissions にあります)',
+  'Create your own Slack app': '自分の Slack アプリを作成',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'リンクを開き、ワークスペースを選んで、用意された設定のままアプリを作成',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App でワークスペースにインストールして許可',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token(xoxp-)をコピーしてここに貼り付け',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'メッセージをすぐ受け取るには: Basic Information で connections:write 付きのアプリレベルトークンを生成し、下に貼り付け(xapp-)',
 }

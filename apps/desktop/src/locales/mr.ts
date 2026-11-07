@@ -3548,8 +3548,6 @@ export const mr: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'चॅट बंद आहेत. सेटिंग्जमध्ये चालू करा.',
   'User token': 'वापरकर्ता टोकन',
   'App-level token': 'ॲप-स्तर टोकन',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'ब्राउझरमध्ये साइन इन करण्यासाठी रिकामे ठेवा, किंवा तुमच्या स्वतःच्या Slack ॲपचा वापरकर्ता टोकन पेस्ट करा',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'पर्यायी: तुमच्या ॲपमध्ये Socket Mode चालू असल्यास संदेश लगेच येतात',
   'Signed out of Slack. Connect again.': 'Slack मधून साइन आउट झाले. पुन्हा कनेक्ट करा.',
@@ -3560,8 +3558,6 @@ export const mr: Dictionary = {
   'Slack removes messages for everyone': 'Slack संदेश सर्वांसाठी हटवते',
   'Slack files need the desktop app': 'Slack फाइल्ससाठी डेस्कटॉप ॲप लागते',
   'Slack does not know that emoji': 'Slack ला ते इमोजी माहीत नाही',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Slack वापरकर्ता टोकन पेस्ट करा, हा बिल्ड ब्राउझरमध्ये साइन इन करू शकत नाही',
   'Delete for everyone': 'सर्वांसाठी हटवा',
   'Delete for me': 'माझ्यासाठी हटवा',
   Forwarded: 'पुढे पाठवलेला',
@@ -3652,4 +3648,15 @@ export const mr: Dictionary = {
     'App api_id आणि App api_hash येथील फील्डमध्ये कॉपी करा',
   'Paste the API ID and hash from my.telegram.org':
     'my.telegram.org वरून API ID आणि hash पेस्ट करा',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'तुमच्या स्वतःच्या Slack ॲपचा User OAuth Token, OAuth & Permissions अंतर्गत',
+  'Create your own Slack app': 'तुमचे स्वतःचे Slack ॲप तयार करा',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'लिंक उघडा, तुमचे वर्कस्पेस निवडा आणि ॲप जसे सेट आहे तसे तयार करा',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App अंतर्गत ते तुमच्या वर्कस्पेसमध्ये इन्स्टॉल करा आणि परवानगी द्या',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) कॉपी करून येथे पेस्ट करा',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'संदेश लगेच मिळण्यासाठी: Basic Information अंतर्गत connections:write सह ॲप-स्तरीय टोकन तयार करा आणि खाली पेस्ट करा (xapp-)',
 }

@@ -19,7 +19,6 @@ import type {
 import { secretName } from '../provider'
 import { Api, list, record, type Said, sleep, type Sleep, SlackError, text } from './api'
 import { type Emoji, emoji, emojiIn, nameFor, textFor } from './emoji'
-import { signIn } from './oauth'
 import { type Dial, SocketMode } from './socket'
 import { markdownOf, mrkdwnOf } from './text'
 
@@ -113,9 +112,7 @@ export async function open(
   if (appToken && !appToken.startsWith('xapp-')) throw new Error(WORDS.noAppToken)
   let token = typed
   if (!token && known !== undefined) token = (await host.secret(vaultName(known))) ?? ''
-  if (!token && known !== undefined) throw new Error(WORDS.signedOut)
-  const fresh = !token
-  if (fresh) token = (await signIn(host)).token
+  if (!token) throw new Error(known === undefined ? WORDS.noToken : WORDS.signedOut)
   const wait = deps.wait ?? sleep
   const api = new Api(host, token, wait)
   let who: Said
@@ -131,7 +128,6 @@ export async function open(
   const team = text(who.team_id)
   const user = text(who.user_id)
   const id = `${team}-${user}`
-  if (fresh) await host.keepSecret(vaultName(id), token)
   const table = await emoji()
   const connection = new SlackConnection(api, host, table, token, who, deps, appToken)
   await connection.boot()

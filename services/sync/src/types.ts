@@ -56,9 +56,6 @@ export interface Env {
 
   SECOND_FACTOR_SECRET?: string
 
-  SLACK_CLIENT_ID?: string
-  SLACK_CLIENT_SECRET?: string
-
   VAPID_PUBLIC_KEY?: string
   VAPID_PRIVATE_KEY?: string
   VAPID_SUBJECT?: string

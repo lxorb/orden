@@ -3,8 +3,7 @@ import { forgetKey, readSecret, writeSecret } from '../../ai/keys'
 import { Channel } from '../../native'
 import { isRecord } from '../../stored'
 import { invoke, isDesktop } from '../../tauri'
-import { BASE } from '../../api'
-import { authorize, builtWith, post, request } from './authorize'
+import { authorize, post, request } from './authorize'
 import { parsedOffThread } from './mail-parse'
 import { screens } from './screens.svelte'
 import { sealedStore } from './sealed'
@@ -158,10 +157,6 @@ export const host: Host = {
   parseMessage: parsedOffThread,
   fetch: (...args) => fetch(...args),
   now: () => Date.now(),
-  build: builtWith({
-    slackClientId: import.meta.env.VITE_ORDEN_SLACK_CLIENT_ID,
-    ordenServer: BASE,
-  }),
   ask: screens.ask,
   show: screens.show,
   sealed: sealedStore({ read: readSecret, write: (name, value) => host.keepSecret(name, value) }),

@@ -3570,8 +3570,6 @@ export const tr: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'Sohbetler kapalı. Ayarlar’dan açın.',
   'User token': 'Kullanıcı jetonu',
   'App-level token': 'Uygulama jetonu',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'Tarayıcıda oturum açmak için boş bırakın ya da kendi Slack uygulamanızın kullanıcı jetonunu yapıştırın',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'İsteğe bağlı: kendi uygulamanızda Socket Mode açıkken mesajlar hemen gelir',
   'Signed out of Slack. Connect again.': 'Slack oturumu kapandı. Yeniden bağlanın.',
@@ -3582,8 +3580,6 @@ export const tr: Dictionary = {
   'Slack removes messages for everyone': 'Slack mesajları herkes için siler',
   'Slack files need the desktop app': 'Slack dosyaları masaüstü uygulamasını gerektirir',
   'Slack does not know that emoji': 'Slack bu emojiyi tanımıyor',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Bir Slack kullanıcı jetonu yapıştırın, bu sürüm tarayıcıda oturum açamaz',
   'Delete for everyone': 'Herkesten sil',
   'Delete for me': 'Benden sil',
   Forwarded: 'İletildi',
@@ -3674,4 +3670,15 @@ export const tr: Dictionary = {
     'App api_id ve App api_hash değerlerini buradaki alanlara kopyala',
   'Paste the API ID and hash from my.telegram.org':
     'my.telegram.org üzerindeki API kimliğini ve hash değerini yapıştır',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'Kendi Slack uygulamanın User OAuth Token değeri, OAuth & Permissions altında',
+  'Create your own Slack app': 'Kendi Slack uygulamanı oluştur',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'Bağlantıyı aç, çalışma alanını seç ve uygulamayı hazır haliyle oluştur',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App altında onu çalışma alanına kur ve izin ver',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) değerini kopyala ve buraya yapıştır',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'Mesajların hemen gelmesi için: Basic Information altında connections:write ile bir uygulama jetonu oluştur ve aşağıya yapıştır (xapp-)',
 }

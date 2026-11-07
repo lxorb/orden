@@ -3545,8 +3545,6 @@ export const bn: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'চ্যাট বন্ধ আছে। সেটিংসে চালু করুন।',
   'User token': 'ব্যবহারকারী টোকেন',
   'App-level token': 'অ্যাপ-স্তরের টোকেন',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'ব্রাউজারে সাইন ইন করতে খালি রাখুন, অথবা নিজের Slack অ্যাপের ব্যবহারকারী টোকেন পেস্ট করুন',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'ঐচ্ছিক: নিজের অ্যাপে Socket Mode চালু থাকলে বার্তা সঙ্গে সঙ্গে আসে',
   'Signed out of Slack. Connect again.': 'Slack থেকে সাইন আউট হয়েছে। আবার সংযোগ করুন।',
@@ -3557,8 +3555,6 @@ export const bn: Dictionary = {
   'Slack removes messages for everyone': 'Slack সবার জন্য বার্তা মুছে দেয়',
   'Slack files need the desktop app': 'Slack ফাইলের জন্য ডেস্কটপ অ্যাপ লাগে',
   'Slack does not know that emoji': 'Slack এই ইমোজি চেনে না',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'একটি Slack ব্যবহারকারী টোকেন পেস্ট করুন, এই বিল্ড ব্রাউজারে সাইন ইন করতে পারে না',
   'Delete for everyone': 'সবার জন্য মুছুন',
   'Delete for me': 'আমার জন্য মুছুন',
   Forwarded: 'ফরওয়ার্ড করা',
@@ -3647,4 +3643,15 @@ export const bn: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'App api_id ও App api_hash এখানকার ঘরে কপি করুন',
   'Paste the API ID and hash from my.telegram.org': 'my.telegram.org থেকে API ID ও hash পেস্ট করুন',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'আপনার নিজের Slack অ্যাপের User OAuth Token, OAuth & Permissions-এর অধীনে',
+  'Create your own Slack app': 'নিজের Slack অ্যাপ তৈরি করুন',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'লিংক খুলুন, আপনার ওয়ার্কস্পেস বেছে নিন এবং অ্যাপটি যেমন সাজানো আছে তেমনই তৈরি করুন',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App-এর অধীনে এটি আপনার ওয়ার্কস্পেসে ইনস্টল করে অনুমতি দিন',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) কপি করে এখানে পেস্ট করুন',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'বার্তা সঙ্গে সঙ্গে পেতে: Basic Information-এর অধীনে connections:write সহ একটি অ্যাপ-স্তরের টোকেন তৈরি করে নিচে পেস্ট করুন (xapp-)',
 }

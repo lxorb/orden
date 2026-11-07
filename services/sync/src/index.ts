@@ -46,7 +46,6 @@ import { appIce } from './apps/ice'
 import { isMachineHost, machineDomain } from './machines/hetzner-host'
 import { online } from './machines/routes'
 import { siteIcons } from './site-icons'
-import { slack } from './slack'
 import { settings } from './settings'
 import { protectedRoutes } from './protected'
 import { v2Docs, v2Spaces } from './sync2'
@@ -118,7 +117,6 @@ app.route('/v1/join', join)
 app.route('/v1/feedback', feedback)
 
 app.route('/v1/crashes', crashes)
-app.route('/v1/slack', slack)
 app.route('/v1/pass-link', openLink)
 
 app.use('/.well-known/*', anyOrigin)

@@ -3372,8 +3372,6 @@ export const yue: Dictionary = {
   'Chats are off. Turn them on in Settings.': '傾偈已經閂咗。去設定開返。',
   'User token': '用戶權杖',
   'App-level token': 'App 層級權杖',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    '留空就喺瀏覽器登入，或者貼上你自己個 Slack app 嘅用戶權杖',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     '可選：喺你自己個 app 開咗 Socket Mode，訊息即刻到',
   'Signed out of Slack. Connect again.': '已經登出 Slack。請再連接。',
@@ -3384,8 +3382,6 @@ export const yue: Dictionary = {
   'Slack removes messages for everyone': 'Slack 會幫所有人刪除訊息',
   'Slack files need the desktop app': 'Slack 檔案要用桌面 app',
   'Slack does not know that emoji': 'Slack 唔識呢個表情符號',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    '請貼上 Slack 用戶權杖，呢個版本唔可以喺瀏覽器登入',
   'Delete for everyone': '為所有人刪除',
   'Delete for me': '只喺我度刪除',
   Forwarded: '已轉寄',
@@ -3468,6 +3464,17 @@ export const yue: Dictionary = {
   'Sign in at my.telegram.org with your phone number': '用你個電話號碼登入 my.telegram.org',
   'Open API development tools and create an app with any name':
     '打開 API development tools，隨便改個名開一個 app',
-  'Copy App api_id and App api_hash into the fields here': '將 App api_id 同 App api_hash 抄落呢度啲欄',
+  'Copy App api_id and App api_hash into the fields here':
+    '將 App api_id 同 App api_hash 抄落呢度啲欄',
   'Paste the API ID and hash from my.telegram.org': '貼上 my.telegram.org 嘅 API ID 同 hash',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    '你自己個 Slack app 嘅 User OAuth Token，喺 OAuth & Permissions 度',
+  'Create your own Slack app': '開你自己個 Slack app',
+  'Open the link, pick your workspace and create the app as it is set up':
+    '打開條連結，揀你個工作區，照設定開個 app',
+  'Under Install App, install it to your workspace and allow it':
+    '喺 Install App 度裝落你個工作區再允許',
+  'Copy the User OAuth Token (xoxp-) and paste it here': '抄低 User OAuth Token（xoxp-）貼落呢度',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    '想訊息即刻到：喺 Basic Information 度整一個有 connections:write 嘅 app 層級權杖，貼落下面（xapp-）',
 }

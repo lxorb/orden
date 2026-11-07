@@ -3622,8 +3622,6 @@ export const fil: Dictionary = {
     'Naka-off ang mga chat. I-on ang mga ito sa Settings.',
   'User token': 'User token',
   'App-level token': 'App-level token',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'Iwanang blangko para mag-sign in sa browser, o i-paste ang user token ng sarili mong Slack app',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'Opsyonal: kapag naka-on ang Socket Mode sa sarili mong app, agad dumarating ang mga mensahe',
   'Signed out of Slack. Connect again.': 'Naka-sign out sa Slack. Kumonekta ulit.',
@@ -3634,8 +3632,6 @@ export const fil: Dictionary = {
   'Slack removes messages for everyone': 'Binubura ng Slack ang mga mensahe para sa lahat',
   'Slack files need the desktop app': 'Kailangan ng desktop app para sa mga file ng Slack',
   'Slack does not know that emoji': 'Hindi kilala ng Slack ang emoji na iyan',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Mag-paste ng Slack user token, hindi makakapag-sign in sa browser ang build na ito',
   'Delete for everyone': 'Burahin para sa lahat',
   'Delete for me': 'Burahin para sa akin',
   Forwarded: 'Ipinasa',
@@ -3727,4 +3723,15 @@ export const fil: Dictionary = {
     'Kopyahin ang App api_id at App api_hash sa mga field dito',
   'Paste the API ID and hash from my.telegram.org':
     'I-paste ang API ID at hash mula sa my.telegram.org',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'Ang User OAuth Token ng sarili mong Slack app, sa OAuth & Permissions',
+  'Create your own Slack app': 'Gumawa ng sarili mong Slack app',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'Buksan ang link, piliin ang iyong workspace at gawin ang app ayon sa pagkakaayos nito',
+  'Under Install App, install it to your workspace and allow it':
+    'Sa Install App, i-install ito sa iyong workspace at payagan',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'Kopyahin ang User OAuth Token (xoxp-) at i-paste dito',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'Para dumating agad ang mga mensahe: sa Basic Information, gumawa ng app-level token na may connections:write at i-paste sa ibaba (xapp-)',
 }

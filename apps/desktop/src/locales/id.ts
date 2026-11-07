@@ -3488,8 +3488,6 @@ export const id: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'Obrolan nonaktif. Aktifkan di Pengaturan.',
   'User token': 'Token pengguna',
   'App-level token': 'Token aplikasi',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'Kosongkan untuk masuk lewat peramban, atau tempel token pengguna dari aplikasi Slack Anda sendiri',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'Opsional: dengan Socket Mode aktif di aplikasi Anda, pesan langsung tiba',
   'Signed out of Slack. Connect again.': 'Keluar dari Slack. Hubungkan lagi.',
@@ -3500,8 +3498,6 @@ export const id: Dictionary = {
   'Slack removes messages for everyone': 'Slack menghapus pesan untuk semua orang',
   'Slack files need the desktop app': 'Berkas Slack memerlukan aplikasi desktop',
   'Slack does not know that emoji': 'Slack tidak mengenal emoji itu',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Tempel token pengguna Slack, versi ini tidak dapat masuk lewat peramban',
   'Delete for everyone': 'Hapus untuk semua',
   'Delete for me': 'Hapus untuk saya',
   Forwarded: 'Diteruskan',
@@ -3592,4 +3588,15 @@ export const id: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'Salin App api_id dan App api_hash ke kolom di sini',
   'Paste the API ID and hash from my.telegram.org': 'Tempel ID dan hash API dari my.telegram.org',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'User OAuth Token aplikasi Slack Anda sendiri, di OAuth & Permissions',
+  'Create your own Slack app': 'Buat aplikasi Slack Anda sendiri',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'Buka tautan, pilih workspace Anda, lalu buat aplikasinya seperti yang sudah disiapkan',
+  'Under Install App, install it to your workspace and allow it':
+    'Di Install App, pasang ke workspace Anda dan izinkan',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'Salin User OAuth Token (xoxp-) dan tempel di sini',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'Agar pesan langsung masuk: di Basic Information, buat token aplikasi dengan connections:write dan tempel di bawah (xapp-)',
 }

@@ -3588,8 +3588,6 @@ export const kn: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'ಚಾಟ್‌ಗಳು ಆಫ್ ಆಗಿವೆ. ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಆನ್ ಮಾಡಿ.',
   'User token': 'ಬಳಕೆದಾರ ಟೋಕನ್',
   'App-level token': 'ಆ್ಯಪ್-ಮಟ್ಟದ ಟೋಕನ್',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಲು ಖಾಲಿ ಬಿಡಿ, ಅಥವಾ ನಿಮ್ಮ ಸ್ವಂತ Slack ಆ್ಯಪ್‌ನ ಬಳಕೆದಾರ ಟೋಕನ್ ಅಂಟಿಸಿ',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'ಐಚ್ಛಿಕ: ನಿಮ್ಮ ಆ್ಯಪ್‌ನಲ್ಲಿ Socket Mode ಆನ್ ಇದ್ದರೆ ಸಂದೇಶಗಳು ತಕ್ಷಣ ಬರುತ್ತವೆ',
   'Signed out of Slack. Connect again.': 'Slack ನಿಂದ ಸೈನ್ ಔಟ್ ಆಗಿದೆ. ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ.',
@@ -3600,8 +3598,6 @@ export const kn: Dictionary = {
   'Slack removes messages for everyone': 'Slack ಸಂದೇಶಗಳನ್ನು ಎಲ್ಲರಿಗೂ ಅಳಿಸುತ್ತದೆ',
   'Slack files need the desktop app': 'Slack ಫೈಲ್‌ಗಳಿಗೆ ಡೆಸ್ಕ್‌ಟಾಪ್ ಆ್ಯಪ್ ಬೇಕು',
   'Slack does not know that emoji': 'Slack ಗೆ ಆ ಎಮೋಜಿ ತಿಳಿದಿಲ್ಲ',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Slack ಬಳಕೆದಾರ ಟೋಕನ್ ಅಂಟಿಸಿ, ಈ ಬಿಲ್ಡ್ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಲಾಗದು',
   'Delete for everyone': 'ಎಲ್ಲರಿಗೂ ಅಳಿಸಿ',
   'Delete for me': 'ನನಗಾಗಿ ಅಳಿಸಿ',
   Forwarded: 'ಫಾರ್ವರ್ಡ್ ಮಾಡಲಾಗಿದೆ',
@@ -3693,4 +3689,15 @@ export const kn: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'App api_id ಮತ್ತು App api_hash ಅನ್ನು ಇಲ್ಲಿನ ಕ್ಷೇತ್ರಗಳಿಗೆ ನಕಲಿಸಿ',
   'Paste the API ID and hash from my.telegram.org': 'my.telegram.org ನಿಂದ API ID ಮತ್ತು hash ಅಂಟಿಸಿ',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'ನಿಮ್ಮ ಸ್ವಂತ Slack ಆ್ಯಪ್‌ನ User OAuth Token, OAuth & Permissions ಅಡಿಯಲ್ಲಿ',
+  'Create your own Slack app': 'ನಿಮ್ಮ ಸ್ವಂತ Slack ಆ್ಯಪ್ ರಚಿಸಿ',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'ಲಿಂಕ್ ತೆರೆದು, ನಿಮ್ಮ ವರ್ಕ್‌ಸ್ಪೇಸ್ ಆಯ್ಕೆಮಾಡಿ ಮತ್ತು ಹೊಂದಿಸಿದಂತೆಯೇ ಆ್ಯಪ್ ರಚಿಸಿ',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App ಅಡಿಯಲ್ಲಿ ಅದನ್ನು ನಿಮ್ಮ ವರ್ಕ್‌ಸ್ಪೇಸ್‌ಗೆ ಸ್ಥಾಪಿಸಿ ಮತ್ತು ಅನುಮತಿಸಿ',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) ನಕಲಿಸಿ ಇಲ್ಲಿ ಅಂಟಿಸಿ',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'ಸಂದೇಶಗಳು ತಕ್ಷಣ ಬರಲು: Basic Information ಅಡಿಯಲ್ಲಿ connections:write ಇರುವ ಆ್ಯಪ್-ಮಟ್ಟದ ಟೋಕನ್ ರಚಿಸಿ ಕೆಳಗೆ ಅಂಟಿಸಿ (xapp-)',
 }

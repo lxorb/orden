@@ -3601,8 +3601,6 @@ export const ha: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'Hira a kashe take. Kunna ta a Saituna.',
   'User token': 'Alamar mai amfani',
   'App-level token': 'Alamar manhaja',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'Bar shi babu komai don shiga ta burauza, ko liƙa alamar mai amfani ta manhajar Slack ɗinka',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'Zaɓi: idan Socket Mode yana kunne a manhajarka, saƙonni suna isowa nan take',
   'Signed out of Slack. Connect again.': 'An fita daga Slack. Sake haɗawa.',
@@ -3613,8 +3611,6 @@ export const ha: Dictionary = {
   'Slack removes messages for everyone': 'Slack yana goge saƙonni ga kowa',
   'Slack files need the desktop app': 'Fayilolin Slack suna buƙatar manhajar kwamfuta',
   'Slack does not know that emoji': 'Slack bai san wannan emoji ba',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Liƙa alamar mai amfani ta Slack, wannan sigar ba za ta iya shiga ta burauza ba',
   'Delete for everyone': 'Goge ga kowa',
   'Delete for me': 'Goge a gare ni',
   Forwarded: 'An tura',
@@ -3706,4 +3702,15 @@ export const ha: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'Kwafi App api_id da App api_hash zuwa filayen nan',
   'Paste the API ID and hash from my.telegram.org': 'Liƙa API ID da hash daga my.telegram.org',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'User OAuth Token na manhajar Slack ɗinka, a ƙarƙashin OAuth & Permissions',
+  'Create your own Slack app': 'Ƙirƙiri manhajar Slack ɗinka',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'Buɗe mahaɗin, zaɓi wurin aikinka ka ƙirƙiri manhajar kamar yadda aka tsara ta',
+  'Under Install App, install it to your workspace and allow it':
+    'A ƙarƙashin Install App, saka ta a wurin aikinka ka ba da izini',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'Kwafi User OAuth Token (xoxp-) ka liƙa a nan',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'Don saƙonni su zo nan take: a ƙarƙashin Basic Information, ƙirƙiri alamar manhaja mai connections:write ka liƙa a ƙasa (xapp-)',
 }

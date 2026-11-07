@@ -18,7 +18,6 @@ interface ImportMetaEnv {
   readonly VITE_ORDEN_WEB?: string
   readonly VITE_ORDEN_LEGACY_WEB?: string
   readonly VITE_ORDEN_CHANNEL?: string
-  readonly VITE_ORDEN_SLACK_CLIENT_ID?: string
 }
 
 declare module 'virtual:noto-outlines' {

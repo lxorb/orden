@@ -3481,8 +3481,6 @@ export const am: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'ውይይቶች ጠፍተዋል። በቅንብሮች ውስጥ ያብሯቸው።',
   'User token': 'የተጠቃሚ ቶከን',
   'App-level token': 'የመተግበሪያ ደረጃ ቶከን',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'በአሳሽ ለመግባት ባዶ ይተዉት፣ ወይም የራስዎን Slack መተግበሪያ የተጠቃሚ ቶከን ይለጥፉ',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'አማራጭ፦ በራስዎ መተግበሪያ Socket Mode ሲበራ መልዕክቶች ወዲያው ይደርሳሉ',
   'Signed out of Slack. Connect again.': 'ከSlack ወጥተዋል። እንደገና ያገናኙ።',
@@ -3493,8 +3491,6 @@ export const am: Dictionary = {
   'Slack removes messages for everyone': 'Slack መልዕክቶችን ለሁሉም ይሰርዛል',
   'Slack files need the desktop app': 'የSlack ፋይሎች የዴስክቶፕ መተግበሪያ ያስፈልጋቸዋል',
   'Slack does not know that emoji': 'Slack ያንን ኢሞጂ አያውቅም',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'የSlack የተጠቃሚ ቶከን ይለጥፉ፣ ይህ ስሪት በአሳሽ መግባት አይችልም',
   'Delete for everyone': 'ለሁሉም ሰርዝ',
   'Delete for me': 'ለእኔ ሰርዝ',
   Forwarded: 'የተላለፈ',
@@ -3581,4 +3577,14 @@ export const am: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'App api_id እና App api_hash ን እዚህ ባሉት መስኮች ይቅዱ',
   'Paste the API ID and hash from my.telegram.org': 'ከ my.telegram.org የተገኘውን API ID እና hash ይለጥፉ',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'የራስዎ Slack መተግበሪያ User OAuth Token፣ በ OAuth & Permissions ስር',
+  'Create your own Slack app': 'የራስዎን Slack መተግበሪያ ይፍጠሩ',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'አገናኙን ይክፈቱ፣ የሥራ ቦታዎን ይምረጡ እና መተግበሪያውን እንደተዘጋጀው ይፍጠሩ',
+  'Under Install App, install it to your workspace and allow it':
+    'በ Install App ስር ወደ የሥራ ቦታዎ ይጫኑት እና ይፍቀዱ',
+  'Copy the User OAuth Token (xoxp-) and paste it here': 'User OAuth Token (xoxp-) ን ቀድተው እዚህ ይለጥፉ',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'መልዕክቶች ወዲያው እንዲደርሱ፦ በ Basic Information ስር connections:write ያለው የመተግበሪያ ደረጃ ቶክን ፈጥረው ከታች ይለጥፉ (xapp-)',
 }

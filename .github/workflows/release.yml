@@ -23,7 +23,6 @@ permissions:
   contents: read
 
 env:
-  VITE_ORDEN_SLACK_CLIENT_ID: ${{ vars.ORDEN_SLACK_CLIENT_ID }}
 
 jobs:
   version:

@@ -3566,8 +3566,6 @@ export const te: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'చాట్‌లు ఆఫ్‌లో ఉన్నాయి. సెట్టింగ్‌లలో ఆన్ చేయండి.',
   'User token': 'వినియోగదారు టోకెన్',
   'App-level token': 'యాప్-స్థాయి టోకెన్',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'బ్రౌజర్‌లో సైన్ ఇన్ చేయడానికి ఖాళీగా ఉంచండి, లేదా మీ సొంత Slack యాప్ వినియోగదారు టోకెన్‌ను అతికించండి',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'ఐచ్ఛికం: మీ యాప్‌లో Socket Mode ఆన్‌లో ఉంటే సందేశాలు వెంటనే వస్తాయి',
   'Signed out of Slack. Connect again.': 'Slack నుండి సైన్ అవుట్ అయ్యారు. మళ్లీ కనెక్ట్ చేయండి.',
@@ -3578,8 +3576,6 @@ export const te: Dictionary = {
   'Slack removes messages for everyone': 'Slack సందేశాలను అందరికీ తొలగిస్తుంది',
   'Slack files need the desktop app': 'Slack ఫైల్‌లకు డెస్క్‌టాప్ యాప్ అవసరం',
   'Slack does not know that emoji': 'Slack కు ఆ ఎమోజీ తెలియదు',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Slack వినియోగదారు టోకెన్‌ను అతికించండి, ఈ బిల్డ్ బ్రౌజర్‌లో సైన్ ఇన్ చేయలేదు',
   'Delete for everyone': 'అందరికీ తొలగించు',
   'Delete for me': 'నాకు తొలగించు',
   Forwarded: 'ఫార్వర్డ్ చేయబడింది',
@@ -3672,4 +3668,15 @@ export const te: Dictionary = {
     'App api_id మరియు App api_hash ను ఇక్కడి ఫీల్డ్‌లలో కాపీ చేయండి',
   'Paste the API ID and hash from my.telegram.org':
     'my.telegram.org నుండి API ID మరియు hash అతికించండి',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'మీ సొంత Slack యాప్ యొక్క User OAuth Token, OAuth & Permissions కింద',
+  'Create your own Slack app': 'మీ సొంత Slack యాప్ సృష్టించండి',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'లింక్ తెరిచి, మీ వర్క్‌స్పేస్ ఎంచుకుని, సెట్ చేసినట్టే యాప్ సృష్టించండి',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App కింద దాన్ని మీ వర్క్‌స్పేస్‌లో ఇన్‌స్టాల్ చేసి అనుమతించండి',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) కాపీ చేసి ఇక్కడ అతికించండి',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'సందేశాలు వెంటనే రావడానికి: Basic Information కింద connections:write తో యాప్-స్థాయి టోకెన్ సృష్టించి కింద అతికించండి (xapp-)',
 }

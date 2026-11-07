@@ -3554,8 +3554,6 @@ export const fa: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'گفتگوها خاموش‌اند. در تنظیمات روشنشان کنید.',
   'User token': 'توکن کاربر',
   'App-level token': 'توکن سطح برنامه',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'برای ورود از راه مرورگر خالی بگذارید، یا توکن کاربر برنامهٔ Slack خودتان را بچسبانید',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'اختیاری: با روشن بودن Socket Mode در برنامهٔ خودتان، پیام‌ها فوراً می‌رسند',
   'Signed out of Slack. Connect again.': 'از Slack خارج شدید. دوباره وصل شوید.',
@@ -3566,8 +3564,6 @@ export const fa: Dictionary = {
   'Slack removes messages for everyone': 'Slack پیام‌ها را برای همه حذف می‌کند',
   'Slack files need the desktop app': 'فایل‌های Slack به برنامهٔ دسکتاپ نیاز دارند',
   'Slack does not know that emoji': 'Slack این شکلک را نمی‌شناسد',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'یک توکن کاربر Slack بچسبانید، این نسخه نمی‌تواند از راه مرورگر وارد شود',
   'Delete for everyone': 'حذف برای همه',
   'Delete for me': 'حذف برای من',
   Forwarded: 'بازارسال‌شده',
@@ -3659,4 +3655,15 @@ export const fa: Dictionary = {
     'App api_id و App api_hash را در فیلدهای اینجا کپی کنید',
   'Paste the API ID and hash from my.telegram.org':
     'شناسه API و hash را از my.telegram.org جای‌گذاری کنید',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'User OAuth Token برنامه Slack خودتان، در OAuth & Permissions',
+  'Create your own Slack app': 'برنامه Slack خودتان را بسازید',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'پیوند را باز کنید، فضای کاری را انتخاب کنید و برنامه را همان‌طور که تنظیم شده بسازید',
+  'Under Install App, install it to your workspace and allow it':
+    'در Install App آن را در فضای کاری نصب و مجاز کنید',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) را کپی و اینجا جای‌گذاری کنید',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'برای رسیدن فوری پیام‌ها: در Basic Information یک توکن سطح برنامه با connections:write بسازید و پایین جای‌گذاری کنید (xapp-)',
 }

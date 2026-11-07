@@ -44,11 +44,3 @@ export async function request(ask: NativeAsk): Promise<Uint8Array> {
   })
   return new Uint8Array(answer)
 }
-
-export function builtWith(
-  values: Readonly<Record<string, string | undefined>>,
-): Readonly<Record<string, string>> {
-  const out: Record<string, string> = {}
-  for (const [key, value] of Object.entries(values)) if (value) out[key] = value
-  return out
-}

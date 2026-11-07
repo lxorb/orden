@@ -3601,8 +3601,6 @@ export const ml: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'ചാറ്റുകൾ ഓഫാണ്. ക്രമീകരണങ്ങളിൽ ഓണാക്കുക.',
   'User token': 'ഉപയോക്തൃ ടോക്കൺ',
   'App-level token': 'ആപ്പ്-തല ടോക്കൺ',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'ബ്രൗസറിൽ സൈൻ ഇൻ ചെയ്യാൻ ശൂന്യമായി വിടുക, അല്ലെങ്കിൽ നിങ്ങളുടെ സ്വന്തം Slack ആപ്പിന്റെ ഉപയോക്തൃ ടോക്കൺ ഒട്ടിക്കുക',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'ഐച്ഛികം: നിങ്ങളുടെ ആപ്പിൽ Socket Mode ഓണാണെങ്കിൽ സന്ദേശങ്ങൾ ഉടൻ എത്തും',
   'Signed out of Slack. Connect again.': 'Slack-ൽ നിന്ന് സൈൻ ഔട്ട് ആയി. വീണ്ടും ബന്ധിപ്പിക്കുക.',
@@ -3613,8 +3611,6 @@ export const ml: Dictionary = {
   'Slack removes messages for everyone': 'Slack സന്ദേശങ്ങൾ എല്ലാവർക്കും നീക്കംചെയ്യുന്നു',
   'Slack files need the desktop app': 'Slack ഫയലുകൾക്ക് ഡെസ്ക്ടോപ്പ് ആപ്പ് വേണം',
   'Slack does not know that emoji': 'Slack-ന് ആ ഇമോജി അറിയില്ല',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'ഒരു Slack ഉപയോക്തൃ ടോക്കൺ ഒട്ടിക്കുക, ഈ ബിൽഡിന് ബ്രൗസറിൽ സൈൻ ഇൻ ചെയ്യാനാവില്ല',
   'Delete for everyone': 'എല്ലാവർക്കും ഇല്ലാതാക്കുക',
   'Delete for me': 'എനിക്കായി ഇല്ലാതാക്കുക',
   Forwarded: 'ഫോർവേഡ് ചെയ്തത്',
@@ -3708,4 +3704,15 @@ export const ml: Dictionary = {
     'App api_id-ഉം App api_hash-ഉം ഇവിടെയുള്ള ഫീൽഡുകളിലേക്ക് പകർത്തുക',
   'Paste the API ID and hash from my.telegram.org':
     'my.telegram.org-ൽ നിന്നുള്ള API ID-യും hash-ഉം ഒട്ടിക്കുക',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'നിങ്ങളുടെ സ്വന്തം Slack ആപ്പിന്റെ User OAuth Token, OAuth & Permissions-ന് കീഴിൽ',
+  'Create your own Slack app': 'നിങ്ങളുടെ സ്വന്തം Slack ആപ്പ് ഉണ്ടാക്കുക',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'ലിങ്ക് തുറന്ന്, വർക്ക്‌സ്‌പേസ് തിരഞ്ഞെടുത്ത്, സജ്ജമാക്കിയതുപോലെ ആപ്പ് ഉണ്ടാക്കുക',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App-ന് കീഴിൽ അത് വർക്ക്‌സ്‌പേസിൽ ഇൻസ്റ്റാൾ ചെയ്ത് അനുവദിക്കുക',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) പകർത്തി ഇവിടെ ഒട്ടിക്കുക',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'സന്ദേശങ്ങൾ ഉടനെ ലഭിക്കാൻ: Basic Information-ന് കീഴിൽ connections:write ഉള്ള ആപ്പ്-തല ടോക്കൺ ഉണ്ടാക്കി താഴെ ഒട്ടിക്കുക (xapp-)',
 }

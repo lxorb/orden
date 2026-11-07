@@ -3545,8 +3545,6 @@ export const ur: Dictionary = {
   'Chats are off. Turn them on in Settings.': 'چیٹس بند ہیں۔ انہیں ترتیبات میں آن کریں۔',
   'User token': 'صارف ٹوکن',
   'App-level token': 'ایپ لیول ٹوکن',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    'براؤزر میں سائن ان کرنے کے لیے خالی چھوڑیں، یا اپنی Slack ایپ کا صارف ٹوکن چسپاں کریں',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     'اختیاری: اپنی ایپ میں Socket Mode آن ہو تو پیغامات فوراً آتے ہیں',
   'Signed out of Slack. Connect again.': 'Slack سے سائن آؤٹ ہو گئے۔ دوبارہ جوڑیں۔',
@@ -3557,8 +3555,6 @@ export const ur: Dictionary = {
   'Slack removes messages for everyone': 'Slack پیغامات سب کے لیے حذف کرتا ہے',
   'Slack files need the desktop app': 'Slack فائلوں کے لیے ڈیسک ٹاپ ایپ درکار ہے',
   'Slack does not know that emoji': 'Slack اس ایموجی کو نہیں جانتا',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    'Slack صارف ٹوکن چسپاں کریں، یہ بلڈ براؤزر میں سائن ان نہیں کر سکتا',
   'Delete for everyone': 'سب کے لیے حذف کریں',
   'Delete for me': 'میرے لیے حذف کریں',
   Forwarded: 'آگے بھیجا گیا',
@@ -3649,4 +3645,15 @@ export const ur: Dictionary = {
   'Copy App api_id and App api_hash into the fields here':
     'App api_id اور App api_hash یہاں کے خانوں میں کاپی کریں',
   'Paste the API ID and hash from my.telegram.org': 'my.telegram.org سے API ID اور hash پیسٹ کریں',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    'آپ کی اپنی Slack ایپ کا User OAuth Token، OAuth & Permissions کے تحت',
+  'Create your own Slack app': 'اپنی Slack ایپ بنائیں',
+  'Open the link, pick your workspace and create the app as it is set up':
+    'لنک کھولیں، اپنا ورک اسپیس چنیں اور ایپ ویسے ہی بنائیں جیسے ترتیب دی گئی ہے',
+  'Under Install App, install it to your workspace and allow it':
+    'Install App کے تحت اسے اپنے ورک اسپیس میں انسٹال کریں اور اجازت دیں',
+  'Copy the User OAuth Token (xoxp-) and paste it here':
+    'User OAuth Token (xoxp-) کاپی کر کے یہاں پیسٹ کریں',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    'پیغامات فوراً پانے کے لیے: Basic Information کے تحت connections:write والا ایپ لیول ٹوکن بنائیں اور نیچے پیسٹ کریں (xapp-)',
 }

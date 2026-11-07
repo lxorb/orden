@@ -3382,8 +3382,6 @@ export const zhHant: Dictionary = {
   'Chats are off. Turn them on in Settings.': '聊天已關閉。請在設定中開啟。',
   'User token': '使用者權杖',
   'App-level token': '應用程式層級權杖',
-  'Leave it empty to sign in through the browser, or paste the user token of your own Slack app':
-    '留空以在瀏覽器中登入，或貼上你自己的 Slack 應用程式的使用者權杖',
   'Optional: with Socket Mode on in your own app, messages arrive at once':
     '選用：在你自己的應用程式中開啟 Socket Mode，訊息即時送達',
   'Signed out of Slack. Connect again.': '已登出 Slack。請重新連線。',
@@ -3394,8 +3392,6 @@ export const zhHant: Dictionary = {
   'Slack removes messages for everyone': 'Slack 會為所有人刪除訊息',
   'Slack files need the desktop app': 'Slack 檔案需要桌面應用程式',
   'Slack does not know that emoji': 'Slack 不認得這個表情符號',
-  'Paste a Slack user token, this build cannot sign in through the browser':
-    '請貼上 Slack 使用者權杖，此版本無法在瀏覽器中登入',
   'Delete for everyone': '為所有人刪除',
   'Delete for me': '僅為我刪除',
   Forwarded: '已轉傳',
@@ -3472,11 +3468,23 @@ export const zhHant: Dictionary = {
     '在 API permissions 下新增委派權限 IMAP.AccessAsUser.All、SMTP.Send 和 offline_access，然後將 Application (client) ID 貼到這裡',
   'API ID': 'API ID',
   'API hash': 'API hash',
-  'From my.telegram.org, under API development tools': '來自 my.telegram.org 的 API development tools',
+  'From my.telegram.org, under API development tools':
+    '來自 my.telegram.org 的 API development tools',
   'How to get your API ID and hash': '如何取得 API ID 和 hash',
   'Sign in at my.telegram.org with your phone number': '用你的電話號碼登入 my.telegram.org',
   'Open API development tools and create an app with any name':
     '開啟 API development tools，用任意名稱建立一個應用程式',
-  'Copy App api_id and App api_hash into the fields here': '把 App api_id 和 App api_hash 複製到這裡的欄位',
+  'Copy App api_id and App api_hash into the fields here':
+    '把 App api_id 和 App api_hash 複製到這裡的欄位',
   'Paste the API ID and hash from my.telegram.org': '請貼上來自 my.telegram.org 的 API ID 和 hash',
+  'The User OAuth Token of your own Slack app, under OAuth & Permissions':
+    '你自己的 Slack 應用程式的 User OAuth Token，在 OAuth & Permissions 下',
+  'Create your own Slack app': '建立你自己的 Slack 應用程式',
+  'Open the link, pick your workspace and create the app as it is set up':
+    '開啟連結，選擇你的工作區，依預設建立應用程式',
+  'Under Install App, install it to your workspace and allow it':
+    '在 Install App 下，將它安裝到你的工作區並允許',
+  'Copy the User OAuth Token (xoxp-) and paste it here': '複製 User OAuth Token（xoxp-）並貼到這裡',
+  'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
+    '要即時收到訊息：在 Basic Information 下產生具 connections:write 的應用程式層級權杖，並貼到下方（xapp-）',
 }
