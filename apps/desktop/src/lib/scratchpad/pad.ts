@@ -40,6 +40,7 @@ class Scratchpad {
   private asked: Promise<string> | null = null
   private known: string | null = null
   private readonly onTheirWay = new Set<string>()
+  private readonly heard = new Set<() => void>()
   live: EditorView | null = null
   line: number | null = null
 
@@ -82,6 +83,16 @@ class Scratchpad {
 
     await this.landed(path, words)
     if (storedText(WRITING) === mine) forget(WRITING)
+    this.told()
+  }
+
+  listen(heard: () => void): () => void {
+    this.heard.add(heard)
+    return () => this.heard.delete(heard)
+  }
+
+  private told(): void {
+    for (const heard of this.heard) heard()
   }
 
   private mayBe(): string[] {
@@ -141,6 +152,26 @@ class Scratchpad {
     return owed ? settled(owed, text) : text
   }
 
+  async now(): Promise<string> {
+    return this.toChange(await this.where())
+  }
+
+  async takeIn(
+    change: (now: string) => readonly Edit[],
+    settle: (after: string) => Promise<void>,
+  ): Promise<void> {
+    const path = await this.where()
+    const before = await this.toChange(path)
+    const edits = change(before)
+    const after = applied(before, edits)
+    if (after !== before) {
+      if (this.live) this.live.dispatch({ changes: [...edits] })
+      else this.intoTab(path, edits, after)
+    }
+    await settle(after)
+    if (after !== before) await this.written(path, after, false)
+  }
+
   private async toChange(path: string): Promise<string> {
     if (this.live) return this.live.state.doc.toString()
     const words = await workspace.noteText(path)
@@ -169,11 +200,12 @@ class Scratchpad {
     workspace.documentAt(path)?.edited(changes, after)
   }
 
-  private async written(path: string, words: string): Promise<void> {
+  private async written(path: string, words: string, tell = true): Promise<void> {
     const held = storedText(WRITING)
     const within = this.live !== null
     await this.landed(path, words)
     if (within && storedText(WRITING) === held) forget(WRITING)
+    if (tell) this.told()
   }
 }
 

@@ -240,3 +240,37 @@ describe('words the card is writing down', () => {
     expect(fake.kept.size).toBe(0)
   })
 })
+
+describe('words another device wrote', () => {
+  test('are kept before the file is written, then land in it', async () => {
+    fake.disk.set(PAD, 'mine')
+    const seen: string[] = []
+
+    await scratchpad.takeIn(
+      (now) => [{ from: now.length, to: now.length, insert: ' theirs' }],
+      (after) => {
+        seen.push(after, fake.disk.get(PAD) ?? '')
+        return Promise.resolve()
+      },
+    )
+
+    expect(seen).toEqual(['mine theirs', 'mine'])
+    expect(fake.disk.get(PAD)).toBe('mine theirs')
+  })
+
+  test('are not taken for writing on this device', async () => {
+    fake.disk.set(PAD, 'mine')
+    let told = 0
+    const stop = scratchpad.listen(() => told++)
+
+    await scratchpad.takeIn(
+      () => [{ from: 0, to: 0, insert: 'theirs ' }],
+      () => Promise.resolve(),
+    )
+    expect(told).toBe(0)
+
+    await scratchpad.append('more')
+    expect(told).toBe(1)
+    stop()
+  })
+})
