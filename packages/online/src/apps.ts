@@ -20,11 +20,12 @@ export type AppState = 'stopped' | 'starting' | 'running' | 'exited'
 const APP_STATES: readonly AppState[] = ['stopped', 'starting', 'running', 'exited']
 
 export type NotStarted =
-  'isolation' | 'display' | 'refused' | 'missing' | 'packaged' | 'handed' | 'failed'
+  'isolation' | 'display' | 'permission' | 'refused' | 'missing' | 'packaged' | 'handed' | 'failed'
 
 export const NOT_STARTED: readonly NotStarted[] = [
   'isolation',
   'display',
+  'permission',
   'refused',
   'missing',
   'packaged',

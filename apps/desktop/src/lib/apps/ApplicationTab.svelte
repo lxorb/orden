@@ -182,6 +182,8 @@
         return t('{device} cannot run an application on a display of its own yet.', { device })
       case 'display':
         return t('{device} needs Xvfb to run an application.', { device })
+      case 'permission':
+        return t('{device} needs Screen Recording and Accessibility.', { device })
       case 'refused':
         return t('{device} did not allow this program.', { device })
       case 'missing':

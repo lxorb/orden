@@ -2282,6 +2282,7 @@ export const zhHans: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} 暂时还不能在独立的显示器上运行应用程序。',
   '{device} needs Xvfb to run an application.': '{device} 需要 Xvfb 才能运行应用程序。',
+  '{device} needs Screen Recording and Accessibility.': '{device} 需要屏幕录制和辅助功能权限。',
   '{device} did not allow this program.': '{device} 未允许此程序。',
   '{device} does not have this application.': '{device} 上没有此应用程序。',
   '{device} cannot start a Store application on a desktop of its own.':

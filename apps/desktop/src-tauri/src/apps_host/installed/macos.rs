@@ -30,18 +30,35 @@ pub fn entries(with_icons: bool) -> Vec<Entry> {
             if !seen.insert(bundle.key.clone()) {
                 continue;
             }
-            let id = path.to_string_lossy().into_owned();
+            let Some(program) = program(&path) else {
+                continue;
+            };
             found.push(Entry::program(
                 Listed {
-                    id: id.clone(),
+                    id: path.to_string_lossy().into_owned(),
                     name: bundle.name,
                     icon: bundle.icon,
                 },
-                vec!["/usr/bin/open".to_owned(), "-a".to_owned(), id],
+                vec![program],
             ));
         }
     }
     found
+}
+
+pub fn program(bundle: &Path) -> Option<String> {
+    let contents = bundle.join("Contents");
+    let info = plist::Value::from_file(contents.join("Info.plist")).ok()?;
+    let executable = info
+        .as_dictionary()?
+        .get("CFBundleExecutable")
+        .and_then(plist::Value::as_string)
+        .map(str::trim)
+        .filter(|one| !one.is_empty() && !one.contains('/'))?;
+    let program = contents.join("MacOS").join(executable);
+    program
+        .is_file()
+        .then(|| program.to_string_lossy().into_owned())
 }
 
 pub fn bundles(root: &Path) -> Vec<PathBuf> {
@@ -209,7 +226,8 @@ mod tests {
             "Utilities/Terminal.app",
             "<key>CFBundleDisplayName</key><string>Terminal</string>\
              <key>CFBundleIdentifier</key><string>com.apple.Terminal</string>\
-             <key>CFBundleIconFile</key><string>Terminal</string>",
+             <key>CFBundleIconFile</key><string>Terminal</string>\
+             <key>CFBundleExecutable</key><string>Terminal</string>",
         );
         std::fs::write(resources.join("Terminal.icns"), icns(&[(b"icp5", png(32))])).unwrap();
         bundle(
@@ -232,6 +250,20 @@ mod tests {
             .unwrap()
             .icon
             .is_none());
+        let terminal = root.join("Utilities/Terminal.app");
+        assert_eq!(program(&terminal), None);
+        std::fs::create_dir_all(terminal.join("Contents/MacOS")).unwrap();
+        std::fs::write(terminal.join("Contents/MacOS/Terminal"), "").unwrap();
+        assert_eq!(
+            program(&terminal),
+            Some(
+                terminal
+                    .join("Contents/MacOS/Terminal")
+                    .to_string_lossy()
+                    .into_owned()
+            )
+        );
+        assert_eq!(program(&root.join("Plain.app")), None);
         let _ = std::fs::remove_dir_all(root);
     }
 }

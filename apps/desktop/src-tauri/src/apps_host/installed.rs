@@ -72,6 +72,20 @@ fn entries(_icons: bool) -> Vec<Entry> {
     Vec::new()
 }
 
+pub fn program_of(path: &str) -> Option<String> {
+    #[cfg(target_os = "macos")]
+    {
+        let named = Path::new(path);
+        let bundle = named
+            .extension()
+            .is_some_and(|one| one.eq_ignore_ascii_case("app"));
+        if bundle && named.is_dir() {
+            return macos::program(named);
+        }
+    }
+    on_path(path).then(|| path.to_owned())
+}
+
 pub fn on_path(program: &str) -> bool {
     which(program).is_some()
 }

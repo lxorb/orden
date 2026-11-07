@@ -2342,6 +2342,8 @@ export const ms: Dictionary = {
     '{device} belum boleh menjalankan aplikasi pada paparan sendiri.',
   '{device} needs Xvfb to run an application.':
     '{device} memerlukan Xvfb untuk menjalankan aplikasi.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} memerlukan Rakaman Skrin dan Kebolehcapaian.',
   '{device} did not allow this program.': '{device} tidak membenarkan program ini.',
   '{device} does not have this application.': '{device} tiada aplikasi ini.',
   '{device} cannot start a Store application on a desktop of its own.':

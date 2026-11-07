@@ -2343,6 +2343,8 @@ export const gu: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} હજુ પોતાના અલગ ડિસ્પ્લે પર એપ્લિકેશન ચલાવી શકતું નથી.',
   '{device} needs Xvfb to run an application.': 'એપ્લિકેશન ચલાવવા માટે {device}ને Xvfb જોઈએ.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device}ને સ્ક્રીન રેકોર્ડિંગ અને ઍક્સેસિબિલિટીની પરવાનગી જોઈએ.',
   '{device} did not allow this program.': '{device}એ આ પ્રોગ્રામની મંજૂરી ન આપી.',
   '{device} does not have this application.': '{device} પાસે આ એપ્લિકેશન નથી.',
   '{device} cannot start a Store application on a desktop of its own.':

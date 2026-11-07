@@ -17,6 +17,7 @@ pub enum Hardware {
     Qsv,
     Nvenc,
     Amf,
+    VideoToolbox,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -26,7 +27,7 @@ pub struct Encoder {
     pub hardware: Hardware,
 }
 
-pub const ALL: [Encoder; 8] = [
+pub const ALL: [Encoder; 9] = [
     one("h264_nvenc", Made::H264, Hardware::Nvenc),
     one("h264_vaapi", Made::H264, Hardware::Vaapi),
     one("h264_qsv", Made::H264, Hardware::Qsv),
@@ -34,6 +35,7 @@ pub const ALL: [Encoder; 8] = [
     one("vp9_vaapi", Made::Vp9, Hardware::Vaapi),
     one("vp9_qsv", Made::Vp9, Hardware::Qsv),
     one("vp8_vaapi", Made::Vp8, Hardware::Vaapi),
+    one("h264_videotoolbox", Made::H264, Hardware::VideoToolbox),
     SOFTWARE,
 ];
 
@@ -64,6 +66,7 @@ pub fn working() -> &'static [Encoder] {
             .iter()
             .copied()
             .filter(|one| one.hardware != Hardware::None)
+            .filter(|one| ours(one.hardware))
             .filter(|one| works(*one))
             .collect();
         found.push(SOFTWARE);
@@ -71,15 +74,28 @@ pub fn working() -> &'static [Encoder] {
     })
 }
 
+fn ours(hardware: Hardware) -> bool {
+    (hardware == Hardware::VideoToolbox) == cfg!(target_os = "macos")
+}
+
+const MAC_FOLDERS: [&str; 3] = ["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"];
+
 pub fn ffmpeg() -> Option<PathBuf> {
     static FOUND: OnceLock<Option<PathBuf>> = OnceLock::new();
     FOUND
         .get_or_init(|| {
-            super::installed::which("ffmpeg").or_else(|| {
-                let links = PathBuf::from(std::env::var_os("LOCALAPPDATA")?)
-                    .join("Microsoft\\WinGet\\Links\\ffmpeg.exe");
-                (cfg!(windows) && links.is_file()).then_some(links)
-            })
+            super::installed::which("ffmpeg")
+                .or_else(|| {
+                    let links = PathBuf::from(std::env::var_os("LOCALAPPDATA")?)
+                        .join("Microsoft\\WinGet\\Links\\ffmpeg.exe");
+                    (cfg!(windows) && links.is_file()).then_some(links)
+                })
+                .or_else(|| {
+                    MAC_FOLDERS
+                        .iter()
+                        .map(|folder| PathBuf::from(folder).join("ffmpeg"))
+                        .find(|one| cfg!(target_os = "macos") && one.is_file())
+                })
         })
         .clone()
 }
@@ -144,7 +160,7 @@ fn device_args(hardware: Hardware) -> Vec<String> {
             "va",
         ],
         Hardware::Qsv => &["-init_hw_device", "qsv=hw", "-filter_hw_device", "hw"],
-        Hardware::Nvenc | Hardware::Amf | Hardware::None => &[],
+        Hardware::Nvenc | Hardware::Amf | Hardware::VideoToolbox | Hardware::None => &[],
     };
     words.iter().map(|&one| one.to_owned()).collect()
 }
@@ -154,6 +170,7 @@ fn upload_args(hardware: Hardware) -> Vec<String> {
         Hardware::Vaapi => &["-vf", "format=nv12,hwupload"],
         Hardware::Qsv => &["-vf", "format=nv12,hwupload=extra_hw_frames=16"],
         Hardware::Nvenc | Hardware::Amf | Hardware::None => &["-pix_fmt", "yuv420p"],
+        Hardware::VideoToolbox => &["-pix_fmt", "nv12"],
     };
     words.iter().map(|&one| one.to_owned()).collect()
 }
@@ -212,6 +229,16 @@ fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
             "ultralowlatency",
             "-quality",
             "speed",
+            "-profile:v",
+            "constrained_baseline",
+        ],
+        "h264_videotoolbox" => &[
+            "-realtime",
+            "1",
+            "-prio_speed",
+            "1",
+            "-bf",
+            "0",
             "-profile:v",
             "constrained_baseline",
         ],
