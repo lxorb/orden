@@ -1,5 +1,15 @@
 import { describe, expect, test } from 'vitest'
-import { blurred, boxesFor, fitted, LARGEST, measured, sharpBelow, sideFor, toned } from './pixels'
+import {
+  blurred,
+  boxesFor,
+  fitted,
+  LARGEST,
+  measured,
+  sharpBelow,
+  sharpSide,
+  sideFor,
+  toned,
+} from './pixels'
 
 function picture(
   width: number,
@@ -132,5 +142,22 @@ describe('a picture sharp enough to want the screen’s own size', () => {
     expect(sharpBelow(2560)).toBeCloseTo(10.67, 1)
     expect(sideFor(sharpBelow(2560) + 0.5, 2560)).toBeLessThan(LARGEST)
     expect(sideFor(sharpBelow(2560) - 0.5, 2560)).toBe(LARGEST)
+  })
+})
+
+describe('the sharp copy', () => {
+  test('is the screen’s own pixels with no blur at all', () => {
+    expect(sharpSide(0, 2560, 3200)).toBe(3200)
+    expect(sharpSide(0.25, 2560, 3200)).toBe(3200)
+  })
+
+  test('holds a pixel per half-blur, as the kept picture does, so a blurred one is drawn small', () => {
+    expect(sharpSide(4, 2560, 3200)).toBe(1280)
+    expect(sharpSide(8, 2560, 3200)).toBe(640)
+    expect(sharpSide(sharpBelow(2560) - 0.01, 2560, 3200)).toBe(LARGEST)
+  })
+
+  test('never holds more than the screen has', () => {
+    expect(sharpSide(1, 2560, 1800)).toBe(1800)
   })
 })

@@ -16,7 +16,7 @@ import {
   WALLPAPER_THEME,
 } from './held'
 import { type Copy, forgetSource, keepSource, keptSource } from './kept'
-import { sharpBelow } from './pixels'
+import { sharpBelow, sharpSide } from './pixels'
 import { copyOf, decode, type Drawable, made, sharp, type Tone, toneKey } from './render'
 import { toneOf } from './settings'
 import { showPicture } from './sheet'
@@ -37,6 +37,11 @@ function screenSide(): number {
 
 function devicePixels(): number {
   return Math.min(LARGEST_COPY, Math.round(screenSide() * (window.devicePixelRatio || 1)))
+}
+
+function sharpLongest(blur: number, kept: boolean): number {
+  const side = sharpSide(blur, screenSide(), devicePixels())
+  return kept ? side : Math.min(MOVING, side)
 }
 
 function blurDial(): number {
@@ -214,7 +219,7 @@ class Wallpaper {
     held = { ...held, blur }
 
     if (blur < least) {
-      const copy = await sharp(source, blur, tone, side, kept ? devicePixels() : MOVING)
+      const copy = await sharp(source, blur, tone, side, sharpLongest(blur, kept))
       held = { ...held, span: copy.span, mean: copy.mean }
       this.sharpened[slot] = copy.picture
     } else {
@@ -239,7 +244,7 @@ class Wallpaper {
           held.blur,
           toneDial(),
           screenSide(),
-          kept ? devicePixels() : MOVING,
+          sharpLongest(held.blur, kept),
         )
         copy = made.picture
         this.sharpened[slot] = copy
