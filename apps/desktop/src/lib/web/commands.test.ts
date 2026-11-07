@@ -1499,7 +1499,30 @@ describe('a note kept away', () => {
       'Later.md',
       'Work/Plan.md',
     ])
-    expect(await webInvoke('space_tags', { root: '/Notes' })).toEqual([{ tag: 'work', count: 1 }])
+    expect(await webInvoke('space_tags', { root: '/Notes' })).toEqual([{ tag: '#work', count: 1 }])
+  })
+
+  test('counts the tags of its own space, reading none of the notes of another', async () => {
+    away()
+    const stamp = { size: 12, mtime: 5, ctime: 5 }
+    const said = indexed('Plan.md', '# Plan\n\nkept away #work\n', stamp)
+    if (said) keptAway.answeredBy(new Map([['n1', said]]), () => Promise.resolve())
+    await write('/Notes/a.md', 'one #work')
+    await write('/Notes/Deep/b.md', 'two #work #home')
+    await write('/Other/c.md', 'three #home')
+    const { files } = await import('./store')
+    const whole = vi.spyOn(files, 'all')
+    const read = vi.spyOn(files, 'between')
+
+    expect(await webInvoke('space_tags', { root: '/Notes' })).toEqual([
+      { tag: '#work', count: 3 },
+      { tag: '#home', count: 1 },
+    ])
+    expect(whole).not.toHaveBeenCalled()
+    const rows = await Promise.all(read.mock.results.map((one) => one.value as Promise<FileRow[]>))
+    expect(rows.flat().map((row) => row.path)).not.toContain('/Other/c.md')
+    whole.mockRestore()
+    read.mockRestore()
   })
 
   test('let go of, its row goes with nothing kept', async () => {
