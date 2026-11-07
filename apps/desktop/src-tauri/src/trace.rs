@@ -244,7 +244,7 @@ fn millis_since_epoch() -> f64 {
 }
 
 #[cfg(windows)]
-fn cpu() -> Option<Duration> {
+pub(crate) fn cpu() -> Option<Duration> {
     use windows::Win32::Foundation::FILETIME;
     use windows::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
 
@@ -286,7 +286,7 @@ fn cpu() -> Option<Duration> {
 }
 
 #[cfg(not(windows))]
-fn cpu() -> Option<Duration> {
+pub(crate) fn cpu() -> Option<Duration> {
     None
 }
 
