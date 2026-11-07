@@ -7,26 +7,28 @@ mod store {
     use keyring::{Entry, Error};
     use tauri::AppHandle;
 
-    fn entry(service: &str, account: &str) -> Result<Entry, String> {
-        Entry::new(service, account).map_err(|error| error.to_string())
+    use super::file;
+
+    fn entry(service: &str, account: &str) -> Result<Entry, Error> {
+        Entry::new(service, account)
     }
 
-    fn read(service: &str, account: &str) -> Result<Option<String>, String> {
+    fn read(service: &str, account: &str) -> Result<Option<String>, Error> {
         match entry(service, account)?.get_password() {
             Ok(secret) => Ok(Some(secret)),
             Err(Error::NoEntry) => Ok(None),
-            Err(error) => Err(error.to_string()),
+            Err(error) => Err(error),
         }
     }
 
-    fn forget(service: &str, account: &str) -> Result<(), String> {
+    fn forget(service: &str, account: &str) -> Result<(), Error> {
         match entry(service, account)?.delete_credential() {
             Ok(()) | Err(Error::NoEntry) => Ok(()),
-            Err(error) => Err(error.to_string()),
+            Err(error) => Err(error),
         }
     }
 
-    pub fn get(_app: &AppHandle, account: &str) -> Result<Option<String>, String> {
+    fn kept(account: &str) -> Result<Option<String>, Error> {
         if let Some(secret) = read(super::SERVICE, account)? {
             return Ok(Some(secret));
         }
@@ -42,22 +44,63 @@ mod store {
         Ok(Some(secret))
     }
 
-    pub fn set(_app: &AppHandle, account: &str, secret: &str) -> Result<(), String> {
-        entry(super::SERVICE, account)?
-            .set_password(secret)
-            .map_err(|error| error.to_string())?;
-        let _ = forget(super::FORMER_SERVICE, account);
-        Ok(())
+    fn away(error: &Error) -> bool {
+        matches!(error, Error::PlatformFailure(_) | Error::NoStorageAccess(_))
     }
 
-    pub fn delete(_app: &AppHandle, account: &str) -> Result<(), String> {
-        forget(super::SERVICE, account)?;
-        forget(super::FORMER_SERVICE, account)
+    pub(super) fn either(
+        kept: Result<Option<String>, Error>,
+        filed: impl FnOnce() -> Result<Option<String>, String>,
+    ) -> Result<Option<String>, String> {
+        match kept {
+            Ok(Some(secret)) => Ok(Some(secret)),
+            Ok(None) => filed(),
+            Err(error) if away(&error) => filed(),
+            Err(error) => Err(error.to_string()),
+        }
+    }
+
+    pub(super) fn wrote(
+        kept: Result<(), Error>,
+        then: impl FnOnce() -> Result<(), String>,
+        instead: impl FnOnce() -> Result<(), String>,
+    ) -> Result<(), String> {
+        match kept {
+            Ok(()) => then(),
+            Err(error) if away(&error) => instead(),
+            Err(error) => Err(error.to_string()),
+        }
+    }
+
+    pub fn get(app: &AppHandle, account: &str) -> Result<Option<String>, String> {
+        either(kept(account), || file::get(app, account))
+    }
+
+    pub fn set(app: &AppHandle, account: &str, secret: &str) -> Result<(), String> {
+        let written = entry(super::SERVICE, account).and_then(|one| one.set_password(secret));
+        if written.is_ok() {
+            let _ = forget(super::FORMER_SERVICE, account);
+        }
+        wrote(
+            written,
+            || file::delete(app, account),
+            || file::set(app, account, secret),
+        )
+    }
+
+    pub fn delete(app: &AppHandle, account: &str) -> Result<(), String> {
+        wrote(
+            forget(super::SERVICE, account).and_then(|()| forget(super::FORMER_SERVICE, account)),
+            || file::delete(app, account),
+            || file::delete(app, account),
+        )
     }
 }
 
 #[cfg(target_os = "macos")]
-mod store {
+use file as store;
+
+mod file {
     use std::sync::Mutex;
 
     use tauri::{AppHandle, Manager as _};
@@ -102,10 +145,8 @@ mod store {
     }
 }
 
-#[cfg_attr(not(any(test, target_os = "macos")), allow(dead_code))]
 const FILE: &str = "secrets.json";
 
-#[cfg_attr(not(any(test, target_os = "macos")), allow(dead_code))]
 fn read_file(path: &std::path::Path) -> Result<BTreeMap<String, String>, String> {
     match std::fs::read(path) {
         Ok(bytes) => serde_json::from_slice(&bytes)
@@ -115,7 +156,6 @@ fn read_file(path: &std::path::Path) -> Result<BTreeMap<String, String>, String>
     }
 }
 
-#[cfg_attr(not(any(test, target_os = "macos")), allow(dead_code))]
 fn write_file(path: &std::path::Path, kept: &BTreeMap<String, String>) -> Result<(), String> {
     if let Some(folder) = path.parent() {
         crate::paths::made(folder)?;
@@ -204,6 +244,28 @@ mod tests {
         std::fs::write(&path, b"not json").unwrap();
         assert!(read_file(&path).is_err());
         let _ = std::fs::remove_dir_all(folder);
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    #[test]
+    fn a_keyring_that_is_not_there_keeps_keys_in_the_file() {
+        use super::store::{either, wrote};
+        use keyring::Error;
+        let gone = || Error::PlatformFailure("no secret service".into());
+        let filed = || Ok(Some("sk".to_owned()));
+        assert_eq!(either(Err(gone()), filed), Ok(Some("sk".to_owned())));
+        assert_eq!(either(Ok(None), filed), Ok(Some("sk".to_owned())));
+        assert_eq!(
+            either(Ok(Some("kept".to_owned())), || Err("unread".to_owned())),
+            Ok(Some("kept".to_owned()))
+        );
+        assert!(either(Err(Error::TooLong("name".into(), 1)), filed).is_err());
+        assert_eq!(
+            wrote(Err(gone()), || Err("kept".to_owned()), || Ok(())),
+            Ok(())
+        );
+        assert_eq!(wrote(Ok(()), || Ok(()), || Err("filed".to_owned())), Ok(()));
+        assert!(wrote(Err(Error::TooLong("name".into(), 1)), || Ok(()), || Ok(())).is_err());
     }
 
     #[test]
