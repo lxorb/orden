@@ -1093,9 +1093,10 @@ fn windows_asked(
     let holder = holder.to_string();
     builder.on_new_window(move |url: Url, features| {
         #[cfg(windows)]
-        let hushed = crate::extensions::welcome::taken(&asking);
-        let said = crate::web_opens::taken(&asking);
-        if crate::web_opens::ours(&asking) {
+        let hushed = crate::extensions::welcome::taken(&asking, &url);
+        let heard = crate::web_opens::heard(&asking, &url);
+        let said = heard.said;
+        if heard.ours {
             return NewWindowResponse::Deny;
         }
         #[cfg(windows)]
@@ -1103,9 +1104,8 @@ fn windows_asked(
             return NewWindowResponse::Deny;
         }
 
-        let unasked = crate::web_opens::unasked(&asking);
         let sized = features.size().is_some() || features.position().is_some();
-        let address = match becomes(&url, sized, said.is_some(), unasked) {
+        let address = match becomes(&url, sized, said.is_some(), heard.unasked) {
             Becomes::Nothing => return NewWindowResponse::Deny,
             Becomes::Blocked(address) => {
                 popup_blocked(&opening, &holder, &asking, &address);
