@@ -1,5 +1,5 @@
 diff --git a/dist/index.js b/dist/index.js
-index 1021312..63d0184 100644
+index 1021312..7e82823 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -1731,6 +1731,8 @@ class ViewUpdate {
@@ -79,3 +79,21 @@ index 1021312..63d0184 100644
          for (let cur = start;;) {
              this.findPointBefore(parent, cur);
              let oldLen = this.text.length;
+@@ -4764,6 +4796,17 @@ class MouseSelection {
+             return this.destroy();
+         if (this.dragging || this.dragging == null && dist(this.startEvent, event) < 10)
+             return;
++        // A press in the selection may still start a drag, which the browser does after this
++        // event: selecting now would drag what was selected instead.
++        if (this.dragging == null && !this.waitedForDrag) {
++            this.waitedForDrag = true;
++            this.lastEvent = event;
++            setTimeout(() => {
++                if (this.dragging == null && this.view.inputState.mouseSelection == this)
++                    this.move(this.lastEvent);
++            });
++            return;
++        }
+         this.select(this.lastEvent = event);
+         let sx = 0, sy = 0;
+         let left = 0, top = 0, right = this.view.win.innerWidth, bottom = this.view.win.innerHeight;
