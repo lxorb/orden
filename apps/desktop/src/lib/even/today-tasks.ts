@@ -4,16 +4,46 @@ import { modes } from '../modes.svelte'
 import { AGENTS_NAME } from '../note-name'
 import { inboxOf } from '../rows/inbox'
 import { listedAt } from '../rows/todo-lists'
-import { insideSpace, samePath } from '../space-paths'
+import { insideSpace, samePath, within } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
+
+const KEPT_FOR = 5 * 60_000
+
+const scanned = new Map<string, { at: number; notes: Promise<readonly ScannedNote[]> }>()
+
+let heard = false
+
+function hear() {
+  if (heard) return
+  heard = true
+  links.hearSaves((path) => {
+    for (const root of scanned.keys()) if (within(root, path, root) !== null) scanned.delete(root)
+  })
+  workspace.fileOps.follow(() => scanned.clear())
+}
+
+function scan(root: string): Promise<readonly ScannedNote[]> {
+  hear()
+  const kept = scanned.get(root)
+  if (kept && Date.now() - kept.at < KEPT_FOR) return kept.notes
+  const notes = invoke<SpaceLinks>('scan_links', { root }).then(
+    (found) => found.notes,
+    () => {
+      if (scanned.get(root)?.notes === notes) scanned.delete(root)
+      return []
+    },
+  )
+  scanned.set(root, { at: Date.now(), notes })
+  return notes
+}
 
 async function notesOf(root: string): Promise<readonly ScannedNote[]> {
   if (samePath(links.rootOf(), root)) {
     await links.scanned()
     if (samePath(links.rootOf(), root)) return links.held()
   }
-  return (await invoke<SpaceLinks>('scan_links', { root }).catch(() => null))?.notes ?? []
+  return scan(root)
 }
 
 export async function todayHere(): Promise<{ at: string; space: string; text: string }[]> {

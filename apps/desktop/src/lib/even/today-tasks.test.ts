@@ -5,6 +5,9 @@ const held = vi.hoisted(() => ({
   disk: new Map<string, string>(),
   locked: new Set<string>(),
   lists: new Set<string>(),
+  scans: [] as string[],
+  saves: [] as ((path: string, content: string) => void)[],
+  ops: [] as (() => void)[],
 }))
 
 const notesUnder = (root: string) =>
@@ -17,15 +20,20 @@ vi.mock('../link-index.svelte', () => ({
     rootOf: () => '/home',
     scanned: () => Promise.resolve(),
     held: () => notesUnder('/home'),
+    hearSaves: (hear: (path: string, content: string) => void) => {
+      held.saves.push(hear)
+      return () => undefined
+    },
   },
 }))
 
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
-  invoke: (command: string, args: { root: string }) =>
-    command === 'scan_links'
-      ? Promise.resolve({ notes: notesUnder(args.root), files: [] })
-      : Promise.reject(new Error(command)),
+  invoke: (command: string, args: { root: string }) => {
+    if (command !== 'scan_links') return Promise.reject(new Error(command))
+    held.scans.push(args.root)
+    return Promise.resolve({ notes: notesUnder(args.root), files: [] })
+  },
 }))
 
 vi.mock('../rows/todo-lists', () => ({
@@ -44,6 +52,12 @@ vi.mock('../workspace.svelte', () => ({
     ],
     protection: { locked: (path: string) => held.locked.has(path) },
     noteText: (path: string) => Promise.resolve(held.disk.get(path) ?? null),
+    fileOps: {
+      follow: (follower: () => void) => {
+        held.ops.push(follower)
+        return () => undefined
+      },
+    },
   },
 }))
 
@@ -64,5 +78,32 @@ describe("the glasses' Today", () => {
     const texts = (await todayHere()).map((one) => `${one.space}: ${one.text}`).sort()
 
     expect(texts).toEqual(['Home: Call Mum', 'Home: Milk', 'Work: Send the slides'])
+  })
+
+  test('scans a space that is not open once, and again only after a save in it or a file moves', async () => {
+    held.disk.set('/work/Plan.md', '- [ ] First 📅 2020-01-01\n')
+    held.lists.add('/work/Plan.md')
+    for (const moved of held.ops) moved()
+    held.scans.length = 0
+    const texts = async () => (await todayHere()).map((one) => one.text)
+
+    await todayHere()
+    await todayHere()
+    expect(held.scans).toEqual(['/work'])
+
+    for (const hear of held.saves) hear('/home/Shop.md', '')
+    await todayHere()
+    expect(held.scans).toEqual(['/work'])
+
+    held.disk.set('/work/Plan.md', '- [ ] Second 📅 2020-01-01\n')
+    for (const hear of held.saves) hear('/work/Plan.md', '')
+    expect(await texts()).toContain('Second')
+    expect(held.scans).toEqual(['/work', '/work'])
+
+    held.disk.set('/work/Moved.md', '- [ ] Third 📅 2020-01-01\n')
+    held.lists.add('/work/Moved.md')
+    for (const moved of held.ops) moved()
+    expect(await texts()).toContain('Third')
+    expect(held.scans).toEqual(['/work', '/work', '/work'])
   })
 })
