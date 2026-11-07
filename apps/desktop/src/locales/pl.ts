@@ -2444,6 +2444,8 @@ export const pl: Dictionary = {
     '{device} nie może jeszcze uruchomić aplikacji na własnym ekranie.',
   '{device} needs Xvfb to run an application.':
     '{device} potrzebuje Xvfb, aby uruchomić aplikację.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} potrzebuje uprawnień Nagrywanie ekranu i Dostępność.',
   '{device} did not allow this program.': '{device} nie zezwolił na ten program.',
   '{device} does not have this application.': '{device} nie ma tej aplikacji.',
   '{device} cannot start a Store application on a desktop of its own.':

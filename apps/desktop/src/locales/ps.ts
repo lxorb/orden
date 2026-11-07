@@ -2354,6 +2354,8 @@ export const ps: Dictionary = {
     '{device} لا نشي کولی اپلیکیشن د خپل جلا ښودنځي پر مخ وچلوي.',
   '{device} needs Xvfb to run an application.':
     '{device} د اپلیکیشن چلولو لپاره Xvfb ته اړتیا لري.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} د سکرین ثبت او لاسرسي اجازې ته اړتیا لري.',
   '{device} did not allow this program.': '{device} دې پروګرام ته اجازه ورنکړه.',
   '{device} does not have this application.': '{device} دا اپلیکیشن نه لري.',
   '{device} cannot start a Store application on a desktop of its own.':

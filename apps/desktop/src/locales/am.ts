@@ -2316,6 +2316,8 @@ export const am: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} እስካሁን መተግበሪያን በራሱ ማሳያ ላይ ማስኬድ አይችልም።',
   '{device} needs Xvfb to run an application.': '{device} መተግበሪያ ለማስኬድ Xvfb ያስፈልገዋል።',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} የማያ ገጽ ቀረጻ እና ተደራሽነት ፈቃድ ያስፈልገዋል።',
   '{device} did not allow this program.': '{device} ይህን ፕሮግራም አልፈቀደም።',
   '{device} does not have this application.': '{device} ይህ መተግበሪያ የለውም።',
   '{device} cannot start a Store application on a desktop of its own.':

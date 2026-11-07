@@ -2437,6 +2437,8 @@ export const uk: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} поки не може запускати застосунок на окремому екрані.',
   '{device} needs Xvfb to run an application.': 'Щоб запустити застосунок, {device} потрібен Xvfb.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} потребує дозволів «Запис екрана» і «Доступність».',
   '{device} did not allow this program.': '{device} не дозволив цю програму.',
   '{device} does not have this application.': 'На {device} немає цього застосунку.',
   '{device} cannot start a Store application on a desktop of its own.':

@@ -2401,6 +2401,8 @@ export const fil: Dictionary = {
     'Hindi pa kayang magpatakbo ng {device} ng application sa sarili nitong display.',
   '{device} needs Xvfb to run an application.':
     'Kailangan ng {device} ang Xvfb para magpatakbo ng application.',
+  '{device} needs Screen Recording and Accessibility.':
+    'Kailangan ng {device} ang Screen Recording at Accessibility.',
   '{device} did not allow this program.': 'Hindi pinayagan ng {device} ang program na ito.',
   '{device} does not have this application.': 'Wala sa {device} ang application na ito.',
   '{device} cannot start a Store application on a desktop of its own.':

@@ -1,4 +1,7 @@
-#![cfg_attr(not(any(target_os = "linux", target_os = "windows")), allow(dead_code))]
+#![cfg_attr(
+    not(any(target_os = "linux", target_os = "windows", target_os = "macos")),
+    allow(dead_code)
+)]
 
 #[cfg(target_os = "linux")]
 mod audio;
@@ -10,22 +13,26 @@ mod clipboard;
 mod desk;
 #[cfg(target_os = "linux")]
 mod display;
-#[cfg(any(target_os = "linux", target_os = "windows"))]
+#[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 mod encoder;
-#[cfg(any(target_os = "linux", target_os = "windows"))]
+#[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 mod events;
 #[cfg(target_os = "linux")]
 mod input;
 mod installed;
-#[cfg(any(target_os = "linux", target_os = "windows"))]
+#[cfg(target_os = "macos")]
+mod mac;
+#[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 mod stream;
-#[cfg(any(target_os = "linux", target_os = "windows"))]
+#[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 mod stun;
 #[cfg(target_os = "linux")]
 mod wm;
 
 #[cfg(target_os = "windows")]
 use desk::{audio, capture, clipboard, input};
+#[cfg(target_os = "macos")]
+use mac::{audio, capture, clipboard, input};
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -107,6 +114,12 @@ struct Running {
     sink: Mutex<Option<audio::Sink>>,
     #[cfg(target_os = "windows")]
     desktop: Mutex<Option<desk::Desktop>>,
+    #[cfg(target_os = "macos")]
+    display: Mutex<Option<mac::display::Display>>,
+    #[cfg(target_os = "macos")]
+    placer: Mutex<Option<mac::windows::Placer>>,
+    #[cfg(target_os = "macos")]
+    clipboard: Arc<clipboard::Clipboard>,
 }
 
 impl Running {
@@ -125,7 +138,7 @@ impl Running {
 pub struct Hosted {
     apps: Mutex<HashMap<String, Arc<Running>>>,
     allowed: Mutex<Option<HashSet<String>>>,
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     peers: Mutex<HashMap<String, stream::Peer>>,
 }
 
@@ -136,14 +149,14 @@ impl Hosted {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     fn peers(&self) -> MutexGuard<'_, HashMap<String, stream::Peer>> {
         self.peers
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     fn end_peer(&self, key: &str) {
         let gone = self.peers().remove(key);
         drop(gone);
@@ -211,15 +224,17 @@ pub async fn apps_start(
                 (entry.argv, entry.cwd)
             }
             Run::Path { path, args, cwd } => {
-                if !installed::on_path(path) {
-                    return Err("missing".to_owned());
-                }
-                let mut argv = vec![path.clone()];
+                let program = installed::program_of(path).ok_or("missing")?;
+                let mut argv = vec![program];
                 argv.extend(args.iter().cloned());
                 (argv, cwd.clone())
             }
         };
-        if !cfg!(any(target_os = "linux", target_os = "windows")) {
+        if !cfg!(any(
+            target_os = "linux",
+            target_os = "windows",
+            target_os = "macos"
+        )) {
             return Err("isolation".to_owned());
         }
         if let Run::Path { path, args, cwd } = &run {
@@ -232,7 +247,7 @@ pub async fn apps_start(
     .await
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "windows")))]
+#[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn run_on_its_display(
     _app: AppHandle,
     _key: String,
@@ -326,6 +341,94 @@ fn run_on_its_display(
             said.why = Some("handed");
         }
         running.tell(said);
+    });
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn run_on_its_display(
+    app: AppHandle,
+    key: String,
+    argv: Vec<String>,
+    cwd: Option<String>,
+    view: View,
+    events: Channel<Said>,
+) -> Result<(), String> {
+    use mac::{access, display, windows};
+    use std::os::unix::process::CommandExt;
+    use std::process::{Command, Stdio};
+
+    if !display::available() {
+        return Err("isolation".to_owned());
+    }
+    if !access::allowed() {
+        return Err("permission".to_owned());
+    }
+    if encoder::ffmpeg().is_some() {
+        std::thread::spawn(|| encoder::working().len());
+    }
+    let (width, height) = display::screen(view.width, view.height, view.dpr);
+    let display = display::Display::start(width, height, view.dpr).map_err(|_| "failed")?;
+    let folder = cwd
+        .map(PathBuf::from)
+        .filter(|one| one.is_dir())
+        .or_else(dirs::home_dir)
+        .unwrap_or_else(|| PathBuf::from("/"));
+    let (program, rest) = argv.split_first().ok_or("missing")?;
+    let mut child = Command::new(program)
+        .args(rest)
+        .current_dir(folder)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .process_group(0)
+        .spawn()
+        .map_err(|_| "failed")?;
+    let pid = child.id();
+    let process = i32::try_from(pid).map_err(|_| "failed")?;
+    let running = Arc::new(Running {
+        pid,
+        events: Mutex::new(Some(events)),
+        stopping: AtomicBool::new(false),
+        screen: Arc::new(Mutex::new(Screen {
+            display: format!("{}/{pid}", display.id),
+            hz: view.hz,
+        })),
+        placer: Mutex::new(Some(windows::Placer::start(process, display.id))),
+        display: Mutex::new(Some(display)),
+        clipboard: clipboard::Clipboard::open(process),
+    });
+    app.state::<Hosted>()
+        .apps()
+        .insert(key.clone(), running.clone());
+    running.tell(Said::RUNNING);
+
+    std::thread::spawn(move || {
+        let code = child.wait().ok().and_then(|status| status.code());
+        let placer = running
+            .placer
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take();
+        drop(placer);
+        let display = running
+            .display
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take();
+        drop(display);
+        let hosted = app.state::<Hosted>();
+        let mut apps = hosted.apps();
+        let ours = apps.get(&key).is_some_and(|one| Arc::ptr_eq(one, &running));
+        if ours {
+            apps.remove(&key);
+        }
+        drop(apps);
+        if ours {
+            hosted.end_peer(&key);
+        }
+        let stopped = running.stopping.load(Ordering::SeqCst);
+        running.tell(Said::ended(stopped, code));
     });
     Ok(())
 }
@@ -473,7 +576,7 @@ pub async fn apps_view(webview: Webview, key: String, view: View) -> Result<(), 
     .await
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "windows")))]
+#[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn view_here(_running: &Running, _view: View) {}
 
 #[cfg(target_os = "windows")]
@@ -490,6 +593,23 @@ fn view_here(running: &Running, view: View) {
         .unwrap_or_else(std::sync::PoisonError::into_inner);
     if let Some(desktop) = desktop.as_ref() {
         desktop.fit(width, height);
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn view_here(running: &Running, view: View) {
+    running
+        .screen
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .hz = view.hz;
+    let (width, height) = mac::display::screen(view.width, view.height, view.dpr);
+    let display = running
+        .display
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if let Some(display) = display.as_ref() {
+        display.fit(width, height, view.dpr);
     }
 }
 
@@ -524,13 +644,13 @@ pub async fn apps_signal(
     .await
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "windows")))]
+#[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn signal_here(_hosted: &Hosted, _key: &str, data: &str) -> Option<String> {
     data.contains("\"offer\"")
         .then(|| serde_json::json!({ "cannot": "stopped" }).to_string())
 }
 
-#[cfg(any(target_os = "linux", target_os = "windows"))]
+#[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
     use stream::FromViewer;
 
@@ -588,6 +708,11 @@ fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<St
 #[cfg(target_os = "windows")]
 fn shared_of(_running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
     (None, None)
+}
+
+#[cfg(target_os = "macos")]
+fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
+    (Some(running.clipboard.clone()), None)
 }
 
 fn end(running: &Arc<Running>, grace: std::time::Duration) {
@@ -654,7 +779,7 @@ pub fn end_all(app: &AppHandle) {
         return;
     };
     let all: Vec<Arc<Running>> = hosted.apps().drain().map(|(_, one)| one).collect();
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     hosted.peers().clear();
     if all.is_empty() {
         return;
@@ -759,7 +884,10 @@ fn in_time(test: impl FnOnce() + Send + 'static) {
     within(std::time::Duration::from_secs(120), test);
 }
 
-#[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
+#[cfg(all(
+    test,
+    any(target_os = "linux", target_os = "windows", target_os = "macos")
+))]
 fn within(limit: std::time::Duration, test: impl FnOnce() + Send + 'static) {
     let (done, finished) = std::sync::mpsc::channel();
     let running = std::thread::spawn(move || {
@@ -778,7 +906,7 @@ fn within(limit: std::time::Duration, test: impl FnOnce() + Send + 'static) {
 mod tests {
     use super::*;
 
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     #[test]
     fn a_test_that_hangs_fails_once_its_time_is_up_and_one_that_panics_with_its_own_words() {
         let began = std::time::Instant::now();

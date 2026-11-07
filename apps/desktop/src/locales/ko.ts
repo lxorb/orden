@@ -2316,6 +2316,8 @@ export const ko: Dictionary = {
     '{device}에서는 아직 애플리케이션을 전용 화면에서 실행할 수 없습니다.',
   '{device} needs Xvfb to run an application.':
     '{device}에서 애플리케이션을 실행하려면 Xvfb가 필요합니다.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device}에 화면 기록 및 손쉬운 사용 권한이 필요합니다.',
   '{device} did not allow this program.': '{device}에서 이 프로그램을 허용하지 않았습니다.',
   '{device} does not have this application.': '{device}에 이 애플리케이션이 없습니다.',
   '{device} cannot start a Store application on a desktop of its own.':

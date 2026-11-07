@@ -2324,6 +2324,8 @@ export const vi: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} chưa thể chạy ứng dụng trên một màn hình riêng.',
   '{device} needs Xvfb to run an application.': '{device} cần Xvfb để chạy ứng dụng.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} cần quyền Ghi màn hình và Trợ năng.',
   '{device} did not allow this program.': '{device} không cho phép chương trình này.',
   '{device} does not have this application.': '{device} không có ứng dụng này.',
   '{device} cannot start a Store application on a desktop of its own.':

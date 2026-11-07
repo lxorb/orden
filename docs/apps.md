@@ -81,7 +81,7 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   desktop, every application file of the open space that names this device gets a socket to its
   relay as the host. The holder's Start, Stop and Restart are done by the crate
   (`apps_host.rs`), and where the application stands is said back, with a reason when it did
-  not start (`why`: `isolation`, `display`, `refused`, `missing`, `failed`). Nothing starts by
+  not start (`why`: `isolation`, `display`, `permission`, `refused`, `missing`, `packaged`, `handed`, `failed`). Nothing starts by
   itself; an application keeps running when its viewer leaves and when the host's window
   reloads, and stops when it is stopped, when its file goes and when Orden quits.
 - **What may run**: an installed application by the id the crate found and the command its own
@@ -91,8 +91,7 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
 - **Where**: on Linux, an Xvfb of its own (`apps_host/display.rs`) at the holder's size in
   device pixels, with the toolkits told to speak X11 (`WAYLAND_DISPLAY` removed), in a process
   group of its own that is what Stop ends. Xvfb not installed: the tab says so. Windows and
-  macOS: nothing is started, and the tab says the computer cannot give an application a
-  display of its own yet (step 8).
+  macOS each have a display of their own (step 8, below).
 - **Not yet**: a host serves the applications of the space it has open; a program that speaks
   only Wayland needs a headless compositor (weston), which comes with the capture in step 4.
 
@@ -113,8 +112,8 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
     name once. Icons are the shell's own picture of each.
   - **macOS** (`installed/macos.rs`): the bundles in `~/Applications`, `/Applications` and
     `/System/Applications`, two folders deep, by their own names, once each by bundle id, not
-    background agents; the icon is the smallest PNG of the bundle's `icns` that is large
-    enough.
+    background agents, each run by its bundle's own program; the icon is the smallest PNG of
+    the bundle's `icns` that is large enough.
 - **The chooser holds all of them**: a find sheet lists every match and scrolls, with only the
   rows near the view in the page (`row-window.ts`), and keeps working as it is typed into.
 - **The catalogue** is kept under D1's row limit (`MOST_CATALOGUE`): a host with more than fits
@@ -327,8 +326,35 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   view, draw it, and have a `str0m` viewer get its picture and type into it; and
   `scripts/apps-drive.py`, in check.yml's `apps-windows`, does the same from a probe build's
   WebView2 with its own `RTCPeerConnection`, and keeps the picture it saw.
-- **macOS** still says it cannot run an application on a display of its own yet; its way
-  (ScreenCaptureKit on a `CGVirtualDisplay`) is researched in the issue.
+
+## A Mac: a display of its own (step 8)
+
+- **Where it runs** (`apps_host/mac/display.rs`): a `CGVirtualDisplay`, a private CoreGraphics
+  class reached through the Objective-C runtime by name; a macOS without it says `isolation`.
+  It is the holder's size in device pixels, Retina where the holder's screen is, made again as
+  the view changes, and moved to the far corner of the other displays, so the reader's pointer
+  reaches it only through that corner. One thread holds every display.
+- **What a Mac has to allow** (`mac/access.rs`): Screen Recording and Accessibility, each asked
+  with the system's prompt as an application first starts. Until both are given the tab says
+  so (`permission`).
+- **The application** is its bundle's own program (`CFBundleExecutable`), run as a child of
+  Orden's in a process group of its own, not `open -a`: a process whose windows are found by
+  its id, and a second copy where the reader already has it open.
+- **Its windows** (`mac/windows.rs`) are looked at through Accessibility eight times a second
+  and moved onto its display: a standard window to fill it, a dialog or panel to its middle.
+- **Its picture** (`mac/capture.rs`): ScreenCaptureKit's stream of that display, filtered to the
+  application's windows, BGRA at the display's device pixels, no pointer drawn, at most 60 a
+  second; only a `Complete` frame is news, so a still application sends nothing. The encoder
+  is VideoToolbox's H.264 (`h264_videotoolbox`) to a viewer that decodes H.264, libvpx's VP8 to
+  any other; ffmpeg is looked for on `PATH` and in Homebrew's and MacPorts' folders.
+- **Its input** (`mac/input.rs`): keys, text, the wheel and a pointer that only moves are posted
+  to the application's process. A press goes through the window server, which moves the
+  reader's pointer onto the application's display until the last button is let go, then puts
+  it back.
+- **The clipboard** (`mac/clipboard.rs`) is the system's: a paste puts the holder's text on it
+  first, and a change made while the application is in front goes to the holder.
+- **Not yet**: its sound (it plays from the Mac's speakers), its pointer's shape, and its menu
+  bar (the Mac's own, on the main screen).
 
 ## Agents (step 7)
 

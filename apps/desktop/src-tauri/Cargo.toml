@@ -159,6 +159,7 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
 objc2-app-kit = { version = "0.3", default-features = false, features = [
   "std",
   "block2",
+  "libc",
   "objc2-core-foundation",
   "NSApplication",
   "NSBitmapImageRep",
@@ -224,6 +225,53 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKWebsiteDataRecord",
   "WKWebsiteDataStore",
 ] }
+objc2-screen-capture-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "libc",
+  "objc2-core-media",
+  "objc2-core-graphics",
+  "dispatch2",
+  "SCError",
+  "SCShareableContent",
+  "SCStream",
+] }
+objc2-core-media = { version = "0.3", default-features = false, features = [
+  "std",
+  "objc2-core-video",
+  "CMSampleBuffer",
+  "CMBase",
+  "CMTime",
+] }
+objc2-core-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "CFArray",
+  "CFCGTypes",
+  "CFDictionary",
+  "CFNumber",
+  "CFString",
+] }
+objc2-core-video = { version = "0.3", default-features = false, features = [
+  "std",
+  "CVBase",
+  "CVBuffer",
+  "CVImageBuffer",
+  "CVPixelBuffer",
+  "CVReturn",
+] }
+objc2-core-graphics = { version = "0.3", default-features = false, features = [
+  "std",
+  "libc",
+  "CGDirectDisplay",
+  "CGDisplayConfiguration",
+  "CGError",
+  "CGEvent",
+  "CGEventSource",
+  "CGEventTypes",
+  "CGRemoteOperation",
+  "CGWindowLevel",
+] }
+dispatch2 = { version = "0.3", default-features = false, features = ["std", "objc2"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
@@ -231,8 +279,10 @@ x11rb = { version = "0.13", default-features = false, features = ["cursor", "dam
 libc = "0.2"
 raw-window-handle = "0.6"
 
-[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
+[target.'cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))'.dependencies]
 str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
+
+[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
 trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]

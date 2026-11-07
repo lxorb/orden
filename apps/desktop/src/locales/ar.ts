@@ -2467,6 +2467,8 @@ export const ar: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     'لا يستطيع {device} بعدُ تشغيل تطبيق على شاشة خاصة به.',
   '{device} needs Xvfb to run an application.': 'يحتاج {device} إلى Xvfb لتشغيل تطبيق.',
+  '{device} needs Screen Recording and Accessibility.':
+    'يحتاج {device} إلى إذن تسجيل الشاشة وإمكانية الوصول.',
   '{device} did not allow this program.': 'لم يسمح {device} بهذا البرنامج.',
   '{device} does not have this application.': 'لا يوجد هذا التطبيق على {device}.',
   '{device} cannot start a Store application on a desktop of its own.':
