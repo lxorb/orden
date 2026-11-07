@@ -6,6 +6,7 @@ import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
@@ -56,6 +57,9 @@ TH32CS_SNAPPROCESS = 0x00000002
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 PROCESS_TERMINATE = 0x0001
 INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
+
+if sys.platform == "win32":
+    tempfile.tempdir = str(pathlib.Path(tempfile.gettempdir()).resolve())
 
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True) if sys.platform == "win32" else None
@@ -548,7 +552,5 @@ def sized(hwnd: int, width: int, height: int) -> None:
     )
 
 def spaces_folder(name: str) -> pathlib.Path:
-
-    import tempfile
 
     return pathlib.Path(tempfile.mkdtemp(prefix=f"nib-{name}-spaces-"))
