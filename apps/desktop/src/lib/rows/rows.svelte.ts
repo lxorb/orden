@@ -43,7 +43,10 @@ workspace.fileOps.follow(keeping(inboxes))
 workspace.fileOps.follow(keeping(projectFolders))
 
 if (!__EVEN_PLUGIN__) {
-  store.watch((change) => void import('./inbox-moving').then((one) => one.heard(change)))
+  let moving: Promise<typeof import('./inbox-moving')> | null = null
+  store.watch(
+    (change) => void (moving ??= import('./inbox-moving')).then((one) => one.heard(change)),
+  )
 }
 
 $effect.root(() => {
