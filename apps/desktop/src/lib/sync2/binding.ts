@@ -12,13 +12,17 @@ import type { Engine } from './engine'
 import { writtenOf } from './ingest'
 import { judge, mergedOf, turn } from './kinds'
 
-export interface Held {
-  readonly live: SharedDoc
+interface Meeting {
+  readonly live: Pick<SharedDoc, 'arrived'>
   readonly latest: string
+}
+
+export interface Held extends Meeting {
+  readonly live: SharedDoc
   onDisk?: string | null
 }
 
-function arrive(note: Held, from: string, to: string) {
+function arrive(note: Meeting, from: string, to: string) {
   const change = fold(from, to)
   if (change) note.live.arrived([change])
 }
@@ -28,7 +32,7 @@ type Met = { shared: string; asked?: never } | { asked: string; shared?: never }
 async function agree(
   engine: Engine,
   id: string,
-  note: Held,
+  note: Meeting,
   doc: Doc,
   given?: string,
 ): Promise<Met> {
@@ -71,6 +75,12 @@ async function agree(
 }
 
 const AGREEING = 8
+
+const ELSEWHERE = { arrived: () => undefined }
+
+export async function meetWords(engine: Engine, id: string, doc: Doc, mine: string) {
+  return (await agree(engine, id, { live: ELSEWHERE, latest: mine }, doc)).asked === undefined
+}
 
 export async function attach(
   engine: Engine,

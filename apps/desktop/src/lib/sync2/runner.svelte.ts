@@ -28,10 +28,13 @@ import type { NoteDoc } from '../workspace/documents.svelte'
 import type { PlaneSurface } from '../canvas/shared'
 import type { Watched } from './watching'
 import { rooms } from '../rooms.svelte'
+import { theme } from '../theme.svelte'
 import * as Y from 'yjs'
 import { asking, type Held, type HeldAnswer, unsyncedToast } from './asking.svelte'
-import { attach, attachPlane, type PlaneJoin } from './binding'
-import { carry, uncarry } from './carry'
+import { attach, attachPlane, meetWords, type PlaneJoin } from './binding'
+import { carry, uncarry, whoHere } from './carry'
+import { Mirrors } from './mirrors'
+import { LiveRelay } from './relay'
 import { kindOfName } from './create'
 import { MINE } from './docs'
 import { Engine, type AwayFile } from './engine'
@@ -471,7 +474,7 @@ class Runner {
     this.stopHolding()
     this.owed.clear()
     this.seen = { spaces: [], notes: [] }
-    this.seenAt.clear()
+    this.seenAt = new Map()
     this.noLeader()
     for (const stop of this.hearings.splice(0)) stop()
     return this.inLane(() => this.letGo(keepLead, () => this.attempt !== at))
@@ -1293,7 +1296,14 @@ class Runner {
   }
 
   private seen: Rows = { spaces: [], notes: [] }
-  private seenAt = new Map<string, { id: string; version: number; hash: string }>()
+  private seenAt = $state.raw(new Map<string, { id: string; version: number; hash: string }>())
+  private readonly relay = new LiveRelay((kind, what) => this.say(kind, what))
+  private readonly mirrors = new Mirrors({
+    say: (kind, what) => this.say(kind, what),
+    ask: (what, args) => this.ask(what, args),
+    who: whoHere,
+    scheme: () => theme.current,
+  })
   private readonly owed = new Owed((item) => this.say('sync-owed', { item }))
   private leaderId: string | null = null
   private beat: ReturnType<typeof setInterval> | undefined
@@ -1323,6 +1333,7 @@ class Runner {
     clearInterval(this.beat)
     this.beat = undefined
     for (const answer of [...this.asked.values()]) answer(null)
+    this.mirrors.clear()
   }
 
   private lookedAt() {
@@ -1401,7 +1412,18 @@ class Runner {
         this.leaderIs(said.from)
         this.owed.resend()
         this.say('sync-hello')
+        this.mirrors.restart()
       }),
+      this.hear('live-down', (said) => {
+        if (!this.engine) this.mirrors.heard(said)
+      }),
+      this.hear('live-again', (said) => {
+        if (!this.engine && typeof said.id === 'string') this.mirrors.again(said.id)
+      }),
+      this.hear('live-hello', (said) => {
+        if (!this.engine) this.mirrors.hello(said.id)
+      }),
+      this.followMirrored(),
       this.hear('sync-took', (said) => {
         if (said.to === windows.me && typeof said.id === 'string') this.owed.done(said.id)
       }),
@@ -1440,6 +1462,7 @@ class Runner {
             { id, version, hash },
           ]),
         )
+        this.mirrors.unjoined()
       }),
     )
     this.say('sync-hello')
@@ -1448,10 +1471,23 @@ class Runner {
   private async tookOver(engine: Engine) {
     this.noLeader()
     this.stops.push(
+      this.hear('live-want', (said) => {
+        const ids = Array.isArray(said.ids)
+          ? said.ids.filter((one): one is string => typeof one === 'string')
+          : []
+        if (typeof said.from === 'string' && this.relay.want(said.from, ids)) this.rebind()
+      }),
+      this.hear('live-up', (said) => {
+        if (typeof said.from === 'string') this.relay.up(said.from, said)
+      }),
+      windows.hear('bye', (said) => {
+        if (typeof said.from === 'string' && this.relay.gone(said.from)) this.rebind()
+      }),
+      () => this.relay.stop(),
       this.hear('sync-owed', (said) => {
         const item = said.item as Owing
         this.inTurn(async () => {
-          await this.took(engine, item)
+          await this.took(engine, item, typeof said.from === 'string' ? said.from : '')
           this.say('sync-took', { id: item.id, to: said.from })
         })
       }),
@@ -1507,8 +1543,16 @@ class Runner {
     })
   }
 
-  private took(engine: Engine, item: Owing): Promise<void> {
-    return takeOwed(engine, item, (op) => this.follow(op)).then(() => this.nudge())
+  private async took(engine: Engine, item: Owing, from = ''): Promise<void> {
+    const what = item.what
+    const id = what.kind === 'wrote' ? engine.entryAt(what.path)?.id : undefined
+    if (what.kind === 'wrote' && id !== undefined && this.relay.joined(from, id)) return
+    if (what.kind === 'wrote' && id !== undefined && this.bound.has(`${RELAY}${id}`)) {
+      await engine.foldWritten(what.path)
+    } else {
+      await takeOwed(engine, item, (op) => this.follow(op))
+    }
+    this.nudge()
   }
 
   private async answering(said: Said): Promise<unknown> {
@@ -1528,6 +1572,9 @@ class Runner {
       return await searchedAway(said.args, (found) => {
         this.say('sync-part', { id: said.id, to: said.from, value: found })
       })
+    }
+    if (said.what === 'live-meet' && typeof said.from === 'string') {
+      return await this.liveMeet(said.from, said.args)
     }
     if (said.what === 'forget') {
       await this.forget(args.root ?? '')
@@ -1620,6 +1667,63 @@ class Runner {
     })
   }
 
+  private followMirrored(): () => void {
+    return $effect.root(() => {
+      $effect(() => {
+        const open = workspace.openNotes
+        const seen = this.seenAt
+        untrack(() => {
+          if (!this.engine) this.mirrors.follow(open, (path) => seen.get(pathKey(path))?.id ?? null)
+        })
+      })
+    })
+  }
+
+  livesWith(note: NoteDoc, from: string): boolean {
+    const engine = this.engine
+    if (!engine) return this.mirrors.joins(note.key)
+    const id = note.path === null ? null : engine.entryAt(note.path)?.id
+    return !!id && this.relay.joined(from, id)
+  }
+
+  private liveOf(engine: Engine, id: string): Y.Doc | null {
+    return engine.core.pinned.has(id) ? (engine.core.docs.get(id)?.live ?? null) : null
+  }
+
+  private async liveMeet(from: string, args: unknown): Promise<unknown> {
+    const engine = this.current
+    const { id, mine } = (args ?? {}) as { id?: unknown; mine?: unknown }
+    if (!engine || typeof id !== 'string' || typeof mine !== 'string') return null
+    if (this.relay.meeting(from, id)) this.rebind()
+    await this.binding
+    const doc = engine.core.docs.get(id)
+    if (this.current !== engine || !doc?.live || !engine.core.pinned.has(id)) return null
+    if (!(await meetWords(engine, id, doc, mine))) return null
+    this.relay.follow((one) => this.liveOf(engine, one))
+    const live = this.liveOf(engine, id)
+    const gen = this.relay.genOf(id)
+    return gen === null || !live ? null : { gen, whole: Y.encodeStateAsUpdate(live) }
+  }
+
+  private async relayHold(
+    engine: Engine,
+    id: string,
+    holds: () => boolean,
+    again: () => void,
+  ): Promise<(() => void) | null> {
+    const doc = await engine.hold(id)
+    if (!doc?.live || !holds()) {
+      if (doc) await engine.letGo(id)
+      return null
+    }
+    const replaced = () => again()
+    doc.replaced = replaced
+    return () => {
+      if (doc.replaced === replaced) doc.replaced = null
+      void engine.letGo(id)
+    }
+  }
+
   private rebind(open = workspace.openNotes) {
     this.binding = this.binding.then(() => this.bindNow(open)).catch(() => undefined)
   }
@@ -1642,6 +1746,11 @@ class Runner {
       if (on && entry && engine.core.hasDoc(entry.id))
         wanted.set(one.key, { id: entry.id, on, arrivals: () => note.arrivals })
     }
+    const own = new Set([...wanted.values()].map((one) => one.id))
+    for (const id of this.relay.ids()) {
+      if (!own.has(id) && engine.core.hasDoc(id) && engine.core.entry(id)?.kind === 'note')
+        wanted.set(`${RELAY}${id}`, { id, on: { relay: true }, arrivals: () => 0 })
+    }
 
     for (const [key, one] of this.bound) {
       if (wanted.get(key)?.id === one.id) continue
@@ -1663,11 +1772,14 @@ class Runner {
         uncarry(key)
         this.carried.delete(key)
         this.enter(engine, key, one.id, one.on)
+        this.relay.follow((id) => this.liveOf(engine, id))
       }
       const joined =
-        'note' in one.on
-          ? await attach(engine, one.id, one.on.note, holds, again)
-          : await attachPlane(engine, one.id, one.on.surface, holds, again)
+        'relay' in one.on
+          ? await this.relayHold(engine, one.id, holds, again)
+          : 'note' in one.on
+            ? await attach(engine, one.id, one.on.note, holds, again)
+            : await attachPlane(engine, one.id, one.on.surface, holds, again)
       const part = typeof joined === 'function' ? joined : (joined?.part ?? null)
       if (!part || this.bound.get(key)?.id !== one.id) {
         part?.()
@@ -1677,6 +1789,10 @@ class Runner {
       this.bound.set(key, { id: one.id, part, plane: typeof joined === 'function' ? null : joined })
       this.enter(engine, key, one.id, one.on)
     }
+    this.relay.roomsHeld(
+      new Set([...this.bound].flatMap(([key, one]) => (this.carried.has(key) ? [one.id] : []))),
+    )
+    this.relay.follow((id) => this.liveOf(engine, id))
   }
 
   private readonly told = new Set<string>()
@@ -1735,6 +1851,10 @@ class Runner {
     void room.then((entered) => {
       const plane = this.bound.get(key)?.plane
       if (plane && entered?.hand) plane.hand = entered.hand.bind(entered)
+      if (entered?.awareness && this.current === engine) {
+        this.relay.roomCame(id, entered.awareness)
+        this.relay.follow((one) => this.liveOf(engine, one))
+      }
     })
   }
 }
@@ -1755,7 +1875,9 @@ function signedIn(): boolean {
   return account.user !== null
 }
 
-type On = { note: NoteDoc } | { surface: PlaneSurface }
+type On = { note: NoteDoc } | { surface: PlaneSurface } | { relay: true }
+
+const RELAY = 'relay:'
 
 function unreachable(error: unknown): boolean {
   if (error instanceof ApiError) return error.status === 429 || error.status >= 500

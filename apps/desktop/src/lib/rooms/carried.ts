@@ -1,6 +1,7 @@
 import { setPeers, type SharedDoc } from '@orden/editor'
 import { readSync, receive, syncStep1Of, syncStep2Of, TEXT } from '@orden/rooms'
 import { NEW_EPOCH, roomNews, ROOM_V2 } from '@orden/sync-core/wire'
+import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { InkStroke } from '../canvas/format'
 import type { Point } from '../canvas/geometry'
@@ -111,7 +112,7 @@ class CarryingDoor extends RoomDoor {
 }
 
 export interface Carried extends Entering {
-  note: SharedDoc
+  note: Pick<SharedDoc, 'announce'>
   carrying: Carrying
 }
 
@@ -126,6 +127,10 @@ export class CarriedRoom extends JoinedRoom {
 
   get settled(): boolean {
     return this.door.caughtUp
+  }
+
+  get awareness(): Awareness {
+    return this.door.awareness
   }
 
   moved(anchor: number, head: number) {

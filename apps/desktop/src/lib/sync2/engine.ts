@@ -610,6 +610,14 @@ export class Engine implements AskedEngine {
     await this.core.commit([...this.core.entryChanges(changed), ...forgets])
   }
 
+  foldWritten(path: string): Promise<void> {
+    return this.core.use(async () => {
+      const placed = this.placed(path)
+      const entry = this.entryAt(path)
+      if (placed && entry) await this.core.commit(await foldIn(this.core, placed.space, entry))
+    })
+  }
+
   saved(path: string, text: string): Promise<void> {
     return this.core.use(() => this.wroteDown(path, text))
   }

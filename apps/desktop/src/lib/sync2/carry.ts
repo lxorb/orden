@@ -1,8 +1,10 @@
+import type { Awareness } from 'y-protocols/awareness'
 import { account } from '../account.svelte'
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
 import { rooms } from '../rooms.svelte'
 import type { Carrying } from '../rooms/carried'
+import type { Who } from '../rooms/door'
 import type { Seen } from '../rooms/peers'
 import { deviceAccent, deviceName, personFace, personName } from '../rooms/who'
 import { theme } from '../theme.svelte'
@@ -13,7 +15,7 @@ import type { PlaneSurface } from '../canvas/shared'
 
 export interface Carry {
   noteId: string
-  on: { note: NoteDoc } | { surface: PlaneSurface }
+  on: { note: NoteDoc } | { surface: PlaneSurface } | { relay: true }
   carrying: Carrying
   gone: () => void
 }
@@ -21,7 +23,10 @@ export interface Carry {
 export async function carry(
   key: string,
   carried: Carry,
-): Promise<{ hand?: (at: Point | null, drawing: InkStroke | null) => void } | null> {
+): Promise<{
+  hand?: (at: Point | null, drawing: InkStroke | null) => void
+  awareness?: Awareness
+} | null> {
   const token = account.token
   if (!token || rooms.carried.has(key)) return null
   const { CarriedRoom, CarriedPlaneRoom } = await import('../rooms/carried')
@@ -30,12 +35,7 @@ export async function carry(
   const entering = {
     noteId: carried.noteId,
     token,
-    who: {
-      name: deviceName(t('Browser')),
-      accent: deviceAccent(),
-      person: personName(),
-      ...personFace(),
-    },
+    who: whoHere(),
     scheme: theme.current,
     onPeers: (count: number, seen?: Seen) => {
       rooms.heard(key, count, seen)
@@ -56,9 +56,21 @@ export async function carry(
     rooms.carried.set(key, { live: carried.on.surface, room })
     return room
   }
-  const room = new CarriedRoom({ ...entering, note: carried.on.note.live })
-  rooms.carried.set(key, { live: carried.on.note.live, room })
-  return {}
+  const live = 'note' in carried.on ? carried.on.note.live : NOBODY
+  const room = new CarriedRoom({ ...entering, note: live })
+  rooms.carried.set(key, { live, room })
+  return { awareness: room.awareness }
+}
+
+const NOBODY = { announce: () => undefined }
+
+export function whoHere(): Who {
+  return {
+    name: deviceName(t('Browser')),
+    accent: deviceAccent(),
+    person: personName(),
+    ...personFace(),
+  }
 }
 
 export function uncarry(key: string): void {
