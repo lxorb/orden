@@ -5330,3 +5330,20 @@ describe('a closed tab brought back while its pane goes', () => {
     expect(workspace.activeTabId).toBe(again?.id)
   })
 })
+
+describe('a tab that held a web page and now shows a note', () => {
+  beforeEach(() => {
+    onePane()
+  })
+
+  test('lets the page go when it closes', async () => {
+    await workspace.open('/space/a.md')
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    pages.of(tab.id)
+
+    workspace.close(tab.id)
+
+    expect(pages.each().map(([id]) => id)).not.toContain(tab.id)
+  })
+})
