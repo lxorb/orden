@@ -45,11 +45,15 @@ const IDLE: Duration = Duration::from_secs(600);
 
 const TELLING: Duration = Duration::from_secs(30);
 
+const GONE: &str = "the page that asked has gone";
+
 #[derive(Default)]
 pub struct Asks {
     running: Mutex<HashMap<String, Held>>,
     sessions: Mutex<HashMap<String, Session>>,
     hosts: Mutex<HashMap<HostKey, Arc<Host>>>,
+    closing: AtomicBool,
+    loads: Mutex<HashMap<String, u64>>,
 }
 
 struct Held {
@@ -102,6 +106,19 @@ fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
 }
 
 impl Asks {
+    fn load_of(&self, owner: &str) -> u64 {
+        lock(&self.loads).get(owner).copied().unwrap_or(0)
+    }
+
+    fn gone(&self, owner: &str, load: u64) -> bool {
+        self.closing.load(Ordering::SeqCst) || self.load_of(owner) != load
+    }
+
+    fn page_started(&self, owner: &str) {
+        *lock(&self.loads).entry(owner.to_owned()).or_insert(0) += 1;
+        self.stop_where(Some(owner));
+    }
+
     fn stop_where(&self, owner: Option<&str>) {
         let mine = |one: &str| owner.is_none_or(|owner| one == owner);
         for held in lock(&self.running).values_mut() {
@@ -146,8 +163,15 @@ pub fn window_gone(app: &AppHandle, label: &str) {
     }
 }
 
+pub fn page_started(app: &AppHandle, label: &str) {
+    if let Some(asks) = app.try_state::<Asks>() {
+        asks.page_started(label);
+    }
+}
+
 pub fn end_all(app: &AppHandle) {
     if let Some(asks) = app.try_state::<Asks>() {
+        asks.closing.store(true, Ordering::SeqCst);
         asks.stop_where(None);
     }
 }
@@ -321,6 +345,7 @@ pub async fn ai_cli_ask(
 ) -> Result<(), String> {
     crate::lane::off_the_runtime(move || -> Result<(), String> {
         let owner = owner(&webview)?;
+        let load = webview.state::<Asks>().load_of(&owner);
         usable(&id)?;
         offered(tool)?;
         if tool != Tool::ClaudeCode {
@@ -337,6 +362,9 @@ pub async fn ai_cli_ask(
         let opening = next_opening();
         {
             let mut running = lock(&asks.running);
+            if asks.gone(&owner, load) {
+                return Err(GONE.to_owned());
+            }
             if running.contains_key(&id) {
                 return Err(format!("{id} is already being asked"));
             }
@@ -469,6 +497,7 @@ pub async fn ai_cli_open(
 ) -> Result<(), String> {
     crate::lane::off_the_runtime(move || -> Result<(), String> {
         let owner = owner(&webview)?;
+        let load = webview.state::<Asks>().load_of(&owner);
         usable(&id)?;
         offered(opening.tool)?;
         if let Some(thread) = &opening.thread {
@@ -523,7 +552,7 @@ pub async fn ai_cli_open(
                     agent: opening.mode.map(|mode| (opening.agent.id.clone(), mode)),
                     home: home.clone(),
                 };
-                let host = host_for(&asks, key, &program, &folder, token.as_deref())?;
+                let host = host_for(&asks, key, load, &program, &folder, token.as_deref())?;
                 let from = codex_app::From {
                     fork_of: opening.fork_of.as_deref(),
                     thread: opening.thread.as_deref(),
@@ -562,13 +591,24 @@ pub async fn ai_cli_open(
             opening: number,
             on: Arc::new(on),
         };
-        kept(&asks, id, session, &ended)
+        kept(&asks, id, session, load, &ended)
     })
     .await
 }
 
-fn kept(asks: &Asks, id: String, session: Session, ended: &AtomicBool) -> Result<(), String> {
+fn kept(
+    asks: &Asks,
+    id: String,
+    session: Session,
+    load: u64,
+    ended: &AtomicBool,
+) -> Result<(), String> {
     let mut sessions = lock(&asks.sessions);
+    if asks.gone(&session.owner, load) {
+        drop(sessions);
+        session.on.end(&id);
+        return Err(GONE.to_owned());
+    }
     if sessions.contains_key(&id) {
         drop(sessions);
         session.on.end(&id);
@@ -621,6 +661,7 @@ fn claude_command(
 fn host_for(
     asks: &Asks,
     key: HostKey,
+    load: u64,
     program: &Program,
     folder: &Path,
     token: Option<&str>,
@@ -640,6 +681,11 @@ fn host_for(
         .map_err(|error| format!("codex could not be started: {error}"))?;
     let host = Arc::new(host);
     let mut hosts = lock(&asks.hosts);
+    if asks.gone(&key.owner, load) {
+        drop(hosts);
+        host.stop();
+        return Err(GONE.to_owned());
+    }
     if let Some(other) = alive(&hosts) {
         drop(hosts);
         host.stop();
@@ -717,12 +763,13 @@ pub async fn ai_cli_models(
             }
             Tool::Codex => {
                 let asks = webview.state::<Asks>();
+                let load = asks.load_of(&owner);
                 let key = HostKey {
                     owner,
                     agent: None,
                     home,
                 };
-                host_for(&asks, key, &program, &folder, None)?.models(TELLING)
+                host_for(&asks, key, load, &program, &folder, None)?.models(TELLING)
             }
             Tool::Gemini => Err("Gemini CLI names its models by alias".to_owned()),
         }
@@ -744,6 +791,21 @@ mod tests {
             .map(|folder| folder.join("scripts").join("fake-ai-cli.mjs"))
             .find(|script| script.is_file())
             .expect("scripts/fake-ai-cli.mjs above the crate")
+    }
+
+    #[test]
+    fn a_start_from_a_page_since_reloaded_or_an_app_quitting_is_refused() {
+        let asks = Asks::default();
+        let load = asks.load_of("orden-1");
+        assert!(!asks.gone("orden-1", load));
+        asks.page_started("orden-1");
+        assert!(asks.gone("orden-1", load));
+        let now = asks.load_of("orden-1");
+        assert!(!asks.gone("orden-1", now));
+        assert!(!asks.gone("orden-2", asks.load_of("orden-2")));
+        asks.closing.store(true, Ordering::SeqCst);
+        assert!(asks.gone("orden-1", now));
+        assert!(asks.gone("orden-2", asks.load_of("orden-2")));
     }
 
     fn node() -> bool {

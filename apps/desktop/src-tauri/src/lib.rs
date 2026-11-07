@@ -857,6 +857,7 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
             if let Some(sidecars) = webview.try_state::<sidecar::Held>() {
                 sidecars.end_where(webview.label());
             }
+            ai_cli::page_started(webview.app_handle(), webview.label());
         }
     });
     builder
