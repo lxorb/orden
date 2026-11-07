@@ -152,6 +152,31 @@ describe('a gesture that edits as it goes', () => {
     }
   })
 
+  test('writes the file once when undo and redo are held down, not on every step', () => {
+    vi.useFakeTimers()
+    try {
+      const { store, note } = opened()
+      for (const id of ['a', 'b', 'c', 'd']) {
+        store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card(id)] })
+      }
+      vi.advanceTimersByTime(1300)
+      const written = vi.spyOn(note, 'replace')
+
+      store.undo()
+      store.undo()
+      store.undo()
+      store.redo()
+      expect(ids(store.canvas)).toEqual(['a', 'b'])
+      expect(written).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(1300)
+      expect(written).toHaveBeenCalledTimes(1)
+      expect(ids(readCanvas(note.text))).toEqual(['a', 'b'])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test('and writes it at once when the surface is being taken down', () => {
     vi.useFakeTimers()
     try {
@@ -465,6 +490,7 @@ describe('a plane whose tab is switched away from and back', () => {
     again.undo()
 
     expect(again.canvas.nodes).toEqual([])
+    again.part()
     expect(readCanvas(note.text).nodes).toEqual([])
   })
 
