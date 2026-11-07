@@ -8,7 +8,7 @@ from pathlib import Path
 
 from playwright.sync_api import Browser, Page, Route
 
-from harness import Drive
+from harness import WEBKIT, Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
@@ -218,6 +218,9 @@ def quick_add(browser: Browser) -> None:
     page.context.close()
 
 def main() -> int:
+    if WEBKIT:
+        say("WebKit takes no recorded voice for its microphone, so there is nothing to hear")
+        return DRIVE.verdict("nothing to drive in WebKit")
     with tempfile.TemporaryDirectory() as made:
         sound = bursts(Path(made) / "microphone.wav")
         with DRIVE.session(
