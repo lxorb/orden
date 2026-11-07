@@ -43,3 +43,6 @@ export function sensedOf(value: unknown): Sensed | null {
     locked: flagOr(value.locked),
   }
 }
+
+export const withIdle = (said: Sensed, idleMs: number): Sensed =>
+  said.idleMs === null ? { ...said, idleMs } : said
