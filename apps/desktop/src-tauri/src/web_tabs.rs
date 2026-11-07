@@ -1389,7 +1389,10 @@ fn say(
         loading,
     };
 
-    let _ = app.emit_to(view.window().label(), MOVED, payload);
+    let Ok(payload) = serde_json::to_value(payload) else {
+        return;
+    };
+    crate::web_steady::say(app, view.window().label(), MOVED, tab, loading, payload);
 }
 
 #[tauri::command]
@@ -1708,6 +1711,7 @@ pub async fn web_close(
             crate::web_find::forget(&named);
             crate::web_dialogs::forget(&named);
             ask::forget(&named);
+            crate::web_steady::forget(&named);
             crate::web_pass::forget(&named);
             crate::keyboard::closed(view.label());
             crate::web_follow::unfollow(view.label());
