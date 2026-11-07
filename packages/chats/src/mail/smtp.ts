@@ -1,10 +1,11 @@
 import type { Socket, SocketAsk } from '../provider'
 import { ascii, Reader, toBase64 } from './bytes'
+import { xoauth2 } from './imap'
 import { Silence } from './silence'
 
 export const SMTP_SILENCE = 600_000
 
-class SmtpError extends Error {
+export class SmtpError extends Error {
   constructor(
     message: string,
     readonly code: number,
@@ -115,7 +116,7 @@ export interface Envelope {
 export async function sendMail(
   open: (ask: SocketAsk) => Promise<Socket>,
   ask: SocketAsk,
-  login: { user: string; password: string },
+  login: { user: string; password: string; bearer?: boolean },
   envelope: Envelope,
   message: Uint8Array,
 ): Promise<void> {
@@ -132,7 +133,12 @@ export async function sendMail(
     const offered = hello.lines.map((one) => one.slice(4).toUpperCase())
     const auth = offered.find((one) => one.startsWith('AUTH')) ?? ''
     const plain = toBase64(new TextEncoder().encode(`\0${login.user}\0${login.password}`))
-    if (/\bPLAIN\b/.test(auth) || !/\bLOGIN\b/.test(auth)) {
+    if (login.bearer) {
+      if (!/\bXOAUTH2\b/.test(auth))
+        throw new SmtpError('the server does not take a sign-in token', 0)
+      const said = await talk.say(`AUTH XOAUTH2 ${xoauth2(login.user, login.password)}`, [235, 334])
+      if (said.code === 334) await talk.say('', [235])
+    } else if (/\bPLAIN\b/.test(auth) || !/\bLOGIN\b/.test(auth)) {
       await talk.say(`AUTH PLAIN ${plain}`, [235])
     } else {
       await talk.say('AUTH LOGIN', [334])

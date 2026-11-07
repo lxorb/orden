@@ -211,6 +211,11 @@ export interface SocketAsk {
   tls: 'tls' | 'starttls' | 'none'
 }
 
+export interface Posted {
+  status: number
+  body: string
+}
+
 export interface Host {
   secret(name: string): Promise<string | null>
   keepSecret(name: string, value: string | null): Promise<void>
@@ -222,6 +227,7 @@ export interface Host {
   show?: (screen: Screen | null) => void
   sealed?: Sealed
   authorize?: (make: (loopback: string) => string) => Promise<Record<string, string>>
+  post?: (url: string, form: Readonly<Record<string, string>>) => Promise<Posted>
   wire?: (ask: WireAsk) => Promise<WireSocket>
   sidecar?: (program: string, args: readonly string[]) => Promise<Stream>
   build?: Readonly<Record<string, string>>
@@ -231,6 +237,7 @@ export interface Account {
   id: string
   label: string
   self?: Person
+  keep?: Readonly<Record<string, string>>
 }
 
 export interface HistoryAsk {
@@ -300,6 +307,7 @@ export interface ChatProvider {
   readonly fields: readonly ConnectField[]
   readonly can: Capabilities
   readonly warning?: string
+  readonly kept?: readonly string[]
   available(host: Host): boolean
   connect(config: Readonly<Record<string, string>>, host: Host): Promise<Connection>
 }

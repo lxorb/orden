@@ -20,6 +20,9 @@ export class FakeMail {
   password = 'right horse'
   idle = true
   sasl = true
+  bearer = false
+  tokens = new Set<string>()
+  bearers: string[] = []
   private readonly idlers = new Set<() => void>()
   private readonly servers: Server[] = []
   imapPort = 0
@@ -33,6 +36,14 @@ export class FakeMail {
     this.boxes.set(box, list)
     for (const wake of this.idlers) wake()
     return uid
+  }
+
+  private signedInWith(said: string): boolean {
+    const parts = new TextDecoder().decode(fromBase64(said)).split('\x01')
+    const user = parts[0]?.replace(/^user=/, '')
+    const token = parts[1]?.replace(/^auth=Bearer /, '') ?? ''
+    this.bearers.push(token)
+    return this.bearer && user === this.user && this.tokens.has(token)
   }
 
   async listen(): Promise<void> {
@@ -69,11 +80,28 @@ export class FakeMail {
     let authed = false
     let literal: { tag: string; rest: string; size: number } | null = null
     let idling: { tag: string; stop: () => void } | null = null
-    const caps = `IMAP4rev1 LITERAL+${this.sasl ? ' AUTH=PLAIN SASL-IR' : ''}${this.idle ? ' IDLE' : ''}`
+    let sasl: { tag: string; failed: boolean } | null = null
+    const caps = `IMAP4rev1 LITERAL+${this.sasl ? ' AUTH=PLAIN SASL-IR' : ''}${this.bearer ? ' AUTH=XOAUTH2' : ''}${this.idle ? ' IDLE' : ''}`
     say(`* OK [CAPABILITY ${caps}] fake ready`)
 
     const messages = () => this.boxes.get(box ?? '') ?? []
+    const tokenSaid = (tag: string, said: string) => {
+      if (this.signedInWith(said)) {
+        authed = true
+        say(`${tag} OK in`)
+        return
+      }
+      sasl = { tag, failed: true }
+      say(`+ ${FAILED}`)
+    }
     const handle = (line: string, data?: Uint8Array) => {
+      if (sasl) {
+        const held = sasl
+        sasl = null
+        if (held.failed) say(`${held.tag} NO [AUTHENTICATIONFAILED] Invalid credentials (Failure)`)
+        else tokenSaid(held.tag, line)
+        return
+      }
       if (idling) {
         if (line.toUpperCase() === 'DONE') {
           idling.stop()
@@ -103,6 +131,13 @@ export class FakeMail {
         const password = data ? new TextDecoder().decode(data) : said[1]
         authed = user === this.user && password === this.password
         say(authed ? `${tag} OK in` : `${tag} NO [AUTHENTICATIONFAILED] Invalid credentials`)
+      } else if (command === 'AUTHENTICATE' && /^XOAUTH2\b/i.test(rest)) {
+        const said = rest.split(' ')[1]
+        if (said) tokenSaid(tag, said)
+        else {
+          sasl = { tag, failed: false }
+          say('+ ')
+        }
       } else if (command === 'AUTHENTICATE') {
         const [, user, password] = new TextDecoder()
           .decode(fromBase64(rest.split(' ')[1] ?? ''))
@@ -202,6 +237,7 @@ export class FakeMail {
     let from = ''
     let to: string[] = []
     let data: string[] | null = null
+    let refused = false
     say('220 fake ESMTP')
     socket.on('data', (chunk: Buffer) => {
       reader.push(new Uint8Array(chunk))
@@ -214,11 +250,22 @@ export class FakeMail {
           } else data.push(line.startsWith('..') ? line.slice(1) : line)
           continue
         }
+        if (refused) {
+          refused = false
+          say('535 5.7.8 Username and Password not accepted')
+          continue
+        }
         const upper = line.toUpperCase()
         if (upper.startsWith('EHLO')) {
           say('250-fake')
-          say('250-AUTH PLAIN LOGIN')
+          say(`250-AUTH PLAIN LOGIN${this.bearer ? ' XOAUTH2' : ''}`)
           say('250 8BITMIME')
+        } else if (upper.startsWith('AUTH XOAUTH2 ')) {
+          if (this.signedInWith(line.split(' ')[2] ?? '')) say('235 ok')
+          else {
+            refused = true
+            say(`334 ${FAILED}`)
+          }
         } else if (upper.startsWith('AUTH PLAIN')) {
           const [, user, password] = new TextDecoder()
             .decode(fromBase64(line.split(' ')[2] ?? ''))
@@ -242,6 +289,8 @@ export class FakeMail {
     })
   }
 }
+
+const FAILED = 'eyJzdGF0dXMiOiI0MDAiLCJzY2hlbWVzIjoiQmVhcmVyIn0='
 
 function inRange(range: string, at: number, uid: boolean, list: readonly Stored[]): boolean {
   const top = uid ? (list.at(-1)?.uid ?? 0) : list.length
