@@ -1439,6 +1439,8 @@ export const yue: Dictionary = {
   'No providers yet.': '仲冇服務商。',
   'Add {name}': '新增{name}',
   'This browser holds the keys in its own storage.': '呢個瀏覽器將密鑰放喺自己嘅儲存空間入面。',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    '呢部機搵唔到鎖匙圈，所以你啲金鑰放咗喺一個得你自己睇到嘅檔案度。',
   'Keep this browser’s keys in the vault': '將呢個瀏覽器嘅密鑰放喺保險庫',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     '噉樣每部裝置嘅密鑰都會儲喺呢個瀏覽器嘅儲存空間，混入頁面嘅腳本可以讀到。',

@@ -509,6 +509,7 @@ macro_rules! desktop_commands {
             secrets::secret_forget,
             secrets::secret_read,
             secrets::secret_write,
+            secrets::secrets_in_file,
             shell_menu::new_menu_registered,
             shell_menu::set_new_menu,
             mail_socket::mail_socket_open,
@@ -792,6 +793,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         secrets::secret_forget,
         secrets::secret_read,
         secrets::secret_write,
+        secrets::secrets_in_file,
     ]);
     #[cfg(target_os = "android")]
     let builder = builder.invoke_handler(commands![]);

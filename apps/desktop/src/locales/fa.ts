@@ -1487,6 +1487,8 @@ export const fa: Dictionary = {
   'Add {name}': 'افزودن {name}',
   'This browser holds the keys in its own storage.':
     'این مرورگر کلیدها را در انبار خودش نگه می‌دارد.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'هیچ جاکلیدی در این دستگاه پیدا نشد، پس کلیدهای شما در فایلی نگه داشته می‌شوند که فقط خودتان می‌توانید بخوانید.',
   'Keep this browser’s keys in the vault': 'کلیدهای این مرورگر را در گاوصندوق نگه دار',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'در این صورت کلیدهای همهٔ دستگاه‌ها در حافظهٔ این مرورگر نگه داشته می‌شوند، جایی که اسکریپتی که به صفحه راه یافته می‌تواند آن‌ها را بخواند.',

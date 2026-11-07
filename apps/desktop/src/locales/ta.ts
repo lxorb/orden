@@ -1507,6 +1507,8 @@ export const ta: Dictionary = {
   'Add {name}': '{name} சேர்',
   'This browser holds the keys in its own storage.':
     'இந்த உலாவி சாவிகளைத் தன் சேமிப்பிடத்தில் வைத்திருக்கும்.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'இந்தச் சாதனத்தில் கீரிங் எதுவும் இல்லை, எனவே உங்கள் சாவிகள் நீங்கள் மட்டுமே படிக்கக்கூடிய கோப்பில் வைக்கப்பட்டுள்ளன.',
   'Keep this browser’s keys in the vault': 'இந்த உலாவியின் சாவிகளை பெட்டகத்தில் வை',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'அப்போது ஒவ்வொரு சாதனத்தின் சாவிகளும் இந்த உலாவியின் சேமிப்பில் வைக்கப்படும்; பக்கத்திற்குள் நுழைந்த ஒரு ஸ்கிரிப்ட் அவற்றைப் படிக்கக்கூடும்.',

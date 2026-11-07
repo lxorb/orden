@@ -1484,6 +1484,8 @@ export const hi: Dictionary = {
   'Add {name}': '{name} जोड़ें',
   'This browser holds the keys in its own storage.':
     'यह ब्राउज़र कुंजियाँ अपने ही भंडार में रखता है।',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'इस डिवाइस पर कोई कीरिंग नहीं मिली, इसलिए आपकी कुंजियाँ ऐसी फ़ाइल में रखी गई हैं जिसे सिर्फ़ आप पढ़ सकते हैं।',
   'Keep this browser’s keys in the vault': 'इस ब्राउज़र की कुंजियाँ वॉल्ट में रखें',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'तब हर डिवाइस की कुंजियाँ इस ब्राउज़र के स्टोरेज में रखी जाएँगी, जहाँ पेज में घुसी कोई स्क्रिप्ट उन्हें पढ़ सकती है।',

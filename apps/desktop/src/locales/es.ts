@@ -1526,6 +1526,8 @@ export const es: Dictionary = {
   'Add {name}': 'Añadir {name}',
   'This browser holds the keys in its own storage.':
     'Este navegador guarda las claves en su propio almacenamiento.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'No se encontró un llavero en este dispositivo, así que tus claves se guardan en un archivo que solo tú puedes leer.',
   'Keep this browser’s keys in the vault': 'Guardar las claves de este navegador en la bóveda',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Entonces las claves de todos los dispositivos se guardan en el almacenamiento de este navegador, donde un script que se haya colado en la página podría leerlas.',

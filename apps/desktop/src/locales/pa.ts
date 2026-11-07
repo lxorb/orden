@@ -1488,6 +1488,8 @@ export const pa: Dictionary = {
   'Add {name}': '{name} ਜੋੜੋ',
   'This browser holds the keys in its own storage.':
     'ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਕੁੰਜੀਆਂ ਆਪਣੇ ਭੰਡਾਰ ਵਿੱਚ ਰੱਖਦਾ ਹੈ।',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਕੋਈ ਕੀਰਿੰਗ ਨਹੀਂ ਮਿਲੀ, ਇਸ ਲਈ ਤੁਹਾਡੀਆਂ ਕੁੰਜੀਆਂ ਉਸ ਫ਼ਾਈਲ ਵਿੱਚ ਰੱਖੀਆਂ ਗਈਆਂ ਹਨ ਜਿਸ ਨੂੰ ਸਿਰਫ਼ ਤੁਸੀਂ ਪੜ੍ਹ ਸਕਦੇ ਹੋ।',
   'Keep this browser’s keys in the vault': 'ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਦੀਆਂ ਕੁੰਜੀਆਂ ਵਾਲਟ ਵਿੱਚ ਰੱਖੋ',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'ਫਿਰ ਹਰ ਡਿਵਾਈਸ ਦੀਆਂ ਕੁੰਜੀਆਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਦੀ ਸਟੋਰੇਜ ਵਿੱਚ ਰਹਿਣਗੀਆਂ, ਜਿੱਥੇ ਪੰਨੇ ਵਿੱਚ ਵੜੀ ਕੋਈ ਸਕ੍ਰਿਪਟ ਉਨ੍ਹਾਂ ਨੂੰ ਪੜ੍ਹ ਸਕਦੀ ਹੈ।',

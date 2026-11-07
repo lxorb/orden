@@ -1503,6 +1503,8 @@ export const sw: Dictionary = {
   'Add {name}': 'Ongeza {name}',
   'This browser holds the keys in its own storage.':
     'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'Hakuna hifadhi ya funguo iliyopatikana kwenye kifaa hiki, kwa hivyo funguo zako zimehifadhiwa katika faili ambalo ni wewe tu unayeweza kulisoma.',
   'Keep this browser’s keys in the vault': 'Weka funguo za kivinjari hiki kwenye kasha',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Kisha funguo za kila kifaa zitahifadhiwa kwenye hifadhi ya kivinjari hiki, ambapo hati iliyoingia kwenye ukurasa inaweza kuzisoma.',

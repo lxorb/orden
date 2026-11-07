@@ -1483,6 +1483,8 @@ export const bn: Dictionary = {
   'No providers yet.': 'এখনও কোনো প্রদানকারী নেই।',
   'Add {name}': '{name} যোগ করুন',
   'This browser holds the keys in its own storage.': 'এই ব্রাউজার কী নিজের ভাণ্ডারে রাখে।',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'এই ডিভাইসে কোনো কিরিং পাওয়া যায়নি, তাই আপনার কী এমন একটি ফাইলে রাখা আছে যা শুধু আপনি পড়তে পারেন।',
   'Keep this browser’s keys in the vault': 'এই ব্রাউজারের কী ভল্টে রাখুন',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'তখন প্রতিটি ডিভাইসের কী এই ব্রাউজারের স্টোরেজে রাখা হবে, যেখানে পৃষ্ঠায় ঢুকে পড়া কোনো স্ক্রিপ্ট সেগুলো পড়তে পারে।',

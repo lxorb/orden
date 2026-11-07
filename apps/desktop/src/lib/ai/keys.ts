@@ -1,5 +1,5 @@
 import { frameWord, NoWord } from '../mobile/bridge'
-import { isMobile, isNative, invoke } from '../tauri'
+import { isDesktop, isMobile, isNative, invoke } from '../tauri'
 import type { Provider } from './providers'
 
 interface Secrets {
@@ -28,6 +28,11 @@ async function word(): Promise<string> {
 
 export function keysAreGuarded(): boolean {
   return isNative
+}
+
+export async function keysInFile(): Promise<boolean> {
+  if (!isDesktop) return false
+  return (await invoke<unknown>('secrets_in_file').catch(() => false)) === true
 }
 
 export async function readKey(provider: Provider): Promise<string> {

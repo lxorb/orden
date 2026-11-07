@@ -1563,6 +1563,8 @@ export const ru: Dictionary = {
   'Add {name}': 'Добавить {name}',
   'This browser holds the keys in its own storage.':
     'Этот браузер держит ключи в собственном хранилище.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'На этом устройстве не найдена связка ключей, поэтому ваши ключи хранятся в файле, который можете прочитать только вы.',
   'Keep this browser’s keys in the vault': 'Хранить ключи этого браузера в хранилище',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Тогда ключи всех устройств будут храниться в памяти этого браузера, где их сможет прочитать скрипт, проникший на страницу.',

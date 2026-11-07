@@ -1489,6 +1489,8 @@ export const tr: Dictionary = {
   'Add {name}': '{name} ekle',
   'This browser holds the keys in its own storage.':
     'Bu tarayıcı anahtarları kendi deposunda tutar.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'Bu cihazda anahtarlık bulunamadı, bu yüzden anahtarların yalnızca senin okuyabileceğin bir dosyada tutuluyor.',
   'Keep this browser’s keys in the vault': 'Bu tarayıcının anahtarlarını kasada tut',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'O zaman her cihazın anahtarları bu tarayıcının depolama alanında tutulur; sayfaya sızan bir betik onları okuyabilir.',

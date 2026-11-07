@@ -1463,6 +1463,8 @@ export const vi: Dictionary = {
   'Add {name}': 'Thêm {name}',
   'This browser holds the keys in its own storage.':
     'Trình duyệt này giữ khoá trong bộ lưu trữ của chính nó.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'Không tìm thấy keyring trên thiết bị này, nên khóa của bạn được lưu trong một tệp chỉ bạn đọc được.',
   'Keep this browser’s keys in the vault': 'Giữ khóa của trình duyệt này trong kho',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Khi đó, khóa của mọi thiết bị sẽ được lưu trong bộ nhớ của trình duyệt này, nơi một đoạn mã lọt vào trang có thể đọc được.',

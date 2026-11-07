@@ -1467,6 +1467,8 @@ export const ja: Dictionary = {
   'Add {name}': '{name} を追加',
   'This browser holds the keys in its own storage.':
     'このブラウザはキーを自身のストレージに保持します。',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'このデバイスにキーリングが見つからないため、キーはあなただけが読めるファイルに保存されています。',
   'Keep this browser’s keys in the vault': 'このブラウザのキーを保管庫に入れる',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'その場合、すべてのデバイスのキーがこのブラウザのストレージに保存され、ページに入り込んだスクリプトに読まれるおそれがあります。',

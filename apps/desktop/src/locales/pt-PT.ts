@@ -1527,6 +1527,8 @@ export const ptPT: Dictionary = {
   'Add {name}': 'Adicionar {name}',
   'This browser holds the keys in its own storage.':
     'Este navegador guarda as chaves no seu próprio armazenamento.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'Não foi encontrado nenhum porta-chaves neste dispositivo, por isso as suas chaves são guardadas num ficheiro que só você pode ler.',
   'Keep this browser’s keys in the vault': 'Guardar as chaves deste browser no cofre',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Assim, as chaves de todos os dispositivos ficam no armazenamento deste browser, onde um script que entrasse na página as poderia ler.',

@@ -1512,6 +1512,8 @@ export const fil: Dictionary = {
   'Add {name}': 'Idagdag ang {name}',
   'This browser holds the keys in its own storage.':
     'Itinatago ng browser na ito ang key sa sariling imbakan nito.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'Walang nakitang keyring sa device na ito, kaya nakatago ang iyong mga key sa isang file na ikaw lang ang makakabasa.',
   'Keep this browser’s keys in the vault': 'Itago ang mga key ng browser na ito sa vault',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Kung gayon, itatago ang mga key ng bawat device sa storage ng browser na ito, kung saan mababasa ang mga ito ng script na nakapasok sa page.',

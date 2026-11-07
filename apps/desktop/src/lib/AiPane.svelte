@@ -4,7 +4,7 @@
   import { type Account, repeatable } from './ai/accounts'
   import { FEATURES, ai } from './ai/store.svelte'
   import { listModels } from './ai/complete'
-  import { forgetKey, hasKey, keysAreGuarded, writeKey } from './ai/keys'
+  import { forgetKey, hasKey, keysAreGuarded, keysInFile, keysMoved, writeKey } from './ai/keys'
   import { plans } from './ai/local/status.svelte'
   import { browserVault, keepBrowserInVault, vault } from './ai/vault/start.svelte'
   import PlanRows from './ai/PlanRows.svelte'
@@ -33,6 +33,7 @@
   let models = $state<Record<string, string[]>>({})
   let asking = $state('')
   let trouble = $state<Record<string, string>>({})
+  let inFile = $state(false)
   const EXAMPLE_URL = 'http://localhost:11434'
 
   const named = (vendor: string) => vendorName(vendor, ai.accounts)
@@ -50,6 +51,9 @@
 
   onMount(() => {
     for (const account of ai.accounts) void ask(account)
+    const lookFile = () => void keysInFile().then((found) => (inFile = found))
+    lookFile()
+    return keysMoved(lookFile)
   })
 
   async function ask(account: Provider) {
@@ -527,6 +531,11 @@
     {t('Sign in to have them on every device.')}
   {/if}
 </p>
+{#if inFile}
+  <p class="hint caption" role="note">
+    {t('No keyring was found on this device, so your keys are kept in a file only you can read.')}
+  </p>
+{/if}
 <p class="hint caption">{t('AI can be wrong. Check the facts.')}</p>
 
 {#if glassesKey.set}

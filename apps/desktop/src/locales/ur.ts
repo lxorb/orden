@@ -1485,6 +1485,8 @@ export const ur: Dictionary = {
   'No providers yet.': 'ابھی کوئی فراہم کنندہ نہیں۔',
   'Add {name}': '{name} شامل کریں',
   'This browser holds the keys in its own storage.': 'یہ براؤزر کلیدیں اپنے ہی ذخیرے میں رکھتا ہے۔',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'اس ڈیوائس پر کوئی کی رنگ نہیں ملا، اس لیے آپ کی کلیدیں ایسی فائل میں رکھی گئی ہیں جسے صرف آپ پڑھ سکتے ہیں۔',
   'Keep this browser’s keys in the vault': 'اس براؤزر کی کلیدیں والٹ میں رکھیں',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'پھر ہر ڈیوائس کی کلیدیں اس براؤزر کے اسٹوریج میں رکھی جائیں گی، جہاں صفحے میں گھس آنے والا کوئی اسکرپٹ انہیں پڑھ سکتا ہے۔',

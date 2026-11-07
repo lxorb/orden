@@ -2,6 +2,16 @@ import { invoke, isDesktop, isNative } from './tauri'
 
 export type Level = 'info' | 'warn' | 'error'
 
+const BEARER = /\b(Bearer|Basic|Token)\s+[A-Za-z0-9._~+/=-]{6,}/gi
+
+const KEYS = /\b(?:sk|pk|rk|ghp|gho|ghs|ghu|github_pat|xox[abpr]|AKIA|AIza)[-_A-Za-z0-9]{12,}/g
+
+export function tokensOut(text: string): string {
+  return text
+    .replace(BEARER, (_whole: string, kind: string) => `${kind} <token>`)
+    .replace(KEYS, '<token>')
+}
+
 const KEPT = 200
 const recent: string[] = []
 
@@ -9,7 +19,8 @@ export function recentLog(): readonly string[] {
   return recent
 }
 
-export function log(level: Level, message: string) {
+export function log(level: Level, said: string) {
+  const message = tokensOut(said)
   const at = new Date().toISOString()
   recent.push(`${at} ${level} ${message}`)
   if (recent.length > KEPT) recent.splice(0, recent.length - KEPT)
@@ -36,7 +47,9 @@ function report(error: unknown) {
   const message = error instanceof Error ? `${error.name}: ${error.message}` : describe(error)
   if (message.startsWith(RESIZE_LOOP) || NOT_BROKEN.test(message)) return
   const stack = error instanceof Error ? (error.stack ?? '') : ''
-  void invoke('crash_report_js', { message, stack }).catch(() => undefined)
+  void invoke('crash_report_js', { message: tokensOut(message), stack: tokensOut(stack) }).catch(
+    () => undefined,
+  )
 }
 
 export function collectErrors() {

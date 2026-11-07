@@ -1590,6 +1590,8 @@ export const ar: Dictionary = {
   'No providers yet.': 'لا مزوّدين بعد.',
   'Add {name}': 'إضافة {name}',
   'This browser holds the keys in its own storage.': 'يحفظ هذا المتصفح المفاتيح في مخزنه الخاص.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'لم يُعثر على حافظة مفاتيح في هذا الجهاز، لذا تُحفظ مفاتيحك في ملف لا يقرؤه سواك.',
   'Keep this browser’s keys in the vault': 'الاحتفاظ بمفاتيح هذا المتصفح في الخزنة',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'عندها تُحفظ مفاتيح كل جهاز في تخزين هذا المتصفح، حيث يمكن لنص برمجي تسلل إلى الصفحة أن يقرأها.',

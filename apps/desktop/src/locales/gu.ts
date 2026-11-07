@@ -1477,6 +1477,8 @@ export const gu: Dictionary = {
   'No providers yet.': 'હજી પ્રદાતા નથી.',
   'Add {name}': '{name} ઉમેરો',
   'This browser holds the keys in its own storage.': 'આ બ્રાઉઝર કીઓ પોતાના સંગ્રહમાં રાખે છે.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'આ ઉપકરણ પર કોઈ કીરિંગ મળ્યું નથી, તેથી તમારી કી એવી ફાઇલમાં રાખવામાં આવી છે જે ફક્ત તમે વાંચી શકો.',
   'Keep this browser’s keys in the vault': 'આ બ્રાઉઝરની કી વૉલ્ટમાં રાખો',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'પછી દરેક ઉપકરણની કી આ બ્રાઉઝરના સ્ટોરેજમાં રહેશે, જ્યાં પેજમાં ઘૂસેલી કોઈ સ્ક્રિપ્ટ તેને વાંચી શકે.',

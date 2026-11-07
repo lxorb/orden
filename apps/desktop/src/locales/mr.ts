@@ -1483,6 +1483,8 @@ export const mr: Dictionary = {
   'No providers yet.': 'अद्याप पुरवठादार नाही.',
   'Add {name}': '{name} जोडा',
   'This browser holds the keys in its own storage.': 'हा ब्राउझर कळा स्वतःच्या साठ्यात ठेवतो.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'या डिव्हाइसवर कीरिंग सापडले नाही, म्हणून तुमच्या की फक्त तुम्हीच वाचू शकाल अशा फाइलमध्ये ठेवल्या आहेत.',
   'Keep this browser’s keys in the vault': 'या ब्राउझरच्या की व्हॉल्टमध्ये ठेवा',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'मग प्रत्येक डिव्हाइसच्या की या ब्राउझरच्या स्टोरेजमध्ये ठेवल्या जातील, जिथे पेजमध्ये शिरलेली स्क्रिप्ट त्या वाचू शकते.',

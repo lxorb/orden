@@ -73,8 +73,26 @@ mod store {
     }
 
     pub fn get(app: &AppHandle, account: &str) -> Result<Option<String>, String> {
-        either(kept(account), || file::get(app, account))
+        let kept = kept(account);
+        let reachable = matches!(kept, Ok(None));
+        let found = either(kept, || file::get(app, account))?;
+        if let (true, Some(secret)) = (reachable, &found) {
+            if entry(super::SERVICE, account)
+                .and_then(|one| one.set_password(secret))
+                .is_ok()
+            {
+                let _ = file::delete(app, account);
+            }
+        }
+        Ok(found)
     }
+
+    pub fn in_file(app: &AppHandle) -> bool {
+        let probed = entry(super::SERVICE, PROBE).and_then(|one| one.get_password());
+        matches!(&probed, Err(error) if away(error)) || file::holds_any(app)
+    }
+
+    const PROBE: &str = "orden-keyring-probe";
 
     pub fn set(app: &AppHandle, account: &str, secret: &str) -> Result<(), String> {
         let written = entry(super::SERVICE, account).and_then(|one| one.set_password(secret));
@@ -98,7 +116,13 @@ mod store {
 }
 
 #[cfg(target_os = "macos")]
-use file as store;
+mod store {
+    pub use super::file::{delete, get, set};
+
+    pub fn in_file(_app: &tauri::AppHandle) -> bool {
+        false
+    }
+}
 
 mod file {
     use std::sync::Mutex;
@@ -143,11 +167,26 @@ mod file {
         }
         Ok(())
     }
+
+    #[cfg_attr(target_os = "macos", allow(dead_code))]
+    pub fn holds_any(app: &AppHandle) -> bool {
+        let _held = HELD
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        file(app)
+            .and_then(|path| super::read_file(&path))
+            .is_ok_and(|kept| !kept.is_empty())
+    }
 }
 
 const FILE: &str = "secrets.json";
 
 fn read_file(path: &std::path::Path) -> Result<BTreeMap<String, String>, String> {
+    #[cfg(unix)]
+    if let Some(folder) = path.parent() {
+        private(folder, 0o700);
+        private(path, 0o600);
+    }
     match std::fs::read(path) {
         Ok(bytes) => serde_json::from_slice(&bytes)
             .map_err(|error| format!("the secrets file would not read: {error}")),
@@ -159,9 +198,23 @@ fn read_file(path: &std::path::Path) -> Result<BTreeMap<String, String>, String>
 fn write_file(path: &std::path::Path, kept: &BTreeMap<String, String>) -> Result<(), String> {
     if let Some(folder) = path.parent() {
         crate::paths::made(folder)?;
+        #[cfg(unix)]
+        private(folder, 0o700);
     }
     let text = serde_json::to_vec(kept).map_err(|error| error.to_string())?;
     crate::paths::write_privately(path, &text)
+}
+
+#[cfg(unix)]
+fn private(path: &std::path::Path, mode: u32) {
+    use std::os::unix::fs::PermissionsExt as _;
+    let Ok(meta) = std::fs::symlink_metadata(path) else {
+        return;
+    };
+    if meta.file_type().is_symlink() || meta.permissions().mode() & 0o777 == mode {
+        return;
+    }
+    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode));
 }
 
 pub(crate) fn get(app: &AppHandle, account: &str) -> Result<Option<String>, String> {
@@ -218,6 +271,11 @@ pub fn secret_write(app: AppHandle, name: String, secret: String) -> Result<(), 
 }
 
 #[tauri::command(async)]
+pub fn secrets_in_file(app: AppHandle) -> bool {
+    store::in_file(&app)
+}
+
+#[tauri::command(async)]
 pub fn secret_forget(app: AppHandle, name: String) -> Result<(), String> {
     delete(&app, &filed(&name, &app.config().identifier)?)
 }
@@ -238,8 +296,17 @@ mod tests {
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt as _;
-            let mode = std::fs::metadata(&path).unwrap().permissions().mode();
-            assert_eq!(mode & 0o777, 0o600);
+            let mode =
+                |at: &std::path::Path| std::fs::metadata(at).unwrap().permissions().mode() & 0o777;
+            assert_eq!(mode(&path), 0o600);
+            assert_eq!(mode(&folder), 0o700);
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+            std::fs::set_permissions(&folder, std::fs::Permissions::from_mode(0o755)).unwrap();
+            assert_eq!(read_file(&path).unwrap(), kept);
+            assert_eq!(mode(&path), 0o600);
+            assert_eq!(mode(&folder), 0o700);
+            let left: Vec<_> = std::fs::read_dir(&folder).unwrap().collect();
+            assert_eq!(left.len(), 1);
         }
         std::fs::write(&path, b"not json").unwrap();
         assert!(read_file(&path).is_err());

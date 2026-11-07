@@ -1531,6 +1531,8 @@ export const it: Dictionary = {
   'Add {name}': 'Aggiungi {name}',
   'This browser holds the keys in its own storage.':
     'Questo browser conserva le chiavi nella propria memoria.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'Non è stato trovato alcun portachiavi su questo dispositivo, quindi le tue chiavi sono conservate in un file che solo tu puoi leggere.',
   'Keep this browser’s keys in the vault': 'Conserva le chiavi di questo browser nella cassaforte',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Così le chiavi di ogni dispositivo vengono conservate nello spazio di questo browser, dove uno script entrato nella pagina potrebbe leggerle.',

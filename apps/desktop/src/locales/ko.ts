@@ -1459,6 +1459,8 @@ export const ko: Dictionary = {
   'No providers yet.': '아직 공급자가 없습니다.',
   'Add {name}': '{name} 추가',
   'This browser holds the keys in its own storage.': '이 브라우저는 키를 자체 저장소에 보관합니다.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    '이 기기에서 키링을 찾지 못해 키를 나만 읽을 수 있는 파일에 보관합니다.',
   'Keep this browser’s keys in the vault': '이 브라우저의 키를 보관함에 두기',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     '그러면 모든 기기의 키가 이 브라우저의 저장소에 보관되며, 페이지에 들어온 스크립트가 이를 읽을 수 있습니다.',

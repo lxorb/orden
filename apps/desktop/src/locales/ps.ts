@@ -1485,6 +1485,8 @@ export const ps: Dictionary = {
   'No providers yet.': 'تر اوسه برابرونکي نشته.',
   'Add {name}': '{name} ورزياتول',
   'This browser holds the keys in its own storage.': 'دا کوټګر کيليانې په خپله زېرمه کې ساتي.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'په دې وسیله کې د کیلیو زېرمه ونه موندل شوه، نو ستاسو کیلي په داسې فایل کې ساتل کېږي چې یوازې تاسو یې لوستلی شئ.',
   'Keep this browser’s keys in the vault': 'د دې براوزر کلیدونه په خزانه کې وساته',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'بیا به د هرې وسیلې کلیدونه د دې براوزر په زېرمه کې وساتل شي، چېرته چې یو سکرېپټ چې پاڼې ته ننوتی وي هغه لوستلی شي.',

@@ -1470,6 +1470,8 @@ export const ms: Dictionary = {
   'Add {name}': 'Tambah {name}',
   'This browser holds the keys in its own storage.':
     'Pelayar ini menyimpan kunci dalam simpanannya sendiri.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'Tiada keyring ditemui pada peranti ini, jadi kunci anda disimpan dalam fail yang hanya anda boleh baca.',
   'Keep this browser’s keys in the vault': 'Simpan kunci pelayar ini dalam peti besi',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Kemudian kunci setiap peranti disimpan dalam storan pelayar ini, tempat skrip yang menyusup ke halaman boleh membacanya.',

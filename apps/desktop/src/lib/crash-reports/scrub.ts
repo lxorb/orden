@@ -1,4 +1,5 @@
 import { scrubbedLog } from '../feedback-log'
+import { tokensOut } from '../log'
 
 interface CrashFrame {
   module: string
@@ -42,10 +43,6 @@ const NAMED_SECRET = new RegExp(
   'gi',
 )
 
-const BEARER = /\b(Bearer|Basic|Token)\s+[A-Za-z0-9._~+/=-]{6,}/gi
-
-const KEYS = /\b(?:sk|pk|rk|ghp|gho|ghs|ghu|github_pat|xox[abpr]|AKIA|AIza)[-_A-Za-z0-9]{12,}/g
-
 const OPAQUE =
   /(?<![\w.-])(?=[A-Za-z0-9_+/=-]*\d)(?=[A-Za-z0-9_+/=-]*[A-Za-z])[A-Za-z0-9_+/=-]{28,}(?![\w.-])/g
 
@@ -62,9 +59,7 @@ const LOCATION = /^[\w.:\\/-]+\.rs:\d+:\d+$/
 const SYMBOL = /^[\w$.:<>~@?, *&()[\]-]{1,200}$/
 
 function secretsOut(text: string): string {
-  return text
-    .replace(BEARER, (_whole: string, kind: string) => `${kind} <token>`)
-    .replace(KEYS, '<token>')
+  return tokensOut(text)
     .replace(
       NAMED_SECRET,
       (_whole: string, name: string, between: string) => `${name}${between}<hidden>`,

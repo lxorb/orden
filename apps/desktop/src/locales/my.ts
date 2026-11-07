@@ -1467,6 +1467,8 @@ export const my: Dictionary = {
   'Add {name}': '{name} ထည့်ပါ',
   'This browser holds the keys in its own storage.':
     'ဤဘရောက်ဇာသည် သော့များကို မိမိသိမ်းဆည်းမှုတွင် ထားသည်။',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'ဤစက်တွင် keyring မတွေ့ပါ၊ ထို့ကြောင့် သင့်ကီးများကို သင်တစ်ဦးတည်းသာ ဖတ်နိုင်သော ဖိုင်တွင် သိမ်းထားသည်။',
   'Keep this browser’s keys in the vault': 'ဤဘရောက်ဇာ၏ ကီးများကို သေတ္တာထဲတွင် သိမ်းထားပါ',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'ထိုအခါ စက်တိုင်း၏ ကီးများကို ဤဘရောက်ဇာ၏ သိုလှောင်ရာတွင် သိမ်းမည်ဖြစ်ပြီး စာမျက်နှာထဲသို့ ဝင်လာသော script တစ်ခုက ၎င်းတို့ကို ဖတ်နိုင်သည်။',

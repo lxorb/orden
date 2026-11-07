@@ -1492,6 +1492,8 @@ export const gsw: Dictionary = {
   'Add {name}': '{name} dezuetue',
   'This browser holds the keys in its own storage.':
     'Dä Browser bhaltet d Schlüssel in sim eigene Speicher.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'Uf däm Grät hät mer kei Schlüsselbund gfunde, drum sind dini Schlüssel imene File, wo nur du chasch läse.',
   'Keep this browser’s keys in the vault': 'D Schlüssel vo däm Browser im Tresor ufbewahre',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Denn sind d Schlüssel vo allne Grät im Speicher vo däm Browser, wo sie es Skript, wo i d Siite inecho isch, chönnt läse.',

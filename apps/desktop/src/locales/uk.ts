@@ -1558,6 +1558,8 @@ export const uk: Dictionary = {
   'No providers yet.': 'Постачальників ще немає.',
   'Add {name}': 'Додати {name}',
   'This browser holds the keys in its own storage.': 'Цей браузер тримає ключі у власному сховищі.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'На цьому пристрої не знайдено зв’язки ключів, тому ваші ключі зберігаються у файлі, який можете прочитати лише ви.',
   'Keep this browser’s keys in the vault': 'Зберігати ключі цього браузера у сховищі',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Тоді ключі всіх пристроїв зберігатимуться в пам’яті цього браузера, де їх зможе прочитати скрипт, що потрапив на сторінку.',

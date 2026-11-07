@@ -1504,6 +1504,8 @@ export const ml: Dictionary = {
   'Add {name}': '{name} ചേർക്കുക',
   'This browser holds the keys in its own storage.':
     'ഈ ബ്രൗസർ കീകൾ സ്വന്തം സ്റ്റോറേജിൽ സൂക്ഷിക്കുന്നു.',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'ഈ ഉപകരണത്തിൽ കീറിംഗ് കണ്ടെത്തിയില്ല, അതിനാൽ നിങ്ങളുടെ കീകൾ നിങ്ങൾക്ക് മാത്രം വായിക്കാവുന്ന ഒരു ഫയലിൽ സൂക്ഷിച്ചിരിക്കുന്നു.',
   'Keep this browser’s keys in the vault': 'ഈ ബ്രൗസറിന്റെ കീകൾ വോൾട്ടിൽ സൂക്ഷിക്കുക',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'അപ്പോൾ ഓരോ ഉപകരണത്തിന്റെയും കീകൾ ഈ ബ്രൗസറിന്റെ സംഭരണത്തിൽ സൂക്ഷിക്കും, പേജിൽ കടന്നുകൂടിയ ഒരു സ്ക്രിപ്റ്റിന് അവ വായിക്കാനാകും.',

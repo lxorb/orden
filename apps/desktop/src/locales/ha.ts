@@ -1507,6 +1507,8 @@ export const ha: Dictionary = {
   'Add {name}': 'Ƙara {name}',
   'This browser holds the keys in its own storage.':
     "Wannan birawuza na riƙe maɓallai a ma'ajinsa.",
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'Ba a sami ma’ajiyar maɓallai a wannan na’ura ba, don haka ana ajiye maɓallanku a cikin fayil da kai kaɗai za ka iya karantawa.',
   'Keep this browser’s keys in the vault': "Ajiye maɓallan wannan burauza a cikin ma'aji",
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     "Sannan za a ajiye maɓallan kowace na'ura a ma'ajin wannan burauza, inda rubutun da ya shiga shafin zai iya karanta su.",

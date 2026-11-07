@@ -1451,6 +1451,8 @@ export const th: Dictionary = {
   'No providers yet.': 'ยังไม่มีผู้ให้บริการ',
   'Add {name}': 'เพิ่ม {name}',
   'This browser holds the keys in its own storage.': 'เบราว์เซอร์นี้เก็บคีย์ไว้ในที่เก็บของตัวเอง',
+  'No keyring was found on this device, so your keys are kept in a file only you can read.':
+    'ไม่พบพวงกุญแจในอุปกรณ์นี้ จึงเก็บคีย์ของคุณไว้ในไฟล์ที่มีเพียงคุณเท่านั้นที่อ่านได้',
   'Keep this browser’s keys in the vault': 'เก็บคีย์ของเบราว์เซอร์นี้ไว้ในห้องนิรภัย',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'จากนั้นคีย์ของทุกอุปกรณ์จะถูกเก็บไว้ในพื้นที่จัดเก็บของเบราว์เซอร์นี้ ซึ่งสคริปต์ที่แทรกเข้ามาในหน้าอาจอ่านได้',
