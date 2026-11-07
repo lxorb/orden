@@ -3,7 +3,7 @@ import { keep, storedText } from '../stored'
 const KEY = 'nib:icon-tabs'
 
 class IconTabs {
-  on = $state(storedText(KEY) !== 'no')
+  on = $state(storedText(KEY) === 'yes')
 
   set(on: boolean) {
     this.on = on

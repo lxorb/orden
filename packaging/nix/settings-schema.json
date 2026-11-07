@@ -305,7 +305,7 @@
   },
   "general.iconTabs": {
     "type": "boolean",
-    "default": true,
+    "default": false,
     "description": "Every tab but the one in front shows only its icon; pointing at one shows its name."
   },
   "general.keepVersionEvery": {
