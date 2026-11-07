@@ -67,6 +67,8 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src/lib/sync/mirror.test.ts': ['.nib-moving-'],
   'apps/desktop/src/lib/sync/pass.ts': ['.nib-moving-'],
   'apps/desktop/src/lib/sync2/runner.svelte.ts': ['|nib)-moving'],
+  'apps/desktop/src/lib/themes/carried.test.ts': ['nib-'],
+  'apps/desktop/src/lib/themes/carried.ts': ['nib-'],
   'apps/desktop/src/lib/web-tab/address.test.ts': ['nib://'],
   'apps/desktop/src/lib/web-tab/address.ts': ["'nib:'"],
   'apps/desktop/src/lib/web-tab/own-pages.test.ts': ['nib://'],
