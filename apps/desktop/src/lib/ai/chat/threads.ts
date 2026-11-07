@@ -393,6 +393,18 @@ function headIn(value: unknown): ThreadHead | null {
   }
 }
 
+const listing = new Map<string, Promise<void>>()
+
+function inTurn(space: string, run: () => Promise<void>): Promise<void> {
+  const done = (listing.get(space) ?? Promise.resolve()).then(run)
+  const settled = done.catch(() => undefined)
+  listing.set(space, settled)
+  void settled.then(() => {
+    if (listing.get(space) === settled) listing.delete(space)
+  })
+  return done
+}
+
 async function web() {
   const { meta } = await import('../../web/store')
   const listKey = (space: string) => `ai-threads:${space}`
@@ -518,9 +530,11 @@ export async function writeThread(given: Thread): Promise<void> {
     return
   }
   const store = await web()
-  await store.meta.put(store.threadKey(thread.space, thread.id), body)
-  const others = (await store.heads(thread.space)).filter((one) => headIn(one)?.id !== thread.id)
-  await store.meta.put(store.listKey(thread.space), JSON.stringify([...others, head]))
+  await inTurn(thread.space, async () => {
+    await store.meta.put(store.threadKey(thread.space, thread.id), body)
+    const others = (await store.heads(thread.space)).filter((one) => headIn(one)?.id !== thread.id)
+    await store.meta.put(store.listKey(thread.space), JSON.stringify([...others, head]))
+  })
 }
 
 const removed = new Set<string>()
@@ -559,9 +573,11 @@ async function deleted(space: string, id: string): Promise<void> {
     return
   }
   const store = await web()
-  await store.meta.remove(store.threadKey(space, id))
-  const left = (await store.heads(space)).filter((one) => headIn(one)?.id !== id)
-  await store.meta.put(store.listKey(space), JSON.stringify(left))
+  await inTurn(space, async () => {
+    await store.meta.remove(store.threadKey(space, id))
+    const left = (await store.heads(space)).filter((one) => headIn(one)?.id !== id)
+    await store.meta.put(store.listKey(space), JSON.stringify(left))
+  })
 }
 
 export async function forgetSpace(space: string): Promise<void> {
@@ -570,11 +586,13 @@ export async function forgetSpace(space: string): Promise<void> {
     return
   }
   const store = await web()
-  for (const head of await store.heads(space)) {
-    const id = headIn(head)?.id
-    if (id) await store.meta.remove(store.threadKey(space, id))
-  }
-  await store.meta.remove(store.listKey(space))
+  await inTurn(space, async () => {
+    for (const head of await store.heads(space)) {
+      const id = headIn(head)?.id
+      if (id) await store.meta.remove(store.threadKey(space, id))
+    }
+    await store.meta.remove(store.listKey(space))
+  })
 }
 
 const writing = new Map<string, { next: boolean; thread: Thread; done: Promise<void> }>()
