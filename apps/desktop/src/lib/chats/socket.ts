@@ -7,6 +7,10 @@ import { BEAT_EVERY, roomDelay } from '../backoff'
 
 const ENDED = 1008
 
+const SILENT_BEATS = 3
+
+const OPEN_WITHIN = 10_000
+
 export interface Heard {
   events(events: Logged[]): void
   behind(seq: number): void
@@ -52,7 +56,9 @@ export class ChatSocket {
   private greeted = false
   private stopped = false
   private tries = 0
+  private quiet = 0
   private retry: ReturnType<typeof setTimeout> | undefined
+  private opening: ReturnType<typeof setTimeout> | undefined
   private beat: ReturnType<typeof setInterval> | undefined
 
   constructor(
@@ -106,12 +112,21 @@ export class ChatSocket {
       wire = this.dial(url, protocols, {
         opened: () => {
           if (this.wire !== wire || !wire) return
+          clearTimeout(this.opening)
           this.tries = 0
+          this.quiet = 0
           wire.send(text({ t: 'hello', since: this.since() }))
           this.greeted = true
           this.heard.state(true)
           clearInterval(this.beat)
           this.beat = setInterval(() => {
+            if (this.wire !== wire) return
+            this.quiet += 1
+            if (this.quiet >= SILENT_BEATS) {
+              this.drop()
+              this.again()
+              return
+            }
             try {
               wire?.send(BEAT)
             } catch {
@@ -120,7 +135,9 @@ export class ChatSocket {
           }, BEAT_EVERY)
         },
         heard: (said) => {
-          if (this.wire === wire) this.hear(said)
+          if (this.wire !== wire) return
+          this.quiet = 0
+          this.hear(said)
         },
         closed: (code) => {
           if (this.wire !== wire) return
@@ -138,6 +155,12 @@ export class ChatSocket {
       return
     }
     this.wire = wire
+    clearTimeout(this.opening)
+    this.opening = setTimeout(() => {
+      if (this.wire !== wire || this.greeted) return
+      this.drop()
+      this.again()
+    }, OPEN_WITHIN)
   }
 
   private hear(said: string): void {
@@ -169,6 +192,7 @@ export class ChatSocket {
   }
 
   private drop(): void {
+    clearTimeout(this.opening)
     clearInterval(this.beat)
     this.beat = undefined
     const wire = this.wire
