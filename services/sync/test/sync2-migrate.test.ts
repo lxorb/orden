@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { frame, unframe } from '@orden/sync-core'
 import { sha256 } from '../src/crypto'
 import { keepVersionNow } from '../src/versions'
 import app from '../src/index'
@@ -156,16 +157,27 @@ async function v1Cursor(): Promise<number> {
   return (await call(env, `/v1/spaces/${space}/changes?since=0`, { token })).json.cursor
 }
 
+async function oneDocAPull(request: Request): Promise<Response> {
+  const answer = await app.fetch(request, env)
+  if (!request.url.endsWith('/v2/docs/pull') || !answer.ok) return answer
+  const said = unframe(new Uint8Array(await answer.arrayBuffer())) as { docs: unknown[] }
+  return new Response(frame({ ...said, docs: said.docs.slice(0, 1) }), {
+    status: answer.status,
+    headers: answer.headers,
+  })
+}
+
 async function migrated(
   files: Record<string, string>,
   notes: Record<string, Tracked>,
   cursor = 0,
   untold?: V1Space['untold'],
   carried?: ReadonlyMap<string, string>,
+  fetch: (request: Request) => Promise<Response> = async (request) => await app.fetch(request, env),
 ) {
   const kit = await engine()
   const device = await kit.testDevice({
-    fetch: async (request) => await app.fetch(request, env),
+    fetch,
     token,
     files,
   })
@@ -217,6 +229,24 @@ describe('a device moving to v2', () => {
 
     expect(file('Plan.md')).toBe('We ship on Tuesday, after the review.\n')
     expect(await liveNames()).toEqual(['Plan.md'])
+  })
+
+  test('notes moved on both sides all merge when the account answers a pull a few at a time', async () => {
+    const base = 'First line.\n\nSecond line.\n'
+    const notes: Record<string, Tracked> = {}
+    const files: Record<string, string> = {}
+    for (const name of ['Plan.md', 'Ideas.md', 'Later.md']) {
+      const note = await v1Note(name, base)
+      await keepVersionNow(env, note.id, base, 'one')
+      await v1Write(note.id, name, 'First line, edited elsewhere.\n\nSecond line.\n', note.version)
+      notes[name] = { ...note, hash: await sha256(base) }
+      files[name] = 'First line.\n\nSecond line, edited here.\n'
+    }
+    const { file } = await migrated(files, notes, 0, undefined, undefined, oneDocAPull)
+
+    for (const name of Object.keys(files)) {
+      expect(file(name)).toBe('First line, edited elsewhere.\n\nSecond line, edited here.\n')
+    }
   })
 
   test('words written under v1 that never went up go up, and nothing is copied', async () => {

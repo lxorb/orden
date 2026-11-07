@@ -162,21 +162,29 @@ export async function firstPass(
   }
 
   for (let at = 0; at < needs.length; at += PULL_BATCH) {
-    const batch = needs.slice(at, at + PULL_BATCH)
-    const reply = await world.account.ask(
-      'pull',
-      {
-        docs: batch.map((one) => ({ id: one.entry.id, epoch: one.item.epoch ?? 1, sv: EMPTY_SV })),
-      },
-      space.id,
-    )
-    if (!alive() || reply === null) return false
-    const answer = pullResponseOf(reply)
-    for (const one of batch) {
-      const whole = answer?.docs.find((doc) => doc.id === one.entry.id)
-      if (whole && 'update' in whole) {
-        changes.push(...(await reconcile(core, space, one, whole.update, whole.seq)))
+    let batch = needs.slice(at, at + PULL_BATCH)
+    while (batch.length) {
+      const reply = await world.account.ask(
+        'pull',
+        {
+          docs: batch.map((one) => ({
+            id: one.entry.id,
+            epoch: one.item.epoch ?? 1,
+            sv: EMPTY_SV,
+          })),
+        },
+        space.id,
+      )
+      if (!alive() || reply === null) return false
+      const answered = new Map((pullResponseOf(reply)?.docs ?? []).map((doc) => [doc.id, doc]))
+      for (const one of batch) {
+        const whole = answered.get(one.entry.id)
+        if (whole && 'update' in whole) {
+          changes.push(...(await reconcile(core, space, one, whole.update, whole.seq)))
+        }
       }
+      const left = batch.filter((one) => !answered.has(one.entry.id))
+      batch = left.length < batch.length ? left : []
     }
   }
 
