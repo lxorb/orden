@@ -23,7 +23,7 @@ import type { Doc } from './docs'
 import { MINE } from './docs'
 import { foldIn, readAgain } from './ingest'
 import { fileOfUpdates, holdsDocument, judge, shapeOf, turn, unixLines } from './kinds'
-import { made } from './create'
+import { dropUnmade, made } from './create'
 import { type Outboxed, settle, type SpaceState } from './places'
 import { keepingChange, keptHere } from './keeping'
 import { notWritten, project } from './project'
@@ -154,6 +154,7 @@ async function sendOps(
       }
     }
     space.outbox = queue
+    changes.push(...unmade(core, space, waiting, folded))
 
     const batch = space.outbox.filter(going).slice(0, OPS_BATCH)
     for (const one of batch) {
@@ -253,6 +254,23 @@ function unplaced(space: SpaceState, batch: readonly Outboxed[], error: Refused)
 
 function changesOf(core: Core, space: SpaceState, batch: readonly Outboxed[]): Change[] {
   return [...batch.map((one) => put('outbox', one.row)), ...core.orderChanges(space)]
+}
+
+function unmade(
+  core: Core,
+  space: SpaceState,
+  waiting: readonly Outboxed[],
+  folded: readonly Op[],
+): Change[] {
+  const left = new Set(folded.map((op) => op.id))
+  const ids = waiting.flatMap(({ record }) =>
+    record.t === 'op' &&
+    (record.op.t === 'create' || record.op.t === 'mkdir') &&
+    !left.has(record.op.id)
+      ? [record.op.id]
+      : [],
+  )
+  return dropUnmade(core, space, ids)
 }
 
 export async function refused(

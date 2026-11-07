@@ -246,6 +246,24 @@ export function described(
   return changes
 }
 
+export function dropUnmade(core: Core, space: SpaceState, ids: Iterable<string>): Change[] {
+  const changes: Change[] = []
+  for (const id of ids) {
+    const entry = space.entries.get(id)
+    if (entry?.seq !== null || entry.local_path || entry.deleted) continue
+    if ([...space.gone.values()].some((went) => went.paths.has(id))) continue
+    const named = space.outbox.some(({ record }) =>
+      record.t === 'op'
+        ? record.op.id === id
+        : record.t === 'merge' && (record.merge.mine === id || record.merge.into === id),
+    )
+    if (named) continue
+    space.entries.delete(id)
+    changes.push(remove('entries', id), ...core.forgetChanges(id))
+  }
+  return changes
+}
+
 export function unsynced(core: Core, space: SpaceState, entry: EntryRow): Change[] {
   const changes: Change[] = []
   if (entry.local_path) {
@@ -288,7 +306,9 @@ export function removed(core: Core, space: SpaceState, path: string, back?: stri
   space.gone.delete(entry.id)
   const paths = new Map(gone.map((one) => [one.id, one.local_path]))
   space.gone.set(entry.id, back === undefined ? { paths } : { paths, back })
+  const pruned: string[] = []
   for (const id of [...space.gone.keys()].slice(0, Math.max(0, space.gone.size - GONE_KEPT))) {
+    pruned.push(...(space.gone.get(id)?.paths.keys() ?? []))
     space.gone.delete(id)
   }
   changes.push(put('meta', goneRow(space.id, space.gone)))
@@ -300,6 +320,7 @@ export function removed(core: Core, space: SpaceState, path: string, back?: stri
     if (one.kind !== 'folder') changes.push(...core.forgetChanges(one.id))
   }
   changes.push(...queue(core, space, { op: core.nextId('o'), t: 'delete', id: entry.id, seen }))
+  changes.push(...dropUnmade(core, space, pruned))
   space.changed()
   return changes
 }
