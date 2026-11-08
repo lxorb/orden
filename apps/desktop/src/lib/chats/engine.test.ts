@@ -1,7 +1,7 @@
 import { type Event, type Message, ulid, type Who } from '@orden/chats'
 import { afterEach, describe, expect, test } from 'vitest'
 import { MemoryCache } from './cache'
-import { ChatEngine } from './engine'
+import { ChatEngine, type Remote } from './engine'
 import { keepsRow } from './fold'
 import { Account, CHAT, random } from './test-account'
 
@@ -161,5 +161,48 @@ describe('three devices in one chat', () => {
     await ana.engine.drop(['e1'])
     expect(ana.engine.pending(CHAT)).toEqual([])
     expect(await ana.cache.outbox()).toEqual([])
+  })
+})
+
+describe('a stopped engine', () => {
+  test('sends no more of its outbox once stopped, though batches were left', async () => {
+    let online = false
+    const posted: number[] = []
+    let engine: ChatEngine | null = null
+    const remote: Remote = {
+      list: () => Promise.resolve(null),
+      events: () => Promise.resolve(null),
+      state: () => Promise.resolve(null),
+      read: () => Promise.resolve(true),
+      post: (_chat, events) => {
+        if (!online) return Promise.resolve(null)
+        posted.push(events.length)
+        engine?.stop()
+        return Promise.resolve({
+          results: events.map((one, at) => ({
+            id: one.id,
+            seq: posted.length * 100 + at + 1,
+            at: 1,
+          })),
+        })
+      },
+    }
+    engine = new ChatEngine(new MemoryCache(), remote, () => 'user:ana')
+    engines.push(engine)
+    await engine.load()
+    const next = random(3)
+    for (let one = 0; one < 80; one++) {
+      await engine.queue(CHAT, {
+        kind: 'post',
+        id: ulid(1_000 + one, next),
+        message: ulid(2_000 + one, next),
+        body: `line ${String(one)}`,
+      })
+    }
+
+    online = true
+    await engine.flush(CHAT)
+
+    expect(posted).toEqual([50])
   })
 })

@@ -46,12 +46,19 @@ const WIKILINK = /\[\[([^\]|#^]+)/g
 const LOOK_FIRST = 2000
 const LOOK_AGAIN = 30_000
 
-const remote: Remote = {
-  list: () => http.listChats(),
-  events: (chat, after) => http.eventsOf(chat, { after }),
-  state: (chat, before) => http.stateOf(chat, before),
-  post: (chat, events) => http.sendEvents(chat, events),
-  read: (chat, seq, back) => http.postRead(chat, seq, back).catch(() => false),
+function remoteFor(id: string): Remote {
+  const other = () => {
+    const now = account.user?.id ?? account.guest?.id ?? null
+    return now !== null && now !== id
+  }
+  return {
+    list: () => (other() ? Promise.resolve(null) : http.listChats()),
+    events: (chat, after) => (other() ? Promise.resolve(null) : http.eventsOf(chat, { after })),
+    state: (chat, before) => (other() ? Promise.resolve(null) : http.stateOf(chat, before)),
+    post: (chat, events) => (other() ? Promise.resolve(null) : http.sendEvents(chat, events)),
+    read: (chat, seq, back) =>
+      other() ? Promise.resolve(false) : http.postRead(chat, seq, back).catch(() => false),
+  }
 }
 
 function newId(): string {
@@ -107,7 +114,7 @@ class ChatsStore implements Chats {
       const { nativeCache } = await import('./native-cache')
       cache = nativeCache(id)
     }
-    const engine = new ChatEngine(cache, remote, () => this.me)
+    const engine = new ChatEngine(cache, remoteFor(id), () => this.me)
     await engine.load().catch(() => undefined)
     if (this.account !== id) return
     this.cache = cache
