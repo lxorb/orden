@@ -130,6 +130,8 @@ async function sendOps(
     )
     const changes: Change[] = []
     const kept = new Map(folded.map((op) => [op.op, op]))
+    const had = new Set(waiting.map((one) => (one.record.t === 'op' ? one.record.op.op : '')))
+    const splits = folded.filter((op) => !had.has(op.op))
     const queue: Outboxed[] = []
     for (const one of space.outbox) {
       if (one.record.t !== 'op' || one.record.sent) {
@@ -139,14 +141,18 @@ async function sendOps(
       const id = one.record.op.op
       const op = kept.get(id)
       if (op) {
-        one.record = { t: 'op', op }
-        one.row = { ...one.row, op: outgoingBytes(one.record) }
-        changes.push(put('outbox', one.row))
+        const record: Outgoing = { t: 'op', op }
+        const bytes = outgoingBytes(record)
+        one.record = record
+        if (!sameBytes(bytes, one.row.op)) {
+          one.row = { ...one.row, op: bytes }
+          changes.push(put('outbox', one.row))
+        }
         queue.push(one)
       } else {
         changes.push(remove('outbox', one.row.op_id))
       }
-      for (const split of folded) {
+      for (const split of splits) {
         if (!split.op.startsWith(`${id}.`)) continue
         const record: Outgoing = { t: 'op', op: split }
         const row = { ...one.row, op_id: split.op, op: outgoingBytes(record) }
@@ -182,14 +188,21 @@ async function sendOps(
     if (!answer) throw new Error('the account answered the ops with something else')
 
     const done: Change[] = []
+    let byOp = opsOf(space)
+    const answered = new Set<Outboxed>()
+    const leave = () => {
+      if (!answered.size) return
+      space.outbox = space.outbox.filter((other) => !answered.has(other))
+      answered.clear()
+    }
     for (const result of answer.results) {
-      const one = space.outbox.find(
-        (other) => other.record.t === 'op' && other.record.op.op === result.op,
-      )
+      const one = byOp.get(result.op)
       if (one?.record.t !== 'op') continue
       const op = one.record.op
-      space.outbox = space.outbox.filter((other) => other !== one)
+      byOp.delete(result.op)
+      answered.add(one)
       done.push(remove('outbox', one.row.op_id))
+      if ('merged' in result || 'refused' in result) leave()
 
       if ('merged' in result && op.t === 'create') {
         const merge: Merging = { mine: op.id, into: result.merged, create: op }
@@ -204,15 +217,31 @@ async function sendOps(
       }
       if ('refused' in result) {
         done.push(...(await refused(core, space, op, result.refused)))
+        byOp = opsOf(space)
         continue
       }
       done.push(...core.entryChanges(space.answered(op, result)))
     }
+    leave()
     done.push(...core.orderChanges(space))
     space.changed()
     await core.commit(done)
     if (!alive()) return false
   }
+  return true
+}
+
+function opsOf(space: SpaceState): Map<string, Outboxed> {
+  const out = new Map<string, Outboxed>()
+  for (const one of space.outbox) {
+    if (one.record.t === 'op' && !out.has(one.record.op.op)) out.set(one.record.op.op, one)
+  }
+  return out
+}
+
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.byteLength !== b.byteLength) return false
+  for (let at = 0; at < a.byteLength; at++) if (a[at] !== b[at]) return false
   return true
 }
 
