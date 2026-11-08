@@ -125,4 +125,30 @@ describe('the account inbox on a device', () => {
     await opening
     await vi.waitFor(async () => expect(await late.text()).toMatch(/Written meanwhile/))
   })
+
+  test('reaches no account but the one whose records are open while it switches', async () => {
+    const { all, open } = disks()
+    const mine = account()
+    const theirs = account()
+    await theirs.push([
+      { id: 'b1', fields: { text: 'Theirs' }, stamps: { text: '00000000a-0000-x' } },
+    ])
+    let release: () => void = () => undefined
+    const held = new Promise<void>((done) => (release = done))
+    const inbox = new AccountInbox(async (owner) => {
+      if (owner === 'them') await held
+      return open(owner)
+    })
+    await inbox.opened({ owner: 'me', server: mine, device: 'laptop' })
+    await inbox.write('- [ ] Mine\n')
+
+    const switching = inbox.opened({ owner: 'them', server: theirs, device: 'laptop' })
+    await inbox.exchange()
+    release()
+    await switching
+
+    expect(all.get('me')?.has('b1')).toBe(false)
+    const reached = await theirs.pull(0)
+    expect(reached?.items.map((one) => one.id)).toEqual(['b1'])
+  })
 })

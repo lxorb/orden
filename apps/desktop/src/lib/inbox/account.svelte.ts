@@ -182,7 +182,7 @@ export class AccountInbox {
   private async exchanged(): Promise<boolean> {
     const server = this.server
     const records = this.records
-    if (!server || !records) return false
+    if (!server || !records || this.openedFor !== this.owner) return false
     try {
       const before = this.changes
       const answered = await records.exchange(server)

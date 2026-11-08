@@ -84,6 +84,7 @@ export class TimeStore {
   private disk: TimeDisk | null = null
   private server: TimeServer | null = null
   private owner: string | null | undefined = undefined
+  private openedFor: string | null | undefined = undefined
   private device = ''
   private cursor = 0
   private opening: Promise<void> = Promise.resolve()
@@ -124,6 +125,7 @@ export class TimeStore {
     if (owner !== null) await this.carry(ledger, disk)
     await disk.put(early.map((row) => ledger.write(row.kind, row.id, row.value, row.at)))
     this.disk = disk
+    this.openedFor = owner
     this.ledger = ledger
     this.cursor = typeof cursor === 'number' ? cursor : 0
     this.kept = null
@@ -411,7 +413,7 @@ export class TimeStore {
   private async exchanged(): Promise<void> {
     await this.opening
     const { server, disk, ledger } = this
-    if (!server || !disk) return
+    if (!server || !disk || this.openedFor !== this.owner) return
     try {
       const done = await exchange(ledger, server, this.cursor)
       if (ledger !== this.ledger) return
