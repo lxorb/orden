@@ -475,7 +475,21 @@ async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
     listed.push({ note, front, slug: pageOf(note.path, front) })
   }
 
-  return listed
+  return apart(listed)
+}
+
+function apart(listed: Page[]): Page[] {
+  const wanted = new Set(listed.map((one) => one.slug))
+  const taken = new Set<string>()
+  return listed.map((one) => {
+    let slug = one.slug
+    for (let n = 2; taken.has(slug); n++) {
+      slug = `${one.slug}-${String(n)}`
+      if (wanted.has(slug)) slug = one.slug
+    }
+    taken.add(slug)
+    return slug === one.slug ? one : { ...one, slug }
+  })
 }
 
 function feedPages(listed: readonly Page[], origin: string): FeedPage[] {
@@ -758,9 +772,9 @@ async function takeAnswer(
 
   const fence = codeBlocks(source).find((one) => one.language.toLowerCase() === 'form')
   const form = fence ? formOf(fence.code) : null
-  const where = space.blog_note
-    ? '/'
-    : new URL(`/${pageOf(note.path, front)}`, request.url).pathname
+  const listed = space.blog_note ? [] : await sitePages(env, space, site)
+  const slug = listed.find((one) => one.note.id === note.id)?.slug ?? pageOf(note.path, front)
+  const where = space.blog_note ? '/' : new URL(`/${slug}`, request.url).pathname
   if (!form) return back(where)
 
   const machine = machineIn(request)
@@ -1079,7 +1093,9 @@ async function served(
   }
 
   const decodedSlug = decoded(slug) ?? slug
-  const found = pageList.find((one) => pathsOf(one.note.path, one.front).includes(decodedSlug))
+  const found =
+    pageList.find((one) => one.slug === decodedSlug) ??
+    pageList.find((one) => pathsOf(one.note.path, one.front).includes(decodedSlug))
 
   if (!found) {
     const was = await rememberedNote(env, space.id, decodedSlug)
