@@ -528,6 +528,30 @@ describe('writing', () => {
     expect(created.poll).toMatchObject({ question: 'Where?', several: true })
   })
 
+  test('removed from a group it turns read-only, and added back it can be written in again', async () => {
+    const { link, connection } = await connected()
+    history(link)
+    link.fire('groups.upsert', [
+      { id: GROUP, subject: 'Climbing', participants: [{ id: ME }, { id: BEN }] } as never,
+    ])
+    const group = async () => (await connection.conversations()).find((one) => one.id === GROUP)
+    link.fire('group-participants.update', {
+      id: GROUP,
+      author: BEN,
+      participants: [ME],
+      action: 'remove',
+    })
+    expect((await group())?.readOnly).toBe(true)
+    link.fire('group-participants.update', {
+      id: GROUP,
+      author: BEN,
+      participants: [ME],
+      action: 'add',
+    })
+    expect((await group())?.readOnly).toBeUndefined()
+    expect((await group())?.members).toBe(2)
+  })
+
   test('chat settings, groups and people', async () => {
     const { link, connection } = await connected()
     history(link)
