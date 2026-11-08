@@ -755,3 +755,20 @@ describe('ink deleted while picked', () => {
     expect(store.picked).toEqual(['b'])
   })
 })
+
+describe('framing what is picked', () => {
+  test('a picked arrow alone frames the two cards it joins, not the whole plane', () => {
+    const { store } = opened()
+    const far = { ...card('far', 20000), y: 20000 }
+    store.edit({
+      ...store.canvas,
+      nodes: [card('a'), card('b', 600), far],
+      edges: [{ id: 'e', fromNode: 'a', toNode: 'b', label: 'pays' }],
+    })
+    store.pick('e')
+    store.frame(800, 600)
+
+    expect(store.camera.x).toBeCloseTo(425)
+    expect(store.camera.y).toBeCloseTo(30)
+  })
+})

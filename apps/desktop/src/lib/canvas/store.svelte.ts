@@ -416,6 +416,13 @@ export class CanvasStore implements PlaneSurface {
     if (box) this.camera = this.framingTurned(box, width, height)
   }
 
+  private endsOfPickedEdges(): string[] {
+    const wanted = idSet(this.picked)
+    return this.canvas.edges
+      .filter((edge) => wanted.has(edge.id))
+      .flatMap((edge) => [edge.fromNode, edge.toNode])
+  }
+
   private framingTurned(
     box: { x: number; y: number; width: number; height: number },
     width: number,
@@ -439,7 +446,7 @@ export class CanvasStore implements PlaneSurface {
   }
 
   frame(width: number, height: number) {
-    const box = this.box
+    const box = this.box ?? pickedBox(this.canvas, this.endsOfPickedEdges())
     if (box) this.camera = this.framingTurned(box, width, height)
     else this.fit(width, height)
   }
