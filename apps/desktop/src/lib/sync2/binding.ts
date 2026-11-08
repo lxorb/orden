@@ -76,6 +76,8 @@ async function agree(
 
 const AGREEING = 8
 
+export type Attached = (() => void) & { bound: () => boolean }
+
 const ELSEWHERE = { arrived: () => undefined }
 
 export async function meetWords(engine: Engine, id: string, doc: Doc, mine: string) {
@@ -88,7 +90,8 @@ export async function attach(
   note: Held,
   holds: () => boolean,
   again?: () => void,
-): Promise<(() => void) | null> {
+  joined?: () => void,
+): Promise<Attached | null> {
   const doc = await engine.hold(id)
   if (!doc?.live || !holds()) {
     if (doc) await engine.letGo(id)
@@ -119,8 +122,10 @@ export async function attach(
         if (gone()) return
         const met = await together(asked)
         if (gone()) return
-        if (met.asked === undefined) join()
-        else wait(met.asked)
+        if (met.asked === undefined) {
+          join()
+          joined?.()
+        } else wait(met.asked)
       })()
     })
   }
@@ -145,7 +150,7 @@ export async function attach(
     again?.()
   }
 
-  return () => {
+  const part = () => {
     parted = true
     unheard()
     unbind?.()
@@ -153,6 +158,7 @@ export async function attach(
     doc.replaced = null
     void engine.letGo(id)
   }
+  return Object.assign(part, { bound: () => unbind !== null && !gone() })
 }
 
 export interface PlaneJoin {

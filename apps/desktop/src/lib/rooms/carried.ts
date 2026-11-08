@@ -134,6 +134,7 @@ export class CarriedRoom extends JoinedRoom {
   }
 
   moved(anchor: number, head: number) {
+    if (!this.holds()) return
     const text = this.door.doc.getText(TEXT)
     this.door.announce('caret', () => ({
       anchor: relative(text, anchor),
@@ -152,9 +153,13 @@ export class CarriedRoom extends JoinedRoom {
     return undefined
   }
 
+  shown() {
+    this.showPresent()
+  }
+
   protected showPresent() {
     const { present, carets, seen } = peersIn(this.door.awareness, this.door.doc, this.scheme)
-    this.carried.note.announce([setPeers.of(carets)])
+    this.carried.note.announce([setPeers.of(this.holds() ? carets : [])])
     this.carried.onPeers(present, seen)
   }
 }

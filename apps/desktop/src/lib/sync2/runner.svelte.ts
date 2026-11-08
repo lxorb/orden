@@ -31,7 +31,7 @@ import { rooms } from '../rooms.svelte'
 import { theme } from '../theme.svelte'
 import * as Y from 'yjs'
 import { asking, type Held, type HeldAnswer, unsyncedToast } from './asking.svelte'
-import { attach, attachPlane, meetWords, type PlaneJoin } from './binding'
+import { attach, attachPlane, type Attached, meetWords, type PlaneJoin } from './binding'
 import { carry, uncarry, whoHere } from './carry'
 import { Mirrors } from './mirrors'
 import { LiveRelay } from './relay'
@@ -144,7 +144,13 @@ class Runner {
   private readonly firsts = new Set<string>()
   private readonly bound = new Map<
     string,
-    { id: string; part: () => void; plane?: PlaneJoin | null; joining?: boolean }
+    {
+      id: string
+      part: () => void
+      plane?: PlaneJoin | null
+      joining?: boolean
+      bound?: () => boolean
+    }
   >()
   private binding = Promise.resolve()
   private watched: Watched | null = null
@@ -1794,7 +1800,9 @@ class Runner {
         'relay' in one.on
           ? await this.relayHold(engine, one.id, holds, again)
           : 'note' in one.on
-            ? await attach(engine, one.id, one.on.note, holds, again)
+            ? await attach(engine, one.id, one.on.note, holds, again, () =>
+                rooms.carried.get(key)?.shown?.(),
+              )
             : await attachPlane(engine, one.id, one.on.surface, holds, again)
       const part = typeof joined === 'function' ? joined : (joined?.part ?? null)
       if (!part || this.bound.get(key)?.id !== one.id) {
@@ -1802,7 +1810,14 @@ class Runner {
         if (this.bound.get(key)?.id === one.id) this.bound.delete(key)
         continue
       }
-      this.bound.set(key, { id: one.id, part, plane: typeof joined === 'function' ? null : joined })
+      this.bound.set(key, {
+        id: one.id,
+        part,
+        plane: typeof joined === 'function' ? null : joined,
+        ...(typeof joined === 'function' && 'bound' in joined
+          ? { bound: (joined as Attached).bound }
+          : {}),
+      })
       this.enter(engine, key, one.id, one.on)
     }
     this.relay.roomsHeld(
@@ -1834,6 +1849,7 @@ class Runner {
     const room = carry(key, {
       noteId: id,
       on,
+      holds: () => this.bound.get(key)?.bound?.() ?? true,
       gone: () => {
         this.carried.delete(key)
         this.kick(space.id)
