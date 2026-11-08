@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick, untrack } from 'svelte'
+  import { onDestroy, tick, untrack } from 'svelte'
   import type { ChatProvider, ConnectField, Conversation } from '@orden/chats/provider'
   import { t } from '../../i18n.svelte'
   import { openExternal } from '../../tauri'
@@ -11,6 +11,9 @@
   import { adding, closeAdding, mayLeave } from './adding.svelte'
   import { ADVANCED, fixFor, introOf, isOAuth, pairingSteps, submitOf, tileHint } from './add-steps'
   import SignIn from './SignIn.svelte'
+  import Avatar from '../../people/Avatar.svelte'
+  import { firstLine } from './body'
+  import { conversationTitle } from './title'
 
   type Step = 'choose' | 'connect' | 'check' | 'done'
 
@@ -94,13 +97,60 @@
   )
   const linked = $derived(account ? connected.find(account.provider, account.account) : undefined)
   const listed = $derived<readonly Conversation[]>(
-    (linked?.conversations ?? []).filter((one) => !one.archived).slice(0, 12),
+    (linked?.conversations ?? [])
+      .filter((one) => !one.archived && (one.lastAt !== null || !!one.snippet))
+      .sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
+      .slice(0, 12),
   )
+  let settled = $state(false)
+  let pictures = $state<Record<string, string>>({})
+  const asked = new Set<string>()
 
   $effect(() => {
-    if (step !== 'done' || chosen.length || !listed.length) return
+    if (step !== 'done' || settled) return
+    const count = linked?.conversations.length ?? 0
+    void linked?.conversations
+    if (!count) return
+    const quiet = setTimeout(() => (settled = true), SETTLE_QUIET)
+    return () => clearTimeout(quiet)
+  })
+
+  $effect(() => {
+    if (step !== 'done' || settled) return
+    const most = setTimeout(() => (settled = true), SETTLE_MOST)
+    return () => clearTimeout(most)
+  })
+
+  $effect(() => {
+    if (step !== 'done' || !settled || chosen.length || !listed.length) return
     untrack(() => (chosen = listed.slice(0, 3).map((one) => one.id)))
   })
+
+  $effect(() => {
+    const connection = linked?.connection
+    if (step !== 'done' || !settled || !connection?.picture) return
+    for (const one of listed) {
+      if (asked.has(one.id)) continue
+      asked.add(one.id)
+      const id =
+        one.picture ?? (one.kind === 'direct' ? one.people[0]?.picture : undefined) ?? one.id
+      void connection
+        .picture(id)
+        .then((bytes) => {
+          if (!bytes?.length) return
+          pictures = { ...pictures, [one.id]: URL.createObjectURL(new Blob([bytes.slice()])) }
+        })
+        .catch(() => undefined)
+    }
+  })
+
+  function forgetPictures() {
+    for (const url of Object.values(pictures)) URL.revokeObjectURL(url)
+    pictures = {}
+    asked.clear()
+  }
+
+  onDestroy(forgetPictures)
 
   function reset() {
     step = 'choose'
@@ -113,6 +163,8 @@
     advanced = false
     account = null
     chosen = []
+    settled = false
+    forgetPictures()
   }
 
   function begin(one: ChatProvider) {
@@ -221,14 +273,10 @@
     for (const [index, one] of opening.entries()) {
       openConversation(
         { provider: done.provider, account: done.account, conversation: one.id },
-        titleOf(one),
+        conversationTitle(one),
         { activate: index === 0 },
       )
     }
-  }
-
-  function titleOf(one: Conversation): string {
-    return one.title ?? (one.people.map((person) => person.name).join(', ') || t('Chat'))
   }
 
   function toggle(id: string) {
@@ -243,6 +291,8 @@
   }
 
   const NUMBERS = ['choose', 'connect', 'check', 'done'] as const
+  const SETTLE_QUIET = 2000
+  const SETTLE_MOST = 15_000
 </script>
 
 {#snippet mark(one: ChatProvider, size: 'big' | 'small')}
@@ -444,17 +494,30 @@
           {#if provider}{@render mark(provider, 'small')}{/if}
           <h2>{t('{account} is connected', { account: account.label })}</h2>
         </div>
-        {#if listed.length}
+        {#if !settled}
+          <p class="note" role="status">{t('Loading your chats…')}</p>
+        {:else if listed.length}
           <p class="intro">{t('Choose the chats to open now. The rest wait in the sidebar.')}</p>
           <div class="chosen">
             {#each listed as one (one.id)}
+              {@const title = conversationTitle(one)}
               <label class="pick orden-row">
                 <input
                   type="checkbox"
                   checked={chosen.includes(one.id)}
                   onchange={() => toggle(one.id)}
                 />
-                <span class="orden-row-label">{titleOf(one)}</span>
+                <span class="face">
+                  {#if pictures[one.id]}
+                    <img src={pictures[one.id]} alt="" />
+                  {:else}
+                    <Avatar face={{ name: title, key: one.id }} size={32} />
+                  {/if}
+                </span>
+                <span class="words">
+                  <span class="orden-row-label">{title}</span>
+                  {#if one.snippet}<span class="snippet">{firstLine(one.snippet)}</span>{/if}
+                </span>
               </label>
             {/each}
           </div>
@@ -727,7 +790,37 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
+    padding-block: var(--space-1);
     cursor: pointer;
+  }
+
+  .face {
+    display: inline-flex;
+    flex: none;
+    width: 32px;
+    height: 32px;
+  }
+
+  .face img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .words {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .snippet {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .actions {

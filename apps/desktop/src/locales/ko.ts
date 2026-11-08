@@ -3683,4 +3683,7 @@ export const ko: Dictionary = {
     '사용한 항목의 하루 횟수를 무작위 ID로 보내며, 노트, 이름, 경로, 입력한 내용은 보내지 않습니다.',
   'Share anonymous usage data': '익명 사용 데이터 공유',
   'Also share anonymous usage data': '익명 사용 데이터도 공유',
+  Unknown: '알 수 없음',
+  'Unnamed group': '이름 없는 그룹',
+  'Loading your chats…': '채팅을 불러오는 중…',
 }

@@ -3804,4 +3804,7 @@ export const pa: Dictionary = {
     'ਤੁਸੀਂ ਜੋ ਵਰਤਦੇ ਹੋ ਉਸਦੀ ਰੋਜ਼ਾਨਾ ਗਿਣਤੀ ਇੱਕ ਬੇਤਰਤੀਬ ID ਹੇਠ ਭੇਜਦਾ ਹੈ; ਨੋਟ, ਨਾਂ, ਪਾਥ ਜਾਂ ਜੋ ਤੁਸੀਂ ਟਾਈਪ ਕਰਦੇ ਹੋ ਕਦੇ ਨਹੀਂ।',
   'Share anonymous usage data': 'ਗੁਮਨਾਮ ਵਰਤੋਂ ਡਾਟਾ ਸਾਂਝਾ ਕਰੋ',
   'Also share anonymous usage data': 'ਗੁਮਨਾਮ ਵਰਤੋਂ ਡਾਟਾ ਵੀ ਸਾਂਝਾ ਕਰੋ',
+  Unknown: 'ਅਣਜਾਣ',
+  'Unnamed group': 'ਬਿਨਾਂ ਨਾਂ ਦਾ ਗਰੁੱਪ',
+  'Loading your chats…': 'ਤੁਹਾਡੀਆਂ ਚੈਟਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ…',
 }

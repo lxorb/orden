@@ -1,6 +1,6 @@
 import type { WAMessage } from '@whiskeysockets/baileys'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import type { ProviderEvent } from '../provider'
+import { type ProviderEvent, UNKNOWN } from '../provider'
 import { cacheName } from './cache'
 import { WORDS } from './connection'
 import { ANNA, BEN, FakeHost, FakeKit, type FakeLink, GROUP, ME, incoming } from './fake'
@@ -373,6 +373,113 @@ describe('reading', () => {
     history(link)
     expect((await connection.search?.('ROPE'))?.map((one) => one.id)).toEqual(['G1'])
     expect(await connection.search?.('rope', ANNA)).toEqual([])
+  })
+})
+
+describe('naming', () => {
+  const LID_PN = '180938566836460@lid'
+  const LID_PUSH = '47167414792314@lid'
+  const LID_LATE = '17467665588385@lid'
+  const LID_KEY = '232185948856347@lid'
+  const LID_NONE = '186118146416871@lid'
+  const ELI = '41790000004@s.whatsapp.net'
+  const DORA = '41790000006@s.whatsapp.net'
+  const FRED = '41790000007@s.whatsapp.net'
+  const LIDS = [LID_PN, LID_PUSH, LID_LATE, LID_KEY, LID_NONE]
+
+  function lidSync(link: FakeLink): void {
+    link.fire('messaging-history.set', {
+      chats: [
+        { id: LID_PN, pnJid: ELI, conversationTimestamp: 1_800_000_050 },
+        { id: LID_PUSH, conversationTimestamp: 1_800_000_040 },
+        { id: LID_LATE, conversationTimestamp: 1_800_000_030 },
+        { id: LID_KEY, conversationTimestamp: 1_800_000_020 },
+        { id: LID_NONE, conversationTimestamp: 1_800_000_010 },
+        { id: GROUP, name: 'hall of fame', conversationTimestamp: 1_800_000_005 },
+        { id: ANNA, conversationTimestamp: 1_800_000_001 },
+      ],
+      contacts: [
+        ...LIDS.map((id) => ({ id })),
+        { id: GROUP, name: 'hall of fame' },
+        { id: ANNA, jid: ANNA },
+      ],
+      messages: [
+        incoming('P1', LID_PUSH, { conversation: 'hi' }, { pushName: 'Carla' }),
+        incoming(
+          'K1',
+          LID_KEY,
+          { conversation: 'yo' },
+          { key: { senderPn: FRED }, pushName: null },
+        ),
+        incoming('N1', LID_NONE, { conversation: 'hey' }, { pushName: null }),
+        incoming('A1', ANNA, { conversation: 'ciao' }, { pushName: null }),
+      ],
+      isLatest: true,
+    })
+  }
+
+  test('a real-shaped LID sync ends with a human name for every chat', async () => {
+    const { link, connection, heard } = await connected()
+    lidSync(link)
+    link.fire('contacts.upsert', [{ id: DORA, name: 'Dora Saved', lid: LID_LATE, jid: DORA }])
+    link.fire('messaging-history.set', {
+      chats: [],
+      contacts: [{ id: ELI, notify: 'Eli' }],
+      messages: [],
+      isLatest: false,
+    })
+    const titles = Object.fromEntries(
+      (await connection.conversations()).map((one) => [one.id, one.title]),
+    )
+    expect(titles).toEqual({
+      [LID_PN]: 'Eli',
+      [LID_PUSH]: 'Carla',
+      [LID_LATE]: 'Dora Saved',
+      [LID_KEY]: '+41790000007',
+      [LID_NONE]: UNKNOWN,
+      [GROUP]: 'hall of fame',
+      [ANNA]: '+41790000002',
+    })
+    const renamed = heard.filter(
+      (one) => one.t === 'conversation' && one.conversation.id === LID_LATE,
+    )
+    expect(renamed.at(-1)).toMatchObject({ conversation: { title: 'Dora Saved' } })
+    for (const title of Object.values(titles)) {
+      expect(title).not.toMatch(/^\d+$/)
+      expect(title).not.toContain('@')
+    }
+  })
+
+  test('a name arriving later reaches the open list without a new sync', async () => {
+    const { link, heard } = await connected()
+    lidSync(link)
+    heard.length = 0
+    link.fire('contacts.update', [{ id: LID_NONE, notify: 'Gina' }])
+    expect(heard).toContainEqual(
+      expect.objectContaining({
+        t: 'conversation',
+        conversation: expect.objectContaining({ id: LID_NONE, title: 'Gina' }),
+      }),
+    )
+  })
+
+  test('a LID person in a group is named through the phone number it maps to', async () => {
+    const { link, connection } = await connected()
+    lidSync(link)
+    link.fire('messages.upsert', {
+      type: 'notify',
+      messages: [
+        incoming(
+          'G9',
+          GROUP,
+          { conversation: 'rope?' },
+          { key: { participant: LID_PN, participantPn: ELI }, pushName: null },
+        ),
+      ],
+    })
+    link.fire('contacts.upsert', [{ id: ELI, name: 'Eli Saved' }])
+    const page = await connection.history(GROUP, { limit: 1 })
+    expect(page.messages[0]?.author).toMatchObject({ name: 'Eli Saved', phone: '+41790000004' })
   })
 })
 

@@ -34,6 +34,7 @@
   import { choosePeople, conversationMenu } from './manage'
   import { menu } from '../../menu.svelte'
   import type { Conversation } from '@orden/chats/provider'
+  import { conversationTitle } from './title'
 
   let query = $state('')
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
@@ -90,10 +91,7 @@
   }
 
   function titleOf(row: Row) {
-    return (
-      row.conversation.title ??
-      (row.conversation.people.map((person) => person.name).join(', ') || t('Chat'))
-    )
+    return conversationTitle(row.conversation)
   }
 
   function iconOf(row: Row) {
@@ -166,7 +164,7 @@
     if (made)
       openConversation(
         { provider: one.provider.id, account: one.account.id, conversation: made.id },
-        made.title ?? made.people[0]?.name ?? one.provider.name,
+        conversationTitle(made),
       )
   }
 
@@ -228,12 +226,10 @@
       onclick={() =>
         openConversation(
           { provider: one.provider.id, account: one.account.id, conversation: conversation.id },
-          conversation.title ?? conversation.people[0]?.name ?? one.provider.name,
+          conversationTitle(conversation),
         )}
     >
-      <span class="orden-row-label"
-        >{conversation.title ?? conversation.people.map((person) => person.name).join(', ')}</span
-      >
+      <span class="orden-row-label">{conversationTitle(conversation)}</span>
       {#if conversation.pinned}<span class="orden-row-meta pinned" aria-label={t('Pinned')}
           ><Glyph name="pin" /></span
         >{/if}

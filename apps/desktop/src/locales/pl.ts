@@ -3938,4 +3938,7 @@ export const pl: Dictionary = {
     'Wysyła dzienne liczniki użycia pod losowym ID; nigdy notatek, nazw, ścieżek ani tego, co wpisujesz.',
   'Share anonymous usage data': 'Udostępniaj anonimowe dane o użyciu',
   'Also share anonymous usage data': 'Udostępniaj też anonimowe dane o użyciu',
+  Unknown: 'Nieznany',
+  'Unnamed group': 'Grupa bez nazwy',
+  'Loading your chats…': 'Wczytywanie czatów…',
 }

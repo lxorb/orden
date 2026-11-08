@@ -3844,4 +3844,7 @@ export const ha: Dictionary = {
     'Yana aika ƙididdigar abin da kake amfani da shi a kowace rana ƙarƙashin ID na bazata; ba bayanan kula, sunaye, hanyoyi ko abin da kake rubutawa ba.',
   'Share anonymous usage data': 'Raba bayanan amfani ba tare da suna ba',
   'Also share anonymous usage data': 'Kuma raba bayanan amfani ba tare da suna ba',
+  Unknown: 'Ba a sani ba',
+  'Unnamed group': 'Rukuni marar suna',
+  'Loading your chats…': 'Ana loda hirarrakinka…',
 }

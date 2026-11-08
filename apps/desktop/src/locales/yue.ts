@@ -3599,4 +3599,7 @@ export const yue: Dictionary = {
     '每日用隨機 ID 傳送你用過嘅嘢嘅次數；永遠唔傳筆記、名、路徑或者你打嘅字。',
   'Share anonymous usage data': '分享匿名使用數據',
   'Also share anonymous usage data': '同時分享匿名使用數據',
+  Unknown: '不明',
+  'Unnamed group': '未命名群組',
+  'Loading your chats…': '載入緊你嘅傾偈…',
 }

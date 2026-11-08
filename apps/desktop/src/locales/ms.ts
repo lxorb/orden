@@ -3731,4 +3731,7 @@ export const ms: Dictionary = {
     'Menghantar kiraan harian apa yang anda gunakan di bawah ID rawak; tidak sekali-kali nota, nama, laluan atau apa yang anda taip.',
   'Share anonymous usage data': 'Kongsi data penggunaan tanpa nama',
   'Also share anonymous usage data': 'Kongsi juga data penggunaan tanpa nama',
+  Unknown: 'Tidak diketahui',
+  'Unnamed group': 'Kumpulan tanpa nama',
+  'Loading your chats…': 'Memuatkan sembang anda…',
 }

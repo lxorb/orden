@@ -3786,4 +3786,7 @@ export const bn: Dictionary = {
     'আপনি যা ব্যবহার করেন তার দৈনিক গণনা একটি র‍্যান্ডম ID-র অধীনে পাঠায়; নোট, নাম, পাথ বা আপনি যা টাইপ করেন তা কখনো নয়।',
   'Share anonymous usage data': 'বেনামী ব্যবহারের ডেটা শেয়ার করুন',
   'Also share anonymous usage data': 'বেনামী ব্যবহারের ডেটাও শেয়ার করুন',
+  Unknown: 'অজানা',
+  'Unnamed group': 'নামহীন গ্রুপ',
+  'Loading your chats…': 'আপনার চ্যাটগুলো লোড হচ্ছে…',
 }

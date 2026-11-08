@@ -3788,4 +3788,7 @@ export const ur: Dictionary = {
     'آپ کے استعمال کی روزانہ گنتی ایک بے ترتیب ID کے تحت بھیجتا ہے؛ نوٹس، نام، راستے یا جو آپ ٹائپ کرتے ہیں، کبھی نہیں۔',
   'Share anonymous usage data': 'گمنام استعمال کا ڈیٹا شیئر کریں',
   'Also share anonymous usage data': 'گمنام استعمال کا ڈیٹا بھی شیئر کریں',
+  Unknown: 'نامعلوم',
+  'Unnamed group': 'بے نام گروپ',
+  'Loading your chats…': 'آپ کی چیٹس لوڈ ہو رہی ہیں…',
 }

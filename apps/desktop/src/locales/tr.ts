@@ -3813,4 +3813,7 @@ export const tr: Dictionary = {
     'Kullandıklarının günlük sayılarını rastgele bir kimlikle gönderir; asla not, ad, yol veya yazdıklarını göndermez.',
   'Share anonymous usage data': 'Anonim kullanım verileri paylaş',
   'Also share anonymous usage data': 'Anonim kullanım verileri de paylaş',
+  Unknown: 'Bilinmiyor',
+  'Unnamed group': 'Adsız grup',
+  'Loading your chats…': 'Sohbetleriniz yükleniyor…',
 }

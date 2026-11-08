@@ -3711,4 +3711,7 @@ export const jv: Dictionary = {
     'Ngirim etungan saben dina saka apa sing sampeyan enggo nganggo ID acak; ora tau cathetan, jeneng, path utawa apa sing sampeyan ketik.',
   'Share anonymous usage data': 'Bagekake data panggunaan anonim',
   'Also share anonymous usage data': 'Uga bagekake data panggunaan anonim',
+  Unknown: 'Ora dikenal',
+  'Unnamed group': 'Grup tanpa jeneng',
+  'Loading your chats…': 'Ngemot obrolanmu…',
 }

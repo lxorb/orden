@@ -3927,4 +3927,7 @@ export const fr: Dictionary = {
     'Envoie chaque jour le décompte de ce que vous utilisez sous un ID aléatoire ; jamais de notes, noms, chemins ni ce que vous tapez.',
   'Share anonymous usage data': 'Partager des données d’utilisation anonymes',
   'Also share anonymous usage data': 'Partager aussi des données d’utilisation anonymes',
+  Unknown: 'Inconnu',
+  'Unnamed group': 'Groupe sans nom',
+  'Loading your chats…': 'Chargement de vos discussions…',
 }

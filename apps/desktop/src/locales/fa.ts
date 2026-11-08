@@ -3797,4 +3797,7 @@ export const fa: Dictionary = {
     'هر روز شمار آنچه به کار می‌برید را زیر یک شناسه تصادفی می‌فرستد؛ هرگز یادداشت، نام، مسیر یا آنچه تایپ می‌کنید.',
   'Share anonymous usage data': 'اشتراک داده‌های ناشناس استفاده',
   'Also share anonymous usage data': 'همچنین اشتراک داده‌های ناشناس استفاده',
+  Unknown: 'ناشناس',
+  'Unnamed group': 'گروه بی‌نام',
+  'Loading your chats…': 'در حال بارگیری گفتگوهای شما…',
 }

@@ -3881,4 +3881,7 @@ export const ptBR: Dictionary = {
     'Envia contagens diárias do que você usa com um ID aleatório; nunca notas, nomes, caminhos ou o que você digita.',
   'Share anonymous usage data': 'Compartilhar dados de uso anônimos',
   'Also share anonymous usage data': 'Compartilhar também dados de uso anônimos',
+  Unknown: 'Desconhecido',
+  'Unnamed group': 'Grupo sem nome',
+  'Loading your chats…': 'Carregando suas conversas…',
 }

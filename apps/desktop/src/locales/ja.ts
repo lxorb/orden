@@ -3706,4 +3706,7 @@ export const ja: Dictionary = {
     '使った機能の 1 日ごとの回数をランダムな ID で送信し、ノート、名前、パス、入力内容は送りません。',
   'Share anonymous usage data': '匿名の利用データを共有',
   'Also share anonymous usage data': '匿名の利用データも共有',
+  Unknown: '不明',
+  'Unnamed group': '名前のないグループ',
+  'Loading your chats…': 'チャットを読み込んでいます…',
 }

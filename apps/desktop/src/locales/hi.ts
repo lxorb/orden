@@ -3791,4 +3791,7 @@ export const hi: Dictionary = {
     'आप जो इस्तेमाल करते हैं उसकी रोज़ की गिनती एक रैंडम ID के तहत भेजता है; नोट, नाम, पाथ या आप जो टाइप करते हैं, कभी नहीं।',
   'Share anonymous usage data': 'अनाम उपयोग डेटा साझा करें',
   'Also share anonymous usage data': 'अनाम उपयोग डेटा भी साझा करें',
+  Unknown: 'अज्ञात',
+  'Unnamed group': 'बिना नाम का समूह',
+  'Loading your chats…': 'आपकी चैट लोड हो रही हैं…',
 }

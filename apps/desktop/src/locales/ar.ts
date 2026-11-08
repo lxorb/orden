@@ -3978,4 +3978,7 @@ export const ar: Dictionary = {
     'يرسل يوميًا أعداد ما تستخدمه تحت معرّف عشوائي؛ دون الملاحظات أو الأسماء أو المسارات أو ما تكتبه.',
   'Share anonymous usage data': 'مشاركة بيانات استخدام مجهولة',
   'Also share anonymous usage data': 'مشاركة بيانات استخدام مجهولة أيضًا',
+  Unknown: 'غير معروف',
+  'Unnamed group': 'مجموعة بلا اسم',
+  'Loading your chats…': 'جارٍ تحميل محادثاتك…',
 }

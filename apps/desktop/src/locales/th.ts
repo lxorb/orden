@@ -3650,4 +3650,7 @@ export const th: Dictionary = {
     'ส่งจำนวนครั้งรายวันของสิ่งที่คุณใช้ภายใต้ ID สุ่ม ไม่ส่งโน้ต ชื่อ พาธ หรือสิ่งที่คุณพิมพ์',
   'Share anonymous usage data': 'แชร์ข้อมูลการใช้งานแบบไม่ระบุตัวตน',
   'Also share anonymous usage data': 'แชร์ข้อมูลการใช้งานแบบไม่ระบุตัวตนด้วย',
+  Unknown: 'ไม่ทราบ',
+  'Unnamed group': 'กลุ่มที่ไม่มีชื่อ',
+  'Loading your chats…': 'กำลังโหลดแชทของคุณ…',
 }

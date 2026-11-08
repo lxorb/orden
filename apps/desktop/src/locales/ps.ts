@@ -3788,4 +3788,7 @@ export const ps: Dictionary = {
     'د هغه څه ورځنۍ شمېرې چې تاسو یې کاروئ د یو ناڅاپي ID لاندې لېږي؛ هېڅکله یادښتونه، نومونه، لارې یا هغه څه چې تاسو یې ټایپوئ نه.',
   'Share anonymous usage data': 'بې نومه د کارونې معلومات شریک کړئ',
   'Also share anonymous usage data': 'بې نومه د کارونې معلومات هم شریک کړئ',
+  Unknown: 'ناپېژندل شوی',
+  'Unnamed group': 'بې نومه ډله',
+  'Loading your chats…': 'ستاسو چټونه پورته کېږي…',
 }

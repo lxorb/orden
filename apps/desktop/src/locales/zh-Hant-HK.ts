@@ -3607,4 +3607,7 @@ export const zhHantHK: Dictionary = {
     '每天以隨機 ID 傳送你使用內容的計數；絕不傳送筆記、名稱、路徑或你輸入的內容。',
   'Share anonymous usage data': '分享匿名使用數據',
   'Also share anonymous usage data': '同時分享匿名使用數據',
+  Unknown: '未知',
+  'Unnamed group': '未命名群組',
+  'Loading your chats…': '正在載入你的聊天…',
 }

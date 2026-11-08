@@ -27,7 +27,16 @@ import type {
   ProviderMessage,
   ProviderPoll,
 } from '../provider'
-import { atOf, Cache, cacheName, type ChatRow, type GroupRow, secondsOf } from './cache'
+import { UNKNOWN } from '../provider'
+import {
+  atOf,
+  Cache,
+  cacheName,
+  type ChatRow,
+  type ContactRow,
+  type GroupRow,
+  secondsOf,
+} from './cache'
 import {
   FORBIDDEN,
   LOGGED_OUT,
@@ -76,6 +85,7 @@ export const WORDS = {
 } as const
 
 const WHATSAPP_USER = '@s.whatsapp.net'
+const LID = '@lid'
 const GROUP = '@g.us'
 const BROADCAST = '@broadcast'
 const NEWSLETTER = '@newsletter'
@@ -519,24 +529,62 @@ class WhatsAppConnection implements Connection {
     return row
   }
 
+  private pair(lid: string | null | undefined, pn: string | null | undefined): boolean {
+    if (!lid || !pn) return false
+    const left = bareJid(lid)
+    const right = bareJid(pn)
+    if (!left.endsWith(LID) || !right.endsWith(WHATSAPP_USER)) return false
+    const one = this.cache.contacts.get(left) ?? { id: left }
+    const two = this.cache.contacts.get(right) ?? { id: right }
+    if (one.phone === right && two.lid === left) return false
+    this.cache.contacts.set(left, { ...one, phone: right })
+    this.cache.contacts.set(right, { ...two, lid: left })
+    return true
+  }
+
+  private partnerOf(bare: string, row: ContactRow | undefined): ContactRow | undefined {
+    const other = bare.endsWith(LID) ? row?.phone : row?.lid
+    return other ? this.cache.contacts.get(bareJid(other)) : undefined
+  }
+
+  private learn(message: WAMessage): boolean {
+    const key = message.key
+    const paired = [
+      this.pair(key.remoteJid, key.senderPn),
+      this.pair(key.senderLid, key.remoteJid),
+      this.pair(key.participant, key.participantPn),
+      this.pair(key.participantLid, key.participant),
+    ].some(Boolean)
+    const remote = key.remoteJid ?? ''
+    const author = bareJid(firstOf(key.participant, message.participant, remote))
+    if (key.fromMe || !message.pushName || !author.includes('@') || author.endsWith(GROUP))
+      return paired
+    if (author === STATUS || author.endsWith(BROADCAST) || author.endsWith(NEWSLETTER))
+      return paired
+    const row = this.cache.contacts.get(author) ?? { id: author }
+    if (row.notify === message.pushName) return paired
+    this.cache.contacts.set(author, { ...row, notify: message.pushName })
+    return true
+  }
+
   private person(jid: string, pushName?: string | null): Person {
     const bare = bareJid(jid)
     if (this.mine(bare) && this.account.self) return this.account.self
     const contact = this.cache.contacts.get(bare)
-    const digits = digitsOf(bare)
-    const phone = bare.endsWith(WHATSAPP_USER)
-      ? `+${digits}`
-      : contact?.phone
-        ? `+${digitsOf(contact.phone)}`
-        : undefined
-    const name = firstOf(
-      contact?.name,
-      contact?.notify,
-      pushName,
-      contact?.verifiedName,
-      phone,
-      digits,
-    )
+    const partner = this.partnerOf(bare, contact)
+    const pn = bare.endsWith(WHATSAPP_USER) ? bare : bare.endsWith(LID) ? contact?.phone : undefined
+    const phone = pn ? `+${digitsOf(pn)}` : undefined
+    const name =
+      firstOf(
+        contact?.name,
+        partner?.name,
+        contact?.notify,
+        partner?.notify,
+        pushName,
+        contact?.verifiedName,
+        partner?.verifiedName,
+        phone,
+      ) || UNKNOWN
     if (pushName && contact && !contact.notify) {
       contact.notify = pushName
       this.cache.touch()
@@ -613,7 +661,9 @@ class WhatsAppConnection implements Connection {
     const myRole = group?.participants.find((one) => this.mine(one.id))?.admin
     const conversation: Conversation = {
       id: jid,
-      title: firstOf(group?.subject, row.name, isGroup ? null : this.person(jid).name) || null,
+      title:
+        firstOf(group?.subject, row.name, isGroup || readOnlyKind ? null : this.person(jid).name) ||
+        null,
       kind: isGroup
         ? group?.community
           ? 'channel'
@@ -662,7 +712,11 @@ class WhatsAppConnection implements Connection {
     for (const chat of chats) {
       if (!chat.id) continue
       const row = this.chatRow(chat.id)
-      if (chat.name) row.name = chat.name
+      this.pair(chat.lidJid, chat.pnJid)
+      this.pair(chat.id, chat.pnJid)
+      this.pair(chat.lidJid, chat.id)
+      const named = firstOf(chat.name, chat.displayName)
+      if (named) row.name = named
       if (typeof chat.unreadCount === 'number')
         row.unread = chat.unreadCount < 0 ? 0 : chat.unreadCount
       if (chat.unreadCount === -1) row.markedUnread = true
@@ -681,21 +735,49 @@ class WhatsAppConnection implements Connection {
     this.cache.touch()
   }
 
-  private contactsChanged(contacts: readonly Partial<Contact>[]): void {
+  private contactsChanged(contacts: readonly Partial<Contact>[], quiet = false): void {
+    const touched = new Set<string>()
     for (const contact of contacts) {
       if (!contact.id) continue
-      const ids = [contact.id, contact.lid].filter((one): one is string => !!one)
-      for (const id of ids.map(bareJid)) {
-        const old = this.cache.contacts.get(id) ?? { id }
+      const id = bareJid(contact.id)
+      const lid = contact.lid ? bareJid(contact.lid) : id.endsWith(LID) ? id : undefined
+      const pn = contact.jid ? bareJid(contact.jid) : id.endsWith(WHATSAPP_USER) ? id : undefined
+      if (this.pair(lid, pn)) for (const one of [lid, pn]) if (one) touched.add(one)
+      for (const one of new Set([id, lid, pn])) {
+        if (!one) continue
+        const old = this.cache.contacts.get(one) ?? { id: one }
         const next = { ...old }
         if (contact.name) next.name = contact.name
         if (contact.notify) next.notify = contact.notify
         if (contact.verifiedName) next.verifiedName = contact.verifiedName
-        if (contact.lid) next.lid = bareJid(contact.lid)
-        this.cache.contacts.set(id, next)
+        if (
+          next.name === old.name &&
+          next.notify === old.notify &&
+          next.verifiedName === old.verifiedName &&
+          this.cache.contacts.has(one)
+        )
+          continue
+        this.cache.contacts.set(one, next)
+        touched.add(one)
       }
     }
+    if (!touched.size) return
     this.cache.touch()
+    if (!quiet) this.renamed(touched)
+  }
+
+  private renamed(ids: ReadonlySet<string>): void {
+    const chats = new Set<string>()
+    for (const id of ids) {
+      const row = this.cache.contacts.get(id)
+      for (const one of [id, row?.phone, row?.lid])
+        if (one && this.cache.chats.has(one)) chats.add(one)
+    }
+    if (chats.size > 20) {
+      this.emit({ t: 'conversations', conversations: this.conversationsNow() })
+      return
+    }
+    for (const jid of chats) this.emitConversation(jid)
   }
 
   private groupsChanged(groups: readonly Partial<GroupMetadata>[]): void {
@@ -716,7 +798,7 @@ class WhatsAppConnection implements Connection {
     contacts: readonly Contact[],
     messages: readonly WAMessage[],
   ): void {
-    this.contactsChanged(contacts)
+    this.contactsChanged(contacts, true)
     for (const chat of chats) if (chat.id) this.chatRow(chat.id)
     this.chatsChanged(chats)
     const touched = new Set<string>()
@@ -724,6 +806,7 @@ class WhatsAppConnection implements Connection {
     for (const message of messages) {
       const jid = message.key.remoteJid
       if (!jid || !message.key.id) continue
+      this.learn(message)
       if (this.isSpecial(message)) {
         later.push(message)
         continue
@@ -796,6 +879,7 @@ class WhatsAppConnection implements Connection {
   private heard(message: WAMessage, notify: boolean): void {
     const jid = message.key.remoteJid
     if (!jid || !message.key.id || jid === STATUS) return
+    if (this.learn(message)) this.cache.touch()
     if (this.special(message, true)) return
     const known = this.cache.find(jid, message.key.id)
     if (known) {
@@ -1314,7 +1398,9 @@ class WhatsAppConnection implements Connection {
     const seen = new Set<string>()
     const out: Person[] = []
     for (const contact of this.cache.contacts.values()) {
-      if (!contact.id.endsWith(WHATSAPP_USER) || this.mine(contact.id)) continue
+      const reachable =
+        contact.id.endsWith(WHATSAPP_USER) || (contact.id.endsWith(LID) && !contact.phone)
+      if (!reachable || this.mine(contact.id)) continue
       const person = this.person(contact.id)
       if (seen.has(person.id)) continue
       const haystack = `${person.name}\n${person.phone ?? ''}`.toLowerCase()

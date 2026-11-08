@@ -3914,4 +3914,7 @@ export const it: Dictionary = {
     'Invia conteggi giornalieri di ciò che usi con un ID casuale; mai note, nomi, percorsi o ciò che digiti.',
   'Share anonymous usage data': 'Condividi dati di utilizzo anonimi',
   'Also share anonymous usage data': 'Condividi anche dati di utilizzo anonimi',
+  Unknown: 'Sconosciuto',
+  'Unnamed group': 'Gruppo senza nome',
+  'Loading your chats…': 'Caricamento delle tue chat…',
 }
