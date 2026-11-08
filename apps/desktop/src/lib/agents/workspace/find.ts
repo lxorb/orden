@@ -78,11 +78,14 @@ export async function listBacklinks(call: Call): Promise<AgentAnswer> {
   const relative = notePath(asked) ?? asked
 
   const index = await indexOf(place)
-  const rows = index.backlinks(onDisk(place, relative)).map((one) => ({
-    path: one.path,
-    line: one.line + 1,
-    text: one.text.trim().slice(0, LONGEST),
-  }))
+  const rows = index
+    .backlinks(onDisk(place, relative))
+    .filter((one) => seen(onDisk(place, one.path)))
+    .map((one) => ({
+      path: one.path,
+      line: one.line + 1,
+      text: one.text.trim().slice(0, LONGEST),
+    }))
 
   return done(rows, rows.length ? sharedSource(place) : null)
 }
