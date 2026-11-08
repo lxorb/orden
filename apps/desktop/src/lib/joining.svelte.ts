@@ -26,8 +26,15 @@ function said(text: string): { name: string } | { email: string } {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(text) ? { email: text } : { name: text }
 }
 
+const PASSING = new Set([408, 429])
+
 function refused(error: unknown): boolean {
-  return error instanceof ApiError && error.status >= 400 && error.status < 500
+  return (
+    error instanceof ApiError &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    !PASSING.has(error.status)
+  )
 }
 
 class Joining {

@@ -12,6 +12,7 @@ interface World {
   } | null
   through: Record<string, unknown>
   refuse: string | null
+  busy: number | null
   unreachable: boolean
   invitationDown: boolean
   asked: { key: string; options: Record<string, unknown> }[]
@@ -30,6 +31,7 @@ const world = vi.hoisted((): World => ({
   about: null,
   through: {},
   refuse: null,
+  busy: null,
   unreachable: false,
   invitationDown: false,
   asked: [],
@@ -61,6 +63,11 @@ vi.mock('./api', async (importOriginal) => {
         if (world.gate) await world.gate
         if (world.unreachable) return Promise.reject(new Error('the network is not there'))
         if (world.refuse) return Promise.reject(new original.ApiError(404, world.refuse))
+        if (world.busy) {
+          return Promise.reject(
+            new original.ApiError(world.busy, 'that link is busy, try again in a minute'),
+          )
+        }
 
         return Promise.resolve(world.through)
       },
@@ -155,6 +162,7 @@ beforeEach(async () => {
   world.about = null
   world.through = {}
   world.refuse = null
+  world.busy = null
   world.unreachable = false
   world.invitationDown = false
   world.asked = []
@@ -657,6 +665,35 @@ describe('a link followed while the network is down', () => {
     expect(joining.step).toBe('asking')
     expect(joining.told).toBe('Ada')
     expect(joining.error).toBe('the network is not there')
+  })
+
+  test.each([429, 408])(
+    'may be tried again when the link answers %i for a moment',
+    async (status) => {
+      world.busy = status
+      await joining.start()
+
+      expect(joining.step).toBe('unreached')
+      expect(joining.error).toBe('that link is busy, try again in a minute')
+
+      world.busy = null
+      await joining.retry()
+
+      expect(joining.step).toBeNull()
+      expect(world.shown).toBe('here')
+    },
+  )
+
+  test('keeps the ask open when the link is busy for a moment', async () => {
+    world.about = approval
+    await joining.start()
+    joining.told = 'Ada'
+    world.busy = 429
+    await joining.tell()
+
+    expect(joining.step).toBe('asking')
+    expect(joining.told).toBe('Ada')
+    expect(joining.error).toBe('that link is busy, try again in a minute')
   })
 
   test('still says a refused link opens nothing', async () => {
