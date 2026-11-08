@@ -18,7 +18,8 @@ const engine = {
     notes: [
       { id: 'one', path: NOTE, name: 'Diary', mine: side('what nobody'), theirs: side('may read') },
     ],
-    answer: () => Promise.resolve(undefined),
+    answer: (_id: string, answer: string) =>
+      Promise.resolve(answer === 'both' ? `${ROOT}/Diary 2.md` : undefined),
   },
   store: { read: () => Promise.resolve(null) },
   on: () => () => undefined,
@@ -40,6 +41,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  workspace.protection.set(ROOT, `${ROOT}/Diary 2.md`, null)
   gone()
   vi.restoreAllMocks()
   unlocks.lockAll()
@@ -55,5 +57,18 @@ describe('a protected note that went two ways', () => {
     unlocks.close([LOCK])
     flushSync()
     expect(asking.asked).toBeNull()
+  })
+})
+
+describe('both ways kept of a protected note', () => {
+  test('leave the copy protected as the note is', async () => {
+    vi.spyOn(workspace, 'openRow').mockResolvedValue(undefined)
+    unlocks.unlock([LOCK])
+    flushSync()
+    const asked = asking.asked
+    if (!asked) throw new Error('asked')
+    await asking.answer(asked, 'both')
+    unlocks.lockAll()
+    expect(workspace.protection.locked(`${ROOT}/Diary 2.md`)).toBe(true)
   })
 })

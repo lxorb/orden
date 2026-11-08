@@ -169,6 +169,10 @@ class Asking {
     this.wrong = null
     try {
       const copy = await engine.held.answer(note.id, answer)
+      if (copy) {
+        const root = workspace.rootHolding(note.path)
+        workspace.protection.copied(note.path, copy, root, workspace.rootHolding(copy))
+      }
       this.shut = note.id
       if (this.open === note.id) this.open = null
       if (answer === 'both' && copy) await workspace.openRow(copy, howFor('behind'))
