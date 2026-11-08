@@ -173,8 +173,6 @@
     settings.listing = false
   }
 
-  const isWindows = isDesktop && navigator.userAgent.includes('Windows')
-
   async function rename(name: string) {
     settings.error = null
     try {
@@ -823,6 +821,7 @@
         <div class="card">
           {#each group.fields as field, index (index)}
             {@render row(field)}
+            {#if field.key === 'appearance.mode'}{@render themeTools()}{/if}
           {/each}
         </div>
       {/if}
@@ -847,10 +846,6 @@
 
     {#if settings.section === 'export'}
       {@render exportExtras()}
-    {/if}
-
-    {#if settings.section === 'appearance'}
-      {@render appearanceExtras()}
     {/if}
 
     {#if settings.section === 'spelling'}
@@ -1387,34 +1382,18 @@
   </p>
 {/snippet}
 
-{#snippet appearanceExtras()}
-  <div class="card">
-    <div class="orden-setting setting">
-      <span class="name">{t('Themes')}</span>
-      <button class="orden-chip" onclick={() => store.show()}>{t('Browse')}</button>
-    </div>
+{#snippet themeTools()}
+  <div class="orden-setting setting">
+    <span class="name">{t('Themes')}</span>
+    <button class="orden-chip" onclick={() => store.show()}>{t('Browse')}</button>
   </div>
 
   {#if isDesktop}
-    <h3>{t('Custom')}</h3>
-    <div class="card">
-      <button class="orden-action" onclick={() => theme.reload()}
-        >{t('Reload themes and custom CSS')}</button
-      >
-      <BrowserThemes />
-
-      {#if isWindows}
-        {@render row({
-          kind: 'switch',
-          label: t('Show in Explorer’s New menu'),
-          hint: t(
-            'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.',
-          ),
-          get: () => settings.newMenu,
-          set: (on) => void settings.setNewMenu(on),
-        })}
-      {/if}
+    <div class="orden-setting setting">
+      <span class="name">{t('Reload themes and custom CSS')}</span>
+      <button class="orden-chip" onclick={() => theme.reload()}>{t('Reload')}</button>
     </div>
+    <BrowserThemes />
   {/if}
 {/snippet}
 
