@@ -54,6 +54,7 @@ import { openExternal } from './tauri'
 import { shortcuts } from './shortcuts.svelte'
 import { isMarkdownPath, noteName, relativeTo } from './space-paths'
 import { workspace } from './workspace.svelte'
+import { unlocks } from './protect/unlocked.svelte'
 import { viewport } from './viewport.svelte'
 
 function runCommand(view: EditorView | undefined, command: StateCommand) {
@@ -501,6 +502,6 @@ export function showEditorMenu(
       ...recordingEntries(view, at),
       ...spellingEntries(view, event),
     ],
-    { near: true },
+    { near: true, until: unlocks.held },
   )
 }

@@ -27,6 +27,7 @@ import { busy } from './busy.svelte'
 import { copySelection, cutSelection } from './clipboard'
 import { blockCommands, exportCommands } from './commands'
 import { fullscreen } from './fullscreen.svelte'
+import { frontShut } from './export/context'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
 import { canPrint, printable, printOpen } from './export/print'
@@ -133,7 +134,7 @@ export function appMenu(context: Context): MenuGroup[] {
                 label: t('Print'),
                 ...keyed('app.print'),
                 asks: true,
-                disabled: !printable(workspace.active?.kind),
+                disabled: !printable(workspace.active?.kind) || frontShut(),
                 run: () => busy.start(t('Printing'), () => printOpen(), 'print'),
               },
             ]
@@ -142,7 +143,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: t('Version history'),
           asks: true,
-          disabled: !hasNote,
+          disabled: !hasNote || frontShut(),
           run: () => context.onhistory(),
         },
       ],

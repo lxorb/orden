@@ -17,7 +17,7 @@ class Present {
 
   start(tabId: string | null = workspace.activeTabId) {
     const tab = workspace.tabs.find((one) => one.id === tabId)
-    if (tab?.kind !== 'note') return
+    if (tab?.kind !== 'note' || workspace.protection.locked(tab.path)) return
 
     workspace.flush()
     if (!isDeck(tab.doc)) return
@@ -42,7 +42,7 @@ class Present {
 
   get available(): boolean {
     const tab = workspace.active
-    if (tab?.kind !== 'note') return false
+    if (tab?.kind !== 'note' || workspace.protection.locked(tab.path)) return false
 
     return isDeck(tab.doc)
   }

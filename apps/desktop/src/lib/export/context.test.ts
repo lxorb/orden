@@ -14,6 +14,7 @@ vi.mock('../workspace.svelte', () => ({
     get active() {
       return world.active
     },
+    protection: { locked: () => false },
   },
 }))
 vi.mock('../sharing.svelte', () => ({ trustsHtmlIn: () => world.trusts }))

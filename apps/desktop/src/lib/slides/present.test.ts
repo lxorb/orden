@@ -31,6 +31,7 @@ vi.mock('../workspace.svelte', () => ({
     activeTabId: 'deck',
     tabs: [{ id: 'deck', kind: 'note', doc: '# One\n\n---\n\n# Two\n' }],
     flush: () => undefined,
+    protection: { locked: () => false },
   },
 }))
 

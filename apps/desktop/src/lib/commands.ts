@@ -60,7 +60,7 @@ import { key, t } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import type { MenuItem } from './menu-item'
 import type { Exportable } from './export/formats'
-import { look, openTarget, renderOptions } from './export/context'
+import { frontShut, look, openTarget, renderOptions } from './export/context'
 import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
 import type { RunOptions } from './export/run'
 import { PANDOC_FORMATS } from './export-formats'
@@ -120,16 +120,11 @@ export function exportCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
 
   const note = () => workspace.active
-  const source = () => {
-    workspace.wordsNow()
-    return note()?.doc ?? ''
-  }
+  const source = () => openTarget().source
   const name = () => note()?.name ?? 'Untitled.md'
   const target = openTarget
   const shut = (rows: Command[]) =>
-    workspace.protection.locked(note()?.path)
-      ? rows.map((one) => ({ ...one, disabled: true }))
-      : rows
+    frontShut() ? rows.map((one) => ({ ...one, disabled: true })) : rows
 
   const open = note()
   const kind = exportKindOf(
@@ -191,8 +186,8 @@ export function exportCommands(): Command[] {
   }
 
   const copyOut = async () => {
-    const path = note()?.path
-    if (path === null || path === undefined) return
+    const path = target().path
+    if (path === null) return
 
     const m = await import('./export/copy')
     await m.saveCopy(path, name())
@@ -231,7 +226,7 @@ export function exportCommands(): Command[] {
     })
   }
 
-  if (!settings.pandoc) return commands
+  if (!settings.pandoc) return shut(commands)
 
   if (!asNote) return shut(commands)
 
@@ -1082,7 +1077,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'print',
             label: t('Print'),
             hint: shortcuts.hint('app.print'),
-            disabled: !printable(workspace.active?.kind),
+            disabled: !printable(workspace.active?.kind) || frontShut(),
             run: () => busy.start(t('Printing'), () => printOpen(), 'print'),
           },
         ]
@@ -1183,7 +1178,7 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'history',
       label: t('Version history'),
-      disabled: !workspace.active?.path,
+      disabled: !workspace.active?.path || frontShut(),
       run: () => (settings.historyOpen = true),
     },
     ...agentUndoRows(),
