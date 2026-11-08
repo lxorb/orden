@@ -62,21 +62,68 @@ export function place(row: Row, day: string): Placed {
   return { row, day, start: time, minutes: row.task?.duration ?? DEFAULT_MINUTES }
 }
 
+interface Walk {
+  days: string[]
+  ended: boolean
+}
+
+const walks = new Map<string, Walk>()
+
+const WALKS_KEPT = 512
+
+function countedDays(
+  rule: NonNullable<ReturnType<typeof parseRule>>,
+  key: string,
+  start: string,
+  last: string,
+): string[] {
+  let walk = walks.get(key)
+  if (!walk) {
+    walk = { days: [], ended: false }
+    walks.set(key, walk)
+    if (walks.size > WALKS_KEPT) walks.delete(walks.keys().next().value ?? key)
+  }
+  const most = (rule.count ?? 1) - 1
+  while (!walk.ended && (walk.days.at(-1) ?? start) < last) {
+    const next = walk.days.length < most ? nextDate(rule, start, walk.days.at(-1) ?? start) : null
+    if (next === null) walk.ended = true
+    else walk.days.push(next)
+  }
+  return walk.days
+}
+
+function firstAtOrAfter(days: readonly string[], day: string): number {
+  let low = 0
+  let high = days.length
+  while (low < high) {
+    const middle = (low + high) >> 1
+    if ((days[middle] ?? '') < day) low = middle + 1
+    else high = middle
+  }
+  return low
+}
+
 export function occurrences(placed: Placed, last: string, most = 62, first = placed.day): Placed[] {
   const task = placed.row.task
   if (!task?.recurrence || task.done || task.cancelled) return []
   const rule = parseRule(task.recurrence)
   if (!rule || rule.whenDone) return []
   const out: Placed[] = []
-  const counted = rule.count !== undefined
-  let left = counted ? (rule.count ?? 1) - 1 : Infinity
-  let after = first > placed.day && !counted ? addDays(first, -1) : placed.day
-  while (out.length < most && left > 0) {
+  if (rule.count !== undefined) {
+    const days = countedDays(rule, `${task.recurrence}\n${placed.day}`, placed.day, last)
+    for (let at = firstAtOrAfter(days, first); at < days.length && out.length < most; at++) {
+      const day = days[at] ?? last
+      if (day > last) break
+      out.push({ ...placed, day, ghost: true })
+    }
+    return out
+  }
+  let after = first > placed.day ? addDays(first, -1) : placed.day
+  while (out.length < most) {
     const next = nextDate(rule, placed.day, after)
     if (next === null || next > last) break
     if (next >= first) out.push({ ...placed, day: next, ghost: true })
     after = next
-    left--
   }
   return out
 }
