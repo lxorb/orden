@@ -63,33 +63,47 @@ export class AccountInbox {
     this.records = null
     this.answers = null
     this.openedFor = undefined
+    const channel =
+      typeof BroadcastChannel === 'undefined'
+        ? null
+        : new BroadcastChannel(`orden-inbox:${owner ?? ''}`)
+    const early = { heard: false }
+    let loaded: InboxRecords | null = null
+    if (channel) {
+      channel.onmessage = () => {
+        if (loaded) void loaded.load()
+        else early.heard = true
+      }
+    }
     const disk = await this.open(owner)
     const records = new InboxRecords(disk, this.device)
     await records.load()
-    if (owner !== null) await this.carry(records)
+    const carried = owner !== null && (await this.carry(records))
     if (this.owner !== owner) {
+      channel?.close()
       disk.close()
       return
     }
     this.disk = disk
     this.records = records
+    this.channel = channel
     records.hear(() => this.told())
-    if (typeof BroadcastChannel !== 'undefined') {
-      this.channel = new BroadcastChannel(`orden-inbox:${owner ?? ''}`)
-      this.channel.onmessage = () => void records.load()
-    }
+    loaded = records
+    if (early.heard) void records.load()
+    if (carried) channel?.postMessage('changed')
     this.openedFor = owner
     this.told()
     if (this.server) void this.exchange()
   }
 
-  private async carry(into: InboxRecords): Promise<void> {
+  private async carry(into: InboxRecords): Promise<boolean> {
     const local = await this.open(null)
     try {
       const items = await local.items()
-      if (!items.length) return
+      if (!items.length) return false
       await into.adopt(items)
       await local.clear()
+      return true
     } finally {
       local.close()
     }
@@ -170,8 +184,12 @@ export class AccountInbox {
     const records = this.records
     if (!server || !records) return false
     try {
+      const before = this.changes
       const answered = await records.exchange(server)
-      if (records === this.records) this.answers = answered
+      if (records === this.records) {
+        this.answers = answered
+        if (this.changes !== before) this.channel?.postMessage('changed')
+      }
       return answered
     } catch (error) {
       log('warn', `inbox did not reach the account: ${String(error)}`)
