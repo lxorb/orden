@@ -159,6 +159,7 @@ export class Connected {
       { provider: provider.id, account: account.id },
       () => this.find(provider.id, account.id),
       (conversation) => this.seen(provider.id, account.id, conversation),
+      (conversation) => this.unseen(provider.id, account.id, conversation),
     )
     keepRemote(remote)
     this.stops.set(
@@ -264,6 +265,19 @@ export class Connected {
     const found = this.find(provider, account)
     this.linked = this.linked.filter((one) => one !== found)
     return found?.connection.close().catch(() => undefined) ?? Promise.resolve()
+  }
+
+  unseen(provider: string, account: string, conversation: string): void {
+    this.linked = this.linked.map((one) =>
+      one.provider.id === provider && one.account.id === account
+        ? {
+            ...one,
+            conversations: one.conversations.map((it) =>
+              it.id === conversation ? { ...it, unread: Math.max(1, it.unread) } : it,
+            ),
+          }
+        : one,
+    )
   }
 
   seen(provider: string, account: string, conversation: string): void {
