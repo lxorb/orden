@@ -26,15 +26,18 @@ export function bandsOf(
   now: number,
 ): Band[] {
   const out: Band[] = []
+  const lastOf = new Map<string, Band>()
   const mine = (span: Span) => span.source === lane && span.place !== null
   for (const piece of piecesIn(spans, from, to, now, mine)) {
     const key = piece.span.place ?? ''
-    const last = [...out].reverse().find((one) => one.key === key)
+    const last = lastOf.get(key)
     if (last && piece.from - last.to <= JOINED && piece.from >= last.from) {
       last.to = Math.max(last.to, piece.to)
       continue
     }
-    out.push({ key, label: piece.span.label ?? key, from: piece.from, to: piece.to })
+    const band = { key, label: piece.span.label ?? key, from: piece.from, to: piece.to }
+    out.push(band)
+    lastOf.set(key, band)
   }
   return out.sort((one, other) => one.from - other.from)
 }
