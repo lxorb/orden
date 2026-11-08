@@ -81,16 +81,40 @@ export async function claimDomain(env: Env, domain: string): Promise<string | nu
   }
 }
 
-export async function releaseDomain(env: Env, domain: string): Promise<void> {
-  const reachable = access(env)
-  if (!reachable) return
+export const DOMAIN = 'domains/'
 
+async function released(reachable: Access, domain: string): Promise<boolean> {
   try {
     const found = await find(reachable, domain)
-    if (found) await request(reachable, 'DELETE', `/${found.id}`)
+    return !found || (await request(reachable, 'DELETE', `/${found.id}`)).success
   } catch (error) {
     console.warn(`could not release ${domain}: ${reason(error)}`)
+    return false
   }
+}
+
+export async function releaseDomain(env: Env, domain: string): Promise<void> {
+  const reachable = access(env)
+  if (!reachable || (await released(reachable, domain))) return
+
+  await env.DB.prepare('insert or ignore into leftovers (what, since) values (?, ?)')
+    .bind(DOMAIN + domain, Date.now())
+    .run()
+    .catch(() => undefined)
+}
+
+export async function releaseLeftDomains(env: Env, domains: readonly string[]): Promise<string[]> {
+  const reachable = access(env)
+  if (!reachable) return [...domains]
+
+  const done: string[] = []
+  for (const domain of domains) {
+    const held = await env.DB.prepare('select 1 as one from spaces where blog_domain = ?')
+      .bind(domain)
+      .first()
+    if (held || (await released(reachable, domain))) done.push(domain)
+  }
+  return done
 }
 
 export async function domainStatus(env: Env, domain: string): Promise<DomainStatus> {

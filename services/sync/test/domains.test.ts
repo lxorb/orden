@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { sweepLeftovers } from '../src/leftovers'
 import { proveDomain, recheckDomains } from '../src/spaces/proof'
 import type { Space } from '../src/types'
 import { fakeCloudflare, TOKEN, ZONE } from './cloudflare'
@@ -164,6 +165,43 @@ describe("a domain of one's own", () => {
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
 
     expect(cloudflare.hostnames.has('notes.example.com')).toBe(false)
+  })
+
+  function releasesFail() {
+    const real = globalThis.fetch
+    vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
+      init?.method === 'DELETE'
+        ? Promise.reject(new Error('Cloudflare is down'))
+        : real(input, init),
+    )
+  }
+
+  test('is released the next night when Cloudflare could not be reached at the time', async () => {
+    await published()
+    releasesFail()
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+    expect(cloudflare.hostnames.has('notes.example.com')).toBe(true)
+
+    cloudflare.install()
+    await sweepLeftovers(env)
+    expect(cloudflare.hostnames.has('notes.example.com')).toBe(false)
+  })
+
+  test('is not released late once another space has taken it in the meantime', async () => {
+    await published()
+    releasesFail()
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+    cloudflare.install()
+
+    const theirs = (await call(env, '/v1/spaces', { token, body: { name: 'Next' } })).json.space.id
+    await publish({ domain: 'notes.example.com' }, theirs)
+    await prove(theirs)
+    await sweepLeftovers(env)
+
+    expect(cloudflare.hostnames.has('notes.example.com')).toBe(true)
+    expect(env.db.prepare("select what from leftovers where what like 'domains/%'").all()).toEqual(
+      [],
+    )
   })
 
   test('is swapped when the domain changes, and the new one starts unproved', async () => {
