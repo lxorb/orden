@@ -234,4 +234,28 @@ describe('the inbox kept on a device', () => {
     await phone.exchange(server)
     expect(phone.text()).toMatch(/- \[ \] Call the bank/)
   })
+
+  test('a kept change without a stamp is sent once, not again on every round', async () => {
+    const clock = { at: 1000 }
+    const server = account()
+    let pushes = 0
+    const counting: InboxServer = {
+      pull: (since) => server.pull(since),
+      push: (changes) => {
+        pushes += 1
+        return pushes > 5 ? Promise.resolve(false) : server.push(changes)
+      },
+    }
+    const disk = memoryDisk(
+      new Map([
+        ['a1', { id: 'a1', fields: { text: 'Call the bank' }, stamps: {}, dirty: ['text'] }],
+      ]),
+    )
+    const laptop = new InboxRecords(disk, 'laptop', () => clock.at)
+    await laptop.load()
+    expect(await laptop.exchange(counting)).toBe(true)
+    expect(pushes).toBe(1)
+    expect(laptop.pending).toBe(0)
+    expect(disk.kept.get('a1')?.dirty).toEqual([])
+  })
 })
