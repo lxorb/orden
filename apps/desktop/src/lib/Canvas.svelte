@@ -1439,7 +1439,7 @@
 
     if (paths.length) {
       event.preventDefault()
-      run.dropPaths(store, paths, point)
+      void run.dropPaths(store, paths, point)
       return
     }
 

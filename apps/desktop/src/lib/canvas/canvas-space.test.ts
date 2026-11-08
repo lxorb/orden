@@ -58,18 +58,18 @@ test('a card turned into a note points at it relative to the canvas space', asyn
   expect(card).toMatchObject({ type: 'file', file: 'Note.md' })
 })
 
-test('a note dropped on the canvas is named relative to the canvas space', () => {
+test('a note dropped on the canvas is named relative to the canvas space', async () => {
   const store = boardInB()
 
-  run.dropPaths(store, ['/home/me/B/Ideas.md'], { x: 0, y: 0 })
+  await run.dropPaths(store, ['/home/me/B/Ideas.md'], { x: 0, y: 0 })
 
   expect(store.canvas.nodes).toMatchObject([{ type: 'file', file: 'Ideas.md' }])
 })
 
-test('a note from another space is not put on the canvas as a local path', () => {
+test('a note from another space is not put on the canvas as a local path', async () => {
   const store = boardInB()
 
-  run.dropPaths(store, ['/home/me/A/Other.md'], { x: 0, y: 0 })
+  await run.dropPaths(store, ['/home/me/A/Other.md'], { x: 0, y: 0 })
 
   expect(store.canvas.nodes).toEqual([])
 })

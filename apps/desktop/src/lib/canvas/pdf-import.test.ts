@@ -45,6 +45,7 @@ vi.mock('../assets', () => ({
     return Promise.resolve(`/space/assets/page-${String(world.stored)}.png`)
   },
 }))
+vi.mock('../bytes', () => ({ fileBytes: () => Promise.resolve(new Uint8Array([1])) }))
 vi.mock('../pdf/document', () => ({
   loading: (library: { getDocument: (source: object) => unknown }, data: Uint8Array) =>
     library.getDocument({ data }),
@@ -261,4 +262,22 @@ test('a tiny picture is drawn big enough to take hold of', async () => {
   const [card] = store.canvas.nodes
   expect(card?.width).toBe(80)
   expect(card?.height).toBe(40)
+})
+
+test('a picture dragged in from the files keeps its shape, and what comes after it lies below', async () => {
+  const store = board()
+  vi.stubGlobal('createImageBitmap', () =>
+    Promise.resolve({ width: 1080, height: 2400, close: () => undefined }),
+  )
+  try {
+    await run.dropPaths(store, ['/space/shots/phone.png', '/space/Ideas.md'], { x: 0, y: 0 })
+  } finally {
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  }
+
+  const [shot, note] = store.canvas.nodes
+  expect(shot).toMatchObject({ file: 'shots/phone.png', width: 144, height: 320 })
+  expect(note).toMatchObject({ file: 'Ideas.md' })
+  expect(note?.y ?? 0).toBeGreaterThanOrEqual((shot?.y ?? 0) + (shot?.height ?? 0))
 })
