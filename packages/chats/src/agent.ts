@@ -6,8 +6,58 @@ export function untrusted(source: string, words: string): string {
   return `<${TAG} source="${attribute(source)}">\n${inert(words)}\n</${TAG}>`
 }
 
+const HIDDEN = /^[\p{Cf}\u034F\uFE00-\uFE0F\u{E0100}-\u{E01EF}]$/u
+
+const LATIN: Record<string, string> = {
+  '\u0430': 'a',
+  '\u03b1': 'a',
+  '\u0441': 'c',
+  '\u03f2': 'c',
+  '\u0501': 'd',
+  '\u0435': 'e',
+  '\u0450': 'e',
+  '\u04bb': 'h',
+  '\u0456': 'i',
+  '\u03b9': 'i',
+  '\u0131': 'i',
+  '\u04cf': 'l',
+  '\u0458': 'j',
+  '\u03f3': 'j',
+  '\u03ba': 'k',
+  '\u043e': 'o',
+  '\u03bf': 'o',
+  '\u0440': 'p',
+  '\u03c1': 'p',
+  '\u051b': 'q',
+  '\u0455': 's',
+  '\u03c5': 'u',
+  '\u03bd': 'v',
+  '\u0475': 'v',
+  '\u051d': 'w',
+  '\u0445': 'x',
+  '\u03c7': 'x',
+  '\u0443': 'y',
+}
+
+const LOOKED_AT = 64
+
+function seenAfter(words: string, from: number): string {
+  let out = ''
+  let kept = 0
+  for (let at = from; at < words.length && kept < LOOKED_AT;) {
+    const one = String.fromCodePoint(words.codePointAt(at) ?? 0)
+    at += one.length
+    if (HIDDEN.test(one)) continue
+    out += one
+    kept++
+  }
+  return Array.from(out.normalize('NFKC').toLowerCase(), (one) => LATIN[one] ?? one).join('')
+}
+
 function inert(words: string): string {
-  return words.replace(/<(?=\s*\/?\s*untrusted)/gi, '&lt;')
+  return words.replace(/[<\uFF1C\uFE64]/g, (one, at: number) =>
+    /^\s*[/\u2215\u2044]?\s*untrusted/.test(seenAfter(words, at + 1)) ? '&lt;' : one,
+  )
 }
 
 function attribute(source: string): string {
