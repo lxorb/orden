@@ -1346,8 +1346,17 @@
   }
 
   function onKeyUp(event: KeyboardEvent) {
-    if (event.key === ' ' && !typing(event.target)) send({ kind: 'space', down: false })
+    if (event.key === ' ') letGoOfSpace()
     tools.released(event)
+  }
+
+  function letGoOfSpace() {
+    if (machine.spacing) send({ kind: 'space', down: false })
+  }
+
+  function onFocusOut(event: FocusEvent) {
+    const going = event.relatedTarget
+    if (!(going instanceof Node && host?.contains(going))) letGoOfSpace()
   }
 
   function onCopy(event: ClipboardEvent) {
@@ -1538,6 +1547,8 @@
   )
 </script>
 
+<svelte:window onblur={letGoOfSpace} />
+
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   class="canvas orden-host"
@@ -1557,6 +1568,7 @@
   ondblclick={onDoubleClick}
   onkeydown={onKeyDown}
   onkeyup={onKeyUp}
+  onfocusout={onFocusOut}
   oncopy={onCopy}
   oncut={onCut}
   onpaste={onPaste}
