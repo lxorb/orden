@@ -8,19 +8,19 @@
     let
       release = {
         pname = "orden";
-        version = "0.21.0";
-        tag = "v0.21.0";
+        version = "0.21.1";
+        tag = "v0.21.1";
         asset = "Orden";
       };
 
       debs = {
         x86_64-linux = {
           suffix = "x64";
-          hash = "sha256-CUz5VYidxOiVY9ks0WCs2NFjycznrQToh1LEPX6fOmY=";
+          hash = "sha256-dcShFV0kIG1X6FW/cu4SzbvxZ2BiC3sil67WuuBD1D0=";
         };
         aarch64-linux = {
           suffix = "arm64";
-          hash = "sha256-KLMV23jMLOy8ONS7elbTN3e1o9w+aVJraxopXXO9FJw=";
+          hash = "sha256-gjmKGLQgOO85cA3ny0V63p6+sRdh/A18oPrhHU99Sac=";
         };
       };
 

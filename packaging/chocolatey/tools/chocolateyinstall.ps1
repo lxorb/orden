@@ -3,8 +3,8 @@ $ErrorActionPreference = 'Stop'
 $packageArgs = @{
   packageName    = $env:ChocolateyPackageName
   fileType       = 'MSI'
-  url            = 'https://github.com/lxorb/orden/releases/download/v0.21.0/Orden-0.21.0-windows-x64.msi'
-  checksum       = 'CEDBECEF0071789EE65CC79594B45142EB3243447F4327E4C125AD1D4A7ED649'
+  url            = 'https://github.com/lxorb/orden/releases/download/v0.21.1/Orden-0.21.1-windows-x64.msi'
+  checksum       = '1EF80FE917646FB0725F2AC7A66D21E60EF85660C08444128CBB453685F378C4'
   checksumType   = 'sha256'
   softwareName   = 'Orden'
   silentArgs     = '/qn /norestart'
@@ -12,8 +12,8 @@ $packageArgs = @{
 }
 
 if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6432 -eq 'ARM64') {
-  $packageArgs['url'] = 'https://github.com/lxorb/orden/releases/download/v0.21.0/Orden-0.21.0-windows-arm64.msi'
-  $packageArgs['checksum'] = '30B75E6349811F84A56C9FA0B9706DBF0245EB19226631EF5EABF5481C73D910'
+  $packageArgs['url'] = 'https://github.com/lxorb/orden/releases/download/v0.21.1/Orden-0.21.1-windows-arm64.msi'
+  $packageArgs['checksum'] = '7B75CCC7305F42BE9AFAAD018CDF71ABD8BFCE82A29EA83C7231325F2A6B5D20'
 } elseif ((Get-OSArchitectureWidth) -ne 64) {
   throw 'Orden requires 64-bit Windows (x64 or ARM64).'
 }
