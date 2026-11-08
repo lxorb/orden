@@ -28,6 +28,8 @@ const WRITE_DELAY = 1_200
 
 const PRINTED_AT_ONCE = 10_000
 
+const FEW_PICKED = 16
+
 export class CanvasStore implements PlaneSurface {
   canvas = $state.raw<Canvas>(emptyCanvas())
 
@@ -141,6 +143,7 @@ export class CanvasStore implements PlaneSurface {
     const before = this.canvas
     const after = stamped(before, next, Date.now())
     this.canvas = after
+    this.keepPicked()
 
     const carrying = run !== undefined && run === this.during
     this.during = run ?? null
@@ -347,16 +350,28 @@ export class CanvasStore implements PlaneSurface {
 
   private keepPicked() {
     if (!this.picked.length && this.editing === null) return
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
-    const held = new Set([
-      ...this.canvas.nodes.filter((node) => !node.locked).map((node) => node.id),
-      ...this.canvas.edges.map((edge) => edge.id),
-      ...this.canvas.ink.map((stroke) => stroke.id),
-    ])
-
-    const kept = this.picked.filter((id) => held.has(id))
+    const held = this.holds()
+    const kept = this.picked.filter(held)
     if (kept.length !== this.picked.length) this.picked = kept
-    if (this.editing !== null && !held.has(this.editing)) this.editing = null
+    if (this.editing !== null && !held(this.editing)) this.editing = null
+  }
+
+  private holds(): (id: string) => boolean {
+    const { nodes, edges, ink } = this.canvas
+    if (this.picked.length <= FEW_PICKED) {
+      return (id) =>
+        nodes.some((node) => node.id === id && !node.locked) ||
+        edges.some((edge) => edge.id === id) ||
+        ink.some((stroke) => stroke.id === id)
+    }
+
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
+    const all = new Set([
+      ...nodes.filter((node) => !node.locked).map((node) => node.id),
+      ...edges.map((edge) => edge.id),
+      ...ink.map((stroke) => stroke.id),
+    ])
+    return (id) => all.has(id)
   }
 
   isPicked(id: string): boolean {
