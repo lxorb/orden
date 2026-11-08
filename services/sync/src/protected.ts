@@ -67,11 +67,15 @@ function readProtected(raw: string | null | undefined): Protected {
   return { password: passwordOf(held.password), spaces }
 }
 
-async function protectedFor(env: Env, userId: string): Promise<Protected> {
+async function rawFor(env: Env, userId: string): Promise<string | null> {
   const row = await env.DB.prepare('select protected from users where id = ?')
     .bind(userId)
     .first<{ protected: string | null }>()
-  return readProtected(row?.protected)
+  return row?.protected ?? null
+}
+
+async function protectedFor(env: Env, userId: string): Promise<Protected> {
+  return readProtected(await rawFor(env, userId))
 }
 
 function covers(ways: Record<string, Way> | undefined, path: string): boolean {
@@ -89,11 +93,38 @@ export async function shutFor(env: Env, userId: string): Promise<Shut> {
   return (spaceId, path) => covers(held.spaces[spaceId], path)
 }
 
-async function write(env: Env, userId: string, held: Protected): Promise<boolean> {
-  const written = JSON.stringify(held)
-  if (byteLength(written) > MOST_BYTES) return false
-  await env.DB.prepare('update users set protected = ? where id = ?').bind(written, userId).run()
-  return true
+const TOO_MUCH = 'that is more than an account protects'
+
+const TOO_MANY_SPACES = `at most ${MOST_SPACES} spaces hold something protected`
+
+const BUSY = 'what is protected changed meanwhile, try again'
+
+const TRIES = 8
+
+interface Refusal {
+  error: string
+  status: 413 | 503
+}
+
+async function rewrite(
+  env: Env,
+  userId: string,
+  change: (held: Protected) => Protected | Refusal,
+): Promise<Protected | Refusal> {
+  for (let tried = 0; tried < TRIES; tried++) {
+    const raw = await rawFor(env, userId)
+    const next = change(readProtected(raw))
+    if ('error' in next) return next
+    const written = JSON.stringify(next)
+    if (byteLength(written) > MOST_BYTES) return { error: TOO_MUCH, status: 413 }
+    const done = await env.DB.prepare(
+      'update users set protected = ?1 where id = ?2 and protected is ?3',
+    )
+      .bind(written, userId, raw)
+      .run()
+    if (done.meta.changes) return next
+  }
+  return { error: BUSY, status: 503 }
 }
 
 export const protectedRoutes = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -110,11 +141,13 @@ protectedRoutes.put('/password', async (context) => {
 
   const user = context.get('user').id
   const held = await protectedFor(context.env, user)
-  if (!held.password || held.password.at < sent.at) {
-    held.password = sent
-    await write(context.env, user, held)
-  }
-  return context.json(held)
+  if (held.password && held.password.at >= sent.at) return context.json(held)
+
+  const next = await rewrite(context.env, user, (now) =>
+    now.password && now.password.at >= sent.at ? now : { ...now, password: sent },
+  )
+  if ('error' in next) return context.json({ error: next.error }, next.status)
+  return context.json(next)
 })
 
 protectedRoutes.put('/spaces/:id', async (context) => {
@@ -126,19 +159,15 @@ protectedRoutes.put('/spaces/:id', async (context) => {
     return context.json({ error: 'protected must be an object' }, 400)
   }
 
-  const user = context.get('user').id
-  const held = await protectedFor(context.env, user)
   const ways = waysOf(body.protected)
-  const spaces = Object.fromEntries(Object.entries(held.spaces).filter(([one]) => one !== id))
-  if (Object.keys(ways).length) {
-    if (Object.keys(spaces).length >= MOST_SPACES) {
-      return context.json({ error: `at most ${MOST_SPACES} spaces hold something protected` }, 413)
+  const next = await rewrite(context.env, context.get('user').id, (held) => {
+    const spaces = Object.fromEntries(Object.entries(held.spaces).filter(([one]) => one !== id))
+    if (Object.keys(ways).length) {
+      if (Object.keys(spaces).length >= MOST_SPACES) return { error: TOO_MANY_SPACES, status: 413 }
+      spaces[id] = ways
     }
-    spaces[id] = ways
-  }
-  const next = { ...held, spaces }
-  if (!(await write(context.env, user, next))) {
-    return context.json({ error: 'that is more than an account protects' }, 413)
-  }
+    return { ...held, spaces }
+  })
+  if ('error' in next) return context.json({ error: next.error }, next.status)
   return context.json(next)
 })
