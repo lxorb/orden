@@ -31,13 +31,13 @@ async function issueToken(
 ): Promise<string> {
   const token = mint()
 
-  await env.DB.prepare('delete from mcp_tokens where user_id = ?').bind(userId).run()
-  await env.DB.prepare(
-    `insert into mcp_tokens (token_hash, user_id, read_only, created_at, session_hash)
-     values (?, ?, ?, ?, ?)`,
-  )
-    .bind(await sha256(token), userId, readOnly ? 1 : 0, now(), sessionHash)
-    .run()
+  await env.DB.batch([
+    env.DB.prepare('delete from mcp_tokens where user_id = ?').bind(userId),
+    env.DB.prepare(
+      `insert into mcp_tokens (token_hash, user_id, read_only, created_at, session_hash)
+       values (?, ?, ?, ?, ?)`,
+    ).bind(await sha256(token), userId, readOnly ? 1 : 0, now(), sessionHash),
+  ])
 
   return token
 }
