@@ -8,7 +8,7 @@ import { shortcuts } from '../shortcuts.svelte'
 import { workspace } from '../workspace.svelte'
 import { carry, changeable, duplicate, newFolder, paste, removeForGood, trash } from './changes'
 import { type Entry, openWithSystem } from './commands'
-import { inASpace, openFile, openingOf } from './open'
+import { inASpace, openFile, ordenOpens } from './open'
 import { places } from './places.svelte'
 import { explorerPrefs } from './prefs.svelte'
 import { viewOf, type ExplorerView } from './view.svelte'
@@ -33,10 +33,9 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
   return [
     {
       label: t('Open'),
-      run: () =>
-        entry.folder ? void view.go(path) : void openFile(path, () => view.look(entry.name)),
+      run: () => (entry.folder ? void view.go(path) : void openFile(path)),
     },
-    ...(!entry.folder && openingOf(path) === 'orden'
+    ...(!entry.folder && ordenOpens(path)
       ? [{ label: t('Open with the system app'), run: () => void openWithSystem(path) }]
       : []),
     { label: t(showLabel(platform(), false)), run: () => void reveal(path, { system: true }) },
