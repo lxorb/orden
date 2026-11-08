@@ -3,7 +3,7 @@ import Long from 'long'
 import protobuf from 'protobufjs/minimal.js'
 import type { WireAsk, WireSocket } from '@orden/chats/provider'
 import type { Kit, Link } from '@orden/chats/whatsapp'
-import { quiet } from './node/pino'
+import { quiet } from './whatsapp-log'
 import { useWire } from './node/ws'
 
 function buffered(data: Uint8Array): Buffer {

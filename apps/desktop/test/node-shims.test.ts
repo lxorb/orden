@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { expect, test, vi } from 'vitest'
 
 vi.mock('node:path', async (original) => {
@@ -29,4 +31,17 @@ test('on Windows every shim has the one id the app imports it by, so no module i
   expect(changed?.code).toContain(JSON.stringify(shimPath('buffer.ts')))
   expect(changed?.code).toContain(JSON.stringify(shimPath('process.ts')))
   expect(changed?.code.split('\n').slice(0, 2).join('\n')).not.toContain('\\')
+})
+
+test('no shim pulls in the app, so prebundling the WhatsApp packages never bundles app code', () => {
+  const folder = join(import.meta.dirname, '../src/lib/chats/providers/node')
+  const reaching = readdirSync(folder)
+    .filter((name) => name.endsWith('.ts') && !name.endsWith('.test.ts'))
+    .flatMap((name) =>
+      readFileSync(join(folder, name), 'utf8')
+        .split('\n')
+        .filter((line) => /^import (?!type\b).*from '\.\.\//.test(line))
+        .map((line) => `${name}: ${line}`),
+    )
+  expect(reaching).toEqual([])
 })
