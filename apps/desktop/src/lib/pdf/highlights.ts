@@ -18,21 +18,24 @@ export interface Highlight {
   created: number
 }
 
+export type Held = 'newer' | 'unreadable' | 'damaged'
+
 export interface Sheet {
   version: number
   highlights: Highlight[]
+  held?: Held
 }
 
 export function emptySheet(): Sheet {
   return { version: VERSION, highlights: [] }
 }
 
-export function leftAlone(): Sheet {
-  return { version: VERSION + 1, highlights: [] }
+export function leftAlone(held: Held): Sheet {
+  return { version: VERSION, highlights: [], held }
 }
 
-export function frozen(sheet: Sheet): boolean {
-  return sheet.version > VERSION
+export function frozen(sheet: Sheet): Held | null {
+  return sheet.held ?? (sheet.version > VERSION ? 'newer' : null)
 }
 
 function readQuad(value: unknown): Quad | null {
@@ -73,7 +76,7 @@ export function readSheet(text: string): Sheet {
   try {
     parsed = JSON.parse(text)
   } catch {
-    return leftAlone()
+    return leftAlone('damaged')
   }
 
   if (!isRecord(parsed)) return emptySheet()

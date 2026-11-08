@@ -1,7 +1,7 @@
 import { isPdfTarget } from '@orden/markdown/links'
 import { readable } from './guarded'
 import type { AgentAnswer } from '../../automation/caller'
-import { COLOURS, type Highlight } from '../../pdf/highlights'
+import { COLOURS, frozen, type Held, type Highlight } from '../../pdf/highlights'
 import { marksWritten } from '../../pdf/sheets.svelte'
 import { editHighlights, loadHighlights } from '../../pdf/sidecar'
 import { canWriteAt } from '../../sharing.svelte'
@@ -79,12 +79,21 @@ export async function readPdf(call: Call): Promise<AgentAnswer> {
   }
 }
 
+const HELD: Record<Held, string> = {
+  newer:
+    'the highlights beside that PDF were written by a newer Orden, so they were left as they are',
+  unreadable: 'the highlights beside that PDF could not be read, so they were left as they are',
+  damaged: 'the highlights file beside that PDF is damaged, so it was left as it is',
+}
+
 export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
   const { relative, path } = pdfOf(call)
   const sheet = await loadHighlights(path)
 
   switch (need(call, 'op')) {
-    case 'list':
+    case 'list': {
+      const held = frozen(sheet)
+      if (held && held !== 'newer') throw new Refused('failed', HELD[held])
       return done(
         sheet.highlights.map(({ id, page, text, colour, created }) => ({
           id,
@@ -95,6 +104,7 @@ export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
         })),
         relative,
       )
+    }
 
     case 'add': {
       needScope(call, 'notes.write', 'a highlight')
@@ -112,9 +122,7 @@ export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
         ...now,
         highlights: [...now.highlights, mark],
       }))
-      if (!written) {
-        throw new Refused('failed', 'the highlights beside that PDF were written by a newer Orden')
-      }
+      if (typeof written === 'string') throw new Refused('failed', HELD[written])
       marksWritten(path)
       const comment = maybe(call, 'comment') === null ? {} : { comment: 'not kept' }
       return done({ id: mark.id, page: mark.page, text: mark.text, ...comment })

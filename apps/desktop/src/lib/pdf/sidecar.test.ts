@@ -48,8 +48,17 @@ describe('the marks on a PDF', () => {
   test('are left alone where the sidecar is there and will not read', async () => {
     disk.refuse = true
 
-    expect(await editHighlights('/space/paper.pdf', (now) => now)).toBeNull()
+    expect(await editHighlights('/space/paper.pdf', (now) => now)).toBe('unreadable')
     expect(disk.written).toEqual([])
+  })
+
+  test('say why they were left alone: unread, damaged, or written by a newer Orden', async () => {
+    disk.written = ['{ "version": 1, "highlights": [']
+    expect(await editHighlights('/space/paper.pdf', (now) => now)).toBe('damaged')
+
+    disk.written = [JSON.stringify({ version: 99, highlights: [] })]
+    expect(await editHighlights('/space/paper.pdf', (now) => now)).toBe('newer')
+    expect(disk.written).toHaveLength(1)
   })
 
   test('changed at once, by the viewer and by the calls of an agent, keep every change', async () => {
