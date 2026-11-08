@@ -1,6 +1,7 @@
 import { account } from './account.svelte'
 import { api, ApiError } from './api'
 import { isRecord, keepJson, recordOf, stored } from './stored'
+import { passing } from './backoff'
 
 const MOST = 200
 
@@ -87,8 +88,7 @@ const orders = new Shelf<string[]>(
 const ORDER = 'order'
 
 function unreachable(error: unknown): boolean {
-  if (error instanceof ApiError)
-    return [401, 408, 429].includes(error.status) || error.status >= 500
+  if (error instanceof ApiError) return error.status === 401 || passing(error.status)
   return true
 }
 

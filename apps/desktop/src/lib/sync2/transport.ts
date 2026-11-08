@@ -8,6 +8,7 @@ import {
 } from '@orden/scan/wire'
 import type { Blobs, Replaced } from './files'
 import type { Account, Route } from './world'
+import { passing } from '../backoff'
 
 export class Refused extends Error {
   override name = 'Refused'
@@ -71,7 +72,7 @@ export function accountOver(reaching: Reaching): Account {
       } catch {
         return null
       }
-      if (response.status === 429 || response.status >= 500) return null
+      if (passing(response.status)) return null
       if (!response.ok) {
         const said: unknown = await response.json().catch(() => null)
         const error =
@@ -95,7 +96,7 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
         new Request(`${reaching.base}${path}`, { ...init, headers }),
       )
       if (full && response.status === FULL) return response
-      return response.status === 429 || response.status >= 500 ? null : response
+      return passing(response.status) ? null : response
     } catch {
       return null
     }

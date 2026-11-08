@@ -1,7 +1,7 @@
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { api, ApiError } from '../api'
-import { pollDelay, RECONCILE_INTERVAL } from '../backoff'
+import { passing, pollDelay, RECONCILE_INTERVAL } from '../backoff'
 import { log } from '../log'
 import { type Pairing, pairSpaces } from '../space-pairing'
 import { readMirror, type Mirror } from '../sync/mirror'
@@ -1920,7 +1920,7 @@ function relayable(kind: string | undefined): boolean {
 }
 
 function unreachable(error: unknown): boolean {
-  if (error instanceof ApiError) return error.status === 429 || error.status >= 500
+  if (error instanceof ApiError) return passing(error.status)
   return error instanceof TypeError
 }
 

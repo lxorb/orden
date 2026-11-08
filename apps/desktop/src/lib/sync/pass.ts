@@ -29,6 +29,7 @@ import {
 import { type Folded, foldWebCopies } from './web-copies'
 import { NotWritten, writeDown } from './write-down'
 import type { Entry } from '../workspace.svelte'
+import { passing } from '../backoff'
 
 function ordered<T extends { path: string }>(
   notes: readonly T[],
@@ -746,7 +747,7 @@ function untoldBy(mirror: Mirror, id: string, from: string, to: string, error: u
     mirror.untold = { ...mirror.untold, [id]: { ...was, from, to, tries: was?.tries ?? 0 } }
     return
   }
-  if (status >= 500 || status === 408 || status === 429) {
+  if (passing(status)) {
     const now = Date.now()
     const failing = { since: was?.failing?.since ?? now, times: (was?.failing?.times ?? 0) + 1 }
     if (now - failing.since >= FAILING_FOR && failing.times >= MOST_TRIES) {
