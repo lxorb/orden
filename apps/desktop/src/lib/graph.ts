@@ -75,7 +75,8 @@ export function buildGraph(
   resolve: Resolve,
   options: GraphOptions = {},
 ): NoteGraph {
-  const nodes: GraphNode[] = notes.map((note) => ({
+  const shown = notes.filter((note) => !note.path.split('/').some((part) => part.startsWith('.')))
+  const nodes: GraphNode[] = shown.map((note) => ({
     id: note.path,
     name: note.name,
     path: note.path,
@@ -86,7 +87,7 @@ export function buildGraph(
   const edges: GraphEdge[] = []
   const drawn = new Map<string, number>()
 
-  for (const note of notes) {
+  for (const note of shown) {
     const from = at.get(note.path)
     if (from === undefined) continue
 
