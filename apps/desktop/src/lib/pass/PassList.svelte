@@ -238,24 +238,26 @@
   {:else}
     <div class="bar">
       {#if heading === null}
-        <button class="orden-chip is-quiet" type="button" onclick={showFilters}>
+        <button class="orden-chip is-quiet is-shrinkable" type="button" onclick={showFilters}>
           <span class="chip-words">
             <Glyph icon={ListFilter} />
-            {filterName(view.filter)}
+            <span class="chip-name">{filterName(view.filter)}</span>
             <span class="number">{shown.counts[view.filter]}</span>
           </span>
         </button>
       {/if}
-      <button class="orden-chip is-quiet" type="button" onclick={showSorts}>
+      <button class="orden-chip is-quiet is-shrinkable" type="button" onclick={showSorts}>
         <span class="chip-words">
           <Glyph icon={ArrowUpDown} />
-          {sortName(view.sort)}
+          <span class="chip-name">{sortName(view.sort)}</span>
         </span>
       </button>
       <span class="gap"></span>
       {#if trash && rows.length}
-        <button class="orden-chip is-quiet danger" type="button" onclick={() => void emptyTrash()}
-          >{t('Empty trash')}</button
+        <button
+          class="orden-chip is-quiet is-shrinkable danger"
+          type="button"
+          onclick={() => void emptyTrash()}>{t('Empty trash')}</button
         >
       {/if}
       {#if rows.length && heading === null}
@@ -372,10 +374,22 @@
     padding: 0 var(--space-3) var(--space-2);
   }
 
+  .bar.picking {
+    flex-wrap: wrap;
+  }
+
   .chip-words {
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
+    max-width: 100%;
+  }
+
+  .chip-name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .chip-words :global(.glyph) {
