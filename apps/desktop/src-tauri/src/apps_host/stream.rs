@@ -29,6 +29,7 @@ const LISTEN_FOR: Duration = Duration::from_millis(250);
 const LARGEST_FRAME: usize = 16 * 1024 * 1024;
 const FRAME_PAUSE: Duration = Duration::from_millis(2);
 const WHOLE_AT_MOST: Duration = Duration::from_millis(500);
+const STILL_EVERY: Duration = Duration::from_secs(1);
 const DUE_AT_ONCE: usize = 4;
 const SAMPLE_EVERY: Duration = Duration::from_secs(1);
 const SAMPLED_AFTER_A_PING: Duration = Duration::from_secs(5);
@@ -734,10 +735,8 @@ impl Owed {
             let fresh = began.map(|at| at + WHOLE_AT_MOST);
             refresh.max(fresh).unwrap_or(now)
         });
-        match (drawn, whole) {
-            (Some(one), Some(other)) => Some(one.min(other)),
-            (one, other) => one.or(other),
-        }
+        let still = last.map(|at| at + STILL_EVERY);
+        [drawn, whole, still].into_iter().flatten().min()
     }
 }
 
@@ -973,6 +972,34 @@ fn ivf_frame(from: &mut impl Read) -> io::Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_still_picture_is_sent_again_now_and_then_so_a_lost_one_is_noticed() {
+        let now = Instant::now();
+        let every = Duration::from_millis(33);
+        let nothing = Owed::default();
+        assert_eq!(nothing.due(now, None, every, None), None);
+        assert_eq!(
+            nothing.due(now, Some(now), every, Some(now)),
+            Some(now + STILL_EVERY)
+        );
+        let drawn = Owed {
+            drawn: true,
+            whole: false,
+        };
+        assert_eq!(
+            drawn.due(now, Some(now), every, Some(now)),
+            Some(now + every)
+        );
+        let whole = Owed {
+            drawn: false,
+            whole: true,
+        };
+        assert_eq!(
+            whole.due(now, Some(now), every, Some(now)),
+            Some(now + WHOLE_AT_MOST)
+        );
+    }
     #[cfg(target_os = "linux")]
     use std::process::Command;
 
@@ -1897,14 +1924,29 @@ mod tests {
                     &std::env::temp_dir(),
                 )
                 .unwrap();
-            let (peer, mut viewer, _, _) = Viewer::connect(desktop.name(), None, None);
+            let (peer, mut viewer, mid, _) = Viewer::connect(desktop.name(), None, None);
             let frames = std::cell::RefCell::new(Vec::<Vec<u8>>::new());
             let channel = std::cell::Cell::new(None);
+            let asked = std::cell::Cell::new(None::<Instant>);
             let connected = viewer.run(
                 Duration::from_secs(30),
-                |_, event| match event {
+                |rtc, event| match event {
                     Event::ChannelOpen(id, _) => channel.set(Some(id)),
-                    Event::MediaData(data) => frames.borrow_mut().push(data.data.to_vec()),
+                    Event::MediaData(data) => {
+                        let mut frames = frames.borrow_mut();
+                        if !frames.is_empty() || vp8(&data.data).0 {
+                            frames.push(data.data.to_vec());
+                        } else if asked
+                            .get()
+                            .is_none_or(|at| at.elapsed() >= Duration::from_secs(1))
+                        {
+                            asked.set(Some(Instant::now()));
+                            if let Some(mut writer) = rtc.writer(mid) {
+                                let _ = writer
+                                    .request_keyframe(None, str0m::media::KeyframeRequestKind::Pli);
+                            }
+                        }
+                    }
                     _ => {}
                 },
                 || {
