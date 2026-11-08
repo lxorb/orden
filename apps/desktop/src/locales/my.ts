@@ -3720,4 +3720,7 @@ export const my: Dictionary = {
     'အရာ {count} ခု ကာကွယ်ထားဆဲ ဖြစ်သည်။ လော့ခ်ချထားဆဲ ဖြစ်မည်; ကာကွယ်မှုကို ဖယ်ရှားရန် ၎င်းတို့၏ ကာကွယ်မှုကို ဦးစွာ ဖြုတ်ပါ။',
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities မျက်မှန်ပေါ်တွင် သင့်မှတ်စုများနှင့် လုပ်ငန်းများကို ပြပြီး ပြောသော အမိန့်များကို လက်ခံသည်။',
+  'Export…': 'ထုတ်ယူ…',
+  'Include pictures': 'ပုံများ ထည့်ပါ',
+  'Without styles': 'အပြင်အဆင်မပါ',
 }

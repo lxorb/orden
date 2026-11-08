@@ -3827,4 +3827,7 @@ export const kn: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities ಕನ್ನಡಕದಲ್ಲಿ ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳು ಮತ್ತು ಕಾರ್ಯಗಳನ್ನು ತೋರಿಸುತ್ತದೆ ಮತ್ತು ಮಾತಿನ ಆಜ್ಞೆಗಳನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
+  'Export…': 'ಎಕ್ಸ್‌ಪೋರ್ಟ್…',
+  'Include pictures': 'ಚಿತ್ರಗಳನ್ನು ಸೇರಿಸಿ',
+  'Without styles': 'ಶೈಲಿ ಇಲ್ಲದೆ',
 }

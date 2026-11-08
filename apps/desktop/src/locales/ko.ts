@@ -3674,4 +3674,7 @@ export const ko: Dictionary = {
     '아직 보호된 항목이 {count}개 있습니다. 잠긴 채로 유지되며, 보호를 없애려면 먼저 보호를 해제하세요.',
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities 안경에 노트와 작업을 보여 주고 음성 명령을 받습니다.',
+  'Export…': '내보내기…',
+  'Include pictures': '그림 포함',
+  'Without styles': '스타일 없이',
 }

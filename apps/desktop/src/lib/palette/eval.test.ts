@@ -19,7 +19,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-const { appCommands } = await import('../commands')
+const { paletteCommands } = await import('../commands')
 const { preferences } = await import('../preferences')
 const { places } = await import('../settings/places')
 const { sectionGroups } = await import('../settings/sections')
@@ -69,7 +69,7 @@ const WORLD = world({
     { kind: 'heading', path: 'Plan.md', text: 'Goals' },
     { kind: 'search', path: '', text: 'tag:work' },
   ],
-  commands: appCommands(),
+  commands: paletteCommands(),
   pages: [
     visit(MOODLE, 'Moodle', { visits: 30, typed: 4 }),
     visit('https://github.com/lxorb/orden', 'lxorb/orden: a Typora-style editor', {
@@ -108,7 +108,7 @@ const CASES: [string, string, 1 | 3][] = [
   ['reopen', '> Reopen closed tab', 1],
   ['close all', '> Close all tabs', 1],
   ['split', '> Split right', 1],
-  ['word', '> Export as Word', 3],
+  ['word', '> Export…', 4],
   ['settings', '> Settings', 1],
   ['shortcuts', '> Shortcuts', 1],
   ['sidebar', '> Show left sidebar', 1],
@@ -122,7 +122,7 @@ const CASES: [string, string, 1 | 3][] = [
   ['fold', '> Fold', 1],
   ['heading 2', '> Heading 2', 1],
   ['dark', '> Mode: Dark', 1],
-  ['export pdf', '> Export as PDF', 1],
+  ['export pdf', '> Export…', 1],
   ['github', 'page lxorb/orden: a Typora-style editor', 1],
   ['chatgpt', 'page ChatGPT', 1],
   ['polybox', 'page polybox', 1],

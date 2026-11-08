@@ -3598,4 +3598,7 @@ export const zhHans: Dictionary = {
     '仍有 {count} 个项目受保护。它们会保持锁定；要移除保护，请先取消它们的保护。',
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     '在 Even Realities 眼镜上显示你的笔记和任务，并接受语音命令。',
+  'Export…': '导出…',
+  'Include pictures': '包含图片',
+  'Without styles': '不带样式',
 }

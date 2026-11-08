@@ -3856,4 +3856,7 @@ export const ta: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities கண்ணாடியில் உங்கள் குறிப்புகளையும் பணிகளையும் காட்டி, பேசும் கட்டளைகளை ஏற்கிறது.',
+  'Export…': 'ஏற்றுமதி…',
+  'Include pictures': 'படங்களைச் சேர்',
+  'Without styles': 'பாணிகள் இல்லாமல்',
 }

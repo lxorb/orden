@@ -3872,4 +3872,7 @@ export const ptBR: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Mostra suas notas e tarefas nos óculos Even Realities e aceita comandos falados.',
+  'Export…': 'Exportar…',
+  'Include pictures': 'Incluir imagens',
+  'Without styles': 'Sem estilos',
 }

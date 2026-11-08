@@ -3927,4 +3927,7 @@ export const uk: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Показує ваші нотатки й завдання в окулярах Even Realities і приймає голосові команди.',
+  'Export…': 'Експорт…',
+  'Include pictures': 'З малюнками',
+  'Without styles': 'Без стилів',
 }

@@ -3702,4 +3702,7 @@ export const jv: Dictionary = {
     '{count} item isih direksa. Tetep kakunci; copot dhisik pangreksané kanggo mbusak pangreksan.',
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Nuduhaké cathetan lan tugasmu ing kacamata Even Realities lan nampa printah swara.',
+  'Export…': 'Ekspor…',
+  'Include pictures': 'Kalebu gambar',
+  'Without styles': 'Tanpa gaya',
 }

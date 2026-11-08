@@ -7,7 +7,7 @@
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
   import Server from 'lucide/dist/esm/icons/server.mjs'
-  import { appCommands } from './commands'
+  import { paletteCommands } from './commands'
   import { fileMark } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { frecency } from './frecency'
@@ -88,7 +88,7 @@
 
   let forgotten = $state(0)
 
-  const commands = $derived(open ? appCommands(view) : [])
+  const commands = $derived(open ? paletteCommands(view) : [])
 
   const settingRows = $derived(
     open ? settingsOf(sectionGroups().flat(), preferences(view), places(), t('Settings')) : [],

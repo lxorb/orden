@@ -251,6 +251,28 @@ export function exportCommands(): Command[] {
   return shut(commands)
 }
 
+function exportPicker(): Command[] {
+  if (__EVEN_PLUGIN__) return []
+
+  const formats = exportCommands().filter((one) => one.id !== 'page-setup')
+
+  return [
+    {
+      id: 'export',
+      label: t('Export…'),
+      also: formats.map((one) => one.label),
+      disabled: formats.every((one) => one.disabled),
+      run: () => void import('./export/picker.svelte').then(({ picker }) => picker.show()),
+    },
+  ]
+}
+
+export function paletteCommands(view?: EditorView): Command[] {
+  const folded = new Set(exportCommands().map((one) => one.id))
+  folded.delete('page-setup')
+  return appCommands(view).filter((one) => !folded.has(one.id))
+}
+
 function importCommand(): Command | null {
   if (__EVEN_PLUGIN__) return null
 
@@ -1195,6 +1217,7 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]),
 
+    ...exportPicker(),
     ...exportCommands(),
     ...spaceCommands(),
     { id: 'llm', label: t('Connect an LLM to your notes'), run: () => settings.show('llm') },

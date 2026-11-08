@@ -3835,4 +3835,7 @@ export const ha: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Yana nuna bayananka da ayyukanka a gilashin Even Realities kuma yana karɓar umarnin da aka faɗa.',
+  'Export…': 'Fitar…',
+  'Include pictures': 'Haɗa hotuna',
+  'Without styles': 'Ba tare da salo',
 }

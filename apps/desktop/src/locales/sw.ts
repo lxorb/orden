@@ -3834,4 +3834,7 @@ export const sw: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Huonyesha madokezo na kazi zako kwenye miwani ya Even Realities na hupokea amri za sauti.',
+  'Export…': 'Toa…',
+  'Include pictures': 'Jumuisha picha',
+  'Without styles': 'Bila mitindo',
 }

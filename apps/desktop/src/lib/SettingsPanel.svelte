@@ -9,7 +9,6 @@
   import { cubicOut } from 'svelte/easing'
   import Swatches from './Swatches.svelte'
   import { account } from './account.svelte'
-  import { exportCommands } from './commands'
   import { arrive, segmented } from './slide'
   import CanvasIcon from './CanvasIcon.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
@@ -92,9 +91,6 @@
   const panes = $derived(preferences())
   const current = $derived(panes.find((one) => one.id === settings.section))
 
-  const exportActions = () =>
-    exportCommands().filter((command) => command.id !== 'page-setup' && command.id !== 'import')
-
   const places = $derived.by((): Place[] => {
     const all: Place[] = [
       ...paneRows(),
@@ -102,11 +98,6 @@
         section: 'shortcuts',
         label: one.label(),
         text: [shortcuts.hint(one.id) ?? '', t('Shortcuts')],
-      })),
-      ...exportActions().map((action): Place => ({
-        section: 'export',
-        label: action.label,
-        text: [],
       })),
     ]
 
@@ -844,10 +835,6 @@
       {@render browserRow()}
     {/if}
 
-    {#if settings.section === 'export'}
-      {@render exportExtras()}
-    {/if}
-
     {#if settings.section === 'spelling'}
       {@render dictionary()}
     {/if}
@@ -1011,17 +998,6 @@
       </div>
     {/await}
   {/if}
-{/snippet}
-
-{#snippet exportExtras()}
-  <h3>{t('This note')}</h3>
-  <div class="card">
-    {#each exportActions() as action (action.id)}
-      <button class="orden-action" disabled={action.disabled} onclick={action.run}>
-        {action.label}
-      </button>
-    {/each}
-  </div>
 {/snippet}
 
 {#snippet keyboard()}

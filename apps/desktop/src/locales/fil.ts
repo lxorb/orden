@@ -3861,4 +3861,7 @@ export const fil: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Ipinapakita ang iyong mga note at gawain sa Even Realities glasses at tumatanggap ng mga sinasabing utos.',
+  'Export…': 'I-export…',
+  'Include pictures': 'Isama ang mga larawan',
+  'Without styles': 'Walang estilo',
 }

@@ -3641,4 +3641,7 @@ export const th: Dictionary = {
     'ยังมี {count} รายการที่ป้องกันอยู่ รายการเหล่านั้นยังคงล็อก ให้ยกเลิกการป้องกันก่อนเพื่อเอาการป้องกันออก',
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'แสดงโน้ตและงานของคุณบนแว่น Even Realities และรับคำสั่งเสียง',
+  'Export…': 'ส่งออก…',
+  'Include pictures': 'รวมรูป',
+  'Without styles': 'ไม่มีสไตล์',
 }

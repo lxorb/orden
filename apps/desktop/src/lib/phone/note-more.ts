@@ -14,10 +14,10 @@ export function showNoteMore(from: HTMLElement) {
   const box = from.getBoundingClientRect()
   const at = new MouseEvent('contextmenu', { clientX: box.right, clientY: box.bottom })
   const title = workspace.active?.shown
-  menu.show(at, noteMore(at), title ? { title } : {})
+  menu.show(at, noteMore(), title ? { title } : {})
 }
 
-function noteMore(event: MouseEvent): MenuEntry[] {
+function noteMore(): MenuEntry[] {
   const tab = workspace.active
   if (!tab) return []
 
@@ -25,7 +25,7 @@ function noteMore(event: MouseEvent): MenuEntry[] {
   const panels: MenuEntry[] = TAB_KINDS[tab.kind].panels
     .filter((panel) => workspace.offers(panel))
     .map((panel) => ({ label: PANEL_WORDS[panel](), run: () => workspace.showPanel(panel) }))
-  const writes = TAB_KINDS[tab.kind].editor ? noteMenu(event, paneId) : []
+  const writes = TAB_KINDS[tab.kind].editor ? noteMenu(paneId) : []
 
   const said = new Set<string>()
   const once = (entries: MenuEntry[]) =>

@@ -31,13 +31,7 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!window.ordenApp.present.on", "Escape to leave the deck")
 
-    page.keyboard.press("Control+Shift+P")
-    page.wait_for_selector(".palette input")
-    page.keyboard.type("Export slides as PDF", delay=1)
-    page.wait_for_function(
-        "() => [...document.querySelectorAll('[role=option]')].some((one) => one.innerText.startsWith('Export slides as PDF'))"
-    )
-    page.keyboard.press("Enter")
+    DRIVE.pick_export(page, "slides-pdf").click()
     wait_for(
         page,
         "document.querySelector('iframe[aria-hidden]')?.contentDocument?.querySelector('.stage')?.style.getPropertyValue('--stage-scale')",

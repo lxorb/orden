@@ -3804,4 +3804,7 @@ export const te: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities కళ్లద్దాలపై మీ నోట్‌లు, పనులను చూపి, మాట్లాడిన ఆదేశాలను తీసుకుంటుంది.',
+  'Export…': 'ఎక్స్‌పోర్ట్…',
+  'Include pictures': 'చిత్రాలను చేర్చు',
+  'Without styles': 'స్టైల్‌లు లేకుండా',
 }

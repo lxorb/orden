@@ -3804,4 +3804,7 @@ export const tr: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Notlarınızı ve görevlerinizi Even Realities gözlüğünde gösterir ve sesli komutları alır.',
+  'Export…': 'Dışa aktar…',
+  'Include pictures': 'Resimleri ekle',
+  'Without styles': 'Biçemsiz',
 }

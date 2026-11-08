@@ -3969,4 +3969,7 @@ export const ar: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'يعرض ملاحظاتك ومهامك على نظارات Even Realities ويتلقى الأوامر المنطوقة.',
+  'Export…': 'تصدير…',
+  'Include pictures': 'تضمين الصور',
+  'Without styles': 'بلا أنماط',
 }

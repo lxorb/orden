@@ -3703,4 +3703,7 @@ export const am: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'ማስታወሻዎችዎን እና ተግባሮችዎን በEven Realities መነጽር ላይ ያሳያል፣ የሚነገሩ ትዕዛዞችንም ይቀበላል።',
+  'Export…': 'ላክ…',
+  'Include pictures': 'ምስሎችን አካትት',
+  'Without styles': 'ያለ ቅጥ',
 }

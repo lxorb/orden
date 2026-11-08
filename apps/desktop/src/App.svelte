@@ -53,6 +53,7 @@
     joinSheet,
     feedbackSheet,
     importSheet,
+    exportSheet,
     spacePickerDialog,
     tabOverview,
     tabOverviewLayer,
@@ -1043,6 +1044,11 @@
 {#if importSheet.asked}
   {#await importSheet.asked then ImportSheet}
     <ImportSheet />
+  {/await}
+{/if}
+{#if exportSheet.asked}
+  {#await exportSheet.asked then ExportSheet}
+    <ExportSheet />
   {/await}
 {/if}
 {#if rewriteSheet.asked}

@@ -110,9 +110,7 @@
   }
 
   function showNoteMenu(event: MouseEvent) {
-    void here(import('./note-menu')).then(({ noteMenu }) =>
-      menu.show(event, noteMenu(event, paneId)),
-    )
+    void here(import('./note-menu')).then(({ noteMenu }) => menu.show(event, noteMenu(paneId)))
   }
 
   let onMark = false

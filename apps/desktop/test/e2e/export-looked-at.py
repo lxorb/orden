@@ -39,16 +39,20 @@ async (encoded) => {
 }
 """
 
+FORMATS = {
+    "Export as PNG": "png",
+    "Export as JPG": "jpg",
+    "Export as SVG": "svg",
+    "Export as PDF": "pdf",
+    "Export as Plain text": "txt",
+    "Export as RTF": "rtf",
+    "Export as Word": "docx",
+}
+
 def exported(page: Page, row: str) -> tuple[bytes, str]:
-    page.keyboard.press("Control+Shift+P")
-    page.wait_for_selector(".palette input")
-    page.keyboard.type(row, delay=1)
-    page.wait_for_function(
-        "(row) => [...document.querySelectorAll('[role=option]')].some((one) => one.innerText.startsWith(row))",
-        arg=row,
-    )
+    go = DRIVE.pick_export(page, FORMATS[row])
     with page.expect_download(timeout=30000) as asked:
-        page.keyboard.press("Enter")
+        go.click()
     path = asked.value.path()
     return path.read_bytes(), asked.value.suggested_filename
 
