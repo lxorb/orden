@@ -5,6 +5,7 @@ import { entitiesOf, markdownOf, withMentions } from './entities'
 import { channel, user } from './fake'
 import { attachmentsOf, messageOf, pollOf, reactionsOf, type Context } from './messages'
 import { idOf, Peers, whereOf } from './peers'
+import { MOST_TEXT, piecesOf } from './pieces'
 import { oggCrc, oggOf, packedOf, samplesOf, waveOf } from './voice'
 
 function peers(): Peers {
@@ -482,3 +483,26 @@ function text(
     ...extra,
   }
 }
+
+describe('long text in pieces', () => {
+  test('a text over the limit is cut at a paragraph, and a mark across the cut is in both pieces', () => {
+    const one = 'a'.repeat(30)
+    const two = 'b'.repeat(30)
+    const text = `${one}\n\n${two}`
+    const bold: tl.TypeMessageEntity = { _: 'messageEntityBold', offset: 25, length: 12 }
+    expect(piecesOf(text, [bold], 40)).toEqual([
+      { message: one, entities: [{ ...bold, offset: 25, length: 5 }] },
+      { message: two, entities: [{ ...bold, offset: 0, length: 5 }] },
+    ])
+  })
+
+  test('no piece is longer than the limit, and an emoji is never cut in half', () => {
+    const text = `x${'😀'.repeat(3000)}`
+    const pieces = piecesOf(text, [], MOST_TEXT)
+    expect(pieces.length).toBe(2)
+    expect(pieces.map((one) => one.message).join('')).toBe(text)
+    for (const piece of pieces) expect(piece.message.length).toBeLessThanOrEqual(MOST_TEXT)
+    expect(pieces[1]?.message.codePointAt(0)).toBe(0x1f600)
+    expect(piecesOf('short', [])).toEqual([{ message: 'short', entities: [] }])
+  })
+})

@@ -6,11 +6,11 @@ const handled: { updates: unknown; quiet: boolean | undefined }[] = []
 let answer: unknown = null
 
 vi.mock('@mtcute/web', () => ({
-  MemoryStorage: class {},
+  MemoryStorage: vi.fn(),
   TelegramClient: class {
-    onRawUpdate = { add() {}, remove() {} }
-    onConnectionState = { add() {}, remove() {} }
-    onError = { add() {}, remove() {} }
+    onRawUpdate = { add: vi.fn(), remove: vi.fn() }
+    onConnectionState = { add: vi.fn(), remove: vi.fn() }
+    onError = { add: vi.fn(), remove: vi.fn() }
     connect() {
       return Promise.resolve()
     }

@@ -1311,3 +1311,55 @@ describe('reading in forum topics', () => {
     expect(heard).toMatchObject([{ t: 'conversation', conversation: { id: 's50t7', unread: 1 } }])
   })
 })
+
+describe('long messages', () => {
+  test('a text over 4096 goes out in pieces, only the first one replying', async () => {
+    const { fake, connection, heard } = await linked()
+    let next = 80
+    fake.answer('messages.sendMessage', (request: { randomId: Long }) =>
+      sent(next++, toMia)(request),
+    )
+    const long = `${'word '.repeat(900)}\n\n${'more '.repeat(300)}`
+    const first = await connection.send('u2', { text: long, replyTo: '10' })
+    const calls = fake.called('messages.sendMessage')
+    expect(calls).toHaveLength(2)
+    for (const one of calls) expect(one.message.length).toBeLessThanOrEqual(4096)
+    expect(calls[0]?.replyTo).toEqual({ _: 'inputReplyToMessage', replyToMsgId: 10 })
+    expect(calls[1]?.replyTo).toBeUndefined()
+    expect(first.id).toBe('80')
+    expect(heard.filter((one) => one.t === 'message').map((one) => one.message.id)).toEqual([
+      '80',
+      '81',
+    ])
+  })
+
+  test('in a topic every piece stays in the topic', async () => {
+    const { fake, connection } = await linked()
+    let next = 90
+    fake.answer('messages.sendMessage', (request: { randomId: Long }) =>
+      sent(next++, toForum)(request),
+    )
+    await connection.send('s50t7', { text: 'word '.repeat(1000) })
+    expect(fake.called('messages.sendMessage').map((one) => one.replyTo)).toEqual([
+      { _: 'inputReplyToMessage', replyToMsgId: 7, topMsgId: 7 },
+      { _: 'inputReplyToMessage', replyToMsgId: 7, topMsgId: 7 },
+    ])
+  })
+
+  test('a caption too long for a file goes out as text before the file', async () => {
+    const { fake, connection } = await linked()
+    let next = 95
+    const answer = (request: { randomId: Long }) => sent(next++, toMia)(request)
+    fake.answer('messages.sendMessage', answer)
+    fake.answer('messages.sendMedia', answer)
+    const caption = 'long '.repeat(300)
+    await connection.send('u2', {
+      text: caption,
+      attachments: [{ name: 'a.pdf', type: 'application/pdf', bytes: new Uint8Array([1]) }],
+    })
+    const texts = fake.called('messages.sendMessage')
+    expect(texts).toHaveLength(1)
+    expect(texts[0]?.message.length).toBeGreaterThan(1024)
+    expect(fake.called('messages.sendMedia')[0]?.message).toBe('')
+  })
+})

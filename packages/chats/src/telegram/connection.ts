@@ -38,6 +38,7 @@ import {
   type Context,
 } from './messages'
 import { fullName, idOf, Peers, peerId, personOf, whereOf, type Where } from './peers'
+import { MOST_TEXT, piecesOf } from './pieces'
 import { oggOf, packedOf } from './voice'
 
 const TELEGRAM = 'telegram'
@@ -50,6 +51,7 @@ const MOST_DIALOGS = 500
 const MOST_KEPT = 5000
 const TYPING_FOR = 6000
 const MOST_REACTIONS = 3
+const MOST_CAPTION = 1024
 const FOREVER = 2147483647
 const GENERAL = 1
 
@@ -269,7 +271,7 @@ class TelegramConnection implements Connection {
 
   private ownUpdates(result: unknown): void {
     if (typeof result !== 'object' || result === null || !('_' in result)) return
-    const kind = (result as { _: unknown })._
+    const kind = result._
     if (kind !== 'updates' && kind !== 'updatesCombined' && kind !== 'updateShort') return
     for (const update of updatesIn(result as tl.TypeUpdates)) {
       if (update._ === 'updateNewMessage' || update._ === 'updateNewChannelMessage') {
@@ -823,25 +825,41 @@ class TelegramConnection implements Connection {
       )
     }
     const files = draft.attachments ?? []
-    if (!files.length) {
-      return this.deliver(
-        to,
-        (randomId) => ({ _: 'messages.sendMessage', ...base, randomId, message, entities }),
-        message,
-        entities,
-      )
+    const top =
+      to.replyTo?._ === 'inputReplyToMessage' && to.replyTo.topMsgId !== undefined
+        ? to.replyTo.topMsgId
+        : undefined
+    const later = {
+      peer: to.peer,
+      ...(top !== undefined
+        ? { replyTo: { _: 'inputReplyToMessage', replyToMsgId: top, topMsgId: top } as const }
+        : {}),
     }
+    let first: ProviderMessage | null = null
     const medias: tl.TypeInputMedia[] = []
     for (const file of files) medias.push(await this.mediaOf(file))
-    let first: ProviderMessage | null = null
+    const captioned = !!medias.length && message.length <= (this.premium ? MOST_TEXT : MOST_CAPTION)
+    if (!captioned) {
+      for (const piece of piecesOf(message, entities)) {
+        const head = first ? later : base
+        const sent = await this.deliver(
+          to,
+          (randomId) => ({ _: 'messages.sendMessage', ...head, randomId, ...piece }),
+          piece.message,
+          piece.entities,
+        )
+        first ??= sent
+      }
+    }
     for (const [index, media] of medias.entries()) {
-      const caption = index === 0 ? message : ''
-      const marks = index === 0 ? entities : []
+      const caption = captioned && index === 0 ? message : ''
+      const marks = captioned && index === 0 ? entities : []
+      const head = first ? later : base
       const sent = await this.deliver(
         to,
         (randomId) => ({
           _: 'messages.sendMedia',
-          ...base,
+          ...head,
           randomId,
           media,
           message: caption,
