@@ -20,6 +20,7 @@ import {
   trashPaths,
   type Trashing,
 } from './commands'
+import { parentOf } from './crumbs'
 import { jobs } from './jobs.svelte'
 import { inASpace } from './open'
 import type { ExplorerView } from './view.svelte'
@@ -142,7 +143,17 @@ export async function paste(view: ExplorerView, into?: string) {
 
 export async function duplicate(view: ExplorerView, paths: readonly string[]) {
   const folder = view.listing?.path
-  if (folder && paths.length && changeable(view)) await carry(view, paths, folder, 'copy')
+  if (!folder || !paths.length || !changeable(view)) return
+  const beside = new Map<string, string[]>()
+  for (const path of paths) {
+    const at = (view.search ? parentOf(path) : null) ?? folder
+    const some = beside.get(at)
+    if (some) some.push(path)
+    else beside.set(at, [path])
+  }
+  await workspace.undone.batch(async () => {
+    for (const [at, some] of beside) await carry(view, some, at, 'copy')
+  })
 }
 
 export async function carry(
