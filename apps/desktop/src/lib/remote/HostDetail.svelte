@@ -151,7 +151,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="orden-setting pressable" onclick={() => about({ pinned: !host.pinned })}>
     <span class="name">{t('Pin')}</span>
-    <Switch on={host.pinned} label={t('Pin')} onchange={(on) => about({ pinned: on })} />
+    <Switch on={host.pinned} label={t('Pin')} onchange={(on: boolean) => about({ pinned: on })} />
   </div>
 </div>
 

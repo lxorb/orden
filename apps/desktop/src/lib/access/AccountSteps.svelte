@@ -135,7 +135,7 @@
               <Switch
                 on={!connectors.readOnly}
                 label={t('Let it write to my notes, not only read them')}
-                onchange={(on) => connectors.setReadOnly(!on)}
+                onchange={(on: boolean) => connectors.setReadOnly(!on)}
               />
             </div>
 
