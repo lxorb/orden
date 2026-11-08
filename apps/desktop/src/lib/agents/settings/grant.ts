@@ -95,10 +95,9 @@ export function withScope(grant: Grant, scope: Scope, on: boolean): Grant {
 
 export const asks = (grant: Grant, category: Category): boolean => grant.asks[category] ?? true
 
-const SIDEBAR = ['Orden · ', 'nib · ']
+const SIDEBAR = 'Orden '
 
-export const sidebars = (grant: Grant): boolean =>
-  SIDEBAR.some((prefix) => grant.client.startsWith(prefix))
+export const sidebars = (grant: Grant): boolean => grant.client.startsWith(SIDEBAR)
 
 export const withName = (grant: Grant, name: string): Grant => {
   const trimmed = name.trim()
