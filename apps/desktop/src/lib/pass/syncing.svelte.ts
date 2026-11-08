@@ -2,6 +2,7 @@ import type { Invite } from '@orden/pass/wire'
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { BASE, request } from '../api'
+import { roomDelay } from '../backoff'
 import { log } from '../log'
 import { passOn } from '../settings.svelte'
 import { hub } from '../sync2/hub.svelte'
@@ -117,8 +118,20 @@ export function startPassSync(): void {
   started = true
 
   let timer: ReturnType<typeof setTimeout> | undefined
+  let retry: ReturnType<typeof setTimeout> | undefined
+  let tries = 0
   const now = () => {
-    if (passOn()) void passSync.refresh()
+    clearTimeout(retry)
+    if (!passOn()) return
+    void passSync.refresh().then(() => {
+      clearTimeout(retry)
+      if (passSync.state !== 'offline') {
+        tries = 0
+        return
+      }
+      tries++
+      retry = setTimeout(now, roomDelay(tries))
+    })
   }
   const soon = () => {
     clearTimeout(timer)
@@ -130,6 +143,7 @@ export function startPassSync(): void {
   setInterval(now, EVERY)
   if (typeof window !== 'undefined') {
     window.addEventListener('focus', now)
+    window.addEventListener('online', now)
   }
   void invitesOf(deviceRows)
     .then((invites) => {
