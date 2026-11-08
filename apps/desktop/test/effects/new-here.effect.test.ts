@@ -217,3 +217,29 @@ test('is one stop for Tab, whichever button the keyboard is on', () => {
 
   expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1])
 })
+
+test('takes the keyboard once what held it in the tab just closed is gone', async () => {
+  makers()
+  const leaving = document.createElement('input')
+  document.body.append(leaving)
+  leaving.focus()
+  here()
+  expect(document.activeElement).toBe(leaving)
+
+  leaving.remove()
+  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+
+  expect(document.activeElement).toBe(buttons()[0])
+})
+
+test('leaves the keyboard where the reader put it outside the pane', async () => {
+  makers()
+  const elsewhere = document.createElement('input')
+  document.body.append(elsewhere)
+  elsewhere.focus()
+  here()
+  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+
+  expect(document.activeElement).toBe(elsewhere)
+  elsewhere.remove()
+})
