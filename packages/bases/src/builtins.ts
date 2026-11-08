@@ -16,8 +16,14 @@ const UNDATED = '!task.start && !task.scheduled'
 
 const quote = (text: string) => JSON.stringify(text)
 
-export const WHEN =
-  'if(!task.deadline, null, if(task.deadline < today(), "overdue", if(task.deadline == today(), "today", if(task.deadline == today() + "1d", "tomorrow", "later"))))'
+const BY_DEADLINE =
+  'if(task.deadline < today(), "overdue", if(task.deadline == today(), "today", if(task.deadline == today() + "1d", "tomorrow", "later")))'
+
+export const WHEN = `if(!task.deadline, null, ${BY_DEADLINE})`
+const WHEN_UNDATED = `if(!task.deadline, if(${UNDATED}, "today", null), ${BY_DEADLINE})`
+
+const whenFormula = (undated: boolean) => (undated ? WHEN_UNDATED : WHEN)
+export const isWhenFormula = (text: string | undefined) => text === WHEN || text === WHEN_UNDATED
 
 export const WHEN_ASIDE = 'ordenWhen'
 export function isWhen(property: string | undefined): boolean {
@@ -64,7 +70,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
           groupBy: { property: 'formula.when', direction: 'ASC' },
           orden: { rows: 'tasks', groups: [...WHEN_GROUPS], kept: {} },
         },
-        { when: WHEN },
+        { when: whenFormula(params.undated === true) },
       )
     case 'inbox': {
       const inboxes = params.inboxes ?? []
@@ -164,14 +170,28 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
   }
 }
 
+function swapped(filter: Filter, from: string, to: string): Filter {
+  if (typeof filter === 'string') return filter === from ? to : filter
+  if ('and' in filter) return { and: filter.and.map((one) => swapped(one, from, to)) }
+  if ('or' in filter) return { or: filter.or.map((one) => swapped(one, from, to)) }
+  return { not: filter.not.map((one) => swapped(one, from, to)) }
+}
+
 export function todayAs(base: Base, undated: boolean): Base {
-  const now = builtinView('today', { undated }).views[0]?.filters
-  const other = JSON.stringify(builtinView('today', { undated: !undated }).views[0]?.filters)
-  if (now === undefined) return base
+  const now = undated ? `${UNDATED} || ${TODAY}` : TODAY
+  const other = undated ? TODAY : `${UNDATED} || ${TODAY}`
   return {
     ...base,
     views: base.views.map((view) =>
-      JSON.stringify(view.filters) === other ? { ...view, filters: now } : view,
+      view.filters ? { ...view, filters: swapped(view.filters, other, now) } : view,
     ),
   }
+}
+
+export function whenAs(base: Base, undated: boolean): Base {
+  const formulas = { ...base.formulas }
+  for (const name of ['when', WHEN_ASIDE]) {
+    if (isWhenFormula(formulas[name])) formulas[name] = whenFormula(undated)
+  }
+  return { ...base, formulas }
 }

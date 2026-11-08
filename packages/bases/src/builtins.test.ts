@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { answer } from './answer'
 import { readBase, writeBase } from './base-file'
-import { builtinView, todayAs } from './builtins'
+import { builtinView, todayAs, WHEN_ASIDE, whenAs } from './builtins'
 import { contextAt, noteRow, taskRow } from './fixtures/rows'
 import type { Answer, Row } from './types'
 
@@ -98,6 +98,50 @@ describe('the built-in views', () => {
     expect(todayAs(on, true)).toEqual(on)
     const own = { ...off, views: off.views.map((view) => ({ ...view, filters: 'task.mine' })) }
     expect(todayAs(own, true)).toEqual(own)
+  })
+
+  test('a Today a filter was added to still follows the setting (#2017)', () => {
+    const narrowed = (base: ReturnType<typeof builtinView>) => ({
+      ...base,
+      views: base.views.map((view) => ({
+        ...view,
+        filters: { and: [view.filters ?? 'true', 'task.mine'] },
+      })),
+    })
+    const off = narrowed(builtinView('today'))
+    const on = narrowed(builtinView('today', { undated: true }))
+    expect(todayAs(off, true)).toEqual(on)
+    expect(todayAs(on, false)).toEqual(off)
+  })
+
+  test('Todos holds the tasks with no start date under Today where the setting says (#2017)', () => {
+    const due = [
+      taskRow('Due.md', '- [ ] Now [deadline:: 2026-10-04]', 0),
+      taskRow('Due.md', '- [ ] Whenever', 1),
+      taskRow('Due.md', '- [ ] Begun 🛫 2026-10-01', 2),
+      taskRow('Due.md', '- [ ] Planned ⏳ 2026-10-01', 3),
+      taskRow('Due.md', '- [ ] Far [deadline:: 2026-11-30]', 4),
+    ]
+    const on = builtinView('todos', { undated: true })
+    expect(keyed(answer(on, 0, due, context))).toEqual([
+      ['today', ['Now', 'Whenever']],
+      ['later', ['Far']],
+      [null, ['Begun', 'Planned']],
+    ])
+    const off = builtinView('todos')
+    expect(keyed(answer(off, 0, due, context))).toEqual([
+      ['today', ['Now']],
+      ['later', ['Far']],
+      [null, ['Whenever', 'Begun', 'Planned']],
+    ])
+    expect(whenAs(off, true)).toEqual(on)
+    expect(whenAs(on, false)).toEqual(off)
+    expect(readBase(writeBase(on))).toEqual(on)
+    const aside = { ...off, formulas: { when: 'task.text', [WHEN_ASIDE]: off.formulas.when ?? '' } }
+    expect(whenAs(aside, true).formulas).toEqual({
+      when: 'task.text',
+      [WHEN_ASIDE]: on.formulas.when,
+    })
   })
 
   test('Upcoming: what is overdue, then by day from today, a start still to come on its day', () => {

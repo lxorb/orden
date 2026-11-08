@@ -20,6 +20,7 @@ vi.mock('../../rows/rows.svelte', () => {
 })
 
 const { planDay, showTasks } = await import('./todos')
+const { modes } = await import('../../modes.svelte')
 
 function host(said = '') {
   const ask = vi.fn(() => Promise.resolve(said))
@@ -51,7 +52,18 @@ describe('/tasks', () => {
     const { fake, lines } = host()
     await showTasks(fake, thread, '')
     expect(lines[0]?.code).toBe('tasks')
-    expect(shown(lines).tasks.map((one) => one.text)).toEqual(['Pay rent'])
+    expect(shown(lines).tasks.map((one) => one.text)).toEqual(['Pay rent', 'Call mum'])
+  })
+
+  test('Today without the tasks that have no start date, where the setting says (#2017)', async () => {
+    modes.setUndatedInToday(false)
+    try {
+      const { fake, lines } = host()
+      await showTasks(fake, thread, '')
+      expect(shown(lines).tasks.map((one) => one.text)).toEqual(['Pay rent'])
+    } finally {
+      modes.setUndatedInToday(true)
+    }
   })
 
   test("Todoist's filter, as written", async () => {

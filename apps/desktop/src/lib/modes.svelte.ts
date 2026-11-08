@@ -30,6 +30,7 @@ import {
 } from '@orden/editor'
 import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
+import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
@@ -144,7 +145,7 @@ interface Saved {
   conflicts: string
   keepVersions: number
   remindBefore: number
-  undatedInToday: boolean
+  undatedToday: boolean
   turnsCanvas: boolean
   canvasTurnSnaps: boolean
   highlightTone: number | null
@@ -252,7 +253,7 @@ export const DEFAULTS = {
   conflicts: DEFAULT_RULE,
   keepVersions: KEEP_MONTH,
   remindBefore: 0,
-  undatedInToday: false,
+  undatedInToday: true,
   canvasTurns: true,
   canvasTurnSnaps: true,
   highlightTone: null as number | null,
@@ -410,6 +411,8 @@ class Modes {
       stale ||= 'properties' in saved || 'frontMatter' in saved || 'frontMatterDrawn' in saved
       this.canvasTurns = on(saved.turnsCanvas, DEFAULTS.canvasTurns)
       stale ||= 'canvasTurns' in saved
+      this.undatedInToday = on(saved.undatedToday, DEFAULTS.undatedInToday)
+      stale ||= 'undatedInToday' in saved
     }
     setHardBreaks(this.hardBreaks)
     setLinkWriting(this.linkFormat)
@@ -1294,7 +1297,7 @@ class Modes {
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,
       remindBefore: this.remindBefore,
-      undatedInToday: this.undatedInToday,
+      undatedToday: this.undatedInToday,
       turnsCanvas: this.canvasTurns,
       canvasTurnSnaps: this.canvasTurnSnaps,
       highlightTone: this.highlightTone,
@@ -1310,5 +1313,17 @@ function fieldsOf(state: Saved): Record<string, unknown> {
 }
 
 export const modes = new Modes()
+
+export function watchUndated(changed: () => void): () => void {
+  let was = untrack(() => modes.undatedInToday)
+  return $effect.root(() => {
+    $effect(() => {
+      const now = modes.undatedInToday
+      if (now === was) return
+      was = now
+      untrack(changed)
+    })
+  })
+}
 
 account.forgetWithSession(() => modes.forgetSession())

@@ -510,7 +510,7 @@
   },
   "general.undatedInToday": {
     "type": "boolean",
-    "default": false,
+    "default": true,
     "description": "Today also lists the tasks that have no start date; off shows only those dated today or earlier."
   },
   "general.unloadTabs": {

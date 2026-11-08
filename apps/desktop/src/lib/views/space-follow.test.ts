@@ -64,6 +64,7 @@ const {
 const { followSpaceName, forgetSpaceTabs } = await import('./space-follow')
 const { builtinBase, tabSource } = await import('./source')
 const { readSpec, writeSpec } = await import('./spec')
+const { modes } = await import('../modes.svelte')
 
 const narrowed = (base: ReturnType<typeof builtinView>) => {
   const [view] = base.views
@@ -355,5 +356,25 @@ describe('two spaces of one name', () => {
     followSpaceName('Work', 'Job', [tab], [{ name: 'Work' }])
     expect(tab.doc).toBe(words)
     expect(renamedTo('Work')).toBeUndefined()
+  })
+})
+
+describe('Todos and the tasks with no start date in Today (#2017)', () => {
+  const when = () => builtinBase({ builtin: 'todos' }).formulas.when
+
+  test('hold them under Today unless the setting is off, kept as Orden ships it', async () => {
+    modes.setUndatedInToday(true)
+    expect(when()).toBe(builtinView('todos', { undated: true }).formulas.when)
+    const tab = tabOf(writeSpec({ builtin: 'todos' }))
+    await tabSource(tab as never).save(builtinBase({ builtin: 'todos' }))
+    expect(todosView('')).toBeUndefined()
+    modes.setUndatedInToday(false)
+    expect(when()).toBe(builtinView('todos').formulas.when)
+    await tabSource(tab as never).save(readBase(narrowed(builtinView('todos', { undated: true }))))
+    expect(readBase(todosView('') ?? '').formulas.when).toBe(builtinView('todos').formulas.when)
+    expect(when()).toBe(builtinView('todos').formulas.when)
+    modes.setUndatedInToday(true)
+    expect(when()).toBe(builtinView('todos', { undated: true }).formulas.when)
+    expect(builtinBase({ builtin: 'todos' }).views[0]?.type).toBe('kanban')
   })
 })

@@ -366,7 +366,7 @@ async function undatedInToday(env: Env, user: string): Promise<boolean> {
   const row = await env.DB.prepare('select settings from users where id = ?')
     .bind(user)
     .first<{ settings: string | null }>()
-  return objectIn(row?.settings)?.undatedInToday === true
+  return objectIn(row?.settings)?.undatedInToday !== false
 }
 
 async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {

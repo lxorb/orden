@@ -225,22 +225,24 @@ describe('the to-dos, with Orden closed', () => {
 
   test('Today, and a Todoist filter', async () => {
     const key = await connector(true)
+    await call(env, '/v1/settings', { method: 'PATCH', token, body: { undatedInToday: false } })
     const listed = await json(key, 'list_tasks', { view: 'today' })
     expect(listed.tasks.map((one) => one.text)).toEqual(['Write the intro', 'Read'])
     const writing = await json(key, 'list_tasks', { filter: '#writing' })
     expect(writing.tasks).toMatchObject([{ text: 'Write the intro', space: 'Work', priority: 2 }])
   })
 
-  test('Today with the tasks that have no start date, where the account says so (#408)', async () => {
+  test('Today with the tasks that have no start date, unless the account says not (#408, #2017)', async () => {
     const key = await connector(true)
+    const undated = ['Write the intro', 'Milk', 'Outline', 'Read']
+    const untouched = await json(key, 'list_tasks', { view: 'today' })
+    expect(untouched.tasks.map((one) => one.text)).toEqual(undated)
+    await call(env, '/v1/settings', { method: 'PATCH', token, body: { undatedInToday: false } })
+    const off = await json(key, 'list_tasks', { view: 'today' })
+    expect(off.tasks.map((one) => one.text)).toEqual(['Write the intro', 'Read'])
     await call(env, '/v1/settings', { method: 'PATCH', token, body: { undatedInToday: true } })
-    const listed = await json(key, 'list_tasks', { view: 'today' })
-    expect(listed.tasks.map((one) => one.text)).toEqual([
-      'Write the intro',
-      'Milk',
-      'Outline',
-      'Read',
-    ])
+    const on = await json(key, 'list_tasks', { view: 'today' })
+    expect(on.tasks.map((one) => one.text)).toEqual(undated)
   })
 
   test("a task added to the account's inbox, kept as records and read back as lines", async () => {

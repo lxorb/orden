@@ -1,6 +1,5 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { modes } from '../modes.svelte'
   import type { Tab } from '../workspace/documents.svelte'
   import { kitFor } from './kit'
   import { LiveView } from './live.svelte'
@@ -38,16 +37,6 @@
     if (words === seen) return
     seen = words
     if (tab.path === null) untrack(() => void made.live.reload())
-  })
-
-  let undated = untrack(() => modes.undatedInToday)
-  $effect(() => {
-    const now = modes.undatedInToday
-    if (now === undated) return
-    undated = now
-    untrack(() => {
-      if (tab.path === null && readSpec(tab.doc)?.builtin === 'today') void made.live.reload()
-    })
   })
 </script>
 

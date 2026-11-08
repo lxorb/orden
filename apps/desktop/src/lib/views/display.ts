@@ -5,6 +5,7 @@ import {
   type Row,
   SMART_SORT,
   type View,
+  isWhenFormula,
   WHEN,
   WHEN_ASIDE,
   WHEN_GROUPS,
@@ -138,12 +139,16 @@ export function notesIn(rows: readonly Row[]): { path: string; name: string }[] 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
 const whenName = (base: Base) =>
-  base.formulas.when === undefined || base.formulas.when === WHEN ? 'when' : WHEN_ASIDE
+  base.formulas.when === undefined || isWhenFormula(base.formulas.when) ? 'when' : WHEN_ASIDE
 
 function withView(base: Base, at: number, change: (view: View) => View, when = false): Base {
   const view = base.views[at]
   if (!view) return base
-  const formulas = when ? { ...base.formulas, [whenName(base)]: WHEN } : base.formulas
+  const name = whenName(base)
+  const kept = base.formulas[name]
+  const formulas = when
+    ? { ...base.formulas, [name]: kept !== undefined && isWhenFormula(kept) ? kept : WHEN }
+    : base.formulas
   return {
     ...base,
     formulas,
