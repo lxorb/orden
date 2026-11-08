@@ -313,8 +313,8 @@
         {/if}
         <ItemMark content={item.content} />
         <span class="orden-row-label">
-          <span class="name">{item.content.title || t('Untitled')}</span>
-          <span class="sub">{subtitleOf(item)}</span>
+          <span class="name" dir="auto">{item.content.title || t('Untitled')}</span>
+          <span class="sub" dir="auto">{subtitleOf(item)}</span>
         </span>
       </button>
     {:else}
@@ -539,5 +539,9 @@
 
   .empty p {
     margin: 0;
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

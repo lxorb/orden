@@ -44,7 +44,12 @@
       onclick={() => void copyField(label, value)}
     >
       <span class="label">{label}</span>
-      <span class="value" class:is-mono={mono || hidden} class:is-multiline={multiline && !masked}>
+      <span
+        class="value"
+        dir="auto"
+        class:is-mono={mono || hidden}
+        class:is-multiline={multiline && !masked}
+      >
         {masked ? dots : value}
       </span>
     </button>
@@ -144,5 +149,9 @@
   .strength {
     flex-basis: 100%;
     padding: var(--space-1) var(--space-2) 0 0;
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>
