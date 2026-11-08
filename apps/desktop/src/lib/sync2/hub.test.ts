@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { BEAT_EVERY } from '../backoff'
+import { account } from '../account.svelte'
 import { Hub, type HubWorld, type SocketEvents } from './hub.svelte'
 
 interface Opened {
@@ -154,6 +155,38 @@ describe('a device’s hub socket', () => {
     hub.follow('token-2')
     await open()
     expect(sockets).toHaveLength(2)
+  })
+
+  test('asks the account when it is shut out, so a session ended elsewhere signs out here', async () => {
+    const asked = vi.spyOn(account, 'recheck').mockResolvedValue(undefined)
+    const hub = new Hub(world())
+    hub.follow('token-1')
+    const socket = await open()
+
+    socket.events.closed(1008)
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    expect(asked).toHaveBeenCalledTimes(1)
+    expect(sockets).toHaveLength(1)
+    asked.mockRestore()
+  })
+
+  test('comes back when the account says the session it was shut out of still holds', async () => {
+    const asked = vi.spyOn(account, 'recheck').mockResolvedValue(undefined)
+    account.token = 'token-1'
+    const hub = new Hub(world())
+    hub.follow('token-1')
+    const socket = await open()
+
+    socket.events.closed(4401)
+    await vi.advanceTimersByTimeAsync(5_000)
+    await open()
+
+    expect(asked).toHaveBeenCalledTimes(1)
+    expect(sockets).toHaveLength(2)
+    expect(hub.state).toBe('open')
+    account.token = null
+    asked.mockRestore()
   })
 
   test('goes with the session', async () => {
