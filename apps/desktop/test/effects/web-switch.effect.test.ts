@@ -1008,3 +1008,26 @@ describe('a page drawn under the app', () => {
     expect(document.body.style.getPropertyValue('--underlay-clip')).toBe('')
   })
 })
+
+test('a key pressed in a dialog over the page, or already taken, is not the page’s', async () => {
+  const { app } = await opened('https://example.com/under-a-dialog')
+  const dialog = document.createElement('div')
+  dialog.setAttribute('role', 'dialog')
+  const field = document.createElement('input')
+  dialog.append(field)
+  document.body.append(dialog)
+  onTestFinished(() => dialog.remove())
+
+  asked.length = 0
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'F12', bubbles: true }))
+  const taken = new KeyboardEvent('keydown', { key: 'F12', cancelable: true })
+  taken.preventDefault()
+  window.dispatchEvent(taken)
+  await frames()
+  expect(asked.map((one) => one.command)).not.toContain('web_devtools')
+
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F12', cancelable: true }))
+  await frames()
+  expect(asked.map((one) => one.command)).toContain('web_devtools')
+  void unmount(app)
+})

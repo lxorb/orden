@@ -149,3 +149,21 @@ test('a base drawn after the page is not counted by the fence it replaced', asyn
   await redrawn(target, 'beta\n<div data-base-code="beta">beta</div>', 'betaview')
   expect(tally(target)).toBe('1 of 1')
 })
+
+test('Find pressed in a dialog over the page, or already taken, opens no bar behind it', async () => {
+  const target = await opened()
+  const dialog = document.createElement('div')
+  dialog.setAttribute('role', 'dialog')
+  const field = document.createElement('input')
+  dialog.append(field)
+  document.body.append(dialog)
+
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', bubbles: true }))
+  const taken = new KeyboardEvent('keydown', { key: 'f', cancelable: true })
+  taken.preventDefault()
+  window.dispatchEvent(taken)
+  flushSync()
+  expect(target.querySelector('input')).toBeNull()
+
+  expect(openBar(target)).not.toBeNull()
+})

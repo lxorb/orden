@@ -2,6 +2,7 @@
   import { tick, untrack } from 'svelte'
   import FindBar from './FindBar.svelte'
   import { t } from './i18n.svelte'
+  import { keyElsewhere } from './layer-keys'
   import { menu } from './menu.svelte'
   import { modes } from './modes.svelte'
   import { inlineFiles } from './reading/drawn'
@@ -31,6 +32,7 @@
   const REDRAW = 200
 
   let scroller = $state<HTMLDivElement>()
+  let root = $state<HTMLDivElement>()
   let surface = $state<HTMLElement>()
   let html = $state('')
 
@@ -464,7 +466,7 @@
   })
 
   function onKeydown(event: KeyboardEvent) {
-    if (!focused) return
+    if (!focused || event.defaultPrevented || keyElsewhere(event, root)) return
 
     if (shortcuts.pressed('edit.find', event)) {
       event.preventDefault()
@@ -481,7 +483,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="read" {style}>
+<div class="read" {style} bind:this={root}>
   {#if finding}
     <FindBar
       {query}
