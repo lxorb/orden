@@ -244,7 +244,7 @@
     {/if}
     <p class="safety" data-safety>
       <span class="quiet">{t('Safety code')}</span>
-      <code>{found.code}</code>
+      <code dir="ltr">{found.code}</code>
       {#if found.known === 'confirmed'}
         <span class="quiet" data-matched>{t('Checked')}</span>
       {:else}

@@ -23,7 +23,7 @@
     'It opens Pass if you forget your password. Keep it somewhere safe, away from this device.',
   )}
 >
-  <output class="code" aria-label={t('Recovery key')}>{code}</output>
+  <output class="code" dir="ltr" aria-label={t('Recovery key')}>{code}</output>
   <div class="row">
     <button
       class="orden-button is-quiet is-soft"

@@ -139,7 +139,7 @@
       <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
         <p class="sent">{t('Now the code from your authenticator app')}</p>
 
-        <div class="digits">
+        <div class="digits" dir="ltr">
           {#each digits as digit, index (index)}
             <input
               bind:this={boxes[index]}
@@ -165,6 +165,7 @@
             <input
               bind:value={recovery}
               type="text"
+              dir="ltr"
               placeholder={t('Recovery code')}
               aria-label={t('Recovery code')}
               spellcheck="false"
@@ -185,7 +186,7 @@
       <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
         <p class="sent">{t('Code sent to')} <strong>{account.email}</strong></p>
 
-        <div class="digits">
+        <div class="digits" dir="ltr">
           {#each digits as digit, index (index)}
             <input
               bind:this={boxes[index]}

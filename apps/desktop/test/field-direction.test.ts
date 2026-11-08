@@ -91,3 +91,24 @@ test('a box laid out in its name’s direction carries no gap or flow of its own
   })
   expect(turned).toEqual([])
 })
+
+test('a code, key or address is laid out left to right, so its groups keep their order in right-to-left', () => {
+  const sheet = readFileSync(SHEET, 'utf8')
+  expect(sheet).toMatch(
+    /input:is\(\s*\[type='email'\],\s*\[type='url'\],\s*\[type='tel'\],\s*\[inputmode='numeric'\],\s*\[autocomplete='one-time-code'\]\s*\)\s*\{\s*direction:\s*ltr;/,
+  )
+  const places = [
+    ...svelteFiles(join(SOURCE, 'lib', 'pass')),
+    ...['Security', 'Copyable', 'SignIn'].map((name) => join(SOURCE, 'lib', `${name}.svelte`)),
+  ]
+  const turned = places.flatMap((path) =>
+    [
+      ...readFileSync(path, 'utf8').matchAll(
+        /<(?:output|code)\b[^>]*>|<\w+\b[^>]*class="(?:digits|codes)"[^>]*>/g,
+      ),
+    ]
+      .filter((tag) => !tag[0].includes('dir="ltr"'))
+      .map((tag) => `${path.slice(SOURCE.length)}: ${tag[0]}`),
+  )
+  expect(turned).toEqual([])
+})

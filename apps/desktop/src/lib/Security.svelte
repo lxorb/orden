@@ -196,7 +196,7 @@
       <p class="note">
         {t('Keep these somewhere safe. Each works once, and they are not shown again.')}
       </p>
-      <ul class="codes">
+      <ul class="codes" dir="ltr">
         {#each codes as one (one)}
           <li>{one}</li>
         {/each}
