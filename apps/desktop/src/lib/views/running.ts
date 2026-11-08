@@ -3,6 +3,7 @@ import { withProperties } from '@orden/bases/agent'
 import { frontMatterValue } from '@orden/markdown'
 import { insideOnly } from '../automation/inside'
 import { heldForLife, inTurn } from '../locks'
+import { protection } from '../protect/protection.svelte'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
 import { noteRowsOf, type RowsChange } from '../rows/store'
@@ -64,7 +65,7 @@ const running = (): boolean => held.size > 0
 
 function heldIn(space: string, led = false): HeldBase[] {
   return [...held.entries()].flatMap(([path, one]) => {
-    if (led && !leading.has(path)) return []
+    if ((led && !leading.has(path)) || protection.locked(path)) return []
     const base = one.space === space ? guardedAt(one.base, path) : null
     return base ? [{ ...one, base }] : []
   })
@@ -250,7 +251,12 @@ async function makeRepeats() {
   for (const row of rows.of(space.name)) {
     if (row.kind !== 'note' || typeof row.note.repeat !== 'string') continue
     const path = insideSpace(space.root, row.path)
-    if (within(folder, path, space.root) === null || workspace.documentAt(path)) continue
+    if (
+      within(folder, path, space.root) === null ||
+      workspace.documentAt(path) ||
+      protection.locked(path)
+    )
+      continue
     const template = await workspace.noteText(path)
     if (template === null) continue
     const note = { ...row.note }
