@@ -228,10 +228,16 @@ class Rooms {
     }
 
     const demoted = () => {
+      open.note.reads = true
       this.letGo(key)
       void account
         .loadSpaces()
-        .catch(() => undefined)
+        .then(
+          () => {
+            open.note.reads = false
+          },
+          () => undefined,
+        )
         .then(() => {
           this.follow(this.open)
         })

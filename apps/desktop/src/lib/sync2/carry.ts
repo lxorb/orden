@@ -53,10 +53,17 @@ export async function carry(
       if (signedOut) void account.recheck()
     },
     demoted: () => {
+      const note = 'note' in carried.on ? carried.on.note : null
+      if (note) note.reads = true
       uncarry(key)
       void account
         .loadSpaces()
-        .catch(() => undefined)
+        .then(
+          () => {
+            if (note) note.reads = false
+          },
+          () => undefined,
+        )
         .then(() => {
           carried.gone()
         })

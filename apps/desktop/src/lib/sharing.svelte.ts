@@ -167,9 +167,10 @@ export function canWriteAt(path: string): boolean {
 }
 
 export function canWriteIn(
-  note: { path: string | null; shared: string | null } | null | undefined,
+  note: { path: string | null; shared: string | null; reads?: boolean } | null | undefined,
 ): boolean {
   if (!note) return true
+  if (note.reads) return false
   if (note.shared !== null) return sharedWithYou.mayWrite(note.shared)
 
   return note.path === null || canWriteAt(note.path)
