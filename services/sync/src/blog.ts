@@ -433,7 +433,12 @@ function presentLink(source: string): string {
 function publishedDeck(source: string, options: Parameters<typeof renderMarkdown>[1]): string {
   return deckBody(
     deckOf(source).map((slide) => ({
-      html: renderMarkdown(slide.markdown, { ...options, breaks: true, cover: false }),
+      html: renderMarkdown(slide.markdown, {
+        ...options,
+        breaks: true,
+        cover: false,
+        fragments: true,
+      }),
       shape: slide.shape,
       vertical: slide.vertical,
       fragments: slide.fragments,

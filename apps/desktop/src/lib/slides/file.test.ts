@@ -26,7 +26,7 @@ function slide(html: string, over: Partial<StageSlide> = {}): StageSlide {
 const DECK = [
   slide('<h1>Orden</h1>', { shape: 'title' }),
   slide('<p>Words.</p>'),
-  slide('<ul><li>a</li><li>b</li></ul>', { fragments: [0, 1] }),
+  slide('<ul><li data-fragment>a</li><li data-fragment>b</li></ul>', { fragments: [0, 1] }),
   slide('<h2>Detail</h2>', { vertical: true }),
 ]
 
@@ -52,8 +52,8 @@ describe('a deck written out as one page per slide', () => {
     expect(html.match(/data-vertical="yes"/g)).toHaveLength(1)
   })
 
-  test('the items that wait for a click are named by their place', () => {
-    expect(html).toContain('data-steps="2" data-fragments="0,1"')
+  test('a slide says how many clicks its waiting items take', () => {
+    expect(html).toContain('data-steps="2">')
   })
 
   test('the title is the file`s title', () => {
@@ -120,8 +120,8 @@ describe('the markup a deck page is made of', () => {
     expect(body.indexOf('one')).toBeLessThan(body.indexOf('two'))
   })
 
-  test('a slide with nothing waiting names no items', () => {
-    expect(deckBody([slide('<p>one</p>')])).not.toContain('data-fragments')
+  test('a slide with nothing waiting takes no clicks', () => {
+    expect(deckBody([slide('<p>one</p>')])).toContain('data-steps="0">')
   })
 
   test('the progress line and the counter are the only furniture', () => {

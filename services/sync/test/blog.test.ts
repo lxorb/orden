@@ -1231,7 +1231,8 @@ describe('a published note read as slides', () => {
     await publishDeck()
 
     const response = await call(env, '/talk?slides', { host: 'field.nibeditor.com' })
-    expect(response.text).toContain('data-fragments="0,1"')
+    expect(response.text.match(/<li data-fragment>/g)).toHaveLength(2)
+    expect(response.text).toContain('data-steps="2"')
   })
 
   test('only the script written here may run', async () => {

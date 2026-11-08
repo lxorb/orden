@@ -37,6 +37,7 @@ export async function deckHtml(
     resolveLink,
     escapeHtml: !trusted,
     breaks: true,
+    fragments: true,
   }
 
   const pages = slides.map((slide) => ({

@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'vitest'
+import { JSDOM } from 'jsdom'
+import { renderMarkdown } from '@orden/markdown'
 import { deckOf } from '@orden/markdown/slides'
 import {
   axesOf,
@@ -8,7 +10,8 @@ import {
   fitStep,
   forward,
   moveBetween,
-  shownFragments,
+  markFragments,
+  nextPlace,
   STAGE_HEIGHT,
   STAGE_WIDTH,
   stageScale,
@@ -177,9 +180,49 @@ describe('the deck a note makes', () => {
   })
 
   test('the items come out one press at a time', () => {
-    const fragments = slides[0]?.fragments ?? []
-    expect(shownFragments(fragments, 0)).toEqual([])
-    expect(shownFragments(fragments, 1)).toEqual([0])
-    expect(shownFragments(fragments, 2)).toEqual([0, 1])
+    const surface = surfaceOf('+ a\n+ b', true)
+    expect(shown(surface, 0)).toEqual([])
+    expect(shown(surface, 1)).toEqual(['a'])
+    expect(shown(surface, 2)).toEqual(['a', 'b'])
+  })
+
+  test('a footnote written above the list is not taken for one of its items', () => {
+    const surface = surfaceOf('[^1]: aside\n\n- kept\n+ a\n+ b', false)
+    expect(waiting(surface)).toEqual(['a', 'b'])
+    expect(shown(surface, 1)).toEqual(['a'])
+  })
+
+  test('a list written as HTML above the list is not taken for its items', () => {
+    const surface = surfaceOf('<ul><li>raw</li></ul>\n\n+ a\n+ b', true)
+    expect(waiting(surface)).toEqual(['a', 'b'])
+    expect(shown(surface, 1)).toEqual(['a'])
+  })
+
+  test('the next view is the next item while the slide still has some waiting', () => {
+    const steps = stepsOf(slides)
+    expect(nextPlace(steps, { slide: 0, step: 0 })).toEqual({ slide: 0, step: 1 })
+    expect(nextPlace(steps, { slide: 0, step: 2 })).toEqual({ slide: 1, step: 0 })
+    expect(nextPlace(steps, { slide: 1, step: 0 })).toBe(null)
   })
 })
+
+function surfaceOf(markdown: string, trusted: boolean): HTMLElement {
+  const html = renderMarkdown(markdown, { escapeHtml: !trusted, breaks: true, fragments: true })
+  const surface = new JSDOM(`<div>${html}</div>`).window.document.querySelector('div')
+  if (!surface) throw new Error('no surface')
+  return surface
+}
+
+function texts(items: Iterable<Element>): string[] {
+  return [...items].map((item) => item.textContent.trim())
+}
+
+function waiting(surface: HTMLElement): string[] {
+  markFragments(surface, 0)
+  return texts(surface.querySelectorAll('li.fragment'))
+}
+
+function shown(surface: HTMLElement, step: number): string[] {
+  markFragments(surface, step)
+  return texts(surface.querySelectorAll('li.fragment.shown'))
+}

@@ -5,6 +5,8 @@ import { invoke, isDesktop } from '../tauri'
 export interface Stage {
   slide: string
   next: string
+  step: number
+  nextStep: number
   shape: SlideShape
   nextShape: SlideShape
   notes: string
@@ -49,6 +51,7 @@ export function messageOf(value: unknown): Message | null {
   const one = stage as Record<string, unknown>
 
   if (typeof one.slide !== 'string' || typeof one.next !== 'string') return null
+  if (typeof one.step !== 'number' || typeof one.nextStep !== 'number') return null
   if (typeof one.notes !== 'string' || typeof one.at !== 'number') return null
   if (typeof one.count !== 'number' || typeof one.started !== 'number') return null
   if (one.scheme !== 'dark' && one.scheme !== 'light') return null
@@ -64,6 +67,8 @@ export function messageOf(value: unknown): Message | null {
     stage: {
       slide: one.slide,
       next: one.next,
+      step: one.step,
+      nextStep: one.nextStep,
       shape,
       nextShape,
       notes: one.notes,
