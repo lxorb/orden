@@ -236,6 +236,21 @@ test('a pen stroke the browser cancels ends once the pen tip says nothing more',
   expect(store().canvas.ink.filter((stroke) => stroke.id !== 's')).toHaveLength(0)
 })
 
+test('a pen put down again after a cancelled stroke draws, rather than waiting on the old one', () => {
+  tools.choose('draw')
+  pointer('pointerdown', 7, 'pen', 100, 440, 1)
+  for (let x = 110; x <= 150; x += 10) pointer('pointermove', 7, 'pen', x, 440, 1)
+  pointer('pointercancel', 7, 'pen', 150, 440, 0)
+  pointer('pointerdown', 8, 'pen', 100, 480, 1)
+  for (let x = 110; x <= 200; x += 10) pointer('pointermove', 8, 'pen', x, 480, 1)
+  pointer('pointerup', 8, 'pen', 200, 480, 0)
+
+  const drawn = store().canvas.ink.filter((stroke) => stroke.id !== 's')
+  expect(drawn).toHaveLength(1)
+  const xs = drawn[0]?.points.map((point) => point.x) ?? []
+  expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(50)
+})
+
 test('the pen’s button pressed mid-line turns the line into rubbing out, as on a canvas', () => {
   tools.choose('draw')
   pointer('pointerdown', 6, 'pen', 100, 400, 1)

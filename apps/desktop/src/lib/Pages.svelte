@@ -589,7 +589,7 @@
     return now - since <= TWO_FINGERS
   }
 
-  let doubting: { id: number; timer: number } | null = null
+  let doubting: { id: number; timer: number; event: PointerEvent } | null = null
 
   function stopDoubting(id?: number) {
     if (!doubting || (id !== undefined && doubting.id !== id)) return
@@ -597,11 +597,18 @@
     doubting = null
   }
 
+  function endDoubting() {
+    const was = doubting
+    if (!was) return
+    stopDoubting()
+    cancelled(was.event)
+  }
+
   $effect(() => () => stopDoubting())
 
   function onpointerdown(event: PointerEvent) {
     if (contacts.echo(event)) return
-    stopDoubting()
+    endDoubting()
     tools.used()
 
     const { kind, eraser } = kindOf(event)
@@ -1131,15 +1138,8 @@
   function onpointercancel(event: PointerEvent) {
     const one = gesture
     if (one && one.kind !== 'pinch' && one.id === event.pointerId && kindOf(event).kind === 'pen') {
-      stopDoubting()
-      const id = event.pointerId
-      doubting = {
-        id,
-        timer: window.setTimeout(() => {
-          doubting = null
-          cancelled(event)
-        }, GRACE),
-      }
+      endDoubting()
+      doubting = { id: event.pointerId, timer: window.setTimeout(endDoubting, GRACE), event }
       return
     }
     cancelled(event)
