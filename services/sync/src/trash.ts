@@ -7,7 +7,7 @@ import { noteKey, presentNote, restoreNote, takeSeq } from './notes'
 import { eraseRooms } from './rooms'
 import { snapshotKey } from './rooms/epoch'
 import { deviceOf } from './sync2/device'
-import { presentSpace } from './spaces/space'
+import { MOST_OWN_SPACES, presentSpace, TOO_MANY_SPACES } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
 import { forgetWords } from './blog/words'
 import { forgetReminders } from './push/reminders'
@@ -398,11 +398,14 @@ trash.post('/spaces/:id/restore', async (context) => {
   const position = live.results.reduce((last, one) => Math.max(last, one.position), -1) + 1
 
   const at = now()
-  await env.DB.prepare(
-    'update spaces set deleted = 0, deleted_at = null, name = ?, position = ?, updated_at = ? where id = ?',
+  const back = await env.DB.prepare(
+    `update spaces set deleted = 0, deleted_at = null, name = ?1, position = ?2, updated_at = ?3
+      where id = ?4
+        and (select count(*) from spaces where user_id = ?5 and deleted = 0) < ?6`,
   )
-    .bind(name, position, at, space.id)
+    .bind(name, position, at, space.id, user.id, MOST_OWN_SPACES)
     .run()
+  if (!back.meta.changes) return context.json({ error: TOO_MANY_SPACES }, 409)
 
   return context.json({
     space: presentSpace(

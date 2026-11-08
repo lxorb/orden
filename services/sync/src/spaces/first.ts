@@ -19,5 +19,6 @@ export async function makeFirstSpace(
   if (held) return
 
   const space = await addSpace(env, userId, SPACE, ICON)
+  if (!space) return
   await addNote(env, space.id, NOTE, welcomeNote(accepted))
 }

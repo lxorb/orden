@@ -40,12 +40,16 @@ export function allows(held: Role, needed: Role): boolean {
   return RANK[held] >= RANK[needed]
 }
 
+export const MOST_OWN_SPACES = 500
+
+export const TOO_MANY_SPACES = `that is as many spaces as one account keeps (${MOST_OWN_SPACES})`
+
 export async function addSpace(
   env: Env,
   userId: string,
   name: string,
   icon: string | null = null,
-): Promise<Space> {
+): Promise<Space | null> {
   const last = await env.DB.prepare(
     'select max(position) as last from spaces where user_id = ? and deleted = 0',
   )
@@ -82,9 +86,10 @@ export async function addSpace(
     sort: '',
   }
 
-  await env.DB.prepare(
+  const added = await env.DB.prepare(
     `insert into spaces (id, user_id, name, position, icon, created_at, updated_at)
-     values (?, ?, ?, ?, ?, ?, ?)`,
+     select ?1, ?2, ?3, ?4, ?5, ?6, ?7
+      where (select count(*) from spaces where user_id = ?2 and deleted = 0) < ?8`,
   )
     .bind(
       space.id,
@@ -94,10 +99,11 @@ export async function addSpace(
       space.icon,
       space.created_at,
       space.updated_at,
+      MOST_OWN_SPACES,
     )
     .run()
 
-  return space
+  return added.meta.changes ? space : null
 }
 
 export interface Reached extends Space {
