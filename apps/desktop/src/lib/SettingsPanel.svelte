@@ -355,7 +355,7 @@
         <svg class="orden-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
       </button>
 
-      <h1>{titleOf(settings.section)}</h1>
+      <h2>{titleOf(settings.section)}</h2>
     </header>
   {/if}
 
@@ -1893,7 +1893,7 @@
     background: var(--bg);
   }
 
-  .sheet.phone .bar h1 {
+  .sheet.phone .bar h2 {
     flex: 1;
     min-width: 0;
     margin: 0;
