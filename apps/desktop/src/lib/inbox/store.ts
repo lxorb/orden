@@ -201,13 +201,24 @@ export class InboxRecords {
 
   private sending(): InboxChange[] {
     const out: InboxChange[] = []
-    for (const one of this.held.values()) {
+    for (let one of [...this.held.values()]) {
       if (!one.dirty.length) continue
+      const missing = one.dirty.filter((key) => one.stamps[key] === undefined)
+      if (missing.length) {
+        const stamp = this.stamp()
+        const stamped: Kept = {
+          ...one,
+          stamps: { ...one.stamps, ...Object.fromEntries(missing.map((key) => [key, stamp])) },
+        }
+        this.held.set(one.id, stamped)
+        one = stamped
+      }
       const fields: InboxFields = {}
       const stamps: InboxStamps = {}
       for (const key of one.dirty) {
         fields[key] = one.fields[key] ?? null
-        stamps[key] = one.stamps[key] ?? this.stamp()
+        const stamp = one.stamps[key]
+        if (stamp !== undefined) stamps[key] = stamp
       }
       const change = inboxChangeOf({ id: one.id, fields, stamps })
       if (!change) continue
