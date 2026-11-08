@@ -3707,4 +3707,8 @@ export const am: Dictionary = {
   'Include pictures': 'ምስሎችን አካትት',
   'Without styles': 'ያለ ቅጥ',
   'Turn {name} on or off': '{name}ን አብራ ወይም አጥፋ',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'የሚጠቀሙትን ዕለታዊ ቆጠራ በዘፈቀደ ID ስር ይልካል፤ ማስታወሻዎች፣ ስሞች፣ መንገዶች ወይም የሚተይቡት ፈጽሞ አይላኩም።',
+  'Share anonymous usage data': 'ስም-አልባ የአጠቃቀም መረጃ አጋራ',
+  'Also share anonymous usage data': 'ስም-አልባ የአጠቃቀም መረጃም አጋራ',
 }

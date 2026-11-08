@@ -3839,4 +3839,8 @@ export const ha: Dictionary = {
   'Include pictures': 'Haɗa hotuna',
   'Without styles': 'Ba tare da salo',
   'Turn {name} on or off': 'Kunna ko kashe {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Yana aika ƙididdigar abin da kake amfani da shi a kowace rana ƙarƙashin ID na bazata; ba bayanan kula, sunaye, hanyoyi ko abin da kake rubutawa ba.',
+  'Share anonymous usage data': 'Raba bayanan amfani ba tare da suna ba',
+  'Also share anonymous usage data': 'Kuma raba bayanan amfani ba tare da suna ba',
 }

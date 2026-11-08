@@ -528,6 +528,11 @@
     "default": false,
     "description": "A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again."
   },
+  "general.usageData": {
+    "type": "boolean",
+    "default": false,
+    "description": "Sends daily counts of what you use under a random ID; never notes, names, paths or what you type."
+  },
   "general.warnBeforeQuitting": {
     "type": "string",
     "enum": [

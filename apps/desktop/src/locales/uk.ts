@@ -3931,4 +3931,8 @@ export const uk: Dictionary = {
   'Include pictures': 'З малюнками',
   'Without styles': 'Без стилів',
   'Turn {name} on or off': 'Увімкнути або вимкнути {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Щодня надсилає лічильники використання під випадковим ID; ніколи нотатки, імена, шляхи чи те, що ви вводите.',
+  'Share anonymous usage data': 'Ділитися анонімними даними використання',
+  'Also share anonymous usage data': 'Також ділитися анонімними даними використання',
 }

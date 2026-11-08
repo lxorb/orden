@@ -3813,4 +3813,8 @@ export const gsw: Dictionary = {
   'Include pictures': 'Bilder mitnäh',
   'Without styles': 'Ohni Stil',
   'Turn {name} on or off': '{name} ii- oder uusschalte',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Schickt täglich Zählige vo dem, wo du bruuchsch, under ere zuefällige ID; nie Notize, Näme, Pfäd oder was du tippsch.',
+  'Share anonymous usage data': 'Anonymi Nutzigsdate teile',
+  'Also share anonymous usage data': 'Au anonymi Nutzigsdate teile',
 }

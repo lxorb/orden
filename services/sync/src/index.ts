@@ -57,6 +57,7 @@ import { sweepTreeOps } from './sync2/tree'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
 import { crashes, sweepCrashes } from './crashes'
+import { usage } from './usage'
 import { feedback } from './feedback'
 import { openWaitingIssues } from './feedback-issues'
 import { recheckDomains } from './spaces/proof'
@@ -120,6 +121,7 @@ app.route('/v1/account/left', left)
 app.route('/v1/feedback', feedback)
 
 app.route('/v1/crashes', crashes)
+app.route('/v1/usage', usage)
 app.route('/v1/pass-link', openLink)
 
 app.use('/.well-known/*', anyOrigin)

@@ -10,17 +10,28 @@
   import { settings } from './settings.svelte'
   import { segmented } from './slide'
   import { theme, type SchemeChoice } from './theme.svelte'
+  import { stepped } from './usage/tally'
 
   const QUESTIONS = ['theme', 'developer', 'markdown'] as const
   type Question = (typeof QUESTIONS)[number]
 
-  const finish = () => (settings.setup = null)
+  const finish = () => {
+    if (settings.setup !== null) stepped('setup-left')
+    settings.setup = null
+  }
 
   function next() {
     const at = (settings.setup ?? -1) + 1
-    if (at >= QUESTIONS.length) finish()
-    else settings.setup = at
+    if (at >= QUESTIONS.length) {
+      stepped('setup-finished')
+      settings.setup = null
+    } else settings.setup = at
   }
+
+  $effect(() => {
+    const question = settings.setup === null ? undefined : QUESTIONS[settings.setup]
+    if (question) stepped(`setup-${question}`)
+  })
 
   $effect(() => {
     if (account.signedIn) finish()

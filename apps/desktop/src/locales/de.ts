@@ -3859,4 +3859,8 @@ export const de: Dictionary = {
   'Include pictures': 'Bilder einschließen',
   'Without styles': 'Ohne Stile',
   'Turn {name} on or off': '{name} ein- oder ausschalten',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Sendet täglich Zählungen deiner Nutzung unter einer zufälligen ID; nie Notizen, Namen, Pfade oder was du tippst.',
+  'Share anonymous usage data': 'Anonyme Nutzungsdaten teilen',
+  'Also share anonymous usage data': 'Auch anonyme Nutzungsdaten teilen',
 }

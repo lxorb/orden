@@ -3799,4 +3799,8 @@ export const pa: Dictionary = {
   'Include pictures': 'ਤਸਵੀਰਾਂ ਸ਼ਾਮਲ ਕਰੋ',
   'Without styles': 'ਸ਼ੈਲੀ ਬਿਨਾਂ',
   'Turn {name} on or off': '{name} ਚਾਲੂ ਜਾਂ ਬੰਦ ਕਰੋ',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'ਤੁਸੀਂ ਜੋ ਵਰਤਦੇ ਹੋ ਉਸਦੀ ਰੋਜ਼ਾਨਾ ਗਿਣਤੀ ਇੱਕ ਬੇਤਰਤੀਬ ID ਹੇਠ ਭੇਜਦਾ ਹੈ; ਨੋਟ, ਨਾਂ, ਪਾਥ ਜਾਂ ਜੋ ਤੁਸੀਂ ਟਾਈਪ ਕਰਦੇ ਹੋ ਕਦੇ ਨਹੀਂ।',
+  'Share anonymous usage data': 'ਗੁਮਨਾਮ ਵਰਤੋਂ ਡਾਟਾ ਸਾਂਝਾ ਕਰੋ',
+  'Also share anonymous usage data': 'ਗੁਮਨਾਮ ਵਰਤੋਂ ਡਾਟਾ ਵੀ ਸਾਂਝਾ ਕਰੋ',
 }

@@ -3792,4 +3792,8 @@ export const fa: Dictionary = {
   'Include pictures': 'همراه با تصویرها',
   'Without styles': 'بی‌سبک',
   'Turn {name} on or off': 'روشن یا خاموش کردن {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'هر روز شمار آنچه به کار می‌برید را زیر یک شناسه تصادفی می‌فرستد؛ هرگز یادداشت، نام، مسیر یا آنچه تایپ می‌کنید.',
+  'Share anonymous usage data': 'اشتراک داده‌های ناشناس استفاده',
+  'Also share anonymous usage data': 'همچنین اشتراک داده‌های ناشناس استفاده',
 }

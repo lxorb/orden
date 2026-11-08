@@ -20,6 +20,7 @@
     "./textops": "./src/textops.ts",
     "./time": "./src/time.ts",
     "./tree": "./src/tree.ts",
+    "./usage": "./src/usage.ts",
     "./wire": "./src/wire.ts",
     "./sim": "./test/sim/index.ts"
   },

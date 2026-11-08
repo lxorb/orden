@@ -3706,4 +3706,8 @@ export const jv: Dictionary = {
   'Include pictures': 'Kalebu gambar',
   'Without styles': 'Tanpa gaya',
   'Turn {name} on or off': 'Uripake utawa pateni {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Ngirim etungan saben dina saka apa sing sampeyan enggo nganggo ID acak; ora tau cathetan, jeneng, path utawa apa sing sampeyan ketik.',
+  'Share anonymous usage data': 'Bagekake data panggunaan anonim',
+  'Also share anonymous usage data': 'Uga bagekake data panggunaan anonim',
 }

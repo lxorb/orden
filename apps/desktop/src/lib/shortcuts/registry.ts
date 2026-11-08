@@ -23,6 +23,8 @@ import type { Platform } from '../keys'
 import { workspace } from '../workspace.svelte'
 import type { Toward } from '../workspace/pane-tree'
 import { type Around, closeAfterLabel } from '../workspace/closing-around'
+import type { UsageVia } from '@orden/sync-core/usage'
+import { ran } from '../usage/tally'
 
 let askAgain: (() => boolean) | null = null
 
@@ -1542,12 +1544,13 @@ export const BY_ID = new Map(SHORTCUTS.map((one) => [one.id, one]))
 
 const EDITOR_BY_ID = new Map(EDITOR_SPECS.map((one) => [one.id, one]))
 
-export function runEntry(id: string, context: AppContext): boolean {
+export function runEntry(id: string, context: AppContext, via?: UsageVia): boolean {
   const spec = EDITOR_BY_ID.get(id)
   if (spec) {
     const view = context.view
     if (!view) return false
 
+    if (via) ran(id, via)
     spec.run(view)
     view.focus()
     return true
@@ -1556,6 +1559,7 @@ export function runEntry(id: string, context: AppContext): boolean {
   const entry = BY_ID.get(id)
   if (entry?.scope !== 'app' || !entry.run || entry.shown?.() === false) return false
 
+  if (via) ran(id, via)
   entry.run(context)
   return true
 }

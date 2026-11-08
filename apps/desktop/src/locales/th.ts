@@ -3645,4 +3645,8 @@ export const th: Dictionary = {
   'Include pictures': 'รวมรูป',
   'Without styles': 'ไม่มีสไตล์',
   'Turn {name} on or off': 'เปิดหรือปิด {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'ส่งจำนวนครั้งรายวันของสิ่งที่คุณใช้ภายใต้ ID สุ่ม ไม่ส่งโน้ต ชื่อ พาธ หรือสิ่งที่คุณพิมพ์',
+  'Share anonymous usage data': 'แชร์ข้อมูลการใช้งานแบบไม่ระบุตัวตน',
+  'Also share anonymous usage data': 'แชร์ข้อมูลการใช้งานแบบไม่ระบุตัวตนด้วย',
 }

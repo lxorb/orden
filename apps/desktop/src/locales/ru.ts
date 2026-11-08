@@ -3934,4 +3934,8 @@ export const ru: Dictionary = {
   'Include pictures': 'С картинками',
   'Without styles': 'Без стилей',
   'Turn {name} on or off': 'Включить или выключить {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Отправляет ежедневные счётчики использования под случайным ID; никогда заметки, имена, пути или то, что вы печатаете.',
+  'Share anonymous usage data': 'Делиться анонимными данными об использовании',
+  'Also share anonymous usage data': 'Также делиться анонимными данными об использовании',
 }

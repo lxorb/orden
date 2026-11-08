@@ -141,6 +141,7 @@ export const APP_FOLDERS = [
   'terminal',
   'theme-picker',
   'themes',
+  'usage',
   'views',
   'wallpaper',
   'web',

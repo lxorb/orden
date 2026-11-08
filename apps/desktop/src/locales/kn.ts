@@ -3831,4 +3831,8 @@ export const kn: Dictionary = {
   'Include pictures': 'ಚಿತ್ರಗಳನ್ನು ಸೇರಿಸಿ',
   'Without styles': 'ಶೈಲಿ ಇಲ್ಲದೆ',
   'Turn {name} on or off': '{name} ಆನ್ ಅಥವಾ ಆಫ್ ಮಾಡಿ',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'ನೀವು ಬಳಸುವುದರ ದೈನಂದಿನ ಎಣಿಕೆಗಳನ್ನು ಯಾದೃಚ್ಛಿಕ ID ಅಡಿಯಲ್ಲಿ ಕಳುಹಿಸುತ್ತದೆ; ಟಿಪ್ಪಣಿಗಳು, ಹೆಸರುಗಳು, ಪಥಗಳು ಅಥವಾ ನೀವು ಟೈಪ್ ಮಾಡುವುದನ್ನು ಎಂದಿಗೂ ಇಲ್ಲ.',
+  'Share anonymous usage data': 'ಅನಾಮಧೇಯ ಬಳಕೆಯ ಡೇಟಾವನ್ನು ಹಂಚಿಕೊಳ್ಳಿ',
+  'Also share anonymous usage data': 'ಅನಾಮಧೇಯ ಬಳಕೆಯ ಡೇಟಾವನ್ನೂ ಹಂಚಿಕೊಳ್ಳಿ',
 }

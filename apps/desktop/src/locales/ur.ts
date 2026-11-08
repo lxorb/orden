@@ -3783,4 +3783,8 @@ export const ur: Dictionary = {
   'Include pictures': 'تصاویر شامل کریں',
   'Without styles': 'بغیر اسٹائل',
   'Turn {name} on or off': '{name} آن یا آف کریں',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'آپ کے استعمال کی روزانہ گنتی ایک بے ترتیب ID کے تحت بھیجتا ہے؛ نوٹس، نام، راستے یا جو آپ ٹائپ کرتے ہیں، کبھی نہیں۔',
+  'Share anonymous usage data': 'گمنام استعمال کا ڈیٹا شیئر کریں',
+  'Also share anonymous usage data': 'گمنام استعمال کا ڈیٹا بھی شیئر کریں',
 }

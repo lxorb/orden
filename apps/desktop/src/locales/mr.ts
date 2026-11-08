@@ -3784,4 +3784,8 @@ export const mr: Dictionary = {
   'Include pictures': 'चित्रे समाविष्ट करा',
   'Without styles': 'शैलीविना',
   'Turn {name} on or off': '{name} चालू किंवा बंद करा',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'तुम्ही जे वापरता त्याची दैनिक गणना यादृच्छिक ID खाली पाठवते; नोट्स, नावे, पथ किंवा तुम्ही जे टाइप करता ते कधीच नाही.',
+  'Share anonymous usage data': 'निनावी वापर डेटा शेअर करा',
+  'Also share anonymous usage data': 'निनावी वापर डेटाही शेअर करा',
 }

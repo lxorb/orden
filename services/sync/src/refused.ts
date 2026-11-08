@@ -1,5 +1,7 @@
 export const NOT_AN_OBJECT = 'send an object'
 
+export const NOT_JSON = 'send a JSON object'
+
 export const NOT_FOUND = 'not found'
 
 export const NO_SUCH_SPACE = 'no such space'

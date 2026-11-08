@@ -3689,4 +3689,8 @@ export const vi: Dictionary = {
   'Include pictures': 'Kèm ảnh',
   'Without styles': 'Không kiểu',
   'Turn {name} on or off': 'Bật hoặc tắt {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Gửi số đếm hằng ngày về những gì bạn dùng dưới một ID ngẫu nhiên; không bao giờ gửi ghi chú, tên, đường dẫn hay những gì bạn gõ.',
+  'Share anonymous usage data': 'Chia sẻ dữ liệu sử dụng ẩn danh',
+  'Also share anonymous usage data': 'Chia sẻ cả dữ liệu sử dụng ẩn danh',
 }

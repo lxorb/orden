@@ -3,6 +3,7 @@ import { CATALOGUES_URL, i18n, plural, t } from '../i18n.svelte'
 import { languageOptions, machineSaid } from '../language-options'
 import { method } from '../mobile/bridge'
 import { crashReports } from '../crash-reports/choice.svelte'
+import { usageChoice } from '../usage/choice.svelte'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { protectionOn } from '../protect/gate'
 import { protectionStore, turnProtection } from '../protect/protection-setting'
@@ -201,6 +202,19 @@ function privacyGroup(): Group {
         initial: true,
         get: () => crashReports.on,
         set: (on) => crashReports.set(on),
+      },
+      {
+        kind: 'switch',
+        key: 'general.usageData',
+        store: { on: usageChoice, name: 'helping' },
+        label: t('Share anonymous usage data'),
+        hint: t(
+          'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.',
+        ),
+        words: ['analytics', 'telemetry', 'usage', 'statistics', 'improve', 'privacy'],
+        initial: false,
+        get: () => usageChoice.helping,
+        set: (on) => usageChoice.setHelping(on),
       },
     ],
   }

@@ -3594,4 +3594,8 @@ export const yue: Dictionary = {
   'Include pictures': '連埋圖片',
   'Without styles': '唔含樣式',
   'Turn {name} on or off': '開或者關 {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    '每日用隨機 ID 傳送你用過嘅嘢嘅次數；永遠唔傳筆記、名、路徑或者你打嘅字。',
+  'Share anonymous usage data': '分享匿名使用數據',
+  'Also share anonymous usage data': '同時分享匿名使用數據',
 }

@@ -3897,4 +3897,8 @@ export const ptPT: Dictionary = {
   'Include pictures': 'Incluir imagens',
   'Without styles': 'Sem estilos',
   'Turn {name} on or off': 'Ativar ou desativar {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Envia contagens diárias do que usa com um ID aleatório; nunca notas, nomes, caminhos ou o que escreve.',
+  'Share anonymous usage data': 'Partilhar dados de utilização anónimos',
+  'Also share anonymous usage data': 'Partilhar também dados de utilização anónimos',
 }

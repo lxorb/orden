@@ -3933,4 +3933,8 @@ export const pl: Dictionary = {
   'Include pictures': 'Dołącz obrazy',
   'Without styles': 'Bez stylów',
   'Turn {name} on or off': 'Włącz lub wyłącz {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Wysyła dzienne liczniki użycia pod losowym ID; nigdy notatek, nazw, ścieżek ani tego, co wpisujesz.',
+  'Share anonymous usage data': 'Udostępniaj anonimowe dane o użyciu',
+  'Also share anonymous usage data': 'Udostępniaj też anonimowe dane o użyciu',
 }

@@ -8,8 +8,9 @@ import { markdownPane } from './settings/markdown-pane'
 import { appearancePane } from './settings/appearance-pane'
 import { exportPane } from './settings/export-pane'
 import { experimentalPane } from './settings/experimental-pane'
-import type { Pane } from './settings/fields'
+import type { Field, Pane } from './settings/fields'
 import { declared } from './settings/declared.svelte'
+import { changed } from './usage/tally'
 
 export type {
   Caption,
@@ -27,9 +28,27 @@ export function preferences(view?: EditorView): Pane[] {
     ...pane,
     groups: pane.groups.map((group) => ({
       ...group,
-      fields: group.fields.map((one) => declared.lock(one)),
+      fields: group.fields.map((one) => tallied(declared.lock(one))),
     })),
   }))
+}
+
+function tallied(field: Field): Field {
+  if (field.kind === 'switch') {
+    const set = (on: boolean) => {
+      changed(field.key, on)
+      field.set(on)
+    }
+    return { ...field, set }
+  }
+  if (field.kind === 'select' || field.kind === 'segmented' || field.kind === 'swatches') {
+    const set = (value: string) => {
+      changed(field.key, value)
+      field.set(value)
+    }
+    return { ...field, set }
+  }
+  return field
 }
 
 export function declaredPanes(view?: EditorView): Pane[] {

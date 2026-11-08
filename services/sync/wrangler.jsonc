@@ -71,6 +71,7 @@
     "FEEDBACK_PROJECT": "lxorb/2",
     "MACHINE_EGRESS": "open",
     "CF_ACCOUNT_ID": "b0e98c15b1f905a394ecd6a849e8e99f",
+    "POSTHOG_KEY": "phc_zvHuDpaMhdgfELEk9dG5LYteFrr3ffLB2haxm7gXyncc",
   },
 
   "triggers": { "crons": ["0 3 * * *", "* * * * *"] },
