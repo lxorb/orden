@@ -59,6 +59,20 @@ describe('handing out a token', () => {
     expect((await rpc(second, 'tools/list')).status).toBe(200)
   })
 
+  test('replaces one handed out at the same moment', async () => {
+    env.justBefore(/insert into mcp_tokens/, () =>
+      env.db
+        .prepare(
+          `insert into mcp_tokens (token_hash, user_id, read_only, created_at)
+           select 'quicker', id, 1, 0 from users where email = 'a@b.dev'`,
+        )
+        .run(),
+    )
+
+    await connector()
+    expect(env.db.prepare('select count(*) as n from mcp_tokens').get()).toEqual({ n: 1 })
+  })
+
   test('can be taken back', async () => {
     const key = await connector()
     await call(env, '/v1/mcp/token', { token, method: 'DELETE' })
