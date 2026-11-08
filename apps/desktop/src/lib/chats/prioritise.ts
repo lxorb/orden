@@ -3,7 +3,7 @@ import { heldForLife } from '../locks'
 import { ai } from '../ai/store.svelte'
 import { type Notice, show } from '../notify'
 import { t } from '../i18n.svelte'
-import { inHours } from '@orden/chats/notify'
+import { inHours, levelOf } from '@orden/chats/notify'
 import { dndUntil, hush } from './hush.svelte'
 import { inFront } from './on-screen'
 import { chatsOn } from '../settings.svelte'
@@ -37,10 +37,20 @@ export function startPriorities(): void {
   })
   connected.hear((provider, account, event) => {
     if (event.t !== 'message' || event.message.mine || !chatsOn()) return
-    if (!priorities.on && !priorities.drafting) return
     const linked = connected.find(provider, account)
     const conversation = linked?.conversations.find((one) => one.id === event.message.conversation)
     if (!linked || !conversation) return
+    if (!priorities.on) {
+      const where = { provider, account, conversation: conversation.id }
+      if (
+        leads &&
+        !event.message.system &&
+        !event.message.thread &&
+        !plainlyQuiet(event.message, where)
+      )
+        show(priorityNotice(where, conversation.title ?? event.message.author.name, event.message))
+    }
+    if (!priorities.on && !priorities.drafting) return
     const key = rowKey(provider, account, conversation.id)
     const title = conversation.title ?? event.message.author.name
     void consider(key, title, linked.connection, conversation.id)
@@ -65,6 +75,18 @@ export function startPriorities(): void {
     const key = rowKey(ORDEN, ORDEN, chat)
     void consider(key, store().entry(chat)?.name ?? '', own, chat).catch(() => undefined)
   })
+}
+
+function plainlyQuiet(message: ProviderMessage, where: ConversationKey): boolean {
+  if (quiet(where.provider, where.account, where.conversation, message)) return true
+  const found = connected
+    .find(where.provider, where.account)
+    ?.conversations.find((one) => one.id === where.conversation)
+  const level = remoteOf(conversationKey(where))?.notifies[where.conversation] ?? null
+  const members = found?.members ?? (found?.people.length ?? 0) + 1
+  if (levelOf(level, members) !== 'mentions') return false
+  const self = connected.find(where.provider, where.account)?.account.self?.id
+  return !(self && message.mentions?.includes(self))
 }
 
 export function quiet(
