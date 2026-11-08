@@ -29,9 +29,12 @@ import { activeLogins } from '@orden/pass/monitor'
 import type { Content, Envelope, Item, Vault, VaultMeta } from '@orden/pass/types'
 import type { Invite, Member, MemberState } from '@orden/pass/wire'
 import { rank } from '@orden/pass/urls'
+import { untrack } from 'svelte'
+import { account } from '../account.svelte'
 import { forgetKey, keysAreGuarded, readSecret, writeSecret } from '../ai/keys'
 import { message, t } from '../i18n.svelte'
 import { deviceCan, deviceSays } from '../protect/device'
+import { passOn } from '../settings.svelte'
 import { adoptedChange } from './adopt'
 import type { AliasAccount } from './alias-account'
 import type { Picked } from './attachments'
@@ -182,6 +185,8 @@ export class PassStore {
   aliasesStopped: Promise<void> = Promise.resolve()
 
   private keyring: KeyringRow | null = null
+  private heardFor = $state<string | null>(null)
+  private watchingAccount = false
   private device: DeviceRow | null = null
   private queue: Promise<unknown> = Promise.resolve()
   private unlocking: Promise<unknown> = Promise.resolve()
@@ -204,7 +209,35 @@ export class PassStore {
     this.pinTries = PIN_TRIES - (device?.seal.way === 'pin' ? device.seal.tries : 0)
     this.relock.watch()
     if (unlocked.has(this)) return
-    this.state = keyring ? 'locked' : 'new'
+    this.state = keyring ? 'locked' : this.waitsForAccount() ? 'loading' : 'new'
+    this.watchAccount()
+  }
+
+  waitsForAccount(): boolean {
+    if (!passOn()) return false
+    if (account.restoring) return true
+    if (account.user) return this.heardFor !== account.user.id
+    return !!account.token && !account.guest
+  }
+
+  accountHeard(id: string | null): void {
+    this.heardFor = id
+  }
+
+  private watchAccount(): void {
+    if (this.watchingAccount) return
+    this.watchingAccount = true
+    $effect.root(() => {
+      $effect(() => {
+        const waiting = this.waitsForAccount()
+        const state = this.state
+        untrack(() => {
+          if (this.keyring) return
+          if (state === 'loading' && !waiting) this.state = 'new'
+          if (state === 'new' && waiting) this.state = 'loading'
+        })
+      })
+    })
   }
 
   async setup(password: string): Promise<string> {
@@ -704,7 +737,9 @@ export class PassStore {
 
   tookKeyring(row: KeyringRow): void {
     this.keyring = row
-    if (this.state === 'new') this.state = 'locked'
+    if (this.state === 'new' || (this.state === 'loading' && this.watchingAccount)) {
+      this.state = 'locked'
+    }
   }
 
   adoptAccountPass(password: string): Promise<boolean> {

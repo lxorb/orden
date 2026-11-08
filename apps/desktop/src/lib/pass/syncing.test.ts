@@ -23,6 +23,7 @@ vi.mock('./store.svelte', () => ({
     state: 'open',
     conflict: false,
     start: () => Promise.resolve(),
+    accountHeard: () => undefined,
     backfillTrust: () => Promise.resolve(0),
   },
 }))

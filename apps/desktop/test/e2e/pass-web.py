@@ -145,6 +145,13 @@ def named_as_pass(page: Page) -> None:
     say("named Orden Pass, with its own manifest and icons")
 
 
+SETUP_SEEN = """(() => {
+  const look = () => {
+    if (document.body?.innerText.includes('Set up Pass')) window.__setupSeen = true
+  }
+  new MutationObserver(look).observe(document, { subtree: true, childList: true, characterData: true })
+})()"""
+
 TAB = """(scheme) => {
   const strip = document.createElement('div')
   const ground = scheme === 'dark' ? '#202124' : '#dee1e6'
@@ -210,11 +217,46 @@ def looks_in(browser: Browser, worker: harness.Worker, scheme: str) -> None:
     say(f"Orden Pass on the sign-in screen and a rounded tab icon in {scheme}")
 
 
-def signed_in(page: Page, worker: harness.Worker) -> None:
+def slow_vault(browser: Browser, worker: harness.Worker) -> None:
+    context = browser.new_context(viewport={"width": 1280, "height": 820}, reduced_motion="reduce")
+    context.add_init_script(SETUP_SEEN)
+    held: list = []
+    released = []
+
+    def hold(route) -> None:
+        if released:
+            route.continue_()
+        else:
+            held.append(route)
+
+    context.route("**/v2/pass/**", hold)
+    page = context.new_page()
+    page.set_default_timeout(30000)
+    page.on("pageerror", lambda error: wrong(f"page error: {error}"))
+    page.goto(worker.origin, wait_until="domcontentloaded")
+    signed_in(page, worker, "08-slow-sign-in")
+    page.wait_for_timeout(4000)
+    if not held:
+        wrong("Pass asked its server nothing while signed in")
+    shot(page, "09-slow-waiting")
+    seen = page.evaluate("() => !!window.__setupSeen")
+    released.append(True)
+    for route in held:
+        route.continue_()
+    wait_for(page, has_text(".pass", "Pass is locked"), "the lock once the vault arrived", STRETCH)
+    seen = seen or page.evaluate("() => !!window.__setupSeen")
+    if seen:
+        wrong("a slow vault showed the setup screen to an account that has Pass")
+    shot(page, "10-slow-locked")
+    context.close()
+    say("a slow vault waits, then shows the lock, never setup")
+
+
+def signed_in(page: Page, worker: harness.Worker, name: str = "01-sign-in") -> None:
     wait_for(page, f"document.querySelector('{DIALOG} input[type=email]')", "the sign-in sheet")
     if page.locator(".pass").count():
         wrong("Pass shows before anybody signed in")
-    shot(page, "01-sign-in")
+    shot(page, name)
     mark = len(worker.written())
     page.locator(f"{DIALOG} input[type=email]").fill(READER)
     page.locator(f"{DIALOG} button[type=submit]").click()
@@ -372,7 +414,8 @@ def main() -> int:
         offered_a_reload(page)
         on_a_phone(page)
         signed_out(page)
-    return DRIVE.verdict("Orden Pass on its own name, light and dark, a rounded tab icon: signed in, set up, a login made, locked and opened, the corner without a theme switch and with the face or its initial, a phone")
+        slow_vault(browser, worker)
+    return DRIVE.verdict("Orden Pass on its own name, light and dark, a rounded tab icon: signed in, set up, a login made, locked and opened, the corner without a theme switch and with the face or its initial, a phone, a slow vault never offers setup")
 
 
 if __name__ == "__main__":

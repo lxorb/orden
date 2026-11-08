@@ -104,6 +104,7 @@ class PassSync {
     try {
       const outcome = await syncOnce(this.worldFor(user.id, user.email, token))
       if (!this.holds(token)) return
+      pass.accountHeard(user.id)
       this.state = outcome
       if (outcome === 'synced') this.at = Date.now()
       if (outcome === 'synced' && pass.state === 'open' && !this.backfilled) {
