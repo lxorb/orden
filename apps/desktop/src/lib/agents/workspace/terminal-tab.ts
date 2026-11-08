@@ -120,10 +120,16 @@ export async function readTerminal(call: Call): Promise<AgentAnswer> {
   const most = count(call, 'lines', LINES, MOST_LINES)
 
   if (isOnlineTab(tab) && !running(tab)) {
-    const session = await sessionFor(tab)
-    if (!session.host.isConnected) await startedOffScreen(session)
-    await readyOf(session, CONNECTING)
-    return screenOf(tab, session, most)
+    const halting = await stopSignal(call)
+    try {
+      const session = await sessionFor(tab)
+      if (!session.host.isConnected) await startedOffScreen(session, halting.signal)
+      await readyOf(session, CONNECTING, halting.signal)
+      if (halted(halting.signal)) throw stopRefused(`${tab.shown}: read nothing`)
+      return screenOf(tab, session, most)
+    } finally {
+      halting.end()
+    }
   }
 
   if (!running(tab)) {
