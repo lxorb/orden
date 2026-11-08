@@ -63,13 +63,13 @@ describe('a kind with a surface of its own', () => {
 
 describe('a protected tab', () => {
   test('is drawn as its lock before any surface or the editor', () => {
-    const chain = SOURCE.slice(SOURCE.indexOf('{#if tab?.path && locked}'))
+    const chain = SOURCE.slice(SOURCE.indexOf('{#if tab && behind && locked}'))
     expect(chain.length).toBeLessThan(SOURCE.length)
     for (const [, door] of SURFACES) {
       expect(chain.indexOf(`${door}()`), door).toBeGreaterThan(0)
     }
     expect(chain.indexOf('<Editor')).toBeGreaterThan(0)
-    expect(SOURCE).toContain('const locked = $derived(workspace.protection.locked(tab?.path))')
+    expect(SOURCE).toContain('const locked = $derived(workspace.protection.locked(behind))')
   })
 
   test('is never a column beside an open one, and has no find bar', () => {

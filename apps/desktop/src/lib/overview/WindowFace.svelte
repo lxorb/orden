@@ -13,6 +13,7 @@
   import { theme } from '../theme.svelte'
   import { pages } from '../web-tab/pages.svelte'
   import { type Tab, workspace } from '../workspace.svelte'
+  import { noteBehind } from '../protect/protection.svelte'
   import { TAB_KINDS } from '../workspace/tab-kinds'
   import { drawInto, type Face } from './faces'
   import { scrolledBack } from './mirror'
@@ -35,7 +36,7 @@
   } = $props()
 
   const how = $derived(TAB_KINDS[tab.kind].preview)
-  const locked = $derived(workspace.protection.locked(tab.path))
+  const locked = $derived(workspace.protection.locked(noteBehind(tab, workspace.spaces)))
 
   const START = 6000
 

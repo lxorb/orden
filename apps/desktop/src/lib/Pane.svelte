@@ -75,6 +75,7 @@
   import { viewport } from './viewport.svelte'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
+  import { noteBehind } from './protect/protection.svelte'
   import { paneCorners } from './pane-corners.svelte'
   import { EDGE, inside, type Zone, zoneAt } from './workspace/zones'
 
@@ -83,7 +84,8 @@
   const here = whileHere()
 
   const tab = $derived(workspace.showing(pane.id))
-  const locked = $derived(workspace.protection.locked(tab?.path))
+  const behind = $derived(tab ? noteBehind(tab, workspace.spaces) : null)
+  const locked = $derived(workspace.protection.locked(behind))
 
   const attachments = $derived(workspace.graphSettings.here.attachments)
 
@@ -406,10 +408,10 @@
     </Door>
   {/if}
 
-  {#if tab?.path && locked}
+  {#if tab && behind && locked}
     {#key tab.id}
       {#await lockScreen() then LockScreen}
-        <LockScreen path={tab.path} focused={workspace.panes.focusedId === pane.id} />
+        <LockScreen path={behind} focused={workspace.panes.focusedId === pane.id} />
       {:catch}
         {@render unreachable()}
       {/await}
