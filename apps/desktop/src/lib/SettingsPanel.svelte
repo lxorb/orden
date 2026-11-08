@@ -23,6 +23,7 @@
   import Security from './Security.svelte'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
+  import { holdScroll } from './kept-scroll'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
@@ -152,6 +153,7 @@
       )
       if (!row) return
 
+      holdScroll(box)
       row.scrollIntoView({ block: 'center' })
       row.classList.add('landed')
       void waited(LIT).then(() => row.classList.remove('landed'))
@@ -421,6 +423,7 @@
     <div
       class="body"
       data-scrolls
+      data-scroll-key={query && !stacked ? 'search' : settings.section}
       bind:this={body}
       use:scrollbar={settings.section}
       in:fly={enter(24)}
