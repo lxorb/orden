@@ -3,6 +3,9 @@ import { beforeEach, expect, test, vi } from 'vitest'
 const world = vi.hoisted(() => ({
   meanwhile: null as (() => void) | null,
   stored: 0,
+  pages: 2,
+  full: 0,
+  sizes: [] as { width: number; height: number }[],
 }))
 
 function memoryStorage(): Storage {
@@ -22,18 +25,22 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const paper = {
-  createElement: () => ({
-    width: 0,
-    height: 0,
-    getContext: () => ({}),
-    toBlob: (done: (blob: Blob) => void) => done(new Blob(['png'], { type: 'image/png' })),
-  }),
+  createElement: () => {
+    const sheet = { width: 0, height: 0 }
+    world.sizes.push(sheet)
+    return Object.assign(sheet, {
+      getContext: () => ({}),
+      toBlob: (done: (blob: Blob) => void) => done(new Blob(['png'], { type: 'image/png' })),
+    })
+  },
 }
 
 vi.mock('../prompt.svelte', () => ({ prompt: { choose: () => Promise.resolve('all') } }))
 vi.mock('../assets', () => ({
   accountAddress: () => null,
   storeImage: () => {
+    if (world.full && world.stored >= world.full)
+      return Promise.reject(new Error('The account is out of space'))
     world.stored += 1
     return Promise.resolve(`/space/assets/page-${String(world.stored)}.png`)
   },
@@ -45,10 +52,15 @@ vi.mock('../pdf/document', () => ({
     Promise.resolve({
       getDocument: () => ({
         promise: Promise.resolve({
-          numPages: 2,
+          get numPages() {
+            return world.pages
+          },
           getPage: (number: number) =>
             Promise.resolve({
-              getViewport: () => ({ width: 600, height: 800 }),
+              getViewport: ({ scale }: { scale: number }) =>
+                number === 3
+                  ? { width: 20 * scale, height: 90_000 * scale }
+                  : { width: 600, height: 800 },
               render: () => ({
                 promise: (async () => {
                   if (number === 2) world.meanwhile?.()
@@ -86,6 +98,9 @@ function board() {
 beforeEach(() => {
   world.meanwhile = null
   world.stored = 0
+  world.pages = 2
+  world.full = 0
+  world.sizes = []
   workspace.spaces = [{ id: 'local', name: 'space', root: '/space' }]
   workspace.activeSpaceId = 'local'
 })
@@ -117,4 +132,41 @@ test('a card drawn while the pages render is kept, beside every page', async () 
   expect(ids).toContain('mine')
   expect(store.canvas.nodes.filter((node) => node.type === 'file')).toHaveLength(2)
   expect(store.canvas.gone).not.toHaveProperty('mine')
+})
+
+async function dropped(store: ReturnType<typeof board>) {
+  const pdf = new File([new Uint8Array([37, 80, 68, 70])], 'Lecture.pdf', {
+    type: 'application/pdf',
+  })
+  vi.stubGlobal('document', paper)
+  try {
+    await run.dropPdf(store, pdf, { x: 0, y: 0 }, '/space/Board.canvas')
+  } finally {
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  }
+}
+
+test('a long strip of a page is drawn within what a canvas can hold', async () => {
+  world.pages = 3
+  await dropped(board())
+
+  expect(world.sizes).toHaveLength(3)
+  for (const size of world.sizes) {
+    expect(size.height).toBeGreaterThan(0)
+    expect(size.height).toBeLessThanOrEqual(16384)
+  }
+})
+
+test('pages stored before the space runs out are placed, and the reader is told', async () => {
+  const { busy } = await import('../busy.svelte')
+  world.pages = 5
+  world.full = 2
+  const store = board()
+
+  await dropped(store)
+
+  expect(store.canvas.nodes.filter((node) => node.type === 'file')).toHaveLength(2)
+  expect(busy.trouble).toMatch(/out of space/)
+  expect(busy.active).toBe(false)
 })

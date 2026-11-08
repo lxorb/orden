@@ -49,6 +49,7 @@ import { openHref } from '../open-link'
 import { workspace } from '../workspace.svelte'
 import { loading, pdfjs } from '../pdf/document'
 import { PDF_TO_CSS } from '../pdf/pages'
+import { drawScale } from '../pages/paper'
 
 const NUDGE = 1
 
@@ -303,43 +304,51 @@ export const run = {
 
       const made: Parameters<typeof withNode>[1][] = []
       let y = at.y
-      for (const number of pages) {
-        const page = await doc.getPage(number)
-        const natural = page.getViewport({ scale: PDF_TO_CSS })
-        const area = natural.width * natural.height * 4
-        const scale = area > 16 * 1024 * 1024 ? 2 * Math.sqrt((16 * 1024 * 1024) / area) : 2
-        const viewport = page.getViewport({ scale: PDF_TO_CSS * scale })
-        const canvas = document.createElement('canvas')
-        canvas.width = Math.max(1, Math.round(viewport.width))
-        canvas.height = Math.max(1, Math.round(viewport.height))
-        const context = canvas.getContext('2d')
-        if (!context) {
-          page.cleanup()
-          continue
-        }
-        await page.render({ canvas, canvasContext: context, viewport }).promise
-        page.cleanup()
-        const blob = await new Promise<Blob | null>((resolve) =>
-          canvas.toBlob(resolve, 'image/png'),
-        )
-        if (!blob) continue
+      const label = t('Import PDF')
+      try {
+        await busy.run(label, async () => {
+          for (const number of pages) {
+            const page = await doc.getPage(number)
+            const natural = page.getViewport({ scale: PDF_TO_CSS })
+            const scale = drawScale(natural.width, natural.height, 2)
+            const viewport = page.getViewport({ scale: PDF_TO_CSS * scale })
+            const canvas = document.createElement('canvas')
+            canvas.width = Math.max(1, Math.round(viewport.width))
+            canvas.height = Math.max(1, Math.round(viewport.height))
+            const context = canvas.getContext('2d')
+            if (!context) {
+              page.cleanup()
+              continue
+            }
+            await page.render({ canvas, canvasContext: context, viewport }).promise
+            page.cleanup()
+            const blob = await new Promise<Blob | null>((resolve) =>
+              canvas.toBlob(resolve, 'image/png'),
+            )
+            if (!blob) continue
 
-        const image = new File([blob], `${file.name.replace(/\.pdf$/i, '')}-page-${number}.png`, {
-          type: 'image/png',
+            const image = new File(
+              [blob],
+              `${file.name.replace(/\.pdf$/i, '')}-page-${number}.png`,
+              { type: 'image/png' },
+            )
+            const stored = await storeImage(image, notePath)
+            if (!stored) continue
+            const relative = accountAddress(stored) ?? spaceRelative(root, notePath, stored)
+            if (!relative) continue
+
+            const width = Math.round(natural.width)
+            const height = Math.round(natural.height)
+            const box =
+              mode === 'single'
+                ? placedAt(at, width, height)
+                : placedAt({ x: at.x, y: y + height / 2 }, width, height)
+            made.push({ ...box, id: freshId(), type: 'file', file: relative })
+            y += height + GRID
+          }
         })
-        const stored = await storeImage(image, notePath)
-        if (!stored) continue
-        const relative = stored.startsWith('http') ? stored : spaceRelative(root, notePath, stored)
-        if (!relative) continue
-
-        const width = Math.round(natural.width)
-        const height = Math.round(natural.height)
-        const box =
-          mode === 'single'
-            ? placedAt(at, width, height)
-            : placedAt({ x: at.x, y: y + height / 2 }, width, height)
-        made.push({ ...box, id: freshId(), type: 'file', file: relative })
-        y += height + GRID
+      } catch (error) {
+        busy.failed(`${label}: ${error instanceof Error ? error.message : String(error)}`)
       }
 
       if (made.length) {
