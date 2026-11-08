@@ -21,7 +21,7 @@
   } = $props()
 
   let term = $state('')
-  let at = $state(0)
+  let at = $state(-1)
   let field = $state<HTMLInputElement>()
 
   const found = $derived(hits ?? matches(canvas, term))
@@ -38,13 +38,13 @@
 
   $effect(() => {
     follows(found.length)
-    at = 0
+    at = -1
   })
 
   function go(step: number) {
     if (!found.length) return
 
-    at = (at + step + found.length) % found.length
+    at = at < 0 ? (step > 0 ? 0 : found.length - 1) : (at + step + found.length) % found.length
     const one = found[at]
     if (one) onpick(one.id)
   }
@@ -82,7 +82,7 @@
     autocorrect="off"
   />
 
-  <span class="count">{found.length ? `${at + 1}/${found.length}` : ''}</span>
+  <span class="count">{found.length ? `${Math.max(at + 1, 1)}/${found.length}` : ''}</span>
 
   <button type="button" aria-label={t('Previous')} title={t('Previous')} onclick={() => go(-1)}>
     <svg viewBox="0 0 14 14"><path d="M4 8.5 7 5.5l3 3" /></svg>
