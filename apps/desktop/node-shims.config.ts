@@ -3,6 +3,10 @@ import type { Plugin } from 'vite'
 
 const NODE = resolve(import.meta.dirname, 'src/lib/chats/providers/node')
 
+export function shimPath(file: string): string {
+  return resolve(NODE, file).replaceAll('\\', '/')
+}
+
 const SCOPE =
   /[\\/]node_modules[\\/](?:@whiskeysockets[\\/]baileys|libsignal|@hapi[\\/][^\\/]+|@cacheable[\\/][^\\/]+|curve25519-js|lru-cache|p-queue|async-mutex)[\\/]/
 
@@ -37,7 +41,7 @@ function shimFor(source: string, importer: string): string | null {
   if (!SCOPE.test(importer)) return null
   const bare = source.replace(/^node:/, '')
   const file = SHIMS[bare]
-  return file ? resolve(NODE, file) : null
+  return file ? shimPath(file) : null
 }
 
 const ASSERT =
@@ -50,7 +54,7 @@ function injected(code: string): string {
     new RegExp(
       `\\b(?:(?:const|let|var|function|class)\\s+${name}\\b|import\\s+${name}\\b|import\\s*\\{[^}]*\\b${name}\\b)`,
     ).test(code)
-  const from = (file: string) => JSON.stringify(resolve(NODE, file))
+  const from = (file: string) => JSON.stringify(shimPath(file))
   if (/\bBuffer\b/.test(code) && !declares('Buffer'))
     heads.push(
       common
