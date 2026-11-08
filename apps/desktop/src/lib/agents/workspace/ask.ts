@@ -14,6 +14,7 @@ const MOST_WAIT = 120_000
 const MOST_CHOICES = 12
 const MOST_MESSAGE = 2000
 const LONGEST_CHOICE = 200
+const MOST_OPEN = 5
 
 export async function askReader(call: Call): Promise<AgentAnswer> {
   const agent = call.caller.agent
@@ -52,6 +53,13 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
     throw new Refused(
       'bad_arguments',
       `a choice or placeholder is at most ${LONGEST_CHOICE} characters`,
+    )
+  }
+
+  if (asking.of(agent.id).length >= MOST_OPEN) {
+    throw new Refused(
+      'bad_arguments',
+      `the reader has ${MOST_OPEN} of your questions open: ask about one by its id first`,
     )
   }
 
