@@ -202,7 +202,8 @@ export class Hub {
           closed: (code) => {
             if (this.socket !== socket) return
             this.lost(null)
-            if (!shutOut(code)) this.again()
+            if (shutOut(code)) this.shut()
+            else this.again()
           },
         },
       )
@@ -285,6 +286,13 @@ export class Hub {
   private setState(state: HubState): void {
     this.state = state
     this.channel?.post({ k: 'state', state } satisfies Relayed)
+  }
+
+  private shut(): void {
+    const token = this.token
+    void account.recheck().then(() => {
+      if (token && this.token === token && account.token === token) this.again()
+    })
   }
 
   private again(): void {
