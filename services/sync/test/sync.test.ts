@@ -168,6 +168,21 @@ describe("a space's icon", () => {
     expect(renamed.json.space.icon).toBe('Book')
   })
 
+  test('keeps a rename that lands while the icon is being written', async () => {
+    env.justBefore(/update spaces set/, () =>
+      env.db.prepare("update spaces set name = 'Renamed' where id = ?").run(space),
+    )
+
+    const response = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token,
+      body: { icon: 'Book' },
+    })
+
+    expect(response.json.space).toMatchObject({ name: 'Renamed', icon: 'Book' })
+    expect((await inRail())?.name).toBe('Renamed')
+  })
+
   test('keeps the name when only the icon is sent', async () => {
     const response = await call(env, `/v1/spaces/${space}`, {
       method: 'PATCH',

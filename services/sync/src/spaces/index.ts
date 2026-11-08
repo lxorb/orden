@@ -175,37 +175,36 @@ spaces.patch('/:id', atLeast('write'), async (context) => {
     return context.json({ error: refusal('owner') }, 403)
   }
 
-  const label = name === undefined ? space.name : spaceName(name)
-  if (!label) return context.json({ error: 'give the space a name' }, 400)
+  const label = name === undefined ? null : spaceName(name)
+  if (label === '') return context.json({ error: 'give the space a name' }, 400)
 
-  const icon =
-    chosen === undefined
-      ? space.icon
-      : chosen === null
-        ? null
-        : isIcon(chosen)
-          ? chosen
-          : space.icon
+  const icon = chosen === null || (chosen !== undefined && isIcon(chosen)) ? chosen : undefined
+  const tint = painted === null || (painted !== undefined && isTint(painted)) ? painted : undefined
 
-  const tint =
-    icon === null
-      ? null
-      : painted === undefined
-        ? space.tint
-        : painted === null
-          ? null
-          : isTint(painted)
-            ? painted
-            : space.tint
-
-  await context.env.DB.prepare(
-    'update spaces set name = ?, icon = ?, tint = ?, updated_at = ? where id = ?',
+  const written = await context.env.DB.prepare(
+    `update spaces set
+       name = coalesce(?1, name),
+       icon = case when ?2 then ?3 else icon end,
+       tint = case when (case when ?2 then ?3 else icon end) is null then null
+                   when ?4 then ?5 else tint end,
+       updated_at = ?6
+     where id = ?7
+     returning name, icon, tint`,
   )
-    .bind(label, icon, tint, now(), space.id)
-    .run()
+    .bind(
+      label,
+      icon === undefined ? 0 : 1,
+      icon ?? null,
+      tint === undefined ? 0 : 1,
+      tint ?? null,
+      now(),
+      space.id,
+    )
+    .first<{ name: string; icon: string | null; tint: string | null }>()
+  const held = written ?? { name: space.name, icon: space.icon, tint: space.tint }
 
   return context.json({
-    space: presentSpace({ ...space, name: label, icon, tint }, context.env, space.role),
+    space: presentSpace({ ...space, ...held }, context.env, space.role),
   })
 })
 
