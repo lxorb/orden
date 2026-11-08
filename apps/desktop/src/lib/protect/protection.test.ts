@@ -198,3 +198,46 @@ describe('what is locked', () => {
     expect(shut()).toBe(0)
   })
 })
+
+describe('a copy an outside sync tool left of a protected note', () => {
+  const copies = [
+    'Diary (conflicted copy 2026-11-08 101010).md',
+    "Diary (Emil's conflicted copy 2026-11-08).md",
+    'Diary.sync-conflict-20261108-101010-ABCDEFG.md',
+    'Diary_conflict-20261108-101010.md',
+    'Diary-DESKTOP-AB12CD3.md',
+  ]
+
+  test('is locked with the note, and opens with it', () => {
+    protection.set(ROOT, at('Diary.md'), 'password')
+    for (const name of copies) {
+      expect(protection.locked(at(name))).toBe(true)
+      expect(protection.covering(at(name))).toEqual([
+        { root: ROOT, key: 'Diary.md', way: 'password' },
+      ])
+    }
+    expect(protection.locked(at('Diary 2.md'))).toBe(false)
+    expect(protection.locked(at('Plans (conflicted copy 2026-11-08 101010).md'))).toBe(false)
+    unlocks.unlock(protection.covering(at(copies[0] ?? '')))
+    expect(protection.locked(at('Diary.md'))).toBe(false)
+    unlocks.lockAll()
+  })
+
+  test('of a protected folder is locked, with everything in it', () => {
+    protection.set(ROOT, at('Inside'), 'device')
+    expect(protection.locked(at('Inside (conflicted copy 2026-11-08 101010)/a.md'))).toBe(true)
+    expect(protection.locked(at('Inside/a.sync-conflict-20261108-101010-ABCDEFG.md'))).toBe(true)
+    expect(protection.covering(at('Inside/b (conflicted copy 2026-11-08 101010).md'))).toEqual([
+      { root: ROOT, key: 'Inside', way: 'device' },
+    ])
+  })
+
+  test('is told once, when it lies under the same lock as its note', () => {
+    protection.set(ROOT, at('Inside'), 'device')
+    protection.set(ROOT, at('Inside/Diary.md'), 'password')
+    expect(protection.covering(at('Inside/Diary (conflicted copy 2026-11-08 101010).md'))).toEqual([
+      { root: ROOT, key: 'Inside', way: 'device' },
+      { root: ROOT, key: 'Inside/Diary.md', way: 'password' },
+    ])
+  })
+})

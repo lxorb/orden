@@ -1,3 +1,4 @@
+import { foreignCopy, inForeignCopy } from '@orden/sync-core/foreign'
 import {
   foldsIn,
   insideItsSpace,
@@ -5,6 +6,7 @@ import {
   movedTo,
   pathKeyAs,
   relativeTo,
+  samePath,
   within,
 } from '../space-paths'
 import { isRecord, keepJson, parsed, stored } from '../stored'
@@ -102,6 +104,14 @@ interface Shut {
   keys: { key: string; under: string }[]
 }
 
+function copiedFrom(path: string): string | null {
+  if (!inForeignCopy(path)) return null
+  return path
+    .split(/([\\/])/)
+    .map((part) => foreignCopy(part)?.original ?? part)
+    .join('')
+}
+
 function covers(key: string, at: string, root: string): boolean {
   return key === SPACE || within(key, at, root) !== null
 }
@@ -146,6 +156,11 @@ export class Protection {
     if (!path) return false
     const shut = this.shutNow()
     if (!shut.length) return false
+    const original = copiedFrom(path)
+    return this.shutAt(shut, path) || (original !== null && this.shutAt(shut, original))
+  }
+
+  private shutAt(shut: Shut[], path: string): boolean {
     const exact = pathKeyAs(path, false)
     let folded: string | null = null
     return shut.some(({ folds, keys }) => {
@@ -210,6 +225,16 @@ export class Protection {
   }
 
   covering(path: string): Lock[] {
+    const original = copiedFrom(path)
+    const own = this.coveringAt(path)
+    if (original === null) return own
+    const more = this.coveringAt(original).filter(
+      (one) => !own.some((mine) => mine.key === one.key && samePath(mine.root, one.root)),
+    )
+    return [...own, ...more]
+  }
+
+  private coveringAt(path: string): Lock[] {
     const out: Lock[] = []
     for (const [root, kept] of Object.entries(this.spaces)) {
       const at = within(root, path, root)
