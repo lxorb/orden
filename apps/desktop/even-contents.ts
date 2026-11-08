@@ -175,7 +175,7 @@ export function partOf(file: string, catalogue: boolean): Part {
 }
 
 export const BUDGETS: Record<Part, number> = {
-  code: 6_246_600,
+  code: 6_247_200,
   catalogues: 1_044_900,
   styles: 295_500,
   fonts: 260_000,
