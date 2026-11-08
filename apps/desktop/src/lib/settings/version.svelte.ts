@@ -25,7 +25,7 @@ class Version {
 
   said(): string {
     const channel = this.channel()
-    return channel ? `${this.which()} · ${channel}` : this.which()
+    return channel ? `${this.which()}, ${channel}` : this.which()
   }
 
   async copy(): Promise<void> {

@@ -2424,7 +2424,7 @@ export const gsw: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} im Monet',
   'Starts again {date}': 'Fangt am {date} wieder aa',
-  '{tool} conflict copy · not synced': '{tool}-Konfliktkopie · nöd synchronisiert',
+  '{tool} conflict copy, not synced': '{tool}-Konfliktkopie, nöd synchronisiert',
   'Compare with original': 'Mit em Original verglyche',
   'Conflict copies from other apps': 'Konfliktkopie vo andere Apps',
   'Remove from sync': 'Us em Sync näh',

@@ -25,8 +25,8 @@ test('another sync tool’s copy says which tool, and that it is not synced', ()
   draw('/home/emil/Nib/Plan.sync-conflict-20231012-143052-CEIVOCO.md')
 
   expect(labels()).toEqual([
-    'Proton conflict copy · not synced',
-    'Syncthing conflict copy · not synced',
+    'Proton conflict copy, not synced',
+    'Syncthing conflict copy, not synced',
   ])
   expect(marks.querySelectorAll('.foreign')).toHaveLength(2)
 })

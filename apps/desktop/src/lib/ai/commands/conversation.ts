@@ -64,7 +64,7 @@ export async function exportThread(host: Host, thread: Thread, name: string): Pr
   if (path) await workspace.open(path)
   else {
     const why = root ? t('you can only read this space') : t('no such space')
-    host.line(thread, `${t('Save as a note')} · ${why}`)
+    host.line(thread, `${t('Save as a note')}: ${why}`)
   }
 }
 
@@ -84,7 +84,7 @@ export function autocompact(host: Host, thread: Thread, args: string): void {
     host.touched(thread)
   }
   const at = compactsAt(thread.usage.window, thread.autocompact ?? 'auto')
-  host.line(thread, `◔ ${thread.autocompact ?? 'auto'}${at ? ` · ${tokens(at)}` : ''}`)
+  host.line(thread, `◔ ${thread.autocompact ?? 'auto'}${at ? `, ${tokens(at)}` : ''}`)
 }
 
 const GLYPH: Record<TaskKind, string> = {
@@ -100,7 +100,7 @@ export function listJobs(host: Host, thread: Thread): void {
   const now = Date.now()
   const rows = tasks.of(thread.id).map((one) => {
     const minutes = Math.round((now - one.started) / 60_000)
-    return `${GLYPH[one.kind]} ${one.label.split('\n')[0]?.slice(0, 80) ?? ''} · ${minutes}m`
+    return `${GLYPH[one.kind]} ${one.label.split('\n')[0]?.slice(0, 80) ?? ''}, ${minutes}m`
   })
   host.line(thread, rows.join('\n') || '∅')
 }

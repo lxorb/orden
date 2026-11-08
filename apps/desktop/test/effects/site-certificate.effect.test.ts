@@ -84,14 +84,17 @@ test('pressing the secure connection line shows the whole chain, site first, up 
 
   const steps = [...target.querySelectorAll<HTMLButtonElement>('.chain button')]
   expect(steps.map((one) => one.dataset.role)).toEqual(['site', 'intermediate', 'root'])
-  expect(steps.map((one) => one.querySelector('.name')?.textContent)).toEqual([
-    'example.com',
-    "R3 · Let's Encrypt",
-    'ISRG Root X1 · Internet Security Research Group',
+  expect(
+    steps.map((one) => [...one.querySelectorAll('.name .fact')].map((fact) => fact.textContent)),
+  ).toEqual([
+    ['example.com'],
+    ['R3', "Let's Encrypt"],
+    ['ISRG Root X1', 'Internet Security Research Group'],
   ])
 
   expect(text('.details')).toContain('example.com')
-  expect(text('.details')).toContain("R3 · Let's Encrypt")
+  expect(text('.details')).toContain('R3')
+  expect(text('.details')).toContain("Let's Encrypt")
   expect(text('.details')).toContain('example.com-fingerprint')
   expect(text('.details')).toContain('01:02')
 

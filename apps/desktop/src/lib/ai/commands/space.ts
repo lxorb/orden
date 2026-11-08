@@ -20,7 +20,7 @@ export async function memory(host: Host, thread: Thread | null, args: string): P
   const word = args.trim().toLowerCase()
   if (word === 'on' || word === 'off') {
     setRemembers(word === 'on')
-    if (thread) host.line(thread, `${t('Memory')} · ${word === 'on' ? '✓' : '✕'}`)
+    if (thread) host.line(thread, `${t('Memory')}: ${word === 'on' ? '✓' : '✕'}`)
     return
   }
   const root = rootOf(thread)

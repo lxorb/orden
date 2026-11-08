@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from './Facts.svelte'
   import { tick, untrack } from 'svelte'
   import { typeAhead } from './palette/type-ahead'
   import { cubicOut } from 'svelte/easing'
@@ -280,7 +281,7 @@
     }
   }
 
-  function whereOf(row: Row): string | null {
+  function whereOf(row: Row): string | readonly string[] | null {
     switch (row.kind) {
       case 'note':
       case 'tab': {
@@ -622,7 +623,12 @@
                     >{:else}{piece.text}{/if}{/each}</span
               >
               {#if row.kind === 'tab' && unsavedTab(row)}<UnsavedDot />{/if}
-              {#if where}<span class="where">{where}</span>{/if}
+              {#if where}<span class="where"
+                  >{#if typeof where === 'string'}{where}{:else}<Facts
+                      line
+                      parts={where}
+                    />{/if}</span
+                >{/if}
               {#if row.kind === 'setting' && row.setting.field?.kind === 'switch'}
                 <span class="flip" aria-hidden="true"
                   ><span class="orden-switch" class:on={row.setting.field.get()}></span></span

@@ -8,7 +8,7 @@ import { engineFor } from '../chat/engine'
 function rows(pairs: readonly (readonly [string, string | number | null | undefined])[]): string {
   return pairs
     .filter(([, value]) => value !== null && value !== undefined && value !== '')
-    .map(([word, value]) => `${word} · ${value}`)
+    .map(([word, value]) => `${word}: ${value}`)
     .join('\n')
 }
 
@@ -38,12 +38,12 @@ export async function status(thread: Thread | null, provider: Provider | null): 
   return rows([
     [
       t('Provider'),
-      `${KIND_NAMES[provider.kind]}${provider.name !== KIND_NAMES[provider.kind] ? ` · ${provider.name}` : ''}`,
+      `${KIND_NAMES[provider.kind]}${provider.name !== KIND_NAMES[provider.kind] ? `, ${provider.name}` : ''}`,
     ],
-    [t('Model'), [thread?.model ?? provider.model, thread?.effort].filter(Boolean).join(' · ')],
+    [t('Model'), [thread?.model ?? provider.model, thread?.effort].filter(Boolean).join(', ')],
     [t('Mode'), thread?.mode],
-    [t('Account'), [plan, account].filter(Boolean).join(' · ')],
-    [t('Agents'), `Orden · ${provider.name}`],
+    [t('Account'), [plan, account].filter(Boolean).join(', ')],
+    [t('Agents'), `Orden ${provider.name}`],
     [t('Version'), __APP_VERSION__],
   ])
 }
@@ -69,7 +69,7 @@ export async function usage(thread: Thread | null, provider: Provider | null): P
         thread && window ? `${tokens(filled(thread.usage))} / ${tokens(window)}` : null,
       ],
       [t('Cost'), spent?.cost !== undefined ? `$${spent.cost.toFixed(4)}` : null],
-      [t('Account'), standing.filter(Boolean).join(' · ')],
+      [t('Account'), standing.filter(Boolean).join(', ')],
     ]) || '∅'
   )
 }

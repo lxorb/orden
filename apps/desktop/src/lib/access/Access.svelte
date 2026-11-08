@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../Facts.svelte'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { account } from '../account.svelte'
@@ -148,9 +149,12 @@
                 <span class="name">
                   {grant.name}
                   <small>
-                    {grant.client !== grant.name ? `${grant.client} · ` : ''}{when(
-                      pane?.last.get(grant.id),
-                    )}
+                    <Facts
+                      parts={[
+                        grant.client !== grant.name && grant.client,
+                        when(pane?.last.get(grant.id)),
+                      ]}
+                    />
                   </small>
                 </span>
                 <svg class="chevron orden-mirror" viewBox="0 0 16 16" aria-hidden="true"

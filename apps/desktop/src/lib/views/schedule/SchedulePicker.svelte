@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../../Facts.svelte'
   import { addDays, addMonths } from '@orden/bases'
   import { dayWords, timeWords } from '@orden/editor/task-days'
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
@@ -175,13 +176,13 @@
     }
   }
 
-  function previewWords(when: Scheduled): string {
+  function previewWords(when: Scheduled): string[] {
     const parts: string[] = []
     if (when.due) parts.push(dayWords(when.due, today, when.time ?? undefined))
     else if (when.time) parts.push(timeWords(when.time))
     if (when.minutes) parts.push(durationLabel(when.minutes))
     if (when.recurrence) parts.push(`↻ ${when.recurrence}`)
-    return parts.join(' · ')
+    return parts
   }
 </script>
 
@@ -218,7 +219,7 @@
     {#if preview}
       <button type="button" class="orden-row is-short preview" onclick={() => pick(preview)}>
         <span class="orden-row-mark"><Glyph icon={Calendar} /></span>
-        <span class="orden-row-label">{previewWords(preview)}</span>
+        <span class="orden-row-label"><Facts line parts={previewWords(preview)} /></span>
       </button>
     {/if}
   </div>
@@ -307,10 +308,12 @@
         onclick={() => (open = open === 'time' ? null : 'time')}
       >
         <Glyph icon={Clock} />
-        <span
-          >{time === undefined ? t('Time') : timeWords(time)}{#if duration !== undefined}
-            · {durationLabel(duration)}{/if}</span
-        >
+        <Facts
+          parts={[
+            time === undefined ? t('Time') : timeWords(time),
+            duration !== undefined && durationLabel(duration),
+          ]}
+        />
       </button>
       <button
         type="button"

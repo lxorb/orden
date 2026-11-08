@@ -99,7 +99,6 @@
               >
               <span class="meta">
                 <span data-expires>{over ? t('Expired') : expiresIn(link.expires, now)}</span>
-                <span aria-hidden="true">·</span>
                 <span data-views>{viewsWord(link)}</span>
               </span>
             </span>
@@ -175,7 +174,8 @@
 
   .meta {
     display: flex;
-    gap: var(--space-1);
+    flex-wrap: wrap;
+    column-gap: var(--space-2);
     color: var(--muted);
     font-size: var(--text-sm);
   }

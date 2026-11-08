@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from './Facts.svelte'
   import { cubicOut } from 'svelte/easing'
   import { relativeStep } from './ago'
   import { i18n, plural, t } from './i18n.svelte'
@@ -27,15 +28,13 @@
     return Math.max(1, Math.ceil((item.purgeAt - Date.now()) / DAY))
   }
 
-  function meta(item: TrashItem): string {
+  function meta(item: TrashItem): string[] {
     return [
       item.detail,
       t('deleted {when}', { when: ago(item.deletedAt) }),
       plural(daysLeft(item), { one: 'gone in {count} day', other: 'gone in {count} days' }),
       item.source === 'device' ? t('on this device') : '',
     ]
-      .filter(Boolean)
-      .join(' · ')
   }
 </script>
 
@@ -45,7 +44,7 @@
       <div class="row" transition:slide={{ duration: dur(180), easing: cubicOut }}>
         <div class="name">
           <span class="title">{rowName(item.name, item.kind !== 'note')}</span>
-          <small>{meta(item)}</small>
+          <small><Facts parts={meta(item)} /></small>
         </div>
         <button
           class="quiet"

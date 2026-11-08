@@ -21,7 +21,7 @@ export async function clipPage(
   const path = root ? await workspace.noteFrom(await clipNote(page, new Date()), root) : null
   if (path === null) {
     const why = root ? t('you can only read this space') : t('no such space')
-    pages.of(tabId).notice = `${t('Save as a note')} · ${why}`
+    pages.of(tabId).notice = `${t('Save as a note')}: ${why}`
   }
   return path
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from './Facts.svelte'
   import { busy } from './busy.svelte'
   import Sweep from './Sweep.svelte'
 
@@ -26,7 +27,7 @@
   <div class="track" role="status" data-covers aria-label={busy.label ?? undefined}>
     <Sweep />
     {#if busy.told}
-      <p class="said told">{busy.label} · {busy.told}</p>
+      <p class="said told"><Facts parts={[busy.label, busy.told]} /></p>
     {/if}
   </div>
 {/if}

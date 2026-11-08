@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from './Facts.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { cubicOut } from 'svelte/easing'
   import { plural, t } from './i18n.svelte'
@@ -194,10 +195,7 @@
               <div class="label">
                 <span class="who">
                   <span class="name">{one.name}</span>
-                  <span class="by"
-                    >{one.author}{#if mood}
-                      · {mood}{/if}</span
-                  >
+                  <span class="by"><Facts line parts={[one.author, mood]} /></span>
                 </span>
                 {@render mark(one)}
               </div>

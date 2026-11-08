@@ -2373,7 +2373,7 @@ export const am: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} በወር',
   'Starts again {date}': '{date} እንደገና ይጀምራል',
-  '{tool} conflict copy · not synced': '{tool} የግጭት ቅጂ · አልተመሳሰለም',
+  '{tool} conflict copy, not synced': '{tool} የግጭት ቅጂ፣ አልተመሳሰለም',
   'Compare with original': 'ከዋናው ጋር አወዳድር',
   'Conflict copies from other apps': 'ከሌሎች መተግበሪያዎች የመጡ የግጭት ቅጂዎች',
   'Remove from sync': 'ከማመሳሰል አስወግድ',

@@ -3,10 +3,10 @@ import type { Tab } from '../workspace.svelte'
 
 const EVERY = 1000
 
-export function usageLine(usage: Usage, size: (bytes: number) => string): string {
+export function usageLine(usage: Usage, size: (bytes: number) => string): string[] {
   const parts = [`CPU ${Math.round(usage.cpu)}%`, `RAM ${size(usage.memory)}`]
   if (usage.gpu !== undefined) parts.push(`GPU ${Math.round(usage.gpu)}%`)
-  return parts.join(' · ')
+  return parts
 }
 
 export function streamLine(stream: {
@@ -16,7 +16,7 @@ export function streamLine(stream: {
   bitrate: number | null
   rtt: number | null
   encoder: string | null
-}): string {
+}): string[] {
   const parts: string[] = []
   if (stream.width !== null && stream.height !== null)
     parts.push(`${stream.width}×${stream.height}`)
@@ -24,10 +24,10 @@ export function streamLine(stream: {
   if (stream.bitrate !== null) parts.push(`${(stream.bitrate / 1e6).toFixed(1)} Mb/s`)
   if (stream.rtt !== null) parts.push(`${Math.round(stream.rtt)} ms`)
   if (stream.encoder) parts.push(stream.encoder)
-  return parts.join(' · ')
+  return parts
 }
 
-export function watchFacts(tab: Tab, said: (lines: string[]) => void): () => void {
+export function watchFacts(tab: Tab, said: (lines: string[][]) => void): () => void {
   if (tab.kind !== 'application' && tab.kind !== 'terminal') return () => undefined
   let over = false
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -37,19 +37,19 @@ export function watchFacts(tab: Tab, said: (lines: string[]) => void): () => voi
       import('../i18n.svelte'),
       import('../usage.svelte'),
     ])
-    const lines: string[] = []
+    const lines: string[][] = []
     if (tab.kind === 'application') {
       const { appSessionIfAny } = await import('../apps/session.svelte')
       const session = appSessionIfAny(tab)
       if (session) {
         release ??= session.picture.hold()
-        if (session.hostName) lines.push(t('Running on {device}', { device: session.hostName }))
+        if (session.hostName) lines.push([t('Running on {device}', { device: session.hostName })])
         const usage = session.picture.usage
         if (usage) lines.push(usageLine(usage, readableSize))
         const stats = session.picture.stats
         if (stats) {
           const line = streamLine({ ...stats, encoder: session.picture.encoder?.name ?? null })
-          if (line) lines.push(line)
+          if (line.length) lines.push(line)
         }
       }
     } else {

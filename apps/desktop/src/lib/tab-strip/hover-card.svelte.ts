@@ -35,7 +35,7 @@ const FACTS_TALL = 48
 
 class Hovering {
   card = $state<Shown | null>(null)
-  facts = $state<string[]>([])
+  facts = $state<string[][]>([])
   private unwatch: { id: string; stop: () => void } | null = null
 
   private aim: Aim | null = null

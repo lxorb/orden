@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../../Facts.svelte'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from '../../i18n.svelte'
@@ -38,10 +39,10 @@
       : all
   })
 
-  const label = $derived.by(() => {
-    if (!head) return ''
+  const label = $derived.by((): string[] => {
+    if (!head) return []
     const name = [model?.name, head.model, provider?.name].find(Boolean) ?? ''
-    return head.effort === 'auto' ? name : `${name} · ${t(effortWord(head.effort))}`
+    return head.effort === 'auto' ? [name] : [name, t(effortWord(head.effort))]
   })
 
   $effect(() => {
@@ -99,7 +100,9 @@
     title={t('Model and effort')}
     onclick={toggle}
   >
-    <span dir="auto">{label || t('Model')}</span>
+    <span dir="auto"
+      >{#if label.some(Boolean)}<Facts line parts={label} />{:else}{t('Model')}{/if}</span
+    >
     <svg viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
   </button>
 

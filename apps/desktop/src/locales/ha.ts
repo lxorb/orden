@@ -2444,7 +2444,7 @@ export const ha: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} a wata',
   'Starts again {date}': 'Zai sake farawa {date}',
-  '{tool} conflict copy · not synced': 'Kwafin rikici na {tool} · ba a daidaita ba',
+  '{tool} conflict copy, not synced': 'Kwafin rikici na {tool}, ba a daidaita ba',
   'Compare with original': 'Kwatanta da na asali',
   'Conflict copies from other apps': 'Kwafin rikici daga wasu manhajoji',
   'Remove from sync': 'Cire daga daidaitawa',

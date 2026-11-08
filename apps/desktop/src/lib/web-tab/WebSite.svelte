@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../Facts.svelte'
   import { cubicOut } from 'svelte/easing'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
@@ -95,8 +96,7 @@
 
   const secure = $derived(certificate ? certificate.secure : https)
 
-  const named = (party: Party) =>
-    [party.name, ...party.organization].filter((one) => one !== '').join(' · ')
+  const named = (party: Party) => [party.name, ...party.organization]
   const day = (when: number) => i18n.when(when, { dateStyle: 'long' })
   const said = $derived(grants.of(site, privately))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
@@ -160,7 +160,7 @@
                 onclick={() => (chosen = index)}
               >
                 <span class="role">{ROLES[role(link, index)]()}</span>
-                <span class="name">{named(link.to)}</span>
+                <span class="name"><Facts parts={named(link.to)} /></span>
               </button>
             </li>
           {/each}
@@ -174,9 +174,9 @@
         {/if}
         <dl class="details">
           <dt>{t('Issued to')}</dt>
-          <dd>{named(shown.to)}</dd>
+          <dd><Facts parts={named(shown.to)} /></dd>
           <dt>{t('Issued by')}</dt>
-          <dd>{named(shown.by)}</dd>
+          <dd><Facts parts={named(shown.by)} /></dd>
           <dt>{t('Valid from')}</dt>
           <dd>{day(shown.from)}</dd>
           <dt>{t('Valid until')}</dt>

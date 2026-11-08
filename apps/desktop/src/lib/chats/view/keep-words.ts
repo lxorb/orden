@@ -25,7 +25,7 @@ export function noteNameOf(body: string, fallback: string): string {
 
 export function quoted(who: string, at: string, body: string, files: readonly string[]): string {
   const lines = [
-    `**${who}** · ${at}`,
+    `**${who}** ${at}`,
     ...(body ? body.split('\n') : []),
     ...files.map((one) => `![[${one}]]`),
   ]

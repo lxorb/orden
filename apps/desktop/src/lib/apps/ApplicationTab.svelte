@@ -420,18 +420,26 @@
     {@const encoder = session.picture.encoder}
     <div class="stats">
       <p>
-        {figure(stats?.width)}×{figure(stats?.height)} · {figure(stats?.fps)} fps · {figure(
-          stats?.bitrate == null ? null : stats.bitrate / 1e6,
-          1,
-        )} Mb/s
+        <span>{figure(stats?.width)}×{figure(stats?.height)}</span>
+        <span>{figure(stats?.fps)} fps</span>
+        <span>{figure(stats?.bitrate == null ? null : stats.bitrate / 1e6, 1)} Mb/s</span>
       </p>
       <p>{t('Glass to glass')} {figure(session.picture.latency)} ms</p>
-      <p>{t('Round trip')} {figure(stats?.rtt)} ms · {stats?.route ?? '–'}</p>
-      <p>{t('Frame pacing')} ±{figure(stats?.pacing, 1)} ms</p>
-      <p>{t('Dropped')} {stats?.dropped ?? 0} · {t('Lost')} {stats?.lost ?? 0}</p>
       <p>
-        {stats?.codec ?? '–'} · {encoder?.name ?? '–'}
-        {#if encoder}({encoder.hardware ? t('Hardware') : t('Software')}){/if}
+        <span>{t('Round trip')} {figure(stats?.rtt)} ms</span>
+        <span>{stats?.route ?? '–'}</span>
+      </p>
+      <p>{t('Frame pacing')} ±{figure(stats?.pacing, 1)} ms</p>
+      <p>
+        <span>{t('Dropped')} {stats?.dropped ?? 0}</span>
+        <span>{t('Lost')} {stats?.lost ?? 0}</span>
+      </p>
+      <p>
+        <span>{stats?.codec ?? '–'}</span>
+        <span
+          >{encoder?.name ?? '–'}
+          {#if encoder}({encoder.hardware ? t('Hardware') : t('Software')}){/if}</span
+        >
       </p>
     </div>
   {/if}
@@ -548,6 +556,9 @@
   }
 
   .stats p {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: var(--space-2);
     color: var(--text-strong);
     font-family: var(--font-mono);
     font-size: var(--text-xs);

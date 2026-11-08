@@ -3,6 +3,7 @@
   import { api } from './api'
   import { amount, plural, t } from './i18n.svelte'
   import { when } from './when'
+  import Facts from './Facts.svelte'
   import { log } from './log'
   import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from './modes.svelte'
   import { dur, fade } from './motion'
@@ -298,13 +299,13 @@
           {#if pass.failed}
             {t(pass.failed)}
           {:else}
-            {[
-              pass.pulled ? t('{count} down', { count: pass.pulled }) : '',
-              pass.pushed ? t('{count} up', { count: pass.pushed }) : '',
-              pass.clashed ? t('{count} waiting', { count: pass.clashed }) : '',
-            ]
-              .filter(Boolean)
-              .join(' · ')}
+            <Facts
+              parts={[
+                pass.pulled ? t('{count} down', { count: pass.pulled }) : '',
+                pass.pushed ? t('{count} up', { count: pass.pushed }) : '',
+                pass.clashed ? t('{count} waiting', { count: pass.clashed }) : '',
+              ]}
+            />
           {/if}
         </span>
         <span class="where">{pass.space}</span>

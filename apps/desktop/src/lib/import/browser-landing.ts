@@ -37,7 +37,7 @@ const KEPT: Partial<Record<BrowserId, Lost>> = {
 
 export async function landBrowser(profile: BrowserProfile, several: boolean): Promise<Space> {
   const browser = BROWSER_NAMES[profile.browser]
-  const name = several ? `${browser} · ${profile.name}` : browser
+  const name = several ? `${browser} (${profile.name})` : browser
   const firefox = profile.browser === 'firefox'
   const nothing = t('Nothing could be read out of {browser}.', { browser })
   const read = await readProfile(profile, name)

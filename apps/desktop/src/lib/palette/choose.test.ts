@@ -249,7 +249,7 @@ describe('a message in a chat', () => {
       id: '01K6Z8',
       path: '/s/Team/thesis.chat',
       line: 'the figures',
-      where: '#thesis · Lucile',
+      where: ['#thesis', 'Lucile'],
     }
     expect(choose(row, undefined, hand)).toBe('close')
     expect(choose(row, key({ ctrl: true }), hand)).toBe('close')

@@ -130,7 +130,7 @@ export function notesIn(rows: readonly Row[]): { path: string; name: string }[] 
   return [...seen]
     .map(([path, { space, name }]) => ({
       path,
-      name: many && (named.get(name) ?? 0) > 1 ? `${name} · ${space}` : name,
+      name: many && (named.get(name) ?? 0) > 1 ? `${name} (${space})` : name,
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
 }

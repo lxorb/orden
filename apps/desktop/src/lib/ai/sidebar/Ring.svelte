@@ -33,8 +33,8 @@
     if (!bands) return ''
     const used = bands.window ? `${say(bands.used)} / ${say(bands.window)}` : say(bands.used)
     const spent = chat.thread?.spent
-    const cost = spent?.cost === undefined ? '' : ` · $${spent.cost.toFixed(2)}`
-    return spent ? `${used} · ↑${say(spent.input)} ↓${say(spent.output)}${cost}` : used
+    const cost = spent?.cost === undefined ? '' : `, $${spent.cost.toFixed(2)}`
+    return spent ? `${used}, ↑${say(spent.input)} ↓${say(spent.output)}${cost}` : used
   })
 
   const R = 5.25

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../Facts.svelte'
   import { i18n, t } from '../i18n.svelte'
   import { diskNear, diskShare, shares } from '@orden/online'
   import { prompt } from '../prompt.svelte'
@@ -34,7 +35,7 @@
   const when = (stamp: number) => i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
 
   const detail = (row: SessionRow) =>
-    [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null).join(' · ')
+    [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null)
 
   async function open(path: string) {
     const space = workspace.spaces.find((one) => within(one.root, path) !== null)
@@ -81,7 +82,7 @@
       }).format(about.price)
       parts.push(t('{price} a month', { price }))
     }
-    return parts.map((part) => part.replaceAll(' ', '\u00a0')).join('\u00a0· ')
+    return parts.map((part) => part.replaceAll(' ', '\u00a0'))
   })
 
   const stateWords = $derived(
@@ -163,7 +164,7 @@
       <div class="orden-setting setting">
         <span class="name">
           {t('Machine')}
-          {#if spec}<small>{spec}</small>{/if}
+          {#if spec}<small><Facts parts={spec} /></small>{/if}
         </span>
         <div class="row">
           <span class="hint">{stateWords}</span>
@@ -185,7 +186,7 @@
         <div class="orden-setting setting">
           <span class="name">
             {row.name ?? t('Terminal')}
-            {#if detail(row)}<small>{detail(row)}</small>{/if}
+            {#if detail(row).length}<small><Facts parts={detail(row)} /></small>{/if}
           </span>
           <div class="row">
             {#if file}

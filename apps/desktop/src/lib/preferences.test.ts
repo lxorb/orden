@@ -228,7 +228,7 @@ describe('the release channel', () => {
     const general = desktop.find((one) => one.id === 'general')
     const group = general?.groups.find((one) => one.fields.some((field) => field === row()))
     expect(group?.fields.map((one) => one.label)).toEqual(['Release channel', 'Version'])
-    expect(group?.fields.at(-1)?.get()).toBe('under test · Stable')
+    expect(group?.fields.at(-1)?.get()).toBe('under test, Stable')
   })
 
   test('stands in for the web version, which the desktop app has no use for', () => {
@@ -306,7 +306,7 @@ describe('the version', () => {
     const last = group?.fields.at(-1)
     expect(last?.label).toBe('Version')
     expect(last?.kind).toBe('value')
-    expect(last?.get()).toBe('under test (c0ffee1) · Stable')
+    expect(last?.get()).toBe('under test (c0ffee1), Stable')
     expect(last?.words).toEqual(expect.arrayContaining(['version', 'about']))
   })
 })

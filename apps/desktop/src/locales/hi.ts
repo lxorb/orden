@@ -2409,7 +2409,7 @@ export const hi: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} प्रति माह',
   'Starts again {date}': '{date} को फिर शुरू होगा',
-  '{tool} conflict copy · not synced': '{tool} टकराव प्रति · सिंक नहीं',
+  '{tool} conflict copy, not synced': '{tool} टकराव प्रति, सिंक नहीं',
   'Compare with original': 'मूल से तुलना करें',
   'Conflict copies from other apps': 'अन्य ऐप्स की टकराव प्रतियाँ',
   'Remove from sync': 'सिंक से हटाएँ',

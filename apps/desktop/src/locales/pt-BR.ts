@@ -2459,7 +2459,7 @@ export const ptBR: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} por mês',
   'Starts again {date}': 'Renova em {date}',
-  '{tool} conflict copy · not synced': 'Cópia em conflito do {tool} · não sincronizada',
+  '{tool} conflict copy, not synced': 'Cópia em conflito do {tool}, não sincronizada',
   'Compare with original': 'Comparar com o original',
   'Conflict copies from other apps': 'Cópias em conflito de outros apps',
   'Remove from sync': 'Tirar da sincronização',

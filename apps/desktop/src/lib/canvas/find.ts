@@ -3,6 +3,7 @@ import type { Canvas } from './format'
 export interface Found {
   id: string
   says: string
+  paper?: number
 }
 
 const SHOWN = 60

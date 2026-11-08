@@ -48,7 +48,7 @@
     aria-label={t('Calculate')}
     title={t('Calculate')}
     onclick={oncount}
-    >{count}{#each sums as sum, at (at)}<span class="sum"> · {sum}</span>{/each}</button
+    >{count}{#each sums as sum, at (at)}<span class="sum">{sum}</span>{/each}</button
   >
   <span class="spring"></span>
   <button
@@ -184,6 +184,7 @@
   }
 
   .sum {
+    margin-inline-start: var(--space-2);
     white-space: nowrap;
   }
 

@@ -36,4 +36,11 @@ export type Row =
   | { kind: 'host'; host: Host }
   | { kind: 'group'; group: string; hosts: readonly Host[] }
   | { kind: 'connect'; wanted: Destination; said: string }
-  | { kind: 'message'; chat: string; id: string; path: string; line: string; where: string }
+  | {
+      kind: 'message'
+      chat: string
+      id: string
+      path: string
+      line: string
+      where: readonly string[]
+    }

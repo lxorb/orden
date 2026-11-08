@@ -801,7 +801,7 @@ describe('a note made of a thread', () => {
 
     expect(place.noteFrom).toHaveBeenCalledTimes(1)
     await vi.waitFor(() =>
-      expect(said(chat)).toEqual(['Save as a note · you can only read this space']),
+      expect(said(chat)).toEqual(['Save as a note: you can only read this space']),
     )
   })
 
@@ -812,7 +812,7 @@ describe('a note made of a thread', () => {
     await chat.noteFrom('# Answer\n')
 
     expect(place.noteFrom).not.toHaveBeenCalled()
-    await vi.waitFor(() => expect(said(chat)).toEqual(['Save as a note · no such space']))
+    await vi.waitFor(() => expect(said(chat)).toEqual(['Save as a note: no such space']))
   })
 })
 

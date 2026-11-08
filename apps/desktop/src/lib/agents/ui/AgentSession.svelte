@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../../Facts.svelte'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from '../../i18n.svelte'
@@ -42,7 +43,7 @@
     if (word === null) return null
 
     const about = last.tab === null ? null : titleOf(last.tab)
-    return about ? `${word} · ${about}` : word
+    return [word, about]
   })
 
   const latest = $derived(activity.seen.doing[agent]?.at ?? 0)
@@ -79,7 +80,7 @@
       <span class="name">{name}</span>
       {#if doing}
         <span class="doing" transition:slide={{ duration: dur(140), easing: cubicOut }}>
-          {doing}
+          <Facts line parts={doing} />
         </span>
       {/if}
     </div>

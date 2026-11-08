@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../Facts.svelte'
   import { cubicOut } from 'svelte/easing'
   import { dur, fade, fly } from '../motion'
   import SpaceMark from '../SpaceMark.svelte'
@@ -6,7 +7,8 @@
 
   const {
     hovering,
-  }: { hovering: { readonly card: Shown | null; readonly facts: readonly string[] } } = $props()
+  }: { hovering: { readonly card: Shown | null; readonly facts: readonly (readonly string[])[] } } =
+    $props()
 
   const card = $derived(hovering.card)
 </script>
@@ -34,8 +36,8 @@
             {/if}
           </span>
         {/if}
-        {#each hovering.facts as fact (fact)}
-          <span class="fact">{fact}</span>
+        {#each hovering.facts as fact, at (at)}
+          <span class="fact"><Facts parts={fact} /></span>
         {/each}
       </div>
     {/key}

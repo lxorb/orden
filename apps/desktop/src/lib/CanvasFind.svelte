@@ -127,7 +127,7 @@
             field?.focus()
           }}
         >
-          {one.says}
+          {#if one.paper !== undefined}<span class="paper">{one.paper}</span>{/if}{one.says}
         </button>
       </li>
     {/each}
@@ -215,6 +215,12 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .paper {
+    margin-inline-end: var(--space-2);
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
   }
 
   .hits button.on {
