@@ -51,20 +51,19 @@ async function withinTheDay(env: Env, address: string): Promise<boolean> {
 
   await env.DB.prepare('delete from mailed_days where day < ?').bind(day).run()
 
-  const counted = await env.DB.prepare(
-    `select count(*) as many, sum(case when email = ?2 then 1 else 0 end) as held
-       from mailed_days where day = ?1`,
+  const added = await env.DB.prepare(
+    `insert into mailed_days (day, email)
+     select ?1, ?2 where (select count(*) from mailed_days where day = ?1) < ?3
+     on conflict do nothing`,
   )
-    .bind(day, address)
-    .first<{ many: number; held: number | null }>()
-
-  if (!counted?.held && (counted?.many ?? 0) >= ADDRESSES_A_DAY) return false
-
-  await env.DB.prepare('insert into mailed_days (day, email) values (?, ?) on conflict do nothing')
-    .bind(day, address)
+    .bind(day, address, ADDRESSES_A_DAY)
     .run()
+  if (added.meta.changes) return true
 
-  return true
+  const held = await env.DB.prepare('select 1 as one from mailed_days where day = ? and email = ?')
+    .bind(day, address)
+    .first<{ one: number }>()
+  return !!held
 }
 
 const REGISTRATIONS_AN_HOUR = 20

@@ -39,20 +39,14 @@ async function entriesSince(env: Env, userId: string, since: number): Promise<Ti
   }
 }
 
-async function fits(env: Env, userId: string, changes: readonly TimeChange[]): Promise<boolean> {
-  const keys = new Map(changes.map(({ kind, id }) => [`${kind}\u0000${id}`, { kind, id }]))
-  const sent = [...keys.values()]
-  const row = await env.DB.prepare(
-    `select count(*) as held,
-            (select count(*) from time_entries as kept, json_each(?2) as sent
-              where kept.user_id = ?1
-                and kept.kind = json_extract(sent.value, '$.kind')
-                and kept.id = json_extract(sent.value, '$.id')) as known
-       from time_entries where user_id = ?1`,
-  )
-    .bind(userId, JSON.stringify(sent))
-    .first<{ held: number; known: number }>()
-  return (row?.held ?? 0) + sent.length - (row?.known ?? 0) <= MOST_TIME_ENTRIES
+function roomFor(user: string, sent: string, most: string): string {
+  return `((select count(*) from time_entries where user_id = ${user})
+          + (select count(*) from (select distinct json_extract(value, '$.kind') as kind,
+                                                   json_extract(value, '$.id') as id
+                                     from json_each(${sent})) as fresh
+              where not exists (select 1 from time_entries as kept
+                                 where kept.user_id = ${user}
+                                   and kept.kind = fresh.kind and kept.id = fresh.id)) <= ${most})`
 }
 
 async function written(
@@ -60,7 +54,7 @@ async function written(
   userId: string,
   changes: readonly TimeChange[],
   by: string,
-): Promise<number> {
+): Promise<number | 'full'> {
   const many = changes.length
   const at = now()
   const rows = changes.map((one, index) => ({
@@ -69,11 +63,18 @@ async function written(
     value: one.value === null ? null : JSON.stringify(one.value),
     seq: index,
   }))
+  const sent = JSON.stringify(rows)
   const results = await env.DB.batch([
+    env.DB.prepare(`select ${roomFor('?1', '?2', '?3')} as room`).bind(
+      userId,
+      sent,
+      MOST_TIME_ENTRIES,
+    ),
     env.DB.prepare(
-      `insert into time_cursor (user_id, next) values (?1, ?2 + 1)
+      `insert into time_cursor (user_id, next) select ?1, ?2 + 1
+        where ${roomFor('?1', '?3', '?4')}
        on conflict(user_id) do update set next = next + ?2`,
-    ).bind(userId, many),
+    ).bind(userId, many, sent, MOST_TIME_ENTRIES),
     env.DB.prepare(
       `insert into time_entries (user_id, kind, id, value, seq, at, by)
        select ?1, json_extract(value, '$.kind'), json_extract(value, '$.id'),
@@ -81,12 +82,13 @@ async function written(
               (select next from time_cursor where user_id = ?1) - ?4
                 + json_extract(value, '$.seq'),
               ?5, ?2
-         from json_each(?3) where true
+         from json_each(?3) where ${roomFor('?1', '?3', '?6')}
        on conflict(user_id, kind, id) do update
          set value = excluded.value, seq = excluded.seq, at = excluded.at, by = excluded.by`,
-    ).bind(userId, by, JSON.stringify(rows), many, at),
+    ).bind(userId, by, sent, many, at, MOST_TIME_ENTRIES),
     env.DB.prepare('select next - 1 as last from time_cursor where user_id = ?1').bind(userId),
   ])
+  if (!(results[0]?.results[0] as { room?: number } | undefined)?.room) return 'full'
   return (results.at(-1)?.results[0] as { last?: number } | undefined)?.last ?? many
 }
 
@@ -109,8 +111,7 @@ time.post('/', async (context) => {
   if (!(await mayChangeTree(context.env, user))) {
     return context.json({ error: TOO_MANY_CHANGES }, 429)
   }
-  if (!(await fits(context.env, user, changes))) return context.json({ error: TOO_MUCH_TIME }, 413)
-
   const cursor = await written(context.env, user, changes, await deviceOf(context))
+  if (cursor === 'full') return context.json({ error: TOO_MUCH_TIME }, 413)
   return context.json({ cursor })
 })

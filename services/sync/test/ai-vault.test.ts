@@ -415,6 +415,28 @@ describe('the AI vault', () => {
     ).toBe(403)
   })
 
+  test('holds no more devices than an account keeps when two ask at the same moment', async () => {
+    const user = (
+      env.db.prepare("select id from users where email = 'vault@example.com'").get() as {
+        id: string
+      }
+    ).id
+    const add = env.db.prepare(
+      `insert into ai_devices (user_id, id, name, commitment, created_at)
+       values (?, ?, 'held', 'Y29tbWl0', 1)`,
+    )
+    for (let at = 0; at < 29; at++) add.run(user, at.toString(16).padStart(32, '0'))
+    env.justBefore(/insert into ai_devices/, () => {
+      add.run(user, 'f'.repeat(32))
+    })
+
+    const laptop = await aDevice()
+    expect((await register(laptop, 'Laptop')).status).toBe(409)
+    expect(
+      env.db.prepare('select count(*) as n from ai_devices where user_id = ?').get(user),
+    ).toEqual({ n: 30 })
+  })
+
   test('is the account’s alone', async () => {
     const laptop = await first()
     const other = await signIn(env, 'other@example.com')

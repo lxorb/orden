@@ -34,6 +34,22 @@ function countedIn(scope: string): number {
   return row.held
 }
 
+describe('addresses mailed in a day', () => {
+  test('stay at the most when another is mailed at the same moment', async () => {
+    alreadyMailed(499)
+    env.justBefore(/insert into mailed_days/, () => {
+      env.db
+        .prepare('insert into mailed_days (day, email) values (?, ?)')
+        .run(today(), 'quicker@example.com')
+    })
+
+    expect((await askForACode('late@example.com')).status).toBe(429)
+    expect(
+      env.db.prepare('select count(*) as n from mailed_days where day = ?').get(today()),
+    ).toEqual({ n: 500 })
+  })
+})
+
 describe('mail from one machine', () => {
   test('stops at a number of messages an hour', async () => {
     for (let at = 0; at < 20; at++) {

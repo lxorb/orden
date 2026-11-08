@@ -87,6 +87,47 @@ describe('the time an account keeps', () => {
     expect((await write([span('x7', 9)])).status).toBe(200)
   })
 
+  test('lets no record past what it keeps when another arrives at the same moment', async () => {
+    const user = env.db.prepare(`select id from users where email = 'a@b.dev'`).get() as {
+      id: string
+    }
+    env.db
+      .prepare(
+        `with recursive n(i) as (select 1 union all select i + 1 from n where i < ?)
+         insert into time_entries (user_id, kind, id, value, seq, at)
+         select ?, 'span', 'x' || i, '{}', i, 1 from n`,
+      )
+      .run(MOST_TIME_ENTRIES - 1, user.id)
+    env.justBefore(/insert into time_cursor/, () => {
+      env.db
+        .prepare(
+          `insert into time_entries (user_id, kind, id, value, seq, at)
+           values (?, 'span', 'quicker', '{}', 0, 1)`,
+        )
+        .run(user.id)
+    })
+
+    expect((await write([span('fresh'), span('fresh', 2)])).status).toBe(413)
+    expect(
+      env.db.prepare('select count(*) as n from time_entries where user_id = ?').get(user.id),
+    ).toEqual({ n: MOST_TIME_ENTRIES })
+  })
+
+  test('counts a record sent twice in one request once', async () => {
+    const user = env.db.prepare(`select id from users where email = 'a@b.dev'`).get() as {
+      id: string
+    }
+    env.db
+      .prepare(
+        `with recursive n(i) as (select 1 union all select i + 1 from n where i < ?)
+         insert into time_entries (user_id, kind, id, value, seq, at)
+         select ?, 'span', 'x' || i, '{}', i, 1 from n`,
+      )
+      .run(MOST_TIME_ENTRIES - 1, user.id)
+
+    expect((await write([span('fresh'), span('fresh', 2)])).status).toBe(200)
+  })
+
   test('asks to be signed in', async () => {
     expect((await call(env, '/v2/time')).status).toBe(401)
   })
