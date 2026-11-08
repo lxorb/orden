@@ -3,6 +3,7 @@ import { ai } from '../store.svelte'
 import { engineFor, type Setup } from '../chat/engine'
 import type { Engine, Thread } from '../chat/types'
 import { workspace } from '../../workspace.svelte'
+import { protection } from '../../protect/protection.svelte'
 import { fromOthers } from '../commands/found'
 import { instructionsFor } from '../commands/instructions'
 import { untrusted } from '../chat/transcript'
@@ -13,6 +14,7 @@ const INSTRUCTIONS = ['AGENTS.md', 'CLAUDE.md']
 const told = new Map<string, string>()
 
 async function instructionFile(path: string): Promise<string | null> {
+  if (!protection.agentsMay(path)) return null
   const text = await workspace.noteText(path).catch(() => null)
   if (!text?.trim()) return null
   return (await fromOthers(path)) ? untrusted(path, text) : text

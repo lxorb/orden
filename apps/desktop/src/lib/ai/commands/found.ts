@@ -1,5 +1,6 @@
 import { links } from '../../link-index.svelte'
 import type { Query } from '@orden/scan/search/query'
+import { protection } from '../../protect/protection.svelte'
 import { samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import { untrusted } from '../chat/transcript'
@@ -39,6 +40,9 @@ async function ask(root: string, version: number): Promise<NoteCommand[]> {
   return found
 }
 
+const readable = (all: NoteCommand[]): NoteCommand[] =>
+  protection.any ? all.filter((one) => protection.agentsMay(one.path)) : all
+
 export function foundNow(root = workspace.activeSpace?.root): NoteCommand[] {
   if (!root) return []
   const version = samePath(root, workspace.activeSpace?.root) ? links.version : -1
@@ -51,13 +55,14 @@ export function foundNow(root = workspace.activeSpace?.root): NoteCommand[] {
         .finally(() => asking.delete(root)),
     )
   }
-  return kept?.found ?? []
+  return readable(kept?.found ?? [])
 }
 
 export async function found(root = workspace.activeSpace?.root): Promise<NoteCommand[]> {
   if (!root) return []
   const now = foundNow(root)
-  return (await asking.get(root)) ?? now
+  const asked = asking.get(root)
+  return asked ? readable(await asked) : now
 }
 
 export async function foundNamed(
