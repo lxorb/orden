@@ -294,6 +294,17 @@ describe('choosing a key', () => {
     expect(shortcuts.refuse('Mod-Enter', 'app.scratchpad')).toBeNull()
   })
 
+  test('is refused where a key that always cuts, copies or pastes would stop doing so', () => {
+    const { shortcuts } = registry
+    for (const key of ['Mod-c', 'Mod-x', 'Mod-v']) {
+      expect(shortcuts.refuse(key, 'app.palette'), key).toContain('already runs')
+      expect(shortcuts.refuse(key, 'format.bold'), key).toContain('already runs')
+    }
+    expect(shortcuts.refuse('Mod-c', 'app.palette')).toContain('Copy')
+    expect(shortcuts.refuse('Mod-Shift-c', 'app.palette')).toBeNull()
+    expect(shortcuts.refuse('Escape', 'app.palette')).toContain('already runs')
+  })
+
   test('but a list’s own row may have it, where nobody is typing', () => {
     const { shortcuts } = registry
     expect(shortcuts.refuse('Enter', 'tree.rename')).toBeNull()
