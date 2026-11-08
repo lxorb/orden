@@ -116,6 +116,22 @@
     return () => watcher.disconnect()
   })
 
+  $effect(() => {
+    const surface = page
+    const waiting = current?.fragments ?? []
+    if (!surface) return
+
+    const items = [...surface.querySelectorAll('li')].filter(
+      (item) => !item.closest('figure.embed'),
+    )
+    const shown = new Set(shownFragments(waiting, place.step))
+
+    for (const [at, item] of items.entries()) {
+      item.classList.toggle('fragment', waiting.includes(at))
+      item.classList.toggle('shown', shown.has(at))
+    }
+  })
+
   let fitted: (number | undefined)[] = []
 
   function fit() {
@@ -160,22 +176,6 @@
 
     return () => {
       for (const picture of pictures) picture.removeEventListener('load', again)
-    }
-  })
-
-  $effect(() => {
-    const surface = page
-    const waiting = current?.fragments ?? []
-    if (!surface) return
-
-    const items = [...surface.querySelectorAll('li')].filter(
-      (item) => !item.closest('figure.embed'),
-    )
-    const shown = new Set(shownFragments(waiting, place.step))
-
-    for (const [at, item] of items.entries()) {
-      item.classList.toggle('fragment', waiting.includes(at))
-      item.classList.toggle('shown', shown.has(at))
     }
   })
 
