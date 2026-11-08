@@ -281,3 +281,10 @@ test('a picture dragged in from the files keeps its shape, and what comes after 
   expect(note).toMatchObject({ file: 'Ideas.md' })
   expect(note?.y ?? 0).toBeGreaterThanOrEqual((shot?.y ?? 0) + (shot?.height ?? 0))
 })
+
+test('a PDF dragged in from the files takes the shape of its first page', async () => {
+  const store = board()
+  await run.dropPaths(store, ['/space/Reading.pdf'], { x: 0, y: 0 })
+
+  expect(store.canvas.nodes[0]).toMatchObject({ file: 'Reading.pdf', width: 240, height: 320 })
+})
