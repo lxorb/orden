@@ -1,4 +1,4 @@
-import { placesOf, type Words } from '../reading/find'
+import { type Piece, placesOf, type Words } from '../reading/find'
 
 export function runsOfItems(items: readonly object[]): string[] {
   return items.flatMap((item) => {
@@ -63,6 +63,34 @@ export function wordsOfRuns(runs: readonly string[], divs: readonly HTMLElement[
   }
 
   return words
+}
+
+export interface Span {
+  node: Text
+  from: number
+  to: number
+}
+
+export function spansOver(pieces: readonly Piece[], at: number, length: number): Span[] {
+  const end = at + length
+  let low = 0
+  let high = pieces.length
+  while (low < high) {
+    const middle = (low + high) >> 1
+    const piece = pieces[middle]
+    if (piece && piece.at + piece.node.length <= at) low = middle + 1
+    else high = middle
+  }
+
+  const out: Span[] = []
+  for (let index = low; index < pieces.length; index++) {
+    const piece = pieces[index]
+    if (!piece || piece.at >= end) break
+    const from = Math.max(at - piece.at, 0)
+    const to = Math.min(end - piece.at, piece.node.length)
+    if (from < to) out.push({ node: piece.node, from, to })
+  }
+  return out
 }
 
 function isText(node: ChildNode | null | undefined): node is Text {

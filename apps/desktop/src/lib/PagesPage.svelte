@@ -14,9 +14,8 @@
     wordsInto,
   } from './pages/paper'
   import { boxOf, COLOURS, type Highlight, toViewport } from './pdf/highlights'
-  import { wordsOfRuns } from './pdf/find'
+  import { spansOver, wordsOfRuns } from './pdf/find'
   import { wordsEnd } from './pages/words-end'
-  import { locate } from './reading/find'
   import { pixelRatio } from './pixel-ratio.svelte'
 
   const {
@@ -233,22 +232,20 @@
     const whole = layer.getBoundingClientRect()
     if (!whole.width || !whole.height) return []
 
-    return sought.flatMap((one) => {
-      const from = locate(found.pieces, one.at)
-      const to = locate(found.pieces, one.at + one.length)
-      if (!from || !to) return []
-
-      const range = document.createRange()
-      range.setStart(from.piece.node, Math.min(from.into, from.piece.node.length))
-      range.setEnd(to.piece.node, Math.min(to.into, to.piece.node.length))
-      return [...range.getClientRects()].map((box) => ({
-        current: one.at === current,
-        left: ((box.left - whole.left) / whole.width) * 100,
-        top: ((box.top - whole.top) / whole.height) * 100,
-        width: (box.width / whole.width) * 100,
-        height: (box.height / whole.height) * 100,
-      }))
-    })
+    return sought.flatMap((one) =>
+      spansOver(found.pieces, one.at, one.length).flatMap(({ node, from, to }) => {
+        const range = document.createRange()
+        range.setStart(node, from)
+        range.setEnd(node, to)
+        return [...range.getClientRects()].map((box) => ({
+          current: one.at === current,
+          left: ((box.left - whole.left) / whole.width) * 100,
+          top: ((box.top - whole.top) / whole.height) * 100,
+          width: (box.width / whole.width) * 100,
+          height: (box.height / whole.height) * 100,
+        }))
+      }),
+    )
   })
 
   $effect(() => {
