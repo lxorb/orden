@@ -79,12 +79,26 @@ export class Hub {
   constructor(private readonly world: HubWorld) {}
 
   start(): () => void {
-    return $effect.root(() => {
+    const back = () => this.back()
+    if (typeof window !== 'undefined') window.addEventListener('online', back)
+    const stop = $effect.root(() => {
       $effect(() => {
         const token = account.signedIn ? account.token : null
         untrack(() => this.follow(token))
       })
     })
+    return () => {
+      if (typeof window !== 'undefined') window.removeEventListener('online', back)
+      stop()
+    }
+  }
+
+  back(): void {
+    if (!this.retry) return
+    clearTimeout(this.retry)
+    this.retry = undefined
+    this.tries = 0
+    this.connect()
   }
 
   follow(token: string | null): void {

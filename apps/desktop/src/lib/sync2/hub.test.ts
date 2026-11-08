@@ -143,6 +143,18 @@ describe('a device’s hub socket', () => {
     expect(again).toHaveBeenCalledTimes(2)
   })
 
+  test('comes back at once when the network does, without sitting out its wait', async () => {
+    const hub = new Hub(world())
+    hub.follow('token-1')
+    ;(await open()).events.closed(1006)
+    expect(sockets).toHaveLength(1)
+
+    hub.back()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(sockets).toHaveLength(2)
+  })
+
   test('does not come back after the account ended the session', async () => {
     const hub = new Hub(world())
     hub.follow('token-1')
