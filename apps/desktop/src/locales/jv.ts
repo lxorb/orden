@@ -1136,8 +1136,6 @@ export const jv: Dictionary = {
     '{device} nawakake brankas AI sampeyan menyang piranti iki',
   Join: 'Gabung',
   'Allow this device on another one': 'Idini piranti iki ing piranti liyane',
-  'On every device you sign in to, end-to-end encrypted.':
-    'Ing saben piranti sing sampeyan mlebu, dienkripsi saka ujung nganti ujung.',
   'Sign in to have them on every device.': 'Mlebu supaya ana ing saben piranti.',
   'Agents on this computer connect on their own': 'Agen ing komputer iki nyambung dhewe',
   Helpers: 'Pambantu',
@@ -1466,10 +1464,8 @@ export const jv: Dictionary = {
   'Base URL': 'URL dhasar',
   'API key': 'Kunci API',
   Optional: 'Ora wajib',
-  'List models': 'Jupuk dhaptar model',
   'Asking…': 'Takon…',
   'No providers yet.': 'Durung ana panyedhiya.',
-  'Add {name}': 'Tambah {name}',
   'This browser holds the keys in its own storage.':
     'Panjelajah iki nyimpen kunci ing panyimpenane dhewe.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1477,7 +1473,6 @@ export const jv: Dictionary = {
   'Keep this browser’s keys in the vault': 'Simpen kunci browser iki ing brankas',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Banjur kunci saben piranti disimpen ing panyimpenan browser iki, ing ngendi skrip sing mlebu menyang kaca bisa maca.',
-  'AI can be wrong. Check the facts.': 'AI bisa salah. Priksa fakta-faktane.',
   'Used by the glasses': 'Dipakai tesmak',
   'Could not read the models.': 'Ora bisa maca dhaptar model.',
   'That provider is not set up yet.': 'Panyedhiya kuwi durung disetel.',
@@ -2003,8 +1998,6 @@ export const jv: Dictionary = {
     'kuwi luwih akeh tinimbang sing disimpen papan babagan wite',
   'Agents on this computer': 'Agen ing komputer iki',
   'Your account’s connector': 'Konektor akunmu',
-  'Orden asks you once, the first time it connects.':
-    'Orden takon sepisan, nalika pisanan nyambung.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Ing Antigravity, bukak menu … ing ndhuwur panel agen, banjur MCP Servers → Manage MCP Servers → View raw config, lan tambahna entri iki ing kono.',
   'A client on another machine?': 'Klien ing mesin liya?',
@@ -3690,4 +3683,15 @@ export const jv: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'Nambahake penjelajah file kanggo folder ing komputer iki, lan Tampilake ing folder mbukak iku.',
   '{name} is turned off, so its tabs were closed': '{name} dipateni, mula tab-tabe ditutup',
+  'Add an AI account': 'Tambah akun AI',
+  '{percent} used this week': '{percent} kanggo minggu iki',
+  'Resets {when}': 'Direset {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Nganggo paket Claude panjenengan liwat Claude Code ing komputer iki.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Nganggo paket ChatGPT panjenengan liwat Codex ing komputer iki.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Nganggo akun Google panjenengan liwat Gemini CLI ing komputer iki.',
+  'Sign in with your ChatGPT plan.': 'Mlebu nganggo paket ChatGPT panjenengan.',
+  'Paid by use on your API account.': 'Mbayar miturut panggunaan ing akun API panjenengan.',
 }

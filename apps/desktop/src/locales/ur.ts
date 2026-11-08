@@ -1143,8 +1143,6 @@ export const ur: Dictionary = {
   '{device} offers this device your AI vault': '{device} اس ڈیوائس کو آپ کا AI والٹ پیش کر رہا ہے',
   Join: 'شامل ہوں',
   'Allow this device on another one': 'کسی دوسرے آلے پر اس آلے کی اجازت دیں',
-  'On every device you sign in to, end-to-end encrypted.':
-    'ہر اس آلے پر جس میں آپ سائن ان ہوں، اینڈ ٹو اینڈ انکرپٹڈ۔',
   'Sign in to have them on every device.': 'ہر آلے پر رکھنے کے لیے سائن ان کریں۔',
   'Agents on this computer connect on their own': 'اس کمپیوٹر کے ایجنٹ خود جڑتے ہیں',
   Helpers: 'معاونین',
@@ -1486,17 +1484,14 @@ export const ur: Dictionary = {
   'Base URL': 'بنیادی URL',
   'API key': 'API کلید',
   Optional: 'اختیاری',
-  'List models': 'ماڈل حاصل کریں',
   'Asking…': 'پوچھا جا رہا ہے…',
   'No providers yet.': 'ابھی کوئی فراہم کنندہ نہیں۔',
-  'Add {name}': '{name} شامل کریں',
   'This browser holds the keys in its own storage.': 'یہ براؤزر کلیدیں اپنے ہی ذخیرے میں رکھتا ہے۔',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'اس ڈیوائس پر کوئی کی رنگ نہیں ملا، اس لیے آپ کی کلیدیں ایسی فائل میں رکھی گئی ہیں جسے صرف آپ پڑھ سکتے ہیں۔',
   'Keep this browser’s keys in the vault': 'اس براؤزر کی کلیدیں والٹ میں رکھیں',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'پھر ہر ڈیوائس کی کلیدیں اس براؤزر کے اسٹوریج میں رکھی جائیں گی، جہاں صفحے میں گھس آنے والا کوئی اسکرپٹ انہیں پڑھ سکتا ہے۔',
-  'AI can be wrong. Check the facts.': 'AI غلط ہو سکتا ہے۔ حقائق کی تصدیق کریں۔',
   'Used by the glasses': 'چشمہ استعمال کرتا ہے',
   'Could not read the models.': 'ماڈل پڑھے نہیں جا سکے۔',
   'That provider is not set up yet.': 'وہ فراہم کنندہ ابھی مرتب نہیں ہوا۔',
@@ -2017,8 +2012,6 @@ export const ur: Dictionary = {
     'یہ اس سے زیادہ ہے جتنا ایک اسپیس اپنے ٹری کے بارے میں رکھتا ہے',
   'Agents on this computer': 'اس کمپیوٹر پر ایجنٹس',
   'Your account’s connector': 'آپ کے اکاؤنٹ کا کنیکٹر',
-  'Orden asks you once, the first time it connects.':
-    'Orden آپ سے ایک بار پوچھتا ہے، جب یہ پہلی بار جڑتا ہے۔',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity میں ایجنٹ پینل کے اوپر … مینو کھولیں، پھر MCP Servers → Manage MCP Servers → View raw config، اور اس میں یہ اندراج شامل کریں۔',
   'A client on another machine?': 'کسی دوسری مشین پر کلائنٹ؟',
@@ -3763,4 +3756,15 @@ export const ur: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'اس کمپیوٹر کے فولڈرز کے لیے فائل ایکسپلورر شامل کرتا ہے، اور فولڈر میں دکھائیں اسے کھولتا ہے۔',
   '{name} is turned off, so its tabs were closed': '{name} بند ہے، اس لیے اس کے ٹیب بند کر دیے گئے',
+  'Add an AI account': 'AI اکاؤنٹ شامل کریں',
+  '{percent} used this week': 'اس ہفتے {percent} استعمال ہوا',
+  'Resets {when}': '{when} ری سیٹ ہوگا',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'اس کمپیوٹر پر Claude Code کے ذریعے آپ کا Claude پلان استعمال کرتا ہے۔',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'اس کمپیوٹر پر Codex کے ذریعے آپ کا ChatGPT پلان استعمال کرتا ہے۔',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'اس کمپیوٹر پر Gemini CLI کے ذریعے آپ کا Google اکاؤنٹ استعمال کرتا ہے۔',
+  'Sign in with your ChatGPT plan.': 'اپنے ChatGPT پلان سے سائن ان کریں۔',
+  'Paid by use on your API account.': 'آپ کے API اکاؤنٹ پر استعمال کے مطابق ادائیگی۔',
 }

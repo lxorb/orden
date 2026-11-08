@@ -1,26 +1,21 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { accountName, vendorName } from './ai/account-words'
-  import { type Account, repeatable } from './ai/accounts'
+  import { type Account, repeatable, vendorOf } from './ai/accounts'
+  import AddAccount from './ai/AddAccount.svelte'
+  import type { Adding } from './ai/add-paths'
   import { FEATURES, ai } from './ai/store.svelte'
   import { listModels } from './ai/complete'
   import { forgetKey, hasKey, keysAreGuarded, keysInFile, keysMoved, writeKey } from './ai/keys'
   import { plans } from './ai/local/status.svelte'
+  import { USAGE_EVERY, usage, type Weekly } from './ai/usage.svelte'
   import { browserVault, keepBrowserInVault, vault } from './ai/vault/start.svelte'
   import PlanRows from './ai/PlanRows.svelte'
   import ProviderMark from './ai/ProviderMark.svelte'
-  import {
-    firstModel,
-    isLocal,
-    KIND_NAMES,
-    offeredKinds,
-    type Provider,
-    type ProviderKind,
-    reachable,
-  } from './ai/providers'
+  import { firstModel, isLocal, offeredKinds, type Provider } from './ai/providers'
   import { glassesKey } from './even/key.svelte'
   import { NoWord, wordSaid } from './mobile/bridge'
-  import { message, t } from './i18n.svelte'
+  import { i18n, message, t } from './i18n.svelte'
   import { dur, slide } from './motion'
   import Select from './Select.svelte'
   import { invoke, isDesktop } from './tauri'
@@ -30,18 +25,12 @@
   import { local } from './dictation/local.svelte'
 
   let keyed = $state<Record<string, boolean>>({})
-  let models = $state<Record<string, string[]>>({})
-  let asking = $state('')
+  let adding = $state(false)
   let trouble = $state<Record<string, string>>({})
   let inFile = $state(false)
   const EXAMPLE_URL = 'http://localhost:11434'
 
   const named = (vendor: string) => vendorName(vendor, ai.accounts)
-
-  const ready = (provider: Provider) =>
-    provider.kind === 'chatgpt'
-      ? !__EVEN_PLUGIN__ && !!plans.chatgpt
-      : (keyed[provider.id] ?? false)
 
   const addable = $derived(
     offeredKinds(isDesktop, __CLAUDE_CODE__).filter(
@@ -53,7 +42,14 @@
     for (const account of ai.accounts) void ask(account)
     const lookFile = () => void keysInFile().then((found) => (inFile = found))
     lookFile()
-    return keysMoved(lookFile)
+    const measuring = setInterval(() => {
+      for (const account of ai.accounts) void usage.look(account)
+    }, USAGE_EVERY)
+    const unhear = keysMoved(lookFile)
+    return () => {
+      clearInterval(measuring)
+      unhear()
+    }
   })
 
   async function ask(account: Provider) {
@@ -69,6 +65,14 @@
     }
   })
 
+  $effect(() => {
+    for (const account of ai.accounts) {
+      if (!__EVEN_PLUGIN__ && isLocal(account.kind) && plans.of(account.id).state === 'in') {
+        void usage.look(account)
+      }
+    }
+  })
+
   async function look(id: string) {
     const found = await hasKey(id).catch((error: unknown) => {
       if (error instanceof NoWord) void wordSaid().then(() => look(id))
@@ -77,16 +81,19 @@
     if (found !== undefined) keyed = { ...keyed, [id]: found }
   }
 
-  async function take(provider: Provider, typed: string) {
+  async function take(provider: Provider, typed: string): Promise<string> {
     trouble = { ...trouble, [provider.id]: '' }
 
     try {
       await writeKey(provider.id, typed)
       await look(provider.id)
-      await refresh(provider)
     } catch (error) {
-      trouble = { ...trouble, [provider.id]: message(error, t('that key could not be saved')) }
+      const said = message(error, t('that key could not be saved'))
+      trouble = { ...trouble, [provider.id]: said }
+      return said
     }
+    await refresh(provider)
+    return ''
   }
 
   async function drop(provider: Provider) {
@@ -99,20 +106,17 @@
   }
 
   async function refresh(provider: Provider) {
-    if (!reachable(provider, ready(provider))) return
-
-    asking = provider.id
-    trouble = { ...trouble, [provider.id]: '' }
-
+    if (isLocal(provider.kind)) {
+      void usage.look(provider, true)
+      return
+    }
     try {
       const found = await listModels(provider)
-      models = { ...models, [provider.id]: found }
       const first = firstModel(provider.kind, found)
-      if (!provider.model && first) ai.update(provider.id, { model: first })
+      const now = ai.accounts.find((one) => one.id === provider.id)
+      if (now && !now.model && first) ai.update(provider.id, { model: first })
     } catch (error) {
       trouble = { ...trouble, [provider.id]: message(error, t('Could not read the models.')) }
-    } finally {
-      asking = ''
     }
   }
 
@@ -120,9 +124,50 @@
     trouble = { ...trouble, [provider.id]: text }
   }
 
-  function add(kind: ProviderKind) {
+  async function add({ kind, key, name, baseUrl }: Adding): Promise<string | null> {
+    if (!__EVEN_PLUGIN__ && kind === 'chatgpt' && !plans.chatgpt) {
+      try {
+        await invoke('chatgpt_sign_in')
+        await plans.checkChatgpt()
+      } catch (error) {
+        const said = error instanceof Error ? error.message : String(error)
+        if (said === 'stopped') return ''
+        return said === 'timed out'
+          ? t('Could not sign in.')
+          : message(new Error(said), t('Could not sign in.'))
+      }
+    }
     const made = ai.add(kind)
-    void ai.written().then(() => ask(made))
+    if (kind === 'compatible') ai.update(made.id, { name, baseUrl })
+    await ai.written()
+    const account = ai.accounts.find((one) => one.id === made.id) ?? made
+    if (key) {
+      const said = await take(account, key)
+      if (said) return said
+    } else if (kind === 'compatible' || kind === 'chatgpt') {
+      void refresh(account)
+    }
+    void ask(account)
+    return null
+  }
+
+  function fullness(week: Weekly): 'fine' | 'near' | 'full' {
+    if (week.used >= 90) return 'full'
+    return week.used >= 75 ? 'near' : 'fine'
+  }
+
+  function weekWords(week: Weekly): { used: string; resets: string } {
+    return {
+      used: t('{percent} used this week', {
+        percent: i18n.amount(week.used / 100, { style: 'percent', maximumFractionDigits: 0 }),
+      }),
+      resets:
+        week.resets === null
+          ? ''
+          : t('Resets {when}', {
+              when: i18n.when(week.resets, { weekday: 'long', hour: '2-digit', minute: '2-digit' }),
+            }),
+    }
   }
 
   function forget(provider: Account) {
@@ -133,6 +178,7 @@
         trouble = { ...trouble, [provider.id]: message(error, t('Could not sign out.')) }
       })
     }
+    usage.forget(provider.id)
     ai.remove(provider.id)
   }
 
@@ -161,14 +207,6 @@
     return email ?? vault.seen[provider.id] ?? accountName(provider)
   }
 </script>
-
-{#snippet defaulting(vendor: string)}
-  {#if ai.defaultVendor === vendor}
-    <span class="hint">{t('Default')}</span>
-  {:else}
-    <button class="orden-chip" onclick={() => ai.setDefault(vendor)}>{t('Make default')}</button>
-  {/if}
-{/snippet}
 
 <h3>{t('Accounts')}</h3>
 
@@ -256,171 +294,159 @@
 {/if}
 
 {#if ai.accounts.length}
-  {#each ai.vendors as vendor (vendor)}
-    {@const mine = ai.accountsOf(vendor)}
+  {#each ai.accounts as provider (provider.id)}
+    {@const fallback = ai.defaultAccount?.id === provider.id}
+    {@const siblings = ai.accountsOf(vendorOf(provider)).length}
+    {@const week = usage.of(provider.id)}
     <div
-      class="orden-setting setting"
-      data-vendor={vendor}
+      class="card boxed"
+      class:fallback
+      data-account={provider.id}
       transition:slide={{ duration: dur(160) }}
     >
-      <span class="name strong"
-        >{#if mine[0]}<ProviderMark account={mine[0]} />{/if}{named(vendor)}</span
-      >
-      <div class="row">{@render defaulting(vendor)}</div>
-    </div>
-    {#each mine as provider (provider.id)}
-      {@const using = mine.length > 1 && ai.isActive(provider.id)}
-      <div
-        class="card boxed"
-        class:using
-        data-account={provider.id}
-        transition:slide={{ duration: dur(160) }}
-      >
-        <div class="orden-setting setting">
-          <span class="name strong">
-            {provider.kind === 'compatible' ? t(KIND_NAMES.compatible) : labelOf(provider)}
-          </span>
-          <div class="row">
-            {#if using}
-              <span class="hint on">{t('In use')}</span>
-            {:else if mine.length > 1}
-              <button class="orden-chip" onclick={() => ai.activate(provider.id)}>{t('Use')}</button
-              >
-            {/if}
-            <button class="orden-chip is-quiet" onclick={() => forget(provider)}
-              >{t('Remove')}</button
+      <div class="orden-setting setting">
+        <span class="name strong"
+          ><ProviderMark account={provider} />{named(vendorOf(provider))}</span
+        >
+        <div class="row">
+          {#if fallback}
+            <span class="hint on">{t('Default')}</span>
+          {:else}
+            <button class="orden-chip" onclick={() => ai.setDefault(provider.id)}
+              >{t('Make default')}</button
             >
-          </div>
+          {/if}
+          <button class="orden-chip is-quiet" onclick={() => forget(provider)}>{t('Remove')}</button
+          >
         </div>
+      </div>
 
-        {#if provider.kind !== 'compatible' && mine.length > 1}
-          <label class="orden-setting setting">
-            <span class="name">{t('Name')}</span>
+      {#if isLocal(provider.kind)}
+        <div class="orden-setting setting">
+          <span class="name">{labelOf(provider)}</span>
+        </div>
+      {/if}
+
+      {#if provider.kind !== 'compatible' && siblings > 1}
+        <label class="orden-setting setting">
+          <span class="name">{t('Name')}</span>
+          <input
+            class="orden-field is-value"
+            value={provider.name}
+            placeholder={accountName({ ...provider, name: '' })}
+            spellcheck="false"
+            onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
+          />
+        </label>
+      {/if}
+
+      {#if provider.kind === 'compatible'}
+        <label class="orden-setting setting">
+          <span class="name">{t('Name')}</span>
+          <input
+            class="orden-field is-value"
+            value={provider.name}
+            placeholder={t('OpenAI-compatible')}
+            spellcheck="false"
+            onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
+          />
+        </label>
+
+        <label class="orden-setting setting">
+          <span class="name">{t('Base URL')}</span>
+          <input
+            class="orden-field is-value"
+            value={provider.baseUrl ?? ''}
+            placeholder={EXAMPLE_URL}
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            autocomplete="off"
+            onchange={(event) => {
+              ai.update(provider.id, { baseUrl: event.currentTarget.value })
+              void refresh({ ...provider, baseUrl: event.currentTarget.value })
+            }}
+          />
+        </label>
+      {/if}
+
+      {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex' || provider.kind === 'gemini-cli' || provider.kind === 'chatgpt')}
+        <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
+      {:else}
+        <div class="orden-setting setting">
+          <span class="name">{t('API key')}</span>
+          {#if keyed[provider.id]}
+            <div class="row">
+              <span class="hint">{t('Set')}</span>
+              <button class="orden-chip is-quiet" onclick={() => void drop(provider)}
+                >{t('Remove')}</button
+              >
+            </div>
+          {:else}
             <input
               class="orden-field is-value"
-              value={provider.name}
-              placeholder={accountName({ ...provider, name: '' })}
+              type="password"
+              value=""
+              placeholder={provider.kind === 'compatible'
+                ? t('Optional')
+                : provider.kind === 'gemini'
+                  ? 'AIza'
+                  : 'sk-'}
               spellcheck="false"
-              onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
-            />
-          </label>
-        {/if}
-
-        {#if provider.kind === 'compatible'}
-          <label class="orden-setting setting">
-            <span class="name">{t('Name')}</span>
-            <input
-              class="orden-field is-value"
-              value={provider.name}
-              placeholder={t('OpenAI-compatible')}
-              spellcheck="false"
-              onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
-            />
-          </label>
-
-          <label class="orden-setting setting">
-            <span class="name">{t('Base URL')}</span>
-            <input
-              class="orden-field is-value"
-              value={provider.baseUrl ?? ''}
-              placeholder={EXAMPLE_URL}
-              spellcheck="false"
-              autocapitalize="off"
-              autocorrect="off"
               autocomplete="off"
               onchange={(event) => {
-                ai.update(provider.id, { baseUrl: event.currentTarget.value })
-                void refresh({ ...provider, baseUrl: event.currentTarget.value })
+                const typed = event.currentTarget.value
+                event.currentTarget.value = ''
+                void take(provider, typed)
               }}
             />
-          </label>
-        {/if}
-
-        {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex' || provider.kind === 'gemini-cli')}
-          <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
-        {:else}
-          {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt'}
-            <PlanRows {provider} kind="chatgpt" {refresh} trouble={said(provider)} />
-          {:else}
-            <div class="orden-setting setting">
-              <span class="name">{t('API key')}</span>
-              {#if keyed[provider.id]}
-                <div class="row">
-                  <span class="hint">{t('Set')}</span>
-                  <button class="orden-chip is-quiet" onclick={() => void drop(provider)}
-                    >{t('Remove')}</button
-                  >
-                </div>
-              {:else}
-                <input
-                  class="orden-field is-value"
-                  type="password"
-                  value=""
-                  placeholder={provider.kind === 'compatible'
-                    ? t('Optional')
-                    : provider.kind === 'gemini'
-                      ? 'AIza'
-                      : 'sk-'}
-                  spellcheck="false"
-                  autocomplete="off"
-                  onchange={(event) => {
-                    const typed = event.currentTarget.value
-                    event.currentTarget.value = ''
-                    void take(provider, typed)
-                  }}
-                />
-              {/if}
-            </div>
           {/if}
+        </div>
+      {/if}
 
-          <div class="orden-setting setting">
-            <span class="name">{t('Model')}</span>
-            {#if models[provider.id]?.length}
-              <div class="orden-setting-value">
-                <Select
-                  value={provider.model}
-                  options={(models[provider.id] ?? []).map((one) => ({ value: one, label: one }))}
-                  onchange={(value: string) => ai.update(provider.id, { model: value })}
-                  label={t('Model')}
-                  plain={viewport.touch}
-                />
-              </div>
-            {:else}
-              <div class="row">
-                {#if provider.model}<span class="hint">{provider.model}</span>{/if}
-                <button
-                  class="orden-chip"
-                  disabled={asking === provider.id || !reachable(provider, ready(provider))}
-                  onclick={() => void refresh(provider)}
-                >
-                  {asking === provider.id ? t('Asking…') : t('List models')}
-                </button>
-              </div>
-            {/if}
+      {#if week}
+        {@const words = weekWords(week)}
+        <div class="week" data-week>
+          <div
+            class="orden-meter"
+            class:is-near={fullness(week) === 'near'}
+            class:is-full={fullness(week) === 'full'}
+            role="progressbar"
+            aria-label={words.used}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(week.used)}
+          >
+            <div class="orden-meter-fill" style:width="{week.used}%"></div>
           </div>
-        {/if}
+          <div class="week-words">
+            <span>{words.used}</span>
+            {#if words.resets}<span>{words.resets}</span>{/if}
+          </div>
+        </div>
+      {/if}
 
-        {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
-          <p class="hint">{t('Using ChatGPT plan')}</p>
-        {/if}
-        {#if trouble[provider.id]}
-          <p class="hint bad">{trouble[provider.id]}</p>
-        {/if}
-      </div>
-    {/each}
+      {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
+        <p class="hint">{t('Using ChatGPT plan')}</p>
+      {/if}
+      {#if trouble[provider.id]}
+        <p class="hint bad">{trouble[provider.id]}</p>
+      {/if}
+    </div>
   {/each}
 {:else}
   <p class="hint">{t('No providers yet.')}</p>
 {/if}
 
-<div class="card">
-  {#each addable as kind (kind)}
-    <button class="orden-action adding" onclick={() => add(kind)}>
-      <ProviderMark account={{ kind, name: '' }} />
-      {t('Add {name}', { name: t(KIND_NAMES[kind]) })}
+{#if addable.length}
+  <div class="card">
+    <button class="orden-action adding" data-add-account onclick={() => (adding = true)}>
+      {t('Add')}
     </button>
-  {/each}
-</div>
+  </div>
+{/if}
+
+<AddAccount open={adding} offered={addable} onadd={add} onclose={() => (adding = false)} />
 
 {#if ai.vendors.length > 1}
   <h3 transition:slide={{ duration: dur(160) }}>{t('Used for')}</h3>
@@ -522,21 +548,20 @@
   {/await}
 {/if}
 
-<p class="hint caption">
-  {#if vault.standing === 'open'}
-    {t('On every device you sign in to, end-to-end encrypted.')}
-  {:else if !keysAreGuarded()}
-    {t('This browser holds the keys in its own storage.')}
-  {:else if vault.standing === 'off'}
-    {t('Sign in to have them on every device.')}
-  {/if}
-</p>
+{#if vault.standing !== 'open' && (!keysAreGuarded() || vault.standing === 'off')}
+  <p class="hint caption">
+    {#if !keysAreGuarded()}
+      {t('This browser holds the keys in its own storage.')}
+    {:else}
+      {t('Sign in to have them on every device.')}
+    {/if}
+  </p>
+{/if}
 {#if inFile}
   <p class="hint caption" role="note">
     {t('No keyring was found on this device, so your keys are kept in a file only you can read.')}
   </p>
 {/if}
-<p class="hint caption">{t('AI can be wrong. Check the facts.')}</p>
 
 {#if glassesKey.set}
   <h3>{t('OpenAI key')}</h3>
@@ -630,8 +655,24 @@
     padding-block: var(--space-2);
   }
 
-  .boxed.using {
+  .boxed.fallback {
     border-color: var(--accent);
+  }
+
+  .week {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding-block: var(--space-2);
+  }
+
+  .week-words {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-1) var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--muted);
   }
 
   :global(.sheet.phone) .card {
@@ -645,11 +686,12 @@
     padding: 0;
   }
 
-  :global(.sheet.phone) .boxed.using {
+  :global(.sheet.phone) .boxed.fallback {
     border-color: var(--accent);
   }
 
-  :global(.sheet.phone) .boxed > p.hint {
+  :global(.sheet.phone) .boxed > p.hint,
+  :global(.sheet.phone) .week {
     padding: var(--space-2) var(--touch-pad);
   }
 

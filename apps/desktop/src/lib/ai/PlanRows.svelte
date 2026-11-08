@@ -6,7 +6,6 @@
   import { limitSentence } from './local/trouble'
   import type { Limit } from './local/heard'
   import type { LocalKind, Provider } from './providers'
-  import { ai } from './store.svelte'
   import { message, t } from '../i18n.svelte'
   import { dur, slide } from '../motion'
   import { invoke, openExternal } from '../tauri'
@@ -126,20 +125,6 @@
       {/if}
     </div>
   </div>
-
-  <label class="orden-setting setting">
-    <span class="name">{t('Model')}</span>
-    <input
-      class="orden-field is-value"
-      value={provider.model}
-      placeholder={t('Default')}
-      spellcheck="false"
-      autocapitalize="off"
-      autocorrect="off"
-      autocomplete="off"
-      onchange={(event) => ai.update(provider.id, { model: event.currentTarget.value.trim() })}
-    />
-  </label>
 
   {@render limited(kind, plan.limit)}
 {/snippet}

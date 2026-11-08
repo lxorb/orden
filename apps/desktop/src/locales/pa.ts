@@ -1147,8 +1147,6 @@ export const pa: Dictionary = {
   '{device} offers this device your AI vault': '{device} ਇਸ ਡਿਵਾਈਸ ਨੂੰ ਤੁਹਾਡਾ AI ਵਾਲਟ ਦੇ ਰਿਹਾ ਹੈ',
   Join: 'ਸ਼ਾਮਲ ਹੋਵੋ',
   'Allow this device on another one': 'ਕਿਸੇ ਹੋਰ ਡਿਵਾਈਸ ਤੇ ਇਸ ਡਿਵਾਈਸ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ',
-  'On every device you sign in to, end-to-end encrypted.':
-    'ਹਰ ਡਿਵਾਈਸ ਤੇ ਜਿੱਥੇ ਤੁਸੀਂ ਸਾਈਨ ਇਨ ਕਰੋ, ਐਂਡ-ਟੂ-ਐਂਡ ਇਨਕ੍ਰਿਪਟਿਡ।',
   'Sign in to have them on every device.': 'ਹਰ ਡਿਵਾਈਸ ਤੇ ਪਾਉਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'Agents on this computer connect on their own': 'ਇਸ ਕੰਪਿਊਟਰ ਦੇ ਏਜੰਟ ਆਪਣੇ ਆਪ ਜੁੜਦੇ ਹਨ',
   Helpers: 'ਸਹਾਇਕ',
@@ -1488,10 +1486,8 @@ export const pa: Dictionary = {
   'Base URL': 'ਮੂਲ URL',
   'API key': 'API ਕੁੰਜੀ',
   Optional: 'ਮਰਜ਼ੀ ਨਾਲ',
-  'List models': 'ਮਾਡਲ ਲਿਆਓ',
   'Asking…': 'ਪੁੱਛ ਰਿਹਾ ਹੈ…',
   'No providers yet.': 'ਹਾਲੇ ਪ੍ਰਦਾਤਾ ਨਹੀਂ।',
-  'Add {name}': '{name} ਜੋੜੋ',
   'This browser holds the keys in its own storage.':
     'ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਕੁੰਜੀਆਂ ਆਪਣੇ ਭੰਡਾਰ ਵਿੱਚ ਰੱਖਦਾ ਹੈ।',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1499,7 +1495,6 @@ export const pa: Dictionary = {
   'Keep this browser’s keys in the vault': 'ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਦੀਆਂ ਕੁੰਜੀਆਂ ਵਾਲਟ ਵਿੱਚ ਰੱਖੋ',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'ਫਿਰ ਹਰ ਡਿਵਾਈਸ ਦੀਆਂ ਕੁੰਜੀਆਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਦੀ ਸਟੋਰੇਜ ਵਿੱਚ ਰਹਿਣਗੀਆਂ, ਜਿੱਥੇ ਪੰਨੇ ਵਿੱਚ ਵੜੀ ਕੋਈ ਸਕ੍ਰਿਪਟ ਉਨ੍ਹਾਂ ਨੂੰ ਪੜ੍ਹ ਸਕਦੀ ਹੈ।',
-  'AI can be wrong. Check the facts.': 'AI ਗਲਤ ਹੋ ਸਕਦਾ ਹੈ। ਤੱਥਾਂ ਦੀ ਜਾਂਚ ਕਰੋ।',
   'Used by the glasses': 'ਐਨਕਾਂ ਵਰਤਦੀਆਂ ਹਨ',
   'Could not read the models.': 'ਮਾਡਲ ਨਹੀਂ ਪੜ੍ਹੇ ਜਾ ਸਕੇ।',
   'That provider is not set up yet.': 'ਉਹ ਪ੍ਰਦਾਤਾ ਹਾਲੇ ਨਹੀਂ ਲੱਗਾ।',
@@ -2022,8 +2017,6 @@ export const pa: Dictionary = {
     'ਇਹ ਉਸ ਤੋਂ ਵੱਧ ਹੈ ਜਿੰਨਾ ਇੱਕ ਥਾਂ ਆਪਣੇ ਰੁੱਖ ਬਾਰੇ ਰੱਖਦੀ ਹੈ',
   'Agents on this computer': 'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਏਜੰਟ',
   'Your account’s connector': 'ਤੁਹਾਡੇ ਖਾਤੇ ਦਾ ਕਨੈਕਟਰ',
-  'Orden asks you once, the first time it connects.':
-    'ਪਹਿਲੀ ਵਾਰ ਜੁੜਨ ’ਤੇ Orden ਤੁਹਾਨੂੰ ਇੱਕ ਵਾਰ ਪੁੱਛਦਾ ਹੈ।',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity ਵਿੱਚ ਏਜੰਟ ਪੈਨਲ ਦੇ ਉੱਪਰ ਵਾਲਾ … ਮੀਨੂ ਖੋਲ੍ਹੋ, ਫਿਰ MCP Servers → Manage MCP Servers → View raw config, ਅਤੇ ਇਸ ਵਿੱਚ ਇਹ ਐਂਟਰੀ ਜੋੜੋ।',
   'A client on another machine?': 'ਕਿਸੇ ਹੋਰ ਮਸ਼ੀਨ ਉੱਤੇ ਕਲਾਇੰਟ?',
@@ -3779,4 +3772,15 @@ export const pa: Dictionary = {
     'ਇਸ ਕੰਪਿਊਟਰ ਦੇ ਫੋਲਡਰਾਂ ਲਈ ਫ਼ਾਈਲ ਐਕਸਪਲੋਰਰ ਜੋੜਦਾ ਹੈ, ਅਤੇ ਫੋਲਡਰ ਵਿੱਚ ਦਿਖਾਓ ਉਸਨੂੰ ਖੋਲ੍ਹਦਾ ਹੈ।',
   '{name} is turned off, so its tabs were closed':
     '{name} ਬੰਦ ਹੈ, ਇਸ ਲਈ ਇਸ ਦੀਆਂ ਟੈਬਾਂ ਬੰਦ ਕੀਤੀਆਂ ਗਈਆਂ',
+  'Add an AI account': 'AI ਖਾਤਾ ਜੋੜੋ',
+  '{percent} used this week': 'ਇਸ ਹਫ਼ਤੇ {percent} ਵਰਤਿਆ',
+  'Resets {when}': '{when} ਰੀਸੈੱਟ ਹੋਵੇਗਾ',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'ਇਸ ਕੰਪਿਊਟਰ ਦੇ Claude Code ਰਾਹੀਂ ਤੁਹਾਡਾ Claude ਪਲਾਨ ਵਰਤਦਾ ਹੈ।',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'ਇਸ ਕੰਪਿਊਟਰ ਦੇ Codex ਰਾਹੀਂ ਤੁਹਾਡਾ ChatGPT ਪਲਾਨ ਵਰਤਦਾ ਹੈ।',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'ਇਸ ਕੰਪਿਊਟਰ ਦੇ Gemini CLI ਰਾਹੀਂ ਤੁਹਾਡਾ Google ਖਾਤਾ ਵਰਤਦਾ ਹੈ।',
+  'Sign in with your ChatGPT plan.': 'ਆਪਣੇ ChatGPT ਪਲਾਨ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।',
+  'Paid by use on your API account.': 'ਤੁਹਾਡੇ API ਖਾਤੇ ਉੱਤੇ ਵਰਤੋਂ ਮੁਤਾਬਕ ਭੁਗਤਾਨ।',
 }

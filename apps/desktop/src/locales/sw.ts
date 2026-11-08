@@ -1152,8 +1152,6 @@ export const sw: Dictionary = {
   '{device} offers this device your AI vault': '{device} inakipa kifaa hiki kasha lako la AI',
   Join: 'Jiunge',
   'Allow this device on another one': 'Ruhusu kifaa hiki kwenye kingine',
-  'On every device you sign in to, end-to-end encrypted.':
-    'Kwenye kila kifaa unachoingia, kimesimbwa mwisho hadi mwisho.',
   'Sign in to have them on every device.': 'Ingia ili uwe nazo kwenye kila kifaa.',
   'Agents on this computer connect on their own':
     'Mawakala kwenye kompyuta hii hujiunganisha wenyewe',
@@ -1503,10 +1501,8 @@ export const sw: Dictionary = {
   'Base URL': 'URL ya msingi',
   'API key': 'Kitufe cha API',
   Optional: 'Si lazima',
-  'List models': 'Pata modeli',
   'Asking…': 'Inauliza…',
   'No providers yet.': 'Hakuna watoa huduma bado.',
-  'Add {name}': 'Ongeza {name}',
   'This browser holds the keys in its own storage.':
     'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1514,7 +1510,6 @@ export const sw: Dictionary = {
   'Keep this browser’s keys in the vault': 'Weka funguo za kivinjari hiki kwenye kasha',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Kisha funguo za kila kifaa zitahifadhiwa kwenye hifadhi ya kivinjari hiki, ambapo hati iliyoingia kwenye ukurasa inaweza kuzisoma.',
-  'AI can be wrong. Check the facts.': 'AI inaweza kukosea. Hakiki ukweli.',
   'Used by the glasses': 'Inatumiwa na miwani',
   'Could not read the models.': 'Modeli hazikusomwa.',
   'That provider is not set up yet.': 'Mtoa huduma huyo hajasanidiwa bado.',
@@ -2049,8 +2044,6 @@ export const sw: Dictionary = {
     'hiyo ni zaidi ya kile nafasi inachohifadhi kuhusu mti wake',
   'Agents on this computer': 'Mawakala kwenye kompyuta hii',
   'Your account’s connector': 'Kiunganishi cha akaunti yako',
-  'Orden asks you once, the first time it connects.':
-    'Orden hukuuliza mara moja, mara ya kwanza inapounganishwa.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Katika Antigravity, fungua menyu … juu ya paneli ya wakala, kisha MCP Servers → Manage MCP Servers → View raw config, na uongeze ingizo hili humo.',
   'A client on another machine?': 'Kiteja kwenye mashine nyingine?',
@@ -3818,4 +3811,15 @@ export const sw: Dictionary = {
     'Huongeza kichunguzi cha faili kwa folda za kompyuta hii, na Onyesha kwenye folda hukifungua.',
   '{name} is turned off, so its tabs were closed':
     '{name} imezimwa, kwa hivyo vichupo vyake vimefungwa',
+  'Add an AI account': 'Ongeza akaunti ya AI',
+  '{percent} used this week': '{percent} imetumika wiki hii',
+  'Resets {when}': 'Inaanza upya {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Hutumia mpango wako wa Claude kupitia Claude Code kwenye kompyuta hii.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Hutumia mpango wako wa ChatGPT kupitia Codex kwenye kompyuta hii.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Hutumia akaunti yako ya Google kupitia Gemini CLI kwenye kompyuta hii.',
+  'Sign in with your ChatGPT plan.': 'Ingia kwa mpango wako wa ChatGPT.',
+  'Paid by use on your API account.': 'Unalipa kulingana na matumizi kwenye akaunti yako ya API.',
 }

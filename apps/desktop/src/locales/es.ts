@@ -1162,8 +1162,6 @@ export const es: Dictionary = {
   '{device} offers this device your AI vault': '{device} ofrece a este dispositivo tu bóveda de IA',
   Join: 'Unirse',
   'Allow this device on another one': 'Permite este dispositivo desde otro',
-  'On every device you sign in to, end-to-end encrypted.':
-    'En cada dispositivo en el que inicies sesión, con cifrado de extremo a extremo.',
   'Sign in to have them on every device.': 'Inicia sesión para tenerlas en cada dispositivo.',
   'Agents on this computer connect on their own': 'Los agentes de este equipo se conectan solos',
   Helpers: 'Ayudantes',
@@ -1526,10 +1524,8 @@ export const es: Dictionary = {
   'Base URL': 'URL base',
   'API key': 'Clave de API',
   Optional: 'Opcional',
-  'List models': 'Listar modelos',
   'Asking…': 'Preguntando…',
   'No providers yet.': 'Aún no hay proveedores.',
-  'Add {name}': 'Añadir {name}',
   'This browser holds the keys in its own storage.':
     'Este navegador guarda las claves en su propio almacenamiento.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1537,7 +1533,6 @@ export const es: Dictionary = {
   'Keep this browser’s keys in the vault': 'Guardar las claves de este navegador en la bóveda',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Entonces las claves de todos los dispositivos se guardan en el almacenamiento de este navegador, donde un script que se haya colado en la página podría leerlas.',
-  'AI can be wrong. Check the facts.': 'La IA puede equivocarse. Comprobar los hechos.',
   'Used by the glasses': 'Lo usan las gafas',
   'Could not read the models.': 'No se pudieron leer los modelos.',
   'That provider is not set up yet.': 'Ese proveedor aún no está configurado.',
@@ -2076,8 +2071,6 @@ export const es: Dictionary = {
     'es más de lo que un espacio guarda sobre su árbol',
   'Agents on this computer': 'Agentes en este equipo',
   'Your account’s connector': 'Conector de tu cuenta',
-  'Orden asks you once, the first time it connects.':
-    'Orden te pregunta una vez, la primera vez que se conecta.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'En Antigravity, abre el menú … en la parte superior del panel del agente, luego MCP Servers → Manage MCP Servers → View raw config, y añade esta entrada.',
   'A client on another machine?': '¿Un cliente en otro equipo?',
@@ -3878,4 +3871,15 @@ export const es: Dictionary = {
     'Añade un explorador de archivos para las carpetas de este ordenador, y Mostrar en la carpeta lo abre.',
   '{name} is turned off, so its tabs were closed':
     '{name} está desactivado, así que se cerraron sus pestañas',
+  'Add an AI account': 'Añadir una cuenta de IA',
+  '{percent} used this week': '{percent} usado esta semana',
+  'Resets {when}': 'Se restablece el {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Usa tu plan de Claude a través de Claude Code en este ordenador.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Usa tu plan de ChatGPT a través de Codex en este ordenador.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Usa tu cuenta de Google a través de Gemini CLI en este ordenador.',
+  'Sign in with your ChatGPT plan.': 'Inicia sesión con tu plan de ChatGPT.',
+  'Paid by use on your API account.': 'Se paga por uso en tu cuenta de la API.',
 }

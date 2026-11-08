@@ -1147,8 +1147,6 @@ export const gsw: Dictionary = {
   '{device} offers this device your AI vault': '{device} bietet däm Grät din KI-Tresor aa',
   Join: 'Biiträte',
   'Allow this device on another one': 'Das Grät uf emne andere zueloo',
-  'On every device you sign in to, end-to-end encrypted.':
-    'Uf jedem Grät, wo du aagmäldet bisch, Änd-zu-Änd-verschlüsslet.',
   'Sign in to have them on every device.': 'Mälde dich aa, zum sie uf jedem Grät ha.',
   'Agents on this computer connect on their own': 'Agänte uf däm Computer verbinde sich sälber',
   Helpers: 'Helfer',
@@ -1492,10 +1490,8 @@ export const gsw: Dictionary = {
   'Base URL': 'Basis-URL',
   'API key': 'API-Schlüssel',
   Optional: 'Optional',
-  'List models': 'Modäll abrüefe',
   'Asking…': 'Wird gfragt…',
   'No providers yet.': 'Na kei Aabieter.',
-  'Add {name}': '{name} dezuetue',
   'This browser holds the keys in its own storage.':
     'Dä Browser bhaltet d Schlüssel in sim eigene Speicher.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1503,7 +1499,6 @@ export const gsw: Dictionary = {
   'Keep this browser’s keys in the vault': 'D Schlüssel vo däm Browser im Tresor ufbewahre',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Denn sind d Schlüssel vo allne Grät im Speicher vo däm Browser, wo sie es Skript, wo i d Siite inecho isch, chönnt läse.',
-  'AI can be wrong. Check the facts.': 'KI cha sich irre. Fakte prüefe.',
   'Used by the glasses': 'Vo de Brille gnutzt',
   'Could not read the models.': 'D Modäll händ sich nöd läse laa.',
   'That provider is not set up yet.': 'Dä Aabieter isch na nöd iigrichtet.',
@@ -2030,8 +2025,6 @@ export const gsw: Dictionary = {
     'Das isch meh, als en Bereich über sin Baum bhaltet',
   'Agents on this computer': 'Agänte uf däm Computer',
   'Your account’s connector': 'Connector vo dim Konto',
-  'Orden asks you once, the first time it connects.':
-    'Orden fragt di einisch, wenn er sich s erscht Mal verbindet.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Mach in Antigravity s Menü … obe im Agent-Bereich uf, denn MCP Servers → Manage MCP Servers → View raw config, und füeg dä Iitrag dört dezue.',
   'A client on another machine?': 'En Client uf eme andere Grät?',
@@ -3793,4 +3786,15 @@ export const gsw: Dictionary = {
     'Füegt en Datei-Explorer für d Ordner uf däm Computer hinzue, und Im Ordner zeige öffnet ihn.',
   '{name} is turned off, so its tabs were closed':
     '{name} isch usgschaltet, drum sind d Tabs zuegmacht worde',
+  'Add an AI account': 'KI-Konto hinzuefüege',
+  '{percent} used this week': '{percent} die Wuche bruucht',
+  'Resets {when}': 'Wird am {when} zruggsetzt',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Bruucht dis Claude-Abo über Claude Code uf dem Computer.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Bruucht dis ChatGPT-Abo über Codex uf dem Computer.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Bruucht dis Google-Konto über Gemini CLI uf dem Computer.',
+  'Sign in with your ChatGPT plan.': 'Mit dim ChatGPT-Abo amälde.',
+  'Paid by use on your API account.': 'Nach Verbruuch zahlt, über dis API-Konto.',
 }

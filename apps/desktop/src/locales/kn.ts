@@ -1152,8 +1152,6 @@ export const kn: Dictionary = {
   '{device} offers this device your AI vault': '{device} ಈ ಸಾಧನಕ್ಕೆ ನಿಮ್ಮ AI ವಾಲ್ಟ್ ನೀಡುತ್ತಿದೆ',
   Join: 'ಸೇರಿ',
   'Allow this device on another one': 'ಇನ್ನೊಂದು ಸಾಧನದಲ್ಲಿ ಈ ಸಾಧನವನ್ನು ಅನುಮತಿಸಿ',
-  'On every device you sign in to, end-to-end encrypted.':
-    'ನೀವು ಸೈನ್ ಇನ್ ಮಾಡುವ ಪ್ರತಿ ಸಾಧನದಲ್ಲಿ, ಎಂಡ್-ಟು-ಎಂಡ್ ಎನ್‌ಕ್ರಿಪ್ಟ್.',
   'Sign in to have them on every device.': 'ಪ್ರತಿ ಸಾಧನದಲ್ಲಿ ಪಡೆಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'Agents on this computer connect on their own': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನ ಏಜೆಂಟ್‌ಗಳು ತಾವಾಗಿ ಸಂಪರ್ಕಿಸುತ್ತವೆ',
   Helpers: 'ಸಹಾಯಕರು',
@@ -1499,10 +1497,8 @@ export const kn: Dictionary = {
   'Base URL': 'ಬೇಸ್ URL',
   'API key': 'API ಕೀ',
   Optional: 'ಐಚ್ಛಿಕ',
-  'List models': 'ಮಾದರಿಗಳ ಪಟ್ಟಿ',
   'Asking…': 'ಕೇಳುತ್ತಿದೆ…',
   'No providers yet.': 'ಇನ್ನೂ ಪೂರೈಕೆದಾರರಿಲ್ಲ.',
-  'Add {name}': '{name} ಸೇರಿಸಿ',
   'This browser holds the keys in its own storage.':
     'ಈ ಬ್ರೌಸರ್ ಕೀಗಳನ್ನು ತನ್ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇಡುತ್ತದೆ.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1510,7 +1506,6 @@ export const kn: Dictionary = {
   'Keep this browser’s keys in the vault': 'ಈ ಬ್ರೌಸರ್‌ನ ಕೀಗಳನ್ನು ವಾಲ್ಟ್‌ನಲ್ಲಿ ಇರಿಸಿ',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'ಆಗ ಪ್ರತಿಯೊಂದು ಸಾಧನದ ಕೀಗಳು ಈ ಬ್ರೌಸರ್‌ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇರುತ್ತವೆ, ಅಲ್ಲಿ ಪುಟದೊಳಗೆ ನುಸುಳಿದ ಸ್ಕ್ರಿಪ್ಟ್ ಅವುಗಳನ್ನು ಓದಬಹುದು.',
-  'AI can be wrong. Check the facts.': 'AI ತಪ್ಪಾಗಬಹುದು. ಸತ್ಯಾಂಶಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.',
   'Used by the glasses': 'ಕನ್ನಡಕ ಬಳಸುವುದು',
   'Could not read the models.': 'ಮಾದರಿಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
   'That provider is not set up yet.': 'ಆ ಪೂರೈಕೆದಾರ ಇನ್ನೂ ಹೊಂದಿಸಿಲ್ಲ.',
@@ -2041,8 +2036,6 @@ export const kn: Dictionary = {
     'ಇದು ಒಂದು ಸ್ಪೇಸ್ ತನ್ನ ಟ್ರೀ ಬಗ್ಗೆ ಇಟ್ಟುಕೊಳ್ಳುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು',
   'Agents on this computer': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿರುವ ಏಜೆಂಟ್‌ಗಳು',
   'Your account’s connector': 'ನಿಮ್ಮ ಖಾತೆಯ ಕನೆಕ್ಟರ್',
-  'Orden asks you once, the first time it connects.':
-    'ಮೊದಲ ಬಾರಿ ಸಂಪರ್ಕಿಸಿದಾಗ Orden ನಿಮ್ಮನ್ನು ಒಮ್ಮೆ ಕೇಳುತ್ತದೆ.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity ನಲ್ಲಿ ಏಜೆಂಟ್ ಫಲಕದ ಮೇಲಿನ … ಮೆನು ತೆರೆಯಿರಿ, ನಂತರ MCP Servers → Manage MCP Servers → View raw config, ಮತ್ತು ಅದಕ್ಕೆ ಈ ನಮೂದನ್ನು ಸೇರಿಸಿ.',
   'A client on another machine?': 'ಬೇರೆ ಯಂತ್ರದಲ್ಲಿನ ಕ್ಲೈಂಟ್?',
@@ -3811,4 +3804,15 @@ export const kn: Dictionary = {
     'ಈ ಕಂಪ್ಯೂಟರ್‌ನ ಫೋಲ್ಡರ್‌ಗಳಿಗೆ ಫೈಲ್ ಎಕ್ಸ್‌ಪ್ಲೋರರ್ ಸೇರಿಸುತ್ತದೆ, ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ತೋರಿಸು ಅದನ್ನು ತೆರೆಯುತ್ತದೆ.',
   '{name} is turned off, so its tabs were closed':
     '{name} ಆಫ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ ಅದರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಮುಚ್ಚಲಾಗಿದೆ',
+  'Add an AI account': 'AI ಖಾತೆ ಸೇರಿಸಿ',
+  '{percent} used this week': 'ಈ ವಾರ {percent} ಬಳಸಲಾಗಿದೆ',
+  'Resets {when}': '{when} ಮರುಹೊಂದಿಸುತ್ತದೆ',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'ಈ ಕಂಪ್ಯೂಟರ್‌ನ Claude Code ಮೂಲಕ ನಿಮ್ಮ Claude ಪ್ಲಾನ್ ಬಳಸುತ್ತದೆ.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'ಈ ಕಂಪ್ಯೂಟರ್‌ನ Codex ಮೂಲಕ ನಿಮ್ಮ ChatGPT ಪ್ಲಾನ್ ಬಳಸುತ್ತದೆ.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'ಈ ಕಂಪ್ಯೂಟರ್‌ನ Gemini CLI ಮೂಲಕ ನಿಮ್ಮ Google ಖಾತೆ ಬಳಸುತ್ತದೆ.',
+  'Sign in with your ChatGPT plan.': 'ನಿಮ್ಮ ChatGPT ಪ್ಲಾನ್‌ನೊಂದಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'Paid by use on your API account.': 'ನಿಮ್ಮ API ಖಾತೆಯಲ್ಲಿ ಬಳಕೆಗೆ ತಕ್ಕಂತೆ ಪಾವತಿ.',
 }

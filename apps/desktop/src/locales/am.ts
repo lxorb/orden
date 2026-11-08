@@ -1127,8 +1127,6 @@ export const am: Dictionary = {
   '{device} offers this device your AI vault': '{device} የAI ካዝናዎን ለዚህ መሣሪያ ያቀርባል',
   Join: 'ተቀላቀል',
   'Allow this device on another one': 'ይህን መሣሪያ በሌላ ላይ ይፍቀዱ',
-  'On every device you sign in to, end-to-end encrypted.':
-    'በሚገቡበት እያንዳንዱ መሣሪያ ላይ፣ ከጫፍ እስከ ጫፍ የተመሰጠረ።',
   'Sign in to have them on every device.': 'በእያንዳንዱ መሣሪያ ላይ እንዲኖሩ ይግቡ።',
   'Agents on this computer connect on their own': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች በራሳቸው ይገናኛሉ',
   Helpers: 'ረዳቶች',
@@ -1463,17 +1461,14 @@ export const am: Dictionary = {
   'Base URL': 'መሠረታዊ አድራሻ',
   'API key': 'የAPI ቁልፍ',
   Optional: 'አማራጭ',
-  'List models': 'ሞዴሎች አምጣ',
   'Asking…': 'በመጠየቅ ላይ…',
   'No providers yet.': 'እስካሁን አቅራቢ የለም።',
-  'Add {name}': '{name} ጨምር',
   'This browser holds the keys in its own storage.': 'ይህ አሳሽ ቁልፎቹን በራሱ ማከማቻ ይይዛል።',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'በዚህ መሣሪያ ላይ የቁልፍ ማከማቻ አልተገኘም፣ ስለዚህ ቁልፎችዎ እርስዎ ብቻ በሚያነቡት ፋይል ውስጥ ተቀምጠዋል።',
   'Keep this browser’s keys in the vault': 'የዚህን አሳሽ ቁልፎች በካዝናው ውስጥ አቆይ',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'ከዚያ የእያንዳንዱ መሣሪያ ቁልፎች በዚህ አሳሽ ማከማቻ ውስጥ ይቀመጣሉ፤ ወደ ገጹ የገባ ስክሪፕት ሊያነባቸው ይችላል።',
-  'AI can be wrong. Check the facts.': 'AI ሊሳሳት ይችላል። እውነታዎቹን አረጋግጥ።',
   'Used by the glasses': 'መነጽሩ ይጠቀማል',
   'Could not read the models.': 'ሞዴሎቹን ማንበብ አልተቻለም።',
   'That provider is not set up yet.': 'ያ አቅራቢ እስካሁን አልተዘጋጀም።',
@@ -1990,7 +1985,6 @@ export const am: Dictionary = {
   'that is more than a space keeps about its tree': 'ይህ አንድ ቦታ ስለ ዛፉ ከሚይዘው በላይ ነው',
   'Agents on this computer': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች',
   'Your account’s connector': 'የመለያዎ ማገናኛ',
-  'Orden asks you once, the first time it connects.': 'Orden ለመጀመሪያ ጊዜ ሲገናኝ አንድ ጊዜ ይጠይቅዎታል።',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'በAntigravity ውስጥ በወኪሉ ፓነል አናት ላይ ያለውን … ምናሌ ይክፈቱ፣ ከዚያ MCP Servers → Manage MCP Servers → View raw config፣ እና ይህን ግቤት ያክሉበት።',
   'A client on another machine?': 'በሌላ ማሽን ላይ ያለ ደንበኛ?',
@@ -3687,4 +3681,15 @@ export const am: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'ለዚህ ኮምፒውተር አቃፊዎች የፋይል አሳሽ ያክላል፣ በአቃፊ ውስጥ አሳይም ይከፍተዋል።',
   '{name} is turned off, so its tabs were closed': '{name} ጠፍቷል፣ ስለዚህ ትሮቹ ተዘግተዋል',
+  'Add an AI account': 'የAI መለያ ያክሉ',
+  '{percent} used this week': 'በዚህ ሳምንት {percent} ጥቅም ላይ ውሏል',
+  'Resets {when}': '{when} ዳግም ይጀምራል',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'የClaude ዕቅድዎን በዚህ ኮምፒውተር ላይ ባለው Claude Code በኩል ይጠቀማል።',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'የChatGPT ዕቅድዎን በዚህ ኮምፒውተር ላይ ባለው Codex በኩል ይጠቀማል።',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'የGoogle መለያዎን በዚህ ኮምፒውተር ላይ ባለው Gemini CLI በኩል ይጠቀማል።',
+  'Sign in with your ChatGPT plan.': 'በChatGPT ዕቅድዎ ይግቡ።',
+  'Paid by use on your API account.': 'በAPI መለያዎ ላይ በአጠቃቀም ይከፈላል።',
 }

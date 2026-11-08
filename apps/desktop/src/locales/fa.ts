@@ -1146,8 +1146,6 @@ export const fa: Dictionary = {
     '{device} گاوصندوق هوش مصنوعی شما را به این دستگاه پیشنهاد می‌کند',
   Join: 'پیوستن',
   'Allow this device on another one': 'این دستگاه را روی دستگاه دیگری مجاز کنید',
-  'On every device you sign in to, end-to-end encrypted.':
-    'روی هر دستگاهی که وارد شوید، با رمزگذاری سرتاسری.',
   'Sign in to have them on every device.': 'وارد شوید تا روی هر دستگاهی داشته باشید.',
   'Agents on this computer connect on their own': 'عامل‌های این رایانه خودشان وصل می‌شوند',
   Helpers: 'دستیارها',
@@ -1487,10 +1485,8 @@ export const fa: Dictionary = {
   'Base URL': 'نشانی پایه',
   'API key': 'کلید API',
   Optional: 'دلخواه',
-  'List models': 'گرفتن مدل‌ها',
   'Asking…': 'در حال پرسیدن…',
   'No providers yet.': 'هنوز فراهم‌کننده‌ای نیست.',
-  'Add {name}': 'افزودن {name}',
   'This browser holds the keys in its own storage.':
     'این مرورگر کلیدها را در انبار خودش نگه می‌دارد.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1498,7 +1494,6 @@ export const fa: Dictionary = {
   'Keep this browser’s keys in the vault': 'کلیدهای این مرورگر را در گاوصندوق نگه دار',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'در این صورت کلیدهای همهٔ دستگاه‌ها در حافظهٔ این مرورگر نگه داشته می‌شوند، جایی که اسکریپتی که به صفحه راه یافته می‌تواند آن‌ها را بخواند.',
-  'AI can be wrong. Check the facts.': 'هوش مصنوعی ممکن است اشتباه کند. واقعیت‌ها را بررسی کنید.',
   'Used by the glasses': 'عینک به کار می‌برد',
   'Could not read the models.': 'مدل‌ها خوانده نشدند.',
   'That provider is not set up yet.': 'آن فراهم‌کننده هنوز برپا نشده.',
@@ -2021,8 +2016,6 @@ export const fa: Dictionary = {
     'این بیش از آن است که یک فضا درباره درختش نگه می‌دارد',
   'Agents on this computer': 'عامل‌های این رایانه',
   'Your account’s connector': 'رابط حساب شما',
-  'Orden asks you once, the first time it connects.':
-    'Orden یک بار، هنگام نخستین اتصال، از شما می‌پرسد.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'در Antigravity، منوی … بالای پنل عامل را باز کنید، سپس MCP Servers → Manage MCP Servers → View raw config، و این ورودی را به آن اضافه کنید.',
   'A client on another machine?': 'کلاینتی روی دستگاهی دیگر؟',
@@ -3772,4 +3765,15 @@ export const fa: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'یک کاوشگر فایل برای پوشه‌های این رایانه می‌افزاید، و نمایش در پوشه آن را باز می‌کند.',
   '{name} is turned off, so its tabs were closed': '{name} خاموش است، پس زبانه‌هایش بسته شد',
+  'Add an AI account': 'افزودن حساب هوش مصنوعی',
+  '{percent} used this week': '{percent} در این هفته مصرف شده',
+  'Resets {when}': 'بازنشانی {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'از طرح Claude شما از طریق Claude Code روی این رایانه استفاده می‌کند.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'از طرح ChatGPT شما از طریق Codex روی این رایانه استفاده می‌کند.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'از حساب Google شما از طریق Gemini CLI روی این رایانه استفاده می‌کند.',
+  'Sign in with your ChatGPT plan.': 'با طرح ChatGPT خود وارد شوید.',
+  'Paid by use on your API account.': 'پرداخت بر اساس مصرف در حساب API شما.',
 }

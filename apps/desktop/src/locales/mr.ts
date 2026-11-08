@@ -1140,8 +1140,6 @@ export const mr: Dictionary = {
   '{device} offers this device your AI vault': '{device} या डिव्हाइसला तुमचा AI व्हॉल्ट देत आहे',
   Join: 'सामील व्हा',
   'Allow this device on another one': 'दुसऱ्या डिव्हाइसवर या डिव्हाइसला परवानगी द्या',
-  'On every device you sign in to, end-to-end encrypted.':
-    'तुम्ही साइन इन कराल त्या प्रत्येक डिव्हाइसवर, एंड-टू-एंड एन्क्रिप्टेड.',
   'Sign in to have them on every device.': 'प्रत्येक डिव्हाइसवर मिळवण्यासाठी साइन इन करा.',
   'Agents on this computer connect on their own': 'या संगणकावरील एजंट आपोआप जोडले जातात',
   Helpers: 'सहाय्यक',
@@ -1483,17 +1481,14 @@ export const mr: Dictionary = {
   'Base URL': 'मूळ URL',
   'API key': 'API कळ',
   Optional: 'ऐच्छिक',
-  'List models': 'मॉडेल आणा',
   'Asking…': 'विचारत आहे…',
   'No providers yet.': 'अद्याप पुरवठादार नाही.',
-  'Add {name}': '{name} जोडा',
   'This browser holds the keys in its own storage.': 'हा ब्राउझर कळा स्वतःच्या साठ्यात ठेवतो.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'या डिव्हाइसवर कीरिंग सापडले नाही, म्हणून तुमच्या की फक्त तुम्हीच वाचू शकाल अशा फाइलमध्ये ठेवल्या आहेत.',
   'Keep this browser’s keys in the vault': 'या ब्राउझरच्या की व्हॉल्टमध्ये ठेवा',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'मग प्रत्येक डिव्हाइसच्या की या ब्राउझरच्या स्टोरेजमध्ये ठेवल्या जातील, जिथे पेजमध्ये शिरलेली स्क्रिप्ट त्या वाचू शकते.',
-  'AI can be wrong. Check the facts.': 'AI चुकू शकते. तथ्ये तपासा.',
   'Used by the glasses': 'चष्मा वापरतो',
   'Could not read the models.': 'मॉडेल वाचता आले नाहीत.',
   'That provider is not set up yet.': 'तो पुरवठादार अद्याप मांडलेला नाही.',
@@ -2020,8 +2015,6 @@ export const mr: Dictionary = {
     'एखादी स्पेस तिच्या ट्रीबद्दल ठेवते त्यापेक्षा हे जास्त आहे',
   'Agents on this computer': 'या संगणकावरील एजंट',
   'Your account’s connector': 'तुमच्या खात्याचा कनेक्टर',
-  'Orden asks you once, the first time it connects.':
-    'पहिल्यांदा जोडले जाताना Orden तुम्हाला एकदाच विचारते.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity मध्ये एजंट पॅनेलच्या वरचा … मेनू उघडा, मग MCP Servers → Manage MCP Servers → View raw config, आणि त्यात ही नोंद जोडा.',
   'A client on another machine?': 'दुसऱ्या मशीनवरील क्लायंट?',
@@ -3764,4 +3757,15 @@ export const mr: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'या संगणकावरील फोल्डरसाठी फाइल एक्सप्लोरर जोडते, आणि फोल्डरमध्ये दाखवा ते उघडते.',
   '{name} is turned off, so its tabs were closed': '{name} बंद आहे, म्हणून त्याचे टॅब बंद केले',
+  'Add an AI account': 'AI खाते जोडा',
+  '{percent} used this week': 'या आठवड्यात {percent} वापरले',
+  'Resets {when}': '{when} रीसेट होईल',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'या संगणकावरील Claude Code द्वारे तुमचा Claude प्लॅन वापरते.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'या संगणकावरील Codex द्वारे तुमचा ChatGPT प्लॅन वापरते.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'या संगणकावरील Gemini CLI द्वारे तुमचे Google खाते वापरते.',
+  'Sign in with your ChatGPT plan.': 'तुमच्या ChatGPT प्लॅनने साइन इन करा.',
+  'Paid by use on your API account.': 'तुमच्या API खात्यावर वापरानुसार पैसे.',
 }

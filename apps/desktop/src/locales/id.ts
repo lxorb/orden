@@ -1139,8 +1139,6 @@ export const id: Dictionary = {
     '{device} menawarkan brankas AI Anda ke perangkat ini',
   Join: 'Gabung',
   'Allow this device on another one': 'Izinkan perangkat ini di perangkat lain',
-  'On every device you sign in to, end-to-end encrypted.':
-    'Di setiap perangkat tempat Anda masuk, terenkripsi ujung ke ujung.',
   'Sign in to have them on every device.': 'Masuk agar ada di setiap perangkat.',
   'Agents on this computer connect on their own': 'Agen di komputer ini terhubung sendiri',
   Helpers: 'Pembantu',
@@ -1471,10 +1469,8 @@ export const id: Dictionary = {
   'Base URL': 'URL dasar',
   'API key': 'Kunci API',
   Optional: 'Opsional',
-  'List models': 'Ambil daftar model',
   'Asking…': 'Menanyakan…',
   'No providers yet.': 'Belum ada penyedia.',
-  'Add {name}': 'Tambah {name}',
   'This browser holds the keys in its own storage.':
     'Peramban ini menyimpan kunci di penyimpanannya sendiri.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1482,7 +1478,6 @@ export const id: Dictionary = {
   'Keep this browser’s keys in the vault': 'Simpan kunci browser ini di brankas',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Maka kunci setiap perangkat disimpan di penyimpanan browser ini, tempat skrip yang menyusup ke halaman dapat membacanya.',
-  'AI can be wrong. Check the facts.': 'AI bisa salah. Periksa faktanya.',
   'Used by the glasses': 'Dipakai kacamata',
   'Could not read the models.': 'Tidak dapat membaca daftar model.',
   'That provider is not set up yet.': 'Penyedia itu belum disiapkan.',
@@ -2010,8 +2005,6 @@ export const id: Dictionary = {
     'itu lebih dari yang disimpan sebuah ruang tentang pohonnya',
   'Agents on this computer': 'Agen di komputer ini',
   'Your account’s connector': 'Konektor akunmu',
-  'Orden asks you once, the first time it connects.':
-    'Orden bertanya sekali, saat pertama kali ia terhubung.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Di Antigravity, buka menu … di bagian atas panel agen, lalu MCP Servers → Manage MCP Servers → View raw config, dan tambahkan entri ini ke sana.',
   'A client on another machine?': 'Klien di mesin lain?',
@@ -3705,4 +3698,15 @@ export const id: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'Menambahkan penjelajah file untuk folder di komputer ini, dan Tampilkan di folder membukanya.',
   '{name} is turned off, so its tabs were closed': '{name} dimatikan, jadi tabnya ditutup',
+  'Add an AI account': 'Tambahkan akun AI',
+  '{percent} used this week': '{percent} terpakai minggu ini',
+  'Resets {when}': 'Direset {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Memakai paket Claude Anda lewat Claude Code di komputer ini.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Memakai paket ChatGPT Anda lewat Codex di komputer ini.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Memakai akun Google Anda lewat Gemini CLI di komputer ini.',
+  'Sign in with your ChatGPT plan.': 'Masuk dengan paket ChatGPT Anda.',
+  'Paid by use on your API account.': 'Dibayar sesuai pemakaian di akun API Anda.',
 }

@@ -1132,8 +1132,6 @@ export const ko: Dictionary = {
   '{device} offers this device your AI vault': '{device}에서 이 기기에 AI 보관함을 제공합니다',
   Join: '참여',
   'Allow this device on another one': '다른 기기에서 이 기기를 허용하세요',
-  'On every device you sign in to, end-to-end encrypted.':
-    '로그인하는 모든 기기에서, 종단 간 암호화.',
   'Sign in to have them on every device.': '로그인하면 모든 기기에서 쓸 수 있습니다.',
   'Agents on this computer connect on their own': '이 컴퓨터의 에이전트가 스스로 연결',
   Helpers: '도우미',
@@ -1460,17 +1458,14 @@ export const ko: Dictionary = {
   'Base URL': '기본 URL',
   'API key': 'API 키',
   Optional: '선택 사항',
-  'List models': '모델 목록 가져오기',
   'Asking…': '묻는 중…',
   'No providers yet.': '아직 공급자가 없습니다.',
-  'Add {name}': '{name} 추가',
   'This browser holds the keys in its own storage.': '이 브라우저는 키를 자체 저장소에 보관합니다.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     '이 기기에서 키링을 찾지 못해 키를 나만 읽을 수 있는 파일에 보관합니다.',
   'Keep this browser’s keys in the vault': '이 브라우저의 키를 보관함에 두기',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     '그러면 모든 기기의 키가 이 브라우저의 저장소에 보관되며, 페이지에 들어온 스크립트가 이를 읽을 수 있습니다.',
-  'AI can be wrong. Check the facts.': 'AI는 틀릴 수 있습니다. 사실을 확인하세요.',
   'Used by the glasses': '글래스가 사용',
   'Could not read the models.': '모델 목록을 읽을 수 없었습니다.',
   'That provider is not set up yet.': '그 공급자는 아직 설정되지 않았습니다.',
@@ -1990,7 +1985,6 @@ export const ko: Dictionary = {
     '스페이스가 트리에 대해 보관할 수 있는 양을 넘습니다',
   'Agents on this computer': '이 컴퓨터의 에이전트',
   'Your account’s connector': '계정의 커넥터',
-  'Orden asks you once, the first time it connects.': '처음 연결할 때 Orden이 한 번 묻습니다.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity에서 에이전트 패널 위쪽의 … 메뉴를 열고 MCP Servers → Manage MCP Servers → View raw config로 가서 이 항목을 추가하세요.',
   'A client on another machine?': '다른 기기의 클라이언트인가요?',
@@ -3661,4 +3655,15 @@ export const ko: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     '이 컴퓨터의 폴더를 위한 파일 탐색기를 추가하며, 폴더에서 보기가 이를 엽니다.',
   '{name} is turned off, so its tabs were closed': '{name}이(가) 꺼져 있어 해당 탭을 닫았습니다',
+  'Add an AI account': 'AI 계정 추가',
+  '{percent} used this week': '이번 주 {percent} 사용',
+  'Resets {when}': '{when}에 초기화',
+  'Uses your Claude plan through Claude Code on this computer.':
+    '이 컴퓨터의 Claude Code로 Claude 요금제를 사용합니다.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    '이 컴퓨터의 Codex로 ChatGPT 요금제를 사용합니다.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    '이 컴퓨터의 Gemini CLI로 Google 계정을 사용합니다.',
+  'Sign in with your ChatGPT plan.': 'ChatGPT 요금제로 로그인합니다.',
+  'Paid by use on your API account.': 'API 계정에서 사용한 만큼 결제합니다.',
 }

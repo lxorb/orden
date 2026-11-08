@@ -1182,8 +1182,6 @@ export const uk: Dictionary = {
   '{device} offers this device your AI vault': '{device} пропонує цьому пристрою ваше сховище ШІ',
   Join: 'Приєднатися',
   'Allow this device on another one': 'Дозвольте цей пристрій на іншому',
-  'On every device you sign in to, end-to-end encrypted.':
-    'На кожному пристрої, де ви ввійшли, з наскрізним шифруванням.',
   'Sign in to have them on every device.': 'Увійдіть, щоб мати їх на кожному пристрої.',
   'Agents on this computer connect on their own': 'Агенти на цьому комп’ютері підключаються самі',
   Helpers: 'Помічники',
@@ -1559,17 +1557,14 @@ export const uk: Dictionary = {
   'Base URL': 'Базова адреса',
   'API key': 'Ключ API',
   Optional: 'Необов’язково',
-  'List models': 'Отримати моделі',
   'Asking…': 'Запит…',
   'No providers yet.': 'Постачальників ще немає.',
-  'Add {name}': 'Додати {name}',
   'This browser holds the keys in its own storage.': 'Цей браузер тримає ключі у власному сховищі.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'На цьому пристрої не знайдено зв’язки ключів, тому ваші ключі зберігаються у файлі, який можете прочитати лише ви.',
   'Keep this browser’s keys in the vault': 'Зберігати ключі цього браузера у сховищі',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Тоді ключі всіх пристроїв зберігатимуться в пам’яті цього браузера, де їх зможе прочитати скрипт, що потрапив на сторінку.',
-  'AI can be wrong. Check the facts.': 'ШІ може помилятися. Перевіряйте факти.',
   'Used by the glasses': 'Використовується окулярами',
   'Could not read the models.': 'Не вдалося прочитати моделі.',
   'That provider is not set up yet.': 'Цей постачальник ще не налаштований.',
@@ -2097,8 +2092,6 @@ export const uk: Dictionary = {
     'це більше, ніж простір зберігає про своє дерево',
   'Agents on this computer': 'Агенти на цьому комп’ютері',
   'Your account’s connector': 'Конектор вашого акаунта',
-  'Orden asks you once, the first time it connects.':
-    'Orden спитає вас один раз, під час першого підключення.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'В Antigravity відкрийте меню … угорі панелі агента, потім MCP Servers → Manage MCP Servers → View raw config, і додайте туди цей запис.',
   'A client on another machine?': 'Клієнт на іншому комп’ютері?',
@@ -3909,4 +3902,15 @@ export const uk: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'Додає провідник для папок цього комп’ютера, і «Показати в папці» відкриває його.',
   '{name} is turned off, so its tabs were closed': '{name} вимкнено, тому його вкладки закрито',
+  'Add an AI account': 'Додати ШІ-акаунт',
+  '{percent} used this week': '{percent} використано цього тижня',
+  'Resets {when}': 'Скидання: {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Використовує ваш план Claude через Claude Code на цьому комп’ютері.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Використовує ваш план ChatGPT через Codex на цьому комп’ютері.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Використовує ваш акаунт Google через Gemini CLI на цьому комп’ютері.',
+  'Sign in with your ChatGPT plan.': 'Увійдіть із планом ChatGPT.',
+  'Paid by use on your API account.': 'Оплата за використання у вашому акаунті API.',
 }

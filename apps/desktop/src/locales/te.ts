@@ -1146,8 +1146,6 @@ export const te: Dictionary = {
   '{device} offers this device your AI vault': '{device} ఈ పరికరానికి మీ AI వాల్ట్‌ను అందిస్తోంది',
   Join: 'చేరండి',
   'Allow this device on another one': 'మరొక పరికరంలో ఈ పరికరాన్ని అనుమతించండి',
-  'On every device you sign in to, end-to-end encrypted.':
-    'మీరు సైన్ ఇన్ చేసే ప్రతి పరికరంలో, ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్ట్.',
   'Sign in to have them on every device.': 'ప్రతి పరికరంలో పొందడానికి సైన్ ఇన్ చేయండి.',
   'Agents on this computer connect on their own':
     'ఈ కంప్యూటర్‌లోని ఏజెంట్లు స్వయంగా కనెక్ట్ అవుతాయి',
@@ -1492,17 +1490,14 @@ export const te: Dictionary = {
   'Base URL': 'బేస్ URL',
   'API key': 'API కీ',
   Optional: 'ఐచ్ఛికం',
-  'List models': 'మోడల్‌ల జాబితా',
   'Asking…': 'అడుగుతోంది…',
   'No providers yet.': 'ఇంకా ప్రొవైడర్‌లు లేవు.',
-  'Add {name}': '{name} జోడించు',
   'This browser holds the keys in its own storage.': 'ఈ బ్రౌజర్ కీలను తన స్టోరేజ్‌లో ఉంచుతుంది.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'ఈ పరికరంలో కీరింగ్ కనిపించలేదు, కాబట్టి మీ కీలు మీరు మాత్రమే చదవగలిగే ఫైల్‌లో ఉంచబడ్డాయి.',
   'Keep this browser’s keys in the vault': 'ఈ బ్రౌజర్ కీలను వాల్ట్‌లో ఉంచు',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'అప్పుడు ప్రతి పరికరం కీలు ఈ బ్రౌజర్ నిల్వలో ఉంటాయి, పేజీలోకి చొరబడిన స్క్రిప్ట్ వాటిని చదవగలదు.',
-  'AI can be wrong. Check the facts.': 'AI తప్పు కావచ్చు. వాస్తవాలను సరిచూసుకోండి.',
   'Used by the glasses': 'అద్దాలు వాడేది',
   'Could not read the models.': 'మోడల్‌లను చదవలేకపోయింది.',
   'That provider is not set up yet.': 'ఆ ప్రొవైడర్ ఇంకా ఏర్పాటు కాలేదు.',
@@ -2030,8 +2025,6 @@ export const te: Dictionary = {
     'ఒక స్పేస్ తన ట్రీ గురించి ఉంచుకునే దానికంటే ఇది ఎక్కువ',
   'Agents on this computer': 'ఈ కంప్యూటర్‌లోని ఏజెంట్‌లు',
   'Your account’s connector': 'మీ ఖాతా కనెక్టర్',
-  'Orden asks you once, the first time it connects.':
-    'మొదటిసారి కనెక్ట్ అయినప్పుడు Orden మిమ్మల్ని ఒకసారి అడుగుతుంది.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity లో ఏజెంట్ ప్యానెల్ పైన ఉన్న … మెనూ తెరవండి, తర్వాత MCP Servers → Manage MCP Servers → View raw config, దానికి ఈ ఎంట్రీని జోడించండి.',
   'A client on another machine?': 'వేరే మెషీన్‌లో క్లయింట్ ఉందా?',
@@ -3788,4 +3781,15 @@ export const te: Dictionary = {
     'ఈ కంప్యూటర్ ఫోల్డర్ల కోసం ఫైల్ ఎక్స్‌ప్లోరర్‌ను జోడిస్తుంది, ఫోల్డర్‌లో చూపించు దాన్ని తెరుస్తుంది.',
   '{name} is turned off, so its tabs were closed':
     '{name} ఆఫ్‌లో ఉంది, కాబట్టి దాని ట్యాబ్‌లు మూసివేయబడ్డాయి',
+  'Add an AI account': 'AI ఖాతాను జోడించండి',
+  '{percent} used this week': 'ఈ వారం {percent} వాడారు',
+  'Resets {when}': '{when} రీసెట్ అవుతుంది',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'ఈ కంప్యూటర్‌లోని Claude Code ద్వారా మీ Claude ప్లాన్‌ను వాడుతుంది.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'ఈ కంప్యూటర్‌లోని Codex ద్వారా మీ ChatGPT ప్లాన్‌ను వాడుతుంది.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'ఈ కంప్యూటర్‌లోని Gemini CLI ద్వారా మీ Google ఖాతాను వాడుతుంది.',
+  'Sign in with your ChatGPT plan.': 'మీ ChatGPT ప్లాన్‌తో సైన్ ఇన్ చేయండి.',
+  'Paid by use on your API account.': 'మీ API ఖాతాలో వాడకాన్ని బట్టి చెల్లింపు.',
 }

@@ -1134,8 +1134,6 @@ export const vi: Dictionary = {
   '{device} offers this device your AI vault': '{device} đề nghị thiết bị này dùng kho AI của bạn',
   Join: 'Tham gia',
   'Allow this device on another one': 'Cho phép thiết bị này trên thiết bị khác',
-  'On every device you sign in to, end-to-end encrypted.':
-    'Trên mọi thiết bị bạn đăng nhập, mã hóa đầu cuối.',
   'Sign in to have them on every device.': 'Đăng nhập để có chúng trên mọi thiết bị.',
   'Agents on this computer connect on their own': 'Tác tử trên máy này tự kết nối',
   Helpers: 'Trợ thủ',
@@ -1463,10 +1461,8 @@ export const vi: Dictionary = {
   'Base URL': 'URL gốc',
   'API key': 'Khoá API',
   Optional: 'Không bắt buộc',
-  'List models': 'Lấy danh sách mô hình',
   'Asking…': 'Đang hỏi…',
   'No providers yet.': 'Chưa có nhà cung cấp nào.',
-  'Add {name}': 'Thêm {name}',
   'This browser holds the keys in its own storage.':
     'Trình duyệt này giữ khoá trong bộ lưu trữ của chính nó.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1474,7 +1470,6 @@ export const vi: Dictionary = {
   'Keep this browser’s keys in the vault': 'Giữ khóa của trình duyệt này trong kho',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Khi đó, khóa của mọi thiết bị sẽ được lưu trong bộ nhớ của trình duyệt này, nơi một đoạn mã lọt vào trang có thể đọc được.',
-  'AI can be wrong. Check the facts.': 'AI có thể sai. Hãy kiểm tra lại thông tin.',
   'Used by the glasses': 'Kính đang dùng',
   'Could not read the models.': 'Không đọc được danh sách mô hình.',
   'That provider is not set up yet.': 'Nhà cung cấp đó chưa được thiết lập.',
@@ -1997,8 +1992,6 @@ export const vi: Dictionary = {
     'con số đó vượt quá những gì một không gian lưu giữ về cây của nó',
   'Agents on this computer': 'Tác tử trên máy tính này',
   'Your account’s connector': 'Trình kết nối của tài khoản',
-  'Orden asks you once, the first time it connects.':
-    'Orden hỏi bạn một lần, khi nó kết nối lần đầu.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Trong Antigravity, mở menu … ở đầu bảng tác nhân, rồi MCP Servers → Manage MCP Servers → View raw config, và thêm mục này vào đó.',
   'A client on another machine?': 'Một ứng dụng khách trên máy khác?',
@@ -3673,4 +3666,15 @@ export const vi: Dictionary = {
     'Thêm trình khám phá tệp cho các thư mục trên máy tính này, và Hiện trong thư mục sẽ mở nó.',
   '{name} is turned off, so its tabs were closed':
     '{name} đang tắt, nên các thẻ của nó đã được đóng',
+  'Add an AI account': 'Thêm tài khoản AI',
+  '{percent} used this week': 'Đã dùng {percent} tuần này',
+  'Resets {when}': 'Đặt lại vào {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Dùng gói Claude của bạn qua Claude Code trên máy tính này.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Dùng gói ChatGPT của bạn qua Codex trên máy tính này.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Dùng tài khoản Google của bạn qua Gemini CLI trên máy tính này.',
+  'Sign in with your ChatGPT plan.': 'Đăng nhập bằng gói ChatGPT của bạn.',
+  'Paid by use on your API account.': 'Trả theo mức dùng trên tài khoản API của bạn.',
 }

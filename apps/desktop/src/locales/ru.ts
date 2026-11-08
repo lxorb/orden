@@ -1184,8 +1184,6 @@ export const ru: Dictionary = {
     '{device} предлагает этому устройству ваше хранилище ИИ',
   Join: 'Присоединиться',
   'Allow this device on another one': 'Разрешите это устройство на другом',
-  'On every device you sign in to, end-to-end encrypted.':
-    'На каждом устройстве, где вы вошли, со сквозным шифрованием.',
   'Sign in to have them on every device.': 'Войдите, чтобы они были на каждом устройстве.',
   'Agents on this computer connect on their own': 'Агенты на этом компьютере подключаются сами',
   Helpers: 'Помощники',
@@ -1563,10 +1561,8 @@ export const ru: Dictionary = {
   'Base URL': 'Базовый адрес',
   'API key': 'Ключ API',
   Optional: 'Необязательно',
-  'List models': 'Получить модели',
   'Asking…': 'Запрос…',
   'No providers yet.': 'Поставщиков пока нет.',
-  'Add {name}': 'Добавить {name}',
   'This browser holds the keys in its own storage.':
     'Этот браузер держит ключи в собственном хранилище.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1574,7 +1570,6 @@ export const ru: Dictionary = {
   'Keep this browser’s keys in the vault': 'Хранить ключи этого браузера в хранилище',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Тогда ключи всех устройств будут храниться в памяти этого браузера, где их сможет прочитать скрипт, проникший на страницу.',
-  'AI can be wrong. Check the facts.': 'ИИ может ошибаться. Проверяйте факты.',
   'Used by the glasses': 'Используется очками',
   'Could not read the models.': 'Не удалось прочитать модели.',
   'That provider is not set up yet.': 'Этот поставщик ещё не настроен.',
@@ -2104,8 +2099,6 @@ export const ru: Dictionary = {
     'это больше, чем пространство хранит о своём дереве',
   'Agents on this computer': 'Агенты на этом компьютере',
   'Your account’s connector': 'Коннектор вашего аккаунта',
-  'Orden asks you once, the first time it connects.':
-    'Orden спросит вас один раз, при первом подключении.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'В Antigravity откройте меню … вверху панели агента, затем MCP Servers → Manage MCP Servers → View raw config, и добавьте туда эту запись.',
   'A client on another machine?': 'Клиент на другом компьютере?',
@@ -3912,4 +3905,15 @@ export const ru: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'Добавляет проводник для папок этого компьютера, и «Показать в папке» открывает его.',
   '{name} is turned off, so its tabs were closed': '{name} выключено, поэтому его вкладки закрыты',
+  'Add an AI account': 'Добавить ИИ-аккаунт',
+  '{percent} used this week': '{percent} использовано на этой неделе',
+  'Resets {when}': 'Сброс: {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Использует ваш план Claude через Claude Code на этом компьютере.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Использует ваш план ChatGPT через Codex на этом компьютере.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Использует ваш аккаунт Google через Gemini CLI на этом компьютере.',
+  'Sign in with your ChatGPT plan.': 'Войдите с планом ChatGPT.',
+  'Paid by use on your API account.': 'Оплата по факту использования в вашем аккаунте API.',
 }

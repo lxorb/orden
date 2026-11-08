@@ -1156,8 +1156,6 @@ export const ptBR: Dictionary = {
     '{device} oferece a este dispositivo o seu cofre de IA',
   Join: 'Entrar',
   'Allow this device on another one': 'Permita este dispositivo em outro',
-  'On every device you sign in to, end-to-end encrypted.':
-    'Em todo dispositivo em que você entrar, com criptografia de ponta a ponta.',
   'Sign in to have them on every device.': 'Entre para tê-las em todos os dispositivos.',
   'Agents on this computer connect on their own':
     'Os agentes deste computador se conectam sozinhos',
@@ -1515,10 +1513,8 @@ export const ptBR: Dictionary = {
   'Base URL': 'URL base',
   'API key': 'Chave de API',
   Optional: 'Opcional',
-  'List models': 'Listar modelos',
   'Asking…': 'Perguntando…',
   'No providers yet.': 'Ainda sem provedores.',
-  'Add {name}': 'Adicionar {name}',
   'This browser holds the keys in its own storage.':
     'Este navegador guarda as chaves no próprio armazenamento.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1526,7 +1522,6 @@ export const ptBR: Dictionary = {
   'Keep this browser’s keys in the vault': 'Guardar as chaves deste navegador no cofre',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Assim, as chaves de todos os dispositivos ficam no armazenamento deste navegador, onde um script que entrasse na página poderia lê-las.',
-  'AI can be wrong. Check the facts.': 'A IA pode errar. Confira os fatos.',
   'Used by the glasses': 'Usado pelos óculos',
   'Could not read the models.': 'Não foi possível ler os modelos.',
   'That provider is not set up yet.': 'Esse provedor ainda não está configurado.',
@@ -2059,8 +2054,6 @@ export const ptBR: Dictionary = {
     'é mais do que um espaço guarda sobre sua árvore',
   'Agents on this computer': 'Agentes neste computador',
   'Your account’s connector': 'Conector da sua conta',
-  'Orden asks you once, the first time it connects.':
-    'O Orden pergunta uma vez, na primeira vez que ele se conecta.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'No Antigravity, abra o menu … no topo do painel do agente, depois MCP Servers → Manage MCP Servers → View raw config, e adicione esta entrada.',
   'A client on another machine?': 'Um cliente em outra máquina?',
@@ -3855,4 +3848,15 @@ export const ptBR: Dictionary = {
     'Adiciona um explorador de arquivos para as pastas deste computador, e Mostrar na pasta o abre.',
   '{name} is turned off, so its tabs were closed':
     '{name} está desativado, então as abas dele foram fechadas',
+  'Add an AI account': 'Adicionar conta de IA',
+  '{percent} used this week': '{percent} usado nesta semana',
+  'Resets {when}': 'Reinicia {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Usa seu plano Claude pelo Claude Code neste computador.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Usa seu plano ChatGPT pelo Codex neste computador.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Usa sua conta Google pelo Gemini CLI neste computador.',
+  'Sign in with your ChatGPT plan.': 'Entre com seu plano ChatGPT.',
+  'Paid by use on your API account.': 'Pago por uso na sua conta da API.',
 }

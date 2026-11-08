@@ -43,7 +43,6 @@
   {:else}
     <Copyable label={t('Command')} value={line} />
   {/if}
-  <p class="hint">{t('Orden asks you once, the first time it connects.')}</p>
 {/if}
 
 {#if client === 'other'}

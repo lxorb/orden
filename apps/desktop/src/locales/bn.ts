@@ -1142,8 +1142,6 @@ export const bn: Dictionary = {
   '{device} offers this device your AI vault': '{device} এই ডিভাইসকে আপনার AI ভল্ট দিচ্ছে',
   Join: 'যোগ দিন',
   'Allow this device on another one': 'অন্য ডিভাইসে এই ডিভাইসকে অনুমতি দিন',
-  'On every device you sign in to, end-to-end encrypted.':
-    'যে ডিভাইসেই সাইন ইন করুন, এন্ড-টু-এন্ড এনক্রিপ্টেড।',
   'Sign in to have them on every device.': 'প্রতিটি ডিভাইসে পেতে সাইন ইন করুন।',
   'Agents on this computer connect on their own': 'এই কম্পিউটারের এজেন্টরা নিজেরাই যুক্ত হয়',
   Helpers: 'সহায়ক',
@@ -1484,17 +1482,14 @@ export const bn: Dictionary = {
   'Base URL': 'মূল URL',
   'API key': 'API কী',
   Optional: 'ঐচ্ছিক',
-  'List models': 'মডেল আনুন',
   'Asking…': 'জিজ্ঞাসা করা হচ্ছে…',
   'No providers yet.': 'এখনও কোনো প্রদানকারী নেই।',
-  'Add {name}': '{name} যোগ করুন',
   'This browser holds the keys in its own storage.': 'এই ব্রাউজার কী নিজের ভাণ্ডারে রাখে।',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'এই ডিভাইসে কোনো কিরিং পাওয়া যায়নি, তাই আপনার কী এমন একটি ফাইলে রাখা আছে যা শুধু আপনি পড়তে পারেন।',
   'Keep this browser’s keys in the vault': 'এই ব্রাউজারের কী ভল্টে রাখুন',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'তখন প্রতিটি ডিভাইসের কী এই ব্রাউজারের স্টোরেজে রাখা হবে, যেখানে পৃষ্ঠায় ঢুকে পড়া কোনো স্ক্রিপ্ট সেগুলো পড়তে পারে।',
-  'AI can be wrong. Check the facts.': 'AI ভুল করতে পারে। তথ্যগুলো যাচাই করুন।',
   'Used by the glasses': 'চশমা ব্যবহার করে',
   'Could not read the models.': 'মডেল পড়া গেল না।',
   'That provider is not set up yet.': 'ওই প্রদানকারী এখনও সাজানো হয়নি।',
@@ -2018,8 +2013,6 @@ export const bn: Dictionary = {
     'একটি স্পেস তার ট্রি সম্পর্কে যতটা রাখে, এটি তার চেয়ে বেশি',
   'Agents on this computer': 'এই কম্পিউটারের এজেন্ট',
   'Your account’s connector': 'আপনার অ্যাকাউন্টের কানেক্টর',
-  'Orden asks you once, the first time it connects.':
-    'প্রথমবার সংযোগের সময় Orden আপনাকে একবার জিজ্ঞাসা করে।',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity-তে এজেন্ট প্যানেলের ওপরের … মেনু খুলুন, তারপর MCP Servers → Manage MCP Servers → View raw config, এবং এই এন্ট্রিটি সেখানে যোগ করুন।',
   'A client on another machine?': 'অন্য মেশিনের ক্লায়েন্ট?',
@@ -3761,4 +3754,15 @@ export const bn: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'এই কম্পিউটারের ফোল্ডারের জন্য একটি ফাইল এক্সপ্লোরার যোগ করে, এবং ফোল্ডারে দেখান সেটি খোলে।',
   '{name} is turned off, so its tabs were closed': '{name} বন্ধ, তাই এর ট্যাবগুলো বন্ধ করা হয়েছে',
+  'Add an AI account': 'একটি AI অ্যাকাউন্ট যোগ করুন',
+  '{percent} used this week': 'এই সপ্তাহে {percent} ব্যবহৃত',
+  'Resets {when}': '{when} রিসেট হবে',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'এই কম্পিউটারের Claude Code দিয়ে আপনার Claude প্ল্যান ব্যবহার করে।',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'এই কম্পিউটারের Codex দিয়ে আপনার ChatGPT প্ল্যান ব্যবহার করে।',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'এই কম্পিউটারের Gemini CLI দিয়ে আপনার Google অ্যাকাউন্ট ব্যবহার করে।',
+  'Sign in with your ChatGPT plan.': 'আপনার ChatGPT প্ল্যান দিয়ে সাইন ইন করুন।',
+  'Paid by use on your API account.': 'আপনার API অ্যাকাউন্টে ব্যবহার অনুযায়ী মূল্য।',
 }

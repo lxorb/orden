@@ -1192,8 +1192,6 @@ export const ar: Dictionary = {
     'يعرض {device} على هذا الجهاز خزنة الذكاء الاصطناعي الخاصة بك',
   Join: 'انضمام',
   'Allow this device on another one': 'اسمح بهذا الجهاز من جهاز آخر',
-  'On every device you sign in to, end-to-end encrypted.':
-    'على كل جهاز تسجّل الدخول إليه، بتشفير تام بين الطرفين.',
   'Sign in to have them on every device.': 'سجّل الدخول لتحصل عليها على كل جهاز.',
   'Agents on this computer connect on their own': 'الوكلاء على هذا الحاسوب يتصلون تلقائيًا',
   Helpers: 'المساعدون',
@@ -1591,17 +1589,14 @@ export const ar: Dictionary = {
   'Base URL': 'العنوان الأساسي',
   'API key': 'مفتاح API',
   Optional: 'اختياري',
-  'List models': 'جلب الطُرز',
   'Asking…': 'جارٍ السؤال…',
   'No providers yet.': 'لا مزوّدين بعد.',
-  'Add {name}': 'إضافة {name}',
   'This browser holds the keys in its own storage.': 'يحفظ هذا المتصفح المفاتيح في مخزنه الخاص.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'لم يُعثر على حافظة مفاتيح في هذا الجهاز، لذا تُحفظ مفاتيحك في ملف لا يقرؤه سواك.',
   'Keep this browser’s keys in the vault': 'الاحتفاظ بمفاتيح هذا المتصفح في الخزنة',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'عندها تُحفظ مفاتيح كل جهاز في تخزين هذا المتصفح، حيث يمكن لنص برمجي تسلل إلى الصفحة أن يقرأها.',
-  'AI can be wrong. Check the facts.': 'قد يخطئ الذكاء الاصطناعي. تحقّق من الحقائق.',
   'Used by the glasses': 'تستخدمه النظارات',
   'Could not read the models.': 'تعذّرت قراءة الطُرز.',
   'That provider is not set up yet.': 'هذا المزوّد غير مُهيّأ بعد.',
@@ -2132,7 +2127,6 @@ export const ar: Dictionary = {
   'that is more than a space keeps about its tree': 'هذا أكثر مما تحتفظ به المساحة عن شجرتها',
   'Agents on this computer': 'الوكلاء على هذا الحاسوب',
   'Your account’s connector': 'موصّل حسابك',
-  'Orden asks you once, the first time it connects.': 'يسألك Orden مرة واحدة، عند أول اتصال.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'في Antigravity، افتح القائمة … أعلى لوحة الوكيل، ثم MCP Servers → Manage MCP Servers → View raw config، وأضف هذا الإدخال إليه.',
   'A client on another machine?': 'عميل على جهاز آخر؟',
@@ -3949,4 +3943,15 @@ export const ar: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'يضيف مستكشف ملفات لمجلدات هذا الحاسوب، ويفتحه أمر الإظهار في المجلد.',
   '{name} is turned off, so its tabs were closed': '{name} متوقف، لذا أُغلقت علامات تبويبه',
+  'Add an AI account': 'إضافة حساب ذكاء اصطناعي',
+  '{percent} used this week': 'استُخدم {percent} هذا الأسبوع',
+  'Resets {when}': 'يُعاد التعيين {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'يستخدم خطة Claude الخاصة بك عبر Claude Code على هذا الكمبيوتر.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'يستخدم خطة ChatGPT الخاصة بك عبر Codex على هذا الكمبيوتر.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'يستخدم حساب Google الخاص بك عبر Gemini CLI على هذا الكمبيوتر.',
+  'Sign in with your ChatGPT plan.': 'سجّل الدخول بخطة ChatGPT الخاصة بك.',
+  'Paid by use on your API account.': 'الدفع حسب الاستخدام في حساب API الخاص بك.',
 }

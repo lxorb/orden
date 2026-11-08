@@ -254,6 +254,14 @@ function claudeSession() {
           totalTokens: 522,
           maxTokens: 200000,
         })
+      case 'get_usage':
+        return answer(id, {
+          subscription_type: 'max',
+          rate_limits: {
+            five_hour: null,
+            seven_day: { utilization: 42, resets_at: '2030-01-07T09:00:00+00:00' },
+          },
+        })
       case 'list_models':
         return answer(id, {
           models: [
@@ -630,6 +638,13 @@ function appServer() {
       case 'thread/goal/clear':
         reply(id, { cleared: true })
         return tell('thread/goal/cleared', { threadId: params.threadId })
+      case 'account/rateLimits/read':
+        return reply(id, {
+          rateLimits: {
+            primary: { usedPercent: 12, windowDurationMins: 300, resetsAt: 1893488400 },
+            secondary: { usedPercent: 34, windowDurationMins: 10080, resetsAt: 1893920400 },
+          },
+        })
       case 'model/list':
         return reply(id, {
           data: [

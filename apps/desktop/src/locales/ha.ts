@@ -1154,8 +1154,6 @@ export const ha: Dictionary = {
   '{device} offers this device your AI vault': "{device} yana ba wannan na'ura ma'ajin AI ɗinka",
   Join: 'Shiga',
   'Allow this device on another one': "Ba da izinin wannan na'ura a wata",
-  'On every device you sign in to, end-to-end encrypted.':
-    "A kowace na'ura da ka shiga, an ɓoye daga ƙarshe zuwa ƙarshe.",
   'Sign in to have them on every device.': "Shiga don samun su a kowace na'ura.",
   'Agents on this computer connect on their own': 'Wakilai a wannan kwamfuta suna haɗuwa da kansu',
   Helpers: 'Mataimaka',
@@ -1507,10 +1505,8 @@ export const ha: Dictionary = {
   'Base URL': 'URL na tushe',
   'API key': 'Maɓallin API',
   Optional: 'Ba dole ba',
-  'List models': 'Samo samfura',
   'Asking…': 'Ana tambaya…',
   'No providers yet.': 'Babu masu bayarwa tukuna.',
-  'Add {name}': 'Ƙara {name}',
   'This browser holds the keys in its own storage.':
     "Wannan birawuza na riƙe maɓallai a ma'ajinsa.",
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1518,7 +1514,6 @@ export const ha: Dictionary = {
   'Keep this browser’s keys in the vault': "Ajiye maɓallan wannan burauza a cikin ma'aji",
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     "Sannan za a ajiye maɓallan kowace na'ura a ma'ajin wannan burauza, inda rubutun da ya shiga shafin zai iya karanta su.",
-  'AI can be wrong. Check the facts.': 'AI na iya yin kuskure. Ka tabbatar da gaskiyar bayanai.',
   'Used by the glasses': 'Tabarau na amfani da shi',
   'Could not read the models.': 'Ba a iya karanta samfuran ba.',
   'That provider is not set up yet.': 'Ba a saita wannan mai bayarwa tukuna.',
@@ -2049,8 +2044,6 @@ export const ha: Dictionary = {
     'wannan ya fi abin da wuri ke riƙewa game da bishiyarsa',
   'Agents on this computer': 'Wakilai a wannan kwamfuta',
   'Your account’s connector': 'Mahaɗin asusunka',
-  'Orden asks you once, the first time it connects.':
-    'Orden zai tambaye ka sau ɗaya, a farkon lokacin da ya haɗu.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'A cikin Antigravity, buɗe menu … a saman faifan wakili, sannan MCP Servers → Manage MCP Servers → View raw config, kuma ƙara wannan shigarwar a ciki.',
   'A client on another machine?': "Abokin ciniki a wata na'ura?",
@@ -3819,4 +3812,15 @@ export const ha: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'Yana ƙara mai binciken fayil don manyan fayilolin wannan kwamfuta, kuma Nuna a babban fayil yana buɗe shi.',
   '{name} is turned off, so its tabs were closed': 'An kashe {name}, don haka an rufe shafukansa',
+  'Add an AI account': 'Ƙara asusun AI',
+  '{percent} used this week': 'An yi amfani da {percent} a wannan makon',
+  'Resets {when}': 'Za a sake saitawa {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Yana amfani da tsarin Claude ɗinka ta Claude Code a wannan kwamfuta.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Yana amfani da tsarin ChatGPT ɗinka ta Codex a wannan kwamfuta.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Yana amfani da asusun Google ɗinka ta Gemini CLI a wannan kwamfuta.',
+  'Sign in with your ChatGPT plan.': 'Shiga da tsarin ChatGPT ɗinka.',
+  'Paid by use on your API account.': 'Ana biya gwargwadon amfani a asusun API ɗinka.',
 }
