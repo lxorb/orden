@@ -42,6 +42,7 @@ interface Device {
   online: boolean
   unanswered: Set<string>
   refuses: ((route: string, body: Parameters<typeof frame>[0]) => boolean) | null
+  refusal: Refused | null
   engine: Engine
   launch(): Promise<Engine>
 }
@@ -106,6 +107,7 @@ async function device(
     online: true,
     unanswered: new Set(),
     refuses: null,
+    refusal: null,
     engine: null as unknown as Engine,
     async launch() {
       const world: World = {
@@ -113,7 +115,9 @@ async function device(
         account: {
           ask: async (route, body) => {
             if (!made.online || route === 'prepare' || made.unanswered.has(route)) return null
-            if (made.refuses?.(route, body)) throw new Refused(400, 'not a request')
+            if (made.refuses?.(route, body)) {
+              throw made.refusal ?? new Refused(400, 'not a request')
+            }
             made.routes.push(route)
             return unframe(await account.handle(id, route, frame(body)))
           },
@@ -508,6 +512,47 @@ describe('an open note', () => {
       record.t === 'keep' ? [record.keep.text] : [],
     )
     expect(kept).toEqual([theirs])
+    part?.()
+  })
+  test('a version to keep stays queued until the account itself answers it', async () => {
+    const one = await device()
+    one.online = false
+    const seeded = SEEDED[0]?.text ?? ''
+    const theirs = seeded.replace('Monday', 'Friday')
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+    const mine = seeded.replace('Monday', 'Tuesday')
+    const part = await attach(
+      one.engine,
+      PLAN,
+      { live: new SharedDoc(mine), latest: mine },
+      () => true,
+    )
+    const kept = () =>
+      (one.engine.core.spaces.get(SPACE)?.outbox ?? []).flatMap(({ record }) =>
+        record.t === 'keep' ? [record.keep.text] : [],
+      )
+
+    one.online = true
+    one.refuses = (route) => route === 'keep'
+    for (const refusal of [
+      new Refused(401, 'sign in first'),
+      new Refused(403, 'request failed (403)', false),
+    ]) {
+      one.refusal = refusal
+      await one.engine.pass(SPACE).catch(() => undefined)
+      expect(kept()).toEqual([theirs])
+    }
+
+    one.refusal = new Refused(400, 'not a request')
+    await one.engine.pass(SPACE).catch(() => undefined)
+    expect(kept()).toEqual([])
     part?.()
   })
 })

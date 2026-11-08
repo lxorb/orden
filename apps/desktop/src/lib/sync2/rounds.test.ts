@@ -67,7 +67,8 @@ describe('the way back to v1', () => {
     expect(await sentAll(away, new Set(['one']), 4, () => Promise.resolve())).toBe(false)
   })
 
-  const refused = (status: number) => Promise.reject(new ApiError(status, 'no', null))
+  const refused = (status: number) =>
+    Promise.reject(new ApiError(status, 'no', { error: 'no such space' }))
 
   test('gone is a refused listing and a list of spaces without it', async () => {
     const { listings, gone } = await reachable(
@@ -104,5 +105,23 @@ describe('the way back to v1', () => {
         () => Promise.resolve([]),
       ),
     ).rejects.toMatchObject({ status: 503 })
+  })
+
+  test('a refusal from something in the way is no answer from the account, and waits', async () => {
+    const blocked = {
+      pass: () => Promise.reject(new Refused(403, 'request failed (403)', false)),
+      waiting: () => false,
+    }
+    await expect(
+      sentAll(blocked, new Set(['one']), 4, () => Promise.resolve()),
+    ).rejects.toMatchObject({ status: 403 })
+
+    await expect(
+      reachable(
+        new Set(['one']),
+        () => Promise.reject(new ApiError(404, 'Not Found', '<html>not here</html>')),
+        () => Promise.resolve([]),
+      ),
+    ).rejects.toMatchObject({ status: 404 })
   })
 })

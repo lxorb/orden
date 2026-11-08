@@ -99,7 +99,7 @@ async function sendKeeps(core: Core, space: SpaceState, alive: () => boolean): P
       const reply = await ask(core, space, 'keep', one.record.keep)
       if (!alive() || reply === null) return false
     } catch (error) {
-      if (!(error instanceof Refused)) throw error
+      if (!(error instanceof Refused) || !error.told || error.status === 401) throw error
       if (!alive()) return false
     }
     space.outbox = space.outbox.filter((other) => other !== one)

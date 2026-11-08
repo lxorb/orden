@@ -1,4 +1,4 @@
-import { ApiError } from '../api'
+import { ApiError, fromServer } from '../api'
 import { Refused } from './transport'
 
 function statusOf(error: unknown): number | null {
@@ -6,8 +6,9 @@ function statusOf(error: unknown): number | null {
 }
 
 function outOfReach(error: unknown): boolean {
+  const said = error instanceof Refused ? error.told : fromServer(error)
   const status = statusOf(error)
-  return status === 403 || status === 404
+  return said && (status === 403 || status === 404)
 }
 
 export async function eachDue(
