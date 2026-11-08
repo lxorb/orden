@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keyFromLayer } from '../layer-keys'
   import { blank } from '@orden/pass/envelope'
   import type { Item } from '@orden/pass/types'
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
@@ -89,7 +90,8 @@
     void ui.openItem(item.id)
   }
 
-  function stepTo(event: KeyboardEvent) {
+  function stepTo(event: KeyboardEvent & { currentTarget: HTMLElement }) {
+    if (keyFromLayer(event, event.currentTarget)) return
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
     if (!rows.length) return
     event.preventDefault()

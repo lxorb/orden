@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keyFromLayer } from './layer-keys'
   import { onDestroy, tick } from 'svelte'
   import { loadEmbed } from '@orden/editor'
   import { claimsGesture } from './swipe'
@@ -234,7 +235,7 @@
 
     const focused = document.activeElement
     if (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) return
-    if (menu.open) return
+    if (menu.open || keyFromLayer(event, deck)) return
 
     if (/^\d$/.test(event.key)) {
       event.preventDefault()

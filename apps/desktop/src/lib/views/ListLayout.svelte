@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keyFromLayer } from '../layer-keys'
   import { groupName, type Row, type Value } from '@orden/bases'
   import { untrack } from 'svelte'
   import { Heights } from '../chats/view/window'
@@ -246,7 +247,8 @@
     return found ? groupName(found.group.key) : null
   }
 
-  function keydown(event: KeyboardEvent) {
+  function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
+    if (keyFromLayer(event, event.currentTarget)) return
     const key = rowKey(event, (id) => shortcuts.keyFor(id), shortcuts.platform)
     if (!key) return
     const at = rows.findIndex((one) => one.id === selected)

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keyFromLayer } from '../layer-keys'
   import { type Group, groupName, type Row } from '@orden/bases'
   import { untrack } from 'svelte'
   import { menu } from '../menu.svelte'
@@ -167,8 +168,8 @@
     window.addEventListener('pointerup', up)
   }
 
-  function keydown(event: KeyboardEvent) {
-    if (editing) return
+  function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
+    if (editing || keyFromLayer(event, event.currentTarget)) return
     const rowsAt = lines.length
     const move = (line: number, column: number) => {
       event.preventDefault()
