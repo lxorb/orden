@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { invoke } from '../tauri'
-  import { CHANNEL, heard, type Said } from './channel'
+  import { asking, CHANNEL, heard, type Said } from './channel'
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
 
@@ -13,16 +13,12 @@
   const channel = new BroadcastChannel(CHANNEL)
   const say = (said: Said) => channel.postMessage(said)
 
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
-  const waiting = new Map<number, (ok: boolean) => void>()
-  let next = 0
-  const ANSWER_WITHIN = 10_000
+  const asked = asking(say, 10_000)
 
   channel.onmessage = (event: MessageEvent) => {
     const said = heard(event.data)
     if (said?.kind === 'added') {
-      waiting.get(said.id)?.(said.ok)
-      waiting.delete(said.id)
+      asked.heard(said)
       return
     }
     if (said?.kind !== 'world') return
@@ -34,18 +30,7 @@
   const hide = (raise = false) => void invoke('quick_add_hide', { raise }).catch(() => undefined)
 
   async function added(entry: Entry, open: boolean): Promise<boolean> {
-    const id = next++
-    const ok = await new Promise<boolean>((resolve) => {
-      const unanswered = setTimeout(() => {
-        waiting.delete(id)
-        resolve(false)
-      }, ANSWER_WITHIN)
-      waiting.set(id, (ok) => {
-        clearTimeout(unanswered)
-        resolve(ok)
-      })
-      say({ kind: 'task', id, entry, open })
-    })
+    const ok = await asked.ask(entry, open)
     if (ok) hide(open)
     return ok
   }

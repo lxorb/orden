@@ -7,13 +7,21 @@ import { shortcuts } from '../shortcuts.svelte'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { quickAdd } from './asked.svelte'
-import { ANSWERING, CHANNEL, heard, type Said } from './channel'
+import { addingOnce, ANSWERING, CHANNEL, heard, type Said } from './channel'
 import { addTask, noteNames } from './write'
 
 export function listen(): () => void {
   const stopping = new AbortController()
   let stopKey: (() => void) | null = null
   let channel: BroadcastChannel | null = null
+  const added = addingOnce(async (entry, open) => {
+    try {
+      return (await addTask(entry, { open })) !== null
+    } catch (error) {
+      log('error', `quick add: ${error instanceof Error ? error.message : String(error)}`)
+      return false
+    }
+  })
 
   const answer = (said: Said) => {
     if (said.kind === 'hello') {
@@ -25,14 +33,8 @@ export function listen(): () => void {
         smart: quickAdd.smart,
       } satisfies Said)
     } else if (said.kind === 'task') {
-      const tell = (ok: boolean) =>
-        channel?.postMessage({ kind: 'added', id: said.id, ok } satisfies Said)
-      void addTask(said.entry, { open: said.open }).then(
-        (where) => tell(where !== null),
-        (error: unknown) => {
-          log('error', `quick add: ${error instanceof Error ? error.message : String(error)}`)
-          tell(false)
-        },
+      void added(said.id, said.entry, said.open).then((ok) =>
+        channel?.postMessage({ kind: 'added', id: said.id, ok } satisfies Said),
       )
     }
   }
