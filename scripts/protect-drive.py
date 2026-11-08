@@ -16,7 +16,7 @@ import urllib.error
 import urllib.request
 from typing import Any
 import crash_told
-from fresh_app import fresh
+from fresh_app import ended, fresh
 
 SPACE = "Protect probe"
 NOTE = "Diary.md"
@@ -273,11 +273,7 @@ def main() -> int:
         print(f"the trouble line: {app.eval(TROUBLE)}", flush=True)
         print(f"errors on the page: {app.eval('window.__seen')}", flush=True)
     finally:
-        process.terminate()
-        try:
-            process.wait(20)
-        except subprocess.TimeoutExpired:
-            process.kill()
+        ended(process, gentle=True)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
 

@@ -22,8 +22,9 @@ from PIL import Image, ImageChops, ImageGrab, ImageStat
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from carry_page import PAGE as CARRY_PAGE, carried  # noqa: E402
-from probe_app import FIRST_START_ANSWERED, main_window, refuse_updating  # noqa: E402
-from fresh_app import fresh  # noqa: E402
+from probe_app import main_window, refuse_updating  # noqa: E402
+import crash_told  # noqa: E402
+from fresh_app import ended, fresh  # noqa: E402
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
@@ -102,6 +103,7 @@ def endpoint(identifier: str, pid: int, secret: str) -> App:
         try:
             said = json.loads(path.read_text(encoding="utf-8-sig"))
             if said.get("port") and int(said.get("pid") or 0) == pid:
+                crash_told.told(int(said["port"]), secret)
                 return App(int(said["port"]), secret)
         except (OSError, ValueError):
             pass
@@ -360,7 +362,6 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
         until = time.monotonic() + 90
         while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
-        app.eval(FIRST_START_ANSWERED)
         hwnd = 0
         while time.monotonic() < until and not hwnd:
             hwnd = main_window(process.pid)
@@ -390,11 +391,7 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
             print(f"::warning::{one}", flush=True)
         return missed
     finally:
-        process.terminate()
-        try:
-            process.wait(20)
-        except subprocess.TimeoutExpired:
-            process.kill()
+        ended(process, gentle=True)
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -428,7 +425,6 @@ def main() -> int:
         until = time.monotonic() + 90
         while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
-        app.eval(FIRST_START_ANSWERED)
         hwnd = 0
         while time.monotonic() < until and not hwnd:
             hwnd = main_window(process.pid)
@@ -582,18 +578,10 @@ def main() -> int:
             wrong += overview(app, hwnd, hole, args.out, by_keys)
 
         if not args.windowed:
-            process.terminate()
-            try:
-                process.wait(20)
-            except subprocess.TimeoutExpired:
-                process.kill()
+            ended(process, gentle=True)
             wrong += carried_alone(args.exe, args.identifier, secret, env, url.replace("/under", "/carry"), args.out)
     finally:
-        process.terminate()
-        try:
-            process.wait(20)
-        except subprocess.TimeoutExpired:
-            process.kill()
+        ended(process, gentle=True)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
 

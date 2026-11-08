@@ -37,6 +37,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 drive = importlib.import_module("web-tab-drive")
 from probe_app import main_window
+from fresh_app import ended, fresh
 
 ALT = 0x12
 F10 = 0x79
@@ -127,8 +128,7 @@ def main() -> int:
 
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     config = drive.config_of(args.identifier)
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True, exist_ok=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-alt-"))
@@ -185,11 +185,7 @@ def main() -> int:
                     break
                 tap(user32, app, other, name, key, "the presenter's window", wrong)
     finally:
-        process.kill()
-        try:
-            process.wait(20)
-        except subprocess.TimeoutExpired:
-            pass
+        ended(process)
         shutil.rmtree(spaces, ignore_errors=True)
 
     for one in wrong:

@@ -27,7 +27,7 @@ from PIL import Image, ImageChops, ImageGrab, ImageStat
 
 from carry_page import PAGE as CARRY_PAGE, carried
 import crash_told
-from fresh_app import fresh
+from fresh_app import ended, fresh
 
 COLOUR = (255, 0, 255)
 LAYER = (0, 160, 0)
@@ -309,11 +309,7 @@ def moves_as_before(exe: pathlib.Path, identifier: str, secret: str, env: dict[s
         time.sleep(0.5)
         return app.eval("window.__moves")
     finally:
-        process.terminate()
-        try:
-            process.wait(20)
-        except subprocess.TimeoutExpired:
-            process.kill()
+        ended(process, gentle=True)
 
 def carried_in(app: App, url: str, name: str) -> tuple[list[str], list[str]]:
     inner = app.eval(INNER)
@@ -336,11 +332,7 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
         shot().save(out / f"carried-{name}.png")
         return said
     finally:
-        process.terminate()
-        try:
-            process.wait(20)
-        except subprocess.TimeoutExpired:
-            process.kill()
+        ended(process, gentle=True)
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -520,11 +512,7 @@ def main() -> int:
 
         wrong += overview(app, hole, ratio, args.out)
     finally:
-        process.terminate()
-        try:
-            process.wait(20)
-        except subprocess.TimeoutExpired:
-            process.kill()
+        ended(process, gentle=True)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
 

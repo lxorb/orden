@@ -21,7 +21,7 @@ import mss
 import numpy
 from PIL import Image, ImageStat
 import crash_told
-from fresh_app import fresh
+from fresh_app import ended, fresh
 
 COLOUR = (255, 0, 255)
 PAGE = b"<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%;background:#ff00ff}</style>"
@@ -538,11 +538,7 @@ def main() -> int:
             wrong += round_trip(app, desk, "web", hole, args.out, scale)
             wrong += round_trip(app, desk, "web-again", hole, args.out, scale)
     finally:
-        process.terminate()
-        try:
-            process.wait(20)
-        except subprocess.TimeoutExpired:
-            process.kill()
+        ended(process, gentle=True)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
 
