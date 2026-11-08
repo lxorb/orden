@@ -158,6 +158,29 @@ describe("another service's conversation in Orden's chat view", () => {
     page.close()
   })
 
+  test('an edit keeps the people it names, as sending does', async () => {
+    const { fake, chat } = await linked()
+    const page = await opened(chat('team'))
+    await vi.waitFor(() => expect(page.view.members.length).toBeGreaterThan(1))
+    const named = page.view.members.find((one) => one.who !== page.me && one.name)
+    if (!named?.name) throw new Error('no member with a name')
+    page.post(`@${named.name} look`)
+    await vi.waitFor(() => expect(page.messages.at(-1)?.body).toBe(`@${named.name} look`))
+    const id = page.messages.at(-1)?.id ?? ''
+    await store().edit(chat('team'), id, `@${named.name} look again`)
+    const sent = fake.world.calls.find((one) => one.method === 'send')?.args[1] as {
+      mentions?: string[]
+    }
+    const edited = fake.world.calls.find((one) => one.method === 'edit')?.args[2] as {
+      text: string
+      mentions?: string[]
+    }
+    expect(sent.mentions?.length).toBe(1)
+    expect(edited.text).toBe(`@${named.name} look again`)
+    expect(edited.mentions).toEqual(sent.mentions)
+    page.close()
+  })
+
   test('reading tells the service, and so does marking unread', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const { fake, chat } = await linked()

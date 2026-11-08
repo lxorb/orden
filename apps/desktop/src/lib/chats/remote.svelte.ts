@@ -549,12 +549,16 @@ export class Remote {
     return this.urls.put(hash, bytes, file?.type ?? '')
   }
 
+  private mentionsIn(conversation: string, body: string): string[] {
+    const members = this.views.get(conversation)?.view.members ?? []
+    return members
+      .filter((one) => one.who !== this.me && one.name && body.includes(`@${one.name}`))
+      .map((one) => personOf(one.who))
+  }
+
   private outgoing(conversation: string, draft: Draft) {
     const formatting = this.source()?.provider.can.formatting ?? 'plain'
-    const members = this.views.get(conversation)?.view.members ?? []
-    const mentions = members
-      .filter((one) => one.who !== this.me && one.name && draft.body.includes(`@${one.name}`))
-      .map((one) => personOf(one.who))
+    const mentions = this.mentionsIn(conversation, draft.body)
     const attachments: OutgoingFile[] = (draft.files ?? []).flatMap((file) => {
       const held = this.uploads.get(file.hash)
       if (!held) return []
@@ -695,7 +699,11 @@ export class Remote {
     const conversation = this.conv(chat)
     const formatting = this.source()?.provider.can.formatting ?? 'plain'
     const text = sentText(body, formatting)
-    await this.connection?.edit?.(conversation, message, { text })
+    const mentions = this.mentionsIn(conversation, body)
+    await this.connection?.edit?.(conversation, message, {
+      text,
+      ...(mentions.length ? { mentions } : {}),
+    })
     this.patch(conversation, message, (one) => ({ ...one, text, editedAt: Date.now() }))
   }
 

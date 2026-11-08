@@ -158,10 +158,20 @@ export class FakeSlack {
       const channel = this.place(form.get('channel') ?? '')
       const parent = form.get('ts') ?? ''
       const latest = Number(form.get('latest') ?? Infinity)
-      const all = channel.messages.filter(
-        (one) => (one.ts === parent || one.thread_ts === parent) && Number(one.ts) <= latest,
-      )
-      return { messages: all, has_more: false }
+      const oldest = Number(form.get('oldest') ?? 0)
+      const inclusive = form.get('inclusive') === 'true'
+      const limit = Number(form.get('limit') ?? 1000)
+      const head = channel.messages.filter((one) => one.ts === parent)
+      const replies = channel.messages.filter((one) => {
+        const at = Number(one.ts)
+        return (
+          one.ts !== parent &&
+          one.thread_ts === parent &&
+          (inclusive ? at <= latest && at >= oldest : at < latest && at > oldest)
+        )
+      })
+      const all = [...head, ...replies]
+      return { messages: all.slice(0, limit), has_more: all.length > limit }
     },
     'conversations.mark': (form) => {
       this.place(form.get('channel') ?? '').last_read = form.get('ts') ?? ''
