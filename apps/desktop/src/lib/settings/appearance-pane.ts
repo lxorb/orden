@@ -2,6 +2,7 @@ import { key, t } from '../i18n.svelte'
 import { DEFAULTS, type FontPlace, INTERFACE_ZOOMS, modes } from '../modes.svelte'
 import { isDesktop, isMobile, platform } from '../tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
+import { settings } from '../settings.svelte'
 import { sideToggles } from '../side-toggles.svelte'
 import { appSettings, builtIns, type SchemeChoice, theme } from '../theme.svelte'
 import { type ChosenSettings, SHARED, type ThemeSetting, type ThemeValue } from '../themes/settings'
@@ -370,6 +371,20 @@ export function appearancePane(): Pane {
                   get: () => modes.flushBottom,
                   set: () => modes.toggleFlushBottom(),
                 },
+                ...(navigator.userAgent.includes('Windows')
+                  ? ([
+                      {
+                        kind: 'switch',
+                        label: t('Show in Explorer’s New menu'),
+                        hint: t(
+                          'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.',
+                        ),
+                        words: ['explorer', 'new', 'right-click', 'context menu', 'markdown'],
+                        get: () => settings.newMenu,
+                        set: (on) => void settings.setNewMenu(on),
+                      },
+                    ] satisfies Field[])
+                  : []),
                 ...(zooms
                   ? ([
                       {
