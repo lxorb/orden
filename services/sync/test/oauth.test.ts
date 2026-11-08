@@ -728,6 +728,22 @@ describe('refreshing', () => {
     const { clientId } = await connect()
     expect((await refresh(clientId, 'nibr_made_up')).json.error).toBe('invalid_grant')
   })
+
+  test('treats a token another request rotated meanwhile as spent', async () => {
+    const { tokens, clientId } = await connect()
+    env.justBefore(/update oauth_grants\s+set access_hash/, () =>
+      env.db
+        .prepare(
+          "update oauth_grants set previous_refresh_hash = refresh_hash, refresh_hash = 'won'",
+        )
+        .run(),
+    )
+
+    const refreshed = await refresh(clientId, tokens.json.refresh_token)
+    expect(refreshed.status).toBe(401)
+    expect(refreshed.json.error).toBe('invalid_grant')
+    expect(env.db.prepare('select count(*) as n from oauth_grants').get()).toEqual({ n: 0 })
+  })
 })
 
 describe('a client that describes itself at a URL', () => {
@@ -1003,6 +1019,43 @@ describe('how many apps one account connects', () => {
 
   test('lets a first app in', async () => {
     expect((await consent((await register()).json.client_id)).status).toBe(302)
+  })
+
+  test('holds when another connection lands between consent and the token', async () => {
+    const clientId = (await register()).json.client_id
+    connected(Array.from({ length: 199 }, () => clientId))
+    const { verifier, challenge } = await pkce()
+    const ask = {
+      client_id: clientId,
+      redirect_uri: CHATGPT,
+      state: 'xyz',
+      code_challenge: challenge,
+      resource: `${ORIGIN}/mcp`,
+    }
+    const code = await codeSentTo(() => submit({ ...ask, action: 'send', email: ACCOUNT }))
+    const allowed = await submit({ ...ask, action: 'allow', email: ACCOUNT, code })
+    expect(allowed.status).toBe(302)
+    const grant = new URL(allowed.headers.get('location')!).searchParams.get('code')!
+    env.justBefore(/insert into oauth_grants/, () =>
+      env.db
+        .prepare(
+          `insert into oauth_grants
+             (id, user_id, client_id, client_name, read_only, access_hash, access_expires_at,
+              refresh_hash, created_at)
+           values ('quicker', 'one', ?1, 'Something', 1, 'quicker', ?2, 'quicker', ?2)`,
+        )
+        .run(clientId, Date.now()),
+    )
+
+    const tokens = await exchange({
+      code: grant,
+      code_verifier: verifier,
+      client_id: clientId,
+      redirect_uri: CHATGPT,
+      resource: `${ORIGIN}/mcp`,
+    })
+    expect(tokens.json.error).toBe('invalid_grant')
+    expect(env.db.prepare('select count(*) as n from oauth_grants').get()).toEqual({ n: 200 })
   })
 })
 
