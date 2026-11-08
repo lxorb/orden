@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { closeOnBack } from '../backstack.svelte'
   import { dropOver } from '../drag-paths'
   import { t } from '../i18n.svelte'
   import { prompt } from '../prompt.svelte'
@@ -16,6 +17,7 @@
 
   let chosen = $state<string | null>(null)
   const host = $derived(chosen === null ? null : (remote.byId(chosen) ?? null))
+  $effect(() => closeOnBack(host !== null, () => (chosen = null)))
 
   let problem = $state('')
 

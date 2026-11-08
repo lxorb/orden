@@ -7,6 +7,7 @@
   import { tauriCrate } from '../agents/settings/crate'
   import { AgentsPane } from '../agents/settings/pane.svelte'
   import { reach } from '../agents/settings/reach.svelte'
+  import { closeOnBack } from '../backstack.svelte'
   import { connectors } from '../connectors.svelte'
   import { i18n, t } from '../i18n.svelte'
   import { dur, slide } from '../motion'
@@ -41,6 +42,7 @@
 
   let chosen = $state<string | null>(null)
   const agent = $derived(pane?.grants.find((one) => one.id === chosen) ?? null)
+  $effect(() => closeOnBack(agent !== null, () => (chosen = null)))
   $effect(() => {
     ondetail?.(agent !== null)
   })
