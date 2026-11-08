@@ -52,7 +52,7 @@ vi.mock('./commands', () => ({
   },
   renameTo: (path: string, name: string) => {
     changed.push(`rename ${path} ${name}`)
-    return Promise.resolve(`/home/me/${name}`)
+    return Promise.resolve(`${path.slice(0, path.lastIndexOf('/'))}/${name}`)
   },
   trashPaths: (paths: string[]) => {
     changed.push(`trash ${paths.join(',')}`)
@@ -259,6 +259,35 @@ describe('a file explorer', () => {
     await settled()
     expect(target.querySelector('input.rename')).toBeNull()
     expect(changed).toEqual([])
+  })
+
+  test('renames a file found below by its own name, and the found row takes it', async () => {
+    const { view } = await explorer()
+    view.searchBelow('bank')
+    const search = view.search
+    if (!search) throw new Error('no search')
+    search.found = [
+      {
+        name: 'letters/bank.txt',
+        kind: 'file',
+        folder: false,
+        size: 1,
+        modified: 0,
+        hidden: false,
+      },
+    ]
+    await settled()
+    view.pick('letters/bank.txt', 'one')
+    await settled()
+    press('F2')
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.rename')
+    if (!field) throw new Error('no rename field')
+    expect(field.value).toBe('bank.txt')
+    field.value = 'loan.txt'
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await settled()
+    expect(changed).toEqual(['rename /home/me/letters/bank.txt loan.txt'])
   })
 
   test('keeps a name being typed when the folder is read again under it', async () => {

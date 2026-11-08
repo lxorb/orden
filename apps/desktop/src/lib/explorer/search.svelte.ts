@@ -54,6 +54,14 @@ export class Search {
     ]
   }
 
+  moved(from: string, to: string): string | null {
+    const was = within(this.root, from)
+    const now = within(this.root, to)
+    if (!was || !now) return null
+    this.found = this.found.map((one) => (one.name === was ? { ...one, name: now } : one))
+    return now
+  }
+
   stop() {
     if (!this.done) void cancelJob(this.job)
   }

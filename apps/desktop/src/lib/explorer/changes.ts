@@ -3,7 +3,7 @@ import { message, plural, t } from '../i18n.svelte'
 import type { Picked as Brought } from '../import/sources'
 import { fileClipboard } from '../list-landing.svelte'
 import { prompt } from '../prompt.svelte'
-import { nameOf } from '../space-paths'
+import { folderOf, nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import type { OutsideStep } from '../workspace/undo.svelte'
@@ -78,13 +78,14 @@ export async function renamePath(view: ExplorerView, from: string, name: string)
     let to: string
     if (inASpace(from)) {
       await workspace.rename(from, clean)
-      to = joinPath(view.listing?.path ?? '', clean)
+      to = joinPath(folderOf(from), clean)
     } else {
       to = await renameTo(from, clean)
       record([{ op: 'moved', pairs: [{ from, to }] }])
     }
+    const picked = view.search ? view.search.moved(from, to) : nameOf(to)
     await view.reload()
-    view.pick(nameOf(to), 'one')
+    if (picked !== null) view.pick(picked, 'one')
   } catch (error) {
     view.tell(message(error, 'could not rename this'))
   }
