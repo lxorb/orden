@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import ctypes
-import importlib.util
 import json
 import os
 import pathlib
@@ -49,14 +48,6 @@ ROWS = """JSON.stringify((() => {
 })())"""
 
 
-def borrowed(name: str, file: str) -> Any:
-    spec = importlib.util.spec_from_file_location(name, HERE / file)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 def made_folder(root: pathlib.Path) -> None:
     root.mkdir(parents=True)
     for name, size, day in NAMED:
@@ -68,6 +59,7 @@ def made_folder(root: pathlib.Path) -> None:
         (root / name).mkdir()
         (root / name / "inner.txt").write_bytes(b"x")
         os.utime(root / name, (BASE + day * DAY, BASE + day * DAY))
+        time.sleep(0.05)
     for one in range(MORE):
         path = root / f"zz {one}.bin"
         path.write_bytes(b"x" * (101 + one * 7))
@@ -75,31 +67,22 @@ def made_folder(root: pathlib.Path) -> None:
         time.sleep(0.02)
 
 
-class Linux:
-    def __init__(self, exe: pathlib.Path) -> None:
-        self.home = pathlib.Path(tempfile.mkdtemp(prefix="orden-sort-drive-"))
-        config = self.home / ".config" / "so.orden.Orden"
-        config.mkdir(parents=True)
-        (config / "automation.json").write_text(
-            json.dumps({"port": 0, "secret": secrets.token_hex(32), "eval": True, "pid": 0})
-        )
-        os.chmod(config / "automation.json", 0o600)
-        self.config = config
-        self.env = dict(os.environ, HOME=str(self.home), XDG_CONFIG_HOME=str(self.home / ".config"))
-        self.env["XDG_DATA_HOME"] = str(self.home / ".local" / "share")
-        self.running = subprocess.Popen([str(exe)], env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        self.port, self.secret = 0, ""
+class Driven:
+    running: subprocess.Popen[bytes]
+    port = 0
+    secret = ""
+
+    def wait_for_endpoint(self, config: pathlib.Path) -> None:
         for _ in range(240):
             try:
-                kept = json.loads((config / "automation.json").read_text())
+                kept = json.loads((config / "automation.json").read_text(encoding="utf-8-sig"))
                 if kept.get("port"):
                     self.port, self.secret = int(kept["port"]), str(kept["secret"])
-                    break
+                    return
             except (OSError, ValueError):
                 pass
             time.sleep(0.5)
-        if not self.port:
-            raise SystemExit("the app wrote no endpoint")
+        raise SystemExit("the app wrote no endpoint")
 
     def ask(self, code: str) -> Any:
         body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
@@ -125,6 +108,32 @@ class Linux:
                 return value
         return value
 
+    def stop(self) -> None:
+        self.running.terminate()
+        try:
+            self.running.wait(timeout=20)
+        except subprocess.TimeoutExpired:
+            self.running.kill()
+
+
+def automation(config: pathlib.Path) -> None:
+    config.mkdir(parents=True, exist_ok=True)
+    (config / "automation.json").write_text(
+        json.dumps({"port": 0, "secret": secrets.token_hex(32), "eval": True, "pid": 0}), encoding="utf-8"
+    )
+
+
+class Linux(Driven):
+    def __init__(self, exe: pathlib.Path) -> None:
+        self.home = pathlib.Path(tempfile.mkdtemp(prefix="orden-sort-drive-"))
+        config = self.home / ".config" / "so.orden.Orden"
+        automation(config)
+        os.chmod(config / "automation.json", 0o600)
+        self.env = dict(os.environ, HOME=str(self.home), XDG_CONFIG_HOME=str(self.home / ".config"))
+        self.env["XDG_DATA_HOME"] = str(self.home / ".local" / "share")
+        self.running = subprocess.Popen([str(exe)], env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.wait_for_endpoint(config)
+
     def click(self, x: float, y: float) -> None:
         window = subprocess.run(
             ["xdotool", "search", "--pid", str(self.running.pid), "--onlyvisible"],
@@ -139,63 +148,66 @@ class Linux:
         subprocess.run(["xdotool", "mousemove", str(int(left + x)), str(int(top + y)), "click", "1"], env=self.env, check=False)
 
     def end(self) -> None:
-        self.running.terminate()
-        try:
-            self.running.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            self.running.kill()
+        self.stop()
         shutil.rmtree(self.home, ignore_errors=True)
 
 
-class Windows:
+class Windows(Driven):
     def __init__(self, exe: pathlib.Path, identifier: str) -> None:
+        if "probe" not in identifier:
+            raise SystemExit(f"{identifier} is not a probe identifier")
         sys.path.insert(0, str(HERE))
-        ctypes.windll.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
-        from probe_app import main_window
+        from fresh_app import fresh
+        from probe_app import main_window, refuse_updating
 
-        self.main_window = main_window
-        probe = borrowed("downloads_probe", "web-downloads-probe.py")
+        self.user32 = ctypes.windll.user32
+        self.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
+        refuse_updating(exe)
+        config = pathlib.Path(os.environ["APPDATA"]) / identifier
+        fresh(config)
+        automation(config)
         self.spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-sort-spaces-"))
-        os.environ["ORDEN_SPACES_DIR"] = str(self.spaces)
-        probe.wipe(identifier)
-        running, app = probe.launch(exe, identifier)
-        running.terminate()
-        running.wait(timeout=30)
-        probe.allow_eval(identifier)
-        self.running, self.app = probe.launch(exe, identifier, unlike=app.port)
-        self.probe = probe
-        probe.quiet(self.app)
+        env = {**os.environ, "ORDEN_SPACES_DIR": str(self.spaces)}
+        self.running = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent))
+        self.wait_for_endpoint(config)
+        self.hwnd = 0
+        until = time.monotonic() + 90
+        while time.monotonic() < until and not self.hwnd:
+            self.hwnd = main_window(self.running.pid)
+            time.sleep(0.25)
+        if not self.hwnd:
+            raise SystemExit("no window")
+        from ctypes import wintypes
 
-    def ask(self, code: str) -> Any:
-        return self.app.ask(code)
+        self.user32.ShowWindow(self.hwnd, 9)
+        desk = wintypes.RECT()
+        self.user32.SystemParametersInfoW(0x30, 0, ctypes.byref(desk), 0)
+        wide, high = min(1280, desk.right - desk.left), min(860, desk.bottom - desk.top)
+        self.user32.SetWindowPos(self.hwnd, None, desk.left, desk.top, wide, high, 0x0004)
+        time.sleep(1)
 
     def click(self, x: float, y: float) -> None:
         from ctypes import wintypes
 
-        user32 = ctypes.windll.user32
-        hwnd = self.main_window(self.running.pid)
+        user32 = self.user32
         origin = wintypes.POINT(0, 0)
-        user32.ClientToScreen(hwnd, ctypes.byref(origin))
+        user32.ClientToScreen(self.hwnd, ctypes.byref(origin))
         front = user32.GetForegroundWindow()
         theirs = user32.GetWindowThreadProcessId(front, None)
         ours = ctypes.windll.kernel32.GetCurrentThreadId()
         user32.AttachThreadInput(ours, theirs, True)
-        user32.SetForegroundWindow(hwnd)
-        user32.BringWindowToTop(hwnd)
+        user32.SetForegroundWindow(self.hwnd)
+        user32.BringWindowToTop(self.hwnd)
         user32.AttachThreadInput(ours, theirs, False)
         time.sleep(0.2)
         user32.SetCursorPos(int(origin.x + x), int(origin.y + y))
-        time.sleep(0.1)
+        time.sleep(0.15)
         user32.mouse_event(0x0002, 0, 0, 0, 0)
-        time.sleep(0.05)
+        time.sleep(0.06)
         user32.mouse_event(0x0004, 0, 0, 0, 0)
 
     def end(self) -> None:
-        self.running.terminate()
-        try:
-            self.running.wait(timeout=30)
-        except subprocess.TimeoutExpired:
-            self.running.kill()
+        self.stop()
         shutil.rmtree(self.spaces, ignore_errors=True)
 
 
