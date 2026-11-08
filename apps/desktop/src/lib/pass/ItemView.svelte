@@ -197,11 +197,11 @@
     <ItemMark {content} big />
     <div class="named">
       <h2 class="title">
-        <span class="words">{content.title || t('Untitled')}</span>
+        <span class="words" dir="auto">{content.title || t('Untitled')}</span>
         {#if item.pinned}<span class="pinned" title={t('Pinned')}><Glyph icon={Pin} /></span>{/if}
       </h2>
       {#if vault}
-        <span class="vault"
+        <span class="vault" dir="auto"
           ><VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />{vault.name}</span
         >
       {/if}
@@ -239,7 +239,7 @@
 
     {#each groups as group (group.id)}
       <section class="card" aria-label={group.name || null}>
-        {#if group.name}<h3 class="orden-section">{group.name}</h3>{/if}
+        {#if group.name}<h3 class="orden-section" dir="auto">{group.name}</h3>{/if}
         {#each group.fields as field (field.id)}
           {#if field.kind === 'totp' && sealed}
             <FieldRow label={field.label} value="" hidden sealed />
@@ -527,5 +527,9 @@
   .times dd {
     margin: 0;
     color: var(--muted-strong);
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

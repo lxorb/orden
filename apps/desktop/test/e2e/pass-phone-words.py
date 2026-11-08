@@ -16,7 +16,7 @@ PHONE = (
 )
 PASSWORD = "tulip ladder seven"
 TITLE = "Averyveryverylongunbrokentitlewithoutanyspacesthatgoesonandon"
-LANGUAGES = ("de", "my", "ta")
+LANGUAGES = ("de", "my", "ta", "ar")
 WIDTH = 320
 
 PAST = """() => {
@@ -46,6 +46,20 @@ TITLED = """() => {
 
 SIDE = "() => !!document.querySelector('.pass .column.side')?.checkVisibility()"
 
+BEGINS = """(selector) => [...document.querySelectorAll(selector)]
+  .filter((one) => one.checkVisibility())
+  .map((one) => {
+    const words = [...one.childNodes].find((node) => node.nodeType === 3 && node.textContent.trim())
+    if (!words) return 'no words'
+    const at = words.textContent.search(/\\S/)
+    const range = document.createRange()
+    range.setStart(words, at)
+    range.setEnd(words, at + 1)
+    const first = range.getBoundingClientRect()
+    const box = one.getBoundingClientRect()
+    return first.left >= box.left - 1 && first.right <= box.right + 1 ? 'shown' : 'cut'
+  })"""
+
 
 def words(language: str):
     source = (harness.APP / "src" / "locales" / f"{language}.ts").read_text(encoding="utf-8")
@@ -56,6 +70,13 @@ def words(language: str):
         return found.group(1).replace("\\'", "'") if found else english
 
     return said
+
+
+def begins(page: Page, selector: str, where: str) -> None:
+    seen = page.evaluate(BEGINS, selector)
+    if not seen or any(one != "shown" for one in seen):
+        wrong(f"{where}: the title's first letters are cut off, not its end: {seen}")
+        shot(page, f"cut-{where}")
 
 
 def fits(page: Page, where: str) -> None:
@@ -99,12 +120,14 @@ def look(browser: Browser, language: str) -> None:
     page.get_by_role("button", name=said("Create"), exact=True).click()
     wait_for(page, f"document.querySelector('.pass main h2')?.textContent.includes({TITLE!r})", f"[{language}] the login")
     fits(page, f"{language} login")
+    begins(page, ".pass main h2 .words", f"{language} login title")
     if not page.evaluate(TITLED):
         wrong(f"[{language}] the login's title is squeezed out of its header")
         shot(page, f"{language}-untitled")
     page.go_back()
     page.wait_for_timeout(500)
     fits(page, f"{language} list")
+    begins(page, ".pass [data-item] .name", f"{language} list row")
     page.locator(".pass .column.list").get_by_role("button", name=said("Select items"), exact=True).click()
     fits(page, f"{language} picking")
     page.keyboard.press("Escape")

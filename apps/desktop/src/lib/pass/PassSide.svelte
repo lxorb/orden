@@ -101,7 +101,7 @@
       {:else}
         <Glyph icon={FolderMark} class="orden-row-mark" />
       {/if}
-      <span class="orden-row-label">{folder.name}</span>
+      <span class="orden-row-label" dir="auto">{folder.name}</span>
       <span class="orden-row-meta">{countIn(vault.id, folder.id)}</span>
     </button>
     {@render folders(vault, folder.id, depth + 1)}
@@ -142,7 +142,7 @@
             menu.show(event, vaultEntries(ui, vault), { until: pass.opened })}
         >
           <VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />
-          <span class="orden-row-label">{vault.name}</span>
+          <span class="orden-row-label" dir="auto">{vault.name}</span>
           {#if vault.shared}<SharedMark />{/if}
           <span class="orden-row-meta count">{countIn(vault.id)}</span>
         </button>
@@ -355,5 +355,9 @@
     gap: 1px;
     padding: var(--space-2);
     border-top: 1px solid var(--line);
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>
