@@ -127,7 +127,8 @@
     class:is-on={cell.on}
     data-space-name={cell.key}
     aria-hidden="true"
-    use:named={cell.key}><bdi>{cell.name}</bdi></span
+    use:named={cell.key}
+    dir="auto">{cell.name}</span
   >
 {/each}
 
@@ -173,5 +174,9 @@
 
   .name.is-on {
     color: var(--text-strong);
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

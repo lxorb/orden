@@ -805,6 +805,10 @@ select option {
   white-space: nowrap;
 }
 
+.orden-row-label[dir='auto'] {
+  text-align: match-parent;
+}
+
 .orden-row-meta {
   flex: none;
   color: var(--muted);

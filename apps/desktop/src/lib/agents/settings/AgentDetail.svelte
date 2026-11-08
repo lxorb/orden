@@ -228,7 +228,7 @@
   {#each sites as { site, rule, always } (site)}
     <div class="orden-setting site">
       <span class="name">
-        <span class="what"><bdi>{chatNames[site] ?? site}</bdi></span>
+        <span class="what" dir="auto">{chatNames[site] ?? site}</span>
         {#if always.length}
           <span class="always">
             {#each always as category (category)}
@@ -411,5 +411,9 @@
 
   .slider {
     width: 11rem;
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

@@ -357,7 +357,7 @@
               style:--level={part.level}
               onclick={() => store.turnToPaper(part.page)}
             >
-              <span class="orden-row-label"><bdi>{part.title}</bdi></span>
+              <span class="orden-row-label" dir="auto">{part.title}</span>
               <span class="orden-row-meta">{part.page}</span>
             </button>
           </li>

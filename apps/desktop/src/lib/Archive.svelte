@@ -182,8 +182,8 @@
                 })}
             >
               <FileMark mark={row.mark} path={row.markPath} />
-              <span class="orden-row-label"
-                ><bdi>{rowName(row.entry.name, row.entry.is_dir)}</bdi></span
+              <span class="orden-row-label" dir="auto"
+                >{rowName(row.entry.name, row.entry.is_dir)}</span
               >
               {#if row.from}<span class="orden-row-meta">{row.from}</span>{/if}
             </button>

@@ -470,11 +470,11 @@
                   ondblclick={(event) => event.stopPropagation()}
                 />
               {:else}
-                <span class="orden-row-label"
-                  ><bdi>{view.search ? nameOf(entry.name) : entry.name}</bdi></span
+                <span class="orden-row-label" dir="auto"
+                  >{view.search ? nameOf(entry.name) : entry.name}</span
                 >
                 {#if view.search && folderOf(entry.name)}
-                  <span class="where"><bdi>{folderOf(entry.name)}</bdi></span>
+                  <span class="where" dir="auto">{folderOf(entry.name)}</span>
                 {/if}
               {/if}
             </span>
@@ -703,5 +703,9 @@
     color: var(--muted);
     font-size: var(--text-sm);
     text-align: center;
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

@@ -1036,7 +1036,7 @@
       onpointerenter={() => entry.evicted && keptAway.ahead(entry.path)}
     >
       <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
-      <span class="orden-row-label"><bdi>{name}</bdi></span>
+      <span class="orden-row-label" dir="auto">{name}</span>
       {#if !__EVEN_PLUGIN__ && entry.evicted}
         {#await import('./CloudMark.svelte') then mark}<mark.default path={entry.path} />{/await}
       {/if}

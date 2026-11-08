@@ -227,7 +227,7 @@
                 oncontextmenu={(event) => placeMenu(event, group.lane, place)}
               >
                 <span class="dot" style:background={placeTint(place.key)}></span>
-                <span class="orden-row-label"><bdi>{place.name}</bdi></span>
+                <span class="orden-row-label" dir="auto">{place.name}</span>
                 {#if rule}<span class="counted" style:color={tintOf(rule.activity)}
                     >{nameOf(rule.activity, '')}</span
                   >{/if}

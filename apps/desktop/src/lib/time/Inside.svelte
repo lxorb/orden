@@ -157,7 +157,7 @@
       {#each found.said as total (total.activity)}
         <li>
           <span class="dot" style:background={tintOf(total.activity)}></span>
-          <span class="label"><bdi>{nameOf(total.activity, t('No activity'))}</bdi></span>
+          <span class="label" dir="auto">{nameOf(total.activity, t('No activity'))}</span>
           <span class="meta">{length(total.ms)}</span>
         </li>
       {/each}
@@ -170,7 +170,7 @@
       {#each group.list as place (place.key)}
         <li>
           <span class="dot" style:background={placeTint(place.key)}></span>
-          <span class="label"><bdi>{place.name}</bdi></span>
+          <span class="label" dir="auto">{place.name}</span>
           <span class="bar"
             ><span
               style:width="{part(place.ms, group.list) * 100}%"
@@ -300,5 +300,9 @@
     flex: none;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

@@ -868,7 +868,7 @@
                       ondragend={endSection}
                       ondrop={(event) => dropSection(event, index)}
                     >
-                      <span class="orden-row-label"><bdi>{heading.text}</bdi></span>
+                      <span class="orden-row-label" dir="auto">{heading.text}</span>
                     </button>
                   </li>
                 {/each}
@@ -886,7 +886,7 @@
                       onclick={() => jump(note.line)}
                     >
                       <span class="orden-row-mark note-id">{note.id}</span>
-                      <span class="orden-row-label"><bdi>{note.text}</bdi></span>
+                      <span class="orden-row-label" dir="auto">{note.text}</span>
                     </button>
                   </li>
                 {/each}
