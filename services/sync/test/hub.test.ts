@@ -216,6 +216,21 @@ describe('ending a device', () => {
 
     expect(socket.closedWith?.code).toBe(1008)
     expect(elsewhere.closedWith).toBe(null)
+
+    const late = connect(hub, {
+      device: 'device-late',
+      who: guest,
+      guest: true,
+      session: await sha256(token),
+    })
+    await send(hub, late, {
+      t: 'hello',
+      device: 'device-late',
+      name: 'Firefox',
+      platform: 'web',
+      app: '1.0.0',
+    })
+    expect(late.closedWith?.code).toBe(1008)
   })
 
   test('is unknown for a device the account does not have', async () => {
