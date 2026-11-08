@@ -7,6 +7,7 @@ const crate = vi.hoisted(() => ({
   mems: new Map<string, unknown>(),
   log: [] as string[],
   hang: false,
+  tokens: [] as (() => string | null)[],
 }))
 
 vi.mock('./store', async (importOriginal) => {
@@ -67,17 +68,20 @@ vi.mock('./store', async (importOriginal) => {
 vi.mock('./app-world', async () => {
   const { MemoryDisk } = await import('./memory-disk')
   return {
-    appWorld: () => ({
-      disk: new MemoryDisk(),
-      account: { ask: () => (crate.hang ? new Promise(() => undefined) : Promise.resolve(null)) },
-      name: 'here',
-      now: () => 1000,
-      random: Math.random,
-      digest: (text: string) => Promise.resolve(String(hash32('a', text))),
-      join: (root: string, path: string) => `${root}/${path}`,
-      foldsCase: true,
-      platform: 'other',
-    }),
+    appWorld: (token: () => string | null) => {
+      crate.tokens.push(token)
+      return {
+        disk: new MemoryDisk(),
+        account: { ask: () => (crate.hang ? new Promise(() => undefined) : Promise.resolve(null)) },
+        name: 'here',
+        now: () => 1000,
+        random: Math.random,
+        digest: (text: string) => Promise.resolve(String(hash32('a', text))),
+        join: (root: string, path: string) => `${root}/${path}`,
+        foldsCase: true,
+        platform: 'other',
+      }
+    },
   }
 })
 
@@ -194,6 +198,7 @@ beforeEach(() => {
   crate.mems.clear()
   crate.log.length = 0
   crate.hang = false
+  crate.tokens.length = 0
   Object.defineProperty(navigator, 'locks', { value: locksOf(), configurable: true })
 })
 
@@ -476,5 +481,21 @@ describe('a stop and a start in one tick', () => {
     await settle(500)
     expect(a.runner.engine).not.toBeNull()
     expect(wrong()).toEqual([])
+  })
+})
+
+describe('an engine kept while another account signs in', () => {
+  test('never speaks with the token of the account that came after', async () => {
+    vi.stubGlobal('fetch', () => new Promise(() => undefined))
+    const a = await aWindow()
+    Object.assign(a.account, { user: { id: 'u1', syncVersion: 2 }, token: 'first' })
+    await a.runner.start()
+    await settle(100)
+    expect(a.runner.engine).not.toBeNull()
+    const token = crate.tokens.at(-1)
+    expect(token?.()).toBe('first')
+
+    Object.assign(a.account, { user: { id: 'u2', syncVersion: 2 }, token: 'second' })
+    expect(token?.()).toBeNull()
   })
 })
