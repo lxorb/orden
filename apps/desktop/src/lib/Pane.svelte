@@ -76,6 +76,7 @@
   import { viewport } from './viewport.svelte'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
+  import { keepsScroll, scrollKeyOf } from './kept-scroll'
   import { noteBehind } from './protect/protection.svelte'
   import { paneCorners } from './pane-corners.svelte'
   import { EDGE, inside, type Zone, zoneAt } from './workspace/zones'
@@ -85,6 +86,7 @@
   const here = whileHere()
 
   const tab = $derived(workspace.showing(pane.id))
+  const scrollKept = $derived(scrollKeyOf(tab, workspace.windowSlot))
   const behind = $derived(tab ? noteBehind(tab, workspace.spaces) : null)
   const locked = $derived(workspace.protection.locked(behind))
 
@@ -361,6 +363,7 @@
   data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   use:dropOver={over}
+  use:keepsScroll={scrollKept}
   ondragleave={(event) => {
     const box = event.currentTarget.getBoundingClientRect()
     if (landing?.paneId !== pane.id || inside(box, event.clientX, event.clientY)) return
