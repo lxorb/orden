@@ -268,10 +268,9 @@ export class CanvasStore implements PlaneSurface {
     const mine = this.shared !== null || this.history.canUndo || this.note.dirty
 
     this.at = this.note.revision
-    this.history.clear()
-    this.stackChanged()
 
     if (!mine) {
+      this.history.carry(ours, arrived)
       this.canvas = arrived
       this.keepPicked()
       this.opened = { canvas: arrived, revision: this.at }
@@ -286,6 +285,7 @@ export class CanvasStore implements PlaneSurface {
       ...(arrived.extras ? { extras: arrived.extras } : {}),
     }
     if (!arrived.extras) delete together.extras
+    this.history.carry(ours, together)
     this.canvas = together
     this.keepPicked()
     this.shared?.push(ours, together)
