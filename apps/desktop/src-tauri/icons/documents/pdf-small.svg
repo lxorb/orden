@@ -1,15 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
 <defs>
-<linearGradient id="wash" x1="192" y1="80" x2="832" y2="944" gradientUnits="userSpaceOnUse">
-<stop offset="0" stop-color="#bfddfb"/><stop offset="0.25" stop-color="#bfddfb"/>
-<stop offset="0.75" stop-color="#e7c6ec"/><stop offset="1" stop-color="#e7c6ec"/>
+<linearGradient id="wash" x1="96" y1="16" x2="928" y2="1008" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#bfddfb"/><stop offset="1" stop-color="#e7c6ec"/>
 </linearGradient>
-<clipPath id="page"><path d="M248 80H656L832 256V888A56 56 0 0 1 776 944H248A56 56 0 0 1 192 888V136A56 56 0 0 1 248 80Z"/></clipPath>
 </defs>
-<path d="M248 80H656L832 256V888A56 56 0 0 1 776 944H248A56 56 0 0 1 192 888V136A56 56 0 0 1 248 80Z" fill="url(#wash)"/>
-<rect x="192" y="540" width="640" height="404" fill="#D2414D" clip-path="url(#page)"/>
-<rect x="401.12" y="189.12" width="155.4" height="57.12" rx="14.28" fill="#1c2233"/><rect x="565.76" y="189.12" width="57.12" height="155.4" rx="14.28" fill="#1c2233"/><rect x="467.48" y="353.76" width="155.4" height="57.12" rx="14.28" fill="#1c2233"/><rect x="401.12" y="255.48" width="57.12" height="155.4" rx="14.28" fill="#1c2233"/>
-
-<path d="M248 80H656L832 256V888A56 56 0 0 1 776 944H248A56 56 0 0 1 192 888V136A56 56 0 0 1 248 80Z" fill="none" stroke="#1c2233" stroke-opacity="0.28" stroke-width="52" stroke-linejoin="round"/>
-<path d="M656 80V212A44 44 0 0 0 700 256H832Z" fill="#FFFFFF" fill-opacity="0.85" stroke="#1c2233" stroke-opacity="0.28" stroke-width="52" stroke-linejoin="round"/>
+<path d="M192 16H688L928 256V912A96 96 0 0 1 832 1008H192A96 96 0 0 1 96 912V112A96 96 0 0 1 192 16Z" fill="url(#wash)"/>
+<path d="M155.2 760V440H244.8A86.4 86.4 0 0 1 244.8 612.8H155.2M420.8 440H459.2A160 160 0 0 1 459.2 760H420.8ZM868.8 440H708.8V760M708.8 593.6H836.8" fill="none" stroke="#1c2233" stroke-width="100" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M192 16H688L928 256V912A96 96 0 0 1 832 1008H192A96 96 0 0 1 96 912V112A96 96 0 0 1 192 16Z" fill="none" stroke="#1c2233" stroke-opacity="0.3" stroke-width="56" stroke-linejoin="round"/>
+<path d="M688 16V196A60 60 0 0 0 748 256H928Z" fill="#FFFFFF" fill-opacity="0.7" stroke="#1c2233" stroke-opacity="0.3" stroke-width="56" stroke-linejoin="round"/>
 </svg>

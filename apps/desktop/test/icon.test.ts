@@ -132,6 +132,23 @@ describe('the document icons', () => {
     }
   })
 
+  test('every drawing is a page in the wash of Pass with the type in ink, no mark or badge', () => {
+    for (const ext of opened) {
+      for (const file of [`${ext}.svg`, `${ext}-mid.svg`, `${ext}-small.svg`]) {
+        const drawing = readFileSync(join(DOCUMENTS, file), 'utf8')
+        const colours = new Set(
+          [...drawing.matchAll(/(?:fill|stroke|stop-color)="(#[0-9A-Fa-f]{6})"/g)].map((one) =>
+            one[1]?.toLowerCase(),
+          ),
+        )
+        expect([...colours].sort(), file).toEqual(['#1c2233', '#bfddfb', '#e7c6ec', '#ffffff'])
+        expect(drawing, file).toContain('fill="url(#wash)"')
+        expect(drawing, file).toMatch(/<path d="[^"]+" fill="none" stroke="#1c2233" stroke-width/i)
+        expect(drawing, file).not.toContain('<rect')
+      }
+    }
+  })
+
   test('the Windows icon holds every size Explorer asks for, each a page', () => {
     for (const ext of opened) {
       const bytes = readFileSync(join(DOCUMENTS, `${ext}.ico`))
