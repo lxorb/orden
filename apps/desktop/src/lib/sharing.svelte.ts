@@ -386,6 +386,7 @@ class Share {
         !(await this.change(
           (asking) => api.invite(asking.token, asking.id, address, role, asking.item),
           'invite',
+          false,
         ))
       ) {
         break
@@ -464,13 +465,18 @@ class Share {
   private async change(
     work: (asking: Asking) => Promise<Sharing>,
     about: string,
+    goneIsDone = true,
   ): Promise<boolean> {
-    const done = await this.run(work, about)
+    const done = await this.run(work, about, goneIsDone)
     if (done) await account.loadSpaces().catch(() => undefined)
     return done
   }
 
-  private async run(work: (asking: Asking) => Promise<Sharing>, about: string): Promise<boolean> {
+  private async run(
+    work: (asking: Asking) => Promise<Sharing>,
+    about: string,
+    goneIsDone = true,
+  ): Promise<boolean> {
     const token = account.accountToken
     const id = this.spaceId
     if (!token || !id) return false
@@ -486,7 +492,7 @@ class Share {
     try {
       return this.landed(sheet, await work(asking))
     } catch (error) {
-      if (gone(error)) return await this.reread(asking, sheet)
+      if (gone(error) && (await this.reread(asking, sheet)) && goneIsDone) return true
 
       if (sheet === this.sheet) this.error = message(error, 'could not reach the server')
       return false
