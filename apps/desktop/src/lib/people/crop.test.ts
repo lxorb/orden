@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { clampOffset, MOST_ZOOM, scaleAt, sourceSquare, turned, zoomed } from './crop'
+import { clampOffset, MOST_ZOOM, scaleAt, sourceSquare, turned, wheeledZoom, zoomed } from './crop'
 
 const VIEW = 240
 
@@ -58,5 +58,15 @@ describe('the avatar sheet’s window', () => {
     expect(turned(1200, 800, 1)).toEqual([800, 1200])
     expect(turned(1200, 800, 2)).toEqual([1200, 800])
     expect(turned(1200, 800, 3)).toEqual([800, 1200])
+  })
+})
+
+describe('the wheel over the picture', () => {
+  test('zooms as far for a wheel counted in lines, as Firefox counts one, as for pixels', () => {
+    expect(wheeledZoom(1, { deltaY: -3, deltaMode: 1 })).toBeCloseTo(
+      wheeledZoom(1, { deltaY: -120, deltaMode: 0 }),
+      10,
+    )
+    expect(wheeledZoom(1, { deltaY: -120, deltaMode: 0 })).toBeGreaterThan(1.3)
   })
 })

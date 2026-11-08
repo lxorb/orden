@@ -3,7 +3,16 @@
   import { onMount } from 'svelte'
   import { message, t } from '../i18n.svelte'
   import Sheet from '../Sheet.svelte'
-  import { clampOffset, clampZoom, type Crop, MOST_ZOOM, type Point, scaleAt, zoomed } from './crop'
+  import {
+    clampOffset,
+    clampZoom,
+    type Crop,
+    MOST_ZOOM,
+    type Point,
+    scaleAt,
+    wheeledZoom,
+    zoomed,
+  } from './crop'
   import { decode, prepared } from './encode'
   import { wearFace } from './mine'
 
@@ -168,10 +177,7 @@
 
   function wheeled(event: WheelEvent) {
     event.preventDefault()
-    zoomTo(
-      crop.zoom * Math.exp(-event.deltaY / 400),
-      fromMiddle(event, event.currentTarget as Element),
-    )
+    zoomTo(wheeledZoom(crop.zoom, event), fromMiddle(event, event.currentTarget as Element))
   }
 
   function given(files: FileList | null | undefined) {

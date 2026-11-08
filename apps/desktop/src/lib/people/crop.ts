@@ -1,3 +1,5 @@
+import { type Turned, wheelPixels } from '../camera'
+
 export interface Point {
   x: number
   y: number
@@ -12,6 +14,10 @@ export const MOST_ZOOM = 4
 
 export function scaleAt(width: number, height: number, view: number, zoom: number): number {
   return (zoom * view) / Math.min(width, height)
+}
+
+export function wheeledZoom(zoom: number, turn: Turned): number {
+  return zoom * Math.exp(-wheelPixels(turn).y / 400)
 }
 
 export function clampZoom(zoom: number): number {
