@@ -680,6 +680,35 @@ describe('signal groups and people', () => {
 })
 
 describe('signal when signal-cli stops', () => {
+  it('lets signal-cli go once closed, even after a start again that failed', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] })
+    const { cli, connection, heard } = await connected()
+    cli.stop()
+    cli.refuse.set('subscribeReceive', 'not yet')
+    await vi.advanceTimersByTimeAsync(2500)
+    cli.refuse.delete('subscribeReceive')
+    await vi.advanceTimersByTimeAsync(4500)
+    vi.useRealTimers()
+    const off = heard.findIndex((one) => one.t === 'status' && one.status === 'offline')
+    await until(() => heard.slice(off).some((one) => one.t === 'status' && one.status === 'online'))
+    expect(cli.stopped).toBeNull()
+    await connection.close()
+    expect(cli.stopped).toBe('closed')
+  })
+
+  it('lets signal-cli go when it comes back without this account', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] })
+    const { cli, connection, heard } = await connected()
+    cli.stop()
+    cli.accounts = []
+    await vi.advanceTimersByTimeAsync(2500)
+    vi.useRealTimers()
+    await until(() => heard.some((one) => one.t === 'status' && one.status === 'signed-out'))
+    expect(cli.stopped).toBe('closed')
+    await connection.close()
+    expect(cli.started).toBe(2)
+  })
+
   it('goes offline, starts it again and listens again', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] })
     const { cli, heard } = await connected()
