@@ -3608,4 +3608,8 @@ export const my: Dictionary = {
     'User OAuth Token (xoxp-) ကို ကူးပြီး ဤနေရာတွင် ထည့်ပါ',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'မက်ဆေ့ချ်များ ချက်ချင်းရရန်- Basic Information အောက်တွင် connections:write ပါသော app-level token ထုတ်ပြီး အောက်တွင် ထည့်ပါ (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'အခြားနေရာတွင် ထွက်ခဲ့သည်။ အကောင့်ကို မဖျက်ရသေးပါ။ ဖျက်ရန် ပြန်ဝင်ပါ။',
+  'Signed out; sign in again to see whether the account is still there.':
+    'ထွက်ခဲ့သည်။ အကောင့် ရှိနေသေးသလား သိရန် ပြန်ဝင်ပါ။',
 }

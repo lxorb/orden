@@ -1,7 +1,7 @@
 import { type Context, Hono, type MiddlewareHandler } from 'hono'
 import { SIGN_IN, SIGN_IN_TO_DO_THAT } from './refused'
 import { cors } from 'hono/cors'
-import { account } from './account'
+import { account, left } from './account'
 import { ask } from './ask'
 import { accountById, auth, presentUser, requireWhoever, sessions } from './auth'
 import { readBody } from './body'
@@ -113,6 +113,8 @@ app.route('/v2/apps', appsDoor)
 app.route('/v2/online/machine', machineBundle)
 
 app.route('/v1/join', join)
+
+app.route('/v1/account/left', left)
 
 app.route('/v1/feedback', feedback)
 

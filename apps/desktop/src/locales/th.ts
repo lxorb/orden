@@ -3538,4 +3538,8 @@ export const th: Dictionary = {
     'คัดลอก User OAuth Token (xoxp-) แล้ววางที่นี่',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'เพื่อให้ข้อความมาทันที: ใน Basic Information สร้างโทเค็นระดับแอปที่มี connections:write แล้ววางด้านล่าง (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'ออกจากระบบจากที่อื่นแล้ว บัญชียังไม่ถูกลบ ลงชื่อเข้าใช้อีกครั้งเพื่อลบ',
+  'Signed out; sign in again to see whether the account is still there.':
+    'ออกจากระบบแล้ว ลงชื่อเข้าใช้อีกครั้งเพื่อดูว่าบัญชียังอยู่หรือไม่',
 }

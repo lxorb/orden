@@ -3670,4 +3670,8 @@ export const ps: Dictionary = {
     'User OAuth Token (xoxp-) کاپي او دلته یې ولګوئ',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'د پیغامونو د سمدستي رارسېدو لپاره: د Basic Information لاندې د connections:write سره د اپ کچې ټوکن جوړ کړئ او لاندې یې ولګوئ (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'له بل ځای څخه ووتل شو؛ حساب ړنګ نه شو. د ړنګولو لپاره بیا ننوځئ.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'ووتل شو؛ بیا ننوځئ چې وګورئ حساب لا شته که نه.',
 }

@@ -3,7 +3,7 @@
 
   import { account } from './account.svelte'
   import { fromServer, request } from './api'
-  import { i18n, message, t } from './i18n.svelte'
+  import { i18n, key, message, t } from './i18n.svelte'
   import { dur, fade } from './motion'
 
   const { onend }: { onend: () => void } = $props()
@@ -83,10 +83,33 @@
         busy = false
         return
       }
+
+      const gone = await wentWith(ticket)
+      if (gone !== true) {
+        await account.recheck()
+        account.error =
+          gone === false
+            ? key('Signed out elsewhere; the account was not deleted. Sign in again to delete it.')
+            : key('Signed out; sign in again to see whether the account is still there.')
+        account.open = true
+        onend()
+        return
+      }
     }
 
     void account.signOut('kept')
     onend()
+  }
+
+  async function wentWith(held: string): Promise<boolean | null> {
+    try {
+      const asked = await request<{ gone?: unknown }>('/v1/account/left', {
+        body: { ticket: held },
+      })
+      return typeof asked.gone === 'boolean' ? asked.gone : null
+    } catch {
+      return null
+    }
   }
 
   let timer: ReturnType<typeof setInterval> | undefined

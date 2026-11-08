@@ -3495,4 +3495,8 @@ export const zhHantHK: Dictionary = {
   'Copy the User OAuth Token (xoxp-) and paste it here': '複製 User OAuth Token（xoxp-）並貼到這裡',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     '要即時收到訊息：在 Basic Information 下產生具 connections:write 的應用程式層級權杖，並貼到下方（xapp-）',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    '已在別處登出；帳戶未被刪除。請重新登入以刪除。',
+  'Signed out; sign in again to see whether the account is still there.':
+    '已登出；請重新登入查看帳戶是否仍在。',
 }

@@ -13,6 +13,10 @@ const TICKETS = 'leaving'
 
 const TICKET_FOR = 5 * 60 * 1000
 
+const LEFT = 'left'
+
+const LEFT_FOR = 24 * 60 * 60 * 1000
+
 export const account = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 account.post('/delete/code', async (context) => {
@@ -82,6 +86,27 @@ account.delete('/', async (context) => {
   if (!held) return context.json({ error: TOOK_TOO_LONG }, 400)
 
   await eraseAccount(context.env, user)
+  await context.env.DB.prepare(
+    'insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)',
+  )
+    .bind(LEFT, await sha256(ticket ?? ''), 'gone', now() + LEFT_FOR)
+    .run()
 
   return context.json({ ok: true })
+})
+
+export const left = new Hono<{ Bindings: Env; Variables: Variables }>()
+
+left.post('/', async (context) => {
+  const body = await readBody(context)
+  const ticket = body.text('ticket', 128)
+  if (body.problem || !ticket) return context.json({ error: body.problem ?? 'no ticket' }, 400)
+
+  const gone = await context.env.DB.prepare(
+    'select 1 as one from cached where scope = ? and key = ? and until > ?',
+  )
+    .bind(LEFT, await sha256(ticket), now())
+    .first<{ one: number }>()
+
+  return context.json({ gone: !!gone })
 })

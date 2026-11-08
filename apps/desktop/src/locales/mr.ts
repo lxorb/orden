@@ -3670,4 +3670,8 @@ export const mr: Dictionary = {
     'User OAuth Token (xoxp-) कॉपी करून येथे पेस्ट करा',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'संदेश लगेच मिळण्यासाठी: Basic Information अंतर्गत connections:write सह ॲप-स्तरीय टोकन तयार करा आणि खाली पेस्ट करा (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'इतरत्र साइन आउट झाले; खाते हटवले नाही. ते हटवण्यासाठी पुन्हा साइन इन करा.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'साइन आउट झाले; खाते अजून आहे का ते पाहण्यासाठी पुन्हा साइन इन करा.',
 }

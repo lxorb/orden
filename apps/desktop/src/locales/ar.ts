@@ -3857,4 +3857,8 @@ export const ar: Dictionary = {
   'Copy the User OAuth Token (xoxp-) and paste it here': 'انسخ User OAuth Token (xoxp-) والصقه هنا',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'لتصل الرسائل فورًا: ضمن Basic Information أنشئ رمزًا على مستوى التطبيق مع connections:write والصقه أدناه (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'تم تسجيل خروجك من مكان آخر؛ لم يُحذف الحساب. سجّل الدخول مجددًا لحذفه.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'تم تسجيل خروجك؛ سجّل الدخول مجددًا لترى إن كان الحساب لا يزال موجودًا.',
 }

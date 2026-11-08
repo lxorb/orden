@@ -3610,4 +3610,8 @@ export const id: Dictionary = {
     'Salin User OAuth Token (xoxp-) dan tempel di sini',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Agar pesan langsung masuk: di Basic Information, buat token aplikasi dengan connections:write dan tempel di bawah (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Keluar di tempat lain; akun tidak dihapus. Masuk lagi untuk menghapusnya.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Telah keluar; masuk lagi untuk melihat apakah akun masih ada.',
 }

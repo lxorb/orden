@@ -3656,4 +3656,8 @@ export const gu: Dictionary = {
     'User OAuth Token (xoxp-) કૉપિ કરીને અહીં પેસ્ટ કરો',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'સંદેશા તરત મેળવવા: Basic Information હેઠળ connections:write સાથે એપ-સ્તરનો ટોકન બનાવો અને નીચે પેસ્ટ કરો (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'બીજે ક્યાંકથી સાઇન આઉટ થયા; ખાતું કાઢી નખાયું નથી. તેને કાઢવા ફરી સાઇન ઇન કરો.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'સાઇન આઉટ થયા; ખાતું હજી છે કે નહીં તે જોવા ફરી સાઇન ઇન કરો.',
 }

@@ -3743,4 +3743,8 @@ export const de: Dictionary = {
     'Kopiere das User OAuth Token (xoxp-) und füge es hier ein',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Für sofortige Nachrichten: Unter Basic Information ein App-Token mit connections:write erzeugen und unten einfügen (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Anderswo abgemeldet; das Konto wurde nicht gelöscht. Melde dich erneut an, um es zu löschen.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Abgemeldet; melde dich erneut an, um zu sehen, ob das Konto noch besteht.',
 }

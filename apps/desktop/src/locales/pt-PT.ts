@@ -3775,4 +3775,8 @@ export const ptPT: Dictionary = {
     'Copie o User OAuth Token (xoxp-) e cole-o aqui',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Para mensagens de imediato: em Basic Information, gere um token da app com connections:write e cole-o abaixo (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Sessão terminada noutro local; a conta não foi eliminada. Inicie sessão de novo para a eliminar.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Sessão terminada; inicie sessão de novo para ver se a conta ainda existe.',
 }

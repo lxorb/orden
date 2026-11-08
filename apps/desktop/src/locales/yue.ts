@@ -3487,4 +3487,8 @@ export const yue: Dictionary = {
   'Copy the User OAuth Token (xoxp-) and paste it here': '抄低 User OAuth Token（xoxp-）貼落呢度',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     '想訊息即刻到：喺 Basic Information 度整一個有 connections:write 嘅 app 層級權杖，貼落下面（xapp-）',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    '喺第二度登出咗；帳戶未刪除。再登入先可以刪除。',
+  'Signed out; sign in again to see whether the account is still there.':
+    '已經登出；再登入睇吓帳戶仲喺唔喺度。',
 }

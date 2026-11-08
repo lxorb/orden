@@ -3597,4 +3597,8 @@ export const am: Dictionary = {
   'Copy the User OAuth Token (xoxp-) and paste it here': 'User OAuth Token (xoxp-) ን ቀድተው እዚህ ይለጥፉ',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'መልዕክቶች ወዲያው እንዲደርሱ፦ በ Basic Information ስር connections:write ያለው የመተግበሪያ ደረጃ ቶክን ፈጥረው ከታች ይለጥፉ (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'በሌላ ቦታ ወጥተዋል፤ መለያው አልተሰረዘም። ለመሰረዝ እንደገና ይግቡ።',
+  'Signed out; sign in again to see whether the account is still there.':
+    'ወጥተዋል፤ መለያው አሁንም መኖሩን ለማየት እንደገና ይግቡ።',
 }

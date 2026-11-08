@@ -3613,4 +3613,8 @@ export const ms: Dictionary = {
     'Salin User OAuth Token (xoxp-) dan tampal di sini',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Untuk mesej serta-merta: di bawah Basic Information, jana token aplikasi dengan connections:write dan tampal di bawah (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Dilog keluar di tempat lain; akaun tidak dipadam. Log masuk semula untuk memadamnya.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Telah log keluar; log masuk semula untuk melihat sama ada akaun masih ada.',
 }

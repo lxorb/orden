@@ -97,6 +97,8 @@ afterEach(() => {
   host.remove()
   account.token = null
   account.user = null
+  account.open = false
+  account.error = null
   vi.unstubAllGlobals()
 })
 
@@ -204,14 +206,7 @@ test('the last question names the spaces other people lose, and only those', asy
   account.spaces = []
 })
 
-test('an answer lost on the way back from a delete that happened still signs out', async () => {
-  serve({
-    'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }],
-    'POST /v1/account/delete/verify': () => [200, { ticket: 'earned' }],
-    'DELETE /v1/account': () => [401, { error: 'sign in first' }],
-    ...SIGNED_OUT,
-  })
-
+async function deleteNow() {
   open()
   await settled()
   type('Code', '123456')
@@ -219,8 +214,57 @@ test('an answer lost on the way back from a delete that happened still signs out
   await settled()
   press('Delete now')
   await settled()
+  await settled()
+}
+
+const SESSION_GONE: Record<string, Answer> = {
+  'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }],
+  'POST /v1/account/delete/verify': () => [200, { ticket: 'earned' }],
+  'DELETE /v1/account': () => [401, { error: 'sign in first' }],
+  'GET /v1/me': () => [401, { error: 'sign in first' }],
+  ...SIGNED_OUT,
+}
+
+test('an answer lost on the way back from a delete that happened still signs out', async () => {
+  serve({
+    ...SESSION_GONE,
+    'POST /v1/account/left': (body) => [200, { gone: body?.ticket === 'earned' }],
+  })
+
+  await deleteNow()
+
+  expect(asked.find((one) => one.route === 'POST /v1/account/left')).toEqual({
+    route: 'POST /v1/account/left',
+    body: { ticket: 'earned' },
+    token: null,
+  })
+  expect(account.user).toBeNull()
+  expect(account.open).toBe(false)
+  expect(account.error).toBeNull()
+  expect(ended).toBe(1)
+})
+
+test('a session ended elsewhere is not taken for a deleted account', async () => {
+  serve({ ...SESSION_GONE, 'POST /v1/account/left': () => [200, { gone: false }] })
+
+  await deleteNow()
 
   expect(account.user).toBeNull()
+  expect(account.open).toBe(true)
+  expect(account.error).toBe(
+    'Signed out elsewhere; the account was not deleted. Sign in again to delete it.',
+  )
+  expect(ended).toBe(1)
+})
+
+test('a server that cannot say whether it went is not taken for a deleted account either', async () => {
+  serve(SESSION_GONE)
+
+  await deleteNow()
+
+  expect(account.user).toBeNull()
+  expect(account.open).toBe(true)
+  expect(account.error).toBe('Signed out; sign in again to see whether the account is still there.')
   expect(ended).toBe(1)
 })
 

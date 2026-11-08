@@ -3746,4 +3746,8 @@ export const fil: Dictionary = {
     'Kopyahin ang User OAuth Token (xoxp-) at i-paste dito',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Para dumating agad ang mga mensahe: sa Basic Information, gumawa ng app-level token na may connections:write at i-paste sa ibaba (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Na-sign out sa ibang lugar; hindi nabura ang account. Mag-sign in muli para burahin ito.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Na-sign out; mag-sign in muli para makita kung naroon pa ang account.',
 }

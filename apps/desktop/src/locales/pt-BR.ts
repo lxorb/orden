@@ -3756,4 +3756,8 @@ export const ptBR: Dictionary = {
     'Copie o User OAuth Token (xoxp-) e cole aqui',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Para mensagens na hora: em Basic Information, gere um token do app com connections:write e cole abaixo (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Você saiu em outro lugar; a conta não foi excluída. Entre de novo para excluí-la.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Você saiu; entre de novo para ver se a conta ainda existe.',
 }

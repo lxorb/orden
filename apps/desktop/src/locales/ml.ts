@@ -3726,4 +3726,8 @@ export const ml: Dictionary = {
     'User OAuth Token (xoxp-) പകർത്തി ഇവിടെ ഒട്ടിക്കുക',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'സന്ദേശങ്ങൾ ഉടനെ ലഭിക്കാൻ: Basic Information-ന് കീഴിൽ connections:write ഉള്ള ആപ്പ്-തല ടോക്കൺ ഉണ്ടാക്കി താഴെ ഒട്ടിക്കുക (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'മറ്റൊരിടത്ത് സൈൻ ഔട്ട് ആയി; അക്കൗണ്ട് ഇല്ലാതാക്കിയിട്ടില്ല. ഇല്ലാതാക്കാൻ വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'സൈൻ ഔട്ട് ആയി; അക്കൗണ്ട് ഇപ്പോഴും ഉണ്ടോ എന്ന് കാണാൻ വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.',
 }

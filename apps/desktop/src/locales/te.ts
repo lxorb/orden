@@ -3691,4 +3691,8 @@ export const te: Dictionary = {
     'User OAuth Token (xoxp-) కాపీ చేసి ఇక్కడ అతికించండి',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'సందేశాలు వెంటనే రావడానికి: Basic Information కింద connections:write తో యాప్-స్థాయి టోకెన్ సృష్టించి కింద అతికించండి (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'వేరే చోట సైన్ అవుట్ అయ్యింది; ఖాతా తొలగించబడలేదు. తొలగించడానికి మళ్లీ సైన్ ఇన్ చేయండి.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'సైన్ అవుట్ అయ్యింది; ఖాతా ఇంకా ఉందో లేదో చూడడానికి మళ్లీ సైన్ ఇన్ చేయండి.',
 }
