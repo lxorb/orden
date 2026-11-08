@@ -104,7 +104,7 @@ import { firstScreen } from './first-screen.svelte'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace/drafts'
-import { TAB_KINDS } from './workspace/tab-kinds'
+import { TAB_KINDS, type TabKind } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
 import { type Binning, type FileAction, FileActions, type Kept } from './workspace/undo.svelte'
 import { fetchAcross, inFileTurn, meetAcross } from './workspace/in-turn'
@@ -726,7 +726,9 @@ class Workspace {
           this.panes.focusedId,
         )
         const ones = new Set(
-          this.tabs.filter((tab) => TAB_KINDS[tab.kind].single).map((tab) => tab.kind),
+          this.tabs
+            .filter((tab) => TAB_KINDS[tab.kind].single && this.panes.at(tab.paneId))
+            .map((tab) => tab.kind),
         )
         this.tabs = [...this.tabs, ...firstOnes(tabs, ones).filter((tab) => tab !== null)]
         if (!this.persist()) throw new Error('no room to write them down')
@@ -1350,8 +1352,16 @@ class Workspace {
   }
 
   private otherOne(tab: Tab): Tab | null {
-    if (!TAB_KINDS[tab.kind].single) return null
-    return this.tabs.find((other) => other.kind === tab.kind && other.id !== tab.id) ?? null
+    if (!TAB_KINDS[tab.kind].single || !this.panes.at(tab.paneId)) return null
+    return this.tabs.find((other) => other.id !== tab.id && this.isHere(other, tab.kind)) ?? null
+  }
+
+  private isHere(tab: Tab, kind: TabKind): boolean {
+    return tab.kind === kind && this.panes.at(tab.paneId) !== null
+  }
+
+  singleHere(kind: TabKind): Tab | null {
+    return this.tabs.find((tab) => this.isHere(tab, kind)) ?? null
   }
 
   private add(tab: Tab, activate = true, opener: string | null = null): Tab {
@@ -1524,7 +1534,7 @@ class Workspace {
   }
 
   get settingsTab(): Tab | null {
-    return this.tabs.find((tab) => tab.kind === 'settings') ?? null
+    return this.singleHere('settings')
   }
 
   get settingsShown(): boolean {
@@ -1533,7 +1543,7 @@ class Workspace {
   }
 
   openChat() {
-    const was = this.tabs.find((tab) => tab.kind === 'chat')
+    const was = this.singleHere('chat')
     if (was) this.panes.activate(was.paneId, was.id)
     else {
       const doc = { kind: 'chat', path: null, name: t('Ask'), text: '', dirty: false } as const
