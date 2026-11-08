@@ -709,6 +709,11 @@ class Workspace {
   }
 
   private slot = 0
+
+  get windowSlot(): number {
+    return this.slot
+  }
+
   private sessionKey: string | null = STORAGE_KEY
   private arriving: Layout | null = null
 
