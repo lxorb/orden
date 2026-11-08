@@ -134,6 +134,7 @@
   let pointing = $state.raw<Point | null>(null)
   let narrowed = $state(false)
   let finding = $state(false)
+  let askedFind = $state(0)
 
   const camera = $derived(store.camera)
   const unit = $derived(1 / camera.scale)
@@ -148,6 +149,11 @@
 
   let twisted = 0
   let twistedTo = 0
+
+  function find() {
+    finding = true
+    askedFind++
+  }
 
   function twist(x: number, y: number, by: number) {
     if (!modes.canvasTurnSnaps) {
@@ -1272,7 +1278,7 @@
           narrowed = !narrowed
           if (narrowed) store.frame(width, height)
         },
-        onfind: () => (finding = true),
+        onfind: find,
       }),
       { title: t('Canvas'), near },
     )
@@ -1322,7 +1328,7 @@
         path: tab.path,
         name: tab.name,
         palette,
-        onfind: () => (finding = true),
+        onfind: find,
       })
     ) {
       event.preventDefault()
@@ -1866,6 +1872,7 @@
   {#if finding}
     <CanvasFind
       canvas={store.canvas}
+      asked={askedFind}
       onpick={(id: string) => {
         store.pick(id)
         store.frame(width, height)

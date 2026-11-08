@@ -3,10 +3,12 @@
   import { type Found, matches } from './canvas/find'
   import { t } from './i18n.svelte'
   import Cross from './Cross.svelte'
+  import { shortcuts } from './shortcuts.svelte'
 
   const {
     canvas,
     hits,
+    asked = 0,
     label = t('Find on the canvas'),
     onterm,
     onpick,
@@ -14,6 +16,7 @@
   }: {
     canvas: Canvas
     hits?: readonly Found[]
+    asked?: number
     label?: string
     onterm?: (term: string) => void
     onpick: (id: string) => void
@@ -33,7 +36,9 @@
   const follows = (_value: unknown) => undefined
 
   $effect(() => {
+    follows(asked)
     field?.focus()
+    field?.select()
   })
 
   $effect(() => {
@@ -53,6 +58,13 @@
     if (event.key === 'Escape') {
       event.preventDefault()
       onclose()
+      return
+    }
+
+    if (shortcuts.pressed('canvas.find', event)) {
+      event.preventDefault()
+      event.stopPropagation()
+      field?.select()
       return
     }
 
@@ -110,6 +122,7 @@
           onclick={() => {
             at = index
             onpick(one.id)
+            field?.focus()
           }}
         >
           {one.says}
