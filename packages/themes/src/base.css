@@ -1236,6 +1236,7 @@ select option {
 
 .orden-field {
   width: 100%;
+  min-width: 0;
   min-height: var(--row-height);
   display: flex;
   align-items: center;
