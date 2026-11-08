@@ -81,6 +81,8 @@ export class Connected {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing draws these
   private readonly turns = new Map<string, Promise<Linked>>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing draws these
+  private readonly listing = new Map<string, { again: boolean; done: Promise<void> }>()
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing draws these
   private readonly heardIds = new Map<string, Set<string>>()
 
   constructor(private readonly dial: Dial = oneLink) {}
@@ -168,12 +170,25 @@ export class Connected {
           return
         if (event.t === 'status' && event.status === 'online' && was && was !== 'online')
           void this.catchUp(provider.id, account.id, connection, remote)
+        const tell = () => {
+          for (const hear of this.hearers) hear(provider.id, account.id, event)
+        }
+        if (
+          event.t === 'message' &&
+          !event.message.thread &&
+          this.find(provider.id, account.id)?.conversations.some(
+            (one) => one.id === event.message.conversation,
+          ) === false
+        ) {
+          void this.listAgain(provider.id, account.id, connection).then(tell)
+          return
+        }
         this.linked = this.linked.map((one) =>
           one.provider.id === provider.id && one.account.id === account.id
             ? heardInto(one, event)
             : one,
         )
-        for (const hear of this.hearers) hear(provider.id, account.id, event)
+        tell()
       }),
     )
     return linked
@@ -203,13 +218,37 @@ export class Connected {
     remote: Remote,
   ): Promise<void> {
     remote.caughtUp()
-    const conversations = await connection.conversations().catch(() => null)
-    if (!conversations) return
-    this.linked = this.linked.map((one) =>
-      one.provider.id === provider && one.account.id === account && one.connection === connection
-        ? { ...one, conversations }
-        : one,
-    )
+    await this.listAgain(provider, account, connection)
+  }
+
+  private async listAgain(provider: string, account: string, connection: Connection) {
+    const key = `${provider}\n${account}`
+    const busy = this.listing.get(key)
+    if (busy) {
+      busy.again = true
+      return busy.done
+    }
+    const turn = { again: true, done: Promise.resolve() }
+    this.listing.set(key, turn)
+    turn.done = (async () => {
+      try {
+        while (turn.again) {
+          turn.again = false
+          const conversations = await connection.conversations().catch(() => null)
+          if (!conversations) continue
+          this.linked = this.linked.map((one) =>
+            one.provider.id === provider &&
+            one.account.id === account &&
+            one.connection === connection
+              ? { ...one, conversations }
+              : one,
+          )
+        }
+      } finally {
+        this.listing.delete(key)
+      }
+    })()
+    return turn.done
   }
 
   async unlink(provider: string, account: string): Promise<void> {

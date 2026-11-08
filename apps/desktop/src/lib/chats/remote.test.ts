@@ -442,3 +442,27 @@ describe('what is heard twice or never looked at', () => {
     expect(remoteOf(chat('news'))?.known.has('news')).toBe(false)
   })
 })
+
+describe('a conversation the list does not have yet', () => {
+  test('its first message brings it into the list', async () => {
+    const { fake, link } = await linked()
+    fake.world.conversations = [
+      ...fake.world.conversations,
+      {
+        id: 'stranger',
+        title: 'Stranger',
+        kind: 'direct',
+        people: [fake.world.person('cy')],
+        lastAt: null,
+        unread: 0,
+      },
+    ]
+    fake.world.say('stranger', 'cy', 'hi, we have not met')
+    await vi.waitFor(() =>
+      expect(
+        hub.find(fake.id, link.account.id)?.conversations.find((one) => one.id === 'stranger')
+          ?.unread,
+      ).toBe(1),
+    )
+  })
+})
