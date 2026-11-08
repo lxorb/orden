@@ -21,7 +21,7 @@ import { inkSvg } from './svg'
 import { paletteOf } from './palette'
 import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
-import { type Faces, NO_FACES, pdfFaces } from './faces'
+import { type Faces, faceOf, NO_FACES, pdfFaces } from './faces'
 import { assetPath, invoke, isDesktop } from '../tauri'
 import { message, t } from '../i18n.svelte'
 import { settings } from '../settings.svelte'
@@ -203,7 +203,7 @@ export function drawnNode(
     return `<image x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" preserveAspectRatio="xMidYMid slice" href="${escapeAll(fileUrl(node.file, root))}"/>`
   }
 
-  const face = node.type === 'file' ? faces.get(node.file) : undefined
+  const face = node.type === 'file' ? faces.get(faceOf(node)) : undefined
   if (face) {
     return `<g><rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${palette.surface ?? '#fff'}" stroke="${line}"/><image x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" preserveAspectRatio="xMidYMid meet" href="${escapeAll(face)}"/></g>`
   }
@@ -466,9 +466,9 @@ async function printSheet(drawing: Drawing, faces: Faces) {
 
   const links = new Map<string, string>()
   try {
-    for (const [file, face] of faces) {
+    for (const [key, face] of faces) {
       const bytes = await decoded(face)
-      links.set(file, URL.createObjectURL(new Blob([bytes.slice()], { type: 'image/png' })))
+      links.set(key, URL.createObjectURL(new Blob([bytes.slice()], { type: 'image/png' })))
     }
     const { html, page } = sheetOf(drawing, links)
     await printWithPictures(html, fromAsset, page)

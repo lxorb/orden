@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
 
-const world = vi.hoisted(() => ({ saved: [] as Blob[], printed: [] as string[] }))
+const world = vi.hoisted(() => ({
+  saved: [] as Blob[],
+  printed: [] as string[],
+  pages: [] as number[],
+}))
 
 vi.mock('../link-index.svelte', () => ({
   links: {
@@ -35,8 +39,12 @@ vi.mock('../tauri', async (importOriginal) => ({
 }))
 
 vi.mock('../pages/raster', () => ({
-  paperPicture: (at: { file: string }) =>
-    Promise.resolve(at.file === 'Reading.pdf' ? 'data:image/png;base64,UEFHRQ==' : null),
+  paperPicture: (at: { file: string }, page: number) => {
+    world.pages.push(page)
+    return Promise.resolve(
+      at.file === 'Reading.pdf' ? `data:image/png;base64,UEFHRQ${page}A` : null,
+    )
+  },
 }))
 
 const { readCanvas } = await import('./format')
@@ -325,10 +333,19 @@ describe('the sheet a plane of one’s own is printed on', () => {
 })
 
 describe('a PDF lying on a plane, taken out of the app', () => {
-  const drawing = (file: string) => ({
+  const drawing = (file: string, ...subpaths: string[]) => ({
     canvas: readCanvas(
       JSON.stringify({
-        nodes: [{ id: 'p', type: 'file', file, x: 0, y: 0, width: 240, height: 320 }],
+        nodes: (subpaths.length ? subpaths : ['']).map((subpath, at) => ({
+          id: `p${String(at)}`,
+          type: 'file',
+          file,
+          ...(subpath ? { subpath } : {}),
+          x: at * 300,
+          y: 0,
+          width: 240,
+          height: 320,
+        })),
         edges: [],
       }),
     ),
@@ -343,8 +360,18 @@ describe('a PDF lying on a plane, taken out of the app', () => {
     world.saved = []
     await exportCanvasSvg(drawing('Reading.pdf'))
     const saved = (await world.saved[0]?.text()) ?? ''
-    expect(saved).toMatch(/<image [^>]*href="data:image\/png;base64,UEFHRQ=="/)
+    expect(saved).toMatch(/<image [^>]*href="data:image\/png;base64,UEFHRQ1A"/)
     expect(saved).not.toContain('>Reading.pdf<')
+  })
+
+  test('is drawn as the page it names, each card as its own', async () => {
+    world.saved = []
+    world.pages = []
+    await exportCanvasSvg(drawing('Reading.pdf', '#page=3', '', '#page=3'))
+    const saved = (await world.saved[0]?.text()) ?? ''
+    expect([...world.pages].sort((a, b) => a - b)).toEqual([1, 3])
+    expect(saved.match(/base64,UEFHRQ3A"/g)).toHaveLength(2)
+    expect(saved.match(/base64,UEFHRQ1A"/g)).toHaveLength(1)
   })
 
   test.each([

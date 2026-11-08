@@ -11,7 +11,14 @@
   } from '@orden/editor'
   import type { EmbeddedNote } from '@orden/markdown'
   import type { CanvasNode } from './canvas/format'
-  import { cardHtml, fileShown, fileSource, fileUrl, keptByAccount } from './canvas/render'
+  import {
+    cardHtml,
+    fileShown,
+    fileSource,
+    fileUrl,
+    keptByAccount,
+    pageOfFile,
+  } from './canvas/render'
   import { account } from './account.svelte'
   import CanvasPdf from './CanvasPdf.svelte'
   import { type Box, isLineShape, shapeLine, shapePath } from './canvas/geometry'
@@ -283,7 +290,15 @@
         <audio src={fileUrl(node.file, root)} controls preload="metadata"></audio>
       </div>
     {:else if shown === 'pdf'}
-      <CanvasPdf file={node.file} note={canvasPath} {root} box={node} {scale} {seen} />
+      <CanvasPdf
+        file={node.file}
+        page={pageOfFile(node)}
+        note={canvasPath}
+        {root}
+        box={node}
+        {scale}
+        {seen}
+      />
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
       <div class="card page embed orden-rendered" use:embeds>{@html html}</div>
