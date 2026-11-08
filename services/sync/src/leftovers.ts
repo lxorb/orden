@@ -123,6 +123,14 @@ export async function sweepLeftovers(env: Env): Promise<number> {
       .run()
   }
 
+  const cleared = new Set(done)
+  const later = names.filter((one) => !cleared.has(one))
+  for (const chunk of chunks(later)) {
+    await env.DB.prepare(`update leftovers set since = ? where what in (${places(chunk.length)})`)
+      .bind(Date.now(), ...chunk)
+      .run()
+  }
+
   const rooms = done.filter((one) => one.startsWith(ROOM)).map((one) => one.slice(ROOM.length))
   for (const chunk of chunks(rooms)) {
     await env.DB.prepare(

@@ -463,6 +463,23 @@ describe('deleting one of two accounts', () => {
     expect(env.keys().sort()).toEqual(keys)
   })
 
+  test('goes on to the next leftovers when the oldest cannot be cleared yet', async () => {
+    const stuck = env.db.prepare('insert into leftovers (what, since) values (?, 0)')
+    for (let n = 1; n <= 200; n++) stuck.run(`issues/${String(n)}`)
+    env.db.prepare("insert into leftovers (what, since) values ('hubs/gone-user', 1)").run()
+
+    const { sweepLeftovers } = await import('../src/leftovers')
+    await sweepLeftovers(env)
+    await sweepLeftovers(env)
+
+    expect(
+      env.db.prepare("select what from leftovers where what = 'hubs/gone-user'").all(),
+    ).toEqual([])
+    expect(
+      env.db.prepare("select count(*) as many from leftovers where what like 'issues/%'").get(),
+    ).toEqual({ many: 200 })
+  })
+
   test('picks up what a request did not get to, the next night', async () => {
     const bucket = env.NOTES as unknown as { delete: (keys: string | string[]) => Promise<void> }
     const real = bucket.delete.bind(bucket)
