@@ -68,6 +68,8 @@
       kit.writes(row),
   )
 
+  const stillEditing = () => editing
+
   function write(next: Value | null) {
     const change = changeOf(row, property, next)
     if (change) kit.write(row, change)
@@ -165,6 +167,7 @@
           }
         }}
         onblur={(event) => {
+          if (!stillEditing()) return
           if (event.currentTarget.value !== row.task?.text) write(event.currentTarget.value)
           onstop?.()
         }}

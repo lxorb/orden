@@ -901,6 +901,13 @@
     const to = event.relatedTarget
     if (to instanceof Node && list?.contains(to)) return
     if (keyedOn) return
+    const from = event.target
+    if (to === null && from instanceof Node) {
+      queueMicrotask(() => {
+        if (from.isConnected && !list?.contains(document.activeElement)) standing = null
+      })
+      return
+    }
     standing = null
   }
 </script>
