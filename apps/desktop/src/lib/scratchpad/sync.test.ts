@@ -218,4 +218,31 @@ describe('the scratchpad on every device of the account', () => {
     expect(theirs.doc.getText('note').toJSON()).toBe('their words')
     expect(mine.doc.getText('note').toJSON()).toBe('my words')
   })
+
+  test('carries nothing written just before signing out into the next account', async () => {
+    const mine = new Account()
+    const theirs = new Account()
+    const desk = device('my words')
+    await desk.sync.exchange('me', mine)
+
+    desk.pad.words = 'my words\nand a secret'
+    await desk.sync.left('me')
+    await desk.sync.exchange('them', theirs)
+
+    expect(theirs.doc.getText('note').toJSON()).toBe('')
+    expect(desk.pad.words).toBe('')
+  })
+
+  test('still carries what was written after signing out', async () => {
+    const mine = new Account()
+    const theirs = new Account()
+    const desk = device('my words')
+    await desk.sync.exchange('me', mine)
+    await desk.sync.left('me')
+
+    desk.pad.words = 'written signed out'
+    await desk.sync.exchange('them', theirs)
+
+    expect(theirs.doc.getText('note').toJSON()).toBe('written signed out')
+  })
 })

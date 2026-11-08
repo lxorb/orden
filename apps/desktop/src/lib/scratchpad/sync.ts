@@ -103,6 +103,12 @@ export class PadSync {
     return this.inTurn(`orden:pad:${owner}`, () => this.traded(owner, server))
   }
 
+  left(owner: string): Promise<void> {
+    return this.inTurn(`orden:pad:${owner}`, async () => {
+      await this.disk.keep(LAST, { owner, text: await this.text.now() })
+    })
+  }
+
   private async traded(owner: string, server: PadServer): Promise<Traded> {
     const kept = keptOf(await this.disk.read(owner))
     const last = lastOf(await this.disk.read(LAST))
