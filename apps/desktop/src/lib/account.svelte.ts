@@ -271,21 +271,26 @@ class Session {
   }
 
   async rename(name: string) {
-    if (!this.token) return
+    const token = this.token
+    if (!token) return
 
-    const who = await api.rename(this.token, name)
+    const who = await api.rename(token, name)
+    if (this.token !== token) return
     if (who.user) this.user = who.user
     if (who.guest) this.guest = who.guest
   }
 
   async loadSpaces() {
-    if (!this.token) return
-    const listed = await api.listSpaces(this.token)
+    const token = this.token
+    if (!token) return
+    const listed = await api.listSpaces(token)
+    if (this.token !== token) return
     this.spaces = listed.spaces
     this.deletedSpaces = listed.deleted
     this.listed = true
 
     const { rememberRoles, sharedWithYou } = await import('./sharing.svelte')
+    if (this.token !== token) return
     rememberRoles()
     await sharedWithYou.load()
 
