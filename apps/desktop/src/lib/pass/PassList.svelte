@@ -63,6 +63,7 @@
         checked: view.filter === filter,
         run: () => ui.show({ filter }),
       })),
+      { until: pass.opened },
     )
   }
 
@@ -74,6 +75,7 @@
         checked: view.sort === sort,
         run: () => ui.show({ sort }),
       })),
+      { until: pass.opened },
     )
   }
 
@@ -107,6 +109,7 @@
 
   async function emptyTrash() {
     const sure = await prompt.confirm({
+      until: pass.opened,
       title: t('Empty the trash?'),
       detail: t('Everything in the trash is deleted for good.'),
       confirmLabel: t('Empty trash'),
@@ -117,6 +120,7 @@
 
   async function removePicked(ids: string[]) {
     const sure = await prompt.confirm({
+      until: pass.opened,
       title: plural(ids.length, {
         one: 'Delete {count} item for good?',
         other: 'Delete {count} items for good?',

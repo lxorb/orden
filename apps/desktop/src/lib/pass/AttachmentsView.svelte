@@ -35,6 +35,7 @@
 
   async function remove(id: string, name: string) {
     const sure = await prompt.confirm({
+      until: pass.opened,
       title: t('Remove {name}?', { name }),
       detail: t('The file is deleted from this item.'),
       confirmLabel: t('Remove'),

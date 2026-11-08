@@ -187,6 +187,7 @@ export class PassStore {
   private unlocking: Promise<unknown> = Promise.resolve()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- who is listening; nothing renders from it
   private readonly listeners = new Set<() => void>()
+  private session = new AbortController()
   private readonly relock = new Relock(
     () => this.settings.relockAfter,
     () => this.lock(),
@@ -248,7 +249,13 @@ export class PassStore {
     }
   }
 
+  get opened(): AbortSignal {
+    return this.session.signal
+  }
+
   lock(): void {
+    this.session.abort()
+    this.session = new AbortController()
     unlocked.delete(this)
     this.relock.back()
     this.items = []

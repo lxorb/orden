@@ -99,6 +99,7 @@
 
   async function removeForGood() {
     const sure = await prompt.confirm({
+      until: pass.opened,
       title: t('Delete {title} for good?', { title: content.title || t('Untitled') }),
       detail: t('This cannot be undone.'),
       confirmLabel: t('Delete'),
@@ -127,7 +128,9 @@
   function shareShown(from: Element) {
     const box = from.getBoundingClientRect()
     const at = new MouseEvent('contextmenu', { clientX: box.right, clientY: box.bottom })
-    void shareEntries().then((rows) => menu.show(at, rows, { title: t('Share') }))
+    void shareEntries().then((rows) =>
+      menu.show(at, rows, { until: pass.opened, title: t('Share') }),
+    )
   }
 
   function chooseIcon() {
@@ -221,7 +224,7 @@
       type="button"
       aria-label={t('More')}
       title={t('More')}
-      onclick={(event) => menu.show(event, entries(event.currentTarget))}
+      onclick={(event) => menu.show(event, entries(event.currentTarget), { until: pass.opened })}
     >
       <Glyph icon={Ellipsis} />
     </button>

@@ -61,6 +61,7 @@ export class PassUi {
   async leave(): Promise<boolean> {
     if (this.editing && this.dirty) {
       const sure = await prompt.confirm({
+        until: pass.opened,
         title: t('Discard your changes?'),
         confirmLabel: t('Discard'),
         danger: true,

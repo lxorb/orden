@@ -5,6 +5,7 @@
   import { menu } from '../menu.svelte'
   import { fieldKindLabel } from './field-words'
   import Glyph from './Glyph.svelte'
+  import { pass } from './store.svelte'
 
   const { onadd, label }: { onadd: (kind: FieldKind) => void; label?: string } = $props()
 
@@ -12,6 +13,7 @@
     menu.show(
       event,
       FIELD_KINDS.map((kind) => ({ label: fieldKindLabel(kind), run: () => onadd(kind) })),
+      { until: pass.opened },
     )
   }
 </script>

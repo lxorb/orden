@@ -8,7 +8,11 @@ import { pass } from './store.svelte'
 import type { PassUi } from './ui.svelte'
 
 async function newFolder(vault: Vault, parent: string | null): Promise<void> {
-  const name = await prompt.ask({ title: t('New folder'), confirmLabel: t('Create') })
+  const name = await prompt.ask({
+    until: pass.opened,
+    title: t('New folder'),
+    confirmLabel: t('Create'),
+  })
   if (!name) return
   const folder: Folder = { id: newId(), name, parent }
   await pass.updateVault(vault.id, { folders: [...vault.folders, folder] })
@@ -17,6 +21,7 @@ async function newFolder(vault: Vault, parent: string | null): Promise<void> {
 async function moveAll(ui: PassUi, vault: Vault): Promise<void> {
   const others = pass.vaults.filter((one) => one.id !== vault.id)
   const to = await prompt.choose({
+    until: pass.opened,
     title: t('Move all items to'),
     options: others.map((one) => ({ id: one.id, label: one.name })),
   })
@@ -27,6 +32,7 @@ async function moveAll(ui: PassUi, vault: Vault): Promise<void> {
 
 async function deleteVault(ui: PassUi, vault: Vault): Promise<void> {
   const sure = await prompt.confirm({
+    until: pass.opened,
     title: t('Delete {vault}?', { vault: vault.name }),
     detail: t('Every item in it is deleted for good.'),
     confirmLabel: t('Delete'),
@@ -76,6 +82,7 @@ function inside(folders: readonly Folder[], root: string): Set<string> {
 
 async function renameFolder(vault: Vault, folder: Folder): Promise<void> {
   const name = await prompt.ask({
+    until: pass.opened,
     title: t('Rename folder'),
     value: folder.name,
     confirmLabel: t('Rename'),
@@ -88,6 +95,7 @@ async function renameFolder(vault: Vault, folder: Folder): Promise<void> {
 
 async function deleteFolder(ui: PassUi, vault: Vault, folder: Folder): Promise<void> {
   const sure = await prompt.confirm({
+    until: pass.opened,
     title: t('Delete {folder}?', { folder: folder.name }),
     detail: t('Its items stay in the vault.'),
     confirmLabel: t('Delete'),

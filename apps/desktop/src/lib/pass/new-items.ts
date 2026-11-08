@@ -5,6 +5,7 @@ import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu.svelte'
 import { DIVIDER, menu } from '../menu.svelte'
 import { KIND_ICONS } from './icons'
+import { pass } from './store.svelte'
 import { contentFromTemplate, TEMPLATES } from './templates'
 import type { PassUi } from './ui.svelte'
 
@@ -23,7 +24,10 @@ function templateEntries(ui: PassUi): MenuEntry[] {
 export function newItemEntries(ui: PassUi, at: { x: number; y: number }): MenuEntry[] {
   const others = () => {
     const event = new MouseEvent('contextmenu', { clientX: at.x, clientY: at.y })
-    setTimeout(() => menu.show(event, templateEntries(ui), { title: t('Other') }), 0)
+    setTimeout(
+      () => menu.show(event, templateEntries(ui), { until: pass.opened, title: t('Other') }),
+      0,
+    )
   }
   return [
     { label: t('Login'), icon: KIND_ICONS.login, run: make(ui, blank('login')) },

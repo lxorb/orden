@@ -15,6 +15,7 @@
 
   async function remove(id: string, site: string) {
     const sure = await prompt.confirm({
+      until: pass.opened,
       title: t('Remove the passkey for {site}?', { site }),
       detail: t('You will no longer be able to sign in with it.'),
       confirmLabel: t('Remove'),

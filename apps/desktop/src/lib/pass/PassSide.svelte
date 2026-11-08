@@ -78,7 +78,7 @@
 
   function newItem(event: MouseEvent) {
     const box = (event.currentTarget as Element).getBoundingClientRect()
-    menu.show(event, newItemEntries(ui, { x: box.left, y: box.bottom }))
+    menu.show(event, newItemEntries(ui, { x: box.left, y: box.bottom }), { until: pass.opened })
   }
 </script>
 
@@ -91,7 +91,8 @@
       type="button"
       style:padding-inline-start="calc(var(--row-pad) + {depth} * var(--row-indent))"
       onclick={() => chosen(scope)}
-      oncontextmenu={(event) => menu.show(event, folderEntries(ui, vault, folder))}
+      oncontextmenu={(event) =>
+        menu.show(event, folderEntries(ui, vault, folder), { until: pass.opened })}
     >
       {#if folder.mark}
         <span class="orden-row-mark folder-mark"
@@ -137,7 +138,8 @@
           type="button"
           data-vault={vault.id}
           onclick={() => chosen(scope)}
-          oncontextmenu={(event) => menu.show(event, vaultEntries(ui, vault))}
+          oncontextmenu={(event) =>
+            menu.show(event, vaultEntries(ui, vault), { until: pass.opened })}
         >
           <VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />
           <span class="orden-row-label">{vault.name}</span>
@@ -149,7 +151,7 @@
           type="button"
           aria-label={t('Vault options')}
           title={t('Vault options')}
-          onclick={(event) => menu.show(event, vaultEntries(ui, vault))}
+          onclick={(event) => menu.show(event, vaultEntries(ui, vault), { until: pass.opened })}
         >
           <Glyph icon={Ellipsis} />
         </button>
