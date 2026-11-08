@@ -651,6 +651,19 @@ describe('another space, without switching', () => {
     })
   })
 
+  test('a query or filter is at most 1000 characters, refused before any space is searched', async () => {
+    const long = 'soup '.repeat(201)
+    for (const [verb, args] of [
+      ['search_notes', { query: long }],
+      ['bookmarks', { space: 'Home', op: 'add', query: long }],
+      ['list_tasks', { filter: long }],
+    ] as const) {
+      expect(await call(verb, args)).toMatchObject({ code: 'bad_arguments' })
+    }
+    expect(searched).toEqual([])
+    expect(marks['/s/Home']?.filter((one) => one.kind === 'search') ?? []).toEqual([])
+  })
+
   test('the backlinks of Home come from an index of Home, not the window own', async () => {
     const answered = await call('list_backlinks', { space: 'Home', path: 'Soup' })
     expect(answered).toMatchObject({ result: [{ path: 'Recipes.md', line: 3 }] })

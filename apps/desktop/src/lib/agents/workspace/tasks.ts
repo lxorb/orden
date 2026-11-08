@@ -41,7 +41,7 @@ import { stopWatch } from './stopping'
 import { nowOf } from '../../views/days'
 import { guardedAt } from '../../views/guard'
 import { withComment } from '../../views/task-body'
-import { type Call, done, flag, maybe, need, writerOf } from './call'
+import { type Call, done, flag, maybe, need, short, writerOf } from './call'
 import { at, made, madeOrChanged, noteOf } from './notes'
 import { Refused } from './problem'
 import {
@@ -130,7 +130,7 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
       all,
       {
         ...(base ? { base: { base: base.base } } : view ? { view } : {}),
-        ...(maybe(call, 'filter') ? { filter: need(call, 'filter') } : {}),
+        ...(maybe(call, 'filter') ? { filter: short('filter', need(call, 'filter')) } : {}),
         ...(typeof call.args.limit === 'number' ? { limit: call.args.limit } : {}),
         inboxes: rows.inboxes().filter((one) => reached.has(one.space)),
         undated: modes.undatedInToday,

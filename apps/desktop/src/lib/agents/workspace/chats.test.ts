@@ -247,6 +247,9 @@ describe('the chats an agent sees', () => {
   test('searched, outside the grant’s spaces nothing', async () => {
     expect(said(await call('search_chats', { query: 'plan' }))).toBe('Nothing found.')
     expect(said(await call('search_chats', { query: 'chapter' }))).toMatch(/^- #thesis · /)
+    expect(await call('search_chats', { query: 'chapter '.repeat(200) })).toMatchObject({
+      code: 'bad_arguments',
+    })
   })
 })
 
