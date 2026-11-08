@@ -149,12 +149,18 @@ function screenOf(tab: Tab, session: Session, most: number): AgentAnswer {
   )
 }
 
-export async function terminalSelection(tab: Tab) {
+export async function terminalSelection(tab: Tab, longest: number) {
   if (!running(tab)) return { running: false }
 
   const { term } = await sessionFor(tab)
   const selected = term.getSelection()
-  return { running: true, ...(selected ? { selected } : {}) }
+  if (!selected) return { running: true }
+
+  return {
+    running: true,
+    selected: selected.slice(0, longest),
+    ...(selected.length > longest ? { truncated: true } : {}),
+  }
 }
 
 export function typeTerminal(call: Call): Promise<AgentAnswer> {
