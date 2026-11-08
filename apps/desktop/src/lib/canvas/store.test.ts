@@ -572,6 +572,30 @@ describe('ink pasted on its own', () => {
   })
 })
 
+describe('words pasted onto a plane', () => {
+  const blank = { nodes: [], edges: [], ink: [], at: {}, gone: {} }
+
+  test('that are only an address become a link card', () => {
+    const { store } = opened()
+    run.paste(store, blank, 'https://example.com/a?b=c', { x: 0, y: 0 })
+
+    expect(store.canvas.nodes).toMatchObject([{ type: 'link', url: 'https://example.com/a?b=c' }])
+  })
+
+  test('that begin with an address but say more stay words, all of them kept', () => {
+    for (const text of [
+      'https://example.com is where it is',
+      'https://example.com\nhttps://example.org',
+      'https://example.com\n\nsee above',
+    ]) {
+      const { store } = opened()
+      run.paste(store, blank, text, { x: 0, y: 0 })
+
+      expect(store.canvas.nodes).toMatchObject([{ type: 'text', text }])
+    }
+  })
+})
+
 describe('a plane whose tab is switched away from and back', () => {
   test('can still take back what was drawn on it', () => {
     const { store, note, tab } = opened()
