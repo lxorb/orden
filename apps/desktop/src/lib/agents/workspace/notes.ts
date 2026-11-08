@@ -18,7 +18,8 @@ import { heldIndex, indexOf } from './links'
 import { openFile } from './reader-view'
 import { Refused } from './problem'
 import { createFile, fileKindOf } from './new-files'
-import { readable } from './guarded'
+import { readable, seen } from './guarded'
+import { isRecord } from '../../stored'
 import { namedTab, tabsOwnSpace } from './tab-target'
 import {
   judged,
@@ -109,6 +110,11 @@ export async function readNote(call: Call): Promise<AgentAnswer> {
     const path = onDisk(place, relative)
     if (read.links !== undefined) read.links = index.outgoing(path)
     if (read.backlinks !== undefined) read.backlinks = index.backlinks(path)
+  }
+  if (read.backlinks !== undefined) {
+    read.backlinks = read.backlinks.filter(
+      (one) => !isRecord(one) || typeof one.path !== 'string' || seen(onDisk(place, one.path)),
+    )
   }
 
   return done(read, sharedSource(place, relative))

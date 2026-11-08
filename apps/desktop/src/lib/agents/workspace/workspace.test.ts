@@ -2296,6 +2296,23 @@ describe('a note the reader protected', () => {
     }
   })
 
+  test('lends no line of its own as a backlink, in this space or another', async () => {
+    const { protection } = await import('../../protect/protection.svelte')
+    files.set('/s/Home/Soup.md', '# Soup\n')
+    files.set('/s/Home/Recipes.md', '# Recipes\n\nSee [[Soup]] tonight.\n')
+    expect(await call('list_backlinks', { space: 'Home', path: 'Soup' })).toMatchObject({
+      result: [{ path: 'Recipes.md' }],
+    })
+    protection.set('/s/Home', '/s/Home/Recipes.md', 'password')
+    try {
+      expect(await call('list_backlinks', { space: 'Home', path: 'Soup' })).toMatchObject({
+        result: [],
+      })
+    } finally {
+      protection.set('/s/Home', '/s/Home/Recipes.md', null)
+    }
+  })
+
   test('is refused to an agent until it is unlocked and agents are let read it', async () => {
     const { protection } = await import('../../protect/protection.svelte')
     const { unlocks } = await import('../../protect/unlocked.svelte')
