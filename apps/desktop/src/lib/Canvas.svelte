@@ -1,6 +1,7 @@
 <script lang="ts">
   import { keyElsewhere } from './layer-keys'
   import { untrack } from 'svelte'
+  import { wordsBesidePicture } from '@orden/editor'
   import CanvasBar from './CanvasBar.svelte'
   import CanvasEdges from './CanvasEdges.svelte'
   import CanvasFind from './CanvasFind.svelte'
@@ -1410,8 +1411,13 @@
   function onPaste(event: ClipboardEvent) {
     if (typing(event.target) || store.editing !== null) return
 
-    const files = filesIn(event.clipboardData).filter(isCanvasFile)
-    if (files.length) {
+    const data = event.clipboardData
+    const files = filesIn(data).filter(isCanvasFile)
+    const words = wordsBesidePicture(
+      data?.getData('text/html') ?? '',
+      data?.getData('text/plain') ?? '',
+    )
+    if (files.length && !words) {
       event.preventDefault()
       placeFiles(files, pasteSpot())
       return
