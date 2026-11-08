@@ -56,4 +56,13 @@ describe('a request to the account', () => {
     const response = await fetchInTime(new Request('https://orden.so/v2/spaces'))
     expect(response.status).toBe(204)
   })
+
+  test('called off by its caller is called off at once, not taken for a network gone', async () => {
+    hanging('headers')
+    const stop = new AbortController()
+    const asked = fetchInTime('https://api.pwnedpasswords.com/range/ABCDE', { signal: stop.signal })
+    const failed = expect(asked).rejects.toThrow(DOMException)
+    stop.abort(new DOMException('aborted', 'AbortError'))
+    await failed
+  })
 })
