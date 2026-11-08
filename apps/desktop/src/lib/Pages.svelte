@@ -118,6 +118,8 @@
 
   const TWO_FINGERS = 250
 
+  const GRACE = 160
+
   const follows = (_value: unknown) => undefined
 
   let host = $state<HTMLElement>()
@@ -587,8 +589,19 @@
     return now - since <= TWO_FINGERS
   }
 
+  let doubting: { id: number; timer: number } | null = null
+
+  function stopDoubting(id?: number) {
+    if (!doubting || (id !== undefined && doubting.id !== id)) return
+    window.clearTimeout(doubting.timer)
+    doubting = null
+  }
+
+  $effect(() => () => stopDoubting())
+
   function onpointerdown(event: PointerEvent) {
     if (contacts.echo(event)) return
+    stopDoubting()
     tools.used()
 
     const { kind, eraser } = kindOf(event)
@@ -909,6 +922,7 @@
   }
 
   function onpointermove(event: PointerEvent) {
+    stopDoubting(event.pointerId)
     pointing = planeAt(event)
 
     if (hovering(event) && host?.hasPointerCapture(event.pointerId)) {
@@ -1060,6 +1074,7 @@
   }
 
   function onpointerup(event: PointerEvent) {
+    stopDoubting(event.pointerId)
     contacts.went(event.pointerId)
 
     const lifted = right.up(event)
@@ -1097,6 +1112,23 @@
   }
 
   function onpointercancel(event: PointerEvent) {
+    const one = gesture
+    if (one && one.kind !== 'pinch' && one.id === event.pointerId && kindOf(event).kind === 'pen') {
+      stopDoubting()
+      const id = event.pointerId
+      doubting = {
+        id,
+        timer: window.setTimeout(() => {
+          doubting = null
+          cancelled(event)
+        }, GRACE),
+      }
+      return
+    }
+    cancelled(event)
+  }
+
+  function cancelled(event: PointerEvent) {
     contacts.went(event.pointerId)
     right.cancel(event.pointerId)
 
