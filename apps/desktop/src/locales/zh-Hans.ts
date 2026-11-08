@@ -3507,4 +3507,58 @@ export const zhHans: Dictionary = {
     '已在别处退出登录；账户未被删除。请重新登录以删除。',
   'Signed out; sign in again to see whether the account is still there.':
     '已退出登录；请重新登录查看账户是否仍在。',
+  'Add a chat account': '添加聊天账户',
+  Steps: '步骤',
+  'Choose a service': '选择服务',
+  'Chat services connect in the desktop app.': '聊天服务需在桌面应用中连接。',
+  Advanced: '高级',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden 无法连接它推测的服务器。请在此填写。',
+  'Sign in with {service}': '使用 {service} 登录',
+  'Checking the connection…': '正在检查连接…',
+  'Could not connect': '无法连接',
+  'Change the details': '修改信息',
+  '{account} is connected': '{account} 已连接',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    '选择现在要打开的聊天。其余的留在侧边栏中。',
+  'Its chats show in the sidebar as they arrive.': '它的聊天到达后会显示在侧边栏中。',
+  'Add another': '再添加一个',
+  'Open chats': '打开聊天',
+  'Any mail account, with its address and password': '任意邮件账户，使用其地址和密码',
+  'Sign in with your Google account': '使用你的 Google 账户登录',
+  'Sign in with your work or school account': '使用你的工作或学校账户登录',
+  'Your account, with a code sent to your phone': '你的账户，验证码发送到你的手机',
+  'Your own Slack app, made in one click': '你自己的 Slack 应用，一键创建',
+  'Linked as a device with a QR code': '通过 QR 码作为设备关联',
+  'Orden finds the servers from your address.': 'Orden 会根据你的地址找到服务器。',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden 在浏览器中打开登录页面，你允许后会回到这里。',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram 会先要求一次 API ID，然后向你的手机发送验证码或显示 QR 码。',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden 会为你创建专属的 Slack 应用，数据不经过任何其他人。',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden 会像电脑一样，作为另一台设备关联到你的手机。',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    '在手机上打开 WhatsApp，进入“设置”，然后“已关联的设备”',
+  'Tap Link a device': '点按“关联新设备”',
+  'Scan the QR code Orden shows next': '扫描 Orden 接下来显示的 QR 码',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    '在手机上打开 Signal，进入“设置”，然后“已关联的设备”',
+  'Tap the plus to link a new device': '点按加号以关联新设备',
+  'Show the QR code': '显示 QR 码',
+  'Check the token you pasted: it starts with xoxp-.': '请检查你粘贴的令牌：它以 xoxp- 开头。',
+  'Check the address and password. Some services ask for an app password instead.':
+    '请检查地址和密码。有些服务要求使用应用专用密码。',
+  'Sign in again and allow Orden what it asks for.': '请重新登录，并允许 Orden 请求的权限。',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden 无法连接服务器。请检查网络连接，或“高级”中的服务器。',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden 无法连接该服务。请检查网络连接后重试。',
+  'Change the details and try again.': '修改信息后重试。',
+  'Stop adding this account?': '停止添加此账户？',
+  'What you entered is not kept.': '你输入的内容不会保留。',
+  'Chat accounts': '聊天账户',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    '连接邮件、Telegram、Slack、WhatsApp 或 Signal，一步一步来。',
 }

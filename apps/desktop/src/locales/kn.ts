@@ -3726,4 +3726,64 @@ export const kn: Dictionary = {
     'ಬೇರೆಡೆ ಸೈನ್ ಔಟ್ ಆಗಿದೆ; ಖಾತೆ ಅಳಿಸಲಾಗಿಲ್ಲ. ಅಳಿಸಲು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'Signed out; sign in again to see whether the account is still there.':
     'ಸೈನ್ ಔಟ್ ಆಗಿದೆ; ಖಾತೆ ಇನ್ನೂ ಇದೆಯೇ ಎಂದು ನೋಡಲು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'Add a chat account': 'ಚಾಟ್ ಖಾತೆ ಸೇರಿಸಿ',
+  Steps: 'ಹಂತಗಳು',
+  'Choose a service': 'ಸೇವೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ',
+  'Chat services connect in the desktop app.':
+    'ಚಾಟ್ ಸೇವೆಗಳು ಡೆಸ್ಕ್‌ಟಾಪ್ ಆ್ಯಪ್‌ನಲ್ಲಿ ಸಂಪರ್ಕಗೊಳ್ಳುತ್ತವೆ.',
+  Advanced: 'ಸುಧಾರಿತ',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden ಊಹಿಸಿದ ಸರ್ವರ್‌ಗಳನ್ನು ತಲುಪಲಾಗಲಿಲ್ಲ. ಅವುಗಳನ್ನು ಇಲ್ಲಿ ತುಂಬಿ.',
+  'Sign in with {service}': '{service} ಮೂಲಕ ಸೈನ್ ಇನ್ ಮಾಡಿ',
+  'Checking the connection…': 'ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…',
+  'Could not connect': 'ಸಂಪರ್ಕಿಸಲಾಗಲಿಲ್ಲ',
+  'Change the details': 'ವಿವರಗಳನ್ನು ಬದಲಿಸಿ',
+  '{account} is connected': '{account} ಸಂಪರ್ಕಗೊಂಡಿದೆ',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'ಈಗ ತೆರೆಯಬೇಕಾದ ಚಾಟ್‌ಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ. ಉಳಿದವು ಸೈಡ್‌ಬಾರ್‌ನಲ್ಲಿ ಕಾಯುತ್ತವೆ.',
+  'Its chats show in the sidebar as they arrive.':
+    'ಇದರ ಚಾಟ್‌ಗಳು ಬಂದಂತೆ ಸೈಡ್‌ಬಾರ್‌ನಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.',
+  'Add another': 'ಇನ್ನೊಂದು ಸೇರಿಸಿ',
+  'Open chats': 'ಚಾಟ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ',
+  'Any mail account, with its address and password':
+    'ಯಾವುದೇ ಮೇಲ್ ಖಾತೆ, ಅದರ ವಿಳಾಸ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್‌ನೊಂದಿಗೆ',
+  'Sign in with your Google account': 'ನಿಮ್ಮ Google ಖಾತೆಯಿಂದ ಸೈನ್ ಇನ್ ಮಾಡಿ',
+  'Sign in with your work or school account': 'ನಿಮ್ಮ ಕೆಲಸದ ಅಥವಾ ಶಾಲೆಯ ಖಾತೆಯಿಂದ ಸೈನ್ ಇನ್ ಮಾಡಿ',
+  'Your account, with a code sent to your phone': 'ನಿಮ್ಮ ಖಾತೆ, ನಿಮ್ಮ ಫೋನ್‌ಗೆ ಕಳುಹಿಸಿದ ಕೋಡ್‌ನೊಂದಿಗೆ',
+  'Your own Slack app, made in one click': 'ನಿಮ್ಮದೇ Slack ಆ್ಯಪ್, ಒಂದೇ ಕ್ಲಿಕ್‌ನಲ್ಲಿ ತಯಾರಿಸಿದ್ದು',
+  'Linked as a device with a QR code': 'QR ಕೋಡ್ ಮೂಲಕ ಸಾಧನವಾಗಿ ಲಿಂಕ್ ಮಾಡಲಾಗಿದೆ',
+  'Orden finds the servers from your address.':
+    'Orden ನಿಮ್ಮ ವಿಳಾಸದಿಂದ ಸರ್ವರ್‌ಗಳನ್ನು ಕಂಡುಹಿಡಿಯುತ್ತದೆ.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸೈನ್ ಇನ್ ತೆರೆಯುತ್ತದೆ ಮತ್ತು ನೀವು ಅನುಮತಿಸಿದ ನಂತರ ಇಲ್ಲಿಗೆ ಮರಳುತ್ತದೆ.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram ಒಮ್ಮೆ API ID ಕೇಳುತ್ತದೆ, ನಂತರ ನಿಮ್ಮ ಫೋನ್‌ಗೆ ಕೋಡ್ ಕಳುಹಿಸುತ್ತದೆ ಅಥವಾ QR ಕೋಡ್ ತೋರಿಸುತ್ತದೆ.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden ನಿಮ್ಮದೇ Slack ಆ್ಯಪ್ ತಯಾರಿಸುತ್ತದೆ, ಆದ್ದರಿಂದ ಏನೂ ಬೇರೆಯವರ ಮೂಲಕ ಹಾದುಹೋಗುವುದಿಲ್ಲ.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden ಕಂಪ್ಯೂಟರ್‌ನಂತೆ ಇನ್ನೊಂದು ಸಾಧನವಾಗಿ ನಿಮ್ಮ ಫೋನ್‌ಗೆ ಲಿಂಕ್ ಆಗುತ್ತದೆ.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲಿ WhatsApp ತೆರೆಯಿರಿ ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳು, ನಂತರ ಲಿಂಕ್ ಮಾಡಿದ ಸಾಧನಗಳು ಎಂಬಲ್ಲಿಗೆ ಹೋಗಿ',
+  'Tap Link a device': 'ಸಾಧನವನ್ನು ಲಿಂಕ್ ಮಾಡಿ ಟ್ಯಾಪ್ ಮಾಡಿ',
+  'Scan the QR code Orden shows next': 'Orden ಮುಂದೆ ತೋರಿಸುವ QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲಿ Signal ತೆರೆಯಿರಿ ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳು, ನಂತರ ಲಿಂಕ್ ಮಾಡಿದ ಸಾಧನಗಳು ಎಂಬಲ್ಲಿಗೆ ಹೋಗಿ',
+  'Tap the plus to link a new device': 'ಹೊಸ ಸಾಧನ ಲಿಂಕ್ ಮಾಡಲು ಪ್ಲಸ್ ಟ್ಯಾಪ್ ಮಾಡಿ',
+  'Show the QR code': 'QR ಕೋಡ್ ತೋರಿಸಿ',
+  'Check the token you pasted: it starts with xoxp-.':
+    'ನೀವು ಅಂಟಿಸಿದ ಟೋಕನ್ ಪರಿಶೀಲಿಸಿ: ಅದು xoxp- ನಿಂದ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'ವಿಳಾಸ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ಪರಿಶೀಲಿಸಿ. ಕೆಲವು ಸೇವೆಗಳು ಬದಲಿಗೆ ಆ್ಯಪ್ ಪಾಸ್‌ವರ್ಡ್ ಕೇಳುತ್ತವೆ.',
+  'Sign in again and allow Orden what it asks for.':
+    'ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ ಮತ್ತು Orden ಕೇಳುವುದಕ್ಕೆ ಅನುಮತಿ ನೀಡಿ.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden ಸರ್ವರ್‌ಗಳನ್ನು ತಲುಪಲಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು, ಅಥವಾ ಸುಧಾರಿತ ಅಡಿಯ ಸರ್ವರ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden ಸೇವೆಯನ್ನು ತಲುಪಲಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'Change the details and try again.': 'ವಿವರಗಳನ್ನು ಬದಲಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'Stop adding this account?': 'ಈ ಖಾತೆ ಸೇರಿಸುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
+  'What you entered is not kept.': 'ನೀವು ನಮೂದಿಸಿದ್ದು ಉಳಿಸಲಾಗುವುದಿಲ್ಲ.',
+  'Chat accounts': 'ಚಾಟ್ ಖಾತೆಗಳು',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'ಮೇಲ್, Telegram, Slack, WhatsApp ಅಥವಾ Signal ಅನ್ನು ಒಂದೊಂದೇ ಹಂತದಲ್ಲಿ ಸಂಪರ್ಕಿಸಿ.',
 }

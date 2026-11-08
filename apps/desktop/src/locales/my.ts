@@ -3622,4 +3622,65 @@ export const my: Dictionary = {
     'အခြားနေရာတွင် ထွက်ခဲ့သည်။ အကောင့်ကို မဖျက်ရသေးပါ။ ဖျက်ရန် ပြန်ဝင်ပါ။',
   'Signed out; sign in again to see whether the account is still there.':
     'ထွက်ခဲ့သည်။ အကောင့် ရှိနေသေးသလား သိရန် ပြန်ဝင်ပါ။',
+  'Add a chat account': 'ချတ်အကောင့် ထည့်ပါ',
+  Steps: 'အဆင့်များ',
+  'Choose a service': 'ဝန်ဆောင်မှု ရွေးပါ',
+  'Chat services connect in the desktop app.':
+    'ချတ်ဝန်ဆောင်မှုများကို ဒက်စ်တော့ အက်ပ်တွင် ချိတ်ပါ။',
+  Advanced: 'အဆင့်မြင့်',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden ခန့်မှန်းထားသော ဆာဗာများသို့ မရောက်နိုင်ပါ။ ဤနေရာတွင် ဖြည့်ပါ။',
+  'Sign in with {service}': '{service} ဖြင့် အကောင့်ဝင်ပါ',
+  'Checking the connection…': 'ချိတ်ဆက်မှုကို စစ်ဆေးနေသည်…',
+  'Could not connect': 'မချိတ်နိုင်ပါ',
+  'Change the details': 'အသေးစိတ်ကို ပြင်ပါ',
+  '{account} is connected': '{account} ချိတ်ပြီးပါပြီ',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'ယခုဖွင့်မည့် ချတ်များကို ရွေးပါ။ ကျန်သည်များ ဘေးတန်းတွင် စောင့်နေမည်။',
+  'Its chats show in the sidebar as they arrive.':
+    '၎င်း၏ ချတ်များ ရောက်လာသည်နှင့် ဘေးတန်းတွင် ပေါ်မည်။',
+  'Add another': 'နောက်တစ်ခု ထည့်ပါ',
+  'Open chats': 'ချတ်များ ဖွင့်ပါ',
+  'Any mail account, with its address and password':
+    'မည်သည့် မေးလ်အကောင့်မဆို၊ ၎င်း၏ လိပ်စာနှင့် စကားဝှက်ဖြင့်',
+  'Sign in with your Google account': 'သင့် Google အကောင့်ဖြင့် အကောင့်ဝင်ပါ',
+  'Sign in with your work or school account':
+    'သင့် အလုပ် သို့မဟုတ် ကျောင်း အကောင့်ဖြင့် အကောင့်ဝင်ပါ',
+  'Your account, with a code sent to your phone': 'သင့်အကောင့်၊ သင့်ဖုန်းသို့ ပို့သော ကုဒ်ဖြင့်',
+  'Your own Slack app, made in one click':
+    'သင့်ကိုယ်ပိုင် Slack အက်ပ်၊ တစ်ချက်နှိပ်ရုံဖြင့် ပြုလုပ်သည်',
+  'Linked as a device with a QR code': 'QR ကုဒ်ဖြင့် စက်တစ်ခုအဖြစ် ချိတ်ထားသည်',
+  'Orden finds the servers from your address.': 'Orden သည် သင့်လိပ်စာမှ ဆာဗာများကို ရှာသည်။',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden သည် သင့်ဘရောက်ဇာတွင် အကောင့်ဝင်ခြင်းကို ဖွင့်ပြီး သင်ခွင့်ပြုသည်နှင့် ဤနေရာသို့ ပြန်လာသည်။',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram သည် API ID ကို တစ်ကြိမ်တောင်းပြီး သင့်ဖုန်းသို့ ကုဒ်ပို့သည် သို့မဟုတ် QR ကုဒ်ပြသည်။',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden သည် သင့်ကိုယ်ပိုင် Slack အက်ပ်ကို ပြုလုပ်သဖြင့် မည်သည့်အရာမျှ အခြားသူထံ မဖြတ်သန်းပါ။',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden သည် ကွန်ပျူတာကဲ့သို့ပင် သင့်ဖုန်းနှင့် အခြားစက်တစ်ခုအဖြစ် ချိတ်ထားသည်။',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'သင့်ဖုန်းတွင် WhatsApp ကိုဖွင့်ပြီး ဆက်တင်များ၊ ထို့နောက် ချိတ်ဆက်ထားသော စက်များ သို့သွားပါ',
+  'Tap Link a device': 'စက်ပစ္စည်း ချိတ်ဆက်ရန် ကို နှိပ်ပါ',
+  'Scan the QR code Orden shows next': 'Orden နောက်တွင်ပြမည့် QR ကုဒ်ကို စကန်ဖတ်ပါ',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'သင့်ဖုန်းတွင် Signal ကိုဖွင့်ပြီး ဆက်တင်များ၊ ထို့နောက် ချိတ်ဆက်ထားသော စက်များ သို့သွားပါ',
+  'Tap the plus to link a new device': 'စက်အသစ် ချိတ်ရန် အပေါင်းလက္ခဏာကို နှိပ်ပါ',
+  'Show the QR code': 'QR ကုဒ် ပြပါ',
+  'Check the token you pasted: it starts with xoxp-.':
+    'သင်ကူးထည့်သော တိုကင်ကို စစ်ပါ: xoxp- ဖြင့် စရမည်။',
+  'Check the address and password. Some services ask for an app password instead.':
+    'လိပ်စာနှင့် စကားဝှက်ကို စစ်ပါ။ အချို့ဝန်ဆောင်မှုများသည် အက်ပ်စကားဝှက်ကို တောင်းသည်။',
+  'Sign in again and allow Orden what it asks for.':
+    'ထပ်မံ အကောင့်ဝင်ပြီး Orden တောင်းသည်များကို ခွင့်ပြုပါ။',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden ဆာဗာများသို့ မရောက်နိုင်ပါ။ သင့်ချိတ်ဆက်မှု သို့မဟုတ် အဆင့်မြင့် အောက်ရှိ ဆာဗာများကို စစ်ပါ။',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden ဝန်ဆောင်မှုသို့ မရောက်နိုင်ပါ။ သင့်ချိတ်ဆက်မှုကို စစ်ပြီး ထပ်စမ်းကြည့်ပါ။',
+  'Change the details and try again.': 'အသေးစိတ်ကို ပြင်ပြီး ထပ်စမ်းကြည့်ပါ။',
+  'Stop adding this account?': 'ဤအကောင့် ထည့်ခြင်းကို ရပ်မလား။',
+  'What you entered is not kept.': 'သင်ထည့်ခဲ့သည်များကို မသိမ်းပါ။',
+  'Chat accounts': 'ချတ်အကောင့်များ',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'မေးလ်၊ Telegram၊ Slack၊ WhatsApp သို့မဟုတ် Signal ကို တစ်ဆင့်ချင်း ချိတ်ပါ။',
 }

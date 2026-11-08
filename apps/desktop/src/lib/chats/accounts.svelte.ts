@@ -63,7 +63,9 @@ export class Accounts {
   extra = $state.raw<readonly ChatProvider[]>([])
 
   get offered(): readonly ChatProvider[] {
-    return [...this.providers, ...this.extra]
+    const later = (one: ChatProvider) => this.extra.find((it) => it.id === one.id)
+    const built = this.providers.map((one) => later(one) ?? one)
+    return [...built, ...this.extra.filter((one) => !built.includes(one))]
   }
 
   offer(provider: ChatProvider): void {

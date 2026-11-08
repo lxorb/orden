@@ -3754,4 +3754,65 @@ export const ta: Dictionary = {
     'வேறிடத்தில் வெளியேற்றப்பட்டது; கணக்கு நீக்கப்படவில்லை. நீக்க மீண்டும் உள்நுழையவும்.',
   'Signed out; sign in again to see whether the account is still there.':
     'வெளியேற்றப்பட்டது; கணக்கு இன்னும் உள்ளதா எனப் பார்க்க மீண்டும் உள்நுழையவும்.',
+  'Add a chat account': 'அரட்டைக் கணக்கைச் சேர்',
+  Steps: 'படிகள்',
+  'Choose a service': 'ஒரு சேவையைத் தேர்ந்தெடு',
+  'Chat services connect in the desktop app.': 'அரட்டைச் சேவைகள் டெஸ்க்டாப் செயலியில் இணைகின்றன.',
+  Advanced: 'மேம்பட்டவை',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden ஊகித்த சேவையகங்களை அடைய முடியவில்லை. அவற்றை இங்கே நிரப்பவும்.',
+  'Sign in with {service}': '{service} மூலம் உள்நுழை',
+  'Checking the connection…': 'இணைப்பைச் சரிபார்க்கிறது…',
+  'Could not connect': 'இணைக்க முடியவில்லை',
+  'Change the details': 'விவரங்களை மாற்று',
+  '{account} is connected': '{account} இணைக்கப்பட்டது',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'இப்போது திறக்க வேண்டிய அரட்டைகளைத் தேர்ந்தெடுக்கவும். மற்றவை பக்கப்பட்டியில் காத்திருக்கும்.',
+  'Its chats show in the sidebar as they arrive.':
+    'அதன் அரட்டைகள் வரும்போது பக்கப்பட்டியில் தோன்றும்.',
+  'Add another': 'மற்றொன்றைச் சேர்',
+  'Open chats': 'அரட்டைகளைத் திற',
+  'Any mail account, with its address and password':
+    'எந்த அஞ்சல் கணக்கும், அதன் முகவரி மற்றும் கடவுச்சொல்லுடன்',
+  'Sign in with your Google account': 'உங்கள் Google கணக்கு மூலம் உள்நுழையவும்',
+  'Sign in with your work or school account': 'உங்கள் பணி அல்லது பள்ளிக் கணக்கு மூலம் உள்நுழையவும்',
+  'Your account, with a code sent to your phone':
+    'உங்கள் கணக்கு, உங்கள் தொலைபேசிக்கு அனுப்பப்படும் குறியீட்டுடன்',
+  'Your own Slack app, made in one click':
+    'உங்கள் சொந்த Slack செயலி, ஒரே கிளிக்கில் உருவாக்கப்பட்டது',
+  'Linked as a device with a QR code': 'QR குறியீடு மூலம் ஒரு சாதனமாக இணைக்கப்பட்டது',
+  'Orden finds the servers from your address.':
+    'Orden உங்கள் முகவரியிலிருந்து சேவையகங்களைக் கண்டறிகிறது.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden உங்கள் உலாவியில் உள்நுழைவைத் திறந்து, நீங்கள் அனுமதித்ததும் இங்கே திரும்புகிறது.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram ஒருமுறை API ID கேட்கிறது, பின்னர் உங்கள் தொலைபேசிக்குக் குறியீட்டை அனுப்புகிறது அல்லது QR குறியீட்டைக் காட்டுகிறது.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden உங்களுக்கென ஒரு Slack செயலியை உருவாக்குகிறது, எனவே எதுவும் வேறு யார் வழியாகவும் செல்வதில்லை.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'கணினியைப் போலவே, Orden உங்கள் தொலைபேசியுடன் மற்றொரு சாதனமாக இணைக்கப்படுகிறது.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'உங்கள் தொலைபேசியில் WhatsApp-ஐத் திறந்து அமைப்புகள், பின்னர் இணைக்கப்பட்ட சாதனங்கள் என்பதற்குச் செல்லவும்',
+  'Tap Link a device': 'சாதனத்தை இணை என்பதைத் தட்டவும்',
+  'Scan the QR code Orden shows next': 'அடுத்து Orden காட்டும் QR குறியீட்டை ஸ்கேன் செய்யவும்',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'உங்கள் தொலைபேசியில் Signal-ஐத் திறந்து அமைப்புகள், பின்னர் இணைக்கப்பட்ட சாதனங்கள் என்பதற்குச் செல்லவும்',
+  'Tap the plus to link a new device': 'புதிய சாதனத்தை இணைக்கக் கூட்டல் குறியைத் தட்டவும்',
+  'Show the QR code': 'QR குறியீட்டைக் காட்டு',
+  'Check the token you pasted: it starts with xoxp-.':
+    'நீங்கள் ஒட்டிய டோக்கனைச் சரிபார்க்கவும்: அது xoxp- என்று தொடங்கும்.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'முகவரியையும் கடவுச்சொல்லையும் சரிபார்க்கவும். சில சேவைகள் அதற்குப் பதிலாக செயலிக் கடவுச்சொல்லைக் கேட்கின்றன.',
+  'Sign in again and allow Orden what it asks for.':
+    'மீண்டும் உள்நுழைந்து Orden கேட்பதை அனுமதிக்கவும்.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden சேவையகங்களை அடைய முடியவில்லை. உங்கள் இணைப்பை, அல்லது மேம்பட்டவை கீழுள்ள சேவையகங்களைச் சரிபார்க்கவும்.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden சேவையை அடைய முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்.',
+  'Change the details and try again.': 'விவரங்களை மாற்றி மீண்டும் முயலவும்.',
+  'Stop adding this account?': 'இந்தக் கணக்கைச் சேர்ப்பதை நிறுத்தவா?',
+  'What you entered is not kept.': 'நீங்கள் உள்ளிட்டவை சேமிக்கப்படாது.',
+  'Chat accounts': 'அரட்டைக் கணக்குகள்',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'அஞ்சல், Telegram, Slack, WhatsApp அல்லது Signal-ஐ ஒவ்வொரு படியாக இணைக்கவும்.',
 }

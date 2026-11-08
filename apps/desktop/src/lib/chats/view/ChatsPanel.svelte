@@ -19,7 +19,7 @@
   import { newestFirst } from '@orden/chats/provider'
   import { host } from '../providers/host'
   import { accounts, openConversation } from '../linked'
-  import ConnectForm from './ConnectForm.svelte'
+  import { addChat, adding } from './adding.svelte'
   import SignIn from './SignIn.svelte'
   import { byPriority, LEVELS, isLevel } from '@orden/chats/priority'
   import { priorities, rowKey } from '../priorities.svelte'
@@ -49,13 +49,9 @@
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
   })
   const offered = $derived(accounts.offered.filter((one) => one.available(host)))
-  let connecting = $state(false)
-  let again = $state<{ provider: string; account: string } | null>(null)
-  const againWith = $derived(again ? accounts.providerOf(again.provider) : undefined)
 
   function signInAgain(provider: string, account: string) {
-    connecting = false
-    again = { provider, account }
+    addChat({ provider, account })
   }
 
   let arranged = $state<'service' | 'priority'>('service')
@@ -422,29 +418,13 @@
           <button
             type="button"
             class="orden-glyph add"
-            aria-label={t('Connect')}
-            title={t('Connect')}
-            onclick={() => {
-              again = null
-              connecting = !connecting
-            }}><Glyph name="attach" /></button
+            aria-label={t('Add a chat account')}
+            title={t('Add a chat account')}
+            onclick={() => addChat()}><Glyph name="attach" /></button
           >
         {/if}
       </div>
-      {#if again && againWith}
-        {#key `${again.provider}:${again.account}`}
-          <ConnectForm
-            providers={[againWith]}
-            given={accounts.given(again.provider, again.account)}
-            replacing={again.account}
-            done={() => (again = null)}
-          />
-        {/key}
-      {:else if connecting && offered.length}
-        <ConnectForm providers={offered} done={() => (connecting = false)} />
-      {:else}
-        <SignIn />
-      {/if}
+      {#if !adding.busy}<SignIn />{/if}
       {#each accounts.failed as one (`${one.provider}:${one.account}`)}
         <p class="orden-row failed" title={one.reason}>
           <span class="orden-row-label">{one.account}</span>

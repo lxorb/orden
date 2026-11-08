@@ -694,6 +694,31 @@ export function generalPane(): Pane {
                   get: () => chatsOn(),
                   set: (on: boolean) => setWord(CHATS_WORD, on),
                 },
+                ...(chatsOn()
+                  ? [
+                      {
+                        kind: 'value' as const,
+                        label: t('Chat accounts'),
+                        hint: t(
+                          'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.',
+                        ),
+                        words: [
+                          'account',
+                          'connect',
+                          'add',
+                          'mail',
+                          'telegram',
+                          'slack',
+                          'whatsapp',
+                          'signal',
+                        ],
+                        get: () => t('Add'),
+                        does: t('Add a chat account'),
+                        press: () =>
+                          void import('../chats/view/adding.svelte').then((one) => one.addChat()),
+                      },
+                    ]
+                  : []),
                 ...(chatsOn() && !isMobile ? chatsFields() : []),
               ],
             },

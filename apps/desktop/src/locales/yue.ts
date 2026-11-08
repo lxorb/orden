@@ -3499,4 +3499,58 @@ export const yue: Dictionary = {
     '喺第二度登出咗；帳戶未刪除。再登入先可以刪除。',
   'Signed out; sign in again to see whether the account is still there.':
     '已經登出；再登入睇吓帳戶仲喺唔喺度。',
+  'Add a chat account': '加個傾偈帳戶',
+  Steps: '步驟',
+  'Choose a service': '揀服務',
+  'Chat services connect in the desktop app.': '傾偈服務要喺桌面 app 度連接。',
+  Advanced: '進階',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden 估嘅伺服器連唔到。喺度填返佢哋啦。',
+  'Sign in with {service}': '用 {service} 登入',
+  'Checking the connection…': '檢查緊連接…',
+  'Could not connect': '連唔到',
+  'Change the details': '改資料',
+  '{account} is connected': '{account} 已經連接咗',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    '揀而家要開嘅傾偈。其餘嘅喺側邊欄等。',
+  'Its chats show in the sidebar as they arrive.': '佢啲傾偈一到就會喺側邊欄出現。',
+  'Add another': '再加一個',
+  'Open chats': '開傾偈',
+  'Any mail account, with its address and password': '任何郵件帳戶，用佢嘅地址同密碼',
+  'Sign in with your Google account': '用你嘅 Google 帳戶登入',
+  'Sign in with your work or school account': '用你嘅公司或者學校帳戶登入',
+  'Your account, with a code sent to your phone': '你嘅帳戶，驗證碼會發去你部電話',
+  'Your own Slack app, made in one click': '你自己嘅 Slack app，撳一下就整好',
+  'Linked as a device with a QR code': '用 QR 碼連結做一部裝置',
+  'Orden finds the servers from your address.': 'Orden 會根據你嘅地址搵到伺服器。',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden 會喺瀏覽器打開登入頁，你允許之後就會返嚟呢度。',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram 會問一次 API ID，之後發驗證碼去你部電話或者顯示 QR 碼。',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden 會幫你整一個自己嘅 Slack app，所以乜嘢都唔會經過其他人。',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden 會好似電腦咁，以另一部裝置嘅身份連結你部電話。',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    '喺電話打開 WhatsApp，去「設定」，再去「已連結裝置」',
+  'Tap Link a device': '撳「連結裝置」',
+  'Scan the QR code Orden shows next': '掃 Orden 跟住顯示嘅 QR 碼',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    '喺電話打開 Signal，去「設定」，再去「已連結裝置」',
+  'Tap the plus to link a new device': '撳加號連結新裝置',
+  'Show the QR code': '顯示 QR 碼',
+  'Check the token you pasted: it starts with xoxp-.': '檢查下你貼上嘅令牌：佢係 xoxp- 開頭嘅。',
+  'Check the address and password. Some services ask for an app password instead.':
+    '檢查下地址同密碼。有啲服務會要你用 app 密碼。',
+  'Sign in again and allow Orden what it asks for.': '再登入一次，然後允許 Orden 要求嘅權限。',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden 連唔到伺服器。檢查下你嘅網絡，或者「進階」入面嘅伺服器。',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden 連唔到呢個服務。檢查下你嘅網絡再試一次。',
+  'Change the details and try again.': '改咗資料再試一次。',
+  'Stop adding this account?': '唔加呢個帳戶住？',
+  'What you entered is not kept.': '你輸入嘅嘢唔會保留。',
+  'Chat accounts': '傾偈帳戶',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    '連接郵件、Telegram、Slack、WhatsApp 或者 Signal，一步一步嚟。',
 }

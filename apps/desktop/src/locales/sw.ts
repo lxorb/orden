@@ -3733,4 +3733,64 @@ export const sw: Dictionary = {
     'Umetoka mahali pengine; akaunti haijafutwa. Ingia tena ili uifute.',
   'Signed out; sign in again to see whether the account is still there.':
     'Umetoka; ingia tena ili uone kama akaunti bado ipo.',
+  'Add a chat account': 'Ongeza akaunti ya gumzo',
+  Steps: 'Hatua',
+  'Choose a service': 'Chagua huduma',
+  'Chat services connect in the desktop app.':
+    'Huduma za gumzo huunganishwa kwenye programu ya kompyuta.',
+  Advanced: 'Kina',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden haikuweza kufikia seva ilizokisia. Zijaze hapa.',
+  'Sign in with {service}': 'Ingia kwa {service}',
+  'Checking the connection…': 'Inakagua muunganisho…',
+  'Could not connect': 'Imeshindwa kuunganisha',
+  'Change the details': 'Badilisha maelezo',
+  '{account} is connected': '{account} imeunganishwa',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Chagua gumzo za kufungua sasa. Zilizobaki zinasubiri kwenye utepe.',
+  'Its chats show in the sidebar as they arrive.':
+    'Gumzo zake huonekana kwenye utepe zinapowasili.',
+  'Add another': 'Ongeza nyingine',
+  'Open chats': 'Fungua gumzo',
+  'Any mail account, with its address and password':
+    'Akaunti yoyote ya barua pepe, kwa anwani na nenosiri lake',
+  'Sign in with your Google account': 'Ingia kwa akaunti yako ya Google',
+  'Sign in with your work or school account': 'Ingia kwa akaunti yako ya kazini au shuleni',
+  'Your account, with a code sent to your phone':
+    'Akaunti yako, kwa msimbo unaotumwa kwenye simu yako',
+  'Your own Slack app, made in one click':
+    'Programu yako mwenyewe ya Slack, iliyoundwa kwa mbofyo mmoja',
+  'Linked as a device with a QR code': 'Imeunganishwa kama kifaa kwa msimbo wa QR',
+  'Orden finds the servers from your address.': 'Orden hupata seva kutoka kwa anwani yako.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden hufungua kuingia kwenye kivinjari chako na kurudi hapa mara utakaporuhusu.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram huomba API ID mara moja, kisha hutuma msimbo kwenye simu yako au huonyesha msimbo wa QR.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden huunda programu yako mwenyewe ya Slack, kwa hivyo hakuna kinachopita kwa mtu mwingine.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden huunganishwa na simu yako kama kifaa kingine, kama kompyuta.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'Kwenye simu yako, fungua WhatsApp na uende kwenye Mipangilio, kisha Vifaa vilivyounganishwa',
+  'Tap Link a device': 'Gusa Unganisha kifaa',
+  'Scan the QR code Orden shows next': 'Changanua msimbo wa QR ambao Orden itaonyesha baadaye',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'Kwenye simu yako, fungua Signal na uende kwenye Mipangilio, kisha Vifaa vilivyounganishwa',
+  'Tap the plus to link a new device': 'Gusa alama ya kujumlisha ili kuunganisha kifaa kipya',
+  'Show the QR code': 'Onyesha msimbo wa QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Kagua tokeni uliyobandika: inaanza na xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Kagua anwani na nenosiri. Baadhi ya huduma huomba nenosiri la programu badala yake.',
+  'Sign in again and allow Orden what it asks for.': 'Ingia tena na uiruhusu Orden inachoomba.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden haikuweza kufikia seva. Kagua muunganisho wako, au seva zilizo chini ya Kina.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden haikuweza kufikia huduma. Kagua muunganisho wako na ujaribu tena.',
+  'Change the details and try again.': 'Badilisha maelezo na ujaribu tena.',
+  'Stop adding this account?': 'Acha kuongeza akaunti hii?',
+  'What you entered is not kept.': 'Ulichoingiza hakihifadhiwi.',
+  'Chat accounts': 'Akaunti za gumzo',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Unganisha barua pepe, Telegram, Slack, WhatsApp au Signal, hatua moja baada ya nyingine.',
 }

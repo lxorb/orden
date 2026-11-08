@@ -3739,4 +3739,67 @@ export const ml: Dictionary = {
     'മറ്റൊരിടത്ത് സൈൻ ഔട്ട് ആയി; അക്കൗണ്ട് ഇല്ലാതാക്കിയിട്ടില്ല. ഇല്ലാതാക്കാൻ വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.',
   'Signed out; sign in again to see whether the account is still there.':
     'സൈൻ ഔട്ട് ആയി; അക്കൗണ്ട് ഇപ്പോഴും ഉണ്ടോ എന്ന് കാണാൻ വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.',
+  'Add a chat account': 'ചാറ്റ് അക്കൗണ്ട് ചേർക്കുക',
+  Steps: 'ഘട്ടങ്ങൾ',
+  'Choose a service': 'ഒരു സേവനം തിരഞ്ഞെടുക്കുക',
+  'Chat services connect in the desktop app.':
+    'ചാറ്റ് സേവനങ്ങൾ ഡെസ്ക്ടോപ്പ് ആപ്പിലാണ് കണക്റ്റ് ചെയ്യുന്നത്.',
+  Advanced: 'വിപുലമായത്',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'ഊഹിച്ച സെർവറുകളിൽ Orden-ന് എത്താനായില്ല. അവ ഇവിടെ പൂരിപ്പിക്കുക.',
+  'Sign in with {service}': '{service} ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക',
+  'Checking the connection…': 'കണക്ഷൻ പരിശോധിക്കുന്നു…',
+  'Could not connect': 'കണക്റ്റ് ചെയ്യാനായില്ല',
+  'Change the details': 'വിവരങ്ങൾ മാറ്റുക',
+  '{account} is connected': '{account} കണക്റ്റ് ചെയ്തു',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'ഇപ്പോൾ തുറക്കേണ്ട ചാറ്റുകൾ തിരഞ്ഞെടുക്കുക. ബാക്കിയുള്ളവ സൈഡ്‌ബാറിൽ കാത്തിരിക്കും.',
+  'Its chats show in the sidebar as they arrive.':
+    'ഇതിന്റെ ചാറ്റുകൾ എത്തുന്നതനുസരിച്ച് സൈഡ്‌ബാറിൽ കാണിക്കും.',
+  'Add another': 'മറ്റൊന്ന് ചേർക്കുക',
+  'Open chats': 'ചാറ്റുകൾ തുറക്കുക',
+  'Any mail account, with its address and password':
+    'ഏത് മെയിൽ അക്കൗണ്ടും, അതിന്റെ വിലാസവും പാസ്‌വേഡും സഹിതം',
+  'Sign in with your Google account': 'നിങ്ങളുടെ Google അക്കൗണ്ട് ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക',
+  'Sign in with your work or school account':
+    'നിങ്ങളുടെ ജോലി അല്ലെങ്കിൽ സ്കൂൾ അക്കൗണ്ട് ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക',
+  'Your account, with a code sent to your phone':
+    'നിങ്ങളുടെ അക്കൗണ്ട്, ഫോണിലേക്ക് അയച്ച കോഡ് സഹിതം',
+  'Your own Slack app, made in one click':
+    'നിങ്ങളുടെ സ്വന്തം Slack ആപ്പ്, ഒറ്റ ക്ലിക്കിൽ നിർമ്മിച്ചത്',
+  'Linked as a device with a QR code': 'QR കോഡ് വഴി ഒരു ഉപകരണമായി ലിങ്ക് ചെയ്തത്',
+  'Orden finds the servers from your address.':
+    'Orden നിങ്ങളുടെ വിലാസത്തിൽ നിന്ന് സെർവറുകൾ കണ്ടെത്തുന്നു.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden നിങ്ങളുടെ ബ്രൗസറിൽ സൈൻ ഇൻ തുറക്കുകയും നിങ്ങൾ അനുവദിച്ചാൽ ഇവിടേക്ക് മടങ്ങുകയും ചെയ്യുന്നു.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram ഒരിക്കൽ API ID ചോദിക്കുന്നു, തുടർന്ന് ഫോണിലേക്ക് ഒരു കോഡ് അയയ്ക്കുകയോ QR കോഡ് കാണിക്കുകയോ ചെയ്യുന്നു.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden നിങ്ങളുടെ സ്വന്തം Slack ആപ്പ് നിർമ്മിക്കുന്നു, അതിനാൽ ഒന്നും മറ്റാരിലൂടെയും കടന്നുപോകുന്നില്ല.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'ഒരു കമ്പ്യൂട്ടർ പോലെ, Orden മറ്റൊരു ഉപകരണമായി നിങ്ങളുടെ ഫോണുമായി ലിങ്ക് ചെയ്യപ്പെടുന്നു.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'ഫോണിൽ WhatsApp തുറന്ന് സെറ്റിംഗ്സ്, തുടർന്ന് ലിങ്ക് ചെയ്ത ഉപകരണങ്ങൾ എന്നതിലേക്ക് പോകുക',
+  'Tap Link a device': 'ഒരു ഉപകരണം ലിങ്ക് ചെയ്യുക ടാപ്പ് ചെയ്യുക',
+  'Scan the QR code Orden shows next': 'Orden അടുത്തതായി കാണിക്കുന്ന QR കോഡ് സ്കാൻ ചെയ്യുക',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'ഫോണിൽ Signal തുറന്ന് സെറ്റിംഗ്സ്, തുടർന്ന് ലിങ്ക് ചെയ്ത ഉപകരണങ്ങൾ എന്നതിലേക്ക് പോകുക',
+  'Tap the plus to link a new device': 'പുതിയ ഉപകരണം ലിങ്ക് ചെയ്യാൻ പ്ലസ് ടാപ്പ് ചെയ്യുക',
+  'Show the QR code': 'QR കോഡ് കാണിക്കുക',
+  'Check the token you pasted: it starts with xoxp-.':
+    'നിങ്ങൾ ഒട്ടിച്ച ടോക്കൺ പരിശോധിക്കുക: അത് xoxp- ൽ ആരംഭിക്കുന്നു.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'വിലാസവും പാസ്‌വേഡും പരിശോധിക്കുക. ചില സേവനങ്ങൾ പകരം ഒരു ആപ്പ് പാസ്‌വേഡ് ചോദിക്കും.',
+  'Sign in again and allow Orden what it asks for.':
+    'വീണ്ടും സൈൻ ഇൻ ചെയ്ത് Orden ചോദിക്കുന്നത് അനുവദിക്കുക.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden-ന് സെർവറുകളിൽ എത്താനായില്ല. നിങ്ങളുടെ കണക്ഷനോ വിപുലമായത് എന്നതിലെ സെർവറുകളോ പരിശോധിക്കുക.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden-ന് സേവനത്തിൽ എത്താനായില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.',
+  'Change the details and try again.': 'വിവരങ്ങൾ മാറ്റി വീണ്ടും ശ്രമിക്കുക.',
+  'Stop adding this account?': 'ഈ അക്കൗണ്ട് ചേർക്കുന്നത് നിർത്തണോ?',
+  'What you entered is not kept.': 'നിങ്ങൾ നൽകിയത് സൂക്ഷിക്കില്ല.',
+  'Chat accounts': 'ചാറ്റ് അക്കൗണ്ടുകൾ',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'മെയിൽ, Telegram, Slack, WhatsApp അല്ലെങ്കിൽ Signal ഓരോ ഘട്ടമായി കണക്റ്റ് ചെയ്യുക.',
 }

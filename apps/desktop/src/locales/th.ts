@@ -3551,4 +3551,59 @@ export const th: Dictionary = {
     'ออกจากระบบจากที่อื่นแล้ว บัญชียังไม่ถูกลบ ลงชื่อเข้าใช้อีกครั้งเพื่อลบ',
   'Signed out; sign in again to see whether the account is still there.':
     'ออกจากระบบแล้ว ลงชื่อเข้าใช้อีกครั้งเพื่อดูว่าบัญชียังอยู่หรือไม่',
+  'Add a chat account': 'เพิ่มบัญชีแชท',
+  Steps: 'ขั้นตอน',
+  'Choose a service': 'เลือกบริการ',
+  'Chat services connect in the desktop app.': 'บริการแชทเชื่อมต่อได้ในแอปเดสก์ท็อป',
+  Advanced: 'ขั้นสูง',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden เชื่อมต่อเซิร์ฟเวอร์ที่คาดไว้ไม่ได้ กรอกข้อมูลที่นี่',
+  'Sign in with {service}': 'ลงชื่อเข้าใช้ด้วย {service}',
+  'Checking the connection…': 'กำลังตรวจสอบการเชื่อมต่อ…',
+  'Could not connect': 'เชื่อมต่อไม่ได้',
+  'Change the details': 'แก้ไขรายละเอียด',
+  '{account} is connected': 'เชื่อมต่อ {account} แล้ว',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'เลือกแชทที่จะเปิดตอนนี้ ที่เหลือจะรออยู่ในแถบข้าง',
+  'Its chats show in the sidebar as they arrive.': 'แชทจะแสดงในแถบข้างเมื่อเข้ามา',
+  'Add another': 'เพิ่มอีกบัญชี',
+  'Open chats': 'เปิดแชท',
+  'Any mail account, with its address and password': 'บัญชีอีเมลใดก็ได้ พร้อมที่อยู่และรหัสผ่าน',
+  'Sign in with your Google account': 'ลงชื่อเข้าใช้ด้วยบัญชี Google ของคุณ',
+  'Sign in with your work or school account': 'ลงชื่อเข้าใช้ด้วยบัญชีที่ทำงานหรือโรงเรียน',
+  'Your account, with a code sent to your phone': 'บัญชีของคุณ พร้อมรหัสที่ส่งไปยังโทรศัพท์',
+  'Your own Slack app, made in one click': 'แอป Slack ของคุณเอง สร้างในคลิกเดียว',
+  'Linked as a device with a QR code': 'เชื่อมโยงเป็นอุปกรณ์ด้วยรหัส QR',
+  'Orden finds the servers from your address.': 'Orden ค้นหาเซิร์ฟเวอร์จากที่อยู่ของคุณ',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden เปิดหน้าลงชื่อเข้าใช้ในเบราว์เซอร์ และกลับมาที่นี่เมื่อคุณอนุญาต',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram ขอ API ID ครั้งเดียว แล้วส่งรหัสไปยังโทรศัพท์หรือแสดงรหัส QR',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden สร้างแอป Slack ของคุณเอง จึงไม่มีสิ่งใดผ่านผู้อื่น',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden เชื่อมโยงกับโทรศัพท์ของคุณเป็นอุปกรณ์อีกเครื่อง เหมือนคอมพิวเตอร์',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'บนโทรศัพท์ เปิด WhatsApp แล้วไปที่ การตั้งค่า แล้ว อุปกรณ์ที่เชื่อมโยง',
+  'Tap Link a device': 'แตะ เชื่อมโยงอุปกรณ์',
+  'Scan the QR code Orden shows next': 'สแกนรหัส QR ที่ Orden แสดงต่อไป',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'บนโทรศัพท์ เปิด Signal แล้วไปที่ การตั้งค่า แล้ว อุปกรณ์ที่เชื่อมโยง',
+  'Tap the plus to link a new device': 'แตะเครื่องหมายบวกเพื่อเชื่อมโยงอุปกรณ์ใหม่',
+  'Show the QR code': 'แสดงรหัส QR',
+  'Check the token you pasted: it starts with xoxp-.': 'ตรวจสอบโทเคนที่วาง: ต้องขึ้นต้นด้วย xoxp-',
+  'Check the address and password. Some services ask for an app password instead.':
+    'ตรวจสอบที่อยู่และรหัสผ่าน บางบริการขอรหัสผ่านแอปแทน',
+  'Sign in again and allow Orden what it asks for.':
+    'ลงชื่อเข้าใช้อีกครั้งและอนุญาตสิ่งที่ Orden ขอ',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบการเชื่อมต่อ หรือเซิร์ฟเวอร์ในส่วนขั้นสูง',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden เชื่อมต่อบริการไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง',
+  'Change the details and try again.': 'แก้ไขรายละเอียดแล้วลองอีกครั้ง',
+  'Stop adding this account?': 'หยุดเพิ่มบัญชีนี้หรือไม่',
+  'What you entered is not kept.': 'ข้อมูลที่คุณป้อนจะไม่ถูกเก็บไว้',
+  'Chat accounts': 'บัญชีแชท',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'เชื่อมต่ออีเมล Telegram Slack WhatsApp หรือ Signal ทีละขั้นตอน',
 }

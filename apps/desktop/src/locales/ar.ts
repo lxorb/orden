@@ -3871,4 +3871,59 @@ export const ar: Dictionary = {
     'تم تسجيل خروجك من مكان آخر؛ لم يُحذف الحساب. سجّل الدخول مجددًا لحذفه.',
   'Signed out; sign in again to see whether the account is still there.':
     'تم تسجيل خروجك؛ سجّل الدخول مجددًا لترى إن كان الحساب لا يزال موجودًا.',
+  'Add a chat account': 'إضافة حساب دردشة',
+  Steps: 'الخطوات',
+  'Choose a service': 'اختر خدمة',
+  'Chat services connect in the desktop app.': 'تتصل خدمات الدردشة في تطبيق سطح المكتب.',
+  Advanced: 'متقدم',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'تعذّر على Orden الوصول إلى الخوادم التي خمّنها. أدخلها هنا.',
+  'Sign in with {service}': 'تسجيل الدخول باستخدام {service}',
+  'Checking the connection…': 'جارٍ التحقق من الاتصال…',
+  'Could not connect': 'تعذّر الاتصال',
+  'Change the details': 'تغيير التفاصيل',
+  '{account} is connected': '{account} متصل',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'اختر الدردشات التي تفتحها الآن. ينتظر الباقي في الشريط الجانبي.',
+  'Its chats show in the sidebar as they arrive.': 'تظهر دردشاته في الشريط الجانبي فور وصولها.',
+  'Add another': 'إضافة حساب آخر',
+  'Open chats': 'فتح الدردشات',
+  'Any mail account, with its address and password': 'أي حساب بريد، بعنوانه وكلمة مروره',
+  'Sign in with your Google account': 'سجّل الدخول بحساب Google',
+  'Sign in with your work or school account': 'سجّل الدخول بحساب العمل أو المدرسة',
+  'Your account, with a code sent to your phone': 'حسابك، مع رمز يُرسل إلى هاتفك',
+  'Your own Slack app, made in one click': 'تطبيق Slack خاص بك، يُنشأ بنقرة واحدة',
+  'Linked as a device with a QR code': 'مرتبط كجهاز عبر رمز QR',
+  'Orden finds the servers from your address.': 'يجد Orden الخوادم من عنوانك.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'يفتح Orden تسجيل الدخول في متصفحك ويعود إلى هنا بعد أن تسمح له.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'يطلب Telegram رقم API ID مرة واحدة، ثم يرسل رمزًا إلى هاتفك أو يعرض رمز QR.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'ينشئ Orden تطبيق Slack خاصًا بك، فلا يمر شيء عبر أي طرف آخر.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'يرتبط Orden بهاتفك كجهاز إضافي، كما يرتبط الحاسوب.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'على هاتفك، افتح WhatsApp وانتقل إلى الإعدادات، ثم الأجهزة المرتبطة',
+  'Tap Link a device': 'اضغط على ربط جهاز',
+  'Scan the QR code Orden shows next': 'امسح رمز QR الذي يعرضه Orden بعد ذلك',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'على هاتفك، افتح Signal وانتقل إلى الإعدادات، ثم الأجهزة المرتبطة',
+  'Tap the plus to link a new device': 'اضغط على علامة الزائد لربط جهاز جديد',
+  'Show the QR code': 'إظهار رمز QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'تحقق من الرمز المميز الذي لصقته: يبدأ بـ xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'تحقق من العنوان وكلمة المرور. تطلب بعض الخدمات كلمة مرور للتطبيق بدلًا منها.',
+  'Sign in again and allow Orden what it asks for.': 'سجّل الدخول مجددًا وامنح Orden ما يطلبه.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'تعذّر على Orden الوصول إلى الخوادم. تحقق من اتصالك، أو من الخوادم ضمن متقدم.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'تعذّر على Orden الوصول إلى الخدمة. تحقق من اتصالك وأعد المحاولة.',
+  'Change the details and try again.': 'غيّر التفاصيل وأعد المحاولة.',
+  'Stop adding this account?': 'إيقاف إضافة هذا الحساب؟',
+  'What you entered is not kept.': 'لا يُحفظ ما أدخلته.',
+  'Chat accounts': 'حسابات الدردشة',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'اربط البريد أو Telegram أو Slack أو WhatsApp أو Signal، خطوة بخطوة.',
 }

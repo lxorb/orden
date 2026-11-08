@@ -3581,4 +3581,60 @@ export const ko: Dictionary = {
     '다른 곳에서 로그아웃되었습니다. 계정은 삭제되지 않았습니다. 삭제하려면 다시 로그인하세요.',
   'Signed out; sign in again to see whether the account is still there.':
     '로그아웃되었습니다. 계정이 아직 있는지 보려면 다시 로그인하세요.',
+  'Add a chat account': '채팅 계정 추가',
+  Steps: '단계',
+  'Choose a service': '서비스 선택',
+  'Chat services connect in the desktop app.': '채팅 서비스는 데스크톱 앱에서 연결합니다.',
+  Advanced: '고급',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden이 추측한 서버에 연결할 수 없습니다. 여기에 입력하세요.',
+  'Sign in with {service}': '{service}(으)로 로그인',
+  'Checking the connection…': '연결 확인 중…',
+  'Could not connect': '연결할 수 없음',
+  'Change the details': '입력 내용 변경',
+  '{account} is connected': '{account} 연결됨',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    '지금 열 채팅을 선택하세요. 나머지는 사이드바에서 기다립니다.',
+  'Its chats show in the sidebar as they arrive.': '채팅이 도착하는 대로 사이드바에 표시됩니다.',
+  'Add another': '하나 더 추가',
+  'Open chats': '채팅 열기',
+  'Any mail account, with its address and password': '주소와 암호로 쓰는 모든 메일 계정',
+  'Sign in with your Google account': 'Google 계정으로 로그인',
+  'Sign in with your work or school account': '직장 또는 학교 계정으로 로그인',
+  'Your account, with a code sent to your phone': '휴대전화로 받은 코드로 쓰는 내 계정',
+  'Your own Slack app, made in one click': '클릭 한 번으로 만드는 나만의 Slack 앱',
+  'Linked as a device with a QR code': 'QR 코드로 기기로 연결',
+  'Orden finds the servers from your address.': 'Orden이 주소에서 서버를 찾습니다.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden이 브라우저에서 로그인을 열고, 허용하면 여기로 돌아옵니다.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram은 API ID를 한 번 요청한 뒤, 휴대전화로 코드를 보내거나 QR 코드를 표시합니다.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden이 나만의 Slack 앱을 만들므로 다른 누구도 거치지 않습니다.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden은 컴퓨터처럼 다른 기기로 휴대전화에 연결됩니다.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    '휴대전화에서 WhatsApp을 열고 설정, 연결된 기기로 이동하세요',
+  'Tap Link a device': '기기 연결을 탭하세요',
+  'Scan the QR code Orden shows next': '다음에 Orden이 보여 주는 QR 코드를 스캔하세요',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    '휴대전화에서 Signal을 열고 설정, 연결된 기기로 이동하세요',
+  'Tap the plus to link a new device': '더하기를 탭해 새 기기를 연결하세요',
+  'Show the QR code': 'QR 코드 표시',
+  'Check the token you pasted: it starts with xoxp-.':
+    '붙여 넣은 토큰을 확인하세요: xoxp-로 시작해야 합니다.',
+  'Check the address and password. Some services ask for an app password instead.':
+    '주소와 암호를 확인하세요. 일부 서비스는 대신 앱 암호를 요구합니다.',
+  'Sign in again and allow Orden what it asks for.':
+    '다시 로그인하고 Orden이 요청하는 권한을 허용하세요.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden이 서버에 연결할 수 없습니다. 연결 상태나 고급의 서버를 확인하세요.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden이 서비스에 연결할 수 없습니다. 연결 상태를 확인하고 다시 시도하세요.',
+  'Change the details and try again.': '입력 내용을 변경하고 다시 시도하세요.',
+  'Stop adding this account?': '이 계정 추가를 중단할까요?',
+  'What you entered is not kept.': '입력한 내용은 저장되지 않습니다.',
+  'Chat accounts': '채팅 계정',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    '메일, Telegram, Slack, WhatsApp, Signal을 한 단계씩 연결하세요.',
 }

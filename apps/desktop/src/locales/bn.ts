@@ -3679,4 +3679,62 @@ export const bn: Dictionary = {
     'অন্য কোথাও থেকে সাইন আউট হয়েছে; অ্যাকাউন্ট মোছা হয়নি। মুছতে আবার সাইন ইন করুন।',
   'Signed out; sign in again to see whether the account is still there.':
     'সাইন আউট হয়েছে; অ্যাকাউন্টটি এখনও আছে কি না দেখতে আবার সাইন ইন করুন।',
+  'Add a chat account': 'চ্যাট অ্যাকাউন্ট যোগ করুন',
+  Steps: 'ধাপসমূহ',
+  'Choose a service': 'একটি সেবা বেছে নিন',
+  'Chat services connect in the desktop app.': 'চ্যাট সেবা ডেস্কটপ অ্যাপে যুক্ত হয়।',
+  Advanced: 'উন্নত',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden অনুমান করা সার্ভারগুলোতে পৌঁছাতে পারেনি। এখানে সেগুলো লিখুন।',
+  'Sign in with {service}': '{service} দিয়ে সাইন ইন',
+  'Checking the connection…': 'সংযোগ যাচাই হচ্ছে…',
+  'Could not connect': 'সংযোগ করা গেল না',
+  'Change the details': 'বিবরণ বদলান',
+  '{account} is connected': '{account} যুক্ত হয়েছে',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'এখন যে চ্যাটগুলো খুলবেন তা বেছে নিন। বাকিগুলো সাইডবারে অপেক্ষা করবে।',
+  'Its chats show in the sidebar as they arrive.':
+    'এর চ্যাটগুলো আসার সাথে সাথে সাইডবারে দেখা যাবে।',
+  'Add another': 'আরেকটি যোগ করুন',
+  'Open chats': 'চ্যাট খুলুন',
+  'Any mail account, with its address and password':
+    'যেকোনো মেইল অ্যাকাউন্ট, তার ঠিকানা ও পাসওয়ার্ড দিয়ে',
+  'Sign in with your Google account': 'আপনার Google অ্যাকাউন্ট দিয়ে সাইন ইন করুন',
+  'Sign in with your work or school account': 'আপনার অফিস বা স্কুলের অ্যাকাউন্ট দিয়ে সাইন ইন করুন',
+  'Your account, with a code sent to your phone': 'আপনার অ্যাকাউন্ট, ফোনে পাঠানো একটি কোড দিয়ে',
+  'Your own Slack app, made in one click': 'আপনার নিজের Slack অ্যাপ, এক ক্লিকে তৈরি',
+  'Linked as a device with a QR code': 'QR কোড দিয়ে ডিভাইস হিসেবে লিঙ্ক করা',
+  'Orden finds the servers from your address.': 'Orden আপনার ঠিকানা থেকে সার্ভার খুঁজে নেয়।',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden আপনার ব্রাউজারে সাইন-ইন খোলে এবং আপনি অনুমতি দিলে এখানে ফিরে আসে।',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram একবার API ID চায়, তারপর আপনার ফোনে একটি কোড পাঠায় বা একটি QR কোড দেখায়।',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden আপনার নিজস্ব একটি Slack অ্যাপ তৈরি করে, তাই কিছুই অন্য কারও মাধ্যমে যায় না।',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden আপনার ফোনের সাথে আরেকটি ডিভাইস হিসেবে লিঙ্ক হয়, যেমন একটি কম্পিউটার হয়।',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'ফোনে WhatsApp খুলে সেটিংসে যান, তারপর লিঙ্ক করা ডিভাইস',
+  'Tap Link a device': 'ডিভাইস লিঙ্ক করুন-এ ট্যাপ করুন',
+  'Scan the QR code Orden shows next': 'Orden এরপর যে QR কোড দেখাবে তা স্ক্যান করুন',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'ফোনে Signal খুলে সেটিংসে যান, তারপর লিঙ্ক করা ডিভাইস',
+  'Tap the plus to link a new device': 'নতুন ডিভাইস লিঙ্ক করতে প্লাস চিহ্নে ট্যাপ করুন',
+  'Show the QR code': 'QR কোড দেখান',
+  'Check the token you pasted: it starts with xoxp-.':
+    'পেস্ট করা টোকেনটি দেখুন: এটি xoxp- দিয়ে শুরু হয়।',
+  'Check the address and password. Some services ask for an app password instead.':
+    'ঠিকানা ও পাসওয়ার্ড দেখুন। কিছু সেবা এর বদলে অ্যাপ পাসওয়ার্ড চায়।',
+  'Sign in again and allow Orden what it asks for.':
+    'আবার সাইন ইন করুন এবং Orden যা চায় তার অনুমতি দিন।',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden সার্ভারে পৌঁছাতে পারেনি। আপনার সংযোগ, বা উন্নত-এর অধীনে সার্ভারগুলো দেখুন।',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden সেবাটিতে পৌঁছাতে পারেনি। আপনার সংযোগ দেখে আবার চেষ্টা করুন।',
+  'Change the details and try again.': 'বিবরণ বদলে আবার চেষ্টা করুন।',
+  'Stop adding this account?': 'এই অ্যাকাউন্ট যোগ করা বন্ধ করবেন?',
+  'What you entered is not kept.': 'আপনি যা লিখেছেন তা রাখা হয় না।',
+  'Chat accounts': 'চ্যাট অ্যাকাউন্ট',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'মেইল, Telegram, Slack, WhatsApp বা Signal যুক্ত করুন, ধাপে ধাপে।',
 }

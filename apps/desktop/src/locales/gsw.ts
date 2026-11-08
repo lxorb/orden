@@ -3711,4 +3711,61 @@ export const gsw: Dictionary = {
     'Andersch abgmäldet; s Konto isch nöd glöscht worde. Mäld di nomal a, zum s lösche.',
   'Signed out; sign in again to see whether the account is still there.':
     'Abgmäldet; mäld di nomal a, zum luege, öb s Konto no dä isch.',
+  'Add a chat account': 'Chat-Konto hinzuefüege',
+  Steps: 'Schritt',
+  'Choose a service': 'Dienst uswähle',
+  'Chat services connect in the desktop app.': 'Chat-Dienscht verbindsch i de Desktop-App.',
+  Advanced: 'Erwiiteret',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden het d Server, wo s vermuetet het, nöd erreicht. Träg sie da ii.',
+  'Sign in with {service}': 'Mit {service} aamelde',
+  'Checking the connection…': 'Verbindig wird prüeft…',
+  'Could not connect': 'Verbindig het nöd klappt',
+  'Change the details': 'Aagabe ändere',
+  '{account} is connected': '{account} isch verbunde',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Wähl d Chats, wo du jetzt wotsch ufmache. De Rescht wartet i de Sitteleiste.',
+  'Its chats show in the sidebar as they arrive.':
+    'Sini Chats chömed i de Sitteleiste, sobald sie aachömed.',
+  'Add another': 'Na eis hinzuefüege',
+  'Open chats': 'Chats ufmache',
+  'Any mail account, with its address and password': 'Jedes Mail-Konto, mit Adrässe und Passwort',
+  'Sign in with your Google account': 'Mit dim Google-Konto aamelde',
+  'Sign in with your work or school account': 'Mit dim Arbeits- oder Schuelkonto aamelde',
+  'Your account, with a code sent to your phone': 'Dis Konto, mit emene Code ufs Handy',
+  'Your own Slack app, made in one click': 'Dini eigeti Slack-App, mit eim Klick gmacht',
+  'Linked as a device with a QR code': 'Als Grät verchnüpft, mit emene QR-Code',
+  'Orden finds the servers from your address.': 'Orden findet d Server us dinere Adrässe.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden macht d Aameldig im Browser uf und chunnt da zrugg, sobald du s erlaubsch.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram fröget eimal nach ere API ID und schickt dänn en Code ufs Handy oder zeigt en QR-Code.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden macht dir e eigeti Slack-App, so lauft nüt über anderi.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden wird mit dim Handy als wiiters Grät verchnüpft, wie en Computer.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'Mach uf em Handy WhatsApp uf und gang zu Einstellungen, dänn Verknüpfte Geräte',
+  'Tap Link a device': 'Tipp uf Gerät hinzufügen',
+  'Scan the QR code Orden shows next': 'Scann de QR-Code, wo Orden als nächschts zeigt',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'Mach uf em Handy Signal uf und gang zu Einstellungen, dänn Gekoppelte Geräte',
+  'Tap the plus to link a new device': 'Tipp ufs Plus, zum es neus Grät z verchnüpfe',
+  'Show the QR code': 'QR-Code zeige',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Prüef s Token, wo du iigfüegt häsch: Es fangt mit xoxp- aa.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Prüef Adrässe und Passwort. Paar Dienscht wänd stattdesse es App-Passwort.',
+  'Sign in again and allow Orden what it asks for.':
+    'Meld di nomol aa und erlaub Orden, was es wott.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden het d Server nöd erreicht. Prüef dini Verbindig oder d Server under Erwiiteret.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden het de Dienst nöd erreicht. Prüef dini Verbindig und probier s nomol.',
+  'Change the details and try again.': 'Änder d Aagabe und probier s nomol.',
+  'Stop adding this account?': 'Hinzuefüege vo dem Konto abbräche?',
+  'What you entered is not kept.': 'Was du iigäh häsch, wird nöd gspeicheret.',
+  'Chat accounts': 'Chat-Konte',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Verbind Mail, Telegram, Slack, WhatsApp oder Signal, Schritt für Schritt.',
 }

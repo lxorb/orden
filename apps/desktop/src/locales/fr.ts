@@ -3814,4 +3814,66 @@ export const fr: Dictionary = {
     'Déconnecté ailleurs ; le compte n’a pas été supprimé. Reconnectez-vous pour le supprimer.',
   'Signed out; sign in again to see whether the account is still there.':
     'Déconnecté ; reconnectez-vous pour voir si le compte existe encore.',
+  'Add a chat account': 'Ajouter un compte de chat',
+  Steps: 'Étapes',
+  'Choose a service': 'Choisir un service',
+  'Chat services connect in the desktop app.':
+    'Les services de chat se connectent dans l’app de bureau.',
+  Advanced: 'Avancé',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden n’a pas pu joindre les serveurs devinés. Indiquez-les ici.',
+  'Sign in with {service}': 'Se connecter avec {service}',
+  'Checking the connection…': 'Vérification de la connexion…',
+  'Could not connect': 'Connexion impossible',
+  'Change the details': 'Modifier les informations',
+  '{account} is connected': '{account} est connecté',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Choisissez les chats à ouvrir maintenant. Les autres attendent dans la barre latérale.',
+  'Its chats show in the sidebar as they arrive.':
+    'Ses chats apparaissent dans la barre latérale à mesure qu’ils arrivent.',
+  'Add another': 'En ajouter un autre',
+  'Open chats': 'Ouvrir les chats',
+  'Any mail account, with its address and password':
+    'Tout compte e-mail, avec son adresse et son mot de passe',
+  'Sign in with your Google account': 'Se connecter avec votre compte Google',
+  'Sign in with your work or school account':
+    'Se connecter avec votre compte professionnel ou scolaire',
+  'Your account, with a code sent to your phone':
+    'Votre compte, avec un code envoyé sur votre téléphone',
+  'Your own Slack app, made in one click': 'Votre propre app Slack, créée en un clic',
+  'Linked as a device with a QR code': 'Associé comme appareil avec un code QR',
+  'Orden finds the servers from your address.':
+    'Orden trouve les serveurs à partir de votre adresse.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden ouvre la connexion dans votre navigateur et revient ici dès que vous l’autorisez.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram demande une API ID une seule fois, puis envoie un code sur votre téléphone ou affiche un code QR.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden crée votre propre app Slack, pour que rien ne passe par quelqu’un d’autre.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden est associé à votre téléphone comme un autre appareil, à la manière d’un ordinateur.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'Sur votre téléphone, ouvrez WhatsApp et allez dans Paramètres, puis Appareils connectés',
+  'Tap Link a device': 'Touchez Connecter un appareil',
+  'Scan the QR code Orden shows next': 'Scannez le code QR qu’Orden affiche ensuite',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'Sur votre téléphone, ouvrez Signal et allez dans Paramètres, puis Appareils associés',
+  'Tap the plus to link a new device': 'Touchez le plus pour associer un nouvel appareil',
+  'Show the QR code': 'Afficher le code QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Vérifiez le jeton collé : il commence par xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Vérifiez l’adresse et le mot de passe. Certains services demandent plutôt un mot de passe d’application.',
+  'Sign in again and allow Orden what it asks for.':
+    'Reconnectez-vous et accordez à Orden ce qu’il demande.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden n’a pas pu joindre les serveurs. Vérifiez votre connexion, ou les serveurs sous Avancé.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden n’a pas pu joindre le service. Vérifiez votre connexion et réessayez.',
+  'Change the details and try again.': 'Modifiez les informations et réessayez.',
+  'Stop adding this account?': 'Arrêter l’ajout de ce compte ?',
+  'What you entered is not kept.': 'Ce que vous avez saisi n’est pas conservé.',
+  'Chat accounts': 'Comptes de chat',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Connectez e-mail, Telegram, Slack, WhatsApp ou Signal, étape par étape.',
 }

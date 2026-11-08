@@ -3759,4 +3759,65 @@ export const fil: Dictionary = {
     'Na-sign out sa ibang lugar; hindi nabura ang account. Mag-sign in muli para burahin ito.',
   'Signed out; sign in again to see whether the account is still there.':
     'Na-sign out; mag-sign in muli para makita kung naroon pa ang account.',
+  'Add a chat account': 'Magdagdag ng chat account',
+  Steps: 'Mga hakbang',
+  'Choose a service': 'Pumili ng serbisyo',
+  'Chat services connect in the desktop app.': 'Sa desktop app kumokonekta ang mga chat service.',
+  Advanced: 'Abansado',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Hindi maabot ng Orden ang mga server na hinulaan nito. Ilagay ang mga ito rito.',
+  'Sign in with {service}': 'Mag-sign in gamit ang {service}',
+  'Checking the connection…': 'Sinusuri ang koneksyon…',
+  'Could not connect': 'Hindi makakonekta',
+  'Change the details': 'Baguhin ang mga detalye',
+  '{account} is connected': 'Nakakonekta na ang {account}',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Piliin ang mga chat na bubuksan ngayon. Maghihintay ang iba sa sidebar.',
+  'Its chats show in the sidebar as they arrive.':
+    'Lalabas ang mga chat nito sa sidebar habang dumarating.',
+  'Add another': 'Magdagdag pa',
+  'Open chats': 'Buksan ang mga chat',
+  'Any mail account, with its address and password':
+    'Anumang mail account, kasama ang address at password nito',
+  'Sign in with your Google account': 'Mag-sign in gamit ang iyong Google account',
+  'Sign in with your work or school account':
+    'Mag-sign in gamit ang iyong account sa trabaho o paaralan',
+  'Your account, with a code sent to your phone':
+    'Ang iyong account, na may code na ipinapadala sa iyong phone',
+  'Your own Slack app, made in one click': 'Sariling Slack app mo, ginawa sa isang click',
+  'Linked as a device with a QR code': 'Naka-link bilang device gamit ang QR code',
+  'Orden finds the servers from your address.':
+    'Hinahanap ng Orden ang mga server mula sa iyong address.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Binubuksan ng Orden ang sign-in sa iyong browser at bumabalik dito kapag pinayagan mo.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Isang beses humihingi ang Telegram ng API ID, saka magpapadala ng code sa iyong phone o magpapakita ng QR code.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Gumagawa ang Orden ng sarili mong Slack app, kaya walang dumadaan sa iba.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Naka-link ang Orden sa iyong phone bilang isa pang device, gaya ng isang computer.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'Sa iyong phone, buksan ang WhatsApp at pumunta sa Settings, saka Mga naka-link na device',
+  'Tap Link a device': 'I-tap ang Mag-link ng device',
+  'Scan the QR code Orden shows next': 'I-scan ang QR code na susunod na ipapakita ng Orden',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'Sa iyong phone, buksan ang Signal at pumunta sa Settings, saka Linked devices',
+  'Tap the plus to link a new device': 'I-tap ang plus para mag-link ng bagong device',
+  'Show the QR code': 'Ipakita ang QR code',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Suriin ang token na idinikit mo: nagsisimula ito sa xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Suriin ang address at password. May mga serbisyong humihingi ng app password sa halip.',
+  'Sign in again and allow Orden what it asks for.':
+    'Mag-sign in muli at payagan ang hinihingi ng Orden.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Hindi maabot ng Orden ang mga server. Suriin ang iyong koneksyon, o ang mga server sa Abansado.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Hindi maabot ng Orden ang serbisyo. Suriin ang iyong koneksyon at subukang muli.',
+  'Change the details and try again.': 'Baguhin ang mga detalye at subukang muli.',
+  'Stop adding this account?': 'Ihinto ang pagdaragdag ng account na ito?',
+  'What you entered is not kept.': 'Hindi itatabi ang inilagay mo.',
+  'Chat accounts': 'Mga chat account',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Ikonekta ang mail, Telegram, Slack, WhatsApp o Signal, isang hakbang sa bawat pagkakataon.',
 }
