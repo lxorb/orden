@@ -13,6 +13,7 @@ const server = vi.hoisted(() => ({
   codes: 0,
   asksForSecond: false,
   asked: [] as string[],
+  spacesHeld: null as Promise<void> | null,
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -68,10 +69,12 @@ vi.mock('./api', async (importOriginal) => {
             : { user: { id: 'u1', email: 'me@example.com', name: null } },
         )
       },
-      listSpaces: () =>
-        server.spacesFail
-          ? Promise.reject(new Error('the network is not there yet'))
-          : Promise.resolve({ spaces: [], deleted: [] }),
+      listSpaces: async () => {
+        if (server.spacesFail) throw new Error('the network is not there yet')
+        if (!server.spacesHeld) return { spaces: [], deleted: [] }
+        await server.spacesHeld
+        return { spaces: [{ id: 's1', name: 'Theirs' }], deleted: [] }
+      },
       signOut: () => Promise.resolve({ ok: true as const }),
       usage: () => Promise.resolve({ used: 0, limit: 0 }),
     },
@@ -133,6 +136,7 @@ beforeEach(async () => {
   server.codes = 0
   server.asksForSecond = false
   server.asked.length = 0
+  server.spacesHeld = null
 
   vi.resetModules()
   ;({ account } = await import('./account.svelte'))
@@ -219,6 +223,21 @@ describe('a code that is accepted', () => {
     expect(account.token).toBeNull()
     expect(account.spaces).toEqual([])
     expect(localStorage.getItem('orden:session')).toBeNull()
+  })
+
+  test('a listing of spaces that comes back after signing out is not kept', async () => {
+    await account.verify('123456')
+    account.settled()
+    let release: () => void = () => undefined
+    server.spacesHeld = new Promise((done) => (release = done))
+
+    const loading = account.loadSpaces().catch(() => undefined)
+    await account.signOut()
+    release()
+    await loading
+
+    expect(account.spaces).toEqual([])
+    expect(account.listed).toBe(false)
   })
 
   test('signing out takes what was read for that account with it', async () => {
