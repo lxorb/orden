@@ -101,18 +101,20 @@
   }
 
   const step = $derived(wide && ui.column === 'item' ? 'list' : ui.column)
+  const home = $derived(page === 'items' && ui.view.scope.kind === 'all')
 
   let kept = $state(0)
   $effect(() =>
-    closeOnBack(kept >= 0 && columns === 1 && (step !== 'list' || page !== 'items'), () => {
+    closeOnBack(kept >= 0 && columns === 1 && (step !== 'list' || !home), () => {
       if (ui.column === 'item' && !wide)
         void ui.leave().then((left) => {
           if (left) ui.column = 'list'
           else kept++
         })
       else if (flagged && ui.column !== 'side') ui.flag = null
-      else if (page === 'items') ui.column = 'list'
-      else void ui.goTo('items')
+      else if (page !== 'items') void ui.goTo('items')
+      else if (step !== 'list') ui.column = 'list'
+      else void ui.choose({ kind: 'all' })
     }),
   )
 
