@@ -8,6 +8,7 @@ import {
   host,
   HostLink,
   type HostWorld,
+  LOOKS_AT_ONCE,
   type Runner,
   type Said,
   type Speaking,
@@ -24,7 +25,12 @@ const tick = () => new Promise((settle) => setTimeout(settle, 0))
 
 function world(
   files: Record<string, AppFile | string>,
-  options: { serves?: boolean; cannot?: NotStarted | null } = {},
+  options: {
+    serves?: boolean
+    cannot?: NotStarted | null
+    idOf?: (path: string) => Promise<string | null>
+    reads?: string[]
+  } = {},
 ) {
   const said: HostFrame[] = []
   const links: { app: string; heard: (what: RelayToHost | Opened) => void; closed: boolean }[] = []
@@ -67,12 +73,13 @@ function world(
     device: () => Promise.resolve('device-laptop'),
     files: () => paths,
     read: (path) => {
+      options.reads?.push(path)
       const one = files[path]
       return Promise.resolve(
         one === undefined ? null : typeof one === 'string' ? one : JSON.stringify(one),
       )
     },
-    idOf: (path) => Promise.resolve(`id-${path.replace(/\W/g, '')}`),
+    idOf: options.idOf ?? ((path) => Promise.resolve(`id-${path.replace(/\W/g, '')}`)),
     serves: () => Promise.resolve(options.serves ?? true),
     cannot: options.cannot ?? null,
     runner,
@@ -107,6 +114,7 @@ function world(
     refuses: (reason: NonNullable<typeof why>) => {
       why = reason
     },
+    changed: () => changed?.(),
     remove: (path: string) => {
       paths = paths.filter((one) => one !== path)
       changed?.()
@@ -115,6 +123,44 @@ function world(
 }
 
 const VIEW: View = { width: 1600, height: 900, dpr: 2, hz: 120 }
+
+describe('an application’s host looking through many files (#1934)', () => {
+  test('asks for a few ids at once, each file once, and a change meanwhile looks once more', async () => {
+    const files: Record<string, AppFile> = {}
+    for (let one = 0; one < 12; one++) files[`/s/App ${String(one)}.application`] = GIMP
+    const waiting: (() => void)[] = []
+    let asked = 0
+    let most = 0
+    const reads: string[] = []
+    const here = world(files, {
+      reads,
+      idOf: (path) => {
+        asked += 1
+        most = Math.max(most, asked)
+        return new Promise((done) => {
+          waiting.push(() => {
+            asked -= 1
+            done(`id-${path.replace(/\W/g, '')}`)
+          })
+        })
+      },
+    })
+    await tick()
+    for (let one = 0; one < 5; one++) here.changed()
+    for (let round = 0; round < 40 && here.links.length < 12; round++) {
+      waiting.splice(0).forEach((done) => {
+        done()
+      })
+      await tick()
+    }
+    expect(here.links).toHaveLength(12)
+    expect(most).toBeLessThanOrEqual(LOOKS_AT_ONCE)
+    expect(most).toBeGreaterThan(1)
+    const counts = new Map<string, number>()
+    for (const path of reads) counts.set(path, (counts.get(path) ?? 0) + 1)
+    expect([...counts.values()].every((count) => count === 1)).toBe(true)
+  })
+})
 
 describe('an application’s host', () => {
   test('hosts the files that name this device, and no other, without starting them', async () => {
