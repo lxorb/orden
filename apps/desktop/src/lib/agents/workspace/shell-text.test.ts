@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { onTheList, plainOf, programOf, startsOnlyOne } from './shell-text'
+import { onTheList, plainOf, programOf, startsOnlyOne, Tail } from './shell-text'
 
 function onBoth(command: string, programs: readonly string[]): boolean | string {
   const windows = onTheList(command, programs, 'windows')
@@ -559,5 +559,26 @@ describe('a colon name that is a file', () => {
 
   test.each(['bun run test:unit', 'bun db:migrate', 'pnpm build:web'])('goes: %s', (line) => {
     expect(onBoth(line, listed)).toBe(true)
+  })
+})
+
+describe('what a command prints, kept while it runs', () => {
+  test('is its last lines only, however long it prints', () => {
+    const kept = new Tail(1000)
+    for (let at = 1; at <= 20_000; at++) {
+      kept.push(`line ${at}\n`)
+      expect(kept.text.length).toBeLessThanOrEqual(2000)
+    }
+    expect(kept.dropped).toBe(true)
+    expect(kept.text.startsWith('line ')).toBe(true)
+    expect(kept.text.endsWith('line 20000\n')).toBe(true)
+  })
+
+  test('is all of it when it is short', () => {
+    const kept = new Tail(1000)
+    kept.push('one\n')
+    kept.push('two')
+    expect(kept.text).toBe('one\ntwo')
+    expect(kept.dropped).toBe(false)
   })
 })

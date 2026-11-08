@@ -6,13 +6,14 @@ import { invoke, platform } from '../../tauri'
 import { asked } from './asks'
 import { type Call, count, done, maybe, need } from './call'
 import { Refused } from './problem'
-import { onTheList, osOf, plainOf, startsOnlyOne } from './shell-text'
+import { onTheList, osOf, plainOf, startsOnlyOne, Tail } from './shell-text'
 import { judged, onDisk, placeOf } from './spaces'
 
 const WAIT = 60_000
 const MOST_WAIT = 600_000
 
 const MOST_OUTPUT = 100_000
+const KEPT = MOST_OUTPUT * 4
 
 export async function runTerminal(call: Call): Promise<AgentAnswer> {
   const agent = call.caller.agent
@@ -40,7 +41,7 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
 
   const ran = await session(shell.id, folder, command, count(call, 'timeout_ms', WAIT, MOST_WAIT))
   const output = plainOf(ran.printed)
-  const cut = output.length > MOST_OUTPUT
+  const cut = ran.dropped || output.length > MOST_OUTPUT
 
   return done(
     {
@@ -59,10 +60,14 @@ function session(
   folder: string,
   command: string,
   patience: number,
-): Promise<{ printed: string; exit: number | null }> {
+): Promise<{ printed: string; dropped: boolean; exit: number | null }> {
   const id = `agent-${identifier().replace(/[^\w-]/g, '')}`.slice(0, 80)
   const decoder = new TextDecoder()
-  let printed = ''
+  const printed = new Tail(KEPT)
+  const ended = (exit: number | null) => {
+    printed.push(decoder.decode())
+    return { printed: printed.text, dropped: printed.dropped, exit }
+  }
 
   return new Promise((settle, fail) => {
     let over: ReturnType<typeof setTimeout> | undefined
@@ -71,7 +76,7 @@ function session(
     output.onmessage = (message) => {
       if (message instanceof ArrayBuffer) {
         const bytes = new Uint8Array(message)
-        printed += decoder.decode(bytes, { stream: true })
+        printed.push(decoder.decode(bytes, { stream: true }))
         void invoke('pty_seen', { id, bytes: bytes.length }).catch(() => undefined)
         return
       }
@@ -79,7 +84,7 @@ function session(
       const exit = (message as { exit?: unknown } | null)?.exit
       if (typeof exit === 'number') {
         clearTimeout(over)
-        settle({ printed: printed + decoder.decode(), exit })
+        settle(ended(exit))
       }
     }
 
@@ -87,7 +92,7 @@ function session(
       .then(async () => {
         over = setTimeout(() => {
           void invoke('pty_kill', { id }).catch(() => undefined)
-          settle({ printed: printed + decoder.decode(), exit: null })
+          settle(ended(null))
         }, patience)
 
         await invoke('pty_write', { id, data: `${command}\r`, binary: false })
