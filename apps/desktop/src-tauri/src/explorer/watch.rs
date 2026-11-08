@@ -84,11 +84,28 @@ impl Watching {
         folder: PathBuf,
         hear: impl Fn(Vec<String>) + Send + 'static,
     ) -> Result<(), String> {
+        let mut hear = Some(hear);
+        watched_soon(
+            || self.try_add(owner, &folder, &mut hear),
+            || folder.is_dir() || std::fs::read_dir(&folder).is_ok(),
+            std::thread::sleep,
+        )
+    }
+
+    fn try_add<H: Fn(Vec<String>) + Send + 'static>(
+        &self,
+        owner: &str,
+        folder: &Path,
+        hear: &mut Option<H>,
+    ) -> Result<(), String> {
         let mut held = self
             .0
             .lock()
             .map_err(|_| "the watcher is stuck".to_owned())?;
         if held.is_none() {
+            let hear = hear
+                .take()
+                .ok_or_else(|| "the watcher could not be made".to_owned())?;
             let watcher =
                 notify::recommended_watcher(move |event: notify::Result<notify::Event>| {
                     if let Ok(event) = event {
@@ -101,17 +118,17 @@ impl Watching {
         let Some((watcher, counts)) = held.as_mut() else {
             return Ok(());
         };
-        let count = counts.entry(folder.clone()).or_insert(0);
-        if *count == 0 {
+        let count = counts.get(folder).copied().unwrap_or(0);
+        if count == 0 {
             watcher
-                .watch(&folder, RecursiveMode::NonRecursive)
+                .watch(folder, RecursiveMode::NonRecursive)
                 .map_err(|why| why.to_string())?;
         }
-        *count += 1;
+        counts.insert(folder.to_path_buf(), count + 1);
         self.owned()
             .entry(owner.to_owned())
             .or_default()
-            .push(folder);
+            .push(folder.to_path_buf());
         Ok(())
     }
 
@@ -144,6 +161,28 @@ impl Watching {
         if let Some((watcher, counts)) = held.as_mut() {
             for folder in &folders {
                 let_go(watcher, counts, folder);
+            }
+        }
+    }
+}
+
+const WATCH_TRIES: u32 = 5;
+
+const WATCH_PAUSE: Duration = Duration::from_millis(40);
+
+fn watched_soon(
+    mut watch: impl FnMut() -> Result<(), String>,
+    there: impl Fn() -> bool,
+    pause: impl Fn(Duration),
+) -> Result<(), String> {
+    let mut tried = 1;
+    loop {
+        match watch() {
+            Ok(()) => return Ok(()),
+            Err(why) if tried >= WATCH_TRIES || !there() => return Err(why),
+            Err(_) => {
+                pause(WATCH_PAUSE * tried);
+                tried += 1;
             }
         }
     }
@@ -191,8 +230,9 @@ pub fn window_gone(app: &AppHandle, label: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{folders_of, Gathered, Watching};
+    use super::{folders_of, watched_soon, Gathered, Watching, WATCH_TRIES};
     use crate::explorer::listing::entries;
+    use std::cell::Cell;
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::mpsc::channel;
@@ -245,6 +285,94 @@ mod tests {
         writing.store(false, Ordering::Relaxed);
         writer.join().expect("the writer");
         assert!(answered.is_ok(), "going between folders stuck");
+    }
+
+    #[test]
+    fn a_watch_that_fails_while_its_folder_is_there_is_tried_again() {
+        let tries = Cell::new(0);
+        let paused = Cell::new(0);
+        let watched = watched_soon(
+            || {
+                tries.set(tries.get() + 1);
+                if tries.get() < 3 {
+                    Err("Input watch path is neither a file nor a directory.".to_owned())
+                } else {
+                    Ok(())
+                }
+            },
+            || true,
+            |_| paused.set(paused.get() + 1),
+        );
+        assert_eq!(watched, Ok(()));
+        assert_eq!((tries.get(), paused.get()), (3, 2));
+    }
+
+    #[test]
+    fn a_watch_on_a_folder_that_is_gone_gives_up_at_once() {
+        let tries = Cell::new(0);
+        let watched = watched_soon(
+            || {
+                tries.set(tries.get() + 1);
+                Err("gone".to_owned())
+            },
+            || false,
+            |_| panic!("waited on a folder that is gone"),
+        );
+        assert_eq!(watched, Err("gone".to_owned()));
+        assert_eq!(tries.get(), 1);
+        let always = Cell::new(0);
+        let failing = watched_soon(
+            || {
+                always.set(always.get() + 1);
+                Err("busy".to_owned())
+            },
+            || true,
+            |_| {},
+        );
+        assert_eq!(failing, Err("busy".to_owned()));
+        assert_eq!(always.get(), WATCH_TRIES);
+    }
+
+    #[test]
+    fn a_folder_gone_while_watched_leaves_the_watcher_serving_the_next() {
+        let root = tempfile::tempdir().expect("a folder");
+        let base = crate::paths::folded(root.path());
+        let gone = base.join("gone");
+        let next = base.join("next");
+        std::fs::create_dir(&gone).expect("a folder");
+        std::fs::create_dir(&next).expect("a folder");
+        let (told, heard) = channel::<Vec<String>>();
+        let told = Mutex::new(told);
+        let watching = Watching::default();
+        let counted = |folder: &PathBuf| {
+            watching
+                .0
+                .lock()
+                .expect("held")
+                .as_ref()
+                .and_then(|(_, counts)| counts.get(folder).copied())
+        };
+        watching
+            .add("main", gone.clone(), move |folders| {
+                let _ = told.lock().expect("held").send(folders);
+            })
+            .expect("watched");
+        std::fs::remove_dir_all(&gone).expect("removed");
+        assert!(watching.add("main", base.join("never"), |_| {}).is_err());
+        assert_eq!(counted(&base.join("never")), None);
+        watching.remove("main", &gone);
+        assert_eq!(counted(&gone), None);
+        watching.add("main", next.clone(), |_| {}).expect("watched");
+        while heard.try_recv().is_ok() {}
+        std::fs::write(next.join("arrived.txt"), "here").expect("a file");
+        let mut seen = false;
+        let until = std::time::Instant::now() + Duration::from_secs(20);
+        while !seen && std::time::Instant::now() < until {
+            if let Ok(folders) = heard.recv_timeout(Duration::from_millis(200)) {
+                seen = folders.iter().any(|one| one.ends_with("arrived.txt"));
+            }
+        }
+        assert!(seen, "the folder after a gone one was not heard");
     }
 
     #[test]
