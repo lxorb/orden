@@ -1426,13 +1426,13 @@ mod tests {
 
             frames.borrow_mut().clear();
             viewer.run(
-                Duration::from_millis(800),
+                STILL_EVERY * 2,
                 |rtc, event| heard(rtc, event, &mut shaped),
                 || false,
             );
             assert!(
-                frames.borrow().is_empty(),
-                "{} frames of a still screen",
+                frames.borrow().len() <= 3,
+                "{} frames of a still screen, more than it is sent again",
                 frames.borrow().len()
             );
 
