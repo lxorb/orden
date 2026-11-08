@@ -242,6 +242,15 @@
     background: var(--bg);
   }
 
+  .pass :global([data-scrolls] > *) {
+    flex-shrink: 0;
+  }
+
+  :global(main:has(.fab)) .pass :global([data-scrolls]),
+  :global(main:has(.fab)) .pass :global(.side .foot) {
+    padding-bottom: calc(var(--space-4) + var(--touch-bottom) + var(--touch-row));
+  }
+
   .columns {
     display: flex;
     height: 100%;

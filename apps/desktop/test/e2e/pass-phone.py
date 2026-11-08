@@ -16,12 +16,37 @@ TITLE = "Averyveryverylongunbrokentitlewithoutanyspacesthatgoesonandon"
 
 PAST = """() => {
   const wide = document.documentElement.clientWidth
+  const clipped = (one) => {
+    const box = one.getBoundingClientRect()
+    for (let up = one.parentElement; up && !up.matches('.pass'); up = up.parentElement) {
+      if (!/auto|scroll/.test(getComputedStyle(up).overflowX)) continue
+      const room = up.getBoundingClientRect()
+      if (room.right <= wide + 1 && (box.right > room.right || box.left < room.left)) return true
+    }
+    return false
+  }
   return [...document.querySelectorAll('.pass *')]
-    .filter((one) => one.checkVisibility())
+    .filter((one) => one.checkVisibility() && !clipped(one))
     .map((one) => [one, one.getBoundingClientRect()])
     .filter(([, box]) => box.width && (box.right > wide + 1 || box.left < -1))
     .slice(0, 4)
     .map(([one, box]) => `${one.tagName.toLowerCase()}.${one.className} ${Math.round(box.left)}..${Math.round(box.right)}`)
+}"""
+
+SQUEEZED = """() => [...document.querySelectorAll('.pass [data-scrolls] > *')]
+  .filter((one) => one.checkVisibility() && getComputedStyle(one).overflowY !== 'visible' && one.scrollHeight > one.clientHeight + 2)
+  .slice(0, 4)
+  .map((one) => `${one.tagName.toLowerCase()}.${one.className} ${one.clientHeight} of ${one.scrollHeight}`)"""
+
+UNDER = """() => {
+  const plus = document.querySelector('main .fab')?.getBoundingClientRect()
+  if (!plus) return []
+  for (const one of document.querySelectorAll('.pass [data-scrolls]')) one.scrollTop = one.scrollHeight
+  return [...document.querySelectorAll('.pass :is(button, input, select, textarea)')]
+    .filter((one) => one.checkVisibility())
+    .map((one) => [one, one.getBoundingClientRect()])
+    .filter(([, box]) => box.width && box.right > plus.left && box.left < plus.right && box.bottom > plus.top && box.top < plus.bottom)
+    .map(([one]) => one.getAttribute('aria-label') || one.textContent.trim() || one.tagName.toLowerCase())
 }"""
 
 SHOWN = """() => ['side', 'list', 'item'].filter((one) => document.querySelector(`.pass .column.${one}`)?.checkVisibility())"""
@@ -33,6 +58,14 @@ def fits(page: Page, where: str) -> None:
     if past:
         wrong(f"{where}: runs past the phone's edge: {past}")
         shot(page, f"past-{where}")
+    squeezed = page.evaluate(SQUEEZED)
+    if squeezed:
+        wrong(f"{where}: a scroller squeezes what it holds instead of scrolling: {squeezed}")
+        shot(page, f"squeezed-{where}")
+    under = page.evaluate(UNDER)
+    if under:
+        wrong(f"{where}: the end cannot be scrolled out from under the + button: {under}")
+        shot(page, f"under-{where}")
 
 
 def column(page: Page, want: str, where: str) -> None:
@@ -98,6 +131,18 @@ def drive(browser: Browser) -> None:
     fits(page, "vaults")
     page.go_back()
     column(page, "list", "Back from the vaults")
+    for name in ("Monitor", "Settings", "Trash"):
+        if page.evaluate(SHOWN) != ["side"]:
+            page.locator(".pass").get_by_role("button", name="Back", exact=True).first.click()
+            column(page, "side", f"Back before {name}")
+        page.locator(".pass .column.side").get_by_role("button", name=name, exact=True).first.click()
+        page.wait_for_timeout(500)
+        fits(page, name)
+        if name == "Settings":
+            for tab in page.locator(".pass [role=tab]").all_inner_texts()[1:]:
+                page.locator(".pass [role=tab]", has_text=tab).first.click()
+                fits(page, f"Settings {tab}")
+
     say("Back steps a phone's Pass from a login to the list, and the list fits the phone")
     context.close()
 
