@@ -721,11 +721,7 @@ export const pl: Dictionary = {
   'In use': 'W użyciu',
   Use: 'Użyj',
   Remove: 'Usuń',
-  'Your words': 'Własne słowa',
   Words: 'Słowa',
-  'Add a word': 'Dodaj słowo',
-  'Add {word} to the dictionary': 'Dodaj {word} do słownika',
-  'Remove {word} from the dictionary': 'Usuń {word} ze słownika',
   '{count} things in this theme were left out.': {
     one: 'Pominięto {count} element w tym motywie.',
     few: 'Pominięto {count} elementy w tym motywie.',
@@ -2600,8 +2596,6 @@ export const pl: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'Gdzie wyszukiwane są słowa wpisane w pasek adresu karty internetowej.',
   'The search address, with %s where the words go.': 'Adres wyszukiwania, z %s w miejscu słów.',
-  'Words the spelling check never marks as wrong.':
-    'Słowa, których sprawdzanie pisowni nigdy nie oznacza jako błędne.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Którego programu skróty klawiszowe stosuje Orden; każdy skrót poniżej nadal można zmienić.',
   'Moves and edits in notes with Vim’s keys.':

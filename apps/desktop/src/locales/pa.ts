@@ -695,11 +695,7 @@ export const pa: Dictionary = {
   'In use': 'ਵਰਤੋਂ ਵਿੱਚ',
   Use: 'ਵਰਤੋ',
   Remove: 'ਹਟਾਓ',
-  'Your words': 'ਤੁਹਾਡੇ ਸ਼ਬਦ',
   Words: 'ਸ਼ਬਦ',
-  'Add a word': 'ਸ਼ਬਦ ਜੋੜੋ',
-  'Add {word} to the dictionary': '{word} ਸ਼ਬਦਕੋਸ਼ ਵਿੱਚ ਜੋੜੋ',
-  'Remove {word} from the dictionary': '{word} ਸ਼ਬਦਕੋਸ਼ ਤੋਂ ਹਟਾਓ',
   '{count} things in this theme were left out.': {
     one: 'ਇਸ ਥੀਮ ਦੀ {count} ਚੀਜ਼ ਛੱਡ ਦਿੱਤੀ ਗਈ।',
     other: 'ਇਸ ਥੀਮ ਦੀਆਂ {count} ਚੀਜ਼ਾਂ ਛੱਡ ਦਿੱਤੀਆਂ ਗਈਆਂ।',
@@ -2513,8 +2509,6 @@ export const pa: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'ਵੈੱਬ ਟੈਬ ਦੀ ਪਤਾ ਪੱਟੀ ਵਿੱਚ ਲਿਖੇ ਸ਼ਬਦ ਕਿੱਥੇ ਖੋਜੇ ਜਾਂਦੇ ਹਨ।',
   'The search address, with %s where the words go.': 'ਖੋਜ ਦਾ ਪਤਾ, ਜਿਸ ਵਿੱਚ ਸ਼ਬਦਾਂ ਦੀ ਥਾਂ %s ਹੈ।',
-  'Words the spelling check never marks as wrong.':
-    'ਉਹ ਸ਼ਬਦ ਜਿਨ੍ਹਾਂ ਨੂੰ ਸ਼ਬਦ-ਜੋੜ ਜਾਂਚ ਕਦੇ ਗਲਤ ਨਹੀਂ ਦੱਸਦੀ।',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden ਕਿਸ ਐਪ ਦੀਆਂ ਕੁੰਜੀਆਂ ਮੰਨਦਾ ਹੈ, ਹੇਠਾਂ ਦੀ ਕੋਈ ਵੀ ਕੁੰਜੀ ਫਿਰ ਵੀ ਬਦਲੀ ਜਾ ਸਕਦੀ ਹੈ।',
   'Moves and edits in notes with Vim’s keys.':

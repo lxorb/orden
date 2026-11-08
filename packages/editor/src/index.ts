@@ -129,7 +129,6 @@ export { type PreviewMount, type PreviewNote } from './wikilink/hover'
 export { renderNote } from './wikilink/preview'
 export { setBlocks, type SlashBlock } from './slash'
 export { embedClicks, htmlFrameDocument, loadEmbed } from './web-frame'
-export { isSpellWord, LONGEST_WORD } from './spelling'
 export { setSnippets, snippets } from './snippets'
 export { englishLabel, LABEL_KEYS, type LabelKey, setLabels } from './labels'
 export {
@@ -153,7 +152,6 @@ export {
   setSmartPunctuation,
   setSourceMode,
   setSpellcheck,
-  setSpellWords,
   setStrictMode,
   setTypewriterMode,
 } from './modes'

@@ -700,11 +700,7 @@ export const ml: Dictionary = {
   'In use': 'ഉപയോഗത്തിൽ',
   Use: 'ഉപയോഗിക്കുക',
   Remove: 'നീക്കം ചെയ്യുക',
-  'Your words': 'നിങ്ങളുടെ വാക്കുകൾ',
   Words: 'വാക്കുകൾ',
-  'Add a word': 'ഒരു വാക്ക് ചേർക്കുക',
-  'Add {word} to the dictionary': '{word} നിഘണ്ടുവിൽ ചേർക്കുക',
-  'Remove {word} from the dictionary': '{word} നിഘണ്ടുവിൽ നിന്ന് നീക്കുക',
   '{count} things in this theme were left out.': {
     one: 'ഈ തീമിലെ {count} കാര്യം ഒഴിവാക്കി.',
     other: 'ഈ തീമിലെ {count} കാര്യങ്ങൾ ഒഴിവാക്കി.',
@@ -2542,8 +2538,6 @@ export const ml: Dictionary = {
     'വെബ് ടാബിന്റെ വിലാസ ബാറിൽ ടൈപ്പ് ചെയ്യുന്ന വാക്കുകൾ എവിടെ തിരയുന്നു എന്നത്.',
   'The search address, with %s where the words go.':
     'തിരയൽ വിലാസം, വാക്കുകൾ വരുന്നിടത്ത് %s ഉള്ളത്.',
-  'Words the spelling check never marks as wrong.':
-    'സ്പെല്ലിംഗ് പരിശോധന ഒരിക്കലും തെറ്റായി അടയാളപ്പെടുത്താത്ത വാക്കുകൾ.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden ഏത് ആപ്പിന്റെ കീകളാണ് പിന്തുടരുന്നത് എന്നത്; താഴെയുള്ള ഏത് കീയും ഇപ്പോഴും മാറ്റാം.',
   'Moves and edits in notes with Vim’s keys.':

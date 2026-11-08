@@ -731,11 +731,7 @@ export const ar: Dictionary = {
   'In use': 'مُستخدم',
   Use: 'استخدام',
   Remove: 'إزالة',
-  'Your words': 'كلماتك',
   Words: 'كلمات',
-  'Add a word': 'إضافة كلمة',
-  'Add {word} to the dictionary': 'إضافة {word} إلى القاموس',
-  'Remove {word} from the dictionary': 'إزالة {word} من القاموس',
   '{count} things in this theme were left out.': {
     zero: 'تم تجاهل {count} عناصر في هذه السمة.',
     one: 'تم تجاهل {count} عنصر في هذه السمة.',
@@ -2623,7 +2619,6 @@ export const ar: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'أين يُبحث عن الكلمات المكتوبة في شريط العنوان في تبويب الويب.',
   'The search address, with %s where the words go.': 'عنوان البحث، مع %s في موضع الكلمات.',
-  'Words the spelling check never marks as wrong.': 'كلمات لا يعدّها التدقيق الإملائي خاطئة أبدًا.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'أيّ تطبيق يتبع Orden اختصاراته؛ ويبقى بالإمكان تغيير أي اختصار أدناه.',
   'Moves and edits in notes with Vim’s keys.': 'يتيح التنقل والتحرير في الملاحظات باختصارات Vim.',

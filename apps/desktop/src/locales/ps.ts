@@ -691,11 +691,7 @@ export const ps: Dictionary = {
   'In use': 'په کار',
   Use: 'کارول',
   Remove: 'ليرې کول',
-  'Your words': 'ستاسو کلمې',
   Words: 'کلمې',
-  'Add a word': 'کلمه ورزياتول',
-  'Add {word} to the dictionary': '{word} قاموس ته ورزياتول',
-  'Remove {word} from the dictionary': '{word} له قاموس ليرې کول',
   '{count} things in this theme were left out.': {
     one: 'په دې بڼه کې {count} شی پرېښودل شو.',
     other: 'په دې بڼه کې {count} شيان پرېښودل شول.',
@@ -2508,7 +2504,6 @@ export const ps: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'د ویب ټب د پتې په پټه کې لیکل شوي ټکي چېرته ولټول شي.',
   'The search address, with %s where the words go.': 'د لټون پته، چې د ټکو پر ځای %s لري.',
-  'Words the spelling check never marks as wrong.': 'هغه ټکي چې د املا کتنه یې هېڅکله غلط نه ګڼي.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden د کوم اپ کلیدونه تعقیبوي؛ لاندې هره کلید بیا هم بدلېدای شي.',
   'Moves and edits in notes with Vim’s keys.': 'په یادښتونو کې د Vim په کلیدونو خوځښت او سمون کوي.',

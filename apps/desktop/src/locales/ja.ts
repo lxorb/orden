@@ -690,11 +690,7 @@ export const ja: Dictionary = {
   'In use': '使用中',
   Use: '使う',
   Remove: '取り外す',
-  'Your words': 'あなたの単語',
   Words: '単語',
-  'Add a word': '単語を追加',
-  'Add {word} to the dictionary': '{word} を辞書に追加',
-  'Remove {word} from the dictionary': '{word} を辞書から削除',
   '{count} things in this theme were left out.': 'このテーマの {count} 件は見送られました。',
   'A note': 'ノート',
   'Words with {bold} and a {link}.': '{bold} と {link} のある文章。',
@@ -2491,7 +2487,6 @@ export const ja: Dictionary = {
     'ウェブタブのアドレスバーに入力した語を検索する場所です。',
   'The search address, with %s where the words go.':
     '検索のアドレスで、語が入る位置に %s を置きます。',
-  'Words the spelling check never marks as wrong.': 'スペルチェックが誤りとしない単語です。',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden が従うアプリのキー配置で、下のキーはどれも変更できます。',
   'Moves and edits in notes with Vim’s keys.': 'Vim のキーでノートを移動、編集します。',

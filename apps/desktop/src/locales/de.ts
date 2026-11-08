@@ -698,11 +698,7 @@ export const de: Dictionary = {
   'In use': 'In Gebrauch',
   Use: 'Verwenden',
   Remove: 'Entfernen',
-  'Your words': 'Deine Wörter',
   Words: 'Wörter',
-  'Add a word': 'Wort hinzufügen',
-  'Add {word} to the dictionary': '{word} ins Wörterbuch aufnehmen',
-  'Remove {word} from the dictionary': '{word} aus dem Wörterbuch entfernen',
   '{count} things in this theme were left out.': {
     one: '{count} Ding in diesem Design wurde weggelassen.',
     other: '{count} Dinge in diesem Design wurden weggelassen.',
@@ -2556,8 +2552,6 @@ export const de: Dictionary = {
     'Wo Wörter gesucht werden, die du in die Adressleiste eines Web-Tabs tippst.',
   'The search address, with %s where the words go.':
     'Die Suchadresse, mit %s an der Stelle der Wörter.',
-  'Words the spelling check never marks as wrong.':
-    'Wörter, die die Rechtschreibprüfung nie als falsch markiert.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Nach welcher App sich die Tasten von Orden richten; jede Taste unten lässt sich trotzdem ändern.',
   'Moves and edits in notes with Vim’s keys.':

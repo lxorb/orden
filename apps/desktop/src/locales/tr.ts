@@ -695,11 +695,7 @@ export const tr: Dictionary = {
   'In use': 'Kullanımda',
   Use: 'Kullan',
   Remove: 'Kaldır',
-  'Your words': 'Sözcükleriniz',
   Words: 'Sözcükler',
-  'Add a word': 'Sözcük ekle',
-  'Add {word} to the dictionary': '{word} sözlüğe eklensin',
-  'Remove {word} from the dictionary': '{word} sözlükten kaldırılsın',
   '{count} things in this theme were left out.': {
     one: 'Bu temada {count} şey dışarıda kaldı.',
     other: 'Bu temada {count} şey dışarıda kaldı.',
@@ -2524,8 +2520,6 @@ export const tr: Dictionary = {
     'Bir web sekmesinin adres çubuğuna yazılan sözcüklerin nerede aranacağı.',
   'The search address, with %s where the words go.':
     'Sözcüklerin geleceği yerde %s bulunan arama adresi.',
-  'Words the spelling check never marks as wrong.':
-    'Yazım denetiminin asla yanlış olarak işaretlemediği sözcükler.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden’in hangi uygulamanın tuşlarını izlediği; aşağıdaki her tuş yine de değiştirilebilir.',
   'Moves and edits in notes with Vim’s keys.':

@@ -10,7 +10,6 @@ import {
   insertPageBreak,
   calloutSign,
   insertTableToEdit,
-  isSpellWord,
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
@@ -365,38 +364,6 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
   ]
 }
 
-function wordUnder(view: EditorView, event: MouseEvent): string | null {
-  const at = view.posAtCoords({ x: event.clientX, y: event.clientY })
-  if (at === null) return null
-
-  const range = view.state.wordAt(at)
-  if (!range) return null
-
-  const word = view.state.doc.sliceString(range.from, range.to)
-  return isSpellWord(word) ? word : null
-}
-
-function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
-  if (!view || !modes.spellcheck) return []
-
-  const on = event.target
-  if (on instanceof Element && on.closest('.orden-block-handle')) return []
-
-  const word = wordUnder(view, event)
-  if (word === null) return []
-
-  const known = modes.knowsWord(word)
-  return [
-    DIVIDER,
-    {
-      label: known
-        ? t('Remove {word} from the dictionary', { word })
-        : t('Add {word} to the dictionary', { word }),
-      run: () => modes.toggleSpellWord(word, view),
-    },
-  ]
-}
-
 function recordingEntries(view: EditorView | undefined, at: number | null): MenuEntry[] {
   if (!view || at === null || view.state.readOnly || !canTranscribe()) return []
   if (!recordingAt(view, at)) return []
@@ -500,7 +467,6 @@ export function showEditorMenu(
       ...linkEntries(view, event, path),
       ...editorMenu(view, blockEntries(view, at, path)),
       ...recordingEntries(view, at),
-      ...spellingEntries(view, event),
     ],
     { near: true, until: unlocks.held },
   )

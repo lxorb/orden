@@ -686,11 +686,7 @@ export const am: Dictionary = {
   'In use': 'በአገልግሎት ላይ',
   Use: 'ተጠቀም',
   Remove: 'አስወግድ',
-  'Your words': 'የእርስዎ ቃላት',
   Words: 'ቃላት',
-  'Add a word': 'ቃል ጨምር',
-  'Add {word} to the dictionary': '{word} ወደ መዝገበ ቃላት ጨምር',
-  'Remove {word} from the dictionary': '{word} ከመዝገበ ቃላት አስወግድ',
   '{count} things in this theme were left out.': {
     one: 'በዚህ ገጽታ {count} ነገር ተትቷል።',
     other: 'በዚህ ገጽታ {count} ነገሮች ተትተዋል።',
@@ -2470,7 +2466,6 @@ export const am: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'በድር ትር የአድራሻ አሞሌ ውስጥ የተተየቡ ቃላት የሚፈለጉበት ቦታ።',
   'The search address, with %s where the words go.': 'የፍለጋ አድራሻው፣ ቃላቱ በሚገቡበት ቦታ %s ያለበት።',
-  'Words the spelling check never marks as wrong.': 'የፊደል ፍተሻው በጭራሽ ስህተት ብሎ የማያመለክታቸው ቃላት።',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden የትኛውን መተግበሪያ ቁልፎች እንደሚከተል፤ ከታች ያለ ማንኛውም ቁልፍ አሁንም ሊቀየር ይችላል።',
   'Moves and edits in notes with Vim’s keys.': 'በVim ቁልፎች በማስታወሻዎች ውስጥ ያንቀሳቅሳል እና ያርማል።',

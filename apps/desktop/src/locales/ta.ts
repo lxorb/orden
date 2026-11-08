@@ -693,11 +693,7 @@ export const ta: Dictionary = {
   'In use': 'பயன்பாட்டில்',
   Use: 'பயன்படுத்து',
   Remove: 'அகற்று',
-  'Your words': 'உங்கள் சொற்கள்',
   Words: 'சொற்கள்',
-  'Add a word': 'சொல்லைச் சேர்',
-  'Add {word} to the dictionary': '{word} ஐ அகராதியில் சேர்',
-  'Remove {word} from the dictionary': '{word} ஐ அகராதியிலிருந்து அகற்று',
   '{count} things in this theme were left out.': {
     one: 'இந்தத் தீமில் {count} விஷயம் விடப்பட்டது.',
     other: 'இந்தத் தீமில் {count} விஷயங்கள் விடப்பட்டன.',
@@ -2546,8 +2542,6 @@ export const ta: Dictionary = {
     'இணையத் தாவலின் முகவரிப் பட்டியில் தட்டச்சு செய்யும் சொற்கள் எங்கே தேடப்படுகின்றன என்பது.',
   'The search address, with %s where the words go.':
     'தேடல் முகவரி, சொற்கள் வரும் இடத்தில் %s உடன்.',
-  'Words the spelling check never marks as wrong.':
-    'எழுத்துப்பிழைச் சரிபார்ப்பு ஒருபோதும் தவறு எனக் குறிக்காத சொற்கள்.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden எந்த ஆப்பின் விசைகளைப் பின்பற்றுகிறது என்பது; கீழுள்ள எந்த விசையையும் இன்னும் மாற்றலாம்.',
   'Moves and edits in notes with Vim’s keys.':

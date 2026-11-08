@@ -692,11 +692,7 @@ export const mr: Dictionary = {
   'In use': 'वापरात',
   Use: 'वापरा',
   Remove: 'काढा',
-  'Your words': 'तुमचे शब्द',
   Words: 'शब्द',
-  'Add a word': 'शब्द जोडा',
-  'Add {word} to the dictionary': '{word} शब्दकोशात जोडा',
-  'Remove {word} from the dictionary': '{word} शब्दकोशातून काढा',
   '{count} things in this theme were left out.': {
     one: 'या थीममधील {count} गोष्ट वगळली.',
     other: 'या थीममधील {count} गोष्टी वगळल्या.',
@@ -2509,8 +2505,6 @@ export const mr: Dictionary = {
     'वेब टॅबच्या पत्ता पट्टीत टाइप केलेले शब्द कुठे शोधले जातात.',
   'The search address, with %s where the words go.':
     'शोधाचा पत्ता, ज्यात शब्द जिथे येतात तिथे %s असते.',
-  'Words the spelling check never marks as wrong.':
-    'शुद्धलेखन तपासणी कधीही चूक म्हणून न दाखवणारे शब्द.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden कोणत्या ॲपच्या कळा पाळते; खालील कोणतीही कळ तरीही बदलता येते.',
   'Moves and edits in notes with Vim’s keys.': 'Vim च्या कळांनी नोंदींमध्ये फिरा आणि संपादन करा.',

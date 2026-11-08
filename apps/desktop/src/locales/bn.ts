@@ -693,11 +693,7 @@ export const bn: Dictionary = {
   'In use': 'ব্যবহারে',
   Use: 'ব্যবহার',
   Remove: 'সরান',
-  'Your words': 'আপনার শব্দ',
   Words: 'শব্দ',
-  'Add a word': 'শব্দ যোগ',
-  'Add {word} to the dictionary': 'অভিধানে {word} যোগ',
-  'Remove {word} from the dictionary': 'অভিধান থেকে {word} সরান',
   '{count} things in this theme were left out.': {
     one: '{count}টি জিনিস এই থিম থেকে বাদ পড়েছে।',
     other: '{count}টি জিনিস এই থিম থেকে বাদ পড়েছে।',
@@ -2507,8 +2503,6 @@ export const bn: Dictionary = {
     'ওয়েব ট্যাবের ঠিকানা বারে লেখা শব্দ কোথায় খোঁজা হবে।',
   'The search address, with %s where the words go.':
     'খোঁজার ঠিকানা, যেখানে শব্দগুলো বসবে সেখানে %s থাকে।',
-  'Words the spelling check never marks as wrong.':
-    'যে শব্দগুলোকে বানান পরীক্ষা কখনো ভুল হিসেবে চিহ্নিত করে না।',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden কোন অ্যাপের কী অনুসরণ করে; নিচের যেকোনো কী তবুও বদলানো যায়।',
   'Moves and edits in notes with Vim’s keys.': 'Vim-এর কী দিয়ে নোটে চলাফেরা ও সম্পাদনা করে।',

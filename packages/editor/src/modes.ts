@@ -27,7 +27,6 @@ import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
 import { codeThemeEffect } from './code-theme'
 import { ligatures, type LigatureScope } from './ligatures'
-import { knownWords, spellingWords } from './spelling'
 import { once } from './once'
 import { completionEffect } from './completion'
 import { wrapSelection } from './wrap'
@@ -41,7 +40,6 @@ const punctuation = new Compartment()
 const language = new Compartment()
 const equations = new Compartment()
 const spelling = new Compartment()
-const spellWords = new Compartment()
 const brackets = new Compartment()
 const glyphs = new Compartment()
 const readOnly = new Compartment()
@@ -187,7 +185,6 @@ export function modeExtensions(length = 0): Extension {
     punctuation.of(punctuationFor(false)),
     equations.of(numberEquations.of(false)),
     spelling.of(spellingFor(false)),
-    spellWords.of(spellWordsFor('')),
     brackets.of(bracketsFor(true)),
     glyphs.of(ligaturesFor('off')),
     readOnly.of(readOnlyFor(false)),
@@ -329,17 +326,6 @@ const spellings = once((setting: string): Extension => {
   })
 })
 
-const BETWEEN = '\n'
-
-function joined(words: readonly string[] | undefined): string {
-  return (words ?? []).join(BETWEEN)
-}
-
-const spellWordsFor = once((words: string): Extension => [
-  knownWords.of(words ? words.split(BETWEEN) : []),
-  spellingWords(),
-])
-
 const spellingFor = (on: boolean, language?: string): Extension =>
   spellings(`${on ? 'on' : 'off'}|${language ?? ''}`)
 
@@ -358,7 +344,6 @@ export interface ModeSettings {
   equationNumbers: boolean
   spellcheck: boolean
   dictionary?: string | undefined
-  words?: readonly string[] | undefined
   closeBrackets: boolean
   ligatures: LigatureScope
   vim: boolean
@@ -378,7 +363,6 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
     punctuation.reconfigure(punctuationFor(settings.punctuation)),
     equations.reconfigure(numberEquations.of(settings.equationNumbers)),
     spelling.reconfigure(spellingFor(settings.spellcheck, settings.dictionary)),
-    spellWords.reconfigure(spellWordsFor(joined(settings.words))),
     brackets.reconfigure(bracketsFor(settings.closeBrackets)),
     completionEffect(settings.closeBrackets),
     glyphs.reconfigure(ligaturesFor(settings.ligatures)),
@@ -471,10 +455,6 @@ export function remeasure(view: EditorView) {
 
 export function setSpellcheck(view: EditorView, on: boolean, language?: string) {
   view.dispatch({ effects: spelling.reconfigure(spellingFor(on, language)) })
-}
-
-export function setSpellWords(view: EditorView, words: readonly string[]) {
-  view.dispatch({ effects: spellWords.reconfigure(spellWordsFor(joined(words))) })
 }
 
 export function setCloseBrackets(view: EditorView, on: boolean) {

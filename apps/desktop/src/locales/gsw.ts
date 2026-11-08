@@ -694,11 +694,7 @@ export const gsw: Dictionary = {
   'In use': 'Im Gebruuch',
   Use: 'Bruuche',
   Remove: 'Ewägnäh',
-  'Your words': 'Dini Wörter',
   Words: 'Wörter',
-  'Add a word': 'Wort hinzuefüege',
-  'Add {word} to the dictionary': '{word} is Wörterbuech uufnäh',
-  'Remove {word} from the dictionary': '{word} usem Wörterbuech ewägnäh',
   '{count} things in this theme were left out.': {
     one: '{count} Sach i dem Design isch uusegloh worde.',
     other: '{count} Sache i dem Design sind uusegloh worde.',
@@ -2521,8 +2517,6 @@ export const gsw: Dictionary = {
     'Wo Wörter gsuecht wärded, wo du i d Adrässliischte vom ene Web-Tab tippsch.',
   'The search address, with %s where the words go.':
     'D Suechadrässe, mit %s det, wo d Wörter here chömed.',
-  'Words the spelling check never marks as wrong.':
-    'Wörter, wo d Rächtschriibprüefig nie als falsch markiert.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Nach welere App sich d Taschte vo Orden richted; jedi Taschte une chasch trotzdem ändere.',
   'Moves and edits in notes with Vim’s keys.':

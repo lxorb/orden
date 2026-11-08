@@ -693,11 +693,7 @@ export const fa: Dictionary = {
   'In use': 'در کار',
   Use: 'به کار بردن',
   Remove: 'برداشتن',
-  'Your words': 'واژه‌های شما',
   Words: 'واژه‌ها',
-  'Add a word': 'افزودن واژه',
-  'Add {word} to the dictionary': 'افزودن {word} به واژه‌نامه',
-  'Remove {word} from the dictionary': 'برداشتن {word} از واژه‌نامه',
   '{count} things in this theme were left out.': {
     one: '{count} چیز در این پوسته کنار گذاشته شد.',
     other: '{count} چیز در این پوسته کنار گذاشته شد.',
@@ -2510,8 +2506,6 @@ export const fa: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'واژه‌هایی که در نوار نشانی زبانهٔ وب نوشته می‌شوند کجا جست‌وجو شوند.',
   'The search address, with %s where the words go.': 'نشانی جست‌وجو، با %s در جای واژه‌ها.',
-  'Words the spelling check never marks as wrong.':
-    'واژه‌هایی که بررسی املا هرگز نادرست نمی‌شمارد.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden از کلیدهای کدام برنامه پیروی می‌کند؛ هر کلید زیر همچنان تغییرپذیر است.',
   'Moves and edits in notes with Vim’s keys.': 'جابه‌جایی و ویرایش در یادداشت‌ها با کلیدهای Vim.',

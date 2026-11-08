@@ -689,11 +689,7 @@ export const ko: Dictionary = {
   'In use': '사용 중',
   Use: '사용',
   Remove: '제거',
-  'Your words': '내 단어',
   Words: '단어',
-  'Add a word': '단어 추가',
-  'Add {word} to the dictionary': '{word}을 사전에 추가',
-  'Remove {word} from the dictionary': '{word}을 사전에서 제거',
   '{count} things in this theme were left out.': '이 테마의 {count}개 항목은 빠졌습니다.',
   'A note': '노트 하나',
   'Words with {bold} and a {link}.': '{bold}와 {link}가 있는 글.',
@@ -2473,8 +2469,6 @@ export const ko: Dictionary = {
     '웹 탭의 주소창에 입력한 단어를 검색하는 곳입니다.',
   'The search address, with %s where the words go.':
     '검색 주소이며, 단어가 들어갈 자리에 %s를 넣습니다.',
-  'Words the spelling check never marks as wrong.':
-    '철자 검사가 틀렸다고 표시하지 않는 단어입니다.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden이 따르는 앱의 키 배치이며, 아래의 키는 언제든 바꿀 수 있습니다.',
   'Moves and edits in notes with Vim’s keys.': 'Vim의 키로 노트에서 이동하고 편집합니다.',

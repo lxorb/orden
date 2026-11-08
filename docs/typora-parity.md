@@ -321,7 +321,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Change list type via shortcut and context menu
 - [x] Spellcheck (native, in the editor), on out of the box, with one switch to
       turn it off and the dictionary the machine is set to
-- [x] A dictionary of your own. See section 17: it is not the system's
+- [-] A dictionary of your own: taken out at the owner's request (#2021)
 - [x] Every shortcut from Typora's table
 - [x] A row in Paragraph for each of the blocks that had none: a task list, a
       callout, a footnote, a table of contents, front matter and a picture
@@ -785,18 +785,8 @@ Features Typora does not have, which are the reason this exists.
       half a table is a table that lies about the file. Nowhere outside the app,
       whichever answer: front matter is about the note rather than part of it, and
       every export already leaves it out
-- [x] A dictionary of your own. The menu over a word offers to add it, and from
-      then on the wavy line under it is gone, wherever it appears, on every
-      device: the list follows the account. Settings has it under Spelling, to
-      read and to take words back from.
-
-      What it is not, said plainly: Orden does not spell-check - the webview does,
-      and no browser on any platform lets a page ask which words its checker
-      thinks are wrong, read its suggestions, or add one to a dictionary. So what
-      this does is turn the checker off over the words you have added, which is
-      the whole of what adding a word is for, and nothing more. The word is not
-      learned by the system, so another app still underlines it, and Orden cannot
-      offer a correction for a word that really is misspelled
+- [-] A dictionary of your own: taken out at the owner's request (#2021); the
+      checker uses only the dictionaries it has built in
 - [x] Dragging a heading in the Outline moves its whole section: the heading and
       everything under it, to where it was dropped. Two edits and never a
       rewrite, so a note open in a second pane keeps every caret outside the words

@@ -684,11 +684,7 @@ export const zhHans: Dictionary = {
   'In use': '使用中',
   Use: '使用',
   Remove: '移除',
-  'Your words': '你的词汇',
   Words: '词汇',
-  'Add a word': '添加词汇',
-  'Add {word} to the dictionary': '将{word}加入词典',
-  'Remove {word} from the dictionary': '从词典移除{word}',
   '{count} things in this theme were left out.': '此主题中有{count}项被忽略。',
   'A note': '一篇笔记',
   'Words with {bold} and a {link}.': '带{bold}和{link}的文字。',
@@ -2435,7 +2431,6 @@ export const zhHans: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     '在网页标签页地址栏中输入的文字在何处搜索。',
   'The search address, with %s where the words go.': '搜索地址，用 %s 表示文字所在的位置。',
-  'Words the spelling check never marks as wrong.': '拼写检查永远不会标为错误的词。',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden 遵循哪个应用的按键，下方任何按键仍可更改。',
   'Moves and edits in notes with Vim’s keys.': '用 Vim 的按键在笔记中移动和编辑。',

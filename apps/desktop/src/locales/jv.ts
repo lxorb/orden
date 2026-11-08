@@ -690,11 +690,7 @@ export const jv: Dictionary = {
   'In use': 'Dipakai',
   Use: 'Pakai',
   Remove: 'Busak',
-  'Your words': 'Tembung sampeyan',
   Words: 'Tembung',
-  'Add a word': 'Tambah tembung',
-  'Add {word} to the dictionary': 'Tambahake {word} menyang bausastra',
-  'Remove {word} from the dictionary': 'Busak {word} saka bausastra',
   '{count} things in this theme were left out.': '{count} bab ing tema iki ora dilebokake.',
   'A note': 'Sawijining cathetan',
   'Words with {bold} and a {link}.': 'Tembung kanthi {bold} lan {link}.',
@@ -2487,8 +2483,6 @@ export const jv: Dictionary = {
     'Panggonan nggoleki tembung sing diketik ing bar alamat tab web.',
   'The search address, with %s where the words go.':
     'Alamat panelusuran, karo %s ing panggonan tembung-tembunge.',
-  'Words the spelling check never marks as wrong.':
-    'Tembung sing ora tau ditandhani salah dening pamriksa ejaan.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Tombol aplikasi endi sing dituruti Orden; saben tombol ing ngisor isih bisa diganti.',
   'Moves and edits in notes with Vim’s keys.': 'Obah lan nyunting ing cathetan nganggo tombol Vim.',

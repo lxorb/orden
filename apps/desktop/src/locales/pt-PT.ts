@@ -708,11 +708,7 @@ export const ptPT: Dictionary = {
   'In use': 'Em uso',
   Use: 'Usar',
   Remove: 'Remover',
-  'Your words': 'Palavras próprias',
   Words: 'Palavras',
-  'Add a word': 'Adicionar uma palavra',
-  'Add {word} to the dictionary': 'Adicionar {word} ao dicionário',
-  'Remove {word} from the dictionary': 'Remover {word} do dicionário',
   '{count} things in this theme were left out.': {
     one: '{count} item deste tema ficou de fora.',
     many: '{count} itens deste tema ficaram de fora.',
@@ -2570,8 +2566,6 @@ export const ptPT: Dictionary = {
     'Onde são pesquisadas as palavras escritas na barra de endereço de um separador web.',
   'The search address, with %s where the words go.':
     'O endereço de pesquisa, com %s onde entram as palavras.',
-  'Words the spelling check never marks as wrong.':
-    'Palavras que a verificação ortográfica nunca assinala como erradas.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Que aplicação o Orden segue nos atalhos; qualquer atalho abaixo pode ainda ser alterado.',
   'Moves and edits in notes with Vim’s keys.': 'Move e edita nas notas com as teclas do Vim.',

@@ -641,3 +641,29 @@ describe('the theme kept with the account', () => {
     }
   })
 })
+
+describe('a setting the app no longer has', () => {
+  const RETIRED: Record<string, unknown> = {
+    spellWords: ['orden', 'tauri'],
+  }
+
+  test('is taken from an older build and kept nowhere', async () => {
+    for (const [name, value] of Object.entries(RETIRED)) {
+      const set = await patch({ [name]: value, ligatures: true })
+      expect(set.status, name).toBe(200)
+      expect(set.json.settings, name).toEqual({ ligatures: true })
+    }
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ ligatures: true })
+  })
+
+  test('is taken whatever shape it has', async () => {
+    for (const name of Object.keys(RETIRED)) {
+      expect((await patch({ [name]: { not: 'what it was' } })).status, name).toBe(200)
+    }
+  })
+
+  test('is not handed back where an account stored it before', async () => {
+    env.db.exec(`update users set settings = '${JSON.stringify({ ...RETIRED, vim: true })}'`)
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ vim: true })
+  })
+})

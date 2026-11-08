@@ -684,11 +684,7 @@ export const yue: Dictionary = {
   'In use': '用緊',
   Use: '用',
   Remove: '移除',
-  'Your words': '你嘅詞彙',
   Words: '詞彙',
-  'Add a word': '新增詞彙',
-  'Add {word} to the dictionary': '將{word}加入詞典',
-  'Remove {word} from the dictionary': '從詞典移除{word}',
   '{count} things in this theme were left out.': '呢個主題中有{count}項被忽略。',
   'A note': '一篇筆記',
   'Words with {bold} and a {link}.': '含{bold}同{link}嘅文字。',
@@ -2431,7 +2427,6 @@ export const yue: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     '喺網頁標籤頁網址列打嘅字會用邊度搜尋。',
   'The search address, with %s where the words go.': '搜尋網址，%s 嗰度會換成你打嘅字。',
-  'Words the spelling check never marks as wrong.': '拼字檢查永遠唔會當係錯嘅字。',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden 跟邊個 app 嘅按鍵；下面每個鍵都仲可以改。',
   'Moves and edits in notes with Vim’s keys.': '用 Vim 嘅按鍵喺筆記入面移動同編輯。',

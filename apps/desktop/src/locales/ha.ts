@@ -697,11 +697,7 @@ export const ha: Dictionary = {
   'In use': 'Ana amfani',
   Use: 'Yi amfani',
   Remove: 'Cire',
-  'Your words': 'Kalmominka',
   Words: 'Kalmomi',
-  'Add a word': 'Ƙara kalma',
-  'Add {word} to the dictionary': 'Ƙara {word} cikin ƙamus',
-  'Remove {word} from the dictionary': 'Cire {word} daga ƙamus',
   '{count} things in this theme were left out.': {
     one: 'An bar abu {count} a wannan kamanni.',
     other: 'An bar abubuwa {count} a wannan kamanni.',
@@ -2542,8 +2538,6 @@ export const ha: Dictionary = {
     'Inda ake neman kalmomin da aka rubuta a mashigin adireshi na shafin yanar gizo.',
   'The search address, with %s where the words go.':
     'Adireshin bincike, da %s a inda kalmomin za su shiga.',
-  'Words the spelling check never marks as wrong.':
-    'Kalmomin da duba rubutun kalma ba ya taɓa nuna su a matsayin kuskure.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Maɓallan wace manhaja Orden ke bi; har yanzu ana iya canza kowane maɓalli a ƙasa.',
   'Moves and edits in notes with Vim’s keys.':

@@ -693,11 +693,7 @@ export const ur: Dictionary = {
   'In use': 'زیرِ استعمال',
   Use: 'استعمال کریں',
   Remove: 'ہٹائیں',
-  'Your words': 'آپ کے الفاظ',
   Words: 'الفاظ',
-  'Add a word': 'لفظ شامل کریں',
-  'Add {word} to the dictionary': '{word} کو لغت میں شامل کریں',
-  'Remove {word} from the dictionary': '{word} کو لغت سے ہٹائیں',
   '{count} things in this theme were left out.': {
     one: 'اس تھیم کی {count} چیز چھوڑ دی گئی۔',
     other: 'اس تھیم کی {count} چیزیں چھوڑ دی گئیں۔',
@@ -2505,8 +2501,6 @@ export const ur: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'ویب ٹیب کے ایڈریس بار میں لکھے الفاظ کہاں تلاش کیے جائیں۔',
   'The search address, with %s where the words go.': 'تلاش کا پتہ، جس میں الفاظ کی جگہ %s ہو۔',
-  'Words the spelling check never marks as wrong.':
-    'وہ الفاظ جنہیں ہجے کی جانچ کبھی غلط نہیں بتاتی۔',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden کس ایپ کی کلیدوں کی پیروی کرتا ہے؛ نیچے کی ہر کلید پھر بھی بدلی جا سکتی ہے۔',
   'Moves and edits in notes with Vim’s keys.': 'Vim کی کلیدوں سے نوٹس میں حرکت اور ترمیم کرتا ہے۔',

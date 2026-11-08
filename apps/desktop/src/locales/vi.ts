@@ -690,11 +690,7 @@ export const vi: Dictionary = {
   'In use': 'Đang dùng',
   Use: 'Dùng',
   Remove: 'Bỏ',
-  'Your words': 'Từ của bạn',
   Words: 'Từ',
-  'Add a word': 'Thêm từ',
-  'Add {word} to the dictionary': 'Thêm {word} vào từ điển',
-  'Remove {word} from the dictionary': 'Bỏ {word} khỏi từ điển',
   '{count} things in this theme were left out.': '{count} thứ trong chủ đề này bị bỏ qua.',
   'A note': 'Một ghi chú',
   'Words with {bold} and a {link}.': 'Chữ có {bold} và một {link}.',
@@ -2480,8 +2476,6 @@ export const vi: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'Nơi tìm kiếm những từ gõ vào thanh địa chỉ của thẻ web.',
   'The search address, with %s where the words go.': 'Địa chỉ tìm kiếm, với %s ở chỗ đặt các từ.',
-  'Words the spelling check never marks as wrong.':
-    'Những từ mà kiểm tra chính tả không bao giờ đánh dấu là sai.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden theo phím của ứng dụng nào; mọi phím bên dưới vẫn đổi được.',
   'Moves and edits in notes with Vim’s keys.': 'Di chuyển và sửa trong ghi chú bằng phím của Vim.',

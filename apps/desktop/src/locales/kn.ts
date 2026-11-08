@@ -699,11 +699,7 @@ export const kn: Dictionary = {
   'In use': 'ಬಳಕೆಯಲ್ಲಿ',
   Use: 'ಬಳಸಿ',
   Remove: 'ತೆಗೆಯಿರಿ',
-  'Your words': 'ನಿಮ್ಮ ಪದಗಳು',
   Words: 'ಪದಗಳು',
-  'Add a word': 'ಪದ ಸೇರಿಸಿ',
-  'Add {word} to the dictionary': '{word} ಅನ್ನು ನಿಘಂಟಿಗೆ ಸೇರಿಸಿ',
-  'Remove {word} from the dictionary': '{word} ಅನ್ನು ನಿಘಂಟಿನಿಂದ ತೆಗೆಯಿರಿ',
   '{count} things in this theme were left out.': {
     one: 'ಈ ಥೀಮ್‌ನಲ್ಲಿ {count} ಅಂಶ ಬಿಡಲಾಗಿದೆ.',
     other: 'ಈ ಥೀಮ್‌ನಲ್ಲಿ {count} ಅಂಶಗಳನ್ನು ಬಿಡಲಾಗಿದೆ.',
@@ -2534,8 +2530,6 @@ export const kn: Dictionary = {
     'ವೆಬ್ ಟ್ಯಾಬ್‌ನ ವಿಳಾಸ ಪಟ್ಟಿಯಲ್ಲಿ ಟೈಪ್ ಮಾಡಿದ ಪದಗಳನ್ನು ಎಲ್ಲಿ ಹುಡುಕಲಾಗುತ್ತದೆ ಎಂಬುದು.',
   'The search address, with %s where the words go.':
     'ಹುಡುಕಾಟ ವಿಳಾಸ, ಪದಗಳು ಬರುವ ಸ್ಥಳದಲ್ಲಿ %s ಇರುವಂತೆ.',
-  'Words the spelling check never marks as wrong.':
-    'ಕಾಗುಣಿತ ಪರಿಶೀಲನೆ ಎಂದಿಗೂ ತಪ್ಪೆಂದು ಗುರುತಿಸದ ಪದಗಳು.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden ಯಾವ ಆ್ಯಪ್‌ನ ಕೀಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ ಎಂಬುದು; ಕೆಳಗಿನ ಯಾವುದೇ ಕೀಯನ್ನು ಇನ್ನೂ ಬದಲಾಯಿಸಬಹುದು.',
   'Moves and edits in notes with Vim’s keys.':
