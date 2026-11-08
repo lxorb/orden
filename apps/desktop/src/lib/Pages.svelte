@@ -63,7 +63,7 @@
   import { RightPan } from './canvas/right-pan'
   import { freeScroll, holdFreeScroll } from './canvas/free-scroll'
   import { copyText } from './clipboard'
-  import { placesOf } from './reading/find'
+  import { placesOnPaper } from './pdf/find'
   import type { Highlight } from './pdf/highlights'
   import { marksFromOutside } from './pdf/sheets.svelte'
   import { loadHighlights } from './pdf/sidecar'
@@ -301,8 +301,8 @@
     const out: PaperHit[] = []
     for (const page of pages) {
       if (page.file !== backing || !page.page) continue
-      for (const at of placesOf(texts[page.page - 1] ?? '', wanted)) {
-        out.push({ paper: page.page, at, length: wanted.length })
+      for (const { at, length } of placesOnPaper(texts[page.page - 1] ?? '', wanted)) {
+        out.push({ paper: page.page, at, length })
         if (out.length >= MOST_HITS) return out
       }
     }
