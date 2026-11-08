@@ -10,6 +10,7 @@ const COOLING = 1 - Math.pow(COLD, 1 / TICKS)
 
 const SETTLING_TICKS = 4
 const DRAG_WARMTH = 0.3
+const CARRIED_WARMTH = 0.1
 
 const THETA_SQUARED = 0.81
 const NEAREST_SQUARED = 1
@@ -35,6 +36,7 @@ export interface LayoutOptions {
   gather?: boolean
   distance?: number
   push?: number
+  from?: ReadonlyMap<string, { x: number; y: number }> | undefined
 }
 
 export class Layout {
@@ -81,6 +83,8 @@ export class Layout {
       this.y[one] = radius * Math.sin(angle)
     }
 
+    if (options.from?.size) this.carry(graph, options.from, next)
+
     const edges = graph.edges.length
     this.from = new Int32Array(edges)
     this.to = new Int32Array(edges)
@@ -104,6 +108,36 @@ export class Layout {
     this.order = new Int32Array(count)
     this.scratch = new Int32Array(count)
     this.growCells(Math.max(8, 4 * Math.ceil(count / IN_A_LEAF) + 8))
+  }
+
+  private carry(
+    graph: NoteGraph,
+    from: ReadonlyMap<string, { x: number; y: number }>,
+    next: () => number,
+  ) {
+    const known = new Uint8Array(this.count)
+    for (const [one, node] of graph.nodes.entries()) {
+      const was = from.get(node.id)
+      if (!was) continue
+      this.x[one] = was.x
+      this.y[one] = was.y
+      known[one] = 1
+    }
+    if (!known.includes(1)) return
+
+    for (const edge of graph.edges) {
+      for (const [one, other] of [
+        [edge.a, edge.b],
+        [edge.b, edge.a],
+      ] as const) {
+        if (known[one] || !known[other]) continue
+        const angle = next() * 2 * Math.PI
+        this.x[one] = (this.x[other] ?? 0) + this.distance * Math.cos(angle)
+        this.y[one] = (this.y[other] ?? 0) + this.distance * Math.sin(angle)
+        known[one] = 1
+      }
+    }
+    this.warmth = CARRIED_WARMTH
   }
 
   get settled(): boolean {
