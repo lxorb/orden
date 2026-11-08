@@ -210,6 +210,32 @@ test('what a finger rubbed out comes back when the system cancels the touch as a
   expect(drawn()).toBe(before)
 })
 
+test('a pen stroke the browser cancels while the pen tip still writes goes on, as on a canvas', () => {
+  tools.choose('draw')
+  pointer('pointerdown', 3, 'pen', 100, 320, 1)
+  for (let x = 110; x <= 150; x += 10) pointer('pointermove', 3, 'pen', x, 320, 1)
+  pointer('pointercancel', 3, 'pen', 150, 320, 0)
+  for (let x = 160; x <= 220; x += 10) pointer('pointermove', 3, 'pen', x, 320, 1)
+  pointer('pointerup', 3, 'pen', 220, 320, 0)
+
+  const drawn = store().canvas.ink.filter((stroke) => stroke.id !== 's')
+  expect(drawn).toHaveLength(1)
+  const xs = drawn[0]?.points.map((point) => point.x) ?? []
+  expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(70)
+})
+
+test('a pen stroke the browser cancels ends once the pen tip says nothing more', async () => {
+  tools.choose('draw')
+  pointer('pointerdown', 4, 'pen', 100, 360, 1)
+  for (let x = 110; x <= 150; x += 10) pointer('pointermove', 4, 'pen', x, 360, 1)
+  pointer('pointercancel', 4, 'pen', 150, 360, 0)
+  await new Promise((done) => setTimeout(done, 400))
+  pointer('pointermove', 4, 'pen', 200, 360, 1)
+  pointer('pointerup', 4, 'pen', 200, 360, 0)
+
+  expect(store().canvas.ink.filter((stroke) => stroke.id !== 's')).toHaveLength(0)
+})
+
 test('a pen put down while a palm already rests on the page draws, as on a canvas', () => {
   tools.choose('draw')
   pointer('pointerdown', 9, 'touch', 60, 300, 1)
