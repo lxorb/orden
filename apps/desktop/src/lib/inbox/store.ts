@@ -1,5 +1,6 @@
 import { todayOf } from '@orden/bases'
 import {
+  inboxChangeOf,
   inboxStamp,
   mergedInbox,
   MOST_INBOX_CHANGES,
@@ -208,7 +209,9 @@ export class InboxRecords {
         fields[key] = one.fields[key] ?? null
         stamps[key] = one.stamps[key] ?? this.stamp()
       }
-      out.push({ id: one.id, fields, stamps })
+      const change = inboxChangeOf({ id: one.id, fields, stamps })
+      if (!change) continue
+      out.push(change)
       if (out.length >= MOST_INBOX_CHANGES) break
     }
     return out

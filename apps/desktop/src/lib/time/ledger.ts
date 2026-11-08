@@ -41,8 +41,8 @@ export class Ledger {
     return row
   }
 
-  pending(most: number): Row[] {
-    return [...this.rows.values()].filter((row) => row.dirty > 0).slice(0, most)
+  pending(most: number, sendable: (row: Row) => boolean = () => true): Row[] {
+    return [...this.rows.values()].filter((row) => row.dirty > 0 && sendable(row)).slice(0, most)
   }
 
   sent(rows: readonly Row[]): Row[] {

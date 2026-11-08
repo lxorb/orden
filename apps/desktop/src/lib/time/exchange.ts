@@ -1,4 +1,9 @@
-import { MOST_TIME_CHANGES, type TimeChange, type TimePage } from '@orden/sync-core/time'
+import {
+  MOST_TIME_CHANGES,
+  type TimeChange,
+  timeChangeOf,
+  type TimePage,
+} from '@orden/sync-core/time'
 import { changeOf, type Ledger, type Row } from './ledger'
 
 export interface TimeServer {
@@ -21,7 +26,7 @@ export async function exchange(
 ): Promise<Exchanged> {
   const written: Row[] = []
   for (;;) {
-    const sending = ledger.pending(MOST_TIME_CHANGES)
+    const sending = ledger.pending(MOST_TIME_CHANGES, (row) => timeChangeOf(changeOf(row)) !== null)
     if (!sending.length) break
     if (!(await server.push(sending.map(changeOf))))
       return { cursor: since, written, reached: false }
