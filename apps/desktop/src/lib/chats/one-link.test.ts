@@ -117,7 +117,10 @@ function windows(count: number) {
       locks: () => Promise.resolve(locks.as(at + 1)),
       line: (heard) => line(id, heard),
     })
-    const hub = new Connected((p, c, h, k, w) => link.dial(p, c, h, k, w))
+    const hub = new Connected(
+      (p, c, h, k, w) => link.dial(p, c, h, k, w),
+      (p, a, work) => link.alone(p, a, work),
+    )
     opened.push(hub)
     const heard: ProviderEvent[] = []
     hub.hear((_provider, _account, event) => heard.push(event))
@@ -241,5 +244,29 @@ describe('one connection per account across windows', () => {
     opened.push(hub)
     const linked = await hub.link(fake, { name: 'acct' }, host)
     expect(linked.conversations.length).toBeGreaterThan(0)
+  })
+})
+
+describe('forgetting an account', () => {
+  test('is done only once no window holds its connection', async () => {
+    const { fake, provider, made } = windows(2)
+    const account = (await fake.connect({ name: 'acct' }, host)).account.id
+    const [first, second] = made
+    if (!first || !second) throw new Error('no windows')
+    await first.hub.link(provider, { name: 'acct' }, host, account)
+    await second.hub.link(provider, { name: 'acct' }, host, account)
+    second.hub.wanted = () => false
+    first.hub.wanted = () => false
+    let forgotten = false
+    const forgetting = second.hub.alone(provider.id, account, () => {
+      forgotten = true
+      return Promise.resolve()
+    })
+    await second.hub.unlink(provider.id, account)
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(forgotten).toBe(false)
+    await first.hub.unlink(provider.id, account)
+    await forgetting
+    expect(forgotten).toBe(true)
   })
 })

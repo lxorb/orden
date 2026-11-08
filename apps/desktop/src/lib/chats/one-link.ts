@@ -391,6 +391,17 @@ export class OneLink {
     }
   }
 
+  async alone<T>(provider: string, account: string, work: () => Promise<T>): Promise<T> {
+    const locks = await this.world.locks()
+    if (!locks) return work()
+    const release = await holdWithin(locks, keyOf(provider, account), TAKE_WITHIN)
+    try {
+      return await work()
+    } finally {
+      release()
+    }
+  }
+
   async dial(
     provider: ChatProvider,
     config: Readonly<Record<string, string>>,
@@ -500,4 +511,11 @@ let native: OneLink | null = null
 export const oneLink: Dial = (provider, config, host, known, wanted) => {
   native ??= new OneLink(nativeWorld())
   return native.dial(provider, config, host, known, wanted)
+}
+
+export type Alone = <T>(provider: string, account: string, work: () => Promise<T>) => Promise<T>
+
+export const oneAlone: Alone = (provider, account, work) => {
+  native ??= new OneLink(nativeWorld())
+  return native.alone(provider, account, work)
 }
