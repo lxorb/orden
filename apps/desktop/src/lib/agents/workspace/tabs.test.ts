@@ -448,6 +448,22 @@ describe('where the reader is', () => {
     })
   })
 
+  test('a long terminal selection is cut like a note selection', async () => {
+    workspace.activeTabId = 't1'
+    running.add('t1')
+    const was = term.getSelection
+    term.getSelection = () => 'x'.repeat(5000 * 200)
+    try {
+      const said = (await call('get_context', {})) as {
+        result: { selection: { selected: string; truncated?: boolean } }
+      }
+      expect(said.result.selection.selected).toHaveLength(20_000)
+      expect(said.result.selection.truncated).toBe(true)
+    } finally {
+      term.getSelection = was
+    }
+  })
+
   test('a note shared with the reader, in front, is read as data', async () => {
     const theirs = tab('theirs', 'note', null, { shown: 'Their plan' })
     theirs.note.shared = 'item-1'

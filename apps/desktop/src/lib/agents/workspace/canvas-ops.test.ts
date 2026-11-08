@@ -99,6 +99,34 @@ function exchange(one: Y.Doc, other: Y.Doc) {
   Y.applyUpdate(one, toOne)
 }
 
+describe('what one call may ask', () => {
+  test('at most five hundred operations', () => {
+    const many = (n: number) => Array.from({ length: n }, () => ({ op: 'add_card' }))
+    expect(applied(plane(), many(500)).made).toHaveLength(500)
+    expect(refusal(() => applied(plane(), many(501)))).toBe('bad_arguments')
+  })
+
+  test('a card stays where the canvas can keep it', () => {
+    const { canvas, made } = applied(plane(), [
+      { op: 'add_card', x: -1e308, y: 1e308, width: 1e308, height: 1e308 },
+      { op: 'add_card' },
+    ])
+    const [huge, next] = made.map((id) => canvas.nodes.find((one) => one.id === id)!)
+    expect(huge).toMatchObject({ x: -1e9, y: 1e9, width: 100_000, height: 100_000 })
+    expect(Number.isFinite(next!.y)).toBe(true)
+    expect(JSON.parse(JSON.stringify(canvas)).nodes[1].y).toBe(next!.y)
+  })
+
+  test('a move stays where the canvas can keep it', () => {
+    let canvas = plane(card('a', 0, 0))
+    canvas = applied(canvas, [
+      { op: 'move', id: 'a', dx: 1e308, dy: -1e308 },
+      { op: 'move', id: 'a', dx: 1e308 },
+    ]).canvas
+    expect(canvas.nodes[0]).toMatchObject({ x: 1e9, y: -1e9 })
+  })
+})
+
 describe('an agent edit beside the reader drawing', () => {
   test('merges object by object through the room, whichever lands first', () => {
     const start = plane(card('a', 0, 0), card('b', 400, 0))

@@ -113,7 +113,7 @@ async function selectionIn(tab: Tab): Promise<unknown> {
 
     case 'terminal': {
       const { terminalSelection } = await import('./terminal-tab')
-      return terminalSelection(tab)
+      return terminalSelection(tab, LONGEST_SELECTION)
     }
 
     case 'page':

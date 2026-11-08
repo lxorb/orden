@@ -7,6 +7,7 @@ import {
   type Side,
 } from '../../canvas/format'
 import { connected, movedBy, removed, withLabel, withNode, withText } from '../../canvas/edits'
+import { FURTHEST } from '@orden/markdown/canvas'
 import { settled } from '@orden/markdown/pages'
 import { hasPages, pageIn, pageOperation, placeOnPage } from './pages-ops'
 import { Refused } from './problem'
@@ -27,6 +28,17 @@ function numberOf(op: Record<string, unknown>, key: string): number | null {
 function textOf(op: Record<string, unknown>, key: string): string | null {
   const value = op[key]
   return typeof value === 'string' ? value : null
+}
+
+const MOST_OPS = 500
+const LARGEST = 100_000
+
+function held(value: number): number {
+  return Math.round(Math.min(FURTHEST, Math.max(-FURTHEST, value)))
+}
+
+function sized(op: Record<string, unknown>, key: string, fallback: number): number {
+  return Math.min(LARGEST, Math.max(20, Math.round(numberOf(op, key) ?? fallback)))
 }
 
 function nodeIn(canvas: Canvas, id: string | null): CanvasNode {
@@ -68,6 +80,7 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
   if (!Array.isArray(ops) || !ops.length) {
     throw new Refused('bad_arguments', 'ops is a list of at least one operation')
   }
+  if (ops.length > MOST_OPS) throw new Refused('bad_arguments', `at most ${MOST_OPS} ops a call`)
 
   let now = settled(canvas)
   const made: string[] = []
@@ -87,10 +100,10 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
           id: freshId(),
           type: 'text',
           text: textOf(op, 'text') ?? '',
-          x: Math.round(page ? at.x : (numberOf(op, 'x') ?? at.x)),
-          y: Math.round(page ? at.y : (numberOf(op, 'y') ?? at.y)),
-          width: Math.max(20, Math.round(numberOf(op, 'width') ?? DEFAULT_WIDTH)),
-          height: Math.max(20, Math.round(numberOf(op, 'height') ?? DEFAULT_HEIGHT)),
+          x: held(page ? at.x : (numberOf(op, 'x') ?? at.x)),
+          y: held(page ? at.y : (numberOf(op, 'y') ?? at.y)),
+          width: sized(op, 'width', DEFAULT_WIDTH),
+          height: sized(op, 'height', DEFAULT_HEIGHT),
           ...(colour ? { color: colour } : {}),
         }
         now = withNode(now, card)
@@ -121,8 +134,8 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
           : null
         const x = corner ? corner.x : numberOf(op, 'x')
         const y = corner ? corner.y : numberOf(op, 'y')
-        const dx = x === null ? (numberOf(op, 'dx') ?? 0) : x - node.x
-        const dy = y === null ? (numberOf(op, 'dy') ?? 0) : y - node.y
+        const dx = held(x ?? node.x + (numberOf(op, 'dx') ?? 0)) - node.x
+        const dy = held(y ?? node.y + (numberOf(op, 'dy') ?? 0)) - node.y
         now = movedBy(now, [node.id], dx, dy)
         break
       }
