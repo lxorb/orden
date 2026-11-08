@@ -23,6 +23,7 @@ import {
   pickedOnly,
   stillThere,
 } from './picked'
+import { onMoved } from './follow'
 import { places } from './places.svelte'
 import { explorerPrefs } from './prefs.svelte'
 import { readSpec, type Spec, steppedBack, steppedForward, wentTo, writeSpec } from './spec'
@@ -311,6 +312,15 @@ export class ExplorerView {
     })
   }
 
+  followMove() {
+    const spec = readSpec(this.tab.doc)
+    if (!spec || writeSpec(spec) === (this.spec && writeSpec(this.spec))) return
+    const went = !this.spec || !samePath(spec.folder, this.spec.folder)
+    this.spec = spec
+    if (went && this.#alive) void this.show(spec.folder, () => spec)
+    else if (went) this.listing = null
+  }
+
   heard(folders: readonly string[]) {
     const here = this.listing?.path
     if (here && folders.some((one) => samePath(one, here))) void this.reload()
@@ -359,6 +369,12 @@ export function viewOf(tab: Tab): ExplorerView {
   }
   return view
 }
+
+onMoved(() => {
+  for (const tab of workspace.tabs) {
+    if (tab.kind === 'explorer') views.get(tab)?.followMove()
+  }
+})
 
 export function relistAll() {
   for (const tab of workspace.tabs) {

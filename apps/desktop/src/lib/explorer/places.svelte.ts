@@ -9,9 +9,8 @@ import Library from 'lucide/dist/esm/icons/library.mjs'
 import Monitor from 'lucide/dist/esm/icons/monitor.mjs'
 import Music from 'lucide/dist/esm/icons/music.mjs'
 import { t } from '../i18n.svelte'
-import { samePath } from '../space-paths'
-import { keepJson, stored, stringList } from '../stored'
 import { listPlaces, type Place, type PlaceKind } from './commands'
+import { pins } from './pins.svelte'
 
 const SHOWN: Record<PlaceKind, { name: () => string; mark: IconNode }> = {
   home: { name: () => t('Home'), mark: House },
@@ -34,26 +33,24 @@ export function placeMark(place: Place): IconNode {
   return SHOWN[place.kind].mark
 }
 
-const PINNED = 'orden:explorer-pinned'
-
 class Places {
   list = $state<Place[]>([])
-  pinned = $state<string[]>(stringList(stored(PINNED)) ?? [])
   #asked: Promise<Place[]> | null = null
 
+  get pinned(): string[] {
+    return pins.list
+  }
+
   pin(path: string) {
-    if (this.pinned.some((one) => samePath(one, path))) return
-    this.pinned = [...this.pinned, path]
-    keepJson(PINNED, this.pinned)
+    pins.pin(path)
   }
 
   unpin(path: string) {
-    this.pinned = this.pinned.filter((one) => !samePath(one, path))
-    keepJson(PINNED, this.pinned)
+    pins.unpin(path)
   }
 
   isPinned(path: string): boolean {
-    return this.pinned.some((one) => samePath(one, path))
+    return pins.has(path)
   }
 
   ask(again = false): Promise<Place[]> {

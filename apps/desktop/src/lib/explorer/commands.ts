@@ -1,5 +1,6 @@
 import { invoke } from '../tauri'
 import type { OutsideTicket } from '../workspace/undo.svelte'
+import { moved } from './follow'
 
 export interface Entry {
   name: string
@@ -94,8 +95,15 @@ export function makeIn(folder: string, name: string, file: boolean): Promise<str
   return invoke<string>('explorer_make', { folder, name, file })
 }
 
-export function renameTo(path: string, name: string): Promise<string> {
-  return invoke<string>('explorer_rename', { path, name })
+export async function renameTo(path: string, name: string): Promise<string> {
+  const to = await invoke<string>('explorer_rename', { path, name })
+  moved(path, to)
+  return to
+}
+
+function carried(done: Transferred, how: 'copy' | 'move'): Transferred {
+  if (how === 'move') for (const one of done.done) if (!one.stayed) moved(one.from, one.to)
+  return done
 }
 
 export interface Trashing {
@@ -127,7 +135,14 @@ export function transfer(
   clash: Clash,
   staying: readonly string[] = [],
 ): Promise<Transferred> {
-  return invoke<Transferred>('explorer_transfer', { job, sources, folder, how, clash, staying })
+  return invoke<Transferred>('explorer_transfer', {
+    job,
+    sources,
+    folder,
+    how,
+    clash,
+    staying,
+  }).then((done) => carried(done, how))
 }
 
 export function put(
@@ -135,7 +150,7 @@ export function put(
   pairs: readonly Pair[],
   how: 'copy' | 'move',
 ): Promise<Transferred> {
-  return invoke<Transferred>('explorer_put', { job, pairs, how })
+  return invoke<Transferred>('explorer_put', { job, pairs, how }).then((done) => carried(done, how))
 }
 
 export function cancelJob(job: string): Promise<void> {
