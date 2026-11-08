@@ -252,6 +252,12 @@ export class Protection {
     return way ? { root, key, way } : null
   }
 
+  marked(root: string, path: string): boolean {
+    if (this.own(root, path)) return true
+    const original = copiedFrom(path)
+    return original !== null && this.own(root, original) !== null
+  }
+
   ways(root: string): Record<string, Way> {
     return this.spaces[root]?.ways ?? {}
   }

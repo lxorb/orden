@@ -232,6 +232,18 @@ describe('a copy an outside sync tool left of a protected note', () => {
     ])
   })
 
+  test('wears the lock mark its note or folder wears', () => {
+    protection.set(ROOT, at('Diary.md'), 'password')
+    protection.set(ROOT, at('Inside'), 'device')
+    for (const name of copies) expect(protection.marked(ROOT, at(name))).toBe(true)
+    expect(protection.marked(ROOT, at('Inside (conflicted copy 2026-11-08 101010)'))).toBe(true)
+    expect(protection.marked(ROOT, at('Inside (conflicted copy 2026-11-08 101010)/a.md'))).toBe(
+      false,
+    )
+    expect(protection.marked(ROOT, at('Plans (conflicted copy 2026-11-08 101010).md'))).toBe(false)
+    expect(protection.marked(ROOT, at('Diary 2.md'))).toBe(false)
+  })
+
   test('is told once, when it lies under the same lock as its note', () => {
     protection.set(ROOT, at('Inside'), 'device')
     protection.set(ROOT, at('Inside/Diary.md'), 'password')
