@@ -213,7 +213,7 @@ export const run = {
       return
     }
 
-    if (/^[a-z][a-z\d+.-]*:\/\//i.test(text)) {
+    if (/^[a-z][a-z\d+.-]*:\/\/\S*$/i.test(text)) {
       putLink(store, text, placedAt(at, DEFAULT_WIDTH, GRID * 4))
     } else {
       putText(store, text, placedAt(at, DEFAULT_WIDTH, DEFAULT_HEIGHT))
