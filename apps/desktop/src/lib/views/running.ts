@@ -2,13 +2,13 @@ import { idNumber, inBase, readBase, readAutomations, repeatDue, type Row } from
 import { withProperties } from '@orden/bases/agent'
 import { frontMatterValue } from '@orden/markdown'
 import { insideOnly } from '../automation/inside'
-import { inTurn } from '../locks'
+import { heldForLife, inTurn } from '../locks'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
 import { noteRowsOf, type RowsChange } from '../rows/store'
 import { basesOn } from '../settings.svelte'
 import { canWriteAt } from '../sharing.svelte'
-import { insideSpace, within } from '../space-paths'
+import { insideSpace, pathKey, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
@@ -23,15 +23,48 @@ import { templatesFolder, templateWords } from './templates'
 
 const held = new Map<string, HeldBase>()
 
+const leading = new Set<string>()
+const letGo = new Map<string, AbortController>()
+
+function lead(path: string) {
+  if (letGo.has(path)) return
+  const stop = new AbortController()
+  letGo.set(path, stop)
+  heldForLife(
+    `orden:automations:${pathKey(path)}`,
+    () =>
+      new Promise<void>((done) => {
+        const end = () => {
+          leading.delete(path)
+          done()
+        }
+        if (stop.signal.aborted) end()
+        else {
+          leading.add(path)
+          stop.signal.addEventListener('abort', end, { once: true })
+        }
+      }),
+    stop.signal,
+  )
+}
+
+function forget(path: string) {
+  held.delete(path)
+  letGo.get(path)?.abort()
+  letGo.delete(path)
+  leading.delete(path)
+}
+
 export function basesAre(paths: readonly string[]) {
-  for (const path of [...held.keys()]) if (!paths.includes(path)) held.delete(path)
+  for (const path of [...held.keys()]) if (!paths.includes(path)) forget(path)
   for (const path of paths) if (!held.has(path)) void readHeld(path)
 }
 
 const running = (): boolean => held.size > 0
 
-function heldIn(space: string): HeldBase[] {
+function heldIn(space: string, led = false): HeldBase[] {
   return [...held.entries()].flatMap(([path, one]) => {
+    if (led && !leading.has(path)) return []
     const base = one.space === space ? guardedAt(one.base, path) : null
     return base ? [{ ...one, base }] : []
   })
@@ -73,12 +106,13 @@ export async function readHeld(path: string): Promise<void> {
         space: space.name,
         base,
       })
+      lead(path)
       return
     }
   } catch {
     // A base half written by hand runs nothing until it reads again.
   }
-  held.delete(path)
+  forget(path)
 }
 
 function rowsOf(space: string, path: string): readonly Row[] {
@@ -109,7 +143,7 @@ function withoutIds(path: string, text: string): string | null {
 leaveIdsBy({ numbers: (path) => numbering(path).bases.length > 0, without: withoutIds })
 
 async function run(space: string, path: string, removed: readonly Row[]) {
-  const bases = heldIn(space)
+  const bases = heldIn(space, true)
   const root = workspace.spaces.find((one) => one.name === space)?.root
   if (!bases.length || root === undefined || !canWriteAt(root)) return
   const all = rows.of(space)
