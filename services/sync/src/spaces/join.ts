@@ -8,7 +8,14 @@ import { forgetEmptyGuest, newGuest, presentGuest } from '../guests'
 import { machineOf, mayTellTheOwner } from '../limits'
 import { asksForSecond, halfWay } from '../second'
 import type { Env, Guest, Space, User, Variables } from '../types'
-import { EMAIL_LIMIT, itemName, MOST_MEMBERS, personName, presentItem } from './share'
+import {
+  EMAIL_LIMIT,
+  itemName,
+  MOST_MEMBERS,
+  personName,
+  presentItem,
+  roomForMember,
+} from './share'
 import { onceShared, presentSpace, type Given } from './space'
 
 const EXPIRED = 'that link has expired'
@@ -138,34 +145,39 @@ async function memberNow(
 ): Promise<Given | null> {
   const { space, item } = found
 
-  const roleOf = () =>
-    env.DB.prepare('select role from space_members where space_id = ? and email = ? and item = ?')
-      .bind(space.id, email, item)
-      .first<{ role: Given }>()
-
-  const counted = await env.DB.prepare(
-    'select count(*) as held from space_members where space_id = ? and item = ?',
-  )
-    .bind(space.id, item)
-    .first<{ held: number }>()
-
-  if ((counted?.held ?? 0) >= MOST_MEMBERS) return (await roleOf())?.role ?? null
-
-  await env.DB.prepare(
+  const joined = await env.DB.prepare(
     `insert into space_members (space_id, email, item, role, joined_at, created_at)
-     values (?1, ?2, ?3, ?4, ?5, ?5)
+     select ?1, ?2, ?3, ?4, ?5, ?5
+      where ${roomForMember('?1', '?2', '?3', '?6')}
      on conflict(space_id, email, item)
        do update set joined_at = coalesce(space_members.joined_at, ?5)`,
   )
-    .bind(space.id, email, item, role, now())
+    .bind(space.id, email, item, role, now(), MOST_MEMBERS)
     .run()
+  if (!joined.meta.changes) return null
   await onceShared(env, space.id, item)
 
-  return (await roleOf())?.role ?? role
+  const held = await env.DB.prepare(
+    'select role from space_members where space_id = ? and email = ? and item = ?',
+  )
+    .bind(space.id, email, item)
+    .first<{ role: Given }>()
+
+  return held?.role ?? role
 }
 
 function spaceIsFull(context: Reply) {
   return context.json({ error: SPACE_IS_FULL }, 409)
+}
+
+const GUESTS_IN = `(select count(*) from guest_members
+                      where space_id = ?1 and item = ?3 and joined_at is not null)`
+
+function waitingIn(space: string, item: string): string {
+  return `((select count(*) from space_requests where space_id = ${space} and item = ${item})
+         + (select count(*) from guest_members
+             where space_id = ${space} and item = ${item}
+               and joined_at is null and declined_at is null))`
 }
 
 async function roomForAGuest(env: Env, spaceId: string, item: string): Promise<boolean> {
@@ -181,16 +193,15 @@ async function roomForAGuest(env: Env, spaceId: string, item: string): Promise<b
 }
 
 async function roomToWait(env: Env, spaceId: string, item: string): Promise<boolean> {
-  const held = await env.DB.prepare(
-    `select (select count(*) from space_requests where space_id = ?1 and item = ?2)
-          + (select count(*) from guest_members
-              where space_id = ?1 and item = ?2
-                and joined_at is null and declined_at is null) as waiting`,
-  )
+  const held = await env.DB.prepare(`select ${waitingIn('?1', '?2')} as waiting`)
     .bind(spaceId, item)
     .first<{ waiting: number }>()
 
   return (held?.waiting ?? 0) < MOST_WAITING
+}
+
+function linkIsBusy(context: Reply) {
+  return context.json({ error: 'that link is busy, try again in a minute' }, 429)
 }
 
 function tooManyWaiting(context: Reply) {
@@ -213,15 +224,26 @@ async function writeGuestMember(
   role: Given,
   waiting: boolean,
   item: string,
-): Promise<void> {
-  await env.DB.prepare(
+): Promise<boolean> {
+  const written = await env.DB.prepare(
     `insert into guest_members (space_id, guest_id, item, role, joined_at, created_at)
-     values (?, ?, ?, ?, ?, ?)
+     select ?1, ?2, ?3, ?4, ?5, ?6
+      where ${waiting ? waitingIn('?1', '?3') : GUESTS_IN} < ?7
      on conflict(space_id, guest_id, item) do nothing`,
   )
-    .bind(spaceId, guestId, item, role, waiting ? null : now(), now())
+    .bind(
+      spaceId,
+      guestId,
+      item,
+      role,
+      waiting ? null : now(),
+      now(),
+      waiting ? MOST_WAITING : MOST_GUESTS,
+    )
     .run()
+  if (!written.meta.changes && !(await guestStanding(env, spaceId, guestId, item))) return false
   if (!waiting) await onceShared(env, spaceId, item)
+  return true
 }
 
 async function tellTheOwner(context: Reply, found: Leads, who: string): Promise<void> {
@@ -376,13 +398,22 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
 
     if (!(await roomToWait(context.env, space.id, item))) return tooManyWaiting(context)
 
-    await context.env.DB.prepare(
+    const asked = await context.env.DB.prepare(
       `insert into space_requests (space_id, email, item, role, created_at)
-       values (?1, ?2, ?3, ?4, ?5)
+       select ?1, ?2, ?3, ?4, ?5
+        where ${waitingIn('?1', '?3')} < ?6
        on conflict(space_id, email, item) do nothing`,
     )
-      .bind(space.id, user.email, item, found.role, now())
+      .bind(space.id, user.email, item, found.role, now(), MOST_WAITING)
       .run()
+    if (!asked.meta.changes) {
+      const there = await context.env.DB.prepare(
+        'select 1 from space_requests where space_id = ? and email = ? and item = ?',
+      )
+        .bind(space.id, user.email, item)
+        .first()
+      if (!there) return tooManyWaiting(context)
+    }
 
     await tellTheOwner(context, found, personName(user))
     return context.json({ waiting: true })
@@ -411,13 +442,15 @@ async function asAGuest(context: Reply, found: Leads, guest: Guest) {
   if (await askingAgain(context)) return context.json({ error: NO_LONGER_WAITING }, 410)
 
   if (!(await roomForAGuest(context.env, space.id, item))) {
-    return context.json({ error: 'that link is busy, try again in a minute' }, 429)
+    return linkIsBusy(context)
   }
 
   const asks = found.kind === 'link' && found.mode === 'approval'
   if (asks && !(await roomToWait(context.env, space.id, item))) return tooManyWaiting(context)
 
-  await writeGuestMember(context.env, space.id, guest.id, found.role, asks, item)
+  if (!(await writeGuestMember(context.env, space.id, guest.id, found.role, asks, item))) {
+    return asks ? tooManyWaiting(context) : linkIsBusy(context)
+  }
 
   if (asks) {
     await tellTheOwner(context, found, guest.name)
@@ -435,7 +468,7 @@ async function asNobody(context: Reply, found: Leads) {
   const { space, item } = found
 
   if (!(await roomForAGuest(context.env, space.id, item))) {
-    return context.json({ error: 'that link is busy, try again in a minute' }, 429)
+    return linkIsBusy(context)
   }
 
   const body = await readBody(context)
@@ -445,7 +478,10 @@ async function asNobody(context: Reply, found: Leads) {
 
   if (found.mode === 'open') {
     const { guest, token } = await newGuest(context.env, device ?? null, null, null)
-    await writeGuestMember(context.env, space.id, guest.id, found.role, false, item)
+    if (!(await writeGuestMember(context.env, space.id, guest.id, found.role, false, item))) {
+      await forgetEmptyGuest(context.env, guest.id)
+      return linkIsBusy(context)
+    }
 
     return context.json({
       token,
@@ -468,7 +504,10 @@ async function asNobody(context: Reply, found: Leads) {
     named || gave,
     isEmail(gave) ? gave : null,
   )
-  await writeGuestMember(context.env, space.id, guest.id, found.role, true, item)
+  if (!(await writeGuestMember(context.env, space.id, guest.id, found.role, true, item))) {
+    await forgetEmptyGuest(context.env, guest.id)
+    return tooManyWaiting(context)
+  }
   await tellTheOwner(context, found, guest.name)
 
   return context.json({ token, guest: presentGuest(guest), waiting: true })

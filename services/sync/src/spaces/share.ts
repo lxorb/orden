@@ -13,6 +13,13 @@ import { atLeast, isGiven, MOST_ITEMS, onceShared, spaceOf, trustAgain, type Giv
 const SAY_WHICH_ROLE = 'say whether they may write or read'
 
 export const MOST_MEMBERS = 200
+
+export function roomForMember(space: string, email: string, item: string, most: string): string {
+  return `((select count(*) from space_members where space_id = ${space} and item = ${item}) < ${most}
+          or exists (select 1 from space_members
+                      where space_id = ${space} and email = ${email} and item = ${item}))`
+}
+
 export const EMAIL_LIMIT = 320
 const ID_LIMIT = 64
 const INVITE_TTL = 30 * 24 * 60 * 60 * 1000
@@ -333,16 +340,27 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   const before = held.find((one) => one.email === email)?.role
 
   const token = randomToken()
-  await context.env.DB.prepare(
+  const invited = await context.env.DB.prepare(
     `insert into space_members (space_id, email, item, role, invite_hash, expires_at, created_at)
-     values (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+     select ?1, ?2, ?3, ?4, ?5, ?6, ?7
+      where ${roomForMember('?1', '?2', '?3', '?8')}
      on conflict(space_id, email, item) do update set
        role = excluded.role,
        invite_hash = excluded.invite_hash,
        expires_at = excluded.expires_at`,
   )
-    .bind(space.id, email, scope.id, role, await sha256(token), now() + INVITE_TTL, now())
+    .bind(
+      space.id,
+      email,
+      scope.id,
+      role,
+      await sha256(token),
+      now() + INVITE_TTL,
+      now(),
+      MOST_MEMBERS,
+    )
     .run()
+  if (!invited.meta.changes) return context.json({ error: SPACE_IS_FULL }, 409)
   await onceShared(context.env, space.id, scope.id)
 
   await context.env.DB.prepare(
@@ -535,15 +553,17 @@ share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (conte
     .bind(space.id, email, scope.id)
     .first<{ role: Given }>()
 
-  await context.env.DB.prepare(
+  const admitted = await context.env.DB.prepare(
     `insert into space_members (space_id, email, item, role, joined_at, created_at)
-     values (?1, ?2, ?3, ?4, ?5, ?5)
+     select ?1, ?2, ?3, ?4, ?5, ?5
+      where ${roomForMember('?1', '?2', '?3', '?6')}
      on conflict(space_id, email, item) do update set
        role = excluded.role,
        joined_at = coalesce(space_members.joined_at, excluded.joined_at)`,
   )
-    .bind(space.id, email, scope.id, waiting.role, now())
+    .bind(space.id, email, scope.id, waiting.role, now(), MOST_MEMBERS)
     .run()
+  if (!admitted.meta.changes) return context.json({ error: SPACE_IS_FULL }, 409)
   await onceShared(context.env, space.id, scope.id)
 
   await context.env.DB.prepare(

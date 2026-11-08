@@ -5,7 +5,7 @@ import { Hono } from 'hono'
 import { newId, now } from '../crypto'
 import { within } from '../limits'
 import { NO_SUCH_SPACE } from '../refused'
-import { roomForAnItem, TOO_MANY_ITEMS } from '../spaces/share'
+import { MOST_MEMBERS, roomForAnItem, roomForMember, TOO_MANY_ITEMS } from '../spaces/share'
 import { allows, onceShared, reachedSpace, refusal } from '../spaces/space'
 import { blobKey, BYTES, NO_SUCH_FILE } from '../sync2/files'
 import { deviceOf } from '../sync2/device'
@@ -423,16 +423,20 @@ chats.post('/:chat/note', async (context) => {
     .bind(reached.chat, dropped.space, dropped.note)
     .all<{ email: string }>()
   const at = now()
+  let shared = 0
   for (const one of results) {
-    await env.DB.prepare(
+    const added = await env.DB.prepare(
       `insert into space_members (space_id, email, item, role, joined_at, created_at)
-       values (?, ?, ?, 'read', ?, ?) on conflict(space_id, email, item) do nothing`,
+       select ?1, ?2, ?3, 'read', ?4, ?4
+        where ${roomForMember('?1', '?2', '?3', '?5')}
+       on conflict(space_id, email, item) do nothing`,
     )
-      .bind(dropped.space, one.email, dropped.note, at, at)
+      .bind(dropped.space, one.email, dropped.note, at, MOST_MEMBERS)
       .run()
+    shared += added.meta.changes
   }
-  if (results.length) await onceShared(env, dropped.space, dropped.note)
-  return context.json({ shared: results.length })
+  if (shared) await onceShared(env, dropped.space, dropped.note)
+  return context.json({ shared })
 })
 
 function dayIn(zone: string | undefined): (at: number) => string {
