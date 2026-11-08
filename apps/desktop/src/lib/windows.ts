@@ -1,4 +1,4 @@
-import { inTurn } from './locks'
+import { inTurn, locksHere, locksWork } from './locks'
 import { pathKey } from './space-paths'
 
 export interface Said {
@@ -7,6 +7,8 @@ export interface Said {
 }
 
 type Hearing = (said: Said) => void
+
+const alive = (id: string) => `orden:window:${id}`
 
 export interface Line {
   postMessage(message: unknown): void
@@ -20,7 +22,10 @@ export class Windows {
   private line: Line | null = null
   private opened = false
 
-  constructor(private readonly open: () => Line | null) {}
+  constructor(
+    private readonly open: () => Line | null,
+    private readonly locks: () => LockManager | undefined = locksHere,
+  ) {}
 
   private opening(): Line | null {
     if (this.opened) return this.line
@@ -32,9 +37,13 @@ export class Windows {
     }
     if (!this.line) return null
     this.line.onmessage = (event) => this.heard(event.data)
+    this.living()
     this.post({ kind: 'hello' })
     if (typeof window !== 'undefined') {
       window.addEventListener('pagehide', () => this.post({ kind: 'bye' }))
+      window.addEventListener('pageshow', (event) => {
+        if (event.persisted) this.post({ kind: 'hello' })
+      })
     }
     return this.line
   }
@@ -64,13 +73,46 @@ export class Windows {
     }
   }
 
+  private living(): void {
+    try {
+      this.locks()
+        ?.request(alive(this.me), () => new Promise<never>(() => undefined))
+        .catch(() => undefined)
+    } catch {
+      return
+    }
+  }
+
+  private async watch(peer: string): Promise<void> {
+    const locks = this.locks()
+    if (!locks || !(await locksWork(locks))) return
+    const name = alive(peer)
+    for (;;) {
+      if (!this.here.has(peer)) return
+      let still: boolean
+      try {
+        still = await locks.request(name, async () => {
+          const { pending = [] } = await locks.query()
+          return pending.some((one) => one.name === name)
+        })
+      } catch {
+        return
+      }
+      if (!still) break
+    }
+    if (this.here.has(peer)) this.heard({ kind: 'bye', from: peer })
+  }
+
   private heard(data: unknown): void {
     if (typeof data !== 'object' || data === null) return
     const said = data as Said & { from?: unknown }
     if (typeof said.kind !== 'string' || typeof said.from !== 'string') return
     if (said.from === this.me) return
     if (said.kind === 'bye') this.here.delete(said.from)
-    else this.here.add(said.from)
+    else if (!this.here.has(said.from)) {
+      this.here.add(said.from)
+      void this.watch(said.from)
+    }
     if (said.kind === 'hello') this.post({ kind: 'here' })
     for (const listener of [...(this.hearing.get(said.kind) ?? [])]) listener(said)
   }
