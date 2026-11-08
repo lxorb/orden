@@ -53,7 +53,6 @@ people.get('/presence', async (context) => {
 const COLUMN: Record<Exclude<keyof ProfileChanges, 'status' | 'hidden'>, string> = {
   pronouns: 'pronouns',
   bio: 'bio',
-  accent: 'accent',
   zone: 'zone',
 }
 

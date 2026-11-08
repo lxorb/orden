@@ -549,16 +549,7 @@ export const gsw: Dictionary = {
   'Actual size': 'Originalgrössi',
   Accent: 'Akzänt',
   'Tidy up': 'Ufrume',
-  'Blur the app behind the tab overview': 'App hinder de Tab-Übersicht verschwumme',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Zeigt d App verschwumme hinder de Fänschter statt em eigete Hintergrund vo Orden.',
   'Swipe in from the edge to see your notes.': 'Wisch vom Rand ine, zum dini Notize z gseh.',
-  'Point at the edge of the window to see your notes.':
-    'Fahr mit em Zeiger a de Rand vom Fänschter, zum dini Notize z gseh.',
-  Sidebars: 'Sitteleischte',
-  'Sidebar toggles inside the sidebars': 'Sitteleischte-Schalter i de Sitteleischte',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'De Schalter vo jedere Sitteleischte isch i ire, und di rächt chunnt a irem Fänschterrand use.',
   'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jede Tab usser em vordere zeigt nur sis Symbol; wenn du druf zeigsch, chunnt sin Name.',
@@ -976,7 +967,6 @@ export const gsw: Dictionary = {
   Minimize: 'Minimiere',
   Maximize: 'Maximiere',
   Restore: 'Wiederhärstelle',
-  'Show in Explorer’s New menu': 'Im „Neu“-Menü vom Explorer zeige',
   'choose an address': 'Wähl e Adrässe',
   'Reset to defaults': 'Uf Standard zruggsetze',
   Spelling: 'Rächtschriibig',
@@ -1764,8 +1754,6 @@ export const gsw: Dictionary = {
   'Take it off': 'Wägnä',
   'Put it on the bar': 'Uf di Leischte',
   'Reset the bar': 'Leischte zrugsetze',
-  'Pulling down': 'Abezieh',
-  'A pull past the top runs': 'Zieh über de Afang startet',
   Nothing: 'Nüt',
 
   Keep: 'Behalte',
@@ -2521,16 +2509,12 @@ export const gsw: Dictionary = {
     'Nach welere App sich d Taschte vo Orden richted; jedi Taschte une chasch trotzdem ändere.',
   'Moves and edits in notes with Vim’s keys.':
     'Bewege und Bearbeite i Notize mit de Taschte vo Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Was s Abezieh vonere Notiz über ihre Aafang use ufem Handy macht.',
   'The OpenAI key the glasses ask their questions with.':
     'De OpenAI-Schlüssel, mit däm d Brülle ihri Frage stellt.',
   'The model that answers what you ask on the glasses.':
     'S Modell, wo beantwortet, was du uf de Brülle fragsch.',
   'How long the model thinks before it answers; longer is slower.':
     'Wie lang s Modell vor de Antwort nachedänkt; länger isch langsamer.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Füegt im „Nöi“-Menü, wo en Rächtsklick im Explorer uftuet, es Markdown-Dokumänt dezue.',
   'What happens when one note was changed on two devices before they synced.':
     'Was passiert, wänn e Notiz uf zwei Gräät gänderet worde isch, bevor si sich abgliche händ.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2573,7 +2557,6 @@ export const gsw: Dictionary = {
   'When your status is taken away again.': 'Wänn din Status wieder wäggnah wird.',
   'Silences chat notifications and shows the others you are busy.':
     'Schaltet Chat-Mitteilige stumm und zeigt de andere, dass du beschäftigt bisch.',
-  'The colour the others see beside your name.': 'D Farb, wo di andere näbe dim Name gsehnd.',
   'The others see you as offline even while you are here.':
     'Di andere gsehnd dich als offline, au wänn du da bisch.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
@@ -2581,15 +2564,10 @@ export const gsw: Dictionary = {
   'The theme Orden is drawn in.': 'S Design, i däm Orden erschiint.',
   'Light, dark, or whichever the system is in.':
     'Hell, dunkel oder so, wie s System grad iigstellt isch.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Öb d Lesezeiche obe i de Dateiliste als Chachle oder als Liste erschiined.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Zeigt über Chnöpf e zeigendi Hand, wie s Websiite mached.',
   'Orden’s own title bar, or the window frame of your system.':
     'Di eiget Titelliischte vo Orden oder de Fänschterrahme vo dim System.',
-  'Square bottom edge': 'Eckigi Underkante',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Was offe isch, gaht mit eckige Egge bis a de unteri Fensterrand; bi ere Teilig d Bereich, wo ne berüehred.',
   'How large the text of notes is.': 'Wie gross de Text vo Notize isch.',
   'How large all of Orden is drawn on this device.':
     'Wie gross s ganze Orden uf däm Grät aazeigt wird.',

@@ -24,7 +24,7 @@
   import { alone } from './alone.svelte'
   import { isDeck } from '@orden/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
-  import { bottomRow, type Pane, paneIn, panesIn, topRow } from './workspace/pane-tree'
+  import { type Pane, panesIn, topRow } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
   import { TAB_KINDS } from './workspace/tab-kinds'
   import { isDesktop } from './tauri'
@@ -359,7 +359,6 @@
   class="pane"
   class:lifted={tabOverview.lifted.includes(pane.id)}
   class:straight={!stripped && flushFirst(pane.id)}
-  class:grounded={modes.flushBottom && !!paneIn(bottomRow(workspace.panes.frame), pane.id)}
   data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   use:dropOver={over}
@@ -659,8 +658,7 @@
     display: flex;
     flex-direction: column;
     background: var(--content-ground, var(--bg));
-    --card-foot: var(--card-radius);
-    border-radius: var(--card-radius) var(--card-radius) var(--card-foot) var(--card-foot);
+    border-radius: var(--card-radius);
     overflow: clip;
     box-shadow:
       var(--card-shadow),
@@ -669,10 +667,6 @@
 
   .pane.straight {
     border-start-start-radius: 0;
-  }
-
-  .pane.grounded {
-    --card-foot: 0px;
   }
 
   .pane:has(> .head) {

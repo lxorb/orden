@@ -16,10 +16,7 @@
   {#each shown as { id, person } (id)}
     {#if person}
       <span class="one">
-        <Avatar
-          face={{ name: person.name, avatar: person.avatar, accent: person.accent, key: id }}
-          size={16}
-        />
+        <Avatar face={{ name: person.name, avatar: person.avatar, key: id }} size={16} />
       </span>
     {/if}
   {/each}

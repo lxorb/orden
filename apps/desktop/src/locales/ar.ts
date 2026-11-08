@@ -579,16 +579,7 @@ export const ar: Dictionary = {
   'Actual size': 'الحجم الفعلي',
   Accent: 'اللون المميز',
   'Tidy up': 'ترتيب',
-  'Blur the app behind the tab overview': 'تمويه التطبيق خلف عرض علامات التبويب',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'يعرض التطبيق مموّهًا خلف النوافذ بدلًا من خلفية Orden الخاصة.',
   'Swipe in from the edge to see your notes.': 'اسحب من الحافة لترى ملاحظاتك.',
-  'Point at the edge of the window to see your notes.':
-    'حرّك المؤشر إلى حافة النافذة لترى ملاحظاتك.',
-  Sidebars: 'الأشرطة الجانبية',
-  'Sidebar toggles inside the sidebars': 'أزرار الأشرطة الجانبية داخلها',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'يوضع زر كل شريط جانبي داخله، ويظهر الشريط الجانبي الأيمن عند حافته من النافذة.',
   'Show other tabs as icons': 'اعرض علامات التبويب الأخرى كأيقونات',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'كل علامة تبويب غير التي في الواجهة تعرض أيقونتها فقط، وتظهر اسمها عند الإشارة إليها.',
@@ -1022,7 +1013,6 @@ export const ar: Dictionary = {
   Minimize: 'تصغير',
   Maximize: 'تكبير',
   Restore: 'استعادة',
-  'Show in Explorer’s New menu': 'إظهار في قائمة جديد في Explorer',
   'choose an address': 'اختر عنوانًا',
   'Reset to defaults': 'إعادة التعيين إلى الافتراضي',
   Spelling: 'الإملاء',
@@ -1855,8 +1845,6 @@ export const ar: Dictionary = {
   'Take it off': 'إزالة',
   'Put it on the bar': 'إضافة إلى الشريط',
   'Reset the bar': 'إعادة الشريط',
-  'Pulling down': 'السحب للأسفل',
-  'A pull past the top runs': 'سحبة بعد الأعلى تشغّل',
   Nothing: 'لا شيء',
 
   Keep: 'احتفاظ',
@@ -2622,16 +2610,12 @@ export const ar: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'أيّ تطبيق يتبع Orden اختصاراته؛ ويبقى بالإمكان تغيير أي اختصار أدناه.',
   'Moves and edits in notes with Vim’s keys.': 'يتيح التنقل والتحرير في الملاحظات باختصارات Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'ما يحدث عند سحب ملاحظة إلى الأسفل إلى ما بعد أعلاها على الهاتف.',
   'The OpenAI key the glasses ask their questions with.':
     'مفتاح OpenAI الذي تطرح به النظارات أسئلتها.',
   'The model that answers what you ask on the glasses.':
     'النموذج الذي يجيب عمّا تسأله على النظارات.',
   'How long the model thinks before it answers; longer is slower.':
     'مدة تفكير النموذج قبل أن يجيب؛ والأطول أبطأ.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'يضيف مستند Markdown إلى قائمة “جديد” التي تظهر بالنقر بزر الماوس الأيمن في مستكشف الملفات.',
   'What happens when one note was changed on two devices before they synced.':
     'ما يحدث عندما تتغير ملاحظة واحدة على جهازين قبل أن يتزامنا.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2671,21 +2655,15 @@ export const ar: Dictionary = {
   'When your status is taken away again.': 'متى تُزال حالتك مجددًا.',
   'Silences chat notifications and shows the others you are busy.':
     'يكتم إشعارات المحادثات ويُظهر للآخرين أنك مشغول.',
-  'The colour the others see beside your name.': 'اللون الذي يراه الآخرون بجانب اسمك.',
   'The others see you as offline even while you are here.': 'يراك الآخرون غير متصل حتى وأنت هنا.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'الصورة خلف النافذة، واحدة للوضع الفاتح وأخرى للداكن؛ اسحبها لتحريك مركزها.',
   'The theme Orden is drawn in.': 'السمة التي يُرسم بها Orden.',
   'Light, dark, or whichever the system is in.': 'فاتح أو داكن أو بحسب وضع النظام.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'هل تظهر الأساسيات أعلى قائمة الملفات كبلاطات أم كقائمة.',
   'Shows a pointing hand over buttons, as web pages do.':
     'يعرض يدًا مشيرة فوق الأزرار، كما تفعل صفحات الويب.',
   'Orden’s own title bar, or the window frame of your system.':
     'شريط عنوان Orden الخاص، أو إطار النافذة في نظامك.',
-  'Square bottom edge': 'حافة سفلية مربعة',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'يمتد المفتوح حتى أسفل النافذة بزوايا مربعة؛ وفي التقسيم، الأجزاء التي تلامسه.',
   'How large the text of notes is.': 'حجم نص الملاحظات.',
   'How large all of Orden is drawn on this device.': 'حجم عرض Orden بالكامل على هذا الجهاز.',
   'The space between the lines of a note.': 'المسافة بين أسطر الملاحظة.',

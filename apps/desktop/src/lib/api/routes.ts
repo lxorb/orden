@@ -14,7 +14,6 @@ export interface Account {
   pronouns?: string | null
   bio?: string | null
   status?: Status | null
-  accent?: string | null
   zone?: string | null
   hidden?: boolean
   nicks?: Record<string, string>
@@ -32,7 +31,6 @@ export interface Guest {
 export interface Member {
   id?: string | null
   avatar?: Avatar | null
-  accent?: string | null
   email: string | null
   guest: string | null
   name: string | null
@@ -49,7 +47,6 @@ export interface ShareLink {
 interface JoinRequest {
   id?: string | null
   avatar?: Avatar | null
-  accent?: string | null
   email: string | null
   guest: string | null
   name: string | null
@@ -63,7 +60,6 @@ export interface Sharing {
     name: string | null
     id?: string | null
     avatar?: Avatar | null
-    accent?: string | null
   }
   item: { id: string; path: string } | null
   members: Member[]
@@ -246,7 +242,6 @@ export interface AccountSettings {
   preset?: string
   toolbar?: string[] | null
   hiddenKinds?: string[] | null
-  pull?: string | null
   vim?: boolean
   recoveryEvery?: number
   recoveryDays?: number

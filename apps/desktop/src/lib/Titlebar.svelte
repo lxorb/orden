@@ -1,8 +1,6 @@
 <script lang="ts">
   import { swipeOpens } from './swipe-opens'
   import { chrome } from './glass/chrome.svelte'
-  import { edgePeek, endPeek } from './edge-peek.svelte'
-  import { sideToggles } from './side-toggles.svelte'
   import { i18n, t } from './i18n.svelte'
   import { keepFocus } from './focus'
   import { modes } from './modes.svelte'
@@ -50,12 +48,6 @@
   $effect(() => {
     if (swiped && workspace.openOn('left')) {
       void import('./hints.svelte').then(({ hints }) => hints.dismiss('drawer'))
-    }
-  })
-
-  $effect(() => {
-    if (edgePeek.out || endPeek.out) {
-      void import('./hints.svelte').then(({ hints }) => hints.dismiss('edge'))
     }
   })
 
@@ -155,12 +147,8 @@
     {#if workspace.right.length}
       <SidebarToggle side="right" />
     {/if}
-  {:else if !sideToggles.inside}
-    {#if workspace.right.length || !__EVEN_PLUGIN__}
-      <SidebarToggle side="right" />
-    {/if}
-  {:else if (workspace.right.length || !__EVEN_PLUGIN__) && workspace.rightShows === null}
-    <SidebarToggle side="right" unseen />
+  {:else if workspace.right.length || !__EVEN_PLUGIN__}
+    <SidebarToggle side="right" />
   {/if}
 {/snippet}
 
@@ -192,8 +180,8 @@
 {/snippet}
 
 {#snippet leftToggle()}
-  {#if !listless && (viewport.touch || !sideToggles.inside || !workspace.openOn('left'))}
-    <SidebarToggle unseen={swiped || (!viewport.touch && sideToggles.inside)} />
+  {#if !listless}
+    <SidebarToggle unseen={swiped} />
     {#if swiped && startup.settled && !__EVEN_PLUGIN__}
       <span class="swipe-hint">
         {#await import('./HintCard.svelte') then card}
@@ -206,19 +194,6 @@
         {/await}
       </span>
     {/if}
-  {/if}
-  {#if !viewport.touch && sideToggles.inside && !listless && startup.settled && !__EVEN_PLUGIN__}
-    <span class="swipe-hint">
-      {#await import('./HintCard.svelte') then card}
-        <card.default
-          hint="edge"
-          side="below"
-          when={!workspace.openOn('left')}
-          text={t('Point at the edge of the window to see your notes.')}
-          onpress={() => workspace.toggleSidebar()}
-        />
-      {/await}
-    </span>
   {/if}
 {/snippet}
 

@@ -71,6 +71,7 @@ vi.mock('./socket', () => ({ RoomSocket: sockets.FakeSocket }))
 vi.mock('./who', () => ({
   deviceName: () => 'Windows',
   deviceAccent: () => 'blue',
+  ownAccent: () => 'blue',
   personName: () => undefined,
   personFace: () => ({}),
 }))

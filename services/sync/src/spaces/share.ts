@@ -107,7 +107,6 @@ export const TOO_MANY_ITEMS = 'that is as many notes as one space shares on thei
 interface FaceColumns {
   user_id: string | null
   avatar: string | null
-  accent: string | null
 }
 
 interface MemberRow extends FaceColumns {
@@ -124,10 +123,10 @@ interface RequestRow extends FaceColumns {
   name: string | null
 }
 
-const FACE = 'u.id as user_id, u.avatar, u.accent'
+const FACE = 'u.id as user_id, u.avatar'
 
 function faceOf(row: FaceColumns) {
-  return { id: row.user_id, avatar: avatarIn(row.avatar), accent: row.accent }
+  return { id: row.user_id, avatar: avatarIn(row.avatar) }
 }
 
 interface LinkRow {
@@ -237,7 +236,6 @@ function presentGuest(guest: GuestRow) {
   return {
     id: null,
     avatar: null,
-    accent: null,
     email: guest.email,
     guest: guest.guest_id,
     name: guest.name,
@@ -265,7 +263,7 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
     owner: {
       email: owner.email,
       name: owner.name,
-      ...faceOf(face ?? { user_id: owner.id, avatar: null, accent: null }),
+      ...faceOf(face ?? { user_id: owner.id, avatar: null }),
     },
     item: scope.path === null ? null : { id: scope.id, path: scope.path },
     members: [
@@ -286,7 +284,6 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
         .map((one) => ({
           id: null,
           avatar: null,
-          accent: null,
           email: one.email,
           guest: one.guest_id,
           name: one.name,

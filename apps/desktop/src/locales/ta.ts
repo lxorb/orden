@@ -548,17 +548,8 @@ export const ta: Dictionary = {
   'Actual size': 'உண்மை அளவு',
   Accent: 'சிறப்பு நிறம்',
   'Tidy up': 'ஒழுங்குபடுத்து',
-  'Blur the app behind the tab overview': 'தாவல் மேலோட்டத்தின் பின்னால் செயலியை மங்கலாக்கு',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden-இன் சொந்தப் பின்னணிக்குப் பதிலாக, சாளரங்களின் பின்னால் செயலியை மங்கலாகக் காட்டும்.',
   'Swipe in from the edge to see your notes.':
     'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
-  'Point at the edge of the window to see your notes.':
-    'உங்கள் குறிப்புகளைப் பார்க்க சுட்டியைச் சாளரத்தின் ஓரத்திற்குக் கொண்டு செல்லவும்.',
-  Sidebars: 'பக்கப்பட்டிகள்',
-  'Sidebar toggles inside the sidebars': 'பக்கப்பட்டி மாற்றிகள் பக்கப்பட்டிகளுக்குள்',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'ஒவ்வொரு பக்கப்பட்டியின் மாற்றியும் அதற்குள் இருக்கும், வலது பக்கப்பட்டி சாளரத்தின் அந்த ஓரத்தில் வெளிவரும்.',
   'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'முன்னால் உள்ளதைத் தவிர ஒவ்வொரு தாவலும் உருவத்தை மட்டும் காட்டும்; ஒன்றின் மேல் சுட்டினால் அதன் பெயர் தெரியும்.',
@@ -982,7 +973,6 @@ export const ta: Dictionary = {
   Minimize: 'குறுக்கு',
   Maximize: 'விரிவாக்கு',
   Restore: 'முன் அளவு',
-  'Show in Explorer’s New menu': 'Explorer இன் New மெனுவில் காட்டு',
   'choose an address': 'ஒரு முகவரியைத் தேர்ந்தெடுக்கவும்',
   'Reset to defaults': 'இயல்புநிலைக்கு மீட்டமை',
   Spelling: 'எழுத்துப்பிழை',
@@ -1781,8 +1771,6 @@ export const ta: Dictionary = {
   'Take it off': 'நீக்கு',
   'Put it on the bar': 'பட்டையில் வை',
   'Reset the bar': 'பட்டையை மீட்டமை',
-  'Pulling down': 'கீழே இழுத்தல்',
-  'A pull past the top runs': 'மேலிருந்து இழுத்தால் இயங்கும்',
   Nothing: 'ஒன்றுமில்லை',
 
   Keep: 'வை',
@@ -2546,16 +2534,12 @@ export const ta: Dictionary = {
     'Orden எந்த ஆப்பின் விசைகளைப் பின்பற்றுகிறது என்பது; கீழுள்ள எந்த விசையையும் இன்னும் மாற்றலாம்.',
   'Moves and edits in notes with Vim’s keys.':
     'Vim விசைகளைக் கொண்டு குறிப்புகளில் நகர்ந்து திருத்துகிறது.',
-  'What pulling a note down past its top does on a phone.':
-    'தொலைபேசியில் குறிப்பை அதன் மேற்பகுதிக்கு அப்பால் கீழே இழுத்தால் என்ன நடக்கும் என்பது.',
   'The OpenAI key the glasses ask their questions with.':
     'கண்ணாடி தன் கேள்விகளைக் கேட்கப் பயன்படுத்தும் OpenAI சாவி.',
   'The model that answers what you ask on the glasses.':
     'கண்ணாடியில் நீங்கள் கேட்பதற்குப் பதிலளிக்கும் மாதிரி.',
   'How long the model thinks before it answers; longer is slower.':
     'மாதிரி பதிலளிக்கும் முன் எவ்வளவு நேரம் சிந்திக்கிறது என்பது; நீண்டால் மெதுவாகும்.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer-இல் வலது கிளிக் செய்யும்போது வரும் புதிய மெனுவில் ஒரு Markdown ஆவணத்தைச் சேர்க்கிறது.',
   'What happens when one note was changed on two devices before they synced.':
     'ஒத்திசைவுக்கு முன் ஒரு குறிப்பு இரண்டு சாதனங்களில் மாற்றப்பட்டால் என்ன நடக்கும் என்பது.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2599,8 +2583,6 @@ export const ta: Dictionary = {
   'When your status is taken away again.': 'உங்கள் நிலை மீண்டும் எப்போது நீக்கப்படும் என்பது.',
   'Silences chat notifications and shows the others you are busy.':
     'அரட்டை அறிவிப்புகளை அமைதிப்படுத்தி, நீங்கள் வேலையாக இருப்பதை மற்றவர்களுக்குக் காட்டுகிறது.',
-  'The colour the others see beside your name.':
-    'உங்கள் பெயருக்கு அருகில் மற்றவர்கள் காணும் நிறம்.',
   'The others see you as offline even while you are here.':
     'நீங்கள் இங்கே இருக்கும்போதும் மற்றவர்கள் உங்களை ஆஃப்லைனாகக் காண்பார்கள்.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
@@ -2608,15 +2590,10 @@ export const ta: Dictionary = {
   'The theme Orden is drawn in.': 'Orden வரையப்படும் தீம்.',
   'Light, dark, or whichever the system is in.':
     'வெளிர், இருள், அல்லது கணினி எதில் இருக்கிறதோ அது.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'கோப்புப் பட்டியலின் மேலுள்ள புத்தகக்குறிகள் ஓடுகளாகவா பட்டியலாகவா காட்டப்படும் என்பது.',
   'Shows a pointing hand over buttons, as web pages do.':
     'இணையப் பக்கங்களைப் போல, பொத்தான்களின் மேல் சுட்டும் கையைக் காட்டுகிறது.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-இன் சொந்தத் தலைப்புப் பட்டை, அல்லது உங்கள் கணினியின் சாளரச் சட்டகம்.',
-  'Square bottom edge': 'சதுரக் கீழ் விளிம்பு',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'திறந்திருப்பது சதுர மூலைகளுடன் சாளரத்தின் கீழ்வரை செல்கிறது; பிரிப்பில், அதைத் தொடும் பலகங்கள்.',
   'How large the text of notes is.': 'குறிப்புகளின் உரை எவ்வளவு பெரியது என்பது.',
   'How large all of Orden is drawn on this device.':
     'இந்தச் சாதனத்தில் முழு Orden எவ்வளவு பெரிதாகக் காட்டப்படுகிறது.',

@@ -939,7 +939,6 @@ const UNSUPPORTED: Record<string, unknown> = {
   web_pass_fill: false,
   file_stamp: null,
   mcp_config: null,
-  new_menu_registered: false,
   owner_can: false,
   write_log: null,
   read_log: '',

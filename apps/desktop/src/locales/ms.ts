@@ -545,16 +545,7 @@ export const ms: Dictionary = {
   'Actual size': 'Saiz sebenar',
   Accent: 'Warna aksen',
   'Tidy up': 'Kemaskan',
-  'Blur the app behind the tab overview': 'Kaburkan apl di belakang gambaran keseluruhan tab',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Menunjukkan apl yang dikaburkan di belakang tetingkap, bukannya latar belakang Orden sendiri.',
   'Swipe in from the edge to see your notes.': 'Leret masuk dari tepi untuk melihat nota anda.',
-  'Point at the edge of the window to see your notes.':
-    'Halakan penuding ke tepi tetingkap untuk melihat nota anda.',
-  Sidebars: 'Bar sisi',
-  'Sidebar toggles inside the sidebars': 'Togol bar sisi di dalam bar sisi',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Togol setiap bar sisi berada di dalamnya, dan bar sisi kanan keluar di tepinya pada tetingkap.',
   'Show other tabs as icons': 'Tunjukkan tab lain sebagai ikon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Setiap tab kecuali yang di hadapan hanya menunjukkan ikonnya; tuding pada satu untuk melihat namanya.',
@@ -968,7 +959,6 @@ export const ms: Dictionary = {
   Minimize: 'Minimumkan',
   Maximize: 'Maksimumkan',
   Restore: 'Pulihkan',
-  'Show in Explorer’s New menu': 'Tunjukkan dalam menu New Explorer',
   'choose an address': 'pilih satu alamat',
   'Reset to defaults': 'Set semula ke lalai',
   Spelling: 'Ejaan',
@@ -1746,8 +1736,6 @@ export const ms: Dictionary = {
   'Take it off': 'Tanggalkan',
   'Put it on the bar': 'Letak pada bar',
   'Reset the bar': 'Tetapkan semula bar',
-  'Pulling down': 'Menarik ke bawah',
-  'A pull past the top runs': 'Tarikan melepasi atas menjalankan',
   Nothing: 'Tiada',
 
   Keep: 'Simpan',
@@ -2499,16 +2487,12 @@ export const ms: Dictionary = {
     'Kekunci apl mana yang diikut Orden; mana-mana kekunci di bawah masih boleh diubah.',
   'Moves and edits in notes with Vim’s keys.':
     'Bergerak dan menyunting dalam nota dengan kekunci Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Apa yang berlaku apabila nota ditarik ke bawah melepasi bahagian atasnya pada telefon.',
   'The OpenAI key the glasses ask their questions with.':
     'Kunci OpenAI yang digunakan cermin mata untuk bertanya.',
   'The model that answers what you ask on the glasses.':
     'Model yang menjawab soalan anda pada cermin mata.',
   'How long the model thinks before it answers; longer is slower.':
     'Berapa lama model berfikir sebelum menjawab; lebih lama bermakna lebih perlahan.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Menambah dokumen Markdown pada menu New yang muncul apabila anda klik kanan dalam File Explorer.',
   'What happens when one note was changed on two devices before they synced.':
     'Apa yang berlaku apabila satu nota diubah pada dua peranti sebelum disegerakkan.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2551,23 +2535,16 @@ export const ms: Dictionary = {
   'When your status is taken away again.': 'Bila status anda dibuang semula.',
   'Silences chat notifications and shows the others you are busy.':
     'Menyenyapkan pemberitahuan sembang dan menunjukkan kepada orang lain bahawa anda sibuk.',
-  'The colour the others see beside your name.':
-    'Warna yang dilihat orang lain di sebelah nama anda.',
   'The others see you as offline even while you are here.':
     'Orang lain melihat anda di luar talian walaupun anda ada di sini.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'Gambar di belakang tetingkap, satu untuk cerah dan satu untuk gelap; seret untuk mengalihkan bahagian tengahnya.',
   'The theme Orden is drawn in.': 'Tema yang digunakan untuk melukis Orden.',
   'Light, dark, or whichever the system is in.': 'Cerah, gelap atau mengikut sistem.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Sama ada penanda di bahagian atas senarai fail ditunjukkan sebagai jubin atau senarai.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Menunjukkan tangan penuding di atas butang, seperti halaman web.',
   'Orden’s own title bar, or the window frame of your system.':
     'Bar tajuk Orden sendiri, atau bingkai tetingkap sistem anda.',
-  'Square bottom edge': 'Tepi bawah bersegi',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Yang terbuka sampai ke bawah tetingkap dengan sudut bersegi; dalam pisahan, anak tetingkap yang menyentuhnya.',
   'How large the text of notes is.': 'Berapa besar teks nota.',
   'How large all of Orden is drawn on this device.':
     'Sebesar mana seluruh Orden dipaparkan pada peranti ini.',

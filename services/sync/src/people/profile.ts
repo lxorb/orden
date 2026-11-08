@@ -20,13 +20,12 @@ export interface ProfileRow {
   pronouns: string | null
   bio: string | null
   status: string | null
-  accent: string | null
   zone: string | null
   hidden: number
 }
 
 export const PROFILE_COLUMNS =
-  'u.id, u.email, u.name, u.avatar, u.pronouns, u.bio, u.status, u.accent, u.zone, u.hidden'
+  'u.id, u.email, u.name, u.avatar, u.pronouns, u.bio, u.status, u.zone, u.hidden'
 
 const PRONOUNS_LIMIT = 40
 const BIO_LIMIT = 190
@@ -34,8 +33,6 @@ const STATUS_LIMIT = 100
 const EMOJI_LIMIT = 16
 export const NICK_LIMIT = 60
 export const AVATAR_BYTES = 100 * 1024
-
-const ACCENT = /^[a-z]{1,16}$/
 
 export function statusIn(raw: string | null, now: number): Status | null {
   const held = objectIn(raw)
@@ -77,7 +74,6 @@ export interface ProfileChanges {
   pronouns?: string | null
   bio?: string | null
   status?: Status | null
-  accent?: string | null
   zone?: string | null
   hidden?: boolean
 }
@@ -120,14 +116,6 @@ export function profileChanges(
     } else return { problem: 'status must be an object' }
   }
 
-  if (Object.hasOwn(fields, 'accent')) {
-    const value = fields.accent
-    if (value !== null && (typeof value !== 'string' || !ACCENT.test(value))) {
-      return { problem: 'accent must be an accent' }
-    }
-    changes.accent = value
-  }
-
   if (Object.hasOwn(fields, 'zone')) {
     const value = fields.zone
     if (value !== null && (typeof value !== 'string' || !isZone(value))) {
@@ -149,7 +137,6 @@ function presentFace(row: ProfileRow) {
     id: row.id,
     name: personName(row),
     avatar: avatarIn(row.avatar),
-    accent: row.accent,
   }
 }
 
@@ -176,7 +163,6 @@ export function presentOwnProfile(row: ProfileRow, now: number) {
     pronouns: row.pronouns,
     bio: row.bio,
     status: statusIn(row.status, now),
-    accent: row.accent,
     zone: row.zone,
     hidden: row.hidden === 1,
   }

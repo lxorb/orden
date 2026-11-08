@@ -20,20 +20,6 @@
     "default": "",
     "description": "The face notes are written in; any font installed here, by its name."
   },
-  "appearance.essentials": {
-    "type": "string",
-    "enum": [
-      "tiles",
-      "list"
-    ],
-    "default": "tiles",
-    "description": "Whether the bookmarks at the top of the file list show as tiles or as a list."
-  },
-  "appearance.flushBottom": {
-    "type": "boolean",
-    "default": false,
-    "description": "What is open runs into the bottom of the window with square corners; in a split, the panes that touch it."
-  },
   "appearance.frame": {
     "type": "string",
     "enum": [
@@ -57,11 +43,6 @@
     "default": "",
     "description": "The face of code and terminals; any monospaced font installed here, by its name."
   },
-  "appearance.overviewBlur": {
-    "type": "boolean",
-    "default": false,
-    "description": "Shows the app blurred behind the windows, instead of Orden’s own background."
-  },
   "appearance.paneFollowsPointer": {
     "type": "boolean",
     "default": true,
@@ -71,11 +52,6 @@
     "type": "boolean",
     "default": false,
     "description": "Shows a pointing hand over buttons, as web pages do."
-  },
-  "appearance.sideTogglesInside": {
-    "type": "boolean",
-    "default": false,
-    "description": "Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window."
   },
   "appearance.style": {
     "type": "string",

@@ -150,7 +150,6 @@ def drive(browser) -> None:
     say("--- pulling the note down past its top ---")
     page.evaluate("() => (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(500)
-    say(f"the pull runs {page.evaluate('() => window.ordenApp.pull.id')}")
 
     say(f"a short pull: {pulling(page, 40)}")
     say(f"a long pull:  {pulling(page, 200, hold=True)}")

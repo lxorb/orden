@@ -548,17 +548,8 @@ export const te: Dictionary = {
   'Actual size': 'నిజ పరిమాణం',
   Accent: 'యాక్సెంట్ రంగు',
   'Tidy up': 'చక్కదిద్దు',
-  'Blur the app behind the tab overview': 'ట్యాబ్ అవలోకనం వెనుక యాప్‌ను మసకబార్చు',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden సొంత నేపథ్యానికి బదులుగా, విండోల వెనుక యాప్‌ను మసకగా చూపిస్తుంది.',
   'Swipe in from the edge to see your notes.':
     'మీ నోట్‌లను చూడడానికి అంచు నుండి లోపలికి స్వైప్ చేయండి.',
-  'Point at the edge of the window to see your notes.':
-    'మీ నోట్‌లను చూడడానికి పాయింటర్‌ను విండో అంచుకు తీసుకెళ్లండి.',
-  Sidebars: 'సైడ్‌బార్‌లు',
-  'Sidebar toggles inside the sidebars': 'సైడ్‌బార్ టాగుల్‌లు సైడ్‌బార్‌ల లోపల',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'ప్రతి సైడ్‌బార్ టాగుల్ దాని లోపల ఉంటుంది, కుడి సైడ్‌బార్ విండో యొక్క ఆ అంచు నుండి బయటకు వస్తుంది.',
   'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ముందున్నది తప్ప ప్రతి ట్యాబ్ తన ఐకాన్ మాత్రమే చూపిస్తుంది; ఒకదానిపై పాయింటర్ ఉంచితే పేరు కనిపిస్తుంది.',
@@ -975,7 +966,6 @@ export const te: Dictionary = {
   Minimize: 'కుదించు',
   Maximize: 'పెంచు',
   Restore: 'పూర్వ పరిమాణం',
-  'Show in Explorer’s New menu': 'Explorer New మెనూలో చూపు',
   'choose an address': 'ఒక చిరునామా ఎంచుకోండి',
   'Reset to defaults': 'డిఫాల్ట్‌లకు రీసెట్',
   Spelling: 'స్పెల్లింగ్',
@@ -1761,8 +1751,6 @@ export const te: Dictionary = {
   'Take it off': 'తీసివేయండి',
   'Put it on the bar': 'పట్టీపై పెట్టండి',
   'Reset the bar': 'పట్టీని మళ్లీ అమర్చండి',
-  'Pulling down': 'కిందకు లాగడం',
-  'A pull past the top runs': 'పై నుంచి లాగితే నడుస్తుంది',
   Nothing: 'ఏమీ లేదు',
 
   Keep: 'ఉంచండి',
@@ -2515,16 +2503,12 @@ export const te: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden ఏ యాప్ కీలను అనుసరిస్తుందో అది; కింద ఉన్న ఏ కీనైనా ఇంకా మార్చవచ్చు.',
   'Moves and edits in notes with Vim’s keys.': 'Vim కీలతో నోట్‌లలో కదులుతుంది, సవరిస్తుంది.',
-  'What pulling a note down past its top does on a phone.':
-    'ఫోన్‌లో నోట్‌ను దాని పైభాగం దాటి కిందకు లాగితే ఏమి జరుగుతుందో అది.',
   'The OpenAI key the glasses ask their questions with.':
     'అద్దాలు తమ ప్రశ్నలు అడగడానికి వాడే OpenAI కీ.',
   'The model that answers what you ask on the glasses.':
     'అద్దాలపై మీరు అడిగిన దానికి జవాబిచ్చే మోడల్.',
   'How long the model thinks before it answers; longer is slower.':
     'మోడల్ జవాబిచ్చే ముందు ఎంతసేపు ఆలోచిస్తుందో అది; ఎక్కువైతే నెమ్మది.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer లో కుడి-క్లిక్ చేస్తే వచ్చే కొత్త మెనూకు Markdown పత్రాన్ని జోడిస్తుంది.',
   'What happens when one note was changed on two devices before they synced.':
     'సింక్ అయ్యే ముందు ఒక నోట్ రెండు పరికరాల్లో మారితే ఏమి జరుగుతుందో అది.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2567,22 +2551,16 @@ export const te: Dictionary = {
   'When your status is taken away again.': 'మీ స్థితి మళ్లీ ఎప్పుడు తీసివేయబడుతుందో అది.',
   'Silences chat notifications and shows the others you are busy.':
     'చాట్ నోటిఫికేషన్‌లను నిశ్శబ్దం చేసి, మీరు బిజీగా ఉన్నారని ఇతరులకు చూపిస్తుంది.',
-  'The colour the others see beside your name.': 'మీ పేరు పక్కన ఇతరులు చూసే రంగు.',
   'The others see you as offline even while you are here.':
     'మీరు ఇక్కడ ఉన్నప్పుడు కూడా ఇతరులు మిమ్మల్ని ఆఫ్‌లైన్‌గా చూస్తారు.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'విండో వెనుక ఉన్న చిత్రం, లైట్‌కు ఒకటి, డార్క్‌కు ఒకటి; దాని మధ్యను కదపడానికి లాగండి.',
   'The theme Orden is drawn in.': 'Orden గీయబడే థీమ్.',
   'Light, dark, or whichever the system is in.': 'లైట్, డార్క్, లేదా సిస్టమ్ ఏది వాడుతుందో అది.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'ఫైల్ జాబితా పైన ఉన్న బుక్‌మార్క్‌లు టైల్స్‌గా చూపాలా లేక జాబితాగా చూపాలా అనేది.',
   'Shows a pointing hand over buttons, as web pages do.':
     'వెబ్ పేజీల లాగే, బటన్‌లపై చూపుడు చేతిని చూపిస్తుంది.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden సొంత టైటిల్ బార్, లేదా మీ సిస్టమ్ విండో ఫ్రేమ్.',
-  'Square bottom edge': 'చతురస్ర కింది అంచు',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'తెరిచి ఉన్నది చతురస్ర మూలలతో విండో కింది వరకు వస్తుంది; విభజనలో, దాన్ని తాకే పేన్‌లు.',
   'How large the text of notes is.': 'నోట్‌ల టెక్స్ట్ ఎంత పెద్దదో అది.',
   'How large all of Orden is drawn on this device.':
     'ఈ పరికరంలో Orden మొత్తం ఎంత పెద్దగా కనిపిస్తుంది.',

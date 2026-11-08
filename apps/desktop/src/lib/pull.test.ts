@@ -30,21 +30,10 @@ vi.mock('./refresh', () => ({
 const screen = vi.hoisted(() => ({ typing: false }))
 vi.mock('./viewport.svelte', () => ({ viewport: screen }))
 
-import {
-  armed,
-  CLAIM,
-  claimsPull,
-  DEFAULT_PULL,
-  NOTHING,
-  pull,
-  pulled,
-  REACH,
-  usable,
-} from './pull.svelte'
+import { armed, CLAIM, claimsPull, pull, pulled, REACH } from './pull.svelte'
 
 beforeEach(() => {
   localStorage.clear()
-  pull.chosen = null
   pull.at = 0
 })
 
@@ -87,59 +76,15 @@ describe('how far the surface follows', () => {
   })
 })
 
-describe('which command it runs', () => {
-  test('reload, until somebody says otherwise (#1065)', () => {
-    expect(DEFAULT_PULL).toBe('app.refresh')
-    expect(pull.id).toBe(DEFAULT_PULL)
-    expect(pull.changed).toBe(false)
-  })
-
-  test('whatever was chosen', () => {
-    pull.choose('app.palette')
-    expect(pull.id).toBe('app.palette')
-    expect(pull.changed).toBe(true)
-    expect(localStorage.getItem('orden:pull')).toBe('app.palette')
-  })
-
-  test('choosing the one it offers anyway is choosing nothing', () => {
-    pull.choose(DEFAULT_PULL)
-    expect(pull.changed).toBe(false)
+describe('what it runs', () => {
+  test('always a reload, with no choice of another left from an older build (#2022)', async () => {
+    localStorage.setItem('orden:pull', 'app.palette')
+    pull.restore()
     expect(localStorage.getItem('orden:pull')).toBeNull()
-  })
-
-  test('or no gesture at all, which is a choice', () => {
-    pull.choose(NOTHING)
-    expect(pull.id).toBe(NOTHING)
-    expect(pull.changed).toBe(true)
-  })
-
-  test('and never a command nothing can press', () => {
-    pull.choose('nothing.at.all')
-    expect(pull.id).toBe(DEFAULT_PULL)
-  })
-})
-
-describe('what the account may say about it', () => {
-  test('a command, the word for none, or nothing', () => {
-    expect(usable('app.palette')).toBe('app.palette')
-    expect(usable(NOTHING)).toBe(NOTHING)
-    expect(usable('made.up')).toBeNull()
-    expect(usable(7)).toBeNull()
-    expect(usable(null)).toBeNull()
-  })
-
-  test('and this device takes it over', () => {
-    pull.receive({ pull: 'app.palette' })
-    expect(pull.id).toBe('app.palette')
-
-    pull.receive({ pull: null })
-    expect(pull.id).toBe(DEFAULT_PULL)
-  })
-
-  test('an account that has never been told anything leaves this one alone', () => {
-    pull.choose('app.palette')
-    pull.receive({})
-    expect(pull.id).toBe('app.palette')
+    refreshing.calls = 0
+    refreshing.answer = () => Promise.resolve()
+    await pull.press()
+    expect(refreshing.calls).toBe(1)
   })
 })
 
@@ -165,17 +110,6 @@ describe('a pull let go of (#1065)', () => {
     await pull.press()
     expect(pull.refreshing).toBe(false)
     expect(pull.failed).toBe(true)
-  })
-
-  test('presses another command at once where one was chosen', async () => {
-    const runs = vi.fn()
-    pull.runs = runs
-    refreshing.calls = 0
-    pull.choose('app.palette')
-    await pull.press()
-    expect(runs).toHaveBeenCalledOnce()
-    expect(refreshing.calls).toBe(0)
-    pull.runs = null
   })
 })
 

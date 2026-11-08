@@ -182,7 +182,7 @@ mod search;
 mod secrets;
 #[cfg(desktop)]
 mod secure_dns;
-#[cfg(desktop)]
+#[cfg(target_os = "windows")]
 mod shell_menu;
 #[cfg(desktop)]
 mod shortcuts;
@@ -514,8 +514,6 @@ macro_rules! desktop_commands {
             secrets::secret_read,
             secrets::secret_write,
             secrets::secrets_in_file,
-            shell_menu::new_menu_registered,
-            shell_menu::set_new_menu,
             mail_socket::mail_socket_open,
             mail_socket::mail_socket_write,
             mail_socket::mail_socket_tls,
@@ -905,6 +903,8 @@ fn hearing(handle: &tauri::AppHandle) {
     page_carry::forget_carried(handle);
     #[cfg(windows)]
     touchpad::start(handle);
+    #[cfg(windows)]
+    std::thread::spawn(shell_menu::forget);
 }
 
 #[cfg(feature = "cef")]
@@ -1120,10 +1120,8 @@ mod tests {
         assert_eq!(app_page_load_hooks(second), 1);
     }
 
-    const EXCEPTED: [&str; 5] = [
+    const EXCEPTED: [&str; 3] = [
         "crate::logs::write_log",
-        "crate::shell_menu::new_menu_registered",
-        "crate::shell_menu::set_new_menu",
         "crate::kept::kept_write",
         "crate::kept::kept_forget",
     ];

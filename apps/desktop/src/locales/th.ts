@@ -543,16 +543,7 @@ export const th: Dictionary = {
   'Actual size': 'ขนาดจริง',
   Accent: 'สีเน้น',
   'Tidy up': 'จัดระเบียบ',
-  'Blur the app behind the tab overview': 'เบลอแอปด้านหลังภาพรวมแท็บ',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'แสดงแอปแบบเบลอด้านหลังหน้าต่าง แทนพื้นหลังของ Orden เอง',
   'Swipe in from the edge to see your notes.': 'ปัดเข้ามาจากขอบเพื่อดูโน้ตของคุณ',
-  'Point at the edge of the window to see your notes.':
-    'เลื่อนตัวชี้ไปที่ขอบหน้าต่างเพื่อดูโน้ตของคุณ',
-  Sidebars: 'แถบข้าง',
-  'Sidebar toggles inside the sidebars': 'ปุ่มสลับแถบข้างอยู่ในแถบข้าง',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'ปุ่มสลับของแถบข้างแต่ละอันอยู่ในแถบข้าง และแถบข้างขวาจะเลื่อนออกมาที่ขอบหน้าต่างด้านนั้น',
   'Show other tabs as icons': 'แสดงแท็บอื่นเป็นไอคอน',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ทุกแท็บยกเว้นแท็บด้านหน้าแสดงแค่ไอคอน ชี้ที่แท็บใดก็จะเห็นชื่อ',
@@ -959,7 +950,6 @@ export const th: Dictionary = {
   Minimize: 'ย่อลง',
   Maximize: 'ขยายเต็ม',
   Restore: 'คืนขนาด',
-  'Show in Explorer’s New menu': 'แสดงในเมนู New ของ Explorer',
   'choose an address': 'เลือกที่อยู่',
   'Reset to defaults': 'คืนค่าเริ่มต้น',
   Spelling: 'การสะกด',
@@ -1714,8 +1704,6 @@ export const th: Dictionary = {
   'Take it off': 'เอาออก',
   'Put it on the bar': 'ใส่ไว้บนแถบ',
   'Reset the bar': 'ตั้งแถบใหม่',
-  'Pulling down': 'การลากลง',
-  'A pull past the top runs': 'ลากเลยด้านบนแล้วสั่ง',
   Nothing: 'ไม่มี',
 
   Keep: 'เก็บ',
@@ -2457,14 +2445,10 @@ export const th: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'แอปที่ Orden ใช้ปุ่มลัดตาม โดยยังเปลี่ยนปุ่มใดด้านล่างได้',
   'Moves and edits in notes with Vim’s keys.': 'เลื่อนและแก้ไขในโน้ตด้วยปุ่มแบบ Vim',
-  'What pulling a note down past its top does on a phone.':
-    'สิ่งที่เกิดขึ้นเมื่อดึงโน้ตลงเลยด้านบนสุดบนโทรศัพท์',
   'The OpenAI key the glasses ask their questions with.': 'คีย์ OpenAI ที่แว่นใช้ถามคำถาม',
   'The model that answers what you ask on the glasses.': 'โมเดลที่ตอบสิ่งที่คุณถามบนแว่น',
   'How long the model thinks before it answers; longer is slower.':
     'เวลาที่โมเดลคิดก่อนตอบ ยิ่งนานยิ่งช้า',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'เพิ่มเอกสาร Markdown ลงในเมนูสร้างใหม่ที่ได้จากการคลิกขวาใน File Explorer',
   'What happens when one note was changed on two devices before they synced.':
     'สิ่งที่เกิดขึ้นเมื่อโน้ตหนึ่งถูกแก้ไขบนสองอุปกรณ์ก่อนที่จะซิงก์กัน',
   'How far back the account keeps earlier versions of your notes.':
@@ -2501,22 +2485,16 @@ export const th: Dictionary = {
   'When your status is taken away again.': 'เวลาที่สถานะของคุณจะถูกลบออก',
   'Silences chat notifications and shows the others you are busy.':
     'ปิดเสียงการแจ้งเตือนแชตและแสดงให้คนอื่นเห็นว่าคุณไม่ว่าง',
-  'The colour the others see beside your name.': 'สีที่คนอื่นเห็นข้างชื่อของคุณ',
   'The others see you as offline even while you are here.':
     'คนอื่นจะเห็นว่าคุณออฟไลน์แม้ขณะที่คุณอยู่',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'รูปด้านหลังหน้าต่าง แยกสำหรับโหมดสว่างและมืด ลากเพื่อย้ายจุดกึ่งกลาง',
   'The theme Orden is drawn in.': 'ธีมที่ใช้แสดง Orden',
   'Light, dark, or whichever the system is in.': 'สว่าง มืด หรือตามที่ระบบใช้อยู่',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'บุ๊กมาร์กด้านบนรายการไฟล์จะแสดงเป็นไทล์หรือเป็นรายการ',
   'Shows a pointing hand over buttons, as web pages do.':
     'แสดงรูปมือชี้เมื่ออยู่เหนือปุ่ม เหมือนหน้าเว็บ',
   'Orden’s own title bar, or the window frame of your system.':
     'แถบชื่อของ Orden เอง หรือกรอบหน้าต่างของระบบคุณ',
-  'Square bottom edge': 'ขอบล่างแบบเหลี่ยม',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'สิ่งที่เปิดอยู่จะยาวถึงขอบล่างของหน้าต่างด้วยมุมเหลี่ยม เมื่อแบ่งหน้าจอ จะเป็นเฉพาะบานที่แตะขอบล่าง',
   'How large the text of notes is.': 'ขนาดตัวอักษรของโน้ต',
   'How large all of Orden is drawn on this device.': 'ขนาดการแสดงผลของ Orden ทั้งหมดบนอุปกรณ์นี้',
   'The space between the lines of a note.': 'ระยะห่างระหว่างบรรทัดของโน้ต',

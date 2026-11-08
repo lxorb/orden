@@ -8,7 +8,7 @@ import { roomKindOf } from './rooms/kind'
 import type { Seen } from './rooms/peers'
 import type { PlaneRoom } from './rooms/plane'
 import type { Room } from './rooms/room'
-import { deviceAccent, deviceName, personFace, personName } from './rooms/who'
+import { deviceName, ownAccent, personFace, personName } from './rooms/who'
 import { t } from './i18n.svelte'
 import { type Scheme, theme } from './theme.svelte'
 import type { NoteDoc } from './workspace/documents.svelte'
@@ -213,7 +213,7 @@ class Rooms {
 
     const who = {
       name: deviceName(t('Browser')),
-      accent: deviceAccent(),
+      accent: ownAccent(),
       person: personName(),
       ...personFace(),
     }

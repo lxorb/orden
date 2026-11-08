@@ -32,13 +32,17 @@ export function accentColour(id: string, scheme: 'dark' | 'light'): string {
   return accentById(id)[scheme]
 }
 
-export function accentFor(name: string, scheme: 'dark' | 'light'): string {
+export function accentIdFor(name: string): string {
   let sum = 0
   for (const character of name.trim().toLowerCase()) {
     sum = (sum + (character.codePointAt(0) ?? 0)) % 4093
   }
 
-  return accentColour(ACCENTS[sum % ACCENTS.length]?.id ?? DEFAULT_ACCENT, scheme)
+  return ACCENTS[sum % ACCENTS.length]?.id ?? DEFAULT_ACCENT
+}
+
+export function accentFor(name: string, scheme: 'dark' | 'light'): string {
+  return accentColour(accentIdFor(name), scheme)
 }
 
 function channels(hex: string): [number, number, number] {

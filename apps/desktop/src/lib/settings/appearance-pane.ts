@@ -1,9 +1,7 @@
 import { key, t } from '../i18n.svelte'
 import { DEFAULTS, type FontPlace, INTERFACE_ZOOMS, modes } from '../modes.svelte'
-import { isDesktop, isMobile, platform } from '../tauri'
+import { isDesktop, platform } from '../tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
-import { settings } from '../settings.svelte'
-import { sideToggles } from '../side-toggles.svelte'
 import { appSettings, builtIns, type SchemeChoice, theme } from '../theme.svelte'
 import { type ChosenSettings, SHARED, type ThemeSetting, type ThemeValue } from '../themes/settings'
 import { WALLPAPER_THEME } from '../wallpaper/held'
@@ -248,52 +246,6 @@ export function appearancePane(): Pane {
       },
 
       {
-        title: t('File list'),
-        fields: [
-          {
-            kind: 'segmented',
-            key: 'appearance.essentials',
-            store: { on: workspace.device, name: 'essentialTiles' },
-            label: t('Essentials'),
-            hint: t(
-              'Whether the bookmarks at the top of the file list show as tiles or as a list.',
-            ),
-            words: ['bookmarks', t('Bookmarks'), 'favorites', 'pinned', 'tiles', 'grid', 'list'],
-            options: [
-              { value: 'tiles', label: t('Grid') },
-              { value: 'list', label: t('List') },
-            ],
-            initial: 'tiles',
-            get: () => (workspace.device.essentialTiles ? 'tiles' : 'list'),
-            set: (value) => workspace.device.showEssentialTiles(value !== 'list'),
-          },
-        ],
-      },
-
-      ...(isMobile
-        ? []
-        : ([
-            {
-              title: t('Sidebars'),
-              fields: [
-                {
-                  kind: 'switch',
-                  key: 'appearance.sideTogglesInside',
-                  store: { on: sideToggles, name: 'inside' },
-                  label: t('Sidebar toggles inside the sidebars'),
-                  hint: t(
-                    'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.',
-                  ),
-                  words: ['sidebar', 'toggle', 'button', 'title bar', 'edge', 'hover', 'peek'],
-                  initial: false,
-                  get: () => sideToggles.inside,
-                  set: (on) => sideToggles.set(on),
-                },
-              ],
-            },
-          ] satisfies Group[])),
-
-      {
         title: t('Pointer'),
         fields: [
           {
@@ -321,23 +273,6 @@ export function appearancePane(): Pane {
         ],
       },
 
-      {
-        title: t('Tabs'),
-        fields: [
-          {
-            kind: 'switch',
-            key: 'appearance.overviewBlur',
-            store: { on: modes, name: 'overviewBlur' },
-            label: t('Blur the app behind the tab overview'),
-            hint: t('Shows the app blurred behind the windows, instead of Orden’s own background.'),
-            words: ['overview', 'alt alt', 'blur', 'background', 'windows'],
-            initial: DEFAULTS.overviewBlur,
-            get: () => modes.overviewBlur,
-            set: () => modes.toggleOverviewBlur(),
-          },
-        ],
-      },
-
       ...(isDesktop
         ? ([
             {
@@ -358,33 +293,6 @@ export function appearancePane(): Pane {
                   get: () => modes.frame,
                   set: (value) => modes.setFrame(value),
                 },
-                {
-                  kind: 'switch',
-                  key: 'appearance.flushBottom',
-                  store: { on: modes, name: 'flushBottom' },
-                  label: t('Square bottom edge'),
-                  hint: t(
-                    'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.',
-                  ),
-                  words: ['corners', 'rounded', 'square', 'bottom', 'edge', 'card', 'gap', 'flush'],
-                  initial: DEFAULTS.flushBottom,
-                  get: () => modes.flushBottom,
-                  set: () => modes.toggleFlushBottom(),
-                },
-                ...(navigator.userAgent.includes('Windows')
-                  ? ([
-                      {
-                        kind: 'switch',
-                        label: t('Show in Explorer’s New menu'),
-                        hint: t(
-                          'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.',
-                        ),
-                        words: ['explorer', 'new', 'right-click', 'context menu', 'markdown'],
-                        get: () => settings.newMenu,
-                        set: (on) => void settings.setNewMenu(on),
-                      },
-                    ] satisfies Field[])
-                  : []),
                 ...(zooms
                   ? ([
                       {

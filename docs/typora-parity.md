@@ -458,8 +458,8 @@ Still pandoc's, and offered only where pandoc is installed:
 - [x] Application logs
 - [x] UI translations (English, German, Swiss German, French, Japanese; falls
       back to English)
-- [x] "New Markdown" in Explorer's New menu - a per-user registry entry, added
-      and removed from Appearance settings
+- [-] "New Markdown" in Explorer's New menu - taken out at the owner's request
+      (#2022); an entry an older build put there is taken away at start
 - [x] Auto-update - looks every six hours, downloads what it finds and puts it
       in place as the app closes. Which stream it follows is one setting in
       General; the updater key is in tauri.conf.json and the private half is a

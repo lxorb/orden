@@ -106,7 +106,7 @@
   import { toolbar } from './lib/toolbar.svelte'
   import { pull } from './lib/pull.svelte'
   import PullMark from './lib/PullMark.svelte'
-  import { type AppContext, runEntry } from './lib/shortcuts/registry'
+  import type { AppContext } from './lib/shortcuts/registry'
   import { writeNew } from './lib/write-new'
 
   if (renamed.showing) void renameNotice.ask()
@@ -228,7 +228,6 @@
 
         shortcuts.receive(remote)
         toolbar.receive(remote)
-        pull.receive(remote)
         void import('./lib/kind-choice').then((one) => one.receive(remote))
         recovery.receive(remote)
         void import('./lib/space-archive').then((one) => one.receive(remote))
@@ -270,13 +269,6 @@
   })
 
   $effect(() => watchTextSize())
-
-  $effect(() => {
-    pull.runs = () => void runEntry(pull.id, appContext())
-    return () => {
-      pull.runs = null
-    }
-  })
 
   $effect(() => workspace.oneDocument())
 
@@ -842,7 +834,6 @@
           class="panes"
           data-panes
           class:under-pad={padOver}
-          class:grounded={modes.flushBottom}
           inert={padOver}
           bind:clientWidth={panesWide}
         >
@@ -1152,10 +1143,6 @@
 
   .panes.under-pad {
     visibility: hidden;
-  }
-
-  .panes.grounded {
-    padding-bottom: 0;
   }
 
   .notices {

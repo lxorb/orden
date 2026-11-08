@@ -553,16 +553,7 @@ export const ha: Dictionary = {
   'Actual size': 'Girman gaske',
   Accent: 'Launin nuni',
   'Tidy up': 'Tsara',
-  'Blur the app behind the tab overview': 'Dushe manhaja a bayan bayyani na shafuka',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Yana nuna manhajar a dushe a bayan tagogi, maimakon bangon Orden na kansa.',
   'Swipe in from the edge to see your notes.': 'Goge daga gefe zuwa ciki don ganin bayananka.',
-  'Point at the edge of the window to see your notes.':
-    'Kai alamar linzami gefen taga don ganin bayananka.',
-  Sidebars: 'Gefen mashaya',
-  'Sidebar toggles inside the sidebars': 'Maɓallan gefen mashaya a cikin gefen mashayan',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Maɓallin kowane gefen mashaya yana cikinsa, kuma gefen mashaya na dama yana fitowa a gefensa na taga.',
   'Show other tabs as icons': 'Nuna sauran shafuka a matsayin gumaka',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kowane shafi banda na gaba yana nuna gumakinsa kawai; idan ka nuna ɗaya, sunansa zai bayyana.',
@@ -982,7 +973,6 @@ export const ha: Dictionary = {
   Minimize: 'Rage',
   Maximize: 'Faɗaɗa',
   Restore: 'Mayar',
-  'Show in Explorer’s New menu': 'Nuna a menu na New na Explorer',
   'choose an address': 'zaɓi adireshi',
   'Reset to defaults': 'Mayar da na asali',
   Spelling: 'Rubutun kalma',
@@ -1782,8 +1772,6 @@ export const ha: Dictionary = {
   'Take it off': 'Cire',
   'Put it on the bar': 'Sa a kan sanda',
   'Reset the bar': 'Mayar da sanda',
-  'Pulling down': 'Jawo kasa',
-  'A pull past the top runs': 'Jan sama yana tafiyar da',
   Nothing: 'Babu',
 
   Keep: 'Ajiye',
@@ -2542,16 +2530,12 @@ export const ha: Dictionary = {
     'Maɓallan wace manhaja Orden ke bi; har yanzu ana iya canza kowane maɓalli a ƙasa.',
   'Moves and edits in notes with Vim’s keys.':
     'Yana motsawa da gyara a cikin bayanan kula da maɓallan Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Abin da jan bayanin kula ƙasa fiye da samansa ke yi a waya.',
   'The OpenAI key the glasses ask their questions with.':
     'Maɓallin OpenAI da tabarau ke yin tambayoyinsu da shi.',
   'The model that answers what you ask on the glasses.':
     'Samfurin da ke amsa abin da ka tambaya a tabarau.',
   'How long the model thinks before it answers; longer is slower.':
     'Tsawon lokacin da samfurin ke tunani kafin ya amsa; mafi tsawo ya fi jinkiri.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Yana ƙara takardar Markdown zuwa menu na New da kake samu ta danna dama a File Explorer.',
   'What happens when one note was changed on two devices before they synced.':
     "Abin da ke faruwa idan an canza bayanin kula ɗaya a na'urori biyu kafin su daidaita.",
   'How far back the account keeps earlier versions of your notes.':
@@ -2594,22 +2578,16 @@ export const ha: Dictionary = {
   'When your status is taken away again.': 'Lokacin da za a sake cire matsayinka.',
   'Silences chat notifications and shows the others you are busy.':
     'Yana yin shiru da sanarwar hira kuma yana nuna wa sauran cewa kana da aiki.',
-  'The colour the others see beside your name.': 'Launin da sauran ke gani kusa da sunanka.',
   'The others see you as offline even while you are here.':
     'Sauran suna ganinka a matsayin babu haɗi ko da kana nan.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'Hoton da ke bayan taga, ɗaya don haske ɗaya kuma don duhu; ja shi don motsa tsakiyarsa.',
   'The theme Orden is drawn in.': 'Kamannin da ake zana Orden da shi.',
   'Light, dark, or whichever the system is in.': 'Haske, duhu, ko duk wanda tsarin ke ciki.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Ko Muhimmai a saman jerin fayiloli suna nuna a matsayin tayal ko a matsayin jeri.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Yana nuna hannu mai nuni a kan maɓallai, kamar yadda shafukan yanar gizo ke yi.',
   'Orden’s own title bar, or the window frame of your system.':
     'Sandar take ta Orden kanta, ko firam ɗin taga na tsarinka.',
-  'Square bottom edge': 'Gefen ƙasa mai murabba’i',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Abin da yake buɗe yana kaiwa ƙasan taga da kusurwoyi masu murabba’i; a rabe, sassan da suka taɓa shi.',
   'How large the text of notes is.': 'Girman rubutun bayanan kula.',
   'How large all of Orden is drawn on this device.':
     'Yadda Orden gaba ɗaya yake da girma a wannan na’ura.',

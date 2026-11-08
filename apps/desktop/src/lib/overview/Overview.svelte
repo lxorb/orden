@@ -34,7 +34,6 @@
   import { type Cell, cellAt } from './cells'
   import Cells from './Cells.svelte'
   import { boundsOf, boxOutline, moved as shifted, type Outline, outlineOf } from './outline'
-  import { modes } from '../modes.svelte'
   import { keep, storedText } from '../stored'
   import { canWriteAt } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
@@ -627,7 +626,6 @@
   }
 
   const opening = spring(0, SHARE)
-  let ground = $state<HTMLElement>()
   let canvasNode = $state<HTMLElement>()
   let top = $state<HTMLElement>()
   let under = $state<HTMLElement>()
@@ -653,10 +651,6 @@
     for (const one of [...opens, under, top]) one?.style.setProperty('--overview-open', value)
     for (const one of slides) one.style.setProperty('--overview-slide', value)
     bar?.style.setProperty('--overview-bar', value)
-    if (ground) {
-      ground.style.opacity = value
-      ground.style.visibility = at < 0.01 ? 'hidden' : ''
-    }
   }
 
   let started = true
@@ -699,7 +693,7 @@
   function begin() {
     started = true
     onTheWay = true
-    document.documentElement.dataset.overview = modes.overviewBlur ? 'blur' : 'slide'
+    document.documentElement.dataset.overview = 'slide'
     opensOf()
     for (const id of flights.keys()) paint(id)
   }
@@ -1582,10 +1576,6 @@
 />
 
 {#if shown}
-  {#if modes.overviewBlur}
-    <div class="orden-scrim ground is-blurred" aria-hidden="true" bind:this={ground}></div>
-  {/if}
-
   <div
     class="under"
     aria-hidden="true"
@@ -1774,14 +1764,6 @@
   ) {
     opacity: calc(1 - var(--overview-open, 1));
     pointer-events: none;
-  }
-
-  .ground.is-blurred {
-    --scrim-z: var(--z-raised);
-    opacity: 0;
-    background: color-mix(in srgb, var(--bg) 55%, transparent);
-    -webkit-backdrop-filter: blur(28px);
-    backdrop-filter: blur(28px);
   }
 
   .canvas {

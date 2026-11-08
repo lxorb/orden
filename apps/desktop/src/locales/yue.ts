@@ -543,15 +543,7 @@ export const yue: Dictionary = {
   'Actual size': '實際大小',
   Accent: '強調色',
   'Tidy up': '整理',
-  'Blur the app behind the tab overview': '喺分頁總覽後面模糊個 app',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    '喺視窗後面顯示模糊咗嘅 app，而唔係 Orden 自己嘅背景。',
   'Swipe in from the edge to see your notes.': '由邊緣向內掃就睇到你嘅筆記。',
-  'Point at the edge of the window to see your notes.': '將指標移到視窗邊緣就睇到你嘅筆記。',
-  Sidebars: '側邊欄',
-  'Sidebar toggles inside the sidebars': '側邊欄嘅開關擺喺側邊欄入面',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    '每個側邊欄嘅開關擺喺側邊欄入面，右邊嘅側邊欄喺視窗嗰邊嘅邊緣出嚟。',
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除咗前面嗰個，每個分頁淨係顯示圖示；指住其中一個就會見到佢個名。',
@@ -953,7 +945,6 @@ export const yue: Dictionary = {
   Minimize: '最小化',
   Maximize: '最大化',
   Restore: '還原',
-  'Show in Explorer’s New menu': '顯示喺檔案總管嘅「新增」菜單中',
   'choose an address': '請選一個網址',
   'Reset to defaults': '重置為預設值',
   Spelling: '拼寫',
@@ -1700,8 +1691,6 @@ export const yue: Dictionary = {
   'Take it off': '移除',
   'Put it on the bar': '放到列上',
   'Reset the bar': '重設工具列',
-  'Pulling down': '下拉',
-  'A pull past the top runs': '從頂端再下拉則執行',
   Nothing: '無',
 
   Keep: '保留',
@@ -2430,13 +2419,10 @@ export const yue: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden 跟邊個 app 嘅按鍵；下面每個鍵都仲可以改。',
   'Moves and edits in notes with Vim’s keys.': '用 Vim 嘅按鍵喺筆記入面移動同編輯。',
-  'What pulling a note down past its top does on a phone.': '喺手機上將筆記拉過頂之後會做咩。',
   'The OpenAI key the glasses ask their questions with.': '眼鏡問問題用嘅 OpenAI 密鑰。',
   'The model that answers what you ask on the glasses.': '喺眼鏡上面答你問題嘅模型。',
   'How long the model thinks before it answers; longer is slower.':
     '模型答之前諗幾耐；諗得耐啲就慢啲。',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    '喺檔案總管右鍵嘅「新增」菜單加入 Markdown 文件。',
   'What happens when one note was changed on two devices before they synced.':
     '同一份筆記喺兩部裝置同步之前都改咗，會點處理。',
   'How far back the account keeps earlier versions of your notes.':
@@ -2473,20 +2459,14 @@ export const yue: Dictionary = {
   'When your status is taken away again.': '你嘅狀態幾時會自動清除。',
   'Silences chat notifications and shows the others you are busy.':
     '靜音聊天通知，等其他人見到你好忙。',
-  'The colour the others see beside your name.': '其他人喺你名旁邊見到嘅顏色。',
   'The others see you as offline even while you are here.': '就算你喺度，其他人都會見到你離線。',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     '視窗後面嘅圖片，淺色同深色各一張；拖佢就可以移動中心。',
   'The theme Orden is drawn in.': 'Orden 用嘅主題。',
   'Light, dark, or whichever the system is in.': '淺色、深色，或者跟系統而定。',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    '檔案列表頂部嘅 Essentials 用圖塊定列表顯示。',
   'Shows a pointing hand over buttons, as web pages do.': '好似網頁咁，喺按鈕上面顯示手指游標。',
   'Orden’s own title bar, or the window frame of your system.':
     '用 Orden 自己嘅標題列，定係你系統嘅視窗框。',
-  'Square bottom edge': '直角底邊',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    '打開嘅內容以直角伸到視窗底部；分割時，只係掂到底部嘅窗格。',
   'How large the text of notes is.': '筆記文字有幾大。',
   'How large all of Orden is drawn on this device.': '成個 Orden 喺呢部裝置上面顯示幾大。',
   'The space between the lines of a note.': '筆記行同行之間嘅空間。',

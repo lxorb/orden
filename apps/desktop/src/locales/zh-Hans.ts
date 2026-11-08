@@ -543,15 +543,7 @@ export const zhHans: Dictionary = {
   'Actual size': '实际大小',
   Accent: '强调色',
   'Tidy up': '整理',
-  'Blur the app behind the tab overview': '在标签页总览后模糊应用',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    '在窗口后显示模糊的应用，而不是 Orden 自己的背景。',
   'Swipe in from the edge to see your notes.': '从边缘向内滑动即可查看笔记。',
-  'Point at the edge of the window to see your notes.': '将指针移到窗口边缘即可查看笔记。',
-  Sidebars: '侧边栏',
-  'Sidebar toggles inside the sidebars': '侧边栏开关位于侧边栏内',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    '每个侧边栏的开关位于侧边栏内，右侧边栏从窗口的那一侧边缘滑出。',
   'Show other tabs as icons': '其他标签页只显示图标',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的标签页外，每个标签页只显示图标；指向某个标签页时会显示其名称。',
@@ -953,7 +945,6 @@ export const zhHans: Dictionary = {
   Minimize: '最小化',
   Maximize: '最大化',
   Restore: '还原',
-  'Show in Explorer’s New menu': '在资源管理器的“新建”菜单中显示',
   'choose an address': '请选择一个地址',
   'Reset to defaults': '恢复默认设置',
   Spelling: '拼写',
@@ -1704,8 +1695,6 @@ export const zhHans: Dictionary = {
   'Take it off': '移出',
   'Put it on the bar': '放到条上',
   'Reset the bar': '重置工具条',
-  'Pulling down': '下拉',
-  'A pull past the top runs': '从顶部再下拉则运行',
   Nothing: '无',
 
   Keep: '保留',
@@ -2434,14 +2423,10 @@ export const zhHans: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden 遵循哪个应用的按键，下方任何按键仍可更改。',
   'Moves and edits in notes with Vim’s keys.': '用 Vim 的按键在笔记中移动和编辑。',
-  'What pulling a note down past its top does on a phone.':
-    '在手机上把笔记拉过顶部继续下拉时的操作。',
   'The OpenAI key the glasses ask their questions with.': '眼镜提问时使用的 OpenAI 密钥。',
   'The model that answers what you ask on the glasses.': '回答你在眼镜上所问问题的模型。',
   'How long the model thinks before it answers; longer is slower.':
     '模型回答前思考多久，越久越慢。',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    '在文件资源管理器右键菜单的“新建”中添加 Markdown 文档。',
   'What happens when one note was changed on two devices before they synced.':
     '同一笔记在同步前于两台设备上被更改时如何处理。',
   'How far back the account keeps earlier versions of your notes.': '账户保留笔记早期版本的时长。',
@@ -2477,21 +2462,15 @@ export const zhHans: Dictionary = {
   'When your status is taken away again.': '你的状态何时再次清除。',
   'Silences chat notifications and shows the others you are busy.':
     '静音对话通知，并让其他人看到你正忙。',
-  'The colour the others see beside your name.': '其他人在你名字旁看到的颜色。',
   'The others see you as offline even while you are here.':
     '即使你在线，其他人也会看到你处于离线状态。',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     '窗口背后的图片，浅色和深色各一张，拖动可移动其中心。',
   'The theme Orden is drawn in.': 'Orden 所用的主题。',
   'Light, dark, or whichever the system is in.': '浅色、深色，或跟随系统。',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    '文件列表顶部的书签以磁贴还是列表显示。',
   'Shows a pointing hand over buttons, as web pages do.': '像网页一样在按钮上显示手形指针。',
   'Orden’s own title bar, or the window frame of your system.':
     '使用 Orden 自己的标题栏，或系统的窗口边框。',
-  'Square bottom edge': '直角底边',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    '打开的内容以直角延伸到窗口底部；分屏时，仅限触及底部的窗格。',
   'How large the text of notes is.': '笔记文字的大小。',
   'How large all of Orden is drawn on this device.': '整个 Orden 在此设备上的显示大小。',
   'The space between the lines of a note.': '笔记行与行之间的距离。',

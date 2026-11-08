@@ -548,17 +548,8 @@ export const hi: Dictionary = {
   'Actual size': 'वास्तविक आकार',
   Accent: 'एक्सेंट',
   'Tidy up': 'व्यवस्थित करें',
-  'Blur the app behind the tab overview': 'टैब अवलोकन के पीछे ऐप को धुंधला करें',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden की अपनी पृष्ठभूमि के बजाय विंडो के पीछे ऐप को धुंधला दिखाता है।',
   'Swipe in from the edge to see your notes.':
     'अपने नोट्स देखने के लिए किनारे से अंदर स्वाइप करें।',
-  'Point at the edge of the window to see your notes.':
-    'अपने नोट्स देखने के लिए पॉइंटर को विंडो के किनारे पर ले जाएँ।',
-  Sidebars: 'साइडबार',
-  'Sidebar toggles inside the sidebars': 'साइडबार के टॉगल साइडबार के अंदर',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'हर साइडबार का टॉगल उसके अंदर रहता है, और दायाँ साइडबार विंडो के उस किनारे से बाहर आता है।',
   'Show other tabs as icons': 'बाकी टैब आइकन के रूप में दिखाएँ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'सामने वाले को छोड़ हर टैब सिर्फ़ अपना आइकन दिखाता है; किसी पर पॉइंटर ले जाने पर उसका नाम दिखता है।',
@@ -975,7 +966,6 @@ export const hi: Dictionary = {
   Minimize: 'छोटा करें',
   Maximize: 'बड़ा करें',
   Restore: 'पहले जैसा',
-  'Show in Explorer’s New menu': 'Explorer के New मेनू में दिखाएँ',
   'choose an address': 'एक पता चुनें',
   'Reset to defaults': 'डिफ़ॉल्ट पर लाएँ',
   Spelling: 'वर्तनी',
@@ -1752,8 +1742,6 @@ export const hi: Dictionary = {
   'Take it off': 'हटाएँ',
   'Put it on the bar': 'पट्टी पर लगाएँ',
   'Reset the bar': 'पट्टी रीसेट करें',
-  'Pulling down': 'नीचे खींचना',
-  'A pull past the top runs': 'ऊपर से खींचने पर चले',
   Nothing: 'कुछ नहीं',
 
   Keep: 'रखें',
@@ -2504,16 +2492,12 @@ export const hi: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden किस ऐप की कुंजियाँ अपनाता है; नीचे की कोई भी कुंजी फिर भी बदली जा सकती है।',
   'Moves and edits in notes with Vim’s keys.': 'नोट में Vim की कुंजियों से घूमना और संपादन करना।',
-  'What pulling a note down past its top does on a phone.':
-    'फ़ोन पर नोट को उसके ऊपरी छोर से आगे नीचे खींचने पर क्या होता है।',
   'The OpenAI key the glasses ask their questions with.':
     'वह OpenAI कुंजी जिससे चश्मा अपने सवाल पूछता है।',
   'The model that answers what you ask on the glasses.':
     'वह मॉडल जो चश्मे पर पूछी गई बातों का जवाब देता है।',
   'How long the model thinks before it answers; longer is slower.':
     'जवाब देने से पहले मॉडल कितनी देर सोचता है; ज़्यादा देर यानी धीमा।',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer में राइट-क्लिक करने पर मिलने वाले नया मेनू में एक Markdown दस्तावेज़ जोड़ता है।',
   'What happens when one note was changed on two devices before they synced.':
     'जब एक नोट सिंक होने से पहले दो डिवाइस पर बदला गया हो तब क्या होता है।',
   'How far back the account keeps earlier versions of your notes.':
@@ -2554,22 +2538,16 @@ export const hi: Dictionary = {
   'When your status is taken away again.': 'आपकी स्थिति फिर से कब हटाई जाती है।',
   'Silences chat notifications and shows the others you are busy.':
     'चैट सूचनाओं को शांत करता है और दूसरों को दिखाता है कि आप व्यस्त हैं।',
-  'The colour the others see beside your name.': 'वह रंग जो दूसरे आपके नाम के पास देखते हैं।',
   'The others see you as offline even while you are here.':
     'आप यहाँ होने पर भी दूसरों को ऑफ़लाइन दिखते हैं।',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'विंडो के पीछे की तस्वीर, एक हल्के और एक गहरे के लिए; उसका केंद्र खिसकाने के लिए उसे खींचें।',
   'The theme Orden is drawn in.': 'वह थीम जिसमें Orden दिखता है।',
   'Light, dark, or whichever the system is in.': 'हल्का, गहरा, या जो सिस्टम में चल रहा हो।',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'फ़ाइल सूची के ऊपर के बुकमार्क टाइल के रूप में दिखें या सूची के रूप में।',
   'Shows a pointing hand over buttons, as web pages do.':
     'वेब पेज की तरह बटन पर इशारा करता हाथ दिखाता है।',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden का अपना टाइटल बार या आपके सिस्टम का विंडो फ़्रेम।',
-  'Square bottom edge': 'चौकोर निचला किनारा',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'जो खुला है वह चौकोर कोनों के साथ विंडो के नीचे तक जाता है; विभाजन में, वे पैन जो उसे छूते हैं।',
   'How large the text of notes is.': 'नोट का टेक्स्ट कितना बड़ा है।',
   'How large all of Orden is drawn on this device.': 'इस डिवाइस पर पूरा Orden कितना बड़ा दिखे।',
   'The space between the lines of a note.': 'नोट की पंक्तियों के बीच की जगह।',

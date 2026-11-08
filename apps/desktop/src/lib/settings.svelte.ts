@@ -2,7 +2,6 @@ import { setSnippets } from '@orden/editor'
 import { account } from './account.svelte'
 import { modes } from './modes.svelte'
 import { connectors } from './connectors.svelte'
-import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'
 import { isRecord, isString, keep, keepJson, stored, storedText, stringList } from './stored'
@@ -50,8 +49,6 @@ class Settings {
 
   exportAppearance = $state<ExportAppearance>('light')
 
-  newMenu = $state(false)
-
   noteIdFormat = $state(DEFAULT_ID_FORMAT)
 
   error = $state<string | null>(null)
@@ -84,24 +81,6 @@ class Settings {
     )
 
     void this.loadSnippets()
-
-    if (isDesktop) {
-      void invoke<boolean>('new_menu_registered')
-        .then((on) => (this.newMenu = on))
-        .catch(() => undefined)
-    }
-  }
-
-  async setNewMenu(enabled: boolean) {
-    if (!isDesktop) return
-
-    this.error = null
-    try {
-      await invoke('set_new_menu', { enabled })
-      this.newMenu = enabled
-    } catch (error) {
-      this.error = message(error, 'that did not work')
-    }
   }
 
   setPage(patch: Partial<PageSetup>) {

@@ -571,16 +571,7 @@ export const uk: Dictionary = {
   'Actual size': 'Справжній розмір',
   Accent: 'Акцент',
   'Tidy up': 'Упорядкувати',
-  'Blur the app behind the tab overview': 'Розмивати застосунок за оглядом вкладок',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Показує розмитий застосунок за вікнами замість власного тла Orden.',
   'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
-  'Point at the edge of the window to see your notes.':
-    'Наведіть вказівник на край вікна, щоб побачити нотатки.',
-  Sidebars: 'Бічні панелі',
-  'Sidebar toggles inside the sidebars': 'Перемикачі бічних панелей усередині панелей',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Перемикач кожної бічної панелі розташований у ній, а права панель висувається біля свого краю вікна.',
   'Show other tabs as icons': 'Показувати інші вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Кожна вкладка, крім передньої, показує лише значок; якщо навести на неї, з’являється назва.',
@@ -1011,7 +1002,6 @@ export const uk: Dictionary = {
   Minimize: 'Згорнути',
   Maximize: 'Розгорнути',
   Restore: 'Відновити',
-  'Show in Explorer’s New menu': 'Показувати в меню «Створити» Провідника',
   'choose an address': 'виберіть адресу',
   'Reset to defaults': 'Скинути налаштування',
   Spelling: 'Орфографія',
@@ -1826,8 +1816,6 @@ export const uk: Dictionary = {
   'Take it off': 'Прибрати',
   'Put it on the bar': 'Додати на смужку',
   'Reset the bar': 'Скинути смужку',
-  'Pulling down': 'Потягування вниз',
-  'A pull past the top runs': 'Потягування за верх запускає',
   Nothing: 'Нічого',
 
   Keep: 'Залишити',
@@ -2594,16 +2582,12 @@ export const uk: Dictionary = {
     'Сполучень клавіш якої програми дотримується Orden; будь-яке сполучення нижче все одно можна змінити.',
   'Moves and edits in notes with Vim’s keys.':
     'Переміщення й редагування в нотатках клавішами Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Що робить на телефоні потягування нотатки вниз далі її початку.',
   'The OpenAI key the glasses ask their questions with.':
     'Ключ OpenAI, з яким окуляри ставлять свої запитання.',
   'The model that answers what you ask on the glasses.':
     'Модель, яка відповідає на ваші запитання в окулярах.',
   'How long the model thinks before it answers; longer is slower.':
     'Як довго модель думає перед відповіддю; довше означає повільніше.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Додає документ Markdown до меню Створити, яке відкривається клацанням правою кнопкою в Провіднику.',
   'What happens when one note was changed on two devices before they synced.':
     'Що відбувається, якщо нотатку змінили на двох пристроях до їх синхронізації.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2645,22 +2629,16 @@ export const uk: Dictionary = {
   'When your status is taken away again.': 'Коли ваш статус знову знімається.',
   'Silences chat notifications and shows the others you are busy.':
     'Вимикає сповіщення чатів і показує іншим, що ви зайняті.',
-  'The colour the others see beside your name.': 'Колір, який інші бачать поруч із вашим ім’ям.',
   'The others see you as offline even while you are here.':
     'Інші бачать вас не в мережі, навіть коли ви тут.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'Зображення за вікном, одне для світлої теми й одне для темної; перетягніть його, щоб зсунути центр.',
   'The theme Orden is drawn in.': 'Тема, у якій відмальовано Orden.',
   'Light, dark, or whichever the system is in.': 'Світла, темна або та, що зараз у системі.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Чи показувати закладки вгорі списку файлів плитками, чи списком.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Показує вказівну руку над кнопками, як на вебсторінках.',
   'Orden’s own title bar, or the window frame of your system.':
     'Власний рядок заголовка Orden або рамка вікна вашої системи.',
-  'Square bottom edge': 'Прямий нижній край',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Відкрите сягає нижнього краю вікна з прямими кутами; при поділі це панелі, що його торкаються.',
   'How large the text of notes is.': 'Розмір тексту нотаток.',
   'How large all of Orden is drawn on this device.':
     'Наскільки великим показується весь Orden на цьому пристрої.',

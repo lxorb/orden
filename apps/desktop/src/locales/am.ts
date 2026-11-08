@@ -544,15 +544,7 @@ export const am: Dictionary = {
   'Actual size': 'እውነተኛ መጠን',
   Accent: 'የማጉላት ቀለም',
   'Tidy up': 'አስተካክል',
-  'Blur the app behind the tab overview': 'ከትሮች አጠቃላይ እይታ በስተጀርባ መተግበሪያውን አደብዝዝ',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'ከOrden የራሱ ዳራ ይልቅ መተግበሪያውን ከመስኮቶቹ በስተጀርባ ደብዝዞ ያሳያል።',
   'Swipe in from the edge to see your notes.': 'ማስታወሻዎችዎን ለማየት ከጠርዙ ወደ ውስጥ ያንሸራትቱ።',
-  'Point at the edge of the window to see your notes.': 'ማስታወሻዎችዎን ለማየት ጠቋሚውን ወደ መስኮቱ ጠርዝ ይውሰዱ።',
-  Sidebars: 'የጎን ሰሌዳዎች',
-  'Sidebar toggles inside the sidebars': 'የጎን ሰሌዳ መቀያየሪያዎች በጎን ሰሌዳዎቹ ውስጥ',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'የእያንዳንዱ የጎን ሰሌዳ መቀያየሪያ በጎን ሰሌዳው ውስጥ ይቀመጣል፤ የቀኝ ጎን ሰሌዳውም በመስኮቱ ጠርዝ ይወጣል።',
   'Show other tabs as icons': 'ሌሎች ትሮችን እንደ አዶ አሳይ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ከፊት ካለው በስተቀር እያንዳንዱ ትር አዶውን ብቻ ያሳያል፤ ወደ አንዱ ሲጠቁሙ ስሙን ያሳያል።',
@@ -961,7 +953,6 @@ export const am: Dictionary = {
   Minimize: 'አሳንስ',
   Maximize: 'አስፋ',
   Restore: 'መልስ',
-  'Show in Explorer’s New menu': 'በExplorer New ዝርዝር አሳይ',
   'choose an address': 'አድራሻ ምረጥ',
   'Reset to defaults': 'ወደ ነባሩ መልስ',
   Spelling: 'ፊደል አጻጻፍ',
@@ -1726,8 +1717,6 @@ export const am: Dictionary = {
   'Take it off': 'አውጣው',
   'Put it on the bar': 'በአሞሌው ላይ አድርግ',
   'Reset the bar': 'አሞሌውን እንደነበር መልስ',
-  'Pulling down': 'ወደ ታች መጎተት',
-  'A pull past the top runs': 'ከላይ ማለፍ ያስኬዳል',
   Nothing: 'ምንም',
 
   Keep: 'አቆይ',
@@ -2469,14 +2458,10 @@ export const am: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden የትኛውን መተግበሪያ ቁልፎች እንደሚከተል፤ ከታች ያለ ማንኛውም ቁልፍ አሁንም ሊቀየር ይችላል።',
   'Moves and edits in notes with Vim’s keys.': 'በVim ቁልፎች በማስታወሻዎች ውስጥ ያንቀሳቅሳል እና ያርማል።',
-  'What pulling a note down past its top does on a phone.':
-    'በስልክ ላይ ማስታወሻን ከላይኛው ጫፉ አልፎ ወደ ታች መጎተት የሚያደርገው።',
   'The OpenAI key the glasses ask their questions with.': 'መነጽሩ ጥያቄዎቹን የሚጠይቅበት የOpenAI ቁልፍ።',
   'The model that answers what you ask on the glasses.': 'በመነጽሩ ላይ ለሚጠይቁት መልስ የሚሰጠው ሞዴል።',
   'How long the model thinks before it answers; longer is slower.':
     'ሞዴሉ ከመመለሱ በፊት ምን ያህል እንደሚያስብ፤ ረዘም ያለው ቀርፋፋ ነው።',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'በFile Explorer ውስጥ በቀኝ ጠቅ ሲያደርጉ ወደሚመጣው አዲስ ምናሌ የMarkdown ሰነድ ያክላል።',
   'What happens when one note was changed on two devices before they synced.':
     'አንድ ማስታወሻ ከመመሳሰሉ በፊት በሁለት መሣሪያዎች ላይ ሲቀየር የሚሆነው።',
   'How far back the account keeps earlier versions of your notes.':
@@ -2513,20 +2498,14 @@ export const am: Dictionary = {
   'When your status is taken away again.': 'ሁኔታዎ እንደገና የሚወገድበት ጊዜ።',
   'Silences chat notifications and shows the others you are busy.':
     'የውይይት ማሳወቂያዎችን ጸጥ ያደርጋል እና ሥራ እንደበዛብዎት ለሌሎች ያሳያል።',
-  'The colour the others see beside your name.': 'ሌሎች ከስምዎ አጠገብ የሚያዩት ቀለም።',
   'The others see you as offline even while you are here.': 'እዚህ እያሉም ሌሎች ከመስመር ውጭ እንደሆኑ ያዩዎታል።',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'ከመስኮቱ ጀርባ ያለው ምስል፣ አንዱ ለብርሃን አንዱ ለጨለማ፤ መሃሉን ለማንቀሳቀስ ይጎትቱት።',
   'The theme Orden is drawn in.': 'Orden የሚሳልበት ገጽታ።',
   'Light, dark, or whichever the system is in.': 'ብርሃን፣ ጨለማ፣ ወይም ሥርዓቱ ያለበት።',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'በፋይል ዝርዝሩ አናት ያሉት ምልክቶች እንደ ሰቆች ወይም እንደ ዝርዝር እንደሚታዩ።',
   'Shows a pointing hand over buttons, as web pages do.': 'እንደ ድረ ገጾች፣ በአዝራሮች ላይ የሚጠቁም እጅ ያሳያል።',
   'Orden’s own title bar, or the window frame of your system.':
     'የOrden የራሱ የርዕስ አሞሌ፣ ወይም የሥርዓትዎ የመስኮት ክፈፍ።',
-  'Square bottom edge': 'ካሬ የታች ጠርዝ',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'የተከፈተው ነገር በካሬ ማዕዘኖች እስከ መስኮቱ ታች ይደርሳል፤ በክፍፍል ውስጥ ታቹን የሚነኩት ክፍሎች።',
   'How large the text of notes is.': 'የማስታወሻዎች ጽሑፍ ምን ያህል ትልቅ እንደሆነ።',
   'How large all of Orden is drawn on this device.': 'ኦርደን በዚህ መሣሪያ ላይ በሙሉ ምን ያህል ትልቅ እንደሚታይ።',
   'The space between the lines of a note.': 'በማስታወሻ መስመሮች መካከል ያለው ክፍተት።',

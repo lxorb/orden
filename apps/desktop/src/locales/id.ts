@@ -544,16 +544,7 @@ export const id: Dictionary = {
   'Actual size': 'Ukuran asli',
   Accent: 'Warna aksen',
   'Tidy up': 'Rapikan',
-  'Blur the app behind the tab overview': 'Buramkan aplikasi di balik ikhtisar tab',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Menampilkan aplikasi buram di balik jendela, bukan latar belakang Orden sendiri.',
   'Swipe in from the edge to see your notes.': 'Geser masuk dari tepi untuk melihat catatanmu.',
-  'Point at the edge of the window to see your notes.':
-    'Arahkan penunjuk ke tepi jendela untuk melihat catatanmu.',
-  Sidebars: 'Bilah sisi',
-  'Sidebar toggles inside the sidebars': 'Tombol bilah sisi di dalam bilah sisi',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Tombol tiap bilah sisi ada di dalamnya, dan bilah sisi kanan muncul di tepinya pada jendela.',
   'Show other tabs as icons': 'Tampilkan tab lain sebagai ikon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Setiap tab kecuali yang di depan hanya menampilkan ikonnya; arahkan ke salah satunya untuk melihat namanya.',
@@ -967,7 +958,6 @@ export const id: Dictionary = {
   Minimize: 'Perkecil',
   Maximize: 'Perbesar',
   Restore: 'Pulihkan',
-  'Show in Explorer’s New menu': 'Tampilkan di menu New Explorer',
   'choose an address': 'pilih alamat',
   'Reset to defaults': 'Setel ulang ke bawaan',
   Spelling: 'Ejaan',
@@ -1745,8 +1735,6 @@ export const id: Dictionary = {
   'Take it off': 'Lepaskan',
   'Put it on the bar': 'Taruh di bilah',
   'Reset the bar': 'Setel ulang bilah',
-  'Pulling down': 'Menarik ke bawah',
-  'A pull past the top runs': 'Tarikan melewati atas menjalankan',
   Nothing: 'Tidak ada',
 
   Keep: 'Simpan',
@@ -2497,16 +2485,12 @@ export const id: Dictionary = {
     'Tombol aplikasi mana yang diikuti Orden; tombol mana pun di bawah tetap bisa diubah.',
   'Moves and edits in notes with Vim’s keys.':
     'Berpindah dan mengedit dalam catatan dengan tombol Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Apa yang terjadi saat catatan ditarik ke bawah melewati bagian atasnya di telepon.',
   'The OpenAI key the glasses ask their questions with.':
     'Kunci OpenAI yang dipakai kacamata untuk mengajukan pertanyaannya.',
   'The model that answers what you ask on the glasses.':
     'Model yang menjawab pertanyaan Anda di kacamata.',
   'How long the model thinks before it answers; longer is slower.':
     'Berapa lama model berpikir sebelum menjawab; makin lama makin lambat.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Menambahkan dokumen Markdown ke menu New yang muncul saat Anda mengeklik kanan di File Explorer.',
   'What happens when one note was changed on two devices before they synced.':
     'Apa yang terjadi bila satu catatan diubah di dua perangkat sebelum keduanya tersinkron.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2549,8 +2533,6 @@ export const id: Dictionary = {
   'When your status is taken away again.': 'Kapan status Anda dihapus lagi.',
   'Silences chat notifications and shows the others you are busy.':
     'Membisukan notifikasi obrolan dan menunjukkan kepada orang lain bahwa Anda sibuk.',
-  'The colour the others see beside your name.':
-    'Warna yang dilihat orang lain di samping nama Anda.',
   'The others see you as offline even while you are here.':
     'Orang lain melihat Anda luring meski Anda sedang ada.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
@@ -2558,15 +2540,10 @@ export const id: Dictionary = {
   'The theme Orden is drawn in.': 'Tema yang dipakai untuk menggambar Orden.',
   'Light, dark, or whichever the system is in.':
     'Terang, gelap, atau mana pun yang sedang dipakai sistem.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Apakah markah di atas daftar berkas tampil sebagai ubin atau sebagai daftar.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Menampilkan tangan penunjuk di atas tombol, seperti di halaman web.',
   'Orden’s own title bar, or the window frame of your system.':
     'Bilah judul milik Orden, atau bingkai jendela sistem Anda.',
-  'Square bottom edge': 'Tepi bawah siku',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Yang terbuka sampai ke tepi bawah jendela dengan sudut siku; dalam pemisahan, panel yang menyentuhnya.',
   'How large the text of notes is.': 'Seberapa besar teks catatan.',
   'How large all of Orden is drawn on this device.':
     'Seberapa besar seluruh Orden ditampilkan di perangkat ini.',

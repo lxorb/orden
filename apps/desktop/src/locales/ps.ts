@@ -546,16 +546,7 @@ export const ps: Dictionary = {
   'Actual size': 'اصلي کچه',
   Accent: 'ځانګړی رنګ',
   'Tidy up': 'ترتیب کړئ',
-  'Blur the app behind the tab overview': 'د ټب کتنې شاته اپ تت کړئ',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'د Orden د خپل شالید پر ځای، اپ د کړکیو شاته تت ښيي.',
   'Swipe in from the edge to see your notes.': 'خپلې یادښتونه د لیدو لپاره له څنډې دننه سوایپ کړئ.',
-  'Point at the edge of the window to see your notes.':
-    'خپلې یادښتونه د لیدو لپاره نښه د کړکۍ څنډې ته یوسئ.',
-  Sidebars: 'څنګ پټې',
-  'Sidebar toggles inside the sidebars': 'د څنګ پټو تڼۍ د هغو دننه',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'د هرې څنګ پټې تڼۍ د هغې دننه وي، او ښي څنګ پټه د کړکۍ له هغې څنډې راووځي.',
   'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'له مخکني پرته هر ټب یوازې خپله نښه ښيي؛ کله چې یو ته اشاره وکړئ، نوم یې ښکاره کېږي.',
@@ -971,7 +962,6 @@ export const ps: Dictionary = {
   Minimize: 'کوچنيول',
   Maximize: 'لويول',
   Restore: 'بېرته راوستل',
-  'Show in Explorer’s New menu': 'د Explorer په New مېنو کې ښودل',
   'choose an address': 'پته وټاکئ',
   'Reset to defaults': 'اصلي حالت ته بېرته کول',
   Spelling: 'ليکدود',
@@ -1753,8 +1743,6 @@ export const ps: Dictionary = {
   'Take it off': 'ایسته کول',
   'Put it on the bar': 'پر پټه ایښودل',
   'Reset the bar': 'پټه بیا تنظیمول',
-  'Pulling down': 'ښکته کشول',
-  'A pull past the top runs': 'له سر تېره کشونه چلوي',
   Nothing: 'هیڅ',
 
   Keep: 'ساتل',
@@ -2507,16 +2495,12 @@ export const ps: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden د کوم اپ کلیدونه تعقیبوي؛ لاندې هره کلید بیا هم بدلېدای شي.',
   'Moves and edits in notes with Vim’s keys.': 'په یادښتونو کې د Vim په کلیدونو خوځښت او سمون کوي.',
-  'What pulling a note down past its top does on a phone.':
-    'په تلیفون کې د یادښت له سر څخه تېر ښکته کشول څه کوي.',
   'The OpenAI key the glasses ask their questions with.':
     'د OpenAI هغه کلید چې عينکې پرې خپلې پوښتنې کوي.',
   'The model that answers what you ask on the glasses.':
     'هغه ماډل چې په عينکو کې ستاسو پوښتنو ته ځواب ورکوي.',
   'How long the model thinks before it answers; longer is slower.':
     'ماډل له ځواب مخکې څومره فکر وکړي؛ اوږد فکر ورو دی.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'د File Explorer هغه New مېنو ته چې په ښي کلیک خلاصېږي یو Markdown سند ورزیاتوي.',
   'What happens when one note was changed on two devices before they synced.':
     'کله چې یو یادښت له همغږۍ مخکې په دوو وسیلو بدل شوی وي څه کېږي.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2557,21 +2541,15 @@ export const ps: Dictionary = {
   'When your status is taken away again.': 'ستاسو حالت کله بېرته لرې کېږي.',
   'Silences chat notifications and shows the others you are busy.':
     'د چټ خبرتیاوې چوپوي او نورو ته ښيي چې تاسو بوخت یاست.',
-  'The colour the others see beside your name.': 'هغه رنګ چې نور یې ستاسو د نوم تر څنګ ویني.',
   'The others see you as offline even while you are here.':
     'نور تاسو آفلاین ویني، حتی کله چې تاسو دلته یاست.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'د کړکۍ شاته انځور، یو د رڼا او یو د تیارې لپاره؛ د مرکز د خوځولو لپاره یې کش کړئ.',
   'The theme Orden is drawn in.': 'هغه بڼه چې Orden پکې انځورېږي.',
   'Light, dark, or whichever the system is in.': 'رڼا، تیاره، یا هغه چې غونډال پکې وي.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'ایا د فایلونو د لړ په سر کې اړین د ټایلونو په بڼه ښکاره شي که د لړ په بڼه.',
   'Shows a pointing hand over buttons, as web pages do.': 'لکه ویب پاڼې، پر تڼیو د اشارې لاس ښيي.',
   'Orden’s own title bar, or the window frame of your system.':
     'د Orden خپله سرلیک پټه، یا ستاسو د غونډال د کړکۍ چوکاټ.',
-  'Square bottom edge': 'مربع لاندینۍ څنډه',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'هغه څه چې پرانیستي دي د مربع کونجونو سره د کړکۍ تر لاندې رسېږي؛ په وېش کې، هغه برخې چې ورسره لګېږي.',
   'How large the text of notes is.': 'د یادښتونو متن څومره لوی وي.',
   'How large all of Orden is drawn on this device.': 'په دې وسیله کې د ټول Orden د ښودلو اندازه.',
   'The space between the lines of a note.': 'د یادښت د کرښو ترمنځ واټن.',

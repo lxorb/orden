@@ -553,17 +553,8 @@ export const kn: Dictionary = {
   'Actual size': 'ನಿಜ ಗಾತ್ರ',
   Accent: 'ಆಕ್ಸೆಂಟ್ ಬಣ್ಣ',
   'Tidy up': 'ಅಚ್ಚುಕಟ್ಟು ಮಾಡಿ',
-  'Blur the app behind the tab overview': 'ಟ್ಯಾಬ್ ಅವಲೋಕನದ ಹಿಂದೆ ಆ್ಯಪ್ ಅನ್ನು ಮಸುಕಾಗಿಸಿ',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden ನ ಸ್ವಂತ ಹಿನ್ನೆಲೆಯ ಬದಲು, ವಿಂಡೋಗಳ ಹಿಂದೆ ಆ್ಯಪ್ ಅನ್ನು ಮಸುಕಾಗಿ ತೋರಿಸುತ್ತದೆ.',
   'Swipe in from the edge to see your notes.':
     'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಅಂಚಿನಿಂದ ಒಳಗೆ ಸ್ವೈಪ್ ಮಾಡಿ.',
-  'Point at the edge of the window to see your notes.':
-    'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಪಾಯಿಂಟರ್ ಅನ್ನು ವಿಂಡೋದ ಅಂಚಿಗೆ ಸರಿಸಿ.',
-  Sidebars: 'ಸೈಡ್‌ಬಾರ್‌ಗಳು',
-  'Sidebar toggles inside the sidebars': 'ಸೈಡ್‌ಬಾರ್ ಟಾಗಲ್‌ಗಳು ಸೈಡ್‌ಬಾರ್‌ಗಳ ಒಳಗೆ',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'ಪ್ರತಿ ಸೈಡ್‌ಬಾರ್‌ನ ಟಾಗಲ್ ಅದರ ಒಳಗೆ ಇರುತ್ತದೆ, ಮತ್ತು ಬಲ ಸೈಡ್‌ಬಾರ್ ವಿಂಡೋದ ಆ ಅಂಚಿನಿಂದ ಹೊರಬರುತ್ತದೆ.',
   'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ಮುಂದಿನದನ್ನು ಬಿಟ್ಟು ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್ ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ; ಒಂದರ ಮೇಲೆ ಪಾಯಿಂಟರ್ ಇಟ್ಟರೆ ಹೆಸರು ಕಾಣುತ್ತದೆ.',
@@ -981,7 +972,6 @@ export const kn: Dictionary = {
   Minimize: 'ಕಿರಿದಾಗಿಸಿ',
   Maximize: 'ಹಿರಿದಾಗಿಸಿ',
   Restore: 'ಹಿಂದಿನ ಗಾತ್ರ',
-  'Show in Explorer’s New menu': 'Explorer New ಮೆನುವಿನಲ್ಲಿ ತೋರಿಸಿ',
   'choose an address': 'ಒಂದು ವಿಳಾಸ ಆಯ್ಕೆಮಾಡಿ',
   'Reset to defaults': 'ಡಿಫಾಲ್ಟ್‌ಗೆ ಮರುಹೊಂದಿಸಿ',
   Spelling: 'ಕಾಗುಣಿತ',
@@ -1769,8 +1759,6 @@ export const kn: Dictionary = {
   'Take it off': 'ತೆಗೆದುಹಾಕಿ',
   'Put it on the bar': 'ಪಟ್ಟಿಗೆ ಸೇರಿಸಿ',
   'Reset the bar': 'ಪಟ್ಟಿಯನ್ನು ಮರುಹೊಂದಿಸಿ',
-  'Pulling down': 'ಕೆಳಗೆ ಎಳೆಯುವುದು',
-  'A pull past the top runs': 'ಮೇಲಿನಿಂದ ಎಳೆದರೆ ಚಲಿಸುತ್ತದೆ',
   Nothing: 'ಏನೂ ಇಲ್ಲ',
 
   Keep: 'ಇರಿಸಿ',
@@ -2534,16 +2522,12 @@ export const kn: Dictionary = {
     'Orden ಯಾವ ಆ್ಯಪ್‌ನ ಕೀಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ ಎಂಬುದು; ಕೆಳಗಿನ ಯಾವುದೇ ಕೀಯನ್ನು ಇನ್ನೂ ಬದಲಾಯಿಸಬಹುದು.',
   'Moves and edits in notes with Vim’s keys.':
     'Vim ಕೀಗಳಿಂದ ಟಿಪ್ಪಣಿಗಳಲ್ಲಿ ಚಲಿಸುತ್ತದೆ ಮತ್ತು ಸಂಪಾದಿಸುತ್ತದೆ.',
-  'What pulling a note down past its top does on a phone.':
-    'ಫೋನ್‌ನಲ್ಲಿ ಟಿಪ್ಪಣಿಯನ್ನು ಅದರ ಮೇಲ್ಭಾಗ ದಾಟಿ ಕೆಳಗೆ ಎಳೆದರೆ ಏನಾಗುತ್ತದೆ ಎಂಬುದು.',
   'The OpenAI key the glasses ask their questions with.':
     'ಕನ್ನಡಕವು ತನ್ನ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಲು ಬಳಸುವ OpenAI ಕೀ.',
   'The model that answers what you ask on the glasses.':
     'ಕನ್ನಡಕದಲ್ಲಿ ನೀವು ಕೇಳಿದ್ದಕ್ಕೆ ಉತ್ತರಿಸುವ ಮಾದರಿ.',
   'How long the model thinks before it answers; longer is slower.':
     'ಮಾದರಿ ಉತ್ತರಿಸುವ ಮುನ್ನ ಎಷ್ಟು ಹೊತ್ತು ಯೋಚಿಸುತ್ತದೆ ಎಂಬುದು; ಹೆಚ್ಚಾದಷ್ಟು ನಿಧಾನ.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer ನಲ್ಲಿ ಬಲ-ಕ್ಲಿಕ್ ಮಾಡಿದಾಗ ಬರುವ ಹೊಸ ಮೆನುವಿಗೆ Markdown ದಾಖಲೆಯನ್ನು ಸೇರಿಸುತ್ತದೆ.',
   'What happens when one note was changed on two devices before they synced.':
     'ಸಿಂಕ್ ಆಗುವ ಮುನ್ನ ಒಂದು ಟಿಪ್ಪಣಿ ಎರಡು ಸಾಧನಗಳಲ್ಲಿ ಬದಲಾದರೆ ಏನಾಗುತ್ತದೆ ಎಂಬುದು.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2587,22 +2571,16 @@ export const kn: Dictionary = {
     'ನಿಮ್ಮ ಸ್ಥಿತಿಯನ್ನು ಮತ್ತೆ ಯಾವಾಗ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ ಎಂಬುದು.',
   'Silences chat notifications and shows the others you are busy.':
     'ಚಾಟ್ ಅಧಿಸೂಚನೆಗಳನ್ನು ಮೌನಗೊಳಿಸಿ, ನೀವು ಕಾರ್ಯನಿರತರಾಗಿದ್ದೀರಿ ಎಂದು ಇತರರಿಗೆ ತೋರಿಸುತ್ತದೆ.',
-  'The colour the others see beside your name.': 'ನಿಮ್ಮ ಹೆಸರಿನ ಪಕ್ಕದಲ್ಲಿ ಇತರರು ನೋಡುವ ಬಣ್ಣ.',
   'The others see you as offline even while you are here.':
     'ನೀವು ಇಲ್ಲಿರುವಾಗಲೂ ಇತರರು ನಿಮ್ಮನ್ನು ಆಫ್‌ಲೈನ್ ಎಂದು ನೋಡುತ್ತಾರೆ.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'ವಿಂಡೋದ ಹಿಂದಿನ ಚಿತ್ರ, ಲೈಟ್‌ಗೆ ಒಂದು ಮತ್ತು ಡಾರ್ಕ್‌ಗೆ ಒಂದು; ಅದರ ಮಧ್ಯಭಾಗವನ್ನು ಸರಿಸಲು ಎಳೆಯಿರಿ.',
   'The theme Orden is drawn in.': 'Orden ಅನ್ನು ಚಿತ್ರಿಸುವ ಥೀಮ್.',
   'Light, dark, or whichever the system is in.': 'ಲೈಟ್, ಡಾರ್ಕ್, ಅಥವಾ ಸಿಸ್ಟಂ ಯಾವುದರಲ್ಲಿದೆಯೋ ಅದು.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'ಫೈಲ್ ಪಟ್ಟಿಯ ಮೇಲಿನ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು ಟೈಲ್‌ಗಳಾಗಿ ಕಾಣಬೇಕೇ ಅಥವಾ ಪಟ್ಟಿಯಾಗಿ ಕಾಣಬೇಕೇ ಎಂಬುದು.',
   'Shows a pointing hand over buttons, as web pages do.':
     'ವೆಬ್ ಪುಟಗಳಂತೆಯೇ, ಬಟನ್‌ಗಳ ಮೇಲೆ ತೋರುಬೆರಳಿನ ಕೈಯನ್ನು ತೋರಿಸುತ್ತದೆ.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ನ ಸ್ವಂತ ಶೀರ್ಷಿಕೆ ಪಟ್ಟಿ, ಅಥವಾ ನಿಮ್ಮ ಸಿಸ್ಟಂನ ವಿಂಡೋ ಚೌಕಟ್ಟು.',
-  'Square bottom edge': 'ಚೌಕ ಕೆಳ ಅಂಚು',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'ತೆರೆದಿರುವುದು ಚೌಕ ಮೂಲೆಗಳೊಂದಿಗೆ ವಿಂಡೋದ ಕೆಳಭಾಗದವರೆಗೆ ಬರುತ್ತದೆ; ವಿಭಜನೆಯಲ್ಲಿ, ಅದನ್ನು ಮುಟ್ಟುವ ಪೇನ್‌ಗಳು.',
   'How large the text of notes is.': 'ಟಿಪ್ಪಣಿಗಳ ಪಠ್ಯ ಎಷ್ಟು ದೊಡ್ಡದು ಎಂಬುದು.',
   'How large all of Orden is drawn on this device.':
     'ಈ ಸಾಧನದಲ್ಲಿ ಇಡೀ Orden ಎಷ್ಟು ದೊಡ್ಡದಾಗಿ ಕಾಣಿಸುತ್ತದೆ.',

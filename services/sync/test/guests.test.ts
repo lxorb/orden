@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 
-const NO_FACE = { id: null, avatar: null, accent: null }
-const A_FACE = { id: expect.any(String), avatar: null, accent: null }
+const NO_FACE = { id: null, avatar: null }
+const A_FACE = { id: expect.any(String), avatar: null }
 
 const OWNER = 'owner@example.com'
 const GUEST = 'guest@example.com'

@@ -15,6 +15,5 @@ export type Presence = 'active' | 'away' | 'offline'
 export interface Face {
   name: string
   avatar?: Avatar | null
-  accent?: string | null
   key?: string
 }

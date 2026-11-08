@@ -126,7 +126,6 @@ const KNOWN: Record<string, Check> = {
       : `preset must be one of ${PRESETS.join(', ')}`,
   shortcuts: shortcutMap,
   toolbar: buttonList,
-  pull: pulledCommand,
   hiddenKinds: kindList,
   archivedSpaces: spaceList,
   recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
@@ -160,7 +159,7 @@ const KNOWN: Record<string, Check> = {
   look: lookWrong,
 }
 
-const RETIRED: ReadonlySet<string> = new Set(['spellWords'])
+const RETIRED: ReadonlySet<string> = new Set(['spellWords', 'pull'])
 
 const MOST_SHORTCUTS = 200
 const LONGEST_ID = 64
@@ -249,15 +248,6 @@ function spaceList(value: unknown): string | null {
   return null
 }
 
-function pulledCommand(value: unknown): string | null {
-  if (value === null || value === 'none') return null
-  if (typeof value !== 'string' || value.length > LONGEST_ID || !ID.test(value)) {
-    return 'pull must be a command id, none, or null'
-  }
-
-  return null
-}
-
 function shortcutMap(value: unknown): string | null {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     return 'shortcuts must be an object'
@@ -311,9 +301,7 @@ settings.patch('/', async (context) => {
   const sent = await objectBody(context)
   if (!sent) return context.json({ error: NOT_AN_OBJECT }, 400)
 
-  const body = Object.fromEntries(
-    Object.entries(sent).filter(([name]) => !RETIRED.has(name)),
-  )
+  const body = Object.fromEntries(Object.entries(sent).filter(([name]) => !RETIRED.has(name)))
 
   for (const [name, value] of Object.entries(body)) {
     const check = Object.hasOwn(KNOWN, name) ? KNOWN[name] : undefined
@@ -323,7 +311,7 @@ settings.patch('/', async (context) => {
     if (wrong) return context.json({ error: wrong }, 400)
   }
 
-  const merged = { ...(await settingsOf(context.env, user.id)), ...(body as AccountSettings) }
+  const merged = { ...(await settingsOf(context.env, user.id)), ...body }
   const written = JSON.stringify({ ...merged, look: undefined })
   if (byteLength(written) > MOST_BYTES) {
     return context.json({ error: 'that is more settings than an account holds' }, 413)

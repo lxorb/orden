@@ -7,7 +7,6 @@ export interface ProfileChanges {
   pronouns?: string | null
   bio?: string | null
   status?: Status | null
-  accent?: string | null
   zone?: string | null
   hidden?: boolean
 }
@@ -17,7 +16,6 @@ export interface OwnProfile {
   pronouns: string | null
   bio: string | null
   status: Status | null
-  accent: string | null
   zone: string | null
   hidden: boolean
 }

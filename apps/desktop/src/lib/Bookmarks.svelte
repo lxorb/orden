@@ -140,15 +140,11 @@
     return out
   })
 
-  const tiles = $derived(
-    workspace.device.essentialTiles ? drawn.filter((row) => isTile(row.mark)) : [],
-  )
-  const rows = $derived(
-    workspace.device.essentialTiles ? drawn.filter((row) => !isTile(row.mark)) : drawn,
-  )
+  const tiles = $derived(drawn.filter((row) => isTile(row.mark)))
+  const rows = $derived(drawn.filter((row) => !isTile(row.mark)))
 
   const offered = $derived.by(() => {
-    if (!workspace.device.essentialTiles || !workspace.panes.dragging) return false
+    if (!workspace.panes.dragging) return false
     if (workspace.panes.dragging.tabId === null) {
       return carried().some((one) => workspace.entryAt(one)?.is_dir === false)
     }
@@ -433,7 +429,7 @@
     {#if rows.length}
       <p class="orden-section">{t('Essentials')}</p>
 
-      <ul class="list" data-bookmark-drop={workspace.device.essentialTiles ? undefined : ''}>
+      <ul class="list">
         {#each rows as row (`${row.mark.kind}:${row.mark.path}:${row.mark.text}`)}
           {@const showing = workspace.isGroupOpen(row.mark.path)}
           {@const lands = landing?.at === row.at}

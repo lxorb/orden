@@ -558,16 +558,7 @@ export const ptBR: Dictionary = {
   'Actual size': 'Tamanho real',
   Accent: 'Destaque',
   'Tidy up': 'Organizar',
-  'Blur the app behind the tab overview': 'Desfocar o app atrás da visão geral das abas',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Mostra o app desfocado atrás das janelas, em vez do fundo do próprio Orden.',
   'Swipe in from the edge to see your notes.': 'Deslize a partir da borda para ver suas notas.',
-  'Point at the edge of the window to see your notes.':
-    'Leve o ponteiro até a borda da janela para ver suas notas.',
-  Sidebars: 'Barras laterais',
-  'Sidebar toggles inside the sidebars': 'Botões das barras laterais dentro delas',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'O botão de cada barra lateral fica dentro dela, e a barra direita aparece na borda dela na janela.',
   'Show other tabs as icons': 'Mostrar as outras abas como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada aba, exceto a da frente, mostra só o ícone; ao apontar para uma, aparece o nome dela.',
@@ -986,7 +977,6 @@ export const ptBR: Dictionary = {
   Minimize: 'Minimizar',
   Maximize: 'Maximizar',
   Restore: 'Restaurar',
-  'Show in Explorer’s New menu': 'Mostrar no menu Novo do Explorador',
   'choose an address': 'escolher um endereço',
   'Reset to defaults': 'Voltar aos padrões',
   Spelling: 'Ortografia',
@@ -1786,8 +1776,6 @@ export const ptBR: Dictionary = {
   'Take it off': 'Tirar',
   'Put it on the bar': 'Colocar na barra',
   'Reset the bar': 'Restaurar a barra',
-  'Pulling down': 'Puxar para baixo',
-  'A pull past the top runs': 'Puxar além do topo executa',
   Nothing: 'Nada',
 
   Keep: 'Guardar',
@@ -2556,16 +2544,12 @@ export const ptBR: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'De qual app o Orden segue os atalhos; qualquer atalho abaixo ainda pode ser alterado.',
   'Moves and edits in notes with Vim’s keys.': 'Move e edita nas notas com as teclas do Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'O que puxar uma nota para baixo além do topo faz no celular.',
   'The OpenAI key the glasses ask their questions with.':
     'A chave da OpenAI com que os óculos fazem suas perguntas.',
   'The model that answers what you ask on the glasses.':
     'O modelo que responde ao que você pergunta nos óculos.',
   'How long the model thinks before it answers; longer is slower.':
     'Quanto tempo o modelo pensa antes de responder; mais tempo é mais lento.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Adiciona um documento Markdown ao menu Novo que aparece ao clicar com o botão direito no Explorador de Arquivos.',
   'What happens when one note was changed on two devices before they synced.':
     'O que acontece quando uma nota foi alterada em dois dispositivos antes de sincronizarem.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2607,22 +2591,16 @@ export const ptBR: Dictionary = {
   'When your status is taken away again.': 'Quando seu status é retirado de novo.',
   'Silences chat notifications and shows the others you are busy.':
     'Silencia as notificações de chat e mostra aos outros que você está ocupado.',
-  'The colour the others see beside your name.': 'A cor que os outros veem ao lado do seu nome.',
   'The others see you as offline even while you are here.':
     'Os outros veem você como off-line mesmo enquanto você está aqui.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'A imagem atrás da janela, uma para o tema claro e outra para o escuro; arraste-a para mover o centro.',
   'The theme Orden is drawn in.': 'O tema em que o Orden é desenhado.',
   'Light, dark, or whichever the system is in.': 'Claro, escuro ou o que o sistema estiver usando.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Se os favoritos no topo da lista de arquivos aparecem como blocos ou como lista.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Mostra uma mão apontando sobre os botões, como nas páginas da web.',
   'Orden’s own title bar, or the window frame of your system.':
     'A barra de título do próprio Orden ou a moldura de janela do seu sistema.',
-  'Square bottom edge': 'Borda inferior reta',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'O que está aberto vai até a borda inferior da janela com cantos retos; numa divisão, os painéis que a tocam.',
   'How large the text of notes is.': 'O tamanho do texto das notas.',
   'How large all of Orden is drawn on this device.': 'O tamanho de todo o Orden neste dispositivo.',
   'The space between the lines of a note.': 'O espaço entre as linhas de uma nota.',

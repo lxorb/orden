@@ -79,7 +79,6 @@
         face={{
           name,
           avatar: person?.avatar ?? null,
-          accent: person?.accent ?? null,
           key: shown.id,
         }}
         size={80}

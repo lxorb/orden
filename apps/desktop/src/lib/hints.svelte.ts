@@ -1,7 +1,7 @@
 import { modes } from './modes.svelte'
 import { keepJson, stored, stringList } from './stored'
 
-export const HINTS = ['drawer', 'edge', 'graph', 'palette'] as const
+export const HINTS = ['drawer', 'graph', 'palette'] as const
 export type Hint = (typeof HINTS)[number]
 
 const KEY = 'orden:hints'

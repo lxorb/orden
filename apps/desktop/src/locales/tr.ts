@@ -549,17 +549,7 @@ export const tr: Dictionary = {
   'Actual size': 'Gerçek boyut',
   Accent: 'Vurgu rengi',
   'Tidy up': 'Düzenle',
-  'Blur the app behind the tab overview':
-    'Sekme genel görünümünün arkasındaki uygulamayı bulanıklaştır',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden’in kendi arka planı yerine pencerelerin arkasında uygulamayı bulanık gösterir.',
   'Swipe in from the edge to see your notes.': 'Notlarını görmek için kenardan içeri kaydır.',
-  'Point at the edge of the window to see your notes.':
-    'Notlarını görmek için işaretçiyi pencerenin kenarına götür.',
-  Sidebars: 'Kenar çubukları',
-  'Sidebar toggles inside the sidebars': 'Kenar çubuğu düğmeleri kenar çubuklarının içinde',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Her kenar çubuğunun düğmesi kendi içindedir ve sağ kenar çubuğu pencerenin o kenarından çıkar.',
   'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Öndeki dışındaki her sekme yalnızca simgesini gösterir; birinin üzerine gelince adı görünür.',
@@ -976,7 +966,6 @@ export const tr: Dictionary = {
   Minimize: 'Küçült',
   Maximize: 'Büyüt',
   Restore: 'Geri yükle',
-  'Show in Explorer’s New menu': 'Dosya Gezgini’nin Yeni menüsünde göster',
   'choose an address': 'bir adres seçin',
   'Reset to defaults': 'Öntanımlılara döndür',
   Spelling: 'Yazım',
@@ -1761,8 +1750,6 @@ export const tr: Dictionary = {
   'Take it off': 'Kaldır',
   'Put it on the bar': 'Çubuğa ekle',
   'Reset the bar': 'Çubuğu sıfırla',
-  'Pulling down': 'Aşağı çekme',
-  'A pull past the top runs': 'Üstten çekmek şunu çalıştırır',
   Nothing: 'Hiçbiri',
 
   Keep: 'Sakla',
@@ -2524,16 +2511,12 @@ export const tr: Dictionary = {
     'Orden’in hangi uygulamanın tuşlarını izlediği; aşağıdaki her tuş yine de değiştirilebilir.',
   'Moves and edits in notes with Vim’s keys.':
     'Notlarda Vim tuşlarıyla gezinmenizi ve düzenleme yapmanızı sağlar.',
-  'What pulling a note down past its top does on a phone.':
-    'Telefonda bir notu en üstünden aşağı çekmenin ne yaptığı.',
   'The OpenAI key the glasses ask their questions with.':
     'Gözlüğün sorularını sorarken kullandığı OpenAI anahtarı.',
   'The model that answers what you ask on the glasses.':
     'Gözlükte sorduklarınızı yanıtlayan model.',
   'How long the model thinks before it answers; longer is slower.':
     'Modelin yanıtlamadan önce ne kadar düşündüğü; daha uzunu daha yavaştır.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Dosya Gezgini’nde sağ tıklayınca açılan Yeni menüsüne bir Markdown belgesi ekler.',
   'What happens when one note was changed on two devices before they synced.':
     'Bir not eşitlenmeden önce iki cihazda değiştirildiğinde ne olacağı.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2575,22 +2558,16 @@ export const tr: Dictionary = {
   'When your status is taken away again.': 'Durumunuzun ne zaman yeniden kaldırılacağı.',
   'Silences chat notifications and shows the others you are busy.':
     'Sohbet bildirimlerini susturur ve diğerlerine meşgul olduğunuzu gösterir.',
-  'The colour the others see beside your name.': 'Diğerlerinin adınızın yanında gördüğü renk.',
   'The others see you as offline even while you are here.':
     'Buradayken bile diğerleri sizi çevrimdışı görür.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'Pencerenin arkasındaki resim, biri açık biri koyu tema için; ortasını taşımak için sürükleyin.',
   'The theme Orden is drawn in.': 'Orden’in görünümünü belirleyen tema.',
   'Light, dark, or whichever the system is in.': 'Açık, koyu ya da sistem hangisindeyse o.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Dosya listesinin üstündeki yer imlerinin kutucuk olarak mı yoksa liste olarak mı gösterileceği.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Web sayfalarında olduğu gibi düğmelerin üzerinde işaret eden bir el gösterir.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden’in kendi başlık çubuğu ya da sisteminizin pencere çerçevesi.',
-  'Square bottom edge': 'Köşeli alt kenar',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Açık olan, köşeli kenarlarla pencerenin altına kadar uzanır; bölündüğünde, alta değen bölmeler.',
   'How large the text of notes is.': 'Notların yazısının ne kadar büyük olduğu.',
   'How large all of Orden is drawn on this device.':
     'Orden’ın tamamının bu cihazda ne kadar büyük görüneceği.',

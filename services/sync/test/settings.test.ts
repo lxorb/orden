@@ -645,6 +645,7 @@ describe('the theme kept with the account', () => {
 describe('a setting the app no longer has', () => {
   const RETIRED: Record<string, unknown> = {
     spellWords: ['orden', 'tauri'],
+    pull: 'app.palette',
   }
 
   test('is taken from an older build and kept nowhere', async () => {

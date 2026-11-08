@@ -260,32 +260,17 @@ def drive_hands(browser: Browser) -> None:
     if below != expected:
         wrong(f"ArrowDown did not walk down the grid: {below}, not {expected}")
 
-    page.evaluate("() => window.ordenApp.settings.show()")
-    page.wait_for_timeout(600)
-    page.fill(".sheet .search input", "bookmarks")
-    page.wait_for_timeout(500)
-    found = page.locator(".sheet .orden-segmented button", has_text="List")
-    if not found.count():
-        wrong("a settings search for the old word does not find the Essentials")
-    else:
-        shot(page, "11-settings")
-        found.first.click()
-        page.wait_for_timeout(300)
-    page.evaluate("() => (window.ordenApp.settings.open = false)")
-    page.wait_for_timeout(500)
-    listed = page.evaluate(ROWS)
-    say(f"[hands] as a list: {listed}")
-    if page.locator(".tiles").count() or len(listed) != 7:
-        wrong(f"the list did not come back: {listed}")
-    sidebar(page, "12-as-a-list")
-    page.evaluate("() => localStorage.setItem('orden:essentials-look', 'tiles')")
+    kept = page.evaluate(ORDER)
+    page.evaluate("() => localStorage.setItem('orden:essentials-look', 'list')")
     reload(page)
     page.evaluate(SHOW)
     wait_for(page, "document.querySelectorAll('.tiles .tile').length > 0", "the tiles")
     page.locator(".tiles .tile").first.click()
     page.wait_for_timeout(600)
     if page.locator(".tiles .tile").count() != 6:
-        wrong("the tiles did not come back from the list")
+        wrong("a list look an older build stored did not leave the grid")
+    if page.evaluate(ORDER) != kept:
+        wrong(f"the Essentials moved under a stored list look: {page.evaluate(ORDER)}, not {kept}")
     if page.locator("p.orden-section", has_text="Essentials").count() != 1:
         wrong("the rows under the tiles are not headed Essentials")
 
