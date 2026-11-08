@@ -34,6 +34,8 @@ export type PictureStatus =
 
 export const AGAIN_AFTER = 4000
 export const SHOWN_WITHIN = 20_000
+export const QUIET_CHECK = 2000
+export const QUIET_FOR = 6000
 
 export interface PeerWorld {
   servers(): Promise<IceServer[]>
@@ -90,6 +92,7 @@ export class Picture {
   private peer: RTCPeerConnection | null = null
   private wanted = false
   private cancelTimer: (() => void) | null = null
+  private cancelQuiet: (() => void) | null = null
   private turn = 0
 
   constructor(
@@ -248,8 +251,10 @@ export class Picture {
     }
     peer.onconnectionstatechange = () => {
       if (this.peer !== peer) return
-      if (peer.connectionState === 'connected') this.status = { is: 'showing' }
-      else if (peer.connectionState === 'failed') this.lost()
+      if (peer.connectionState === 'connected') {
+        this.status = { is: 'showing' }
+        this.listen(peer)
+      } else if (peer.connectionState === 'failed') this.lost()
     }
     try {
       await peer.setLocalDescription(await peer.createOffer())
@@ -265,6 +270,35 @@ export class Picture {
     }
   }
 
+  private listen(peer: RTCPeerConnection): void {
+    if (this.cancelQuiet) return
+    let heard = -1
+    let heardAt = this.world.now()
+    const check = () => {
+      this.cancelQuiet = this.world.after(QUIET_CHECK, () => {
+        void peer
+          .getStats()
+          .then((report) => {
+            if (this.peer !== peer) return
+            const bytes = receivedOf(report.values() as Iterable<Record<string, unknown>>)
+            const now = this.world.now()
+            if (bytes > heard) {
+              heard = bytes
+              heardAt = now
+            } else if (now - heardAt >= QUIET_FOR) {
+              this.lost()
+              return
+            }
+            check()
+          })
+          .catch(() => {
+            if (this.peer === peer) check()
+          })
+      })
+    }
+    check()
+  }
+
   private lost(): void {
     this.close()
     this.status = { is: 'lost' }
@@ -278,6 +312,8 @@ export class Picture {
     this.turn += 1
     this.cancelTimer?.()
     this.cancelTimer = null
+    this.cancelQuiet?.()
+    this.cancelQuiet = null
     const peer = this.peer
     this.peer = null
     this.channel = null
@@ -295,4 +331,14 @@ export class Picture {
   private send(said: ToHost): void {
     this.say(toHostText(said))
   }
+}
+
+function receivedOf(report: Iterable<Record<string, unknown>>): number {
+  let bytes = 0
+  for (const one of report) {
+    if (one.type === 'inbound-rtp' && typeof one.bytesReceived === 'number') {
+      bytes += one.bytesReceived
+    }
+  }
+  return bytes
 }
