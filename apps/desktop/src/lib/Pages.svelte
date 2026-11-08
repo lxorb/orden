@@ -1276,8 +1276,7 @@
       if (!store.picked.length || !writable) return
 
       event.preventDefault()
-      const going = store.picked.filter((id) => !pages.some((page) => page.id === id))
-      if (going.length) store.edit(removed(canvas, going))
+      deletePicked()
       return
     }
 

@@ -728,3 +728,30 @@ describe('leaving the card being written in', () => {
     }
   })
 })
+
+describe('ink deleted while picked', () => {
+  const points = [{ x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }]
+  const stroke = { id: 's', tool: 'pen' as const, color: '#000000', size: 2, points }
+
+  test('is picked no more, however the delete came, so an undo brings it back unpicked', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, ink: [stroke] })
+    store.pick('s')
+
+    store.edit({ ...store.canvas, ink: [] })
+    expect(store.picked).toEqual([])
+
+    store.undo()
+    expect(store.canvas.ink.map((one) => one.id)).toEqual(['s'])
+    expect(store.picked).toEqual([])
+  })
+
+  test('and a card rubbed out of the plane in the same way', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a'), card('b', 300)] })
+    store.pickAll(['a', 'b'])
+
+    store.edit({ ...store.canvas, nodes: [card('b', 300)] })
+    expect(store.picked).toEqual(['b'])
+  })
+})
