@@ -39,12 +39,6 @@ function emptyTables(): Tables {
   return { keyed, log: [] }
 }
 
-function clone(tables: Tables): Tables {
-  const keyed = new Map<TableName, Map<string, Row>>()
-  for (const [name, rows] of tables.keyed) keyed.set(name, new Map(rows))
-  return { keyed, log: [...tables.log] }
-}
-
 export class MemoryStore {
   private tables = emptyTables()
   private clean = true
@@ -121,9 +115,7 @@ export class MemoryStore {
 
   private write(changes: readonly Change[]): number[] {
     for (const change of changes) changeOf(change)
-    const next = clone(this.tables)
-    const counts = changes.map((change) => applied(next, change))
-    this.tables = next
+    const counts = changes.map((change) => applied(this.tables, change))
     this.writes += 1
     return counts
   }

@@ -1,5 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
+import { linearly } from '../../../scripts/growth'
 import { applyOp, contentChanged, kindOfName, nameKey, type TreeState, treeState } from './tree'
 import type { Op, OpResult } from './wire'
 
@@ -68,6 +69,32 @@ describe('tree', () => {
     const cut = create(state, 'n5', emoji)
     expect('name' in cut && cut.name.length <= 255).toBe(true)
     expect('name' in cut && /[\uD800-\uDBFF]\./.test(cut.name)).toBe(false)
+  })
+
+  test('a name let go of by a rename, a move or a delete is free again, and one taken since is not', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    create(state, 'a', 'Plan.md')
+    create(state, 'b', 'Plan.md', 'f')
+    applyOp(state, { op: opId(), t: 'rename', id: 'a', name: 'Old.md', seen: state.cursor }, OWNER)
+    expect(create(state, 'c', 'plan.md')).toMatchObject({ name: 'plan.md' })
+    applyOp(state, { op: opId(), t: 'move', id: 'b', parent: null, seen: state.cursor }, OWNER)
+    expect(state.entries.get('b')?.name).toBe('Plan 2.md')
+    expect(create(state, 'd', 'Plan.md', 'f')).toMatchObject({ name: 'Plan.md' })
+    applyOp(state, { op: opId(), t: 'delete', id: 'c', seen: state.cursor }, OWNER)
+    expect(create(state, 'e', 'Plan.md')).toMatchObject({ name: 'Plan.md' })
+    applyOp(state, { op: opId(), t: 'rename', id: 'a', name: 'Plan.md', seen: state.cursor }, OWNER)
+    expect(state.entries.get('a')?.name).toBe('Plan 3.md')
+    applyOp(state, { op: opId(), t: 'restore', id: 'c', seen: state.cursor }, OWNER)
+    expect(state.entries.get('c')?.name).toBe('plan 4.md')
+  })
+
+  test('a folder of many takes each new name in time that grows with the folder, not its square', () => {
+    linearly((size) => {
+      const state = treeState()
+      for (let at = 0; at < size; at++) create(state, `n${String(at)}`, `Note ${String(at)}.md`)
+      return state
+    }, 2000)
   })
 
   test('nameKey is NFC and without case', () => {
