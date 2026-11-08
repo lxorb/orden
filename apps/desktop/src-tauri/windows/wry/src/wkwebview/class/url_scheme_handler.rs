@@ -127,9 +127,17 @@ extern "C" fn start_task(
       // get all our headers values and inject them in our request
       if let Some(all_headers) = all_headers {
         for current_header in all_headers.allKeys().iter() {
-          let header_value = all_headers.valueForKey(&current_header).unwrap();
+          let Some(header_value) = all_headers.valueForKey(&current_header) else {
+            continue;
+          };
           // inject the header into the request
-          http_request = http_request.header(current_header.to_string(), header_value.to_string());
+          let (name, value) = (current_header.to_string(), header_value.to_string());
+          if let (Ok(name), Ok(value)) = (
+            http::HeaderName::from_bytes(name.as_bytes()),
+            http::HeaderValue::from_bytes(value.as_bytes()),
+          ) {
+            http_request = http_request.header(name, value);
+          }
         }
       }
 
