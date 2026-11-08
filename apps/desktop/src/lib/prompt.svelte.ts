@@ -1,13 +1,17 @@
 import type { FileMark } from './file-mark'
 
-interface Ask {
+interface Held {
+  until?: AbortSignal
+}
+
+interface Ask extends Held {
   title: string
   value?: string
   placeholder?: string
   confirmLabel?: string
 }
 
-interface Confirm {
+interface Confirm extends Held {
   title: string
   detail?: string
   confirmLabel?: string
@@ -26,7 +30,7 @@ interface Choice {
   picture?: string
 }
 
-interface Choose {
+interface Choose extends Held {
   title: string
   detail?: string
   options: Choice[]
@@ -36,7 +40,7 @@ interface ChooseTicking extends Choose {
   tick: string
 }
 
-interface Find {
+interface Find extends Held {
   title: string
   options: Choice[]
   placeholder?: string
@@ -73,7 +77,7 @@ class Prompt {
       this.placeholder = options.placeholder ?? ''
       this.confirmLabel = options.confirmLabel ?? 'Create'
       this.danger = false
-    }) as Promise<string | null>
+    }, options.until) as Promise<string | null>
   }
 
   confirm(options: Confirm): Promise<boolean> {
@@ -85,7 +89,7 @@ class Prompt {
       this.confirmLabel = options.confirmLabel ?? 'Confirm'
       this.danger = options.danger ?? false
       this.lands = options.lands ?? false
-    }).then((answer) => answer !== null)
+    }, options.until).then((answer) => answer !== null)
   }
 
   private chosen(options: Choose) {
@@ -97,7 +101,7 @@ class Prompt {
   }
 
   choose(options: Choose): Promise<string | null> {
-    return this.show(() => this.chosen(options)) as Promise<string | null>
+    return this.show(() => this.chosen(options), options.until) as Promise<string | null>
   }
 
   async chooseTicking(options: ChooseTicking): Promise<{ id: string; ticked: boolean } | null> {
@@ -105,7 +109,7 @@ class Prompt {
       this.chosen(options)
       this.tick = options.tick
       this.ticked = false
-    })) as string | null
+    }, options.until)) as string | null
     return id === null ? null : { id, ticked: this.ticked }
   }
 
@@ -117,18 +121,32 @@ class Prompt {
       this.value = ''
       this.placeholder = options.placeholder ?? ''
       this.options = options.options
-    }) as Promise<string | null>
+    }, options.until) as Promise<string | null>
   }
 
   pick(id: string) {
     this.answer(id)
   }
 
-  private show(setup: () => void): Promise<unknown> {
+  private show(setup: () => void, until?: AbortSignal): Promise<unknown> {
+    if (until?.aborted) return Promise.resolve(null)
     return new Promise((resolve) => {
-      this.waiting.push({ setup, resolve })
+      const asked: Asked = { setup, resolve }
+      this.waiting.push(asked)
+      until?.addEventListener('abort', () => this.withdraw(asked), { once: true })
       if (!this.pending) this.next()
     })
+  }
+
+  private withdraw(asked: Asked) {
+    if (this.pending === asked) {
+      this.answer(null)
+      return
+    }
+    const at = this.waiting.indexOf(asked)
+    if (at < 0) return
+    this.waiting.splice(at, 1)
+    asked.resolve(null)
   }
 
   private next() {

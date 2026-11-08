@@ -26,6 +26,7 @@ interface MenuOptions {
   near?: boolean
   keepFocus?: boolean
   up?: boolean
+  until?: AbortSignal
 }
 
 class ContextMenu {
@@ -40,15 +41,17 @@ class ContextMenu {
   lit = $state(-1)
   heldAt: { x: number; y: number } | null = null
   from: Element | null = null
+  private shown = 0
 
   show(event: MouseEvent, items: MenuEntry[], options: MenuOptions = {}) {
     event.preventDefault()
     event.stopPropagation()
 
     const usable = trim(items)
-    if (!usable.length) return
+    if (!usable.length || options.until?.aborted) return
 
     this.items = usable
+    const shown = ++this.shown
     this.title = options.title ?? null
     this.near = !!options.near
     this.keepFocus = !!options.keepFocus
@@ -60,6 +63,13 @@ class ContextMenu {
     this.y = under ? (this.up ? under.top : under.bottom) : event.clientY
     this.heldAt = event.buttons ? { x: event.clientX, y: event.clientY } : null
     this.open = true
+    options.until?.addEventListener(
+      'abort',
+      () => {
+        if (this.shown === shown) this.hide()
+      },
+      { once: true },
+    )
   }
 
   replace(items: MenuEntry[]) {

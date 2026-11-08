@@ -14,7 +14,7 @@ export function showPassAccount(event: MouseEvent, ui: PassUi): void {
       DIVIDER,
       { label: t('Sign out'), run: () => void signOut() },
     ],
-    { title: account.user?.email ?? t('Account'), up: true },
+    { until: pass.opened, title: account.user?.email ?? t('Account'), up: true },
   )
 }
 

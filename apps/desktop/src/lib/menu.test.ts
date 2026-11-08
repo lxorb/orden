@@ -34,3 +34,26 @@ describe('what opens a menu', () => {
     expect(menu.open).toBe(false)
   })
 })
+
+describe('a menu held by a signal', () => {
+  test('closes when the signal goes, but a later menu stays', () => {
+    const lock = new AbortController()
+    menu.show(press(), [{ label: 'Delete', run: () => undefined }], { until: lock.signal })
+    expect(menu.open).toBe(true)
+    lock.abort()
+    expect(menu.open).toBe(false)
+
+    const again = new AbortController()
+    menu.show(press(), [{ label: 'Copy', run: () => undefined }], { until: again.signal })
+    menu.show(press(), [{ label: 'Paste', run: () => undefined }])
+    again.abort()
+    expect(menu.open).toBe(true)
+  })
+
+  test('never opens once its signal has gone', () => {
+    const lock = new AbortController()
+    lock.abort()
+    menu.show(press(), [{ label: 'Delete', run: () => undefined }], { until: lock.signal })
+    expect(menu.open).toBe(false)
+  })
+})

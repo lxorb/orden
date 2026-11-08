@@ -49,3 +49,29 @@ describe('asks that come while another is open', () => {
     expect(await ticking).toEqual({ id: 'b', ticked: true })
   })
 })
+
+describe('an ask held by a signal', () => {
+  test('is taken away when the signal goes, open or still waiting, and the next one comes up', async () => {
+    const lock = new AbortController()
+    const held = prompt.confirm({ title: 'Delete Bank for good?', until: lock.signal })
+    const waiting = prompt.choose({ title: 'Move to', options: [], until: lock.signal })
+    const other = prompt.confirm({ title: 'Elsewhere' })
+
+    expect(prompt.title).toBe('Delete Bank for good?')
+    lock.abort()
+    expect(await held).toBe(false)
+    expect(await waiting).toBeNull()
+
+    await settle()
+    expect(prompt.title).toBe('Elsewhere')
+    prompt.dismiss()
+    expect(await other).toBe(false)
+  })
+
+  test('is never shown once its signal has gone', async () => {
+    const lock = new AbortController()
+    lock.abort()
+    expect(await prompt.ask({ title: 'New folder', until: lock.signal })).toBeNull()
+    expect(prompt.open).toBe(false)
+  })
+})

@@ -156,6 +156,7 @@
   async function removed(member: Member) {
     if (!vault) return
     const sure = await prompt.confirm({
+      until: pass.opened,
       title: t('Remove {name}?', { name: nameOf(member) }),
       detail: t('The vault gets a new key. What they kept from before stays readable to them.'),
       confirmLabel: t('Remove'),
@@ -181,12 +182,14 @@
   async function handedOn() {
     if (!vault) return
     const to = await prompt.choose({
+      until: pass.opened,
       title: t('Transfer ownership to'),
       options: heirs.map((one) => ({ id: one.email, label: nameOf(one) })),
     })
     if (!to) return
     const heir = heirs.find((one) => one.email === to)
     const sure = await prompt.confirm({
+      until: pass.opened,
       title: t('Make {name} the owner?', { name: heir ? nameOf(heir) : to }),
       detail: t('You stay a manager of the vault.'),
       confirmLabel: t('Transfer'),
@@ -199,6 +202,7 @@
   async function left() {
     if (!vault) return
     const sure = await prompt.confirm({
+      until: pass.opened,
       title: t('Leave {vault}?', { vault: vault.name }),
       detail: t('Its items leave this device. Somebody who manages it can invite you again.'),
       confirmLabel: t('Leave'),

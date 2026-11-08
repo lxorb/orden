@@ -43,6 +43,7 @@
   async function cleared() {
     if (!asked) return
     const sure = await prompt.confirm({
+      until: pass.opened,
       title: t('Clear the history?'),
       detail: t('The older versions are deleted for good.'),
       confirmLabel: t('Clear history'),
