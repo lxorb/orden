@@ -148,6 +148,26 @@ describe('a question put to the reader', () => {
     })
   })
 
+  test('at most five of an agent’s questions are open at once', async () => {
+    const ids: string[] = []
+    for (let one = 0; one < 5; one++) {
+      const said = await askReader(
+        call('ask_reader', { kind: 'text', message: `Name ${one}?`, wait_ms: 1 }),
+      )
+      ids.push((said as { result: { id: string } }).result.id)
+    }
+    await expect(
+      askReader(call('ask_reader', { kind: 'text', message: 'Again?', wait_ms: 1 })),
+    ).rejects.toMatchObject({ code: 'bad_arguments' })
+    expect(asking.of('claude')).toHaveLength(5)
+
+    asking.answer(ids[0] ?? '', 'Ada')
+    expect(
+      await askReader(call('ask_reader', { kind: 'text', message: 'Again?', wait_ms: 1 })),
+    ).toMatchObject({ result: { waiting: true } })
+    asking.forget('claude')
+  })
+
   test('another agent’s question is not this one’s to ask about', async () => {
     const theirs = asking.ask({
       agent: 'codex',
