@@ -122,7 +122,9 @@ export class FakeCrate implements AgentsCrate {
   ) {
     const day = new Date(at).toISOString().slice(0, 10)
     const line = { at, agent, verb, args, status, ms: 12, ...(code ? { code } : {}) }
-    this.log.set(day, [...(this.log.get(day) ?? []), line])
+    const gathered = this.log.get(day)
+    if (gathered) gathered.push(line)
+    else this.log.set(day, [line])
   }
 }
 

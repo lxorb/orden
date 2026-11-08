@@ -97,7 +97,11 @@ export function tracksMoved(from: string, to: string, root?: string): void {
     tracks.delete(key)
     const there = tracks.get(moved)
     const row = touchedMoved(path, now, agent)
-    if (there) waiting.set(moved, [...(waiting.get(moved) ?? []), { track: there, row }])
+    if (there) {
+      const gathered = waiting.get(moved)
+      if (gathered) gathered.push({ track: there, row })
+      else waiting.set(moved, [{ track: there, row }])
+    }
     tracks.set(moved, track)
     placed.set(track, now)
     if (kept.delete(key)) kept.add(moved)
@@ -123,7 +127,9 @@ export function tracksRemoved(path: string): void {
     kept.delete(key)
     const row = touchedBy(at).find((one) => one.id === agent) ?? null
     touch(at, { id: agent, name: row?.name ?? agent }, 0)
-    aside.set(key, [...(aside.get(key) ?? []), { track, row }])
+    const gathered = aside.get(key)
+    if (gathered) gathered.push({ track, row })
+    else aside.set(key, [{ track, row }])
     for (const listener of listeners) listener(agent, at)
   }
 }

@@ -187,7 +187,9 @@ export class RowsStore {
         const hash = row.anchor?.hash
         if (!task || hash === undefined || (cancelled ? !task.cancelled : !task.done)) continue
         const day = cancelled ? task.cancelledOn : task.completed
-        out.set(hash, [...(out.get(hash) ?? []), day])
+        const gathered = out.get(hash)
+        if (gathered) gathered.push(day)
+        else out.set(hash, [day])
       }
       return out
     }

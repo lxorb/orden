@@ -1,7 +1,9 @@
 const instead = new Map<string, ((value: unknown) => unknown)[]>()
 
 export function sendInstead(key: string, fix: (value: unknown) => unknown): void {
-  instead.set(key, [...(instead.get(key) ?? []), fix])
+  const gathered = instead.get(key)
+  if (gathered) gathered.push(fix)
+  else instead.set(key, [fix])
 }
 
 export function sendAsSaid(): void {

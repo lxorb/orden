@@ -31,7 +31,11 @@ function familiesByClass(css: string): Map<string, string[][]> {
         .map((compound) => [...compound.matchAll(/\.([\w-]+)/g)].map(([, name = '']) => name))
         .find((found) => found.length)
 
-      if (classes) families.set(family, [...(families.get(family) ?? []), classes])
+      if (classes) {
+        const gathered = families.get(family)
+        if (gathered) gathered.push(classes)
+        else families.set(family, [classes])
+      }
     }
   }
 

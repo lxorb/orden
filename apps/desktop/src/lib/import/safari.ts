@@ -53,7 +53,9 @@ function readTabs(said: Said[], made: Made, words: FolderWords) {
   const inside = new Map<number | null, Row[]>()
   for (const row of rows) {
     const parent = row.parent !== null && ids.has(row.parent) ? row.parent : null
-    inside.set(parent, [...(inside.get(parent) ?? []), row])
+    const gathered = inside.get(parent)
+    if (gathered) gathered.push(row)
+    else inside.set(parent, [row])
   }
   const tabsIn = (folder: Row) => (inside.get(folder.id) ?? []).filter((one) => one.type === TAB)
 

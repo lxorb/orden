@@ -460,7 +460,9 @@ function byRows<T>(items: readonly T[], pathOf: (item: T) => string): Map<Rows, 
   const out = new Map<Rows, T[]>()
   for (const item of items) {
     const rows = rowsAt(pathOf(item))
-    out.set(rows, [...(out.get(rows) ?? []), item])
+    const gathered = out.get(rows)
+    if (gathered) gathered.push(item)
+    else out.set(rows, [item])
   }
   return out
 }

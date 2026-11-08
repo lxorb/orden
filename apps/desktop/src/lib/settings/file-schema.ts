@@ -98,7 +98,9 @@ export function mergedSchema(each: Record<Platform, Schema>): Schema {
     for (const [key, setting] of Object.entries(each[platform])) {
       const there = found.get(key)
       found.set(key, there ? across(there, setting, key) : setting)
-      where.set(key, [...(where.get(key) ?? []), platform])
+      const platforms = where.get(key)
+      if (platforms) platforms.push(platform)
+      else where.set(key, [platform])
     }
   }
   for (const [key, platforms] of where) {

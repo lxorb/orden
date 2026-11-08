@@ -196,7 +196,9 @@ export function planOf(account: Account, into = 'Projects'): ImportPlan & { inbo
   const children = new Map<string, Task[]>()
   for (const task of account.tasks) {
     if (!task.parent) continue
-    children.set(task.parent, [...(children.get(task.parent) ?? []), task])
+    const gathered = children.get(task.parent)
+    if (gathered) gathered.push(task)
+    else children.set(task.parent, [task])
   }
   for (const list of children.values()) list.sort(byOrder)
   const byId = new Map(account.tasks.map((one) => [one.id, one]))
@@ -562,7 +564,11 @@ export async function readTodoistAccount(
   const remindOfTask = new Map<string, Remind[]>()
   for (const row of reminders) {
     const one = remindOf(row)
-    if (one) remindOfTask.set(id(row.item_id), [...(remindOfTask.get(id(row.item_id)) ?? []), one])
+    if (one) {
+      const gathered = remindOfTask.get(id(row.item_id))
+      if (gathered) gathered.push(one)
+      else remindOfTask.set(id(row.item_id), [one])
+    }
   }
 
   const tasks: Task[] = []

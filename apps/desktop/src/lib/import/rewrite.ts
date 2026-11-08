@@ -263,7 +263,9 @@ function calledBy(paths: readonly string[]): Map<string, string[]> {
     const names = isMarkdownPath(path) ? [name, withoutExtension(name)] : [name]
     for (const one of names) {
       const key = foldName(one)
-      called.set(key, [...(called.get(key) ?? []), path])
+      const gathered = called.get(key)
+      if (gathered) gathered.push(path)
+      else called.set(key, [path])
     }
   }
   return called
@@ -594,7 +596,9 @@ export class ExportFiles {
       const key = one.toLowerCase()
       this.called.set(key, (this.called.get(key) ?? 0) + 1)
       const folded = foldName(one)
-      this.byName.set(folded, [...(this.byName.get(folded) ?? []), [was, found]])
+      const gathered = this.byName.get(folded)
+      if (gathered) gathered.push([was, found])
+      else this.byName.set(folded, [[was, found]])
     }
 
     const said = found.name.toLowerCase()
@@ -602,7 +606,9 @@ export class ExportFiles {
 
     if (isMarkdownPath(found.path)) {
       const last = foldName(withoutExtension(found.path)).split('/').pop() ?? ''
-      this.arriving.set(last, [...(this.arriving.get(last) ?? []), found.path])
+      const gathered = this.arriving.get(last)
+      if (gathered) gathered.push(found.path)
+      else this.arriving.set(last, [found.path])
     }
   }
 

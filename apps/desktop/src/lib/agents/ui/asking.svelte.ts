@@ -63,7 +63,9 @@ class Asking {
         else this.hearing.delete(id)
         settle(null)
       }, patience)
-      this.hearing.set(id, [...(this.hearing.get(id) ?? []), heard])
+      const gathered = this.hearing.get(id)
+      if (gathered) gathered.push(heard)
+      else this.hearing.set(id, [heard])
     })
   }
 

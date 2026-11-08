@@ -354,8 +354,11 @@ function arrivals(
 
   for (const arrival of arriving) {
     const next = staying.find((token) => RANK[token.field] > arrival.rank)
-    if (next) before.set(next.from, [...(before.get(next.from) ?? []), arrival])
-    else after.push(arrival)
+    if (next) {
+      const gathered = before.get(next.from)
+      if (gathered) gathered.push(arrival)
+      else before.set(next.from, [arrival])
+    } else after.push(arrival)
   }
 
   const byRank = (list: Arrival[]) =>

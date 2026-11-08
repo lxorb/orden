@@ -110,7 +110,11 @@ export async function writeEach(
   const byNote = new Map<string, { row: Row; change: RowChange }[]>()
   for (const pair of pairs) {
     const path = pathOf(pair.row)
-    if (path !== null) byNote.set(path, [...(byNote.get(path) ?? []), pair])
+    if (path !== null) {
+      const gathered = byNote.get(path)
+      if (gathered) gathered.push(pair)
+      else byNote.set(path, [pair])
+    }
   }
 
   const changes = []
@@ -178,7 +182,11 @@ function byNote(many: readonly Row[]): Map<string, Anchored[]> {
   for (const row of many) {
     const path = pathOf(row)
     const anchor = row.anchor
-    if (path !== null && anchor) out.set(path, [...(out.get(path) ?? []), { row, anchor }])
+    if (path !== null && anchor) {
+      const gathered = out.get(path)
+      if (gathered) gathered.push({ row, anchor })
+      else out.set(path, [{ row, anchor }])
+    }
   }
   return out
 }

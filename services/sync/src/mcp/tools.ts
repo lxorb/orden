@@ -275,7 +275,11 @@ async function searchNotes(
       const said = `${one.name}/${row.path}: ${line.trim().slice(0, 200)}`
       const source = noteSource(one, items, row)
       if (source === null) own.push(said)
-      else theirs.set(source, [...(theirs.get(source) ?? []), said])
+      else {
+        const gathered = theirs.get(source)
+        if (gathered) gathered.push(said)
+        else theirs.set(source, [said])
+      }
     }
   }
 
