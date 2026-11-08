@@ -41,3 +41,53 @@ test('no name sits in a bare bdi, whose clipped label would keep the app’s dir
   )
   expect(bare).toEqual([])
 })
+
+test('a label aligned with its row says so in a way Chromium reads too', () => {
+  const sheets = [SHEET, ...svelteFiles(SOURCE)]
+  const lone = sheets.flatMap((path) =>
+    readFileSync(path, 'utf8')
+      .split('\n')
+      .flatMap((line, at, lines) =>
+        /text-align:\s*match-parent/.test(line) &&
+        !/text-align:\s*-webkit-match-parent/.test(lines[at - 1] ?? '')
+          ? [`${path}:${at + 1}`]
+          : [],
+      ),
+  )
+  expect(lone).toEqual([])
+})
+
+test('a box laid out in its name’s direction carries no gap or flow of its own that would turn with it', () => {
+  const turned = svelteFiles(SOURCE).flatMap((path) => {
+    const text = readFileSync(path, 'utf8')
+    const style = text.slice(text.indexOf('<style'))
+    return [
+      ...text.matchAll(
+        /<(?!input|textarea)\w+\b((?:[^>{]|\{[^}]*\})*?\bdir="auto"(?:[^>{]|\{[^}]*\})*)>/g,
+      ),
+    ]
+      .flatMap((tag) =>
+        (/class="([^"]*)"/.exec(tag[1] ?? '')?.[1] ?? '').split(/\s+/).filter(Boolean),
+      )
+      .filter((name) => {
+        const own = [...style.matchAll(/([^{}]*)\{([^}]*)\}/g)]
+          .map(([, selector = '', body = '']) => ({ selector, body }))
+          .filter(({ selector }) =>
+            selector
+              .split(/,(?![^(]*\))/)
+              .some((one) => new RegExp(`\\.${name}(?![\\w-])[^\\s>+~]*$`).test(one.trim())),
+          )
+        const swapped = own.some(
+          ({ selector, body }) =>
+            selector.includes(`.${name}:dir(`) && /(?:margin|padding)-inline/.test(body),
+        )
+        return own.some(
+          ({ body }) =>
+            /display:\s*(?:inline-)?(?:flex|grid)/.test(body) ||
+            (!swapped && /(?:margin|padding)-inline|inset-inline/.test(body)),
+        )
+      })
+      .map((name) => `${path.slice(SOURCE.length)}: .${name}`)
+  })
+  expect(turned).toEqual([])
+})

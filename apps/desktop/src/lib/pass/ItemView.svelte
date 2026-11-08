@@ -201,8 +201,10 @@
         {#if item.pinned}<span class="pinned" title={t('Pinned')}><Glyph icon={Pin} /></span>{/if}
       </h2>
       {#if vault}
-        <span class="vault" dir="auto"
-          ><VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />{vault.name}</span
+        <span class="vault"
+          ><VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} /><span dir="auto"
+            >{vault.name}</span
+          ></span
         >
       {/if}
     </div>
@@ -239,7 +241,9 @@
 
     {#each groups as group (group.id)}
       <section class="card" aria-label={group.name || null}>
-        {#if group.name}<h3 class="orden-section" dir="auto">{group.name}</h3>{/if}
+        {#if group.name}<h3 class="orden-section">
+            <span class="group" dir="auto">{group.name}</span>
+          </h3>{/if}
         {#each group.fields as field (field.id)}
           {#if field.kind === 'totp' && sealed}
             <FieldRow label={field.label} value="" hidden sealed />
@@ -529,7 +533,14 @@
     color: var(--muted-strong);
   }
 
+  .orden-section > .group {
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+  }
+
   [dir='auto'] {
+    text-align: -webkit-match-parent;
     text-align: match-parent;
   }
 </style>

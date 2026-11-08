@@ -28,7 +28,11 @@ ORDER = """([selector, name, first, second]) => {
   }
   const one = at(first)
   const other = at(second)
-  return { first: one.left, second: other.left }
+  const range = document.createRange()
+  range.selectNodeContents(label)
+  const text = range.getBoundingClientRect()
+  const box = label.getBoundingClientRect()
+  return { first: one.left, second: other.left, room: box.width - text.width, left: text.left - box.left, right: box.right - text.right }
 }"""
 
 def opened(browser: Browser, language: str) -> Page:
@@ -62,6 +66,10 @@ def drive(browser: Browser) -> None:
                 say(f"[{language}] {place} {name!r}: {found}")
                 if reads_left_to_right == rtl_name:
                     wrong(f"[{language}] the {place} shows {name!r} back to front")
+                if place == "file list" and found["room"] > 8:
+                    edge = found["right"] if direction == "rtl" else found["left"]
+                    if edge > 2:
+                        wrong(f"[{language}] the {place} sets {name!r} {edge:.0f}px off the row's {'right' if direction == 'rtl' else 'left'} edge")
         DRIVE.shot(page, language)
         page.close()
 
