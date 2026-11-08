@@ -85,6 +85,20 @@ describe('a file’s bytes over the network', () => {
     expect(await over(507).down('s', 'f')).toBeNull()
   })
 
+  test('only the account refuses new bytes, not something in the way', async () => {
+    const answering = (status: number, body: string) =>
+      remoteFiles({
+        base: 'https://sync.test',
+        token: () => 'token-1',
+        device: () => 'one',
+        fetch: () => Promise.resolve(new Response(body, { status })),
+      })
+    expect(await answering(403, '<html>blocked</html>').replace('s', 'f', 'h', 'b')).toBeNull()
+    expect(await answering(404, 'Not found').replace('s', 'f', 'h', 'b')).toBeNull()
+    expect(await over(403).replace('s', 'f', 'h', 'b')).toEqual({ refused: 'role' })
+    expect(await over(404).replace('s', 'f', 'h', 'b')).toEqual({ gone: true })
+  })
+
   test('an account that cannot say which bytes it keeps says nothing', async () => {
     expect(await over(404).have?.(['h'])).toBeNull()
     expect(await over(503).have?.(['h'])).toBeNull()

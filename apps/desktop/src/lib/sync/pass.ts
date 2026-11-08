@@ -4,7 +4,7 @@ import { conflictPath } from '@orden/markdown/paths'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { hash32 } from '@orden/sync-core/seed'
 import { isEntryId } from '@orden/sync-core/wire'
-import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
+import { api, ApiError, fromServer, type RemoteNote, type SpaceFile } from '../api'
 import { sha256 } from '../bytes'
 import { evictedHere } from '../icloud-placeholder'
 import { log } from '../log'
@@ -1130,7 +1130,7 @@ async function deletedOnAccount(token: string, id: string): Promise<boolean> {
 }
 
 function isGone(error: unknown): boolean {
-  return error instanceof ApiError && (error.status === 403 || error.status === 404)
+  return fromServer(error) && (error.status === 403 || error.status === 404)
 }
 
 async function pushFiles(

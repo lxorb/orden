@@ -1598,13 +1598,26 @@ describe('a delete the account did not take', () => {
   test('while one the account answered is done with', async () => {
     const { mirror } = await paired('note.md', 'the words\n')
     fake.disk.delete(`${ROOT}/note.md`)
-    fake.refusing.delete = new ApiError(404, 'no such note')
+    fake.refusing.delete = new ApiError(404, 'no such note', { error: 'no such note' })
 
     await push(mirror, 'token', NOBODY)
     fake.calls.length = 0
     await push(mirror, 'token', NOBODY)
 
     expect(fake.calls).toEqual([])
+  })
+
+  test('while one something in the way answered is still owed', async () => {
+    const { mirror, id } = await paired('note.md', 'the words\n')
+    fake.disk.delete(`${ROOT}/note.md`)
+    fake.refusing.delete = new ApiError(403, 'request failed (403)', '<html>')
+
+    await push(mirror, 'token', NOBODY)
+    expect(fake.remote.get(id)?.deleted).not.toBe(true)
+
+    fake.refusing.delete = null
+    await push(mirror, 'token', NOBODY)
+    expect(fake.remote.get(id)?.deleted).toBe(true)
   })
 })
 

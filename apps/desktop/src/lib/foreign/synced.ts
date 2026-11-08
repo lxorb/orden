@@ -1,6 +1,6 @@
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { account } from '../account.svelte'
-import { api, ApiError } from '../api'
+import { api, fromServer } from '../api'
 import { log } from '../log'
 import { stored } from '../stored'
 import { type Mirror, savedRecord } from '../sync/mirror'
@@ -47,7 +47,7 @@ async function deleted(token: string, id: string) {
   try {
     await api.deleteNote(token, id)
   } catch (error) {
-    if (error instanceof ApiError && (error.status === 403 || error.status === 404)) return
+    if (fromServer(error) && (error.status === 403 || error.status === 404)) return
     log('warn', `sync: a conflict copy ${id} stayed on the account - ${String(error)}`)
   }
 }

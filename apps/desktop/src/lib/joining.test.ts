@@ -87,7 +87,8 @@ vi.mock('./api', async (importOriginal) => {
         world.withdrawn.push({ key, token })
         if (world.withdrawFails === 'network') return Promise.reject(new Error('offline'))
         if (world.withdrawFails) {
-          return Promise.reject(new original.ApiError(world.withdrawFails, 'that link has expired'))
+          const error = 'that link has expired'
+          return Promise.reject(new original.ApiError(world.withdrawFails, error, { error }))
         }
         return Promise.resolve()
       },

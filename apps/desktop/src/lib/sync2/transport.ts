@@ -147,8 +147,11 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
         },
       )
       if (response === null) return null
-      if (response.status === 404) return { gone: true }
-      if (response.status === 403) return { refused: 'role' }
+      if (response.status === 404 || response.status === 403) {
+        const said: unknown = await response.json().catch(() => null)
+        if (typeof said !== 'object' || said === null || !('error' in said)) return null
+        return response.status === 404 ? { gone: true } : { refused: 'role' }
+      }
       if (!response.ok) return null
       const said: unknown = await response.json().catch(() => null)
       if (typeof said !== 'object' || said === null) return null
