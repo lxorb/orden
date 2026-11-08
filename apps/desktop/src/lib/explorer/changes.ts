@@ -57,7 +57,8 @@ export async function newFolder(view: ExplorerView) {
   try {
     let path: string
     if (inASpace(folder)) {
-      path = joinPath(folder, freeName(takenNames(view.names), t('New folder')))
+      const all = view.listing?.entries.map((one) => one.name) ?? []
+      path = joinPath(folder, freeName(takenNames(all), t('New folder')))
       await invoke('create_folder', { path })
       await workspace.loadTree()
     } else {
@@ -65,8 +66,13 @@ export async function newFolder(view: ExplorerView) {
       record([{ op: 'made', path }])
     }
     await view.reload()
-    view.pick(nameOf(path), 'one')
-    view.renaming = nameOf(path)
+    const name = nameOf(path)
+    if (!view.names.includes(name)) {
+      view.filter = ''
+      view.endSearch()
+    }
+    view.pick(name, 'one')
+    view.renaming = name
   } catch (error) {
     view.tell(message(error, 'could not make the folder'))
   }
