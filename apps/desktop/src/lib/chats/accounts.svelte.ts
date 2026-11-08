@@ -85,7 +85,7 @@ export class Accounts {
     this.hub.wanted = (provider, account) =>
       this.started &&
       this.on() &&
-      this.saved.some((one) => one.provider === provider && one.account === account)
+      savedOf(stored(KEY)).some((one) => one.provider === provider && one.account === account)
     this.saved = savedOf(stored(KEY))
     for (const one of this.saved) void this.relink(one)
     if (!this.following && typeof window !== 'undefined') {
@@ -194,7 +194,9 @@ export class Accounts {
     )
     await this.hub.unlink(providerId, account)
     const provider = this.providerOf(providerId)
-    await provider?.forget?.(account, this.host).catch(() => undefined)
+    await this.hub
+      .alone(providerId, account, () => provider?.forget?.(account, this.host) ?? Promise.resolve())
+      .catch(() => undefined)
     for (const field of provider?.fields ?? []) {
       if (field.secret) await this.host.keepSecret(secretName(providerId, account, field.key), null)
     }

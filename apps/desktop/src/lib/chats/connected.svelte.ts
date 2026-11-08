@@ -8,7 +8,7 @@ import type {
   Status,
 } from '@orden/chats/provider'
 import { newestFirst } from '@orden/chats/provider'
-import { type Dial, oneLink } from './one-link'
+import { type Alone, type Dial, oneAlone, oneLink } from './one-link'
 import { conversationOf, ORDEN } from './providers/orden'
 import { Remote } from './remote.svelte'
 import { dropRemote, keepRemote } from './remotes'
@@ -85,7 +85,10 @@ export class Connected {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing draws these
   private readonly heardIds = new Map<string, Set<string>>()
 
-  constructor(private readonly dial: Dial = oneLink) {}
+  constructor(
+    private readonly dial: Dial = oneLink,
+    readonly alone: Alone = oneAlone,
+  ) {}
 
   rows(): Row[] {
     const own = store().list.map((entry) => ({
