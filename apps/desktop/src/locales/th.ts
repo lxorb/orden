@@ -2303,7 +2303,6 @@ export const th: Dictionary = {
   'What does it run?': 'เรียกใช้อะไร?',
   'A program’s path, and its arguments': 'พาธของโปรแกรม และอาร์กิวเมนต์',
   '{device} (this device)': '{device} (อุปกรณ์นี้)',
-  '{device}: cannot run applications yet': '{device}: ยังรันแอปพลิเคชันไม่ได้',
   '{device} has not listed its applications yet. What does it run?':
     '{device} ยังไม่ได้แสดงรายการแอปพลิเคชันของตน เรียกใช้อะไร?',
   'Find an application': 'ค้นหาแอปพลิเคชัน',

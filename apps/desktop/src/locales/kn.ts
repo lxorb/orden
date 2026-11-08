@@ -2377,7 +2377,6 @@ export const kn: Dictionary = {
   'What does it run?': 'ಇದು ಏನನ್ನು ಚಲಾಯಿಸುತ್ತದೆ?',
   'A program’s path, and its arguments': 'ಪ್ರೋಗ್ರಾಂನ ಪಾತ್ ಮತ್ತು ಅದರ ಆರ್ಗ್ಯುಮೆಂಟ್‌ಗಳು',
   '{device} (this device)': '{device} (ಈ ಸಾಧನ)',
-  '{device}: cannot run applications yet': '{device}: ಇನ್ನೂ ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಚಲಾಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ',
   '{device} has not listed its applications yet. What does it run?':
     '{device} ಇನ್ನೂ ತನ್ನ ಅಪ್ಲಿಕೇಶನ್‌ಗಳ ಪಟ್ಟಿಯನ್ನು ನೀಡಿಲ್ಲ. ಇದು ಏನನ್ನು ಚಲಾಯಿಸುತ್ತದೆ?',
   'Find an application': 'ಅಪ್ಲಿಕೇಶನ್ ಹುಡುಕಿ',

@@ -2365,7 +2365,6 @@ export const tr: Dictionary = {
   'What does it run?': 'Neyi çalıştırsın?',
   'A program’s path, and its arguments': 'Bir programın yolu ve argümanları',
   '{device} (this device)': '{device} (bu cihaz)',
-  '{device}: cannot run applications yet': '{device}: henüz uygulama çalıştıramıyor',
   '{device} has not listed its applications yet. What does it run?':
     '{device} uygulamalarını henüz listelemedi. Neyi çalıştırsın?',
   'Find an application': 'Uygulama bul',

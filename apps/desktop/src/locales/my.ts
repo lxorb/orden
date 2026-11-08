@@ -2335,7 +2335,6 @@ export const my: Dictionary = {
   'What does it run?': 'ဘာကို လည်ပတ်မလဲ?',
   'A program’s path, and its arguments': 'ပရိုဂရမ်၏ လမ်းကြောင်းနှင့် ၎င်း၏ argument များ',
   '{device} (this device)': '{device} (ဤစက်)',
-  '{device}: cannot run applications yet': '{device}: အပလီကေးရှင်းများကို မလုပ်ဆောင်နိုင်သေးပါ',
   '{device} has not listed its applications yet. What does it run?':
     '{device} သည် ၎င်း၏ အပလီကေးရှင်းများကို မစာရင်းပေးသေးပါ။ ဘာကို လည်ပတ်မလဲ?',
   'Find an application': 'အက်ပလီကေးရှင်း ရှာရန်',

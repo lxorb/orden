@@ -2353,7 +2353,6 @@ export const ps: Dictionary = {
   'What does it run?': 'څه چلوي؟',
   'A program’s path, and its arguments': 'د یوه پروګرام لار، او دلیلونه یې',
   '{device} (this device)': '{device} (دا وسیله)',
-  '{device}: cannot run applications yet': '{device}: تر اوسه اپلېکېشنونه نشي چلولی',
   '{device} has not listed its applications yet. What does it run?':
     '{device} تر اوسه خپل اپلېکېشنونه نه دي لیست کړي. څه چلوي؟',
   'Find an application': 'یو اپلیکیشن ومومئ',

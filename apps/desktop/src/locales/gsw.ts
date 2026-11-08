@@ -2365,7 +2365,6 @@ export const gsw: Dictionary = {
   'What does it run?': 'Was füert si us?',
   'A program’s path, and its arguments': 'De Pfad vomene Programm und sini Argumänt',
   '{device} (this device)': '{device} (das Grät)',
-  '{device}: cannot run applications yet': '{device}: cha no kei Aawändige uusfüere',
   '{device} has not listed its applications yet. What does it run?':
     '{device} het sini Aawändige no nöd ufgliste. Was füert es us?',
   'Find an application': 'Aawändig sueche',

@@ -2,7 +2,25 @@ import { describe, expect, test } from 'vitest'
 import type { LinkWorld } from '../online/link'
 import { type AppHeard, AppLink } from './link'
 import { appName } from './open'
-import { mayHost, programOf } from './words'
+import { hostChoices, mayHost, programOf } from './words'
+
+describe('where a new application runs', () => {
+  test('offers every computer that hosts, a Mac as much as the rest, and this one first', () => {
+    const here = (device: string) => `${device} (here)`
+    expect(
+      hostChoices(
+        [
+          { id: 'm', name: 'Mac', platform: 'macos', current: true },
+          { id: 'l', name: 'Box', platform: 'linux', current: false },
+        ],
+        here,
+      ),
+    ).toEqual([
+      { id: 'm', label: 'Mac (here)', primary: true },
+      { id: 'l', label: 'Box', primary: false },
+    ])
+  })
+})
 
 describe('what an application runs', () => {
   test('splits a program line as a shell would, and runs no shell', () => {

@@ -2400,8 +2400,6 @@ export const fil: Dictionary = {
   'What does it run?': 'Ano ang patatakbuhin nito?',
   'A program’s path, and its arguments': 'Path ng isang program, at ang mga argument nito',
   '{device} (this device)': '{device} (ang device na ito)',
-  '{device}: cannot run applications yet':
-    '{device}: hindi pa kayang magpatakbo ng mga application',
   '{device} has not listed its applications yet. What does it run?':
     'Hindi pa naglilista ng mga application nito ang {device}. Ano ang patatakbuhin nito?',
   'Find an application': 'Maghanap ng application',

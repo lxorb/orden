@@ -2350,7 +2350,6 @@ export const bn: Dictionary = {
   'What does it run?': 'এটি কী চালাবে?',
   'A program’s path, and its arguments': 'একটি প্রোগ্রামের পাথ, এবং এর আর্গুমেন্ট',
   '{device} (this device)': '{device} (এই ডিভাইস)',
-  '{device}: cannot run applications yet': '{device}: এখনও অ্যাপ্লিকেশন চালাতে পারে না',
   '{device} has not listed its applications yet. What does it run?':
     '{device} এখনও তার অ্যাপ্লিকেশনের তালিকা দেয়নি। এটি কী চালাবে?',
   'Find an application': 'একটি অ্যাপ্লিকেশন খুঁজুন',
