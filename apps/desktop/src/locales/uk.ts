@@ -1512,7 +1512,7 @@ export const uk: Dictionary = {
   },
   'That did not work.': 'Не вийшло.',
   'Signing in': 'Вхід',
-  'Ask for a code from an app': 'Запитувати код із програми',
+  'Two-factor authentication': 'Двофакторна автентифікація',
   'Turn on': 'Увімкнути',
   'Turn off': 'Вимкнути',
   'Put this into your authenticator app, then type its code.':
@@ -1537,8 +1537,6 @@ export const uk: Dictionary = {
   End: 'Завершити',
   'End every other session': 'Завершити всі інші сеанси',
   'Delete account': 'Видалити акаунт',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Нотатки на цьому пристрої залишаться; зникнуть лише акаунт і його синхронізовані копії.',
   'Also gone for everyone in {spaces}.': 'Також зникне для всіх у {spaces}.',
   'The note': 'Нотатка',
   '{space} panel': 'Панель простору {space}',
@@ -1845,8 +1843,6 @@ export const uk: Dictionary = {
   'Keep versions': 'Зберігати версії',
   'A month': 'Місяць',
   'A year': 'Рік',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Усе за останню добу, потім по одній на годину, після місяця по одній на день, а після трьох по одній на тиждень.',
   'This note is as large as a note in a room may get.':
     'Ця нотатка досягла найбільшого розміру, який може мати нотатка в кімнаті.',
 

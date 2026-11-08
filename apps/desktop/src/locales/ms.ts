@@ -1422,7 +1422,7 @@ export const ms: Dictionary = {
   '{count} notes went back.': '{count} nota telah dikembalikan.',
   'That did not work.': 'Itu tidak berjaya.',
   'Signing in': 'Masuk',
-  'Ask for a code from an app': 'Minta kod daripada satu aplikasi',
+  'Two-factor authentication': 'Pengesahan dua faktor',
   'Turn on': 'Hidupkan',
   'Turn off': 'Matikan',
   'Put this into your authenticator app, then type its code.':
@@ -1448,8 +1448,6 @@ export const ms: Dictionary = {
   End: 'Tamatkan',
   'End every other session': 'Tamatkan semua sesi lain',
   'Delete account': 'Hapuskan akaun',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Nota pada peranti ini kekal; hanya akaun dan salinan yang disegerakkan akan hilang.',
   'Also gone for everyone in {spaces}.': 'Juga hilang bagi semua orang dalam {spaces}.',
   'The note': 'Nota',
   '{space} panel': 'Panel {space}',
@@ -1765,8 +1763,6 @@ export const ms: Dictionary = {
   'Keep versions': 'Simpan versi',
   'A month': 'Sebulan',
   'A year': 'Setahun',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Semua dari hari terakhir, kemudian satu sejam, satu sehari selepas sebulan, dan satu seminggu selepas tiga.',
   'This note is as large as a note in a room may get.':
     'Nota ini sudah sebesar nota dalam sebuah bilik boleh jadi.',
 

@@ -154,7 +154,7 @@
 {:else}
   <div class="card">
     <div class="orden-setting setting">
-      <span class="name">{t('Ask for a code from an app')}</span>
+      <span class="name">{t('Two-factor authentication')}</span>
       {#if factor?.on}
         <span class="text">{t('On')}</span>
       {:else}

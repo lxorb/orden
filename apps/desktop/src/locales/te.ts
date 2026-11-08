@@ -1445,7 +1445,7 @@ export const te: Dictionary = {
   },
   'That did not work.': 'అది పని చేయలేదు.',
   'Signing in': 'సైన్ ఇన్ అవుతోంది',
-  'Ask for a code from an app': 'యాప్ నుండి కోడ్ అడుగు',
+  'Two-factor authentication': 'టూ-ఫ్యాక్టర్ ప్రామాణీకరణ',
   'Turn on': 'ఆన్ చేయి',
   'Turn off': 'ఆఫ్ చేయి',
   'Put this into your authenticator app, then type its code.':
@@ -1470,8 +1470,6 @@ export const te: Dictionary = {
   End: 'ముగించు',
   'End every other session': 'ఇతర సెషన్‌లన్నీ ముగించు',
   'Delete account': 'ఖాతాను తొలగించు',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'ఈ పరికరంలోని నోట్‌లు ఉంటాయి; ఖాతా, దాని సింక్ చేసిన కాపీలు మాత్రమే పోతాయి.',
   'Also gone for everyone in {spaces}.': '{spaces}లోని అందరికీ కూడా పోతుంది.',
   'The note': 'నోట్',
   '{space} panel': '{space} ప్యానెల్',
@@ -1780,8 +1778,6 @@ export const te: Dictionary = {
   'Keep versions': 'వెర్షన్లను ఉంచండి',
   'A month': 'ఒక నెల',
   'A year': 'ఒక సంవత్సరం',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'చివరి రోజు అంతా, తర్వాత గంటకు ఒకటి, ఒక నెల తర్వాత రోజుకు ఒకటి, మూడు నెలల తర్వాత వారానికి ఒకటి.',
   'This note is as large as a note in a room may get.':
     'ఒక గదిలో ఒక నోట్ ఎంత పెద్దదిగా ఉండగలదో ఈ నోట్ అంత పెద్దదైంది.',
 

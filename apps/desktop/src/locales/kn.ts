@@ -1452,7 +1452,7 @@ export const kn: Dictionary = {
   },
   'That did not work.': 'ಅದು ಕೆಲಸ ಮಾಡಲಿಲ್ಲ.',
   'Signing in': 'ಸೈನ್ ಇನ್ ಆಗುತ್ತಿದೆ',
-  'Ask for a code from an app': 'ಅಪ್ಲಿಕೇಶನ್‌ನಿಂದ ಕೋಡ್ ಕೇಳಿ',
+  'Two-factor authentication': 'ಎರಡು ಹಂತದ ದೃಢೀಕರಣ',
   'Turn on': 'ಆನ್ ಮಾಡಿ',
   'Turn off': 'ಆಫ್ ಮಾಡಿ',
   'Put this into your authenticator app, then type its code.':
@@ -1477,8 +1477,6 @@ export const kn: Dictionary = {
   End: 'ಕೊನೆಗೊಳಿಸಿ',
   'End every other session': 'ಉಳಿದ ಎಲ್ಲ ಸೆಷನ್ ಕೊನೆಗೊಳಿಸಿ',
   'Delete account': 'ಖಾತೆ ಅಳಿಸಿ',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'ಈ ಸಾಧನದಲ್ಲಿನ ಟಿಪ್ಪಣಿಗಳು ಉಳಿಯುತ್ತವೆ; ಖಾತೆ ಮತ್ತು ಅದರ ಸಿಂಕ್ ಮಾಡಿದ ಪ್ರತಿಗಳು ಮಾತ್ರ ಹೋಗುತ್ತವೆ.',
   'Also gone for everyone in {spaces}.': '{spaces} ನಲ್ಲಿರುವ ಎಲ್ಲರಿಗೂ ಹೋಗುತ್ತದೆ.',
   'The note': 'ಟಿಪ್ಪಣಿ',
   '{space} panel': '{space} ಪ್ಯಾನೆಲ್',
@@ -1788,8 +1786,6 @@ export const kn: Dictionary = {
   'Keep versions': 'ಆವೃತ್ತಿಗಳನ್ನು ಇರಿಸಿ',
   'A month': 'ಒಂದು ತಿಂಗಳು',
   'A year': 'ಒಂದು ವರ್ಷ',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'ಕೊನೆಯ ದಿನದ ಎಲ್ಲವೂ, ನಂತರ ಗಂಟೆಗೆ ಒಂದು, ಒಂದು ತಿಂಗಳ ನಂತರ ದಿನಕ್ಕೆ ಒಂದು, ಮೂರು ತಿಂಗಳ ನಂತರ ವಾರಕ್ಕೆ ಒಂದು.',
   'This note is as large as a note in a room may get.':
     'ಈ ನೋಟ್ ಒಂದು ಕೋಣೆಯಲ್ಲಿ ನೋಟ್ ಆಗಬಹುದಾದ ಗರಿಷ್ಠ ಗಾತ್ರವನ್ನು ತಲುಪಿದೆ.',
 

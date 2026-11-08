@@ -1460,7 +1460,7 @@ export const de: Dictionary = {
   },
   'That did not work.': 'Das hat nicht funktioniert.',
   'Signing in': 'Anmeldung',
-  'Ask for a code from an app': 'Code aus einer App verlangen',
+  'Two-factor authentication': 'Zwei-Faktor-Authentifizierung',
   'Turn on': 'Einschalten',
   'Turn off': 'Ausschalten',
   'Put this into your authenticator app, then type its code.':
@@ -1486,8 +1486,6 @@ export const de: Dictionary = {
   End: 'Beenden',
   'End every other session': 'Alle anderen Sitzungen beenden',
   'Delete account': 'Konto löschen',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Notizen auf diesem Gerät bleiben; nur das Konto und seine synchronisierten Kopien gehen.',
   'Also gone for everyone in {spaces}.': 'Auch weg für alle in {spaces}.',
   'The note': 'Die Notiz',
   '{space} panel': 'Bereich {space}',
@@ -1813,8 +1811,6 @@ export const de: Dictionary = {
   'Keep versions': 'Versionen behalten',
   'A month': 'Einen Monat',
   'A year': 'Ein Jahr',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Alles vom letzten Tag, dann eine pro Stunde, nach einem Monat eine pro Tag, nach drei eine pro Woche.',
   'This note is as large as a note in a room may get.':
     'Diese Notiz ist so groß, wie eine Notiz in einem Raum werden kann.',
 

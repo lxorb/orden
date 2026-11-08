@@ -131,8 +131,6 @@
 </script>
 
 <div class="leaving" transition:fade={{ duration: dur(130) }}>
-  <p class="hint">{t('Notes on this device stay; only the account and its synced copies go.')}</p>
-
   {#if stage === 'codes'}
     <form
       onsubmit={(event) => {

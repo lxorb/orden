@@ -1413,7 +1413,7 @@ export const ko: Dictionary = {
   '{count} notes went back.': '노트 {count}개를 되돌렸습니다.',
   'That did not work.': '되지 않았습니다.',
   'Signing in': '로그인',
-  'Ask for a code from an app': '앱에서 코드 받기',
+  'Two-factor authentication': '2단계 인증',
   'Turn on': '켜기',
   'Turn off': '끄기',
   'Put this into your authenticator app, then type its code.':
@@ -1438,8 +1438,6 @@ export const ko: Dictionary = {
   End: '종료',
   'End every other session': '다른 모든 세션 종료',
   'Delete account': '계정 삭제',
-  'Notes on this device stay; only the account and its synced copies go.':
-    '이 기기의 노트는 남고, 계정과 동기화된 사본만 사라집니다.',
   'Also gone for everyone in {spaces}.': '{spaces}의 모든 사람에게서도 사라집니다.',
   'The note': '노트',
   '{space} panel': '{space} 패널',
@@ -1746,8 +1744,6 @@ export const ko: Dictionary = {
   'Keep versions': '버전 보관',
   'A month': '한 달',
   'A year': '한 해',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    '지난 하루는 모두, 그다음은 시간마다 하나, 한 달 뒤에는 하루에 하나, 세 달 뒤에는 주마다 하나.',
   'This note is as large as a note in a room may get.':
     '이 노트는 룸에서 노트가 가질 수 있는 최대 크기입니다.',
 

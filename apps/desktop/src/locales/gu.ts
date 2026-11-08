@@ -1431,7 +1431,7 @@ export const gu: Dictionary = {
   '{count} notes went back.': { one: '{count} નોંધ પાછી ગઈ.', other: '{count} નોંધ પાછી ગઈ.' },
   'That did not work.': 'એ ચાલ્યું નહીં.',
   'Signing in': 'સાઇન ઇન',
-  'Ask for a code from an app': 'એપ પાસેથી કોડ માંગો',
+  'Two-factor authentication': 'ટુ-ફેક્ટર ઓથેન્ટિકેશન',
   'Turn on': 'ચાલુ કરો',
   'Turn off': 'બંધ કરો',
   'Put this into your authenticator app, then type its code.':
@@ -1456,8 +1456,6 @@ export const gu: Dictionary = {
   End: 'પૂરું કરો',
   'End every other session': 'બીજાં બધાં સત્ર પૂરાં કરો',
   'Delete account': 'ખાતું કાઢી નાખો',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'આ ડિવાઇસ પરની નોંધો રહેશે; ફક્ત ખાતું અને તેની સિંક કરેલી નકલો જશે.',
   'Also gone for everyone in {spaces}.': '{spaces}માં બધા માટે પણ જશે.',
   'The note': 'નોંધ',
   '{space} panel': '{space} પૅનલ',
@@ -1763,8 +1761,6 @@ export const gu: Dictionary = {
   'Keep versions': 'આવૃત્તિઓ રાખો',
   'A month': 'એક મહિનો',
   'A year': 'એક વર્ષ',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'છેલ્લા દિવસનું બધું, પછી કલાકે એક, એક મહિના પછી દિવસે એક, અને ત્રણ પછી અઠવાડિયે એક.',
   'This note is as large as a note in a room may get.':
     'આ નોંધ રૂમમાં કોઈ નોંધ જેટલી મોટી થઈ શકે તેટલી મોટી થઈ ગઈ છે.',
 

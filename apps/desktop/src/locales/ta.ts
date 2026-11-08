@@ -1460,7 +1460,7 @@ export const ta: Dictionary = {
   },
   'That did not work.': 'அது வேலை செய்யவில்லை.',
   'Signing in': 'உள்நுழைகிறது',
-  'Ask for a code from an app': 'செயலியிலிருந்து ஒரு குறியீடு கேள்',
+  'Two-factor authentication': 'இரு காரணி அங்கீகாரம்',
   'Turn on': 'ஆன் செய்',
   'Turn off': 'ஆஃப் செய்',
   'Put this into your authenticator app, then type its code.':
@@ -1485,8 +1485,6 @@ export const ta: Dictionary = {
   End: 'முடி',
   'End every other session': 'மற்ற எல்லா அமர்வுகளையும் முடி',
   'Delete account': 'கணக்கை நீக்கு',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'இந்தச் சாதனத்திலுள்ள குறிப்புகள் இருக்கும்; கணக்கும் அதன் ஒத்திசைத்த நகல்களும் மட்டுமே போகும்.',
   'Also gone for everyone in {spaces}.': '{spaces} இல் உள்ள அனைவருக்கும் இதுவும் போகும்.',
   'The note': 'குறிப்பு',
   '{space} panel': '{space} பலகம்',
@@ -1800,8 +1798,6 @@ export const ta: Dictionary = {
   'Keep versions': 'பதிப்புகளை வை',
   'A month': 'ஒரு மாதம்',
   'A year': 'ஒரு ஆண்டு',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'கடந்த நாளின் அனைத்தும், பிறகு மணிக்கு ஒன்று, ஒரு மாதத்திற்குப் பிறகு நாளுக்கு ஒன்று, மூன்றுக்குப் பிறகு வாரத்திற்கு ஒன்று.',
   'This note is as large as a note in a room may get.':
     'ஒரு அறையில் ஒரு குறிப்பு எவ்வளவு பெரியதாக இருக்க முடியுமோ அந்த அளவை இந்தக் குறிப்பு அடைந்துவிட்டது.',
 

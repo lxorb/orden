@@ -1436,7 +1436,7 @@ export const mr: Dictionary = {
   },
   'That did not work.': 'ते जमले नाही.',
   'Signing in': 'साइन इन होत आहे',
-  'Ask for a code from an app': 'ॲपकडून कोड मागा',
+  'Two-factor authentication': 'द्वि-घटक प्रमाणीकरण',
   'Turn on': 'चालू करा',
   'Turn off': 'बंद करा',
   'Put this into your authenticator app, then type its code.':
@@ -1461,8 +1461,6 @@ export const mr: Dictionary = {
   End: 'संपवा',
   'End every other session': 'इतर सर्व सत्रे संपवा',
   'Delete account': 'खाते हटवा',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'या डिव्हाइसवरील नोट्स राहतील; फक्त खाते आणि त्याच्या सिंक केलेल्या प्रती जातील.',
   'Also gone for everyone in {spaces}.': '{spaces} मधील सर्वांसाठीही जाईल.',
   'The note': 'नोंद',
   '{space} panel': '{space} चा पॅनेल',
@@ -1774,8 +1772,6 @@ export const mr: Dictionary = {
   'Keep versions': 'आवृत्त्या ठेवा',
   'A month': 'एक महिना',
   'A year': 'एक वर्ष',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'शेवटच्या दिवसाचे सर्व, नंतर तासाला एक, महिन्यानंतर दिवसाला एक, आणि तीन महिन्यांनंतर आठवड्याला एक.',
   'This note is as large as a note in a room may get.':
     'या नोंदीने रूममधील नोंद जितकी मोठी असू शकते तितका आकार गाठला आहे.',
 

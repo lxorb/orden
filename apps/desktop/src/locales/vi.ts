@@ -1416,7 +1416,7 @@ export const vi: Dictionary = {
   '{count} notes went back.': '{count} ghi chú đã trở về.',
   'That did not work.': 'Không thành công.',
   'Signing in': 'Đang đăng nhập',
-  'Ask for a code from an app': 'Xin mã từ một ứng dụng',
+  'Two-factor authentication': 'Xác thực hai yếu tố',
   'Turn on': 'Bật',
   'Turn off': 'Tắt',
   'Put this into your authenticator app, then type its code.':
@@ -1441,8 +1441,6 @@ export const vi: Dictionary = {
   End: 'Kết thúc',
   'End every other session': 'Kết thúc mọi phiên khác',
   'Delete account': 'Xoá tài khoản',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Ghi chú trên thiết bị này vẫn còn; chỉ tài khoản và các bản sao đã đồng bộ mất đi.',
   'Also gone for everyone in {spaces}.': 'Cũng mất đi với mọi người trong {spaces}.',
   'The note': 'Ghi chú',
   '{space} panel': 'Bảng của {space}',
@@ -1753,8 +1751,6 @@ export const vi: Dictionary = {
   'Keep versions': 'Giữ các phiên bản',
   'A month': 'Một tháng',
   'A year': 'Một năm',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Tất cả của ngày cuối, rồi mỗi giờ một bản, sau một tháng mỗi ngày một bản, và sau ba tháng mỗi tuần một bản.',
   'This note is as large as a note in a room may get.':
     'Ghi chú này đã lớn hết mức mà một ghi chú trong một phòng có thể lớn.',
 

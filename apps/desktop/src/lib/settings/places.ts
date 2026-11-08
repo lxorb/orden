@@ -13,7 +13,14 @@ export function places(): Place[] {
     {
       section: 'account',
       label: t('Signing in'),
-      text: [t('Ask for a code from an app'), t('Recovery codes left')],
+      text: [
+        t('Two-factor authentication'),
+        '2FA',
+        'two-factor',
+        'TOTP',
+        'authenticator',
+        t('Recovery codes left'),
+      ],
     },
     { section: 'account', label: t('Signed in on'), text: [t('End every other session')] },
     ...(account.user

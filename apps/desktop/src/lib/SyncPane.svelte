@@ -234,12 +234,6 @@
   </div>
 </div>
 
-<p class="hint">
-  {t(
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
-  )}
-</p>
-
 {#if asking.engine && asking.held.length}
   <h3>{t('Waiting for you')}</h3>
 

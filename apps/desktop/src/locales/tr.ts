@@ -1442,7 +1442,7 @@ export const tr: Dictionary = {
   '{count} notes went back.': { one: '{count} not geri döndü.', other: '{count} not geri döndü.' },
   'That did not work.': 'Bu işe yaramadı.',
   'Signing in': 'Oturum açma',
-  'Ask for a code from an app': 'Bir uygulamadan kod iste',
+  'Two-factor authentication': 'İki adımlı doğrulama',
   'Turn on': 'Aç',
   'Turn off': 'Kapat',
   'Put this into your authenticator app, then type its code.':
@@ -1467,8 +1467,6 @@ export const tr: Dictionary = {
   End: 'Bitir',
   'End every other session': 'Diğer tüm oturumları bitir',
   'Delete account': 'Hesabı sil',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Bu cihazdaki notlar kalır; yalnızca hesap ve eşitlenmiş kopyaları gider.',
   'Also gone for everyone in {spaces}.': '{spaces} içindeki herkes için de gider.',
   'The note': 'Not',
   '{space} panel': '{space} paneli',
@@ -1780,8 +1778,6 @@ export const tr: Dictionary = {
   'Keep versions': 'Sürümleri sakla',
   'A month': 'Bir ay',
   'A year': 'Bir yıl',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Son günün tamamı, sonra saatte bir, bir aydan sonra günde bir, üç aydan sonra haftada bir.',
   'This note is as large as a note in a room may get.':
     'Bu not, bir odadaki bir notun olabileceği en büyük boyutta.',
 

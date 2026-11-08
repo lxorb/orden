@@ -1468,7 +1468,7 @@ export const ptBR: Dictionary = {
   },
   'That did not work.': 'Isso não funcionou.',
   'Signing in': 'Entrando',
-  'Ask for a code from an app': 'Pedir um código a um app',
+  'Two-factor authentication': 'Autenticação de dois fatores',
   'Turn on': 'Ligar',
   'Turn off': 'Desligar',
   'Put this into your authenticator app, then type its code.':
@@ -1493,8 +1493,6 @@ export const ptBR: Dictionary = {
   End: 'Encerrar',
   'End every other session': 'Encerrar as outras sessões',
   'Delete account': 'Excluir conta',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'As notas deste dispositivo ficam; só a conta e as cópias sincronizadas dela vão embora.',
   'Also gone for everyone in {spaces}.': 'Também some para todos em {spaces}.',
   'The note': 'A nota',
   '{space} panel': 'Painel de {space}',
@@ -1805,8 +1803,6 @@ export const ptBR: Dictionary = {
   'Keep versions': 'Guardar versões',
   'A month': 'Um mês',
   'A year': 'Um ano',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Tudo do último dia, depois uma por hora, uma por dia após um mês e uma por semana após três.',
   'This note is as large as a note in a room may get.':
     'Esta nota está do tamanho máximo que uma nota em uma sala pode ter.',
 

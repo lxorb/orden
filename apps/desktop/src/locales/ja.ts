@@ -1420,7 +1420,7 @@ export const ja: Dictionary = {
   '{count} notes went back.': '{count} 件のノートを戻しました。',
   'That did not work.': 'うまくいきませんでした。',
   'Signing in': 'サインイン',
-  'Ask for a code from an app': 'アプリのコードを要求する',
+  'Two-factor authentication': '2 段階認証',
   'Turn on': '有効にする',
   'Turn off': '無効にする',
   'Put this into your authenticator app, then type its code.':
@@ -1445,8 +1445,6 @@ export const ja: Dictionary = {
   End: '終了',
   'End every other session': '他のすべてのセッションを終了',
   'Delete account': 'アカウントを削除',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'この端末のノートは残ります。消えるのはアカウントと同期されたコピーだけです。',
   'Also gone for everyone in {spaces}.': '{spaces} のメンバー全員からも消えます。',
   'The note': 'ノート',
   '{space} panel': '{space} パネル',
@@ -1761,8 +1759,6 @@ export const ja: Dictionary = {
   'Keep versions': '版を保持',
   'A month': '1 か月',
   'A year': '1 年',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    '直近 1 日はすべて、その後は 1 時間ごと、1 か月を過ぎると 1 日ごと、3 か月を過ぎると 1 週間ごと。',
   'This note is as large as a note in a room may get.':
     'このノートは、ルーム内のノートが取れる最大の大きさです。',
 

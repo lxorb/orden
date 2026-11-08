@@ -1419,7 +1419,7 @@ export const jv: Dictionary = {
   '{count} notes went back.': '{count} cathetan wis dibalekake.',
   'That did not work.': 'Kuwi ora kasil.',
   'Signing in': 'Mlebu',
-  'Ask for a code from an app': 'Njaluk kode saka aplikasi',
+  'Two-factor authentication': 'Otentikasi rong faktor',
   'Turn on': 'Uripake',
   'Turn off': 'Patenana',
   'Put this into your authenticator app, then type its code.':
@@ -1444,8 +1444,6 @@ export const jv: Dictionary = {
   End: 'Pungkasi',
   'End every other session': 'Pungkasi kabeh sesi liya',
   'Delete account': 'Busak akun',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Cathetan ing piranti iki tetep ana; mung akun lan salinan sing disinkronake sing ilang.',
   'Also gone for everyone in {spaces}.': 'Uga ilang kanggo kabeh wong ing {spaces}.',
   'The note': 'Cathetan',
   '{space} panel': 'Panel {space}',
@@ -1758,8 +1756,6 @@ export const jv: Dictionary = {
   'Keep versions': 'Simpen vèrsi',
   'A month': 'Sesasi',
   'A year': 'Setaun',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Kabèh saka dina pungkasan, banjur siji saben jam, siji saben dina sawisé sesasi, lan siji saben minggu sawisé telung sasi.',
   'This note is as large as a note in a room may get.':
     'Cathetan iki wis gedhé kaya ukuran paling gedhé cathetan ing sawijining ruang.',
 

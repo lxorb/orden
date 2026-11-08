@@ -1395,7 +1395,7 @@ export const zhHant: Dictionary = {
   '{count} notes went back.': '{count}篇筆記已回溯。',
   'That did not work.': '沒有成功。',
   'Signing in': '登入',
-  'Ask for a code from an app': '要求應用程式提供驗證碼',
+  'Two-factor authentication': '雙重驗證',
   'Turn on': '開啟',
   'Turn off': '關閉',
   'Put this into your authenticator app, then type its code.':
@@ -1420,8 +1420,6 @@ export const zhHant: Dictionary = {
   End: '結束',
   'End every other session': '結束所有其他工作階段',
   'Delete account': '刪除帳號',
-  'Notes on this device stay; only the account and its synced copies go.':
-    '此裝置上的筆記會保留；只有帳號及其同步副本會被刪除。',
   'Also gone for everyone in {spaces}.': '{spaces} 中的所有人也會失去它。',
   'The note': '筆記',
   '{space} panel': '{space}面板',
@@ -1723,8 +1721,6 @@ export const zhHant: Dictionary = {
   'Keep versions': '保留版本',
   'A month': '一個月',
   'A year': '一年',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    '最近一天的全部，之後每小時一個，一個月後每天一個，三個月後每週一個。',
   'This note is as large as a note in a room may get.':
     '這則筆記已達到房間中筆記可以達到的最大大小。',
 

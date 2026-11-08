@@ -1420,7 +1420,7 @@ export const my: Dictionary = {
   '{count} notes went back.': 'မှတ်စု {count} ပြန်သွားပြီ။',
   'That did not work.': 'ထိုအရာ အလုပ်မလုပ်ပါ။',
   'Signing in': 'ဝင်မှု',
-  'Ask for a code from an app': 'အက်ပ်မှ ကုဒ်တောင်းပါ',
+  'Two-factor authentication': 'နှစ်ဆင့် အထောက်အထားစိစစ်ခြင်း',
   'Turn on': 'ဖွင့်ပါ',
   'Turn off': 'ပိတ်ပါ',
   'Put this into your authenticator app, then type its code.':
@@ -1445,8 +1445,6 @@ export const my: Dictionary = {
   End: 'အဆုံးသတ်ပါ',
   'End every other session': 'အခြားစက်ရှင်အားလုံး အဆုံးသတ်ပါ',
   'Delete account': 'အကောင့်ဖျက်',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'ဤစက်ပေါ်ရှိ မှတ်စုများ ကျန်နေမည်။ အကောင့်နှင့် ချိန်ကိုက်ထားသော မိတ္တူများသာ ပျောက်မည်။',
   'Also gone for everyone in {spaces}.': '{spaces} ထဲရှိ လူတိုင်းအတွက်လည်း ပျောက်မည်။',
   'The note': 'မှတ်စု',
   '{space} panel': '{space} အကန့်',
@@ -1758,8 +1756,6 @@ export const my: Dictionary = {
   'Keep versions': 'ဗားရှင်းများ ထားပါ',
   'A month': 'တစ်လ',
   'A year': 'တစ်နှစ်',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'နောက်ဆုံးတစ်ရက်အားလုံး၊ ထို့နောက် နာရီတစ်ခုလျှင် တစ်ခု၊ တစ်လအကြာတွင် ရက်တစ်ခုလျှင် တစ်ခု၊ သုံးလအကြာတွင် အပတ်တစ်ခုလျှင် တစ်ခု။',
   'This note is as large as a note in a room may get.':
     'ဤမှတ်စုသည် အခန်းတစ်ခုအတွင်း မှတ်စုတစ်ခု ရှိနိုင်သည့် အကြီးဆုံးအရွယ်အစား ဖြစ်သည်။',
 

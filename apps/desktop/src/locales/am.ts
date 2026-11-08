@@ -1416,7 +1416,7 @@ export const am: Dictionary = {
   '{count} notes went back.': { one: '{count} ማስታወሻ ተመለሰ።', other: '{count} ማስታወሻዎች ተመለሱ።' },
   'That did not work.': 'ያ አልሠራም።',
   'Signing in': 'መግቢያ',
-  'Ask for a code from an app': 'ከመተግበሪያ ኮድ ጠይቅ',
+  'Two-factor authentication': 'ባለሁለት ደረጃ ማረጋገጫ',
   'Turn on': 'አብራ',
   'Turn off': 'አጥፋ',
   'Put this into your authenticator app, then type its code.':
@@ -1441,8 +1441,6 @@ export const am: Dictionary = {
   End: 'አብቃ',
   'End every other session': 'ሌሎቹን ክፍለ ጊዜዎች ሁሉ አብቃ',
   'Delete account': 'መዝገብ አጥፋ',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'በዚህ መሣሪያ ላይ ያሉ ማስታወሻዎች ይቆያሉ፤ መዝገቡ እና የተመሳሰሉ ቅጂዎቹ ብቻ ይጠፋሉ።',
   'Also gone for everyone in {spaces}.': 'በ{spaces} ውስጥ ላሉ ሁሉም ይጠፋል።',
   'The note': 'ማስታወሻው',
   '{space} panel': 'የ{space} ሰሌዳ',
@@ -1745,8 +1743,6 @@ export const am: Dictionary = {
   'Keep versions': 'ዕትሞችን አቆይ',
   'A month': 'አንድ ወር',
   'A year': 'አንድ ዓመት',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'የመጨረሻው ቀን ሁሉ፣ ከዚያ በሰዓት አንድ፣ ከወር በኋላ በቀን አንድ፣ ከሦስት ወር በኋላ በሳምንት አንድ።',
   'This note is as large as a note in a room may get.':
     'ይህ ማስታወሻ በክፍል ውስጥ ማስታወሻ ሊሆን የሚችለውን ከፍተኛ መጠን ደርሷል።',
 
