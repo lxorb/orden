@@ -46,7 +46,7 @@ export function replay(one: Pressed): void {
     cancelable: true,
   })
   played.add(event)
-  window.dispatchEvent(event)
+  document.body.dispatchEvent(event)
 }
 
 export interface Taken {

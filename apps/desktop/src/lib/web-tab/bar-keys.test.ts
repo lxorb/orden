@@ -148,7 +148,7 @@ describe('F6', () => {
         }
       },
     )
-    vi.stubGlobal('window', { dispatchEvent: (event: Event) => (played = event) })
+    vi.stubGlobal('document', { body: { dispatchEvent: (event: Event) => (played = event) } })
 
     replay({
       key: 'F6',
