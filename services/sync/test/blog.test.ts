@@ -142,6 +142,33 @@ describe('publishing', () => {
     }
   })
 
+  test('the address a page had before a rename or a move on sync v2 redirects to it', async () => {
+    const one = (await addNote('Old name.md', '# Old\n')).json.note.id
+    const two = (await addNote('Loose.md', '# Loose\n')).json.note.id
+    await publish({ subdomain: 'field' })
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    const changed = await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: {
+        ops: [
+          { op: 'r1', t: 'rename', id: one, name: 'New name.md', seen: 1e9 },
+          { op: 'f1', t: 'mkdir', id: 'f1', parent: null, name: 'Kept', seen: 1e9 },
+          { op: 'm1', t: 'move', id: two, parent: 'f1', seen: 1e9 },
+        ],
+      },
+    })
+    expect(changed.status, changed.text).toBe(200)
+
+    for (const [old, now] of [
+      ['/old-name', '/new-name'],
+      ['/loose', '/kept/loose'],
+    ]) {
+      const response = await call(env, old!, { host: 'field.nibeditor.com' })
+      expect(response.status, old).toBe(301)
+      expect(response.headers.get('location')).toBe(`https://field.nibeditor.com${now}`)
+    }
+  })
+
   test('front matter is not printed', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
