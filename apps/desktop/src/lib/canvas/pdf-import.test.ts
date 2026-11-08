@@ -218,3 +218,47 @@ test('a picture that finds the space full says so instead of vanishing', async (
   expect(store.canvas.nodes).toHaveLength(0)
   expect(busy.trouble).toMatch(/out of space/)
 })
+
+test('a picture added to a canvas keeps its own shape instead of being cut to a landscape card', async () => {
+  const store = board()
+  vi.stubGlobal('createImageBitmap', () =>
+    Promise.resolve({ width: 1080, height: 2400, close: () => undefined }),
+  )
+  try {
+    await run.dropImage(
+      store,
+      new File(['png'], 'phone.png', { type: 'image/png' }),
+      { x: 0, y: 0 },
+      '/space/Board.canvas',
+    )
+  } finally {
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  }
+
+  const [card] = store.canvas.nodes
+  expect(card?.height).toBe(320)
+  expect(card?.width).toBe(144)
+})
+
+test('a tiny picture is drawn big enough to take hold of', async () => {
+  const store = board()
+  vi.stubGlobal('createImageBitmap', () =>
+    Promise.resolve({ width: 16, height: 8, close: () => undefined }),
+  )
+  try {
+    await run.dropImage(
+      store,
+      new File(['png'], 'icon.png', { type: 'image/png' }),
+      { x: 0, y: 0 },
+      '/space/Board.canvas',
+    )
+  } finally {
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  }
+
+  const [card] = store.canvas.nodes
+  expect(card?.width).toBe(80)
+  expect(card?.height).toBe(40)
+})
