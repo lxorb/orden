@@ -1,10 +1,11 @@
 import { plural } from '../i18n.svelte'
-import { folderOf, nameOf, samePath } from '../space-paths'
+import { folderOf, nameOf, pathKey } from '../space-paths'
 import { joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import type { FileAction, OutsideStep } from '../workspace/undo.svelte'
 import { type Pair, put, trashPaths, type Transferred, untrash } from './commands'
 import { jobs } from './jobs.svelte'
+import { swapping } from './renaming'
 import { relistAll } from './view.svelte'
 
 type Outside = Extract<FileAction, { kind: 'outside' }>
@@ -68,10 +69,7 @@ async function redoStep(step: OutsideStep): Promise<OutsideStep> {
 }
 
 async function movedBack(pairs: Pair[]) {
-  const crossing = pairs.some((one, at) =>
-    pairs.some((other, there) => there !== at && samePath(other.from, one.to)),
-  )
-  if (!crossing) {
+  if (!swapping(pairs, (path) => pathKey(path))) {
     whole(await carried(pairs, 'move'))
     return
   }

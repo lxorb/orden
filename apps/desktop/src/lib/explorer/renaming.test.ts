@@ -1,5 +1,6 @@
+import { linearly } from '../../../../../scripts/growth'
 import { describe, expect, test } from 'vitest'
-import { clashing, isOneName, renamedAll } from './renaming'
+import { clashing, crossing, isOneName, renamedAll, swapping } from './renaming'
 
 describe('renaming many at once', () => {
   test('replaces words in the names and leaves the endings alone', () => {
@@ -60,5 +61,42 @@ describe('renaming many at once', () => {
     ]).toEqual([0, 1])
     expect([...clashing(['a/x.txt'], ['kept.txt'], ['a/x.txt', 'a/kept.txt'])]).toEqual([0])
     expect([...clashing(['a/x.txt'], ['kept.txt'], ['a/x.txt', 'b/kept.txt'])]).toEqual([])
+  })
+})
+
+describe('renames that take each other’s names', () => {
+  test('are seen within one folder, whatever the case, and not across folders', () => {
+    const pair = (from: string, name: string) => ({ from, name })
+    expect(crossing([pair('/d/a.txt', 'b.txt'), pair('/d/b.txt', 'c.txt')])).toBe(true)
+    expect(crossing([pair('/d/a.txt', 'B.TXT'), pair('/d/b.txt', 'a.txt')])).toBe(true)
+    expect(crossing([pair('/d/a.txt', 'b.txt'), pair('/e/b.txt', 'c.txt')])).toBe(false)
+    expect(crossing([pair('/d/a.txt', 'A.txt')])).toBe(false)
+    expect(crossing([pair('/d/a.txt', 'x.txt'), pair('/d/A.txt', 'a.txt')])).toBe(true)
+  })
+
+  test('are looked for in time that grows with the files, not their square', () => {
+    const many = Array.from({ length: 40_000 }, (_, at) => ({
+      from: `/home/me/Photos/IMG_${at}.jpg`,
+      name: `Rome ${at}.jpg`,
+    }))
+    expect(linearly((count) => crossing(many.slice(0, count)), 40_000)).toBe(false)
+  })
+
+  test('moved back are looked for in time that grows with the files, not their square', () => {
+    const many = Array.from({ length: 40_000 }, (_, at) => ({
+      from: `/home/me/Photos/Rome/IMG_${at}.jpg`,
+      to: `/home/me/Photos/IMG_${at}.jpg`,
+    }))
+    const key = (path: string) => path.toLowerCase()
+    expect(linearly((count) => swapping(many.slice(0, count), key), 40_000)).toBe(false)
+    expect(
+      swapping(
+        [
+          { from: '/a/x', to: '/a/y' },
+          { from: '/a/Y', to: '/a/x' },
+        ],
+        key,
+      ),
+    ).toBe(true)
   })
 })
