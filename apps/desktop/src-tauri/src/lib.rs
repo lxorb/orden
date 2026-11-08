@@ -98,6 +98,8 @@ mod lane;
 #[cfg(desktop)]
 mod launch;
 #[cfg(desktop)]
+mod letters;
+#[cfg(desktop)]
 mod lifecycle;
 #[cfg(target_os = "macos")]
 mod lights;

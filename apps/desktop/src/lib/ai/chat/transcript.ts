@@ -1,3 +1,4 @@
+import { untrusted } from '@orden/chats/agent'
 import type {
   Api,
   Attachment,
@@ -26,10 +27,6 @@ export interface Call {
 
 const MARK = 'untrusted'
 
-function inert(words: string): string {
-  return words.replace(new RegExp(`<(?=/?${MARK})`, 'gi'), '&lt;')
-}
-
 function attribute(label: string): string {
   return label
     .slice(0, 300)
@@ -40,9 +37,7 @@ function attribute(label: string): string {
     .replace(/[\r\n\t]/g, ' ')
 }
 
-export function untrusted(source: string, words: string): string {
-  return `<${MARK} source="${attribute(source)}">\n${inert(words)}\n</${MARK}>`
-}
+export { untrusted }
 
 const OPENED = `<${MARK} source="`
 
