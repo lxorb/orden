@@ -7,7 +7,7 @@ import { chatsOn } from '../../settings.svelte'
 import { rootedAt } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
-import { type Call, count, done, flag, maybe, need, text } from './call'
+import { type Call, count, done, flag, maybe, need, short, text } from './call'
 import { Refused } from './problem'
 import { openChat } from './reader-view'
 import { placeFor, reachable } from './spaces'
@@ -129,7 +129,7 @@ export async function readChat(call: Call): Promise<AgentAnswer> {
 
 export async function searchChats(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
-  const query = need(call, 'query')
+  const query = short('query', need(call, 'query'))
   const seen = new Map(seenBy(call, store).map((one) => [one.entry.id, one.name]))
   const hits = (await store.search(query))
     .flatMap((hit) => {

@@ -5,7 +5,7 @@ import { parseQuery } from '@orden/scan/search/query'
 import { searchSpace } from '../../search/space'
 import { notePath, relativeTo } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
-import { type Call, count, done, maybe, need } from './call'
+import { type Call, count, done, maybe, need, short } from './call'
 import { indexOf } from './links'
 import { judged, onDisk, type Place, placeFor, placeOf, reachable, sharedSource } from './spaces'
 
@@ -50,7 +50,7 @@ async function hitsIn(place: Place, query: string, most: number): Promise<Row[]>
 }
 
 export async function searchNotes(call: Call): Promise<AgentAnswer> {
-  const query = need(call, 'query')
+  const query = short('query', need(call, 'query'))
   const named = maybe(call, 'space')
   const most = count(call, 'limit', MATCHES, MOST_MATCHES)
 

@@ -3,14 +3,14 @@ import { notePath } from '../../space-paths'
 import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from '../../workspace/bookmarks.svelte'
 import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
-import { type Call, done, maybe, need } from './call'
+import { type Call, done, maybe, need, short } from './call'
 import { Refused } from './problem'
 import { judged, type Place, placeOf } from './spaces'
 import { entryIn } from './tree'
 
 async function bookmarkOf(call: Call, place: Place): Promise<Bookmark> {
   const query = maybe(call, 'query')
-  if (query !== null) return { kind: 'search', path: '', text: query }
+  if (query !== null) return { kind: 'search', path: '', text: short('query', query) }
 
   const path = judged(need(call, 'path'))
   const heading = maybe(call, 'heading')

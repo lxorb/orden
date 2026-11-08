@@ -16,6 +16,15 @@ export function need(call: Call, name: string): string {
   return value
 }
 
+const LONGEST_QUERY = 1000
+
+export function short(name: string, value: string): string {
+  if (value.length > LONGEST_QUERY) {
+    throw new Refused('bad_arguments', `${name} is at most ${LONGEST_QUERY} characters`)
+  }
+  return value
+}
+
 export function maybe(call: Call, name: string): string | null {
   return said(call.args, name)
 }
