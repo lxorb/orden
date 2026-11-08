@@ -47,6 +47,7 @@ export class NoteDoc {
   path = $state<string | null>(null)
   name = $state('')
   dirty = $state(false)
+  reads = $state(false)
 
   readonly shared: string | null
 

@@ -219,6 +219,30 @@ describe('a writer made a reader while the note is open in its room', () => {
     await until(() => sockets.opened.length === 2, 'the room joined again')
   })
 
+  test('locks the note at once, before the spaces have been asked again', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+    let answer = (): void => undefined
+    const asked = new Promise<void>((done) => {
+      answer = done
+    })
+    const loading = vi
+      .spyOn((await import('../account.svelte')).account, 'loadSpaces')
+      .mockImplementation(() => asked)
+
+    try {
+      socket.went(NOW_READS)
+
+      expect(note.reads).toBe(true)
+      answer()
+      await until(() => !note.reads, 'the note to write again once the spaces answer')
+    } finally {
+      answer()
+      loading.mockRestore()
+    }
+  })
+
   test('shows the room’s words again, not what the room no longer took from it', async () => {
     const note = documentOn('/Notes/a.md', '# A\n')
     const server = new Server('# A\n')
