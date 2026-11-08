@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { EditorState, EditorView } from '@orden/editor'
+import { select } from '@orden/editor/agent-hands'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf } from '../../automation/caller'
 
@@ -87,6 +88,52 @@ describe('a note’s editor', () => {
     expect(noteEditor(call(select, ['editor', 'workspace.focus']))).toMatchObject({
       result: { selections: [{ text: 'second' }] },
     })
+  })
+
+  test('at most 500 selections are set or read, with at most 20000 characters of their words', () => {
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: `${'word '.repeat(6000)}\n${'x\n'.repeat(700)}`,
+        extensions: EditorState.allowMultipleSelections.of(true),
+      }),
+      parent: document.body,
+    })
+    open.push(view)
+    views.put('p1', view)
+    const focus = ['editor', 'workspace.focus']
+    const place = (line: number) => ({ line, ch: 0 })
+    const many = (count: number) =>
+      Array.from({ length: count }, (_, at) => ({ anchor: place(at + 2), head: place(at + 2) }))
+    expect(() =>
+      noteEditor(call({ tab: 'n1', op: 'select', selections: many(501) }, focus)),
+    ).toThrow(/at most 500 selections/)
+    expect(view.state.selection.ranges).toHaveLength(1)
+
+    select(view, [{ anchor: place(1), head: { line: 1, ch: 30_000 } }, ...many(599)])
+    const read = noteEditor(call({ tab: 'n1', op: 'selection' })) as {
+      result: { selections: { text: string; truncated?: true }[]; more?: number }
+    }
+    expect(read.result.selections).toHaveLength(500)
+    expect(read.result.more).toBe(100)
+    expect(read.result.selections[0]?.text).toHaveLength(20_000)
+    expect(read.result.selections[0]?.truncated).toBe(true)
+  })
+
+  test('at most 500 marks, each saying at most 2000 characters', () => {
+    const mark = (message: string) => ({
+      from: { line: 1, ch: 0 },
+      to: { line: 1, ch: 3 },
+      message,
+    })
+    expect(() =>
+      noteEditor(
+        call({ tab: 'n1', op: 'mark', marks: Array.from({ length: 501 }, () => mark('x')) }),
+      ),
+    ).toThrow(/at most 500 marks/)
+    expect(() =>
+      noteEditor(call({ tab: 'n1', op: 'mark', marks: [mark('x'.repeat(2001))] })),
+    ).toThrow(/at most 2000 characters/)
+    expect(document.querySelector('.cm-agent-mark')).toBeNull()
   })
 
   test('marks are drawn, kept for the note and drawn again in an editor built later', () => {

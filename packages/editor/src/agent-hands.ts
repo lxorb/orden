@@ -116,13 +116,23 @@ export function agentMarksIn(view: EditorView, agent?: string): AgentMark[] {
     }))
 }
 
-export function selectionsOf(view: EditorView): (Stretch & { text: string })[] {
+export function selectionsOf(
+  view: EditorView,
+  most = Infinity,
+  longest = Infinity,
+): (Stretch & { text: string; truncated?: true })[] {
   const { ranges, main } = view.state.selection
-  return [main, ...ranges.filter((one) => one !== main)].map((one) => ({
-    anchor: placeOf(view.state, one.anchor),
-    head: placeOf(view.state, one.head),
-    text: view.state.sliceDoc(one.from, one.to),
-  }))
+  let left = longest
+  return [main, ...ranges.filter((one) => one !== main)].slice(0, most).map((one) => {
+    const to = Math.min(one.to, one.from + left)
+    left -= to - one.from
+    return {
+      anchor: placeOf(view.state, one.anchor),
+      head: placeOf(view.state, one.head),
+      text: view.state.sliceDoc(one.from, to),
+      ...(to < one.to ? { truncated: true as const } : {}),
+    }
+  })
 }
 
 export function select(view: EditorView, stretches: Stretch[]): void {
