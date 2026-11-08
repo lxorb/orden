@@ -5,7 +5,7 @@ const held = vi.hoisted(() => ({
   opened: 0,
   closed: 0,
   release: [] as (() => void)[],
-  views: [] as { width: number; offsetX: number; offsetY: number }[],
+  views: [] as { width: number; height: number; offsetX: number; offsetY: number }[],
   cancelled: 0,
 }))
 
@@ -31,7 +31,10 @@ vi.mock('../pdf/document', () => ({
               scale: number
               offsetX?: number
               offsetY?: number
-            }) => ({ width: 600 * scale, height: 800 * scale, offsetX, offsetY }),
+            }) =>
+              number === 999
+                ? { width: 20 * scale, height: 90_000 * scale, offsetX, offsetY }
+                : { width: 600 * scale, height: 800 * scale, offsetX, offsetY },
             render: ({
               canvas,
               viewport,
@@ -45,6 +48,7 @@ vi.mock('../pdf/document', () => ({
                 held.drawn.push(`${String(number)} at ${String(Math.round(viewport.width))}`)
                 held.views.push({
                   width: canvas.width,
+                  height: canvas.height,
                   offsetX: viewport.offsetX,
                   offsetY: viewport.offsetY,
                 })
@@ -197,6 +201,16 @@ describe('the pages of a paper', () => {
     expect(held.drawn.length).toBe(drawn + 1)
   })
 
+  test('a long strip of a page is drawn within what a canvas can hold', async () => {
+    const asked = paperOf(AT, 999, new AbortController().signal, false, 4)
+    await drawNext()
+
+    const paper = await asked
+    expect(paper?.height).toBe(Math.round((90_000 * 96) / 72))
+    expect(held.views.at(-1)?.height).toBeGreaterThan(0)
+    expect(held.views.at(-1)?.height).toBeLessThanOrEqual(16384)
+  })
+
   test('the paper is read once for all its pages', async () => {
     const before = held.opened
     for (let number = 1; number <= 5; number++)
@@ -216,7 +230,7 @@ describe('a close-up of a page', () => {
     const image = await asked
     expect(image?.width).toBe(3000)
     expect(image?.height).toBe(2000)
-    expect(held.views).toEqual([{ width: 3000, offsetX: -1500, offsetY: -4000 }])
+    expect(held.views).toEqual([{ width: 3000, height: 2000, offsetX: -1500, offsetY: -4000 }])
   })
 
   test('is never larger than the largest screen needs', async () => {
@@ -231,6 +245,21 @@ describe('a close-up of a page', () => {
 
     const image = await asked
     expect((image?.width ?? 0) * (image?.height ?? 0)).toBeLessThanOrEqual(64 * 1024 * 1024)
+  })
+
+  test('of a long strip of a page stays within what a canvas can hold', async () => {
+    const asked = closeUpOf(
+      AT,
+      999,
+      { x: 0, y: 0, width: 1, height: 1 },
+      400,
+      new AbortController().signal,
+    )
+    await drawNext()
+
+    const image = await asked
+    expect(image?.height).toBeGreaterThan(0)
+    expect(image?.height).toBeLessThanOrEqual(16384)
   })
 
   test('let go of while drawing, stops drawing and gives nothing', async () => {

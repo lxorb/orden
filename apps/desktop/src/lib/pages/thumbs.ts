@@ -1,5 +1,6 @@
 import type { InkStroke, PageNode } from '../canvas/format'
 import { strokeBox } from '../canvas/ink'
+import { sharpness } from './paper'
 
 export interface Sheet {
   width: number
@@ -47,6 +48,27 @@ export function shelvesOf(sheets: readonly Sheet[], wide: number, shelf: Shelf):
   }
 
   return { columns, tops, heights, total: Math.max(0, y - gap) }
+}
+
+export interface ThumbSize {
+  scale: number
+  tall: number
+  ratio: number
+  width: number
+  height: number
+}
+
+export function thumbSize(sheet: Sheet, wide: number, wanted: number): ThumbSize {
+  const scale = sheet.width > 0 ? wide / sheet.width : 1
+  const tall = sheet.height * scale
+  const ratio = sharpness(wide, tall, wanted)
+  return {
+    scale,
+    tall,
+    ratio,
+    width: Math.max(1, Math.round(wide * ratio)),
+    height: Math.max(1, Math.round(tall * ratio)),
+  }
 }
 
 export function shownOf(shelves: Shelves, count: number, top: number, room: number): Shown {

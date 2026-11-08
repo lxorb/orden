@@ -24,6 +24,8 @@ const CLOSE_PIXELS = 64 * 1024 * 1024
 
 const KEPT = 24
 
+const SIDE = 16384
+
 const KEPT_PIXELS = 64 * 1024 * 1024
 
 export interface Paper {
@@ -68,6 +70,10 @@ export interface PaperAt {
 function keyOf(at: PaperAt): string {
   const places = paperPlaces(at.file, at.note, at.root)
   return at.shared ? [...places, `#${at.shared}`].join('\n') : places.join('\n')
+}
+
+export function sharpness(width: number, height: number, wanted: number): number {
+  return Math.min(wanted, SIDE / Math.max(width, height, 1))
 }
 
 export function densityFor(onScreen: number): number {
@@ -284,7 +290,11 @@ async function draw(one: Held, number: number, density: number): Promise<Paper |
   const wanted = page.getViewport({ scale: PDF_TO_CSS })
 
   const area = wanted.width * wanted.height * density * density
-  const scale = area > MOST_PIXELS ? density * Math.sqrt(MOST_PIXELS / area) : density
+  const scale = sharpness(
+    wanted.width,
+    wanted.height,
+    area > MOST_PIXELS ? density * Math.sqrt(MOST_PIXELS / area) : density,
+  )
   const view = page.getViewport({ scale: PDF_TO_CSS * scale })
 
   const paper = sheetOf(Math.max(1, Math.round(view.width)), Math.max(1, Math.round(view.height)))
@@ -340,7 +350,11 @@ export async function closeUpOf(
   const wide = part.width * whole.width
   const tall = part.height * whole.height
   const wanted = across / whole.width
-  const scale = Math.min(wanted, Math.sqrt(CLOSE_PIXELS / Math.max(1, wide * tall)))
+  const scale = sharpness(
+    wide,
+    tall,
+    Math.min(wanted, Math.sqrt(CLOSE_PIXELS / Math.max(1, wide * tall))),
+  )
   const view = page.getViewport({
     scale,
     offsetX: -part.x * whole.width * scale,
