@@ -1115,13 +1115,15 @@ class TelegramConnection implements Connection {
       unreadPollVotesCount: 0,
       notifySettings: { _: 'peerNotifySettings' },
     }
-    const made = this.conversationOf(dialog, undefined) ?? {
+    const made: Conversation = {
+      ...(this.conversationOf(dialog, undefined) ?? {
+        title: null,
+        kind: where.kind === 'u' ? 'direct' : 'group',
+        people: [],
+        lastAt: null,
+        unread: 0,
+      }),
       id,
-      title: null,
-      kind: where.kind === 'u' ? 'direct' : 'group',
-      people: [],
-      lastAt: null,
-      unread: 0,
     }
     this.known.set(id, made)
     return made
@@ -1539,10 +1541,30 @@ class TelegramConnection implements Connection {
     const where = whereOfMessage(message, this.peers)
     if (!where) return
     const conversation = idOf(where)
-    if (!this.known.has(conversation))
+    if (!this.known.has(conversation)) {
       this.emit({ t: 'conversation', conversation: this.conversationFor(where) })
+      if (where.topic !== undefined)
+        void this.newTopic(where.id, where.topic).catch(() => undefined)
+    }
     const mapped = this.mapped(message)
     if (mapped) this.emit({ t: 'message', message: mapped })
+  }
+
+  private async newTopic(id: number, topic: number): Promise<void> {
+    const result = await this.call({
+      _: 'messages.getForumTopicsByID',
+      peer: this.peers.input({ kind: 's', id }),
+      topics: [topic],
+    })
+    const found = result.topics.find((one) => one._ === 'forumTopic' && one.id === topic)
+    const channel = this.peers.channels.get(id)
+    if (found?._ !== 'forumTopic' || !channel) return
+    const made = this.topicConversation(channel, found, undefined)
+    const known = this.known.get(made.id)
+    this.changeConversation(made.id, {
+      title: made.title,
+      ...(known ? { lastAt: known.lastAt, unread: known.unread } : {}),
+    })
   }
 
   private edited(message: tl.TypeMessage): void {
