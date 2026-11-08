@@ -11,7 +11,7 @@ import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need } from './call'
 import { Refused } from './problem'
 import { namedTab } from './tab-target'
-import { KEY_NAMES, keyBytes, linesOf, shellOs, typesFreely } from './terminal-keys'
+import { KEY_NAMES, keyBytes, linesFrom, linesOf, shellOs, typesFreely } from './terminal-keys'
 
 const LINES = 200
 const MOST_LINES = 5000
@@ -203,15 +203,14 @@ async function typed(
 
   const session = await started(tab)
   const { term } = session
-  const buffer = term.buffer.active
-  const from = buffer.baseY + buffer.cursorY
+  const since = linesFrom(term)
 
   const sent = keyBytes(keys, term.modes.applicationCursorKeysMode)
   const bytes = text + (enter ? '\r' : '') + ('bytes' in sent ? sent.bytes : '')
   if (session.agentTyped(bytes) !== null) throw refusedFor(tab, session)
 
   await quiet(term, patience, rest * 2, rest)
-  const read = linesOf(term.buffer.active, from, MOST_LINES)
+  const read = since(MOST_LINES)
   return done(
     {
       ...about(tab),

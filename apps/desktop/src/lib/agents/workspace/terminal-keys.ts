@@ -77,3 +77,38 @@ export function linesOf(
   const truncated = lines.length > most
   return { text: (truncated ? lines.slice(-most) : lines).join('\n'), truncated }
 }
+
+interface Rows {
+  length: number
+  baseY: number
+  cursorY: number
+  getLine(at: number): Row | undefined
+}
+
+interface Marker {
+  readonly line: number
+  readonly isDisposed: boolean
+  dispose(): void
+}
+
+interface Screen {
+  buffer: { active: Rows; normal: Rows }
+  registerMarker(offset?: number): Marker | undefined
+}
+
+export function linesFrom(term: Screen): (most: number) => { text: string; truncated: boolean } {
+  const rows = term.buffer.active
+  const mark = rows === term.buffer.normal ? term.registerMarker(0) : undefined
+  const from = rows.baseY + rows.cursorY
+
+  return (most) => {
+    const now = term.buffer.active
+    if (now !== rows) return linesOf(now, 0, most)
+    if (!mark) return linesOf(now, from, most)
+
+    const lost = mark.isDisposed
+    const read = linesOf(now, lost ? 0 : mark.line, most)
+    mark.dispose()
+    return lost ? { ...read, truncated: true } : read
+  }
+}
