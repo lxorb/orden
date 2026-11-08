@@ -3890,4 +3890,10 @@ export const ru: Dictionary = {
   'Chat accounts': 'Аккаунты чатов',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Подключайте почту, Telegram, Slack, WhatsApp или Signal шаг за шагом.',
+  Owners: 'Владельцы',
+  Admins: 'Администраторы',
+  Bots: 'Боты',
+  'Copy name': 'Копировать имя',
+  'Copy address': 'Копировать адрес',
+  'Send message': 'Написать сообщение',
 }

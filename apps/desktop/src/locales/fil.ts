@@ -3822,4 +3822,10 @@ export const fil: Dictionary = {
   'Chat accounts': 'Mga chat account',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Ikonekta ang mail, Telegram, Slack, WhatsApp o Signal, isang hakbang sa bawat pagkakataon.',
+  Owners: 'Mga may-ari',
+  Admins: 'Mga admin',
+  Bots: 'Mga bot',
+  'Copy name': 'Kopyahin ang pangalan',
+  'Copy address': 'Kopyahin ang address',
+  'Send message': 'Magpadala ng mensahe',
 }

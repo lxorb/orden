@@ -3765,4 +3765,10 @@ export const te: Dictionary = {
   'Chat accounts': 'చాట్ ఖాతాలు',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'మెయిల్, Telegram, Slack, WhatsApp లేదా Signalను ఒక్కో దశలో కనెక్ట్ చేయండి.',
+  Owners: 'యజమానులు',
+  Admins: 'నిర్వాహకులు',
+  Bots: 'బాట్‌లు',
+  'Copy name': 'పేరు కాపీ చేయండి',
+  'Copy address': 'చిరునామా కాపీ చేయండి',
+  'Send message': 'సందేశం పంపండి',
 }

@@ -3739,4 +3739,10 @@ export const bn: Dictionary = {
   'Chat accounts': 'চ্যাট অ্যাকাউন্ট',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'মেইল, Telegram, Slack, WhatsApp বা Signal যুক্ত করুন, ধাপে ধাপে।',
+  Owners: 'মালিকরা',
+  Admins: 'অ্যাডমিনরা',
+  Bots: 'বট',
+  'Copy name': 'নাম কপি করুন',
+  'Copy address': 'ঠিকানা কপি করুন',
+  'Send message': 'বার্তা পাঠান',
 }

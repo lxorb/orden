@@ -3887,4 +3887,10 @@ export const uk: Dictionary = {
   'Chat accounts': 'Облікові записи чатів',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Підключайте пошту, Telegram, Slack, WhatsApp або Signal крок за кроком.',
+  Owners: 'Власники',
+  Admins: 'Адміністратори',
+  Bots: 'Боти',
+  'Copy name': 'Копіювати ім’я',
+  'Copy address': 'Копіювати адресу',
+  'Send message': 'Надіслати повідомлення',
 }

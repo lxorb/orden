@@ -3685,4 +3685,10 @@ export const my: Dictionary = {
   'Chat accounts': 'ချတ်အကောင့်များ',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'မေးလ်၊ Telegram၊ Slack၊ WhatsApp သို့မဟုတ် Signal ကို တစ်ဆင့်ချင်း ချိတ်ပါ။',
+  Owners: 'ပိုင်ရှင်များ',
+  Admins: 'စီမံသူများ',
+  Bots: 'ဘော့များ',
+  'Copy name': 'အမည် ကူးယူရန်',
+  'Copy address': 'လိပ်စာ ကူးယူရန်',
+  'Send message': 'မက်ဆေ့ချ် ပို့ရန်',
 }

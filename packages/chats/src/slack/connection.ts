@@ -929,6 +929,7 @@ export class SlackConnection implements Connection {
       const role: ConversationRole =
         id === creator ? 'owner' : user?.is_admin === true ? 'admin' : 'member'
       const member: Member = { ...person, role }
+      if (user?.is_bot === true) member.bot = true
       const on = this.online.get(id)
       if (on !== undefined) member.online = on
       return member

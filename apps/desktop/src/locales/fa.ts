@@ -3751,4 +3751,10 @@ export const fa: Dictionary = {
   'Chat accounts': 'حساب‌های گفتگو',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'رایانامه، Telegram، Slack، WhatsApp یا Signal را گام‌به‌گام وصل کنید.',
+  Owners: 'مالکان',
+  Admins: 'مدیران',
+  Bots: 'ربات‌ها',
+  'Copy name': 'کپی نام',
+  'Copy address': 'کپی نشانی',
+  'Send message': 'ارسال پیام',
 }

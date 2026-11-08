@@ -776,6 +776,14 @@ const APP_ENTRIES: Shortcut[] = [
           key: 'Mod-f',
           contextual: true,
         } satisfies Shortcut,
+        {
+          id: 'chat.members',
+          label: () => t('Members'),
+          category: 'view',
+          scope: 'panel',
+          key: 'Mod-u',
+          contextual: true,
+        } satisfies Shortcut,
       ]),
   {
     id: 'app.ask',

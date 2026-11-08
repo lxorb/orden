@@ -37,6 +37,7 @@ const JUMP_PAGES = 20
 const MOST_URLS = 64
 const MOST_URL_BYTES = 64 * 1024 * 1024
 const READ_AFTER = 500
+const RELIST_AFTER = 1000
 
 export interface Source {
   provider: ChatProvider
@@ -419,18 +420,37 @@ export class Remote {
     const self = this.source()?.account.self
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and dropped here
     const byWho = new Map<Who, ChatMember>()
-    const add = (person: Person, role: ConversationRole) => {
+    const add = (person: Person | Member, role: ConversationRole) => {
       const who = person.id === self?.id ? this.me : whoOf(person.id)
-      if (!byWho.has(who))
-        byWho.set(who, { who, name: person.name, role: role === 'member' ? 'write' : 'owner' })
+      const held = byWho.get(who)
+      const handle = person.handle ?? person.phone
+      const bot = 'bot' in person && (person.bot ?? false)
+      if (held) {
+        if (!held.handle && handle) held.handle = handle
+        if (bot) held.bot = true
+        return
+      }
+      byWho.set(who, {
+        who,
+        name: person.name,
+        role: role === 'member' ? 'write' : 'owner',
+        rank: role,
+        ...(handle ? { handle } : {}),
+        ...(bot ? { bot } : {}),
+      })
     }
     if (self) add(self, found?.role ?? 'member')
     for (const one of listed ?? []) add(one, one.role)
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and dropped here
+    const kept = new Set(byWho.keys())
     for (const one of found?.people ?? []) add(one, 'member')
     for (const one of this.known.get(conversation)?.values() ?? []) {
       if (!one.mine) add(one.author, 'member')
     }
-    return [...byWho.values()]
+    const all = [...byWho.values()]
+    return listed?.length
+      ? all.map((one) => (kept.has(one.who) ? one : { ...one, gone: true }))
+      : all
   }
 
   open(chat: string): ChatView {
@@ -475,7 +495,10 @@ export class Remote {
       this.views.get(conversation)?.view.heard(event)
       return
     }
-    if (event.t === 'presence') for (const { view } of this.views.values()) view.heard(event)
+    if (event.t === 'conversation') this.views.get(event.conversation.id)?.view.heard(event)
+    else if (event.t === 'conversations')
+      for (const one of event.conversations) this.views.get(one.id)?.view.heard(event)
+    else if (event.t === 'presence') for (const { view } of this.views.values()) view.heard(event)
   }
 
   caughtUp(): void {
@@ -976,6 +999,8 @@ export class RemoteView extends RemoteList implements ChatView {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
   private readonly online = new Map<Who, boolean>()
   private typingTimer: ReturnType<typeof setTimeout> | undefined
+  private relistTimer: ReturnType<typeof setTimeout> | undefined
+  private relists = 0
   private typedAt = 0
   private listed: readonly Member[] | null = null
   private closed = false
@@ -1022,13 +1047,26 @@ export class RemoteView extends RemoteList implements ChatView {
       this.remote.readSeqs = { ...this.remote.readSeqs, [this.conversation]: line }
     }
     this.drawMembers()
+    await this.relist()
+  }
+
+  private async relist(): Promise<void> {
+    const asked = ++this.relists
     const listed = await this.remote.connection?.members?.(this.conversation).catch(() => null)
-    if (this.closed) return
+    if (this.closed || asked !== this.relists) return
     this.listed = listed ?? null
     this.remote.keepListed(this.conversation, this.listed)
     for (const one of listed ?? [])
       if (one.online !== undefined) this.online.set(whoOfMember(this.remote, one), one.online)
     this.drawMembers()
+  }
+
+  private relistSoon(): void {
+    if (this.closed || this.relistTimer !== undefined) return
+    this.relistTimer = setTimeout(() => {
+      this.relistTimer = undefined
+      void this.relist()
+    }, RELIST_AFTER)
   }
 
   private drawMembers(): void {
@@ -1046,6 +1084,8 @@ export class RemoteView extends RemoteList implements ChatView {
     this.take(event)
     for (const one of this.replying) one.take(event)
     if (event.t === 'typing') this.typing(event.person, event.on, event.thread)
+    else if (event.t === 'conversation' || event.t === 'conversations') this.relistSoon()
+    else if (event.t === 'message' && event.message.system) this.relistSoon()
     else if (event.t === 'presence') {
       const who = whoOf(event.person)
       if (!this.members.some((one) => one.who === who)) return
@@ -1117,6 +1157,7 @@ export class RemoteView extends RemoteList implements ChatView {
     if (this.closed || !this.remote.release(this.conversation)) return
     this.closed = true
     clearTimeout(this.typingTimer)
+    clearTimeout(this.relistTimer)
   }
 
   private typing(person: string, on: boolean, thread: string | undefined): void {

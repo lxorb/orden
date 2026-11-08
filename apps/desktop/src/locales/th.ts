@@ -3608,4 +3608,10 @@ export const th: Dictionary = {
   'Chat accounts': 'บัญชีแชท',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'เชื่อมต่ออีเมล Telegram Slack WhatsApp หรือ Signal ทีละขั้นตอน',
+  Owners: 'เจ้าของ',
+  Admins: 'ผู้ดูแล',
+  Bots: 'บอต',
+  'Copy name': 'คัดลอกชื่อ',
+  'Copy address': 'คัดลอกที่อยู่',
+  'Send message': 'ส่งข้อความ',
 }

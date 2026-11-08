@@ -3756,4 +3756,10 @@ export const pa: Dictionary = {
   'Chat accounts': 'ਚੈਟ ਖਾਤੇ',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'ਮੇਲ, Telegram, Slack, WhatsApp ਜਾਂ Signal ਜੋੜੋ, ਇੱਕ ਸਮੇਂ ਇੱਕ ਕਦਮ।',
+  Owners: 'ਮਾਲਕ',
+  Admins: 'ਐਡਮਿਨ',
+  Bots: 'ਬੋਟ',
+  'Copy name': 'ਨਾਮ ਕਾਪੀ ਕਰੋ',
+  'Copy address': 'ਪਤਾ ਕਾਪੀ ਕਰੋ',
+  'Send message': 'ਸੁਨੇਹਾ ਭੇਜੋ',
 }

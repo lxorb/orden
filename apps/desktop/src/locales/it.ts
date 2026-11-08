@@ -3865,4 +3865,10 @@ export const it: Dictionary = {
   'Chat accounts': 'Account chat',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Collega posta, Telegram, Slack, WhatsApp o Signal, un passo alla volta.',
+  Owners: 'Proprietari',
+  Admins: 'Amministratori',
+  Bots: 'Bot',
+  'Copy name': 'Copia nome',
+  'Copy address': 'Copia indirizzo',
+  'Send message': 'Invia messaggio',
 }

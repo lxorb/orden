@@ -15,6 +15,8 @@
   import Float from './Float.svelte'
   import Glyph from './Glyph.svelte'
   import Lightbox from './Lightbox.svelte'
+  import MembersPanel from './MembersPanel.svelte'
+  import { membersOpen } from './members-open.svelte'
   import { isPicture, isVideo } from './media'
   import { onScreen } from '../on-screen'
   import { chatName, hearJumps, takeJump } from './open'
@@ -30,6 +32,8 @@
   import { accounts } from '../linked'
 
   const { tab }: { tab: Tab } = $props()
+
+  const NARROWEST_BESIDE = 640
 
   let page = $state<ChatPage | null>(null)
   let missing = $state(false)
@@ -49,6 +53,7 @@
   let looking = $state<{ files: FileRef[]; start: number } | null>(null)
   let polling = $state<((poll: Poll) => void) | null>(null)
   let dropping = $state(false)
+  let sheetFor = $state<string | null>(null)
 
   const space = $derived(page?.service ? null : (page?.entry?.space ?? null))
   const remoteChat = $derived(isRemote(tab.note.text) ? tab.note.text : null)
@@ -85,6 +90,19 @@
   })
   const lentName = $derived(tab.note.shared ? chatName(tab.note.name) : null)
   const phone = $derived(viewport.device === 'phone')
+  const narrow = $derived(phone || (width > 0 && width < NARROWEST_BESIDE))
+  const membersShown = $derived(
+    !!page &&
+      page.can.members &&
+      (narrow ? sheetFor === page.id : membersOpen.shown(page.id)) &&
+      !(phone && page.replying),
+  )
+
+  function toggleMembers() {
+    if (!page) return
+    if (narrow) sheetFor = sheetFor === page.id ? null : page.id
+    else membersOpen.toggle(page.id)
+  }
 
   $effect(() => {
     const path = tab.path
@@ -157,6 +175,10 @@
       event.preventDefault()
       event.stopPropagation()
       page.search()
+    } else if (shortcuts.pressed('chat.members', event) && page.can.members) {
+      event.preventDefault()
+      event.stopPropagation()
+      toggleMembers()
     }
   }
 
@@ -208,7 +230,13 @@
   {#if page}
     {@const open = page}
     <div class="main" class:hidden={phone && open.replying !== null}>
-      <ChatHead page={open} {space} named={lentName} />
+      <ChatHead
+        page={open}
+        {space}
+        named={lentName}
+        membersOn={membersShown}
+        onmembers={toggleMembers}
+      />
       {#if linked && (linked.status === 'offline' || linked.status === 'signed-out')}
         <p class="status" role="status">
           {linked.status === 'offline' ? t('Offline') : t('Signed out')}{linked.reason
@@ -263,6 +291,19 @@
           onfiles={openFiles}
         />
       {/key}
+    {/if}
+    {#if membersShown}
+      <MembersPanel
+        page={open}
+        {space}
+        sheet={narrow}
+        onmention={(words: string) => composer?.insert(words)}
+        onclose={() => {
+          if (narrow) sheetFor = null
+          else membersOpen.set(open.id, false)
+          composer?.focus()
+        }}
+      />
     {/if}
   {:else if remoteChat && failure}
     <p class="state">

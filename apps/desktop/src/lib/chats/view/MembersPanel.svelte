@@ -1,0 +1,406 @@
+<script lang="ts">
+  import type { Who } from '@orden/chats'
+  import { cubicOut } from 'svelte/easing'
+  import { closeOnBack } from '../../backstack.svelte'
+  import { copyText } from '../../clipboard'
+  import { amount, i18n, t } from '../../i18n.svelte'
+  import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
+  import { dur, fly } from '../../motion'
+  import { overlays } from '../../overlays'
+  import Avatar from '../../people/Avatar.svelte'
+  import { showProfile } from '../../people/card.svelte'
+  import { people } from '../../people/people.svelte'
+  import { viewport } from '../../viewport.svelte'
+  import { openConversation } from '../linked'
+  import { remoteOf } from '../remotes'
+  import type { ChatPage } from './chat.svelte'
+  import { mentionText } from './compose'
+  import Glyph from './Glyph.svelte'
+  import { memberMenu } from './manage'
+  import { membersOpen } from './members-open.svelte'
+  import { accountOf, faceOf, nameOf } from './people'
+  import { grouped, linesOf, type Listed, listedOf, placed, type Rank, visible } from './roster'
+
+  const {
+    page,
+    space,
+    sheet = false,
+    onmention,
+    onclose,
+  }: {
+    page: ChatPage
+    space: string | null
+    sheet?: boolean
+    onmention: (words: string) => void
+    onclose: () => void
+  } = $props()
+
+  const HEIGHTS = { group: 36, member: 44 }
+  const SPARE = 8
+
+  let panel = $state<HTMLElement>()
+  let filter = $state('')
+  let top = $state(0)
+  let height = $state(0)
+
+  const service = $derived(page.service)
+  const remote = $derived(service ? remoteOf(page.id) : null)
+  const conversation = $derived(
+    service ? (remote?.conversation(service.conversation) ?? null) : null,
+  )
+  const width = membersOpen.width
+
+  function presenceOf(who: Who) {
+    if (service) return page.view.presence.here.includes(who) ? 'active' : null
+    const id = accountOf(who)
+    return id ? (people.of(id)?.presence ?? null) : null
+  }
+
+  const listed = $derived(
+    listedOf(page.view.members, (who) => nameOf(who, page.members, space), presenceOf),
+  )
+  const groups = $derived(grouped(listed, filter))
+  const laid = $derived(placed(linesOf(groups), HEIGHTS))
+  const shown = $derived(
+    visible(laid.rows, top - HEIGHTS.member * SPARE, top + height + HEIGHTS.member * SPARE).map(
+      (row) =>
+        row.line.kind === 'group'
+          ? { key: `g:${row.line.rank}`, top: row.top, height: row.height, group: row.line }
+          : { key: row.line.member.who, top: row.top, height: row.height, member: row.line.member },
+    ),
+  )
+
+  const RANK_WORDS: Record<Rank, () => string> = {
+    owner: () => t('Owners'),
+    admin: () => t('Admins'),
+    member: () => t('Members'),
+    bot: () => t('Bots'),
+  }
+
+  $effect(() => (sheet ? overlays.show(onclose, () => [panel]) : undefined))
+  $effect(() => closeOnBack(sheet, onclose))
+
+  function personOf(who: Who): string | null {
+    return who.startsWith('guest:') ? who.slice(6) : null
+  }
+
+  function canMessage(who: Who): boolean {
+    return !!service && who !== page.me && !!remote?.connection?.begin && !!personOf(who)
+  }
+
+  async function message(who: Who, name: string) {
+    const person = personOf(who)
+    const connection = remote?.connection
+    if (!service || !person || !connection?.begin) return
+    const made = await connection.begin([person]).catch(() => null)
+    if (made)
+      openConversation(
+        { provider: service.provider, account: service.account, conversation: made.id },
+        made.title ?? name,
+      )
+  }
+
+  function press(event: MouseEvent, member: Listed) {
+    const id = accountOf(member.who)
+    if (!service) {
+      if (id && event.currentTarget instanceof Element) showProfile(id, event.currentTarget, space)
+      return
+    }
+    if (canMessage(member.who)) {
+      void message(member.who, member.name)
+      return
+    }
+    showMenu(event, member)
+  }
+
+  function showMenu(event: MouseEvent, member: Listed) {
+    event.preventDefault()
+    const entries: MenuEntry[] = []
+    const one = page.members.find((it) => it.who === member.who)
+    if (one && member.who !== page.me && page.view.role !== 'read')
+      entries.push({ label: t('Mention'), run: () => onmention(mentionText(one)) })
+    if (canMessage(member.who))
+      entries.push({ label: t('Send message'), run: () => void message(member.who, member.name) })
+    const id = accountOf(member.who)
+    if (!service && id && event.currentTarget instanceof Element) {
+      const from = event.currentTarget
+      entries.push({ label: t('Profile'), run: () => showProfile(id, from, space) })
+    }
+    entries.push({ label: t('Copy name'), run: () => void copyText(member.name) })
+    const handle = member.handle
+    if (handle) entries.push({ label: t('Copy address'), run: () => void copyText(handle) })
+    const held = remote && conversation ? remote.memberOf(conversation.id, member.who) : null
+    const ruling = held && remote && conversation ? memberMenu(remote, conversation, held) : []
+    menu.show(event, ruling.length ? [...entries, DIVIDER, ...ruling] : entries)
+  }
+
+  function onEdgeKey(event: KeyboardEvent) {
+    if (viewport.touch) return
+    if (width.step(event.key, panel)) event.preventDefault()
+  }
+</script>
+
+{#if sheet}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="orden-scrim scrim" onclick={onclose}></div>
+{/if}
+
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<aside
+  bind:this={panel}
+  class="members"
+  class:sheet
+  class:resizing={width.dragging}
+  style:--members-width={sheet || width.pixels === null ? undefined : `${width.pixels}px`}
+  aria-label={t('Members')}
+  transition:fly={{ x: 24 * i18n.factor, duration: dur(190), easing: cubicOut }}
+  onkeydown={(event) => {
+    if (event.key === 'Escape' && !event.defaultPrevented) {
+      event.preventDefault()
+      onclose()
+    }
+  }}
+>
+  {#if !sheet}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+    <div
+      class="edge"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={t('Panel width')}
+      aria-valuemin={width.narrowest}
+      aria-valuemax={width.widest}
+      aria-valuenow={Math.round(width.pixels ?? panel?.clientWidth ?? width.narrowest)}
+      tabindex="0"
+      title={t('Drag to resize')}
+      onpointerdown={(event) => width.start(event, panel)}
+      ondblclick={() => width.reset()}
+      onkeydown={onEdgeKey}
+    ></div>
+  {/if}
+  <header class="top">
+    <input
+      class="orden-field look"
+      type="search"
+      aria-label={t('Filter')}
+      placeholder={t('Filter')}
+      bind:value={filter}
+      onkeydown={(event) => {
+        if (event.key === 'Escape' && filter) {
+          event.preventDefault()
+          filter = ''
+        }
+      }}
+    />
+    <button type="button" class="orden-glyph" aria-label={t('Close')} onclick={onclose}
+      ><Glyph name="close" /></button
+    >
+  </header>
+  <div
+    class="list orden-scrolls"
+    role="list"
+    bind:clientHeight={height}
+    onscroll={(event) => (top = event.currentTarget.scrollTop)}
+  >
+    {#if laid.rows.length}
+      <div class="room" style:height="{laid.total}px">
+        {#each shown as row (row.key)}
+          {#if 'group' in row}
+            <h3 class="group" style:top="{row.top}px" style:height="{row.height}px">
+              <span class="group-name">{RANK_WORDS[row.group.rank]()}</span>
+              <span class="group-count">{amount(row.group.count)}</span>
+            </h3>
+          {:else}
+            <button
+              type="button"
+              role="listitem"
+              class="member"
+              data-who={row.member.who}
+              style:top="{row.top}px"
+              style:height="{row.height}px"
+              onclick={(event) => press(event, row.member)}
+              oncontextmenu={(event) => showMenu(event, row.member)}
+            >
+              <Avatar
+                face={faceOf(row.member.who, page.members, space)}
+                size={32}
+                presence={row.member.presence}
+              />
+              <span class="words">
+                <span class="name">{row.member.name}</span>
+                {#if row.member.handle && row.member.handle !== row.member.name}
+                  <span class="handle">{row.member.handle}</span>
+                {/if}
+              </span>
+            </button>
+          {/if}
+        {/each}
+      </div>
+    {:else if filter.trim()}
+      <p class="none">{t('No matches')}</p>
+    {/if}
+  </div>
+</aside>
+
+<style>
+  .members {
+    position: relative;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    width: var(--members-width, 240px);
+    min-width: 0;
+    min-height: 0;
+    border-inline-start: 1px solid var(--line);
+    background: var(--surface);
+    font-family: var(--font-ui);
+  }
+
+  .members.sheet {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    z-index: var(--z-raised);
+    width: min(320px, 100%);
+    padding-bottom: var(--inset-bottom);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .scrim {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-raised);
+  }
+
+  .edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    inset-inline-start: -4px;
+    width: 8px;
+    z-index: var(--z-lifted);
+    cursor: col-resize;
+  }
+
+  .edge::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    inset-inline-end: 3px;
+    width: 2px;
+    background: transparent;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  .edge:hover::after,
+  .resizing .edge::after {
+    background: var(--accent);
+  }
+
+  .top {
+    --glyph-size: 15px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    height: 44px;
+    padding: 0 var(--space-2);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .look {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .room {
+    position: relative;
+  }
+
+  .group,
+  .member {
+    position: absolute;
+    inset-inline: var(--space-2);
+  }
+
+  .group {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0 var(--space-2) var(--space-1);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-strong);
+  }
+
+  .group-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .group-count {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+    font-weight: normal;
+  }
+
+  .member {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0 var(--space-2);
+    border: none;
+    border-radius: var(--radius-row);
+    background: none;
+    color: var(--text);
+    font: inherit;
+    text-align: start;
+  }
+
+  @media (hover: hover) {
+    .member:hover {
+      background: var(--surface-hover);
+    }
+  }
+
+  .words {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .name,
+  .handle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .name {
+    color: var(--text-strong);
+    font-size: var(--text-row);
+  }
+
+  .handle {
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+
+  .none {
+    margin: var(--space-4);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    text-align: center;
+  }
+</style>

@@ -692,6 +692,7 @@ the app's without asking. See `shellReads` in `lib/terminal/keys.ts` and
 | Ctrl+J | to the New line (`chat.jump-new`), which is a chat's own key: the composer is a small editor, and the editor's Ctrl+J gives way there |
 | Escape in the composer | to the bottom of the chat; in the replies, closes them |
 | Ctrl+Shift+M | record a voice message (`chat.record`); Enter or the key again sends it, Escape throws it away |
+| Ctrl+U | the members of the chat at its side (`chat.members`), the same as pressing the faces at the top; Escape closes them |
 | ← → in the lightbox | the previous and next picture; Escape closes it |
 
 **The spaces**

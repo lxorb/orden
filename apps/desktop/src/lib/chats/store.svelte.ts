@@ -249,7 +249,14 @@ class ChatsStore implements Chats {
       })
     }
     entries.sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
+    const before = new Map(this.list.map((one) => [one.id, one.members]))
     this.list = entries
+    for (const one of entries) {
+      const was = before.get(one.id)
+      if (was === undefined || was === one.members) continue
+      this.people.delete(one.id)
+      this.views.get(one.id)?.view.relist()
+    }
     for (const listener of this.listeners) listener()
     if (entries.some((one) => !one.path)) this.awaitPointers()
     else this.lookWait = LOOK_FIRST

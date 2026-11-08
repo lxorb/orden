@@ -3729,4 +3729,10 @@ export const gu: Dictionary = {
   'Chat accounts': 'ચૅટ એકાઉન્ટ્સ',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'મેઇલ, Telegram, Slack, WhatsApp કે Signal જોડો, એક પછી એક પગલું.',
+  Owners: 'માલિકો',
+  Admins: 'એડમિન',
+  Bots: 'બૉટ',
+  'Copy name': 'નામ કૉપિ કરો',
+  'Copy address': 'સરનામું કૉપિ કરો',
+  'Send message': 'સંદેશ મોકલો',
 }

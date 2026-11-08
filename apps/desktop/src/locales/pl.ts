@@ -3888,4 +3888,10 @@ export const pl: Dictionary = {
   'Chat accounts': 'Konta czatu',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Połącz pocztę, Telegram, Slack, WhatsApp lub Signal, krok po kroku.',
+  Owners: 'Właściciele',
+  Admins: 'Administratorzy',
+  Bots: 'Boty',
+  'Copy name': 'Kopiuj nazwę',
+  'Copy address': 'Kopiuj adres',
+  'Send message': 'Wyślij wiadomość',
 }

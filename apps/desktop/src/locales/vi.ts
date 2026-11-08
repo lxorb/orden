@@ -3650,4 +3650,10 @@ export const vi: Dictionary = {
   'Chat accounts': 'Tài khoản trò chuyện',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Kết nối thư, Telegram, Slack, WhatsApp hoặc Signal, từng bước một.',
+  Owners: 'Chủ sở hữu',
+  Admins: 'Quản trị viên',
+  Bots: 'Bot',
+  'Copy name': 'Sao chép tên',
+  'Copy address': 'Sao chép địa chỉ',
+  'Send message': 'Gửi tin nhắn',
 }

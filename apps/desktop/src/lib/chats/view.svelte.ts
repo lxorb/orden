@@ -258,6 +258,7 @@ export class View extends Listing implements ChatView {
   private readonly typists = new Map<string, { who: Who; parent?: string; until: number }>()
   private typingTimer: ReturnType<typeof setTimeout> | undefined
   private typedAt = 0
+  private relists = 0
   private stopListening: (() => void) | null = null
   private closed = false
 
@@ -290,15 +291,20 @@ export class View extends Listing implements ChatView {
     setTimeout(() => {
       if (this.closed) return
       void this.connect()
-      void this.host.members(this.chat).then((members) => {
-        if (!this.closed) {
-          this.members = members
-          this.drawPresence()
-        }
-      })
+      this.relist()
     }, 0)
     await this.host.engine.sync(this.chat)
     if (this.window.length === 0) await this.latest()
+  }
+
+  relist(): void {
+    const asked = ++this.relists
+    void this.host.members(this.chat).then((members) => {
+      if (!this.closed && asked === this.relists) {
+        this.members = members
+        this.drawPresence()
+      }
+    })
   }
 
   async jump(message: string): Promise<boolean> {

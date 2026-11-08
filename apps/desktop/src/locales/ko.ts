@@ -3639,4 +3639,10 @@ export const ko: Dictionary = {
   'Chat accounts': '채팅 계정',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     '메일, Telegram, Slack, WhatsApp, Signal을 한 단계씩 연결하세요.',
+  Owners: '소유자',
+  Admins: '관리자',
+  Bots: '봇',
+  'Copy name': '이름 복사',
+  'Copy address': '주소 복사',
+  'Send message': '메시지 보내기',
 }

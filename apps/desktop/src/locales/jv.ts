@@ -3668,4 +3668,10 @@ export const jv: Dictionary = {
   'Chat accounts': 'Akun obrolan',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Sambungake email, Telegram, Slack, WhatsApp utawa Signal, langkah demi langkah.',
+  Owners: 'Sing duwe',
+  Admins: 'Admin',
+  Bots: 'Bot',
+  'Copy name': 'Salin jeneng',
+  'Copy address': 'Salin alamat',
+  'Send message': 'Kirim pesen',
 }

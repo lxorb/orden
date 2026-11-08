@@ -3683,4 +3683,10 @@ export const id: Dictionary = {
   'Chat accounts': 'Akun obrolan',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Hubungkan email, Telegram, Slack, WhatsApp, atau Signal, selangkah demi selangkah.',
+  Owners: 'Pemilik',
+  Admins: 'Admin',
+  Bots: 'Bot',
+  'Copy name': 'Salin nama',
+  'Copy address': 'Salin alamat',
+  'Send message': 'Kirim pesan',
 }

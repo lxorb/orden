@@ -35,6 +35,7 @@ export interface Member extends Person {
   role: ConversationRole
   online?: boolean
   lastSeen?: number
+  bot?: boolean
 }
 
 export interface Conversation {
