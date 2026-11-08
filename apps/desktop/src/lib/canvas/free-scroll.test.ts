@@ -127,3 +127,14 @@ describe('a mouse wheel beside the touchpad', () => {
     })
   })
 })
+
+describe('a wheel that counts in lines or pages, as Firefox reports a mouse wheel', () => {
+  test('moves as far as one that counts in pixels', () => {
+    const free = new FreeScroll()
+    expect(free.wheel({ deltaX: 0, deltaY: 3, deltaMode: 1, timeStamp: 5 })).toEqual({
+      x: 0,
+      y: 120,
+    })
+    expect(free.wheel({ deltaX: -1, deltaY: 0, deltaMode: 2, timeStamp: 900 }).x).toBeLessThan(-100)
+  })
+})

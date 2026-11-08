@@ -20,7 +20,10 @@ describe('Ctrl and the wheel', () => {
     expect(ctrlWheelZoom({ deltaY: 100, deltaMode: 0 })).toBeCloseTo(1 / NOTCH, 10)
     expect(ctrlWheelZoom({ deltaY: -200 / 3, deltaMode: 0 })).toBeLessThan(NOTCH)
     expect(ctrlWheelZoom({ deltaY: -200 / 3, deltaMode: 0 })).toBeGreaterThan(1)
-    expect(ctrlWheelZoom({ deltaY: -3.5, deltaMode: 1 })).toBeLessThan(1.1)
+    expect(ctrlWheelZoom({ deltaY: -3.5, deltaMode: 1 })).toBeCloseTo(
+      ctrlWheelZoom({ deltaY: -140, deltaMode: 0 }),
+      10,
+    )
   })
 })
 
