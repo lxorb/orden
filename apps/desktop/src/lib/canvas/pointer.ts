@@ -399,9 +399,10 @@ function onCancel(machine: Machine, id: number): Step {
     }
   }
 
+  const palmRubbed = machine.gesture?.kind === 'erase' && machine.driver?.kind === 'touch'
   return {
     machine: { ...machine, gesture: null, spare: [], penDown: false, driver: null },
-    effects: [],
+    effects: palmRubbed ? [{ do: 'unrub' }] : [],
   }
 }
 

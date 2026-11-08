@@ -193,6 +193,23 @@ function pointer(type: string, id: number, kind: string, x: number, y: number, b
   flushSync()
 }
 
+test('what a finger rubbed out comes back when the system cancels the touch as a palm', () => {
+  tools.choose('draw')
+  pointer('pointerdown', 2, 'mouse', 100, 250, 1)
+  for (let x = 110; x <= 200; x += 10) pointer('pointermove', 2, 'mouse', x, 250, 1)
+  pointer('pointerup', 2, 'mouse', 200, 250, 0)
+  const drawn = () => JSON.stringify(store().canvas.ink.filter((stroke) => stroke.id !== 's'))
+  const before = drawn()
+
+  tools.choose('erase')
+  pointer('pointerdown', 5, 'touch', 150, 240, 1)
+  for (let y = 244; y <= 260; y += 4) pointer('pointermove', 5, 'touch', 150, y, 1)
+  expect(drawn()).not.toBe(before)
+  pointer('pointercancel', 5, 'touch', 150, 260, 0)
+
+  expect(drawn()).toBe(before)
+})
+
 test('a pen put down while a palm already rests on the page draws, as on a canvas', () => {
   tools.choose('draw')
   pointer('pointerdown', 9, 'touch', 60, 300, 1)
