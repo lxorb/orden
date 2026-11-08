@@ -1875,7 +1875,7 @@
       asked={askedFind}
       onpick={(id: string) => {
         store.pick(id)
-        store.frame(width, height)
+        store.frameOver([id], width, height)
       }}
       onclose={() => {
         finding = false
