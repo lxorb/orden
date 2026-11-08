@@ -7,6 +7,7 @@ const fake = vi.hoisted(() => ({
     state: 'open',
     conflict: false,
     start: vi.fn(),
+    accountHeard: vi.fn(),
     onLocalChange: vi.fn(),
     backfillTrust: vi.fn(() => Promise.resolve(0)),
   },
