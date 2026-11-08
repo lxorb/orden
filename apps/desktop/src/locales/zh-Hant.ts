@@ -3601,4 +3601,7 @@ export const zhHant: Dictionary = {
     '仍有 {count} 個項目受保護。它們會保持鎖定；若要移除保護，請先取消它們的保護。',
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     '在 Even Realities 眼鏡上顯示你的筆記和任務，並接受語音指令。',
+  'Export…': '匯出…',
+  'Include pictures': '包含圖片',
+  'Without styles': '不含樣式',
 }

@@ -3841,4 +3841,7 @@ export const ml: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities കണ്ണടയിൽ നിങ്ങളുടെ കുറിപ്പുകളും ജോലികളും കാണിക്കുകയും സംസാരിച്ച കമാൻഡുകൾ സ്വീകരിക്കുകയും ചെയ്യുന്നു.',
+  'Export…': 'എക്സ്പോർട്ട്…',
+  'Include pictures': 'ചിത്രങ്ങൾ ഉൾപ്പെടുത്തുക',
+  'Without styles': 'സ്റ്റൈലുകളില്ലാതെ',
 }

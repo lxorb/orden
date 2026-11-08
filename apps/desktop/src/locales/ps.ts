@@ -3779,4 +3779,7 @@ export const ps: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'ستاسو یادښتونه او دندې د Even Realities په عینکو ښيي او ویل شوي امرونه مني.',
+  'Export…': 'صادرول…',
+  'Include pictures': 'انځورونه پکې شامل کړه',
+  'Without styles': 'بې بڼو',
 }

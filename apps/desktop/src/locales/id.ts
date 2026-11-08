@@ -3717,4 +3717,7 @@ export const id: Dictionary = {
     '{count} item masih dilindungi. Item itu tetap terkunci; lepaskan dulu perlindungannya untuk menghapus perlindungan.',
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Menampilkan catatan dan tugas Anda di kacamata Even Realities dan menerima perintah suara.',
+  'Export…': 'Ekspor…',
+  'Include pictures': 'Sertakan gambar',
+  'Without styles': 'Tanpa gaya',
 }

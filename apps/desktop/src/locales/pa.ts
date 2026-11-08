@@ -3795,4 +3795,7 @@ export const pa: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities ਐਨਕਾਂ ਉੱਤੇ ਤੁਹਾਡੇ ਨੋਟ ਅਤੇ ਕੰਮ ਦਿਖਾਉਂਦਾ ਹੈ ਅਤੇ ਬੋਲੇ ਹੁਕਮ ਲੈਂਦਾ ਹੈ।',
+  'Export…': 'ਬਾਹਰ ਭੇਜੋ…',
+  'Include pictures': 'ਤਸਵੀਰਾਂ ਸ਼ਾਮਲ ਕਰੋ',
+  'Without styles': 'ਸ਼ੈਲੀ ਬਿਨਾਂ',
 }

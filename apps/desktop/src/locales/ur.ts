@@ -3779,4 +3779,7 @@ export const ur: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities عینک پر آپ کے نوٹس اور کام دکھاتا ہے اور بولے گئے احکام لیتا ہے۔',
+  'Export…': 'ایکسپورٹ…',
+  'Include pictures': 'تصاویر شامل کریں',
+  'Without styles': 'بغیر اسٹائل',
 }

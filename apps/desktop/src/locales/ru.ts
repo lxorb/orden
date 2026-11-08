@@ -3930,4 +3930,7 @@ export const ru: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Показывает ваши заметки и задачи в очках Even Realities и принимает голосовые команды.',
+  'Export…': 'Экспорт…',
+  'Include pictures': 'С картинками',
+  'Without styles': 'Без стилей',
 }

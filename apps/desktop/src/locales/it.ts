@@ -3905,4 +3905,7 @@ export const it: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Mostra le tue note e attività sugli occhiali Even Realities e accetta comandi vocali.',
+  'Export…': 'Esporta…',
+  'Include pictures': 'Includi le immagini',
+  'Without styles': 'Senza stili',
 }

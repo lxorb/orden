@@ -48,12 +48,9 @@ def is_true(claim: bool, what: str) -> None:
         wrong(what)
 
 def export(page: Page) -> None:
-    page.keyboard.press("Control+o")
-    page.wait_for_timeout(400)
-    page.keyboard.type("> Export as Plain text")
-    page.wait_for_timeout(700)
+    go = DRIVE.pick_export(page, "txt")
     with page.expect_download(timeout=40000):
-        page.keyboard.press("Enter")
+        go.click()
 
 def opened(browser: Browser, reduced: bool) -> tuple[object, Page]:
     context = browser.new_context(

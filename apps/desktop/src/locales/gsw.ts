@@ -3809,4 +3809,7 @@ export const gsw: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Zeigt dini Notize und Ufgabe uf de Even-Realities-Brülle und nimmt gsprocheni Befehl aa.',
+  'Export…': 'Exportiere…',
+  'Include pictures': 'Bilder mitnäh',
+  'Without styles': 'Ohni Stil',
 }

@@ -3780,4 +3780,7 @@ export const mr: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities चष्म्यावर तुमच्या नोट्स आणि कामे दाखवते आणि बोललेल्या आज्ञा घेते.',
+  'Export…': 'एक्सपोर्ट…',
+  'Include pictures': 'चित्रे समाविष्ट करा',
+  'Without styles': 'शैलीविना',
 }

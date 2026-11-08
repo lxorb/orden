@@ -172,6 +172,12 @@ export const shareSheet = latched(() => import('./ShareSheet.svelte'))
 
 export const publishSheet = latched(() => import('./PublishSheet.svelte'))
 
+export const exportSheet = latched(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no export in the Even Realities plugin'))
+    : import('./export/ExportSheet.svelte'),
+)
+
 export const importSheet = latched(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no import in the Even Realities plugin'))

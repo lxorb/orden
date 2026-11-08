@@ -227,13 +227,9 @@ def ink_kept(page: Page, cdp, path: str) -> None:
 def exported(page: Page) -> None:
     say("--- Export as PDF ---")
     page.keyboard.press("Escape")
-    page.keyboard.press("Control+o")
-    page.wait_for_timeout(400)
-    page.keyboard.type("> Export as PDF")
-    page.wait_for_timeout(700)
-
+    go = DRIVE.pick_export(page, "pdf")
     with page.expect_download(timeout=40000) as caught:
-        page.keyboard.press("Enter")
+        go.click()
 
     where = DRIVE.shots / "exported.pdf"
     caught.value.save_as(str(where))

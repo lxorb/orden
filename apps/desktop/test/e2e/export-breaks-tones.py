@@ -74,14 +74,20 @@ def is_true(claim: bool, what: str) -> None:
     if not claim:
         wrong(what)
 
-def exported(page: Page, row: str, name: str) -> Path:
-    page.keyboard.press("Control+o")
-    page.wait_for_timeout(400)
-    page.keyboard.type(f"> {row}")
-    page.wait_for_timeout(700)
+FORMATS = {
+    "Export as PNG": "png",
+    "Export as JPG": "jpg",
+    "Export as SVG": "svg",
+    "Export as PDF": "pdf",
+    "Export as Plain text": "txt",
+    "Export as RTF": "rtf",
+    "Export as Word": "docx",
+}
 
+def exported(page: Page, row: str, name: str) -> Path:
+    go = DRIVE.pick_export(page, FORMATS[row])
     with page.expect_download(timeout=40000) as caught:
-        page.keyboard.press("Enter")
+        go.click()
 
     SHOTS.mkdir(parents=True, exist_ok=True)
     where = SHOTS / name

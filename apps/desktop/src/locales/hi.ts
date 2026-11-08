@@ -3782,4 +3782,7 @@ export const hi: Dictionary = {
     },
   'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
     'Even Realities चश्मे पर आपके नोट और काम दिखाता है और बोले गए कमांड लेता है।',
+  'Export…': 'एक्सपोर्ट…',
+  'Include pictures': 'चित्र शामिल करें',
+  'Without styles': 'बिना स्टाइल',
 }

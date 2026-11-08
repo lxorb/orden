@@ -920,6 +920,21 @@ class Drive:
         )
         self.settled(page)
 
+    def pick_export(self, page: Any, format: str, option: bool = False) -> Any:  # noqa: A002
+        page.keyboard.press("Control+Shift+P")
+        page.wait_for_selector(".palette input")
+        page.keyboard.type("Export", delay=1)
+        row = page.locator("[role=option]", has_text="Export…").first
+        row.wait_for()
+        row.click()
+        tile = page.locator(f'.tile[data-format="{format}"]')
+        tile.wait_for()
+        tile.click()
+        switch = page.locator('[role="dialog"] .option[role="switch"]')
+        if switch.count() and (switch.get_attribute("aria-checked") == "true") != option:
+            switch.click()
+        return page.locator('[role="dialog"] .go')
+
     def side(self, handler: type[http.server.BaseHTTPRequestHandler]) -> str:
         server = side(handler)
         self._stack.callback(server.close)

@@ -152,16 +152,20 @@ async (src) => {
 }
 """
 
+FORMATS = {
+    "Export as PNG": "png",
+    "Export as JPG": "jpg",
+    "Export as SVG": "svg",
+    "Export as PDF": "pdf",
+    "Export as Plain text": "txt",
+    "Export as RTF": "rtf",
+    "Export as Word": "docx",
+}
+
 def exported(page: Page, row: str) -> bytes:
-    page.keyboard.press("Control+Shift+P")
-    page.wait_for_selector(".palette input")
-    page.keyboard.type(row, delay=1)
-    page.wait_for_function(
-        "(row) => [...document.querySelectorAll('[role=option]')].some((one) => one.innerText.startsWith(row))",
-        arg=row,
-    )
+    go = DRIVE.pick_export(page, FORMATS[row])
     with page.expect_download(timeout=30000) as asked:
-        page.keyboard.press("Enter")
+        go.click()
     return asked.value.path().read_bytes()
 
 def opened_with_ink(page: Page, name: str, paper: str) -> None:
@@ -205,13 +209,7 @@ def drive(browser: Browser) -> None:
 
     opened_with_ink(page, "Locked.pdf", LOCKED)
     word = "document.querySelector('.track.failed .said')?.innerText === 'This PDF is locked by its owner'"
-    page.keyboard.press("Control+Shift+P")
-    page.wait_for_selector(".palette input")
-    page.keyboard.type("Export as PDF", delay=1)
-    page.wait_for_function(
-        "() => [...document.querySelectorAll('[role=option]')].some((one) => one.innerText.startsWith('Export as PDF'))"
-    )
-    page.keyboard.press("Enter")
+    DRIVE.pick_export(page, "pdf").click()
     wait_for(page, word, "the word on Export as PDF")
     shot(page, "01-locked-said")
 
