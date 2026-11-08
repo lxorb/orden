@@ -119,17 +119,17 @@ describe('a sidecar this build did not write', () => {
   test('from a later version is left exactly as it is', () => {
     const sheet = readSheet(JSON.stringify({ version: 99, highlights: [mark()] }))
 
-    expect(frozen(sheet)).toBe(true)
+    expect(frozen(sheet)).toBe('newer')
     expect(sheet.highlights).toHaveLength(1)
   })
 
   test('that is not JSON at all is left alone too', () => {
-    expect(frozen(readSheet('this is not a sidecar'))).toBe(true)
+    expect(frozen(readSheet('this is not a sidecar'))).toBe('damaged')
   })
 
   test('and one this build wrote is not frozen', () => {
-    expect(frozen(readSheet(writeSheet({ version: 1, highlights: [mark()] })))).toBe(false)
-    expect(frozen(emptySheet())).toBe(false)
+    expect(frozen(readSheet(writeSheet({ version: 1, highlights: [mark()] })))).toBeNull()
+    expect(frozen(emptySheet())).toBeNull()
   })
 })
 
