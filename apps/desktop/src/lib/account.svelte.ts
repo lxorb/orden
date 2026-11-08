@@ -1,8 +1,8 @@
-import { api, ApiError, type Account, type Guest, type RemoteSpace } from './api'
+import { api, ApiError, fromServer, type Account, type Guest, type RemoteSpace } from './api'
 import { arriving } from './arriving.svelte'
 import { pollDelay } from './backoff'
 import { called } from './person'
-import { forget, isRecord, isString, keep, storedText } from './stored'
+import { forget, keep, storedText } from './stored'
 import { waited } from './timing'
 
 const STORAGE_KEY = 'orden:session'
@@ -20,12 +20,7 @@ export interface Vault {
 const TRIES = [400, 1200, 2500]
 
 function rejected(error: unknown): boolean {
-  return (
-    error instanceof ApiError &&
-    error.status === 401 &&
-    isRecord(error.body) &&
-    isString(error.body.error)
-  )
+  return fromServer(error) && error.status === 401
 }
 
 function statusOf(error: unknown): number | null {

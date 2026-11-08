@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
 
   import { account } from './account.svelte'
-  import { ApiError, request } from './api'
+  import { fromServer, request } from './api'
   import { i18n, message, t } from './i18n.svelte'
   import { dur, fade } from './motion'
 
@@ -78,7 +78,7 @@
     try {
       await request<{ ok: true }>('/v1/account', { method: 'DELETE', token, body: { ticket } })
     } catch (error) {
-      if (!(error instanceof ApiError && error.status === 401)) {
+      if (!(fromServer(error) && error.status === 401)) {
         wrong = message(error, 'that did not work')
         busy = false
         return

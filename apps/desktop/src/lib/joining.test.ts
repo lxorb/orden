@@ -13,6 +13,7 @@ interface World {
   through: Record<string, unknown>
   refuse: string | null
   busy: number | null
+  blocked: number | null
   unreachable: boolean
   invitationDown: boolean
   asked: { key: string; options: Record<string, unknown> }[]
@@ -32,6 +33,7 @@ const world = vi.hoisted((): World => ({
   through: {},
   refuse: null,
   busy: null,
+  blocked: null,
   unreachable: false,
   invitationDown: false,
   asked: [],
@@ -53,20 +55,30 @@ vi.mock('./api', async (importOriginal) => {
     ...original,
     api: {
       invitation: () =>
-        world.invitationDown
-          ? Promise.reject(new Error('the network is not there'))
-          : world.about
-            ? Promise.resolve(world.about)
-            : Promise.reject(new original.ApiError(404, 'that link has expired')),
+        world.blocked
+          ? Promise.reject(new original.ApiError(world.blocked, 'request failed', '<html>'))
+          : world.invitationDown
+            ? Promise.reject(new Error('the network is not there'))
+            : world.about
+              ? Promise.resolve(world.about)
+              : Promise.reject(
+                  new original.ApiError(404, 'that link has expired', {
+                    error: 'that link has expired',
+                  }),
+                ),
       join: async (key: string, options: Record<string, unknown> = {}) => {
         world.asked.push({ key, options })
         if (world.gate) await world.gate
         if (world.unreachable) return Promise.reject(new Error('the network is not there'))
-        if (world.refuse) return Promise.reject(new original.ApiError(404, world.refuse))
+        if (world.blocked) {
+          return Promise.reject(new original.ApiError(world.blocked, 'request failed', '<html>'))
+        }
+        if (world.refuse) {
+          return Promise.reject(new original.ApiError(404, world.refuse, { error: world.refuse }))
+        }
         if (world.busy) {
-          return Promise.reject(
-            new original.ApiError(world.busy, 'that link is busy, try again in a minute'),
-          )
+          const error = 'that link is busy, try again in a minute'
+          return Promise.reject(new original.ApiError(world.busy, error, { error }))
         }
 
         return Promise.resolve(world.through)
@@ -163,6 +175,7 @@ beforeEach(async () => {
   world.through = {}
   world.refuse = null
   world.busy = null
+  world.blocked = null
   world.unreachable = false
   world.invitationDown = false
   world.asked = []
@@ -374,6 +387,18 @@ describe('a link that asks first', () => {
     world.through = { guest: { id: 'g1', name: 'Ada' }, space }
     await joining.walkThrough()
     expect(localStorage.getItem('orden:waiting')).toBeNull()
+  })
+
+  test('keeps waiting when something in the way answers instead of the account', async () => {
+    await joining.start()
+    joining.told = 'Ada'
+    await joining.tell()
+
+    world.blocked = 403
+    await joining.walkThrough()
+
+    expect(joining.step).toBe('waiting')
+    expect(localStorage.getItem('orden:waiting')).toBe(TOKEN)
   })
 
   test('picks the wait back up on the next launch', async () => {
@@ -695,6 +720,22 @@ describe('a link followed while the network is down', () => {
     expect(joining.told).toBe('Ada')
     expect(joining.error).toBe('that link is busy, try again in a minute')
   })
+
+  test.each([403, 404])(
+    'may be tried again when something in the way answers %i',
+    async (status) => {
+      world.blocked = status
+      await joining.start()
+
+      expect(joining.step).toBe('unreached')
+
+      world.blocked = null
+      await joining.retry()
+
+      expect(joining.step).toBeNull()
+      expect(world.shown).toBe('here')
+    },
+  )
 
   test('still says a refused link opens nothing', async () => {
     world.refuse = 'that link has expired'

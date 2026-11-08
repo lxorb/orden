@@ -74,6 +74,10 @@ export class ApiError extends Error {
   }
 }
 
+export function fromServer(error: unknown): error is ApiError {
+  return error instanceof ApiError && isRecord(error.body) && isString(error.body.error)
+}
+
 export async function request<T>(
   path: string,
   options: { method?: string; body?: unknown; token?: string; device?: boolean } = {},
