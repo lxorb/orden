@@ -11,12 +11,15 @@
   import List from 'lucide/dist/esm/icons/list.mjs'
   import LayoutGrid from 'lucide/dist/esm/icons/layout-grid.mjs'
   import Columns from 'lucide/dist/esm/icons/columns-3.mjs'
+  import ArrowUpDown from 'lucide/dist/esm/icons/arrow-up-down.mjs'
   import type { IconNode } from 'lucide'
   import { tick } from 'svelte'
   import { t } from '../i18n.svelte'
+  import { menu } from '../menu.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { crumbsOf, typedFolder } from './crumbs'
   import { dropInto, over } from './drag'
+  import { sortMenu } from './menu'
   import { places } from './places.svelte'
   import { explorerPrefs } from './prefs.svelte'
   import type { ExplorerView } from './view.svelte'
@@ -174,6 +177,13 @@
     title={shortcuts.tooltip(t('Filter'), 'explorer.filter')}
     aria-label={t('Filter')}
     onclick={() => (filtering = !filtering)}>{@render glyph(Search)}</button
+  >
+  <button
+    class="orden-glyph sort"
+    title={t('Sort')}
+    aria-label={t('Sort')}
+    aria-haspopup="menu"
+    onclick={(event) => menu.show(event, sortMenu(view))}>{@render glyph(ArrowUpDown)}</button
   >
   <button
     class="orden-glyph"

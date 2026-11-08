@@ -10,6 +10,7 @@ import { carry, changeable, duplicate, newFolder, paste, removeForGood, trash } 
 import { type Entry, openWithSystem } from './commands'
 import { inASpace, openFile, ordenOpens } from './open'
 import { places } from './places.svelte'
+import type { SortKey } from './order'
 import { explorerPrefs } from './prefs.svelte'
 import { viewOf, type ExplorerView } from './view.svelte'
 
@@ -155,5 +156,30 @@ export function roomMenu(view: ExplorerView): MenuEntry[] {
           },
         ]
       : []),
+  ]
+}
+
+function sortKeysOf(view: ExplorerView): { key: SortKey; label: string }[] {
+  return [
+    { key: 'name', label: t('Name') },
+    { key: 'modified', label: t('Modified') },
+    { key: 'created', label: t('Created') },
+    { key: 'size', label: t('Size') },
+    { key: 'kind', label: t('Kind') },
+    ...(view.search ? [{ key: 'folder' as const, label: t('Folder') }] : []),
+  ]
+}
+
+export function sortMenu(view: ExplorerView): MenuEntry[] {
+  const { key, down } = view.sort
+  return [
+    ...sortKeysOf(view).map((one) => ({
+      label: one.label,
+      checked: key === one.key,
+      run: () => explorerPrefs.sortOn(one.key),
+    })),
+    DIVIDER,
+    { label: t('Ascending'), checked: !down, run: () => explorerPrefs.sortTurned(false) },
+    { label: t('Descending'), checked: down, run: () => explorerPrefs.sortTurned(true) },
   ]
 }

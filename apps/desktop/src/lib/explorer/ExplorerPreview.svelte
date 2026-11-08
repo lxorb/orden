@@ -124,9 +124,9 @@
       {/if}
       <dt>{t('Modified')}</dt>
       <dd>{when(facts.modified, 'medium')}</dd>
-      {#if facts.created}
+      {#if facts.born}
         <dt>{t('Created')}</dt>
-        <dd>{when(facts.created, 'medium')}</dd>
+        <dd>{when(facts.born, 'medium')}</dd>
       {/if}
       {#if facts.mode}
         <dt>{t('Permissions')}</dt>

@@ -3,7 +3,16 @@ import type { Entry } from './commands'
 import { endingOf, ordered } from './order'
 
 function entry(name: string, more: Partial<Entry> = {}): Entry {
-  return { name, kind: 'file', folder: false, size: 0, modified: 0, hidden: false, ...more }
+  return {
+    name,
+    kind: 'file',
+    folder: false,
+    size: 0,
+    modified: 0,
+    created: 0,
+    hidden: false,
+    ...more,
+  }
 }
 
 describe('a folder in a file explorer', () => {

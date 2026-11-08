@@ -35,6 +35,7 @@ vi.mock('./commands', () => ({
         folder: !name.includes('.'),
         size: 2048,
         modified: 0,
+        created: 0,
         hidden: false,
       })),
     })
@@ -72,7 +73,7 @@ vi.mock('./commands', () => ({
       size: 2048,
       modified: 0,
       hidden: false,
-      created: null,
+      born: null,
       accessed: null,
       readonly: false,
       mode: 'rw-r--r--',
@@ -277,6 +278,7 @@ describe('a file explorer', () => {
         folder: false,
         size: 1,
         modified: 0,
+        created: 0,
         hidden: false,
       },
     ]
@@ -305,6 +307,7 @@ describe('a file explorer', () => {
       folder: false,
       size: 1,
       modified: 0,
+      created: 0,
       hidden: false,
     }))
     await settled()
@@ -325,6 +328,7 @@ describe('a file explorer', () => {
       folder: false,
       size: 1,
       modified: 0,
+      created: 0,
       hidden: false,
     }))
     await settled()

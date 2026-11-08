@@ -3,7 +3,7 @@
   import { type Entry, listFolder } from './commands'
   import EntryMark from './EntryMark.svelte'
   import { openFile } from './open'
-  import { ordered } from './order'
+  import { ordered, sortShown } from './order'
   import { explorerPrefs } from './prefs.svelte'
   import { type ExplorerView, watchHeard } from './view.svelte'
   import { samePath } from '../space-paths'
@@ -53,7 +53,9 @@
     }
   })
 
-  const rows = $derived(ordered(entries, explorerPrefs.sort, explorerPrefs.hidden))
+  const rows = $derived(
+    ordered(entries, sortShown(explorerPrefs.sort, false), explorerPrefs.hidden),
+  )
 
   const SPARE = 8
   let scrollTop = $state(0)

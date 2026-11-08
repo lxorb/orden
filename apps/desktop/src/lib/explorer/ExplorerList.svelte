@@ -356,22 +356,24 @@
     return ending ? ending.toUpperCase() : t('File')
   }
 
-  const COLUMNS: { key: SortKey; label: () => string }[] = [
-    { key: 'name', label: () => t('Name') },
-    { key: 'modified', label: () => t('Modified') },
-    { key: 'size', label: () => t('Size') },
-    { key: 'kind', label: () => (view.search ? t('Folder') : t('Kind')) },
-  ]
+  const columnsShown = $derived<{ key: SortKey; at: string; label: string }[]>([
+    { key: 'name', at: 'name', label: t('Name') },
+    { key: 'modified', at: 'modified', label: t('Modified') },
+    { key: 'size', at: 'size', label: t('Size') },
+    view.search
+      ? { key: 'folder', at: 'kind', label: t('Folder') }
+      : { key: 'kind', at: 'kind', label: t('Kind') },
+  ])
 </script>
 
 <div class="list" class:searching={!!view.search} class:narrow={explorerPrefs.view === 'columns'}>
   {#if !grid}
     <div class="head">
-      {#each COLUMNS as column (column.key)}
-        <button class="column {column.key}" onclick={() => explorerPrefs.sortBy(column.key)}>
-          {column.label()}
-          {#if explorerPrefs.sort.key === column.key}
-            <span class="turn" aria-hidden="true">{explorerPrefs.sort.down ? '↓' : '↑'}</span>
+      {#each columnsShown as column (column.at)}
+        <button class="column {column.at}" onclick={() => explorerPrefs.sortBy(column.key)}>
+          {column.label}
+          {#if view.sort.key === column.key}
+            <span class="turn" aria-hidden="true">{view.sort.down ? '↓' : '↑'}</span>
           {/if}
         </button>
       {/each}

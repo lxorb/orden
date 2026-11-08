@@ -27,6 +27,7 @@ pub struct Entry {
     pub folder: bool,
     pub size: u64,
     pub modified: u64,
+    pub created: u64,
     pub hidden: bool,
 }
 
@@ -92,13 +93,15 @@ fn described(path: &Path, meta: &fs::Metadata) -> Option<Entry> {
     } else {
         Kind::File
     };
+    let modified = meta.modified().map_or(0, millis);
     Some(Entry {
         hidden: is_hidden(&name, meta),
         name,
         kind,
         folder,
         size: if kind == Kind::File { meta.len() } else { 0 },
-        modified: meta.modified().map_or(0, millis),
+        modified,
+        created: meta.created().map_or(modified, millis),
     })
 }
 
@@ -259,7 +262,7 @@ pub struct Facts {
     #[serde(flatten)]
     pub entry: Entry,
     pub path: String,
-    pub created: Option<u64>,
+    pub born: Option<u64>,
     pub accessed: Option<u64>,
     pub readonly: bool,
     pub mode: Option<String>,
@@ -280,7 +283,7 @@ pub async fn explorer_facts(app: AppHandle, path: String) -> Result<Facts, Strin
         Ok(Facts {
             entry,
             path: path.display().to_string(),
-            created: meta.created().ok().map(millis),
+            born: meta.created().ok().map(millis),
             accessed: meta.accessed().ok().map(millis),
             readonly: meta.permissions().readonly(),
             mode,
@@ -373,6 +376,18 @@ mod tests {
             (Kind::File, 4, false)
         );
         assert_eq!((found[2].kind, found[2].folder), (Kind::Folder, true));
+    }
+
+    #[test]
+    fn an_entry_says_when_it_was_made_or_else_when_it_was_changed() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let path = dir.path().join("a.txt");
+        fs::write(&path, "four").expect("a file");
+        let meta = fs::metadata(&path).expect("its facts");
+        let (found, _) = entries(dir.path(), 10).expect("listed");
+        let made = meta.created().map_or(found[0].modified, super::millis);
+        assert_eq!(found[0].created, made);
+        assert!(found[0].created > 0);
     }
 
     #[test]
