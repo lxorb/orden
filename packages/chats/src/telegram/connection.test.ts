@@ -251,6 +251,19 @@ describe('signing in', () => {
     expect(host.asked).toEqual([{ kind: 'password', label: WORDS.password, note: 'the usual' }])
   })
 
+  test('cancelling while the QR code shows stops waiting for a scan and closes the client', async () => {
+    const fake = world()
+    fake.qrWaits = true
+    const host = new FakeHost()
+    const connecting = provider(fake).connect({}, host)
+    await vi.waitFor(() => expect(host.shown.length).toBeGreaterThan(0))
+    host.cancel()
+    await expect(connecting).rejects.toThrow()
+    expect(fake.closed).toBe(true)
+    expect(host.stoppers.size).toBe(0)
+    expect(host.shown.at(-1)).toBeNull()
+  })
+
   test('an unknown number says so and closes the client', async () => {
     const fake = world()
     await expect(provider(fake).connect({ phone: '+0' }, new FakeHost())).rejects.toThrow(

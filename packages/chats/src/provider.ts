@@ -241,6 +241,7 @@ export interface Host {
   now(): number
   ask?: (prompt: Prompt) => Promise<string>
   show?: (screen: Screen | null) => void
+  whileWaiting?: (stop: () => void) => () => void
   sealed?: Sealed
   authorize?: (make: (loopback: string) => string) => Promise<Record<string, string>>
   post?: (url: string, form: Readonly<Record<string, string>>) => Promise<Posted>

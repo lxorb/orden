@@ -99,12 +99,13 @@ export async function dial(setup: Setup): Promise<Client> {
       loggedIn(await client.signIn({ phone, phoneCodeHash: hash, phoneCode: code })),
     checkPassword: async (password) => loggedIn(await client.checkPassword(password)),
     hint: () => client.getPasswordHint(),
-    signInQr: async (show, password, wrong) =>
+    signInQr: async (show, password, wrong, stop) =>
       loggedIn(
         await client.signInQr({
           onUrlUpdated: (url, expires) => show(url, expires.getTime()),
           password,
           invalidPasswordCallback: wrong,
+          abortSignal: stop,
         }),
       ),
     async ready(me) {

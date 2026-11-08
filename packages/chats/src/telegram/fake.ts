@@ -97,6 +97,7 @@ export class FakeTelegram implements Client {
   expireOnce = false
   sessionText = 'session-one'
   qrUrls = ['tg://login?token=first', 'tg://login?token=second']
+  qrWaits = false
   readied = false
   loggedOut = false
   closed = false
@@ -167,8 +168,13 @@ export class FakeTelegram implements Client {
     show: (url: string, expires: number) => void,
     password: () => Promise<string>,
     wrong: () => void,
+    stop: AbortSignal,
   ): Promise<tl.RawUser> {
     for (const url of this.qrUrls) show(url, Date.now() + 30_000)
+    if (this.qrWaits)
+      await new Promise((_resolve, reject) => {
+        stop.addEventListener('abort', () => reject(failure('ABORTED')))
+      })
     if (this.password === null) return this.me
     for (;;) {
       if ((await password()) === this.password) return this.me
@@ -252,6 +258,17 @@ export class FakeHost implements Host {
 
   show = (screen: Screen | null): void => {
     this.shown.push(screen)
+  }
+
+  readonly stoppers = new Set<() => void>()
+
+  whileWaiting = (stop: () => void): (() => void) => {
+    this.stoppers.add(stop)
+    return () => this.stoppers.delete(stop)
+  }
+
+  cancel(): void {
+    for (const stop of [...this.stoppers]) stop()
   }
 
   sealed = {
