@@ -857,7 +857,10 @@ class Runner {
       this.trimSoon()
     } catch (error) {
       if (this.current !== engine) return
-      if (account.signedOutBy(error)) return
+      if (account.signedOutBy(error)) {
+        this.status = 'offline'
+        return
+      }
       log('error', `sync: ${error instanceof Error ? error.message : String(error)}`)
       this.status = 'error'
       this.lastError = error instanceof Error ? error.message : String(error)

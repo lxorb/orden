@@ -1616,6 +1616,7 @@ describe('a pass that fails partway through', () => {
 
     expect(account.token).toBe('session')
     expect(account.signedIn).toBe(true)
+    expect(sync.status).toBe('offline')
   })
 
   test('says so, lets anybody waiting in, and leaves the loop looping', async () => {

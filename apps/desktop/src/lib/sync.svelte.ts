@@ -706,7 +706,10 @@ class Sync {
 
       if (mine !== this.generation) return moved
 
-      if (account.signedOutBy(error)) return moved
+      if (account.signedOutBy(error)) {
+        this.status = 'offline'
+        return moved
+      }
 
       this.status = 'error'
       this.lastError = error instanceof Error ? error.message : t('sync failed')
