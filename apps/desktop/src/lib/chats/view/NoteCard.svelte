@@ -20,8 +20,10 @@
 
   $effect(() => {
     follows(links.version)
+    follows(links.locksSeen())
     const note = path
-    if (!note) return
+    lines = []
+    if (!note || workspace.protection.locked(note)) return
     let current = true
     void workspace.noteText(note).then((text) => {
       if (current && text !== null) lines = cardLines(text, name)
