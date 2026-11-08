@@ -147,16 +147,29 @@ async function paperPage(file: Drawn, width: number): Promise<HTMLCanvasElement 
 async function plane(file: Drawn): Promise<SVGSVGElement | null> {
   const text = await invoke<string>('read_note', { path: joinPath(file.root, file.path) })
 
-  const [{ drawingOf }, { canvasSvg }] = await Promise.all([
+  const [{ drawingOf }, { canvasSvg }, { pdfFaces }] = await Promise.all([
     import('../export/drawing'),
     import('../canvas/picture'),
+    import('../canvas/faces'),
   ])
 
   const drawing = drawingOf({ text, name: nameOf(file.path), path: file.path, root: file.root })
   if (!drawing.canvas.nodes.length && !drawing.canvas.ink.length) return null
 
+  const faces = await pdfFaces(drawing.canvas.nodes, {
+    note: joinPath(file.root, file.path),
+    root: file.root,
+  })
   const holder = document.createElement('div')
-  holder.innerHTML = canvasSvg(drawing.canvas, drawing.palette, drawing.path, drawing.root, true)
+  holder.innerHTML = canvasSvg(
+    drawing.canvas,
+    drawing.palette,
+    drawing.path,
+    drawing.root,
+    true,
+    false,
+    faces,
+  )
 
   const picture = holder.firstElementChild
   if (!(picture instanceof SVGSVGElement)) return null
