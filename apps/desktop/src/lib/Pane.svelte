@@ -42,7 +42,7 @@
   import { notePicture } from './note-images'
   import { placement } from './placement.svelte'
   import { rooms } from './rooms.svelte'
-  import { settings } from './settings.svelte'
+  import { appsOn, explorerOn, settings } from './settings.svelte'
   import {
     applicationSurface,
     archivedStrip,
@@ -488,21 +488,25 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'application'}
-    {#key tab.id}
-      {#await applicationSurface() then ApplicationTab}
-        <ApplicationTab {tab} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {#if appsOn()}
+      {#key tab.id}
+        {#await applicationSurface() then ApplicationTab}
+          <ApplicationTab {tab} />
+        {:catch}
+          {@render unreachable()}
+        {/await}
+      {/key}
+    {/if}
   {:else if tab?.kind === 'explorer'}
-    {#key tab.id}
-      {#await explorerSurface() then ExplorerTab}
-        <ExplorerTab {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {#if explorerOn()}
+      {#key tab.id}
+        {#await explorerSurface() then ExplorerTab}
+          <ExplorerTab {tab} focused={workspace.panes.focusedId === pane.id} />
+        {:catch}
+          {@render unreachable()}
+        {/await}
+      {/key}
+    {/if}
   {:else if tab?.kind === 'pass'}
     {#key tab.id}
       {#await passSurface() then PassTab}

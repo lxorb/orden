@@ -3575,4 +3575,16 @@ export const zhHant: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack 拒絕了這個應用程式層級權杖。請在 Basic Information 下產生一個帶 connections:write 的權杖',
   'A Slack channel name needs a letter or a number': 'Slack 頻道名稱需要包含字母或數字',
+  Experimental: '實驗性',
+  'Enable experimental features': '啟用實驗性功能',
+  'Lets you turn on the features below, which are still being built.':
+    '可以開啟下面這些仍在開發中的功能。',
+  'Turn on experimental features?': '要開啟實驗性功能嗎？',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    '你一定會遇到問題，百分之百。只有清楚自己在做什麼時才繼續。',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    '新增應用程式，即你另一台電腦上的程式，可在分頁中檢視和操作。',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    '為這台電腦上的資料夾新增檔案總管，「在資料夾中顯示」會開啟它。',
+  '{name} is turned off, so its tabs were closed': '{name}已關閉，因此關閉了它的分頁',
 }

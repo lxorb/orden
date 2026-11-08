@@ -14,9 +14,10 @@ vi.mock('./workspace/write-file', () => ({
   writeFile: async (path: string) => void written.push(path),
 }))
 
-const { hiddenKinds, KINDS_KEY, BASES_WORD, basesOn } = await import('./settings.svelte')
+const { hiddenKinds, KINDS_KEY, BASES_WORD, EXPERIMENTAL_WORD, PASS_WORD, basesOn } =
+  await import('./settings.svelte')
 const { setWord, receive } = await import('./kind-choice')
-const { generalPane } = await import('./settings/general-pane')
+const { experimentalPane } = await import('./settings/experimental-pane')
 const { appCommands } = await import('./commands')
 const { newFileRows } = await import('./row-menu')
 const { openBaseFile } = await import('./views/open')
@@ -27,15 +28,16 @@ const { workspace } = await import('./workspace.svelte')
 beforeEach(() => {
   store.clear()
   written.length = 0
+  store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD]))
   hiddenKinds.restore()
   for (const tab of workspace.tabs.filter((one) => one.kind === 'view'))
     workspace.close(tab.id, false)
 })
 
 function field() {
-  const found = generalPane()
+  const found = experimentalPane()
     .groups.flatMap((group) => group.fields)
-    .find((one) => one.key === 'general.databases')
+    .find((one) => one.key === 'experimental.databases')
   if (found?.kind !== 'switch') throw new Error('no switch for databases')
   return found
 }
@@ -65,7 +67,7 @@ describe('databases, until they are turned on', () => {
     expect(launcher()).toBe(true)
     expect(openBaseFile('/s/B.base')?.kind).toBe('view')
     expect(opened()).toHaveLength(1)
-    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([BASES_WORD])
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD, BASES_WORD])
 
     hiddenKinds.hidden = []
     hiddenKinds.restore()
@@ -75,14 +77,14 @@ describe('databases, until they are turned on', () => {
     expect(basesOn()).toBe(false)
     expect(palette()).toBe(false)
     expect(launcher()).toBe(false)
-    expect(store.has(KINDS_KEY)).toBe(false)
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD])
   })
 
   test('follow the account, beside the other switches', () => {
-    setWord('shown-pass', true)
-    receive({ hiddenKinds: ['shown-pass', BASES_WORD] })
+    setWord(PASS_WORD, true)
+    receive({ hiddenKinds: [EXPERIMENTAL_WORD, PASS_WORD, BASES_WORD] })
     expect(basesOn()).toBe(true)
-    receive({ hiddenKinds: ['shown-pass'] })
+    receive({ hiddenKinds: [EXPERIMENTAL_WORD, PASS_WORD] })
     expect(basesOn()).toBe(false)
   })
 })

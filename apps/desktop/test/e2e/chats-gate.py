@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, experimental_on
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
@@ -27,7 +27,7 @@ async (path) => {
 TABS = "() => window.ordenApp.workspace.tabs.filter((one) => one.kind === 'channel').length"
 
 def switch(page: Page, on: bool) -> None:
-    page.evaluate("() => window.ordenApp.settings.show('general')")
+    experimental_on(page)
     row = page.locator('[role=switch][aria-label="Chats"]')
     row.wait_for(state="visible", timeout=15_000)
     if (row.get_attribute("aria-checked") == "true") != on:
@@ -83,7 +83,7 @@ def drive(browser: Browser) -> None:
 
     page.reload(wait_until="domcontentloaded")
     DRIVE.ready(page)
-    if page.evaluate("() => !JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]').includes('shown-chats')"):
+    if page.evaluate("() => !JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]').includes('experimental-chats')"):
         wrong("the switch was not kept through a reload")
     say("still on after a reload")
 

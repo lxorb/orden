@@ -3617,4 +3617,16 @@ export const th: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack ปฏิเสธโทเค็นแอปนี้ สร้างโทเค็นใหม่ที่มี connections:write ใน Basic Information',
   'A Slack channel name needs a letter or a number': 'ชื่อช่อง Slack ต้องมีตัวอักษรหรือตัวเลข',
+  Experimental: 'ทดลอง',
+  'Enable experimental features': 'เปิดใช้ฟีเจอร์ทดลอง',
+  'Lets you turn on the features below, which are still being built.':
+    'ให้คุณเปิดฟีเจอร์ด้านล่างซึ่งยังอยู่ระหว่างการสร้าง',
+  'Turn on experimental features?': 'เปิดฟีเจอร์ทดลองไหม',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'คุณจะเจอบั๊กแน่นอน 100% ทำต่อเฉพาะเมื่อคุณรู้ว่ากำลังทำอะไรอยู่',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'เพิ่มแอปพลิเคชัน โปรแกรมบนคอมพิวเตอร์เครื่องอื่นของคุณที่คุณดูและใช้งานในแท็บ',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'เพิ่มตัวสำรวจไฟล์สำหรับโฟลเดอร์ในคอมพิวเตอร์เครื่องนี้ และแสดงในโฟลเดอร์จะเปิดมัน',
+  '{name} is turned off, so its tabs were closed': '{name} ปิดอยู่ จึงปิดแท็บของมันแล้ว',
 }

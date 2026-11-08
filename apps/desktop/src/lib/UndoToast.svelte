@@ -7,6 +7,7 @@
   import { told } from './said.svelte'
   import { reservedName } from './reserved-name.svelte'
   import { back } from './sync2/resurrected.svelte'
+  import { gateNote } from './gate-note.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
   import { unsynced } from './sync2/unsynced.svelte'
@@ -56,6 +57,7 @@
     failed: () => turn === 'failed',
     undo: () => turn === 'undo',
     back: () => !!back.said,
+    gate: () => !!gateNote.said,
     unsynced: () => !!unsynced.said,
   }
 
@@ -128,6 +130,7 @@
     unread.dismiss()
     failed.dismiss()
     back.dismiss()
+    gateNote.dismiss()
     unsynced.dismiss()
   })
 </script>
@@ -183,6 +186,16 @@
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
     {@attach told(words)}
     {@attach kept('back', back)}
+  >
+    <p>{words}</p>
+  </div>
+{/if}{#if gateNote.said}
+  {@const words = t('{name} is turned off, so its tabs were closed', { name: gateNote.said })}
+  <div
+    class="toast"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    {@attach told(words)}
+    {@attach kept('gate', gateNote)}
   >
     <p>{words}</p>
   </div>

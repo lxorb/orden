@@ -20,8 +20,8 @@ vi.mock('../../src/lib/tauri', async (original) => ({
 const { fakeProvider } = await import('@orden/chats/fake-provider')
 const { connected } = await import('../../src/lib/chats/connected.svelte')
 const { accounts } = await import('../../src/lib/chats/linked')
-const { CHATS_WORD, hiddenKinds } = await import('../../src/lib/settings.svelte')
-hiddenKinds.hidden = [CHATS_WORD]
+const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds } = await import('../../src/lib/settings.svelte')
+hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
 const { adding } = await import('../../src/lib/chats/view/adding.svelte')
 const AddChat = (await import('../../src/lib/chats/view/AddChat.svelte')).default
 

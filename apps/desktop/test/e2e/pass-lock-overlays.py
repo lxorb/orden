@@ -29,7 +29,7 @@ def unlock(page: Page) -> None:
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 860}, reduced_motion="reduce")
-    context.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-pass'])); localStorage.setItem('orden:pass-settings', JSON.stringify({ relockAfter: 1 }))")
+    context.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-pass'])); localStorage.setItem('orden:pass-settings', JSON.stringify({ relockAfter: 1 }))")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)

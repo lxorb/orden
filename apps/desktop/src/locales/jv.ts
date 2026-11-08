@@ -3678,4 +3678,16 @@ export const jv: Dictionary = {
     'Slack nolak token aplikasi kuwi. Gawe siji nganggo connections:write ing Basic Information',
   'A Slack channel name needs a letter or a number':
     'Jeneng kanal Slack kudu ana huruf utawa angka',
+  Experimental: 'Eksperimen',
+  'Enable experimental features': 'Aktifake fitur eksperimen',
+  'Lets you turn on the features below, which are still being built.':
+    'Ngidini sampeyan nguripake fitur ing ngisor, sing isih digawe.',
+  'Turn on experimental features?': 'Uripake fitur eksperimen?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Sampeyan mesthi 100% bakal nemu bug. Terusna mung yen sampeyan ngerti apa sing ditindakake.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Nambahake aplikasi, program ing komputer sampeyan liyane sing sampeyan deleng lan gunakake ing tab.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Nambahake penjelajah file kanggo folder ing komputer iki, lan Tampilake ing folder mbukak iku.',
+  '{name} is turned off, so its tabs were closed': '{name} dipateni, mula tab-tabe ditutup',
 }

@@ -19,7 +19,7 @@ vi.mock('./surfaces.svelte', () => ({
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
-const { hiddenKinds, TIME_WORD } = await import('./settings.svelte')
+const { EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('./settings.svelte')
 const Sidebar = (await import('./Sidebar.svelte')).default
 const PhoneTabs = (await import('./phone/PhoneTabs.svelte')).default
 const PhoneYou = (await import('./phone/PhoneYou.svelte')).default
@@ -69,7 +69,7 @@ describe('the panel tabs', () => {
   })
 
   test('hold the time tracker only once Settings turns it on', () => {
-    hiddenKinds.hidden = [TIME_WORD]
+    hiddenKinds.hidden = [EXPERIMENTAL_WORD, TIME_WORD]
     expect(strip('left')).toEqual(['Files', 'Time tracker'])
     hiddenKinds.hidden = []
     expect(strip('left')).toEqual(['Files'])

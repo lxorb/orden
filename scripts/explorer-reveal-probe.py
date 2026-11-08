@@ -24,7 +24,7 @@ def borrowed(name: str, file: str) -> Any:
     return module
 
 
-TURN_ON = "localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-explorer'])); 1"
+TURN_ON = "localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-explorer'])); 1"
 
 PRESS_SHOW = """(async () => {
   const wait = (ms) => new Promise((done) => setTimeout(done, ms))

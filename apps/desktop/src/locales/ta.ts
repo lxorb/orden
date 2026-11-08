@@ -3827,4 +3827,17 @@ export const ta: Dictionary = {
     'Slack இந்த ஆப்-நிலை டோக்கனை மறுத்தது. Basic Information இல் connections:write உடன் ஒன்றை உருவாக்குங்கள்',
   'A Slack channel name needs a letter or a number':
     'Slack சேனல் பெயரில் ஓர் எழுத்து அல்லது எண் வேண்டும்',
+  Experimental: 'சோதனை நிலை',
+  'Enable experimental features': 'சோதனை அம்சங்களை இயக்கு',
+  'Lets you turn on the features below, which are still being built.':
+    'இன்னும் உருவாக்கத்தில் உள்ள கீழே உள்ள அம்சங்களை இயக்க உதவும்.',
+  'Turn on experimental features?': 'சோதனை அம்சங்களை இயக்கவா?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'நீங்கள் 100% பிழைகளைச் சந்திப்பீர்கள். என்ன செய்கிறீர்கள் என்று தெரிந்தால் மட்டும் தொடருங்கள்.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'பயன்பாடுகளைச் சேர்க்கிறது, உங்கள் மற்றொரு கணினியில் உள்ள நிரல்கள், அவற்றை ஒரு தாவலில் பார்த்துப் பயன்படுத்தலாம்.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'இந்தக் கணினியின் கோப்புறைகளுக்கு ஒரு கோப்பு உலாவியைச் சேர்க்கிறது, கோப்புறையில் காட்டு அதைத் திறக்கும்.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} அணைக்கப்பட்டுள்ளது, எனவே அதன் தாவல்கள் மூடப்பட்டன',
 }

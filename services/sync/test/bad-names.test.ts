@@ -106,7 +106,7 @@ test('a folder of a base cannot name its way out of the space', async () => {
   await call(env, '/v1/settings', {
     method: 'PATCH',
     token,
-    body: { hiddenKinds: ['shown-bases'] },
+    body: { hiddenKinds: ['experimental', 'experimental-bases'] },
   })
   const said = await tool('add_row', { base: 'T.base', title: 'pwn' })
   expect(said).toContain('not a note path')

@@ -3695,4 +3695,17 @@ export const my: Dictionary = {
     'Slack က ဤအက်ပ်တိုကင်ကို ငြင်းပယ်ခဲ့သည်။ Basic Information အောက်တွင် connections:write ပါသော တိုကင်တစ်ခု ပြုလုပ်ပါ',
   'A Slack channel name needs a letter or a number':
     'Slack ချန်နယ်အမည်တွင် စာလုံး သို့မဟုတ် ဂဏန်း ပါရမည်',
+  Experimental: 'စမ်းသပ်ဆဲ',
+  'Enable experimental features': 'စမ်းသပ်ဆဲ လုပ်ဆောင်ချက်များ ဖွင့်ရန်',
+  'Lets you turn on the features below, which are still being built.':
+    'တည်ဆောက်ဆဲ ဖြစ်သော အောက်ပါ လုပ်ဆောင်ချက်များကို ဖွင့်ခွင့်ပေးသည်။',
+  'Turn on experimental features?': 'စမ်းသပ်ဆဲ လုပ်ဆောင်ချက်များ ဖွင့်မလား။',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'သင် ချို့ယွင်းချက်များကို 100% ကြုံရပါမည်။ ဘာလုပ်နေသည်ကို သိမှသာ ဆက်လုပ်ပါ။',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'အပလီကေးရှင်းများ ထည့်သည်၊ တဘ်တစ်ခုတွင် မြင်ပြီး သုံးနိုင်သော သင့်အခြားကွန်ပျူတာရှိ ပရိုဂရမ်များ။',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'ဤကွန်ပျူတာရှိ ဖိုင်တွဲများအတွက် ဖိုင်ရှာဖွေစနစ် ထည့်သည်၊ ဖိုင်တွဲတွင်ပြရန်က ၎င်းကို ဖွင့်သည်။',
+  '{name} is turned off, so its tabs were closed':
+    '{name} ပိတ်ထားသဖြင့် ၎င်း၏ တဘ်များကို ပိတ်လိုက်သည်',
 }

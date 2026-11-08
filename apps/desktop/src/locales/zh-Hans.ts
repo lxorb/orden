@@ -3572,4 +3572,16 @@ export const zhHans: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack 拒绝了这个应用级令牌。请在 Basic Information 下生成一个带 connections:write 的令牌',
   'A Slack channel name needs a letter or a number': 'Slack 频道名称需要包含字母或数字',
+  Experimental: '实验性',
+  'Enable experimental features': '启用实验性功能',
+  'Lets you turn on the features below, which are still being built.':
+    '可以打开下面这些仍在开发中的功能。',
+  'Turn on experimental features?': '要打开实验性功能吗？',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    '你一定会遇到问题，百分之百。只有清楚自己在做什么时才继续。',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    '添加应用程序，即你另一台电脑上的程序，可在标签页中查看和操作。',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    '为这台电脑上的文件夹添加文件浏览器，“在文件夹中显示”会打开它。',
+  '{name} is turned off, so its tabs were closed': '{name}已关闭，因此关闭了它的标签页',
 }

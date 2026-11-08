@@ -7,10 +7,11 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-const { hiddenKinds, KINDS_KEY, PASS_WORD, passOn, kindsHere } = await import('./settings.svelte')
+const { hiddenKinds, KINDS_KEY, PASS_WORD, EXPERIMENTAL_WORD, passOn, kindsHere } =
+  await import('./settings.svelte')
 const { setKind, setWord, receive } = await import('./kind-choice')
 const { runnable, SHORTCUTS } = await import('./shortcuts/registry')
-const { generalPane } = await import('./settings/general-pane')
+const { experimentalPane } = await import('./settings/experimental-pane')
 const { appCommands } = await import('./commands')
 const { offeredKinds } = await import('./new-kinds')
 const { openPass } = await import('./pass/open')
@@ -18,15 +19,16 @@ const { workspace } = await import('./workspace.svelte')
 
 beforeEach(() => {
   store.clear()
+  store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD]))
   hiddenKinds.restore()
   for (const tab of workspace.tabs.filter((one) => one.kind === 'pass'))
     workspace.close(tab.id, false)
 })
 
 function field() {
-  const found = generalPane()
+  const found = experimentalPane()
     .groups.flatMap((group) => group.fields)
-    .find((one) => one.key === 'general.passwordManager')
+    .find((one) => one.key === 'experimental.passwordManager')
   if (found?.kind !== 'switch') throw new Error('no switch for the password manager')
   return found
 }
@@ -67,7 +69,7 @@ describe('the password manager, until it is turned on', () => {
     expect(shortcuts()).toEqual(['app.pass', 'pass.search', 'pass.new-login'])
     expect(offeredKinds().map((one) => one.kind)).toContain('pass')
     expect(openPass()?.kind).toBe('pass')
-    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([PASS_WORD])
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD, PASS_WORD])
 
     hiddenKinds.hidden = []
     hiddenKinds.restore()
@@ -76,25 +78,22 @@ describe('the password manager, until it is turned on', () => {
     field().set(false)
     expect(passOn()).toBe(false)
     expect(palette()).toEqual([])
-    expect(store.has(KINDS_KEY)).toBe(false)
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD])
   })
 
-  test('once on, can still be left out of the new tab while it stays on', () => {
+  test('once on, is offered in the new tab, whatever Note types had for it before', () => {
     setWord(PASS_WORD, true)
     setKind('pass', false)
+    hiddenKinds.hidden = [...hiddenKinds.hidden, 'pass']
     expect(passOn()).toBe(true)
-    expect(offeredKinds().map((one) => one.kind)).not.toContain('pass')
+    expect(offeredKinds().map((one) => one.kind)).toContain('pass')
     expect(palette()).toEqual(COMMANDS)
-
-    setWord(PASS_WORD, false)
-    setWord(PASS_WORD, true)
-    expect(offeredKinds().map((one) => one.kind)).not.toContain('pass')
   })
 
   test('follows the account', () => {
-    receive({ hiddenKinds: [PASS_WORD] })
+    receive({ hiddenKinds: [EXPERIMENTAL_WORD, PASS_WORD] })
     expect(passOn()).toBe(true)
-    receive({ hiddenKinds: [] })
+    receive({ hiddenKinds: [EXPERIMENTAL_WORD] })
     expect(passOn()).toBe(false)
   })
 })

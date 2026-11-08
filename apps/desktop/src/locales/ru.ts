@@ -3900,4 +3900,16 @@ export const ru: Dictionary = {
     'Slack отклонил этот токен приложения. Создайте новый с connections:write в разделе Basic Information',
   'A Slack channel name needs a letter or a number':
     'Название канала Slack должно содержать букву или цифру',
+  Experimental: 'Экспериментальное',
+  'Enable experimental features': 'Включить экспериментальные функции',
+  'Lets you turn on the features below, which are still being built.':
+    'Позволяет включить функции ниже, которые ещё в разработке.',
+  'Turn on experimental features?': 'Включить экспериментальные функции?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Вы на 100% столкнётесь с ошибками. Продолжайте, только если понимаете, что делаете.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Добавляет приложения: программы на другом вашем компьютере, которые вы видите и используете во вкладке.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Добавляет проводник для папок этого компьютера, и «Показать в папке» открывает его.',
+  '{name} is turned off, so its tabs were closed': '{name} выключено, поэтому его вкладки закрыты',
 }

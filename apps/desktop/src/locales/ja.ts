@@ -3673,4 +3673,16 @@ export const ja: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack がこのアプリレベルトークンを拒否しました。Basic Information で connections:write 付きのトークンを生成してください',
   'A Slack channel name needs a letter or a number': 'Slack のチャンネル名には文字か数字が必要です',
+  Experimental: '試験的',
+  'Enable experimental features': '試験的な機能を有効にする',
+  'Lets you turn on the features below, which are still being built.':
+    'まだ作っている途中の下の機能をオンにできます。',
+  'Turn on experimental features?': '試験的な機能をオンにしますか？',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    '100% バグに遭遇します。何をしているか分かっている場合のみ続けてください。',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'アプリケーションを追加します。別のコンピューターにあるプログラムをタブで見て操作できます。',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'このコンピューターのフォルダー用のファイルエクスプローラーを追加し、フォルダーに表示で開きます。',
+  '{name} is turned off, so its tabs were closed': '{name} がオフなので、そのタブを閉じました',
 }

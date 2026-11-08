@@ -112,7 +112,7 @@ const { account } = await import('./account.svelte')
 const { newKinds, offeredKinds } = await import('./new-kinds')
 const { busy } = await import('./busy.svelte')
 const { makeChat, openChat } = await import('./chats/view/open')
-const { CHATS_WORD, hiddenKinds } = await import('./settings.svelte')
+const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('./settings.svelte')
 
 let opened: { path: string | null; name: string; pointer: boolean }[] = []
 
@@ -126,7 +126,7 @@ beforeEach(async () => {
   asked.refused = false
   readOnly.clear()
   opened = []
-  hiddenKinds.hidden = [CHATS_WORD]
+  hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
 
   Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })
   vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote-space')
@@ -173,7 +173,7 @@ describe('a new chat', () => {
     expect(workspace.tabs).toHaveLength(0)
     expect(said).toHaveBeenCalledWith('Chats are off. Turn them on in Settings.')
 
-    hiddenKinds.hidden = [CHATS_WORD]
+    hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
     expect(newKinds().map((one) => one.kind)).toContain('chat')
   })
 

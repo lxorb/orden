@@ -1,7 +1,7 @@
 import { flushSync } from 'svelte'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { setWord } from './kind-choice'
-import { CHATS_WORD, hiddenKinds, PASS_WORD, TIME_WORD } from './settings.svelte'
+import { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD, TIME_WORD } from './settings.svelte'
 import { whenChatsOn, whenPassOn, whenTimeOn } from './feature-gate.svelte'
 import { openPass } from './pass/open'
 import { workspace } from './workspace.svelte'
@@ -9,6 +9,7 @@ import { workspace } from './workspace.svelte'
 beforeEach(() => {
   localStorage.clear()
   hiddenKinds.restore()
+  setWord(EXPERIMENTAL_WORD, true)
 })
 
 describe('a feature turned on and off while the app runs', () => {

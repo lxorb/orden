@@ -1,0 +1,193 @@
+import { chatsFields } from '../chats-settings'
+import { t } from '../i18n.svelte'
+import { setWord } from '../kind-choice'
+import { prompt } from '../prompt.svelte'
+import {
+  APPS_WORD,
+  appsOn,
+  BASES_WORD,
+  CHATS_WORD,
+  chatsOn,
+  EXPERIMENTAL_WORD,
+  experimentalOn,
+  EXPLORER_WORD,
+  hiddenKinds,
+  PASS_WORD,
+  TIME_WORD,
+} from '../settings.svelte'
+import { isDesktop, isMobile } from '../tauri'
+import { clipboardSharing } from './apps-clipboard.svelte'
+import type { Field, Group, Pane } from './fields'
+import { among } from './hold'
+
+async function turnExperimental(on: boolean): Promise<void> {
+  if (!on) {
+    setWord(EXPERIMENTAL_WORD, false)
+    return
+  }
+  if (experimentalOn()) return
+  const sure = await prompt.confirm({
+    title: t('Turn on experimental features?'),
+    detail: t('You will 100% experience bugs. Only go on if you know what you are doing.'),
+    confirmLabel: t('Turn on'),
+    danger: true,
+  })
+  if (sure) setWord(EXPERIMENTAL_WORD, true)
+}
+
+interface Feature {
+  key: string
+  word: string
+  label: string
+  hint: string
+  words: string[]
+  more?: () => Field[]
+}
+
+function featureGroup(one: Feature): Group {
+  return {
+    title: one.label,
+    fields: [
+      {
+        kind: 'switch',
+        key: `experimental.${one.key}`,
+        store: { ...among(hiddenKinds, 'hidden', one.word), shared: 'hiddenKinds' },
+        label: one.label,
+        hint: one.hint,
+        words: ['experimental', ...one.words],
+        initial: false,
+        locked: () => !experimentalOn(),
+        get: () => hiddenKinds.hidden.includes(one.word),
+        set: (on) => setWord(one.word, on),
+      },
+      ...(one.more?.() ?? []),
+    ],
+  }
+}
+
+function clipboardFields(): Field[] {
+  if (!appsOn()) return []
+  return [
+    {
+      kind: 'switch',
+      label: t('Share the clipboard with applications'),
+      hint: t(
+        'An application on another of your computers pastes what you copied here, and what it copies comes here.',
+      ),
+      words: ['clipboard', 'copy', 'paste', 'application', 'remote'],
+      initial: true,
+      get: () => clipboardSharing.on,
+      set: (on) => clipboardSharing.set(on),
+    },
+  ]
+}
+
+function chatFields(): Field[] {
+  if (!chatsOn()) return []
+  return [
+    {
+      kind: 'value',
+      label: t('Chat accounts'),
+      hint: t('Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.'),
+      words: ['account', 'connect', 'add', 'mail', 'telegram', 'slack', 'whatsapp', 'signal'],
+      get: () => t('Add'),
+      does: t('Add a chat account'),
+      press: () => void import('../chats/view/adding.svelte').then((one) => one.addChat()),
+    },
+    ...(isMobile ? [] : chatsFields()),
+  ]
+}
+
+function features(): Feature[] {
+  const bases: Feature = {
+    key: 'databases',
+    word: BASES_WORD,
+    label: t('Databases'),
+    hint: t(
+      'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.',
+    ),
+    words: ['database', 'databases', 'base', 'bases', 'table', 'board', 'kanban', 'notion'],
+  }
+  if (__EVEN_PLUGIN__) return [bases]
+
+  return [
+    {
+      key: 'chats',
+      word: CHATS_WORD,
+      label: t('Chats'),
+      hint: t(
+        'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.',
+      ),
+      words: ['chat', 'chats', 'messages', 'mail', 'telegram', 'slack', 'whatsapp', 'signal'],
+      more: chatFields,
+    },
+    {
+      key: 'applications',
+      word: APPS_WORD,
+      label: t('Applications'),
+      hint: t(
+        'Adds applications, programs on another of your computers that you see and use in a tab.',
+      ),
+      words: ['application', 'applications', 'app', 'remote', 'desktop', 'stream'],
+      more: clipboardFields,
+    },
+    ...(isDesktop
+      ? [
+          {
+            key: 'explorer',
+            word: EXPLORER_WORD,
+            label: t('File explorer'),
+            hint: t(
+              'Adds a file explorer for the folders on this computer, and Show in folder opens it.',
+            ),
+            words: ['explorer', 'files', 'folders', 'finder', 'show in folder'],
+          },
+        ]
+      : []),
+    {
+      key: 'passwordManager',
+      word: PASS_WORD,
+      label: t('Password manager'),
+      hint: t(
+        'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.',
+      ),
+      words: ['pass', 'password', 'passwords', 'vault', 'autofill', 'login', 'keychain'],
+    },
+    {
+      key: 'timeTracker',
+      word: TIME_WORD,
+      label: t('Time tracker'),
+      hint: t(
+        'Adds a timer and records the app, site and tab in front and how busy the computer is.',
+      ),
+      words: ['time', 'tracking', 'timer', 'hours', 'activity', 'screen time', 'toggl'],
+    },
+    bases,
+  ]
+}
+
+export function experimentalPane(): Pane {
+  return {
+    id: 'experimental',
+    label: t('Experimental'),
+    groups: [
+      {
+        title: t('Experimental'),
+        fields: [
+          {
+            kind: 'switch',
+            key: 'experimental.enabled',
+            store: { ...among(hiddenKinds, 'hidden', EXPERIMENTAL_WORD), shared: 'hiddenKinds' },
+            label: t('Enable experimental features'),
+            hint: t('Lets you turn on the features below, which are still being built.'),
+            words: ['experimental', 'beta', 'preview', 'labs', 'unstable', 'early'],
+            initial: false,
+            get: () => experimentalOn(),
+            set: (on) => void turnExperimental(on),
+          },
+        ],
+      },
+      ...features().map(featureGroup),
+    ],
+  }
+}

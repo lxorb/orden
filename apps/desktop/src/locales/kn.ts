@@ -3798,4 +3798,17 @@ export const kn: Dictionary = {
     'Slack ಈ ಆ್ಯಪ್-ಮಟ್ಟದ ಟೋಕನ್ ನಿರಾಕರಿಸಿದೆ. Basic Information ನಲ್ಲಿ connections:write ಇರುವ ಒಂದನ್ನು ರಚಿಸಿ',
   'A Slack channel name needs a letter or a number':
     'Slack ಚಾನೆಲ್ ಹೆಸರಿನಲ್ಲಿ ಒಂದು ಅಕ್ಷರ ಅಥವಾ ಅಂಕೆ ಇರಬೇಕು',
+  Experimental: 'ಪ್ರಾಯೋಗಿಕ',
+  'Enable experimental features': 'ಪ್ರಾಯೋಗಿಕ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ',
+  'Lets you turn on the features below, which are still being built.':
+    'ಇನ್ನೂ ನಿರ್ಮಾಣದಲ್ಲಿರುವ ಕೆಳಗಿನ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಆನ್ ಮಾಡಲು ಬಿಡುತ್ತದೆ.',
+  'Turn on experimental features?': 'ಪ್ರಾಯೋಗಿಕ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಆನ್ ಮಾಡಬೇಕೆ?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'ನಿಮಗೆ 100% ದೋಷಗಳು ಎದುರಾಗುತ್ತವೆ. ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ ಎಂದು ಗೊತ್ತಿದ್ದರೆ ಮಾತ್ರ ಮುಂದುವರಿಯಿರಿ.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಸೇರಿಸುತ್ತದೆ, ನಿಮ್ಮ ಇನ್ನೊಂದು ಕಂಪ್ಯೂಟರ್‌ನ ಪ್ರೋಗ್ರಾಂಗಳು, ಅವನ್ನು ಒಂದು ಟ್ಯಾಬ್‌ನಲ್ಲಿ ನೋಡಿ ಬಳಸುತ್ತೀರಿ.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'ಈ ಕಂಪ್ಯೂಟರ್‌ನ ಫೋಲ್ಡರ್‌ಗಳಿಗೆ ಫೈಲ್ ಎಕ್ಸ್‌ಪ್ಲೋರರ್ ಸೇರಿಸುತ್ತದೆ, ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ತೋರಿಸು ಅದನ್ನು ತೆರೆಯುತ್ತದೆ.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} ಆಫ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ ಅದರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಮುಚ್ಚಲಾಗಿದೆ',
 }

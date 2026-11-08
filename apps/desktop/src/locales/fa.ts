@@ -3760,4 +3760,16 @@ export const fa: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack این توکن سطح برنامه را نپذیرفت. در Basic Information یکی با connections:write بسازید',
   'A Slack channel name needs a letter or a number': 'نام کانال Slack به یک حرف یا عدد نیاز دارد',
+  Experimental: 'آزمایشی',
+  'Enable experimental features': 'فعال‌کردن ویژگی‌های آزمایشی',
+  'Lets you turn on the features below, which are still being built.':
+    'به تو اجازه می‌دهد ویژگی‌های زیر را که هنوز در دست ساخت‌اند روشن کنی.',
+  'Turn on experimental features?': 'ویژگی‌های آزمایشی روشن شوند؟',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'صددرصد با باگ روبه‌رو می‌شوی. فقط اگر می‌دانی چه می‌کنی ادامه بده.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'برنامه‌ها را می‌افزاید، برنامه‌هایی روی رایانهٔ دیگرت که در یک زبانه می‌بینی و به کار می‌بری.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'یک کاوشگر فایل برای پوشه‌های این رایانه می‌افزاید، و نمایش در پوشه آن را باز می‌کند.',
+  '{name} is turned off, so its tabs were closed': '{name} خاموش است، پس زبانه‌هایش بسته شد',
 }

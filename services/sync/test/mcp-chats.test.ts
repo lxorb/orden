@@ -33,7 +33,7 @@ async function chatsTurned(token: string, on: boolean) {
   await call(env, '/v1/settings', {
     method: 'PATCH',
     token,
-    body: { hiddenKinds: on ? ['shown-chats'] : null },
+    body: { hiddenKinds: on ? ['experimental', 'experimental-chats'] : null },
   })
 }
 
@@ -127,6 +127,14 @@ describe('chats through the connector', () => {
     await chatsTurned(owner, true)
     expect(await names()).toEqual(expect.arrayContaining(chatTools))
     expect(await tool(key, 'list_chats')).toContain('#thesis')
+  })
+
+  test('stay off for an account that had chats on before they were experimental, or without the experimental switch', async () => {
+    const key = await connector(owner, false, false)
+    for (const hiddenKinds of [['shown-chats'], ['experimental-chats'], ['experimental']]) {
+      await call(env, '/v1/settings', { method: 'PATCH', token: owner, body: { hiddenKinds } })
+      expect(await tool(key, 'list_chats')).toContain('Chats are turned off')
+    }
   })
 
   test('are listed with the tools', async () => {

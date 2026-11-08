@@ -526,7 +526,7 @@ let log: unknown[] = []
 
 const { runAgentVerb, AGENT_VERBS, answerTheCrate } = await import('./index')
 const { forgetIndexes } = await import('./links')
-const { BASES_WORD, hiddenKinds } = await import('../../settings.svelte')
+const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../settings.svelte')
 
 const EVERY = [
   'context',
@@ -579,7 +579,7 @@ beforeEach(() => {
   shell.hangs = false
   reads({})
   forgetIndexes()
-  hiddenKinds.hidden = [BASES_WORD]
+  hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
   vi.clearAllMocks()
 })
 

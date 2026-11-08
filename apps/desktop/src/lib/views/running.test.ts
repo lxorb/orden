@@ -84,8 +84,8 @@ vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true, trustsHtmlAt: () => trusted.yes }))
 
 const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
-const { BASES_WORD, hiddenKinds } = await import('../settings.svelte')
-hiddenKinds.hidden = [BASES_WORD]
+const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../settings.svelte')
+hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
 const { moving } = await import('./moving')
 
 beforeEach(() => {

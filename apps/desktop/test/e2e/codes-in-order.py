@@ -60,7 +60,7 @@ def drive(browser: Browser) -> None:
         said = words(language)
         context = browser.new_context(viewport={"width": 1100, "height": 760}, reduced_motion="reduce")
         context.add_init_script(
-            "localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-pass']));"
+            "localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-pass']));"
             f" localStorage.setItem('orden:language', {language!r})"
         )
         page = context.new_page()

@@ -3775,4 +3775,16 @@ export const tr: Dictionary = {
     'Slack bu uygulama tokenini reddetti. Basic Information altında connections:write ile yeni bir tane oluşturun',
   'A Slack channel name needs a letter or a number':
     'Slack kanal adında bir harf ya da rakam olmalı',
+  Experimental: 'Deneysel',
+  'Enable experimental features': 'Deneysel özellikleri etkinleştir',
+  'Lets you turn on the features below, which are still being built.':
+    'Hâlâ yapım aşamasındaki aşağıdaki özellikleri açmanı sağlar.',
+  'Turn on experimental features?': 'Deneysel özellikler açılsın mı?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Yüzde 100 hatalarla karşılaşacaksın. Yalnızca ne yaptığını biliyorsan devam et.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Uygulamaları ekler: başka bir bilgisayarındaki, bir sekmede görüp kullandığın programlar.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Bu bilgisayardaki klasörler için bir dosya gezgini ekler ve Klasörde göster onu açar.',
+  '{name} is turned off, so its tabs were closed': '{name} kapalı, bu yüzden sekmeleri kapatıldı',
 }

@@ -3805,4 +3805,17 @@ export const sw: Dictionary = {
     'Slack imekataa tokeni hiyo ya programu. Tengeneza moja yenye connections:write chini ya Basic Information',
   'A Slack channel name needs a letter or a number':
     'Jina la chaneli ya Slack linahitaji herufi au namba',
+  Experimental: 'Majaribio',
+  'Enable experimental features': 'Washa vipengele vya majaribio',
+  'Lets you turn on the features below, which are still being built.':
+    'Hukuruhusu kuwasha vipengele vilivyo hapa chini, ambavyo bado vinajengwa.',
+  'Turn on experimental features?': 'Washa vipengele vya majaribio?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Utakutana na hitilafu kwa asilimia 100. Endelea tu ikiwa unajua unachofanya.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Huongeza programu, programu kwenye kompyuta yako nyingine unazoziona na kuzitumia kwenye kichupo.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Huongeza kichunguzi cha faili kwa folda za kompyuta hii, na Onyesha kwenye folda hukifungua.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} imezimwa, kwa hivyo vichupo vyake vimefungwa',
 }

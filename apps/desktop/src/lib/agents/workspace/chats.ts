@@ -17,7 +17,10 @@ const MOST_FOUND = 50
 
 async function chatsStore(): Promise<Chats> {
   if (!chatsOn()) {
-    throw new Refused('not_found', 'chats are off; the user turns them on in Settings')
+    throw new Refused(
+      'not_found',
+      'chats are turned off; the reader turns them on in Settings, Experimental',
+    )
   }
   const { chats } = await import('../../chats/store.svelte')
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {

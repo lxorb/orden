@@ -3807,4 +3807,16 @@ export const ha: Dictionary = {
     'Slack ya ƙi wannan alamar manhaja. Ƙirƙiri ɗaya mai connections:write a ƙarƙashin Basic Information',
   'A Slack channel name needs a letter or a number':
     'Sunan tashar Slack yana buƙatar harafi ko lamba',
+  Experimental: 'Na gwaji',
+  'Enable experimental features': 'Kunna fasalolin gwaji',
+  'Lets you turn on the features below, which are still being built.':
+    'Yana ba ka damar kunna fasalolin da ke ƙasa, waɗanda ake ci gaba da ginawa.',
+  'Turn on experimental features?': 'Kunna fasalolin gwaji?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Tabbas kashi 100 za ka gamu da kurakurai. Ka ci gaba kawai idan ka san abin da kake yi.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Yana ƙara manhajoji, shirye-shirye a wata kwamfutarka da kake gani kuma kake amfani da su a shafi.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Yana ƙara mai binciken fayil don manyan fayilolin wannan kwamfuta, kuma Nuna a babban fayil yana buɗe shi.',
+  '{name} is turned off, so its tabs were closed': 'An kashe {name}, don haka an rufe shafukansa',
 }

@@ -125,7 +125,15 @@ export interface Group {
 }
 
 type PaneId =
-  'general' | 'editor' | 'kinds' | 'spelling' | 'markdown' | 'appearance' | 'glasses' | 'export'
+  | 'general'
+  | 'editor'
+  | 'kinds'
+  | 'spelling'
+  | 'markdown'
+  | 'appearance'
+  | 'glasses'
+  | 'experimental'
+  | 'export'
 
 export interface Pane {
   id: PaneId

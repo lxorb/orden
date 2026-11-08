@@ -1,13 +1,12 @@
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import {
-  choiceWord,
   chosenOn,
+  gated,
   hiddenKinds,
   KINDS_KEY,
   type KindName,
   kindsHere,
-  offUntilShown,
   shownOf,
 } from './settings.svelte'
 import { forget, isString, keepJson } from './stored'
@@ -37,11 +36,11 @@ export function locked(kind: KindName): boolean {
 
 export function setKind(kind: KindName, on: boolean) {
   const hidden = hiddenKinds.hidden
-  if (on === chosenOn(kind, hidden)) return
+  if (gated(kind) || on === chosenOn(kind, hidden)) return
   if (!on && !mayHide(kind, kindsHere(), hidden)) return
 
-  const rest = hidden.filter((one) => one !== kind && one !== choiceWord(kind))
-  hiddenKinds.hidden = on === offUntilShown(kind) ? [...rest, choiceWord(kind)] : rest
+  const rest = hidden.filter((one) => one !== kind)
+  hiddenKinds.hidden = on ? rest : [...rest, kind]
   settle()
   share()
 }

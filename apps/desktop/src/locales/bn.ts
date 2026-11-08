@@ -3749,4 +3749,16 @@ export const bn: Dictionary = {
     'Slack এই অ্যাপ-স্তরের টোকেন প্রত্যাখ্যান করেছে। Basic Information-এ connections:write সহ একটি টোকেন তৈরি করুন',
   'A Slack channel name needs a letter or a number':
     'Slack চ্যানেলের নামে একটি অক্ষর বা সংখ্যা থাকতে হবে',
+  Experimental: 'পরীক্ষামূলক',
+  'Enable experimental features': 'পরীক্ষামূলক ফিচার চালু করুন',
+  'Lets you turn on the features below, which are still being built.':
+    'নিচের যে ফিচারগুলো এখনও তৈরি হচ্ছে সেগুলো চালু করতে দেয়।',
+  'Turn on experimental features?': 'পরীক্ষামূলক ফিচার চালু করবেন?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'আপনি ১০০% বাগের মুখোমুখি হবেন। কী করছেন জানলে তবেই এগোন।',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'অ্যাপ্লিকেশন যোগ করে, আপনার অন্য কোনো কম্পিউটারের প্রোগ্রাম যা আপনি একটি ট্যাবে দেখেন ও চালান।',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'এই কম্পিউটারের ফোল্ডারের জন্য একটি ফাইল এক্সপ্লোরার যোগ করে, এবং ফোল্ডারে দেখান সেটি খোলে।',
+  '{name} is turned off, so its tabs were closed': '{name} বন্ধ, তাই এর ট্যাবগুলো বন্ধ করা হয়েছে',
 }

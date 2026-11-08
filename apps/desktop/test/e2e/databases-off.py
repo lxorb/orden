@@ -4,7 +4,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
-from harness import MOD, Drive
+from harness import MOD, Drive, experimental_on
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -66,7 +66,7 @@ def commands(page: Page, typed: str) -> list[str]:
 
 
 def switch(page: Page, on: bool) -> None:
-    page.evaluate("() => window.ordenApp.settings.show('general')")
+    experimental_on(page)
     row = page.locator(".orden-setting", has_text="Databases").first
     row.wait_for()
     row.scroll_into_view_if_needed()
@@ -130,7 +130,7 @@ def drive(browser: Browser) -> None:
     page.evaluate(WRITE, [[["Reading/Dune.md", DUNE], ["Library.md", LIBRARY], ["Shelf.base", SHELF]]])
     wait_for(page, "() => window.tasks.rows.of().some((one) => one.path === 'Reading/Dune.md')", "the seeded rows")
 
-    if page.evaluate("() => JSON.parse(localStorage.getItem('orden:hidden-kinds') ?? '[]')").count("shown-bases"):
+    if page.evaluate("() => JSON.parse(localStorage.getItem('orden:hidden-kinds') ?? '[]')").count("experimental-bases"):
         wrong("databases start on")
     off(page, "first run")
     quiet(page)

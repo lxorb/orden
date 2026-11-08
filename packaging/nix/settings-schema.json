@@ -201,6 +201,41 @@
     "default": false,
     "description": "Keeps the line you are writing in the middle of the screen."
   },
+  "experimental.applications": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds applications, programs on another of your computers that you see and use in a tab."
+  },
+  "experimental.chats": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages."
+  },
+  "experimental.databases": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files."
+  },
+  "experimental.enabled": {
+    "type": "boolean",
+    "default": false,
+    "description": "Lets you turn on the features below, which are still being built."
+  },
+  "experimental.explorer": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds a file explorer for the folders on this computer, and Show in folder opens it."
+  },
+  "experimental.passwordManager": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults."
+  },
+  "experimental.timeTracker": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds a timer and records the app, site and tab in front and how busy the computer is."
+  },
   "export.appearance": {
     "type": "string",
     "enum": [
@@ -246,11 +281,6 @@
     "default": true,
     "description": "The Add task shortcut works even while another app is in front."
   },
-  "general.chats": {
-    "type": "boolean",
-    "default": false,
-    "description": "Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages."
-  },
   "general.crashReports": {
     "type": "boolean",
     "default": true,
@@ -260,11 +290,6 @@
     "type": "boolean",
     "default": false,
     "description": "Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit."
-  },
-  "general.databases": {
-    "type": "boolean",
-    "default": false,
-    "description": "Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files."
   },
   "general.developerMode": {
     "type": "boolean",
@@ -398,11 +423,6 @@
     "default": "off",
     "description": "Unloads web pages that have been out of sight for a while to free memory; they load again when you return."
   },
-  "general.passwordManager": {
-    "type": "boolean",
-    "default": false,
-    "description": "Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults."
-  },
   "general.relockAfter": {
     "type": "string",
     "enum": [
@@ -488,11 +508,6 @@
     "default": true,
     "description": "Paints terminals in the theme’s colours; off keeps one fixed palette."
   },
-  "general.timeTracker": {
-    "type": "boolean",
-    "default": false,
-    "description": "Adds a timer and records the app, site and tab in front and how busy the computer is."
-  },
   "general.undatedInToday": {
     "type": "boolean",
     "default": false,
@@ -513,19 +528,9 @@
     "default": "running",
     "description": "Asks before Orden quits with terminals open: always, or only while something runs in one."
   },
-  "kinds.application": {
-    "type": "boolean",
-    "default": true,
-    "description": "Offers this type when you make something new; off only takes it out of that list."
-  },
   "kinds.canvas": {
     "type": "boolean",
     "default": true,
-    "description": "Offers this type when you make something new; off only takes it out of that list."
-  },
-  "kinds.explorer": {
-    "type": "boolean",
-    "default": false,
     "description": "Offers this type when you make something new; off only takes it out of that list."
   },
   "kinds.note": {

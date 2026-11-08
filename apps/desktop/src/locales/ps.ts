@@ -3751,4 +3751,16 @@ export const ps: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack دا د اپ کچې ټوکن رد کړ. په Basic Information کې یو د connections:write سره جوړ کړئ',
   'A Slack channel name needs a letter or a number': 'د Slack د چینل نوم یو توری یا شمېره غواړي',
+  Experimental: 'ازمایښتي',
+  'Enable experimental features': 'ازمایښتي ځانګړنې فعالې کړئ',
+  'Lets you turn on the features below, which are still being built.':
+    'تاسو ته اجازه درکوي چې لاندې ځانګړنې چې لا جوړېږي، چالانې کړئ.',
+  'Turn on experimental features?': 'ازمایښتي ځانګړنې چالانې شي؟',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'تاسو به سل په سلو کې له تېروتنو سره مخ شئ. یوازې هغه وخت مخکې لاړ شئ چې پوهېږئ څه کوئ.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'اپلیکېشنونه ورزیاتوي، ستاسو د بل کمپیوټر پروګرامونه چې په یوه ټب کې یې وینئ او کاروئ.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'د دې کمپیوټر د فولډرونو لپاره د فایل لټوونکی ورزیاتوي، او په فولډر کې ښودل یې پرانیزي.',
+  '{name} is turned off, so its tabs were closed': '{name} بند دی، نو د هغه ټبونه وتړل شول',
 }

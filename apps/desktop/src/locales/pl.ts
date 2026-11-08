@@ -3898,4 +3898,17 @@ export const pl: Dictionary = {
     'Slack odrzucił ten token aplikacji. Wygeneruj nowy z connections:write w Basic Information',
   'A Slack channel name needs a letter or a number':
     'Nazwa kanału Slack musi zawierać literę lub cyfrę',
+  Experimental: 'Eksperymentalne',
+  'Enable experimental features': 'Włącz funkcje eksperymentalne',
+  'Lets you turn on the features below, which are still being built.':
+    'Pozwala włączyć poniższe funkcje, które wciąż są w budowie.',
+  'Turn on experimental features?': 'Włączyć funkcje eksperymentalne?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Na 100% trafisz na błędy. Kontynuuj tylko, jeśli wiesz, co robisz.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Dodaje aplikacje, programy na innym z twoich komputerów, które widzisz i obsługujesz w karcie.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Dodaje eksplorator plików dla folderów na tym komputerze, a Pokaż w folderze go otwiera.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} jest wyłączone, więc jego karty zostały zamknięte',
 }

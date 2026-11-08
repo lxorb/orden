@@ -31,8 +31,9 @@ vi.mock('./remote/picker.svelte', () => ({
 }))
 
 const { kindLines, newKinds } = await import('./new-kinds')
-const { hiddenKinds, PASS_WORD } = await import('./settings.svelte')
-hiddenKinds.hidden = [PASS_WORD]
+const { APPS_WORD, EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, PASS_WORD } =
+  await import('./settings.svelte')
+hiddenKinds.hidden = [EXPERIMENTAL_WORD, APPS_WORD, EXPLORER_WORD, PASS_WORD]
 
 const terminalKind = () => newKinds().find((one) => one.kind === 'terminal')
 const { workspace } = await import('./workspace.svelte')
@@ -52,13 +53,13 @@ describe('a terminal, as a kind a new tab can be', () => {
     ])
   })
 
-  test('is left out, with Remote and Online, for somebody who does not write code', async () => {
+  test('is left out, with Remote and Online, for somebody who does not write code, applications staying', async () => {
     const { modes } = await import('./modes.svelte')
     modes.developer = false
     try {
       expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
         ['note', 'canvas', 'pages'],
-        ['explorer', 'pass'],
+        ['application', 'explorer', 'pass'],
         ['web', 'private'],
       ])
     } finally {

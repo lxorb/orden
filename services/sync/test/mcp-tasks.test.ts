@@ -68,7 +68,7 @@ async function basesTurned(on: boolean) {
   await call(env, '/v1/settings', {
     method: 'PATCH',
     token,
-    body: { hiddenKinds: on ? ['shown-bases'] : null },
+    body: { hiddenKinds: on ? ['experimental', 'experimental-bases'] : null },
   })
 }
 

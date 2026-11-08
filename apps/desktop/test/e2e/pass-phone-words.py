@@ -97,7 +97,7 @@ def look(browser: Browser, language: str) -> None:
         reduced_motion="reduce",
     )
     context.add_init_script(
-        "localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-pass']));"
+        "localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-pass']));"
         f" localStorage.setItem('orden:language', {language!r})"
     )
     page = context.new_page()

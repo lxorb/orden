@@ -68,7 +68,7 @@ const { configurePass, PassStore } = await import('./store.svelte')
 const { Autofill } = await import('./autofill')
 const { passBubbles } = await import('./fill-bubbles.svelte')
 const { FLOW_WINDOW } = await import('./sign-in-flow')
-const { hiddenKinds, PASS_WORD } = await import('../settings.svelte')
+const { EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('../settings.svelte')
 
 configurePass({ kdf: { m: 64, t: 1, p: 1 }, pinKdf: { m: 64, t: 1, p: 1 } })
 
@@ -165,7 +165,7 @@ beforeEach(async () => {
   heard.fills = true
   heard.aliasFor = []
   clock = 59_000
-  hiddenKinds.hidden = [PASS_WORD]
+  hiddenKinds.hidden = [EXPERIMENTAL_WORD, PASS_WORD]
   passBubbles.clear(TAB)
   store = new PassStore()
   await store.start()
@@ -732,7 +732,7 @@ describe('with the password manager turned off in Settings', () => {
     const autofill = made()
     hiddenKinds.hidden = []
     store.lock()
-    hiddenKinds.hidden = [PASS_WORD]
+    hiddenKinds.hidden = [EXPERIMENTAL_WORD, PASS_WORD]
     expect(await store.unlock({ password: 'correct horse battery staple' })).toBe(true)
     store.setSetting('autoLogin', false)
     await marked(frameAt(`${BANK}/login`), 'login', ['username', 'password'])

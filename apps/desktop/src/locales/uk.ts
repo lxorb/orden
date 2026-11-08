@@ -3897,4 +3897,16 @@ export const uk: Dictionary = {
     'Slack відхилив цей токен застосунку. Створіть новий із connections:write у розділі Basic Information',
   'A Slack channel name needs a letter or a number':
     'Назва каналу Slack має містити літеру або цифру',
+  Experimental: 'Експериментальне',
+  'Enable experimental features': 'Увімкнути експериментальні функції',
+  'Lets you turn on the features below, which are still being built.':
+    'Дає змогу ввімкнути функції нижче, які ще в розробці.',
+  'Turn on experimental features?': 'Увімкнути експериментальні функції?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Ви на 100% натрапите на помилки. Продовжуйте, лише якщо знаєте, що робите.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Додає застосунки: програми на іншому вашому комп’ютері, які ви бачите й використовуєте у вкладці.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Додає провідник для папок цього комп’ютера, і «Показати в папці» відкриває його.',
+  '{name} is turned off, so its tabs were closed': '{name} вимкнено, тому його вкладки закрито',
 }

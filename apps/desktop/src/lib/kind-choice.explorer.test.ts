@@ -31,11 +31,13 @@ vi.mock('./explorer/open', () => ({
   },
 }))
 
-const { hiddenKinds, kindsHere, KINDS_KEY } = await import('./settings.svelte')
-const { receive, setKind } = await import('./kind-choice')
+const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, kindsHere, KINDS_KEY } =
+  await import('./settings.svelte')
+const { receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds } = await import('./new-kinds')
 const { kindOfLetter } = await import('./new-kind-keys')
 const { kindsPane } = await import('./settings/kinds-pane')
+const { experimentalPane } = await import('./settings/experimental-pane')
 const { BY_ID } = await import('./shortcuts/registry')
 const { account } = await import('./account.svelte')
 const { viewport } = await import('./viewport.svelte')
@@ -51,6 +53,7 @@ beforeEach(() => {
   store.clear()
   saved.length = 0
   opened.length = 0
+  store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD]))
   hiddenKinds.restore()
 })
 
@@ -60,9 +63,9 @@ afterEach(() => {
 })
 
 function field() {
-  const found = kindsPane()
+  const found = experimentalPane()
     .groups.flatMap((group) => group.fields)
-    .find((one) => one.key === 'kinds.explorer')
+    .find((one) => one.key === 'experimental.explorer')
   if (found?.kind !== 'switch') throw new Error('no switch for the file explorer')
   return found
 }
@@ -76,14 +79,20 @@ async function pressed() {
   return opened.length > 0
 }
 
-describe('the file explorer, as a kind a new tab can be', () => {
-  test('is on a desktop, but not offered until it is turned on', async () => {
-    expect(kindsHere()).toContain('explorer')
+describe('the file explorer, under Experimental', () => {
+  test('is not there until it is turned on, and not among the note types', async () => {
+    expect(kindsHere()).not.toContain('explorer')
     expect(hiddenKinds.offers('explorer')).toBe(false)
     expect(offered()).not.toContain('explorer')
     expect(offered()).toContain('note')
     expect(lettered()).toBeNull()
     expect(await pressed()).toBe(false)
+    setWord(EXPLORER_WORD, true)
+    expect(
+      kindsPane()
+        .groups.flatMap((group) => group.fields)
+        .map((one) => one.key),
+    ).not.toContain('kinds.explorer')
   })
 
   test('shows in Settings as off, and off is its default', () => {
@@ -92,8 +101,8 @@ describe('the file explorer, as a kind a new tab can be', () => {
     expect(field().locked?.()).toBe(false)
   })
 
-  test('stays off for a reader who chose other kinds before', () => {
-    store.set(KINDS_KEY, JSON.stringify(['canvas']))
+  test('stays off for a reader who had it on before it was experimental', () => {
+    store.set(KINDS_KEY, JSON.stringify(['canvas', 'shown-explorer']))
     hiddenKinds.restore()
 
     expect(hiddenKinds.offers('explorer')).toBe(false)
@@ -110,9 +119,9 @@ describe('the file explorer, as a kind a new tab can be', () => {
     expect(await pressed()).toBe(true)
   })
 
-  test('stays on for the next run, and goes back to nothing stored when off', () => {
+  test('stays on for the next run, and goes when turned off', () => {
     field().set(true)
-    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual(['shown-explorer'])
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD, EXPLORER_WORD])
 
     hiddenKinds.hidden = []
     hiddenKinds.restore()
@@ -120,30 +129,32 @@ describe('the file explorer, as a kind a new tab can be', () => {
 
     field().set(false)
     expect(hiddenKinds.offers('explorer')).toBe(false)
-    expect(store.has(KINDS_KEY)).toBe(false)
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD])
   })
 
   test('keeps what else the reader chose when it is turned on and off', () => {
-    store.set(KINDS_KEY, JSON.stringify(['canvas', 'explorer']))
+    store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD, 'canvas']))
     hiddenKinds.restore()
 
-    setKind('explorer', true)
-    expect(hiddenKinds.hidden).toEqual(['canvas', 'shown-explorer'])
+    field().set(true)
+    expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD, 'canvas', EXPLORER_WORD])
     expect(hiddenKinds.offers('canvas')).toBe(false)
-
     setKind('explorer', false)
-    expect(hiddenKinds.hidden).toEqual(['canvas'])
+    expect(hiddenKinds.offers('explorer')).toBe(true)
+
+    field().set(false)
+    expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD, 'canvas'])
   })
 
   test('is told to the account, and followed from it', () => {
     token = 'token'
-    setKind('explorer', true)
-    expect(saved).toEqual([{ hiddenKinds: ['shown-explorer'] }])
+    field().set(true)
+    expect(saved).toEqual([{ hiddenKinds: [EXPERIMENTAL_WORD, EXPLORER_WORD] }])
 
     receive({ hiddenKinds: null })
     expect(hiddenKinds.offers('explorer')).toBe(false)
 
-    receive({ hiddenKinds: ['web', 'shown-explorer'] })
+    receive({ hiddenKinds: ['web', EXPERIMENTAL_WORD, EXPLORER_WORD] })
     expect(hiddenKinds.offers('explorer')).toBe(true)
     expect(hiddenKinds.offers('web')).toBe(false)
   })

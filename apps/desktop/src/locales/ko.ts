@@ -3649,4 +3649,16 @@ export const ko: Dictionary = {
     'Slack이 이 앱 수준 토큰을 거부했습니다. Basic Information에서 connections:write가 있는 토큰을 생성하세요',
   'A Slack channel name needs a letter or a number':
     'Slack 채널 이름에는 글자나 숫자가 있어야 합니다',
+  Experimental: '실험 기능',
+  'Enable experimental features': '실험 기능 사용',
+  'Lets you turn on the features below, which are still being built.':
+    '아직 만들고 있는 아래 기능을 켤 수 있습니다.',
+  'Turn on experimental features?': '실험 기능을 켤까요?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    '100% 버그를 겪게 됩니다. 무엇을 하는지 알 때만 계속하세요.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    '애플리케이션을 추가합니다. 다른 컴퓨터의 프로그램을 탭에서 보고 사용합니다.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    '이 컴퓨터의 폴더를 위한 파일 탐색기를 추가하며, 폴더에서 보기가 이를 엽니다.',
+  '{name} is turned off, so its tabs were closed': '{name}이(가) 꺼져 있어 해당 탭을 닫았습니다',
 }

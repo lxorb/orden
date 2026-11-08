@@ -8,6 +8,7 @@ import { markdownPane } from './settings/markdown-pane'
 import { appearancePane } from './settings/appearance-pane'
 import { glassesPanes } from './settings/glasses-pane'
 import { exportPane } from './settings/export-pane'
+import { experimentalPane } from './settings/experimental-pane'
 import type { Pane } from './settings/fields'
 import { declared } from './settings/declared.svelte'
 
@@ -43,6 +44,7 @@ export function declaredPanes(view?: EditorView): Pane[] {
     markdownPane(view),
     appearancePane(),
     ...glassesPanes(),
+    experimentalPane(),
     exportPane(),
   ]
 }

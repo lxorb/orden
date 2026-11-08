@@ -3738,4 +3738,16 @@ export const gu: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack એ આ ઍપ-સ્તર ટોકન નકાર્યો. Basic Information માં connections:write સાથે ટોકન બનાવો',
   'A Slack channel name needs a letter or a number': 'Slack ચૅનલના નામમાં અક્ષર અથવા અંક હોવો જોઈએ',
+  Experimental: 'પ્રાયોગિક',
+  'Enable experimental features': 'પ્રાયોગિક સુવિધાઓ ચાલુ કરો',
+  'Lets you turn on the features below, which are still being built.':
+    'નીચેની સુવિધાઓ ચાલુ કરવા દે છે, જે હજુ બની રહી છે.',
+  'Turn on experimental features?': 'પ્રાયોગિક સુવિધાઓ ચાલુ કરવી છે?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'તમને 100% બગ મળશે. તમે શું કરી રહ્યા છો તે જાણતા હો તો જ આગળ વધો.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'ઍપ્લિકેશન ઉમેરે છે, તમારા બીજા કમ્પ્યુટરના પ્રોગ્રામ જે તમે એક ટૅબમાં જુઓ અને વાપરો છો.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'આ કમ્પ્યુટરના ફોલ્ડર માટે ફાઇલ એક્સપ્લોરર ઉમેરે છે, અને ફોલ્ડરમાં બતાવો તેને ખોલે છે.',
+  '{name} is turned off, so its tabs were closed': '{name} બંધ છે, તેથી તેની ટૅબ બંધ કરાઈ',
 }
