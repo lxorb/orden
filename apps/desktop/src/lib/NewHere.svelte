@@ -35,13 +35,23 @@
 
   let element = $state<HTMLElement>()
 
-  $effect(() => {
-    if (chosenOn !== undefined || workspace.panes.focusedId !== paneId) return
-
+  function taken(): boolean {
     const at = document.activeElement
-    if (at && at !== document.body && !element?.contains(at)) return
+    if (at && at !== document.body && !element?.contains(at)) return false
 
     element?.querySelector('button')?.focus()
+    return true
+  }
+
+  $effect(() => {
+    if (chosenOn !== undefined || workspace.panes.focusedId !== paneId) return
+    if (taken()) return
+
+    const until = performance.now() + 1000
+    let frame = requestAnimationFrame(function again() {
+      if (!taken() && performance.now() < until) frame = requestAnimationFrame(again)
+    })
+    return () => cancelAnimationFrame(frame)
   })
 
   function hears(): boolean {

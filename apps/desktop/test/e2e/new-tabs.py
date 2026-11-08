@@ -92,7 +92,11 @@ HERE = """
 
   return {
     buttons: buttons.map((one) => one.querySelector('.orden-row-label')?.textContent.trim()),
-    on: document.activeElement?.querySelector('.orden-row-label')?.textContent.trim() ?? null,
+    on: (() => {
+      const at = document.activeElement
+      if (!at || at === document.body) return null
+      return at.querySelector('.orden-row-label')?.textContent.trim() ?? at.tagName.toLowerCase()
+    })(),
     // Each mark's artwork in its own 24 unit grid: where it starts down the box and
     // how much of it it fills. Read off the drawing with `getBBox` rather than off
     // the screen, so it is the ink and not the stroke around it. This is twice the
@@ -389,6 +393,7 @@ def nothing_open(page) -> None:
     else:
         say("every tab closed       -> nothing open, and nothing made")
 
+    settles(page, "() => !!document.activeElement?.closest('[data-new-here]')")
     here = page.evaluate(HERE)
     if here["buttons"] != [one for line in LINES for one in line]:
         wrong(f"the empty pane does not offer the kinds: {here['buttons']}")
