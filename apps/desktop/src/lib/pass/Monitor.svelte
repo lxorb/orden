@@ -201,7 +201,7 @@
             <span class="line">{card.line}</span>
           </span>
           {@render counted(card.ids.length)}
-          {#if card.ids.length}<Glyph icon={ChevronRight} class="chevron" />{/if}
+          {#if card.ids.length}<Glyph icon={ChevronRight} class="chevron orden-mirror" />{/if}
         </button>
       </div>
     {/each}

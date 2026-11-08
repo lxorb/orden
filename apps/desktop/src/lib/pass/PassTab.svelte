@@ -214,7 +214,7 @@
                 title={t('Back')}
                 onclick={() => (ui.column = 'side')}
               >
-                <Glyph icon={ArrowLeft} />
+                <Glyph icon={ArrowLeft} class="orden-mirror" />
               </button>
               <div class="wide-body">{@render wideColumn()}</div>
             </div>

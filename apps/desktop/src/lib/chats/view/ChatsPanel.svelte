@@ -537,7 +537,7 @@
     {/if}
   {:else}
     <button type="button" class="orden-row back" onclick={() => (showing = 'chats')}>
-      <span class="orden-row-mark"><Glyph name="left" /></span>
+      <span class="orden-row-mark orden-mirror"><Glyph name="left" /></span>
       <span class="orden-row-label">{showing === 'activity' ? t('Activity') : t('Saved')}</span>
     </button>
     {#if showing === 'activity'}

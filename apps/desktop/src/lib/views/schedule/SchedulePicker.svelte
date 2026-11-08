@@ -256,7 +256,8 @@
         type="button"
         class="orden-glyph step"
         aria-label={t('Previous month')}
-        onclick={() => (month = addMonths(month, -1))}><Glyph icon={ChevronLeft} /></button
+        onclick={() => (month = addMonths(month, -1))}
+        ><Glyph icon={ChevronLeft} class="orden-mirror" /></button
       >
       <button
         type="button"
@@ -268,7 +269,8 @@
         type="button"
         class="orden-glyph step"
         aria-label={t('Next month')}
-        onclick={() => (month = addMonths(month, 1))}><Glyph icon={ChevronRight} /></button
+        onclick={() => (month = addMonths(month, 1))}
+        ><Glyph icon={ChevronRight} class="orden-mirror" /></button
       >
     </div>
     <div class="grid" role="grid">
