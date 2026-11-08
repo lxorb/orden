@@ -3870,4 +3870,6 @@ export const ptBR: Dictionary = {
       other:
         '{count} itens ainda estão protegidos. Eles continuam bloqueados; remova a proteção deles primeiro para tirá-la.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Mostra suas notas e tarefas nos óculos Even Realities e aceita comandos falados.',
 }

@@ -3833,4 +3833,6 @@ export const ha: Dictionary = {
       other:
         'Abubuwa {count} har yanzu suna da kariya. Za su kasance a kulle; cire musu kariya tukuna don cire kariyar.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Yana nuna bayananka da ayyukanka a gilashin Even Realities kuma yana karɓar umarnin da aka faɗa.',
 }

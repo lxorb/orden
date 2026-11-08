@@ -3853,4 +3853,6 @@ export const de: Dictionary = {
       other:
         '{count} Elemente sind noch geschützt. Sie bleiben gesperrt; heb zuerst ihren Schutz auf, um den Schutz zu entfernen.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Zeigt deine Notizen und Aufgaben auf der Even-Realities-Brille und nimmt gesprochene Befehle an.',
 }

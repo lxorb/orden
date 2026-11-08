@@ -3839,4 +3839,6 @@ export const ml: Dictionary = {
       other:
         '{count} ഇനങ്ങൾ ഇപ്പോഴും സംരക്ഷിതമാണ്. അവ ലോക്ക് ചെയ്തുതന്നെ ഇരിക്കും; സംരക്ഷണം നീക്കാൻ ആദ്യം അവയുടെ സംരക്ഷണം എടുത്തുമാറ്റുക.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities കണ്ണടയിൽ നിങ്ങളുടെ കുറിപ്പുകളും ജോലികളും കാണിക്കുകയും സംസാരിച്ച കമാൻഡുകൾ സ്വീകരിക്കുകയും ചെയ്യുന്നു.',
 }

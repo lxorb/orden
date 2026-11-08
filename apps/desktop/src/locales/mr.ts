@@ -3778,4 +3778,6 @@ export const mr: Dictionary = {
       other:
         '{count} आयटम अजून संरक्षित आहेत. ते लॉक राहतील; संरक्षण काढण्यासाठी आधी त्यांचे संरक्षण हटवा.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities चष्म्यावर तुमच्या नोट्स आणि कामे दाखवते आणि बोललेल्या आज्ञा घेते.',
 }

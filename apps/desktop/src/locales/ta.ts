@@ -3854,4 +3854,6 @@ export const ta: Dictionary = {
       other:
         '{count} உருப்படிகள் இன்னும் பாதுகாக்கப்பட்டுள்ளன. அவை பூட்டியே இருக்கும்; பாதுகாப்பை நீக்க முதலில் அவற்றின் பாதுகாப்பை அகற்றவும்.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities கண்ணாடியில் உங்கள் குறிப்புகளையும் பணிகளையும் காட்டி, பேசும் கட்டளைகளை ஏற்கிறது.',
 }

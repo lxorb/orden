@@ -3893,4 +3893,6 @@ export const es: Dictionary = {
       other:
         '{count} elementos siguen protegidos. Siguen bloqueados; quítales la protección primero para eliminarla.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Muestra tus notas y tareas en las gafas Even Realities y acepta órdenes habladas.',
 }

@@ -1,6 +1,5 @@
 import { account } from '../account.svelte'
 import { modes } from '../modes.svelte'
-import { isPlugin } from '../plugin'
 import { t } from '../i18n.svelte'
 import type { Section } from '../settings.svelte'
 import { isDesktop } from '../tauri'
@@ -62,9 +61,6 @@ export function sectionGroups(): Item[][] {
         : []),
       ...(!__EVEN_PLUGIN__ && account.user && modes.coder
         ? [{ id: 'online' as Section, label: t('Online terminal') }]
-        : []),
-      ...(isPlugin() || modes.glassesSeen
-        ? [{ id: 'glasses' as Section, label: t('Glasses') }]
         : []),
       { id: 'experimental', label: t('Experimental') },
     ],

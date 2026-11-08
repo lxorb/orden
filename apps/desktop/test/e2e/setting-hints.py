@@ -31,7 +31,7 @@ UNEXPLAINED = """
 
 def every_pane(page: Page) -> None:
     ids = ["general", "editor", "kinds", "shortcuts", "mobile", "spelling", "markdown", "appearance",
-           "ai", "glasses", "export", "sync", "account", "trash", "import"]
+           "ai", "experimental", "export", "sync", "account", "trash", "import"]
     counted = 0
     for section in ids:
         page.evaluate("(id) => window.ordenApp.settings.show(id)", section)
@@ -109,7 +109,6 @@ def drive(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          window.ordenApp.modes.glassesSeen = true
           window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' }
         }"""
     )

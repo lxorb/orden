@@ -26,7 +26,7 @@
   import { holdScroll } from './kept-scroll'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
-  import { settings, type Section } from './settings.svelte'
+  import { glassesOn, settings, type Section } from './settings.svelte'
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
   import './views/task-keys'
   import { runnable } from './shortcuts/registry'
@@ -838,7 +838,7 @@
       {@render dictionary()}
     {/if}
 
-    {#if settings.section === 'glasses'}
+    {#if settings.section === 'experimental' && glassesOn()}
       {@render glassesExtras()}
     {/if}
 

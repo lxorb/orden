@@ -3764,4 +3764,6 @@ export const gu: Dictionary = {
       other:
         '{count} આઇટમ હજુ સુરક્ષિત છે. તે લૉક રહેશે; સુરક્ષા દૂર કરવા પહેલાં તેમની સુરક્ષા હટાવો.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities ચશ્માં પર તમારી નોંધો અને કાર્યો બતાવે છે અને બોલેલા આદેશો લે છે.',
 }

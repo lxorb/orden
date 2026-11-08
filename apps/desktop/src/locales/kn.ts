@@ -3825,4 +3825,6 @@ export const kn: Dictionary = {
       other:
         '{count} ಐಟಂಗಳು ಇನ್ನೂ ರಕ್ಷಿತವಾಗಿವೆ. ಅವು ಲಾಕ್ ಆಗಿಯೇ ಇರುತ್ತವೆ; ರಕ್ಷಣೆ ತೆಗೆಯಲು ಮೊದಲು ಅವುಗಳ ರಕ್ಷಣೆ ತೆಗೆಯಿರಿ.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities ಕನ್ನಡಕದಲ್ಲಿ ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳು ಮತ್ತು ಕಾರ್ಯಗಳನ್ನು ತೋರಿಸುತ್ತದೆ ಮತ್ತು ಮಾತಿನ ಆಜ್ಞೆಗಳನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
 }

@@ -3967,4 +3967,6 @@ export const ar: Dictionary = {
       many: 'لا يزال {count} عنصرًا محميًا. تبقى مقفلة؛ أزل حمايتها أولًا لإزالة الحماية.',
       other: 'لا يزال {count} عنصر محميًا. تبقى مقفلة؛ أزل حمايتها أولًا لإزالة الحماية.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'يعرض ملاحظاتك ومهامك على نظارات Even Realities ويتلقى الأوامر المنطوقة.',
 }

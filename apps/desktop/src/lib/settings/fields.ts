@@ -131,7 +131,6 @@ type PaneId =
   | 'spelling'
   | 'markdown'
   | 'appearance'
-  | 'glasses'
   | 'experimental'
   | 'export'
 

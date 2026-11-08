@@ -26,7 +26,6 @@ export type Section =
   | 'spelling'
   | 'markdown'
   | 'appearance'
-  | 'glasses'
   | 'experimental'
   | 'ai'
   | 'agents'
@@ -252,6 +251,7 @@ export const EXPLORER_WORD = 'experimental-explorer'
 export const PASS_WORD = 'experimental-pass'
 export const TIME_WORD = 'experimental-time'
 export const BASES_WORD = 'experimental-bases'
+export const GLASSES_WORD = 'experimental-glasses'
 
 export function chatsOn(): boolean {
   return !__EVEN_PLUGIN__ && tried(CHATS_WORD)
@@ -277,4 +277,8 @@ export function timeOn(): boolean {
 
 export function basesOn(): boolean {
   return tried(BASES_WORD)
+}
+
+export function glassesOn(): boolean {
+  return tried(GLASSES_WORD)
 }

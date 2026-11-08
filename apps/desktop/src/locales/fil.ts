@@ -3859,4 +3859,6 @@ export const fil: Dictionary = {
       other:
         '{count} item ang protektado pa. Mananatili silang naka-lock; alisin muna ang proteksyon nila para tanggalin ang proteksyon.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Ipinapakita ang iyong mga note at gawain sa Even Realities glasses at tumatanggap ng mga sinasabing utos.',
 }

@@ -3715,4 +3715,6 @@ export const id: Dictionary = {
   'Turn off protection?': 'Matikan perlindungan?',
   '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
     '{count} item masih dilindungi. Item itu tetap terkunci; lepaskan dulu perlindungannya untuk menghapus perlindungan.',
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Menampilkan catatan dan tugas Anda di kacamata Even Realities dan menerima perintah suara.',
 }

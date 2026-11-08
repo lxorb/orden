@@ -3639,4 +3639,6 @@ export const th: Dictionary = {
   'Turn off protection?': 'ปิดการป้องกันไหม',
   '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
     'ยังมี {count} รายการที่ป้องกันอยู่ รายการเหล่านั้นยังคงล็อก ให้ยกเลิกการป้องกันก่อนเพื่อเอาการป้องกันออก',
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'แสดงโน้ตและงานของคุณบนแว่น Even Realities และรับคำสั่งเสียง',
 }

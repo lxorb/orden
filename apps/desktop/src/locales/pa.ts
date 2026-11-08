@@ -3793,4 +3793,6 @@ export const pa: Dictionary = {
       other:
         '{count} ਆਈਟਮਾਂ ਅਜੇ ਵੀ ਸੁਰੱਖਿਅਤ ਹਨ। ਇਹ ਲੌਕ ਰਹਿਣਗੀਆਂ; ਸੁਰੱਖਿਆ ਹਟਾਉਣ ਲਈ ਪਹਿਲਾਂ ਇਨ੍ਹਾਂ ਦੀ ਸੁਰੱਖਿਆ ਹਟਾਓ।',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities ਐਨਕਾਂ ਉੱਤੇ ਤੁਹਾਡੇ ਨੋਟ ਅਤੇ ਕੰਮ ਦਿਖਾਉਂਦਾ ਹੈ ਅਤੇ ਬੋਲੇ ਹੁਕਮ ਲੈਂਦਾ ਹੈ।',
 }

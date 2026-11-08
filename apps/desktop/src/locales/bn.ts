@@ -3775,4 +3775,6 @@ export const bn: Dictionary = {
       other:
         '{count}টি আইটেম এখনও সুরক্ষিত। এগুলো লক থাকবে; সুরক্ষা সরাতে আগে এগুলোর সুরক্ষা তুলে নিন।',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities চশমায় আপনার নোট ও কাজ দেখায় এবং মুখে বলা কমান্ড নেয়।',
 }
