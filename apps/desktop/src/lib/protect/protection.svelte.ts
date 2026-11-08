@@ -272,6 +272,21 @@ export class Protection {
     if (changed) this.put(root, next)
   }
 
+  copied(from: string, to: string, root: string | null, into: string | null): void {
+    if (root === null || into === null) return
+    const was = relativeTo(root, from)
+    const now = relativeTo(into, to)
+    if (!insideItsSpace(now)) return
+    const came: Record<string, Way> = {}
+    for (const [key, way] of Object.entries(this.ways(root))) {
+      const at = key === SPACE ? null : movedTo(key, was, now, root)
+      if (at !== null) came[at] = way
+    }
+    const above = this.covering(from).find((one) => one.key !== was)
+    if (!(now in came) && above && !this.covering(to).length) came[now] = above.way
+    if (Object.keys(came).length) this.put(into, { ...this.ways(into), ...came })
+  }
+
   gone(path: string, root: string | null): void {
     if (root === null) return
     const at = relativeTo(root, path)

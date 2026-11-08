@@ -33,7 +33,12 @@ export async function templates(): Promise<Entry[]> {
   if (root === undefined) return []
   const folder = joinPath(root, await templatesFolder(root))
   return workspace.notes
-    .filter((one) => /\.md$/i.test(one.name) && within(folder, one.path, root) !== null)
+    .filter(
+      (one) =>
+        /\.md$/i.test(one.name) &&
+        within(folder, one.path, root) !== null &&
+        !workspace.protection.locked(one.path),
+    )
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
@@ -60,6 +65,7 @@ export function templatePath(link: string, space = workspace.activeSpace): strin
 }
 
 export async function templateWords(path: string, title: string): Promise<string> {
+  if (workspace.protection.locked(path)) return ''
   const text = await workspace.noteText(path).catch(() => null)
   if (text === null) return ''
   const now = nowHere()

@@ -49,6 +49,7 @@ vi.mock('../workspace.svelte', async () => {
       fileCame: async () => undefined,
       open: async () => undefined,
       fileOps: { follow: () => undefined },
+      protection: { locked: () => false },
     },
   }
 })

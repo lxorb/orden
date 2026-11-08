@@ -105,6 +105,42 @@ describe('a protected path that moves', () => {
     expect(protection.ways(ROOT)).toEqual({ [SPACE]: 'password' })
   })
 
+  test('copied, leaves a copy that is as protected', () => {
+    protection.set(ROOT, at('Plans.md'), 'device')
+    protection.copied(at('Plans.md'), at('Plans copy.md'), ROOT, ROOT)
+    expect(protection.covering(at('Plans copy.md'))).toEqual([
+      { root: ROOT, key: 'Plans copy.md', way: 'device' },
+    ])
+  })
+
+  test('copied with what is protected inside it, keeps those protected in the copy', () => {
+    protection.set(ROOT, at('Trip/Diary.md'), 'password')
+    protection.copied(at('Trip'), `${OTHER}/Trip`, ROOT, OTHER)
+    expect(protection.covering(`${OTHER}/Trip/Diary.md`)).toEqual([
+      { root: OTHER, key: 'Trip/Diary.md', way: 'password' },
+    ])
+    expect(protection.covering(`${OTHER}/Trip/Packing.md`)).toEqual([])
+  })
+
+  test('copied out from under a protected folder or space, stays protected', () => {
+    protection.set(ROOT, at('Diary'), 'password')
+    protection.set(OTHER, OTHER, 'device')
+    protection.copied(at('Diary/Monday.md'), at('Monday.md'), ROOT, ROOT)
+    expect(protection.covering(at('Monday.md'))).toEqual([
+      { root: ROOT, key: 'Monday.md', way: 'password' },
+    ])
+    protection.copied(`${OTHER}/Plans.md`, at('Plans.md'), OTHER, ROOT)
+    expect(protection.covering(at('Plans.md'))).toEqual([
+      { root: ROOT, key: 'Plans.md', way: 'device' },
+    ])
+  })
+
+  test('copied beside itself under the same lock, adds no lock of its own', () => {
+    protection.set(ROOT, at('Diary'), 'password')
+    protection.copied(at('Diary/Monday.md'), at('Diary/Monday copy.md'), ROOT, ROOT)
+    expect(protection.ways(ROOT)).toEqual({ Diary: 'password' })
+  })
+
   test('with its space renamed follows the space', () => {
     protection.set(ROOT, at('Inside'), 'password')
     protection.spaceMoved(ROOT, '/renamed')
