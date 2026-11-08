@@ -168,32 +168,39 @@ const PRESSED_IN: &str = "orden-pressed";
 const BLOCKED: &str = "orden-popup-blocked";
 
 pub const PAGE_SCRIPT: &str = r"(function () {
-  if (typeof Proxy !== 'function') return
+  if (typeof Proxy !== 'function' || typeof WeakSet !== 'function') return
   var ours = true
+  var apply = Reflect.apply
+  var now = Date.now
+  var described = Object.getOwnPropertyDescriptor
+  var define = Object.defineProperty
+  var seen = new WeakSet()
+  var saw = WeakSet.prototype.has.bind(seen)
+  var see = WeakSet.prototype.add.bind(seen)
   var pressed = -1
   var spending = {}
-  ;['keydown', 'mousedown', 'pointerdown', 'pointerup', 'touchend', 'click'].forEach(function (type) {
-    window.addEventListener(type, function (event) {
-      if (event.isTrusted) pressed = Date.now()
-    }, true)
-  })
-  function spent(kind) {
-    var fresh = pressed >= 0 && Date.now() - pressed < 5000 && spending[kind] !== pressed
-    var engine = kind !== 'open' || !navigator.userActivation || navigator.userActivation.isActive
-    if (fresh && engine) spending[kind] = pressed
-    return fresh && engine
+  function getter(kind, name) {
+    var one = typeof window[kind] === 'function' ? described(window[kind].prototype, name) : null
+    return one && typeof one.get === 'function' ? one.get : null
   }
-  function gated(owner, name, kind, refuse) {
-    var was = owner ? Object.getOwnPropertyDescriptor(owner, name) : null
-    if (!was || typeof was.value !== 'function') return
-    was.value = new Proxy(was.value, {
-      apply: function (engine, self, args) {
-        var asked = typeof kind === 'function' ? kind(self, args) : kind
-        if (!asked || spent(asked)) return Reflect.apply(engine, self, args)
-        return refuse(self, args)
-      }
-    })
-    Object.defineProperty(owner, name, was)
+  function read(get, one) {
+    try { return get ? apply(get, one, []) : undefined } catch (e) { return undefined }
+  }
+  var named = getter('Element', 'localName')
+  var typed = getter('HTMLInputElement', 'type')
+  var labelled = getter('HTMLLabelElement', 'control')
+  var holders = [getter('HTMLIFrameElement', 'contentWindow'), getter('HTMLFrameElement', 'contentWindow'), getter('HTMLObjectElement', 'contentWindow')]
+  function filed(one) {
+    if (read(named, one) === 'label') one = read(labelled, one)
+    return read(named, one) === 'input' && String(read(typed, one)).toLowerCase() === 'file'
+  }
+  function held(one) {
+    if (!/^(iframe|frame|object)$/.test(read(named, one))) return null
+    for (var i = 0; i < holders.length; i++) {
+      var inner = read(holders[i], one)
+      if (inner) return inner
+    }
+    return null
   }
   function denied(name) {
     try { return new DOMException('A press or a key in the page comes first.', name) } catch (e) { return new Error(name) }
@@ -201,51 +208,122 @@ pub const PAGE_SCRIPT: &str = r"(function () {
   function rejecting(name) {
     return function () { return Promise.reject(denied(name)) }
   }
-  function prototype(kind) {
-    return typeof window[kind] === 'function' ? window[kind].prototype : null
-  }
-  function filed(one) {
-    if (window.HTMLLabelElement && one instanceof HTMLLabelElement) one = one.control
-    return !!window.HTMLInputElement && one instanceof HTMLInputElement && String(one.type).toLowerCase() === 'file'
-  }
-  ;['requestFullscreen', 'webkitRequestFullscreen', 'webkitRequestFullScreen'].forEach(function (name) {
-    gated(prototype('Element'), name, 'fullscreen', function (self) {
-      try { self.dispatchEvent(new Event('fullscreenerror', { bubbles: true, composed: true })) } catch (e) {}
-      return name === 'requestFullscreen' ? Promise.reject(new TypeError('Permissions check failed')) : undefined
-    })
-  })
-  gated(prototype('Clipboard'), 'writeText', 'clipboard', rejecting('NotAllowedError'))
-  gated(prototype('Clipboard'), 'write', 'clipboard', rejecting('NotAllowedError'))
-  gated(prototype('Document'), 'execCommand', function (self, args) {
-    return /^(copy|cut)$/i.test(String(args[0])) ? 'copy' : null
-  }, function () { return false })
-  gated(prototype('HTMLElement'), 'click', function (self) {
-    return filed(self) ? 'picker' : null
-  }, function () {})
-  ;['HTMLInputElement', 'HTMLSelectElement'].forEach(function (kind) {
-    gated(prototype(kind), 'showPicker', 'picker', function () { throw denied('NotAllowedError') })
-  })
-  ;['showOpenFilePicker', 'showSaveFilePicker', 'showDirectoryPicker'].forEach(function (name) {
-    gated(window, name, 'picker', rejecting('SecurityError'))
-  })
-  gated(prototype('PaymentRequest'), 'show', 'payment', rejecting('SecurityError'))
-  gated(prototype('Navigator'), 'share', 'share', rejecting('NotAllowedError'))
-  gated(prototype('HTMLVideoElement'), 'requestPictureInPicture', 'picture', rejecting('NotAllowedError'))
-  gated(window.Notification, 'requestPermission', 'notifications', function (self, args) {
-    var answer = Notification.permission
-    if (typeof args[0] === 'function') setTimeout(function () { args[0](answer) })
-    return Promise.resolve(answer)
-  })
-
-  var open = window.open
-  if (typeof open !== 'function') return
   function said(kind, url) {
     var at = null
     try { at = String(new URL(url == null || url === '' ? 'about:blank' : String(url), location.href)) } catch (e) { return }
     window.dispatchEvent(new CustomEvent(kind, { detail: at }))
   }
-  window.open = new Proxy(open, {
-    apply: function (engine, self, args) {
+  function guard(win) {
+    try {
+      if (!win || saw(win)) return
+      see(win)
+      if (typeof win.Element !== 'function') return
+    } catch (e) { return }
+    function spent(kind) {
+      var at = apply(now, Date, [])
+      var fresh = pressed >= 0 && at - pressed < 5000 && spending[kind] !== pressed
+      var activation = win.navigator && win.navigator.userActivation
+      var engine = kind !== 'open' || !activation || activation.isActive
+      if (fresh && engine) spending[kind] = pressed
+      return fresh && engine
+    }
+    function wrapped(engine, after) {
+      return new Proxy(engine, {
+        apply: function (engine, self, args) { return after(engine, self, args) }
+      })
+    }
+    function gated(owner, name, kind, refuse) {
+      var was = owner ? described(owner, name) : null
+      if (!was || typeof was.value !== 'function') return
+      was.value = wrapped(was.value, function (engine, self, args) {
+        var asked = typeof kind === 'function' ? kind(self, args) : kind
+        if (!asked || spent(asked)) return apply(engine, self, args)
+        return refuse(self, args)
+      })
+      define(owner, name, was)
+    }
+    function prototype(kind) {
+      return typeof win[kind] === 'function' ? win[kind].prototype : null
+    }
+    function framed(inner) {
+      if (!inner) return
+      try { guard(inner.window === inner ? inner : inner.defaultView) } catch (e) {}
+    }
+    function heard(target) {
+      target.addEventListener('load', function (event) {
+        var one = event.target
+        if (one && one !== win.document) framed(held(one))
+      }, true)
+    }
+    ;['keydown', 'mousedown', 'pointerdown', 'pointerup', 'touchend', 'click'].forEach(function (type) {
+      win.addEventListener(type, function (event) {
+        if (event.isTrusted) pressed = apply(now, Date, [])
+      }, true)
+    })
+    heard(win)
+    ;['HTMLIFrameElement', 'HTMLFrameElement', 'HTMLObjectElement', 'HTMLEmbedElement'].forEach(function (kind) {
+      var owner = prototype(kind)
+      if (!owner) return
+      ;['contentWindow', 'contentDocument'].forEach(function (name) {
+        var was = described(owner, name)
+        if (!was || typeof was.get !== 'function') return
+        was.get = wrapped(was.get, function (engine, self, args) {
+          var inner = apply(engine, self, args)
+          framed(inner)
+          return inner
+        })
+        define(owner, name, was)
+      })
+      var svg = described(owner, 'getSVGDocument')
+      if (!svg || typeof svg.value !== 'function') return
+      svg.value = wrapped(svg.value, function (engine, self, args) {
+        var inner = apply(engine, self, args)
+        framed(inner)
+        return inner
+      })
+      define(owner, 'getSVGDocument', svg)
+    })
+    var shadows = prototype('Element')
+    var shadow = shadows ? described(shadows, 'attachShadow') : null
+    if (shadow && typeof shadow.value === 'function') {
+      shadow.value = wrapped(shadow.value, function (engine, self, args) {
+        var root = apply(engine, self, args)
+        try { heard(root) } catch (e) {}
+        return root
+      })
+      define(shadows, 'attachShadow', shadow)
+    }
+    ;['requestFullscreen', 'webkitRequestFullscreen', 'webkitRequestFullScreen'].forEach(function (name) {
+      gated(prototype('Element'), name, 'fullscreen', function (self) {
+        try { self.dispatchEvent(new Event('fullscreenerror', { bubbles: true, composed: true })) } catch (e) {}
+        return name === 'requestFullscreen' ? Promise.reject(new TypeError('Permissions check failed')) : undefined
+      })
+    })
+    gated(prototype('Clipboard'), 'writeText', 'clipboard', rejecting('NotAllowedError'))
+    gated(prototype('Clipboard'), 'write', 'clipboard', rejecting('NotAllowedError'))
+    gated(prototype('Document'), 'execCommand', function (self, args) {
+      return /^(copy|cut)$/i.test(String(args[0])) ? 'copy' : null
+    }, function () { return false })
+    gated(prototype('HTMLElement'), 'click', function (self) {
+      return filed(self) ? 'picker' : null
+    }, function () {})
+    ;['HTMLInputElement', 'HTMLSelectElement'].forEach(function (kind) {
+      gated(prototype(kind), 'showPicker', 'picker', function () { throw denied('NotAllowedError') })
+    })
+    ;['showOpenFilePicker', 'showSaveFilePicker', 'showDirectoryPicker'].forEach(function (name) {
+      gated(win, name, 'picker', rejecting('SecurityError'))
+    })
+    gated(prototype('PaymentRequest'), 'show', 'payment', rejecting('SecurityError'))
+    gated(prototype('Navigator'), 'share', 'share', rejecting('NotAllowedError'))
+    gated(prototype('HTMLVideoElement'), 'requestPictureInPicture', 'picture', rejecting('NotAllowedError'))
+    gated(win.Notification, 'requestPermission', 'notifications', function (self, args) {
+      var answer = win.Notification.permission
+      if (typeof args[0] === 'function') setTimeout(function () { args[0](answer) })
+      return Promise.resolve(answer)
+    })
+
+    if (typeof win.open !== 'function') return
+    win.open = wrapped(win.open, function (engine, self, args) {
       var active = spent('open')
       var name = args.length > 1 && args[1] != null ? String(args[1]) : '_blank'
       var features = args.length > 2 && args[2] != null ? String(args[2]).toLowerCase() : ''
@@ -257,9 +335,10 @@ pub const PAGE_SCRIPT: &str = r"(function () {
         said('orden-popup-blocked', args[0])
         return null
       }
-      return Reflect.apply(engine, self, args)
-    }
-  })
+      return apply(engine, self, args)
+    })
+  }
+  guard(window)
 })()";
 
 #[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
@@ -861,7 +940,7 @@ mod tests {
     fn a_page_without_the_reader_s_press_never_reaches_the_engine_s_window_open() {
         let gate = super::PAGE_SCRIPT.find("if (!active) {").expect("the gate");
         let engine = super::PAGE_SCRIPT
-            .rfind("Reflect.apply(engine")
+            .rfind("return apply(engine, self, args)")
             .expect("the engine");
         assert!(gate < engine);
         assert!(super::PAGE_SCRIPT[gate..engine].contains("return null"));
@@ -869,7 +948,7 @@ mod tests {
             .find("var active = spent('open')")
             .expect("the press");
         assert!(active < gate);
-        assert!(super::PAGE_SCRIPT.contains("if (event.isTrusted) pressed = Date.now()"));
+        assert!(super::PAGE_SCRIPT.contains("if (event.isTrusted) pressed = apply(now, Date, [])"));
         assert!(super::PAGE_SCRIPT.contains("if (fresh && engine) spending[kind] = pressed"));
         assert!(super::engine_page_script().contains("var ours = false"));
         assert!(SCRIPT.contains("else open(event.detail, 'orden-popup-blocked')"));

@@ -10,7 +10,7 @@ type Inside = Window &
     showOpenFilePicker: () => Promise<unknown>
   }
 
-function page(ours = true) {
+function page(ours = true, before?: (inside: Inside, reached: string[]) => void) {
   const dom = new JSDOM(
     '<input id="file" type="file"><input id="text"><label id="label" for="file">a file</label>',
     {
@@ -93,6 +93,7 @@ function page(ours = true) {
   })
   inside.open = reach('open', null) as typeof inside.open
 
+  before?.(inside, reached)
   const ran = ours ? script : script.replace('var ours = true', 'var ours = false')
   inside.eval(ran.replaceAll('event.isTrusted', 'event.cancelable'))
 
@@ -241,5 +242,95 @@ describe('a press of the reader', () => {
     engine.pressed()
     engine.inside.open('https://elsewhere.example/', '_blank', 'noopener')
     expect(engine.reached).toEqual(['open'])
+  })
+})
+
+function stubbedFrames(inside: Inside, reached: string[]) {
+  const owner = inside.HTMLIFrameElement.prototype
+  const was = Object.getOwnPropertyDescriptor(owner, 'contentWindow') as
+    { get?: () => unknown } | undefined
+  const get = was?.get
+  if (!was || !get) return
+  const stubbed = new WeakSet()
+  Object.defineProperty(owner, 'contentWindow', {
+    ...was,
+    get(this: HTMLIFrameElement) {
+      const child = get.call(this) as Inside | null
+      if (!child || stubbed.has(child)) return child
+      stubbed.add(child)
+      const reach = (name: string) =>
+        function () {
+          reached.push(`frame ${name}`)
+          return Promise.resolve()
+        }
+      Object.defineProperty(child.Element.prototype, 'requestFullscreen', {
+        value: reach('fullscreen'),
+        configurable: true,
+        writable: true,
+      })
+      Object.defineProperty(child.Document.prototype, 'execCommand', {
+        value: reach('copy'),
+        configurable: true,
+        writable: true,
+      })
+      child.open = reach('open') as unknown as typeof child.open
+      return child
+    },
+  })
+}
+
+function framedIn(inside: Inside) {
+  const frame = inside.document.createElement('iframe')
+  inside.document.body.append(frame)
+  const child = (inside as unknown as Record<number, Inside>)[inside.length - 1]
+  if (!child) throw new Error('the frame has no window')
+  const tried = (from: Inside) => {
+    for (const ask of [
+      () => from.Element.prototype.requestFullscreen.call(inside.document.body),
+      () =>
+        (
+          from.Document.prototype as unknown as { execCommand: (name: string) => unknown }
+        ).execCommand.call(inside.document, 'copy'),
+      () => from.open('https://elsewhere.example/'),
+    ]) {
+      const answer = ask() as { catch?: (fn: () => void) => void } | undefined
+      answer?.catch?.(() => undefined)
+    }
+  }
+  return { frame, child, tried }
+}
+
+describe('a frame the page makes itself', () => {
+  test('is gated as the page is', () => {
+    const { inside, reached, pressed } = page(true, stubbedFrames)
+    const { frame, child, tried } = framedIn(inside)
+    tried(child)
+    tried(frame.contentWindow as Inside)
+    expect(reached).toEqual([])
+    pressed()
+    tried(child)
+    expect(reached).toEqual(['frame fullscreen', 'frame copy', 'frame open'])
+  })
+
+  test('is pressed by a press in it, spent for the page as well', () => {
+    const { inside, reached } = page(true, stubbedFrames)
+    const { child, tried } = framedIn(inside)
+    child.document.dispatchEvent(
+      new child.MouseEvent('mousedown', { bubbles: true, cancelable: true }),
+    )
+    tried(inside)
+    tried(child)
+    expect(reached).toEqual(['fullscreen', 'execCommand copy', 'open'])
+  })
+})
+
+describe('a file field', () => {
+  test('is known by what it is, not by what the page says it is', () => {
+    const { inside, reached } = page()
+    const file = inside.document.getElementById('file') as HTMLInputElement
+    Object.defineProperty(file, 'type', { value: 'text' })
+    Object.defineProperty(file, 'localName', { value: 'div' })
+    file.click()
+    expect(reached).toEqual([])
   })
 })

@@ -37,15 +37,23 @@ const settle = (when, what, asked) => {
     answer.then(() => tell(when, what, 'yes'), (error) => tell(when, what, 'no: ' + (error && error.name)))
   } else tell(when, what, answer === false ? 'no: false' : answer === 'unsupported' ? answer : 'yes')
 }
-const tried = (when, only) => {
+const fresh = () => {
+  const frame = document.createElement('iframe')
+  frame.style.display = 'none'
+  document.body.appendChild(frame)
+  setTimeout(() => frame.remove(), 4000)
+  return frames[frames.length - 1]
+}
+const tried = (when, only, from = window) => {
   if (!only || only === 'copy') settle(when, 'copy', () => {
     getSelection().selectAllChildren(document.getElementById('words'))
-    return document.execCommand('copy')
+    return from.Document.prototype.execCommand.call(document, 'copy')
   })
-  if (!only || only === 'clipboard') settle(when, 'clipboard', () => navigator.clipboard ? navigator.clipboard.writeText('gestures ' + when) : 'unsupported')
+  if (!only || only === 'clipboard') settle(when, 'clipboard', () => navigator.clipboard && from.Clipboard ? from.Clipboard.prototype.writeText.call(navigator.clipboard, 'gestures ' + when) : 'unsupported')
   if (!only || only === 'fullscreen') settle(when, 'fullscreen', () => {
-    if (!document.fullscreenEnabled || !document.documentElement.requestFullscreen) return 'unsupported'
-    const filled = document.documentElement.requestFullscreen().then(() => document.exitFullscreen())
+    const asked = from.Element.prototype.requestFullscreen
+    if (!document.fullscreenEnabled || !asked) return 'unsupported'
+    const filled = asked.call(document.documentElement).then(() => document.exitFullscreen())
     return Promise.race([filled, new Promise((done) => setTimeout(() => done('pending'), 3000))]).then((answer) => {
       if (answer === 'pending') throw { name: 'pending' }
     })
@@ -56,6 +64,7 @@ setInterval(() => {
   if (pressed) return
   if (navigator.userActivation && navigator.userActivation.isActive) active++
   tried('unasked')
+  tried('framed', null, fresh())
 }, 100)
 setInterval(() => tell('engine', 'active', active), 500)
 const kinds = ['copy', 'clipboard', 'fullscreen']
@@ -257,15 +266,16 @@ def main() -> int:
                 break
             time.sleep(0.5)
         time.sleep(2)
-        unasked = heard("unasked")
         active = heard("engine").get("active", ["0"])[-1]
         print(f"web tab {tab}: activation the engine gave the page with no press: {active} times", flush=True)
-        print(f"with no press: {json.dumps(unasked)}", flush=True)
-        for what in ("fullscreen", "clipboard", "copy"):
-            if not unasked.get(what):
-                wrong.append(f"the page never tried {what} with no press")
-            elif "yes" in unasked[what]:
-                wrong.append(f"{what} was let through with no press, after a script Orden ran in the page")
+        for when, through in (("unasked", ""), ("framed", " through a fresh frame's own functions")):
+            unasked = heard(when)
+            print(f"with no press{through}: {json.dumps(unasked)}", flush=True)
+            for what in ("fullscreen", "clipboard", "copy"):
+                if not unasked.get(what):
+                    wrong.append(f"the page never tried {what} with no press{through}")
+                elif "yes" in unasked[what]:
+                    wrong.append(f"{what} was let through with no press{through}, after a script Orden ran in the page")
 
         for count in range(1, 4):
             for _ in range(3):
