@@ -21,6 +21,7 @@ import {
   tidied,
 } from './sets'
 import { TABS_KEY, tabSets } from './spaces'
+import { TAB_KINDS } from './tab-kinds'
 
 interface Aside {
   frame: Frame
@@ -218,7 +219,19 @@ class Sets {
     const key = setKey(space)
     await this.built(key)
 
-    const moving = tabs.filter((tab) => this.keyOf(tab) !== key)
+    const there = new Set(
+      this.tabsOf(key)
+        .filter((tab) => TAB_KINDS[tab.kind].single)
+        .map((tab) => tab.kind),
+    )
+    const coming = tabs.filter((tab) => this.keyOf(tab) !== key)
+    const twice = coming.filter((tab) => there.has(tab.kind))
+    if (twice.length)
+      ws.closeEach(
+        twice.map((tab) => tab.id),
+        false,
+      )
+    const moving = coming.filter((tab) => !twice.includes(tab))
     if (!moving.length) return
     const shown = moving.filter((tab) => ws.panes.at(tab.paneId))
     const left = new Set(moving.map((tab) => this.keyOf(tab)))

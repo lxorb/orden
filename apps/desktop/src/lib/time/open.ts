@@ -6,7 +6,7 @@ import { type Spec, writeSpec } from './spec'
 
 export function openTime(spec: Spec = { view: 'day', day: null }): Tab | null {
   if (!timeOn()) return null
-  const open = workspace.tabs.find((one) => one.kind === 'time')
+  const open = workspace.singleHere('time')
   if (open) {
     if (spec.day !== null) open.note.replace(writeSpec(spec), false)
     workspace.activate(open.id)

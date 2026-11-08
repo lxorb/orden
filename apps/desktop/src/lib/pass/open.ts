@@ -6,7 +6,7 @@ import { asked, type PassIntent } from './asked.svelte'
 import { FIRST_VIEW, writeView } from './view'
 
 function passTab(): Tab | null {
-  return workspace.tabs.find((tab) => tab.kind === 'pass') ?? null
+  return workspace.singleHere('pass')
 }
 
 export function openPass(intent: PassIntent | null = null): Tab | null {
