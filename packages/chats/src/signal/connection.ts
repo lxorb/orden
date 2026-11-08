@@ -60,6 +60,7 @@ interface Meta {
   unread: number
   snippet?: string
   archived?: boolean
+  timer?: number
 }
 
 interface Index {
@@ -714,6 +715,7 @@ class SignalConnection implements Connection {
     }
     const message = this.messageOf(data, conversation, author, at, mine)
     if (!message) return
+    this.timed(conversation, number(data.expiresInSeconds))
     if (
       data.isExpirationUpdate === true ||
       (said(data.groupInfo).type === 'UPDATE' && !message.text && !message.attachments.length)
@@ -724,6 +726,19 @@ class SignalConnection implements Connection {
     }
     await this.put(message, true)
     this.fetchFiles(message, data)
+  }
+
+  private timed(conversation: string, seconds: number): void {
+    const meta = this.meta(conversation)
+    if ((meta.timer ?? 0) === seconds) return
+    if (seconds > 0) meta.timer = seconds
+    else delete meta.timer
+    this.save('index')
+  }
+
+  private expiry(conversation: string): { expiresAt?: number } {
+    const timer = this.metas.get(conversation)?.timer ?? 0
+    return timer > 0 ? { expiresAt: this.now() + timer * 1000 } : {}
   }
 
   private messageOf(
@@ -969,6 +984,7 @@ class SignalConnection implements Connection {
         attachments: [],
         mine: true,
         delivery: failed(sent) ? 'failed' : 'sent',
+        ...this.expiry(conversation),
         poll: {
           question: draft.poll.question,
           answers: [...draft.poll.answers],
@@ -1035,6 +1051,7 @@ class SignalConnection implements Connection {
       delivery: failed(sent) ? 'failed' : 'sent',
       ...(draft.replyTo ? { replyTo: draft.replyTo } : {}),
       ...(draft.mentions?.length ? { mentions: [...draft.mentions] } : {}),
+      ...this.expiry(conversation),
     }
     await this.put(message, false)
     return message

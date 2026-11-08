@@ -606,6 +606,32 @@ describe('signal sending', () => {
     expect(left.messages.map((one) => one.id)).not.toContain(`60:${ANA}`)
   })
 
+  it('lets what Orden sends into a disappearing chat disappear as well, and stops once the timer is off', async () => {
+    const { cli, connection, host, heard } = await connected()
+    incoming(cli, {
+      timestamp: host.clock,
+      dataMessage: { timestamp: host.clock, message: 'timer on', expiresInSeconds: 30 },
+    })
+    await until(() => heard.some((one) => one.t === 'message'))
+    const sent = await connection.send(`u:${ANA}`, { text: 'mine goes too' })
+    expect(sent.expiresAt).toBe(host.clock + 30_000)
+    const poll = await connection.send(`u:${ANA}`, {
+      text: '',
+      poll: { question: 'Now?', answers: ['yes', 'no'], several: false },
+    })
+    expect(poll.expiresAt).toBe(host.clock + 30_000)
+    host.clock += 31_000
+    const page = await connection.history(`u:${ANA}`, { limit: 10 })
+    expect(page.messages).toEqual([])
+    incoming(cli, {
+      timestamp: host.clock,
+      dataMessage: { timestamp: host.clock, isExpirationUpdate: true, expiresInSeconds: 0 },
+    })
+    await until(() => heard.some((one) => one.t === 'message' && one.message.system === true))
+    const kept = await connection.send(`u:${ANA}`, { text: 'stays' })
+    expect(kept.expiresAt).toBeUndefined()
+  })
+
   it('removes a disappearing message when its time is up', async () => {
     const { cli, connection, host, heard } = await connected()
     incoming(cli, {
