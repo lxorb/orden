@@ -44,3 +44,24 @@ describe('the folders v1 paired, for a store that paired none', () => {
     expect(pairsFromV1(null, 'u1', ['/Notes'], remote, [])).toEqual([])
   })
 })
+
+describe('a folder v1 kept under another spelling', () => {
+  const spelled = {
+    account: 'u1',
+    mirrors: { '/Cafe\u0301': { spaceId: 'mine', cursor: 3, notes: {} } },
+  }
+
+  test('is paired under the spelling this device gives it', () => {
+    expect(pairsFromV1(spelled, 'u1', ['/Caf\u00e9'], remote, [])).toEqual([
+      { root: '/Caf\u00e9', spaceId: 'mine', role: 'owner' },
+    ])
+  })
+
+  test('is not paired again when the store holds it under the other spelling', () => {
+    expect(
+      pairsFromV1(spelled, 'u1', ['/Caf\u00e9'], remote, [
+        { root: '/Cafe\u0301', spaceId: 'other' },
+      ]),
+    ).toEqual([])
+  })
+})
