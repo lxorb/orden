@@ -20,7 +20,7 @@ function xml(body: string, kind: string): Response {
   })
 }
 
-function moment(page: FeedPage): number {
+export function moment(page: FeedPage): number {
   const said = page.date ? Date.parse(page.date) : Number.NaN
   return Number.isFinite(said) ? said : page.updated
 }
@@ -33,7 +33,7 @@ export function sitemap(pages: readonly FeedPage[]): Response {
   const entries = pages
     .map(
       (page) =>
-        `<url><loc>${escape(page.url)}</loc><lastmod>${new Date(moment(page)).toISOString()}</lastmod></url>`,
+        `<url><loc>${escape(page.url)}</loc><lastmod>${new Date(page.updated).toISOString()}</lastmod></url>`,
     )
     .join('')
 
