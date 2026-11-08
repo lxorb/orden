@@ -1,4 +1,4 @@
-import { samePath } from '../space-paths'
+import { movedTo, samePath } from '../space-paths'
 import { isRecord, isString, stringList } from '../stored'
 
 export interface Spec {
@@ -43,4 +43,10 @@ export function steppedForward(spec: Spec): Spec | null {
   const folder = spec.ahead.at(-1)
   if (folder === undefined) return null
   return { folder, back: [...spec.back, spec.folder], ahead: spec.ahead.slice(0, -1) }
+}
+
+export function specMoved(spec: Spec, from: string, to: string): Spec | null {
+  const at = (path: string) => movedTo(path, from, to) ?? path
+  const now = { folder: at(spec.folder), back: spec.back.map(at), ahead: spec.ahead.map(at) }
+  return writeSpec(now) === writeSpec(spec) ? null : now
 }

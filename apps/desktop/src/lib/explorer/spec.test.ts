@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { readSpec, type Spec, steppedBack, steppedForward, wentTo, writeSpec } from './spec'
+import {
+  readSpec,
+  type Spec,
+  specMoved,
+  steppedBack,
+  steppedForward,
+  wentTo,
+  writeSpec,
+} from './spec'
 
 describe("a file explorer's words", () => {
   it('come back as they were written, and nothing else reads as one', () => {
@@ -26,5 +34,17 @@ describe("a file explorer's words", () => {
   it('take no step for the folder already on screen', () => {
     const spec = { folder: '/a', back: ['/'], ahead: [] }
     expect(wentTo(spec, '/a')).toBe(spec)
+  })
+})
+
+describe('a move', () => {
+  it('carries the folder and the way back and ahead along, and leaves the rest', () => {
+    const spec: Spec = { folder: '/a/b/c', back: ['/a', '/a/b'], ahead: ['/ab', '/a/b/c/d'] }
+    expect(specMoved(spec, '/a/b', '/x')).toEqual({
+      folder: '/x/c',
+      back: ['/a', '/x'],
+      ahead: ['/ab', '/x/c/d'],
+    })
+    expect(specMoved(spec, '/q', '/r')).toBeNull()
   })
 })

@@ -363,6 +363,10 @@ class Workspace {
       }
     })
     this.fileOps.follow((op) => {
+      if (__EVEN_PLUGIN__ || op.op !== 'moved') return
+      return import('./explorer/follow').then(({ moved }) => moved(op.from, op.to), unfetched)
+    })
+    this.fileOps.follow((op) => {
       if (op.op === 'moved') rowIds.moved(op.from, op.to)
       else if (op.op === 'removed') rowIds.gone(op.path)
     })
