@@ -34,8 +34,14 @@ vi.mock('../tauri', async (importOriginal) => ({
       : Promise.resolve(null),
 }))
 
+vi.mock('../pages/raster', () => ({
+  paperPicture: (at: { file: string }) =>
+    Promise.resolve(at.file === 'Reading.pdf' ? 'data:image/png;base64,UEFHRQ==' : null),
+}))
+
 const { readCanvas } = await import('./format')
-const { canvasSvg, exportCanvasSvg, inlinedSvg, printCanvas } = await import('./picture')
+const { canvasSvg, exportCanvasPdf, exportCanvasSvg, inlinedSvg, printCanvas } =
+  await import('./picture')
 
 const HOSTILE = '<img src=x onerror="alert(1)">'
 
@@ -315,5 +321,48 @@ describe('the sheet a plane of one’s own is printed on', () => {
     for (const link of dom.querySelectorAll('a')) {
       expect(link.getAttribute('href') ?? '').not.toMatch(/script:/i)
     }
+  })
+})
+
+describe('a PDF lying on a plane, taken out of the app', () => {
+  const drawing = (file: string) => ({
+    canvas: readCanvas(
+      JSON.stringify({
+        nodes: [{ id: 'p', type: 'file', file, x: 0, y: 0, width: 240, height: 320 }],
+        edges: [],
+      }),
+    ),
+    palette: {},
+    path: '/s/Board.canvas',
+    root: '/s',
+    name: 'Board.canvas',
+    trusted: true,
+  })
+
+  test('is drawn as its first page in the picture saved', async () => {
+    world.saved = []
+    await exportCanvasSvg(drawing('Reading.pdf'))
+    const saved = (await world.saved[0]?.text()) ?? ''
+    expect(saved).toMatch(/<image [^>]*href="data:image\/png;base64,UEFHRQ=="/)
+    expect(saved).not.toContain('>Reading.pdf<')
+  })
+
+  test.each([
+    ['printed', printCanvas],
+    ['made into a PDF', exportCanvasPdf],
+  ])('is drawn as its first page when %s, linked and not written in', async (_how, out) => {
+    world.printed = []
+    await out(drawing('Reading.pdf'))
+    const page = world.printed[0] ?? ''
+    expect(page).toMatch(/<image [^>]*href="blob:[^"]+"/)
+    expect(page).not.toContain('UEFHRQ')
+  })
+
+  test('that cannot be read still says its name', async () => {
+    world.saved = []
+    await exportCanvasSvg(drawing('Gone.pdf'))
+    const saved = (await world.saved[0]?.text()) ?? ''
+    expect(saved).toContain('Gone.pdf')
+    expect(saved).not.toContain('<image')
   })
 })

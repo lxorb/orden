@@ -11,6 +11,7 @@ import { INK_STYLES, inkOpacity, outlineOf } from '../canvas/ink'
 import { inkColour, type Palette } from '../canvas/paint'
 import { DEFAULT_INK, paletteOf } from '../canvas/palette'
 import { drawnNode, inlinedSvg, styles } from '../canvas/picture'
+import { type Faces, pdfFaces } from '../canvas/faces'
 import { inkSvg } from '../canvas/svg'
 import { type Box } from '../canvas/geometry'
 import { busy } from '../busy.svelte'
@@ -39,17 +40,30 @@ export interface PagesOut {
   name: string
   trusted?: boolean
   laid?: ReadonlyMap<string, Run[]>
+  faces?: Faces
 }
 
-export async function laidOf(out: PagesOut): Promise<PagesOut> {
+function allCards(canvas: Canvas): CanvasNode[] {
+  return [...new Set(pagesOf(canvas).flatMap((page) => cardsOn(canvas, page)))]
+}
+
+async function facedOf(out: PagesOut): Promise<PagesOut> {
+  if (out.faces) return out
+  const faces = await pdfFaces(allCards(out.canvas), {
+    note: out.path,
+    root: out.root,
+    shared: out.shared ?? null,
+  })
+  return { ...out, faces }
+}
+
+export async function laidOf(given: PagesOut): Promise<PagesOut> {
+  const out = await facedOf(given)
   if (out.laid) return out
-  const cards = new Map<string, TextCard>()
-  for (const page of pagesOf(out.canvas)) {
-    for (const node of cardsOn(out.canvas, page)) {
-      if (node.type === 'text' && node.text.trim()) cards.set(node.id, node)
-    }
-  }
-  const laid = await laidOut([...cards.values()], {
+  const cards = allCards(out.canvas).filter(
+    (node): node is TextCard => node.type === 'text' && !!node.text.trim(),
+  )
+  const laid = await laidOut(cards, {
     path: out.path,
     root: out.root,
     trusted: out.trusted ?? false,
@@ -168,7 +182,7 @@ export function pageSvg(
     .map((node) =>
       plain && node.type === 'text'
         ? laidSvg(node, out.laid?.get(node.id) ?? [], palette)
-        : drawnNode(node, palette, out.path, out.root, plain, out.trusted ?? false),
+        : drawnNode(node, palette, out.path, out.root, plain, out.trusted ?? false, out.faces),
     )
     .join('')
 
@@ -234,9 +248,10 @@ async function handOver(
   return target
 }
 
-export async function exportPagesSvg(out: PagesOut): Promise<string | undefined> {
-  const pages = sheetsOf(pagesOf(out.canvas))
+export async function exportPagesSvg(given: PagesOut): Promise<string | undefined> {
+  const pages = sheetsOf(pagesOf(given.canvas))
   if (!pages.length) return
+  const out = await facedOf(given)
 
   const name = stem(out.name)
   const entries: { path: string; body: string }[] = []
@@ -493,7 +508,7 @@ async function cardPdf(
     `<style>${localFaces()}${styles(palette)}</style>`,
     card.type === 'text'
       ? laidSvg(card, runs, palette)
-      : drawnNode(card, palette, out.path, out.root, true, out.trusted ?? false),
+      : drawnNode(card, palette, out.path, out.root, true, out.trusted ?? false, out.faces),
     '</svg>',
   ].join('')
   const png = await svgToPng(await inlinedSvg(svg), box.width, box.height).catch(() => null)

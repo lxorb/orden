@@ -1,6 +1,6 @@
 import { escapeAll } from '@orden/markdown/html'
-import { pageBytes } from '../bytes'
-import { assetsOf, inlineImages, localSources, SHEET_POLICY } from '../export'
+import { decoded, pageBytes } from '../bytes'
+import { assetsOf, inlineImages, localSources, printsInFrame, SHEET_POLICY } from '../export'
 import { writtenPdf } from '../export/print'
 import { printWithPictures, wholeSheet } from '../export/sheet'
 import { chooseTarget, download, handOver, writeFile } from '../export/save'
@@ -21,6 +21,7 @@ import { inkSvg } from './svg'
 import { paletteOf } from './palette'
 import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
+import { type Faces, NO_FACES, pdfFaces } from './faces'
 import { assetPath, invoke, isDesktop } from '../tauri'
 import { message, t } from '../i18n.svelte'
 import { settings } from '../settings.svelte'
@@ -158,6 +159,7 @@ export function drawnNode(
   root: string | null,
   plain: boolean,
   trusted: boolean,
+  faces: Faces = NO_FACES,
 ): string {
   const box = boxOf(node)
   const line = colourOf(node, palette, palette.line ?? '#d6d9de')
@@ -199,6 +201,11 @@ export function drawnNode(
 
   if (node.type === 'file' && isPicture(node.file)) {
     return `<image x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" preserveAspectRatio="xMidYMid slice" href="${escapeAll(fileUrl(node.file, root))}"/>`
+  }
+
+  const face = node.type === 'file' ? faces.get(node.file) : undefined
+  if (face) {
+    return `<g><rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${palette.surface ?? '#fff'}" stroke="${line}"/><image x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" preserveAspectRatio="xMidYMid meet" href="${escapeAll(face)}"/></g>`
   }
 
   const wash = node.color === undefined ? '' : ` fill-opacity="0.09"`
@@ -275,6 +282,7 @@ export function canvasSvg(
   root: string | null,
   plain = false,
   trusted = false,
+  faces: Faces = NO_FACES,
 ): string {
   const box = planeBox(canvas) ?? {
     x: 0,
@@ -289,7 +297,7 @@ export function canvasSvg(
   const height = Math.max(1, Math.round(box.height + 2 * PADDING))
 
   const nodes = canvas.nodes
-    .map((node) => drawnNode(node, palette, canvasPath, root, plain, trusted))
+    .map((node) => drawnNode(node, palette, canvasPath, root, plain, trusted, faces))
     .join('')
 
   return [
@@ -361,8 +369,20 @@ async function readySvg(
   palette: Palette,
   plain = false,
 ): Promise<{ svg: string; whole: string | Blob }> {
-  const svg = canvasSvg(drawing.canvas, palette, drawing.path, drawing.root, plain, drawing.trusted)
+  const svg = canvasSvg(
+    drawing.canvas,
+    palette,
+    drawing.path,
+    drawing.root,
+    plain,
+    drawing.trusted,
+    await facesOf(drawing),
+  )
   return { svg, whole: await wholeSheet(svg, fromAsset) }
+}
+
+function facesOf(drawing: Drawing): Promise<Faces> {
+  return pdfFaces(drawing.canvas.nodes, { note: drawing.path, root: drawing.root })
 }
 
 function chosenPalette(drawing: Drawing): Palette {
@@ -420,7 +440,7 @@ export async function exportCanvasPng(drawing: Drawing) {
   return name
 }
 
-function sheetOf(drawing: Drawing) {
+function sheetOf(drawing: Drawing, faces: Faces) {
   const svg = canvasSvg(
     drawing.canvas,
     paletteOf('light'),
@@ -428,6 +448,7 @@ function sheetOf(drawing: Drawing) {
     drawing.root,
     false,
     drawing.trusted,
+    faces,
   )
   const { width, height } = sizeOf(svg)
 
@@ -436,20 +457,40 @@ function sheetOf(drawing: Drawing) {
   return { html, page: { width: width / 96, height: height / 96, margin: 0, landscape: false } }
 }
 
+async function printSheet(drawing: Drawing, faces: Faces) {
+  if (!printsInFrame()) {
+    const { html, page } = sheetOf(drawing, faces)
+    await printWithPictures(html, fromAsset, page)
+    return
+  }
+
+  const links = new Map<string, string>()
+  try {
+    for (const [file, face] of faces) {
+      const bytes = await decoded(face)
+      links.set(file, URL.createObjectURL(new Blob([bytes.slice()], { type: 'image/png' })))
+    }
+    const { html, page } = sheetOf(drawing, links)
+    await printWithPictures(html, fromAsset, page)
+  } finally {
+    for (const link of links.values()) URL.revokeObjectURL(link)
+  }
+}
+
 export async function printCanvas(drawing: Drawing) {
-  const { html, page } = sheetOf(drawing)
-  await printWithPictures(html, fromAsset, page)
+  await printSheet(drawing, await facesOf(drawing))
 }
 
 export async function exportCanvasPdf(drawing: Drawing) {
   const native = isDesktop && (await invoke<boolean>('pdf_supported').catch(() => false))
   const target = native ? await chooseTarget(drawing.name, 'pdf', 'PDF') : null
 
-  const { html, page } = sheetOf(drawing)
+  const faces = await facesOf(drawing)
 
   if (target) {
+    const { html, page } = sheetOf(drawing, faces)
     if (await writtenPdf(await wholeSheet(html, fromAsset), target, page)) return target
   }
 
-  await printWithPictures(html, fromAsset, page)
+  await printSheet(drawing, faces)
 }
