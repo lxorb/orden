@@ -3692,4 +3692,61 @@ export const fa: Dictionary = {
     'از جای دیگری خارج شدید؛ حساب حذف نشد. برای حذف آن دوباره وارد شوید.',
   'Signed out; sign in again to see whether the account is still there.':
     'خارج شدید؛ دوباره وارد شوید تا ببینید حساب هنوز هست یا نه.',
+  'Add a chat account': 'افزودن حساب گفتگو',
+  Steps: 'گام‌ها',
+  'Choose a service': 'یک سرویس برگزینید',
+  'Chat services connect in the desktop app.': 'سرویس‌های گفتگو در برنامهٔ رومیزی وصل می‌شوند.',
+  Advanced: 'پیشرفته',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden به کارسازهایی که حدس زد دسترسی نیافت. آن‌ها را اینجا وارد کنید.',
+  'Sign in with {service}': 'ورود با {service}',
+  'Checking the connection…': 'در حال بررسی اتصال…',
+  'Could not connect': 'اتصال برقرار نشد',
+  'Change the details': 'تغییر جزئیات',
+  '{account} is connected': '{account} وصل شد',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'گفتگوهایی را که اکنون باز می‌شوند برگزینید. بقیه در نوار کناری می‌مانند.',
+  'Its chats show in the sidebar as they arrive.':
+    'گفتگوهایش با رسیدن در نوار کناری نمایان می‌شوند.',
+  'Add another': 'افزودن یکی دیگر',
+  'Open chats': 'گشودن گفتگوها',
+  'Any mail account, with its address and password': 'هر حساب رایانامه، با نشانی و گذرواژه‌اش',
+  'Sign in with your Google account': 'با حساب Google خود وارد شوید',
+  'Sign in with your work or school account': 'با حساب کاری یا آموزشی خود وارد شوید',
+  'Your account, with a code sent to your phone': 'حساب شما، با کدی که به تلفنتان فرستاده می‌شود',
+  'Your own Slack app, made in one click': 'برنامهٔ Slack خودتان، با یک کلیک ساخته می‌شود',
+  'Linked as a device with a QR code': 'پیوند به‌عنوان دستگاه با کد QR',
+  'Orden finds the servers from your address.': 'Orden کارسازها را از نشانی شما پیدا می‌کند.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden ورود را در مرورگرتان باز می‌کند و پس از اجازهٔ شما به اینجا برمی‌گردد.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram یک بار API ID می‌خواهد، سپس کدی به تلفنتان می‌فرستد یا کد QR نشان می‌دهد.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden یک برنامهٔ Slack ویژهٔ شما می‌سازد تا چیزی از دست دیگران نگذرد.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden مانند یک رایانه، به‌عنوان دستگاهی دیگر به تلفنتان پیوند می‌خورد.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'در تلفن، WhatsApp را باز کنید و به تنظیمات، سپس دستگاه‌های پیوندشده بروید',
+  'Tap Link a device': 'روی پیوند دادن دستگاه بزنید',
+  'Scan the QR code Orden shows next': 'کد QR را که Orden پس از این نشان می‌دهد اسکن کنید',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'در تلفن، Signal را باز کنید و به تنظیمات، سپس دستگاه‌های پیوندشده بروید',
+  'Tap the plus to link a new device': 'برای پیوند دستگاهی تازه روی علامت به‌علاوه بزنید',
+  'Show the QR code': 'نمایش کد QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'توکنی را که چسباندید بررسی کنید: با xoxp- آغاز می‌شود.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'نشانی و گذرواژه را بررسی کنید. برخی سرویس‌ها به‌جای آن گذرواژهٔ برنامه می‌خواهند.',
+  'Sign in again and allow Orden what it asks for.':
+    'دوباره وارد شوید و آنچه Orden می‌خواهد را اجازه دهید.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden به کارسازها دسترسی نیافت. اتصال خود یا کارسازهای بخش پیشرفته را بررسی کنید.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden به سرویس دسترسی نیافت. اتصال خود را بررسی کنید و دوباره تلاش کنید.',
+  'Change the details and try again.': 'جزئیات را تغییر دهید و دوباره تلاش کنید.',
+  'Stop adding this account?': 'افزودن این حساب متوقف شود؟',
+  'What you entered is not kept.': 'آنچه وارد کرده‌اید نگه داشته نمی‌شود.',
+  'Chat accounts': 'حساب‌های گفتگو',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'رایانامه، Telegram، Slack، WhatsApp یا Signal را گام‌به‌گام وصل کنید.',
 }

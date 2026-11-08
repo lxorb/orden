@@ -3627,4 +3627,63 @@ export const ms: Dictionary = {
     'Dilog keluar di tempat lain; akaun tidak dipadam. Log masuk semula untuk memadamnya.',
   'Signed out; sign in again to see whether the account is still there.':
     'Telah log keluar; log masuk semula untuk melihat sama ada akaun masih ada.',
+  'Add a chat account': 'Tambah akaun sembang',
+  Steps: 'Langkah',
+  'Choose a service': 'Pilih perkhidmatan',
+  'Chat services connect in the desktop app.':
+    'Perkhidmatan sembang disambungkan dalam apl desktop.',
+  Advanced: 'Lanjutan',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden tidak dapat mencapai pelayan yang diteka. Isikannya di sini.',
+  'Sign in with {service}': 'Masuk dengan {service}',
+  'Checking the connection…': 'Menyemak sambungan…',
+  'Could not connect': 'Tidak dapat menyambung',
+  'Change the details': 'Ubah butiran',
+  '{account} is connected': '{account} telah disambungkan',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Pilih sembang untuk dibuka sekarang. Selebihnya menunggu di bar sisi.',
+  'Its chats show in the sidebar as they arrive.': 'Sembangnya muncul di bar sisi apabila tiba.',
+  'Add another': 'Tambah lagi',
+  'Open chats': 'Buka sembang',
+  'Any mail account, with its address and password':
+    'Mana-mana akaun e-mel, dengan alamat dan kata laluannya',
+  'Sign in with your Google account': 'Masuk dengan akaun Google anda',
+  'Sign in with your work or school account': 'Masuk dengan akaun kerja atau sekolah anda',
+  'Your account, with a code sent to your phone':
+    'Akaun anda, dengan kod yang dihantar ke telefon anda',
+  'Your own Slack app, made in one click': 'Apl Slack anda sendiri, dibuat dengan satu klik',
+  'Linked as a device with a QR code': 'Dipautkan sebagai peranti dengan kod QR',
+  'Orden finds the servers from your address.': 'Orden mencari pelayan daripada alamat anda.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden membuka log masuk dalam pelayar anda dan kembali ke sini setelah anda membenarkannya.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram meminta API ID sekali, kemudian menghantar kod ke telefon anda atau menunjukkan kod QR.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden membuat apl Slack anda sendiri, jadi tiada apa-apa melalui pihak lain.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden dipautkan ke telefon anda sebagai peranti lain, seperti komputer.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'Pada telefon anda, buka WhatsApp dan pergi ke Tetapan, kemudian Peranti dipautkan',
+  'Tap Link a device': 'Ketik Pautkan peranti',
+  'Scan the QR code Orden shows next': 'Imbas kod QR yang Orden tunjukkan seterusnya',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'Pada telefon anda, buka Signal dan pergi ke Tetapan, kemudian Peranti dipautkan',
+  'Tap the plus to link a new device': 'Ketik tanda tambah untuk memautkan peranti baharu',
+  'Show the QR code': 'Tunjukkan kod QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Semak token yang anda tampal: ia bermula dengan xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Semak alamat dan kata laluan. Sesetengah perkhidmatan meminta kata laluan apl.',
+  'Sign in again and allow Orden what it asks for.':
+    'Masuk semula dan benarkan apa yang diminta oleh Orden.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden tidak dapat mencapai pelayan. Semak sambungan anda, atau pelayan di bawah Lanjutan.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden tidak dapat mencapai perkhidmatan. Semak sambungan anda dan cuba lagi.',
+  'Change the details and try again.': 'Ubah butiran dan cuba lagi.',
+  'Stop adding this account?': 'Berhenti menambah akaun ini?',
+  'What you entered is not kept.': 'Apa yang anda masukkan tidak disimpan.',
+  'Chat accounts': 'Akaun sembang',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Sambungkan e-mel, Telegram, Slack, WhatsApp atau Signal, selangkah demi selangkah.',
 }

@@ -3826,4 +3826,63 @@ export const uk: Dictionary = {
     'Вихід виконано деінде; обліковий запис не видалено. Увійдіть знову, щоб видалити його.',
   'Signed out; sign in again to see whether the account is still there.':
     'Вихід виконано; увійдіть знову, щоб дізнатися, чи обліковий запис ще існує.',
+  'Add a chat account': 'Додати обліковий запис чату',
+  Steps: 'Кроки',
+  'Choose a service': 'Виберіть сервіс',
+  'Chat services connect in the desktop app.':
+    'Сервіси чатів підключаються в настільному застосунку.',
+  Advanced: 'Додатково',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    "Orden не зміг під'єднатися до серверів, які вгадав. Укажіть їх тут.",
+  'Sign in with {service}': 'Увійти через {service}',
+  'Checking the connection…': "Перевірка з'єднання…",
+  'Could not connect': 'Не вдалося підключитися',
+  'Change the details': 'Змінити дані',
+  '{account} is connected': '{account} підключено',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Виберіть чати, які відкрити зараз. Решта чекатиме на бічній панелі.',
+  'Its chats show in the sidebar as they arrive.':
+    "Його чати з'являтимуться на бічній панелі в міру надходження.",
+  'Add another': 'Додати ще',
+  'Open chats': 'Відкрити чати',
+  'Any mail account, with its address and password': 'Будь-яка пошта, з адресою та паролем',
+  'Sign in with your Google account': 'Увійдіть через обліковий запис Google',
+  'Sign in with your work or school account':
+    'Увійдіть через робочий або навчальний обліковий запис',
+  'Your account, with a code sent to your phone': 'Ваш обліковий запис, з кодом на телефон',
+  'Your own Slack app, made in one click': 'Власний застосунок Slack, створений одним клацанням',
+  'Linked as a device with a QR code': "Прив'язується як пристрій через QR-код",
+  'Orden finds the servers from your address.': 'Orden знаходить сервери за вашою адресою.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden відкриває вхід у браузері й повертається сюди, щойно ви дозволите.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram один раз запитує API ID, потім надсилає код на телефон або показує QR-код.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden створює ваш власний застосунок Slack, тож ніщо не проходить через когось іще.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    "Orden прив'язується до телефона як ще один пристрій, так само як комп'ютер.",
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    "На телефоні відкрийте WhatsApp і перейдіть у Налаштування, потім Пов'язані пристрої",
+  'Tap Link a device': "Торкніться Прив'язати пристрій",
+  'Scan the QR code Orden shows next': 'Відскануйте QR-код, який Orden покаже далі',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    "На телефоні відкрийте Signal і перейдіть у Налаштування, потім Пов'язані пристрої",
+  'Tap the plus to link a new device': "Торкніться плюса, щоб прив'язати новий пристрій",
+  'Show the QR code': 'Показати QR-код',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Перевірте вставлений токен: він починається з xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Перевірте адресу й пароль. Деякі сервіси натомість просять пароль застосунку.',
+  'Sign in again and allow Orden what it asks for.':
+    'Увійдіть знову й надайте Orden те, що він запитує.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    "Orden не зміг під'єднатися до серверів. Перевірте з'єднання або сервери в розділі Додатково.",
+  'Orden could not reach the service. Check your connection and try again.':
+    "Orden не зміг під'єднатися до сервісу. Перевірте з'єднання й спробуйте ще раз.",
+  'Change the details and try again.': 'Змініть дані й спробуйте ще раз.',
+  'Stop adding this account?': 'Припинити додавання цього облікового запису?',
+  'What you entered is not kept.': 'Введене не зберігається.',
+  'Chat accounts': 'Облікові записи чатів',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Підключайте пошту, Telegram, Slack, WhatsApp або Signal крок за кроком.',
 }

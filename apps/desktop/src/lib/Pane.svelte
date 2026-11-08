@@ -53,6 +53,7 @@
     explorerSurface,
     passSurface,
     settingsSurface,
+    connectSurface,
     timeSurface,
     findBar,
     graphSurface,
@@ -511,6 +512,14 @@
     {#key tab.id}
       {#await settingsSurface() then SettingsPanel}
         <SettingsPanel />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'connect'}
+    {#key tab.id}
+      {#await connectSurface() then AddChat}
+        <AddChat />
       {:catch}
         {@render unreachable()}
       {/await}

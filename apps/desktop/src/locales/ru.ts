@@ -3830,4 +3830,62 @@ export const ru: Dictionary = {
     'Выполнен выход в другом месте; аккаунт не удалён. Войдите снова, чтобы удалить его.',
   'Signed out; sign in again to see whether the account is still there.':
     'Выполнен выход; войдите снова, чтобы узнать, существует ли аккаунт.',
+  'Add a chat account': 'Добавить аккаунт чата',
+  Steps: 'Шаги',
+  'Choose a service': 'Выберите сервис',
+  'Chat services connect in the desktop app.':
+    'Чат-сервисы подключаются в приложении для компьютера.',
+  Advanced: 'Дополнительно',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden не смог связаться с угаданными серверами. Укажите их здесь.',
+  'Sign in with {service}': 'Войти через {service}',
+  'Checking the connection…': 'Проверка подключения…',
+  'Could not connect': 'Не удалось подключиться',
+  'Change the details': 'Изменить данные',
+  '{account} is connected': '{account} подключён',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Выберите чаты, которые открыть сейчас. Остальные ждут на боковой панели.',
+  'Its chats show in the sidebar as they arrive.':
+    'Его чаты появляются на боковой панели по мере поступления.',
+  'Add another': 'Добавить ещё',
+  'Open chats': 'Открыть чаты',
+  'Any mail account, with its address and password': 'Любой почтовый аккаунт, с адресом и паролем',
+  'Sign in with your Google account': 'Войдите через аккаунт Google',
+  'Sign in with your work or school account': 'Войдите через рабочий или учебный аккаунт',
+  'Your account, with a code sent to your phone': 'Ваш аккаунт, с кодом, отправленным на телефон',
+  'Your own Slack app, made in one click': 'Своё приложение Slack, созданное одним щелчком',
+  'Linked as a device with a QR code': 'Привязан как устройство по QR-коду',
+  'Orden finds the servers from your address.': 'Orden находит серверы по вашему адресу.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden открывает вход в браузере и возвращается сюда, как только вы разрешите.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram один раз запрашивает API ID, затем отправляет код на телефон или показывает QR-код.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden создаёт ваше собственное приложение Slack, поэтому ничего не проходит через других.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden привязывается к телефону как ещё одно устройство, как компьютер.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'На телефоне откройте WhatsApp и перейдите в Настройки, затем Связанные устройства',
+  'Tap Link a device': 'Нажмите Привязка устройства',
+  'Scan the QR code Orden shows next': 'Отсканируйте QR-код, который Orden покажет далее',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'На телефоне откройте Signal и перейдите в Настройки, затем Связанные устройства',
+  'Tap the plus to link a new device': 'Нажмите плюс, чтобы привязать новое устройство',
+  'Show the QR code': 'Показать QR-код',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Проверьте вставленный токен: он начинается с xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Проверьте адрес и пароль. Некоторые сервисы требуют вместо него пароль приложения.',
+  'Sign in again and allow Orden what it asks for.':
+    'Войдите снова и разрешите Orden то, что он запрашивает.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden не смог связаться с серверами. Проверьте подключение или серверы в разделе Дополнительно.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden не смог связаться с сервисом. Проверьте подключение и повторите попытку.',
+  'Change the details and try again.': 'Измените данные и повторите попытку.',
+  'Stop adding this account?': 'Прекратить добавление аккаунта?',
+  'What you entered is not kept.': 'Введённые данные не сохраняются.',
+  'Chat accounts': 'Аккаунты чатов',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Подключайте почту, Telegram, Slack, WhatsApp или Signal шаг за шагом.',
 }

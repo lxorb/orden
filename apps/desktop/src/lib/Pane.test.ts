@@ -15,6 +15,7 @@ describe('a surface a pane is filled with', () => {
       'applicationSurface',
       'canvasSurface',
       'chatSurface',
+      'connectSurface',
       'emptySurface',
       'explorerSurface',
       'graphSurface',

@@ -3705,4 +3705,62 @@ export const te: Dictionary = {
     'వేరే చోట సైన్ అవుట్ అయ్యింది; ఖాతా తొలగించబడలేదు. తొలగించడానికి మళ్లీ సైన్ ఇన్ చేయండి.',
   'Signed out; sign in again to see whether the account is still there.':
     'సైన్ అవుట్ అయ్యింది; ఖాతా ఇంకా ఉందో లేదో చూడడానికి మళ్లీ సైన్ ఇన్ చేయండి.',
+  'Add a chat account': 'చాట్ ఖాతాను జోడించు',
+  Steps: 'దశలు',
+  'Choose a service': 'సేవను ఎంచుకోండి',
+  'Chat services connect in the desktop app.': 'చాట్ సేవలు డెస్క్‌టాప్ యాప్‌లో కనెక్ట్ అవుతాయి.',
+  Advanced: 'అధునాతనం',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden ఊహించిన సర్వర్‌లను చేరుకోలేకపోయింది. వాటిని ఇక్కడ పూరించండి.',
+  'Sign in with {service}': '{service}తో సైన్ ఇన్ చేయండి',
+  'Checking the connection…': 'కనెక్షన్‌ను తనిఖీ చేస్తోంది…',
+  'Could not connect': 'కనెక్ట్ చేయలేకపోయింది',
+  'Change the details': 'వివరాలు మార్చు',
+  '{account} is connected': '{account} కనెక్ట్ అయింది',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'ఇప్పుడు తెరవాల్సిన చాట్‌లను ఎంచుకోండి. మిగతావి సైడ్‌బార్‌లో వేచి ఉంటాయి.',
+  'Its chats show in the sidebar as they arrive.':
+    'దాని చాట్‌లు వచ్చినప్పుడు సైడ్‌బార్‌లో కనిపిస్తాయి.',
+  'Add another': 'మరొకటి జోడించు',
+  'Open chats': 'చాట్‌లు తెరువు',
+  'Any mail account, with its address and password':
+    'ఏదైనా మెయిల్ ఖాతా, దాని చిరునామా మరియు పాస్‌వర్డ్‌తో',
+  'Sign in with your Google account': 'మీ Google ఖాతాతో సైన్ ఇన్ చేయండి',
+  'Sign in with your work or school account': 'మీ ఆఫీసు లేదా పాఠశాల ఖాతాతో సైన్ ఇన్ చేయండి',
+  'Your account, with a code sent to your phone': 'మీ ఖాతా, మీ ఫోన్‌కు పంపిన కోడ్‌తో',
+  'Your own Slack app, made in one click': 'మీ సొంత Slack యాప్, ఒక్క క్లిక్‌లో తయారవుతుంది',
+  'Linked as a device with a QR code': 'QR కోడ్‌తో పరికరంగా లింక్ అవుతుంది',
+  'Orden finds the servers from your address.': 'Orden మీ చిరునామా నుండి సర్వర్‌లను కనుగొంటుంది.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden మీ బ్రౌజర్‌లో సైన్ ఇన్‌ను తెరుస్తుంది, మీరు అనుమతించాక ఇక్కడికి తిరిగి వస్తుంది.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram ఒకసారి API ID అడుగుతుంది, తర్వాత మీ ఫోన్‌కు కోడ్ పంపుతుంది లేదా QR కోడ్ చూపుతుంది.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden మీ సొంత Slack యాప్‌ను తయారు చేస్తుంది, కాబట్టి ఏదీ ఇతరుల ద్వారా వెళ్లదు.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'కంప్యూటర్ లాగే, Orden మీ ఫోన్‌కు మరో పరికరంగా లింక్ అవుతుంది.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'మీ ఫోన్‌లో WhatsApp తెరిచి సెట్టింగ్‌లు, తర్వాత లింక్ చేసిన పరికరాలు కు వెళ్లండి',
+  'Tap Link a device': 'పరికరాన్ని లింక్ చేయండి నొక్కండి',
+  'Scan the QR code Orden shows next': 'Orden తర్వాత చూపే QR కోడ్‌ను స్కాన్ చేయండి',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'మీ ఫోన్‌లో Signal తెరిచి సెట్టింగ్‌లు, తర్వాత లింక్ చేసిన పరికరాలు కు వెళ్లండి',
+  'Tap the plus to link a new device': 'కొత్త పరికరాన్ని లింక్ చేయడానికి ప్లస్ నొక్కండి',
+  'Show the QR code': 'QR కోడ్ చూపు',
+  'Check the token you pasted: it starts with xoxp-.':
+    'మీరు అతికించిన టోకెన్‌ను తనిఖీ చేయండి: అది xoxp-తో మొదలవుతుంది.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'చిరునామా మరియు పాస్‌వర్డ్‌ను తనిఖీ చేయండి. కొన్ని సేవలు బదులుగా యాప్ పాస్‌వర్డ్ అడుగుతాయి.',
+  'Sign in again and allow Orden what it asks for.':
+    'మళ్లీ సైన్ ఇన్ చేసి Orden అడిగినవి అనుమతించండి.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden సర్వర్‌లను చేరుకోలేకపోయింది. మీ కనెక్షన్‌ను, లేదా అధునాతనం కింద ఉన్న సర్వర్‌లను తనిఖీ చేయండి.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden సేవను చేరుకోలేకపోయింది. మీ కనెక్షన్‌ను తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.',
+  'Change the details and try again.': 'వివరాలు మార్చి మళ్లీ ప్రయత్నించండి.',
+  'Stop adding this account?': 'ఈ ఖాతా జోడించడం ఆపాలా?',
+  'What you entered is not kept.': 'మీరు నమోదు చేసినది ఉంచబడదు.',
+  'Chat accounts': 'చాట్ ఖాతాలు',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'మెయిల్, Telegram, Slack, WhatsApp లేదా Signalను ఒక్కో దశలో కనెక్ట్ చేయండి.',
 }

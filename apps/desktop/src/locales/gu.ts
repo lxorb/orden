@@ -3670,4 +3670,61 @@ export const gu: Dictionary = {
     'બીજે ક્યાંકથી સાઇન આઉટ થયા; ખાતું કાઢી નખાયું નથી. તેને કાઢવા ફરી સાઇન ઇન કરો.',
   'Signed out; sign in again to see whether the account is still there.':
     'સાઇન આઉટ થયા; ખાતું હજી છે કે નહીં તે જોવા ફરી સાઇન ઇન કરો.',
+  'Add a chat account': 'ચૅટ એકાઉન્ટ ઉમેરો',
+  Steps: 'પગલાં',
+  'Choose a service': 'સેવા પસંદ કરો',
+  'Chat services connect in the desktop app.': 'ચૅટ સેવાઓ ડેસ્કટૉપ ઍપમાં જોડાય છે.',
+  Advanced: 'વિગતવાર',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden અનુમાનિત સર્વર સુધી પહોંચી શક્યું નહીં. અહીં ભરો.',
+  'Sign in with {service}': '{service} વડે સાઇન ઇન',
+  'Checking the connection…': 'જોડાણ તપાસી રહ્યા છીએ…',
+  'Could not connect': 'જોડાઈ શકાયું નહીં',
+  'Change the details': 'વિગતો બદલો',
+  '{account} is connected': '{account} જોડાયેલું છે',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'હમણાં ખોલવાની ચૅટ પસંદ કરો. બાકીની બાજુપટ્ટીમાં રાહ જુએ છે.',
+  'Its chats show in the sidebar as they arrive.': 'તેની ચૅટ આવે તેમ બાજુપટ્ટીમાં દેખાય છે.',
+  'Add another': 'બીજું ઉમેરો',
+  'Open chats': 'ચૅટ ખોલો',
+  'Any mail account, with its address and password':
+    'કોઈપણ મેઇલ એકાઉન્ટ, તેના સરનામા અને પાસવર્ડ સાથે',
+  'Sign in with your Google account': 'તમારા Google એકાઉન્ટ વડે સાઇન ઇન કરો',
+  'Sign in with your work or school account': 'તમારા કાર્ય કે શાળાના એકાઉન્ટ વડે સાઇન ઇન કરો',
+  'Your account, with a code sent to your phone': 'તમારું એકાઉન્ટ, ફોન પર મોકલેલા કોડ સાથે',
+  'Your own Slack app, made in one click': 'તમારી પોતાની Slack ઍપ, એક ક્લિકમાં બનેલી',
+  'Linked as a device with a QR code': 'QR કોડ વડે ડિવાઇસ તરીકે લિંક કરેલું',
+  'Orden finds the servers from your address.': 'Orden તમારા સરનામા પરથી સર્વર શોધે છે.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden તમારા બ્રાઉઝરમાં સાઇન-ઇન ખોલે છે અને તમે મંજૂરી આપો પછી અહીં પાછું આવે છે.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram એક વાર API ID માગે છે, પછી તમારા ફોન પર કોડ મોકલે છે અથવા QR કોડ બતાવે છે.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden તમારી પોતાની Slack ઍપ બનાવે છે, જેથી કશું બીજા કોઈ પાસેથી પસાર ન થાય.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden તમારા ફોન સાથે બીજા ડિવાઇસ તરીકે લિંક થાય છે, જેમ કમ્પ્યુટર થાય છે.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'ફોન પર WhatsApp ખોલો અને સેટિંગ્સમાં જાઓ, પછી લિંક કરેલા ડિવાઇસ',
+  'Tap Link a device': 'ડિવાઇસ લિંક કરો પર ટૅપ કરો',
+  'Scan the QR code Orden shows next': 'Orden હવે પછી બતાવે તે QR કોડ સ્કૅન કરો',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'ફોન પર Signal ખોલો અને સેટિંગ્સમાં જાઓ, પછી લિંક કરેલા ડિવાઇસ',
+  'Tap the plus to link a new device': 'નવું ડિવાઇસ લિંક કરવા પ્લસ પર ટૅપ કરો',
+  'Show the QR code': 'QR કોડ બતાવો',
+  'Check the token you pasted: it starts with xoxp-.':
+    'તમે પેસ્ટ કરેલું ટોકન તપાસો: તે xoxp- થી શરૂ થાય છે.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'સરનામું અને પાસવર્ડ તપાસો. કેટલીક સેવાઓ તેના બદલે ઍપ પાસવર્ડ માગે છે.',
+  'Sign in again and allow Orden what it asks for.':
+    'ફરી સાઇન ઇન કરો અને Orden જે માગે તેની મંજૂરી આપો.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden સર્વર સુધી પહોંચી શક્યું નહીં. તમારું જોડાણ, અથવા વિગતવાર હેઠળના સર્વર તપાસો.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden સેવા સુધી પહોંચી શક્યું નહીં. તમારું જોડાણ તપાસો અને ફરી પ્રયાસ કરો.',
+  'Change the details and try again.': 'વિગતો બદલો અને ફરી પ્રયાસ કરો.',
+  'Stop adding this account?': 'આ એકાઉન્ટ ઉમેરવાનું બંધ કરીએ?',
+  'What you entered is not kept.': 'તમે દાખલ કરેલું સાચવવામાં આવતું નથી.',
+  'Chat accounts': 'ચૅટ એકાઉન્ટ્સ',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'મેઇલ, Telegram, Slack, WhatsApp કે Signal જોડો, એક પછી એક પગલું.',
 }

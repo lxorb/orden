@@ -3738,4 +3738,61 @@ export const ha: Dictionary = {
     'An fitar da kai a wani wuri; ba a share asusun ba. Sake shiga don share shi.',
   'Signed out; sign in again to see whether the account is still there.':
     'An fitar da kai; sake shiga don ganin ko asusun yana nan har yanzu.',
+  'Add a chat account': 'Ƙara asusun hira',
+  Steps: 'Matakai',
+  'Choose a service': 'Zaɓi sabis',
+  'Chat services connect in the desktop app.': 'Ana haɗa sabis na hira a manhajar kwamfuta.',
+  Advanced: 'Na ci gaba',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden ba ta iya kai wa uwar garken da ta zata ba. Cika su a nan.',
+  'Sign in with {service}': 'Shiga da {service}',
+  'Checking the connection…': 'Ana duba haɗin…',
+  'Could not connect': 'Ba a iya haɗawa ba',
+  'Change the details': 'Canza bayanan',
+  '{account} is connected': 'An haɗa {account}',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Zaɓi hirarrakin da za a buɗe yanzu. Sauran za su jira a gefen mashaya.',
+  'Its chats show in the sidebar as they arrive.':
+    'Hirarrakinsa za su bayyana a gefen mashaya yayin da suke zuwa.',
+  'Add another': 'Ƙara wani',
+  'Open chats': 'Buɗe hirarraki',
+  'Any mail account, with its address and password':
+    'Kowane asusun imel, da adireshinsa da kalmar sirrinsa',
+  'Sign in with your Google account': 'Shiga da asusunka na Google',
+  'Sign in with your work or school account': 'Shiga da asusunka na aiki ko makaranta',
+  'Your account, with a code sent to your phone': 'Asusunka, da lambar da aka aika zuwa wayarka',
+  'Your own Slack app, made in one click': 'Manhajar Slack taka, an yi ta da danna ɗaya',
+  'Linked as a device with a QR code': "An haɗa a matsayin na'ura da lambar QR",
+  'Orden finds the servers from your address.': 'Orden tana gano uwar garken daga adireshinka.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden tana buɗe shiga a birawuzarka kuma ta dawo nan da zarar ka amince.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram tana neman API ID sau ɗaya, sannan ta aika lamba zuwa wayarka ko ta nuna lambar QR.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden tana yin manhajar Slack taka ta kanka, don kada wani abu ya bi ta hannun wani.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    "An haɗa Orden da wayarka a matsayin wata na'ura, kamar yadda ake haɗa kwamfuta.",
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    "A wayarka, buɗe WhatsApp ka je Saituna, sannan Na'urori masu haɗi",
+  'Tap Link a device': "Taɓa Haɗa na'ura",
+  'Scan the QR code Orden shows next': 'Yi sikanin lambar QR da Orden za ta nuna a gaba',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    "A wayarka, buɗe Signal ka je Saituna, sannan Na'urori masu haɗi",
+  'Tap the plus to link a new device': "Taɓa alamar ƙari don haɗa sabuwar na'ura",
+  'Show the QR code': 'Nuna lambar QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Duba token ɗin da ka liƙa: yana farawa da xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Duba adireshin da kalmar sirri. Wasu sabis suna neman kalmar sirrin manhaja maimakon haka.',
+  'Sign in again and allow Orden what it asks for.': 'Sake shiga ka ba Orden abin da take nema.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden ba ta iya kai wa uwar garken ba. Duba haɗinka, ko uwar garken a ƙarƙashin Na ci gaba.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden ba ta iya kai wa sabis ɗin ba. Duba haɗinka ka sake gwadawa.',
+  'Change the details and try again.': 'Canza bayanan ka sake gwadawa.',
+  'Stop adding this account?': 'A daina ƙara wannan asusun?',
+  'What you entered is not kept.': 'Ba a adana abin da ka shigar ba.',
+  'Chat accounts': 'Asusun hira',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Haɗa imel, Telegram, Slack, WhatsApp ko Signal, mataki-mataki.',
 }

@@ -41,4 +41,5 @@ export function whenPassOn(run: () => void, off: () => void): void {
 
 export function whenChatsOn(run: () => void, off: () => void): void {
   whenOn(chatsOn, 'channel', run, off)
+  whenOn(chatsOn, 'connect', () => undefined)
 }

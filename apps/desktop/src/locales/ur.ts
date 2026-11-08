@@ -3681,4 +3681,62 @@ export const ur: Dictionary = {
     'کسی اور جگہ سے سائن آؤٹ ہوا؛ اکاؤنٹ حذف نہیں ہوا۔ اسے حذف کرنے کے لیے دوبارہ سائن ان کریں۔',
   'Signed out; sign in again to see whether the account is still there.':
     'سائن آؤٹ ہوا؛ یہ دیکھنے کے لیے دوبارہ سائن ان کریں کہ اکاؤنٹ ابھی موجود ہے یا نہیں۔',
+  'Add a chat account': 'چیٹ اکاؤنٹ شامل کریں',
+  Steps: 'مراحل',
+  'Choose a service': 'سروس منتخب کریں',
+  'Chat services connect in the desktop app.': 'چیٹ سروسز ڈیسک ٹاپ ایپ میں جڑتی ہیں۔',
+  Advanced: 'اعلیٰ ترتیبات',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden اپنے اندازے والے سرورز تک نہیں پہنچ سکا۔ انہیں یہاں بھریں۔',
+  'Sign in with {service}': '{service} سے سائن ان کریں',
+  'Checking the connection…': 'کنکشن جانچا جا رہا ہے…',
+  'Could not connect': 'جڑ نہیں سکا',
+  'Change the details': 'تفصیلات بدلیں',
+  '{account} is connected': '{account} جڑ گیا',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'ابھی کھولنے والی چیٹس منتخب کریں۔ باقی سائیڈ بار میں انتظار کریں گی۔',
+  'Its chats show in the sidebar as they arrive.': 'اس کی چیٹس آتے ہی سائیڈ بار میں دکھیں گی۔',
+  'Add another': 'ایک اور شامل کریں',
+  'Open chats': 'چیٹس کھولیں',
+  'Any mail account, with its address and password':
+    'کوئی بھی میل اکاؤنٹ، اس کے پتے اور پاس ورڈ کے ساتھ',
+  'Sign in with your Google account': 'اپنے Google اکاؤنٹ سے سائن ان کریں',
+  'Sign in with your work or school account': 'اپنے دفتر یا اسکول اکاؤنٹ سے سائن ان کریں',
+  'Your account, with a code sent to your phone':
+    'آپ کا اکاؤنٹ، آپ کے فون پر بھیجے گئے کوڈ کے ساتھ',
+  'Your own Slack app, made in one click': 'آپ کی اپنی Slack ایپ، ایک کلک میں بنی',
+  'Linked as a device with a QR code': 'QR کوڈ سے بطور ڈیوائس لنک',
+  'Orden finds the servers from your address.': 'Orden آپ کے پتے سے سرورز ڈھونڈتا ہے۔',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden آپ کے براؤزر میں سائن ان کھولتا ہے اور اجازت دینے پر یہاں واپس آتا ہے۔',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram ایک بار API ID مانگتا ہے، پھر آپ کے فون پر کوڈ بھیجتا ہے یا QR کوڈ دکھاتا ہے۔',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden آپ کی اپنی Slack ایپ بناتا ہے، اس لیے کچھ بھی کسی اور کے ذریعے نہیں گزرتا۔',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden کمپیوٹر کی طرح آپ کے فون سے ایک اور ڈیوائس کے طور پر لنک ہوتا ہے۔',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'اپنے فون پر WhatsApp کھولیں اور سیٹنگز، پھر لنک کردہ ڈیوائسز میں جائیں',
+  'Tap Link a device': 'ڈیوائس لنک کریں پر ٹیپ کریں',
+  'Scan the QR code Orden shows next': 'Orden آگے جو QR کوڈ دکھائے اسے اسکین کریں',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'اپنے فون پر Signal کھولیں اور سیٹنگز، پھر لنک کردہ ڈیوائسز میں جائیں',
+  'Tap the plus to link a new device': 'نئی ڈیوائس لنک کرنے کے لیے جمع کے نشان پر ٹیپ کریں',
+  'Show the QR code': 'QR کوڈ دکھائیں',
+  'Check the token you pasted: it starts with xoxp-.':
+    'اپنا چسپاں کیا ٹوکن جانچیں: یہ xoxp- سے شروع ہوتا ہے۔',
+  'Check the address and password. Some services ask for an app password instead.':
+    'پتہ اور پاس ورڈ جانچیں۔ کچھ سروسز اس کے بجائے ایپ پاس ورڈ مانگتی ہیں۔',
+  'Sign in again and allow Orden what it asks for.':
+    'دوبارہ سائن ان کریں اور Orden جو مانگے اس کی اجازت دیں۔',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden سرورز تک نہیں پہنچ سکا۔ اپنا کنکشن، یا اعلیٰ ترتیبات کے تحت سرورز جانچیں۔',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden سروس تک نہیں پہنچ سکا۔ اپنا کنکشن جانچ کر دوبارہ کوشش کریں۔',
+  'Change the details and try again.': 'تفصیلات بدل کر دوبارہ کوشش کریں۔',
+  'Stop adding this account?': 'یہ اکاؤنٹ شامل کرنا روکیں؟',
+  'What you entered is not kept.': 'آپ کا درج کیا گیا مواد محفوظ نہیں رہتا۔',
+  'Chat accounts': 'چیٹ اکاؤنٹس',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'میل، Telegram، Slack، WhatsApp یا Signal کو مرحلہ وار جوڑیں۔',
 }

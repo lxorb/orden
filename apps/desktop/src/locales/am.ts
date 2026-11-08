@@ -3610,4 +3610,58 @@ export const am: Dictionary = {
     'በሌላ ቦታ ወጥተዋል፤ መለያው አልተሰረዘም። ለመሰረዝ እንደገና ይግቡ።',
   'Signed out; sign in again to see whether the account is still there.':
     'ወጥተዋል፤ መለያው አሁንም መኖሩን ለማየት እንደገና ይግቡ።',
+  'Add a chat account': 'የቻት መለያ አክል',
+  Steps: 'ደረጃዎች',
+  'Choose a service': 'አገልግሎት ይምረጡ',
+  'Chat services connect in the desktop app.': 'የቻት አገልግሎቶች በዴስክቶፕ መተግበሪያው ውስጥ ይገናኛሉ።',
+  Advanced: 'የላቀ',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden የገመታቸውን አገልጋዮች ማግኘት አልቻለም። እዚህ ያስገቡዋቸው።',
+  'Sign in with {service}': 'በ{service} ግባ',
+  'Checking the connection…': 'ግንኙነቱ እየተፈተሸ ነው…',
+  'Could not connect': 'መገናኘት አልተቻለም',
+  'Change the details': 'ዝርዝሮቹን ቀይር',
+  '{account} is connected': '{account} ተገናኝቷል',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'አሁን የሚከፈቱትን ቻቶች ይምረጡ። የቀሩት በጎን ሰሌዳው ይጠብቃሉ።',
+  'Its chats show in the sidebar as they arrive.': 'ቻቶቹ ሲደርሱ በጎን ሰሌዳው ይታያሉ።',
+  'Add another': 'ሌላ አክል',
+  'Open chats': 'ቻቶችን ክፈት',
+  'Any mail account, with its address and password': 'ማንኛውም የኢሜይል መለያ፣ ከአድራሻውና ከይለፍ ቃሉ ጋር',
+  'Sign in with your Google account': 'በGoogle መለያዎ ይግቡ',
+  'Sign in with your work or school account': 'በሥራ ወይም በትምህርት ቤት መለያዎ ይግቡ',
+  'Your account, with a code sent to your phone': 'መለያዎ፣ ወደ ስልክዎ በሚላክ ኮድ',
+  'Your own Slack app, made in one click': 'የራስዎ Slack መተግበሪያ፣ በአንድ ጠቅታ የሚሠራ',
+  'Linked as a device with a QR code': 'በQR ኮድ እንደ መሣሪያ የተገናኘ',
+  'Orden finds the servers from your address.': 'Orden አገልጋዮቹን ከአድራሻዎ ያገኛል።',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden መግቢያውን በአሳሽዎ ይከፍታል፣ ሲፈቅዱም ወደዚህ ይመለሳል።',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram አንድ ጊዜ API ID ይጠይቃል፣ ከዚያ ወደ ስልክዎ ኮድ ይልካል ወይም QR ኮድ ያሳያል።',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden የራስዎን Slack መተግበሪያ ይሠራል፣ ስለዚህ ምንም ነገር በሌላ ሰው በኩል አያልፍም።',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden እንደ ኮምፒውተር ሁሉ እንደ ሌላ መሣሪያ ከስልክዎ ጋር ይገናኛል።',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'በስልክዎ WhatsApp ይክፈቱና ወደ ቅንብሮች፣ ከዚያ የተገናኙ መሣሪያዎች ይሂዱ',
+  'Tap Link a device': 'መሣሪያ አገናኝ የሚለውን ይንኩ',
+  'Scan the QR code Orden shows next': 'Orden ቀጥሎ የሚያሳየውን QR ኮድ ይቃኙ',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'በስልክዎ Signal ይክፈቱና ወደ ቅንብሮች፣ ከዚያ የተገናኙ መሣሪያዎች ይሂዱ',
+  'Tap the plus to link a new device': 'አዲስ መሣሪያ ለማገናኘት የመደመር ምልክቱን ይንኩ',
+  'Show the QR code': 'QR ኮዱን አሳይ',
+  'Check the token you pasted: it starts with xoxp-.': 'የለጠፉትን ቶከን ይፈትሹ፦ በxoxp- ይጀምራል።',
+  'Check the address and password. Some services ask for an app password instead.':
+    'አድራሻውንና የይለፍ ቃሉን ይፈትሹ። አንዳንድ አገልግሎቶች በምትኩ የመተግበሪያ ይለፍ ቃል ይጠይቃሉ።',
+  'Sign in again and allow Orden what it asks for.': 'እንደገና ይግቡና Orden የሚጠይቀውን ይፍቀዱ።',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden አገልጋዮቹን ማግኘት አልቻለም። ግንኙነትዎን ወይም በየላቀ ስር ያሉትን አገልጋዮች ይፈትሹ።',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden አገልግሎቱን ማግኘት አልቻለም። ግንኙነትዎን ይፈትሹና እንደገና ይሞክሩ።',
+  'Change the details and try again.': 'ዝርዝሮቹን ይቀይሩና እንደገና ይሞክሩ።',
+  'Stop adding this account?': 'ይህን መለያ ማከል ይቁም?',
+  'What you entered is not kept.': 'ያስገቡት አይቀመጥም።',
+  'Chat accounts': 'የቻት መለያዎች',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'ኢሜይል፣ Telegram፣ Slack፣ WhatsApp ወይም Signal ደረጃ በደረጃ ያገናኙ።',
 }

@@ -3624,4 +3624,61 @@ export const id: Dictionary = {
     'Keluar di tempat lain; akun tidak dihapus. Masuk lagi untuk menghapusnya.',
   'Signed out; sign in again to see whether the account is still there.':
     'Telah keluar; masuk lagi untuk melihat apakah akun masih ada.',
+  'Add a chat account': 'Tambah akun obrolan',
+  Steps: 'Langkah',
+  'Choose a service': 'Pilih layanan',
+  'Chat services connect in the desktop app.': 'Layanan obrolan terhubung di aplikasi desktop.',
+  Advanced: 'Lanjutan',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden tidak dapat menghubungi server yang ditebaknya. Isi di sini.',
+  'Sign in with {service}': 'Masuk dengan {service}',
+  'Checking the connection…': 'Memeriksa koneksi…',
+  'Could not connect': 'Tidak dapat terhubung',
+  'Change the details': 'Ubah detail',
+  '{account} is connected': '{account} terhubung',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Pilih obrolan yang dibuka sekarang. Sisanya menunggu di bilah sisi.',
+  'Its chats show in the sidebar as they arrive.': 'Obrolannya muncul di bilah sisi saat tiba.',
+  'Add another': 'Tambah lagi',
+  'Open chats': 'Buka obrolan',
+  'Any mail account, with its address and password':
+    'Akun email apa pun, dengan alamat dan sandinya',
+  'Sign in with your Google account': 'Masuk dengan akun Google Anda',
+  'Sign in with your work or school account': 'Masuk dengan akun kantor atau sekolah Anda',
+  'Your account, with a code sent to your phone': 'Akun Anda, dengan kode yang dikirim ke ponsel',
+  'Your own Slack app, made in one click': 'Aplikasi Slack milik Anda, dibuat dalam satu klik',
+  'Linked as a device with a QR code': 'Ditautkan sebagai perangkat dengan kode QR',
+  'Orden finds the servers from your address.': 'Orden menemukan server dari alamat Anda.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden membuka halaman masuk di peramban dan kembali ke sini setelah Anda mengizinkan.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram meminta API ID sekali, lalu mengirim kode ke ponsel Anda atau menampilkan kode QR.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden membuat aplikasi Slack milik Anda sendiri, jadi tidak ada yang melewati pihak lain.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden ditautkan ke ponsel Anda sebagai perangkat lain, seperti komputer.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'Di ponsel, buka WhatsApp lalu ke Setelan, lalu Perangkat tertaut',
+  'Tap Link a device': 'Ketuk Tautkan perangkat',
+  'Scan the QR code Orden shows next': 'Pindai kode QR yang ditampilkan Orden berikutnya',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'Di ponsel, buka Signal lalu ke Pengaturan, lalu Perangkat tertaut',
+  'Tap the plus to link a new device': 'Ketuk tanda plus untuk menautkan perangkat baru',
+  'Show the QR code': 'Tampilkan kode QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Periksa token yang Anda tempel: diawali dengan xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Periksa alamat dan sandi. Beberapa layanan meminta sandi aplikasi sebagai gantinya.',
+  'Sign in again and allow Orden what it asks for.':
+    'Masuk lagi dan izinkan apa yang diminta Orden.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden tidak dapat menghubungi server. Periksa koneksi Anda, atau server di Lanjutan.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden tidak dapat menghubungi layanan. Periksa koneksi Anda dan coba lagi.',
+  'Change the details and try again.': 'Ubah detail dan coba lagi.',
+  'Stop adding this account?': 'Berhenti menambahkan akun ini?',
+  'What you entered is not kept.': 'Yang Anda masukkan tidak disimpan.',
+  'Chat accounts': 'Akun obrolan',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Hubungkan email, Telegram, Slack, WhatsApp, atau Signal, selangkah demi selangkah.',
 }

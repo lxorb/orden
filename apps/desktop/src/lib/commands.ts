@@ -1198,6 +1198,16 @@ export function appCommands(view?: EditorView): Command[] {
     ...exportCommands(),
     ...spaceCommands(),
     { id: 'llm', label: t('Connect an LLM to your notes'), run: () => settings.show('llm') },
+    ...(__EVEN_PLUGIN__ || !chatsOn()
+      ? []
+      : [
+          {
+            id: 'add-chat',
+            label: t('Add a chat account'),
+            also: ['connect', 'mail', 'gmail', 'telegram', 'slack', 'whatsapp', 'signal'],
+            run: () => void import('./chats/view/adding.svelte').then((one) => one.addChat()),
+          },
+        ]),
 
     account.user
       ? {

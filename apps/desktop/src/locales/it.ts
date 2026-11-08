@@ -3804,4 +3804,63 @@ export const it: Dictionary = {
     'Disconnesso altrove; l’account non è stato eliminato. Accedi di nuovo per eliminarlo.',
   'Signed out; sign in again to see whether the account is still there.':
     'Disconnesso; accedi di nuovo per vedere se l’account esiste ancora.',
+  'Add a chat account': 'Aggiungi un account chat',
+  Steps: 'Passaggi',
+  'Choose a service': 'Scegli un servizio',
+  'Chat services connect in the desktop app.': 'I servizi di chat si collegano nell’app desktop.',
+  Advanced: 'Avanzate',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden non ha raggiunto i server che ha ipotizzato. Inseriscili qui.',
+  'Sign in with {service}': 'Accedi con {service}',
+  'Checking the connection…': 'Verifica della connessione…',
+  'Could not connect': 'Impossibile connettersi',
+  'Change the details': 'Modifica i dati',
+  '{account} is connected': '{account} è connesso',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Scegli le chat da aprire ora. Le altre restano nella barra laterale.',
+  'Its chats show in the sidebar as they arrive.':
+    'Le sue chat compaiono nella barra laterale man mano che arrivano.',
+  'Add another': 'Aggiungine un altro',
+  'Open chats': 'Apri le chat',
+  'Any mail account, with its address and password':
+    'Qualsiasi account di posta, con indirizzo e password',
+  'Sign in with your Google account': 'Accedi con il tuo account Google',
+  'Sign in with your work or school account': 'Accedi con l’account di lavoro o della scuola',
+  'Your account, with a code sent to your phone':
+    'Il tuo account, con un codice inviato al telefono',
+  'Your own Slack app, made in one click': 'La tua app Slack, creata con un clic',
+  'Linked as a device with a QR code': 'Collegato come dispositivo con un codice QR',
+  'Orden finds the servers from your address.': 'Orden trova i server dal tuo indirizzo.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden apre l’accesso nel browser e torna qui appena lo consenti.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram chiede una sola volta un API ID, poi invia un codice al telefono o mostra un codice QR.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden crea un’app Slack tutta tua, così nulla passa da altri.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden si collega al telefono come un altro dispositivo, come fa un computer.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'Sul telefono apri WhatsApp e vai su Impostazioni, poi Dispositivi collegati',
+  'Tap Link a device': 'Tocca Collega un dispositivo',
+  'Scan the QR code Orden shows next': 'Scansiona il codice QR che Orden mostra dopo',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'Sul telefono apri Signal e vai su Impostazioni, poi Dispositivi collegati',
+  'Tap the plus to link a new device': 'Tocca il più per collegare un nuovo dispositivo',
+  'Show the QR code': 'Mostra il codice QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Controlla il token incollato: inizia con xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Controlla indirizzo e password. Alcuni servizi chiedono invece una password per le app.',
+  'Sign in again and allow Orden what it asks for.':
+    'Accedi di nuovo e concedi a Orden ciò che chiede.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden non ha raggiunto i server. Controlla la connessione o i server in Avanzate.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden non ha raggiunto il servizio. Controlla la connessione e riprova.',
+  'Change the details and try again.': 'Modifica i dati e riprova.',
+  'Stop adding this account?': 'Interrompere l’aggiunta di questo account?',
+  'What you entered is not kept.': 'Ciò che hai inserito non viene conservato.',
+  'Chat accounts': 'Account chat',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Collega posta, Telegram, Slack, WhatsApp o Signal, un passo alla volta.',
 }

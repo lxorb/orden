@@ -3706,4 +3706,61 @@ export const tr: Dictionary = {
     'Başka bir yerden çıkış yapıldı; hesap silinmedi. Silmek için yeniden giriş yapın.',
   'Signed out; sign in again to see whether the account is still there.':
     'Çıkış yapıldı; hesabın hâlâ var olup olmadığını görmek için yeniden giriş yapın.',
+  'Add a chat account': 'Sohbet hesabı ekle',
+  Steps: 'Adımlar',
+  'Choose a service': 'Bir hizmet seçin',
+  'Chat services connect in the desktop app.': 'Sohbet hizmetleri masaüstü uygulamasında bağlanır.',
+  Advanced: 'Gelişmiş',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden tahmin ettiği sunuculara ulaşamadı. Bunları buraya girin.',
+  'Sign in with {service}': '{service} ile oturum aç',
+  'Checking the connection…': 'Bağlantı denetleniyor…',
+  'Could not connect': 'Bağlanılamadı',
+  'Change the details': 'Bilgileri değiştir',
+  '{account} is connected': '{account} bağlandı',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Şimdi açılacak sohbetleri seçin. Diğerleri kenar çubuğunda bekler.',
+  'Its chats show in the sidebar as they arrive.': 'Sohbetleri geldikçe kenar çubuğunda görünür.',
+  'Add another': 'Başka ekle',
+  'Open chats': 'Sohbetleri aç',
+  'Any mail account, with its address and password':
+    'Herhangi bir e-posta hesabı, adresi ve parolasıyla',
+  'Sign in with your Google account': 'Google hesabınızla oturum açın',
+  'Sign in with your work or school account': 'İş veya okul hesabınızla oturum açın',
+  'Your account, with a code sent to your phone': 'Hesabınız, telefonunuza gönderilen bir kodla',
+  'Your own Slack app, made in one click': 'Tek tıkla oluşturulan kendi Slack uygulamanız',
+  'Linked as a device with a QR code': 'QR koduyla cihaz olarak bağlanır',
+  'Orden finds the servers from your address.': 'Orden sunucuları adresinizden bulur.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden oturum açmayı tarayıcınızda açar ve izin verdiğinizde buraya döner.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram bir kez API ID ister, ardından telefonunuza kod gönderir veya QR kodu gösterir.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden size ait bir Slack uygulaması oluşturur, böylece hiçbir şey başkasından geçmez.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden, bir bilgisayar gibi telefonunuza başka bir cihaz olarak bağlanır.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    "Telefonunuzda WhatsApp'ı açın, Ayarlar'a, ardından Bağlı cihazlar'a gidin",
+  'Tap Link a device': "Cihaz bağla'ya dokunun",
+  'Scan the QR code Orden shows next': "Orden'ın ardından gösterdiği QR kodunu tarayın",
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    "Telefonunuzda Signal'i açın, Ayarlar'a, ardından Bağlı cihazlar'a gidin",
+  'Tap the plus to link a new device': 'Yeni cihaz bağlamak için artıya dokunun',
+  'Show the QR code': 'QR kodunu göster',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Yapıştırdığınız belirteci denetleyin: xoxp- ile başlar.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Adresi ve parolayı denetleyin. Bazı hizmetler bunun yerine uygulama parolası ister.',
+  'Sign in again and allow Orden what it asks for.':
+    "Yeniden oturum açın ve Orden'ın istediklerine izin verin.",
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden sunuculara ulaşamadı. Bağlantınızı veya Gelişmiş altındaki sunucuları denetleyin.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden hizmete ulaşamadı. Bağlantınızı denetleyip tekrar deneyin.',
+  'Change the details and try again.': 'Bilgileri değiştirip tekrar deneyin.',
+  'Stop adding this account?': 'Bu hesabı eklemeyi bırakmak mı istiyorsunuz?',
+  'What you entered is not kept.': 'Girdikleriniz saklanmaz.',
+  'Chat accounts': 'Sohbet hesapları',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    "E-posta, Telegram, Slack, WhatsApp veya Signal'i adım adım bağlayın.",
 }

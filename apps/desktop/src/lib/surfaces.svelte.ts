@@ -135,6 +135,12 @@ export const phoneYou = held(() =>
 
 export const settingsSurface = held(() => import('./SettingsPanel.svelte'))
 
+export const connectSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no chats in the Even Realities plugin'))
+    : import('./chats/view/AddChat.svelte'),
+)
+
 export const pagesNavigator = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no page notes in the Even Realities plugin'))

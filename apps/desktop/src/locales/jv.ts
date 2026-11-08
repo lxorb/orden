@@ -3608,4 +3608,62 @@ export const jv: Dictionary = {
     'Metu ing panggonan liya; akun ora dibusak. Mlebu maneh kanggo mbusak.',
   'Signed out; sign in again to see whether the account is still there.':
     'Wis metu; mlebu maneh kanggo ndeleng apa akun isih ana.',
+  'Add a chat account': 'Tambah akun obrolan',
+  Steps: 'Langkah',
+  'Choose a service': 'Pilih layanan',
+  'Chat services connect in the desktop app.': 'Layanan obrolan nyambung ing aplikasi desktop.',
+  Advanced: 'Lanjutan',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden ora bisa nggayuh server sing dikira. Isinen ing kene.',
+  'Sign in with {service}': 'Mlebu nganggo {service}',
+  'Checking the connection…': 'Mriksa sambungan…',
+  'Could not connect': 'Ora bisa nyambung',
+  'Change the details': 'Owahi rincian',
+  '{account} is connected': '{account} wis nyambung',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Pilih obrolan sing dibukak saiki. Liyane ngenteni ing bar sisih.',
+  'Its chats show in the sidebar as they arrive.': 'Obrolane katon ing bar sisih nalika teka.',
+  'Add another': 'Tambah liyane',
+  'Open chats': 'Bukak obrolan',
+  'Any mail account, with its address and password':
+    'Akun email apa wae, nganggo alamat lan tembung sandhine',
+  'Sign in with your Google account': 'Mlebu nganggo akun Google sampeyan',
+  'Sign in with your work or school account': 'Mlebu nganggo akun kantor utawa sekolah sampeyan',
+  'Your account, with a code sent to your phone':
+    'Akun sampeyan, nganggo kode sing dikirim menyang telpon',
+  'Your own Slack app, made in one click': 'Aplikasi Slack duweke sampeyan, digawe sak klik',
+  'Linked as a device with a QR code': 'Disambung dadi piranti nganggo kode QR',
+  'Orden finds the servers from your address.': 'Orden nemokake server saka alamat sampeyan.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden mbukak kaca mlebu ing panjelajah lan bali mrene sawise sampeyan ngidini.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram njaluk API ID sepisan, banjur ngirim kode menyang telpon sampeyan utawa nuduhake kode QR.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden nggawe aplikasi Slack duweke sampeyan dhewe, dadi ora ana sing liwat wong liya.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden disambungake menyang telpon sampeyan minangka piranti liyane, kaya komputer.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'Ing telpon, bukak WhatsApp lan menyang Setelan, banjur Piranti sing disambung',
+  'Tap Link a device': 'Tutul Sambungake piranti',
+  'Scan the QR code Orden shows next': 'Pindai kode QR sing dituduhake Orden sabanjure',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'Ing telpon, bukak Signal lan menyang Setelan, banjur Piranti sing disambung',
+  'Tap the plus to link a new device': 'Tutul tandha plus kanggo nyambungake piranti anyar',
+  'Show the QR code': 'Tuduhake kode QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Priksa token sing sampeyan tempel: diwiwiti karo xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Priksa alamat lan tembung sandhi. Sawetara layanan njaluk tembung sandhi aplikasi.',
+  'Sign in again and allow Orden what it asks for.':
+    'Mlebu maneh lan idini apa sing dijaluk Orden.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden ora bisa nggayuh server. Priksa sambungan sampeyan, utawa server ing Lanjutan.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden ora bisa nggayuh layanan. Priksa sambungan sampeyan lan coba maneh.',
+  'Change the details and try again.': 'Owahi rincian lan coba maneh.',
+  'Stop adding this account?': 'Mandheg nambah akun iki?',
+  'What you entered is not kept.': 'Apa sing sampeyan lebokake ora disimpen.',
+  'Chat accounts': 'Akun obrolan',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Sambungake email, Telegram, Slack, WhatsApp utawa Signal, langkah demi langkah.',
 }

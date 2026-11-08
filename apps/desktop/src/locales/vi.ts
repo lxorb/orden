@@ -3590,4 +3590,62 @@ export const vi: Dictionary = {
     'Đã đăng xuất ở nơi khác; tài khoản chưa bị xóa. Đăng nhập lại để xóa.',
   'Signed out; sign in again to see whether the account is still there.':
     'Đã đăng xuất; đăng nhập lại để xem tài khoản còn hay không.',
+  'Add a chat account': 'Thêm tài khoản trò chuyện',
+  Steps: 'Các bước',
+  'Choose a service': 'Chọn dịch vụ',
+  'Chat services connect in the desktop app.':
+    'Dịch vụ trò chuyện được kết nối trong ứng dụng máy tính.',
+  Advanced: 'Nâng cao',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden không kết nối được các máy chủ đã đoán. Hãy điền vào đây.',
+  'Sign in with {service}': 'Đăng nhập bằng {service}',
+  'Checking the connection…': 'Đang kiểm tra kết nối…',
+  'Could not connect': 'Không kết nối được',
+  'Change the details': 'Sửa thông tin',
+  '{account} is connected': 'Đã kết nối {account}',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'Chọn các cuộc trò chuyện để mở ngay. Phần còn lại chờ ở thanh bên.',
+  'Its chats show in the sidebar as they arrive.':
+    'Các cuộc trò chuyện sẽ hiện ở thanh bên khi đến.',
+  'Add another': 'Thêm tài khoản khác',
+  'Open chats': 'Mở trò chuyện',
+  'Any mail account, with its address and password': 'Mọi tài khoản thư, với địa chỉ và mật khẩu',
+  'Sign in with your Google account': 'Đăng nhập bằng tài khoản Google',
+  'Sign in with your work or school account': 'Đăng nhập bằng tài khoản công việc hoặc trường học',
+  'Your account, with a code sent to your phone': 'Tài khoản của bạn, với mã gửi đến điện thoại',
+  'Your own Slack app, made in one click': 'Ứng dụng Slack của riêng bạn, tạo bằng một lần nhấp',
+  'Linked as a device with a QR code': 'Liên kết như một thiết bị bằng mã QR',
+  'Orden finds the servers from your address.': 'Orden tìm máy chủ từ địa chỉ của bạn.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden mở trang đăng nhập trong trình duyệt và quay lại đây khi bạn cho phép.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram hỏi API ID một lần, rồi gửi mã đến điện thoại hoặc hiện mã QR.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden tạo một ứng dụng Slack của riêng bạn, nên không có gì đi qua người khác.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden được liên kết với điện thoại như một thiết bị khác, giống máy tính.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'Trên điện thoại, mở WhatsApp, vào Cài đặt, rồi Thiết bị đã liên kết',
+  'Tap Link a device': 'Nhấn Liên kết thiết bị',
+  'Scan the QR code Orden shows next': 'Quét mã QR mà Orden hiện tiếp theo',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'Trên điện thoại, mở Signal, vào Cài đặt, rồi Thiết bị đã liên kết',
+  'Tap the plus to link a new device': 'Nhấn dấu cộng để liên kết thiết bị mới',
+  'Show the QR code': 'Hiện mã QR',
+  'Check the token you pasted: it starts with xoxp-.':
+    'Kiểm tra token đã dán: nó bắt đầu bằng xoxp-.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'Kiểm tra địa chỉ và mật khẩu. Một số dịch vụ yêu cầu mật khẩu ứng dụng.',
+  'Sign in again and allow Orden what it asks for.':
+    'Đăng nhập lại và cho phép những gì Orden yêu cầu.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden không kết nối được máy chủ. Hãy kiểm tra kết nối, hoặc máy chủ trong mục Nâng cao.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden không kết nối được dịch vụ. Hãy kiểm tra kết nối và thử lại.',
+  'Change the details and try again.': 'Sửa thông tin và thử lại.',
+  'Stop adding this account?': 'Dừng thêm tài khoản này?',
+  'What you entered is not kept.': 'Những gì bạn đã nhập sẽ không được giữ.',
+  'Chat accounts': 'Tài khoản trò chuyện',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'Kết nối thư, Telegram, Slack, WhatsApp hoặc Signal, từng bước một.',
 }

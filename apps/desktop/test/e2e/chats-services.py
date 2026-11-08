@@ -349,16 +349,16 @@ def signed_out(page: Page) -> None:
     if not wait_for(page, "!!document.querySelector('.chats [aria-label=\"Sign in again\"]')", "Sign in again"):
         return
     page.locator('.chats [aria-label="Sign in again"]').first.click()
-    if not wait_for(page, "!!document.querySelector('.chats .connect')", "the form to sign in again"):
+    if not wait_for(page, "document.querySelector('.add-chat')?.dataset.step === 'connect'", "the window to sign in again"):
         return
     form = page.evaluate("""() => ({
-      services: document.querySelectorAll('.chats .connect .service').length,
-      values: [...document.querySelectorAll('.chats .connect input.orden-field')].map((one) => one.value),
+      services: document.querySelectorAll('.add-chat .tile').length,
+      values: [...document.querySelectorAll('.add-chat input.orden-field')].map((one) => one.value),
     })""")
     if form["services"] or "wren" not in form["values"]:
-        wrong(f"signed out: the form is not for the same account ({form})")
-    page.locator(".chats .connect button[type=submit]").click()
-    if not wait_for(page, "!document.querySelector('.chats .connect') && !document.querySelector('.chats [aria-label=\"Sign in again\"]')", "the account back"):
+        wrong(f"signed out: the window is not for the same account ({form})")
+    page.locator(".add-chat button[type=submit]").click()
+    if not wait_for(page, "document.querySelector('.add-chat')?.dataset.step === 'done' && !document.querySelector('.chats [aria-label=\"Sign in again\"]')", "the account back"):
         return
     asked = page.evaluate("() => window.__again.asked")
     if asked != [{"name": "wren"}, {"name": "wren"}]:

@@ -3605,4 +3605,61 @@ export const ja: Dictionary = {
     '別の場所でサインアウトされました。アカウントは削除されていません。削除するにはもう一度サインインしてください。',
   'Signed out; sign in again to see whether the account is still there.':
     'サインアウトしました。アカウントがまだあるか確かめるには、もう一度サインインしてください。',
+  'Add a chat account': 'チャットアカウントを追加',
+  Steps: '手順',
+  'Choose a service': 'サービスを選択',
+  'Chat services connect in the desktop app.': 'チャットサービスはデスクトップアプリで接続します。',
+  Advanced: '詳細設定',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden が推測したサーバーに接続できませんでした。ここで入力してください。',
+  'Sign in with {service}': '{service} でサインイン',
+  'Checking the connection…': '接続を確認しています…',
+  'Could not connect': '接続できませんでした',
+  'Change the details': '入力内容を変更',
+  '{account} is connected': '{account} を接続しました',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    '今開くチャットを選んでください。残りはサイドバーで待機します。',
+  'Its chats show in the sidebar as they arrive.': 'チャットは届きしだいサイドバーに表示されます。',
+  'Add another': '別のアカウントを追加',
+  'Open chats': 'チャットを開く',
+  'Any mail account, with its address and password':
+    'アドレスとパスワードで使える任意のメールアカウント',
+  'Sign in with your Google account': 'Google アカウントでサインイン',
+  'Sign in with your work or school account': '職場または学校のアカウントでサインイン',
+  'Your account, with a code sent to your phone': '電話に届くコードで使うアカウント',
+  'Your own Slack app, made in one click': 'ワンクリックで作るあなた専用の Slack アプリ',
+  'Linked as a device with a QR code': 'QR コードでデバイスとしてリンク',
+  'Orden finds the servers from your address.': 'Orden がアドレスからサーバーを見つけます。',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden がブラウザでサインインを開き、許可するとここに戻ります。',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram は最初に一度だけ API ID を求め、その後電話にコードを送るか QR コードを表示します。',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden があなた専用の Slack アプリを作るので、ほかの誰も経由しません。',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden はパソコンと同じように、別のデバイスとして電話にリンクされます。',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    '電話で WhatsApp を開き、設定、次にリンク済みデバイスに進みます',
+  'Tap Link a device': '「デバイスをリンク」をタップ',
+  'Scan the QR code Orden shows next': '次に Orden が表示する QR コードをスキャン',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    '電話で Signal を開き、設定、次にリンク済み端末に進みます',
+  'Tap the plus to link a new device': 'プラスをタップして新しい端末をリンク',
+  'Show the QR code': 'QR コードを表示',
+  'Check the token you pasted: it starts with xoxp-.':
+    '貼り付けたトークンを確認してください。xoxp- で始まります。',
+  'Check the address and password. Some services ask for an app password instead.':
+    'アドレスとパスワードを確認してください。サービスによってはアプリパスワードが必要です。',
+  'Sign in again and allow Orden what it asks for.':
+    'もう一度サインインし、Orden が求める権限を許可してください。',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden がサーバーに接続できませんでした。接続か、詳細設定のサーバーを確認してください。',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden がサービスに接続できませんでした。接続を確認して再試行してください。',
+  'Change the details and try again.': '入力内容を変更して再試行してください。',
+  'Stop adding this account?': 'このアカウントの追加をやめますか？',
+  'What you entered is not kept.': '入力した内容は保存されません。',
+  'Chat accounts': 'チャットアカウント',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'メール、Telegram、Slack、WhatsApp、Signal を一歩ずつ接続します。',
 }

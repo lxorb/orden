@@ -1249,7 +1249,8 @@ class Workspace {
       | 'explorer'
       | 'pass'
       | 'time'
-      | 'settings',
+      | 'settings'
+      | 'connect',
     text: string,
     name = UNTITLED,
     beside: string | null = null,
@@ -1449,7 +1450,7 @@ class Workspace {
   }
 
   private onlyOne(kept: Tab) {
-    if (!viewport.touch || kept.kind === 'settings') return
+    if (!viewport.touch || kept.kind === 'settings' || kept.kind === 'connect') return
 
     for (const other of this.tabs) {
       if (other.id === kept.id || !this.panes.at(other.paneId)) continue
@@ -1551,6 +1552,21 @@ class Workspace {
   get settingsShown(): boolean {
     const tab = this.settingsTab
     return tab !== null && this.panes.at(tab.paneId)?.activeTabId === tab.id
+  }
+
+  openConnect() {
+    const open = this.connectTab
+    if (open) this.activate(open.id)
+    else this.openUnsaved('connect', '', t('Add a chat account'))
+  }
+
+  closeConnect() {
+    const open = this.connectTab
+    if (open) this.close(open.id, false)
+  }
+
+  get connectTab(): Tab | null {
+    return this.singleHere('connect')
   }
 
   openChat() {
@@ -2608,6 +2624,10 @@ class Workspace {
 
   private async mayClose(closing: readonly Tab[]): Promise<boolean> {
     if (__EVEN_PLUGIN__) return true
+    if (closing.some((tab) => tab.kind === 'connect')) {
+      const { mayLeave } = await import('./chats/view/adding.svelte')
+      if (!(await mayLeave())) return false
+    }
     if (closing.some(unsaved)) {
       const { mayLose } = await import('./workspace/closing-unsaved')
       if (!(await mayLose(this, closing))) return false

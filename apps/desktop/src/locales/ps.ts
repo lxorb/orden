@@ -3683,4 +3683,61 @@ export const ps: Dictionary = {
     'له بل ځای څخه ووتل شو؛ حساب ړنګ نه شو. د ړنګولو لپاره بیا ننوځئ.',
   'Signed out; sign in again to see whether the account is still there.':
     'ووتل شو؛ بیا ننوځئ چې وګورئ حساب لا شته که نه.',
+  'Add a chat account': 'د چټ حساب ورزیاتول',
+  Steps: 'پړاوونه',
+  'Choose a service': 'یو خدمت وټاکئ',
+  'Chat services connect in the desktop app.': 'د چټ خدمتونه په ډیسټاپ اپ کې نښلول کېږي.',
+  Advanced: 'پرمختللی',
+  'Orden could not reach the servers it guessed. Fill them in here.':
+    'Orden هغو سرورونو ته ونه رسېد چې اټکل یې کړي وو. دلته یې ډک کړئ.',
+  'Sign in with {service}': 'د {service} سره ننوتل',
+  'Checking the connection…': 'نښلون کتل کېږي…',
+  'Could not connect': 'ونه نښلول شو',
+  'Change the details': 'جزییات بدل کړئ',
+  '{account} is connected': '{account} ونښلول شو',
+  'Choose the chats to open now. The rest wait in the sidebar.':
+    'هغه چټونه وټاکئ چې اوس پرانیستل شي. نور په څنګ پټه کې پاتې کېږي.',
+  'Its chats show in the sidebar as they arrive.': 'د دې چټونه چې څنګه راځي په څنګ پټه کې ښکاري.',
+  'Add another': 'بل ورزیات کړئ',
+  'Open chats': 'چټونه پرانیستل',
+  'Any mail account, with its address and password': 'هر برېښناليک حساب، د خپلې پتې او پټنوم سره',
+  'Sign in with your Google account': 'د خپل Google حساب سره ننوځئ',
+  'Sign in with your work or school account': 'د خپل کار یا ښوونځي حساب سره ننوځئ',
+  'Your account, with a code sent to your phone':
+    'ستاسو حساب، د هغه کوډ سره چې تلیفون ته استول کېږي',
+  'Your own Slack app, made in one click': 'ستاسو خپل Slack اپ، په یوه کلیک جوړ',
+  'Linked as a device with a QR code': 'د QR کوډ سره د یوې وسیلې په توګه تړل شوی',
+  'Orden finds the servers from your address.': 'Orden ستاسو له پتې سرورونه پیدا کوي.',
+  'Orden opens the sign-in in your browser and comes back here once you allow it.':
+    'Orden په براوزر کې ننوتل پرانیزي او کله چې اجازه ورکړئ دلته بېرته راځي.',
+  'Telegram asks for an API ID once, then sends a code to your phone or shows a QR code.':
+    'Telegram یو ځل API ID غواړي، بیا تلیفون ته کوډ استوي یا QR کوډ ښيي.',
+  'Orden makes a Slack app of your own, so nothing passes through anyone else.':
+    'Orden ستاسو خپل Slack اپ جوړوي، نو هېڅ شی د بل چا له لارې نه تېرېږي.',
+  'Orden is linked to your phone as another device, the way a computer is.':
+    'Orden ستاسو تلیفون ته د بلې وسیلې په توګه تړل کېږي، لکه کمپیوټر.',
+  'On your phone, open WhatsApp and go to Settings, then Linked devices':
+    'په تلیفون کې WhatsApp پرانیزئ او امستنې، بیا تړل شوي وسایل ته لاړ شئ',
+  'Tap Link a device': 'وسیله وتړئ باندې ټک وکړئ',
+  'Scan the QR code Orden shows next': 'هغه QR کوډ سکن کړئ چې Orden یې وروسته ښيي',
+  'On your phone, open Signal and go to Settings, then Linked devices':
+    'په تلیفون کې Signal پرانیزئ او امستنې، بیا تړل شوي وسایل ته لاړ شئ',
+  'Tap the plus to link a new device': 'د نوې وسیلې تړلو لپاره جمع باندې ټک وکړئ',
+  'Show the QR code': 'QR کوډ وښایاست',
+  'Check the token you pasted: it starts with xoxp-.':
+    'هغه ټوکن وګورئ چې مو پیسټ کړ: په xoxp- پیلېږي.',
+  'Check the address and password. Some services ask for an app password instead.':
+    'پته او پټنوم وګورئ. ځینې خدمتونه پر ځای یې د اپ پټنوم غواړي.',
+  'Sign in again and allow Orden what it asks for.':
+    'بیا ننوځئ او Orden ته هغه اجازه ورکړئ چې غواړي یې.',
+  'Orden could not reach the servers. Check your connection, or the servers under Advanced.':
+    'Orden سرورونو ته ونه رسېد. خپل نښلون، یا د پرمختللی لاندې سرورونه وګورئ.',
+  'Orden could not reach the service. Check your connection and try again.':
+    'Orden خدمت ته ونه رسېد. خپل نښلون وګورئ او بیا هڅه وکړئ.',
+  'Change the details and try again.': 'جزییات بدل کړئ او بیا هڅه وکړئ.',
+  'Stop adding this account?': 'د دې حساب ورزیاتول ودروئ؟',
+  'What you entered is not kept.': 'هغه څه چې مو ولیکل نه ساتل کېږي.',
+  'Chat accounts': 'د چټ حسابونه',
+  'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
+    'برېښناليک، Telegram، Slack، WhatsApp یا Signal ونښلوئ، ګام په ګام.',
 }
