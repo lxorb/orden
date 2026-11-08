@@ -247,6 +247,89 @@ describe('a room', () => {
     })
   })
 
+  describe('a note written with Windows line endings', () => {
+    async function crlfNote(content = '# Lines\r\none\r\ntwo\r\n'): Promise<string> {
+      const made = await call(env, `/v1/spaces/${spaceId}/notes`, {
+        token,
+        body: { path: 'lines.md', content },
+      })
+      return made.json.note.id
+    }
+
+    test('is held with the line endings an editor counts, so a change lands where it was typed', async () => {
+      const id = await crlfNote()
+      const { room: made, state } = room(env)
+      const one = await arrive(made, state, { id, spaceId })
+      const two = await arrive(made, state, { id, spaceId })
+
+      expect(one.words).toBe('# Lines\none\ntwo\n')
+
+      await say(made, state, one.socket, one.type(one.words.indexOf('two'), 'between\n'))
+      await settle(made, state, [one, two])
+
+      expect(two.words).toBe('# Lines\none\nbetween\ntwo\n')
+    })
+
+    test('is written back with the line endings it had', async () => {
+      const id = await crlfNote()
+      const { room: made, state } = room(env)
+      const one = await arrive(made, state, { id, spaceId })
+
+      await made.alarm()
+      expect((await call(env, `/v1/notes/${id}`, { token })).json.note.version).toBe(1)
+
+      await say(made, state, one.socket, one.type(one.words.length, 'three\n'))
+      await made.alarm()
+
+      const read = await call(env, `/v1/notes/${id}`, { token })
+      expect(read.json.content).toBe('# Lines\r\none\r\ntwo\r\nthree\r\n')
+    })
+
+    test('takes in a change pushed while it slept without a stray carriage return', async () => {
+      const id = await crlfNote()
+      const { room: made, state } = room(env)
+      const one = await arrive(made, state, { id, spaceId })
+      state.drop(one.socket)
+      await made.webSocketClose(one.socket as unknown as WebSocket)
+
+      const pushed = await call(env, `/v1/notes/${id}`, {
+        token,
+        method: 'PUT',
+        body: { path: 'lines.md', content: '# Lines\r\none\r\npushed\r\ntwo\r\n', baseVersion: 1 },
+      })
+      expect(pushed.status).toBe(200)
+
+      const woken = new NoteRoom(state as unknown as DurableObjectState, env)
+      const back = await arrive(woken, state, { id, spaceId })
+
+      expect(back.words).toBe('# Lines\none\npushed\ntwo\n')
+    })
+
+    test('held with its carriage returns from before is evened out once nobody is in it', async () => {
+      const { room: made, state } = room(env)
+      const one = await arrive(made, state, { id: noteId, spaceId })
+      await say(made, state, one.socket, one.type(11, 'old\r\nroom\r\n'))
+      await made.alarm()
+
+      const kept = (await state.storage.get('note')) as Record<string, unknown>
+      delete kept.lines
+      await state.storage.put('note', kept)
+
+      const raw = new NoteRoom(state as unknown as DurableObjectState, env)
+      const during = await arrive(raw, state, { id: noteId, spaceId })
+      expect(during.words).toBe('# Together\nold\r\nroom\r\n')
+
+      for (const gone of [one, during]) {
+        state.drop(gone.socket)
+        await raw.webSocketClose(gone.socket as unknown as WebSocket)
+      }
+
+      const woken = new NoteRoom(state as unknown as DurableObjectState, env)
+      const back = await arrive(woken, state, { id: noteId, spaceId })
+      expect(back.words).toBe('# Together\nold\nroom\n')
+    })
+  })
+
   async function held(): Promise<string[]> {
     const page = await call(env, `/v1/spaces/${spaceId}/changes?since=0`, { token })
     return (page.json.notes as { path: string; deleted?: boolean }[])

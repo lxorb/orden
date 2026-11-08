@@ -43,6 +43,11 @@ import {
   noteKind,
   readsAs,
   takeInto,
+  type Lines,
+  linesOf,
+  asWritten,
+  unixLines,
+  unixWords,
   writesOf,
   type RoomKind,
 } from './kind'
@@ -65,6 +70,7 @@ export interface Held {
   epoch?: number
   epochBase?: string
   snapshot?: number
+  lines?: Lines
 }
 
 interface Attached {
@@ -102,6 +108,7 @@ function heldIn(value: unknown): Held | null {
     ...(typeof held.epoch === 'number' ? { epoch: held.epoch } : {}),
     ...(typeof held.epochBase === 'string' ? { epochBase: held.epochBase } : {}),
     ...(typeof held.snapshot === 'number' ? { snapshot: held.snapshot } : {}),
+    ...(held.lines === 'crlf' || held.lines === 'lf' ? { lines: held.lines } : {}),
   }
 }
 
@@ -648,7 +655,10 @@ export class NoteRoom implements DurableObject {
     await this.woken()
     await this.forgetSocket(socket)
 
-    if (this.ctx.getWebSockets().length <= 1) await this.settle()
+    if (this.ctx.getWebSockets().length <= 1) {
+      if (this.held) await this.unixed(this.held, socket)
+      await this.settle()
+    }
   }
 
   async webSocketError(socket: WebSocket) {
@@ -683,6 +693,7 @@ export class NoteRoom implements DurableObject {
         if (before.epoch !== undefined) held.epoch ??= before.epoch
         if (before.epochBase !== undefined) held.epochBase ??= before.epochBase
         if (before.snapshot !== undefined) held.snapshot ??= before.snapshot
+        if (before.lines !== undefined) held.lines ??= before.lines
       }
 
       await this.ctx.storage.put('note', held)
@@ -699,6 +710,7 @@ export class NoteRoom implements DurableObject {
         const object = await this.env.NOTES.get(noteKey(held.spaceId, held.noteId))
         const file = object ? await object.text() : ''
         await this.state.seed((doc) => fill(held.kind, doc, file))
+        if (held.kind === 'words') held.lines = linesOf(file)
 
         const level = await this.env.DB.prepare('select version from notes where id = ?')
           .bind(held.noteId)
@@ -706,10 +718,11 @@ export class NoteRoom implements DurableObject {
 
         if (level) {
           held.version = level.version
-          held.hash = await sha256(fileOf(held.kind, this.state.doc))
-          await this.ctx.storage.put('note', held)
+          held.hash = await sha256(this.written(held))
         }
+        await this.ctx.storage.put('note', held)
       } else {
+        await this.unixed(held)
         await this.caughtUp(held)
       }
 
@@ -740,7 +753,7 @@ export class NoteRoom implements DurableObject {
     if (!row || row.version === held.version) return
     if (noteKind(row) !== held.kind) return
 
-    const mine = fileOf(held.kind, this.state.doc)
+    const mine = this.written(held)
     if ((await sha256(mine)) !== held.hash) return
 
     const object = await this.env.NOTES.get(noteKey(held.spaceId, held.noteId))
@@ -748,10 +761,34 @@ export class NoteRoom implements DurableObject {
     if (!file) return
     if (!readsAs(held.kind, file)) return
 
-    if (file !== mine) takeInto(held.kind, this.state.doc, mine, file)
+    if (file !== mine) {
+      if (held.lines === undefined) takeInto(held.kind, this.state.doc, mine, file)
+      else {
+        takeInto(held.kind, this.state.doc, fileOf(held.kind, this.state.doc), unixLines(file))
+        held.lines = linesOf(file)
+      }
+    }
 
     held.version = row.version
-    held.hash = await sha256(fileOf(held.kind, this.state.doc))
+    held.hash = await sha256(this.written(held))
+    await this.ctx.storage.put('note', held)
+  }
+
+  private written(held: Held): string {
+    const words = fileOf(held.kind, this.state.doc)
+    return held.kind === 'words' ? asWritten(held.lines, words) : words
+  }
+
+  private async unixed(held: Held, leaving?: WebSocket): Promise<void> {
+    if (held.kind !== 'words' || held.lines !== undefined || (held.epoch ?? 0) >= 1) return
+    if (this.ctx.getWebSockets().some((socket) => socket !== leaving)) return
+
+    const was = fileOf(held.kind, this.state.doc)
+    held.lines = linesOf(was)
+    unixWords(this.state.doc, PUSHED)
+    if (held.hash !== undefined && held.hash === (await sha256(was))) {
+      held.hash = await sha256(this.written(held))
+    }
     await this.ctx.storage.put('note', held)
   }
 
@@ -831,7 +868,7 @@ export class NoteRoom implements DurableObject {
       return false
     }
 
-    const settled = fileOf(held.kind, this.state.doc)
+    const settled = this.written(held)
     const size = byteLength(settled)
     if (size > MAX_NOTE_BYTES) return false
 
@@ -903,9 +940,8 @@ export class NoteRoom implements DurableObject {
 
   private async carried(held: Held): Promise<string | null> {
     if (neverHeld(this.state.doc)) return null
-    const mine = fileOf(held.kind, this.state.doc)
-    if (held.hash !== undefined && (await sha256(mine)) === held.hash) return null
-    return mine
+    if (held.hash !== undefined && (await sha256(this.written(held))) === held.hash) return null
+    return fileOf(held.kind, this.state.doc)
   }
 
   private async startEpoch(held: Held, row: Placed, carried: string | null): Promise<void> {
@@ -951,6 +987,7 @@ export class NoteRoom implements DurableObject {
     held.version = row.version
     held.hash = await sha256(seeded)
     delete held.snapshot
+    delete held.lines
 
     const update = ingested(held.kind, this.state.doc, held.noteId, seeded, target)
     if (update) Y.applyUpdateV2(this.state.doc, update, PUSHED)
