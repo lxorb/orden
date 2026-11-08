@@ -5,6 +5,7 @@ export class FileRefused extends Error {
   constructor(
     readonly status: number,
     message: string,
+    readonly told = false,
   ) {
     super(message)
     this.name = 'FileRefused'
@@ -26,16 +27,20 @@ export interface FileApi {
 
 async function refusal(response: Response): Promise<FileRefused> {
   let said = `request failed (${String(response.status)})`
+  let told = false
   try {
     const body: unknown = JSON.parse(await response.text())
     if (typeof body === 'object' && body !== null && 'error' in body) {
       const { error } = body
-      if (typeof error === 'string' && error !== '') said = error
+      if (typeof error === 'string') {
+        told = true
+        if (error !== '') said = error
+      }
     }
   } catch {
     said = `request failed (${String(response.status)})`
   }
-  return new FileRefused(response.status, said)
+  return new FileRefused(response.status, said, told)
 }
 
 export function fileApi(
