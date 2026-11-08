@@ -372,8 +372,8 @@ def throttled(identifier: str, rate: float):
                 try:
                     marks = page.evaluate(
                         "() => Object.fromEntries(performance.getEntriesByType('mark')"
-                        ".filter((one) => one.name.startsWith('nib: '))"
-                        ".map((one) => [one.name.slice(5), one.startTime]))"
+                        ".filter((one) => one.name.startsWith('orden: '))"
+                        ".map((one) => [one.name.slice(7), one.startTime]))"
                     )
                 except Exception:  # noqa: BLE001 - the page is mid-navigation
                     marks = {}

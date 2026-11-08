@@ -145,7 +145,7 @@ def drive(_browser: object) -> None:
     native.start()
     port, secret = switch.endpoint(identifier, 90, unlike=port)
     asked = switch.App(port, secret)
-    ask(asked, "await wait(() => performance.getEntriesByName('nib: launch order finished').length > 0, 60000); return true")
+    ask(asked, "await wait(() => performance.getEntriesByName('orden: launch order finished').length > 0, 60000); return true")
 
     asked.open("Shared.url", SPACE)
     shared = tab_of(asked, "Shared")

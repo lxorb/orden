@@ -130,7 +130,7 @@ NEEDS = {
 
 RELEASE_IDENTIFIER = "so.orden.Orden"
 
-LAUNCHED = "nib: launch order finished"
+LAUNCHED = "orden: launch order finished"
 
 CHATS_ON = (
     "try { const kept = JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]');"

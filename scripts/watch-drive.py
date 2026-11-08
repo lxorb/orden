@@ -54,7 +54,7 @@ def heard():
     return run("JSON.stringify(window.nibHeard ?? [])") or "[]"
 
 for _ in range(120):
-    if run("performance.getEntriesByName('nib: launch order finished').length > 0"):
+    if run("performance.getEntriesByName('orden: launch order finished').length > 0"):
         break
     time.sleep(0.5)
 else:

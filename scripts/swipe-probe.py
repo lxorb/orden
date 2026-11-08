@@ -283,7 +283,7 @@ def main() -> int:
             app,
             """
             await wait(() => ws.notes.length >= 2 &&
-              performance.getEntriesByName('nib: launch order finished').length > 0, 40000)
+              performance.getEntriesByName('orden: launch order finished').length > 0, 40000)
             const path = (starts) => ws.notes.find((one) => one.name.startsWith(starts)).path
             // Whatever the launch opened goes, so both notes pass through one tab.
             for (const one of [...ws.tabs]) ws.close(one.id)

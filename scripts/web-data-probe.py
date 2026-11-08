@@ -132,7 +132,7 @@ class Run:
             time.sleep(0.2)
         ask(
             self.app,
-            "await wait(() => performance.getEntriesByName('nib: launch order finished').length > 0, 60000); return true",
+            "await wait(() => performance.getEntriesByName('orden: launch order finished').length > 0, 60000); return true",
         )
 
     def close(self) -> None:

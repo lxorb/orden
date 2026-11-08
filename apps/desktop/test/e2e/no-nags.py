@@ -82,7 +82,7 @@ def desktop(browser: Browser) -> None:
 
 SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 
-SETTLED = "() => performance.now() > performance.getEntriesByName('nib: start')[0].startTime + 21_000"
+SETTLED = "() => performance.now() > performance.getEntriesByName('orden: start')[0].startTime + 21_000"
 
 STILL = """
 () => document.getAnimations().every(

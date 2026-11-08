@@ -139,8 +139,8 @@ def drive(browser: Browser) -> None:
     marks = page.evaluate(
         "() => Object.fromEntries(performance.getEntriesByType('mark').map((one) => [one.name, one.startTime]))"
     )
-    drawn_at = marks.get("nib: first screen drawn")
-    frame_at = marks.get("nib: first frame painted")
+    drawn_at = marks.get("orden: first screen drawn")
+    frame_at = marks.get("orden: first frame painted")
     say(f"first screen drawn at {drawn_at:.0f} ms, first frame painted at {frame_at:.0f} ms")
     if drawn_at is None or frame_at is None or drawn_at > frame_at + 20:
         wrong("the drawing was not in the launch's first frame")

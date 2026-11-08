@@ -73,8 +73,8 @@ async (count) => {
 def marks(page: Page) -> dict[str, float]:
     return page.evaluate(
         "() => Object.fromEntries(performance.getEntriesByType('mark')"
-        ".filter((one) => one.name.startsWith('nib: '))"
-        ".map((one) => [one.name.slice(5), one.startTime]))"
+        ".filter((one) => one.name.startsWith('orden: '))"
+        ".map((one) => [one.name.slice(7), one.startTime]))"
     )
 
 def main() -> int:
@@ -96,7 +96,7 @@ def main() -> int:
         page.reload(wait_until="commit")
         wait_for(
             page,
-            "performance.getEntriesByName('nib: launch order finished').length",
+            "performance.getEntriesByName('orden: launch order finished').length",
             "the launch order",
         )
         page.wait_for_timeout(1000)
@@ -106,8 +106,8 @@ def main() -> int:
         seen = marks(page)
         marks_all = page.evaluate(
             "() => performance.getEntriesByType('mark')"
-            ".filter((one) => one.name.startsWith('nib: '))"
-            ".map((one) => [one.name.slice(5), one.startTime])"
+            ".filter((one) => one.name.startsWith('orden: '))"
+            ".map((one) => [one.name.slice(7), one.startTime])"
         )
         tasks = page.evaluate("() => window.__longTasks")
 
