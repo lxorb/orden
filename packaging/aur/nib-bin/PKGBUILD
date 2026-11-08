@@ -2,7 +2,7 @@
 
 pkgname=orden-bin
 _pkgname=nib
-pkgver=0.21.0
+pkgver=0.21.1
 pkgrel=1
 pkgdesc="Lightweight markdown editor with realtime inline preview"
 arch=('x86_64' 'aarch64')
@@ -23,8 +23,8 @@ source_x86_64=("nib.deb::${_url}/Orden-${pkgver}-linux-x64.deb")
 source_aarch64=("nib.deb::${_url}/Orden-${pkgver}-linux-arm64.deb")
 noextract=('nib.deb')
 sha256sums=('9275d5003e0f6d336c2159c3900e535512c6e9bf63309c2a7c85144b85902e63')
-sha256sums_x86_64=('094cf955889dc4e89563d92cd160acd8d163c9cce7ad04e88752c43d7e9f3a66')
-sha256sums_aarch64=('28b315db78cc2cecbc38d4bb7a56d33777b5a3dc3e69526b6b1a295d73bd149c')
+sha256sums_x86_64=('75c4a1155d24206d57e855bf72ee12cdbbf16760620b7b2297aed6bae043d43d')
+sha256sums_aarch64=('82398a18b42038ef39700de7cb457ade9ebeb11761fc0d7ca0fae11d4f7d49a7')
 
 package() {
   bsdtar -O -xf "${srcdir}/nib.deb" 'data.tar.*' |
