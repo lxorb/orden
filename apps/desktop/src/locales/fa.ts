@@ -3616,6 +3616,8 @@ export const fa: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp این اتصال را رد کرد',
   'WhatsApp needs the Orden app': 'WhatsApp به برنامهٔ Orden نیاز دارد',
   'That number is not on WhatsApp': 'این شماره در WhatsApp نیست',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'واتس‌اپ پاسخ نداد. اتصال اینترنت را بررسی کنید و دوباره امتحان کنید.',
   'WhatsApp cannot do that in this conversation':
     'WhatsApp نمی‌تواند این کار را در این گفتگو انجام دهد',
   'WhatsApp makes a new group owner only from its own app':

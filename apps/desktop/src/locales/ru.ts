@@ -3756,6 +3756,8 @@ export const ru: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp отклонил это подключение',
   'WhatsApp needs the Orden app': 'WhatsApp требует приложение Orden',
   'That number is not on WhatsApp': 'Этого номера нет в WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp не ответил. Проверьте подключение к интернету и попробуйте ещё раз.',
   'WhatsApp cannot do that in this conversation': 'WhatsApp не может сделать это в этом разговоре',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp назначает нового владельца группы только в своём приложении',

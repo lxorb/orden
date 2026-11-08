@@ -3606,6 +3606,8 @@ export const ur: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp نے یہ کنکشن مسترد کر دیا',
   'WhatsApp needs the Orden app': 'WhatsApp کو Orden ایپ درکار ہے',
   'That number is not on WhatsApp': 'وہ نمبر WhatsApp پر نہیں ہے',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'واٹس ایپ نے جواب نہیں دیا۔ انٹرنیٹ کنکشن چیک کریں اور دوبارہ کوشش کریں۔',
   'WhatsApp cannot do that in this conversation': 'WhatsApp اس گفتگو میں یہ نہیں کر سکتا',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp نیا گروپ مالک صرف اپنی ایپ سے بناتا ہے',

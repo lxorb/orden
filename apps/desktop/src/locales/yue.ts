@@ -3429,6 +3429,8 @@ export const yue: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp 拒絕咗呢個連線',
   'WhatsApp needs the Orden app': 'WhatsApp 要用 Orden 應用程式',
   'That number is not on WhatsApp': '呢個號碼冇用 WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp 冇回應。請檢查網絡連線再試一次。',
   'WhatsApp cannot do that in this conversation': 'WhatsApp 喺呢個對話做唔到呢樣嘢',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp 淨係可以喺自己嘅應用程式指定新群組擁有者',

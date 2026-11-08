@@ -3440,6 +3440,8 @@ export const zhHant: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp 拒絕了此連線',
   'WhatsApp needs the Orden app': 'WhatsApp 需要 Orden 應用程式',
   'That number is not on WhatsApp': '該號碼未使用 WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp 沒有回應。請檢查網路連線後再試一次。',
   'WhatsApp cannot do that in this conversation': 'WhatsApp 無法在此對話中執行該操作',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp 只能在自己的應用程式中指定新的群組擁有者',

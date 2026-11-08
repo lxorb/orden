@@ -3658,6 +3658,8 @@ export const sw: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp imekataa muunganisho huu',
   'WhatsApp needs the Orden app': 'WhatsApp inahitaji programu ya Orden',
   'That number is not on WhatsApp': 'Namba hiyo haipo kwenye WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp haikujibu. Angalia muunganisho wa intaneti na ujaribu tena.',
   'WhatsApp cannot do that in this conversation':
     'WhatsApp haiwezi kufanya hivyo katika mazungumzo haya',
   'WhatsApp makes a new group owner only from its own app':

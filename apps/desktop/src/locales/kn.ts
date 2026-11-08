@@ -3650,6 +3650,8 @@ export const kn: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ಈ ಸಂಪರ್ಕವನ್ನು ನಿರಾಕರಿಸಿದೆ',
   'WhatsApp needs the Orden app': 'WhatsApp‌ಗೆ Orden ಆ್ಯಪ್ ಬೇಕು',
   'That number is not on WhatsApp': 'ಆ ಸಂಖ್ಯೆ WhatsApp‌ನಲ್ಲಿ ಇಲ್ಲ',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp ಉತ್ತರಿಸಲಿಲ್ಲ. ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
   'WhatsApp cannot do that in this conversation': 'ಈ ಸಂಭಾಷಣೆಯಲ್ಲಿ WhatsApp ಅದನ್ನು ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp ಹೊಸ ಗುಂಪು ಮಾಲೀಕರನ್ನು ತನ್ನದೇ ಆ್ಯಪ್‌ನಿಂದ ಮಾತ್ರ ನೇಮಿಸುತ್ತದೆ',

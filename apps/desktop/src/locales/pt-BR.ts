@@ -3695,6 +3695,8 @@ export const ptBR: Dictionary = {
   'WhatsApp refused this connection': 'O WhatsApp recusou esta conexão',
   'WhatsApp needs the Orden app': 'O WhatsApp precisa do app Orden',
   'That number is not on WhatsApp': 'Esse número não está no WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'O WhatsApp não respondeu. Verifique a conexão com a internet e tente de novo.',
   'WhatsApp cannot do that in this conversation': 'O WhatsApp não pode fazer isso nesta conversa',
   'WhatsApp makes a new group owner only from its own app':
     'O WhatsApp só define um novo dono do grupo pelo próprio app',

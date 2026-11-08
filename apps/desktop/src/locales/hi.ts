@@ -3612,6 +3612,8 @@ export const hi: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ने यह कनेक्शन अस्वीकार कर दिया',
   'WhatsApp needs the Orden app': 'WhatsApp को Orden ऐप चाहिए',
   'That number is not on WhatsApp': 'वह नंबर WhatsApp पर नहीं है',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp ने जवाब नहीं दिया। इंटरनेट कनेक्शन जाँचें और फिर से कोशिश करें।',
   'WhatsApp cannot do that in this conversation': 'WhatsApp इस बातचीत में ऐसा नहीं कर सकता',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp नया ग्रुप ओनर सिर्फ़ अपने ऐप से बनाता है',

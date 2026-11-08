@@ -3799,6 +3799,8 @@ export const ar: Dictionary = {
   'WhatsApp refused this connection': 'رفض WhatsApp هذا الاتصال',
   'WhatsApp needs the Orden app': 'يحتاج WhatsApp إلى تطبيق Orden',
   'That number is not on WhatsApp': 'هذا الرقم غير موجود على WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'لم يستجب واتساب. تحقق من الاتصال بالإنترنت وحاول مرة أخرى.',
   'WhatsApp cannot do that in this conversation': 'لا يستطيع WhatsApp فعل ذلك في هذه المحادثة',
   'WhatsApp makes a new group owner only from its own app':
     'لا يعيّن WhatsApp مالكًا جديدًا للمجموعة إلا من تطبيقه',

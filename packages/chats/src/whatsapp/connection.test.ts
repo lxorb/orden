@@ -93,6 +93,72 @@ describe('signing in', () => {
     expect(host.bigs.size).toBe(0)
   })
 
+  test('when WhatsApp never sends a code, connecting stops with a reason instead of waiting forever', async () => {
+    vi.useFakeTimers()
+    const kit = new FakeKit()
+    const host = new FakeHost()
+    kit.onDial = () => undefined
+    const connecting = whatsappProvider(() => Promise.resolve(kit)).connect({}, host)
+    const failed = expect(connecting).rejects.toThrow(WORDS.noAnswer)
+    await vi.advanceTimersByTimeAsync(30_000)
+    await failed
+    expect(kit.link.closed).toBe(true)
+    expect(host.logged.some((one) => one.includes(WORDS.noAnswer))).toBe(true)
+    expect(host.bigs.size).toBe(0)
+  })
+
+  test('the reason says why the connection would not open, and is logged', async () => {
+    vi.useFakeTimers()
+    const kit = new FakeKit()
+    const host = new FakeHost()
+    kit.onDial = (link) => {
+      if (kit.links.length === 1) link.drop(428, 'web.whatsapp.com could not be reached')
+    }
+    const connecting = whatsappProvider(() => Promise.resolve(kit)).connect({}, host)
+    const failed = expect(connecting).rejects.toThrow(
+      `${WORDS.noAnswer} (web.whatsapp.com could not be reached (428))`,
+    )
+    await vi.advanceTimersByTimeAsync(40_000)
+    await failed
+    expect(host.logged).toContain(
+      'warn WhatsApp: the connection closed: web.whatsapp.com could not be reached (428)',
+    )
+  })
+
+  test('a QR code on the screen is waited on until WhatsApp says it expired', async () => {
+    vi.useFakeTimers()
+    const kit = new FakeKit()
+    const host = new FakeHost()
+    kit.onDial = (link) => link.fire('connection.update', { qr: 'QR-ONE' })
+    let settled = false
+    const connecting = whatsappProvider(() => Promise.resolve(kit))
+      .connect({}, host)
+      .finally(() => (settled = true))
+    const failed = expect(connecting).rejects.toThrow(WORDS.expired)
+    await vi.advanceTimersByTimeAsync(90_000)
+    expect(settled).toBe(false)
+    kit.link.drop(408)
+    await failed
+  })
+
+  test('a connection dropped before pairing asks the new one for a fresh pairing code', async () => {
+    vi.useFakeTimers()
+    const kit = new FakeKit()
+    const host = new FakeHost()
+    kit.onDial = (link) => {
+      link.fire('connection.update', { qr: 'QR-ONE' })
+      if (kit.links.length === 1) setTimeout(() => link.drop(428), 0)
+      else setTimeout(() => signsIn(link), 0)
+    }
+    const connecting = whatsappProvider(() => Promise.resolve(kit)).connect(
+      { phone: '+41 79 000 00 01' },
+      host,
+    )
+    await vi.advanceTimersByTimeAsync(5000)
+    await connecting
+    expect(kit.links.map((one) => one.callsOf('pairingCode').length)).toEqual([1, 1])
+  })
+
   test('without a kept sign-in a saved account asks to connect again', async () => {
     await expect(
       whatsappProvider(() => Promise.resolve(new FakeKit())).connect({}, new FakeHost(), ACCOUNT),

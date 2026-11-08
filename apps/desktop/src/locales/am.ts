@@ -3540,6 +3540,8 @@ export const am: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ይህን ግንኙነት አልተቀበለም',
   'WhatsApp needs the Orden app': 'WhatsApp የOrden መተግበሪያ ያስፈልገዋል',
   'That number is not on WhatsApp': 'ያ ቁጥር WhatsApp ላይ የለም',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp አልመለሰም። የኢንተርኔት ግንኙነቱን ያረጋግጡ እና እንደገና ይሞክሩ።',
   'WhatsApp cannot do that in this conversation': 'WhatsApp በዚህ ውይይት ይህን ማድረግ አይችልም',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp አዲስ የቡድን ባለቤት የሚሰይመው ከራሱ መተግበሪያ ብቻ ነው',

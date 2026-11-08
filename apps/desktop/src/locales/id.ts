@@ -3549,6 +3549,8 @@ export const id: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp menolak koneksi ini',
   'WhatsApp needs the Orden app': 'WhatsApp memerlukan aplikasi Orden',
   'That number is not on WhatsApp': 'Nomor itu tidak ada di WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp tidak menjawab. Periksa koneksi internet dan coba lagi.',
   'WhatsApp cannot do that in this conversation':
     'WhatsApp tidak bisa melakukan itu di percakapan ini',
   'WhatsApp makes a new group owner only from its own app':

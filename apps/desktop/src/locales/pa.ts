@@ -3622,6 +3622,8 @@ export const pa: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ਨੇ ਇਹ ਕਨੈਕਸ਼ਨ ਰੱਦ ਕਰ ਦਿੱਤਾ',
   'WhatsApp needs the Orden app': 'WhatsApp ਨੂੰ Orden ਐਪ ਚਾਹੀਦੀ ਹੈ',
   'That number is not on WhatsApp': 'ਉਹ ਨੰਬਰ WhatsApp ਉੱਤੇ ਨਹੀਂ ਹੈ',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp ਨੇ ਜਵਾਬ ਨਹੀਂ ਦਿੱਤਾ। ਇੰਟਰਨੈੱਟ ਕਨੈਕਸ਼ਨ ਦੇਖੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
   'WhatsApp cannot do that in this conversation': 'WhatsApp ਇਸ ਗੱਲਬਾਤ ਵਿੱਚ ਇਹ ਨਹੀਂ ਕਰ ਸਕਦਾ',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp ਨਵਾਂ ਗਰੁੱਪ ਮਾਲਕ ਸਿਰਫ਼ ਆਪਣੀ ਐਪ ਤੋਂ ਹੀ ਬਣਾਉਂਦਾ ਹੈ',

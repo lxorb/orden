@@ -3436,6 +3436,8 @@ export const zhHans: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp 拒绝了此连接',
   'WhatsApp needs the Orden app': 'WhatsApp 需要 Orden 应用',
   'That number is not on WhatsApp': '该号码未使用 WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp 没有响应。请检查网络连接后重试。',
   'WhatsApp cannot do that in this conversation': 'WhatsApp 无法在此对话中执行该操作',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp 只能在自己的应用中指定新的群主',

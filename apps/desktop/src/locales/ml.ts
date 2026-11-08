@@ -3662,6 +3662,8 @@ export const ml: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ഈ കണക്ഷൻ നിരസിച്ചു',
   'WhatsApp needs the Orden app': 'WhatsApp-ന് Orden ആപ്പ് വേണം',
   'That number is not on WhatsApp': 'ആ നമ്പർ WhatsApp-ൽ ഇല്ല',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp മറുപടി നൽകിയില്ല. ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.',
   'WhatsApp cannot do that in this conversation': 'ഈ സംഭാഷണത്തിൽ WhatsApp-ന് അത് ചെയ്യാനാകില്ല',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp പുതിയ ഗ്രൂപ്പ് ഉടമയെ സ്വന്തം ആപ്പിൽ നിന്ന് മാത്രമേ നിയമിക്കൂ',

@@ -3530,6 +3530,8 @@ export const ja: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp がこの接続を拒否しました',
   'WhatsApp needs the Orden app': 'WhatsApp には Orden アプリが必要です',
   'That number is not on WhatsApp': 'その番号は WhatsApp を利用していません',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp から応答がありません。インターネット接続を確認して、もう一度お試しください。',
   'WhatsApp cannot do that in this conversation': 'この会話では WhatsApp はそれを行えません',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp はグループの新しいオーナーを自身のアプリでしか指定できません',

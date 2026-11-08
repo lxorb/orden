@@ -3608,6 +3608,8 @@ export const mr: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ने हे कनेक्शन नाकारले',
   'WhatsApp needs the Orden app': 'WhatsApp ला Orden ॲप लागते',
   'That number is not on WhatsApp': 'तो नंबर WhatsApp वर नाही',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp ने उत्तर दिले नाही. इंटरनेट कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.',
   'WhatsApp cannot do that in this conversation': 'WhatsApp या संभाषणात ते करू शकत नाही',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp नवीन ग्रुप मालक फक्त स्वतःच्या ॲपमधूनच ठरवते',
