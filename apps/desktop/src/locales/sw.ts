@@ -3832,4 +3832,6 @@ export const sw: Dictionary = {
       other:
         'Vipengee {count} bado vimelindwa. Vinabaki vimefungwa; viondolee ulinzi kwanza ili kuondoa ulinzi.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Huonyesha madokezo na kazi zako kwenye miwani ya Even Realities na hupokea amri za sauti.',
 }

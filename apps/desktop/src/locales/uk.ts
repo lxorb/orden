@@ -3925,4 +3925,6 @@ export const uk: Dictionary = {
       other:
         '{count} елемента досі захищені. Вони лишаються заблокованими; спершу зніміть із них захист, щоб прибрати його.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Показує ваші нотатки й завдання в окулярах Even Realities і приймає голосові команди.',
 }

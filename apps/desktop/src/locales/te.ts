@@ -3802,4 +3802,6 @@ export const te: Dictionary = {
       other:
         '{count} అంశాలు ఇంకా రక్షణలో ఉన్నాయి. అవి లాక్‌లోనే ఉంటాయి; రక్షణను తీసివేయడానికి ముందు వాటి రక్షణను తొలగించండి.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities కళ్లద్దాలపై మీ నోట్‌లు, పనులను చూపి, మాట్లాడిన ఆదేశాలను తీసుకుంటుంది.',
 }

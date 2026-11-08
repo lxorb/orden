@@ -226,6 +226,11 @@
     "default": false,
     "description": "Adds a file explorer for the folders on this computer, and Show in folder opens it."
   },
+  "experimental.glasses": {
+    "type": "boolean",
+    "default": false,
+    "description": "Shows your notes and tasks on Even Realities glasses and takes spoken commands."
+  },
   "experimental.passwordManager": {
     "type": "boolean",
     "default": false,

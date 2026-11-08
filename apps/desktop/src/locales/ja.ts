@@ -3695,4 +3695,6 @@ export const ja: Dictionary = {
   'Turn off protection?': '保護をオフにしますか？',
   '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
     '{count} 件の項目がまだ保護されています。ロックされたままです。保護をなくすには、先に保護を解除してください。',
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities のメガネにノートとタスクを表示し、音声コマンドを受け付けます。',
 }

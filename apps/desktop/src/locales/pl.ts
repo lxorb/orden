@@ -3927,4 +3927,6 @@ export const pl: Dictionary = {
       other:
         '{count} elementu jest nadal chronione. Pozostają zablokowane; najpierw zdejmij z nich ochronę, aby ją usunąć.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Pokazuje twoje notatki i zadania w okularach Even Realities i przyjmuje polecenia głosowe.',
 }

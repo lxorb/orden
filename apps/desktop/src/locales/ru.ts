@@ -3928,4 +3928,6 @@ export const ru: Dictionary = {
       other:
         '{count} элемента всё ещё защищены. Они остаются заблокированными; сначала снимите с них защиту, чтобы убрать её.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Показывает ваши заметки и задачи в очках Even Realities и принимает голосовые команды.',
 }

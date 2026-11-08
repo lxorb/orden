@@ -7,6 +7,7 @@ import { account } from './lib/account.svelte'
 import { holdComposingKeys } from './lib/keys'
 import Glasses from './lib/even/Glasses.svelte'
 import { bridge } from './lib/even/bridge.svelte'
+import { glassesOn } from './lib/settings.svelte'
 import { everywhere, seedFlag } from './lib/even/keep'
 import { recovery } from './lib/recovery.svelte'
 import { rememberSeedIn } from './lib/seeded'
@@ -40,6 +41,6 @@ void filling.then(() => {
 
 const app = mount(App, { target })
 const frame = mount(Glasses, { target })
-bridge.start()
+bridge.startWhile(glassesOn)
 
 export default { app, frame }

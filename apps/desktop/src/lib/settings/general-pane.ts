@@ -4,7 +4,6 @@ import { languageOptions, machineSaid } from '../language-options'
 import { method } from '../mobile/bridge'
 import { crashReports } from '../crash-reports/choice.svelte'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
-import { isPlugin } from '../plugin'
 import { protectionOn } from '../protect/gate'
 import { protectionStore, turnProtection } from '../protect/protection-setting'
 import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../protect/unlocked.svelte'
@@ -29,6 +28,7 @@ import { hiddenTabs } from '../workspace/hidden-tabs.svelte'
 import { quickAdd } from '../quick-add/asked.svelte'
 import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
+import { glassesOn } from '../settings.svelte'
 import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
 import { dns, PROVIDER_NAMES } from './dns.svelte'
@@ -341,7 +341,7 @@ function remindersGroup(): Group {
 function caption(): { caption?: { text: string; url: string } } {
   const said = [
     i18n.machine ? machineSaid() : '',
-    (isPlugin() || modes.glassesSeen) && !panelDrawable() ? t('The glasses show English.') : '',
+    glassesOn() && !panelDrawable() ? t('The glasses show English.') : '',
   ].filter(Boolean)
 
   if (!said.length) return {}

@@ -3807,4 +3807,6 @@ export const gsw: Dictionary = {
       other:
         '{count} Element sind no gschützt. Si bliibed gsperrt; heb zersch ihre Schutz uf, zum de Schutz wegznäh.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Zeigt dini Notize und Ufgabe uf de Even-Realities-Brülle und nimmt gsprocheni Befehl aa.',
 }

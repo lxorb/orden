@@ -1,3 +1,4 @@
+import { untrack } from 'svelte'
 import { BODY_INNER, BODY_ROWS, GUTTER, type Page, type Paging } from '@orden/glasses'
 import { account } from '../account.svelte'
 import { api } from '../api'
@@ -116,6 +117,26 @@ class Bridge {
   private steerUntil = 0
   private since: number | null = null
   private cost = 0
+
+  startWhile(wanted: () => boolean): () => void {
+    let stop: (() => void) | null = null
+    const end = $effect.root(() => {
+      $effect(() => {
+        const on = wanted()
+        untrack(() => {
+          if (on && !stop) stop = this.start()
+          if (!on && stop) {
+            stop()
+            stop = null
+          }
+        })
+      })
+    })
+    return () => {
+      end()
+      stop?.()
+    }
+  }
 
   start(): () => void {
     let stop: (() => void) | undefined

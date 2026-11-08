@@ -3701,4 +3701,6 @@ export const am: Dictionary = {
       one: '{count} ንጥል አሁንም የተጠበቀ ነው። እንደተቆለፈ ይቆያል፤ ጥበቃን ለማስወገድ መጀመሪያ ጥበቃውን ያንሱ።',
       other: '{count} ንጥሎች አሁንም የተጠበቁ ናቸው። እንደተቆለፉ ይቆያሉ፤ ጥበቃን ለማስወገድ መጀመሪያ ጥበቃቸውን ያንሱ።',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'ማስታወሻዎችዎን እና ተግባሮችዎን በEven Realities መነጽር ላይ ያሳያል፣ የሚነገሩ ትዕዛዞችንም ይቀበላል።',
 }

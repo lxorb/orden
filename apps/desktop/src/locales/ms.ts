@@ -3720,4 +3720,6 @@ export const ms: Dictionary = {
   'Turn off protection?': 'Matikan perlindungan?',
   '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
     '{count} item masih dilindungi. Ia kekal terkunci; buang perlindungannya dahulu untuk mengalih keluar perlindungan.',
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Menunjukkan nota dan tugas anda pada cermin mata Even Realities dan menerima arahan suara.',
 }

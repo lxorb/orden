@@ -3596,4 +3596,6 @@ export const zhHantHK: Dictionary = {
   'Turn off protection?': '關閉保護？',
   '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
     '仍有 {count} 個項目受保護。它們會保持鎖定；如要移除保護，請先取消它們的保護。',
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    '在 Even Realities 眼鏡上顯示你的筆記和工作，並接受語音指令。',
 }

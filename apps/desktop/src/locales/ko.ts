@@ -3672,4 +3672,6 @@ export const ko: Dictionary = {
   'Turn off protection?': '보호를 끌까요?',
   '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
     '아직 보호된 항목이 {count}개 있습니다. 잠긴 채로 유지되며, 보호를 없애려면 먼저 보호를 해제하세요.',
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities 안경에 노트와 작업을 보여 주고 음성 명령을 받습니다.',
 }

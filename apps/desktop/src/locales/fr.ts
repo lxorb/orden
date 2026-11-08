@@ -3916,4 +3916,6 @@ export const fr: Dictionary = {
       other:
         '{count} éléments sont encore protégés. Ils restent verrouillés ; retirez d’abord leur protection pour la supprimer.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Affiche vos notes et vos tâches sur les lunettes Even Realities et accepte les commandes vocales.',
 }

@@ -3700,4 +3700,6 @@ export const jv: Dictionary = {
   'Turn off protection?': 'Pateni pangreksan?',
   '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
     '{count} item isih direksa. Tetep kakunci; copot dhisik pangreksané kanggo mbusak pangreksan.',
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Nuduhaké cathetan lan tugasmu ing kacamata Even Realities lan nampa printah swara.',
 }

@@ -3802,4 +3802,6 @@ export const tr: Dictionary = {
       other:
         '{count} öğe hâlâ korunuyor. Kilitli kalırlar; korumayı kaldırmak için önce korumalarını kaldırın.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Notlarınızı ve görevlerinizi Even Realities gözlüğünde gösterir ve sesli komutları alır.',
 }

@@ -3777,4 +3777,6 @@ export const ur: Dictionary = {
       other:
         '{count} آئٹمز ابھی تک محفوظ ہیں۔ یہ مقفل رہیں گے؛ تحفظ ہٹانے کے لیے پہلے ان کا تحفظ ختم کریں۔',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities عینک پر آپ کے نوٹس اور کام دکھاتا ہے اور بولے گئے احکام لیتا ہے۔',
 }

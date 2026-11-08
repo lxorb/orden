@@ -3777,4 +3777,6 @@ export const ps: Dictionary = {
       other:
         '{count} توکي لا هم ساتل شوي دي. تړلي پاتې کېږي؛ د ساتنې لرې کولو لپاره لومړی یې ساتنه لرې کړئ.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'ستاسو یادښتونه او دندې د Even Realities په عینکو ښيي او ویل شوي امرونه مني.',
 }

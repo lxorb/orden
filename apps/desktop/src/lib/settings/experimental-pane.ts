@@ -1,4 +1,5 @@
 import { chatsFields } from '../chats-settings'
+import { glassesGroups, wordFields } from '../even/settings'
 import { t } from '../i18n.svelte'
 import { setWord } from '../kind-choice'
 import { prompt } from '../prompt.svelte'
@@ -11,6 +12,8 @@ import {
   EXPERIMENTAL_WORD,
   experimentalOn,
   EXPLORER_WORD,
+  GLASSES_WORD,
+  glassesOn,
   hiddenKinds,
   PASS_WORD,
   TIME_WORD,
@@ -98,7 +101,20 @@ function chatFields(): Field[] {
   ]
 }
 
+function glassesFields(): Field[] {
+  if (!glassesOn()) return []
+  return [...glassesGroups().flatMap((group) => group.fields), ...wordFields()]
+}
+
 function features(): Feature[] {
+  const glasses: Feature = {
+    key: 'glasses',
+    word: GLASSES_WORD,
+    label: t('Glasses'),
+    hint: t('Shows your notes and tasks on Even Realities glasses and takes spoken commands.'),
+    words: ['glasses', 'even', 'realities', 'g2', 'smart glasses', 'hud', 'voice'],
+    more: glassesFields,
+  }
   const bases: Feature = {
     key: 'databases',
     word: BASES_WORD,
@@ -108,7 +124,7 @@ function features(): Feature[] {
     ),
     words: ['database', 'databases', 'base', 'bases', 'table', 'board', 'kanban', 'notion'],
   }
-  if (__EVEN_PLUGIN__) return [bases]
+  if (__EVEN_PLUGIN__) return [glasses, bases]
 
   return [
     {
@@ -163,6 +179,7 @@ function features(): Feature[] {
       words: ['time', 'tracking', 'timer', 'hours', 'activity', 'screen time', 'toggl'],
     },
     bases,
+    glasses,
   ]
 }
 

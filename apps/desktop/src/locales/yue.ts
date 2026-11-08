@@ -3588,4 +3588,6 @@ export const yue: Dictionary = {
   'Turn off protection?': '關閉保護？',
   '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
     '仲有 {count} 個項目受保護。佢哋會保持鎖住；要移除保護，請先取消佢哋嘅保護。',
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    '喺 Even Realities 眼鏡度顯示你嘅筆記同工作，仲可以收聲音指令。',
 }

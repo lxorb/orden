@@ -3780,4 +3780,6 @@ export const hi: Dictionary = {
       other:
         '{count} आइटम अब भी सुरक्षित हैं। ये लॉक रहेंगे; सुरक्षा हटाने के लिए पहले इनकी सुरक्षा हटाएँ।',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Even Realities चश्मे पर आपके नोट और काम दिखाता है और बोले गए कमांड लेता है।',
 }

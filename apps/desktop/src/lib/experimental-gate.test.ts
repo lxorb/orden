@@ -52,9 +52,10 @@ const FEATURES = [
   'passwordManager',
   'timeTracker',
   'databases',
+  'glasses',
 ] as const
 
-const ON = [chatsOn, appsOn, explorerOn, passOn, timeOn, basesOn]
+const ON = [chatsOn, appsOn, explorerOn, passOn, timeOn, basesOn, settings.glassesOn]
 
 function fields() {
   return experimentalPane().groups.flatMap((group) => group.fields)

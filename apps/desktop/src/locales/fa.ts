@@ -3786,4 +3786,6 @@ export const fa: Dictionary = {
       other:
         '{count} مورد هنوز محافظت شده‌اند. قفل می‌مانند؛ برای برداشتن محافظت، اول محافظتشان را بردارید.',
     },
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'یادداشت‌ها و کارهای شما را روی عینک Even Realities نشان می‌دهد و فرمان‌های گفتاری را می‌پذیرد.',
 }

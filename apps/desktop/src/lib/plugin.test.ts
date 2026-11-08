@@ -42,54 +42,73 @@ vi.stubGlobal('document', {
 let modes: typeof import('./modes.svelte').modes
 let preferences: typeof import('./preferences').preferences
 let sectionGroups: typeof import('./settings/sections').sectionGroups
+let hiddenKinds: typeof import('./settings.svelte').hiddenKinds
+let words: { experimental: string; glasses: string }
 
 beforeAll(async () => {
   ;({ modes } = await import('./modes.svelte'))
   ;({ preferences } = await import('./preferences'))
   ;({ sectionGroups } = await import('./settings/sections'))
+  const gates = await import('./settings.svelte')
+  hiddenKinds = gates.hiddenKinds
+  words = { experimental: gates.EXPERIMENTAL_WORD, glasses: gates.GLASSES_WORD }
 }, 240_000)
 
-function pageOf(asPlugin: boolean) {
+function pageOf(asPlugin: boolean, on = false) {
   page.plugin = asPlugin
   modes.glassesSeen = false
   modes.restore()
+  hiddenKinds.hidden = on ? [words.experimental, words.glasses] : []
 
   return { panes: preferences(), groups: sectionGroups() }
 }
 
 const ids = (groups: { id: string }[][]) => groups.flat().map((one) => one.id)
 
+function glassesGroup(panes: ReturnType<typeof preferences>) {
+  return panes
+    .find((one) => one.id === 'experimental')
+    ?.groups.find((group) => group.fields[0]?.key === 'experimental.glasses')
+}
+
+const fieldsOf = (panes: ReturnType<typeof preferences>) => glassesGroup(panes)?.fields ?? []
+
 beforeEach(() => {
   localStorage.clear()
 })
 
-describe('the Glasses settings', () => {
-  test('are not there in the app', () => {
-    const { panes, groups } = pageOf(false)
+describe('the Glasses settings, in Experimental (#2027)', () => {
+  for (const plugin of [false, true]) {
+    test(`are a switch in Experimental, off, with no section of their own${plugin ? ' in the plugin' : ''}`, () => {
+      const { panes, groups } = pageOf(plugin)
 
-    expect(panes.map((one) => one.id)).not.toContain('glasses')
-    expect(ids(groups)).not.toContain('glasses')
-  })
+      expect(panes.map((one) => one.id)).not.toContain('glasses')
+      expect(ids(groups)).not.toContain('glasses')
+      expect(fieldsOf(panes).map((one) => one.key)).toEqual(['experimental.glasses'])
+      const toggle = fieldsOf(panes)[0]
+      expect(toggle?.kind === 'switch' && toggle.get()).toBe(false)
+      expect(toggle?.kind === 'switch' && toggle.locked?.()).toBe(true)
+    })
+  }
 
-  test('are there in the plugin', () => {
-    const { panes, groups } = pageOf(true)
-
-    expect(panes.map((one) => one.id)).toContain('glasses')
-    expect(ids(groups)).toContain('glasses')
-  })
-
-  test('are there on any device once a pair has answered', () => {
+  test('stay hidden for a pair that answered before, until turned on', () => {
     localStorage.setItem('orden:modes', JSON.stringify({ glassesSeen: true }))
-    const { panes, groups } = pageOf(false)
+    const { panes } = pageOf(false)
 
-    expect(panes.map((one) => one.id)).toContain('glasses')
-    expect(ids(groups)).toContain('glasses')
+    expect(fieldsOf(panes)).toHaveLength(1)
   })
 
-  test('carry where a page begins, and only in the plugin', () => {
-    const inside = pageOf(true)
-    const pane = inside.panes.find((one) => one.id === 'glasses')
-    const field = pane?.groups.flatMap((group) => group.fields).find((one) => one.kind === 'select')
+  test('show their own settings under the switch once it is on', () => {
+    const { panes } = pageOf(false, true)
+    const fields = fieldsOf(panes)
+
+    expect(fields[0]?.kind === 'switch' && fields[0].get()).toBe(true)
+    expect(fields.map((one) => one.label)).toContain('Line numbers')
+  })
+
+  test('carry where a page begins, and only while on', () => {
+    const inside = pageOf(true, true)
+    const field = fieldsOf(inside.panes).find((one) => one.kind === 'select')
 
     expect(field?.kind === 'select' && field.options.map((one) => one.value)).toEqual([
       '1',
@@ -101,8 +120,7 @@ describe('the Glasses settings', () => {
       '0',
     ])
 
-    const outside = pageOf(false)
-    const labels = outside.panes.flatMap((one) =>
+    const labels = pageOf(true).panes.flatMap((one) =>
       one.groups.flatMap((group) => group.fields.map((field) => field.label)),
     )
     expect(labels).not.toContain('New page at')
@@ -110,9 +128,7 @@ describe('the Glasses settings', () => {
   })
 
   test('carry the line numbers as a switch, and no page number', () => {
-    const inside = pageOf(true)
-    const pane = inside.panes.find((one) => one.id === 'glasses')
-    const fields = pane?.groups.flatMap((group) => group.fields) ?? []
+    const fields = fieldsOf(pageOf(true, true).panes).slice(1)
 
     const switches = fields.filter((one) => one.kind === 'switch').map((one) => one.label)
     expect(switches[0]).toBe('Line numbers')
@@ -124,24 +140,15 @@ describe('the Glasses settings', () => {
   })
 
   test('carry a phrase for every spoken command, as text', () => {
-    const inside = pageOf(true)
-    const pane = inside.panes.find((one) => one.id === 'glasses')
-    const group = pane?.groups.find((one) => one.title === 'Spoken commands')
-    const fields = group?.fields ?? []
+    const fields = fieldsOf(pageOf(true, true).panes).filter((one) => one.kind === 'text')
 
     expect(fields.length).toBeGreaterThan(5)
     for (const field of fields) {
-      expect(field.kind).toBe('text')
-      expect(field.kind === 'text' && field.placeholder).toBeTruthy()
+      expect(field.placeholder).toBeTruthy()
     }
   })
 
-  test('leave no gap where the section was', () => {
-    const outside = pageOf(false)
-    const inside = pageOf(true)
-
-    expect(outside.groups).toHaveLength(inside.groups.length)
-    for (const group of outside.groups) expect(group.length).toBeGreaterThan(0)
-    expect(ids(outside.groups).length).toBe(ids(inside.groups).length - 1)
+  test('leave the same sections in the app and the plugin', () => {
+    expect(ids(pageOf(false).groups)).toEqual(ids(pageOf(true).groups))
   })
 })

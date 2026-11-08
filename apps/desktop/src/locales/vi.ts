@@ -3683,4 +3683,6 @@ export const vi: Dictionary = {
   'Turn off protection?': 'Tắt bảo vệ?',
   '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
     '{count} mục vẫn đang được bảo vệ. Chúng vẫn bị khóa; hãy bỏ bảo vệ chúng trước để gỡ bảo vệ.',
+  'Shows your notes and tasks on Even Realities glasses and takes spoken commands.':
+    'Hiện ghi chú và việc cần làm của bạn trên kính Even Realities và nhận lệnh bằng giọng nói.',
 }
