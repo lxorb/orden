@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { t } from '../i18n.svelte'
-  import { keyFromLayer } from '../layer-keys'
+  import { keyElsewhere } from '../layer-keys'
   import { shortcuts } from '../shortcuts.svelte'
   import { arrive } from '../slide'
   import { viewport } from '../viewport.svelte'
@@ -44,7 +44,7 @@
 
   function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     const target = event.target
-    if (keyFromLayer(event, event.currentTarget)) return
+    if (keyElsewhere(event, event.currentTarget)) return
     if (
       target instanceof HTMLElement &&
       target.closest('input, textarea, select, [contenteditable]')
