@@ -1,8 +1,9 @@
 import type { IBuffer, IBufferCell, ILink, ILinkProvider, Terminal } from '@xterm/xterm'
 
-const URL = /https?:\/\/[^\s"'!*(){}|\\^<>`]*[^\s"':,.!?{}|\\^~[\]`()<>]/gi
-const PART = /[^\s"'!*(){}|\\^<>`]/
-const LEADING = /^[^\s"'!*(){}|\\^<>`]+/
+const URL =
+  /https?:\/\/[^\s"'!*(){}|\\^<>`\u2500-\u257f]*[^\s"':,.!?{}|\\^~[\]`()<>\u2500-\u257f]/gi
+const PART = /[^\s"'!*(){}|\\^<>`\u2500-\u257f]/
+const LEADING = /^[^\s"'!*(){}|\\^<>`\u2500-\u257f]+/
 const SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i
 const FURTHEST = 64
 
@@ -44,20 +45,62 @@ function rowOf(buffer: IBuffer, y: number, cols: number, cell: IBufferCell): Row
 }
 
 function trimmed(row: Row): Row {
-  const text = row.text.replace(/ +$/, '')
-  return { text, at: row.at.slice(0, text.length), wide: row.wide.slice(0, text.length) }
+  return cut(row, 0, row.text.replace(/ +$/, '').length)
 }
 
-function looksContinued(before: Row, next: Row): boolean {
-  if (!PART.test(before.text.at(-1) ?? ' ')) return false
-  const leading = LEADING.exec(next.text)?.[0]
-  if (!leading || SCHEME.test(leading)) return false
-  return leading.length === next.text.length || next.text.slice(leading.length).trim() === ''
+function cut(row: Row, from: number, to = row.text.length): Row {
+  return {
+    text: row.text.slice(from, to),
+    at: row.at.slice(from, to),
+    wide: row.wide.slice(from, to),
+  }
+}
+
+const LEFT = /^[ \u2500-\u257f]*/
+const RIGHT = /[ \u2500-\u257f]*$/
+
+interface Framed {
+  left: number
+  right: number
+  start: number
+  border: string
+  content: string
+}
+
+function framed(row: Row): Framed {
+  const left = LEFT.exec(row.text)?.[0].length ?? 0
+  const right = left === row.text.length ? 0 : (RIGHT.exec(row.text)?.[0].length ?? 0)
+  const content = row.text.slice(left, row.text.length - right)
+  const border = row.text.slice(0, left).trimStart()
+  return { left, right, start: row.at[left]?.x ?? -1, border, content }
+}
+
+function fills(row: Row, frame: Framed): boolean {
+  const edge = row.text.slice(row.text.length - frame.right)
+  const closing = frame.border.split('').reverse().join('')
+  if (!closing) return edge === ''
+  return edge.replace(/ +$/, '') === closing
+}
+
+function looksContinued(before: Row, next: Row, column: number | null): boolean {
+  const above = framed(before)
+  const below = framed(next)
+  if (!PART.test(above.content.at(-1) ?? ' ') || !fills(before, above)) return false
+  const leading = LEADING.exec(below.content)?.[0]
+  if (!leading || leading !== below.content || SCHEME.test(leading)) return false
+  if (below.border !== above.border) return false
+  if (above.border && next.text.trimEnd().length !== before.text.trimEnd().length) return false
+  return column === null || below.start === above.start || below.start === column
 }
 
 function inAddress(text: string): boolean {
   const run = /\S*$/.exec(text)?.[0] ?? ''
   return run.includes('://')
+}
+
+function addressColumn(line: Row): number | null {
+  const run = /\S*$/.exec(line.text)?.[0] ?? ''
+  return line.at[line.text.length - run.length]?.x ?? null
 }
 
 function lineAround(buffer: IBuffer, cols: number, y: number) {
@@ -71,32 +114,36 @@ function lineAround(buffer: IBuffer, cols: number, y: number) {
     const a = row(above)
     const b = row(below)
     if (!a || !b) return false
-    return buffer.getLine(below)?.isWrapped === true || looksContinued(a, b)
+    return buffer.getLine(below)?.isWrapped === true || looksContinued(a, b, null)
   }
 
   let top = y
   while (top > 0 && y - top < FURTHEST && joins(top - 1, top)) top--
 
-  let line = row(top)
-  if (!line) return null
+  let last = row(top)
+  if (!last) return null
+  let line = last
   let broken = false
   for (let next = top + 1; next - top < 2 * FURTHEST; next++) {
     const below = row(next)
     if (!below) break
     const soft = buffer.getLine(next)?.isWrapped === true
-    const hard = !soft && looksContinued(line, below) && inAddress(line.text)
+    const kept = soft ? trimmed(line) : cut(line, 0, line.text.length - framed(last).right)
+    const hard = !soft && inAddress(kept.text) && looksContinued(last, below, addressColumn(kept))
     if (!soft && !hard) {
       if (next > y) break
       line = below
+      last = below
       broken = false
       continue
     }
-    const kept = trimmed(line)
+    const added = hard ? cut(below, framed(below).left) : below
     line = {
-      text: kept.text + below.text,
-      at: [...kept.at, ...below.at],
-      wide: [...kept.wide, ...below.wide],
+      text: kept.text + added.text,
+      at: [...kept.at, ...added.at],
+      wide: [...kept.wide, ...added.wide],
     }
+    last = below
     broken ||= hard
   }
   return { ...trimmed(line), broken }

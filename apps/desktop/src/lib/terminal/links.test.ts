@@ -101,3 +101,113 @@ describe('rows that are not one address', () => {
     expect(linksOn(buffer, cols, 1).map((link) => link.start)).toEqual([{ x: 0, y: 1 }])
   })
 })
+
+const AWS =
+  'https://us-east-1.signin.aws.amazon.com/v1/authorize?response_type=code' +
+  '&client_id=arn%3Aaws%3Asignin%3A%3A%3Adevtools%2Fsame-device' +
+  '&redirect_uri=http%3A%2F%2F127.0.0.1%3A53121%2Foauth&code_challenge=TmV2ZXJHb25'
+
+function chunks(text: string, width: number): string[] {
+  const rows: string[] = []
+  for (let at = 0; at < text.length; at += width) rows.push(text.slice(at, at + width))
+  return rows
+}
+
+function boxed(lines: string[], cols: number): string {
+  const inner = cols - 4
+  const top = `╭─ Authentication ${'─'.repeat(cols - 20)}╮`
+  const bottom = `╰${'─'.repeat(cols - 2)}╯`
+  const rows = lines.flatMap((line) => chunks(line, inner))
+  return [top, ...rows.map((row) => `│ ${row.padEnd(inner)} │`), bottom].join('\r\n')
+}
+
+function hyperlinked(text: string, cols: number): string {
+  return chunks(text, cols)
+    .map((row) => `\x1b]8;id=a1;${text}\x07\x1b[2m${row}\x1b[22m\x1b]8;;\x07`)
+    .join('\r\n')
+}
+
+describe('an address a program drew over three rows', () => {
+  const cols = 80
+
+  test('inside a bordered panel is one link from every row, without the border', async () => {
+    const inner = cols - 4
+    expect(rowsOf(AWS, inner)).toBe(3)
+    const data = `${boxed(['Open this address to sign in:', AWS], cols)}\r\n$ `
+    const { buffer } = await screen(cols, data)
+    const end = { x: 2 + ((AWS.length - 1) % inner), y: 4 }
+    for (const y of [2, 3, 4]) {
+      expect(linksOn(buffer, cols, y)).toEqual([{ text: AWS, start: { x: 2, y: 2 }, end }])
+    }
+    expect(linksOn(buffer, cols, 1)).toEqual([])
+    expect(linksOn(buffer, cols, 5)).toEqual([])
+    expect(unbroken(buffer, cols, { x: 2, y: 2 }, { x: end.x + 1, y: 4 })).toBe(AWS)
+  })
+
+  test('under an indented tool marker is one link from every row', async () => {
+    const width = cols - 5
+    const [first = '', ...rest] = chunks(AWS, width)
+    expect(rest).toHaveLength(2)
+    const data = [`  ⎿  ${first}`, ...rest.map((row) => `     ${row}`), '', '$ '].join('\r\n')
+    const { buffer } = await screen(cols, data)
+    const end = { x: 5 + ((AWS.length - 1) % width), y: 2 }
+    for (const y of [0, 1, 2]) {
+      expect(linksOn(buffer, cols, y)).toEqual([{ text: AWS, start: { x: 5, y: 0 }, end }])
+    }
+  })
+
+  test('sent as a hyperlink on each row is one link from every row', async () => {
+    expect(rowsOf(AWS, cols)).toBe(3)
+    const { buffer } = await screen(cols, `${hyperlinked(AWS, cols)}\r\n$ `)
+    const end = { x: (AWS.length - 1) % cols, y: 2 }
+    for (const y of [0, 1, 2]) {
+      expect(linksOn(buffer, cols, y)).toEqual([{ text: AWS, start: { x: 0, y: 0 }, end }])
+    }
+  })
+
+  for (const [how, data] of [
+    ['soft', `${AWS}\r\n$ `],
+    ['hard', `${hardWrapped(AWS, cols)}\r\n$ `],
+  ] as const) {
+    test(`${how}-wrapped is one link from every row`, async () => {
+      expect(rowsOf(AWS, cols)).toBe(3)
+      const { buffer } = await screen(cols, data)
+      const end = { x: (AWS.length - 1) % cols, y: 2 }
+      for (const y of [0, 1, 2]) {
+        expect(linksOn(buffer, cols, y)).toEqual([{ text: AWS, start: { x: 0, y: 0 }, end }])
+      }
+    })
+  }
+})
+
+describe('panel rows that are not one address', () => {
+  const cols = 40
+
+  test('an address that ends at the border does not take the sentence under it', async () => {
+    const address = 'https://one.example/aaaaaaaaaaaaaaaa'
+    expect(address).toHaveLength(cols - 4)
+    const { buffer } = await screen(cols, boxed([address, 'Press Enter to go on'], cols))
+    expect(linksOn(buffer, cols, 1).map((link) => link.text)).toEqual([address])
+    expect(linksOn(buffer, cols, 2)).toEqual([])
+  })
+
+  test('an address short of the border does not take the word under it', async () => {
+    const { buffer } = await screen(cols, boxed(['https://one.example/a', 'continued'], cols))
+    expect(linksOn(buffer, cols, 1).map((link) => link.text)).toEqual(['https://one.example/a'])
+    expect(linksOn(buffer, cols, 2)).toEqual([])
+  })
+
+  test('an address short of the edge does not take the word under it', async () => {
+    const { buffer } = await screen(cols, 'see https://one.example/a\r\ncontinued\r\n')
+    expect(linksOn(buffer, cols, 0).map((link) => link.text)).toEqual(['https://one.example/a'])
+    expect(linksOn(buffer, cols, 1)).toEqual([])
+  })
+
+  test('an indented row does not continue an address it does not line up with', async () => {
+    const address = `https://one.example/${'a'.repeat(cols - 20)}`
+    expect(address).toHaveLength(cols)
+    const { buffer } = await screen(cols, `${address}\r\n   continued\r\n`)
+    expect(linksOn(buffer, cols, 0).map((link) => link.text)).toEqual([address])
+    expect(linksOn(buffer, cols, 1)).toEqual([])
+  })
+})

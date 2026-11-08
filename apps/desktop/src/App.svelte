@@ -439,6 +439,7 @@
         viewport,
         links,
         views,
+        terminals: () => import('./lib/terminal/sessions.svelte'),
       },
     })
     Object.assign(window, { nibApp: (window as unknown as { ordenApp: object }).ordenApp })
