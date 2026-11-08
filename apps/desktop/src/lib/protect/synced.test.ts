@@ -45,4 +45,20 @@ describe('protection on the account', () => {
     expect(workspace.protection.password?.hash).toBe('aGFzaA==')
     expect(workspace.protection.locked(`${ROOT}/Plans.md`)).toBe(true)
   })
+
+  test('never hands one account’s password to the next one signed in on the device', async () => {
+    server.answer = { password: HASH, spaces: {} }
+    await pulled('first', 'u1', PAIRS)
+    expect(workspace.protection.password?.hash).toBe('aGFzaA==')
+
+    server.answer = { password: null, spaces: {} }
+    await pulled('second', 'u2', PAIRS)
+    expect(server.sent.filter((one) => one.path === '/v1/protected/password')).toEqual([])
+
+    const theirs = { ...HASH, salt: 'b3RoZXI=', hash: 'b3RoZXI=', at: 1 }
+    server.answer = { password: theirs, spaces: {} }
+    await pulled('second', 'u2', PAIRS)
+    expect(workspace.protection.password?.hash).toBe('b3RoZXI=')
+    expect(server.sent).toEqual([])
+  })
 })

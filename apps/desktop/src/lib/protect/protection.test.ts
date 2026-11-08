@@ -170,9 +170,9 @@ describe('what the account holds of it', () => {
     const older = { n: 16, r: 1, p: 1, salt: 'c2FsdA==', hash: 'b2xkZXI=', at: 1 }
     const newer = { ...older, hash: 'bmV3ZXI=', at: Date.now() + 1000 }
     protection.setPassword(older)
-    expect(protection.adoptPassword(newer)).toBe(false)
+    expect(protection.adoptPassword(newer, 'u1')).toBe(false)
     expect(protection.password?.hash).toBe('bmV3ZXI=')
-    expect(protection.adoptPassword({ ...older, at: 2 })).toBe(true)
+    expect(protection.adoptPassword({ ...older, at: 2 }, 'u1')).toBe(true)
     expect(protection.password?.hash).toBe('bmV3ZXI=')
   })
 })

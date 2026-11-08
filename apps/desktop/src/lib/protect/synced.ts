@@ -31,10 +31,13 @@ export async function pushWays(root: string): Promise<void> {
   workspace.protection.said(root, landed)
 }
 
-export async function pushPassword(): Promise<void> {
-  const token = account.token
+export async function pushPassword(
+  token = account.token,
+  accountId = account.user?.id ?? null,
+): Promise<void> {
   const password = workspace.protection.password
-  if (!token || !password) return
+  if (!token || !accountId || !password) return
+  workspace.protection.ownedBy(accountId)
   await request('/v1/protected/password', { method: 'PUT', token, body: { password } }).catch(
     () => undefined,
   )
@@ -51,5 +54,7 @@ export async function pulled(
     const theirs = protectedMap(remote.spaces[spaceId])
     if (workspace.protection.adopt(root, theirs, accountId)) await pushWays(root)
   }
-  if (workspace.protection.adoptPassword(hashedOf(remote.password))) await pushPassword()
+  if (workspace.protection.adoptPassword(hashedOf(remote.password), accountId)) {
+    await pushPassword(token, accountId)
+  }
 }
