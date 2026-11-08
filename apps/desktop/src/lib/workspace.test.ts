@@ -4388,6 +4388,34 @@ describe('what a tab s own menu does to the strip', () => {
     expect(workspace.tabs.filter((tab) => tab.kind === 'chat')).toHaveLength(1)
   })
 
+  test.each(['settings', 'pass', 'time'] as const)(
+    'splitting the %s tab leaves it the only one',
+    (kind) => {
+      workspace.openUnsaved(kind, '', kind)
+      const one = workspace.active
+      if (!one) throw new Error('nothing opened')
+
+      workspace.split('row', one.id)
+
+      expect(workspace.tabs.filter((tab) => tab.kind === kind)).toHaveLength(1)
+    },
+  )
+
+  test('reopening a closed chat while another is open brings that one to the front', async () => {
+    await workspace.open('/space/a.md')
+    workspace.openChat()
+    const first = workspace.active
+    if (!first) throw new Error('no chat')
+    workspace.closeEach([first.id])
+    workspace.openChat()
+    const second = workspace.active
+
+    await workspace.reopenClosed()
+
+    expect(workspace.tabs.filter((tab) => tab.kind === 'chat')).toHaveLength(1)
+    expect(workspace.active).toBe(second)
+  })
+
   test('moves a tab into a new pane beside its own when there is no other', async () => {
     const id = await opened('/space/a.md', '/space/b.md')
 

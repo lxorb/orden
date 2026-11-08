@@ -1341,7 +1341,20 @@ class Workspace {
     if (this.sortMode.startsWith('modified')) this.showEntry({ ...entry, modified: Date.now() })
   }
 
+  private otherOne(tab: Tab): Tab | null {
+    if (!TAB_KINDS[tab.kind].single) return null
+    return this.tabs.find((other) => other.kind === tab.kind && other.id !== tab.id) ?? null
+  }
+
   private add(tab: Tab, activate = true, opener: string | null = null): Tab {
+    const one = this.otherOne(tab)
+    if (one) {
+      if (activate) {
+        this.panes.activate(one.paneId, one.id)
+        this.onlyOne(one)
+      }
+      return one
+    }
     if (this.essentialComing !== null && samePath(tab.path, this.essentialComing)) {
       tab.essential = this.essentialComing
       this.essentialComing = null
@@ -2671,9 +2684,10 @@ class Workspace {
         const [tab] = await this.tabsFrom([draft], paneId)
         if (!tab) continue
 
-        const there = this.tabsIn(tab.paneId).find((one) => one.note === tab.note)
+        const there =
+          this.otherOne(tab) ?? this.tabsIn(tab.paneId).find((one) => one.note === tab.note)
         if (there) {
-          back = { tab: there, paneId: tab.paneId }
+          back = { tab: there, paneId: there.paneId }
           continue
         }
 
