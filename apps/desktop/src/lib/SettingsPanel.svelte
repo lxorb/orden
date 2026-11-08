@@ -73,7 +73,11 @@
   const SECTIONS = $derived(GROUPS.flat())
   const titleOf = (id: Section) => SECTIONS.find((one) => one.id === id)?.label ?? ''
 
-  const stacked = $derived(viewport.touch || viewport.narrow)
+  const SIDE_BY_SIDE = 560
+
+  let width = $state(0)
+
+  const stacked = $derived(viewport.touch || viewport.narrow || (width > 0 && width < SIDE_BY_SIDE))
 
   let query = $state('')
   let accessDetail = $state(false)
@@ -340,6 +344,7 @@
 <div
   class="sheet"
   class:phone={stacked}
+  bind:clientWidth={width}
   role="region"
   aria-label={t('Settings')}
   data-region="editor"

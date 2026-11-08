@@ -48,3 +48,21 @@ test('a wide window shows the list and the pane side by side', () => {
   expect(sheet?.querySelector('nav')).not.toBeNull()
   expect(sheet?.querySelector('.body')).not.toBeNull()
 })
+
+test('a tab too narrow for both, in a wide window, shows them one at a time too', () => {
+  const was = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth')
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.classList.contains('sheet') ? 420 : 0
+    },
+  })
+  try {
+    const sheet = open(false)
+    expect(sheet?.classList.contains('phone')).toBe(true)
+    expect(sheet?.querySelector('nav')).toBeNull()
+    expect(sheet?.querySelector('header .orden-glyph')).not.toBeNull()
+  } finally {
+    if (was) Object.defineProperty(HTMLElement.prototype, 'clientWidth', was)
+  }
+})
