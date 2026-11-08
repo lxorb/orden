@@ -130,7 +130,7 @@
   let touchMultiTapAt = 0
   let palette = $state.raw<Record<string, string>>({})
   let placed = $state(false)
-  let at: Point = { x: 0, y: 0 }
+  let arrow: { clientX: number; clientY: number } | null = null
   let pointing = $state.raw<Point | null>(null)
   let narrowed = $state(false)
   let finding = $state(false)
@@ -686,6 +686,11 @@
     return graphPoint(camera, width, height, event.clientX - rect.left, event.clientY - rect.top)
   }
 
+  function pasteSpot(): Point {
+    if (arrow) return planeAt(arrow)
+    return graphPoint(camera, width, height, width / 2, height / 2)
+  }
+
   function screenAt(event: { clientX: number; clientY: number }): Point {
     const rect = host?.getBoundingClientRect()
     return { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) }
@@ -963,7 +968,7 @@
     }
 
     const point = planeAt(event)
-    at = point
+    arrow = { clientX: event.clientX, clientY: event.clientY }
     began = event.timeStamp
 
     const coarse = kind === 'touch'
@@ -1040,7 +1045,7 @@
     if (!floating) stopDoubting(event.pointerId)
 
     const point = planeAt(event)
-    at = point
+    arrow = { clientX: event.clientX, clientY: event.clientY }
     if (store.shared) pointing = point
     const kind = kindOf(event).kind
     const coarse = kind === 'touch'
@@ -1379,7 +1384,7 @@
     const files = filesIn(event.clipboardData).filter(isCanvasFile)
     if (files.length) {
       event.preventDefault()
-      placeFiles(files, at)
+      placeFiles(files, pasteSpot())
       return
     }
 
@@ -1390,7 +1395,7 @@
     if (pastesMarkup(types, text)) tab.note.pasted = true
 
     event.preventDefault()
-    run.paste(store, readCanvas(text), text, at)
+    run.paste(store, readCanvas(text), text, pasteSpot())
   }
 
   function onDrop(event: DragEvent) {
@@ -1563,7 +1568,10 @@
   onpointermove={onPointerMove}
   onpointerup={onPointerUp}
   onpointercancel={onPointerCancel}
-  onpointerleave={() => (pointing = null)}
+  onpointerleave={() => {
+    pointing = null
+    arrow = null
+  }}
   onclick={onTapClick}
   ondblclick={onDoubleClick}
   onkeydown={onKeyDown}
