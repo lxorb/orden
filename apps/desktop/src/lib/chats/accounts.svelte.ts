@@ -51,6 +51,7 @@ export class Accounts {
   saved = $state.raw<readonly Saved[]>([])
   failed = $state.raw<readonly Failure[]>([])
   private started = false
+  private following = false
 
   constructor(
     private readonly host: Host,
@@ -81,8 +82,33 @@ export class Accounts {
   start(): void {
     if (this.started || !this.on()) return
     this.started = true
+    this.hub.wanted = (provider, account) =>
+      this.started &&
+      this.on() &&
+      this.saved.some((one) => one.provider === provider && one.account === account)
     this.saved = savedOf(stored(KEY))
     for (const one of this.saved) void this.relink(one)
+    if (!this.following && typeof window !== 'undefined') {
+      this.following = true
+      window.addEventListener('storage', (event) => {
+        if (event.key === KEY) void this.follow()
+      })
+    }
+  }
+
+  async follow(): Promise<void> {
+    if (!this.started) return
+    const was = this.saved
+    this.saved = savedOf(stored(KEY))
+    const has = (list: readonly Saved[], one: { provider: string; account: string }) =>
+      list.some((it) => it.provider === one.provider && it.account === one.account)
+    for (const one of this.hub.linked) {
+      const key = { provider: one.provider.id, account: one.account.id }
+      if (!has(this.saved, key)) await this.hub.unlink(key.provider, key.account)
+    }
+    for (const one of this.saved) {
+      if (!has(was, one) && !this.hub.find(one.provider, one.account)) void this.relink(one)
+    }
   }
 
   async stop(): Promise<void> {
@@ -163,6 +189,9 @@ export class Accounts {
   }
 
   async disconnect(providerId: string, account: string): Promise<void> {
+    this.keepSaved(
+      this.saved.filter((one) => one.provider !== providerId || one.account !== account),
+    )
     await this.hub.unlink(providerId, account)
     const provider = this.providerOf(providerId)
     await provider?.forget?.(account, this.host).catch(() => undefined)
@@ -173,9 +202,6 @@ export class Accounts {
       await this.host.keepSecret(secretName(providerId, account, kept), null)
     }
     this.failed = this.failed.filter((it) => it.provider !== providerId || it.account !== account)
-    this.keepSaved(
-      this.saved.filter((one) => one.provider !== providerId || one.account !== account),
-    )
   }
 }
 
