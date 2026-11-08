@@ -198,6 +198,22 @@ describe('chats through the connector', () => {
     ])
   })
 
+  test('what the chat would not take is said plainly, and nothing of it lands', async () => {
+    const key = await connector(owner)
+    const before = await state(owner)
+    expect(await tool(key, 'post_message', { chat, text: 'x'.repeat(16_001) })).toBe(
+      'A message is at most 16000 characters.',
+    )
+    for (const [name, args] of [
+      ['post_message', { chat, text: 'a reply', reply_to: 'not an id' }],
+      ['post_message', { chat, text: 'a quote', quote: 'q'.repeat(5000) }],
+      ['react', { chat, message: before[0]?.id ?? '', emoji: 'e'.repeat(500) }],
+    ] as const) {
+      expect(await tool(key, name, args), name).toMatch(/^The chat cannot take that/)
+    }
+    expect(await state(owner)).toEqual(before)
+  })
+
   test('a token that may only read, and a reader of the space, say nothing', async () => {
     expect(await tool(await connector(owner, true), 'post_message', { chat, text: 'hi' })).toMatch(
       /may only read/,
