@@ -202,8 +202,8 @@ def kept(space: pathlib.Path, name: str) -> str:
 
     text = (space / f"{name}.url").read_text(encoding="utf-8")
     for line in text.splitlines():
-        if line.lower().startswith("nib-icon="):
-            value = line[len("nib-icon=") :]
+        key, _, value = line.partition("=")
+        if key.lower() in ("orden-icon", "nib-icon"):
             return f"{value[:30]}... ({len(value)} chars, first pixel {first_pixel(value)})"
     return ""
 
