@@ -814,7 +814,10 @@ class RemoteList implements MessageList {
     try {
       const page = await this.page(this.cursor)
       const have = new Set(this.window.map((one) => one.id))
-      this.window = [...page.messages.filter((one) => !have.has(one.id)), ...this.window]
+      this.window = [
+        ...page.messages.filter((one) => this.belongs(one) && !have.has(one.id)),
+        ...this.window,
+      ]
       this.cursor = page.before
       this.atStart = page.before === null
     } finally {

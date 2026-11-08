@@ -1,5 +1,5 @@
 import { EVERYTHING, fakeProvider, SEND_ONLY, type FakeOptions } from '@orden/chats/fake-provider'
-import type { Host } from '@orden/chats/provider'
+import type { Host, ProviderMessage } from '@orden/chats/provider'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { Shown } from './api'
 import { connected as hub } from './connected.svelte'
@@ -306,5 +306,37 @@ describe('notifying', () => {
     expect(quiet(fake.id, link.account.id, 'ada', message)).toBe(true)
     const called = fake.world.say('ada', 'ada', '@me', { mentions: ['me'] })
     expect(quiet(fake.id, link.account.id, 'ada', called)).toBe(false)
+  })
+})
+
+describe('older pages', () => {
+  test('a reply in a thread stays in its thread when older messages are loaded', async () => {
+    const { fake, chat } = await linked()
+    const connection = fake.connection
+    if (!connection) throw new Error('not connected')
+    const ada = fake.world.person('ada')
+    const message = (id: string, at: number, more: Partial<ProviderMessage> = {}) => ({
+      id,
+      conversation: 'news',
+      author: ada,
+      at,
+      text: id,
+      attachments: [],
+      mine: false,
+      ...more,
+    })
+    connection.history = (_conversation, ask) =>
+      Promise.resolve(
+        ask.before
+          ? {
+              messages: [message('first', 1_000), message('in-thread', 2_000, { thread: 'first' })],
+              before: null,
+            }
+          : { messages: [message('newest', 3_000)], before: 'newest' },
+      )
+    const page = await opened(chat('news'))
+    await page.view.older()
+    expect(page.messages.map((one) => one.body)).toEqual(['first', 'newest'])
+    page.close()
   })
 })
