@@ -310,12 +310,17 @@ export async function renameMany(
   const folder = view.listing?.path ?? ''
   if (inASpace(folder)) {
     let failed: unknown = null
+    const went: { from: string; to: string }[] = []
     await workspace.undone.batch(async () => {
       for (const { from, name } of moving) {
-        await workspace.rename(from, name).catch((error: unknown) => (failed ??= error))
+        await workspace.rename(from, name).then(
+          () => went.push({ from, to: joinPath(folderOf(from), name) }),
+          (error: unknown) => (failed ??= error),
+        )
       }
     })
     if (failed !== null) view.tell(message(failed, 'could not rename this'))
+    view.search?.movedAll(went)
     await view.reload()
     return
   }
@@ -340,5 +345,6 @@ export async function renameMany(
     view.tell(message(error, 'could not rename this'))
   }
   record(done.length ? [{ op: 'moved', pairs: done }] : [])
+  view.search?.movedAll(done)
   await view.reload()
 }
