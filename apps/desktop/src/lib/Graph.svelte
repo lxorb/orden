@@ -7,7 +7,7 @@
   import { graphFilter, type Keeps } from './graph-filter'
   import { Layout } from './graph-layout'
   import { howFor, type OpenHow, type TabAsk, tabAsk } from './new-tab'
-  import { type Camera, framing, graphPoint, nodeAt, zoomed } from './camera'
+  import { type Camera, framing, graphPoint, nodeAt, wheelPixels, zoomed } from './camera'
   import { type GraphColours, paint, radiusOf } from './graph-paint'
   import { t } from './i18n.svelte'
   import { stillness } from './motion'
@@ -576,7 +576,7 @@
       height,
       event.clientX - box.left,
       event.clientY - box.top,
-      Math.exp(-event.deltaY * 0.0015),
+      Math.exp(-wheelPixels(event).y * 0.0015),
     )
     schedule()
   }

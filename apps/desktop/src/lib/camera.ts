@@ -40,10 +40,25 @@ export function wheelZoom(deltaY: number): number {
   return Math.exp((-deltaY / 100) * Math.log(NOTCH))
 }
 
-export function ctrlWheelZoom(event: { deltaY: number; deltaMode: number }): number {
+const LINE = 40
+
+const PAGE = 800
+
+export interface Turned {
+  deltaX?: number
+  deltaY: number
+  deltaMode?: number
+}
+
+export function wheelPixels(turn: Turned, page = PAGE): { x: number; y: number } {
+  const unit = turn.deltaMode === 1 ? LINE : turn.deltaMode === 2 ? page : 1
+  return { x: (turn.deltaX ?? 0) * unit, y: turn.deltaY * unit }
+}
+
+export function ctrlWheelZoom(event: Turned): number {
   const pinch =
-    event.deltaMode === 0 && Math.abs(event.deltaY) < PINCHED && !Number.isInteger(event.deltaY)
-  return pinch ? Math.exp(-event.deltaY / 100) : wheelZoom(event.deltaY)
+    !event.deltaMode && Math.abs(event.deltaY) < PINCHED && !Number.isInteger(event.deltaY)
+  return pinch ? Math.exp(-event.deltaY / 100) : wheelZoom(wheelPixels(event).y)
 }
 
 const PINCHED = 50

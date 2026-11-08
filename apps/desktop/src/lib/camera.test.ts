@@ -3,6 +3,7 @@ import {
   type Camera,
   CLOSEST,
   clampScale,
+  ctrlWheelZoom,
   framing,
   FURTHEST,
   graphPoint,
@@ -137,6 +138,14 @@ describe('one notch of a zoom', () => {
   test('up is bigger, the way round every platform reads it', () => {
     expect(wheelZoom(-100)).toBeGreaterThan(1)
     expect(wheelZoom(100)).toBeLessThan(1)
+  })
+
+  test('is as big from a wheel that counts in lines or pages as from one that counts pixels', () => {
+    expect(ctrlWheelZoom({ deltaY: -3, deltaMode: 1 })).toBeCloseTo(
+      ctrlWheelZoom({ deltaY: -120, deltaMode: 0 }),
+      10,
+    )
+    expect(ctrlWheelZoom({ deltaY: 1, deltaMode: 2 })).toBeLessThan(1 / NOTCH)
   })
 })
 

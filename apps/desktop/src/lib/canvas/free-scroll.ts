@@ -1,4 +1,5 @@
 import { invoke, isDesktop, platform } from '../tauri'
+import { wheelPixels } from '../camera'
 
 const FRESH = 150
 
@@ -18,6 +19,7 @@ interface Vector {
 export interface Wheeled {
   deltaX: number
   deltaY: number
+  deltaMode?: number
   timeStamp: number
 }
 
@@ -52,7 +54,7 @@ export class FreeScroll {
 
   wheel(event: Wheeled): Vector {
     const now = event.timeStamp
-    const asked = { x: event.deltaX, y: event.deltaY }
+    const asked = wheelPixels(event)
     const since = now - this.lastWheel
     const size = Math.hypot(asked.x, asked.y)
     const gliding = since < GLIDE && size <= this.lastSize * SLOWING
