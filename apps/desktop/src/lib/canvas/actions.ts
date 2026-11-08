@@ -282,7 +282,13 @@ export const run = {
     notePath: string | null,
   ): Promise<string[]> {
     if (store.readOnly) return []
-    const stored = await storeImage(file, notePath).catch(() => null)
+    const label = t('Storing the image')
+    const stored = await busy
+      .run(label, () => storeImage(file, notePath))
+      .catch((error: unknown) => {
+        busy.failed(`${label}: ${error instanceof Error ? error.message : String(error)}`)
+        return null
+      })
     if (!stored) return []
 
     const root = canvasRoot(store)
