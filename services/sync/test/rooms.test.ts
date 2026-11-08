@@ -1546,6 +1546,33 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
   })
 
+  test('keeps the socket of somebody taken out of the space who still holds the file itself', async () => {
+    await call(env, `/v1/spaces/${spaceId}/share/invite?item=${noteId}`, {
+      token: owner,
+      body: { email: WRITER, role: 'write' },
+    })
+    const socket = await signedIn(writer, writerId)
+
+    await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    expect(socket.closed).toBe(false)
+    expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(true)
+  })
+
+  test('closes only the ended session’s socket, as signed out, when the others are ended', async () => {
+    const ended = await signedIn(writer, writerId)
+    const kept = await signIn(env, WRITER)
+    const staying = await signedIn(kept, writerId)
+
+    await call(env, '/v1/sessions', { method: 'DELETE', token: kept })
+
+    expect(ended.closedWith?.code).toBe(4401)
+    expect(staying.closed).toBe(false)
+  })
+
   describe('a handshake the database never answers', () => {
     const LONGER_THAN_ANY_WAIT = 60 * 60 * 1000
 

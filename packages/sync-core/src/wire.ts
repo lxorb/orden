@@ -206,6 +206,14 @@ export type RoomNews =
 
 export const NEW_EPOCH = 4001
 
+export const SHUT_OUT = 1008
+
+export const SIGNED_OUT = 4401
+
+export function shutOut(code: number): boolean {
+  return code === SHUT_OUT || code === SIGNED_OUT
+}
+
 export const BEAT = 'beat'
 export const BEAT_ANSWER = 'ok'
 

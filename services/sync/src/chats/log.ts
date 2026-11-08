@@ -1079,13 +1079,35 @@ export class ChatLog implements DurableObject {
   private async revoke(id: string, role: string | null): Promise<Response> {
     this.reachers = null
     const toRead = role === 'read'
-    for (const socket of this.ctx.getWebSockets()) {
+    const chat = this.chatId()
+    const theirs = this.ctx.getWebSockets().filter((one) => attachedTo(one)?.id === id)
+    const at = Date.now()
+    const asked = chat
+      ? await Promise.all(
+          theirs.map(async (one) => {
+            const login = attachedTo(one)?.login
+            return login ? await reachByToken(this.env, login, at, chat) : null
+          }),
+        ).catch(() => null)
+      : null
+    let kept = false
+    for (const [index, socket] of theirs.entries()) {
       const them = attachedTo(socket)
-      if (them?.id !== id) continue
-      if (toRead) attach(socket, { ...them, role: 'read' })
-      else socket.close(1008, 'no longer in this space')
+      if (!them) continue
+      const answer = asked?.[index]
+      const may = standing(answer, toRead)
+      if (may === 'ended') {
+        socket.close(SIGNED_OUT, 'signed out')
+        continue
+      }
+      if (may === 'none') {
+        socket.close(1008, 'no longer in this space')
+        continue
+      }
+      if (may === 'read' && them.role !== 'read') attach(socket, { ...them, role: 'read' })
+      kept = true
     }
-    if (!toRead) {
+    if (!kept) {
       await this.forgetSocketRow(id)
       this.sayHere()
     }
@@ -1155,4 +1177,13 @@ function resultOf(answer: Answer) {
   return answer.t === 'placed'
     ? { id: answer.id, seq: answer.seq, at: answer.at }
     : { id: answer.id ?? '', refused: answer.error }
+}
+
+function standing(
+  answer: Awaited<ReturnType<typeof reachByToken>> | null | undefined,
+  toRead: boolean,
+): string {
+  if (!answer) return toRead ? 'read' : 'none'
+  if (!answer.live) return 'ended'
+  return answer.reached?.role ?? 'none'
 }

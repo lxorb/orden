@@ -73,7 +73,16 @@ vi.mock('./who', () => ({
   personName: () => undefined,
   personFace: () => ({}),
 }))
-vi.mock('../account.svelte', () => ({ account: { token: 'session', name: null } }))
+const session = vi.hoisted(() => ({ token: 'session', name: null, rechecked: 0 }))
+
+vi.mock('../account.svelte', () => ({
+  account: Object.assign(session, {
+    recheck: () => {
+      session.rechecked += 1
+      return Promise.resolve()
+    },
+  }),
+}))
 vi.mock('../theme.svelte', () => ({ theme: { current: 'dark' } }))
 vi.mock('../i18n.svelte', () => ({ t: (text: string) => text, key: (text: string) => text }))
 
@@ -186,6 +195,8 @@ beforeAll(async () => {
 beforeEach(() => {
   rooms.clear()
   sockets.opened.length = 0
+  session.token = 'session'
+  session.rechecked = 0
 })
 
 describe('a space renamed while one of its notes is open in a room', () => {
@@ -493,6 +504,61 @@ describe('a room that will take no more keystrokes', () => {
     note.flush()
 
     expect(words(note)).toBe('# A\nstill typing\n')
+  })
+})
+
+describe('a room the server shut this device out of', () => {
+  const SHUT_OUT = 1008
+  const SIGNED_OUT = 4401
+
+  function open(note: Doc) {
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# A\n', version: 1 }])
+  }
+
+  test('is not dialled again while the same note stays open', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const socket = await following(note, new Server('# A\n'))
+
+    socket.went(SHUT_OUT, 'no longer in this space')
+    open(note)
+
+    expect(socket.stopped).toBe(true)
+    expect(sockets.opened).toHaveLength(1)
+    expect(rooms.carries('note-1')).toBe(false)
+  })
+
+  test('is joined again once the note is opened anew', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const socket = await following(note, new Server('# A\n'))
+
+    socket.went(SHUT_OUT, 'no longer in this space')
+    rooms.follow([])
+    open(note)
+
+    expect(sockets.opened).toHaveLength(2)
+  })
+
+  test('and for a session that ended, asks the account whether it still holds', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const socket = await following(note, new Server('# A\n'))
+
+    socket.went(SIGNED_OUT, 'signed out')
+    open(note)
+
+    expect(socket.stopped).toBe(true)
+    expect(sockets.opened).toHaveLength(1)
+    expect(session.rechecked).toBe(1)
+  })
+
+  test('a room is dialled again with the session that took over, not the one it was opened with', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const socket = await following(note, new Server('# A\n'))
+
+    session.token = 'upgraded'
+    open(note)
+
+    expect(socket.stopped).toBe(true)
+    expect(latest().token).toBe('upgraded')
   })
 })
 

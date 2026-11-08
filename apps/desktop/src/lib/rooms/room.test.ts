@@ -127,6 +127,7 @@ function joining(
     },
     gone: () => undefined,
     refused: () => undefined,
+    shut: () => undefined,
   })
 
   return { note, room, server, asked, socket: socketOf() }

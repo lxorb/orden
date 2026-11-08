@@ -1,11 +1,9 @@
 import type { Logged, Who } from '@orden/chats'
 import { serverFrameOf, socketPath, text, type ClientFrame } from '@orden/chats/wire'
 import { subprotocol } from '@orden/rooms'
-import { BEAT, DEVICE_PROTOCOL } from '@orden/sync-core/wire'
+import { BEAT, DEVICE_PROTOCOL, shutOut } from '@orden/sync-core/wire'
 import { BASE } from '../api'
 import { BEAT_EVERY, roomDelay } from '../backoff'
-
-const ENDED = 1008
 
 const SILENT_BEATS = 3
 
@@ -142,7 +140,7 @@ export class ChatSocket {
         closed: (code) => {
           if (this.wire !== wire) return
           this.drop()
-          if (code === ENDED) {
+          if (shutOut(code)) {
             this.stopped = true
             this.heard.ended()
             return

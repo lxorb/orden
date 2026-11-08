@@ -45,6 +45,7 @@ function probe(onFile = () => true): Probe {
     onPeers: () => undefined,
     gone: () => undefined,
     refused: () => undefined,
+    shut: () => undefined,
     holds: onFile,
   })
 }

@@ -549,19 +549,29 @@ export class NoteRoom implements DurableObject {
 
     await this.woken()
 
-    for (const socket of sockets) {
-      if (whoOf(socket) !== who) continue
+    const theirs = sockets.filter((socket) => whoOf(socket) === who)
+    const noteId = this.held?.noteId
+    const logins = theirs.flatMap((one) => loginOf(one) ?? [])
+    const access = noteId ? await accessOf(this.env, noteId, logins).catch(() => null) : null
+    let kept = false
 
-      if (toRead) {
-        attach(socket, { mayWrite: false })
+    for (const socket of theirs) {
+      const login = loginOf(socket)
+      const may =
+        access && login !== undefined ? (access.get(login) ?? 'ended') : toRead ? 'read' : 'none'
+
+      if (may === 'write' || may === 'read') {
+        if (may === 'read') attach(socket, { mayWrite: false })
+        kept = true
         continue
       }
 
       forget(this.awareness, announcedBy(socket), socket)
-      socket.close(1008, 'no longer in this space')
+      if (may === 'ended') socket.close(SIGNED_OUT, 'signed out')
+      else socket.close(1008, 'no longer in this space')
     }
 
-    if (!toRead && this.held) {
+    if (!kept && this.held) {
       await this.env.DB.prepare('delete from room_sockets where note_id = ? and who = ?')
         .bind(this.held.noteId, who)
         .run()

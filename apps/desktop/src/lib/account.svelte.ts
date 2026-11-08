@@ -117,6 +117,11 @@ class Session {
     return true
   }
 
+  async recheck(): Promise<void> {
+    const token = this.token
+    if (token) await this.asked(token)
+  }
+
   async reread(): Promise<void> {
     const token = this.token
     if (!token || !this.user) return

@@ -9,6 +9,7 @@ export interface Entering {
   onPeers: (present: number, seen?: Seen) => void
   gone: () => void
   refused: (said: string) => void
+  shut: (signedOut: boolean) => void
   holds: () => boolean
 }
 
@@ -30,6 +31,7 @@ export abstract class JoinedRoom {
         entering.gone()
       },
       refused: (said) => entering.refused(said),
+      shut: (signedOut) => entering.shut(signedOut),
     })
   }
 

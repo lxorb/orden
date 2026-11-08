@@ -33,6 +33,7 @@ export function inRooms(
 
 type Joined = {
   noteId: string
+  token: string
   note: NoteDoc
   hash: string | null
 } & ({ kind: 'words'; room: Room } | { kind: 'plane'; room: PlaneRoom })
@@ -56,6 +57,7 @@ class Rooms {
   private reaching: Promise<void> | null = null
 
   private readonly held = new Map<string, Joined>()
+  private readonly shut = new Map<string, { noteId: string; token: string }>()
   readonly planes = new Map<string, PlaneSurface>()
   drawn: (() => void) | null = null
   private open: readonly Open[] = []
@@ -91,10 +93,15 @@ class Rooms {
     const token = account.token
     const wanted = new Map(token ? open.map((one) => [one.key, one]) : [])
 
+    for (const [key, out] of this.shut) {
+      if (wanted.get(key)?.noteId !== out.noteId || out.token !== token) this.shut.delete(key)
+    }
+
     for (const [key, joined] of this.held) {
       const still = wanted.get(key)
       if (
         still?.noteId === joined.noteId &&
+        joined.token === token &&
         roomKindOf(still.note) === joined.kind &&
         this.ready(still) &&
         !this.answered(joined, still)
@@ -115,7 +122,7 @@ class Rooms {
     }
 
     for (const [key, one] of wanted) {
-      if (!this.held.has(key) && this.ready(one)) this.join(key, one, token)
+      if (!this.held.has(key) && !this.shut.has(key) && this.ready(one)) this.join(key, one, token)
     }
   }
 
@@ -213,6 +220,12 @@ class Rooms {
       busy.failed(t('This note is as large as a note in a room may get.'))
     }
 
+    const shut = (signedOut: boolean) => {
+      this.letGo(key)
+      this.shut.set(key, { noteId: open.noteId, token })
+      if (signedOut) void account.recheck()
+    }
+
     const arrivals = open.note.arrivals
     const holds = () => open.note.arrivals === arrivals
 
@@ -224,6 +237,7 @@ class Rooms {
       onPeers,
       gone,
       refused,
+      shut,
       holds,
     }
 
@@ -233,6 +247,7 @@ class Rooms {
       this.held.set(key, {
         room: new engine.PlaneRoom({ ...shape, surface }),
         noteId: open.noteId,
+        token,
         note: open.note,
         hash: open.hash,
         kind,
@@ -262,6 +277,7 @@ class Rooms {
     this.held.set(key, {
       room,
       noteId: open.noteId,
+      token,
       note: open.note,
       hash: open.hash,
       kind: 'words',

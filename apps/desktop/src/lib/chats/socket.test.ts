@@ -77,6 +77,23 @@ describe('a chat’s socket', () => {
     }
   })
 
+  test('is not dialled again once the server says the session ended', () => {
+    vi.useFakeTimers()
+    try {
+      const { sockets, dial } = dialed()
+      const ears = heard()
+      const socket = new ChatSocket(CHAT, 'token', null, () => 0, ears, dial)
+      sockets[0]?.on.opened()
+      sockets[0]?.on.closed(4401)
+      vi.advanceTimersByTime(60_000)
+      expect(sockets).toHaveLength(1)
+      expect(ears.calls.at(-1)).toBe('ended []')
+      socket.close()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test('a socket that stops answering its beats is dropped and dialled again', () => {
     vi.useFakeTimers()
     try {

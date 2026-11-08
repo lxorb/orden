@@ -48,6 +48,10 @@ export async function carry(
       uncarry(key)
       busy.failed(t('This note is as large as a note in a room may get.'))
     },
+    shut: (signedOut: boolean) => {
+      uncarry(key)
+      if (signedOut) void account.recheck()
+    },
     holds: () => true,
     carrying: carried.carrying,
   }

@@ -142,6 +142,7 @@ function joining(note: InstanceType<typeof NoteDoc>, server: Server, hash: strin
     holds: () => note.arrivals === arrivals,
     gone: () => undefined,
     refused: () => undefined,
+    shut: () => undefined,
     apart: () => Promise.resolve('take' as const),
   })
 

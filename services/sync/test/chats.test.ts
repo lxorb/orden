@@ -553,6 +553,18 @@ describe('chats', () => {
       expect(env.db.prepare('select count(*) as n from chat_sockets').get()).toEqual({ n: 1 })
     })
 
+    test('ending somebody’s other sessions closes only the ended one, as signed out', async () => {
+      const chat = await chatOfOwner()
+      const ended = await socketOf('writer', chat, undefined, await sha256(people.writer))
+      const kept = await signIn(env, 'writer@example.com')
+      const staying = await socketOf('writer', chat, undefined, await sha256(kept))
+
+      await call(env, '/v1/sessions', { method: 'DELETE', token: kept })
+
+      expect(ended.closedWith?.code).toBe(4401)
+      expect(staying.closed).toBe(false)
+    })
+
     test('taking somebody out a day after they opened the chat still closes their socket', async () => {
       const chat = await chatOfOwner()
       const writer = await socketOf('writer', chat)

@@ -1,4 +1,4 @@
-import { DEVICE_PROTOCOL, TOKEN_PROTOCOL } from '@orden/sync-core/wire'
+import { DEVICE_PROTOCOL, shutOut, TOKEN_PROTOCOL } from '@orden/sync-core/wire'
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { BASE } from '../api'
@@ -18,8 +18,6 @@ import {
 } from './hub-frames'
 
 export type HubState = 'off' | 'connecting' | 'open'
-
-const ENDED = 1008
 
 const OPEN_WITHIN = 10_000
 
@@ -204,7 +202,7 @@ export class Hub {
           closed: (code) => {
             if (this.socket !== socket) return
             this.lost(null)
-            if (code !== ENDED) this.again()
+            if (!shutOut(code)) this.again()
           },
         },
       )

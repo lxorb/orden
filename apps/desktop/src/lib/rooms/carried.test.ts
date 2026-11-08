@@ -138,6 +138,7 @@ function join(device: Device) {
     onPeers: () => undefined,
     gone: () => (device.gone += 1),
     refused: () => undefined,
+    shut: () => undefined,
     holds: () => true,
     note,
     carrying: carrying(device),
@@ -318,6 +319,7 @@ describe('a room carrying the engine’s document', () => {
       onPeers: () => undefined,
       gone: () => undefined,
       refused: () => undefined,
+      shut: () => undefined,
       holds: () => true,
       surface: {
         canvas: { nodes: [], edges: [], ink: [], at: {}, gone: {} },
