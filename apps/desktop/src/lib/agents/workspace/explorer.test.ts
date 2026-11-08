@@ -1,3 +1,4 @@
+import { linearly } from '../../../../../../scripts/growth'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf } from '../../automation/caller'
 
@@ -91,6 +92,7 @@ vi.mock('../../explorer/places.svelte', () => ({
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 vi.mock('../../tauri', () => ({
+  platform: () => 'linux',
   joinPath: (dir: string, rest: string) => `${dir}/${rest}`,
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     asked.push({ command, args })
@@ -98,7 +100,7 @@ vi.mock('../../tauri', () => ({
   },
 }))
 
-const { explorerTabs } = await import('./explorer')
+const { explorerTabs, namesAt } = await import('./explorer')
 
 function call(args: Record<string, unknown>, mode = 'confirm') {
   return explorerTabs({
@@ -138,6 +140,16 @@ describe("an agent's file explorer", () => {
       code: 'not_granted',
     })
     expect(view.went).toEqual([])
+  })
+
+  test('picks a thousand of a thousand rows without comparing each with each', () => {
+    const names = Array.from({ length: 4000 }, (_, at) => `File ${at}.txt`)
+    const picked = linearly((count) => {
+      const rows = names.slice(0, count).map((name) => ({ name }))
+      const paths = names.slice(0, count).map((name) => `/home/me/Downloads/${name}`)
+      return namesAt(rows, (name) => `/home/me/Downloads/${name}`, paths, true)
+    }, 4000)
+    expect(picked).toHaveLength(4000)
   })
 
   test('picks and trashes through the tab, so the reader can undo it', async () => {

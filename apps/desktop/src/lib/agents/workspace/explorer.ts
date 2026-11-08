@@ -1,6 +1,6 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { message } from '../../i18n.svelte'
-import { samePath } from '../../space-paths'
+import { foldsIn, pathKeyAs, samePath } from '../../space-paths'
 import { joinPath } from '../../tauri'
 import type { Tab } from '../../workspace.svelte'
 import { workspace } from '../../workspace.svelte'
@@ -51,11 +51,10 @@ export async function explorerTabs(call: Call): Promise<AgentAnswer> {
       return shown(tab, view)
     }
     case 'select': {
-      const paths = await pathsOf(call, view)
-      const names = view.rows
-        .filter((one) => paths.some((path) => samePath(view.pathOf(one.name), path)))
-        .map((one) => one.name)
-      view.pickNames(names)
+      const folds = view.listing !== null && foldsIn(view.listing.path)
+      view.pickNames(
+        namesAt(view.rows, (name) => view.pathOf(name), await pathsOf(call, view), folds),
+      )
       return shown(tab, view)
     }
     case 'trash':
@@ -185,6 +184,16 @@ async function absolute(asked: string): Promise<string> {
     )
   }
   return said
+}
+
+export function namesAt(
+  rows: readonly { name: string }[],
+  pathOf: (name: string) => string,
+  paths: readonly string[],
+  folds: boolean,
+): string[] {
+  const wanted = new Set(paths.map((one) => pathKeyAs(one, folds)))
+  return rows.filter((one) => wanted.has(pathKeyAs(pathOf(one.name), folds))).map((one) => one.name)
 }
 
 async function pathsOf(call: Call, view: View): Promise<string[]> {
