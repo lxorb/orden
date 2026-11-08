@@ -651,7 +651,7 @@ export async function printPages(out: PagesOut): Promise<void> {
   const texts: string[] = []
   const pieces: Blob[] = []
   const links: string[] = []
-  let first: { width: number; height: number } | null = null
+  const sizes: Size[] = []
 
   try {
     try {
@@ -666,9 +666,9 @@ export async function printPages(out: PagesOut): Promise<void> {
         const context = canvas.getContext('2d')
         if (context) {
           await page.render({ canvas, canvasContext: context, viewport }).promise
-          first ??= { width: natural.width, height: natural.height }
-          const open = '<div class="sheet"><img src="'
-          const close = `" alt="Page ${texts.length + pieces.length + 1}" width="${Math.round(natural.width)}" height="${Math.round(natural.height)}"></div>`
+          const size = { width: Math.round(natural.width), height: Math.round(natural.height) }
+          const open = `<div class="sheet ${sizeName(sizes, size)}"><img src="`
+          const close = `" alt="Page ${texts.length + pieces.length + 1}" width="${size.width}" height="${size.height}"></div>`
           if (linked) {
             const link = await linkOf(canvas)
             links.push(link)
@@ -685,17 +685,13 @@ export async function printPages(out: PagesOut): Promise<void> {
       await task.destroy().catch(() => undefined)
     }
 
+    const first = sizes[0]
     if (!first) return
 
     const head = [
       '<!doctype html><html><head><meta charset="utf-8">',
       `<title>${escaped(stem(out.name))}</title><style>`,
-      `@page{size:${first.width}px ${first.height}px;margin:0}`,
-      'html,body{margin:0;padding:0;background:#fff}',
-      '.sheet{display:flex;align-items:center;justify-content:center;',
-      `width:${first.width}px;height:${first.height}px;break-after:page;overflow:hidden}`,
-      '.sheet:last-child{break-after:auto}',
-      'img{display:block;max-width:100%;max-height:100%}',
+      sheetStyle(sizes),
       '</style></head><body>',
     ].join('')
     const tail = '</body></html>'
@@ -713,6 +709,32 @@ export async function printPages(out: PagesOut): Promise<void> {
   } finally {
     for (const link of links) URL.revokeObjectURL(link)
   }
+}
+
+interface Size {
+  width: number
+  height: number
+}
+
+function sizeName(sizes: Size[], size: Size): string {
+  let at = sizes.findIndex((one) => one.width === size.width && one.height === size.height)
+  if (at < 0) at = sizes.push(size) - 1
+  return `s${String(at)}`
+}
+
+export function sheetStyle(sizes: readonly Size[]): string {
+  const first = sizes[0]
+  return [
+    first ? `@page{size:${first.width}px ${first.height}px;margin:0}` : '',
+    'html,body{margin:0;padding:0;background:#fff}',
+    '.sheet{display:flex;align-items:center;justify-content:center;break-after:page;overflow:hidden}',
+    '.sheet:last-child{break-after:auto}',
+    'img{display:block;max-width:100%;max-height:100%}',
+    ...sizes.map(
+      (size, at) =>
+        `@page s${String(at)}{size:${size.width}px ${size.height}px;margin:0}.s${String(at)}{page:s${String(at)};width:${size.width}px;height:${size.height}px}`,
+    ),
+  ].join('')
 }
 
 async function linkOf(canvas: HTMLCanvasElement): Promise<string> {
