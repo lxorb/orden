@@ -36,6 +36,8 @@ jobs:
             where: home
           - from: '0.11.0'
             where: applications
+          - from: '0.20.0'
+            where: applications
     runs-on: macos-latest
     timeout-minutes: 30
     steps:

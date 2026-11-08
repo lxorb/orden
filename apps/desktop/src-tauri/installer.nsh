@@ -63,6 +63,51 @@ FunctionEnd
   orden_lnk_${ID}_done:
 !macroend
 
+!macro ORDEN_RETARGET_SHORTCUT LNK ID
+  IfFileExists "${LNK}" 0 orden_retarget_${ID}_done
+  !insertmacro IsShortcutTarget "${LNK}" "$INSTDIR\${ORDEN_OLD_BINARY}"
+  Pop $0
+  StrCmp $0 1 orden_retarget_${ID}_moved
+  StrCmp $OrdenOldDir "" orden_retarget_${ID}_done
+  StrCmp $OrdenOldDir $INSTDIR orden_retarget_${ID}_done
+  !insertmacro IsShortcutTarget "${LNK}" "$OrdenOldDir\${ORDEN_OLD_BINARY}"
+  Pop $0
+  StrCmp $0 1 orden_retarget_${ID}_moved
+  !insertmacro IsShortcutTarget "${LNK}" "$OrdenOldDir\${MAINBINARYNAME}.exe"
+  Pop $0
+  StrCmp $0 1 0 orden_retarget_${ID}_done
+  orden_retarget_${ID}_moved:
+    Delete "${LNK}"
+    CreateShortcut "${LNK}" "$INSTDIR\${MAINBINARYNAME}.exe"
+    !insertmacro SetLnkAppUserModelId "${LNK}"
+  orden_retarget_${ID}_done:
+!macroend
+
+!define ORDEN_PINNED "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
+
+!macro ORDEN_RETARGET_SHORTCUTS
+  !insertmacro ORDEN_RETARGET_SHORTCUT "$SMPROGRAMS\${PRODUCTNAME}.lnk" start
+  !insertmacro ORDEN_RETARGET_SHORTCUT "$DESKTOP\${PRODUCTNAME}.lnk" desktop
+  FindFirst $R4 $R5 "${ORDEN_PINNED}\*.lnk"
+  orden_pins_next:
+    StrCmp $R5 "" orden_pins_done
+    !insertmacro ORDEN_RETARGET_SHORTCUT "${ORDEN_PINNED}\$R5" pinned
+    FindNext $R4 $R5
+    Goto orden_pins_next
+  orden_pins_done:
+  FindClose $R4
+  ClearErrors
+!macroend
+
+!macro ORDEN_FORGET_STALE_SHORTCUT LNK ID
+  IfFileExists "${LNK}" 0 orden_stale_${ID}_done
+  !insertmacro IsShortcutTarget "${LNK}" "$INSTDIR\${ORDEN_OLD_BINARY}"
+  Pop $0
+  StrCmp $0 1 0 orden_stale_${ID}_done
+    Delete "${LNK}"
+  orden_stale_${ID}_done:
+!macroend
+
 !macro ORDEN_FORGET_OLD_BROWSER OLD ID
   ReadRegStr $R7 SHCTX "Software\Clients\StartMenuInternet\${OLD}\shell\open\command" ""
   StrCmp $R7 "" orden_browser_${ID}_done
@@ -206,6 +251,7 @@ FunctionEnd
 
   !insertmacro ORDEN_FORGET_OLD_NAME "${ORDEN_OLD_NAME_1}" 1
   !insertmacro ORDEN_FORGET_OLD_NAME "${ORDEN_OLD_NAME_2}" 2
+  !insertmacro ORDEN_RETARGET_SHORTCUTS
   ClearErrors
 
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)'
@@ -213,6 +259,8 @@ FunctionEnd
 
 !macro NSIS_HOOK_POSTUNINSTALL
   Delete "$INSTDIR\${ORDEN_OLD_BINARY}"
+  !insertmacro ORDEN_FORGET_STALE_SHORTCUT "$SMPROGRAMS\${PRODUCTNAME}.lnk" start
+  !insertmacro ORDEN_FORGET_STALE_SHORTCUT "$DESKTOP\${PRODUCTNAME}.lnk" desktop
   !insertmacro ORDEN_PDF_FORGET
 
   !insertmacro ORDEN_FORGET_FILES

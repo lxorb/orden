@@ -76,7 +76,7 @@ function Show([string]$when) {
     ForEach-Object { Get-ItemProperty $_.PSPath } |
     Where-Object { $_.Publisher -eq 'Emil Vinu' } |
     ForEach-Object { Write-Host "HKLM uninstall: $($_.PSChildName) $($_.DisplayName) $($_.DisplayVersion) $($_.InstallLocation)" }
-  $dirs = @($programs, $desktop, $commonPrograms, $commonDesktop, $where) + @($names | ForEach-Object { "$commonPrograms\$_" })
+  $dirs = @($programs, $desktop, $commonPrograms, $commonDesktop, $pinned, $where) + @($names | ForEach-Object { "$commonPrograms\$_" })
   foreach ($dir in $dirs) {
     Get-ChildItem -LiteralPath $dir -Filter '*.lnk' -ErrorAction SilentlyContinue |
       Where-Object { $_.Name -match '^(Uninstall )?(Nib|nibeditor|Orden)\.lnk$' } |
@@ -97,6 +97,7 @@ $programs = [Environment]::GetFolderPath('Programs')
 $desktop = [Environment]::GetFolderPath('Desktop')
 $commonPrograms = [Environment]::GetFolderPath('CommonPrograms')
 $commonDesktop = [Environment]::GetFolderPath('CommonDesktopDirectory')
+$pinned = "$env:APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
 $where = ''
 $first = Files $Old
 $built = Files $New
@@ -133,6 +134,13 @@ $chosen = (Handler 'http' 20) -eq 'NibURL' -and (Handler 'https' 20) -eq 'NibURL
 if (-not $chosen) { Write-Host '::warning::this runner did not take the default browser; the choice is not checked' }
 Show 'before'
 $hadDesktop = Test-Path "$desktop\$before.lnk"
+$pin = "$pinned\$before.lnk"
+if ($Scenario -ne 'msi') {
+  New-Item -ItemType Directory -Force $pinned | Out-Null
+  $link = (New-Object -ComObject WScript.Shell).CreateShortcut($pin)
+  $link.TargetPath = (Shortcut "$programs\$before.lnk").Target
+  $link.Save()
+}
 
 switch ($Scenario) {
   'updater' { Run $built.Setup '/P /UPDATE' | Out-Null; $want = $dir }
@@ -145,6 +153,10 @@ Show 'after'
 $olds = @($names | Where-Object { $_ -ne $product })
 
 $exe = "$want\orden.exe"
+if ($Scenario -ne 'msi') {
+  $held = Shortcut $pin
+  Check 'the pinned taskbar button starts the program' ($held -and $held.Target -eq $exe)
+}
 Check "the program is in $want" (Test-Path $exe)
 Check 'and the program under its former name is gone' (-not (Test-Path "$want\nib.exe"))
 Check "and it is $version" ((Get-Item $exe).VersionInfo.ProductVersion -like "$version*")

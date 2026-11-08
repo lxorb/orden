@@ -10,8 +10,13 @@ mount="/tmp/orden-image-$where"
 hdiutil attach -nobrowse -readonly -mountpoint "$mount" "$dmg" >/dev/null
 source_app="$(find "$mount" -maxdepth 1 -name '*.app' | head -1)"
 id="${DRIVEN_ID:-$(defaults read "$source_app/Contents/Info" CFBundleIdentifier)}"
-support="$HOME/Library/Application Support/$id"
-endpoint="$support/automation.json"
+first_id="$id"
+known() {
+  support="$HOME/Library/Application Support/$id"
+  endpoint="$support/automation.json"
+  export ORDEN_ENDPOINT="$endpoint"
+}
+known
 name="$(basename "$source_app")"
 case "$where" in
   applications) folder=/Applications ;;
@@ -33,6 +38,10 @@ carried() {
   for name in Orden.app nibeditor.app; do
     [ ! -d "$app" ] && [ -d "$folder/$name" ] && app="$folder/$name"
   done
+  if [ -z "${DRIVEN_ID:-}" ]; then
+    now="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist" 2>/dev/null)"
+    [ -n "$now" ] && [ "$now" != "$id" ] && { echo "the bundle is now $now, not $id"; id="$now"; known; }
+  fi
   return 0
 }
 
@@ -80,8 +89,10 @@ case "$version" in *"$expect"*)
 esac
 
 logs() {
-  for log in "$HOME/Library/Logs/$id"/*; do
-    [ -f "$log" ] && { echo "--- $log"; tail -40 "$log"; }
+  for one in $(printf '%s\n' "$first_id" "$id" | sort -u); do
+    for log in "$HOME/Library/Logs/$one"/*; do
+      [ -f "$log" ] && { echo "--- $log"; tail -40 "$log"; }
+    done
   done
 }
 cat "$endpoint"; echo
@@ -96,8 +107,7 @@ done
 echo "notice: $notice"
 case "$notice" in *"$expect"*) ;; *) echo "no notice offered $expect"; logs; quit_app; exit 1 ;; esac
 
-log_before="$(ls -t "$HOME/Library/Logs/$id" 2>/dev/null | head -1)"
-say_eval "[...document.querySelectorAll('.notice .orden-button')].at(-1).click(), 'pressed'"
+say_eval "[...document.querySelectorAll('.notice [class*=\"-button\"]')].at(-1).click(), 'pressed'"
 
 for _ in $(seq 60); do running "$app" || break; sleep 1; done
 back=no

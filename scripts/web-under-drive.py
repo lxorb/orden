@@ -22,7 +22,7 @@ from PIL import Image, ImageChops, ImageGrab, ImageStat
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from carry_page import PAGE as CARRY_PAGE, carried  # noqa: E402
-from probe_app import main_window, refuse_updating  # noqa: E402
+from probe_app import FIRST_START_ANSWERED, main_window, refuse_updating  # noqa: E402
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
@@ -359,6 +359,7 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
         until = time.monotonic() + 90
         while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
+        app.eval(FIRST_START_ANSWERED)
         hwnd = 0
         while time.monotonic() < until and not hwnd:
             hwnd = main_window(process.pid)
@@ -427,6 +428,7 @@ def main() -> int:
         until = time.monotonic() + 90
         while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
+        app.eval(FIRST_START_ANSWERED)
         hwnd = 0
         while time.monotonic() < until and not hwnd:
             hwnd = main_window(process.pid)
