@@ -163,13 +163,12 @@ def drive(browser: Browser) -> None:
             for tab in page.locator(".pass [role=tab]").all_inner_texts()[1:]:
                 page.locator(".pass [role=tab]", has_text=tab).first.click()
                 fits(page, f"Settings {tab}")
-        if name != "Trash":
-            page.go_back()
-            column(page, "list", f"Back from {name}")
-            if page.evaluate("() => !document.querySelector('.pass [data-item]')"):
-                wrong(f"Back from {name} does not show the list of logins")
+        page.go_back()
+        column(page, "list", f"Back from {name}")
+        if page.evaluate("() => !document.querySelector('.pass [data-item]')"):
+            wrong(f"Back from {name} does not show the list of logins")
 
-    say("Back steps a phone's Pass from a login, the vaults, Monitor or Settings to the list, and the list fits the phone")
+    say("Back steps a phone's Pass from a login, the vaults, Monitor, Settings or Trash to the list, and the list fits the phone")
     context.close()
 
 
