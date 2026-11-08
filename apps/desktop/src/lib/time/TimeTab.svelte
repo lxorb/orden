@@ -352,6 +352,7 @@
   .named > * {
     min-width: 0;
     overflow: hidden;
+    text-align: -webkit-match-parent;
     text-align: match-parent;
     text-overflow: ellipsis;
   }

@@ -370,6 +370,7 @@
   .block .name {
     overflow: hidden;
     font-weight: var(--weight-strong);
+    text-align: -webkit-match-parent;
     text-align: match-parent;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -392,6 +393,7 @@
     color: var(--text-strong);
     font-size: 11px;
     line-height: 18px;
+    text-align: -webkit-match-parent;
     text-align: match-parent;
     text-overflow: ellipsis;
     white-space: nowrap;

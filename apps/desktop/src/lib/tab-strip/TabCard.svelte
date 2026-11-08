@@ -129,6 +129,7 @@
   }
 
   [dir='auto'] {
+    text-align: -webkit-match-parent;
     text-align: match-parent;
   }
 </style>

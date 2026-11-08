@@ -1420,6 +1420,11 @@
     margin-inline-start: 6px;
   }
 
+  .pick:dir(rtl) .label:dir(ltr),
+  .pick:dir(ltr) .label:dir(rtl) {
+    margin-inline: 0 6px;
+  }
+
   .label {
     flex: 1 1 0;
     min-width: 0;
@@ -1663,6 +1668,7 @@
   }
 
   [dir='auto'] {
+    text-align: -webkit-match-parent;
     text-align: match-parent;
   }
 </style>
