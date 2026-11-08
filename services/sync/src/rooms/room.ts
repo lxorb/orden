@@ -968,12 +968,13 @@ export class NoteRoom implements DurableObject {
       seed = body
     }
 
-    let target = body
+    const words = held.kind === 'words'
+    const text = words ? unixLines(body) : body
+    let target = text
     if (carried !== null) {
-      const words = held.kind === 'words'
       if (held.hash === undefined || held.hash === bodyHash) target = carried
-      else if (words && inside(body, carried)) target = carried
-      else if (!words || !inside(carried, body)) await this.besideTheNote(held, carried)
+      else if (words && inside(text, carried)) target = carried
+      else if (!words || !inside(carried, text)) await this.besideTheNote(held, carried)
     }
 
     await this.closeForEpoch(epoch, base)
@@ -985,9 +986,10 @@ export class NoteRoom implements DurableObject {
     held.epoch = epoch
     held.epochBase = base
     held.version = row.version
-    held.hash = await sha256(seeded)
+    if (words) held.lines = linesOf(body)
+    else delete held.lines
+    held.hash = await sha256(this.written(held))
     delete held.snapshot
-    delete held.lines
 
     const update = ingested(held.kind, this.state.doc, held.noteId, seeded, target)
     if (update) Y.applyUpdateV2(this.state.doc, update, PUSHED)
@@ -1059,7 +1061,7 @@ export class NoteRoom implements DurableObject {
       noted(`room ${held.noteId}`, new Error(`the file is a ${noteKind(file)} room now`), null)
       return false
     }
-    const settled = fileOf(held.kind, this.state.doc)
+    const settled = this.written(held)
     const size = byteLength(settled)
     if (size > MAX_NOTE_BYTES) return false
     if (leavesAPlane(held.kind, this.state.doc)) {
@@ -1207,7 +1209,7 @@ export class NoteRoom implements DurableObject {
     const held = this.held
     if (!asked || !held || (held.epoch ?? 0) < 1) return { refused: 'gone' }
 
-    const unsettled = (await sha256(fileOf(held.kind, this.state.doc))) !== held.hash
+    const unsettled = (await sha256(this.written(held))) !== held.hash
     const settled = !unsettled || (await this.settle())
 
     const level = held.hash
@@ -1218,23 +1220,27 @@ export class NoteRoom implements DurableObject {
     if (asked.base !== undefined && row.version !== asked.base) return { conflict: true }
     if (!readsAs(held.kind, asked.text)) return { refused: UNREADABLE }
 
+    const words = held.kind === 'words'
+    const text = words ? unixLines(asked.text) : asked.text
+    const lines = words ? linesOf(asked.text) : undefined
     const current = fileOf(held.kind, this.state.doc)
-    if (asked.base !== undefined && asked.text !== current) {
+    if (asked.base !== undefined && text !== current) {
       if (!settled) return { refused: 'unsaved' }
       if (
-        (await sha256(current)) !== level ||
+        (await sha256(this.written(held))) !== level ||
         held.hash !== level ||
         fileOf(held.kind, this.state.doc) !== current
       ) {
         return { conflict: true }
       }
     }
-    const update = ingested(held.kind, this.state.doc, held.noteId, current, asked.text)
-    if (!update) return { note: row }
+    const update = ingested(held.kind, this.state.doc, held.noteId, current, text)
+    if (!update && (lines === undefined || lines === held.lines)) return { note: row }
 
     this.settling = deviceIn(asked.name)
     this.settlingDevice = asked.device
-    Y.applyUpdateV2(this.state.doc, update, PUSHED)
+    if (lines !== undefined) held.lines = lines
+    if (update) Y.applyUpdateV2(this.state.doc, update, PUSHED)
     await this.state.flushAll()
     if (!(await this.settle())) return { refused: 'unsaved' }
 
