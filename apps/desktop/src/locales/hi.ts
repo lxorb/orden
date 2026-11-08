@@ -694,11 +694,7 @@ export const hi: Dictionary = {
   'In use': 'उपयोग में',
   Use: 'उपयोग करें',
   Remove: 'निकालें',
-  'Your words': 'आपके शब्द',
   Words: 'शब्द',
-  'Add a word': 'शब्द जोड़ें',
-  'Add {word} to the dictionary': '{word} को शब्दकोश में जोड़ें',
-  'Remove {word} from the dictionary': '{word} को शब्दकोश से निकालें',
   '{count} things in this theme were left out.': {
     one: 'इस थीम की {count} चीज़ छोड़ दी गई।',
     other: 'इस थीम की {count} चीज़ें छोड़ दी गईं।',
@@ -2505,8 +2501,6 @@ export const hi: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'वेब टैब के पता बार में लिखे शब्द कहाँ खोजे जाएँ।',
   'The search address, with %s where the words go.': 'खोज का पता, जिसमें %s की जगह शब्द आते हैं।',
-  'Words the spelling check never marks as wrong.':
-    'वे शब्द जिन्हें वर्तनी जाँच कभी गलत नहीं बताती।',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden किस ऐप की कुंजियाँ अपनाता है; नीचे की कोई भी कुंजी फिर भी बदली जा सकती है।',
   'Moves and edits in notes with Vim’s keys.': 'नोट में Vim की कुंजियों से घूमना और संपादन करना।',

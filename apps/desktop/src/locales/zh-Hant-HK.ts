@@ -684,11 +684,7 @@ export const zhHantHK: Dictionary = {
   'In use': '使用中',
   Use: '使用',
   Remove: '移除',
-  'Your words': '你的詞彙',
   Words: '詞彙',
-  'Add a word': '新增詞彙',
-  'Add {word} to the dictionary': '將{word}加入詞典',
-  'Remove {word} from the dictionary': '從詞典移除{word}',
   '{count} things in this theme were left out.': '此主題中有{count}項被忽略。',
   'A note': '一篇筆記',
   'Words with {bold} and a {link}.': '含{bold}和{link}的文字。',
@@ -2435,7 +2431,6 @@ export const zhHantHK: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     '在網頁標籤頁網址列中輸入的文字在何處搜尋。',
   'The search address, with %s where the words go.': '搜尋網址，以 %s 表示文字所在的位置。',
-  'Words the spelling check never marks as wrong.': '拼寫檢查永遠不會標為錯誤的詞語。',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden 遵循哪個應用程式的按鍵，下方任何按鍵仍可變更。',
   'Moves and edits in notes with Vim’s keys.': '用 Vim 的按鍵在筆記中移動和編輯。',

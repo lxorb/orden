@@ -698,11 +698,7 @@ export const sw: Dictionary = {
   'In use': 'Inatumika',
   Use: 'Tumia',
   Remove: 'Ondoa',
-  'Your words': 'Maneno yako',
   Words: 'Maneno',
-  'Add a word': 'Ongeza neno',
-  'Add {word} to the dictionary': 'Ongeza {word} kwenye kamusi',
-  'Remove {word} from the dictionary': 'Ondoa {word} kwenye kamusi',
   '{count} things in this theme were left out.': {
     one: 'Kitu {count} katika mandhari hii kiliachwa.',
     other: 'Vitu {count} katika mandhari hii viliachwa.',
@@ -2541,8 +2537,6 @@ export const sw: Dictionary = {
     'Mahali maneno yanayoandikwa kwenye upau wa anwani wa kichupo cha wavuti yanatafutwa.',
   'The search address, with %s where the words go.':
     'Anwani ya utafutaji, yenye %s mahali maneno yanapowekwa.',
-  'Words the spelling check never marks as wrong.':
-    'Maneno ambayo ukaguzi wa herufi hauyawekei alama ya kosa kamwe.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Funguo za programu ipi Orden inafuata; ufunguo wowote hapa chini bado unaweza kubadilishwa.',
   'Moves and edits in notes with Vim’s keys.':

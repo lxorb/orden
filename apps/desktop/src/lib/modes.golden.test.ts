@@ -83,7 +83,6 @@ const AWAY = {
   lineHeight: 2,
   spellcheck: false,
   spellLanguages: ['de-DE', 'fr-FR'],
-  spellWords: ['Orden', 'Tauri'],
   alwaysOnTop: true,
   closeBrackets: false,
   ligatures: 'code',

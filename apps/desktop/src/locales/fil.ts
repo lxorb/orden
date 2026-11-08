@@ -699,11 +699,7 @@ export const fil: Dictionary = {
   'In use': 'Ginagamit',
   Use: 'Gamitin',
   Remove: 'Alisin',
-  'Your words': 'Mga salita mo',
   Words: 'Mga salita',
-  'Add a word': 'Magdagdag ng salita',
-  'Add {word} to the dictionary': 'Idagdag ang {word} sa diksyunaryo',
-  'Remove {word} from the dictionary': 'Alisin ang {word} sa diksyunaryo',
   '{count} things in this theme were left out.': {
     one: '{count} bagay sa temang ito ang hindi naisama.',
     other: '{count} bagay sa temang ito ang hindi naisama.',
@@ -2558,8 +2554,6 @@ export const fil: Dictionary = {
     'Kung saan hinahanap ang mga salitang tina-type sa address bar ng web tab.',
   'The search address, with %s where the words go.':
     'Ang address ng paghahanap, na may %s kung saan ilalagay ang mga salita.',
-  'Words the spelling check never marks as wrong.':
-    'Mga salitang hindi kailanman mamarkahang mali ng spell check.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Kung aling app ang sinusundan ng mga key ng Orden; mababago pa rin ang alinmang key sa ibaba.',
   'Moves and edits in notes with Vim’s keys.':

@@ -751,44 +751,6 @@
   {/if}
 {/snippet}
 
-{#snippet dictionary()}
-  <h3>{t('Your words')}</h3>
-  <div class="card">
-    <div class="orden-setting setting words">
-      <span class="name"
-        ><span class="what"
-          >{t('Words')}<Hint text={t('Words the spelling check never marks as wrong.')} /></span
-        ></span
-      >
-      {#if modes.spellWords.length}
-        <div class="chips">
-          {#each modes.spellWords as word (word)}
-            <button
-              class="orden-tag"
-              title={t('Remove')}
-              onclick={() => modes.toggleSpellWord(word)}
-            >
-              {word}<Cross small />
-            </button>
-          {/each}
-        </div>
-      {/if}
-      <input
-        class="orden-field is-value add"
-        type="text"
-        placeholder={t('Add a word')}
-        spellcheck="false"
-        autocapitalize="off"
-        autocomplete="off"
-        onchange={(event) => {
-          modes.toggleSpellWord(event.currentTarget.value)
-          event.currentTarget.value = ''
-        }}
-      />
-    </div>
-  </div>
-{/snippet}
-
 {#snippet pane()}
   {#if current}
     {#each current.groups as group, index (index)}
@@ -818,10 +780,6 @@
 
     {#if !__EVEN_PLUGIN__ && settings.section === 'general' && isDesktop}
       {@render browserRow()}
-    {/if}
-
-    {#if settings.section === 'spelling'}
-      {@render dictionary()}
     {/if}
 
     {#if settings.section === 'experimental' && glassesOn()}
@@ -1782,22 +1740,6 @@
     flex: none;
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-  }
-
-  .words {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-2);
-  }
-
-  .words > .add {
-    inline-size: auto;
-  }
-
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
     gap: var(--space-2);
   }
 

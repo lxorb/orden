@@ -62,26 +62,6 @@ function phraseMap(value: unknown): string | null {
   return null
 }
 
-const MOST_SPELL_WORDS = 500
-const LONGEST_SPELL_WORD = 64
-
-const SPELL_WORD = /^[\p{L}\p{N}][\p{L}\p{N}'’_-]*$/u
-
-function wordList(value: unknown): string | null {
-  if (!Array.isArray(value)) return 'spellWords must be a list of words'
-  if (value.length > MOST_SPELL_WORDS) {
-    return `spellWords holds at most ${MOST_SPELL_WORDS} words`
-  }
-
-  for (const word of value as unknown[]) {
-    if (typeof word !== 'string' || word.length > LONGEST_SPELL_WORD || !SPELL_WORD.test(word)) {
-      return 'every one of spellWords must be a single word'
-    }
-  }
-
-  return null
-}
-
 const MOST_MODEL = 100
 
 function shortEnough(name: string, most: number): Check {
@@ -140,7 +120,6 @@ const KNOWN: Record<string, Check> = {
     typeof value === 'string' && ATTACHMENT_FOLDERS.includes(value)
       ? null
       : `attachments must be one of ${ATTACHMENT_FOLDERS.join(', ')}`,
-  spellWords: wordList,
   preset: (value) =>
     typeof value === 'string' && PRESETS.includes(value)
       ? null
@@ -180,6 +159,8 @@ const KNOWN: Record<string, Check> = {
   developer: switched('developer'),
   look: lookWrong,
 }
+
+const RETIRED: ReadonlySet<string> = new Set(['spellWords'])
 
 const MOST_SHORTCUTS = 200
 const LONGEST_ID = 64
@@ -304,7 +285,8 @@ async function settingsOf(env: Env, userId: string): Promise<AccountSettings> {
 }
 
 function parse(raw: string | undefined): AccountSettings {
-  return objectIn(raw) ?? {}
+  const held = objectIn(raw) ?? {}
+  return Object.fromEntries(Object.entries(held).filter(([name]) => !RETIRED.has(name)))
 }
 
 export async function shownWords(env: Env, userId: string): Promise<string[]> {
@@ -326,8 +308,12 @@ const NAMED = 64
 
 settings.patch('/', async (context) => {
   const user = context.get('user')
-  const body = await objectBody(context)
-  if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
+  const sent = await objectBody(context)
+  if (!sent) return context.json({ error: NOT_AN_OBJECT }, 400)
+
+  const body = Object.fromEntries(
+    Object.entries(sent).filter(([name]) => !RETIRED.has(name)),
+  )
 
   for (const [name, value] of Object.entries(body)) {
     const check = Object.hasOwn(KNOWN, name) ? KNOWN[name] : undefined

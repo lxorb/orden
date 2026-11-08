@@ -720,11 +720,7 @@ export const uk: Dictionary = {
   'In use': 'Використовується',
   Use: 'Застосувати',
   Remove: 'Прибрати',
-  'Your words': 'Свої слова',
   Words: 'Слова',
-  'Add a word': 'Додати слово',
-  'Add {word} to the dictionary': 'Додати {word} до словника',
-  'Remove {word} from the dictionary': 'Прибрати {word} зі словника',
   '{count} things in this theme were left out.': {
     one: '{count} елемент цієї теми пропущено.',
     few: '{count} елементи цієї теми пропущено.',
@@ -2594,8 +2590,6 @@ export const uk: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'Де шукаються слова, введені в адресний рядок вебвкладки.',
   'The search address, with %s where the words go.': 'Адреса пошуку, де %s стоїть на місці слів.',
-  'Words the spelling check never marks as wrong.':
-    'Слова, які перевірка правопису ніколи не позначає як помилкові.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Сполучень клавіш якої програми дотримується Orden; будь-яке сполучення нижче все одно можна змінити.',
   'Moves and edits in notes with Vim’s keys.':

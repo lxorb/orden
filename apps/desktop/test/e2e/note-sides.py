@@ -149,39 +149,12 @@ def dictionary(page: Page) -> None:
     page.mouse.click(place["x"], place["y"], button="right")
     page.wait_for_timeout(600)
     rows = page.evaluate("() => [...document.querySelectorAll('.orden-row')].map((one) => one.textContent.trim())")
-    adding = [one for one in rows if "dictionary" in one]
+    adding = [one for one in rows if "dictionary" in one.lower()]
     say(f"[menu] {json.dumps(adding)}")
     shot(page, "06-menu")
 
-    if not adding:
-        wrong("the menu over a word does not offer the dictionary")
-        return
-
-    page.evaluate(
-        """() => {
-          const row = [...document.querySelectorAll('.orden-row')]
-            .find((one) => one.textContent.includes('dictionary'))
-          row.click()
-        }"""
-    )
-    page.wait_for_timeout(700)
-
-    words = page.evaluate("() => window.ordenApp.modes.spellWords")
-    quiet = page.evaluate(
-        """() => [...document.querySelectorAll('.orden-known-word')].map((one) => ({
-          word: one.textContent,
-          spellcheck: one.getAttribute('spellcheck'),
-        }))"""
-    )
-    say(f"[dictionary] {json.dumps(words)} quiet: {json.dumps(quiet)}")
-    shot(page, "07-known")
-
-    if "nib" not in (words or []):
-        wrong(f"the word was not added: {words}")
-    if not quiet:
-        wrong("the word is in the list but the checker was not turned off over it")
-    elif quiet[0]["spellcheck"] != "false":
-        wrong(f"the mark does not turn the checker off: {quiet[0]}")
+    if adding:
+        wrong(f"the menu over a word still offers a dictionary: {adding}")
 
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)

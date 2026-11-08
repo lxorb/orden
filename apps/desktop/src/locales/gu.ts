@@ -692,11 +692,7 @@ export const gu: Dictionary = {
   'In use': 'વપરાશમાં',
   Use: 'વાપરો',
   Remove: 'કાઢો',
-  'Your words': 'તમારા શબ્દો',
   Words: 'શબ્દો',
-  'Add a word': 'શબ્દ ઉમેરો',
-  'Add {word} to the dictionary': '{word} શબ્દકોશમાં ઉમેરો',
-  'Remove {word} from the dictionary': '{word} શબ્દકોશમાંથી કાઢો',
   '{count} things in this theme were left out.': {
     one: 'આ થીમની {count} વસ્તુ છોડી દેવાઈ.',
     other: 'આ થીમની {count} વસ્તુ છોડી દેવાઈ.',
@@ -2498,8 +2494,6 @@ export const gu: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'વેબ ટૅબના સરનામા પટ્ટીમાં લખેલા શબ્દો ક્યાં શોધાય છે.',
   'The search address, with %s where the words go.': 'શોધનું સરનામું, જેમાં શબ્દોની જગ્યાએ %s હોય.',
-  'Words the spelling check never marks as wrong.':
-    'એવા શબ્દો જેને જોડણી તપાસ ક્યારેય ખોટા ગણતી નથી.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden કઈ ઍપની કી અનુસરે છે; નીચેની કોઈપણ કી હજી બદલી શકાય છે.',
   'Moves and edits in notes with Vim’s keys.': 'Vim ની કી વડે નોંધોમાં ફરે છે અને ફેરફાર કરે છે.',

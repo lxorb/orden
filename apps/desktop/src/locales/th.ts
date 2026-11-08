@@ -687,11 +687,7 @@ export const th: Dictionary = {
   'In use': 'ใช้อยู่',
   Use: 'ใช้',
   Remove: 'ลบออก',
-  'Your words': 'คำของคุณ',
   Words: 'คำ',
-  'Add a word': 'เพิ่มคำ',
-  'Add {word} to the dictionary': 'เพิ่ม {word} ลงพจนานุกรม',
-  'Remove {word} from the dictionary': 'ลบ {word} จากพจนานุกรม',
   '{count} things in this theme were left out.': 'ธีมนี้มี {count} อย่างที่ถูกข้ามไป',
   'A note': 'โน้ตหนึ่ง',
   'Words with {bold} and a {link}.': 'ข้อความที่มี {bold} และ {link}',
@@ -2458,7 +2454,6 @@ export const th: Dictionary = {
     'ที่ที่ใช้ค้นหาคำที่พิมพ์ลงในแถบที่อยู่ของแท็บเว็บ',
   'The search address, with %s where the words go.':
     'ที่อยู่สำหรับค้นหา โดยใส่ %s ตรงที่คำค้นจะไปอยู่',
-  'Words the spelling check never marks as wrong.': 'คำที่การตรวจตัวสะกดจะไม่ทำเครื่องหมายว่าผิด',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'แอปที่ Orden ใช้ปุ่มลัดตาม โดยยังเปลี่ยนปุ่มใดด้านล่างได้',
   'Moves and edits in notes with Vim’s keys.': 'เลื่อนและแก้ไขในโน้ตด้วยปุ่มแบบ Vim',

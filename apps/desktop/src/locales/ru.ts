@@ -721,11 +721,7 @@ export const ru: Dictionary = {
   'In use': 'Используется',
   Use: 'Применить',
   Remove: 'Убрать',
-  'Your words': 'Свои слова',
   Words: 'Слова',
-  'Add a word': 'Добавить слово',
-  'Add {word} to the dictionary': 'Добавить {word} в словарь',
-  'Remove {word} from the dictionary': 'Убрать {word} из словаря',
   '{count} things in this theme were left out.': {
     one: '{count} элемент этой темы пропущен.',
     few: '{count} элемента этой темы пропущены.',
@@ -2600,8 +2596,6 @@ export const ru: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'Где ищутся слова, введённые в адресную строку веб-вкладки.',
   'The search address, with %s where the words go.': 'Адрес поиска, где %s стоит на месте слов.',
-  'Words the spelling check never marks as wrong.':
-    'Слова, которые проверка орфографии никогда не отмечает как ошибки.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Сочетаниям клавиш какого приложения следует Orden; любое сочетание ниже всё равно можно изменить.',
   'Moves and edits in notes with Vim’s keys.': 'Перемещение и правка в заметках клавишами Vim.',

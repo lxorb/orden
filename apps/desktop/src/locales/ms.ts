@@ -690,11 +690,7 @@ export const ms: Dictionary = {
   'In use': 'Digunakan',
   Use: 'Guna',
   Remove: 'Buang',
-  'Your words': 'Perkataan anda',
   Words: 'Perkataan',
-  'Add a word': 'Tambah perkataan',
-  'Add {word} to the dictionary': 'Tambah {word} ke kamus',
-  'Remove {word} from the dictionary': 'Buang {word} daripada kamus',
   '{count} things in this theme were left out.': '{count} perkara dalam tema ini ditinggalkan.',
   'A note': 'Sebuah nota',
   'Words with {bold} and a {link}.': 'Perkataan dengan {bold} dan satu {link}.',
@@ -2499,8 +2495,6 @@ export const ms: Dictionary = {
     'Tempat perkataan yang ditaip dalam bar alamat tab web dicari.',
   'The search address, with %s where the words go.':
     'Alamat carian, dengan %s di tempat perkataan diletakkan.',
-  'Words the spelling check never marks as wrong.':
-    'Perkataan yang tidak pernah ditanda salah oleh semakan ejaan.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Kekunci apl mana yang diikut Orden; mana-mana kekunci di bawah masih boleh diubah.',
   'Moves and edits in notes with Vim’s keys.':

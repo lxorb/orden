@@ -693,11 +693,7 @@ export const my: Dictionary = {
   'In use': 'သုံးနေ',
   Use: 'သုံး',
   Remove: 'ဖယ်',
-  'Your words': 'သင့်စကားလုံးများ',
   Words: 'စကားလုံးများ',
-  'Add a word': 'စကားလုံးထည့်',
-  'Add {word} to the dictionary': '{word} ကိုအဘိဓာန်သို့ထည့်',
-  'Remove {word} from the dictionary': '{word} ကိုအဘိဓာန်မှဖယ်',
   '{count} things in this theme were left out.': 'ဤအပြင်အဆင်တွင် {count} ချက်ကိုချန်ထားသည်။',
   'A note': 'မှတ်စုတစ်ခု',
   'Words with {bold} and a {link}.': '{bold} နှင့် {link} ပါသောစာ။',
@@ -2493,8 +2489,6 @@ export const my: Dictionary = {
     'ဝဘ်တဘ်၏ လိပ်စာဘားတွင် ရိုက်ထည့်သော စကားလုံးများကို ရှာဖွေမည့်နေရာ။',
   'The search address, with %s where the words go.':
     'စကားလုံးများ ဝင်မည့်နေရာတွင် %s ပါသော ရှာဖွေရေးလိပ်စာ။',
-  'Words the spelling check never marks as wrong.':
-    'စာလုံးပေါင်းစစ်က မည်သည့်အခါမျှ မှားသည်ဟု မမှတ်သော စကားလုံးများ။',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden လိုက်နာသော အက်ပ်၏ ကီးများဖြစ်ပြီး အောက်ပါ ကီးမည်သည်ကိုမဆို ပြောင်းနိုင်သေးသည်။',
   'Moves and edits in notes with Vim’s keys.':

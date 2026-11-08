@@ -242,7 +242,6 @@ export interface AccountSettings {
   chatHours?: { days: number[]; from: number; to: number } | null
   chatPreviews?: boolean
   chatSound?: boolean
-  spellWords?: string[]
   shortcuts?: Record<string, string | null>
   preset?: string
   toolbar?: string[] | null

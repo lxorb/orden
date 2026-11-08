@@ -16,9 +16,7 @@ import {
   setSmartPunctuation,
   remeasure,
   setSourceMode,
-  isSpellWord,
   setSpellcheck,
-  setSpellWords,
   setHighlightColour,
   setStrictMode,
   setTypewriterMode,
@@ -56,7 +54,6 @@ import { opening } from './workspace/documents.svelte'
 
 const STORAGE_KEY = 'orden:modes'
 
-const MOST_SPELL_WORDS = 500
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
 export const INTERFACE_ZOOMS = [0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2]
@@ -120,7 +117,6 @@ interface Saved {
   lineHeight: number
   spellcheck: boolean
   spellLanguages: string[]
-  spellWords: string[]
   alwaysOnTop: boolean
   frame: Frame
   hand: boolean
@@ -303,7 +299,6 @@ class Modes {
   lineHeight = $state(DEFAULTS.lineHeight)
   spellcheck = $state(DEFAULTS.spellcheck)
   spellLanguages = $state<string[]>([])
-  spellWords = $state<string[]>([])
   alwaysOnTop = $state(DEFAULTS.alwaysOnTop)
 
   frame = $state<Frame>(DEFAULTS.frame)
@@ -378,9 +373,7 @@ class Modes {
           ? [saved.spellLanguage]
           : [])
       stale ||= 'spellLanguage' in saved
-      this.spellWords = (stringList(saved.spellWords) ?? [])
-        .filter(isSpellWord)
-        .slice(0, MOST_SPELL_WORDS)
+      stale ||= 'spellWords' in saved
       this.ligatures = ligatureScope(saved.ligatures) ?? DEFAULTS.ligatures
       this.conflicts = conflictRule(saved.conflicts) ?? DEFAULTS.conflicts
       this.keepVersions = keepingOf(saved.keepVersions) ?? DEFAULTS.keepVersions
@@ -521,7 +514,6 @@ class Modes {
       equationNumbers: this.equationNumbers,
       spellcheck: this.spellcheck,
       dictionary: this.dictionary,
-      words: this.spellWords,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
       vim: this.vim,
@@ -686,24 +678,6 @@ class Modes {
 
   private get dictionary(): string | undefined {
     return this.spellLanguages.length === 1 ? this.spellLanguages[0] : undefined
-  }
-
-  toggleSpellWord(word: string, view?: EditorView) {
-    const wanted = word.trim().toLowerCase()
-    if (!isSpellWord(wanted)) return
-
-    const rest = this.spellWords.filter((one) => one !== wanted)
-    const words = rest.length === this.spellWords.length ? [...rest, wanted].sort() : rest
-    if (words.length > MOST_SPELL_WORDS) return
-
-    this.spellWords = words
-    this.each(view, (one) => setSpellWords(one, words))
-    this.persist()
-    this.share({ spellWords: words })
-  }
-
-  knowsWord(word: string): boolean {
-    return this.spellWords.includes(word.trim().toLowerCase())
   }
 
   setSpellLanguages(chosen: string[], view?: EditorView) {
@@ -1038,16 +1012,6 @@ class Modes {
       this.persist()
     }
 
-    const words = remote.spellWords
-    if (Array.isArray(words) && unheard) {
-      const kept = words.filter(isSpellWord).slice(0, MOST_SPELL_WORDS)
-      if (kept.join('\0') !== this.spellWords.join('\0')) {
-        this.spellWords = kept
-        this.each(undefined, (one) => setSpellWords(one, kept))
-        this.persist()
-      }
-    }
-
     if (unheard) this.adoptGlasses(remote)
 
     this.tellOfMobile(token, remote)
@@ -1272,7 +1236,6 @@ class Modes {
       lineHeight: this.lineHeight,
       spellcheck: this.spellcheck,
       spellLanguages: this.spellLanguages,
-      spellWords: this.spellWords,
       alwaysOnTop: this.alwaysOnTop,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,

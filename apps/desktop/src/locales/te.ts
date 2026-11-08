@@ -693,11 +693,7 @@ export const te: Dictionary = {
   'In use': 'వాడుకలో',
   Use: 'వాడు',
   Remove: 'తీసివేయి',
-  'Your words': 'మీ పదాలు',
   Words: 'పదాలు',
-  'Add a word': 'పదం జోడించు',
-  'Add {word} to the dictionary': '{word}ను నిఘంటువులో జోడించు',
-  'Remove {word} from the dictionary': '{word}ను నిఘంటువు నుండి తీసివేయి',
   '{count} things in this theme were left out.': {
     one: 'ఈ థీమ్‌లో {count} అంశం వదిలివేయబడింది.',
     other: 'ఈ థీమ్‌లో {count} అంశాలు వదిలివేయబడ్డాయి.',
@@ -2516,8 +2512,6 @@ export const te: Dictionary = {
   'Where words typed into a web tab’s address bar are searched.':
     'వెబ్ ట్యాబ్ అడ్రస్ బార్‌లో టైప్ చేసిన పదాలు ఎక్కడ వెతకబడతాయో అది.',
   'The search address, with %s where the words go.': 'శోధన చిరునామా, పదాలు వచ్చే చోట %s తో.',
-  'Words the spelling check never marks as wrong.':
-    'స్పెల్లింగ్ తనిఖీ ఎప్పుడూ తప్పుగా గుర్తించని పదాలు.',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden ఏ యాప్ కీలను అనుసరిస్తుందో అది; కింద ఉన్న ఏ కీనైనా ఇంకా మార్చవచ్చు.',
   'Moves and edits in notes with Vim’s keys.': 'Vim కీలతో నోట్‌లలో కదులుతుంది, సవరిస్తుంది.',
