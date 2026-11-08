@@ -4364,6 +4364,30 @@ describe('what a tab s own menu does to the strip', () => {
     expect(workspace.tabs).toHaveLength(1)
   })
 
+  test.each(['settings', 'pass', 'time'] as const)(
+    'does not duplicate the %s tab, which there is only one of',
+    (kind) => {
+      workspace.openUnsaved(kind, '', kind)
+      const one = workspace.active
+      if (!one) throw new Error('nothing opened')
+
+      expect(workspace.canDuplicateTab(one)).toBe(false)
+      ops.duplicateTab(one.id)
+
+      expect(workspace.tabs.filter((tab) => tab.kind === kind)).toHaveLength(1)
+    },
+  )
+
+  test('does not duplicate the chat, which there is only one of', () => {
+    workspace.openChat()
+    const chat = workspace.active
+    if (!chat) throw new Error('no chat')
+
+    ops.duplicateTab(chat.id)
+
+    expect(workspace.tabs.filter((tab) => tab.kind === 'chat')).toHaveLength(1)
+  })
+
   test('moves a tab into a new pane beside its own when there is no other', async () => {
     const id = await opened('/space/a.md', '/space/b.md')
 

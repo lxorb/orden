@@ -3966,7 +3966,7 @@ class Workspace {
   }
 
   canDuplicateTab(tab: Tab): boolean {
-    return !viewport.touch && tab.kind !== 'graph'
+    return !viewport.touch && tab.kind !== 'graph' && !TAB_KINDS[tab.kind].single
   }
 
   canSplit(along: Along, tabId?: string): boolean {
