@@ -558,6 +558,7 @@
       if (plainOnPick) picking?.chosen.clear()
       return
     }
+    if (!workspace.tabs.some((one) => one.id === ending.tabId)) return
 
     event.preventDefault()
     settle(ending.tabId)
@@ -600,6 +601,15 @@
 
     settle(tabId)
     if (from) flyHome(tabId, from)
+  }
+
+  function strayed(event: PointerEvent) {
+    if (drag.pressing) released(event)
+  }
+
+  function strayedBare(event: PointerEvent) {
+    if (!drag.pressing || event.buttons !== 0 || event.pointerType === 'touch') return
+    if (!(event.target instanceof Node && strip?.contains(event.target))) released(event)
   }
 
   function keyed(event: KeyboardEvent) {
@@ -776,7 +786,14 @@
     )
 </script>
 
-<svelte:window onkeydowncapture={keyed} />
+<svelte:window
+  onkeydowncapture={keyed}
+  onpointerup={strayed}
+  onpointercancel={() => {
+    if (drag.pressing) giveUp()
+  }}
+  onpointermove={strayedBare}
+/>
 
 <div class="strip" in:together|global>
   {#if walked && walking}
