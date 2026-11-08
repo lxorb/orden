@@ -204,7 +204,7 @@ else:
     xdo("mouseup", "1")
 time.sleep(1)
 value = run(f"document.querySelector(\"{SLIDER}\").value")
-run("(nib.settings.open = false, true)")
+run("(orden.settings.open = false, true)")
 if not until(f"!document.querySelector({json.dumps(SETTINGS)}) && !!document.querySelector('.cm-content')", 10):
     fail("closing the Settings tab did not bring the note back", "settings-open")
 time.sleep(1.5)
