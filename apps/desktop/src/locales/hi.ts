@@ -1437,7 +1437,7 @@ export const hi: Dictionary = {
   '{count} notes went back.': { one: '{count} नोट पीछे गया।', other: '{count} नोट पीछे गए।' },
   'That did not work.': 'वह काम नहीं आया।',
   'Signing in': 'साइन इन हो रहा है',
-  'Ask for a code from an app': 'ऐप से कोड माँगें',
+  'Two-factor authentication': 'टू-फ़ैक्टर ऑथेंटिकेशन',
   'Turn on': 'चालू करें',
   'Turn off': 'बंद करें',
   'Put this into your authenticator app, then type its code.':
@@ -1462,8 +1462,6 @@ export const hi: Dictionary = {
   End: 'खत्म करें',
   'End every other session': 'बाकी सभी सत्र खत्म करें',
   'Delete account': 'खाता हटाएँ',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'इस डिवाइस के नोट बने रहेंगे; सिर्फ़ खाता और उसकी सिंक की गई प्रतियाँ हटेंगी।',
   'Also gone for everyone in {spaces}.': '{spaces} में सभी के लिए भी हट जाएगा।',
   'The note': 'नोट',
   '{space} panel': '{space} का पैनल',
@@ -1771,8 +1769,6 @@ export const hi: Dictionary = {
   'Keep versions': 'संस्करण रखें',
   'A month': 'एक महीना',
   'A year': 'एक साल',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'पिछले दिन का सब कुछ, फिर हर घंटे एक, एक महीने बाद रोज़ एक, और तीन महीने बाद हफ़्ते में एक।',
   'This note is as large as a note in a room may get.':
     'यह नोट उतना बड़ा हो गया है जितना किसी रूम में कोई नोट हो सकता है।',
 

@@ -1544,7 +1544,7 @@ export const ar: Dictionary = {
   },
   'That did not work.': 'لم ينجح ذلك.',
   'Signing in': 'جارٍ تسجيل الدخول',
-  'Ask for a code from an app': 'طلب رمز من تطبيق',
+  'Two-factor authentication': 'المصادقة الثنائية',
   'Turn on': 'تشغيل',
   'Turn off': 'إيقاف',
   'Put this into your authenticator app, then type its code.':
@@ -1569,8 +1569,6 @@ export const ar: Dictionary = {
   End: 'إنهاء',
   'End every other session': 'إنهاء كل الجلسات الأخرى',
   'Delete account': 'حذف الحساب',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'تبقى الملاحظات على هذا الجهاز؛ يُحذف الحساب ونسخه المتزامنة فقط.',
   'Also gone for everyone in {spaces}.': 'ويختفي أيضًا لدى كل من في {spaces}.',
   'The note': 'الملاحظة',
   '{space} panel': 'لوحة {space}',
@@ -1874,8 +1872,6 @@ export const ar: Dictionary = {
   'Keep versions': 'حفظ النسخ',
   'A month': 'شهر',
   'A year': 'سنة',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'كل شيء من اليوم الأخير، ثم واحدة كل ساعة، وواحدة كل يوم بعد شهر، وواحدة كل أسبوع بعد ثلاثة.',
   'This note is as large as a note in a room may get.':
     'وصلت هذه الملاحظة إلى أقصى حجم يمكن أن تبلغه ملاحظة في غرفة.',
 

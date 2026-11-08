@@ -1439,7 +1439,7 @@ export const ur: Dictionary = {
   },
   'That did not work.': 'یہ کام نہیں کر سکا۔',
   'Signing in': 'سائن ان ہو رہا ہے',
-  'Ask for a code from an app': 'ایپ سے کوڈ منگوائیں',
+  'Two-factor authentication': 'دو مرحلہ توثیق',
   'Turn on': 'آن کریں',
   'Turn off': 'آف کریں',
   'Put this into your authenticator app, then type its code.':
@@ -1464,8 +1464,6 @@ export const ur: Dictionary = {
   End: 'ختم کریں',
   'End every other session': 'باقی تمام سیشن ختم کریں',
   'Delete account': 'اکاؤنٹ حذف کریں',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'اس ڈیوائس کے نوٹس رہیں گے؛ صرف اکاؤنٹ اور اس کی ہم آہنگ کاپیاں جائیں گی۔',
   'Also gone for everyone in {spaces}.': '{spaces} میں سب کے لیے بھی چلا جائے گا۔',
   'The note': 'نوٹ',
   '{space} panel': '{space} کا پینل',
@@ -1771,8 +1769,6 @@ export const ur: Dictionary = {
   'Keep versions': 'ورژن رکھیں',
   'A month': 'ایک ماہ',
   'A year': 'ایک سال',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'پچھلے دن کا سب کچھ، پھر ہر گھنٹے ایک، ایک ماہ بعد روز ایک، اور تین ماہ بعد ہفتے میں ایک۔',
   'This note is as large as a note in a room may get.':
     'یہ نوٹ اُتنا بڑا ہو گیا ہے جتنا کسی روم میں کوئی نوٹ ہو سکتا ہے۔',
 

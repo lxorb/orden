@@ -1424,7 +1424,7 @@ export const id: Dictionary = {
   '{count} notes went back.': '{count} catatan dikembalikan.',
   'That did not work.': 'Itu tidak berhasil.',
   'Signing in': 'Masuk',
-  'Ask for a code from an app': 'Minta kode dari sebuah aplikasi',
+  'Two-factor authentication': 'Autentikasi dua faktor',
   'Turn on': 'Nyalakan',
   'Turn off': 'Matikan',
   'Put this into your authenticator app, then type its code.':
@@ -1449,8 +1449,6 @@ export const id: Dictionary = {
   End: 'Akhiri',
   'End every other session': 'Akhiri semua sesi lain',
   'Delete account': 'Hapus akun',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Catatan di perangkat ini tetap ada; hanya akun dan salinan yang disinkronkan yang hilang.',
   'Also gone for everyone in {spaces}.': 'Juga hilang untuk semua orang di {spaces}.',
   'The note': 'Catatan',
   '{space} panel': 'Panel {space}',
@@ -1764,8 +1762,6 @@ export const id: Dictionary = {
   'Keep versions': 'Simpan versi',
   'A month': 'Satu bulan',
   'A year': 'Satu tahun',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Semua dari hari terakhir, lalu satu per jam, satu per hari setelah satu bulan, dan satu per minggu setelah tiga.',
   'This note is as large as a note in a room may get.':
     'Catatan ini sudah sebesar ukuran maksimum catatan di sebuah ruang.',
 

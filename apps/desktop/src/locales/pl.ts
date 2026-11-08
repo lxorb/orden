@@ -1512,7 +1512,7 @@ export const pl: Dictionary = {
   },
   'That did not work.': 'Nie udało się.',
   'Signing in': 'Logowanie',
-  'Ask for a code from an app': 'Poproś o kod z aplikacji',
+  'Two-factor authentication': 'Uwierzytelnianie dwuskładnikowe',
   'Turn on': 'Włącz',
   'Turn off': 'Wyłącz',
   'Put this into your authenticator app, then type its code.':
@@ -1538,8 +1538,6 @@ export const pl: Dictionary = {
   End: 'Zakończ',
   'End every other session': 'Zakończ wszystkie inne sesje',
   'Delete account': 'Usuń konto',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Notatki na tym urządzeniu zostają; znika tylko konto i jego zsynchronizowane kopie.',
   'Also gone for everyone in {spaces}.': 'Znika też dla wszystkich w {spaces}.',
   'The note': 'Notatka',
   '{space} panel': 'Panel przestrzeni {space}',
@@ -1850,8 +1848,6 @@ export const pl: Dictionary = {
   'Keep versions': 'Zachowuj wersje',
   'A month': 'Miesiąc',
   'A year': 'Rok',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Wszystko z ostatniego dnia, potem jedna na godzinę, po miesiącu jedna na dzień, a po trzech jedna na tydzień.',
   'This note is as large as a note in a room may get.':
     'Ta notatka jest tak duża, jak notatka w pokoju może być.',
 

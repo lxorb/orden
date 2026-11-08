@@ -1456,7 +1456,7 @@ export const sw: Dictionary = {
   },
   'That did not work.': 'Hiyo haikufanya kazi.',
   'Signing in': 'Kuingia',
-  'Ask for a code from an app': 'Omba kodi kutoka programu',
+  'Two-factor authentication': 'Uthibitishaji wa hatua mbili',
   'Turn on': 'Washa',
   'Turn off': 'Zima',
   'Put this into your authenticator app, then type its code.':
@@ -1481,8 +1481,6 @@ export const sw: Dictionary = {
   End: 'Maliza',
   'End every other session': 'Maliza vipindi vingine vyote',
   'Delete account': 'Futa akaunti',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Madokezo kwenye kifaa hiki yanabaki; akaunti na nakala zake zilizosawazishwa pekee ndizo zinaondoka.',
   'Also gone for everyone in {spaces}.': 'Pia kinaondoka kwa kila mtu katika {spaces}.',
   'The note': 'Dokezo',
   '{space} panel': 'Paneli ya {space}',
@@ -1800,8 +1798,6 @@ export const sw: Dictionary = {
   'Keep versions': 'Weka matoleo',
   'A month': 'Mwezi mmoja',
   'A year': 'Mwaka mmoja',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Kila kitu cha siku ya mwisho, kisha moja kwa saa, moja kwa siku baada ya mwezi, na moja kwa wiki baada ya miezi mitatu.',
   'This note is as large as a note in a room may get.':
     'Noti hii imefikia ukubwa wa juu kabisa ambao noti katika chumba inaweza kuwa.',
 

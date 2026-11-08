@@ -1393,7 +1393,7 @@ export const yue: Dictionary = {
   '{count} notes went back.': '{count}篇筆記已回溯。',
   'That did not work.': '冇成功。',
   'Signing in': '登入',
-  'Ask for a code from an app': '要求應用程式提供驗證碼',
+  'Two-factor authentication': '雙重認證',
   'Turn on': '開啟',
   'Turn off': '關閉',
   'Put this into your authenticator app, then type its code.':
@@ -1418,8 +1418,6 @@ export const yue: Dictionary = {
   End: '結束',
   'End every other session': '結束所有其他會話',
   'Delete account': '刪除帳戶',
-  'Notes on this device stay; only the account and its synced copies go.':
-    '呢部裝置上嘅筆記會保留；只有帳戶同佢已同步嘅副本會冇咗。',
   'Also gone for everyone in {spaces}.': '{spaces} 入面每個人都會冇埋。',
   'The note': '筆記',
   '{space} panel': '{space}面板',
@@ -1719,8 +1717,6 @@ export const yue: Dictionary = {
   'Keep versions': '保留版本',
   'A month': '一個月',
   'A year': '一年',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    '最近一天嘅全部，之後每小時一個，一個月後每天一個，三個月後每週一個。',
   'This note is as large as a note in a room may get.':
     '呢則筆記已達到房間中筆記可以達到嘅最大大小。',
 

@@ -1445,7 +1445,7 @@ export const gsw: Dictionary = {
   },
   'That did not work.': 'Das het nöd funktioniert.',
   'Signing in': 'Aamäldig',
-  'Ask for a code from an app': 'Code us ere App verlange',
+  'Two-factor authentication': 'Zwei-Faktor-Authentifizierig',
   'Turn on': 'Iischalte',
   'Turn off': 'Uusschalte',
   'Put this into your authenticator app, then type its code.':
@@ -1470,8 +1470,6 @@ export const gsw: Dictionary = {
   End: 'Beände',
   'End every other session': 'Alli anderi Sitzige beände',
   'Delete account': 'Konto lösche',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'D Notize uf däm Grät bliibed; nume s Konto und sini synchronisierte Kopie gönd.',
   'Also gone for everyone in {spaces}.': 'Au weg für alli i {spaces}.',
   'The note': 'D Notiz',
   '{space} panel': 'Bereich {space}',
@@ -1783,8 +1781,6 @@ export const gsw: Dictionary = {
   'Keep versions': 'Versione behalte',
   'A month': 'En Monet',
   'A year': 'Es Jahr',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Alles vom letzte Tag, dänn eini pro Stund, nach eim Monet eini pro Tag, nach drü eini pro Wuche.',
   'This note is as large as a note in a room may get.':
     'Die Notiz isch so gross, wie e Notiz in eme Ruum cha wärde.',
 

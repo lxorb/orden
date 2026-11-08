@@ -1464,7 +1464,7 @@ export const fil: Dictionary = {
   },
   'That did not work.': 'Hindi umubra.',
   'Signing in': 'Pag-sign in',
-  'Ask for a code from an app': 'Humiling ng code mula sa app',
+  'Two-factor authentication': 'Two-factor na pagpapatunay',
   'Turn on': 'Buksan',
   'Turn off': 'Isara',
   'Put this into your authenticator app, then type its code.':
@@ -1490,8 +1490,6 @@ export const fil: Dictionary = {
   End: 'Tapusin',
   'End every other session': 'Tapusin lahat ng ibang session',
   'Delete account': 'Tanggalin ang account',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Mananatili ang mga tala sa device na ito; ang account at ang mga naka-sync na kopya lang nito ang mawawala.',
   'Also gone for everyone in {spaces}.': 'Mawawala rin para sa lahat sa {spaces}.',
   'The note': 'Ang tala',
   '{space} panel': 'Panel ng {space}',
@@ -1810,8 +1808,6 @@ export const fil: Dictionary = {
   'Keep versions': 'Itago ang mga bersyon',
   'A month': 'Isang buwan',
   'A year': 'Isang taon',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Lahat mula sa huling araw, pagkatapos isa kada oras, isa kada araw pagkalipas ng isang buwan, at isa kada linggo pagkalipas ng tatlo.',
   'This note is as large as a note in a room may get.':
     'Kasinglaki na ng pinakamalaking posibleng laki ng tala sa isang silid ang talang ito.',
 

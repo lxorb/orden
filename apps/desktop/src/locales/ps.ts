@@ -1438,7 +1438,7 @@ export const ps: Dictionary = {
   },
   'That did not work.': 'هغه کار ونه کړ.',
   'Signing in': 'ننوتل',
-  'Ask for a code from an app': 'له کاريال کوډ غوښتل',
+  'Two-factor authentication': 'دوه مرحلې تصدیق',
   'Turn on': 'ولاړول',
   'Turn off': 'بندول',
   'Put this into your authenticator app, then type its code.':
@@ -1463,8 +1463,6 @@ export const ps: Dictionary = {
   End: 'پای',
   'End every other session': 'ټولې نورې ناستې پای ته رسول',
   'Delete account': 'حساب ړنګول',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'په دې وسیله کې یادښتونه پاتې کېږي؛ یوازې حساب او د هغه همغږي شوې کاپي ګانې ځي.',
   'Also gone for everyone in {spaces}.': 'په {spaces} کې د ټولو لپاره هم ځي.',
   'The note': 'يادښت',
   '{space} panel': 'د {space} تخته',
@@ -1772,8 +1770,6 @@ export const ps: Dictionary = {
   'Keep versions': 'نسخې ساتل',
   'A month': 'یوه میاشت',
   'A year': 'یو کال',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'د تېرې ورځې هر څه، بیا هر ساعت یوه، له یوې میاشتې وروسته هره ورځ یوه، او له درېو وروسته هره اونۍ یوه.',
   'This note is as large as a note in a room may get.':
     'دا یادښت هومره لوی شوی دی چې په یوه کوټه کې یو یادښت کېدای شي.',
 

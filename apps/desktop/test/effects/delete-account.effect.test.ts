@@ -115,9 +115,7 @@ test('pressing it mails a code; a wrong one is said, and nothing is deleted', as
     { route: 'POST /v1/account/delete/code', body: {}, token: 'Bearer session' },
   ])
   expect(host.textContent).toContain('me@example.com')
-  expect(host.textContent).toContain(
-    'Notes on this device stay; only the account and its synced copies go.',
-  )
+  expect(host.textContent).not.toContain('Notes on this device stay')
   expect(host.querySelector('input[aria-label="App code to delete"]')).toBeNull()
 
   type('Code', '111111')

@@ -1441,7 +1441,7 @@ export const pa: Dictionary = {
   '{count} notes went back.': { one: '{count} ਨੋਟ ਵਾਪਸ ਗਈ।', other: '{count} ਨੋਟਾਂ ਵਾਪਸ ਗਈਆਂ।' },
   'That did not work.': 'ਉਹ ਨਹੀਂ ਚੱਲਿਆ।',
   'Signing in': 'ਸਾਈਨ ਇਨ',
-  'Ask for a code from an app': 'ਐਪ ਤੋਂ ਕੋਡ ਮੰਗੋ',
+  'Two-factor authentication': 'ਦੋ-ਪੜਾਵੀ ਪ੍ਰਮਾਣੀਕਰਨ',
   'Turn on': 'ਚਾਲੂ ਕਰੋ',
   'Turn off': 'ਬੰਦ ਕਰੋ',
   'Put this into your authenticator app, then type its code.':
@@ -1466,8 +1466,6 @@ export const pa: Dictionary = {
   End: 'ਮੁਕਾਓ',
   'End every other session': 'ਬਾਕੀ ਸਾਰੇ ਸੈਸ਼ਨ ਮੁਕਾਓ',
   'Delete account': 'ਖਾਤਾ ਮਿਟਾਓ',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'ਇਸ ਡਿਵਾਈਸ ਦੇ ਨੋਟ ਰਹਿਣਗੇ; ਸਿਰਫ਼ ਖਾਤਾ ਅਤੇ ਉਸ ਦੀਆਂ ਸਿੰਕ ਕੀਤੀਆਂ ਕਾਪੀਆਂ ਜਾਣਗੀਆਂ।',
   'Also gone for everyone in {spaces}.': '{spaces} ਵਿੱਚ ਸਾਰਿਆਂ ਲਈ ਵੀ ਜਾਵੇਗਾ।',
   'The note': 'ਨੋਟ',
   '{space} panel': '{space} ਪੈਨਲ',
@@ -1775,8 +1773,6 @@ export const pa: Dictionary = {
   'Keep versions': 'ਵਰਜਨ ਰੱਖੋ',
   'A month': 'ਇੱਕ ਮਹੀਨਾ',
   'A year': 'ਇੱਕ ਸਾਲ',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'ਪਿਛਲੇ ਦਿਨ ਦਾ ਸਭ ਕੁਝ, ਫਿਰ ਘੰਟੇ ਵਿੱਚ ਇੱਕ, ਮਹੀਨੇ ਬਾਅਦ ਦਿਨ ਵਿੱਚ ਇੱਕ, ਅਤੇ ਤਿੰਨ ਬਾਅਦ ਹਫ਼ਤੇ ਵਿੱਚ ਇੱਕ।',
   'This note is as large as a note in a room may get.':
     'ਇਹ ਨੋਟ ਓਨਾ ਵੱਡਾ ਹੋ ਗਿਆ ਹੈ ਜਿੰਨਾ ਇੱਕ ਕਮਰੇ ਵਿੱਚ ਕੋਈ ਨੋਟ ਹੋ ਸਕਦਾ ਹੈ।',
 

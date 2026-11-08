@@ -1457,7 +1457,7 @@ export const ml: Dictionary = {
   },
   'That did not work.': 'അത് പ്രവർത്തിച്ചില്ല.',
   'Signing in': 'സൈൻ ഇൻ ചെയ്യുന്നു',
-  'Ask for a code from an app': 'ആപ്പിൽ നിന്ന് ഒരു കോഡ് ചോദിക്കുക',
+  'Two-factor authentication': 'ടു-ഫാക്ടർ ഓതന്റിക്കേഷൻ',
   'Turn on': 'ഓൺ ചെയ്യുക',
   'Turn off': 'ഓഫ് ചെയ്യുക',
   'Put this into your authenticator app, then type its code.':
@@ -1482,8 +1482,6 @@ export const ml: Dictionary = {
   End: 'അവസാനിപ്പിക്കുക',
   'End every other session': 'മറ്റെല്ലാ സെഷനും അവസാനിപ്പിക്കുക',
   'Delete account': 'അക്കൗണ്ട് ഇല്ലാതാക്കുക',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'ഈ ഉപകരണത്തിലെ കുറിപ്പുകൾ നിലനിൽക്കും; അക്കൗണ്ടും അതിന്റെ സമന്വയിപ്പിച്ച പകർപ്പുകളും മാത്രം പോകും.',
   'Also gone for everyone in {spaces}.': '{spaces} ലെ എല്ലാവർക്കും ഇത് ഇല്ലാതാകും.',
   'The note': 'കുറിപ്പ്',
   '{space} panel': '{space} പാനൽ',
@@ -1796,8 +1794,6 @@ export const ml: Dictionary = {
   'Keep versions': 'പതിപ്പുകൾ സൂക്ഷിക്കുക',
   'A month': 'ഒരു മാസം',
   'A year': 'ഒരു വർഷം',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'കഴിഞ്ഞ ദിവസത്തെ എല്ലാം, പിന്നെ മണിക്കൂറിൽ ഒന്ന്, ഒരു മാസത്തിന് ശേഷം ദിവസത്തിൽ ഒന്ന്, മൂന്നിന് ശേഷം ആഴ്ചയിൽ ഒന്ന്.',
   'This note is as large as a note in a room may get.':
     'ഒരു റൂമിൽ ഒരു കുറിപ്പിന് ആകാവുന്ന ഏറ്റവും വലിയ വലുപ്പത്തിൽ ഈ കുറിപ്പ് എത്തി.',
 

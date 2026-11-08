@@ -1516,7 +1516,7 @@ export const ru: Dictionary = {
   },
   'That did not work.': 'Не получилось.',
   'Signing in': 'Вход',
-  'Ask for a code from an app': 'Запрашивать код из приложения',
+  'Two-factor authentication': 'Двухфакторная аутентификация',
   'Turn on': 'Включить',
   'Turn off': 'Отключить',
   'Put this into your authenticator app, then type its code.':
@@ -1541,8 +1541,6 @@ export const ru: Dictionary = {
   End: 'Завершить',
   'End every other session': 'Завершить все другие сеансы',
   'Delete account': 'Удалить аккаунт',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Заметки на этом устройстве останутся; исчезнут только аккаунт и его синхронизированные копии.',
   'Also gone for everyone in {spaces}.': 'Также исчезнет для всех в {spaces}.',
   'The note': 'Заметка',
   '{space} panel': 'Панель пространства {space}',
@@ -1850,8 +1848,6 @@ export const ru: Dictionary = {
   'Keep versions': 'Хранить версии',
   'A month': 'Месяц',
   'A year': 'Год',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Всё за последние сутки, затем по одной в час, после месяца по одной в день, после трёх по одной в неделю.',
   'This note is as large as a note in a room may get.':
     'Эта заметка достигла наибольшего размера, который может иметь заметка в комнате.',
 

@@ -1480,7 +1480,7 @@ export const ptPT: Dictionary = {
   },
   'That did not work.': 'Isso não funcionou.',
   'Signing in': 'A iniciar sessão',
-  'Ask for a code from an app': 'Pedir um código a uma aplicação',
+  'Two-factor authentication': 'Autenticação de dois fatores',
   'Turn on': 'Ligar',
   'Turn off': 'Desligar',
   'Put this into your authenticator app, then type its code.':
@@ -1505,8 +1505,6 @@ export const ptPT: Dictionary = {
   End: 'Terminar',
   'End every other session': 'Terminar as outras sessões',
   'Delete account': 'Eliminar conta',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'As notas deste dispositivo ficam; só a conta e as suas cópias sincronizadas desaparecem.',
   'Also gone for everyone in {spaces}.': 'Também desaparece para todos em {spaces}.',
   'The note': 'A nota',
   '{space} panel': 'Painel de {space}',
@@ -1819,8 +1817,6 @@ export const ptPT: Dictionary = {
   'Keep versions': 'Guardar versões',
   'A month': 'Um mês',
   'A year': 'Um ano',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Tudo do último dia, depois uma por hora, uma por dia após um mês e uma por semana após três.',
   'This note is as large as a note in a room may get.':
     'Esta nota está no tamanho máximo que uma nota numa sala pode ter.',
 

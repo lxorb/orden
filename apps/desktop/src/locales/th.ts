@@ -1404,7 +1404,7 @@ export const th: Dictionary = {
   '{count} notes went back.': '{count} โน้ตย้อนกลับแล้ว',
   'That did not work.': 'ทำไม่สำเร็จ',
   'Signing in': 'กำลังเข้าสู่ระบบ',
-  'Ask for a code from an app': 'ขอรหัสจากแอป',
+  'Two-factor authentication': 'การยืนยันตัวตนแบบสองขั้นตอน',
   'Turn on': 'เปิด',
   'Turn off': 'ปิด',
   'Put this into your authenticator app, then type its code.':
@@ -1429,8 +1429,6 @@ export const th: Dictionary = {
   End: 'สิ้นสุด',
   'End every other session': 'สิ้นสุดเซสชันอื่นทั้งหมด',
   'Delete account': 'ลบบัญชี',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'โน้ตในอุปกรณ์นี้ยังอยู่ จะหายไปเฉพาะบัญชีและสำเนาที่ซิงค์ไว้เท่านั้น',
   'Also gone for everyone in {spaces}.': 'จะหายไปสำหรับทุกคนใน {spaces} ด้วย',
   'The note': 'โน้ต',
   '{space} panel': 'แผงของ {space}',
@@ -1733,8 +1731,6 @@ export const th: Dictionary = {
   'Keep versions': 'เก็บเวอร์ชัน',
   'A month': 'หนึ่งเดือน',
   'A year': 'หนึ่งปี',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'ทั้งหมดของวันล่าสุด แล้วชั่วโมงละหนึ่ง หลังหนึ่งเดือนวันละหนึ่ง และหลังสามเดือนสัปดาห์ละหนึ่ง',
   'This note is as large as a note in a room may get.':
     'บันทึกนี้ใหญ่ที่สุดเท่าที่บันทึกในห้องจะเป็นได้แล้ว',
 

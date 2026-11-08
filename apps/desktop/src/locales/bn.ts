@@ -1437,7 +1437,7 @@ export const bn: Dictionary = {
   },
   'That did not work.': 'এটি কাজ করল না।',
   'Signing in': 'সাইন ইন হচ্ছে',
-  'Ask for a code from an app': 'অ্যাপ থেকে কোড চান',
+  'Two-factor authentication': 'টু-ফ্যাক্টর প্রমাণীকরণ',
   'Turn on': 'চালু করুন',
   'Turn off': 'বন্ধ করুন',
   'Put this into your authenticator app, then type its code.':
@@ -1462,8 +1462,6 @@ export const bn: Dictionary = {
   End: 'শেষ করুন',
   'End every other session': 'বাকি সব সেশন শেষ করুন',
   'Delete account': 'অ্যাকাউন্ট মুছুন',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'এই ডিভাইসের নোটগুলো থেকে যাবে; শুধু অ্যাকাউন্ট আর তার সিঙ্ক করা কপিগুলো যাবে।',
   'Also gone for everyone in {spaces}.': '{spaces}-এর সবার জন্যও মুছে যাবে।',
   'The note': 'নোট',
   '{space} panel': '{space} প্যানেল',
@@ -1769,8 +1767,6 @@ export const bn: Dictionary = {
   'Keep versions': 'সংস্করণ রাখুন',
   'A month': 'এক মাস',
   'A year': 'এক বছর',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'শেষ দিনের সবকিছু, তারপর ঘণ্টায় একটি, এক মাস পরে দিনে একটি, আর তিন মাস পরে সপ্তাহে একটি।',
   'This note is as large as a note in a room may get.':
     'একটি রুমে একটি নোট যত বড় হতে পারে, এই নোটটি তত বড় হয়ে গেছে।',
 

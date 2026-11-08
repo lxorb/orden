@@ -1440,7 +1440,7 @@ export const fa: Dictionary = {
   },
   'That did not work.': 'آن کار نکرد.',
   'Signing in': 'ورود',
-  'Ask for a code from an app': 'خواستن کد از یک برنامه',
+  'Two-factor authentication': 'احراز هویت دومرحله‌ای',
   'Turn on': 'روشن کردن',
   'Turn off': 'خاموش کردن',
   'Put this into your authenticator app, then type its code.':
@@ -1465,8 +1465,6 @@ export const fa: Dictionary = {
   End: 'پایان دادن',
   'End every other session': 'پایان دادن همه نشست‌های دیگر',
   'Delete account': 'حذف حساب',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'یادداشت‌های این دستگاه می‌مانند؛ فقط حساب و نسخه‌های همگام‌شده‌اش حذف می‌شوند.',
   'Also gone for everyone in {spaces}.': 'برای همه در {spaces} هم از بین می‌رود.',
   'The note': 'یادداشت',
   '{space} panel': 'تخته {space}',
@@ -1773,8 +1771,6 @@ export const fa: Dictionary = {
   'Keep versions': 'نگه داشتن نسخه‌ها',
   'A month': 'یک ماه',
   'A year': 'یک سال',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'همه‌چیز از روز گذشته، سپس یکی در هر ساعت، پس از یک ماه یکی در روز، و پس از سه ماه یکی در هفته.',
   'This note is as large as a note in a room may get.':
     'این یادداشت به بزرگ‌ترین اندازه‌ای رسیده که یک یادداشت در یک اتاق می‌تواند داشته باشد.',
 

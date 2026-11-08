@@ -1459,7 +1459,7 @@ export const ha: Dictionary = {
   },
   'That did not work.': 'Wannan bai yi aiki ba.',
   'Signing in': 'Shiga',
-  'Ask for a code from an app': 'Nemi lamba daga manhaja',
+  'Two-factor authentication': 'Tabbatarwa ta matakai biyu',
   'Turn on': 'Kunna',
   'Turn off': 'Kashe',
   'Put this into your authenticator app, then type its code.':
@@ -1485,8 +1485,6 @@ export const ha: Dictionary = {
   End: 'Ƙare',
   'End every other session': 'Ƙare duk sauran zaman',
   'Delete account': 'Share asusu',
-  'Notes on this device stay; only the account and its synced copies go.':
-    'Bayanan kula a wannan na’ura za su zauna; asusun da kwafinsa da aka daidaita ne kawai za su tafi.',
   'Also gone for everyone in {spaces}.': 'Zai tafi ga kowa da ke cikin {spaces} ma.',
   'The note': 'Bayanin kula',
   '{space} panel': 'Fanon {space}',
@@ -1801,8 +1799,6 @@ export const ha: Dictionary = {
   'Keep versions': 'Ajiye juyi',
   'A month': 'Wata daya',
   'A year': 'Shekara daya',
-  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Duk na ranar da ta gabata, sannan daya a kowace awa, daya a kowace rana bayan wata daya, da daya a kowane mako bayan uku.',
   'This note is as large as a note in a room may get.':
     'Wannan rubutu ya kai girman da rubutu zai iya kaiwa a cikin ɗaki.',
 
