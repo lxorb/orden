@@ -15,7 +15,7 @@ import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@orden/markdown/link
 import { isDeck } from '@orden/markdown/slide-breaks'
 import { deckOf } from '@orden/markdown/slides'
 import { blogFence } from './blog/code'
-import { feed, type FeedPage, newestFirst, robots, rss, sitemap } from './blog/feed'
+import { feed, type FeedPage, moment, newestFirst, robots, rss, sitemap } from './blog/feed'
 import { answersFrom, formHtml, formOf } from './blog/form'
 import { type NoteFront, readFront } from './blog/front'
 import { keptCover } from './blog/kept-cover'
@@ -1051,7 +1051,7 @@ async function served(
   if (!slug) {
     const items = newestFirst(feedPages(pageList, url.origin))
       .map((one) => {
-        const date = new Date(one.updated).toISOString().slice(0, 10)
+        const date = new Date(moment(one)).toISOString().slice(0, 10)
         const where = escape(new URL(one.url).pathname)
         return `<li><a href="${where}"><span>${escape(one.title)}</span><time datetime="${date}">${date}</time></a></li>`
       })

@@ -169,6 +169,19 @@ describe('publishing', () => {
     }
   })
 
+  test('the index shows the date a page is sorted by, and the sitemap when it last changed', async () => {
+    await addNote('Old.md', '---\ndate: 2020-01-01\n---\n\n# Old\n')
+    await addNote('New.md', '---\ndate: 2024-05-06\n---\n\n# New\n')
+    await publish({ subdomain: 'field' })
+
+    const index = (await call(env, '/', { host: 'field.nibeditor.com' })).text
+    expect(index).toContain('<time datetime="2020-01-01">2020-01-01</time>')
+    expect(index.indexOf('2024-05-06')).toBeLessThan(index.indexOf('2020-01-01'))
+
+    const map = (await call(env, '/sitemap.xml', { host: 'field.nibeditor.com' })).text
+    expect(map).not.toContain('<lastmod>2020-01-01')
+  })
+
   test('front matter is not printed', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
