@@ -256,6 +256,23 @@ describe('the Publish sheet', () => {
     expect(publish.busy).toBe(false)
   })
 
+  test('publishes on the next try once what went wrong is put right', async () => {
+    publish.show(local('Notes'))
+    publish.subdomain = 'emil'
+    world.refuse = 'that name is taken'
+    await publish.publish()
+
+    world.refuse = null
+    world.asked = []
+    publish.subdomain = 'emil2'
+    await publish.publish()
+
+    expect(world.asked).toContain(
+      `publish space-1 ${JSON.stringify({ subdomain: 'emil2', note: null })}`,
+    )
+    expect(publish.error).toBeNull()
+  })
+
   test('takes a space back off the web, and forgets its records', async () => {
     publish.show(local('Notes'))
     publish.dns = [{ type: 'CNAME', name: 'notes', value: 'cname.orden.so' }]
@@ -377,6 +394,19 @@ describe('the Publish sheet', () => {
 
     expect(world.asked).toEqual(['verify space-1'])
     expect(publish.status?.state).toBe('active')
+  })
+
+  test('verifying again clears what went wrong the time before', async () => {
+    account.spaces = [remote('space-1', 'owner', { enabled: true, domain: 'notes.example.com' })]
+    publish.show(local('Notes'))
+    world.refuse = 'could not reach the server'
+    await publish.verifyDomain()
+
+    world.refuse = null
+    world.domain = { state: 'active', dns: [], detail: null }
+    await publish.verifyDomain()
+
+    expect(publish.error).toBeNull()
   })
 
   test('a domain that is not answering yet is a state, not a failure', async () => {
