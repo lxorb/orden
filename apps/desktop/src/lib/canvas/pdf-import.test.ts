@@ -199,3 +199,22 @@ test('files dropped together are laid one below another, none over the last, and
   }
   expect([...store.picked].sort()).toEqual(cards.map((card) => card.id).sort())
 })
+
+test('a picture that finds the space full says so instead of vanishing', async () => {
+  const { busy } = await import('../busy.svelte')
+  busy.clear()
+  world.full = 1
+  world.stored = 1
+  const store = board()
+
+  const made = await run.dropImage(
+    store,
+    new File(['png'], 'a.png', { type: 'image/png' }),
+    { x: 0, y: 0 },
+    '/space/Board.canvas',
+  )
+
+  expect(made).toEqual([])
+  expect(store.canvas.nodes).toHaveLength(0)
+  expect(busy.trouble).toMatch(/out of space/)
+})
