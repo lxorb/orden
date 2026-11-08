@@ -10,6 +10,8 @@ export {
   builtinView,
   SMART_SORT,
   todayAs,
+  whenAs,
+  isWhenFormula,
   isWhen,
   WHEN,
   WHEN_ASIDE,

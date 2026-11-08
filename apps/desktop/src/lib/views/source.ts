@@ -1,8 +1,16 @@
-import { type Base, builtinView, readBase, type Row, todayAs, writeBase } from '@orden/bases'
+import {
+  type Base,
+  builtinView,
+  readBase,
+  type Row,
+  todayAs,
+  whenAs,
+  writeBase,
+} from '@orden/bases'
 import { CodeBlocks, OPENS } from '@orden/markdown/fences'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { links } from '../link-index.svelte'
-import { modes } from '../modes.svelte'
+import { modes, watchUndated } from '../modes.svelte'
 import { rows } from '../rows/rows.svelte'
 import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -27,11 +35,18 @@ function today(): Base {
 
 export function shippedBase(spec: ViewSpec): Base {
   if (spec.builtin === 'todos')
-    return builtinView('todos', spec.space === undefined ? {} : { space: spec.space })
+    return builtinView('todos', {
+      ...(spec.space === undefined ? {} : { space: spec.space }),
+      undated: modes.undatedInToday,
+    })
   return builtinBase(asShipped(spec))
 }
 
 export function builtinBase(spec: ViewSpec): Base {
+  return whenAs(madeBase(spec), modes.undatedInToday)
+}
+
+function madeBase(spec: ViewSpec): Base {
   if (spec.yaml !== undefined) {
     const base = readBase(spec.yaml)
     return spec.builtin === 'today' ? todayAs(base, modes.undatedInToday) : base
@@ -109,7 +124,7 @@ export function fileSource(path: string, view?: string, self?: () => Row | undef
 function keepChange(spec: ViewSpec, yaml: string): void {
   if (spec.builtin === 'project') keepProjectView(spec.space ?? '', spec.path ?? '', yaml)
   if (spec.builtin === 'todos') {
-    const shipped = writeBase(shippedBase(spec))
+    const shipped = writeBase(whenAs(shippedBase(spec), false))
     keepTodosView(spec.space ?? EVERY_SPACE, yaml === shipped ? undefined : yaml)
   }
 }
@@ -158,12 +173,13 @@ export function tabSource(tab: Tab): Source {
     },
     save(next) {
       const now = spec()
-      const yaml = writeBase(next)
+      const yaml = writeBase(whenAs(next, false))
       tab.note.replace(writeSpec({ ...now, yaml }), false)
       keepChange(now, yaml)
       workspace.scheduleSession()
       return Promise.resolve()
     },
+    watch: watchUndated,
   }
 }
 
@@ -175,11 +191,12 @@ export function panelSource(spec: ViewSpec): Source {
     scope: null,
     load: () => Promise.resolve(builtinBase(now)),
     save(next) {
-      const yaml = writeBase(next)
+      const yaml = writeBase(whenAs(next, false))
       now = { ...asShipped(now), yaml }
       keepChange(now, yaml)
       return Promise.resolve()
     },
+    watch: watchUndated,
   }
 }
 
