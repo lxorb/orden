@@ -1,9 +1,10 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { accentColour, accentFor } from '../accents'
+  import { faceUrl } from '../api'
   import { initial } from '../icons'
   import { theme } from '../theme.svelte'
-  import { faceUrl, type Face, type Presence } from './face'
+  import type { Face, Presence } from './face'
 
   const {
     face,

@@ -186,9 +186,12 @@ class CaretMarker implements LayerMarker {
     const tag = caret.appendChild(document.createElement('span'))
     tag.className = 'cm-orden-caret-name'
     if (this.face) {
-      const face = tag.appendChild(document.createElement('span'))
+      const face = tag.appendChild(document.createElement('img'))
       face.className = 'cm-orden-caret-face'
-      face.style.backgroundImage = `url("${this.face}")`
+      face.alt = ''
+      face.draggable = false
+      face.onerror = () => face.remove()
+      face.src = this.face
     }
     tag.append(this.name)
 
@@ -383,8 +386,7 @@ const style = EditorView.baseTheme({
     height: '12px',
     margin: '0 3px 0 -2px',
     borderRadius: '50%',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
+    objectFit: 'cover',
   },
 
   '.cm-orden-caret.is-passing': {
