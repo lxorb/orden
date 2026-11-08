@@ -17,6 +17,14 @@ describe('a key from any app, handed to the system', () => {
     expect(accelerator('F9', 'win')).toBe('F9')
   })
 
+  test('the keys above the arrows that every keyboard names', () => {
+    expect(accelerator('Ctrl-Insert', 'win')).toBe('Control+Insert')
+    expect(accelerator('Ctrl-Alt-Pause', 'linux')).toBe('Control+Alt+Pause')
+    expect(accelerator('Alt-ScrollLock', 'win')).toBe('Alt+ScrollLock')
+    expect(accelerator('Ctrl-PrintScreen', 'win')).toBe('Control+PrintScreen')
+    expect(accelerator('Insert', 'win')).toBeNull()
+  })
+
   test('is refused where it would take a key from every app', () => {
     expect(accelerator('Shift-k', 'win')).toBeNull()
     expect(accelerator('k', 'win')).toBeNull()
