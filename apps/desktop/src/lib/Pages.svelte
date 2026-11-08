@@ -714,19 +714,7 @@
     }
 
     if (tool === 'erase') {
-      const whole = pens.whole || event.shiftKey
-      const wide = whole ? pens.strokeRub + (kind === 'touch' ? FORGIVING : 0) : pens.rub
-      const erasing = {
-        kind: 'erase' as const,
-        id: event.pointerId,
-        run: freshId(),
-        last: point,
-        lastScreen: screenAt(event),
-        whole,
-        reach: wide * unit,
-      }
-      gesture = erasing
-      rub([point], erasing)
+      rubFrom(event, point, kind === 'touch')
       return
     }
 
@@ -921,6 +909,22 @@
     showMenu(event)
   }
 
+  function rubFrom(event: PointerEvent, point: Point, touch: boolean) {
+    const whole = pens.whole || event.shiftKey
+    const wide = whole ? pens.strokeRub + (touch ? FORGIVING : 0) : pens.rub
+    const erasing = {
+      kind: 'erase' as const,
+      id: event.pointerId,
+      run: freshId(),
+      last: point,
+      lastScreen: screenAt(event),
+      whole,
+      reach: wide * unit,
+    }
+    gesture = erasing
+    rub([point], erasing)
+  }
+
   function onpointermove(event: PointerEvent) {
     stopDoubting(event.pointerId)
     pointing = planeAt(event)
@@ -1001,6 +1005,19 @@
     }
 
     const point = planeAt(event)
+
+    if (one.kind === 'draw' && writable) {
+      const now = kindOf(event)
+      const turned = contacts.turned(event.pointerId, {
+        pen: now.kind === 'pen',
+        eraser: now.eraser,
+      })
+      if (turned?.eraser) {
+        predicted = []
+        rubFrom(event, point, false)
+        return
+      }
+    }
 
     if (one.kind === 'pan') {
       const wanted = {

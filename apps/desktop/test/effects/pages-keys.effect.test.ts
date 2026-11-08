@@ -236,6 +236,16 @@ test('a pen stroke the browser cancels ends once the pen tip says nothing more',
   expect(store().canvas.ink.filter((stroke) => stroke.id !== 's')).toHaveLength(0)
 })
 
+test('the pen’s button pressed mid-line turns the line into rubbing out, as on a canvas', () => {
+  tools.choose('draw')
+  pointer('pointerdown', 6, 'pen', 100, 400, 1)
+  for (let x = 110; x <= 150; x += 10) pointer('pointermove', 6, 'pen', x, 400, 1)
+  for (let x = 160; x <= 200; x += 10) pointer('pointermove', 6, 'pen', x, 400, 33)
+  pointer('pointerup', 6, 'pen', 200, 400, 0)
+
+  expect(store().canvas.ink.filter((stroke) => stroke.id !== 's')).toHaveLength(0)
+})
+
 test('a pen put down while a palm already rests on the page draws, as on a canvas', () => {
   tools.choose('draw')
   pointer('pointerdown', 9, 'touch', 60, 300, 1)
