@@ -92,7 +92,7 @@
             }}
           >
             <span class="orden-row-label" class:is-gone={!change.spots.some((one) => one.inserted)}
-              >{snippetOf(change)}</span
+              >{workspace.protection.locked(note.path) ? t('Protected') : snippetOf(change)}</span
             >
             <Tally added={change.added} removed={change.removed} />
           </button>
