@@ -55,11 +55,14 @@ export function settled(canvas: Canvas, before: readonly PageNode[] = pagesOf(ca
     shift ? { ...thing, x: thing.x + shift.x, y: thing.y + shift.y } : thing
 
   const nodes = canvas.nodes.map((node) => {
-    const shift = shifts.find((one) => on(node, one.box))
-    return byId.get(node.id) ?? by(node, shift)
+    const page = byId.get(node.id)
+    if (page) return page
+    const owner = ownerOf(node, before)
+    return by(node, owner ? shifts.find((one) => one.box === owner) : undefined)
   })
   const ink = canvas.ink.map((stroke) => {
-    const shift = shifts.find((one) => onPage(stroke, one.box))
+    const owner = inkOwnerOf(stroke, before)
+    const shift = owner && shifts.find((one) => one.box === owner)
     return shift ? { ...stroke, points: stroke.points.map((one) => by(one, shift)) } : stroke
   })
 
@@ -121,15 +124,10 @@ export function removed(canvas: Canvas, id: string): Canvas {
   const page = pages.find((one) => one.id === id)
   if (!page || pages.length < 2) return canvas
 
-  const box = { x: page.x, y: page.y, width: page.width, height: page.height }
-  const on = (thing: { x: number; y: number; width: number; height: number }) =>
-    thing.x + thing.width > box.x &&
-    thing.x < box.x + box.width &&
-    thing.y + thing.height > box.y &&
-    thing.y < box.y + box.height
-
-  const nodes = canvas.nodes.filter((node) => node.id !== id && !(isPage(node) ? false : on(node)))
-  const ink = canvas.ink.filter((stroke) => !onPage(stroke, box))
+  const nodes = canvas.nodes.filter(
+    (node) => node.id !== id && (isPage(node) || ownerOf(node, pages) !== page),
+  )
+  const ink = canvas.ink.filter((stroke) => inkOwnerOf(stroke, pages) !== page)
 
   return settled({ ...canvas, nodes, ink }, pages)
 }
@@ -169,16 +167,37 @@ export function moved(canvas: Canvas, id: string, to: number): Canvas {
   return settled({ ...canvas, nodes }, pages)
 }
 
-function on(
-  thing: { x: number; y: number; width: number; height: number },
-  box: { x: number; y: number; width: number; height: number },
-): boolean {
-  return (
-    thing.x + thing.width > box.x &&
-    thing.x < box.x + box.width &&
-    thing.y + thing.height > box.y &&
-    thing.y < box.y + box.height
+interface Box {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+function overlap(thing: Box, box: Box): number {
+  const across = Math.min(thing.x + thing.width, box.x + box.width) - Math.max(thing.x, box.x)
+  const down = Math.min(thing.y + thing.height, box.y + box.height) - Math.max(thing.y, box.y)
+  return across > 0 && down > 0 ? across * down : 0
+}
+
+function ownerOf<T extends Box>(thing: Box, pages: readonly T[]): T | null {
+  const x = thing.x + thing.width / 2
+  const y = thing.y + thing.height / 2
+  const holding = pages.find(
+    (page) => x >= page.x && x < page.x + page.width && y >= page.y && y < page.y + page.height,
   )
+  if (holding) return holding
+
+  let best: T | null = null
+  let most = 0
+  for (const page of pages) {
+    const area = overlap(thing, page)
+    if (area > most) {
+      most = area
+      best = page
+    }
+  }
+  return best
 }
 
 export function reshaped(
@@ -264,4 +283,20 @@ export function pageShowing(pages: readonly PageNode[], top: number, height: num
   }
 
   return pages.length
+}
+
+function inkOwnerOf<T extends Box>(
+  stroke: { points: readonly { x: number; y: number }[] },
+  pages: readonly T[],
+): T | null {
+  const held = pages.find((page) => onPage(stroke, page))
+  if (held || !stroke.points.length) return held ?? null
+
+  const xs = stroke.points.map((one) => one.x)
+  const ys = stroke.points.map((one) => one.y)
+  const x = xs.reduce((low, one) => Math.min(low, one))
+  const y = ys.reduce((low, one) => Math.min(low, one))
+  const width = xs.reduce((high, one) => Math.max(high, one)) - x
+  const height = ys.reduce((high, one) => Math.max(high, one)) - y
+  return ownerOf({ x, y, width, height }, pages)
 }

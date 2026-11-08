@@ -262,6 +262,54 @@ describe('adding and taking away', () => {
     expect(strays(left)).toEqual([])
   })
 
+  test('a card that reaches over the edge onto the next page stays with the page it sits on', () => {
+    const three = laidOut([page('a'), page('b'), page('c')])
+    const [first, second] = three
+    if (!first || !second) throw new Error('no pages')
+    const card = (id: string, y: number) => ({
+      id,
+      type: 'text' as const,
+      x: first.x + 10,
+      y,
+      width: 80,
+      height: 200,
+      text: id,
+    })
+    const plane = {
+      ...emptyCanvas(),
+      nodes: [...three, card('low', first.y + first.height - 150), card('high', second.y - 50)],
+    }
+
+    const left = removed(plane, 'b')
+    expect(left.nodes.map((node) => node.id)).toEqual(['a', 'c', 'low'])
+    expect(left.nodes.find((node) => node.id === 'low')?.y).toBe(first.y + first.height - 150)
+
+    const gone = removed(plane, 'a')
+    const high = gone.nodes.find((node) => node.id === 'high')
+    expect(gone.nodes.map((node) => node.id)).toEqual(['b', 'c', 'high'])
+    expect(high?.y).toBe((pagesOf(gone)[0]?.y ?? 0) - 50)
+  })
+
+  test('a stroke begun in the gap between pages goes with the page it is written on', () => {
+    const three = laidOut([page('a'), page('b'), page('c')])
+    const second = three[1]
+    if (!second) throw new Error('no pages')
+    const at = (y: number) => ({ x: second.x + 50, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })
+    const stroke = {
+      id: 'over',
+      tool: 'pen' as const,
+      color: '1',
+      size: 2,
+      points: [at(second.y - 20), at(second.y + 300)],
+    }
+    const plane = { ...emptyCanvas(), nodes: three, ink: [stroke] }
+
+    expect(removed(plane, 'b').ink).toEqual([])
+
+    const moved = removed(plane, 'a').ink[0]?.points[0]?.y
+    expect(moved).toBe((pagesOf(removed(plane, 'a'))[0]?.y ?? 0) - 20)
+  })
+
   test('the last page is never taken away', () => {
     const one = emptyPages()
     expect(removed(one, pagesOf(one)[0]?.id ?? '')).toBe(one)
