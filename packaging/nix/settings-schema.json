@@ -1067,6 +1067,10 @@
     "type": "string",
     "description": "The key that runs New messages, as the keys file writes it; empty for none."
   },
+  "shortcuts.chat-members": {
+    "type": "string",
+    "description": "The key that runs Members, as the keys file writes it; empty for none."
+  },
   "shortcuts.chat-record": {
     "type": "string",
     "description": "The key that runs Voice message, as the keys file writes it; empty for none."

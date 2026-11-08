@@ -3664,4 +3664,10 @@ export const ja: Dictionary = {
   'Chat accounts': 'チャットアカウント',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'メール、Telegram、Slack、WhatsApp、Signal を一歩ずつ接続します。',
+  Owners: '所有者',
+  Admins: '管理者',
+  Bots: 'ボット',
+  'Copy name': '名前をコピー',
+  'Copy address': 'アドレスをコピー',
+  'Send message': 'メッセージを送信',
 }

@@ -164,6 +164,13 @@ export class FixtureChats implements Chats {
     return message
   }
 
+  seat(chat: string, members: ChatMember[]): void {
+    const held = this.must(chat)
+    held.members = members
+    this.setEntry(chat, { ...held.entry, members: members.length })
+    for (const view of held.views) view.refresh()
+  }
+
   readTo(chat: string, who: Who, seq: number): void {
     this.must(chat).reads.set(who, seq)
     for (const view of this.must(chat).views) view.refresh()

@@ -3804,4 +3804,10 @@ export const ml: Dictionary = {
   'Chat accounts': 'ചാറ്റ് അക്കൗണ്ടുകൾ',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'മെയിൽ, Telegram, Slack, WhatsApp അല്ലെങ്കിൽ Signal ഓരോ ഘട്ടമായി കണക്റ്റ് ചെയ്യുക.',
+  Owners: 'ഉടമകൾ',
+  Admins: 'അഡ്മിൻമാർ',
+  Bots: 'ബോട്ടുകൾ',
+  'Copy name': 'പേര് പകർത്തുക',
+  'Copy address': 'വിലാസം പകർത്തുക',
+  'Send message': 'സന്ദേശം അയയ്ക്കുക',
 }

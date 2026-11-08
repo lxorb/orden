@@ -3744,4 +3744,10 @@ export const hi: Dictionary = {
   'Chat accounts': 'चैट खाते',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'मेल, Telegram, Slack, WhatsApp या Signal जोड़ें, एक-एक कदम करके।',
+  Owners: 'मालिक',
+  Admins: 'एडमिन',
+  Bots: 'बॉट',
+  'Copy name': 'नाम कॉपी करें',
+  'Copy address': 'पता कॉपी करें',
+  'Send message': 'संदेश भेजें',
 }

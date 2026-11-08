@@ -3817,4 +3817,10 @@ export const ta: Dictionary = {
   'Chat accounts': 'அரட்டைக் கணக்குகள்',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'அஞ்சல், Telegram, Slack, WhatsApp அல்லது Signal-ஐ ஒவ்வொரு படியாக இணைக்கவும்.',
+  Owners: 'உரிமையாளர்கள்',
+  Admins: 'நிர்வாகிகள்',
+  Bots: 'பாட்கள்',
+  'Copy name': 'பெயரை நகலெடு',
+  'Copy address': 'முகவரியை நகலெடு',
+  'Send message': 'செய்தி அனுப்பு',
 }

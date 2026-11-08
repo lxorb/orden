@@ -3765,4 +3765,10 @@ export const tr: Dictionary = {
   'Chat accounts': 'Sohbet hesapları',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     "E-posta, Telegram, Slack, WhatsApp veya Signal'i adım adım bağlayın.",
+  Owners: 'Sahipler',
+  Admins: 'Yöneticiler',
+  Bots: 'Botlar',
+  'Copy name': 'Adı kopyala',
+  'Copy address': 'Adresi kopyala',
+  'Send message': 'Mesaj gönder',
 }

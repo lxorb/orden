@@ -3928,4 +3928,10 @@ export const ar: Dictionary = {
   'Chat accounts': 'حسابات الدردشة',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'اربط البريد أو Telegram أو Slack أو WhatsApp أو Signal، خطوة بخطوة.',
+  Owners: 'المالكون',
+  Admins: 'المشرفون',
+  Bots: 'الروبوتات',
+  'Copy name': 'نسخ الاسم',
+  'Copy address': 'نسخ العنوان',
+  'Send message': 'إرسال رسالة',
 }

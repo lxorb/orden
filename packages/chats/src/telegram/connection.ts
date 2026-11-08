@@ -1053,6 +1053,7 @@ class TelegramConnection implements Connection {
     const user = this.peers.users.get(userId)
     if (!user) return null
     const member: Member = { ...personOf(user), role }
+    if (user.bot) member.bot = true
     const status = user.status
     if (status?._ === 'userStatusOnline') member.online = true
     if (status?._ === 'userStatusOffline') {

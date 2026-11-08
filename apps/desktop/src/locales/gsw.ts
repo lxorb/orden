@@ -3770,4 +3770,10 @@ export const gsw: Dictionary = {
   'Chat accounts': 'Chat-Konte',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Verbind Mail, Telegram, Slack, WhatsApp oder Signal, Schritt für Schritt.',
+  Owners: 'Bsitzer',
+  Admins: 'Admins',
+  Bots: 'Bots',
+  'Copy name': 'Name kopiere',
+  'Copy address': 'Adrässe kopiere',
+  'Send message': 'Nachricht schicke',
 }

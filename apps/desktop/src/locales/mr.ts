@@ -3742,4 +3742,10 @@ export const mr: Dictionary = {
   'Chat accounts': 'चॅट खाती',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'मेल, Telegram, Slack, WhatsApp किंवा Signal जोडा, एका वेळी एक पायरी.',
+  Owners: 'मालक',
+  Admins: 'प्रशासक',
+  Bots: 'बॉट',
+  'Copy name': 'नाव कॉपी करा',
+  'Copy address': 'पत्ता कॉपी करा',
+  'Send message': 'संदेश पाठवा',
 }

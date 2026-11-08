@@ -5,7 +5,6 @@
   import { amount, t } from '../../i18n.svelte'
   import Avatar from '../../people/Avatar.svelte'
   import Bell from '../Bell.svelte'
-  import { showProfile } from '../../people/card.svelte'
   import { people } from '../../people/people.svelte'
   import { shortcuts } from '../../shortcuts.svelte'
   import type { ChatPage } from './chat.svelte'
@@ -19,22 +18,26 @@
   import { tip } from './tips.svelte'
   import { menu } from '../../menu.svelte'
   import { remoteOf } from '../remotes'
-  import { conversationMenu, memberMenu } from './manage'
+  import { conversationMenu } from './manage'
   import type { Hit } from '../api'
 
   const {
     page,
     space,
     named = null,
+    membersOn = false,
+    onmembers,
   }: {
     page: ChatPage
     space: string | null
     named?: string | null
+    membersOn?: boolean
+    onmembers: () => void
   } = $props()
 
   let writing = $state(false)
   let topic = $state('')
-  let showing = $state<{ what: 'members' | 'pins' | 'found'; at: Box } | null>(null)
+  let showing = $state<{ what: 'pins' | 'found'; at: Box } | null>(null)
   let looking = $state('')
   let found = $state.raw<Hit[]>([])
   let pinned = $state.raw<Message[]>([])
@@ -47,23 +50,6 @@
     service ? (remote?.conversation(service.conversation) ?? null) : null,
   )
   const managing = $derived(remote && conversation ? conversationMenu(remote, conversation) : [])
-
-  function presenceOf(who: (typeof page.members)[number]['who']) {
-    if (service) return page.view.presence.here.includes(who) ? 'active' : null
-    const id = accountOf(who)
-    return id ? (people.of(id)?.presence ?? null) : null
-  }
-
-  function pressMember(event: MouseEvent, who: (typeof page.members)[number]['who']) {
-    if (!service) {
-      const id = accountOf(who)
-      if (id && event.currentTarget instanceof Element) showProfile(id, event.currentTarget, space)
-      return
-    }
-    const member = remote && conversation ? remote.memberOf(conversation.id, who) : null
-    const entries = member && remote && conversation ? memberMenu(remote, conversation, member) : []
-    if (entries.length) menu.show(event, entries)
-  }
 
   async function lookFor(words: string) {
     const asked = words.trim()
@@ -170,16 +156,18 @@
     <button
       type="button"
       class="people"
+      class:on={membersOn}
       aria-label={t('Members')}
-      use:tip={() => t('Members')}
-      onclick={(event) => (showing = { what: 'members', at: boxOf(event.currentTarget) })}
+      aria-pressed={membersOn}
+      use:tip={() => shortcuts.tooltip(t('Members'), 'chat.members')}
+      onclick={onmembers}
     >
       <span class="faces" aria-hidden="true">
         {#each members.slice(0, 3) as one (one.who)}
           <span class="face"><Avatar face={faceOf(one.who, page.members, space)} size={20} /></span>
         {/each}
       </span>
-      <span class="count">{amount(page.members.length)}</span>
+      <span class="count">{amount(page.view.members.filter((one) => !one.gone).length)}</span>
     </button>
   {/if}
   {#if page.can.pin}
@@ -224,32 +212,11 @@
   at={showing?.at ?? null}
   end
   width="280px"
-  label={showing?.what === 'pins'
-    ? t('Pinned')
-    : showing?.what === 'found'
-      ? t('Search this chat')
-      : t('Members')}
+  label={showing?.what === 'pins' ? t('Pinned') : t('Search this chat')}
   onclose={() => (showing = null)}
 >
   <div class="list orden-scrolls">
-    {#if showing?.what === 'members'}
-      {#each members as one (one.who)}
-        {@const id = accountOf(one.who)}
-        <button type="button" class="orden-row" onclick={(event) => pressMember(event, one.who)}>
-          <span class="orden-row-mark">
-            <Avatar
-              face={faceOf(one.who, page.members, space)}
-              size={24}
-              presence={presenceOf(one.who)}
-            />
-          </span>
-          <span class="orden-row-label">{nameOf(one.who, page.members, space)}</span>
-          {#if id && people.of(id)?.status?.emoji}
-            <span class="orden-row-meta">{people.of(id)?.status?.emoji}</span>
-          {/if}
-        </button>
-      {/each}
-    {:else if showing?.what === 'found'}
+    {#if showing?.what === 'found'}
       <!-- svelte-ignore a11y_autofocus -->
       <input
         class="orden-field look"
@@ -393,6 +360,11 @@
     .people:hover {
       background: var(--surface-hover);
     }
+  }
+
+  .people.on {
+    background: var(--surface-selected);
+    color: var(--text);
   }
 
   .faces {

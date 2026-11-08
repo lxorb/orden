@@ -3832,4 +3832,10 @@ export const ptBR: Dictionary = {
   'Chat accounts': 'Contas de chat',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Conecte e-mail, Telegram, Slack, WhatsApp ou Signal, uma etapa de cada vez.',
+  Owners: 'Proprietários',
+  Admins: 'Administradores',
+  Bots: 'Bots',
+  'Copy name': 'Copiar nome',
+  'Copy address': 'Copiar endereço',
+  'Send message': 'Enviar mensagem',
 }

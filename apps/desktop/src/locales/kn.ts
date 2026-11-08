@@ -3788,4 +3788,10 @@ export const kn: Dictionary = {
   'Chat accounts': 'ಚಾಟ್ ಖಾತೆಗಳು',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'ಮೇಲ್, Telegram, Slack, WhatsApp ಅಥವಾ Signal ಅನ್ನು ಒಂದೊಂದೇ ಹಂತದಲ್ಲಿ ಸಂಪರ್ಕಿಸಿ.',
+  Owners: 'ಮಾಲೀಕರು',
+  Admins: 'ನಿರ್ವಾಹಕರು',
+  Bots: 'ಬಾಟ್‌ಗಳು',
+  'Copy name': 'ಹೆಸರು ನಕಲಿಸಿ',
+  'Copy address': 'ವಿಳಾಸ ನಕಲಿಸಿ',
+  'Send message': 'ಸಂದೇಶ ಕಳುಹಿಸಿ',
 }

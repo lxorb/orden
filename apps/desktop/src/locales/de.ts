@@ -3816,4 +3816,10 @@ export const de: Dictionary = {
   'Chat accounts': 'Chat-Konten',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Verbinde Mail, Telegram, Slack, WhatsApp oder Signal, Schritt für Schritt.',
+  Owners: 'Besitzer',
+  Admins: 'Admins',
+  Bots: 'Bots',
+  'Copy name': 'Namen kopieren',
+  'Copy address': 'Adresse kopieren',
+  'Send message': 'Nachricht senden',
 }

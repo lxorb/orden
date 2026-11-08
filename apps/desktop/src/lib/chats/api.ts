@@ -11,7 +11,7 @@ import type {
   SearchQuery,
   Who,
 } from '@orden/chats'
-import type { Capabilities, Delivery } from '@orden/chats/provider'
+import type { Capabilities, ConversationRole, Delivery } from '@orden/chats/provider'
 import type { Refusal } from '@orden/chats/wire'
 
 export interface Shown extends Message {
@@ -84,6 +84,10 @@ export interface ChatMember {
   who: Who
   name: string | null
   role: Role
+  rank?: ConversationRole
+  handle?: string
+  bot?: boolean
+  gone?: boolean
 }
 
 export interface Presence {

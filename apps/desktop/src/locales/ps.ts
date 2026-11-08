@@ -3742,4 +3742,10 @@ export const ps: Dictionary = {
   'Chat accounts': 'د چټ حسابونه',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'برېښناليک، Telegram، Slack، WhatsApp یا Signal ونښلوئ، ګام په ګام.',
+  Owners: 'خاوندان',
+  Admins: 'مدیران',
+  Bots: 'بوټونه',
+  'Copy name': 'نوم کاپي کړئ',
+  'Copy address': 'پته کاپي کړئ',
+  'Send message': 'پیغام ولېږئ',
 }

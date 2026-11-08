@@ -3741,4 +3741,10 @@ export const ur: Dictionary = {
   'Chat accounts': 'چیٹ اکاؤنٹس',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'میل، Telegram، Slack، WhatsApp یا Signal کو مرحلہ وار جوڑیں۔',
+  Owners: 'مالکان',
+  Admins: 'منتظمین',
+  Bots: 'بوٹس',
+  'Copy name': 'نام کاپی کریں',
+  'Copy address': 'پتہ کاپی کریں',
+  'Send message': 'پیغام بھیجیں',
 }

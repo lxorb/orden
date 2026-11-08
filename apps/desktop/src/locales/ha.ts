@@ -3797,4 +3797,10 @@ export const ha: Dictionary = {
   'Chat accounts': 'Asusun hira',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Haɗa imel, Telegram, Slack, WhatsApp ko Signal, mataki-mataki.',
+  Owners: 'Masu shi',
+  Admins: 'Masu gudanarwa',
+  Bots: 'Bots',
+  'Copy name': 'Kwafi suna',
+  'Copy address': 'Kwafi adireshi',
+  'Send message': 'Aika saƙo',
 }

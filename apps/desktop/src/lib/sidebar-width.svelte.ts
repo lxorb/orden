@@ -7,18 +7,18 @@ const STORAGE_KEY = 'orden:sidebar-width'
 const NARROWEST = 180
 const WIDEST = 520
 
-function keyFor(side: PanelSide): string {
-  return side === 'right' ? `${STORAGE_KEY}-right` : STORAGE_KEY
+function keyFor(side: PanelSide, base: string): string {
+  return side === 'right' && base === STORAGE_KEY ? `${STORAGE_KEY}-right` : base
 }
 
-function saved(side: PanelSide): number | null {
-  const width = stored(keyFor(side))
+function saved(side: PanelSide, base: string): number | null {
+  const width = stored(keyFor(side, base))
   return isNumber(width) && width >= NARROWEST && width <= WIDEST ? width : null
 }
 
-function write(side: PanelSide, width: number | null) {
-  if (width === null) forget(keyFor(side))
-  else keepJson(keyFor(side), width)
+function write(side: PanelSide, base: string, width: number | null) {
+  if (width === null) forget(keyFor(side, base))
+  else keepJson(keyFor(side, base), width)
 }
 
 const STEP = 16
@@ -29,8 +29,11 @@ export class SidebarWidth {
 
   pixels = $state<number | null>(null)
 
-  constructor(private readonly which: () => PanelSide = () => 'left') {
-    this.pixels = saved(which())
+  constructor(
+    private readonly which: () => PanelSide = () => 'left',
+    private readonly key = STORAGE_KEY,
+  ) {
+    this.pixels = saved(which(), key)
   }
 
   private get side(): PanelSide {
@@ -47,7 +50,7 @@ export class SidebarWidth {
 
   reset() {
     this.pixels = null
-    write(this.side, null)
+    write(this.side, this.key, null)
   }
 
   step(key: string, panel: HTMLElement | undefined): boolean {
@@ -55,7 +58,7 @@ export class SidebarWidth {
 
     const put = (width: number) => {
       this.pixels = Math.round(Math.min(WIDEST, Math.max(NARROWEST, width)))
-      write(this.side, this.pixels)
+      write(this.side, this.key, this.pixels)
       return true
     }
 
@@ -111,7 +114,7 @@ export class SidebarWidth {
       this.dragging = false
       document.body.style.cursor = ''
       document.body.classList.remove('orden-unselectable')
-      if (this.pixels !== null) write(this.side, this.pixels)
+      if (this.pixels !== null) write(this.side, this.key, this.pixels)
     }
 
     this.ending = stop

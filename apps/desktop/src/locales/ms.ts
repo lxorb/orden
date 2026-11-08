@@ -3688,4 +3688,10 @@ export const ms: Dictionary = {
   'Chat accounts': 'Akaun sembang',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Sambungkan e-mel, Telegram, Slack, WhatsApp atau Signal, selangkah demi selangkah.',
+  Owners: 'Pemilik',
+  Admins: 'Pentadbir',
+  Bots: 'Bot',
+  'Copy name': 'Salin nama',
+  'Copy address': 'Salin alamat',
+  'Send message': 'Hantar mesej',
 }

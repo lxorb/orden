@@ -3666,4 +3666,10 @@ export const am: Dictionary = {
   'Chat accounts': 'የቻት መለያዎች',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'ኢሜይል፣ Telegram፣ Slack፣ WhatsApp ወይም Signal ደረጃ በደረጃ ያገናኙ።',
+  Owners: 'ባለቤቶች',
+  Admins: 'አስተዳዳሪዎች',
+  Bots: 'ቦቶች',
+  'Copy name': 'ስም ቅዳ',
+  'Copy address': 'አድራሻ ቅዳ',
+  'Send message': 'መልዕክት ላክ',
 }

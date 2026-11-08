@@ -3795,4 +3795,10 @@ export const sw: Dictionary = {
   'Chat accounts': 'Akaunti za gumzo',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     'Unganisha barua pepe, Telegram, Slack, WhatsApp au Signal, hatua moja baada ya nyingine.',
+  Owners: 'Wamiliki',
+  Admins: 'Wasimamizi',
+  Bots: 'Boti',
+  'Copy name': 'Nakili jina',
+  'Copy address': 'Nakili anwani',
+  'Send message': 'Tuma ujumbe',
 }

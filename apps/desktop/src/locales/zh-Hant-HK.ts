@@ -3563,4 +3563,10 @@ export const zhHantHK: Dictionary = {
   'Chat accounts': '聊天帳戶',
   'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.':
     '連接郵件、Telegram、Slack、WhatsApp 或 Signal，逐步完成。',
+  Owners: '擁有者',
+  Admins: '管理員',
+  Bots: '機械人',
+  'Copy name': '複製名稱',
+  'Copy address': '複製地址',
+  'Send message': '傳送訊息',
 }
