@@ -8,11 +8,12 @@ import { changeOf } from '../search/replace'
 import { isMarkdownPath, samePath } from '../space-paths'
 import { joinPath } from '../tauri'
 import type { ItemMetaStore } from './item-meta.svelte'
+import type { Keeping } from './note-text'
 
 export interface Notes {
   readonly itemMeta: ItemMetaStore
   noteText(path: string): Promise<string | null>
-  replaceInNotes(changes: readonly Change[]): Promise<number>
+  replaceInNotes(changes: readonly Change[], keeping?: Keeping): Promise<number>
 }
 
 const moving = new Set<string>()
@@ -53,6 +54,6 @@ async function moveOwnKeys(root: string, workspace: Notes, signedIn: boolean): P
 
   if (!mayMove(root, workspace, signedIn)) return
   workspace.itemMeta.setMany(root, patches)
-  if (changes.length) await workspace.replaceInNotes(changes)
+  if (changes.length) await workspace.replaceInNotes(changes, { throughLocks: true })
   workspace.itemMeta.markMoved(root)
 }

@@ -114,7 +114,9 @@ export async function dropSetext(
     return 0
   }
   const untouched = changes.filter((change) => !beingWritten(ws, change.path))
-  const written = untouched.length ? await replaceInNotes(ws, untouched, { undoable: false }) : 0
+  const written = untouched.length
+    ? await replaceInNotes(ws, untouched, { undoable: false, throughLocks: true })
+    : 0
   const marked = untouched.length ? untouched.map((change) => change.path) : first ? [first] : []
   if (marked.length) {
     ws.itemMeta.setMany(

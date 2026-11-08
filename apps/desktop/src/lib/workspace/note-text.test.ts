@@ -11,6 +11,8 @@ let holding: { command: string; until: Promise<void> } | null = null
 vi.mock('../tauri', () => ({
   isNative: false,
   platform: () => 'linux',
+  isDesktop: false,
+  joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
   invoke: async (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     const content = typeof args?.content === 'string' ? args.content : ''
@@ -53,6 +55,8 @@ const { undoLastFileAction } = await import('./undoing')
 type PutsBack = import('./undoing').PutsBack
 const { NoteDoc } = await import('./documents.svelte')
 const { meetAcross } = await import('./in-turn')
+const { protection } = await import('../protect/protection.svelte')
+const { unlocks } = await import('../protect/unlocked.svelte')
 type HoldsNotes = import('./note-text').HoldsNotes
 
 const SPACE = '/space'
@@ -914,5 +918,65 @@ describe('with another window here', () => {
     }
     expect(turns).toEqual(['in orden:file:/space/a.md', 'out orden:file:/space/a.md'])
     expect(disk.get('/space/a.md')).toBe('ONE\n')
+  })
+})
+
+describe('a protected note while it is shut', () => {
+  const SHUT = `${SPACE}/Diary.md`
+  const OPEN = `${SPACE}/Plans.md`
+  const change = (path: string) => ({
+    path,
+    before: 'before',
+    after: 'after',
+    edits: [{ from: 0, to: 6, insert: 'after' }],
+    back: [{ from: 0, to: 5, insert: 'before' }],
+  })
+
+  beforeEach(() => protection.set(SPACE, SHUT, 'password'))
+  afterEach(() => {
+    unlocks.lockAll()
+    protection.set(SPACE, SHUT, null)
+  })
+
+  test('takes no replacement, while the open notes beside it take theirs', async () => {
+    const { ws } = space({ [SHUT]: 'before', [OPEN]: 'before' })
+
+    expect(await replaceInNotes(ws, [change(SHUT), change(OPEN)])).toBe(1)
+    expect(disk.get(SHUT)).toBe('before')
+    expect(disk.get(OPEN)).toBe('after')
+    expect(sent.some((one) => one.command === 'write_note' && one.path === SHUT)).toBe(false)
+  })
+
+  test('keeps its tags when a tag is renamed or removed everywhere', async () => {
+    const { ws } = space({ [SHUT]: 'Dear #work\n', [OPEN]: 'Plan #work\n' })
+
+    expect(await retagNotes(ws, 'work', 'job')).toBe(1)
+    expect(disk.get(SHUT)).toBe('Dear #work\n')
+    expect(await retagNotes(ws, 'job', null)).toBe(1)
+    expect(disk.get(SHUT)).toBe('Dear #work\n')
+    expect(disk.get(OPEN)).toBe('Plan\n')
+  })
+
+  test('nor is it written from a hover card, nor a task in it ticked', async () => {
+    const { ws } = space({ [SHUT]: '- [ ] wash up\n' })
+
+    await writeNoteText(ws, SHUT, '- [ ] wash up\n', '- [ ] dry up\n')
+    expect(await toggleTaskAt(ws, SHUT, 0)).toBe(false)
+    expect(disk.get(SHUT)).toBe('- [ ] wash up\n')
+  })
+
+  test('is written again once it is unlocked', async () => {
+    const { ws } = space({ [SHUT]: 'before' })
+    unlocks.unlock(protection.covering(SHUT))
+
+    expect(await replaceInNotes(ws, [change(SHUT)])).toBe(1)
+    expect(disk.get(SHUT)).toBe('after')
+  })
+
+  test('is still written by a change that says it goes through locks', async () => {
+    const { ws } = space({ [SHUT]: 'before' })
+
+    expect(await replaceInNotes(ws, [change(SHUT)], { throughLocks: true })).toBe(1)
+    expect(disk.get(SHUT)).toBe('after')
   })
 })

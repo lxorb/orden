@@ -75,3 +75,22 @@ describe('what Convert syntax would rewrite', () => {
     expect(said.rewrites).toBe(0)
   })
 })
+
+describe('Convert syntax beside a protected note', () => {
+  test('neither rewrites nor counts what is in it while it is shut', async () => {
+    const { protection } = await import('./protect/protection.svelte')
+    const { unlocks } = await import('./protect/unlocked.svelte')
+    protection.set('/space', '/space/Diary.md', 'password')
+    try {
+      const said = syntaxChanges(
+        [note('/space/Diary.md', '#two words#'), note('/space/Plans.md', '#one more#')],
+        [],
+      )
+      expect(said.changes.map((one) => one.path)).toEqual(['/space/Plans.md'])
+      expect(said.rewrites).toBe(1)
+    } finally {
+      unlocks.lockAll()
+      protection.set('/space', '/space/Diary.md', null)
+    }
+  })
+})

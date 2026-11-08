@@ -2,6 +2,7 @@ import { oneEdit } from '@orden/markdown/edits'
 
 import { plural, t } from './i18n.svelte'
 import { converted } from './import/convert'
+import { protection } from './protect/protection.svelte'
 import type { Change } from './search/apply'
 import { changeOf } from './search/replace'
 import { isMarkdownPath } from './space-paths'
@@ -15,7 +16,7 @@ export function syntaxChanges(
   let rewrites = 0
 
   for (const note of notes) {
-    if (!isMarkdownPath(note.path)) continue
+    if (!isMarkdownPath(note.path) || protection.locked(note.path)) continue
 
     const said = converted(note.text, names)
     if (!said.changes) continue
@@ -77,6 +78,7 @@ async function everyNote(): Promise<{ path: string; text: string }[]> {
   const found: { path: string; text: string }[] = []
 
   for (const entry of workspace.notes) {
+    if (protection.locked(entry.path)) continue
     const text = await workspace.noteText(entry.path)
     if (text !== null) found.push({ path: entry.path, text })
   }
