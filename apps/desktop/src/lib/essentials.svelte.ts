@@ -90,7 +90,7 @@ export function dropOnGrid(event: DragEvent, entry: (path: string) => Entry | un
   landing.clear()
   if (at === null || keepCarried(event, after ? at + 1 : at, entry)) return
 
-  const from = draggedBookmark(event.dataTransfer)
+  const from = workspace.bookmarks.indexOf(draggedBookmark(event.dataTransfer))
   const moving = from === null ? undefined : workspace.bookmarks.list[from]
   if (from === null || !moving) return
 
