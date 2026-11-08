@@ -987,10 +987,13 @@ export class SlackConnection implements Connection {
 
   async search(query: string, conversation?: string): Promise<ProviderMessage[]> {
     const where = conversation ? this.known.get(conversation) : undefined
+    const partner = where?.kind === 'direct' ? where.people[0]?.handle : undefined
     const scoped =
       where?.kind === 'group' && where.title && !where.title.includes(',')
         ? `${query} in:#${where.title}`
-        : query
+        : partner
+          ? `${query} in:@${partner}`
+          : query
     const said = await this.api.call('search.messages', {
       query: scoped,
       count: 50,

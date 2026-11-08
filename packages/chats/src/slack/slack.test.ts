@@ -298,6 +298,15 @@ describe('a pasted token', () => {
     expect((await connection.search?.('launch', 'C1'))?.map((one) => one.text)).toEqual([
       'the launch plan',
     ])
+    expect((await connection.search?.('launch', 'D1'))?.map((one) => one.text)).toEqual([
+      'launch soon?',
+    ])
+    expect(
+      given.slack.calls
+        .filter((one) => one.method === 'search.messages')
+        .at(-1)
+        ?.form.get('query'),
+    ).toBe('launch in:@mia')
     const members = await connection.members?.('C1')
     expect(members?.find((one) => one.id === 'U2')?.role).toBe('owner')
     expect((await connection.people?.('noa'))?.map((one) => one.name)).toEqual(['Noah'])

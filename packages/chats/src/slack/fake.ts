@@ -306,7 +306,7 @@ export class FakeSlack {
       return {}
     },
     'search.messages': (form) => {
-      const words = (form.get('query') ?? '').replace(/\s*in:#\S+/, '').toLowerCase()
+      const words = (form.get('query') ?? '').replace(/\s*in:[#@]\S+/, '').toLowerCase()
       const matches = [...this.channels.values()].flatMap((channel) =>
         channel.messages
           .filter((one) => text(one.text).toLowerCase().includes(words))
