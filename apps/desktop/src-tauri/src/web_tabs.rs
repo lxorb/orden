@@ -251,6 +251,13 @@ const LOOKED: &str = r"(function () {
 })()";
 
 const READER: &str = include_str!("web_tabs/reader.js");
+#[cfg(any(windows, test))]
+const BARS: &str = include_str!("web_bars.js");
+
+#[cfg(any(windows, test))]
+fn bars() -> &'static str {
+    BARS.trim().trim_start_matches(';')
+}
 
 #[derive(Default)]
 struct Trail {
@@ -719,6 +726,9 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
     ];
     #[cfg(all(not(windows), not(feature = "cef")))]
     let mut scripts: Vec<String> = Vec::new();
+
+    #[cfg(windows)]
+    scripts.push(bars().to_string());
 
     #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     if pass {
@@ -2877,9 +2887,10 @@ mod tests {
         assert_eq!(
             opening(None, "https://a.example/page", true),
             format!(
-                "{};\n{};\n{};\n",
+                "{};\n{};\n{};\n{};\n",
                 crate::web_opens::SCRIPT,
                 crate::web_swipe::script(),
+                super::bars(),
                 crate::web_pass::script()
             )
         );
@@ -2891,14 +2902,15 @@ mod tests {
         assert_eq!(
             opening(None, "https://a.example/page", true),
             format!(
-                "{};
-{};
-{};
-{};
-",
+                "{};\n{};\n{};\n{}{};\n",
                 crate::web_opens::script(),
                 crate::web_swipe::script(),
                 crate::web_media::script(),
+                if cfg!(windows) {
+                    format!("{};\n", super::bars())
+                } else {
+                    String::new()
+                },
                 crate::web_pass::script()
             )
         );
@@ -2910,6 +2922,19 @@ mod tests {
         assert_eq!(
             opening(None, "https://a.example/page", true),
             format!("{};\n", crate::web_pass::script())
+        );
+    }
+
+    #[test]
+    fn a_page_s_own_bars_keep_clear_of_the_pane_s_rounded_corners() {
+        let script = super::bars();
+        assert!(script.starts_with("(function () {") && script.ends_with("})()"));
+        assert!(script.contains("html::-webkit-scrollbar-track:horizontal{margin:0 18px}"));
+        assert!(script.contains("html::-webkit-scrollbar-track:vertical{margin:0 0 18px}"));
+        assert!(script.contains("html::-webkit-scrollbar-corner{background:transparent}"));
+        assert_eq!(
+            opening(None, "https://a.example/page", false).contains(script),
+            cfg!(windows)
         );
     }
 
