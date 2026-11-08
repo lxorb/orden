@@ -6,6 +6,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { dur, fade } from '../motion'
+  import { links } from '../link-index.svelte'
   import { readingHtml, unreadableHtml } from '../reading/render'
   import { trustsHtmlIn } from '../sharing.svelte'
   import TabMark from '../TabMark.svelte'
@@ -43,7 +44,13 @@
     const text = readingFrom(tab.doc, tab.anchor, START)
     const scheme = theme.current
     const trusted = trustsHtmlIn(tab.note)
-    return { text, scheme, trusted, key: `${scheme}\u0000${String(trusted)}\u0000${text}` }
+    const locks = links.locksSeen()
+    return {
+      text,
+      scheme,
+      trusted,
+      key: `${locks}\u0000${scheme}\u0000${String(trusted)}\u0000${text}`,
+    }
   })
 
   const readBefore = untrack(() => reading && drawnBefore.get(tab.id))

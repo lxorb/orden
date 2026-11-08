@@ -63,6 +63,7 @@
     if (node.type !== 'file' || isPicture(node.file)) return
 
     const wanted = node.file
+    links.locksSeen()
     let mine = true
     void fileSource(wanted, canvasPath).then((text) => {
       if (mine) source = text
