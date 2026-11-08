@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from '../../../../../scripts/growth'
 import {
   atClock,
   clockOf,
@@ -8,6 +9,7 @@ import {
   HOUR,
   lasting,
   MINUTE,
+  near,
   piecesIn,
   startOf,
   stepped,
@@ -110,5 +112,66 @@ describe('the time spans add up to', () => {
     expect(lasting(90 * MINUTE)).toBe('1:30')
     expect(lasting(25 * HOUR + 59_999)).toBe('25:00')
     expect(ticking(HOUR + 61_000)).toBe('1:01:01')
+  })
+})
+
+describe('a long history of recorded time', () => {
+  const plainly = (spans: readonly Span[], from: number, to: number, now: number) =>
+    spans
+      .flatMap((one) => {
+        const end = one.end ?? Math.max(now, one.start)
+        const cut = { span: one, from: Math.max(one.start, from), to: Math.min(end, to) }
+        const kept = cut.to > cut.from || (one.end === null && one.start >= from && one.start < to)
+        return kept ? [cut] : []
+      })
+      .sort((one, other) => one.from - other.from)
+
+  test('finds the same pieces as looking at every span', () => {
+    let seed = 7
+    const next = (most: number) => {
+      seed = (seed * 48271) % 2147483647
+      return seed % most
+    }
+    for (let round = 0; round < 200; round += 1) {
+      const spans = Array.from({ length: next(40) }, (_, index) => {
+        const start = at(1, 0) + next(72) * HOUR
+        const end = next(8) === 0 ? null : start + next(30) * HOUR
+        return span(`s${index}`, start, end, next(2) ? 'uni' : 'sport')
+      })
+      const sorted = [...spans].sort((one, other) => one.start - other.start)
+      const from = at(1, 0) + next(80) * HOUR
+      const to = from + next(30) * HOUR
+      const now = at(1, 0) + next(100) * HOUR
+      const uni = (one: Span) => one.activity === 'uni'
+      for (const list of [spans, sorted]) {
+        expect(piecesIn(list, from, to, now)).toEqual(plainly(list, from, to, now))
+        expect(piecesIn(list, from, to, now, uni)).toEqual(plainly(list.filter(uni), from, to, now))
+      }
+    }
+  })
+
+  test('looking at one day costs the same after a year as after a week', () => {
+    const now = at(20, 12)
+    const histories = new Map<number, Span[]>()
+    const history = (size: number) => {
+      const known = histories.get(size)
+      if (known) return known
+      const spans = Array.from({ length: size }, (_, index) => {
+        const start = now - (size - index) * 3 * MINUTE
+        return span(`s${index}`, start, start + 2 * MINUTE)
+      })
+      histories.set(size, spans)
+      return spans
+    }
+    const ratio = growth(
+      (size) => {
+        const spans = history(size)
+        piecesIn(spans, dayOf(now), daysAfter(dayOf(now), 1), now)
+        near(spans, now - 2 * MINUTE, Infinity)
+      },
+      2000,
+      64,
+    )
+    expect(ratio).toBeLessThan(GROWS_AT_MOST)
   })
 })

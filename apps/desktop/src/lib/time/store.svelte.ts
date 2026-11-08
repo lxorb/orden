@@ -1,6 +1,7 @@
 import { ACCENTS } from '../accents'
 import { log } from '../log'
 import { afterQuiet } from '../timing'
+import { recentFirst } from './counted'
 import { openTimeDisk, type TimeDisk } from './disk'
 import { exchange, type TimeServer } from './exchange'
 import { type Heard, Ledger, type Row } from './ledger'
@@ -74,6 +75,11 @@ export class TimeStore {
 
   readonly running = $derived(this.spans.filter((span) => span.end === null))
 
+  private recent: {
+    activities: readonly Activity[]
+    spans: readonly Span[]
+    list: Activity[]
+  } | null = null
   private ledger = new Ledger()
   private disk: TimeDisk | null = null
   private server: TimeServer | null = null
@@ -379,12 +385,12 @@ export class TimeStore {
   }
 
   latest(): Activity[] {
-    const seen: Activity[] = []
-    for (const span of [...this.spans].reverse()) {
-      const one = this.activity(span.activity)
-      if (one && !one.archived && !seen.includes(one)) seen.push(one)
-    }
-    return [...seen, ...this.activities.filter((one) => !one.archived && !seen.includes(one))]
+    const { activities, spans } = this
+    const known = this.recent
+    if (known?.activities === activities && known.spans === spans) return known.list
+    const list = recentFirst(activities, spans)
+    this.recent = { activities, spans, list }
+    return list
   }
 
   exchange(): Promise<void> {

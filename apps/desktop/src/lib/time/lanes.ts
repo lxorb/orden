@@ -26,8 +26,8 @@ export function bandsOf(
   now: number,
 ): Band[] {
   const out: Band[] = []
-  const mine = spans.filter((span) => span.source === lane && span.place !== null)
-  for (const piece of piecesIn(mine, from, to, now)) {
+  const mine = (span: Span) => span.source === lane && span.place !== null
+  for (const piece of piecesIn(spans, from, to, now, mine)) {
     const key = piece.span.place ?? ''
     const last = [...out].reverse().find((one) => one.key === key)
     if (last && piece.from - last.to <= JOINED && piece.from >= last.from) {
@@ -55,13 +55,8 @@ export function within(
   to: number,
   now: number,
 ): Within {
-  const said = piecesIn(spans.filter(isOwn), from, to, now)
-  const seen = piecesIn(
-    spans.filter((span) => !isOwn(span)),
-    from,
-    to,
-    now,
-  )
+  const said = piecesIn(spans, from, to, now, isOwn)
+  const seen = piecesIn(spans, from, to, now, (span) => !isOwn(span))
   const inside = minutes.filter((one) => one.at >= from && one.at < to)
   const places = Object.fromEntries(LANES.map((lane) => [lane, placesOf(seen, lane)])) as Record<
     Lane,
@@ -92,7 +87,7 @@ export function unsaid(
   to: number,
   now: number,
 ): Stretch[] {
-  const said = piecesIn(spans.filter(isOwn), from, to, now)
+  const said = piecesIn(spans, from, to, now, isOwn)
   const covered = (at: number) => said.some((piece) => piece.from <= at && at < piece.to)
   const out: Stretch[] = []
   let open: Stretch | null = null
@@ -119,14 +114,9 @@ export function madeOf(
   to: number,
   now: number,
 ): Place[] {
-  const said = piecesIn(
-    spans.filter((span) => isOwn(span) && span.activity === activity),
-    from,
-    to,
-    now,
-  )
-  const seen = spans.filter((span) => span.source === lane)
-  const pieces = said.flatMap((one) => piecesIn(seen, one.from, one.to, now))
+  const said = piecesIn(spans, from, to, now, (span) => isOwn(span) && span.activity === activity)
+  const seen = (span: Span) => span.source === lane
+  const pieces = said.flatMap((one) => piecesIn(spans, one.from, one.to, now, seen))
   return placesOf(pieces, lane)
 }
 

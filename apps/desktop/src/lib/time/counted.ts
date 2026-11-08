@@ -1,5 +1,5 @@
 import { counts, type Piece } from './days'
-import type { Lane, Rule, Span } from './records'
+import type { Activity, Lane, Rule, Span } from './records'
 
 export interface Place {
   lane: Lane
@@ -36,4 +36,18 @@ export function placesOf(pieces: readonly Piece[], lane: Lane): Place[] {
     by.set(key, place)
   }
   return [...by.values()].filter((one) => counts(one.ms)).sort((one, other) => other.ms - one.ms)
+}
+
+export function recentFirst(activities: readonly Activity[], spans: readonly Span[]): Activity[] {
+  const left = new Map(activities.filter((one) => !one.archived).map((one) => [one.id, one]))
+  const seen: Activity[] = []
+  for (let index = spans.length - 1; index >= 0 && left.size; index -= 1) {
+    const id = spans[index]?.activity ?? null
+    const one = id === null ? undefined : left.get(id)
+    if (id !== null && one) {
+      seen.push(one)
+      left.delete(id)
+    }
+  }
+  return [...seen, ...left.values()]
 }

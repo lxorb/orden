@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from '../i18n.svelte'
   import { counted, isOwn } from './counted'
-  import { dayOf, daysAfter, MINUTE, piecesIn, totalsOf, wholeOf } from './days'
+  import { dayOf, daysAfter, MINUTE, near, piecesIn, totalsOf, wholeOf } from './days'
   import { hoursShown } from './lanes'
   import { length, tintOf } from './look'
   import { openTime } from './open'
@@ -42,7 +42,7 @@
   const starters = $derived([t('Work'), t('Study'), t('Reading'), t('Break')])
 
   const inFront = $derived.by(() => {
-    const fresh = time.spans.filter(
+    const fresh = near(time.spans, now - 2 * MINUTE, Infinity).filter(
       (one) => !isOwn(one) && one.end !== null && now - one.end < 2 * MINUTE,
     )
     const of = (lane: string) =>
