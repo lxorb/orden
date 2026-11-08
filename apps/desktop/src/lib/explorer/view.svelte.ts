@@ -53,7 +53,7 @@ export class ExplorerView {
   )
   readonly names = $derived(this.rows.map((one) => one.name))
 
-  #watched: string | null = null
+  #watching: { folder: string; issued: boolean } | null = null
   #went = 0
   #asked: string | null = null
   #landed = 0
@@ -73,7 +73,7 @@ export class ExplorerView {
 
   async appear() {
     this.#alive = true
-    hearChanges()
+    void hearChanges()
     if (this.listing) {
       await this.reload()
       this.watch(this.listing.path)
@@ -230,8 +230,8 @@ export class ExplorerView {
   }
 
   #unwatch() {
-    if (this.#watched) void unwatchFolder(this.#watched)
-    this.#watched = null
+    if (this.#watching?.issued) void unwatchFolder(this.#watching.folder)
+    this.#watching = null
   }
 
   private async show(folder: string, next: (listed: string) => Spec) {
@@ -300,10 +300,15 @@ export class ExplorerView {
   }
 
   private watch(folder: string) {
-    if (this.#watched !== null && samePath(this.#watched, folder)) return
+    if (this.#watching && samePath(this.#watching.folder, folder)) return
     this.#unwatch()
-    this.#watched = folder
-    watchFolder(folder).catch(() => undefined)
+    const watching = { folder, issued: false }
+    this.#watching = watching
+    void hearChanges().then(() => {
+      if (this.#watching !== watching) return
+      watching.issued = true
+      watchFolder(folder).catch(quiet)
+    })
   }
 
   heard(folders: readonly string[]) {
@@ -361,24 +366,46 @@ export function relistAll() {
   }
 }
 
-let hearing = false
+let hearing: Promise<void> | null = null
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- held between two events, never drawn
 const changed = new Set<string>()
+let hearers: ((folders: readonly string[]) => void)[] = []
 const settle = afterQuiet(() => {
   const folders = [...changed]
   changed.clear()
   for (const tab of workspace.tabs) {
     if (tab.kind === 'explorer') views.get(tab)?.heard(folders)
   }
+  for (const hear of hearers) hear(folders)
 }, 150)
 
-function hearChanges() {
-  if (hearing || !isDesktop) return
-  hearing = true
-  void import('@tauri-apps/api/event').then(({ listen }) =>
-    listen<{ folders: string[] }>(CHANGED, (event) => {
-      for (const one of event.payload.folders) changed.add(one)
-      settle()
-    }),
-  )
+function hearChanges(): Promise<void> {
+  if (!isDesktop) return Promise.resolve()
+  hearing ??= import('@tauri-apps/api/event')
+    .then(({ listen }) =>
+      listen<{ folders: string[] }>(CHANGED, (event) => {
+        for (const one of event.payload.folders) changed.add(one)
+        settle()
+      }),
+    )
+    .then(quiet, () => {
+      hearing = null
+    })
+  return hearing
+}
+
+export function watchHeard(folder: string, hear: (folders: readonly string[]) => void): () => void {
+  let on = true
+  let issued = false
+  hearers = [...hearers, hear]
+  void hearChanges().then(() => {
+    if (!on) return
+    issued = true
+    watchFolder(folder).catch(quiet)
+  })
+  return () => {
+    on = false
+    hearers = hearers.filter((one) => one !== hear)
+    if (issued) void unwatchFolder(folder)
+  }
 }
