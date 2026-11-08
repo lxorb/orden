@@ -1328,6 +1328,25 @@ describe('a second finger', () => {
     expect(verbs(effects).indexOf('unrub')).toBeLessThan(verbs(effects).lastIndexOf('cut'))
   })
 
+  test('takes back what a finger rubbed out when the system cancels the touch', () => {
+    const { machine, effects } = play(
+      [down({ id: 1, pointer: 'touch', hit: hit({ stroke: 's1' }) }), { kind: 'cancel', id: 1 }],
+      context({ tool: 'erase' }),
+    )
+
+    expect(machine.gesture).toBeNull()
+    expect(verbs(effects).slice(-1)).toEqual(['unrub'])
+  })
+
+  test('keeps what the pen rubbed out when its touch is cancelled', () => {
+    const { effects } = play(
+      [down({ id: 1, pointer: 'pen', hit: hit({ stroke: 's1' }) }), { kind: 'cancel', id: 1 }],
+      context({ tool: 'erase' }),
+    )
+
+    expect(verbs(effects)).not.toContain('unrub')
+  })
+
   test('keeps what the pen rubbed out when the pen comes down again', () => {
     const { effects } = play(
       [

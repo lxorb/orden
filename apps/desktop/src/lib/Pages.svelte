@@ -1106,6 +1106,7 @@
     if (!mine) return
 
     const by = driver
+    if (one?.kind === 'erase' && by?.touch) store.takeBack(one.run)
     gesture = null
     driver = null
     predicted = []
