@@ -406,6 +406,13 @@ function onCancel(machine: Machine, id: number): Step {
 }
 
 function onDown(machine: Machine, input: Down, context: Context): Step {
+  const next = landing(machine, input, context)
+  const palmRubbed =
+    input.pointer === 'pen' && machine.gesture?.kind === 'erase' && machine.driver?.kind === 'touch'
+  return palmRubbed ? { ...next, effects: [{ do: 'unrub' }, ...next.effects] } : next
+}
+
+function landing(machine: Machine, input: Down, context: Context): Step {
   if (input.pointer === 'touch' && machine.penDown) return { machine, effects: [] }
 
   const now: Machine =
