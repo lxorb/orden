@@ -1,7 +1,3 @@
-<script lang="ts" module>
-  let listTop = 0
-</script>
-
 <script lang="ts">
   import { dropOver } from './drag-paths'
   import { closeOnBack } from './backstack.svelte'
@@ -150,6 +146,9 @@
       )
       if (!row) return
 
+      for (let one: HTMLElement | null = row; one && one !== box; one = one.parentElement) {
+        holdScroll(one)
+      }
       holdScroll(box)
       row.scrollIntoView({ block: 'center' })
       row.classList.add('landed')
@@ -224,13 +223,6 @@
 
   const rebind = new Rebind()
   let keyFilter = $state('')
-
-  function keepsItsPlace(list: HTMLElement) {
-    list.scrollTop = listTop
-    const kept = () => (listTop = list.scrollTop)
-    list.addEventListener('scroll', kept, { passive: true })
-    return { destroy: () => list.removeEventListener('scroll', kept) }
-  }
 
   const shown = (key: string | null) => (key ? showCombination(key, shortcuts.platform) : null)
 
@@ -1029,7 +1021,7 @@
     />
   </label>
 
-  <div class="shortcut-list" data-scrolls use:scrollbar use:keepsItsPlace>
+  <div class="shortcut-list" data-scrolls use:scrollbar>
     {#each keyGroups as group (group.id)}
       <section class="shortcut-group">
         <h3>{group.label}</h3>
