@@ -52,9 +52,10 @@
       const space = path
         ? workspace.spaces.find((one) => withinSpace(one.root, path) !== null)
         : null
-      const [{ drawingOf }, { canvasSvg }] = await Promise.all([
+      const [{ drawingOf }, { canvasSvg }, { pdfFaces }] = await Promise.all([
         import('../export/drawing'),
         import('../canvas/picture'),
+        import('../canvas/faces'),
       ])
       const drawing = drawingOf({
         text,
@@ -62,9 +63,18 @@
         path: space && path ? withinSpace(space.root, path) : null,
         root: space?.root ?? null,
       })
+      const faces = await pdfFaces(drawing.canvas.nodes, { note: path, root: drawing.root })
       await tick()
       if (!node.isConnected) return
-      node.innerHTML = canvasSvg(drawing.canvas, drawing.palette, drawing.path, drawing.root, true)
+      node.innerHTML = canvasSvg(
+        drawing.canvas,
+        drawing.palette,
+        drawing.path,
+        drawing.root,
+        true,
+        false,
+        faces,
+      )
       const picture = node.firstElementChild
       picture?.removeAttribute('width')
       picture?.removeAttribute('height')
