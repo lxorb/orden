@@ -5,16 +5,20 @@ import { cancelJob, type Entry, FOUND, type Found, searchBelow } from './command
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the searches by job, never drawn
 const running = new Map<string, Search>()
-let hearing = false
+let hearing: Promise<unknown> | null = null
 
-function hear() {
-  if (hearing || !isDesktop) return
-  hearing = true
-  void import('@tauri-apps/api/event').then(({ listen }) =>
-    listen<{ job: string; found: Found[] }>(FOUND, ({ payload }) => {
-      running.get(payload.job)?.heard(payload.found)
-    }),
-  )
+function hear(): Promise<unknown> {
+  if (!isDesktop) return Promise.resolve()
+  hearing ??= import('@tauri-apps/api/event')
+    .then(({ listen }) =>
+      listen<{ job: string; found: Found[] }>(FOUND, ({ payload }) => {
+        running.get(payload.job)?.heard(payload.found)
+      }),
+    )
+    .catch(() => {
+      hearing = null
+    })
+  return hearing
 }
 
 function relativeName(root: string, one: Found): string {
@@ -36,9 +40,9 @@ export class Search {
   }
 
   async run(hidden: boolean) {
-    hear()
     running.set(this.job, this)
     try {
+      await hear()
       const said = await searchBelow(this.job, this.root, this.query, hidden)
       this.cut = said.cut
     } finally {
