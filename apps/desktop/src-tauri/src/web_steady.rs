@@ -24,12 +24,24 @@ impl<T> Default for Steady<T> {
 }
 
 impl<T> Steady<T> {
+    #[cfg(test)]
     pub fn told(
         &mut self,
         tab: &str,
         loading: bool,
         one: T,
         now: Instant,
+    ) -> (Vec<T>, Option<Duration>) {
+        self.told_over(tab, loading, one, now, |_, newer| newer)
+    }
+
+    pub fn told_over(
+        &mut self,
+        tab: &str,
+        loading: bool,
+        one: T,
+        now: Instant,
+        over: impl FnOnce(T, T) -> T,
     ) -> (Vec<T>, Option<Duration>) {
         let Some(kept) = self.tabs.get_mut(tab) else {
             self.tabs.insert(
@@ -55,7 +67,10 @@ impl<T> Steady<T> {
             kept.last = now;
             return (vec![one], None);
         }
-        kept.held = Some(one);
+        kept.held = Some(match kept.held.take() {
+            Some(older) => over(older, one),
+            None => one,
+        });
         if kept.waiting {
             return (Vec::new(), None);
         }
@@ -78,6 +93,21 @@ impl<T> Steady<T> {
 
 type Said = (String, serde_json::Value);
 
+fn said_over(older: Said, newer: Said) -> Said {
+    let (window, mut payload) = newer;
+    if let (serde_json::Value::Object(kept), serde_json::Value::Object(now)) =
+        (older.1, &mut payload)
+    {
+        for (key, was) in kept {
+            let blank = now.get(&key).is_none_or(|one| one.as_str() == Some(""));
+            if blank && was.as_str().is_some_and(|one| !one.is_empty()) {
+                now.insert(key, was);
+            }
+        }
+    }
+    (window, payload)
+}
+
 static TOLD: LazyLock<Mutex<Steady<Said>>> = LazyLock::new(Mutex::default);
 
 fn told<R>(look: impl FnOnce(&mut Steady<Said>) -> R) -> R {
@@ -94,8 +124,15 @@ pub fn say(
 ) {
     use tauri::Emitter;
 
-    let (now, later) =
-        told(|all| all.told(tab, loading, (window.to_string(), payload), Instant::now()));
+    let (now, later) = told(|all| {
+        all.told_over(
+            tab,
+            loading,
+            (window.to_string(), payload),
+            Instant::now(),
+            said_over,
+        )
+    });
     for (window, one) in now {
         let _ = app.emit_to(window.as_str(), event, one);
     }
@@ -117,7 +154,7 @@ pub fn forget(tab: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Steady, STEADY};
+    use super::{said_over, Steady, STEADY};
     use std::time::{Duration, Instant};
 
     #[test]
@@ -168,6 +205,26 @@ mod tests {
             (vec!["loaded"], None)
         );
         assert_eq!(steady.due("t", at + STEADY), None);
+    }
+
+    #[test]
+    fn a_title_held_back_is_not_lost_to_a_later_word_that_carries_none() {
+        let mut steady = Steady::default();
+        let at = Instant::now();
+        let word = |url: &str, title: &str| {
+            (
+                "main".to_string(),
+                serde_json::json!({ "tab": "t", "url": url, "title": title, "back": false }),
+            )
+        };
+        steady.told_over("t", false, word("http://a/", "carry"), at, said_over);
+        let held = steady.told_over("t", false, word("http://a/", "carried {}"), at, said_over);
+        assert!(held.0.is_empty());
+        let after = steady.told_over("t", false, word("http://a/b", ""), at, said_over);
+        assert!(after.0.is_empty());
+        let (_, sent) = steady.due("t", at + STEADY).unwrap();
+        assert_eq!(sent["title"], "carried {}");
+        assert_eq!(sent["url"], "http://a/b");
     }
 
     #[test]
