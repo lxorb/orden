@@ -78,6 +78,12 @@ class Asking {
   }
 
   keepOnly(agents: ReadonlySet<string>): void {
+    for (const [id, agent] of this.owners) {
+      if (agents.has(agent) || this.hearing.has(id)) continue
+      if (this.waiting.some((one) => one.id === id)) continue
+      this.owners.delete(id)
+      this.answered.delete(id)
+    }
     for (const one of this.waiting) if (!agents.has(one.agent)) this.answer(one.id, null)
   }
 }
