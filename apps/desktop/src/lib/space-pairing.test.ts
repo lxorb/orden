@@ -12,6 +12,7 @@ const world = vi.hoisted(() => ({
   onMade: null as (() => Promise<void>) | null,
   online: true,
   expired: false,
+  blocked: false,
   adopted: [] as { name: string; fresh: boolean }[],
 }))
 
@@ -35,6 +36,7 @@ vi.mock('./api', async (importOriginal) => {
       deleteSpace: (_token: string, id: string) => {
         if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
         if (world.expired) return Promise.reject(new ApiError(401, 'sign in again'))
+        if (world.blocked) return Promise.reject(new ApiError(403, 'request failed', '<html>'))
         world.ended.push(`delete ${id}`)
         return Promise.resolve({ ok: true })
       },
@@ -132,6 +134,7 @@ beforeEach(() => {
   world.ended = []
   world.online = true
   world.expired = false
+  world.blocked = false
   world.onMade = null
 })
 
@@ -215,6 +218,23 @@ describe('a space deleted while the account could not be reached', () => {
 
     expect(world.ended).toEqual(['leave a-Theirs'])
     expect(world.adopted).toEqual([])
+  })
+})
+
+describe('a space deleted while something in the way answered for the account', () => {
+  test('is still owed, and the account is told once it answers', async () => {
+    world.spaces = []
+    signedIn('a', ['Gone'])
+    world.blocked = true
+    await endSpace('token-a', 'a', 'a-Gone', 'delete')
+    expect(endsOwed('a')).toEqual(new Set(['a-Gone']))
+
+    world.blocked = false
+    const { pairing: held } = pairing()
+    await pairSpaces('token-a', held)
+
+    expect(world.ended).toEqual(['delete a-Gone'])
+    expect(endsOwed('a')).toEqual(new Set())
   })
 })
 
