@@ -1152,6 +1152,14 @@ select option {
   color: var(--muted);
 }
 
+.orden-chip.is-shrinkable {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 @media (hover: hover) {
   .orden-chip.is-quiet:hover:not(:disabled) {
     border-color: transparent;

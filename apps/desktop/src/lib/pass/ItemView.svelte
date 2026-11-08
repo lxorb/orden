@@ -206,28 +206,30 @@
         >
       {/if}
     </div>
-    {#if trashed}
+    <div class="acts">
+      {#if trashed}
+        <button
+          class="orden-button is-quiet is-soft"
+          type="button"
+          onclick={() => void pass.restore([item.id])}
+        >
+          {t('Restore')}
+        </button>
+      {:else}
+        <button class="orden-button" type="button" onclick={() => void ui.edit(item.id)}
+          >{t('Edit')}</button
+        >
+      {/if}
       <button
-        class="orden-button is-quiet is-soft"
+        class="orden-glyph"
         type="button"
-        onclick={() => void pass.restore([item.id])}
+        aria-label={t('More')}
+        title={t('More')}
+        onclick={(event) => menu.show(event, entries(event.currentTarget), { until: pass.opened })}
       >
-        {t('Restore')}
+        <Glyph icon={Ellipsis} />
       </button>
-    {:else}
-      <button class="orden-button" type="button" onclick={() => void ui.edit(item.id)}
-        >{t('Edit')}</button
-      >
-    {/if}
-    <button
-      class="orden-glyph"
-      type="button"
-      aria-label={t('More')}
-      title={t('More')}
-      onclick={(event) => menu.show(event, entries(event.currentTarget), { until: pass.opened })}
-    >
-      <Glyph icon={Ellipsis} />
-    </button>
+    </div>
   </header>
 
   <div class="body" data-scrolls>
@@ -341,13 +343,21 @@
   .head {
     flex: none;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-4) var(--space-4) var(--space-3);
   }
 
+  .acts {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-inline-start: auto;
+  }
+
   .named {
-    flex: 1;
+    flex: 1 1 4rem;
     min-width: 0;
     display: flex;
     flex-direction: column;
