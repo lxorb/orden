@@ -271,6 +271,18 @@ pub(crate) fn plain_name(said: &str) -> String {
         .join(" ")
 }
 
+pub(crate) fn spelled_out(said: &str) -> String {
+    let mut out = String::with_capacity(said.len());
+    for one in said.chars() {
+        if (one.is_control() && one != ' ') || is_format(one) {
+            out.extend(one.escape_unicode());
+        } else {
+            out.push(one);
+        }
+    }
+    out
+}
+
 pub(crate) fn clean_name(suggested: &OsStr) -> String {
     let replaced: String = suggested
         .to_string_lossy()
@@ -1059,7 +1071,9 @@ pub fn follow(view: &tauri::Webview, app: &AppHandle, window: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{clean_name, free_path, plain_name, split_extension, Downloads, State};
+    use super::{
+        clean_name, free_path, plain_name, spelled_out, split_extension, Downloads, State,
+    };
     use std::collections::HashSet;
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -1096,6 +1110,10 @@ mod tests {
         assert_eq!(
             plain_name(" Claude\u{202E}edoC\u{2066}\u{200B} x\u{3164}\ty\u{7}"),
             "ClaudeedoC x y"
+        );
+        assert_eq!(
+            spelled_out("sh -c \"curl x|sh #\u{202E}\nolleh\" می\u{200C}خواهم"),
+            "sh -c \"curl x|sh #\\u{202e}\\u{a}olleh\" می\u{200C}خواهم"
         );
         assert_eq!(name("a\u{200B}b\u{FEFF}.pdf"), "a_b_.pdf");
         assert_eq!(name("a\u{061C}b\u{E0041}.pdf"), "a_b_.pdf");
