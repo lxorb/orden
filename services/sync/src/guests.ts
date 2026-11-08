@@ -84,6 +84,16 @@ export async function guestForToken(env: Env, token: string): Promise<Guest | nu
   return row ?? null
 }
 
+export async function guestSignedIn(env: Env, guestId: string, tokenHash: string) {
+  const row = await env.DB.prepare(
+    'select 1 as one from guest_sessions where token_hash = ? and guest_id = ? and expires_at > ?',
+  )
+    .bind(tokenHash, guestId, now())
+    .first()
+
+  return row !== null
+}
+
 export async function renameGuest(env: Env, guestId: string, name: string): Promise<void> {
   await env.DB.prepare('update guests set name = ? where id = ?').bind(name, guestId).run()
 }

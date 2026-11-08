@@ -1,5 +1,6 @@
 import { isWho } from '@orden/chats/wire'
 import { note } from '../failed'
+import { guestSignedIn } from '../guests'
 import { rollOn } from '../sync2/rollout'
 import type { Env } from '../types'
 import { markSeen, register } from './devices'
@@ -125,6 +126,10 @@ export class AccountHub implements DurableObject {
     if (frame.device !== me.device) return
 
     if (me.guest) {
+      if (!(await guestSignedIn(this.env, me.who, me.session))) {
+        socket.close(1008, 'this device was signed out')
+        return
+      }
       attach(socket, { ...me, hello: true })
       return
     }
