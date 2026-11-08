@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { time } = await import('./time.svelte')
 const TimePanel = (await import('./TimePanel.svelte')).default
@@ -10,6 +10,8 @@ let target: HTMLElement
 let close: (() => void) | undefined
 
 beforeEach(async () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 4, 13, 15, 0))
   await time.opened({ owner: null, server: null, device: 'here' })
   for (const one of time.spans) time.removeSpan(one.id)
   for (const one of time.activities) time.removeActivity(one.id)
@@ -20,6 +22,7 @@ beforeEach(async () => {
 afterEach(() => {
   close?.()
   target.remove()
+  vi.useRealTimers()
 })
 
 function shown(component: unknown, props: Record<string, unknown> = {}) {

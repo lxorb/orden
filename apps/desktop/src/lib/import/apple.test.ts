@@ -16,8 +16,8 @@ function read(): AppleNotes {
         path: 'Groceries.md',
         title: 'Groceries',
         text: '# Groceries\n\n- [x] Milk\n- [ ] Eggs\n',
-        created: 1_788_480_000,
-        modified: 1_788_566_400,
+        created: 1_788_523_200,
+        modified: 1_788_609_600,
       },
       {
         path: 'Work/Ideas.md',

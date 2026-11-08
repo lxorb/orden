@@ -23,6 +23,7 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 const { links } = await import('../../src/lib/link-index.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')
 await import('../../src/lib/rows/rows.svelte')
+await import('../../src/lib/views/runner.svelte')
 const { makeList, unmakeList } = await import('../../src/lib/rows/todo-lists')
 const { computed, root, watch } = await import('./runes.svelte')
 type NoteIndex = import('@orden/editor').NoteIndex
