@@ -25,7 +25,7 @@ impl Client {
         let said = |key: &str| {
             info.get(key)
                 .and_then(Value::as_str)
-                .map(|one| one.split_whitespace().collect::<Vec<_>>().join(" "))
+                .map(crate::downloads::plain_name)
                 .filter(|one| !one.is_empty())
         };
         let own = said("name");
@@ -121,6 +121,15 @@ mod tests {
         let odd = Client::from_info(&json!({ "name": "日本", "title": "  " }));
         assert_eq!(odd.key, "agent");
         assert_eq!(odd.name, "日本");
+    }
+
+    #[test]
+    fn a_client_cannot_hide_letters_in_its_name() {
+        let hidden =
+            Client::from_info(&json!({ "name": "x", "title": "Claude Code\u{202E}lave\u{2066}" }));
+        assert_eq!(hidden.name, "Claude Codelave");
+        let blank = Client::from_info(&json!({ "name": "\u{200B}\u{3164}", "title": "\u{202E}" }));
+        assert_eq!(blank.name, "An agent");
     }
 
     #[test]

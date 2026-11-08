@@ -369,7 +369,7 @@ fn pair_client(app: &AppHandle, caller: &Caller, pair: &verbs::Pair) -> Answer {
             "only a client holding the installation's secret pairs: an agent is paired already",
         );
     }
-    let client: String = pair.client.split_whitespace().collect::<Vec<_>>().join(" ");
+    let client = crate::downloads::plain_name(&pair.client);
     if client.is_empty() || client.chars().count() > 60 {
         return Answer::error(Code::BadArguments, "a client's name is 1 to 60 characters");
     }

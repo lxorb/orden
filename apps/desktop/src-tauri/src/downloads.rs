@@ -255,6 +255,22 @@ fn is_blank(one: char) -> bool {
     )
 }
 
+pub(crate) fn plain_name(said: &str) -> String {
+    said.chars()
+        .filter(|one| !is_format(*one))
+        .map(|one| {
+            if one.is_control() || is_blank(one) {
+                ' '
+            } else {
+                one
+            }
+        })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 pub(crate) fn clean_name(suggested: &OsStr) -> String {
     let replaced: String = suggested
         .to_string_lossy()
@@ -1043,7 +1059,7 @@ pub fn follow(view: &tauri::Webview, app: &AppHandle, window: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{clean_name, free_path, split_extension, Downloads, State};
+    use super::{clean_name, free_path, plain_name, split_extension, Downloads, State};
     use std::collections::HashSet;
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -1077,6 +1093,10 @@ mod tests {
     fn what_changes_how_a_name_reads_is_replaced() {
         assert_eq!(name("invoice\u{202E}fdp.exe"), "invoice_fdp.exe");
         assert_eq!(name("a\u{2066}b\u{2069}.pdf"), "a_b_.pdf");
+        assert_eq!(
+            plain_name(" Claude\u{202E}edoC\u{2066}\u{200B} x\u{3164}\ty\u{7}"),
+            "ClaudeedoC x y"
+        );
         assert_eq!(name("a\u{200B}b\u{FEFF}.pdf"), "a_b_.pdf");
         assert_eq!(name("a\u{061C}b\u{E0041}.pdf"), "a_b_.pdf");
         assert_eq!(name("می\u{200C}خواهم.pdf"), "می\u{200C}خواهم.pdf");
