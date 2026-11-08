@@ -335,22 +335,15 @@ describe('the switch', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/AiPane.svelte',
       'lib/GraphControls.svelte',
       'lib/ImportSheet.svelte',
       'lib/Palette.svelte',
-      'lib/SettingsPanel.svelte',
       'lib/ShareSheet.svelte',
-      'lib/access/Access.svelte',
-      'lib/access/AccountSteps.svelte',
-      'lib/agents/settings/AgentDetail.svelte',
+      'lib/Switch.svelte',
       'lib/ai/DoWithAiCard.svelte',
       'lib/ai/sidebar/ModelPicker.svelte',
       'lib/chats/view/PollSheet.svelte',
       'lib/pass/SwitchRow.svelte',
-      'lib/people/ProfileRows.svelte',
-      'lib/remote/HostDetail.svelte',
-      'lib/settings/ExtensionRows.svelte',
       'lib/views/AutomationsBuilder.svelte',
       'lib/views/DisplayBuilder.svelte',
       'lib/views/ViewSettings.svelte',
