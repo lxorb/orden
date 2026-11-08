@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { locate, placesOf } from '../reading/find'
-import { placesOnPaper, runsOfItems, textOfRuns, wordsOfRuns } from './find'
+import { placesOnPaper, runsOfItems, spansOver, textOfRuns, wordsOfRuns } from './find'
 
 function divs(...runs: (string | null)[]): HTMLElement[] {
   return runs.map(
@@ -128,5 +128,34 @@ describe('a word broken across two lines with a hyphen', () => {
   test('and a break with no letter after the hyphen keeps the hyphen as a space', () => {
     const list = textOfRuns(runsOfItems([{ str: 'one -', hasEOL: true }, { str: '2 two' }]))
     expect(placesOnPaper(list, '- 2')).toHaveLength(1)
+  })
+})
+
+describe('the words a hit covers on the page', () => {
+  const pieces = ['The first worked exam-', 'ple shows the method.', 'A second line.'].reduce<
+    { node: Text; at: number }[]
+  >((all, said) => {
+    const last = all.at(-1)
+    const at = last ? last.at + last.node.length + 1 : 0
+    return [...all, { node: { length: said.length, data: said } as unknown as Text, at }]
+  }, [])
+  const text = pieces.map((one) => one.node.data).join('\n')
+
+  test('a word broken at a line end covers the two runs and nothing between them', () => {
+    const [hit] = placesOnPaper(text, 'example')
+    if (!hit) throw new Error('no hit')
+    const spans = spansOver(pieces, hit.at, hit.length)
+    expect(spans.map(({ node, from, to }) => node.data.slice(from, to))).toEqual(['exam-', 'ple'])
+  })
+
+  test('a word inside one run covers that run alone', () => {
+    const at = text.indexOf('second')
+    expect(spansOver(pieces, at, 6).map(({ node, from, to }) => node.data.slice(from, to))).toEqual(
+      ['second'],
+    )
+  })
+
+  test('nothing is covered past the last run', () => {
+    expect(spansOver(pieces, text.length + 4, 3)).toEqual([])
   })
 })
