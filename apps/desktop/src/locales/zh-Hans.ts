@@ -3601,4 +3601,5 @@ export const zhHans: Dictionary = {
   'Export…': '导出…',
   'Include pictures': '包含图片',
   'Without styles': '不带样式',
+  'Turn {name} on or off': '开启或关闭 {name}',
 }

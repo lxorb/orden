@@ -3807,4 +3807,5 @@ export const tr: Dictionary = {
   'Export…': 'Dışa aktar…',
   'Include pictures': 'Resimleri ekle',
   'Without styles': 'Biçemsiz',
+  'Turn {name} on or off': '{name} öğesini aç veya kapat',
 }

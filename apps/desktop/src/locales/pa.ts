@@ -3798,4 +3798,5 @@ export const pa: Dictionary = {
   'Export…': 'ਬਾਹਰ ਭੇਜੋ…',
   'Include pictures': 'ਤਸਵੀਰਾਂ ਸ਼ਾਮਲ ਕਰੋ',
   'Without styles': 'ਸ਼ੈਲੀ ਬਿਨਾਂ',
+  'Turn {name} on or off': '{name} ਚਾਲੂ ਜਾਂ ਬੰਦ ਕਰੋ',
 }

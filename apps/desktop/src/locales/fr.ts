@@ -3921,4 +3921,5 @@ export const fr: Dictionary = {
   'Export…': 'Exporter…',
   'Include pictures': 'Inclure les images',
   'Without styles': 'Sans styles',
+  'Turn {name} on or off': 'Activer ou désactiver {name}',
 }

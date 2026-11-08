@@ -24,7 +24,7 @@ const OWN: Record<string, RegExp> = {
   'Swatches.svelte': /class="swatch/,
   'SettingsPanel.svelte': /class="(thumb|key|link)"/,
   '*': /role="(radio|tab)"/,
-  'settings/ExtensionRows.svelte': /class="(name|toggle)"/,
+  'settings/ExtensionRows.svelte': /class="name"/,
   'remote/RemotePane.svelte': /class="(open|link)"/,
   'settings/BrowserThemes.svelte': /class="card"/,
   'pass/SettingsImport.svelte': /class="source"/,
@@ -67,6 +67,24 @@ describe('a row in Settings', () => {
       ),
     )
     expect(inline).toEqual([])
+  })
+})
+
+const SETTINGS =
+  /^((SettingsPanel|AiPane|SyncPane|Security|MigrateRows|RecentlyDeleted)\.svelte|people\/ProfileRows\.svelte|(settings|access|agents\/settings|online|remote)\/.+)$/
+
+describe('an on/off control in Settings', () => {
+  test('is the shared switch, never one drawn by hand', () => {
+    const files = svelteFiles(LIB)
+      .map((path) => ({ path: path.slice(LIB.length), source: readFileSync(path, 'utf8') }))
+      .filter((one) => SETTINGS.test(one.path))
+    expect(files.map((one) => one.path)).toEqual(
+      expect.arrayContaining(['SettingsPanel.svelte', 'settings/ExtensionRows.svelte']),
+    )
+    const own = files
+      .filter(({ source }) => /orden-switch|role="switch"/.test(source))
+      .map((one) => one.path)
+    expect(own).toEqual([])
   })
 })
 

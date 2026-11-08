@@ -3972,4 +3972,5 @@ export const ar: Dictionary = {
   'Export…': 'تصدير…',
   'Include pictures': 'تضمين الصور',
   'Without styles': 'بلا أنماط',
+  'Turn {name} on or off': 'تشغيل {name} أو إيقافه',
 }

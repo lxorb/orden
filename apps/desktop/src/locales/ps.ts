@@ -3782,4 +3782,5 @@ export const ps: Dictionary = {
   'Export…': 'صادرول…',
   'Include pictures': 'انځورونه پکې شامل کړه',
   'Without styles': 'بې بڼو',
+  'Turn {name} on or off': '{name} چالانول یا بندول',
 }

@@ -3807,4 +3807,5 @@ export const te: Dictionary = {
   'Export…': 'ఎక్స్‌పోర్ట్…',
   'Include pictures': 'చిత్రాలను చేర్చు',
   'Without styles': 'స్టైల్‌లు లేకుండా',
+  'Turn {name} on or off': '{name} ఆన్ లేదా ఆఫ్ చేయండి',
 }

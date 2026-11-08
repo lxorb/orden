@@ -3688,4 +3688,5 @@ export const vi: Dictionary = {
   'Export…': 'Xuất…',
   'Include pictures': 'Kèm ảnh',
   'Without styles': 'Không kiểu',
+  'Turn {name} on or off': 'Bật hoặc tắt {name}',
 }

@@ -3723,4 +3723,5 @@ export const my: Dictionary = {
   'Export…': 'ထုတ်ယူ…',
   'Include pictures': 'ပုံများ ထည့်ပါ',
   'Without styles': 'အပြင်အဆင်မပါ',
+  'Turn {name} on or off': '{name} ကို ဖွင့် သို့မဟုတ် ပိတ်ပါ',
 }

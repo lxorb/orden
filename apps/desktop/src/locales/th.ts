@@ -3644,4 +3644,5 @@ export const th: Dictionary = {
   'Export…': 'ส่งออก…',
   'Include pictures': 'รวมรูป',
   'Without styles': 'ไม่มีสไตล์',
+  'Turn {name} on or off': 'เปิดหรือปิด {name}',
 }

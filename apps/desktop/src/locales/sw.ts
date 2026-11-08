@@ -3837,4 +3837,5 @@ export const sw: Dictionary = {
   'Export…': 'Toa…',
   'Include pictures': 'Jumuisha picha',
   'Without styles': 'Bila mitindo',
+  'Turn {name} on or off': 'Washa au zima {name}',
 }

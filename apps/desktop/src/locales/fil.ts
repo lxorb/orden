@@ -3864,4 +3864,5 @@ export const fil: Dictionary = {
   'Export…': 'I-export…',
   'Include pictures': 'Isama ang mga larawan',
   'Without styles': 'Walang estilo',
+  'Turn {name} on or off': 'I-on o i-off ang {name}',
 }

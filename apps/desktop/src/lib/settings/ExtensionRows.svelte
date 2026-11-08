@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import { t } from '../i18n.svelte'
+  import Switch from '../Switch.svelte'
   import { dur, slide } from '../motion'
   import { workspace } from '../workspace.svelte'
   import ExtensionGaps from '../web-tab/ExtensionGaps.svelte'
@@ -52,15 +53,11 @@
         {/if}
       </span>
     </button>
-    <button
-      class="toggle"
-      role="switch"
-      aria-checked={one.enabled}
-      aria-label={one.name}
-      onclick={() => void extensions.enable(one.id, !one.enabled)}
-    >
-      <span class="orden-switch" class:on={one.enabled} aria-hidden="true"></span>
-    </button>
+    <Switch
+      on={one.enabled}
+      label={t('Turn {name} on or off', { name: one.name })}
+      onchange={(on) => void extensions.enable(one.id, on)}
+    />
   </div>
   {#if opened === one.id}
     <div class="details" transition:slide={{ duration: dur(140) }}>
@@ -162,14 +159,6 @@
 
   .warn {
     color: var(--danger);
-  }
-
-  .toggle {
-    flex: none;
-    padding: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
   }
 
   .details {

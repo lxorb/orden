@@ -3930,4 +3930,5 @@ export const uk: Dictionary = {
   'Export…': 'Експорт…',
   'Include pictures': 'З малюнками',
   'Without styles': 'Без стилів',
+  'Turn {name} on or off': 'Увімкнути або вимкнути {name}',
 }

@@ -3838,4 +3838,5 @@ export const ha: Dictionary = {
   'Export…': 'Fitar…',
   'Include pictures': 'Haɗa hotuna',
   'Without styles': 'Ba tare da salo',
+  'Turn {name} on or off': 'Kunna ko kashe {name}',
 }

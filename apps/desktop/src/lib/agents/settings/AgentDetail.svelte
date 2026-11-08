@@ -2,6 +2,7 @@
   import Facts from '../../Facts.svelte'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import Cross from '../../Cross.svelte'
+  import Switch from '../../Switch.svelte'
   import { i18n, t } from '../../i18n.svelte'
   import { prompt } from '../../prompt.svelte'
   import Select from '../../Select.svelte'
@@ -97,12 +98,6 @@
     await pane.remove(grant.id)
   }
 
-  function pressed(event: KeyboardEvent, then: () => void) {
-    if (event.key !== ' ' && event.key !== 'Enter') return
-    event.preventDefault()
-    then()
-  }
-
   let moving = $state<{ limit: Limit; value: number } | null>(null)
 
   const limitOf = (limit: Limit) => (moving?.limit === limit ? moving.value : grant.limits[limit])
@@ -112,18 +107,10 @@
 </script>
 
 {#snippet toggle(label: string, on: boolean, flip: () => void)}
-  <div
-    class="orden-setting pressable"
-    role="switch"
-    tabindex="0"
-    aria-checked={on}
-    onclick={flip}
-    onkeydown={(event) => {
-      pressed(event, flip)
-    }}
-  >
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="orden-setting pressable" onclick={flip}>
     <span class="name">{label}</span>
-    <span class="orden-switch" class:on aria-hidden="true"></span>
+    <Switch {on} {label} onchange={flip} />
   </div>
 {/snippet}
 

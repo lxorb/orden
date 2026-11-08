@@ -3601,4 +3601,5 @@ export const zhHantHK: Dictionary = {
   'Export…': '匯出…',
   'Include pictures': '包含圖片',
   'Without styles': '不含樣式',
+  'Turn {name} on or off': '開啟或關閉 {name}',
 }

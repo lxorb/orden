@@ -3593,4 +3593,5 @@ export const yue: Dictionary = {
   'Export…': '匯出…',
   'Include pictures': '連埋圖片',
   'Without styles': '唔含樣式',
+  'Turn {name} on or off': '開或者關 {name}',
 }

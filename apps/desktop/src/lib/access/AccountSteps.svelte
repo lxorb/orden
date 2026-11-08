@@ -5,6 +5,7 @@
   import Copyable from '../Copyable.svelte'
   import CopyButton from '../CopyButton.svelte'
   import Outward from '../Outward.svelte'
+  import Switch from '../Switch.svelte'
   import { t } from '../i18n.svelte'
   import { openExternal } from '../tauri'
   import { dur, fly, slide } from '../motion'
@@ -128,15 +129,15 @@
                 'A client that cannot sign in can be given a token instead. It is shown only once.',
               )}
             </p>
-            <button
-              class="switch"
-              role="switch"
-              aria-checked={!connectors.readOnly}
-              onclick={() => connectors.setReadOnly(!connectors.readOnly)}
-            >
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+            <div class="switch" onclick={() => connectors.setReadOnly(!connectors.readOnly)}>
               <span class="name">{t('Let it write to my notes, not only read them')}</span>
-              <span class="orden-switch" class:on={!connectors.readOnly} aria-hidden="true"></span>
-            </button>
+              <Switch
+                on={!connectors.readOnly}
+                label={t('Let it write to my notes, not only read them')}
+                onchange={(on) => connectors.setReadOnly(!on)}
+              />
+            </div>
 
             {#if connectors.freshToken}
               <div class="fresh" transition:slide={{ duration: dur(200), easing: cubicOut }}>
@@ -349,10 +350,5 @@
     font-size: var(--text-sm);
     text-align: start;
     cursor: default;
-  }
-
-  .switch:focus-visible {
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
   }
 </style>

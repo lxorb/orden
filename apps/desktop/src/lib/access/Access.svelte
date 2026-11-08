@@ -20,6 +20,7 @@
   import { type Choice, choices, shownFirst, viaAccount } from './choices'
   import LocalSteps from './LocalSteps.svelte'
   import Hint from '../Hint.svelte'
+  import Switch from '../Switch.svelte'
 
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
 
@@ -121,12 +122,6 @@
     void invoke('ai_cli_enroll_write', { on: enrolled }).catch(() => undefined)
   }
 
-  function pressed(event: KeyboardEvent) {
-    if (event.key !== 'Enter' && event.key !== ' ') return
-    event.preventDefault()
-    enroll()
-  }
-
   onMount(() => {
     if (settings.at !== 'access') return
     settings.at = null
@@ -219,15 +214,11 @@
                   /></span
                 ></span
               >
-              <span
-                class="orden-switch"
-                class:on={enrolled}
-                role="switch"
-                tabindex="0"
-                aria-checked={enrolled}
-                aria-label={t('Agents on this computer connect on their own')}
-                onkeydown={pressed}
-              ></span>
+              <Switch
+                on={enrolled}
+                label={t('Agents on this computer connect on their own')}
+                onchange={enroll}
+              />
             </div>
           </div>
         {/if}

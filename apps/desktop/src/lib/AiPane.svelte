@@ -21,6 +21,7 @@
   import { invoke, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
   import Hint from './Hint.svelte'
+  import Switch from './Switch.svelte'
   import { canDictate, type Engine, engines } from './dictation/engines.svelte'
   import { local } from './dictation/local.svelte'
 
@@ -221,19 +222,11 @@
           /></span
         ></span
       >
-      <span
-        class="orden-switch"
-        class:on={browserVault.on}
-        role="switch"
-        tabindex="0"
-        aria-checked={browserVault.on}
-        aria-label={t('Keep this browser’s keys in the vault')}
-        onkeydown={(event) => {
-          if (event.key !== ' ' && event.key !== 'Enter') return
-          event.preventDefault()
-          void keepBrowserInVault(!browserVault.on)
-        }}
-      ></span>
+      <Switch
+        on={browserVault.on}
+        label={t('Keep this browser’s keys in the vault')}
+        onchange={(on) => void keepBrowserInVault(on)}
+      />
     </div>
   </div>
   <p class="hint caption">
