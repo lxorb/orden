@@ -1202,7 +1202,9 @@ export function appCommands(view?: EditorView): Command[] {
     account.user
       ? {
           id: 'signout',
-          label: `${t('Sign out')} ${account.user.email}`.trim(),
+          label: account.user.email
+            ? t('Sign out {email}', { email: account.user.email })
+            : t('Sign out'),
           byHand: true,
           run: () =>
             __EVEN_PLUGIN__

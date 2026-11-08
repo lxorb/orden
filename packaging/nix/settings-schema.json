@@ -1065,7 +1065,7 @@
   },
   "shortcuts.chat-jump-new": {
     "type": "string",
-    "description": "The key that runs New, as the keys file writes it; empty for none."
+    "description": "The key that runs New messages, as the keys file writes it; empty for none."
   },
   "shortcuts.chat-record": {
     "type": "string",
