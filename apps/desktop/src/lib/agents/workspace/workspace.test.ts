@@ -184,6 +184,11 @@ function reads(result: Record<string, unknown>) {
   captured = { status: 'ok', result: { ...PAGE, ...result }, untrusted: PAGE.url }
 }
 
+const shell = {
+  hangs: false,
+  output: null as { onmessage: (message: unknown) => void } | null,
+}
+
 function crate(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
   asked.push({ command, args })
   const path = typeof args.path === 'string' ? args.path : ''
@@ -225,6 +230,12 @@ function crate(command: string, args: Record<string, unknown> = {}): Promise<unk
       return Promise.resolve(`files/${String(args.name)}`)
     case 'agents_log':
       return Promise.resolve(log)
+    case 'pty_spawn':
+      shell.output = args.output as typeof shell.output
+      return Promise.resolve()
+    case 'pty_write':
+      if (args.data === 'exit\r' && !shell.hangs) shell.output?.onmessage({ exit: 0 })
+      return Promise.resolve()
     default:
       return Promise.resolve(null)
   }
@@ -233,6 +244,13 @@ function crate(command: string, args: Record<string, unknown> = {}): Promise<unk
 vi.mock('../../tauri', async (original) => ({
   ...(await original<typeof import('../../tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => crate(command, args),
+}))
+
+vi.mock('../../native', async (original) => ({
+  ...(await original<typeof import('../../native')>()),
+  Channel: class {
+    onmessage: (message: unknown) => void = () => undefined
+  },
 }))
 
 vi.mock('../../sharing.svelte', () => ({
@@ -558,6 +576,7 @@ beforeEach(() => {
   searched.length = 0
   ran.length = 0
   answer = { status: 'ok', result: {} }
+  shell.hangs = false
   reads({})
   forgetIndexes()
   hiddenKinds.hidden = [BASES_WORD]
@@ -1955,6 +1974,15 @@ describe('to-dos and bases', () => {
       message: expect.stringContaining('changed Soup.md') as string,
     })
     expect(docs.writeNote).toHaveBeenCalledTimes(1)
+  })
+
+  test('the stop ends a command run_terminal started, its shell killed at once', async () => {
+    shell.hangs = true
+    const going = call('run_terminal', { command: 'git status', timeout_ms: 600_000 })
+    await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_write')).toBe(true))
+    for (const on of heard) on({ kind: 'stopped', agent: null })
+    expect(await going).toMatchObject({ status: 'error', code: 'stopped' })
+    expect(asked.filter((one) => one.command === 'pty_kill')).toHaveLength(1)
   })
 
   test('an agent that may only read cannot add one', async () => {

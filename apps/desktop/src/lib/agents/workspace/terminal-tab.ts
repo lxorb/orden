@@ -10,6 +10,7 @@ import type { Tab } from '../../workspace.svelte'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need } from './call'
 import { Refused } from './problem'
+import { stopRefused, stopSignal } from './stopping'
 import { namedTab } from './tab-target'
 import { KEY_NAMES, keyBytes, linesFrom, linesOf, shellOs, typesFreely } from './terminal-keys'
 
@@ -40,11 +41,11 @@ function running(tab: Tab): boolean {
 
 const CONNECTING = 60_000
 
-async function readyOf(session: Session, patience: number): Promise<void> {
+async function readyOf(session: Session, patience: number, signal?: AbortSignal): Promise<void> {
   const until = Date.now() + patience
   for (;;) {
     const blocked = session.agentBlocked()
-    if (blocked === null || blocked.lasting || Date.now() >= until) return
+    if (blocked === null || blocked.lasting || Date.now() >= until || signal?.aborted) return
     await new Promise((go) => setTimeout(go, 50))
   }
 }
@@ -58,42 +59,50 @@ function refusedFor(tab: Tab, session: Session): Refused {
   return new Refused('failed', why)
 }
 
-async function startingOf(tab: Tab): Promise<void> {
+async function startingOf(tab: Tab, signal?: AbortSignal): Promise<void> {
   const until = Date.now() + STARTING
-  while (!running(tab) && Date.now() < until) await new Promise((go) => setTimeout(go, 50))
+  while (!running(tab) && Date.now() < until && !signal?.aborted) {
+    await new Promise((go) => setTimeout(go, 50))
+  }
 }
 
-async function started(tab: Tab): Promise<Session> {
+async function started(tab: Tab, signal: AbortSignal): Promise<Session> {
   const session = await sessionFor(tab)
   if (session.agentBlocked() === null) return session
 
   if (session.online) {
     if (session.ended) session.startAgain()
-    else if (!session.host.isConnected) await startedOffScreen(session)
+    else if (!session.host.isConnected) await startedOffScreen(session, signal)
   } else if (session.host.isConnected) session.term.input('\r', false)
-  else await startedOffScreen(session)
+  else await startedOffScreen(session, signal)
 
-  await startingOf(tab)
-  await readyOf(session, session.online ? CONNECTING : 0)
+  await startingOf(tab, signal)
+  await readyOf(session, session.online ? CONNECTING : 0, signal)
+  if (signal.aborted) throw stopRefused(`${tab.shown}: typed nothing`)
   if (session.agentBlocked() !== null) throw refusedFor(tab, session)
-  await atPrompt(session.term)
+  await atPrompt(session.term, signal)
+  if (halted(signal)) throw stopRefused(`${tab.shown}: typed nothing`)
   return session
 }
 
-async function atPrompt(term: Session['term']): Promise<void> {
-  const until = Date.now() + PROMPT_WAIT
-  do await quiet(term, until - Date.now(), READY_QUIET, READY_QUIET)
-  while (!linesOf(term.buffer.active, 0, 1).text.trim() && Date.now() < until)
+function halted(signal: AbortSignal): boolean {
+  return signal.aborted
 }
 
-async function startedOffScreen(session: Session): Promise<void> {
+async function atPrompt(term: Session['term'], signal: AbortSignal): Promise<void> {
+  const until = Date.now() + PROMPT_WAIT
+  do await quiet(term, until - Date.now(), READY_QUIET, READY_QUIET, signal)
+  while (!linesOf(term.buffer.active, 0, 1).text.trim() && Date.now() < until && !signal.aborted)
+}
+
+async function startedOffScreen(session: Session, signal?: AbortSignal): Promise<void> {
   const holder = document.createElement('div')
   holder.style.cssText = OFF_SCREEN
   holder.setAttribute('aria-hidden', 'true')
   document.body.append(holder)
   try {
     await session.attach(holder, false)
-    await startingOf(session.tab)
+    await startingOf(session.tab, signal)
   } finally {
     if (session.host.parentElement === holder) session.detach()
     holder.remove()
@@ -207,25 +216,38 @@ async function typed(
   const question = await asked(call, free ? null : 'terminal', `${tab.shown}: ${shown}`)
   if (question) return question
 
-  const session = await started(tab)
-  const { term } = session
-  const since = linesFrom(term)
+  const halting = await stopSignal(call)
+  try {
+    const session = await started(tab, halting.signal)
+    const { term } = session
+    const since = linesFrom(term)
 
-  const sent = keyBytes(keys, term.modes.applicationCursorKeysMode)
-  const bytes = text + (enter ? '\r' : '') + ('bytes' in sent ? sent.bytes : '')
-  if (session.agentTyped(bytes) !== null) throw refusedFor(tab, session)
+    const sent = keyBytes(keys, term.modes.applicationCursorKeysMode)
+    const bytes = text + (enter ? '\r' : '') + ('bytes' in sent ? sent.bytes : '')
+    if (halting.signal.aborted) throw stopRefused(`${tab.shown}: typed nothing`)
+    if (session.agentTyped(bytes) !== null) throw refusedFor(tab, session)
 
-  await quiet(term, patience, rest * 2, rest)
-  const read = since(MOST_LINES)
-  return done(
-    {
-      ...about(tab),
-      typed: shown,
-      output: read.text,
-      ...(read.truncated ? { truncated: true } : {}),
-    },
-    SOURCE,
-  )
+    const interrupt = () => {
+      if (enter) session.agentTyped('\x03')
+    }
+    halting.signal.addEventListener('abort', interrupt, { once: true })
+    await quiet(term, patience, rest * 2, rest, halting.signal)
+    if (halted(halting.signal)) {
+      throw stopRefused(`${tab.shown}: ${shown}${enter ? ', then Ctrl+C' : ''}`)
+    }
+    const read = since(MOST_LINES)
+    return done(
+      {
+        ...about(tab),
+        typed: shown,
+        output: read.text,
+        ...(read.truncated ? { truncated: true } : {}),
+      },
+      SOURCE,
+    )
+  } finally {
+    halting.end()
+  }
 }
 
 function quiet(
@@ -233,10 +255,12 @@ function quiet(
   patience: number,
   first = QUIET * 2,
   rest = QUIET,
+  signal?: AbortSignal,
 ): Promise<void> {
   return new Promise((settle) => {
     let still: ReturnType<typeof setTimeout> | undefined
     const over = setTimeout(finish, patience)
+    signal?.addEventListener('abort', finish, { once: true })
     const printing = term.onWriteParsed(() => {
       clearTimeout(still)
       still = setTimeout(finish, rest)
@@ -247,6 +271,7 @@ function quiet(
       clearTimeout(over)
       clearTimeout(still)
       printing.dispose()
+      signal?.removeEventListener('abort', finish)
       settle()
     }
   })

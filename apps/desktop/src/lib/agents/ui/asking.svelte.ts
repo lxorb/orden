@@ -44,7 +44,7 @@ class Asking {
     else this.answered.set(id, said)
   }
 
-  heard(id: string, patience: number): Promise<Answered | null> {
+  heard(id: string, patience: number, signal?: AbortSignal): Promise<Answered | null> {
     const kept = this.answered.get(id)
     if (kept) {
       this.answered.delete(id)
@@ -54,15 +54,19 @@ class Asking {
     return new Promise((settle) => {
       const heard = (said: Answered) => {
         clearTimeout(over)
+        signal?.removeEventListener('abort', unheard)
         this.owners.delete(id)
         settle(said)
       }
-      const over = setTimeout(() => {
+      const unheard = () => {
+        clearTimeout(over)
         const left = (this.hearing.get(id) ?? []).filter((one) => one !== heard)
         if (left.length) this.hearing.set(id, left)
         else this.hearing.delete(id)
         settle(null)
-      }, patience)
+      }
+      const over = setTimeout(unheard, patience)
+      signal?.addEventListener('abort', unheard, { once: true })
       const gathered = this.hearing.get(id)
       if (gathered) gathered.push(heard)
       else this.hearing.set(id, [heard])
