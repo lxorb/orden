@@ -80,12 +80,11 @@
   const filter = $derived<Keeps | null>(asked ? graphFilter(parseQuery(asked)) : null)
 
   const groups = $derived(
-    settings.groups
-      .filter((group) => group.query.trim())
-      .map((group) => ({
-        colour: Math.min(MOST_GROUPS, Math.max(1, Math.round(group.colour))) - 1,
-        keeps: graphFilter(parseQuery(group.query)),
-      })),
+    settings.groups.flatMap((group) => {
+      const keeps = group.query.trim() ? graphFilter(parseQuery(group.query)) : null
+      if (!keeps) return []
+      return [{ colour: Math.min(MOST_GROUPS, Math.max(1, Math.round(group.colour))) - 1, keeps }]
+    }),
   )
 
   const madeAt = $derived.by((): Map<string, number> => {
