@@ -43,6 +43,10 @@ export async function fetchInTime(
 ): Promise<Response> {
   const giving = new AbortController()
   const timer = setTimeout(() => giving.abort(), within)
+  const asked = init.signal ?? (typeof input === 'string' ? null : input.signal)
+  const stopped = () => giving.abort(asked?.reason)
+  if (asked?.aborted) stopped()
+  else asked?.addEventListener('abort', stopped, { once: true })
   try {
     const response = await fetch(input, { ...init, signal: giving.signal })
     const bytes = await response.arrayBuffer()
@@ -52,10 +56,11 @@ export async function fetchInTime(
       headers: response.headers,
     })
   } catch (error) {
-    if (giving.signal.aborted) throw new TypeError(LATE, { cause: error })
+    if (giving.signal.aborted && !asked?.aborted) throw new TypeError(LATE, { cause: error })
     throw error
   } finally {
     clearTimeout(timer)
+    asked?.removeEventListener('abort', stopped)
   }
 }
 

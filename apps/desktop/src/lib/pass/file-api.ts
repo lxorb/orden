@@ -1,3 +1,4 @@
+import { BYTES_WITHIN, fetchInTime } from '../api'
 export type FileFetcher = (input: string, init: RequestInit) => Promise<Response>
 
 export class FileRefused extends Error {
@@ -40,7 +41,7 @@ async function refusal(response: Response): Promise<FileRefused> {
 export function fileApi(
   base: string,
   token: string,
-  fetcher: FileFetcher = (input, init) => fetch(input, init),
+  fetcher: FileFetcher = (input, init) => fetchInTime(input, init, BYTES_WITHIN),
 ): FileApi {
   const at = (vault: string, item: string, file: string) =>
     `${base}/v2/pass/files/${[vault, item, file].map(encodeURIComponent).join('/')}`

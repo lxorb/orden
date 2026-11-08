@@ -49,9 +49,11 @@ export async function pushedFiles(world: SyncWorld): Promise<FilesSent> {
       await sentOne(world, files, one)
       await world.exclusive(() => settledWaiting(world.rows, one))
     } catch (error) {
-      if (!(error instanceof FileRefused) || error.status >= 500) throw error
-      if (NEVER.has(error.status)) await world.exclusive(() => settledWaiting(world.rows, one))
-      else all = LATER.has(error.status) && all === 'sent' ? 'again' : 'stuck'
+      if (error instanceof TypeError) all = 'stuck'
+      else if (!(error instanceof FileRefused)) throw error
+      else if (NEVER.has(error.status)) {
+        await world.exclusive(() => settledWaiting(world.rows, one))
+      } else all = LATER.has(error.status) && all === 'sent' ? 'again' : 'stuck'
     }
   }
   return all
