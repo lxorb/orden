@@ -15,6 +15,7 @@ export class Refused extends Error {
   constructor(
     readonly status: number,
     message: string,
+    readonly told = true,
   ) {
     super(message)
   }
@@ -77,7 +78,11 @@ export function accountOver(reaching: Reaching): Account {
         const said: unknown = await response.json().catch(() => null)
         const error =
           typeof said === 'object' && said !== null && 'error' in said ? String(said.error) : ''
-        throw new Refused(response.status, error || `request failed (${String(response.status)})`)
+        throw new Refused(
+          response.status,
+          error || `request failed (${String(response.status)})`,
+          error !== '',
+        )
       }
       return unframe(new Uint8Array(await response.arrayBuffer()))
     },
