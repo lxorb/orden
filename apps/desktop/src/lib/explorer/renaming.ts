@@ -28,6 +28,10 @@ export function isOneName(name: string): boolean {
   return clean !== '' && clean !== '.' && clean !== '..' && !/[/\\\0]/.test(name)
 }
 
+function folderPart(relative: string): string {
+  return relative.slice(0, relative.lastIndexOf('/') + 1)
+}
+
 export function clashing(
   names: readonly string[],
   next: readonly string[],
@@ -39,7 +43,7 @@ export function clashing(
   const seen = new Map<string, number>()
   const out = new Set<number>()
   next.forEach((name, at) => {
-    const key = name.toLowerCase()
+    const key = `${folderPart(names[at] ?? '')}${name}`.toLowerCase()
     const same = key === names[at]?.toLowerCase()
     if (!isOneName(name) || (staying.has(key) && !same)) out.add(at)
     const first = seen.get(key)

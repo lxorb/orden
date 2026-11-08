@@ -50,4 +50,15 @@ describe('renaming many at once', () => {
     ])
     expect([...clashing(['a.md', 'b.md'], ['A.md', 'b.md'], ['a.md', 'b.md'], false)]).toEqual([])
   })
+
+  test('found below, names clash only with names in their own folder', () => {
+    expect([
+      ...clashing(['a/x.txt', 'b/y.txt'], ['same.txt', 'same.txt'], ['a/x.txt', 'b/y.txt']),
+    ]).toEqual([])
+    expect([
+      ...clashing(['a/x.txt', 'a/y.txt'], ['same.txt', 'same.txt'], ['a/x.txt', 'a/y.txt']),
+    ]).toEqual([0, 1])
+    expect([...clashing(['a/x.txt'], ['kept.txt'], ['a/x.txt', 'a/kept.txt'])]).toEqual([0])
+    expect([...clashing(['a/x.txt'], ['kept.txt'], ['a/x.txt', 'b/kept.txt'])]).toEqual([])
+  })
 })

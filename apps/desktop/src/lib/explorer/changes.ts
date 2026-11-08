@@ -302,9 +302,12 @@ export async function renameMany(
     await view.reload()
     return
   }
-  const crossing = moving.some(({ name }, at) =>
+  const crossing = moving.some(({ from, name }, at) =>
     moving.some(
-      (other, there) => there !== at && nameOf(other.from).toLowerCase() === name.toLowerCase(),
+      (other, there) =>
+        there !== at &&
+        folderOf(other.from) === folderOf(from) &&
+        nameOf(other.from).toLowerCase() === name.toLowerCase(),
     ),
   )
   const done: { from: string; to: string }[] = []

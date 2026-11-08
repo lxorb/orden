@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { t } from '../i18n.svelte'
-  import { nameOf } from '../space-paths'
+  import { nameOf, within } from '../space-paths'
   import { renameMany } from './changes'
   import { inASpace } from './open'
   import { clashing, renamedAll } from './renaming'
@@ -20,7 +20,12 @@
 
   const names = $derived(paths.map((one) => nameOf(one)))
   const next = $derived(renamedAll(names, { find, replace, numbered }))
-  const clashes = $derived(clashing(names, next, view.names, !inASpace(view.listing?.path ?? '')))
+  const listed = $derived(
+    paths.map((one) =>
+      view.search ? (within(view.search.root, one) ?? nameOf(one)) : nameOf(one),
+    ),
+  )
+  const clashes = $derived(clashing(listed, next, view.names, !inASpace(view.listing?.path ?? '')))
   const changed = $derived(next.some((name, at) => name !== names[at]))
 
   onMount(() => {
