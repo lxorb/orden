@@ -1103,6 +1103,26 @@ describe('a page out of sight', () => {
     expect(commands()).toEqual(['web_place'])
   })
 
+  test('a page switched away from while it wakes stays out of sight', async () => {
+    await built('t0')
+    away('t0', 30)
+    pages.retime()
+    await vi.waitFor(() => expect(lulls('t0')).toEqual([true]))
+    await settle()
+
+    let answer = (): void => undefined
+    pausing = new Promise<void>((go) => (answer = go))
+    const showing = pages.show('t0', SITE, PANE)
+    await vi.waitFor(() => expect(lulls('t0')).toEqual([true, false]))
+    pages.hide('t0', PANE)
+    pausing = null
+    answer()
+    await showing
+    await settle()
+
+    expect(last('web_place')).toMatchObject({ tab: 't0', visible: false })
+  })
+
   test("Hidden tabs' Pause and the countdown are one freeze: never twice, woken once", async () => {
     await built('t0')
     away('t0', 0)

@@ -287,6 +287,10 @@ export class Page {
   find = $state({ open: false, query: '', count: 0, at: -1 })
 }
 
+export function inSight(page: Page): boolean {
+  return page.onScreen
+}
+
 class Pages {
   private readonly held = new Map<string, Page>()
 
@@ -361,10 +365,11 @@ class Pages {
 
     await this.listen()
 
-    if (page.crashed) return
+    if (page.crashed || !inSight(page)) return
 
     if (page.live) {
       await this.thaw(tabId)
+      if (!inSight(page)) return
       await this.place(tabId, pane, visible, !visible, over)
       return
     }
