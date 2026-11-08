@@ -494,6 +494,65 @@ describe('a version put back from the history (#533)', () => {
   })
 })
 
+describe('an edit another window made meanwhile (#1847)', () => {
+  function edited() {
+    const { store, note } = opened(
+      writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a'), card('b', 300)] }),
+    )
+    store.edit({ ...store.canvas, nodes: [{ ...card('a'), y: 200 }, card('b', 300)] })
+    store.part()
+    return { store, note }
+  }
+
+  async function elsewhere(
+    note: InstanceType<typeof NoteDoc>,
+    change: (nodes: CanvasNode[]) => CanvasNode[],
+  ) {
+    const { stamped } = await import('./format')
+    const theirs = readCanvas(note.text)
+    note.replace(
+      writeCanvas(stamped(theirs, { ...theirs, nodes: change(theirs.nodes) }, Date.now() + 60_000)),
+    )
+  }
+
+  const where = (canvas: Canvas) =>
+    Object.fromEntries(canvas.nodes.map((node) => [node.id, node.y]))
+
+  test('stays when undo takes this window’s own edit back, and comes again with a redo', async () => {
+    const { store, note } = edited()
+    await elsewhere(note, (nodes) =>
+      nodes.map((node) => (node.id === 'b' ? { ...node, y: 500 } : node)),
+    )
+    store.follow()
+
+    expect(store.canUndo).toBe(true)
+    store.undo()
+    expect(where(store.canvas)).toEqual({ a: 0, b: 500 })
+
+    store.redo()
+    expect(where(store.canvas)).toEqual({ a: 200, b: 500 })
+  })
+
+  test('is not brought back by an undo when it deleted something', async () => {
+    const { store, note } = edited()
+    await elsewhere(note, (nodes) => nodes.filter((node) => node.id !== 'b'))
+    store.follow()
+
+    store.undo()
+    expect(where(store.canvas)).toEqual({ a: 0 })
+  })
+
+  test('adds what it drew to every step undo goes back to', async () => {
+    const { store, note } = edited()
+    await elsewhere(note, (nodes) => [...nodes, card('c', 600)])
+    store.follow()
+
+    store.undo()
+    expect(where(store.canvas)).toEqual({ a: 0, b: 0, c: 0 })
+    expect(ids(store.canvas)).toEqual(['a', 'b', 'c'])
+  })
+})
+
 describe('ink pasted on its own', () => {
   test('lands centred on the pointer, as cards do', async () => {
     const { run } = await import('./actions')

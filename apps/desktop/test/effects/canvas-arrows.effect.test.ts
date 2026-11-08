@@ -119,7 +119,7 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
     expect(lit('Redo')).toBe(false)
   })
 
-  test('words that changed under the plane put both out', () => {
+  test('words that changed under the plane leave both lit, taking back only this plane’s own steps', () => {
     put('a')
     put('b')
     store.undo()
@@ -131,7 +131,7 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
     note.replace(writeCanvas({ ...outside, nodes: [...outside.nodes, card('z')] }))
     store.follow()
     flushSync()
-    expect(lit('Undo')).toBe(false)
-    expect(lit('Redo')).toBe(false)
+    expect(lit('Undo')).toBe(true)
+    expect(lit('Redo')).toBe(true)
   })
 })
