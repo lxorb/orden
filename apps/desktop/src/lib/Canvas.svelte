@@ -23,7 +23,7 @@
     unsnapped,
     zoomed,
   } from './camera'
-  import { actualSize, canvasMenu, place, pull, run } from './canvas/actions'
+  import { actualSize, canvasMenu, isPdfFile, place, pull, run } from './canvas/actions'
   import {
     coloured,
     movedBy,
@@ -1452,19 +1452,11 @@
   }
 
   function placeFiles(files: readonly File[], point: { x: number; y: number }) {
-    for (const [index, file] of files.entries()) {
-      const at = { x: point.x, y: point.y + index * GRID * 10 }
-      if (isPdfFile(file)) void run.dropPdf(store, file, at, tab.path)
-      else void run.dropImage(store, file, at, tab.path)
-    }
+    void run.dropFiles(store, files, point, tab.path)
   }
 
   function isCanvasFile(file: File): boolean {
     return file.type.startsWith('image/') || isPicture(file.name) || isPdfFile(file)
-  }
-
-  function isPdfFile(file: File): boolean {
-    return file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
   }
 
   const pickedColour = $derived.by(() => {
