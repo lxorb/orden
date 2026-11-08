@@ -1,3 +1,5 @@
+export const MOST_LINE = 10_000
+
 export type Os = 'windows' | 'unix'
 
 export function osOf(platform: string): Os {

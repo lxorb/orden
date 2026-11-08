@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
-import { plainOf } from './shell-text'
+import { MOST_LINE, plainOf } from './shell-text'
 import { historyOf } from '../../terminal/history'
 import { isOnlineTab } from '../../online/path'
 import { shellRunning } from '../../terminal/running'
@@ -13,6 +13,8 @@ import { Refused } from './problem'
 import { stopRefused, stopSignal } from './stopping'
 import { namedTab } from './tab-target'
 import { KEY_NAMES, keyBytes, linesFrom, linesOf, shellOs, typesFreely } from './terminal-keys'
+
+const MOST_KEYS = 100
 
 const LINES = 200
 const MOST_LINES = 5000
@@ -201,8 +203,15 @@ async function typed(
 
   const { tab } = namedTab(call, ['terminal'], 'a terminal')
   if (/[\r\n]/.test(text)) throw new Refused('bad_arguments', 'one line at a time')
+  if (text.length > MOST_LINE) {
+    throw new Refused('bad_arguments', `a line is at most ${MOST_LINE} characters`)
+  }
 
-  const keys = Array.isArray(call.args.keys) ? call.args.keys.map(String) : []
+  const listed: unknown[] = Array.isArray(call.args.keys) ? call.args.keys : []
+  if (listed.length > MOST_KEYS) {
+    throw new Refused('bad_arguments', `keys is a list of up to ${MOST_KEYS} keys`)
+  }
+  const keys = listed.map(String)
   const enter = 'enter' in call.args ? flag(call, 'enter') : text !== '' || !keys.length
   if (!text && !enter && !keys.length) throw new Refused('bad_arguments', 'say the text or keys')
 

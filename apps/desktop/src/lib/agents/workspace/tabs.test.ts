@@ -865,6 +865,23 @@ describe('the reader terminals', () => {
     expect(asked.some((one) => one.command === 'agents_ask')).toBe(false)
   })
 
+  test('type: at most 100 keys and a line of 10000 characters, refused before anything is typed', async () => {
+    running.add('t1')
+    for (const args of [
+      { keys: Array.from({ length: 101 }, () => 'Ctrl+C') },
+      { text: `git ${'x'.repeat(10_000)}` },
+    ]) {
+      expect(await call('type_terminal', { tab: 't1', ...args, wait_ms: 1 })).toMatchObject({
+        code: 'bad_arguments',
+      })
+    }
+    expect(await call('run_terminal', { command: `git ${'x'.repeat(10_000)}` })).toMatchObject({
+      code: 'bad_arguments',
+    })
+    expect(screen.typed).toEqual([])
+    expect(asked.some((one) => one.command === 'agents_ask')).toBe(false)
+  })
+
   test('type: anything else asks, and Ctrl+C alone does not', async () => {
     running.add('t1')
     answer = { status: 'needs_approval', approval: 'a2', summary: 'rm' }

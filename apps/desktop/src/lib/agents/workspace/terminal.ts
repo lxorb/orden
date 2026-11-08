@@ -6,7 +6,7 @@ import { invoke, platform } from '../../tauri'
 import { asked } from './asks'
 import { type Call, count, done, maybe, need } from './call'
 import { Refused } from './problem'
-import { onTheList, osOf, plainOf, startsOnlyOne, Tail } from './shell-text'
+import { MOST_LINE, onTheList, osOf, plainOf, startsOnlyOne, Tail } from './shell-text'
 import { judged, onDisk, placeOf } from './spaces'
 import { stopRefused, stopSignal } from './stopping'
 
@@ -22,6 +22,9 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
 
   const command = need(call, 'command')
   if (/[\r\n]/.test(command)) throw new Refused('bad_arguments', 'one command line at a time')
+  if (command.length > MOST_LINE) {
+    throw new Refused('bad_arguments', `a command line is at most ${MOST_LINE} characters`)
+  }
 
   if (maybe(call, 'tab') !== null) {
     const { runInTab } = await import('./terminal-tab')
