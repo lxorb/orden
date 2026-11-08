@@ -248,6 +248,26 @@ describe('input, as the host plays it', () => {
     })
   })
 
+  test('a key the host plays: named as people name it, the plus key too, and nothing it drops', () => {
+    const pressed = (key: string) =>
+      inputOf([{ type: 'key', key }])
+        .filter((one) => one.t === 'key' && one.down)
+        .map((one) => (one.t === 'key' ? one.key : ''))
+    expect(pressed('Space')).toEqual([' '])
+    expect(pressed('esc')).toEqual(['Escape'])
+    expect(pressed('Return')).toEqual(['Enter'])
+    expect(pressed('enter')).toEqual(['Enter'])
+    expect(pressed('Shift+Up')).toEqual(['Shift', 'ArrowUp'])
+    expect(pressed('Alt+f4')).toEqual(['Alt', 'F4'])
+    expect(pressed('Ctrl++')).toEqual(['Control', '+'])
+    expect(pressed('Ctrl + +')).toEqual(['Control', '+'])
+    expect(pressed('+')).toEqual(['+'])
+    expect(pressed('Ctrl+Plus')).toEqual(['Control', '+'])
+    for (const key of ['Spaec', 'F25', 'Ctrl+Hyper', 'Ctrl+a+']) {
+      expect(() => inputOf([{ type: 'key', key }]), key).toThrow()
+    }
+  })
+
   test('the wheel, a double click with the right button, a press held', () => {
     expect(
       inputOf([

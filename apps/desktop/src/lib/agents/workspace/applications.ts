@@ -189,10 +189,63 @@ function eventsOf(one: unknown, at: number): InputEvent[] {
   }
 }
 
+const NAMED = [
+  'Enter',
+  'Backspace',
+  'Tab',
+  'Escape',
+  'Delete',
+  'Insert',
+  'Home',
+  'End',
+  'PageUp',
+  'PageDown',
+  'ArrowLeft',
+  'ArrowUp',
+  'ArrowRight',
+  'ArrowDown',
+  'CapsLock',
+  'NumLock',
+  'ScrollLock',
+  'Pause',
+  'PrintScreen',
+  'ContextMenu',
+]
+
+const ALIASES: Readonly<Record<string, string>> = {
+  space: ' ',
+  spacebar: ' ',
+  plus: '+',
+  minus: '-',
+  esc: 'Escape',
+  return: 'Enter',
+  del: 'Delete',
+  ins: 'Insert',
+  pgup: 'PageUp',
+  pgdn: 'PageDown',
+  pagedown: 'PageDown',
+  left: 'ArrowLeft',
+  up: 'ArrowUp',
+  right: 'ArrowRight',
+  down: 'ArrowDown',
+  menu: 'ContextMenu',
+  ...Object.fromEntries(NAMED.map((one) => [one.toLowerCase(), one])),
+}
+
+function keyOf(said: string, shifted: boolean): string | null {
+  if (said.length === 1) return shifted ? said : said.toLowerCase()
+  const lower = said.toLowerCase()
+  if (Object.hasOwn(ALIASES, lower)) return ALIASES[lower] ?? null
+  const number = /^f(\d{1,2})$/.exec(lower)?.[1]
+  return number && Number(number) >= 1 && Number(number) <= 24 ? `F${Number(number)}` : null
+}
+
 function chord(said: unknown, bad: (why: string) => Refused): InputEvent[] {
   if (typeof said !== 'string' || said.trim() === '') throw bad('say key, such as Enter or Ctrl+S')
-  const parts = said.split('+').map((one) => one.trim())
-  const last = parts.pop() ?? ''
+  const plus = /(^|\+)\s*\+\s*$/.exec(said)
+  const parts = (plus ? said.slice(0, plus.index) : said).split('+').map((one) => one.trim())
+  const last = plus ? '+' : (parts.pop() ?? '')
+  if (plus && parts.length === 1 && parts[0] === '') parts.pop()
   const held = parts.map((one) => {
     const found = MODIFIERS[one.toLowerCase()]
     if (!found) throw bad(`${one} is not Ctrl, Shift, Alt or Meta`)
@@ -200,7 +253,10 @@ function chord(said: unknown, bad: (why: string) => Refused): InputEvent[] {
   })
   if (last === '') throw bad('say the key after the modifiers')
   const shifted = held.some((one) => one.key === 'Shift')
-  const key = last.length === 1 && !shifted ? last.toLowerCase() : last
+  const key = keyOf(last, shifted)
+  if (key === null) {
+    throw bad(`${last} is not a key: one character, Space, F1 to F24 or ${NAMED.join(', ')}`)
+  }
   const code = `Agent:${key}`
   return [
     ...held.map((one): InputEvent => ({ t: 'key', key: one.key, code: one.code, down: true })),
