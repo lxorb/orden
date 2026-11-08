@@ -595,6 +595,40 @@ describe('a session a share link handed out', () => {
     expect(account.accountToken).toBe('session')
   })
 
+  test('opened as another account takes what was read for the last one with it', async () => {
+    await account.verify('123456')
+    account.settled()
+    usage.limit = 1000
+    usage.full = true
+    connectors.freshToken = 'mcp-secret'
+
+    await account.arrive('other-session', {
+      user: { id: 'u2', email: 'ada@example.com', name: null },
+    })
+
+    expect(usage.limit).toBe(0)
+    expect(usage.full).toBe(false)
+    expect(connectors.freshToken).toBeNull()
+    expect(account.user?.id).toBe('u2')
+    expect(account.accountToken).toBe('other-session')
+    expect(localStorage.getItem('orden:session')).toBe('other-session')
+  })
+
+  test('opened as the same account, or a guest signing in, keeps what was read', async () => {
+    await account.verify('123456')
+    account.settled()
+    usage.limit = 1000
+
+    await account.arrive('session', { user: { id: 'u1', email: 'me@example.com', name: null } })
+    expect(usage.limit).toBe(1000)
+
+    await account.signOut()
+    await account.arrive('guest-session', { guest: { id: 'g1', name: 'iPhone lark' } })
+    usage.limit = 500
+    await account.arrive('session', { user: { id: 'u1', email: 'me@example.com', name: null } })
+    expect(usage.limit).toBe(500)
+  })
+
   test('is nobody again once the session is let go of', async () => {
     server.meIsAGuest = true
     localStorage.setItem('orden:session', 'guest-session')
