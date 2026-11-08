@@ -117,7 +117,8 @@ tokens.post('/token', async (context) => {
 
     const hash = await sha256(body.code)
     const code = await context.env.DB.prepare(
-      'select client_id, user_id, redirect_uri, challenge, read_only, expires_at from oauth_codes where code_hash = ?',
+      `delete from oauth_codes where code_hash = ?
+       returning client_id, user_id, redirect_uri, challenge, read_only, expires_at`,
     )
       .bind(hash)
       .first<{
@@ -128,10 +129,6 @@ tokens.post('/token', async (context) => {
         read_only: number
         expires_at: number
       }>()
-
-    if (code) {
-      await context.env.DB.prepare('delete from oauth_codes where code_hash = ?').bind(hash).run()
-    }
 
     if (
       !code ||

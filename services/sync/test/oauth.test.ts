@@ -575,6 +575,38 @@ describe('connecting', () => {
     )
   })
 
+  test('spends a code once when it is presented twice at the same moment', async () => {
+    const { client_id } = (await register()).json
+    const { verifier, challenge } = await pkce()
+    const ask = { client_id, redirect_uri: CHATGPT, code_challenge: challenge }
+
+    const code = await codeSentTo(() => submit({ ...ask, action: 'send', email: 'a@b.dev' }))
+    const allowed = await submit({ ...ask, action: 'allow', email: 'a@b.dev', code })
+    const grant = new URL(allowed.headers.get('location')!).searchParams.get('code')!
+
+    const prepare = env.DB.prepare.bind(env.DB)
+    env.DB.prepare = (sql: string) => {
+      const statement = prepare(sql)
+      if (!sql.includes('oauth_codes where code_hash')) return statement
+      const first = statement.first.bind(statement)
+      return Object.assign(statement, {
+        first: async () => {
+          const row: unknown = await first()
+          await new Promise((resolve) => setTimeout(resolve, 20))
+          return row
+        },
+      })
+    }
+
+    const answers = await Promise.all([
+      exchange({ code: grant, code_verifier: verifier, client_id }),
+      exchange({ code: grant, code_verifier: verifier, client_id }),
+    ])
+
+    expect(answers.map((one) => one.status).sort()).toEqual([200, 400])
+    expect(env.db.prepare('select count(*) as n from oauth_grants').get()).toEqual({ n: 1 })
+  })
+
   test('refuses a code presented by another client', async () => {
     const { client_id } = (await register()).json
     const other = (await register([CHATGPT], { client_name: 'Other' })).json.client_id
