@@ -1,6 +1,7 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Packing {
     TarGz,
+    BareTarGz,
     Zip,
 }
 
@@ -18,6 +19,7 @@ pub struct Runtime {
     pub arch: &'static str,
     pub archive: Pinned,
     pub java: &'static str,
+    pub native: Option<Pinned>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -48,6 +50,13 @@ macro_rules! jre {
     };
 }
 
+const WINDOWS_X64_JRE: Pinned = pinned(
+    jre!("OpenJDK25U-jre_x64_windows_hotspot_25.0.5_8.zip"),
+    58_589_419,
+    "da78d54a2fcdbba1e92d5e3f07dd30236f96297891c4a21a781c3f38f5c0beae",
+    Packing::Zip,
+);
+
 pub const SIGNAL_CLI: Program = Program {
     name: "signal-cli",
     version: "0.14.9-25.0.5",
@@ -70,6 +79,24 @@ pub const SIGNAL_CLI: Program = Program {
                 Packing::TarGz,
             ),
             java: "bin/java",
+            native: None,
+        },
+        Runtime {
+            os: "linux",
+            arch: "aarch64",
+            archive: pinned(
+                jre!("OpenJDK25U-jre_aarch64_linux_hotspot_25.0.5_8.tar.gz"),
+                60_517_419,
+                "963931723891302ebb2687178532c3d793d71e2577cd058061c7efb396140a86",
+                Packing::TarGz,
+            ),
+            java: "bin/java",
+            native: Some(pinned(
+                "https://github.com/exquo/signal-libs-build/releases/download/libsignal_v0.103.0/libsignal_jni.so-v0.103.0-aarch64-unknown-linux-gnu.tar.gz",
+                10_340_511,
+                "bc112187bef1989ac5a3de14a0e43c53ba6c0c7fbc20b97cc363e92a7012728f",
+                Packing::BareTarGz,
+            )),
         },
         Runtime {
             os: "macos",
@@ -81,6 +108,7 @@ pub const SIGNAL_CLI: Program = Program {
                 Packing::TarGz,
             ),
             java: "Contents/Home/bin/java",
+            native: None,
         },
         Runtime {
             os: "macos",
@@ -92,17 +120,21 @@ pub const SIGNAL_CLI: Program = Program {
                 Packing::TarGz,
             ),
             java: "Contents/Home/bin/java",
+            native: None,
         },
         Runtime {
             os: "windows",
             arch: "x86_64",
-            archive: pinned(
-                jre!("OpenJDK25U-jre_x64_windows_hotspot_25.0.5_8.zip"),
-                58_589_419,
-                "da78d54a2fcdbba1e92d5e3f07dd30236f96297891c4a21a781c3f38f5c0beae",
-                Packing::Zip,
-            ),
+            archive: WINDOWS_X64_JRE,
             java: "bin/java.exe",
+            native: None,
+        },
+        Runtime {
+            os: "windows",
+            arch: "aarch64",
+            archive: WINDOWS_X64_JRE,
+            java: "bin/java.exe",
+            native: None,
         },
     ],
 };
@@ -113,6 +145,23 @@ pub fn program(name: &str) -> Option<&'static Program> {
     PROGRAMS.iter().find(|one| one.name == name)
 }
 
+fn system_name(os: &str) -> &str {
+    match os {
+        "windows" => "Windows",
+        "macos" => "macOS",
+        "linux" => "Linux",
+        other => other,
+    }
+}
+
+fn chip_name(arch: &str) -> &str {
+    match arch {
+        "x86_64" => "x64",
+        "aarch64" => "ARM64",
+        other => other,
+    }
+}
+
 impl Program {
     pub fn runtime_on(&self, os: &str, arch: &str) -> Option<&'static Runtime> {
         self.runtimes
@@ -120,8 +169,20 @@ impl Program {
             .find(|one| one.os == os && one.arch == arch)
     }
 
-    pub fn runtime(&self) -> Option<&'static Runtime> {
-        self.runtime_on(std::env::consts::OS, std::env::consts::ARCH)
+    pub fn runnable_on(&self, os: &str, arch: &str) -> Result<&'static Runtime, String> {
+        if let Some(runtime) = self.runtime_on(os, arch) {
+            return Ok(runtime);
+        }
+        Err(format!(
+            "{} does not run on {} on {}: there is no Java and Signal library made for it",
+            self.name,
+            system_name(os),
+            chip_name(arch)
+        ))
+    }
+
+    pub fn runnable(&self) -> Result<&'static Runtime, String> {
+        self.runnable_on(std::env::consts::OS, std::env::consts::ARCH)
     }
 
     pub fn allows(&self, args: &[String]) -> Result<(), String> {
