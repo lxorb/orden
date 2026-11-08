@@ -422,6 +422,7 @@
         graph={picture}
         whole
         current={workspace.relativeNote}
+        focused={workspace.panes.focusedId === pane.id}
         onopen={(path: string, how: OpenHow) => workspace.openRelative(path, how)}
         onescape={() => void workspace.closeAsking(tab.id)}
       />

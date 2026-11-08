@@ -22,12 +22,14 @@
     graph,
     current = null,
     whole = false,
+    focused = true,
     onopen,
     onescape,
   }: {
     graph: NoteGraph
     current?: string | null
     whole?: boolean
+    focused?: boolean
     onopen?: ((path: string, how: OpenHow) => void) | undefined
     onescape?: (() => void) | undefined
   } = $props()
@@ -582,11 +584,13 @@
   }
 
   function onKeydown(event: KeyboardEvent) {
-    if (event.key !== 'Escape' || !onescape) return
+    if (event.key !== 'Escape' || event.defaultPrevented || !onescape) return
 
-    const focused = document.activeElement
-    if (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) return
-    if (focused instanceof HTMLElement && focused.isContentEditable) return
+    const focus = document.activeElement
+    if (focus instanceof HTMLInputElement || focus instanceof HTMLTextAreaElement) return
+    if (focus instanceof HTMLElement && focus.isContentEditable) return
+    const bare = focus === null || focus === document.body
+    if (!host?.contains(focus) && !(bare && focused)) return
 
     event.preventDefault()
     onescape()
@@ -595,7 +599,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="graph" bind:this={host}>
+<div class="graph" tabindex="-1" bind:this={host}>
   <canvas
     bind:this={canvas}
     class:panning
@@ -633,6 +637,7 @@
     min-width: 0;
     min-height: 0;
     overflow: hidden;
+    outline: none;
   }
 
   canvas {
