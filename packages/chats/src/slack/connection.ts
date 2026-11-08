@@ -1162,7 +1162,7 @@ export class SlackConnection implements Connection {
       const inner = record(event.message)
       if (!text(inner.ts)) return
       const shown = await this.shapes(channel, inner)
-      const message = shown.at(-1)
+      const message = shown[0]
       if (!message) return
       if (!message.thread) this.noted(channel, message.id)
       if (message.deleted && !message.replies)
@@ -1172,7 +1172,7 @@ export class SlackConnection implements Connection {
     }
     if (!this.known.has(channel)) await this.channelChanged(channel, true).catch(() => undefined)
     const shown = await this.shapes(channel, event)
-    const message = shown.at(-1)
+    const message = shown[0]
     if (!message) return
     if (!message.thread) {
       this.noted(channel, message.id)
@@ -1189,7 +1189,7 @@ export class SlackConnection implements Connection {
     if (!inChannel) return []
     if (text(raw.subtype) !== 'thread_broadcast') return [inChannel]
     const [inThread] = await this.mapped(channel, [raw], true)
-    return inThread ? [inThread, inChannel] : [inChannel]
+    return inThread ? [inChannel, inThread] : [inChannel]
   }
 
   private async parentChanged(channel: string, parent: string): Promise<void> {
@@ -1234,7 +1234,7 @@ export class SlackConnection implements Connection {
   }
 
   private changedAll(channel: string, shown: readonly ProviderMessage[]): void {
-    const message = shown.at(-1)
+    const message = shown[0]
     if (message && !message.thread) this.noted(channel, message.id)
     for (const one of shown) this.emit({ t: 'changed', message: one })
   }

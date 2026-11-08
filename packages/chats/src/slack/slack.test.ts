@@ -529,11 +529,11 @@ describe('threads', () => {
     given.slack.event({ ...loud, channel: 'C1' })
     await vi.waitFor(() =>
       expect(events.filter((one) => one.t === 'message').map((one) => one.message)).toEqual([
-        expect.objectContaining({ id: loud.ts, thread: parent.ts }),
         expect.objectContaining({ id: loud.ts, replyTo: parent.ts }),
+        expect.objectContaining({ id: loud.ts, thread: parent.ts }),
       ]),
     )
-    const inChannel = events.filter((one) => one.t === 'message')[1]
+    const inChannel = events.find((one) => one.t === 'message')
     expect(inChannel?.t === 'message' && inChannel.message.thread).toBeUndefined()
   })
 
@@ -558,8 +558,8 @@ describe('threads', () => {
     })
     await vi.waitFor(() =>
       expect(events.filter((one) => one.t === 'changed').map((one) => one.message)).toEqual([
-        expect.objectContaining({ thread: parent.ts, reactions: { '🔥': ['U2'] } }),
         expect.objectContaining({ replyTo: parent.ts, reactions: { '🔥': ['U2'] } }),
+        expect.objectContaining({ thread: parent.ts, reactions: { '🔥': ['U2'] } }),
       ]),
     )
   })
