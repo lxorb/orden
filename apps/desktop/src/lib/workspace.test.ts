@@ -1741,6 +1741,19 @@ describe('a tab a session wrote as pinned', () => {
     const written = JSON.stringify(workspace.layout())
     expect(written).not.toContain('pinned')
   })
+
+  test('keeps one Settings tab when what comes back holds two', async () => {
+    workspace.openUnsaved('settings', '', 'Settings')
+    const kept = workspace.layout()
+    if (kept.frame.kind !== 'pane') throw new Error('one pane expected')
+    const [one] = kept.frame.pane.tabs
+    if (!one) throw new Error('nothing kept')
+    kept.frame.pane.tabs = [one, { ...one }]
+
+    await workspace.applyLayout(kept)
+
+    expect(workspace.tabs.filter((tab) => tab.kind === 'settings')).toHaveLength(1)
+  })
 })
 
 describe('a window with nothing open', () => {
