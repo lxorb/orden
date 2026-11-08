@@ -19,6 +19,7 @@ import { push } from './push/targets'
 import { sendDue } from './push/reminders'
 import { fillFronts } from './blog/fill'
 import { sweepLeftovers } from './leftovers'
+import { finishErasing } from './erase'
 import { forgetHalfDone, resealBorrowed, second } from './second'
 import { sweepAnswers } from './spaces/answers'
 import { sweepVersions } from './versions'
@@ -349,6 +350,7 @@ function scheduled(event: ScheduledEvent, given: Env, context: ExecutionContext)
   context.waitUntil(forgetHalfDone(env, at))
   context.waitUntil(resealBorrowed(env))
   context.waitUntil(sweepLeftovers(env))
+  context.waitUntil(finishErasing(env))
   context.waitUntil(sweepMisnamed(env))
   context.waitUntil(fillFronts(env, null))
 }

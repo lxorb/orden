@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { ERASED, eraseAccount } from '../src/erase'
+import { ERASED, eraseAccount, finishErasing } from '../src/erase'
 import { type TestEnv, testEnv } from './harness'
 import { hubs } from './hub-fakes'
 
@@ -477,18 +477,67 @@ describe('deleting one of two accounts', () => {
     ).toEqual([{ what: `hubs/${LEAVING.id}` }])
   })
 
-  test('undoes nothing when the transaction fails', async () => {
-    const before = everyRow(env.db)
-    const keys = env.keys().sort()
+  test('one that fails part way touches nothing of the other, and is finished the next night', async () => {
+    const theirs = () =>
+      everyRow(env.db).filter(({ row }) => naming(STAYING)(row) && !naming(LEAVING)(row))
+    const before = theirs()
     env.db.exec("create trigger refuse before delete on users begin select raise(abort, 'no'); end")
 
     await expect(
       eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 }),
     ).rejects.toThrow()
 
+    expect(theirs()).toEqual(before)
+    expect(
+      env.db.prepare('select count(*) as many from sessions where user_id = ?').get(LEAVING.id),
+    ).toEqual({ many: 0 })
+
+    await finishErasing(env)
+    expect(
+      env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id),
+    ).toEqual({ many: 1 })
+
     env.db.exec('drop trigger refuse')
-    expect(everyRow(env.db)).toEqual(before)
-    expect(env.keys().sort()).toEqual(keys)
+    await finishErasing(env)
+
+    expect(everyRow(env.db).filter(({ row }) => naming(LEAVING)(row))).toEqual([])
+    expect(theirs()).toEqual(before)
+    expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
+  })
+
+  test('of a very large account is written a bounded piece at a time', async () => {
+    const notes = env.db.prepare(
+      `insert into notes (id, space_id, path, seq, updated_at, size, hash)
+       values (?, ?, ?, 1, 1, 3, 'h')`,
+    )
+    const versions = env.db.prepare(
+      'insert into note_versions (note_id, at, hash, size) values (?, 1, ?, 3), (?, 2, ?, 3)',
+    )
+    env.db.exec('begin')
+    for (let n = 0; n < 3000; n++) {
+      const id = `big-${String(n)}`
+      notes.run(id, LEAVING.space, `${id}.md`)
+      versions.run(id, `v1-${String(n)}`, id, `v2-${String(n)}`)
+    }
+    env.db.exec('commit')
+
+    const pieces: number[] = []
+    const real = env.DB.batch.bind(env.DB)
+    env.DB.batch = async <T>(statements: D1PreparedStatement[]) => {
+      const answers = await real<T>(statements)
+      pieces.push(answers.reduce((sum, one) => sum + one.meta.changes, 0))
+      return answers
+    }
+
+    await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
+
+    expect(
+      env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id),
+    ).toEqual({ many: 0 })
+    expect(
+      env.db.prepare("select count(*) as many from notes where id like 'big-%'").get(),
+    ).toEqual({ many: 0 })
+    expect(Math.max(...pieces)).toBeLessThanOrEqual(3000)
   })
 
   test('goes on to the next leftovers when the oldest cannot be cleared yet', async () => {

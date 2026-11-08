@@ -21,6 +21,8 @@ const HOME = 'homes/'
 
 const WORDS = 'words/'
 
+export const ERASING = 'accounts/'
+
 const WORDS_AT_ONCE = 100
 
 export function wordsLeftover(noteId: string): string {
@@ -76,6 +78,7 @@ export async function sweepLeftovers(env: Env): Promise<number> {
           most,
           `${WORDS}%`,
           `${DOMAIN}%`,
+          `${ERASING}%`,
         )
         .all<{ what: string }>()
     ).results
@@ -84,13 +87,14 @@ export async function sweepLeftovers(env: Env): Promise<number> {
     ...(await taken(
       `select what from leftovers where what not like ?1 and what not like ?2
           and what not like ?3 and what not like ?4 and what not like ?5
-          and what not like ?7 and what not like ?8
+          and what not like ?7 and what not like ?8 and what not like ?9
         order by since, what limit ?6`,
       OBJECTS_AT_ONCE,
     )),
     ...(await taken(
       `select what from leftovers where (what like ?1 or what like ?2 or what like ?3
           or what like ?4 or what like ?5 or what like ?8) and what not like ?7
+          and what not like ?9
         order by since, what limit ?6`,
       ROOMS_AT_ONCE,
     )),
