@@ -7,36 +7,35 @@ import { saver } from './saver.svelte'
 
 export interface Held {
   each(): [string, Page][]
+  peek(tabId: string): Page | undefined
   park(tabId: string, hidden?: boolean): Promise<void>
 }
 
-function resting(pages: Held): Resting[] {
-  return pages.each().map(([id, page]) => {
-    const site = siteOf(page.url)
-    const allowed = (ask: 'camera' | 'microphone' | 'notifications') =>
-      grants.said(site, ask, page.inPrivate) === 'allow'
-    return {
-      id,
-      live: page.live,
-      onScreen: page.onScreen,
-      frozen: page.frozen,
-      looked: page.looked,
-      loading: page.loading,
-      playing: page.playing,
-      heard: page.heard,
-      acting: id in agentMarks.on || page.lent,
-      calling: allowed('camera') || allowed('microphone'),
-      notifying: allowed('notifications'),
-      edited: page.edited,
-      inPrivate: page.inPrivate,
-    }
-  })
+function resting(id: string, page: Page): Resting {
+  const site = siteOf(page.url)
+  const allowed = (ask: 'camera' | 'microphone' | 'notifications') =>
+    grants.said(site, ask, page.inPrivate) === 'allow'
+  return {
+    id,
+    live: page.live,
+    onScreen: page.onScreen,
+    frozen: page.frozen,
+    looked: page.looked,
+    loading: page.loading,
+    playing: page.playing,
+    heard: page.heard,
+    acting: id in agentMarks.on || page.lent,
+    calling: allowed('camera') || allowed('microphone'),
+    notifying: allowed('notifications'),
+    edited: page.edited,
+    inPrivate: page.inPrivate,
+  }
 }
 
 export function rest(pages: Held, tabId: string, refused = false): void {
-  const page = pages.each().find(([id]) => id === tabId)?.[1]
-  const one = resting(pages).find((each) => each.id === tabId)
-  if (!page || !one?.live || page.onScreen) return
+  const page = pages.peek(tabId)
+  if (!page?.live || page.onScreen) return
+  const one = resting(tabId, page)
 
   clearTimeout(page.resting)
   page.resting = undefined
@@ -66,5 +65,6 @@ export function lull(pages: Held, tabId: string, page: Page, paused: boolean): P
 }
 
 export function bound(pages: Held): void {
-  for (const id of overCap(resting(pages), saver.mode, Date.now())) void pages.park(id, true)
+  const all = pages.each().map(([id, page]) => resting(id, page))
+  for (const id of overCap(all, saver.mode, Date.now())) void pages.park(id, true)
 }
