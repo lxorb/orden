@@ -254,6 +254,8 @@
 
   const tabsOf = (paneId: string) => workspace.tabsIn(paneId).map((tab) => tab.id)
 
+  places.own(workspace.windowSlot)
+
   const ALL = 'orden:overview-spaces'
   let all = $state(storedText(ALL) !== 'this')
 

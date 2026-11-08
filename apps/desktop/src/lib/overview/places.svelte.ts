@@ -44,6 +44,13 @@ export function nextPlace(all: Record<string, Box>, size: { w: number; h: number
   return { x: right + APART, y: top, ...size }
 }
 
+const scoped = (key: string, slot: number) => (slot === 0 ? key : `${key}:${slot}`)
+
+function storedFor(key: string, slot: number): unknown {
+  const own = scoped(key, slot)
+  return storedText(own) === null ? stored(key) : stored(own)
+}
+
 export function upgradeWindows() {
   if (storedText(WINDOWS_BEFORE) === null) return
   const before = readPlaces(stored(WINDOWS_BEFORE))
@@ -53,9 +60,22 @@ export function upgradeWindows() {
 }
 
 class Places {
+  private slot = 0
   private all = $state.raw<Record<string, Box>>(readPlaces(stored(KEY)))
   private put = $state.raw<Record<string, Box>>({})
   private kept: Camera | null = readCamera(stored(CAMERA))
+
+  own(slot: number) {
+    if (slot === this.slot) return
+    this.slot = slot
+    this.all = readPlaces(storedFor(KEY, slot))
+    this.put = {}
+    this.kept = readCamera(storedFor(CAMERA, slot))
+  }
+
+  private key(key: string): string {
+    return scoped(key, this.slot)
+  }
 
   get camera(): Camera | null {
     return this.kept
@@ -63,7 +83,7 @@ class Places {
 
   remember(camera: Camera) {
     this.kept = { ...camera }
-    keepJson(CAMERA, this.kept)
+    keepJson(this.key(CAMERA), this.kept)
   }
 
   get windows(): Readonly<Record<string, Box>> {
@@ -71,7 +91,7 @@ class Places {
   }
 
   recall(tabs: readonly Keyed[]) {
-    const written = readPlaces(stored(WINDOWS))
+    const written = readPlaces(storedFor(WINDOWS, this.slot))
     const names = lastingKeys(tabs)
     const next = { ...this.put }
     for (const tab of tabs) {
@@ -93,7 +113,7 @@ class Places {
       const name = names.get(id)
       if (name) written[name] = box
     }
-    keepJson(WINDOWS, written)
+    keepJson(this.key(WINDOWS), written)
   }
 
   forgetWindow(id: string, tabs: readonly Keyed[]) {
@@ -104,14 +124,14 @@ class Places {
   tidy(arranged: Readonly<Record<string, Box>> = {}) {
     this.put = {}
     this.all = { ...arranged }
-    keepJson(WINDOWS, {})
-    keepJson(KEY, this.all)
+    keepJson(this.key(WINDOWS), {})
+    keepJson(this.key(KEY), this.all)
   }
 
   arrange(more: Readonly<Record<string, Box>>) {
     if (!Object.keys(more).length) return
     this.all = { ...this.all, ...more }
-    keepJson(KEY, this.all)
+    keepJson(this.key(KEY), this.all)
   }
 
   every(): Readonly<Record<string, Box>> {
@@ -127,7 +147,7 @@ class Places {
     if (known) return known
     const made = nextPlace(this.all, size)
     this.all = { ...this.all, [space]: made }
-    keepJson(KEY, this.all)
+    keepJson(this.key(KEY), this.all)
     return made
   }
 }
