@@ -273,6 +273,7 @@
   const AROUND = 24
 
   let finding = $state(false)
+  let askedFind = $state(0)
   let term = $state('')
   let texts = $state.raw<readonly string[]>([])
   let looking = $state.raw<PaperHit | null>(null)
@@ -1252,6 +1253,7 @@
     if (shortcuts.pressed('canvas.find', event)) {
       event.preventDefault()
       finding = true
+      askedFind++
       return
     }
 
@@ -1461,6 +1463,7 @@
     <CanvasFind
       {canvas}
       hits={found}
+      asked={askedFind}
       label={t('Find')}
       onterm={seek}
       onpick={pickFound}

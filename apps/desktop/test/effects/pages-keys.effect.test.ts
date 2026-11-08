@@ -115,3 +115,19 @@ test('and with nothing picked it leaves Ctrl+D to the app', () => {
   expect(event.defaultPrevented).toBe(false)
   expect(store().canvas.ink).toHaveLength(1)
 })
+
+test('Ctrl+F with the find bar up takes the caret back to its field, the word chosen', () => {
+  press('f', true)
+  const field = host.querySelector<HTMLInputElement>('.find input')
+  if (!field) throw new Error('no find field')
+  field.value = 'kestrel'
+  field.dispatchEvent(new Event('input', { bubbles: true }))
+  flushSync()
+
+  const plane = host.querySelector<HTMLElement>('.pages')
+  plane?.focus()
+  expect(document.activeElement).toBe(plane)
+  press('f', true)
+  expect(document.activeElement).toBe(field)
+  expect([field.selectionStart, field.selectionEnd]).toEqual([0, 'kestrel'.length])
+})

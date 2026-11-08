@@ -79,3 +79,32 @@ test('words a card breaks across two lines are found as the card shows them', as
   const found = matches({ ...canvas, nodes: [card] }, 'the invoice today')
   expect(found).toEqual([{ id: 'two', says: 'pay the invoice today' }])
 })
+
+test('Ctrl+F in the find field chooses its word and goes no further', () => {
+  const { field } = opened()
+  field.setSelectionRange(3, 3)
+  const event = new KeyboardEvent('keydown', {
+    key: 'f',
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  })
+  field.dispatchEvent(event)
+  expect(event.defaultPrevented).toBe(true)
+  expect([field.selectionStart, field.selectionEnd]).toEqual([0, 'invoice'.length])
+})
+
+test('a hit clicked in the list gives the caret back to the field, so Enter goes on from it', () => {
+  const { picked, field, count } = opened()
+  const row = document.querySelectorAll<HTMLButtonElement>('.hits button')[1]
+  if (!row) throw new Error('no second hit')
+  row.focus()
+  row.click()
+  flushSync()
+  expect(picked).toEqual(['b'])
+  expect(document.activeElement).toBe(field)
+
+  enter(field)
+  expect(picked).toEqual(['b', 'c'])
+  expect(count()).toBe('3/3')
+})
