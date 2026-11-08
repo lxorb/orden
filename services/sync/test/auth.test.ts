@@ -187,6 +187,19 @@ describe('verifying a code', () => {
     expect(response.status).toBe(429)
   })
 
+  test('locks out after five wrong tries sent all at once', async () => {
+    await requestCode('a@b.dev')
+
+    const answers = await Promise.all(
+      Array.from({ length: 10 }, () =>
+        call(env, '/v1/auth/verify', { body: { email: 'a@b.dev', code: '000000' } }),
+      ),
+    )
+
+    expect(answers.filter((one) => one.status === 400)).toHaveLength(5)
+    expect(answers.filter((one) => one.status === 429)).toHaveLength(5)
+  })
+
   test('stops at a number of tries for one address, however many codes it was sent', async () => {
     for (let code = 0; code < 3; code++) {
       env.db.exec('delete from login_codes')
