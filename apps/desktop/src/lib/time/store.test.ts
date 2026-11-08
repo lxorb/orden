@@ -249,6 +249,30 @@ describe('the time a person records', () => {
     expect(signedOut.activities).toEqual([])
   })
 
+  test('reaches no account but the one whose records are open while it switches', async () => {
+    const first = owner()
+    const written = await opened(first, null)
+    written.addActivity('Mine')
+    await new Promise((go) => setTimeout(go, 20))
+
+    let release: () => void = () => undefined
+    const held = new Promise<void>((done) => (release = done))
+    const store = new TimeStore(async (who) => {
+      if (who === first) await held
+      return openTimeDisk(who)
+    })
+    const theirs = new FakeTimeServer()
+    const opening = store.opened({ owner: first, server: null, device: 'here' })
+    const exchanging = store.exchange()
+    const switching = store.opened({ owner: owner(), server: theirs, device: 'here' })
+    release()
+    await opening
+    await switching
+    await exchanging
+
+    expect(theirs.entries.size).toBe(0)
+  })
+
   test('what one window writes shows in another window of the same records at once', async () => {
     const who = owner()
     const one = await opened(who, null)
