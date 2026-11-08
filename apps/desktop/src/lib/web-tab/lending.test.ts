@@ -48,7 +48,11 @@ const pages = {
   hide: vi.fn((id: string) => done.push(`hide ${id}`)),
 }
 
-vi.mock('./pages.svelte', () => ({ pages, OUT_OF_THE_WAY: 20_000 }))
+vi.mock('./pages.svelte', () => ({
+  pages,
+  OUT_OF_THE_WAY: 20_000,
+  inSight: (page: Held) => page.onScreen,
+}))
 
 const { lend, unlend } = await import('./lending')
 
@@ -79,6 +83,43 @@ describe('a tab lent to an agent', () => {
     await lend('t1')
 
     expect(done).toEqual(['thaw t1', 'aside t1 40'])
+  })
+
+  test('brought on screen while it thaws is the reader’s, never put out of the way', async () => {
+    const page = pages.of('t1')
+    Object.assign(page, {
+      live: true,
+      url: 'https://a.example/',
+      pane: { x: 40, y: 0, width: 900, height: 600 },
+    })
+    pages.thaw.mockImplementationOnce((id: string) => {
+      done.push(`thaw ${id}`)
+      page.onScreen = true
+      return Promise.resolve()
+    })
+
+    await lend('t1')
+
+    expect(done).toEqual(['thaw t1'])
+  })
+
+  test('brought on screen while it is built keeps the place the reader gave it', async () => {
+    const page = pages.of('t1')
+    page.url = 'https://a.example/'
+    pages.build.mockImplementationOnce((id: string, built: Held) => {
+      done.push(`build ${id}`)
+      Object.assign(built, {
+        live: true,
+        shown: true,
+        onScreen: true,
+        pane: { x: 300, y: 0, width: 500, height: 600 },
+      })
+      return Promise.resolve()
+    })
+
+    await lend('t1')
+
+    expect(page).toMatchObject({ shown: true, pane: { x: 300, width: 500 } })
   })
 
   test('on screen is the reader’s to place, and is left as it is', async () => {
