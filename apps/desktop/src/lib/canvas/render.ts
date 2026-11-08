@@ -1,4 +1,5 @@
 import { type EmbeddedNote, hardBreaks, renderMarkdown } from '@orden/markdown'
+import { embedKind } from '@orden/markdown/links'
 import { BASE } from '../api'
 import { accountAddress } from '../assets'
 import { isPicturePath } from '../space-paths'
@@ -52,9 +53,21 @@ export function keptByAccount(file: string, signedIn: boolean): string | null {
   return accountAddress(`${BASE}/${file}`)
 }
 
+export type FileShown = 'picture' | 'sound' | 'film' | 'pdf' | 'words'
+
+export function fileShown(file: string): FileShown {
+  const bare = file.replace(/[?#].*$/, '')
+  if (isPicturePath(bare)) return 'picture'
+  const kind = embedKind(bare)
+  if (kind === 'audio') return 'sound'
+  if (kind === 'video') return 'film'
+  return kind === 'pdf' ? 'pdf' : 'words'
+}
+
 export function fileSource(
   file: string,
   canvasPath: string | null = null,
 ): Promise<EmbeddedNote | null> {
+  if (fileShown(file) !== 'words') return Promise.resolve(null)
   return links.embedNote(file, null, canvasPath)
 }
