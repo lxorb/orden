@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { keyFromLayer } from './layer-keys'
+  import { keyElsewhere } from './layer-keys'
   import { untrack } from 'svelte'
   import CanvasBar from './CanvasBar.svelte'
   import CanvasEdges from './CanvasEdges.svelte'
@@ -1314,7 +1314,7 @@
   }
 
   function onKeyDown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
-    if (typing(event.target) || keyFromLayer(event, event.currentTarget)) return
+    if (typing(event.target) || keyElsewhere(event, event.currentTarget)) return
 
     if (event.key === ' ' && store.editing === null) {
       event.preventDefault()

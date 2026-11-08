@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { keyFromLayer } from '../layer-keys'
+  import { keyElsewhere } from '../layer-keys'
   import { onDestroy } from 'svelte'
   import { fitSurface } from './fit'
   import { leads, presenterChannel, type Lead, type Stage } from './presenter'
@@ -95,7 +95,7 @@
   }
 
   function onKeydown(event: KeyboardEvent) {
-    if (keyFromLayer(event)) return
+    if (keyElsewhere(event)) return
     switch (event.key) {
       case 'ArrowRight':
       case 'ArrowDown':

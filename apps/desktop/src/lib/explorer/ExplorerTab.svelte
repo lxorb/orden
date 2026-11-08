@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { keyFromLayer } from '../layer-keys'
+  import { keyElsewhere } from '../layer-keys'
   import { onMount, untrack } from 'svelte'
   import { i18n, plural, t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
@@ -61,7 +61,7 @@
 
   function onkey(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (event.defaultPrevented || event.target instanceof HTMLInputElement) return
-    if (keyFromLayer(event, event.currentTarget)) return
+    if (keyElsewhere(event, event.currentTarget)) return
     const pressed = (id: string) => shortcuts.pressed(id, event)
     let run: (() => unknown) | null = null
     const chosen = view.chosen

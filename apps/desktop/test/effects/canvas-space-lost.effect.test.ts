@@ -106,3 +106,34 @@ test('a space let go while focus is elsewhere in the window stops panning', () =
   field.remove()
   expect(dragged()).toEqual({ x: 0, y: 0 })
 })
+
+function reached(button: HTMLElement, byKeys: boolean) {
+  const own = button.matches.bind(button)
+  button.matches = (selector: string) => (selector === ':focus-visible' ? byKeys : own(selector))
+  button.focus()
+}
+
+function bar(): HTMLElement {
+  const found = host.querySelector<HTMLElement>('.canvas button')
+  if (!found) throw new Error('no toolbar button')
+  return found
+}
+
+test('a space on a toolbar button reached by keys presses the button and pans nothing', () => {
+  const button = bar()
+  reached(button, true)
+  const down = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: ' ' })
+  button.dispatchEvent(down)
+  flushSync()
+  expect(down.defaultPrevented).toBe(false)
+  expect(dragged()).toEqual({ x: 0, y: 0 })
+  space('keyup', button)
+})
+
+test('a space on a toolbar button last clicked still pans', () => {
+  const button = bar()
+  reached(button, false)
+  space('keydown', button)
+  expect(dragged().x).not.toBe(0)
+  space('keyup', button)
+})

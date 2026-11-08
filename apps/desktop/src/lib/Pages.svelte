@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keyElsewhere } from './layer-keys'
   import { untrack } from 'svelte'
   import CanvasBar from './CanvasBar.svelte'
   import CanvasFind from './CanvasFind.svelte'
@@ -1307,8 +1308,9 @@
     )
   }
 
-  function onkeydown(event: KeyboardEvent) {
+  function onkeydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (store.editing !== null || typing(event.target)) return
+    if (keyElsewhere(event, event.currentTarget)) return
 
     if (shortcuts.pressed('canvas.find', event)) {
       event.preventDefault()
