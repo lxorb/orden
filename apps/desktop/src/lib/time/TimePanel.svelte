@@ -64,7 +64,9 @@
   <Timer {now} />
 
   {#if inFront && time.recording}
-    <p class="front"><span class="live" aria-hidden="true"></span><bdi>{inFront}</bdi></p>
+    <p class="front">
+      <span class="live" aria-hidden="true"></span><span class="name" dir="auto">{inFront}</span>
+    </p>
   {/if}
 
   {#if empty}
@@ -148,7 +150,7 @@
     white-space: nowrap;
   }
 
-  .front bdi {
+  .front .name {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;

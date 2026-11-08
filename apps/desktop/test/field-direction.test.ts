@@ -34,3 +34,10 @@ test('a name alone in its label is laid out in its own direction, so a cut-off k
   )
   expect(isolated).toEqual([])
 })
+
+test('no name sits in a bare bdi, whose clipped label would keep the app’s direction and cut its start', () => {
+  const bare = svelteFiles(SOURCE).flatMap((path) =>
+    [...readFileSync(path, 'utf8').matchAll(/<bdi\s*>/g)].map(() => path.slice(SOURCE.length)),
+  )
+  expect(bare).toEqual([])
+})

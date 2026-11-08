@@ -616,12 +616,10 @@
                   ><Icon icon={null} fallback={Server} /></span
                 >
               {/if}
-              <span class="orden-row-label"
-                ><bdi
-                  >{#each pieces(label(row), mode === 'everything' || mode === 'commands' || mode === 'headings' || mode === 'hosts' ? term : '') as piece, at (at)}{#if piece.hit}<b
-                        >{piece.text}</b
-                      >{:else}{piece.text}{/if}{/each}</bdi
-                ></span
+              <span class="orden-row-label" dir="auto"
+                >{#each pieces(label(row), mode === 'everything' || mode === 'commands' || mode === 'headings' || mode === 'hosts' ? term : '') as piece, at (at)}{#if piece.hit}<b
+                      >{piece.text}</b
+                    >{:else}{piece.text}{/if}{/each}</span
               >
               {#if row.kind === 'tab' && unsavedTab(row)}<UnsavedDot />{/if}
               {#if where}<span class="where">{where}</span>{/if}
@@ -736,6 +734,11 @@
 
   .orden-row-label {
     padding-inline-start: calc(var(--depth) * var(--space-3));
+  }
+
+  [role='option']:dir(rtl) .orden-row-label:dir(ltr),
+  [role='option']:dir(ltr) .orden-row-label:dir(rtl) {
+    padding-inline: 0 calc(var(--depth) * var(--space-3));
   }
 
   .orden-row-label b {

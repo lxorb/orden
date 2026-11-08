@@ -31,11 +31,9 @@
 </script>
 
 <SpacePlace {place} {typed} {held}><SpaceBadge {space} {on} /></SpacePlace>
-<span class="orden-row-label"
-  ><bdi
-    >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b
-        >{:else}{piece.text}{/if}{/each}</bdi
-  ></span
+<span class="orden-row-label" dir="auto"
+  >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b
+      >{:else}{piece.text}{/if}{/each}</span
 >
 {#if !__EVEN_PLUGIN__ && others.length}
   {#await import('./people/Faces.svelte') then faces}<faces.default ids={others} />{/await}

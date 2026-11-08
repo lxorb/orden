@@ -177,7 +177,7 @@
           )}"
         >
           {#if pixels(piece.to - piece.from) > 40}
-            <span class="name">{nameOf(piece.span.activity, t('No activity'))}</span>
+            <span class="name" dir="auto">{nameOf(piece.span.activity, t('No activity'))}</span>
             {#if rows === 1 && pixels(piece.to - piece.from) > 52}
               <span class="long">{length(piece.to - piece.from)}</span>
             {/if}
@@ -195,7 +195,8 @@
             style:width={wide(band.to - band.from)}
             style:--tint={placeTint(band.key)}
             title="{band.label}, {clock(band.from)}–{clock(band.to)}"
-            >{#if pixels(band.to - band.from) > 48}<bdi>{band.label}</bdi>{/if}</span
+            dir="auto"
+            >{#if pixels(band.to - band.from) > 48}{band.label}{/if}</span
           >
         {/each}
       </div>
@@ -369,6 +370,7 @@
   .block .name {
     overflow: hidden;
     font-weight: var(--weight-strong);
+    text-align: match-parent;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -390,6 +392,7 @@
     color: var(--text-strong);
     font-size: 11px;
     line-height: 18px;
+    text-align: match-parent;
     text-overflow: ellipsis;
     white-space: nowrap;
   }

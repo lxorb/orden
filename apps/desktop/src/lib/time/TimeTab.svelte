@@ -196,9 +196,11 @@
                       })}
                   >
                     <span class="dot" style:background={tintOf(piece.span.activity)}></span>
-                    <span class="orden-row-label"
-                      ><bdi>{nameOf(piece.span.activity, t('No activity'))}</bdi
-                      >{#if piece.span.note}<span class="note">{piece.span.note}</span>{/if}</span
+                    <span class="orden-row-label named"
+                      ><span class="name" dir="auto"
+                        >{nameOf(piece.span.activity, t('No activity'))}</span
+                      >{#if piece.span.note}<span class="note" dir="auto">{piece.span.note}</span
+                        >{/if}</span
                     >
                     <span class="orden-row-meta clock"
                       >{clock(piece.span.start)}–{piece.span.end === null
@@ -342,8 +344,19 @@
     border-radius: 50%;
   }
 
+  .named {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .named > * {
+    min-width: 0;
+    overflow: hidden;
+    text-align: match-parent;
+    text-overflow: ellipsis;
+  }
+
   .note {
-    margin-inline-start: var(--space-2);
     color: var(--muted);
   }
 
