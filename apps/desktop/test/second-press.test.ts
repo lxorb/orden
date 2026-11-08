@@ -28,6 +28,7 @@ const NOT_LAYERS: Record<string, string> = {
   'lib/downloads/started.ts': 'a press says where a download was asked for, to fly from',
   'lib/select-all.ts': 'a press inside a name field leaves its second take of the words alone',
   'lib/views/pressed-away.ts': 'a press past the rows selected lets them go, no layer up',
+  'lib/workspace/panes.svelte.ts': 'a press ends a drag whose row went away, no layer up',
 }
 
 const NOT_YET = new Set(['lib/web-tab/WebExtensionPopup.svelte'])

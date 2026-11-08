@@ -458,7 +458,7 @@
     const paths = workspace.dragPayload(path)
     carry(event.dataTransfer, paths)
     carrying = paths
-    workspace.panes.dragged({ tabId: null })
+    workspace.panes.dragged({ tabId: null }, endDrag)
     void import('./tab-strip/space-drop').then((drop) => drop.followTreeDrag(paths))
     if (isDesktop) void import('./web-tab/carry-in').then((pages) => pages.carryToPages(paths))
   }
