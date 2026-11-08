@@ -60,8 +60,7 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
           {
             label: t('Paste'),
             hint: shortcuts.hint('fixed.paste'),
-            run: () =>
-              void carry(view, fileClipboard.paths, path, fileClipboard.cut ? 'move' : 'copy'),
+            run: () => void paste(view, path),
           },
         ]
       : []),

@@ -131,8 +131,8 @@ export async function removeForGood(view: ExplorerView, paths: readonly string[]
   await view.reload()
 }
 
-export async function paste(view: ExplorerView) {
-  const folder = view.listing?.path
+export async function paste(view: ExplorerView, into?: string) {
+  const folder = into ?? view.listing?.path
   const paths = [...fileClipboard.paths]
   if (!folder || !paths.length || !changeable(view)) return
   const cut = fileClipboard.cut

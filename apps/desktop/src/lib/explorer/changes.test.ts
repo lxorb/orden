@@ -51,9 +51,8 @@ const workspace = {
 }
 vi.mock('../workspace.svelte', () => ({ workspace }))
 
-vi.mock('../list-landing.svelte', () => ({
-  fileClipboard: { paths: [], cut: false, hold: vi.fn() },
-}))
+const fileClipboard = { paths: [] as string[], cut: false, hold: vi.fn() }
+vi.mock('../list-landing.svelte', () => ({ fileClipboard }))
 
 const asked: string[] = []
 let answer: string | null = 'keep'
@@ -67,7 +66,7 @@ vi.mock('../prompt.svelte', () => ({
   },
 }))
 
-const { carry, freeName, renameMany, renamePath, removeForGood, takenNames, trash } =
+const { carry, freeName, paste, renameMany, renamePath, removeForGood, takenNames, trash } =
   await import('./changes')
 
 function view(path = '/home/me/Downloads') {
@@ -152,6 +151,20 @@ describe("a file explorer's changes", () => {
           },
         ],
       },
+    ])
+  })
+
+  test('a cut pasted into a folder below lands there and is not held to paste again', async () => {
+    fileClipboard.paths = ['/home/me/Music/a.txt']
+    fileClipboard.cut = true
+    await paste(view() as never, '/home/me/Downloads/Old')
+    fileClipboard.paths = []
+    fileClipboard.cut = false
+    expect(fileClipboard.hold).toHaveBeenCalledWith([], false)
+    expect(crate.transfer.mock.calls[0]?.slice(1, 4)).toEqual([
+      ['/home/me/Music/a.txt'],
+      '/home/me/Downloads/Old',
+      'move',
     ])
   })
 
