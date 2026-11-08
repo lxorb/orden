@@ -18,6 +18,9 @@ import { Refused } from './problem'
 import { namedTab } from './tab-target'
 
 const MOST_MARKS = 500
+const MOST_SELECTIONS = 500
+const LONGEST_SELECTED = 20_000
+const LONGEST_MESSAGE = 2000
 
 const kept = new Map<string, Map<string, AgentMark[]>>()
 
@@ -71,9 +74,10 @@ function placeIn(value: unknown, name: string): AgentPlace {
   return { line, ch }
 }
 
-function listOf(call: Call, name: string): Record<string, unknown>[] {
+function listOf(call: Call, name: string, most: number): Record<string, unknown>[] {
   const value = call.args[name]
   if (!Array.isArray(value)) throw new Refused('bad_arguments', `say ${name}, a list`)
+  if (value.length > most) throw new Refused('bad_arguments', `at most ${most} ${name}`)
   return value.map(
     (one) => (typeof one === 'object' && one !== null ? one : {}) as Record<string, unknown>,
   )
@@ -92,10 +96,16 @@ export function noteEditor(call: Call): AgentAnswer {
     const marks =
       op === 'clear_marks'
         ? []
-        : listOf(call, 'marks').map((one, at) => {
+        : listOf(call, 'marks', MOST_MARKS).map((one, at) => {
             const severity = SEVERITIES.find((word) => word === one.severity) ?? 'info'
             const message = typeof one.message === 'string' ? one.message : ''
             if (!message) throw new Refused('bad_arguments', `mark ${at} says no message`)
+            if (message.length > LONGEST_MESSAGE) {
+              throw new Refused(
+                'bad_arguments',
+                `a mark says at most ${LONGEST_MESSAGE} characters`,
+              )
+            }
             return {
               agent: agent.id,
               from: placeIn(one.from, `marks[${at}].from`),
@@ -104,7 +114,6 @@ export function noteEditor(call: Call): AgentAnswer {
               severity,
             }
           })
-    if (marks.length > MOST_MARKS) throw new Refused('bad_arguments', `at most ${MOST_MARKS} marks`)
     marked(agent.id, noteOf(tab), marks)
     return done({ tab: tab.id, marks: marks.length })
   }
@@ -118,10 +127,10 @@ export function noteEditor(call: Call): AgentAnswer {
 
   switch (op) {
     case 'selection':
-      return done({ tab: tab.id, selections: selectionsOf(view) })
+      return done({ tab: tab.id, ...selectionsShown(view) })
     case 'select': {
       needScope(call, 'workspace.focus', 'moving the reader’s caret')
-      const stretches: Stretch[] = listOf(call, 'selections').map((one, at) => {
+      const stretches: Stretch[] = listOf(call, 'selections', MOST_SELECTIONS).map((one, at) => {
         const anchor = placeIn(one.anchor ?? one.head, `selections[${at}].anchor`)
         return {
           anchor,
@@ -130,7 +139,7 @@ export function noteEditor(call: Call): AgentAnswer {
       })
       if (!stretches.length) throw new Refused('bad_arguments', 'say at least one selection')
       selectStretches(view, stretches)
-      return done({ tab: tab.id, selections: selectionsOf(view) })
+      return done({ tab: tab.id, ...selectionsShown(view) })
     }
     case 'fold':
     case 'unfold': {
@@ -149,6 +158,14 @@ export function noteEditor(call: Call): AgentAnswer {
         'bad_arguments',
         'op is one of selection, select, mark, clear_marks, fold, unfold, reveal',
       )
+  }
+}
+
+function selectionsShown(view: EditorView) {
+  const more = view.state.selection.ranges.length - MOST_SELECTIONS
+  return {
+    selections: selectionsOf(view, MOST_SELECTIONS, LONGEST_SELECTED),
+    ...(more > 0 ? { more } : {}),
   }
 }
 
