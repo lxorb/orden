@@ -7,6 +7,8 @@ import type * as Y from 'yjs'
 
 export type RoomKind = 'words' | 'plane'
 
+export type Lines = 'crlf' | 'lf'
+
 const KINDS: readonly RoomKind[] = ['words', 'plane']
 
 function roomKind(path: string): RoomKind {
@@ -46,7 +48,36 @@ export function fill(kind: RoomKind, doc: Y.Doc, stored: string) {
     return
   }
 
-  if (stored) doc.getText(TEXT).insert(0, stored)
+  if (stored) doc.getText(TEXT).insert(0, unixLines(stored))
+}
+
+export function unixLines(text: string): string {
+  return text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text
+}
+
+export function linesOf(text: string): Lines {
+  return text.includes('\r\n') && asWritten('crlf', unixLines(text)) === text ? 'crlf' : 'lf'
+}
+
+export function asWritten(lines: Lines | undefined, words: string): string {
+  return lines === 'crlf' ? words.replace(/\n/g, '\r\n') : words
+}
+
+export function unixWords(doc: Y.Doc, origin: unknown): void {
+  const text = doc.getText(TEXT)
+  const words = text.toJSON()
+  if (!words.includes('\r')) return
+
+  const delta: { retain?: number; delete?: number; insert?: string }[] = []
+  let from = 0
+  for (let at = words.indexOf('\r'); at >= 0; at = words.indexOf('\r', at + 1)) {
+    if (at > from) delta.push({ retain: at - from })
+    delta.push({ delete: 1 })
+    if (words[at + 1] !== '\n') delta.push({ insert: '\n' })
+    from = at + 1
+  }
+
+  doc.transact(() => text.applyDelta(delta), origin)
 }
 
 export function takeInto(kind: RoomKind, doc: Y.Doc, held: string, file: string) {

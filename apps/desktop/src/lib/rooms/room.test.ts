@@ -179,6 +179,26 @@ describe('a note typed in while the room is still answering', () => {
     room.leave()
   })
 
+  test('takes the room as it is when the file was written with Windows line endings and is unchanged here', async () => {
+    const { note, room, server, asked, socket } = joining('one\n', 'one\ntwo from elsewhere\n', {
+      held: 'one\r\n',
+    })
+    socket.arrive()
+
+    for (const message of socket.take()) {
+      const back = server.answer(message)
+      if (back) socket.wire.heard(back)
+    }
+    await settled()
+    for (const message of socket.take()) server.answer(message)
+
+    expect(asked).toEqual([])
+    expect(note.text.toString()).toBe('one\ntwo from elsewhere\n')
+    expect(server.words).toBe(note.text.toString())
+
+    room.leave()
+  })
+
   test('asks the rule when the room has moved on as well', async () => {
     const { note, room, server, asked, socket } = joining('one\n', 'one\ntwo from elsewhere\n')
     socket.arrive()
