@@ -514,3 +514,25 @@ test('a launcher or top button that comes while the overview is open is under it
     /\[data-box\] \*\s+\)\s+\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/,
   )
 })
+
+test('a hand on the ground when it is put away is let go, so the next one does not follow a pointer nobody presses', async () => {
+  Element.prototype.setPointerCapture = () => undefined
+  const world = () => document.querySelector<HTMLElement>('.world')?.style.transform
+  const point = (kind: string, x: number, buttons: number) => {
+    const event = new MouseEvent(kind, { clientX: x, clientY: 300, buttons, bubbles: true })
+    Object.defineProperty(event, 'pointerId', { value: 1 })
+    document.querySelector('.floor')?.dispatchEvent(event)
+    flushSync()
+  }
+  await opened()
+  point('pointerdown', 400, 1)
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  await tick()
+  expect(layer()).toBe(null)
+
+  await opened()
+  const before = world()
+  point('pointermove', 700, 0)
+  expect(world()).toBe(before)
+})

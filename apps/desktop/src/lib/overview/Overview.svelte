@@ -939,6 +939,10 @@
   function leave() {
     held = null
     pressed = null
+    carrying = null
+    aside = {}
+    touching.clear()
+    panning = false
     chosen = []
     if (zoomGoal) camera = eased(camera, zoomGoal.zoom, zoomGoal.at, Number.POSITIVE_INFINITY)
     zoomGoal = null
