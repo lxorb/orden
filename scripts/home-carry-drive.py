@@ -14,6 +14,8 @@ import urllib.error
 import urllib.request
 from typing import Any
 
+import crash_told
+
 HOME = pathlib.Path(__file__).resolve().parent.parent / "apps/desktop/src-tauri/src/old_home.rs"
 
 
@@ -85,6 +87,7 @@ def endpoint(config: pathlib.Path, pid: int, secret: str, seconds: float = 120) 
         try:
             said = json.loads(path.read_text(encoding="utf-8-sig"))
             if said.get("port") and int(said.get("pid") or 0) == pid:
+                crash_told.told(int(said["port"]), secret)
                 return App(int(said["port"]), secret)
         except (OSError, ValueError):
             pass

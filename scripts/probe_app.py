@@ -140,16 +140,6 @@ def refuse_updating(exe: pathlib.Path) -> None:
             "real update and install it on close. Build it as scripts/probe_app.py says."
         )
 
-FIRST_START_ANSWERED = (
-    "localStorage.setItem('orden:crash-reports-told', 'true');"
-    " localStorage.setItem('orden:crash-reports', 'false');"
-    " const sheet = document.querySelector('.orden-screen.sheet[role=\"dialog\"]');"
-    " const box = sheet?.querySelector('input.orden-checkbox');"
-    " if (box?.checked) box.click();"
-    " sheet?.querySelector('button[data-lands]')?.click();"
-    " return true"
-)
-
 def identifier_of(exe: pathlib.Path, given: str | None = None) -> str:
 
     if given:

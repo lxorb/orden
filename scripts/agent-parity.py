@@ -7,7 +7,6 @@ import json
 import os
 import pathlib
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -17,6 +16,9 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable
 from typing import Any
+
+import crash_told
+from fresh_app import ended, fresh
 
 CANNOT: dict[str, set[str]] = {
     "webview2": set(),
@@ -137,7 +139,7 @@ def config_dir(identifier: str) -> pathlib.Path:
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
-    shutil.rmtree(config_dir(identifier), ignore_errors=True)
+    fresh(config_dir(identifier))
 
 class Endpoint:
     def __init__(self, port: int, secret: str) -> None:
@@ -165,6 +167,7 @@ def endpoint(identifier: str, pid: int, seconds: float = 120) -> Endpoint:
         try:
             said = json.loads(path.read_text(encoding="utf-8-sig"))
             if said.get("port") and int(said.get("pid") or 0) == pid:
+                crash_told.told(int(said["port"]), str(said["secret"]))
                 return Endpoint(int(said["port"]), str(said["secret"]))
         except (OSError, ValueError):
             pass
@@ -389,11 +392,7 @@ def main() -> int:
         run = Run(args.engine, api, base, upload)
         run.script()
     finally:
-        app.terminate()
-        try:
-            app.wait(20)
-        except subprocess.TimeoutExpired:
-            app.kill()
+        ended(app, gentle=True)
         site.shutdown()
 
     failed = [one for one in run.results if one["problem"]]

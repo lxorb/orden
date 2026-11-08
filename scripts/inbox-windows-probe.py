@@ -14,6 +14,9 @@ import urllib.error
 import urllib.request
 from typing import Any
 
+import crash_told
+from fresh_app import ended, fresh
+
 EACH = 15
 failures: list[str] = []
 
@@ -54,6 +57,7 @@ class App:
                 said = json.loads(path.read_text(encoding="utf-8-sig"))
                 if said.get("port") and int(said.get("pid") or 0) == self.process.pid:
                     self.port = int(said["port"])
+                    crash_told.told(self.port, secret)
             except (OSError, ValueError):
                 pass
             time.sleep(0.25)
@@ -89,12 +93,7 @@ class App:
         return said
 
     def stop(self) -> None:
-        self.process.terminate()
-        try:
-            self.process.wait(30)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
-            self.process.wait(15)
+        ended(self.process, 30, gentle=True)
 
 
 SETUP = """
@@ -226,9 +225,9 @@ def main() -> int:
         raise SystemExit(f"{args.identifier} is not a probe identifier; refusing to wipe it")
 
     config = config_dir(args.identifier)
-    for path in (config, *local_dirs(args.identifier)):
+    for path in local_dirs(args.identifier):
         shutil.rmtree(path, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-inbox-spaces-"))
