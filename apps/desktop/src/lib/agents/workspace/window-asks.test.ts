@@ -28,6 +28,16 @@ vi.mock('../../notify', () => ({
   show: (one: (typeof shown)[number]) => shown.push(one),
 }))
 
+const heard: ((event: { kind: string; agent: string | null }) => void)[] = []
+vi.mock('../settings/crate', () => ({
+  tauriCrate: {
+    hear: (on: (event: { kind: string; agent: string | null }) => void) => {
+      heard.push(on)
+      return Promise.resolve(() => undefined)
+    },
+  },
+}))
+
 const revealed: string[] = []
 vi.mock('../../focus', () => ({ revealPanel: (panel: string) => revealed.push(panel) }))
 
@@ -173,6 +183,18 @@ describe('a question put to the reader', () => {
     asking.keepOnly(new Set(['codex']))
     expect(await waiting).toMatchObject({ result: { dismissed: true } })
     expect(asking.of('claude')).toEqual([])
+  })
+
+  test('pausing the agent ends its wait for an answer at once, and another agent’s pause does not', async () => {
+    const waiting = askReader(
+      call('ask_reader', { kind: 'choice', message: 'Go on?', choices: ['Yes'], wait_ms: 60_000 }),
+    )
+    await vi.waitFor(() => expect(asking.of('claude')).toHaveLength(1))
+    await vi.waitFor(() => expect(heard.length).toBeGreaterThan(0))
+    for (const on of heard) on({ kind: 'paused', agent: 'codex' })
+    for (const on of heard) on({ kind: 'paused', agent: 'claude' })
+    await expect(waiting).rejects.toMatchObject({ code: 'stopped' })
+    asking.keepOnly(new Set())
   })
 
   test('the command line asks the reader nothing', async () => {

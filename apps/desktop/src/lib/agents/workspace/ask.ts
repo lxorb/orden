@@ -6,6 +6,7 @@ import { revealPanel } from '../../focus'
 import { asking } from '../ui/asking.svelte'
 import { type Call, count, done, maybe, need } from './call'
 import { Refused } from './problem'
+import { stopRefused, stopSignal } from './stopping'
 
 const WAIT = 60_000
 const MOST_WAIT = 120_000
@@ -23,7 +24,7 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
   if (id !== null) {
     if (!asking.knows(agent.id, id))
       throw new Refused('bad_arguments', `there is no question ${id}`)
-    return heard(id, patience)
+    return heard(call, id, patience)
   }
 
   const kind = need(call, 'kind')
@@ -76,11 +77,13 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
         }
       : {}),
   })
-  return heard(question.id, patience)
+  return heard(call, question.id, patience)
 }
 
-async function heard(id: string, patience: number): Promise<AgentAnswer> {
-  const said = await asking.heard(id, patience)
+async function heard(call: Call, id: string, patience: number): Promise<AgentAnswer> {
+  const halting = await stopSignal(call)
+  const said = await asking.heard(id, patience, halting.signal).finally(halting.end)
+  if (halting.signal.aborted && said === null) throw stopRefused(`question ${id} is still open`)
   if (said === null) return done({ id, waiting: true })
 
   return said.answer === null ? done({ id, dismissed: true }) : done({ id, answer: said.answer })

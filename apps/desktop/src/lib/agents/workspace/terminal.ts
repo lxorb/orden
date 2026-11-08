@@ -8,6 +8,7 @@ import { type Call, count, done, maybe, need } from './call'
 import { Refused } from './problem'
 import { onTheList, osOf, plainOf, startsOnlyOne, Tail } from './shell-text'
 import { judged, onDisk, placeOf } from './spaces'
+import { stopRefused, stopSignal } from './stopping'
 
 const WAIT = 60_000
 const MOST_WAIT = 600_000
@@ -39,7 +40,12 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, allowed ? null : 'terminal', command)
   if (question) return question
 
-  const ran = await session(shell.id, folder, command, count(call, 'timeout_ms', WAIT, MOST_WAIT))
+  const patience = count(call, 'timeout_ms', WAIT, MOST_WAIT)
+  const halting = await stopSignal(call)
+  const ran = await session(shell.id, folder, command, patience, halting.signal).finally(
+    halting.end,
+  )
+  if (halting.signal.aborted) throw stopRefused(`${command} was ended`)
   const output = plainOf(ran.printed)
   const cut = ran.dropped || output.length > MOST_OUTPUT
 
@@ -60,6 +66,7 @@ function session(
   folder: string,
   command: string,
   patience: number,
+  signal: AbortSignal,
 ): Promise<{ printed: string; dropped: boolean; exit: number | null }> {
   const id = `agent-${identifier().replace(/[^\w-]/g, '')}`.slice(0, 80)
   const decoder = new TextDecoder()
@@ -71,6 +78,12 @@ function session(
 
   return new Promise((settle, fail) => {
     let over: ReturnType<typeof setTimeout> | undefined
+    const halt = () => {
+      clearTimeout(over)
+      void invoke('pty_kill', { id }).catch(() => undefined)
+      settle(ended(null))
+    }
+    signal.addEventListener('abort', halt, { once: true })
 
     const output = new Channel<unknown>()
     output.onmessage = (message) => {
@@ -84,22 +97,25 @@ function session(
       const exit = (message as { exit?: unknown } | null)?.exit
       if (typeof exit === 'number') {
         clearTimeout(over)
+        signal.removeEventListener('abort', halt)
         settle(ended(exit))
       }
     }
 
     invoke('pty_spawn', { id, shell, folder, cols: 160, rows: 48, output })
       .then(async () => {
-        over = setTimeout(() => {
-          void invoke('pty_kill', { id }).catch(() => undefined)
-          settle(ended(null))
-        }, patience)
+        if (signal.aborted) {
+          halt()
+          return
+        }
+        over = setTimeout(halt, patience)
 
         await invoke('pty_write', { id, data: `${command}\r`, binary: false })
         await invoke('pty_write', { id, data: 'exit\r', binary: false })
       })
       .catch((error: unknown) => {
         clearTimeout(over)
+        signal.removeEventListener('abort', halt)
         fail(new Refused('failed', `the shell would not start: ${String(error)}`))
       })
   })

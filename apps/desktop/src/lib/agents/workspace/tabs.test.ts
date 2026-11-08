@@ -138,6 +138,16 @@ vi.mock('../../tauri', async (original) => ({
   },
 }))
 
+const heard: ((event: { kind: string; agent: string | null }) => void)[] = []
+vi.mock('../settings/crate', () => ({
+  tauriCrate: {
+    hear: (on: (event: { kind: string; agent: string | null }) => void) => {
+      heard.push(on)
+      return Promise.resolve(() => undefined)
+    },
+  },
+}))
+
 let readOnly = false
 vi.mock('../../sharing.svelte', () => ({
   isShared: () => false,
@@ -889,6 +899,15 @@ describe('the reader terminals', () => {
       status: 'needs_approval',
     })
     expect(screen.typed).toEqual(['git log\r'])
+  })
+
+  test('the stop ends a command run in a tab at once, with Ctrl+C, and no longer waits on it', async () => {
+    running.add('t1')
+    const going = call('run_terminal', { tab: 't1', command: 'git status', timeout_ms: 60_000 })
+    await vi.waitFor(() => expect(screen.typed).toEqual(['git status\r']))
+    for (const on of heard) on({ kind: 'stopped', agent: null })
+    expect(await going).toMatchObject({ status: 'error', code: 'stopped' })
+    expect(screen.typed).toEqual(['git status\r', '\x03'])
   })
 
   test('run_terminal in a tab runs there, a local terminal and an online one alike', async () => {
