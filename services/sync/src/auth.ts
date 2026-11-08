@@ -239,10 +239,16 @@ export async function checkCode(
     return { error: TRY_IN_AN_HOUR, status: 429 }
   }
 
+  const tried = await env.DB.prepare(
+    `update login_codes set attempts = attempts + 1
+      where email = ?1 and code_hash = ?2 and attempts < ?3
+      returning attempts`,
+  )
+    .bind(address, pending.code_hash, MAX_ATTEMPTS)
+    .first<{ attempts: number }>()
+  if (!tried) return { error: 'too many tries - ask for a new code', status: 429 }
+
   if (!equals(await sha256(pending.salt + entered), pending.code_hash)) {
-    await env.DB.prepare('update login_codes set attempts = attempts + 1 where email = ?')
-      .bind(address)
-      .run()
     return { error: WRONG_CODE, status: 400 }
   }
 
