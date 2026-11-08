@@ -324,6 +324,32 @@ describe('where a page lives', () => {
     expect(moved.headers.get('location')).toBe(`https://${HOST}/plans/april`)
   })
 
+  test('two notes with the same address each get one of their own', async () => {
+    await note('Hello World.md', '# One\n\nFirst words.\n')
+    await note('hello-world.md', '# Two\n\nSecond words.\n')
+    await note('hello world 2.md', '# Three\n\nThird words.\n')
+    await note('Plan.md', '---\naliases:\n  - notes\n---\n\n# Plan\n\nPlan words.\n')
+    await note('Notes.md', '# Notes\n\nNote words.\n')
+    await publish()
+
+    const index = await page('/')
+    expect(index.text).toContain('href="/hello-world"')
+    expect(index.text).toContain('href="/hello-world-2"')
+    expect(index.text).toContain('href="/hello-world-3"')
+
+    const read = async (path: string) => (await page(path)).text
+    const shown = [
+      await read('/hello-world'),
+      await read('/hello-world-2'),
+      await read('/hello-world-3'),
+    ]
+    expect(shown.filter((one) => one.includes('First words.'))).toHaveLength(1)
+    expect(shown.filter((one) => one.includes('Second words.'))).toHaveLength(1)
+    expect(shown.filter((one) => one.includes('Third words.'))).toHaveLength(1)
+    expect(await read('/notes')).toContain('Note words.')
+    expect(await read('/plan')).toContain('Plan words.')
+  })
+
   test('a path nothing ever answered on is still not found', async () => {
     await note('Plan.md', '# Plan\n')
     await publish()
