@@ -122,9 +122,11 @@
     current === null ? -1 : graph.nodes.findIndex((node) => node.id === current),
   )
 
-  const arrangedBy = $derived(
-    [settings.spread, settings.gather, settings.distance, settings.push, shape].join('\n'),
+  const pushedBy = $derived(
+    [settings.spread, settings.gather, settings.distance, settings.push].join('\n'),
   )
+
+  const arrangedBy = $derived(`${pushedBy}\n${shape}`)
 
   const follows = (_value: unknown) => undefined
 
@@ -183,21 +185,36 @@
     if (frame) cancelAnimationFrame(frame)
   })
 
+  let laidOut: { graph: NoteGraph; by: string } | null = null
+
+  function placed(): Map<string, { x: number; y: number }> | undefined {
+    const was = laidOut
+    const held = layout
+    if (!was || !held || was.by !== pushedBy) return undefined
+
+    return new Map(
+      was.graph.nodes.map((node, one) => [node.id, { x: held.x[one] ?? 0, y: held.y[one] ?? 0 }]),
+    )
+  }
+
   function rebuild() {
+    const from = placed()
     layout = new Layout(graph, {
       spread: settings.spread,
       gather: settings.gather,
       distance: settings.distance,
       push: settings.push,
+      from,
     })
+    laidOut = { graph, by: pushedBy }
     lit = new Uint8Array(graph.nodes.length)
     hovered = -1
     remask()
 
     settling = stillness()
 
-    touched = false
-    frameGraph()
+    if (!from) touched = false
+    if (!touched) frameGraph()
     schedule()
   }
 

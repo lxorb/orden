@@ -276,3 +276,51 @@ describe('a space of two thousand notes and four thousand links', () => {
     }
   })
 })
+
+describe('a note or link that arrives while the graph is laid out', () => {
+  const before = graph(
+    40,
+    Array.from({ length: 39 }, (_, one): [number, number] => [one, one + 1]),
+  )
+  const after = graph(41, [
+    ...Array.from({ length: 39 }, (_, one): [number, number] => [one, one + 1]),
+    [40, 20],
+  ])
+
+  const old = new Layout(before)
+  rested(old)
+  const placed = new Map(
+    before.nodes.map((node, one) => [node.id, { x: old.x[one] ?? 0, y: old.y[one] ?? 0 }]),
+  )
+
+  const drift = (layout: Layout) =>
+    Math.max(
+      ...before.nodes.map((_, one) =>
+        Math.hypot(
+          (layout.x[one] ?? 0) - (old.x[one] ?? 0),
+          (layout.y[one] ?? 0) - (old.y[one] ?? 0),
+        ),
+      ),
+    )
+
+  test('leaves every note that was there where it was', () => {
+    const layout = new Layout(after, { from: placed, seed: 9 })
+    rested(layout)
+
+    expect(drift(layout)).toBeLessThan(30)
+  })
+
+  test('puts the new note beside the note it links to', () => {
+    const layout = new Layout(after, { from: placed, seed: 9 })
+    rested(layout)
+
+    expect(away(layout, 40, 20)).toBeLessThan(120)
+  })
+
+  test('and lays everything out afresh when nothing was placed before', () => {
+    const layout = new Layout(after, { from: new Map(), seed: 9 })
+    rested(layout)
+
+    expect(drift(layout)).toBeGreaterThan(30)
+  })
+})
