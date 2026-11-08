@@ -137,3 +137,30 @@ test('a window back from the page cache says hello again to those that let it go
   await settled()
   expect(other.alone).toBe(false)
 })
+
+test('an engine whose locks cannot be asked who waits keeps its windows and throws nothing', async () => {
+  const locks = new Locks()
+  const { line } = hub()
+  const without = (client: number) => {
+    const manager: Partial<LockManager> = locks.as(client)
+    delete manager.query
+    return manager as LockManager
+  }
+  const thrown: unknown[] = []
+  const heard = (event: PromiseRejectionEvent) => thrown.push(event.reason)
+  window.addEventListener('unhandledrejection', heard)
+  process.on('unhandledRejection', heard)
+  try {
+    const one = new Windows(line, () => without(1))
+    const other = new Windows(line, () => without(2))
+    expect(one.alone && other.alone).toBe(true)
+    await settled()
+    await settled()
+    expect(one.alone).toBe(false)
+    expect(other.alone).toBe(false)
+    expect(thrown).toEqual([])
+  } finally {
+    window.removeEventListener('unhandledrejection', heard)
+    process.off('unhandledRejection', heard)
+  }
+})
