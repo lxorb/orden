@@ -3,6 +3,7 @@
   import GraphControls from './GraphControls.svelte'
   import type { NoteGraph } from './graph'
   import { neighbours, signature } from './graph-walk'
+  import { Fingers } from './graph-fingers'
   import { graphFilter, type Keeps } from './graph-filter'
   import { Layout } from './graph-layout'
   import { howFor, type OpenHow, type TabAsk, tabAsk } from './new-tab'
@@ -66,6 +67,7 @@
   let lastX = 0
   let lastY = 0
   let travelled = 0
+  const fingers = new Fingers()
 
   let carding = $state(false)
   let at = $state<number | null>(null)
@@ -431,6 +433,15 @@
     if (event.button !== 0) return
 
     canvas?.setPointerCapture(event.pointerId)
+    fingers.press(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (fingers.pinching) {
+      holding = -1
+      panning = false
+      travelled = Infinity
+      return
+    }
+    if (fingers.lead !== event.pointerId) return
+
     lastX = event.clientX
     lastY = event.clientY
     travelled = 0
@@ -444,9 +455,33 @@
     const surface = canvas
     if (!surface) return
 
+    const pinched = fingers.move(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (fingers.pinching) {
+      if (!pinched) return
+      touched = true
+      const box = surface.getBoundingClientRect()
+      const moved = {
+        ...camera,
+        x: camera.x - pinched.dx / camera.scale,
+        y: camera.y - pinched.dy / camera.scale,
+      }
+      camera = zoomed(
+        moved,
+        width,
+        height,
+        pinched.at.x - box.left,
+        pinched.at.y - box.top,
+        pinched.by,
+      )
+      schedule()
+      return
+    }
+    if (fingers.lead !== null && fingers.lead !== event.pointerId) return
+
     if ((holding >= 0 || panning) && event.buttons === 0) {
       holding = -1
       panning = false
+      fingers.lift(event.pointerId)
       if (surface.hasPointerCapture(event.pointerId)) surface.releasePointerCapture(event.pointerId)
     }
 
@@ -494,14 +529,26 @@
   }
 
   function onPointerUp(event: PointerEvent) {
+    if (canvas?.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId)
+
+    const leading = fingers.lead === event.pointerId
+    const left = fingers.lift(event.pointerId)
+    if (left) {
+      holding = -1
+      panning = true
+      lastX = left.x
+      lastY = left.y
+      return
+    }
+    if (!leading && fingers.lead !== null) return
+
     const wasHolding = holding
     const wasClick = travelled <= A_CLICK
 
     holding = -1
     panning = false
-    if (canvas?.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId)
 
-    if (wasHolding >= 0 && wasClick) open(wasHolding, tabAsk(event))
+    if (event.type === 'pointerup' && wasHolding >= 0 && wasClick) open(wasHolding, tabAsk(event))
   }
 
   function onDoubleClick(event: MouseEvent) {
