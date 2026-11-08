@@ -60,7 +60,7 @@ import { paletteName } from './highlight'
 import { key, t } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import type { MenuItem } from './menu-item'
-import type { Exportable } from './export/formats'
+import { EXPORT_FORMATS, type Exportable } from './export/formats'
 import { frontShut, look, openTarget, renderOptions } from './export/context'
 import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
 import type { RunOptions } from './export/run'
@@ -260,7 +260,10 @@ function exportPicker(): Command[] {
     {
       id: 'export',
       label: t('Export…'),
-      also: formats.map((one) => one.label),
+      also: [
+        ...formats.map((one) => one.label),
+        ...[...EXPORT_FORMATS, ...PANDOC_FORMATS].map((one) => t(one.label)),
+      ],
       disabled: formats.every((one) => one.disabled),
       run: () => void import('./export/picker.svelte').then(({ picker }) => picker.show()),
     },
