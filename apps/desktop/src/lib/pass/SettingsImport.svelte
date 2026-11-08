@@ -21,6 +21,8 @@
   const accept = $derived(SOURCES.find((one) => one.id === source)?.accept.join(',') ?? '')
   const shown = $derived(SOURCES.find((one) => one.id === source))
 
+  let latest = 0
+
   function pick(id: SourceId) {
     source = id
     asked = true
@@ -28,6 +30,8 @@
     done = null
     wrong = ''
     file = null
+    busy = false
+    latest++
     passphrase = ''
     flushSync()
     picker?.click()
@@ -40,10 +44,13 @@
     const picked = input.files?.[0]
     input.value = ''
     if (!picked) return
+    const turn = ++latest
     const bytes = new Uint8Array(await picked.arrayBuffer())
+    if (turn !== latest) return
     const guessed = guessSource(picked.name, new TextDecoder().decode(bytes.slice(0, 4096)))
     if (guessed) source = guessed
     file = { name: picked.name, bytes }
+    busy = false
     imported = null
     done = null
     wrong = ''
@@ -51,16 +58,19 @@
   }
 
   async function read() {
-    if (!file) return
+    const reading = file
+    if (!reading) return
     busy = true
     wrong = ''
     try {
-      imported = await importedFrom(source, file.name, file.bytes, passphrase)
+      const found = await importedFrom(source, reading.name, reading.bytes, passphrase)
+      if (file === reading) imported = found
     } catch (error) {
+      if (file !== reading) return
       imported = null
       wrong = message(error, 'This file could not be read.')
     } finally {
-      busy = false
+      if (file === reading) busy = false
     }
   }
 
