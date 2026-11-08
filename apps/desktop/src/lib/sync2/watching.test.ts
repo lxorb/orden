@@ -57,6 +57,7 @@ describe('a launch scan', () => {
       key: (path: string) => path,
       at: () => null,
       paths: () => new Map(),
+      wantedAt: () => [],
     }
     const how = {
       engine: {
@@ -129,6 +130,7 @@ describe('what is heard while a first pass runs', () => {
       key: (path: string) => path,
       at: () => null,
       paths: () => new Map(),
+      wantedAt: () => [],
     }
     let ready = false
     const watched = watchFolders({

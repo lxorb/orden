@@ -9,25 +9,28 @@ export interface Twin {
 
 export function madeTwice(space: SpaceState): Twin[] {
   const entries = [...space.entries.values()]
+  const lost = new Map<string, Set<string>>()
+  for (const one of entries) {
+    if (one.kind !== 'file' || !one.deleted || one.local_path || !one.written_hash) continue
+    const at = `${one.parent ?? ''}\u0000${space.key(one.name)}`
+    const hashes = lost.get(at) ?? new Set<string>()
+    hashes.add(one.written_hash)
+    lost.set(at, hashes)
+  }
   const out: Twin[] = []
+  if (!lost.size) return out
+  const chosen = new Set<string>()
   for (const twin of entries) {
     if (twin.kind !== 'file' || twin.deleted || !twin.local_path || !twin.written_hash) continue
     const numbered = NUMBERED.exec(nameOf(twin.local_path))
     if (!numbered) continue
     const first = `${numbered[1] ?? ''}${numbered[3] ?? ''}`
+    const hashes = lost.get(`${twin.parent ?? ''}\u0000${space.key(first)}`)
+    if (!hashes?.has(twin.written_hash)) continue
     const to = joined(folderOf(twin.local_path), first)
-    if (space.at(to) || out.some((one) => space.key(one.to) === space.key(to))) continue
-    const lost = entries.some(
-      (one) =>
-        one !== twin &&
-        one.kind === 'file' &&
-        one.deleted &&
-        !one.local_path &&
-        one.parent === twin.parent &&
-        space.key(one.name) === space.key(first) &&
-        one.written_hash === twin.written_hash,
-    )
-    if (lost) out.push({ from: twin.local_path, to })
+    if (space.at(to) || chosen.has(space.key(to))) continue
+    chosen.add(space.key(to))
+    out.push({ from: twin.local_path, to })
   }
   return out
 }
