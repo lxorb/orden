@@ -5,7 +5,8 @@
   import { openFile } from './open'
   import { ordered } from './order'
   import { explorerPrefs } from './prefs.svelte'
-  import type { ExplorerView } from './view.svelte'
+  import { type ExplorerView, watchHeard } from './view.svelte'
+  import { samePath } from '../space-paths'
 
   const {
     view,
@@ -20,20 +21,35 @@
   $effect(() => {
     const at = folder
     let gone = false
-    const waiting = setTimeout(() => {
-      void listFolder(at)
-        .then((listing) => {
-          if (gone) return
+    let reading = 0
+    let stopWatching: (() => void) | null = null
+    const read = () => {
+      const turn = ++reading
+      return listFolder(at).then(
+        (listing) => {
+          if (gone || turn !== reading) return null
           entries = listing.entries
           listed = listing.path
+          return listing.path
+        },
+        () => {
+          if (!gone && turn === reading) entries = []
+          return null
+        },
+      )
+    }
+    const waiting = setTimeout(() => {
+      void read().then((path) => {
+        if (gone || path === null) return
+        stopWatching = watchHeard(path, (folders) => {
+          if (folders.some((one) => samePath(one, path))) void read()
         })
-        .catch(() => {
-          if (!gone) entries = []
-        })
+      })
     }, SETTLED_MS)
     return () => {
       gone = true
       clearTimeout(waiting)
+      stopWatching?.()
     }
   })
 
