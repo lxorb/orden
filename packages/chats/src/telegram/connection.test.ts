@@ -1133,3 +1133,168 @@ describe('live', () => {
     expect(fake.closed).toBe(true)
   })
 })
+
+describe('what our own calls change', () => {
+  const reactionsOf = (emojis: readonly string[]): tl.TypeMessageReactions => ({
+    _: 'messageReactions',
+    results: emojis.map((emoticon, order) => ({
+      _: 'reactionCount',
+      reaction: { _: 'reactionEmoji', emoticon },
+      count: 1,
+      chosenOrder: order,
+    })),
+  })
+
+  test('a second reaction keeps the first, since the answer to the first is applied', async () => {
+    const fake = world()
+    fake.me = user(1, 'Emil', { self: true, premium: true })
+    const { connection } = await linked(fake)
+    fake.answer('messages.getHistory', () => ({
+      _: 'messages.messages',
+      chats: [],
+      users: [],
+      messages: [text(10, toMia, 2, 'hi')],
+    }))
+    await connection.history('u2', { limit: 1 })
+    fake.answer('messages.sendReaction', (request: tl.messages.RawSendReactionRequest) => ({
+      _: 'updates',
+      updates: [
+        {
+          _: 'updateMessageReactions',
+          peer: toMia,
+          msgId: request.msgId,
+          reactions: reactionsOf(
+            (request.reaction ?? []).flatMap((one) =>
+              one._ === 'reactionEmoji' ? [one.emoticon] : [],
+            ),
+          ),
+        },
+      ],
+      users: [],
+      chats: [],
+      date: 1,
+      seq: 0,
+    }))
+    await connection.react?.('u2', '10', '👍', true)
+    await connection.react?.('u2', '10', '🔥', true)
+    expect(fake.called('messages.sendReaction').map((one) => one.reaction)).toEqual([
+      [{ _: 'reactionEmoji', emoticon: '👍' }],
+      [
+        { _: 'reactionEmoji', emoticon: '👍' },
+        { _: 'reactionEmoji', emoticon: '🔥' },
+      ],
+    ])
+  })
+
+  test('an edit is heard as soon as Telegram answers it', async () => {
+    const { fake, connection, heard } = await linked()
+    fake.answer('messages.editMessage', () => ({
+      _: 'updates',
+      updates: [
+        {
+          _: 'updateEditMessage',
+          message: text(10, toMia, 1, 'better', { out: true, editDate: 1_700_000_900 }),
+          pts: 2,
+          ptsCount: 1,
+        },
+      ],
+      users: [],
+      chats: [],
+      date: 1,
+      seq: 0,
+    }))
+    await connection.edit?.('u2', '10', { text: 'better' })
+    expect(heard).toMatchObject([
+      { t: 'changed', message: { id: '10', text: 'better', editedAt: 1_700_000_900_000 } },
+    ])
+  })
+
+  test('every file of a message with several shows up, and none goes out when one fails to upload', async () => {
+    const { fake, connection, heard } = await linked()
+    let next = 70
+    fake.answer('messages.sendMedia', (request: { randomId: Long }) => sent(next++, toMia)(request))
+    const file = (name: string) => ({
+      name,
+      type: 'application/pdf',
+      bytes: new Uint8Array([1, 2, 3]),
+    })
+    const first = await connection.send('u2', {
+      text: 'two',
+      attachments: [file('a.pdf'), file('b.pdf')],
+    })
+    expect(first.id).toBe('70')
+    expect(heard.filter((one) => one.t === 'message').map((one) => one.message.id)).toEqual([
+      '70',
+      '71',
+    ])
+    const upload = fake.upload.bind(fake)
+    let uploads = 0
+    fake.upload = (bytes, name, type) =>
+      ++uploads === 2 ? Promise.reject(failure('FILE_PARTS_INVALID')) : upload(bytes, name, type)
+    const before = fake.called('messages.sendMedia').length
+    await expect(
+      connection.send('u2', { text: 'two', attachments: [file('c.pdf'), file('d.pdf')] }),
+    ).rejects.toThrow()
+    expect(fake.called('messages.sendMedia')).toHaveLength(before)
+  })
+
+  test('our comment in a discussion group we are not in brings no chat', async () => {
+    const { fake, connection, heard } = await linked()
+    fake.answer('messages.getDiscussionMessage', () => ({
+      _: 'messages.discussionMessage',
+      unreadCount: 0,
+      chats: [TALK],
+      users: [],
+      messages: [text(800, { _: 'peerChannel', channelId: 61 }, 0, 'headline')],
+    }))
+    fake.answer('messages.sendMessage', sent(901, { _: 'peerChannel', channelId: 61 }))
+    await connection.send('s60', { text: 'nice', thread: '50' })
+    expect(heard.filter((one) => one.t === 'conversation')).toEqual([])
+  })
+})
+
+describe('reading in forum topics', () => {
+  test('a topic read elsewhere clears its count, and their reads of ours reach the topic', async () => {
+    const { fake, heard } = await linked()
+    fake.push({
+      _: 'updateReadChannelDiscussionInbox',
+      channelId: 50,
+      topMsgId: 7,
+      readMaxId: 40,
+    })
+    fake.push({
+      _: 'updateReadChannelDiscussionOutbox',
+      channelId: 50,
+      topMsgId: 7,
+      readMaxId: 40,
+    })
+    fake.push({ _: 'updateReadChannelOutbox', channelId: 50, maxId: 39 })
+    expect(heard).toMatchObject([
+      { t: 'conversation', conversation: { id: 's50t7', unread: 0 } },
+      { t: 'read', conversation: 's50t7', upTo: '40' },
+      { t: 'read', conversation: 's50t1', upTo: '39' },
+    ])
+  })
+
+  test('a topic read only partly keeps the messages after the read mark unread', async () => {
+    const { fake, connection, heard } = await linked()
+    fake.answer('messages.getReplies', () => ({
+      _: 'messages.messages',
+      chats: [],
+      users: [],
+      messages: [41, 42, 43].map((id) =>
+        text(id, toForum, 2, `m${id}`, {
+          replyTo: { _: 'messageReplyHeader', forumTopic: true, replyToMsgId: 7 },
+        }),
+      ),
+    }))
+    await connection.history('s50t7', { limit: 3 })
+    fake.push({
+      _: 'updateReadChannelDiscussionInbox',
+      channelId: 50,
+      topMsgId: 7,
+      readMaxId: 42,
+    })
+    expect(heard).toMatchObject([{ t: 'conversation', conversation: { id: 's50t7', unread: 1 } }])
+  })
+})
