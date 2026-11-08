@@ -983,6 +983,29 @@ describe('the Share sheet', () => {
     expect(share.email).toBe('ada@example.com, bob@example.com, grace@example.com')
   })
 
+  test('keeps an address the server could not invite for want of the space, and says so', async () => {
+    share.email = 'ada@example.com, bob@example.com'
+    world.refuse = 'no such note'
+    world.refuseStatus = 404
+    const inviting = share.invite()
+    world.refuse = null
+    await inviting
+
+    expect(world.asked).toEqual(['invite ada@example.com as write to space-1', 'read space-1'])
+    expect(share.email).toBe('ada@example.com, bob@example.com')
+    expect(share.error).toBe('no such note')
+  })
+
+  test('says what went wrong when the space is gone and cannot be read again either', async () => {
+    share.email = 'ada@example.com'
+    world.refuse = 'no such space'
+    world.refuseStatus = 404
+    await share.invite()
+
+    expect(share.email).toBe('ada@example.com')
+    expect(share.error).toBe('no such space')
+  })
+
   test('says so about something that is not an address, and asks nothing', async () => {
     share.email = 'nonsense'
     await share.invite()
