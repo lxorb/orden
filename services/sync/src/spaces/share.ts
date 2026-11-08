@@ -20,6 +20,8 @@ export function roomForMember(space: string, email: string, item: string, most: 
                       where space_id = ${space} and email = ${email} and item = ${item}))`
 }
 
+export const MOST_GUESTS = 200
+
 export const EMAIL_LIMIT = 320
 const ID_LIMIT = 64
 const INVITE_TTL = 30 * 24 * 60 * 60 * 1000
@@ -621,21 +623,27 @@ share.post('/:id/share/guests/:guest', atLeast('owner'), about(), async (context
   const scope = context.get('scope')
   const guest = guestIdOf(context)
 
-  const waiting = await context.env.DB.prepare(
-    `select role from guest_members
-      where space_id = ? and guest_id = ? and item = ?
-        and joined_at is null and declined_at is null`,
+  const admitted = await context.env.DB.prepare(
+    `update guest_members set joined_at = ?1
+      where space_id = ?2 and guest_id = ?3 and item = ?4
+        and joined_at is null and declined_at is null
+        and (select count(*) from guest_members
+              where space_id = ?2 and item = ?4 and joined_at is not null) < ?5`,
   )
-    .bind(space.id, guest, scope.id)
-    .first<{ role: Given }>()
-
-  if (!waiting) return context.json({ error: 'nobody is waiting by that name' }, 404)
-
-  await context.env.DB.prepare(
-    'update guest_members set joined_at = ? where space_id = ? and guest_id = ? and item = ?',
-  )
-    .bind(now(), space.id, guest, scope.id)
+    .bind(now(), space.id, guest, scope.id, MOST_GUESTS)
     .run()
+
+  if (!admitted.meta.changes) {
+    const waiting = await context.env.DB.prepare(
+      `select 1 as one from guest_members
+        where space_id = ? and guest_id = ? and item = ?
+          and joined_at is null and declined_at is null`,
+    )
+      .bind(space.id, guest, scope.id)
+      .first()
+    if (!waiting) return context.json({ error: 'nobody is waiting by that name' }, 404)
+    return context.json({ error: SPACE_IS_FULL }, 409)
+  }
   await onceShared(context.env, space.id, scope.id)
 
   return context.json(await sharing(context.env, space, context.get('user'), scope))
@@ -685,13 +693,19 @@ share.delete('/:id/share/guests/:guest', atLeast('owner'), about(), async (conte
     .bind(space.id, guest, scope.id)
     .first<{ joined_at: number | null }>()
 
-  if (held?.joined_at === null) {
-    await context.env.DB.prepare(
-      'update guest_members set declined_at = ? where space_id = ? and guest_id = ? and item = ?',
-    )
-      .bind(now(), space.id, guest, scope.id)
-      .run()
-  } else {
+  const declined =
+    held?.joined_at === null
+      ? (
+          await context.env.DB.prepare(
+            `update guest_members set declined_at = ?
+              where space_id = ? and guest_id = ? and item = ? and joined_at is null`,
+          )
+            .bind(now(), space.id, guest, scope.id)
+            .run()
+        ).meta.changes
+      : 0
+
+  if (!declined) {
     await context.env.DB.prepare(
       'delete from guest_members where space_id = ? and guest_id = ? and item = ?',
     )

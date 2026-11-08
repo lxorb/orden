@@ -11,6 +11,7 @@ import type { Env, Guest, Space, User, Variables } from '../types'
 import {
   EMAIL_LIMIT,
   itemName,
+  MOST_GUESTS,
   MOST_MEMBERS,
   personName,
   presentItem,
@@ -31,7 +32,6 @@ type Mode = 'open' | 'approval'
 const DEVICE_LIMIT = 24
 
 const GUESTS_A_MINUTE = 20
-const MOST_GUESTS = 200
 
 const MOST_WAITING = MOST_MEMBERS
 
@@ -129,12 +129,21 @@ function ownerOf(env: Env, space: Space) {
     .first<{ name: string | null; email: string }>()
 }
 
-function spendInvitation(env: Env, hash: string): Promise<unknown> {
-  return env.DB.prepare(
-    'update space_members set invite_hash = null, expires_at = null where invite_hash = ?',
+async function takeInvitation(env: Env, found: Leads): Promise<Given | null> {
+  if (found.kind !== 'invite') return null
+  const at = now()
+  const taken = await env.DB.prepare(
+    `update space_members set joined_at = coalesce(joined_at, ?1), invite_hash = null,
+            expires_at = null
+      where invite_hash = ?2 and email = ?3 and (expires_at is null or expires_at >= ?1)
+        and exists (select 1 from spaces where id = space_members.space_id and deleted = 0)
+      returning role`,
   )
-    .bind(hash)
-    .run()
+    .bind(at, found.hash, found.email)
+    .first<{ role: Given }>()
+  if (!taken) return null
+  await onceShared(env, found.space.id, found.item)
+  return taken.role
 }
 
 async function memberNow(
@@ -343,9 +352,8 @@ async function redeemInvitation(context: Reply, found: Leads) {
     return context.json({ second: true, holding: await halfWay(context.env, user) })
   }
 
-  const role = await memberNow(context.env, found, user.email, found.role)
-  if (!role) return spaceIsFull(context)
-  await spendInvitation(context.env, found.hash)
+  const role = await takeInvitation(context.env, found)
+  if (!role) return context.json({ error: EXPIRED }, 404)
 
   return context.json({
     token: await openSession(context.env, user.id),
@@ -369,10 +377,9 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
       return context.json({ error: 'that invitation was sent to another address' }, 403)
     }
 
-    const role = await memberNow(context.env, found, user.email, found.role)
-    if (!role) return spaceIsFull(context)
+    const role = await takeInvitation(context.env, found)
+    if (!role) return context.json({ error: EXPIRED }, 404)
 
-    await spendInvitation(context.env, found.hash)
     return context.json(landedOn(context.env, found, role, await owner()))
   }
 
