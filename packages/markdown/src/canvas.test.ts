@@ -1151,3 +1151,50 @@ describe('ids a canvas file uses twice', () => {
     expect(readCanvas(plain).nodes.map((one) => one.id)).toEqual(['a'])
   })
 })
+
+describe('a stroke with a number that is not one', () => {
+  const point = (x: number, tiltX = 0) => ({ x, y: 10, pressure: 0.5, tiltX, tiltY: 0, t: x })
+
+  test('is written with the value left as it would be read, not as a hole', () => {
+    const text = writeCanvas({
+      ...readCanvas(blankCanvas()),
+      ink: [
+        { id: 's', tool: 'pen', color: DEFAULT_INK, size: 2, points: [point(1, NaN), point(2)] },
+      ],
+    })
+
+    expect(text).not.toContain('null')
+    expect(readCanvas(text).ink[0]?.points.map((one) => [one.x, one.tiltX])).toEqual([
+      [1, 0],
+      [2, 0],
+    ])
+  })
+
+  test('read from a file keeps every point after it in its place', () => {
+    const text = writeCanvas({
+      ...readCanvas(blankCanvas()),
+      ink: [
+        {
+          id: 's',
+          tool: 'pen',
+          color: DEFAULT_INK,
+          size: 2,
+          points: [1, 2, 3].map((x) => point(x)),
+        },
+      ],
+    })
+    const file = JSON.parse(text) as Record<string, { ink?: { points: unknown[] }[] }>
+    const own = Object.values(file).find((one) => Array.isArray(one.ink))
+    const stroke = own?.ink?.[0]
+    if (!stroke) throw new Error('no ink written')
+    stroke.points[3] = null
+    const holed = JSON.stringify(file)
+
+    expect(holed).toContain('null')
+    expect(readCanvas(holed).ink[0]?.points.map((one) => [one.x, one.y, one.t])).toEqual([
+      [1, 10, 1],
+      [2, 10, 2],
+      [3, 10, 3],
+    ])
+  })
+})

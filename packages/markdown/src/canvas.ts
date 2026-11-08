@@ -276,24 +276,28 @@ export function edgeOf(value: unknown, nodes: ReadonlySet<string>): CanvasEdge |
   }
 }
 
+function or(value: number, otherwise: number): number {
+  return Number.isFinite(value) ? value : otherwise
+}
+
 export function packed(points: readonly InkPoint[]): number[] {
   const out: number[] = []
 
   for (const point of points) {
     out.push(
-      Math.round(point.x * 10) / 10,
-      Math.round(point.y * 10) / 10,
-      Math.round(point.pressure * 100) / 100,
-      Math.round(point.tiltX),
-      Math.round(point.tiltY),
-      Math.round(point.t),
+      or(Math.round(point.x * 10) / 10, 0),
+      or(Math.round(point.y * 10) / 10, 0),
+      or(Math.round(point.pressure * 100) / 100, 0.5),
+      or(Math.round(point.tiltX), 0),
+      or(Math.round(point.tiltY), 0),
+      or(Math.round(point.t), 0),
     )
   }
 
   return out
 }
 
-export function unpacked(values: readonly number[]): InkPoint[] {
+export function unpacked(values: readonly (number | null)[]): InkPoint[] {
   const out: InkPoint[] = []
 
   for (let index = 0; index + 5 < values.length; index += 6) {
@@ -322,7 +326,7 @@ export function strokeOf(value: unknown): InkStroke | null {
   if (!isInkTool(value.tool) || !isString(value.color)) return null
   if (!Array.isArray(value.points)) return null
 
-  const points = unpacked(value.points.filter(isNumber))
+  const points = unpacked(value.points.map((one) => (isNumber(one) ? one : null)))
   if (points.length === 0) return null
 
   return {
