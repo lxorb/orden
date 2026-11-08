@@ -1,3 +1,4 @@
+import { folderOf, nameOf } from '../space-paths'
 import { endingOf } from './order'
 
 export interface Renaming {
@@ -53,4 +54,27 @@ export function clashing(
     } else seen.set(key, at)
   })
   return out
+}
+
+export function swapping(
+  pairs: readonly { from: string; to: string }[],
+  key: (path: string) => string,
+): boolean {
+  const leaving = new Map<string, number[]>()
+  pairs.forEach(({ from }, at) => {
+    const held = leaving.get(key(from))
+    if (held) held.push(at)
+    else leaving.set(key(from), [at])
+  })
+  return pairs.some(({ to }, at) => (leaving.get(key(to)) ?? []).some((there) => there !== at))
+}
+
+export function crossing(moving: readonly { from: string; name: string }[]): boolean {
+  return swapping(
+    moving.map(({ from, name }) => ({
+      from: `${folderOf(from)}\0${nameOf(from)}`,
+      to: `${folderOf(from)}\0${name}`,
+    })),
+    (one) => one.toLowerCase(),
+  )
 }

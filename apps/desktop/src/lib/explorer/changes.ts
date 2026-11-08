@@ -23,6 +23,7 @@ import {
 import { parentOf } from './crumbs'
 import { jobs } from './jobs.svelte'
 import { inASpace } from './open'
+import { crossing } from './renaming'
 import type { ExplorerView } from './view.svelte'
 
 const MOST_BROUGHT = 48 * 1024 * 1024
@@ -324,24 +325,17 @@ export async function renameMany(
     await view.reload()
     return
   }
-  const crossing = moving.some(({ from, name }, at) =>
-    moving.some(
-      (other, there) =>
-        there !== at &&
-        folderOf(other.from) === folderOf(from) &&
-        nameOf(other.from).toLowerCase() === name.toLowerCase(),
-    ),
-  )
+  const crosses = crossing(moving)
   const done: { from: string; to: string }[] = []
   const staged: { from: string; at: string; name: string }[] = []
   try {
     for (const [index, { from, name }] of moving.entries()) {
-      const at = crossing ? await renameTo(from, `.orden-renaming-${index}`) : from
+      const at = crosses ? await renameTo(from, `.orden-renaming-${index}`) : from
       staged.push({ from, at, name })
     }
     for (const { from, at, name } of staged) done.push({ from, to: await renameTo(at, name) })
   } catch (error) {
-    if (crossing) await putBack(staged, done.splice(0))
+    if (crosses) await putBack(staged, done.splice(0))
     view.tell(message(error, 'could not rename this'))
   }
   record(done.length ? [{ op: 'moved', pairs: done }] : [])
