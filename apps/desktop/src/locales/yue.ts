@@ -2278,7 +2278,6 @@ export const yue: Dictionary = {
   'What does it run?': '運行咩？',
   'A program’s path, and its arguments': '程式嘅路徑同參數',
   '{device} (this device)': '{device}（呢部裝置）',
-  '{device}: cannot run applications yet': '{device}：仲未可以執行應用程式',
   '{device} has not listed its applications yet. What does it run?':
     '{device}仲未列出佢嘅應用程式。運行咩？',
   'Find an application': '搵應用程式',

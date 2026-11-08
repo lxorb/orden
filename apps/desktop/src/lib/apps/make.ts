@@ -14,14 +14,7 @@ import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { openApplication } from './open'
-import { mayHost, programOf } from './words'
-
-interface Listed {
-  id: string
-  name: string
-  platform: string
-  current: boolean
-}
+import { type Computer, hostChoices, mayHost, programOf } from './words'
 
 export async function makeApplication(): Promise<Tab | null> {
   const token = account.accountToken
@@ -34,7 +27,7 @@ export async function makeApplication(): Promise<Tab | null> {
 
   const { request } = await import('../api')
   const { prompt } = await import('../prompt.svelte')
-  const listed = await request<{ devices?: Listed[] }>('/v2/devices', { token }).catch(() => null)
+  const listed = await request<{ devices?: Computer[] }>('/v2/devices', { token }).catch(() => null)
   const computers = (listed?.devices ?? []).filter((one) => mayHost(one.platform))
   if (!computers.length) {
     await prompt.choose({
@@ -46,14 +39,7 @@ export async function makeApplication(): Promise<Tab | null> {
 
   const host = await prompt.choose({
     title: t('Where does it run?'),
-    options: computers.map((one) => {
-      const name = one.current ? t('{device} (this device)', { device: one.name }) : one.name
-      const label =
-        one.platform === 'macos'
-          ? t('{device}: cannot run applications yet', { device: name })
-          : name
-      return { id: one.id, label, primary: one.current && one.platform !== 'macos' }
-    }),
+    options: hostChoices(computers, (device) => t('{device} (this device)', { device })),
   })
   if (!host) return null
 

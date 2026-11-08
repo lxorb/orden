@@ -2340,7 +2340,6 @@ export const id: Dictionary = {
   'What does it run?': 'Apa yang dijalankan?',
   'A program’s path, and its arguments': 'Path program, dan argumennya',
   '{device} (this device)': '{device} (perangkat ini)',
-  '{device}: cannot run applications yet': '{device}: belum dapat menjalankan aplikasi',
   '{device} has not listed its applications yet. What does it run?':
     '{device} belum mencantumkan aplikasinya. Apa yang dijalankan?',
   'Find an application': 'Cari aplikasi',

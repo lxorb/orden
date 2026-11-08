@@ -2412,7 +2412,6 @@ export const ptPT: Dictionary = {
   'What does it run?': 'O que executa?',
   'A program’s path, and its arguments': 'O caminho de um programa e os seus argumentos',
   '{device} (this device)': '{device} (este dispositivo)',
-  '{device}: cannot run applications yet': '{device}: ainda não pode executar aplicações',
   '{device} has not listed its applications yet. What does it run?':
     '{device} ainda não listou as suas aplicações. O que executa?',
   'Find an application': 'Procurar uma aplicação',

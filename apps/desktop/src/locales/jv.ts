@@ -2330,7 +2330,6 @@ export const jv: Dictionary = {
   'What does it run?': 'Apa sing dilakokake?',
   'A program’s path, and its arguments': 'Path program, lan argumene',
   '{device} (this device)': '{device} (piranti iki)',
-  '{device}: cannot run applications yet': '{device}: durung bisa mbukak aplikasi',
   '{device} has not listed its applications yet. What does it run?':
     '{device} durung nyathet aplikasine. Apa sing dilakokake?',
   'Find an application': 'Golèk aplikasi',

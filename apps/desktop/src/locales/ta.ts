@@ -2389,7 +2389,6 @@ export const ta: Dictionary = {
   'What does it run?': 'இது எதை இயக்கும்?',
   'A program’s path, and its arguments': 'ஒரு நிரலின் பாதை, அதன் அளவுருக்கள்',
   '{device} (this device)': '{device} (இந்தச் சாதனம்)',
-  '{device}: cannot run applications yet': '{device}: இன்னும் பயன்பாடுகளை இயக்க முடியாது',
   '{device} has not listed its applications yet. What does it run?':
     '{device} இன்னும் தன் பயன்பாடுகளின் பட்டியலை அனுப்பவில்லை. இது எதை இயக்கும்?',
   'Find an application': 'பயன்பாட்டைத் தேடு',

@@ -2384,7 +2384,6 @@ export const sw: Dictionary = {
   'What does it run?': 'Inaendesha nini?',
   'A program’s path, and its arguments': 'Njia ya programu, na hoja zake',
   '{device} (this device)': '{device} (kifaa hiki)',
-  '{device}: cannot run applications yet': '{device}: bado haiwezi kuendesha programu',
   '{device} has not listed its applications yet. What does it run?':
     '{device} haijaorodhesha programu zake bado. Inaendesha nini?',
   'Find an application': 'Tafuta programu',

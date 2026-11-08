@@ -2384,8 +2384,6 @@ export const ml: Dictionary = {
   'What does it run?': 'ഇത് എന്ത് പ്രവർത്തിപ്പിക്കും?',
   'A program’s path, and its arguments': 'ഒരു പ്രോഗ്രാമിന്റെ പാത്ത്, അതിന്റെ ആർഗ്യുമെന്റുകൾ',
   '{device} (this device)': '{device} (ഈ ഉപകരണം)',
-  '{device}: cannot run applications yet':
-    '{device}: ഇതുവരെ ആപ്ലിക്കേഷനുകൾ പ്രവർത്തിപ്പിക്കാൻ കഴിയില്ല',
   '{device} has not listed its applications yet. What does it run?':
     '{device} ഇതുവരെ അതിന്റെ ആപ്ലിക്കേഷനുകളുടെ പട്ടിക നൽകിയിട്ടില്ല. ഇത് എന്ത് പ്രവർത്തിപ്പിക്കും?',
   'Find an application': 'ആപ്ലിക്കേഷൻ തിരയുക',
