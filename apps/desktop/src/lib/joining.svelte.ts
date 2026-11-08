@@ -1,4 +1,4 @@
-import { api, ApiError, fromServer, type Invitation, type Joined } from './api'
+import { api, fromServer, type Invitation, type Joined } from './api'
 import { account } from './account.svelte'
 import { passing, pollDelay } from './backoff'
 import { message, t } from './i18n.svelte'
@@ -270,7 +270,7 @@ class Joining {
         await api.withdraw(token, account.token)
       } catch (error) {
         if (this.token !== token) return
-        if (!(error instanceof ApiError && error.status === 404)) {
+        if (!(fromServer(error) && error.status === 404)) {
           this.error = message(error, t('Try again'))
           this.closed = false
           this.laterOnce()
