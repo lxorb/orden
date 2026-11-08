@@ -3,6 +3,7 @@
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import { onMount, type Snippet, untrack } from 'svelte'
+  import { closeOnBack } from '../backstack.svelte'
   import { t } from '../i18n.svelte'
   import { dur, fade } from '../motion'
   import { shortcuts } from '../shortcuts.svelte'
@@ -99,9 +100,22 @@
     }
   }
 
+  const step = $derived(wide && ui.column === 'item' ? 'list' : ui.column)
+
+  let kept = $state(0)
+  $effect(() =>
+    closeOnBack(kept >= 0 && columns === 1 && step !== 'list', () => {
+      if (ui.column !== 'item') ui.column = 'list'
+      else
+        void ui.leave().then((left) => {
+          if (left) ui.column = 'list'
+          else kept++
+        })
+    }),
+  )
+
   const shows = $derived.by(() => {
     if (columns === 3) return { side: true, list: !wide, item: true }
-    const step = wide && ui.column === 'item' ? 'list' : ui.column
     if (columns === 2)
       return { side: true, list: step !== 'item' && !wide, item: step === 'item' || wide }
     return {
