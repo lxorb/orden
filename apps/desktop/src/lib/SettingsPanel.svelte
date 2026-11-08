@@ -1923,7 +1923,7 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
-    overflow: hidden;
+    overflow: clip;
   }
 
   .sheet.phone .group + .group {
@@ -1988,7 +1988,7 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
-    overflow: hidden;
+    overflow: clip;
   }
 
   .sheet.phone .card > .stack {

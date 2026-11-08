@@ -18,6 +18,18 @@ LISTED = """
   .map((one) => one.innerText.trim())
 """
 
+SLID = """
+() => [...document.querySelectorAll('[role="region"][aria-label="Settings"] :is(.card, .group)')]
+  .filter((one) => one.checkVisibility())
+  .filter((one) => {
+    one.scrollTop = 99
+    const slid = one.scrollTop > 0
+    one.scrollTop = 0
+    return slid
+  })
+  .map((one) => `${one.className.split(' ')[0]} ${one.scrollHeight - one.clientHeight}px: ${one.innerText.slice(0, 40)}`)
+"""
+
 def listed(page: Page) -> list[str]:
     page.evaluate("() => { window.ordenApp.settings.show('general'); window.ordenApp.settings.listing = true }")
     wait_for(page, "() => !!document.querySelector('[role=\"region\"][aria-label=\"Settings\"] nav button')",
@@ -58,6 +70,14 @@ def phone(browser: Browser) -> None:
     if "Mobile" not in sections:
         wrong("[phone] no Mobile section on a phone")
     DRIVE.shot(page, "phone")
+    for name in [None, *sections]:
+        if name:
+            page.evaluate("() => { window.ordenApp.settings.listing = true }")
+            page.locator('[role="region"][aria-label="Settings"] nav button.item', has_text=name).first.click()
+            page.wait_for_timeout(400)
+        slid = page.evaluate(SLID)
+        if slid:
+            wrong(f"[phone] a card in {name or 'the sections'} slides inside its frame: {slid}")
     context.close()
 
 def drive(browser: Browser) -> None:
