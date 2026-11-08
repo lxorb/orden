@@ -79,3 +79,51 @@ describe('anything else', () => {
     expect(free.wheel({ deltaX: 0, deltaY: 100, timeStamp: 5000 })).toEqual({ x: 0, y: 100 })
   })
 })
+
+describe('a mouse wheel beside the touchpad', () => {
+  function learnt() {
+    const free = new FreeScroll()
+    free.fingers(2)
+    free.pan(0, 2, 10)
+    free.wheel({ deltaX: 0, deltaY: 20, timeStamp: 11 })
+    free.pan(3, 4, 20)
+    free.wheel({ deltaX: 0, deltaY: 40, timeStamp: 21 })
+    return free
+  }
+
+  test('scrolls while two fingers rest still on the touchpad', () => {
+    const free = learnt()
+    expect(free.wheel({ deltaX: 0, deltaY: 100, timeStamp: 1000 })).toEqual({ x: 0, y: 100 })
+    expect(free.wheel({ deltaX: 0, deltaY: 100, timeStamp: 1050 })).toEqual({ x: 0, y: 100 })
+  })
+
+  test('still scrolls when the lift of the fingers was never heard', () => {
+    const free = learnt()
+    for (let at = 5000; at < 5500; at += 50) {
+      expect(free.wheel({ deltaX: 0, deltaY: -100, timeStamp: at })).toEqual({ x: 0, y: -100 })
+    }
+  })
+
+  test('is not bent along the way the fingers last went', () => {
+    const free = learnt()
+    free.fingers(0)
+    expect(rounded(free.wheel({ deltaX: 0, deltaY: 8, timeStamp: 300 }))).toEqual({ x: 6, y: 8 })
+    for (let at = 350; at < 1200; at += 50) {
+      expect(free.wheel({ deltaX: 0, deltaY: 100, timeStamp: at })).toEqual({ x: 0, y: 100 })
+    }
+  })
+
+  test('takes up only what the fingers did just now, not what they scrolled elsewhere', () => {
+    const free = learnt()
+    for (let at = 30; at <= 1030; at += 10) free.pan(0, 10, at)
+    free.pan(0, 1, 1040)
+    expect(free.wheel({ deltaX: 0, deltaY: 10, timeStamp: 1041 })).toEqual({ x: 0, y: 10 })
+    free.pan(0, 1, 1050)
+    expect(free.wheel({ deltaX: 0, deltaY: 10, timeStamp: 1051 })).toEqual({ x: 0, y: 10 })
+    free.pan(3, 4, 1060)
+    expect(rounded(free.wheel({ deltaX: 0, deltaY: 40, timeStamp: 1061 }))).toEqual({
+      x: 30,
+      y: 40,
+    })
+  })
+})
