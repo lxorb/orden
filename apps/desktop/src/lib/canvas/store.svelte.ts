@@ -12,10 +12,8 @@ import {
   takeParsed,
 } from './format'
 import { changesBetween, type Written, written } from './written'
-import { idSet, pickedBox } from './edits'
+import { idSet, pickedBox, planeBox } from './edits'
 import { type KeptView, viewKept, viewOf } from './place'
-import { bounds } from './geometry'
-import { strokeBox } from './ink'
 import { afterQuiet } from '../timing'
 import { CanvasHistory } from './history'
 import type { Hand, PlaneSurface, Reachable, SharedPlane } from './shared'
@@ -412,7 +410,7 @@ export class CanvasStore implements PlaneSurface {
   }
 
   fit(width: number, height: number) {
-    const box = bounds([...this.canvas.nodes, ...this.canvas.ink.map(strokeBox)])
+    const box = planeBox(this.canvas)
     if (box) this.camera = this.framingTurned(box, width, height)
   }
 

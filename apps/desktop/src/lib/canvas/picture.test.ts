@@ -159,6 +159,40 @@ describe('the colours of a picture leaving the app', () => {
   })
 })
 
+describe('a link that bows out past its cards', () => {
+  const bowed = () =>
+    readCanvas(
+      JSON.stringify({
+        nodes: [
+          { id: 'a', type: 'text', text: 'A', x: 0, y: 0, width: 200, height: 100 },
+          { id: 'b', type: 'text', text: 'B', x: 1000, y: 0, width: 200, height: 100 },
+        ],
+        edges: [{ id: 'e', fromNode: 'a', toNode: 'b', fromSide: 'top', toSide: 'top' }],
+      }),
+    )
+
+  test('is inside the picture, all of it', () => {
+    const svg = canvasSvg(bowed(), {}, null, null)
+    const [, , top] = /viewBox="(-?\d+) (-?\d+)/.exec(svg) ?? []
+    const highest = Math.min(
+      ...[...svg.matchAll(/<path d="M [^"]*"/g)].flatMap((path) =>
+        [...path[0].matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map((pair) => Number(pair[2])),
+      ),
+    )
+
+    expect(Number(top)).toBeLessThan(-300)
+    expect(highest).toBeGreaterThan(-600)
+  })
+
+  test('is inside what fitting the plane to the window frames', async () => {
+    const { planeBox } = await import('./edits')
+    const box = planeBox(bowed())
+
+    expect(box?.y).toBeLessThan(-290)
+    expect(box?.y).toBeGreaterThan(-310)
+  })
+})
+
 describe('a card set as plain lines', () => {
   test('is the weight the card is on the plane, not the weight of a label', () => {
     const svg = canvasSvg(

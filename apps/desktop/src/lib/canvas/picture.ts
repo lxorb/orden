@@ -5,9 +5,9 @@ import { writtenPdf } from '../export/print'
 import { printWithPictures, wholeSheet } from '../export/sheet'
 import { chooseTarget, download, handOver, writeFile } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
+import { planeBox } from './edits'
 import {
   arrowAt,
-  bounds,
   type Box,
   boxOf,
   edgeEnds,
@@ -17,7 +17,6 @@ import {
   shapeLine,
   shapePath,
 } from './geometry'
-import { strokeBox } from './ink'
 import { inkSvg } from './svg'
 import { paletteOf } from './palette'
 import type { Palette } from './paint'
@@ -277,7 +276,7 @@ export function canvasSvg(
   plain = false,
   trusted = false,
 ): string {
-  const box = bounds([...canvas.nodes, ...canvas.ink.map(strokeBox)]) ?? {
+  const box = planeBox(canvas) ?? {
     x: 0,
     y: 0,
     width: 400,
