@@ -10,6 +10,8 @@ export const ml: Dictionary = {
   Yes: 'അതെ',
   No: 'ഇല്ല',
   'From other apps: {key}': 'മറ്റ് ആപ്പുകളിൽ നിന്ന്: {key}',
+  'From other apps: not available, pick another key':
+    'മറ്റ് ആപ്പുകളിൽ നിന്ന്: ലഭ്യമല്ല, മറ്റൊരു കീ തിരഞ്ഞെടുക്കുക',
   'From other apps: set in your system settings':
     'മറ്റ് ആപ്പുകളിൽ നിന്ന്: സിസ്റ്റം ക്രമീകരണങ്ങളിൽ സജ്ജമാക്കുക',
   'From other apps: bind {command} in your system settings':

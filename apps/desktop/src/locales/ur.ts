@@ -10,6 +10,8 @@ export const ur: Dictionary = {
   Yes: 'ہاں',
   No: 'نہیں',
   'From other apps: {key}': 'دوسری ایپس سے: {key}',
+  'From other apps: not available, pick another key':
+    'دوسری ایپس سے: دستیاب نہیں، کوئی اور کلید چنیں',
   'From other apps: set in your system settings': 'دوسری ایپس سے: سسٹم سیٹنگز میں طے کریں',
   'From other apps: bind {command} in your system settings':
     'دوسری ایپس سے: سسٹم سیٹنگز میں {command} مقرر کریں',

@@ -26,9 +26,17 @@ const plain = (key: string) =>
     .replace(/control/g, 'ctrl')
     .replace(/logo|meta|win/g, 'super')
 
-export function noteFor(keys: GlobalKeys | null, id: string, shown: string | null): Note | null {
+export function noteFor(
+  keys: GlobalKeys | null,
+  id: string,
+  shown: string | null,
+  reachable = true,
+): Note | null {
   const flag = FLAGS[id]
-  if (!keys || !flag || keys.reach === 'system') return null
+  if (!keys || !flag) return null
+  const taken = { text: t('From other apps: not available, pick another key'), change: false }
+  if (keys.reach !== 'none' && shown !== null && !reachable) return taken
+  if (keys.reach === 'system') return keys.refused.includes(id) ? taken : null
   if (keys.reach === 'none') {
     return {
       text: t('From other apps: bind {command} in your system settings', {

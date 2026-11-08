@@ -10,6 +10,8 @@ export const pa: Dictionary = {
   Yes: 'ਹਾਂ',
   No: 'ਨਹੀਂ',
   'From other apps: {key}': 'ਹੋਰ ਐਪਾਂ ਤੋਂ: {key}',
+  'From other apps: not available, pick another key':
+    'ਹੋਰ ਐਪਾਂ ਤੋਂ: ਉਪਲਬਧ ਨਹੀਂ, ਕੋਈ ਹੋਰ ਕੁੰਜੀ ਚੁਣੋ',
   'From other apps: set in your system settings': 'ਹੋਰ ਐਪਾਂ ਤੋਂ: ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਤੈਅ ਕਰੋ',
   'From other apps: bind {command} in your system settings':
     'ਹੋਰ ਐਪਾਂ ਤੋਂ: ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ ਵਿੱਚ {command} ਜੋੜੋ',

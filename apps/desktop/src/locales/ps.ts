@@ -10,6 +10,7 @@ export const ps: Dictionary = {
   Yes: 'هو',
   No: 'نه',
   'From other apps: {key}': 'له نورو اپونو: {key}',
+  'From other apps: not available, pick another key': 'له نورو اپونو: شتون نه لري، بله کیلي وټاکئ',
   'From other apps: set in your system settings': 'له نورو اپونو: د سیسټم په ترتیباتو کې یې وټاکئ',
   'From other apps: bind {command} in your system settings':
     'له نورو اپونو: {command} د سیسټم په ترتیباتو کې وټاکئ',

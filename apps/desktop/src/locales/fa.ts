@@ -10,6 +10,8 @@ export const fa: Dictionary = {
   Yes: 'بله',
   No: 'نه',
   'From other apps: {key}': 'از برنامه‌های دیگر: {key}',
+  'From other apps: not available, pick another key':
+    'از برنامه‌های دیگر: در دسترس نیست، کلید دیگری انتخاب کنید',
   'From other apps: set in your system settings': 'از برنامه‌های دیگر: در تنظیمات سیستم تعیین کنید',
   'From other apps: bind {command} in your system settings':
     'از برنامه‌های دیگر: {command} را در تنظیمات سیستم اختصاص دهید',

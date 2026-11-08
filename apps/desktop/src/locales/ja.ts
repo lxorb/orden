@@ -10,6 +10,8 @@ export const ja: Dictionary = {
   Yes: 'はい',
   No: 'いいえ',
   'From other apps: {key}': '他のアプリから: {key}',
+  'From other apps: not available, pick another key':
+    '他のアプリから: 使用できません。別のキーを選んでください',
   'From other apps: set in your system settings': '他のアプリから: システム設定で指定',
   'From other apps: bind {command} in your system settings':
     '他のアプリから: システム設定で {command} を割り当て',

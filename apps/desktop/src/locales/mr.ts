@@ -10,6 +10,7 @@ export const mr: Dictionary = {
   Yes: 'हो',
   No: 'नाही',
   'From other apps: {key}': 'इतर ॲप्समधून: {key}',
+  'From other apps: not available, pick another key': 'इतर ॲप्समधून: उपलब्ध नाही, दुसरी की निवडा',
   'From other apps: set in your system settings': 'इतर ॲप्समधून: सिस्टम सेटिंग्जमध्ये ठरवा',
   'From other apps: bind {command} in your system settings':
     'इतर ॲप्समधून: सिस्टम सेटिंग्जमध्ये {command} जोडा',

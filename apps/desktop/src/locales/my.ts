@@ -10,6 +10,8 @@ export const my: Dictionary = {
   Yes: 'ဟုတ်ကဲ့',
   No: 'မဟုတ်ပါ',
   'From other apps: {key}': 'အခြားအက်ပ်များမှ: {key}',
+  'From other apps: not available, pick another key':
+    'အခြားအက်ပ်များမှ: မရနိုင်ပါ၊ အခြားခလုတ်တစ်ခု ရွေးပါ',
   'From other apps: set in your system settings': 'အခြားအက်ပ်များမှ: စနစ်ဆက်တင်များတွင် သတ်မှတ်ပါ',
   'From other apps: bind {command} in your system settings':
     'အခြားအက်ပ်များမှ: စနစ်ဆက်တင်များတွင် {command} ကို ချိတ်ပါ',

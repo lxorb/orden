@@ -54,6 +54,28 @@ describe('what a shortcut row says about other apps', () => {
     expect(noteFor(refused, 'agents.stop', 'Ctrl+Alt+Shift+K')?.change).toBe(true)
   })
 
+  test('another app holding the key, where the system turned it down', () => {
+    const refused = keys({ reach: 'system', refused: ['app.quick-add'] })
+    expect(noteFor(refused, 'app.quick-add', 'Ctrl+Alt+Space')).toEqual({
+      text: 'From other apps: not available, pick another key',
+      change: false,
+    })
+    expect(noteFor(refused, 'agents.stop', 'Ctrl+Alt+Shift+K')).toBeNull()
+  })
+
+  test('a key no system shortcut can name is said, wherever the keys go', () => {
+    for (const reach of ['system', 'portal'] as const) {
+      expect(noteFor(keys({ reach }), 'app.quick-add', 'Ctrl+Ü', false)?.text).toBe(
+        'From other apps: not available, pick another key',
+      )
+    }
+    expect(noteFor(keys({ reach: 'system' }), 'app.quick-add', null, false)).toBeNull()
+    expect(noteFor(keys({ reach: 'system' }), 'app.sidebar', 'Ctrl+Ü', false)).toBeNull()
+    expect(noteFor(keys({ reach: 'none' }), 'app.quick-add', 'Ctrl+Ü', false)?.text).toContain(
+      'orden --quick-add',
+    )
+  })
+
   test('nothing while the portal has not answered yet', () => {
     expect(noteFor(keys({}), 'app.quick-add', 'Ctrl+Alt+Space')).toBeNull()
   })

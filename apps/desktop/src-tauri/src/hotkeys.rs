@@ -123,9 +123,10 @@ fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
     use tauri_plugin_global_shortcut::{GlobalShortcutExt as _, ShortcutState};
 
     let old = with_state(|held| held.held.get(&which).cloned());
-    if old == key {
+    if old.is_some() && old == key {
         return old;
     }
+    let asked = key.is_some();
     if let Some(old) = &old {
         let _ = app.global_shortcut().unregister(old.as_str());
     }
@@ -140,15 +141,24 @@ fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
                 })
                 .is_ok()
     });
-    with_state(|held| {
-        held.reach = Some(Reach::System);
-        match &now {
-            Some(now) => held.held.insert(which, now.clone()),
-            None => held.held.remove(&which),
-        };
-    });
+    with_state(|held| settled(held, which, asked, now.clone()));
     told_page(app);
     now
+}
+
+fn settled(state: &mut State, which: Which, asked: bool, now: Option<String>) {
+    state.reach = Some(Reach::System);
+    if let Some(now) = now {
+        state.held.insert(which, now);
+        state.refused.remove(&which);
+    } else {
+        state.held.remove(&which);
+        if asked {
+            state.refused.insert(which);
+        } else {
+            state.refused.remove(&which);
+        }
+    }
 }
 
 fn allowed(accelerator: &str, mac: bool) -> bool {
@@ -353,6 +363,37 @@ mod tests {
         assert!(!allowed("Meta+Q", false));
         assert!(allowed("Control+Alt+Space", false));
         assert!(allowed("Control+Super+Alt+K", true));
+    }
+
+    #[test]
+    fn a_key_the_system_turns_down_is_told_as_refused_until_another_is_held() {
+        let mut state = State {
+            wanted: BTreeMap::new(),
+            held: BTreeMap::new(),
+            refused: BTreeSet::new(),
+            reach: None,
+            change: false,
+        };
+        settled(&mut state, Which::QuickAdd, true, None);
+        assert!(state.refused.contains(&Which::QuickAdd));
+        assert!(!state.held.contains_key(&Which::QuickAdd));
+
+        settled(
+            &mut state,
+            Which::QuickAdd,
+            true,
+            Some("Control+Alt+K".to_owned()),
+        );
+        assert!(state.refused.is_empty());
+        assert_eq!(
+            state.held.get(&Which::QuickAdd).map(String::as_str),
+            Some("Control+Alt+K")
+        );
+
+        settled(&mut state, Which::QuickAdd, true, None);
+        settled(&mut state, Which::QuickAdd, false, None);
+        assert!(state.refused.is_empty());
+        assert!(state.held.is_empty());
     }
 
     #[test]

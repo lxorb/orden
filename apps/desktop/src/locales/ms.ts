@@ -10,6 +10,8 @@ export const ms: Dictionary = {
   Yes: 'Ya',
   No: 'Tidak',
   'From other apps: {key}': 'Dari apl lain: {key}',
+  'From other apps: not available, pick another key':
+    'Dari apl lain: tidak tersedia, pilih kekunci lain',
   'From other apps: set in your system settings': 'Dari apl lain: tetapkan dalam tetapan sistem',
   'From other apps: bind {command} in your system settings':
     'Dari apl lain: ikat {command} dalam tetapan sistem',

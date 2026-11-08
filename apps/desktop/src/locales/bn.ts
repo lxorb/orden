@@ -10,6 +10,8 @@ export const bn: Dictionary = {
   Yes: 'হ্যাঁ',
   No: 'না',
   'From other apps: {key}': 'অন্য অ্যাপ থেকে: {key}',
+  'From other apps: not available, pick another key':
+    'অন্য অ্যাপ থেকে: পাওয়া যাচ্ছে না, অন্য কী বেছে নিন',
   'From other apps: set in your system settings': 'অন্য অ্যাপ থেকে: সিস্টেম সেটিংসে ঠিক করুন',
   'From other apps: bind {command} in your system settings':
     'অন্য অ্যাপ থেকে: সিস্টেম সেটিংসে {command} যুক্ত করুন',

@@ -35,6 +35,7 @@
   import { showCombination } from './keys'
   import { prompt } from './prompt.svelte'
   import { Rebind } from './settings/rebind.svelte'
+  import { accelerator } from './accelerator'
   import { globalKeys, noteFor } from './global-keys.svelte'
   import { hearTaps } from './tapped'
   import { landing } from './settings/landing.svelte'
@@ -1054,7 +1055,12 @@
       {#each group.rows as entry (entry.id)}
         {@const key = shortcuts.keyFor(entry.id)}
         {@const warning = entry.scope === 'fixed' ? null : shortcuts.warning(key)}
-        {@const reach = noteFor(globalKeys.keys, entry.id, shown(key))}
+        {@const reach = noteFor(
+          globalKeys.keys,
+          entry.id,
+          shown(key),
+          accelerator(key, shortcuts.platform) !== null,
+        )}
         {@const held = declared.holds(shortcutKey(entry.id))}
         <div class="orden-setting setting shortcut" class:declared={held}>
           <span class="name">
