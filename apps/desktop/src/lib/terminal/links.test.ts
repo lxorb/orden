@@ -89,6 +89,15 @@ describe('rows that are not one address', () => {
     expect(linksOn(buffer, cols, 1)).toEqual([])
   })
 
+  test('an address that ends at the edge does not take the prompt under it', async () => {
+    for (const prompt of ['me@vm:~/orden$ ', 'root@vm:/# ', 'me@mac%  ']) {
+      const { buffer } = await screen(cols, `${first}\r\n${prompt}`)
+      expect(linksOn(buffer, cols, 0).map((link) => link.text)).toEqual([first])
+      const wrapped = await screen(cols, `${'x'.repeat(cols - 1)} ${first}\r\n${prompt}`)
+      expect(linksOn(wrapped.buffer, cols, 1).map((link) => link.text)).toEqual([first])
+    }
+  })
+
   test('an address followed by words on its row ends where they begin', async () => {
     const { buffer } = await screen(cols, 'see https://x.example/a for more\r\nok\r\n')
     expect(linksOn(buffer, cols, 0)).toEqual([
