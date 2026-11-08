@@ -15,6 +15,7 @@ export type FromHub =
   | { t: 'terms' }
   | { t: 'ai' }
   | { t: 'pass' }
+  | { t: 'settings' }
   | { t: 'chat'; said: Record<string, unknown> }
 
 export type HubType = FromHub['t']
@@ -49,6 +50,9 @@ export function readHubFrame(said: string): FromHub | null {
 
     case 'pass':
       return { t: 'pass' }
+
+    case 'settings':
+      return { t: 'settings' }
 
     case 'chat':
       return { t: 'chat', said: one }

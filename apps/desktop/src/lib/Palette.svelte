@@ -31,7 +31,7 @@
   import UnsavedDot from './UnsavedDot.svelte'
   import { isDraft } from './workspace/drafts'
   import { settingsOf, settingValue } from './palette/settings'
-  import { type Look, lookOf } from './palette/trying'
+  import { lookOf } from './palette/trying'
   import { preferences } from './preferences'
   import { search } from './search.svelte'
   import { paletteWords } from './surfaces.svelte'
@@ -358,17 +358,17 @@
     list?.querySelector('.orden-row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
 
-  let kept: Look | null = null
+  let trying = false
 
   function wear(row: Row | undefined) {
-    const was = kept ?? { id: theme.id, scheme: theme.scheme, accent: theme.accent }
-    const look = lookOf(row, was)
+    const look = lookOf(row, theme.kept)
     if (look) {
-      kept = was
+      trying = true
       theme.preview(look.id, look.scheme, look.accent)
-    } else if (kept) {
+    } else if (trying) {
+      const kept = theme.kept
       theme.preview(kept.id, kept.scheme, kept.accent)
-      kept = null
+      trying = false
     }
   }
 
@@ -428,7 +428,7 @@
   }
 
   function pick(row: Row, press?: KeyboardEvent | MouseEvent) {
-    if (lookOf(row, theme)) kept = null
+    if (lookOf(row, theme)) trying = false
     const chosen = choose(row, press, hands)
     if (chosen === 'nothing') return
 

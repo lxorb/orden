@@ -24,13 +24,19 @@ class Picking {
   open = $state(false)
   at = $state<Anchor | null>(null)
   query = $state('')
-  kept = $state<Look>({ id: '', scheme: 'system', accent: '' })
   pointed = $state<Pointed>({ ...NOTHING })
+
+  constructor() {
+    theme.rewore(() => this.follow())
+  }
+
+  get kept(): Look {
+    return theme.kept
+  }
 
   show(at: Anchor | null) {
     if (this.open) return
 
-    this.kept = { id: theme.id, scheme: theme.scheme, accent: theme.accent }
     theme.warm()
     this.pointed = { ...NOTHING }
     this.query = ''
@@ -46,26 +52,27 @@ class Picking {
   }
 
   keepTheme(id: string) {
-    this.kept.id = id
+    theme.select(id)
     this.pointed.id = null
     this.paint()
-    theme.select(id)
   }
 
   keepScheme(choice: SchemeChoice) {
     if (!theme.offers(choice)) return
 
-    this.kept.scheme = choice
+    theme.setScheme(choice)
     this.pointed.scheme = null
     this.paint()
-    theme.setScheme(choice)
   }
 
   keepAccent(id: string) {
-    this.kept.accent = id
+    theme.setAccent(id)
     this.pointed.accent = null
     this.paint()
-    theme.setAccent(id)
+  }
+
+  private follow() {
+    if (this.open) this.paint()
   }
 
   close() {

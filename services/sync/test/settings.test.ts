@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, signIn, testEnv, type TestEnv } from './harness'
+import { computer, hubs } from './hub-fakes'
 
 let env: TestEnv
 let token: string
@@ -586,5 +587,57 @@ describe('the shortcuts an account carries', () => {
 
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings).toEqual({ ligatures: true, shortcuts: { 'app.save': 'F2' } })
+  })
+})
+
+describe('the theme kept with the account', () => {
+  const LOOK = {
+    theme: 'file:rose',
+    scheme: 'dark',
+    values: { '*': { accent: 'teal' }, 'file:rose': { dim: 20 } },
+    css: '[data-theme=dark] { --bg: #000; }',
+  }
+
+  test('is kept and read back as it was sent', async () => {
+    expect((await patch({ look: LOOK })).status).toBe(200)
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ look: LOOK })
+  })
+
+  test('refuses one the app could not wear', async () => {
+    expect((await patch({ look: { ...LOOK, scheme: 'sepia' } })).status).toBe(400)
+    expect((await patch({ look: { ...LOOK, theme: 'file:../x' } })).status).toBe(400)
+    expect((await patch({ look: 'dark' })).status).toBe(400)
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
+  })
+
+  test('takes a sheet larger than the room the other settings share', async () => {
+    const css = `:root { --bg: #000; }${' '.repeat(20 * 1024)}`
+    expect((await patch({ look: { ...LOOK, css } })).status).toBe(200)
+    expect((await patch({ ligatures: true })).status).toBe(200)
+  })
+
+  test('leaves an older build that knows nothing of it working', async () => {
+    await patch({ look: LOOK })
+    expect((await patch({ vim: true })).json.settings).toEqual({ look: LOOK, vim: true })
+  })
+
+  test('tells every device of the account that the settings moved', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      const running = hubs(env)
+      env.HUB = running.HUB
+      const laptop = await computer(env, running, 'owner@example.com', 'Laptop')
+      const phone = await computer(env, running, 'owner@example.com', 'Phone')
+      const stranger = await computer(env, running, 'stranger@example.com', 'Stranger')
+
+      const sent = await patch({ look: LOOK }, laptop.token)
+      expect(sent.status).toBe(200)
+
+      expect(phone.socket.take()).toEqual([{ t: 'settings' }])
+      expect(laptop.socket.take()).toEqual([{ t: 'settings' }])
+      expect(stranger.socket.take()).toEqual([])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

@@ -19,6 +19,7 @@ export type FromHub =
   | { t: 'terms' }
   | { t: 'ai' }
   | { t: 'pass' }
+  | { t: 'settings' }
   | ChatPoke
 
 type Fields = Record<string, unknown>

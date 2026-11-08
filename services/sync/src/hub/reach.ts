@@ -2,7 +2,7 @@ import { chunks } from '../bound'
 import type { Env } from '../types'
 
 export type HubAsk =
-  'join' | 'poke' | 'revoke' | 'erase' | 'machine' | 'terms' | 'chat' | 'ai' | 'pass'
+  'join' | 'poke' | 'revoke' | 'erase' | 'machine' | 'terms' | 'chat' | 'ai' | 'pass' | 'settings'
 
 export const HUB_AWAY = 'sync is not answering - try again'
 

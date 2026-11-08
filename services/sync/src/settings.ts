@@ -8,6 +8,8 @@ import type { Env, Variables } from './types'
 import { KEEP_DAYS } from './versions'
 import { REMIND_BEFORE } from './push/reminders'
 import { isHours, isKeywords, LONGEST_KEYWORD, MOST_KEYWORDS } from '@orden/chats/notify'
+import { lookWrong } from '@orden/sync-core/look'
+import { askHub } from './hub/reach'
 
 type Check = (value: unknown) => string | null
 
@@ -176,6 +178,7 @@ const KNOWN: Record<string, Check> = {
   quietMarks: switched('quietMarks'),
   silent: switched('silent'),
   developer: switched('developer'),
+  look: lookWrong,
 }
 
 const MOST_SHORTCUTS = 200
@@ -335,7 +338,7 @@ settings.patch('/', async (context) => {
   }
 
   const merged = { ...(await settingsOf(context.env, user.id)), ...(body as AccountSettings) }
-  const written = JSON.stringify(merged)
+  const written = JSON.stringify({ ...merged, look: undefined })
   if (byteLength(written) > MOST_BYTES) {
     return context.json({ error: 'that is more settings than an account holds' }, 413)
   }
@@ -348,6 +351,7 @@ settings.patch('/', async (context) => {
     )
       .bind(...keys.flatMap((name) => [`$."${name}"`, JSON.stringify(body[name])]), user.id)
       .run()
+    await askHub(context.env, user.id, 'settings').catch(() => null)
   }
   return context.json({ settings: await settingsOf(context.env, user.id) })
 })

@@ -53,6 +53,7 @@ export function start(): () => void {
   viewport.start()
   i18n.restore()
   theme.init()
+  if (!__EVEN_PLUGIN__) void import('./themes/synced.svelte').then((one) => one.syncLook())
   modes.restore()
   shortcuts.restore()
   toolbar.restore()
