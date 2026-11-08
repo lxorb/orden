@@ -13,7 +13,7 @@
 {#if copy}
   <span class="foreign">
     <SharedMark
-      label={t('{tool} conflict copy · not synced', { tool: copy.tool })}
+      label={t('{tool} conflict copy, not synced', { tool: copy.tool })}
       icon={CloudOff}
     />
   </span>

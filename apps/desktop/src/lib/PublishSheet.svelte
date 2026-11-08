@@ -5,6 +5,7 @@
   import { segmented } from './slide'
   import { shownName } from './note-name'
   import { nameOf } from './space-paths'
+  import Facts from './Facts.svelte'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
   import { chooseTarget, download, writeFile } from './export/save'
@@ -221,10 +222,14 @@
 
       {#if changes}
         <p class="note" transition:slide={{ duration: dur(160) }}>
-          {t('{count} pages', { count: changes.pages })}
-          {#if changes.adds.length}· {t('{count} new', { count: changes.adds.length })}{/if}
-          {#if changes.removes.length}· {t('{count} gone', { count: changes.removes.length })}{/if}
-          {#if changes.bytes}· {readableSize(changes.bytes)}{/if}
+          <Facts
+            parts={[
+              t('{count} pages', { count: changes.pages }),
+              changes.adds.length ? t('{count} new', { count: changes.adds.length }) : '',
+              changes.removes.length ? t('{count} gone', { count: changes.removes.length }) : '',
+              changes.bytes ? readableSize(changes.bytes) : '',
+            ]}
+          />
         </p>
         {#if changes.adds.length || changes.removes.length}
           <ul class="changed">
@@ -462,8 +467,12 @@
       <h3>{t('Answers')}</h3>
       {#if publish.kept}
         <p class="hint" class:bad={publish.kept.full}>
-          {t('Kept for {days}', { days: t('{count} days', { count: publish.kept.days }) })}
-          {#if publish.kept.full}· {t('Full')}{/if}
+          <Facts
+            parts={[
+              t('Kept for {days}', { days: t('{count} days', { count: publish.kept.days }) }),
+              publish.kept.full && t('Full'),
+            ]}
+          />
         </p>
       {/if}
 
@@ -475,9 +484,11 @@
               <small>{when(one.at)}</small>
             </span>
             <span class="said">
-              {Object.entries(one.answers)
-                .map(([question, said]) => `${question}: ${said}`)
-                .join(' · ')}
+              <Facts
+                parts={Object.entries(one.answers).map(
+                  ([question, said]) => `${question}: ${said}`,
+                )}
+              />
             </span>
             <button class="orden-chip" onclick={() => void publish.forget(one)}
               >{t('Delete')}</button

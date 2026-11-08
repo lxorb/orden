@@ -2503,7 +2503,7 @@ export const ru: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} в месяц',
   'Starts again {date}': 'Обновится {date}',
-  '{tool} conflict copy · not synced': 'Конфликтная копия {tool} · не синхронизируется',
+  '{tool} conflict copy, not synced': 'Конфликтная копия {tool}, не синхронизируется',
   'Compare with original': 'Сравнить с оригиналом',
   'Conflict copies from other apps': 'Конфликтные копии других приложений',
   'Remove from sync': 'Убрать из синхронизации',

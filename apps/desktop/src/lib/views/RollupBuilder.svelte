@@ -62,7 +62,7 @@
   })
 
   const autoName = (spec: { relation: string; property?: string | undefined; calc: Rollup }) =>
-    [propertyName(spec.relation), spec.property, NAMES[spec.calc]].filter(Boolean).join(' · ')
+    [propertyName(spec.relation), spec.property, NAMES[spec.calc]].filter(Boolean).join(' ')
 
   function write() {
     if (!relation || !base) return

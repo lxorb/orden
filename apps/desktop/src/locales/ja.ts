@@ -325,7 +325,7 @@ export const ja: Dictionary = {
   Graph: 'グラフ',
   Depth: '深さ',
   'Graph controls': 'グラフの設定',
-  'Name, path or tag': '名前・パス・タグ',
+  'Name, path or tag': '名前、パス、タグ',
   Filter: 'フィルター',
   Orphans: '孤立したノート',
   'Colour a group': 'グループに色を付ける',
@@ -744,7 +744,7 @@ export const ja: Dictionary = {
   Syntax: '構文',
   'Strict CommonMark': '厳密な CommonMark',
   'Only the standard markdown rules, no tables, task lists or footnotes.':
-    '標準の markdown 記法だけを使い、表・タスクリスト・脚注は使いません。',
+    '標準の markdown 記法だけを使い、表、タスクリスト、脚注は使いません。',
   'Smart punctuation': 'スマート約物',
   'Turns straight quotes and dashes into typographic ones as you type.':
     '入力しながら、直線の引用符やハイフンを約物に置き換えます。',
@@ -2054,7 +2054,7 @@ export const ja: Dictionary = {
   'Send requests to any site, outside your tabs': 'タブの外から任意のサイトにリクエストを送信',
   'Read and change the clipboard': 'クリップボードの読み取りと変更',
   'Ask you a question or tell you something': 'あなたに質問する、または何かを伝える',
-  'Select, mark and fold in your notes': 'ノートで選択・マーク・折りたたみ',
+  'Select, mark and fold in your notes': 'ノートで選択、マーク、折りたたみ',
   Applications: 'アプリケーション',
   'Start, see and use your applications': 'アプリケーションの起動、表示、操作',
   Paying: '支払い',
@@ -2394,7 +2394,7 @@ export const ja: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '月額 {price}',
   'Starts again {date}': '{date}にリセット',
-  '{tool} conflict copy · not synced': '{tool} の競合コピー · 同期されません',
+  '{tool} conflict copy, not synced': '{tool} の競合コピー、同期されません',
   'Compare with original': '元のファイルと比較',
   'Conflict copies from other apps': 'ほかのアプリの競合コピー',
   'Remove from sync': '同期から外す',
@@ -2505,7 +2505,7 @@ export const ja: Dictionary = {
   'Words the spelling check never marks as wrong.': 'スペルチェックが誤りとしない単語です。',
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden が従うアプリのキー配置で、下のキーはどれも変更できます。',
-  'Moves and edits in notes with Vim’s keys.': 'Vim のキーでノートを移動・編集します。',
+  'Moves and edits in notes with Vim’s keys.': 'Vim のキーでノートを移動、編集します。',
   'What pulling a note down past its top does on a phone.':
     'スマートフォンでノートを先頭より下に引いたときの動作です。',
   'The OpenAI key the glasses ask their questions with.': 'グラスが質問に使う OpenAI キーです。',
@@ -2622,7 +2622,7 @@ export const ja: Dictionary = {
   'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
     'VS Code のように Ctrl+Tab で最後に使ったタブへ移り、オフでは並び順にタブを巡ります。',
   'Two fingers sideways on the touchpad go back and forward.':
-    'タッチパッドで二本指を横に動かすと戻る・進むができます。',
+    'タッチパッドで二本指を横に動かすと戻ったり進んだりできます。',
   'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
     '見えていないスペースのウェブページを、実行し続けるか、一時停止するか、初回に確認するかです。',
   'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
@@ -2803,7 +2803,7 @@ export const ja: Dictionary = {
   'Urgent and important': '緊急と重要',
   'Draft replies': '返信の下書き',
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
-    'AI があなたの書き方で返信の下書きを作ってタスクを提案し、あなたが選ぶまで何も送信・追加されません。',
+    'AI があなたの書き方で返信の下書きを作ってタスクを提案し、あなたが選ぶまで何も送信されず、追加もされません。',
   'Use draft': '下書きを使う',
   Protected: '保護中',
   'A protected note has a reminder': '保護中のノートにリマインダーがあります',
@@ -3259,7 +3259,7 @@ export const ja: Dictionary = {
   'Last name': '姓',
   'Full name': '氏名',
   Street: '番地',
-  'Floor or apartment': '階・部屋番号',
+  'Floor or apartment': '階または部屋番号',
   'ZIP or postal code': '郵便番号',
   City: '市区町村',
   'State or province': '都道府県',
@@ -3542,7 +3542,7 @@ export const ja: Dictionary = {
   'How this computer is listed under linked devices in Signal':
     'Signal のリンク済みデバイスでこのコンピューターに表示される名前',
   'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
-    'Orden は signal-cli を通じてデバイスとして Signal にリンクします。signal-cli は Signal が作成・承認したものではありません。初回に Orden は signal-cli と Java（約 190 MB）をダウンロードします。',
+    'Orden は signal-cli を通じてデバイスとして Signal にリンクします。signal-cli は Signal が作成したものでも承認したものでもありません。初回に Orden は signal-cli と Java（約 190 MB）をダウンロードします。',
   'Scan this with Signal on your phone': 'スマートフォンの Signal でこれをスキャンしてください',
   'In Signal: Settings > Linked devices > Link new device':
     'Signal で：設定 > リンク済みデバイス > 新しいデバイスをリンク',

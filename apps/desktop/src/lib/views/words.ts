@@ -142,8 +142,8 @@ function noteLabel(key: string, names: NoteNames | undefined): string {
   const name = nameOf(path)
   if ((names?.get(name) ?? 0) < 2) return name
   const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null
-  if (space === null) return `${name} · ${folder ?? '/'}`
-  return `${name} · ${folder === null ? space : `${space}/${folder}`}`
+  if (space === null) return `${name} (${folder ?? '/'})`
+  return `${name} (${folder === null ? space : `${space}/${folder}`})`
 }
 
 export function dayHead(value: Value, today: string): string {
@@ -151,7 +151,7 @@ export function dayHead(value: Value, today: string): string {
   if (day === null) return value === 'overdue' ? t('Overdue') : groupName(value)
   const date = i18n.when(dateAt(day), { weekday: 'short', day: 'numeric', month: 'short' })
   const near = dayWords(day, today)
-  return day === today || day === addDays(today, 1) ? `${date} · ${near}` : date
+  return day === today || day === addDays(today, 1) ? `${near}, ${date}` : date
 }
 
 export const statusName = (status: string): string => t(STATUS_NAMES[status] ?? 'To do')

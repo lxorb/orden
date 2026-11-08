@@ -2414,7 +2414,7 @@ export const fa: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'ماهانه {price}',
   'Starts again {date}': 'از {date} دوباره شروع می‌شود',
-  '{tool} conflict copy · not synced': 'رونوشت تعارض {tool} · همگام نشده',
+  '{tool} conflict copy, not synced': 'رونوشت تعارض {tool}، همگام نشده',
   'Compare with original': 'مقایسه با اصل',
   'Conflict copies from other apps': 'رونوشت‌های تعارض از برنامه‌های دیگر',
   'Remove from sync': 'حذف از همگام‌سازی',

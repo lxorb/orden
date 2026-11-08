@@ -172,7 +172,7 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
       const path = notes[next++] ?? ''
       const helper = helperOf(
         parent,
-        `${instruction.slice(0, 60)} · ${linkOf(path, root)}`,
+        `${instruction.slice(0, 60)}, ${linkOf(path, root)}`,
         false,
         parent.mode,
       )

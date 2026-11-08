@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../Facts.svelte'
   import { ACCENTS } from '../accents'
   import { i18n, t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
@@ -61,13 +62,12 @@
   const most = (list: readonly Place[]) =>
     list.map((one) => one.ms).reduce((high, one) => Math.max(high, one), 1)
 
-  const madeOfText = (activity: string | null): string =>
+  const madeOfText = (activity: string | null): string[] =>
     (['site', 'app'] as const)
       .flatMap((lane) => madeOf(spans, activity, lane, from, to, now).slice(0, 2))
       .sort((one, other) => other.ms - one.ms)
       .slice(0, 3)
       .map((one) => `${one.name} ${length(one.ms)}`)
-      .join(' · ')
 
   function placeMenu(event: MouseEvent, lane: Lane, place: Place) {
     event.preventDefault()
@@ -194,7 +194,7 @@
             <span class="dot" style:background={tintOf(total.activity)}></span>
             <span class="orden-row-label">
               <span class="name" dir="auto">{nameOf(total.activity, t('No activity'))}</span>
-              {#if made}<span class="made">{made}</span>{/if}
+              {#if made.length}<span class="made"><Facts line parts={made} /></span>{/if}
             </span>
             <span class="bar"
               ><span

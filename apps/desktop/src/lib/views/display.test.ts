@@ -133,8 +133,8 @@ describe('a view grouped by note', () => {
     const names = noteNames(keys)
     expect(keys.map((key) => groupLabel(property, key, TODAY, names))).toEqual([
       'Inbox',
-      'Tasks · Alpha',
-      'Tasks · Beta',
+      'Tasks (Alpha)',
+      'Tasks (Beta)',
     ])
   })
 
@@ -167,7 +167,7 @@ describe('a view grouped by note', () => {
       const names = noteNames(some)
       return some.map((key) => groupLabel('file.path', key, TODAY, names))
     }, 2000)
-    expect(said[0]).toBe('Note 0 · Folder 0')
+    expect(said[0]).toBe('Note 0 (Folder 0)')
     expect(said).toHaveLength(2000)
   })
 })
@@ -191,8 +191,8 @@ describe('Todos grouped by note across two spaces (#1157)', () => {
     ).toEqual([['Home Home one'], ['Work Work one'], ['Home Water the plants']])
     const names = noteNames(keys)
     expect(keys.map((key) => groupLabel(property, key, TODAY, names))).toEqual([
-      '.Inbox · Home',
-      '.Inbox · Work',
+      '.Inbox (Home)',
+      '.Inbox (Work)',
       'Garden',
     ])
   })

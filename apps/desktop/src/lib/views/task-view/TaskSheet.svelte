@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../../Facts.svelte'
   import type { Priority, Row } from '@orden/bases'
   import { parseQuickAdd } from '@orden/bases/language'
   import { linesOf } from '@orden/bases/tasks'
@@ -478,8 +479,13 @@
         >
           <span class="orden-row-mark"><Glyph icon={task.recurrence ? Repeat : Calendar} /></span>
           <span class="orden-row-label"
-            >{#if starts}{dayWords(starts, today, task.time)}{#if task.duration !== undefined}
-                · {durationLabel(task.duration)}{/if}{:else}{t('No date')}{/if}</span
+            >{#if starts}<Facts
+                line
+                parts={[
+                  dayWords(starts, today, task.time),
+                  task.duration !== undefined && durationLabel(task.duration),
+                ]}
+              />{:else}{t('No date')}{/if}</span
           >
         </button>
         {#if task.recurrence}<p class="rule">{task.recurrence}</p>{/if}

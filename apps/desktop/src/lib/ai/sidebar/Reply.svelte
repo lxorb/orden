@@ -190,7 +190,7 @@
       case 'max_tokens':
         return t('Length limit')
       case 'refusal':
-        return part.text ? `${t('Declined')} · ${part.text}` : t('Declined')
+        return part.text ? `${t('Declined')}: ${part.text}` : t('Declined')
       case 'error':
         return part.text
       case 'stopped':

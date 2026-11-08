@@ -279,15 +279,15 @@ test('the tab says what runs in it, the title its program set, and the shell aga
   await sessionOf(tab).attach(place, false)
   await vi.waitFor(() => expect(asked).toContain('pty_spawn'))
 
-  await vi.waitFor(() => expect(tab.shown).toBe('PowerShell · work'))
+  await vi.waitFor(() => expect(tab.shown).toBe('PowerShell, work'))
 
   titling?.('C:\\Program Files\\PowerShell\\7\\pwsh.exe')
   flushSync()
-  expect(tab.shown).toBe('PowerShell · work')
+  expect(tab.shown).toBe('PowerShell, work')
 
   front = 'claude'
   typing?.('claude\r')
-  await vi.waitFor(() => expect(tab.shown).toBe('claude · work'))
+  await vi.waitFor(() => expect(tab.shown).toBe('claude, work'))
   expect(tab.running?.program).toBe('claude')
 
   titling?.('⠐ Fix the parser')
@@ -301,7 +301,7 @@ test('the tab says what runs in it, the title its program set, and the shell aga
 
   front = null
   channels.at(-1)?.onmessage?.(bytesOf('\x1b]133;A\x07PS C:\\work> '))
-  await vi.waitFor(() => expect(tab.shown).toBe('PowerShell · work'))
+  await vi.waitFor(() => expect(tab.shown).toBe('PowerShell, work'))
   expect(tab.running?.program).toBeNull()
 
   expect(asked.filter((one) => one === 'pty_program').length).toBeLessThanOrEqual(2)

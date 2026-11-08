@@ -28,8 +28,8 @@ function goalWord(state: GoalState): string {
 function goalStatus(goal: Goal, now: number): string {
   const minutes = Math.round((now - goal.started) / 60_000)
   return [
-    `◎ ${goalWord(goal.state)} · ${goal.condition}`,
-    `${minutes}m · ${goal.turns}/${goal.budget.turns} · ${tokens(goal.tokens)}`,
+    `◎ ${goalWord(goal.state)}: ${goal.condition}`,
+    `${minutes}m, ${goal.turns}/${goal.budget.turns}, ${tokens(goal.tokens)}`,
     goal.reason ?? '',
   ]
     .filter(Boolean)
@@ -42,7 +42,7 @@ function road(host: Host, thread: Thread, signal: AbortSignal): GoalRoad {
     evaluate: async (condition, since) =>
       verdictIn(await host.ask(thread, evaluatorMessages(condition, shown(thread, since)), signal)),
     changed: () => host.touched(thread),
-    ended: (goal, why) => host.line(thread, `◎ ${goalWord(goal.state)}${why ? ` · ${why}` : ''}`),
+    ended: (goal, why) => host.line(thread, `◎ ${goalWord(goal.state)}${why ? `: ${why}` : ''}`),
     wait: waitFor,
     now: () => Date.now(),
   }
@@ -91,7 +91,7 @@ export function goal(host: Host, thread: Thread, args: string): void {
       tasks.stop(thread.id, 'goal')
       if (held) {
         held.state = 'cleared'
-        host.line(thread, `◎ ${goalWord('cleared')} · ${held.condition}`)
+        host.line(thread, `◎ ${goalWord('cleared')}: ${held.condition}`)
       }
       return
     case 'set': {

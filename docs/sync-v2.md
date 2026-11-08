@@ -707,7 +707,7 @@ What the engine does with one:
   removes one by itself, because which of two files is the stray is a person's call.
 
 In the list such a file is drawn faint with a struck-through cloud, the tooltip saying
-`Proton conflict copy · not synced` (`foreign/ForeignMark.svelte`, fetched through the
+`Proton conflict copy, not synced` (`foreign/ForeignMark.svelte`, fetched through the
 same door as the held mark the first time sync meets one). Its menu adds *Compare with
 original* while the note it was made of is there: the note in front, the copy to the side.
 

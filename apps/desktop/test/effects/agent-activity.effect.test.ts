@@ -138,7 +138,10 @@ describe("an agent's session", () => {
     await settled()
 
     expect(target.querySelector('.name')?.textContent).toBe('Claude Code')
-    expect(target.querySelector('.doing')?.textContent.trim()).toBe('Pressing · Shop')
+    expect([...target.querySelectorAll('.doing .fact')].map((one) => one.textContent)).toEqual([
+      'Pressing',
+      'Shop',
+    ])
     const pages = [...target.querySelectorAll('.tabs .orden-row-label')].map(
       (one) => one.textContent,
     )

@@ -225,7 +225,7 @@ accountsAre(
       const provider = vendorName(vendor, ai.accounts)
       return mine.map((one) => ({
         id: one.id,
-        label: `${provider} · ${accountName(one)}`,
+        label: `${provider}, ${accountName(one)}`,
         active: ai.isActive(one.id),
       }))
     }),

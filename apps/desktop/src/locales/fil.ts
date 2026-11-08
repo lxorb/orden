@@ -2460,7 +2460,7 @@ export const fil: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} kada buwan',
   'Starts again {date}': 'Magsisimula muli sa {date}',
-  '{tool} conflict copy · not synced': 'Conflict copy ng {tool} · hindi naka-sync',
+  '{tool} conflict copy, not synced': 'Conflict copy ng {tool}, hindi naka-sync',
   'Compare with original': 'Ihambing sa orihinal',
   'Conflict copies from other apps': 'Mga conflict copy mula sa ibang app',
   'Remove from sync': 'Alisin sa sync',

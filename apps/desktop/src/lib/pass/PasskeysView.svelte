@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../Facts.svelte'
   import type { Item, Login } from '@orden/pass/types'
   import { atLeast } from '@orden/pass/types'
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
@@ -38,9 +39,12 @@
         <span class="words">
           <span class="user">{key.userName || key.userDisplayName || t('Passkey')}</span>
           <span class="meta"
-            >{key.rpName || key.rpId}{key.created
-              ? ` · ${i18n.when(key.created, { dateStyle: 'medium' })}`
-              : ''}</span
+            ><Facts
+              parts={[
+                key.rpName || key.rpId,
+                key.created ? i18n.when(key.created, { dateStyle: 'medium' }) : '',
+              ]}
+            /></span
           >
         </span>
         {#if editable}

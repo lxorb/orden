@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from './Facts.svelte'
   import { fileMark } from './file-mark'
   import { t } from './i18n.svelte'
   import { shownName } from './note-name'
@@ -35,9 +36,9 @@
     return person.email ? called({ name: person.name, email: person.email }) : (person.name ?? '')
   }
 
-  function subtitle(person: Member): string {
-    if (person.guest) return person.email ? `${person.email} · ${t('Guest')}` : t('Guest')
-    return person.pending ? `${person.email} · ${t('Invited')}` : (person.email ?? '')
+  function subtitle(person: Member): (string | null | false)[] {
+    if (person.guest) return [person.email, t('Guest')]
+    return [person.email, person.pending && t('Invited')]
   }
 
   const keyOf = (person: Member | Waiting) => `person:${person.guest ?? person.email ?? ''}`
@@ -236,7 +237,7 @@
           </span>
           <span class="name">
             {name(person)}
-            <small>{subtitle(person)}</small>
+            <small><Facts parts={subtitle(person)} /></small>
           </span>
           <div class="pick">
             <Select

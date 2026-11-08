@@ -23,9 +23,15 @@ function displayWidth(spec: ImageSpec, natural: number | undefined): string {
   return spec.width ? `${spec.width}px` : ''
 }
 
-function sizeLabel(zoom: number, natural: number | undefined): string {
-  const pixels = natural ? ` · ${Math.round((natural * zoom) / 100)}px` : ''
-  return `${zoom}%${pixels}`
+function showSize(target: HTMLElement, zoom: number, natural: number | undefined): void {
+  const parts = natural ? [`${zoom}%`, `${Math.round((natural * zoom) / 100)}px`] : [`${zoom}%`]
+  target.replaceChildren(
+    ...parts.map((text) => {
+      const part = document.createElement('span')
+      part.textContent = text
+      return part
+    }),
+  )
 }
 
 function icon(paths: string[]): SVGSVGElement {
@@ -228,7 +234,7 @@ export class ImageWidget extends OrdenWidget {
     parts.missing.textContent = image.src
 
     if (document.activeElement !== parts.alt) parts.alt.value = image.alt
-    parts.size.textContent = sizeLabel(image.zoom, natural)
+    showSize(parts.size, image.zoom, natural)
     const plain = image.zoom === 100 && !image.width
     parts.size.disabled = plain
     parts.size.title = plain ? '' : uiLabel('resetSize')
@@ -391,7 +397,7 @@ export class ImageWidget extends OrdenWidget {
 
     frame.classList.add('is-resizing')
     frame.dataset.corner = handle.dataset.corner
-    parts.badge.textContent = sizeLabel(zoom, natural)
+    showSize(parts.badge, zoom, natural)
     try {
       handle.setPointerCapture(event.pointerId)
     } catch {
@@ -407,8 +413,8 @@ export class ImageWidget extends OrdenWidget {
         !moved.altKey,
       )
       parts.image.style.width = displayWidth(withZoom(image, zoom), natural)
-      parts.badge.textContent = sizeLabel(zoom, natural)
-      parts.size.textContent = sizeLabel(zoom, natural)
+      showSize(parts.badge, zoom, natural)
+      showSize(parts.size, zoom, natural)
     }
 
     const finish = () => {

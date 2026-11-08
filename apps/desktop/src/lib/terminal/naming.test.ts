@@ -29,11 +29,11 @@ describe('a terminal is called', () => {
   })
 
   test('else the program in front, and the folder', () => {
-    expect(terminalName({ ...parts, program: 'node' })).toBe('node · quaestur')
+    expect(terminalName({ ...parts, program: 'node' })).toBe('node, quaestur')
   })
 
   test('else the shell, and the folder, or the shell alone', () => {
-    expect(terminalName(parts)).toBe('PowerShell · quaestur')
+    expect(terminalName(parts)).toBe('PowerShell, quaestur')
     expect(terminalName({ ...parts, folder: null })).toBe('PowerShell')
   })
 })

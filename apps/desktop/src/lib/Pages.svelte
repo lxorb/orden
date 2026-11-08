@@ -337,18 +337,22 @@
     return `paper:${hit.paper}:${hit.at}`
   }
 
-  function around(hit: PaperHit): string {
+  function around(hit: PaperHit): Found {
     const text = texts[hit.paper - 1] ?? ''
     const from = Math.max(0, hit.at - AROUND)
     const to = Math.min(text.length, hit.at + hit.length + AROUND)
     const said = text.slice(from, to).replace(/\s+/g, ' ').trim()
-    return `${hit.paper} · ${from ? '…' : ''}${said}${to < text.length ? '…' : ''}`
+    return {
+      id: hitId(hit),
+      paper: hit.paper,
+      says: `${from ? '…' : ''}${said}${to < text.length ? '…' : ''}`,
+    }
   }
 
   const found = $derived<Found[]>(
     finding
       ? [
-          ...paperHits.map((hit) => ({ id: hitId(hit), says: around(hit) })),
+          ...paperHits.map(around),
           ...matches(canvas, term).filter((one) => cards.some((card) => card.id === one.id)),
         ]
       : [],

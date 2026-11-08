@@ -37,7 +37,7 @@ export async function messageHits(words: string): Promise<{ rows: Row[]; only: b
         id: message.id,
         path: entry.path,
         line: line.length > LINE ? `${line.slice(0, LINE)}…` : line,
-        where: `#${entry.name ?? ''} · ${who}`,
+        where: [`#${entry.name ?? ''}`, who],
       },
     ]
   })

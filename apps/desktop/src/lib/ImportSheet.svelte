@@ -1,6 +1,7 @@
 <script lang="ts">
   import { dropOver } from './drag-paths'
 
+  import Facts from './Facts.svelte'
   import { key, plural, t } from './i18n.svelte'
   import { importing, onMac } from './importing.svelte'
   import { droppedFiles, pickFiles } from './import/picking'
@@ -36,14 +37,10 @@
   const plan = $derived(importing.plan)
   const counts = $derived(importing.counts)
 
-  const said = $derived(
-    [
-      plural(counts.notes, { one: '{count} note', other: '{count} notes' }),
-      counts.files ? plural(counts.files, { one: '{count} file', other: '{count} files' }) : '',
-    ]
-      .filter(Boolean)
-      .join(' · '),
-  )
+  const said = $derived([
+    plural(counts.notes, { one: '{count} note', other: '{count} notes' }),
+    counts.files ? plural(counts.files, { one: '{count} file', other: '{count} files' }) : '',
+  ])
 
   const target = $derived(
     [importing.spaceName, importing.under].filter(Boolean).join(' / ') || t('This space'),
@@ -169,7 +166,7 @@
     <div class="card" in:fade={{ duration: dur(130) }}>
       <div class="row">
         <span class="name">{importing.format ? t(FORMATS[importing.format]) : ''}</span>
-        <span class="hint">{said}</span>
+        <span class="hint"><Facts parts={said} /></span>
       </div>
     </div>
 

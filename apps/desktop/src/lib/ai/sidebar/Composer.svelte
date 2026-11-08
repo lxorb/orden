@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../../Facts.svelte'
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from '../../i18n.svelte'
   import Cross from '../../Cross.svelte'
@@ -531,10 +532,14 @@
         <span class="mark">◎</span>
         <span class="condition">{goal.condition}</span>
         <span class="meta"
-          >{minutes(now - goal.started, i18n.language)} · {goal.turns}/{goal.budget.turns} · {tokens(
-            goal.tokens,
-            i18n.language,
-          )}</span
+          ><Facts
+            line
+            parts={[
+              minutes(now - goal.started, i18n.language),
+              `${goal.turns}/${goal.budget.turns}`,
+              tokens(goal.tokens, i18n.language),
+            ]}
+          /></span
         >
       </button>
       <button

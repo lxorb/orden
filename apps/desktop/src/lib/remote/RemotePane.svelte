@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../Facts.svelte'
   import { closeOnBack } from '../backstack.svelte'
   import { dropOver } from '../drag-paths'
   import { t } from '../i18n.svelte'
@@ -75,7 +76,7 @@
       {:else}
         <div class="card">
           {#each remote.hosts as one, at (one.id)}
-            {@const about = [one.detail, one.group].filter(Boolean).join(' · ')}
+            {@const about = [one.detail, one.group].filter(Boolean)}
             <div
               class="orden-setting row"
               class:landing={dropAt === at}
@@ -98,7 +99,7 @@
                 <HostMark colour={one.colour} />
                 <span class="name">
                   {one.name}
-                  {#if about}<small>{about}</small>{/if}
+                  {#if about.length}<small><Facts parts={about} /></small>{/if}
                 </span>
               </button>
               <button

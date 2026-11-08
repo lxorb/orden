@@ -1,6 +1,6 @@
 import { nameOf } from '../space-paths'
 
-const BETWEEN = ' · '
+const BETWEEN = ', '
 
 const TITLE_MOST = 120
 

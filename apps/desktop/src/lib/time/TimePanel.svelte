@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../Facts.svelte'
   import { t } from '../i18n.svelte'
   import { counted, isOwn } from './counted'
   import { dayOf, daysAfter, MINUTE, near, piecesIn, totalsOf, wholeOf } from './days'
@@ -47,7 +48,7 @@
     )
     const of = (lane: string) =>
       [...fresh].reverse().find((one) => one.source === lane)?.label ?? null
-    return [of('app'), of('site') ?? of('tab')].filter((one) => one !== null).join(' · ')
+    return [of('app'), of('site') ?? of('tab')].filter((one) => one !== null)
   })
 
   const todayOf = (activity: string) => totals.find((one) => one.activity === activity)?.ms ?? 0
@@ -63,9 +64,11 @@
 <div class="time" ondblclick={opened}>
   <Timer {now} />
 
-  {#if inFront && time.recording}
+  {#if inFront.length && time.recording}
     <p class="front">
-      <span class="live" aria-hidden="true"></span><span class="name" dir="auto">{inFront}</span>
+      <span class="live" aria-hidden="true"></span><span class="name" dir="auto"
+        ><Facts line parts={inFront} /></span
+      >
     </p>
   {/if}
 

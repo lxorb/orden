@@ -233,7 +233,7 @@ describe('a Firefox profile brought into Orden', () => {
 
     await landBrowser(FIREFOX, true)
 
-    expect(spaces.map((one) => one.name)).toEqual(['Firefox · default-release'])
+    expect(spaces.map((one) => one.name)).toEqual(['Firefox (default-release)'])
     expect(written[0]?.files.map((one) => one.path)).toContain(
       'Bookmarks/Bookmarks menu/Recipes.url',
     )

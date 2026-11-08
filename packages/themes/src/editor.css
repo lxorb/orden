@@ -1761,6 +1761,11 @@
   transition: opacity var(--dur-fast) var(--ease-out);
 }
 
+.orden-image-badge > span + span,
+.orden-image-size > span + span {
+  margin-inline-start: var(--space-2);
+}
+
 .orden-image-frame[data-corner$='w'] .orden-image-badge {
   left: 10px;
 }

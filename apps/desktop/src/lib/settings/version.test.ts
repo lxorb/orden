@@ -53,17 +53,17 @@ describe('the version', () => {
   test('says the channel a desktop follows beside it', () => {
     world.desktop = true
     world.channel = 'unstable'
-    expect(version.said()).toBe('under test · Unstable')
+    expect(version.said()).toBe('under test, Unstable')
   })
 
   test('says the build the web app was served beside it, and the commit it was built from', () => {
     world.web = 'stable'
-    expect(version.said()).toBe('under test (c0ffee1) · Stable')
+    expect(version.said()).toBe('under test (c0ffee1), Stable')
   })
 
   test("says the edge's commit, which its number does not", () => {
     world.web = 'unstable'
-    expect(version.said()).toBe('under test (c0ffee1) · Unstable')
+    expect(version.said()).toBe('under test (c0ffee1), Unstable')
   })
 
   test('pressed on the web, puts the commit on the clipboard with the version', async () => {
@@ -92,6 +92,6 @@ describe('the version', () => {
     await vi.waitFor(() => expect(world.copied).toEqual(['under test']))
     expect(field.get()).toBe('Copied')
     vi.advanceTimersByTime(1600)
-    expect(field.get()).toBe('under test · Stable')
+    expect(field.get()).toBe('under test, Stable')
   })
 })

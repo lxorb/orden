@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Facts from '../../Facts.svelte'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import Cross from '../../Cross.svelte'
   import { i18n, t } from '../../i18n.svelte'
@@ -146,9 +147,12 @@
       }}
     />
     <small>
-      {grant.client !== grant.name ? `${grant.client} · ` : ''}{t('Added {date}', {
-        date: i18n.when(grant.created, { dateStyle: 'medium' }),
-      })}
+      <Facts
+        parts={[
+          grant.client !== grant.name && grant.client,
+          t('Added {date}', { date: i18n.when(grant.created, { dateStyle: 'medium' }) }),
+        ]}
+      />
     </small>
   </span>
 </header>

@@ -1477,7 +1477,7 @@ class Chat implements Panel {
     }
     const why = root ? t('you can only read this space') : t('no such space')
     const { hostOf } = await import('../commands/host')
-    hostOf(this).line(thread, `${t('Save as a note')} · ${why}`)
+    hostOf(this).line(thread, `${t('Save as a note')}: ${why}`)
   }
 
   archive(id = this.open?.id): void {

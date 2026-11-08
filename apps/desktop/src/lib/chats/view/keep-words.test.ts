@@ -18,7 +18,7 @@ describe('a message kept outside its chat', () => {
 
   test('each message a quote under its writer and time, its files embedded', () => {
     expect(quoted('Lucile', '7 Oct, 16:52', 'one\n\ntwo', ['figure.png'])).toBe(
-      '> **Lucile** · 7 Oct, 16:52\n> one\n>\n> two\n> ![[figure.png]]',
+      '> **Lucile** 7 Oct, 16:52\n> one\n>\n> two\n> ![[figure.png]]',
     )
   })
 })

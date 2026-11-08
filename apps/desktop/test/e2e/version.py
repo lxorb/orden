@@ -46,7 +46,7 @@ def settings(page: Page, label: str, version: str) -> None:
     row.scroll_into_view_if_needed()
     said = row.locator(".said").inner_text().strip()
     say(f"[{label}] the row says {said!r}")
-    if said != f"{version} · Stable":
+    if said != f"{version}, Stable":
         wrong(f"[{label}] Version says {said!r}, not the build and its channel")
     shot(page, f"{label}-settings")
 
