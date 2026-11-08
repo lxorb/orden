@@ -2,12 +2,12 @@ import { execSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { BARS, BLUSH, INK, R, SKY } from './mark.mjs'
+import { BLUSH, INK, SKY } from './mark.mjs'
 
 const OUT = 'apps/desktop/src-tauri/icons/documents'
 
 const TYPES = {
-  pdf: { label: 'PDF', colour: '#D2414D' },
+  pdf: { label: 'PDF' },
 }
 
 const WINDOWS = [16, 20, 24, 32, 40, 48, 64, 256]
@@ -26,28 +26,29 @@ const MAC = [
 ]
 
 const VARIANTS = {
-  small: { band: 540, mark: { scale: 0.42, y: 300 }, label: null, outline: 52 },
+  small: {
+    page: [96, 16, 928, 1008],
+    corner: 96,
+    fold: 240,
+    label: { height: 320, stroke: 100, gap: 0.28, y: 600 },
+    outline: 56,
+  },
   mid: {
-    band: 500,
-    mark: { scale: 0.4, y: 280 },
-    label: { height: 220, stroke: 70, gap: 0.2 },
-    outline: 30,
+    page: [144, 48, 880, 976],
+    corner: 80,
+    fold: 220,
+    label: { height: 260, stroke: 86, gap: 0.24, y: 590 },
+    outline: 32,
   },
   full: {
-    band: 600,
-    mark: { scale: 0.5, y: 330 },
-    label: { height: 150, stroke: 46, gap: 0.28 },
+    page: [192, 80, 832, 944],
+    corner: 56,
+    fold: 176,
+    label: { height: 200, stroke: 60, gap: 0.28, y: 580 },
     outline: 18,
   },
 }
 const variantOf = (size) => (size < 32 ? 'small' : size < 48 ? 'mid' : 'full')
-
-const X0 = 192
-const X1 = 832
-const Y0 = 80
-const Y1 = 944
-const CORNER = 56
-const FOLD = 176
 
 const n = (v) => Number(v.toFixed(2))
 const hex = (c) => `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`
@@ -75,7 +76,7 @@ const GLYPHS = {
   },
 }
 
-function label(text, { height, stroke, gap }, top, bottom) {
+function label(text, { height, stroke, gap, y: middle }) {
   const letters = [...text].map((c) => {
     const glyph = GLYPHS[c]
     if (!glyph) throw new Error(`no glyph for ${c}`)
@@ -84,7 +85,7 @@ function label(text, { height, stroke, gap }, top, bottom) {
   const width =
     letters.reduce((sum, g) => sum + g.width * height, 0) + gap * height * (letters.length - 1)
   let x = 512 - width / 2
-  const y = (top + bottom) / 2 - height / 2
+  const y = middle - height / 2
   const d = letters
     .map((g) => {
       const part = g.path(x, y, height)
@@ -92,38 +93,29 @@ function label(text, { height, stroke, gap }, top, bottom) {
       return part
     })
     .join('')
-  return `<path d="${d}" fill="none" stroke="#FFFFFF" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>`
+  return `<path d="${d}" fill="none" stroke="${hex(INK)}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>`
 }
 
-function mark({ scale, y }) {
-  return BARS.map(([x0, y0, x1, y1]) => {
-    const at = (v, c) => c + (v - 512) * scale
-    return `<rect x="${n(at(x0, 512))}" y="${n(at(y0, y))}" width="${n((x1 - x0) * scale)}" height="${n((y1 - y0) * scale)}" rx="${n(R * scale)}" fill="${hex(INK)}"/>`
-  }).join('')
-}
-
-function svg({ label: text, colour }, variant) {
+function svg({ label: text }, variant) {
   const v = VARIANTS[variant]
-  const r = CORNER
-  const page = `M${X0 + r} ${Y0}H${X1 - FOLD}L${X1} ${Y0 + FOLD}V${Y1 - r}A${r} ${r} 0 0 1 ${X1 - r} ${Y1}H${X0 + r}A${r} ${r} 0 0 1 ${X0} ${Y1 - r}V${Y0 + r}A${r} ${r} 0 0 1 ${X0 + r} ${Y0}Z`
-  const f = 44
-  const fold = `M${X1 - FOLD} ${Y0}V${Y0 + FOLD - f}A${f} ${f} 0 0 0 ${X1 - FOLD + f} ${Y0 + FOLD}H${X1}Z`
-  const line = `stroke="${hex(INK)}" stroke-opacity="0.28" stroke-width="${v.outline}" stroke-linejoin="round"`
+  const [x0, y0, x1, y1] = v.page
+  const r = v.corner
+  const k = v.fold
+  const page = `M${x0 + r} ${y0}H${x1 - k}L${x1} ${y0 + k}V${y1 - r}A${r} ${r} 0 0 1 ${x1 - r} ${y1}H${x0 + r}A${r} ${r} 0 0 1 ${x0} ${y1 - r}V${y0 + r}A${r} ${r} 0 0 1 ${x0 + r} ${y0}Z`
+  const f = Math.round(k / 4)
+  const fold = `M${x1 - k} ${y0}V${y0 + k - f}A${f} ${f} 0 0 0 ${x1 - k + f} ${y0 + k}H${x1}Z`
+  const line = `stroke="${hex(INK)}" stroke-opacity="0.3" stroke-width="${v.outline}" stroke-linejoin="round"`
   return [
     '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">',
     '<defs>',
-    `<linearGradient id="wash" x1="${X0}" y1="${Y0}" x2="${X1}" y2="${Y1}" gradientUnits="userSpaceOnUse">`,
-    `<stop offset="0" stop-color="${hex(SKY)}"/><stop offset="0.25" stop-color="${hex(SKY)}"/>`,
-    `<stop offset="0.75" stop-color="${hex(BLUSH)}"/><stop offset="1" stop-color="${hex(BLUSH)}"/>`,
+    `<linearGradient id="wash" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" gradientUnits="userSpaceOnUse">`,
+    `<stop offset="0" stop-color="${hex(SKY)}"/><stop offset="1" stop-color="${hex(BLUSH)}"/>`,
     '</linearGradient>',
-    `<clipPath id="page"><path d="${page}"/></clipPath>`,
     '</defs>',
     `<path d="${page}" fill="url(#wash)"/>`,
-    `<rect x="${X0}" y="${v.band}" width="${X1 - X0}" height="${Y1 - v.band}" fill="${colour}" clip-path="url(#page)"/>`,
-    mark(v.mark),
-    v.label ? label(text, v.label, v.band, Y1) : '',
+    label(text, v.label),
     `<path d="${page}" fill="none" ${line}/>`,
-    `<path d="${fold}" fill="#FFFFFF" fill-opacity="0.85" ${line}/>`,
+    `<path d="${fold}" fill="#FFFFFF" fill-opacity="0.7" ${line}/>`,
     '</svg>',
     '',
   ].join('\n')

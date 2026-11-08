@@ -11,8 +11,8 @@ const GAP = 22
 const A = 248
 const B = 776
 const M = B - T
-export const R = 34
-export const BARS = [
+const R = 34
+const BARS = [
   [A, A, M - GAP, A + T],
   [M, A, B, M - GAP],
   [A + T + GAP, M, B, B],
