@@ -7,7 +7,7 @@ import {
   relativeTo,
   within,
 } from '../space-paths'
-import { isRecord, keepJson, stored } from '../stored'
+import { isRecord, keepJson, parsed, stored } from '../stored'
 import { type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { carried, moving } from '../workspace/file-ops'
 import type { Cost } from './scrypt'
@@ -323,6 +323,18 @@ export class Protection {
     this.revision++
     keepJson(STORAGE_KEY, this.spaces)
   }
+}
+
+export function noteBehind(
+  tab: { kind: string; path: string | null; doc: string },
+  spaces: readonly { name: string; root: string }[],
+): string | null {
+  if (tab.path) return tab.path
+  if (tab.kind !== 'view') return null
+  const spec = parsed(tab.doc)
+  if (!isRecord(spec) || spec.builtin !== 'project' || typeof spec.path !== 'string') return null
+  const space = spaces.find((one) => one.name === spec.space)
+  return space ? insideSpace(space.root, spec.path) : null
 }
 
 export const protection = new Protection()
