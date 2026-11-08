@@ -10,6 +10,11 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 PICKER = "[role=dialog][aria-label=Themes]"
 THEME = "() => window.ordenApp.theme.id"
+FOCUS_SHOWN = """() => {
+  let shown = 1
+  for (let at = document.activeElement; at; at = at.parentElement) shown *= Number(getComputedStyle(at).opacity)
+  return shown
+}"""
 
 
 def fresh(browser: Browser) -> Page:
@@ -69,6 +74,19 @@ def drive(browser: Browser) -> None:
         if tried == kept:
             wrong(f"[{side}] the arrow tried nothing")
         shot(page, f"{harness.ENGINE}-{side}-arrow")
+        page.wait_for_timeout(300)
+        if page.evaluate(FOCUS_SHOWN) < 0.9:
+            wrong(f"[{side}] the search field fades while the arrow tries a theme")
+        page.keyboard.type("Con")
+        page.wait_for_timeout(400)
+        if page.evaluate(THEME) != "contrast":
+            wrong(f"[{side}] typing Con did not try Contrast")
+        if page.evaluate(FOCUS_SHOWN) < 0.9:
+            wrong(f"[{side}] the search field fades while typing, the words can hardly be read")
+        shot(page, f"{harness.ENGINE}-{side}-typing")
+        page.keyboard.press("Control+a")
+        page.keyboard.press("Backspace")
+        page.wait_for_timeout(300)
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
         if page.evaluate(THEME) != kept or page.locator(PICKER).count():
