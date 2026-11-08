@@ -140,6 +140,8 @@ export class SpaceState {
   private readonly within = new Map<string, Set<string>>()
   private readonly keys = new Map<string, string>()
   private shownAt: { paths: Map<string, string>; keys: Map<string, string[]> } | null = null
+  private namesAt: Map<string | null, { taken: Set<string>; own: Set<string> }> | null = null
+  private loose: Set<string> | null = null
 
   constructor(
     public row: SpaceRow,
@@ -153,6 +155,7 @@ export class SpaceState {
     this.entries = new Entries((row, from, to) => {
       this.unhold(row.id, from)
       this.hold(row.id, to)
+      this.loose?.add(row.id)
     }, entries)
     this.outbox = [...outbox]
     this.ordering = ordering
@@ -166,6 +169,16 @@ export class SpaceState {
     this.shownCache = null
     this.pathsCache = null
     this.placedCache = null
+    this.namesAt = null
+    this.loose = null
+  }
+
+  looseIds(): ReadonlySet<string> | null {
+    return this.loose
+  }
+
+  settledBut(wanted: Map<string, string>, unsettled: readonly EntryRow[]) {
+    if (this.pathsCache === wanted) this.loose = new Set(unsettled.map((entry) => entry.id))
   }
 
   confirmed(): TreeState {
@@ -212,14 +225,16 @@ export class SpaceState {
   shown(): TreeState {
     if (this.shownCache) return this.shownCache
     const state = this.confirmed()
-    for (const one of this.outbox) {
-      if (one.record.t !== 'op') continue
-      const op: Op = { ...one.record.op }
-      if (op.t === 'create') delete op.mergeable
-      applyOp(state, op, { role: 'owner', device: this.device })
-    }
+    for (const one of this.outbox) this.showing(state, one)
     this.shownCache = state
     return state
+  }
+
+  private showing(state: TreeState, one: Outboxed) {
+    if (one.record.t !== 'op') return
+    const op: Op = { ...one.record.op }
+    if (op.t === 'create') delete op.mergeable
+    applyOp(state, op, { role: 'owner', device: this.device })
   }
 
   paths(): Map<string, string> {
@@ -234,12 +249,14 @@ export class SpaceState {
     }
 
     const out = new Map<string, string>()
+    const names = new Map<string | null, { taken: Set<string>; own: Set<string> }>()
     const walk = (parent: string | null, folder: string) => {
       const siblings = (children.get(parent) ?? []).sort((a, b) => (a.id < b.id ? -1 : 1))
       const taken = new Set<string>()
       const own = new Set(
         siblings.map((entry) => this.key(localName(entry.name, this.world.platform))),
       )
+      names.set(parent, { taken, own })
       for (const entry of siblings) {
         const wanted = localName(entry.name, this.world.platform)
         const name = freePath(
@@ -254,7 +271,34 @@ export class SpaceState {
     }
     walk(null, '')
     this.pathsCache = out
+    this.namesAt = names
     return out
+  }
+
+  private pathed(paths: Map<string, string>, shown: TreeState, id: string): boolean {
+    const names = this.namesAt
+    const entry = shown.entries.get(id)
+    if (!names || !entry || entry.deleted || paths.has(id)) return false
+    const folder = entry.parent === null ? '' : paths.get(entry.parent)
+    const place = names.get(entry.parent)
+    if (folder === undefined || (!place && entry.parent !== null)) return false
+    const name = localName(entry.name, this.world.platform)
+    const key = this.key(name)
+    if (place && (place.taken.has(key) || place.own.has(key))) return false
+    const siblings = place ?? { taken: new Set<string>(), own: new Set<string>() }
+    names.set(entry.parent, siblings)
+    siblings.taken.add(key)
+    siblings.own.add(key)
+    if (entry.kind === 'folder') names.set(id, { taken: new Set(), own: new Set() })
+    const path = joined(folder, name)
+    paths.set(id, path)
+    if (this.shownAt?.paths === paths) {
+      const at = this.keyOf(path)
+      const ids = this.shownAt.keys.get(at)
+      if (ids) ids.push(id)
+      else this.shownAt.keys.set(at, [id])
+    }
+    return true
   }
 
   placedNames(): Map<string, { folder: string; names: string[] }> {
@@ -344,6 +388,19 @@ export class SpaceState {
     return key
   }
 
+  heldAt(path: string): EntryRow[] {
+    const out: EntryRow[] = []
+    for (const id of this.holding.get(this.key(path)) ?? []) {
+      const entry = this.entries.get(id)
+      if (entry) out.push(entry)
+    }
+    return out
+  }
+
+  wantedAt(path: string): readonly string[] {
+    return this.shownKeys().get(this.key(path)) ?? []
+  }
+
   inside(folder: string): EntryRow[] {
     const out: EntryRow[] = []
     for (const id of this.within.get(this.key(folder)) ?? []) {
@@ -402,7 +459,23 @@ export class SpaceState {
 
   queue(one: Outboxed) {
     this.outbox.push(one)
+    const shown = this.shownCache
+    const paths = this.pathsCache
+    const names = this.namesAt
+    const loose = this.loose
     this.changed()
+    if (!shown) return
+    this.showing(shown, one)
+    this.shownCache = shown
+    const op = one.record.t === 'op' ? one.record.op : null
+    if (!paths || !names || (op?.t !== 'create' && op?.t !== 'mkdir')) return
+    this.namesAt = names
+    if (!this.pathed(paths, shown, op.id)) {
+      this.namesAt = null
+      return
+    }
+    this.pathsCache = paths
+    if (loose) this.loose = loose.add(op.id)
   }
 
   placedBy(op: Op, before: string | null, after: string | null): boolean {
@@ -515,7 +588,17 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
   }
 
   const busy = how.busy ?? (() => false)
-  for (const entry of space.entries.values()) {
+  const loose = space.looseIds()
+  const looked = (): EntryRow[] => {
+    if (!loose) return [...space.entries.values()]
+    const out: EntryRow[] = []
+    for (const id of loose) {
+      const entry = space.entries.get(id)
+      if (entry) out.push(entry)
+    }
+    return out
+  }
+  for (const entry of looked()) {
     if (!entry.local_path || wanted.has(entry.id) || busy(entry.id)) continue
     if (entry.kind !== 'folder' && how.keeps(entry.id)) continue
     if (entry.kind === 'folder' && holdsKept(space, entry, how)) continue
@@ -531,7 +614,7 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
   }
 
   for (let round = 0; round <= space.entries.size; round += 1) {
-    const due = [...space.entries.values()]
+    const due = looked()
       .filter((entry) => {
         const want = wanted.get(entry.id)
         if (busy(entry.id)) return false
@@ -582,15 +665,24 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     if (!progress) break
   }
 
-  for (const [id, want] of wanted) {
-    const entry = space.entries.get(id)
-    if (entry?.kind !== 'folder' || entry.local_path) continue
+  const folders = looked()
+    .filter((entry) => entry.kind === 'folder' && !entry.local_path && wanted.has(entry.id))
+    .sort((a, b) => depth(wanted.get(a.id) ?? '') - depth(wanted.get(b.id) ?? ''))
+  for (const entry of folders) {
+    const want = wanted.get(entry.id)
+    if (want === undefined || entry.local_path) continue
     if (!(await makes(want))) continue
     entry.local_path = want
     moved.add(entry)
   }
 
+  const unsettled = looked().filter((entry) => {
+    const want = wanted.get(entry.id)
+    if (!entry.local_path) return want !== undefined && entry.kind === 'folder'
+    return want !== entry.local_path
+  })
   if (moved.size) space.changed()
+  else space.settledBut(wanted, unsettled)
   return [...moved]
 }
 

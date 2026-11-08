@@ -60,13 +60,52 @@ function tick(state: TreeState): number {
   return state.cursor
 }
 
-function takenIn(state: TreeState, parent: string | null, except: string): Set<string> {
-  const taken = new Set<string>()
-  for (const entry of state.entries.values()) {
-    if (entry.deleted || entry.parent !== parent || entry.id === except) continue
-    taken.add(nameKey(entry.name))
+interface Names {
+  size: number
+  byPlace: Map<string | null, Map<string, Set<TreeEntry>>>
+}
+
+const namesOf = new WeakMap<TreeState, Names>()
+
+function placeName(names: Names, entry: TreeEntry) {
+  if (entry.deleted) return
+  const place = names.byPlace.get(entry.parent) ?? new Map<string, Set<TreeEntry>>()
+  names.byPlace.set(entry.parent, place)
+  const key = nameKey(entry.name)
+  const holders = place.get(key)
+  if (holders) holders.add(entry)
+  else place.set(key, new Set([entry]))
+}
+
+function names(state: TreeState): Names {
+  const had = namesOf.get(state)
+  if (had?.size === state.entries.size) return had
+  const fresh: Names = { size: state.entries.size, byPlace: new Map() }
+  for (const entry of state.entries.values()) placeName(fresh, entry)
+  namesOf.set(state, fresh)
+  return fresh
+}
+
+function named(state: TreeState, entry: TreeEntry) {
+  const had = namesOf.get(state)
+  if (!had) return
+  had.size = state.entries.size
+  placeName(had, entry)
+}
+
+function holdsName(state: TreeState, parent: string | null, key: string, except: string): boolean {
+  const holders = names(state).byPlace.get(parent)?.get(key)
+  if (!holders) return false
+  for (const entry of holders) {
+    const there =
+      state.entries.get(entry.id) === entry &&
+      !entry.deleted &&
+      entry.parent === parent &&
+      nameKey(entry.name) === key
+    if (!there) holders.delete(entry)
+    else if (entry.id !== except) return true
   }
-  return taken
+  return false
 }
 
 function freeName(
@@ -76,8 +115,7 @@ function freeName(
   kind: EntryKind,
   except: string,
 ): string {
-  const taken = takenIn(state, parent, except)
-  const free = (candidate: string) => !taken.has(nameKey(candidate))
+  const free = (candidate: string) => !holdsName(state, parent, nameKey(candidate), except)
   const first = (name: string): string =>
     kind === 'folder'
       ? freeWhole(name, (candidate) => !free(candidate))
@@ -130,6 +168,7 @@ function revive(state: TreeState, entry: TreeEntry, device: string | undefined) 
   entry.name = freeName(state, entry.parent, entry.name, entry.kind, entry.id)
   entry.deleted = false
   delete entry.deletedIn
+  named(state, entry)
   changed(state, entry, device)
 }
 
@@ -246,6 +285,7 @@ class Rules {
     if (pos !== undefined) entry.pos = pos
     changed(state, entry, device)
     state.entries.set(id, entry)
+    named(state, entry)
     return placement(op, entry)
   }
 
@@ -276,6 +316,7 @@ class Rules {
     const name = freeName(this.state, entry.parent, op.name, entry.kind, entry.id)
     if (name !== entry.name) {
       entry.name = name
+      named(this.state, entry)
       changed(this.state, entry, this.device, op.seen)
     }
     return placement(op, entry)
@@ -297,6 +338,7 @@ class Rules {
     if (name !== entry.name || op.parent !== entry.parent || pos !== entry.pos) {
       entry.name = name
       entry.parent = op.parent
+      named(state, entry)
       if (pos === undefined) delete entry.pos
       else entry.pos = pos
       changed(state, entry, device, op.seen)

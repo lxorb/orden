@@ -573,13 +573,13 @@ export class Engine implements AskedEngine {
     const placed = this.placed(path)
     if (!placed) return false
     const { space } = placed
-    const key = space.key(placed.path)
     const wanted = space.paths()
-    for (const entry of space.entries.values()) {
-      const want = wanted.get(entry.id)
-      const here = entry.local_path
-      if (here && space.key(here) === key && want !== here) return true
-      if (want !== undefined && space.key(want) === key && here !== want) return true
+    for (const entry of space.heldAt(placed.path)) {
+      if (wanted.get(entry.id) !== entry.local_path) return true
+    }
+    for (const id of space.wantedAt(placed.path)) {
+      const entry = space.entries.get(id)
+      if (entry && entry.local_path !== wanted.get(id)) return true
     }
     return false
   }
