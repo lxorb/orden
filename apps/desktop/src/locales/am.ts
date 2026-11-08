@@ -3692,4 +3692,13 @@ export const am: Dictionary = {
     'የGoogle መለያዎን በዚህ ኮምፒውተር ላይ ባለው Gemini CLI በኩል ይጠቀማል።',
   'Sign in with your ChatGPT plan.': 'በChatGPT ዕቅድዎ ይግቡ።',
   'Paid by use on your API account.': 'በAPI መለያዎ ላይ በአጠቃቀም ይከፈላል።',
+  'Use protection': 'ጥበቃን ተጠቀም',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'ጥበቃን ወደ ምናሌዎች ያክላል፣ ማስታወሻዎችን፣ አቃፊዎችን እና ቦታዎችን በይለፍ ቃል ወይም በዚህ መሣሪያ መቆለፊያ ለመጠበቅ።',
+  'Turn off protection?': 'ጥበቃን ላጥፋ?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} ንጥል አሁንም የተጠበቀ ነው። እንደተቆለፈ ይቆያል፤ ጥበቃን ለማስወገድ መጀመሪያ ጥበቃውን ያንሱ።',
+      other: '{count} ንጥሎች አሁንም የተጠበቁ ናቸው። እንደተቆለፉ ይቆያሉ፤ ጥበቃን ለማስወገድ መጀመሪያ ጥበቃቸውን ያንሱ።',
+    },
 }

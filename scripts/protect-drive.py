@@ -208,6 +208,12 @@ def main() -> int:
     try:
         app = endpoint(config, process.pid, secret)
         app.until("!!orden.workspace", 90)
+        app.eval(
+            "localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-protection']));"
+            " location.reload(); return true"
+        )
+        time.sleep(3)
+        app.until("!!orden.workspace", 90)
         time.sleep(3)
         app.eval(
             "for (const one of document.querySelectorAll('button'))"

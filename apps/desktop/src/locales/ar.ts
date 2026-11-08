@@ -3954,4 +3954,17 @@ export const ar: Dictionary = {
     'يستخدم حساب Google الخاص بك عبر Gemini CLI على هذا الكمبيوتر.',
   'Sign in with your ChatGPT plan.': 'سجّل الدخول بخطة ChatGPT الخاصة بك.',
   'Paid by use on your API account.': 'الدفع حسب الاستخدام في حساب API الخاص بك.',
+  'Use protection': 'استخدام الحماية',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'يضيف «حماية» إلى القوائم، لإبقاء الملاحظات والمجلدات والمساحات خلف كلمة مرور أو قفل هذا الجهاز.',
+  'Turn off protection?': 'إيقاف الحماية؟',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      zero: 'لا يزال {count} عنصر محميًا. تبقى مقفلة؛ أزل حمايتها أولًا لإزالة الحماية.',
+      one: 'لا يزال {count} عنصر محميًا. يبقى مقفلًا؛ أزل حمايته أولًا لإزالة الحماية.',
+      two: 'لا يزال {count} عنصر محميين. يبقيان مقفلين؛ أزل حمايتهما أولًا لإزالة الحماية.',
+      few: 'لا تزال {count} عناصر محمية. تبقى مقفلة؛ أزل حمايتها أولًا لإزالة الحماية.',
+      many: 'لا يزال {count} عنصرًا محميًا. تبقى مقفلة؛ أزل حمايتها أولًا لإزالة الحماية.',
+      other: 'لا يزال {count} عنصر محميًا. تبقى مقفلة؛ أزل حمايتها أولًا لإزالة الحماية.',
+    },
 }

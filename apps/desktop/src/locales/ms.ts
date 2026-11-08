@@ -3714,4 +3714,10 @@ export const ms: Dictionary = {
     'Menggunakan akaun Google anda melalui Gemini CLI pada komputer ini.',
   'Sign in with your ChatGPT plan.': 'Log masuk dengan pelan ChatGPT anda.',
   'Paid by use on your API account.': 'Dibayar mengikut penggunaan pada akaun API anda.',
+  'Use protection': 'Gunakan perlindungan',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Menambah Lindungi pada menu, untuk menyimpan nota, folder dan ruang di sebalik kata laluan atau kunci peranti ini.',
+  'Turn off protection?': 'Matikan perlindungan?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    '{count} item masih dilindungi. Ia kekal terkunci; buang perlindungannya dahulu untuk mengalih keluar perlindungan.',
 }

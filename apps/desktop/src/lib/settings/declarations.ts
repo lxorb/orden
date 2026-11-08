@@ -6,6 +6,7 @@ import { shortcuts, SHORTCUTS } from '../shortcuts.svelte'
 import { enginesFor, isEngineAddress } from '../web-tab/engines'
 import { CUSTOM, searchEngine } from '../web-tab/search-engine.svelte'
 import { themeDeclarations } from './appearance-pane'
+import { relockField } from './general-pane'
 import { shortcutKey } from './declared.svelte'
 import type { Field } from './fields'
 import { part } from './hold'
@@ -68,7 +69,13 @@ function searchFields(): Field[] {
 
 export async function declarations(view?: EditorView): Promise<Field[]> {
   const rows = declaredPanes(view).flatMap((pane) => pane.groups.flatMap((group) => group.fields))
-  const all = [...rows, ...(await themeDeclarations()), ...shortcutFields(), ...searchFields()]
+  const all = [
+    ...rows,
+    ...(await themeDeclarations()),
+    ...shortcutFields(),
+    ...searchFields(),
+    ...(__EVEN_PLUGIN__ ? [] : [relockField()]),
+  ]
   const seen = new Set<string>()
   return all.filter((one) => {
     if (!one.key) return false

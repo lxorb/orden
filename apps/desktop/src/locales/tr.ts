@@ -3792,4 +3792,14 @@ export const tr: Dictionary = {
     'Google hesabınızı bu bilgisayardaki Gemini CLI üzerinden kullanır.',
   'Sign in with your ChatGPT plan.': 'ChatGPT planınızla oturum açın.',
   'Paid by use on your API account.': 'API hesabınızda kullandıkça ödenir.',
+  'Use protection': 'Korumayı kullan',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Menülere Koru ekler; notları, klasörleri ve alanları bir parolanın ya da bu cihazın kilidinin arkasında tutmak için.',
+  'Turn off protection?': 'Koruma kapatılsın mı?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} öğe hâlâ korunuyor. Kilitli kalır; korumayı kaldırmak için önce korumasını kaldırın.',
+      other:
+        '{count} öğe hâlâ korunuyor. Kilitli kalırlar; korumayı kaldırmak için önce korumalarını kaldırın.',
+    },
 }

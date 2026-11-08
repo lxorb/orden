@@ -3844,4 +3844,14 @@ export const ta: Dictionary = {
     'இந்தக் கணினியில் உள்ள Gemini CLI மூலம் உங்கள் Google கணக்கைப் பயன்படுத்துகிறது.',
   'Sign in with your ChatGPT plan.': 'உங்கள் ChatGPT திட்டத்துடன் உள்நுழையுங்கள்.',
   'Paid by use on your API account.': 'உங்கள் API கணக்கில் பயன்பாட்டுக்கு ஏற்ப கட்டணம்.',
+  'Use protection': 'பாதுகாப்பைப் பயன்படுத்து',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'மெனுக்களில் பாதுகா என்பதைச் சேர்க்கிறது, குறிப்புகள், கோப்புறைகள், இடங்களைக் கடவுச்சொல் அல்லது இந்தச் சாதனத்தின் பூட்டுக்குப் பின் வைக்க.',
+  'Turn off protection?': 'பாதுகாப்பை முடக்கவா?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} உருப்படி இன்னும் பாதுகாக்கப்பட்டுள்ளது. அது பூட்டியே இருக்கும்; பாதுகாப்பை நீக்க முதலில் அதன் பாதுகாப்பை அகற்றவும்.',
+      other:
+        '{count} உருப்படிகள் இன்னும் பாதுகாக்கப்பட்டுள்ளன. அவை பூட்டியே இருக்கும்; பாதுகாப்பை நீக்க முதலில் அவற்றின் பாதுகாப்பை அகற்றவும்.',
+    },
 }

@@ -24,13 +24,23 @@ async () => {
 }
 """
 
+PROTECTION_ON = (
+    "try { const kept = JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]');"
+    " const list = Array.isArray(kept) ? kept : [];"
+    " if (!list.includes('shown-protection'))"
+    " localStorage.setItem('orden:hidden-kinds', JSON.stringify([...list, 'shown-protection'])) }"
+    " catch {}"
+)
+
 PROTECTED = """
 (where) => window.ordenApp.workspace.protection.own(where.root, where.path)?.way ?? null
 """
 
 
-def drive(browser: Browser) -> None:
+def opened(browser: Browser, on: bool):
     context = browser.new_context(viewport={"width": 1280, "height": 820}, reduced_motion="reduce")
+    if on:
+        context.add_init_script(PROTECTION_ON)
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.on(
@@ -41,7 +51,20 @@ def drive(browser: Browser) -> None:
     where = page.evaluate(SEED)
     say(f"the note: {json.dumps(where)}")
     wait_for(page, "document.querySelector('.cm-content')", "the editor")
+    return context, page, where
 
+
+def drive(browser: Browser) -> None:
+    context, page, where = opened(browser, False)
+    row = page.locator(f'.row[data-path="{where["path"]}"]')
+    row.click(button="right")
+    page.get_by_role("menuitem", name="Rename", exact=True).wait_for()
+    if page.get_by_role("menuitem", name="Protect", exact=True).count():
+        wrong("Protect is in the menu while protection is off")
+    say("no Protect while protection is off")
+    context.close()
+
+    context, page, where = opened(browser, True)
     row = page.locator(f'.row[data-path="{where["path"]}"]')
     row.click(button="right")
     page.get_by_role("menuitem", name="Protect", exact=True).click()

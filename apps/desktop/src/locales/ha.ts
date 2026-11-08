@@ -3823,4 +3823,14 @@ export const ha: Dictionary = {
     'Yana amfani da asusun Google ɗinka ta Gemini CLI a wannan kwamfuta.',
   'Sign in with your ChatGPT plan.': 'Shiga da tsarin ChatGPT ɗinka.',
   'Paid by use on your API account.': 'Ana biya gwargwadon amfani a asusun API ɗinka.',
+  'Use protection': 'Yi amfani da kariya',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Yana ƙara Kare zuwa menu, don ajiye bayanai, manyan fayiloli da wurare a bayan kalmar sirri ko makullin wannan na’ura.',
+  'Turn off protection?': 'A kashe kariya?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: 'Abu {count} har yanzu yana da kariya. Zai kasance a kulle; cire masa kariya tukuna don cire kariyar.',
+      other:
+        'Abubuwa {count} har yanzu suna da kariya. Za su kasance a kulle; cire musu kariya tukuna don cire kariyar.',
+    },
 }

@@ -3593,4 +3593,10 @@ export const zhHant: Dictionary = {
     '透過這台電腦上的 Gemini CLI 使用你的 Google 帳號。',
   'Sign in with your ChatGPT plan.': '以你的 ChatGPT 方案登入。',
   'Paid by use on your API account.': '在你的 API 帳號上依用量付費。',
+  'Use protection': '使用保護',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    '在選單中加入「保護」，把筆記、資料夾和空間放在密碼或此裝置的鎖後面。',
+  'Turn off protection?': '關閉保護？',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    '仍有 {count} 個項目受保護。它們會保持鎖定；若要移除保護，請先取消它們的保護。',
 }

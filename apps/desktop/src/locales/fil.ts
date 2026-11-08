@@ -3849,4 +3849,14 @@ export const fil: Dictionary = {
     'Ginagamit ang iyong Google account sa pamamagitan ng Gemini CLI sa computer na ito.',
   'Sign in with your ChatGPT plan.': 'Mag-sign in gamit ang iyong ChatGPT plan.',
   'Paid by use on your API account.': 'Bayad ayon sa paggamit sa iyong API account.',
+  'Use protection': 'Gumamit ng proteksyon',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Nagdadagdag ng Protektahan sa mga menu, para mailagay ang mga note, folder at space sa likod ng password o lock ng device na ito.',
+  'Turn off protection?': 'I-off ang proteksyon?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} item ang protektado pa. Mananatili itong naka-lock; alisin muna ang proteksyon nito para tanggalin ang proteksyon.',
+      other:
+        '{count} item ang protektado pa. Mananatili silang naka-lock; alisin muna ang proteksyon nila para tanggalin ang proteksyon.',
+    },
 }

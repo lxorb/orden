@@ -3822,4 +3822,14 @@ export const sw: Dictionary = {
     'Hutumia akaunti yako ya Google kupitia Gemini CLI kwenye kompyuta hii.',
   'Sign in with your ChatGPT plan.': 'Ingia kwa mpango wako wa ChatGPT.',
   'Paid by use on your API account.': 'Unalipa kulingana na matumizi kwenye akaunti yako ya API.',
+  'Use protection': 'Tumia ulinzi',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Huongeza Linda kwenye menyu, ili kuweka madokezo, folda na nafasi nyuma ya nenosiri au kufuli ya kifaa hiki.',
+  'Turn off protection?': 'Zima ulinzi?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: 'Kipengee {count} bado kimelindwa. Kinabaki kimefungwa; kiondolee ulinzi kwanza ili kuondoa ulinzi.',
+      other:
+        'Vipengee {count} bado vimelindwa. Vinabaki vimefungwa; viondolee ulinzi kwanza ili kuondoa ulinzi.',
+    },
 }

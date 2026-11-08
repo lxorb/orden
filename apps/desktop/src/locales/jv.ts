@@ -3694,4 +3694,10 @@ export const jv: Dictionary = {
     'Nganggo akun Google panjenengan liwat Gemini CLI ing komputer iki.',
   'Sign in with your ChatGPT plan.': 'Mlebu nganggo paket ChatGPT panjenengan.',
   'Paid by use on your API account.': 'Mbayar miturut panggunaan ing akun API panjenengan.',
+  'Use protection': 'Gunakaké pangreksan',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Nambahaké Reksa menyang menu, kanggo nyimpen cathetan, folder lan papan ing mburi tembung sandhi utawa kunci piranti iki.',
+  'Turn off protection?': 'Pateni pangreksan?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    '{count} item isih direksa. Tetep kakunci; copot dhisik pangreksané kanggo mbusak pangreksan.',
 }
