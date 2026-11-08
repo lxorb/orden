@@ -203,6 +203,20 @@ describe('a file explorer', () => {
     }
   })
 
+  test('looks at a picture in Orden when it is opened, never handing it to the system', async () => {
+    const { view } = await explorer()
+    await view.go('/home/me/Pictures')
+    await settled()
+    const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) =>
+      one.textContent.includes('a.png'),
+    )
+    row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    await settled()
+    expect(opened).toEqual([])
+    expect(target.querySelector('.look')).not.toBeNull()
+    expect(view.picked.cursor).toBe('a.png')
+  })
+
   test('goes where a path typed into the bar says', async () => {
     const { view } = await explorer()
     target.querySelector<HTMLElement>('.past')?.click()

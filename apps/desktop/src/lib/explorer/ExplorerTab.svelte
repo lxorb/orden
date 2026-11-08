@@ -31,7 +31,6 @@
 
   let typing = $state(false)
   let filtering = $state(false)
-  let looking = $state(false)
   let list = $state<{ focus: () => void; menuHere: () => void }>()
 
   onMount(() => {
@@ -76,7 +75,8 @@
         if (view.filter.trim()) view.searchBelow(view.filter)
         else filtering = true
       }
-    } else if (pressed('explorer.look') && view.picked.cursor !== null) run = () => (looking = true)
+    } else if (pressed('explorer.look') && view.picked.cursor !== null)
+      run = () => (view.looking = true)
     else if (pressed('explorer.preview')) run = () => explorerPrefs.togglePreview()
     else if (pressed('explorer.list')) run = () => explorerPrefs.show('list')
     else if (pressed('explorer.grid')) run = () => explorerPrefs.show('grid')
@@ -133,11 +133,11 @@
         }}
       />
     {/if}
-    {#if looking}
+    {#if view.looking}
       <ExplorerLook
         {view}
         onclose={() => {
-          looking = false
+          view.looking = false
           list?.focus()
         }}
       />

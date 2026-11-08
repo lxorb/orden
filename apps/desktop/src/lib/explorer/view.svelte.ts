@@ -36,6 +36,7 @@ export class ExplorerView {
   picked = $state<Picked>(NOTHING)
   renaming = $state<string | null>(null)
   renamingMany = $state<string[] | null>(null)
+  looking = $state(false)
   said = $state<string | null>(null)
   #saying: ReturnType<typeof setTimeout> | undefined
 
@@ -94,6 +95,18 @@ export class ExplorerView {
   async forward() {
     const spec = this.spec && steppedForward(this.spec)
     if (spec) await this.show(spec.folder, () => spec)
+  }
+
+  look(name: string) {
+    this.pick(name, 'one')
+    this.looking = true
+  }
+
+  async lookAt(path: string) {
+    const above = parentOf(path)
+    if (above && !(this.folder && samePath(this.folder, above))) await this.go(above)
+    const name = folderName(path)
+    if (this.names.includes(name)) this.look(name)
   }
 
   async up() {

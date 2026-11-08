@@ -60,7 +60,7 @@
   function press(entry: Entry) {
     const path = joinPath(listed ?? folder, entry.name)
     if (entry.folder) void view.go(path)
-    else void openFile(path)
+    else void openFile(path, () => void view.lookAt(path))
   }
 </script>
 
