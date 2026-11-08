@@ -105,7 +105,7 @@ export function spanValue(span: Span): Record<string, unknown> {
     end: span.end,
     activity: span.activity,
     tags: span.tags,
-    note: span.note,
+    note: span.note.slice(0, LONGEST_NOTE),
     source: span.source,
     place: span.place,
     label: span.label,

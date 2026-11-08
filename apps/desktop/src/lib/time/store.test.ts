@@ -112,6 +112,23 @@ describe('the time a person records', () => {
     expect(one.kept).toBe(true)
   })
 
+  test('a span too large for the account keeps the rest from waiting behind it', async () => {
+    const server = new FakeTimeServer()
+    const who = owner()
+    const one = await opened(who, server)
+    one.addSpan({ start: 10 * M, end: 20 * M, note: '漢'.repeat(2000), tags: ['x'.repeat(2000)] })
+    const pasted = one.addSpan({ start: 30 * M, end: 40 * M })
+    one.changeSpan(pasted.id, { note: 'words '.repeat(1000) })
+    const short = one.addSpan({ start: 50 * M, end: 60 * M, note: 'Lunch' })
+    await one.exchange()
+
+    const other = new TimeStore((one) => openTimeDisk(one === null ? null : `${one}-elsewhere`))
+    await other.opened({ owner: who, server, device: 'there' })
+    await other.exchange()
+    expect(other.spans.map((span) => span.id)).toEqual([pasted.id, short.id])
+    expect(other.spans[0]?.note).toBe(one.span(pasted.id)?.note)
+  })
+
   test('keeps everything on the device against a server that has no time records', async () => {
     const who = owner()
     const store = await opened(who, OLD_SERVER)

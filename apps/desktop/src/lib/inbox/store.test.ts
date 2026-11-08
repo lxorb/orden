@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { type InboxChange, type InboxItem, mergedInbox } from '@orden/sync-core/inbox'
+import {
+  type InboxChange,
+  inboxChangesOf,
+  type InboxItem,
+  mergedInbox,
+} from '@orden/sync-core/inbox'
 import { type InboxDisk, type InboxServer, InboxRecords, type Kept, keptOver } from './store'
 
 function memoryDisk(kept = new Map<string, Kept>()): InboxDisk & { kept: Map<string, Kept> } {
@@ -208,5 +213,25 @@ describe('the inbox kept on a device', () => {
     const phone = device('phone', clock)
     await phone.exchange(server)
     expect(phone.text()).toMatch(/- \[x\] Call the bank today/)
+  })
+
+  test('one to-do too large for the account keeps the rest from waiting behind it', async () => {
+    const clock = { at: 1000 }
+    const server = account()
+    const strict: InboxServer = {
+      pull: (since) => server.pull(since),
+      push: (changes) => {
+        if (!inboxChangesOf({ changes })) return Promise.reject(new Error('400'))
+        return server.push(changes)
+      },
+    }
+    const laptop = device('laptop', clock)
+    await laptop.write(`- [ ] Read this\n${'long words '.repeat(2000)}\n- [ ] Call the bank\n`)
+    expect(await laptop.exchange(strict)).toBe(true)
+    expect(laptop.pending).toBe(1)
+
+    const phone = device('phone', clock)
+    await phone.exchange(server)
+    expect(phone.text()).toMatch(/- \[ \] Call the bank/)
   })
 })

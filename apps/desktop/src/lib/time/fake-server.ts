@@ -1,4 +1,4 @@
-import { TIME_PAGE, type TimeChange, type TimeEntry } from '@orden/sync-core/time'
+import { TIME_PAGE, type TimeChange, timeChangesOf, type TimeEntry } from '@orden/sync-core/time'
 import type { TimeServer } from './exchange'
 
 export class FakeTimeServer implements TimeServer {
@@ -20,6 +20,7 @@ export class FakeTimeServer implements TimeServer {
 
   push(changes: readonly TimeChange[]) {
     this.pushes += 1
+    if (!timeChangesOf({ changes })) return Promise.reject(new Error('400: not a time change'))
     for (const change of changes) {
       this.entries.set(`${change.kind}:${change.id}`, { ...change, seq: this.next, at: this.next })
       this.next += 1
