@@ -9,7 +9,7 @@ import {
   samePath,
   within,
 } from '../space-paths'
-import { isRecord, keepJson, parsed, stored } from '../stored'
+import { forget, isRecord, keep, keepJson, parsed, stored, storedText } from '../stored'
 import { type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { carried, moving } from '../workspace/file-ops'
 import type { Cost } from './scrypt'
@@ -17,6 +17,7 @@ import { unlocks } from './unlocked.svelte'
 
 export const STORAGE_KEY = 'orden:protected'
 const PASSWORD_KEY = 'orden:protect-password'
+const OWNER_KEY = 'orden:protect-password-account'
 
 export type Way = 'password' | 'device'
 
@@ -120,6 +121,7 @@ export class Protection {
   private spaces = $state<Record<string, Kept>>(read())
   private revision = $state(0)
   private hashed = $state<Hashed | null>(hashedOf(stored(PASSWORD_KEY)))
+  private owner: string | null = storedText(OWNER_KEY)
 
   get any(): boolean {
     return Object.values(this.spaces).some((one) => Object.keys(one.ways).length > 0)
@@ -189,20 +191,32 @@ export class Protection {
   setPassword(hashed: Hashed | null): void {
     this.hashed = hashed && { ...hashed, at: Date.now() }
     keepJson(PASSWORD_KEY, this.hashed)
+    this.owner = null
+    forget(OWNER_KEY)
     if (this.hashed)
       void synced()
         .then((one) => one.pushPassword())
         .catch(() => undefined)
   }
 
-  adoptPassword(theirs: Hashed | null): boolean {
-    const mine = this.hashed
+  adoptPassword(theirs: Hashed | null, accountId: string): boolean {
+    const foreign = this.owner !== null && this.owner !== accountId
+    const mine = foreign ? null : this.hashed
     if (theirs && (!mine || (mine.at ?? 0) < (theirs.at ?? 0))) {
       this.hashed = theirs
       keepJson(PASSWORD_KEY, theirs)
+      this.ownedBy(accountId)
       return false
     }
-    return !!mine && (!theirs || (mine.at ?? 0) > (theirs.at ?? 0))
+    if (!mine) return false
+    this.ownedBy(accountId)
+    return !theirs || (mine.at ?? 0) > (theirs.at ?? 0)
+  }
+
+  ownedBy(accountId: string): void {
+    if (this.owner === accountId) return
+    this.owner = accountId
+    keep(OWNER_KEY, accountId)
   }
 
   adopt(root: string, theirs: Record<string, Way>, accountId: string): boolean {
