@@ -429,3 +429,16 @@ describe('older pages', () => {
     page.close()
   })
 })
+
+describe('what is heard twice or never looked at', () => {
+  test('a message told twice counts once, and a chat nobody opened keeps no messages', async () => {
+    const { fake, link, chat } = await linked()
+    const unread = () =>
+      hub.find(fake.id, link.account.id)?.conversations.find((one) => one.id === 'news')?.unread
+    const before = unread() ?? 0
+    const message = fake.world.say('news', 'ada', 'once only')
+    fake.world.tell({ t: 'message', message })
+    expect(unread()).toBe(before + 1)
+    expect(remoteOf(chat('news'))?.known.has('news')).toBe(false)
+  })
+})
