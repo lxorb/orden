@@ -145,8 +145,13 @@
     overflow: hidden;
     color: var(--muted-strong);
     font-size: var(--text-xs);
-    text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .front bdi {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .live {

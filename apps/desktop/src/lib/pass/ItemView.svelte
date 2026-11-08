@@ -194,7 +194,7 @@
     <ItemMark {content} big />
     <div class="named">
       <h2 class="title">
-        {content.title || t('Untitled')}
+        <span class="words">{content.title || t('Untitled')}</span>
         {#if item.pinned}<span class="pinned" title={t('Pinned')}><Glyph icon={Pin} /></span>{/if}
       </h2>
       {#if vault}
@@ -357,11 +357,16 @@
     gap: var(--space-2);
     margin: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
     font-size: var(--text-head);
     font-weight: var(--weight-strong);
     color: var(--text-strong);
+  }
+
+  .title .words {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .pinned {
