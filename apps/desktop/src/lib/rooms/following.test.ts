@@ -538,6 +538,30 @@ describe('a room that will take no more keystrokes', () => {
     expect(said).toEqual(['This note is as large as a note in a room may get.'])
   })
 
+  test('and is not dialled again, to say so again, while the same note stays open', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+
+    socket.went(TOO_LARGE, SAID)
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# A\n', version: 2 }])
+
+    expect(sockets.opened).toHaveLength(1)
+    expect(said).toHaveLength(1)
+  })
+
+  test('is tried again once the note is opened anew', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+
+    socket.went(TOO_LARGE, SAID)
+    rooms.follow([])
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# A\n', version: 2 }])
+
+    expect(sockets.opened).toHaveLength(2)
+  })
+
   test('while the words carry on being written into the file', async () => {
     const note = documentOn('/Notes/a.md', '# A\n')
     const server = new Server('# A\n')

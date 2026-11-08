@@ -217,6 +217,7 @@ class Rooms {
 
     const refused = () => {
       this.letGo(key)
+      this.shut.set(key, { noteId: open.noteId, token })
       busy.failed(t('This note is as large as a note in a room may get.'))
     }
 
