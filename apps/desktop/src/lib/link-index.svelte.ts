@@ -268,12 +268,23 @@ class Links {
     }))
   })
 
+  private readonly seen = $derived.by((): ScannedNote[] => {
+    this.locksSeen()
+    const root = this.root
+    if (root === null) return this.notes
+    return this.notes.map((note) =>
+      this.lockedAt(insideSpace(root, note.path))
+        ? { ...note, headings: [], blocks: [], aliases: [], tags: [], links: [] }
+        : note,
+    )
+  })
+
   readonly spaceTags = $derived.by((): SpaceTag[] => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const counts = new Map<string, number>()
     const archived = this.archived
 
-    for (const note of this.notes) {
+    for (const note of this.seen) {
       if (coveredBy(archived, note.path) !== null || this.isInstructions(note.path)) continue
 
       const under: string[] = []
@@ -295,11 +306,11 @@ class Links {
   })
 
   readonly graph = $derived.by((): NoteGraph =>
-    buildGraph(this.notes, (from, link) => this.resolveFrom(from, link)),
+    buildGraph(this.seen, (from, link) => this.resolveFrom(from, link)),
   )
 
   readonly graphWithFiles = $derived.by((): NoteGraph =>
-    buildGraph(this.notes, (from, link) => this.resolveFrom(from, link), { attachments: true }),
+    buildGraph(this.seen, (from, link) => this.resolveFrom(from, link), { attachments: true }),
   )
 
   pictureOf(attachments: boolean): NoteGraph {
@@ -700,7 +711,7 @@ class Links {
     if (known) return known
 
     const made: NoteIndex = {
-      notes: this.refs,
+      notes: this.offered(this.refs, this.root, locks),
       files: this.files,
       path,
       read: (wanted) => this.readNote(wanted),
@@ -728,6 +739,19 @@ class Links {
     return made
   }
 
+  private offeredHeld = new WeakMap<NoteRef[], { locks: string; offered: NoteRef[] }>()
+
+  private offered(refs: NoteRef[], root: string | null, locks: string): NoteRef[] {
+    const held = this.offeredHeld.get(refs)
+    if (held?.locks === locks) return held.offered
+    const shut = (ref: NoteRef) => root !== null && this.lockedAt(insideSpace(root, ref.path))
+    const offered = refs.some(shut)
+      ? refs.map((ref) => (shut(ref) ? { ...ref, headings: [], blocks: [], aliases: [] } : ref))
+      : refs
+    this.offeredHeld.set(refs, { locks, offered })
+    return offered
+  }
+
   private otherHolding(path: string): string | null {
     if (this.relative(path) !== null) return null
     const root = this.spaceOf(path)
@@ -736,8 +760,11 @@ class Links {
   }
 
   private otherIndex(root: string, openPath: string): NoteIndex {
-    if (this.handedAt !== this.version) {
+    const locks = this.locksSeen()
+    if (this.handedAt !== this.version || this.handedLocks !== locks) {
+      if (this.handedLocks !== locks) this.read.clear()
       this.handedAt = this.version
+      this.handedLocks = locks
       this.handed.clear()
     }
 
@@ -751,7 +778,7 @@ class Links {
     const space = typeof held === 'object' ? held : { refs: [], files: [] }
 
     const made: NoteIndex = {
-      notes: space.refs,
+      notes: this.offered(space.refs, root, locks),
       files: space.files,
       path,
       locked: (wanted) => this.lockedAt(insideSpace(root, wanted)),

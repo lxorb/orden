@@ -1523,6 +1523,28 @@ describe('a note that is protected and shut', () => {
     }
   })
 
+  test('lends none of its headings, blocks, aliases, tags or links to completion, the tags or the graph', async () => {
+    links.lockedAt = (path) => path === at('Secret.md')
+    links.locksSeen = () => 'shut'
+    try {
+      await space({
+        'Secret.md':
+          '---\naliases: [Hidden name]\n---\n# Diagnosis\n\nline ^mark #private [[Plan]]',
+        'Plan.md': '# Plan\n\n#shared [[Secret]]',
+      })
+      const refs = links.index(at('Plan.md')).notes
+      const secret = refs.find((one) => one.path === 'Secret.md')
+      expect(secret).toMatchObject({ headings: [], blocks: [], aliases: [] })
+      expect(refs.find((one) => one.path === 'Plan.md')?.headings).toEqual(['Plan'])
+      expect(links.spaceTags.map((one) => one.tag)).toEqual(['shared'])
+      const graph = links.pictureOf(false)
+      expect(graph.edges.map((one) => one.both)).toEqual([false])
+    } finally {
+      links.lockedAt = () => false
+      links.locksSeen = () => ''
+    }
+  })
+
   test('hands every open note a fresh index when a lock opens or shuts, so embeds draw again', async () => {
     await space({ 'Plan.md': '# Plan' })
     let seen = 'one'
