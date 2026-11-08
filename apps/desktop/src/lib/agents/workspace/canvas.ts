@@ -8,6 +8,7 @@ import { workspace } from '../../workspace.svelte'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import { asked } from './asks'
+import { inTurn } from '../turns'
 import { applied, readable } from './canvas-ops'
 import { type Call, done, maybe, need } from './call'
 import { readablePages } from './pages-ops'
@@ -147,15 +148,17 @@ async function edited(target: Target, ops: unknown, source: string | undefined):
 
   const path = target.path
   if (path === null) throw new Refused('no_such_file', 'there is no canvas there')
-  const was = await invoke<string>('read_note', { path })
-  const before = parse(was)
-  const done = applied(before, ops)
-  const mine = stamped(before, done.canvas, Date.now())
+  return inTurn(path, async () => {
+    const was = await invoke<string>('read_note', { path })
+    const before = parse(was)
+    const done = applied(before, ops)
+    const mine = stamped(before, done.canvas, Date.now())
 
-  const now = await invoke<string>('read_note', { path }).catch(() => was)
-  const kept = now === was ? mine : merged(mine, parse(now))
+    const now = await invoke<string>('read_note', { path }).catch(() => was)
+    const kept = now === was ? mine : merged(mine, parse(now))
 
-  await invoke('snapshot_note', { path, content: now, source }).catch(() => undefined)
-  await writeFile(path, writeCanvas(kept))
-  return done.made
+    await invoke('snapshot_note', { path, content: now, source }).catch(() => undefined)
+    await writeFile(path, writeCanvas(kept))
+    return done.made
+  })
 }

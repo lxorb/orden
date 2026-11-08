@@ -46,15 +46,21 @@ export async function bookmarks(call: Call): Promise<AgentAnswer> {
 
     case 'add': {
       const mark = await bookmarkOf(call, place)
-      if (held.some((one) => sameBookmark(one, mark))) return done({ ...shown(mark), added: false })
-      if (held.length >= MOST_BOOKMARKS) {
-        throw new Refused('failed', `a space keeps at most ${MOST_BOOKMARKS} bookmarks`)
+      const kept = (now: readonly Bookmark[]) => {
+        if (now.some((one) => sameBookmark(one, mark))) return true
+        if (now.length >= MOST_BOOKMARKS) {
+          throw new Refused('failed', `a space keeps at most ${MOST_BOOKMARKS} bookmarks`)
+        }
+        return false
       }
+      if (kept(workspace.bookmarks.of(root))) return done({ ...shown(mark), added: false })
 
       const question = await asked(call, null, `Bookmark ${mark.text || mark.path}`)
       if (question) return question
 
-      workspace.bookmarks.put(root, [...held, mark])
+      const now = workspace.bookmarks.of(root)
+      if (kept(now)) return done({ ...shown(mark), added: false })
+      workspace.bookmarks.put(root, [...now, mark])
       return done({ ...shown(mark), added: true })
     }
 
