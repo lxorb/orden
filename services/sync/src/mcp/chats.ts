@@ -1,8 +1,11 @@
 import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden/chats'
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
+import { EVENTS_A_MINUTE, MOST_BODY } from '@orden/chats/limits'
+import { postEventsOf } from '@orden/chats/wire'
 import { accountById } from '../auth'
 import { askInChunks, places } from '../bound'
 import { askChat } from '../chats/ask'
+import { within } from '../limits'
 import { reachChat, type Reached } from '../chats/reach'
 import { asking, listed, membersOf, searched } from '../chats/routes'
 import type { Env, Whoever } from '../types'
@@ -232,8 +235,14 @@ async function searchChats(env: Env, who: Whoever, args: Record<string, unknown>
 }
 
 async function sent(env: Env, reached: Reached, event: Post | Record<string, unknown>) {
+  const checked = postEventsOf({ events: [event] })
+  if (!checked)
+    return 'The chat cannot take that: reply_to, quote or message is not a message id, or the emoji is not one.'
+  if (!(await within(env, 'chat-events', reached.id, EVENTS_A_MINUTE, 60_000))) {
+    return 'Too many messages in this chat just now. Wait a minute.'
+  }
   const answer = await askChat(env, reached.chat, 'send', asking(reached), {
-    body: JSON.stringify({ events: [event] }),
+    body: JSON.stringify(checked),
   })
   if (!answer?.ok) return 'The chat did not answer. Try again.'
   const { results } = await answer.json<{ results: { refused?: string }[] }>()
@@ -255,6 +264,7 @@ async function postMessage(env: Env, token: TokenRow, who: Whoever, args: Record
   if (refused) return refused
   const body = words(args, 'text')
   if (!body) return 'Say what: text.'
+  if (body.length > MOST_BODY) return `A message is at most ${String(MOST_BODY)} characters.`
   const members = (await membersOf(env, known.id)).map((one) => ({
     who: one.who,
     name: one.name ?? '',
