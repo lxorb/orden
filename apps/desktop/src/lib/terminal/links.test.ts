@@ -1,6 +1,7 @@
 import headless from '@xterm/headless'
 import type { IBuffer } from '@xterm/xterm'
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from '../../../../../scripts/growth'
 import { linksOn, unbroken } from './links'
 
 const { Terminal } = headless
@@ -219,4 +220,20 @@ describe('panel rows that are not one address', () => {
     expect(linksOn(buffer, cols, 0).map((link) => link.text)).toEqual([address])
     expect(linksOn(buffer, cols, 1)).toEqual([])
   })
+})
+
+test('a long wrapped line costs in step with its rows when the pointer crosses it', async () => {
+  const cols = 300
+  const lines = new Map<number, Awaited<ReturnType<typeof screen>>>()
+  for (const rows of [32, 128]) {
+    lines.set(rows, await screen(cols, `https://example.com/${'a'.repeat(cols * rows - 20)}\r\n$ `))
+  }
+  const ratio = growth((rows) => {
+    const shown = lines.get(rows)
+    if (!shown) throw new Error(`no screen of ${rows} rows`)
+    const end = shown.buffer.length - 2
+    const found = linksOn(shown.buffer, cols, end - Math.floor(rows / 2))
+    if (found.length !== 1) throw new Error(`found ${found.length} links`)
+  }, 32)
+  expect(ratio).toBeLessThan(GROWS_AT_MOST)
 })

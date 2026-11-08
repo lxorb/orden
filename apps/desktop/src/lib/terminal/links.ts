@@ -105,14 +105,32 @@ function looksContinued(before: Row, next: Row, column: number | null): boolean 
   return column === null || below.start === above.start || below.start === column
 }
 
-function inAddress(text: string): boolean {
-  const run = /\S*$/.exec(text)?.[0] ?? ''
-  return run.includes('://')
+function runStart(text: string, end: number): number {
+  let at = end
+  while (at > 0 && !/\s/.test(text[at - 1] ?? '')) at--
+  return at
 }
 
-function addressColumn(line: Row): number | null {
-  const run = /\S*$/.exec(line.text)?.[0] ?? ''
-  return line.at[line.text.length - run.length]?.x ?? null
+function inAddress(text: string, end = text.length): boolean {
+  return text.slice(runStart(text, end), end).includes('://')
+}
+
+function addressColumn(line: Row, end = line.text.length): number | null {
+  return line.at[runStart(line.text, end)]?.x ?? null
+}
+
+function shorten(row: Row, end: number) {
+  row.text = row.text.slice(0, end)
+  row.at.length = end
+  row.wide.length = end
+  row.typed.length = end
+}
+
+function append(row: Row, more: Row) {
+  row.text += more.text
+  row.at.push(...more.at)
+  row.wide.push(...more.wide)
+  row.typed.push(...more.typed)
 }
 
 function lineAround(buffer: IBuffer, cols: number, y: number) {
@@ -134,28 +152,26 @@ function lineAround(buffer: IBuffer, cols: number, y: number) {
 
   let last = row(top)
   if (!last) return null
-  let line = last
+  let line = cut(last, 0)
   let broken = false
   for (let next = top + 1; next - top < 2 * FURTHEST; next++) {
     const below = row(next)
     if (!below) break
     const soft = buffer.getLine(next)?.isWrapped === true
-    const kept = soft ? trimmed(line) : cut(line, 0, line.text.length - framed(last).right)
-    const hard = !soft && inAddress(kept.text) && looksContinued(last, below, addressColumn(kept))
+    let end = line.text.length
+    if (soft) while (end > 0 && line.text[end - 1] === ' ') end--
+    else end -= framed(last).right
+    const hard =
+      !soft && inAddress(line.text, end) && looksContinued(last, below, addressColumn(line, end))
     if (!soft && !hard) {
       if (next > y) break
-      line = below
+      line = cut(below, 0)
       last = below
       broken = false
       continue
     }
-    const added = hard ? cut(below, framed(below).left) : below
-    line = {
-      text: kept.text + added.text,
-      at: [...kept.at, ...added.at],
-      wide: [...kept.wide, ...added.wide],
-      typed: [...kept.typed, ...added.typed],
-    }
+    shorten(line, end)
+    append(line, hard ? cut(below, framed(below).left) : below)
     last = below
     broken ||= hard
   }
