@@ -1485,10 +1485,9 @@ class Runner {
     this.noLeader()
     this.stops.push(
       this.hear('live-want', (said) => {
-        const ids = Array.isArray(said.ids)
-          ? said.ids.filter((one): one is string => typeof one === 'string')
-          : []
-        if (typeof said.from === 'string' && this.relay.want(said.from, ids)) this.rebind()
+        const ids = idsIn(said.ids)
+        const meeting = idsIn(said.meeting)
+        if (typeof said.from === 'string' && this.relay.want(said.from, ids, meeting)) this.rebind()
       }),
       this.hear('live-up', (said) => {
         if (typeof said.from === 'string') this.relay.up(said.from, said)
@@ -1894,6 +1893,10 @@ function spaceRooted<T extends { row: { root: string } }>(
 ): T | undefined {
   for (const space of spaces) if (samePath(space.row.root, root)) return space
   return undefined
+}
+
+function idsIn(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
 }
 
 function withoutKey(op: FileOp): FileOp {

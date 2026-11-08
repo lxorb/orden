@@ -93,6 +93,10 @@ export class Mirror {
     return this.unbind !== null
   }
 
+  get pending(): boolean {
+    return this.asking && !this.joined
+  }
+
   async meet(): Promise<void> {
     if (this.asking || this.joined) return
     this.asking = true
@@ -325,13 +329,15 @@ export class Mirrors {
   }
 
   private tell(always = false) {
-    const ids = [
-      ...new Set([...this.held.values()].filter((one) => one.joined).map((one) => one.id)),
-    ]
-    const said = ids.sort().join(',')
+    const all = [...this.held.values()]
+    const ids = [...new Set(all.filter((one) => one.joined).map((one) => one.id))].sort()
+    const meeting = [
+      ...new Set(all.filter((one) => one.pending && !ids.includes(one.id)).map((one) => one.id)),
+    ].sort()
+    const said = `${ids.join(',')}|${meeting.join(',')}`
     if (said === this.said && !always) return
     this.said = said
-    this.line.say('live-want', { ids })
+    this.line.say('live-want', { ids, meeting })
   }
 }
 

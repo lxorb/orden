@@ -53,13 +53,13 @@ export class LiveRelay {
     return this.lives.get(id)?.gen ?? null
   }
 
-  want(from: string, ids: readonly string[]): boolean {
+  want(from: string, ids: readonly string[], meeting: readonly string[] = []): boolean {
     const had = this.wants.get(from) ?? new Set<string>()
-    const now = new Set(ids)
+    const now = new Set([...ids, ...meeting])
     for (const id of had) if (!now.has(id)) this.forgetClient(from, id)
     if (now.size) this.wants.set(from, now)
     else this.wants.delete(from)
-    if (now.size) this.joins.set(from, new Set(now))
+    if (ids.length) this.joins.set(from, new Set(ids))
     else this.joins.delete(from)
     return had.size !== now.size || [...now].some((id) => !had.has(id))
   }

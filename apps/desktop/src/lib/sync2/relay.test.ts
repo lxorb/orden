@@ -51,7 +51,7 @@ class Device {
           this.relay.up(name, what)
         }
         if (kind === 'live-want') {
-          this.relay.want(name, what.ids as string[])
+          this.relay.want(name, what.ids as string[], (what.meeting as string[] | undefined) ?? [])
           this.follow()
         }
       },
@@ -331,3 +331,76 @@ describe('a canvas open in a window that does not sync', () => {
     expect(device.awareness.getStates().size).toBe(2)
   })
 })
+
+describe('two notes a window opens at once', () => {
+  test('both stay live both ways when one joins while the other is still meeting', async () => {
+    const lives = new Map([
+      ['a', new Y.Doc()],
+      ['b', new Y.Doc()],
+    ])
+    lives.get('a')?.getText(TEXT).insert(0, 'A')
+    lives.get('b')?.getText(TEXT).insert(0, 'B')
+    const windows: Mirrors[] = []
+    const relay = new LiveRelay((kind, what) => {
+      for (const one of windows) {
+        if (kind === 'live-down') one.heard(what)
+        if (kind === 'live-again') one.again(what.id as string)
+      }
+    })
+    const follow = () => {
+      for (const id of lives.keys()) {
+        if (!relay.ids().has(id)) lives.set(id, copyOf(lives.get(id)))
+      }
+      relay.follow((id) => (relay.ids().has(id) ? (lives.get(id) ?? null) : null))
+    }
+    let letB: () => void = () => undefined
+    const window = new Mirrors({
+      say: (kind, what) => {
+        if (kind === 'live-up') relay.up('w2', what)
+        if (kind === 'live-want') {
+          relay.want('w2', what.ids as string[], (what.meeting as string[] | undefined) ?? [])
+          follow()
+        }
+      },
+      ask: (_what, args) => {
+        const id = args.id as string
+        relay.meeting('w2', id)
+        follow()
+        const met = () => ({
+          gen: relay.genOf(id),
+          whole: Y.encodeStateAsUpdate(lives.get(id) ?? new Y.Doc()),
+        })
+        if (id === 'a') return Promise.resolve(met())
+        const answer = met()
+        return new Promise((resolve) => (letB = () => resolve(answer)))
+      },
+      who: () => ({ name: 'Firefox', accent: 'green', id: 'u1', person: 'Emil' }),
+      scheme: () => 'light',
+    })
+    windows.push(window)
+    const a = noteOf('ka', 'A')
+    const b = noteOf('kb', 'B')
+    window.follow(
+      [
+        { key: 'ka', path: 'Notes/a.md', note: a },
+        { key: 'kb', path: 'Notes/b.md', note: b },
+      ],
+      (path) => (path === 'Notes/a.md' ? 'a' : 'b'),
+    )
+    await settled()
+    lives.get('b')?.getText(TEXT).insert(1, ' meanwhile')
+    letB()
+    await settled()
+
+    lives.get('b')?.getText(TEXT).insert(0, 'then ')
+    type(b, b.latest.length, ' typed')
+    expect(b.latest).toBe('then B meanwhile typed')
+    expect(lives.get('b')?.getText(TEXT).toJSON()).toBe('then B meanwhile typed')
+  })
+})
+
+function copyOf(doc: Y.Doc | undefined): Y.Doc {
+  const out = new Y.Doc()
+  if (doc) Y.applyUpdate(out, Y.encodeStateAsUpdate(doc))
+  return out
+}
