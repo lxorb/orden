@@ -139,7 +139,13 @@ function eventsOf(one: unknown, at: number): InputEvent[] {
   const bad = (why: string) => new Refused('bad_arguments', `event ${at}: ${why}`)
   const point = (): { x: number; y: number } => {
     const { x, y } = event
-    if (typeof x !== 'number' || typeof y !== 'number' || !(x >= 0) || !(y >= 0)) {
+    if (
+      typeof x !== 'number' ||
+      typeof y !== 'number' ||
+      !Number.isFinite(x + y) ||
+      x < 0 ||
+      y < 0
+    ) {
       throw bad('x and y are the picture’s pixels, from its top left')
     }
     return { x: Math.round(x), y: Math.round(y) }
@@ -251,6 +257,9 @@ function chord(said: unknown, bad: (why: string) => Refused): InputEvent[] {
     if (!found) throw bad(`${one} is not Ctrl, Shift, Alt or Meta`)
     return found
   })
+  if (new Set(held.map((one) => one.key)).size < held.length) {
+    throw bad('each of Ctrl, Shift, Alt and Meta is held once')
+  }
   if (last === '') throw bad('say the key after the modifiers')
   const shifted = held.some((one) => one.key === 'Shift')
   const key = keyOf(last, shifted)
