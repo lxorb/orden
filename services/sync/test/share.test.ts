@@ -815,6 +815,34 @@ describe('an invitation', () => {
     expect((await call<JoinView>(env, `/v1/join/${link}`)).json.from).toBe('owner')
   })
 
+  test('lets nobody in once it is taken back while being followed', async () => {
+    const link = await inviteLink(STRANGER, 'write')
+    env.justBefore(/into space_members|update space_members set joined_at/, () =>
+      env.db.prepare('delete from space_members where email = ?').run(STRANGER),
+    )
+
+    const joined = await call(env, `/v1/join/${link}`, { method: 'POST', token: stranger })
+
+    expect(joined.status).toBe(404)
+    expect(
+      env.db.prepare('select count(*) as n from space_members where email = ?').get(STRANGER),
+    ).toEqual({ n: 0 })
+  })
+
+  test('opens one sign-in when it is followed twice at once', async () => {
+    const link = await inviteLink('fresh@example.com', 'read')
+    const sessions = () =>
+      (env.db.prepare('select count(*) as n from sessions').get() as { n: number }).n
+    const before = sessions()
+
+    const answers = await Promise.all(
+      [0, 1].map(() => call(env, `/v1/join/${link}`, { method: 'POST' })),
+    )
+
+    expect(answers.map((one) => one.status).sort()).toEqual([200, 404])
+    expect(sessions() - before).toBe(1)
+  })
+
   test('stops being a shortcut once it has run out', async () => {
     const link = await inviteLink(READER, 'read')
     env.db.exec('update space_members set expires_at = 1')
@@ -1058,6 +1086,60 @@ describe('as many people as one space holds', () => {
 
     expect(asked.status).toBe(429)
     expect(held('space_requests')).toBe(MOST_MEMBERS)
+  })
+
+  test('lets no waiting guest in once guests fill it', async () => {
+    const token = await shareLink('read', 'approval')
+    const asked = await call(env, `/v1/join/${token}`, { method: 'POST', body: { name: 'Wren' } })
+    expect(asked.json.waiting).toBe(true)
+    const guest = await guestOf(asked.json.token)
+    const long = Date.now() - 10 * 60_000
+    for (let one = 0; one < 200; one++) {
+      env.db
+        .prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
+        .run(`filler-guest-${String(one)}`, 'Filler', long)
+      env.db
+        .prepare(
+          `insert into guest_members (space_id, guest_id, role, joined_at, created_at)
+           values (?, ?, 'read', ?, ?)`,
+        )
+        .run(space, `filler-guest-${String(one)}`, long, long)
+    }
+
+    const admitted = await call(env, `/v1/spaces/${space}/share/guests/${guest}`, {
+      method: 'POST',
+      token: owner,
+    })
+
+    expect(admitted.status).toBe(409)
+    expect(admitted.json.error).toBe('that is as many people as one space holds')
+    const joined = env.db
+      .prepare(
+        'select count(*) as n from guest_members where space_id = ? and joined_at is not null',
+      )
+      .get(space) as { n: number }
+    expect(joined.n).toBe(200)
+  })
+
+  test('leaves a guest out who is declined just as they are let in elsewhere', async () => {
+    const token = await shareLink('read', 'approval')
+    const asked = await call(env, `/v1/join/${token}`, { method: 'POST', body: { name: 'Wren' } })
+    const guest = await guestOf(asked.json.token)
+    env.justBefore(/update guest_members set declined_at/, () =>
+      env.db
+        .prepare('update guest_members set joined_at = ? where guest_id = ?')
+        .run(Date.now(), guest),
+    )
+
+    await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'DELETE', token: owner })
+
+    expect(
+      env.db
+        .prepare(
+          'select count(*) as n from guest_members where guest_id = ? and joined_at is not null',
+        )
+        .get(guest),
+    ).toEqual({ n: 0 })
   })
 
   test('lets in no more guests than it holds when many come at once', async () => {
