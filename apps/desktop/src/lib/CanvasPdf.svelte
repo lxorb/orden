@@ -10,6 +10,7 @@
     type Part,
   } from './pages/paper'
   import FileMark from './FileMark.svelte'
+  import { t } from './i18n.svelte'
   import { pixelRatio } from './pixel-ratio.svelte'
 
   const {
@@ -34,12 +35,18 @@
 
   const STRETCH = 1.1
 
+  const RETRY = 5000
+
+  const MOST_TRIES = 60
+
   let sheet = $state<HTMLCanvasElement>()
   let close = $state<HTMLCanvasElement>()
   let paper = $state.raw<Paper | null>(null)
   let closeUp = $state.raw<Part | null>(null)
   let wide = $state(0)
   let tall = $state(0)
+  let lost = $state(false)
+  let tries = $state(0)
 
   const fit = $derived(
     paper && wide && tall ? Math.min(wide / paper.width, tall / paper.height) : 0,
@@ -61,12 +68,21 @@
   $effect(() => {
     const at = { file, note, root }
     const asked = density
+    const asking = tries
     paperEdition(at)
     const leaving = new AbortController()
     void paperOf(at, 1, leaving.signal, false, asked).then((drawn) => {
-      if (!leaving.signal.aborted && drawn) paper = drawn
+      if (leaving.signal.aborted || asking !== tries) return
+      if (drawn) paper = drawn
+      lost = !drawn && !paper
     })
     return () => leaving.abort()
+  })
+
+  $effect(() => {
+    if (!lost || tries >= MOST_TRIES) return
+    const timer = setTimeout(() => (tries += 1), RETRY)
+    return () => clearTimeout(timer)
   })
 
   $effect(() => {
@@ -154,6 +170,9 @@
       ></canvas>
     {/if}
   </div>
+  {#if lost}
+    <span class="missing">{t('The paper could not be read')}</span>
+  {/if}
   <span class="name"><FileMark mark="pdf" /><span>{name}</span></span>
 </div>
 
@@ -186,6 +205,17 @@
 
   canvas.close.there {
     opacity: 1;
+  }
+
+  .missing {
+    position: absolute;
+    inset-inline: 0;
+    top: 12px;
+    color: var(--muted);
+    font: var(--text-sm) / 1.4 var(--font-ui);
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .name {
