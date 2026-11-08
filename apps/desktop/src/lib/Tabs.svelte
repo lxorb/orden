@@ -274,7 +274,7 @@
     const carriedTab = workspace.panes.dragging?.tabId
     const tab = carriedTab ? workspace.tabs.find((one) => one.id === carriedTab) : undefined
     if (tab) return fits[tab.id]
-    const mark = carriedMark()
+    const mark = workspace.bookmarks.indexOf(carriedMark())
     const path =
       mark === null
         ? carried()[0]
@@ -695,7 +695,7 @@
     workspace.panes.landing = null
     workspace.panes.dropped()
 
-    const mark = draggedBookmark(transfer)
+    const mark = workspace.bookmarks.indexOf(draggedBookmark(transfer))
     if (mark !== null) {
       void here(import('./tab-strip/essential-drop')).then(({ droppedEssential }) =>
         droppedEssential(mark, paneId, at),

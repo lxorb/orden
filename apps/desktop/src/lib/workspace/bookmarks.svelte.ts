@@ -172,6 +172,11 @@ export class Bookmarks {
     return this.spaces[root]?.list ?? []
   }
 
+  indexOf(mark: Bookmark | null): number | null {
+    const at = mark ? this.list.findIndex((held) => sameBookmark(held, mark)) : -1
+    return at < 0 ? null : at
+  }
+
   has(mark: Bookmark | null): boolean {
     return !!mark && this.list.some((held) => sameBookmark(held, mark))
   }

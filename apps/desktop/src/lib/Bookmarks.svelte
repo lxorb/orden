@@ -244,7 +244,7 @@
 
   function startDrag(event: DragEvent, row: Row) {
     reach()
-    carryBookmark(event.dataTransfer, row.at, isTile(row.mark))
+    carryBookmark(event.dataTransfer, row.mark, row.at, isTile(row.mark))
     dragging = row.at
   }
 
@@ -269,7 +269,7 @@
       return
     }
 
-    const from = draggedBookmark(event.dataTransfer)
+    const from = workspace.bookmarks.indexOf(draggedBookmark(event.dataTransfer))
     endDrag()
     if (from === null) return
 

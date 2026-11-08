@@ -86,7 +86,7 @@ export function dropOnList(event: DragEvent, folder: string) {
   }
 
   const tile = landing(event, shortcuts.platform) && isBookmarkDrag(transfer)
-  const at = tile ? draggedBookmark(transfer) : null
+  const at = tile ? workspace.bookmarks.indexOf(draggedBookmark(transfer)) : null
   if (at !== null) {
     void import('./essentials.svelte').then((one) => one.unkeepInto(at, folder))
     return

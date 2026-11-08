@@ -1,6 +1,7 @@
 import type { CarriedFiles } from '@orden/editor'
 import type { Action } from 'svelte/action'
 import type { Platform } from './keys'
+import type { Bookmark } from './workspace/bookmarks.svelte'
 
 const ONE = 'text/orden-path'
 const MANY = 'text/orden-paths'
@@ -153,18 +154,23 @@ export function dragged(transfer: DataTransfer | null): string[] {
 
 let carryingTile = false
 
-export function carryBookmark(transfer: DataTransfer | null, at: number, tile = false) {
+export function carryBookmark(
+  transfer: DataTransfer | null,
+  mark: Bookmark,
+  at: number,
+  tile = false,
+) {
   if (!transfer) return
 
   carryHere(transfer, BOOKMARK, String(at))
   transfer.effectAllowed = 'move'
   carryingTile = tile
-  carryingMark = at
+  carryingMark = mark
 }
 
-let carryingMark: number | null = null
+let carryingMark: Bookmark | null = null
 
-export function carriedMark(): number | null {
+export function carriedMark(): Bookmark | null {
   return carryingMark
 }
 
@@ -172,8 +178,8 @@ export function isBookmarkDrag(transfer: DataTransfer | null): boolean {
   return fromHere(transfer, BOOKMARK)
 }
 
-export function draggedBookmark(transfer: DataTransfer | null): number | null {
-  return index(transfer, BOOKMARK)
+export function draggedBookmark(transfer: DataTransfer | null): Bookmark | null {
+  return index(transfer, BOOKMARK) === null ? null : carryingMark
 }
 
 export function carrySection(transfer: DataTransfer | null, at: number) {

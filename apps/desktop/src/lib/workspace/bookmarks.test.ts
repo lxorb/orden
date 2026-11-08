@@ -55,6 +55,32 @@ beforeEach(() => {
   pushed.length = 0
 })
 
+describe('a bookmark picked up to drag', () => {
+  test('is found where the list has it now, after the list changed under it', () => {
+    const marks = store()
+    marks.put('/Notes', [note('a.md'), note('b.md'), note('c.md')])
+    const picked = marks.list[1]!
+
+    marks.put('/Notes', [note('new.md'), note('a.md'), note('b.md'), note('c.md')])
+    expect(marks.indexOf(picked)).toBe(2)
+
+    marks.put('/Notes', [note('a.md'), note('c.md')])
+    expect(marks.indexOf(picked)).toBeNull()
+    expect(marks.indexOf(null)).toBeNull()
+  })
+
+  test('and is not found in another space, whose list has other bookmarks at those places', () => {
+    let root = '/Notes'
+    const marks = new Bookmarks(() => root)
+    marks.put('/Notes', [note('a.md'), note('b.md')])
+    marks.put('/Home', [note('x.md'), note('y.md')])
+    const picked = marks.list[1]!
+
+    root = '/Home'
+    expect(marks.indexOf(picked)).toBeNull()
+  })
+})
+
 describe('what counts as a bookmark', () => {
   test('is one of the four kinds, with a path and a text', () => {
     for (const kind of BOOKMARK_KINDS) {

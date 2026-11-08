@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import type { Bookmark } from './workspace/bookmarks.svelte'
 import {
   carriedIntoNotes,
   carriedNothing,
@@ -79,13 +80,13 @@ describe('a bookmark carried over the file list', () => {
   test('is a move where it is a tile, and nothing otherwise', async () => {
     const { carryBookmark, carriedNothing } = await import('./drag-paths')
     const tile = transfer()
-    carryBookmark(tile, 0, true)
+    carryBookmark(tile, { kind: 'note', path: 'a.md', text: '' }, 0, true)
     expect(landing(drop(tile), 'linux')).toBe('move')
     carriedNothing()
     expect(landing(drop(tile), 'linux')).toBeNull()
 
     const search = transfer()
-    carryBookmark(search, 1)
+    carryBookmark(search, { kind: 'search', path: '', text: 'x' }, 1)
     expect(landing(drop(search), 'linux')).toBeNull()
   })
 })
@@ -125,14 +126,35 @@ describe('rows of the file explorer, carried where files are taken', () => {
   })
 })
 
+const MARKS: Bookmark[] = [
+  { kind: 'note', path: 'a.md', text: '' },
+  { kind: 'note', path: 'b.md', text: '' },
+  { kind: 'note', path: 'c.md', text: '' },
+]
+
+describe('a bookmark carried', () => {
+  test('is the bookmark picked up, not a place in a list', async () => {
+    const here = await import('./drag-paths')
+    const mark = transfer()
+    here.carryBookmark(mark, MARKS[1]!, 1, true)
+
+    expect(here.draggedBookmark(mark)).toBe(MARKS[1])
+    expect(here.carriedMark()).toBe(MARKS[1])
+
+    here.carriedNothing()
+    expect(here.draggedBookmark(mark)).toBeNull()
+    expect(here.carriedMark()).toBeNull()
+  })
+})
+
 describe('a row carried by its place in a list', () => {
   test('is taken in the window it was picked up in', async () => {
     const here = await import('./drag-paths')
 
     const mark = transfer()
-    here.carryBookmark(mark, 2)
+    here.carryBookmark(mark, MARKS[2]!, 2)
     expect(here.isBookmarkDrag(mark)).toBe(true)
-    expect(here.draggedBookmark(mark)).toBe(2)
+    expect(here.draggedBookmark(mark)).toBe(MARKS[2])
 
     const section = transfer()
     here.carrySection(section, 3)
@@ -149,7 +171,7 @@ describe('a row carried by its place in a list', () => {
   test('and never in another window, whose list has other rows at those places', async () => {
     const there = await import('./drag-paths')
     const mark = transfer()
-    there.carryBookmark(mark, 2)
+    there.carryBookmark(mark, MARKS[2]!, 2)
     const section = transfer()
     there.carrySection(section, 3)
     const sheet = transfer()
