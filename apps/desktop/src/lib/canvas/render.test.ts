@@ -14,7 +14,8 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-const { cardHtml, fileShown, fileSource, fileUrl, keptByAccount } = await import('./render')
+const { cardHtml, fileShown, fileSource, fileUrl, keptByAccount, pageOfFile } =
+  await import('./render')
 
 const HOSTILE = '<img src=x onerror="alert(1)"> and <u>more</u>'
 
@@ -115,5 +116,14 @@ describe('a file card', () => {
     for (const file of ['clips/Talk.mp4', 'sounds/Song.mp3', 'papers/Thesis.pdf', 'Sun.png']) {
       expect(await fileSource(file, '/space/Board.canvas')).toBeNull()
     }
+  })
+})
+
+describe('the page a PDF card shows', () => {
+  test('is the one its subpath names, else the first', () => {
+    expect(pageOfFile({ subpath: '#page=4' })).toBe(4)
+    expect(pageOfFile({ subpath: '#Heading' })).toBe(1)
+    expect(pageOfFile({ subpath: '#page=0' })).toBe(1)
+    expect(pageOfFile({})).toBe(1)
   })
 })

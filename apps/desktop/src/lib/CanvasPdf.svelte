@@ -15,6 +15,7 @@
 
   const {
     file,
+    page = 1,
     note,
     root,
     box = null,
@@ -22,6 +23,7 @@
     seen = null,
   }: {
     file: string
+    page?: number
     note: string | null
     root: string | null
     box?: Box | null
@@ -67,11 +69,12 @@
 
   $effect(() => {
     const at = { file, note, root }
+    const number = page
     const asked = density
     const asking = tries
     paperEdition(at)
     const leaving = new AbortController()
-    void paperOf(at, 1, leaving.signal, false, asked).then((drawn) => {
+    void paperOf(at, number, leaving.signal, false, asked).then((drawn) => {
       if (leaving.signal.aborted || asking !== tries) return
       if (drawn) paper = drawn
       lost = !drawn && !paper
@@ -124,10 +127,11 @@
     }
 
     const at = { file, note, root }
+    const number = page
     paperEdition(at)
     const leaving = new AbortController()
     const timer = setTimeout(() => {
-      void closeUpOf(at, 1, want, across, leaving.signal).then((image) => {
+      void closeUpOf(at, number, want, across, leaving.signal).then((image) => {
         if (!image) return
         if (leaving.signal.aborted || !close) {
           image.close()

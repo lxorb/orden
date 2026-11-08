@@ -1,4 +1,5 @@
 import { type EmbeddedNote, hardBreaks, renderMarkdown } from '@orden/markdown'
+import { pageOfSubpath } from '@orden/markdown/canvas'
 import { embedKind } from '@orden/markdown/links'
 import { BASE } from '../api'
 import { accountAddress } from '../assets'
@@ -41,6 +42,10 @@ export function cardHtml(text: string, canvasPath: string | null, trusted: boole
 
 export function isPicture(file: string): boolean {
   return isPicturePath(file)
+}
+
+export function pageOfFile(node: { subpath?: string }): number {
+  return pageOfSubpath(node.subpath) ?? 1
 }
 
 export function fileUrl(file: string, root: string | null): string {

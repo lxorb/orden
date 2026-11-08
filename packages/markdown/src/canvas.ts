@@ -394,7 +394,7 @@ function asPage(node: CanvasNode, record: { paper: Paper; pattern: Pattern }): P
   }
 }
 
-function pageOfSubpath(subpath: string | undefined): number | null {
+export function pageOfSubpath(subpath: string | undefined): number | null {
   const digits = /^#page=(\d+)$/i.exec((subpath ?? '').trim())?.[1]
   if (digits === undefined) return null
 
