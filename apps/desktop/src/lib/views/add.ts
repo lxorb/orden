@@ -11,7 +11,7 @@ import {
 import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
 import { joinPath } from '../tauri'
 import { insideOnly } from '../automation/inside'
-import { folderOf, insideSpace, within, withinSpace } from '../space-paths'
+import { folderOf, insideSpace, samePath, within, withinSpace } from '../space-paths'
 import { contextFor } from './context'
 import { nowHere, todayHere } from './days'
 import { templatePath, templateWords } from './templates'
@@ -99,7 +99,7 @@ export function prefillOf(
   if (spec.builtin === 'project' && spec.space !== undefined && spec.path !== undefined) {
     const space = workspace.spaces.find((one) => one.name === spec.space)
     if (space) out.path = insideSpace(space.root, spec.path)
-    if (space && space.root !== workspace.activeSpace?.root) out.root = space.root
+    if (space && !samePath(space.root, workspace.activeSpace?.root)) out.root = space.root
   }
   narrowedBy(out, only, today, spec)
   if (!group) return out

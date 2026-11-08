@@ -30,7 +30,7 @@ import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import { modes } from '../../modes.svelte'
 import { onDisk as there } from '../../on-disk'
 import { reachedByOthersIn } from '../../sharing.svelte'
-import { folderOf, insideSpace, nameOf } from '../../space-paths'
+import { folderOf, insideSpace, nameOf, rootedAt } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
@@ -168,7 +168,7 @@ async function inboxPlace(call: Call, place: Place): Promise<Place> {
   if (maybe(call, 'space') !== null || threadSpaceOf(call.caller)) return place
   const { homeRoot } = await import('../../rows/home.svelte')
   const root = homeRoot()
-  const home = reachable(call).find((one) => one.root === root)
+  const home = rootedAt(reachable(call), root)
   return home ? { space: home, open: home.id === workspace.activeSpace?.id } : place
 }
 

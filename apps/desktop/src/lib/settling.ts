@@ -2,6 +2,7 @@ import { account } from './account.svelte'
 import { t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
 import { MIRRORS_KEY, savedRecord } from './sync/mirror'
+import { rootedAt } from './space-paths'
 import { stored } from './stored'
 import { workspace } from './workspace.svelte'
 
@@ -34,7 +35,7 @@ export async function settleLocalNotes(): Promise<void> {
       ...account.spaces.map((one) => one.name),
     ])
     for (const space of met) {
-      const id = workspace.spaces.find((one) => one.root === space.root)?.id
+      const id = rootedAt(workspace.spaces, space.root)?.id
       if (id === undefined) continue
       const name = apartName(space.name, taken)
       taken.add(name)

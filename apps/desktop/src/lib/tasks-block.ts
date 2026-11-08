@@ -2,7 +2,7 @@ import type { Answer, Row } from '@orden/bases'
 import { escapeAll } from '@orden/markdown/html'
 import { shownName } from './note-name'
 import { trustsHtmlAt } from './sharing.svelte'
-import { insideSpace } from './space-paths'
+import { insideSpace, rootedAt } from './space-paths'
 
 const MOST = 50
 
@@ -13,8 +13,7 @@ async function rowsOfSpace(
     import('./rows/rows.svelte'),
     import('./workspace.svelte'),
   ])
-  const space =
-    root === null ? workspace.activeSpace : workspace.spaces.find((one) => one.root === root)
+  const space = root === null ? workspace.activeSpace : rootedAt(workspace.spaces, root)
   if (!space) return null
   if (!rows.ready) {
     await new Promise<void>((resolve) => {

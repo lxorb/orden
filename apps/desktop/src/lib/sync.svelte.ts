@@ -28,7 +28,7 @@ import { workspace } from './workspace.svelte'
 import { sayEntryIds } from './workspace/entry-ids'
 import type { FileOp } from './workspace/file-ops'
 import { unixLines } from './workspace/documents.svelte'
-import { samePath } from './space-paths'
+import { rootedAt, samePath } from './space-paths'
 
 export const STORAGE_KEY = MIRRORS_KEY
 
@@ -66,15 +66,35 @@ class Sync {
         shared: one.shared,
       })),
     pair: (root, spaceId, shared) => {
-      this.mirrors[root] = newMirror(spaceId, root, shared)
+      this.mirrors[this.keyAt(root) ?? root] = newMirror(spaceId, root, shared)
     },
     unpair: (root) => {
-      this.mirrors = without(this.mirrors, root)
+      this.mirrors = without(this.mirrors, this.keyAt(root) ?? root)
     },
     share: (root, shared) => {
-      const mirror = this.mirrors[root]
+      const mirror = this.mirrorAt(root)
       if (mirror) mirror.shared = shared
     },
+  }
+
+  private keyAt(root: string): string | undefined {
+    if (this.mirrors[root]) return root
+    return Object.keys(this.mirrors).find((key) => samePath(key, root))
+  }
+
+  private mirrorAt(root: string): Mirror | undefined {
+    const key = this.keyAt(root)
+    return key === undefined ? undefined : this.mirrors[key]
+  }
+
+  private respell(): void {
+    for (const space of workspace.spaces) {
+      const key = this.keyAt(space.root)
+      const mirror = key === undefined ? undefined : this.mirrors[key]
+      if (key === undefined || !mirror || key === space.root) continue
+      mirror.root = space.root
+      this.mirrors = { ...without(this.mirrors, key), [space.root]: mirror }
+    }
   }
 
   version = $state<1 | 2>(1)
@@ -241,11 +261,12 @@ class Sync {
   }
 
   async renamed(from: string, to: string, name: string) {
-    const mirror = this.mirrors[from]
-    if (!mirror) return
+    const key = this.keyAt(from)
+    const mirror = key === undefined ? undefined : this.mirrors[key]
+    if (key === undefined || !mirror) return
 
     mirror.root = to
-    this.mirrors = { ...without(this.mirrors, from), [to]: mirror }
+    this.mirrors = { ...without(this.mirrors, key), [to]: mirror }
     this.save()
 
     const token = account.token
@@ -291,14 +312,14 @@ class Sync {
     if (V2 && this.local) await this.local.forget(root)
     const spaceId = this.remoteIdFor(root)
     if (spaceId === null) return
-    const shared = !(V2 && this.v2) && !!this.mirrors[root]?.shared
+    const shared = !(V2 && this.v2) && !!this.mirrorAt(root)?.shared
     const theirs = shared || (role !== null && role !== 'owner')
     const mine = !shared && role === 'owner'
 
     if (V2 && this.v2) {
       await this.v2.forget(root)
     } else {
-      this.mirrors = without(this.mirrors, root)
+      this.mirrors = without(this.mirrors, this.keyAt(root) ?? root)
       this.save()
     }
 
@@ -417,6 +438,7 @@ class Sync {
     const token = account.token
     if (!token) return
 
+    this.respell()
     const missing = workspace.spaces.some((space) => !this.mirrors[space.root])
     const due = Date.now() - this.reconciledAt >= RECONCILE_INTERVAL
 
@@ -453,12 +475,12 @@ class Sync {
 
   remoteIdFor(root: string): string | null {
     if (V2 && this.v2) return this.v2.remoteIdFor(root)
-    return this.mirrors[root]?.spaceId ?? null
+    return this.mirrorAt(root)?.spaceId ?? null
   }
 
   roleKept(root: string): string | null {
     if (V2 && this.v2) return this.v2.roleKept(root)
-    const mirror = this.mirrors[root]
+    const mirror = this.mirrorAt(root)
     return mirror && !mirror.shared ? 'owner' : null
   }
 
@@ -576,7 +598,7 @@ class Sync {
   private noted(mirror: Mirror, began: number, failed: string | null) {
     record.wrote({
       at: began,
-      space: workspace.spaces.find((one) => one.root === mirror.root)?.name ?? mirror.root,
+      space: rootedAt(workspace.spaces, mirror.root)?.name ?? mirror.root,
       pulled: this.pulled,
       pushed: this.pushed,
       clashed: this.clashed,
@@ -600,6 +622,7 @@ class Sync {
     try {
       const { pull, push } = await import('./sync/pass')
       const { eachDue } = await import('./sync2/rounds')
+      this.respell()
       const mirrors = new Map(Object.values(this.mirrors).map((one) => [one.root, one]))
 
       await eachDue(
@@ -608,7 +631,7 @@ class Sync {
         async (root) => {
           const mirror = mirrors.get(root)
           if (!mirror) return
-          if (!workspace.spaces.some((space) => space.root === mirror.root)) return
+          if (rootedAt(workspace.spaces, mirror.root) === undefined) return
 
           this.pulled = 0
           this.pushed = 0
@@ -617,7 +640,7 @@ class Sync {
 
           if (await pull(mirror, token, joined, this.waiting(mirror, joined))) {
             moved = true
-            if (mirror.root === workspace.activeSpace?.root) shown = true
+            if (samePath(mirror.root, workspace.activeSpace?.root)) shown = true
           }
 
           if (this.reads(mirror.spaceId)) {
@@ -633,7 +656,7 @@ class Sync {
             folded: ({ kept, gone }: Folded) => {
               void this.refresh(kept, joined)
               void workspace.fileGone(gone, 'file')
-              if (mirror.root === workspace.activeSpace?.root) shown = true
+              if (samePath(mirror.root, workspace.activeSpace?.root)) shown = true
             },
           }
           if (await push(mirror, token, joined, sending)) moved = true
@@ -712,7 +735,7 @@ class Sync {
     this.seen = this.seen || held.seen
 
     for (const [root, stored] of Object.entries(held.mirrors)) {
-      const mine = this.mirrors[root]
+      const mine = this.mirrorAt(root)
       if (!mine) {
         this.mirrors[root] = stored
         grew = true

@@ -7,7 +7,7 @@ import { modes } from '../modes.svelte'
 import { hearHere } from '../own-window'
 import { quickAdd } from '../quick-add/asked.svelte'
 import { rows } from '../rows/rows.svelte'
-import { insideSpace } from '../space-paths'
+import { insideSpace, rootedAt, samePath } from '../space-paths'
 import { invoke, isDesktop } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { askToShow } from '../notify'
@@ -45,8 +45,8 @@ const pressHost: PressHost = {
       openBuiltin('inbox')
       return
     }
-    const space = workspace.spaces.find((one) => one.root === root)
-    if (space && workspace.activeSpace?.root !== root) await workspace.selectSpace(space.id)
+    const space = rootedAt(workspace.spaces, root)
+    if (space && !samePath(workspace.activeSpace?.root, root)) await workspace.selectSpace(space.id)
     await workspace.open(path)
     workspace.goto = { path, line }
   },

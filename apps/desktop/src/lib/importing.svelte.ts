@@ -16,7 +16,7 @@ import type { Rows } from './import/table'
 import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
 import { canWriteAt } from './sharing.svelte'
-import { relativeTo } from './space-paths'
+import { relativeTo, rootedAt } from './space-paths'
 import { importSheet } from './surfaces.svelte'
 import { invoke, isDesktop, joinPath, platform } from './tauri'
 import { workspace } from './workspace.svelte'
@@ -51,9 +51,7 @@ class Importing {
     this.plan ? counts(this.plan) : { notes: 0, files: 0, folders: 0, bytes: 0 },
   )
 
-  readonly spaceName = $derived(
-    workspace.spaces.find((space) => space.root === this.root)?.name ?? '',
-  )
+  readonly spaceName = $derived(rootedAt(workspace.spaces, this.root)?.name ?? '')
 
   show() {
     void importSheet.ask()
@@ -181,7 +179,7 @@ class Importing {
     if (!imported) return
 
     const root = await this.pandocRoot()
-    const home = workspace.spaces.find((one) => one.root === root)?.id ?? null
+    const home = rootedAt(workspace.spaces, root)?.id ?? null
     if (root === null && imported.pictures.length) busy.failed(t('That picture could not be read.'))
     const markdown =
       root === null
@@ -194,7 +192,7 @@ class Importing {
 
   private async pandocRoot(): Promise<string | null> {
     const asked = this.root
-    const known = workspace.spaces.some((one) => one.root === asked)
+    const known = rootedAt(workspace.spaces, asked) !== undefined
     if (asked !== null && known && canWriteAt(asked)) return asked
 
     const found = landing()

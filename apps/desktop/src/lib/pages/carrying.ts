@@ -1,6 +1,7 @@
 import { account } from '../account.svelte'
 import { api } from '../api'
 import { fileBytes, sha256 } from '../bytes'
+import { rootedAt } from '../space-paths'
 import { keepJson, recordOf, stored, isString } from '../stored'
 import { invoke, isNative, joinPath } from '../tauri'
 import { isPagesTarget } from '@orden/markdown/links'
@@ -72,7 +73,7 @@ export function mirroredPages(
 ): Carried[] {
   const out: Carried[] = []
   for (const mirror of mirrors) {
-    const space = workspace.spaces.find((one) => one.root === mirror.root)
+    const space = rootedAt(workspace.spaces, mirror.root)
     if (!space) continue
     const writes = !reads(mirror.spaceId)
     for (const [path, held] of Object.entries(mirror.notes)) {

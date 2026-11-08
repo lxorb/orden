@@ -980,6 +980,40 @@ describe('the mirrors this machine remembers', () => {
     }
   })
 
+  test('are found under the spelling this device gives the folder, and its notes come down', async () => {
+    const written = 'Cafe\u0301'
+    const here = '/Caf\u00e9'
+    localStorage.setItem(
+      'orden:mirrors',
+      JSON.stringify({
+        account: 'u1',
+        seen: true,
+        mirrors: { [`/${written}`]: { spaceId: 's-Cafe', root: `/${written}` } },
+      }),
+    )
+    fake.disk.set(`${here}/.keep`, '')
+    fake.remote.spaces.push({ id: 's-Cafe', name: 'Caf\u00e9' })
+    fake.addRemoteNote('s-Cafe', 'two.md', '# two')
+    workspace.spaces = [{ id: 'local', name: 'Caf\u00e9', root: here }]
+
+    await started()
+    try {
+      expect(sync.remoteIdFor(here)).toBe('s-Cafe')
+      expect(sync.roleKept(here)).toBe('owner')
+
+      await sync.pass()
+
+      expect(fake.disk.get(`${here}/two.md`)).toBe('# two')
+      expect(fake.remote.calls.filter((one) => one.startsWith('createSpace'))).toEqual([])
+      const kept = JSON.parse(localStorage.getItem('orden:mirrors') ?? '{}') as {
+        mirrors?: Record<string, unknown>
+      }
+      expect(Object.keys(kept.mirrors ?? {})).toEqual([here])
+    } finally {
+      stopped()
+    }
+  })
+
   describe('are read again when the rest of the storage lands', () => {
     function landed(notes: Record<string, { id: string; version: number; hash: string }>) {
       localStorage.setItem(

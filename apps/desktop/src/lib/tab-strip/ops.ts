@@ -1,6 +1,6 @@
 import { folderNote } from '../folder-notes'
 import { canWriteAt } from '../sharing.svelte'
-import { folderOf } from '../space-paths'
+import { folderOf, samePath } from '../space-paths'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
@@ -67,7 +67,7 @@ export function renameFromTab(id: string) {
 
   workspace.activeTabId = tab.id
   workspace.showPanel('tree')
-  if (folderOf(row) !== workspace.activeSpace?.root) workspace.revealFolder(folderOf(row))
+  if (!samePath(folderOf(row), workspace.activeSpace?.root)) workspace.revealFolder(folderOf(row))
   workspace.startRenaming(row)
 }
 

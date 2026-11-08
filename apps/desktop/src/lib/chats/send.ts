@@ -3,7 +3,7 @@ import { account } from '../account.svelte'
 import { hiddenKinds } from '../settings.svelte'
 import { t } from '../i18n.svelte'
 import { prompt } from '../prompt.svelte'
-import { nameOf, within, withoutExtension } from '../space-paths'
+import { nameOf, samePath, within, withoutExtension } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { headingAbove, sentWords } from './sent-words'
 import { openChat } from './view/open'
@@ -24,7 +24,7 @@ export async function sendToChat(
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
   const space = workspace.spaces.find((one) => within(one.root, note) !== null) ?? null
-  const ours = (root: string | null) => (root === space?.root ? 0 : 1)
+  const ours = (root: string | null) => (space && samePath(root, space.root) ? 0 : 1)
   const open = chats.list
     .filter((one) => one.path && one.name && may(one.role, 'post', one.meta.posting))
     .sort((a, b) => ours(a.root) - ours(b.root))

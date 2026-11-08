@@ -9,7 +9,7 @@
   import { dur, fly } from '../../motion'
   import { overlays } from '../../overlays'
   import { shortcuts } from '../../shortcuts.svelte'
-  import { withinSpace } from '../../space-paths'
+  import { samePath, withinSpace } from '../../space-paths'
   import { views } from '../../views.svelte'
   import { workspace, type Entry } from '../../workspace.svelte'
   import { estimateText } from '../chat/usage'
@@ -57,7 +57,7 @@
   const head = $derived(chat.head)
   const busy = $derived(chat.busy)
   const root = $derived(chat.root)
-  const home = $derived(root !== null && root === workspace.activeSpace?.root)
+  const home = $derived(root !== null && samePath(root, workspace.activeSpace?.root))
 
   const front = $derived.by((): (Front & { key: string }) | null => {
     const note = noteInFront(root)

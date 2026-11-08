@@ -52,7 +52,7 @@
     windowFor,
   } from './row-window'
   import { ListView, tokenFloor, tokenRow } from './row-window.svelte'
-  import { folderOf } from './space-paths'
+  import { folderOf, samePath } from './space-paths'
   import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from './tree-flat'
   import { steppedKey } from './direction'
   import { onTwist, treeStep, TREE_MOVES } from './tree-keys'
@@ -795,7 +795,7 @@
     const box = where.box
     if (!list || !box || fold !== null || frozen !== null) return
     if (carrying.length || workspace.arranged.dragging) return
-    if (workspace.activeSpace?.root !== listed) return
+    if (!samePath(workspace.activeSpace?.root, listed)) return
     settle(was, now, { list, box, row: rowHeight, top: where.top, refresh: () => where.refresh() })
   }
 

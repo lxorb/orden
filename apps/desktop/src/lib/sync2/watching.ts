@@ -10,6 +10,7 @@ import { keptShaped } from '../internal/roots'
 import { hearInternal, listInternal, mountedFor } from '../internal/watch'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { t } from '../i18n.svelte'
+import { samePath } from '../space-paths'
 import { syncMark } from '../surfaces.svelte'
 import type { Engine } from './engine'
 import { holdsDocument } from './kinds'
@@ -70,7 +71,7 @@ export interface Watched {
 }
 
 function spaceAt(engine: Engine, root: string) {
-  return [...engine.core.spaces.values()].find((one) => one.row.root === root)
+  return [...engine.core.spaces.values()].find((one) => samePath(one.row.root, root))
 }
 
 export function watchFolders(how: Watching): Watched {

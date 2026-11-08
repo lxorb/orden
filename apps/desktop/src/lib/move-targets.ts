@@ -1,5 +1,5 @@
 import { folderFor, folderNote } from './folder-notes'
-import { folderOf, isMarkdownPath, relativeTo } from './space-paths'
+import { folderOf, isMarkdownPath, relativeTo, rootedAt, samePath } from './space-paths'
 import type { Entry } from './workspace.svelte'
 
 export interface MoveTarget {
@@ -64,7 +64,7 @@ export function moveTargets(input: {
   here: string | null
 }): MoveTarget[] {
   const { moving, tree, spaces, here } = input
-  const space = spaces.find((one) => one.root === here) ?? null
+  const space = rootedAt(spaces, here) ?? null
 
   const inside: MoveTarget[] = !tree
     ? []
@@ -87,7 +87,7 @@ export function moveTargets(input: {
         )
 
   const elsewhere: MoveTarget[] = spaces
-    .filter((one) => one.root !== here)
+    .filter((one) => !samePath(one.root, here))
     .map((one) => ({ id: one.root, label: one.name, space: { id: one.id, name: one.name } }))
 
   return [...inside, ...elsewhere]

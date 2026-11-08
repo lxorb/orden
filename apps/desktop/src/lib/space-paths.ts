@@ -50,6 +50,14 @@ export function samePath(
 
 export const foldsIn = (root: string): boolean => foldsAt(root)
 
+export function rootedAt<T extends { readonly root: string }>(
+  spaces: Iterable<T>,
+  root: string | null | undefined,
+): T | undefined {
+  for (const one of spaces) if (samePath(one.root, root)) return one
+  return undefined
+}
+
 export function pathKeyAs(path: string, folds: boolean): string {
   const key = steps(path)
     .map((one) => one.normalize('NFC'))

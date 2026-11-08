@@ -46,3 +46,29 @@ describe('two space paths', () => {
     expect(offenders(PREFIXED)).toEqual([])
   })
 })
+
+const EVERY = readdirSync(LIB, { recursive: true, encoding: 'utf8' }).filter(
+  (name) => /\.(?:ts|svelte)$/.test(name) && !name.endsWith('.test.ts'),
+)
+
+const LOOKED_UP = new RegExp(
+  String.raw`\.(?:find|some|findIndex|filter|every)\(\((\w+)\) => \1\.(?:row\.)?root\s*[!=]==|activeSpace\?\.root\s*[!=]==(?!\s*(?:undefined|null))|[!=]==\s*[\w$.?()]*activeSpace\?\.root`,
+)
+
+describe('a space found by its folder', () => {
+  test('the scan reads the whole app', () => {
+    expect(EVERY.length).toBeGreaterThan(500)
+  })
+
+  test('is matched by path, never by the exact spelling of its root', () => {
+    const out: string[] = []
+    for (const name of EVERY) {
+      readFileSync(join(LIB, name), 'utf8')
+        .split('\n')
+        .forEach((line, at) => {
+          if (LOOKED_UP.test(line)) out.push(`${name}:${at + 1}: ${line.trim()}`)
+        })
+    }
+    expect(out).toEqual([])
+  })
+})

@@ -3,6 +3,7 @@ import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@o
 import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import type { ChatEntry, Chats } from '../../chats/api'
 import { chatsOn } from '../../settings.svelte'
+import { rootedAt } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, text } from './call'
@@ -35,7 +36,7 @@ interface Seen {
 function seenBy(call: Call, store: Chats): Seen[] {
   const spaces = reachable(call)
   return store.list.flatMap((entry) => {
-    const space = spaces.find((one) => one.root === entry.root)
+    const space = rootedAt(spaces, entry.root)
     return space && entry.name ? [{ entry, name: entry.name, space: space.name }] : []
   })
 }

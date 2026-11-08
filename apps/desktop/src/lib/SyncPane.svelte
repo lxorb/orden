@@ -10,7 +10,7 @@
   import { record } from './sync/record.svelte'
   import type { Answer, Clash } from './sync/conflicts'
   import { sync } from './sync.svelte'
-  import { nameOf } from './space-paths'
+  import { nameOf, rootedAt } from './space-paths'
   import { syncedCopies } from './foreign/synced'
   import { asking, type Engine } from './sync2/asking.svelte'
   import { scan } from './sync2/store'
@@ -66,7 +66,7 @@
     const nameFor = (id: string | null) => {
       const root = spaces.find((one) => one.space_id === id)?.root
       if (root === undefined) return id ?? ''
-      return workspace.spaces.find((one) => one.root === root)?.name ?? nameOf(root)
+      return rootedAt(workspace.spaces, root)?.name ?? nameOf(root)
     }
 
     return rows

@@ -9,6 +9,7 @@ import {
   placesOf,
   relativePath,
   relativeTo,
+  rootedAt,
 } from './space-paths'
 
 describe('a path as the space speaks of it', () => {
@@ -196,5 +197,24 @@ describe('the note a name means', () => {
     expect(notePath('Ledger.base')).toBeNull()
     expect(notePath('Book.pages')).toBeNull()
     expect(notePath('files/report.pdf')).toBeNull()
+  })
+})
+
+describe('the space a folder names', () => {
+  const spaces = [
+    { id: 'a', root: '/Caf\u00e9' },
+    { id: 'b', root: '/Notes' },
+  ]
+
+  test('is found however the folder is spelled', () => {
+    expect(rootedAt(spaces, '/Cafe\u0301')?.id).toBe('a')
+    expect(rootedAt(spaces, '/Notes/')?.id).toBe('b')
+    expect(rootedAt(spaces, '\\Notes')?.id).toBe('b')
+  })
+
+  test('is no space for a folder none holds, nor for none at all', () => {
+    expect(rootedAt(spaces, '/Notes/inside')).toBeUndefined()
+    expect(rootedAt(spaces, null)).toBeUndefined()
+    expect(rootedAt(spaces, undefined)).toBeUndefined()
   })
 })

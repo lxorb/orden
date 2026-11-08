@@ -16,7 +16,7 @@
   import { onDisk } from '../on-disk'
   import { canWriteAt } from '../sharing.svelte'
   import { settings } from '../settings.svelte'
-  import { folderOf, samePath } from '../space-paths'
+  import { folderOf, rootedAt, samePath } from '../space-paths'
   import { joinPath } from '../tauri'
   import { workspace } from '../workspace.svelte'
   import { noteText, writeNoteText } from '../workspace/note-text'
@@ -24,7 +24,7 @@
   import { type FieldHands, InstructionsField as Field } from './instructions-field.svelte'
 
   const root = $derived(settings.space ?? workspace.activeSpace?.root ?? null)
-  const name = $derived(workspace.spaces.find((one) => one.root === root)?.name ?? '')
+  const name = $derived(rootedAt(workspace.spaces, root)?.name ?? '')
 
   async function nudged() {
     const { sync } = await import('../sync.svelte')

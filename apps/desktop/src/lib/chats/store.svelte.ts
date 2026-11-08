@@ -347,7 +347,8 @@ class ChatsStore implements Chats {
     const known = new Set(placed.map((one) => one.path))
     const held = new Set(paths)
     const came = paths.some((path) => !known.has(path))
-    const went = root !== null && placed.some((one) => one.root === root && !held.has(one.path))
+    const went =
+      root !== null && placed.some((one) => samePath(one.root, root) && !held.has(one.path))
     if (came || went) void this.lookForPointers()
   }
 

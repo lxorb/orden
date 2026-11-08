@@ -1,5 +1,6 @@
 import { links } from '../../link-index.svelte'
 import type { Query } from '@orden/scan/search/query'
+import { samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import { untrusted } from '../chat/transcript'
 import { NOTE_KEYS, type NoteCommand, type NoteKind, rolesOf } from './notes'
@@ -40,7 +41,7 @@ async function ask(root: string, version: number): Promise<NoteCommand[]> {
 
 export function foundNow(root = workspace.activeSpace?.root): NoteCommand[] {
   if (!root) return []
-  const version = root === workspace.activeSpace?.root ? links.version : -1
+  const version = samePath(root, workspace.activeSpace?.root) ? links.version : -1
   const kept = held.get(root)
   if ((version < 0 || kept?.version !== version) && !asking.has(root)) {
     asking.set(
