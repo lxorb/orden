@@ -10,8 +10,9 @@ class Reloading {
   private pressed = false
   private readonly holders = new Set<() => boolean>()
 
-  holds(busy: () => boolean): void {
+  holds(busy: () => boolean): () => void {
     this.holders.add(busy)
+    return () => this.holders.delete(busy)
   }
 
   watch(settled: () => Promise<boolean>): () => void {

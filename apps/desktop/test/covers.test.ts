@@ -50,6 +50,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/tab-strip/TabChip.svelte .chip':
     'the tab carried out of a strip, which hangs only while a drag is over the panes - and a drag covers all of every page (`coverOf` in WebTab.svelte)',
   'lib/tab-strip/TabNumbers.svelte .numeral': 'on the tabs of a strip, which no page is under',
+  'lib/pass/web/PassWeb.svelte .reload': 'Pass on its own site, which holds no web tab',
 }
 
 const MADE_BY: Record<string, string> = {

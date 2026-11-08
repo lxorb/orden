@@ -149,6 +149,16 @@ def came_back(page: Page) -> None:
     say("still signed in after a reload")
 
 
+def offered_a_reload(page: Page) -> None:
+    piece = "**/assets/FeedbackSheet-*.js"
+    page.route(piece, lambda route: route.abort())
+    page.locator(f"{CORNER} button[aria-label='Send feedback']").click()
+    wait_for(page, "document.querySelector('.reload[role=alert] button')", "the offer to reload after a piece of the page failed to load")
+    page.unroute(piece)
+    shot(page, "05-reload-offered")
+    say("a piece of the page that failed to load offers a reload")
+
+
 def on_a_phone(page: Page) -> None:
     page.set_viewport_size({"width": 390, "height": 760})
     wait_for(page, "document.querySelector(\".pass[data-columns='1']\")", "one column")
@@ -199,6 +209,7 @@ def main() -> int:
         made_login(page)
         locked_and_opened(page)
         came_back(page)
+        offered_a_reload(page)
         on_a_phone(page)
         signed_out(page)
     return DRIVE.verdict("Pass on its own name: signed in, set up, a login made, locked and opened, the corner without a theme switch, a phone")

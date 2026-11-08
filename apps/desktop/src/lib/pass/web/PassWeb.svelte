@@ -6,6 +6,7 @@
   import { menu } from '../../menu.svelte'
   import { overlays } from '../../overlays'
   import { prompt } from '../../prompt.svelte'
+  import { reloading } from '../../reloading.svelte'
   import { said } from '../../said.svelte'
   import SidebarFoot from '../../SidebarFoot.svelte'
   import { contextMenu, feedbackSheet, promptSheet, signInSheet } from '../../surfaces.svelte'
@@ -67,6 +68,14 @@
   {/if}
 </main>
 
+{#if reloading.offered}
+  <div class="reload" role="alert">
+    <button class="orden-button" type="button" onclick={() => location.reload()}
+      >{t('Reload')}</button
+    >
+  </div>
+{/if}
+
 <p class="orden-said" role="status" aria-live="polite">{said.words}</p>
 
 {#if signInSheet.asked}
@@ -101,5 +110,19 @@
 
   .blank {
     height: 100%;
+  }
+
+  .reload {
+    position: fixed;
+    inset-block-end: calc(var(--space-4) + var(--inset-bottom, 0px));
+    inset-inline: 0;
+    z-index: var(--z-notice);
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .reload button {
+    pointer-events: auto;
   }
 </style>
