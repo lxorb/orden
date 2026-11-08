@@ -99,18 +99,12 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     persist() {
       this.persisted += 1
     },
-    freeName: (folder: string, name: string, except?: string) => {
+    nameTaken: (folder: string) => {
       const taken = new Set([
         ...tree.children.map((one) => one.path),
         ...ws.documents.flatMap((one) => (one.path === null ? [] : [one.path])),
       ])
-      if (except !== undefined) taken.delete(except)
-
-      const dot = name.lastIndexOf('.')
-      for (let n = 1; ; n++) {
-        const candidate = n === 1 ? name : `${name.slice(0, dot)} ${n}${name.slice(dot)}`
-        if (!taken.has(`${folder}/${candidate}`)) return candidate
-      }
+      return (name: string) => taken.has(`${folder}/${name}`)
     },
     born: () => undefined,
     touched: () => undefined,
