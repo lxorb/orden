@@ -627,7 +627,7 @@ fn searched(relative: &str, file: &FileEntry, glob: Option<&str>, text: Option<&
     if let Some(glob) = glob {
         let name = relative.rsplit('/').next().unwrap_or(relative);
         let against = if glob.contains('/') { relative } else { name };
-        if !globbed(glob.as_bytes(), against.as_bytes()) {
+        if !globbed(glob, against) {
             return false;
         }
     }
@@ -641,13 +641,19 @@ fn searched(relative: &str, file: &FileEntry, glob: Option<&str>, text: Option<&
         .is_ok_and(|words| words.to_lowercase().contains(&text.to_lowercase()))
 }
 
-fn globbed(glob: &[u8], name: &[u8]) -> bool {
-    matched(glob, name, (0, 0), &mut std::collections::HashSet::new())
+fn globbed(glob: &str, name: &str) -> bool {
+    let glob: Vec<char> = glob.chars().collect();
+    let name: Vec<char> = name.chars().collect();
+    matched(&glob, &name, (0, 0), &mut std::collections::HashSet::new())
+}
+
+fn same_letter(one: char, other: char) -> bool {
+    one == other || one.to_lowercase().eq(other.to_lowercase())
 }
 
 fn matched(
-    glob: &[u8],
-    name: &[u8],
+    glob: &[char],
+    name: &[char],
     (g, n): (usize, usize),
     failed: &mut std::collections::HashSet<(usize, usize)>,
 ) -> bool {
@@ -656,23 +662,23 @@ fn matched(
     }
     let found = match (glob.get(g), name.get(n)) {
         (None, None) => true,
-        (Some(b'*'), _) if glob.get(g + 1) == Some(&b'*') => {
-            let rest = if glob.get(g + 2) == Some(&b'/') {
+        (Some('*'), _) if glob.get(g + 1) == Some(&'*') => {
+            let rest = if glob.get(g + 2) == Some(&'/') {
                 g + 3
             } else {
                 g + 2
             };
             (n..=name.len()).any(|at| matched(glob, name, (rest, at), failed))
         }
-        (Some(b'*'), _) => {
+        (Some('*'), _) => {
             let run = name[n..]
                 .iter()
-                .position(|one| *one == b'/')
+                .position(|one| *one == '/')
                 .map_or(name.len(), |at| n + at);
             (n..=run).any(|at| matched(glob, name, (g + 1, at), failed))
         }
-        (Some(b'?'), Some(one)) if *one != b'/' => matched(glob, name, (g + 1, n + 1), failed),
-        (Some(want), Some(one)) if want.eq_ignore_ascii_case(one) => {
+        (Some('?'), Some(one)) if *one != '/' => matched(glob, name, (g + 1, n + 1), failed),
+        (Some(want), Some(one)) if same_letter(*want, *one) => {
             matched(glob, name, (g + 1, n + 1), failed)
         }
         _ => false,
@@ -689,18 +695,23 @@ mod tests {
 
     #[test]
     fn a_glob_reads_as_a_shell_reads_one() {
-        assert!(globbed(b"*.rs", b"main.rs"));
-        assert!(!globbed(b"*.rs", b"main.ts"));
-        assert!(globbed(b"note?.md", b"note1.md"));
-        assert!(!globbed(b"*.md", b"a/b.md"));
-        assert!(globbed(b"**/*.md", b"a/b/c.md"));
-        assert!(globbed(b"**/*.md", b"c.md"));
-        assert!(globbed(b"src/**/mod.rs", b"src/agents/mod.rs"));
-        assert!(!globbed(b"src/*/mod.rs", b"src/a/b/mod.rs"));
-        assert!(globbed(b"README*", b"readme.md"));
+        assert!(globbed("*.rs", "main.rs"));
+        assert!(!globbed("*.rs", "main.ts"));
+        assert!(globbed("note?.md", "note1.md"));
+        assert!(!globbed("*.md", "a/b.md"));
+        assert!(globbed("**/*.md", "a/b/c.md"));
+        assert!(globbed("**/*.md", "c.md"));
+        assert!(globbed("src/**/mod.rs", "src/agents/mod.rs"));
+        assert!(!globbed("src/*/mod.rs", "src/a/b/mod.rs"));
+        assert!(globbed("README*", "readme.md"));
         let many = "a".repeat(200);
-        assert!(!globbed(b"*a*a*a*a*a*a*a*a*a*a*a*a*b", many.as_bytes()));
-        assert!(!globbed(b"**a**a**a**a**a**a**a**a**b", many.as_bytes()));
+        assert!(!globbed("*a*a*a*a*a*a*a*a*a*a*a*a*b", &many));
+        assert!(!globbed("**a**a**a**a**a**a**a**a**b", &many));
+        assert!(globbed("?.md", "ü.md"));
+        assert!(globbed("note-?.md", "note-日.md"));
+        assert!(!globbed("?.md", "üb.md"));
+        assert!(globbed("Ärger*", "ärger.txt"));
+        assert!(globbed("*.MD", "Übersicht.md"));
     }
 
     fn temp() -> PathBuf {
