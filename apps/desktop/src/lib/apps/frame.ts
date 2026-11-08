@@ -19,7 +19,7 @@ export async function frameOf(stream: MediaStream): Promise<Frame | null> {
       video.addEventListener('loadeddata', () => settle(true), { once: true })
       setTimeout(() => settle(false), WITHIN)
     })
-    await video.play().catch(() => undefined)
+    void video.play().catch(() => undefined)
     if (!(await ready)) return null
     const width = video.videoWidth
     const height = video.videoHeight
