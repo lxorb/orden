@@ -376,7 +376,7 @@
           {#if item.kind === 'day'}
             <div class="day" role="separator"><span>{dayLine(item.at)}</span></div>
           {:else if item.kind === 'new'}
-            <div class="new" role="separator"><span>{t('New')}</span></div>
+            <div class="new" role="separator"><span>{t('New messages')}</span></div>
           {:else}
             <MessageRow
               message={item.message}
@@ -425,14 +425,14 @@
       transition:fade={{ duration: dur(130) }}
     >
       <Glyph name="up" />
-      <span>{t('New')}</span>
+      <span>{t('New messages')}</span>
     </button>
   {/if}
   {#if !stuck && (unreadBelow > 0 || page.after)}
     <button
       type="button"
       class="jump below orden-pill is-pressable"
-      aria-label={t('New')}
+      aria-label={t('New messages')}
       onclick={() => void toBottom()}
       transition:fade={{ duration: dur(130) }}
     >

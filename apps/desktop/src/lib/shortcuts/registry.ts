@@ -754,7 +754,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'chat.jump-new',
-          label: () => t('New'),
+          label: () => t('New messages'),
           category: 'view',
           scope: 'panel',
           key: 'Mod-j',

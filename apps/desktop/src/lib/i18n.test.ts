@@ -636,3 +636,22 @@ describe('a failure', () => {
     }
   })
 })
+
+describe('a sentence with a value in it', () => {
+  test('is one string a language can reorder, never a word set beside the value', () => {
+    const beside = new RegExp(String.raw`\$\{t\(\s*${LITERAL}\s*\)\} +\$\{|\} +\$\{t\(\s*'`)
+    const glued = sourceFiles(SOURCE).flatMap((path) =>
+      readFileSync(path, 'utf8')
+        .split('\n')
+        .flatMap((line, index) =>
+          beside.test(line) ? [`${path.slice(SOURCE.length)}:${index + 1}: ${line.trim()}`] : [],
+        ),
+    )
+    expect(glued).toEqual([])
+  })
+
+  test('puts the value where each language wants it', () => {
+    expect(de['Sign out {email}']).toBe('{email} abmelden')
+    expect(ja['Sign out {email}']).toMatch(/^\{email\}/)
+  })
+})

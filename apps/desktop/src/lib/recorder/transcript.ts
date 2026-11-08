@@ -58,5 +58,5 @@ function clockOf(at: Date): string {
 }
 
 export function recordingNoteName(at: Date): string {
-  return `${t('Recording')} ${dayOf(at)} ${clockOf(at)}`
+  return t('Recording {date} {time}', { date: dayOf(at), time: clockOf(at) })
 }
