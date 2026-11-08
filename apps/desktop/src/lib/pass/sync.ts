@@ -59,6 +59,8 @@ function isFields(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+const FULL = 507
+
 function saidOf(error: unknown): Said | null {
   if (!(error instanceof Error)) return null
   const status = (error as { status?: unknown }).status
@@ -226,7 +228,7 @@ export class PassApi {
       }
     } catch (error) {
       const said = saidOf(error)
-      if (!said || said.status >= 500) throw error
+      if (!said || (said.status >= 500 && said.status !== FULL)) throw error
       const raw = isFields(said.body) ? said.body : {}
       return {
         ok: false,
