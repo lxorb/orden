@@ -22,6 +22,7 @@ interface Row {
   text: string
   at: Cell[]
   wide: boolean[]
+  typed: boolean[]
 }
 
 function rowOf(buffer: IBuffer, y: number, cols: number, cell: IBufferCell): Row | null {
@@ -30,18 +31,20 @@ function rowOf(buffer: IBuffer, y: number, cols: number, cell: IBufferCell): Row
   let text = ''
   const at: Cell[] = []
   const wide: boolean[] = []
+  const typed: boolean[] = []
   for (let x = 0; x < Math.min(cols, line.length); x++) {
     line.getCell(x, cell)
     const width = cell.getWidth()
     if (width === 0) continue
-    const chars = cell.getChars() || ' '
-    for (const unit of chars.split('')) {
+    const written = cell.getChars()
+    for (const unit of (written || ' ').split('')) {
       at.push({ x, y })
       wide.push(width > 1)
+      typed.push(written !== '')
       text += unit
     }
   }
-  return { text, at, wide }
+  return { text, at, wide, typed }
 }
 
 function trimmed(row: Row): Row {
@@ -53,6 +56,7 @@ function cut(row: Row, from: number, to = row.text.length): Row {
     text: row.text.slice(from, to),
     at: row.at.slice(from, to),
     wide: row.wide.slice(from, to),
+    typed: row.typed.slice(from, to),
   }
 }
 
@@ -82,12 +86,20 @@ function fills(row: Row, frame: Framed): boolean {
   return edge.replace(/ +$/, '') === closing
 }
 
+const PROMPT_SIGN = /[$#%]$/
+
+function prompted(row: Row, frame: Framed): boolean {
+  const after = frame.left + frame.content.length
+  return PROMPT_SIGN.test(frame.content) && row.text[after] === ' ' && row.typed[after] === true
+}
+
 function looksContinued(before: Row, next: Row, column: number | null): boolean {
   const above = framed(before)
   const below = framed(next)
   if (!PART.test(above.content.at(-1) ?? ' ') || !fills(before, above)) return false
   const leading = LEADING.exec(below.content)?.[0]
   if (!leading || leading !== below.content || SCHEME.test(leading)) return false
+  if (prompted(next, below)) return false
   if (below.border !== above.border) return false
   if (above.border && next.text.trimEnd().length !== before.text.trimEnd().length) return false
   return column === null || below.start === above.start || below.start === column
@@ -142,6 +154,7 @@ function lineAround(buffer: IBuffer, cols: number, y: number) {
       text: kept.text + added.text,
       at: [...kept.at, ...added.at],
       wide: [...kept.wide, ...added.wide],
+      typed: [...kept.typed, ...added.typed],
     }
     last = below
     broken ||= hard
