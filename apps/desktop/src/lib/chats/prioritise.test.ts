@@ -42,11 +42,15 @@ const said = (at: number): ProviderMessage => ({
 vi.mock('./connected.svelte', () => ({
   connected: {
     hear: (listener: NonNullable<typeof world.hear>) => {
-      world.hear = listener
+      const before = world.hear
+      world.hear = (provider, account, event) => {
+        before?.(provider, account, event)
+        listener(provider, account, event)
+      }
       return () => undefined
     },
     find: () => ({
-      conversations: [{ id: 'c', title: 'Lucile' }],
+      conversations: [{ id: 'c', title: 'Lucile', people: [] }],
       connection: {
         history: async () => {
           world.read++
@@ -80,4 +84,18 @@ test('a burst of messages in one chat is weighed once, not once a message', asyn
   expect(world.read).toBeLessThanOrEqual(2)
   expect(world.told).toEqual(['Lucile: message 20'])
   expect(priorities.levelOf('mail\nme\nc')).toBe('urgent')
+})
+
+test('without priorities a message from another service is still told, and its own words show', async () => {
+  priorities.setOn(false)
+  startPriorities()
+  world.told.length = 0
+  world.hear?.('mail', 'me', { t: 'message', message: { ...said(99), text: 'are you in?' } })
+  await vi.waitFor(() => expect(world.told).toEqual(['Lucile: are you in?']))
+  world.hear?.('mail', 'me', {
+    t: 'message',
+    message: { ...said(100), text: 'not this', mine: true },
+  })
+  await new Promise((resolve) => setTimeout(resolve, 20))
+  expect(world.told).toEqual(['Lucile: are you in?'])
 })
