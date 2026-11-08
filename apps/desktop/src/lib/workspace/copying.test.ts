@@ -49,6 +49,7 @@ vi.stubGlobal('localStorage', {
 
 const { bringIn, copyRows } = await import('./copying')
 const { ItemMetaStore } = await import('./item-meta.svelte')
+const { Protection } = await import('../protect/protection.svelte')
 
 const meta = new ItemMetaStore((path) => (path?.startsWith('/t/') ? '/t' : '/s'))
 
@@ -67,6 +68,8 @@ function rig(entries: Entry[]) {
   return {
     undone: { record: () => undefined },
     itemMeta: meta,
+    protection: { copied: () => undefined },
+    rootHolding: () => '/s',
     entryAt: (path: string) => entries.find((one) => one.path === path) ?? null,
     showEntry: () => undefined,
     freshEntry: (path: string) => entry(path),
@@ -172,6 +175,26 @@ describe('a copy keeps what Orden keeps about the item', () => {
     await copyRows(ws as never, [{ from: '/s/Plan.md', into: '/t' }])
 
     expect(meta.of('/t/Plan.md', '/t')).toEqual({ 'todo-list': 'yes' })
+  })
+
+  test('a protected note copied leaves a copy that is as protected', async () => {
+    disk.clear()
+    disk.set('/s/Diary.md', 'what nobody may read\n')
+    const ws = rig([entry('/s/Diary.md')])
+    const protection = new Protection()
+    protection.set('/s', '/s/Diary.md', 'password')
+    await copyRows(
+      {
+        ...ws,
+        protection,
+        rootHolding: (path: string | null) => (path?.startsWith('/t/') ? '/t' : '/s'),
+      } as never,
+      [{ from: '/s/Diary.md', into: '/t' }],
+    )
+
+    expect(protection.covering('/t/Diary.md')).toEqual([
+      { root: '/t', key: 'Diary.md', way: 'password' },
+    ])
   })
 })
 

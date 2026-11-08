@@ -7,12 +7,15 @@ import { copyName } from '../note-name'
 import { isMarkdownPath, nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import type { Entry } from '../workspace.svelte'
+import type { Protection } from '../protect/protection.svelte'
 import type { ItemMetaStore } from './item-meta.svelte'
 import type { Copied, FileActions } from './undo.svelte'
 import { copyPath, writeBytes, writeFile } from './write-file'
 
 export interface Copies {
   readonly undone: FileActions
+  readonly protection: Pick<Protection, 'copied'>
+  rootHolding(path: string | null): string | null
   readonly itemMeta: Pick<ItemMetaStore, 'copied' | 'moved' | 'set'>
   entryAt(path: string): Entry | null
   showEntry(entry: Entry): void
@@ -83,6 +86,7 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
   if (!landed) return false
   await idsLeftBehind(entry, path)
   ws.itemMeta.copied(entry.path, path)
+  ws.protection.copied(entry.path, path, ws.rootHolding(entry.path), ws.rootHolding(path))
 
   const own = ownNoteRenamed(entry, path)
   const renamed =
