@@ -30,7 +30,9 @@ function lookups(rows: readonly Row[]): Lookups {
       const found = byName.get(keyOf(row.space, nameOf(target.split('#')[0] ?? target)))
       if (!found) continue
       const key = keyOf(found.space, found.path)
-      linking.set(key, [...(linking.get(key) ?? []), row.path])
+      const gathered = linking.get(key)
+      if (gathered) gathered.push(row.path)
+      else linking.set(key, [row.path])
     }
   }
   return { byPath, byName, linking }

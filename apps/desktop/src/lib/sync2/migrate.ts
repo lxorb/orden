@@ -248,7 +248,9 @@ async function renamedHere(
   for (const tracked of Object.values(v1?.notes ?? {})) {
     const entry = space.entries.get(tracked.id)
     if (!entry || entry.deleted || claimed.has(entry.id) || !shapeOf(entry.kind)) continue
-    left.set(tracked.hash, [...(left.get(tracked.hash) ?? []), tracked])
+    const gathered = left.get(tracked.hash)
+    if (gathered) gathered.push(tracked)
+    else left.set(tracked.hash, [tracked])
   }
   if (!left.size) return []
 

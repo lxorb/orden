@@ -114,7 +114,11 @@ export function agendaOf(
   for (const row of rows) {
     const day = dayOf(row)
     if (day === null) undated.push(row)
-    else byDay.set(day, [...(byDay.get(day) ?? []), row])
+    else {
+      const gathered = byDay.get(day)
+      if (gathered) gathered.push(row)
+      else byDay.set(day, [row])
+    }
   }
   return { dated: [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)), undated }
 }

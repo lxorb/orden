@@ -531,7 +531,11 @@ export async function findParents(space: string): Promise<number> {
   const holders = new Map<string, string[]>()
   for (const thread of threads.values()) {
     const under = Array.isArray(thread.helpers) ? thread.helpers.filter(isString) : []
-    for (const child of under) holders.set(child, [...(holders.get(child) ?? []), thread.id])
+    for (const child of under) {
+      const gathered = holders.get(child)
+      if (gathered) gathered.push(thread.id)
+      else holders.set(child, [thread.id])
+    }
   }
   const depth = (id: string) => holders.get(id)?.length ?? 0
   let wrote = 0

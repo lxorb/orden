@@ -51,6 +51,35 @@ const noSpreadMath = {
   },
 }
 
+const noCopyAppend = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      copy: 'Copying a list to add one item to it makes building the map quadratic: push onto the list instead.',
+    },
+  },
+  create(context) {
+    return {
+      "CallExpression[callee.property.name='set'] > ArrayExpression.arguments"(node) {
+        const [first, second] = node.elements
+        const read = first?.type === 'SpreadElement' ? first.argument : null
+        if (
+          node.elements.length === 2 &&
+          second?.type !== 'SpreadElement' &&
+          read?.type === 'LogicalExpression' &&
+          read.operator === '??' &&
+          read.left.type === 'CallExpression' &&
+          read.left.callee.type === 'MemberExpression' &&
+          read.left.callee.property.name === 'get'
+        ) {
+          context.report({ node, messageId: 'copy' })
+        }
+      },
+    }
+  },
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -222,7 +251,15 @@ export default tseslint.config(
     },
   },
   {
-    plugins: { orden: { rules: { 'no-comments': noComments, 'no-spread-math': noSpreadMath } } },
+    plugins: {
+      orden: {
+        rules: {
+          'no-comments': noComments,
+          'no-spread-math': noSpreadMath,
+          'no-copy-append': noCopyAppend,
+        },
+      },
+    },
     rules: { 'orden/no-comments': 'error' },
   },
   {
@@ -233,7 +270,7 @@ export default tseslint.config(
       'packages/chats/**',
       'services/sync/src/chats/**',
     ],
-    rules: { 'orden/no-spread-math': 'error' },
+    rules: { 'orden/no-spread-math': 'error', 'orden/no-copy-append': 'error' },
   },
   {
     files: [

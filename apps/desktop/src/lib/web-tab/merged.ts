@@ -60,7 +60,9 @@ export function planned(
       const host = hostOf(origin)
       if (!host) continue
       const site = siteOf(host, registrable)
-      bySite.set(site, [...(bySite.get(site) ?? []), origin])
+      const gathered = bySite.get(site)
+      if (gathered) gathered.push(origin)
+      else bySite.set(site, [origin])
     }
     for (const [site, theirs] of bySite) {
       const from = storeName('site', space, site)
