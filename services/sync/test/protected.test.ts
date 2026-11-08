@@ -57,6 +57,31 @@ describe('what a reader protected', () => {
     expect((await read()).json.password?.hash).toBe('bmV3ZXJuZXdlcg==')
   })
 
+  test('keeps what another device protected at the same moment', async () => {
+    env.justBefore(/update users set protected/, () =>
+      env.db
+        .prepare("update users set protected = ? where email = 'a@b.dev'")
+        .run(JSON.stringify({ password: null, spaces: { s2: { Diary: 'password' } } })),
+    )
+
+    expect((await ways('s1', { Work: 'device' })).status).toBe(200)
+    expect((await read()).json.spaces).toEqual({
+      s1: { Work: 'device' },
+      s2: { Diary: 'password' },
+    })
+  })
+
+  test('keeps a space protected meanwhile when a password arrives', async () => {
+    env.justBefore(/update users set protected/, () =>
+      env.db
+        .prepare("update users set protected = ? where email = 'a@b.dev'")
+        .run(JSON.stringify({ password: null, spaces: { s2: { Diary: 'password' } } })),
+    )
+
+    expect((await password(HASH)).status).toBe(200)
+    expect((await read()).json).toEqual({ password: HASH, spaces: { s2: { Diary: 'password' } } })
+  })
+
   test('refuses what is not a hash the app wrote', async () => {
     expect((await password({ ...HASH, n: 1000 })).status).toBe(400)
     expect((await password('tulip ladder')).status).toBe(400)
