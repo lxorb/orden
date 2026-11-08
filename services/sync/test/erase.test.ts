@@ -436,6 +436,34 @@ describe('deleting one of two accounts', () => {
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
   })
 
+  test('sends everybody in its chats away at once, though the chats are emptied later', async () => {
+    const asked: { chat: string; ask: string; who: string | null }[] = []
+    env.CHATS = {
+      idFromName: (name: string) => name,
+      get: (id: unknown) => ({
+        fetch: (request: Request) => {
+          const ask = request.headers.get('x-orden-chat-ask') ?? ''
+          asked.push({ chat: String(id), ask, who: request.headers.get('x-orden-revoked') })
+          return Promise.resolve(new Response(null, { status: ask === 'erase' ? 503 : 204 }))
+        },
+      }),
+    } as unknown as DurableObjectNamespace
+
+    await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
+
+    const revoked = asked
+      .filter((one) => one.ask === 'revoke')
+      .map((one) => `${one.chat} ${one.who ?? ''}`)
+      .sort()
+    expect(revoked).toEqual(
+      [
+        `chat-${LEAVING.id} ${LEAVING.id}`,
+        `chat-${LEAVING.id} ${STAYING.id}`,
+        `chat-${STAYING.id} ${LEAVING.id}`,
+      ].sort(),
+    )
+  })
+
   test('keeps a hub that did not answer on the list for the next night', async () => {
     env.HUB = {
       idFromName: (name: string) => name,

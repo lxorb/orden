@@ -147,7 +147,7 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
     .all<{ note_id: string; who: string }>()
 
   const { results: chatting } = await env.DB.prepare(
-    'select chat_id, who from chat_sockets where who = ?1',
+    `select chat_id, who from chat_sockets where chat_id in (${OWNED_CHATS}) or who = ?1`,
   )
     .bind(user.id)
     .all<{ chat_id: string; who: string }>()
