@@ -22,6 +22,7 @@ vi.mock('../tauri', () => ({
 vi.mock('../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
+vi.mock('../protect/protection.svelte', () => ({ protection: { locked: () => true } }))
 vi.mock('../stored', () => ({
   stored: (key: string) => kept.get(key) ?? null,
   keepJson: (key: string, value: unknown) => {

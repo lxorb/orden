@@ -153,6 +153,7 @@ export interface Keeping {
   undoable?: boolean
   together?: boolean
   anyFile?: boolean
+  throughLocks?: boolean
 }
 
 async function keep(path: string, content: string, keeping: Keeping) {
@@ -170,8 +171,14 @@ export async function replaceInNotes(
     keeping.anyFile === true ? changes : changes.filter((one) => isMarkdownPath(one.path))
   if (!notes.length) return 0
 
-  const { canWriteAt } = await import('../sharing.svelte')
-  const writable = notes.filter((change) => canWriteAt(change.path))
+  const [{ canWriteAt }, { protection }] = await Promise.all([
+    import('../sharing.svelte'),
+    import('../protect/protection.svelte'),
+  ])
+  const writable = notes.filter(
+    (change) =>
+      canWriteAt(change.path) && (keeping.throughLocks === true || !protection.locked(change.path)),
+  )
   if (!writable.length || (keeping.together && writable.length < notes.length)) return 0
 
   const done: Undone[] = []
