@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { readFrame } from '../src/hub/frames'
 import { call, type ShareView, signIn, type TestEnv, testEnv } from './harness'
-import { computer, connect, hub, type Hubs, hubs } from './hub-fakes'
+import { computer, connect, hub, type Hubs, hubs, send } from './hub-fakes'
 
 const T0 = Date.UTC(2026, 8, 30, 12)
 const KEY = 'k'.repeat(43)
@@ -144,6 +144,29 @@ describe('ending a device', () => {
     })
     expect(others.json.ended).toBe(1)
     expect(laptop.socket.closedWith?.code).toBe(1008)
+  })
+
+  test('stays ended when a socket of the ended session got in just after and says hello', async () => {
+    const laptop = await computer(env, running, 'after@example.com', 'Laptop')
+    const desktop = await computer(env, running, 'after@example.com', 'Desktop')
+    await call(env, `/v1/sessions/${laptop.session}`, { method: 'DELETE', token: desktop.token })
+
+    const { hub: made } = running.of(laptop.user)
+    const late = connect(made, { device: laptop.id, who: laptop.user, session: laptop.session })
+    await send(made, late, {
+      t: 'hello',
+      device: laptop.id,
+      name: 'Laptop',
+      platform: 'windows',
+      app: '1.0.0',
+    })
+
+    expect(late.closedWith?.code).toBe(1008)
+    expect(
+      env.db
+        .prepare('select revoked_at is not null as ended from devices where id = ?')
+        .get(laptop.id),
+    ).toEqual({ ended: 1 })
   })
 
   test('is what signing out does to a socket that never said hello', async () => {
