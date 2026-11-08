@@ -1,4 +1,4 @@
-import { api, ApiError, type Invitation, type Joined } from './api'
+import { api, ApiError, fromServer, type Invitation, type Joined } from './api'
 import { account } from './account.svelte'
 import { passing, pollDelay } from './backoff'
 import { message, t } from './i18n.svelte'
@@ -27,7 +27,7 @@ function said(text: string): { name: string } | { email: string } {
 }
 
 function refused(error: unknown): boolean {
-  return error instanceof ApiError && error.status >= 400 && !passing(error.status)
+  return fromServer(error) && error.status >= 400 && !passing(error.status)
 }
 
 class Joining {

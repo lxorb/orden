@@ -5,7 +5,7 @@ const server = vi.hoisted(() => ({
   refuse: false,
   meFails: 0,
   meStatus: null as number | null,
-  meBody: { error: 'sign in first' } as unknown,
+  meBody: null as Record<string, string> | string | null,
   meCalls: 0,
   spacesFail: false,
   meIsAGuest: false,
@@ -54,7 +54,11 @@ vi.mock('./api', async (importOriginal) => {
           return Promise.reject(
             server.meStatus === null
               ? new Error('the network is not there yet')
-              : new original.ApiError(server.meStatus, 'no', server.meBody),
+              : new original.ApiError(
+                  server.meStatus,
+                  'no',
+                  server.meBody ?? { error: 'sign in first' },
+                ),
           )
         }
 
@@ -121,7 +125,7 @@ beforeEach(async () => {
   server.resendIn = 30
   server.meFails = 0
   server.meStatus = null
-  server.meBody = { error: 'sign in first' }
+  server.meBody = null
   server.meCalls = 0
   server.spacesFail = false
   server.meIsAGuest = false
