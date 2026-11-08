@@ -11,40 +11,49 @@ const world = vi.hoisted(() => ({
   order: [] as string[],
   onMade: null as (() => Promise<void>) | null,
   online: true,
+  expired: false,
   adopted: [] as { name: string; fresh: boolean }[],
 }))
 
-vi.mock('./api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./api')>()),
-  api: {
-    createSpace: async (_token: string, name: string) => {
-      world.made.push(name)
-      await world.onMade?.()
-      return { space: { id: `made-${name}`, name } }
+vi.mock('./api', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./api')>()
+  const { ApiError } = original
+  return {
+    ...original,
+    api: {
+      createSpace: async (_token: string, name: string) => {
+        world.made.push(name)
+        await world.onMade?.()
+        return { space: { id: `made-${name}`, name } }
+      },
+      setSpaceIcon: (_token: string, id: string, icon: string | null) => {
+        if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
+        if (world.expired) return Promise.reject(new ApiError(401, 'sign in again'))
+        world.ended.push(`icon ${id} ${icon}`)
+        return Promise.resolve({ space: { id } })
+      },
+      deleteSpace: (_token: string, id: string) => {
+        if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
+        if (world.expired) return Promise.reject(new ApiError(401, 'sign in again'))
+        world.ended.push(`delete ${id}`)
+        return Promise.resolve({ ok: true })
+      },
+      leaveSpace: (_token: string, id: string) => {
+        if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
+        if (world.expired) return Promise.reject(new ApiError(401, 'sign in again'))
+        world.ended.push(`leave ${id}`)
+        return Promise.resolve({ ok: true })
+      },
+      saveBookmarks: () => Promise.resolve(),
+      reorderSpaces: (_token: string, order: string[]) => {
+        if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
+        if (world.expired) return Promise.reject(new ApiError(401, 'sign in again'))
+        world.ended.push(`order ${order.join(' ')}`)
+        return Promise.resolve({ ok: true })
+      },
     },
-    setSpaceIcon: (_token: string, id: string, icon: string | null) => {
-      if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
-      world.ended.push(`icon ${id} ${icon}`)
-      return Promise.resolve({ space: { id } })
-    },
-    deleteSpace: (_token: string, id: string) => {
-      if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
-      world.ended.push(`delete ${id}`)
-      return Promise.resolve({ ok: true })
-    },
-    leaveSpace: (_token: string, id: string) => {
-      if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
-      world.ended.push(`leave ${id}`)
-      return Promise.resolve({ ok: true })
-    },
-    saveBookmarks: () => Promise.resolve(),
-    reorderSpaces: (_token: string, order: string[]) => {
-      if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
-      world.ended.push(`order ${order.join(' ')}`)
-      return Promise.resolve({ ok: true })
-    },
-  },
-}))
+  }
+})
 
 vi.mock('./tauri', () => ({
   invoke: () => Promise.reject(new Error('no disk here')),
@@ -122,6 +131,7 @@ beforeEach(() => {
   world.icons = []
   world.ended = []
   world.online = true
+  world.expired = false
   world.onMade = null
 })
 
@@ -205,6 +215,42 @@ describe('a space deleted while the account could not be reached', () => {
 
     expect(world.ended).toEqual(['leave a-Theirs'])
     expect(world.adopted).toEqual([])
+  })
+})
+
+describe('a space ended while the sign-in had run out', () => {
+  test('is still owed, and is not brought back down once the account is in again', async () => {
+    world.spaces = [{ id: '2', name: 'Fresh', root: '/Fresh' }]
+    signedIn('a', ['Fresh', 'Gone'])
+    world.expired = true
+    await endSpace('token-a', 'a', 'a-Gone', 'delete')
+    await endSpace('token-a', 'a', 'a-Fresh', 'leave')
+    expect(endsOwed('a')).toEqual(new Set(['a-Gone', 'a-Fresh']))
+
+    world.expired = false
+    const { pairing: held } = pairing()
+    await pairSpaces('token-a', held)
+
+    expect(world.ended).toEqual(['delete a-Gone', 'leave a-Fresh'])
+    expect(world.adopted).toEqual([])
+    expect(endsOwed('a')).toEqual(new Set())
+  })
+
+  test('keeps its icon and the order chosen for when the account is in again', async () => {
+    world.spaces = [{ id: '1', name: 'Work', root: '/Work' }]
+    signedIn('a', ['Work'])
+    world.expired = true
+    await sendIcon('token-a', 'a', 'a-Work', { icon: 'star', tint: null })
+    await sendOrder('token-a', 'a', ['a-Work'])
+    expect(iconOwed('a', 'a-Work')).toEqual({ icon: 'star', tint: null })
+
+    world.expired = false
+    const { pairs, pairing: held } = pairing()
+    pairs.push({ root: '/Work', spaceId: 'a-Work', shared: false })
+    await pairSpaces('token-a', held)
+
+    expect(world.ended).toEqual(expect.arrayContaining(['icon a-Work star', 'order a-Work']))
+    expect(iconOwed('a', 'a-Work')).toBeNull()
   })
 })
 
