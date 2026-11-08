@@ -927,6 +927,17 @@ describe('the reader terminals', () => {
     expect(screen.typed).toEqual(['git status\r', '\x03'])
   })
 
+  test('the stop ends a read of an online terminal still connecting, without waiting a minute on it', async () => {
+    withOnline()
+    online.blocked = { why: 'connecting', lasting: false }
+    let answered: unknown
+    void call('read_terminal', { tab: 'o1' }).then((one) => (answered = one))
+    await vi.waitFor(() => {
+      for (const on of heard) on({ kind: 'stopped', agent: null })
+      expect(answered).toMatchObject({ status: 'error', code: 'stopped' })
+    })
+  })
+
   test('run_terminal in a tab runs there, a local terminal and an online one alike', async () => {
     withOnline()
     running.add('t1')
