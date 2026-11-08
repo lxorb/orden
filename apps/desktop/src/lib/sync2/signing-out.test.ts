@@ -144,7 +144,8 @@ describe("a device's name", () => {
   test('is asked for once by everyone who wants it at once, and a failure is not kept', async () => {
     const { account } = await import('../account.svelte')
     account.token = 't1'
-    Object.assign(runner, { names: null })
+    Object.assign(account, { user: { id: 'u1' } })
+    Object.assign(runner, { names: null, accountId: 'u1' })
     devices.asked = 0
 
     let answer: (value: unknown) => void = () => undefined
@@ -161,5 +162,22 @@ describe("a device's name", () => {
     expect(await nameOf('d1')).toBe('')
     devices.answer = () => Promise.resolve({ devices: [{ id: 'd1', name: 'Laptop' }] })
     expect(await nameOf('d1')).toBe('Laptop')
+  })
+
+  test('is asked again of the account signed in after another', async () => {
+    const { account } = await import('../account.svelte')
+    account.token = 't1'
+    Object.assign(account, { user: { id: 'u1' } })
+    Object.assign(runner, { names: null, accountId: 'u1' })
+    devices.answer = () => Promise.resolve({ devices: [{ id: 'd1', name: 'Laptop' }] })
+    expect(await nameOf('d1')).toBe('Laptop')
+
+    account.token = 't2'
+    Object.assign(account, { user: { id: 'u2' } })
+    expect(await nameOf('d1')).toBe('')
+
+    Object.assign(runner, { accountId: 'u2' })
+    devices.answer = () => Promise.resolve({ devices: [{ id: 'd1', name: 'Phone' }] })
+    expect(await nameOf('d1')).toBe('Phone')
   })
 })

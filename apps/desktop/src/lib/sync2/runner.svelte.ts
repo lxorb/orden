@@ -297,13 +297,9 @@ class Runner {
 
   private async running(user: { id: string }, live: () => boolean): Promise<Engine | null> {
     const store = await openSyncStore(user.id, true, madeDeviceId(user.id))
-    const engine = await Engine.start(
-      appWorld(() => account.token, this.telling),
-      store,
-      {
-        names: (device) => this.nameOf(device),
-      },
-    )
+    const engine = await Engine.start(appWorld(tokenOf(user.id), this.telling), store, {
+      names: (device) => this.nameOf(device),
+    })
     if (!live() || this.accountId !== user.id) {
       await store.close()
       return null
@@ -312,12 +308,7 @@ class Runner {
     await followRoots(engine.core)
     if (!isNative) {
       const store = await openIndex(user.id).catch(() => null)
-      if (store)
-        this.indexing = new Indexing(
-          engine,
-          readingFor(() => account.token),
-          store,
-        )
+      if (store) this.indexing = new Indexing(engine, readingFor(tokenOf(user.id)), store)
       this.indexStore = store
     }
     await this.carriedIn(engine)
@@ -550,10 +541,7 @@ class Runner {
     const token = account.token
     if (!user || !token) return false
     const store = await openSyncStore(user.id, true, madeDeviceId(user.id))
-    const engine = await Engine.start(
-      appWorld(() => account.token, this.telling),
-      store,
-    )
+    const engine = await Engine.start(appWorld(tokenOf(user.id), this.telling), store)
     let back = false
     try {
       const kept = await this.kept(engine)
@@ -920,8 +908,9 @@ class Runner {
 
   private async reconcile(engine: Engine) {
     const token = account.token
-    if (!token) return
+    if (!token || account.user?.id !== this.accountId) return
     await account.loadSpaces()
+    if (account.token !== token) return
     this.reconciledAt = Date.now()
     const core = engine.core
     const changes: Parameters<typeof core.commit>[0][number][] = []
@@ -960,6 +949,7 @@ class Runner {
       }
     }
     await pairSpaces(token, pairing)
+    if (account.token !== token) return
     await core.commit(changes)
     this.watched?.follow()
     for (const id of core.spaces.keys()) this.due.add(id)
@@ -1285,12 +1275,14 @@ class Runner {
     if (engine && space) await engine.core.commit(engine.core.forgetSpace(space.id))
   }
 
-  private names: Promise<Map<string, string>> | null = null
+  private names: { account: string; asked: Promise<Map<string, string>> } | null = null
   private async nameOf(device: string | null): Promise<string> {
-    if (!device) return ''
-    const token = account.token
+    const owner = this.accountId
+    if (!device || !owner) return ''
+    const token = tokenOf(owner)()
     if (!token) return ''
-    if (!this.names) {
+    let held = this.names
+    if (held?.account !== owner) {
       const asked = (async () => {
         const { request } = await import('../api')
         const listed = await request<{ devices?: { id: string; name: string }[] }>('/v2/devices', {
@@ -1298,12 +1290,14 @@ class Runner {
         })
         return new Map((listed.devices ?? []).map((one) => [one.id, one.name]))
       })()
-      this.names = asked
+      const fresh = { account: owner, asked }
+      this.names = fresh
+      held = fresh
       asked.catch(() => {
-        if (this.names === asked) this.names = null
+        if (this.names === fresh) this.names = null
       })
     }
-    const names = await this.names.catch(() => null)
+    const names = await held.asked.catch(() => null)
     return names?.get(device) ?? ''
   }
 
@@ -1996,6 +1990,10 @@ async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
     cursor = page.cursor
     if (!page.more || cursor === asked) return { cursor, notes }
   }
+}
+
+function tokenOf(id: string): () => string | null {
+  return () => (account.user?.id === id ? account.token : null)
 }
 
 account.forgetWithSession((keepHere) => {
