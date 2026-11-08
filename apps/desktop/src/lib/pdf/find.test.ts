@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { locate, placesOf } from '../reading/find'
-import { runsOfItems, textOfRuns, wordsOfRuns } from './find'
+import { placesOnPaper, runsOfItems, textOfRuns, wordsOfRuns } from './find'
 
 function divs(...runs: (string | null)[]): HTMLElement[] {
   return runs.map(
@@ -33,15 +33,17 @@ describe("a page's runs, read from the PDF", () => {
     { str: 'last' },
   ]
 
-  test('a line that ends is kept apart from the next by a space', () => {
-    expect(textOfRuns(runsOfItems(items))).toBe('the end of a field. Line 52 ends in a space last')
+  test('a line that ends is kept apart from the next by a line break', () => {
+    expect(textOfRuns(runsOfItems(items))).toBe(
+      'the end of a field.\nLine 52\nends in a space last',
+    )
   })
 
   test('so a match does not run across two lines, and a phrase across them is found', () => {
     const text = textOfRuns(runsOfItems(items))
 
-    expect(placesOf(text, 'field.Line')).toEqual([])
-    expect(placesOf(text, 'field. Line')).toEqual([13])
+    expect(placesOnPaper(text, 'field.Line')).toEqual([])
+    expect(placesOnPaper(text, 'field. Line')).toEqual([{ at: 13, length: 11 }])
   })
 
   test('one run per piece of text, as many as the spans the page draws', () => {
@@ -95,5 +97,36 @@ describe('where a page keeps its words', () => {
 
     expect(words.text).toBe('The word again')
     expect(words.pieces).toEqual([])
+  })
+})
+
+describe('a word broken across two lines with a hyphen', () => {
+  const text = textOfRuns(
+    runsOfItems([
+      { str: 'for exam-', hasEOL: true },
+      { str: 'ple, a pre- and post-', hasEOL: true },
+      { str: 'war word', hasEOL: true },
+    ]),
+  )
+
+  test('is found whole, and the place found runs over the hyphen and the break', () => {
+    const found = placesOnPaper(text, 'example')
+    expect(found).toEqual([{ at: 4, length: 9 }])
+    expect(text.slice(4, 13)).toBe('exam-\nple')
+  })
+
+  test('as is a phrase that goes on past it, and the place after it keeps its offset', () => {
+    expect(placesOnPaper(text, 'example, a')).toEqual([{ at: 4, length: 12 }])
+    expect(placesOnPaper(text, 'word')).toEqual([{ at: text.indexOf('word'), length: 4 }])
+  })
+
+  test('while a hyphen inside a line stays, so "pre- and" is still found as written', () => {
+    expect(placesOnPaper(text, 'pre- and')).toHaveLength(1)
+    expect(placesOnPaper(text, 'preand')).toEqual([])
+  })
+
+  test('and a break with no letter after the hyphen keeps the hyphen as a space', () => {
+    const list = textOfRuns(runsOfItems([{ str: 'one -', hasEOL: true }, { str: '2 two' }]))
+    expect(placesOnPaper(list, '- 2')).toHaveLength(1)
   })
 })
