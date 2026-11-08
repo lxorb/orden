@@ -1,14 +1,18 @@
 import { complete } from '../ai/complete'
 import { heldForLife } from '../locks'
 import { ai } from '../ai/store.svelte'
-import { notify } from '../notify'
+import { type Notice, show } from '../notify'
+import { t } from '../i18n.svelte'
+import { inHours } from '@orden/chats/notify'
+import { dndUntil, hush } from './hush.svelte'
+import { inFront } from './on-screen'
 import { chatsOn } from '../settings.svelte'
 import { connected } from './connected.svelte'
 import { openConversation } from './linked'
 import { type Asker, priorities, rowKey } from './priorities.svelte'
 import { ORDEN, ordenConnection } from './providers/orden'
 import { store } from './view/source.svelte'
-import { conversationKey } from './conversation-key'
+import { type ConversationKey, conversationKey } from './conversation-key'
 import { remoteOf } from './remotes'
 import { todayOf } from '@orden/bases'
 import type { Level } from '@orden/chats/priority'
@@ -43,9 +47,12 @@ export function startPriorities(): void {
       .then((said) => {
         if (!said?.level || !priorities.notify.includes(said.level)) return
         if (!leads || quiet(provider, account, conversation.id, event.message)) return
-        const newest = said.newest ?? event.message
-        notify(title, `${newest.author.name}: ${newest.text}`, key, () =>
-          openConversation({ provider, account, conversation: conversation.id }, title),
+        show(
+          priorityNotice(
+            { provider, account, conversation: conversation.id },
+            title,
+            said.newest ?? event.message,
+          ),
         )
       })
       .catch(() => undefined)
@@ -71,6 +78,12 @@ export function quiet(
   const found = linked?.conversations.find((one) => one.id === conversation)
   if (!found) return true
   if (found.mutedUntil != null && found.mutedUntil > now) return true
+  if (inFront(conversationKey({ provider, account, conversation }))) return true
+  const dnd = dndUntil()
+  if (dnd !== null && dnd > now) return true
+  const local = new Date(now)
+  const moment = { now, day: local.getDay(), minute: local.getHours() * 60 + local.getMinutes() }
+  if (!inHours(hush.hours, moment)) return true
   const level = remoteOf(conversationKey({ provider, account, conversation }))?.notifies[
     conversation
   ]
@@ -78,6 +91,21 @@ export function quiet(
   if (level !== 'mentions') return false
   const self = linked?.account.self?.id
   return !(self && message.mentions?.includes(self))
+}
+
+export function priorityNotice(
+  key: ConversationKey,
+  title: string,
+  newest: ProviderMessage,
+): Notice {
+  const previews = hush.previews
+  return {
+    title: previews ? title : t('New message'),
+    body: previews ? `${newest.author.name}: ${newest.text}` : '',
+    tag: conversationKey(key),
+    silent: !hush.sound,
+    opened: () => openConversation(key, title),
+  }
 }
 
 interface Considered {
