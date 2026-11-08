@@ -15,6 +15,7 @@ import time
 import urllib.error
 import urllib.request
 from typing import Any
+from fresh_app import fresh
 
 SPACE = "Protect probe"
 NOTE = "Diary.md"
@@ -176,8 +177,7 @@ def main() -> int:
     (spaces / SPACE).mkdir()
     (spaces / SPACE / NOTE).write_text(f"# Diary\n\n{WORDS}\n", encoding="utf-8")
     config = config_of(args.identifier)
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(
         json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8"

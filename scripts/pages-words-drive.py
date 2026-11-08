@@ -14,6 +14,7 @@ import time
 import urllib.error
 import urllib.request
 from typing import Any
+from fresh_app import ended, fresh
 
 SPAN = """
 (() => {
@@ -403,8 +404,7 @@ def main() -> int:
     engine: Any = Windows() if sys.platform == "win32" else Mac()
 
     config = config_of(args.identifier)
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-words-spaces-"))
@@ -565,8 +565,7 @@ def main() -> int:
                 if got["built"]:
                     wrong.append(f"words were laid out for {got['built']} nodes while a long PDF scrolled")
     finally:
-        process.kill()
-        process.wait(20)
+        ended(process)
         shutil.rmtree(spaces, ignore_errors=True)
 
     for one in unverified:

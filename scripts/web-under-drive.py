@@ -23,6 +23,7 @@ from PIL import Image, ImageChops, ImageGrab, ImageStat
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from carry_page import PAGE as CARRY_PAGE, carried  # noqa: E402
 from probe_app import FIRST_START_ANSWERED, main_window, refuse_updating  # noqa: E402
+from fresh_app import fresh  # noqa: E402
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
@@ -412,8 +413,7 @@ def main() -> int:
     url = f"http://127.0.0.1:{site.server_address[1]}/under"
 
     config = config_dir(args.identifier)
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-under-spaces-"))

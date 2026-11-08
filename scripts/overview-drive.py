@@ -20,6 +20,7 @@ from typing import Any
 import mss
 import numpy
 from PIL import Image, ImageStat
+from fresh_app import fresh
 
 COLOUR = (255, 0, 255)
 PAGE = b"<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%;background:#ff00ff}</style>"
@@ -475,8 +476,7 @@ def main() -> int:
     url = f"http://127.0.0.1:{site.server_address[1]}/"
 
     config = Desk.config(args.identifier)
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-overview-spaces-"))
