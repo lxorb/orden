@@ -253,9 +253,9 @@ fn card_field(field: &Field) -> bool {
     }) {
         return true;
     }
-    let said = field.said.to_lowercase();
-    CARD.iter().any(|one| said.contains(one))
-        || (says(&plain_said(&field.said), CARD_WORDS) && !says(&said, NO_PAYMENT_CARD))
+    let said = seen(&field.said).to_lowercase();
+    CARD.iter().any(|one| said.contains(&seen(one)))
+        || (says(&plain_said(&seen(&field.said)), CARD_WORDS) && !says(&said, NO_PAYMENT_CARD))
 }
 
 fn plain_said(said: &str) -> String {
@@ -279,9 +279,9 @@ fn one_time(field: &Field) -> bool {
     {
         return false;
     }
-    let said = plain_said(&field.said);
+    let said = plain_said(&seen(&field.said));
     if says(&said, ONE_TIME)
-        || alone(&plain_said(&field.label), ONE_TIME_ALONE)
+        || alone(&plain_said(&seen(&field.label)), ONE_TIME_ALONE)
         || alone(&said, ONE_TIME_ALONE)
     {
         return true;
@@ -407,14 +407,14 @@ pub fn signs_in(facts: &Facts, act: Act) -> bool {
 }
 
 fn alone(name: &str, words: &[&str]) -> bool {
-    let name = name
+    let name = seen(name)
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
         .trim_end_matches([':', '\u{ff1a}'])
         .trim()
         .to_lowercase();
-    !name.is_empty() && words.contains(&name.as_str())
+    !name.is_empty() && words.iter().any(|word| seen(word) == name)
 }
 
 pub struct Question {
@@ -617,9 +617,86 @@ fn short(name: &str) -> String {
     }
 }
 
+fn seen(said: &str) -> String {
+    said.chars()
+        .filter(|one| !hidden(*one))
+        .map(|one| {
+            if one.is_control() || crate::downloads::is_blank(one) {
+                ' '
+            } else {
+                look_alike(one)
+            }
+        })
+        .collect()
+}
+
+fn hidden(one: char) -> bool {
+    crate::downloads::is_format(one)
+        || matches!(one,
+            '\u{034F}'
+            | '\u{200C}'..='\u{200D}'
+            | '\u{FE00}'..='\u{FE0F}'
+            | '\u{E0100}'..='\u{E01EF}'
+        )
+}
+
+fn look_alike(one: char) -> char {
+    let at = u32::from(one);
+    let latin = |offset: u32| char::from_u32(offset).unwrap_or(one);
+    match at {
+        0xFF01..=0xFF5E => latin(at - 0xFEE0),
+        0x1D400..=0x1D6A3 => {
+            let letter = (at - 0x1D400) % 52;
+            latin(if letter < 26 {
+                0x41 + letter
+            } else {
+                0x61 + letter - 26
+            })
+        }
+        0x1D7CE..=0x1D7FF => latin(0x30 + (at - 0x1D7CE) % 10),
+        _ => {
+            let mut lower = one.to_lowercase();
+            let (Some(small), None) = (lower.next(), lower.next()) else {
+                return one;
+            };
+            match like_latin(small) {
+                Some(latin) if one.is_uppercase() => latin.to_ascii_uppercase(),
+                Some(latin) => latin,
+                None => one,
+            }
+        }
+    }
+}
+
+fn like_latin(small: char) -> Option<char> {
+    Some(match small {
+        '\u{430}' | '\u{3b1}' => 'a',
+        '\u{441}' | '\u{3f2}' => 'c',
+        '\u{501}' => 'd',
+        '\u{435}' | '\u{450}' => 'e',
+        '\u{4bb}' => 'h',
+        '\u{456}' | '\u{3b9}' | '\u{131}' => 'i',
+        '\u{4cf}' => 'l',
+        '\u{458}' | '\u{3f3}' => 'j',
+        '\u{3ba}' => 'k',
+        '\u{43e}' | '\u{3bf}' => 'o',
+        '\u{440}' | '\u{3c1}' => 'p',
+        '\u{51b}' => 'q',
+        '\u{455}' => 's',
+        '\u{3c5}' => 'u',
+        '\u{3bd}' | '\u{475}' => 'v',
+        '\u{51d}' => 'w',
+        '\u{445}' | '\u{3c7}' => 'x',
+        '\u{443}' => 'y',
+        _ => return None,
+    })
+}
+
 pub fn says(name: &str, words: &[&str]) -> bool {
-    let name = name.to_lowercase();
+    let name = seen(name).to_lowercase();
     words.iter().any(|word| {
+        let word = seen(word);
+        let word = word.as_str();
         if !spaced(word) {
             return name.contains(word);
         }
@@ -800,6 +877,7 @@ const DISMISSING: &[&str] = &[
 const KEEPING: &[&str] = &["keep", "behalten", "garder"];
 
 fn dismisses(name: &str) -> bool {
+    let name = &seen(name);
     if alone(name, DISMISSING) {
         return true;
     }
@@ -881,7 +959,7 @@ const IN_ANOTHER_SENSE: &[&str] = &[
 const ONLY_AS_A_NAME: &[&str] = &["saya"];
 
 fn talks_of(said: &str, words: &[&str], inflected: &[&str]) -> bool {
-    let mut said = said.to_lowercase();
+    let mut said = seen(said).to_lowercase();
     for phrase in IN_ANOTHER_SENSE {
         said = said.replace(phrase, " ");
     }
@@ -917,9 +995,9 @@ fn mention<'d>(dialog: &'d str, words: &[&str], inflected: &[&str]) -> Option<&'
 }
 
 fn starts_with_any(line: &str, words: &[&str]) -> bool {
-    let line = line.trim().to_lowercase();
+    let line = seen(line).trim().to_lowercase();
     words.iter().any(|word| {
-        line.strip_prefix(word)
+        line.strip_prefix(seen(word).as_str())
             .is_some_and(|rest| !rest.chars().next().is_some_and(char::is_alphanumeric))
     })
 }
@@ -2730,6 +2808,58 @@ mod tests {
         let mut full = grant();
         full.mode = Mode::Autonomous;
         assert!(answering(&full, DialogKind::Confirm, true, url, "Pay now?").is_none());
+    }
+
+    #[test]
+    fn hidden_or_look_alike_letters_never_hide_a_dangerous_word() {
+        let url = "https://shop.example/";
+        let disguised = [
+            ("Del\u{200b}ete", Category::Deleting),
+            ("Del\u{200d}ete account", Category::Deleting),
+            ("D\u{ad}elete", Category::Deleting),
+            ("\u{202e}Delete\u{202c}", Category::Deleting),
+            ("De\u{2060}lete", Category::Deleting),
+            ("Delet\u{435}", Category::Deleting),
+            (
+                "\u{ff24}\u{ff45}\u{ff4c}\u{ff45}\u{ff54}\u{ff45}",
+                Category::Deleting,
+            ),
+            (
+                "\u{1d403}\u{1d41e}\u{1d425}\u{1d41e}\u{1d42d}\u{1d41e}",
+                Category::Deleting,
+            ),
+            ("\u{420}\u{430}\u{443}", Category::Paying),
+            ("P\u{feff}ay now", Category::Paying),
+            ("Buy\u{fe0f} now", Category::Paying),
+        ];
+        for (name, wanted) in disguised {
+            assert_eq!(category(&press(name), url), Some(wanted), "{name:?}");
+        }
+        let question = answering(
+            &grant(),
+            DialogKind::Confirm,
+            true,
+            url,
+            "Del\u{200b}ete this repository?",
+        )
+        .expect("asked");
+        assert_eq!(question.category, Category::Deleting);
+        assert!(leads("Del\u{200b}ete all"));
+
+        let dialog = "This will delete your account.";
+        let out = |name: &str| Facts {
+            dialog: dialog.into(),
+            ..press(name)
+        };
+        assert_eq!(
+            category(&out("\u{41e}\u{422}\u{41c}\u{415}\u{41d}\u{410}"), url),
+            None
+        );
+        assert_eq!(category(&out("C\u{200b}ancel"), url), None);
+        assert_eq!(
+            category(&out("D\u{200b}elete"), url),
+            Some(Category::Deleting)
+        );
     }
 
     #[test]

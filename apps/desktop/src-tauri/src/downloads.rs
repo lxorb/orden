@@ -176,7 +176,7 @@ fn same_path(one: &Path, other: &Path) -> bool {
         .eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
 }
 
-fn is_format(one: char) -> bool {
+pub(crate) fn is_format(one: char) -> bool {
     matches!(one,
         '\u{00AD}'
         | '\u{0600}'..='\u{0605}'
@@ -203,7 +203,7 @@ fn is_format(one: char) -> bool {
     )
 }
 
-fn is_blank(one: char) -> bool {
+pub(crate) fn is_blank(one: char) -> bool {
     matches!(one,
         '\u{00A0}'
         | '\u{115F}'..='\u{1160}'
