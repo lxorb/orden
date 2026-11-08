@@ -116,6 +116,7 @@
       theme.current,
       trustsHtmlIn(tab.note),
       asks ? links.version : 0,
+      links.locksSeen(),
       modes.hardBreaks,
     ]
     if (!reasons.length) return

@@ -5,6 +5,7 @@
   import { menu } from './menu.svelte'
   import { overlays } from './overlays'
   import { trustsHtmlIn } from './sharing.svelte'
+  import { links } from './link-index.svelte'
   import { deckHtml, type StageSlide } from './slides/render'
   import {
     openPresenter,
@@ -84,7 +85,7 @@
   }
 
   $effect(() => {
-    const reasons = [tab.note.revision, theme.current]
+    const reasons = [tab.note.revision, theme.current, links.locksSeen()]
     if (!reasons.length) return
 
     if (!drawn) {
