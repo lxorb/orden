@@ -3829,4 +3829,14 @@ export const ml: Dictionary = {
     'ഈ കമ്പ്യൂട്ടറിലെ Gemini CLI വഴി നിങ്ങളുടെ Google അക്കൗണ്ട് ഉപയോഗിക്കുന്നു.',
   'Sign in with your ChatGPT plan.': 'നിങ്ങളുടെ ChatGPT പ്ലാൻ ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക.',
   'Paid by use on your API account.': 'നിങ്ങളുടെ API അക്കൗണ്ടിൽ ഉപയോഗത്തിനനുസരിച്ച് പണം.',
+  'Use protection': 'സംരക്ഷണം ഉപയോഗിക്കുക',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'മെനുകളിൽ സംരക്ഷിക്കുക ചേർക്കുന്നു, കുറിപ്പുകൾ, ഫോൾഡറുകൾ, സ്പേസുകൾ എന്നിവ പാസ്‌വേഡിനോ ഈ ഉപകരണത്തിന്റെ ലോക്കിനോ പിന്നിൽ സൂക്ഷിക്കാൻ.',
+  'Turn off protection?': 'സംരക്ഷണം ഓഫാക്കണോ?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} ഇനം ഇപ്പോഴും സംരക്ഷിതമാണ്. അത് ലോക്ക് ചെയ്തുതന്നെ ഇരിക്കും; സംരക്ഷണം നീക്കാൻ ആദ്യം അതിന്റെ സംരക്ഷണം എടുത്തുമാറ്റുക.',
+      other:
+        '{count} ഇനങ്ങൾ ഇപ്പോഴും സംരക്ഷിതമാണ്. അവ ലോക്ക് ചെയ്തുതന്നെ ഇരിക്കും; സംരക്ഷണം നീക്കാൻ ആദ്യം അവയുടെ സംരക്ഷണം എടുത്തുമാറ്റുക.',
+    },
 }

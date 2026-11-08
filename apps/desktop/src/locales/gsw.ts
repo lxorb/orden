@@ -3797,4 +3797,14 @@ export const gsw: Dictionary = {
     'Bruucht dis Google-Konto über Gemini CLI uf dem Computer.',
   'Sign in with your ChatGPT plan.': 'Mit dim ChatGPT-Abo amälde.',
   'Paid by use on your API account.': 'Nach Verbruuch zahlt, über dis API-Konto.',
+  'Use protection': 'Schutz bruuche',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Füegt de Menüs „Schütze“ hinzue, zum Notize, Ordner und Bereich hinder emne Passwort oder de Sperri vo dem Grät z bhalte.',
+  'Turn off protection?': 'Schutz abschalte?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} Element isch no gschützt. Es blibt gsperrt; heb zersch sin Schutz uf, zum de Schutz wegznäh.',
+      other:
+        '{count} Element sind no gschützt. Si bliibed gsperrt; heb zersch ihre Schutz uf, zum de Schutz wegznäh.',
+    },
 }

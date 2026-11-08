@@ -3815,4 +3815,14 @@ export const kn: Dictionary = {
     'ಈ ಕಂಪ್ಯೂಟರ್‌ನ Gemini CLI ಮೂಲಕ ನಿಮ್ಮ Google ಖಾತೆ ಬಳಸುತ್ತದೆ.',
   'Sign in with your ChatGPT plan.': 'ನಿಮ್ಮ ChatGPT ಪ್ಲಾನ್‌ನೊಂದಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'Paid by use on your API account.': 'ನಿಮ್ಮ API ಖಾತೆಯಲ್ಲಿ ಬಳಕೆಗೆ ತಕ್ಕಂತೆ ಪಾವತಿ.',
+  'Use protection': 'ರಕ್ಷಣೆ ಬಳಸಿ',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'ಮೆನುಗಳಿಗೆ ರಕ್ಷಿಸು ಸೇರಿಸುತ್ತದೆ, ಟಿಪ್ಪಣಿಗಳು, ಫೋಲ್ಡರ್‌ಗಳು ಮತ್ತು ಸ್ಪೇಸ್‌ಗಳನ್ನು ಪಾಸ್‌ವರ್ಡ್ ಅಥವಾ ಈ ಸಾಧನದ ಲಾಕ್ ಹಿಂದೆ ಇಡಲು.',
+  'Turn off protection?': 'ರಕ್ಷಣೆ ಆಫ್ ಮಾಡಬೇಕೆ?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} ಐಟಂ ಇನ್ನೂ ರಕ್ಷಿತವಾಗಿದೆ. ಅದು ಲಾಕ್ ಆಗಿಯೇ ಇರುತ್ತದೆ; ರಕ್ಷಣೆ ತೆಗೆಯಲು ಮೊದಲು ಅದರ ರಕ್ಷಣೆ ತೆಗೆಯಿರಿ.',
+      other:
+        '{count} ಐಟಂಗಳು ಇನ್ನೂ ರಕ್ಷಿತವಾಗಿವೆ. ಅವು ಲಾಕ್ ಆಗಿಯೇ ಇರುತ್ತವೆ; ರಕ್ಷಣೆ ತೆಗೆಯಲು ಮೊದಲು ಅವುಗಳ ರಕ್ಷಣೆ ತೆಗೆಯಿರಿ.',
+    },
 }

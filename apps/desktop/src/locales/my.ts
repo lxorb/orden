@@ -3712,4 +3712,10 @@ export const my: Dictionary = {
     'ဤကွန်ပျူတာရှိ Gemini CLI မှတစ်ဆင့် သင်၏ Google အကောင့်ကို သုံးသည်။',
   'Sign in with your ChatGPT plan.': 'သင်၏ ChatGPT အစီအစဉ်ဖြင့် ဝင်ရောက်ပါ။',
   'Paid by use on your API account.': 'သင်၏ API အကောင့်တွင် သုံးသလောက် ပေးချေရသည်။',
+  'Use protection': 'ကာကွယ်မှုကို သုံးမည်',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'မှတ်စုများ၊ ဖိုင်တွဲများနှင့် နေရာများကို စကားဝှက် သို့မဟုတ် ဤစက်၏ လော့ခ်နောက်တွင် ထားနိုင်ရန် မီနူးများတွင် ကာကွယ်ရန်ကို ထည့်ပေးသည်။',
+  'Turn off protection?': 'ကာကွယ်မှုကို ပိတ်မလား။',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    'အရာ {count} ခု ကာကွယ်ထားဆဲ ဖြစ်သည်။ လော့ခ်ချထားဆဲ ဖြစ်မည်; ကာကွယ်မှုကို ဖယ်ရှားရန် ၎င်းတို့၏ ကာကွယ်မှုကို ဦးစွာ ဖြုတ်ပါ။',
 }

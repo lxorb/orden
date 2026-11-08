@@ -4,6 +4,7 @@ import type { IconNode } from 'lucide'
 import type { MenuItem } from '../menu-item'
 import { samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
+import { protectionOn } from './gate'
 import { unlocks } from './unlocked.svelte'
 
 const unlocking = () =>
@@ -50,6 +51,7 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
           },
         ]
       : []
+  if (!protectionOn()) return lock
   if (workspace.protection.own(root, path)) {
     return [
       ...lock,

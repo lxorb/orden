@@ -3913,4 +3913,16 @@ export const uk: Dictionary = {
     'Використовує ваш акаунт Google через Gemini CLI на цьому комп’ютері.',
   'Sign in with your ChatGPT plan.': 'Увійдіть із планом ChatGPT.',
   'Paid by use on your API account.': 'Оплата за використання у вашому акаунті API.',
+  'Use protection': 'Використовувати захист',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Додає «Захистити» до меню, щоб тримати нотатки, теки й простори за паролем або блокуванням цього пристрою.',
+  'Turn off protection?': 'Вимкнути захист?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} елемент досі захищений. Він лишається заблокованим; спершу зніміть із нього захист, щоб прибрати його.',
+      few: '{count} елементи досі захищені. Вони лишаються заблокованими; спершу зніміть із них захист, щоб прибрати його.',
+      many: '{count} елементів досі захищені. Вони лишаються заблокованими; спершу зніміть із них захист, щоб прибрати його.',
+      other:
+        '{count} елемента досі захищені. Вони лишаються заблокованими; спершу зніміть із них захист, щоб прибрати його.',
+    },
 }

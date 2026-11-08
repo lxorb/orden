@@ -127,6 +127,10 @@ export class Protection {
     return Object.values(this.spaces).some((one) => Object.keys(one.ways).length > 0)
   }
 
+  get count(): number {
+    return Object.values(this.spaces).reduce((sum, one) => sum + Object.keys(one.ways).length, 0)
+  }
+
   get seen(): string {
     return `${String(this.revision)}:${String(unlocks.revision)}`
   }

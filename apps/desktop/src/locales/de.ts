@@ -3843,4 +3843,14 @@ export const de: Dictionary = {
     'Nutzt dein Google-Konto über Gemini CLI auf diesem Computer.',
   'Sign in with your ChatGPT plan.': 'Mit deinem ChatGPT-Abo anmelden.',
   'Paid by use on your API account.': 'Nach Nutzung bezahlt, über dein API-Konto.',
+  'Use protection': 'Schutz verwenden',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Fügt den Menüs „Schützen“ hinzu, um Notizen, Ordner und Bereiche hinter einem Passwort oder der Sperre dieses Geräts zu halten.',
+  'Turn off protection?': 'Schutz ausschalten?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} Element ist noch geschützt. Es bleibt gesperrt; heb zuerst seinen Schutz auf, um den Schutz zu entfernen.',
+      other:
+        '{count} Elemente sind noch geschützt. Sie bleiben gesperrt; heb zuerst ihren Schutz auf, um den Schutz zu entfernen.',
+    },
 }

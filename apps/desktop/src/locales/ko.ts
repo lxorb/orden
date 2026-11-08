@@ -3666,4 +3666,10 @@ export const ko: Dictionary = {
     '이 컴퓨터의 Gemini CLI로 Google 계정을 사용합니다.',
   'Sign in with your ChatGPT plan.': 'ChatGPT 요금제로 로그인합니다.',
   'Paid by use on your API account.': 'API 계정에서 사용한 만큼 결제합니다.',
+  'Use protection': '보호 사용',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    '메뉴에 보호를 추가해 노트, 폴더, 스페이스를 비밀번호나 이 기기의 잠금 뒤에 둘 수 있게 합니다.',
+  'Turn off protection?': '보호를 끌까요?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    '아직 보호된 항목이 {count}개 있습니다. 잠긴 채로 유지되며, 보호를 없애려면 먼저 보호를 해제하세요.',
 }

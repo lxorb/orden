@@ -3582,4 +3582,10 @@ export const yue: Dictionary = {
     '經呢部電腦嘅 Gemini CLI 用你嘅 Google 帳戶。',
   'Sign in with your ChatGPT plan.': '用你嘅 ChatGPT 計劃登入。',
   'Paid by use on your API account.': '喺你嘅 API 帳戶用幾多俾幾多。',
+  'Use protection': '使用保護',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    '喺選單加入「保護」，將筆記、資料夾同空間放喺密碼或者呢部裝置嘅鎖後面。',
+  'Turn off protection?': '關閉保護？',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    '仲有 {count} 個項目受保護。佢哋會保持鎖住；要移除保護，請先取消佢哋嘅保護。',
 }

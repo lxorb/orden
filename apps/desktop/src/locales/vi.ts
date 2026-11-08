@@ -3677,4 +3677,10 @@ export const vi: Dictionary = {
     'Dùng tài khoản Google của bạn qua Gemini CLI trên máy tính này.',
   'Sign in with your ChatGPT plan.': 'Đăng nhập bằng gói ChatGPT của bạn.',
   'Paid by use on your API account.': 'Trả theo mức dùng trên tài khoản API của bạn.',
+  'Use protection': 'Dùng bảo vệ',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'Thêm Bảo vệ vào các menu, để giữ ghi chú, thư mục và không gian sau mật khẩu hoặc khóa của thiết bị này.',
+  'Turn off protection?': 'Tắt bảo vệ?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    '{count} mục vẫn đang được bảo vệ. Chúng vẫn bị khóa; hãy bỏ bảo vệ chúng trước để gỡ bảo vệ.',
 }

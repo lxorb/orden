@@ -30,6 +30,8 @@ vi.mock('./sharing.svelte', () => ({
 const { bookmarkAll, rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
+const { hiddenKinds } = await import('./settings.svelte')
+const { PROTECTION_WORD } = await import('./protect/gate')
 type Entry = import('./workspace.svelte').Entry
 
 function note(path: string): Entry {
@@ -65,6 +67,7 @@ function labels(entry: Entry): string[] {
 }
 
 beforeEach(() => {
+  hiddenKinds.hidden = [PROTECTION_WORD]
   workspace.spaces = [{ id: 's', name: 'Notes', root: '/s' }]
   workspace.activeSpaceId = 's'
   workspace.tree = tree

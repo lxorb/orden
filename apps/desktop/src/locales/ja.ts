@@ -3689,4 +3689,10 @@ export const ja: Dictionary = {
     'このコンピュータの Gemini CLI で Google アカウントを使います。',
   'Sign in with your ChatGPT plan.': 'ChatGPT プランでサインインします。',
   'Paid by use on your API account.': 'API アカウントで使った分だけ支払います。',
+  'Use protection': '保護を使う',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'メニューに「保護」を追加し、ノート、フォルダ、スペースをパスワードまたはこのデバイスのロックで守れるようにします。',
+  'Turn off protection?': '保護をオフにしますか？',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    '{count} 件の項目がまだ保護されています。ロックされたままです。保護をなくすには、先に保護を解除してください。',
 }

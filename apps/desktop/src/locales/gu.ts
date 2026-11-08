@@ -3754,4 +3754,14 @@ export const gu: Dictionary = {
     'આ કમ્પ્યુટર પરના Gemini CLI દ્વારા તમારું Google એકાઉન્ટ વાપરે છે.',
   'Sign in with your ChatGPT plan.': 'તમારા ChatGPT પ્લાનથી સાઇન ઇન કરો.',
   'Paid by use on your API account.': 'તમારા API એકાઉન્ટ પર વપરાશ મુજબ ચુકવણી.',
+  'Use protection': 'સુરક્ષા વાપરો',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'મેનૂમાં સુરક્ષા ઉમેરે છે, જેથી નોંધો, ફોલ્ડર અને સ્પેસ પાસવર્ડ કે આ ઉપકરણના લૉક પાછળ રહે.',
+  'Turn off protection?': 'સુરક્ષા બંધ કરીએ?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} આઇટમ હજુ સુરક્ષિત છે. તે લૉક રહેશે; સુરક્ષા દૂર કરવા પહેલાં તેની સુરક્ષા હટાવો.',
+      other:
+        '{count} આઇટમ હજુ સુરક્ષિત છે. તે લૉક રહેશે; સુરક્ષા દૂર કરવા પહેલાં તેમની સુરક્ષા હટાવો.',
+    },
 }

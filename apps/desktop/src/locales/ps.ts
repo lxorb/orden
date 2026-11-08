@@ -3767,4 +3767,14 @@ export const ps: Dictionary = {
     'ستاسو د Google حساب پدې کمپیوټر کې د Gemini CLI له لارې کاروي.',
   'Sign in with your ChatGPT plan.': 'د خپل ChatGPT پلان سره ننوځئ.',
   'Paid by use on your API account.': 'ستاسو په API حساب د کارونې سره سم تادیه.',
+  'Use protection': 'ساتنه کاروئ',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'مینوګانو ته «ساتل» ورزیاتوي، څو یادښتونه، فولډرونه او ځایونه د پټنوم یا د دې وسیلې د قلف تر شا وساتل شي.',
+  'Turn off protection?': 'ساتنه بنده شي؟',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} توکی لا هم ساتل شوی دی. تړلی پاتې کېږي؛ د ساتنې لرې کولو لپاره لومړی یې ساتنه لرې کړئ.',
+      other:
+        '{count} توکي لا هم ساتل شوي دي. تړلي پاتې کېږي؛ د ساتنې لرې کولو لپاره لومړی یې ساتنه لرې کړئ.',
+    },
 }

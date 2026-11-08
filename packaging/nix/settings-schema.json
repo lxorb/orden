@@ -423,6 +423,11 @@
     "default": "off",
     "description": "Unloads web pages that have been out of sight for a while to free memory; they load again when you return."
   },
+  "general.protection": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock."
+  },
   "general.relockAfter": {
     "type": "string",
     "enum": [

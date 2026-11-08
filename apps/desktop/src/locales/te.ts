@@ -3792,4 +3792,14 @@ export const te: Dictionary = {
     'ఈ కంప్యూటర్‌లోని Gemini CLI ద్వారా మీ Google ఖాతాను వాడుతుంది.',
   'Sign in with your ChatGPT plan.': 'మీ ChatGPT ప్లాన్‌తో సైన్ ఇన్ చేయండి.',
   'Paid by use on your API account.': 'మీ API ఖాతాలో వాడకాన్ని బట్టి చెల్లింపు.',
+  'Use protection': 'రక్షణను ఉపయోగించు',
+  'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.':
+    'మెనూలకు రక్షించు జోడిస్తుంది, నోట్‌లు, ఫోల్డర్‌లు, స్పేస్‌లను పాస్‌వర్డ్ లేదా ఈ పరికరం లాక్ వెనుక ఉంచడానికి.',
+  'Turn off protection?': 'రక్షణను ఆఫ్ చేయాలా?',
+  '{count} items are still protected. They stay locked; unprotect them first to remove protection.':
+    {
+      one: '{count} అంశం ఇంకా రక్షణలో ఉంది. అది లాక్‌లోనే ఉంటుంది; రక్షణను తీసివేయడానికి ముందు దాని రక్షణను తొలగించండి.',
+      other:
+        '{count} అంశాలు ఇంకా రక్షణలో ఉన్నాయి. అవి లాక్‌లోనే ఉంటాయి; రక్షణను తీసివేయడానికి ముందు వాటి రక్షణను తొలగించండి.',
+    },
 }

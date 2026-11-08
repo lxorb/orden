@@ -5,6 +5,8 @@ import { method } from '../mobile/bridge'
 import { crashReports } from '../crash-reports/choice.svelte'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { isPlugin } from '../plugin'
+import { protectionOn } from '../protect/gate'
+import { protectionStore, turnProtection } from '../protect/protection-setting'
 import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../protect/unlocked.svelte'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from '../recovery'
 import { recovery } from '../recovery.svelte'
@@ -130,6 +132,29 @@ function terminalGroup(): Group {
       },
       ...twoWayFields(),
     ],
+  }
+}
+
+export function relockField(): Field {
+  return {
+    kind: 'select',
+    key: 'general.relockAfter',
+    store: { on: unlocks, name: 'relock' },
+    label: t('Lock again after'),
+    hint: t('How long Orden may be in the background before what you protected locks again.'),
+    words: ['protect', 'lock', 'password', 'timeout'],
+    options: RELOCK_MINUTES.map((minutes) => ({
+      value: String(minutes),
+      label:
+        minutes === NEVER
+          ? t('Only when Orden closes')
+          : minutes === 0
+            ? t('Right away')
+            : t('{count} min', { count: minutes }),
+    })),
+    initial: String(DEFAULT_RELOCK),
+    get: () => String(unlocks.relock),
+    set: (value) => unlocks.setRelock(Number(value)),
   }
 }
 
@@ -393,27 +418,19 @@ export function generalPane(): Pane {
               title: t('Protection'),
               fields: [
                 {
-                  kind: 'select',
-                  key: 'general.relockAfter',
-                  store: { on: unlocks, name: 'relock' },
-                  label: t('Lock again after'),
+                  kind: 'switch' as const,
+                  key: 'general.protection',
+                  store: protectionStore(),
+                  label: t('Use protection'),
                   hint: t(
-                    'How long Orden may be in the background before what you protected locks again.',
+                    'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.',
                   ),
-                  words: ['protect', 'lock', 'password', 'timeout'],
-                  options: RELOCK_MINUTES.map((minutes) => ({
-                    value: String(minutes),
-                    label:
-                      minutes === NEVER
-                        ? t('Only when Orden closes')
-                        : minutes === 0
-                          ? t('Right away')
-                          : t('{count} min', { count: minutes }),
-                  })),
-                  initial: String(DEFAULT_RELOCK),
-                  get: () => String(unlocks.relock),
-                  set: (value) => unlocks.setRelock(Number(value)),
+                  words: ['protect', 'lock', 'password', 'private', 'hide'],
+                  initial: false,
+                  get: () => protectionOn(),
+                  set: (on: boolean) => void turnProtection(on),
                 },
+                ...(protectionOn() ? [relockField()] : []),
               ],
             } satisfies Group,
           ]),
