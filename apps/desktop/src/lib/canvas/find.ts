@@ -7,11 +7,14 @@ export interface Found {
 
 const SHOWN = 60
 
-function shortened(text: string, term: string): string {
-  const flat = text.replace(/\s+/g, ' ').trim()
+function flattened(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+function shortened(flat: string, term: string): string {
   if (flat.length <= SHOWN) return flat
 
-  const at = flat.toLowerCase().indexOf(term.toLowerCase())
+  const at = flat.toLowerCase().indexOf(term)
   if (at < 0) return `${flat.slice(0, SHOWN)}…`
 
   const from = Math.max(0, at - 20)
@@ -19,23 +22,17 @@ function shortened(text: string, term: string): string {
 }
 
 export function matches(canvas: Canvas, term: string): Found[] {
-  const wanted = term.trim().toLowerCase()
+  const wanted = flattened(term).toLowerCase()
   if (!wanted) return []
 
   const found: Found[] = []
-
-  for (const node of canvas.nodes) {
-    const says = saysOf(node)
-    if (says.toLowerCase().includes(wanted)) {
-      found.push({ id: node.id, says: shortened(says, wanted) })
-    }
+  const meet = (id: string, text: string) => {
+    const flat = flattened(text)
+    if (flat.toLowerCase().includes(wanted)) found.push({ id, says: shortened(flat, wanted) })
   }
 
-  for (const edge of canvas.edges) {
-    if (edge.label?.toLowerCase().includes(wanted)) {
-      found.push({ id: edge.id, says: shortened(edge.label, wanted) })
-    }
-  }
+  for (const node of canvas.nodes) meet(node.id, saysOf(node))
+  for (const edge of canvas.edges) if (edge.label) meet(edge.id, edge.label)
 
   return found
 }
