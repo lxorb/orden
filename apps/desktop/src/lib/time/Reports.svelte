@@ -193,7 +193,7 @@
           >
             <span class="dot" style:background={tintOf(total.activity)}></span>
             <span class="orden-row-label">
-              <bdi>{nameOf(total.activity, t('No activity'))}</bdi>
+              <span class="name" dir="auto">{nameOf(total.activity, t('No activity'))}</span>
               {#if made}<span class="made">{made}</span>{/if}
             </span>
             <span class="bar"
@@ -340,6 +340,13 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
+  }
+
+  .name {
+    display: block;
+    overflow: hidden;
+    text-align: match-parent;
+    text-overflow: ellipsis;
   }
 
   .made {
