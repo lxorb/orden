@@ -26,6 +26,7 @@ export interface Client {
     show: (url: string, expires: number) => void,
     password: () => Promise<string>,
     wrong: () => void,
+    stop: AbortSignal,
   ): Promise<tl.RawUser>
   ready(me: tl.RawUser): Promise<void>
   session(): Promise<string>

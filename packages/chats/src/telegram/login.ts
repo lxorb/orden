@@ -106,6 +106,8 @@ async function byQr(
   const show = host.show
   if (!show) throw new Error(WORDS.needsApp)
   let wrong = false
+  const stop = new AbortController()
+  const done = host.whileWaiting?.(() => stop.abort())
   try {
     return await client.signInQr(
       (url) => show({ kind: 'qr', data: url, label: WORDS.scan, note: WORDS.where }),
@@ -120,10 +122,12 @@ async function byQr(
       () => {
         wrong = true
       },
+      stop.signal,
     )
   } catch (error) {
     throw friendly(error)
   } finally {
+    done?.()
     show(null)
   }
 }

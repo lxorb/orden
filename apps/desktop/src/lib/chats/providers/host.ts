@@ -159,5 +159,6 @@ export const host: Host = {
   now: () => Date.now(),
   ask: screens.ask,
   show: screens.show,
+  whileWaiting: screens.whileWaiting,
   sealed: sealedStore({ read: readSecret, write: (name, value) => host.keepSecret(name, value) }),
 }
