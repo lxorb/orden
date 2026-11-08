@@ -148,6 +148,14 @@ class Shortcuts {
       return this.platform === 'mac' ? t('Hold ⌃, ⌥ or ⌘ as well.') : t('Hold Ctrl or Alt as well.')
     }
 
+    const fixed = this.fixedHolder(key)
+    if (fixed && !this.inAList(row) && !this.ownKey(row, key)) {
+      return t('{key} already runs {name}.', {
+        key: showCombination(key, this.platform),
+        name: fixed.label(),
+      })
+    }
+
     return null
   }
 
