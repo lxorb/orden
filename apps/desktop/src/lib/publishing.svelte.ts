@@ -329,17 +329,17 @@ class Publish {
 
   async publish(icon: string | null = null) {
     const note = this.note || null
+    this.error = null
 
-    await this.saveSite(icon)
-    if (this.error) return
+    if (!(await this.saveSite(icon))) return
 
-    await this.send(
+    const sent = await this.send(
       this.address === 'subdomain'
         ? { subdomain: this.subdomain, note }
         : { domain: this.domain, note },
     )
 
-    if (!this.error) await this.sendDiagrams()
+    if (sent) await this.sendDiagrams()
   }
 
   private async sendDiagrams() {
@@ -354,9 +354,9 @@ class Publish {
     }
   }
 
-  private async saveSite(icon: string | null) {
+  private async saveSite(icon: string | null): Promise<boolean> {
     const id = this.spaceId
-    if (!id || !account.accountToken) return
+    if (!id || !account.accountToken) return false
 
     try {
       const chosen = await this.themeFor(account.accountToken)
@@ -379,8 +379,10 @@ class Publish {
         this.hasPassword = true
         this.password = ''
       }
+      return true
     } catch (error) {
       this.error = message(error, 'could not publish')
+      return false
     }
   }
 
@@ -403,9 +405,13 @@ class Publish {
     }
   }
 
-  private async send(settings: { subdomain?: string; domain?: string; note?: string | null }) {
+  private async send(settings: {
+    subdomain?: string
+    domain?: string
+    note?: string | null
+  }): Promise<boolean> {
     const id = this.spaceId
-    if (!id || !account.accountToken) return
+    if (!id || !account.accountToken) return false
 
     this.busy = true
     this.error = null
@@ -415,8 +421,10 @@ class Publish {
       this.dns = result.dns
       await account.loadSpaces()
       this.refill(true)
+      return true
     } catch (error) {
       this.error = message(error, 'could not publish')
+      return false
     } finally {
       this.busy = false
     }
@@ -447,6 +455,7 @@ class Publish {
     if (!id || !account.accountToken) return
 
     this.busy = true
+    this.error = null
 
     try {
       this.status = await api.verifyDomain(account.accountToken, id)
