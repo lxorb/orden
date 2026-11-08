@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter as _};
 
 use super::verbs::{Answer, Approval, ApprovalAnswer, Category, Event, EVENT};
+use crate::downloads::spelled_out;
 
 const EXPIRES: Duration = Duration::from_secs(24 * 60 * 60);
 
@@ -81,9 +82,9 @@ pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> A
     let approval = Approval {
         id: format!("q{}", NEXT.fetch_add(1, Ordering::Relaxed)),
         agent: asking.agent.to_string(),
-        name: asking.name.to_string(),
+        name: spelled_out(asking.name),
         category: asking.category,
-        summary: asking.summary,
+        summary: spelled_out(&asking.summary),
         site: asking.site,
         tab: asking.tab,
         verb: verb_of(&asking.key).to_owned(),
@@ -131,9 +132,9 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
     let approval = Approval {
         id: format!("q{}", NEXT.fetch_add(1, Ordering::Relaxed)),
         agent: asking.agent.to_string(),
-        name: asking.name.to_string(),
+        name: spelled_out(asking.name),
         category: asking.category,
-        summary: asking.summary,
+        summary: spelled_out(&asking.summary),
         site: asking.site,
         tab: asking.tab,
         verb: verb_of(&asking.key).to_owned(),
