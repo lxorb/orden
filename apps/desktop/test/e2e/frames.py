@@ -208,18 +208,25 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Control+Enter")
 
     lines: list[str] = []
+    seen = False
     until = time.monotonic() + 30
     while time.monotonic() < until:
-        lines = page.evaluate(
-            """() => [...document.querySelectorAll('.orden-run-line')].map((one) => one.textContent)"""
+        lines, running = page.evaluate(
+            """() => [
+              [...document.querySelectorAll('.orden-run-line')].map((one) => one.textContent),
+              !!document.querySelector('iframe[title=\"Orden runner\"]'),
+            ]"""
         )
+        seen = seen or running
         if len(lines) >= 2:
             break
         page.wait_for_timeout(200)
 
     say(f"[fence] {json.dumps(lines)}")
+    if not seen:
+        wrong("no runner frame was seen while the fence ran, so its going away proves nothing")
     try:
-        wait_for(page, "!document.querySelector('iframe[title=\"nib runner\"]')", "the runner", 20)
+        wait_for(page, "!document.querySelector('iframe[title=\"Orden runner\"]')", "the runner", 20)
     except SystemExit:
         wrong("the runner was never taken down")
     shot(page, "02-fence")

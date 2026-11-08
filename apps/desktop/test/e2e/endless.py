@@ -193,7 +193,7 @@ def fence(page: Page) -> None:
     try:
         DRIVE.wait_for(
             page,
-            "!document.querySelector('iframe[title=\"nib runner\"]')"
+            "!document.querySelector('iframe[title=\"Orden runner\"]')"
             " && /tim/i.test(document.querySelector('.orden-run-state')?.textContent ?? '')",
             "the run to be stopped as timed out",
             30,

@@ -42,6 +42,7 @@ const PROPERTY = /\bclassName\s*=\s*["'`]([^"'`]*)["'`]/g
 const classes = new Set<string>()
 const ids = new Set<string>()
 const data = new Set<string>()
+const titles = new Set<string>()
 
 function split(text: string, into: Set<string>): void {
   for (const one of text.split(/[\s${}()?:+\\]+/)) if (one) into.add(one.replace(/^\./, ''))
@@ -71,6 +72,10 @@ for (const path of sources) {
   for (const found of text.matchAll(/\bdata-([a-z][\w-]*)/g)) data.add(caught(found))
   for (const found of text.matchAll(/\bdataset\.([A-Za-z]\w*)/g))
     data.add(caught(found).replace(/[A-Z]/g, (one) => `-${one.toLowerCase()}`))
+
+  for (const found of text.matchAll(/\btitle\s*[=:]\s*(["'`])([^"'`${}]*)\1/g))
+    titles.add(caught(found, 2))
+  for (const found of text.matchAll(/<title>([^<]*)<\/title>/g)) titles.add(caught(found))
 }
 
 const ASKED =
@@ -82,6 +87,10 @@ const NOT_OURS = /^(?:cm-|ytp-|vp-)/
 
 function strangers(selector: string): string[] {
   const gone: string[] = []
+  for (const found of selector
+    .replace(/\\(["'])/g, '$1')
+    .matchAll(/\[title\s*=\s*(["'])((?:(?!\1).)*)\1\s*\]/g))
+    if (!titles.has(caught(found, 2))) gone.push(`[title="${caught(found, 2)}"]`)
   const part = selector.replace(/(["'])(?:\\.|(?!\1).)*\1/g, '""')
 
   for (const found of part.matchAll(/\.(-?[A-Za-z_][\w-]*)/g)) {
@@ -113,6 +122,7 @@ describe('the names a drive points at', () => {
     expect(classes.size).toBeGreaterThan(500)
     expect(ids).toContain('write')
     expect(data).toContain('callout')
+    expect(titles).toContain('Orden runner')
   })
 
   test.each(drives)('%s points at names the app still writes', (name) => {

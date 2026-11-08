@@ -60,6 +60,15 @@ describe('the document the sandbox runs', () => {
     expect(html).toContain("form-action 'none'")
   })
 
+  test('carries no style, which its own policy refuses', () => {
+    const html = made("document.body.style.color = 'red'")
+    const policy = /http-equiv="Content-Security-Policy" content="([^"]*)"/.exec(html)?.[1] ?? ''
+    expect(policy).toContain("default-src 'none'")
+    expect(policy).not.toMatch(/style-src/)
+    const page = html.replace(programOf(html) ?? '', '').replace(`<script>${SCRIPT}</script>`, '')
+    expect(page).not.toMatch(/<style|<link|\sstyle\s*=/i)
+  })
+
   test('runs nothing inline but the frame script: the program is text it evaluates', () => {
     const html = made('1 + 1')
     const scripts = [...html.matchAll(/<script([^>]*)>/g)].map((one) => one[1]?.trim())
