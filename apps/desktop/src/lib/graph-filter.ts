@@ -4,23 +4,23 @@ import { aKindOfLine, type Query } from '@orden/scan/search/query'
 
 export type Keeps = (node: GraphNode) => boolean
 
-const EVERYTHING: Keeps = () => true
-
-export function graphFilter(query: Query): Keeps {
+export function graphFilter(query: Query): Keeps | null {
   switch (query.kind) {
     case 'all': {
-      const parts = query.of.map(graphFilter)
-      return (node) => parts.every((one) => one(node))
+      const parts = known(query.of.map((one) => graphFilter(one)))
+      return parts.length ? (node) => parts.every((one) => one(node)) : null
     }
 
     case 'any': {
-      const parts = query.of.map(graphFilter)
-      return (node) => parts.some((one) => one(node))
+      const parts = query.of.map((one) => graphFilter(one))
+      const told = known(parts)
+      if (told.length < parts.length) return null
+      return (node) => told.some((one) => one(node))
     }
 
     case 'not': {
       const inner = graphFilter(query.of)
-      return (node) => !inner(node)
+      return inner ? (node) => !inner(node) : null
     }
 
     case 'text': {
@@ -47,7 +47,7 @@ export function graphFilter(query: Query): Keeps {
 
     case 'regex': {
       const pattern = compiled(query.source, query.fold)
-      if (!pattern) return EVERYTHING
+      if (!pattern) return null
       return (node) => {
         pattern.lastIndex = 0
         return pattern.test(node.name)
@@ -55,12 +55,16 @@ export function graphFilter(query: Query): Keeps {
     }
 
     case 'scope':
-      return aKindOfLine(query.unit) ? EVERYTHING : graphFilter(query.of)
+      return aKindOfLine(query.unit) ? null : graphFilter(query.of)
 
     case 'property':
     case 'content':
-      return EVERYTHING
+      return null
   }
+}
+
+function known(parts: readonly (Keeps | null)[]): Keeps[] {
+  return parts.filter((one): one is Keeps => one !== null)
 }
 
 function folded(text: string, fold: boolean): string {
