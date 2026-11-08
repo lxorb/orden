@@ -473,6 +473,9 @@
                 <span class="orden-row-label"
                   ><bdi>{view.search ? nameOf(entry.name) : entry.name}</bdi></span
                 >
+                {#if view.search && folderOf(entry.name)}
+                  <span class="where"><bdi>{folderOf(entry.name)}</bdi></span>
+                {/if}
               {/if}
             </span>
             {#if !grid}
@@ -585,6 +588,51 @@
 
   .list.searching {
     --columns: minmax(0, 1fr) 9.5rem 5.5rem minmax(0, 0.8fr);
+  }
+
+  .where {
+    display: none;
+    flex: none;
+    max-width: 45%;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: var(--text-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .list.searching.narrow {
+    --columns: minmax(0, 1fr) 5rem;
+  }
+
+  .list.searching.narrow .where,
+  .tile .where {
+    display: block;
+  }
+
+  .list.searching .tile .name {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .tile .where {
+    max-width: 100%;
+  }
+
+  @container (max-width: 34rem) {
+    .list.searching {
+      --columns: minmax(0, 1fr) 8.5rem 5rem;
+    }
+
+    .list.searching .where {
+      display: block;
+    }
+  }
+
+  @container (max-width: 22rem) {
+    .list.searching {
+      --columns: minmax(0, 1fr) 5rem;
+    }
   }
 
   .entry.tile {

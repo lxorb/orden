@@ -295,6 +295,26 @@ describe('a file explorer', () => {
     expect(changed).toEqual(['rename /home/me/letters/bank.txt loan.txt'])
   })
 
+  test('a found file names its folder beside its name too, for when the folder column is hidden', async () => {
+    const { view } = await explorer()
+    view.searchBelow('draft')
+    const search = view.search
+    if (!search) throw new Error('no search')
+    search.found = ['letters/draft.txt', 'old/draft.txt', 'draft.txt'].map((name) => ({
+      name,
+      kind: 'file',
+      folder: false,
+      size: 1,
+      modified: 0,
+      hidden: false,
+    }))
+    await settled()
+    const names = [...target.querySelectorAll('.entry .name')].map((one) =>
+      [...one.querySelectorAll('.orden-row-label, .where')].map((part) => part.textContent),
+    )
+    expect(names).toEqual([['draft.txt'], ['draft.txt', 'letters'], ['draft.txt', 'old']])
+  })
+
   test('renames several files found below at once, the same new name in two folders, and the found rows take the new names', async () => {
     const { view } = await explorer()
     view.searchBelow('draft')
