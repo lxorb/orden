@@ -10,6 +10,7 @@ export interface Entering {
   gone: () => void
   refused: (said: string) => void
   shut: (signedOut: boolean) => void
+  demoted?: () => void
   holds: () => boolean
 }
 
@@ -32,6 +33,11 @@ export abstract class JoinedRoom {
       },
       refused: (said) => entering.refused(said),
       shut: (signedOut) => entering.shut(signedOut),
+      demoted: () => {
+        this.rebuilt()
+        if (entering.demoted) entering.demoted()
+        else entering.gone()
+      },
     })
   }
 
