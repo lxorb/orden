@@ -7,6 +7,7 @@
   import { fullscreen } from '../fullscreen.svelte'
   import { chrome, landed } from '../glass/chrome.svelte'
   import { t } from '../i18n.svelte'
+  import { keyElsewhere } from '../layer-keys'
   import { menu } from '../menu.svelte'
   import { dur, fade } from '../motion'
   import { tabAsk, type TabAsk } from '../new-tab'
@@ -455,6 +456,7 @@
   let opener = $state<HTMLElement | null>(null)
 
   let head = $state<HTMLElement>()
+  let root = $state<HTMLElement>()
 
   let onStore = $state<string | null>(null)
   const addable = $derived(
@@ -524,6 +526,7 @@
 
   function onKeydown(event: KeyboardEvent) {
     if (!focused || !isDesktop || !page.live) return
+    if (event.defaultPrevented || keyElsewhere(event, root)) return
 
     const either = (id: string) =>
       shortcuts.pressed(id, event) || shortcuts.pressed(`${id}.alt`, event)
@@ -591,7 +594,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="web">
+<div class="web" bind:this={root}>
   <div class="head" class:gone={fullscreen.on} bind:this={head}>
     <WebBar
       {page}
