@@ -2,7 +2,9 @@ import { DEFAULT_COMPACTION } from '@orden/glasses'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('../api', () => ({ api: {} }))
-vi.mock('../account.svelte', () => ({ account: { accountToken: null } }))
+vi.mock('../account.svelte', () => ({
+  account: { accountToken: null, forgetWithSession: () => undefined },
+}))
 vi.mock('../i18n.svelte', () => ({
   t: (text: string) => text,
   key: (text: string) => text,

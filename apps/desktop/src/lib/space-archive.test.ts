@@ -41,9 +41,15 @@ const workspace = vi.hoisted(() => ({
 }))
 
 const told = vi.hoisted(() => ({ sent: [] as unknown[], fails: false }))
+const session = vi.hoisted(() => ({ forgets: [] as (() => void)[] }))
 
 vi.mock('./workspace.svelte', () => ({ workspace }))
-vi.mock('./account.svelte', () => ({ account: { accountToken: 'token' } }))
+vi.mock('./account.svelte', () => ({
+  account: {
+    accountToken: 'token',
+    forgetWithSession: (clear: () => void) => session.forgets.push(clear),
+  },
+}))
 vi.mock('./api', () => ({
   api: {
     saveSettings: (_token: string, patch: unknown) => {
@@ -142,6 +148,19 @@ describe('the account', () => {
     await archive.receive({ archivedSpaces: [] })
     expect(workspace.shownSpaces.map((one) => one.name)).toEqual(['Notes', 'Old', 'Local'])
     expect(told.sent.at(-1)).toEqual({ archivedSpaces: ['id-Work'] })
+  })
+
+  test('that signed out leaves nothing of its list to the next one on the device', async () => {
+    await archive.receive({ archivedSpaces: ['id-Elsewhere'] })
+    told.fails = true
+    await archive.archiveSpace(at(1))
+    told.fails = false
+
+    for (const clear of session.forgets) clear()
+    await archive.unarchiveSpace(at(1))
+    await archive.archiveSpace(at(2))
+
+    expect(told.sent.at(-1)).toEqual({ archivedSpaces: ['id-Old'] })
   })
 
   test('never leaves no space in sight', async () => {

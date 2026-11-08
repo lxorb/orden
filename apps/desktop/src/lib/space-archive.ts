@@ -1,6 +1,6 @@
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
-import { keepJson, stored } from './stored'
+import { forget, keepJson, stored } from './stored'
 import { type Space, workspace } from './workspace.svelte'
 
 const OWED_KEY = 'orden:archived-spaces-owed'
@@ -90,3 +90,8 @@ async function tell(): Promise<void> {
     // Still owed; the next start or listing sends it.
   }
 }
+
+account.forgetWithSession(() => {
+  heard = null
+  forget(OWED_KEY)
+})
