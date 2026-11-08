@@ -64,15 +64,26 @@ links.post('/links', async (context) => {
        (id, user_id, vault_id, item_id, body, expires_at, max_views, views, created_at)
      select ?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, ?8
       where (select count(*) from pass_links where user_id = ?2) < ?9
+        and exists (select 1 from pass_items
+                     where vault_id = ?3 and id = ?4 and deleted_at is null)
+        and exists (select 1 from pass_members m join pass_vaults v on v.id = m.vault_id
+                     where m.vault_id = ?3 and m.email = ?10 and m.state = 'active'
+                       and v.deleted_at is null and m.role in ('editor', 'manager', 'owner'))
      on conflict(id) do nothing`,
   )
-    .bind(id, user.id, vault, item, body, expires, views, at, MOST_LINKS)
+    .bind(id, user.id, vault, item, body, expires, views, at, MOST_LINKS, user.email)
     .run()
   if (!written.meta.changes) {
     const taken = await context.env.DB.prepare('select 1 as one from pass_links where id = ?')
       .bind(id)
       .first()
-    return context.json({ error: taken ? TAKEN : TOO_MANY_LINKS }, 409)
+    if (taken) return context.json({ error: TAKEN }, 409)
+    if (!(await activeIn(context.env, vault, user.email))) {
+      return context.json({ error: NO_SUCH_VAULT }, 404)
+    }
+    const still = await itemOf(context.env, vault, item)
+    if (still?.deleted_at !== null) return context.json({ error: NO_SUCH_ITEM }, 404)
+    return context.json({ error: TOO_MANY_LINKS }, 409)
   }
   return context.json({
     link: linkRowOf({
