@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keyFromLayer } from '../layer-keys'
   import {
     type Answer,
     groupName,
@@ -606,8 +607,8 @@
 
   let board = $state<HTMLElement>()
 
-  function keydown(event: KeyboardEvent) {
-    if (event.defaultPrevented) return
+  function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
+    if (event.defaultPrevented || keyFromLayer(event, event.currentTarget)) return
     const face = event.target instanceof HTMLElement ? event.target.closest('[data-card]') : null
     const columnBox = face?.closest<HTMLElement>('[data-column]')
     const slot = face?.closest<HTMLElement>('[data-index]')

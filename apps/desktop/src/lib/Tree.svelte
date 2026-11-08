@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keyFromLayer } from './layer-keys'
   import { tick, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { door } from '@orden/markdown/door'
@@ -282,8 +283,8 @@
     return null
   }
 
-  function onKey(event: KeyboardEvent) {
-    if (event.target instanceof HTMLInputElement) return
+  function onKey(event: KeyboardEvent & { currentTarget: HTMLElement }) {
+    if (event.target instanceof HTMLInputElement || keyFromLayer(event, event.currentTarget)) return
 
     if (shortcuts.pressed('tree.select-all', event)) {
       event.preventDefault()
