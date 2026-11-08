@@ -728,14 +728,12 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   const picked = store.picked.length > 0
   const several = store.picked.length > 1
   const many = store.picked.length > 2
-  const onEdge = store.picked.some((id) => store.canvas.edges.some((edge) => edge.id === id))
-  const onCard =
-    store.picked.length === 1 &&
-    store.canvas.nodes.find((one) => one.id === store.picked[0])?.type === 'text'
-  const onFrame = store.picked.some((id) =>
-    store.canvas.nodes.some((node) => node.id === id && node.type === 'group'),
-  )
-  const onNode = store.picked.some((id) => store.canvas.nodes.some((node) => node.id === id))
+  const chosen = new Set(store.picked)
+  const onEdge = picked && store.canvas.edges.some((edge) => chosen.has(edge.id))
+  const cards = picked ? store.canvas.nodes.filter((node) => chosen.has(node.id)) : []
+  const onCard = store.picked.length === 1 && cards[0]?.type === 'text'
+  const onFrame = cards.some((node) => node.type === 'group')
+  const onNode = cards.length > 0
   const locked = view.locked
   const putting = { colour: tools.colour, path: view.path }
 

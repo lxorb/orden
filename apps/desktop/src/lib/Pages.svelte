@@ -792,7 +792,7 @@
   }
 
   function inkPicked(): boolean {
-    return writable && store.picked.some((id) => canvas.ink.some((one) => one.id === id))
+    return writable && canvas.ink.some((one) => store.pickedSet.has(one.id))
   }
 
   function duplicatePicked() {
@@ -804,7 +804,8 @@
 
   function deletePicked() {
     if (!writable) return
-    const going = store.picked.filter((id) => !pages.some((page) => page.id === id))
+    const paged = new Set(pages.map((page) => page.id))
+    const going = store.picked.filter((id) => !paged.has(id))
     if (!going.length) return
     store.edit(removed(canvas, going))
     store.clearPicked()

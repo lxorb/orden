@@ -433,13 +433,14 @@
 
   const picked = $derived(store.pickedSet)
 
-  const holdsShape = $derived(
-    store.picked.length > 0 &&
-      store.picked.every((id) => {
-        const node = store.canvas.nodes.find((one) => one.id === id)
-        return node?.type === 'file' && isPicture(node.file)
-      }),
-  )
+  const holdsShape = $derived.by(() => {
+    if (!store.picked.length) return false
+    const cards = store.canvas.nodes.filter((node) => store.pickedSet.has(node.id))
+    return (
+      cards.length === store.pickedSet.size &&
+      cards.every((node) => node.type === 'file' && isPicture(node.file))
+    )
+  })
 
   const box = $derived(pickedBox(shown, store.picked))
 
