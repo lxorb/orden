@@ -8,6 +8,7 @@ import type {
   Status,
 } from '@orden/chats/provider'
 import { newestFirst } from '@orden/chats/provider'
+import { type Dial, oneLink } from './one-link'
 import { conversationOf, ORDEN } from './providers/orden'
 import { Remote } from './remote.svelte'
 import { dropRemote, keepRemote } from './remotes'
@@ -74,6 +75,12 @@ export class Connected {
     (provider: string, account: string, event: ProviderEvent) => void
   >()
 
+  wanted: (provider: string, account: string) => boolean = () => true
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing draws these
+  private readonly turns = new Map<string, Promise<Linked>>()
+
+  constructor(private readonly dial: Dial = oneLink) {}
+
   rows(): Row[] {
     const own = store().list.map((entry) => ({
       provider: ORDEN,
@@ -99,13 +106,35 @@ export class Connected {
     return () => this.hearers.delete(listener)
   }
 
-  async link(
+  link(
     provider: ChatProvider,
     config: Readonly<Record<string, string>>,
     host: Host,
     known?: string,
   ): Promise<Linked> {
-    const connection = await provider.connect(config, host, known)
+    const turn = `${provider.id}\n${known ?? '\u0000'}`
+    const next = (this.turns.get(turn) ?? Promise.resolve())
+      .catch(() => undefined)
+      .then(() => this.linkNow(provider, config, host, known))
+    this.turns.set(turn, next)
+    void next
+      .catch(() => undefined)
+      .then(() => {
+        if (this.turns.get(turn) === next) this.turns.delete(turn)
+      })
+    return next
+  }
+
+  private async linkNow(
+    provider: ChatProvider,
+    config: Readonly<Record<string, string>>,
+    host: Host,
+    known: string | undefined,
+  ): Promise<Linked> {
+    if (known !== undefined) await this.unlink(provider.id, known)
+    const connection = await this.dial(provider, config, host, known, (account) =>
+      this.wanted(provider.id, account),
+    )
     const account = connection.account
     await this.unlink(provider.id, account.id)
     const conversations = await connection.conversations().catch(() => [])
@@ -117,6 +146,7 @@ export class Connected {
       reason: null,
       conversations,
     }
+    void this.drop(provider.id, account.id)
     this.linked = [...this.linked, linked]
     const key = `${provider.id}\n${account.id}`
     const remote = new Remote(
@@ -141,13 +171,17 @@ export class Connected {
   }
 
   async unlink(provider: string, account: string): Promise<void> {
+    await this.drop(provider, account)
+  }
+
+  private drop(provider: string, account: string): Promise<void> {
     const key = `${provider}\n${account}`
     this.stops.get(key)?.()
     this.stops.delete(key)
     dropRemote(provider, account)
     const found = this.find(provider, account)
     this.linked = this.linked.filter((one) => one !== found)
-    await found?.connection.close().catch(() => undefined)
+    return found?.connection.close().catch(() => undefined) ?? Promise.resolve()
   }
 
   seen(provider: string, account: string, conversation: string): void {

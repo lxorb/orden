@@ -1,4 +1,5 @@
 import { complete } from '../ai/complete'
+import { heldForLife } from '../locks'
 import { ai } from '../ai/store.svelte'
 import { notify } from '../notify'
 import { chatsOn } from '../settings.svelte'
@@ -25,6 +26,11 @@ export function startPriorities(): void {
   if (started) return
   started = true
   priorities.useAsker(asker)
+  let leads = false
+  heldForLife('orden:chat-priorities', () => {
+    leads = true
+    return new Promise<never>(() => undefined)
+  })
   connected.hear((provider, account, event) => {
     if (event.t !== 'message' || event.message.mine || !chatsOn()) return
     if (!priorities.on && !priorities.drafting) return
@@ -36,7 +42,7 @@ export function startPriorities(): void {
     void consider(key, title, linked.connection, conversation.id)
       .then((said) => {
         if (!said?.level || !priorities.notify.includes(said.level)) return
-        if (quiet(provider, account, conversation.id, event.message)) return
+        if (!leads || quiet(provider, account, conversation.id, event.message)) return
         const newest = said.newest ?? event.message
         notify(title, `${newest.author.name}: ${newest.text}`, key, () =>
           openConversation({ provider, account, conversation: conversation.id }, title),
