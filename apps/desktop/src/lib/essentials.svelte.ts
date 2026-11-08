@@ -292,11 +292,12 @@ async function showEssential(path: string) {
     return
   }
 
-  ws.essentialComing = path
+  ws.essentialsComing.push(path)
   try {
     await ws.openEntry(path, { activate: true })
   } finally {
-    ws.essentialComing = null
+    const left = ws.essentialsComing.indexOf(path)
+    if (left >= 0) ws.essentialsComing.splice(left, 1)
   }
 }
 

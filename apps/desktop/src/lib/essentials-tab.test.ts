@@ -69,6 +69,20 @@ describe('an essential double clicked', () => {
   })
 })
 
+describe('two essentials pressed one right after the other', () => {
+  test('each opens as its essential, neither as a tab of the strip', async () => {
+    workspace.tabs = []
+    workspace.bookmarks.put('/space', [note('Notes.md'), note('Next.md')])
+
+    await Promise.all([openEssential('/space/Notes.md'), openEssential('/space/Next.md')])
+
+    const essentials = workspace.tabs.map((one) => one.essential)
+    expect(essentials).toEqual(['/space/Notes.md', '/space/Next.md'])
+    expect(strip()).toEqual([])
+    expect(workspace.essentialsComing).toEqual([])
+  })
+})
+
 describe('an essential pressed while the window is split', () => {
   test('is kept as a tab of the strip in front, and no pane loses what it showed', async () => {
     workspace.panes.collapse()

@@ -293,7 +293,7 @@ class Workspace {
   previewTabId = $state<string | null>(null)
   private besideLast: { opener: string; tab: string } | null = null
   private choosing: string | null = null
-  essentialComing: string | null = null
+  readonly essentialsComing: string[] = []
   naming = $state<Naming | null>(null)
   treeOptions = $state<TreeOptions>(readTreeOptions())
   readonly undone = new FileActions()
@@ -1363,10 +1363,8 @@ class Workspace {
       }
       return one
     }
-    if (this.essentialComing !== null && samePath(tab.path, this.essentialComing)) {
-      tab.essential = this.essentialComing
-      this.essentialComing = null
-    }
+    const coming = this.essentialsComing.findIndex((path) => samePath(tab.path, path))
+    if (coming >= 0) tab.essential = this.essentialsComing.splice(coming, 1)[0] ?? null
     const chosenOn = activate ? this.chosenFor(tab) : null
     if (chosenOn) {
       this.tabs = this.placed(tab, tab.paneId, this.tabsIn(tab.paneId).indexOf(chosenOn))
