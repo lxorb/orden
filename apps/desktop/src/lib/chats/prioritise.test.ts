@@ -19,7 +19,8 @@ vi.mock('../ai/complete', () => ({
 }))
 vi.mock('../ai/store.svelte', () => ({ ai: { providerFor: () => ({ model: 'small' }) } }))
 vi.mock('../notify', () => ({
-  notify: (_title: string, body: string) => world.told.push(body),
+  show: (notice: { body: string }) => world.told.push(notice.body),
+  unshow: () => undefined,
 }))
 vi.mock('./linked', () => ({ openConversation: () => undefined }))
 vi.mock('./providers/orden', () => ({

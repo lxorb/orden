@@ -1,23 +1,15 @@
-import { MUTED_FOR_GOOD } from '@orden/chats/notify'
 import { account } from '../account.svelte'
 import { t } from '../i18n.svelte'
 import { show, unshow } from '../notify'
 import { deviceActivity } from '../people/here'
 import { people } from '../people/people.svelte'
-import { stands } from '../people/status'
 import { residency } from '../reminders/residency.svelte'
 import { hub } from '../sync2/hub.svelte'
-import { hush } from './hush.svelte'
+import { dndUntil, hush } from './hush.svelte'
 import { ChatNotices, type NoticeWorld } from './notify'
 import { inFront } from './on-screen'
 import { chats } from './store.svelte'
 import { openChat } from './view/open'
-
-function dndUntil(): number | null {
-  const status = account.user?.status
-  if (!status?.quiet || !stands(status, Date.now())) return null
-  return status.until ?? MUTED_FOR_GOOD
-}
 
 const world: NoticeWorld = {
   me: () => chats.me,

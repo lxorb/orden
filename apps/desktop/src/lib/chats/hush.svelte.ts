@@ -1,6 +1,7 @@
-import { type Hours, isHours, isKeywords } from '@orden/chats/notify'
+import { type Hours, isHours, isKeywords, MUTED_FOR_GOOD } from '@orden/chats/notify'
 import { account } from '../account.svelte'
 import { api, type AccountSettings } from '../api'
+import { stands } from '../people/status'
 import { isBoolean, isRecord, keepJson, stored } from '../stored'
 
 const KEY = 'orden.chat-hush'
@@ -85,3 +86,9 @@ class Hush {
 }
 
 export const hush = /* @__PURE__ */ new Hush()
+
+export function dndUntil(): number | null {
+  const status = account.user?.status
+  if (!status?.quiet || !stands(status, Date.now())) return null
+  return status.until ?? MUTED_FOR_GOOD
+}

@@ -5,7 +5,8 @@ import type { Shown } from './api'
 import { connected as hub } from './connected.svelte'
 import { conversationKey } from './conversation-key'
 import { sentText, shownText } from './formats'
-import { quiet } from './prioritise'
+import { hush } from './hush.svelte'
+import { priorityNotice, quiet } from './prioritise'
 import { abilitiesOf, whoOf } from './remote.svelte'
 import { remoteOf } from './remotes'
 import { chats } from './store.svelte'
@@ -306,6 +307,28 @@ describe('notifying', () => {
     expect(quiet(fake.id, link.account.id, 'ada', message)).toBe(true)
     const called = fake.world.say('ada', 'ada', '@me', { mentions: ['me'] })
     expect(quiet(fake.id, link.account.id, 'ada', called)).toBe(false)
+  })
+
+  test('quiet hours hush a priority notice, and with previews off it names neither person nor words', async () => {
+    const { fake, link } = await linked()
+    const message = fake.world.say('ada', 'ada', 'secret plans')
+    expect(quiet(fake.id, link.account.id, 'ada', message)).toBe(false)
+    hush.setHours({ days: [], from: 0, to: 0 })
+    try {
+      expect(quiet(fake.id, link.account.id, 'ada', message)).toBe(true)
+    } finally {
+      hush.setHours(null)
+    }
+    const key = { provider: fake.id, account: link.account.id, conversation: 'ada' }
+    hush.setPreviews(false)
+    try {
+      const notice = priorityNotice(key, 'Ada', message)
+      expect(notice.title).not.toContain('Ada')
+      expect(notice.body).toBe('')
+      expect(notice.tag).toBe(conversationKey(key))
+    } finally {
+      hush.setPreviews(true)
+    }
   })
 })
 
