@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { openTimeDisk } from './disk'
 import { FakeTimeServer, OLD_SERVER } from './fake-server'
 import { TimeStore } from './store.svelte'
@@ -228,5 +228,55 @@ describe('the time a person records', () => {
 
     const signedOut = await opened(null, null)
     expect(signedOut.activities).toEqual([])
+  })
+
+  test('what one window writes shows in another window of the same records at once', async () => {
+    const who = owner()
+    const one = await opened(who, null)
+    const two = await opened(who, null)
+    const uni = one.addActivity('Uni')
+    const timer = one.start(uni.id, 10 * M)
+
+    await vi.waitFor(() => expect(two.running.map((span) => span.id)).toEqual([timer.id]))
+    expect(two.activity(uni.id)?.name).toBe('Uni')
+
+    two.stop(30 * M)
+    await vi.waitFor(() => expect(one.running).toEqual([]))
+    expect(one.span(timer.id)?.end).toBe(30 * M)
+
+    one.start(uni.id, 40 * M)
+    await vi.waitFor(() => expect(two.running).toHaveLength(1))
+    expect(two.span(timer.id)?.end).toBe(30 * M)
+    expect(one.span(timer.id)?.end).toBe(30 * M)
+  })
+
+  test('a window keeps its own later change over an older one heard from another', async () => {
+    const who = owner()
+    const one = await opened(who, null)
+    const two = await opened(who, null)
+    const span = one.addSpan({ start: 0, end: M, note: 'first' })
+    await vi.waitFor(() => expect(two.span(span.id)?.note).toBe('first'))
+
+    const at = Date.now()
+    const now = vi.spyOn(Date, 'now')
+    now.mockReturnValue(at + 60_000)
+    two.changeSpan(span.id, { note: 'later' })
+    now.mockReturnValue(at + 30_000)
+    one.changeSpan(span.id, { note: 'earlier' })
+    now.mockRestore()
+
+    await vi.waitFor(() => expect(one.span(span.id)?.note).toBe('later'))
+    await new Promise((go) => setTimeout(go, 20))
+    expect(two.span(span.id)?.note).toBe('later')
+  })
+
+  test('a window opened as another writes still hears what it wrote', async () => {
+    const who = owner()
+    const one = await opened(who, null)
+    const two = new TimeStore()
+    const opening = two.opened({ owner: who, server: null, device: 'here' })
+    const span = one.addSpan({ start: 0, end: M })
+    await opening
+    await vi.waitFor(() => expect(two.span(span.id)).not.toBeNull())
   })
 })

@@ -3,7 +3,7 @@ import { log } from '../log'
 import { afterQuiet } from '../timing'
 import { openTimeDisk, type TimeDisk } from './disk'
 import { exchange, type TimeServer } from './exchange'
-import { Ledger, type Row } from './ledger'
+import { type Heard, Ledger, type Row } from './ledger'
 import {
   type Activity,
   activityOf,
@@ -45,6 +45,17 @@ export interface Opening {
 
 type SpanFields = Partial<Omit<Span, 'id'>>
 
+const heardOf = (value: unknown): value is Heard => {
+  if (typeof value !== 'object' || value === null) return false
+  const { kind, id, value: held, at } = value as Record<string, unknown>
+  return (
+    typeof kind === 'string' &&
+    typeof id === 'string' &&
+    typeof at === 'number' &&
+    (held === null || (typeof held === 'object' && !Array.isArray(held)))
+  )
+}
+
 const byStart = (one: Span, other: Span) =>
   one.start - other.start || one.id.localeCompare(other.id)
 
@@ -72,6 +83,8 @@ export class TimeStore {
   private opening: Promise<void> = Promise.resolve()
   private exchanging: Promise<void> | null = null
   private again = false
+  private channel: BroadcastChannel | null = null
+  private unheard: Heard[] | null = null
 
   private readonly sendSoon = afterQuiet(() => void this.exchange(), SEND_AFTER)
 
@@ -94,9 +107,12 @@ export class TimeStore {
     const opened = this.disk !== null
     this.disk?.close()
     this.disk = null
+    this.channel?.close()
+    this.channel = null
     this.ready = false
     const early = opened ? [] : this.ledger.pending(Infinity)
     const disk = await this.open(owner)
+    this.hear(disk.name)
     const ledger = new Ledger(await disk.rows())
     const cursor = await disk.read(CURSOR)
     if (owner !== null) await this.carry(ledger, disk)
@@ -105,6 +121,9 @@ export class TimeStore {
     this.ledger = ledger
     this.cursor = typeof cursor === 'number' ? cursor : 0
     this.kept = null
+    const unheard = this.unheard ?? []
+    this.unheard = null
+    ledger.heard(unheard)
     this.shown()
     this.ready = true
     if (this.server) void this.exchange()
@@ -148,6 +167,25 @@ export class TimeStore {
     this.reminding = this.ledger.get('pref', REMINDERS)?.value?.on !== false
   }
 
+  private hear(name: string): void {
+    if (typeof BroadcastChannel === 'undefined') return
+    const channel = new BroadcastChannel(name)
+    this.channel = channel
+    this.unheard = []
+    channel.onmessage = (event: MessageEvent<unknown>) => {
+      if (this.channel !== channel || !Array.isArray(event.data)) return
+      const rows = event.data.filter(heardOf)
+      if (this.unheard) this.unheard.push(...rows)
+      else this.shownAfter(this.ledger.heard(rows))
+    }
+  }
+
+  private shownAfter(rows: readonly Row[]): void {
+    if (!rows.length) return
+    if (rows.every((row) => row.kind === 'span')) this.spansChanged(rows)
+    else this.shown()
+  }
+
   private spansChanged(rows: readonly Row[]): void {
     const ids: Record<string, true> = Object.fromEntries(rows.map((row) => [row.id, true]))
     const spans = this.spans.filter((one) => !Object.hasOwn(ids, one.id))
@@ -161,11 +199,17 @@ export class TimeStore {
 
   private written(rows: readonly Row[]): void {
     if (!rows.length) return
-    if (rows.every((row) => row.kind === 'span')) this.spansChanged(rows)
-    else this.shown()
-    void this.disk?.put(rows).catch((error: unknown) => {
-      log('warn', `time records were not kept: ${String(error)}`)
-    })
+    this.shownAfter(rows)
+    const channel = this.channel
+    const told: Heard[] = rows.map(({ kind, id, value, at }) => ({ kind, id, value, at }))
+    void this.disk
+      ?.put(rows)
+      .then(() => {
+        if (channel && this.channel === channel) channel.postMessage(told)
+      })
+      .catch((error: unknown) => {
+        log('warn', `time records were not kept: ${String(error)}`)
+      })
     if (this.server) this.sendSoon()
   }
 

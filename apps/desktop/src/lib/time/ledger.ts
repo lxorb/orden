@@ -8,6 +8,11 @@ export interface Row {
   at: number
 }
 
+export type Heard = Pick<Row, 'kind' | 'id' | 'value' | 'at'>
+
+const later = (one: Heard, other: Heard): boolean =>
+  one.at !== other.at ? one.at > other.at : JSON.stringify(one.value) > JSON.stringify(other.value)
+
 const keyOf = (kind: string, id: string) => `${kind}\u0000${id}`
 
 export class Ledger {
@@ -48,6 +53,24 @@ export class Ledger {
       const clean = { ...now, dirty: 0 }
       this.rows.set(keyOf(row.kind, row.id), clean)
       out.push(clean)
+    }
+    return out
+  }
+
+  heard(entries: readonly Heard[]): Row[] {
+    const out: Row[] = []
+    for (const entry of entries) {
+      const own = this.get(entry.kind, entry.id)
+      if (own && !later(entry, own)) continue
+      const row: Row = {
+        kind: entry.kind,
+        id: entry.id,
+        value: entry.value,
+        dirty: 0,
+        at: entry.at,
+      }
+      this.rows.set(keyOf(entry.kind, entry.id), row)
+      out.push(row)
     }
     return out
   }

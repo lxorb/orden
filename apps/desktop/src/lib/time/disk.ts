@@ -3,6 +3,7 @@ import type { Row } from './ledger'
 import { type Minute, minuteValue } from './minutes'
 
 export interface TimeDisk {
+  name: string
   rows(): Promise<Row[]>
   put(rows: readonly Row[]): Promise<void>
   read(key: string): Promise<unknown>
@@ -57,6 +58,7 @@ export async function openTimeDisk(owner: string | null): Promise<TimeDisk> {
   })
   await held.transaction(META)
   return {
+    name: nameFor(owner),
     rows: async () => {
       const all = await settled((await held.transaction(ROWS)).objectStore(ROWS).getAll())
       return all.map(rowOf).filter((one): one is Row => one !== null)
