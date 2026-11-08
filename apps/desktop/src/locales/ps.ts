@@ -127,7 +127,7 @@ export const ps: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'د هر څه موندلو لپاره، یادښتونه او امرونه، {key} کېکاږئ.',
   'Show markdown while writing': 'د لیکلو پر مهال مارک ډاون ښکاره کړه',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'يادښتونه د سرچينې په حالت کې پرانيستل',
   Pointer: 'نښه ګر',
   'Pointing hand on buttons': 'په تڼیو باندې اشاره کوونکی لاس',
   'Add task': 'دنده ورزيات کړئ',
@@ -1143,6 +1143,7 @@ export const ps: Dictionary = {
   Helpers: 'مرستندويان',
   'Start helpers on your AI accounts': 'ستاسو د AI په حسابونو مرستندويان پیل کړئ',
   Delegated: 'وسپارل شو',
+  'Follow the theme': 'د موضوع پیروي',
   'Code theme: {name}': 'د کوډ بڼه: {name}',
   'Delete a layout': 'اوډون ړنګول',
   Default: 'اصلي',
@@ -3588,7 +3589,7 @@ export const ps: Dictionary = {
   'Signed out of WhatsApp. Connect again.': 'له WhatsApp څخه ووتلئ. بیا وصل شئ.',
   'Scan with WhatsApp on your phone': 'په خپل تلیفون کې د WhatsApp سره یې سکن کړئ',
   'WhatsApp > Settings > Linked devices > Link a device':
-    'WhatsApp > Settings > Linked devices > Link a device',
+    'WhatsApp > امستنې > تړل شوي وسایل > وسیله وتړئ',
   'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
     'په خپل تلیفون کې په WhatsApp کې Settings > Linked devices > Link a device > Link with phone number instead پرانیزئ، او دا کوډ ولیکئ',
   'The QR code expired. Try again.': 'د QR کوډ موده پای ته ورسېده. بیا هڅه وکړئ.',

@@ -129,7 +129,7 @@ export const ha: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'Danna {key} don nemo komai, bayanai da umarni duka.',
   'Show markdown while writing': 'Nuna Markdown yayin rubutu',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'Buɗe bayanan kula a yanayin tushe',
   Pointer: 'Mai nuni',
   'Pointing hand on buttons': 'Hannun nuni a kan maɓallai',
   'Add task': 'Ƙara aiki',
@@ -1156,6 +1156,7 @@ export const ha: Dictionary = {
   Helpers: 'Mataimaka',
   'Start helpers on your AI accounts': 'Fara mataimaka a asusun AI naka',
   Delegated: 'An danka',
+  'Follow the theme': 'Bi jigo',
   'Code theme: {name}': 'Kamannin lamba: {name}',
   'Delete a layout': 'Share tsari',
   Default: 'Na asali',

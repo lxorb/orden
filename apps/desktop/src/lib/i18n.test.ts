@@ -327,6 +327,19 @@ describe.each(CATALOGUES)('the %s catalogue', (language, catalogue) => {
     expect(changed.length).toBeGreaterThan(Object.keys(catalogue).length * 0.9)
   })
 
+  test('leaves no English phrase untranslated', () => {
+    const latin = forms(catalogue.Settings ?? '').every((one) =>
+      /^[\p{Script=Latin} ]+$/u.test(one),
+    )
+    const phrase = latin
+      ? /\p{Ll}{2,} \p{Ll}{2,} \p{Ll}{2,}/u
+      : /[\p{Lu}\p{Ll}]?\p{Ll}+ \p{Ll}{2,}/u
+    expect(
+      offenders(catalogue, (written, english) => written === english && phrase.test(english)),
+      language,
+    ).toEqual([])
+  })
+
   test('keeps every placeholder the English string uses', () => {
     const lost = offenders(
       catalogue,

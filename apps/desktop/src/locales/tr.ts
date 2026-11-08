@@ -1150,6 +1150,7 @@ export const tr: Dictionary = {
   Helpers: 'Yardımcılar',
   'Start helpers on your AI accounts': 'Yapay zekâ hesaplarında yardımcı başlat',
   Delegated: 'Devredildi',
+  'Follow the theme': 'Temayı izle',
   'Code theme: {name}': 'Kod teması: {name}',
   'Delete a layout': 'Bir düzeni sil',
   Default: 'Öntanımlı',

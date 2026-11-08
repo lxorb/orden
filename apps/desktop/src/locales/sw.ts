@@ -129,7 +129,7 @@ export const sw: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'Bonyeza {key} kupata chochote, madokezo na amri pia.',
   'Show markdown while writing': 'Onyesha Markdown unapoandika',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'Fungua madokezo katika hali ya chanzo',
   Pointer: 'Kielekezi',
   'Pointing hand on buttons': 'Mkono unaoelekeza kwenye vitufe',
   'Add task': 'Ongeza kazi',
@@ -1155,6 +1155,7 @@ export const sw: Dictionary = {
   Helpers: 'Wasaidizi',
   'Start helpers on your AI accounts': 'Anzisha wasaidizi kwenye akaunti zako za AI',
   Delegated: 'Imekabidhiwa',
+  'Follow the theme': 'Fuata mandhari',
   'Code theme: {name}': 'Mandhari ya kodi: {name}',
   'Delete a layout': 'Futa mpangilio',
   Default: 'Chaguomsingi',

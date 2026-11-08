@@ -131,7 +131,7 @@ export const ar: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'اضغط {key} للعثور على أي شيء، ملاحظات وأوامر على حد سواء.',
   'Show markdown while writing': 'إظهار ماركداون أثناء الكتابة',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'فتح الملاحظات في وضع المصدر',
   Pointer: 'المؤشر',
   'Pointing hand on buttons': 'يد مشيرة فوق الأزرار',
   'Add task': 'إضافة مهمة',
@@ -1194,6 +1194,7 @@ export const ar: Dictionary = {
   Helpers: 'المساعدون',
   'Start helpers on your AI accounts': 'تشغيل مساعدين على حسابات الذكاء الاصطناعي',
   Delegated: 'تم التفويض',
+  'Follow the theme': 'اتباع السمة',
   'Code theme: {name}': 'سمة الكود: {name}',
   'Delete a layout': 'حذف تخطيط',
   Default: 'افتراضي',

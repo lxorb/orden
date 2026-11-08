@@ -129,7 +129,7 @@ export const ml: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'കുറിപ്പുകളും കമാൻഡുകളും, എന്തും കണ്ടെത്താൻ {key} അമർത്തുക.',
   'Show markdown while writing': 'എഴുതുമ്പോൾ മാർക്ക്ഡൗൺ കാണിക്കുക',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'കുറിപ്പുകൾ സോഴ്‌സ് മോഡിൽ തുറക്കുക',
   Pointer: 'പോയിന്റർ',
   'Pointing hand on buttons': 'ബട്ടണുകളിൽ ചൂണ്ടുന്ന കൈ',
   'Add task': 'ടാസ്ക് ചേർക്കുക',
@@ -1159,6 +1159,7 @@ export const ml: Dictionary = {
   Helpers: 'സഹായികൾ',
   'Start helpers on your AI accounts': 'നിങ്ങളുടെ AI അക്കൗണ്ടുകളിൽ സഹായികളെ ആരംഭിക്കുക',
   Delegated: 'ഏൽപ്പിച്ചു',
+  'Follow the theme': 'തീം പിന്തുടരുക',
   'Code theme: {name}': 'കോഡ് തീം: {name}',
   'Delete a layout': 'ലേഔട്ട് ഇല്ലാതാക്കുക',
   Default: 'ഡിഫോൾട്ട്',
@@ -3642,7 +3643,7 @@ export const ml: Dictionary = {
     'WhatsApp-ൽ നിന്ന് സൈൻ ഔട്ട് ചെയ്തു. വീണ്ടും കണക്റ്റ് ചെയ്യുക.',
   'Scan with WhatsApp on your phone': 'നിങ്ങളുടെ ഫോണിലെ WhatsApp കൊണ്ട് സ്കാൻ ചെയ്യുക',
   'WhatsApp > Settings > Linked devices > Link a device':
-    'WhatsApp > Settings > Linked devices > Link a device',
+    'WhatsApp > ക്രമീകരണം > ലിങ്ക് ചെയ്ത ഉപകരണങ്ങൾ > ഒരു ഉപകരണം ലിങ്ക് ചെയ്യുക',
   'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
     'നിങ്ങളുടെ ഫോണിലെ WhatsApp-ൽ Settings > Linked devices > Link a device > Link with phone number instead തുറന്ന് ഈ കോഡ് നൽകുക',
   'The QR code expired. Try again.': 'QR കോഡിന്റെ കാലാവധി കഴിഞ്ഞു. വീണ്ടും ശ്രമിക്കുക.',

@@ -1183,6 +1183,7 @@ export const pl: Dictionary = {
   Helpers: 'Pomocnicy',
   'Start helpers on your AI accounts': 'Uruchamiać pomocników na twoich kontach AI',
   Delegated: 'Zlecono',
+  'Follow the theme': 'Zgodnie z motywem',
   'Code theme: {name}': 'Motyw kodu: {name}',
   'Delete a layout': 'Usuń układ',
   Default: 'Domyślne',

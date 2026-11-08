@@ -1159,6 +1159,7 @@ export const ptBR: Dictionary = {
   Helpers: 'Ajudantes',
   'Start helpers on your AI accounts': 'Iniciar ajudantes nas suas contas de IA',
   Delegated: 'Delegado',
+  'Follow the theme': 'Seguir o tema',
   'Code theme: {name}': 'Tema do código: {name}',
   'Delete a layout': 'Excluir um layout',
   Default: 'Padrão',

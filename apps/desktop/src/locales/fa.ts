@@ -128,7 +128,7 @@ export const fa: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'برای یافتن هر چیزی، یادداشت یا فرمان، {key} را بزنید.',
   'Show markdown while writing': 'نمایش مارک‌داون هنگام نوشتن',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'گشودن یادداشت‌ها در حالت منبع',
   Pointer: 'اشاره‌گر',
   'Pointing hand on buttons': 'دست اشاره روی دکمه‌ها',
   'Add task': 'افزودن کار',
@@ -1148,6 +1148,7 @@ export const fa: Dictionary = {
   Helpers: 'دستیارها',
   'Start helpers on your AI accounts': 'اجرای دستیار روی حساب‌های هوش مصنوعی شما',
   Delegated: 'واگذار شد',
+  'Follow the theme': 'پیروی از پوسته',
   'Code theme: {name}': 'پوسته کد: {name}',
   'Delete a layout': 'حذف چیدمان',
   Default: 'پیش‌فرض',

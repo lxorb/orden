@@ -1,5 +1,6 @@
 import type { EditorView } from '@orden/editor'
 import { CODE_PALETTES } from '@orden/editor'
+import { paletteName } from '../highlight'
 import { t } from '../i18n.svelte'
 import { DEFAULTS, modes } from '../modes.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from '../note-id'
@@ -229,7 +230,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
             label: t('Highlighting'),
             hint: t('The colours code in a note is highlighted in.'),
             words: ['syntax', 'code colours', 'code colors'],
-            options: CODE_PALETTES.map((one) => ({ value: one.id, label: one.name })),
+            options: CODE_PALETTES.map((one) => ({ value: one.id, label: paletteName(one) })),
             initial: DEFAULTS.codeTheme,
             get: () => modes.codeTheme,
             set: (value) => modes.setCodeTheme(value, view),

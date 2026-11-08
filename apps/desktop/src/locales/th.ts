@@ -124,7 +124,7 @@ export const th: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'กด {key} เพื่อค้นหาทุกอย่าง ทั้งโน้ตและคำสั่ง',
   'Show markdown while writing': 'แสดง Markdown ขณะเขียน',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'เปิดโน้ตในโหมดซอร์ส',
   Pointer: 'ตัวชี้',
   'Pointing hand on buttons': 'มือชี้บนปุ่ม',
   'Add task': 'เพิ่มงาน',
@@ -1128,6 +1128,7 @@ export const th: Dictionary = {
   Helpers: 'ผู้ช่วย',
   'Start helpers on your AI accounts': 'เริ่มผู้ช่วยในบัญชี AI ของคุณ',
   Delegated: 'มอบหมายแล้ว',
+  'Follow the theme': 'ตามธีม',
   'Code theme: {name}': 'ธีมโค้ด: {name}',
   'Delete a layout': 'ลบเลย์เอาต์',
   Default: 'ค่าเริ่มต้น',

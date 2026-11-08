@@ -126,7 +126,7 @@ export const my: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'မှတ်စုနှင့် အမိန့်များ အားလုံးကို ရှာရန် {key} ကိုနှိပ်ပါ။',
   'Show markdown while writing': 'ရေးနေစဉ် Markdown ကိုပြပါ',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'မှတ်စုများကို ဆိုးစ်မုဒ်ဖြင့် ဖွင့်ရန်',
   Pointer: 'ညွှန်ပြချက်',
   'Pointing hand on buttons': 'ခလုတ်များပေါ်တွင် ညွှန်ပြသောလက်',
   'Add task': 'လုပ်ငန်း ထည့်ရန်',
@@ -1029,7 +1029,7 @@ export const my: Dictionary = {
   Contrast: 'အရောင်ကွာဟမှု',
   Glass: 'မှန်',
   Classic: 'ဂန္ထဝင်',
-  'Front matter': 'Front matter',
+  'Front matter': 'ဖရန့်မက်တာ',
   Picture: 'ပုံ',
   Comment: 'မှတ်ချက်',
   'Always on top': 'အမြဲအပေါ်တွင်',
@@ -1140,6 +1140,7 @@ export const my: Dictionary = {
   Helpers: 'အကူများ',
   'Start helpers on your AI accounts': 'သင့် AI အကောင့်များတွင် အကူများ စတင်ပါ',
   Delegated: 'လွှဲအပ်ခဲ့သည်',
+  'Follow the theme': 'အပြင်အဆင်အတိုင်း',
   'Code theme: {name}': 'ကုဒ်အပြင်အဆင်: {name}',
   'Delete a layout': 'အပြင်အဆင်ဖျက်ပါ',
   Default: 'မူရင်း',
@@ -3566,8 +3567,8 @@ export const my: Dictionary = {
   'signal-cli does not run on this computer': 'signal-cli သည် ဤကွန်ပျူတာတွင် မလည်ပတ်ပါ',
   'The download is not the file it should be; nothing was kept':
     'ဒေါင်းလုဒ်သည် မျှော်လင့်ထားသော ဖိုင် မဟုတ်ပါ၊ ဘာမျှ မသိမ်းထားပါ',
-  'OAuth client ID': 'OAuth client ID',
-  'OAuth client secret': 'OAuth client secret',
+  'OAuth client ID': 'OAuth ကလိုင်းယင့် ID',
+  'OAuth client secret': 'OAuth ကလိုင်းယင့် လျှို့ဝှက်ချက်',
   'How to make your own Google client': 'ကိုယ်ပိုင် Google client ပြုလုပ်နည်း',
   'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
     'Google Cloud တွင် ပရောဂျက်တစ်ခု ဖန်တီးပါ၊ ထို့နောက် သဘောတူညီချက် စခရင်ကို External အဖြစ် သတ်မှတ်ပြီး သင့်လိပ်စာကို စမ်းသပ်အသုံးပြုသူအဖြစ် ထည့်ပါ',

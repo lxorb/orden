@@ -1186,6 +1186,7 @@ export const ru: Dictionary = {
   Helpers: 'Помощники',
   'Start helpers on your AI accounts': 'Запускать помощников на ваших аккаунтах ИИ',
   Delegated: 'Поручено',
+  'Follow the theme': 'Следовать теме',
   'Code theme: {name}': 'Тема кода: {name}',
   'Delete a layout': 'Удалить макет',
   Default: 'По умолчанию',

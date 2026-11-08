@@ -128,7 +128,7 @@ export const fil: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'Pindutin ang {key} para mahanap ang kahit ano, mga tala man o mga command.',
   'Show markdown while writing': 'Ipakita ang Markdown habang nagsusulat',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'Buksan ang mga tala sa source mode',
   Pointer: 'Pointer',
   'Pointing hand on buttons': 'Nakaturong kamay sa mga button',
   'Add task': 'Magdagdag ng gawain',
@@ -1161,6 +1161,7 @@ export const fil: Dictionary = {
   Helpers: 'Mga katulong',
   'Start helpers on your AI accounts': 'Magpatakbo ng katulong sa iyong mga AI account',
   Delegated: 'Ipinasa',
+  'Follow the theme': 'Sundan ang tema',
   'Code theme: {name}': 'Tema ng code: {name}',
   'Delete a layout': 'Tanggalin ang layout',
   Default: 'Orihinal',
@@ -3149,7 +3150,7 @@ export const fil: Dictionary = {
     other: 'Naalis ang {count} link',
   },
   'Email or username': 'Email o username',
-  '2FA secret key (TOTP)': '2FA secret key (TOTP)',
+  '2FA secret key (TOTP)': 'Lihim na key ng 2FA (TOTP)',
   'Easy to guess. Change them to generated ones.':
     'Madaling hulaan. Palitan ng mga ginawang password.',
   'Used for more than one login.': 'Ginagamit sa higit sa isang login.',
@@ -3405,7 +3406,7 @@ export const fil: Dictionary = {
   Floor: 'Palapag',
   'Country or region': 'Bansa o rehiyon',
   County: 'County',
-  'Social security number': 'Social security number',
+  'Social security number': 'Numero ng Social Security',
   'Passport number': 'Numero ng pasaporte',
   'License number': 'Numero ng lisensya',
   'X handle': 'X handle',
@@ -3705,7 +3706,7 @@ export const fil: Dictionary = {
   'The download is not the file it should be; nothing was kept':
     'Hindi ang inaasahang file ang na-download; walang itinago',
   'OAuth client ID': 'OAuth client ID',
-  'OAuth client secret': 'OAuth client secret',
+  'OAuth client secret': 'Lihim ng OAuth client',
   'How to make your own Google client': 'Paano gumawa ng sarili mong Google client',
   'In Google Cloud, create a project, then set up the consent screen as External and add your address as a test user':
     'Sa Google Cloud, gumawa ng project, tapos i-set up ang consent screen bilang External at idagdag ang address mo bilang test user',

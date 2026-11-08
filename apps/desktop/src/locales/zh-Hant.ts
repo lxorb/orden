@@ -1120,6 +1120,7 @@ export const zhHant: Dictionary = {
   Helpers: '助手',
   'Start helpers on your AI accounts': '在你的 AI 帳戶上啟動助手',
   Delegated: '已委派',
+  'Follow the theme': '跟隨主題',
   'Code theme: {name}': '程式碼主題：{name}',
   'Delete a layout': '刪除版面配置',
   Default: '預設',

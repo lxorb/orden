@@ -1120,6 +1120,7 @@ export const zhHans: Dictionary = {
   Helpers: '助手',
   'Start helpers on your AI accounts': '在你的 AI 账户上启动助手',
   Delegated: '已委派',
+  'Follow the theme': '跟随主题',
   'Code theme: {name}': '代码主题：{name}',
   'Delete a layout': '删除布局',
   Default: '默认',
