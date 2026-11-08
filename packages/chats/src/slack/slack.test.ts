@@ -662,6 +662,27 @@ describe('workspace-wide channel events', () => {
   })
 })
 
+describe('a big workspace', () => {
+  test('many direct conversations are named from one paged user list, not a call per person', async () => {
+    const given = setup()
+    for (let at = 10; at < 70; at++) {
+      given.slack.user(`U${at}`, `p${at}`, `Person ${at}`)
+      given.slack.channel({
+        id: `D${at}`,
+        is_im: true,
+        user: `U${at}`,
+        members: ['U1', `U${at}`],
+        messages: [],
+      })
+    }
+    const { connection } = await connect(given)
+    const all = await connection.conversations()
+    expect(all.find((one) => one.id === 'D42')?.title).toBe('Person 42')
+    expect(given.slack.calls.filter((one) => one.method === 'users.info').length).toBeLessThan(5)
+    expect(given.slack.calls.some((one) => one.method === 'users.list')).toBe(true)
+  })
+})
+
 describe('people changing', () => {
   test('a new display name renames the direct conversation with that person', async () => {
     const given = setup()

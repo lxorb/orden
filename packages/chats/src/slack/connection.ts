@@ -49,6 +49,7 @@ const RELIST_EVERY = 3 * 60_000
 const PRESENCE_EVERY = 3 * 60_000
 const PRESENCE_MOST = 20
 const USER_PAGES = 25
+const ONE_BY_ONE = 20
 const THREAD_MOST = 1000
 const AROUND_AFTER = 200
 const SYSTEM = new Set([
@@ -335,7 +336,10 @@ export class SlackConnection implements Connection {
   }
 
   private async ensure(ids: readonly string[]): Promise<void> {
-    const missing = [...new Set(ids)].filter((id) => id && /^[UW]/.test(id) && !this.users.has(id))
+    const unknown = () =>
+      [...new Set(ids)].filter((id) => id && /^[UW]/.test(id) && !this.users.has(id))
+    if (unknown().length > ONE_BY_ONE) await this.allUsers().catch(() => undefined)
+    const missing = unknown()
     await Promise.all(
       missing.map((id) => {
         let asked = this.asking.get(id)
