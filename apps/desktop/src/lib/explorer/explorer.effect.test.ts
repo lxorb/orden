@@ -83,6 +83,11 @@ vi.mock('./commands', () => ({
     return Promise.resolve({ bytes: new TextEncoder().encode('hello'), cut: false })
   },
   searchBelow: () => Promise.resolve({ found: 0, cut: false, cancelled: false }),
+  clashesIn: () => Promise.resolve([]),
+  transfer: (_job: string, sources: string[], folder: string, how: string) => {
+    changed.push(`${how} ${sources.join(',')} ${folder}`)
+    return Promise.resolve({ done: [], replaced: [], skipped: [], failed: [], cancelled: false })
+  },
   FOUND: 'explorer://found',
   PROGRESS: 'explorer://progress',
   cancelJob: () => Promise.resolve(),
@@ -467,6 +472,29 @@ describe('a file explorer', () => {
     await settled()
     expect(changed).toEqual([])
     expect(target.querySelector('input.rename')).toBeNull()
+  })
+
+  test('a file dragged in from elsewhere onto a picked folder lands in that folder', async () => {
+    await explorer()
+    press('p')
+    await settled()
+    const row = [...target.querySelectorAll<HTMLElement>('.entry .orden-row-label')]
+      .find((one) => one.textContent === 'Pictures')
+      ?.closest<HTMLElement>('.entry')
+    if (!row) throw new Error('no Pictures row')
+    expect(row.classList.contains('is-picked')).toBe(true)
+    const data = new Map([['text/orden-path', '/home/me/Orden/Work/x.md']])
+    const drop = new Event('drop', { bubbles: true, cancelable: true })
+    Object.defineProperty(drop, 'dataTransfer', {
+      value: {
+        types: [...data.keys()],
+        getData: (type: string) => data.get(type) ?? '',
+        dropEffect: 'none',
+      },
+    })
+    row.dispatchEvent(drop)
+    await settled()
+    expect(changed).toEqual(['copy /home/me/Orden/Work/x.md /home/me/Pictures'])
   })
 
   test('draws only the rows of a long folder in columns that can be seen', async () => {
