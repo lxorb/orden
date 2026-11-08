@@ -54,10 +54,12 @@ def shortcut_over_a_menu(browser: Browser) -> None:
     say(f"[menu] Ctrl+, over a row's menu: {up}, {menus} menu(s) up")
     if menus:
         wrong("a row's menu stays up under Settings opened by its shortcut")
+    if not up["settings"]:
+        wrong(f"Ctrl+, over a row's menu did not bring the Settings tab in front: {up}")
     page.keyboard.press("Escape")
     left = state(page)
-    if left["settings"] or left["depth"] or page.evaluate(MENUS):
-        wrong(f"one Escape after it should leave nothing up: {left}")
+    if left["depth"] or page.evaluate(MENUS):
+        wrong(f"one Escape after it should leave no layer up: {left}")
     context.close()
 
 def state(page: Any) -> dict[str, Any]:
@@ -78,8 +80,8 @@ def drive(browser: Browser, phone: bool) -> None:
     wait_for(page, "window.ordenApp.themeStore", "the theme store")
 
     page.evaluate(BROWSE)
-    wait_for(page, "window.ordenApp.overlays.depth === 2", "Settings and the theme store, both up")
-    say(f"[{kind}] Settings and the store at once: {state(page)}")
+    wait_for(page, "window.ordenApp.overlays.depth === 1 && window.ordenApp.settings.open", "the theme store over the Settings tab")
+    say(f"[{kind}] the store over the Settings tab: {state(page)}")
 
     if phone:
         page.go_back()
@@ -87,20 +89,19 @@ def drive(browser: Browser, phone: bool) -> None:
         page.keyboard.press("Escape")
     first = state(page)
     say(f"[{kind}] one step back: {first}")
-    if first["store"] or not first["settings"] or first["depth"] != 1:
-        wrong(f"[{kind}] one step back should close the store over Settings and only it: {first}")
+    if first["store"] or not first["settings"] or first["depth"] != 0:
+        wrong(f"[{kind}] one step back should close the store and leave the Settings tab: {first}")
 
-    for _ in range(3 if phone else 1):
-        if phone:
-            page.go_back()
-        else:
-            page.keyboard.press("Escape")
-        rest = state(page)
-        if not rest["settings"]:
-            break
-    say(f"[{kind}] stepping back the rest of the way: {rest}")
-    if rest["settings"] or rest["store"] or rest["depth"] != 0:
-        wrong(f"[{kind}] stepping back the rest of the way should leave nothing up: {rest}")
+    if phone:
+        page.go_back()
+    else:
+        page.keyboard.press("Escape")
+    rest = state(page)
+    say(f"[{kind}] another step back: {rest}")
+    if rest["store"] or rest["depth"] != 0:
+        wrong(f"[{kind}] another step back should bring nothing back up: {rest}")
+    if not rest["settings"]:
+        wrong(f"[{kind}] a step back closed the Settings tab, which is a tab and not a layer: {rest}")
     context.close()
 
 def main() -> int:
@@ -109,7 +110,7 @@ def main() -> int:
         drive(browser, phone=True)
         shortcut_over_a_menu(browser)
 
-    return DRIVE.verdict("a layer opened over Settings in the same moment is the first to close")
+    return DRIVE.verdict("a layer over the Settings tab is the first to close, and the tab stays")
 
 if __name__ == "__main__":
     raise SystemExit(main())

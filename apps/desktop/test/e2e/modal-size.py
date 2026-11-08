@@ -175,26 +175,46 @@ def unwrapped(page, name: str, selector: str) -> None:
         return
     check(f"{name}: no control's words wrap{': ' + '; '.join(said['wrapped']) if said['wrapped'] else ''}", not said["wrapped"])
 
+PANE = """
+(selector) => {
+  const sheet = document.querySelector(selector)
+  const pane = sheet?.closest('[data-pane], .pane-body, .pane')
+  if (!sheet || !pane) return null
+  const one = sheet.getBoundingClientRect()
+  const other = pane.getBoundingClientRect()
+  return { sheet: [one.x, one.y, one.width, one.height], pane: [other.x, other.y, other.width, other.height] }
+}
+"""
+
 def settings(page, label: str) -> None:
     page.evaluate("() => window.ordenApp.settings.show('general')")
     page.wait_for_selector(SETTINGS)
     quiet(page)
 
     first = page.evaluate(BOX, SETTINGS)
-    inside(f"[{label}] settings", first)
-    if first:
+    if first is None:
+        wrong(f"[{label}] settings: not there")
+    else:
         check(
-            f"[{label}] settings is no taller than --screen-tall ({first['height']:.0f} <= {first['tall']:.0f})",
-            first["height"] <= first["tall"] + 1,
+            f"[{label}] settings stays inside the window "
+            f"({first['x']:.0f},{first['y']:.0f} {first['width']:.0f}x{first['height']:.0f} in {first['vw']}x{first['vh']})",
+            first["x"] >= 0
+            and first["y"] >= 0
+            and first["x"] + first["width"] <= first["vw"] + 1
+            and first["y"] + first["height"] <= first["vh"] + 1,
         )
-        if first["vw"] > first["vh"]:
-            check(
-                f"[{label}] settings is wider than tall ({first['width']:.0f}x{first['height']:.0f})",
-                first["width"] > first["height"],
-            )
+    held = page.evaluate(PANE, SETTINGS)
+    if held is None:
+        wrong(f"[{label}] settings is not in a pane")
+    else:
+        check(
+            f"[{label}] settings fills its pane's width ({held['sheet'][2]:.0f} of {held['pane'][2]:.0f})",
+            held["sheet"][2] >= held["pane"][2] - 2,
+        )
 
     sizes = set()
     for pane in page.evaluate(PANES):
+        page.evaluate("() => { window.ordenApp.settings.listing = true }")
         page.locator(f"{SETTINGS} nav .item", has_text=pane).first.click()
         quiet(page, 40)
         box = page.evaluate(BOX, SETTINGS)
@@ -205,10 +225,13 @@ def settings(page, label: str) -> None:
             wrong(f"[{label}] {pane}: words wrap: {'; '.join(said['wrapped'])}")
 
     check(f"[{label}] one size across every pane {sorted(sizes)}", len(sizes) == 1)
+    page.evaluate("() => { window.ordenApp.settings.listing = true }")
+    quiet(page, 40)
     unwrapped(page, f"[{label}] the list of panes", f"{SETTINGS} nav")
     if first and first["vh"] >= 720:
         check(f"[{label}] the list of panes fits without scrolling", page.evaluate(NAV_SCROLLS) is False)
 
+    page.evaluate("() => { window.ordenApp.settings.listing = true }")
     page.locator(f"{SETTINGS} nav .item", has_text="Appearance").first.click()
     quiet(page, 40)
     frame = page.evaluate(FRAME)
@@ -216,7 +239,7 @@ def settings(page, label: str) -> None:
         wrong(f"[{label}] Appearance has no segmented row to stand in for Frame")
     else:
         unwrapped(page, f"[{label}] Frame ({frame})", f"{SETTINGS} .body")
-    page.keyboard.press("Escape")
+    page.evaluate("() => { window.ordenApp.settings.open = false }")
     page.wait_for_selector(SETTINGS, state="detached")
 
 def palette(page, label: str, photograph: str | None) -> None:
@@ -270,14 +293,7 @@ def store(page, label: str, photograph: str | None) -> None:
     over = page.evaluate(BOX, selector)
     under = page.evaluate(BOX, SETTINGS)
     inside(f"[{label}] theme store", over)
-    if over and under:
-        check(
-            f"[{label}] the theme store stands inside the settings",
-            over["x"] > under["x"] + 8
-            and over["y"] > under["y"] + 8
-            and over["x"] + over["width"] < under["x"] + under["width"] - 8
-            and over["y"] + over["height"] < under["y"] + under["height"] - 8,
-        )
+    check(f"[{label}] the Settings tab stays under the theme store", under is not None)
     if photograph:
         shot(page, f"{photograph}-store")
     page.evaluate("() => { window.ordenApp.themeStore.open = false; window.ordenApp.settings.open = false }")
@@ -377,7 +393,7 @@ def drive(browser) -> None:
                     page.evaluate("() => window.ordenApp.settings.show('general')")
                     quiet(page)
                     shot(page, f"{name}-settings-general")
-                    page.keyboard.press("Escape")
+                    page.evaluate("() => { window.ordenApp.settings.open = false }")
                     page.wait_for_selector(SETTINGS, state="detached")
                     palette(page, name, name)
                     picker(page, name, name)

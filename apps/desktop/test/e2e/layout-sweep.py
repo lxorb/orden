@@ -496,9 +496,8 @@ async def settings(one: Browser, page: Any, width: int, scheme: str) -> None:
         await page.evaluate("() => { window.ordenApp.settings.listing = true }")
         await one.check(page, "settings", width, scheme, SETTINGS)
     for pane in await page.evaluate(PANES):
-        if phone:
-            await page.evaluate("() => { window.ordenApp.settings.listing = true }")
-            await settle(page)
+        await page.evaluate("() => { window.ordenApp.settings.listing = true }")
+        await settle(page)
         await page.locator(f"{SETTINGS} nav .item", has_text=pane).first.click()
         await one.through(page, f"settings/{pane}", width, scheme, SETTINGS, f"{SETTINGS} .body")
     await page.evaluate("() => { window.ordenApp.settings.open = false }")
