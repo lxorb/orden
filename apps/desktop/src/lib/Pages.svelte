@@ -609,6 +609,7 @@
     if (pen) hand.sawPen()
 
     if (kind === 'touch' && contacts.penned) return
+    if (pen && driver?.touch) dropTouch()
 
     const screen = screenAt(event)
     const one = gesture
@@ -1120,6 +1121,15 @@
 
   function sameView(one: Camera, other: Camera): boolean {
     return one.x === other.x && one.y === other.y && one.scale === other.scale
+  }
+
+  function dropTouch() {
+    const one = gesture
+    if (one?.kind === 'erase') store.takeBack(one.run)
+    gesture = null
+    driver = null
+    predicted = []
+    endPull()
   }
 
   function finish() {
