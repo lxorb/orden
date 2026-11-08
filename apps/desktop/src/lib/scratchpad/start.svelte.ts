@@ -18,11 +18,13 @@ const sync = new PadSync(scratchpad, padDisk(), (name, run) => inTurn(() => name
 
 let going: Promise<unknown> | null = null
 let again = false
+let signedInAs: string | null = null
 
 function exchange(): void {
   const owner = account.user?.id ?? null
   const token = account.accountToken
   if (!owner || !token) return
+  signedInAs = owner
   if (going) {
     again = true
     return
@@ -41,6 +43,12 @@ function exchange(): void {
 }
 
 scratchpad.listen(afterQuiet(exchange, AFTER_WRITING))
+
+account.forgetWithSession(() => {
+  const owner = signedInAs
+  signedInAs = null
+  if (owner) void sync.left(owner).catch(() => undefined)
+})
 
 $effect.root(() => {
   $effect(() => {
