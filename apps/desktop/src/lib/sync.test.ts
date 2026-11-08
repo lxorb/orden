@@ -1577,14 +1577,45 @@ describe('a pass that fails partway through', () => {
     const { ApiError } = await import('./api')
     const real = fake.api.changes
     fake.api.changes = () => Promise.reject(new ApiError(401, 'unauthorized'))
+    const me = fake.api.me
+    fake.api.me = () =>
+      Promise.reject(new ApiError(401, 'sign in first', { error: 'sign in first' }))
     try {
       await sync.run()
+      await vi.waitFor(() => expect(account.token).toBeNull())
     } finally {
       fake.api.changes = real
+      fake.api.me = me
     }
 
-    expect(account.token).toBeNull()
     expect(sync.status).not.toBe('error')
+  })
+
+  test('keeps the session when a refusal did not come from the account', async () => {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    await sync.pass()
+
+    const { ApiError } = await import('./api')
+    const real = fake.api.changes
+    let asked = 0
+    const me = fake.api.me
+    fake.api.me = async () => {
+      asked++
+      return me()
+    }
+    fake.api.changes = () => Promise.reject(new ApiError(401, 'request failed (401)', null))
+    try {
+      await sync.run()
+      await vi.waitFor(() => expect(asked).toBe(1))
+    } finally {
+      fake.api.changes = real
+      fake.api.me = me
+    }
+
+    expect(account.token).toBe('session')
+    expect(account.signedIn).toBe(true)
   })
 
   test('says so, lets anybody waiting in, and leaves the loop looping', async () => {

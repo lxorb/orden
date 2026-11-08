@@ -61,7 +61,6 @@ import {
 } from './local'
 import { deviceOfSyncStore, forgetSyncStore, get, openSyncStore, put, remove } from './store'
 import { eachDue, reachable, sentAll } from './rounds'
-import { Refused } from './transport'
 import { pairsFromV1 } from './v1-pairs'
 import { usage } from '../usage.svelte'
 import { forgetAccount, leaveSpaces } from '../left-spaces'
@@ -858,10 +857,7 @@ class Runner {
       this.trimSoon()
     } catch (error) {
       if (this.current !== engine) return
-      if ((error instanceof Refused || error instanceof ApiError) && error.status === 401) {
-        void account.signOut()
-        return
-      }
+      if (account.signedOutBy(error)) return
       log('error', `sync: ${error instanceof Error ? error.message : String(error)}`)
       this.status = 'error'
       this.lastError = error instanceof Error ? error.message : String(error)

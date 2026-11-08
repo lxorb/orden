@@ -5,6 +5,7 @@ const server = vi.hoisted(() => ({
   refuse: false,
   meFails: 0,
   meStatus: null as number | null,
+  meBody: { error: 'sign in first' } as unknown,
   meCalls: 0,
   spacesFail: false,
   meIsAGuest: false,
@@ -53,7 +54,7 @@ vi.mock('./api', async (importOriginal) => {
           return Promise.reject(
             server.meStatus === null
               ? new Error('the network is not there yet')
-              : new original.ApiError(server.meStatus, 'no'),
+              : new original.ApiError(server.meStatus, 'no', server.meBody),
           )
         }
 
@@ -120,6 +121,7 @@ beforeEach(async () => {
   server.resendIn = 30
   server.meFails = 0
   server.meStatus = null
+  server.meBody = { error: 'sign in first' }
   server.meCalls = 0
   server.spacesFail = false
   server.meIsAGuest = false
@@ -397,6 +399,41 @@ describe('restoring a session', () => {
     expect(account.signedIn).toBe(false)
     expect(localStorage.getItem('orden:session')).toBeNull()
     expect(server.meCalls).toBe(1)
+  })
+
+  test.each([
+    [401, '<html>blocked</html>'],
+    [403, '<html>Attention Required! | Cloudflare</html>'],
+    [403, { error: 'that is not something a token can do' }],
+  ])('keeps the session when something in the way answers %i', async (status, body) => {
+    localStorage.setItem('orden:session', 'session')
+    server.meFails = Infinity
+    server.meStatus = status
+    server.meBody = body
+
+    await restore()
+
+    expect(account.signedIn).toBe(false)
+    expect(account.token).toBe('session')
+    expect(localStorage.getItem('orden:session')).toBe('session')
+  })
+
+  test('asks the account before ending a session sync was refused for', async () => {
+    localStorage.setItem('orden:session', 'session')
+    await restore()
+    expect(account.signedIn).toBe(true)
+
+    const asked = server.meCalls
+    expect(account.signedOutBy(new Error('offline'))).toBe(false)
+    expect(account.signedOutBy(Object.assign(new Error('blocked'), { status: 401 }))).toBe(true)
+    await vi.waitFor(() => expect(server.meCalls).toBe(asked + 1))
+    expect(account.signedIn).toBe(true)
+
+    server.meFails = Infinity
+    server.meStatus = 401
+    expect(account.signedOutBy(Object.assign(new Error('ended'), { status: 401 }))).toBe(true)
+    await vi.waitFor(() => expect(account.token).toBeNull())
+    expect(localStorage.getItem('orden:session')).toBeNull()
   })
 
   test('keeps the session when the spaces cannot be listed', async () => {
