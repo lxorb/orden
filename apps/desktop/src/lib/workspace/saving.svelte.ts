@@ -28,7 +28,7 @@ export interface Writes {
   persist(): void
   wroteAll(path: string, key: string, words: string): void
   loadTree(): Promise<void>
-  freeName(folder: string, name: string, except?: string): string
+  nameTaken(folder: string): (name: string) => boolean
   born(path: string): void
   touched(path: string): void
   fileCame(path: string, kind: 'file' | 'folder', key?: string): Promise<void>
@@ -364,12 +364,13 @@ export class Saving {
     const { holdIfFree } = await import('../locks')
     const found: string[] = []
     for (;;) {
+      const listed = this.ws.nameTaken(folder)
       const name = freePath(
         file,
         (candidate) =>
           found.includes(candidate) ||
           this.isClaimed(joinPath(folder, candidate)) ||
-          this.ws.freeName(folder, candidate) !== candidate,
+          listed(candidate),
       )
       const path = joinPath(folder, name)
       const release = await holdIfFree(`orden:claim:${path}`)
@@ -385,7 +386,7 @@ export class Saving {
         return null
       }
       if (taken) found.push(name)
-      else if (!this.isClaimed(path) && this.ws.freeName(folder, name) === name) {
+      else if (!this.isClaimed(path) && !this.ws.nameTaken(folder)(name)) {
         note.path = path
         this.claimed.add(path)
         this.claimHeld.set(path, release)

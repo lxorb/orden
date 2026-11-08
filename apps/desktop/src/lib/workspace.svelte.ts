@@ -3269,33 +3269,32 @@ class Workspace {
   }
 
   freeName(dir: string, wanted: string, except?: string): string {
+    return freePath(wanted, this.nameTaken(dir, except))
+  }
+
+  nameTaken(dir: string, except?: string): (name: string) => boolean {
     const taken = pathKeys(this.everyPath(), dir)
     if (except !== undefined) taken.delete(pathKey(except, dir))
     const has = (name: string) => taken.has(pathKey(joinPath(dir, name), dir))
-    return freePath(
-      wanted,
-      (candidate) =>
-        has(candidate) ||
-        isAgentsName(candidate) ||
-        (/\.pages$/i.test(candidate) && has(`${candidate}.pdf`)) ||
-        (/\.pages\.pdf$/i.test(candidate) && has(candidate.slice(0, -'.pdf'.length))),
-    )
+    return (candidate) =>
+      has(candidate) ||
+      isAgentsName(candidate) ||
+      (/\.pages$/i.test(candidate) && has(`${candidate}.pdf`)) ||
+      (/\.pages\.pdf$/i.test(candidate) && has(candidate.slice(0, -'.pdf'.length)))
   }
 
   async freeNameOnDisk(dir: string, wanted: string): Promise<string> {
     const { pairOf } = await import('./pages/held')
     const found: string[] = []
     for (;;) {
-      const name = freePath(
-        wanted,
-        (candidate) => found.includes(candidate) || this.freeName(dir, candidate) !== candidate,
-      )
+      const listed = this.nameTaken(dir)
+      const name = freePath(wanted, (candidate) => found.includes(candidate) || listed(candidate))
       const other = pairOf(name)
       const taken =
         (await onDisk(joinPath(dir, name))) ||
         (other !== null && (await onDisk(joinPath(dir, other))))
       if (taken) found.push(name)
-      else if (this.freeName(dir, name) === name) return name
+      else if (!this.nameTaken(dir)(name)) return name
     }
   }
 
