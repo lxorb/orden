@@ -12,6 +12,7 @@ const MOST_WAIT = 120_000
 
 const MOST_CHOICES = 12
 const MOST_MESSAGE = 2000
+const LONGEST_CHOICE = 200
 
 export async function askReader(call: Call): Promise<AgentAnswer> {
   const agent = call.caller.agent
@@ -45,13 +46,20 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
   if (kind === 'choice' && (choices.length < 1 || choices.length > MOST_CHOICES)) {
     throw new Refused('bad_arguments', `a choice offers 1 to ${MOST_CHOICES} choices`)
   }
+  const placeholder = maybe(call, 'placeholder')
+  if ([...choices, placeholder ?? ''].some((one) => one.length > LONGEST_CHOICE)) {
+    throw new Refused(
+      'bad_arguments',
+      `a choice or placeholder is at most ${LONGEST_CHOICE} characters`,
+    )
+  }
 
   const question = asking.ask({
     agent: agent.id,
     kind,
     message,
     choices: kind === 'choice' ? choices : [],
-    placeholder: maybe(call, 'placeholder'),
+    placeholder,
   })
   show({
     title: agent.name,

@@ -158,6 +158,13 @@ describe('a question put to the reader', () => {
     await expect(
       askReader(call('ask_reader', { kind: 'shout', message: 'Hi' })),
     ).rejects.toMatchObject({ code: 'bad_arguments' })
+    const long = 'x'.repeat(201)
+    await expect(
+      askReader(call('ask_reader', { kind: 'choice', message: 'Pick', choices: ['Yes', long] })),
+    ).rejects.toMatchObject({ code: 'bad_arguments' })
+    await expect(
+      askReader(call('ask_reader', { kind: 'text', message: 'Name?', placeholder: long })),
+    ).rejects.toMatchObject({ code: 'bad_arguments' })
   })
 
   test('an agent that goes, or is stopped, takes its questions with it', async () => {
