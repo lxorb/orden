@@ -40,18 +40,31 @@ class Trash {
   error = $state<string | null>(null)
   loaded = $state(false)
 
+  private asked = 0
+
   async load() {
+    const asked = ++this.asked
     this.error = null
+    const token = account.accountToken
     const [found, remote] = await Promise.all([
       this.fromDevice(),
-      account.accountToken ? this.fromAccount(account.accountToken) : Promise.resolve([]),
+      token ? this.fromAccount(token, asked) : Promise.resolve([]),
     ])
+    if (asked !== this.asked) return
     const device =
       remote.length && found.length
         ? await (await import('./trash-doubles')).withoutDoubles(found, this.remoteNotes)
         : found
+    if (asked !== this.asked) return
     this.items = [...remote, ...device].sort((a, b) => b.deletedAt - a.deletedAt)
     this.loaded = true
+  }
+
+  forgetAccount(): void {
+    this.asked++
+    this.items = this.items.filter((one) => one.source === 'device')
+    this.remoteNotes = []
+    this.error = null
   }
 
   private remoteNotes: { spaceId: string; path: string; deletedAt: number }[] = []
@@ -71,14 +84,15 @@ class Trash {
     }))
   }
 
-  private async fromAccount(token: string): Promise<TrashItem[]> {
+  private async fromAccount(token: string, asked: number): Promise<TrashItem[]> {
     let listing: Awaited<ReturnType<typeof api.trash>>
     try {
       listing = await api.trash(token)
     } catch (error) {
-      this.error = message(error, t('could not reach the server'))
+      if (asked === this.asked) this.error = message(error, t('could not reach the server'))
       return []
     }
+    if (asked !== this.asked) return []
 
     const spaces = listing.spaces.map((space) => ({
       id: `space:${space.id}`,
@@ -203,6 +217,8 @@ class Trash {
 }
 
 export const trash = new Trash()
+
+account.forgetWithSession(() => trash.forgetAccount())
 
 function whereFrom(from: string): string | null {
   if (from.startsWith('/') || /^[A-Za-z]:[\\/]/.test(from)) return from

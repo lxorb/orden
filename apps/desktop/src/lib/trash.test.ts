@@ -134,6 +134,7 @@ vi.mock('./api', async (importOriginal) => ({
       return { ok: true }
     },
     listSpaces: async () => ({ spaces: [], deleted: [] }),
+    signOut: async () => ({ ok: true }),
   },
 }))
 
@@ -413,6 +414,24 @@ describe('signed in', () => {
 
     expect(calls).toContain('delete_note')
     expect(calls).not.toContain('trash_item')
+  })
+
+  test('signing out leaves only the device’s, and a list asked before writes nothing back', async () => {
+    const at = Date.now() - 2 * DAY
+    remote.spaces = [
+      { id: 's2', name: 'Old', deletedAt: at - DAY, purgeAt: at + 13 * DAY, notes: 3 },
+    ]
+    deviceTrash = [
+      { id: 'd1', kind: 'note', name: 'Local.md', from: '/space/Local.md', trashedAt: at },
+    ]
+    await trash.load()
+    expect(trash.items.map((item) => item.id)).toEqual(['device:d1', 'space:s2'])
+
+    const loading = trash.load()
+    void account.signOut()
+    await loading
+
+    expect(trash.items.map((item) => item.id)).toEqual(['device:d1'])
   })
 
   test('the list is the account’s, with any device leftovers', async () => {
