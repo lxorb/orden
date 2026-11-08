@@ -265,7 +265,7 @@ export class Machine implements DurableObject {
         this.signedOut((headers.get('x-orden-logins') ?? '').split(',').filter(Boolean))
         return new Response(null, { status: 204 })
       case 'revoke':
-        this.revoke(headers.get('x-orden-who') ?? '', headers.get('x-orden-role'), headers)
+        await this.revoke(headers.get('x-orden-who') ?? '', headers.get('x-orden-role'), headers)
         return new Response(null, { status: 204 })
       case 'end':
         await this.end(headers.get('x-orden-session') ?? '')
@@ -1387,13 +1387,38 @@ export class Machine implements DurableObject {
     }
   }
 
-  private revoke(who: string, role: string | null, headers: Headers): void {
+  private async revoke(who: string, role: string | null, headers: Headers): Promise<void> {
     const terms = new Set((headers.get('x-orden-terms') ?? '').split(',').filter(Boolean))
-    for (const socket of this.ctx.getWebSockets(who)) {
+    const theirs = this.ctx.getWebSockets(who).flatMap((socket) => {
       const viewer = viewerOf(socket)
-      if (!viewer || viewer.owns || !terms.has(viewer.term)) continue
-      if (role === 'read') this.reattach(socket, { ...viewer, role: 'read' })
-      else socket.close(4403, 'no longer reaches this terminal')
+      return viewer && !viewer.owns && terms.has(viewer.term) ? [{ socket, viewer }] : []
+    })
+    if (!theirs.length) return
+
+    const me = await this.me()
+    const pairs = new Map(
+      theirs.map(({ viewer }) => [
+        `${viewer.term}\n${String(viewer.guest)}`,
+        { who: viewer.who, term: viewer.term, guest: viewer.guest },
+      ]),
+    )
+    const reached = me
+      ? await reachAgain(this.env, me.id, [...pairs.values()]).catch(() => null)
+      : null
+    const now = reached && new Map(reached.map((one) => [`${one.term}\n${String(one.guest)}`, one]))
+
+    for (const { socket, viewer } of theirs) {
+      if (!now) {
+        if (role === 'read') this.reattach(socket, { ...viewer, role: 'read' })
+        else socket.close(4403, 'no longer reaches this terminal')
+        continue
+      }
+      const one = now.get(`${viewer.term}\n${String(viewer.guest)}`)
+      if (one?.session !== viewer.session) {
+        socket.close(4403, 'no longer reaches this terminal')
+        continue
+      }
+      this.reattach(socket, { ...viewer, role: one.role, owns: one.owns, typing: one.typing })
     }
   }
 

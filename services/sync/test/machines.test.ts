@@ -9,7 +9,16 @@ import { reachAgain } from '../src/machines/reach'
 import { eraseAccount } from '../src/erase'
 import { purgeExpired } from '../src/trash'
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { doorway, fire, join, machine, type MachineSocket, ordend, say } from './machine-fakes'
+import {
+  doorway,
+  fire,
+  join,
+  machine,
+  type MachineSocket,
+  ordend,
+  type Running,
+  say,
+} from './machine-fakes'
 
 const DEVICE = 'device-laptop'
 
@@ -1221,35 +1230,55 @@ describe('a machine', () => {
     expect(phone.closedWith).toBeNull()
   })
 
+  const revoke = (running: Running, who: string, role: string) =>
+    running.machine.fetch(
+      new Request('https://machine.invalid/revoke', {
+        headers: {
+          'x-orden-machine': 'revoke',
+          'x-orden-who': who,
+          'x-orden-role': role,
+          'x-orden-terms': 'term-1',
+        },
+      }),
+    )
+
   test('revocation closes a socket at once, and a reader’s typing is taken away', async () => {
     const running = await machine(env, ID, user)
-    const writer = await join(running, { who: 'writer', role: 'write', typing: 'writers' })
-    const other = await join(running, { who: 'other', role: 'write', typing: 'writers' })
+    const writer = await join(running, { who: idOf(WRITER), role: 'write', typing: 'writers' })
+    const guest = await join(running, {
+      who: 'guest-write',
+      guest: true,
+      role: 'write',
+      typing: 'writers',
+    })
 
-    await running.machine.fetch(
-      new Request('https://machine.invalid/revoke', {
-        headers: {
-          'x-orden-machine': 'revoke',
-          'x-orden-who': 'writer',
-          'x-orden-role': 'none',
-          'x-orden-terms': 'term-1',
-        },
-      }),
-    )
+    env.db.prepare('delete from space_members where email = ?').run(WRITER)
+    await revoke(running, idOf(WRITER), 'none')
     expect(writer.closedWith?.code).toBe(4403)
 
-    await running.machine.fetch(
-      new Request('https://machine.invalid/revoke', {
-        headers: {
-          'x-orden-machine': 'revoke',
-          'x-orden-who': 'other',
-          'x-orden-role': 'read',
-          'x-orden-terms': 'term-1',
-        },
-      }),
-    )
-    expect(other.closedWith).toBeNull()
-    expect(other.of('role').at(-1)).toEqual({ t: 'role', type: false })
+    env.db.prepare("update guest_members set role = 'read' where guest_id = 'guest-write'").run()
+    await revoke(running, 'guest-write', 'read')
+    expect(guest.closedWith).toBeNull()
+    expect(guest.of('role').at(-1)).toEqual({ t: 'role', type: false })
+  })
+
+  test('revocation leaves a socket the person still reaches the terminal by', async () => {
+    const running = await machine(env, ID, user)
+    env.db.prepare("update term_sessions set typing = 'writers'").run()
+    const writer = await join(running, { who: idOf(WRITER), role: 'write', typing: 'writers' })
+    env.db
+      .prepare(
+        `insert into space_members (space_id, email, item, role, created_at, joined_at)
+         values ('space-1', ?, 'term-1', 'read', 1, 1)`,
+      )
+      .run(WRITER)
+
+    await revoke(running, idOf(WRITER), 'read')
+    expect(writer.of('role').at(-1)).toEqual({ t: 'role', type: true })
+    env.db.prepare("delete from space_members where email = ? and item = 'term-1'").run(WRITER)
+    await revoke(running, idOf(WRITER), 'none')
+    expect(writer.closedWith).toBeNull()
+    expect(writer.of('role').at(-1)).toEqual({ t: 'role', type: true })
   })
 
   test('the minute closes what the rows no longer let in, even when nobody said', async () => {
