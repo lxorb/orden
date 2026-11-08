@@ -1885,6 +1885,37 @@ describe('to-dos and bases', () => {
     expect(files.get('/s/Home/Books.base')).toContain('name: Board')
   })
 
+  test('edits asked at once all land, none written over another', async () => {
+    files.set('/s/Home/Books.base', 'views:\n  - type: table\n    name: All\n')
+    files.set('/s/Home/board.canvas', '{"nodes":[],"edges":[]}')
+    await Promise.all([
+      ...['Wall', 'Board', 'Shelf'].map((name) =>
+        call('edit_base', {
+          space: 'Home',
+          path: 'Books.base',
+          ops: [{ op: 'add_view', name, type: 'cards' }],
+        }),
+      ),
+      ...['One', 'Two', 'Three'].map((text) =>
+        call('edit_canvas', {
+          space: 'Home',
+          path: 'board.canvas',
+          ops: [{ op: 'add_card', text }],
+        }),
+      ),
+      ...['Soup.md', 'Recipes.md'].map((path) =>
+        call('bookmarks', { space: 'Home', op: 'add', path }),
+      ),
+    ])
+    expect(marks['/s/Home']?.map((one) => one.path).sort()).toEqual(['Recipes.md', 'Soup.md'])
+    for (const name of ['All', 'Wall', 'Board', 'Shelf']) {
+      expect(files.get('/s/Home/Books.base')).toContain(`name: ${name}`)
+    }
+    for (const text of ['One', 'Two', 'Three']) {
+      expect(files.get('/s/Home/board.canvas')).toContain(text)
+    }
+  })
+
   test('properties on several notes', async () => {
     expect(
       await call('edit_rows', {

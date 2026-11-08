@@ -36,6 +36,7 @@ import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
 import { DocError, notes } from '../docs'
 import { asked } from './asks'
+import { inTurn } from '../turns'
 import { nowOf } from '../../views/days'
 import { guardedAt } from '../../views/guard'
 import { withComment } from '../../views/task-body'
@@ -487,23 +488,31 @@ export async function editRows(call: Call): Promise<AgentAnswer> {
   return done({ changed })
 }
 
+function baseEdited(base: Base, ops: unknown): Base {
+  try {
+    return editedBase(base, ops)
+  } catch (error) {
+    refused(error)
+  }
+}
+
 export async function editBase(call: Call): Promise<AgentAnswer> {
-  const { place, relative, text, base } = await baseAt(call)
-  writableAt(place, onDisk(place, relative))
-  const next = (() => {
-    try {
-      return editedBase(base, call.args.ops)
-    } catch (error) {
-      refused(error)
-    }
-  })()
+  const { place, relative, base } = await baseAt(call)
+  const path = onDisk(place, relative)
+  writableAt(place, path)
+  baseEdited(base, call.args.ops)
 
   const question = await asked(call, null, `Edit ${nameOf(relative)} in ${place.space.name}`)
   if (question) return question
 
-  const written = writeBase(next, text)
-  if (written === text) return done({ path: relative, changed: false })
-  await writeFile(onDisk(place, relative), written)
+  const { written, next } = await inTurn(path, async () => {
+    const { text, base: now } = await baseAt(call)
+    const next = baseEdited(now, call.args.ops)
+    const written = writeBase(next, text)
+    if (written !== text) await writeFile(path, written)
+    return { written: written !== text, next }
+  })
+  if (!written) return done({ path: relative, changed: false })
   const { sync } = await import('../../sync.svelte')
   sync.nudge()
   return done({ path: relative, changed: true, views: next.views.map((view) => view.name) })
