@@ -8,6 +8,9 @@ import time
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from drive_scheme import switch  # noqa: E402
+
 DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
 ROUNDS = int(sys.argv[4]) if len(sys.argv) > 4 else 5
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
@@ -146,20 +149,18 @@ PANE = (
     "(() => { const one = document.querySelector('.pane, main'); if (!one) return null;"
     " const r = one.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } })()"
 )
-TOGGLE = "button.act[aria-label='Light'], button.act[aria-label='Dark']"
 
 def tabs():
     return run(TABS) or []
 
+said = "not tried"
 for _ in range(3):
+    said = switch(run, box, press, "dark")
     if run("document.documentElement.dataset.theme") == "dark":
         break
-    button = box(TOGGLE)
-    if isinstance(button, dict):
-        press(button)
     time.sleep(1.5)
 if run("document.documentElement.dataset.theme") != "dark":
-    raise SystemExit(f"::error::{DESK}: the app would not go dark")
+    raise SystemExit(f"::error::{DESK}: the app would not go dark: {said}")
 
 web = next((one for one in tabs() if one["web"]), None)
 note = next((one for one in tabs() if not one["web"]), None)

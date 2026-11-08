@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { overlays } from '../../src/lib/overlays'
@@ -124,6 +126,52 @@ test('the themes button in the sidebar foot opens it over itself, in place of a 
   expect(dialog()).not.toBeNull()
   expect(picking.at?.x).toBe(200)
   expect(theme.current).toBe('dark')
+
+  void unmount(foot, { outro: false })
+  target.remove()
+})
+
+const DRIVE = readFileSync(resolve('../../scripts/drive_scheme.py'), 'utf8')
+
+function driven(name: string): string {
+  const found = new RegExp(`^${name} = "(.*)"$`, 'm').exec(DRIVE)?.[1]
+  if (!found) throw new Error(`drive_scheme.py names no ${name}`)
+  return found
+}
+
+function modeOf(scheme: 'light' | 'dark'): string {
+  const names = JSON.parse(/^NAMES = (\{.*\})$/m.exec(DRIVE)?.[1] ?? '{}') as Record<string, string>
+  const shape = /def mode\(scheme\):\n\s+return f"(.*)"/.exec(DRIVE)?.[1] ?? ''
+  return shape.replace('{PICKER}', driven('PICKER')).replace('{NAMES[scheme]}', names[scheme] ?? '')
+}
+
+test('the native drives switch the scheme through the button and the choices drawn here', async () => {
+  const target = document.createElement('div')
+  document.body.append(target)
+  const foot = mount(SidebarFoot, { target })
+  flushSync()
+
+  for (const scheme of ['light', 'dark'] as const) {
+    const button = document.querySelector<HTMLElement>(driven('THEMES'))
+    expect(button, 'the drives press a themes button the foot no longer draws').not.toBeNull()
+    button?.click()
+    await expect.poll(() => picking.open).toBe(true)
+    flushSync()
+    expect(document.querySelector(driven('PICKER'))).not.toBeNull()
+
+    const choice = [...document.querySelectorAll<HTMLElement>(modeOf(scheme))].at(-1) ?? null
+    expect(
+      choice,
+      `the drives choose ${scheme} with a control the picker no longer draws`,
+    ).not.toBeNull()
+    choice?.click()
+    flushSync()
+    expect(root.dataset.theme).toBe(scheme)
+
+    expect(overlays.escape()).toBe(true)
+    flushSync()
+    expect(picking.open).toBe(false)
+  }
 
   void unmount(foot, { outro: false })
   target.remove()

@@ -66,7 +66,7 @@ def row_box(path: str) -> str:
         "   const on = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);"
         "   if (!on || row.contains(on)) break;"
         "   let over = on; while (over.parentElement && !['fixed', 'absolute'].includes(getComputedStyle(over).position)) over = over.parentElement;"
-        "   over.style.visibility = 'hidden' }"
+        "   over.style.visibility = 'hidden'; over.style.pointerEvents = 'none' }"
         " const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);"
         " return hit && row.contains(hit) ? { x: r.x, y: r.y, width: r.width, height: r.height } : null })()"
         % json.dumps(path)
