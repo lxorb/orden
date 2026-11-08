@@ -491,6 +491,26 @@ export function holdPaper(at: PaperAt): () => void {
   }
 }
 
+export class PapersHeld {
+  private held = new Map<string, () => void>()
+
+  keep(papers: readonly PaperAt[]): void {
+    const wanted = new Map(papers.map((at) => [keyOf(at), at]))
+    for (const [key, at] of wanted) {
+      if (!this.held.has(key)) this.held.set(key, holdPaper(at))
+    }
+    for (const [key, release] of this.held) {
+      if (wanted.has(key)) continue
+      this.held.delete(key)
+      release()
+    }
+  }
+
+  release(): void {
+    this.keep([])
+  }
+}
+
 const editions = new SvelteMap<string, number>()
 
 export function paperEdition(at: PaperAt): number {

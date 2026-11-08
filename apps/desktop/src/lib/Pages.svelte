@@ -52,7 +52,7 @@
   import { stillness } from './motion'
   import { type Found, matches } from './canvas/find'
   import {
-    forgetPaper,
+    PapersHeld,
     outlineOf,
     paperAhead,
     paperEdition,
@@ -434,16 +434,17 @@
     return out
   })
 
+  const papers = new PapersHeld()
+
   $effect(() => {
     const note = tab.note.path
     const root = workspace.rootHolding(note)
-
-    return () => {
-      for (const file of new Set(pages.map((page) => page.file).filter(Boolean))) {
-        if (file) forgetPaper({ file, note, root })
-      }
-    }
+    const shared = tab.note.shared
+    const files = new Set(pages.flatMap((page) => (page.file ? [page.file] : [])))
+    papers.keep([...files].map((file) => ({ file, note, root, shared })))
   })
+
+  $effect(() => () => papers.release())
 
   $effect(() => {
     if (focused && store.editing === null) host?.focus({ preventScroll: true })

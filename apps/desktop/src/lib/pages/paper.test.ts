@@ -80,8 +80,16 @@ class Sheet {
   }
 }
 
-const { closeUpOf, densityFor, forgetPaper, holdPaper, paperEdition, paperOf, paperRewritten } =
-  await import('./paper')
+const {
+  closeUpOf,
+  densityFor,
+  forgetPaper,
+  holdPaper,
+  PapersHeld,
+  paperEdition,
+  paperOf,
+  paperRewritten,
+} = await import('./paper')
 
 const AT = { file: 'Thick.pages.pdf', note: '/s/Thick.pages', root: '/s' }
 
@@ -268,6 +276,62 @@ describe('a paper shown on cards', () => {
     expect(await anew).not.toBeNull()
     expect(held.opened).toBe(opened + 1)
     forgetPaper(CARD)
+  })
+})
+
+describe('a paper a page note shows', () => {
+  const NOTE = { file: 'Scan.pdf', note: '/s/Scan.pages', root: '/s' }
+
+  test('stays open while another pane shows it, and closes with the last of them', async () => {
+    const one = new PapersHeld()
+    const other = new PapersHeld()
+    one.keep([NOTE])
+    other.keep([NOTE])
+    const first = paperOf(NOTE, 1, new AbortController().signal)
+    await drawNext()
+    expect(await first).not.toBeNull()
+    const closed = held.closed
+
+    one.release()
+    await settle()
+    expect(held.closed).toBe(closed)
+    expect(await paperOf(NOTE, 1, new AbortController().signal)).toBe(await first)
+
+    other.release()
+    await settle()
+    expect(held.closed).toBe(closed + 1)
+  })
+
+  test('shared from the account is closed once its page note lets go', async () => {
+    const shared = { ...NOTE, shared: 'from-account' }
+    const papers = new PapersHeld()
+    papers.keep([shared])
+    const first = paperOf(shared, 1, new AbortController().signal)
+    await drawNext()
+    expect(await first).not.toBeNull()
+    const closed = held.closed
+
+    papers.release()
+    await settle()
+    expect(held.closed).toBe(closed + 1)
+  })
+
+  test('is held once however often it is asked, and let go when it is shown no more', async () => {
+    const papers = new PapersHeld()
+    const card = holdPaper(NOTE)
+    papers.keep([NOTE, NOTE])
+    papers.keep([NOTE])
+    const first = paperOf(NOTE, 1, new AbortController().signal)
+    await drawNext()
+    await first
+    const closed = held.closed
+
+    papers.keep([])
+    await settle()
+    expect(held.closed).toBe(closed)
+    card()
+    await settle()
+    expect(held.closed).toBe(closed + 1)
   })
 })
 
