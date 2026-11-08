@@ -721,7 +721,10 @@ class Workspace {
           await asDrafts(drafts, says, (path) => this.spaceIdAt(path)),
           this.panes.focusedId,
         )
-        this.tabs = [...this.tabs, ...tabs]
+        const ones = new Set(
+          this.tabs.filter((tab) => TAB_KINDS[tab.kind].single).map((tab) => tab.kind),
+        )
+        this.tabs = [...this.tabs, ...firstOnes(tabs, ones).filter((tab) => tab !== null)]
         if (!this.persist()) throw new Error('no room to write them down')
       })
       if (waiting) setTimeout(() => void this.takeWhatWasLeft(slot), LEAVING_GRACE)
@@ -959,9 +962,10 @@ class Workspace {
   async built(layout: Layout): Promise<{ frame: Frame; made: Tab[] }> {
     const showing = emptyMap<string | null>()
     const made: Tab[] = []
+    const ones = new Set<string>()
 
     for (const draft of panesOf(layout.frame)) {
-      const along = await this.tabsAlong(draft.tabs, draft.id)
+      const along = firstOnes(await this.tabsAlong(draft.tabs, draft.id), ones)
       const tabs = [...new Set(along)].filter((one) => one !== null)
       const order = (draft.recent ?? []).flatMap((at) => {
         const one = along[at]
@@ -4175,6 +4179,15 @@ function shellWords(doc: string): object | null {
   } catch {
     return null
   }
+}
+
+function firstOnes(tabs: (Tab | null)[], ones: Set<string>): (Tab | null)[] {
+  return tabs.map((tab) => {
+    if (!tab || !TAB_KINDS[tab.kind].single) return tab
+    if (ones.has(tab.kind)) return null
+    ones.add(tab.kind)
+    return tab
+  })
 }
 
 export const workspace = new Workspace()
