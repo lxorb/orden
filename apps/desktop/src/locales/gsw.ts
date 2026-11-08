@@ -2972,6 +2972,7 @@ export const gsw: Dictionary = {
   'Export as JSON': 'Als JSON exportiere',
   'The timer has run for {time}': 'De Timer lauft sit {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass sperre',
   'New login': 'Neus Login',
   'Generate password': 'Passwort erzüge',

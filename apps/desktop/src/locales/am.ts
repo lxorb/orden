@@ -2889,6 +2889,7 @@ export const am: Dictionary = {
   'Export as JSON': 'እንደ JSON ላክ',
   'The timer has run for {time}': 'ሰዓት ቆጣሪው ለ{time} ሠርቷል',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Passን ቆልፍ',
   'New login': 'አዲስ መግቢያ',
   'Generate password': 'የይለፍ ቃል ፍጠር',

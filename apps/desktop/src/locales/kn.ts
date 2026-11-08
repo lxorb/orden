@@ -2983,6 +2983,7 @@ export const kn: Dictionary = {
   'Export as JSON': 'JSON ಆಗಿ ರಫ್ತು ಮಾಡಿ',
   'The timer has run for {time}': 'ಟೈಮರ್ {time} ಇಂದ ನಡೆಯುತ್ತಿದೆ',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass ಲಾಕ್ ಮಾಡಿ',
   'New login': 'ಹೊಸ ಲಾಗಿನ್',
   'Generate password': 'ಪಾಸ್‌ವರ್ಡ್ ರಚಿಸಿ',

@@ -2826,6 +2826,7 @@ export const yue: Dictionary = {
   'Export as JSON': '匯出為 JSON',
   'The timer has run for {time}': '計時器已經行咗 {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': '鎖定 Pass',
   'New login': '新增登入資訊',
   'Generate password': '產生密碼',

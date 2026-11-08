@@ -60,7 +60,7 @@
       <PassTab tab={null} focused {corner} />
     {/key}
   {:else}
-    <Gate icon={KeyRound} title={t('Pass')}>
+    <Gate icon={KeyRound} title={t('Orden Pass')}>
       <button class="orden-button" type="button" onclick={() => (account.open = true)}>
         {t('Sign in')}
       </button>

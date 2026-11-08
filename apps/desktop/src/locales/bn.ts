@@ -2944,6 +2944,7 @@ export const bn: Dictionary = {
   'Export as JSON': 'JSON হিসেবে রপ্তানি',
   'The timer has run for {time}': 'টাইমার {time} ধরে চলছে',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass লক করুন',
   'New login': 'নতুন লগইন',
   'Generate password': 'পাসওয়ার্ড তৈরি করুন',

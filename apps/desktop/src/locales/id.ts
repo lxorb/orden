@@ -2927,6 +2927,7 @@ export const id: Dictionary = {
   'Export as JSON': 'Ekspor sebagai JSON',
   'The timer has run for {time}': 'Timer sudah berjalan {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Kunci Pass',
   'New login': 'Login baru',
   'Generate password': 'Buat kata sandi',

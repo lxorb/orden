@@ -2944,6 +2944,7 @@ export const ur: Dictionary = {
   'Export as JSON': 'JSON کے طور پر برآمد کریں',
   'The timer has run for {time}': 'ٹائمر {time} سے چل رہا ہے',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass مقفل کریں',
   'New login': 'نیا لاگ ان',
   'Generate password': 'پاس ورڈ بنائیں',

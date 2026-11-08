@@ -2990,6 +2990,7 @@ export const sw: Dictionary = {
   'Export as JSON': 'Hamisha kama JSON',
   'The timer has run for {time}': 'Kipima muda kimekuwa kikiendelea kwa {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Funga Pass',
   'New login': 'Kuingia kupya',
   'Generate password': 'Tengeneza nenosiri',

@@ -3012,6 +3012,7 @@ export const fil: Dictionary = {
   'Export as JSON': 'I-export bilang JSON',
   'The timer has run for {time}': 'Tumatakbo na ang timer nang {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'I-lock ang Pass',
   'New login': 'Bagong login',
   'Generate password': 'Gumawa ng password',

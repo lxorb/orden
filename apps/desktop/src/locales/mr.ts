@@ -2947,6 +2947,7 @@ export const mr: Dictionary = {
   'Export as JSON': 'JSON म्हणून निर्यात करा',
   'The timer has run for {time}': 'टायमर {time} पासून चालू आहे',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass लॉक करा',
   'New login': 'नवीन लॉगिन',
   'Generate password': 'पासवर्ड तयार करा',

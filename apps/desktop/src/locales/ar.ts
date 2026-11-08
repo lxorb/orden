@@ -3083,6 +3083,7 @@ export const ar: Dictionary = {
   'Export as JSON': 'تصدير بصيغة JSON',
   'The timer has run for {time}': 'يعمل المؤقّت منذ {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'قفل Pass',
   'New login': 'تسجيل دخول جديد',
   'Generate password': 'توليد كلمة سر',
