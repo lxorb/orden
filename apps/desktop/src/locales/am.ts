@@ -3485,6 +3485,7 @@ export const am: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'በቦታዎችዎ ካሉ ሰዎች ጋር እና በኢሜይል፣ Telegram፣ Slack፣ WhatsApp እና Signal ውይይቶችን ያክላል፤ ማጥፋቱ መልዕክቶችዎን እና መለያዎችዎን ይጠብቃል።',
   'Chats are off. Turn them on in Settings.': 'ውይይቶች ጠፍተዋል። በቅንብሮች ውስጥ ያብሯቸው።',
+  'Databases are off. Turn them on in Settings.': 'የመረጃ ቋቶች ጠፍተዋል። በቅንብሮች ውስጥ ያብሯቸው።',
   Databases: 'የመረጃ ቋቶች',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'የመረጃ ቋቶችን ያክላል፣ ሌሎች ማስታወሻዎችን እንደ ሰንጠረዥ፣ ሰሌዳ ወይም ቀን መቁጠሪያ የሚያሳዩ ማስታወሻዎች፤ ማጥፋት ፋይሎቹን ያስቀምጣል።',

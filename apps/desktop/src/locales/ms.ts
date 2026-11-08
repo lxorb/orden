@@ -3492,6 +3492,8 @@ export const ms: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Menambah sembang dengan orang dalam ruang anda dan dengan e-mel, Telegram, Slack, WhatsApp dan Signal; mematikannya mengekalkan mesej dan akaun anda.',
   'Chats are off. Turn them on in Settings.': 'Sembang dimatikan. Hidupkannya dalam Tetapan.',
+  'Databases are off. Turn them on in Settings.':
+    'Pangkalan data dimatikan. Hidupkannya dalam Tetapan.',
   Databases: 'Pangkalan data',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'Menambah pangkalan data, nota yang menunjukkan nota lain sebagai jadual, papan atau kalendar; mematikannya mengekalkan failnya.',

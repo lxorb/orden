@@ -3680,6 +3680,8 @@ export const fr: Dictionary = {
     'Ajoute les discussions avec les personnes de vos espaces et avec le courriel, Telegram, Slack, WhatsApp et Signal ; le désactiver conserve vos messages et vos comptes.',
   'Chats are off. Turn them on in Settings.':
     'Les discussions sont désactivées. Activez-les dans les Réglages.',
+  'Databases are off. Turn them on in Settings.':
+    'Les bases de données sont désactivées. Activez-les dans les Réglages.',
   Databases: 'Bases de données',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'Ajoute les bases de données, des notes qui montrent d’autres notes en tableau, en kanban ou en calendrier ; les désactiver garde les fichiers.',

@@ -3699,6 +3699,8 @@ export const ru: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Добавляет чаты с людьми из ваших пространств и с почтой, Telegram, Slack, WhatsApp и Signal; при выключении сообщения и аккаунты сохраняются.',
   'Chats are off. Turn them on in Settings.': 'Чаты выключены. Включите их в настройках.',
+  'Databases are off. Turn them on in Settings.':
+    'Базы данных выключены. Включите их в настройках.',
   Databases: 'Базы данных',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'Добавляет базы данных, то есть заметки, которые показывают другие заметки таблицей, доской или календарём; если выключить, файлы останутся.',

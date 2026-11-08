@@ -3477,6 +3477,7 @@ export const jv: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Nambahi obrolan karo wong ing papan sampeyan lan karo email, Telegram, Slack, WhatsApp lan Signal; yen dipateni, pesen lan akun sampeyan tetep disimpen.',
   'Chats are off. Turn them on in Settings.': 'Obrolan dipateni. Uripna ing Setelan.',
+  'Databases are off. Turn them on in Settings.': 'Database dipateni. Uripna ing Setelan.',
   Databases: 'Database',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'Nambahaké database, cathetan sing nuduhaké cathetan liya minangka tabel, papan utawa tanggalan; yen dipateni, berkasé tetep disimpen.',

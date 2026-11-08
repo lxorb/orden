@@ -3593,6 +3593,8 @@ export const kn: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'ನಿಮ್ಮ ಸ್ಪೇಸ್‌ಗಳ ಜನರೊಂದಿಗೆ ಮತ್ತು ಮೇಲ್, Telegram, Slack, WhatsApp ಮತ್ತು Signal ಜೊತೆ ಚಾಟ್‌ಗಳನ್ನು ಸೇರಿಸುತ್ತದೆ; ಆಫ್ ಮಾಡಿದರೆ ನಿಮ್ಮ ಸಂದೇಶಗಳು ಮತ್ತು ಖಾತೆಗಳು ಉಳಿಯುತ್ತವೆ.',
   'Chats are off. Turn them on in Settings.': 'ಚಾಟ್‌ಗಳು ಆಫ್ ಆಗಿವೆ. ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಆನ್ ಮಾಡಿ.',
+  'Databases are off. Turn them on in Settings.':
+    'ಡೇಟಾಬೇಸ್‌ಗಳು ಆಫ್ ಆಗಿವೆ. ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಆನ್ ಮಾಡಿ.',
   Databases: 'ಡೇಟಾಬೇಸ್‌ಗಳು',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'ಡೇಟಾಬೇಸ್‌ಗಳನ್ನು ಸೇರಿಸುತ್ತದೆ, ಇತರ ಟಿಪ್ಪಣಿಗಳನ್ನು ಟೇಬಲ್, ಬೋರ್ಡ್ ಅಥವಾ ಕ್ಯಾಲೆಂಡರ್ ಆಗಿ ತೋರಿಸುವ ಟಿಪ್ಪಣಿಗಳು; ಆಫ್ ಮಾಡಿದರೂ ಫೈಲ್‌ಗಳು ಉಳಿಯುತ್ತವೆ.',

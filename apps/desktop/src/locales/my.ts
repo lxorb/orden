@@ -3486,6 +3486,8 @@ export const my: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'သင့် space များရှိ လူများနှင့် mail၊ Telegram၊ Slack၊ WhatsApp နှင့် Signal တို့နှင့် chat များကို ထည့်ပေးသည်။ ပိတ်ထားလည်း မက်ဆေ့ချ်နှင့် အကောင့်များ ကျန်ရှိသည်။',
   'Chats are off. Turn them on in Settings.': 'Chat များ ပိတ်ထားသည်။ ဆက်တင်များတွင် ဖွင့်ပါ။',
+  'Databases are off. Turn them on in Settings.':
+    'ဒေတာဘေ့စ်များ ပိတ်ထားသည်။ ဆက်တင်များတွင် ဖွင့်ပါ။',
   Databases: 'ဒေတာဘေ့စ်များ',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'အခြားမှတ်စုများကို ဇယား၊ ဘုတ် သို့မဟုတ် ပြက္ခဒိန်အဖြစ် ပြသော ဒေတာဘေ့စ်များ ထည့်ပေးပြီး ပိတ်လိုက်လည်း ဖိုင်များ ကျန်ရှိသည်။',

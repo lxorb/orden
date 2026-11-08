@@ -3566,6 +3566,7 @@ export const pa: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'ਤੁਹਾਡੇ ਸਪੇਸ ਦੇ ਲੋਕਾਂ ਨਾਲ ਅਤੇ ਮੇਲ, Telegram, Slack, WhatsApp ਤੇ Signal ਨਾਲ ਚੈਟ ਜੋੜਦਾ ਹੈ; ਬੰਦ ਕਰਨ ਨਾਲ ਤੁਹਾਡੇ ਸੁਨੇਹੇ ਅਤੇ ਖਾਤੇ ਰਹਿੰਦੇ ਹਨ।',
   'Chats are off. Turn them on in Settings.': 'ਚੈਟ ਬੰਦ ਹਨ। ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਚਾਲੂ ਕਰੋ।',
+  'Databases are off. Turn them on in Settings.': 'ਡਾਟਾਬੇਸ ਬੰਦ ਹਨ। ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਚਾਲੂ ਕਰੋ।',
   Databases: 'ਡਾਟਾਬੇਸ',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'ਡਾਟਾਬੇਸ ਜੋੜਦਾ ਹੈ, ਅਜਿਹੇ ਨੋਟ ਜੋ ਹੋਰ ਨੋਟਾਂ ਨੂੰ ਟੇਬਲ, ਬੋਰਡ ਜਾਂ ਕੈਲੰਡਰ ਵਜੋਂ ਦਿਖਾਉਂਦੇ ਹਨ; ਬੰਦ ਕਰਨ ’ਤੇ ਫ਼ਾਈਲਾਂ ਰਹਿੰਦੀਆਂ ਹਨ।',

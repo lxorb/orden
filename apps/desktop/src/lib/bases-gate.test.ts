@@ -86,3 +86,39 @@ describe('databases, until they are turned on', () => {
     expect(basesOn()).toBe(false)
   })
 })
+
+describe('a database while they are off', () => {
+  const entry = (path: string) => ({
+    name: path.split('/').pop() ?? path,
+    path,
+    is_dir: false,
+    modified: 0,
+    created: 0,
+    children: [],
+  })
+
+  beforeEach(() => {
+    workspace.tree = {
+      ...entry('/s'),
+      is_dir: true,
+      children: [entry('/s/B.base'), entry('/s/Note.md')],
+    }
+  })
+
+  test('is in no list of the space’s files that is shown, and is again once they are on', () => {
+    const shown = () => workspace.shownFiles.map((one) => one.path)
+    expect(workspace.files.map((one) => one.path)).toContain('/s/B.base')
+    expect(shown()).toEqual(['/s/Note.md'])
+
+    field().set(true)
+    expect(shown()).toEqual(['/s/B.base', '/s/Note.md'])
+  })
+
+  test('says why it does not open when its link is followed', async () => {
+    const { busy } = await import('./busy.svelte')
+    busy.trouble = null
+    await workspace.openEntry('/s/B.base')
+    expect(opened()).toEqual([])
+    expect(busy.trouble).toBe('Databases are off. Turn them on in Settings.')
+  })
+})

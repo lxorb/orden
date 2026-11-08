@@ -38,6 +38,7 @@ import {
   withinSpace,
 } from './space-paths'
 import { t } from './i18n.svelte'
+import { busy } from './busy.svelte'
 import { AGENTS_NAME, isAgentsName, nameFromContent, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
@@ -521,22 +522,28 @@ class Workspace {
 
   readonly notes = $derived(this.files.filter((one) => !isTabFile(one.name)))
 
+  private readonly unlisted = $derived.by(() => {
+    const coder = modes.coder
+    const bases = basesOn()
+    return (root: string, path: string) =>
+      isInstructions(root, path) ||
+      (!coder && isApplicationTarget(path)) ||
+      (!bases && isBaseTarget(path))
+  })
+
+  readonly shownFiles = $derived.by((): Entry[] => {
+    const root = this.tree?.path
+    return root === undefined ? [] : this.files.filter((one) => !this.unlisted(root, one.path))
+  })
+
   readonly shownTree = $derived.by((): Entry | null => {
     const coming =
       this.tree && arriving.coming.size ? withComing(this.tree, [...arriving.coming]) : this.tree
     if (!coming) return null
 
     const root = coming.path
-    const coder = modes.coder
-    const bases = basesOn()
-    const listed = withoutRows(
-      coming,
-      (entry) =>
-        !entry.is_dir &&
-        (isInstructions(root, entry.path) ||
-          (!coder && isApplicationTarget(entry.path)) ||
-          (!bases && isBaseTarget(entry.path))),
-    )
+    const unlisted = this.unlisted
+    const listed = withoutRows(coming, (entry) => !entry.is_dir && unlisted(root, entry.path))
     return orderedTree(this.unkept(this.unarchived(listed)), this.sortMode, (folder) =>
       this.arranged.listOf(folder),
     )
@@ -2063,7 +2070,11 @@ class Workspace {
         await this.openCanvas(path, options)
         return
       case 'view': {
-        if (__EVEN_PLUGIN__ || !basesOn()) return
+        if (__EVEN_PLUGIN__) return
+        if (!basesOn()) {
+          busy.failed(t('Databases are off. Turn them on in Settings.'))
+          return
+        }
         const { openBaseFile } = await import('./views/open')
         openBaseFile(path, options)
         return

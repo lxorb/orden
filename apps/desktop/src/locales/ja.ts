@@ -3471,6 +3471,8 @@ export const ja: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'スペースのメンバーとのチャットと、メール、Telegram、Slack、WhatsApp、Signal を追加します。オフにしてもメッセージとアカウントは残ります。',
   'Chats are off. Turn them on in Settings.': 'チャットはオフです。設定でオンにしてください。',
+  'Databases are off. Turn them on in Settings.':
+    'データベースはオフです。設定でオンにしてください。',
   Databases: 'データベース',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'ほかのノートを表、ボード、カレンダーとして表示するノートであるデータベースを追加し、オフにしてもファイルは残ります。',

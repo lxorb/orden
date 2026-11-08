@@ -3450,6 +3450,7 @@ export const ko: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     '스페이스의 사람들과의 채팅, 그리고 메일, Telegram, Slack, WhatsApp, Signal을 추가합니다. 꺼도 메시지와 계정은 그대로 남습니다.',
   'Chats are off. Turn them on in Settings.': '채팅이 꺼져 있습니다. 설정에서 켜세요.',
+  'Databases are off. Turn them on in Settings.': '데이터베이스가 꺼져 있습니다. 설정에서 켜세요.',
   Databases: '데이터베이스',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     '다른 노트를 표, 보드, 캘린더로 보여 주는 노트인 데이터베이스를 추가하며, 꺼도 파일은 그대로 남습니다.',

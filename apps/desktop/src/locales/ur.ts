@@ -3550,6 +3550,7 @@ export const ur: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'آپ کی اسپیسز کے لوگوں کے ساتھ اور میل، Telegram، Slack، WhatsApp اور Signal کے ساتھ چیٹس شامل کرتا ہے؛ بند کرنے سے آپ کے پیغامات اور اکاؤنٹس محفوظ رہتے ہیں۔',
   'Chats are off. Turn them on in Settings.': 'چیٹس بند ہیں۔ انہیں ترتیبات میں آن کریں۔',
+  'Databases are off. Turn them on in Settings.': 'ڈیٹا بیس بند ہیں۔ انہیں ترتیبات میں آن کریں۔',
   Databases: 'ڈیٹا بیس',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'ڈیٹا بیس شامل کرتا ہے، ایسے نوٹس جو دوسرے نوٹس کو جدول، بورڈ یا کیلنڈر کے طور پر دکھاتے ہیں؛ بند کرنے سے فائلیں رہتی ہیں۔',

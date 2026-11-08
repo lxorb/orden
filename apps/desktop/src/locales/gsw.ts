@@ -3580,6 +3580,8 @@ export const gsw: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Füegt Chats mit Lüüt i dine Spaces und mit Mail, Telegram, Slack, WhatsApp und Signal dezue. Uusschalte bhaltet dini Nachrichte und Konte.',
   'Chats are off. Turn them on in Settings.': 'Chats sind uus. Schalt sie i de Iistellige ii.',
+  'Databases are off. Turn them on in Settings.':
+    'Datebanke sind uus. Schalt sie i de Iistellige ii.',
   Databases: 'Datebanke',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'Füegt Datebanke dezue, Notize, wo anderi Notize als Tabälle, Board oder Kaländer zeiged; Uusschalte bhaltet d Dateie.',

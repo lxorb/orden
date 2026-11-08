@@ -3571,6 +3571,8 @@ export const te: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'మీ స్పేస్‌లలోని వ్యక్తులతో మరియు మెయిల్, Telegram, Slack, WhatsApp, Signal తో చాట్‌లను జోడిస్తుంది; ఆపివేస్తే మీ సందేశాలు, ఖాతాలు అలాగే ఉంటాయి.',
   'Chats are off. Turn them on in Settings.': 'చాట్‌లు ఆఫ్‌లో ఉన్నాయి. సెట్టింగ్‌లలో ఆన్ చేయండి.',
+  'Databases are off. Turn them on in Settings.':
+    'డేటాబేస్‌లు ఆఫ్‌లో ఉన్నాయి. సెట్టింగ్‌లలో ఆన్ చేయండి.',
   Databases: 'డేటాబేస్‌లు',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'డేటాబేస్‌లను జోడిస్తుంది, ఇతర నోట్‌లను పట్టిక, బోర్డ్ లేదా క్యాలెండర్‌గా చూపించే నోట్‌లు; ఆఫ్ చేసినా ఫైల్‌లు ఉంటాయి.',

@@ -3606,6 +3606,8 @@ export const ha: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Yana ƙara hira da mutane a wuraren ka da kuma imel, Telegram, Slack, WhatsApp da Signal; kashe shi yana adana saƙonninka da asusunka.',
   'Chats are off. Turn them on in Settings.': 'Hira a kashe take. Kunna ta a Saituna.',
+  'Databases are off. Turn them on in Settings.':
+    'Rumbunan bayanai a kashe suke. Kunna su a Saituna.',
   Databases: 'Rumbunan bayanai',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'Yana ƙara rumbunan bayanai, bayanan kula da ke nuna wasu bayanan kula a matsayin tebur, allo ko kalanda; kashe su yana ajiye fayilolin.',

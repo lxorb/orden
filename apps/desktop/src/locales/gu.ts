@@ -3539,6 +3539,7 @@ export const gu: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'તમારી સ્પેસના લોકો સાથે અને મેઇલ, Telegram, Slack, WhatsApp અને Signal સાથે ચેટ ઉમેરે છે; બંધ કરવાથી તમારા સંદેશા અને એકાઉન્ટ રહે છે.',
   'Chats are off. Turn them on in Settings.': 'ચેટ બંધ છે. સેટિંગ્સમાં ચાલુ કરો.',
+  'Databases are off. Turn them on in Settings.': 'ડેટાબેઝ બંધ છે. સેટિંગ્સમાં ચાલુ કરો.',
   Databases: 'ડેટાબેઝ',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'ડેટાબેઝ ઉમેરે છે, એવી નોંધો જે બીજી નોંધોને ટેબલ, બોર્ડ કે કૅલેન્ડર તરીકે બતાવે છે; બંધ કરવાથી ફાઇલો રહે છે.',

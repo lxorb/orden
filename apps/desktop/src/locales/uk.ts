@@ -3695,6 +3695,8 @@ export const uk: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Додає чати з людьми з ваших просторів і з поштою, Telegram, Slack, WhatsApp та Signal; вимкнення зберігає повідомлення й облікові записи.',
   'Chats are off. Turn them on in Settings.': 'Чати вимкнено. Увімкніть їх у налаштуваннях.',
+  'Databases are off. Turn them on in Settings.':
+    'Бази даних вимкнено. Увімкніть їх у налаштуваннях.',
   Databases: 'Бази даних',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'Додає бази даних, тобто нотатки, що показують інші нотатки таблицею, дошкою чи календарем; якщо вимкнути, файли залишаться.',

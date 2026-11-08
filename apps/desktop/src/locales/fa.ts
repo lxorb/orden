@@ -3559,6 +3559,8 @@ export const fa: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'گفتگو با افراد فضاهایتان و با ایمیل، Telegram، Slack، WhatsApp و Signal را می‌افزاید؛ خاموش کردنش پیام‌ها و حساب‌هایتان را نگه می‌دارد.',
   'Chats are off. Turn them on in Settings.': 'گفتگوها خاموش‌اند. در تنظیمات روشنشان کنید.',
+  'Databases are off. Turn them on in Settings.':
+    'پایگاه‌های داده خاموش‌اند. در تنظیمات روشنشان کنید.',
   Databases: 'پایگاه‌های داده',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'پایگاه داده را می‌افزاید، یادداشت‌هایی که یادداشت‌های دیگر را به‌صورت جدول، تابلو یا تقویم نشان می‌دهند؛ خاموش کردن، پرونده‌ها را نگه می‌دارد.',

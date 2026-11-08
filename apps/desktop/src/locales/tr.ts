@@ -3575,6 +3575,7 @@ export const tr: Dictionary = {
   'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.':
     'Alanlarınızdaki kişilerle ve e-posta, Telegram, Slack, WhatsApp ve Signal ile sohbetler ekler; kapatmak mesajlarınızı ve hesaplarınızı korur.',
   'Chats are off. Turn them on in Settings.': 'Sohbetler kapalı. Ayarlar’dan açın.',
+  'Databases are off. Turn them on in Settings.': 'Veritabanları kapalı. Ayarlar’dan açın.',
   Databases: 'Veritabanları',
   'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.':
     'Veritabanlarını ekler, diğer notları tablo, pano veya takvim olarak gösteren notlar; kapatmak dosyaları korur.',

@@ -690,7 +690,7 @@ async function putDown(
       const chosen = await prompt.find({
         title: t('Which note'),
         placeholder: t('Search'),
-        options: workspace.files.flatMap((one) => {
+        options: workspace.shownFiles.flatMap((one) => {
           const relative = withinSpace(root, one.path)
           return relative ? [{ id: relative, label: relative }] : []
         }),
