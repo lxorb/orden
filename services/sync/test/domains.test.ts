@@ -2,7 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { recheckDomains } from '../src/spaces/proof'
+import { proveDomain, recheckDomains } from '../src/spaces/proof'
+import type { Space } from '../src/types'
 import { fakeCloudflare, TOKEN, ZONE } from './cloudflare'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
@@ -385,6 +386,22 @@ describe('proving a domain is yours', () => {
     await prove()
     const served = await call(env, '/', { host: 'notes.example.com' })
     expect(served.text).toContain('Hello')
+  })
+
+  test('a proof read for one domain never proves the domain the space moved to meanwhile', async () => {
+    await publish({ domain: 'notes.example.com' })
+    cloudflare.txt(RECORD, [(await wanted()).value])
+    const asked = env.db.prepare('select * from spaces where id = ?').get(space) as Space
+
+    await publish({ domain: 'victim.example.org' })
+    expect((await proveDomain(env, asked)).ok).toBe(false)
+
+    const row = env.db
+      .prepare('select blog_domain, blog_domain_verified_at as at from spaces where id = ?')
+      .get(space)
+    expect(row).toEqual({ blog_domain: 'victim.example.org', at: null })
+    expect(cloudflare.hostnames.has('victim.example.org')).toBe(false)
+    expect((await call(env, '/', { host: 'victim.example.org' })).text).not.toContain('Hello')
   })
 
   test('a proof stands while nothing has changed', async () => {
