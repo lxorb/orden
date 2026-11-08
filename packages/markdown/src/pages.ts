@@ -3,6 +3,7 @@ import {
   emptyCanvas,
   endless,
   freshId,
+  type InkStroke,
   isPage,
   type PageNode,
   PAPERS,
@@ -46,23 +47,24 @@ export function settled(canvas: Canvas, before: readonly PageNode[] = pagesOf(ca
   if (placed.every((page, at) => page === pages[at])) return canvas
 
   const byId = new Map(placed.map((page) => [page.id, page]))
-  const shifts = before.flatMap((was) => {
+  const shifts = new Map<PageNode, { x: number; y: number }>()
+  for (const was of before) {
     const is = byId.get(was.id)
-    const shift = is && { box: was, x: is.x - was.x, y: is.y - was.y }
-    return shift && (shift.x || shift.y) ? [shift] : []
-  })
+    const shift = is && { x: is.x - was.x, y: is.y - was.y }
+    if (shift && (shift.x || shift.y)) shifts.set(was, shift)
+  }
   const by = <T extends { x: number; y: number }>(thing: T, shift?: { x: number; y: number }) =>
     shift ? { ...thing, x: thing.x + shift.x, y: thing.y + shift.y } : thing
+  const column = columnOf(before)
+  const shiftOf = (owner: PageNode | null) => (owner ? shifts.get(owner) : undefined)
 
   const nodes = canvas.nodes.map((node) => {
     const page = byId.get(node.id)
     if (page) return page
-    const owner = ownerOf(node, before)
-    return by(node, owner ? shifts.find((one) => one.box === owner) : undefined)
+    return shifts.size ? by(node, shiftOf(ownerOf(node, column))) : node
   })
   const ink = canvas.ink.map((stroke) => {
-    const owner = inkOwnerOf(stroke, before)
-    const shift = owner && shifts.find((one) => one.box === owner)
+    const shift = shifts.size ? shiftOf(inkOwnerOf(stroke, column)) : undefined
     return shift ? { ...stroke, points: stroke.points.map((one) => by(one, shift)) } : stroke
   })
 
@@ -124,10 +126,11 @@ export function removed(canvas: Canvas, id: string): Canvas {
   const page = pages.find((one) => one.id === id)
   if (!page || pages.length < 2) return canvas
 
+  const column = columnOf(pages)
   const nodes = canvas.nodes.filter(
-    (node) => node.id !== id && (isPage(node) || ownerOf(node, pages) !== page),
+    (node) => node.id !== id && (isPage(node) || ownerOf(node, column) !== page),
   )
-  const ink = canvas.ink.filter((stroke) => inkOwnerOf(stroke, pages) !== page)
+  const ink = canvas.ink.filter((stroke) => inkOwnerOf(stroke, column) !== page)
 
   return settled({ ...canvas, nodes, ink }, pages)
 }
@@ -180,17 +183,55 @@ function overlap(thing: Box, box: Box): number {
   return across > 0 && down > 0 ? across * down : 0
 }
 
-function ownerOf<T extends Box>(thing: Box, pages: readonly T[]): T | null {
-  const x = thing.x + thing.width / 2
-  const y = thing.y + thing.height / 2
-  const holding = pages.find(
-    (page) => x >= page.x && x < page.x + page.width && y >= page.y && y < page.y + page.height,
-  )
-  if (holding) return holding
+interface Column<T extends Box> {
+  pages: readonly T[]
+  stacked: boolean
+}
 
+function columnOf<T extends Box>(pages: readonly T[]): Column<T> {
+  let bottom = -Infinity
+  let stacked = true
+  for (const page of pages) {
+    if (!(page.y >= bottom && page.height >= 0)) stacked = false
+    bottom = page.y + page.height
+  }
+  return { pages, stacked }
+}
+
+function holds(page: Box, x: number, y: number): boolean {
+  return x >= page.x && x < page.x + page.width && y >= page.y && y < page.y + page.height
+}
+
+function firstEndingBelow(pages: readonly Box[], y: number): number {
+  let low = 0
+  let high = pages.length
+  while (low < high) {
+    const middle = (low + high) >> 1
+    const page = pages[middle]
+    if (page && page.y + page.height > y) high = middle
+    else low = middle + 1
+  }
+  return low
+}
+
+function holding<T extends Box>(column: Column<T>, x: number, y: number): T | undefined {
+  const { pages } = column
+  if (!column.stacked) return pages.find((page) => holds(page, x, y))
+  const page = pages[firstEndingBelow(pages, y)]
+  return page && holds(page, x, y) ? page : undefined
+}
+
+function ownerOf<T extends Box>(thing: Box, column: Column<T>): T | null {
+  const held = holding(column, thing.x + thing.width / 2, thing.y + thing.height / 2)
+  if (held) return held
+
+  const { pages } = column
   let best: T | null = null
   let most = 0
-  for (const page of pages) {
+  for (let at = column.stacked ? firstEndingBelow(pages, thing.y) : 0; at < pages.length; at++) {
+    const page = pages[at]
+    if (!page) continue
+    if (column.stacked && page.y >= thing.y + thing.height) break
     const area = overlap(thing, page)
     if (area > most) {
       most = area
@@ -219,6 +260,50 @@ export function reshaped(
   })
 
   return settled({ ...canvas, nodes }, pagesOf(canvas))
+}
+
+export function lowestOf(canvas: Canvas, boxOf: (stroke: InkStroke) => Box): Map<string, number> {
+  const lowest = new Map<string, number>()
+  const pages = pagesOf(canvas)
+  if (!pages.some((page) => page.paper === 'long')) return lowest
+
+  for (const page of pages) if (page.paper === 'long') lowest.set(page.id, page.y)
+  const column = columnOf(pages)
+  const lift = (page: PageNode, bottom: number) => {
+    const held = lowest.get(page.id)
+    if (held !== undefined) lowest.set(page.id, Math.max(held, bottom))
+  }
+
+  for (const node of canvas.nodes) {
+    for (const page of across(column, node.y, node.y + node.height)) {
+      if (page.id === node.id || page.paper !== 'long') continue
+      if (node.x + node.width <= page.x || node.x >= page.x + page.width) continue
+      if (node.y + node.height <= page.y || node.y >= page.y + page.height) continue
+      lift(page, node.y + node.height)
+    }
+  }
+
+  for (const stroke of canvas.ink) {
+    const first = stroke.points[0]
+    if (!first) continue
+    const held = column.stacked ? [holding(column, first.x, first.y)] : pages
+    for (const page of held) {
+      if (page?.paper !== 'long' || !onPage(stroke, page)) continue
+      const box = boxOf(stroke)
+      lift(page, box.y + box.height)
+    }
+  }
+
+  return lowest
+}
+
+function across<T extends Box>(column: Column<T>, top: number, bottom: number): readonly T[] {
+  const { pages } = column
+  if (!column.stacked) return pages
+  const from = firstEndingBelow(pages, top)
+  let to = from
+  while (to < pages.length && (pages[to]?.y ?? Infinity) < bottom) to++
+  return pages.slice(from, to)
 }
 
 export function grown(canvas: Canvas, lowest: ReadonlyMap<string, number>): Canvas {
@@ -287,10 +372,12 @@ export function pageShowing(pages: readonly PageNode[], top: number, height: num
 
 function inkOwnerOf<T extends Box>(
   stroke: { points: readonly { x: number; y: number }[] },
-  pages: readonly T[],
+  column: Column<T>,
 ): T | null {
-  const held = pages.find((page) => onPage(stroke, page))
-  if (held || !stroke.points.length) return held ?? null
+  const first = stroke.points[0]
+  if (!first) return null
+  const held = holding(column, first.x, first.y)
+  if (held) return held
 
   const xs = stroke.points.map((one) => one.x)
   const ys = stroke.points.map((one) => one.y)
@@ -298,5 +385,5 @@ function inkOwnerOf<T extends Box>(
   const y = ys.reduce((low, one) => Math.min(low, one))
   const width = xs.reduce((high, one) => Math.max(high, one)) - x
   const height = ys.reduce((high, one) => Math.max(high, one)) - y
-  return ownerOf({ x, y, width, height }, pages)
+  return ownerOf({ x, y, width, height }, column)
 }

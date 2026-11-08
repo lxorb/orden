@@ -3,7 +3,7 @@ import {
   columnHeight,
   GUTTER,
   grown,
-  onPage,
+  lowestOf,
   pageCount,
   pagesOf,
   pageShowing,
@@ -268,36 +268,7 @@ export class PagesStore extends CanvasStore {
   private gliding = 0
 
   override edit(next: Canvas, run?: string) {
-    super.edit(next === this.canvas ? next : grown(settled(next), this.reach(next)), run)
-  }
-
-  private reach(canvas: Canvas): Map<string, number> {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
-    const lowest = new Map<string, number>()
-    const long = pagesOf(canvas).filter((page) => page.paper === 'long')
-    if (!long.length) return lowest
-
-    for (const page of long) {
-      const box = { x: page.x, y: page.y, width: page.width, height: page.height }
-      let reach = page.y
-
-      for (const node of canvas.nodes) {
-        if (node.id === page.id) continue
-        if (node.x + node.width <= box.x || node.x >= box.x + box.width) continue
-        if (node.y + node.height <= box.y || node.y >= box.y + box.height) continue
-        reach = Math.max(reach, node.y + node.height)
-      }
-
-      for (const stroke of canvas.ink) {
-        if (!onPage(stroke, box)) continue
-        const around = strokeBox(stroke)
-        reach = Math.max(reach, around.y + around.height)
-      }
-
-      lowest.set(page.id, reach)
-    }
-
-    return lowest
+    super.edit(next === this.canvas ? next : grown(settled(next), lowestOf(next, strokeBox)), run)
   }
 
   protected override parse(text: string): Canvas {
