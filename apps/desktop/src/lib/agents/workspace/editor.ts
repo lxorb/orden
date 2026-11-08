@@ -14,6 +14,7 @@ import type { AgentAnswer } from '../../automation/caller'
 import { views } from '../../views.svelte'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { type Call, done, need, needScope } from './call'
+import { readable } from './guarded'
 import { Refused } from './problem'
 import { namedTab } from './tab-target'
 
@@ -87,7 +88,8 @@ const SEVERITIES: readonly Severity[] = ['error', 'warning', 'info']
 
 export function noteEditor(call: Call): AgentAnswer {
   const agent = call.caller.agent
-  const { tab } = namedTab(call, ['note'], 'a note')
+  const { tab, relative } = namedTab(call, ['note'], 'a note')
+  if (tab.note.path !== null) readable(tab.note.path, relative ?? tab.note.path)
   const op = need(call, 'op')
   const view = workspace.showing(tab.paneId) === tab ? views.of(tab.paneId) : undefined
 

@@ -25,6 +25,11 @@ vi.mock('../../workspace.svelte', () => ({
   },
 }))
 
+const locked = new Set<string>()
+vi.mock('../../protect/src/api', () => ({
+  protection: { agentsMay: (path: string) => !locked.has(path) },
+}))
+
 const views = {
   held: new Map<string, EditorView>(),
   onPut: null as ((pane: string, view: EditorView) => void) | null,
@@ -42,7 +47,7 @@ vi.mock('./tab-target', () => ({
   namedTab: (call: { args: { tab?: unknown } }) => {
     const tab = tabs.find((one) => one.id === call.args.tab)
     if (!tab) throw new Error('no tab')
-    return { tab }
+    return { tab, relative: tab.note.path }
   },
 }))
 
@@ -75,6 +80,25 @@ afterEach(() => {
 })
 
 describe('a note’s editor', () => {
+  test('a protected note the reader has not let agents read shows an agent nothing of itself', () => {
+    locked.add('/s/Work/Plan.md')
+    try {
+      for (const args of [
+        { op: 'selection' },
+        { op: 'select', selections: [{ anchor: { line: 1, ch: 0 }, head: { line: 2, ch: 0 } }] },
+        { op: 'fold', line: 1 },
+        { op: 'reveal', line: 2 },
+        { op: 'mark', marks: [{ from: { line: 1 }, to: { line: 1 }, message: 'x' }] },
+      ]) {
+        expect(() =>
+          noteEditor(call({ tab: 'n1', ...args }, ['editor', 'workspace.focus'])),
+        ).toThrow(/protected/)
+      }
+    } finally {
+      locked.clear()
+    }
+  })
+
   test('its selections are read, and set only by an agent that may move the reader', () => {
     expect(noteEditor(call({ tab: 'n1', op: 'selection' }))).toMatchObject({
       result: { selections: [{ anchor: { line: 1, ch: 0 }, head: { line: 1, ch: 0 } }] },
