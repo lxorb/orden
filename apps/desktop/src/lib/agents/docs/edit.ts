@@ -12,6 +12,7 @@ import { DocError } from './problem'
 import { revOf } from './rev'
 import { touch, touchedBy, touchedMoved, type Touched } from './touched'
 import { Track } from './track'
+import { inTurn } from '../turns'
 
 export const TYPING = 2000
 
@@ -28,23 +29,8 @@ const tracks = new Map<string, Track>()
 
 const kept = new Set<string>()
 
-const turns = new Map<string, Promise<unknown>>()
-
 function keyOf(agent: string, path: string): string {
   return `${agent}\n${path}`
-}
-
-function inTurn<T>(key: string, run: () => Promise<T>): Promise<T> {
-  const mine = (turns.get(key) ?? Promise.resolve()).then(run, run)
-  const done = mine.then(
-    () => undefined,
-    () => undefined,
-  )
-  turns.set(key, done)
-  void done.then(() => {
-    if (turns.get(key) === done) turns.delete(key)
-  })
-  return mine
 }
 
 function trackOf(agent: Agent, path: string): Track {
