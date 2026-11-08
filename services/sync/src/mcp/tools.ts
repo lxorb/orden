@@ -29,6 +29,7 @@ const MOST_SPACES = 500
 const MOST_NOTES = 1000
 const MOST_MATCHES = 50
 const MOST_SEARCHED = 300
+const LONGEST_QUERY = 1000
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
@@ -246,6 +247,7 @@ async function searchNotes(
 
   const needle = (asked ?? '').toLowerCase()
   if (!needle) return 'Give me something to look for.'
+  if (needle.length > LONGEST_QUERY) return `A search is at most ${LONGEST_QUERY} characters.`
 
   const own: string[] = []
   const theirs = new Map<string, string[]>()

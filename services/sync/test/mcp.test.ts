@@ -169,6 +169,9 @@ describe('reading notes through it', () => {
 
   test('searches across the account', async () => {
     expect(await tool(await connector(), 'search_notes', { query: 'ship' })).toContain('plan.md')
+    expect(await tool(await connector(), 'search_notes', { query: 'ship '.repeat(201) })).toBe(
+      'A search is at most 1000 characters.',
+    )
   })
 
   test('says plainly when a space is not there', async () => {

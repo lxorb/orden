@@ -1,6 +1,6 @@
 import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden/chats'
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
-import { EVENTS_A_MINUTE, MOST_BODY } from '@orden/chats/limits'
+import { EVENTS_A_MINUTE, LONGEST_SEARCH, MOST_BODY } from '@orden/chats/limits'
 import { postEventsOf } from '@orden/chats/wire'
 import { accountById } from '../auth'
 import { askInChunks, places } from '../bound'
@@ -218,6 +218,7 @@ async function readChat(env: Env, who: Whoever, args: Record<string, unknown>) {
 async function searchChats(env: Env, who: Whoever, args: Record<string, unknown>) {
   const query = words(args, 'query')
   if (!query) return 'Search for what?'
+  if (query.length > LONGEST_SEARCH) return `A search is at most ${LONGEST_SEARCH} characters.`
   const all = await chatsOf(env, who)
   const picked = (
     await Promise.all(
