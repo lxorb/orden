@@ -19,6 +19,7 @@ describe('the engine over the network', () => {
   test.each([
     ['no network', () => Promise.reject(new TypeError('Failed to fetch'))],
     ['a busy account', () => Promise.resolve(new Response('', { status: 429 }))],
+    ['a proxy that timed out', () => Promise.resolve(new Response('', { status: 408 }))],
     ['a failing account', () => Promise.resolve(new Response('', { status: 503 }))],
   ])('%s is no answer: the pass stops and the new note waits', async (_said, fetch) => {
     const device = await made(fetch)

@@ -48,3 +48,7 @@ export const IDLE_AFTER = 5 * 60_000
 export const INPUT_EVERY = 30_000
 
 export const PRESENCE_EVERY = 60_000
+
+export function passing(status: number): boolean {
+  return status === 408 || status === 429 || status >= 500
+}

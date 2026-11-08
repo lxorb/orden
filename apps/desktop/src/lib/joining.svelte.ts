@@ -1,6 +1,6 @@
 import { api, ApiError, type Invitation, type Joined } from './api'
 import { account } from './account.svelte'
-import { pollDelay } from './backoff'
+import { passing, pollDelay } from './backoff'
 import { message, t } from './i18n.svelte'
 import { deviceName } from './rooms/who'
 import { forget, keep, storedText } from './stored'
@@ -26,15 +26,8 @@ function said(text: string): { name: string } | { email: string } {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(text) ? { email: text } : { name: text }
 }
 
-const PASSING = new Set([408, 429])
-
 function refused(error: unknown): boolean {
-  return (
-    error instanceof ApiError &&
-    error.status >= 400 &&
-    error.status < 500 &&
-    !PASSING.has(error.status)
-  )
+  return error instanceof ApiError && error.status >= 400 && !passing(error.status)
 }
 
 class Joining {
