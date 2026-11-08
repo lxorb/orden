@@ -1,6 +1,7 @@
 <script lang="ts">
   import { dropOver } from './drag-paths'
   import { closeOnBack } from './backstack.svelte'
+  import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import Swatches from './Swatches.svelte'
   import { account } from './account.svelte'
@@ -120,6 +121,19 @@
 
   $effect(() => {
     if (settings.section !== 'account') leaving = false
+  })
+
+  let sheet = $state<HTMLElement>()
+
+  $effect(() => {
+    if (!settings.asked || !sheet) return
+    const into = sheet
+    void tick().then(() =>
+      ['.bar button', '.item.is-on', '.item']
+        .map((one) => into.querySelector<HTMLElement>(one))
+        .find(Boolean)
+        ?.focus({ preventScroll: true }),
+    )
   })
 
   let body = $state<HTMLElement>()
@@ -342,6 +356,7 @@
 </script>
 
 <div
+  bind:this={sheet}
   class="sheet"
   class:phone={stacked}
   bind:clientWidth={width}
