@@ -1,5 +1,6 @@
 import { documentOf } from '@orden/editor'
 import { links } from '../../link-index.svelte'
+import { protection } from '../../protect/protection.svelte'
 import { isScratchpad } from '../../scratchpad/is.svelte'
 import { scratchpad } from '../../scratchpad/pad'
 import { withinSpace } from '../../space-paths'
@@ -77,6 +78,7 @@ const desk: Desk = {
   padText: () => scratchpad.text(),
   padWrite: (before, edits) => scratchpad.replace(before, edits),
   scheme: () => theme.current,
+  agentsMay: (path) => protection.agentsMay(path),
 }
 
 async function padded(at: NoteAt): Promise<NoteAt> {

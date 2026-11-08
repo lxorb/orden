@@ -4,7 +4,7 @@ import type { Keeping } from '../../workspace/note-text'
 import { waited } from '../../timing'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Selected } from './anchors'
-import { type Desk, type Located, located, type NoteAt, openNote, wordsOf } from './desk'
+import { type Desk, type Located, type NoteAt, openNote, reachable, wordsOf } from './desk'
 import { type Planned, plan, readEdits, type Replacement } from './edits'
 import { type Agent, showAgent } from './presence'
 import { folderOf, movedTo, nameOf, samePath, within } from '../../space-paths'
@@ -224,7 +224,7 @@ export async function editNote(
   ifRev?: string,
 ): Promise<NoteEdited> {
   const asked = readEdits(edits)
-  const note = located(desk, at)
+  const note = reachable(desk, at)
 
   return inTurn(keyOf(agent.id, note.path), () =>
     change(desk, agent, note, ifRev, (text, selected, _open, again) => {
@@ -251,7 +251,7 @@ export async function writeNote(
   text: string,
   ifRev?: string,
 ): Promise<NoteEdited> {
-  const note = located(desk, at)
+  const note = reachable(desk, at)
   const wanted = text.replace(/\r\n?/g, '\n')
   let first: { text: string; edits: Replacement[] } | null = null
 
@@ -466,7 +466,7 @@ function answer(
 }
 
 export async function undoAgent(desk: Desk, agent: Agent, at: NoteAt): Promise<{ undone: number }> {
-  return undoAt(desk, agent, located(desk, at))
+  return undoAt(desk, agent, reachable(desk, at))
 }
 
 export async function undoAt(desk: Desk, agent: Agent, note: Located): Promise<{ undone: number }> {

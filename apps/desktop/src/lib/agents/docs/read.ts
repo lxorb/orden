@@ -4,7 +4,7 @@ import { type Property, readProperties } from '@orden/markdown/properties'
 import { taskAt } from '@orden/markdown/tasks'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import { type Anchor, headingPath, headingsIn, taskWords } from './anchors'
-import { type Desk, located, type NoteAt, openNote, wordsOf } from './desk'
+import { type Desk, type NoteAt, openNote, reachable, wordsOf } from './desk'
 import { TYPING } from './edit'
 import { DocError } from './problem'
 import { revOf } from './rev'
@@ -162,7 +162,7 @@ function typingIn(open: NoteDoc | null): boolean {
 
 export async function readNote(desk: Desk, at: NoteAt, include?: unknown): Promise<NoteRead> {
   const asked = new Set(readIncludes(include))
-  const note = located(desk, at)
+  const note = reachable(desk, at)
   const text = await wordsOf(desk, note)
   const open = openNote(desk, note)
   const view = open ? desk.frontView(open) : null

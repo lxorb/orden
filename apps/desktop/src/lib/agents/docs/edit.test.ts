@@ -524,3 +524,30 @@ describe('the scratchpad', () => {
     expect(await refusal(readNote(desk, { path: '', tab: SCRATCHPAD_TAB }))).toBe('no_such_note')
   })
 })
+
+describe('a note agents may not read', () => {
+  test('is neither read, edited, written over nor undone by any way in', async () => {
+    const { desk, shut, fileOf, panes } = deskWith(
+      { 'locked/plan.md': 'secret words', 'open.md': 'plain' },
+      ['locked/plan.md'],
+    )
+    shut('locked/plan.md')
+    const agent = anAgent()
+
+    expect(await refusal(readNote(desk, { path: 'locked/plan.md' }))).toBe('protected')
+    expect(
+      await refusal(
+        editNote(desk, agent, { path: 'locked/plan.md' }, [
+          { at: { end: true }, insert_after: 'x' },
+        ]),
+      ),
+    ).toBe('protected')
+    expect(await refusal(writeNote(desk, agent, { path: 'locked/plan.md' }, 'gone'))).toBe(
+      'protected',
+    )
+    expect(await refusal(undoAgent(desk, agent, { path: 'locked/plan.md' }))).toBe('protected')
+    expect(panes['locked/plan.md']?.text).toBe('secret words')
+    expect(fileOf('locked/plan.md')).toBe('secret words')
+    expect(await refusal(writeNote(desk, agent, { path: 'open.md' }, 'still mine'))).toBe('applied')
+  })
+})
