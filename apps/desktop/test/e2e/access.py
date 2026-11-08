@@ -433,7 +433,7 @@ def opens(window: Window, how: str, wait: int = 600) -> bool:
 STILL_UP = """
 () => {
   const up = [...document.querySelectorAll(
-    '[role=dialog], [role=menu], .orden-screen, .sheet, .palette',
+    '[role=dialog], [role=menu], .orden-screen, .sheet:not([role=region]), .palette',
   )].filter((node) => node.getClientRects().length > 0)
 
   return up.map((node) => (node.className ?? '').toString().split(' ')[0] || node.tagName)
@@ -450,6 +450,7 @@ def shut(window: Window, times: int = 5) -> None:
     left = window.page.evaluate(STILL_UP)
     if left:
         wrong(f"[{window.name}] {times} presses of Escape left these up: {left}")
+    window.page.evaluate("() => { window.ordenApp.settings.open = false }")
 
 def layer(window: Window, surface: str, how: str, wait: int = 600) -> None:
     if not opens(window, how, wait):

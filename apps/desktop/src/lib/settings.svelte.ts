@@ -139,6 +139,7 @@ class Settings {
 
   space = $state<string | null>(null)
   landsOnField = $state(false)
+  asked = $state(0)
 
   get open(): boolean {
     return settingsTab.seen()
@@ -150,6 +151,7 @@ class Settings {
   }
 
   show(section?: Section, space: string | null = null, landsOnField = false) {
+    if (!landsOnField) this.asked++
     if (section === undefined && space === null && settingsTab.present()) {
       settingsTab.reveal()
       return
