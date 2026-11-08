@@ -680,6 +680,12 @@ class Links {
     )
   }
 
+  private cameOut(from: string, to: string): boolean {
+    const was = this.relative(from)
+    const now = this.relative(to)
+    return !!was && !!now && isHiddenPath(was) && !isHiddenPath(now)
+  }
+
   private relative(path: string): string | null {
     const root = this.root
     return root ? within(root, path) : null
@@ -691,6 +697,9 @@ class Links {
     const other = this.otherHolding(op.op === 'moved' ? op.from : op.path)
     if (other !== null && this.others.delete(other)) this.changed()
     if (op.kind === 'space') return undefined
+    if (op.op === 'moved' && this.cameOut(op.from, op.to)) {
+      return this.cameBack(op.to, op.kind === 'folder')
+    }
     if (op.op === 'moved') this.notesMoved(op.from, op.to)
     else if (op.op === 'removed') this.noteGone(op.path)
     else return this.cameBack(op.path, op.kind === 'folder')
