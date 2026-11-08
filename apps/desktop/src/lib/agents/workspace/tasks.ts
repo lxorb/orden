@@ -37,6 +37,7 @@ import { writeFile } from '../../workspace/write-file'
 import { DocError, notes } from '../docs'
 import { asked } from './asks'
 import { inTurn } from '../turns'
+import { stopWatch } from './stopping'
 import { nowOf } from '../../views/days'
 import { guardedAt } from '../../views/guard'
 import { withComment } from '../../views/task-body'
@@ -473,8 +474,10 @@ export async function editRows(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Set properties on ${named.length} notes`)
   if (question) return question
 
+  const going = await stopWatch(call)
   const changed: string[] = []
   for (const note of named) {
+    going(`changed ${changed.length ? changed.join(', ') : 'none'}`)
     try {
       const wrote = await rewritten(call, note, (text) => {
         const after = withProperties(text, properties as Record<string, unknown>)

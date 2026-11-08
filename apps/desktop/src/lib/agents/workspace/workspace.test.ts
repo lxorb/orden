@@ -362,6 +362,16 @@ const docs = {
 
 vi.mock('../docs', async () => ({ ...(await import('../docs/problem')), notes: docs }))
 
+const heard: ((event: { kind: string; agent: string | null }) => void)[] = []
+vi.mock('../settings/crate', () => ({
+  tauriCrate: {
+    hear: (on: (event: { kind: string; agent: string | null }) => void) => {
+      heard.push(on)
+      return Promise.resolve(() => undefined)
+    },
+  },
+}))
+
 vi.mock('../../commands', () => ({
   appCommands: () => [
     { id: 'files', label: 'File list', run: () => ran.push('files') },
@@ -1925,6 +1935,26 @@ describe('to-dos and bases', () => {
       }),
     ).toMatchObject({ result: { changed: ['Soup.md', 'Recipes.md'] } })
     expect(written()[0]).toBe('---\ndone: true\n---\n# Soup\n\n- [ ] Buy milk #shop\n')
+  })
+
+  test('properties stop being set once the reader presses the stop', async () => {
+    docs.writeNote.mockImplementationOnce((_agent: unknown, at: { path: string }) => {
+      for (const on of heard) on({ kind: 'paused', agent: 'claude-code' })
+      return Promise.resolve({ path: at.path, rev: 'r2', edits: 1, lines: [0] })
+    })
+    docs.writeNote.mockClear()
+    expect(
+      await call('edit_rows', {
+        space: 'Home',
+        paths: ['Soup.md', 'Recipes'],
+        properties: { done: true },
+      }),
+    ).toMatchObject({
+      status: 'error',
+      code: 'stopped',
+      message: expect.stringContaining('changed Soup.md') as string,
+    })
+    expect(docs.writeNote).toHaveBeenCalledTimes(1)
   })
 
   test('an agent that may only read cannot add one', async () => {
