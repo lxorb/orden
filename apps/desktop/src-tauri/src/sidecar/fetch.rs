@@ -83,6 +83,10 @@ fn inside(path: &Path) -> Option<PathBuf> {
         Some(Component::Normal(_)) => {}
         _ => return None,
     }
+    within(parts)
+}
+
+fn within<'a>(parts: impl Iterator<Item = Component<'a>>) -> Option<PathBuf> {
     let mut kept = PathBuf::new();
     for part in parts {
         match part {
@@ -118,7 +122,7 @@ fn written_out(
     Ok(())
 }
 
-fn untar(archive: &Path, into: &Path) -> Result<(), String> {
+fn untar(archive: &Path, into: &Path, bare: bool) -> Result<(), String> {
     let file = fs::File::open(archive).map_err(|error| error.to_string())?;
     let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(file));
     for entry in tar.entries().map_err(|error| error.to_string())? {
@@ -131,8 +135,13 @@ fn untar(archive: &Path, into: &Path) -> Result<(), String> {
         if !(kind.is_file() || kind.is_dir()) {
             continue;
         }
-        let Some(relative) = inside(&path) else {
-            if path.components().count() <= 1 && kind.is_dir() {
+        let relative = if bare {
+            within(path.components())
+        } else {
+            inside(&path)
+        };
+        let Some(relative) = relative else {
+            if (bare || path.components().count() <= 1) && kind.is_dir() {
                 continue;
             }
             return Err(format!("{} is outside where it belongs", path.display()));
@@ -171,7 +180,8 @@ fn unzip(archive: &Path, into: &Path) -> Result<(), String> {
 pub fn unpack(archive: &Path, packing: Packing, into: &Path) -> Result<(), String> {
     fs::create_dir_all(into).map_err(|error| error.to_string())?;
     match packing {
-        Packing::TarGz => untar(archive, into),
+        Packing::TarGz => untar(archive, into, false),
+        Packing::BareTarGz => untar(archive, into, true),
         Packing::Zip => unzip(archive, into),
     }
 }
@@ -255,6 +265,39 @@ mod tests {
         assert!(inside(Path::new("jdk")).is_none());
         assert!(inside(Path::new("jdk/../../etc/passwd")).is_none());
         assert!(inside(Path::new("/etc/passwd")).is_none());
+    }
+
+    #[test]
+    fn a_bare_tar_keeps_its_files_where_they_are_and_nothing_climbs_out() {
+        let folder = tempfile::tempdir().unwrap();
+        let archive = folder.path().join("a.tar.gz");
+        let made = |name: &str| {
+            let file = std::fs::File::create(&archive).unwrap();
+            let gz = flate2::write::GzEncoder::new(file, flate2::Compression::fast());
+            let mut tar = tar::Builder::new(gz);
+            let mut header = tar::Header::new_gnu();
+            header.set_size(3);
+            header.set_mode(0o755);
+            header.set_cksum();
+            tar.append_data(&mut header, "lib.so", &b"elf"[..]).unwrap();
+            let mut header = tar::Header::new_gnu();
+            header.set_size(1);
+            header.set_mode(0o644);
+            let raw = header.as_old_mut();
+            raw.name[..name.len()].copy_from_slice(name.as_bytes());
+            header.set_cksum();
+            tar.append(&header, &b"x"[..]).unwrap();
+            tar.into_inner().unwrap().finish().unwrap();
+        };
+        made("ok/inner");
+        let into = folder.path().join("out");
+        unpack(&archive, Packing::BareTarGz, &into).unwrap();
+        assert_eq!(std::fs::read(into.join("lib.so")).unwrap(), b"elf");
+        assert_eq!(std::fs::read(into.join("ok/inner")).unwrap(), b"x");
+        made("../escaped");
+        let into = folder.path().join("again");
+        assert!(unpack(&archive, Packing::BareTarGz, &into).is_err());
+        assert!(!folder.path().join("escaped").exists());
     }
 
     #[test]

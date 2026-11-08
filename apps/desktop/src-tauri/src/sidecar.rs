@@ -70,6 +70,8 @@ struct Instance {
     listeners: Mutex<HashMap<String, Listener>>,
     finished: Mutex<bool>,
     ending: AtomicBool,
+    complaint: Arc<Mutex<String>>,
+    complaining: Mutex<Option<std::thread::JoinHandle<()>>>,
     places: Places,
     vault: Arc<dyn Vault>,
 }
@@ -100,10 +102,27 @@ impl Instance {
             }
         };
         let stdin = child.stdin.take();
-        if let Some(mut stderr) = child.stderr.take() {
-            std::thread::spawn(move || {
-                let _ = std::io::copy(&mut stderr, &mut std::io::sink());
-            });
+        let complaint = Arc::new(Mutex::new(String::new()));
+        let mut complaining = None;
+        if let Some(stderr) = child.stderr.take() {
+            let complaint = complaint.clone();
+            complaining = Some(std::thread::spawn(move || {
+                let mut reader = BufReader::new(stderr);
+                let mut line = Vec::new();
+                loop {
+                    line.clear();
+                    match reader.read_until(b'\n', &mut line) {
+                        Ok(0) | Err(_) => break,
+                        Ok(_) => {
+                            let said = String::from_utf8_lossy(&line);
+                            let said = said.trim();
+                            if !said.is_empty() {
+                                *held(&complaint) = said.chars().take(400).collect();
+                            }
+                        }
+                    }
+                }
+            }));
         }
         let stdout = child.stdout.take();
         let instance = Arc::new(Self {
@@ -113,6 +132,8 @@ impl Instance {
             listeners: Mutex::new(HashMap::new()),
             finished: Mutex::new(false),
             ending: AtomicBool::new(false),
+            complaint,
+            complaining: Mutex::new(complaining),
             places,
             vault,
         });
@@ -198,6 +219,21 @@ impl Instance {
         let mut listeners = held(&self.listeners);
         listeners.retain(|_, one| one.owner != owner);
         listeners.is_empty()
+    }
+
+    fn stopped(&self) -> String {
+        let until = Instant::now() + Duration::from_secs(1);
+        if let Some(reading) = held(&self.complaining).take() {
+            while !reading.is_finished() && Instant::now() < until {
+                std::thread::sleep(Duration::from_millis(20));
+            }
+        }
+        let complaint = held(&self.complaint).clone();
+        if complaint.is_empty() {
+            "signal-cli stopped".to_owned()
+        } else {
+            format!("signal-cli stopped: {complaint}")
+        }
     }
 
     fn finish(&self, reason: &str) {
@@ -305,7 +341,7 @@ impl Sidecars {
         std::thread::spawn(move || {
             read_lines(&instance, stdout);
             let _turn = held(&sidecars.turn);
-            instance.finish("signal-cli stopped");
+            instance.finish(&instance.stopped());
             sidecars.gone(&instance);
         });
         Ok(id)
@@ -410,11 +446,15 @@ fn root(app: &AppHandle, program: &Program) -> Result<PathBuf, String> {
 }
 
 fn command_for(program: &Program, places: &Places, args: &[String]) -> Result<Command, String> {
-    let runtime = program
-        .runtime()
-        .ok_or_else(|| format!("{} does not run on this computer", program.name))?;
+    let runtime = program.runnable()?;
     let mut command = Command::new(places.install.join("jre").join(runtime.java));
     let classpath = places.install.join("app").join("lib").join("*");
+    if runtime.native.is_some() {
+        command.arg(format!(
+            "-Djava.library.path={}",
+            places.install.join("native").display()
+        ));
+    }
     command
         .arg("-Xmx512m")
         .arg("-XX:+UseSerialGC")
@@ -451,7 +491,7 @@ pub async fn sidecar_ready(app: AppHandle, program: String) -> Result<bool, Stri
     crate::lane::off_the_runtime(move || -> Result<bool, String> {
         let program = known(&program)?;
         let places = Places::under(&root(&app, program)?, program);
-        Ok(program.runtime().is_some() && places.install.join("ready").is_file())
+        Ok(program.runnable().is_ok() && places.install.join("ready").is_file())
     })
     .await
 }
@@ -461,20 +501,23 @@ async fn install(
     program: &'static Program,
     progress: &mut impl FnMut(Fetched),
 ) -> Result<(), String> {
-    let runtime = program
-        .runtime()
-        .ok_or_else(|| format!("{} does not run on this computer", program.name))?;
+    let runtime = program.runnable()?;
     let downloads = root.join("downloads");
     let app_archive = downloads.join(format!("{}-app", program.version));
     let jre_archive = downloads.join(format!("{}-jre", program.version));
-    let total = program.archive.size + runtime.archive.size;
+    let native_archive = downloads.join(format!("{}-native", program.version));
+    let total = program.archive.size
+        + runtime.archive.size
+        + runtime.native.as_ref().map_or(0, |pin| pin.size);
     let mut done = 0;
     progress(Fetched { done, total });
     let client = fetch::client()?;
-    for (pin, path) in [
-        (&program.archive, &app_archive),
-        (&runtime.archive, &jre_archive),
-    ] {
+    let wanted = [
+        Some((&program.archive, &app_archive)),
+        Some((&runtime.archive, &jre_archive)),
+        runtime.native.as_ref().map(|pin| (pin, &native_archive)),
+    ];
+    for (pin, path) in wanted.into_iter().flatten() {
         fetch::fetch(&client, pin, path, &mut |more| {
             done += more;
             progress(Fetched { done, total });
@@ -487,6 +530,10 @@ async fn install(
         let _ = fs::remove_dir_all(&part);
         let unpacked = fetch::unpack(&app_archive, program.archive.packing, &part.join("app"))
             .and_then(|()| fetch::unpack(&jre_archive, runtime.archive.packing, &part.join("jre")))
+            .and_then(|()| match &runtime.native {
+                Some(pin) => fetch::unpack(&native_archive, pin.packing, &part.join("native")),
+                None => Ok(()),
+            })
             .and_then(|()| {
                 fs::write(part.join("ready"), program.version).map_err(|e| e.to_string())
             });
@@ -633,15 +680,170 @@ mod tests {
                 assert!(runtime.archive.url.starts_with("https://github.com/"));
             }
         }
-        let signal = catalog::program("signal-cli").unwrap();
-        for (os, arch) in [
+        for runtime in catalog::SIGNAL_CLI.runtimes {
+            if let Some(native) = runtime.native {
+                assert_eq!(native.sha256.len(), 64);
+                assert!(native.url.starts_with("https://github.com/"));
+            }
+        }
+    }
+
+    fn shipped_targets() -> Vec<(String, String)> {
+        let release = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../../.github/workflows/release.yml");
+        let text = std::fs::read_to_string(release).unwrap();
+        let mut found = Vec::new();
+        for line in text.lines().filter(|one| one.contains("target:")) {
+            for word in line.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '-')) {
+                let Some((arch, rest)) = word.split_once('-') else {
+                    continue;
+                };
+                if !matches!(arch, "x86_64" | "aarch64") {
+                    continue;
+                }
+                let os = if rest.contains("windows") {
+                    "windows"
+                } else if rest.contains("darwin") {
+                    "macos"
+                } else if rest.contains("linux") {
+                    "linux"
+                } else {
+                    continue;
+                };
+                found.push((os.to_owned(), arch.to_owned()));
+            }
+        }
+        found
+    }
+
+    #[test]
+    fn signal_cli_runs_on_every_computer_orden_is_released_for() {
+        let shipped = shipped_targets();
+        for wanted in [
+            ("windows", "x86_64"),
+            ("windows", "aarch64"),
             ("linux", "x86_64"),
+            ("linux", "aarch64"),
             ("macos", "x86_64"),
             ("macos", "aarch64"),
-            ("windows", "x86_64"),
         ] {
-            assert!(signal.runtime_on(os, arch).is_some(), "{os} {arch}");
+            assert!(
+                shipped.contains(&(wanted.0.to_owned(), wanted.1.to_owned())),
+                "{wanted:?} is not in release.yml"
+            );
         }
+        for (os, arch) in &shipped {
+            assert!(
+                catalog::SIGNAL_CLI.runnable_on(os, arch).is_ok(),
+                "Orden is released for {os} {arch} but cannot run signal-cli there"
+            );
+        }
+    }
+
+    #[test]
+    fn windows_on_arm_runs_the_x64_java_because_signal_ships_no_arm_library_for_windows() {
+        let arm = catalog::SIGNAL_CLI
+            .runnable_on("windows", "aarch64")
+            .unwrap();
+        let x64 = catalog::SIGNAL_CLI
+            .runnable_on("windows", "x86_64")
+            .unwrap();
+        assert_eq!(arm.archive.sha256, x64.archive.sha256);
+        let linux = catalog::SIGNAL_CLI.runnable_on("linux", "aarch64").unwrap();
+        assert!(linux.native.is_some());
+        assert!(linux.archive.url.contains("aarch64_linux"));
+    }
+
+    #[test]
+    fn a_computer_it_cannot_run_on_is_named_with_the_reason() {
+        let refused = catalog::SIGNAL_CLI
+            .runnable_on("linux", "riscv64")
+            .unwrap_err();
+        assert_eq!(
+            refused,
+            "signal-cli does not run on Linux on riscv64: there is no Java and Signal library made for it"
+        );
+        assert!(catalog::SIGNAL_CLI
+            .runnable_on("freebsd", "x86_64")
+            .unwrap_err()
+            .contains("freebsd on x64"));
+    }
+}
+
+#[cfg(test)]
+mod real {
+    use super::{catalog, command_for, install, Heard, Out, Places, Sidecars};
+    use crate::sidecar::sealed::Vault;
+    use std::sync::mpsc::channel;
+    use std::sync::{Arc, Mutex};
+    use std::time::{Duration, Instant};
+
+    #[derive(Default)]
+    struct Kept(Mutex<Option<String>>);
+
+    impl Vault for Kept {
+        fn get(&self) -> Result<Option<String>, String> {
+            Ok(self.0.lock().unwrap().clone())
+        }
+        fn set(&self, value: &str) -> Result<(), String> {
+            *self.0.lock().unwrap() = Some(value.to_owned());
+            Ok(())
+        }
+    }
+
+    #[test]
+    #[ignore = "downloads signal-cli and Java from the internet"]
+    fn the_real_signal_cli_is_downloaded_checked_started_and_offers_a_link_code() {
+        let folder = tempfile::tempdir().unwrap();
+        let program = &catalog::SIGNAL_CLI;
+        let mut last = (0, 0);
+        tauri::async_runtime::block_on(install(
+            folder.path().to_path_buf(),
+            program,
+            &mut |fetched| last = (fetched.done, fetched.total),
+        ))
+        .unwrap();
+        assert!(last.1 > 0);
+        assert_eq!(last.0, last.1);
+        let places = Places::under(folder.path(), program);
+        assert!(places.install.join("ready").is_file());
+        let args: Vec<String> = program.args.iter().map(|one| (*one).to_owned()).collect();
+        let command = command_for(program, &places, &args).unwrap();
+        let (tell, told) = channel();
+        let tell = Mutex::new(tell);
+        let out: Out = Arc::new(move |heard| {
+            let said = match heard {
+                Heard::Line(line) => Ok(String::from_utf8_lossy(&line).into_owned()),
+                Heard::End(reason) => Err(reason),
+            };
+            tell.lock().unwrap().send(said).is_ok()
+        });
+        let sidecars = Arc::new(Sidecars::default());
+        let vault: Arc<dyn Vault> = Arc::new(Kept::default());
+        let id = sidecars
+            .open(program, args, "main", &out, || Ok((command, places, vault)))
+            .unwrap();
+        let instance = sidecars.holding(&id).unwrap();
+        instance
+            .write(
+                &id,
+                "main",
+                b"{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"startLink\"}\n",
+            )
+            .unwrap();
+        let until = Instant::now() + Duration::from_secs(240);
+        let mut heard = Vec::new();
+        let link = loop {
+            let left = until.saturating_duration_since(Instant::now());
+            match told.recv_timeout(left) {
+                Ok(Ok(line)) if line.contains("sgnl://linkdevice") => break line,
+                Ok(Ok(line)) => heard.push(line),
+                Ok(Err(reason)) => panic!("signal-cli ended: {reason}; heard {heard:?}"),
+                Err(waited) => panic!("signal-cli gave no link code ({waited}); heard {heard:?}"),
+            }
+        };
+        assert!(link.contains("\"id\":\"1\""));
+        sidecars.end_all();
     }
 }
 
@@ -784,6 +986,29 @@ mod running {
         );
         assert!(sidecars.holding(&id).is_none());
         assert!(!Places::under(folder.path(), program).live.exists());
+    }
+
+    #[test]
+    fn a_program_that_dies_says_its_last_complaint() {
+        let folder = tempfile::tempdir().unwrap();
+        let program = catalog::program("signal-cli").unwrap();
+        let vault: Arc<dyn Vault> = Arc::new(Kept::default());
+        let sidecars = Arc::new(Sidecars::default());
+        let (out, told) = heard();
+        let mut command = Command::new("sh");
+        command.arg("-c").arg(
+            "echo 'WARN starting' >&2; echo 'Error: UnsatisfiedLinkError signal_jni' >&2; \
+             echo '' >&2; exit 1",
+        );
+        sidecars
+            .open(program, vec!["jsonRpc".to_owned()], "main", &out, || {
+                Ok((command, Places::under(folder.path(), program), vault))
+            })
+            .unwrap();
+        assert_eq!(
+            told.recv_timeout(Duration::from_secs(5)).unwrap(),
+            Err("signal-cli stopped: Error: UnsatisfiedLinkError signal_jni".to_owned())
+        );
     }
 
     #[test]
