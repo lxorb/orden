@@ -1,6 +1,7 @@
 import { addDays, answer, builtinView, readBase, writeBase } from '@orden/bases'
 import { changedTask } from '@orden/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
+import { linearly } from '../../../../../scripts/growth'
 import { daysShown, occurrences, place, placedByDay, stepped, timeOf } from './calendar'
 import { donutPaths, heights, linePath, seriesOf, settingsOf, totalOf } from './chart'
 import { changeOf, columnsOf, defaultColumns, editorOf, holdsOf, knownProperties } from './columns'
@@ -594,6 +595,36 @@ describe('the calendar', () => {
     expect(all.map((one) => one.day)).toEqual(['2026-10-05', '2026-10-06'])
     const later = occurrences(place(pill, '2026-10-04'), '2026-10-20', 62, '2026-10-06')
     expect(later.map((one) => one.day)).toEqual(['2026-10-06'])
+  })
+
+  test('a repeat for so many times shows the same days, whichever weeks were drawn before', () => {
+    const pill = taskRow('Health.md', '- [ ] Pill 🔁 every 2 days for 6 times 📅 2026-10-04')
+    const placed = place(pill, '2026-10-04')
+    expect(occurrences(placed, '2026-12-31').map((one) => one.day)).toEqual([
+      '2026-10-06',
+      '2026-10-08',
+      '2026-10-10',
+      '2026-10-12',
+      '2026-10-14',
+    ])
+    expect(occurrences(placed, '2026-10-09', 62, '2026-10-07').map((one) => one.day)).toEqual([
+      '2026-10-08',
+    ])
+    expect(occurrences(placed, '2026-12-31', 2, '2026-10-07').map((one) => one.day)).toEqual([
+      '2026-10-08',
+      '2026-10-10',
+    ])
+  })
+
+  test('a repeat for many times, its day long past, is not walked again from that day each week drawn', () => {
+    const pill = taskRow('Health.md', '- [ ] Pill 🔁 every day for 100000 times 📅 2016-01-04')
+    const placed = place(pill, '2016-01-04')
+    linearly((weeks) => {
+      for (let week = 0; week < weeks; week++) {
+        const first = addDays('2016-01-04', week * 7)
+        occurrences(placed, addDays(first, 6), 62, first)
+      }
+    }, 400)
   })
 
   test('keeps what has no day for the tray', () => {
