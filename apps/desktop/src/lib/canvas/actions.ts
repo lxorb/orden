@@ -295,7 +295,7 @@ export const run = {
     const relative =
       accountAddress(stored) ?? (root && notePath ? spaceRelative(root, notePath, stored) : stored)
     if (!relative) return []
-    const size = ownSize('picture')
+    const size = await pictureSize(file)
 
     return [putFile(store, relative, spotted(where, size.width, size.height))]
   },
@@ -659,6 +659,23 @@ async function askLabel(store: CanvasStore, id: string) {
 
   const answer = await prompt.ask({ title: t('Name this'), value: was, confirmLabel: key('Save') })
   if (answer !== null) store.edit(withLabel(store.canvas, id, answer))
+}
+
+async function pictureSize(file: File): Promise<{ width: number; height: number }> {
+  const own = ownSize('picture')
+  if (typeof createImageBitmap !== 'function') return own
+  const drawn = await createImageBitmap(file).catch(() => null)
+  if (!drawn) return own
+  const { width, height } = drawn
+  drawn.close()
+  if (!width || !height) return own
+
+  const longest = Math.max(width, height)
+  const scale = Math.min(own.width / longest, Math.max(1, (GRID * 4) / longest))
+  return {
+    width: Math.max(GRID, Math.round(width * scale)),
+    height: Math.max(GRID, Math.round(height * scale)),
+  }
 }
 
 function ownSize(tool: PutTool): { width: number; height: number } {
