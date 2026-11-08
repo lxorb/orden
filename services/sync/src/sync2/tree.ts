@@ -17,6 +17,7 @@ import {
 import { LIST_KEY } from '@orden/bases/todo-lists'
 import { metaFromText, metaText } from '@orden/sync-core/meta'
 import { chunks } from '../bound'
+import { type Moved, rememberMoves } from '../blog/paths'
 import { picturesOfMeta } from '../pictures'
 import { newId, now } from '../crypto'
 import type { Env } from '../types'
@@ -181,6 +182,7 @@ export class Tree {
   readonly content = new Map<string, Content>()
   private readonly answered = new Map<string, OpResult>()
   private unmarked = false
+  moves: Moved[] = []
 
   constructor(
     readonly spaceId: string,
@@ -380,6 +382,11 @@ export class Tree {
   statements(env: Env): D1PreparedStatement[] | null {
     const moved = this.moved()
     const at = now()
+    this.moves = [...moved].flatMap(([id, to]) => {
+      const from = this.paths.get(id)
+      const entry = this.state.entries.get(id)
+      return from === undefined || !entry || entry.deleted ? [] : [{ id, from, to }]
+    })
 
     const folders: Record<string, unknown>[] = []
     const newFolders: Record<string, unknown>[] = []
@@ -1019,6 +1026,7 @@ export async function changeTree<T>(
 
     try {
       await env.DB.batch(batch)
+      await rememberMoves(env, spaceId, tree.moves).catch(() => undefined)
       return {
         value,
         cursor: tree.state.cursor,
