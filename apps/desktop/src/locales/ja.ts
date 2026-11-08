@@ -1141,6 +1141,7 @@ export const ja: Dictionary = {
   Helpers: 'ヘルパー',
   'Start helpers on your AI accounts': 'AI アカウントでヘルパーを起動',
   Delegated: '依頼',
+  'Follow the theme': 'テーマに合わせる',
   'Code theme: {name}': 'コードテーマ: {name}',
   'Delete a layout': 'レイアウトを削除',
   Default: '既定',

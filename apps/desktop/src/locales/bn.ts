@@ -128,7 +128,7 @@ export const bn: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'নোট ও কমান্ড, যেকোনো কিছু খুঁজতে {key} চাপুন।',
   'Show markdown while writing': 'লেখার সময় মার্কডাউন দেখান',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'নোট সোর্স মোডে খুলুন',
   Pointer: 'পয়েন্টার',
   'Pointing hand on buttons': 'বোতামের উপর নির্দেশক হাত',
   'Add task': 'কাজ যোগ করুন',
@@ -1144,6 +1144,7 @@ export const bn: Dictionary = {
   Helpers: 'সহায়ক',
   'Start helpers on your AI accounts': 'আপনার এআই অ্যাকাউন্টে সহায়ক চালু করুন',
   Delegated: 'অর্পণ করা হয়েছে',
+  'Follow the theme': 'থিম অনুসরণ করুন',
   'Code theme: {name}': 'কোড থিম: {name}',
   'Delete a layout': 'লেআউট মুছুন',
   Default: 'ডিফল্ট',
@@ -3585,7 +3586,7 @@ export const bn: Dictionary = {
   'Signed out of WhatsApp. Connect again.': 'WhatsApp থেকে সাইন আউট হয়েছে। আবার সংযুক্ত করুন।',
   'Scan with WhatsApp on your phone': 'আপনার ফোনের WhatsApp দিয়ে স্ক্যান করুন',
   'WhatsApp > Settings > Linked devices > Link a device':
-    'WhatsApp > Settings > Linked devices > Link a device',
+    'WhatsApp > সেটিংস > লিঙ্ক করা ডিভাইস > ডিভাইস লিঙ্ক করুন',
   'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
     'আপনার ফোনের WhatsApp-এ Settings > Linked devices > Link a device > Link with phone number instead খুলুন, এবং এই কোডটি লিখুন',
   'The QR code expired. Try again.': 'QR কোডের মেয়াদ শেষ হয়েছে। আবার চেষ্টা করুন।',

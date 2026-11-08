@@ -1184,6 +1184,7 @@ export const uk: Dictionary = {
   Helpers: 'Помічники',
   'Start helpers on your AI accounts': 'Запускати помічників на ваших облікових записах ШІ',
   Delegated: 'Доручено',
+  'Follow the theme': 'Відповідно до теми',
   'Code theme: {name}': 'Тема коду: {name}',
   'Delete a layout': 'Видалити макет',
   Default: 'За умовчанням',

@@ -56,6 +56,7 @@ import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { turnedOff } from './kind-choice'
 import { composerCommands } from './composer-commands'
+import { paletteName } from './highlight'
 import { key, t } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import type { MenuItem } from './menu-item'
@@ -1384,7 +1385,7 @@ export function appCommands(view?: EditorView): Command[] {
         }))),
     ...CODE_PALETTES.map((palette) => ({
       id: `code-theme:${palette.id}`,
-      label: t('Code theme: {name}', { name: palette.name }),
+      label: t('Code theme: {name}', { name: paletteName(palette) }),
       checked: palette.id === modes.codeTheme,
       run: () => modes.setCodeTheme(palette.id, view),
     })),

@@ -1149,6 +1149,7 @@ export const gsw: Dictionary = {
   Helpers: 'Helfer',
   'Start helpers on your AI accounts': 'Helfer uf dine KI-Konte starte',
   Delegated: 'Übergeh',
+  'Follow the theme': 'Em Design folge',
   'Code theme: {name}': 'Code-Design: {name}',
   'Delete a layout': 'Es Layout lösche',
   Default: 'Standard',

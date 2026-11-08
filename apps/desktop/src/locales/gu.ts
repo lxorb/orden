@@ -127,7 +127,7 @@ export const gu: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'નોંધો અને આદેશો, કંઈપણ શોધવા {key} દબાવો.',
   'Show markdown while writing': 'લખતી વખતે માર્કડાઉન બતાવો',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'નોંધો સ્રોત રીતમાં ખોલો',
   Pointer: 'પોઇન્ટર',
   'Pointing hand on buttons': 'બટનો પર નિર્દેશ કરતો હાથ',
   'Add task': 'કાર્ય ઉમેરો',
@@ -1034,7 +1034,7 @@ export const gu: Dictionary = {
   Contrast: 'કોન્ટ્રાસ્ટ',
   Glass: 'કાચ',
   Classic: 'ક્લાસિક',
-  'Front matter': 'Front matter',
+  'Front matter': 'ફ્રન્ટ મેટર',
   Picture: 'ચિત્ર',
   Comment: 'ટિપ્પણી',
   'Always on top': 'હંમેશાં ઉપર',
@@ -1143,6 +1143,7 @@ export const gu: Dictionary = {
   Helpers: 'સહાયકો',
   'Start helpers on your AI accounts': 'તમારા AI એકાઉન્ટ પર સહાયકો શરૂ કરો',
   Delegated: 'સોંપ્યું',
+  'Follow the theme': 'થીમને અનુસરો',
   'Code theme: {name}': 'કોડ થીમ: {name}',
   'Delete a layout': 'માંડણી કાઢો',
   Default: 'મૂળ',
@@ -3574,7 +3575,7 @@ export const gu: Dictionary = {
   'Signed out of WhatsApp. Connect again.': 'WhatsApp માંથી સાઇન આઉટ થયા. ફરી કનેક્ટ કરો.',
   'Scan with WhatsApp on your phone': 'તમારા ફોન પરના WhatsApp થી સ્કેન કરો',
   'WhatsApp > Settings > Linked devices > Link a device':
-    'WhatsApp > Settings > Linked devices > Link a device',
+    'WhatsApp > સેટિંગ > લિંક કરેલા ડિવાઇસ > ડિવાઇસ લિંક કરો',
   'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
     'તમારા ફોન પરના WhatsApp માં Settings > Linked devices > Link a device > Link with phone number instead ખોલો અને આ કોડ દાખલ કરો',
   'The QR code expired. Try again.': 'QR કોડની મુદત પૂરી થઈ ગઈ. ફરી પ્રયાસ કરો.',

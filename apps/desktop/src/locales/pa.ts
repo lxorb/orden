@@ -127,7 +127,7 @@ export const pa: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'ਨੋਟ ਅਤੇ ਕਮਾਂਡਾਂ, ਕੁਝ ਵੀ ਲੱਭਣ ਲਈ {key} ਦਬਾਓ।',
   'Show markdown while writing': 'ਲਿਖਦੇ ਸਮੇਂ ਮਾਰਕਡਾਊਨ ਦਿਖਾਓ',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'ਨੋਟਾਂ ਸਰੋਤ ਰੂਪ ਵਿੱਚ ਖੋਲ੍ਹੋ',
   Pointer: 'ਪੁਆਇੰਟਰ',
   'Pointing hand on buttons': 'ਬਟਨਾਂ ਉੱਤੇ ਇਸ਼ਾਰਾ ਕਰਦਾ ਹੱਥ',
   'Add task': 'ਕੰਮ ਜੋੜੋ',
@@ -1039,7 +1039,7 @@ export const pa: Dictionary = {
   Contrast: 'ਕੰਟਰਾਸਟ',
   Glass: 'ਸ਼ੀਸ਼ਾ',
   Classic: 'ਕਲਾਸਿਕ',
-  'Front matter': 'Front matter',
+  'Front matter': 'ਫ਼ਰੰਟ ਮੈਟਰ',
   Picture: 'ਤਸਵੀਰ',
   Comment: 'ਟਿੱਪਣੀ',
   'Always on top': 'ਹਮੇਸ਼ਾ ਉੱਪਰ',
@@ -1149,6 +1149,7 @@ export const pa: Dictionary = {
   Helpers: 'ਸਹਾਇਕ',
   'Start helpers on your AI accounts': 'ਆਪਣੇ AI ਖਾਤਿਆਂ ਤੇ ਸਹਾਇਕ ਸ਼ੁਰੂ ਕਰੋ',
   Delegated: 'ਸੌਂਪਿਆ',
+  'Follow the theme': 'ਥੀਮ ਮੁਤਾਬਕ',
   'Code theme: {name}': 'ਕੋਡ ਥੀਮ: {name}',
   'Delete a layout': 'ਖਾਕਾ ਮਿਟਾਓ',
   Default: 'ਮੂਲ',
@@ -3601,7 +3602,7 @@ export const pa: Dictionary = {
   'Signed out of WhatsApp. Connect again.': 'WhatsApp ਤੋਂ ਸਾਈਨ ਆਊਟ ਹੋ ਗਏ। ਦੁਬਾਰਾ ਕਨੈਕਟ ਕਰੋ।',
   'Scan with WhatsApp on your phone': 'ਆਪਣੇ ਫ਼ੋਨ ਦੇ WhatsApp ਨਾਲ ਸਕੈਨ ਕਰੋ',
   'WhatsApp > Settings > Linked devices > Link a device':
-    'WhatsApp > Settings > Linked devices > Link a device',
+    'WhatsApp > ਸੈਟਿੰਗਾਂ > ਲਿੰਕ ਕੀਤੇ ਡੀਵਾਈਸ > ਡੀਵਾਈਸ ਲਿੰਕ ਕਰੋ',
   'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
     'ਆਪਣੇ ਫ਼ੋਨ ਦੇ WhatsApp ਵਿੱਚ Settings > Linked devices > Link a device > Link with phone number instead ਖੋਲ੍ਹੋ, ਅਤੇ ਇਹ ਕੋਡ ਦਰਜ ਕਰੋ',
   'The QR code expired. Try again.': 'QR ਕੋਡ ਦੀ ਮਿਆਦ ਖ਼ਤਮ ਹੋ ਗਈ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',

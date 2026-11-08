@@ -1141,6 +1141,7 @@ export const id: Dictionary = {
   Helpers: 'Pembantu',
   'Start helpers on your AI accounts': 'Jalankan pembantu di akun AI Anda',
   Delegated: 'Didelegasikan',
+  'Follow the theme': 'Ikuti tema',
   'Code theme: {name}': 'Tema kode: {name}',
   'Delete a layout': 'Hapus tata letak',
   Default: 'Bawaan',

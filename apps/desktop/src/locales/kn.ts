@@ -130,7 +130,7 @@ export const kn: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'ಟಿಪ್ಪಣಿಗಳು ಮತ್ತು ಆಜ್ಞೆಗಳು, ಏನನ್ನಾದರೂ ಹುಡುಕಲು {key} ಒತ್ತಿ.',
   'Show markdown while writing': 'ಬರೆಯುವಾಗ ಮಾರ್ಕ್‌ಡೌನ್ ತೋರಿಸಿ',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'ಟಿಪ್ಪಣಿಗಳನ್ನು ಸೋರ್ಸ್ ಮೋಡ್‌ನಲ್ಲಿ ತೆರೆಯಿರಿ',
   Pointer: 'ಪಾಯಿಂಟರ್',
   'Pointing hand on buttons': 'ಬಟನ್‌ಗಳ ಮೇಲೆ ಸೂಚಿಸುವ ಕೈ',
   'Add task': 'ಕಾರ್ಯ ಸೇರಿಸಿ',
@@ -1154,6 +1154,7 @@ export const kn: Dictionary = {
   Helpers: 'ಸಹಾಯಕರು',
   'Start helpers on your AI accounts': 'ನಿಮ್ಮ AI ಖಾತೆಗಳಲ್ಲಿ ಸಹಾಯಕರನ್ನು ಪ್ರಾರಂಭಿಸಿ',
   Delegated: 'ವಹಿಸಲಾಗಿದೆ',
+  'Follow the theme': 'ಥೀಮ್ ಅನುಸರಿಸಿ',
   'Code theme: {name}': 'ಕೋಡ್ ಥೀಮ್: {name}',
   'Delete a layout': 'ಲೇಔಟ್ ಅಳಿಸಿ',
   Default: 'ಡಿಫಾಲ್ಟ್',
@@ -3629,7 +3630,7 @@ export const kn: Dictionary = {
   'Signed out of WhatsApp. Connect again.': 'WhatsApp‌ನಿಂದ ಸೈನ್ ಔಟ್ ಆಗಿದೆ. ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ.',
   'Scan with WhatsApp on your phone': 'ನಿಮ್ಮ ಫೋನ್‌ನ WhatsApp‌ನಿಂದ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ',
   'WhatsApp > Settings > Linked devices > Link a device':
-    'WhatsApp > Settings > Linked devices > Link a device',
+    'WhatsApp > ಸೆಟ್ಟಿಂಗ್‌ಗಳು > ಲಿಂಕ್ ಮಾಡಿದ ಸಾಧನಗಳು > ಸಾಧನವನ್ನು ಲಿಂಕ್ ಮಾಡಿ',
   'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
     'ನಿಮ್ಮ ಫೋನ್‌ನ WhatsApp‌ನಲ್ಲಿ Settings > Linked devices > Link a device > Link with phone number instead ತೆರೆಯಿರಿ, ಮತ್ತು ಈ ಕೋಡ್ ನಮೂದಿಸಿ',
   'The QR code expired. Try again.': 'QR ಕೋಡ್ ಅವಧಿ ಮುಗಿದಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',

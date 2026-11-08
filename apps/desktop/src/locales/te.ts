@@ -128,7 +128,7 @@ export const te: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'నోట్‌లు, ఆదేశాలు, ఏదైనా కనుగొనడానికి {key} నొక్కండి.',
   'Show markdown while writing': 'రాస్తున్నప్పుడు మార్క్‌డౌన్ చూపించు',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'నోట్‌లను సోర్స్ మోడ్‌లో తెరువు',
   Pointer: 'పాయింటర్',
   'Pointing hand on buttons': 'బటన్‌లపై సూచించే చేయి',
   'Add task': 'పని జోడించు',
@@ -1149,6 +1149,7 @@ export const te: Dictionary = {
   Helpers: 'సహాయకులు',
   'Start helpers on your AI accounts': 'మీ AI ఖాతాలలో సహాయకులను ప్రారంభించండి',
   Delegated: 'అప్పగించారు',
+  'Follow the theme': 'థీమ్‌ను అనుసరించు',
   'Code theme: {name}': 'కోడ్ థీమ్: {name}',
   'Delete a layout': 'లేఅవుట్ తొలగించు',
   Default: 'డిఫాల్ట్',
@@ -3608,7 +3609,7 @@ export const te: Dictionary = {
     'WhatsApp నుండి సైన్ అవుట్ అయ్యారు. మళ్లీ కనెక్ట్ చేయండి.',
   'Scan with WhatsApp on your phone': 'మీ ఫోన్‌లోని WhatsApp‌తో స్కాన్ చేయండి',
   'WhatsApp > Settings > Linked devices > Link a device':
-    'WhatsApp > Settings > Linked devices > Link a device',
+    'WhatsApp > సెట్టింగ్‌లు > లింక్ చేసిన పరికరాలు > పరికరాన్ని లింక్ చేయండి',
   'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
     'మీ ఫోన్‌లోని WhatsApp‌లో Settings > Linked devices > Link a device > Link with phone number instead తెరిచి, ఈ కోడ్‌ను నమోదు చేయండి',
   'The QR code expired. Try again.': 'QR కోడ్ గడువు ముగిసింది. మళ్లీ ప్రయత్నించండి.',

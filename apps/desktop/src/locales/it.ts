@@ -1169,6 +1169,7 @@ export const it: Dictionary = {
   Helpers: 'Aiutanti',
   'Start helpers on your AI accounts': 'Avviare aiutanti sui tuoi account IA',
   Delegated: 'Delegato',
+  'Follow the theme': 'Segui il tema',
   'Code theme: {name}': 'Tema del codice: {name}',
   'Delete a layout': 'Elimina un layout',
   Default: 'Predefinito',

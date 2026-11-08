@@ -1,6 +1,7 @@
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
 import { CODE_PALETTES, type CodePalette, fenceLanguages } from '@orden/editor'
 import { everySurface } from '@orden/themes/write'
+import { t } from './i18n.svelte'
 
 export type Parser = LanguageSupport['language']['parser']
 
@@ -24,6 +25,9 @@ export async function loadParsers(names: Iterable<string>): Promise<Map<string, 
 
   return parsers
 }
+
+export const paletteName = (palette: CodePalette): string =>
+  palette.id === 'follow' ? t('Follow the theme') : palette.name
 
 export function paletteCss(palette: CodePalette): string {
   const colours: [string, string][] = [

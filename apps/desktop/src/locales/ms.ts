@@ -1142,6 +1142,7 @@ export const ms: Dictionary = {
   Helpers: 'Pembantu',
   'Start helpers on your AI accounts': 'Mulakan pembantu pada akaun AI anda',
   Delegated: 'Diwakilkan',
+  'Follow the theme': 'Ikut tema',
   'Code theme: {name}': 'Tema kod: {name}',
   'Delete a layout': 'Hapuskan susun atur',
   Default: 'Lalai',

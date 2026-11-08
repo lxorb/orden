@@ -1134,6 +1134,7 @@ export const ko: Dictionary = {
   Helpers: '도우미',
   'Start helpers on your AI accounts': 'AI 계정에서 도우미 시작',
   Delegated: '맡김',
+  'Follow the theme': '테마 따라가기',
   'Code theme: {name}': '코드 테마: {name}',
   'Delete a layout': '레이아웃 삭제',
   Default: '기본',

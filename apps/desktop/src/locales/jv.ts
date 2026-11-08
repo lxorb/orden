@@ -124,7 +124,7 @@ export const jv: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'Pencet {key} kanggo nemokake apa wae, cathetan utawa prentah.',
   'Show markdown while writing': 'Tampilaké Markdown nalika nulis',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'Bukak cathetan ing mode sumber',
   Pointer: 'Penuding',
   'Pointing hand on buttons': 'Tangan nuding ing tombol',
   'Add task': 'Tambah tugas',
@@ -1138,6 +1138,7 @@ export const jv: Dictionary = {
   Helpers: 'Pambantu',
   'Start helpers on your AI accounts': 'Miwiti pambantu ing akun AI sampeyan',
   Delegated: 'Dipasrahake',
+  'Follow the theme': 'Tut wuri tema',
   'Code theme: {name}': 'Tema kode: {name}',
   'Delete a layout': 'Busak tata letak',
   Default: 'Gawan',

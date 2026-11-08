@@ -128,7 +128,7 @@ export const ta: Dictionary = {
   'Press {key} to find anything, notes and commands alike.':
     'குறிப்புகளும் கட்டளைகளும், எதையும் கண்டுபிடிக்க {key} அழுத்தவும்.',
   'Show markdown while writing': 'எழுதும்போது மார்க்டவுனைக் காட்டு',
-  'Open notes in source mode': 'Open notes in source mode',
+  'Open notes in source mode': 'குறிப்புகளை மூல நிலையில் திற',
   Pointer: 'சுட்டி',
   'Pointing hand on buttons': 'பொத்தான்களில் சுட்டும் கை',
   'Add task': 'பணியைச் சேர்',
@@ -1157,6 +1157,7 @@ export const ta: Dictionary = {
   Helpers: 'உதவியாளர்கள்',
   'Start helpers on your AI accounts': 'உங்கள் AI கணக்குகளில் உதவியாளர்களைத் தொடங்கு',
   Delegated: 'ஒப்படைத்தது',
+  'Follow the theme': 'தீமைப் பின்பற்று',
   'Code theme: {name}': 'குறியீட்டுத் தீம்: {name}',
   'Delete a layout': 'தளவமைப்பை நீக்கு',
   Default: 'இயல்புநிலை',
@@ -3655,7 +3656,7 @@ export const ta: Dictionary = {
     'WhatsApp-இலிருந்து வெளியேறிவிட்டீர்கள். மீண்டும் இணைக்கவும்.',
   'Scan with WhatsApp on your phone': 'உங்கள் தொலைபேசியிலுள்ள WhatsApp-ஆல் ஸ்கேன் செய்யவும்',
   'WhatsApp > Settings > Linked devices > Link a device':
-    'WhatsApp > Settings > Linked devices > Link a device',
+    'WhatsApp > அமைப்புகள் > இணைக்கப்பட்ட சாதனங்கள் > சாதனத்தை இணை',
   'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
     'உங்கள் தொலைபேசியிலுள்ள WhatsApp-இல் Settings > Linked devices > Link a device > Link with phone number instead என்பதைத் திறந்து, இந்தக் குறியீட்டை உள்ளிடவும்',
   'The QR code expired. Try again.': 'QR குறியீடு காலாவதியானது. மீண்டும் முயலவும்.',

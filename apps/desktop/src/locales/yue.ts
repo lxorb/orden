@@ -1120,6 +1120,7 @@ export const yue: Dictionary = {
   Helpers: '助手',
   'Start helpers on your AI accounts': '喺你嘅 AI 帳戶度開助手',
   Delegated: '交咗出去',
+  'Follow the theme': '跟住主題',
   'Code theme: {name}': '代碼主題：{name}',
   'Delete a layout': '刪除佈局',
   Default: '預設',
