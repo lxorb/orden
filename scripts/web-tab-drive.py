@@ -121,10 +121,7 @@ def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
         try:
             said = json.loads(path.read_text(encoding="utf-8-sig"))
             if said.get("port") and int(said.get("pid") or 0) == pid:
-                for _ in range(40):
-                    if crash_told.tell(int(said["port"]), secret):
-                        break
-                    time.sleep(0.5)
+                crash_told.told(int(said["port"]), secret)
                 return App(int(said["port"]), secret)
         except (OSError, ValueError):
             pass

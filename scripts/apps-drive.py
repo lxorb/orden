@@ -15,6 +15,7 @@ import time
 import urllib.error
 import urllib.request
 from typing import Any
+import crash_told
 from fresh_app import ended, fresh
 
 TYPED = "typed from afar"
@@ -52,6 +53,7 @@ def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
         try:
             said = json.loads(path.read_text(encoding="utf-8-sig"))
             if said.get("port") and int(said.get("pid") or 0) == pid:
+                crash_told.told(int(said["port"]), secret)
                 return App(int(said["port"]), secret)
         except (OSError, ValueError):
             pass

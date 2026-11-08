@@ -55,6 +55,14 @@ def tell(port: int, secret: str, watch: float = 20.0) -> bool:
     return True
 
 
+def told(port: int, secret: str) -> bool:
+    for _ in range(40):
+        if tell(port, secret):
+            return True
+        time.sleep(0.5)
+    return False
+
+
 def main() -> int:
     config = pathlib.Path(sys.argv[1])
     until = time.monotonic() + 60
