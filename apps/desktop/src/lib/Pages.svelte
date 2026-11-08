@@ -346,7 +346,7 @@
     finding
       ? [
           ...paperHits.map((hit) => ({ id: hitId(hit), says: around(hit) })),
-          ...matches(canvas, term).filter((one) => !pages.some((page) => page.id === one.id)),
+          ...matches(canvas, term).filter((one) => cards.some((card) => card.id === one.id)),
         ]
       : [],
   )

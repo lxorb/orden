@@ -131,3 +131,34 @@ test('Ctrl+F with the find bar up takes the caret back to its field, the word ch
   expect(document.activeElement).toBe(field)
   expect([field.selectionStart, field.selectionEnd]).toEqual([0, 'kestrel'.length])
 })
+
+test('a page note finds only what it draws: a label on a link between its cards is not listed', () => {
+  const page = store().canvas.nodes[0]
+  if (!page) throw new Error('no page')
+  const card = (id: string, y: number) => ({
+    id,
+    type: 'text' as const,
+    x: 0,
+    y,
+    width: 200,
+    height: 60,
+    text: `kestrel ${id}`,
+  })
+  store().edit({
+    ...store().canvas,
+    nodes: [page, card('one', 100), card('two', 300)],
+    edges: [{ id: 'link', fromNode: 'one', toNode: 'two', label: 'kestrel link' }],
+  })
+  flushSync()
+
+  press('f', true)
+  const field = host.querySelector<HTMLInputElement>('.find input')
+  if (!field) throw new Error('no find field')
+  field.value = 'kestrel'
+  field.dispatchEvent(new Event('input', { bubbles: true }))
+  flushSync()
+
+  const rows = [...host.querySelectorAll('.hits button')].map((row) => row.textContent.trim())
+  expect(rows).toEqual(['kestrel one', 'kestrel two'])
+  expect(host.querySelector('.find .count')?.textContent).toBe('1/2')
+})
