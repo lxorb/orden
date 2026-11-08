@@ -374,6 +374,37 @@ describe('a note saved keeps the index up to date', () => {
     expect(links.fileNamed('.board.canvas')).toBeNull()
   })
 
+  test('a note brought out from under a hidden name joins the index as it lands', async () => {
+    await space({ 'Plan.md': '# Plan' })
+    notes = { ...notes, 'Inbox.md': '- [ ] call about [[Plan]] #work' }
+    files = ['Drafts/picture.png']
+    notes['Drafts/Two.md'] = 'see [[Plan]] #idea'
+
+    await links.follow({
+      op: 'moved',
+      from: at('.orden-inbox.md'),
+      to: at('Inbox.md'),
+      kind: 'file',
+      root: ROOT,
+    })
+    await links.follow({
+      op: 'moved',
+      from: at('.drafts'),
+      to: at('Drafts'),
+      kind: 'folder',
+      root: ROOT,
+    })
+
+    expect(
+      links
+        .backlinks(at('Plan.md'))
+        .map((one) => one.path)
+        .sort(),
+    ).toEqual(['Drafts/Two.md', 'Inbox.md'])
+    expect(links.spaceTags.map((one) => one.tag).sort()).toEqual(['idea', 'work'])
+    expect(links.fileNamed('picture.png')).toBe('Drafts/picture.png')
+  })
+
   test('the version moves only when something changed', async () => {
     await space({ 'Plan.md': '# Plan' })
     const was = links.version
