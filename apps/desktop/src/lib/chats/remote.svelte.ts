@@ -202,6 +202,7 @@ export class Remote {
     key: { provider: string; account: string },
     readonly source: () => Source | undefined,
     private readonly seen: (conversation: string) => void,
+    private readonly unseen: (conversation: string) => void = () => undefined,
   ) {
     this.provider = key.provider
     this.account = key.account
@@ -494,6 +495,7 @@ export class Remote {
 
   markUnread(conversation: string, seq: number): void {
     this.readSeqs = { ...this.readSeqs, [conversation]: Math.max(0, seq - 1) }
+    this.unseen(conversation)
     void this.connection?.markUnread?.(conversation).catch(() => undefined)
   }
 

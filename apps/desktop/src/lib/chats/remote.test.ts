@@ -466,3 +466,19 @@ describe('a conversation the list does not have yet', () => {
     )
   })
 })
+
+describe('marking unread', () => {
+  test('the list counts the chat unread though the service says nothing back', async () => {
+    const { fake, link, chat } = await linked()
+    if (fake.connection) fake.connection.markUnread = () => Promise.resolve()
+    const page = await opened(chat('news'))
+    page.seen(page.messages.at(-1)?.seq ?? 0)
+    const unread = () =>
+      hub.find(fake.id, link.account.id)?.conversations.find((one) => one.id === 'news')?.unread
+    await vi.waitFor(() => expect(unread()).toBe(0))
+    const last = page.messages.at(-1)
+    if (last) page.markUnread(last)
+    expect(unread()).toBe(1)
+    page.close()
+  })
+})
