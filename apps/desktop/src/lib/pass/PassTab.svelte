@@ -6,6 +6,7 @@
   import { closeOnBack } from '../backstack.svelte'
   import { t } from '../i18n.svelte'
   import { dur, fade } from '../motion'
+  import { reloading } from '../reloading.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import type { Tab } from '../workspace/documents.svelte'
   import AdoptSheet from './AdoptSheet.svelte'
@@ -52,6 +53,7 @@
 
   onMount(() => {
     void pass.start()
+    return reloading.holds(() => ui.editing !== null && ui.dirty)
   })
 
   $effect(() => {

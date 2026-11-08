@@ -194,6 +194,19 @@ describe('a piece that did not arrive', () => {
     expect(reload).toHaveBeenCalledOnce()
   })
 
+  test('stops being held by what let go of the page', async () => {
+    const { reloading } = await watching()
+    const release = reloading.holds(() => true)
+
+    failedImport()
+    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
+    expect(reload).not.toHaveBeenCalled()
+
+    release()
+    await vi.advanceTimersByTimeAsync(HANDS_OFF)
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
   test('goes at once when the page is out of sight', async () => {
     await watching()
     doc.hidden = true
