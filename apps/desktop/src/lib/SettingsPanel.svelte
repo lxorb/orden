@@ -461,11 +461,12 @@
         {#if hit.kind === 'field'}
           {@render row(hit.field, hit.pane.label)}
         {:else}
+          {@const label = hit.kind === 'place' ? hit.label : ''}
           <button
             class="orden-setting setting link"
             onclick={() => {
               go(hit.section)
-              landing.label = hit.label
+              landing.label = label
             }}
           >
             <span class="name">{hit.label}<small>{titleOf(hit.section)}</small></span>
@@ -511,7 +512,12 @@
       }}
     >
       {@render named(field, where)}
-      <Switch on={held} label={field.label} disabled={locked} onchange={(on) => field.set(on)} />
+      <Switch
+        on={held}
+        label={field.label}
+        disabled={locked}
+        onchange={(on: boolean) => field.set(on)}
+      />
     </div>
   {:else if field.kind === 'slider'}
     {@const least = field.least?.() ?? field.min}

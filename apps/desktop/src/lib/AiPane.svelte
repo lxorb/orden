@@ -225,7 +225,7 @@
       <Switch
         on={browserVault.on}
         label={t('Keep this browser’s keys in the vault')}
-        onchange={(on) => void keepBrowserInVault(on)}
+        onchange={(on: boolean) => void keepBrowserInVault(on)}
       />
     </div>
   </div>

@@ -56,7 +56,7 @@
     <Switch
       on={one.enabled}
       label={t('Turn {name} on or off', { name: one.name })}
-      onchange={(on) => void extensions.enable(one.id, on)}
+      onchange={(on: boolean) => void extensions.enable(one.id, on)}
     />
   </div>
   {#if opened === one.id}

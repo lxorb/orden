@@ -268,7 +268,7 @@
       <Switch
         on={status?.quiet ?? false}
         label={t('Do not disturb')}
-        onchange={(on) => withStatus({ quiet: on })}
+        onchange={(on: boolean) => withStatus({ quiet: on })}
       />
     </div>
 
@@ -303,7 +303,7 @@
       <Switch
         on={user.hidden ?? false}
         label={t('Appear offline')}
-        onchange={(on) => void kept(() => changeProfile({ hidden: on }))}
+        onchange={(on: boolean) => void kept(() => changeProfile({ hidden: on }))}
       />
     </div>
   </div>
