@@ -456,3 +456,17 @@ describe('a space worth a graph (#677)', () => {
     expect(worthAGraph(graph)).toBe(false)
   })
 })
+
+describe('a note under a hidden name', () => {
+  test('is no node of the graph, as the space read from disk holds none, and a link to it draws nothing', () => {
+    const graph = space({
+      'Plan.md': '[[Read me]] [[.orden-inbox]]',
+      'Read me.md': '',
+      '.orden-inbox.md': '[[Plan]]',
+      '.trash/Old.md': '[[Plan]]',
+    })
+
+    expect(named(graph)).toEqual(['Plan', 'Read me'])
+    expect(joins(graph)).toEqual(['Plan - Read me'])
+  })
+})
