@@ -41,6 +41,7 @@ vi.mock('./commands', () => ({
         folder: false,
         size: 1,
         modified: 0,
+        created: 0,
         hidden: false,
       })),
     })

@@ -8,6 +8,7 @@ export interface Entry {
   folder: boolean
   size: number
   modified: number
+  created: number
   hidden: boolean
 }
 
@@ -161,7 +162,7 @@ export const PROGRESS = 'explorer://progress'
 
 export interface Facts extends Entry {
   path: string
-  created: number | null
+  born: number | null
   accessed: number | null
   readonly: boolean
   mode: string | null

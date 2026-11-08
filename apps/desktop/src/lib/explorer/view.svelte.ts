@@ -12,7 +12,7 @@ import {
   watchFolder,
 } from './commands'
 import { folderName, parentOf } from './crumbs'
-import { filtered, ordered } from './order'
+import { filtered, ordered, type Sort, sortShown } from './order'
 import { Search } from './search.svelte'
 import {
   type How,
@@ -43,13 +43,12 @@ export class ExplorerView {
   filter = $state('')
   search = $state<Search | null>(null)
 
+  readonly sort = $derived<Sort>(sortShown(explorerPrefs.sort, !!this.search))
   readonly #sorted = $derived<Entry[]>(
-    this.listing ? ordered(this.listing.entries, explorerPrefs.sort, explorerPrefs.hidden) : [],
+    this.listing ? ordered(this.listing.entries, this.sort, explorerPrefs.hidden) : [],
   )
   readonly rows = $derived<Entry[]>(
-    this.search
-      ? ordered(this.search.found, explorerPrefs.sort, true)
-      : filtered(this.#sorted, this.filter),
+    this.search ? ordered(this.search.found, this.sort, true) : filtered(this.#sorted, this.filter),
   )
   readonly names = $derived(this.rows.map((one) => one.name))
 

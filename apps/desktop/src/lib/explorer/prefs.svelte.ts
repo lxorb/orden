@@ -1,9 +1,7 @@
 import { isRecord, keepJson, stored } from '../stored'
-import type { Sort, SortKey } from './order'
+import { firstDown, SORT_KEYS, type Sort, type SortKey } from './order'
 
 const KEY = 'orden:explorer'
-
-const SORT_KEYS: readonly SortKey[] = ['name', 'modified', 'size', 'kind']
 
 type View = 'list' | 'grid' | 'columns'
 
@@ -26,7 +24,17 @@ class ExplorerPrefs {
   }
 
   sortBy(key: SortKey) {
-    this.sort = { key, down: this.sort.key === key ? !this.sort.down : key !== 'name' }
+    this.sort = { key, down: this.sort.key === key ? !this.sort.down : firstDown(key) }
+    this.keep()
+  }
+
+  sortOn(key: SortKey) {
+    this.sort = { key, down: this.sort.key === key ? this.sort.down : firstDown(key) }
+    this.keep()
+  }
+
+  sortTurned(down: boolean) {
+    this.sort = { key: this.sort.key, down }
     this.keep()
   }
 
