@@ -59,6 +59,8 @@ vi.mock('./raster', () => ({
   },
   cssColour: (colour: string) => colour,
   sharpness: (_width: number, _height: number, wanted: number) => wanted,
+  paperPicture: (at: { file: string }) =>
+    Promise.resolve(at.file === 'Reading.pdf' ? 'data:image/png;base64,UEFHRQ==' : null),
 }))
 vi.mock('../link-index.svelte', () => ({
   links: {
@@ -335,5 +337,24 @@ describe('a group', () => {
     const top = Number(/viewBox="[-\d.]+ ([-\d.]+)/.exec(svg)?.[1])
     const label = Number(/<text[^>]*y="([-\d.]+)"[^>]*>Week one/.exec(svg)?.[1])
     expect(label - 13).toBeGreaterThanOrEqual(top)
+  })
+})
+
+describe('a PDF laid on a page', () => {
+  test('is drawn as its first page, not as its name', async () => {
+    const canvas = note()
+    const page = canvas.nodes[0] as PageNode
+    canvas.nodes.push({
+      id: 'f',
+      type: 'file',
+      file: 'Reading.pdf',
+      x: page.x + 20,
+      y: page.y + 20,
+      width: 200,
+      height: 260,
+    })
+    const svg = pageSvg(await laidOf(out(canvas)), page, 1)
+    expect(svg).toMatch(/<image [^>]*href="data:image\/png;base64,UEFHRQ=="/)
+    expect(svg).not.toContain('>Reading.pdf<')
   })
 })
