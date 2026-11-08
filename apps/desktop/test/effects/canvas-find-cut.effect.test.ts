@@ -1,7 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, onTestFinished, test, vi } from 'vitest'
 import Canvas from '../../src/lib/Canvas.svelte'
 import { emptyCanvas, readCanvas, writeCanvas } from '../../src/lib/canvas/format'
+import { CanvasStore } from '../../src/lib/canvas/store.svelte'
 import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
 
 class NoLayout {
@@ -100,4 +101,57 @@ test('Ctrl+F with the find bar up takes the caret back to its field, the word ch
   find()
   expect(document.activeElement).toBe(field)
   expect([field.selectionStart, field.selectionEnd]).toEqual([0, 'invoice'.length])
+})
+
+test('a find goes to a locked card it finds, though a locked card cannot be picked', () => {
+  const text = writeCanvas({
+    ...emptyCanvas(),
+    nodes: [
+      { id: 'a', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'receipt' },
+      {
+        id: 'b',
+        type: 'text',
+        x: 9000,
+        y: 9000,
+        width: 250,
+        height: 60,
+        text: 'invoice',
+        locked: true,
+      },
+    ],
+  })
+  const note = new NoteDoc(
+    { kind: 'canvas', path: '/space/Board.canvas', name: 'Board.canvas', text, dirty: false },
+    () => undefined,
+  )
+  const tab = new Tab(note, 'pane')
+  const measured = vi
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockReturnValue(new DOMRect(0, 0, 800, 600))
+  onTestFinished(() => {
+    measured.mockRestore()
+  })
+  const target = document.createElement('div')
+  document.body.append(target)
+  const shown = mount(Canvas, { target, props: { tab, focused: true } })
+  close = () => void unmount(shown, { outro: false })
+  flushSync()
+
+  const store = CanvasStore.drawing(note, [tab])
+  if (!store) throw new Error('no store')
+  store.pick('a')
+  const host = target.querySelector<HTMLElement>('.canvas')
+  if (!host) throw new Error('no plane')
+  host.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true }))
+  flushSync()
+  const field = target.querySelector<HTMLInputElement>('.find input')
+  if (!field) throw new Error('no find field')
+  field.value = 'invoice'
+  field.dispatchEvent(new Event('input', { bubbles: true }))
+  flushSync()
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+  flushSync()
+
+  expect(store.camera.x).toBeCloseTo(9125)
+  expect(store.camera.y).toBeCloseTo(9030)
 })
