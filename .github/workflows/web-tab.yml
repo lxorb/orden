@@ -11,6 +11,7 @@ on:
       - apps/desktop/src/lib/drag-paths.ts
       - apps/desktop/src/lib/outside-drops.ts
       - scripts/web-tab-drive.py
+      - scripts/gesture-drive.py
       - scripts/outside-drop-drive.py
       - scripts/pinch-drive.py
       - .github/workflows/web-tab.yml
@@ -91,6 +92,24 @@ jobs:
             Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" ;;
             Windows) python "${drive[@]}" ;;
             *) python3 "${drive[@]}" ;;
+          esac
+
+      - name: Orden's own scripts are not the reader's press
+        if: ${{ !cancelled() && env.EXE != '' }}
+        timeout-minutes: 15
+        run: |
+          drive=(scripts/gesture-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
+          case "$RUNNER_OS" in
+            Linux)
+              python3 -m pip install --quiet --break-system-packages python-xlib
+              xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}"
+              ;;
+            Windows) python "${drive[@]}" ;;
+            *)
+              python3 -m venv "$RUNNER_TEMP/gestures"
+              "$RUNNER_TEMP/gestures/bin/pip" install --quiet pyobjc-framework-Quartz
+              "$RUNNER_TEMP/gestures/bin/python" "${drive[@]}"
+              ;;
           esac
 
       - name: A pinch magnifies the page and leaves its zoom
