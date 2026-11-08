@@ -66,6 +66,19 @@ export class Search {
     return now
   }
 
+  movedAll(pairs: readonly { from: string; to: string }[]) {
+    const names = pairs.flatMap(({ from, to }) => {
+      const was = within(this.root, from)
+      const now = within(this.root, to)
+      return was && now ? [{ was, now }] : []
+    })
+    if (!names.length) return
+    this.found = this.found.map((one) => {
+      const now = names.find(({ was }) => was === one.name)?.now
+      return now === undefined ? one : { ...one, name: now }
+    })
+  }
+
   stop() {
     if (!this.done) void cancelJob(this.job)
   }

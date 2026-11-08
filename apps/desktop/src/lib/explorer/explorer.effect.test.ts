@@ -295,6 +295,42 @@ describe('a file explorer', () => {
     expect(changed).toEqual(['rename /home/me/letters/bank.txt loan.txt'])
   })
 
+  test('renames several files found below at once, the same new name in two folders, and the found rows take the new names', async () => {
+    const { view } = await explorer()
+    view.searchBelow('draft')
+    const search = view.search
+    if (!search) throw new Error('no search')
+    search.found = ['letters/draft.txt', 'old/draft.txt'].map((name) => ({
+      name,
+      kind: 'file',
+      folder: false,
+      size: 1,
+      modified: 0,
+      hidden: false,
+    }))
+    await settled()
+    view.pickAll()
+    press('F2')
+    await settled()
+    const [find, replace] = [
+      ...target.querySelectorAll<HTMLInputElement>('.many input.orden-field'),
+    ]
+    if (!find || !replace) throw new Error('no fields')
+    find.value = 'draft'
+    find.dispatchEvent(new Event('input', { bubbles: true }))
+    replace.value = 'final'
+    replace.dispatchEvent(new Event('input', { bubbles: true }))
+    flushSync()
+    find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await settled()
+    expect(changed).toEqual([
+      'rename /home/me/letters/draft.txt final.txt',
+      'rename /home/me/old/draft.txt final.txt',
+    ])
+    expect(search.found.map((one) => one.name)).toEqual(['letters/final.txt', 'old/final.txt'])
+    expect(rows()).toEqual(['final.txt', 'final.txt'])
+  })
+
   test('keeps a name being typed when the folder is read again under it', async () => {
     const { view } = await explorer()
     press('n')
