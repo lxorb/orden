@@ -1141,8 +1141,6 @@ export const gu: Dictionary = {
   '{device} offers this device your AI vault': '{device} આ ઉપકરણને તમારું AI વૉલ્ટ આપે છે',
   Join: 'જોડાઓ',
   'Allow this device on another one': 'બીજા ઉપકરણ પર આ ઉપકરણને મંજૂરી આપો',
-  'On every device you sign in to, end-to-end encrypted.':
-    'તમે સાઇન ઇન કરો તે દરેક ઉપકરણ પર, એન્ડ-ટુ-એન્ડ એન્ક્રિપ્ટેડ.',
   'Sign in to have them on every device.': 'દરેક ઉપકરણ પર મેળવવા સાઇન ઇન કરો.',
   'Agents on this computer connect on their own': 'આ કમ્પ્યુટરના એજન્ટ આપમેળે જોડાય છે',
   Helpers: 'સહાયકો',
@@ -1478,17 +1476,14 @@ export const gu: Dictionary = {
   'Base URL': 'મૂળ URL',
   'API key': 'API કી',
   Optional: 'મરજિયાત',
-  'List models': 'મોડેલ લાવો',
   'Asking…': 'પૂછે છે…',
   'No providers yet.': 'હજી પ્રદાતા નથી.',
-  'Add {name}': '{name} ઉમેરો',
   'This browser holds the keys in its own storage.': 'આ બ્રાઉઝર કીઓ પોતાના સંગ્રહમાં રાખે છે.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'આ ઉપકરણ પર કોઈ કીરિંગ મળ્યું નથી, તેથી તમારી કી એવી ફાઇલમાં રાખવામાં આવી છે જે ફક્ત તમે વાંચી શકો.',
   'Keep this browser’s keys in the vault': 'આ બ્રાઉઝરની કી વૉલ્ટમાં રાખો',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'પછી દરેક ઉપકરણની કી આ બ્રાઉઝરના સ્ટોરેજમાં રહેશે, જ્યાં પેજમાં ઘૂસેલી કોઈ સ્ક્રિપ્ટ તેને વાંચી શકે.',
-  'AI can be wrong. Check the facts.': 'AI ભૂલ કરી શકે છે. હકીકતો ચકાસો.',
   'Used by the glasses': 'ચશ્માં વાપરે છે',
   'Could not read the models.': 'મોડેલ વાંચી શકાયા નહીં.',
   'That provider is not set up yet.': 'એ પ્રદાતા હજી ગોઠવાયો નથી.',
@@ -2009,8 +2004,6 @@ export const gu: Dictionary = {
     'આ એક જગ્યા તેના વૃક્ષ વિશે રાખે છે તેના કરતાં વધુ છે',
   'Agents on this computer': 'આ કમ્પ્યુટર પરના એજન્ટ',
   'Your account’s connector': 'તમારા ખાતાનું કનેક્ટર',
-  'Orden asks you once, the first time it connects.':
-    'પહેલી વાર જોડાય ત્યારે Orden તમને એક વાર પૂછે છે.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravityમાં એજન્ટ પેનલની ટોચ પરનું … મેનૂ ખોલો, પછી MCP Servers → Manage MCP Servers → View raw config, અને તેમાં આ એન્ટ્રી ઉમેરો.',
   'A client on another machine?': 'બીજા મશીન પરનો ક્લાયન્ટ?',
@@ -3750,4 +3743,15 @@ export const gu: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'આ કમ્પ્યુટરના ફોલ્ડર માટે ફાઇલ એક્સપ્લોરર ઉમેરે છે, અને ફોલ્ડરમાં બતાવો તેને ખોલે છે.',
   '{name} is turned off, so its tabs were closed': '{name} બંધ છે, તેથી તેની ટૅબ બંધ કરાઈ',
+  'Add an AI account': 'AI એકાઉન્ટ ઉમેરો',
+  '{percent} used this week': 'આ અઠવાડિયે {percent} વપરાયું',
+  'Resets {when}': '{when} રીસેટ થશે',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'આ કમ્પ્યુટર પરના Claude Code દ્વારા તમારો Claude પ્લાન વાપરે છે.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'આ કમ્પ્યુટર પરના Codex દ્વારા તમારો ChatGPT પ્લાન વાપરે છે.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'આ કમ્પ્યુટર પરના Gemini CLI દ્વારા તમારું Google એકાઉન્ટ વાપરે છે.',
+  'Sign in with your ChatGPT plan.': 'તમારા ChatGPT પ્લાનથી સાઇન ઇન કરો.',
+  'Paid by use on your API account.': 'તમારા API એકાઉન્ટ પર વપરાશ મુજબ ચુકવણી.',
 }

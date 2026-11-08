@@ -731,15 +731,45 @@ pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Clone, Copy)]
+enum Asking {
+    Models,
+    Usage,
+}
+
 #[tauri::command]
 pub async fn ai_cli_models(
     webview: Webview,
     tool: Tool,
     account: Option<String>,
 ) -> Result<Value, String> {
+    ask_program(webview, tool, account, Asking::Models).await
+}
+
+#[tauri::command]
+pub async fn ai_cli_usage(
+    webview: Webview,
+    tool: Tool,
+    account: Option<String>,
+) -> Result<Value, String> {
+    ask_program(webview, tool, account, Asking::Usage).await
+}
+
+async fn ask_program(
+    webview: Webview,
+    tool: Tool,
+    account: Option<String>,
+    asking: Asking,
+) -> Result<Value, String> {
     crate::lane::off_the_runtime(move || -> Result<Value, String> {
         let owner = owner(&webview)?;
         offered(tool)?;
+        if tool == Tool::Gemini {
+            return match asking {
+                Asking::Models => Err("Gemini CLI names its models by alias".to_owned()),
+                Asking::Usage => Ok(Value::Null),
+            };
+        }
         let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
         let home = home_for(webview.app_handle(), tool, account.as_deref())?;
         let folder = workroom(webview.app_handle())?;
@@ -757,7 +787,11 @@ pub async fn ai_cli_models(
                     |_| {},
                 )
                 .map_err(|error| error.to_string())?;
-                let listed = claude.ask(serde_json::json!({ "subtype": "list_models" }), TELLING);
+                let subtype = match asking {
+                    Asking::Models => "list_models",
+                    Asking::Usage => "get_usage",
+                };
+                let listed = claude.ask(serde_json::json!({ "subtype": subtype }), TELLING);
                 claude.close_input();
                 listed
             }
@@ -769,9 +803,13 @@ pub async fn ai_cli_models(
                     agent: None,
                     home,
                 };
-                host_for(&asks, key, load, &program, &folder, None)?.models(TELLING)
+                let host = host_for(&asks, key, load, &program, &folder, None)?;
+                match asking {
+                    Asking::Models => host.models(TELLING),
+                    Asking::Usage => host.limits(TELLING),
+                }
             }
-            Tool::Gemini => Err("Gemini CLI names its models by alias".to_owned()),
+            Tool::Gemini => Ok(Value::Null),
         }
     })
     .await
@@ -1457,6 +1495,11 @@ exec node '{}' {name} \"$@\"
 
         let models = host.models(TELLING).expect("models");
         assert!(models["data"][0]["supportedReasoningEfforts"].is_array());
+        let limits = host.limits(TELLING).expect("limits");
+        assert_eq!(
+            limits["rateLimits"]["secondary"]["windowDurationMins"],
+            10080
+        );
 
         host.close("one");
         let end = until(&first, TELLING, |one| matches!(one, Message::End(_)));
@@ -1679,6 +1722,8 @@ exec node '{}' {name} \"$@\"
         assert!(result_of(&context, "context")["maxTokens"].is_number());
         let models = claude.ask(serde_json::json!({ "subtype": "list_models" }), TELLING);
         assert!(models.is_ok_and(|models| models["models"].is_array()));
+        let usage = claude.ask(serde_json::json!({ "subtype": "get_usage" }), TELLING);
+        assert!(usage.is_ok_and(|usage| usage["rate_limits"]["seven_day"]["utilization"] == 42));
         claude.stop();
     }
 

@@ -1118,7 +1118,6 @@ export const zhHant: Dictionary = {
   '{device} offers this device your AI vault': '{device} 向此裝置提供你的 AI 保險庫',
   Join: '加入',
   'Allow this device on another one': '在另一台裝置上允許此裝置',
-  'On every device you sign in to, end-to-end encrypted.': '在你登入的每台裝置上，端對端加密。',
   'Sign in to have them on every device.': '登入即可在每台裝置上使用。',
   'Agents on this computer connect on their own': '這台電腦上的代理自動連線',
   Helpers: '助手',
@@ -1441,17 +1440,14 @@ export const zhHant: Dictionary = {
   'Base URL': '基礎網址',
   'API key': 'API金鑰',
   Optional: '選填',
-  'List models': '列出模型',
   'Asking…': '詢問中…',
   'No providers yet.': '還沒有供應商。',
-  'Add {name}': '新增{name}',
   'This browser holds the keys in its own storage.': '此瀏覽器把金鑰放在自己的儲存空間裡。',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     '此裝置上找不到鑰匙圈，因此你的金鑰存放在只有你能讀取的檔案中。',
   'Keep this browser’s keys in the vault': '將此瀏覽器的金鑰保存在保險庫中',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     '這樣，每台裝置的金鑰都會保存在此瀏覽器的儲存空間中，混入頁面的指令碼可能讀取它們。',
-  'AI can be wrong. Check the facts.': 'AI可能會出錯，請查證事實。',
   'Used by the glasses': '供眼鏡使用',
   'Could not read the models.': '無法讀取模型清單。',
   'That provider is not set up yet.': '該供應商還沒設定好。',
@@ -1963,7 +1959,6 @@ export const zhHant: Dictionary = {
   'that is more than a space keeps about its tree': '超出了空間能為其目錄樹保存的內容',
   'Agents on this computer': '這台電腦上的代理',
   'Your account’s connector': '你帳號的連接器',
-  'Orden asks you once, the first time it connects.': '首次連線時，Orden 會問你一次。',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     '在 Antigravity 中開啟代理面板頂端的 … 選單，然後依序選擇 MCP Servers → Manage MCP Servers → View raw config，並把這一項加進去。',
   'A client on another machine?': '另一台機器上的用戶端？',
@@ -3587,4 +3582,15 @@ export const zhHant: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     '為這台電腦上的資料夾新增檔案總管，「在資料夾中顯示」會開啟它。',
   '{name} is turned off, so its tabs were closed': '{name}已關閉，因此關閉了它的分頁',
+  'Add an AI account': '新增 AI 帳號',
+  '{percent} used this week': '本週已用 {percent}',
+  'Resets {when}': '{when}重設',
+  'Uses your Claude plan through Claude Code on this computer.':
+    '透過這台電腦上的 Claude Code 使用你的 Claude 方案。',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    '透過這台電腦上的 Codex 使用你的 ChatGPT 方案。',
+  'Uses your Google account through Gemini CLI on this computer.':
+    '透過這台電腦上的 Gemini CLI 使用你的 Google 帳號。',
+  'Sign in with your ChatGPT plan.': '以你的 ChatGPT 方案登入。',
+  'Paid by use on your API account.': '在你的 API 帳號上依用量付費。',
 }

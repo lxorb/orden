@@ -1140,8 +1140,6 @@ export const ps: Dictionary = {
   '{device} offers this device your AI vault': '{device} دې وسیلې ته ستاسو د AI خزانه وړاندې کوي',
   Join: 'یوځای کېدل',
   'Allow this device on another one': 'په بل وسیله دا وسیله اجازه کړئ',
-  'On every device you sign in to, end-to-end encrypted.':
-    'په هره وسیله چې ننوځئ، له سره تر سره کوډ شوي.',
   'Sign in to have them on every device.': 'ننوځئ چې په هره وسیله یې ولرئ.',
   'Agents on this computer connect on their own': 'په دې کمپیوټر استازي پخپله نښلي',
   Helpers: 'مرستندويان',
@@ -1485,17 +1483,14 @@ export const ps: Dictionary = {
   'Base URL': 'بنسټيزه پته',
   'API key': 'د API کيلي',
   Optional: 'اختياري',
-  'List models': 'ماډلونه راوړل',
   'Asking…': 'پوښتنه کېږي…',
   'No providers yet.': 'تر اوسه برابرونکي نشته.',
-  'Add {name}': '{name} ورزياتول',
   'This browser holds the keys in its own storage.': 'دا کوټګر کيليانې په خپله زېرمه کې ساتي.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'په دې وسیله کې د کیلیو زېرمه ونه موندل شوه، نو ستاسو کیلي په داسې فایل کې ساتل کېږي چې یوازې تاسو یې لوستلی شئ.',
   'Keep this browser’s keys in the vault': 'د دې براوزر کلیدونه په خزانه کې وساته',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'بیا به د هرې وسیلې کلیدونه د دې براوزر په زېرمه کې وساتل شي، چېرته چې یو سکرېپټ چې پاڼې ته ننوتی وي هغه لوستلی شي.',
-  'AI can be wrong. Check the facts.': 'مصنوعي ځيرکتيا تېروتنه کولی شي. حقايق وڅېړئ.',
   'Used by the glasses': 'عينکې يې کاروي',
   'Could not read the models.': 'ماډلونه ونه لوستل شول.',
   'That provider is not set up yet.': 'هغه برابرونکی تر اوسه جوړ نه دی.',
@@ -2019,8 +2014,6 @@ export const ps: Dictionary = {
     'دا له هغه ډېر دی چې یو ځای د خپلې ونې په اړه ساتي',
   'Agents on this computer': 'په دې کمپیوټر کې اجنټان',
   'Your account’s connector': 'ستاسو د حساب نښلونکی',
-  'Orden asks you once, the first time it connects.':
-    'Orden له تاسو یو ځل پوښتي، کله چې لومړی ځل وصلېږي.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'په Antigravity کې د اجنټ پینل په سر کې … مینو پرانیزئ، بیا MCP Servers → Manage MCP Servers → View raw config، او دا ننوتنه ورته ورزیاته کړئ.',
   'A client on another machine?': 'په بل ماشين کې پېرېدونکی؟',
@@ -3763,4 +3756,15 @@ export const ps: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'د دې کمپیوټر د فولډرونو لپاره د فایل لټوونکی ورزیاتوي، او په فولډر کې ښودل یې پرانیزي.',
   '{name} is turned off, so its tabs were closed': '{name} بند دی، نو د هغه ټبونه وتړل شول',
+  'Add an AI account': 'د AI حساب ورزیات کړئ',
+  '{percent} used this week': 'پدې اونۍ کې {percent} کارول شوی',
+  'Resets {when}': '{when} بیا پیلېږي',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'ستاسو د Claude پلان پدې کمپیوټر کې د Claude Code له لارې کاروي.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'ستاسو د ChatGPT پلان پدې کمپیوټر کې د Codex له لارې کاروي.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'ستاسو د Google حساب پدې کمپیوټر کې د Gemini CLI له لارې کاروي.',
+  'Sign in with your ChatGPT plan.': 'د خپل ChatGPT پلان سره ننوځئ.',
+  'Paid by use on your API account.': 'ستاسو په API حساب د کارونې سره سم تادیه.',
 }

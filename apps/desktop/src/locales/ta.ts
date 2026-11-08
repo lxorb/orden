@@ -1155,8 +1155,6 @@ export const ta: Dictionary = {
     '{device} இந்தச் சாதனத்திற்கு உங்கள் AI பெட்டகத்தை வழங்குகிறது',
   Join: 'சேர்',
   'Allow this device on another one': 'வேறொரு சாதனத்தில் இந்தச் சாதனத்தை அனுமதி',
-  'On every device you sign in to, end-to-end encrypted.':
-    'நீங்கள் உள்நுழையும் ஒவ்வொரு சாதனத்திலும், முனைக்கு முனை குறியாக்கம்.',
   'Sign in to have them on every device.': 'ஒவ்வொரு சாதனத்திலும் பெற உள்நுழையவும்.',
   'Agents on this computer connect on their own': 'இந்தக் கணினியின் முகவர்கள் தாமாக இணைகின்றன',
   Helpers: 'உதவியாளர்கள்',
@@ -1507,10 +1505,8 @@ export const ta: Dictionary = {
   'Base URL': 'அடிப்படை URL',
   'API key': 'API சாவி',
   Optional: 'விருப்பத்தேர்வு',
-  'List models': 'மாடல்களைப் பட்டியலிடு',
   'Asking…': 'கேட்கிறது…',
   'No providers yet.': 'இன்னும் வழங்குநர்கள் இல்லை.',
-  'Add {name}': '{name} சேர்',
   'This browser holds the keys in its own storage.':
     'இந்த உலாவி சாவிகளைத் தன் சேமிப்பிடத்தில் வைத்திருக்கும்.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1518,7 +1514,6 @@ export const ta: Dictionary = {
   'Keep this browser’s keys in the vault': 'இந்த உலாவியின் சாவிகளை பெட்டகத்தில் வை',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'அப்போது ஒவ்வொரு சாதனத்தின் சாவிகளும் இந்த உலாவியின் சேமிப்பில் வைக்கப்படும்; பக்கத்திற்குள் நுழைந்த ஒரு ஸ்கிரிப்ட் அவற்றைப் படிக்கக்கூடும்.',
-  'AI can be wrong. Check the facts.': 'AI தவறாகலாம். உண்மைகளைச் சரிபார்க்கவும்.',
   'Used by the glasses': 'கண்ணாடி பயன்படுத்துவது',
   'Could not read the models.': 'மாடல்களைப் படிக்க முடியவில்லை.',
   'That provider is not set up yet.': 'அந்த வழங்குநர் இன்னும் அமைக்கப்படவில்லை.',
@@ -2051,8 +2046,6 @@ export const ta: Dictionary = {
     'ஓர் இடம் தன் மரத்தைப் பற்றி வைத்திருப்பதை விட இது அதிகம்',
   'Agents on this computer': 'இந்தக் கணினியில் உள்ள முகவர்கள்',
   'Your account’s connector': 'உங்கள் கணக்கின் இணைப்பான்',
-  'Orden asks you once, the first time it connects.':
-    'முதல் முறை இணையும்போது Orden உங்களிடம் ஒருமுறை கேட்கும்.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity-இல் ஏஜென்ட் பேனலின் மேலுள்ள … மெனுவைத் திறந்து, பின் MCP Servers → Manage MCP Servers → View raw config, இந்த உள்ளீட்டை அதில் சேர்க்கவும்.',
   'A client on another machine?': 'வேறு கணினியில் உள்ள கிளையன்ட்டா?',
@@ -3840,4 +3833,15 @@ export const ta: Dictionary = {
     'இந்தக் கணினியின் கோப்புறைகளுக்கு ஒரு கோப்பு உலாவியைச் சேர்க்கிறது, கோப்புறையில் காட்டு அதைத் திறக்கும்.',
   '{name} is turned off, so its tabs were closed':
     '{name} அணைக்கப்பட்டுள்ளது, எனவே அதன் தாவல்கள் மூடப்பட்டன',
+  'Add an AI account': 'AI கணக்கைச் சேர்',
+  '{percent} used this week': 'இந்த வாரம் {percent} பயன்படுத்தப்பட்டது',
+  'Resets {when}': '{when} மீட்டமைக்கப்படும்',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'இந்தக் கணினியில் உள்ள Claude Code மூலம் உங்கள் Claude திட்டத்தைப் பயன்படுத்துகிறது.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'இந்தக் கணினியில் உள்ள Codex மூலம் உங்கள் ChatGPT திட்டத்தைப் பயன்படுத்துகிறது.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'இந்தக் கணினியில் உள்ள Gemini CLI மூலம் உங்கள் Google கணக்கைப் பயன்படுத்துகிறது.',
+  'Sign in with your ChatGPT plan.': 'உங்கள் ChatGPT திட்டத்துடன் உள்நுழையுங்கள்.',
+  'Paid by use on your API account.': 'உங்கள் API கணக்கில் பயன்பாட்டுக்கு ஏற்ப கட்டணம்.',
 }

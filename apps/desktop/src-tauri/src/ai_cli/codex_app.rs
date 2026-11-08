@@ -216,14 +216,22 @@ impl Host {
     }
 
     pub fn models(&self, patience: Duration) -> Result<Value, String> {
+        self.ask("model/list", &json!({ "includeHidden": false }), patience)
+    }
+
+    pub fn limits(&self, patience: Duration) -> Result<Value, String> {
+        self.ask("account/rateLimits/read", &Value::Null, patience)
+    }
+
+    fn ask(&self, method: &str, params: &Value, patience: Duration) -> Result<Value, String> {
         let (sent, answer) = mpsc::channel();
         {
             let mut state = locked(&self.state);
             send(
                 &mut state,
                 &self.running,
-                "model/list",
-                &json!({ "includeHidden": false }),
+                method,
+                params,
                 Waiter::Crate(sent),
             )?;
         }

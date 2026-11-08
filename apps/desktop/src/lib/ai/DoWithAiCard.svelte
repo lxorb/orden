@@ -64,28 +64,6 @@
       />
     </div>
   </div>
-  {#each TASK_TOOLS as tool (tool)}
-    {@const words = TOOL_WORDS[tool]}
-    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="orden-setting setting pressable" onclick={() => turnTaskTool(tool)}>
-      <span class="name"
-        ><span class="orden-named">{t(words.label)}<Hint text={t(words.hint)} /></span></span
-      >
-      <span
-        class="orden-switch"
-        class:on={taskTools[tool]}
-        role="switch"
-        tabindex="0"
-        aria-checked={taskTools[tool]}
-        aria-label={t(words.label)}
-        onkeydown={(event) => {
-          if (event.key !== ' ' && event.key !== 'Enter') return
-          event.preventDefault()
-          turnTaskTool(tool)
-        }}
-      ></span>
-    </div>
-  {/each}
   <label class="orden-setting setting asking">
     <span class="name"
       ><span class="orden-named"
@@ -108,7 +86,41 @@
   </label>
 </div>
 
+<h3>{t('Permissions')}</h3>
+<div class="card" data-permissions>
+  {#each TASK_TOOLS as tool (tool)}
+    {@const words = TOOL_WORDS[tool]}
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <div class="orden-setting setting pressable" onclick={() => turnTaskTool(tool)}>
+      <span class="name"
+        ><span class="orden-named">{t(words.label)}<Hint text={t(words.hint)} /></span></span
+      >
+      <span
+        class="orden-switch"
+        class:on={taskTools[tool]}
+        role="switch"
+        tabindex="0"
+        aria-checked={taskTools[tool]}
+        aria-label={t(words.label)}
+        onkeydown={(event) => {
+          if (event.key !== ' ' && event.key !== 'Enter') return
+          event.preventDefault()
+          turnTaskTool(tool)
+        }}
+      ></span>
+    </div>
+  {/each}
+</div>
+
 <style>
+  h3 {
+    margin: var(--space-3) 0 calc(-1 * var(--space-2));
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--muted-strong);
+  }
+
   .card {
     display: flex;
     flex-direction: column;

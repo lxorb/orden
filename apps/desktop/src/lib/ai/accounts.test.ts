@@ -9,6 +9,7 @@ import {
   added,
   CLAUDE,
   defaulted,
+  defaultOf,
   GEMINI,
   isActive,
   merged,
@@ -146,6 +147,22 @@ describe('the default and the features', () => {
     const next = defaulted(state, 'anthropic')
     expect(next.defaultVendor).toBe(CLAUDE)
     expect(next.active[CLAUDE]).toBe('anthropic')
+  })
+
+  test('exactly one account is the default, whichever is made it', () => {
+    const all = made('claude-code', 'claude-code', 'anthropic', 'codex', 'gemini')
+    expect(defaultOf(all)?.id).toBe('claude-code')
+    for (const one of all.accounts) {
+      const next = defaulted(all, one.id)
+      expect(defaultOf(next)?.id).toBe(one.id)
+      expect(next.accounts.filter((other) => defaultOf(next)?.id === other.id)).toHaveLength(1)
+    }
+  })
+
+  test('removing the default hands it to another account', () => {
+    const next = removed(defaulted(state, 'codex'), 'codex')
+    expect(defaultOf(next)?.id).toBe('claude-code')
+    expect(defaultOf(NONE)).toBeNull()
   })
 
   test('a feature asks a provider, by any of its ids', () => {

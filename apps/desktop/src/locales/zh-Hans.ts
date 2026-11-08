@@ -1118,7 +1118,6 @@ export const zhHans: Dictionary = {
   '{device} offers this device your AI vault': '{device} 向此设备提供你的 AI 保险库',
   Join: '加入',
   'Allow this device on another one': '在另一台设备上允许此设备',
-  'On every device you sign in to, end-to-end encrypted.': '在你登录的每台设备上，端到端加密。',
   'Sign in to have them on every device.': '登录即可在每台设备上使用。',
   'Agents on this computer connect on their own': '此电脑上的智能体自动连接',
   Helpers: '助手',
@@ -1441,17 +1440,14 @@ export const zhHans: Dictionary = {
   'Base URL': '基础URL',
   'API key': 'API密钥',
   Optional: '可选',
-  'List models': '获取模型列表',
   'Asking…': '询问中…',
   'No providers yet.': '还没有服务商。',
-  'Add {name}': '添加{name}',
   'This browser holds the keys in its own storage.': '此浏览器把密钥保存在自己的存储中。',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     '此设备上未找到钥匙串，因此你的密钥保存在只有你能读取的文件中。',
   'Keep this browser’s keys in the vault': '将此浏览器的密钥保存在保险库中',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     '这样，每台设备的密钥都会保存在此浏览器的存储中，混入页面的脚本可能读取它们。',
-  'AI can be wrong. Check the facts.': 'AI可能会出错，请核实事实。',
   'Used by the glasses': '供眼镜使用',
   'Could not read the models.': '无法读取模型列表。',
   'That provider is not set up yet.': '该服务商尚未配置。',
@@ -1963,7 +1959,6 @@ export const zhHans: Dictionary = {
   'that is more than a space keeps about its tree': '超出了空间能为其目录树保存的内容',
   'Agents on this computer': '这台电脑上的代理',
   'Your account’s connector': '你账号的连接器',
-  'Orden asks you once, the first time it connects.': '首次连接时，Orden 会问你一次。',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     '在 Antigravity 中打开代理面板顶部的 … 菜单，然后依次选择 MCP Servers → Manage MCP Servers → View raw config，并把这一项加进去。',
   'A client on another machine?': '另一台机器上的客户端？',
@@ -3584,4 +3579,15 @@ export const zhHans: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     '为这台电脑上的文件夹添加文件浏览器，“在文件夹中显示”会打开它。',
   '{name} is turned off, so its tabs were closed': '{name}已关闭，因此关闭了它的标签页',
+  'Add an AI account': '添加 AI 账号',
+  '{percent} used this week': '本周已用 {percent}',
+  'Resets {when}': '{when}重置',
+  'Uses your Claude plan through Claude Code on this computer.':
+    '通过这台电脑上的 Claude Code 使用你的 Claude 套餐。',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    '通过这台电脑上的 Codex 使用你的 ChatGPT 套餐。',
+  'Uses your Google account through Gemini CLI on this computer.':
+    '通过这台电脑上的 Gemini CLI 使用你的 Google 账号。',
+  'Sign in with your ChatGPT plan.': '用你的 ChatGPT 套餐登录。',
+  'Paid by use on your API account.': '在你的 API 账号上按用量付费。',
 }

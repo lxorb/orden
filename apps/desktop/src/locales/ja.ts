@@ -1139,8 +1139,6 @@ export const ja: Dictionary = {
     '{device} がこのデバイスに AI 保管庫を提供しています',
   Join: '参加',
   'Allow this device on another one': '別のデバイスでこのデバイスを許可',
-  'On every device you sign in to, end-to-end encrypted.':
-    'サインインするすべてのデバイスで、エンドツーエンド暗号化。',
   'Sign in to have them on every device.': 'サインインするとすべてのデバイスで使えます。',
   'Agents on this computer connect on their own': 'このコンピューターのエージェントは自動で接続',
   Helpers: 'ヘルパー',
@@ -1467,10 +1465,8 @@ export const ja: Dictionary = {
   'Base URL': 'ベース URL',
   'API key': 'API キー',
   Optional: '任意',
-  'List models': 'モデルを取得',
   'Asking…': '問い合わせ中…',
   'No providers yet.': 'プロバイダはまだありません。',
-  'Add {name}': '{name} を追加',
   'This browser holds the keys in its own storage.':
     'このブラウザはキーを自身のストレージに保持します。',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1478,7 +1474,6 @@ export const ja: Dictionary = {
   'Keep this browser’s keys in the vault': 'このブラウザのキーを保管庫に入れる',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'その場合、すべてのデバイスのキーがこのブラウザのストレージに保存され、ページに入り込んだスクリプトに読まれるおそれがあります。',
-  'AI can be wrong. Check the facts.': 'AI は間違えることがあります。事実を確認してください。',
   'Used by the glasses': 'グラスが使用',
   'Could not read the models.': 'モデルを読み取れませんでした。',
   'That provider is not set up yet.': 'このプロバイダはまだ設定されていません。',
@@ -2006,8 +2001,6 @@ export const ja: Dictionary = {
     'スペースがツリーについて保存できる量を超えています',
   'Agents on this computer': 'このコンピューターのエージェント',
   'Your account’s connector': 'アカウントのコネクタ',
-  'Orden asks you once, the first time it connects.':
-    '初めて接続したときに、Orden が一度だけ確認します。',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity でエージェントパネル上部の … メニューを開き、MCP Servers → Manage MCP Servers → View raw config を選んで、このエントリを追加します。',
   'A client on another machine?': '別のマシンのクライアントですか？',
@@ -3685,4 +3678,15 @@ export const ja: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'このコンピューターのフォルダー用のファイルエクスプローラーを追加し、フォルダーに表示で開きます。',
   '{name} is turned off, so its tabs were closed': '{name} がオフなので、そのタブを閉じました',
+  'Add an AI account': 'AI アカウントを追加',
+  '{percent} used this week': '今週 {percent} 使用',
+  'Resets {when}': '{when} にリセット',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'このコンピュータの Claude Code で Claude プランを使います。',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'このコンピュータの Codex で ChatGPT プランを使います。',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'このコンピュータの Gemini CLI で Google アカウントを使います。',
+  'Sign in with your ChatGPT plan.': 'ChatGPT プランでサインインします。',
+  'Paid by use on your API account.': 'API アカウントで使った分だけ支払います。',
 }

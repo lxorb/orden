@@ -1157,8 +1157,6 @@ export const ml: Dictionary = {
     '{device} ഈ ഉപകരണത്തിന് നിങ്ങളുടെ AI വോൾട്ട് നൽകുന്നു',
   Join: 'ചേരുക',
   'Allow this device on another one': 'മറ്റൊരു ഉപകരണത്തിൽ ഈ ഉപകരണം അനുവദിക്കുക',
-  'On every device you sign in to, end-to-end encrypted.':
-    'നിങ്ങൾ സൈൻ ഇൻ ചെയ്യുന്ന എല്ലാ ഉപകരണത്തിലും, എൻഡ്-ടു-എൻഡ് എൻക്രിപ്റ്റഡ്.',
   'Sign in to have them on every device.': 'എല്ലാ ഉപകരണത്തിലും ലഭിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
   'Agents on this computer connect on their own': 'ഈ കമ്പ്യൂട്ടറിലെ ഏജന്റുകൾ സ്വയം ബന്ധിപ്പിക്കും',
   Helpers: 'സഹായികൾ',
@@ -1504,10 +1502,8 @@ export const ml: Dictionary = {
   'Base URL': 'ബേസ് URL',
   'API key': 'API കീ',
   Optional: 'നിർബന്ധമല്ല',
-  'List models': 'മോഡലുകളുടെ പട്ടിക',
   'Asking…': 'ചോദിക്കുന്നു…',
   'No providers yet.': 'ഇനിയും പ്രൊവൈഡർമാരില്ല.',
-  'Add {name}': '{name} ചേർക്കുക',
   'This browser holds the keys in its own storage.':
     'ഈ ബ്രൗസർ കീകൾ സ്വന്തം സ്റ്റോറേജിൽ സൂക്ഷിക്കുന്നു.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1515,7 +1511,6 @@ export const ml: Dictionary = {
   'Keep this browser’s keys in the vault': 'ഈ ബ്രൗസറിന്റെ കീകൾ വോൾട്ടിൽ സൂക്ഷിക്കുക',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'അപ്പോൾ ഓരോ ഉപകരണത്തിന്റെയും കീകൾ ഈ ബ്രൗസറിന്റെ സംഭരണത്തിൽ സൂക്ഷിക്കും, പേജിൽ കടന്നുകൂടിയ ഒരു സ്ക്രിപ്റ്റിന് അവ വായിക്കാനാകും.',
-  'AI can be wrong. Check the facts.': 'AI-ക്ക് തെറ്റുപറ്റാം. വസ്തുതകൾ പരിശോധിക്കുക.',
   'Used by the glasses': 'കണ്ണട ഉപയോഗിക്കുന്നത്',
   'Could not read the models.': 'മോഡലുകൾ വായിക്കാനായില്ല.',
   'That provider is not set up yet.': 'ആ പ്രൊവൈഡർ ഇനിയും സജ്ജമല്ല.',
@@ -2047,8 +2042,6 @@ export const ml: Dictionary = {
     'ഒരു സ്പേസ് അതിന്റെ ട്രീയെക്കുറിച്ച് സൂക്ഷിക്കുന്നതിലും കൂടുതലാണിത്',
   'Agents on this computer': 'ഈ കമ്പ്യൂട്ടറിലെ ഏജന്റുകൾ',
   'Your account’s connector': 'നിങ്ങളുടെ അക്കൗണ്ടിന്റെ കണക്ടർ',
-  'Orden asks you once, the first time it connects.':
-    'ആദ്യമായി കണക്റ്റ് ചെയ്യുമ്പോൾ Orden നിങ്ങളോട് ഒരിക്കൽ ചോദിക്കും.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity-യിൽ ഏജന്റ് പാനലിന്റെ മുകളിലെ … മെനു തുറക്കുക, തുടർന്ന് MCP Servers → Manage MCP Servers → View raw config, ഈ എൻട്രി അതിൽ ചേർക്കുക.',
   'A client on another machine?': 'മറ്റൊരു മെഷീനിലെ ക്ലയന്റ്?',
@@ -3825,4 +3818,15 @@ export const ml: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'ഈ കമ്പ്യൂട്ടറിലെ ഫോൾഡറുകൾക്കായി ഒരു ഫയൽ എക്സ്പ്ലോറർ ചേർക്കുന്നു, ഫോൾഡറിൽ കാണിക്കുക അത് തുറക്കുന്നു.',
   '{name} is turned off, so its tabs were closed': '{name} ഓഫാണ്, അതിനാൽ അതിന്റെ ടാബുകൾ അടച്ചു',
+  'Add an AI account': 'AI അക്കൗണ്ട് ചേർക്കുക',
+  '{percent} used this week': 'ഈ ആഴ്ച {percent} ഉപയോഗിച്ചു',
+  'Resets {when}': '{when} പുനഃസജ്ജമാകും',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'ഈ കമ്പ്യൂട്ടറിലെ Claude Code വഴി നിങ്ങളുടെ Claude പ്ലാൻ ഉപയോഗിക്കുന്നു.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'ഈ കമ്പ്യൂട്ടറിലെ Codex വഴി നിങ്ങളുടെ ChatGPT പ്ലാൻ ഉപയോഗിക്കുന്നു.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'ഈ കമ്പ്യൂട്ടറിലെ Gemini CLI വഴി നിങ്ങളുടെ Google അക്കൗണ്ട് ഉപയോഗിക്കുന്നു.',
+  'Sign in with your ChatGPT plan.': 'നിങ്ങളുടെ ChatGPT പ്ലാൻ ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക.',
+  'Paid by use on your API account.': 'നിങ്ങളുടെ API അക്കൗണ്ടിൽ ഉപയോഗത്തിനനുസരിച്ച് പണം.',
 }

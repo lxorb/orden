@@ -1137,8 +1137,6 @@ export const my: Dictionary = {
   '{device} offers this device your AI vault': '{device} က ဤစက်ကို သင်၏ AI သေတ္တာ ပေးနေသည်',
   Join: 'ပါဝင်မည်',
   'Allow this device on another one': 'အခြားစက်တွင် ဤစက်ကို ခွင့်ပြုပါ',
-  'On every device you sign in to, end-to-end encrypted.':
-    'သင်ဝင်သည့် စက်တိုင်းတွင် အစမှအဆုံး ကုဒ်ဝှက်ထားသည်။',
   'Sign in to have them on every device.': 'စက်တိုင်းတွင် ရရှိရန် ဝင်ပါ။',
   'Agents on this computer connect on their own':
     'ဤကွန်ပျူတာရှိ အေးဂျင့်များ သူ့အလိုလို ချိတ်ဆက်သည်',
@@ -1467,10 +1465,8 @@ export const my: Dictionary = {
   'Base URL': 'အခြေ URL',
   'API key': 'API သော့',
   Optional: 'မရွေးလည်းရ',
-  'List models': 'မော်ဒယ်များယူပါ',
   'Asking…': 'မေးနေသည်…',
   'No providers yet.': 'ပေးသူ မရှိသေးပါ။',
-  'Add {name}': '{name} ထည့်ပါ',
   'This browser holds the keys in its own storage.':
     'ဤဘရောက်ဇာသည် သော့များကို မိမိသိမ်းဆည်းမှုတွင် ထားသည်။',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1478,7 +1474,6 @@ export const my: Dictionary = {
   'Keep this browser’s keys in the vault': 'ဤဘရောက်ဇာ၏ ကီးများကို သေတ္တာထဲတွင် သိမ်းထားပါ',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'ထိုအခါ စက်တိုင်း၏ ကီးများကို ဤဘရောက်ဇာ၏ သိုလှောင်ရာတွင် သိမ်းမည်ဖြစ်ပြီး စာမျက်နှာထဲသို့ ဝင်လာသော script တစ်ခုက ၎င်းတို့ကို ဖတ်နိုင်သည်။',
-  'AI can be wrong. Check the facts.': 'AI မှားနိုင်ပါသည်။ အချက်အလက်များကို စစ်ဆေးပါ။',
   'Used by the glasses': 'မျက်မှန် အသုံးပြုသည်',
   'Could not read the models.': 'မော်ဒယ်များကို ဖတ်မရပါ။',
   'That provider is not set up yet.': 'ထိုပေးသူ မစီစဉ်ရသေးပါ။',
@@ -2003,8 +1998,6 @@ export const my: Dictionary = {
     '၎င်းသည် အလုပ်ခွင်တစ်ခုက ၎င်း၏သစ်ပင်ဖွဲ့စည်းပုံအကြောင်း သိမ်းထားသည်ထက် များသည်',
   'Agents on this computer': 'ဤကွန်ပျူတာပေါ်ရှိ အေးဂျင့်များ',
   'Your account’s connector': 'သင့်အကောင့်၏ ချိတ်ဆက်ကိရိယာ',
-  'Orden asks you once, the first time it connects.':
-    'ပထမဆုံးချိတ်ဆက်သည့်အခါ Orden က တစ်ကြိမ်မေးပါမည်။',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity တွင် agent panel ထိပ်ရှိ … မီနူးကိုဖွင့်ပါ၊ ထို့နောက် MCP Servers → Manage MCP Servers → View raw config၊ ဤ entry ကို ထည့်ပါ။',
   'A client on another machine?': 'အခြားစက်ပေါ်ရှိ client လား။',
@@ -3708,4 +3701,15 @@ export const my: Dictionary = {
     'ဤကွန်ပျူတာရှိ ဖိုင်တွဲများအတွက် ဖိုင်ရှာဖွေစနစ် ထည့်သည်၊ ဖိုင်တွဲတွင်ပြရန်က ၎င်းကို ဖွင့်သည်။',
   '{name} is turned off, so its tabs were closed':
     '{name} ပိတ်ထားသဖြင့် ၎င်း၏ တဘ်များကို ပိတ်လိုက်သည်',
+  'Add an AI account': 'AI အကောင့် ထည့်ရန်',
+  '{percent} used this week': 'ဤအပတ် {percent} သုံးပြီး',
+  'Resets {when}': '{when} တွင် ပြန်စမည်',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'ဤကွန်ပျူတာရှိ Claude Code မှတစ်ဆင့် သင်၏ Claude အစီအစဉ်ကို သုံးသည်။',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'ဤကွန်ပျူတာရှိ Codex မှတစ်ဆင့် သင်၏ ChatGPT အစီအစဉ်ကို သုံးသည်။',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'ဤကွန်ပျူတာရှိ Gemini CLI မှတစ်ဆင့် သင်၏ Google အကောင့်ကို သုံးသည်။',
+  'Sign in with your ChatGPT plan.': 'သင်၏ ChatGPT အစီအစဉ်ဖြင့် ဝင်ရောက်ပါ။',
+  'Paid by use on your API account.': 'သင်၏ API အကောင့်တွင် သုံးသလောက် ပေးချေရသည်။',
 }

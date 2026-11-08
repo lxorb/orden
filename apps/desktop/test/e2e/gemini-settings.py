@@ -69,36 +69,35 @@ def drive(browser) -> None:
     quiet(page)
     shot(page, "01-accounts")
 
-    sheet = page.locator(".sheet")
-    vendor = sheet.locator('[data-vendor="gemini"]')
-    check("Gemini is a provider of its own beside Claude", vendor.count() == 1)
-    check("Gemini is named Gemini", vendor.get_by_text("Gemini", exact=True).count() == 1)
+    sheet = page.locator(".sheet").first
+    key_card = sheet.locator('.card[data-account="gemini"]')
+    cli_card = sheet.locator('.card[data-account="gemini-cli"]')
+    check("the key and the CLI are a card each", key_card.count() == 1 and cli_card.count() == 1)
+    check("Gemini is named on its card", key_card.get_by_text("Gemini", exact=True).count() == 1)
     try:
-        vendor.locator('.mark[data-brand="googlegemini"] svg.drawn').wait_for(timeout=10_000)
+        key_card.locator('.mark[data-brand="googlegemini"] svg.drawn').wait_for(timeout=10_000)
     except PlaywrightTimeout:
         pass
     check(
         "Gemini wears Gemini's logo",
-        vendor.locator('.mark[data-brand="googlegemini"] svg.drawn').count() == 1,
+        key_card.locator('.mark[data-brand="googlegemini"] svg.drawn').count() == 1,
     )
-    key_card = sheet.locator('.card[data-account="gemini"]')
-    cli_card = sheet.locator('.card[data-account="gemini-cli"]')
-    check("the key and the CLI are a card each", key_card.count() == 1 and cli_card.count() == 1)
     check("the CLI's card is the Gemini CLI's", cli_card.get_by_text("Gemini CLI", exact=True).count() == 1)
-    adding = sheet.locator("button.orden-action", has_text="Add Gemini")
-    check("Gemini can be added again by key", adding.count() >= 1)
+    check("no card asks for a model", sheet.get_by_text("List models", exact=True).count() == 0)
+
+    sheet.locator("[data-add-account]").click()
+    page.locator('[data-maker="google"]').wait_for(timeout=5_000)
+    page.locator('[data-maker="google"]').click()
+    quiet(page)
+    check("Gemini can be added again by key", page.locator('[data-step="connect"][data-road="gemini"]').count() == 1)
+    page.keyboard.press("Escape")
+    quiet(page)
 
     field = key_card.locator('input[type="password"]')
     check("the key field asks for a Google key", field.get_attribute("placeholder") == "AIza")
     field.fill("AIza-e2e-key")
     field.press("Tab")
     quiet(page)
-    listing = key_card.get_by_role("button", name="List models")
-    try:
-        listing.wait_for(timeout=5_000)
-        listing.click()
-    except PlaywrightTimeout:
-        pass
     try:
         page.wait_for_function(
             "() => JSON.parse(localStorage.getItem('orden:ai-accounts')).accounts.find((one) => one.id === 'gemini')?.model",
@@ -111,16 +110,9 @@ def drive(browser) -> None:
     chosen = page.evaluate(
         "JSON.parse(localStorage.getItem('orden:ai-accounts')).accounts.find((one) => one.id === 'gemini').model"
     )
-    check("the newest Pro that talks is picked first", chosen == "gemini-3.1-pro-preview")
+    check("the newest Pro that talks is picked on its own", chosen == "gemini-3.1-pro-preview")
     check("Google is asked with the key in its own header", any(one.get("x-goog-api-key") == "AIza-e2e-key" for one in asked))
     check("no Bearer goes to Google", all("authorization" not in one for one in asked))
-    picker = key_card.get_by_role("combobox", name="Model")
-    picker.click()
-    quiet(page)
-    offered = page.locator('[role="listbox"] [role="option"]').all_inner_texts()
-    check("the picker offers the chat models alone", [one.strip() for one in offered] == ["gemini-3-flash", "gemini-3.1-pro-preview"])
-    page.keyboard.press("Escape")
-    quiet(page)
 
     used = sheet.get_by_text("Used for", exact=True)
     check("Used for is shown with two providers", used.count() == 1)
@@ -132,8 +124,8 @@ def drive(browser) -> None:
     page.keyboard.press("Escape")
     quiet(page)
 
-    page.keyboard.press("Escape")
-    page.wait_for_selector(".sheet", state="detached")
+    page.evaluate("() => window.ordenApp.settings.hide?.() ?? (window.ordenApp.settings.open = false)")
+    page.wait_for_timeout(400)
     page.evaluate("async () => { window.agentsFake = await window.ordenApp.agents.standIn() }")
     page.evaluate("window.ordenApp.settings.show('agents')")
     page.wait_for_selector("text=Accounts")

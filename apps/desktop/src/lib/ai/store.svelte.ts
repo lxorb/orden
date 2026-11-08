@@ -12,6 +12,7 @@ import {
   actives,
   added,
   defaulted,
+  defaultOf,
   including,
   isActive,
   merged,
@@ -70,6 +71,8 @@ class Ai {
   readonly uses = $derived<Record<string, Vendor>>(this.state.uses)
 
   readonly defaultVendor = $derived<Vendor>(this.state.defaultVendor)
+
+  readonly defaultAccount = $derived<Account | null>(defaultOf(this.state))
 
   readonly chosen = $derived<Provider | null>(
     [activeOf(this.state, this.state.defaultVendor), ...actives(this.state)].find(

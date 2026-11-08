@@ -1125,8 +1125,6 @@ export const th: Dictionary = {
   '{device} offers this device your AI vault': '{device} เสนอห้องนิรภัย AI ของคุณให้อุปกรณ์นี้',
   Join: 'เข้าร่วม',
   'Allow this device on another one': 'อนุญาตอุปกรณ์นี้จากอุปกรณ์อื่น',
-  'On every device you sign in to, end-to-end encrypted.':
-    'บนทุกอุปกรณ์ที่คุณลงชื่อเข้าใช้ เข้ารหัสแบบต้นทางถึงปลายทาง',
   'Sign in to have them on every device.': 'ลงชื่อเข้าใช้เพื่อให้มีในทุกอุปกรณ์',
   'Agents on this computer connect on their own': 'เอเจนต์ในคอมพิวเตอร์นี้เชื่อมต่อเอง',
   Helpers: 'ผู้ช่วย',
@@ -1451,17 +1449,14 @@ export const th: Dictionary = {
   'Base URL': 'URL หลัก',
   'API key': 'คีย์ API',
   Optional: 'ไม่บังคับ',
-  'List models': 'ดึงรายการโมเดล',
   'Asking…': 'กำลังถาม…',
   'No providers yet.': 'ยังไม่มีผู้ให้บริการ',
-  'Add {name}': 'เพิ่ม {name}',
   'This browser holds the keys in its own storage.': 'เบราว์เซอร์นี้เก็บคีย์ไว้ในที่เก็บของตัวเอง',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
     'ไม่พบพวงกุญแจในอุปกรณ์นี้ จึงเก็บคีย์ของคุณไว้ในไฟล์ที่มีเพียงคุณเท่านั้นที่อ่านได้',
   'Keep this browser’s keys in the vault': 'เก็บคีย์ของเบราว์เซอร์นี้ไว้ในห้องนิรภัย',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'จากนั้นคีย์ของทุกอุปกรณ์จะถูกเก็บไว้ในพื้นที่จัดเก็บของเบราว์เซอร์นี้ ซึ่งสคริปต์ที่แทรกเข้ามาในหน้าอาจอ่านได้',
-  'AI can be wrong. Check the facts.': 'AI อาจผิดพลาดได้ โปรดตรวจสอบข้อเท็จจริง',
   'Used by the glasses': 'แว่นใช้อยู่',
   'Could not read the models.': 'อ่านรายการโมเดลไม่ได้',
   'That provider is not set up yet.': 'ยังไม่ได้ตั้งค่าผู้ให้บริการนั้น',
@@ -1976,8 +1971,6 @@ export const th: Dictionary = {
     'นั่นมากกว่าที่พื้นที่เก็บเกี่ยวกับโครงสร้างของมันได้',
   'Agents on this computer': 'เอเจนต์ในคอมพิวเตอร์เครื่องนี้',
   'Your account’s connector': 'ตัวเชื่อมต่อของบัญชีคุณ',
-  'Orden asks you once, the first time it connects.':
-    'Orden จะถามคุณครั้งเดียว เมื่อเชื่อมต่อครั้งแรก',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'ใน Antigravity เปิดเมนู … ที่ด้านบนของแผงเอเจนต์ จากนั้น MCP Servers → Manage MCP Servers → View raw config แล้วเพิ่มรายการนี้ลงไป',
   'A client on another machine?': 'ไคลเอนต์บนเครื่องอื่นใช่ไหม',
@@ -3629,4 +3622,15 @@ export const th: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'เพิ่มตัวสำรวจไฟล์สำหรับโฟลเดอร์ในคอมพิวเตอร์เครื่องนี้ และแสดงในโฟลเดอร์จะเปิดมัน',
   '{name} is turned off, so its tabs were closed': '{name} ปิดอยู่ จึงปิดแท็บของมันแล้ว',
+  'Add an AI account': 'เพิ่มบัญชี AI',
+  '{percent} used this week': 'ใช้ไป {percent} ในสัปดาห์นี้',
+  'Resets {when}': 'รีเซ็ต{when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'ใช้แพ็กเกจ Claude ของคุณผ่าน Claude Code บนคอมพิวเตอร์เครื่องนี้',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'ใช้แพ็กเกจ ChatGPT ของคุณผ่าน Codex บนคอมพิวเตอร์เครื่องนี้',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'ใช้บัญชี Google ของคุณผ่าน Gemini CLI บนคอมพิวเตอร์เครื่องนี้',
+  'Sign in with your ChatGPT plan.': 'ลงชื่อเข้าใช้ด้วยแพ็กเกจ ChatGPT ของคุณ',
+  'Paid by use on your API account.': 'จ่ายตามการใช้งานในบัญชี API ของคุณ',
 }

@@ -1158,8 +1158,6 @@ export const fil: Dictionary = {
     'Inaalok ng {device} sa device na ito ang iyong AI vault',
   Join: 'Sumali',
   'Allow this device on another one': 'Payagan ang device na ito sa ibang device',
-  'On every device you sign in to, end-to-end encrypted.':
-    'Sa bawat device na pinag-sign in-an mo, end-to-end encrypted.',
   'Sign in to have them on every device.': 'Mag-sign in para nasa bawat device ang mga ito.',
   'Agents on this computer connect on their own':
     'Kusang kumokonekta ang mga agent sa computer na ito',
@@ -1512,10 +1510,8 @@ export const fil: Dictionary = {
   'Base URL': 'Base URL',
   'API key': 'API key',
   Optional: 'Opsyonal',
-  'List models': 'Kunin ang mga modelo',
   'Asking…': 'Nagtatanong…',
   'No providers yet.': 'Wala pang provider.',
-  'Add {name}': 'Idagdag ang {name}',
   'This browser holds the keys in its own storage.':
     'Itinatago ng browser na ito ang key sa sariling imbakan nito.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1523,7 +1519,6 @@ export const fil: Dictionary = {
   'Keep this browser’s keys in the vault': 'Itago ang mga key ng browser na ito sa vault',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'Kung gayon, itatago ang mga key ng bawat device sa storage ng browser na ito, kung saan mababasa ang mga ito ng script na nakapasok sa page.',
-  'AI can be wrong. Check the facts.': 'Puwedeng magkamali ang AI. Suriin ang mga detalye.',
   'Used by the glasses': 'Ginagamit ng salamin',
   'Could not read the models.': 'Hindi mabasa ang mga modelo.',
   'That provider is not set up yet.': 'Hindi pa naka-set up ang provider na iyon.',
@@ -2063,8 +2058,6 @@ export const fil: Dictionary = {
     'higit iyan sa itinatago ng isang espasyo tungkol sa puno nito',
   'Agents on this computer': 'Mga agent sa computer na ito',
   'Your account’s connector': 'Connector ng iyong account',
-  'Orden asks you once, the first time it connects.':
-    'Magtatanong ang Orden nang isang beses, sa unang pagkonekta nito.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Sa Antigravity, buksan ang … menu sa itaas ng panel ng agent, pagkatapos MCP Servers → Manage MCP Servers → View raw config, at idagdag doon ang entry na ito.',
   'A client on another machine?': 'Isang client sa ibang makina?',
@@ -3845,4 +3838,15 @@ export const fil: Dictionary = {
     'Nagdaragdag ng file explorer para sa mga folder sa computer na ito, at binubuksan ito ng Ipakita sa folder.',
   '{name} is turned off, so its tabs were closed':
     'Naka-off ang {name}, kaya isinara ang mga tab nito',
+  'Add an AI account': 'Magdagdag ng AI account',
+  '{percent} used this week': '{percent} ang nagamit ngayong linggo',
+  'Resets {when}': 'Magre-reset sa {when}',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Ginagamit ang iyong Claude plan sa pamamagitan ng Claude Code sa computer na ito.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'Ginagamit ang iyong ChatGPT plan sa pamamagitan ng Codex sa computer na ito.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Ginagamit ang iyong Google account sa pamamagitan ng Gemini CLI sa computer na ito.',
+  'Sign in with your ChatGPT plan.': 'Mag-sign in gamit ang iyong ChatGPT plan.',
+  'Paid by use on your API account.': 'Bayad ayon sa paggamit sa iyong API account.',
 }

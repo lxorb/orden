@@ -475,41 +475,38 @@ def drive_pane(browser: Browser) -> None:
     page = fresh(browser, "pane")
     page.evaluate("() => { const ai = window.ordenApp.ai; for (const one of [...ai.providers]) ai.remove(one.id) }")
     page.evaluate("() => window.ordenApp.settings.show('ai')")
-    page.wait_for_selector(".orden-screen.sheet", timeout=15000)
+    page.wait_for_selector("[data-add-account]", timeout=15000)
     page.wait_for_timeout(400)
     shot(page, "60-pane-empty")
 
-    adds = page.evaluate(
-        "() => [...document.querySelectorAll('.orden-action')].map((one) => one.textContent.trim())"
+    adds = page.locator("[data-add-account]")
+    if adds.count() != 1:
+        wrong(f"[pane] one Add button was expected, not {adds.count()}")
+    adds.first.click()
+    page.wait_for_selector("[data-maker]", timeout=5000)
+    makers = page.evaluate(
+        "() => [...document.querySelectorAll('[data-maker]')].map((one) => one.dataset.maker)"
     )
-    say(f"[pane] the kinds offered: {adds}")
-    if adds != ["Add Claude", "Add OpenAI", "Add Gemini", "Add OpenAI-compatible"]:
-        wrong(f"[pane] Claude, OpenAI, Gemini and OpenAI-compatible were expected: {adds}")
+    say(f"[pane] the providers offered: {makers}")
+    if makers != ["anthropic", "openai", "google", "compatible"]:
+        wrong(f"[pane] Anthropic, OpenAI, Google and OpenAI-compatible were expected: {makers}")
+    shot(page, "60-pane-add")
 
-    page.locator(".orden-action").last.click()
-    page.wait_for_timeout(300)
-
-    page.evaluate(
-        """(base) => {
-          const ai = window.ordenApp.ai
-          ai.update(ai.providers[0].id, { name: 'Fake', baseUrl: base })
-        }""",
-        MODEL_ORIGIN,
-    )
-    page.wait_for_timeout(200)
-
-    page.locator(".orden-chip", has_text=re.compile("model", re.I)).first.click()
+    page.locator('[data-maker="compatible"]').click()
+    form = page.locator('[data-step="connect"]')
+    form.wait_for(timeout=5000)
+    fields = form.locator("input")
+    fields.nth(0).fill("Fake")
+    fields.nth(1).fill(MODEL_ORIGIN)
+    form.locator('button[type="submit"]').click()
+    page.wait_for_selector('[data-step="connect"]', state="detached", timeout=5000)
     page.wait_for_timeout(900)
     shot(page, "61-models-listed")
 
     chosen = page.evaluate("() => window.ordenApp.ai.providers[0].model")
-    offered = page.evaluate(
-        "() => [...document.querySelectorAll('.pick button, .pick select option')]"
-        ".map((one) => one.textContent.trim())"
-    )
-    say(f"[pane] the model chosen for it: {chosen!r}, from {offered}")
+    say(f"[pane] the model chosen for it: {chosen!r}")
     if chosen not in {MODEL, "fake-large"}:
-        wrong(f"[pane] listing the models did not choose one: {chosen!r}")
+        wrong(f"[pane] adding the server did not choose a model: {chosen!r}")
     if not page.evaluate("() => window.ordenApp.ai.ready"):
         wrong("[pane] the provider is not usable after being set up")
 

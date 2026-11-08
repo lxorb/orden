@@ -126,6 +126,10 @@ export function activeOf(state: Accounts, vendor: Vendor): Account | null {
   return mine.find((one) => one.id === state.active[vendor]) ?? mine[0] ?? null
 }
 
+export function defaultOf(state: Accounts): Account | null {
+  return activeOf(state, state.defaultVendor)
+}
+
 export function actives(state: Accounts): Account[] {
   return vendors(state)
     .map((vendor) => activeOf(state, vendor))

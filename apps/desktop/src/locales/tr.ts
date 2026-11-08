@@ -1147,8 +1147,6 @@ export const tr: Dictionary = {
   '{device} offers this device your AI vault': '{device}, bu cihaza yapay zekâ kasanızı sunuyor',
   Join: 'Katıl',
   'Allow this device on another one': 'Bu cihaza başka bir cihazdan izin verin',
-  'On every device you sign in to, end-to-end encrypted.':
-    'Oturum açtığın her cihazda, uçtan uca şifreli.',
   'Sign in to have them on every device.': 'Her cihazda olmaları için oturum aç.',
   'Agents on this computer connect on their own':
     'Bu bilgisayardaki ajanlar kendiliğinden bağlanır',
@@ -1489,10 +1487,8 @@ export const tr: Dictionary = {
   'Base URL': 'Temel URL',
   'API key': 'API anahtarı',
   Optional: 'İsteğe bağlı',
-  'List models': 'Modelleri getir',
   'Asking…': 'Soruluyor…',
   'No providers yet.': 'Henüz sağlayıcı yok.',
-  'Add {name}': '{name} ekle',
   'This browser holds the keys in its own storage.':
     'Bu tarayıcı anahtarları kendi deposunda tutar.',
   'No keyring was found on this device, so your keys are kept in a file only you can read.':
@@ -1500,7 +1496,6 @@ export const tr: Dictionary = {
   'Keep this browser’s keys in the vault': 'Bu tarayıcının anahtarlarını kasada tut',
   'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
     'O zaman her cihazın anahtarları bu tarayıcının depolama alanında tutulur; sayfaya sızan bir betik onları okuyabilir.',
-  'AI can be wrong. Check the facts.': 'YZ yanılabilir. Bilgileri doğrulayın.',
   'Used by the glasses': 'Gözlük kullanır',
   'Could not read the models.': 'Modeller okunamadı.',
   'That provider is not set up yet.': 'Bu sağlayıcı henüz kurulmadı.',
@@ -2030,7 +2025,6 @@ export const tr: Dictionary = {
     'bu, bir alanın ağacı hakkında tuttuğundan fazla',
   'Agents on this computer': 'Bu bilgisayardaki ajanlar',
   'Your account’s connector': 'Hesabının bağlayıcısı',
-  'Orden asks you once, the first time it connects.': 'Orden ilk bağlandığında sana bir kez sorar.',
   'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
     'Antigravity’de aracı panelinin üstündeki … menüsünü açın, ardından MCP Servers → Manage MCP Servers → View raw config, ve bu girdiyi ekleyin.',
   'A client on another machine?': 'Başka bir makinedeki bir istemci mi?',
@@ -3787,4 +3781,15 @@ export const tr: Dictionary = {
   'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
     'Bu bilgisayardaki klasörler için bir dosya gezgini ekler ve Klasörde göster onu açar.',
   '{name} is turned off, so its tabs were closed': '{name} kapalı, bu yüzden sekmeleri kapatıldı',
+  'Add an AI account': 'Yapay zekâ hesabı ekle',
+  '{percent} used this week': 'Bu hafta {percent} kullanıldı',
+  'Resets {when}': '{when} sıfırlanır',
+  'Uses your Claude plan through Claude Code on this computer.':
+    'Claude planınızı bu bilgisayardaki Claude Code üzerinden kullanır.',
+  'Uses your ChatGPT plan through Codex on this computer.':
+    'ChatGPT planınızı bu bilgisayardaki Codex üzerinden kullanır.',
+  'Uses your Google account through Gemini CLI on this computer.':
+    'Google hesabınızı bu bilgisayardaki Gemini CLI üzerinden kullanır.',
+  'Sign in with your ChatGPT plan.': 'ChatGPT planınızla oturum açın.',
+  'Paid by use on your API account.': 'API hesabınızda kullandıkça ödenir.',
 }

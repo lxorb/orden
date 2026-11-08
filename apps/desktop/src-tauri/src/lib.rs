@@ -421,6 +421,7 @@ macro_rules! desktop_commands {
             ai_cli::ai_cli_say,
             ai_cli::ai_cli_close,
             ai_cli::ai_cli_models,
+            ai_cli::ai_cli_usage,
             chatgpt::chatgpt_sign_in,
             chatgpt::chatgpt_account,
             chatgpt::chatgpt_token,
