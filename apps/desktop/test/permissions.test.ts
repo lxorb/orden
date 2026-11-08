@@ -180,7 +180,8 @@ describe('writing an export', () => {
   })
 
   test('shows the finished file in the file manager, which the opener covers', () => {
-    expect(read('../src/lib/export/save.ts')).toContain('revealItemInDir')
+    expect(read('../src/lib/export/save.ts')).toContain("import('../reveal')")
+    expect(read('../src/lib/reveal.ts')).toContain('revealItemInDir')
     expect(capabilities.permissions).toContain('opener:default')
   })
 

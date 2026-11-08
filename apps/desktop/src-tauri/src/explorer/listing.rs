@@ -343,15 +343,6 @@ pub async fn explorer_icon(ending: String) -> Option<String> {
     crate::lane::off_the_runtime(move || crate::apps_host::kinds::icon(&ending)).await
 }
 
-#[tauri::command]
-pub async fn explorer_reveal(app: AppHandle, path: String) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
-        let path = asked(&app, &path, Use::Look)?;
-        tauri_plugin_opener::reveal_item_in_dir(&path).map_err(|why| why.to_string())
-    })
-    .await
-}
-
 #[cfg(test)]
 mod tests {
     use super::{entries, peeked, Kind};

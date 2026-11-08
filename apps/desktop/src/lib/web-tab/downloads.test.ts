@@ -6,7 +6,19 @@ vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     asked.push({ command, id: args.id })
-    return Promise.resolve(undefined)
+    return Promise.resolve(
+      command === 'web_download_saved'
+        ? `/home/me/Downloads/slides (${String(args.id)}).pdf`
+        : undefined,
+    )
+  },
+}))
+
+const revealed: string[] = []
+vi.mock('../reveal', () => ({
+  reveal: (path: string) => {
+    revealed.push(path)
+    return Promise.resolve()
   },
 }))
 
@@ -104,7 +116,8 @@ test('a row goes back to the crate by id, never by a path', async () => {
 
   expect(asked).toEqual([
     { command: 'web_download_open', id: 4 },
-    { command: 'web_download_show', id: 4 },
+    { command: 'web_download_saved', id: 4 },
     { command: 'web_download_cancel', id: 4 },
   ])
+  expect(revealed).toEqual(['/home/me/Downloads/slides (4).pdf'])
 })

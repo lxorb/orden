@@ -144,10 +144,6 @@ export function cancelJob(job: string): Promise<void> {
 
 export const PROGRESS = 'explorer://progress'
 
-export function showInSystem(path: string): Promise<void> {
-  return invoke<undefined>('explorer_reveal', { path })
-}
-
 export interface Facts extends Entry {
   path: string
   created: number | null

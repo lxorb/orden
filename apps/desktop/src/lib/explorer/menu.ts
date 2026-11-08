@@ -2,11 +2,12 @@ import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { fileClipboard } from '../list-landing.svelte'
 import { DIVIDER, type MenuEntry } from '../menu-item'
-import { showLabel } from '../reveal'
+import { reveal, showLabel } from '../reveal'
+import { platform } from '../tauri'
 import { shortcuts } from '../shortcuts.svelte'
 import { workspace } from '../workspace.svelte'
 import { carry, changeable, duplicate, newFolder, paste, removeForGood, trash } from './changes'
-import { type Entry, openWithSystem, showInSystem } from './commands'
+import { type Entry, openWithSystem } from './commands'
 import { inASpace, openFile, openingOf } from './open'
 import { places } from './places.svelte'
 import { explorerPrefs } from './prefs.svelte'
@@ -38,7 +39,7 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
     ...(!entry.folder && openingOf(path) === 'orden'
       ? [{ label: t('Open with the system app'), run: () => void openWithSystem(path) }]
       : []),
-    { label: t(showLabel()), run: () => void showInSystem(path) },
+    { label: t(showLabel(platform(), false)), run: () => void reveal(path, { system: true }) },
     DIVIDER,
     ...(writes
       ? [
@@ -148,6 +149,13 @@ export function roomMenu(view: ExplorerView): MenuEntry[] {
       checked: explorerPrefs.hidden,
       run: () => explorerPrefs.toggleHidden(),
     },
-    ...(folder ? [{ label: t(showLabel()), run: () => void showInSystem(folder) }] : []),
+    ...(folder
+      ? [
+          {
+            label: t(showLabel(platform(), false)),
+            run: () => void reveal(folder, { system: true }),
+          },
+        ]
+      : []),
   ]
 }

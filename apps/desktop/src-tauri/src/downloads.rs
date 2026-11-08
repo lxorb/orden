@@ -450,10 +450,8 @@ pub fn web_download_open(app: AppHandle, id: u64) -> Result<(), String> {
 }
 
 #[tauri::command(async)]
-pub fn web_download_show(app: AppHandle, id: u64) -> Result<(), String> {
-    let path = held(&app).saved(id)?;
-    tauri_plugin_opener::reveal_item_in_dir(&path)
-        .map_err(|error| format!("that file could not be shown: {error}"))
+pub fn web_download_saved(app: AppHandle, id: u64) -> Result<String, String> {
+    Ok(held(&app).saved(id)?.display().to_string())
 }
 
 #[tauri::command(async)]

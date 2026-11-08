@@ -19,7 +19,8 @@ import { rowName } from './note-name'
 import { canWriteAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { folderOf, isMarkdownPath, isPicturePath, relativeTo } from './space-paths'
-import { isDesktop, joinPath, platform } from './tauri'
+import { isDesktop, joinPath } from './tauri'
+import { showLabel } from './reveal'
 import { entryAt } from './tree-edits'
 import { viewport } from './viewport.svelte'
 import type { Entry } from './workspace.svelte'
@@ -294,8 +295,12 @@ export async function refuseDeleting(paths: readonly string[]) {
 
 function revealEntry(entry: Entry): MenuEntry[] {
   if (!isDesktop) return []
-  const label = platform() === 'macos' ? t('Reveal in Finder') : t('Show in folder')
-  return [{ label, run: () => void import('./reveal').then((one) => one.reveal(entry.path)) }]
+  return [
+    {
+      label: t(showLabel()),
+      run: () => void import('./reveal').then((one) => one.reveal(entry.path)),
+    },
+  ]
 }
 
 const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {

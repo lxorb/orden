@@ -1667,8 +1667,9 @@ desktop engines.
   page's cookies and login from whichever profile or store `engine::web_store` put that
   webview on; a file behind a sign-in (`pluginfile.php`) arrives whenever the page could
   open it, and nothing about downloads has to know where the session is kept.
-- **The window names a download by id, never by path.** `web_download_open` and
-  `web_download_show` open only a file the crate itself saved and saw finish.
+- **The window names a download by id, never by path.** `web_download_open` opens, and
+  `web_download_saved` hands back to be shown, only a file the crate itself saved and saw
+  finish; the window shows it through `reveal`, in the Orden explorer when that is on.
 - **A name is made safe on every platform**: no separators, nothing a file system
   refuses, no device name, no dot at either end, at most 180 characters with the
   extension kept. `ORDEN_DOWNLOADS_DIR` points a probe at a folder of its own.

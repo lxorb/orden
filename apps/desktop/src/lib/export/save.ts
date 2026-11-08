@@ -1,7 +1,7 @@
 import { downloadStarted } from '../downloads/started'
 import { keep, storedText } from '../stored'
 import { folderOf, nameOf } from '../space-paths'
-import { invoke, isDesktop, isMobile, isNative, joinPath } from '../tauri'
+import { invoke, isMobile, isNative, joinPath } from '../tauri'
 import { writeBytes, writeFile as writeText } from '../workspace/write-file'
 import { numbered } from '@orden/markdown/paths'
 import { fileNameFor, freeName, stemOf } from './naming'
@@ -142,10 +142,8 @@ async function writePayload(target: string, payload: Payload): Promise<void> {
 }
 
 async function reveal(target: string): Promise<void> {
-  if (!isDesktop) return
-
-  const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
-  await revealItemInDir(target).catch(() => undefined)
+  const shown = await import('../reveal')
+  await shown.reveal(target)
 }
 
 async function namesIn(folder: string): Promise<Set<string>> {

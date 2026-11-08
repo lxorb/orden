@@ -305,16 +305,16 @@ async function openLog() {
   if (!isDesktop) return
 
   const path = await invoke<string>('log_dir')
-  const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
-  await revealItemInDir(path)
+  const { reveal } = await import('./reveal')
+  await reveal(path)
 }
 
 async function openThemesFolder() {
   if (!isDesktop) return
 
   const dir = await invoke<string>('theme_dir')
-  const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
-  await revealItemInDir(dir)
+  const { reveal } = await import('./reveal')
+  await reveal(dir)
   await theme.reload()
 }
 
