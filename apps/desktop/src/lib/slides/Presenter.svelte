@@ -121,7 +121,7 @@
 <svelte:window onkeydown={onKeydown} />
 
 {#if stage && !gone}
-  <div class="presenter" {style}>
+  <div class="presenter" {style} onloadcapture={fitBoth}>
     <div class="screens">
       <div class="frame deck-frame now" bind:this={big}>
         <div class="stage">
