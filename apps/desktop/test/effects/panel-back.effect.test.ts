@@ -6,10 +6,11 @@ import { workspace } from '../../src/lib/workspace.svelte'
 import { STARTS_RIGHT } from '../../src/lib/workspace/panels'
 import { computed, root, watch } from './runes.svelte'
 
-beforeEach(() => {
+beforeEach(async () => {
   viewport.device = 'phone'
   workspace.panel = null
   workspace.right = []
+  for (let turn = 0; turn < 6; turn++) await new Promise((resolve) => setTimeout(resolve, 5))
 })
 
 afterEach(() => {
@@ -58,10 +59,9 @@ test('and the entry is given back when the drawer itself closes', async () => {
   const stop = registerAsTheAppDoes()
   flushSync()
 
-  const before = history.length
   workspace.showPanel('outline')
   flushSync()
-  expect(history.length).toBe(before + 1)
+  expect((history.state as { ordenDepth?: number } | null)?.ordenDepth).toBe(1)
 
   const heard = new Promise<void>((resolve) => {
     window.addEventListener('popstate', () => resolve(), { once: true })
