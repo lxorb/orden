@@ -26,28 +26,28 @@ fn noting_every_window_from_a_command_while_one_moves_never_stops_the_window_s_t
     let moves = Arc::new(AtomicU64::new(0));
     let rounds = Arc::new(AtomicU64::new(0));
 
-    let moving = done.clone();
-    let moved = moves.clone();
+    let stop_mover = done.clone();
+    let move_tally = moves.clone();
     std::thread::spawn(move || {
         let mut at = 0_u32;
-        while !moving.load(Ordering::Relaxed) {
+        while !stop_mover.load(Ordering::Relaxed) {
             at = (at + 7) % 200;
             let _ = window.set_position(tauri::LogicalPosition::new(40.0 + f64::from(at), 40.0));
             let _ = window.outer_position();
-            moved.fetch_add(1, Ordering::Relaxed);
+            move_tally.fetch_add(1, Ordering::Relaxed);
         }
     });
 
     let handle = app.handle().clone();
-    let noted = done.clone();
-    let counted = rounds.clone();
+    let stop_noter = done.clone();
+    let round_tally = rounds.clone();
     let noting = std::thread::spawn(move || {
         let until = Instant::now() + NOTING;
         while Instant::now() < until {
             orden_lib::window_thread::note_every_window(&handle);
-            counted.fetch_add(1, Ordering::Relaxed);
+            round_tally.fetch_add(1, Ordering::Relaxed);
         }
-        noted.store(true, Ordering::Relaxed);
+        stop_noter.store(true, Ordering::Relaxed);
         handle.exit(0);
     });
 
