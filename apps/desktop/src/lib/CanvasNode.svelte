@@ -38,6 +38,7 @@
     ontext,
     onleave,
     onfollow,
+    onplaying,
   }: {
     node: CanvasNode
     canvasPath: string | null
@@ -53,6 +54,7 @@
     ontext?: (text: string) => void
     onleave?: () => void
     onfollow?: (jump: NoteJump, press: LinkPress | undefined, from: string | null) => void
+    onplaying?: (on: boolean) => void
   } = $props()
 
   const colour = $derived(shownColour(node.color))
@@ -182,9 +184,12 @@
     }
   }
 
+  let sounds: readonly EventTarget[] = []
+
   onDestroy(() => {
     editor?.destroy()
     editor = undefined
+    if (sounds.length) onplaying?.(false)
   })
 
   function embeds(host: HTMLElement) {
@@ -207,6 +212,14 @@
         away()
       },
     }
+  }
+
+  function sounding(event: Event) {
+    const one = event.target
+    if (!one) return
+    const others = sounds.filter((sound) => sound !== one)
+    sounds = event.type === 'play' ? [...others, one] : others
+    onplaying?.(sounds.length > 0)
   }
 
   function onKey(event: KeyboardEvent) {
@@ -234,6 +247,10 @@
   style:height="{node.height}px"
   style:translate="{offset.x}px {offset.y}px"
   style:--card-colour={colour}
+  onplaycapture={sounding}
+  onpausecapture={sounding}
+  onendedcapture={sounding}
+  onemptiedcapture={sounding}
 >
   {#if node.type === 'text'}
     {#if editing}

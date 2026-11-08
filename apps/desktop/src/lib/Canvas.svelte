@@ -371,7 +371,16 @@
     }
   })
 
-  const cards = $derived(shown.nodes.filter((node) => overlaps(boxOf(node), inView)))
+  let playing = $state.raw<ReadonlySet<string>>(new Set())
+
+  function heard(id: string, on: boolean) {
+    if (playing.has(id) === on) return
+    playing = new Set(on ? [...playing, id] : [...playing].filter((one) => one !== id))
+  }
+
+  const cards = $derived(
+    shown.nodes.filter((node) => playing.has(node.id) || overlaps(boxOf(node), inView)),
+  )
 
   const watched = $derived.by(() => {
     const across = spanX / camera.scale / 2
@@ -385,7 +394,9 @@
       (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
   )
 
-  const wanted = $derived(far ? cards.filter((node) => node.id === store.editing) : cards)
+  const wanted = $derived(
+    far ? cards.filter((node) => node.id === store.editing || playing.has(node.id)) : cards,
+  )
 
   const onPage = $derived.by(() => {
     const scale = 2 ** (roughZoom / 4)
@@ -1663,6 +1674,7 @@
           ontext={(text: string) => store.edit(withText(store.canvas, node.id, text))}
           onleave={() => (store.editing = null)}
           onfollow={followNote}
+          onplaying={(on: boolean) => heard(node.id, on)}
         />
       {/each}
 
