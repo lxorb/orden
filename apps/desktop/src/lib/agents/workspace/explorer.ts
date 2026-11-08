@@ -196,6 +196,8 @@ export function namesAt(
   return rows.filter((one) => wanted.has(pathKeyAs(pathOf(one.name), folds))).map((one) => one.name)
 }
 
+const MOST_PATHS = 1000
+
 async function pathsOf(call: Call, view: View): Promise<string[]> {
   const raw = call.args.paths ?? (call.args.path === undefined ? undefined : [call.args.path])
   if (!Array.isArray(raw) || !raw.length || !raw.every((one) => typeof one === 'string')) {
@@ -203,6 +205,9 @@ async function pathsOf(call: Call, view: View): Promise<string[]> {
       'bad_arguments',
       'say which, as paths: absolute, ~/, or names in the tab’s folder',
     )
+  }
+  if (raw.length > MOST_PATHS) {
+    throw new Refused('bad_arguments', `paths is a list of up to ${MOST_PATHS} paths`)
   }
   const out: string[] = []
   for (const one of raw) {

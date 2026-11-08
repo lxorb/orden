@@ -152,6 +152,17 @@ describe("an agent's file explorer", () => {
     expect(picked).toHaveLength(4000)
   })
 
+  test('names at most 1000 paths at once, and asks about none past that', async () => {
+    const many = Array.from({ length: 1001 }, (_, at) => `f${at}.txt`)
+    for (const op of ['select', 'trash', 'copy']) {
+      expect(await call({ op, tab: 'e1', paths: many, to: '~/Documents' }), op).toMatchObject({
+        code: 'bad_arguments',
+      })
+    }
+    expect(trashed).toEqual([])
+    expect(carried).toEqual([])
+  })
+
   test('picks and trashes through the tab, so the reader can undo it', async () => {
     await call({ op: 'select', tab: 'e1', paths: ['a.zip'] })
     expect(view.picked).toEqual(['a.zip'])
