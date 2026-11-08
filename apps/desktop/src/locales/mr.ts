@@ -3748,4 +3748,8 @@ export const mr: Dictionary = {
   'Copy name': 'नाव कॉपी करा',
   'Copy address': 'पत्ता कॉपी करा',
   'Send message': 'संदेश पाठवा',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack ने हा ॲप-स्तर टोकन नाकारला. Basic Information मध्ये connections:write असलेला टोकन तयार करा',
+  'A Slack channel name needs a letter or a number':
+    'Slack चॅनेलच्या नावात एखादे अक्षर किंवा अंक हवा',
 }

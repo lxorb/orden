@@ -3828,4 +3828,8 @@ export const fil: Dictionary = {
   'Copy name': 'Kopyahin ang pangalan',
   'Copy address': 'Kopyahin ang address',
   'Send message': 'Magpadala ng mensahe',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Tinanggihan ng Slack ang token ng app na iyon. Gumawa ng isa na may connections:write sa Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'Kailangan ng pangalan ng Slack channel ang isang titik o numero',
 }

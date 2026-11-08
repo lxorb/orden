@@ -3656,4 +3656,8 @@ export const vi: Dictionary = {
   'Copy name': 'Sao chép tên',
   'Copy address': 'Sao chép địa chỉ',
   'Send message': 'Gửi tin nhắn',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack đã từ chối token ứng dụng này. Hãy tạo một token có connections:write trong Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'Tên kênh Slack cần có một chữ cái hoặc chữ số',
 }

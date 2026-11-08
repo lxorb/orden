@@ -3569,4 +3569,7 @@ export const zhHans: Dictionary = {
   'Copy name': '复制名称',
   'Copy address': '复制地址',
   'Send message': '发送消息',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack 拒绝了这个应用级令牌。请在 Basic Information 下生成一个带 connections:write 的令牌',
+  'A Slack channel name needs a letter or a number': 'Slack 频道名称需要包含字母或数字',
 }

@@ -3859,4 +3859,8 @@ export const ptPT: Dictionary = {
   'Copy name': 'Copiar nome',
   'Copy address': 'Copiar endereço',
   'Send message': 'Enviar mensagem',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'O Slack recusou esse token de aplicação. Gere um com connections:write em Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'O nome de um canal do Slack precisa de uma letra ou de um número',
 }

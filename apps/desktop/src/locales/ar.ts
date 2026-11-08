@@ -3934,4 +3934,7 @@ export const ar: Dictionary = {
   'Copy name': 'نسخ الاسم',
   'Copy address': 'نسخ العنوان',
   'Send message': 'إرسال رسالة',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'رفض Slack رمز التطبيق هذا. أنشئ رمزًا بصلاحية connections:write من Basic Information',
+  'A Slack channel name needs a letter or a number': 'يحتاج اسم قناة Slack إلى حرف أو رقم',
 }

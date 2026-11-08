@@ -3823,4 +3823,8 @@ export const ta: Dictionary = {
   'Copy name': 'பெயரை நகலெடு',
   'Copy address': 'முகவரியை நகலெடு',
   'Send message': 'செய்தி அனுப்பு',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack இந்த ஆப்-நிலை டோக்கனை மறுத்தது. Basic Information இல் connections:write உடன் ஒன்றை உருவாக்குங்கள்',
+  'A Slack channel name needs a letter or a number':
+    'Slack சேனல் பெயரில் ஓர் எழுத்து அல்லது எண் வேண்டும்',
 }

@@ -3748,4 +3748,7 @@ export const ps: Dictionary = {
   'Copy name': 'نوم کاپي کړئ',
   'Copy address': 'پته کاپي کړئ',
   'Send message': 'پیغام ولېږئ',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack دا د اپ کچې ټوکن رد کړ. په Basic Information کې یو د connections:write سره جوړ کړئ',
+  'A Slack channel name needs a letter or a number': 'د Slack د چینل نوم یو توری یا شمېره غواړي',
 }

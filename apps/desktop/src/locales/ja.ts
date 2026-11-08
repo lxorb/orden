@@ -3670,4 +3670,7 @@ export const ja: Dictionary = {
   'Copy name': '名前をコピー',
   'Copy address': 'アドレスをコピー',
   'Send message': 'メッセージを送信',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack がこのアプリレベルトークンを拒否しました。Basic Information で connections:write 付きのトークンを生成してください',
+  'A Slack channel name needs a letter or a number': 'Slack のチャンネル名には文字か数字が必要です',
 }

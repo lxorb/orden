@@ -3689,4 +3689,8 @@ export const id: Dictionary = {
   'Copy name': 'Salin nama',
   'Copy address': 'Salin alamat',
   'Send message': 'Kirim pesan',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack menolak token aplikasi itu. Buat token dengan connections:write di Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'Nama kanal Slack perlu berisi huruf atau angka',
 }

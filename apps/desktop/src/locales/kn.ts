@@ -3794,4 +3794,8 @@ export const kn: Dictionary = {
   'Copy name': 'ಹೆಸರು ನಕಲಿಸಿ',
   'Copy address': 'ವಿಳಾಸ ನಕಲಿಸಿ',
   'Send message': 'ಸಂದೇಶ ಕಳುಹಿಸಿ',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack ಈ ಆ್ಯಪ್-ಮಟ್ಟದ ಟೋಕನ್ ನಿರಾಕರಿಸಿದೆ. Basic Information ನಲ್ಲಿ connections:write ಇರುವ ಒಂದನ್ನು ರಚಿಸಿ',
+  'A Slack channel name needs a letter or a number':
+    'Slack ಚಾನೆಲ್ ಹೆಸರಿನಲ್ಲಿ ಒಂದು ಅಕ್ಷರ ಅಥವಾ ಅಂಕೆ ಇರಬೇಕು',
 }

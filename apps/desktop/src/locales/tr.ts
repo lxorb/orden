@@ -3771,4 +3771,8 @@ export const tr: Dictionary = {
   'Copy name': 'Adı kopyala',
   'Copy address': 'Adresi kopyala',
   'Send message': 'Mesaj gönder',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack bu uygulama tokenini reddetti. Basic Information altında connections:write ile yeni bir tane oluşturun',
+  'A Slack channel name needs a letter or a number':
+    'Slack kanal adında bir harf ya da rakam olmalı',
 }

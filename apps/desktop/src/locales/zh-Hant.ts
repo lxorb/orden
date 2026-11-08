@@ -3572,4 +3572,7 @@ export const zhHant: Dictionary = {
   'Copy name': '複製名稱',
   'Copy address': '複製地址',
   'Send message': '傳送訊息',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack 拒絕了這個應用程式層級權杖。請在 Basic Information 下產生一個帶 connections:write 的權杖',
+  'A Slack channel name needs a letter or a number': 'Slack 頻道名稱需要包含字母或數字',
 }

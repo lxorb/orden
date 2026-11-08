@@ -3894,4 +3894,8 @@ export const pl: Dictionary = {
   'Copy name': 'Kopiuj nazwę',
   'Copy address': 'Kopiuj adres',
   'Send message': 'Wyślij wiadomość',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack odrzucił ten token aplikacji. Wygeneruj nowy z connections:write w Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'Nazwa kanału Slack musi zawierać literę lub cyfrę',
 }

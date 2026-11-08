@@ -3810,4 +3810,7 @@ export const ml: Dictionary = {
   'Copy name': 'പേര് പകർത്തുക',
   'Copy address': 'വിലാസം പകർത്തുക',
   'Send message': 'സന്ദേശം അയയ്ക്കുക',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack ഈ ആപ്പ്-തല ടോക്കൺ നിരസിച്ചു. Basic Information-ൽ connections:write ഉള്ള ഒന്ന് സൃഷ്ടിക്കുക',
+  'A Slack channel name needs a letter or a number': 'Slack ചാനൽ പേരിൽ ഒരു അക്ഷരമോ അക്കമോ വേണം',
 }

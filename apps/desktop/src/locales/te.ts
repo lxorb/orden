@@ -3771,4 +3771,8 @@ export const te: Dictionary = {
   'Copy name': 'పేరు కాపీ చేయండి',
   'Copy address': 'చిరునామా కాపీ చేయండి',
   'Send message': 'సందేశం పంపండి',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack ఈ యాప్-స్థాయి టోకెన్‌ను తిరస్కరించింది. Basic Informationలో connections:write తో ఒకటి సృష్టించండి',
+  'A Slack channel name needs a letter or a number':
+    'Slack ఛానెల్ పేరులో ఒక అక్షరం లేదా అంకె ఉండాలి',
 }
