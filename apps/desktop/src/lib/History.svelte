@@ -23,11 +23,17 @@
   let previewOf = $state<Tab | null>(null)
   let comparing = $state(true)
 
+  const shut = $derived(workspace.protection.locked(workspace.active?.path))
+
+  $effect(() => {
+    if (open && shut) open = false
+  })
+
   $effect(() => {
     if (!open) return
 
     const path = workspace.active?.path
-    if (!path) {
+    if (!path || shut) {
       versions = []
       return
     }
@@ -51,7 +57,7 @@
 
   $effect(() => {
     const tab = workspace.active
-    if (!selected) {
+    if (!selected || shut) {
       preview = ''
       previewOf = null
       return
@@ -134,7 +140,7 @@
     aria-label={t('Version history')}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
-    {#if !workspace.active?.path || !versions.length}
+    {#if !workspace.active?.path || shut || !versions.length}
       <p class="empty">{t('No earlier versions yet.')}</p>
     {:else}
       <ul class="versions" use:scrollbar>

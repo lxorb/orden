@@ -36,6 +36,17 @@ class Unlocks {
 
   private agents = $state<ReadonlySet<string>>(new Set())
 
+  private session = new AbortController()
+
+  get held(): AbortSignal {
+    return this.session.signal
+  }
+
+  private shutting(): void {
+    this.session.abort()
+    this.session = new AbortController()
+  }
+
   agentsMay(locks: readonly Lock[]): boolean {
     return locks.every((one) => this.has(one) && this.agents.has(keyOf(one)))
   }
@@ -73,12 +84,15 @@ class Unlocks {
     const shut = new Set(locks.map(keyOf))
     if ([...shut].some((one) => this.open.has(one))) {
       this.open = new Set([...this.open].filter((one) => !shut.has(one)))
+      this.shutting()
     }
   }
 
   lockAll(): void {
     this.settle()
-    if (this.open.size) this.open = new Set()
+    if (!this.open.size) return
+    this.open = new Set()
+    this.shutting()
   }
 
   setRelock(minutes: number): void {

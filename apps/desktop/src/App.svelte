@@ -152,7 +152,11 @@
       macMenuKey = one.macMenuKey
     })
   }
-  const presenting = $derived(workspace.tabs.find((tab) => tab.id === present.tabId) ?? null)
+  const presenting = $derived(
+    workspace.tabs.find(
+      (tab) => tab.id === present.tabId && !workspace.protection.locked(tab.path),
+    ) ?? null,
+  )
   const canWriteHere = $derived(canWriteIn(workspace.active?.note))
   const filled = $derived(workspace.panes.fills !== null)
   const bare = $derived(fullscreen.on || alone.on)
