@@ -50,13 +50,7 @@ const remote: Remote = {
   list: () => http.listChats(),
   events: (chat, after) => http.eventsOf(chat, { after }),
   state: (chat, before) => http.stateOf(chat, before),
-  async post(chat, events) {
-    try {
-      return await http.postEvents(chat, events)
-    } catch {
-      return 'gone'
-    }
-  },
+  post: (chat, events) => http.sendEvents(chat, events),
   read: (chat, seq, back) => http.postRead(chat, seq, back).catch(() => false),
 }
 

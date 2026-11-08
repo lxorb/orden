@@ -14,7 +14,7 @@ import {
   type StatePage,
 } from '@orden/chats/wire'
 import { account } from '../account.svelte'
-import { ApiError, BASE, request } from '../api'
+import { ApiError, BASE, fromServer, request } from '../api'
 import { isRecord } from '../stored'
 import type { ChatMember, Hit, Scheduled } from './api'
 
@@ -62,8 +62,15 @@ export async function stateOf(chat: string, before?: number): Promise<StatePage 
   return statePageOf(await ask(`${chatPath(chat)}/state${query}`))
 }
 
-export async function postEvents(chat: string, events: readonly Event[]): Promise<Results | null> {
-  return resultsOf(await ask(`${chatPath(chat)}/events`, { body: { events } }))
+export async function sendEvents(
+  chat: string,
+  events: readonly Event[],
+): Promise<Results | 'gone' | null> {
+  try {
+    return resultsOf(await ask(`${chatPath(chat)}/events`, { body: { events } }))
+  } catch (error) {
+    return fromServer(error) && error.status !== 401 ? 'gone' : null
+  }
 }
 
 export async function postRead(chat: string, seq: number, back = false): Promise<boolean> {
