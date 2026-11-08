@@ -209,7 +209,7 @@
   })
 
   $effect(() => {
-    if (!PAPER_TOOLS.has(tools.which)) tools.choose('select')
+    if (focused && !PAPER_TOOLS.has(tools.which)) tools.choose('select')
   })
 
   $effect(() => {
