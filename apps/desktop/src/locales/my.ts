@@ -3543,6 +3543,8 @@ export const my: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp က ဤချိတ်ဆက်မှုကို ငြင်းပယ်ခဲ့သည်',
   'WhatsApp needs the Orden app': 'WhatsApp အတွက် Orden အက်ပ် လိုအပ်သည်',
   'That number is not on WhatsApp': 'ထိုနံပါတ်သည် WhatsApp တွင် မရှိပါ',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp က မဖြေပါ။ အင်တာနက်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်ကြိုးစားပါ။',
   'WhatsApp cannot do that in this conversation':
     'WhatsApp သည် ဤစကားဝိုင်းတွင် ထိုအရာကို မလုပ်နိုင်ပါ',
   'WhatsApp makes a new group owner only from its own app':

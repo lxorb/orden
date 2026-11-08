@@ -3676,6 +3676,8 @@ export const ta: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp இந்த இணைப்பை மறுத்தது',
   'WhatsApp needs the Orden app': 'WhatsApp-க்கு Orden ஆப் தேவை',
   'That number is not on WhatsApp': 'அந்த எண் WhatsApp-இல் இல்லை',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp பதிலளிக்கவில்லை. இணைய இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்.',
   'WhatsApp cannot do that in this conversation': 'இந்த உரையாடலில் WhatsApp அதைச் செய்ய முடியாது',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp புதிய குழு உரிமையாளரைத் தனது சொந்த ஆப்பிலிருந்து மட்டுமே நியமிக்கும்',

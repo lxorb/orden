@@ -3479,6 +3479,8 @@ export const th: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ปฏิเสธการเชื่อมต่อนี้',
   'WhatsApp needs the Orden app': 'WhatsApp ต้องใช้แอป Orden',
   'That number is not on WhatsApp': 'หมายเลขนั้นไม่ได้ใช้ WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp ไม่ตอบกลับ ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองอีกครั้ง',
   'WhatsApp cannot do that in this conversation': 'WhatsApp ทำสิ่งนั้นในการสนทนานี้ไม่ได้',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp แต่งตั้งเจ้าของกลุ่มคนใหม่ได้จากแอปของตัวเองเท่านั้น',

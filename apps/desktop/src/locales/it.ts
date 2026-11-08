@@ -3730,6 +3730,8 @@ export const it: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ha rifiutato questa connessione',
   'WhatsApp needs the Orden app': 'WhatsApp richiede l’app Orden',
   'That number is not on WhatsApp': 'Quel numero non è su WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp non ha risposto. Controlla la connessione a internet e riprova.',
   'WhatsApp cannot do that in this conversation': 'WhatsApp non può farlo in questa conversazione',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp nomina un nuovo proprietario del gruppo solo dalla propria app',

@@ -1,5 +1,6 @@
 import type { Host, Socket, SocketAsk, Stream, WireAsk, WireSocket } from '@orden/chats/provider'
 import { forgetKey, readSecret, writeSecret } from '../../ai/keys'
+import { log } from '../../log'
 import { Channel } from '../../native'
 import { isRecord } from '../../stored'
 import { invoke, isDesktop } from '../../tauri'
@@ -160,5 +161,6 @@ export const host: Host = {
   ask: screens.ask,
   show: screens.show,
   whileWaiting: screens.whileWaiting,
+  log,
   sealed: sealedStore({ read: readSecret, write: (name, value) => host.keepSecret(name, value) }),
 }

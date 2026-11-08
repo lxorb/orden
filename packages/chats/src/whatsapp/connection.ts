@@ -72,6 +72,7 @@ export const WORDS = {
   noMessage: 'That message is no longer here',
   gone: 'That file is no longer on WhatsApp',
   offline: 'WhatsApp is not connected right now',
+  noAnswer: 'WhatsApp did not answer. Check the internet connection and try again.',
 } as const
 
 const WHATSAPP_USER = '@s.whatsapp.net'
@@ -84,12 +85,21 @@ const MOST_RETRIES = 3
 const OLDER = 50
 const OLDER_WAIT = 8000
 const PIN_FOR = 604_800 as const
+const ANSWER_FOR = 30_000
 
 const live = new Map<string, WhatsAppConnection>()
 
 function bareJid(jid: string): string {
   const [user = '', server = ''] = jid.split('@')
   return `${user.split(':')[0]}@${server}`
+}
+
+function causeOf(error: unknown): string | null {
+  if (!error) return null
+  const code = statusOf(error)
+  const words =
+    error instanceof Error ? error.message : typeof error === 'string' ? error : 'unknown'
+  return code === null ? words : `${words} (${code})`
 }
 
 function digitsOf(jid: string): string {
@@ -199,7 +209,9 @@ class WhatsAppConnection implements Connection {
   private stopped = false
   private waiter: Waiter | null = null
   private phone: string | undefined
-  private asked = false
+  private askedOn: Link | null = null
+  private answering: ReturnType<typeof setTimeout> | null = null
+  private cause: string | null = null
   private retries = 0
   private retry: ReturnType<typeof setTimeout> | null = null
   private readonly hearers = new Set<Hearer>()
@@ -235,19 +247,37 @@ class WhatsAppConnection implements Connection {
   signIn(phone: string | undefined, fresh: boolean): Promise<void> {
     const digits = phone?.replace(/\D/g, '')
     this.phone = digits?.length ? digits : undefined
+    this.cause = null
     return new Promise<void>((resolve, reject) => {
       this.waiter = {
         done: () => {
+          this.answered()
           this.waiter = null
           resolve()
         },
         failed: (error) => {
+          this.answered()
           this.waiter = null
+          this.host.log?.('warn', `WhatsApp: signing in failed: ${error.message}`)
           reject(error)
         },
       }
       this.dial()
     }).then(() => this.opened(fresh))
+  }
+
+  private awaitAnswer(): void {
+    this.answered()
+    this.answering = setTimeout(() => {
+      this.answering = null
+      const cause = this.cause
+      this.waiter?.failed(new Error(cause ? `${WORDS.noAnswer} (${cause})` : WORDS.noAnswer))
+    }, ANSWER_FOR)
+  }
+
+  private answered(): void {
+    if (this.answering) clearTimeout(this.answering)
+    this.answering = null
   }
 
   private async opened(fresh: boolean): Promise<void> {
@@ -282,6 +312,7 @@ class WhatsAppConnection implements Connection {
       message: (key) => Promise.resolve(this.stored(key)?.message ?? undefined),
     })
     this.link = link
+    if (this.waiter) this.awaitAnswer()
     const on = <E extends keyof Events>(event: E, hear: (data: Events[E]) => void) =>
       link.on(event, (data) => {
         if (this.link !== link) return
@@ -366,6 +397,11 @@ class WhatsAppConnection implements Connection {
     if (this.link === link) this.link = null
     if (this.stopped) return
     const code = statusOf(update.lastDisconnect?.error)
+    const cause = causeOf(update.lastDisconnect?.error)
+    if (cause) {
+      this.cause = cause
+      this.host.log?.('warn', `WhatsApp: the connection closed: ${cause}`)
+    }
     if (code === RESTART) {
       this.dial()
       return
@@ -412,17 +448,21 @@ class WhatsAppConnection implements Connection {
   private async signInScreen(link: Link, qr: string): Promise<void> {
     if (this.shelf.creds.registered) return
     if (this.phone) {
-      if (this.asked) return
-      this.asked = true
+      if (this.askedOn === link) return
+      this.askedOn = link
       try {
         const code = await link.pairingCode(this.phone)
+        if (this.link !== link || !this.waiter) return
         const shown = code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code
+        this.answered()
         this.host.show?.({ kind: 'wait', label: WORDS.code, note: shown })
       } catch (error) {
-        this.waiter?.failed(error instanceof Error ? error : new Error(String(error)))
+        if (this.link === link)
+          this.waiter?.failed(error instanceof Error ? error : new Error(String(error)))
       }
       return
     }
+    this.answered()
     this.host.show?.({ kind: 'qr', data: qr, label: WORDS.scan, note: WORDS.scanHow })
   }
 
@@ -441,6 +481,7 @@ class WhatsAppConnection implements Connection {
 
   stop(): void {
     this.stopped = true
+    this.answered()
     if (this.retry) clearTimeout(this.retry)
     this.retry = null
     for (const timer of this.typists.values()) clearTimeout(timer)

@@ -3533,6 +3533,8 @@ export const jv: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp nolak sambungan iki',
   'WhatsApp needs the Orden app': 'WhatsApp butuh aplikasi Orden',
   'That number is not on WhatsApp': 'Nomer kuwi ora ana ing WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp ora mangsuli. Priksa sambungan internet lan coba maneh.',
   'WhatsApp cannot do that in this conversation':
     'WhatsApp ora bisa nindakaké kuwi ing obrolan iki',
   'WhatsApp makes a new group owner only from its own app':

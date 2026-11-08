@@ -3629,6 +3629,8 @@ export const te: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ఈ కనెక్షన్‌ను తిరస్కరించింది',
   'WhatsApp needs the Orden app': 'WhatsApp‌కు Orden యాప్ కావాలి',
   'That number is not on WhatsApp': 'ఆ నంబర్ WhatsApp‌లో లేదు',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp స్పందించలేదు. ఇంటర్నెట్ కనెక్షన్‌ను తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.',
   'WhatsApp cannot do that in this conversation': 'ఈ సంభాషణలో WhatsApp అది చేయలేదు',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp కొత్త గ్రూప్ యజమానిని తన సొంత యాప్ నుండి మాత్రమే నియమిస్తుంది',

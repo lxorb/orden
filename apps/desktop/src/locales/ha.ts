@@ -3662,6 +3662,8 @@ export const ha: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp ya ƙi wannan haɗin',
   'WhatsApp needs the Orden app': 'WhatsApp yana buƙatar manhajar Orden',
   'That number is not on WhatsApp': 'Wannan lambar ba ta kan WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp bai amsa ba. Duba haɗin intanet kuma sake gwadawa.',
   'WhatsApp cannot do that in this conversation':
     'WhatsApp ba zai iya yin hakan a wannan tattaunawar ba',
   'WhatsApp makes a new group owner only from its own app':

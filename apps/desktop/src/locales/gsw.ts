@@ -3637,6 +3637,8 @@ export const gsw: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp hät die Verbindig abglehnt',
   'WhatsApp needs the Orden app': 'WhatsApp bruucht d Orden-App',
   'That number is not on WhatsApp': 'Die Nummere isch nöd uf WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp hät nöd gantwortet. Prüef d Internetverbindig und probiers nomal.',
   'WhatsApp cannot do that in this conversation': 'WhatsApp cha das i dem Gspröch nöd',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp macht en neue Gruppebsitzer nur i de eigene App',

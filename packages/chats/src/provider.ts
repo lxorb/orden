@@ -248,6 +248,7 @@ export interface Host {
   wire?: (ask: WireAsk) => Promise<WireSocket>
   sidecar?: (program: string, args: readonly string[]) => Promise<Stream>
   request?: (ask: NativeAsk) => Promise<Uint8Array>
+  log?: (level: 'info' | 'warn' | 'error', message: string) => void
 }
 
 export interface Account {

@@ -206,11 +206,11 @@ export class FakeLink implements Link {
     this.fire('connection.update', { connection: 'open' })
   }
 
-  drop(statusCode: number): void {
+  drop(statusCode: number, words = 'closed'): void {
     this.fire('connection.update', {
       connection: 'close',
       lastDisconnect: {
-        error: Object.assign(new Error('closed'), { output: { statusCode } }),
+        error: Object.assign(new Error(words), { output: { statusCode } }),
         date: new Date(),
       },
     })
@@ -291,6 +291,7 @@ export class FakeHost implements Host {
   readonly secrets = new Map<string, string>()
   readonly bigs = new Map<string, Uint8Array>()
   readonly shown: (Screen | null)[] = []
+  readonly logged: string[] = []
   readonly fetched: { url: string; init?: RequestInit }[] = []
   answers: ((url: string, init?: RequestInit) => Response) | null = null
   clock = 1_800_000_000_000
@@ -318,6 +319,10 @@ export class FakeHost implements Host {
 
   show = (screen: Screen | null): void => {
     this.shown.push(screen)
+  }
+
+  log = (level: string, message: string): void => {
+    this.logged.push(`${level} ${message}`)
   }
 
   wire = (_ask: WireAsk): Promise<WireSocket> => Promise.reject(new Error('not in tests'))

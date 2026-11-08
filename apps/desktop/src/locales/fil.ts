@@ -3683,6 +3683,8 @@ export const fil: Dictionary = {
   'WhatsApp refused this connection': 'Tinanggihan ng WhatsApp ang koneksyong ito',
   'WhatsApp needs the Orden app': 'Kailangan ng WhatsApp ang Orden app',
   'That number is not on WhatsApp': 'Wala sa WhatsApp ang numerong iyan',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'Hindi sumagot ang WhatsApp. Tingnan ang koneksyon sa internet at subukan ulit.',
   'WhatsApp cannot do that in this conversation': 'Hindi iyan magagawa ng WhatsApp sa usapang ito',
   'WhatsApp makes a new group owner only from its own app':
     'Sa sarili lang nitong app nagtatalaga ang WhatsApp ng bagong may-ari ng grupo',

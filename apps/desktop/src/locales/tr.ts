@@ -3631,6 +3631,8 @@ export const tr: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp bu bağlantıyı reddetti',
   'WhatsApp needs the Orden app': 'WhatsApp, Orden uygulamasını gerektiriyor',
   'That number is not on WhatsApp': 'Bu numara WhatsApp’ta yok',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp yanıt vermedi. İnternet bağlantısını kontrol edip tekrar deneyin.',
   'WhatsApp cannot do that in this conversation': 'WhatsApp bunu bu sohbette yapamaz',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp yeni grup sahibini yalnızca kendi uygulamasından atar',

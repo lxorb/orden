@@ -3506,6 +3506,8 @@ export const ko: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp이 이 연결을 거부했습니다',
   'WhatsApp needs the Orden app': 'WhatsApp에는 Orden 앱이 필요합니다',
   'That number is not on WhatsApp': '그 번호는 WhatsApp을 사용하지 않습니다',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp이 응답하지 않았습니다. 인터넷 연결을 확인하고 다시 시도하세요.',
   'WhatsApp cannot do that in this conversation': 'WhatsApp은 이 대화에서 그렇게 할 수 없습니다',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp은 자체 앱에서만 새 그룹 소유자를 지정합니다',

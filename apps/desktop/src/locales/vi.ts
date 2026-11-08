@@ -3515,6 +3515,8 @@ export const vi: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp đã từ chối kết nối này',
   'WhatsApp needs the Orden app': 'WhatsApp cần ứng dụng Orden',
   'That number is not on WhatsApp': 'Số đó không dùng WhatsApp',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp không phản hồi. Hãy kiểm tra kết nối internet và thử lại.',
   'WhatsApp cannot do that in this conversation':
     'WhatsApp không thể làm điều đó trong cuộc trò chuyện này',
   'WhatsApp makes a new group owner only from its own app':

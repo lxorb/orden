@@ -3595,6 +3595,8 @@ export const gu: Dictionary = {
   'WhatsApp refused this connection': 'WhatsApp એ આ કનેક્શન નકાર્યું',
   'WhatsApp needs the Orden app': 'WhatsApp ને Orden ઍપ જોઈએ',
   'That number is not on WhatsApp': 'તે નંબર WhatsApp પર નથી',
+  'WhatsApp did not answer. Check the internet connection and try again.':
+    'WhatsApp એ જવાબ ન આપ્યો. ઇન્ટરનેટ કનેક્શન તપાસો અને ફરી પ્રયાસ કરો.',
   'WhatsApp cannot do that in this conversation': 'WhatsApp આ વાતચીતમાં તે કરી શકતું નથી',
   'WhatsApp makes a new group owner only from its own app':
     'WhatsApp નવા ગ્રુપ માલિક ફક્ત પોતાની ઍપમાંથી જ બનાવે છે',
