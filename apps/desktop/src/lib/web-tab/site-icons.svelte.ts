@@ -141,9 +141,10 @@ class SiteIcons {
     try {
       sites = (await api.siteIcons(token)).sites
     } catch (error) {
-      this.failed(error)
+      if (account.accountToken === token) this.failed(error)
       return
     }
+    if (account.accountToken !== token) return
     this.lacking = false
 
     const held = new Map(this.list.map((one) => [one.site, one]))
@@ -158,6 +159,7 @@ class SiteIcons {
             : await api.siteIconPicture(token, one.site).catch(() => was?.picture ?? null)
       next.push({ site: one.site, label: one.label, seen: one.seen, hash: one.hash, picture })
     }
+    if (account.accountToken !== token) return
 
     this.write(next)
     await this.dropBroken()
@@ -175,7 +177,7 @@ class SiteIcons {
 
     try {
       const { site: row } = await api.sawSite(token, { site, label, icon, seen: Date.now() })
-      if (!row) return
+      if (!row || account.accountToken !== token) return
 
       const was = this.list.find((one) => one.site === row.site)
       const picture =
@@ -184,14 +186,25 @@ class SiteIcons {
           : row.hash === null
             ? null
             : await api.siteIconPicture(token, row.site).catch(() => null)
+      if (account.accountToken !== token) return
       this.write([
         { site: row.site, label: row.label, seen: row.seen, hash: row.hash, picture },
         ...this.list.filter((one) => one.site !== row.site),
       ])
     } catch (error) {
+      if (account.accountToken !== token) return
       this.told.delete(site)
       this.failed(error)
     }
+  }
+
+  forgetAccount() {
+    this.write([])
+    this.told.clear()
+    this.asked = 0
+    this.asking = null
+    this.quietUntil = 0
+    this.lacking = false
   }
 
   async forgetSince(since: number) {
@@ -208,6 +221,8 @@ class SiteIcons {
 }
 
 export const siteIcons = new SiteIcons()
+
+account.forgetWithSession(() => siteIcons.forgetAccount())
 
 export function siteLabel(one: HeldSite): string {
   return one.label || one.site

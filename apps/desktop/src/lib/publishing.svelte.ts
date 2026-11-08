@@ -219,13 +219,16 @@ class Publish {
 
   async readAnswers() {
     const id = this.spaceId
-    if (!id || !account.accountToken || !this.published) return
+    const token = account.accountToken
+    if (!id || !token || !this.published) return
 
     try {
-      const read = await api.answers(account.accountToken, id)
+      const read = await api.answers(token, id)
+      if (!this.holds(token, id)) return
       this.answers = read.answers
       this.kept = read.keptDays ? { days: read.keptDays, full: read.full === true } : null
     } catch {
+      if (!this.holds(token, id)) return
       this.answers = []
       this.kept = null
     }
@@ -233,17 +236,21 @@ class Publish {
 
   async forget(one: FormAnswer) {
     const id = this.spaceId
-    if (!id || !account.accountToken) return
+    const token = account.accountToken
+    if (!id || !token) return
 
-    await api.forgetAnswer(account.accountToken, id, one.id).catch(() => undefined)
+    await api.forgetAnswer(token, id, one.id).catch(() => undefined)
+    if (!this.holds(token, id)) return
     this.answers = this.answers.filter((held) => held.id !== one.id)
   }
 
   async answersCsv(): Promise<string | null> {
     const id = this.spaceId
-    if (!id || !account.accountToken) return null
+    const token = account.accountToken
+    if (!id || !token) return null
 
-    return api.answersCsv(account.accountToken, id).catch(() => null)
+    const csv = await api.answersCsv(token, id).catch(() => null)
+    return this.holds(token, id) ? csv : null
   }
 
   rule(which: 'include' | 'exclude', folder: string, wanted: boolean) {
@@ -268,14 +275,15 @@ class Publish {
 
   async askChanges() {
     const id = this.spaceId
-    if (!id || !account.accountToken) return
+    const token = account.accountToken
+    if (!id || !token) return
 
     const asking = ++this.previews
     this.asking = true
 
     try {
-      const changes = await api.sitePreview(account.accountToken, id, this.rules)
-      if (asking !== this.previews) return
+      const changes = await api.sitePreview(token, id, this.rules)
+      if (asking !== this.previews || !this.holds(token, id)) return
       this.changes = changes
     } catch {
       if (asking !== this.previews) return
@@ -302,20 +310,17 @@ class Publish {
 
   async checkSubdomain(value: string) {
     const check = ++this.checks
+    const token = account.accountToken
 
-    if (!account.accountToken || value.length < 2) {
+    if (!token || value.length < 2) {
       this.availability = { checking: false, available: null }
       return
     }
 
     this.availability = { checking: true, available: null }
     try {
-      const result = await api.subdomainAvailable(
-        account.accountToken,
-        value,
-        this.spaceId ?? undefined,
-      )
-      if (check !== this.checks) return
+      const result = await api.subdomainAvailable(token, value, this.spaceId ?? undefined)
+      if (check !== this.checks || account.accountToken !== token) return
       this.availability = {
         checking: false,
         available: result.available,
@@ -330,38 +335,43 @@ class Publish {
   async publish(icon: string | null = null) {
     const note = this.note || null
     this.error = null
+    const token = account.accountToken
+    if (!token) return
 
-    if (!(await this.saveSite(icon))) return
+    if (!(await this.saveSite(token, icon))) return
 
     const sent = await this.send(
+      token,
       this.address === 'subdomain'
         ? { subdomain: this.subdomain, note }
         : { domain: this.domain, note },
     )
 
-    if (sent) await this.sendDiagrams()
+    if (sent) await this.sendDiagrams(token)
   }
 
-  private async sendDiagrams() {
+  private async sendDiagrams(token: string) {
     const id = this.spaceId
     const root = this.space?.root
-    if (!id || !root || !account.accountToken) return
+    if (!id || !root || account.accountToken !== token) return
 
     const { pushDiagrams } = await import('./site-diagrams')
-    const drawn = await pushDiagrams(account.accountToken, id, root).catch(() => null)
+    if (account.accountToken !== token) return
+    const drawn = await pushDiagrams(token, id, root).catch(() => null)
     if (drawn && (drawn.sent || drawn.refused)) {
       log('info', `site diagrams: ${drawn.sent} drawn and sent, ${drawn.refused} refused`)
     }
   }
 
-  private async saveSite(icon: string | null): Promise<boolean> {
+  private async saveSite(token: string, icon: string | null): Promise<boolean> {
     const id = this.spaceId
-    if (!id || !account.accountToken) return false
+    if (!id || account.accountToken !== token) return false
 
     try {
-      const chosen = await this.themeFor(account.accountToken)
+      const chosen = await this.themeFor(token)
+      if (!this.holds(token, id)) return false
 
-      await api.site(account.accountToken, id, {
+      await api.site(token, id, {
         rules: this.rules,
         description: this.description.trim(),
         ...(icon ? { icon } : {}),
@@ -374,6 +384,7 @@ class Publish {
           : null,
         ...(this.password ? { password: this.password } : {}),
       })
+      if (!this.holds(token, id)) return false
 
       if (this.password) {
         this.hasPassword = true
@@ -381,49 +392,55 @@ class Publish {
       }
       return true
     } catch (error) {
-      this.error = message(error, 'could not publish')
+      if (this.holds(token, id)) this.error = message(error, 'could not publish')
       return false
     }
   }
 
   async removePassword() {
     const id = this.spaceId
-    if (!id || !account.accountToken) return
+    const token = account.accountToken
+    if (!id || !token) return
 
     this.busy = true
     this.error = null
 
     try {
-      await api.site(account.accountToken, id, { password: null })
+      await api.site(token, id, { password: null })
+      if (!this.holds(token, id)) return
       this.hasPassword = false
       this.password = ''
       await account.loadSpaces()
     } catch (error) {
-      this.error = message(error, 'that did not work')
+      if (this.holds(token, id)) this.error = message(error, 'that did not work')
     } finally {
       this.busy = false
     }
   }
 
-  private async send(settings: {
-    subdomain?: string
-    domain?: string
-    note?: string | null
-  }): Promise<boolean> {
+  private async send(
+    token: string,
+    settings: {
+      subdomain?: string
+      domain?: string
+      note?: string | null
+    },
+  ): Promise<boolean> {
     const id = this.spaceId
-    if (!id || !account.accountToken) return false
+    if (!id || account.accountToken !== token) return false
 
     this.busy = true
     this.error = null
 
     try {
-      const result = await api.publish(account.accountToken, id, settings)
+      const result = await api.publish(token, id, settings)
+      if (!this.holds(token, id)) return false
       this.dns = result.dns
       await account.loadSpaces()
       this.refill(true)
       return true
     } catch (error) {
-      this.error = message(error, 'could not publish')
+      if (this.holds(token, id)) this.error = message(error, 'could not publish')
       return false
     } finally {
       this.busy = false
@@ -432,19 +449,21 @@ class Publish {
 
   async unpublish() {
     const id = this.spaceId
-    if (!id || !account.accountToken) return
+    const token = account.accountToken
+    if (!id || !token) return
 
     this.busy = true
     this.error = null
 
     try {
-      await api.unpublish(account.accountToken, id)
+      await api.unpublish(token, id)
+      if (!this.holds(token, id)) return
       this.dns = []
       this.status = null
       await account.loadSpaces()
       this.refill(true)
     } catch (error) {
-      this.error = message(error, 'could not reach the server')
+      if (this.holds(token, id)) this.error = message(error, 'could not reach the server')
     } finally {
       this.busy = false
     }
@@ -452,15 +471,19 @@ class Publish {
 
   async verifyDomain() {
     const id = this.spaceId
-    if (!id || !account.accountToken) return
+    const token = account.accountToken
+    if (!id || !token) return
 
     this.busy = true
     this.error = null
 
     try {
-      this.status = await api.verifyDomain(account.accountToken, id)
+      const status = await api.verifyDomain(token, id)
+      if (!this.holds(token, id)) return
+      this.status = status
       await account.loadSpaces()
     } catch (error) {
+      if (!this.holds(token, id)) return
       const said = error instanceof ApiError ? error.body : null
       if (isDomainStatus(said)) this.status = said
       else this.error = message(error, 'that did not work')
@@ -479,14 +502,15 @@ class Publish {
     const asking = ++this.askings
 
     const id = this.spaceId
-    if (!id || !account.accountToken || !this.blog?.domain) {
+    const token = account.accountToken
+    if (!id || !token || !this.blog?.domain) {
       this.status = null
       return
     }
 
     try {
-      const status = await api.domainStatus(account.accountToken, id)
-      if (asking !== this.askings) return
+      const status = await api.domainStatus(token, id)
+      if (asking !== this.askings || !this.holds(token, id)) return
       this.status = status
     } catch {
       if (asking !== this.askings) return
@@ -501,6 +525,33 @@ class Publish {
     clearTimeout(this.domainTimer)
     this.domainTimer = undefined
   }
+
+  private holds(token: string, id: string): boolean {
+    return account.accountToken === token && this.spaceId === id
+  }
+
+  forgetAccount() {
+    this.close()
+    this.askings++
+    this.previews++
+    this.checks++
+    this.space = null
+    this.spaceId = null
+    this.changes = null
+    this.asking = false
+    this.answers = []
+    this.kept = null
+    this.busy = false
+    this.error = null
+    this.dns = []
+    this.status = null
+    this.availability = { checking: false, available: null }
+    this.password = ''
+    this.filledFrom = null
+    this.filledWith = null
+  }
 }
 
 export const publish = new Publish()
+
+account.forgetWithSession(() => publish.forgetAccount())

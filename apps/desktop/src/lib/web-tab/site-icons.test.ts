@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { AccountDouble } from '../account-double'
 
 const kept = new Map<string, string>()
 vi.stubGlobal('localStorage', {
@@ -7,13 +8,8 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void kept.delete(key),
 })
 
-const signed = vi.hoisted((): { token: string | null } => ({ token: 'session' }))
-vi.mock('../account.svelte', () => ({
-  account: {
-    get accountToken() {
-      return signed.token
-    },
-  },
+vi.mock('../account.svelte', async () => ({
+  account: (await import('../account-double')).accountDouble(),
 }))
 
 const PNG = 'data:image/png;base64,iVBORw0KGgo='
@@ -24,17 +20,20 @@ const server = vi.hoisted(() => ({
   sites: [] as { site: string; label: string; seen: number; hash: string | null }[],
   refuse: null as null | Error,
   calls: 0,
+  held: null as Promise<void> | null,
 }))
 vi.mock('../api', () => ({
   api: {
-    siteIcons: () => {
+    siteIcons: async () => {
       server.calls++
+      await server.held
       return server.refuse
         ? Promise.reject(server.refuse)
         : Promise.resolve({ sites: server.sites })
     },
-    sawSite: (_token: string, site: Record<string, unknown>) => {
+    sawSite: async (_token: string, site: Record<string, unknown>) => {
       server.calls++
+      await server.held
       if (server.refuse) return Promise.reject(server.refuse)
       server.told.push(site)
       return Promise.resolve({
@@ -51,9 +50,11 @@ vi.mock('../api', () => ({
 
 const { bounded, labelOf, siteIcons, siteOf, siteSet } = await import('./site-icons.svelte')
 const { readIcon, SITE_ICONS, takesTint, writtenIcon } = await import('../icons')
+const account = (await import('../account.svelte')).account as unknown as AccountDouble
 
 beforeEach(async () => {
-  signed.token = 'session'
+  account.signInAs('a')
+  server.held = null
   server.told.length = 0
   server.forgot.length = 0
   server.sites = []
@@ -94,7 +95,7 @@ describe('the list', () => {
   })
 
   test('says nothing for a device nobody is signed in on', async () => {
-    signed.token = null
+    account.signOut()
     await siteIcons.saw('https://example.org/', 'Example', PNG)
     expect(server.told).toHaveLength(0)
     expect(siteIcons.list).toHaveLength(0)
@@ -138,6 +139,47 @@ describe('the list', () => {
       ['b.dev', true],
       ['a.dev', false],
     ])
+  })
+})
+
+describe('the list when the account changes', () => {
+  function hold(): () => void {
+    let free: () => void = () => undefined
+    server.held = new Promise((resolve) => (free = resolve))
+    return free
+  }
+
+  test('is gone with the account that saw those sites, here and in what is kept', async () => {
+    await siteIcons.saw('https://github.com/', 'GitHub', PNG)
+    expect(siteIcons.list).toHaveLength(1)
+
+    account.signInAs('b')
+
+    expect(siteIcons.list).toEqual([])
+    expect(kept.get('orden:site-icons')).toBe('[]')
+  })
+
+  test('never takes the last account’s answer into the next account’s list', async () => {
+    server.sites = [{ site: 'a.dev', label: 'A', seen: 10, hash: 'y' }]
+    const free = hold()
+    const asking = siteIcons.refresh()
+
+    account.signInAs('b')
+    free()
+    await asking
+
+    expect(siteIcons.list).toEqual([])
+  })
+
+  test('never keeps a site the last account was telling of', async () => {
+    const free = hold()
+    const telling = siteIcons.saw('https://github.com/', 'GitHub', PNG)
+
+    account.signInAs('b')
+    free()
+    await telling
+
+    expect(siteIcons.list).toEqual([])
   })
 })
 

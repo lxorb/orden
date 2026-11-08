@@ -5,6 +5,11 @@ class GlassesKey {
   set = $state(false)
   tail = $state('')
 
+  forget(): void {
+    this.set = false
+    this.tail = ''
+  }
+
   took(state: KeyState | undefined): void {
     if (!state) return
 
@@ -17,9 +22,12 @@ class GlassesKey {
     if (!token) return 'sign in first'
 
     try {
-      this.took(await api.setAskKey(token, key.trim()))
+      const state = await api.setAskKey(token, key.trim())
+      if (account.accountToken !== token) return 'sign in first'
+      this.took(state)
       return ''
     } catch (error) {
+      if (account.accountToken !== token) return 'sign in first'
       return error instanceof Error ? error.message : 'that key could not be saved'
     }
   }
@@ -29,7 +37,8 @@ class GlassesKey {
     if (!token) return
 
     try {
-      this.took(await api.removeAskKey(token))
+      const state = await api.removeAskKey(token)
+      if (account.accountToken === token) this.took(state)
     } catch {
       // Nothing to say: the field still shows the key as set, which is the truth.
     }
@@ -37,3 +46,5 @@ class GlassesKey {
 }
 
 export const glassesKey = new GlassesKey()
+
+account.forgetWithSession(() => glassesKey.forget())

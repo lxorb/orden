@@ -1700,6 +1700,31 @@ describe('a v2 space whose role is not known yet', () => {
     }
   })
 
+  test('is never deleted with the next session when the account changes while it is let go of', async () => {
+    const { roleOf } = await import('./sharing.svelte')
+    const { done } = await unknown('owner')
+    const v2 = (sync as unknown as { v2: { forget: (root: string) => Promise<void> } }).v2
+    const gate: { free: (() => void) | null } = { free: null }
+    v2.forget = () => new Promise<void>((resolve) => (gate.free = resolve))
+    const was = account.token
+    try {
+      account.listed = true
+      const role = roleOf('/Plan')
+      expect(role).toBe('owner')
+      const forgetting = sync.forget('/Plan', role)
+      for (let turn = 0; turn < 100 && !gate.free; turn++) await Promise.resolve()
+
+      account.token = 'another-session'
+      gate.free?.()
+      await forgetting
+
+      expect(fake.remote.calls).not.toContain('deleteSpace s-Plan')
+    } finally {
+      account.token = was
+      done()
+    }
+  })
+
   test('is not deleted from the account when the listing leaves it out and it was not this device’s', async () => {
     const { roleOf } = await import('./sharing.svelte')
     const { forgotten, done } = await unknown('write')

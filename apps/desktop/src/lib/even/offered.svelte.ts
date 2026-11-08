@@ -58,10 +58,12 @@ export class Offered {
     try {
       found = (await api.askModels(token)).models
     } catch (error) {
+      if (account.accountToken !== token) return
       this.said = error instanceof Error ? error.message : t('Could not reach OpenAI')
       return
     }
 
+    if (account.accountToken !== token) return
     this.models = found
     if (!found.length) {
       this.said = t('That key cannot use any of the models Orden asks for.')

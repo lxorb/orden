@@ -18,12 +18,14 @@ function held(): string {
   return token
 }
 
-function worn(profile: OwnProfile): void {
-  if (account.user) account.user = { ...account.user, ...profile }
+function worn(token: string, profile: OwnProfile): void {
+  if (account.accountToken !== token || !account.user) return
+  account.user = { ...account.user, ...profile }
 }
 
 export async function changeProfile(changes: ProfileChanges): Promise<void> {
-  worn(await saveProfile(held(), changes))
+  const token = held()
+  worn(token, await saveProfile(token, changes))
 }
 
 export async function wearFace(picture: HTMLCanvasElement, crop: Crop, view: number) {
@@ -31,6 +33,7 @@ export async function wearFace(picture: HTMLCanvasElement, crop: Crop, view: num
   const { s, l } = await faceFrom(picture, crop, view)
   const [small, large] = await Promise.all([sha256(s.bytes), sha256(l.bytes)])
   worn(
+    token,
     await saveAvatar(token, {
       s: { ...s, hash: small },
       l: { ...l, hash: large },
@@ -39,13 +42,16 @@ export async function wearFace(picture: HTMLCanvasElement, crop: Crop, view: num
 }
 
 export async function removeFace(): Promise<void> {
-  worn(await dropAvatar(held()))
+  const token = held()
+  worn(token, await dropAvatar(token))
 }
 
 export async function nameIn(space: string, nick: string): Promise<void> {
-  const kept = await saveNick(held(), space, nick)
+  const token = held()
+  const kept = await saveNick(token, space, nick)
   const user = account.user
-  if (user) account.user = { ...user, nicks: withOrWithout(user.nicks ?? {}, space, kept) }
+  if (!user || account.accountToken !== token) return
+  account.user = { ...user, nicks: withOrWithout(user.nicks ?? {}, space, kept) }
 }
 
 export async function keepZone(): Promise<void> {
