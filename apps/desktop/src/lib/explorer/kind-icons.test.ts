@@ -93,15 +93,16 @@ describe('a row of the file explorer', () => {
     for (const name of ['Plan.md', 'notes.txt', 'paper.pdf', 'board.canvas', 'book.pages']) {
       expect(drawn(`/me/${name}`)).toContain('<svg')
     }
+    expect(drawn('/me/photo.png')).toContain('<svg')
+    expect(drawn('/elsewhere/photo.jpg')).toContain('<svg')
     drawn('/me/Folder.docx', true)
     await settled()
     expect(askedOf).toEqual([])
 
     expect(drawn('/me/Budget.xlsx')).toContain('<svg')
-    drawn('/me/photo.png')
     drawn('/elsewhere/Plan.md')
     await settled()
-    expect(askedOf).toEqual(['xlsx', 'png', 'md'])
+    expect(askedOf).toEqual(['xlsx', 'md'])
     expect(drawn('/me/Q3.xlsx')).toContain('<img src="data:image/png;base64,xlsx"')
   })
 })

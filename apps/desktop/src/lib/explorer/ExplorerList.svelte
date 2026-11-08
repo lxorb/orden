@@ -107,7 +107,7 @@
 
   function open(entry: Entry) {
     if (entry.folder) void view.go(view.pathOf(entry.name))
-    else void openFile(view.pathOf(entry.name))
+    else void openFile(view.pathOf(entry.name), () => view.look(entry.name))
   }
 
   function page(): number {
