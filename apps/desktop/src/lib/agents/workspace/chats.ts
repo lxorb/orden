@@ -1,4 +1,5 @@
 import { may, type Message, type Who } from '@orden/chats'
+import { MOST_BODY } from '@orden/chats/limits'
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import type { ChatEntry, Chats } from '../../chats/api'
@@ -175,6 +176,12 @@ export async function postMessage(call: Call): Promise<AgentAnswer> {
   const chat = chatFor(call, store)
   const words = text(call, 'text') ?? ''
   if (!words.trim()) throw new Refused('bad_arguments', 'say text')
+  if (words.length > MOST_BODY) {
+    throw new Refused(
+      'bad_arguments',
+      `a message is at most ${MOST_BODY} characters: put the rest in a note and link it`,
+    )
+  }
   mayPost(chat)
   const parent = maybe(call, 'reply_to')
   const quote = maybe(call, 'quote')
