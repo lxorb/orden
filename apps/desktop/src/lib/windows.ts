@@ -85,7 +85,7 @@ export class Windows {
 
   private async watch(peer: string): Promise<void> {
     const locks = this.locks()
-    if (!locks || !(await locksWork(locks))) return
+    if (!locks || typeof locks.query !== 'function' || !(await locksWork(locks))) return
     const name = alive(peer)
     for (;;) {
       if (!this.here.has(peer)) return
