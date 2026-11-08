@@ -2,7 +2,7 @@ import { api, ApiError, type Account, type Guest, type RemoteSpace } from './api
 import { arriving } from './arriving.svelte'
 import { pollDelay } from './backoff'
 import { called } from './person'
-import { forget, keep, storedText } from './stored'
+import { forget, isRecord, isString, keep, storedText } from './stored'
 import { waited } from './timing'
 
 const STORAGE_KEY = 'orden:session'
@@ -20,7 +20,18 @@ export interface Vault {
 const TRIES = [400, 1200, 2500]
 
 function rejected(error: unknown): boolean {
-  return error instanceof ApiError && (error.status === 401 || error.status === 403)
+  return (
+    error instanceof ApiError &&
+    error.status === 401 &&
+    isRecord(error.body) &&
+    isString(error.body.error)
+  )
+}
+
+function statusOf(error: unknown): number | null {
+  return error instanceof Error && 'status' in error && typeof error.status === 'number'
+    ? error.status
+    : null
 }
 
 class Session {
@@ -120,6 +131,12 @@ class Session {
   async recheck(): Promise<void> {
     const token = this.token
     if (token) await this.asked(token)
+  }
+
+  signedOutBy(error: unknown): boolean {
+    if (statusOf(error) !== 401) return false
+    void this.recheck()
+    return true
   }
 
   async reread(): Promise<void> {

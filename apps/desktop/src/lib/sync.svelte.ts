@@ -1,4 +1,4 @@
-import { api, ApiError, type SpaceRole } from './api'
+import { api, type SpaceRole } from './api'
 import { arriving } from './arriving.svelte'
 import { without } from './records'
 import { log } from './log'
@@ -706,10 +706,7 @@ class Sync {
 
       if (mine !== this.generation) return moved
 
-      if (error instanceof ApiError && error.status === 401) {
-        void account.signOut()
-        return moved
-      }
+      if (account.signedOutBy(error)) return moved
 
       this.status = 'error'
       this.lastError = error instanceof Error ? error.message : t('sync failed')
