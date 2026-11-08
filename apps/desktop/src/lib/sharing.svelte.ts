@@ -298,10 +298,10 @@ interface Asking {
 }
 
 export function addressesIn(typed: string): string[] {
-  return typed
-    .split(/[,;\s]+/)
-    .map((one) => one.trim())
-    .filter(Boolean)
+  const said = typed.replace(/(?:"[^"]*"|[^,;<>"]*)\s*<([^<>\s]+)>/g, ' $1 ')
+  const all = said.split(/[,;\s]+/).filter(Boolean)
+  const keys = all.map((one) => one.toLowerCase())
+  return all.filter((one, at) => keys.indexOf(one.toLowerCase()) === at)
 }
 
 export function looksLikeAddress(one: string): boolean {

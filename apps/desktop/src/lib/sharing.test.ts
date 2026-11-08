@@ -316,6 +316,22 @@ describe('the addresses in the field', () => {
     expect(addressesIn('   ')).toEqual([])
   })
 
+  test('are read out of a name pasted from a mail program, a comma inside quotes and all', () => {
+    expect(
+      addressesIn('Ada Lovelace <ada@example.com>, "Hopper, Grace" <grace@example.com>'),
+    ).toEqual(['ada@example.com', 'grace@example.com'])
+    expect(addressesIn('<bob@example.com>; ada@example.com')).toEqual([
+      'bob@example.com',
+      'ada@example.com',
+    ])
+  })
+
+  test('are each asked once, however often they were typed', () => {
+    expect(addressesIn('ada@example.com, Ada@Example.com bob@example.com ada@example.com')).toEqual(
+      ['ada@example.com', 'bob@example.com'],
+    )
+  })
+
   test('and each of them is looked at before anybody waits on the server', () => {
     expect(looksLikeAddress('ada@example.com')).toBe(true)
     expect(looksLikeAddress('ada@mail.example.co.uk')).toBe(true)
