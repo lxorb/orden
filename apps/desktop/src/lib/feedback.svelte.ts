@@ -10,7 +10,7 @@ const LOG_BYTES = 60 * 1024
 function platformLine(): string {
   const build = isMobile ? 'phone' : isDesktop ? 'desktop' : 'web'
   const system = isNative ? platform() : navigator.userAgent
-  return `${build} · ${system}`.slice(0, 120)
+  return `${build}, ${system}`.slice(0, 120)
 }
 
 async function logTail(): Promise<string> {

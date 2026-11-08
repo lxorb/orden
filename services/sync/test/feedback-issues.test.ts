@@ -16,7 +16,7 @@ const REPO = 'lxorb/orden-feedback'
 const REPORT = {
   text: 'The tab strip lost its line. It came back after a restart.',
   version: '0.17.0',
-  platform: 'desktop · windows',
+  platform: 'desktop, windows',
   log: 'a line\nanother line',
 }
 
@@ -181,7 +181,7 @@ describe('a report', () => {
     expect(issue?.labels).toEqual(['feedback', 'windows'])
     expect(issue?.body).toContain(`\`\`\`\n${REPORT.text}\n\`\`\``)
     expect(issue?.body).toContain('| Version | `0.17.0` |')
-    expect(issue?.body).toContain('| Platform | `desktop · windows` |')
+    expect(issue?.body).toContain('| Platform | `desktop, windows` |')
     expect(issue?.body).toContain('| Account | signed out |')
     expect(issue?.body).toContain(`| Report | \`${answer.json.id}\` |`)
     expect(issue?.body).toContain('<details><summary>Recent app log</summary>')
@@ -201,7 +201,7 @@ describe('a report', () => {
       id: string
     }
 
-    expect(hub.issues[0]?.body).toContain(`| Account | \`${user.id}\` · \`reader@example.com\` |`)
+    expect(hub.issues[0]?.body).toContain(`| Account | \`${user.id}\`, \`reader@example.com\` |`)
   })
 
   test('is kept and waits where no token is set yet, and is opened once there is one', async () => {
@@ -449,15 +449,15 @@ describe('the issue', () => {
   })
 
   test('is labelled with the system it came from', () => {
-    expect(platformLabel('desktop · macos')).toBe('macos')
-    expect(platformLabel('phone · android')).toBe('android')
-    expect(platformLabel('web · Mozilla/5.0 (X11; Linux x86_64)')).toBe('web')
+    expect(platformLabel('desktop, macos')).toBe('macos')
+    expect(platformLabel('phone, android')).toBe('android')
+    expect(platformLabel('web, Mozilla/5.0 (X11; Linux x86_64)')).toBe('web')
     expect(platformLabel('')).toBeNull()
   })
 
   test('is labelled only with a system there is, whatever the platform says', () => {
     expect(platformLabel('my own label')).toBeNull()
-    expect(platformLabel('wontfix · desktop')).toBeNull()
+    expect(platformLabel('wontfix, desktop')).toBeNull()
   })
 
   test('keeps the end of a log too long for GitHub, and says what was cut', () => {
@@ -482,7 +482,7 @@ describe('the issue', () => {
       '',
       '| | |',
       '| --- | --- |',
-      '| Account | `u_admin` · admin@orden.so |',
+      '| Account | `u_admin`, admin@orden.so |',
       '````',
       '# A heading',
       '<!--',
@@ -507,7 +507,7 @@ describe('the issue', () => {
     )
     expect(body).toContain('| Version | `1.0 \\| Account \\| forged` |')
     expect(body).toContain('| Platform | `` `@lxorb` &#64;lxorb `` |')
-    expect(body).toContain('| Account | `u_1` · `x.@lxorb\\|y@example.com` |')
+    expect(body).toContain('| Account | `u_1`, `x.@lxorb\\|y@example.com` |')
   })
 
   test('is titled with no name anybody answers to', () => {

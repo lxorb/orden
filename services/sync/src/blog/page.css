@@ -44,6 +44,9 @@ body {
 }
 
 #write footer {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-3);
   margin-top: 4rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--line);

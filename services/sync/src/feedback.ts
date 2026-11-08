@@ -169,7 +169,7 @@ export function feedbackMail(report: {
   platform: string
   log: string
 }): { text: string; html: string } {
-  const about = `From ${report.from} · Orden ${report.version || 'unknown'} · ${report.platform || 'unknown'}`
+  const about = `From ${report.from}, Orden ${report.version || 'unknown'}, ${report.platform || 'unknown'}`
   const log = report.log || '(no log)'
   return {
     text: `${about}\n\n${report.text}\n\n--- recent app log ---\n${log}\n`,
