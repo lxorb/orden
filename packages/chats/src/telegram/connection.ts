@@ -938,13 +938,21 @@ class TelegramConnection implements Connection {
     await this.call({ _: 'messages.sendVote', peer, msgId: id, options })
   }
 
-  async typing(conversation: string, on: boolean): Promise<void> {
+  async typing(conversation: string, on: boolean, thread?: string): Promise<void> {
     const where = whereOf(conversation)
+    const group = this.peers.group(where)
+    if (thread !== undefined && group?._ === 'channel' && !group.megagroup) return
+    const top =
+      thread !== undefined
+        ? Number(thread)
+        : where.topic !== undefined && where.topic !== GENERAL
+          ? where.topic
+          : undefined
     await this.call({
       _: 'messages.setTyping',
       peer: this.peers.input(where),
       action: on ? { _: 'sendMessageTypingAction' } : { _: 'sendMessageCancelAction' },
-      ...(where.topic !== undefined && where.topic !== GENERAL ? { topMsgId: where.topic } : {}),
+      ...(top !== undefined ? { topMsgId: top } : {}),
     })
   }
 
@@ -1482,21 +1490,27 @@ class TelegramConnection implements Connection {
     this.emit({ t: 'conversation', conversation: next })
   }
 
-  private typed(conversation: string, from: tl.TypePeer, action: tl.TypeSendMessageAction): void {
+  private typed(
+    conversation: string,
+    from: tl.TypePeer,
+    action: tl.TypeSendMessageAction,
+    thread?: string,
+  ): void {
     const person = peerId(from)
     if (person === this.self) return
-    const key = `${conversation}\n${person}`
+    const key = `${conversation}\n${person}\n${thread ?? ''}`
     const timer = this.typists.get(key)
     if (timer) clearTimeout(timer)
     this.typists.delete(key)
     const on = action._ !== 'sendMessageCancelAction'
-    this.emit({ t: 'typing', conversation, person, on })
+    const where = thread !== undefined ? { thread } : {}
+    this.emit({ t: 'typing', conversation, person, on, ...where })
     if (on) {
       this.typists.set(
         key,
         setTimeout(() => {
           this.typists.delete(key)
-          this.emit({ t: 'typing', conversation, person, on: false })
+          this.emit({ t: 'typing', conversation, person, on: false, ...where })
         }, TYPING_FOR),
       )
     }
@@ -1634,11 +1648,13 @@ class TelegramConnection implements Connection {
       this.typed(`u${update.userId}`, { _: 'peerUser', userId: update.userId }, update.action),
     updateChatUserTyping: (update) => this.typed(`c${update.chatId}`, update.fromId, update.action),
     updateChannelUserTyping: (update) => {
-      const topic = this.peers.forum(update.channelId) ? (update.topMsgId ?? GENERAL) : undefined
+      const forum = this.peers.forum(update.channelId)
+      const topic = forum ? (update.topMsgId ?? GENERAL) : undefined
       this.typed(
         idOf({ kind: 's', id: update.channelId, ...(topic !== undefined ? { topic } : {}) }),
         update.fromId,
         update.action,
+        !forum && update.topMsgId !== undefined ? String(update.topMsgId) : undefined,
       )
     },
     updateUserStatus: (update) => {
