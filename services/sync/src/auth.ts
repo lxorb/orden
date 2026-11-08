@@ -375,23 +375,24 @@ sessions.get('/', async (context) => {
 
 sessions.delete('/:id', async (context) => {
   const user = context.get('user')
-  const ending = await context.env.DB.prepare(
-    'select token_hash from sessions where user_id = ? and id = ?',
+  const { results: ending } = await context.env.DB.prepare(
+    'delete from sessions where user_id = ? and id = ? returning token_hash',
   )
     .bind(user.id, context.req.param('id'))
-    .first<{ token_hash: string }>()
-  const gone = await context.env.DB.prepare('delete from sessions where user_id = ? and id = ?')
-    .bind(user.id, context.req.param('id'))
-    .run()
+    .all<{ token_hash: string }>()
 
-  if (gone.meta.changes) {
+  if (ending.length) {
     await roomsSignedOut(context.env, user.id)
     await devicesEnded(context.env, user.id, [context.req.param('id')])
-    await machinesSignedOut(context.env, user.id, ending ? [ending.token_hash] : [])
+    await machinesSignedOut(
+      context.env,
+      user.id,
+      ending.map((one) => one.token_hash),
+    )
   }
   await forgetEndedTargets(context.env, user.id)
 
-  return context.json({ ok: !!gone.meta.changes })
+  return context.json({ ok: ending.length > 0 })
 })
 
 sessions.delete('/', async (context) => {
@@ -399,18 +400,12 @@ sessions.delete('/', async (context) => {
   const mine = await sha256(tokenIn(context.req.header('authorization')) ?? '')
 
   const { results: ending } = await context.env.DB.prepare(
-    'select id, token_hash from sessions where user_id = ? and token_hash <> ?',
+    'delete from sessions where user_id = ? and token_hash <> ? returning id, token_hash',
   )
     .bind(user.id, mine)
     .all<{ id: string | null; token_hash: string }>()
 
-  const gone = await context.env.DB.prepare(
-    'delete from sessions where user_id = ? and token_hash <> ?',
-  )
-    .bind(user.id, mine)
-    .run()
-
-  if (gone.meta.changes) {
+  if (ending.length) {
     await roomsSignedOut(context.env, user.id)
     await devicesEnded(
       context.env,
@@ -425,21 +420,17 @@ sessions.delete('/', async (context) => {
   }
   await forgetEndedTargets(context.env, user.id)
 
-  return context.json({ ended: gone.meta.changes })
+  return context.json({ ended: ending.length })
 })
 
 auth.post('/signout', async (context) => {
   const token = tokenIn(context.req.header('authorization'))
   if (token) {
     const held = await context.env.DB.prepare(
-      'select user_id, id from sessions where token_hash = ?',
+      'delete from sessions where token_hash = ? returning user_id, id',
     )
       .bind(await sha256(token))
       .first<{ user_id: string; id: string | null }>()
-
-    await context.env.DB.prepare('delete from sessions where token_hash = ?')
-      .bind(await sha256(token))
-      .run()
 
     if (held) {
       await roomsSignedOut(context.env, held.user_id)
