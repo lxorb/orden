@@ -22,7 +22,7 @@
   >
     {#key card.id}
       <div class="words" in:fade={{ duration: dur(120) }}>
-        <strong class="name"><bdi>{card.title}</bdi></strong>
+        <strong class="name" dir="auto">{card.title}</strong>
         {#if card.where || card.from}
           <span class="where">
             {#if card.where}<span class="site">{card.where}</span>{/if}
@@ -126,5 +126,9 @@
     object-fit: cover;
     object-position: top;
     border-top: 1px solid var(--line-strong);
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

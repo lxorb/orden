@@ -181,7 +181,7 @@
                 <span class="orden-row-mark">
                   {#if mark}<img src={mark} alt="" draggable="false" />{/if}
                 </span>
-                <span class="orden-row-label"><bdi>{titleOf(visit)}</bdi></span>
+                <span class="orden-row-label" dir="auto">{titleOf(visit)}</span>
                 <span class="orden-row-meta host">{hostOf(visit.url)}</span>
               </button>
               <button

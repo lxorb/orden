@@ -94,7 +94,7 @@
             onclick={() => time.start(one.id)}
           >
             <span class="dot" style:background={tintOf(one.id)}></span>
-            <span class="orden-row-label"><bdi>{one.name}</bdi></span>
+            <span class="orden-row-label" dir="auto">{one.name}</span>
             <span class="orden-row-meta">{todayOf(one.id) ? length(todayOf(one.id)) : ''}</span>
             <svg class="play" viewBox="0 0 12 12" aria-hidden="true"
               ><path d="M3.5 2.2v7.6L9.8 6z" /></svg

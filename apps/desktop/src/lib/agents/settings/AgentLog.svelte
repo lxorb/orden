@@ -71,7 +71,7 @@
           {#each session.calls as call, index (index)}
             <li class:failed={call.status === 'error'}>
               <span class="word">{wordFor(call.verb)}</span>
-              <span class="about"><bdi>{aboutOf(call, () => null) ?? ''}</bdi></span>
+              <span class="about" dir="auto">{aboutOf(call, () => null) ?? ''}</span>
               <span class="at">{timeOf(call.at)}</span>
             </li>
           {/each}
@@ -151,5 +151,9 @@
 
   .keep {
     align-self: flex-start;
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

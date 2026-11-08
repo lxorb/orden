@@ -19,7 +19,7 @@
   aria-hidden="true"
 >
   <TabMark {tab} />
-  <span class="label"><bdi>{tab.shown}</bdi></span>
+  <span class="label" dir="auto">{tab.shown}</span>
 </div>
 
 <style>
@@ -60,7 +60,11 @@
     mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
   }
 
-  :global(:root[dir='rtl']) .label {
+  .label:dir(rtl) {
     mask-image: linear-gradient(to left, #000 calc(100% - var(--fade)), transparent);
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

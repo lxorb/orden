@@ -959,7 +959,8 @@
               class:whole={(fits[tab.id] ?? Infinity) <= box.width}
               class:hidden={!parts.title && !icon}
               class:quiet={icon}
-              class:naming={tab.naming}><bdi>{tab.shown}</bdi></span
+              class:naming={tab.naming}
+              dir="auto">{tab.shown}</span
             >
             {#if isDraft(tab.note) && !icon && parts.title}
               <UnsavedDot pressable />
@@ -1428,7 +1429,7 @@
     mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
   }
 
-  :global(:root[dir='rtl']) .label {
+  .label:dir(rtl) {
     mask-image: linear-gradient(to left, #000 calc(100% - var(--fade)), transparent);
   }
 
@@ -1441,7 +1442,7 @@
   }
 
   .label.whole,
-  :global(:root[dir='rtl']) .label.whole {
+  .label.whole:dir(rtl) {
     mask-image: none;
   }
 
@@ -1659,5 +1660,9 @@
     stroke: currentColor;
     stroke-width: 1.3;
     stroke-linecap: round;
+  }
+
+  [dir='auto'] {
+    text-align: match-parent;
   }
 </style>

@@ -75,7 +75,7 @@
           oncontextmenu={(event) => menu.show(event, menuFor(node), { title: node.name })}
           use:longPress={(event) => menu.show(event, menuFor(node), { title: node.name })}
         >
-          <span class="orden-row-label"><bdi>{node.name}</bdi></span>
+          <span class="orden-row-label" dir="auto">{node.name}</span>
           <span class="orden-row-meta">{node.notes}</span>
         </button>
       </div>

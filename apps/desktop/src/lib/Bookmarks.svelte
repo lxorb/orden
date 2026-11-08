@@ -484,7 +484,7 @@
                 {:else if row.mark.kind !== 'group'}
                   <svg class="orden-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
                 {/if}
-                <span class="orden-row-label"><bdi>{row.label}</bdi></span>
+                <span class="orden-row-label" dir="auto">{row.label}</span>
                 {#if row.note}<span class="orden-row-meta">{row.note}</span>{/if}
               </button>
             </div>

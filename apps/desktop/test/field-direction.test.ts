@@ -23,3 +23,14 @@ test('every field reads each line in the direction of its words, its placeholder
   )
   expect(fixed).toEqual([])
 })
+
+test('a name alone in its label is laid out in its own direction, so a cut-off keeps its start', () => {
+  const alone =
+    /<(span|p|div|strong)\b(?:[^>{]|\{[^}]*\})*>\s*<bdi>\{[^<]*\}<\/bdi\s*>\s*<\/\1\s*>/g
+  const isolated = svelteFiles(SOURCE).flatMap((path) =>
+    [...readFileSync(path, 'utf8').matchAll(alone)].map(
+      (one) => `${path.slice(SOURCE.length)}: ${one[0].replace(/\s+/g, ' ')}`,
+    ),
+  )
+  expect(isolated).toEqual([])
+})
