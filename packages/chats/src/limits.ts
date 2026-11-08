@@ -18,6 +18,8 @@ export const LONGEST_ANSWER = 100
 
 export const LONGEST_TOPIC = 250
 
+export const LONGEST_SEARCH = 1000
+
 export const MOST_SLOWMODE = 6 * 60 * 60
 
 export const MOST_POSTED = 50

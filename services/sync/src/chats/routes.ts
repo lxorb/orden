@@ -1,5 +1,5 @@
 import { type Event, type Message, matches, parseSearch, type Who } from '@orden/chats'
-import { EVENTS_A_MINUTE } from '@orden/chats/limits'
+import { EVENTS_A_MINUTE, LONGEST_SEARCH } from '@orden/chats/limits'
 import { newChatOf, postEventsOf } from '@orden/chats/wire'
 import { Hono } from 'hono'
 import { newId, now } from '../crypto'
@@ -465,7 +465,9 @@ export async function searched(
   picked: readonly { id: string; reached: Reached }[],
 ): Promise<{ chat: string; message: Message }[]> {
   const dayOf = dayIn(query('zone'))
-  const asked = parseSearch(query('q') ?? '', query('today') ?? dayOf(Date.now()))
+  const said = query('q') ?? ''
+  if (said.length > LONGEST_SEARCH) return []
+  const asked = parseSearch(said, query('today') ?? dayOf(Date.now()))
   const me: Who = who.kind === 'user' ? `user:${who.user.id}` : `guest:${who.guest.id}`
   const words = [...asked.words, ...asked.phrases]
 

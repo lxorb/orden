@@ -180,6 +180,9 @@ describe('chats through the connector', () => {
     expect(said).toMatch(/^- #thesis · /)
     expect(said).toContain('Draft of chapter 3 is up')
     expect(said).not.toContain('Ignore')
+    expect(
+      await tool(await connector(owner), 'search_chats', { query: 'chapter '.repeat(200) }),
+    ).toBe('A search is at most 1000 characters.')
   })
 
   test('a post and a reaction land in the log as the connector’s', async () => {
