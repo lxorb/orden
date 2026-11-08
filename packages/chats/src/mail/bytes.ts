@@ -27,6 +27,28 @@ export function decode(bytes: Uint8Array, charset = 'utf-8'): string {
   }
 }
 
+export function eightBit(bytes: Uint8Array): string {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+  } catch {
+    return new TextDecoder('windows-1252').decode(bytes)
+  }
+}
+
+export function withoutControls(text: string): string {
+  let out = ''
+  for (const char of text) {
+    const code = char.charCodeAt(0)
+    out += code < 32 || code === 127 ? ' ' : char
+  }
+  return out
+}
+
+export function latinOnly(text: string): boolean {
+  for (let at = 0; at < text.length; at++) if (text.charCodeAt(at) > 255) return false
+  return true
+}
+
 export function concat(parts: readonly Uint8Array[]): Uint8Array {
   const out = new Uint8Array(parts.reduce((sum, one) => sum + one.length, 0))
   let at = 0

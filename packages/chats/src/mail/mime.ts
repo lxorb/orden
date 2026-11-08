@@ -1,4 +1,16 @@
-import { ascii, base64Lines, concat, decode, fromBase64, fromLatin, latin, toBase64 } from './bytes'
+import {
+  ascii,
+  base64Lines,
+  concat,
+  decode,
+  eightBit,
+  fromBase64,
+  fromLatin,
+  latin,
+  latinOnly,
+  toBase64,
+  withoutControls,
+} from './bytes'
 
 export interface Address {
   name: string
@@ -21,25 +33,42 @@ export interface Parsed {
   attachments: Part[]
 }
 
+const WORD = /=\?([^?*]+)(?:\*[^?]*)?\?([BbQq])\?([^?]*)\?=/g
+
+function wordBytes(how: string, data: string): Uint8Array {
+  if (how.toUpperCase() === 'B') return fromBase64(data)
+  return fromLatin(
+    data
+      .replace(/_/g, ' ')
+      .replace(/=([0-9A-Fa-f]{2})/g, (_m, hex: string) =>
+        String.fromCharCode(Number.parseInt(hex, 16)),
+      ),
+  )
+}
+
 export function decodeWords(text: string): string {
-  return text
-    .replace(/(=\?[^?]+\?[BbQq]\?[^?]*\?=)\s+(?==\?)/g, '$1')
-    .replace(
-      /=\?([^?*]+)(?:\*[^?]*)?\?([BbQq])\?([^?]*)\?=/g,
-      (_all, charset: string, how: string, data: string) => {
-        const bytes =
-          how.toUpperCase() === 'B'
-            ? fromBase64(data)
-            : fromLatin(
-                data
-                  .replace(/_/g, ' ')
-                  .replace(/=([0-9A-Fa-f]{2})/g, (_m, hex: string) =>
-                    String.fromCharCode(Number.parseInt(hex, 16)),
-                  ),
-              )
-        return decode(bytes, charset)
-      },
-    )
+  const raw = /[\x80-\xff]/.test(text) && latinOnly(text) ? eightBit(fromLatin(text)) : text
+  let out = ''
+  let last = 0
+  let run: { charset: string; bytes: Uint8Array[] } | null = null
+  const flush = () => {
+    if (run) out += decode(concat(run.bytes), run.charset)
+    run = null
+  }
+  for (const found of raw.matchAll(WORD)) {
+    const at = found.index
+    const gap = raw.slice(last, at)
+    const charset = (found[1] ?? '').toLowerCase()
+    if (!run || gap.trim() || run.charset !== charset) {
+      flush()
+      out += gap
+      run = { charset, bytes: [] }
+    }
+    run.bytes.push(wordBytes(found[2] ?? 'Q', found[3] ?? ''))
+    last = at + found[0].length
+  }
+  flush()
+  return out + raw.slice(last)
 }
 
 export function headersOf(block: string): Map<string, string[]> {
@@ -50,7 +79,7 @@ export function headersOf(block: string): Map<string, string[]> {
     const name = line.slice(0, colon).trim().toLowerCase()
     const list = headers.get(name) ?? []
     const value = line.slice(colon + 1).trim()
-    list.push(/[\x80-\xff]/.test(value) ? decode(fromLatin(value)) : value)
+    list.push(/[\x80-\xff]/.test(value) ? eightBit(fromLatin(value)) : value)
     headers.set(name, list)
   }
   return headers
@@ -171,23 +200,34 @@ function found(bytes: Uint8Array, word: Uint8Array, from: number): number {
 
 function pieces(body: Uint8Array, boundary: string): Uint8Array[] {
   const word = ascii(`--${boundary}`)
-  const closed = found(body, ascii(`--${boundary}--`), 0) >= 0
   const out: Uint8Array[] = []
-  let from = 0
-  for (let at = found(body, word, 0); at >= 0; at = found(body, word, from)) {
+  let from = -1
+  let search = 0
+  for (let at = found(body, word, search); at >= 0; at = found(body, word, search)) {
+    const after = at + word.length
+    const next = body[after]
+    const closing = next === 45 && body[after + 1] === 45
+    const ends =
+      next === undefined || closing || next === 32 || next === 9 || next === 13 || next === 10
+    if ((at > 0 && body[at - 1] !== 10) || !ends) {
+      search = at + 1
+      continue
+    }
+    const floor = Math.max(from, 0)
     let start = at
-    if (body[start - 1] === 10 && start - 1 >= from) start--
-    if (body[start - 1] === 13 && start - 1 >= from) start--
-    let end = at + word.length
-    if (body[end] === 45 && body[end + 1] === 45) end += 2
+    if (body[start - 1] === 10 && start - 1 >= floor) start--
+    if (body[start - 1] === 13 && start - 1 >= floor) start--
+    if (from >= 0) out.push(body.subarray(from, start))
+    if (closing) return out
+    let end = after
     while (body[end] === 32 || body[end] === 9) end++
     if (body[end] === 13) end++
     if (body[end] === 10) end++
-    out.push(body.subarray(from, start))
     from = end
+    search = end
   }
-  out.push(body.subarray(from))
-  return closed ? out.slice(1, -1) : out.slice(1)
+  if (from >= 0) out.push(body.subarray(from))
+  return out
 }
 
 const BLANK = new Set([9, 10, 11, 12, 13, 32, 160])
@@ -209,31 +249,175 @@ function walk(bytes: Uint8Array, path: string, into: Part[], fallback = 'text/pl
     return
   }
   const name = disposition.params.filename ?? type.params.name ?? null
+  const decoded = decodeBody(body, headers.get('content-transfer-encoding')?.[0] ?? '7bit')
   into.push({
     path: path || '1',
     type: type.value,
     params: type.params,
     disposition: disposition.value,
-    filename: name === null ? null : decodeWords(name),
-    bytes: decodeBody(body, headers.get('content-transfer-encoding')?.[0] ?? '7bit'),
+    filename:
+      name === null ? fallbackName(type.value, disposition.value, decoded) : decodeWords(name),
+    bytes: decoded,
   })
 }
 
+const NAMED: Record<string, string> = {
+  nbsp: ' ',
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  shy: '',
+  zwnj: '',
+  zwj: '',
+  ensp: ' ',
+  emsp: ' ',
+  thinsp: ' ',
+  auml: 'ä',
+  ouml: 'ö',
+  uuml: 'ü',
+  Auml: 'Ä',
+  Ouml: 'Ö',
+  Uuml: 'Ü',
+  szlig: 'ß',
+  eacute: 'é',
+  egrave: 'è',
+  ecirc: 'ê',
+  euml: 'ë',
+  Eacute: 'É',
+  aacute: 'á',
+  agrave: 'à',
+  acirc: 'â',
+  aring: 'å',
+  Aring: 'Å',
+  aelig: 'æ',
+  AElig: 'Æ',
+  ccedil: 'ç',
+  iacute: 'í',
+  igrave: 'ì',
+  icirc: 'î',
+  iuml: 'ï',
+  oacute: 'ó',
+  ograve: 'ò',
+  ocirc: 'ô',
+  oslash: 'ø',
+  Oslash: 'Ø',
+  uacute: 'ú',
+  ugrave: 'ù',
+  ucirc: 'û',
+  ntilde: 'ñ',
+  Ntilde: 'Ñ',
+  euro: '€',
+  pound: '£',
+  yen: '¥',
+  cent: '¢',
+  copy: '©',
+  reg: '®',
+  trade: '™',
+  deg: '°',
+  para: '¶',
+  sect: '§',
+  times: '×',
+  divide: '÷',
+  plusmn: '±',
+  middot: '\u00b7',
+  bull: '\u2022',
+  hellip: '…',
+  ndash: '–',
+  mdash: '\u2014',
+  lsquo: '‘',
+  rsquo: '’',
+  sbquo: '‚',
+  ldquo: '“',
+  rdquo: '”',
+  bdquo: '„',
+  laquo: '«',
+  raquo: '»',
+  lsaquo: '‹',
+  rsaquo: '›',
+  iexcl: '¡',
+  iquest: '¿',
+  rarr: '→',
+  larr: '←',
+}
+
+function codePoint(code: number): string {
+  if (
+    !Number.isInteger(code) ||
+    code <= 0 ||
+    code > 0x10ffff ||
+    (code >= 0xd800 && code <= 0xdfff)
+  ) {
+    return '\ufffd'
+  }
+  return String.fromCodePoint(code)
+}
+
+export function entities(text: string): string {
+  return text.replace(
+    /&(#[xX][0-9A-Fa-f]{1,8}|#\d{1,10}|[A-Za-z][A-Za-z0-9]{1,31});/g,
+    (all, what: string) => {
+      if (what.startsWith('#x') || what.startsWith('#X'))
+        return codePoint(Number.parseInt(what.slice(2), 16))
+      if (what.startsWith('#')) return codePoint(Number(what.slice(1)))
+      return NAMED[what] ?? all
+    },
+  )
+}
+
+function linked(attributes: string, inner: string): string {
+  const href = /\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(attributes)
+  const url = entities(href?.[1] ?? href?.[2] ?? href?.[3] ?? '').trim()
+  const words = entities(inner.replace(/<[^>]+>/g, '')).trim()
+  if (!/^https?:\/\//i.test(url) || !words || words === url || words === url.replace(/\/$/, '')) {
+    return inner
+  }
+  return `${inner} (${url})`
+}
+
 function textOfHtml(html: string): string {
-  return html
-    .replace(/<(script|style|head)[^>]*>[\s\S]*?<\/\1>/gi, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|tr|li|h[1-6]|blockquote)>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#(\d+);/g, (_m, code: string) => String.fromCodePoint(Number(code)))
-    .replace(/&amp;/g, '&')
-    .replace(/[ \t]+\n/g, '\n')
+  return entities(
+    html
+      .replace(/<!--[\s\S]*?(-->|$)/g, '')
+      .replace(/<(script|style|head|title)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
+      .replace(/\s+/g, ' ')
+      .replace(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi, (_all, attributes: string, inner: string) =>
+        linked(attributes, inner),
+      )
+      .replace(/<(br|hr)\b[^>]*>/gi, '\n')
+      .replace(/<\/?(p|div|tr|li|ul|ol|table|h[1-6]|blockquote|pre)\b[^>]*>/gi, '\n')
+      .replace(/<[^>]+>/g, ''),
+  )
+    .replace(/[ \t\u00a0]+/g, ' ')
+    .replace(/ ?\n ?/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
+}
+
+const EXTENSIONS: Record<string, string> = {
+  'message/rfc822': 'eml',
+  'text/calendar': 'ics',
+  'image/jpeg': 'jpg',
+  'application/octet-stream': 'bin',
+  'text/plain': 'txt',
+  'text/html': 'html',
+}
+
+function fallbackName(type: string, disposition: string, bytes: Uint8Array): string | null {
+  if (type.startsWith('multipart/')) return null
+  if ((type === 'text/plain' || type === 'text/html') && disposition !== 'attachment') return null
+  if (type === 'message/rfc822') {
+    const subject = decodeWords(headersOf(split(bytes).head).get('subject')?.[0] ?? '')
+    const safe = withoutControls(subject)
+      .replace(/[\\/:*?"<>|]+/g, ' ')
+      .trim()
+      .slice(0, 80)
+    return `${safe || 'message'}.eml`
+  }
+  const sub = (type.split('/')[1] ?? '').replace(/^x-/, '').replace(/[^a-z0-9.+-]/g, '') || 'bin'
+  const extension = EXTENSIONS[type] ?? sub
+  return `${type.startsWith('image/') ? 'image' : 'attachment'}.${extension}`
 }
 
 export function parseMessage(bytes: Uint8Array): Parsed {
@@ -253,7 +437,31 @@ export function parseMessage(bytes: Uint8Array): Parsed {
   }
 }
 
-export function withoutQuote(text: string): string {
+const ORIGINAL =
+  /^\s*-{2,}\s*(original message|ursprüngliche nachricht|message d'origine|mensaje original|messaggio originale|oorspronkelijk bericht)\s*-{2,}\s*$/i
+const FROM_LINE = /^\s*\*?(from|von|de|da|van|od)\s*:\*?\s+\S/i
+const SENT_LINE =
+  /^\s*\*?(sent|gesendet|envoyé|enviado|inviato|verzonden|date|datum|odesláno)\s*:\*?\s+\S/i
+
+function quotedHistory(lines: readonly string[]): number {
+  for (let at = 1; at < lines.length; at++) {
+    const line = lines[at] ?? ''
+    if (ORIGINAL.test(line)) return at
+    if (!FROM_LINE.test(line)) continue
+    if (!lines.slice(at + 1, at + 5).some((one) => SENT_LINE.test(one))) continue
+    const before = lines[at - 1] ?? ''
+    return /^\s*_{8,}\s*$/.test(before) ? at - 1 : at
+  }
+  return -1
+}
+
+export function withoutQuote(text: string, reply = false): string {
+  if (reply) {
+    const all = text.split('\n')
+    const cut = quotedHistory(all)
+    const kept = cut > 0 ? all.slice(0, cut).join('\n').trim() : ''
+    if (kept) return withoutQuote(kept)
+  }
   const lines = text.replace(/\s+$/, '').split('\n')
   let end = lines.length
   while (end > 0 && (/^\s*>/.test(lines[end - 1] ?? '') || !(lines[end - 1] ?? '').trim())) end--
@@ -294,9 +502,19 @@ function encodeWords(text: string): string {
 }
 
 function addressText(one: Address): string {
-  if (!one.name) return `<${one.address}>`
-  const name = /^[\w .-]*$/.test(one.name) ? `"${one.name}"` : encodeWords(one.name)
+  const plain = withoutControls(one.name).trim()
+  if (!plain) return `<${one.address}>`
+  const name = /^[\x20-\x7e]*$/.test(plain)
+    ? `"${plain.replace(/[\\"]/g, (char) => `\\${char}`)}"`
+    : encodeWords(plain)
   return `${name} <${one.address}>`
+}
+
+function attrValue(text: string): string {
+  return encodeURIComponent(text).replace(
+    /['()*!]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  )
 }
 
 function wrapped(text: string): string {
@@ -366,8 +584,8 @@ export function buildMessage(
     const said = [
       '',
       `--${boundary}`,
-      `Content-Type: ${file.type || 'application/octet-stream'}; name="${encodeWords(file.name).replace(/"/g, '')}"`,
-      `Content-Disposition: attachment; filename*=utf-8''${encodeURIComponent(file.name)}`,
+      `Content-Type: ${/^[\w.+-]+\/[\w.+-]+$/.test(file.type) ? file.type : 'application/octet-stream'}; name="${encodeWords(file.name).replace(/"/g, '')}"`,
+      `Content-Disposition: attachment; filename*=utf-8''${attrValue(file.name)}`,
       'Content-Transfer-Encoding: base64',
       '',
       '',

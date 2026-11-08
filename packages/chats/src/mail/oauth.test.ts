@@ -28,6 +28,7 @@ const idToken = (claims: Record<string, unknown>) =>
 class FakeOAuth {
   issued = 0
   refusing = false
+  failing: string | null = null
   rotate = false
   lasts = 3600
   claims: Record<string, unknown> = { email: ADDRESS }
@@ -82,6 +83,7 @@ class FakeOAuth {
       }
     }
     if (form.grant_type === 'refresh_token') {
+      if (this.failing) return refuse(this.failing)
       if (this.refusing || form.refresh_token !== this.refresh) return refuse('invalid_grant')
       if (this.rotate) this.refresh = `refresh-${this.issued + 2}`
       return {
@@ -296,6 +298,24 @@ describe('mail signed in with OAuth, end to end against a server', () => {
     await expect(
       oauthMailProvider(service).connect({ ...own, address: ADDRESS }, host),
     ).rejects.toThrow(/connect the account again/)
+  })
+
+  test('a sign-in the service cannot give for now keeps the lasting token and tries again later', async () => {
+    const connection = await oauthMailProvider(service).connect(own, host)
+    const heard: ProviderEvent[] = []
+    let told: () => void = () => undefined
+    const status = new Promise<void>((resolve) => (told = resolve))
+    auth.failing = 'temporarily_unavailable'
+    clock += 7200_000
+    const stop = connection.start((event) => {
+      heard.push(event)
+      if (event.t === 'status') told()
+    })
+    await status
+    expect(heard.find((event) => event.t === 'status')).toMatchObject({ status: 'offline' })
+    expect(secrets.get(vault())).toBe('refresh-1')
+    stop()
+    await connection.close()
   })
 
   test('without your own client it cannot connect, says why, and opens no browser', async () => {

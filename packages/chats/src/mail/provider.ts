@@ -31,12 +31,13 @@ import {
   parseMessage,
   withoutQuote,
 } from './mime'
+import { eightBit, fromLatin, withoutControls } from './bytes'
 import { sendMail, SmtpError } from './smtp'
 import { bareSubject, threadsOf } from './threads'
 
 const NEWEST = 300
 const LOOK_EVERY = 60_000
-const IDLE_FOR = 25 * 60_000
+const IDLE_FOR = 5 * 60_000
 
 export const MAIL = 'mail'
 
@@ -48,11 +49,18 @@ interface Mail {
   links: string[]
   subject: string
   from: Address[]
+  replyTo: Address[]
   to: Address[]
   cc: Address[]
   at: number
   seen: boolean
   mine: boolean
+}
+
+interface Change {
+  found: Mail[]
+  gone: Mail[]
+  flagged: Mail[]
 }
 
 interface Read {
@@ -152,13 +160,32 @@ const filled = (value: string | undefined): string | undefined =>
 
 const text = textOf
 
+const seenIn = (flags: Value | undefined): boolean =>
+  Array.isArray(flags) && flags.some((one) => text(one).toLowerCase() === '\\seen')
+
+function distinct(list: readonly Mail[]): Mail[] {
+  const ids = new Set<string>()
+  return list.filter((mail) => {
+    if (!mail.id.includes('@')) return true
+    if (ids.has(mail.id)) return false
+    ids.add(mail.id)
+    return true
+  })
+}
+
+const plain = (part: string): boolean =>
+  /^[^\s<>()",;\\]+$/.test(part) && withoutControls(part) === part
+
+const wordsOf = (value: string): string =>
+  /[\x80-\xff]/.test(value) ? eightBit(fromLatin(value)) : value
+
 function addressList(value: Value | undefined): Address[] {
   if (!Array.isArray(value)) return []
   return value.flatMap((one) => {
     if (!Array.isArray(one)) return []
-    const mailbox = text(one[2])
-    const host = text(one[3])
-    if (!mailbox || !host) return []
+    const mailbox = wordsOf(text(one[2]))
+    const host = wordsOf(text(one[3]))
+    if (!plain(mailbox) || !plain(host)) return []
     return [{ name: decodeWords(text(one[0])), address: `${mailbox}@${host}`.toLowerCase() }]
   })
 }
@@ -177,6 +204,8 @@ class MailConnection {
   private turn: Promise<unknown> = Promise.resolve()
   private sent: string | null = null
   private readonly last = new Map<string, number>()
+  private readonly validity = new Map<string, string>()
+  private dropped: Mail[] = []
   private readonly hearers = new Set<(event: ProviderEvent) => void>()
   private watching = false
   private stopped = false
@@ -194,7 +223,11 @@ class MailConnection {
     if (this.stopped) return Promise.reject(new Error('the mailbox is closed'))
     if (this.main?.alive()) return Promise.resolve(this.main)
     this.opening ??= this.signIn()
-      .then((imap) => {
+      .then(async (imap) => {
+        if (this.stopped) {
+          await imap.close()
+          throw new Error('the mailbox is closed')
+        }
         this.main = imap
         this.selected = null
         imap.ended = () => {
@@ -241,18 +274,77 @@ class MailConnection {
     const lines = await held.command(`SELECT ${quoted(box)}`)
     if (held === this.main) this.selected = box
     const exists = lines.find((one) => one.kind === 'EXISTS')?.number ?? 0
+    const validity = lines
+      .map((one) => /\[UIDVALIDITY (\d+)\]/i.exec(one.line)?.[1])
+      .find((one) => one !== undefined)
+    if (validity !== undefined) {
+      const known = this.validity.get(box)
+      if (known !== undefined && known !== validity) this.forget(box)
+      this.validity.set(box, validity)
+    }
     return { imap: held, exists }
+  }
+
+  private forget(box: string): void {
+    for (const mail of [...this.mails.values()]) {
+      if (mail.box !== box || !mail.uid) continue
+      this.mails.delete(mail.key)
+      this.bodies.delete(mail.key)
+      this.dropped.push(mail)
+    }
+    this.last.delete(box)
+  }
+
+  private watched(): string[] {
+    return ['INBOX', ...(this.sent ? [this.sent] : [])]
   }
 
   begin(): Promise<void> {
     return this.held(async (imap) => {
       const boxes = await imap.command('LIST "" "*"')
       this.sent = sentBox(boxes)
-      for (const box of ['INBOX', ...(this.sent ? [this.sent] : [])]) {
-        const { exists } = await this.select(box, imap)
-        if (exists) await this.fetch(imap, box, `${Math.max(1, exists - NEWEST + 1)}:*`, false)
-      }
+      for (const box of this.watched()) await this.sync(imap, box)
+      this.dropped = []
     })
+  }
+
+  private async sync(imap: Imap, box: string): Promise<Change> {
+    const { exists } = await this.select(box, imap)
+    const gone = this.dropped.splice(0)
+    const flagged: Mail[] = []
+    const known = [...this.mails.values()].filter((mail) => mail.box === box && mail.uid > 0)
+    if (!known.length) {
+      const found = exists
+        ? await this.fetch(imap, box, `${Math.max(1, exists - NEWEST + 1)}:*`, false)
+        : []
+      return { found, gone, flagged }
+    }
+    const seen = new Map<number, boolean>()
+    if (exists) {
+      const low = known.reduce((least, mail) => Math.min(least, mail.uid), Infinity)
+      for (const line of await imap.command(`UID FETCH ${low}:* (UID FLAGS)`)) {
+        if (line.kind !== 'FETCH') continue
+        const items = itemsOf(line.values)
+        const uid = Number(text(items.get('UID')))
+        if (uid) seen.set(uid, seenIn(items.get('FLAGS')))
+      }
+    }
+    for (const mail of known) {
+      const now = seen.get(mail.uid)
+      if (now === undefined) {
+        this.mails.delete(mail.key)
+        this.bodies.delete(mail.key)
+        gone.push(mail)
+      } else if (now !== mail.seen) {
+        mail.seen = now
+        flagged.push(mail)
+      }
+    }
+    const after = (this.last.get(box) ?? 0) + 1
+    const found = exists
+      ? (await this.fetch(imap, box, `${after}:*`, true)).filter((mail) => mail.uid >= after)
+      : []
+    return { found, gone, flagged }
   }
 
   private async fetch(imap: Imap, box: string, range: string, byUid: boolean): Promise<Mail[]> {
@@ -276,8 +368,7 @@ class MailConnection {
     const uid = Number(text(items.get('UID')))
     const envelope = items.get('ENVELOPE')
     if (!uid || !Array.isArray(envelope)) return null
-    const flags = items.get('FLAGS')
-    const seen = Array.isArray(flags) && flags.some((one) => text(one).toLowerCase() === '\\seen')
+    const seen = seenIn(items.get('FLAGS'))
     const references = [...items.entries()].find(([key]) => key.startsWith('BODY['))?.[1]
     const header = headersOf(text(references))
     const from = addressList(envelope[2])
@@ -293,6 +384,7 @@ class MailConnection {
       links: [...idsOf(header.get('references')?.join(' ')), ...idsOf(text(envelope[8]))],
       subject: decodeWords(text(envelope[1])),
       from,
+      replyTo: addressList(envelope[4]),
       to: addressList(envelope[5]),
       cc: addressList(envelope[6]),
       at: Number.isFinite(at) ? at : this.host.now(),
@@ -318,7 +410,7 @@ class MailConnection {
   }
 
   private conversationOf(id: string, list: readonly Mail[]): Conversation {
-    const sorted = [...list].sort((a, b) => a.at - b.at)
+    const sorted = distinct(list).sort((a, b) => a.at - b.at)
     const me = this.config.address.toLowerCase()
     const people = new Map<string, Address>()
     for (const mail of sorted) {
@@ -338,11 +430,12 @@ class MailConnection {
     }
   }
 
-  private inThread(conversation: string): Mail[] {
+  private inThread(conversation: string, copies = false): Mail[] {
     const threads = this.threads()
-    return [...this.mails.values()]
-      .filter((mail) => (threads.get(mail.key) ?? mail.id) === conversation)
-      .sort((a, b) => a.at - b.at)
+    const all = [...this.mails.values()].filter(
+      (mail) => (threads.get(mail.key) ?? mail.id) === conversation,
+    )
+    return (copies ? all : distinct(all)).sort((a, b) => a.at - b.at)
   }
 
   conversations(): Promise<Conversation[]> {
@@ -353,7 +446,9 @@ class MailConnection {
     const held = this.bodies.get(mail.key)
     if (held) return held
     const lines = await this.inBox(mail.box, (imap) =>
-      imap.command(`UID FETCH ${mail.uid} (BODY.PEEK[])`),
+      this.mails.get(mail.key) === mail
+        ? imap.command(`UID FETCH ${mail.uid} (BODY.PEEK[])`)
+        : Promise.resolve([]),
     )
     const line = lines.find(
       (one) => one.kind === 'FETCH' && Number(text(itemsOf(one.values).get('UID'))) === mail.uid,
@@ -363,8 +458,9 @@ class MailConnection {
     const parsed = this.host.parseMessage
       ? await this.host.parseMessage(raw).catch(() => parseMessage(raw))
       : parseMessage(raw)
+    const reply = mail.links.length > 0 && !/^\s*(fwd?|wg|tr|rv)\s*:/i.test(mail.subject)
     const read: Read = {
-      text: withoutQuote(parsed.text),
+      text: withoutQuote(parsed.text, reply),
       attachments: parsed.attachments.map((part) => ({
         ref: part.path,
         name: part.filename ?? part.type,
@@ -408,7 +504,7 @@ class MailConnection {
     if (!last) throw new Error('there is no mail to answer')
     const me = this.config.address.toLowerCase()
     const others = (list: readonly Address[]) => list.filter((one) => one.address !== me)
-    const to = last.mine ? others(last.to) : others(last.from)
+    const to = last.mine ? others(last.to) : others(last.replyTo.length ? last.replyTo : last.from)
     const cc = last.mine ? others(last.cc) : others([...last.to, ...last.cc])
     const recipients = [...to, ...cc].filter(
       (one, at, all) => all.findIndex((it) => it.address === one.address) === at,
@@ -454,6 +550,7 @@ class MailConnection {
       links: [...last.links, last.id],
       subject,
       from: [{ name: this.config.name, address: me }],
+      replyTo: [],
       to,
       cc,
       at: this.host.now(),
@@ -485,13 +582,15 @@ class MailConnection {
   }
 
   async markRead(conversation: string): Promise<void> {
-    const unseen = this.inThread(conversation).filter((mail) => !mail.seen && mail.uid)
+    const unseen = this.inThread(conversation, true).filter((mail) => !mail.seen && mail.uid)
     if (!unseen.length) return
     for (const box of new Set(unseen.map((mail) => mail.box))) {
-      const uids = unseen.filter((mail) => mail.box === box).map((mail) => mail.uid)
-      await this.inBox(box, (imap) =>
-        imap.command(`UID STORE ${uids.join(',')} +FLAGS.SILENT (\\Seen)`),
-      )
+      await this.inBox(box, async (imap) => {
+        const uids = unseen
+          .filter((mail) => mail.box === box && this.mails.get(mail.key) === mail)
+          .map((mail) => mail.uid)
+        if (uids.length) await imap.command(`UID STORE ${uids.join(',')} +FLAGS.SILENT (\\Seen)`)
+      })
     }
     for (const mail of unseen) mail.seen = true
     const list = this.inThread(conversation)
@@ -504,26 +603,44 @@ class MailConnection {
   }
 
   private async look(): Promise<void> {
-    const after = (this.last.get('INBOX') ?? 0) + 1
-    const found = (
-      await this.held(async (imap) => {
-        await this.select('INBOX', imap)
-        return this.fetch(imap, 'INBOX', `${after}:*`, true)
-      })
-    ).filter((mail) => mail.uid >= after)
-    if (!found.length) return
+    const before = this.threads()
+    const changes = await this.held(async (imap) => {
+      const all: Change[] = []
+      for (const box of this.watched()) all.push(await this.sync(imap, box))
+      return all
+    })
+    const found = changes.flatMap((one) => one.found)
+    const gone = changes.flatMap((one) => one.gone)
+    const flagged = changes.flatMap((one) => one.flagged)
+    if (!found.length && !gone.length && !flagged.length) return
     const threads = this.threads()
+    const shown = new Set(distinct([...this.mails.values()]).map((mail) => mail.key))
     const touched = new Set<string>()
+    const left = new Set<string>()
+    for (const mail of gone) {
+      const conversation = before.get(mail.key) ?? mail.id
+      left.add(conversation)
+      this.tell({ t: 'deleted', conversation, message: mail.key })
+    }
+    for (const [key, conversation] of threads) {
+      const was = before.get(key)
+      if (was !== undefined && left.has(was)) touched.add(conversation)
+    }
+    for (const mail of flagged) touched.add(threads.get(mail.key) ?? mail.id)
     for (const mail of found) {
+      if (!shown.has(mail.key)) continue
       const conversation = threads.get(mail.key) ?? mail.id
       touched.add(conversation)
       this.tell({ t: 'message', message: await this.messageOf(conversation, mail) })
     }
+    for (const conversation of left) {
+      if (!this.inThread(conversation).length) this.tell({ t: 'gone', conversation })
+    }
     for (const conversation of touched) {
-      this.tell({
-        t: 'conversation',
-        conversation: this.conversationOf(conversation, this.inThread(conversation)),
-      })
+      const list = this.inThread(conversation)
+      if (list.length) {
+        this.tell({ t: 'conversation', conversation: this.conversationOf(conversation, list) })
+      }
     }
   }
 
@@ -544,8 +661,7 @@ class MailConnection {
       } catch (error) {
         if (this.halted()) return
         const reason = error instanceof Error ? error.message : String(error)
-        const refused =
-          error instanceof SignedOut || /auth|login|password|credential|invalid/i.test(reason)
+        const refused = signedOut(error)
         this.tell({ t: 'status', status: refused ? 'signed-out' : 'offline', reason })
         if (refused) return
         await new Promise((resolve) => setTimeout(resolve, wait))
@@ -597,9 +713,19 @@ class MailConnection {
   async close(): Promise<void> {
     this.stopped = true
     this.wakeIdle()
+    await this.opening?.catch(() => undefined)
     await this.main?.close()
     this.main = null
   }
+}
+
+function signedOut(error: unknown): boolean {
+  if (error instanceof SignedOut) return true
+  if (!(error instanceof ImapError) || error.kind !== 'NO') return false
+  if (/\[(UNAVAILABLE|INUSE|LIMIT|SERVERBUG|OVERQUOTA)\]/i.test(error.message)) return false
+  return /\[(AUTHENTICATIONFAILED|AUTHORIZATIONFAILED|EXPIRED)\]|auth|login|password|credential|invalid/i.test(
+    error.message,
+  )
 }
 
 function refusedLogin(error: unknown): boolean {

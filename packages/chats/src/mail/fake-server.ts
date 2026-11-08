@@ -15,6 +15,7 @@ export class FakeMail {
     ['Sent', []],
   ])
   next = new Map<string, number>()
+  validity = new Map<string, number>()
   sent: { from: string; to: string[]; data: string }[] = []
   user = 'emil@example.org'
   password = 'right horse'
@@ -25,6 +26,7 @@ export class FakeMail {
   bearers: string[] = []
   private readonly idlers = new Set<() => void>()
   private readonly servers: Server[] = []
+  private readonly sockets = new Set<NodeSocket>()
   imapPort = 0
   smtpPort = 0
 
@@ -38,6 +40,35 @@ export class FakeMail {
     return uid
   }
 
+  private wake(): void {
+    for (const wake of this.idlers) wake()
+  }
+
+  mark(box: string, uid: number, flag: string): void {
+    this.boxes
+      .get(box)
+      ?.find((one) => one.uid === uid)
+      ?.flags.add(flag)
+    this.wake()
+  }
+
+  expunge(box: string, uid: number): void {
+    this.boxes.set(
+      box,
+      (this.boxes.get(box) ?? []).filter((one) => one.uid !== uid),
+    )
+    this.wake()
+  }
+
+  rebuild(box: string): void {
+    const list = [...(this.boxes.get(box) ?? [])].reverse()
+    list.forEach((one, at) => (one.uid = at + 1))
+    this.boxes.set(box, list)
+    this.next.set(box, list.length)
+    this.validity.set(box, (this.validity.get(box) ?? 1) + 1)
+    this.wake()
+  }
+
   private signedInWith(said: string): boolean {
     const parts = new TextDecoder().decode(fromBase64(said)).split('\x01')
     const user = parts[0]?.replace(/^user=/, '')
@@ -49,7 +80,11 @@ export class FakeMail {
   async listen(): Promise<void> {
     const listen = (handle: (socket: NodeSocket) => void) =>
       new Promise<number>((resolve) => {
-        const server = createServer(handle)
+        const server = createServer((socket) => {
+          this.sockets.add(socket)
+          socket.on('close', () => this.sockets.delete(socket))
+          handle(socket)
+        })
         this.servers.push(server)
         server.listen(0, '127.0.0.1', () => {
           const address = server.address()
@@ -66,7 +101,7 @@ export class FakeMail {
         (server) =>
           new Promise<void>((resolve) => {
             server.close(() => resolve())
-            ;(server as Server & { closeAllConnections?: () => void }).closeAllConnections?.()
+            for (const socket of this.sockets) socket.destroy()
           }),
       ),
     )
@@ -77,6 +112,9 @@ export class FakeMail {
     const reader = new Reader()
     const say = (line: string) => socket.write(fromLatin(`${line}\r\n`))
     let box: string | null = null
+    let told = ''
+    const state = () =>
+      (this.boxes.get(box ?? '') ?? []).map((one) => `${one.uid}${[...one.flags].join()}`).join(' ')
     let authed = false
     let literal: { tag: string; rest: string; size: number } | null = null
     let idling: { tag: string; stop: () => void } | null = null
@@ -152,7 +190,9 @@ export class FakeMail {
         say(`${tag} OK listed`)
       } else if (command === 'SELECT') {
         box = rest.replace(/^"|"$/g, '')
+        told = state()
         say(`* ${messages().length} EXISTS`)
+        say(`* OK [UIDVALIDITY ${this.validity.get(box) ?? 1}] valid`)
         say(`* OK [UIDNEXT ${(this.next.get(box) ?? 0) + 1}] next`)
         say(`${tag} OK [READ-WRITE] selected`)
       } else if (command === 'FETCH') {
@@ -189,10 +229,14 @@ export class FakeMail {
           say(`${tag} OK appended`)
         }
       } else if (command === 'IDLE') {
-        const wake = () => say(`* ${messages().length} EXISTS`)
+        const wake = () => {
+          told = state()
+          say(`* ${messages().length} EXISTS`)
+        }
         this.idlers.add(wake)
         idling = { tag, stop: () => this.idlers.delete(wake) }
         say('+ idling')
+        if (state() !== told) wake()
       } else if (command === 'NOOP') {
         say(`${tag} OK noop`)
       } else if (command === 'LOGOUT') {
@@ -306,7 +350,9 @@ function envelope(raw: Uint8Array): string {
   const headers = headersOf(latin(raw))
   const one = (name: string) => headers.get(name)?.[0]
   const q = (value: string | undefined) =>
-    value === undefined ? 'NIL' : `"${value.replace(/[\\"]/g, (char) => `\\${char}`)}"`
+    value === undefined
+      ? 'NIL'
+      : `"${latin(new TextEncoder().encode(value)).replace(/[\\"]/g, (char) => `\\${char}`)}"`
   const people = (name: string) => {
     const list = addressesOf(one(name) ?? '')
     if (!list.length) return 'NIL'
@@ -317,7 +363,7 @@ function envelope(raw: Uint8Array): string {
       })
       .join('')})`
   }
-  return `(${q(one('date'))} ${q(one('subject'))} ${people('from')} ${people('from')} ${people('from')} ${people('to')} ${people('cc')} NIL ${q(one('in-reply-to'))} ${q(one('message-id'))})`
+  return `(${q(one('date'))} ${q(one('subject'))} ${people('from')} ${people('from')} ${people(one('reply-to') ? 'reply-to' : 'from')} ${people('to')} ${people('cc')} NIL ${q(one('in-reply-to'))} ${q(one('message-id'))})`
 }
 
 export function nodeSocket(ask: SocketAsk): Promise<Socket> {
