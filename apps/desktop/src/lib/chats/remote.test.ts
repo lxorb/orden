@@ -309,6 +309,72 @@ describe('notifying', () => {
   })
 })
 
+describe('a service that drops and comes back', () => {
+  test('what came while it was away is shown when it is back', async () => {
+    const { fake, link, chat } = await linked()
+    const page = await opened(chat('ada'))
+    fake.world.tell({ t: 'status', status: 'offline' })
+    fake.world.put({
+      id: 'away-1',
+      conversation: 'ada',
+      author: fake.world.person('ada'),
+      at: Date.now(),
+      text: 'said while you were away',
+      attachments: [],
+      mine: false,
+    })
+    fake.world.tell({ t: 'status', status: 'online' })
+    await vi.waitFor(() => expect(page.messages.at(-1)?.body).toBe('said while you were away'))
+    await vi.waitFor(() =>
+      expect(
+        hub.find(fake.id, link.account.id)?.conversations.find((one) => one.id === 'ada')?.snippet,
+      ).toBe('said while you were away'),
+    )
+    page.close()
+  })
+})
+
+describe('what is on its way out', () => {
+  test('a send still going, or one that failed, is there again when the chat is opened anew', async () => {
+    const { fake, chat } = await linked()
+    const page = await opened(chat('ada'))
+    let release: () => void = () => undefined
+    const send = fake.connection?.send.bind(fake.connection)
+    if (!send || !fake.connection) throw new Error('not connected')
+    fake.connection.send = (conversation, draft) =>
+      draft.text === 'slow'
+        ? new Promise<void>((resolve) => (release = resolve)).then(() => send(conversation, draft))
+        : Promise.reject(new Error('offline'))
+    page.post('lost?')
+    await vi.waitFor(() => expect(page.view.pending.at(-1)?.refused).toBe('invalid'))
+    page.post('slow')
+    await vi.waitFor(() => expect(page.view.pending.map((one) => one.body)).toContain('slow'))
+    page.close()
+    const again = await opened(chat('ada'))
+    expect(again.view.pending.map((one) => one.body).sort()).toEqual(['lost?', 'slow'])
+    release()
+    await vi.waitFor(() => expect(again.messages.at(-1)?.body).toBe('slow'))
+    await vi.waitFor(() => expect(again.view.pending.map((one) => one.body)).toEqual(['lost?']))
+    again.close()
+  })
+
+  test('a reaction or vote the service refuses is taken back', async () => {
+    const { fake, chat } = await linked()
+    const page = await opened(chat('team'))
+    const parent = page.messages.find((one) => one.body === 'Where do we meet?')
+    const poll = page.messages.find((one) => one.poll)
+    if (!parent || !poll || !fake.connection) throw new Error('no message')
+    fake.connection.react = () => Promise.reject(new Error('refused'))
+    fake.connection.vote = () => Promise.reject(new Error('refused'))
+    await expect(store().react(chat('team'), parent.id, '🎉', true)).rejects.toThrow()
+    await expect(store().vote(chat('team'), poll.id, [0])).rejects.toThrow()
+    const now = (id: string) => page.messages.find((one) => one.id === id)
+    expect(now(parent.id)?.reactions['🎉']).toBeUndefined()
+    expect(now(poll.id)?.tally).toEqual([2, 1])
+    page.close()
+  })
+})
+
 describe('older pages', () => {
   test('a reply in a thread stays in its thread when older messages are loaded', async () => {
     const { fake, chat } = await linked()

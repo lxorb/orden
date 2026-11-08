@@ -158,7 +158,10 @@ export class Connected {
     this.stops.set(
       key,
       connection.start((event) => {
+        const was = this.find(provider.id, account.id)?.status
         remote.heard(event)
+        if (event.t === 'status' && event.status === 'online' && was && was !== 'online')
+          void this.catchUp(provider.id, account.id, connection, remote)
         this.linked = this.linked.map((one) =>
           one.provider.id === provider.id && one.account.id === account.id
             ? heardInto(one, event)
@@ -168,6 +171,22 @@ export class Connected {
       }),
     )
     return linked
+  }
+
+  private async catchUp(
+    provider: string,
+    account: string,
+    connection: Connection,
+    remote: Remote,
+  ): Promise<void> {
+    remote.caughtUp()
+    const conversations = await connection.conversations().catch(() => null)
+    if (!conversations) return
+    this.linked = this.linked.map((one) =>
+      one.provider.id === provider && one.account.id === account && one.connection === connection
+        ? { ...one, conversations }
+        : one,
+    )
   }
 
   async unlink(provider: string, account: string): Promise<void> {

@@ -10,6 +10,7 @@ import type {
   ConversationRole,
   Member,
   OutgoingFile,
+  Page,
   Person,
   ProviderEvent,
   ProviderMessage,
@@ -191,6 +192,8 @@ export class Remote {
   private readonly uploads = new Map<string, { bytes: Uint8Array; type: string }>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- sends that did not go
   private readonly failed = new Map<string, Pending>()
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- sends on their way
+  private readonly sending = new Map<string, Pending>()
   private readonly urls = new Urls()
   private made = 0
   private readTimers: Record<string, ReturnType<typeof setTimeout>> = {}
@@ -438,6 +441,8 @@ export class Remote {
     }
     const view = new RemoteView(this, conversation, chat)
     this.views.set(conversation, { view, holds: 1 })
+    for (const one of [...this.sending.values(), ...this.failed.values()])
+      if (one.conversation === conversation) view.hold(one)
     void view.start()
     return view
   }
@@ -466,6 +471,10 @@ export class Remote {
       return
     }
     if (event.t === 'presence') for (const { view } of this.views.values()) view.heard(event)
+  }
+
+  caughtUp(): void {
+    for (const { view } of this.views.values()) void view.catchUp()
   }
 
   read(conversation: string, seq: number): void {
@@ -556,7 +565,7 @@ export class Remote {
     const connection = this.connection
     this.made += 1
     const id = `local-${this.made}`
-    const view = this.views.get(conversation)?.view
+    const view = () => this.views.get(conversation)?.view
     const shown: Shown = {
       id,
       seq: Number.MAX_SAFE_INTEGER - 1000 + this.made,
@@ -581,18 +590,21 @@ export class Remote {
         : {}),
     }
     const pending: Pending = { shown, conversation, draft }
-    view?.hold(pending)
+    this.sending.set(id, pending)
+    view()?.hold(pending)
     try {
       if (!connection) throw new Error('not connected')
       const sent = await connection.send(conversation, {
         ...this.outgoing(conversation, draft),
         ...(draft.sticker ? { sticker: draft.sticker } : {}),
       })
+      this.sending.delete(id)
       for (const file of draft.files ?? []) this.uploads.delete(file.hash)
-      view?.drop(id)
-      this.views.get(conversation)?.view.heard({ t: 'message', message: sent })
+      view()?.drop(id)
+      view()?.heard({ t: 'message', message: sent })
       return sent.id
     } catch {
+      this.sending.delete(id)
       const failed = {
         ...pending,
         shown: {
@@ -603,7 +615,7 @@ export class Remote {
         },
       }
       this.failed.set(id, failed)
-      view?.hold(failed)
+      view()?.hold(failed)
       return id
     }
   }
@@ -628,9 +640,26 @@ export class Remote {
     conversation: string,
     message: string,
     change: (one: ProviderMessage) => ProviderMessage,
-  ) {
+  ): ProviderMessage | undefined {
     const known = this.known.get(conversation)?.get(message)
     if (known) this.views.get(conversation)?.view.heard({ t: 'changed', message: change(known) })
+    return known
+  }
+
+  private async tried(
+    conversation: string,
+    message: string,
+    change: (one: ProviderMessage) => ProviderMessage,
+    work: () => Promise<void> | undefined,
+  ): Promise<void> {
+    const was = this.patch(conversation, message, change)
+    try {
+      await work()
+    } catch (error) {
+      const now = this.known.get(conversation)?.get(message)
+      if (was && now) this.views.get(conversation)?.view.heard({ t: 'changed', message: was })
+      throw error
+    }
   }
 
   async edit(chat: string, message: string, body: string): Promise<void> {
@@ -662,18 +691,19 @@ export class Remote {
     const conversation = this.conv(chat)
     const self = this.source()?.account.self?.id
     const one = this.source()?.provider.can.reactions === 'one'
-    if (self) {
-      this.patch(conversation, message, (known) => {
-        const reactions: Record<string, string[]> = {}
-        for (const [key, people] of Object.entries(known.reactions ?? {})) {
-          const kept = people.filter((person) => person !== self || (key !== emoji && !(one && on)))
-          if (kept.length) reactions[key] = kept
-        }
-        if (on) reactions[emoji] = [...(reactions[emoji] ?? []), self]
-        return { ...known, reactions }
-      })
+    const change = (known: ProviderMessage): ProviderMessage => {
+      if (!self) return known
+      const reactions: Record<string, string[]> = {}
+      for (const [key, people] of Object.entries(known.reactions ?? {})) {
+        const kept = people.filter((person) => person !== self || (key !== emoji && !(one && on)))
+        if (kept.length) reactions[key] = kept
+      }
+      if (on) reactions[emoji] = [...(reactions[emoji] ?? []), self]
+      return { ...known, reactions }
     }
-    await this.connection?.react?.(conversation, message, emoji, on)
+    await this.tried(conversation, message, change, () =>
+      this.connection?.react?.(conversation, message, emoji, on),
+    )
   }
 
   async pin(chat: string, message: string, on: boolean): Promise<void> {
@@ -684,7 +714,7 @@ export class Remote {
 
   async vote(chat: string, message: string, answers: number[]): Promise<void> {
     const conversation = this.conv(chat)
-    this.patch(conversation, message, (one) => {
+    const change = (one: ProviderMessage): ProviderMessage => {
       const poll = one.poll
       if (!poll) return one
       const counts = poll.counts.map(
@@ -692,8 +722,10 @@ export class Remote {
           count - (poll.mine.includes(index) ? 1 : 0) + (answers.includes(index) ? 1 : 0),
       )
       return { ...one, poll: { ...poll, counts, mine: [...answers] } }
-    })
-    await this.connection?.vote?.(conversation, message, answers)
+    }
+    await this.tried(conversation, message, change, () =>
+      this.connection?.vote?.(conversation, message, answers),
+    )
   }
 
   async describe(chat: string, topic: string): Promise<void> {
@@ -828,6 +860,38 @@ class RemoteList implements MessageList {
 
   newer(): Promise<void> {
     return Promise.resolve()
+  }
+
+  async catchUp(): Promise<void> {
+    let page: Page
+    try {
+      page = await this.page()
+    } catch {
+      return
+    }
+    const fresh = page.messages.filter((one) => this.belongs(one))
+    const have = new Set(this.window.map((one) => one.id))
+    const oldest = fresh[0]
+    if (page.before !== null && !fresh.some((one) => have.has(one.id))) {
+      this.window = fresh
+      this.cursor = page.before
+      this.atStart = false
+    } else {
+      const byId = new Map(fresh.map((one) => [one.id, one]))
+      const kept = this.window.flatMap((one) => {
+        const now = byId.get(one.id)
+        if (now) return [now]
+        return oldest && one.at >= oldest.at ? [] : [one]
+      })
+      this.window = [...kept, ...fresh.filter((one) => !have.has(one.id))].sort(
+        (a, b) => a.at - b.at,
+      )
+      if (this.window.length === fresh.length) {
+        this.cursor = page.before
+        this.atStart = page.before === null
+      }
+    }
+    this.draw()
   }
 
   async latest(): Promise<void> {
@@ -1001,6 +1065,10 @@ export class RemoteView extends RemoteList implements ChatView {
       await this.older()
     }
     return this.window.some((one) => one.id === message)
+  }
+
+  override async catchUp(): Promise<void> {
+    await Promise.all([super.catchUp(), ...[...this.replying].map((one) => one.catchUp())])
   }
 
   replies(parent: string): RepliesView {
