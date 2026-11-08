@@ -2,7 +2,7 @@ import { now } from './crypto'
 import { goneMessage, mailer } from './email'
 import { note } from './failed'
 import { releaseDomain } from './hostnames'
-import { sweepLeftovers } from './leftovers'
+import { ERASING, sweepLeftovers } from './leftovers'
 import { closeChats } from './chats/ask'
 import { closeRooms } from './rooms'
 import { PASS_ERASED } from './pass/erase'
@@ -129,6 +129,101 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['users', 'delete from users where id = ?1'],
 ]
 
+const ROWS_AT_ONCE = 1000
+
+const NOTES_AT_ONCE = 500
+
+const ACCOUNTS_AT_ONCE = 5
+
+const DRAINED: readonly (readonly [table: string, where: string, noted: string | null])[] = [
+  [
+    'note_versions',
+    `note_id in (${OWNED_NOTES})`,
+    `select distinct 'versions/' || hash, ?3 from note_versions`,
+  ],
+  ['note_pictures', `note_id in (${OWNED_NOTES})`, null],
+  ['tree_ops', `space_id in (${OWNED})`, null],
+  ['space_entries', `space_id in (${OWNED})`, null],
+  [
+    'web_chunks',
+    'user_id = ?1',
+    `select 'web/' || user_id || '/chunks/' || name, ?3 from web_chunks`,
+  ],
+  ['pad_updates', 'user_id = ?1', null],
+  ['time_entries', 'user_id = ?1', null],
+  ['machine_events', 'machine in (select id from machines where user_id = ?1)', null],
+]
+
+const NOTES_NOTED: readonly string[] = [
+  `insert or ignore into leftovers (what, since)
+     select 'spaces/' || space_id || '/' || id, ?3 from notes where id in (select value from json_each(?2))`,
+  `insert or ignore into leftovers (what, since)
+     select 'rooms/' || id, ?3 from notes where id in (select value from json_each(?2))`,
+  `insert or ignore into leftovers (what, since)
+     select 'crdt/' || id, ?3 from notes where id in (select value from json_each(?2))`,
+  `insert or ignore into retired_notes (id, since)
+     select id, ?3 from notes where id in (select value from json_each(?2))`,
+  'delete from notes where id in (select value from json_each(?2))',
+]
+
+async function drained(
+  env: Env,
+  values: readonly unknown[],
+  [table, where, noted]: (typeof DRAINED)[number],
+): Promise<void> {
+  const rows = `select rowid from ${table} where ${where} order by rowid limit ${String(ROWS_AT_ONCE)}`
+  for (;;) {
+    const results = await env.DB.batch([
+      ...(noted
+        ? [
+            bound(
+              env,
+              `insert or ignore into leftovers (what, since) ${noted} where rowid in (${rows})`,
+              values,
+            ),
+          ]
+        : []),
+      bound(env, `delete from ${table} where rowid in (${rows})`, values),
+    ])
+    if ((results.at(-1)?.meta.changes ?? 0) < ROWS_AT_ONCE) return
+  }
+}
+
+async function drainedNotes(env: Env, user: User, at: number): Promise<void> {
+  for (;;) {
+    const { results } = await env.DB.prepare(
+      `select id from notes where space_id in (${OWNED}) limit ?2`,
+    )
+      .bind(user.id, NOTES_AT_ONCE)
+      .all<{ id: string }>()
+    if (!results.length) return
+    const values = [user.id, JSON.stringify(results.map((one) => one.id)), at]
+    const answers = await env.DB.batch(NOTES_NOTED.map((sql) => bound(env, sql, values)))
+    if (results.length < NOTES_AT_ONCE || !answers.at(-1)?.meta.changes) return
+  }
+}
+
+export async function finishErasing(env: Env): Promise<void> {
+  const { results } = await env.DB.prepare(
+    'select what from leftovers where what like ? order by since, what limit ?',
+  )
+    .bind(`${ERASING}%`, ACCOUNTS_AT_ONCE)
+    .all<{ what: string }>()
+
+  for (const { what } of results) {
+    try {
+      const user = await env.DB.prepare('select * from users where id = ?')
+        .bind(what.slice(ERASING.length))
+        .first<User>()
+      if (user) await eraseAccount(env, user)
+      else await env.DB.prepare('delete from leftovers where what = ?').bind(what).run()
+    } catch (error) {
+      note('erase', error, null)
+      await env.DB.prepare('update leftovers set since = ? where what = ?').bind(now(), what).run()
+    }
+  }
+}
+
 export async function eraseAccount(env: Env, user: User): Promise<void> {
   const at = now()
   const values = [user.id, user.email, at]
@@ -157,10 +252,23 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
   const handed = await handedOn(env, user, at)
 
   await env.DB.batch([
+    bound(
+      env,
+      `insert or ignore into leftovers (what, since) values ('${ERASING}' || ?1, ?3)`,
+      values,
+    ),
+    bound(env, 'delete from sessions where user_id = ?1', values),
+    bound(env, `update term_sessions set ended_at = ?3 where ${THEIR_TERMS}`, values),
+  ])
+
+  for (const each of DRAINED) await drained(env, values, each)
+  await drainedNotes(env, user, at)
+
+  await env.DB.batch([
     ...NOTED.map((sql) => bound(env, sql, values)),
     ...handed,
-    bound(env, `update term_sessions set ended_at = ?3 where ${THEIR_TERMS}`, values),
     ...ERASED.map(([, sql]) => bound(env, sql, values)),
+    bound(env, `delete from leftovers where what = '${ERASING}' || ?1`, values),
   ])
 
   for (const { domain } of domains) await releaseDomain(env, domain)
