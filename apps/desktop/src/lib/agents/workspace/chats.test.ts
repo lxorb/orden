@@ -1,4 +1,5 @@
 import type { Who } from '@orden/chats'
+import { MOST_BODY } from '@orden/chats/limits'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller, READER } from '../../automation/caller'
 import { FixtureChats } from '../../chats/view/fixture.svelte'
@@ -272,6 +273,16 @@ describe('what an agent says in a chat', () => {
         via: { agent: 'Claude Code' },
       }),
     )
+  })
+
+  test('a message longer than a chat carries is refused before anyone is asked', async () => {
+    const long = 'x'.repeat(MOST_BODY + 1)
+    expect(await call('post_message', { chat: 'thesis', text: long })).toMatchObject({
+      status: 'error',
+      code: 'bad_arguments',
+    })
+    expect(asked).toEqual([])
+    expect(store.ordered(thesis).map((one) => one.body)).not.toContain(long)
   })
 
   test('never asks in Agent mode, in the chat with yourself, or for a draft', async () => {
