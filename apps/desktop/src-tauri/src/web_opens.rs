@@ -176,9 +176,21 @@ pub const PAGE_SCRIPT: &str = r"(function () {
     try { at = String(new URL(url == null || url === '' ? 'about:blank' : String(url), location.href)) } catch (e) { return }
     window.dispatchEvent(new CustomEvent(kind, { detail: at }))
   }
+  var pressed = -1
+  ;['keydown', 'mousedown', 'pointerdown', 'pointerup', 'touchend', 'click'].forEach(function (type) {
+    window.addEventListener(type, function (event) {
+      if (event.isTrusted) pressed = Date.now()
+    }, true)
+  })
+  function spent() {
+    var fresh = pressed >= 0 && Date.now() - pressed < 5000
+    var engine = !navigator.userActivation || navigator.userActivation.isActive
+    if (fresh && engine) pressed = -1
+    return fresh && engine
+  }
   window.open = new Proxy(open, {
     apply: function (engine, self, args) {
-      var active = !navigator.userActivation || navigator.userActivation.isActive
+      var active = spent()
       var name = args.length > 1 && args[1] != null ? String(args[1]) : '_blank'
       var features = args.length > 2 && args[2] != null ? String(args[2]).toLowerCase() : ''
       if (/(^|[\s,])no(opener|referrer)(?=$|[\s,=])/.test(features) && (name === '_blank' || name === '')) {
@@ -792,6 +804,12 @@ mod tests {
             .expect("the engine");
         assert!(gate < engine);
         assert!(super::PAGE_SCRIPT[gate..engine].contains("return null"));
+        let active = super::PAGE_SCRIPT
+            .find("var active = spent()")
+            .expect("the press");
+        assert!(active < gate);
+        assert!(super::PAGE_SCRIPT.contains("if (event.isTrusted) pressed = Date.now()"));
+        assert!(super::PAGE_SCRIPT.contains("if (fresh && engine) pressed = -1"));
         assert!(SCRIPT.contains("else open(event.detail, 'orden-popup-blocked')"));
     }
 
