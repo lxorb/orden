@@ -1042,7 +1042,7 @@
       {/if}
       {#if othersIn(opens)}<SharedMark label={t('Also open elsewhere')} />
       {:else if isSharedItem(opens)}<SharedMark />{/if}
-      {#if workspace.protection.any && workspace.activeSpace && workspace.protection.own(workspace.activeSpace.root, entry.path)}<SharedMark
+      {#if workspace.protection.any && workspace.activeSpace && workspace.protection.marked(workspace.activeSpace.root, entry.path)}<SharedMark
           label={t('Protected')}
           icon={LOCK_MARK}
         />{/if}
