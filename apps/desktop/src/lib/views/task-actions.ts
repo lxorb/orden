@@ -104,7 +104,7 @@ function undate(rows: readonly Row[]): Promise<boolean> {
 export function labelEntries(rows: readonly Row[]): MenuEntry[] {
   const tasks = rows.filter((row) => row.task)
   const space = tasks[0]?.space
-  return labelsOf(space === undefined ? [] : store.of(space)).map((tag) => {
+  return labelsOf(space === undefined ? [] : store.shown(space)).map((tag) => {
     const all = tasks.every((row) => row.task?.tags.includes(tag))
     return {
       label: `#${tag}`,
