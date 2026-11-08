@@ -1718,23 +1718,32 @@ describe('a v2 space whose role is not known yet', () => {
 })
 
 describe('an account gone back to v1 on a device that kept its spaces under v2', () => {
-  function wayBack() {
+  async function wayBack() {
     let walked: (back: boolean) => void = () => undefined
-    const walkBack = vi.fn(
-      () =>
-        new Promise<boolean>((resolve) => {
-          walked = resolve
-        }),
-    )
+    let reached: () => void = () => undefined
+    const started = new Promise<void>((resolve) => (reached = resolve))
+    const walkBack = vi.fn(() => {
+      reached()
+      return new Promise<boolean>((resolve) => {
+        walked = resolve
+      })
+    })
     vi.doMock('./sync2/runner.svelte', () => ({ runner: { walkBack } }))
-    return { walkBack, walk: (back: boolean) => walked(back) }
+    await import('./sync2/runner.svelte')
+    return { walkBack, started, walk: (back: boolean) => walked(back) }
   }
 
   function countingV1() {
     const real = fake.api.listSpaces
-    const counted = { asked: 0, restore: () => (fake.api.listSpaces = real) }
+    let reached: () => void = () => undefined
+    const counted = {
+      asked: 0,
+      started: new Promise<void>((resolve) => (reached = resolve)),
+      restore: () => (fake.api.listSpaces = real),
+    }
     fake.api.listSpaces = () => {
       counted.asked++
+      reached()
       return real()
     }
     return counted
@@ -1746,16 +1755,8 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
     await startup.shown()
   }
 
-  async function until(done: () => boolean) {
-    const { setTimeout: sleep } = await import('node:timers/promises')
-    for (let at = 0; at < 2000 && !done(); at++) {
-      await vi.advanceTimersByTimeAsync(10)
-      await sleep(5)
-    }
-  }
-
   test('walks the way back before v1 starts, and v1 waits until it is walked', async () => {
-    const { walkBack, walk } = wayBack()
+    const { walkBack, started, walk } = await wayBack()
     standInForTheWindow()
     accountWithNotes()
     await signIn()
@@ -1765,7 +1766,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
 
     try {
       await launched()
-      await until(() => walkBack.mock.calls.length > 0)
+      await started
 
       expect(walkBack).toHaveBeenCalledTimes(1)
       expect(sync.status).toBe('offline')
@@ -1774,7 +1775,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
       expect(v1.asked).toBe(0)
 
       walk(true)
-      await until(() => v1.asked > 0)
+      await v1.started
       expect(localStorage.getItem('orden:sync-version')).toBe('1')
       expect(sync.version).toBe(1)
       expect(v1.asked).toBeGreaterThan(0)
@@ -1787,7 +1788,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
   })
 
   test('starts nothing when the session ends before the way back is walked', async () => {
-    const { walkBack, walk } = wayBack()
+    const { started, walk } = await wayBack()
     standInForTheWindow()
     accountWithNotes()
     await signIn()
@@ -1797,7 +1798,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
 
     try {
       await launched()
-      await until(() => walkBack.mock.calls.length > 0)
+      await started
       sync.stop()
       walk(false)
       await vi.advanceTimersByTimeAsync(60_000)
@@ -1811,7 +1812,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
   })
 
   test('starts v1 at once where this device never ran v2', async () => {
-    const { walkBack } = wayBack()
+    const { walkBack } = await wayBack()
     standInForTheWindow()
     accountWithNotes()
     await signIn()
