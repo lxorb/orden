@@ -182,7 +182,10 @@ export async function publishesFile(
   request: Request,
 ): Promise<boolean> {
   const site = readSite(space.site)
-  if (!space.blog_note) return publishes(site.rules, file.path, NO_FRONT)
+  if (!space.blog_note) {
+    if (!publishes(site.rules, file.path, NO_FRONT)) return false
+    return !site.password || (await letIn(site.password, request.headers.get('cookie'), Date.now()))
+  }
 
   const url = new URL(`/${encodeURIComponent(file.path)}`, request.url)
   const answer = await served(env, space, url, request, site)

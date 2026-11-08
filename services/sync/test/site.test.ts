@@ -669,6 +669,33 @@ describe('a site behind a password', () => {
     expect(read.headers.get('cache-control')).toBe('private, no-store')
   })
 
+  test('keeps its papers to those who know it, even by their own address', async () => {
+    const { hash, bytes } = file(64, 9)
+    await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token,
+      raw: bytes,
+      headers: { 'content-type': 'application/pdf' },
+    })
+    await call(env, `/v1/spaces/${space}/files`, {
+      method: 'PUT',
+      token,
+      body: { files: [{ path: 'paper.pdf', hash }] },
+    })
+
+    expect((await page(`/i/${hash}.pdf`)).status).toBe(404)
+
+    const answer = await page('/plan', {
+      method: 'POST',
+      raw: `password=${encodeURIComponent(PASSWORD)}`,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+    const read = await page(`/i/${hash}.pdf`, { headers: { cookie: ticket } })
+    expect(read.status).toBe(200)
+    expect(read.headers.get('cache-control')).toContain('private')
+  })
+
   test('a cookie another site set for the root keeps nobody out', async () => {
     const answer = await page('/plan', {
       method: 'POST',
