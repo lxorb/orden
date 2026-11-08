@@ -191,7 +191,7 @@
         title={t('Back')}
         onclick={() => ui.back()}
       >
-        <Glyph icon={ArrowLeft} />
+        <Glyph icon={ArrowLeft} class="orden-mirror" />
       </button>
     {/if}
     <ItemMark {content} big />

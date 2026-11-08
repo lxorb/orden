@@ -581,7 +581,9 @@
                 {#if row.command.checked}
                   <span class="mark tick">✓</span>
                 {:else}
-                  <span class="mark quiet"><Icon icon={null} fallback={ChevronRight} /></span>
+                  <span class="mark quiet orden-mirror"
+                    ><Icon icon={null} fallback={ChevronRight} /></span
+                  >
                 {/if}
               {:else if row.kind === 'note'}
                 <FileMark mark={fileMark(row.entry.name)} path={row.entry.path} />

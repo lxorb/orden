@@ -131,7 +131,12 @@
       onclick={() => (showingCertificate = !showingCertificate)}
     >
       {@render how()}
-      <svg class="chevron" class:open={showingCertificate} viewBox="0 0 24 24" aria-hidden="true">
+      <svg
+        class="chevron orden-mirror"
+        class:open={showingCertificate}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
         {#each ChevronRight as [tag, attrs], index (index)}
           <svelte:element this={tag} {...attrs} />
         {/each}
@@ -271,7 +276,7 @@
   }
 
   .how > .chevron.open {
-    transform: rotate(90deg);
+    transform: scaleX(var(--dir)) rotate(90deg);
   }
 
   .risky,

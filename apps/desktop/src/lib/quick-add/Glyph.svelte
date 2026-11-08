@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { IconNode } from '../icons'
 
-  const { icon }: { icon: IconNode } = $props()
+  const { icon, class: kind = '' }: { icon: IconNode; class?: string } = $props()
 </script>
 
-<svg viewBox="0 0 24 24" aria-hidden="true">
+<svg class={kind || undefined} viewBox="0 0 24 24" aria-hidden="true">
   {#each icon as [tag, attrs] (JSON.stringify(attrs))}
     <svelte:element this={tag} {...attrs} />
   {/each}
