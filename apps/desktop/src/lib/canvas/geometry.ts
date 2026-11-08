@@ -100,6 +100,38 @@ export function edgeCurve(ends: EdgeEnds): [Point, Point, Point, Point] {
   ]
 }
 
+function reach(a: number, b: number, c: number, d: number): [number, number] {
+  let least = Math.min(a, d)
+  let most = Math.max(a, d)
+  const p = -a + 3 * b - 3 * c + d
+  const q = 2 * (a - 2 * b + c)
+  const r = b - a
+  const turns =
+    Math.abs(p) < 1e-9
+      ? Math.abs(q) < 1e-9
+        ? []
+        : [-r / q]
+      : ((wide) =>
+          wide < 0 ? [] : [(-q + Math.sqrt(wide)) / (2 * p), (-q - Math.sqrt(wide)) / (2 * p)])(
+          q * q - 4 * p * r,
+        )
+  for (const t of turns) {
+    if (!(t > 0 && t < 1)) continue
+    const u = 1 - t
+    const at = u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d
+    least = Math.min(least, at)
+    most = Math.max(most, at)
+  }
+  return [least, most]
+}
+
+export function edgeBox(ends: EdgeEnds): Box {
+  const [from, first, second, to] = edgeCurve(ends)
+  const [x, right] = reach(from.x, first.x, second.x, to.x)
+  const [y, bottom] = reach(from.y, first.y, second.y, to.y)
+  return { x, y, width: right - x, height: bottom - y }
+}
+
 export function edgePath(ends: EdgeEnds): string {
   const [from, first, second, to] = edgeCurve(ends)
 

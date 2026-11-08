@@ -13,6 +13,8 @@ import {
   type Box,
   containing,
   dragged,
+  edgeBox,
+  edgeEnds,
   gathered,
   GRID,
   type HandleId,
@@ -82,6 +84,17 @@ export function pickedBox(canvas: Canvas, picked: readonly string[]): Box | null
     ...canvas.nodes.filter((node) => wanted.has(node.id)),
     ...canvas.ink.filter((stroke) => wanted.has(stroke.id)).map(strokeBox),
   ])
+}
+
+export function planeBox(canvas: Canvas): Box | null {
+  const byId = new Map(canvas.nodes.map((node) => [node.id, node]))
+  const edges = canvas.edges.flatMap((edge) => {
+    const from = byId.get(edge.fromNode)
+    const to = byId.get(edge.toNode)
+    return from && to ? [edgeBox(edgeEnds(edge, boxOf(from), boxOf(to)))] : []
+  })
+
+  return bounds([...canvas.nodes, ...canvas.ink.map(strokeBox), ...edges])
 }
 
 const INK_STEPS = 10
