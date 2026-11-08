@@ -39,22 +39,26 @@ export class Panes {
 
   landing = $state<Landing | null>(null)
 
-  dragged(what: Dragging) {
+  dragged(what: Dragging, ended?: () => void) {
     this.settled()
     this.dragging = what
 
+    const over = new AbortController()
     const done = () => {
       this.settled()
       this.dragging = null
       this.landing = null
+      ended?.()
+    }
+    const moved = (event: PointerEvent) => {
+      if (event.buttons === 0) done()
     }
 
-    window.addEventListener('dragend', done, { once: true })
-    window.addEventListener('drop', done, { once: true })
-    this.settling = () => {
-      window.removeEventListener('dragend', done)
-      window.removeEventListener('drop', done)
-    }
+    window.addEventListener('dragend', done, { signal: over.signal })
+    window.addEventListener('drop', done, { signal: over.signal })
+    window.addEventListener('pointerdown', done, { capture: true, signal: over.signal })
+    window.addEventListener('pointermove', moved, { capture: true, signal: over.signal })
+    this.settling = () => over.abort()
   }
 
   dropped() {
