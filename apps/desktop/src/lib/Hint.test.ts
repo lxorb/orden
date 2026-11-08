@@ -65,7 +65,10 @@ describe('where the panel draws it', () => {
     expect(drawn.filter((one) => one === '<Hint text={field.hint} />')).toHaveLength(1)
     expect(panel).toContain('{#if field.hint}<Hint text={field.hint} />{/if}')
 
-    const written = drawn.filter((one) => one !== '<Hint text={field.hint} />')
+    expect(drawn.filter((one) => one === '<Hint text={entry.why()} />')).toHaveLength(1)
+    const written = drawn.filter(
+      (one) => one !== '<Hint text={field.hint} />' && one !== '<Hint text={entry.why()} />',
+    )
     expect(written.length).toBeGreaterThan(5)
     for (const one of written) expect(one).toMatch(/^<Hint text=\{t\('[^']+\.'\)\} \/>$/)
   })
