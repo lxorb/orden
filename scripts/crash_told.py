@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import pathlib
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -40,10 +41,7 @@ def ask(port: int, secret: str, code: str, seconds: float = 10) -> object:
         return None
 
 
-def tell(port: int, secret: str, watch: float = 20.0) -> bool:
-    first = ask(port, secret, CODE)
-    if first is None:
-        return False
+def watched(port: int, secret: str, first: object, watch: float) -> None:
     began = time.monotonic()
     said = [str(first)]
     while time.monotonic() - began < watch:
@@ -52,12 +50,21 @@ def tell(port: int, secret: str, watch: float = 20.0) -> bool:
         if now == "answered":
             said.append(f"answered at {time.monotonic() - began:.1f} s")
     print(f"crash_told: {', '.join(said)}", flush=True)
+
+
+def tell(port: int, secret: str, watch: float = 20.0) -> bool:
+    first = ask(port, secret, CODE)
+    if first is None:
+        return False
+    watched(port, secret, first, watch)
     return True
 
 
-def told(port: int, secret: str) -> bool:
+def told(port: int, secret: str, watch: float = 20.0) -> bool:
     for _ in range(40):
-        if tell(port, secret):
+        first = ask(port, secret, CODE)
+        if first is not None:
+            threading.Thread(target=watched, args=(port, secret, first, watch), daemon=True).start()
             return True
         time.sleep(0.5)
     return False
