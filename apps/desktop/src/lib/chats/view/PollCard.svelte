@@ -118,9 +118,16 @@
 
   .fill {
     position: absolute;
-    inset: 0 auto 0 0;
+    inset-block: 0;
+    inset-inline-start: 0;
     background: var(--accent-soft);
     transition: width var(--dur-slow) var(--ease-out);
+  }
+
+  @media (forced-colors: active) {
+    .fill {
+      border-block-end: 3px solid Highlight;
+    }
   }
 
   .words,

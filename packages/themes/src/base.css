@@ -2257,6 +2257,14 @@ figure.query {
 }
 
 @media (forced-colors: active) {
+  .orden-meter {
+    outline: 1px solid GrayText;
+  }
+
+  .orden-meter-fill {
+    background: Highlight;
+  }
+
   .orden-switch {
     border: 1px solid CanvasText;
     background: Canvas;
