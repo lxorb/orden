@@ -332,6 +332,10 @@ export class ChatEngine {
     )
   }
 
+  private halted(): boolean {
+    return this.stopped
+  }
+
   async flush(chat: string): Promise<void> {
     if (this.sending.has(chat) || this.stopped) return
     this.sending.add(chat)
@@ -340,7 +344,7 @@ export class ChatEngine {
     let placedAny = false
     let later = false
     try {
-      for (;;) {
+      while (!this.halted()) {
         const batch = this.outbox
           .filter((row) => row.chat === chat && !row.refused && !this.placed.has(row.id))
           .slice(0, BATCH)
