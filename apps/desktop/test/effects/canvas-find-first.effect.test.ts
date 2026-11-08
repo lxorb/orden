@@ -108,3 +108,57 @@ test('a hit clicked in the list gives the caret back to the field, so Enter goes
   expect(picked).toEqual(['b', 'c'])
   expect(count()).toBe('3/3')
 })
+
+test('going past the first twelve hits turns the list on to the twelve the hit is in, marked', () => {
+  const many = {
+    ...emptyCanvas(),
+    nodes: Array.from({ length: 30 }, (_, at) => ({
+      id: `n${at}`,
+      type: 'text' as const,
+      x: 0,
+      y: at * 100,
+      width: 250,
+      height: 60,
+      text: `invoice ${at}`,
+    })),
+  }
+  const target = document.createElement('div')
+  document.body.append(target)
+  const picked: string[] = []
+  const shown = mount(CanvasFind, {
+    target,
+    props: { canvas: many, onpick: (id: string) => picked.push(id), onclose: () => undefined },
+  })
+  close = () => void unmount(shown, { outro: false })
+  flushSync()
+  const field = target.querySelector<HTMLInputElement>('input')
+  if (!field) throw new Error('no find field')
+  field.value = 'invoice'
+  field.dispatchEvent(new Event('input', { bubbles: true }))
+  flushSync()
+  for (let step = 0; step < 14; step += 1) enter(field)
+  expect(picked.at(-1)).toBe('n13')
+  const rows = () => [...target.querySelectorAll<HTMLButtonElement>('.hits button')]
+  const marked = () =>
+    rows()
+      .find((row) => row.classList.contains('on'))
+      ?.textContent.trim()
+  expect(marked()).toBe('invoice 13')
+
+  const row = rows().find((one) => one.textContent.trim() === 'invoice 15')
+  if (!row) throw new Error('no row for the sixteenth hit')
+  row.click()
+  flushSync()
+  expect(picked.at(-1)).toBe('n15')
+  enter(field)
+  expect(picked.at(-1)).toBe('n16')
+
+  enter(field, true)
+  enter(field, true)
+  enter(field, true)
+  enter(field, true)
+  enter(field, true)
+  enter(field, true)
+  expect(picked.at(-1)).toBe('n10')
+  expect(marked()).toBe('invoice 10')
+})

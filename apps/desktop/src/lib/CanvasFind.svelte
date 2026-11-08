@@ -28,6 +28,8 @@
   let field = $state<HTMLInputElement>()
 
   const found = $derived(hits ?? matches(canvas, term))
+  const shown = 12
+  const first = $derived(Math.floor(Math.max(at, 0) / shown) * shown)
 
   $effect(() => {
     onterm?.(term)
@@ -114,13 +116,13 @@
     onpointermove={(event) => event.stopPropagation()}
     onpointerup={(event) => event.stopPropagation()}
   >
-    {#each found.slice(0, 12) as one, index (one.id)}
+    {#each found.slice(first, first + shown) as one, index (one.id)}
       <li>
         <button
           type="button"
-          class:on={index === at}
+          class:on={first + index === at}
           onclick={() => {
-            at = index
+            at = first + index
             onpick(one.id)
             field?.focus()
           }}
