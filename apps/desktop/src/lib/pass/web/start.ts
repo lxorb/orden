@@ -15,6 +15,7 @@ export function startPassWeb(): () => void {
   viewport.start()
   i18n.restore()
   theme.init()
+  void import('../../themes/synced.svelte').then((one) => one.syncLook())
   shortcuts.restore()
   settings.restore()
   void account.restore()

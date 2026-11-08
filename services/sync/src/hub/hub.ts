@@ -59,12 +59,15 @@ export class AccountHub implements DurableObject {
       case 'pass':
         this.others(headers, 'pass')
         return new Response(null, { status: 204 })
+      case 'settings':
+        this.others(headers, 'settings')
+        return new Response(null, { status: 204 })
       default:
         return new Response('not something a hub does', { status: 400 })
     }
   }
 
-  private others(headers: Headers, t: 'ai' | 'pass'): void {
+  private others(headers: Headers, t: 'ai' | 'pass' | 'settings'): void {
     const from = headers.get('x-orden-from') ?? ''
     for (const { socket, attached } of everySocket(this.ctx)) {
       if (!attached.guest && attached.device !== from) say(socket, { t })

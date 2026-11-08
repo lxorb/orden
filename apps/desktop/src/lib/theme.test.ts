@@ -139,6 +139,11 @@ vi.mock('./tauri', () => ({
       )
     }
 
+    if (command === 'write_theme') {
+      folder.files.set(String(args.id), String(args.css))
+      return Promise.resolve(`/themes/${String(args.id)}.css`)
+    }
+
     if (command === 'read_theme') {
       if (!folder.reading) return Promise.reject(new Error('cannot read'))
 
@@ -153,7 +158,7 @@ vi.mock('./tauri', () => ({
 vi.mock('./insets', () => ({ tintSystemBars: () => undefined }))
 
 const { chosenFirst, theme } = await import('./theme.svelte')
-const { stamped } = await import('./themes/stamp')
+const { stamped, stampOf } = await import('./themes/stamp')
 await Promise.all([
   import('@orden/themes/glass'),
   import('./glass/settings'),
@@ -523,6 +528,121 @@ describe('a look shown and not kept', () => {
     await Promise.resolve()
 
     expect(injected()).toBe('worn once')
+  })
+})
+
+describe('a look kept with the account', () => {
+  test('tells of a pick, and not of a look shown, a dial tried or a fall back', async () => {
+    theme.init()
+    let told = 0
+    const stop = theme.picked(() => told++)
+
+    theme.select('default')
+    theme.setScheme('dark')
+    theme.setAccent('violet')
+    expect(told).toBe(3)
+
+    theme.preview('contrast', 'light', 'teal')
+    theme.try('accent', 'teal')
+    theme.preview('default', 'dark', 'violet')
+    expect(told).toBe(3)
+
+    theme.select('file:gone')
+    await theme.reload()
+    expect(theme.id).toBe('default')
+    expect(told).toBe(4)
+    stop()
+  })
+
+  test('is the kept look, not one being shown', async () => {
+    installed('rose', 'Rose', PAIR)
+    theme.init()
+    await theme.reload()
+    theme.select('default')
+    theme.setScheme('dark')
+    theme.setAccent('violet')
+
+    theme.preview('file:rose', 'light', 'teal')
+
+    const look = theme.look()
+    expect(look.theme).toBe('default')
+    expect(look.scheme).toBe('dark')
+    expect(look.values['*']?.accent).toBe('violet')
+    expect(look.css).toBe('')
+  })
+
+  test('carries the sheet of a theme from the folder', async () => {
+    installed('rose', 'Rose', PAIR)
+    theme.init()
+    await theme.reload()
+    theme.select('file:rose')
+
+    const css = theme.look().css ?? ''
+    expect(css).toContain('--bg: #fff')
+    expect(stampOf(css)?.name).toBe('Rose')
+  })
+
+  test('from another device is worn, the theme it names written where it was missing', async () => {
+    theme.init()
+    let told = 0
+    const stop = theme.picked(() => told++)
+
+    await theme.wearLook({
+      theme: 'file:rose',
+      scheme: 'light',
+      values: { '*': { accent: 'teal' } },
+      css: stamped({ id: 'rose', name: 'Rose', author: 'Orden', version: '1' }, PAIR),
+    })
+
+    expect(folder.files.has('rose')).toBe(true)
+    expect(theme.id).toBe('file:rose')
+    expect(dataset.theme).toBe('light')
+    expect(theme.accent).toBe('teal')
+    expect(kept.getItem('orden:theme')).toBe('file:rose')
+    expect(kept.getItem('orden:theme-scheme')).toBe('light')
+    await settled(() => injected().includes('--bg: #fff'))
+    expect(injected()).toContain('--bg: #fff')
+    expect(told).toBe(0)
+    stop()
+  })
+
+  test('waits for the folder to be read before calling a theme missing', async () => {
+    installed('rose', 'Rose', PAIR)
+    theme.init()
+
+    await theme.wearLook({ theme: 'file:rose', scheme: 'dark', values: {} })
+
+    expect(theme.id).toBe('file:rose')
+    expect(theme.kept.id).toBe('file:rose')
+  })
+
+  test('keeps the theme on this device when the one named is nowhere to be had', async () => {
+    theme.init()
+    theme.select('contrast')
+
+    await theme.wearLook({ theme: 'file:gone', scheme: 'dark', values: {} })
+
+    expect(theme.id).toBe('contrast')
+    expect(theme.kept.scheme).toBe('dark')
+    expect(folder.files.has('gone')).toBe(false)
+  })
+
+  test('moves a look being shown onto the new kept one', async () => {
+    theme.init()
+    theme.select('contrast')
+    theme.setAccent('violet')
+    theme.preview('default', 'light', 'teal')
+    let told = 0
+    const stop = theme.rewore(() => told++)
+
+    await theme.wearLook({ theme: 'default', scheme: 'dark', values: { '*': { accent: 'blue' } } })
+
+    expect(theme.kept).toEqual({ id: 'default', scheme: 'dark', accent: 'blue' })
+    expect(theme.id).toBe('default')
+    expect(theme.accent).toBe('blue')
+    expect(theme.previewing).toBe(false)
+    expect(told).toBe(1)
+    stop()
   })
 })
 

@@ -9,6 +9,7 @@
     "./diverge": "./src/diverge.ts",
     "./foreign": "./src/foreign.ts",
     "./inbox": "./src/inbox.ts",
+    "./look": "./src/look.ts",
     "./merge3": "./src/merge3.ts",
     "./meta": "./src/meta.ts",
     "./order": "./src/order.ts",

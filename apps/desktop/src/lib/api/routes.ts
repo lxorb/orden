@@ -221,6 +221,7 @@ export interface TrashListing {
 
 export interface AccountSettings {
   ligatures?: boolean | string
+  look?: unknown
   glassesBreak?: number
   glassesLineNumbers?: boolean
   glassesVoice?: boolean

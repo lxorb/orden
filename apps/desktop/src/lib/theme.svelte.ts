@@ -1,3 +1,4 @@
+import type { Look } from '@orden/sync-core/look'
 import { contrastCss } from '@orden/themes/contrast'
 import { everySurface } from '@orden/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
@@ -32,7 +33,7 @@ import {
   valueOf,
 } from './themes/settings'
 import { carriedCss } from './themes/carried'
-import { type Stamp, STAMP_LINE, stampOf } from './themes/stamp'
+import { type Stamp, STAMP_LINE, stamped, stampOf } from './themes/stamp'
 
 export type Scheme = 'dark' | 'light'
 
@@ -171,9 +172,16 @@ function variantsOf(css: string): Scheme[] {
   return [/color-scheme\s*:\s*light/.test(css) ? 'light' : 'dark']
 }
 
+const FILE = 'file:'
+
 class Themes {
   id = $state<string>(DEFAULT_ID)
   scheme = $state<SchemeChoice>('system')
+  private keptId = $state<string>(DEFAULT_ID)
+  private keptScheme = $state<SchemeChoice>('system')
+  private readonly pickers = new Set<() => void>()
+  private readonly wearers = new Set<() => void>()
+  private listed: Promise<void> = Promise.resolve()
   private chosen = $state<ChosenSettings>({})
   private trying = $state<Record<string, ThemeValue>>({})
   private sheet = $state('')
@@ -229,7 +237,7 @@ class Themes {
     if (this.active.translucent === true) standAsBefore()
     this.material = stoodOnNothing() || groundUnknown()
     this.apply()
-    void this.reload()
+    this.listed = this.reload().catch(() => undefined)
   }
 
   private withLoaded(theme: ThemeInfo): ThemeInfo {
@@ -300,7 +308,7 @@ class Themes {
   }
 
   adoptTranslucency() {
-    if (this.id === DEFAULT_ID && !__EVEN_PLUGIN__ && hasMaterial()) this.select(GLASS_THEME)
+    if (this.id === DEFAULT_ID && !__EVEN_PLUGIN__ && hasMaterial()) this.wearId(GLASS_THEME)
   }
 
   private restoreChoice(): boolean {
@@ -310,16 +318,19 @@ class Themes {
     const moved = saved && storedText(MOVED_KEY)
 
     this.scheme = isChoice(chosen) ? chosen : isChoice(saved) ? saved : 'system'
+    this.keptScheme = this.scheme
     keep(SCHEME_KEY, this.scheme)
     keep(MOVED_KEY, 'yes')
 
     if (FIRST_LOOK && id === DEFAULT_ID && !moved) {
       this.id = FIRST_LOOK.theme
+      this.keptId = this.id
       forget(STORAGE_KEY)
       return true
     }
 
     this.id = id
+    this.keptId = id
     keep(STORAGE_KEY, this.id)
     return false
   }
@@ -336,7 +347,7 @@ class Themes {
 
     keep(OFFERED_KEY, 'yes')
     this.offerContrast = true
-    this.select(CONTRAST_THEME)
+    this.wearId(CONTRAST_THEME)
   }
 
   async reload() {
@@ -378,8 +389,8 @@ class Themes {
     })
 
     const copy = this.files.find((file) => file.id === this.id && copiesBuiltIn(file))
-    if (copy?.stamp) this.select(copy.stamp.id)
-    else if (!this.all.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
+    if (copy?.stamp) this.wearId(copy.stamp.id)
+    else if (!this.all.some((theme) => theme.id === this.id)) this.wearId(DEFAULT_ID)
     else this.apply()
 
     await this.loadCustom()
@@ -405,9 +416,90 @@ class Themes {
   }
 
   select(id: string) {
+    this.wearId(id)
+    this.tellPicked()
+  }
+
+  private wearId(id: string) {
     this.id = id
+    this.keptId = id
     this.apply()
     keep(STORAGE_KEY, id)
+  }
+
+  readonly kept = $derived({
+    id: this.keptId,
+    scheme: this.keptScheme,
+    accent: String(valueOf(accentSetting(), this.chosen[SHARED]?.accent)),
+  })
+
+  picked(run: () => void): () => void {
+    this.pickers.add(run)
+    return () => this.pickers.delete(run)
+  }
+
+  rewore(run: () => void): () => void {
+    this.wearers.add(run)
+    return () => this.wearers.delete(run)
+  }
+
+  private tellPicked() {
+    for (const run of this.pickers) run()
+  }
+
+  look(): Look {
+    const file = this.files.find((one) => one.id === this.keptId)
+    const css = file?.css === undefined ? '' : file.stamp ? stamped(file.stamp, file.css) : file.css
+    return { theme: this.keptId, scheme: this.keptScheme, values: this.chosen, css }
+  }
+
+  async wearLook(look: Look) {
+    const id = await this.reachable(look)
+    const values = this.ownValues(look.values)
+    if (
+      id === this.keptId &&
+      look.scheme === this.keptScheme &&
+      JSON.stringify(values) === JSON.stringify(this.chosen)
+    )
+      return
+
+    this.chosen = values
+    keepJson(SETTINGS_KEY, values)
+    keep(GIVEN_KEY, '')
+    this.keptScheme = look.scheme
+    keep(SCHEME_KEY, look.scheme)
+    keep(MOVED_KEY, 'yes')
+    this.scheme = look.scheme
+    this.trying = {}
+    this.wearId(id)
+    for (const run of this.wearers) run()
+  }
+
+  private async reachable(look: Look): Promise<string> {
+    const here = () => this.all.some((one) => one.id === look.theme)
+    if (!here()) await this.listed
+    if (here()) return look.theme
+
+    const stem = look.theme.startsWith(FILE) ? look.theme.slice(FILE.length) : ''
+    if (!look.css || !stem) return this.keptId
+
+    try {
+      await invoke<string>('write_theme', { id: stem, css: look.css })
+      await this.reload()
+    } catch (error) {
+      log('warn', `themes: could not keep ${stem} from the account: ${String(error)}`)
+    }
+    return here() ? look.theme : this.keptId
+  }
+
+  private ownValues(values: ChosenSettings): ChosenSettings {
+    const own = new Set(appSettings().map((one) => one.id))
+    const app = values[SHARED]
+    if (!app) return values
+    return {
+      ...values,
+      [SHARED]: Object.fromEntries(Object.entries(app).filter(([id]) => own.has(id))),
+    }
   }
 
   preview(id: string, scheme: SchemeChoice, accent: string) {
@@ -437,8 +529,10 @@ class Themes {
     if (!this.offers(choice)) return
 
     this.scheme = choice
+    this.keptScheme = choice
     keep(SCHEME_KEY, choice)
     this.apply()
+    this.tellPicked()
   }
 
   toggle() {
@@ -480,6 +574,7 @@ class Themes {
     }
     this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
     keepJson(SETTINGS_KEY, this.chosen)
+    this.tellPicked()
   }
 
   set(id: string, value: ThemeValue) {
@@ -493,6 +588,7 @@ class Themes {
     if (id === 'accent') keep(GIVEN_KEY, '')
     this.paintSettings()
     if (setting.reapplies === true) this.apply()
+    this.tellPicked()
   }
 
   get previewing(): boolean {
