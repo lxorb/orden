@@ -391,6 +391,56 @@ describe('an epoch starting', () => {
   })
 })
 
+describe('a note written with Windows line endings on sync v2', () => {
+  const crlf = '# Lines\r\none\r\ntwo\r\n'
+  const lf = '# Lines\none\ntwo\n'
+
+  test('seeds its document without a carriage return, byte for byte as a device seeds it', async () => {
+    const id = await made('Lines.md', crlf)
+    await prepare()
+
+    await join(rooms.of(id).room, { id, spaceId: space })
+    await rooms.settle()
+
+    expect(await snapshotOf(id)).toEqual(seedUpdate(id, 1, crlf))
+    expect(await body(id)).toBe(crlf)
+  })
+
+  test('writes a pushed change back with the line endings the file had', async () => {
+    const id = await made('Lines.md', crlf)
+    await prepare()
+    const device = new Device(id, crlf, 'laptop')
+    expect(device.words).toBe(lf)
+
+    await device.push(device.type(lf.length, 'three\n'))
+    await rooms.settle()
+
+    expect(await body(id)).toBe('# Lines\r\none\r\ntwo\r\nthree\r\n')
+  })
+
+  test('takes a v1 save in Windows line endings as the words a device counts', async () => {
+    const id = await made('Lines.md', crlf)
+    await prepare()
+
+    const put = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: '# Lines\r\none\r\n2\r\n', baseVersion: row(id).version },
+    })
+    expect(put.status, put.text).toBe(200)
+    expect(await body(id)).toBe('# Lines\r\none\r\n2\r\n')
+
+    const device = new Device(id, crlf, 'phone')
+    const { value } = await framed<PullResponse>(env, '/v2/docs/pull', token, {
+      docs: [{ id, epoch: 1, sv: Y.encodeStateVector(device.doc) }],
+    })
+    const pulled = value.docs[0]
+    if (!pulled || !('update' in pulled)) throw new Error('nothing pulled')
+    Y.applyUpdateV2(device.doc, pulled.update)
+    expect(device.words).toBe('# Lines\none\n2\n')
+  })
+})
+
 async function snapshotOf(id: string): Promise<Uint8Array> {
   const object = await env.NOTES.get(`crdt/${id}`)
   if (!object) throw new Error('no snapshot')
