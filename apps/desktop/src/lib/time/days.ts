@@ -54,9 +54,61 @@ export function stepped(range: Range, start: number, by: number): number {
   return date.getTime()
 }
 
-export function piecesIn(spans: readonly Span[], from: number, to: number, now: number): Piece[] {
+interface Reach {
+  size: number
+  ends: Float64Array | null
+}
+
+const reaches = new WeakMap<readonly Span[], Reach>()
+
+function reachOf(spans: readonly Span[]): Float64Array | null {
+  const known = reaches.get(spans)
+  if (known?.size === spans.length) return known.ends
+  let ends: Float64Array | null = new Float64Array(spans.length)
+  let most = -Infinity
+  let last = -Infinity
+  for (const [index, span] of spans.entries()) {
+    if (span.start < last) {
+      ends = null
+      break
+    }
+    last = span.start
+    most = Math.max(most, span.end ?? Infinity)
+    ends[index] = most
+  }
+  reaches.set(spans, { size: spans.length, ends })
+  return ends
+}
+
+function firstWhere(size: number, past: (index: number) => boolean): number {
+  let low = 0
+  let high = size
+  while (low < high) {
+    const middle = (low + high) >>> 1
+    if (past(middle)) high = middle
+    else low = middle + 1
+  }
+  return low
+}
+
+export function near(spans: readonly Span[], from: number, to: number): readonly Span[] {
+  const ends = reachOf(spans)
+  if (!ends) return spans
+  const last = firstWhere(spans.length, (index) => (spans[index]?.start ?? to) >= to)
+  const first = firstWhere(last, (index) => (ends[index] ?? from) >= from)
+  return spans.slice(first, last)
+}
+
+export function piecesIn(
+  spans: readonly Span[],
+  from: number,
+  to: number,
+  now: number,
+  only: (span: Span) => boolean = () => true,
+): Piece[] {
   const out: Piece[] = []
-  for (const span of spans) {
+  for (const span of near(spans, from, to)) {
+    if (!only(span)) continue
     const end = span.end ?? Math.max(now, span.start)
     const cut = { span, from: Math.max(span.start, from), to: Math.min(end, to) }
     if (cut.to > cut.from || (span.end === null && span.start >= from && span.start < to)) {

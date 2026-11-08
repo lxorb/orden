@@ -5,8 +5,8 @@ export const LONG_TIMER = 4 * HOUR
 
 export function reachedOf(goal: Goal, spans: readonly Span[], now: number): number {
   const from = startOf(goal.per, now)
-  const mine = spans.filter((span) => span.activity === goal.activity)
-  return wholeOf(piecesIn(mine, from, endOf(goal.per, from), now))
+  const mine = (span: Span) => span.activity === goal.activity
+  return wholeOf(piecesIn(spans, from, endOf(goal.per, from), now, mine))
 }
 
 export function lengthIn(text: string): number | null {

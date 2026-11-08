@@ -36,7 +36,7 @@
   const wide = (ms: number) => `${Math.max(0.2, (ms / whole) * 100)}%`
   const pixels = (ms: number) => (ms / whole) * width
 
-  const said = $derived(stacked(piecesIn(own.filter(isOwn), from, to, now)))
+  const said = $derived(stacked(piecesIn(own, from, to, now, isOwn)))
   const lanes = $derived(
     (
       [
