@@ -65,8 +65,28 @@ describe('an attachment the account will not take now', () => {
 
   test('that is refused for good is let go', async () => {
     const { world, rows } = worldWith([waiting('a')], () =>
-      Promise.reject(new FileRefused(413, 'too big')),
+      Promise.reject(new FileRefused(413, 'too big', true)),
     )
+    await expect(pushedFiles(world)).resolves.toBe('sent')
+    expect(await waitingFiles(rows)).toEqual([])
+  })
+
+  test.each([403, 413])('that something in the way answers %i for stays queued', async (status) => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response('<html>blocked</html>', { status })))
+    const real = fileApi('https://orden.so', 't')
+    const { world, rows } = worldWith([waiting('a')], (...args) => real.put(...args))
+    await expect(pushedFiles(world)).resolves.toBe('stuck')
+    expect(await waitingFiles(rows)).toEqual([waiting('a')])
+  })
+
+  test('that the account refuses for good through the network is let go', async () => {
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve(
+        Response.json({ error: 'your role in this vault does not allow that' }, { status: 403 }),
+      ),
+    )
+    const real = fileApi('https://orden.so', 't')
+    const { world, rows } = worldWith([waiting('a')], (...args) => real.put(...args))
     await expect(pushedFiles(world)).resolves.toBe('sent')
     expect(await waitingFiles(rows)).toEqual([])
   })
