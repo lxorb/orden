@@ -93,7 +93,8 @@ async () => {
     }
     // The serious and the critical are what a run is judged on; the rest are
     // written down so a number that grows can be accounted for.
-    if (impact === 'critical' || impact === 'serious') named.push(said)
+    const loose = one.id === 'region' && one.nodes.some((node) => !node.target.join(' ').match(/orden-(?:layer|screen)/))
+    if (impact === 'critical' || impact === 'serious' || loose) named.push(said)
     else quieter.push({ id: one.id, impact, nodes: one.nodes.length })
   }
 
