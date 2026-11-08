@@ -33,11 +33,17 @@ export async function deviceOfSession(
   return row?.id ?? null
 }
 
-export async function register(env: Env, user: string, session: string, hello: Hello) {
-  await env.DB.prepare(
+export async function register(
+  env: Env,
+  user: string,
+  session: string,
+  hello: Hello,
+): Promise<boolean> {
+  const wrote = await env.DB.prepare(
     `insert into devices (id, user_id, session_id, name, platform, app, created_at,
                           last_seen_at)
-     values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)
+     select ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7
+      where exists (select 1 from sessions where id = ?3 and user_id = ?2 and expires_at > ?7)
      on conflict(id) do update set
        session_id = excluded.session_id, platform = excluded.platform, app = excluded.app,
        last_seen_at = excluded.last_seen_at, revoked_at = null
@@ -53,6 +59,7 @@ export async function register(env: Env, user: string, session: string, hello: H
       now(),
     )
     .run()
+  return wrote.meta.changes > 0
 }
 
 export async function markSeen(env: Env, user: string, device: string): Promise<void> {

@@ -129,7 +129,10 @@ export class AccountHub implements DurableObject {
       return
     }
 
-    await register(this.env, me.who, me.session, frame)
+    if (!(await register(this.env, me.who, me.session, frame))) {
+      socket.close(1008, 'this device was signed out')
+      return
+    }
     attach(socket, { ...me, hello: true })
     await this.present(me.who)
     await rollOn(this.env, me.who).catch((error: unknown) => note('sync rollout', error, null))
