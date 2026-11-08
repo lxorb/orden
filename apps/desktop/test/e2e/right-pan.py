@@ -12,6 +12,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 CANVAS_CAMERA = "() => { const c = window.ordenApp.workspace.active?.camera; return c ? { x: c.x, y: c.y } : null }"
 PAGES_CAMERA = "() => { const c = window.ordenApp.pages.current?.store.camera; return c ? { x: c.x, y: c.y } : null }"
+CARD = "() => { const box = document.querySelector('[data-id=\"c\"]')?.getBoundingClientRect(); return box ? { x: Math.round(box.x), y: Math.round(box.y) } : null }"
 MENU = "() => document.querySelectorAll('[role=menu] [role=menuitem]').length"
 
 TOOLS = ["v", "d", "e"]
@@ -64,6 +65,36 @@ def checked(page: Page, where: str, camera: str, x: float, y: float) -> None:
         page.keyboard.press("Escape")
         page.wait_for_timeout(200)
     shot(page, where)
+
+
+def lost(page: Page, where: str, camera: str, x: float, y: float, button: str) -> None:
+    cdp = page.context.new_cdp_session(page)
+    held = {"left": 1, "right": 2}[button]
+
+    def mouse(kind: str, at_x: float, at_y: float, pressed: str, buttons: int) -> None:
+        cdp.send("Input.dispatchMouseEvent", {"type": kind, "x": at_x, "y": at_y, "button": pressed, "buttons": buttons, "clickCount": 1})
+
+    page.keyboard.press("Escape")
+    page.mouse.move(x, y)
+    page.wait_for_timeout(150)
+    mouse("mousePressed", x, y, button, held)
+    for step in range(1, 6):
+        mouse("mouseMoved", x + 12 * step, y + 6 * step, button, held)
+        page.wait_for_timeout(12)
+    page.wait_for_timeout(100)
+    before = page.evaluate(camera)
+    for step in range(1, 13):
+        mouse("mouseMoved", x + 60 + 15 * step, y + 30 + 9 * step, "none", 0)
+        page.wait_for_timeout(12)
+    page.wait_for_timeout(200)
+    after = page.evaluate(camera)
+    say(f"[{where} {button}] after a {button} press whose release never came, a bare mouse moved the view {before} -> {after}")
+    if after != before:
+        wrong(f"[{where} {button}] a {button} press whose release was lost (the window lost focus) kept panning as the bare mouse moved: {before} -> {after}")
+    page.mouse.click(x, y + 200)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
+    cdp.detach()
 
 
 def paper() -> bytes:
@@ -125,6 +156,13 @@ def drive(browser: Browser) -> None:
     box = page.locator(".canvas").first.bounding_box()
     assert box
     checked(page, "canvas", CANVAS_CAMERA, box["x"] + box["width"] / 3, box["y"] + box["height"] / 3)
+    lost(page, "canvas", CANVAS_CAMERA, box["x"] + box["width"] / 3, box["y"] + box["height"] / 3, "right")
+    page.keyboard.press("h")
+    lost(page, "canvas pan tool", CANVAS_CAMERA, box["x"] + box["width"] / 3, box["y"] + box["height"] / 3, "left")
+    page.keyboard.press("v")
+    held = page.locator('[data-id="c"]').first.bounding_box()
+    assert held
+    lost(page, "canvas card", CARD, held["x"] + 30, held["y"] + 30, "left")
 
     page.evaluate(SEED, {"path": f"{root}/Right.pdf", "data": base64.b64encode(paper()).decode("ascii")})
     page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", f"{root}/Right.pdf")
@@ -134,6 +172,10 @@ def drive(browser: Browser) -> None:
     box = page.locator(".pages").first.bounding_box()
     assert box
     checked(page, "page note", PAGES_CAMERA, box["x"] + box["width"] / 2, box["y"] + box["height"] / 3)
+    lost(page, "page note", PAGES_CAMERA, box["x"] + box["width"] / 2, box["y"] + box["height"] / 3, "right")
+    page.keyboard.press("h")
+    lost(page, "page note pan tool", PAGES_CAMERA, box["x"] + box["width"] / 2, box["y"] + box["height"] / 3, "left")
+    page.keyboard.press("v")
 
 
 if __name__ == "__main__":

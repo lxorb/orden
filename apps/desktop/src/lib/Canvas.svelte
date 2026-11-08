@@ -1017,10 +1017,22 @@
   function onPointerMove(event: PointerEvent) {
     note('move', event)
 
-    if (right.holding) {
+    if (right.holds(event)) {
       const by = right.move(event)
       if (by) store.camera = panned(camera, by.dx, by.dy)
       return
+    }
+
+    if (
+      hovering(event) &&
+      machine.driver?.id === event.pointerId &&
+      contacts.has(event.pointerId)
+    ) {
+      onPointerUp(event)
+      return
+    }
+    if (hovering(event) && host?.hasPointerCapture(event.pointerId)) {
+      host.releasePointerCapture(event.pointerId)
     }
 
     const floating = hovering(event) || !contacts.has(event.pointerId)

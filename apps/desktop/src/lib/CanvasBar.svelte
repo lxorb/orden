@@ -187,6 +187,14 @@
 
   function onGripMove(event: PointerEvent) {
     if (!grabbed) return
+    if (event.buttons === 0) {
+      onGripLost()
+      const grip = event.currentTarget
+      if (grip instanceof HTMLElement && grip.hasPointerCapture(event.pointerId)) {
+        grip.releasePointerCapture(event.pointerId)
+      }
+      return
+    }
 
     carried = { x: event.clientX - from.x, y: event.clientY - from.y }
   }

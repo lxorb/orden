@@ -4,11 +4,12 @@ import { RightPan, RIGHT_SLOP } from './right-pan'
 const at = (
   x: number,
   y: number,
-  more: Partial<{ button: number; pointerType: string; timeStamp: number }> = {},
+  more: Partial<{ button: number; buttons: number; pointerType: string; timeStamp: number }> = {},
 ) => ({
   pointerId: 1,
   pointerType: 'mouse',
   button: 2,
+  buttons: 2,
   clientX: x,
   clientY: y,
   timeStamp: 0,
@@ -51,5 +52,33 @@ describe('the right mouse button held', () => {
     expect(right.down(at(0, 0, { pointerType: 'touch' }))).toBe(false)
     expect(right.move(at(50, 50))).toBeNull()
     expect(right.up(at(50, 50))).toBeNull()
+  })
+
+  test('whose release never came, the window having lost focus, pans no more once the mouse moves bare', () => {
+    const right = new RightPan()
+    right.down(at(100, 100))
+    expect(right.move(at(120, 100))).toEqual({ dx: 20, dy: 0 })
+
+    expect(right.move(at(160, 140, { buttons: 0 }))).toBeNull()
+    expect(right.holds(at(170, 150, { buttons: 0 }))).toBe(false)
+    expect(right.move(at(200, 200, { buttons: 0 }))).toBeNull()
+    expect(right.ownsMenu(10_000)).toBe(false)
+  })
+
+  test('whose release never came is over when the mouse presses again, and that press is not its release', () => {
+    const right = new RightPan()
+    right.down(at(100, 100))
+    right.move(at(130, 100))
+
+    expect(right.down(at(140, 100, { button: 0, buttons: 1 }))).toBe(false)
+    expect(right.move(at(180, 100, { button: 0, buttons: 1 }))).toBeNull()
+    expect(right.up(at(180, 100, { button: 0, buttons: 0 }))).toBeNull()
+  })
+
+  test('a release of another button opens no menu, and ends a press whose own release was lost', () => {
+    const right = new RightPan()
+    right.down(at(10, 10))
+    expect(right.up(at(10, 10, { button: 0, buttons: 2 }))).toBeNull()
+    expect(right.holds(at(10, 10))).toBe(false)
   })
 })

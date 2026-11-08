@@ -60,6 +60,10 @@ export function wordsEnd(layer: HTMLElement): () => void {
     'pointermove',
     (event) => {
       if (!down) return
+      if (!(event.buttons & 1)) {
+        reset()
+        return
+      }
       const selection = doc.getSelection()
       const anchor = selection?.anchorNode
       if (!selection?.rangeCount || !anchor || !layer.contains(anchor)) return
@@ -68,7 +72,9 @@ export function wordsEnd(layer: HTMLElement): () => void {
     },
     { signal },
   )
-  doc.addEventListener('pointerup', () => down && reset(), { signal })
+  for (const ending of ['pointerup', 'pointercancel', 'dragstart']) {
+    doc.addEventListener(ending, () => down && reset(), { signal })
+  }
   doc.defaultView?.addEventListener('blur', () => down && reset(), { signal })
 
   doc.addEventListener(

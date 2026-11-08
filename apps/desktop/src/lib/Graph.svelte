@@ -445,6 +445,12 @@
     const surface = canvas
     if (!surface) return
 
+    if ((holding >= 0 || panning) && event.buttons === 0) {
+      holding = -1
+      panning = false
+      if (surface.hasPointerCapture(event.pointerId)) surface.releasePointerCapture(event.pointerId)
+    }
+
     if (holding >= 0 && layout) {
       travelled += Math.abs(event.clientX - lastX) + Math.abs(event.clientY - lastY)
       lastX = event.clientX

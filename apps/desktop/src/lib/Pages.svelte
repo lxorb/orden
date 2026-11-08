@@ -885,7 +885,11 @@
   function onpointermove(event: PointerEvent) {
     pointing = planeAt(event)
 
-    if (right.holding) {
+    if (hovering(event) && host?.hasPointerCapture(event.pointerId)) {
+      host.releasePointerCapture(event.pointerId)
+    }
+
+    if (right.holds(event)) {
       const by = right.move(event)
       if (by) {
         store.camera = store.held({
@@ -950,7 +954,8 @@
     if (one.id !== event.pointerId) return
     if (driver?.id === event.pointerId) driver = { ...driver, screen }
 
-    if (one.kind === 'draw' && (hovering(event) || !contacts.has(event.pointerId))) {
+    if (hovering(event) || !contacts.has(event.pointerId)) {
+      contacts.went(event.pointerId)
       finish()
       return
     }

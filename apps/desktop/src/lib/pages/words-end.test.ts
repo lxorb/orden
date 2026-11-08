@@ -27,8 +27,15 @@ function placed(spans: HTMLElement[]) {
   })
 }
 
-function press(target: EventTarget, kind: string, type = 'pointerdown', x = 0, y = 0) {
-  const event = new MouseEvent(type, { bubbles: true, button: 0, clientX: x, clientY: y })
+function press(
+  target: EventTarget,
+  kind: string,
+  type = 'pointerdown',
+  x = 0,
+  y = 0,
+  buttons = type === 'pointerup' ? 0 : 1,
+) {
+  const event = new MouseEvent(type, { bubbles: true, button: 0, buttons, clientX: x, clientY: y })
   Object.defineProperty(event, 'pointerType', { value: kind })
   target.dispatchEvent(event)
 }
@@ -115,6 +122,27 @@ describe('the end of the words a mouse chooses', () => {
     choose(nth(other.texts, 0), 0, nth(other.texts, 0), 4)
     expect(order(layer)).toEqual(['one', 'two', 'end'])
     stop()
+  })
+
+  test('lets go when the release is lost: a bare mouse move, a cancel or the words dragged away end it', () => {
+    for (const ending of ['move', 'pointercancel', 'dragstart']) {
+      const { layer, spans, texts } = layerOf(['Line 1: the field.', 'Line 2: the field.'])
+      placed(spans)
+      const stop = wordsEnd(layer)
+      press(nth(spans, 0), 'mouse')
+      choose(nth(texts, 0), 0, nth(texts, 0), 4)
+
+      if (ending === 'move') press(document, 'mouse', 'pointermove', 340, 26, 0)
+      else document.dispatchEvent(new Event(ending, { bubbles: true }))
+      expect(layer.classList.contains('selecting'), ending).toBe(false)
+
+      press(document, 'mouse', 'pointermove', 340, 26, 0)
+      expect(String(getSelection()), ending).toBe('Line')
+      expect(order(layer).at(-1), ending).toBe('end')
+      stop()
+      getSelection()?.removeAllRanges()
+      document.body.replaceChildren()
+    }
   })
 
   test('is taken away with the words', () => {
