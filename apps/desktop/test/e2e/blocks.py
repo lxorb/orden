@@ -54,9 +54,9 @@ ROWS = """
 }))
 """
 
-def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
+def fresh(browser: Browser, label: str, finger: bool = False, width: int = 1180) -> Page:
     context = browser.new_context(
-        viewport={"width": 1180, "height": 820} if not finger else {"width": 420, "height": 880},
+        viewport={"width": width, "height": 820} if not finger else {"width": 420, "height": 880},
         color_scheme="light",
         has_touch=finger,
         is_mobile=finger,
@@ -139,6 +139,40 @@ def drive_marks(browser: Browser) -> None:
         wrong("the mark did not come out under the pointer")
 
     page.context.close()
+
+REACH = """
+() => {
+  const pane = document.querySelector('.cm-scroller').getBoundingClientRect()
+  return [...document.querySelectorAll('.orden-block-handle')].map((mark) => {
+    const rect = mark.getBoundingClientRect()
+    const under = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    return {
+      text: mark.closest('.cm-line').textContent.trim().slice(0, 24),
+      out: Math.round(Math.max(pane.left - rect.left, rect.right - pane.right)),
+      hit: mark === under || mark.contains(under),
+    }
+  })
+}
+"""
+
+def drive_narrow(browser: Browser) -> None:
+    for width in (480, 640):
+        page = fresh(browser, f"narrow {width}", width=width)
+        line_of(page, "The first paragraph").hover()
+        page.wait_for_timeout(300)
+        marks = page.evaluate(REACH)
+        say(f"[narrow {width}] the marks: {json.dumps(marks[:3], ensure_ascii=False)}")
+        shot(page, f"02-mark-in-a-narrow-window-{width}")
+        if not marks:
+            wrong(f"a {width}px window drew no marks")
+        for one in marks:
+            if one["out"] > 0 or not one["hit"]:
+                wrong(f"[narrow {width}] the mark of {one['text']!r} sticks {one['out']}px out of the pane")
+        line_of(page, "The first paragraph").locator(".orden-block-handle").click()
+        page.wait_for_timeout(400)
+        if not page.evaluate(ROWS):
+            wrong(f"[narrow {width}] pressing the mark opened no menu")
+        page.context.close()
 
 def drive_menu(browser: Browser) -> None:
     page = fresh(browser, "menu")
@@ -285,6 +319,8 @@ def main() -> int:
     with DRIVE.session() as browser:
         say("--- the mark ---")
         drive_marks(browser)
+        say("--- a narrow window ---")
+        drive_narrow(browser)
         say("--- what it opens ---")
         drive_menu(browser)
         say("--- more than one block ---")

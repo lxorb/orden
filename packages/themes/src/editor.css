@@ -16,10 +16,18 @@
 }
 
 .cm-editor #write {
+  --block-room: calc(2 * var(--space-5));
   max-width: calc(var(--measure) - 2 * var(--space-5));
   min-width: 0;
   margin: 0 max(var(--space-5), calc(50% - var(--measure) / 2 + var(--space-5)));
+  margin-inline-start: max(var(--block-room), calc(50% - var(--measure) / 2 + var(--space-5)));
   padding: var(--space-7) 0 45vh;
+}
+
+@media (hover: none) {
+  .cm-editor #write {
+    --block-room: var(--space-5);
+  }
 }
 
 .cm-line[class*='orden-h'] {
