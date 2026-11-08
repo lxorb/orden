@@ -52,9 +52,10 @@ import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
 import { busy } from '../busy.svelte'
-import { folderOf, insideSpace, relativeTo, withinSpace } from '../space-paths'
+import { folderOf, insideSpace, isPicturePath, relativeTo, withinSpace } from '../space-paths'
 import { spaceRelative } from '../recorder/paths'
 import { openHref } from '../open-link'
+import { fileBytes } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { loading, pdfjs } from '../pdf/document'
 import { PDF_TO_CSS } from '../pdf/pages'
@@ -230,21 +231,38 @@ export const run = {
     }
   },
 
-  dropPaths(store: CanvasStore, paths: readonly string[], at: Point) {
+  async dropPaths(store: CanvasStore, paths: readonly string[], at: Point) {
     const root = canvasRoot(store)
     if (!root) return
 
+    const inside = paths.flatMap((path) => {
+      const file = withinSpace(root, path)
+      return file ? [{ path, file }] : []
+    })
+    if (!inside.length) return
+
+    const sizes = await Promise.all(
+      inside.map(({ path, file }) =>
+        isPicturePath(file)
+          ? fileBytes(path)
+              .then((bytes) => pictureSize(new Blob([bytes as Uint8Array<ArrayBuffer>])))
+              .catch(() => ownSize('picture'))
+          : Promise.resolve(ownSize('file')),
+      ),
+    )
+
     let next = store.canvas
     const ids: string[] = []
-
-    const inside = paths.flatMap((path) => withinSpace(root, path) ?? [])
-    for (const [index, file] of inside.entries()) {
+    let below: number | null = null
+    for (const [index, { file }] of inside.entries()) {
       const id = freshId()
-      const box = placedAt({ x: at.x, y: at.y + index * GRID * 10 }, DEFAULT_WIDTH, GRID * 9)
+      const size = sizes[index] ?? ownSize('file')
+      const spot = placedAt(at, size.width, size.height)
+      const box: Box = below === null ? spot : { ...spot, y: snapped(below) }
+      below = box.y + box.height + GRID
       next = withNode(next, { ...box, id, type: 'file', file })
       ids.push(id)
     }
-    if (!ids.length) return
 
     store.edit(next)
     store.pickAll(ids)
@@ -661,7 +679,7 @@ async function askLabel(store: CanvasStore, id: string) {
   if (answer !== null) store.edit(withLabel(store.canvas, id, answer))
 }
 
-async function pictureSize(file: File): Promise<{ width: number; height: number }> {
+async function pictureSize(file: Blob): Promise<{ width: number; height: number }> {
   const own = ownSize('picture')
   if (typeof createImageBitmap !== 'function') return own
   const drawn = await createImageBitmap(file).catch(() => null)
