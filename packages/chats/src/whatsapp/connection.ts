@@ -366,12 +366,13 @@ class WhatsAppConnection implements Connection {
         return
       }
       const ids = participants.map((one) => bareJid(one))
-      if (action === 'add')
+      if (action === 'add') {
         row.participants = [
           ...row.participants.filter((one) => !ids.includes(one.id)),
           ...ids.map((one) => ({ id: one, admin: null })),
         ]
-      else if (action === 'remove') {
+        if (ids.some((one) => this.mine(one))) this.chatRow(id).readOnly = false
+      } else if (action === 'remove') {
         row.participants = row.participants.filter((one) => !ids.includes(one.id))
         if (ids.some((one) => this.mine(one))) this.chatRow(id).readOnly = true
       } else if (action === 'promote' || action === 'demote')
