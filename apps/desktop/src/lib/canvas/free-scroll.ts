@@ -8,6 +8,8 @@ const STEADY = 0.3
 
 const GLIDE = 400
 
+const SLOWING = 2
+
 interface Vector {
   x: number
   y: number
@@ -26,18 +28,21 @@ export class FreeScroll {
   private touching = false
   private lastRaw = -Infinity
   private lastWheel = -Infinity
+  private lastSize = 0
   private ratio: number | null = null
   private heading: Vector | null = null
 
   fingers(count: number): void {
     const touching = count === 2
-    if (touching && !this.touching) {
-      this.owed = { x: 0, y: 0 }
-      this.wheelSum = { x: 0, y: 0 }
-      this.rawSum = { x: 0, y: 0 }
-      this.heading = null
-    }
+    if (touching && !this.touching) this.begin()
     this.touching = touching
+  }
+
+  private begin(): void {
+    this.owed = { x: 0, y: 0 }
+    this.wheelSum = { x: 0, y: 0 }
+    this.rawSum = { x: 0, y: 0 }
+    this.heading = null
   }
 
   pan(dx: number, dy: number, now: number): void {
@@ -48,11 +53,19 @@ export class FreeScroll {
   wheel(event: Wheeled): Vector {
     const now = event.timeStamp
     const asked = { x: event.deltaX, y: event.deltaY }
-    const gliding = now - this.lastWheel < GLIDE
+    const since = now - this.lastWheel
+    const size = Math.hypot(asked.x, asked.y)
+    const gliding = since < GLIDE && size <= this.lastSize * SLOWING
     this.lastWheel = now
+    this.lastSize = size
 
-    if (this.touching || now - this.lastRaw < FRESH) return this.led(asked)
-    if (gliding && this.heading) return this.glide(asked)
+    if (now - this.lastRaw < FRESH) {
+      if (since < FRESH) return this.led(asked)
+      this.begin()
+      return asked
+    }
+    if (!gliding) this.heading = null
+    if (!this.touching && this.heading) return this.glide(asked)
     return asked
   }
 
