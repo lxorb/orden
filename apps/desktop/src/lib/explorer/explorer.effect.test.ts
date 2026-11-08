@@ -247,6 +247,20 @@ describe('a file explorer', () => {
     expect(changed).toEqual(['rename /home/me/notes.txt letters.txt'])
   })
 
+  test('Escape leaves a name being typed unwritten, though the field blurs as it goes', async () => {
+    await explorer()
+    press('n')
+    press('F2')
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.rename')
+    if (!field) throw new Error('no rename field')
+    field.value = 'letters.txt'
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await settled()
+    expect(target.querySelector('input.rename')).toBeNull()
+    expect(changed).toEqual([])
+  })
+
   test('keeps a name being typed when the folder is read again under it', async () => {
     const { view } = await explorer()
     press('n')

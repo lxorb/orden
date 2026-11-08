@@ -145,7 +145,9 @@
       maxlength={LONGEST_TOPIC}
       aria-label={t('Topic')}
       autofocus
-      onblur={keepTopic}
+      onblur={() => {
+        if (writing) keepTopic()
+      }}
       onkeydown={(event) => {
         if (event.key === 'Enter') keepTopic()
         else if (event.key === 'Escape') {

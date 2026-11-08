@@ -339,9 +339,7 @@
       void commit(entry, field.value)
     } else if (event.key === 'Escape') {
       event.preventDefault()
-      committing = true
       view.renaming = null
-      committing = false
       focus()
     }
     event.stopPropagation()
@@ -460,7 +458,9 @@
                   autocomplete="off"
                   use:naming
                   onkeydown={(event) => nameKey(event, entry)}
-                  onblur={(event) => void commit(entry, event.currentTarget.value)}
+                  onblur={(event) => {
+                    if (view.renaming === entry.name) void commit(entry, event.currentTarget.value)
+                  }}
                   onclick={(event) => event.stopPropagation()}
                   ondblclick={(event) => event.stopPropagation()}
                 />

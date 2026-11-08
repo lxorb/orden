@@ -563,6 +563,7 @@
                 }
               }}
               onblur={(event) => {
+                if (naming !== at) return
                 const name = event.currentTarget.value
                 naming = null
                 kit.change((b) => renameView(b, at, name))
@@ -667,6 +668,7 @@
           }
         }}
         onblur={(event) => {
+          if (!renaming) return
           const name = event.currentTarget.value
           renaming = false
           if (project) {
