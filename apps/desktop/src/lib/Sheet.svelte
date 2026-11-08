@@ -175,19 +175,25 @@
   .sheet :global(.name) {
     flex: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
+  .sheet :global(.name > *) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sheet :global(.name > small) {
+    display: block;
+    margin-top: 1px;
+  }
+
   .sheet :global(.name small) {
     font-size: var(--text-xs);
     color: var(--muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .sheet :global(.hint) {

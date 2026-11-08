@@ -49,6 +49,13 @@ UNDER = """() => {
     .map(([one]) => one.getAttribute('aria-label') || one.textContent.trim() || one.tagName.toLowerCase())
 }"""
 
+CUT = """() => [...document.querySelectorAll('.sheet *')]
+  .filter((one) => one.checkVisibility() && one.scrollWidth > one.clientWidth + 1)
+  .filter((one) => one.textContent.trim())
+  .filter((one) => /hidden|clip/.test(getComputedStyle(one).overflowX))
+  .filter((one) => getComputedStyle(one).textOverflow !== 'ellipsis' || /flex|grid/.test(getComputedStyle(one).display))
+  .map((one) => one.className || one.tagName)"""
+
 SHOWN = """() => ['side', 'list', 'item'].filter((one) => document.querySelector(`.pass .column.${one}`)?.checkVisibility())"""
 
 
@@ -113,6 +120,20 @@ def drive(browser: Browser) -> None:
     wait_for(page, f"document.querySelector('.pass main h2')?.textContent.includes({TITLE!r})", "the login shown")
     fits(page, "login")
     column(page, "item", "the login made")
+
+    page.locator(".pass main").get_by_role("button", name="Edit", exact=True).click()
+    page.get_by_label("Title", exact=True).fill(TITLE + "again")
+    page.get_by_role("button", name="Save", exact=True).click()
+    wait_for(page, f"document.querySelector('.pass main h2')?.textContent.includes({TITLE + 'again'!r})", "the login renamed")
+    page.locator(".pass main").get_by_role("button", name="More", exact=True).click()
+    page.get_by_role("menuitem", name="History", exact=True).click()
+    wait_for(page, "document.querySelector('.sheet .name .title')", "the login's history")
+    cut = page.evaluate(CUT)
+    if cut:
+        wrong(f"the history sheet cuts words off without an ellipsis: {cut}")
+    shot(page, "history")
+    page.keyboard.press("Escape")
+    wait_for(page, "!document.querySelector('.sheet')", "the history closed")
 
     page.go_back()
     column(page, "list", "Back from a login")

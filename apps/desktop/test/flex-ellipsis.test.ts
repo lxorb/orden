@@ -5,8 +5,6 @@ import { describe, expect, test } from 'vitest'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 
-const NOT_YET = new Set(['lib/Sheet.svelte .sheet :global(.name)'])
-
 function views(): string[] {
   const out: string[] = []
   const walk = (dir: string) => {
@@ -30,7 +28,7 @@ describe('an ellipsis', () => {
         if (!/display:\s*(?:inline-)?flex/.test(body) || !/text-overflow:\s*ellipsis/.test(body))
           continue
         const where = `${relative(SOURCE, path).replace(/\\/g, '/')} ${(rule[1] ?? '').trim()}`
-        if (!NOT_YET.has(where)) wrong.push(where)
+        wrong.push(where)
       }
     }
     expect(wrong).toEqual([])
