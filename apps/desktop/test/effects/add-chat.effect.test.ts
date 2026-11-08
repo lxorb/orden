@@ -30,6 +30,7 @@ let drawn: ReturnType<typeof mount> | null = null
 afterEach(() => {
   if (drawn) void unmount(drawn)
   drawn = null
+  adding.reset()
   adding.again = null
   document.body.innerHTML = ''
 })
@@ -160,6 +161,49 @@ test('a QR code is drawn in the check step while the service waits to be paired'
   expect(vault.size).toBeGreaterThan(0)
 })
 
+function away(target: HTMLElement): HTMLElement {
+  if (drawn) void unmount(drawn)
+  drawn = null
+  target.remove()
+  flushSync()
+  return open()
+}
+
+test('leaving the window and coming back keeps the step, the live QR code, the fields and the ticks', async () => {
+  const fake = fakeProvider({ id: 'away', name: 'Away', signIn: 'qr' })
+  accounts.offer(fake)
+  let target = open()
+  tile(target, 'Away').click()
+  flushSync()
+  for (const field of target.querySelectorAll<HTMLInputElement>('input.orden-field'))
+    typeInto(field, 'kept')
+  target = away(target)
+  expect(step(target)).toBe('connect')
+  expect(target.querySelector<HTMLInputElement>('input.orden-field')?.value).toBe('kept')
+
+  submit(target)?.click()
+  await vi.waitFor(() => expect(target.querySelector('.square svg')).not.toBeNull())
+  target = away(target)
+  expect(step(target)).toBe('check')
+  await vi.waitFor(() => expect(target.querySelector('.square svg')).not.toBeNull())
+  expect(adding.busy).toBe(true)
+
+  target = away(target)
+  fake.world.pair()
+  await vi.waitFor(() => expect(step(target)).toBe('done'))
+  await vi.waitFor(
+    () => expect(target.querySelectorAll('.pick input:checked').length).toBeGreaterThan(0),
+    { timeout: 5000 },
+  )
+  const ticked = target.querySelectorAll('.pick input:checked').length
+  target.querySelector<HTMLInputElement>('.pick input:checked')?.click()
+  flushSync()
+  target = away(target)
+  expect(step(target)).toBe('done')
+  expect(target.querySelectorAll('.pick input:checked').length).toBe(ticked - 1)
+  expect(Object.values(adding.values)).toEqual([])
+})
+
 test('Escape goes back from the details to the tiles, keeping nothing', () => {
   accounts.offer(fakeProvider({ id: 'esc', name: 'Esc' }))
   const target = open()
@@ -209,6 +253,7 @@ test('signing in again starts on that account’s details, with what it kept fil
   expect(await accounts.connect('back', { name: 'wren' })).toBeNull()
   const account = connected.linked.find((one) => one.provider.id === 'back')?.account.id ?? ''
   adding.again = { provider: 'back', account }
+  adding.asked += 1
   const target = open()
   expect(step(target)).toBe('connect')
   expect(target.querySelector('.tile')).toBeNull()

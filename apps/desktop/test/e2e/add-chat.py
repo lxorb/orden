@@ -77,6 +77,13 @@ def tile(page: Page, name: str) -> None:
     page.locator(".add-chat .tile", has=page.locator(".tile-name", has_text=name)).first.click()
 
 
+def away_and_back(page: Page, what: str) -> None:
+    page.evaluate("() => window.ordenApp.settings.show('general')")
+    wait_for(page, "!document.querySelector('.add-chat')", f"another tab over {what}")
+    page.evaluate("() => window.ordenApp.workspace.openConnect()")
+    wait_for(page, "!!document.querySelector('.add-chat')", f"back to {what}")
+
+
 def look_at(page: Page, name: str) -> None:
     info = page.evaluate("""() => {
       const add = document.querySelector('.add-chat')
@@ -147,6 +154,12 @@ def desktop(browser: Browser) -> None:
     at(page, "connect", "Email again")
     page.locator(".add-chat input[type=email]").fill("ada@localhost")
     page.locator(".add-chat input[type=password]").fill("secret")
+    away_and_back(page, "the filled email details")
+    if not at(page, "connect", "the email details after another tab"):
+        return
+    kept = page.evaluate("() => [...document.querySelectorAll('.add-chat input.orden-field')].slice(0, 2).map((one) => one.value)")
+    if kept != ["ada@localhost", "secret"]:
+        wrong(f"another tab lost the email details ({kept[:1]})")
     page.locator(".add-chat button[type=submit]").click()
     if waited(page, "!!document.querySelector('.add-chat .failed')", "the failed check"):
         reason = page.locator(".add-chat .failed").inner_text()
@@ -184,11 +197,30 @@ def desktop(browser: Browser) -> None:
         for side in ("light", "dark"):
             scheme(page, side)
             shot(page, f"check-qr-{side}")
+        before = page.evaluate("() => document.querySelector('.add-chat .square svg')?.outerHTML")
+        away_and_back(page, "the QR code")
+        if at(page, "check", "the QR step after another tab"):
+            if not waited(page, "!!document.querySelector('.add-chat .square svg')", "the same QR code back"):
+                wrong("another tab dropped the QR code")
+            elif page.evaluate("() => document.querySelector('.add-chat .square svg')?.outerHTML") != before:
+                wrong("another tab started the pairing over with a new QR code")
+            shot(page, "check-qr-after-tab")
+        page.evaluate("() => window.ordenApp.settings.show('general')")
         page.evaluate("() => window.__pairs.world.pair()")
-        if at(page, "done", "the done step"):
-            picks = page.evaluate("() => document.querySelectorAll('.add-chat .pick input:checked').length")
-            if not picks:
+        page.wait_for_timeout(300)
+        page.evaluate("() => window.ordenApp.workspace.openConnect()")
+        if at(page, "done", "the done step reached while another tab was in front"):
+            picked = "() => document.querySelectorAll('.add-chat .pick input:checked').length"
+            if not waited(page, f"({picked})() > 0", "the chats to open"):
                 wrong("the done step offers no chats to open")
+            picks = page.evaluate(picked)
+            page.locator(".add-chat .pick input:checked").first.click()
+            away_and_back(page, "the chat picker")
+            if page.evaluate(picked) != picks - 1:
+                wrong(f"another tab reset the chat picker's ticks ({picks - 1} expected)")
+            if page.evaluate("() => /^\\d{6,}$/m.test(document.querySelector('.add-chat .chosen')?.innerText ?? '')"):
+                wrong("the chat picker shows a bare number as a name")
+            page.locator(".add-chat .pick input:not(:checked)").first.click()
             for side in ("light", "dark"):
                 scheme(page, side)
                 shot(page, f"done-{side}")

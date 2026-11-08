@@ -8,14 +8,12 @@
   import { accounts, openConversation } from '../linked'
   import { host } from '../providers/host'
   import { screens } from '../providers/screens.svelte'
-  import { adding, closeAdding, mayLeave } from './adding.svelte'
+  import { adding, closeAdding, mayLeave, watchClosing } from './adding.svelte'
   import { ADVANCED, fixFor, introOf, isOAuth, pairingSteps, submitOf, tileHint } from './add-steps'
   import SignIn from './SignIn.svelte'
   import Avatar from '../../people/Avatar.svelte'
   import { firstLine } from './body'
   import { conversationTitle } from './title'
-
-  type Step = 'choose' | 'connect' | 'check' | 'done'
 
   const labels: Record<string, string> = {
     address: t('Email address'),
@@ -31,57 +29,26 @@
   }
 
   const offered = $derived(accounts.offered.filter((one) => one.available(host)))
-  let step = $state<Step>('choose')
-  let provider = $state.raw<ChatProvider | null>(null)
-  let given = $state.raw<Readonly<Record<string, string>>>({})
-  let replacing = $state<string | undefined>(undefined)
-  let values = $state<Record<string, string>>({})
-  let understood = $state(false)
-  let busy = $state(false)
-  let problem = $state<string | null>(null)
-  let advanced = $state(false)
-  let account = $state.raw<{ provider: string; account: string; label: string } | null>(null)
-  let chosen = $state.raw<readonly string[]>([])
-  let attempt = 0
+  const provider = $derived(adding.provider)
+  const step = $derived(adding.step)
+  const busy = $derived(adding.busy)
   let frame = $state<HTMLElement | null>(null)
+
+  watchClosing()
 
   $effect(() => {
     const now = step
     const at = frame
     if (!at) return
     void tick().then(() => {
-      if (step !== now || at.contains(document.activeElement)) return
+      if (adding.step !== now || at.contains(document.activeElement)) return
       const first = now === 'connect' ? at.querySelector<HTMLElement>('input, select') : null
       ;(first ?? at).focus({ preventScroll: true })
     })
   })
 
-  let seen = -1
-
   $effect(() => {
-    const asked = adding.asked
-    untrack(() => {
-      if (asked === seen) return
-      seen = asked
-      const again = adding.again
-      const known = again ? accounts.providerOf(again.provider) : undefined
-      if (again && known) {
-        given = accounts.given(again.provider, again.account)
-        replacing = again.account
-        begin(known)
-      } else if (step !== 'choose' && !adding.entered && !busy) {
-        reset()
-      }
-    })
-  })
-
-  $effect(() => {
-    adding.busy = busy
-  })
-
-  $effect(() => {
-    adding.entered =
-      step !== 'done' && (understood || Object.values(values).some((one) => one.trim() !== ''))
+    if (adding.asked !== adding.seen) untrack(() => adding.takeAsk())
   })
 
   $effect.pre(() => closeOnBack(step !== 'choose' && !busy, back))
@@ -90,99 +57,63 @@
   const pairing = $derived(provider ? pairingSteps(provider.id) : [])
   const main = $derived(provider?.fields.filter((one) => !ADVANCED.has(one.key)) ?? [])
   const extra = $derived(provider?.fields.filter((one) => ADVANCED.has(one.key)) ?? [])
-  const ready = $derived(
-    !!provider &&
-      (!provider.warning || understood) &&
-      provider.fields.every((field) => field.optional === true || valueOf(field).trim() !== ''),
+  const ready = $derived(adding.ready)
+  const linked = $derived(
+    adding.account ? connected.find(adding.account.provider, adding.account.account) : undefined,
   )
-  const linked = $derived(account ? connected.find(account.provider, account.account) : undefined)
   const listed = $derived<readonly Conversation[]>(
     (linked?.conversations ?? [])
       .filter((one) => !one.archived && (one.lastAt !== null || !!one.snippet))
       .sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
       .slice(0, 12),
   )
-  let settled = $state(false)
   let pictures = $state<Record<string, string>>({})
-  const asked = new Set<string>()
+  const asked: Record<string, true> = {}
 
   $effect(() => {
-    if (step !== 'done' || settled) return
+    if (step !== 'done' || adding.settled) return
     const count = linked?.conversations.length ?? 0
-    void linked?.conversations
     if (!count) return
-    const quiet = setTimeout(() => (settled = true), SETTLE_QUIET)
+    const quiet = setTimeout(() => (adding.settled = true), SETTLE_QUIET)
     return () => clearTimeout(quiet)
   })
 
   $effect(() => {
-    if (step !== 'done' || settled) return
-    const most = setTimeout(() => (settled = true), SETTLE_MOST)
+    if (step !== 'done' || adding.settled) return
+    const most = setTimeout(() => (adding.settled = true), SETTLE_MOST)
     return () => clearTimeout(most)
   })
 
   $effect(() => {
-    if (step !== 'done' || !settled || chosen.length || !listed.length) return
-    untrack(() => (chosen = listed.slice(0, 3).map((one) => one.id)))
+    if (step !== 'done' || !adding.settled || adding.chosen.length || !listed.length) return
+    untrack(() => (adding.chosen = listed.slice(0, 3).map((one) => one.id)))
   })
 
   $effect(() => {
     const connection = linked?.connection
-    if (step !== 'done' || !settled || !connection?.picture) return
+    if (step !== 'done' || !adding.settled || !connection?.picture) return
     for (const one of listed) {
-      if (asked.has(one.id)) continue
-      asked.add(one.id)
+      const wanted = `${adding.account?.account ?? ''}:${one.id}`
+      if (asked[wanted]) continue
+      asked[wanted] = true
       const id =
         one.picture ?? (one.kind === 'direct' ? one.people[0]?.picture : undefined) ?? one.id
       void connection
         .picture(id)
         .then((bytes) => {
           if (!bytes?.length) return
-          pictures = { ...pictures, [one.id]: URL.createObjectURL(new Blob([bytes.slice()])) }
+          pictures = { ...pictures, [wanted]: URL.createObjectURL(new Blob([bytes.slice()])) }
         })
         .catch(() => undefined)
     }
   })
 
-  function forgetPictures() {
+  onDestroy(() => {
     for (const url of Object.values(pictures)) URL.revokeObjectURL(url)
-    pictures = {}
-    asked.clear()
-  }
+  })
 
-  onDestroy(forgetPictures)
-
-  function reset() {
-    step = 'choose'
-    provider = null
-    given = {}
-    replacing = undefined
-    values = {}
-    understood = false
-    problem = null
-    advanced = false
-    account = null
-    chosen = []
-    settled = false
-    forgetPictures()
-  }
-
-  function begin(one: ChatProvider) {
-    provider = one
-    step = 'connect'
-    understood = false
-    problem = null
-    advanced = false
-  }
-
-  function valueOf(field: ConnectField): string {
-    return (
-      values[`${provider?.id ?? ''}:${field.key}`] ??
-      given[field.key] ??
-      field.initial ??
-      field.options?.[0]?.value ??
-      ''
-    )
+  function pictureOf(one: Conversation): string | undefined {
+    return pictures[`${adding.account?.account ?? ''}:${one.id}`]
   }
 
   function typeOf(field: ConnectField): string {
@@ -203,71 +134,25 @@
     }
   }
 
-  async function connect(event?: SubmitEvent) {
+  function connect(event?: SubmitEvent) {
     event?.preventDefault()
-    if (!ready || busy || !provider) return
-    const one = provider
-    busy = true
-    step = 'check'
-    problem = null
-    const mine = ++attempt
-    const asked: Record<string, string> = {}
-    for (const field of one.fields) {
-      const value = valueOf(field)
-      if (value !== '') asked[field.key] = value
-    }
-    const before = new Set(
-      connected.linked.filter((it) => it.provider.id === one.id).map((it) => it.account.id),
-    )
-    const reason = await accounts.connect(one.id, asked, replacing)
-    screens.show(null)
-    if (mine !== attempt) return
-    busy = false
-    if (reason !== null) {
-      problem = reason
-      if (one.fields.some((field) => ADVANCED.has(field.key))) advanced = true
-      return
-    }
-    const theirs = connected.linked.filter((it) => it.provider.id === one.id)
-    const fresh = theirs.find((it) => !before.has(it.account.id)) ?? theirs.at(-1)
-    account = fresh
-      ? { provider: one.id, account: fresh.account.id, label: fresh.account.label }
-      : { provider: one.id, account: '', label: one.name }
-    adding.again = null
-    step = 'done'
-  }
-
-  function stop() {
-    attempt += 1
-    busy = false
-    screens.cancelAll()
-    step = 'connect'
+    void adding.connect()
   }
 
   function back() {
-    if (busy) {
-      stop()
-      return
-    }
-    if (step === 'check') step = 'connect'
-    else if (step === 'connect' && replacing === undefined) {
-      provider = null
-      step = 'choose'
-    } else if (step === 'done') reset()
+    adding.back()
   }
 
   async function cancel() {
-    if (busy) stop()
+    if (adding.busy) adding.stop()
     if (!(await mayLeave())) return
-    reset()
     adding.again = null
     closeAdding()
   }
 
   function finish() {
-    const done = account
-    const opening = listed.filter((one) => chosen.includes(one.id))
-    reset()
+    const done = adding.account
+    const opening = listed.filter((one) => adding.chosen.includes(one.id))
     closeAdding()
     if (!done) return
     for (const [index, one] of opening.entries()) {
@@ -280,13 +165,14 @@
   }
 
   function toggle(id: string) {
-    chosen = chosen.includes(id) ? chosen.filter((one) => one !== id) : [...chosen, id]
+    const chosen = adding.chosen
+    adding.chosen = chosen.includes(id) ? chosen.filter((one) => one !== id) : [...chosen, id]
   }
 
   function keydown(event: KeyboardEvent) {
     if (event.key !== 'Escape' || event.defaultPrevented) return
     event.preventDefault()
-    if (step === 'choose' || (step === 'connect' && replacing !== undefined)) void cancel()
+    if (step === 'choose' || (step === 'connect' && adding.replacing !== undefined)) void cancel()
     else back()
   }
 
@@ -324,8 +210,8 @@
     {#if one.kind === 'select'}
       <select
         class="orden-field"
-        value={valueOf(one)}
-        onchange={(event) => (values[id] = event.currentTarget.value)}
+        value={adding.valueOf(one)}
+        onchange={(event) => (adding.values[id] = event.currentTarget.value)}
       >
         {#each one.options ?? [] as option (option.value)}
           <option value={option.value}>{t(option.label)}</option>
@@ -345,8 +231,8 @@
               : 'off'}
         placeholder={one.placeholder ? t(one.placeholder) : undefined}
         spellcheck="false"
-        value={valueOf(one)}
-        oninput={(event) => (values[id] = event.currentTarget.value)}
+        value={adding.valueOf(one)}
+        oninput={(event) => (adding.values[id] = event.currentTarget.value)}
       />
     {/if}
     {#if one.note}<span class="note">{t(one.note)}</span>{/if}
@@ -366,7 +252,7 @@
 >
   <div class="frame">
     <header class="head">
-      {#if step !== 'choose' && !(step === 'connect' && replacing !== undefined)}
+      {#if step !== 'choose' && !(step === 'connect' && adding.replacing !== undefined)}
         <button type="button" class="orden-glyph" aria-label={t('Back')} onclick={back}>
           <svg class="orden-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
         </button>
@@ -390,7 +276,7 @@
           <div class="tiles">
             {#each offered as one (one.id)}
               {@const hint = tileHint(one.id)}
-              <button type="button" class="tile" onclick={() => begin(one)}>
+              <button type="button" class="tile" onclick={() => adding.begin(one)}>
                 {@render mark(one, 'big')}
                 <span class="tile-name">{one.name}</span>
                 {#if hint}<span class="tile-hint">{hint}</span>{/if}
@@ -417,10 +303,10 @@
           {@render field(one)}
         {/each}
         {#if extra.length}
-          <details class="advanced" bind:open={advanced}>
+          <details class="advanced" bind:open={adding.advanced}>
             <summary>{t('Advanced')}</summary>
             <div class="servers">
-              {#if problem}<p class="note">
+              {#if adding.problem}<p class="note">
                   {t('Orden could not reach the servers it guessed. Fill them in here.')}
                 </p>{/if}
               {#each extra as one (`${provider.id}:${one.key}`)}
@@ -433,7 +319,7 @@
           <div class="warning" role="note">
             <p>{t(provider.warning)}</p>
             <label class="understood">
-              <input type="checkbox" bind:checked={understood} />
+              <input type="checkbox" bind:checked={adding.understood} />
               <span>{t('I understand and want to connect anyway')}</span>
             </label>
           </div>
@@ -465,51 +351,50 @@
           {#if !screens.screen && !screens.asking}
             <p class="note" role="status">{t('Connecting…')}</p>
           {/if}
-        {:else if problem}
+        {:else if adding.problem}
           <div class="failed" role="alert">
-            <p class="reason">{t(problem)}</p>
-            <p>{fixFor(provider.id, problem)}</p>
+            <p class="reason">{t(adding.problem)}</p>
+            <p>{fixFor(provider.id, adding.problem)}</p>
           </div>
         {/if}
         <div class="actions">
           {#if busy}
-            <button class="orden-button is-quiet" type="button" onclick={stop}>{t('Cancel')}</button
+            <button class="orden-button is-quiet" type="button" onclick={() => adding.stop()}
+              >{t('Cancel')}</button
             >
           {:else}
             <button class="orden-button is-quiet" type="button" onclick={back}
               >{t('Change the details')}</button
             >
-            <button
-              class="orden-button"
-              type="button"
-              disabled={!ready}
-              onclick={() => void connect()}>{t('Try again')}</button
+            <button class="orden-button" type="button" disabled={!ready} onclick={() => connect()}
+              >{t('Try again')}</button
             >
           {/if}
         </div>
       </section>
-    {:else if step === 'done' && account}
+    {:else if step === 'done' && adding.account}
       <section class="body">
         <div class="title">
           {#if provider}{@render mark(provider, 'small')}{/if}
-          <h2>{t('{account} is connected', { account: account.label })}</h2>
+          <h2>{t('{account} is connected', { account: adding.account.label })}</h2>
         </div>
-        {#if !settled}
+        {#if !adding.settled}
           <p class="note" role="status">{t('Loading your chats…')}</p>
         {:else if listed.length}
           <p class="intro">{t('Choose the chats to open now. The rest wait in the sidebar.')}</p>
           <div class="chosen">
             {#each listed as one (one.id)}
               {@const title = conversationTitle(one)}
+              {@const picture = pictureOf(one)}
               <label class="pick orden-row">
                 <input
                   type="checkbox"
-                  checked={chosen.includes(one.id)}
+                  checked={adding.chosen.includes(one.id)}
                   onchange={() => toggle(one.id)}
                 />
                 <span class="face">
-                  {#if pictures[one.id]}
-                    <img src={pictures[one.id]} alt="" />
+                  {#if picture}
+                    <img src={picture} alt="" draggable="false" />
                   {:else}
                     <Avatar face={{ name: title, key: one.id }} size={32} />
                   {/if}
@@ -525,11 +410,11 @@
           <p class="intro">{t('Its chats show in the sidebar as they arrive.')}</p>
         {/if}
         <div class="actions">
-          <button class="orden-button is-quiet" type="button" onclick={reset}
+          <button class="orden-button is-quiet" type="button" onclick={() => adding.reset()}
             >{t('Add another')}</button
           >
           <button class="orden-button" type="button" onclick={finish}
-            >{chosen.length && listed.length ? t('Open chats') : t('Done')}</button
+            >{adding.chosen.length && listed.length ? t('Open chats') : t('Done')}</button
           >
         </div>
       </section>
