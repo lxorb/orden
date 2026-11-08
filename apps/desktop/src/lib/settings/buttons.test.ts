@@ -59,6 +59,17 @@ describe('a button in Settings', () => {
   })
 })
 
+describe('a row in Settings', () => {
+  test('keeps its explanation behind its ?, never as a line of text under its name', () => {
+    const inline = PANES.flatMap(({ path, source }) =>
+      [...source.matchAll(/<(small|p)\b[^>]*>\s*\{[^}]*\b(why|hint)\b[^}]*\}/g)].map(
+        (hit) => `${path}: ${hit[0]}`,
+      ),
+    )
+    expect(inline).toEqual([])
+  })
+})
+
 describe('Settings > Import', () => {
   const source = readFileSync(join(LIB, 'MigrateRows.svelte'), 'utf8')
   const markup = source.slice(source.indexOf('</script>'), source.indexOf('{#snippet mark'))

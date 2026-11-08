@@ -1,3 +1,7 @@
+<script lang="ts" module>
+  let listTop = 0
+</script>
+
 <script lang="ts">
   import { dropOver } from './drag-paths'
   import { closeOnBack } from './backstack.svelte'
@@ -146,6 +150,7 @@
     if (!label || !box) return
 
     query = ''
+    keyFilter = ''
     const frame = requestAnimationFrame(() => {
       landing.label = null
       const row = [...box.querySelectorAll<HTMLElement>('.orden-setting')].find((one) =>
@@ -229,6 +234,13 @@
 
   const rebind = new Rebind()
   let keyFilter = $state('')
+
+  function keepsItsPlace(list: HTMLElement) {
+    list.scrollTop = listTop
+    const kept = () => (listTop = list.scrollTop)
+    list.addEventListener('scroll', kept, { passive: true })
+    return { destroy: () => list.removeEventListener('scroll', kept) }
+  }
 
   const shown = (key: string | null) => (key ? showCombination(key, shortcuts.platform) : null)
 
@@ -422,6 +434,7 @@
   {#if !stacked || !settings.listing}
     <div
       class="body"
+      class:filled={settings.section === 'shortcuts' && !query}
       data-scrolls
       data-scroll-key={query && !stacked ? 'search' : settings.section}
       bind:this={body}
@@ -466,7 +479,13 @@
         {#if hit.kind === 'field'}
           {@render row(hit.field, hit.pane.label)}
         {:else}
-          <button class="orden-setting setting link" onclick={() => go(hit.section)}>
+          <button
+            class="orden-setting setting link"
+            onclick={() => {
+              go(hit.section)
+              landing.label = hit.label
+            }}
+          >
             <span class="name">{hit.label}<small>{titleOf(hit.section)}</small></span>
             <svg class="chevron orden-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
           </button>
@@ -1052,83 +1071,90 @@
     />
   </label>
 
-  {#each keyGroups as group (group.id)}
-    <h3>{group.label}</h3>
-    <div class="card">
-      {#each group.rows as entry (entry.id)}
-        {@const key = shortcuts.keyFor(entry.id)}
-        {@const warning = entry.scope === 'fixed' ? null : shortcuts.warning(key)}
-        {@const reach = noteFor(
-          globalKeys.keys,
-          entry.id,
-          shown(key),
-          accelerator(key, shortcuts.platform) !== null,
-        )}
-        {@const held = declared.holds(shortcutKey(entry.id))}
-        <div class="orden-setting setting shortcut" class:declared={held}>
-          <span class="name">
-            {entry.label()}
-            {#if held}{@render fileNote()}{/if}
-            {#if entry.alias}<small>{t('Second key')}</small>{/if}
-            {#if entry.why}<small>{entry.why()}</small>{/if}
-            {#if warning}<small class="caution">{warning}</small>{/if}
-            {#if reach}<small class="reach"
-                >{reach.text}{#if reach.change}
-                  <button class="link" onclick={() => globalKeys.change()}>{t('Change')}</button
-                  >{/if}</small
-              >{/if}
-            {#if rebind.turnedDown?.id === entry.id}<small class="warn"
-                >{rebind.turnedDown.reason}</small
-              >{/if}
-          </span>
+  <div class="shortcut-list" data-scrolls use:scrollbar use:keepsItsPlace>
+    {#each keyGroups as group (group.id)}
+      <section class="shortcut-group">
+        <h3>{group.label}</h3>
+        <div class="card">
+          {#each group.rows as entry (entry.id)}
+            {@const key = shortcuts.keyFor(entry.id)}
+            {@const warning = entry.scope === 'fixed' ? null : shortcuts.warning(key)}
+            {@const reach = noteFor(
+              globalKeys.keys,
+              entry.id,
+              shown(key),
+              accelerator(key, shortcuts.platform) !== null,
+            )}
+            {@const held = declared.holds(shortcutKey(entry.id))}
+            <div class="orden-setting setting shortcut" class:declared={held}>
+              <span class="name">
+                <span class="what"
+                  >{entry.label()}{#if entry.why}<Hint text={entry.why()} />{/if}</span
+                >
+                {#if held}{@render fileNote()}{/if}
+                {#if entry.alias}<small>{t('Second key')}</small>{/if}
+                {#if warning}<small class="caution">{warning}</small>{/if}
+                {#if reach}<small class="reach"
+                    >{reach.text}{#if reach.change}
+                      <button class="link" onclick={() => globalKeys.change()}>{t('Change')}</button
+                      >{/if}</small
+                  >{/if}
+                {#if rebind.turnedDown?.id === entry.id}<small class="warn"
+                    >{rebind.turnedDown.reason}</small
+                  >{/if}
+              </span>
 
-          {#if entry.scope === 'fixed'}
-            <span class="key held">{shown(key) ?? '–'}</span>
-          {:else}
-            <button
-              class="key"
-              class:listening={rebind.listening === entry.id}
-              class:none={!key}
-              onclick={() => rebind.listen(entry.id)}
-            >
-              {rebind.listening === entry.id ? t('Press a key…') : (shown(key) ?? t('Not set'))}
-            </button>
-            <button
-              class="orden-glyph revert"
-              disabled={!shortcuts.changed(entry.id)}
-              title={t('Reset')}
-              aria-label={t('Reset')}
-              onclick={() => shortcuts.reset(entry.id)}
-            >
-              <svg viewBox="0 0 16 16">
-                <path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5M4.4 2.6v2.6h2.6" />
-              </svg>
-            </button>
-          {/if}
+              {#if entry.scope === 'fixed'}
+                <span class="key held">{shown(key) ?? '–'}</span>
+              {:else}
+                <button
+                  class="key"
+                  class:listening={rebind.listening === entry.id}
+                  class:none={!key}
+                  title={rebind.listening === entry.id
+                    ? t('Esc stops recording, Backspace takes the key away.')
+                    : undefined}
+                  onclick={() => rebind.listen(entry.id)}
+                >
+                  {rebind.listening === entry.id ? t('Press a key…') : (shown(key) ?? t('Not set'))}
+                </button>
+                <button
+                  class="orden-glyph revert"
+                  disabled={!shortcuts.changed(entry.id)}
+                  title={t('Reset')}
+                  aria-label={t('Reset')}
+                  onclick={() => shortcuts.reset(entry.id)}
+                >
+                  <svg viewBox="0 0 16 16">
+                    <path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5M4.4 2.6v2.6h2.6" />
+                  </svg>
+                </button>
+              {/if}
+            </div>
+
+            {#if rebind.clash?.id === entry.id}
+              <div class="clash" transition:slide={{ duration: dur(160) }}>
+                <span>
+                  {t('{key} already runs {name}.', {
+                    key: shown(rebind.clash.key) ?? '',
+                    name: rebind.clash.holders.map((one) => one.label()).join(', '),
+                  })}
+                </span>
+                <button class="orden-chip" onclick={() => rebind.takeOver()}
+                  >{t('Take it over')}</button
+                >
+                <button class="orden-chip is-quiet" onclick={() => (rebind.clash = null)}
+                  >{t('Cancel')}</button
+                >
+              </div>
+            {/if}
+          {/each}
         </div>
-
-        {#if rebind.clash?.id === entry.id}
-          <div class="clash" transition:slide={{ duration: dur(160) }}>
-            <span>
-              {t('{key} already runs {name}.', {
-                key: shown(rebind.clash.key) ?? '',
-                name: rebind.clash.holders.map((one) => one.label()).join(', '),
-              })}
-            </span>
-            <button class="orden-chip" onclick={() => rebind.takeOver()}>{t('Take it over')}</button
-            >
-            <button class="orden-chip is-quiet" onclick={() => (rebind.clash = null)}
-              >{t('Cancel')}</button
-            >
-          </div>
-        {/if}
-      {/each}
-    </div>
-  {:else}
-    <p class="note">{t('Nothing matches.')}</p>
-  {/each}
-
-  <p class="hint">{t('Esc stops recording, Backspace takes the key away.')}</p>
+      </section>
+    {:else}
+      <p class="note">{t('Nothing matches.')}</p>
+    {/each}
+  </div>
 
   <div class="card">
     <button class="orden-action" onclick={() => shortcuts.resetAll()}
@@ -1623,6 +1649,40 @@
     gap: var(--space-2);
   }
 
+  .body.filled {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .body.filled > .pane {
+    flex: 1 0 auto;
+  }
+
+  .shortcut-list {
+    flex: 1 1 0;
+    min-height: 12rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .shortcut-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .pane .shortcut-group h3 {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 0;
+    padding-block: var(--space-1);
+    background: var(--surface);
+  }
+
   .key {
     flex: none;
     min-width: 7rem;
@@ -2006,6 +2066,12 @@
     margin: var(--space-3) 0 calc(-1 * var(--space-2)) 14px;
     font-size: 13px;
     color: var(--muted);
+  }
+
+  .sheet.phone .pane .shortcut-group h3 {
+    margin: 0;
+    padding-inline-start: 14px;
+    background: var(--bg);
   }
 
   .sheet.phone .card {
