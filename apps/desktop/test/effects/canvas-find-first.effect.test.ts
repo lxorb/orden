@@ -64,3 +64,18 @@ test('the first Shift+Enter goes to the last card found', () => {
   expect(picked).toEqual(['c'])
   expect(count()).toBe('3/3')
 })
+
+test('words a card breaks across two lines are found as the card shows them', async () => {
+  const { matches } = await import('../../src/lib/canvas/find')
+  const card = {
+    id: 'two',
+    type: 'text' as const,
+    x: 0,
+    y: 0,
+    width: 250,
+    height: 60,
+    text: 'pay the\ninvoice   today',
+  }
+  const found = matches({ ...canvas, nodes: [card] }, 'the invoice today')
+  expect(found).toEqual([{ id: 'two', says: 'pay the invoice today' }])
+})
