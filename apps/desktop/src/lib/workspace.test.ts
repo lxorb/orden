@@ -2573,6 +2573,53 @@ describe('a new tab', () => {
     expect(workspace.active).toBe(chosenOn)
   })
 
+  test('yet a tab that opens behind it spends the choice all the same', () => {
+    workspace.newTab()
+    const chosenOn = workspace.active
+    if (!chosenOn) throw new Error('no new tab')
+
+    workspace.chosenOn(chosenOn.id)
+    workspace.openPage('https://example.com/', 'behind')
+    workspace.openBlank()
+
+    expect(workspace.tabs.map((one) => one.id)).toContain(chosenOn.id)
+  })
+
+  test('and the host picker it opened, put away, gives the choice up', async () => {
+    const { hostPicker } = await import('./remote/picker.svelte')
+    workspace.newTab()
+    const chosenOn = workspace.active
+    if (!chosenOn) throw new Error('no new tab')
+
+    workspace.chosenOn(chosenOn.id)
+    hostPicker.show(chosenOn.paneId)
+    hostPicker.dismiss()
+    workspace.openBlank()
+
+    expect(workspace.tabs.map((one) => one.id)).toContain(chosenOn.id)
+  })
+
+  test('and so does a tab that is already open, brought to the front instead', () => {
+    const was = workspace.restored
+    workspace.restored = true
+    try {
+      workspace.openSettings()
+      workspace.newTab()
+      const chosenOn = workspace.active
+      if (!chosenOn) throw new Error('no new tab')
+
+      workspace.chosenOn(chosenOn.id)
+      workspace.openSettings()
+      workspace.activate(chosenOn.id)
+      workspace.openBlank()
+
+      expect(workspace.tabs.filter((one) => one.kind === 'settings')).toHaveLength(1)
+      expect(workspace.tabs.map((one) => one.id)).toContain(chosenOn.id)
+    } finally {
+      workspace.restored = was
+    }
+  })
+
   test('a tablet draws no page: a link and a new web tab make no tab there', () => {
     const was = viewport.device
     try {

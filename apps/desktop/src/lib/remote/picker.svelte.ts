@@ -44,10 +44,11 @@ class HostPicker {
 
   dismiss(): void {
     this.open = false
+    workspace.forgetChoice()
   }
 
   private away() {
-    this.dismiss()
+    this.open = false
     if (this.paneId !== undefined) workspace.focusPane(this.paneId)
   }
 }

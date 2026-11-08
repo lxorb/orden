@@ -292,7 +292,7 @@ class Workspace {
   private lastLeft = $state<Panel>('tree')
   previewTabId = $state<string | null>(null)
   private besideLast: { opener: string; tab: string } | null = null
-  private choosing: string | null = null
+  private choosing: { id: string; used: readonly string[] } | null = null
   readonly essentialsComing: string[] = []
   naming = $state<Naming | null>(null)
   treeOptions = $state<TreeOptions>(readTreeOptions())
@@ -1365,6 +1365,7 @@ class Workspace {
   }
 
   private add(tab: Tab, activate = true, opener: string | null = null): Tab {
+    const chosen = this.chosenFor(tab)
     const one = this.otherOne(tab)
     if (one) {
       if (activate) {
@@ -1375,7 +1376,7 @@ class Workspace {
     }
     const coming = this.essentialsComing.findIndex((path) => samePath(tab.path, path))
     if (coming >= 0) tab.essential = this.essentialsComing.splice(coming, 1)[0] ?? null
-    const chosenOn = activate ? this.chosenFor(tab) : null
+    const chosenOn = activate ? chosen : null
     if (chosenOn) {
       this.tabs = this.placed(tab, tab.paneId, this.tabsIn(tab.paneId).indexOf(chosenOn))
     } else {
@@ -1397,14 +1398,19 @@ class Workspace {
   }
 
   chosenOn(tabId: string) {
-    this.choosing = tabId
+    this.choosing = { id: tabId, used: this.panes.used }
+  }
+
+  forgetChoice() {
+    this.choosing = null
   }
 
   private chosenFor(tab: Tab): Tab | null {
-    const id = this.choosing
-    if (id === null) return null
-
+    const was = this.choosing
     this.choosing = null
+    if (was?.used !== this.panes.used) return null
+
+    const { id } = was
     const chosenOn = this.tabs.find((one) => one.id === id)
     const inFront = this.panes.at(tab.paneId)?.activeTabId === id
     return chosenOn?.paneId === tab.paneId && inFront && this.isNewTab(chosenOn) ? chosenOn : null
