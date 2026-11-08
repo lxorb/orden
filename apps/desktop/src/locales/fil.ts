@@ -3832,4 +3832,17 @@ export const fil: Dictionary = {
     'Tinanggihan ng Slack ang token ng app na iyon. Gumawa ng isa na may connections:write sa Basic Information',
   'A Slack channel name needs a letter or a number':
     'Kailangan ng pangalan ng Slack channel ang isang titik o numero',
+  Experimental: 'Pang-eksperimento',
+  'Enable experimental features': 'I-enable ang mga pang-eksperimentong feature',
+  'Lets you turn on the features below, which are still being built.':
+    'Hinahayaan kang buksan ang mga feature sa ibaba, na ginagawa pa.',
+  'Turn on experimental features?': 'Buksan ang mga pang-eksperimentong feature?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    '100% kang makakaranas ng mga bug. Magpatuloy lang kung alam mo ang ginagawa mo.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Nagdaragdag ng mga application, mga program sa isa pa sa iyong mga computer na nakikita at ginagamit mo sa isang tab.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Nagdaragdag ng file explorer para sa mga folder sa computer na ito, at binubuksan ito ng Ipakita sa folder.',
+  '{name} is turned off, so its tabs were closed':
+    'Naka-off ang {name}, kaya isinara ang mga tab nito',
 }

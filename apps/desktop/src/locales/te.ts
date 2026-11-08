@@ -3775,4 +3775,17 @@ export const te: Dictionary = {
     'Slack ఈ యాప్-స్థాయి టోకెన్‌ను తిరస్కరించింది. Basic Informationలో connections:write తో ఒకటి సృష్టించండి',
   'A Slack channel name needs a letter or a number':
     'Slack ఛానెల్ పేరులో ఒక అక్షరం లేదా అంకె ఉండాలి',
+  Experimental: 'ప్రయోగాత్మకం',
+  'Enable experimental features': 'ప్రయోగాత్మక ఫీచర్లను ప్రారంభించు',
+  'Lets you turn on the features below, which are still being built.':
+    'ఇంకా తయారవుతున్న కింది ఫీచర్లను ఆన్ చేయనిస్తుంది.',
+  'Turn on experimental features?': 'ప్రయోగాత్మక ఫీచర్లను ఆన్ చేయాలా?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'మీకు 100% బగ్‌లు ఎదురవుతాయి. మీరు ఏం చేస్తున్నారో తెలిస్తేనే కొనసాగండి.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'అప్లికేషన్లను జోడిస్తుంది, మీ మరో కంప్యూటర్‌లోని ప్రోగ్రామ్‌లు, వాటిని ఒక ట్యాబ్‌లో చూసి వాడతారు.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'ఈ కంప్యూటర్ ఫోల్డర్ల కోసం ఫైల్ ఎక్స్‌ప్లోరర్‌ను జోడిస్తుంది, ఫోల్డర్‌లో చూపించు దాన్ని తెరుస్తుంది.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} ఆఫ్‌లో ఉంది, కాబట్టి దాని ట్యాబ్‌లు మూసివేయబడ్డాయి',
 }

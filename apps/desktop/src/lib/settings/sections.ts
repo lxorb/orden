@@ -37,6 +37,8 @@ export const ICONS: Record<string, string> = {
   export: 'M8 10.5V2.5M5 5.5L8 2.5l3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
   import: 'M8 2.5v8M5 7.5l3 3 3-3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
   remote: 'M3 2.5h10v4.5H3zM3 9h10v4.5H3zM5.5 4.75h.01M5.5 11.25h.01',
+  experimental:
+    'M6.5 2h3M7 2v4.2L3.2 12.6a1 1 0 0 0 .9 1.4h7.8a1 1 0 0 0 .9-1.4L9 6.2V2M4.6 10h6.8',
   online: 'M11.7 12.7H6a4.7 4.7 0 1 1 4.5-6h1.2a3 3 0 1 1 0 6zM5 7.7l1.3 1.2L5 10.1M8 10h2',
 }
 
@@ -64,6 +66,7 @@ export function sectionGroups(): Item[][] {
       ...(isPlugin() || modes.glassesSeen
         ? [{ id: 'glasses' as Section, label: t('Glasses') }]
         : []),
+      { id: 'experimental', label: t('Experimental') },
     ],
     [
       { id: 'account', label: t('Account') },

@@ -76,8 +76,8 @@ afterAll(() => vi.unstubAllGlobals())
 async function aWindow() {
   vi.resetModules()
   const running = await import('./running')
-  const { BASES_WORD, hiddenKinds } = await import('../settings.svelte')
-  hiddenKinds.hidden = [BASES_WORD]
+  const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../settings.svelte')
+  hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
   return running
 }
 

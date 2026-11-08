@@ -3754,4 +3754,16 @@ export const hi: Dictionary = {
     'Slack ने यह ऐप-स्तर टोकन अस्वीकार कर दिया। Basic Information में connections:write वाला टोकन बनाएँ',
   'A Slack channel name needs a letter or a number':
     'Slack चैनल के नाम में कोई अक्षर या अंक होना चाहिए',
+  Experimental: 'प्रायोगिक',
+  'Enable experimental features': 'प्रायोगिक सुविधाएँ चालू करें',
+  'Lets you turn on the features below, which are still being built.':
+    'नीचे की वे सुविधाएँ चालू करने देता है जो अभी बन रही हैं।',
+  'Turn on experimental features?': 'प्रायोगिक सुविधाएँ चालू करें?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'आपको 100% बग मिलेंगे। आगे तभी बढ़ें जब आप जानते हों कि आप क्या कर रहे हैं।',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'ऐप्लिकेशन जोड़ता है, आपके किसी दूसरे कंप्यूटर के प्रोग्राम जिन्हें आप एक टैब में देखते और चलाते हैं।',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'इस कंप्यूटर के फ़ोल्डरों के लिए फ़ाइल एक्सप्लोरर जोड़ता है, और फ़ोल्डर में दिखाएँ उसे खोलता है।',
+  '{name} is turned off, so its tabs were closed': '{name} बंद है, इसलिए उसके टैब बंद कर दिए गए',
 }

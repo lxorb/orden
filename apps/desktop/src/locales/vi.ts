@@ -3660,4 +3660,17 @@ export const vi: Dictionary = {
     'Slack đã từ chối token ứng dụng này. Hãy tạo một token có connections:write trong Basic Information',
   'A Slack channel name needs a letter or a number':
     'Tên kênh Slack cần có một chữ cái hoặc chữ số',
+  Experimental: 'Thử nghiệm',
+  'Enable experimental features': 'Bật tính năng thử nghiệm',
+  'Lets you turn on the features below, which are still being built.':
+    'Cho phép bạn bật các tính năng bên dưới, vẫn đang được xây dựng.',
+  'Turn on experimental features?': 'Bật tính năng thử nghiệm?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Bạn chắc chắn 100% sẽ gặp lỗi. Chỉ tiếp tục nếu bạn biết mình đang làm gì.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Thêm ứng dụng, các chương trình trên một máy tính khác của bạn mà bạn xem và dùng trong một thẻ.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Thêm trình khám phá tệp cho các thư mục trên máy tính này, và Hiện trong thư mục sẽ mở nó.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} đang tắt, nên các thẻ của nó đã được đóng',
 }

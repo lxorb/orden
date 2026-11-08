@@ -3564,4 +3564,16 @@ export const yue: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack 拒絕咗呢個應用程式層級權杖。請喺 Basic Information 度產生一個有 connections:write 嘅權杖',
   'A Slack channel name needs a letter or a number': 'Slack 頻道名要有字母或者數字',
+  Experimental: '實驗性',
+  'Enable experimental features': '啟用實驗性功能',
+  'Lets you turn on the features below, which are still being built.':
+    '可以開下面呢啲仲喺度整緊嘅功能。',
+  'Turn on experimental features?': '要開實驗性功能嗎？',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    '你一定會撞到問題，百分之百。清楚自己做緊乜先好繼續。',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    '加入應用程式，即係你另一部電腦上面嘅程式，可以喺分頁度睇同用。',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    '為呢部電腦嘅資料夾加入檔案總管，「喺資料夾度顯示」會開佢。',
+  '{name} is turned off, so its tabs were closed': '{name}已經閂咗，所以閂咗佢嘅分頁',
 }

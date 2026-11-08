@@ -3780,4 +3780,17 @@ export const gsw: Dictionary = {
     'Slack het das App-Token abglehnt. Mach under Basic Information eis mit connections:write',
   'A Slack channel name needs a letter or a number':
     'En Slack-Kanalname bruucht en Buechstabe oder e Zahl',
+  Experimental: 'Experimentell',
+  'Enable experimental features': 'Experimentelli Funktione aktiviere',
+  'Lets you turn on the features below, which are still being built.':
+    'Dermit chasch d Funktione unde iischalte, wo no dra baut wird.',
+  'Turn on experimental features?': 'Experimentelli Funktione iischalte?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Du wirsch zu 100 % uf Fähler stosse. Mach nume wiiter, wenn du weisch, was du machsch.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Füegt Aawändige hinzue, Programm uf eme andere vo dine Computer, wo du imene Tab gsehsch und bruuchsch.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Füegt en Datei-Explorer für d Ordner uf däm Computer hinzue, und Im Ordner zeige öffnet ihn.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} isch usgschaltet, drum sind d Tabs zuegmacht worde',
 }

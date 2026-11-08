@@ -3751,4 +3751,16 @@ export const ur: Dictionary = {
     'Slack نے یہ ایپ لیول ٹوکن مسترد کر دیا۔ Basic Information میں connections:write والا ٹوکن بنائیں',
   'A Slack channel name needs a letter or a number':
     'Slack چینل کے نام میں کوئی حرف یا عدد ہونا چاہیے',
+  Experimental: 'تجرباتی',
+  'Enable experimental features': 'تجرباتی خصوصیات فعال کریں',
+  'Lets you turn on the features below, which are still being built.':
+    'آپ کو نیچے کی وہ خصوصیات آن کرنے دیتا ہے جو ابھی بن رہی ہیں۔',
+  'Turn on experimental features?': 'تجرباتی خصوصیات آن کریں؟',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'آپ کو سو فیصد بگز ملیں گے۔ صرف تب آگے بڑھیں جب آپ جانتے ہوں کہ آپ کیا کر رہے ہیں۔',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'ایپلیکیشنز شامل کرتا ہے، آپ کے کسی دوسرے کمپیوٹر کے پروگرام جنہیں آپ ایک ٹیب میں دیکھتے اور استعمال کرتے ہیں۔',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'اس کمپیوٹر کے فولڈرز کے لیے فائل ایکسپلورر شامل کرتا ہے، اور فولڈر میں دکھائیں اسے کھولتا ہے۔',
+  '{name} is turned off, so its tabs were closed': '{name} بند ہے، اس لیے اس کے ٹیب بند کر دیے گئے',
 }

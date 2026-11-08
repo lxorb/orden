@@ -214,7 +214,7 @@ def the_form(page: Page) -> None:
 
 def drive(browser) -> None:  # type: ignore[no-untyped-def]
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
-    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-bases']))")
+    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-bases']))")
     DRIVE.open(page)
     seed(page)
     the_rollup(page)

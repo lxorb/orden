@@ -27,6 +27,7 @@ export type Section =
   | 'markdown'
   | 'appearance'
   | 'glasses'
+  | 'experimental'
   | 'ai'
   | 'agents'
   | 'remote'
@@ -194,26 +195,22 @@ export function kindsHere(): KindName[] {
   if (account.accountToken && chatsOn()) here.push('chat')
   if (isDesktop && modes.coder) here.push('terminal', 'remote')
   if (modes.coder) here.push('online')
-  if (modes.coder) here.push('application')
-  if (isDesktop) here.push('explorer')
+  if (appsOn()) here.push('application')
+  if (isDesktop && explorerOn()) here.push('explorer')
   if (passOn()) here.push('pass')
   if (web) here.push('web')
   if (web && isDesktop) here.push('private')
   return here
 }
 
-const OFF_UNTIL_SHOWN: readonly KindName[] = ['explorer']
+const GATED: readonly KindName[] = ['chat', 'application', 'explorer', 'pass']
 
-export function offUntilShown(kind: KindName): boolean {
-  return OFF_UNTIL_SHOWN.includes(kind)
-}
-
-export function choiceWord(kind: KindName): string {
-  return offUntilShown(kind) ? `shown-${kind}` : kind
+export function gated(kind: KindName): boolean {
+  return GATED.includes(kind)
 }
 
 export function chosenOn(kind: KindName, hidden: readonly string[]): boolean {
-  return hidden.includes(choiceWord(kind)) === offUntilShown(kind)
+  return gated(kind) || !hidden.includes(kind)
 }
 
 export function shownOf(here: readonly KindName[], hidden: readonly string[]): KindName[] {
@@ -239,28 +236,45 @@ class HiddenKinds {
 
 export const hiddenKinds = new HiddenKinds()
 
-export const TIME_WORD = 'shown-time'
+export const EXPERIMENTAL_WORD = 'experimental'
 
-export function timeOn(): boolean {
-  return !__EVEN_PLUGIN__ && hiddenKinds.hidden.includes(TIME_WORD)
+export function experimentalOn(): boolean {
+  return hiddenKinds.hidden.includes(EXPERIMENTAL_WORD)
 }
 
-export const PASS_WORD = 'shown-pass'
+function tried(word: string): boolean {
+  return experimentalOn() && hiddenKinds.hidden.includes(word)
+}
+
+export const CHATS_WORD = 'experimental-chats'
+export const APPS_WORD = 'experimental-apps'
+export const EXPLORER_WORD = 'experimental-explorer'
+export const PASS_WORD = 'experimental-pass'
+export const TIME_WORD = 'experimental-time'
+export const BASES_WORD = 'experimental-bases'
+
+export function chatsOn(): boolean {
+  return !__EVEN_PLUGIN__ && tried(CHATS_WORD)
+}
+
+export function appsOn(): boolean {
+  return !__EVEN_PLUGIN__ && tried(APPS_WORD)
+}
+
+export function explorerOn(): boolean {
+  return !__EVEN_PLUGIN__ && tried(EXPLORER_WORD)
+}
 
 const passOnly = typeof document !== 'undefined' && document.documentElement.dataset.only === 'pass'
 
 export function passOn(): boolean {
-  return !__EVEN_PLUGIN__ && (passOnly || hiddenKinds.hidden.includes(PASS_WORD))
+  return !__EVEN_PLUGIN__ && (passOnly || tried(PASS_WORD))
 }
 
-export const CHATS_WORD = 'shown-chats'
-
-export function chatsOn(): boolean {
-  return !__EVEN_PLUGIN__ && hiddenKinds.hidden.includes(CHATS_WORD)
+export function timeOn(): boolean {
+  return !__EVEN_PLUGIN__ && tried(TIME_WORD)
 }
-
-export const BASES_WORD = 'shown-bases'
 
 export function basesOn(): boolean {
-  return hiddenKinds.hidden.includes(BASES_WORD)
+  return tried(BASES_WORD)
 }

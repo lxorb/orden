@@ -1,6 +1,6 @@
 import type { Said } from '../../automation/args'
 import type { AgentAnswer, Caller } from '../../automation/caller'
-import { basesOn } from '../../settings.svelte'
+import { appsOn, basesOn, explorerOn } from '../../settings.svelte'
 import { workspace } from '../../workspace.svelte'
 import { askReader } from './ask'
 import { bookmarks } from './bookmarks'
@@ -51,15 +51,19 @@ function listSpaces(call: Call): AgentAnswer {
 
 type Verb = (call: Call) => AgentAnswer | Promise<AgentAnswer>
 
-function withBases(verb: Verb): Verb {
+function gatedBy(on: () => boolean, what: string, verb: Verb): Verb {
   return (call) => {
-    if (!basesOn())
+    if (!on())
       throw new Refused(
         'not_granted',
-        'databases are turned off; the reader turns them on in Settings, General, Databases',
+        `${what} turned off; the reader turns it on in Settings, Experimental`,
       )
     return verb(call)
   }
+}
+
+function withBases(verb: Verb): Verb {
+  return gatedBy(() => basesOn(), 'databases are', verb)
 }
 
 const VERBS: Record<string, Verb> = {
@@ -104,8 +108,8 @@ const VERBS: Record<string, Verb> = {
   system_clipboard: clipboard,
   ask_reader: askReader,
   note_editor: noteEditor,
-  application_tabs: applicationTabs,
-  explorer_tabs: explorerTabs,
+  application_tabs: gatedBy(() => appsOn(), 'applications are', applicationTabs),
+  explorer_tabs: gatedBy(() => explorerOn(), 'the file explorer is', explorerTabs),
   recently_deleted: recentlyDeleted,
   list_chats: listChats,
   read_chat: readChat,

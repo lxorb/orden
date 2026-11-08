@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, experimental_on
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
@@ -18,7 +18,7 @@ PALETTE = """() => [...document.querySelectorAll('.palette ul li')].map((one) =>
 
 
 def switch(page: Page, on: bool) -> None:
-    page.evaluate("() => window.ordenApp.settings.show('general')")
+    experimental_on(page)
     row = page.locator('[role=switch][aria-label="Password manager"]')
     row.wait_for(state="visible", timeout=15_000)
     if (row.get_attribute("aria-checked") == "true") != on:

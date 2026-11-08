@@ -269,7 +269,7 @@ def the_note(page: Page) -> None:
 
 def the_big_board(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
-    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-bases']))")
+    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-bases']))")
     DRIVE.open(page)
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
@@ -331,7 +331,7 @@ def at_phone_width(browser: Browser) -> None:
         has_touch=True,
         is_mobile=True,
     )
-    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-bases']))")
+    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-bases']))")
     DRIVE.open(page)
     seed(page)
     open_builtin(page, "today")
@@ -370,7 +370,7 @@ def at_phone_width(browser: Browser) -> None:
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
-    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-bases']))")
+    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-bases']))")
     DRIVE.open(page)
     days = seed(page)
     the_panel(page)

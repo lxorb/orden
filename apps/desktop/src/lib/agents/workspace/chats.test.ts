@@ -44,7 +44,7 @@ vi.mock('../../chats/view/open', () => ({
 }))
 
 const verbs = await import('./chats')
-const { CHATS_WORD, hiddenKinds } = await import('../../settings.svelte')
+const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../settings.svelte')
 const { answerOf } = await import('./problem')
 
 const VERBS: Record<
@@ -91,7 +91,7 @@ let mine: string
 let hidden: string
 
 beforeEach(() => {
-  hiddenKinds.hidden = [CHATS_WORD]
+  hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
   asked.length = 0
   opened.length = 0
   answer = { status: 'ok', result: {} }
@@ -126,7 +126,7 @@ describe('the chats an agent sees', () => {
         error?: { message?: string }
       }
       expect(answered.status, verb).not.toBe('ok')
-      expect(JSON.stringify(answered), verb).toContain('chats are off')
+      expect(JSON.stringify(answered), verb).toContain('chats are turned off')
     }
     expect(asked).toEqual([])
   })

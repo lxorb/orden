@@ -93,7 +93,7 @@ def drive(browser: Browser) -> None:
         user_agent=PHONE,
         reduced_motion="reduce",
     )
-    context.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-pass']))")
+    context.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-pass']))")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)

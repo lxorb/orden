@@ -1,8 +1,7 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { isAccountInbox } from '@orden/bases/inbox'
 import { account } from './account.svelte'
-import { basesOn, hiddenKinds, settings } from './settings.svelte'
-import { modes } from './modes.svelte'
+import { appsOn, basesOn, hiddenKinds, settings } from './settings.svelte'
 import { arriving } from './arriving.svelte'
 import { keptAway } from './web/away.svelte'
 import {
@@ -527,11 +526,11 @@ class Workspace {
   readonly notes = $derived(this.files.filter((one) => !isTabFile(one.name)))
 
   private readonly unlisted = $derived.by(() => {
-    const coder = modes.coder
+    const apps = appsOn()
     const bases = basesOn()
     return (root: string, path: string) =>
       isInstructions(root, path) ||
-      (!coder && isApplicationTarget(path)) ||
+      (!apps && isApplicationTarget(path)) ||
       (!bases && isBaseTarget(path))
   })
 

@@ -3675,4 +3675,16 @@ export const am: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack ይህን የመተግበሪያ ደረጃ ቶከን አልተቀበለም። በBasic Information ስር connections:write ያለው ቶከን ይፍጠሩ',
   'A Slack channel name needs a letter or a number': 'የSlack ቻናል ስም ፊደል ወይም ቁጥር ያስፈልገዋል',
+  Experimental: 'ሙከራ',
+  'Enable experimental features': 'የሙከራ ባህሪያትን አንቃ',
+  'Lets you turn on the features below, which are still being built.':
+    'ገና በመገንባት ላይ ያሉትን ከታች ያሉትን ባህሪያት እንድታበራ ያስችልሃል።',
+  'Turn on experimental features?': 'የሙከራ ባህሪያትን ላብራ?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'መቶ በመቶ ስህተቶች ያጋጥሙሃል። የምትሰራውን የምታውቅ ከሆነ ብቻ ቀጥል።',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'መተግበሪያዎችን ያክላል፣ በሌላ ኮምፒውተርህ ያሉ በትር ውስጥ የምታያቸውና የምትጠቀምባቸው ፕሮግራሞች።',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'ለዚህ ኮምፒውተር አቃፊዎች የፋይል አሳሽ ያክላል፣ በአቃፊ ውስጥ አሳይም ይከፍተዋል።',
+  '{name} is turned off, so its tabs were closed': '{name} ጠፍቷል፣ ስለዚህ ትሮቹ ተዘግተዋል',
 }

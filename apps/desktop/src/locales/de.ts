@@ -3826,4 +3826,17 @@ export const de: Dictionary = {
     'Slack hat dieses App-Token abgelehnt. Erstelle unter Basic Information eines mit connections:write',
   'A Slack channel name needs a letter or a number':
     'Ein Slack-Kanalname braucht einen Buchstaben oder eine Zahl',
+  Experimental: 'Experimentell',
+  'Enable experimental features': 'Experimentelle Funktionen aktivieren',
+  'Lets you turn on the features below, which are still being built.':
+    'Damit kannst du die Funktionen unten einschalten, an denen noch gebaut wird.',
+  'Turn on experimental features?': 'Experimentelle Funktionen einschalten?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Du wirst zu 100 % auf Fehler stoßen. Mach nur weiter, wenn du weißt, was du tust.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Fügt Anwendungen hinzu, Programme auf einem anderen deiner Computer, die du in einem Tab siehst und bedienst.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Fügt einen Datei-Explorer für die Ordner auf diesem Computer hinzu, und Im Ordner zeigen öffnet ihn.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} ist ausgeschaltet, daher wurden die Tabs geschlossen',
 }

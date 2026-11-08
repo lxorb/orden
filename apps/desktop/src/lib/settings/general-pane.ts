@@ -2,7 +2,6 @@ import { panelDrawable } from '../even/panel-words'
 import { CATALOGUES_URL, i18n, plural, t } from '../i18n.svelte'
 import { languageOptions, machineSaid } from '../language-options'
 import { method } from '../mobile/bridge'
-import { clipboardSharing } from './apps-clipboard.svelte'
 import { crashReports } from '../crash-reports/choice.svelte'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { isPlugin } from '../plugin'
@@ -10,7 +9,6 @@ import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../protect/unloc
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from '../recovery'
 import { recovery } from '../recovery.svelte'
 import { hasTray, residency } from '../reminders/residency.svelte'
-import { chatsFields } from '../chats-settings'
 import { tabCycle } from '../tab-cycle.svelte'
 import { fitTabs, iconTabs } from '../tab-strip/icon-tabs.svelte'
 import { PREVIEW_DELAY, previewDelay } from '../tab-strip/preview-delay.svelte'
@@ -30,22 +28,9 @@ import { quickAdd } from '../quick-add/asked.svelte'
 import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
-import { setWord } from '../kind-choice'
-import {
-  BASES_WORD,
-  basesOn,
-  CHATS_WORD,
-  chatsOn,
-  hiddenKinds,
-  PASS_WORD,
-  passOn,
-  TIME_WORD,
-  timeOn,
-} from '../settings.svelte'
 import type { Field, Group, Pane } from './fields'
 import { dns, PROVIDER_NAMES } from './dns.svelte'
 import { gpu } from './gpu.svelte'
-import { among } from './hold'
 import { versionField } from './version.svelte'
 import { keptForGood } from '../web/kept-for-good.svelte'
 
@@ -648,151 +633,9 @@ export function generalPane(): Pane {
                   get: () => modes.coder,
                   set: (on: boolean) => modes.setDeveloper(on),
                 },
-                ...(modes.coder
-                  ? [
-                      {
-                        kind: 'switch' as const,
-                        label: t('Share the clipboard with applications'),
-                        hint: t(
-                          'An application on another of your computers pastes what you copied here, and what it copies comes here.',
-                        ),
-                        words: ['clipboard', 'copy', 'paste', 'application', 'remote'],
-                        initial: true,
-                        get: () => clipboardSharing.on,
-                        set: (on: boolean) => clipboardSharing.set(on),
-                      },
-                    ]
-                  : []),
               ],
             },
           ]),
-      ...(__EVEN_PLUGIN__
-        ? []
-        : [
-            {
-              title: t('Chats'),
-              fields: [
-                {
-                  kind: 'switch' as const,
-                  key: 'general.chats',
-                  store: { ...among(hiddenKinds, 'hidden', CHATS_WORD), shared: 'hiddenKinds' },
-                  label: t('Chats'),
-                  hint: t(
-                    'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.',
-                  ),
-                  words: [
-                    'chat',
-                    'chats',
-                    'messages',
-                    'mail',
-                    'telegram',
-                    'slack',
-                    'whatsapp',
-                    'signal',
-                  ],
-                  initial: false,
-                  get: () => chatsOn(),
-                  set: (on: boolean) => setWord(CHATS_WORD, on),
-                },
-                ...(chatsOn()
-                  ? [
-                      {
-                        kind: 'value' as const,
-                        label: t('Chat accounts'),
-                        hint: t(
-                          'Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.',
-                        ),
-                        words: [
-                          'account',
-                          'connect',
-                          'add',
-                          'mail',
-                          'telegram',
-                          'slack',
-                          'whatsapp',
-                          'signal',
-                        ],
-                        get: () => t('Add'),
-                        does: t('Add a chat account'),
-                        press: () =>
-                          void import('../chats/view/adding.svelte').then((one) => one.addChat()),
-                      },
-                    ]
-                  : []),
-                ...(chatsOn() && !isMobile ? chatsFields() : []),
-              ],
-            },
-          ]),
-      ...(__EVEN_PLUGIN__
-        ? []
-        : [
-            {
-              title: t('Time tracker'),
-              fields: [
-                {
-                  kind: 'switch' as const,
-                  key: 'general.timeTracker',
-                  store: { ...among(hiddenKinds, 'hidden', TIME_WORD), shared: 'hiddenKinds' },
-                  label: t('Time tracker'),
-                  hint: t(
-                    'Adds a timer and records the app, site and tab in front and how busy the computer is.',
-                  ),
-                  words: ['time', 'tracking', 'timer', 'hours', 'activity', 'screen time', 'toggl'],
-                  initial: false,
-                  get: () => timeOn(),
-                  set: (on: boolean) => setWord(TIME_WORD, on),
-                },
-              ],
-            },
-          ]),
-      ...(__EVEN_PLUGIN__
-        ? []
-        : [
-            {
-              title: t('Password manager'),
-              fields: [
-                {
-                  kind: 'switch' as const,
-                  key: 'general.passwordManager',
-                  store: { ...among(hiddenKinds, 'hidden', PASS_WORD), shared: 'hiddenKinds' },
-                  label: t('Password manager'),
-                  hint: t(
-                    'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.',
-                  ),
-                  words: [
-                    'pass',
-                    'password',
-                    'passwords',
-                    'vault',
-                    'autofill',
-                    'login',
-                    'keychain',
-                  ],
-                  initial: false,
-                  get: () => passOn(),
-                  set: (on: boolean) => setWord(PASS_WORD, on),
-                },
-              ],
-            },
-          ]),
-      {
-        title: t('Databases'),
-        fields: [
-          {
-            kind: 'switch' as const,
-            key: 'general.databases',
-            store: { ...among(hiddenKinds, 'hidden', BASES_WORD), shared: 'hiddenKinds' },
-            label: t('Databases'),
-            hint: t(
-              'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.',
-            ),
-            words: ['database', 'databases', 'base', 'bases', 'table', 'board', 'kanban', 'notion'],
-            initial: false,
-            get: () => basesOn(),
-            set: (on: boolean) => setWord(BASES_WORD, on),
-          },
-        ],
-      },
       ...(__EVEN_PLUGIN__
         ? []
         : [

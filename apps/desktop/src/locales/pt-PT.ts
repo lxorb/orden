@@ -3863,4 +3863,17 @@ export const ptPT: Dictionary = {
     'O Slack recusou esse token de aplicação. Gere um com connections:write em Basic Information',
   'A Slack channel name needs a letter or a number':
     'O nome de um canal do Slack precisa de uma letra ou de um número',
+  Experimental: 'Experimental',
+  'Enable experimental features': 'Ativar funcionalidades experimentais',
+  'Lets you turn on the features below, which are still being built.':
+    'Permite ativar as funcionalidades abaixo, que ainda estão em construção.',
+  'Turn on experimental features?': 'Ativar funcionalidades experimentais?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Vai encontrar erros, 100%. Só continue se souber o que está a fazer.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Adiciona aplicações, programas noutro dos seus computadores que vê e usa num separador.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Adiciona um explorador de ficheiros para as pastas deste computador, e Mostrar na pasta abre-o.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} está desativado, por isso os separadores foram fechados',
 }

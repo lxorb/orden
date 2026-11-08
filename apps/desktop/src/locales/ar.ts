@@ -3937,4 +3937,16 @@ export const ar: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'رفض Slack رمز التطبيق هذا. أنشئ رمزًا بصلاحية connections:write من Basic Information',
   'A Slack channel name needs a letter or a number': 'يحتاج اسم قناة Slack إلى حرف أو رقم',
+  Experimental: 'تجريبي',
+  'Enable experimental features': 'تفعيل الميزات التجريبية',
+  'Lets you turn on the features below, which are still being built.':
+    'يتيح لك تشغيل الميزات أدناه التي لا تزال قيد البناء.',
+  'Turn on experimental features?': 'تشغيل الميزات التجريبية؟',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'ستواجه أخطاء بنسبة 100%. لا تتابع إلا إذا كنت تعرف ما تفعله.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'يضيف التطبيقات، وهي برامج على حاسوب آخر من حواسيبك تراها وتستخدمها في علامة تبويب.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'يضيف مستكشف ملفات لمجلدات هذا الحاسوب، ويفتحه أمر الإظهار في المجلد.',
+  '{name} is turned off, so its tabs were closed': '{name} متوقف، لذا أُغلقت علامات تبويبه',
 }

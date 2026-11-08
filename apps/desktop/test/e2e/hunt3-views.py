@@ -219,7 +219,7 @@ def drive_fixed(page: Page) -> None:
 
 def drive(browser: Browser) -> None:
     page = browser.new_context(viewport={"width": 1180, "height": 900}).new_page()
-    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-bases']))")
+    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-bases']))")
     DRIVE.open(page)
     DRIVE.ready(page)
     say("--- a file shared on its own ---")

@@ -3766,4 +3766,17 @@ export const pa: Dictionary = {
     'Slack ਨੇ ਇਹ ਐਪ-ਪੱਧਰ ਟੋਕਨ ਰੱਦ ਕਰ ਦਿੱਤਾ। Basic Information ਵਿੱਚ connections:write ਵਾਲਾ ਟੋਕਨ ਬਣਾਓ',
   'A Slack channel name needs a letter or a number':
     'Slack ਚੈਨਲ ਦੇ ਨਾਮ ਵਿੱਚ ਕੋਈ ਅੱਖਰ ਜਾਂ ਅੰਕ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ',
+  Experimental: 'ਤਜਰਬਾਤੀ',
+  'Enable experimental features': 'ਤਜਰਬਾਤੀ ਫ਼ੀਚਰ ਚਾਲੂ ਕਰੋ',
+  'Lets you turn on the features below, which are still being built.':
+    'ਹੇਠਾਂ ਦੇ ਉਹ ਫ਼ੀਚਰ ਚਾਲੂ ਕਰਨ ਦਿੰਦਾ ਹੈ ਜੋ ਅਜੇ ਬਣ ਰਹੇ ਹਨ।',
+  'Turn on experimental features?': 'ਤਜਰਬਾਤੀ ਫ਼ੀਚਰ ਚਾਲੂ ਕਰਨੇ ਹਨ?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'ਤੁਹਾਨੂੰ 100% ਬੱਗ ਮਿਲਣਗੇ। ਅੱਗੇ ਤਾਂ ਹੀ ਵਧੋ ਜੇ ਤੁਸੀਂ ਜਾਣਦੇ ਹੋ ਕਿ ਤੁਸੀਂ ਕੀ ਕਰ ਰਹੇ ਹੋ।',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'ਐਪਲੀਕੇਸ਼ਨ ਜੋੜਦਾ ਹੈ, ਤੁਹਾਡੇ ਕਿਸੇ ਹੋਰ ਕੰਪਿਊਟਰ ਦੇ ਪ੍ਰੋਗਰਾਮ ਜੋ ਤੁਸੀਂ ਇੱਕ ਟੈਬ ਵਿੱਚ ਦੇਖਦੇ ਅਤੇ ਵਰਤਦੇ ਹੋ।',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'ਇਸ ਕੰਪਿਊਟਰ ਦੇ ਫੋਲਡਰਾਂ ਲਈ ਫ਼ਾਈਲ ਐਕਸਪਲੋਰਰ ਜੋੜਦਾ ਹੈ, ਅਤੇ ਫੋਲਡਰ ਵਿੱਚ ਦਿਖਾਓ ਉਸਨੂੰ ਖੋਲ੍ਹਦਾ ਹੈ।',
+  '{name} is turned off, so its tabs were closed':
+    '{name} ਬੰਦ ਹੈ, ਇਸ ਲਈ ਇਸ ਦੀਆਂ ਟੈਬਾਂ ਬੰਦ ਕੀਤੀਆਂ ਗਈਆਂ',
 }

@@ -53,7 +53,7 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
         permissions=["clipboard-read", "clipboard-write"],
     )
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
-    context.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-pass']))")
+    context.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-pass']))")
     page = context.new_page()
     page.set_default_timeout(30000)
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))

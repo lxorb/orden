@@ -3888,4 +3888,17 @@ export const fr: Dictionary = {
     'Slack a refusé ce jeton d’application. Créez-en un avec connections:write sous Basic Information',
   'A Slack channel name needs a letter or a number':
     'Un nom de canal Slack doit contenir une lettre ou un chiffre',
+  Experimental: 'Expérimental',
+  'Enable experimental features': 'Activer les fonctions expérimentales',
+  'Lets you turn on the features below, which are still being built.':
+    'Permet d’activer les fonctions ci-dessous, encore en construction.',
+  'Turn on experimental features?': 'Activer les fonctions expérimentales ?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Vous rencontrerez des bugs à 100 %. Ne continuez que si vous savez ce que vous faites.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Ajoute les applications, des programmes d’un autre de vos ordinateurs que vous voyez et utilisez dans un onglet.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Ajoute un explorateur de fichiers pour les dossiers de cet ordinateur, et Afficher dans le dossier l’ouvre.',
+  '{name} is turned off, so its tabs were closed':
+    '{name} est désactivé, ses onglets ont donc été fermés',
 }

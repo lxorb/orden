@@ -7,29 +7,38 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-const { hiddenKinds, KINDS_KEY, CHATS_WORD, TIME_WORD, PASS_WORD, chatsOn, kindsHere } =
-  await import('./settings.svelte')
+const {
+  hiddenKinds,
+  KINDS_KEY,
+  CHATS_WORD,
+  EXPERIMENTAL_WORD,
+  TIME_WORD,
+  PASS_WORD,
+  chatsOn,
+  kindsHere,
+} = await import('./settings.svelte')
 const { setWord, receive } = await import('./kind-choice')
 const { runnable, SHORTCUTS } = await import('./shortcuts/registry')
-const { generalPane } = await import('./settings/general-pane')
+const { experimentalPane } = await import('./settings/experimental-pane')
 const { account } = await import('./account.svelte')
 
 beforeEach(() => {
   store.clear()
+  store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD]))
   hiddenKinds.restore()
   Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })
 })
 
 function field() {
-  const found = generalPane()
+  const found = experimentalPane()
     .groups.flatMap((group) => group.fields)
-    .find((one) => one.key === 'general.chats')
+    .find((one) => one.key === 'experimental.chats')
   if (found?.kind !== 'switch') throw new Error('no switch for chats')
   return found
 }
 
 function labels(): string[] {
-  return generalPane()
+  return experimentalPane()
     .groups.flatMap((group) => group.fields)
     .map((one) => ('label' in one ? one.label : ''))
 }
@@ -48,10 +57,13 @@ describe('Chats, until it is turned on', () => {
   })
 
   test('is off for someone who chose other features before, here and from the account', () => {
-    store.set(KINDS_KEY, JSON.stringify(['terminal', TIME_WORD, PASS_WORD, 'chat']))
+    store.set(
+      KINDS_KEY,
+      JSON.stringify([EXPERIMENTAL_WORD, 'terminal', TIME_WORD, PASS_WORD, 'chat']),
+    )
     hiddenKinds.restore()
     expect(chatsOn()).toBe(false)
-    receive({ hiddenKinds: ['terminal', TIME_WORD] })
+    receive({ hiddenKinds: [EXPERIMENTAL_WORD, 'terminal', TIME_WORD] })
     expect(chatsOn()).toBe(false)
   })
 
@@ -61,7 +73,7 @@ describe('Chats, until it is turned on', () => {
     expect(runnable('app.chats')).toBe(true)
     expect(kindsHere()).toContain('chat')
     expect(labels()).toContain('My keywords')
-    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([CHATS_WORD])
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD, CHATS_WORD])
 
     hiddenKinds.hidden = []
     hiddenKinds.restore()
@@ -70,11 +82,11 @@ describe('Chats, until it is turned on', () => {
     field().set(false)
     expect(chatsOn()).toBe(false)
     expect(runnable('app.chats')).toBe(false)
-    expect(store.has(KINDS_KEY)).toBe(false)
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD])
   })
 
   test('follows the account', () => {
-    receive({ hiddenKinds: [CHATS_WORD] })
+    receive({ hiddenKinds: [EXPERIMENTAL_WORD, CHATS_WORD] })
     expect(chatsOn()).toBe(true)
     setWord(CHATS_WORD, false)
     expect(chatsOn()).toBe(false)

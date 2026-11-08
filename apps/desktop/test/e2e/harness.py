@@ -135,10 +135,27 @@ LAUNCHED = "orden: launch order finished"
 CHATS_ON = (
     "try { const kept = JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]');"
     " const list = Array.isArray(kept) ? kept : [];"
-    " if (!list.includes('shown-chats'))"
-    " localStorage.setItem('orden:hidden-kinds', JSON.stringify([...list, 'shown-chats'])) }"
+    " const add = ['experimental', 'experimental-chats'].filter((one) => !list.includes(one));"
+    " if (add.length) localStorage.setItem('orden:hidden-kinds', JSON.stringify([...list, ...add])) }"
     " catch {}"
 )
+
+EXPERIMENTAL_SWITCH = '[role=switch][aria-label="Enable experimental features"]'
+
+
+def experimental_on(page: Any) -> None:
+    page.evaluate("() => window.ordenApp.settings.show('experimental')")
+    knob = page.locator(EXPERIMENTAL_SWITCH)
+    knob.wait_for(state="visible", timeout=15_000)
+    if knob.get_attribute("aria-checked") == "true":
+        return
+    knob.click()
+    page.locator("[role=dialog].sheet .row button.orden-button:not(.is-quiet)", has_text="Turn on").click()
+    page.wait_for_function(
+        f"document.querySelector('{EXPERIMENTAL_SWITCH}')?.getAttribute('aria-checked') === 'true'",
+        timeout=15_000,
+    )
+
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)

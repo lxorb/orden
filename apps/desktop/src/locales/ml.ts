@@ -3813,4 +3813,16 @@ export const ml: Dictionary = {
   'Slack refused that app-level token. Generate one with connections:write under Basic Information':
     'Slack ഈ ആപ്പ്-തല ടോക്കൺ നിരസിച്ചു. Basic Information-ൽ connections:write ഉള്ള ഒന്ന് സൃഷ്ടിക്കുക',
   'A Slack channel name needs a letter or a number': 'Slack ചാനൽ പേരിൽ ഒരു അക്ഷരമോ അക്കമോ വേണം',
+  Experimental: 'പരീക്ഷണാത്മകം',
+  'Enable experimental features': 'പരീക്ഷണാത്മക ഫീച്ചറുകൾ പ്രവർത്തനക്ഷമമാക്കുക',
+  'Lets you turn on the features below, which are still being built.':
+    'ഇപ്പോഴും നിർമ്മാണത്തിലുള്ള താഴെയുള്ള ഫീച്ചറുകൾ ഓണാക്കാൻ അനുവദിക്കുന്നു.',
+  'Turn on experimental features?': 'പരീക്ഷണാത്മക ഫീച്ചറുകൾ ഓണാക്കണോ?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'നിങ്ങൾ 100% ബഗുകൾ നേരിടും. എന്താണ് ചെയ്യുന്നതെന്ന് അറിയാമെങ്കിൽ മാത്രം തുടരുക.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'ആപ്ലിക്കേഷനുകൾ ചേർക്കുന്നു, നിങ്ങളുടെ മറ്റൊരു കമ്പ്യൂട്ടറിലെ പ്രോഗ്രാമുകൾ, ഒരു ടാബിൽ കണ്ട് ഉപയോഗിക്കാം.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'ഈ കമ്പ്യൂട്ടറിലെ ഫോൾഡറുകൾക്കായി ഒരു ഫയൽ എക്സ്പ്ലോറർ ചേർക്കുന്നു, ഫോൾഡറിൽ കാണിക്കുക അത് തുറക്കുന്നു.',
+  '{name} is turned off, so its tabs were closed': '{name} ഓഫാണ്, അതിനാൽ അതിന്റെ ടാബുകൾ അടച്ചു',
 }

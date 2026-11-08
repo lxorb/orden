@@ -3698,4 +3698,16 @@ export const ms: Dictionary = {
     'Slack menolak token aplikasi itu. Jana satu dengan connections:write di bawah Basic Information',
   'A Slack channel name needs a letter or a number':
     'Nama saluran Slack perlu ada huruf atau nombor',
+  Experimental: 'Eksperimen',
+  'Enable experimental features': 'Dayakan ciri eksperimen',
+  'Lets you turn on the features below, which are still being built.':
+    'Membolehkan anda menghidupkan ciri di bawah, yang masih dibina.',
+  'Turn on experimental features?': 'Hidupkan ciri eksperimen?',
+  'You will 100% experience bugs. Only go on if you know what you are doing.':
+    'Anda pasti 100% akan menemui pepijat. Teruskan hanya jika anda tahu apa yang anda lakukan.',
+  'Adds applications, programs on another of your computers that you see and use in a tab.':
+    'Menambah aplikasi, program pada komputer anda yang lain yang anda lihat dan guna dalam tab.',
+  'Adds a file explorer for the folders on this computer, and Show in folder opens it.':
+    'Menambah penjelajah fail untuk folder pada komputer ini, dan Tunjuk dalam folder membukanya.',
+  '{name} is turned off, so its tabs were closed': '{name} dimatikan, jadi tabnya ditutup',
 }

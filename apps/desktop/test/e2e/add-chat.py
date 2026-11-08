@@ -214,7 +214,7 @@ def openers(browser: Browser) -> None:
     page.evaluate("() => window.ordenApp.workspace.closeConnect()")
     wait_for(page, f"({COUNT})() === 0", "the window closed")
 
-    page.evaluate("() => window.ordenApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('experimental')")
     wait_for(page, "!!document.querySelector('[role=region][aria-label=Settings]')", "Settings")
     found = page.locator("[role=region][aria-label=Settings] .setting", has_text="Chat accounts")
     found.first.scroll_into_view_if_needed()

@@ -34,7 +34,7 @@ beforeEach(async () => {
   await call(env, '/v1/settings', {
     method: 'PATCH',
     token,
-    body: { hiddenKinds: ['shown-bases'] },
+    body: { hiddenKinds: ['experimental', 'experimental-bases'] },
   })
 })
 

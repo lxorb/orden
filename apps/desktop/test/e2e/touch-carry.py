@@ -90,7 +90,7 @@ def setup(browser, width, height):
     )
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-bases']))")
+    page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-bases']))")
     DRIVE.open(page)
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     today = datetime.date.today()

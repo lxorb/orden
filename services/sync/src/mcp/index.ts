@@ -18,20 +18,20 @@ const INSTRUCTIONS =
 
 const GATES = [
   {
-    word: 'shown-bases',
+    words: ['experimental', 'experimental-bases'],
     tools: new Set(['query_base', 'add_row']),
-    off: 'Databases are turned off. The reader turns them on in Orden’s Settings, under General.',
+    off: 'Databases are turned off. The reader turns them on in Orden’s Settings, under Experimental.',
   },
   {
-    word: 'shown-chats',
+    words: ['experimental', 'experimental-chats'],
     tools: new Set(CHAT_TOOLS.map((tool) => tool.name)),
-    off: 'Chats are turned off. The reader turns them on in Orden’s Settings, under General.',
+    off: 'Chats are turned off. The reader turns them on in Orden’s Settings, under Experimental.',
   },
 ]
 
 async function closedGates(env: Env, userId: string) {
   const shown = await shownWords(env, userId)
-  return GATES.filter((gate) => !shown.includes(gate.word))
+  return GATES.filter((gate) => !gate.words.every((word) => shown.includes(word)))
 }
 
 function idOf(value: unknown): string | number | null {

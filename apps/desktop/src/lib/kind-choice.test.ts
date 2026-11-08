@@ -18,7 +18,8 @@ vi.mock('./api', async (actual) => ({
   },
 }))
 
-const { CHATS_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } = await import('./settings.svelte')
+const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } =
+  await import('./settings.svelte')
 const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('./new-kinds')
 const { newFileRows } = await import('./row-menu')
@@ -82,12 +83,13 @@ describe('a stored list of kinds turned off', () => {
 
 describe('the kinds a device has', () => {
   test('are what is written, the online terminal and an application on a page in a browser', () => {
-    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'web'])
+    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'web'])
   })
 
   test('take Pass in once Settings turns the password manager on', () => {
+    setWord(EXPERIMENTAL_WORD, true)
     setWord(PASS_WORD, true)
-    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'pass', 'web'])
+    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'pass', 'web'])
     setWord(PASS_WORD, false)
     expect(kindsHere()).not.toContain('pass')
   })
@@ -95,6 +97,7 @@ describe('the kinds a device has', () => {
   test('take the chat in with an account, once Chats is turned on', () => {
     token = 'token'
     expect(kindsHere()).not.toContain('chat')
+    setWord(EXPERIMENTAL_WORD, true)
     setWord(CHATS_WORD, true)
     expect(kindsHere()).toContain('chat')
   })
@@ -114,13 +117,7 @@ describe('turning a kind off', () => {
   test('takes it out of the chooser and the file list, and nothing else', () => {
     setKind('canvas', false)
 
-    expect(offeredKinds().map((one) => one.kind)).toEqual([
-      'note',
-      'pages',
-      'online',
-      'application',
-      'web',
-    ])
+    expect(offeredKinds().map((one) => one.kind)).toEqual(['note', 'pages', 'online', 'web'])
     expect(newFileRows().map((one) => one?.label)).toEqual([
       'New note',
       'New page note',
@@ -139,8 +136,7 @@ describe('turning a kind off', () => {
   })
 
   test('is refused for the last kind offered', () => {
-    for (const kind of ['note', 'canvas', 'pages', 'online', 'application', 'pass'] as const)
-      setKind(kind, false)
+    for (const kind of ['note', 'canvas', 'pages', 'online'] as const) setKind(kind, false)
     expect(hiddenKinds.shown).toEqual(['web'])
 
     setKind('web', false)

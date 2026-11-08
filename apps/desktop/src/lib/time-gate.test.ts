@@ -7,20 +7,22 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-const { hiddenKinds, KINDS_KEY, TIME_WORD, timeOn } = await import('./settings.svelte')
+const { hiddenKinds, KINDS_KEY, TIME_WORD, EXPERIMENTAL_WORD, timeOn } =
+  await import('./settings.svelte')
 const { setWord, receive } = await import('./kind-choice')
 const { runnable } = await import('./shortcuts/registry')
-const { generalPane } = await import('./settings/general-pane')
+const { experimentalPane } = await import('./settings/experimental-pane')
 
 beforeEach(() => {
   store.clear()
+  store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD]))
   hiddenKinds.restore()
 })
 
 function field() {
-  const found = generalPane()
+  const found = experimentalPane()
     .groups.flatMap((group) => group.fields)
-    .find((one) => one.key === 'general.timeTracker')
+    .find((one) => one.key === 'experimental.timeTracker')
   if (found?.kind !== 'switch') throw new Error('no switch for the time tracker')
   return found
 }
@@ -39,7 +41,7 @@ describe('the time tracker, until it is turned on', () => {
     field().set(true)
     expect(timeOn()).toBe(true)
     expect(COMMANDS.filter(runnable)).toEqual(COMMANDS)
-    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([TIME_WORD])
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD, TIME_WORD])
 
     hiddenKinds.hidden = []
     hiddenKinds.restore()
@@ -47,19 +49,19 @@ describe('the time tracker, until it is turned on', () => {
 
     field().set(false)
     expect(timeOn()).toBe(false)
-    expect(store.has(KINDS_KEY)).toBe(false)
+    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD])
   })
 
   test('keeps the kinds the reader turned off, and follows the account', () => {
-    store.set(KINDS_KEY, JSON.stringify(['canvas']))
+    store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD, 'canvas']))
     hiddenKinds.restore()
     setWord(TIME_WORD, true)
-    expect(hiddenKinds.hidden).toEqual(['canvas', TIME_WORD])
+    expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD, 'canvas', TIME_WORD])
     expect(hiddenKinds.offers('canvas')).toBe(false)
 
-    receive({ hiddenKinds: ['canvas'] })
+    receive({ hiddenKinds: [EXPERIMENTAL_WORD, 'canvas'] })
     expect(timeOn()).toBe(false)
-    receive({ hiddenKinds: [TIME_WORD] })
+    receive({ hiddenKinds: [EXPERIMENTAL_WORD, TIME_WORD] })
     expect(timeOn()).toBe(true)
   })
 })

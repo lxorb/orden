@@ -161,6 +161,16 @@ export function start(): () => void {
   }
 
   if (!__EVEN_PLUGIN__) {
+    void startup
+      .turn('right')
+      .then(() => import('./feature-gate.svelte'))
+      .then(({ whenAppsOn, whenExplorerOn }) => {
+        whenAppsOn()
+        whenExplorerOn()
+      })
+  }
+
+  if (!__EVEN_PLUGIN__) {
     void startup.turn('right').then(() => import('./scratchpad/start.svelte'))
   }
 

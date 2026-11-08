@@ -34,7 +34,7 @@ vi.mock('./apps/make', () => ({
 const { kindLines, newKinds } = await import('./new-kinds')
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
-const { hiddenKinds, PASS_WORD } = await import('./settings.svelte')
+const { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('./settings.svelte')
 
 let was: 'phone' | 'tablet' | 'desktop'
 
@@ -42,7 +42,7 @@ beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
   localStorage.clear()
-  hiddenKinds.hidden = [PASS_WORD]
+  hiddenKinds.hidden = [EXPERIMENTAL_WORD, APPS_WORD, PASS_WORD]
 })
 
 afterEach(() => {
