@@ -213,14 +213,35 @@ impl Chord {
     }
 }
 
-static TAKEN: std::sync::RwLock<Vec<Chord>> = std::sync::RwLock::new(Vec::new());
+static TAKEN: std::sync::RwLock<Vec<(String, Vec<Chord>)>> = std::sync::RwLock::new(Vec::new());
 
-#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
-fn app_chords() -> Vec<Chord> {
+fn take(window: &str, chords: Vec<Chord>) {
+    let mut taken = TAKEN
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    taken.retain(|(one, _)| one != window);
+    taken.push((window.to_owned(), chords));
+}
+
+#[cfg_attr(not(any(windows, feature = "cef", test)), allow(dead_code))]
+fn app_chords(window: &str) -> Vec<Chord> {
     TAKEN
         .read()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .clone()
+        .iter()
+        .find(|(one, _)| one == window)
+        .map(|(_, chords)| chords.clone())
+        .unwrap_or_default()
+}
+
+#[cfg_attr(not(any(feature = "cef", test)), allow(dead_code))]
+fn every_chord() -> Vec<Chord> {
+    TAKEN
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .iter()
+        .flat_map(|(_, chords)| chords.iter().copied())
+        .collect()
 }
 
 #[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
@@ -264,11 +285,11 @@ fn heard_raw(
 }
 
 #[tauri::command(async)]
-pub fn web_keys_take(app: tauri::AppHandle, chords: Vec<Asked>) -> bool {
-    let chords: Vec<Chord> = chords.iter().filter_map(Chord::of).collect();
-    *TAKEN
-        .write()
-        .unwrap_or_else(std::sync::PoisonError::into_inner) = chords;
+pub fn web_keys_take(app: tauri::AppHandle, window: tauri::Window, chords: Vec<Asked>) -> bool {
+    take(
+        window.label(),
+        chords.iter().filter_map(Chord::of).collect(),
+    );
     tells_alt(&app)
 }
 
@@ -333,7 +354,7 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
                 return Ok(());
             }
             let pressed = meaning(vk, now, down, repeat)
-                .or_else(|| app_s(vk, now, down, repeat, &app_chords()));
+                .or_else(|| app_s(vk, now, down, repeat, &app_chords(&window)));
             let Some(pressed) = pressed else {
                 if let Some(said) = told(vk, now, down, repeat) {
                     let _ = app.emit_to(window.as_str(), PRESSED, said);
@@ -429,8 +450,8 @@ mod grabbed {
     use x11rb::rust_connection::RustConnection;
 
     use super::{
-        app_chords, app_s, heard_raw, meaning, page_took_focus, reloading, vk_of, Chord, Held,
-        Pressed, PRESSED,
+        app_chords, app_s, every_chord, heard_raw, meaning, page_took_focus, reloading, vk_of,
+        Chord, Held, Pressed, PRESSED,
     };
 
     const KEYS: [Keysym; 20] = [
@@ -530,8 +551,15 @@ mod grabbed {
 
         fn grab(&self, page: u32) {
             let _ = self.x.ungrab_key(Grab::ANY, page, ModMask::ANY);
+            let holder = self
+                .pages
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .get(&page)
+                .cloned()
+                .unwrap_or_default();
             let map = self.map.lock().unwrap_or_else(PoisonError::into_inner);
-            for (sym, mask) in chords(&app_chords()) {
+            for (sym, mask) in chords(&app_chords(&holder)) {
                 for code in map.keycodes(sym) {
                     for lock in LOCKS {
                         let _ = self.x.grab_key(
@@ -606,7 +634,7 @@ mod grabbed {
                 held_by(u16::from(state.mask)),
                 down,
                 repeat,
-                &app_chords(),
+                &every_chord(),
                 grabbing.is_some(),
                 || {
                     let page = self.focused(&self.pages()).and_then(|page| {
@@ -681,7 +709,7 @@ mod grabbed {
                 let said = if down {
                     meaning(vk, held, true, false)
                         .or_else(|| reloading(vk, held))
-                        .or_else(|| app_s(vk, held, true, false, &app_chords()))
+                        .or_else(|| app_s(vk, held, true, false, &app_chords(&holder)))
                 } else if self.raw {
                     None
                 } else {
@@ -832,7 +860,10 @@ mod grabbed {
 
 #[cfg(test)]
 mod tests {
-    use super::{app_s, heard_raw, meaning, page_took_focus, told, Asked, Chord, Held};
+    use super::{
+        app_chords, app_s, every_chord, heard_raw, meaning, page_took_focus, take, told, Asked,
+        Chord, Held,
+    };
 
     const ALT: Held = Held {
         ctrl: false,
@@ -867,6 +898,23 @@ mod tests {
         );
         assert_eq!(app_s(0x45, ALT, false, false, &taken), None);
         assert_eq!(app_s(0x45, ALT, true, false, &[]), None);
+    }
+
+    #[test]
+    fn each_window_s_pages_hand_over_that_window_s_chords() {
+        let e = asked("KeyE", false, false, true).expect("Alt and E");
+        let f = asked("KeyF", false, false, true).expect("Alt and F");
+        take("chords-first", vec![e]);
+        take("chords-second", vec![f]);
+        assert_eq!(app_chords("chords-first"), vec![e]);
+        assert_eq!(app_chords("chords-second"), vec![f]);
+        assert!(app_s(0x45, ALT, true, false, &app_chords("chords-first")).is_some());
+        assert!(app_s(0x45, ALT, true, false, &app_chords("chords-second")).is_none());
+        assert!(every_chord().contains(&e) && every_chord().contains(&f));
+        take("chords-first", Vec::new());
+        assert_eq!(app_chords("chords-first"), Vec::new());
+        assert_eq!(app_chords("chords-second"), vec![f]);
+        assert_eq!(app_chords("chords-never"), Vec::new());
     }
 
     #[test]
@@ -960,10 +1008,10 @@ mod tests {
         };
         let webview2 =
             body("pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle");
-        assert!(webview2.contains("app_s(vk, now, down, repeat, &app_chords())"));
+        assert!(webview2.contains("app_s(vk, now, down, repeat, &app_chords(&window))"));
         let cef = body("mod grabbed {");
-        assert!(cef.contains("app_s(vk, held, true, false, &app_chords())"));
-        assert!(cef.contains("chords(&app_chords())"));
+        assert!(cef.contains("app_s(vk, held, true, false, &app_chords(&holder))"));
+        assert!(cef.contains("chords(&app_chords(&holder))"));
         assert!(cef.contains("heard_raw("));
         assert!(include_str!("lib.rs").contains("web_keys::web_keys_take,"));
     }
