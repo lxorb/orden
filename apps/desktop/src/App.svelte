@@ -759,8 +759,6 @@
   onpointerdown={() => fullscreen.stir()}
 />
 
-<h1 class="orden-said">{workspace.active?.shown ?? 'Orden'}</h1>
-
 <p class="orden-said" role="status" aria-live="polite">{said.words}</p>
 
 <main
@@ -774,6 +772,8 @@
     ? `max(var(--panel-narrowest), (100vw - var(--panes-floor)) / ${docked})`
     : undefined}
 >
+  <h1 class="orden-said">{workspace.active?.shown ?? 'Orden'}</h1>
+
   <div class="middle" bind:this={middle}>
     {#if !bare && !filled}
       <div
