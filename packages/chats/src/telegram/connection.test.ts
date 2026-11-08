@@ -1363,3 +1363,28 @@ describe('long messages', () => {
     expect(fake.called('messages.sendMedia')[0]?.message).toBe('')
   })
 })
+
+describe('typing in a thread', () => {
+  test('typing in a reply thread is sent to it and heard in it, never in the chat itself', async () => {
+    vi.useFakeTimers()
+    const { fake, connection, heard } = await linked()
+    fake.answer('messages.setTyping', () => true)
+    await connection.typing?.('s45', true, '30')
+    await connection.typing?.('s60', true, '50')
+    expect(fake.called('messages.setTyping')).toMatchObject([
+      { peer: { _: 'inputPeerChannel', channelId: 45 }, topMsgId: 30 },
+    ])
+    fake.push({
+      _: 'updateChannelUserTyping',
+      channelId: 45,
+      topMsgId: 30,
+      fromId: { _: 'peerUser', userId: 2 },
+      action: { _: 'sendMessageTypingAction' },
+    })
+    vi.advanceTimersByTime(6000)
+    expect(heard).toEqual([
+      { t: 'typing', conversation: 's45', person: 'u2', on: true, thread: '30' },
+      { t: 'typing', conversation: 's45', person: 'u2', on: false, thread: '30' },
+    ])
+  })
+})
