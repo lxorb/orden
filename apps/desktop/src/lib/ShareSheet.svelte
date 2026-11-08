@@ -216,7 +216,10 @@
       <div class="row person">
         {@render face(faceOf(who.owner, called(who.owner)), pressFor(who.owner))}
         <span class="name">
-          <span class="named">{called(who.owner)} <small class="you">{t('(you)')}</small></span>
+          <span class="named"
+            ><bdi class="who">{called(who.owner)}</bdi>
+            <small class="you">{t('(you)')}</small></span
+          >
           <small>{who.owner.email}</small>
         </span>
         <span class="fixed">{t('Owner')}</span>
@@ -397,7 +400,14 @@
     min-width: 0;
   }
 
+  .who {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .you {
+    flex: none;
     color: var(--muted);
   }
 

@@ -97,17 +97,14 @@
     border-top: 1px solid var(--line);
   }
 
-  .name {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
   .title {
+    display: block;
     color: var(--text-strong);
   }
 
   .when {
+    display: block;
+    margin-top: 2px;
     font-size: var(--text-xs);
     color: var(--muted);
   }
