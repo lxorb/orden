@@ -1,5 +1,8 @@
+import headless from '@xterm/headless'
 import { describe, expect, test } from 'vitest'
-import { keyBytes, linesOf, type Row, shellOs, typesFreely } from './terminal-keys'
+import { keyBytes, linesFrom, linesOf, type Row, shellOs, typesFreely } from './terminal-keys'
+
+const { Terminal } = headless
 
 describe('keys', () => {
   test('by name, the arrows as the program in front asked for them', () => {
@@ -93,5 +96,37 @@ describe('a buffer as lines', () => {
     const buffer = rows(['one'], ['two'], ['three'], ['four'])
     expect(linesOf(buffer, 1, 100).text).toBe('two\nthree\nfour')
     expect(linesOf(buffer, 0, 2)).toEqual({ text: 'three\nfour', truncated: true })
+  })
+})
+
+describe('what a command printed in a terminal whose scrollback is full', () => {
+  function written(term: InstanceType<typeof Terminal>, data: string) {
+    return new Promise<void>((resolve) => term.write(data, resolve))
+  }
+
+  function numbered(word: string, count: number) {
+    return Array.from({ length: count }, (_, at) => `${word} ${at + 1}\r\n`).join('')
+  }
+
+  test('is read whole, though the oldest lines fall away under it', async () => {
+    const term = new Terminal({ cols: 40, rows: 5, scrollback: 20, allowProposedApi: true })
+    await written(term, `${numbered('old', 60)}$ `)
+    const since = linesFrom(term)
+    await written(term, `make\r\n${numbered('out', 12)}$ `)
+    expect(since(100)).toEqual({
+      text: ['$ make', ...Array.from({ length: 12 }, (_, at) => `out ${at + 1}`), '$ '].join('\n'),
+      truncated: false,
+    })
+  })
+
+  test('says it was cut when more fell away than the scrollback holds', async () => {
+    const term = new Terminal({ cols: 40, rows: 5, scrollback: 20, allowProposedApi: true })
+    await written(term, `${numbered('old', 60)}$ `)
+    const since = linesFrom(term)
+    await written(term, `make\r\n${numbered('out', 40)}$ `)
+    const read = since(100)
+    expect(read.truncated).toBe(true)
+    expect(read.text.split('\n').at(-2)).toBe('out 40')
+    expect(read.text).not.toContain('old')
   })
 })
