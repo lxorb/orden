@@ -2,6 +2,7 @@
   import { exportCommands } from '../commands'
   import { t } from '../i18n.svelte'
   import Sheet from '../Sheet.svelte'
+  import Switch from '../Switch.svelte'
   import { picker } from './picker.svelte'
   import { commandFor, SETUP, shelved, type Tile } from './tiles'
 
@@ -73,16 +74,11 @@
   {/each}
 
   {#if chosen?.option}
-    <button
-      type="button"
-      class="orden-setting option"
-      role="switch"
-      aria-checked={optioned}
-      onclick={() => (optioned = !optioned)}
-    >
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <div class="orden-setting option" onclick={() => (optioned = !optioned)}>
       <span class="name">{chosen.option.label}</span>
-      <span class="orden-switch" class:on={optioned} aria-hidden="true"></span>
-    </button>
+      <Switch on={optioned} label={chosen.option.label} onchange={(on) => (optioned = on)} />
+    </div>
   {/if}
 
   {#snippet foot()}
@@ -158,19 +154,11 @@
     color: var(--accent);
   }
 
-  .tile:disabled {
-    opacity: 0.45;
-  }
-
   .option {
     margin: 0 var(--space-2);
     padding: var(--space-2) var(--space-3);
-    border: none;
     border-radius: var(--radius-md);
     background: var(--surface-2);
-    color: inherit;
-    font: inherit;
-    text-align: start;
   }
 
   .go {
