@@ -90,6 +90,18 @@ export function typedSlide(typed: string, count: number): number | null {
   return wanted >= 1 && wanted <= count ? wanted - 1 : null
 }
 
-export function shownFragments(fragments: readonly number[], step: number): number[] {
-  return fragments.slice(0, step)
+export function markFragments(surface: ParentNode, step: number): void {
+  const items = [...surface.querySelectorAll('li[data-fragment]')].filter(
+    (item) => !item.closest('figure.embed'),
+  )
+
+  for (const [at, item] of items.entries()) {
+    item.classList.add('fragment')
+    item.classList.toggle('shown', at < step)
+  }
+}
+
+export function nextPlace(steps: readonly number[], at: Place): Place | null {
+  const ahead = forward(steps, at)
+  return ahead.slide === at.slide && ahead.step === at.step ? null : ahead
 }

@@ -48,6 +48,8 @@ test('a picture that lands after its slide is shown fits the slide again', async
     stage: {
       slide: '<h1>Field notes</h1><p><img src="asset://localhost/kestrel.png" alt=""></p>',
       next: '<p>Next</p>',
+      step: 0,
+      nextStep: 0,
       shape: 'picture',
       nextShape: 'prose',
       notes: '',

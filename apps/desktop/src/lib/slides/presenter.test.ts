@@ -4,6 +4,8 @@ import { leads, messageOf, type Lead } from './presenter'
 const stage = {
   slide: '<h1>One</h1>',
   next: '<h1>Two</h1>',
+  step: 0,
+  nextStep: 1,
   shape: 'title',
   nextShape: 'prose',
   notes: '',
@@ -26,6 +28,14 @@ describe('the presenter channel', () => {
     })
     expect(messageOf({ kind: 'gone', show: 'a' })).toEqual({ kind: 'gone', show: 'a' })
     expect(messageOf({ kind: 'here' })).toEqual({ kind: 'here' })
+  })
+
+  test('the stage says which of the waiting items are out, now and next', () => {
+    const heard = messageOf({ kind: 'stage', show: 'a', took: 3, stage })
+    expect(heard?.kind === 'stage' && [heard.stage.step, heard.stage.nextStep]).toEqual([0, 1])
+    expect(
+      messageOf({ kind: 'stage', show: 'a', took: 3, stage: { ...stage, step: 'x' } }),
+    ).toBeNull()
   })
 
   test('a message that names no show is not heard', () => {

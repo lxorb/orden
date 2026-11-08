@@ -14,13 +14,10 @@ export const FIT_STEPS = [1, 0.92, 0.84, 0.76, 0.68, 0.6, 0.52, 0.45, 0.38, 0.32
 
 export function deckBody(slides: readonly RenderedSlide[]): string {
   const stages = slides.map((slide) => {
-    const fragments = slide.fragments.join(',')
-
     return [
       '<div class="stage">',
       `<div class="slide" data-shape="${slide.shape}" data-steps="${slide.fragments.length}"`,
       slide.vertical ? ' data-vertical="yes"' : '',
-      fragments ? ` data-fragments="${fragments}"` : '',
       '>',
       `<div id="write">${slide.html}</div>`,
       '</div>',
@@ -96,32 +93,25 @@ ${STAGE_SOURCE}
   var run = deck.querySelector('.run')
   var count = deck.querySelector('.count')
   var steps = slides.map(function (slide) { return Number(slide.getAttribute('data-steps') || 0) })
-  var waiting = slides.map(function (slide) {
-    var written = slide.getAttribute('data-fragments')
-    return written ? written.split(',').map(Number) : []
-  })
 
   var at = 0
   var step = 0
   var typed = ''
   var hiding
 
-  /* Which of the slide's items wait for a click, and which are out. By their
-     place among the items the slide renders, which is what the deck parser
-     counted; see slides.ts. An embedded note's own list is not the slide's, and
-     the parser never saw it, so it is skipped here too. */
+  /* Which of the slide's items wait for a click, and which are out. The
+     renderer marks each item written with a plus; see slides.ts. An embedded
+     note's own list is not the slide's, so it is skipped. */
   function marks(index) {
-    var found = pages[index].querySelectorAll('li')
+    var found = pages[index].querySelectorAll('li[data-fragment]')
     var items = []
     for (var f = 0; f < found.length; f++) {
       if (!found[f].closest || !found[f].closest('figure.embed')) items.push(found[f])
     }
 
-    var mine = waiting[index]
     for (var i = 0; i < items.length; i++) {
-      var place = mine.indexOf(i)
-      items[i].classList.toggle('fragment', place >= 0)
-      items[i].classList.toggle('shown', place >= 0 && place < step)
+      items[i].classList.add('fragment')
+      items[i].classList.toggle('shown', i < step)
     }
   }
 

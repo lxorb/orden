@@ -26,7 +26,8 @@
     type Move,
     type Place,
     moveBetween,
-    shownFragments,
+    markFragments,
+    nextPlace,
     STAGE_HEIGHT,
     STAGE_WIDTH,
     stageScale,
@@ -63,7 +64,8 @@
   const steps = $derived(stepsOf(slides))
   const axes = $derived(axesOf(slides))
   const current = $derived(slides[place.slide])
-  const next = $derived(slides[place.slide + 1])
+  const ahead = $derived(nextPlace(steps, place))
+  const next = $derived(ahead ? slides[ahead.slide] : undefined)
   const count = $derived(slides.length)
 
   let latest = 0
@@ -118,18 +120,10 @@
 
   $effect(() => {
     const surface = page
-    const waiting = current?.fragments ?? []
-    if (!surface) return
+    const reasons = [current?.html]
+    if (!surface || !reasons.length) return
 
-    const items = [...surface.querySelectorAll('li')].filter(
-      (item) => !item.closest('figure.embed'),
-    )
-    const shown = new Set(shownFragments(waiting, place.step))
-
-    for (const [at, item] of items.entries()) {
-      item.classList.toggle('fragment', waiting.includes(at))
-      item.classList.toggle('shown', shown.has(at))
-    }
+    markFragments(surface, place.step)
   })
 
   let fitted: (number | undefined)[] = []
@@ -393,6 +387,8 @@
     stage: {
       slide: current?.html ?? '',
       next: next?.html ?? '',
+      step: place.step,
+      nextStep: ahead?.step ?? 0,
       shape: current?.shape ?? 'prose',
       nextShape: next?.shape ?? 'prose',
       notes: current?.notes ?? '',

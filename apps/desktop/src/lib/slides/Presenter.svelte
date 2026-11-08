@@ -3,7 +3,7 @@
   import { onDestroy } from 'svelte'
   import { fitSurface } from './fit'
   import { leads, presenterChannel, type Lead, type Stage } from './presenter'
-  import { STAGE_HEIGHT, stageScale, STAGE_WIDTH } from './stage'
+  import { markFragments, STAGE_HEIGHT, stageScale, STAGE_WIDTH } from './stage'
 
   let stage = $state<Stage | null>(null)
   let gone = $state(false)
@@ -88,6 +88,14 @@
 
     fitBoth()
     void document.fonts.ready.then(fitBoth)
+  })
+
+  $effect(() => {
+    const shown = stage
+    if (!shown) return
+
+    if (bigPage) markFragments(bigPage, shown.step)
+    if (smallPage) markFragments(smallPage, shown.nextStep)
   })
 
   function move(by: number) {
