@@ -174,7 +174,7 @@
           <span class="bar"
             ><span
               style:width="{part(place.ms, group.list) * 100}%"
-              style:background={placeTint(place.key)}
+              style:--tint={placeTint(place.key)}
             ></span></span
           >
           <span class="meta">{length(place.ms)}</span>
@@ -294,6 +294,13 @@
   .bar span {
     display: block;
     height: 100%;
+    background: var(--tint);
+  }
+
+  @media (forced-colors: active) {
+    .bar span {
+      background: Highlight;
+    }
   }
 
   .meta {

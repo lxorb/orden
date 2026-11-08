@@ -199,7 +199,7 @@
             <span class="bar"
               ><span
                 style:width="{(total.ms / (goal?.ms ?? whole)) * 100}%"
-                style:background={tintOf(total.activity)}
+                style:--tint={tintOf(total.activity)}
               ></span></span
             >
             <span class="orden-row-meta"
@@ -234,7 +234,7 @@
                 <span class="bar"
                   ><span
                     style:width="{(place.ms / most(group.list)) * 100}%"
-                    style:background={placeTint(place.key)}
+                    style:--tint={placeTint(place.key)}
                   ></span></span
                 >
                 <span class="orden-row-meta">{length(place.ms)}</span>
@@ -375,6 +375,13 @@
     display: block;
     max-width: 100%;
     height: 100%;
+    background: var(--tint);
+  }
+
+  @media (forced-colors: active) {
+    .bar span {
+      background: Highlight;
+    }
   }
 
   .counted {
