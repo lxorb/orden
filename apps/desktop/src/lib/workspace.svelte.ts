@@ -1409,7 +1409,7 @@ class Workspace {
   }
 
   private onlyOne(kept: Tab) {
-    if (!viewport.touch) return
+    if (!viewport.touch || kept.kind === 'settings') return
 
     for (const other of this.tabs) {
       if (other.id === kept.id || !this.panes.at(other.paneId)) continue

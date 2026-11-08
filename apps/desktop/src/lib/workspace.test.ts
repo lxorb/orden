@@ -5124,6 +5124,22 @@ describe('Settings', () => {
     vi.unstubAllGlobals()
   })
 
+  test('on a phone it stands over the note it was opened from, and closing it brings that note back', async () => {
+    const { settings } = await import('./settings.svelte')
+    const was = viewport.device
+    viewport.device = 'phone'
+    try {
+      await workspace.open('/space/a.md')
+      settings.show('appearance')
+      expect(workspace.active?.kind).toBe('settings')
+
+      settings.open = false
+      expect(workspace.active?.path).toBe('/space/a.md')
+    } finally {
+      viewport.device = was
+    }
+  })
+
   test('closing it leaves no tab, and it is no kind the new tab offers', async () => {
     const { settings } = await import('./settings.svelte')
     const { newKinds } = await import('./new-kinds')
