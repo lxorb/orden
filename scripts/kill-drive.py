@@ -7,6 +7,9 @@ import time
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from drive_scheme import clicked, other  # noqa: E402
+
 OUT, PHASE = Path(sys.argv[1]), sys.argv[2]
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 WORDS = "Words written just before the kill"
@@ -58,14 +61,10 @@ if PHASE == "write":
             break
         time.sleep(0.5)
     was = scheme()
-    run(
-        "(() => { const b = document.querySelector(\"button.act[aria-label='Light'], "
-        "button.act[aria-label='Dark']\"); if (b) b.click(); return !!b })()"
-    )
-    time.sleep(0.5)
+    said = clicked(run, other(was))
     now = scheme()
     if now == was or now not in ("light", "dark"):
-        raise SystemExit(f"::error::write: the scheme did not switch ({was} -> {now})")
+        raise SystemExit(f"::error::write: the scheme did not switch ({was} -> {now}): {said}")
     run("(orden.workspace.openBlank(), 'opened')")
     typed = None
     for _ in range(20):

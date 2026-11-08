@@ -118,6 +118,8 @@ run(f"nib.workspace.openPage({json.dumps(URL)}); true")
 if not until(f"({TITLES}) !== ''", 40):
     sys.exit("::error::the page never loaded")
 time.sleep(2)
+run("(document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })), true)")
+until("!document.querySelector('.orden-bubble.hint')", 5)
 pane = until(PANE)
 row = until(row_box(note))
 if not isinstance(pane, dict) or not isinstance(row, dict):

@@ -138,6 +138,7 @@ def fail(what, name):
 
 SIZE = "(() => { const c = document.querySelector('.cm-content'); return c ? parseFloat(getComputedStyle(c).fontSize) : null })()"
 SLIDER = "input[type=range][min='0.8']"
+SETTINGS = "[role=region][aria-label=Settings]"
 
 def text_box():
     return run("(() => { const c = document.querySelector('.cm-content'); if (!c) return null; const r = c.getBoundingClientRect();"
@@ -203,7 +204,9 @@ else:
     xdo("mouseup", "1")
 time.sleep(1)
 value = run(f"document.querySelector(\"{SLIDER}\").value")
-run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
+run("(nib.settings.open = false, true)")
+if not until(f"!document.querySelector({json.dumps(SETTINGS)}) && !!document.querySelector('.cm-content')", 10):
+    fail("closing the Settings tab did not bring the note back", "settings-open")
 time.sleep(1.5)
 after = run(SIZE)
 inked_after = ink("after")

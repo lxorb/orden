@@ -8,6 +8,9 @@ import time
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from drive_scheme import other, switch  # noqa: E402
+
 DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
 ROUNDS = int(sys.argv[4]) if len(sys.argv) > 4 else 5
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
@@ -147,7 +150,6 @@ HOLE = (
     "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
-TOGGLE = "button.act[aria-label='Light'], button.act[aria-label='Dark']"
 
 def colour_at(x, y):
     shot = OUT / "scheme-now.png"
@@ -201,13 +203,9 @@ for turn in range(5):
     seen.append({"app": app, "page": page})
     if page != app:
         fail(f"turn {turn}: the app is {app} and the page is drawn {page}", f"{turn}-page")
-    button = box(TOGGLE)
-    if not isinstance(button, dict):
-        fail("no button to switch the app's scheme", "toggle")
-        break
-    press(button)
-    if not until(f"document.documentElement.dataset.theme !== {json.dumps(app)}"):
-        fail(f"turn {turn}: the app's scheme did not switch", f"{turn}-toggle")
+    said = switch(run, box, press, other(app))
+    if said != "switched":
+        fail(f"turn {turn}: the app's scheme did not switch: {said}", f"{turn}-toggle")
         break
 
 (OUT / "scheme.json").write_text(json.dumps({"seen": seen, "failures": failures}, indent=2))
