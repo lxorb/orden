@@ -719,17 +719,34 @@ class WhatsAppConnection implements Connection {
     for (const chat of chats) if (chat.id) this.chatRow(chat.id)
     this.chatsChanged(chats)
     const touched = new Set<string>()
+    const later: WAMessage[] = []
     for (const message of messages) {
       const jid = message.key.remoteJid
       if (!jid || !message.key.id) continue
-      if (this.special(message, false)) continue
+      if (this.isSpecial(message)) {
+        later.push(message)
+        continue
+      }
       this.cache.put(message, jid)
       touched.add(jid)
       const row = this.chatRow(jid)
       row.lastAt = Math.max(row.lastAt ?? 0, atOf(message))
     }
+    for (const message of later.sort((a, b) => atOf(a) - atOf(b))) this.special(message, false)
     for (const jid of touched) this.older.get(jid)?.()
     this.emit({ t: 'conversations', conversations: this.conversationsNow() })
+  }
+
+  private isSpecial(message: WAMessage): boolean {
+    const content = contentOf(message.message)
+    if (!content) return false
+    return [
+      content.reactionMessage?.key,
+      message.message?.protocolMessage,
+      content.protocolMessage,
+      content.pinInChatMessage?.key?.id,
+      content.pollUpdateMessage,
+    ].some(Boolean)
   }
 
   private special(message: WAMessage, live: boolean): boolean {

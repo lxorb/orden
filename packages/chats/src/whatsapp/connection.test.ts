@@ -230,6 +230,38 @@ describe('reading', () => {
     expect(older.messages.map((one) => one.text)).toEqual(['hello **there**'])
   })
 
+  test('reactions, edits and deletions in a history sync count even when listed before their message', async () => {
+    const { link, connection } = await connected()
+    link.fire('messaging-history.set', {
+      chats: [{ id: ANNA }],
+      contacts: [],
+      messages: [
+        incoming('R9', ANNA, {
+          reactionMessage: { key: { remoteJid: ANNA, id: 'A1', fromMe: true }, text: '🎉' },
+        }),
+        incoming('E8', ANNA, {
+          protocolMessage: {
+            type: 14,
+            key: { remoteJid: ANNA, id: 'A1', fromMe: true },
+            editedMessage: { conversation: 'see you at 8' },
+          },
+        }),
+        incoming('D7', ANNA, {
+          protocolMessage: { type: 0, key: { remoteJid: ANNA, id: 'A2', fromMe: false } },
+        }),
+        incoming('A2', ANNA, { conversation: 'oops' }),
+        incoming('A1', ANNA, { conversation: 'see you at 7' }, { key: { fromMe: true } }),
+      ],
+      isLatest: true,
+    })
+    const page = await connection.history(ANNA, { limit: 5 })
+    expect(page.messages.map((one) => [one.id, one.text, !!one.deleted])).toEqual([
+      ['A1', 'see you at 8', false],
+      ['A2', '', true],
+    ])
+    expect(page.messages[0]?.reactions).toEqual({ '🎉': [ANNA] })
+  })
+
   test('asks the phone for older messages when the device has no more', async () => {
     const { link, connection } = await connected()
     history(link)
