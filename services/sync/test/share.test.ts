@@ -986,6 +986,114 @@ describe('as many people as one space holds', () => {
     expect(joined.status).toBe(200)
     expect(joined.json.space.role).toBe('write')
   })
+  function held(table: 'space_members' | 'space_requests'): number {
+    const row = env.db
+      .prepare(`select count(*) as n from ${table} where space_id = ?`)
+      .get(space) as { n: number }
+    return row.n
+  }
+
+  test('lets nobody in past it when somebody else got in just before', async () => {
+    const token = await shareLink('read', 'open')
+    fillMembers(1)
+    env.justBefore(/insert into space_members/, () => {
+      env.db
+        .prepare(
+          'insert into space_members (space_id, email, role, created_at) values (?, ?, ?, ?)',
+        )
+        .run(space, 'quicker@example.com', 'read', Date.now())
+    })
+
+    const joined = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+
+    expect(joined.status).toBe(409)
+    expect(held('space_members')).toBe(MOST_MEMBERS)
+  })
+
+  test('writes no more invitations than it holds when many are sent at once', async () => {
+    fillMembers(1)
+
+    const answers = await Promise.all(
+      [0, 1, 2, 3].map((one) =>
+        call(env, `/v1/spaces/${space}/share/invite`, {
+          token: owner,
+          body: { email: `asked${one}@example.com`, role: 'read' },
+        }),
+      ),
+    )
+
+    expect(held('space_members')).toBe(MOST_MEMBERS)
+    expect(answers.filter((one) => one.status === 409)).toHaveLength(3)
+  })
+
+  test('lets nobody waiting in once it is full', async () => {
+    const token = await shareLink('read', 'approval')
+    const asked = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+    expect(asked.json.waiting).toBe(true)
+    fillMembers()
+
+    const admitted = await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
+      method: 'POST',
+      token: owner,
+    })
+
+    expect(admitted.status).toBe(409)
+    expect(admitted.json.error).toBe('that is as many people as one space holds')
+    expect(held('space_members')).toBe(MOST_MEMBERS)
+  })
+
+  test('keeps nobody waiting past it when somebody else asked just before', async () => {
+    const token = await shareLink('read', 'approval')
+    const at = Date.now()
+    const ask = (email: string, when: number) =>
+      env.db
+        .prepare(
+          'insert into space_requests (space_id, email, role, created_at) values (?, ?, ?, ?)',
+        )
+        .run(space, email, 'read', when)
+    for (let one = 0; one < MOST_MEMBERS - 1; one++) ask(`waiting${one}@example.com`, at + one)
+    env.justBefore(/insert into space_requests/, () => ask('quicker@example.com', at))
+
+    const asked = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+
+    expect(asked.status).toBe(429)
+    expect(held('space_requests')).toBe(MOST_MEMBERS)
+  })
+
+  test('lets in no more guests than it holds when many come at once', async () => {
+    const token = await shareLink('read', 'open')
+    const long = Date.now() - 10 * 60_000
+    for (let one = 0; one < 199; one++) {
+      env.db
+        .prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
+        .run(`filler-guest-${String(one)}`, 'Filler', long)
+      env.db
+        .prepare(
+          `insert into guest_members (space_id, guest_id, role, joined_at, created_at)
+           values (?, ?, 'read', ?, ?)`,
+        )
+        .run(space, `filler-guest-${String(one)}`, long, long)
+    }
+    const guestsBefore = (env.db.prepare('select count(*) as n from guests').get() as { n: number })
+      .n
+
+    const answers = await Promise.all(
+      [0, 1, 2].map(() =>
+        call(env, `/v1/join/${token}`, { method: 'POST', body: { device: 'Windows' } }),
+      ),
+    )
+
+    const joined = env.db
+      .prepare(
+        'select count(*) as n from guest_members where space_id = ? and joined_at is not null',
+      )
+      .get(space) as { n: number }
+    expect(joined.n).toBe(200)
+    expect(answers.filter((one) => one.status === 429)).toHaveLength(2)
+    const guestsAfter = (env.db.prepare('select count(*) as n from guests').get() as { n: number })
+      .n
+    expect(guestsAfter - guestsBefore).toBe(1)
+  })
 })
 
 describe('a share link', () => {
