@@ -1,11 +1,17 @@
 import type { Quad } from '../../pdf/highlights'
 import { Refused } from './problem'
 
+const MOST_RANGES = 100
+
 export function pagesAsked(said: string | null, count: number): number[] {
   if (said === null) return Array.from({ length: count }, (_, at) => at + 1)
 
+  const parts = said.split(',')
+  if (parts.length > MOST_RANGES) {
+    throw new Refused('bad_arguments', `pages names at most ${MOST_RANGES} ranges`)
+  }
   const pages = new Set<number>()
-  for (const part of said.split(',')) {
+  for (const part of parts) {
     const [from, to] = part.split('-').map((one) => Number(one.trim()))
     if (from === undefined || !Number.isInteger(from)) {
       throw new Refused('bad_arguments', 'pages is like 1-3,7')
