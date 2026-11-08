@@ -9,7 +9,14 @@
   import { longPress } from './longpress'
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
   import { densityFor, paperOf } from './pages/paper'
-  import { sameSheet, type SheetDrawn, sheetDrawn, shelvesOf, shownOf } from './pages/thumbs'
+  import {
+    sameSheet,
+    type SheetDrawn,
+    sheetDrawn,
+    shelvesOf,
+    shownOf,
+    thumbSize,
+  } from './pages/thumbs'
   import { pages as showing } from './pages/showing.svelte'
   import { ListView } from './row-window.svelte'
   import { roving } from './roving'
@@ -189,11 +196,8 @@
     const asked = new AbortController()
     drawing.set(page.id, asked)
 
-    const scale = WIDE / page.width
-    const tall = page.height * scale
-    const ratio = Math.min(2, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1)
-    const wide = Math.max(1, Math.round(WIDE * ratio))
-    const high = Math.max(1, Math.round(tall * ratio))
+    const sharp = Math.min(2, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1)
+    const { scale, tall, ratio, width: wide, height: high } = thumbSize(page, WIDE, sharp)
     if (element.width !== wide) element.width = wide
     if (element.height !== high) element.height = high
 

@@ -1,11 +1,7 @@
 import { pngData, pngDrawn } from '../png-off'
-import type { PaperAt } from './paper'
+import { type PaperAt, sharpness } from './paper'
 
-const SIDE = 16384
-
-export function sharpness(width: number, height: number, wanted: number): number {
-  return Math.min(wanted, SIDE / Math.max(width, height, 1))
-}
+export { sharpness }
 
 export async function svgToPng(
   svg: string,

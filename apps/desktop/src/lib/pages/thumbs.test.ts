@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { InkStroke, PageNode } from '../canvas/format'
-import { sameSheet, sheetDrawn, shelvesOf, shownOf } from './thumbs'
+import { sameSheet, sheetDrawn, shelvesOf, shownOf, thumbSize } from './thumbs'
 
 const A4 = { width: 794, height: 1123 }
 const WIDE = { width: 1123, height: 794 }
@@ -110,5 +110,27 @@ describe('a page thumbnail drawn again', () => {
     expect(sameSheet(drawn, sheetDrawn({ ...one, file: 'X.pdf', page: 2 }, ink, palette))).toBe(
       false,
     )
+  })
+})
+
+describe('the thumbnail of a page', () => {
+  test('is drawn at the sharpness asked for when the page is of usual size', () => {
+    expect(thumbSize(A4, 104, 2)).toMatchObject({ ratio: 2, width: 208, height: 294 })
+  })
+
+  test('of an endless page stays within what a canvas can hold, shrunk in proportion', () => {
+    for (const height of [125_000, 200_000, 1_000_000, 10_000_000]) {
+      const size = thumbSize({ width: 794, height }, 104, 2)
+      expect(size.height).toBeLessThanOrEqual(16384)
+      expect(size.width).toBeGreaterThanOrEqual(1)
+      expect(size.tall).toBeCloseTo((height * 104) / 794)
+      expect(size.height / size.ratio).toBeCloseTo(size.tall, 0)
+      if (size.width > 4) expect(size.height / size.width).toBeCloseTo(height / 794, -1)
+    }
+  })
+
+  test('of a page wider than it is tall keeps its width in bounds too', () => {
+    const size = thumbSize({ width: 1, height: 1 }, 40_000, 2)
+    expect(size.width).toBeLessThanOrEqual(16384)
   })
 })
