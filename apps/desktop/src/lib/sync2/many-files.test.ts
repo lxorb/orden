@@ -1,13 +1,20 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { hash32 } from '@orden/sync-core/seed'
+import { Clock, Random, ReferenceAccount } from '@orden/sync-core/sim'
 import { GROWS_AT_MOST } from '../../../../../scripts/growth'
 import { Engine } from './engine'
 import { localFirst, localSpaceId } from './local'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
+import { EngineDevice } from './sim-device'
+import type { Change } from './store'
 import type { World } from './world'
 
 const ROOT = '/device/space'
+
+interface Writing {
+  write(changes: readonly Change[]): number[]
+}
 
 async function heard(size: number, note: boolean): Promise<number> {
   const disk = new MemoryDisk()
@@ -75,4 +82,26 @@ describe('a folder of many dropped into a space', () => {
     },
     120_000,
   )
+})
+
+describe('a pass sending thousands of new notes', () => {
+  test('writes each op down a few times, not once a round for every op still waiting', async () => {
+    const clock = new Clock()
+    const account = new ReferenceAccount(clock, [])
+    const device = new EngineDevice('a', clock, new Random(1), [])
+    await device.launch()
+    const size = 2000
+    for (let at = 0; at < size; at++) {
+      await device.act({ t: 'create', folder: null, name: `Note ${String(at)}.md`, words: 'w' })
+    }
+    const written = vi.spyOn(device.store as unknown as Writing, 'write')
+    for (let round = 0; round < 3; round++) {
+      await device.pass((route, body) => account.handle('a', route, body))
+    }
+    const puts = written.mock.calls
+      .flatMap(([changes]) => changes)
+      .filter((change) => change.t === 'put' && change.table === 'outbox').length
+    expect((await account.view()).entries).toHaveLength(size)
+    expect(puts).toBeLessThan(size * 2)
+  }, 120_000)
 })
