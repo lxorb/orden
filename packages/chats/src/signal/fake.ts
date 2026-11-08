@@ -42,7 +42,7 @@ export class FakeSignalCli {
   private end: ((reason?: string) => void) | null = null
   private pending = ''
   private early: Uint8Array[] = []
-  private stopped: string | null = null
+  stopped: string | null = null
   private scanned: (() => void) | null = null
 
   program(): Stream {

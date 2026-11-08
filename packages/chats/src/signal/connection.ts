@@ -229,6 +229,7 @@ class SignalConnection implements Connection {
   private unhear: (() => void) | null = null
   private unend: (() => void) | null = null
   private closed = false
+  private holding = true
   private retryIn = RETRY_FIRST
   private readonly now: () => number
 
@@ -293,6 +294,7 @@ class SignalConnection implements Connection {
 
   private lost(reason: string): void {
     if (this.closed) return
+    this.holding = false
     this.subscription = null
     this.emit({ t: 'status', status: 'offline', reason })
     this.retry()
@@ -310,15 +312,19 @@ class SignalConnection implements Connection {
 
   private async again(): Promise<void> {
     if (this.closed) return
+    let rpc: Rpc | null = null
     try {
-      const rpc = await borrow(this.host)
+      rpc = await borrow(this.host)
       if (this.stopped()) {
         await giveBack(this.host, rpc)
         return
       }
       this.rpc = rpc
+      this.holding = true
       const mine = (await accountsOf(rpc)).some((one) => one.aci === this.me.aci)
       if (!mine) {
+        this.holding = false
+        await giveBack(this.host, rpc)
         this.emit({ t: 'status', status: 'signed-out', reason: WORDS.signedOut })
         return
       }
@@ -327,6 +333,10 @@ class SignalConnection implements Connection {
       this.retryIn = RETRY_FIRST
       this.emit({ t: 'status', status: 'online' })
     } catch {
+      if (rpc && this.holding && this.rpc === rpc) {
+        this.holding = false
+        await giveBack(this.host, rpc).catch(() => undefined)
+      }
       this.retry()
     }
   }
@@ -1378,7 +1388,7 @@ class SignalConnection implements Connection {
     this.unhear?.()
     this.unend?.()
     this.hearers.clear()
-    await giveBack(this.host, this.rpc)
+    if (this.holding) await giveBack(this.host, this.rpc)
   }
 }
 
