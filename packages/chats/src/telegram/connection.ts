@@ -259,10 +259,24 @@ class TelegramConnection implements Connection {
       const result = await this.client.call(request)
       const found = foundIn(result)
       if (found) this.peers.add(found)
+      this.ownUpdates(result)
       return result
     } catch (error) {
       if (signedOut(error)) await this.lost()
       throw error
+    }
+  }
+
+  private ownUpdates(result: unknown): void {
+    if (typeof result !== 'object' || result === null || !('_' in result)) return
+    const kind = (result as { _: unknown })._
+    if (kind !== 'updates' && kind !== 'updatesCombined' && kind !== 'updateShort') return
+    for (const update of updatesIn(result as tl.TypeUpdates)) {
+      if (update._ === 'updateNewMessage' || update._ === 'updateNewChannelMessage') {
+        const where = whereOfMessage(update.message, this.peers)
+        if (!where || !this.known.has(idOf(where))) continue
+      }
+      this.heard(update, { users: [], chats: [] })
     }
   }
 
@@ -817,9 +831,10 @@ class TelegramConnection implements Connection {
         entities,
       )
     }
+    const medias: tl.TypeInputMedia[] = []
+    for (const file of files) medias.push(await this.mediaOf(file))
     let first: ProviderMessage | null = null
-    for (const [index, file] of files.entries()) {
-      const media = await this.mediaOf(file)
+    for (const [index, media] of medias.entries()) {
       const caption = index === 0 ? message : ''
       const marks = index === 0 ? entities : []
       const sent = await this.deliver(
@@ -1519,6 +1534,23 @@ class TelegramConnection implements Connection {
       if (!told.has(message)) this.emit({ t: 'deleted', conversation: `s${channel}`, message })
   }
 
+  private home(channel: number): string {
+    return idOf({
+      kind: 's',
+      id: channel,
+      ...(this.peers.forum(channel) ? { topic: GENERAL } : {}),
+    })
+  }
+
+  private readIn(conversation: string, maxId: number): void {
+    const unread = this.keptWhere(
+      (key, message) => key.startsWith(`${conversation}\n`) && !message.out && message.id > maxId,
+    ).length
+    this.changeConversation(conversation, {
+      unread: Math.min(this.known.get(conversation)?.unread ?? 0, unread),
+    })
+  }
+
   private readOut(conversation: string, maxId: number): void {
     this.outbox.set(conversation, maxId)
     this.emit({ t: 'read', conversation, person: conversation, upTo: String(maxId) })
@@ -1559,11 +1591,27 @@ class TelegramConnection implements Connection {
         update.channelId,
       ),
     updateReadHistoryOutbox: (update) => this.readOut(peerId(update.peer), update.maxId),
-    updateReadChannelOutbox: (update) => this.readOut(`s${update.channelId}`, update.maxId),
+    updateReadChannelOutbox: (update) => this.readOut(this.home(update.channelId), update.maxId),
+    updateReadChannelDiscussionOutbox: (update) => {
+      if (this.peers.forum(update.channelId))
+        this.readOut(
+          idOf({ kind: 's', id: update.channelId, topic: update.topMsgId }),
+          update.readMaxId,
+        )
+    },
+    updateReadChannelDiscussionInbox: (update) => {
+      if (this.peers.forum(update.channelId))
+        this.readIn(
+          idOf({ kind: 's', id: update.channelId, topic: update.topMsgId }),
+          update.readMaxId,
+        )
+    },
     updateReadHistoryInbox: (update) =>
       this.changeConversation(peerId(update.peer), { unread: update.stillUnreadCount }),
-    updateReadChannelInbox: (update) =>
-      this.changeConversation(`s${update.channelId}`, { unread: update.stillUnreadCount }),
+    updateReadChannelInbox: (update) => {
+      if (this.peers.forum(update.channelId)) this.readIn(this.home(update.channelId), update.maxId)
+      else this.changeConversation(`s${update.channelId}`, { unread: update.stillUnreadCount })
+    },
     updateUserTyping: (update) =>
       this.typed(`u${update.userId}`, { _: 'peerUser', userId: update.userId }, update.action),
     updateChatUserTyping: (update) => this.typed(`c${update.chatId}`, update.fromId, update.action),

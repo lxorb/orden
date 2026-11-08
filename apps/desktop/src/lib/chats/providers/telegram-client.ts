@@ -1,6 +1,45 @@
 import { MemoryStorage, TelegramClient, type tl } from '@mtcute/web'
 import { signedOut, type Client, type ClientState, type Setup } from '@orden/chats/telegram'
 
+const CONTAINERS = new Set([
+  'updates',
+  'updatesCombined',
+  'updateShort',
+  'updateShortMessage',
+  'updateShortChatMessage',
+])
+
+function channelOf(request: tl.RpcMethod): number {
+  const channel = (request as { channel?: tl.TypeInputChannel }).channel
+  return channel?._ === 'inputChannel' ? channel.channelId : 0
+}
+
+export function ownUpdates(request: tl.RpcMethod, result: unknown): tl.TypeUpdates | null {
+  if (typeof result !== 'object' || result === null || !('_' in result)) return null
+  const kind = String(result._)
+  if (CONTAINERS.has(kind)) return result as tl.TypeUpdates
+  const moved = result as { pts?: unknown; ptsCount?: unknown }
+  const sent = kind === 'updateShortSentMessage'
+  const affected = kind === 'messages.affectedMessages' || kind === 'messages.affectedHistory'
+  if (!(sent || affected) || typeof moved.pts !== 'number' || typeof moved.ptsCount !== 'number')
+    return null
+  return {
+    _: 'updates',
+    seq: 0,
+    date: 0,
+    users: [],
+    chats: [],
+    updates: [
+      {
+        _: 'mtcute.dummyUpdate',
+        channelId: sent ? 0 : channelOf(request),
+        pts: moved.pts,
+        ptsCount: moved.ptsCount,
+      } as unknown as tl.TypeUpdate,
+    ],
+  }
+}
+
 export async function dial(setup: Setup): Promise<Client> {
   const client = new TelegramClient({
     apiId: setup.apiId,
@@ -17,7 +56,12 @@ export async function dial(setup: Setup): Promise<Client> {
     return user.raw
   }
   return {
-    call: (request) => client.call(request),
+    async call(request) {
+      const result = await client.call(request)
+      const own = ownUpdates(request, result)
+      if (own) client.handleClientUpdate(own, true)
+      return result
+    },
     listen(update, state) {
       const raw = (info: {
         update: tl.TypeUpdate
