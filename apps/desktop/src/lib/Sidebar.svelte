@@ -11,7 +11,7 @@
   import { movesSection } from './sections'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { landsIn } from './move-targets'
   import { shortcuts } from './shortcuts.svelte'
@@ -701,7 +701,7 @@
                   workspace.graphSettings.set({
                     depth: depth >= DEEPEST ? SHALLOWEST : depth + 1,
                   })}
-                transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
+                transition:fly={{ x: 10 * i18n.factor, duration: dur(130), easing: cubicOut }}
               >
                 {depth}
               </button>
@@ -725,7 +725,7 @@
               title={shortcuts.tooltip(t('Collapse the file list'), 'app.fold-list')}
               aria-label={t('Collapse the file list')}
               onclick={() => workspace.foldList()}
-              transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
+              transition:fly={{ x: 10 * i18n.factor, duration: dur(130), easing: cubicOut }}
             >
               <svg viewBox="0 0 13 13"><path d={FOLD_MARK} /></svg>
             </button>

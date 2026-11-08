@@ -350,7 +350,7 @@
   })
 
   const enter = (x: number) =>
-    stacked ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
+    stacked ? { x: x * i18n.factor, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
 
   $effect.pre(() => closeOnBack(stacked && !settings.listing, () => (settings.listing = true)))
 </script>
