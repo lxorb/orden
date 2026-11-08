@@ -26,6 +26,7 @@ from ApplicationServices import (
 from PIL import Image, ImageChops, ImageGrab, ImageStat
 
 from carry_page import PAGE as CARRY_PAGE, carried
+from fresh_app import fresh
 
 COLOUR = (255, 0, 255)
 LAYER = (0, 160, 0)
@@ -357,8 +358,7 @@ def main() -> int:
     url = f"http://127.0.0.1:{site.server_address[1]}/under"
 
     config = config_dir(args.identifier)
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-under-spaces-"))

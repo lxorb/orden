@@ -15,6 +15,7 @@ import time
 import urllib.error
 import urllib.request
 from typing import Any
+from fresh_app import ended, fresh
 
 TYPED = "typed from afar"
 KEY = "drive-1063"
@@ -251,8 +252,7 @@ def main() -> int:
         raise SystemExit("this drive is Windows'")
 
     config = pathlib.Path(os.environ["APPDATA"]) / args.identifier
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-apps-spaces-"))
@@ -265,8 +265,7 @@ def main() -> int:
             time.sleep(1)
         wrong = drive(app, process.pid, args.shot)
     finally:
-        process.kill()
-        process.wait(20)
+        ended(process)
         shutil.rmtree(spaces, ignore_errors=True)
 
     for one in wrong:

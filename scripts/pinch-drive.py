@@ -15,6 +15,7 @@ import time
 import urllib.error
 import urllib.request
 from typing import Any
+from fresh_app import ended, fresh
 
 PAGE = b"""<!doctype html><meta name="viewport" content="width=device-width"><title>pinch</title>
 <body style="margin:0;font:16px sans-serif">
@@ -239,8 +240,7 @@ def main() -> int:
     url = f"http://127.0.0.1:{site.server_address[1]}/pinch"
 
     config = config_of(args.identifier)
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-pinch-spaces-"))
@@ -283,8 +283,7 @@ def main() -> int:
             if zoomed.get("ratio", 0) <= before["ratio"] * 1.05:
                 wrong.append(f"Ctrl and the wheel no longer zoom the page: {zoomed}")
     finally:
-        process.kill()
-        process.wait(20)
+        ended(process)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
 

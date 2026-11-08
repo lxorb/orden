@@ -17,6 +17,7 @@ import urllib.request
 from typing import Any
 
 import crash_told
+from fresh_app import ended, fresh
 
 PAGE = b"<!doctype html><title>a page</title><p>a page"
 TABS = 3
@@ -156,8 +157,7 @@ def main() -> int:
     url = f"http://127.0.0.1:{site.server_address[1]}/"
 
     config = config_of(args.identifier)
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-web-tab-spaces-"))
@@ -186,8 +186,7 @@ def main() -> int:
             if wrong:
                 break
     finally:
-        process.kill()
-        process.wait(20)
+        ended(process)
         site.shutdown()
         if wrong:
             for line in stalls(args.identifier):

@@ -14,6 +14,7 @@ import time
 import urllib.error
 import urllib.request
 from typing import Any, Callable
+from fresh_app import ended, fresh
 
 WIDTH, HEIGHT = 1100, 720
 SETTLE = 25.0
@@ -543,8 +544,7 @@ def main() -> int:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
 
     config = config_of(args.identifier)
-    shutil.rmtree(config, ignore_errors=True)
-    config.mkdir(parents=True)
+    fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-outside-spaces-"))
@@ -625,8 +625,7 @@ def main() -> int:
         else:
             print(f"list: the PDF landed in the space: {pdfs_in_space()}", flush=True)
     finally:
-        process.kill()
-        process.wait(20)
+        ended(process)
         shutil.rmtree(spaces, ignore_errors=True)
         shutil.rmtree(outside, ignore_errors=True)
 
