@@ -170,3 +170,32 @@ test('pages stored before the space runs out are placed, and the reader is told'
   expect(busy.trouble).toMatch(/out of space/)
   expect(busy.active).toBe(false)
 })
+
+test('files dropped together are laid one below another, none over the last, and all picked', async () => {
+  const store = board()
+  const picture = (name: string) => new File(['png'], name, { type: 'image/png' })
+  const pdf = new File([new Uint8Array([37, 80, 68, 70])], 'Lecture.pdf', {
+    type: 'application/pdf',
+  })
+  vi.stubGlobal('document', paper)
+  try {
+    await run.dropFiles(
+      store,
+      [picture('a.png'), pdf, picture('b.png')],
+      { x: 0, y: 0 },
+      '/space/Board.canvas',
+    )
+  } finally {
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  }
+
+  const cards = store.canvas.nodes.filter((node) => node.type === 'file')
+  expect(cards).toHaveLength(4)
+  const tops = [...cards].sort((one, other) => one.y - other.y)
+  for (const [index, card] of tops.slice(1).entries()) {
+    const above = tops[index]!
+    expect(card.y).toBeGreaterThanOrEqual(above.y + above.height)
+  }
+  expect([...store.picked].sort()).toEqual(cards.map((card) => card.id).sort())
+})

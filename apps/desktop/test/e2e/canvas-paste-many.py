@@ -48,6 +48,17 @@ PASTE = """(pictures) => {
 
 LOADED = "[...document.querySelectorAll('.canvas img.picture')].filter((one) => one.complete && one.naturalWidth > 0).length"
 
+OVERLAPS = """() => {
+  const boxes = [...document.querySelectorAll('.canvas img.picture')].map((one) => one.getBoundingClientRect())
+  const over = []
+  boxes.forEach((one, at) => boxes.slice(at + 1).forEach((other) => {
+    const x = Math.min(one.right, other.right) - Math.max(one.left, other.left)
+    const y = Math.min(one.bottom, other.bottom) - Math.max(one.top, other.top)
+    if (x > 0.5 && y > 0.5) over.push([Math.round(x), Math.round(y)])
+  }))
+  return over
+}"""
+
 
 def drive(browser: Browser) -> None:
     context = DRIVE.context(browser, viewport={"width": 1200, "height": 800}, service_workers="allow")
@@ -65,6 +76,11 @@ def drive(browser: Browser) -> None:
         say("ok   three pictures pasted at once are three cards")
     except SystemExit:
         wrong(f"three pictures pasted at once became {page.evaluate(LOADED)} card(s)")
+    over = page.evaluate(OVERLAPS)
+    if over:
+        wrong(f"pictures pasted together lie over one another: {over}")
+    else:
+        say("ok   pictures pasted together lie one below another")
     shot(page, "pasted-three")
 
 

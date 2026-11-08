@@ -28,7 +28,16 @@ import {
   type Shape,
   type Side,
 } from './format'
-import { bounds, type Box, boxOf, facingSide, GRID, type Point, rectBetween } from './geometry'
+import {
+  bounds,
+  type Box,
+  boxOf,
+  facingSide,
+  GRID,
+  type Point,
+  rectBetween,
+  snapped,
+} from './geometry'
 import { cardsInLasso, INK_STYLES, strokeBox, strokesInLasso, tidied } from './ink'
 import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
@@ -241,23 +250,57 @@ export const run = {
     store.pickAll(ids)
   },
 
-  async dropImage(store: CanvasStore, file: File, where: Point | Box, notePath: string | null) {
-    if (store.readOnly) return
+  async dropFiles(store: CanvasStore, files: readonly File[], at: Point, notePath: string | null) {
+    const ids: string[] = []
+    let below: number | null = null
+
+    for (const file of files) {
+      const spot = (width: number, height: number): Box => {
+        const box = placedAt(at, width, height)
+        return below === null ? box : { ...box, y: snapped(below) }
+      }
+      const made: string[] = await (
+        isPdfFile(file)
+          ? run.dropPdf(store, file, spot, notePath)
+          : run.dropImage(store, file, spot, notePath)
+      ).catch((error: unknown) => {
+        busy.failed(`${file.name}: ${error instanceof Error ? error.message : String(error)}`)
+        return []
+      })
+      const box = bounds(store.canvas.nodes.filter((node) => made.includes(node.id)))
+      if (box) below = box.y + box.height + GRID
+      ids.push(...made)
+    }
+
+    if (ids.length > 1) store.pickAll(ids)
+  },
+
+  async dropImage(
+    store: CanvasStore,
+    file: File,
+    where: Spot,
+    notePath: string | null,
+  ): Promise<string[]> {
+    if (store.readOnly) return []
     const stored = await storeImage(file, notePath).catch(() => null)
-    if (!stored) return
+    if (!stored) return []
 
     const root = canvasRoot(store)
     const relative =
       accountAddress(stored) ?? (root && notePath ? spaceRelative(root, notePath, stored) : stored)
-    if (!relative) return
+    if (!relative) return []
     const size = ownSize('picture')
-    const box = 'width' in where ? where : placedAt(where, size.width, size.height)
 
-    putFile(store, relative, box)
+    return [putFile(store, relative, spotted(where, size.width, size.height))]
   },
 
-  async dropPdf(store: CanvasStore, file: File, at: Point, notePath: string | null) {
-    if (!notePath || store.readOnly) return
+  async dropPdf(
+    store: CanvasStore,
+    file: File,
+    where: Spot,
+    notePath: string | null,
+  ): Promise<string[]> {
+    if (!notePath || store.readOnly) return []
 
     const bytes = new Uint8Array(await file.arrayBuffer())
     const library = await pdfjs()
@@ -267,7 +310,7 @@ export const run = {
       const doc = await task.promise.catch(() => null)
       if (!doc?.numPages) {
         busy.failed(t('That file could not be read'))
-        return
+        return []
       }
 
       const mode = await prompt.choose({
@@ -278,7 +321,7 @@ export const run = {
           { id: 'all', label: t('All pages') },
         ],
       })
-      if (!mode) return
+      if (!mode) return []
 
       let pages: number[]
       if (mode === 'single') {
@@ -293,17 +336,17 @@ export const run = {
                   label: t('Page {number}', { number: index + 1 }),
                 })),
               })
-        if (!selected) return
+        if (!selected) return []
         pages = [Number(selected)]
       } else {
         pages = Array.from({ length: doc.numPages }, (_, index) => index + 1)
       }
 
       const root = canvasRoot(store)
-      if (!root) return
+      if (!root) return []
 
       const made: Parameters<typeof withNode>[1][] = []
-      let y = at.y
+      let below: number | null = null
       const label = t('Import PDF')
       try {
         await busy.run(label, async () => {
@@ -339,12 +382,10 @@ export const run = {
 
             const width = Math.round(natural.width)
             const height = Math.round(natural.height)
-            const box =
-              mode === 'single'
-                ? placedAt(at, width, height)
-                : placedAt({ x: at.x, y: y + height / 2 }, width, height)
+            const spot = spotted(where, width, height)
+            const box = below === null ? spot : { ...spot, y: snapped(below) }
             made.push({ ...box, id: freshId(), type: 'file', file: relative })
-            y += height + GRID
+            below = box.y + height + GRID
           }
         })
       } catch (error) {
@@ -355,6 +396,7 @@ export const run = {
         store.edit(made.reduce((next, node) => withNode(next, node), store.canvas))
         store.pickAll(made.map((node) => node.id))
       }
+      return made.map((node) => node.id)
     } finally {
       await task.destroy().catch(() => undefined)
     }
@@ -583,10 +625,22 @@ function putLink(store: CanvasStore, url: string, box: Box) {
   store.pick(id)
 }
 
-function putFile(store: CanvasStore, file: string, box: Box) {
+function putFile(store: CanvasStore, file: string, box: Box): string {
   const id = freshId()
   store.edit(withNode(store.canvas, { ...box, id, type: 'file', file }))
   store.pick(id)
+  return id
+}
+
+type Spot = Point | Box | ((width: number, height: number) => Box)
+
+function spotted(where: Spot, width: number, height: number): Box {
+  if (typeof where === 'function') return where(width, height)
+  return 'width' in where ? where : placedAt(where, width, height)
+}
+
+export function isPdfFile(file: File): boolean {
+  return file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
 }
 
 async function askLabel(store: CanvasStore, id: string) {
