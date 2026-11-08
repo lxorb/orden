@@ -5,7 +5,7 @@ import { now } from '../crypto'
 import { OUT_OF_SPACE } from '../refused'
 import { fits } from '../storage'
 import type { Env, Variables } from '../types'
-import { activeIn, mayAct } from './access'
+import { activeIn, holdsSql, mayAct } from './access'
 import {
   NO_SUCH_FILE,
   NO_SUCH_ITEM,
@@ -121,12 +121,23 @@ files.put('/files/:vault/:item/:file', async (context) => {
      select ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8
       where not exists (select 1 from pass_file_parts
                          where item_id = ?1 and file_id = ?2 and (vault_id <> ?5 or parts <> ?4))
+        and exists (select 1 from pass_items where vault_id = ?5 and id = ?1 and deleted_at is null)
+        and ${holdsSql('?5', '?9', 'editor')}
      on conflict(item_id, file_id, part) do update set
        user_id = excluded.user_id, size = excluded.size, at = excluded.at`,
   )
-    .bind(item, file, part, parts, vault, user.id, body.byteLength, now())
+    .bind(item, file, part, parts, vault, user.id, body.byteLength, now(), user.email)
     .run()
   if (!claimed.meta.changes) {
+    const after = await activeIn(context.env, vault, user.email)
+    if (!after) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!mayAct(after, 'editor')) return context.json({ error: NOT_YOUR_ROLE }, 403)
+    const still = await context.env.DB.prepare(
+      'select 1 from pass_items where vault_id = ? and id = ? and deleted_at is null',
+    )
+      .bind(vault, item)
+      .first()
+    if (!still) return context.json({ error: NO_SUCH_ITEM }, 404)
     const there = await partsOf(context.env, item, file)
     const taken = there.some((one) => one.vault_id !== vault)
     return context.json({ error: taken ? TAKEN : NOT_A_FILE }, 409)

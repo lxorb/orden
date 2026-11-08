@@ -3,7 +3,7 @@ import { MOST_ITEM_BYTES, MOST_ITEMS, MOST_VAULTS, MOST_VERSIONS } from '@orden/
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { QUOTA, usedBytes } from '../src/storage'
 import { type TestEnv, testEnv } from './harness'
-import { anId, pass, passCall, type Person, person, sealed } from './pass-fakes'
+import { anId, pass, passCall, type Person, person, sealed, sharedVault } from './pass-fakes'
 
 let env: TestEnv
 let ada: Person
@@ -310,5 +310,71 @@ describe('an item', () => {
     const bob = await person(env, 'bob@example.com')
     expect((await api.item(bob, vault, anId())).status).toBe(404)
     expect((await passCall(env, bob, 'GET', `/vaults/${vault}/items`)).status).toBe(404)
+  })
+
+  describe('is not written by a member whose place changed while the write was on its way', () => {
+    let bob: Person
+    let shared: string
+    let item: string
+
+    const leaves = (state: 'removed' | 'viewer') => () =>
+      env.db
+        .prepare(
+          state === 'removed'
+            ? "update pass_members set state = 'removed', key = null where vault_id = ? and email = ?"
+            : "update pass_members set role = 'viewer' where vault_id = ? and email = ?",
+        )
+        .run(shared, bob.email)
+
+    const rows = () =>
+      env.db
+        .prepare('select vault_id, id, rev, deleted_at from pass_items order by vault_id, id')
+        .all()
+
+    beforeEach(async () => {
+      bob = await person(env, 'bob@example.com')
+      shared = await sharedVault(env, ada, bob)
+      item = anId()
+      await api.item(ada, shared, item)
+    })
+
+    const writes = {
+      new: () => api.item(bob, shared, anId()),
+      changed: () => api.item(bob, shared, item, 1),
+      deleted: () => passCall(env, bob, 'DELETE', `/items/${shared}/${item}?rev=1`),
+    }
+
+    test.each([
+      ['new', 'removed', 404],
+      ['new', 'viewer', 403],
+      ['changed', 'removed', 404],
+      ['changed', 'viewer', 403],
+      ['deleted', 'removed', 404],
+      ['deleted', 'viewer', 403],
+    ] as const)('%s once %s', async (write, state, status) => {
+      const before = rows()
+      env.justBefore(/insert into pass_items|update pass_items set rev = rev \+ 1/, leaves(state))
+      expect((await writes[write]()).status).toBe(status)
+      expect(rows()).toEqual(before)
+    })
+
+    test.each([
+      ['removed', 404],
+      ['viewer', 403],
+    ] as const)('moved out once %s', async (state, status) => {
+      const other = anId()
+      await api.vault(bob, other)
+      const before = rows()
+      env.justBefore(/insert into pass_items/, leaves(state))
+      const moved = await passCall(env, bob, 'POST', `/items/${shared}/${item}/move`, {
+        to: other,
+        rev: 1,
+        key: sealed(),
+        body: sealed(),
+        keyVersion: 1,
+      })
+      expect(moved.status).toBe(status)
+      expect(rows()).toEqual(before)
+    })
   })
 })

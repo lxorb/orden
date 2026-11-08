@@ -240,6 +240,69 @@ describe('leaving and removing', () => {
   })
 })
 
+describe('a manager whose place changes while acting', () => {
+  const demote = (who: Person) => () =>
+    env.db
+      .prepare("update pass_members set role = 'editor' where vault_id = ? and email = ?")
+      .run(vault, who.email)
+
+  const state = () =>
+    env.db
+      .prepare(
+        `select email, role, state, key_version from pass_members where vault_id = ?
+          order by email`,
+      )
+      .all(vault) as { email: string; role: string }[]
+
+  const vaultRow = () =>
+    env.db.prepare('select rev, meta, key_proof from pass_vaults where id = ?').get(vault)
+
+  beforeEach(async () => {
+    vault = await sharedVault(env, ada, bob, 'manager')
+    await api.invite(ada, vault, cy.email, 'viewer')
+    await api.accept(cy, vault)
+  })
+
+  test.each([
+    ['inviting', /insert into pass_members/, () => api.invite(bob, vault, 'dee@example.com')],
+    [
+      'changing a role',
+      /update pass_members set role = /,
+      () => passCall(env, bob, 'PUT', `/vaults/${vault}/members/${cy.email}`, { role: 'editor' }),
+    ],
+    [
+      'removing',
+      /update pass_members set state = 'removed'/,
+      () => passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${cy.email}`),
+    ],
+    ['renaming', /update pass_vaults set rev = rev \+ 1, meta/, () => api.vault(bob, vault, 1)],
+  ] as const)('does nothing by %s once no longer a manager', async (_, sql, act) => {
+    const members = state()
+    const named = vaultRow()
+    env.justBefore(sql, demote(bob))
+    expect((await act()).status).toBe(403)
+    expect(state()).toEqual(
+      members.map((one) => (one.email === bob.email ? { ...one, role: 'editor' } : one)),
+    )
+    expect(vaultRow()).toEqual(named)
+  })
+
+  test('two managers removing each other at once leave one of them in', async () => {
+    env.justBefore(/update pass_members set state = 'removed'/, () =>
+      env.db
+        .prepare(
+          "update pass_members set state = 'removed', key = null where vault_id = ? and email = ?",
+        )
+        .run(vault, bob.email),
+    )
+    await passCall(env, ada, 'PUT', `/vaults/${vault}/members/${cy.email}`, { role: 'manager' })
+    expect(
+      (await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${cy.email}`)).status,
+    ).toBe(404)
+    expect((await membersOf(ada)).map((one) => one.email)).toEqual([ada.email, cy.email])
+  })
+})
+
 describe('handing a vault on', () => {
   test('makes an active member the owner and the old owner a manager', async () => {
     vault = await sharedVault(env, ada, bob)

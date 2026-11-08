@@ -223,3 +223,41 @@ describe('the files of an item', () => {
     expect((await get(ada, at)).text).toBe('back')
   })
 })
+
+describe('a file part written while its item or its writer goes', () => {
+  test.each([
+    [
+      'the item is deleted',
+      () =>
+        env.db.prepare("update pass_items set deleted_at = 1, body = '' where id = ?").run(item),
+      404,
+    ],
+    [
+      'the writer is removed',
+      () =>
+        env.db
+          .prepare("update pass_members set state = 'removed' where email = 'bob@example.com'")
+          .run(),
+      404,
+    ],
+    [
+      'the writer becomes a viewer',
+      () =>
+        env.db
+          .prepare("update pass_members set role = 'viewer' where email = 'bob@example.com'")
+          .run(),
+      403,
+    ],
+  ] as const)('is not kept when %s', async (_, goes, status) => {
+    const bob = await person(env, 'bob@example.com')
+    vault = await sharedVault(env, ada, bob)
+    item = anId()
+    await api.item(ada, vault, item)
+    env.justBefore(/insert into pass_file_parts/, goes)
+    expect((await put(bob, `${vault}/${item}/${anId()}`, 'part', '?part=0&parts=1')).status).toBe(
+      status,
+    )
+    expect(env.db.prepare('select count(*) as n from pass_file_parts').get()).toEqual({ n: 0 })
+    expect(objects()).toEqual([])
+  })
+})
