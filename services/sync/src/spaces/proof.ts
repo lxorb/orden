@@ -23,6 +23,22 @@ async function proofAt(domain: string): Promise<{ asked: boolean; values: string
   }
 }
 
+async function stamped(
+  env: Env,
+  id: string,
+  domain: string,
+  token: string,
+  at: number | null,
+): Promise<boolean> {
+  const wrote = await env.DB.prepare(
+    `update spaces set blog_domain_verified_at = ?
+      where id = ? and blog_domain = ? and blog_domain_token = ?`,
+  )
+    .bind(at, id, domain, token)
+    .run()
+  return wrote.meta.changes > 0
+}
+
 export async function proveDomain(
   env: Env,
   space: Space,
@@ -34,9 +50,7 @@ export async function proveDomain(
   const found = await proofAt(domain)
   if (!found.values.includes(token)) return { ok: false, error: NOT_YET }
 
-  await env.DB.prepare('update spaces set blog_domain_verified_at = ? where id = ?')
-    .bind(now(), space.id)
-    .run()
+  if (!(await stamped(env, space.id, domain, token, now()))) return { ok: false, error: NOT_YET }
 
   await claimDomain(env, domain)
 
@@ -64,9 +78,7 @@ export async function recheckDomains(env: Env, at: number): Promise<number> {
     const found = await proofAt(space.blog_domain)
 
     if (found.values.includes(space.blog_domain_token)) {
-      await env.DB.prepare('update spaces set blog_domain_verified_at = ? where id = ?')
-        .bind(at, space.id)
-        .run()
+      await stamped(env, space.id, space.blog_domain, space.blog_domain_token, at)
       continue
     }
 
@@ -74,9 +86,7 @@ export async function recheckDomains(env: Env, at: number): Promise<number> {
 
     if (at - space.blog_domain_verified_at < TRUSTED_FOR) continue
 
-    await env.DB.prepare('update spaces set blog_domain_verified_at = null where id = ?')
-      .bind(space.id)
-      .run()
+    if (!(await stamped(env, space.id, space.blog_domain, space.blog_domain_token, null))) continue
     await releaseDomain(env, space.blog_domain)
     lost++
   }
