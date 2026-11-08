@@ -975,7 +975,8 @@
 
     const point = planeAt(event)
     arrow = { clientX: event.clientX, clientY: event.clientY }
-    began = event.timeStamp
+    const spare = !pen && !drives(machine, event.pointerId)
+    if (!spare) began = event.timeStamp
 
     const coarse = kind === 'touch'
     contacts.came(event.pointerId, { pen, eraser })
@@ -999,7 +1000,7 @@
       hit: hitFor(point, coarse),
     })
 
-    if (coarse && !machine.penDown) waitForHold(point)
+    if (coarse && !machine.penDown && !spare) waitForHold(point)
   }
 
   function repairPen(event: PointerEvent, point: Point) {
@@ -1047,6 +1048,7 @@
     }
 
     const floating = hovering(event) || !contacts.has(event.pointerId)
+    const ours = drives(machine, event.pointerId)
 
     if (!floating) stopDoubting(event.pointerId)
 
@@ -1057,20 +1059,19 @@
     const coarse = kind === 'touch'
     lastPen = kind === 'pen'
 
-    const samples =
-      machine.gesture?.kind === 'draw' && !floating
-        ? (typeof event.getCoalescedEvents === 'function'
-            ? event.getCoalescedEvents()
-            : [event]
-          ).map((one) => sampleOf(one, began))
-        : []
+    const drawing = ours && !floating && machine.gesture?.kind === 'draw' ? machine.gesture : null
+    const samples = drawing
+      ? (typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [event]).map(
+          (one) => sampleOf(one, began),
+        )
+      : []
 
-    if (machine.gesture?.kind === 'draw' && !floating) {
+    if (drawing) {
       const guessed =
         typeof event.getPredictedEvents === 'function'
           ? event.getPredictedEvents().map((one) => sampleOf(one, began))
           : []
-      const laid = machine.gesture.stroke.points
+      const laid = drawing.stroke.points
       const nib = samples[samples.length - 1] ?? laid[laid.length - 1]
       const before =
         samples.length > 1
@@ -1082,7 +1083,11 @@
 
     if (!floating) repairPen(event, point)
 
-    if (holding && Math.hypot(point.x - held.x, point.y - held.y) * camera.scale > A_TWITCH) {
+    if (
+      ours &&
+      holding &&
+      Math.hypot(point.x - held.x, point.y - held.y) * camera.scale > A_TWITCH
+    ) {
       stopHolding()
     }
 
@@ -1091,7 +1096,7 @@
     const found = wants ? hitFor(point, coarse) : NOTHING
 
     if (!machine.gesture) over = overOf(found)
-    rubAt = machine.gesture?.kind === 'erase' ? point : null
+    if (ours) rubAt = machine.gesture?.kind === 'erase' ? point : null
 
     send({
       kind: 'move',
@@ -1102,7 +1107,7 @@
       hit: found,
     })
 
-    if (machine.gesture?.kind === 'draw' && !holding) waitForHold(point)
+    if (ours && machine.gesture?.kind === 'draw' && !holding) waitForHold(point)
   }
 
   function onPointerUp(event: PointerEvent) {
@@ -1115,14 +1120,17 @@
       return
     }
     if (event.pointerType === 'touch') touchUpAt = performance.now()
-    stopHolding()
-    rubAt = null
+    const ours = drives(machine, event.pointerId)
+    if (ours) {
+      stopHolding()
+      rubAt = null
+    }
     stopDoubting(event.pointerId)
     contacts.went(event.pointerId)
     if (host?.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId)
 
     const point = planeAt(event)
-    const wasInk = machine.gesture?.kind === 'ink'
+    const wasInk = ours && machine.gesture?.kind === 'ink'
 
     send({
       kind: 'up',
@@ -1159,9 +1167,11 @@
 
   function onPointerCancel(event: PointerEvent) {
     note('cancel', event)
-    right.cancel()
-    stopHolding()
-    rubAt = null
+    right.cancel(event.pointerId)
+    if (drives(machine, event.pointerId)) {
+      stopHolding()
+      rubAt = null
+    }
 
     const pen = machine.driver?.kind === 'pen' && machine.driver.id === event.pointerId
     if (pen && machine.gesture) {

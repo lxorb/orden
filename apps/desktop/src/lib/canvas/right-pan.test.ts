@@ -81,4 +81,16 @@ describe('the right mouse button held', () => {
     expect(right.up(at(10, 10, { button: 0, buttons: 2 }))).toBeNull()
     expect(right.holds(at(10, 10))).toBe(false)
   })
+
+  test('a finger the system cancels elsewhere leaves the pan going; its own cancel ends it', () => {
+    const right = new RightPan()
+    right.down(at(100, 100))
+    right.move(at(130, 100))
+
+    right.cancel(9)
+    expect(right.move(at(160, 100))).toEqual({ dx: 30, dy: 0 })
+
+    right.cancel(1)
+    expect(right.holds(at(170, 100))).toBe(false)
+  })
 })
