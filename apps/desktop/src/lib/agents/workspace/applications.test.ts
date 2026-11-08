@@ -304,4 +304,16 @@ describe('input, as the host plays it', () => {
       expect(() => inputOf(events), `case ${at}`).toThrow()
     }
   })
+
+  test('a point is a finite pixel, and a chord holds each modifier once, so one event never turns into thousands', () => {
+    for (const [at, events] of [
+      [{ type: 'move', x: Infinity, y: 2 }],
+      [{ type: 'click', x: 1, y: Number.MAX_VALUE * 2 }],
+      [{ type: 'key', key: `${'Ctrl+'.repeat(10_000)}a` }],
+      [{ type: 'key', key: 'Shift+shift+A' }],
+    ].entries()) {
+      expect(() => inputOf(events), `case ${at}`).toThrow()
+    }
+    expect(inputOf([{ type: 'key', key: 'Ctrl+Alt+Shift+Meta+A' }])).toHaveLength(10)
+  })
 })
