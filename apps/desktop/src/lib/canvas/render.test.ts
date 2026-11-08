@@ -14,7 +14,7 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-const { cardHtml, fileUrl, keptByAccount } = await import('./render')
+const { cardHtml, fileShown, fileSource, fileUrl, keptByAccount } = await import('./render')
 
 const HOSTILE = '<img src=x onerror="alert(1)"> and <u>more</u>'
 
@@ -97,5 +97,23 @@ describe('a card the web app wrote before #364', () => {
     expect(keptByAccount('i/cat.png', true)).toBeNull()
     expect(keptByAccount(`pictures/i/${HASH}.png`, true)).toBeNull()
     expect(keptByAccount(`assets/${HASH.slice(0, 16)}.png`, true)).toBeNull()
+  })
+})
+
+describe('a file card', () => {
+  test('is shown by what the file holds', () => {
+    expect(fileShown('pictures/Sun.PNG')).toBe('picture')
+    expect(fileShown('clips/Talk.mp4')).toBe('film')
+    expect(fileShown('https://example.com/clip.webm?t=3')).toBe('film')
+    expect(fileShown('sounds/Song.mp3')).toBe('sound')
+    expect(fileShown('papers/Thesis.pdf')).toBe('pdf')
+    expect(fileShown('Plan.md')).toBe('words')
+    expect(fileShown('Board.canvas')).toBe('words')
+  })
+
+  test('of a film, a sound or a PDF is never read as words', async () => {
+    for (const file of ['clips/Talk.mp4', 'sounds/Song.mp3', 'papers/Thesis.pdf', 'Sun.png']) {
+      expect(await fileSource(file, '/space/Board.canvas')).toBeNull()
+    }
   })
 })

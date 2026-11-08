@@ -11,7 +11,7 @@
   } from '@orden/editor'
   import type { EmbeddedNote } from '@orden/markdown'
   import type { CanvasNode } from './canvas/format'
-  import { cardHtml, fileSource, fileUrl, isPicture, keptByAccount } from './canvas/render'
+  import { cardHtml, fileShown, fileSource, fileUrl, keptByAccount } from './canvas/render'
   import { account } from './account.svelte'
   import CanvasPdf from './CanvasPdf.svelte'
   import { type Box, isLineShape, shapeLine, shapePath } from './canvas/geometry'
@@ -60,7 +60,7 @@
   let source = $state<EmbeddedNote | null>(null)
 
   $effect(() => {
-    if (node.type !== 'file' || isPicture(node.file)) return
+    if (node.type !== 'file' || fileShown(node.file) !== 'words') return
 
     const wanted = node.file
     links.locksSeen()
@@ -243,7 +243,8 @@
       <div class="card page orden-rendered" use:embeds>{@html html}</div>
     {/if}
   {:else if node.type === 'file'}
-    {#if isPicture(node.file)}
+    {@const shown = fileShown(node.file)}
+    {#if shown === 'picture'}
       {#if broken}
         <p class="missing">{t('Nothing here')}</p>
       {:else}
@@ -255,7 +256,16 @@
           onerror={() => unloaded(node.file)}
         />
       {/if}
-    {:else if /\.pdf$/i.test(node.file)}
+    {:else if shown === 'film'}
+      <!-- svelte-ignore a11y_media_has_caption -->
+      <video class="picture film" src={fileUrl(node.file, root)} controls preload="metadata"
+      ></video>
+    {:else if shown === 'sound'}
+      <div class="card sound">
+        <span class="url">{node.file}</span>
+        <audio src={fileUrl(node.file, root)} controls preload="metadata"></audio>
+      </div>
+    {:else if shown === 'pdf'}
       <CanvasPdf file={node.file} note={canvasPath} {root} box={node} {scale} {seen} />
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
@@ -505,6 +515,22 @@
     object-fit: cover;
     user-select: none;
     -webkit-user-select: none;
+  }
+
+  .film {
+    object-fit: contain;
+    background: #000;
+  }
+
+  .sound {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    justify-content: center;
+  }
+
+  .sound audio {
+    width: 100%;
   }
 
   .link {
