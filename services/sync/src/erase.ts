@@ -163,11 +163,12 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
     ...ERASED.map(([, sql]) => bound(env, sql, values)),
   ])
 
+  for (const { domain } of domains) await releaseDomain(env, domain)
+
   try {
     await closeRooms(env, open)
     await closeChats(env, chatting)
     await tellEnded(env, ending, null)
-    for (const { domain } of domains) await releaseDomain(env, domain)
     await sweepLeftovers(env)
   } catch (error) {
     note('erase', error, null)

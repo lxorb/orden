@@ -2,6 +2,7 @@ import { askInChunks, chunks, places } from './bound'
 import { eraseChats } from './chats/ask'
 import { note } from './failed'
 import { ISSUES, withdrawIssues } from './feedback-issues'
+import { DOMAIN, releaseLeftDomains } from './hostnames'
 import { eraseHubs } from './hub/reach'
 import { eraseMachines } from './machines/ask'
 import type { Env } from './types'
@@ -31,7 +32,8 @@ const isObject = (name: string) =>
   name.startsWith(HUB) ||
   name.startsWith(MACHINE) ||
   name.startsWith(CHAT) ||
-  name.startsWith(ISSUES)
+  name.startsWith(ISSUES) ||
+  name.startsWith(DOMAIN)
 
 async function sweepWords(env: Env): Promise<number> {
   const { results } = await env.DB.prepare(
@@ -65,7 +67,16 @@ export async function sweepLeftovers(env: Env): Promise<number> {
   const taken = async (sql: string, most: number) =>
     (
       await env.DB.prepare(sql)
-        .bind(`${ROOM}%`, `${HUB}%`, `${MACHINE}%`, `${CHAT}%`, `${ISSUES}%`, most, `${WORDS}%`)
+        .bind(
+          `${ROOM}%`,
+          `${HUB}%`,
+          `${MACHINE}%`,
+          `${CHAT}%`,
+          `${ISSUES}%`,
+          most,
+          `${WORDS}%`,
+          `${DOMAIN}%`,
+        )
         .all<{ what: string }>()
     ).results
 
@@ -73,13 +84,13 @@ export async function sweepLeftovers(env: Env): Promise<number> {
     ...(await taken(
       `select what from leftovers where what not like ?1 and what not like ?2
           and what not like ?3 and what not like ?4 and what not like ?5
-          and what not like ?7
+          and what not like ?7 and what not like ?8
         order by since, what limit ?6`,
       OBJECTS_AT_ONCE,
     )),
     ...(await taken(
       `select what from leftovers where (what like ?1 or what like ?2 or what like ?3
-          or what like ?4 or what like ?5) and what not like ?7
+          or what like ?4 or what like ?5 or what like ?8) and what not like ?7
         order by since, what limit ?6`,
       ROOMS_AT_ONCE,
     )),
@@ -110,6 +121,7 @@ export async function sweepLeftovers(env: Env): Promise<number> {
     ...(await eraseMachines(env, of(MACHINE))).map((id) => MACHINE + id),
     ...(await eraseChats(env, of(CHAT))).map((id) => CHAT + id),
     ...(await withdrawIssues(env, of(ISSUES).map(Number))).map((n) => ISSUES + String(n)),
+    ...(await releaseLeftDomains(env, of(DOMAIN))).map((domain) => DOMAIN + domain),
     ...(homesBucket ? homes : []),
   ])
 
