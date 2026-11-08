@@ -2303,6 +2303,11 @@ export const bn: Dictionary = {
   'New application': 'নতুন অ্যাপ্লিকেশন',
   Application: 'অ্যাপ্লিকেশন',
   'This application’s file is damaged': 'এই অ্যাপ্লিকেশনের ফাইল নষ্ট',
+  'This application’s file is no longer there.': 'এই অ্যাপ্লিকেশনের ফাইলটি আর নেই।',
+  'Orden is not allowed to read this application’s file.':
+    'Orden-কে এই অ্যাপ্লিকেশনের ফাইল পড়ার অনুমতি দেওয়া হয়নি।',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'অন্য একটি প্রোগ্রাম এই অ্যাপ্লিকেশনের ফাইলটি ধরে রেখেছে। সেটি বন্ধ করে আবার চেষ্টা করুন।',
   'Waiting for {device}': '{device}-এর অপেক্ষায়',
   'Sign in to use this application.': 'এই অ্যাপ্লিকেশন ব্যবহার করতে সাইন ইন করুন।',
   'Waiting for this application’s file to sync…': 'এই অ্যাপ্লিকেশনের ফাইল সিঙ্ক হওয়ার অপেক্ষায়…',

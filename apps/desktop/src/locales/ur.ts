@@ -2303,6 +2303,11 @@ export const ur: Dictionary = {
   'New application': 'نئی ایپلیکیشن',
   Application: 'ایپلیکیشن',
   'This application’s file is damaged': 'اس ایپلیکیشن کی فائل خراب ہے',
+  'This application’s file is no longer there.': 'اس ایپلیکیشن کی فائل اب وہاں نہیں ہے۔',
+  'Orden is not allowed to read this application’s file.':
+    'Orden کو اس ایپلیکیشن کی فائل پڑھنے کی اجازت نہیں ہے۔',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'کوئی اور پروگرام اس ایپلیکیشن کی فائل پکڑے ہوئے ہے۔ اسے بند کریں، پھر دوبارہ کوشش کریں۔',
   'Waiting for {device}': '{device} کا انتظار',
   'Sign in to use this application.': 'اس ایپلیکیشن کو استعمال کرنے کے لیے سائن ان کریں۔',
   'Waiting for this application’s file to sync…': 'اس ایپلیکیشن کی فائل کے سنک ہونے کا انتظار…',

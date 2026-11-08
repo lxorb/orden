@@ -20,7 +20,7 @@
   import { settings } from '../settings.svelte'
   import Sweep from '../Sweep.svelte'
   import type { Tab } from '../workspace.svelte'
-  import { appSessionOf } from './session.svelte'
+  import { appSessionOf, type Unread } from './session.svelte'
 
   const { tab: shown }: { tab: Tab } = $props()
   const tab = untrack(() => shown)
@@ -139,6 +139,8 @@
         return t('Connecting…')
       case 'damaged':
         return t('This application’s file is damaged')
+      case 'unread':
+        return unreadLine(status.why)
       case 'signed-out':
         return t('Sign in to use this application.')
       case 'syncing':
@@ -176,6 +178,21 @@
         return t('Not running on {device}', { device })
     }
   })
+  function unreadLine(why: Unread): string {
+    switch (why) {
+      case 'away':
+        return t('Not on this device. It opens once you are online again.')
+      case 'missing':
+        return t('This application’s file is no longer there.')
+      case 'denied':
+        return t('Orden is not allowed to read this application’s file.')
+      case 'locked':
+        return t('Another program is holding this application’s file. Close it, then try again.')
+      case 'unread':
+        return t('This file could not be read.')
+    }
+  }
+
   function notStarted(why: NotStarted, device: string): string {
     switch (why) {
       case 'isolation':
@@ -342,7 +359,8 @@
       status.is === 'untaken' ||
       status.is === 'outside' ||
       status.is === 'old-sync' ||
-      status.is === 'shared',
+      status.is === 'shared' ||
+      status.is === 'unread',
   )
   $effect(() => {
     if (account.accountToken && untrack(() => session.status.is) === 'signed-out') session.retry()

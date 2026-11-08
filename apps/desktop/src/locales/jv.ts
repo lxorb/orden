@@ -2284,6 +2284,11 @@ export const jv: Dictionary = {
   'New application': 'Aplikasi anyar',
   Application: 'Aplikasi',
   'This application’s file is damaged': 'Berkas aplikasi iki rusak',
+  'This application’s file is no longer there.': 'Berkas aplikasi iki wis ora ana.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden ora diidini maca berkas aplikasi iki.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Program liya lagi nyekel berkas aplikasi iki. Tutup program kuwi, banjur jajal maneh.',
   'Waiting for {device}': 'Ngenteni {device}',
   'Sign in to use this application.': 'Mlebua kanggo nggunakake aplikasi iki.',
   'Waiting for this application’s file to sync…': 'Ngenteni berkas aplikasi iki disinkronake…',

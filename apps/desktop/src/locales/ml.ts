@@ -2336,6 +2336,11 @@ export const ml: Dictionary = {
   'New application': 'പുതിയ ആപ്ലിക്കേഷൻ',
   Application: 'ആപ്ലിക്കേഷൻ',
   'This application’s file is damaged': 'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ കേടാണ്',
+  'This application’s file is no longer there.': 'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ ഇനി അവിടെ ഇല്ല.',
+  'Orden is not allowed to read this application’s file.':
+    'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ വായിക്കാൻ Orden-ന് അനുമതിയില്ല.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'മറ്റൊരു പ്രോഗ്രാം ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ പിടിച്ചിരിക്കുന്നു. അത് അടച്ച്, വീണ്ടും ശ്രമിക്കുക.',
   'Waiting for {device}': '{device} കാത്തിരിക്കുന്നു',
   'Sign in to use this application.': 'ഈ ആപ്ലിക്കേഷൻ ഉപയോഗിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
   'Waiting for this application’s file to sync…':

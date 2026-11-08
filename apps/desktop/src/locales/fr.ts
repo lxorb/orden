@@ -2376,6 +2376,11 @@ export const fr: Dictionary = {
   'New application': 'Nouvelle application',
   Application: 'Application',
   'This application’s file is damaged': 'Le fichier de cette application est endommagé',
+  'This application’s file is no longer there.': 'Le fichier de cette application n’est plus là.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden n’a pas le droit de lire le fichier de cette application.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Un autre programme retient le fichier de cette application. Fermez-le, puis réessayez.',
   'Waiting for {device}': 'En attente de {device}',
   'Sign in to use this application.': 'Connectez-vous pour utiliser cette application.',
   'Waiting for this application’s file to sync…':

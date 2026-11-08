@@ -2295,6 +2295,11 @@ export const gu: Dictionary = {
   'New application': 'નવી એપ્લિકેશન',
   Application: 'એપ્લિકેશન',
   'This application’s file is damaged': 'આ એપ્લિકેશનની ફાઇલ બગડી ગઈ છે',
+  'This application’s file is no longer there.': 'આ એપ્લિકેશનની ફાઇલ હવે ત્યાં નથી.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden ને આ એપ્લિકેશનની ફાઇલ વાંચવાની મંજૂરી નથી.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'બીજો પ્રોગ્રામ આ એપ્લિકેશનની ફાઇલ પકડી રાખે છે. તેને બંધ કરો, પછી ફરી પ્રયાસ કરો.',
   'Waiting for {device}': '{device}ની રાહ જોઈ રહ્યા છીએ',
   'Sign in to use this application.': 'આ એપ્લિકેશન વાપરવા માટે સાઇન ઇન કરો.',
   'Waiting for this application’s file to sync…':

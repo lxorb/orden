@@ -2422,6 +2422,11 @@ export const ar: Dictionary = {
   'New application': 'تطبيق جديد',
   Application: 'تطبيق',
   'This application’s file is damaged': 'ملف هذا التطبيق تالف',
+  'This application’s file is no longer there.': 'لم يعد ملف هذا التطبيق موجودًا.',
+  'Orden is not allowed to read this application’s file.':
+    'لا يُسمح لـ Orden بقراءة ملف هذا التطبيق.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'برنامج آخر يمسك ملف هذا التطبيق. أغلقه ثم حاول مرة أخرى.',
   'Waiting for {device}': 'في انتظار {device}',
   'Sign in to use this application.': 'سجّل الدخول لاستخدام هذا التطبيق.',
   'Waiting for this application’s file to sync…': 'في انتظار مزامنة ملف هذا التطبيق…',

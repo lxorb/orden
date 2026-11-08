@@ -2337,6 +2337,11 @@ export const sw: Dictionary = {
   'New application': 'Programu mpya',
   Application: 'Programu',
   'This application’s file is damaged': 'Faili ya programu hii imeharibika',
+  'This application’s file is no longer there.': 'Faili la programu hii halipo tena.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden hairuhusiwi kusoma faili la programu hii.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Programu nyingine inashikilia faili la programu hii. Ifunge, kisha ujaribu tena.',
   'Waiting for {device}': 'Inasubiri {device}',
   'Sign in to use this application.': 'Ingia ili utumie programu hii.',
   'Waiting for this application’s file to sync…': 'Inasubiri faili la programu hii lilandanishwe…',

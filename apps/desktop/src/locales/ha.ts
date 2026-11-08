@@ -2337,6 +2337,11 @@ export const ha: Dictionary = {
   'New application': 'Sabuwar manhaja',
   Application: 'Manhaja',
   'This application’s file is damaged': 'Fayil ɗin wannan manhaja ya lalace',
+  'This application’s file is no longer there.': 'Fayil ɗin wannan manhaja ba ya nan kuma.',
+  'Orden is not allowed to read this application’s file.':
+    'Ba a ba Orden izinin karanta fayil ɗin wannan manhaja ba.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Wata manhaja tana riƙe da fayil ɗin wannan manhaja. Rufe ta, sannan ka sake gwadawa.',
   'Waiting for {device}': 'Ana jiran {device}',
   'Sign in to use this application.': 'Shiga domin amfani da wannan aikace-aikacen.',
   'Waiting for this application’s file to sync…':

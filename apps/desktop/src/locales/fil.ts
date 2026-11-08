@@ -2351,6 +2351,11 @@ export const fil: Dictionary = {
   'New application': 'Bagong application',
   Application: 'Application',
   'This application’s file is damaged': 'Sira ang file ng application na ito',
+  'This application’s file is no longer there.': 'Wala na ang file ng application na ito.',
+  'Orden is not allowed to read this application’s file.':
+    'Hindi pinapayagan ang Orden na basahin ang file ng application na ito.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'May ibang program na may hawak sa file ng application na ito. Isara ito, saka subukan ulit.',
   'Waiting for {device}': 'Hinihintay ang {device}',
   'Sign in to use this application.': 'Mag-sign in para magamit ang application na ito.',
   'Waiting for this application’s file to sync…':

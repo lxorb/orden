@@ -278,7 +278,7 @@ async function appWorld(): Promise<{
     { deviceId },
     { workspace },
     native,
-    { platform },
+    { platform, invoke },
   ] = await Promise.all([
     import('../account.svelte'),
     import('../api'),
@@ -351,7 +351,7 @@ async function appWorld(): Promise<{
       serves,
       cannot: ['linux', 'windows', 'macos'].includes(platform()) ? null : 'isolation',
       files: () => applicationFiles(untrack(() => workspace.tree)),
-      read: (path) => native.invoke<string>('read_note', { path }).catch(() => null),
+      read: (path) => invoke<string>('read_note', { path }).catch(() => null),
       idOf: async (path) => {
         const found = await find(path, Date.now() + 20_000)
         return 'id' in found ? found.id : null

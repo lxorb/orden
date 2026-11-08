@@ -2308,6 +2308,11 @@ export const fa: Dictionary = {
   'New application': 'برنامهٔ جدید',
   Application: 'برنامه',
   'This application’s file is damaged': 'فایل این برنامه آسیب دیده است',
+  'This application’s file is no longer there.': 'فایل این برنامه دیگر وجود ندارد.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden اجازهٔ خواندن فایل این برنامه را ندارد.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'برنامهٔ دیگری فایل این برنامه را در دست دارد. آن را ببندید و دوباره امتحان کنید.',
   'Waiting for {device}': 'در انتظار {device}',
   'Sign in to use this application.': 'برای استفاده از این برنامه وارد شوید.',
   'Waiting for this application’s file to sync…': 'در انتظار همگام‌سازی فایل این برنامه…',

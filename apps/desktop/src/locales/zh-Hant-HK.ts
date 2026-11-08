@@ -2238,6 +2238,10 @@ export const zhHantHK: Dictionary = {
   'New application': '新增應用程式',
   Application: '應用程式',
   'This application’s file is damaged': '此應用程式的檔案已損壞',
+  'This application’s file is no longer there.': '此應用程式的檔案已不在了。',
+  'Orden is not allowed to read this application’s file.': 'Orden 無權讀取此應用程式的檔案。',
+  'Another program is holding this application’s file. Close it, then try again.':
+    '另一個程式正佔用此應用程式的檔案。請關閉它，然後重試。',
   'Waiting for {device}': '正在等待 {device}',
   'Sign in to use this application.': '請登入以使用此應用程式。',
   'Waiting for this application’s file to sync…': '正在等待此應用程式的檔案同步…',

@@ -2288,6 +2288,11 @@ export const my: Dictionary = {
   'New application': 'အပလီကေးရှင်းအသစ်',
   Application: 'အပလီကေးရှင်း',
   'This application’s file is damaged': 'ဤအပလီကေးရှင်း၏ ဖိုင် ပျက်စီးနေသည်',
+  'This application’s file is no longer there.': 'ဤအပလီကေးရှင်း၏ ဖိုင်သည် မရှိတော့ပါ။',
+  'Orden is not allowed to read this application’s file.':
+    'Orden ကို ဤအပလီကေးရှင်း၏ ဖိုင်ကို ဖတ်ခွင့် မပေးထားပါ။',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'အခြားပရိုဂရမ်တစ်ခုက ဤအပလီကေးရှင်း၏ ဖိုင်ကို ကိုင်ထားသည်။ ၎င်းကို ပိတ်ပြီး ထပ်စမ်းကြည့်ပါ။',
   'Waiting for {device}': '{device} ကို စောင့်နေသည်',
   'Sign in to use this application.': 'ဤအပလီကေးရှင်းကို အသုံးပြုရန် အကောင့်ဝင်ပါ။',
   'Waiting for this application’s file to sync…': 'ဤအပလီကေးရှင်း၏ ဖိုင် ထပ်တူကျစေရန် စောင့်နေသည်…',

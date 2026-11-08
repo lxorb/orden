@@ -116,6 +116,24 @@ describe('an application’s file', () => {
   })
 })
 
+describe('an application file from any version, made on any platform', () => {
+  const made = [
+    '{"v":1,"host":"d1","run":{"kind":"installed","id":"org.gimp.GIMP.desktop","name":"GIMP"}}\n',
+    '{"v":1,"host":"d1","run":{"kind":"installed","id":"Microsoft.WindowsNotepad_8wekyb3d8bbwe!App","name":"Notepad"}}\n',
+    '{"v":1,"host":"d1","run":{"kind":"installed","id":"C:\\\\Program Files\\\\GIMP 3\\\\bin\\\\gimp.exe","name":"GIMP"}}\n',
+    '{"v":1,"host":"d1","run":{"kind":"installed","id":"org.gimp.gimp-2.10","name":"GIMP"}}\n',
+    '{"v":1,"host":"d1","run":{"kind":"path","path":"/usr/bin/xclock","args":["-digital"],"cwd":null}}\n',
+    '{"v":1,"host":"d1","run":{"kind":"path","path":"C:\\\\Windows\\\\notepad.exe","args":["a b.txt"],"cwd":"C:\\\\Users\\\\me"}}\n',
+    '{"v":1,"host":"d1","run":{"kind":"path","path":"/Applications/Calculator.app","args":[],"cwd":null}}',
+    '{\r\n  "v": 1,\r\n  "host": "d1",\r\n  "run": { "kind": "path", "path": "notepad.exe" }\r\n}\r\n',
+    '\uFEFF{"v":1,"host":"d1","run":{"kind":"installed","id":"x","name":"X"}}\r\n',
+  ]
+
+  it('opens', () => {
+    for (const text of made) expect(appFileOf(text), text).not.toBeNull()
+  })
+})
+
 describe('a reason a host did not start it', () => {
   it('is dropped, and the frame kept, when this side does not know it', () => {
     expect(toViewerOf('{"t":"state","state":"stopped","why":"later"}')).toEqual({

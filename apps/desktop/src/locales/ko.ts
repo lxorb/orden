@@ -2267,6 +2267,11 @@ export const ko: Dictionary = {
   'New application': '새 애플리케이션',
   Application: '애플리케이션',
   'This application’s file is damaged': '이 애플리케이션의 파일이 손상되었습니다',
+  'This application’s file is no longer there.': '이 애플리케이션의 파일이 더 이상 없습니다.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden은 이 애플리케이션의 파일을 읽을 권한이 없습니다.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    '다른 프로그램이 이 애플리케이션의 파일을 사용 중입니다. 그 프로그램을 닫은 뒤 다시 시도하세요.',
   'Waiting for {device}': '{device} 기다리는 중',
   'Sign in to use this application.': '이 애플리케이션을 사용하려면 로그인하세요.',
   'Waiting for this application’s file to sync…':

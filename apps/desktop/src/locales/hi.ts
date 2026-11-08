@@ -2302,6 +2302,11 @@ export const hi: Dictionary = {
   'New application': 'नया एप्लिकेशन',
   Application: 'एप्लिकेशन',
   'This application’s file is damaged': 'इस एप्लिकेशन की फ़ाइल खराब है',
+  'This application’s file is no longer there.': 'इस एप्लिकेशन की फ़ाइल अब वहाँ नहीं है।',
+  'Orden is not allowed to read this application’s file.':
+    'Orden को इस एप्लिकेशन की फ़ाइल पढ़ने की अनुमति नहीं है।',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'कोई दूसरा प्रोग्राम इस एप्लिकेशन की फ़ाइल को पकड़े हुए है। उसे बंद करें, फिर दोबारा कोशिश करें।',
   'Waiting for {device}': '{device} की प्रतीक्षा',
   'Sign in to use this application.': 'इस एप्लिकेशन का उपयोग करने के लिए साइन इन करें।',
   'Waiting for this application’s file to sync…':

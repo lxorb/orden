@@ -2318,6 +2318,11 @@ export const gsw: Dictionary = {
   'New application': 'Neui Aawändig',
   Application: 'Aawändig',
   'This application’s file is damaged': 'D Datei vo dere Aawändig isch kaputt',
+  'This application’s file is no longer there.': 'D Datei vo dere Aawändig isch nüme da.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden dörf d Datei vo dere Aawändig nöd läse.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Es anders Programm hebt d Datei vo dere Aawändig fescht. Mach s zue und probier s nomal.',
   'Waiting for {device}': 'Warte uf {device}',
   'Sign in to use this application.': 'Aamelde, zum die Aawändig z bruche.',
   'Waiting for this application’s file to sync…':

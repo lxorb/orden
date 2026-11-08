@@ -16,6 +16,7 @@ import type { Engine } from './engine'
 import { holdsDocument } from './kinds'
 import { kindOfName } from './create'
 import { relative } from './engine'
+import { madeTwice } from './twins'
 
 const BATCH = 100
 
@@ -270,5 +271,14 @@ export async function scanned(how: Watching, root: string): Promise<void> {
     const full = engine.core.world.join(root, entry.local_path)
     if (engine.ownWork(full) || (await engine.core.world.disk.exists(full))) continue
     await engine.removed(full)
+  }
+
+  const disk = engine.core.world.disk
+  for (const twin of madeTwice(space)) {
+    const from = engine.core.world.join(root, twin.from)
+    const to = engine.core.world.join(root, twin.to)
+    if (engine.ownWork(from) || (await disk.exists(to)) || !(await disk.exists(from))) continue
+    await engine.moving(from, to, () => disk.move(from, to, 'file'))
+    await how.moved?.(from, to, 'file')
   }
 }

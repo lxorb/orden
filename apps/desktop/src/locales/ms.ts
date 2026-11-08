@@ -2294,6 +2294,11 @@ export const ms: Dictionary = {
   'New application': 'Aplikasi baharu',
   Application: 'Aplikasi',
   'This application’s file is damaged': 'Fail aplikasi ini rosak',
+  'This application’s file is no longer there.': 'Fail aplikasi ini sudah tiada.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden tidak dibenarkan membaca fail aplikasi ini.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Program lain sedang memegang fail aplikasi ini. Tutup program itu, kemudian cuba lagi.',
   'Waiting for {device}': 'Menunggu {device}',
   'Sign in to use this application.': 'Log masuk untuk menggunakan aplikasi ini.',
   'Waiting for this application’s file to sync…': 'Menunggu fail aplikasi ini disegerakkan…',
