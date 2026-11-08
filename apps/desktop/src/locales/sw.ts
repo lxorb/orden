@@ -10,6 +10,8 @@ export const sw: Dictionary = {
   Yes: 'Ndiyo',
   No: 'Hapana',
   'From other apps: {key}': 'Kutoka programu nyingine: {key}',
+  'From other apps: not available, pick another key':
+    'Kutoka programu nyingine: haipatikani, chagua kitufe kingine',
   'From other apps: set in your system settings':
     'Kutoka programu nyingine: weka kwenye mipangilio ya mfumo',
   'From other apps: bind {command} in your system settings':

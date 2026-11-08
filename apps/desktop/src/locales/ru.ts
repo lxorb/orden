@@ -10,6 +10,8 @@ export const ru: Dictionary = {
   Yes: 'Да',
   No: 'Нет',
   'From other apps: {key}': 'Из других приложений: {key}',
+  'From other apps: not available, pick another key':
+    'Из других приложений: недоступно, выберите другую клавишу',
   'From other apps: set in your system settings':
     'Из других приложений: задаётся в настройках системы',
   'From other apps: bind {command} in your system settings':

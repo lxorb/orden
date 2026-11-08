@@ -10,6 +10,8 @@ export const tr: Dictionary = {
   Yes: 'Evet',
   No: 'Hayır',
   'From other apps: {key}': 'Diğer uygulamalardan: {key}',
+  'From other apps: not available, pick another key':
+    'Diğer uygulamalardan: kullanılamıyor, başka bir tuş seçin',
   'From other apps: set in your system settings':
     'Diğer uygulamalardan: sistem ayarlarında belirlenir',
   'From other apps: bind {command} in your system settings':

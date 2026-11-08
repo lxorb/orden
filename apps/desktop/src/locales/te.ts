@@ -10,6 +10,8 @@ export const te: Dictionary = {
   Yes: 'అవును',
   No: 'కాదు',
   'From other apps: {key}': 'ఇతర యాప్‌ల నుండి: {key}',
+  'From other apps: not available, pick another key':
+    'ఇతర యాప్‌ల నుండి: అందుబాటులో లేదు, వేరే కీని ఎంచుకోండి',
   'From other apps: set in your system settings':
     'ఇతర యాప్‌ల నుండి: సిస్టమ్ సెట్టింగ్‌లలో సెట్ చేయండి',
   'From other apps: bind {command} in your system settings':

@@ -10,6 +10,7 @@ export const am: Dictionary = {
   Yes: 'አዎ',
   No: 'አይ',
   'From other apps: {key}': 'ከሌሎች መተግበሪያዎች፦ {key}',
+  'From other apps: not available, pick another key': 'ከሌሎች መተግበሪያዎች፦ አይገኝም፣ ሌላ ቁልፍ ይምረጡ',
   'From other apps: set in your system settings': 'ከሌሎች መተግበሪያዎች፦ በስርዓት ቅንብሮች ውስጥ ያዘጋጁ',
   'From other apps: bind {command} in your system settings':
     'ከሌሎች መተግበሪያዎች፦ {command}ን በስርዓት ቅንብሮች ውስጥ ይመድቡ',

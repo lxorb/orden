@@ -10,6 +10,8 @@ export const jv: Dictionary = {
   Yes: 'Iya',
   No: 'Ora',
   'From other apps: {key}': 'Saka aplikasi liya: {key}',
+  'From other apps: not available, pick another key':
+    'Saka aplikasi liya: ora kasedhiya, pilih tombol liyane',
   'From other apps: set in your system settings': 'Saka aplikasi liya: atur ing setelan sistem',
   'From other apps: bind {command} in your system settings':
     'Saka aplikasi liya: pasang {command} ing setelan sistem',

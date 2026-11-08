@@ -10,6 +10,7 @@ export const th: Dictionary = {
   Yes: 'ใช่',
   No: 'ไม่',
   'From other apps: {key}': 'จากแอปอื่น: {key}',
+  'From other apps: not available, pick another key': 'จากแอปอื่น: ใช้ไม่ได้ เลือกปุ่มอื่น',
   'From other apps: set in your system settings': 'จากแอปอื่น: ตั้งในการตั้งค่าระบบ',
   'From other apps: bind {command} in your system settings':
     'จากแอปอื่น: กำหนด {command} ในการตั้งค่าระบบ',

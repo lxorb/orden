@@ -10,6 +10,8 @@ export const gsw: Dictionary = {
   Yes: 'Ja',
   No: 'Nei',
   'From other apps: {key}': 'Us andere Apps: {key}',
+  'From other apps: not available, pick another key':
+    'Us andere Apps: nöd verfüegbar, wähl en anderi Taschte',
   'From other apps: set in your system settings':
     'Us andere Apps: i de Systemiistellige feschtlege',
   'From other apps: bind {command} in your system settings':

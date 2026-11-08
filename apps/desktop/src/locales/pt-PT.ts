@@ -10,6 +10,8 @@ export const ptPT: Dictionary = {
   Yes: 'Sim',
   No: 'Não',
   'From other apps: {key}': 'A partir de outras apps: {key}',
+  'From other apps: not available, pick another key':
+    'A partir de outras apps: indisponível, escolha outra tecla',
   'From other apps: set in your system settings':
     'A partir de outras apps: definir nas definições do sistema',
   'From other apps: bind {command} in your system settings':

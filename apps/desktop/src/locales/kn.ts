@@ -10,6 +10,8 @@ export const kn: Dictionary = {
   Yes: 'ಹೌದು',
   No: 'ಇಲ್ಲ',
   'From other apps: {key}': 'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: {key}',
+  'From other apps: not available, pick another key':
+    'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: ಲಭ್ಯವಿಲ್ಲ, ಬೇರೆ ಕೀ ಆಯ್ಕೆಮಾಡಿ',
   'From other apps: set in your system settings':
     'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಹೊಂದಿಸಿ',
   'From other apps: bind {command} in your system settings':

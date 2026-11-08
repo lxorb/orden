@@ -10,6 +10,7 @@ export const zhHantHK: Dictionary = {
   Yes: '是',
   No: '否',
   'From other apps: {key}': '從其他 App：{key}',
+  'From other apps: not available, pick another key': '從其他 App：用唔到，請揀過另一個按鍵',
   'From other apps: set in your system settings': '從其他 App：喺系統設定中設定',
   'From other apps: bind {command} in your system settings':
     '從其他 App：喺系統設定中綁定 {command}',

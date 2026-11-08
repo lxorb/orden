@@ -10,6 +10,8 @@ export const vi: Dictionary = {
   Yes: 'Có',
   No: 'Không',
   'From other apps: {key}': 'Từ ứng dụng khác: {key}',
+  'From other apps: not available, pick another key':
+    'Từ ứng dụng khác: không dùng được, hãy chọn phím khác',
   'From other apps: set in your system settings': 'Từ ứng dụng khác: đặt trong cài đặt hệ thống',
   'From other apps: bind {command} in your system settings':
     'Từ ứng dụng khác: gán {command} trong cài đặt hệ thống',

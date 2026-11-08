@@ -10,6 +10,8 @@ export const fil: Dictionary = {
   Yes: 'Oo',
   No: 'Hindi',
   'From other apps: {key}': 'Mula sa ibang app: {key}',
+  'From other apps: not available, pick another key':
+    'Mula sa ibang app: hindi magagamit, pumili ng ibang key',
   'From other apps: set in your system settings': 'Mula sa ibang app: itakda sa settings ng system',
   'From other apps: bind {command} in your system settings':
     'Mula sa ibang app: i-bind ang {command} sa settings ng system',

@@ -10,6 +10,8 @@ export const ha: Dictionary = {
   Yes: 'Eh',
   No: "A'a",
   'From other apps: {key}': 'Daga wasu manhajoji: {key}',
+  'From other apps: not available, pick another key':
+    'Daga wasu manhajoji: ba a samu ba, zaɓi wani maɓalli',
   'From other apps: set in your system settings':
     'Daga wasu manhajoji: saita a cikin saitunan tsarin',
   'From other apps: bind {command} in your system settings':

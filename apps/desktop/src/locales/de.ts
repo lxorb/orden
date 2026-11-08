@@ -10,6 +10,8 @@ export const de: Dictionary = {
   Yes: 'Ja',
   No: 'Nein',
   'From other apps: {key}': 'Aus anderen Apps: {key}',
+  'From other apps: not available, pick another key':
+    'Aus anderen Apps: nicht verfügbar, wähle eine andere Taste',
   'From other apps: set in your system settings':
     'Aus anderen Apps: in den Systemeinstellungen festlegen',
   'From other apps: bind {command} in your system settings':

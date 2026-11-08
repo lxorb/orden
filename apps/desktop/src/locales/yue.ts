@@ -10,6 +10,7 @@ export const yue: Dictionary = {
   Yes: '係',
   No: '唔係',
   'From other apps: {key}': '喺其他 App：{key}',
+  'From other apps: not available, pick another key': '喺其他 App：用唔到，揀過另一個掣',
   'From other apps: set in your system settings': '喺其他 App：喺系統設定度設定',
   'From other apps: bind {command} in your system settings':
     '喺其他 App：喺系統設定度綁定 {command}',

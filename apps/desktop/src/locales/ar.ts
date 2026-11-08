@@ -10,6 +10,8 @@ export const ar: Dictionary = {
   Yes: 'نعم',
   No: 'لا',
   'From other apps: {key}': 'من التطبيقات الأخرى: {key}',
+  'From other apps: not available, pick another key':
+    'من التطبيقات الأخرى: غير متاح، اختر مفتاحًا آخر',
   'From other apps: set in your system settings': 'من التطبيقات الأخرى: يُحدَّد في إعدادات النظام',
   'From other apps: bind {command} in your system settings':
     'من التطبيقات الأخرى: اربط {command} في إعدادات النظام',

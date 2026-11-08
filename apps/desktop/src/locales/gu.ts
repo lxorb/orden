@@ -10,6 +10,8 @@ export const gu: Dictionary = {
   Yes: 'હા',
   No: 'ના',
   'From other apps: {key}': 'બીજી ઍપ્સમાંથી: {key}',
+  'From other apps: not available, pick another key':
+    'બીજી ઍપ્સમાંથી: ઉપલબ્ધ નથી, બીજી કી પસંદ કરો',
   'From other apps: set in your system settings': 'બીજી ઍપ્સમાંથી: સિસ્ટમ સેટિંગ્સમાં નક્કી કરો',
   'From other apps: bind {command} in your system settings':
     'બીજી ઍપ્સમાંથી: સિસ્ટમ સેટિંગ્સમાં {command} જોડો',

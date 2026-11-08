@@ -10,6 +10,8 @@ export const ko: Dictionary = {
   Yes: '예',
   No: '아니요',
   'From other apps: {key}': '다른 앱에서: {key}',
+  'From other apps: not available, pick another key':
+    '다른 앱에서: 사용할 수 없음, 다른 키를 고르세요',
   'From other apps: set in your system settings': '다른 앱에서: 시스템 설정에서 지정',
   'From other apps: bind {command} in your system settings':
     '다른 앱에서: 시스템 설정에서 {command} 지정',
