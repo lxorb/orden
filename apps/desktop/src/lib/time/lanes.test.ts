@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from '../../../../../scripts/growth'
 import { HOUR, MINUTE } from './days'
 import { bandsOf, bucketsOf, hoursShown, madeOf, stacked, unsaid, within } from './lanes'
 import type { Minute } from './minutes'
@@ -56,6 +57,15 @@ describe('a lane of the day', () => {
       ['Code', 20 * MINUTE, 30 * MINUTE],
       ['Firefox', 40 * MINUTE, 50 * MINUTE],
     ])
+  })
+
+  test('a day of many switches between places is drawn in time that grows with the switches', () => {
+    const switches = (count: number) =>
+      Array.from({ length: count }, (_, index) =>
+        seen(`s${index}`, 'tab', `note ${index}`, index * 5000, index * 5000 + 4000),
+      )
+    const bands = linearly((count) => bandsOf(switches(count), 'tab', 0, DAY, DAY), 16_000)
+    expect(bands.length).toBeGreaterThan(1000)
   })
 })
 
