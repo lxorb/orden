@@ -106,6 +106,15 @@ describe('the list', () => {
     expect(html).toContain('Reschedule')
   })
 
+  test('is a tab stop only while it holds a row to land on', () => {
+    const stop = (rows: readonly Row[]) =>
+      /role="listbox" tabindex="(-?\d)"/.exec(
+        render(ListLayout, { props: { kit: kitOf(builtinView('today'), rows) } }).body,
+      )?.[1]
+    expect(stop(TASKS)).toBe('0')
+    expect(stop([])).toBe('-1')
+  })
+
   test('puts a sub-task under its parent in a project', () => {
     const base = builtinView('project', { note: { space: 'Notes', path: 'Errands.md' } })
     const html = render(ListLayout, { props: { kit: kitOf(base, TASKS), where: false } }).body
