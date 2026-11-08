@@ -14,6 +14,8 @@ import { Remote } from './remote.svelte'
 import { dropRemote, keepRemote } from './remotes'
 import { store } from './view/source.svelte'
 
+const HEARD_KEPT = 2000
+
 export interface Row {
   provider: string
   account: string
@@ -78,6 +80,8 @@ export class Connected {
   wanted: (provider: string, account: string) => boolean = () => true
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing draws these
   private readonly turns = new Map<string, Promise<Linked>>()
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing draws these
+  private readonly heardIds = new Map<string, Set<string>>()
 
   constructor(private readonly dial: Dial = oneLink) {}
 
@@ -160,6 +164,8 @@ export class Connected {
       connection.start((event) => {
         const was = this.find(provider.id, account.id)?.status
         remote.heard(event)
+        if (event.t === 'message' && this.again(key, event.message.conversation, event.message.id))
+          return
         if (event.t === 'status' && event.status === 'online' && was && was !== 'online')
           void this.catchUp(provider.id, account.id, connection, remote)
         this.linked = this.linked.map((one) =>
@@ -171,6 +177,23 @@ export class Connected {
       }),
     )
     return linked
+  }
+
+  private again(key: string, conversation: string, message: string): boolean {
+    const id = `${conversation}\n${message}`
+    let ids = this.heardIds.get(key)
+    if (!ids) {
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing draws these
+      ids = new Set<string>()
+      this.heardIds.set(key, ids)
+    }
+    if (ids.has(id)) return true
+    ids.add(id)
+    for (const oldest of ids) {
+      if (ids.size <= HEARD_KEPT) break
+      ids.delete(oldest)
+    }
+    return false
   }
 
   private async catchUp(
@@ -197,6 +220,7 @@ export class Connected {
     const key = `${provider}\n${account}`
     this.stops.get(key)?.()
     this.stops.delete(key)
+    this.heardIds.delete(key)
     dropRemote(provider, account)
     const found = this.find(provider, account)
     this.linked = this.linked.filter((one) => one !== found)

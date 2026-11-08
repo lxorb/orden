@@ -459,7 +459,11 @@ export class Remote {
   }
 
   heard(event: ProviderEvent): void {
-    if (event.t === 'message' || event.t === 'changed') this.remember(event.message)
+    if (
+      (event.t === 'message' || event.t === 'changed') &&
+      this.views.has(event.message.conversation)
+    )
+      this.remember(event.message)
     const conversation =
       event.t === 'message' || event.t === 'changed'
         ? event.message.conversation
