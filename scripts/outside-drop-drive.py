@@ -529,6 +529,12 @@ LISTED_PDFS = (
     "return found"
 )
 
+NOTE_IN_FRONT = (
+    "const tab = orden.workspace.tabs.find((one) => one.kind === 'note');"
+    "if (tab && orden.workspace.activeTabId !== tab.id) orden.workspace.activate(tab.id);"
+    "return !!document.querySelector('[data-pane] .cm-content')"
+)
+
 BOX = (
     "const one = document.querySelector({selector});"
     "if (!one) return null;"
@@ -566,10 +572,12 @@ def main() -> int:
             raise SystemExit(f"no space: {made}")
         root = pathlib.Path(made)
         print(f"space at {root}", flush=True)
-        app.eval("nib.workspace.openBlank('Here', '# Here\\n\\nSome words.'); return true")
-        print(f"tabs: {app.eval('return orden.workspace.tabs.map((one) => one.kind)')}", flush=True)
+        app.eval("orden.workspace.openBlank('Here', '# Here\\n\\nSome words.'); return true")
         screen = screen_of(process.pid)
         time.sleep(3)
+        if not waited(lambda: app.eval(NOTE_IN_FRONT) is True, 30):
+            wrong.append(f"the note never came to the front: {app.eval(NOTE_IN_FRONT)}")
+        print(f"tabs: {app.eval('return orden.workspace.tabs.map((one) => one.kind)')}", flush=True)
         app.eval(WATCH)
 
         def pdfs_in_space() -> list[str]:
