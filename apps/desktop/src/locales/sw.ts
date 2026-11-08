@@ -3719,4 +3719,8 @@ export const sw: Dictionary = {
     'Nakili User OAuth Token (xoxp-) na uibandike hapa',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Ili ujumbe ufike mara moja: chini ya Basic Information, tengeneza tokeni ya programu yenye connections:write na uibandike hapa chini (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Umetoka mahali pengine; akaunti haijafutwa. Ingia tena ili uifute.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Umetoka; ingia tena ili uone kama akaunti bado ipo.',
 }

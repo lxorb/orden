@@ -3816,4 +3816,8 @@ export const ru: Dictionary = {
     'Скопируйте User OAuth Token (xoxp-) и вставьте сюда',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Чтобы сообщения приходили сразу: в Basic Information создайте токен приложения с connections:write и вставьте его ниже (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Выполнен выход в другом месте; аккаунт не удалён. Войдите снова, чтобы удалить его.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Выполнен выход; войдите снова, чтобы узнать, существует ли аккаунт.',
 }

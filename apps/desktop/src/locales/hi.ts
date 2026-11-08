@@ -3672,4 +3672,8 @@ export const hi: Dictionary = {
     'User OAuth Token (xoxp-) कॉपी करके यहाँ पेस्ट करें',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'संदेश तुरंत पाने के लिए: Basic Information के अंतर्गत connections:write वाला ऐप-लेवल टोकन बनाएँ और नीचे पेस्ट करें (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'कहीं और से साइन आउट हुआ; खाता नहीं हटाया गया। इसे हटाने के लिए फिर से साइन इन करें।',
+  'Signed out; sign in again to see whether the account is still there.':
+    'साइन आउट हुआ; खाता अब भी है या नहीं, यह देखने के लिए फिर से साइन इन करें।',
 }

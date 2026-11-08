@@ -3683,4 +3683,8 @@ export const pa: Dictionary = {
     'User OAuth Token (xoxp-) ਕਾਪੀ ਕਰਕੇ ਇੱਥੇ ਪੇਸਟ ਕਰੋ',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'ਸੁਨੇਹੇ ਤੁਰੰਤ ਲਈ: Basic Information ਹੇਠਾਂ connections:write ਵਾਲਾ ਐਪ-ਪੱਧਰ ਟੋਕਨ ਬਣਾਓ ਅਤੇ ਹੇਠਾਂ ਪੇਸਟ ਕਰੋ (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'ਕਿਤੇ ਹੋਰ ਤੋਂ ਸਾਈਨ ਆਊਟ ਹੋਇਆ; ਖਾਤਾ ਨਹੀਂ ਮਿਟਾਇਆ ਗਿਆ। ਇਸਨੂੰ ਮਿਟਾਉਣ ਲਈ ਦੁਬਾਰਾ ਸਾਈਨ ਇਨ ਕਰੋ।',
+  'Signed out; sign in again to see whether the account is still there.':
+    'ਸਾਈਨ ਆਊਟ ਹੋਇਆ; ਖਾਤਾ ਅਜੇ ਵੀ ਹੈ ਜਾਂ ਨਹੀਂ ਦੇਖਣ ਲਈ ਦੁਬਾਰਾ ਸਾਈਨ ਇਨ ਕਰੋ।',
 }

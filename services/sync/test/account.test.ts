@@ -8,6 +8,7 @@ interface LeavingView {
   second?: boolean
   ticket?: string
   ok?: boolean
+  gone?: boolean
   error?: string
   holding?: string
   token?: string
@@ -155,6 +156,40 @@ describe('the door', () => {
     expect(receipt).toContain('Your Orden account has been deleted')
     expect(env.db.prepare('select count(*) as many from limits where key = ?').get(ME)).toEqual({
       many: 0,
+    })
+  })
+
+  test('afterwards the ticket alone can ask whether it went, so a lost answer is not guessed at', async () => {
+    const { code } = await askToLeave()
+    const { json } = await verify(code)
+    const ticket = json.ticket ?? ''
+
+    expect((await call<LeavingView>(env, '/v1/account/left', { body: { ticket } })).json).toEqual({
+      gone: false,
+    })
+
+    expect((await confirm(ticket)).status).toBe(200)
+    expect((await confirm(ticket)).status).toBe(401)
+
+    const asked = await call<LeavingView>(env, '/v1/account/left', { body: { ticket } })
+    expect(asked.status).toBe(200)
+    expect(asked.json).toEqual({ gone: true })
+    expect(
+      (await call<LeavingView>(env, '/v1/account/left', { body: { ticket: 'f'.repeat(64) } })).json,
+    ).toEqual({ gone: false })
+  })
+
+  test('a session ended elsewhere deletes nothing, and the ticket says so', async () => {
+    const { code } = await askToLeave()
+    const { json } = await verify(code)
+    await call(env, '/v1/auth/signout', { token, body: {} })
+
+    expect((await confirm(json.ticket)).status).toBe(401)
+    expect(
+      (await call<LeavingView>(env, '/v1/account/left', { body: { ticket: json.ticket } })).json,
+    ).toEqual({ gone: false })
+    expect(env.db.prepare('select count(*) as many from users where email = ?').get(ME)).toEqual({
+      many: 1,
     })
   })
 

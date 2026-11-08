@@ -3576,4 +3576,8 @@ export const vi: Dictionary = {
     'Sao chép User OAuth Token (xoxp-) và dán vào đây',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Để tin nhắn đến ngay: trong Basic Information, tạo token cấp ứng dụng với connections:write và dán vào bên dưới (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Đã đăng xuất ở nơi khác; tài khoản chưa bị xóa. Đăng nhập lại để xóa.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Đã đăng xuất; đăng nhập lại để xem tài khoản còn hay không.',
 }

@@ -3678,4 +3678,8 @@ export const fa: Dictionary = {
     'User OAuth Token (xoxp-) را کپی و اینجا جای‌گذاری کنید',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'برای رسیدن فوری پیام‌ها: در Basic Information یک توکن سطح برنامه با connections:write بسازید و پایین جای‌گذاری کنید (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'از جای دیگری خارج شدید؛ حساب حذف نشد. برای حذف آن دوباره وارد شوید.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'خارج شدید؛ دوباره وارد شوید تا ببینید حساب هنوز هست یا نه.',
 }

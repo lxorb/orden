@@ -3692,4 +3692,8 @@ export const tr: Dictionary = {
     'User OAuth Token (xoxp-) değerini kopyala ve buraya yapıştır',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Mesajların hemen gelmesi için: Basic Information altında connections:write ile bir uygulama jetonu oluştur ve aşağıya yapıştır (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Başka bir yerden çıkış yapıldı; hesap silinmedi. Silmek için yeniden giriş yapın.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Çıkış yapıldı; hesabın hâlâ var olup olmadığını görmek için yeniden giriş yapın.',
 }

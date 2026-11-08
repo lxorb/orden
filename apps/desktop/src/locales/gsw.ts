@@ -3697,4 +3697,8 @@ export const gsw: Dictionary = {
     'Kopier s User OAuth Token (xoxp-) und füeg s da ii',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Für Nachrichte grad sofort: Under Basic Information es App-Token mit connections:write mache und une iifüege (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Andersch abgmäldet; s Konto isch nöd glöscht worde. Mäld di nomal a, zum s lösche.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Abgmäldet; mäld di nomal a, zum luege, öb s Konto no dä isch.',
 }

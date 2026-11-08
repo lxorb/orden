@@ -3712,4 +3712,8 @@ export const kn: Dictionary = {
     'User OAuth Token (xoxp-) ನಕಲಿಸಿ ಇಲ್ಲಿ ಅಂಟಿಸಿ',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'ಸಂದೇಶಗಳು ತಕ್ಷಣ ಬರಲು: Basic Information ಅಡಿಯಲ್ಲಿ connections:write ಇರುವ ಆ್ಯಪ್-ಮಟ್ಟದ ಟೋಕನ್ ರಚಿಸಿ ಕೆಳಗೆ ಅಂಟಿಸಿ (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'ಬೇರೆಡೆ ಸೈನ್ ಔಟ್ ಆಗಿದೆ; ಖಾತೆ ಅಳಿಸಲಾಗಿಲ್ಲ. ಅಳಿಸಲು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'ಸೈನ್ ಔಟ್ ಆಗಿದೆ; ಖಾತೆ ಇನ್ನೂ ಇದೆಯೇ ಎಂದು ನೋಡಲು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
 }

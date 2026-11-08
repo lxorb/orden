@@ -3567,4 +3567,8 @@ export const ko: Dictionary = {
     'User OAuth Token(xoxp-)을 복사해 여기에 붙여 넣으세요',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     '메시지를 바로 받으려면: Basic Information에서 connections:write가 있는 앱 수준 토큰을 만들어 아래에 붙여 넣으세요(xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    '다른 곳에서 로그아웃되었습니다. 계정은 삭제되지 않았습니다. 삭제하려면 다시 로그인하세요.',
+  'Signed out; sign in again to see whether the account is still there.':
+    '로그아웃되었습니다. 계정이 아직 있는지 보려면 다시 로그인하세요.',
 }

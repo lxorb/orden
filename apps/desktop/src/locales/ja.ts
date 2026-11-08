@@ -3591,4 +3591,8 @@ export const ja: Dictionary = {
     'User OAuth Token(xoxp-)をコピーしてここに貼り付け',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'メッセージをすぐ受け取るには: Basic Information で connections:write 付きのアプリレベルトークンを生成し、下に貼り付け(xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    '別の場所でサインアウトされました。アカウントは削除されていません。削除するにはもう一度サインインしてください。',
+  'Signed out; sign in again to see whether the account is still there.':
+    'サインアウトしました。アカウントがまだあるか確かめるには、もう一度サインインしてください。',
 }

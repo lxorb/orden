@@ -3725,4 +3725,8 @@ export const ha: Dictionary = {
     'Kwafi User OAuth Token (xoxp-) ka liƙa a nan',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Don saƙonni su zo nan take: a ƙarƙashin Basic Information, ƙirƙiri alamar manhaja mai connections:write ka liƙa a ƙasa (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'An fitar da kai a wani wuri; ba a share asusun ba. Sake shiga don share shi.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'An fitar da kai; sake shiga don ganin ko asusun yana nan har yanzu.',
 }

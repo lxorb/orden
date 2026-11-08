@@ -3740,4 +3740,8 @@ export const ta: Dictionary = {
     'User OAuth Token (xoxp-) ஐ நகலெடுத்து இங்கே ஒட்டுங்கள்',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'செய்திகள் உடனே வர: Basic Information கீழ் connections:write உடன் ஆப்-நிலை டோக்கனை உருவாக்கி கீழே ஒட்டுங்கள் (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'வேறிடத்தில் வெளியேற்றப்பட்டது; கணக்கு நீக்கப்படவில்லை. நீக்க மீண்டும் உள்நுழையவும்.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'வெளியேற்றப்பட்டது; கணக்கு இன்னும் உள்ளதா எனப் பார்க்க மீண்டும் உள்நுழையவும்.',
 }

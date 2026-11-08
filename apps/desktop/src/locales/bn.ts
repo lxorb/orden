@@ -3665,4 +3665,8 @@ export const bn: Dictionary = {
     'User OAuth Token (xoxp-) কপি করে এখানে পেস্ট করুন',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'বার্তা সঙ্গে সঙ্গে পেতে: Basic Information-এর অধীনে connections:write সহ একটি অ্যাপ-স্তরের টোকেন তৈরি করে নিচে পেস্ট করুন (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'অন্য কোথাও থেকে সাইন আউট হয়েছে; অ্যাকাউন্ট মোছা হয়নি। মুছতে আবার সাইন ইন করুন।',
+  'Signed out; sign in again to see whether the account is still there.':
+    'সাইন আউট হয়েছে; অ্যাকাউন্টটি এখনও আছে কি না দেখতে আবার সাইন ইন করুন।',
 }

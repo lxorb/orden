@@ -3812,4 +3812,8 @@ export const uk: Dictionary = {
     'Скопіюйте User OAuth Token (xoxp-) і вставте сюди',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Щоб повідомлення надходили одразу: у Basic Information створіть токен застосунку з connections:write і вставте нижче (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Вихід виконано деінде; обліковий запис не видалено. Увійдіть знову, щоб видалити його.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Вихід виконано; увійдіть знову, щоб дізнатися, чи обліковий запис ще існує.',
 }

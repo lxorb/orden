@@ -3495,4 +3495,8 @@ export const zhHans: Dictionary = {
     '复制 User OAuth Token（xoxp-）并粘贴到这里',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     '要即时收到消息：在 Basic Information 下生成带 connections:write 的应用级令牌，并粘贴到下方（xapp-）',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    '已在别处退出登录；账户未被删除。请重新登录以删除。',
+  'Signed out; sign in again to see whether the account is still there.':
+    '已退出登录；请重新登录查看账户是否仍在。',
 }

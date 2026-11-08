@@ -3594,4 +3594,8 @@ export const jv: Dictionary = {
     'Salin User OAuth Token (xoxp-) lan tempel ing kene',
   'For messages at once: under Basic Information, generate an app-level token with connections:write and paste it (xapp-) below':
     'Supaya pesen langsung teka: ing Basic Information, gawe token aplikasi nganggo connections:write lan tempel ing ngisor (xapp-)',
+  'Signed out elsewhere; the account was not deleted. Sign in again to delete it.':
+    'Metu ing panggonan liya; akun ora dibusak. Mlebu maneh kanggo mbusak.',
+  'Signed out; sign in again to see whether the account is still there.':
+    'Wis metu; mlebu maneh kanggo ndeleng apa akun isih ana.',
 }
