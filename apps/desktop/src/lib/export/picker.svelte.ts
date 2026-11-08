@@ -3,7 +3,7 @@ import { exportSheet } from '../surfaces.svelte'
 
 const KEPT = 'orden:export-choice'
 
-export interface Kept {
+interface Kept {
   id: string
   optioned: Record<string, boolean>
 }

@@ -11,22 +11,13 @@
   const tiles = $derived(shelves.flatMap((one) => one.tiles))
   const setup = $derived(choices.find((one) => one.id === SETUP) ?? null)
 
-  let chosenId = $state<string | null>(null)
+  let chosenId = $derived(picker.open ? picker.last.id || null : null)
   const chosen = $derived(
     tiles.find((one) => one.id === chosenId && !one.disabled) ??
       tiles.find((one) => !one.disabled) ??
       null,
   )
-  let optioned = $state(false)
-
-  $effect(() => {
-    if (!picker.open) return
-    chosenId = picker.last.id || null
-  })
-
-  $effect(() => {
-    optioned = chosen ? (picker.last.optioned[chosen.id] ?? false) : false
-  })
+  let optioned = $derived(chosen ? (picker.last.optioned[chosen.id] ?? false) : false)
 
   function go(tile: Tile | null) {
     if (!tile || tile.disabled) return
@@ -77,7 +68,11 @@
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="orden-setting option" onclick={() => (optioned = !optioned)}>
       <span class="name">{chosen.option.label}</span>
-      <Switch on={optioned} label={chosen.option.label} onchange={(on) => (optioned = on)} />
+      <Switch
+        on={optioned}
+        label={chosen.option.label}
+        onchange={(on: boolean) => (optioned = on)}
+      />
     </div>
   {/if}
 
