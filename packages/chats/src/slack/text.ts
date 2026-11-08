@@ -45,7 +45,9 @@ export function markdownOf(mrkdwn: string, nameOf: NameOf): Read {
   const mentions: string[] = []
   let everyone = false
   const linked = (inner: string): string => {
-    const [target = '', label] = inner.split('|', 2)
+    const bar = inner.indexOf('|')
+    const target = bar < 0 ? inner : inner.slice(0, bar)
+    const label = bar < 0 ? undefined : inner.slice(bar + 1)
     if (target.startsWith('@')) {
       const id = target.slice(1)
       if (!mentions.includes(id)) mentions.push(id)
@@ -105,7 +107,11 @@ export function mrkdwnOf(markdown: string, people: readonly Mentioned[] = []): s
       let out = escaped(part)
       out = out.replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, '\uE000$2|$1\uE001')
       out = out.replace(/^#{1,6}\s+(.+)$/gm, '\uE002$1\uE002')
-      out = out.replace(/(\*\*|__)(?=\S)([^\n]*?\S)\1/g, '\uE002$2\uE002')
+      out = out.replace(/\*\*(?=\S)([^\n]*?\S)\*\*/g, '\uE002$1\uE002')
+      out = out.replace(
+        /(?<![\p{L}\p{N}_])__(?=\S)([^\n]*?\S)__(?![\p{L}\p{N}_])/gu,
+        '\uE002$1\uE002',
+      )
       out = wrapped(out, '*', '_', '_')
       out = out.replace(/~~(?=\S)([^\n]*?\S)~~/g, '~$1~')
       out = out.replace(/\uE002/g, '*')

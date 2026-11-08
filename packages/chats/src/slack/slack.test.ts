@@ -76,6 +76,13 @@ describe('mrkdwn and markdown', () => {
     expect(mrkdwnOf('mail@Mia.com', [{ id: 'U2', name: 'Mia' }])).toBe('mail@Mia.com')
   })
 
+  test('underscores inside a word stay, and a link label keeps its bars', () => {
+    expect(mrkdwnOf('foo__bar__baz and __init__')).toBe('foo__bar__baz and *init*')
+    expect(markdownOf('<https://a.b|left | right>', nameOf).text).toBe(
+      '[left | right](https://a.b)',
+    )
+  })
+
   test('a round trip keeps what was written', () => {
     const people = [{ id: 'U2', name: 'Mia' }]
     const markdown = '**hi** @Mia, _look_ at [this](https://orden.so) ~~now~~'
@@ -106,6 +113,12 @@ describe('small helpers', () => {
     expect(earlier('1700000000.000100')).toBe('1700000000.000099')
     expect(earlier('1700000001.000000')).toBe('1700000000.999999')
     expect(slugOf('Café Plans 2027!')).toBe('cafe-plans-2027')
+    expect(slugOf('Проект Альфа')).toBe('проект-альфа')
+    expect(slugOf('営業チーム')).toBe('営業チーム')
+    expect(slugOf('한국 팀')).toBe('한국-팀')
+    expect(slugOf('हिन्दी टीम')).toBe('हिन्दी-टीम')
+    expect(slugOf('😀'.repeat(3) + 'x'.repeat(100)).length).toBe(80)
+    expect(() => slugOf('!!! 🎉')).toThrow('letter or a number')
     expect(kindOfFile({ mimetype: 'audio/mp4', subtype: 'slack_audio' })).toBe('voice')
     expect(kindOfFile({ mimetype: 'image/gif' })).toBe('gif')
     expect(kindOfFile({ mimetype: 'application/pdf' })).toBe('file')
@@ -324,6 +337,8 @@ describe('a pasted token', () => {
       attachments: [{ name: 'a.png', type: 'image/png', bytes: new Uint8Array([1, 2, 3]) }],
     })
     expect(sent).toMatchObject({ text: 'here', thread: parent.ts })
+    expect(sent.id).toBe(given.slack.channels.get('C1')?.messages.at(-1)?.ts)
+    expect(given.waits).toEqual([])
     expect(sent.attachments[0]).toMatchObject({ name: 'a.png', kind: 'image', size: 3 })
     const bytes = await connection.attachment('C1', sent.id, sent.attachments[0]?.ref ?? '')
     expect([...bytes]).toEqual([1, 2, 3])
@@ -389,6 +404,27 @@ describe('without Socket Mode', () => {
   })
 })
 
+describe('polling an empty conversation', () => {
+  test('the first message and the removal of the last one are both heard', async () => {
+    const given = setup()
+    const { connection, events } = await connect(given)
+    await connection.history('D1', { limit: 20 })
+    const first = given.slack.post('D1', 'U2', 'first ever')
+    const tick = () => (connection as unknown as { tick(): Promise<void> }).tick()
+    await tick()
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        t: 'message',
+        message: expect.objectContaining({ text: 'first ever' }),
+      }),
+    )
+    const channel = given.slack.channels.get('D1')
+    if (channel) channel.messages = []
+    await tick()
+    expect(events).toContainEqual({ t: 'deleted', conversation: 'D1', message: first.ts })
+  })
+})
+
 describe('Socket Mode', () => {
   test('connects with the app-level token, acknowledges events and hears them live', async () => {
     const given = setup()
@@ -443,6 +479,256 @@ describe('Socket Mode', () => {
     given.slack.lines.at(-1)?.say({ type: 'disconnect', reason: 'refresh_requested' })
     await vi.waitFor(() => expect(given.slack.lines).toHaveLength(2))
     expect(given.slack.lines[0]?.open).toBe(false)
+  })
+})
+
+describe('threads', () => {
+  test('a reply also sent to the channel shows in the channel and in its thread', async () => {
+    const given = setup()
+    const parent = given.slack.post('C1', 'U2', 'question')
+    given.slack.post('C1', 'U3', 'quiet reply', { thread_ts: parent.ts })
+    const loud = given.slack.post('C1', 'U3', 'loud reply', {
+      thread_ts: parent.ts,
+      subtype: 'thread_broadcast',
+    })
+    const { connection } = await connect(given)
+    const channel = await connection.history('C1', { limit: 20 })
+    const shown = channel.messages.find((one) => one.id === loud.ts)
+    expect(shown?.thread).toBeUndefined()
+    expect(shown?.replyTo).toBe(parent.ts)
+    expect(channel.messages.map((one) => one.text)).not.toContain('quiet reply')
+    const thread = await connection.thread?.('C1', parent.ts as string, { limit: 20 })
+    expect(thread?.messages.map((one) => [one.text, one.thread])).toEqual([
+      ['quiet reply', parent.ts],
+      ['loud reply', parent.ts],
+    ])
+  })
+
+  test('a live reply also sent to the channel reaches the channel and the thread', async () => {
+    const given = setup()
+    const parent = given.slack.post('C1', 'U2', 'question')
+    const { connection, events } = await connect(given, {
+      token: 'xoxp-good',
+      appToken: 'xapp-good',
+    })
+    await connection.history('C1', { limit: 20 })
+    await vi.waitFor(() => expect(given.slack.lines).toHaveLength(1))
+    const loud = given.slack.post('C1', 'U3', 'loud', {
+      thread_ts: parent.ts,
+      subtype: 'thread_broadcast',
+    })
+    given.slack.event({ ...loud, channel: 'C1' })
+    await vi.waitFor(() =>
+      expect(events.filter((one) => one.t === 'message').map((one) => one.message)).toEqual([
+        expect.objectContaining({ id: loud.ts, thread: parent.ts }),
+        expect.objectContaining({ id: loud.ts, replyTo: parent.ts }),
+      ]),
+    )
+    const inChannel = events.filter((one) => one.t === 'message')[1]
+    expect(inChannel?.t === 'message' && inChannel.message.thread).toBeUndefined()
+  })
+
+  test('a live reply updates its parent, and a replied notice is no message of its own', async () => {
+    const given = setup()
+    const parent = given.slack.post('C1', 'U2', 'question')
+    const { connection, events } = await connect(given, {
+      token: 'xoxp-good',
+      appToken: 'xapp-good',
+    })
+    await connection.history('C1', { limit: 20 })
+    await vi.waitFor(() => expect(given.slack.lines).toHaveLength(1))
+    const reply = given.slack.post('C1', 'U3', 'answer', { thread_ts: parent.ts })
+    parent.thread_ts = parent.ts
+    parent.reply_count = 1
+    parent.latest_reply = reply.ts
+    given.slack.event({
+      type: 'message',
+      channel: 'C1',
+      hidden: true,
+      ts: given.slack.ts(),
+      message: { ...parent },
+    })
+    given.slack.event({ ...reply, channel: 'C1' })
+    await vi.waitFor(() =>
+      expect(
+        events.filter((one) => one.t === 'changed' && one.message.id === parent.ts).length,
+      ).toBeGreaterThanOrEqual(2),
+    )
+    const messages = events.flatMap((one) => (one.t === 'message' ? [one.message] : []))
+    expect(messages.map((one) => one.text)).toEqual(['answer'])
+    const last = events.filter((one) => one.t === 'changed').at(-1)
+    expect(last?.t === 'changed' && last.message.replies).toBe(1)
+  })
+
+  test('without Socket Mode an open thread is polled for new, edited and removed replies', async () => {
+    const given = setup()
+    const parent = given.slack.post('C1', 'U2', 'question')
+    const first = given.slack.post('C1', 'U3', 'first', { thread_ts: parent.ts })
+    const gone = given.slack.post('C1', 'U3', 'gone', { thread_ts: parent.ts })
+    const { connection, events } = await connect(given)
+    await connection.history('C1', { limit: 20 })
+    await connection.thread?.('C1', parent.ts as string, { limit: 20 })
+    await connection.history('C1', { limit: 20 })
+    given.slack.post('C1', 'U2', 'second', { thread_ts: parent.ts })
+    first.text = 'first, edited'
+    first.edited = { ts: given.slack.ts() }
+    const channel = given.slack.channels.get('C1')
+    if (channel) channel.messages = channel.messages.filter((one) => one !== gone)
+    await (connection as unknown as { tick(): Promise<void> }).tick()
+    const seen = events.flatMap((one) =>
+      one.t === 'message' || one.t === 'changed'
+        ? [[one.t, one.message.text, one.message.thread]]
+        : one.t === 'deleted'
+          ? [[one.t, one.message]]
+          : [],
+    )
+    expect(seen).toContainEqual(['message', 'second', parent.ts])
+    expect(seen).toContainEqual(['changed', 'first, edited', parent.ts])
+    expect(seen).toContainEqual(['deleted', gone.ts])
+  })
+})
+
+describe('workspace-wide channel events', () => {
+  test('a channel you are not in stays out of the list when it is made, renamed or archived', async () => {
+    const given = setup()
+    given.slack.channel({
+      id: 'C8',
+      name: 'elsewhere',
+      creator: 'U2',
+      members: ['U2'],
+      messages: [],
+    })
+    const { connection, events } = await connect(given, {
+      token: 'xoxp-good',
+      appToken: 'xapp-good',
+    })
+    await connection.conversations()
+    await vi.waitFor(() => expect(given.slack.lines).toHaveLength(1))
+    given.slack.event({
+      type: 'channel_created',
+      channel: { id: 'C9', name: 'random', created: 1, creator: 'U2' },
+    })
+    given.slack.event({
+      type: 'channel_rename',
+      channel: { id: 'C8', name: 'renamed', created: 1 },
+    })
+    given.slack.event({ type: 'channel_archive', channel: 'C8', user: 'U2' })
+    given.slack.event({ type: 'channel_unarchive', channel: 'C8', user: 'U2' })
+    given.slack.event({
+      type: 'channel_created',
+      channel: { id: 'C7', name: 'mine', created: 1, creator: 'U1' },
+    })
+    given.slack.event({
+      type: 'channel_rename',
+      channel: { id: 'C1', name: 'everyone', created: 1 },
+    })
+    await vi.waitFor(() =>
+      expect(
+        events.some((one) => one.t === 'conversation' && one.conversation.title === 'everyone'),
+      ).toBe(true),
+    )
+    await new Promise((done) => setTimeout(done, 30))
+    const shown = events.flatMap((one) => (one.t === 'conversation' ? [one.conversation.id] : []))
+    expect(shown).toContain('C7')
+    expect(shown).not.toContain('C8')
+    expect(shown).not.toContain('C9')
+  })
+})
+
+describe('when Socket Mode cannot carry the messages', () => {
+  const texts = (events: ProviderEvent[]) =>
+    events.flatMap((one) => (one.t === 'message' ? [one.message.text] : []))
+  const polling = (connection: Connection) => connection as unknown as { tick(): Promise<void> }
+  const onlines = (events: ProviderEvent[]) =>
+    events.filter((one) => one.t === 'status' && one.status === 'online').length
+
+  test('a socket that never comes up leaves the open conversations polled', async () => {
+    const given = setup()
+    const silent = slackProvider({
+      dial: () => ({ send: () => undefined, close: () => undefined }),
+      wait: () => Promise.resolve(),
+      poll: 1e9,
+    })
+    given.slack.post('C1', 'U2', 'before')
+    const connection = await silent.connect(
+      { token: 'xoxp-good', appToken: 'xapp-good' },
+      given.host,
+    )
+    opened.push(connection)
+    const events: ProviderEvent[] = []
+    connection.start((event) => events.push(event))
+    await connection.conversations()
+    await connection.history('C1', { limit: 20 })
+    given.slack.post('C1', 'U3', 'while the socket is down')
+    await polling(connection).tick()
+    expect(texts(events)).toContain('while the socket is down')
+  })
+
+  test('a revoked app-level token stops the socket and the conversations are polled', async () => {
+    const given = setup()
+    const { connection, events } = await connect(given, {
+      token: 'xoxp-good',
+      appToken: 'xapp-good',
+    })
+    await connection.conversations()
+    await connection.history('C1', { limit: 20 })
+    await vi.waitFor(() => expect(given.slack.lines).toHaveLength(1))
+    given.slack.appTokens.clear()
+    given.slack.lines.at(-1)?.say({ type: 'disconnect', reason: 'refresh_requested' })
+    await vi.waitFor(() => expect(onlines(events)).toBe(2))
+    const opens = given.slack.calls.filter((one) => one.method === 'apps.connections.open').length
+    given.slack.post('C1', 'U3', 'polled instead')
+    await polling(connection).tick()
+    expect(texts(events)).toContain('polled instead')
+    expect(given.slack.calls.filter((one) => one.method === 'apps.connections.open')).toHaveLength(
+      opens,
+    )
+  })
+
+  test('Socket Mode turned off in the app stops the socket instead of dialing forever', async () => {
+    const given = setup()
+    const { connection, events } = await connect(given, {
+      token: 'xoxp-good',
+      appToken: 'xapp-good',
+    })
+    await connection.history('C1', { limit: 20 })
+    await vi.waitFor(() => expect(given.slack.lines).toHaveLength(1))
+    given.slack.lines.at(-1)?.say({ type: 'disconnect', reason: 'link_disabled' })
+    await vi.waitFor(() => expect(onlines(events)).toBe(2))
+    expect(given.slack.lines).toHaveLength(1)
+    given.slack.post('C1', 'U2', 'heard by polling')
+    await polling(connection).tick()
+    expect(texts(events)).toContain('heard by polling')
+  })
+
+  test('what was said while the socket was away arrives once it is back', async () => {
+    const given = setup()
+    const { connection, events } = await connect(given, {
+      token: 'xoxp-good',
+      appToken: 'xapp-good',
+    })
+    await connection.conversations()
+    await connection.history('C1', { limit: 20 })
+    await vi.waitFor(() => expect(given.slack.lines).toHaveLength(1))
+    await vi.waitFor(() => expect(onlines(events)).toBe(1))
+    given.slack.lines.at(-1)?.close()
+    given.slack.post('C1', 'U3', 'said in the gap')
+    await vi.waitFor(() => expect(texts(events)).toContain('said in the gap'))
+    given.slack.event({ ...given.slack.post('C1', 'U2', 'live again'), channel: 'C1' })
+    await vi.waitFor(() => expect(texts(events)).toContain('live again'))
+    const listed = () => given.slack.calls.filter((one) => one.method === 'users.conversations')
+    const before = listed().length
+    given.slack.lines.at(-1)?.close()
+    await vi.waitFor(() => expect(listed().length).toBeGreaterThan(before))
+    expect(texts(events).filter((one) => one === 'live again')).toHaveLength(1)
+    expect(events.some((one) => one.t === 'deleted')).toBe(false)
+  })
+
+  test('an app-level token Slack refuses is said at once, not found out later', async () => {
+    const given = setup()
+    await expect(
+      given.provider.connect({ token: 'xoxp-good', appToken: 'xapp-wrong' }, given.host),
+    ).rejects.toThrow('app-level token')
   })
 })
 

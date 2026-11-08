@@ -17,18 +17,21 @@ import type {
   Status,
 } from '../provider'
 import { secretName } from '../provider'
-import { Api, list, record, type Said, sleep, type Sleep, SlackError, text } from './api'
+import { Api, isRecord, list, record, type Said, sleep, type Sleep, SlackError, text } from './api'
 import { type Emoji, emoji, emojiIn, nameFor, textFor } from './emoji'
-import { type Dial, SocketMode } from './socket'
+import { type Dial, SocketMode, type SocketState } from './socket'
 import { markdownOf, mrkdwnOf } from './text'
 
 const WORDS = {
   signedOut: 'Signed out of Slack. Connect again.',
   noToken: 'That is not a Slack user token. It starts with xoxp-',
   noAppToken: 'That is not a Slack app-level token. It starts with xapp-',
+  badAppToken:
+    'Slack refused that app-level token. Generate one with connections:write under Basic Information',
   forEveryone: 'Slack removes messages for everyone',
   files: 'Slack files need the desktop app',
   unknownEmoji: 'Slack does not know that emoji',
+  noName: 'A Slack channel name needs a letter or a number',
 }
 
 export interface Deps {
@@ -81,13 +84,20 @@ export function earlier(ts: string): string {
 }
 
 export function slugOf(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+  const slug = Array.from(
+    title
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[̀-ͯ]/g, '')
+      .normalize('NFC')
+      .replace(/[^\p{L}\p{N}\p{M}_-]+/gu, '-')
+      .replace(/^-+|-+$/g, ''),
+  )
     .slice(0, 80)
+    .join('')
+    .replace(/-+$/, '')
+  if (!slug) throw new Error(WORDS.noName)
+  return slug
 }
 
 export function kindOfFile(file: Said): AttachmentKind {
@@ -124,6 +134,14 @@ export async function open(
       throw new Error(WORDS.signedOut, { cause: error })
     }
     throw error
+  }
+  if (appToken && known === undefined) {
+    try {
+      await new Api(host, appToken, wait).call('apps.connections.open')
+    } catch (error) {
+      if (error instanceof SlackError && error.signedOut)
+        throw new Error(WORDS.badAppToken, { cause: error })
+    }
   }
   const team = text(who.team_id)
   const user = text(who.user_id)
@@ -165,6 +183,8 @@ export class SlackConnection implements Connection {
   private readonly known = new Map<string, Conversation>()
   private readonly raw = new Map<string, Said>()
   private readonly kept = new Map<string, Said>()
+  private readonly baseline = new Set<string>()
+  private readonly threadSeen = new Map<string, Map<string, string>>()
   private readonly watched = new Map<string, Watched>()
   private readonly online = new Map<string, boolean>()
   private readonly hearers = new Set<Hearer>()
@@ -174,6 +194,7 @@ export class SlackConnection implements Connection {
   private timer: ReturnType<typeof setTimeout> | null = null
   private listed = 0
   private presenceAt = 0
+  private wasOnline = false
   private gone = false
   private closed = false
   private status: Status = 'online'
@@ -202,11 +223,9 @@ export class SlackConnection implements Connection {
         socketApi,
         deps.dial,
         (event) => this.heard(event),
-        (state) => {
-          this.status = state
-          this.emit({ t: 'status', status: state })
-        },
+        (state) => this.socketState(state),
         this.wait,
+        () => this.socketDropped(),
       )
     }
   }
@@ -217,6 +236,29 @@ export class SlackConnection implements Connection {
     if (me) this.account.self = this.personOf(me)
     if (this.socket) this.socket.begin()
     this.schedule()
+  }
+
+  private socketState(state: SocketState): void {
+    if (this.gone || this.closed) return
+    this.status = state
+    this.emit({ t: 'status', status: state })
+    if (state !== 'online') return
+    if (this.wasOnline) void this.catchUp().catch(() => undefined)
+    this.wasOnline = true
+  }
+
+  private socketDropped(): void {
+    this.socket = null
+    if (this.gone || this.closed) return
+    this.status = 'online'
+    this.emit({ t: 'status', status: 'online' })
+    void this.catchUp().catch(() => undefined)
+  }
+
+  private async catchUp(): Promise<void> {
+    for (const conversation of [...this.watched.keys()])
+      await this.refreshMessages(conversation).catch(() => undefined)
+    await this.relist()
   }
 
   private emit(event: ProviderEvent): void {
@@ -248,13 +290,14 @@ export class SlackConnection implements Connection {
 
   async tick(): Promise<void> {
     const now = this.host.now()
-    if (!this.socket) {
+    if (!this.socket || this.status !== 'online') {
       for (const [conversation, seen] of [...this.watched]) {
         if (now - seen.at > WATCHED_FOR) {
           this.watched.delete(conversation)
           continue
         }
         await this.refreshMessages(conversation).catch(() => undefined)
+        if (seen.thread) await this.refreshThread(conversation, seen.thread).catch(() => undefined)
       }
       if (now - this.listed > RELIST_EVERY) await this.relist().catch(() => undefined)
     }
@@ -430,7 +473,7 @@ export class SlackConnection implements Connection {
     return textFor(this.table, name)
   }
 
-  private messageOf(channel: string, raw: Said): ProviderMessage {
+  private messageOf(channel: string, raw: Said, inThread = false): ProviderMessage {
     this.keep(channel, raw)
     const ts = text(raw.ts)
     const subtype = text(raw.subtype)
@@ -454,7 +497,10 @@ export class SlackConnection implements Connection {
       mine: author.id === this.self,
     }
     const thread = text(raw.thread_ts)
-    if (thread && thread !== ts) message.thread = thread
+    if (thread && thread !== ts) {
+      if (inThread || subtype !== 'thread_broadcast') message.thread = thread
+      else message.replyTo = thread
+    }
     const count = Number(raw.reply_count)
     if (Number.isFinite(count) && count > 0) {
       message.replies = count
@@ -498,14 +544,18 @@ export class SlackConnection implements Connection {
     return ref
   }
 
-  private async mapped(channel: string, raws: readonly Said[]): Promise<ProviderMessage[]> {
+  private async mapped(
+    channel: string,
+    raws: readonly Said[],
+    inThread = false,
+  ): Promise<ProviderMessage[]> {
     const ids: string[] = []
     for (const raw of raws) {
       ids.push(text(raw.user))
       for (const match of text(raw.text).matchAll(/<@([UW][A-Z0-9]+)/g)) ids.push(match[1] ?? '')
     }
     await this.ensure(ids)
-    return raws.map((raw) => this.messageOf(channel, raw))
+    return raws.map((raw) => this.messageOf(channel, raw, inThread))
   }
 
   async conversations(): Promise<Conversation[]> {
@@ -560,8 +610,9 @@ export class SlackConnection implements Connection {
   }
 
   private watch(conversation: string, thread?: string): void {
+    const kept = thread ?? this.watched.get(conversation)?.thread
     this.watched.delete(conversation)
-    this.watched.set(conversation, { at: this.host.now(), ...(thread ? { thread } : {}) })
+    this.watched.set(conversation, { at: this.host.now(), ...(kept ? { thread: kept } : {}) })
     while (this.watched.size > WATCHED_MOST) {
       const oldest = this.watched.keys().next().value
       if (oldest === undefined) break
@@ -585,7 +636,7 @@ export class SlackConnection implements Connection {
   private async refreshMessages(conversation: string): Promise<void> {
     const said = await this.api.call('conversations.history', { channel: conversation, limit: 30 })
     const raws = list(said.messages)
-    if (!raws.length) return
+    const known = this.baseline.has(conversation)
     const oldest = raws.reduce((least, one) => Math.min(least, Number(one.ts)), Infinity)
     const present = new Set(raws.map((one) => text(one.ts)))
     const before = new Map<string, string>()
@@ -600,18 +651,45 @@ export class SlackConnection implements Connection {
       const was = before.get(message.id)
       this.kept.set(`${conversation}\n${message.id}`, raw)
       if (was === undefined) {
-        if (before.size) {
+        if (known) {
           this.bump(conversation, message)
           this.emit({ t: 'message', message })
         }
       } else if (was !== print) this.emit({ t: 'changed', message })
     }
     for (const ts of before.keys()) {
-      if (Number(ts) >= oldest && !present.has(ts)) {
+      if ((!raws.length || Number(ts) >= oldest) && !present.has(ts)) {
         this.kept.delete(`${conversation}\n${ts}`)
         this.emit({ t: 'deleted', conversation, message: ts })
       }
     }
+    this.baseline.add(conversation)
+  }
+
+  private printsOf(raws: readonly Said[]): Map<string, string> {
+    return new Map(raws.map((raw) => [text(raw.ts), this.fingerprint(raw)]))
+  }
+
+  private async refreshThread(conversation: string, parent: string): Promise<void> {
+    const key = `${conversation}\n${parent}`
+    const before = this.threadSeen.get(key)
+    if (!before) return
+    const all = (
+      await this.api.pages(
+        'conversations.replies',
+        { channel: conversation, ts: parent, limit: 200 },
+        'messages',
+        Math.ceil(THREAD_MOST / 200),
+      )
+    ).filter((one) => text(one.ts) !== parent)
+    const now = this.printsOf(all)
+    this.threadSeen.set(key, now)
+    const fresh = all.filter((raw) => before.get(text(raw.ts)) !== this.fingerprint(raw))
+    const messages = await this.mapped(conversation, fresh, true)
+    for (const message of messages)
+      this.emit({ t: before.has(message.id) ? 'changed' : 'message', message })
+    for (const ts of before.keys())
+      if (!now.has(ts)) this.emit({ t: 'deleted', conversation, message: ts })
   }
 
   private bump(conversation: string, message: ProviderMessage): void {
@@ -626,7 +704,16 @@ export class SlackConnection implements Connection {
     this.known.set(conversation, next)
   }
 
+  private noted(conversation: string, ts: string): void {
+    const key = `${conversation}\n${ts}`
+    if (!this.baseline.has(conversation)) return
+    const raw = this.raw.get(key)
+    if (raw) this.kept.set(key, raw)
+    else this.kept.delete(key)
+  }
+
   private remember(conversation: string, raws: readonly Said[]): void {
+    this.baseline.add(conversation)
     for (const raw of raws) this.kept.set(`${conversation}\n${text(raw.ts)}`, raw)
     while (this.kept.size > KEPT) {
       const oldest = this.kept.keys().next().value
@@ -688,7 +775,8 @@ export class SlackConnection implements Connection {
     ).filter((one) => text(one.ts) !== parent)
     const cut = ask.before ? all.filter((one) => Number(one.ts) < Number(ask.before)) : all
     const page = cut.slice(Math.max(0, cut.length - ask.limit))
-    const messages = await this.mapped(conversation, page)
+    if (!ask.before) this.threadSeen.set(`${conversation}\n${parent}`, this.printsOf(all))
+    const messages = await this.mapped(conversation, page, true)
     return {
       messages,
       before: cut.length > page.length && page[0] ? text(page[0].ts) : null,
@@ -719,7 +807,7 @@ export class SlackConnection implements Connection {
     const posted = record(said.message)
     const raw: Said = { ...posted, ts: text(said.ts) || text(posted.ts) }
     raw.user ??= this.self
-    const [message] = await this.mapped(text(said.channel) || conversation, [raw])
+    const [message] = await this.mapped(text(said.channel) || conversation, [raw], !!thread)
     if (!message) throw new SlackError('no_message')
     return message
   }
@@ -771,18 +859,22 @@ export class SlackConnection implements Connection {
       }
       await this.wait(500 * (tries + 1))
     }
-    const [message] = await this.mapped(conversation, [
-      {
-        ts: String(this.host.now() / 1000),
-        user: this.self,
-        text: body,
-        files: ids.map((id, index) => {
-          const file = draft.attachments?.[index]
-          return { id, name: file?.name, mimetype: file?.type, size: file?.bytes.length }
-        }),
-        ...(thread ? { thread_ts: thread } : {}),
-      },
-    ])
+    const [message] = await this.mapped(
+      conversation,
+      [
+        {
+          ts: String(this.host.now() / 1000),
+          user: this.self,
+          text: body,
+          files: ids.map((id, index) => {
+            const file = draft.attachments?.[index]
+            return { id, name: file?.name, mimetype: file?.type, size: file?.bytes.length }
+          }),
+          ...(thread ? { thread_ts: thread } : {}),
+        },
+      ],
+      !!thread,
+    )
     if (!message) throw new SlackError('no_message')
     return message
   }
@@ -796,9 +888,10 @@ export class SlackConnection implements Connection {
       ? await this.api.call('conversations.replies', {
           channel: conversation,
           ts: thread,
+          oldest: ts,
           latest: ts,
           inclusive: true,
-          limit: 1,
+          limit: 2,
         })
       : await this.api.call('conversations.history', {
           channel: conversation,
@@ -808,7 +901,7 @@ export class SlackConnection implements Connection {
         })
     const raw = list(said.messages).find((one) => text(one.ts) === ts)
     if (!raw) return null
-    const [message] = await this.mapped(conversation, [raw])
+    const [message] = await this.mapped(conversation, [raw], !!thread)
     return message ?? null
   }
 
@@ -1033,18 +1126,20 @@ export class SlackConnection implements Connection {
     return answer.ok ? new Uint8Array(await answer.arrayBuffer()) : null
   }
 
-  private changed(channel: Said): void {
+  private changed(channel: Said, joined = false): void {
     if (!text(channel.id)) return
     const was = this.known.get(text(channel.id))
+    if (!was && (!joined || channel.is_member === false)) return
     const next = this.conversationOf(
       was ? { ...channel, unread_count_display: was.unread } : channel,
     )
     this.emit({ t: 'conversation', conversation: next })
   }
 
-  private async channelChanged(id: string): Promise<void> {
+  private async channelChanged(id: string, joined = false): Promise<void> {
+    if (!joined && !this.known.has(id)) return
     const said = await this.api.call('conversations.info', { channel: id })
-    this.changed(record(said.channel))
+    this.changed(record(said.channel), joined)
   }
 
   private async heardMessage(event: Said): Promise<void> {
@@ -1052,22 +1147,50 @@ export class SlackConnection implements Connection {
     const subtype = text(event.subtype)
     if (subtype === 'message_deleted') {
       this.raw.delete(`${channel}\n${text(event.deleted_ts)}`)
+      this.noted(channel, text(event.deleted_ts))
       this.emit({ t: 'deleted', conversation: channel, message: text(event.deleted_ts) })
       return
     }
-    if (subtype === 'message_changed' || subtype === 'message_replied') {
+    if (subtype === 'message_changed' || subtype === 'message_replied' || isRecord(event.message)) {
       const inner = record(event.message)
-      const [message] = await this.mapped(channel, [inner])
-      if (message?.deleted && !message.replies)
+      if (!text(inner.ts)) return
+      const shown = await this.shapes(channel, inner)
+      const message = shown.at(-1)
+      if (!message) return
+      if (!message.thread) this.noted(channel, message.id)
+      if (message.deleted && !message.replies)
         this.emit({ t: 'deleted', conversation: channel, message: message.id })
-      else if (message) this.emit({ t: 'changed', message })
+      else for (const one of shown) this.emit({ t: 'changed', message: one })
       return
     }
-    if (!this.known.has(channel)) await this.channelChanged(channel).catch(() => undefined)
-    const [message] = await this.mapped(channel, [event])
+    if (!this.known.has(channel)) await this.channelChanged(channel, true).catch(() => undefined)
+    const shown = await this.shapes(channel, event)
+    const message = shown.at(-1)
     if (!message) return
-    if (!message.thread || subtype === 'thread_broadcast') this.bump(channel, message)
-    this.emit({ t: 'message', message })
+    if (!message.thread) {
+      this.noted(channel, message.id)
+      this.bump(channel, message)
+    }
+    for (const one of shown) this.emit({ t: 'message', message: one })
+    const parent = text(event.thread_ts)
+    if (parent && parent !== message.id)
+      void this.parentChanged(channel, parent).catch(() => undefined)
+  }
+
+  private async shapes(channel: string, raw: Said): Promise<ProviderMessage[]> {
+    const [inChannel] = await this.mapped(channel, [raw])
+    if (!inChannel) return []
+    if (text(raw.subtype) !== 'thread_broadcast') return [inChannel]
+    const [inThread] = await this.mapped(channel, [raw], true)
+    return inThread ? [inThread, inChannel] : [inChannel]
+  }
+
+  private async parentChanged(channel: string, parent: string): Promise<void> {
+    if (!this.raw.has(`${channel}\n${parent}`)) return
+    const message = await this.fetchOne(channel, parent)
+    if (!message) return
+    this.noted(channel, parent)
+    this.emit({ t: 'changed', message })
   }
 
   private async heardReaction(event: Said, on: boolean): Promise<void> {
@@ -1101,6 +1224,7 @@ export class SlackConnection implements Connection {
       }
     }
     const [message] = await this.mapped(channel, [raw])
+    if (message && !message.thread) this.noted(channel, message.id)
     if (message) this.emit({ t: 'changed', message })
   }
 
@@ -1115,6 +1239,7 @@ export class SlackConnection implements Connection {
     )
     if (on) pinned.push(channel)
     const [message] = await this.mapped(channel, [{ ...was, pinned_to: pinned }])
+    if (message && !message.thread) this.noted(channel, message.id)
     if (message) this.emit({ t: 'changed', message })
   }
 
@@ -1143,12 +1268,16 @@ export class SlackConnection implements Connection {
     },
     member_joined_channel: (event) => {
       if (text(event.user) === this.self)
-        void this.channelChanged(text(event.channel)).catch(() => undefined)
+        void this.channelChanged(text(event.channel), true).catch(() => undefined)
     },
-    channel_created: (event) => this.changed(record(event.channel)),
-    group_open: (event) => void this.channelChanged(text(event.channel)).catch(() => undefined),
-    im_open: (event) => void this.channelChanged(text(event.channel)).catch(() => undefined),
-    im_created: (event) => this.changed(record(event.channel)),
+    channel_created: (event) => {
+      const channel = record(event.channel)
+      this.changed(channel, text(channel.creator) === this.self)
+    },
+    group_open: (event) =>
+      void this.channelChanged(text(event.channel), true).catch(() => undefined),
+    im_open: (event) => void this.channelChanged(text(event.channel), true).catch(() => undefined),
+    im_created: (event) => this.changed(record(event.channel), true),
     user_change: (event) => {
       const user = record(event.user)
       if (text(user.id)) this.users.set(text(user.id), user)
