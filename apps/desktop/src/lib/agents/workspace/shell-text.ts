@@ -600,3 +600,28 @@ export function plainOf(printed: string): string {
 
   return out
 }
+
+export class Tail {
+  #text = ''
+  #dropped = false
+
+  constructor(private readonly most: number) {}
+
+  push(more: string) {
+    this.#text += more
+    if (this.#text.length <= this.most * 2) return
+
+    const from = this.#text.length - this.most
+    const line = this.#text.indexOf('\n', from)
+    this.#text = this.#text.slice(line === -1 ? from : line + 1)
+    this.#dropped = true
+  }
+
+  get text(): string {
+    return this.#text
+  }
+
+  get dropped(): boolean {
+    return this.#dropped
+  }
+}
