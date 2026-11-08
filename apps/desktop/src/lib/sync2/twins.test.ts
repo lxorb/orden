@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from '../../../../../scripts/growth'
 import { SpaceState } from './places'
 import type { EntryRow } from './store'
 import { madeTwice } from './twins'
@@ -63,5 +64,18 @@ describe('a file sync numbered beside itself (#1904)', () => {
         ]),
       ),
     ).toEqual([])
+  })
+
+  test('looks over a folder of many numbered files in time that grows with it, not its square', () => {
+    const many = linearly((size) => {
+      const rows = [row('gone', 'Photo.png', '', 'h0', true)]
+      for (let at = 1; at <= size; at++) {
+        const name = `Photo ${String(at)}.png`
+        rows.push(row(`p${String(at)}`, name, name, `h${String(at)}`))
+        rows.push(row(`d${String(at)}`, `Scan ${String(at)}.png`, '', `s${String(at)}`, true))
+      }
+      return madeTwice(space(rows))
+    }, 4000)
+    expect(many).toEqual([])
   })
 })

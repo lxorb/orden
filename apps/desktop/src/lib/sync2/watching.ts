@@ -223,11 +223,7 @@ function wantedFolder(engine: Engine, path: string): boolean {
   const placed = engine.placed(path)
   if (!placed) return false
   const { space } = placed
-  const key = space.key(placed.path)
-  for (const [id, want] of space.paths()) {
-    if (space.key(want) === key && space.entries.get(id)?.kind === 'folder') return true
-  }
-  return false
+  return space.wantedAt(placed.path).some((id) => space.entries.get(id)?.kind === 'folder')
 }
 
 async function made(engine: Engine, path: string, dir: boolean) {
