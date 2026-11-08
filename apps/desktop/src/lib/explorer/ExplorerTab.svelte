@@ -58,8 +58,10 @@
     )
   })
 
-  function onkey(event: KeyboardEvent) {
+  function onkey(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (event.defaultPrevented || event.target instanceof HTMLInputElement) return
+    const sheet = event.target instanceof Element ? event.target.closest('[role="dialog"]') : null
+    if (sheet && event.currentTarget.contains(sheet)) return
     const pressed = (id: string) => shortcuts.pressed(id, event)
     let run: (() => unknown) | null = null
     const chosen = view.chosen
