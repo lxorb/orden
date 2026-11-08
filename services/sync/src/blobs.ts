@@ -219,7 +219,9 @@ publicBlobs.get('/:name', async (context) => {
   return new Response(object.body, {
     headers: {
       'content-type': type,
-      'cache-control': 'public, max-age=31536000, immutable',
+      'cache-control': DOCUMENTS.has(type)
+        ? 'private, no-cache'
+        : 'public, max-age=31536000, immutable',
       etag: `"${hash}"`,
       'x-content-type-options': 'nosniff',
       ...(type === 'image/svg+xml' ? { 'content-security-policy': SVG_POLICY } : {}),
