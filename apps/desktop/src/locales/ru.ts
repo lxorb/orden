@@ -2396,6 +2396,11 @@ export const ru: Dictionary = {
   'New application': 'Новое приложение',
   Application: 'Приложение',
   'This application’s file is damaged': 'Файл этого приложения повреждён',
+  'This application’s file is no longer there.': 'Файла этого приложения больше нет.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden не разрешено читать файл этого приложения.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Другая программа удерживает файл этого приложения. Закройте её и попробуйте снова.',
   'Waiting for {device}': 'Ожидание {device}',
   'Sign in to use this application.': 'Войдите, чтобы использовать это приложение.',
   'Waiting for this application’s file to sync…': 'Ожидание синхронизации файла этого приложения…',

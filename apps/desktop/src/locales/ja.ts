@@ -2286,6 +2286,11 @@ export const ja: Dictionary = {
   'New application': '新しいアプリケーション',
   Application: 'アプリケーション',
   'This application’s file is damaged': 'このアプリケーションのファイルは壊れています',
+  'This application’s file is no longer there.': 'このアプリケーションのファイルはもうありません。',
+  'Orden is not allowed to read this application’s file.':
+    'Orden にはこのアプリケーションのファイルを読む権限がありません。',
+  'Another program is holding this application’s file. Close it, then try again.':
+    '別のプログラムがこのアプリケーションのファイルを使用中です。それを閉じてから、もう一度お試しください。',
   'Waiting for {device}': '{device} を待っています',
   'Sign in to use this application.': 'このアプリケーションを使うにはサインインしてください。',
   'Waiting for this application’s file to sync…':

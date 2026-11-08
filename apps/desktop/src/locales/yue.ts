@@ -2234,6 +2234,10 @@ export const yue: Dictionary = {
   'New application': '新應用程式',
   Application: '應用程式',
   'This application’s file is damaged': '呢個應用程式嘅檔案壞咗',
+  'This application’s file is no longer there.': '呢個應用程式嘅檔案已經唔喺度。',
+  'Orden is not allowed to read this application’s file.': 'Orden 冇權讀取呢個應用程式嘅檔案。',
+  'Another program is holding this application’s file. Close it, then try again.':
+    '另一個程式揸住咗呢個應用程式嘅檔案。閂咗佢，再試一次。',
   'Waiting for {device}': '等緊 {device}',
   'Sign in to use this application.': '登入嚟用呢個應用程式。',
   'Waiting for this application’s file to sync…': '等緊呢個應用程式嘅檔案同步…',

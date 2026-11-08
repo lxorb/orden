@@ -2363,6 +2363,11 @@ export const ptPT: Dictionary = {
   'New application': 'Nova aplicação',
   Application: 'Aplicação',
   'This application’s file is damaged': 'O ficheiro desta aplicação está danificado',
+  'This application’s file is no longer there.': 'O ficheiro desta aplicação já não está lá.',
+  'Orden is not allowed to read this application’s file.':
+    'O Orden não tem permissão para ler o ficheiro desta aplicação.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Outro programa está a segurar o ficheiro desta aplicação. Feche-o e tente novamente.',
   'Waiting for {device}': 'À espera de {device}',
   'Sign in to use this application.': 'Inicie sessão para utilizar esta aplicação.',
   'Waiting for this application’s file to sync…':

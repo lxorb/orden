@@ -2330,6 +2330,11 @@ export const kn: Dictionary = {
   'New application': 'ಹೊಸ ಅಪ್ಲಿಕೇಶನ್',
   Application: 'ಅಪ್ಲಿಕೇಶನ್',
   'This application’s file is damaged': 'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಹಾಳಾಗಿದೆ',
+  'This application’s file is no longer there.': 'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಇನ್ನು ಅಲ್ಲಿಲ್ಲ.',
+  'Orden is not allowed to read this application’s file.':
+    'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಓದಲು Orden ಗೆ ಅನುಮತಿ ಇಲ್ಲ.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'ಇನ್ನೊಂದು ಪ್ರೋಗ್ರಾಂ ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಅನ್ನು ಹಿಡಿದಿದೆ. ಅದನ್ನು ಮುಚ್ಚಿ, ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
   'Waiting for {device}': '{device} ಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ',
   'Sign in to use this application.': 'ಈ ಅಪ್ಲಿಕೇಶನ್ ಬಳಸಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'Waiting for this application’s file to sync…': 'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಸಿಂಕ್ ಆಗಲು ಕಾಯಲಾಗುತ್ತಿದೆ…',

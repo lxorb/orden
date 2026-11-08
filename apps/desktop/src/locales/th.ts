@@ -2255,6 +2255,11 @@ export const th: Dictionary = {
   'New application': 'แอปพลิเคชันใหม่',
   Application: 'แอปพลิเคชัน',
   'This application’s file is damaged': 'ไฟล์ของแอปพลิเคชันนี้เสียหาย',
+  'This application’s file is no longer there.': 'ไฟล์ของแอปพลิเคชันนี้ไม่อยู่แล้ว',
+  'Orden is not allowed to read this application’s file.':
+    'Orden ไม่ได้รับอนุญาตให้อ่านไฟล์ของแอปพลิเคชันนี้',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'โปรแกรมอื่นกำลังถือไฟล์ของแอปพลิเคชันนี้อยู่ ปิดโปรแกรมนั้นแล้วลองอีกครั้ง',
   'Waiting for {device}': 'กำลังรอ {device}',
   'Sign in to use this application.': 'ลงชื่อเข้าใช้เพื่อใช้แอปพลิเคชันนี้',
   'Waiting for this application’s file to sync…': 'กำลังรอให้ไฟล์ของแอปพลิเคชันนี้ซิงก์…',

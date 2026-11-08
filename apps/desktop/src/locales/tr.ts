@@ -2316,6 +2316,11 @@ export const tr: Dictionary = {
   'New application': 'Yeni uygulama',
   Application: 'Uygulama',
   'This application’s file is damaged': 'Bu uygulamanın dosyası bozuk',
+  'This application’s file is no longer there.': 'Bu uygulamanın dosyası artık orada değil.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden’ın bu uygulamanın dosyasını okumasına izin verilmiyor.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Başka bir program bu uygulamanın dosyasını tutuyor. Onu kapatın, sonra yeniden deneyin.',
   'Waiting for {device}': '{device} bekleniyor',
   'Sign in to use this application.': 'Bu uygulamayı kullanmak için oturum aç.',
   'Waiting for this application’s file to sync…':

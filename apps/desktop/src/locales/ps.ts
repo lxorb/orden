@@ -2305,6 +2305,11 @@ export const ps: Dictionary = {
   'New application': 'نوی اپلیکیشن',
   Application: 'اپلیکیشن',
   'This application’s file is damaged': 'د دې اپلیکیشن فایل خراب دی',
+  'This application’s file is no longer there.': 'د دې اپلیکیشن فایل نور شتون نه لري.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden ته د دې اپلیکیشن د فایل لوستلو اجازه نشته.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'بل پروګرام د دې اپلیکیشن فایل نیولی دی. هغه وتړئ، بیا بیا هڅه وکړئ.',
   'Waiting for {device}': 'د {device} په تمه',
   'Sign in to use this application.': 'د دې اپلېکېشن کارولو لپاره ننوځئ.',
   'Waiting for this application’s file to sync…': 'د دې اپلېکېشن د فایل د همغږۍ په تمه…',

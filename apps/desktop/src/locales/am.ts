@@ -2271,6 +2271,11 @@ export const am: Dictionary = {
   'New application': 'አዲስ መተግበሪያ',
   Application: 'መተግበሪያ',
   'This application’s file is damaged': 'የዚህ መተግበሪያ ፋይል ተበላሽቷል',
+  'This application’s file is no longer there.': 'የዚህ መተግበሪያ ፋይል ከአሁን በኋላ የለም።',
+  'Orden is not allowed to read this application’s file.':
+    'Orden የዚህን መተግበሪያ ፋይል እንዲያነብ አልተፈቀደለትም።',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'ሌላ ፕሮግራም የዚህን መተግበሪያ ፋይል ይዞታል። ዝጉት፣ ከዚያ እንደገና ይሞክሩ።',
   'Waiting for {device}': '{device}ን በመጠበቅ ላይ',
   'Sign in to use this application.': 'ይህን መተግበሪያ ለመጠቀም ይግቡ።',
   'Waiting for this application’s file to sync…': 'የዚህ መተግበሪያ ፋይል እስኪመሳሰል በመጠበቅ ላይ…',

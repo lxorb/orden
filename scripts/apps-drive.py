@@ -177,6 +177,46 @@ def notepads_here() -> int:
     user32.EnumWindows(ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)(each), 0)
     return count
 
+FILES = {
+    "Installed": '{"v":1,"host":"HOST","run":{"kind":"installed","id":"ID","name":"Notepad"}}\n',
+    "Program": '{"v":1,"host":"HOST","run":{"kind":"path","path":"C:\\\\Windows\\\\notepad.exe","args":["a b.txt"],"cwd":"C:\\\\Windows"}}\n',
+    "Bare": '{"v":1,"host":"HOST","run":{"kind":"path","path":"C:\\\\Windows\\\\notepad.exe","args":[],"cwd":null}}\n',
+    "Lines": '{\r\n  "v": 1,\r\n  "host": "HOST",\r\n  "run": { "kind": "path", "path": "notepad.exe" }\r\n}\r\n',
+    "Marked": '\ufeff{"v":1,"host":"HOST","run":{"kind":"installed","id":"ID","name":"Notepad"}}',
+}
+
+TAB = """
+const ws = orden.workspace
+if (!ws.spaces.length) { await orden.invoke('create_space', { name: 'Apps' }); await ws.loadSpaces() }
+if (!ws.activeSpace && ws.spaces[0]) await ws.showSpace(ws.spaces[0].id)
+const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
+const path = root + '\\\\' + NAME + '.application'
+await orden.invoke('write_note', { path, content: TEXT })
+await ws.loadTree()
+await ws.openEntry(path)
+const tab = ws.tabs.find((one) => one.kind === 'application' && one.path === path)
+if (!tab) return { said: 'no tab' }
+ws.activeTabId = tab.id
+await new Promise((done) => setTimeout(done, 3000))
+const said = document.querySelector('.application')?.innerText ?? document.body.innerText
+ws.closeTab?.(tab.id)
+return { said: said.slice(0, 300) }
+"""
+
+def tabs(app: App, notepad: str) -> list[str]:
+    wrong: list[str] = []
+    until = time.monotonic() + 60
+    while time.monotonic() < until and app.eval("!!orden.workspace.spaces").get("value") is not True:
+        time.sleep(1)
+    for name, text in FILES.items():
+        written = text.replace("HOST", "device-desktop").replace("ID", notepad.replace("\\", "\\\\"))
+        opened = app.value(TAB.replace("NAME", json.dumps(name)).replace("TEXT", json.dumps(written)), 60)
+        said = str((opened or {}).get("said", ""))
+        print(f"{name}.application: {said!r}", flush=True)
+        if said == "no tab" or "damaged" in said or "could not be read" in said:
+            wrong.append(f"{name}.application did not open: {said!r}")
+    return wrong
+
 def drive(app: App, pid: int, shot: pathlib.Path | None) -> list[str]:
     wrong: list[str] = []
     listed = app.value(LISTED, 120)
@@ -193,6 +233,7 @@ def drive(app: App, pid: int, shot: pathlib.Path | None) -> list[str]:
     notepad = next((one for one in listed["list"] if one[1].lower().startswith("notepad")), None)
     if not notepad:
         return [*wrong, "Notepad was not listed"]
+    wrong.extend(tabs(app, notepad[0]))
 
     before = notepads_here()
     app.value(START.replace("ID", json.dumps(notepad[0])), 60)

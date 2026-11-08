@@ -2292,6 +2292,11 @@ export const id: Dictionary = {
   'New application': 'Aplikasi baru',
   Application: 'Aplikasi',
   'This application’s file is damaged': 'File aplikasi ini rusak',
+  'This application’s file is no longer there.': 'File aplikasi ini sudah tidak ada.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden tidak diizinkan membaca file aplikasi ini.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Program lain sedang menahan file aplikasi ini. Tutup program itu, lalu coba lagi.',
   'Waiting for {device}': 'Menunggu {device}',
   'Sign in to use this application.': 'Masuk untuk menggunakan aplikasi ini.',
   'Waiting for this application’s file to sync…': 'Menunggu file aplikasi ini disinkronkan…',

@@ -2315,6 +2315,11 @@ export const te: Dictionary = {
   'New application': 'కొత్త అప్లికేషన్',
   Application: 'అప్లికేషన్',
   'This application’s file is damaged': 'ఈ అప్లికేషన్ ఫైల్ పాడైంది',
+  'This application’s file is no longer there.': 'ఈ అప్లికేషన్ ఫైల్ ఇక అక్కడ లేదు.',
+  'Orden is not allowed to read this application’s file.':
+    'ఈ అప్లికేషన్ ఫైల్‌ను చదవడానికి Orden‌కు అనుమతి లేదు.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'మరో ప్రోగ్రామ్ ఈ అప్లికేషన్ ఫైల్‌ను పట్టుకుని ఉంది. దాన్ని మూసివేసి, మళ్లీ ప్రయత్నించండి.',
   'Waiting for {device}': '{device} కోసం వేచి ఉంది',
   'Sign in to use this application.': 'ఈ అప్లికేషన్‌ను ఉపయోగించడానికి సైన్ ఇన్ చేయండి.',
   'Waiting for this application’s file to sync…': 'ఈ అప్లికేషన్ ఫైల్ సింక్ అయ్యే వరకు వేచి ఉంది…',

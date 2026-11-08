@@ -24,6 +24,7 @@ const LOOK_WITHIN = 10_000
 export const OPEN_DEADLINE = 12_000
 export const ANSWER_WITHIN = 15_000
 const LOOK_AGAIN = [3_000, 5_000, 10_000, 30_000] as const
+const READ_AGAIN = 15_000
 
 const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
 
@@ -39,6 +40,7 @@ export function lookOf(status: number | null, error: unknown): Look {
 export type AppStatus =
   | { is: 'reading' }
   | { is: 'damaged' }
+  | { is: 'unread'; why: Unread }
   | { is: 'signed-out' }
   | { is: 'syncing' }
   | { is: 'unsynced' }
@@ -79,8 +81,44 @@ export interface Linked {
   resize(view: View): void
 }
 
+export type Unread = 'away' | 'missing' | 'denied' | 'locked' | 'unread'
+
+export type Read = { text: string } | { cannot: Unread }
+
+export function unreadOf(error: unknown): Unread | null {
+  const said = error instanceof Error ? error.message : String(error)
+  if (/too large/i.test(said)) return null
+  if (/not on this device/i.test(said)) return 'away'
+  if (/os error (32|33)\b|used by another process|locked/i.test(said)) return 'locked'
+  if (/permission denied|access is denied|not permitted|os error (1|5|13)\b/i.test(said))
+    return 'denied'
+  if (/no such|not found|cannot find|nothing is at|no file at|os error (2|3)\b/i.test(said))
+    return 'missing'
+  return 'unread'
+}
+
+export async function readApp(read: () => Promise<string>): Promise<Read> {
+  try {
+    return { text: await read() }
+  } catch (error) {
+    const why = unreadOf(error)
+    return why ? { cannot: why } : { text: '' }
+  }
+}
+
+export function numberedBeside(path: string): string[] {
+  const at = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
+  const name = path.slice(at + 1)
+  const dot = name.lastIndexOf('.')
+  if (dot <= 0) return []
+  const stem = `${path.slice(0, at + 1)}${name.slice(0, dot)}`
+  const ext = name.slice(dot)
+  return Array.from({ length: 8 }, (_, one) => `${stem} ${String(one + 2)}${ext}`)
+}
+
 export interface SessionWorld {
-  read(path: string): Promise<string | null>
+  read(path: string): Promise<Read>
+  moved?(path: string): void
   find(path: string, until: number): Promise<Found>
   token(): string | null
   devices(token: string): Promise<Device[] | null>
@@ -93,7 +131,10 @@ export interface SessionWorld {
 const sessionWorld: SessionWorld = {
   async read(path) {
     const { invoke } = await import('../tauri')
-    return invoke<string>('read_note', { path }).catch(() => null)
+    return readApp(() => invoke<string>('read_note', { path }))
+  },
+  moved() {
+    workspace.persist()
   },
   find: (path, until) => find(path, until),
   token: () => account.accountToken,
@@ -142,6 +183,7 @@ export class AppSession {
   hostName = $state('')
   hostPlatform = $state('')
   private damaged = $state(false)
+  private unread = $state<Unread | null>(null)
   private blocked = $state<Blocked | null>(null)
   private slow = $state(false)
   private hostListed = $state<boolean | null>(null)
@@ -178,6 +220,7 @@ export class AppSession {
 
   get status(): AppStatus {
     if (this.damaged) return { is: 'damaged' }
+    if (this.unread) return { is: 'unread', why: this.unread }
     if (!this.file) return { is: 'reading' }
     if (this.blocked) return { is: this.blocked }
     if (!this.open) return this.slow ? { is: 'unreachable' } : { is: 'connecting' }
@@ -196,14 +239,46 @@ export class AppSession {
     if (this.begun || this.ended) return
     this.begun = true
     this.view = view
+    await this.load()
+  }
+
+  private async load(): Promise<void> {
     const path = this.tab.path
-    if (!path) return
-    const text = await this.world.read(path)
-    const file = text === null ? null : appFileOf(text)
+    if (!path || this.ended) return
+    const read = await this.world.read(path)
+    if (this.over()) return
+    if ('cannot' in read && read.cannot === 'missing') {
+      for (const beside of numberedBeside(path)) {
+        const there = await this.world.read(beside)
+        if (this.over()) return
+        if ('text' in there && appFileOf(there.text)) {
+          this.tab.path = beside
+          this.world.moved?.(beside)
+          this.unread = null
+          this.file = appFileOf(there.text)
+          if (this.file) void this.nameHost(this.file.host)
+          await this.connect()
+          return
+        }
+      }
+    }
+    if ('cannot' in read) {
+      this.unread = read.cannot
+      if (read.cannot === 'away') {
+        this.cancelLook?.()
+        this.cancelLook = this.world.after(READ_AGAIN, () => {
+          this.cancelLook = null
+          this.retry()
+        })
+      }
+      return
+    }
+    const file = appFileOf(read.text)
     if (!file) {
       this.damaged = true
       return
     }
+    this.unread = null
     this.file = file
     void this.nameHost(file.host)
     await this.connect()
@@ -288,7 +363,14 @@ export class AppSession {
   }
 
   retry(): void {
-    if (this.ended || !this.file) return
+    if (this.ended) return
+    if (!this.file) {
+      if (!this.unread || !this.begun) return
+      this.cancelLook?.()
+      this.cancelLook = null
+      void this.load()
+      return
+    }
     this.cancelLook?.()
     this.cancelLook = null
     this.tries = 0

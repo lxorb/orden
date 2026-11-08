@@ -253,7 +253,7 @@ function runOfFile(value: unknown): AppRun | null {
 }
 
 export function appFileOf(text: string): AppFile | null {
-  const value = parsed(text)
+  const value = parsed(text.replace(/^\uFEFF/, ''))
   if (!isRecord(value) || value.v !== 1 || !isText(value.host, 200)) return null
   const run = runOfFile(value.run)
   return run ? { v: 1, host: value.host, run } : null

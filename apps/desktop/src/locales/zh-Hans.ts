@@ -2238,6 +2238,10 @@ export const zhHans: Dictionary = {
   'New application': '新建应用程序',
   Application: '应用程序',
   'This application’s file is damaged': '此应用程序的文件已损坏',
+  'This application’s file is no longer there.': '此应用程序的文件已不在了。',
+  'Orden is not allowed to read this application’s file.': 'Orden 无权读取此应用程序的文件。',
+  'Another program is holding this application’s file. Close it, then try again.':
+    '另一个程序正占用此应用程序的文件。请关闭它，然后重试。',
   'Waiting for {device}': '正在等待 {device}',
   'Sign in to use this application.': '请登录以使用此应用程序。',
   'Waiting for this application’s file to sync…': '正在等待此应用程序的文件同步…',

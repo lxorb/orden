@@ -2311,6 +2311,11 @@ export const pa: Dictionary = {
   'New application': 'ਨਵੀਂ ਐਪਲੀਕੇਸ਼ਨ',
   Application: 'ਐਪਲੀਕੇਸ਼ਨ',
   'This application’s file is damaged': 'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਖ਼ਰਾਬ ਹੈ',
+  'This application’s file is no longer there.': 'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਹੁਣ ਉੱਥੇ ਨਹੀਂ ਹੈ।',
+  'Orden is not allowed to read this application’s file.':
+    'Orden ਨੂੰ ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਪੜ੍ਹਨ ਦੀ ਇਜਾਜ਼ਤ ਨਹੀਂ ਹੈ।',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'ਕੋਈ ਹੋਰ ਪ੍ਰੋਗਰਾਮ ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਫੜੀ ਬੈਠਾ ਹੈ। ਉਸਨੂੰ ਬੰਦ ਕਰੋ, ਫਿਰ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
   'Waiting for {device}': '{device} ਦੀ ਉਡੀਕ',
   'Sign in to use this application.': 'ਇਹ ਐਪਲੀਕੇਸ਼ਨ ਵਰਤਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'Waiting for this application’s file to sync…': 'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਦੇ ਸਿੰਕ ਹੋਣ ਦੀ ਉਡੀਕ…',

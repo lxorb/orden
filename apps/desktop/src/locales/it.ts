@@ -2373,6 +2373,11 @@ export const it: Dictionary = {
   'New application': 'Nuova applicazione',
   Application: 'Applicazione',
   'This application’s file is damaged': 'Il file di questa applicazione è danneggiato',
+  'This application’s file is no longer there.': 'Il file di questa applicazione non c’è più.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden non ha il permesso di leggere il file di questa applicazione.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Un altro programma tiene occupato il file di questa applicazione. Chiudilo, poi riprova.',
   'Waiting for {device}': 'In attesa di {device}',
   'Sign in to use this application.': 'Accedi per usare questa applicazione.',
   'Waiting for this application’s file to sync…':

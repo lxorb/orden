@@ -2305,6 +2305,11 @@ export const mr: Dictionary = {
   'New application': 'नवीन ॲप्लिकेशन',
   Application: 'ॲप्लिकेशन',
   'This application’s file is damaged': 'या ॲप्लिकेशनची फाइल खराब आहे',
+  'This application’s file is no longer there.': 'या ॲप्लिकेशनची फाइल आता तिथे नाही.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden ला या ॲप्लिकेशनची फाइल वाचण्याची परवानगी नाही.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'दुसऱ्या प्रोग्रामने या ॲप्लिकेशनची फाइल धरून ठेवली आहे. तो बंद करा, मग पुन्हा प्रयत्न करा.',
   'Waiting for {device}': '{device} ची वाट पाहत आहे',
   'Sign in to use this application.': 'हे ॲप्लिकेशन वापरण्यासाठी साइन इन करा.',
   'Waiting for this application’s file to sync…': 'या ॲप्लिकेशनची फाइल सिंक होण्याची वाट पाहत आहे…',

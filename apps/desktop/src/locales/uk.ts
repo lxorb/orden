@@ -2389,6 +2389,11 @@ export const uk: Dictionary = {
   'New application': 'Нова програма',
   Application: 'Програма',
   'This application’s file is damaged': 'Файл цієї програми пошкоджено',
+  'This application’s file is no longer there.': 'Файлу цього застосунку більше немає.',
+  'Orden is not allowed to read this application’s file.':
+    'Orden не дозволено читати файл цього застосунку.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Інша програма утримує файл цього застосунку. Закрийте її, а потім спробуйте ще раз.',
   'Waiting for {device}': 'Очікування {device}',
   'Sign in to use this application.': 'Увійдіть, щоб користуватися цим застосунком.',
   'Waiting for this application’s file to sync…':

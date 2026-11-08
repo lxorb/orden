@@ -2341,6 +2341,11 @@ export const ta: Dictionary = {
   'New application': 'புதிய பயன்பாடு',
   Application: 'பயன்பாடு',
   'This application’s file is damaged': 'இந்தப் பயன்பாட்டின் கோப்பு சேதமடைந்துள்ளது',
+  'This application’s file is no longer there.': 'இந்தப் பயன்பாட்டின் கோப்பு இனி அங்கு இல்லை.',
+  'Orden is not allowed to read this application’s file.':
+    'இந்தப் பயன்பாட்டின் கோப்பைப் படிக்க Orden-க்கு அனுமதி இல்லை.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'வேறொரு நிரல் இந்தப் பயன்பாட்டின் கோப்பைப் பிடித்து வைத்துள்ளது. அதை மூடிவிட்டு, மீண்டும் முயலுங்கள்.',
   'Waiting for {device}': '{device}க்காகக் காத்திருக்கிறது',
   'Sign in to use this application.': 'இந்தப் பயன்பாட்டைப் பயன்படுத்த உள்நுழையவும்.',
   'Waiting for this application’s file to sync…':

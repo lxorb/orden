@@ -2350,6 +2350,11 @@ export const ptBR: Dictionary = {
   'New application': 'Novo aplicativo',
   Application: 'Aplicativo',
   'This application’s file is damaged': 'O arquivo deste aplicativo está danificado',
+  'This application’s file is no longer there.': 'O arquivo deste aplicativo não está mais lá.',
+  'Orden is not allowed to read this application’s file.':
+    'O Orden não tem permissão para ler o arquivo deste aplicativo.',
+  'Another program is holding this application’s file. Close it, then try again.':
+    'Outro programa está segurando o arquivo deste aplicativo. Feche-o e tente de novo.',
   'Waiting for {device}': 'Aguardando {device}',
   'Sign in to use this application.': 'Entre para usar este aplicativo.',
   'Waiting for this application’s file to sync…':

@@ -11,7 +11,11 @@ import {
   type Look,
   lookOf,
   OPEN_DEADLINE,
+  numberedBeside,
+  type Read,
+  readApp,
   type SessionWorld,
+  unreadOf,
 } from './session.svelte'
 
 const server = vi.hoisted(() => ({ version: 1, asked: 0 }))
@@ -41,7 +45,14 @@ const FILE = JSON.stringify({
 const VIEW: View = { width: 800, height: 600, dpr: 1, hz: 60 }
 const tick = () => new Promise((settle) => setTimeout(settle, 0))
 
-function world(options: { token?: string | null; found?: Found; looks?: Look[] } = {}) {
+function world(
+  options: {
+    token?: string | null
+    found?: Found
+    looks?: Look[]
+    reads?: Read[]
+  } = {},
+) {
   let clock = 0
   let timers: { at: number; run: () => void }[] = []
   const state = {
@@ -50,11 +61,16 @@ function world(options: { token?: string | null; found?: Found; looks?: Look[] }
     finds: 0,
     looks: [...(options.looks ?? ['open'])],
     looked: 0,
+    reads: 0,
     devices: [{ id: 'device-desktop', name: 'Desktop' }] as { id: string; name: string }[],
   }
   const links: { heard: (what: AppHeard) => void; said: unknown[]; closed: boolean }[] = []
   const made: SessionWorld = {
-    read: () => Promise.resolve(FILE),
+    read: () => {
+      state.reads += 1
+      const reads = options.reads ?? []
+      return Promise.resolve((reads.length > 1 ? reads.shift() : reads[0]) ?? { text: FILE })
+    },
     find: () => {
       state.finds += 1
       return Promise.resolve(state.found)
@@ -292,5 +308,84 @@ describe('finding an application on an account that started on the old sync', ()
     } finally {
       done()
     }
+  })
+})
+
+describe('an application file read', () => {
+  test('a file that cannot be read says why, never that it is damaged', async () => {
+    for (const why of ['missing', 'denied', 'locked', 'unread'] as const) {
+      const { session, state } = world({ reads: [{ cannot: why }] })
+      await session.start(VIEW)
+      expect(session.status).toEqual({ is: 'unread', why })
+      expect(state.finds).toBe(0)
+    }
+  })
+
+  test('a file not on this device yet is read again by itself, and opens once it is', async () => {
+    const { session, state, pass } = world({ reads: [{ cannot: 'away' }, { text: FILE }] })
+    await session.start(VIEW)
+    expect(session.status).toEqual({ is: 'unread', why: 'away' })
+    await pass(20_000)
+    expect(state.reads).toBe(2)
+    expect(session.file?.host).toBe('device-desktop')
+    expect(session.status.is).toBe('connecting')
+  })
+
+  test('Try again reads a file that could not be read once more', async () => {
+    const { session, state } = world({ reads: [{ cannot: 'locked' }, { text: FILE }] })
+    await session.start(VIEW)
+    expect(session.status).toEqual({ is: 'unread', why: 'locked' })
+    session.retry()
+    await tick()
+    await tick()
+    expect(state.reads).toBe(2)
+    expect(session.file?.host).toBe('device-desktop')
+    expect(session.status.is).toBe('connecting')
+  })
+
+  test('a file sync numbered beside its own name is followed, and the tab points at it (#1904)', async () => {
+    const { session, state } = world({ reads: [{ cannot: 'missing' }, { text: FILE }] })
+    await session.start(VIEW)
+    expect(state.reads).toBe(2)
+    expect(session.file?.host).toBe('device-desktop')
+    expect(session.status.is).toBe('connecting')
+    expect((session as unknown as { tab: { path: string } }).tab.path).toBe('/s/GIMP 2.application')
+    expect(numberedBeside('C:\\A\\GIMP.application').slice(0, 2)).toEqual([
+      'C:\\A\\GIMP 2.application',
+      'C:\\A\\GIMP 3.application',
+    ])
+  })
+
+  test('only words that are no application are damaged', async () => {
+    const { session } = world({ reads: [{ text: 'not json' }] })
+    await session.start(VIEW)
+    expect(session.status).toEqual({ is: 'damaged' })
+  })
+
+  test('names the reason in what the read was refused with', async () => {
+    expect(
+      unreadOf(new Error('that note is not on this device, and the account could not be reached')),
+    ).toBe('away')
+    expect(unreadOf('could not read C:\\A\\GIMP.application: Access is denied. (os error 5)')).toBe(
+      'denied',
+    )
+    expect(unreadOf('could not read /s/GIMP.application: Permission denied (os error 13)')).toBe(
+      'denied',
+    )
+    expect(
+      unreadOf(
+        'could not read C:\\A\\GIMP.application: The process cannot access the file because it is being used by another process. (os error 32)',
+      ),
+    ).toBe('locked')
+    expect(
+      unreadOf('could not read /s/GIMP.application: No such file or directory (os error 2)'),
+    ).toBe('missing')
+    expect(unreadOf(new Error('no such note'))).toBe('missing')
+    expect(unreadOf('something else')).toBe('unread')
+    expect(unreadOf('that note is too large')).toBeNull()
+    expect(await readApp(() => Promise.reject(new Error('that note is too large')))).toEqual({
+      text: '',
+    })
+    expect(await readApp(() => Promise.resolve(FILE))).toEqual({ text: FILE })
   })
 })

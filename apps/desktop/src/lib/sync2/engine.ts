@@ -391,7 +391,22 @@ export class Engine implements AskedEngine {
     text?: string,
     mergeable?: string,
   ): Promise<string | null> {
-    return this.core.use(() => this.make(path, folder, text, mergeable))
+    return this.core.use(() => this.oneAt(path, () => this.make(path, folder, text, mergeable)))
+  }
+
+  private readonly making = new Map<string, Promise<unknown>>()
+
+  private async oneAt<T>(path: string, work: () => Promise<T>): Promise<T> {
+    const at = path.replace(/\\/g, '/').normalize('NFC')
+    const key = this.core.world.foldsCase ? at.toLowerCase() : at
+    const mine = (this.making.get(key) ?? Promise.resolve()).then(work)
+    const settled = mine.catch(() => undefined)
+    this.making.set(key, settled)
+    try {
+      return await mine
+    } finally {
+      if (this.making.get(key) === settled) this.making.delete(key)
+    }
   }
 
   private async make(
