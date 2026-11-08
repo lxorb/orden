@@ -30,6 +30,7 @@ const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
 pub(crate) const BROWSER_ARGS: &str = concat!(
     "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,HideCursorWhileTyping,",
     "TouchpadOverscrollHistoryNavigation",
+    " --enable-features=msOverlayScrollbarWinStyle,msOverlayScrollbarWinStyleAnimation",
     " --overscroll-history-navigation=0",
 );
 
@@ -86,7 +87,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         .command_line_args(asked)
         .devtools(DevToolsPolicy::Allowed)
         .remote_debugging(debugging);
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", windows))]
     {
         engine = engine.enable_features([OVERLAY_BARS]);
     }
@@ -149,6 +150,9 @@ fn read_by(drive: bool, name: &str) -> Option<String> {
 
 #[cfg(all(feature = "cef", target_os = "linux"))]
 const OVERLAY_BARS: &str = "OverlayScrollbar";
+
+#[cfg(all(feature = "cef", windows))]
+const OVERLAY_BARS: &str = "FluentOverlayScrollbar";
 
 #[cfg(feature = "cef")]
 fn cef_root() -> Option<PathBuf> {
@@ -813,6 +817,15 @@ mod tests {
         assert!(
             off.contains(&swipe),
             "the engine's touchpad swipe is not off"
+        );
+        let on: Vec<&str> = super::BROWSER_ARGS
+            .split_whitespace()
+            .filter_map(|one| one.strip_prefix("--enable-features="))
+            .flat_map(|one| one.split(','))
+            .collect();
+        assert!(
+            on.contains(&"msOverlayScrollbarWinStyle"),
+            "a page's scrollbars are not laid over it, so its bar runs through the pane's rounded corner"
         );
         let wanted = format!("--{switch}={value}");
         assert!(
