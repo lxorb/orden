@@ -1097,7 +1097,7 @@
 
   function onpointercancel(event: PointerEvent) {
     contacts.went(event.pointerId)
-    right.cancel()
+    right.cancel(event.pointerId)
 
     const one = gesture
     const mine =

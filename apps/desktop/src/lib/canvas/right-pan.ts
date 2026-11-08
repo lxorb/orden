@@ -62,8 +62,9 @@ export class RightPan {
     return press.moved ? 'panned' : 'menu'
   }
 
-  cancel(): void {
-    if (this.press) this.ended = performance.now()
+  cancel(id: number): void {
+    if (this.press?.id !== id) return
+    this.ended = performance.now()
     this.press = null
   }
 
