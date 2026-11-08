@@ -6,7 +6,7 @@ import { mayWritePassItems } from '../limits'
 import { OUT_OF_SPACE, TOO_MANY_CHANGES } from '../refused'
 import { fits } from '../storage'
 import type { Env, Variables } from '../types'
-import { activeIn, mayAct } from './access'
+import { activeIn, holdsSql, mayAct } from './access'
 import { filesGone, ITEM_FILES_GONE } from './files'
 import { type Sealed, sealedIn } from './item-body'
 import {
@@ -35,25 +35,32 @@ export async function itemOf(env: Env, vault: string, id: string): Promise<ItemD
     .first<ItemDb>()
 }
 
-function writeOf(db: D1Database, vault: string, id: string, sent: Sealed, at: number) {
+function writeOf(
+  db: D1Database,
+  vault: string,
+  id: string,
+  sent: Sealed,
+  at: number,
+  email: string,
+) {
   if (sent.rev === 0) {
     return db
       .prepare(
         `insert into pass_items (vault_id, id, rev, key, body, key_version, at, deleted_at, seq)
          select ?1, ?2, 1, ?3, ?4, ?5, ?6, null, ${SEQ}
-          where ${CURRENT_KEY} = ?5 and ${LIVE} < ?7
+          where ${CURRENT_KEY} = ?5 and ${LIVE} < ?7 and ${holdsSql('?1', '?8', 'editor')}
          on conflict(vault_id, id) do nothing`,
       )
-      .bind(vault, id, sent.key, sent.body, sent.keyVersion, at, MOST_ITEMS)
+      .bind(vault, id, sent.key, sent.body, sent.keyVersion, at, MOST_ITEMS, email)
   }
   return db
     .prepare(
       `update pass_items set rev = rev + 1, key = ?4, body = ?5, key_version = ?6, at = ?7,
               deleted_at = null, seq = ${SEQ}
         where vault_id = ?1 and id = ?2 and rev = ?3 and ${CURRENT_KEY} = ?6
-          and (deleted_at is null or ${LIVE} < ?8)`,
+          and (deleted_at is null or ${LIVE} < ?8) and ${holdsSql('?1', '?9', 'editor')}`,
     )
-    .bind(vault, id, sent.rev, sent.key, sent.body, sent.keyVersion, at, MOST_ITEMS)
+    .bind(vault, id, sent.rev, sent.key, sent.body, sent.keyVersion, at, MOST_ITEMS, email)
 }
 
 function keepOld(db: D1Database, vault: string, id: string, sent: Sealed) {
@@ -103,7 +110,7 @@ items.put('/items/:vault/:id', async (context) => {
 
   const db = context.env.DB
   const at = now()
-  const write = writeOf(db, vault, id, sent, at)
+  const write = writeOf(db, vault, id, sent, at, user.email)
   const results = await db.batch(
     sent.rev === 0
       ? [bump(db), write]
@@ -112,7 +119,9 @@ items.put('/items/:vault/:id', async (context) => {
   if (!results[sent.rev === 0 ? 1 : 2]?.meta.changes) {
     const current = await itemOf(context.env, vault, id)
     const after = await activeIn(context.env, vault, user.email)
-    if (after && after.key_version !== sent.keyVersion) {
+    if (!after) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!mayAct(after, 'editor')) return context.json({ error: NOT_YOUR_ROLE }, 403)
+    if (after.key_version !== sent.keyVersion) {
       return context.json({ error: ROTATED, keyVersion: after.key_version }, 409)
     }
     if ((current?.rev ?? 0) === sent.rev) return context.json({ error: TOO_MANY_ITEMS }, 409)
@@ -143,9 +152,10 @@ items.delete('/items/:vault/:id', async (context) => {
     db
       .prepare(
         `update pass_items set rev = rev + 1, key = '', body = '', deleted_at = ?4, seq = ${SEQ}
-          where vault_id = ?1 and id = ?2 and rev = ?3 and deleted_at is null`,
+          where vault_id = ?1 and id = ?2 and rev = ?3 and deleted_at is null
+            and ${holdsSql('?1', '?5', 'editor')}`,
       )
-      .bind(vault, id, rev, now()),
+      .bind(vault, id, rev, now(), user.email),
     db
       .prepare(`delete from pass_versions where vault_id = ?1 and id = ?2 and ${gone}`)
       .bind(vault, id),
@@ -155,6 +165,9 @@ items.delete('/items/:vault/:id', async (context) => {
     ...filesGone(db, ITEM_FILES_GONE, [vault, id]),
   ])
   if (!results[1]?.meta.changes) {
+    const after = await activeIn(context.env, vault, user.email)
+    if (!after) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!mayAct(after, 'editor')) return context.json({ error: NOT_YOUR_ROLE }, 403)
     const current = await itemOf(context.env, vault, id)
     if (!current) return context.json({ error: NO_SUCH_ITEM }, 404)
     return context.json({ error: STALE, current: itemRowOf(current) }, 409)

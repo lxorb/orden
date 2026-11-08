@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { readBody } from '../body'
 import { now } from '../crypto'
 import type { Env, Variables } from '../types'
-import { activeIn, mayAct } from './access'
+import { activeIn, holdsSql, mayAct } from './access'
 import { sealedIn } from './item-body'
 import { itemOf } from './items'
 import {
@@ -58,13 +58,25 @@ moves.post('/items/:vault/:id/move', async (context) => {
                           and deleted_at is null)
             and (select key_version from pass_vaults where id = ?1 and deleted_at is null) = ?5
             and (select count(*) from pass_items where vault_id = ?1 and deleted_at is null) < ?9
+            and ${holdsSql('?1', '?10', 'editor')} and ${holdsSql('?7', '?10', 'editor')}
          on conflict(vault_id, id) do update set
            rev = pass_items.rev + 1, key = excluded.key, body = excluded.body,
            key_version = excluded.key_version, at = excluded.at, deleted_at = null,
            seq = excluded.seq
           where pass_items.deleted_at is not null`,
       )
-      .bind(to, id, sent.key, sent.body, sent.keyVersion, at, vault, sent.rev, MOST_ITEMS),
+      .bind(
+        to,
+        id,
+        sent.key,
+        sent.body,
+        sent.keyVersion,
+        at,
+        vault,
+        sent.rev,
+        MOST_ITEMS,
+        user.email,
+      ),
     bump(db),
     db
       .prepare(
@@ -100,15 +112,22 @@ moves.post('/items/:vault/:id/move', async (context) => {
   ])
 
   if (!results[3]?.meta.changes) {
+    const [one, other] = await Promise.all([
+      activeIn(context.env, vault, user.email),
+      activeIn(context.env, to, user.email),
+    ])
+    if (!one || !other) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!mayAct(one, 'editor') || !mayAct(other, 'editor')) {
+      return context.json({ error: NOT_YOUR_ROLE }, 403)
+    }
     const current = await itemOf(context.env, vault, id)
     if (current?.deleted_at !== null || current.rev !== sent.rev) {
       return context.json({ error: STALE, current: current && itemRowOf(current) }, 409)
     }
     const there = await itemOf(context.env, to, id)
     if (there?.deleted_at === null) return context.json({ error: TAKEN }, 409)
-    const after = await activeIn(context.env, to, user.email)
-    if (after && after.key_version !== sent.keyVersion) {
-      return context.json({ error: ROTATED, keyVersion: after.key_version }, 409)
+    if (other.key_version !== sent.keyVersion) {
+      return context.json({ error: ROTATED, keyVersion: other.key_version }, 409)
     }
     return context.json({ error: TOO_MANY_ITEMS }, 409)
   }

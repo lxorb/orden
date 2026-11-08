@@ -12,7 +12,7 @@ import { objectBody } from '../body'
 import { now } from '../crypto'
 import { NOT_AN_OBJECT } from '../refused'
 import type { Env, Variables } from '../types'
-import { activeIn, mayAct } from './access'
+import { activeIn, holdsSql, mayAct } from './access'
 import { itemOf } from './items'
 import {
   NO_SUCH_ITEM,
@@ -66,9 +66,7 @@ links.post('/links', async (context) => {
       where (select count(*) from pass_links where user_id = ?2) < ?9
         and exists (select 1 from pass_items
                      where vault_id = ?3 and id = ?4 and deleted_at is null)
-        and exists (select 1 from pass_members m join pass_vaults v on v.id = m.vault_id
-                     where m.vault_id = ?3 and m.email = ?10 and m.state = 'active'
-                       and v.deleted_at is null and m.role in ('editor', 'manager', 'owner'))
+        and ${holdsSql('?3', '?10', 'editor')}
      on conflict(id) do nothing`,
   )
     .bind(id, user.id, vault, item, body, expires, views, at, MOST_LINKS, user.email)

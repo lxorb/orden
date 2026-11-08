@@ -13,7 +13,7 @@ import { Hono } from 'hono'
 import { readBody } from '../body'
 import { now } from '../crypto'
 import type { Env, Variables } from '../types'
-import { activeIn, mayAct, membershipOf } from './access'
+import { activeIn, holdsSql, mayAct, membershipOf } from './access'
 import { filesGone } from './files'
 import {
   NO_SUCH_VAULT,
@@ -98,12 +98,15 @@ vaults.put('/vaults/:id', async (context) => {
     bump(db),
     db
       .prepare(
-        `update pass_vaults set rev = rev + 1, meta = ?, seq = ${SEQ}
-          where id = ? and rev = ? and deleted_at is null`,
+        `update pass_vaults set rev = rev + 1, meta = ?1, seq = ${SEQ}
+          where id = ?2 and rev = ?3 and deleted_at is null and ${holdsSql('?2', '?4', 'manager')}`,
       )
-      .bind(meta, id, rev),
+      .bind(meta, id, rev, user.email),
   ])
   if (!results[1]?.meta.changes) {
+    const after = await activeIn(context.env, id, user.email)
+    if (!after) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!mayAct(after, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
     const current = await membershipOf(context.env, id, user.email)
     return context.json({ error: STALE, current: current && vaultRowOf(current, user.id) }, 409)
   }
@@ -148,10 +151,11 @@ vaults.put('/vaults/:id/trust', async (context) => {
       : [
           db
             .prepare(
-              `update pass_vaults set key_proof = ?, seq = ${SEQ}
-                where id = ? and key_version = ? and deleted_at is null`,
+              `update pass_vaults set key_proof = ?1, seq = ${SEQ}
+                where id = ?2 and key_version = ?3 and deleted_at is null
+                  and ${holdsSql('?2', '?4', 'manager')}`,
             )
-            .bind(jsonOf(proof), id, keyVersion),
+            .bind(jsonOf(proof), id, keyVersion, user.email),
         ]),
   ])
   await tellVault(context.env, id, [user.id], from)

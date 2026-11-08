@@ -19,7 +19,7 @@ import { isEmail, normaliseEmail } from '../crypto'
 import { mayInviteToPass } from '../limits'
 import { NOT_AN_EMAIL, TRY_IN_AN_HOUR } from '../refused'
 import type { Env, Variables } from '../types'
-import { activeIn, mayAct } from './access'
+import { activeIn, holdsSql, mayAct } from './access'
 import {
   ALREADY_MEMBER,
   NO_SUCH_MEMBER,
@@ -145,7 +145,7 @@ members.post('/vaults/:id/invites', async (context) => {
            (vault_id, email, user_id, role, state, key, key_version, invited_by, seq, vouch, pin)
          select ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ${SEQ}, ?10, ?11
           where (select count(*) from pass_members where vault_id = ?1 and state <> 'removed') < ?9
-            and exists (select 1 from pass_vaults where id = ?1 and deleted_at is null)
+            and ${holdsSql('?1', '?12', 'manager')}
          on conflict(vault_id, email) do update set
            user_id = excluded.user_id, role = excluded.role, state = excluded.state,
            key = excluded.key, key_version = excluded.key_version,
@@ -165,6 +165,7 @@ members.post('/vaults/:id/invites', async (context) => {
         MOST_MEMBERS,
         role === 'manager' ? vouch : null,
         jsonOf(pin),
+        user.email,
       ),
     db
       .prepare(
@@ -175,6 +176,9 @@ members.post('/vaults/:id/invites', async (context) => {
       .bind(id, email),
   ])
   if (!results[1]?.meta.changes) {
+    const after = await activeIn(context.env, id, user.email)
+    if (!after) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!mayAct(after, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
     const there = await memberOf(context.env, id, email)
     return context.json({ error: there ? ALREADY_MEMBER : TOO_MANY_MEMBERS }, 409)
   }
@@ -207,12 +211,18 @@ members.put('/vaults/:id/members/:email/key', async (context) => {
     bump(db),
     db
       .prepare(
-        `update pass_members set key = ?, key_version = ?, state = 'pending', seq = ${SEQ}
-          where vault_id = ? and email = ? and state in ('pending', 'confirm')`,
+        `update pass_members set key = ?1, key_version = ?2, state = 'pending', seq = ${SEQ}
+          where vault_id = ?3 and email = ?4 and state in ('pending', 'confirm')
+            and ${holdsSql('?3', '?5', 'manager')}`,
       )
-      .bind(key, keyVersion, id, email),
+      .bind(key, keyVersion, id, email, user.email),
   ])
-  if (!results[1]?.meta.changes) return context.json({ error: NO_SUCH_MEMBER }, 404)
+  if (!results[1]?.meta.changes) {
+    const after = await activeIn(context.env, id, user.email)
+    if (!after) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!mayAct(after, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
+    return context.json({ error: NO_SUCH_MEMBER }, 404)
+  }
   await tellVault(context.env, id, [user.id], from)
   return context.json({ ok: true })
 })
@@ -237,15 +247,21 @@ members.put('/vaults/:id/members/:email', async (context) => {
   if (target.role === 'owner') return context.json({ error: OWNER_STAYS }, 409)
 
   const db = context.env.DB
-  await db.batch([
+  const results = await db.batch([
     bump(db),
     db
       .prepare(
-        `update pass_members set role = ?, vouch = ?, seq = ${SEQ}
-          where vault_id = ? and email = ? and state <> 'removed' and role <> 'owner'`,
+        `update pass_members set role = ?1, vouch = ?2, seq = ${SEQ}
+          where vault_id = ?3 and email = ?4 and state <> 'removed' and role <> 'owner'
+            and ${holdsSql('?3', '?5', 'manager')}`,
       )
-      .bind(role, role === 'manager' ? vouch : null, id, email),
+      .bind(role, role === 'manager' ? vouch : null, id, email, user.email),
   ])
+  if (!results[1]?.meta.changes) {
+    const after = await activeIn(context.env, id, user.email)
+    if (!after) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!mayAct(after, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
+  }
   await tellVault(context.env, id, [user.id], from)
   return context.json({ ok: true })
 })
@@ -265,25 +281,35 @@ members.delete('/vaults/:id/members/:email', async (context) => {
   if (target.role === 'owner') return context.json({ error: OWNER_STAYS }, 409)
 
   const db = context.env.DB
-  await db.batch([
+  const may = `(?2 = ?3 or ${holdsSql('?1', '?3', 'manager')})`
+  const results = await db.batch([
     bump(db),
-    db
-      .prepare('delete from pass_links where vault_id = ? and user_id = ?')
-      .bind(id, target.user_id ?? ''),
     db
       .prepare(
         `update pass_members set state = 'removed', key = null, seq = ${SEQ}
-          where vault_id = ? and email = ? and state = 'active' and role <> 'owner'`,
+          where vault_id = ?1 and email = ?2 and state = 'active' and role <> 'owner' and ${may}`,
       )
-      .bind(id, email),
+      .bind(id, email, user.email),
     db
       .prepare(
         `delete from pass_members
-          where vault_id = ? and email = ? and state in ('pending', 'confirm')`,
+          where vault_id = ?1 and email = ?2 and state in ('pending', 'confirm') and ${may}`,
       )
-      .bind(id, email),
+      .bind(id, email, user.email),
+    db
+      .prepare(
+        `delete from pass_links where vault_id = ?1 and user_id = ?2
+            and not exists (select 1 from pass_members where vault_id = ?1 and email = ?3
+                              and state in ('active', 'pending', 'confirm'))`,
+      )
+      .bind(id, target.user_id ?? '', email),
     db.prepare(`update pass_vaults set seq = ${SEQ} where id = ?`).bind(id),
   ])
+  if (!results[1]?.meta.changes && !results[2]?.meta.changes) {
+    const after = await activeIn(context.env, id, user.email)
+    if (!after) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!leaving && !mayAct(after, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
+  }
   await tellVault(context.env, id, [user.id, ...(target.user_id ? [target.user_id] : [])], from)
   return context.json({ ok: true })
 })

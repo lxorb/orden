@@ -15,7 +15,7 @@ import { objectBody } from '../body'
 import { isEmail, normaliseEmail } from '../crypto'
 import { NOT_AN_OBJECT } from '../refused'
 import type { Env, Variables } from '../types'
-import { activeIn, mayAct, membershipOf } from './access'
+import { activeIn, holdsSql, mayAct, membershipOf } from './access'
 import {
   KEEPS_ITS_OWNER,
   NO_SUCH_VAULT,
@@ -144,8 +144,8 @@ rotations.post('/vaults/:id/rotate', async (context) => {
             and (select count(*) from pass_items where vault_id = ?1 and deleted_at is null) = ?5
             and (select count(*) from pass_items i join json_each(?6) j on j.key = i.id
                   where i.vault_id = ?1 and i.deleted_at is null and i.rev = j.value) = ?5
-            and exists (select 1 from pass_members where vault_id = ?1 and state = 'active'
-                          and email = ?8 and email in (select key from json_each(?9)))`,
+            and ${holdsSql('?1', '?8', 'manager')}
+            and ?8 in (select key from json_each(?9))`,
       )
       .bind(id, keyVersion, rev, meta, live.length, revs, jsonOf(proof), user.email, peopleJson),
     db
@@ -190,6 +190,9 @@ rotations.post('/vaults/:id/rotate', async (context) => {
       .bind(id, keyVersion, live.length),
   ])
   if (!results[1]?.meta.changes) {
+    const after = await activeIn(context.env, id, user.email)
+    if (!after) return context.json({ error: NO_SUCH_VAULT }, 404)
+    if (!mayAct(after, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
     const current = await membershipOf(context.env, id, user.email)
     if (current && (current.rev !== rev || current.key_version + 1 !== keyVersion)) {
       return context.json({ error: STALE, current: vaultRowOf(current, user.id) }, 409)
