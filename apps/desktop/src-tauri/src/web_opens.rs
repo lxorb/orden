@@ -167,33 +167,89 @@ const PRESSED_IN: &str = "orden-pressed";
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 const BLOCKED: &str = "orden-popup-blocked";
 
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub const PAGE_SCRIPT: &str = r"(function () {
-  var open = window.open
-  if (typeof open !== 'function' || typeof Proxy !== 'function') return
-  function said(kind, url) {
-    var at = null
-    try { at = String(new URL(url == null || url === '' ? 'about:blank' : String(url), location.href)) } catch (e) { return }
-    window.dispatchEvent(new CustomEvent(kind, { detail: at }))
-  }
+  if (typeof Proxy !== 'function') return
+  var ours = true
   var pressed = -1
+  var spending = {}
   ;['keydown', 'mousedown', 'pointerdown', 'pointerup', 'touchend', 'click'].forEach(function (type) {
     window.addEventListener(type, function (event) {
       if (event.isTrusted) pressed = Date.now()
     }, true)
   })
-  function spent() {
-    var fresh = pressed >= 0 && Date.now() - pressed < 5000
-    var engine = !navigator.userActivation || navigator.userActivation.isActive
-    if (fresh && engine) pressed = -1
+  function spent(kind) {
+    var fresh = pressed >= 0 && Date.now() - pressed < 5000 && spending[kind] !== pressed
+    var engine = kind !== 'open' || !navigator.userActivation || navigator.userActivation.isActive
+    if (fresh && engine) spending[kind] = pressed
     return fresh && engine
+  }
+  function gated(owner, name, kind, refuse) {
+    var was = owner ? Object.getOwnPropertyDescriptor(owner, name) : null
+    if (!was || typeof was.value !== 'function') return
+    was.value = new Proxy(was.value, {
+      apply: function (engine, self, args) {
+        var asked = typeof kind === 'function' ? kind(self, args) : kind
+        if (!asked || spent(asked)) return Reflect.apply(engine, self, args)
+        return refuse(self, args)
+      }
+    })
+    Object.defineProperty(owner, name, was)
+  }
+  function denied(name) {
+    try { return new DOMException('A press or a key in the page comes first.', name) } catch (e) { return new Error(name) }
+  }
+  function rejecting(name) {
+    return function () { return Promise.reject(denied(name)) }
+  }
+  function prototype(kind) {
+    return typeof window[kind] === 'function' ? window[kind].prototype : null
+  }
+  function filed(one) {
+    if (window.HTMLLabelElement && one instanceof HTMLLabelElement) one = one.control
+    return !!window.HTMLInputElement && one instanceof HTMLInputElement && String(one.type).toLowerCase() === 'file'
+  }
+  ;['requestFullscreen', 'webkitRequestFullscreen', 'webkitRequestFullScreen'].forEach(function (name) {
+    gated(prototype('Element'), name, 'fullscreen', function (self) {
+      try { self.dispatchEvent(new Event('fullscreenerror', { bubbles: true, composed: true })) } catch (e) {}
+      return name === 'requestFullscreen' ? Promise.reject(new TypeError('Permissions check failed')) : undefined
+    })
+  })
+  gated(prototype('Clipboard'), 'writeText', 'clipboard', rejecting('NotAllowedError'))
+  gated(prototype('Clipboard'), 'write', 'clipboard', rejecting('NotAllowedError'))
+  gated(prototype('Document'), 'execCommand', function (self, args) {
+    return /^(copy|cut)$/i.test(String(args[0])) ? 'copy' : null
+  }, function () { return false })
+  gated(prototype('HTMLElement'), 'click', function (self) {
+    return filed(self) ? 'picker' : null
+  }, function () {})
+  ;['HTMLInputElement', 'HTMLSelectElement'].forEach(function (kind) {
+    gated(prototype(kind), 'showPicker', 'picker', function () { throw denied('NotAllowedError') })
+  })
+  ;['showOpenFilePicker', 'showSaveFilePicker', 'showDirectoryPicker'].forEach(function (name) {
+    gated(window, name, 'picker', rejecting('SecurityError'))
+  })
+  gated(prototype('PaymentRequest'), 'show', 'payment', rejecting('SecurityError'))
+  gated(prototype('Navigator'), 'share', 'share', rejecting('NotAllowedError'))
+  gated(prototype('HTMLVideoElement'), 'requestPictureInPicture', 'picture', rejecting('NotAllowedError'))
+  gated(window.Notification, 'requestPermission', 'notifications', function (self, args) {
+    var answer = Notification.permission
+    if (typeof args[0] === 'function') setTimeout(function () { args[0](answer) })
+    return Promise.resolve(answer)
+  })
+
+  var open = window.open
+  if (typeof open !== 'function') return
+  function said(kind, url) {
+    var at = null
+    try { at = String(new URL(url == null || url === '' ? 'about:blank' : String(url), location.href)) } catch (e) { return }
+    window.dispatchEvent(new CustomEvent(kind, { detail: at }))
   }
   window.open = new Proxy(open, {
     apply: function (engine, self, args) {
-      var active = spent()
+      var active = spent('open')
       var name = args.length > 1 && args[1] != null ? String(args[1]) : '_blank'
       var features = args.length > 2 && args[2] != null ? String(args[2]).toLowerCase() : ''
-      if (/(^|[\s,])no(opener|referrer)(?=$|[\s,=])/.test(features) && (name === '_blank' || name === '')) {
+      if (ours && /(^|[\s,])no(opener|referrer)(?=$|[\s,=])/.test(features) && (name === '_blank' || name === '')) {
         said(active ? 'orden-open-tab' : 'orden-popup-blocked', args[0])
         return null
       }
@@ -205,6 +261,11 @@ pub const PAGE_SCRIPT: &str = r"(function () {
     }
   })
 })()";
+
+#[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
+pub fn engine_page_script() -> String {
+    PAGE_SCRIPT.replacen("var ours = true", "var ours = false", 1)
+}
 
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
@@ -805,11 +866,12 @@ mod tests {
         assert!(gate < engine);
         assert!(super::PAGE_SCRIPT[gate..engine].contains("return null"));
         let active = super::PAGE_SCRIPT
-            .find("var active = spent()")
+            .find("var active = spent('open')")
             .expect("the press");
         assert!(active < gate);
         assert!(super::PAGE_SCRIPT.contains("if (event.isTrusted) pressed = Date.now()"));
-        assert!(super::PAGE_SCRIPT.contains("if (fresh && engine) pressed = -1"));
+        assert!(super::PAGE_SCRIPT.contains("if (fresh && engine) spending[kind] = pressed"));
+        assert!(super::engine_page_script().contains("var ours = false"));
         assert!(SCRIPT.contains("else open(event.detail, 'orden-popup-blocked')"));
     }
 

@@ -686,6 +686,13 @@ mod engine {
 
         if !scripts.is_empty() {
             unsafe {
+                let page = WKUserScript::initWithSource_injectionTime_forMainFrameOnly(
+                    WKUserScript::alloc(mtm),
+                    &NSString::from_str(&crate::web_opens::engine_page_script()),
+                    WKUserScriptInjectionTime::AtDocumentStart,
+                    false,
+                );
+                content.addUserScript(&page);
                 let world = WKContentWorld::worldWithName(&NSString::from_str(WORLD), mtm);
                 let script =
                     WKUserScript::initWithSource_injectionTime_forMainFrameOnly_inContentWorld(
@@ -750,6 +757,13 @@ mod engine {
         content.remove_all_scripts();
         content.unregister_script_message_handler(CHANNEL);
         if !scripts.is_empty() {
+            content.add_script(&UserScript::new(
+                &crate::web_opens::engine_page_script(),
+                UserContentInjectedFrames::AllFrames,
+                UserScriptInjectionTime::Start,
+                &[],
+                &[],
+            ));
             content.add_script(&UserScript::for_world(
                 scripts,
                 UserContentInjectedFrames::AllFrames,
