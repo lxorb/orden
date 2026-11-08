@@ -99,3 +99,19 @@ test('ink deleted with the Delete key is picked no more, and an undo brings it b
   expect(store().canvas.ink.map((one) => one.id)).toEqual(['s'])
   expect(store().picked).toEqual([])
 })
+
+test('Ctrl+D duplicates the picked ink, rather than putting the tab down', () => {
+  store().pickAll(['s'])
+  flushSync()
+
+  const event = press('d', true)
+  expect(event.defaultPrevented).toBe(true)
+  expect(store().canvas.ink).toHaveLength(2)
+  expect(store().picked).not.toContain('s')
+})
+
+test('and with nothing picked it leaves Ctrl+D to the app', () => {
+  const event = press('d', true)
+  expect(event.defaultPrevented).toBe(false)
+  expect(store().canvas.ink).toHaveLength(1)
+})
