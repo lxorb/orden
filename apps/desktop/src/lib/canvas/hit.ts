@@ -95,11 +95,14 @@ function handleAt(where: Where, point: Point, slack: number): HandleId | null {
 function endpointAt(where: Where, point: Point, reach: number): Hit['endpoint'] {
   if (!where.picked.length) return null
 
-  for (const edge of where.canvas.edges) {
-    if (!where.picked.includes(edge.id)) continue
+  const wanted = new Set(where.picked)
+  const picked = where.canvas.edges.filter((edge) => wanted.has(edge.id))
+  if (!picked.length) return null
 
-    const from = where.canvas.nodes.find((one) => one.id === edge.fromNode)
-    const to = where.canvas.nodes.find((one) => one.id === edge.toNode)
+  const byId = new Map(where.canvas.nodes.map((node) => [node.id, node]))
+  for (const edge of picked) {
+    const from = byId.get(edge.fromNode)
+    const to = byId.get(edge.toNode)
     if (!from || !to) continue
 
     const ends = edgeEnds(edge, boxOf(from), boxOf(to))
