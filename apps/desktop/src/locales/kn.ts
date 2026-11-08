@@ -3830,4 +3830,5 @@ export const kn: Dictionary = {
   'Export…': 'ಎಕ್ಸ್‌ಪೋರ್ಟ್…',
   'Include pictures': 'ಚಿತ್ರಗಳನ್ನು ಸೇರಿಸಿ',
   'Without styles': 'ಶೈಲಿ ಇಲ್ಲದೆ',
+  'Turn {name} on or off': '{name} ಆನ್ ಅಥವಾ ಆಫ್ ಮಾಡಿ',
 }

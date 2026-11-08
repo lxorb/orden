@@ -3932,4 +3932,5 @@ export const pl: Dictionary = {
   'Export…': 'Eksportuj…',
   'Include pictures': 'Dołącz obrazy',
   'Without styles': 'Bez stylów',
+  'Turn {name} on or off': 'Włącz lub wyłącz {name}',
 }

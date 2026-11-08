@@ -19,6 +19,7 @@
   import { changeProfile, removeFace } from './mine'
   import { CLEARS, type Clears, clearsAt, stands } from './status'
   import Hint from '../Hint.svelte'
+  import Switch from '../Switch.svelte'
 
   const user = $derived(account.user)
   const status = $derived(user && stands(user.status, Date.now()) ? (user.status ?? null) : null)
@@ -264,19 +265,11 @@
           /></span
         ></span
       >
-      <span
-        class="orden-switch"
-        class:on={status?.quiet ?? false}
-        role="switch"
-        tabindex="0"
-        aria-checked={status?.quiet ?? false}
-        aria-label={t('Do not disturb')}
-        onkeydown={(event) => {
-          if (event.key !== ' ' && event.key !== 'Enter') return
-          event.preventDefault()
-          withStatus({ quiet: !(status?.quiet ?? false) })
-        }}
-      ></span>
+      <Switch
+        on={status?.quiet ?? false}
+        label={t('Do not disturb')}
+        onchange={(on) => withStatus({ quiet: on })}
+      />
     </div>
 
     <div class="orden-setting setting">
@@ -307,19 +300,11 @@
           /></span
         ></span
       >
-      <span
-        class="orden-switch"
-        class:on={user.hidden ?? false}
-        role="switch"
-        tabindex="0"
-        aria-checked={user.hidden ?? false}
-        aria-label={t('Appear offline')}
-        onkeydown={(event) => {
-          if (event.key !== ' ' && event.key !== 'Enter') return
-          event.preventDefault()
-          void kept(() => changeProfile({ hidden: !(user.hidden ?? false) }))
-        }}
-      ></span>
+      <Switch
+        on={user.hidden ?? false}
+        label={t('Appear offline')}
+        onchange={(on) => void kept(() => changeProfile({ hidden: on }))}
+      />
     </div>
   </div>
   {#if wrong}<p class="wrong">{wrong}</p>{/if}

@@ -3844,4 +3844,5 @@ export const ml: Dictionary = {
   'Export…': 'എക്സ്പോർട്ട്…',
   'Include pictures': 'ചിത്രങ്ങൾ ഉൾപ്പെടുത്തുക',
   'Without styles': 'സ്റ്റൈലുകളില്ലാതെ',
+  'Turn {name} on or off': '{name} ഓണാക്കുക അല്ലെങ്കിൽ ഓഫാക്കുക',
 }

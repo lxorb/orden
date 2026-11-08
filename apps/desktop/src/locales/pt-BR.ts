@@ -3875,4 +3875,5 @@ export const ptBR: Dictionary = {
   'Export…': 'Exportar…',
   'Include pictures': 'Incluir imagens',
   'Without styles': 'Sem estilos',
+  'Turn {name} on or off': 'Ativar ou desativar {name}',
 }

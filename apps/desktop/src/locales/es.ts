@@ -3898,4 +3898,5 @@ export const es: Dictionary = {
   'Export…': 'Exportar…',
   'Include pictures': 'Incluir imágenes',
   'Without styles': 'Sin estilos',
+  'Turn {name} on or off': 'Activar o desactivar {name}',
 }

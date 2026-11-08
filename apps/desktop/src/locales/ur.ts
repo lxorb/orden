@@ -3782,4 +3782,5 @@ export const ur: Dictionary = {
   'Export…': 'ایکسپورٹ…',
   'Include pictures': 'تصاویر شامل کریں',
   'Without styles': 'بغیر اسٹائل',
+  'Turn {name} on or off': '{name} آن یا آف کریں',
 }

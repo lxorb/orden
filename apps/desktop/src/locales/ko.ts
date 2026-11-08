@@ -3677,4 +3677,5 @@ export const ko: Dictionary = {
   'Export…': '내보내기…',
   'Include pictures': '그림 포함',
   'Without styles': '스타일 없이',
+  'Turn {name} on or off': '{name} 켜기 또는 끄기',
 }

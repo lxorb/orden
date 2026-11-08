@@ -3812,4 +3812,5 @@ export const gsw: Dictionary = {
   'Export…': 'Exportiere…',
   'Include pictures': 'Bilder mitnäh',
   'Without styles': 'Ohni Stil',
+  'Turn {name} on or off': '{name} ii- oder uusschalte',
 }

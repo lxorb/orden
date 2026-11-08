@@ -3780,4 +3780,5 @@ export const bn: Dictionary = {
   'Export…': 'এক্সপোর্ট…',
   'Include pictures': 'ছবি সহ',
   'Without styles': 'স্টাইল ছাড়া',
+  'Turn {name} on or off': '{name} চালু বা বন্ধ করুন',
 }

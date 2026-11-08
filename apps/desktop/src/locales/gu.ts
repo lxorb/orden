@@ -3769,4 +3769,5 @@ export const gu: Dictionary = {
   'Export…': 'નિકાસ…',
   'Include pictures': 'ચિત્રો સાથે',
   'Without styles': 'શૈલી વિના',
+  'Turn {name} on or off': '{name} ચાલુ કે બંધ કરો',
 }

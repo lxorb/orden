@@ -3700,4 +3700,5 @@ export const ja: Dictionary = {
   'Export…': 'エクスポート…',
   'Include pictures': '画像を含める',
   'Without styles': 'スタイルなし',
+  'Turn {name} on or off': '{name} のオン/オフ',
 }

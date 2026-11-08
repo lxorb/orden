@@ -3933,4 +3933,5 @@ export const ru: Dictionary = {
   'Export…': 'Экспорт…',
   'Include pictures': 'С картинками',
   'Without styles': 'Без стилей',
+  'Turn {name} on or off': 'Включить или выключить {name}',
 }

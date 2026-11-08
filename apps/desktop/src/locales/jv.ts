@@ -3705,4 +3705,5 @@ export const jv: Dictionary = {
   'Export…': 'Ekspor…',
   'Include pictures': 'Kalebu gambar',
   'Without styles': 'Tanpa gaya',
+  'Turn {name} on or off': 'Uripake utawa pateni {name}',
 }

@@ -3791,4 +3791,5 @@ export const fa: Dictionary = {
   'Export…': 'برون‌بری…',
   'Include pictures': 'همراه با تصویرها',
   'Without styles': 'بی‌سبک',
+  'Turn {name} on or off': 'روشن یا خاموش کردن {name}',
 }

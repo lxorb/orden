@@ -3859,4 +3859,5 @@ export const ta: Dictionary = {
   'Export…': 'ஏற்றுமதி…',
   'Include pictures': 'படங்களைச் சேர்',
   'Without styles': 'பாணிகள் இல்லாமல்',
+  'Turn {name} on or off': '{name} இயக்கு அல்லது அணை',
 }

@@ -3785,4 +3785,5 @@ export const hi: Dictionary = {
   'Export…': 'एक्सपोर्ट…',
   'Include pictures': 'चित्र शामिल करें',
   'Without styles': 'बिना स्टाइल',
+  'Turn {name} on or off': '{name} चालू या बंद करें',
 }

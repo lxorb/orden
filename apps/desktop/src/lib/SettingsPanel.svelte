@@ -18,6 +18,7 @@
   import { enginesFor } from './web-tab/engines'
   import { CUSTOM, searchEngine } from './web-tab/search-engine.svelte'
   import Hint from './Hint.svelte'
+  import Switch from './Switch.svelte'
   import Outward from './Outward.svelte'
   import Icon from './Icon.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
@@ -518,21 +519,7 @@
       }}
     >
       {@render named(field, where)}
-      <span
-        class="orden-switch"
-        class:on={held}
-        class:off={locked}
-        role="switch"
-        tabindex="0"
-        aria-checked={held}
-        aria-disabled={locked || undefined}
-        aria-label={field.label}
-        onkeydown={(event) => {
-          if (event.key !== ' ' && event.key !== 'Enter') return
-          event.preventDefault()
-          if (!locked) field.set(!field.get())
-        }}
-      ></span>
+      <Switch on={held} label={field.label} disabled={locked} onchange={(on) => field.set(on)} />
     </div>
   {:else if field.kind === 'slider'}
     {@const least = field.least?.() ?? field.min}

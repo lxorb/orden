@@ -3,6 +3,7 @@
   import { prompt } from '../prompt.svelte'
   import Select from '../Select.svelte'
   import Swatches from '../Swatches.svelte'
+  import Switch from '../Switch.svelte'
   import { invoke } from '../tauri'
   import HostMark from './HostMark.svelte'
   import {
@@ -81,12 +82,6 @@
     onback()
     await remote.keep((kept) => withoutOwn(kept, host.id))
   }
-
-  function pressed(event: KeyboardEvent, then: () => void) {
-    if (event.key !== ' ' && event.key !== 'Enter') return
-    event.preventDefault()
-    then()
-  }
 </script>
 
 <header class="who">
@@ -153,16 +148,10 @@
     />
   </div>
 
-  <div
-    class="orden-setting pressable"
-    role="switch"
-    tabindex="0"
-    aria-checked={host.pinned}
-    onclick={() => about({ pinned: !host.pinned })}
-    onkeydown={(event) => pressed(event, () => about({ pinned: !host.pinned }))}
-  >
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="orden-setting pressable" onclick={() => about({ pinned: !host.pinned })}>
     <span class="name">{t('Pin')}</span>
-    <span class="orden-switch" class:on={host.pinned} aria-hidden="true"></span>
+    <Switch on={host.pinned} label={t('Pin')} onchange={(on) => about({ pinned: on })} />
   </div>
 </div>
 

@@ -3720,4 +3720,5 @@ export const id: Dictionary = {
   'Export…': 'Ekspor…',
   'Include pictures': 'Sertakan gambar',
   'Without styles': 'Tanpa gaya',
+  'Turn {name} on or off': 'Nyalakan atau matikan {name}',
 }

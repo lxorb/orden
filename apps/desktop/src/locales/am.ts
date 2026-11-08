@@ -3706,4 +3706,5 @@ export const am: Dictionary = {
   'Export…': 'ላክ…',
   'Include pictures': 'ምስሎችን አካትት',
   'Without styles': 'ያለ ቅጥ',
+  'Turn {name} on or off': '{name}ን አብራ ወይም አጥፋ',
 }
