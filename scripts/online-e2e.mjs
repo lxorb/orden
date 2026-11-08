@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { migrateLocal, sqlLocal } from './local-d1.ts'
 
 const ROOT = resolve(import.meta.dirname, '..')
 const SYNC = join(ROOT, 'services/sync')
@@ -26,31 +27,8 @@ function log(...what) {
   console.log('[online-e2e]', ...what)
 }
 
-function wrangler(args) {
-  const done = spawnSync(process.execPath, [WRANGLER, ...args], {
-    cwd: SYNC,
-    encoding: 'utf8',
-    env: { ...process.env, CI: '1', WRANGLER_SEND_METRICS: 'false' },
-  })
-  if (done.status !== 0) {
-    throw new Error(`wrangler ${args.join(' ')}: ${done.stdout}\n${done.stderr}`)
-  }
-  return done.stdout
-}
-
 function sql(command) {
-  wrangler([
-    'd1',
-    'execute',
-    'nib',
-    '--local',
-    '--persist-to',
-    state,
-    '--config',
-    CONFIG,
-    '--command',
-    command,
-  ])
+  sqlLocal(state, command)
 }
 
 const pause = (ms) => new Promise((settle) => setTimeout(settle, ms))
@@ -181,17 +159,7 @@ async function main() {
   mkdirSync(join(ROOT, 'apps/desktop/dist'), { recursive: true })
   writeFileSync(vars, `MACHINE_DEV_ORDEND="${ORDEND}"\nMACHINE_DEV_SECRET="dev"\n`)
 
-  wrangler([
-    'd1',
-    'migrations',
-    'apply',
-    'nib',
-    '--local',
-    '--persist-to',
-    state,
-    '--config',
-    CONFIG,
-  ])
+  migrateLocal(state)
   const hash = createHash('sha256').update(TOKEN).digest('hex')
   const now = Date.now()
   sql("update online_service set value = 'on' where key = 'online'")

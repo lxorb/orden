@@ -27,7 +27,11 @@ export interface Found {
 }
 
 function texts(): { path: string; text: string }[] {
-  const listed = execFileSync('git', ['ls-files', '-z'], { cwd: ROOT, encoding: 'utf8' })
+  const listed = execFileSync('git', ['ls-files', '-z'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 512 * 1024 * 1024,
+  })
   return listed
     .split('\0')
     .filter(Boolean)
