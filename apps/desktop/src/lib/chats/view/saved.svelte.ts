@@ -1,5 +1,6 @@
 import type { Message } from '@orden/chats'
-import { isNumber, isRecord, isString, keepJson, stored } from '../../stored'
+import { account } from '../../account.svelte'
+import { forget, isNumber, isRecord, isString, keepJson, stored } from '../../stored'
 
 const KEY = 'orden:chats-saved'
 
@@ -58,6 +59,13 @@ class Saved {
         : rest
     keepJson(KEY, this.list)
   }
+
+  forget(): void {
+    this.list = []
+    forget(KEY)
+  }
 }
 
 export const saved = new Saved()
+
+account.forgetWithSession(() => saved.forget())
