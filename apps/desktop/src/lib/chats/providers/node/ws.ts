@@ -31,6 +31,7 @@ export default class WebSocket extends EventEmitter {
   }
 
   private async open(url: string, options: Options): Promise<void> {
+    await Promise.resolve()
     if (!dial) {
       this.fail(new Error('no connection to the outside here'))
       return
@@ -63,7 +64,7 @@ export default class WebSocket extends EventEmitter {
   }
 
   private fail(error: Error): void {
-    this.emit('error', error)
+    if (this.listenerCount('error') > 0) this.emit('error', error)
     this.ended(1006, error.message)
   }
 

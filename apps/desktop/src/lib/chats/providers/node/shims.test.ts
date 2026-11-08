@@ -1,7 +1,7 @@
 import * as node from 'node:crypto'
 import { deflateSync } from 'node:zlib'
 import type { WireSocket } from '@orden/chats/provider'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
   createCipheriv,
   createDecipheriv,
@@ -149,5 +149,17 @@ describe('the WebSocket over the wire', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(closes).toEqual([1000])
     expect(ws.readyState).toBe(WebSocket.CLOSED)
+  })
+
+  test('without a way out it still tells its listeners that it failed and closed', async () => {
+    vi.resetModules()
+    const { default: Unwired } = await import('./ws')
+    const ws = new Unwired('wss://web.whatsapp.com/ws/chat')
+    const heard: unknown[] = []
+    ws.on('error', (error: Error) => heard.push(error.message))
+    ws.on('close', (code: number) => heard.push(code))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(heard).toEqual(['no connection to the outside here', 1006])
+    expect(ws.readyState).toBe(Unwired.CLOSED)
   })
 })
