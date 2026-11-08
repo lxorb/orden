@@ -204,12 +204,38 @@ export interface HostWorld {
   link(app: string, heard: (what: RelayToHost | Opened) => void): Speaking
 }
 
+export const LOOKS_AT_ONCE = 4
+
 export function host(world: HostWorld, follow: (changed: () => void) => () => void): () => void {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry; nothing renders from it
   const hosting = new Map<string, { id: string; one: Hosting }>()
   let stopped = false
   const over = () => stopped
-  let looking: Promise<void> = Promise.resolve()
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry; nothing renders from it
+  const asking = new Set<string>()
+
+  const hostIf = async (path: string, device: string) => {
+    if (over() || hosting.has(path) || asking.has(path)) return
+    asking.add(path)
+    try {
+      const text = await world.read(path)
+      const file = text === null ? null : appFileOf(text)
+      if (file?.host !== device || over()) return
+      const id = await world.idOf(path)
+      if (!id || over() || hosting.has(path)) return
+      const one = new Hosting(
+        id,
+        file,
+        world.runner,
+        (heard) => world.link(id, heard),
+        world.cannot,
+      )
+      hosting.set(path, { id, one })
+      one.open()
+    } finally {
+      asking.delete(path)
+    }
+  }
 
   const look = async () => {
     if (!(await world.serves())) return
@@ -221,26 +247,28 @@ export function host(world: HostWorld, follow: (changed: () => void) => () => vo
       hosting.delete(path)
       held.one.end(true)
     }
-    for (const path of files) {
-      if (over() || hosting.has(path)) continue
-      const text = await world.read(path)
-      const file = text === null ? null : appFileOf(text)
-      if (file?.host !== device) continue
-      const id = await world.idOf(path)
-      if (!id || over() || hosting.has(path)) continue
-      const one = new Hosting(
-        id,
-        file,
-        world.runner,
-        (heard) => world.link(id, heard),
-        world.cannot,
-      )
-      hosting.set(path, { id, one })
-      one.open()
+    const waiting = [...files].filter((path) => !hosting.has(path) && !asking.has(path))
+    const next = async (): Promise<void> => {
+      const path = waiting.shift()
+      if (path === undefined || over()) return
+      await hostIf(path, device).catch(() => undefined)
+      await next()
     }
+    await Promise.all(Array.from({ length: Math.min(LOOKS_AT_ONCE, waiting.length) }, next))
   }
+  let running = false
+  let wanted = false
   const again = () => {
-    looking = looking.then(look).catch(() => undefined)
+    wanted = true
+    if (running) return
+    running = true
+    void (async () => {
+      while (wanted && !over()) {
+        wanted = false
+        await look().catch(() => undefined)
+      }
+      running = false
+    })()
   }
   again()
   const unfollow = follow(again)
