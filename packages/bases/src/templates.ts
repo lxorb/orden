@@ -1,5 +1,5 @@
 import { writeProperty } from '@orden/markdown/property-edits'
-import { addDays, addMonths, formatDate } from './dates'
+import { addDays, addMonths, dayNumber, formatDate, fromDayNumber } from './dates'
 import { nextDate, parseRule } from './recurrence'
 import type { Value } from './types'
 
@@ -59,6 +59,10 @@ function dayIn(value: Value | undefined): string | null {
   return null
 }
 
+const MOST_MISSED = 400
+
+const PERIOD_DAYS = { day: 1, week: 7, month: 31, year: 366 }
+
 export function repeatDue(
   note: Record<string, Value>,
   today: string,
@@ -68,13 +72,14 @@ export function repeatDue(
   const rule = parseRule(said.replace(/^🔁\s*/u, ''))
   if (!rule) return null
   const made = dayIn(note.made) ?? addDays(today, -1)
+  const reach = dayNumber(today) - (MOST_MISSED + 1) * PERIOD_DAYS[rule.unit] * rule.every
   const days: string[] = []
-  for (let after = made; days.length < 400;) {
+  for (let after = dayNumber(made) < reach ? fromDayNumber(reach) : made; ;) {
     const next = nextDate(rule, made, after)
     if (next === null || next > today) break
     days.push(next)
     after = next
   }
   const day = days.pop()
-  return day === undefined ? null : { day, missed: days }
+  return day === undefined ? null : { day, missed: days.slice(-MOST_MISSED) }
 }

@@ -271,6 +271,17 @@ describe('templates', () => {
     })
     expect(repeatDue({ repeat: 'whenever' }, '2026-10-05')).toBeNull()
   })
+
+  test('a repeating template made more than four hundred times ago owes the note of today', () => {
+    const daily = repeatDue({ repeat: 'every day', made: '2024-01-01' }, '2026-10-05')
+    expect(daily?.day).toBe('2026-10-05')
+    expect(daily?.missed).toHaveLength(400)
+    expect(daily?.missed[0]).toBe('2025-08-31')
+    expect(daily?.missed.at(-1)).toBe('2026-10-04')
+    expect(
+      repeatDue({ repeat: 'every week on Monday', made: '0001-01-01' }, '2026-10-05')?.day,
+    ).toBe('2026-10-05')
+  })
 })
 
 describe('conditional colour', () => {
