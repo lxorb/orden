@@ -357,6 +357,23 @@ describe('a note saved keeps the index up to date', () => {
     expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toEqual(['deep/One.md'])
   })
 
+  test('a note under a hidden name stays out of the index, as a full scan leaves it', async () => {
+    await space({ 'Plan.md': '# Plan', 'One.md': '# One' })
+
+    links.noteSaved(at('.orden-inbox.md'), '- [ ] call about [[Plan]] #work')
+    links.noteSaved(at('.drafts/Two.md'), 'see [[Plan]] #work')
+    links.noteSaved(at('.board.canvas'), '{"nodes":[]}')
+    links.fileWritten(ROOT, '.cache/picture.png')
+    links.notesMoved(at('One.md'), at('.old/One.md'))
+    await new Promise((settle) => setTimeout(settle, 0))
+
+    expect(links.backlinks(at('Plan.md'))).toEqual([])
+    expect(links.spaceTags).toEqual([])
+    expect(links.held().map((one) => one.path)).toEqual(['Plan.md'])
+    expect(links.fileNamed('picture.png')).toBeNull()
+    expect(links.fileNamed('.board.canvas')).toBeNull()
+  })
+
   test('the version moves only when something changed', async () => {
     await space({ 'Plan.md': '# Plan' })
     const was = links.version

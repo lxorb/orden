@@ -41,6 +41,7 @@ import { mark } from './trace'
 import {
   folderOf,
   insideSpace,
+  isHiddenPath,
   isMarkdownPath,
   nameOf,
   noteName,
@@ -533,6 +534,8 @@ class Links {
       return
     }
 
+    if (isHiddenPath(relative)) return
+
     if (!isMarkdownPath(relative)) this.fileAdded(relative)
 
     if (isChatTarget(relative) || isTermTarget(relative)) {
@@ -584,7 +587,12 @@ class Links {
 
   canvasRead(path: string, content: string) {
     const relative = this.relative(path)
-    if (!relative || !(isCanvasTarget(relative) || isPagesTarget(relative))) return
+    if (
+      !relative ||
+      isHiddenPath(relative) ||
+      !(isCanvasTarget(relative) || isPagesTarget(relative))
+    )
+      return
 
     this.putCanvas(relative, content)
   }
@@ -625,7 +633,7 @@ class Links {
 
   async cameBack(path: string, folder: boolean) {
     const relative = this.relative(path)
-    if (!relative) return
+    if (!relative || isHiddenPath(relative)) return
 
     const mine = this.scans
 
@@ -652,6 +660,10 @@ class Links {
     const was = this.relative(from)
     const now = this.relative(to)
     if (!was || !now) return
+    if (isHiddenPath(now)) {
+      this.noteGone(from)
+      return
+    }
 
     const moved = (path: string) =>
       path === was || path.startsWith(`${was}/`) ? now + path.slice(was.length) : path
@@ -816,7 +828,14 @@ class Links {
     const root = this.otherHolding(path)
     const space = root === null ? undefined : this.others.get(root)
     const relative = root === null ? null : within(root, path)
-    if (root === null || typeof space !== 'object' || !relative || !isMarkdownPath(relative)) return
+    if (
+      root === null ||
+      typeof space !== 'object' ||
+      !relative ||
+      isHiddenPath(relative) ||
+      !isMarkdownPath(relative)
+    )
+      return
 
     const ref = refOf(scanNote(relative, content))
     const rest = space.refs.filter((one) => !samePath(one.path, relative))
@@ -1493,6 +1512,7 @@ class Links {
   }
 
   fileWritten(root: string, relative: string) {
+    if (isHiddenPath(relative)) return
     if (this.root !== null && samePath(root, this.root)) {
       this.fileAdded(relative)
       return

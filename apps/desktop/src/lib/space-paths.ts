@@ -210,6 +210,10 @@ export function withoutExtension(relative: string): string {
   return relative.replace(MARKDOWN, '')
 }
 
+export function isHiddenPath(relative: string): boolean {
+  return relative.split('/').some((part) => part.startsWith('.'))
+}
+
 export function isMarkdownPath(path: string): boolean {
   return MARKDOWN.test(path)
 }
