@@ -19,6 +19,10 @@ vi.mock('../../workspace.svelte', () => ({
 vi.mock('../commands/found', () => ({
   fromOthers: (path: string) => Promise.resolve(path.startsWith('/team/')),
 }))
+const shut = new Set<string>()
+vi.mock('../../protect/protection.svelte', () => ({
+  protection: { agentsMay: (path: string) => !shut.has(path) },
+}))
 vi.mock('../commands/instructions', () => ({ instructionsFor: () => Promise.resolve('') }))
 
 const { instructionsOf } = await import('./setup')
@@ -34,4 +38,15 @@ test("sends a shared space's instructions as a collaborator's words", async () =
       '<untrusted source="/team/CLAUDE.md">\nBe brief.\n</untrusted>',
     ].join('\n\n'),
   )
+})
+
+test('leaves out an instructions note behind a lock agents may not read', async () => {
+  shut.add('/team/AGENTS.md')
+  try {
+    expect(await instructionsOf(newThread('team', 'p', 'm'))).toBe(
+      '<untrusted source="/team/CLAUDE.md">\nBe brief.\n</untrusted>',
+    )
+  } finally {
+    shut.clear()
+  }
 })

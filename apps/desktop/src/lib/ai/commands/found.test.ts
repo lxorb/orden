@@ -41,6 +41,15 @@ vi.mock('../../search/space', () => ({
     return Promise.resolve()
   },
 }))
+const shut = new Set<string>()
+vi.mock('../../protect/protection.svelte', () => ({
+  protection: {
+    get any() {
+      return shut.size > 0
+    },
+    agentsMay: (path: string) => !shut.has(path),
+  },
+}))
 vi.mock('../../sharing.svelte', () => ({
   reachedByOthers: (path: string | null) => others.reach(path),
 }))
@@ -99,4 +108,17 @@ test('reads a space that is not in front again, since the link index follows onl
   } finally {
     TEXTS['/team/terse.md'] = '---\noutput-style: terse\n---\nOne line.'
   }
+})
+
+test('offers no command, profile or style from a note behind a lock agents may not read', async () => {
+  expect(await foundNamed('agent', 'researcher', '/team')).not.toBeNull()
+  shut.add('/team/researcher.md')
+  shut.add('/team/weekly.md')
+  try {
+    expect((await found('/team')).map((one) => one.name)).toEqual(['terse'])
+    expect(await foundNamed('agent', 'researcher', '/team')).toBeNull()
+  } finally {
+    shut.clear()
+  }
+  expect((await found('/team')).map((one) => one.name)).toEqual(['researcher', 'terse', 'weekly'])
 })
