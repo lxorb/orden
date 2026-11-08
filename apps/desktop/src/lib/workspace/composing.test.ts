@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const sent: string[] = []
 const told: string[] = []
+const kept: string[] = []
 const disk = new Map<string, string>()
 
 vi.mock('../tauri', () => ({
@@ -70,6 +71,12 @@ function space(notes: Record<string, string>, openAt?: string) {
       Promise.resolve(freePath(wanted, (candidate) => disk.has(`${dir}/${candidate}`))),
     loadTree: () => Promise.resolve(),
     persist: () => undefined,
+    rootHolding: (path: string | null) =>
+      [SPACE, OTHER].find((root) => path?.startsWith(`${root}/`)) ?? null,
+    protection: {
+      copied: (from: string, to: string, root: string | null, into: string | null) =>
+        void kept.push(`${from} -> ${to} in ${String(root)} -> ${String(into)}`),
+    },
   }
 
   return ws as unknown as Composes
@@ -78,6 +85,7 @@ function space(notes: Record<string, string>, openAt?: string) {
 beforeEach(() => {
   sent.length = 0
   told.length = 0
+  kept.length = 0
   readOnly.clear()
 })
 
@@ -335,5 +343,21 @@ describe('a file that is not a note of the open space', () => {
     await splitAtCaret(ws, 10)
 
     expect(sent).toEqual([])
+  })
+})
+
+describe('words carved from or merged out of a protected note', () => {
+  const A = `${SPACE}/a.md`
+  const B = `${SPACE}/b.md`
+
+  test('keep its protection where they land, split, extracted or merged', async () => {
+    const doc = '# a\n\nfirst\n\nsecond\n'
+    await splitAtCaret(space({ [A]: doc }, A), doc.indexOf('second'))
+    await extractSelection(space({ [A]: doc }, A), doc.indexOf('first'), doc.indexOf('first') + 5)
+    await mergeInto(space({ [A]: '# a\n\nfirst\n', [B]: '# b\n' }), A, B)
+    expect(kept).toHaveLength(3)
+    expect(kept[0]).toMatch(new RegExp(`^${A} -> ${SPACE}/.+\\.md in ${SPACE} -> ${SPACE}$`))
+    expect(kept[1]).toMatch(new RegExp(`^${A} -> ${SPACE}/.+\\.md in ${SPACE} -> ${SPACE}$`))
+    expect(kept[2]).toBe(`${A} -> ${B} in ${SPACE} -> ${SPACE}`)
   })
 })

@@ -18,6 +18,14 @@ export interface Composes {
   freeNameOnDisk(dir: string, wanted: string): Promise<string>
   loadTree(): Promise<void>
   persist(): void
+  rootHolding(path: string | null): string | null
+  readonly protection: {
+    copied(from: string, to: string, root: string | null, into: string | null): void
+  }
+}
+
+function keptLike(ws: Composes, from: string, to: string): void {
+  ws.protection.copied(from, to, ws.rootHolding(from), ws.rootHolding(to))
 }
 
 export function mergeable(
@@ -49,6 +57,7 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
 
   await invoke('snapshot_note', { path: into, content: intoContent }).catch(() => undefined)
   await writeFile(into, joined)
+  keptLike(ws, from, into)
   ws.reload(into, joined)
 
   const relinked: string[] = []
@@ -109,6 +118,7 @@ async function carve(
   const carved = cut(file.replace(/\.md$/, '')) ?? wanted
 
   await writeFile(created, carved.taken)
+  keptLike(ws, path, created)
 
   await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
   await writeFile(path, carved.kept)
