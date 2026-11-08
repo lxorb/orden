@@ -296,6 +296,16 @@ fn planned_by(
             to = free(&to);
         } else if fs::symlink_metadata(&to).is_ok() {
             match clash {
+                Clash::Replace if froms.iter().any(|one| inside(&to, one)) => {
+                    out.failed.push(failed(
+                        from,
+                        format!(
+                            "{} holds what is being carried, so it cannot be replaced",
+                            to.display()
+                        ),
+                    ));
+                    continue;
+                }
                 Clash::Replace => {}
                 Clash::Skip => {
                     out.skipped.push(from.display().to_string());
@@ -785,6 +795,28 @@ mod tests {
             assert!(plan.is_empty(), "a folder went inside itself by a link");
             assert_eq!(out.failed.len(), 1);
         }
+    }
+
+    #[test]
+    fn a_replace_never_puts_away_the_folder_that_holds_what_is_carried() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let outer = dir.path().join("photos");
+        let inner = outer.join("photos");
+        fs::create_dir_all(&inner).expect("folders");
+        fs::write(inner.join("a.jpg"), "a").expect("a");
+        fs::write(outer.join("kept.txt"), "kept").expect("kept");
+        fs::create_dir_all(dir.path().join("notes")).expect("notes");
+        fs::write(outer.join("notes"), "inside").expect("notes file");
+        for how in [How::Move, How::Copy] {
+            let mut out = Transferred::default();
+            let from = vec![inner.clone(), outer.join("notes")];
+            let plan = planned(&from, dir.path(), how, Clash::Replace, &mut out);
+            assert_eq!(plan, [(outer.join("notes"), dir.path().join("notes"))]);
+            assert_eq!(out.failed.len(), 1);
+            assert_eq!(out.failed[0].path, inner.display().to_string());
+        }
+        assert!(inner.join("a.jpg").exists());
+        assert!(outer.join("kept.txt").exists());
     }
 
     fn meter() -> Meter<'static> {
