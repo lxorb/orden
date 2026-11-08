@@ -18,6 +18,7 @@ export interface Carry {
   on: { note: NoteDoc } | { surface: PlaneSurface } | { relay: true }
   carrying: Carrying
   gone: () => void
+  holds?: () => boolean
 }
 
 export async function carry(
@@ -68,7 +69,7 @@ export async function carry(
           carried.gone()
         })
     },
-    holds: () => true,
+    holds: carried.holds ?? (() => true),
     carrying: carried.carrying,
   }
   if ('surface' in carried.on) {
@@ -78,7 +79,7 @@ export async function carry(
   }
   const live = 'note' in carried.on ? carried.on.note.live : NOBODY
   const room = new CarriedRoom({ ...entering, note: live })
-  rooms.carried.set(key, { live, room })
+  rooms.carried.set(key, { live, room, shown: () => room.shown() })
   return { awareness: room.awareness }
 }
 

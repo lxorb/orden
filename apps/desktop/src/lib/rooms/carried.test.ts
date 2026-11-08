@@ -13,6 +13,7 @@ import { ackFrame, epochFrame, NEW_EPOCH } from '@orden/sync-core/wire'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { Carrying } from './carried'
+import { relative } from './peers'
 
 const sockets = vi.hoisted(() => {
   interface Wire {
@@ -240,6 +241,52 @@ describe('a room carrying the engine’s document', () => {
     expect(one.doc.getText(TEXT).toJSON()).toBe('We ship on Monday. Laptop.')
     expect(server.words).toBe('Room: We ship on Monday.')
     expect(one.live).toEqual([])
+  })
+
+  test('shows and sends carets only while the note is bound to the document (#542)', async () => {
+    const account = seeded('We ship on Monday.')
+    const server = new Server()
+    Y.applyUpdate(server.doc, account)
+    const one = device(account)
+    let bound = false
+    const told: unknown[] = []
+    const room = new CarriedRoom({
+      noteId: 'note-1',
+      token: 'token',
+      who: { name: 'Laptop', accent: '#000' },
+      scheme: 'light',
+      onPeers: () => undefined,
+      gone: () => undefined,
+      refused: () => undefined,
+      shut: () => undefined,
+      holds: () => bound,
+      note: { announce: (effects) => told.push(...effects.map((effect) => effect.value)) },
+      carrying: carrying(one),
+    })
+    const socket = sockets.opened.at(-1)
+    if (!socket) throw new Error('no socket')
+    socket.arrive()
+    await greet(server, socket)
+
+    const phone = new Awareness(new Y.Doc())
+    const text = one.doc.getText(TEXT)
+    phone.setLocalState({
+      who: { name: 'Phone', accent: '#f00' },
+      caret: { anchor: relative(text, 17), head: relative(text, 17) },
+    })
+    socket.wire.heard(awarenessUpdate(phone, [phone.clientID]))
+    expect(told.at(-1)).toEqual([])
+
+    room.moved(3, 3)
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(room.awareness.getLocalState()?.caret).toBeUndefined()
+
+    bound = true
+    room.shown()
+    expect(told.at(-1)).toHaveLength(1)
+
+    room.leave()
+    phone.destroy()
   })
 
   test('leaves nothing of a room on the engine’s document once it is left', () => {

@@ -64,7 +64,11 @@ class Rooms {
 
   readonly carried = new Map<
     string,
-    { live: unknown; room: Pick<Room, 'moved' | 'repaint' | 'rename' | 'leave'> }
+    {
+      live: unknown
+      room: Pick<Room, 'moved' | 'repaint' | 'rename' | 'leave'>
+      shown?: () => void
+    }
   >()
 
   carries(noteId: string): boolean {
