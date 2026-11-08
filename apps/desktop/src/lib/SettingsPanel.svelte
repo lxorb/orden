@@ -1969,6 +1969,11 @@
     padding: var(--space-3) var(--space-4) calc(var(--space-6) + var(--touch-bottom));
   }
 
+  :global(main:has(.fab)) .sheet.phone nav,
+  :global(main:has(.fab)) .sheet.phone .body {
+    padding-bottom: calc(var(--space-4) + var(--touch-bottom) + var(--touch-row));
+  }
+
   .sheet.phone .pane {
     gap: var(--space-4);
   }
