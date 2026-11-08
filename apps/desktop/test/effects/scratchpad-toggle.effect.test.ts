@@ -41,7 +41,6 @@ const { default: ScratchpadCard } = await import('../../src/lib/scratchpad/Scrat
 const { shown, toggleScratchpad } = await import('../../src/lib/scratchpad/is.svelte')
 const { scratchpad } = await import('../../src/lib/scratchpad/pad')
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { sideToggles } = await import('../../src/lib/side-toggles.svelte')
 const { menu } = await import('../../src/lib/menu.svelte')
 const { tabMenu } = await import('../../src/lib/tab-strip/menu')
 type MenuEntry = import('../../src/lib/menu-item').MenuEntry
@@ -64,7 +63,6 @@ afterEach(() => {
   for (const one of undo) one()
   undo = []
   target.remove()
-  sideToggles.set(false)
 })
 
 function bar() {
@@ -105,21 +103,7 @@ test('the bar has one button for the right side and no switch of the scratchpad�
   expect(target.querySelectorAll('header button[aria-label$="right sidebar"]')).toHaveLength(1)
 })
 
-test('open, the right side has the button and the bar has none', () => {
-  sideToggles.inside = true
-  barAndSide()
-  workspace.showRight('outline')
-  flushSync()
-  expect(target.querySelectorAll('header button[aria-label$="right sidebar"]')).toHaveLength(0)
-  expect(target.querySelectorAll('aside button[aria-label$="right sidebar"]')).toHaveLength(1)
-
-  workspace.closeRight()
-  flushSync()
-  const said = target.querySelector('header button[aria-label$="right sidebar"]')
-  expect(said?.classList.contains('orden-said')).toBe(true)
-})
-
-test('with the toggles in the bar, open or shut the bar has the button and the side none', () => {
+test('open or shut, the bar has the button and the side none', () => {
   barAndSide()
   workspace.showRight('outline')
   flushSync()
@@ -130,12 +114,6 @@ test('with the toggles in the bar, open or shut the bar has the button and the s
   workspace.closeRight()
   flushSync()
   expect(shown()?.classList.contains('orden-said')).toBe(false)
-
-  sideToggles.set(true)
-  workspace.showRight('outline')
-  flushSync()
-  expect(shown()).toBe(null)
-  expect(target.querySelectorAll('aside button[aria-label$="right sidebar"]')).toHaveLength(1)
 })
 
 test('a phone’s bar has no switch of the scratchpad’s', async () => {

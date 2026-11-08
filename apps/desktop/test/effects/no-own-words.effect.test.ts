@@ -25,7 +25,7 @@ afterEach(() => {
 })
 
 function labels(): string[] {
-  return menu.items.flatMap((one) => (one && 'label' in one ? [String(one.label)] : []))
+  return menu.items.flatMap((one) => (one && 'label' in one ? [one.label] : []))
 }
 
 test('the menu over a misspelled word offers no dictionary to add it to', () => {

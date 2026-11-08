@@ -20,7 +20,6 @@ export interface Who {
   person?: string | undefined
   id?: string | undefined
   face?: string | undefined
-  tint?: string | undefined
 }
 
 export interface Opening {

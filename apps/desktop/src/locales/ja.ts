@@ -545,16 +545,7 @@ export const ja: Dictionary = {
   'Actual size': '実際のサイズ',
   Accent: 'アクセント',
   'Tidy up': '整列',
-  'Blur the app behind the tab overview': 'タブ一覧の背後のアプリをぼかす',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden 自身の背景の代わりに、ウィンドウの背後にぼかしたアプリを表示します。',
   'Swipe in from the edge to see your notes.': '端から内側へスワイプするとノートが見られます。',
-  'Point at the edge of the window to see your notes.':
-    'ポインタをウインドウの端に寄せるとノートが見られます。',
-  Sidebars: 'サイドバー',
-  'Sidebar toggles inside the sidebars': 'サイドバーの切り替えボタンをサイドバー内に',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    '各サイドバーの切り替えボタンをサイドバー内に置き、右サイドバーはウインドウのその端から出てきます。',
   'Show other tabs as icons': 'ほかのタブをアイコンで表示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '手前のタブ以外はアイコンだけを表示し、ポインターを当てると名前が出ます。',
@@ -967,7 +958,6 @@ export const ja: Dictionary = {
   Minimize: '最小化',
   Maximize: '最大化',
   Restore: '元に戻す',
-  'Show in Explorer’s New menu': 'エクスプローラーの「新規作成」メニューに表示',
   'choose an address': 'アドレスを選んでください',
   'Reset to defaults': '初期設定に戻す',
   Spelling: 'スペルチェック',
@@ -1742,8 +1732,6 @@ export const ja: Dictionary = {
   'Take it off': '外す',
   'Put it on the bar': 'バーに追加',
   'Reset the bar': 'バーを初期化',
-  'Pulling down': '下に引く',
-  'A pull past the top runs': '先頭より下に引くと実行',
   Nothing: 'なし',
 
   Keep: '残す',
@@ -2490,14 +2478,10 @@ export const ja: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden が従うアプリのキー配置で、下のキーはどれも変更できます。',
   'Moves and edits in notes with Vim’s keys.': 'Vim のキーでノートを移動、編集します。',
-  'What pulling a note down past its top does on a phone.':
-    'スマートフォンでノートを先頭より下に引いたときの動作です。',
   'The OpenAI key the glasses ask their questions with.': 'グラスが質問に使う OpenAI キーです。',
   'The model that answers what you ask on the glasses.': 'グラスでの質問に答えるモデルです。',
   'How long the model thinks before it answers; longer is slower.':
     'モデルが答える前に考える長さで、長いほど遅くなります。',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'エクスプローラーで右クリックしたときの「新規作成」メニューに Markdown ドキュメントを加えます。',
   'What happens when one note was changed on two devices before they synced.':
     '同期前に一つのノートが二つのデバイスで変更されたときの扱いです。',
   'How far back the account keeps earlier versions of your notes.':
@@ -2535,22 +2519,16 @@ export const ja: Dictionary = {
   'When your status is taken away again.': '状態が再び外れるまでの時間です。',
   'Silences chat notifications and shows the others you are busy.':
     'チャットの通知を止め、取り込み中であることを他の人に示します。',
-  'The colour the others see beside your name.': 'あなたの名前の横に他の人から見える色です。',
   'The others see you as offline even while you are here.':
     'ここにいてもオフラインとして他の人に表示されます。',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'ウィンドウの背後の画像で、ライト用とダーク用があり、ドラッグで中心を動かせます。',
   'The theme Orden is drawn in.': 'Orden を描くテーマです。',
   'Light, dark, or whichever the system is in.': 'ライト、ダーク、またはシステムに合わせます。',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'ファイル一覧の上のブックマークをタイルで表示するか、リストで表示するかです。',
   'Shows a pointing hand over buttons, as web pages do.':
     'ウェブページのように、ボタンの上で指差しカーソルを表示します。',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden 独自のタイトルバーか、システムのウィンドウ枠かを選びます。',
-  'Square bottom edge': '下端を角にする',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    '開いている内容が角の丸みなしでウィンドウの下端まで届きます。分割時は下端に接するペインだけです。',
   'How large the text of notes is.': 'ノートの文字の大きさです。',
   'How large all of Orden is drawn on this device.': 'このデバイスで Orden 全体を表示する大きさ。',
   'The space between the lines of a note.': 'ノートの行と行の間隔です。',

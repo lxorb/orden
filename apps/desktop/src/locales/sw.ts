@@ -553,16 +553,7 @@ export const sw: Dictionary = {
   'Actual size': 'Ukubwa halisi',
   Accent: 'Rangi ya msisitizo',
   'Tidy up': 'Panga',
-  'Blur the app behind the tab overview': 'Fifisha programu nyuma ya muhtasari wa vichupo',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Huonyesha programu ikiwa imefifishwa nyuma ya madirisha, badala ya mandharinyuma ya Orden yenyewe.',
   'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
-  'Point at the edge of the window to see your notes.':
-    'Peleka kielekezi ukingoni mwa dirisha kuona madokezo yako.',
-  Sidebars: 'Tepe za pembeni',
-  'Sidebar toggles inside the sidebars': 'Vitufe vya tepe ndani ya tepe za pembeni',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Kitufe cha kila utepe wa pembeni kiko ndani yake, na utepe wa kulia hutokea ukingoni mwake mwa dirisha.',
   'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kila kichupo isipokuwa cha mbele kinaonyesha aikoni yake tu; ukielekeza kimoja, jina lake linaonekana.',
@@ -981,7 +972,6 @@ export const sw: Dictionary = {
   Minimize: 'Punguza',
   Maximize: 'Kuza',
   Restore: 'Rejesha',
-  'Show in Explorer’s New menu': 'Onyesha kwenye menyu ya New ya Explorer',
   'choose an address': 'chagua anwani',
   'Reset to defaults': 'Rejesha kwenye chaguomsingi',
   Spelling: 'Herufi',
@@ -1781,8 +1771,6 @@ export const sw: Dictionary = {
   'Take it off': 'Iondoe',
   'Put it on the bar': 'Iweke kwenye upau',
   'Reset the bar': 'Rejesha upau',
-  'Pulling down': 'Kuvuta chini',
-  'A pull past the top runs': 'Kuvuta kupita juu huendesha',
   Nothing: 'Hakuna',
 
   Keep: 'Weka',
@@ -2541,16 +2529,12 @@ export const sw: Dictionary = {
     'Funguo za programu ipi Orden inafuata; ufunguo wowote hapa chini bado unaweza kubadilishwa.',
   'Moves and edits in notes with Vim’s keys.':
     'Husogea na kuhariri ndani ya madokezo kwa funguo za Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Kile ambacho kuvuta dokezo chini kupita juu yake kunafanya kwenye simu.',
   'The OpenAI key the glasses ask their questions with.':
     'Ufunguo wa OpenAI ambao miwani hutumia kuuliza maswali yake.',
   'The model that answers what you ask on the glasses.':
     'Modeli inayojibu unachouliza kwenye miwani.',
   'How long the model thinks before it answers; longer is slower.':
     'Muda ambao modeli inafikiri kabla ya kujibu; muda mrefu zaidi ni polepole zaidi.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Huongeza hati ya Markdown kwenye menyu ya Mpya unayoipata kwa kubofya kulia katika File Explorer.',
   'What happens when one note was changed on two devices before they synced.':
     'Kinachotokea dokezo moja lilipobadilishwa kwenye vifaa viwili kabla havijasawazishwa.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2593,22 +2577,16 @@ export const sw: Dictionary = {
   'When your status is taken away again.': 'Wakati hali yako inaondolewa tena.',
   'Silences chat notifications and shows the others you are busy.':
     'Hunyamazisha arifa za gumzo na kuwaonyesha wengine kuwa una shughuli.',
-  'The colour the others see beside your name.': 'Rangi ambayo wengine wanaona kando ya jina lako.',
   'The others see you as offline even while you are here.':
     'Wengine wanakuona uko nje ya mtandao hata ukiwa hapa.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'Picha iliyo nyuma ya dirisha, moja kwa mwangaza na moja kwa giza; iburute kusogeza kitovu chake.',
   'The theme Orden is drawn in.': 'Mandhari ambayo Orden inachorwa nayo.',
   'Light, dark, or whichever the system is in.': 'Mwangaza, giza, au lolote ambalo mfumo uko nalo.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Kama alamisho zilizo juu ya orodha ya faili zinaonekana kama vigae au kama orodha.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Huonyesha mkono unaoelekeza juu ya vitufe, kama kurasa za wavuti zinavyofanya.',
   'Orden’s own title bar, or the window frame of your system.':
     'Upau wa kichwa wa Orden wenyewe, au fremu ya dirisha ya mfumo wako.',
-  'Square bottom edge': 'Ukingo wa chini wa mraba',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Kilicho wazi kinafika chini ya dirisha kwa pembe za mraba; katika mgawanyo, vidirisha vinavyougusa.',
   'How large the text of notes is.': 'Ukubwa wa maandishi ya madokezo.',
   'How large all of Orden is drawn on this device.': 'Ukubwa wa Orden yote kwenye kifaa hiki.',
   'The space between the lines of a note.': 'Nafasi kati ya mistari ya dokezo.',

@@ -19,7 +19,6 @@ export function faceOf(who: Who, members: readonly Member[], space: string | nul
   return {
     name: nameOf(who, members, space),
     avatar: person?.avatar ?? null,
-    accent: person?.accent ?? null,
     key: id ?? who,
   }
 }

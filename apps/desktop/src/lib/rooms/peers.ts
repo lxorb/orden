@@ -11,7 +11,6 @@ interface Named {
   person?: string
   id?: string
   face?: string
-  tint?: string
 }
 
 interface Someone {
@@ -74,14 +73,13 @@ function namedIn(value: unknown): Named | null {
   if (!isRecord(value) || !isRecord(value.who)) return null
   if (!isString(value.who.name) || !isString(value.who.accent)) return null
 
-  const { person, id, face, tint } = value.who
+  const { person, id, face } = value.who
   return {
     name: value.who.name.slice(0, LONGEST_NAME),
     accent: value.who.accent,
     ...(isString(person) ? { person: person.slice(0, LONGEST_NAME) } : {}),
     ...(isString(id) && WORD.test(id) ? { id } : {}),
     ...(isString(face) && HASH.test(face) ? { face } : {}),
-    ...(isString(tint) && WORD.test(tint) ? { tint } : {}),
   }
 }
 
@@ -99,7 +97,7 @@ function seenIn(here: readonly Here[], mine: Named | null, scheme: 'dark' | 'lig
       key,
       name: who.person ?? who.name,
       face: faceUrl(who.face) ?? null,
-      fill: who.tint ? accentColour(who.tint, scheme) : accentFor(key, scheme),
+      fill: accentFor(key, scheme),
     })
   }
   return { people: [...people.values()], mine: own }

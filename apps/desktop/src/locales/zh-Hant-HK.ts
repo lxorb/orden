@@ -543,15 +543,7 @@ export const zhHantHK: Dictionary = {
   'Actual size': '實際大小',
   Accent: '強調色',
   'Tidy up': '整理',
-  'Blur the app behind the tab overview': '在分頁總覽後模糊應用程式',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    '在視窗後顯示模糊的應用程式，而非 Orden 本身的背景。',
   'Swipe in from the edge to see your notes.': '從邊緣向內滑動即可查看筆記。',
-  'Point at the edge of the window to see your notes.': '將指標移到視窗邊緣即可查看筆記。',
-  Sidebars: '側邊欄',
-  'Sidebar toggles inside the sidebars': '側邊欄開關位於側邊欄內',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    '每個側邊欄的開關位於側邊欄內，右側邊欄從視窗的那一側邊緣滑出。',
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的分頁外，每個分頁只顯示圖示；指向某個分頁時會顯示其名稱。',
@@ -953,7 +945,6 @@ export const zhHantHK: Dictionary = {
   Minimize: '最小化',
   Maximize: '最大化',
   Restore: '還原',
-  'Show in Explorer’s New menu': '顯示在檔案總管的「新增」菜單中',
   'choose an address': '請選一個網址',
   'Reset to defaults': '重置為預設值',
   Spelling: '拼寫',
@@ -1703,8 +1694,6 @@ export const zhHantHK: Dictionary = {
   'Take it off': '移除',
   'Put it on the bar': '放到列上',
   'Reset the bar': '重設工具列',
-  'Pulling down': '下拉',
-  'A pull past the top runs': '從頂端再下拉則執行',
   Nothing: '無',
 
   Keep: '保留',
@@ -2434,14 +2423,10 @@ export const zhHantHK: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden 遵循哪個應用程式的按鍵，下方任何按鍵仍可變更。',
   'Moves and edits in notes with Vim’s keys.': '用 Vim 的按鍵在筆記中移動和編輯。',
-  'What pulling a note down past its top does on a phone.':
-    '在手機上把筆記拉過頂端繼續下拉時的動作。',
   'The OpenAI key the glasses ask their questions with.': '眼鏡提問時使用的 OpenAI 密鑰。',
   'The model that answers what you ask on the glasses.': '回答你在眼鏡上所問問題的模型。',
   'How long the model thinks before it answers; longer is slower.':
     '模型回答前思考多久，越久越慢。',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    '在檔案總管右鍵選單的「新增」中加入 Markdown 文件。',
   'What happens when one note was changed on two devices before they synced.':
     '同一筆記在同步前於兩部裝置上被變更時如何處理。',
   'How far back the account keeps earlier versions of your notes.':
@@ -2478,21 +2463,15 @@ export const zhHantHK: Dictionary = {
   'When your status is taken away again.': '你的狀態何時再次清除。',
   'Silences chat notifications and shows the others you are busy.':
     '將對話通知靜音，並讓其他人看到你正在忙碌。',
-  'The colour the others see beside your name.': '其他人在你名字旁看到的顏色。',
   'The others see you as offline even while you are here.':
     '即使你在線，其他人也會看到你處於離線狀態。',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     '視窗背後的圖片，淺色和深色各一張，拖曳可移動其中心。',
   'The theme Orden is drawn in.': 'Orden 所用的主題。',
   'Light, dark, or whichever the system is in.': '淺色、深色，或跟隨系統。',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    '檔案列表頂端的書籤以圖塊還是清單顯示。',
   'Shows a pointing hand over buttons, as web pages do.': '像網頁一樣在按鈕上顯示手形指標。',
   'Orden’s own title bar, or the window frame of your system.':
     '使用 Orden 自己的標題列，或系統的視窗框架。',
-  'Square bottom edge': '直角底邊',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    '開啟的內容以直角延伸至視窗底部；分割時，僅限觸及底部的窗格。',
   'How large the text of notes is.': '筆記文字的大小。',
   'How large all of Orden is drawn on this device.': '整個 Orden 在此裝置上的顯示大小。',
   'The space between the lines of a note.': '筆記行與行之間的距離。',

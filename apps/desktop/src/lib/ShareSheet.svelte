@@ -46,7 +46,6 @@
   const faceOf = (person: Member | Waiting | Sharing['owner'], named: string): Face => ({
     name: named,
     avatar: person.avatar ?? null,
-    accent: person.accent ?? null,
     key: person.id ?? person.email ?? ('guest' in person ? person.guest : null) ?? '',
   })
 

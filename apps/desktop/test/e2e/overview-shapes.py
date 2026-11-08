@@ -192,7 +192,6 @@ def overlapping(browser: Browser) -> None:
 def cornered(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 800})
     DRIVE.open(page)
-    page.evaluate("() => { window.ordenApp.modes.flushBottom = true }")
     blank(page, "One", "Two")
     page.wait_for_timeout(400)
     opened(page)

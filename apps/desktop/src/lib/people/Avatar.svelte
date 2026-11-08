@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import { accentColour, accentFor } from '../accents'
+  import { accentFor } from '../accents'
   import { faceUrl } from '../api'
   import { initial } from '../icons'
   import { theme } from '../theme.svelte'
@@ -28,11 +28,7 @@
   let failed = $state<string | null>(null)
   let loaded = $state<string | null>(null)
 
-  const fill = $derived(
-    face.accent
-      ? accentColour(face.accent, theme.current)
-      : accentFor(face.key ?? face.name, theme.current),
-  )
+  const fill = $derived(accentFor(face.key ?? face.name, theme.current))
 </script>
 
 <svelte:element

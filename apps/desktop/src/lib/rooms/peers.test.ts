@@ -3,6 +3,7 @@ import { Awareness } from 'y-protocols/awareness'
 import { awarenessUpdate, receive, TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { peersIn, relative } from './peers'
+import { accentFor } from '../accents'
 
 function pair(words: string) {
   const one = new Y.Doc()
@@ -241,7 +242,7 @@ describe('the faces of who else is in a note', () => {
     return peersIn(two.awareness, two.doc, 'dark')
   }
 
-  test('are another person’s, by their account, with their picture', () => {
+  test('are another person’s, by their account, with their picture and their account’s colour, whatever tint an older build sends', () => {
     const found = heard(
       { name: 'Mac', accent: 'blue', person: 'Lucile', id: 'u-lucile', face: FACE, tint: 'teal' },
       { name: 'Windows', accent: 'red', person: 'Emil', id: 'u-emil' },
@@ -253,7 +254,7 @@ describe('the faces of who else is in a note', () => {
           key: 'u-lucile',
           name: 'Lucile',
           face: `https://orden.so/i/${FACE}.webp`,
-          fill: '#33c7ba',
+          fill: accentFor('u-lucile', 'dark'),
         },
       ],
       mine: 0,

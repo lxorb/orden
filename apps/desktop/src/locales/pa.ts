@@ -550,16 +550,7 @@ export const pa: Dictionary = {
   'Actual size': 'ਅਸਲੀ ਆਕਾਰ',
   Accent: 'ਉਭਾਰ ਰੰਗ',
   'Tidy up': 'ਤਰਤੀਬ ਦਿਓ',
-  'Blur the app behind the tab overview': 'ਟੈਬ ਝਲਕ ਦੇ ਪਿੱਛੇ ਐਪ ਨੂੰ ਧੁੰਦਲਾ ਕਰੋ',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden ਦੇ ਆਪਣੇ ਪਿਛੋਕੜ ਦੀ ਥਾਂ ਵਿੰਡੋਆਂ ਦੇ ਪਿੱਛੇ ਐਪ ਨੂੰ ਧੁੰਦਲਾ ਦਿਖਾਉਂਦਾ ਹੈ।',
   'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
-  'Point at the edge of the window to see your notes.':
-    'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਪੁਆਇੰਟਰ ਨੂੰ ਵਿੰਡੋ ਦੇ ਕਿਨਾਰੇ ਉੱਤੇ ਲੈ ਜਾਓ।',
-  Sidebars: 'ਪਾਸੇ ਦੀਆਂ ਪੱਟੀਆਂ',
-  'Sidebar toggles inside the sidebars': 'ਪਾਸੇ ਦੀ ਪੱਟੀ ਦੇ ਟੌਗਲ ਪੱਟੀਆਂ ਦੇ ਅੰਦਰ',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'ਹਰ ਪਾਸੇ ਦੀ ਪੱਟੀ ਦਾ ਟੌਗਲ ਉਸਦੇ ਅੰਦਰ ਹੁੰਦਾ ਹੈ, ਅਤੇ ਸੱਜੀ ਪੱਟੀ ਵਿੰਡੋ ਦੇ ਉਸ ਕਿਨਾਰੇ ਤੋਂ ਬਾਹਰ ਆਉਂਦੀ ਹੈ।',
   'Show other tabs as icons': 'ਹੋਰ ਟੈਬ ਆਈਕਨ ਵਜੋਂ ਦਿਖਾਓ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ਅੱਗੇ ਵਾਲੀ ਤੋਂ ਬਿਨਾਂ ਹਰ ਟੈਬ ਸਿਰਫ਼ ਆਪਣਾ ਆਈਕਨ ਦਿਖਾਉਂਦੀ ਹੈ; ਕਿਸੇ ਉੱਤੇ ਪੁਆਇੰਟਰ ਲਿਆਉਣ ਨਾਲ ਨਾਂ ਦਿਖਦਾ ਹੈ।',
@@ -976,7 +967,6 @@ export const pa: Dictionary = {
   Minimize: 'ਛੋਟਾ ਕਰੋ',
   Maximize: 'ਵੱਡਾ ਕਰੋ',
   Restore: 'ਮੁੜ ਲਿਆਓ',
-  'Show in Explorer’s New menu': 'Explorer ਦੇ New ਮੀਨੂ ਵਿੱਚ ਦਿਖਾਓ',
   'choose an address': 'ਪਤਾ ਚੁਣੋ',
   'Reset to defaults': 'ਮੂਲ ਹਾਲਤ ਵਿੱਚ ਲਿਆਓ',
   Spelling: 'ਸ਼ਬਦ-ਜੋੜ',
@@ -1756,8 +1746,6 @@ export const pa: Dictionary = {
   'Take it off': 'ਹਟਾਓ',
   'Put it on the bar': 'ਪੱਟੀ ਉੱਤੇ ਪਾਓ',
   'Reset the bar': 'ਪੱਟੀ ਰੀਸੈੱਟ ਕਰੋ',
-  'Pulling down': 'ਹੇਠਾਂ ਖਿੱਚਣਾ',
-  'A pull past the top runs': 'ਉੱਪਰੋਂ ਖਿੱਚਣ ’ਤੇ ਚੱਲੇ',
   Nothing: 'ਕੁਝ ਨਹੀਂ',
 
   Keep: 'ਰੱਖੋ',
@@ -2513,16 +2501,12 @@ export const pa: Dictionary = {
     'Orden ਕਿਸ ਐਪ ਦੀਆਂ ਕੁੰਜੀਆਂ ਮੰਨਦਾ ਹੈ, ਹੇਠਾਂ ਦੀ ਕੋਈ ਵੀ ਕੁੰਜੀ ਫਿਰ ਵੀ ਬਦਲੀ ਜਾ ਸਕਦੀ ਹੈ।',
   'Moves and edits in notes with Vim’s keys.':
     'Vim ਦੀਆਂ ਕੁੰਜੀਆਂ ਨਾਲ ਨੋਟਾਂ ਵਿੱਚ ਚੱਲਦਾ ਅਤੇ ਸੋਧਦਾ ਹੈ।',
-  'What pulling a note down past its top does on a phone.':
-    'ਫ਼ੋਨ ਉੱਤੇ ਨੋਟ ਨੂੰ ਉਸਦੇ ਸਿਖਰ ਤੋਂ ਪਰੇ ਹੇਠਾਂ ਖਿੱਚਣ ਨਾਲ ਕੀ ਹੁੰਦਾ ਹੈ।',
   'The OpenAI key the glasses ask their questions with.':
     'ਉਹ OpenAI ਕੁੰਜੀ ਜਿਸ ਨਾਲ ਐਨਕਾਂ ਆਪਣੇ ਸਵਾਲ ਪੁੱਛਦੀਆਂ ਹਨ।',
   'The model that answers what you ask on the glasses.':
     'ਉਹ ਮਾਡਲ ਜੋ ਐਨਕਾਂ ਉੱਤੇ ਤੁਹਾਡੇ ਸਵਾਲਾਂ ਦਾ ਜਵਾਬ ਦਿੰਦਾ ਹੈ।',
   'How long the model thinks before it answers; longer is slower.':
     'ਮਾਡਲ ਜਵਾਬ ਦੇਣ ਤੋਂ ਪਹਿਲਾਂ ਕਿੰਨੀ ਦੇਰ ਸੋਚਦਾ ਹੈ, ਜਿੰਨਾ ਲੰਮਾ ਓਨਾ ਹੌਲੀ।',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer ਵਿੱਚ ਸੱਜਾ-ਕਲਿੱਕ ਕਰਨ ਨਾਲ ਮਿਲਣ ਵਾਲੇ ਨਵਾਂ ਮੀਨੂ ਵਿੱਚ ਇੱਕ Markdown ਦਸਤਾਵੇਜ਼ ਜੋੜਦਾ ਹੈ।',
   'What happens when one note was changed on two devices before they synced.':
     'ਜਦੋਂ ਇੱਕ ਨੋਟ ਦੋ ਡਿਵਾਈਸਾਂ ਉੱਤੇ ਸਮਕਾਲ ਹੋਣ ਤੋਂ ਪਹਿਲਾਂ ਬਦਲਿਆ ਗਿਆ ਹੋਵੇ ਤਾਂ ਕੀ ਹੁੰਦਾ ਹੈ।',
   'How far back the account keeps earlier versions of your notes.':
@@ -2562,22 +2546,16 @@ export const pa: Dictionary = {
   'When your status is taken away again.': 'ਤੁਹਾਡੀ ਸਥਿਤੀ ਕਦੋਂ ਆਪੇ ਹਟ ਜਾਂਦੀ ਹੈ।',
   'Silences chat notifications and shows the others you are busy.':
     'ਚੈਟ ਸੂਚਨਾਵਾਂ ਚੁੱਪ ਕਰਦਾ ਹੈ ਅਤੇ ਦੂਜਿਆਂ ਨੂੰ ਦਿਖਾਉਂਦਾ ਹੈ ਕਿ ਤੁਸੀਂ ਰੁੱਝੇ ਹੋ।',
-  'The colour the others see beside your name.': 'ਦੂਜਿਆਂ ਨੂੰ ਤੁਹਾਡੇ ਨਾਮ ਦੇ ਕੋਲ ਦਿਖਣ ਵਾਲਾ ਰੰਗ।',
   'The others see you as offline even while you are here.':
     'ਤੁਸੀਂ ਇੱਥੇ ਹੋਵੋ ਤਾਂ ਵੀ ਦੂਜੇ ਤੁਹਾਨੂੰ ਔਫਲਾਈਨ ਦੇਖਦੇ ਹਨ।',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'ਵਿੰਡੋ ਦੇ ਪਿੱਛੇ ਦੀ ਤਸਵੀਰ, ਇੱਕ ਚਾਨਣ ਲਈ ਅਤੇ ਇੱਕ ਗੂੜ੍ਹੇ ਲਈ, ਉਸਦਾ ਕੇਂਦਰ ਹਿਲਾਉਣ ਲਈ ਖਿੱਚੋ।',
   'The theme Orden is drawn in.': 'ਉਹ ਥੀਮ ਜਿਸ ਵਿੱਚ Orden ਬਣਾਇਆ ਜਾਂਦਾ ਹੈ।',
   'Light, dark, or whichever the system is in.': 'ਚਾਨਣ, ਗੂੜ੍ਹਾ, ਜਾਂ ਜੋ ਵੀ ਸਿਸਟਮ ਵਿੱਚ ਹੋਵੇ।',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'ਫ਼ਾਈਲ ਸੂਚੀ ਦੇ ਉੱਪਰ ਦੀਆਂ ਨਿਸ਼ਾਨੀਆਂ ਟਾਈਲਾਂ ਵਜੋਂ ਦਿਖਦੀਆਂ ਹਨ ਜਾਂ ਸੂਚੀ ਵਜੋਂ।',
   'Shows a pointing hand over buttons, as web pages do.':
     'ਵੈੱਬ ਪੰਨਿਆਂ ਵਾਂਗ ਬਟਨਾਂ ਉੱਤੇ ਇਸ਼ਾਰਾ ਕਰਦਾ ਹੱਥ ਦਿਖਾਉਂਦਾ ਹੈ।',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ਦੀ ਆਪਣੀ ਸਿਰਲੇਖ ਪੱਟੀ, ਜਾਂ ਤੁਹਾਡੇ ਸਿਸਟਮ ਦਾ ਵਿੰਡੋ ਚੌਖਟਾ।',
-  'Square bottom edge': 'ਚੌਰਸ ਹੇਠਲਾ ਕਿਨਾਰਾ',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'ਜੋ ਖੁੱਲ੍ਹਾ ਹੈ ਉਹ ਚੌਰਸ ਕੋਨਿਆਂ ਨਾਲ ਵਿੰਡੋ ਦੇ ਹੇਠਾਂ ਤੱਕ ਜਾਂਦਾ ਹੈ; ਵੰਡ ਵਿੱਚ, ਉਹ ਪੈਨ ਜੋ ਇਸ ਨੂੰ ਛੂਹਦੇ ਹਨ।',
   'How large the text of notes is.': 'ਨੋਟਾਂ ਦਾ ਲਿਖਤ ਕਿੰਨਾ ਵੱਡਾ ਹੈ।',
   'How large all of Orden is drawn on this device.':
     'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਪੂਰਾ Orden ਕਿੰਨਾ ਵੱਡਾ ਦਿਖਦਾ ਹੈ।',

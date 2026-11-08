@@ -6,8 +6,8 @@ import { MOST_MEMBERS } from '../src/spaces/share'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 import { framed, live } from './sync2'
 
-const NO_FACE = { id: null, avatar: null, accent: null }
-const A_FACE = { id: expect.any(String), avatar: null, accent: null }
+const NO_FACE = { id: null, avatar: null }
+const A_FACE = { id: expect.any(String), avatar: null }
 
 const OWNER = 'owner@example.com'
 const WRITER = 'writer@example.com'

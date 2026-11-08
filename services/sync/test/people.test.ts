@@ -43,7 +43,7 @@ describe('a profile change', () => {
       problem: 'use at most 190 characters',
     })
     expect(profileChanges({ pronouns: 3 })).toEqual({ problem: 'pronouns must be text' })
-    expect(profileChanges({ accent: '#ff0000' })).toEqual({ problem: 'accent must be an accent' })
+    expect(profileChanges({ accent: '#ff0000' })).toEqual({ changes: {} })
     expect(profileChanges({ zone: 'Mars/Olympus' })).toEqual({
       problem: 'zone must be a time zone',
     })
@@ -165,13 +165,13 @@ describe('the routes', () => {
     expect(json.user).toMatchObject({
       pronouns: 'they/them',
       bio: 'Thesis on sparse solvers.',
-      accent: 'teal',
       zone: 'Europe/Zurich',
       status: { emoji: '🌴', text: 'Away', until: null, quiet: false },
       avatar: null,
       hidden: false,
       nicks: {},
     })
+    expect(json.user).not.toHaveProperty('accent')
   })
 
   test('a profile change that is wrong is refused with its sentence', async () => {

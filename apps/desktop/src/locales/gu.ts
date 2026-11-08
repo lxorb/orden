@@ -547,16 +547,7 @@ export const gu: Dictionary = {
   'Actual size': 'ખરું માપ',
   Accent: 'ઉપસાવ રંગ',
   'Tidy up': 'વ્યવસ્થિત કરો',
-  'Blur the app behind the tab overview': 'ટૅબ ઝાંખી પાછળ ઍપને ઝાંખી કરો',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden ની પોતાની પૃષ્ઠભૂમિને બદલે વિન્ડોઝ પાછળ ઍપને ઝાંખી બતાવે છે.',
   'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
-  'Point at the edge of the window to see your notes.':
-    'તમારી નોંધો જોવા માટે પોઇન્ટરને વિન્ડોની કિનારે લઈ જાઓ.',
-  Sidebars: 'બાજુપટ્ટીઓ',
-  'Sidebar toggles inside the sidebars': 'બાજુપટ્ટીનાં ટૉગલ બાજુપટ્ટીની અંદર',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'દરેક બાજુપટ્ટીનું ટૉગલ તેની અંદર રહે છે, અને જમણી બાજુપટ્ટી વિન્ડોની તે કિનારેથી બહાર આવે છે.',
   'Show other tabs as icons': 'બીજી ટૅબ આઇકન તરીકે બતાવો',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'આગળની ટૅબ સિવાય દરેક ટૅબ ફક્ત તેનું આઇકન બતાવે છે; કોઈ પર પોઇન્ટર રાખતાં તેનું નામ દેખાય છે.',
@@ -971,7 +962,6 @@ export const gu: Dictionary = {
   Minimize: 'નાનું કરો',
   Maximize: 'મોટું કરો',
   Restore: 'પાછું લાવો',
-  'Show in Explorer’s New menu': 'Explorerના New મેનુમાં બતાવો',
   'choose an address': 'સરનામું પસંદ કરો',
   'Reset to defaults': 'મૂળ સ્થિતિ પર લાવો',
   Spelling: 'જોડણી',
@@ -1744,8 +1734,6 @@ export const gu: Dictionary = {
   'Take it off': 'કાઢી નાખો',
   'Put it on the bar': 'પટ્ટી પર મૂકો',
   'Reset the bar': 'પટ્ટી રીસેટ કરો',
-  'Pulling down': 'નીચે ખેંચવું',
-  'A pull past the top runs': 'ઉપરથી ખેંચતાં ચાલે',
   Nothing: 'કંઈ નહીં',
 
   Keep: 'રાખો',
@@ -2497,16 +2485,12 @@ export const gu: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden કઈ ઍપની કી અનુસરે છે; નીચેની કોઈપણ કી હજી બદલી શકાય છે.',
   'Moves and edits in notes with Vim’s keys.': 'Vim ની કી વડે નોંધોમાં ફરે છે અને ફેરફાર કરે છે.',
-  'What pulling a note down past its top does on a phone.':
-    'ફોન પર નોંધને તેની ટોચથી નીચે ખેંચવાથી શું થાય છે.',
   'The OpenAI key the glasses ask their questions with.':
     'ચશ્માં જે OpenAI કી વડે પોતાના પ્રશ્નો પૂછે છે તે.',
   'The model that answers what you ask on the glasses.':
     'ચશ્માં પર તમે જે પૂછો તેનો જવાબ આપતું મોડેલ.',
   'How long the model thinks before it answers; longer is slower.':
     'જવાબ આપતાં પહેલાં મોડેલ કેટલો સમય વિચારે છે; વધુ સમય એટલે ધીમું.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer માં જમણું ક્લિક કરતાં મળતા નવું મેનુમાં Markdown દસ્તાવેજ ઉમેરે છે.',
   'What happens when one note was changed on two devices before they synced.':
     'સમન્વય પહેલાં એક નોંધ બે ઉપકરણો પર બદલાઈ હોય ત્યારે શું થાય છે.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2544,22 +2528,16 @@ export const gu: Dictionary = {
   'When your status is taken away again.': 'તમારી સ્થિતિ ફરી ક્યારે દૂર થાય છે.',
   'Silences chat notifications and shows the others you are busy.':
     'ચેટ સૂચનાઓ શાંત કરે છે અને બીજાઓને બતાવે છે કે તમે વ્યસ્ત છો.',
-  'The colour the others see beside your name.': 'બીજાઓ તમારા નામ પાસે જે રંગ જુએ છે તે.',
   'The others see you as offline even while you are here.':
     'તમે અહીં હો ત્યારે પણ બીજાઓ તમને ઑફલાઇન જુએ છે.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'વિન્ડોની પાછળનું ચિત્ર, એક આછા માટે અને એક ઘાટા માટે; તેનું કેન્દ્ર ખસેડવા ખેંચો.',
   'The theme Orden is drawn in.': 'Orden જે થીમમાં દોરાય છે તે.',
   'Light, dark, or whichever the system is in.': 'આછું, ઘાટું કે સિસ્ટમ જેમાં હોય તે.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'ફાઇલ યાદીની ટોચના બુકમાર્ક ટાઇલ તરીકે દેખાય કે યાદી તરીકે.',
   'Shows a pointing hand over buttons, as web pages do.':
     'વેબ પેજની જેમ બટન પર ઇશારો કરતો હાથ બતાવે છે.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ની પોતાની શીર્ષક પટ્ટી, કે તમારી સિસ્ટમનું વિન્ડો ચોકઠું.',
-  'Square bottom edge': 'ચોરસ નીચેની કિનારી',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'જે ખુલ્લું છે તે ચોરસ ખૂણાઓ સાથે વિન્ડોના તળિયા સુધી પહોંચે છે; વિભાજનમાં, તેને સ્પર્શતા પેન.',
   'How large the text of notes is.': 'નોંધોનું લખાણ કેટલું મોટું છે.',
   'How large all of Orden is drawn on this device.': 'આ ઉપકરણ પર આખું Orden કેટલું મોટું દેખાય.',
   'The space between the lines of a note.': 'નોંધની લીટીઓ વચ્ચેની જગ્યા.',

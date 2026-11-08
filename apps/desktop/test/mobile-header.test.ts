@@ -40,15 +40,13 @@ describe('the button that opens the file list', () => {
     ] as const) {
       expect(text, `${name} draws the glyph again`).not.toContain(PANEL)
       expect(text, `${name} uses the component`).toMatch(
-        /<SidebarToggle unseen=\{(swiped \|\| \(!viewport\.touch && sideToggles\.inside\)|swipeOpens\(\))\} \/>/,
+        /<SidebarToggle unseen=\{(swiped|swipeOpens\(\))\} \/>/,
       )
     }
   })
 
   test('is not in the bar while there is nothing to list', () => {
-    expect(titlebar).toMatch(
-      /\{#if !listless && \(viewport\.touch \|\| !sideToggles\.inside \|\| !workspace\.openOn\('left'\)\)\}\s*<SidebarToggle unseen=\{swiped \|\| \(!viewport\.touch && sideToggles\.inside\)\} \/>/,
-    )
+    expect(titlebar).toMatch(/\{#if !listless\}\s*<SidebarToggle unseen=\{swiped\} \/>/)
     expect(titlebar).toContain('!workspace.spaces.length && !workspace.tabs.length')
   })
 
@@ -101,44 +99,31 @@ describe('the button that opens the file list', () => {
     const squeezed = sidebar.replace(/\s+/g, ' ')
 
     expect(squeezed).toContain(
-      '{#if viewport.drawer || (!viewport.touch && sideToggles.inside)} <SidebarToggle unseen={swipeOpens()} /> {/if}',
+      '{#if viewport.drawer} <SidebarToggle unseen={swipeOpens()} /> {/if}',
     )
     expect(squeezed).toContain('{#if side === \'left\'} <div class="head"')
   })
 })
 
 describe("the sides' buttons on a desktop", () => {
-  test('are in the sides', () => {
-    expect(sidebar.replace(/\s+/g, ' ')).toContain(
-      '{#if side === \'right\' && !viewport.touch && sideToggles.inside} <SidebarToggle side="right" /> {/if}',
-    )
-  })
-
-  test('are in the bar only while the side is shut, and only said there', () => {
+  test('are in the bar, shown, and never in the sides', () => {
     const squeezed = titlebar.replace(/\s+/g, ' ')
     expect(squeezed).toContain(
-      '{:else if (workspace.right.length || !__EVEN_PLUGIN__) && workspace.rightShows === null} <SidebarToggle side="right" unseen />',
+      '{:else if workspace.right.length || !__EVEN_PLUGIN__} <SidebarToggle side="right" /> {/if}',
     )
     expect(squeezed).toContain(
       '{#if viewport.touch} {#if workspace.right.length} <SidebarToggle side="right" /> {/if}',
     )
+    expect(sidebar).not.toContain('<SidebarToggle side="right"')
+    expect(sidebar).toContain("if (viewport.touch || side === 'right') return")
   })
 
-  test('are in the bar, shown, unless the setting puts them in the sides', () => {
-    const squeezed = titlebar.replace(/\s+/g, ' ')
-    expect(squeezed).toContain(
-      '{:else if !sideToggles.inside} {#if workspace.right.length || !__EVEN_PLUGIN__} <SidebarToggle side="right" /> {/if}',
-    )
-    expect(read('lib/side-toggles.svelte.ts')).toContain("storedText(KEY) === 'yes'")
-    expect(read('lib/Sidebar.svelte')).toContain(
-      "if (viewport.touch || (side === 'right' && !sideToggles.inside)) return",
-    )
-  })
-
-  test('and somebody new is told once that the edge brings the list out', () => {
-    expect(titlebar).toMatch(/hint="edge"/)
-    expect(titlebar).toContain("when={!workspace.openOn('left')}")
-    expect(read('lib/hints.svelte.ts')).toMatch(/HINTS = \['drawer', 'edge'/)
+  test('have no setting that moves them, and no hint that comes with it', () => {
+    for (const text of [titlebar, sidebar, read('lib/settings/appearance-pane.ts')]) {
+      expect(text).not.toMatch(/sideToggles|side-toggles/)
+    }
+    expect(titlebar).not.toMatch(/hint="edge"/)
+    expect(read('lib/hints.svelte.ts')).not.toContain("'edge'")
   })
 })
 

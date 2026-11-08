@@ -548,16 +548,7 @@ export const fa: Dictionary = {
   'Actual size': 'اندازه واقعی',
   Accent: 'رنگ تکیه',
   'Tidy up': 'مرتب‌سازی',
-  'Blur the app behind the tab overview': 'محو کردن برنامه پشت نمای کلی زبانه‌ها',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'برنامه را پشت پنجره‌ها محو نشان می‌دهد، به‌جای پس‌زمینهٔ خود Orden.',
   'Swipe in from the edge to see your notes.': 'برای دیدن یادداشت‌هایتان از لبه به داخل بکشید.',
-  'Point at the edge of the window to see your notes.':
-    'برای دیدن یادداشت‌هایتان نشانگر را به لبهٔ پنجره ببرید.',
-  Sidebars: 'نوارهای کناری',
-  'Sidebar toggles inside the sidebars': 'دکمهٔ نوارهای کناری درون خودشان',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'دکمهٔ هر نوار کناری درون خود آن است، و نوار کناری راست از لبهٔ خودش در پنجره بیرون می‌آید.',
   'Show other tabs as icons': 'نمایش زبانه‌های دیگر به‌صورت نماد',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'هر زبانه جز زبانهٔ جلو فقط نمادش را نشان می‌دهد؛ با اشاره به یکی، نامش نمایان می‌شود.',
@@ -974,7 +965,6 @@ export const fa: Dictionary = {
   Minimize: 'کوچک کردن',
   Maximize: 'بزرگ کردن',
   Restore: 'بازگرداندن',
-  'Show in Explorer’s New menu': 'نمایش در فهرست New کاوشگر',
   'choose an address': 'نشانی برگزینید',
   'Reset to defaults': 'بازگشت به پیش‌فرض',
   Spelling: 'نگارش',
@@ -1754,8 +1744,6 @@ export const fa: Dictionary = {
   'Take it off': 'برداشتن',
   'Put it on the bar': 'گذاشتن روی نوار',
   'Reset the bar': 'بازنشانی نوار',
-  'Pulling down': 'کشیدن به پایین',
-  'A pull past the top runs': 'کشیدن از بالا اجرا می‌کند',
   Nothing: 'هیچ',
 
   Keep: 'نگه داشتن',
@@ -2509,16 +2497,12 @@ export const fa: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden از کلیدهای کدام برنامه پیروی می‌کند؛ هر کلید زیر همچنان تغییرپذیر است.',
   'Moves and edits in notes with Vim’s keys.': 'جابه‌جایی و ویرایش در یادداشت‌ها با کلیدهای Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'کشیدن یادداشت به پایین فراتر از بالای آن در گوشی چه می‌کند.',
   'The OpenAI key the glasses ask their questions with.':
     'کلید OpenAI که عینک پرسش‌هایش را با آن می‌پرسد.',
   'The model that answers what you ask on the glasses.':
     'مدلی که به پرسش‌های شما روی عینک پاسخ می‌دهد.',
   'How long the model thinks before it answers; longer is slower.':
     'مدل پیش از پاسخ چه اندازه فکر کند؛ بیشتر یعنی کندتر.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'سند Markdown را به فهرست New می‌افزاید که با کلیک راست در کاوشگر فایل باز می‌شود.',
   'What happens when one note was changed on two devices before they synced.':
     'وقتی یک یادداشت پیش از همگام‌سازی روی دو دستگاه تغییر کرده باشد چه می‌شود.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2560,22 +2544,16 @@ export const fa: Dictionary = {
   'When your status is taken away again.': 'وضعیت شما کی دوباره برداشته می‌شود.',
   'Silences chat notifications and shows the others you are busy.':
     'اعلان‌های گفت‌وگو را بی‌صدا می‌کند و به دیگران نشان می‌دهد که مشغول هستید.',
-  'The colour the others see beside your name.': 'رنگی که دیگران کنار نام شما می‌بینند.',
   'The others see you as offline even while you are here.':
     'دیگران شما را آفلاین می‌بینند، حتی وقتی اینجا هستید.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'تصویر پشت پنجره، یکی برای روشن و یکی برای تیره؛ برای جابه‌جایی مرکزش آن را بکشید.',
   'The theme Orden is drawn in.': 'پوسته‌ای که Orden با آن کشیده می‌شود.',
   'Light, dark, or whichever the system is in.': 'روشن، تیره، یا هر کدام که سامانه در آن است.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'اینکه ضروری‌ها در بالای فهرست فایل‌ها کاشی‌وار نشان داده شوند یا فهرست‌وار.',
   'Shows a pointing hand over buttons, as web pages do.':
     'مانند صفحه‌های وب، روی دکمه‌ها دست اشاره نشان می‌دهد.',
   'Orden’s own title bar, or the window frame of your system.':
     'نوار عنوان خود Orden، یا قاب پنجرهٔ سامانهٔ شما.',
-  'Square bottom edge': 'لبهٔ پایینی گوشه‌دار',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'آنچه باز است با گوشه‌های قائم تا پایین پنجره می‌رسد؛ در حالت تقسیم، پنل‌هایی که به آن می‌رسند.',
   'How large the text of notes is.': 'اندازهٔ متن یادداشت‌ها.',
   'How large all of Orden is drawn on this device.': 'اندازهٔ نمایش کل Orden در این دستگاه.',
   'The space between the lines of a note.': 'فاصلهٔ میان خط‌های یک یادداشت.',

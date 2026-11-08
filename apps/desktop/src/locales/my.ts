@@ -547,17 +547,8 @@ export const my: Dictionary = {
   'Actual size': 'အမှန်အရွယ်',
   Accent: 'အသားပေးအရောင်',
   'Tidy up': 'စနစ်တကျ စီရန်',
-  'Blur the app behind the tab overview': 'တက်ဘ် ခြုံငုံကြည့်ရှုမှု နောက်ရှိ အက်ပ်ကို ဝါးစေရန်',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden ၏ ကိုယ်ပိုင်နောက်ခံအစား ဝင်းဒိုးများနောက်တွင် အက်ပ်ကို ဝါးဝါးပြသည်။',
   'Swipe in from the edge to see your notes.':
     'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
-  'Point at the edge of the window to see your notes.':
-    'သင့်မှတ်စုများကို ကြည့်ရန် ညွှန်တံကို ဝင်းဒိုး၏ အစွန်းသို့ ရွှေ့ပါ။',
-  Sidebars: 'ဘေးတန်းများ',
-  'Sidebar toggles inside the sidebars': 'ဘေးတန်း ခလုတ်များကို ဘေးတန်းများအတွင်း',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'ဘေးတန်းတစ်ခုစီ၏ ခလုတ်သည် ၎င်းအတွင်း ရှိပြီး ညာဘေးတန်းသည် ဝင်းဒိုး၏ ထိုအစွန်းမှ ထွက်လာသည်။',
   'Show other tabs as icons': 'အခြားတဘ်များကို အိုင်ကွန်အဖြစ် ပြပါ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ရှေ့ရှိတဘ်မှလွဲ၍ တဘ်တိုင်းသည် အိုင်ကွန်ကိုသာ ပြသည်၊ တစ်ခုကို ညွှန်လျှင် ၎င်း၏အမည် ပေါ်လာသည်။',
@@ -966,7 +957,6 @@ export const my: Dictionary = {
   Minimize: 'ချုံ့ပါ',
   Maximize: 'ချဲ့ပါ',
   Restore: 'ပြန်ယူပါ',
-  'Show in Explorer’s New menu': 'Explorer ၏ New မီနူးတွင် ပြပါ',
   'choose an address': 'လိပ်စာရွေးပါ',
   'Reset to defaults': 'မူရင်းအတိုင်း ပြန်ထားပါ',
   Spelling: 'စာလုံးပေါင်း',
@@ -1739,8 +1729,6 @@ export const my: Dictionary = {
   'Take it off': 'ဖယ်ရှားပါ',
   'Put it on the bar': 'ဘားပေါ် တင်ပါ',
   'Reset the bar': 'ဘားကို ပြန်စပါ',
-  'Pulling down': 'အောက်သို့ ဆွဲခြင်း',
-  'A pull past the top runs': 'အပေါ်မှ ဆွဲလွန်လျှင် အလုပ်လုပ်မည်',
   Nothing: 'မရှိ',
 
   Keep: 'ထားပါ',
@@ -2493,16 +2481,12 @@ export const my: Dictionary = {
     'Orden လိုက်နာသော အက်ပ်၏ ကီးများဖြစ်ပြီး အောက်ပါ ကီးမည်သည်ကိုမဆို ပြောင်းနိုင်သေးသည်။',
   'Moves and edits in notes with Vim’s keys.':
     'Vim ၏ ကီးများဖြင့် မှတ်စုများထဲတွင် ရွှေ့ပြီး ပြင်ဆင်သည်။',
-  'What pulling a note down past its top does on a phone.':
-    'ဖုန်းပေါ်တွင် မှတ်စုကို ထိပ်ကျော်၍ အောက်သို့ ဆွဲချလျှင် ဖြစ်မည့်အရာ။',
   'The OpenAI key the glasses ask their questions with.':
     'မျက်မှန်က မေးခွန်းများ မေးရာတွင် သုံးသော OpenAI ကီး။',
   'The model that answers what you ask on the glasses.':
     'မျက်မှန်ပေါ်တွင် သင်မေးသည်ကို ဖြေပေးသော မော်ဒယ်။',
   'How long the model thinks before it answers; longer is slower.':
     'မော်ဒယ်က မဖြေမီ စဉ်းစားသည့်ကြာချိန်ဖြစ်ပြီး ကြာလေ နှေးလေ ဖြစ်သည်။',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer တွင် ညာကလစ်နှိပ်၍ ရသော အသစ် မီနူးသို့ Markdown စာရွက်စာတမ်းကို ထည့်သည်။',
   'What happens when one note was changed on two devices before they synced.':
     'မှတ်စုတစ်ခုကို စက်နှစ်ခုပေါ်တွင် ချိန်ကိုက်မီ ပြင်ထားလျှင် ဖြစ်မည့်အရာ။',
   'How far back the account keeps earlier versions of your notes.':
@@ -2543,7 +2527,6 @@ export const my: Dictionary = {
   'When your status is taken away again.': 'သင်၏ အခြေအနေကို ပြန်ဖယ်ရှားမည့်အချိန်။',
   'Silences chat notifications and shows the others you are busy.':
     'ချတ်အသိပေးချက်များကို တိတ်စေပြီး သင် အလုပ်များနေကြောင်း အခြားသူများကို ပြသည်။',
-  'The colour the others see beside your name.': 'အခြားသူများက သင့်အမည်ဘေးတွင် မြင်ရသော အရောင်။',
   'The others see you as offline even while you are here.':
     'သင် ဤနေရာတွင် ရှိနေစဉ်ပင် အခြားသူများက သင့်ကို အော့ဖ်လိုင်းဟု မြင်သည်။',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
@@ -2551,15 +2534,10 @@ export const my: Dictionary = {
   'The theme Orden is drawn in.': 'Orden ကို ဆွဲထားသော အပြင်အဆင်။',
   'Light, dark, or whichever the system is in.':
     'အလင်း၊ အမှောင် သို့မဟုတ် စနစ်လက်ရှိ အသုံးပြုနေသည့်အတိုင်း။',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'ဖိုင်စာရင်း ထိပ်ရှိ စာမှတ်များကို အကွက်များအဖြစ် သို့မဟုတ် စာရင်းအဖြစ် ပြမည်။',
   'Shows a pointing hand over buttons, as web pages do.':
     'ဝဘ်စာမျက်နှာများကဲ့သို့ ခလုတ်များပေါ်တွင် လက်ညှိုးထိုးလက်ကို ပြသည်။',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ၏ ကိုယ်ပိုင် ခေါင်းစဉ်ဘား သို့မဟုတ် သင့်စနစ်၏ ဝင်းဒိုးဘောင်။',
-  'Square bottom edge': 'လေးထောင့် အောက်ခြေအနား',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'ဖွင့်ထားသည့်အရာသည် လေးထောင့်ထောင့်များဖြင့် ဝင်းဒိုး၏ အောက်ခြေအထိ ရောက်သည်။ ခွဲထားလျှင် ၎င်းကို ထိသော အကန့်များ။',
   'How large the text of notes is.': 'မှတ်စုများ၏ စာလုံးအရွယ် မည်မျှကြီးမည်နည်း။',
   'How large all of Orden is drawn on this device.':
     'ဤစက်ပေါ်တွင် Orden တစ်ခုလုံး ပြသသည့် အရွယ်အစား။',

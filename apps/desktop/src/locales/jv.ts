@@ -544,17 +544,8 @@ export const jv: Dictionary = {
   'Actual size': 'Ukuran asli',
   Accent: 'Warna panandes',
   'Tidy up': 'Rapèkaké',
-  'Blur the app behind the tab overview': 'Burekaké aplikasi ing mburi ringkesan tab',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Nuduhaké aplikasi burek ing mburi jendhela, tinimbang latar mburi Orden dhéwé.',
   'Swipe in from the edge to see your notes.':
     'Gesek mlebu saka pinggir kanggo ndeleng cathetanmu.',
-  'Point at the edge of the window to see your notes.':
-    'Pindhahna penunjuk menyang pinggir jendhela kanggo ndeleng cathetanmu.',
-  Sidebars: 'Bar sisih',
-  'Sidebar toggles inside the sidebars': 'Tombol bar sisih ing njero bar sisih',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Tombol saben bar sisih ana ing njerone, lan bar sisih tengen metu saka pinggire jendhela.',
   'Show other tabs as icons': 'Tampilake tab liyane minangka lambang',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Saben tab kajaba sing ngarep mung nampilake lambange; yen diarahake, jenenge katon.',
@@ -966,7 +957,6 @@ export const jv: Dictionary = {
   Minimize: 'Cilikake',
   Maximize: 'Gedhekake',
   Restore: 'Balekake',
-  'Show in Explorer’s New menu': 'Tuduhake ing menu New Explorer',
   'choose an address': 'pilih alamat',
   'Reset to defaults': 'Balekake menyang gawan',
   Spelling: 'Ejaan',
@@ -1739,8 +1729,6 @@ export const jv: Dictionary = {
   'Take it off': 'Dicopot',
   'Put it on the bar': 'Dipasang ing palang',
   'Reset the bar': 'Balèkaké palang',
-  'Pulling down': 'Nyèrèd mangisor',
-  'A pull past the top runs': 'Sèrèdan ngliwati ndhuwur nglakokaké',
   Nothing: 'Ora ana',
 
   Keep: 'Simpen',
@@ -2486,16 +2474,12 @@ export const jv: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Tombol aplikasi endi sing dituruti Orden; saben tombol ing ngisor isih bisa diganti.',
   'Moves and edits in notes with Vim’s keys.': 'Obah lan nyunting ing cathetan nganggo tombol Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Apa sing kedadeyan yen cathetan ditarik mudhun ngliwati pucuke ing telpon.',
   'The OpenAI key the glasses ask their questions with.':
     'Kunci OpenAI sing dienggo tesmak kanggo takon.',
   'The model that answers what you ask on the glasses.':
     'Model sing mangsuli pitakon sampeyan ing tesmak.',
   'How long the model thinks before it answers; longer is slower.':
     'Suwene model mikir sadurunge mangsuli; luwih suwe luwih alon.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Nambahake dokumen Markdown menyang menu New sing metu yen sampeyan klik tengen ing File Explorer.',
   'What happens when one note was changed on two devices before they synced.':
     'Apa sing kedadeyan yen siji cathetan diowahi ing rong piranti sadurunge diselarasake.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2536,23 +2520,16 @@ export const jv: Dictionary = {
   'When your status is taken away again.': 'Kapan status sampeyan dibusak maneh.',
   'Silences chat notifications and shows the others you are busy.':
     'Mateni swara notifikasi obrolan lan nuduhake marang liyane yen sampeyan lagi sibuk.',
-  'The colour the others see beside your name.':
-    'Warna sing dideleng liyane ing sandhinge jeneng sampeyan.',
   'The others see you as offline even while you are here.':
     'Liyane ndeleng sampeyan offline sanajan sampeyan ana kene.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'Gambar ing mburine jendhela, siji kanggo padhang lan siji kanggo peteng; seret kanggo mindhah tengahe.',
   'The theme Orden is drawn in.': 'Tema sing dienggo nggambar Orden.',
   'Light, dark, or whichever the system is in.': 'Padhang, peteng, utawa manut sistem.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Apa tandha buku ing ndhuwur dhaptar berkas katon minangka ubin utawa dhaptar.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Nuduhake tangan nuding ing ndhuwur tombol, kaya ing kaca web.',
   'Orden’s own title bar, or the window frame of your system.':
     'Bar judhul Orden dhewe, utawa kerangka jendhela sistem sampeyan.',
-  'Square bottom edge': 'Pinggir ngisor kothak',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Sing dibukak tekan ngisor jendhéla kanthi pojok kothak; ing pamisahan, panel sing nyenggol.',
   'How large the text of notes is.': 'Sepira gedhene teks cathetan.',
   'How large all of Orden is drawn on this device.':
     'Sepira gedhéné kabèh Orden ditampilaké ing piranti iki.',

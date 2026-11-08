@@ -547,16 +547,7 @@ export const mr: Dictionary = {
   'Actual size': 'खरा आकार',
   Accent: 'ॲक्सेंट',
   'Tidy up': 'नीटनेटके करा',
-  'Blur the app behind the tab overview': 'टॅब आढाव्यामागे ॲप धूसर करा',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden च्या स्वतःच्या पार्श्वभूमीऐवजी विंडोंमागे ॲप धूसर दाखवते.',
   'Swipe in from the edge to see your notes.': 'तुमच्या नोंदी पाहण्यासाठी कडेपासून आत स्वाइप करा.',
-  'Point at the edge of the window to see your notes.':
-    'तुमच्या नोंदी पाहण्यासाठी पॉइंटर विंडोच्या कडेला न्या.',
-  Sidebars: 'साइडबार',
-  'Sidebar toggles inside the sidebars': 'साइडबारची टॉगल साइडबारच्या आत',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'प्रत्येक साइडबारचे टॉगल त्याच्या आत असते, आणि उजवा साइडबार विंडोच्या त्या कडेवरून बाहेर येतो.',
   'Show other tabs as icons': 'इतर टॅब चिन्हांच्या रूपात दाखवा',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'पुढच्या टॅबशिवाय प्रत्येक टॅब फक्त त्याचे चिन्ह दाखवतो; एकावर पॉइंटर नेल्यास त्याचे नाव दिसते.',
@@ -971,7 +962,6 @@ export const mr: Dictionary = {
   Minimize: 'लहान करा',
   Maximize: 'मोठे करा',
   Restore: 'पूर्वीचे',
-  'Show in Explorer’s New menu': 'Explorer च्या New मेनूत दाखवा',
   'choose an address': 'पत्ता निवडा',
   'Reset to defaults': 'मूळ स्थितीत आणा',
   Spelling: 'शुद्धलेखन',
@@ -1755,8 +1745,6 @@ export const mr: Dictionary = {
   'Take it off': 'काढून टाका',
   'Put it on the bar': 'पट्टीवर ठेवा',
   'Reset the bar': 'पट्टी रीसेट करा',
-  'Pulling down': 'खाली ओढणे',
-  'A pull past the top runs': 'वरून ओढल्यास चालते',
   Nothing: 'काहीही नाही',
 
   Keep: 'ठेवा',
@@ -2508,16 +2496,12 @@ export const mr: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden कोणत्या ॲपच्या कळा पाळते; खालील कोणतीही कळ तरीही बदलता येते.',
   'Moves and edits in notes with Vim’s keys.': 'Vim च्या कळांनी नोंदींमध्ये फिरा आणि संपादन करा.',
-  'What pulling a note down past its top does on a phone.':
-    'फोनवर नोंद तिच्या वरच्या टोकापलीकडे खाली ओढल्यावर काय होते.',
   'The OpenAI key the glasses ask their questions with.':
     'चष्मा ज्या OpenAI कीने प्रश्न विचारतो ती की.',
   'The model that answers what you ask on the glasses.':
     'चष्म्यावर तुम्ही विचारलेल्याला उत्तर देणारे मॉडेल.',
   'How long the model thinks before it answers; longer is slower.':
     'उत्तर देण्यापूर्वी मॉडेल किती वेळ विचार करते; जास्त वेळ म्हणजे हळू.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer मध्ये उजवे क्लिक केल्यावर मिळणाऱ्या नवीन मेनूमध्ये Markdown दस्तऐवज जोडते.',
   'What happens when one note was changed on two devices before they synced.':
     'सिंक होण्यापूर्वी एकच नोंद दोन डिव्हाइसवर बदलली गेल्यास काय होते.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2556,22 +2540,16 @@ export const mr: Dictionary = {
   'When your status is taken away again.': 'तुमची स्थिती पुन्हा कधी काढली जाते.',
   'Silences chat notifications and shows the others you are busy.':
     'चॅट सूचना शांत करते आणि इतरांना तुम्ही व्यस्त असल्याचे दाखवते.',
-  'The colour the others see beside your name.': 'इतरांना तुमच्या नावाशेजारी दिसणारा रंग.',
   'The others see you as offline even while you are here.':
     'तुम्ही इथे असतानाही इतरांना तुम्ही ऑफलाइन दिसता.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'खिडकीमागचे चित्र, एक फिकट आणि एक गडदसाठी; त्याचे मध्य हलवण्यासाठी ते ओढा.',
   'The theme Orden is drawn in.': 'Orden ज्या थीममध्ये दिसते ती थीम.',
   'Light, dark, or whichever the system is in.': 'फिकट, गडद किंवा सिस्टम ज्यात आहे ते.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'फाइल यादीच्या वरचे बुकमार्क टाइल म्हणून दिसतात की यादी म्हणून.',
   'Shows a pointing hand over buttons, as web pages do.':
     'वेब पानांप्रमाणे बटणांवर बोट दाखवणारा हात दाखवते.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ची स्वतःची शीर्षक पट्टी किंवा तुमच्या सिस्टमची खिडकी फ्रेम.',
-  'Square bottom edge': 'चौकोनी खालची कड',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'जे उघडे आहे ते चौकोनी कोपऱ्यांसह खिडकीच्या तळापर्यंत जाते; विभाजनात, तळाला स्पर्श करणारे पेन.',
   'How large the text of notes is.': 'नोंदींचा मजकूर किती मोठा आहे.',
   'How large all of Orden is drawn on this device.': 'या डिव्हाइसवर संपूर्ण Orden किती मोठे दिसते.',
   'The space between the lines of a note.': 'नोंदीच्या ओळींमधील अंतर.',

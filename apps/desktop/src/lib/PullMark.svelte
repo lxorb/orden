@@ -8,10 +8,9 @@
   const at = $derived(waiting ? REACH : pull.at)
   const ready = $derived(pull.ready)
   const said = $derived(
-    pull.refreshing ? t('Syncing') : pull.failed ? t('Sync failed') : nameFor(pull.id),
+    pull.refreshing ? t('Syncing') : pull.failed ? t('Sync failed') : nameFor('app.refresh'),
   )
   const part = $derived(Math.min(1, at / REACH))
-  const reloads = $derived(waiting || pull.id === 'app.refresh')
   const still = stillness()
 </script>
 
@@ -30,11 +29,7 @@
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <circle class="track" cx="12" cy="12" r="10.5" />
       <circle class="filling" cx="12" cy="12" r="10.5" />
-      {#if reloads}
-        <path class="arrow" d="M16.2 12a4.2 4.2 0 1 1-1.23-2.97L16.2 10.3M16.2 7.5v2.8h-2.8" />
-      {:else}
-        <path class="arrow" d="M12 7.5v9M8.5 13l3.5 3.5 3.5-3.5" />
-      {/if}
+      <path class="arrow" d="M16.2 12a4.2 4.2 0 1 1-1.23-2.97L16.2 10.3M16.2 7.5v2.8h-2.8" />
     </svg>
   </div>
 {/if}

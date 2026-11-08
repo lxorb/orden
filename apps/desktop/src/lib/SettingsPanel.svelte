@@ -31,7 +31,6 @@
   import './views/task-keys'
   import { runnable } from './shortcuts/registry'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
-  import { NOTHING, pull } from './pull.svelte'
   import { PRESETS, presetById } from './shortcuts/presets'
   import { showCombination } from './keys'
   import { prompt } from './prompt.svelte'
@@ -289,16 +288,6 @@
       ),
     })).filter((group) => group.rows.length)
   })
-
-  const pullChoices = $derived([
-    { value: NOTHING, label: t('Nothing') },
-    ...CATEGORIES.flatMap((category) =>
-      SHORTCUTS.filter((one) => one.category === category.id && runnable(one.id)).map((one) => ({
-        value: one.id,
-        label: `${category.label()}: ${one.label()}`,
-      })),
-    ),
-  ])
 
   function takeBar(event: DragEvent, at: number) {
     event.dataTransfer?.setData('text/plain', String(at))
@@ -1149,28 +1138,6 @@
     <button class="orden-action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
       {t('Reset the bar')}
     </button>
-  </div>
-
-  <h3>{t('Pulling down')}</h3>
-  <div class="card">
-    <div class="orden-setting setting">
-      <span class="name"
-        ><span class="what"
-          >{t('A pull past the top runs')}<Hint
-            text={t('What pulling a note down past its top does on a phone.')}
-          /></span
-        ></span
-      >
-      <div class="orden-setting-value">
-        <Select
-          value={pull.id}
-          options={pullChoices}
-          onchange={(value: string) => pull.choose(value)}
-          label={t('A pull past the top runs')}
-          plain={viewport.touch}
-        />
-      </div>
-    </div>
   </div>
 
   <h3>{t('Everything else')}</h3>

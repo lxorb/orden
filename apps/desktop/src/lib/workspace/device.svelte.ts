@@ -1,4 +1,5 @@
 import {
+  forget,
   isBoolean,
   isNumber,
   isString,
@@ -36,7 +37,6 @@ export class DeviceView {
 
   expandedTags = $state<Record<string, boolean>>({})
   expandedGroups = $state<Record<string, boolean>>({})
-  essentialTiles = $state(true)
   paneFollowsPointer = $state(true)
 
   icons = $state<Record<string, string>>({})
@@ -55,7 +55,7 @@ export class DeviceView {
     this.listScroll = recordOf(stored(LIST_AT_KEY), isNumber)
     this.expandedTags = recordOf(stored(TAGS_KEY), isBoolean)
     this.expandedGroups = recordOf(stored(GROUPS_KEY), isBoolean)
-    this.essentialTiles = storedText(ESSENTIALS_KEY) !== 'list'
+    forget(ESSENTIALS_KEY)
     this.paneFollowsPointer = storedText(FOLLOWS_KEY) !== 'off'
     this.icons = recordOf(stored(ICONS_KEY), isString)
     this.iconTints = recordOf(stored(ICON_TINTS_KEY), isString)
@@ -96,11 +96,6 @@ export class DeviceView {
       ? without(this.expandedGroups, id)
       : { ...this.expandedGroups, [id]: true }
     keepJson(GROUPS_KEY, this.expandedGroups)
-  }
-
-  showEssentialTiles(on: boolean) {
-    this.essentialTiles = on
-    keep(ESSENTIALS_KEY, on ? 'tiles' : 'list')
   }
 
   followPointer(on: boolean) {

@@ -22,8 +22,6 @@ type Timer = ReturnType<typeof setTimeout>
 export class EdgePeek {
   out = $state(false)
 
-  constructor(private readonly end = false) {}
-
   private room: Room | null = null
   private going: Timer | null = null
 
@@ -40,7 +38,7 @@ export class EdgePeek {
     const room = this.room
     if (!room) return
 
-    const right = room.rtl() !== this.end
+    const right = room.rtl()
     const edge = right ? event.clientX >= room.width() - 1 - EDGE : event.clientX <= EDGE
     const beside = event.clientY >= (room.top?.() ?? 0)
 
@@ -84,4 +82,3 @@ export class EdgePeek {
 }
 
 export const edgePeek = new EdgePeek()
-export const endPeek = new EdgePeek(true)

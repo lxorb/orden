@@ -1,7 +1,6 @@
 <script lang="ts">
   import { dropOver } from '../drag-paths'
   import { account } from '../account.svelte'
-  import { ACCENTS, accentColour } from '../accents'
   import { chooseFiles, PICTURES } from '../choose-files'
   import Glyph from '../chats/view/Glyph.svelte'
   import type { Box } from '../chats/view/place'
@@ -10,8 +9,6 @@
   import { menu } from '../menu.svelte'
   import { portal } from '../portal'
   import Select from '../Select.svelte'
-  import Swatches from '../Swatches.svelte'
-  import { theme } from '../theme.svelte'
   import { viewport } from '../viewport.svelte'
   import Avatar from './Avatar.svelte'
   import AvatarSheet from './AvatarSheet.svelte'
@@ -39,14 +36,6 @@
     week: key('This week'),
     never: key('Never'),
   }
-
-  const accents = $derived(
-    ACCENTS.map((one) => ({
-      value: one.id,
-      label: t(one.name),
-      colour: accentColour(one.id, theme.current),
-    })),
-  )
 
   async function kept(work: () => Promise<void>) {
     wrong = null
@@ -123,7 +112,6 @@
         face={{
           name: account.name ?? '',
           avatar: user.avatar ?? null,
-          accent: user.accent ?? null,
           key: user.id,
         }}
         size={32}
@@ -270,22 +258,6 @@
         label={t('Do not disturb')}
         onchange={(on: boolean) => withStatus({ quiet: on })}
       />
-    </div>
-
-    <div class="orden-setting setting">
-      <span class="name"
-        ><span class="orden-named"
-          >{t('Accent')}<Hint text={t('The colour the others see beside your name.')} /></span
-        ></span
-      >
-      <div class="orden-setting-value is-wrapping">
-        <Swatches
-          options={accents}
-          label={t('Accent')}
-          chosen={user.accent ?? ''}
-          onchoose={(value: string) => void kept(() => changeProfile({ accent: value }))}
-        />
-      </div>
     </div>
 
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->

@@ -548,16 +548,7 @@ export const ur: Dictionary = {
   'Actual size': 'اصل سائز',
   Accent: 'نمایاں رنگ',
   'Tidy up': 'ترتیب دیں',
-  'Blur the app behind the tab overview': 'ٹیب جائزے کے پیچھے ایپ کو دھندلا کریں',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'ونڈوز کے پیچھے ایپ کو دھندلا دکھاتا ہے، Orden کے اپنے پس منظر کے بجائے۔',
   'Swipe in from the edge to see your notes.': 'اپنے نوٹس دیکھنے کے لیے کنارے سے اندر سوائپ کریں۔',
-  'Point at the edge of the window to see your notes.':
-    'اپنے نوٹس دیکھنے کے لیے پوائنٹر کو ونڈو کے کنارے پر لے جائیں۔',
-  Sidebars: 'سائیڈ بارز',
-  'Sidebar toggles inside the sidebars': 'سائیڈ بار کے ٹوگل سائیڈ بارز کے اندر',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'ہر سائیڈ بار کا ٹوگل اس کے اندر ہوتا ہے، اور دائیں سائیڈ بار ونڈو کے اس کنارے سے باہر آتی ہے۔',
   'Show other tabs as icons': 'دوسرے ٹیب آئیکن کے طور پر دکھائیں',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'سامنے والے کے سوا ہر ٹیب صرف اپنا آئیکن دکھاتا ہے؛ کسی پر پوائنٹر لے جائیں تو اس کا نام دکھتا ہے۔',
@@ -972,7 +963,6 @@ export const ur: Dictionary = {
   Minimize: 'چھوٹا کریں',
   Maximize: 'بڑا کریں',
   Restore: 'بحال کریں',
-  'Show in Explorer’s New menu': 'Explorer کے New مینو میں دکھائیں',
   'choose an address': 'پتہ منتخب کریں',
   'Reset to defaults': 'طے شدہ پر ری سیٹ کریں',
   Spelling: 'ہجے',
@@ -1752,8 +1742,6 @@ export const ur: Dictionary = {
   'Take it off': 'ہٹا دیں',
   'Put it on the bar': 'پٹی پر رکھیں',
   'Reset the bar': 'پٹی ری سیٹ کریں',
-  'Pulling down': 'نیچے کھینچنا',
-  'A pull past the top runs': 'اوپر سے کھینچنے پر چلے',
   Nothing: 'کچھ نہیں',
 
   Keep: 'رکھیں',
@@ -2504,16 +2492,12 @@ export const ur: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden کس ایپ کی کلیدوں کی پیروی کرتا ہے؛ نیچے کی ہر کلید پھر بھی بدلی جا سکتی ہے۔',
   'Moves and edits in notes with Vim’s keys.': 'Vim کی کلیدوں سے نوٹس میں حرکت اور ترمیم کرتا ہے۔',
-  'What pulling a note down past its top does on a phone.':
-    'فون پر نوٹ کو اس کے اوپر سے آگے نیچے کھینچنے سے کیا ہوتا ہے۔',
   'The OpenAI key the glasses ask their questions with.':
     'وہ OpenAI کلید جس سے چشمہ اپنے سوال پوچھتا ہے۔',
   'The model that answers what you ask on the glasses.':
     'وہ ماڈل جو چشمے پر آپ کے سوالوں کا جواب دیتا ہے۔',
   'How long the model thinks before it answers; longer is slower.':
     'ماڈل جواب سے پہلے کتنی دیر سوچے؛ زیادہ دیر کا مطلب سست۔',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer میں دائیں کلک سے کھلنے والے New مینو میں Markdown دستاویز شامل کرتا ہے۔',
   'What happens when one note was changed on two devices before they synced.':
     'جب ایک نوٹ ہم آہنگی سے پہلے دو ڈیوائسز پر بدلا گیا ہو تو کیا ہو۔',
   'How far back the account keeps earlier versions of your notes.':
@@ -2552,22 +2536,16 @@ export const ur: Dictionary = {
   'When your status is taken away again.': 'آپ کی حالت کب دوبارہ ہٹائی جائے۔',
   'Silences chat notifications and shows the others you are busy.':
     'چیٹ کی اطلاعات خاموش کرتا ہے اور دوسروں کو دکھاتا ہے کہ آپ مصروف ہیں۔',
-  'The colour the others see beside your name.': 'وہ رنگ جو دوسرے آپ کے نام کے ساتھ دیکھتے ہیں۔',
   'The others see you as offline even while you are here.':
     'آپ یہاں ہوں تب بھی دوسرے آپ کو آف لائن دیکھتے ہیں۔',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'ونڈو کے پیچھے کی تصویر، ایک روشن اور ایک تاریک کے لیے؛ اس کا مرکز ہلانے کے لیے اسے گھسیٹیں۔',
   'The theme Orden is drawn in.': 'وہ تھیم جس میں Orden بنایا جاتا ہے۔',
   'Light, dark, or whichever the system is in.': 'روشن، تاریک، یا جو سسٹم میں ہو۔',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'فائل فہرست کے اوپر ضروری ٹائلز کی صورت میں دکھیں یا فہرست کی صورت میں۔',
   'Shows a pointing hand over buttons, as web pages do.':
     'ویب صفحات کی طرح بٹنوں پر اشارہ کرتا ہاتھ دکھاتا ہے۔',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden کی اپنی ٹائٹل بار، یا آپ کے سسٹم کا ونڈو فریم۔',
-  'Square bottom edge': 'مربع نچلا کنارہ',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'جو کھلا ہے وہ مربع کونوں کے ساتھ ونڈو کے نیچے تک جاتا ہے؛ تقسیم میں، وہ پین جو اسے چھوتے ہیں۔',
   'How large the text of notes is.': 'نوٹس کا متن کتنا بڑا ہو۔',
   'How large all of Orden is drawn on this device.': 'اس ڈیوائس پر پورا Orden کتنا بڑا دکھائی دے۔',
   'The space between the lines of a note.': 'نوٹ کی لائنوں کے درمیان فاصلہ۔',

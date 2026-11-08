@@ -1,5 +1,5 @@
 import { account } from '../account.svelte'
-import { ACCENTS } from '../accents'
+import { ACCENTS, accentIdFor } from '../accents'
 import { keep, storedText } from '../stored'
 import { isNative, platform } from '../tauri'
 import { browserName } from './browser'
@@ -28,10 +28,14 @@ export function personName(): string | undefined {
 export function personFace(): {
   id?: string
   face?: string | undefined
-  tint?: string | undefined
 } {
   const user = account.user
-  return user ? { id: user.id, face: user.avatar?.s, tint: user.accent ?? undefined } : {}
+  return user ? { id: user.id, face: user.avatar?.s } : {}
+}
+
+export function ownAccent(): string {
+  const user = account.user
+  return user ? accentIdFor(user.id) : deviceAccent()
 }
 
 export function deviceAccent(): string {

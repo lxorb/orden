@@ -1,16 +1,9 @@
-import { account } from './account.svelte'
-import { api, type AccountSettings } from './api'
-import { runnable } from './shortcuts/registry'
 import { viewport } from './viewport.svelte'
-import { forget, isString, keep, storedText } from './stored'
+import { forget } from './stored'
 
 const STORAGE_KEY = 'orden:pull'
 
-export const DEFAULT_PULL = 'app.refresh'
-
 const WAITS = 15_000
-
-export const NOTHING = 'none'
 
 export const CLAIM = 12
 
@@ -41,10 +34,6 @@ class Pull {
   failed = $state(false)
 
   async press(): Promise<void> {
-    if (this.id !== DEFAULT_PULL) {
-      this.runs?.()
-      return
-    }
     if (this.refreshing) return
     this.refreshing = true
     this.failed = false
@@ -71,51 +60,9 @@ class Pull {
     return armed(this.at)
   }
 
-  chosen = $state<string | null>(null)
-
-  get id(): string {
-    return this.chosen ?? DEFAULT_PULL
-  }
-
-  get changed(): boolean {
-    return this.chosen !== null
-  }
-
   restore() {
-    this.chosen = usable(storedText(STORAGE_KEY))
+    forget(STORAGE_KEY)
   }
-
-  choose(id: string) {
-    this.chosen = id === DEFAULT_PULL ? null : usable(id)
-    if (this.chosen) keep(STORAGE_KEY, this.chosen)
-    else forget(STORAGE_KEY)
-
-    this.share()
-  }
-
-  receive(remote: AccountSettings) {
-    const theirs = remote.pull
-    if (theirs === undefined) {
-      if (this.chosen) this.share()
-      return
-    }
-
-    const theirOwn = usable(theirs)
-    if (theirOwn === this.chosen) return
-
-    this.chosen = theirOwn
-    if (theirOwn) keep(STORAGE_KEY, theirOwn)
-    else forget(STORAGE_KEY)
-  }
-
-  private share() {
-    const token = account.accountToken
-    if (!token) return
-
-    void api.saveSettings(token, { pull: this.chosen }).catch(() => undefined)
-  }
-
-  runs: (() => void) | null = null
 
   follow(scroller: HTMLElement): () => void {
     let startX = 0
@@ -131,7 +78,6 @@ class Pull {
 
     const onStart = (event: TouchEvent) => {
       clear()
-      if (this.id === NOTHING) return
       if (event.touches.length !== 1) return
 
       const touch = event.touches[0]
@@ -193,13 +139,6 @@ function busyWithWords(): boolean {
   if (viewport.typing) return true
   const chosen = typeof document === 'undefined' ? null : document.getSelection()
   return !!chosen && !chosen.isCollapsed
-}
-
-export function usable(value: unknown): string | null {
-  if (!isString(value)) return null
-  if (value === NOTHING) return NOTHING
-
-  return runnable(value) ? value : null
 }
 
 export const pull = new Pull()

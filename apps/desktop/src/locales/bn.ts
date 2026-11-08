@@ -548,16 +548,7 @@ export const bn: Dictionary = {
   'Actual size': 'আসল আকার',
   Accent: 'অ্যাকসেন্ট',
   'Tidy up': 'গুছিয়ে নিন',
-  'Blur the app behind the tab overview': 'ট্যাব ওভারভিউয়ের পেছনে অ্যাপ ঝাপসা করুন',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden-এর নিজস্ব পটভূমির বদলে উইন্ডোগুলোর পেছনে অ্যাপটি ঝাপসা দেখায়।',
   'Swipe in from the edge to see your notes.': 'আপনার নোট দেখতে কিনারা থেকে ভেতরে সোয়াইপ করুন।',
-  'Point at the edge of the window to see your notes.':
-    'আপনার নোট দেখতে পয়েন্টারটি উইন্ডোর কিনারায় নিন।',
-  Sidebars: 'সাইডবার',
-  'Sidebar toggles inside the sidebars': 'সাইডবারের টগল সাইডবারের ভেতরে',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'প্রতিটি সাইডবারের টগল সাইডবারের ভেতরে থাকে, আর ডান সাইডবার উইন্ডোর সেই কিনারা থেকে বেরিয়ে আসে।',
   'Show other tabs as icons': 'অন্য ট্যাবগুলো আইকন হিসেবে দেখান',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'সামনের ট্যাব ছাড়া প্রতিটি ট্যাব শুধু আইকন দেখায়; কোনোটির ওপর পয়েন্টার রাখলে নাম দেখায়।',
@@ -972,7 +963,6 @@ export const bn: Dictionary = {
   Minimize: 'ছোট করুন',
   Maximize: 'বড় করুন',
   Restore: 'ফেরান',
-  'Show in Explorer’s New menu': 'Explorer-এর New মেনুতে দেখান',
   'choose an address': 'একটি ঠিকানা বাছুন',
   'Reset to defaults': 'ডিফল্টে রিসেট',
   Spelling: 'বানান',
@@ -1750,8 +1740,6 @@ export const bn: Dictionary = {
   'Take it off': 'সরান',
   'Put it on the bar': 'বারে রাখুন',
   'Reset the bar': 'বার রিসেট করুন',
-  'Pulling down': 'নিচে টানা',
-  'A pull past the top runs': 'উপর থেকে টানলে চলবে',
   Nothing: 'কিছুই নয়',
 
   Keep: 'রাখুন',
@@ -2506,15 +2494,11 @@ export const bn: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden কোন অ্যাপের কী অনুসরণ করে; নিচের যেকোনো কী তবুও বদলানো যায়।',
   'Moves and edits in notes with Vim’s keys.': 'Vim-এর কী দিয়ে নোটে চলাফেরা ও সম্পাদনা করে।',
-  'What pulling a note down past its top does on a phone.':
-    'ফোনে নোটকে তার শীর্ষ ছাড়িয়ে নিচে টানলে কী হয়।',
   'The OpenAI key the glasses ask their questions with.': 'যে OpenAI কী দিয়ে চশমা তার প্রশ্ন করে।',
   'The model that answers what you ask on the glasses.':
     'চশমায় আপনি যা জিজ্ঞাসা করেন, তার উত্তর দেয় যে মডেল।',
   'How long the model thinks before it answers; longer is slower.':
     'উত্তর দেওয়ার আগে মডেল কতক্ষণ ভাবে; বেশি ভাবলে ধীর হয়।',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer-এ রাইট-ক্লিক করলে যে নতুন মেনু আসে, তাতে একটি Markdown ডকুমেন্ট যোগ করে।',
   'What happens when one note was changed on two devices before they synced.':
     'সিংক হওয়ার আগে একটি নোট দুটি ডিভাইসে বদলালে কী হয়।',
   'How far back the account keeps earlier versions of your notes.':
@@ -2553,22 +2537,16 @@ export const bn: Dictionary = {
   'When your status is taken away again.': 'আপনার অবস্থা কখন আবার মুছে যায়।',
   'Silences chat notifications and shows the others you are busy.':
     'চ্যাটের বিজ্ঞপ্তি চুপ করায় এবং অন্যদের দেখায় যে আপনি ব্যস্ত।',
-  'The colour the others see beside your name.': 'আপনার নামের পাশে অন্যরা যে রং দেখে।',
   'The others see you as offline even while you are here.':
     'আপনি এখানে থাকলেও অন্যরা আপনাকে অফলাইন দেখে।',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'উইন্ডোর পেছনের ছবি, লাইটের জন্য একটি ও ডার্কের জন্য একটি; কেন্দ্র সরাতে টেনে নিন।',
   'The theme Orden is drawn in.': 'যে থিমে Orden আঁকা হয়।',
   'Light, dark, or whichever the system is in.': 'লাইট, ডার্ক, অথবা সিস্টেম যেটিতে আছে।',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'ফাইল তালিকার ওপরের বুকমার্ক টাইল হিসেবে দেখাবে নাকি তালিকা হিসেবে।',
   'Shows a pointing hand over buttons, as web pages do.':
     'ওয়েব পাতার মতোই বোতামের ওপর একটি নির্দেশক হাত দেখায়।',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-এর নিজের টাইটেল বার, অথবা আপনার সিস্টেমের উইন্ডো ফ্রেম।',
-  'Square bottom edge': 'চৌকো নিচের কিনারা',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'যা খোলা আছে তা চৌকো কোণ নিয়ে উইন্ডোর নিচ পর্যন্ত যায়; বিভক্ত অবস্থায়, যে প্যানগুলো নিচ ছোঁয়।',
   'How large the text of notes is.': 'নোটের লেখা কত বড়।',
   'How large all of Orden is drawn on this device.': 'এই ডিভাইসে পুরো Orden কত বড় দেখানো হবে।',
   'The space between the lines of a note.': 'নোটের লাইনগুলোর মাঝের ফাঁক।',

@@ -571,16 +571,7 @@ export const pl: Dictionary = {
   'Actual size': 'Rozmiar rzeczywisty',
   Accent: 'Akcent',
   'Tidy up': 'Uporządkuj',
-  'Blur the app behind the tab overview': 'Rozmyj aplikację za przeglądem kart',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Pokazuje rozmytą aplikację za oknami zamiast własnego tła Ordena.',
   'Swipe in from the edge to see your notes.': 'Przesuń od krawędzi, aby zobaczyć swoje notatki.',
-  'Point at the edge of the window to see your notes.':
-    'Przesuń wskaźnik do krawędzi okna, aby zobaczyć swoje notatki.',
-  Sidebars: 'Panele boczne',
-  'Sidebar toggles inside the sidebars': 'Przełączniki paneli bocznych w panelach',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Przełącznik każdego panelu bocznego jest w nim, a prawy panel wysuwa się przy swojej krawędzi okna.',
   'Show other tabs as icons': 'Pokazuj pozostałe karty jako ikony',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Każda karta poza tą na wierzchu pokazuje tylko ikonę; po wskazaniu pokazuje swoją nazwę.',
@@ -1010,7 +1001,6 @@ export const pl: Dictionary = {
   Minimize: 'Minimalizuj',
   Maximize: 'Maksymalizuj',
   Restore: 'Przywróć',
-  'Show in Explorer’s New menu': 'Pokaż w menu Nowy Eksploratora',
   'choose an address': 'wybierz adres',
   'Reset to defaults': 'Przywróć domyślne',
   Spelling: 'Pisownia',
@@ -1831,8 +1821,6 @@ export const pl: Dictionary = {
   'Take it off': 'Zdejmij',
   'Put it on the bar': 'Dodaj na pasek',
   'Reset the bar': 'Przywróć pasek',
-  'Pulling down': 'Pociągnięcie w dół',
-  'A pull past the top runs': 'Pociągnięcie za górę uruchamia',
   Nothing: 'Nic',
 
   Keep: 'Zachowaj',
@@ -2600,16 +2588,12 @@ export const pl: Dictionary = {
     'Którego programu skróty klawiszowe stosuje Orden; każdy skrót poniżej nadal można zmienić.',
   'Moves and edits in notes with Vim’s keys.':
     'Poruszanie się i edycja w notatkach klawiszami Vima.',
-  'What pulling a note down past its top does on a phone.':
-    'Co na telefonie robi pociągnięcie notatki w dół poza jej początek.',
   'The OpenAI key the glasses ask their questions with.':
     'Klucz OpenAI, którym okulary zadają swoje pytania.',
   'The model that answers what you ask on the glasses.':
     'Model, który odpowiada na pytania zadawane w okularach.',
   'How long the model thinks before it answers; longer is slower.':
     'Jak długo model myśli przed odpowiedzią; dłużej znaczy wolniej.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Dodaje dokument Markdown do menu Nowy, które pojawia się po kliknięciu prawym przyciskiem w Eksploratorze plików.',
   'What happens when one note was changed on two devices before they synced.':
     'Co się dzieje, gdy notatka została zmieniona na dwóch urządzeniach przed ich synchronizacją.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2651,22 +2635,16 @@ export const pl: Dictionary = {
   'When your status is taken away again.': 'Kiedy Twój status zostanie znowu usunięty.',
   'Silences chat notifications and shows the others you are busy.':
     'Wycisza powiadomienia czatu i pokazuje innym, że jesteś zajęty.',
-  'The colour the others see beside your name.': 'Kolor, który inni widzą obok Twojego imienia.',
   'The others see you as offline even while you are here.':
     'Inni widzą Cię jako offline, nawet gdy tu jesteś.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'Obraz za oknem, jeden dla jasnego i jeden dla ciemnego motywu; przeciągnij go, by przesunąć jego środek.',
   'The theme Orden is drawn in.': 'Motyw, w którym rysowany jest Orden.',
   'Light, dark, or whichever the system is in.': 'Jasny, ciemny albo taki, jakiego używa system.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Czy zakładki u góry listy plików są pokazywane jako kafelki, czy jako lista.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Pokazuje wskazującą dłoń nad przyciskami, jak na stronach internetowych.',
   'Orden’s own title bar, or the window frame of your system.':
     'Własny pasek tytułu Orden albo ramka okna Twojego systemu.',
-  'Square bottom edge': 'Prostokątna dolna krawędź',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'To, co otwarte, sięga dołu okna z prostymi rogami; przy podziale panele, które go dotykają.',
   'How large the text of notes is.': 'Jak duży jest tekst notatek.',
   'How large all of Orden is drawn on this device.': 'Jak duży jest cały Orden na tym urządzeniu.',
   'The space between the lines of a note.': 'Odstęp między wierszami notatki.',

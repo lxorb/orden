@@ -1263,7 +1263,7 @@ describe("the card's corner a page is placed with", () => {
     )
   })
 
-  test("is its own pane's foot, square where that pane stands on the window's bottom", () => {
+  test("is its own pane's corner, as that pane's card says it", () => {
     const card = {}
     const hole = { closest: (selector: string) => (selector === '[data-pane]' ? card : null) }
     const foot = (radius: string) =>
@@ -1271,7 +1271,7 @@ describe("the card's corner a page is placed with", () => {
         document: { querySelector: () => null },
         getComputedStyle: (of: object) => ({
           getPropertyValue: (token: string) =>
-            of === card && token === '--card-foot' ? radius : '10px',
+            of === card && token === '--card-radius' ? radius : '10px',
         }),
       })
     foot('10px')

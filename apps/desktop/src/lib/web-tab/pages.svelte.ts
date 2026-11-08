@@ -179,7 +179,7 @@ export async function chooseTab(tab: string): Promise<void> {
 export function cardCorner(within?: Element | null): number {
   if (typeof document === 'undefined') return 0
   const card = within?.closest('[data-pane]')
-  if (card) return parseFloat(getComputedStyle(card).getPropertyValue('--card-foot')) || 0
+  if (card) return parseFloat(getComputedStyle(card).getPropertyValue('--card-radius')) || 0
   const panes = document.querySelector('main') ?? document.documentElement
   return parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
 }

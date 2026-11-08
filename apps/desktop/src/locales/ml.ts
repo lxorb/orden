@@ -554,17 +554,8 @@ export const ml: Dictionary = {
   'Actual size': 'യഥാർത്ഥ വലുപ്പം',
   Accent: 'ആക്‌സന്റ് നിറം',
   'Tidy up': 'ക്രമീകരിക്കുക',
-  'Blur the app behind the tab overview': 'ടാബ് അവലോകനത്തിന് പിന്നിൽ ആപ്പ് മങ്ങിക്കുക',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden-ന്റെ സ്വന്തം പശ്ചാത്തലത്തിന് പകരം, ജാലകങ്ങൾക്ക് പിന്നിൽ ആപ്പ് മങ്ങിച്ച് കാണിക്കുന്നു.',
   'Swipe in from the edge to see your notes.':
     'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ അരികിൽ നിന്ന് അകത്തേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
-  'Point at the edge of the window to see your notes.':
-    'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ പോയിന്റർ വിൻഡോയുടെ അരികിലേക്ക് നീക്കുക.',
-  Sidebars: 'സൈഡ്‌ബാറുകൾ',
-  'Sidebar toggles inside the sidebars': 'സൈഡ്‌ബാർ ടോഗിളുകൾ സൈഡ്‌ബാറുകൾക്കുള്ളിൽ',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'ഓരോ സൈഡ്‌ബാറിന്റെയും ടോഗിൾ അതിനുള്ളിലാണ്, വലത്തെ സൈഡ്‌ബാർ വിൻഡോയുടെ ആ അരികിൽ നിന്ന് പുറത്തുവരും.',
   'Show other tabs as icons': 'മറ്റ് ടാബുകൾ ഐക്കണുകളായി കാണിക്കുക',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'മുന്നിലുള്ളതൊഴികെ ഓരോ ടാബും ഐക്കൺ മാത്രം കാണിക്കുന്നു; ഒന്നിലേക്ക് ചൂണ്ടുമ്പോൾ പേര് കാണാം.',
@@ -984,7 +975,6 @@ export const ml: Dictionary = {
   Minimize: 'ചുരുക്കുക',
   Maximize: 'വികസിപ്പിക്കുക',
   Restore: 'പഴയ വലുപ്പം',
-  'Show in Explorer’s New menu': 'Explorerന്റെ New മെനുവിൽ കാണിക്കുക',
   'choose an address': 'ഒരു വിലാസം തിരഞ്ഞെടുക്കുക',
   'Reset to defaults': 'ഡിഫോൾട്ടിലേക്ക് പുനഃസജ്ജം',
   Spelling: 'സ്പെല്ലിംഗ്',
@@ -1777,8 +1767,6 @@ export const ml: Dictionary = {
   'Take it off': 'നീക്കം ചെയ്യുക',
   'Put it on the bar': 'ബാറിൽ ചേർക്കുക',
   'Reset the bar': 'ബാർ പുനഃസജ്ജമാക്കുക',
-  'Pulling down': 'താഴേക്ക് വലിക്കൽ',
-  'A pull past the top runs': 'മുകളിൽ നിന്ന് വലിച്ചാൽ ഓടും',
   Nothing: 'ഒന്നുമില്ല',
 
   Keep: 'സൂക്ഷിക്കുക',
@@ -2542,16 +2530,12 @@ export const ml: Dictionary = {
     'Orden ഏത് ആപ്പിന്റെ കീകളാണ് പിന്തുടരുന്നത് എന്നത്; താഴെയുള്ള ഏത് കീയും ഇപ്പോഴും മാറ്റാം.',
   'Moves and edits in notes with Vim’s keys.':
     'Vim-ന്റെ കീകൾ ഉപയോഗിച്ച് കുറിപ്പുകളിൽ നീങ്ങുകയും തിരുത്തുകയും ചെയ്യുന്നു.',
-  'What pulling a note down past its top does on a phone.':
-    'ഫോണിൽ ഒരു കുറിപ്പ് അതിന്റെ മുകൾഭാഗം കടന്ന് താഴേക്ക് വലിച്ചാൽ എന്ത് സംഭവിക്കും എന്നത്.',
   'The OpenAI key the glasses ask their questions with.':
     'കണ്ണട അതിന്റെ ചോദ്യങ്ങൾ ചോദിക്കാൻ ഉപയോഗിക്കുന്ന OpenAI കീ.',
   'The model that answers what you ask on the glasses.':
     'കണ്ണടയിൽ നിങ്ങൾ ചോദിക്കുന്നതിന് ഉത്തരം നൽകുന്ന മോഡൽ.',
   'How long the model thinks before it answers; longer is slower.':
     'ഉത്തരം നൽകുന്നതിന് മുമ്പ് മോഡൽ എത്ര നേരം ചിന്തിക്കുന്നു എന്നത്; കൂടുതലായാൽ വേഗം കുറയും.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'File Explorer-ൽ വലത്-ക്ലിക്ക് ചെയ്യുമ്പോൾ കിട്ടുന്ന പുതിയത് മെനുവിലേക്ക് ഒരു Markdown പ്രമാണം ചേർക്കുന്നു.',
   'What happens when one note was changed on two devices before they synced.':
     'സിങ്ക് ചെയ്യുന്നതിന് മുമ്പ് ഒരു കുറിപ്പ് രണ്ട് ഉപകരണങ്ങളിൽ മാറ്റിയാൽ എന്ത് സംഭവിക്കും എന്നത്.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2596,7 +2580,6 @@ export const ml: Dictionary = {
     'നിങ്ങളുടെ സ്ഥിതി വീണ്ടും എപ്പോൾ നീക്കം ചെയ്യപ്പെടും എന്നത്.',
   'Silences chat notifications and shows the others you are busy.':
     'ചാറ്റ് അറിയിപ്പുകൾ നിശ്ശബ്ദമാക്കുകയും നിങ്ങൾ തിരക്കിലാണെന്ന് മറ്റുള്ളവരെ കാണിക്കുകയും ചെയ്യുന്നു.',
-  'The colour the others see beside your name.': 'നിങ്ങളുടെ പേരിനരികിൽ മറ്റുള്ളവർ കാണുന്ന നിറം.',
   'The others see you as offline even while you are here.':
     'നിങ്ങൾ ഇവിടെയുള്ളപ്പോഴും മറ്റുള്ളവർ നിങ്ങളെ ഓഫ്‌ലൈനായി കാണും.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
@@ -2604,15 +2587,10 @@ export const ml: Dictionary = {
   'The theme Orden is drawn in.': 'Orden വരയ്ക്കുന്ന തീം.',
   'Light, dark, or whichever the system is in.':
     'ലൈറ്റ്, ഡാർക്ക്, അല്ലെങ്കിൽ സിസ്റ്റം ഏതിലാണോ അത്.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'ഫയൽ പട്ടികയുടെ മുകളിലുള്ള ബുക്ക്‌മാർക്കുകൾ ടൈലുകളായോ പട്ടികയായോ കാണിക്കണോ എന്നത്.',
   'Shows a pointing hand over buttons, as web pages do.':
     'വെബ് പേജുകളിലെ പോലെ, ബട്ടണുകൾക്ക് മുകളിൽ ചൂണ്ടുന്ന കൈ കാണിക്കുന്നു.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-ന്റെ സ്വന്തം ടൈറ്റിൽ ബാർ, അല്ലെങ്കിൽ നിങ്ങളുടെ സിസ്റ്റത്തിന്റെ വിൻഡോ ഫ്രെയിം.',
-  'Square bottom edge': 'ചതുര താഴത്തെ അറ്റം',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'തുറന്നിരിക്കുന്നത് ചതുര മൂലകളോടെ ജാലകത്തിന്റെ താഴെ വരെ എത്തുന്നു; വിഭജനത്തിൽ, അതിനെ തൊടുന്ന പാളികൾ.',
   'How large the text of notes is.': 'കുറിപ്പുകളിലെ എഴുത്ത് എത്ര വലുതാണ് എന്നത്.',
   'How large all of Orden is drawn on this device.':
     'ഈ ഉപകരണത്തിൽ Orden മുഴുവൻ എത്ര വലുതായി കാണിക്കുന്നു.',

@@ -65,8 +65,7 @@
   import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
-  import { edgePeek, endPeek } from './edge-peek.svelte'
-  import { sideToggles } from './side-toggles.svelte'
+  import { edgePeek } from './edge-peek.svelte'
   import { overlays } from './overlays'
   import { fullscreen } from './fullscreen.svelte'
   import { alone } from './alone.svelte'
@@ -160,8 +159,7 @@
   })
   const shut = $derived(!open || !entered)
 
-  const peeker = $derived(side === 'left' ? edgePeek : endPeek)
-  const peek = $derived(shut && peeker.out)
+  const peek = $derived(side === 'left' && shut && edgePeek.out)
   let floating = $state(false)
   $effect(() => {
     if (peek) {
@@ -182,10 +180,10 @@
   let column = $state<HTMLElement>()
 
   $effect(() => {
-    if (viewport.touch || (side === 'right' && !sideToggles.inside)) return
-    const stop = peeker.watch({
+    if (viewport.touch || side === 'right') return
+    const stop = edgePeek.watch({
       may: () =>
-        (side === 'left' ? workspace.panel === null : workspace.rightShows === null) &&
+        workspace.panel === null &&
         !viewport.drawer &&
         !fullscreen.on &&
         !alone.on &&
@@ -207,9 +205,9 @@
         return carrying || typing || overlays.depth > 1
       },
     })
-    const moved = (event: PointerEvent) => peeker.moved(event)
+    const moved = (event: PointerEvent) => edgePeek.moved(event)
     const out = (event: MouseEvent) => {
-      if (event.relatedTarget === null) peeker.away()
+      if (event.relatedTarget === null) edgePeek.away()
     }
     const carried = (event: DragEvent) => {
       carrying = event.type === 'dragstart' && !!aside?.contains(event.target as Node)
@@ -230,13 +228,13 @@
   $effect(() =>
     peek
       ? overlays.peek(
-          () => peeker.hide(),
+          () => edgePeek.hide(),
           () => [aside],
         )
       : undefined,
   )
   $effect(() => {
-    if (!shut) untrack(() => peeker.hide())
+    if (!shut && side === 'left') untrack(() => edgePeek.hide())
   })
 
   let moving = $state(false)
@@ -567,7 +565,7 @@
 
     {#if side === 'left'}
       <div class="head" data-region="space">
-        {#if viewport.drawer || (!viewport.touch && sideToggles.inside)}
+        {#if viewport.drawer}
           <SidebarToggle unseen={swipeOpens()} />
         {/if}
 
@@ -774,9 +772,6 @@
           >
             <svg viewBox="0 0 13 13"><path d={THREADS_MARK} /></svg>
           </button>
-        {/if}
-        {#if side === 'right' && !viewport.touch && sideToggles.inside}
-          <SidebarToggle side="right" />
         {/if}
       </div>
     </div>
@@ -989,10 +984,6 @@
       0 0 0 1px var(--card-edge),
       var(--shadow-lg);
     transition: transform var(--dur-fast) var(--ease-out) -16ms;
-  }
-
-  .column.right.shut.floating aside {
-    inset-inline: auto var(--card-inset);
   }
 
   .column.shut.floating.peek aside {

@@ -571,16 +571,7 @@ export const ru: Dictionary = {
   'Actual size': 'Реальный размер',
   Accent: 'Акцент',
   'Tidy up': 'Упорядочить',
-  'Blur the app behind the tab overview': 'Размывать приложение за обзором вкладок',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Показывает размытое приложение за окнами вместо собственного фона Orden.',
   'Swipe in from the edge to see your notes.': 'Проведите от края, чтобы увидеть заметки.',
-  'Point at the edge of the window to see your notes.':
-    'Наведите указатель на край окна, чтобы увидеть заметки.',
-  Sidebars: 'Боковые панели',
-  'Sidebar toggles inside the sidebars': 'Переключатели боковых панелей внутри панелей',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Переключатель каждой боковой панели находится в ней, а правая панель выезжает у своего края окна.',
   'Show other tabs as icons': 'Показывать остальные вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Все вкладки, кроме передней, показывают только значок; при наведении появляется название.',
@@ -1012,7 +1003,6 @@ export const ru: Dictionary = {
   Minimize: 'Свернуть',
   Maximize: 'Развернуть',
   Restore: 'Восстановить',
-  'Show in Explorer’s New menu': 'Показывать в меню «Создать» Проводника',
   'choose an address': 'выберите адрес',
   'Reset to defaults': 'Сбросить настройки',
   Spelling: 'Орфография',
@@ -1831,8 +1821,6 @@ export const ru: Dictionary = {
   'Take it off': 'Убрать',
   'Put it on the bar': 'Добавить на панель',
   'Reset the bar': 'Сбросить панель',
-  'Pulling down': 'Потягивание вниз',
-  'A pull past the top runs': 'Потягивание за верх запускает',
   Nothing: 'Ничего',
 
   Keep: 'Оставить',
@@ -2599,16 +2587,12 @@ export const ru: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Сочетаниям клавиш какого приложения следует Orden; любое сочетание ниже всё равно можно изменить.',
   'Moves and edits in notes with Vim’s keys.': 'Перемещение и правка в заметках клавишами Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Что делает на телефоне протягивание заметки вниз дальше её начала.',
   'The OpenAI key the glasses ask their questions with.':
     'Ключ OpenAI, с которым очки задают свои вопросы.',
   'The model that answers what you ask on the glasses.':
     'Модель, которая отвечает на ваши вопросы в очках.',
   'How long the model thinks before it answers; longer is slower.':
     'Как долго модель думает перед ответом; дольше значит медленнее.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Добавляет документ Markdown в меню Создать, которое открывается правым щелчком в Проводнике.',
   'What happens when one note was changed on two devices before they synced.':
     'Что происходит, если заметку изменили на двух устройствах до их синхронизации.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2650,22 +2634,16 @@ export const ru: Dictionary = {
   'When your status is taken away again.': 'Когда ваш статус снова снимается.',
   'Silences chat notifications and shows the others you are busy.':
     'Отключает уведомления чатов и показывает другим, что вы заняты.',
-  'The colour the others see beside your name.': 'Цвет, который другие видят рядом с вашим именем.',
   'The others see you as offline even while you are here.':
     'Другие видят вас не в сети, даже когда вы здесь.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'Картинка за окном, одна для светлой темы и одна для тёмной; перетащите её, чтобы сдвинуть центр.',
   'The theme Orden is drawn in.': 'Тема, в которой отрисован Orden.',
   'Light, dark, or whichever the system is in.': 'Светлая, тёмная или та, что сейчас в системе.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Показывать закладки вверху списка файлов плитками или списком.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Показывает указывающую руку над кнопками, как на веб-страницах.',
   'Orden’s own title bar, or the window frame of your system.':
     'Собственная строка заголовка Orden или рамка окна вашей системы.',
-  'Square bottom edge': 'Прямой нижний край',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Открытое доходит до нижнего края окна с прямыми углами; при разделении это панели, которые его касаются.',
   'How large the text of notes is.': 'Размер текста заметок.',
   'How large all of Orden is drawn on this device.':
     'Насколько крупно отображается весь Orden на этом устройстве.',

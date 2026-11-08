@@ -546,16 +546,7 @@ export const vi: Dictionary = {
   'Actual size': 'Cỡ thật',
   Accent: 'Màu nhấn',
   'Tidy up': 'Sắp xếp gọn',
-  'Blur the app behind the tab overview': 'Làm mờ ứng dụng phía sau tổng quan thẻ',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Hiển thị ứng dụng bị làm mờ phía sau các cửa sổ, thay cho nền riêng của Orden.',
   'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
-  'Point at the edge of the window to see your notes.':
-    'Đưa con trỏ tới mép cửa sổ để xem ghi chú của bạn.',
-  Sidebars: 'Thanh bên',
-  'Sidebar toggles inside the sidebars': 'Nút bật tắt thanh bên nằm trong thanh bên',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Nút bật tắt của mỗi thanh bên nằm trong thanh đó, và thanh bên phải hiện ra ở mép đó của cửa sổ.',
   'Show other tabs as icons': 'Hiện các thẻ khác dưới dạng biểu tượng',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Mọi thẻ trừ thẻ ở phía trước chỉ hiện biểu tượng; trỏ vào một thẻ sẽ thấy tên của nó.',
@@ -965,7 +956,6 @@ export const vi: Dictionary = {
   Minimize: 'Thu nhỏ cửa sổ',
   Maximize: 'Phóng to cửa sổ',
   Restore: 'Khôi phục',
-  'Show in Explorer’s New menu': 'Hiện trong trình đơn New của Explorer',
   'choose an address': 'chọn một địa chỉ',
   'Reset to defaults': 'Đặt lại mặc định',
   Spelling: 'Chính tả',
@@ -1734,8 +1724,6 @@ export const vi: Dictionary = {
   'Take it off': 'Bỏ ra',
   'Put it on the bar': 'Đặt lên thanh',
   'Reset the bar': 'Đặt lại thanh',
-  'Pulling down': 'Kéo xuống',
-  'A pull past the top runs': 'Kéo quá đầu trang sẽ chạy',
   Nothing: 'Không có gì',
 
   Keep: 'Giữ',
@@ -2479,16 +2467,12 @@ export const vi: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden theo phím của ứng dụng nào; mọi phím bên dưới vẫn đổi được.',
   'Moves and edits in notes with Vim’s keys.': 'Di chuyển và sửa trong ghi chú bằng phím của Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Kéo một ghi chú xuống quá đầu trang sẽ làm gì trên điện thoại.',
   'The OpenAI key the glasses ask their questions with.':
     'Khoá OpenAI mà kính dùng để đặt câu hỏi.',
   'The model that answers what you ask on the glasses.':
     'Mô hình trả lời những gì bạn hỏi trên kính.',
   'How long the model thinks before it answers; longer is slower.':
     'Mô hình suy nghĩ bao lâu trước khi trả lời; càng lâu càng chậm.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Thêm tài liệu Markdown vào menu Mới khi bạn nhấp chuột phải trong File Explorer.',
   'What happens when one note was changed on two devices before they synced.':
     'Điều xảy ra khi một ghi chú bị sửa trên hai thiết bị trước khi chúng đồng bộ.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2529,22 +2513,16 @@ export const vi: Dictionary = {
   'When your status is taken away again.': 'Khi nào trạng thái của bạn được gỡ bỏ.',
   'Silences chat notifications and shows the others you are busy.':
     'Tắt thông báo trò chuyện và cho người khác thấy bạn đang bận.',
-  'The colour the others see beside your name.': 'Màu người khác thấy bên cạnh tên bạn.',
   'The others see you as offline even while you are here.':
     'Người khác thấy bạn ngoại tuyến ngay cả khi bạn đang ở đây.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     'Ảnh phía sau cửa sổ, một cho chế độ sáng và một cho chế độ tối; kéo để dời tâm ảnh.',
   'The theme Orden is drawn in.': 'Chủ đề dùng để vẽ Orden.',
   'Light, dark, or whichever the system is in.': 'Sáng, tối hoặc theo chế độ của hệ thống.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Dấu trang ở đầu danh sách tệp hiện dạng ô hay dạng danh sách.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Hiện bàn tay chỉ trên nút, như các trang web.',
   'Orden’s own title bar, or the window frame of your system.':
     'Thanh tiêu đề riêng của Orden hoặc khung cửa sổ của hệ thống.',
-  'Square bottom edge': 'Cạnh dưới vuông',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Nội dung đang mở chạm tới đáy cửa sổ với góc vuông; khi chia, các ngăn chạm đáy.',
   'How large the text of notes is.': 'Cỡ chữ của ghi chú.',
   'How large all of Orden is drawn on this device.':
     'Kích thước hiển thị toàn bộ Orden trên thiết bị này.',

@@ -120,8 +120,6 @@ interface Saved {
   alwaysOnTop: boolean
   frame: Frame
   hand: boolean
-  overviewBlur: boolean
-  flushBottom: boolean
   fonts: Record<FontPlace, string>
   closeBrackets: boolean
   ligatures: LigatureScope
@@ -230,8 +228,6 @@ export const DEFAULTS = {
   alwaysOnTop: false,
   frame: 'orden' as Frame,
   hand: false,
-  overviewBlur: false,
-  flushBottom: false,
   fonts: { ui: '', content: '', mono: '' } as Record<FontPlace, string>,
   closeBrackets: true,
   ligatures: 'off' as LigatureScope,
@@ -303,8 +299,6 @@ class Modes {
 
   frame = $state<Frame>(DEFAULTS.frame)
   hand = $state(DEFAULTS.hand)
-  overviewBlur = $state(DEFAULTS.overviewBlur)
-  flushBottom = $state(DEFAULTS.flushBottom)
   fonts = $state<Record<FontPlace, string>>({ ...DEFAULTS.fonts })
   closeBrackets = $state(DEFAULTS.closeBrackets)
   ligatures = $state<LigatureScope>(DEFAULTS.ligatures)
@@ -374,6 +368,8 @@ class Modes {
           : [])
       stale ||= 'spellLanguage' in saved
       stale ||= 'spellWords' in saved
+      stale ||= 'overviewBlur' in saved
+      stale ||= 'flushBottom' in saved
       this.ligatures = ligatureScope(saved.ligatures) ?? DEFAULTS.ligatures
       this.conflicts = conflictRule(saved.conflicts) ?? DEFAULTS.conflicts
       this.keepVersions = keepingOf(saved.keepVersions) ?? DEFAULTS.keepVersions
@@ -602,16 +598,6 @@ class Modes {
     if (first && this.quietMarks === on) this.toggleQuietMarks()
     this.persist()
     this.share({ developer: on })
-  }
-
-  toggleOverviewBlur() {
-    this.overviewBlur = !this.overviewBlur
-    this.persist()
-  }
-
-  toggleFlushBottom() {
-    this.flushBottom = !this.flushBottom
-    this.persist()
   }
 
   toggleHand() {
@@ -1254,8 +1240,6 @@ class Modes {
       pagesPaper: this.pagesPaper,
       frame: this.frame,
       hand: this.hand,
-      overviewBlur: this.overviewBlur,
-      flushBottom: this.flushBottom,
       fonts: this.fonts,
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,

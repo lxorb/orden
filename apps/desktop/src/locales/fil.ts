@@ -553,17 +553,8 @@ export const fil: Dictionary = {
   'Actual size': 'Tunay na laki',
   Accent: 'Kulay tampok',
   'Tidy up': 'Ayusin',
-  'Blur the app behind the tab overview': 'I-blur ang app sa likod ng overview ng mga tab',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Ipinapakita ang app na naka-blur sa likod ng mga window, sa halip na ang sariling background ng Orden.',
   'Swipe in from the edge to see your notes.':
     'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
-  'Point at the edge of the window to see your notes.':
-    'Itutok ang pointer sa gilid ng window para makita ang iyong mga tala.',
-  Sidebars: 'Mga sidebar',
-  'Sidebar toggles inside the sidebars': 'Mga toggle ng sidebar sa loob ng mga sidebar',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    'Nasa loob ng bawat sidebar ang toggle nito, at lumalabas ang kanang sidebar sa gilid nito ng window.',
   'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Bawat tab maliban sa nasa harap ay icon lang ang ipinapakita; kapag tinuro ang isa, lalabas ang pangalan nito.',
@@ -985,7 +976,6 @@ export const fil: Dictionary = {
   Minimize: 'Paliitin',
   Maximize: 'Palakihin',
   Restore: 'Ibalik',
-  'Show in Explorer’s New menu': 'Ipakita sa New menu ng Explorer',
   'choose an address': 'pumili ng address',
   'Reset to defaults': 'Ibalik sa orihinal',
   Spelling: 'Ispeling',
@@ -1791,8 +1781,6 @@ export const fil: Dictionary = {
   'Take it off': 'Alisin',
   'Put it on the bar': 'Ilagay sa bar',
   'Reset the bar': 'I-reset ang bar',
-  'Pulling down': 'Paghila pababa',
-  'A pull past the top runs': 'Ang hila lampas sa itaas ay magpapatakbo ng',
   Nothing: 'Wala',
 
   Keep: 'Itago',
@@ -2558,16 +2546,12 @@ export const fil: Dictionary = {
     'Kung aling app ang sinusundan ng mga key ng Orden; mababago pa rin ang alinmang key sa ibaba.',
   'Moves and edits in notes with Vim’s keys.':
     'Gumalaw at mag-edit sa mga tala gamit ang mga key ng Vim.',
-  'What pulling a note down past its top does on a phone.':
-    'Kung ano ang nangyayari kapag hinila pababa ang isang tala lampas sa itaas nito sa telepono.',
   'The OpenAI key the glasses ask their questions with.':
     'Ang OpenAI key na ginagamit ng salamin sa pagtatanong.',
   'The model that answers what you ask on the glasses.':
     'Ang modelong sumasagot sa itinatanong mo sa salamin.',
   'How long the model thinks before it answers; longer is slower.':
     'Gaano katagal mag-isip ang modelo bago sumagot; mas matagal, mas mabagal.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    'Nagdaragdag ng Markdown na dokumento sa New menu na lumalabas kapag nag-right-click ka sa File Explorer.',
   'What happens when one note was changed on two devices before they synced.':
     'Kung ano ang nangyayari kapag binago ang isang tala sa dalawang device bago sila nag-sync.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2610,8 +2594,6 @@ export const fil: Dictionary = {
   'When your status is taken away again.': 'Kung kailan aalisin muli ang iyong katayuan.',
   'Silences chat notifications and shows the others you are busy.':
     'Pinatatahimik ang mga abiso ng chat at ipinapakita sa iba na abala ka.',
-  'The colour the others see beside your name.':
-    'Ang kulay na nakikita ng iba sa tabi ng iyong pangalan.',
   'The others see you as offline even while you are here.':
     'Nakikita ka ng iba na offline kahit naririto ka.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
@@ -2619,15 +2601,10 @@ export const fil: Dictionary = {
   'The theme Orden is drawn in.': 'Ang temang ginagamit sa pagguhit ng Orden.',
   'Light, dark, or whichever the system is in.':
     'Maliwanag, madilim, o kung alin ang gamit ng sistema.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    'Kung tile o listahan ang anyo ng mga bookmark sa itaas ng listahan ng file.',
   'Shows a pointing hand over buttons, as web pages do.':
     'Nagpapakita ng nakaturong kamay sa ibabaw ng mga button, gaya ng sa mga web page.',
   'Orden’s own title bar, or the window frame of your system.':
     'Ang sariling title bar ng Orden, o ang kuwadro ng bintana ng iyong sistema.',
-  'Square bottom edge': 'Kuwadradong ibabang gilid',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    'Umaabot sa ibaba ng window ang nakabukas nang may kuwadradong sulok; sa split, ang mga pane na dumidikit dito.',
   'How large the text of notes is.': 'Gaano kalaki ang teksto ng mga tala.',
   'How large all of Orden is drawn on this device.':
     'Kung gaano kalaki ipinapakita ang buong Orden sa device na ito.',

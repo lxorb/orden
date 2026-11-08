@@ -180,12 +180,6 @@ export function topRow(frame: Frame): Frame {
   return { ...frame, sides: [topRow(frame.sides[0]), topRow(frame.sides[1])] }
 }
 
-export function bottomRow(frame: Frame): Frame {
-  if (frame.kind === 'pane') return frame
-  if (frame.along === 'column') return bottomRow(frame.sides[1])
-  return { ...frame, sides: [bottomRow(frame.sides[0]), bottomRow(frame.sides[1])] }
-}
-
 export function tracks(split: Split): string {
   return `minmax(0, ${split.fraction.toFixed(5)}fr) var(--card-gap) minmax(0, ${(1 - split.fraction).toFixed(5)}fr)`
 }

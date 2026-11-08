@@ -545,16 +545,7 @@ export const ko: Dictionary = {
   'Actual size': '실제 크기',
   Accent: '강조색',
   'Tidy up': '정리',
-  'Blur the app behind the tab overview': '탭 개요 뒤의 앱 흐리게 하기',
-  'Shows the app blurred behind the windows, instead of Orden’s own background.':
-    'Orden 자체 배경 대신 창 뒤에 앱을 흐리게 표시합니다.',
   'Swipe in from the edge to see your notes.': '가장자리에서 안쪽으로 밀어 노트를 보세요.',
-  'Point at the edge of the window to see your notes.':
-    '포인터를 창 가장자리로 옮겨 노트를 보세요.',
-  Sidebars: '사이드바',
-  'Sidebar toggles inside the sidebars': '사이드바 토글을 사이드바 안에',
-  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
-    '각 사이드바의 토글이 사이드바 안에 있고, 오른쪽 사이드바는 창의 해당 가장자리에서 나옵니다.',
   'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '앞에 있는 탭을 빼고 모든 탭이 아이콘만 보여 주며, 가리키면 이름이 나타납니다.',
@@ -963,7 +954,6 @@ export const ko: Dictionary = {
   Minimize: '최소화',
   Maximize: '최대화',
   Restore: '복원',
-  'Show in Explorer’s New menu': '탐색기의 새로 만들기 메뉴에 표시',
   'choose an address': '주소를 고르세요',
   'Reset to defaults': '기본값으로 되돌리기',
   Spelling: '철자',
@@ -1727,8 +1717,6 @@ export const ko: Dictionary = {
   'Take it off': '빼기',
   'Put it on the bar': '막대에 넣기',
   'Reset the bar': '막대 초기화',
-  'Pulling down': '아래로 당기기',
-  'A pull past the top runs': '맨 위에서 더 당기면 실행',
   Nothing: '없음',
 
   Keep: '남기기',
@@ -2472,15 +2460,11 @@ export const ko: Dictionary = {
   'Which app’s keys Orden follows; any key below can still be changed.':
     'Orden이 따르는 앱의 키 배치이며, 아래의 키는 언제든 바꿀 수 있습니다.',
   'Moves and edits in notes with Vim’s keys.': 'Vim의 키로 노트에서 이동하고 편집합니다.',
-  'What pulling a note down past its top does on a phone.':
-    '휴대폰에서 노트를 맨 위보다 더 아래로 당겼을 때의 동작입니다.',
   'The OpenAI key the glasses ask their questions with.':
     '글래스가 질문할 때 쓰는 OpenAI 키입니다.',
   'The model that answers what you ask on the glasses.': '글래스에서 묻는 것에 답하는 모델입니다.',
   'How long the model thinks before it answers; longer is slower.':
     '모델이 답하기 전에 생각하는 시간이며, 길수록 느립니다.',
-  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
-    '파일 탐색기에서 마우스 오른쪽 버튼을 누르면 나오는 ‘새로 만들기’ 메뉴에 Markdown 문서를 추가합니다.',
   'What happens when one note was changed on two devices before they synced.':
     '동기화 전에 한 노트가 두 기기에서 바뀌었을 때 어떻게 할지 정합니다.',
   'How far back the account keeps earlier versions of your notes.':
@@ -2519,22 +2503,16 @@ export const ko: Dictionary = {
   'When your status is taken away again.': '상태가 다시 해제되는 때입니다.',
   'Silences chat notifications and shows the others you are busy.':
     '채팅 알림을 끄고 다른 사람에게 바쁘다고 보여 줍니다.',
-  'The colour the others see beside your name.': '다른 사람에게 이름 옆에 보이는 색입니다.',
   'The others see you as offline even while you are here.':
     '여기 있는 동안에도 다른 사람에게 오프라인으로 보입니다.',
   'The picture behind the window, one for light and one for dark; drag it to move its centre.':
     '창 뒤의 그림으로, 밝은 모드용과 어두운 모드용이 있고 끌어서 중심을 옮길 수 있습니다.',
   'The theme Orden is drawn in.': 'Orden을 그리는 테마입니다.',
   'Light, dark, or whichever the system is in.': '밝게, 어둡게, 또는 시스템을 따릅니다.',
-  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
-    '파일 목록 맨 위의 북마크를 타일로 보일지 목록으로 보일지 정합니다.',
   'Shows a pointing hand over buttons, as web pages do.':
     '웹 페이지처럼 버튼 위에서 손가락 포인터를 보여 줍니다.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden 자체의 제목 표시줄이나 시스템의 창 프레임 중에서 고릅니다.',
-  'Square bottom edge': '아래쪽 각진 가장자리',
-  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
-    '열린 내용이 각진 모서리로 창 아래쪽 끝까지 닿습니다. 분할하면 아래쪽에 닿는 패널만 그렇습니다.',
   'How large the text of notes is.': '노트 글자의 크기입니다.',
   'How large all of Orden is drawn on this device.':
     '이 기기에서 Orden 전체가 표시되는 크기입니다.',

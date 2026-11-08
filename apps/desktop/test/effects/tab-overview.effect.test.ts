@@ -286,8 +286,7 @@ test('a pane holding a web page moves as its window, its picture in its hole and
   expect(pages.still).toBe(false)
 })
 
-test('the canvas is the window’s own ground, its sidebars sliding away, and the app blurred only when asked for', async () => {
-  const { modes } = await import('../../src/lib/modes.svelte')
+test('the canvas is the window’s own ground, its sidebars sliding away, and the app never blurred', async () => {
   const bar = document.createElement('header')
   bar.dataset.chrome = 'top'
   bar.innerHTML = '<button>Back</button>'
@@ -311,14 +310,7 @@ test('the canvas is the window’s own ground, its sidebars sliding away, and th
   expect(document.documentElement.dataset.overview).toBe(undefined)
   expect(side.style.getPropertyValue('--overview-slide')).toBe('')
   expect(button?.style.getPropertyValue('--overview-open')).toBe('')
-  modes.toggleOverviewBlur()
-  try {
-    await opened()
-    expect(document.querySelector('.ground')?.classList.contains('is-blurred')).toBe(true)
-    expect(document.documentElement.dataset.overview).toBe('blur')
-  } finally {
-    modes.toggleOverviewBlur()
-  }
+  expect(document.querySelector('.is-blurred')).toBe(null)
 })
 
 test('every page stands still from before the first frame to after the last, and the canvas is no layer a page has to find', async () => {
