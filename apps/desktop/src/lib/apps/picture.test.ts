@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { AGAIN_AFTER, Picture, type PeerWorld, SHOWN_WITHIN } from './picture.svelte'
+import {
+  AGAIN_AFTER,
+  Picture,
+  type PeerWorld,
+  QUIET_CHECK,
+  QUIET_FOR,
+  SHOWN_WITHIN,
+} from './picture.svelte'
 
 const tick = () => new Promise((settle) => setTimeout(settle, 0))
 
@@ -8,6 +15,7 @@ class FakePeer {
   localDescription: { sdp: string } | null = null
   remote: string | null = null
   closed = false
+  bytes = 0
   wants: string[] = []
   ontrack: ((event: { streams: unknown[]; track: unknown }) => void) | null = null
   onicecandidate: ((event: { candidate: unknown }) => void) | null = null
@@ -45,7 +53,18 @@ class FakePeer {
   }
   getStats() {
     return Promise.resolve(
-      new Map([['v', { id: 'v', type: 'inbound-rtp', kind: 'video', frameWidth: 640 }]]),
+      new Map([
+        [
+          'v',
+          {
+            id: 'v',
+            type: 'inbound-rtp',
+            kind: 'video',
+            frameWidth: 640,
+            bytesReceived: this.bytes,
+          },
+        ],
+      ]),
     )
   }
   becomes(state: RTCPeerConnectionState) {
@@ -161,6 +180,34 @@ describe('an application’s picture', () => {
     expect(here.picture.status).toEqual({ is: 'lost' })
     here.picture.want(false)
     here.wait(AGAIN_AFTER)
+    expect(here.peers).toHaveLength(2)
+  })
+
+  test('a picture whose stream goes quiet while connected is lost and asked for again', async () => {
+    const here = world()
+    here.picture.want(true)
+    await tick()
+    here.picture.heard('{"answer":"v=0 answer"}')
+    const peer = here.peers[0]
+    peer?.becomes('connected')
+    for (let at = 0; at < QUIET_FOR * 3; at += QUIET_CHECK) {
+      if (peer) peer.bytes += 1000
+      here.clock.now += QUIET_CHECK
+      here.wait(QUIET_CHECK)
+      await tick()
+    }
+    expect(here.picture.status).toEqual({ is: 'showing' })
+
+    peer?.becomes('disconnected')
+    for (let at = 0; at <= QUIET_FOR; at += QUIET_CHECK) {
+      here.clock.now += QUIET_CHECK
+      here.wait(QUIET_CHECK)
+      await tick()
+    }
+    expect(here.picture.status).toEqual({ is: 'lost' })
+    expect(peer?.closed).toBe(true)
+    here.wait(AGAIN_AFTER)
+    await tick()
     expect(here.peers).toHaveLength(2)
   })
 
