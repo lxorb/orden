@@ -320,6 +320,15 @@
     return on
   })
 
+  const shownHit = $derived.by(() => {
+    const was = looking
+    if (!was) return null
+    const kept = paperHits.some(
+      (hit) => hit.paper === was.paper && hit.at === was.at && hit.length === was.length,
+    )
+    return kept ? was : null
+  })
+
   function hitId(hit: PaperHit): string {
     return `paper:${hit.paper}:${hit.at}`
   }
@@ -369,6 +378,12 @@
       x: box.x + box.width / 2,
       y: box.y + box.height / 2,
     })
+  }
+
+  function seek(said: string) {
+    if (said === term) return
+    term = said
+    looking = null
   }
 
   function stopFinding() {
@@ -1371,8 +1386,8 @@
         {still}
         selectable={tools.which === 'select'}
         sought={page.file === backing && page.page ? (soughtOn.get(page.page) ?? NO_HITS) : NO_HITS}
-        current={looking && looking.paper === page.page && page.file === backing
-          ? looking.at
+        current={shownHit && shownHit.paper === page.page && page.file === backing
+          ? shownHit.at
           : null}
         onfound={foundAt}
         marks={page.file === backing && page.page ? (marksOn.get(page.page) ?? NO_MARKS) : NO_MARKS}
@@ -1447,7 +1462,7 @@
       {canvas}
       hits={found}
       label={t('Find')}
-      onterm={(said: string) => (term = said)}
+      onterm={seek}
       onpick={pickFound}
       onclose={stopFinding}
     />
