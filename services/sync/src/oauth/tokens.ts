@@ -6,6 +6,9 @@ import { failure, GRANTS, resourceMatches, resourceUrl, SCOPES, textFields } fro
 
 const ACCESS_TTL = 24 * 60 * 60 * 1000
 
+export const MOST_CLIENTS_AN_ACCOUNT = 20
+export const MOST_CONNECTIONS = 200
+
 export const tokens = new Hono<{ Bindings: Env }>()
 
 async function tokenBody(
@@ -60,23 +63,13 @@ interface Grant {
   read_only: number
 }
 
-async function issue(env: Env, grant: Grant, replacing?: { refresh_hash: string }) {
+async function issue(grant: Grant) {
   const access = `orden_${randomToken()}`
   const refresh = `ordenr_${randomToken()}`
   const hashes = {
     access: await sha256(access),
     refresh: await sha256(refresh),
     expiresAt: now() + ACCESS_TTL,
-  }
-
-  if (replacing) {
-    await env.DB.prepare(
-      `update oauth_grants
-          set access_hash = ?, access_expires_at = ?, refresh_hash = ?, previous_refresh_hash = ?
-        where id = ?`,
-    )
-      .bind(hashes.access, hashes.expiresAt, hashes.refresh, replacing.refresh_hash, grant.id)
-      .run()
   }
 
   const reply = {
@@ -141,12 +134,15 @@ tokens.post('/token', async (context) => {
     }
 
     const grant: Grant = { id: newId(), client_id: client.id, read_only: code.read_only }
-    const issued = await issue(context.env, grant)
+    const issued = await issue(grant)
 
-    await context.env.DB.prepare(
+    const added = await context.env.DB.prepare(
       `insert into oauth_grants
          (id, user_id, client_id, client_name, read_only, access_hash, access_expires_at, refresh_hash, created_at)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       select ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9
+        where (select count(*) from oauth_grants where user_id = ?2) < ?10
+          and ((select count(distinct client_id) from oauth_grants where user_id = ?2) < ?11
+               or exists (select 1 from oauth_grants where user_id = ?2 and client_id = ?3))`,
     )
       .bind(
         grant.id,
@@ -158,8 +154,16 @@ tokens.post('/token', async (context) => {
         issued.hashes.expiresAt,
         issued.hashes.refresh,
         now(),
+        MOST_CONNECTIONS,
+        MOST_CLIENTS_AN_ACCOUNT,
       )
       .run()
+    if (!added.meta.changes) {
+      return context.json(
+        failure('invalid_grant', 'that is as many apps as one account connects'),
+        400,
+      )
+    }
 
     return context.json(issued.reply, 200, { 'cache-control': 'no-store' })
   }
@@ -186,7 +190,18 @@ tokens.post('/token', async (context) => {
       return context.json(failure('invalid_grant', 'the refresh token is not valid'), 400)
     }
 
-    const issued = await issue(context.env, grant, { refresh_hash: hash })
+    const issued = await issue(grant)
+    const rotated = await context.env.DB.prepare(
+      `update oauth_grants
+          set access_hash = ?1, access_expires_at = ?2, refresh_hash = ?3, previous_refresh_hash = ?4
+        where id = ?5 and refresh_hash = ?4`,
+    )
+      .bind(issued.hashes.access, issued.hashes.expiresAt, issued.hashes.refresh, hash, grant.id)
+      .run()
+    if (!rotated.meta.changes) {
+      await context.env.DB.prepare('delete from oauth_grants where id = ?').bind(grant.id).run()
+      return context.json(failure('invalid_grant', 'that refresh token was already used'), 401)
+    }
     return context.json(issued.reply, 200, { 'cache-control': 'no-store' })
   }
 

@@ -21,11 +21,9 @@ import {
   wantsWrite,
 } from './protocol'
 import { sameRedirect } from './redirects'
+import { MOST_CLIENTS_AN_ACCOUNT, MOST_CONNECTIONS } from './tokens'
 
 const CODE_TTL = 10 * 60 * 1000
-
-const MOST_CLIENTS_AN_ACCOUNT = 20
-const MOST_CONNECTIONS = 200
 
 export const authorize = new Hono<{ Bindings: Env }>()
 
