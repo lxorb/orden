@@ -21,6 +21,7 @@ import { share } from './share'
 import {
   addSpace,
   atLeast,
+  TOO_MANY_SPACES,
   itemsSharedIn,
   notesAmong,
   onceSharedAmong,
@@ -127,6 +128,7 @@ spaces.post('/', async (context) => {
   if (!label) return context.json({ error: 'give the space a name' }, 400)
 
   const space = await addSpace(context.env, user.id, label)
+  if (!space) return context.json({ error: TOO_MANY_SPACES }, 409)
 
   return context.json({ space: presentSpace(space, context.env) }, 201)
 })

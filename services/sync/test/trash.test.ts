@@ -233,6 +233,56 @@ describe('restoring a space', () => {
   })
 })
 
+describe('how many spaces one account keeps', () => {
+  function fill(upTo: number) {
+    const owner = env.db.prepare('select user_id from spaces where id = ?').get(space) as {
+      user_id: string
+    }
+    const insert = env.db.prepare(
+      `insert into spaces (id, user_id, name, position, created_at, updated_at)
+       values (?1, ?2, ?1, 0, 0, 0)`,
+    )
+    const held = (
+      env.db
+        .prepare('select count(*) as n from spaces where user_id = ? and deleted = 0')
+        .get(owner.user_id) as { n: number }
+    ).n
+    for (let at = held; at < upTo; at++) insert.run(`filler-${at}`, owner.user_id)
+  }
+
+  test('stops at as many as the rail lists, so a new one never drops out of sight', async () => {
+    fill(500)
+    const refused = await call(env, '/v1/spaces', { token, body: { name: 'One more' } })
+    expect(refused.status).toBe(409)
+
+    const listed = await call(env, '/v1/spaces', { token })
+    expect(listed.json.spaces).toHaveLength(500)
+  })
+
+  test('holds when another space is made at the same moment', async () => {
+    fill(499)
+    env.justBefore(/insert into spaces/, () =>
+      env.db
+        .prepare(
+          `insert into spaces (id, user_id, name, position, created_at, updated_at)
+           select 'quicker', user_id, 'Quicker', 0, 0, 0 from spaces where id = ?`,
+        )
+        .run(space),
+    )
+
+    expect((await call(env, '/v1/spaces', { token, body: { name: 'One more' } })).status).toBe(409)
+  })
+
+  test('counts a space brought back from the trash', async () => {
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+    fill(500)
+
+    const restored = await call(env, `/v1/trash/spaces/${space}/restore`, { method: 'POST', token })
+    expect(restored.status).toBe(409)
+    expect(spaceRow(space)!.deleted).toBe(1)
+  })
+})
+
 describe('purging', () => {
   test('a note now: content gone, tombstone kept, no longer listed', async () => {
     const id = await addNote('Idea.md', '# Idea')
