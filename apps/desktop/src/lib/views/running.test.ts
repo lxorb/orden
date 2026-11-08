@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-const { written, template, moved, plan, before, writing, trusted, ran } = vi.hoisted(() => ({
+const { written, template, moved, plan, before, writing, trusted, ran, shut } = vi.hoisted(() => ({
+  shut: new Set<string>(),
   trusted: { yes: true },
   ran: [] as { base: { guarded?: boolean } }[][],
   writing: { pairs: [] as unknown[], changed: true },
@@ -76,6 +77,9 @@ vi.mock('../tauri', async (importOriginal) => ({
 vi.mock('../workspace/write-file', () => ({
   writeFile: async (path: string, content: string) => void written.set(path, content),
 }))
+vi.mock('../protect/protection.svelte', () => ({
+  protection: { locked: (path: string) => [...shut].some((one) => path.startsWith(one)) },
+}))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true, trustsHtmlAt: () => trusted.yes }))
 
@@ -103,6 +107,25 @@ describe('a base somebody else could have written', () => {
       trusted.yes = true
     }
     expect(ran.at(-1)?.map((one) => one.base.guarded)).toEqual([true])
+  })
+})
+
+describe('a protected base while it is shut', () => {
+  test('runs nothing, and runs again once it is unlocked', async () => {
+    plan.folder = ''
+    ran.length = 0
+    shut.add('/s/Shared/Tasks.base')
+    try {
+      await readHeld('/s/Shared/Tasks.base')
+      heard('Shared', 'Inbox/a.md', [])
+      await new Promise((done) => setTimeout(done, 150))
+      expect(ran.at(-1) ?? []).toEqual([])
+    } finally {
+      shut.clear()
+    }
+    heard('Shared', 'Inbox/a.md', [])
+    await new Promise((done) => setTimeout(done, 150))
+    expect(ran.at(-1)).toHaveLength(1)
   })
 })
 
@@ -166,6 +189,18 @@ describe("a repeating template's note", () => {
     await repeatTemplates()
 
     expect(written.has('/s/Shared/Journal/Daily 2026-10-24.md')).toBe(true)
+  })
+
+  test('is not made, nor the template written, while the template is behind a lock', async () => {
+    template.folder = 'Journal'
+    shut.add('/s/Shared/Templates/')
+    try {
+      await repeatTemplates()
+    } finally {
+      shut.clear()
+    }
+
+    expect([...written.keys()]).toEqual([])
   })
 
   test('is not made where that folder climbs out of the space', async () => {
