@@ -3845,4 +3845,8 @@ export const ml: Dictionary = {
   'Include pictures': 'ചിത്രങ്ങൾ ഉൾപ്പെടുത്തുക',
   'Without styles': 'സ്റ്റൈലുകളില്ലാതെ',
   'Turn {name} on or off': '{name} ഓണാക്കുക അല്ലെങ്കിൽ ഓഫാക്കുക',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'നിങ്ങൾ ഉപയോഗിക്കുന്നവയുടെ ദൈനംദിന എണ്ണം ഒരു ക്രമരഹിത ID-യിൽ അയയ്ക്കുന്നു; കുറിപ്പുകൾ, പേരുകൾ, പാതകൾ, നിങ്ങൾ ടൈപ്പ് ചെയ്യുന്നത് ഒരിക്കലുമില്ല.',
+  'Share anonymous usage data': 'അജ്ഞാത ഉപയോഗ ഡാറ്റ പങ്കിടുക',
+  'Also share anonymous usage data': 'അജ്ഞാത ഉപയോഗ ഡാറ്റയും പങ്കിടുക',
 }

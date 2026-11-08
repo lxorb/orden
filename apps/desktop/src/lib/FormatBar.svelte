@@ -117,7 +117,11 @@
   }
 
   function act(id: string) {
-    runEntry(id, context?.() ?? { view, palette: () => undefined, fullscreen: () => undefined })
+    runEntry(
+      id,
+      context?.() ?? { view, palette: () => undefined, fullscreen: () => undefined },
+      'button',
+    )
   }
 
   const HIGHLIGHT = 'format.highlight'

@@ -4,7 +4,7 @@ import { objectBody } from './body'
 import { crashReportOf, signatureOf, titleOf } from './crash-shape'
 import { byteLength, equals, now, sha256 } from './crypto'
 import { machineOf, within } from './limits'
-import { NOT_FOUND, TRY_IN_AN_HOUR } from './refused'
+import { NOT_FOUND, NOT_JSON, TRY_IN_AN_HOUR } from './refused'
 import type { Env, Variables } from './types'
 
 const MOST_BYTES = 128 * 1024
@@ -61,7 +61,7 @@ crashes.post('/', async (context) => {
   try {
     sent = JSON.parse(raw)
   } catch {
-    return context.json({ error: 'send a JSON object' }, 400)
+    return context.json({ error: NOT_JSON }, 400)
   }
 
   const report = crashReportOf(sent)

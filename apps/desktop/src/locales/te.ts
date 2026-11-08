@@ -3808,4 +3808,8 @@ export const te: Dictionary = {
   'Include pictures': 'చిత్రాలను చేర్చు',
   'Without styles': 'స్టైల్‌లు లేకుండా',
   'Turn {name} on or off': '{name} ఆన్ లేదా ఆఫ్ చేయండి',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'మీరు ఉపయోగించేవాటి రోజువారీ లెక్కలను యాదృచ్ఛిక ID కింద పంపుతుంది; నోట్స్, పేర్లు, మార్గాలు లేదా మీరు టైప్ చేసేది ఎప్పటికీ కాదు.',
+  'Share anonymous usage data': 'అనామక వినియోగ డేటాను పంచుకో',
+  'Also share anonymous usage data': 'అనామక వినియోగ డేటాను కూడా పంచుకో',
 }

@@ -3701,4 +3701,8 @@ export const ja: Dictionary = {
   'Include pictures': '画像を含める',
   'Without styles': 'スタイルなし',
   'Turn {name} on or off': '{name} のオン/オフ',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    '使った機能の 1 日ごとの回数をランダムな ID で送信し、ノート、名前、パス、入力内容は送りません。',
+  'Share anonymous usage data': '匿名の利用データを共有',
+  'Also share anonymous usage data': '匿名の利用データも共有',
 }

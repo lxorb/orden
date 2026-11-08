@@ -11,6 +11,7 @@
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
   import { walked } from './walk'
+  import { ran } from './usage/tally'
   import { dur, fade, fly, scale } from './motion'
 
   let element = $state<HTMLDivElement>()
@@ -119,6 +120,7 @@
 
     if (item.keep) event.stopPropagation()
     else menu.hide()
+    ran(item.command, 'menu')
     item.run()
   }
 

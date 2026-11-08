@@ -4,6 +4,7 @@ import { howFor, linkAsk, tabAsk } from '../new-tab'
 import type { Section } from '../settings.svelte'
 import type { NoteToMake } from './new-note'
 import type { Row } from './rows'
+import { ran } from '../usage/tally'
 
 export interface Hands {
   openEntry(path: string, how: OpenHow): void
@@ -39,6 +40,7 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
   switch (row.kind) {
     case 'command':
       if (row.command.disabled) return 'nothing'
+      ran(row.command.id, 'palette')
       row.command.run()
       return 'close'
     case 'note':

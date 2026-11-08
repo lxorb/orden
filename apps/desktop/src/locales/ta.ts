@@ -3860,4 +3860,8 @@ export const ta: Dictionary = {
   'Include pictures': 'படங்களைச் சேர்',
   'Without styles': 'பாணிகள் இல்லாமல்',
   'Turn {name} on or off': '{name} இயக்கு அல்லது அணை',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'நீங்கள் பயன்படுத்துவதன் தினசரி எண்ணிக்கைகளை சீரற்ற ID-இன் கீழ் அனுப்புகிறது; குறிப்புகள், பெயர்கள், பாதைகள் அல்லது நீங்கள் தட்டச்சு செய்வது ஒருபோதும் இல்லை.',
+  'Share anonymous usage data': 'அநாமதேயப் பயன்பாட்டுத் தரவைப் பகிர்',
+  'Also share anonymous usage data': 'அநாமதேயப் பயன்பாட்டுத் தரவையும் பகிர்',
 }

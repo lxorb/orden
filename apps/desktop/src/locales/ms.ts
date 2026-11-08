@@ -3726,4 +3726,8 @@ export const ms: Dictionary = {
   'Include pictures': 'Sertakan gambar',
   'Without styles': 'Tanpa gaya',
   'Turn {name} on or off': 'Hidupkan atau matikan {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Menghantar kiraan harian apa yang anda gunakan di bawah ID rawak; tidak sekali-kali nota, nama, laluan atau apa yang anda taip.',
+  'Share anonymous usage data': 'Kongsi data penggunaan tanpa nama',
+  'Also share anonymous usage data': 'Kongsi juga data penggunaan tanpa nama',
 }

@@ -3724,4 +3724,8 @@ export const my: Dictionary = {
   'Include pictures': 'ပုံများ ထည့်ပါ',
   'Without styles': 'အပြင်အဆင်မပါ',
   'Turn {name} on or off': '{name} ကို ဖွင့် သို့မဟုတ် ပိတ်ပါ',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'သင်သုံးသည်များ၏ နေ့စဉ်အရေအတွက်ကို ကျပန်း ID အောက်တွင် ပို့သည်၊ မှတ်စု၊ အမည်၊ လမ်းကြောင်း သို့မဟုတ် သင်ရိုက်သည့်အရာကို ဘယ်တော့မှ မပို့ပါ။',
+  'Share anonymous usage data': 'အမည်မဖော် အသုံးပြုမှုဒေတာ မျှဝေရန်',
+  'Also share anonymous usage data': 'အမည်မဖော် အသုံးပြုမှုဒေတာကိုလည်း မျှဝေရန်',
 }

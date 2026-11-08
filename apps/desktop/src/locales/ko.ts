@@ -3678,4 +3678,8 @@ export const ko: Dictionary = {
   'Include pictures': '그림 포함',
   'Without styles': '스타일 없이',
   'Turn {name} on or off': '{name} 켜기 또는 끄기',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    '사용한 항목의 하루 횟수를 무작위 ID로 보내며, 노트, 이름, 경로, 입력한 내용은 보내지 않습니다.',
+  'Share anonymous usage data': '익명 사용 데이터 공유',
+  'Also share anonymous usage data': '익명 사용 데이터도 공유',
 }

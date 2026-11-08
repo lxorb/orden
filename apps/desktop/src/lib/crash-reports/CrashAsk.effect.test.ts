@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const SENDING = 'orden:crash-reports'
 const ASKED = 'orden:crash-reports-told'
+const HELPING = 'orden:usage-help'
 
 let target: HTMLElement
 let shown: Record<string, unknown> | null = null
@@ -25,6 +26,7 @@ async function launch() {
 
 const dialog = () => target.querySelector<HTMLElement>('[role="dialog"]')
 const box = () => target.querySelector<HTMLInputElement>('input[type="checkbox"]')
+const usageBox = () => target.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')[1]
 
 function goOn() {
   const button = [...target.querySelectorAll('button')].find(
@@ -53,15 +55,34 @@ afterEach(() => {
 })
 
 describe('the crash report question', () => {
-  test('is asked the first time Orden opens, ticked, in one sentence and one button', async () => {
+  test('is asked the first time Orden opens, crash reports ticked and usage data not, with one button', async () => {
     const { due, crashReports } = await launch()
     expect(due).toBe(true)
     expect(crashReports.asking).toBe(true)
     expect(dialog()?.getAttribute('aria-modal')).toBe('true')
     expect(box()?.checked).toBe(true)
+    expect(usageBox()?.checked).toBe(false)
     expect(dialog()?.textContent.replace(/\s+/g, ' ').trim()).toBe(
-      'Send crash reports to help improve Orden Continue',
+      'Send crash reports to help improve Orden Also share anonymous usage data Continue',
     )
+  })
+
+  test('turns usage data on only when ticked', async () => {
+    await launch()
+    const { usageChoice } = await import('../usage/choice.svelte')
+    usageBox()?.click()
+    flushSync()
+    goOn()
+    expect(usageChoice.helping).toBe(true)
+    expect(localStorage.getItem(HELPING)).toBe('true')
+  })
+
+  test('leaves usage data off when left unticked', async () => {
+    await launch()
+    const { usageChoice } = await import('../usage/choice.svelte')
+    goOn()
+    expect(usageChoice.helping).toBe(false)
+    expect(localStorage.getItem(HELPING)).toBeNull()
   })
 
   test('keeps reports on when left ticked, and does not ask again', async () => {

@@ -28,6 +28,7 @@ import { isRecord, keep, keepJson, stored, storedText } from './stored'
 import { isNative } from './tauri'
 import { viewport } from './viewport.svelte'
 import { saveFront } from './save-place/door'
+import { ran } from './usage/tally'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
 
@@ -251,6 +252,7 @@ class Shortcuts {
       if (!key || !matchesCombination(key, event, this.platform)) continue
 
       event.preventDefault()
+      ran(entry.id, 'shortcut')
       entry.run(context)
       return true
     }

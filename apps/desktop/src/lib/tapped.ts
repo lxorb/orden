@@ -3,6 +3,7 @@ import { shortcuts } from './shortcuts.svelte'
 import { present } from './slides/present.svelte'
 import { type AppContext, SHORTCUTS } from './shortcuts/registry'
 import { fromPage } from './web-tab/keys'
+import { ran } from './usage/tally'
 
 type Hearer = (key: Modifier) => void
 
@@ -59,6 +60,7 @@ export function runTap(key: Modifier, context: AppContext): boolean {
     if (entry.scope !== 'app' || !entry.run || !held) continue
     if (tapOf(held, shortcuts.platform) !== key) continue
 
+    ran(entry.id, 'shortcut')
     entry.run(context)
     return true
   }

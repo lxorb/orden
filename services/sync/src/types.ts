@@ -50,6 +50,8 @@ export interface Env {
 
   CRASH_READER_TOKEN?: string
 
+  POSTHOG_KEY?: string
+
   AI?: { run(model: string, input: unknown): Promise<unknown> }
 
   OPENAI_KEY_SECRET?: string

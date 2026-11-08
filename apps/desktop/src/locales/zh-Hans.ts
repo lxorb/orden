@@ -3602,4 +3602,8 @@ export const zhHans: Dictionary = {
   'Include pictures': '包含图片',
   'Without styles': '不带样式',
   'Turn {name} on or off': '开启或关闭 {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    '每天以随机 ID 发送你使用内容的计数；绝不发送笔记、名称、路径或你输入的内容。',
+  'Share anonymous usage data': '分享匿名使用数据',
+  'Also share anonymous usage data': '同时分享匿名使用数据',
 }

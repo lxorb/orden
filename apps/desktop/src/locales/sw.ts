@@ -3838,4 +3838,8 @@ export const sw: Dictionary = {
   'Include pictures': 'Jumuisha picha',
   'Without styles': 'Bila mitindo',
   'Turn {name} on or off': 'Washa au zima {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Hutuma hesabu za kila siku za unachotumia chini ya ID ya nasibu; kamwe si madokezo, majina, njia au unachoandika.',
+  'Share anonymous usage data': 'Shiriki data ya matumizi isiyo na jina',
+  'Also share anonymous usage data': 'Shiriki pia data ya matumizi isiyo na jina',
 }

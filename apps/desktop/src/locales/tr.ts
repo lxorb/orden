@@ -3808,4 +3808,8 @@ export const tr: Dictionary = {
   'Include pictures': 'Resimleri ekle',
   'Without styles': 'Biçemsiz',
   'Turn {name} on or off': '{name} öğesini aç veya kapat',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Kullandıklarının günlük sayılarını rastgele bir kimlikle gönderir; asla not, ad, yol veya yazdıklarını göndermez.',
+  'Share anonymous usage data': 'Anonim kullanım verileri paylaş',
+  'Also share anonymous usage data': 'Anonim kullanım verileri de paylaş',
 }

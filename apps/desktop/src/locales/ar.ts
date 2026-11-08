@@ -3973,4 +3973,8 @@ export const ar: Dictionary = {
   'Include pictures': 'تضمين الصور',
   'Without styles': 'بلا أنماط',
   'Turn {name} on or off': 'تشغيل {name} أو إيقافه',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'يرسل يوميًا أعداد ما تستخدمه تحت معرّف عشوائي؛ دون الملاحظات أو الأسماء أو المسارات أو ما تكتبه.',
+  'Share anonymous usage data': 'مشاركة بيانات استخدام مجهولة',
+  'Also share anonymous usage data': 'مشاركة بيانات استخدام مجهولة أيضًا',
 }

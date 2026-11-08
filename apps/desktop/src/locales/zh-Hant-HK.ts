@@ -3602,4 +3602,8 @@ export const zhHantHK: Dictionary = {
   'Include pictures': '包含圖片',
   'Without styles': '不含樣式',
   'Turn {name} on or off': '開啟或關閉 {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    '每天以隨機 ID 傳送你使用內容的計數；絕不傳送筆記、名稱、路徑或你輸入的內容。',
+  'Share anonymous usage data': '分享匿名使用數據',
+  'Also share anonymous usage data': '同時分享匿名使用數據',
 }

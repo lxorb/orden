@@ -3876,4 +3876,8 @@ export const ptBR: Dictionary = {
   'Include pictures': 'Incluir imagens',
   'Without styles': 'Sem estilos',
   'Turn {name} on or off': 'Ativar ou desativar {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Envia contagens diárias do que você usa com um ID aleatório; nunca notas, nomes, caminhos ou o que você digita.',
+  'Share anonymous usage data': 'Compartilhar dados de uso anônimos',
+  'Also share anonymous usage data': 'Compartilhar também dados de uso anônimos',
 }

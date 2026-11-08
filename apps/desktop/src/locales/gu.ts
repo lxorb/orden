@@ -3770,4 +3770,8 @@ export const gu: Dictionary = {
   'Include pictures': 'ચિત્રો સાથે',
   'Without styles': 'શૈલી વિના',
   'Turn {name} on or off': '{name} ચાલુ કે બંધ કરો',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'તમે જે વાપરો છો તેની દૈનિક ગણતરી રેન્ડમ ID હેઠળ મોકલે છે; ક્યારેય નોંધો, નામ, પાથ કે તમે જે લખો છો તે નહીં.',
+  'Share anonymous usage data': 'અનામી વપરાશ ડેટા શેર કરો',
+  'Also share anonymous usage data': 'અનામી વપરાશ ડેટા પણ શેર કરો',
 }

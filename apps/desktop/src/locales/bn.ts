@@ -3781,4 +3781,8 @@ export const bn: Dictionary = {
   'Include pictures': 'ছবি সহ',
   'Without styles': 'স্টাইল ছাড়া',
   'Turn {name} on or off': '{name} চালু বা বন্ধ করুন',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'আপনি যা ব্যবহার করেন তার দৈনিক গণনা একটি র‍্যান্ডম ID-র অধীনে পাঠায়; নোট, নাম, পাথ বা আপনি যা টাইপ করেন তা কখনো নয়।',
+  'Share anonymous usage data': 'বেনামী ব্যবহারের ডেটা শেয়ার করুন',
+  'Also share anonymous usage data': 'বেনামী ব্যবহারের ডেটাও শেয়ার করুন',
 }

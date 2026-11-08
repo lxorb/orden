@@ -4,15 +4,22 @@
   import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { trap } from '../trap'
+  import { usageChoice } from '../usage/choice.svelte'
   import { crashReports } from './choice.svelte'
 
   crashReports.ask()
 
   let sending = $state(crashReports.on)
 
+  let helping = $state(usageChoice.helping)
+
   const words = $derived(t('Send crash reports to help improve Orden'))
 
-  const go = () => crashReports.answer(sending)
+  const go = () => {
+    if (!crashReports.asking) return
+    if (helping !== usageChoice.helping) usageChoice.setHelping(helping)
+    crashReports.answer(sending)
+  }
 
   $effect(() => (crashReports.asking ? overlays.show(go) : undefined))
 </script>
@@ -32,6 +39,10 @@
     <label class="tick">
       <input type="checkbox" class="orden-checkbox" bind:checked={sending} />
       <span>{words}</span>
+    </label>
+    <label class="tick">
+      <input type="checkbox" class="orden-checkbox" bind:checked={helping} />
+      <span>{t('Also share anonymous usage data')}</span>
     </label>
     <button type="button" class="orden-button" data-lands onclick={go}>{t('Continue')}</button>
   </div>

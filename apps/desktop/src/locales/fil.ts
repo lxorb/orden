@@ -3865,4 +3865,8 @@ export const fil: Dictionary = {
   'Include pictures': 'Isama ang mga larawan',
   'Without styles': 'Walang estilo',
   'Turn {name} on or off': 'I-on o i-off ang {name}',
+  'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.':
+    'Nagpapadala araw-araw ng bilang ng ginagamit mo sa ilalim ng random na ID; hindi kailanman tala, pangalan, path o tina-type mo.',
+  'Share anonymous usage data': 'Magbahagi ng anonymous na data ng paggamit',
+  'Also share anonymous usage data': 'Magbahagi rin ng anonymous na data ng paggamit',
 }

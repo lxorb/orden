@@ -242,6 +242,14 @@ export function start(): () => void {
       .then((one) => (stopCrashes = one.watchForCrashes(!import.meta.env.DEV)))
   }
 
+  let stopUsage: (() => void) | null = null
+  if (!__EVEN_PLUGIN__) {
+    void startup
+      .turn('rooms')
+      .then(() => import('./usage/watch.svelte'))
+      .then((one) => (stopUsage = one.watchUsage(!import.meta.env.DEV)))
+  }
+
   let stopPointer: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
     void import('./typing-pointer').then((one) => (stopPointer = one.hidePointerWhileTyping()))
@@ -249,6 +257,7 @@ export function start(): () => void {
 
   return () => {
     stopCrashes?.()
+    stopUsage?.()
     stopPointer?.()
     stopAnywhere?.()
     clearInterval(sweeper)

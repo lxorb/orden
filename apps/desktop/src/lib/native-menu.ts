@@ -1,6 +1,7 @@
 import { tapOf } from './double-tap'
 import { matchesCombination, PHYSICAL, parseCombination } from './keys'
 import { DIVIDER, isSubmenu, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
+import { ran } from './usage/tally'
 
 type SystemItem =
   | 'About'
@@ -279,7 +280,10 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     const key = row.command ? chordFor((one) => sources.keyFor(one), row.command) : null
     const accelerator = claim(key ? toAccelerator(key) : null)
     const standIn = row.command ? STAND_INS[row.command] : undefined
-    runs.set(id, row.run)
+    runs.set(id, () => {
+      ran(row.command, 'menu')
+      row.run()
+    })
 
     return {
       kind: 'item',
