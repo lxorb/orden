@@ -916,12 +916,15 @@ class Modes {
 
   async adopt(token: string): Promise<AccountSettings | null> {
     const asked = this.sent
+    const session = this.session
 
     await this.settle(token)
+    if (this.session !== session) return null
 
     let remote: AccountSettings
     try {
       const answer = await api.settings(token)
+      if (this.session !== session) return null
       remote = answer.settings
       glassesKey.took(answer.key)
     } catch {
@@ -1112,6 +1115,13 @@ class Modes {
 
   private owed: AccountSettings = {}
 
+  private session = 0
+
+  forgetSession(): void {
+    this.session++
+    this.owed = {}
+  }
+
   private share(patch: AccountSettings) {
     this.sent++
 
@@ -1122,9 +1132,10 @@ class Modes {
     }
 
     const owed = this.owed
+    const session = this.session
     this.owed = {}
     void api.saveSettings(token, { ...owed, ...patch }).catch(() => {
-      this.owed = { ...owed, ...patch, ...this.owed }
+      if (this.session === session) this.owed = { ...owed, ...patch, ...this.owed }
     })
   }
 
@@ -1132,11 +1143,12 @@ class Modes {
     const owed = this.owed
     if (!Object.keys(owed).length) return
 
+    const session = this.session
     this.owed = {}
     try {
       await api.saveSettings(token, owed)
     } catch {
-      this.owed = { ...owed, ...this.owed }
+      if (this.session === session) this.owed = { ...owed, ...this.owed }
     }
   }
 
@@ -1298,3 +1310,5 @@ function fieldsOf(state: Saved): Record<string, unknown> {
 }
 
 export const modes = new Modes()
+
+account.forgetWithSession(() => modes.forgetSession())

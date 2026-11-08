@@ -903,6 +903,46 @@ describe('taking over what the account holds', () => {
     expect(patches).toEqual([{ glassesSeen: true }, { glassesSeen: true }])
   })
 
+  test('owes nothing to the next account once the session that could not be reached signs out', async () => {
+    const patches: [string, Held][] = []
+    api.saveSettings = async (token: string, patch: Held) => {
+      patches.push([token, patch])
+      throw new Error('offline')
+    }
+    api.settings = async () => {
+      throw new Error('offline')
+    }
+
+    modes.sawGlasses()
+    expect(await modes.adopt('first')).toBeNull()
+
+    const { account } = await import('./account.svelte')
+    await account.signOut()
+
+    api.saveSettings = async (token: string, patch: Held) => {
+      patches.push([token, patch])
+      return { settings: {} }
+    }
+    api.settings = async () => ({ settings: {} })
+    await modes.adopt('second')
+
+    expect(patches).toEqual([['first', { glassesSeen: true }]])
+  })
+
+  test('takes nothing from an account whose answer comes after it signed out', async () => {
+    const { release, settingsCall } = heldAnswer({ vim: true, quietMarks: true })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('first')
+    const { account } = await import('./account.svelte')
+    await account.signOut()
+    release()
+
+    expect(await adopted).toBeNull()
+    expect(modes.vim).toBe(false)
+    expect(modes.quietMarks).toBe(false)
+  })
+
   test('takes it from the account, and then has nothing left to say', async () => {
     const patches: Held[] = []
     api.saveSettings = async (_token: string, patch: Held) => {
