@@ -52,6 +52,7 @@ const MOST_KEPT = 5000
 const TYPING_FOR = 6000
 const MOST_REACTIONS = 3
 const MOST_CAPTION = 1024
+const MOST_GENERAL_PAGES = 5
 const FOREVER = 2147483647
 const GENERAL = 1
 
@@ -508,6 +509,23 @@ class TelegramConnection implements Connection {
 
   async history(conversation: string, ask: HistoryAsk): Promise<Page> {
     const where = whereOf(conversation)
+    const first = await this.historyPage(conversation, where, ask)
+    if (where.topic !== GENERAL || ask.around !== undefined) return first
+    const messages = [...first.messages]
+    let before = first.before
+    for (
+      let page = 1;
+      page < MOST_GENERAL_PAGES && before !== null && messages.length < ask.limit;
+      page++
+    ) {
+      const next = await this.historyPage(conversation, where, { limit: ask.limit, before })
+      messages.unshift(...next.messages)
+      before = next.before
+    }
+    return { messages, before }
+  }
+
+  private async historyPage(conversation: string, where: Where, ask: HistoryAsk): Promise<Page> {
     const peer = this.peers.input(where)
     const offsetId = ask.around ? Number(ask.around) + 1 : ask.before ? Number(ask.before) : 0
     const addOffset = ask.around ? -Math.floor(ask.limit / 2) : 0

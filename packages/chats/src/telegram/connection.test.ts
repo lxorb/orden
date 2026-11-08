@@ -1438,3 +1438,27 @@ describe('a new forum topic', () => {
     )
   })
 })
+
+describe('the General topic', () => {
+  test('a page of General reads on past the other topics until it has messages', async () => {
+    const { fake, connection } = await linked()
+    const inTopic = (id: number) =>
+      text(id, toForum, 2, `t${id}`, {
+        replyTo: { _: 'messageReplyHeader', forumTopic: true, replyToMsgId: 7 },
+      })
+    fake.answer('messages.getHistory', (request: tl.messages.RawGetHistoryRequest) => ({
+      _: 'messages.messages',
+      chats: [],
+      users: [],
+      messages:
+        request.offsetId === 0
+          ? [inTopic(100), inTopic(99)]
+          : request.offsetId === 99
+            ? [inTopic(98), text(97, toForum, 2, 'general')]
+            : [text(96, toForum, 2, 'older general')],
+    }))
+    const page = await connection.history('s50t1', { limit: 2 })
+    expect(page.messages.map((one) => one.text)).toEqual(['older general', 'general'])
+    expect(page.before).toBeNull()
+  })
+})
