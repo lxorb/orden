@@ -63,7 +63,8 @@ links.post('/links', async (context) => {
     `insert into pass_links
        (id, user_id, vault_id, item_id, body, expires_at, max_views, views, created_at)
      select ?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, ?8
-      where (select count(*) from pass_links where user_id = ?2) < ?9
+      where (select count(*) from pass_links
+              where user_id = ?2 and body <> '' and expires_at > ?8 and not (${USED_UP})) < ?9
         and exists (select 1 from pass_items
                      where vault_id = ?3 and id = ?4 and deleted_at is null)
         and ${holdsSql('?3', '?10', 'editor')}

@@ -1,4 +1,4 @@
-import { type LinkRow, linkOpenedIn, linkRowIn, LONGEST_LINK } from '@orden/pass/wire'
+import { type LinkRow, linkOpenedIn, linkRowIn, LONGEST_LINK, MOST_LINKS } from '@orden/pass/wire'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, type TestEnv, testEnv } from './harness'
 import { anId, pass, passCall, type Person, person, sealed, sharedVault } from './pass-fakes'
@@ -110,6 +110,24 @@ describe('a secure link', () => {
     const left = await passCall<{ links: LinkRow[] }>(env, ada, 'GET', '/links')
     expect(left.json.links.map((link) => link.id)).toEqual([kept.id])
     expect((await passCall(env, ada, 'DELETE', '/links')).status).toBe(400)
+  })
+
+  test('counts only the links still open against how many one may make', async () => {
+    const live = (await makeLink(ada)).json.link!
+    const userId = (
+      env.db.prepare('select user_id from pass_links where id = ?').get(live.id) as {
+        user_id: string
+      }
+    ).user_id
+    const dead = env.db.prepare(
+      `insert into pass_links
+         (id, user_id, vault_id, item_id, body, expires_at, max_views, views, created_at)
+       values (?, ?, ?, ?, '', ?, null, 0, ?)`,
+    )
+    for (let at = 0; at < MOST_LINKS; at++) dead.run(anId(), userId, vault, item, 1, 1)
+
+    const made = await makeLink(ada)
+    expect(made.status, made.json.error).toBe(200)
   })
 
   test('is somebody else’s to delete only if it is theirs', async () => {
