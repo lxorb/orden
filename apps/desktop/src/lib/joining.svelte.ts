@@ -20,7 +20,7 @@ function askDelay(asked: number, hidden: boolean): number {
   return pollDelay(Math.max(0, asked - QUICK_ASKS), hidden)
 }
 
-export type Step = 'asking' | 'waiting' | 'declined' | 'gone'
+export type Step = 'asking' | 'waiting' | 'declined' | 'gone' | 'unreached'
 
 function said(text: string): { name: string } | { email: string } {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(text) ? { email: text } : { name: text }
@@ -56,12 +56,32 @@ class Joining {
 
     this.token = found[1]
     window.history.replaceState(null, '', '/')
+    await this.open(this.token)
+  }
 
-    this.invitation = await api.invitation(this.token).catch(() => null)
-    if (!this.invitation) {
-      this.ranOut()
+  async retry() {
+    const token = this.token
+    if (this.step !== 'unreached' || !token || this.busy) return
+    this.error = null
+    if (this.invitation) await this.walkThrough()
+    else await this.open(token)
+  }
+
+  private async open(token: string) {
+    this.busy = true
+    let invitation: Invitation
+    try {
+      invitation = await api.invitation(token)
+    } catch (error) {
+      if (this.token !== token) return
+      if (refused(error)) this.ranOut()
+      else this.unreached(error)
       return
+    } finally {
+      this.busy = false
     }
+    if (this.token !== token) return
+    this.invitation = invitation
 
     if (this.invitation.asks && !account.signedIn) {
       this.step = 'asking'
@@ -108,12 +128,15 @@ class Joining {
       })
     } catch (error) {
       if (this.token !== token) return
-      this.error = message(error, t('Ask for another one.'))
-      if (this.step === 'waiting' && !refused(error)) {
-        if (!this.asking) this.later()
+      if (!refused(error)) {
+        this.error = message(error, t('could not reach the server'))
+        if (this.step === 'waiting') {
+          if (!this.asking) this.later()
+        } else if (this.step !== 'asking') this.step = 'unreached'
         return
       }
 
+      this.error = message(error, t('Ask for another one.'))
       this.stopAsking()
       this.closed = false
       this.step = 'gone'
@@ -223,6 +246,11 @@ class Joining {
   private ranOut() {
     this.token = null
     this.step = 'gone'
+  }
+
+  private unreached(error: unknown) {
+    this.error = message(error, t('could not reach the server'))
+    this.step = 'unreached'
   }
 
   close() {

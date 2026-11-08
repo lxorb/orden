@@ -13,6 +13,7 @@ interface World {
   through: Record<string, unknown>
   refuse: string | null
   unreachable: boolean
+  invitationDown: boolean
   asked: { key: string; options: Record<string, unknown> }[]
   shown: string | null
   passes: number
@@ -30,6 +31,7 @@ const world = vi.hoisted((): World => ({
   through: {},
   refuse: null,
   unreachable: false,
+  invitationDown: false,
   asked: [],
   shown: null,
   passes: 0,
@@ -49,9 +51,11 @@ vi.mock('./api', async (importOriginal) => {
     ...original,
     api: {
       invitation: () =>
-        world.about
-          ? Promise.resolve(world.about)
-          : Promise.reject(new original.ApiError(404, 'that link has expired')),
+        world.invitationDown
+          ? Promise.reject(new Error('the network is not there'))
+          : world.about
+            ? Promise.resolve(world.about)
+            : Promise.reject(new original.ApiError(404, 'that link has expired')),
       join: async (key: string, options: Record<string, unknown> = {}) => {
         world.asked.push({ key, options })
         if (world.gate) await world.gate
@@ -152,6 +156,7 @@ beforeEach(async () => {
   world.through = {}
   world.refuse = null
   world.unreachable = false
+  world.invitationDown = false
   world.asked = []
   world.shown = null
   world.passes = 0
@@ -603,6 +608,62 @@ describe('a link that asks first, put aside before anything is typed', () => {
     await joining.tell()
     expect(world.asked[0]?.key).toBe(TOKEN)
     expect(joining.step).toBe('waiting')
+  })
+})
+
+describe('a link followed while the network is down', () => {
+  beforeEach(() => {
+    world.about = open
+    world.through = { token: 'guest-session', guest: { id: 'g1', name: 'Ada' }, space }
+  })
+
+  test('says so and may be tried again when the invitation does not arrive', async () => {
+    world.invitationDown = true
+    await joining.start()
+
+    expect(joining.step).toBe('unreached')
+    expect(joining.error).toBe('the network is not there')
+    expect(world.path).toBe('/')
+
+    world.invitationDown = false
+    await joining.retry()
+
+    expect(joining.step).toBeNull()
+    expect(joining.error).toBeNull()
+    expect(world.shown).toBe('here')
+  })
+
+  test('may be tried again when the join does not arrive', async () => {
+    world.unreachable = true
+    await joining.start()
+
+    expect(joining.step).toBe('unreached')
+    expect(joining.error).toBe('the network is not there')
+
+    world.unreachable = false
+    await joining.retry()
+
+    expect(joining.step).toBeNull()
+    expect(world.shown).toBe('here')
+  })
+
+  test('keeps the name asked for when the ask does not arrive', async () => {
+    world.about = approval
+    await joining.start()
+    joining.told = 'Ada'
+    world.unreachable = true
+    await joining.tell()
+
+    expect(joining.step).toBe('asking')
+    expect(joining.told).toBe('Ada')
+    expect(joining.error).toBe('the network is not there')
+  })
+
+  test('still says a refused link opens nothing', async () => {
+    world.refuse = 'that link has expired'
+    await joining.start()
+
+    expect(joining.step).toBe('gone')
   })
 })
 

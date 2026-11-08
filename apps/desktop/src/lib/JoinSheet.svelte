@@ -80,6 +80,18 @@
       <button type="button" class="orden-button is-quiet" onclick={() => joining.dismiss()}
         >{t('Done')}</button
       >
+    {:else if joining.step === 'unreached'}
+      <div class="actions">
+        <button
+          type="button"
+          class="orden-button"
+          disabled={joining.busy}
+          onclick={() => void joining.retry()}>{t('Try again')}</button
+        >
+        <button type="button" class="orden-button is-quiet" onclick={() => joining.dismiss()}
+          >{t('Close')}</button
+        >
+      </div>
     {:else}
       <p class="quiet">{t('That link does not open anything')}</p>
       <button
