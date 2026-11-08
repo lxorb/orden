@@ -2,6 +2,14 @@ import type { RoomKind } from '../src/rooms/kind'
 import { NoteRoom } from '../src/rooms/room'
 import type { Env } from '../src/types'
 
+class Pair {
+  constructor(
+    readonly request: string,
+    readonly response: string,
+  ) {}
+}
+Object.assign(globalThis, { WebSocketRequestResponsePair: Pair })
+
 export class FakeSocket {
   readonly sent: Uint8Array[] = []
   closed = false
@@ -79,6 +87,12 @@ export class FakeState {
     const at = this.alarm
     this.alarm = null
     return at
+  }
+
+  autoResponse: Pair | null = null
+
+  setWebSocketAutoResponse(pair: Pair) {
+    this.autoResponse = pair
   }
 
   acceptWebSocket(socket: FakeSocket) {
