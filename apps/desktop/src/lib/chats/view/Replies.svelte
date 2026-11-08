@@ -3,7 +3,7 @@
   import { may } from '@orden/chats'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { amount, t } from '../../i18n.svelte'
+  import { amount, i18n, t } from '../../i18n.svelte'
   import { dur, fly } from '../../motion'
   import { menu } from '../../menu.svelte'
   import type { ChatPage } from './chat.svelte'
@@ -80,7 +80,7 @@
 <aside
   class="replies"
   aria-label={t('Replies')}
-  transition:fly={{ x: 24, duration: dur(190), easing: cubicOut }}
+  transition:fly={{ x: 24 * i18n.factor, duration: dur(190), easing: cubicOut }}
   onkeydown={(event) => {
     if (event.key === 'Escape' && !event.defaultPrevented) {
       event.preventDefault()

@@ -2,7 +2,7 @@
   import { door } from '@orden/markdown/door'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../../i18n.svelte'
+  import { i18n, t } from '../../i18n.svelte'
   import { menu } from '../../menu.svelte'
   import { dur, fly } from '../../motion'
   import { hearAgain } from '../../shortcuts/registry'
@@ -107,7 +107,10 @@
   ondrop={dropRows}
 >
   {#if wide && railed}
-    <aside class="shelf" transition:fly={{ x: -12, duration: dur(150), easing: cubicOut }}>
+    <aside
+      class="shelf"
+      transition:fly={{ x: -12 * i18n.factor, duration: dur(150), easing: cubicOut }}
+    >
       <Threads rail />
     </aside>
   {/if}

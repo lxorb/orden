@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { shownName } from './note-name'
   import { ARCHIVE_MARK } from './archive-marks'
   import { SEARCH_MARK } from './panel-marks'
@@ -264,7 +264,10 @@
       />
 
       {#if search.asks && search.hits.length}
-        <span class="found" transition:fly={{ x: 6, duration: dur(130), easing: cubicOut }}>
+        <span
+          class="found"
+          transition:fly={{ x: 6 * i18n.factor, duration: dur(130), easing: cubicOut }}
+        >
           {search.hits.length}
         </span>
       {/if}
@@ -278,7 +281,7 @@
           aria-label={kept ? t('Remove from Essentials') : t('Add to Essentials')}
           aria-pressed={kept}
           onclick={() => workspace.bookmarks.toggle(searchMark)}
-          transition:fly={{ x: 6, duration: dur(130), easing: cubicOut }}
+          transition:fly={{ x: 6 * i18n.factor, duration: dur(130), easing: cubicOut }}
         >
           <svg viewBox="0 0 13 13"><path d={STAR} /></svg>
         </button>

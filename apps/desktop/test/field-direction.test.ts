@@ -112,3 +112,12 @@ test('a code, key or address is laid out left to right, so its groups keep their
   )
   expect(turned).toEqual([])
 })
+
+test('a sideways motion runs the other way in right-to-left', () => {
+  const fixed = svelteFiles(SOURCE).flatMap((path) =>
+    [...readFileSync(path, 'utf8').matchAll(/\bx:\s*-?\w+(?:\.\w+)*,\s*duration:/g)]
+      .filter((one) => !one[0].includes('i18n.factor'))
+      .map((one) => `${path.slice(SOURCE.length)}: ${one[0]}`),
+  )
+  expect(fixed).toEqual([])
+})

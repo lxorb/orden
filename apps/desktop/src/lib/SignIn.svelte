@@ -1,7 +1,7 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { cubicOut } from 'svelte/easing'
   import { account } from './account.svelte'
   import { joining } from './joining.svelte'
@@ -115,7 +115,7 @@
     {#if account.step === 'email'}
       <h2 class="heading">{heading}</h2>
       <form
-        in:fly={{ x: -14, duration: dur(200), easing: cubicOut }}
+        in:fly={{ x: -14 * i18n.factor, duration: dur(200), easing: cubicOut }}
         onsubmit={(event) => {
           event.preventDefault()
           void account.requestCode()
@@ -136,7 +136,7 @@
         </button>
       </form>
     {:else if account.step === 'second'}
-      <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
+      <div class="code" in:fly={{ x: 14 * i18n.factor, duration: dur(200), easing: cubicOut }}>
         <p class="sent">{t('Now the code from your authenticator app')}</p>
 
         <div class="digits" dir="ltr">
@@ -183,7 +183,7 @@
         {/if}
       </div>
     {:else}
-      <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
+      <div class="code" in:fly={{ x: 14 * i18n.factor, duration: dur(200), easing: cubicOut }}>
         <p class="sent">{t('Code sent to')} <strong>{account.email}</strong></p>
 
         <div class="digits" dir="ltr">
