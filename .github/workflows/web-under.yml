@@ -13,6 +13,7 @@ on:
       - scripts/overview-drive.py
       - scripts/tools-freeze-drive.py
       - scripts/alt-alone-drive.py
+      - scripts/web-corner-drive.py
       - apps/desktop/src-tauri/src/keyboard.rs
       - apps/desktop/src-tauri/src/terminal/**
       - apps/desktop/src-tauri/src/explorer/**
@@ -56,6 +57,12 @@ jobs:
           python -m pip install --quiet pillow comtypes
           python scripts/web-under-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER" --out drive
 
+      - name: A page that runs wide keeps the pane's corners
+        if: always()
+        run: |
+          python -m pip install --quiet pillow
+          python scripts/web-corner-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER" --out corner
+
       - name: The overview, filmed
         if: always()
         run: |
@@ -83,6 +90,7 @@ jobs:
           name: web-under
           path: |
             drive
+            corner
             overview
             windowed
           retention-days: 5
