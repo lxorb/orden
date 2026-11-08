@@ -55,6 +55,7 @@ export class ExplorerView {
 
   #watched: string | null = null
   #went = 0
+  #asked: string | null = null
   #landed = 0
   #reread = 0
   #rereading = false
@@ -283,6 +284,19 @@ export class ExplorerView {
     this.wrong = null
     this.listing = listing
     this.picked = stillThere(this.picked, this.names)
+    this.#pickAsked()
+  }
+
+  pickOnArrival(name: string) {
+    this.#asked = name
+    this.#pickAsked()
+  }
+
+  #pickAsked() {
+    const name = this.#asked
+    if (name === null || !this.names.includes(name)) return
+    this.#asked = null
+    this.pick(name, 'one')
   }
 
   private watch(folder: string) {

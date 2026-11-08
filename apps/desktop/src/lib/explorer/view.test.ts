@@ -199,6 +199,17 @@ describe('a file explorer', () => {
     expect(view.names).toEqual(['Music', 'Pictures', 'notes.txt'])
   })
 
+  test('picks a file asked for once its folder shows, whoever lists it first', async () => {
+    const tab = tabWith('{"folder":"/home/me/Pictures","back":[],"ahead":[]}')
+    const view = viewOf(tab as never)
+    view.pickOnArrival('a.png')
+    expect(view.chosen).toEqual([])
+    await view.appear()
+    expect(view.chosen).toEqual(['/home/me/Pictures/a.png'])
+    await view.reload()
+    expect(view.chosen).toEqual(['/home/me/Pictures/a.png'])
+  })
+
   test('lists again only for a change in the folder on screen', async () => {
     const view = viewOf(tabWith('') as never)
     await view.appear()

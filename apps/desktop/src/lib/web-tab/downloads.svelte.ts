@@ -79,7 +79,10 @@ class Downloads {
   }
 
   async show(id: number): Promise<void> {
-    await invoke('web_download_show', { id }).catch(() => undefined)
+    const path = await invoke<string>('web_download_saved', { id }).catch(() => null)
+    if (path === null) return
+    const { reveal } = await import('../reveal')
+    await reveal(path)
   }
 
   async cancel(id: number): Promise<void> {
