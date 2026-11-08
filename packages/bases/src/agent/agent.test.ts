@@ -343,6 +343,10 @@ describe('bases', () => {
     expect(base.views).toHaveLength(1)
     expect(editedBase(edited, [{ op: 'remove_view', name: 'Board' }]).views).toHaveLength(1)
     expect(() => editedBase(base, [{ op: 'rename' }])).toThrow(AgentError)
+    const views = (n: number) =>
+      Array.from({ length: n }, (_, at) => ({ op: 'add_view', name: `V${String(at)}` }))
+    expect(editedBase(base, views(500)).views).toHaveLength(501)
+    expect(() => editedBase(base, views(501))).toThrow('at most 500 ops')
   })
 })
 
