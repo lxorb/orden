@@ -3801,4 +3801,8 @@ export const sw: Dictionary = {
   'Copy name': 'Nakili jina',
   'Copy address': 'Nakili anwani',
   'Send message': 'Tuma ujumbe',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack imekataa tokeni hiyo ya programu. Tengeneza moja yenye connections:write chini ya Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'Jina la chaneli ya Slack linahitaji herufi au namba',
 }

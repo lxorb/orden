@@ -1223,9 +1223,13 @@ export class SlackConnection implements Connection {
         reactions: reactions.filter((one) => Array.isArray(one.users) && one.users.length),
       }
     }
-    const [message] = await this.mapped(channel, [raw])
+    this.changedAll(channel, await this.shapes(channel, raw))
+  }
+
+  private changedAll(channel: string, shown: readonly ProviderMessage[]): void {
+    const message = shown.at(-1)
     if (message && !message.thread) this.noted(channel, message.id)
-    if (message) this.emit({ t: 'changed', message })
+    for (const one of shown) this.emit({ t: 'changed', message: one })
   }
 
   private async heardPin(event: Said, on: boolean): Promise<void> {
@@ -1238,9 +1242,7 @@ export class SlackConnection implements Connection {
       (one) => one !== channel,
     )
     if (on) pinned.push(channel)
-    const [message] = await this.mapped(channel, [{ ...was, pinned_to: pinned }])
-    if (message && !message.thread) this.noted(channel, message.id)
-    if (message) this.emit({ t: 'changed', message })
+    this.changedAll(channel, await this.shapes(channel, { ...was, pinned_to: pinned }))
   }
 
   private readonly handlers: Handlers = {
@@ -1280,7 +1282,15 @@ export class SlackConnection implements Connection {
     im_created: (event) => this.changed(record(event.channel), true),
     user_change: (event) => {
       const user = record(event.user)
-      if (text(user.id)) this.users.set(text(user.id), user)
+      if (!text(user.id)) return
+      this.users.set(text(user.id), user)
+      const person = this.personOf(user)
+      for (const one of [...this.known.values()]) {
+        if (one.kind !== 'direct' || one.picture !== person.id) continue
+        const next: Conversation = { ...one, title: person.name, people: [person] }
+        this.known.set(one.id, next)
+        this.emit({ t: 'conversation', conversation: next })
+      }
     },
     team_join: (event) => {
       const user = record(event.user)

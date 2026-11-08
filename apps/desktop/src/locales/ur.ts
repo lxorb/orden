@@ -3747,4 +3747,8 @@ export const ur: Dictionary = {
   'Copy name': 'نام کاپی کریں',
   'Copy address': 'پتہ کاپی کریں',
   'Send message': 'پیغام بھیجیں',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack نے یہ ایپ لیول ٹوکن مسترد کر دیا۔ Basic Information میں connections:write والا ٹوکن بنائیں',
+  'A Slack channel name needs a letter or a number':
+    'Slack چینل کے نام میں کوئی حرف یا عدد ہونا چاہیے',
 }

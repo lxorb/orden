@@ -3803,4 +3803,8 @@ export const ha: Dictionary = {
   'Copy name': 'Kwafi suna',
   'Copy address': 'Kwafi adireshi',
   'Send message': 'Aika saƙo',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack ya ƙi wannan alamar manhaja. Ƙirƙiri ɗaya mai connections:write a ƙarƙashin Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'Sunan tashar Slack yana buƙatar harafi ko lamba',
 }

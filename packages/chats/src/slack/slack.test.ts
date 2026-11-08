@@ -528,6 +528,33 @@ describe('threads', () => {
     expect(inChannel?.t === 'message' && inChannel.message.thread).toBeUndefined()
   })
 
+  test('a reaction on a reply also sent to the channel reaches the channel and the thread', async () => {
+    const given = setup()
+    const parent = given.slack.post('C1', 'U2', 'question')
+    const loud = given.slack.post('C1', 'U3', 'loud', {
+      thread_ts: parent.ts,
+      subtype: 'thread_broadcast',
+    })
+    const { connection, events } = await connect(given, {
+      token: 'xoxp-good',
+      appToken: 'xapp-good',
+    })
+    await connection.history('C1', { limit: 20 })
+    await vi.waitFor(() => expect(given.slack.lines).toHaveLength(1))
+    given.slack.event({
+      type: 'reaction_added',
+      user: 'U2',
+      reaction: 'fire',
+      item: { type: 'message', channel: 'C1', ts: loud.ts },
+    })
+    await vi.waitFor(() =>
+      expect(events.filter((one) => one.t === 'changed').map((one) => one.message)).toEqual([
+        expect.objectContaining({ thread: parent.ts, reactions: { '🔥': ['U2'] } }),
+        expect.objectContaining({ replyTo: parent.ts, reactions: { '🔥': ['U2'] } }),
+      ]),
+    )
+  })
+
   test('a live reply updates its parent, and a replied notice is no message of its own', async () => {
     const given = setup()
     const parent = given.slack.post('C1', 'U2', 'question')
@@ -632,6 +659,28 @@ describe('workspace-wide channel events', () => {
     expect(shown).toContain('C7')
     expect(shown).not.toContain('C8')
     expect(shown).not.toContain('C9')
+  })
+})
+
+describe('people changing', () => {
+  test('a new display name renames the direct conversation with that person', async () => {
+    const given = setup()
+    const { connection, events } = await connect(given, {
+      token: 'xoxp-good',
+      appToken: 'xapp-good',
+    })
+    await connection.conversations()
+    await vi.waitFor(() => expect(given.slack.lines).toHaveLength(1))
+    given.slack.event({
+      type: 'user_change',
+      user: { id: 'U2', name: 'mia', profile: { display_name: 'Mia R.' } },
+    })
+    await vi.waitFor(() =>
+      expect(events).toContainEqual({
+        t: 'conversation',
+        conversation: expect.objectContaining({ id: 'D1', title: 'Mia R.' }),
+      }),
+    )
   })
 })
 

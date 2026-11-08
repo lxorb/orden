@@ -3645,4 +3645,8 @@ export const ko: Dictionary = {
   'Copy name': '이름 복사',
   'Copy address': '주소 복사',
   'Send message': '메시지 보내기',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack이 이 앱 수준 토큰을 거부했습니다. Basic Information에서 connections:write가 있는 토큰을 생성하세요',
+  'A Slack channel name needs a letter or a number':
+    'Slack 채널 이름에는 글자나 숫자가 있어야 합니다',
 }

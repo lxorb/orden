@@ -3691,4 +3691,8 @@ export const my: Dictionary = {
   'Copy name': 'အမည် ကူးယူရန်',
   'Copy address': 'လိပ်စာ ကူးယူရန်',
   'Send message': 'မက်ဆေ့ချ် ပို့ရန်',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack က ဤအက်ပ်တိုကင်ကို ငြင်းပယ်ခဲ့သည်။ Basic Information အောက်တွင် connections:write ပါသော တိုကင်တစ်ခု ပြုလုပ်ပါ',
+  'A Slack channel name needs a letter or a number':
+    'Slack ချန်နယ်အမည်တွင် စာလုံး သို့မဟုတ် ဂဏန်း ပါရမည်',
 }

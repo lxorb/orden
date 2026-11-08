@@ -3861,4 +3861,8 @@ export const es: Dictionary = {
   'Copy name': 'Copiar nombre',
   'Copy address': 'Copiar dirección',
   'Send message': 'Enviar mensaje',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack rechazó ese token de aplicación. Genera uno con connections:write en Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'El nombre de un canal de Slack necesita una letra o un número',
 }

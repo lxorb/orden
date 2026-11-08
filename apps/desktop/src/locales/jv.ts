@@ -3674,4 +3674,8 @@ export const jv: Dictionary = {
   'Copy name': 'Salin jeneng',
   'Copy address': 'Salin alamat',
   'Send message': 'Kirim pesen',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack nolak token aplikasi kuwi. Gawe siji nganggo connections:write ing Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'Jeneng kanal Slack kudu ana huruf utawa angka',
 }

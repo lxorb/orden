@@ -3893,4 +3893,8 @@ export const uk: Dictionary = {
   'Copy name': 'Копіювати ім’я',
   'Copy address': 'Копіювати адресу',
   'Send message': 'Надіслати повідомлення',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack відхилив цей токен застосунку. Створіть новий із connections:write у розділі Basic Information',
+  'A Slack channel name needs a letter or a number':
+    'Назва каналу Slack має містити літеру або цифру',
 }

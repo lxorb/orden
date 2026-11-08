@@ -3735,4 +3735,7 @@ export const gu: Dictionary = {
   'Copy name': 'નામ કૉપિ કરો',
   'Copy address': 'સરનામું કૉપિ કરો',
   'Send message': 'સંદેશ મોકલો',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack એ આ ઍપ-સ્તર ટોકન નકાર્યો. Basic Information માં connections:write સાથે ટોકન બનાવો',
+  'A Slack channel name needs a letter or a number': 'Slack ચૅનલના નામમાં અક્ષર અથવા અંક હોવો જોઈએ',
 }

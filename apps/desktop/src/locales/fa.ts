@@ -3757,4 +3757,7 @@ export const fa: Dictionary = {
   'Copy name': 'کپی نام',
   'Copy address': 'کپی نشانی',
   'Send message': 'ارسال پیام',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack این توکن سطح برنامه را نپذیرفت. در Basic Information یکی با connections:write بسازید',
+  'A Slack channel name needs a letter or a number': 'نام کانال Slack به یک حرف یا عدد نیاز دارد',
 }

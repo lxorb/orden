@@ -3561,4 +3561,7 @@ export const yue: Dictionary = {
   'Copy name': '複製名稱',
   'Copy address': '複製地址',
   'Send message': '傳送訊息',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack 拒絕咗呢個應用程式層級權杖。請喺 Basic Information 度產生一個有 connections:write 嘅權杖',
+  'A Slack channel name needs a letter or a number': 'Slack 頻道名要有字母或者數字',
 }

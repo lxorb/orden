@@ -3762,4 +3762,8 @@ export const pa: Dictionary = {
   'Copy name': 'ਨਾਮ ਕਾਪੀ ਕਰੋ',
   'Copy address': 'ਪਤਾ ਕਾਪੀ ਕਰੋ',
   'Send message': 'ਸੁਨੇਹਾ ਭੇਜੋ',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack ਨੇ ਇਹ ਐਪ-ਪੱਧਰ ਟੋਕਨ ਰੱਦ ਕਰ ਦਿੱਤਾ। Basic Information ਵਿੱਚ connections:write ਵਾਲਾ ਟੋਕਨ ਬਣਾਓ',
+  'A Slack channel name needs a letter or a number':
+    'Slack ਚੈਨਲ ਦੇ ਨਾਮ ਵਿੱਚ ਕੋਈ ਅੱਖਰ ਜਾਂ ਅੰਕ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ',
 }

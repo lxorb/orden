@@ -3614,4 +3614,7 @@ export const th: Dictionary = {
   'Copy name': 'คัดลอกชื่อ',
   'Copy address': 'คัดลอกที่อยู่',
   'Send message': 'ส่งข้อความ',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack ปฏิเสธโทเค็นแอปนี้ สร้างโทเค็นใหม่ที่มี connections:write ใน Basic Information',
+  'A Slack channel name needs a letter or a number': 'ชื่อช่อง Slack ต้องมีตัวอักษรหรือตัวเลข',
 }

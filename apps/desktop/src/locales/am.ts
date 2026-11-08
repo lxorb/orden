@@ -3672,4 +3672,7 @@ export const am: Dictionary = {
   'Copy name': 'ስም ቅዳ',
   'Copy address': 'አድራሻ ቅዳ',
   'Send message': 'መልዕክት ላክ',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack ይህን የመተግበሪያ ደረጃ ቶከን አልተቀበለም። በBasic Information ስር connections:write ያለው ቶከን ይፍጠሩ',
+  'A Slack channel name needs a letter or a number': 'የSlack ቻናል ስም ፊደል ወይም ቁጥር ያስፈልገዋል',
 }

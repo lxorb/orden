@@ -3776,4 +3776,8 @@ export const gsw: Dictionary = {
   'Copy name': 'Name kopiere',
   'Copy address': 'Adrässe kopiere',
   'Send message': 'Nachricht schicke',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack het das App-Token abglehnt. Mach under Basic Information eis mit connections:write',
+  'A Slack channel name needs a letter or a number':
+    'En Slack-Kanalname bruucht en Buechstabe oder e Zahl',
 }

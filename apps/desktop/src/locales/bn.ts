@@ -3745,4 +3745,8 @@ export const bn: Dictionary = {
   'Copy name': 'নাম কপি করুন',
   'Copy address': 'ঠিকানা কপি করুন',
   'Send message': 'বার্তা পাঠান',
+  'Slack refused that app-level token. Generate one with connections:write under Basic Information':
+    'Slack এই অ্যাপ-স্তরের টোকেন প্রত্যাখ্যান করেছে। Basic Information-এ connections:write সহ একটি টোকেন তৈরি করুন',
+  'A Slack channel name needs a letter or a number':
+    'Slack চ্যানেলের নামে একটি অক্ষর বা সংখ্যা থাকতে হবে',
 }
