@@ -6,6 +6,7 @@ import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } fr
 import { pushPlane, readPlane } from '@orden/rooms/plane'
 import * as Y from 'yjs'
 import { sha256 } from '../src/crypto'
+import { NOW_READS } from '@orden/sync-core/wire'
 import { roomsRevoked } from '../src/rooms'
 import { MOST_DOCUMENT_BYTES, TOO_LARGE_IN_A_ROOM } from '../src/rooms/state'
 import { writesOf } from '../src/rooms/kind'
@@ -1393,7 +1394,7 @@ describe('somebody who stops being in the space while the file is open', () => {
         body: { role: 'read' },
       })
     })
-    expect(socket.closed).toBe(false)
+    expect(socket.closedWith?.code).toBe(NOW_READS)
     expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
   })
 
@@ -1512,7 +1513,7 @@ describe('somebody who stops being in the space while the file is open', () => {
       await typeInto(socket)
       await live.of(noteId).room.alarm()
     })
-    expect(socket.closed).toBe(false)
+    expect(socket.closedWith?.code).toBe(NOW_READS)
     expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
     const read = await call(env, `/v1/notes/${noteId}`, { token: owner })
     expect(read.json.content).toBe(OPENING)
@@ -1541,6 +1542,26 @@ describe('somebody who stops being in the space while the file is open', () => {
     })
 
     const socket = await signedIn(writer, writerId)
+
+    expect(socket.closedWith?.code).toBe(NOW_READS)
+    expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
+  })
+
+  test('lets a reader who joins as one stay, with nothing to be told', async () => {
+    await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+      method: 'PATCH',
+      token: owner,
+      body: { role: 'read' },
+    })
+
+    const socket = new FakeSocket()
+    await live
+      .of(noteId)
+      .room.enter(
+        socket as unknown as WebSocket,
+        { noteId, spaceId, kind: 'words' },
+        { writes: false, who: writerId, login: await sha256(writer) },
+      )
 
     expect(socket.closed).toBe(false)
     expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
@@ -1687,7 +1708,7 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(theirs.closed).toBe(false)
   })
 
-  test('keeps the socket but stops writing when the role drops to reading', async () => {
+  test('tells the socket it only reads now, and takes nothing it still sends, when the role drops to reading', async () => {
     const socket = await open(writerId)
     const { room: made, state } = live.of(noteId)
 
@@ -1697,7 +1718,7 @@ describe('somebody who stops being in the space while the file is open', () => {
       body: { role: 'read' },
     })
 
-    expect(socket.closed).toBe(false)
+    expect(socket.closedWith?.code).toBe(NOW_READS)
 
     const device = new Device(socket)
     await say(made, state, socket, syncStep1(device.doc))
@@ -1791,7 +1812,7 @@ describe('somebody who stops being in the space while the file is open', () => {
       body: { email: WRITER, role: 'read' },
     })
 
-    expect(socket.closed).toBe(false)
+    expect(socket.closedWith?.code).toBe(NOW_READS)
     expect(await typedThrough(socket)).not.toContain('typed after')
   })
 

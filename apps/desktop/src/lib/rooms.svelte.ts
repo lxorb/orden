@@ -226,6 +226,16 @@ class Rooms {
       if (signedOut) void account.recheck()
     }
 
+    const demoted = () => {
+      this.letGo(key)
+      void account
+        .loadSpaces()
+        .catch(() => undefined)
+        .then(() => {
+          this.follow(this.open)
+        })
+    }
+
     const arrivals = open.note.arrivals
     const holds = () => open.note.arrivals === arrivals
 
@@ -238,6 +248,7 @@ class Rooms {
       gone,
       refused,
       shut,
+      demoted,
       holds,
     }
 

@@ -16,6 +16,7 @@ import {
   frame,
   MOST_UPDATE_BYTES,
   NEW_EPOCH,
+  NOW_READS,
   type PushAnswer,
   unframe,
 } from '@orden/sync-core'
@@ -147,6 +148,12 @@ function attach(socket: WebSocket, change: Partial<Attached>) {
     ...(login === undefined ? {} : { login }),
   }
   socket.serializeAttachment({ ...kept, ...change } satisfies Attached)
+}
+
+function demote(socket: WebSocket, awareness: Awareness) {
+  attach(socket, { mayWrite: false })
+  forget(awareness, announcedBy(socket), socket)
+  socket.close(NOW_READS, 'only reads this note now')
 }
 
 const PUSHED = 'push'
@@ -415,7 +422,10 @@ export class NoteRoom implements DurableObject {
     const may = await accessOf(this.env, noteId, [login])
       .then((found) => found.get(login))
       .catch(() => undefined)
-    if (may === 'read') attach(server, { mayWrite: false })
+    if (may === 'read' && mayWrite(server)) {
+      demote(server, this.awareness)
+      return false
+    }
     if (may !== 'none') return true
 
     server.close(1008, 'no longer in this space')
@@ -527,7 +537,8 @@ export class NoteRoom implements DurableObject {
         socket.close(1008, 'no longer in this space')
         closed.add(socket)
       } else if (may === 'read' && mayWrite(socket)) {
-        attach(socket, { mayWrite: false })
+        demote(socket, this.awareness)
+        closed.add(socket)
       }
     }
 
@@ -561,7 +572,7 @@ export class NoteRoom implements DurableObject {
         access && login !== undefined ? (access.get(login) ?? 'ended') : toRead ? 'read' : 'none'
 
       if (may === 'write' || may === 'read') {
-        if (may === 'read') attach(socket, { mayWrite: false })
+        if (may === 'read' && mayWrite(socket)) demote(socket, this.awareness)
         kept = true
         continue
       }

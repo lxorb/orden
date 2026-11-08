@@ -52,6 +52,15 @@ export async function carry(
       uncarry(key)
       if (signedOut) void account.recheck()
     },
+    demoted: () => {
+      uncarry(key)
+      void account
+        .loadSpaces()
+        .catch(() => undefined)
+        .then(() => {
+          carried.gone()
+        })
+    },
     holds: () => true,
     carrying: carried.carrying,
   }

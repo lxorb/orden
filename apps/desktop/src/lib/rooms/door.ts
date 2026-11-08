@@ -1,5 +1,5 @@
 import { awarenessUpdate, forget, isCatchUp, receive, syncStep1, syncUpdate } from '@orden/rooms'
-import { shutOut, SIGNED_OUT } from '@orden/sync-core/wire'
+import { NOW_READS, shutOut, SIGNED_OUT } from '@orden/sync-core/wire'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { RoomSocket } from './socket'
@@ -32,6 +32,7 @@ export interface Opening {
   gone: () => void
   refused: (said: string) => void
   shut: (signedOut: boolean) => void
+  demoted: () => void
 }
 
 export class RoomDoor {
@@ -147,6 +148,13 @@ export class RoomDoor {
       this.socket.stop()
       this.alone()
       this.opening.shut(code === SIGNED_OUT)
+      return
+    }
+
+    if (code === NOW_READS) {
+      this.socket.stop()
+      this.alone()
+      this.opening.demoted()
       return
     }
 

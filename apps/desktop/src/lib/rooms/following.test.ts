@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { emptyCanvas } from '@orden/markdown/canvas'
-import { receive, syncUpdate, TEXT } from '@orden/rooms'
+import { isEdit, receive, syncUpdate, TEXT } from '@orden/rooms'
+import { NOW_READS } from '@orden/sync-core/wire'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { PlaneSurface } from '../canvas/shared'
@@ -73,13 +74,17 @@ vi.mock('./who', () => ({
   personName: () => undefined,
   personFace: () => ({}),
 }))
-const session = vi.hoisted(() => ({ token: 'session', name: null, rechecked: 0 }))
+const session = vi.hoisted(() => ({ token: 'session', name: null, rechecked: 0, listed: 0 }))
 
 vi.mock('../account.svelte', () => ({
   account: Object.assign(session, {
     forgetWithSession: () => undefined,
     recheck: () => {
       session.rechecked += 1
+      return Promise.resolve()
+    },
+    loadSpaces: () => {
+      session.listed += 1
       return Promise.resolve()
     },
   }),
@@ -198,6 +203,44 @@ beforeEach(() => {
   sockets.opened.length = 0
   session.token = 'session'
   session.rechecked = 0
+  session.listed = 0
+})
+
+describe('a writer made a reader while the note is open in its room', () => {
+  test('asks again what it may do, and joins the room again rather than redialling', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+
+    socket.went(NOW_READS)
+
+    expect(socket.stopped).toBe(true)
+    expect(session.listed).toBe(1)
+    await until(() => sockets.opened.length === 2, 'the room joined again')
+  })
+
+  test('shows the room’s words again, not what the room no longer took from it', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+
+    note.live.replace('# A\ntyped after it was made a reader\n')
+    note.flush()
+    socket.take()
+    socket.went(NOW_READS)
+
+    await until(() => sockets.opened.length === 2, 'the room joined again')
+    const back = latest()
+    back.arrive()
+    carry(back, server)
+    await until(() => rooms.carries('note-1'), 'the room to catch up again')
+    for (const message of back.take()) {
+      if (!isEdit(message)) server.answer(message)
+    }
+
+    expect(server.file).toBe('# A\n')
+    expect(words(note)).toBe('# A\n')
+  })
 })
 
 describe('a space renamed while one of its notes is open in a room', () => {

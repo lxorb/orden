@@ -206,6 +206,8 @@ export type RoomNews =
 
 export const NEW_EPOCH = 4001
 
+export const NOW_READS = 4002
+
 export const SHUT_OUT = 1008
 
 export const SIGNED_OUT = 4401
