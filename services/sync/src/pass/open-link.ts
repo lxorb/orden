@@ -35,7 +35,7 @@ openLink.get('/:id', async (context) => {
   const opened = await db
     .prepare(
       `update pass_links set views = views + 1
-        where id = ? and expires_at > ? and body <> ''
+        where id = ? and expires_at > ? and body <> '' and held_at is null
           and (max_views is null or views < max_views)
        returning body, expires_at, max_views, views`,
     )

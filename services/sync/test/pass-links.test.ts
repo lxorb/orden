@@ -143,6 +143,53 @@ describe('a secure link', () => {
     expect((await open(link.id)).status).toBe(404)
   })
 
+  test('rests while its item is in the trash, whoever put it there, and opens again once it is back', async () => {
+    const bob = await person(env, 'bob@example.com')
+    vault = await sharedVault(env, ada, bob, 'editor')
+    item = anId()
+    await api.item(ada, vault, item)
+    const link = (await makeLink(ada)).json.link!
+    const put = (rev: number, trashed?: boolean) =>
+      passCall(env, bob, 'PUT', `/items/${vault}/${item}`, {
+        rev,
+        key: sealed(),
+        body: sealed(120),
+        keyVersion: 1,
+        ...(trashed === undefined ? {} : { trashed }),
+      })
+
+    expect((await put(1, true)).status).toBe(200)
+    expect((await open(link.id)).status).toBe(410)
+    expect((await put(2)).status).toBe(200)
+    expect((await open(link.id)).status).toBe(410)
+    expect((await put(3, false)).status).toBe(200)
+    expect((await open(link.id)).status).toBe(200)
+    expect((await put(4)).status).toBe(200)
+    expect((await open(link.id)).status).toBe(200)
+  })
+
+  test('is not put to rest by a write that did not land', async () => {
+    const link = (await makeLink(ada)).json.link!
+    const stale = await passCall(env, ada, 'PUT', `/items/${vault}/${item}`, {
+      rev: 7,
+      key: sealed(),
+      body: sealed(120),
+      keyVersion: 1,
+      trashed: true,
+    })
+    expect(stale.status).toBe(409)
+    expect((await open(link.id)).status).toBe(200)
+    const odd = await passCall(env, ada, 'PUT', `/items/${vault}/${item}`, {
+      rev: 1,
+      key: sealed(),
+      body: sealed(120),
+      keyVersion: 1,
+      trashed: 'yes',
+    })
+    expect(odd.status).toBe(400)
+    expect((await open(link.id)).status).toBe(200)
+  })
+
   test('is not made for an item deleted while the link was being written', async () => {
     env.justBefore(/insert into pass_links/, () =>
       env.db.prepare("update pass_items set deleted_at = 1, body = '' where id = ?").run(item),

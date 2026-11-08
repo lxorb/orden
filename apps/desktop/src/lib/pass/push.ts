@@ -306,16 +306,26 @@ async function mergedItem(
   })
 }
 
+async function trashedOf(world: SyncWorld, row: ItemRow): Promise<boolean | undefined> {
+  return await world.exclusive(async (held) => {
+    const box = held?.vaults.get(row.vault)
+    const open = box ? await opened(box, row) : null
+    return open ? open.envelope.trashed !== null : undefined
+  })
+}
+
 async function pushedItem(world: SyncWorld, first: ItemRow): Promise<Sent> {
   const { rows, api } = world
   let row = first
   let rev = (await itemBaseOf(rows, row.vault, row.id))?.rev ?? 0
   for (let tries = 0; tries < TRIES; tries++) {
+    const trashed = await trashedOf(world, row)
     const answer = await api.putItem(row.vault, row.id, {
       rev,
       key: row.key,
       body: row.body,
       keyVersion: row.keyVersion,
+      ...(trashed === undefined ? {} : { trashed }),
     })
     if (answer.ok) {
       await settledItem(world, row, answer.value)
