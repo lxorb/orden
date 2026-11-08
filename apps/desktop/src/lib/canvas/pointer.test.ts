@@ -1314,6 +1314,32 @@ describe('a second finger', () => {
     expect(verbs(effects).slice(-1)).toEqual(['unrub'])
   })
 
+  test('takes back what a finger rubbed out when the pen comes down and takes over', () => {
+    const { machine, effects } = play(
+      [
+        down({ id: 1, pointer: 'touch', hit: hit({ stroke: 's1' }) }),
+        down({ id: 2, pointer: 'pen', time: 900 }),
+      ],
+      context({ tool: 'erase', penSeen: true, fingerDraws: true }),
+    )
+
+    expect(machine.driver?.kind).toBe('pen')
+    expect(verbs(effects)).toContain('unrub')
+    expect(verbs(effects).indexOf('unrub')).toBeLessThan(verbs(effects).lastIndexOf('cut'))
+  })
+
+  test('keeps what the pen rubbed out when the pen comes down again', () => {
+    const { effects } = play(
+      [
+        down({ id: 1, pointer: 'pen', hit: hit({ stroke: 's1' }) }),
+        down({ id: 2, pointer: 'pen', time: 900 }),
+      ],
+      context({ tool: 'erase' }),
+    )
+
+    expect(verbs(effects)).not.toContain('unrub')
+  })
+
   test('is a palm rather than a pinch once the eraser has begun rubbing out', () => {
     const { machine } = play(
       [down({ id: 1, pointer: 'touch' }), second({ time: 900 })],
