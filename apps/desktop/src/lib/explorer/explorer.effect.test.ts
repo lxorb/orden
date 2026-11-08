@@ -208,7 +208,7 @@ describe('a file explorer', () => {
     }
   })
 
-  test('looks at a picture in Orden when it is opened, never handing it to the system', async () => {
+  test('hands a picture to the system app when it is opened, looking at nothing in Orden', async () => {
     const { view } = await explorer()
     await view.go('/home/me/Pictures')
     await settled()
@@ -217,9 +217,8 @@ describe('a file explorer', () => {
     )
     row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
     await settled()
-    expect(opened).toEqual([])
-    expect(target.querySelector('.look')).not.toBeNull()
-    expect(view.picked.cursor).toBe('a.png')
+    expect(opened).toEqual(['/home/me/Pictures/a.png'])
+    expect(target.querySelector('.look')).toBeNull()
   })
 
   test('goes where a path typed into the bar says', async () => {
