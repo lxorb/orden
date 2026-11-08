@@ -252,7 +252,7 @@
 
   .help ol {
     margin: var(--space-1) 0;
-    padding-left: var(--space-4);
+    padding-inline-start: var(--space-4);
   }
 
   .link {

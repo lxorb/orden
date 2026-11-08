@@ -289,7 +289,7 @@ export const run = {
                 placeholder: t('Search'),
                 options: Array.from({ length: doc.numPages }, (_, index) => ({
                   id: String(index + 1),
-                  label: `${t('Page')} ${index + 1}`,
+                  label: t('Page {number}', { number: index + 1 }),
                 })),
               })
         if (!selected) return
