@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { linearly } from '../../../../../scripts/growth'
 
 vi.stubGlobal('localStorage', {
   getItem: () => null,
@@ -829,5 +830,39 @@ describe('framing what is picked', () => {
 
     expect(store.camera.x).toBeCloseTo(425)
     expect(store.camera.y).toBeCloseTo(30)
+  })
+})
+
+describe('the menu of a canvas with thousands picked', () => {
+  const view = {
+    ...{ width: 800, height: 600, path: null, name: 'Board', palette: {} as never },
+    ...{ onfind: () => undefined, onnarrow: () => undefined, again: () => undefined },
+    ...{ narrowed: false, trusted: false, bare: false, locked: null },
+  }
+  const stores = new Map<number, InstanceType<typeof CanvasStore>>()
+
+  function pickedAll(count: number) {
+    const held = stores.get(count)
+    if (held) return held
+    const { store } = opened()
+    const nodes = Array.from({ length: count }, (_, at) => card(`c${at}`, at * 300))
+    const dot = (x: number) => ({ x, y: 500, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })
+    const ink = Array.from({ length: count }, (_, at) => ({
+      ...{ id: `s${at}`, tool: 'pen' as const, color: '#000', size: 2 },
+      points: [dot(at), dot(at + 5)],
+    }))
+    store.edit({ ...store.canvas, nodes, ink })
+    store.pickAll([...nodes.map((one) => one.id), ...ink.map((one) => one.id)])
+    stores.set(count, store)
+    return store
+  }
+
+  test('opens in time that grows with the pick, not its square', () => {
+    const rows = linearly((count) => canvasMenu(pickedAll(count), { x: 10, y: 10 }, view), 4000)
+    const labels = rows.map((row) => row?.label)
+
+    expect(labels).toContain('Lock')
+    expect(labels).not.toContain('Ungroup')
+    expect(labels).not.toContain('Arrow at the end')
   })
 })
