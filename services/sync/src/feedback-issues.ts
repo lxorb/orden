@@ -71,7 +71,7 @@ function pictures(images: readonly string[] | undefined): string {
 
 export function issueBody(report: Report): string {
   const account = report.account
-    ? `\`${report.account.id}\` · ${cell(report.account.email)}`
+    ? `\`${report.account.id}\`, ${cell(report.account.email)}`
     : 'signed out'
   const head = `${fenced(report.text)}
 

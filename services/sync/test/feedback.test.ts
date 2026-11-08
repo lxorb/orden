@@ -43,7 +43,7 @@ describe('a report', () => {
     expect(answer.status).toBe(200)
     expect(await rows()).toEqual([{ user_id: null, ...REPORT }])
     expect(mailed).toContain(`[mail] ${OWNER} - Orden feedback: The tab strip lost its line.`)
-    expect(mailed).toContain('From somebody signed out · Orden 0.17.0 · Windows')
+    expect(mailed).toContain('From somebody signed out, Orden 0.17.0, Windows')
     expect(mailed).toContain('a line')
   })
 

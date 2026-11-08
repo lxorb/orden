@@ -371,7 +371,7 @@ ${shell.bar ?? ''}
 <div class="frame">
 ${shell.left ?? ''}
 <div class="middle"><main id="write">${body}
-<footer>${author ? `${escape(author)} · ` : ''}Published with <a href="${env.APP_ORIGIN}">Orden</a></footer>
+<footer>${author ? `<span>${escape(author)}</span>` : ''}<span>Published with <a href="${env.APP_ORIGIN}">Orden</a></span></footer>
 </main>${shell.under ? `<div class="under">${shell.under}</div>` : ''}</div>
 ${shell.right ?? ''}
 </div></body></html>`
@@ -1022,7 +1022,7 @@ async function served(
     })
 
     return page(
-      about(query ? `${query} · ${heading}` : `Search ${heading}`, {
+      about(query ? `${query}, ${heading}` : `Search ${heading}`, {
         url: `${url.origin}/search`,
         noindex: true,
       }),
@@ -1050,7 +1050,7 @@ async function served(
 
   if (slug === 'graph') {
     return page(
-      about(`Graph · ${heading}`, { url: `${url.origin}/graph` }),
+      about(`Graph, ${heading}`, { url: `${url.origin}/graph` }),
       `<h1>Graph</h1>${graphBody(pageList, '')}`,
       env,
       {
