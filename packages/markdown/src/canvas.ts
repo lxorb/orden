@@ -507,6 +507,7 @@ export function holdsCanvas(text: string): boolean {
 
 function apart(file: Record<string, unknown>): Record<string, unknown> {
   const taken = new Set<string>()
+  const counted = new Map<string, number>()
 
   const kept = (list: unknown, kind: string): unknown => {
     if (!Array.isArray(list)) return list
@@ -516,8 +517,12 @@ function apart(file: Record<string, unknown>): Record<string, unknown> {
         taken.add(entry.id)
         return entry
       }
-      let id = `${entry.id}-${kind}`
-      for (let count = 2; taken.has(id); count++) id = `${entry.id}-${kind}-${String(count)}`
+      const base = `${entry.id}-${kind}`
+      let id = base
+      for (let count = counted.get(base) ?? 2; taken.has(id); count++) {
+        id = `${base}-${String(count)}`
+        counted.set(base, count + 1)
+      }
       taken.add(id)
       return { ...entry, id }
     })

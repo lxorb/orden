@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { linearly } from '../../../scripts/growth'
 import {
   blankCanvas,
   type Canvas,
@@ -1149,6 +1150,20 @@ describe('ids a canvas file uses twice', () => {
   test('a file whose ids are all its own is read as it is', () => {
     const plain = JSON.stringify({ nodes: [card('a', 'x')], edges: [] })
     expect(readCanvas(plain).nodes.map((one) => one.id)).toEqual(['a'])
+  })
+
+  test('a file whose cards all share one id is read in time that grows with the cards', () => {
+    const shared = (count: number) =>
+      JSON.stringify({ nodes: Array.from({ length: count }, () => card('a', 'x')), edges: [] })
+    const read = linearly((count) => readCanvas(shared(count)), 4000)
+
+    expect(read.nodes.map((one) => one.id).slice(0, 4)).toEqual([
+      'a',
+      'a-card',
+      'a-card-2',
+      'a-card-3',
+    ])
+    expect(new Set(read.nodes.map((one) => one.id)).size).toBe(read.nodes.length)
   })
 })
 
