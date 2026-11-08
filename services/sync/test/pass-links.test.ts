@@ -167,6 +167,24 @@ describe('a secure link', () => {
     expect(env.db.prepare('select count(*) as n from pass_links').get()).toEqual({ n: 0 })
   })
 
+  test('goes when its maker is made a viewer, who could not have made it', async () => {
+    const bob = await person(env, 'bob@example.com')
+    vault = await sharedVault(env, ada, bob, 'editor')
+    item = anId()
+    await api.item(ada, vault, item)
+    const theirs = (await makeLink(bob)).json.link!
+    const mine = (await makeLink(ada)).json.link!
+
+    const demoted = await passCall(env, ada, 'PUT', `/vaults/${vault}/members/bob@example.com`, {
+      role: 'viewer',
+      vouch: null,
+    })
+    expect(demoted.status).toBe(200)
+
+    expect((await open(theirs.id)).status).toBe(404)
+    expect((await open(mine.id)).status).toBe(200)
+  })
+
   test('is not made by a viewer, or for an item that is not there', async () => {
     const bob = await person(env, 'bob@example.com')
     vault = await sharedVault(env, ada, bob, 'viewer')

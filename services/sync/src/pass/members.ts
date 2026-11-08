@@ -256,6 +256,12 @@ members.put('/vaults/:id/members/:email', async (context) => {
             and ${holdsSql('?3', '?5', 'manager')}`,
       )
       .bind(role, role === 'manager' ? vouch : null, id, email, user.email),
+    db
+      .prepare(
+        `delete from pass_links where vault_id = ?1 and user_id = ?2
+            and not ${holdsSql('?1', '?3', 'editor')}`,
+      )
+      .bind(id, target.user_id ?? '', email),
   ])
   if (!results[1]?.meta.changes) {
     const after = await activeIn(context.env, id, user.email)
