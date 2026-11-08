@@ -765,6 +765,10 @@
     store.edit(coloured(canvas, store.picked, colour ?? DEFAULT_INK))
   }
 
+  function inkPicked(): boolean {
+    return writable && store.picked.some((id) => canvas.ink.some((one) => one.id === id))
+  }
+
   function duplicatePicked() {
     if (!writable || !store.picked.length) return
     const made = copied(canvas, store.picked)
@@ -793,7 +797,7 @@
 
   function pagesMenu(point: Point): MenuEntry[] {
     const page = pageAt(pages, point)
-    const ink = writable && store.picked.some((id) => canvas.ink.some((one) => one.id === id))
+    const ink = inkPicked()
     const chosen = chosenIn(host)
     const groups: MenuEntry[][] = [
       chosen
@@ -807,7 +811,11 @@
         : [],
       ink
         ? [
-            { label: t('Duplicate'), run: duplicatePicked },
+            {
+              label: t('Duplicate'),
+              hint: shortcuts.hint('canvas.duplicate'),
+              run: duplicatePicked,
+            },
             { label: t('Delete'), danger: true, run: deletePicked },
           ]
         : [],
@@ -1269,6 +1277,12 @@
     if (shortcuts.pressed('edit.redo', event) || shortcuts.pressed('edit.redo.alt', event)) {
       event.preventDefault()
       store.redo()
+      return
+    }
+
+    if (shortcuts.pressed('canvas.duplicate', event) && inkPicked()) {
+      event.preventDefault()
+      duplicatePicked()
       return
     }
 
