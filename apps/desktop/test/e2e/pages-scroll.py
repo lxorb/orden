@@ -13,7 +13,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 PAGES = int(os.environ.get("ORDEN_SCROLL_PAGES", "120"))
 LINES = 70
 FRAMES = int(os.environ.get("ORDEN_SCROLL_FRAMES", "360"))
-RATIO = 2.0
+RATIO = 12.0
 CHROMIUM = os.environ.get("ORDEN_ENGINE", "chromium") == "chromium"
 THROTTLE = float(os.environ.get("ORDEN_SCROLL_THROTTLE", "4"))
 
