@@ -179,3 +179,31 @@ test('Escape lets go of words chosen on a PDF page', () => {
   expect(getSelection()?.isCollapsed ?? true).toBe(true)
   words.remove()
 })
+
+function pointer(type: string, id: number, kind: string, x: number, y: number, buttons: number) {
+  const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y, buttons })
+  Object.defineProperties(event, {
+    pointerType: { value: kind },
+    pointerId: { value: id },
+    pressure: { value: buttons ? 0.5 : 0 },
+    tiltX: { value: 0 },
+    tiltY: { value: 0 },
+  })
+  host.querySelector('.pages')?.dispatchEvent(event)
+  flushSync()
+}
+
+test('a pen put down while a palm already rests on the page draws, as on a canvas', () => {
+  tools.choose('draw')
+  pointer('pointerdown', 9, 'touch', 60, 300, 1)
+  pointer('pointermove', 9, 'touch', 64, 304, 1)
+  pointer('pointerdown', 1, 'pen', 100, 200, 1)
+  for (let x = 110; x <= 200; x += 10) pointer('pointermove', 1, 'pen', x, 200, 1)
+  pointer('pointerup', 1, 'pen', 200, 200, 0)
+  pointer('pointerup', 9, 'touch', 64, 304, 0)
+
+  const drawn = store().canvas.ink.filter((stroke) => stroke.id !== 's')
+  expect(drawn).toHaveLength(1)
+  const xs = drawn[0]?.points.map((point) => point.x) ?? []
+  expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(50)
+})
