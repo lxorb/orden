@@ -28,6 +28,12 @@ export type {
 
 export const BASE: string = import.meta.env.VITE_ORDEN_API ?? 'https://orden.so'
 
+const FACE_HASH = /^[a-f0-9]{64}$/
+
+export function faceUrl(hash: string | null | undefined): string | null {
+  return hash && FACE_HASH.test(hash) ? `${BASE}/i/${hash}.webp` : null
+}
+
 export const ANSWERS_WITHIN = 120_000
 
 export const BYTES_WITHIN = 30 * 60_000

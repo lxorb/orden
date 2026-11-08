@@ -2,7 +2,7 @@ import type { Peer } from '@orden/editor'
 import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { accentColour, accentFor } from '../accents'
-import { BASE } from '../api'
+import { faceUrl } from '../api'
 import { isNumber, isRecord, isString } from '../stored'
 
 interface Named {
@@ -85,8 +85,6 @@ function namedIn(value: unknown): Named | null {
   }
 }
 
-const faceUrl = (hash: string | undefined) => (hash ? `${BASE}/i/${hash}.webp` : undefined)
-
 function seenIn(here: readonly Here[], mine: Named | null, scheme: 'dark' | 'light'): Seen {
   const self = mine?.id ?? mine?.person
   const people = new Map<string, Someone>()
@@ -156,7 +154,7 @@ export function peersIn(
       id,
       name,
       colour: accentColour(who.accent, scheme),
-      face: name === who.person ? faceUrl(who.face) : undefined,
+      face: name === who.person ? (faceUrl(who.face) ?? undefined) : undefined,
       head,
       anchor: anchor ?? head,
     })

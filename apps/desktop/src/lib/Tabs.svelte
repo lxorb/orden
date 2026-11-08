@@ -77,6 +77,7 @@
   import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
   import { initial } from './icons'
+  import { SvelteSet } from 'svelte/reactivity'
   import { dur, fade, stillness } from './motion'
   import Cross from './Cross.svelte'
 
@@ -84,6 +85,7 @@
 
   const pane = $derived(workspace.panes.at(paneId))
   const tabs = $derived(workspace.tabsIn(paneId))
+  const faceless = new SvelteSet<string>()
   const focused = $derived(workspace.panes.focusedId === paneId)
   const alone = $derived(workspace.panes.count < 2)
   const twinned = $derived(workspace.twins(paneId).length > 0)
@@ -1008,9 +1010,13 @@
                   <span
                     class="who face"
                     style:--fill={one.fill}
-                    style:background-image={one.face && `url("${one.face}")`}
                     transition:fade={{ duration: dur(190) }}
-                    >{one.face ? '' : initial(one.name)}</span
+                    >{initial(one.name)}{#if one.face && !faceless.has(one.face)}<img
+                        src={one.face}
+                        alt=""
+                        draggable="false"
+                        onerror={() => one.face && faceless.add(one.face)}
+                      />{/if}</span
                   >
                 {/each}
                 {#each { length: elsewhere } as _, at (at)}
@@ -1514,13 +1520,23 @@
   }
 
   .who.face {
+    position: relative;
     display: grid;
     place-items: center;
     width: 16px;
     height: 16px;
-    background: var(--fill) center / cover;
+    overflow: hidden;
+    background: var(--fill);
     color: var(--accent-ink);
     font: var(--weight-strong) 9px var(--font-ui);
+  }
+
+  .who.face img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .shut {

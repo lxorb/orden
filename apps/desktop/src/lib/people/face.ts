@@ -1,5 +1,3 @@
-import { BASE } from '../api'
-
 export interface Avatar {
   s: string
   l: string
@@ -19,10 +17,4 @@ export interface Face {
   avatar?: Avatar | null
   accent?: string | null
   key?: string
-}
-
-const HASH = /^[a-f0-9]{64}$/
-
-export function faceUrl(hash: string | null | undefined): string | null {
-  return hash && HASH.test(hash) ? `${BASE}/i/${hash}.webp` : null
 }

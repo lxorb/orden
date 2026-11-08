@@ -38,6 +38,89 @@ def has_text(selector: str, text: str) -> str:
     return f"[...document.querySelectorAll({selector!r})].some((one) => one.textContent.includes({text!r}))"
 
 
+WEAR_A_FACE = """async () => {
+  const token = localStorage.getItem('orden:session')
+  const made = async (size) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = size
+    const context = canvas.getContext('2d')
+    context.fillStyle = '#2f7d5b'
+    context.fillRect(0, 0, size, size)
+    context.fillStyle = '#f3c74a'
+    context.fillRect(size / 4, size / 4, size / 2, size / 2)
+    let blob = await new Promise((done) => canvas.toBlob(done, 'image/webp', 0.9))
+    if (blob?.type !== 'image/webp') blob = await new Promise((done) => canvas.toBlob(done, 'image/jpeg', 0.9))
+    const bytes = await blob.arrayBuffer()
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))
+    const hash = [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+    const put = await fetch('/v1/blobs/' + hash, {
+      method: 'PUT',
+      headers: { authorization: 'Bearer ' + token, 'content-type': blob.type },
+      body: bytes,
+    })
+    if (!put.ok) throw new Error('the picture was refused: ' + put.status)
+    return hash
+  }
+  const s = await made(96)
+  const l = await made(512)
+  const worn = await fetch('/v2/me/avatar', {
+    method: 'PUT',
+    headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' },
+    body: JSON.stringify({ s, l }),
+  })
+  if (!worn.ok) throw new Error('the face was refused: ' + worn.status)
+  return s
+}"""
+
+BROKEN = (
+    "[...document.querySelectorAll('img')].filter("
+    "(img) => img.complete && img.naturalWidth === 0 && img.getClientRects().length > 0"
+    ").map((img) => img.getAttribute('src'))"
+)
+
+
+def wore_a_face(page: Page) -> str:
+    small = page.evaluate(WEAR_A_FACE)
+    page.reload(wait_until="domcontentloaded")
+    say(f"the reader wears a face, {small[:12]}…")
+    return small
+
+
+def face_in_corner(page: Page, small: str) -> None:
+    wait_for(
+        page,
+        f"[...document.querySelectorAll('{CORNER} img')].some("
+        f"(img) => img.src.includes('/i/{small}') && img.complete && img.naturalWidth > 0)",
+        "the reader's face in the corner",
+    )
+    broken = page.evaluate(f"() => {BROKEN}")
+    if broken:
+        wrong(f"Pass shows a broken picture: {broken}")
+    page.locator(CORNER).screenshot(path=str(DRIVE.shots / "02-face.png"))
+    say("the corner wears the reader's face, and nothing on the page is a broken picture")
+
+
+def face_gone(page: Page) -> None:
+    page.route("**/i/*", lambda route: route.fulfill(status=404, body="Not found"))
+    page.reload(wait_until="domcontentloaded")
+    wait_for(page, has_text(".pass", "Pass is locked"), "Pass locked after a reload", STRETCH)
+    page.locator(".pass input[type=password]").fill(PASSWORD)
+    page.get_by_role("button", name="Unlock", exact=True).click()
+    wait_for(page, f"document.querySelector({CORNER!r})", "the corner after unlocking", STRETCH)
+    wait_for(
+        page,
+        f"[...document.querySelectorAll('{CORNER} .orden-badge')].some("
+        "(one) => /^\\S$/.test(one.textContent.trim()) && !one.querySelector('img'))",
+        "the initial in the corner once the face fails to load",
+    )
+    broken = page.evaluate(f"() => {BROKEN}")
+    if broken:
+        wrong(f"Pass shows a broken picture once the face fails: {broken}")
+    page.locator(CORNER).screenshot(path=str(DRIVE.shots / "02-face-gone.png"))
+    page.unroute("**/i/*")
+    say("a face that fails to load leaves the initial in the corner, never a broken picture")
+
+
 def named_as_pass(page: Page) -> None:
     title = page.title()
     if title != "Orden Pass":
@@ -204,15 +287,18 @@ def main() -> int:
         page.goto(worker.origin, wait_until="domcontentloaded")
         named_as_pass(page)
         signed_in(page, worker)
+        small = wore_a_face(page)
         set_up(page)
         corner(page)
+        face_in_corner(page, small)
         made_login(page)
         locked_and_opened(page)
         came_back(page)
+        face_gone(page)
         offered_a_reload(page)
         on_a_phone(page)
         signed_out(page)
-    return DRIVE.verdict("Pass on its own name: signed in, set up, a login made, locked and opened, the corner without a theme switch, a phone")
+    return DRIVE.verdict("Pass on its own name: signed in, set up, a login made, locked and opened, the corner without a theme switch and with the face or its initial, a phone")
 
 
 if __name__ == "__main__":

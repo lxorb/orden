@@ -210,8 +210,8 @@ def main() -> int:
 
         wait_for(
             member,
-            "() => [...document.querySelectorAll('.cm-orden-caret-face')].some("
-            f"  (one) => one.style.backgroundImage.includes({json.dumps(face['s'])}))",
+            "() => [...document.querySelectorAll('img.cm-orden-caret-face')].some("
+            f"  (one) => one.src.includes({json.dumps(face['s'])}))",
             "[member] the owner's face on the owner's caret",
         )
         member.locator(".cm-editor").first.screenshot(path=str(SHOTS / "caret-face.png"))
@@ -219,8 +219,8 @@ def main() -> int:
 
         tab = wait_for(
             member,
-            "() => [...document.querySelectorAll('.who.face')].some("
-            f"  (one) => one.style.backgroundImage.includes({json.dumps(face['s'])}))",
+            "() => [...document.querySelectorAll('.who.face img')].some("
+            f"  (one) => one.src.includes({json.dumps(face['s'])}))",
             "[member] the owner's face on the tab",
         )
         if tab:
