@@ -331,25 +331,66 @@ export function insideGroup(group: Box, node: Box): boolean {
   )
 }
 
-export function dragged(canvas: Canvas, picked: readonly string[]): string[] {
-  const moving = new Set(picked)
-  const groups = canvas.nodes.filter((node) => node.type === 'group')
-  if (!groups.length) return [...moving]
+export function containing<T>(items: readonly T[], box: (one: T) => Box): (group: Box) => T[] {
+  const boxes = items.map(box)
+  const order = boxes.map((_, at) => at).sort((a, b) => (boxes[a]?.x ?? 0) - (boxes[b]?.x ?? 0))
+  const lefts = order.map((at) => boxes[at]?.x ?? 0)
 
-  for (;;) {
-    const before = moving.size
-
-    for (const group of groups) {
-      if (!moving.has(group.id)) continue
-
-      for (const node of canvas.nodes) {
-        if (node.id === group.id || node.locked || moving.has(node.id)) continue
-        if (insideGroup(boxOf(group), boxOf(node))) moving.add(node.id)
-      }
+  return (group) => {
+    let low = 0
+    let high = lefts.length
+    while (low < high) {
+      const middle = (low + high) >> 1
+      if ((lefts[middle] ?? 0) < group.x) low = middle + 1
+      else high = middle
     }
 
-    if (moving.size === before) return [...moving]
+    const out: T[] = []
+    for (let at = low; at < order.length && (lefts[at] ?? 0) <= group.x + group.width; at++) {
+      const one = order[at] ?? 0
+      const held = boxes[one]
+      const item = items[one]
+      if (held && item !== undefined && insideGroup(group, held)) out.push(item)
+    }
+    return out
   }
+}
+
+export function gathered(
+  groups: readonly CanvasNode[],
+  moving: Set<string>,
+  inside: () => (group: Box) => CanvasNode[],
+): CanvasNode[] {
+  const waiting = groups.slice()
+  const reached: CanvasNode[] = []
+
+  for (let group = waiting.pop(); group; group = waiting.pop()) {
+    reached.push(group)
+    for (const node of inside()(boxOf(group))) {
+      if (moving.has(node.id)) continue
+      moving.add(node.id)
+      if (node.type === 'group') waiting.push(node)
+    }
+  }
+
+  return reached
+}
+
+export function dragged(canvas: Canvas, picked: readonly string[]): string[] {
+  const moving = new Set(picked)
+  const groups = canvas.nodes.filter((node) => node.type === 'group' && moving.has(node.id))
+  let inside: ((group: Box) => CanvasNode[]) | null = null
+  gathered(
+    groups,
+    moving,
+    () =>
+      (inside ??= containing(
+        canvas.nodes.filter((node) => !node.locked),
+        boxOf,
+      )),
+  )
+
+  return [...moving]
 }
 
 export const HANDLES = [

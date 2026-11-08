@@ -1,5 +1,5 @@
 import type { Canvas, CanvasNode } from './format'
-import { reach } from './edits'
+import { reacher } from './edits'
 import { bounds, type Box, boxOf } from './geometry'
 import { transformed } from './ink'
 
@@ -30,14 +30,16 @@ function chosen(canvas: Canvas, picked: readonly string[]): CanvasNode[] {
 
 function shifted(canvas: Canvas, moves: ReadonlyMap<string, { dx: number; dy: number }>): Canvas {
   const byId = new Map<string, { dx: number; dy: number }>()
+  const nodes = new Map(canvas.nodes.map((one) => [one.id, one]))
+  const reach = reacher(canvas)
 
   for (const [id, move] of moves) {
     if (!move.dx && !move.dy) continue
-    const node = canvas.nodes.find((one) => one.id === id)
+    const node = nodes.get(id)
     const whole = node
       ? { dx: Math.round(node.x + move.dx) - node.x, dy: Math.round(node.y + move.dy) - node.y }
       : move
-    for (const carried of reach(canvas, [id])) {
+    for (const carried of reach([id])) {
       if (!byId.has(carried)) byId.set(carried, whole)
     }
   }

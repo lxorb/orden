@@ -11,10 +11,11 @@ import {
   bounds,
   boxOf,
   type Box,
+  containing,
   dragged,
+  gathered,
   GRID,
   type HandleId,
-  insideGroup,
   isLineShape,
   keptAspect,
   overlaps,
@@ -35,19 +36,38 @@ function nodeById(canvas: Canvas, id: string): CanvasNode | undefined {
   return canvas.nodes.find((node) => node.id === id)
 }
 
-export function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
-  const going = new Set(dragged(canvas, picked))
-  const groups = canvas.nodes.filter((node) => node.type === 'group' && going.has(node.id))
+export function reacher(canvas: Canvas): (picked: readonly string[]) => Set<string> {
+  const groups = new Map<string, CanvasNode>()
+  for (const node of canvas.nodes) if (node.type === 'group') groups.set(node.id, node)
+  let cards: ((group: Box) => CanvasNode[]) | null = null
+  let strokes: ((group: Box) => InkStroke[]) | null = null
+  const inside = () =>
+    (cards ??= containing(
+      canvas.nodes.filter((node) => !node.locked),
+      boxOf,
+    ))
 
-  if (groups.length) {
-    for (const stroke of canvas.ink) {
-      if (going.has(stroke.id)) continue
-      if (groups.some((group) => insideGroup(boxOf(group), strokeBox(stroke)))) going.add(stroke.id)
+  return (picked) => {
+    const going = new Set(picked)
+    if (!groups.size) return going
+
+    const chosen = [...going].flatMap((id) => {
+      const group = groups.get(id)
+      return group ? [group] : []
+    })
+    const reached = gathered(chosen, going, inside)
+    if (!reached.length || !canvas.ink.length) return going
+
+    strokes ??= containing(canvas.ink, strokeBox)
+    for (const group of reached) {
+      for (const stroke of strokes(boxOf(group))) going.add(stroke.id)
     }
+    return going
   }
+}
 
-  for (const id of picked) going.add(id)
-  return going
+export function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
+  return reacher(canvas)(picked)
 }
 
 export function idSet(ids: readonly string[]): ReadonlySet<string> {
