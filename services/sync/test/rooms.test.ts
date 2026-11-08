@@ -6,7 +6,7 @@ import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } fr
 import { pushPlane, readPlane } from '@orden/rooms/plane'
 import * as Y from 'yjs'
 import { sha256 } from '../src/crypto'
-import { NOW_READS } from '@orden/sync-core/wire'
+import { BEAT, BEAT_ANSWER, NOW_READS } from '@orden/sync-core/wire'
 import { roomsRevoked } from '../src/rooms'
 import { MOST_DOCUMENT_BYTES, TOO_LARGE_IN_A_ROOM } from '../src/rooms/state'
 import { writesOf } from '../src/rooms/kind'
@@ -90,6 +90,12 @@ describe('a room', () => {
   })
 
   afterEach(() => env.close())
+
+  test('answers a device’s beat by itself, so a quiet connection can be told from a dead one', () => {
+    const { state } = room(env)
+
+    expect(state.autoResponse).toEqual({ request: BEAT, response: BEAT_ANSWER })
+  })
 
   test('opens on the note as the store holds it', async () => {
     const { room: made, state } = room(env)

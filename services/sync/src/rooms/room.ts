@@ -12,6 +12,8 @@ import {
 import { fold } from '@orden/rooms/fold'
 import {
   ackFrame,
+  BEAT,
+  BEAT_ANSWER,
   epochFrame,
   frame,
   MOST_UPDATE_BYTES,
@@ -285,6 +287,7 @@ export class NoteRoom implements DurableObject {
     env: Env,
   ) {
     this.env = steadyEnv(env)
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(BEAT, BEAT_ANSWER))
     this.state = new RoomState(ctx.storage)
     this.awareness = new Awareness(this.state.doc)
     this.listen()
