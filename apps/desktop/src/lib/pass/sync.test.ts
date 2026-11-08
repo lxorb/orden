@@ -99,6 +99,13 @@ describe('the Pass API on the device', () => {
     ).rejects.toBeInstanceOf(Refused)
   })
 
+  test('hands back an account out of space as a refusal, so the sync still pulls', async () => {
+    const { api } = fake(() => ({ status: 507, body: { error: 'out of space' } }))
+    expect(
+      await api.putItem('v', 'i', { rev: 1, key: 'a', body: 'b', keyVersion: 1 }),
+    ).toMatchObject({ ok: false, status: 507, error: 'out of space' })
+  })
+
   test('refuses changes it cannot read', async () => {
     const { api } = fake(() => ({ status: 200, body: { seq: 'x' } }))
     await expect(api.changes(0)).rejects.toThrow('unreadable')
