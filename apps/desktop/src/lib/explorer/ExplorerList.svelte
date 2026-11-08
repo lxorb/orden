@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { dropOver } from '../drag-paths'
+  import { carried, dropOver } from '../drag-paths'
   import { tick, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { spelled, type Spelling } from '../list-keys'
   import { shortcuts } from '../shortcuts.svelte'
   import { readableSize } from '../usage.svelte'
   import { steppedKey } from '../direction'
-  import { isPicturePath, nameOf, folderOf } from '../space-paths'
+  import { isPicturePath, nameOf, folderOf, samePath } from '../space-paths'
   import { menu } from '../menu.svelte'
   import { when } from '../when'
   import { renamePath } from './changes'
@@ -287,8 +287,13 @@
     startDrag(event, view.chosen)
   }
 
+  function carriesItself(entry: Entry): boolean {
+    const path = view.pathOf(entry.name)
+    return carried().some((one) => samePath(one, path))
+  }
+
   function overRow(event: DragEvent, entry: Entry) {
-    if (!entry.folder || view.picked.names.has(entry.name)) return
+    if (!entry.folder || carriesItself(entry)) return
     if (!over(event)) return
     event.stopPropagation()
     if (taking === entry.name) return
@@ -306,7 +311,7 @@
   }
 
   function dropOnRow(event: DragEvent, entry: Entry) {
-    if (!entry.folder || view.picked.names.has(entry.name)) return
+    if (!entry.folder || carriesItself(entry)) return
     event.stopPropagation()
     taking = null
     clearTimeout(opening)
