@@ -34,6 +34,10 @@ fn xkb(key: &str) -> Option<String> {
         "Tab" => "Tab",
         "Backspace" => "BackSpace",
         "Delete" => "Delete",
+        "Insert" => "Insert",
+        "Pause" => "Pause",
+        "ScrollLock" => "Scroll_Lock",
+        "PrintScreen" => "Print",
         "Home" => "Home",
         "End" => "End",
         "PageUp" => "Page_Up",
@@ -81,6 +85,20 @@ mod tests {
         assert_eq!(
             preferred("Control+Quote").as_deref(),
             Some("CTRL+apostrophe")
+        );
+    }
+
+    #[test]
+    fn the_keys_above_the_arrows_go_by_their_xkb_names() {
+        assert_eq!(preferred("Control+Insert").as_deref(), Some("CTRL+Insert"));
+        assert_eq!(preferred("Alt+Pause").as_deref(), Some("ALT+Pause"));
+        assert_eq!(
+            preferred("Alt+ScrollLock").as_deref(),
+            Some("ALT+Scroll_Lock")
+        );
+        assert_eq!(
+            preferred("Control+PrintScreen").as_deref(),
+            Some("CTRL+Print")
         );
     }
 
