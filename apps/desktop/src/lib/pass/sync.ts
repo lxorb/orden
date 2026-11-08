@@ -191,7 +191,7 @@ export class PassApi {
   putItem(
     vault: string,
     id: string,
-    sent: { rev: number; key: string; body: string; keyVersion: number },
+    sent: { rev: number; key: string; body: string; keyVersion: number; trashed?: boolean },
   ): Promise<Answer<Landed>> {
     return this.wrote(`/items/${encodeURIComponent(vault)}/${encodeURIComponent(id)}`, 'PUT', sent)
   }

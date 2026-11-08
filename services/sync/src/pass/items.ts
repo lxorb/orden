@@ -75,6 +75,17 @@ function keepOld(db: D1Database, vault: string, id: string, sent: Sealed) {
     .bind(vault, id, sent.rev, sent.keyVersion)
 }
 
+function holdLinks(db: D1Database, vault: string, id: string, sent: Sealed, trashed: boolean) {
+  return db
+    .prepare(
+      `update pass_links set held_at = case when ?5 then coalesce(held_at, ?6) else null end
+        where vault_id = ?1 and item_id = ?2
+          and exists (select 1 from pass_items where vault_id = ?1 and id = ?2 and rev = ?3
+                                                 and body = ?4 and deleted_at is null)`,
+    )
+    .bind(vault, id, sent.rev + 1, sent.body, trashed ? 1 : 0, now())
+}
+
 function trimOld(db: D1Database, vault: string, id: string) {
   return db
     .prepare(
@@ -92,6 +103,7 @@ items.put('/items/:vault/:id', async (context) => {
   const from = fromOf(context.req.query('from'))
   const body = await readBody(context)
   const sent = sealedIn(body)
+  const trashed = body.flag('trashed')
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (!sent || !isPassId(vault) || !isPassId(id)) return context.json({ error: NOT_AN_ITEM }, 400)
 
@@ -111,10 +123,11 @@ items.put('/items/:vault/:id', async (context) => {
   const db = context.env.DB
   const at = now()
   const write = writeOf(db, vault, id, sent, at, user.email)
+  const holding = trashed === undefined ? [] : [holdLinks(db, vault, id, sent, trashed)]
   const results = await db.batch(
     sent.rev === 0
-      ? [bump(db), write]
-      : [bump(db), keepOld(db, vault, id, sent), write, trimOld(db, vault, id)],
+      ? [bump(db), write, ...holding]
+      : [bump(db), keepOld(db, vault, id, sent), write, trimOld(db, vault, id), ...holding],
   )
   if (!results[sent.rev === 0 ? 1 : 2]?.meta.changes) {
     const current = await itemOf(context.env, vault, id)

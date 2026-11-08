@@ -383,6 +383,16 @@ describe('a secure link', () => {
     expect((await opened(made.link.id)).status).toBe(404)
   })
 
+  test('rests while its item is in the trash, and opens again once the item is restored', async () => {
+    const { a, id, made } = await linked(null)
+    await a.change(id, (envelope) => ({ ...envelope, trashed: Date.now() }))
+    expect(await synced(a, ada)).toBe('synced')
+    expect((await opened(made.link.id)).status).toBe(410)
+    await a.change(id, (envelope) => ({ ...envelope, trashed: null }))
+    expect(await synced(a, ada)).toBe('synced')
+    expect((await opened(made.link.id)).status).toBe(200)
+  })
+
   test('deleted, is gone', async () => {
     const { made } = await linked(5)
     await apiOf(ada).removeLink(made.link.id)
