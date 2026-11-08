@@ -61,7 +61,13 @@ class Search {
   readonly query = $derived(parseQuery(this.text))
   readonly asks = $derived(this.text.trim().length >= SHORTEST && !isEmpty(this.query))
 
-  readonly hits = $derived([...this.inOrder(this.found), ...this.inOrder(this.loose)])
+  private readonly open = $derived(
+    workspace.protection.any ? (hit: Hit) => !workspace.protection.locked(hit.path) : () => true,
+  )
+
+  readonly hits = $derived(
+    [...this.inOrder(this.found), ...this.inOrder(this.loose)].filter(this.open),
+  )
 
   ordering = $state<Ordering>(readOrdering())
 
@@ -105,6 +111,7 @@ class Search {
   readonly chosen = $derived(
     this.found.filter(
       (hit) =>
+        this.open(hit) &&
         hit.tab === undefined &&
         !hit.bare &&
         isMarkdownPath(hit.path) &&
