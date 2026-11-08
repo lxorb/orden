@@ -247,7 +247,9 @@ export const run = {
           ? fileBytes(path)
               .then((bytes) => pictureSize(new Blob([bytes as Uint8Array<ArrayBuffer>])))
               .catch(() => ownSize('picture'))
-          : Promise.resolve(ownSize('file')),
+          : /\.pdf$/i.test(file)
+            ? paperSize(path).catch(() => ownSize('file'))
+            : Promise.resolve(ownSize('file')),
       ),
     )
 
@@ -688,11 +690,29 @@ async function pictureSize(file: Blob): Promise<{ width: number; height: number 
   drawn.close()
   if (!width || !height) return own
 
+  return ownShape(width, height)
+}
+
+function ownShape(width: number, height: number): { width: number; height: number } {
+  const own = ownSize('picture')
   const longest = Math.max(width, height)
   const scale = Math.min(own.width / longest, Math.max(1, (GRID * 4) / longest))
   return {
     width: Math.max(GRID, Math.round(width * scale)),
     height: Math.max(GRID, Math.round(height * scale)),
+  }
+}
+
+async function paperSize(path: string): Promise<{ width: number; height: number }> {
+  const bytes = await fileBytes(path)
+  const library = await pdfjs()
+  const task = loading(library, bytes)
+  try {
+    const page = await (await task.promise).getPage(1)
+    const { width, height } = page.getViewport({ scale: 1 })
+    return width > 0 && height > 0 ? ownShape(width, height) : ownSize('file')
+  } finally {
+    await task.destroy().catch(() => undefined)
   }
 }
 
