@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from '../../../scripts/growth'
 import { emptyCanvas, isPage, type PageNode, PAPERS, readCanvas, writeCanvas } from './canvas'
 import {
   added,
@@ -9,6 +10,7 @@ import {
   GUTTER,
   grown,
   laidOut,
+  lowestOf,
   moved,
   newPage,
   onPage,
@@ -448,6 +450,179 @@ describe('which page a thing is on', () => {
     expect(pageShowing(pages, PAPERS.a4.height + GUTTER, 600)).toBe(2)
     expect(pageShowing(pages, 99_999, 600)).toBe(3)
     expect(pageShowing([], 0, 600)).toBe(0)
+  })
+})
+
+describe('a page note with many pages and strokes', () => {
+  interface Box {
+    x: number
+    y: number
+    width: number
+    height: number
+  }
+
+  const pen = { tool: 'pen' as const, color: '1', size: 2 }
+  const dot = (x: number, y: number) => ({ x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })
+
+  function annotated(count: number, seed = 7) {
+    let state = seed
+    const next = () => ((state = (state * 1103515245 + 12345) % 2147483648), state / 2147483648)
+    const pages = laidOut(Array.from({ length: count }, (_, at) => page(`p${at}`)))
+    const last = pages[pages.length - 1]
+    const tall = last ? last.y + last.height : 0
+    const ink = Array.from({ length: count * 20 }, (_, at) => {
+      const x = (next() - 0.5) * PAPERS.a4.width * 1.6
+      const y = next() * tall
+      return { ...pen, id: `s${at}`, points: [dot(x, y), dot(x + next() * 300, y + next() * 900)] }
+    })
+    const nodes = Array.from({ length: count * 2 }, (_, at) => ({
+      type: 'text' as const,
+      id: `c${at}`,
+      text: '',
+      x: (next() - 0.5) * PAPERS.a4.width * 1.6,
+      y: next() * tall,
+      width: 40 + next() * 400,
+      height: 20 + next() * 900,
+    }))
+    return { ...emptyCanvas(), nodes: [...pages, ...nodes], ink }
+  }
+
+  function overlapOf(one: Box, other: Box): number {
+    const across = Math.min(one.x + one.width, other.x + other.width) - Math.max(one.x, other.x)
+    const down = Math.min(one.y + one.height, other.y + other.height) - Math.max(one.y, other.y)
+    return across > 0 && down > 0 ? across * down : 0
+  }
+
+  function ownerOf(thing: Box, pages: readonly PageNode[]): PageNode | null {
+    const x = thing.x + thing.width / 2
+    const y = thing.y + thing.height / 2
+    const held = pages.find(
+      (one) => x >= one.x && x < one.x + one.width && y >= one.y && y < one.y + one.height,
+    )
+    if (held) return held
+    let best: PageNode | null = null
+    let most = 0
+    for (const one of pages) {
+      const area = overlapOf(thing, one)
+      if (area > most) {
+        most = area
+        best = one
+      }
+    }
+    return best
+  }
+
+  function inkOwnerOf(stroke: { points: { x: number; y: number }[] }, pages: readonly PageNode[]) {
+    const held = pages.find((one) => onPage(stroke, one))
+    if (held) return held
+    const xs = stroke.points.map((one) => one.x)
+    const ys = stroke.points.map((one) => one.y)
+    const x = xs.reduce((low, one) => Math.min(low, one))
+    const y = ys.reduce((low, one) => Math.min(low, one))
+    const width = xs.reduce((high, one) => Math.max(high, one)) - x
+    const height = ys.reduce((high, one) => Math.max(high, one)) - y
+    return ownerOf({ x, y, width, height }, pages)
+  }
+
+  test('takes away with a page what was on it, the same as asking every page', () => {
+    const canvas = annotated(40)
+    const pages = pagesOf(canvas)
+    for (const gone of [pages[0], pages[17], pages[39]]) {
+      if (!gone) throw new Error('no page')
+      const left = removed(canvas, gone.id)
+      const kept = (id: string) => left.nodes.some((one) => one.id === id)
+      for (const node of canvas.nodes) {
+        if (isPage(node)) continue
+        expect(kept(node.id)).toBe(ownerOf(node, pages) !== gone)
+      }
+      const inked = new Set(left.ink.map((one) => one.id))
+      for (const stroke of canvas.ink) {
+        expect(inked.has(stroke.id)).toBe(inkOwnerOf(stroke, pages) !== gone)
+      }
+    }
+  })
+
+  test('moves with a page what was on it, the same as asking every page', () => {
+    const canvas = annotated(30, 11)
+    const pages = pagesOf(canvas)
+    const first = pages[0]
+    if (!first) throw new Error('no page')
+    const after = moved(canvas, first.id, 20)
+    const placed = new Map(pagesOf(after).map((one) => [one.id, one]))
+    const shift = (owner: PageNode | null) => {
+      const now = owner && placed.get(owner.id)
+      return now ? now.y - owner.y : 0
+    }
+    for (const [at, stroke] of canvas.ink.entries()) {
+      const now = after.ink[at]
+      expect((now?.points[0]?.y ?? 0) - (stroke.points[0]?.y ?? 0)).toBe(
+        shift(inkOwnerOf(stroke, pages)),
+      )
+    }
+  })
+
+  function longPages(count: number) {
+    const canvas = annotated(count, 5)
+    return {
+      ...canvas,
+      nodes: canvas.nodes.map((node, at) =>
+        isPage(node) && at % 3 !== 1 ? { ...node, paper: 'long' as const } : node,
+      ),
+    }
+  }
+
+  const boxOf = (stroke: { points: { x: number; y: number }[] }) => {
+    const ys = stroke.points.map((one) => one.y)
+    const y = ys.reduce((low, one) => Math.min(low, one))
+    return { x: 0, y, width: 0, height: ys.reduce((high, one) => Math.max(high, one)) - y }
+  }
+
+  test('finds how far down each long page is written, the same as asking every page', () => {
+    const canvas = longPages(30)
+    const lowest = lowestOf(canvas, boxOf)
+    for (const page of pagesOf(canvas)) {
+      if (page.paper !== 'long') {
+        expect(lowest.has(page.id)).toBe(false)
+        continue
+      }
+      let reach = page.y
+      for (const node of canvas.nodes) {
+        if (node.id === page.id) continue
+        if (node.x + node.width <= page.x || node.x >= page.x + page.width) continue
+        if (node.y + node.height <= page.y || node.y >= page.y + page.height) continue
+        reach = Math.max(reach, node.y + node.height)
+      }
+      for (const stroke of canvas.ink) {
+        if (onPage(stroke, page)) reach = Math.max(reach, boxOf(stroke).y + boxOf(stroke).height)
+      }
+      expect(lowest.get(page.id)).toBe(reach)
+    }
+  })
+
+  test('finds how far down long pages are written in time that grows with pages and strokes, not their product', () => {
+    const made = new Map<number, ReturnType<typeof longPages>>()
+    linearly((count) => {
+      const canvas = made.get(count) ?? longPages(count)
+      made.set(count, canvas)
+      return lowestOf(canvas, boxOf)
+    }, 800)
+  })
+
+  test('adds, moves and takes away a page in time that grows with pages and strokes, not their product', () => {
+    const made = new Map<number, ReturnType<typeof annotated>>()
+    const of = (count: number) => {
+      const held = made.get(count) ?? annotated(count)
+      made.set(count, held)
+      return held
+    }
+    linearly((count) => {
+      const canvas = of(count)
+      const first = pagesOf(canvas)[0]
+      if (!first) throw new Error('no page')
+      added(canvas, first.id)
+      moved(canvas, first.id, count - 1)
+      return removed(canvas, first.id)
+    }, 800)
   })
 })
 
