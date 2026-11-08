@@ -7,7 +7,7 @@ import { deskWith } from './test-desk'
 let made = 0
 function anAgent() {
   made++
-  return { id: `some-${String(made)}`, name: 'Orden · Claude' }
+  return { id: `some-${String(made)}`, name: 'Orden Claude' }
 }
 
 function idsOf(agent: { id: string }, path: string): string[] {

@@ -266,9 +266,11 @@ struct File {
     orden: bool,
 }
 
-pub(crate) const SIDEBAR: &str = "Orden · ";
+pub(crate) const SIDEBAR: &str = "Orden ";
 
-const SIDEBAR_BEFORE: &str = "nib · ";
+const SIDEBAR_BEFORE: &str = "nib \u{b7} ";
+
+const SIDEBAR_DOTTED: &str = "Orden \u{b7} ";
 
 pub(crate) const BUILT_IN: &str = "orden-";
 
@@ -279,6 +281,16 @@ fn as_orden(grant: &mut Grant) {
         if let Some(rest) = label.strip_prefix(SIDEBAR_BEFORE) {
             *label = format!("{SIDEBAR}{rest}");
         }
+    }
+}
+
+fn undotted(grant: &mut Grant) {
+    let Some(rest) = grant.client.strip_prefix(SIDEBAR_DOTTED) else {
+        return;
+    };
+    grant.client = format!("{SIDEBAR}{rest}");
+    if let Some(rest) = grant.name.strip_prefix(SIDEBAR_DOTTED) {
+        grant.name = format!("{SIDEBAR}{rest}");
     }
 }
 
@@ -481,6 +493,7 @@ fn read(path: &std::path::Path) -> Vec<Kept> {
                 }
             }
             for one in &mut agents {
+                undotted(&mut one.grant);
                 one.grant.built_in |= was_built_in(&one.grant);
             }
             let taken: Vec<String> = agents.iter().map(|one| one.grant.id.clone()).collect();
@@ -699,8 +712,8 @@ mod tests {
         assert_eq!(
             labels,
             [
-                ("Orden · Claude", "Orden · Claude"),
-                ("Orden · OpenAI", "My own OpenAI"),
+                ("Orden Claude", "Orden Claude"),
+                ("Orden OpenAI", "My own OpenAI"),
                 ("Claude Code", "Claude Code"),
                 ("nibbler · X", "nib ·X"),
             ]
@@ -713,6 +726,56 @@ mod tests {
         named[2].grant.name = "nib · mine".into();
         write(&path, &named).expect("write again");
         assert_eq!(super::read(&path)[2].grant.name, "nib · mine");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_sidebar_grant_named_with_a_dot_loses_the_dot_and_nothing_else() {
+        let kept = |id: &str, client: &str, name: &str| {
+            let mut grant = Grant::own(id.into(), client);
+            grant.name = name.into();
+            grant.built_in = id.starts_with(BUILT_IN);
+            Kept {
+                grant,
+                token: hashed("t"),
+            }
+        };
+        let text = serde_json::json!({
+            "agents": [
+                kept("orden-anthropic", "Orden \u{b7} Claude", "Orden \u{b7} Claude"),
+                kept("orden-openai", "Orden \u{b7} OpenAI", "Mine"),
+                kept("claude-code", "Claude Code", "Orden \u{b7} mine"),
+            ],
+            "chats": true,
+            "helpers": true,
+            "orden": true,
+        })
+        .to_string();
+        let dir = std::env::temp_dir().join(format!("orden-grants-dot-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let path = dir.join("agents.json");
+        std::fs::write(&path, text).expect("write");
+
+        let read = read(&path);
+        let labels: Vec<(&str, &str, &str)> = read
+            .iter()
+            .map(|one| {
+                (
+                    one.grant.id.as_str(),
+                    one.grant.client.as_str(),
+                    one.grant.name.as_str(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            labels,
+            [
+                ("orden-anthropic", "Orden Claude", "Orden Claude"),
+                ("orden-openai", "Orden OpenAI", "Mine"),
+                ("claude-code", "Claude Code", "Orden \u{b7} mine"),
+            ]
+        );
+        assert!(read[0].grant.built_in);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -872,10 +935,10 @@ mod tests {
     #[test]
     fn only_the_apps_label_makes_a_kept_grant_built_in() {
         let kept = |id: &str, client: &str| Grant::own(id.into(), client);
-        assert!(was_built_in(&kept("nib-anthropic", "Orden \u{b7} Claude")));
+        assert!(was_built_in(&kept("nib-anthropic", "Orden Claude")));
         assert!(!was_built_in(&kept("nib-foo", "nib-foo")));
         assert!(!was_built_in(&kept("nib-2", "nib")));
-        assert!(!was_built_in(&kept("orden-claude", "Orden \u{b7} Claude")));
+        assert!(!was_built_in(&kept("orden-claude", "Orden Claude")));
     }
 
     #[test]

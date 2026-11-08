@@ -68,8 +68,6 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src-tauri/tauri.macos.conf.json': ['"orden", "nib"'],
   'apps/desktop/src/App.svelte': ['nibApp'],
   'apps/desktop/src/lib/Editor.svelte': ["'nib'"],
-  'apps/desktop/src/lib/agents/settings/grant.test.ts': ['nib-anthropic', "'nib · Claude'"],
-  'apps/desktop/src/lib/agents/settings/grant.ts': ["'nib · '"],
   'apps/desktop/src/lib/ai/chat/tools.test.ts': ['ch.emilvinu.nib/answer'],
   'apps/desktop/src/lib/ai/chat/tools.ts': ['ch.emilvinu.nib/answer'],
   'apps/desktop/src/lib/ai/chat/wire.ts': ['|nib)'],

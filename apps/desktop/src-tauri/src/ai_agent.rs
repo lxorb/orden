@@ -295,7 +295,7 @@ mod tests {
     }
 
     fn grant() -> Grant {
-        made("orden-anthropic".into(), "Orden · Claude", &builtin(true))
+        made("orden-anthropic".into(), "Orden Claude", &builtin(true))
     }
 
     fn names(mode: Mode, grant: &Grant) -> BTreeSet<String> {
@@ -437,8 +437,8 @@ mod tests {
 
     #[test]
     fn the_readers_tabs_are_in_reach_or_not() {
-        assert!(made("orden-a".into(), "Orden · A", &builtin(true)).holds(Scope::BrowserReader));
-        assert!(!made("orden-a".into(), "Orden · A", &builtin(false)).holds(Scope::BrowserReader));
+        assert!(made("orden-a".into(), "Orden A", &builtin(true)).holds(Scope::BrowserReader));
+        assert!(!made("orden-a".into(), "Orden A", &builtin(false)).holds(Scope::BrowserReader));
     }
 
     #[test]

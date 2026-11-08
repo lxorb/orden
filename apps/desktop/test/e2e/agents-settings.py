@@ -183,7 +183,7 @@ def look(browser, scheme: str, language: str) -> None:
     if language == "en":
         check(f"[{name}] an MCP client says it manages its own permissions", page.locator(".agents .connected").count() == 1)
         check(f"[{name}] and has no switch of them", page.locator(".agents [role=switch]", has_text="Run scripts in pages").count() == 0)
-        sidebar = page.evaluate("() => { const one = window.agentsFake.pair('Orden · Claude'); return { id: one.id, name: one.name } }")
+        sidebar = page.evaluate("() => { const one = window.agentsFake.pair('Orden Claude'); return { id: one.id, name: one.name } }")
         page.locator(".agents .back").click()
         page.wait_for_selector(".agents .agent")
         quiet(page)
