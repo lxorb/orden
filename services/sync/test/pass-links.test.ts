@@ -125,6 +125,30 @@ describe('a secure link', () => {
     expect((await open(link.id)).status).toBe(404)
   })
 
+  test('is not made for an item deleted while the link was being written', async () => {
+    env.justBefore(/insert into pass_links/, () =>
+      env.db.prepare("update pass_items set deleted_at = 1, body = '' where id = ?").run(item),
+    )
+
+    expect((await makeLink(ada)).status).toBe(404)
+    expect(env.db.prepare('select count(*) as n from pass_links').get()).toEqual({ n: 0 })
+  })
+
+  test('is not made by a member removed while the link was being written', async () => {
+    const bob = await person(env, 'bob@example.com')
+    vault = await sharedVault(env, ada, bob, 'editor')
+    item = anId()
+    await api.item(ada, vault, item)
+    env.justBefore(/insert into pass_links/, () =>
+      env.db
+        .prepare("update pass_members set state = 'removed' where vault_id = ? and email = ?")
+        .run(vault, 'bob@example.com'),
+    )
+
+    expect((await makeLink(bob)).status).toBe(404)
+    expect(env.db.prepare('select count(*) as n from pass_links').get()).toEqual({ n: 0 })
+  })
+
   test('is not made by a viewer, or for an item that is not there', async () => {
     const bob = await person(env, 'bob@example.com')
     vault = await sharedVault(env, ada, bob, 'viewer')
