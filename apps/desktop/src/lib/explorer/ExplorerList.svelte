@@ -452,7 +452,7 @@
               {#if view.renaming === entry.name}
                 <input
                   class="orden-field rename"
-                  value={entry.name}
+                  value={view.search ? nameOf(entry.name) : entry.name}
                   aria-label={t('Rename')}
                   spellcheck="false"
                   autocomplete="off"
