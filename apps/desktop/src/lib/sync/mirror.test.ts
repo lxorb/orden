@@ -720,7 +720,7 @@ describe('a note renamed on this machine', () => {
     }
   }
 
-  test.each([503, 408, 429])(
+  test.each([503, 408, 429, 401])(
     'and one renamed while the account answers %i for a moment is told once it answers',
     async (status) => {
       const { mirror, id } = await paired('One.md', HERE)

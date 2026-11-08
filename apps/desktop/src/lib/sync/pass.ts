@@ -742,7 +742,7 @@ const FAILING_FOR = 60 * 60_000
 function untoldBy(mirror: Mirror, id: string, from: string, to: string, error: unknown) {
   const was = mirror.untold?.[id]
   const status = error instanceof ApiError ? error.status : null
-  if (status === null) {
+  if (status === null || status === 401) {
     mirror.untold = { ...mirror.untold, [id]: { ...was, from, to, tries: was?.tries ?? 0 } }
     return
   }
