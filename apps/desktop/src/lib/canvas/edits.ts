@@ -64,12 +64,16 @@ export function pickedBox(canvas: Canvas, picked: readonly string[]): Box | null
   ])
 }
 
+const INK_STEPS = 10
+
 export function movedBy(canvas: Canvas, picked: readonly string[], dx: number, dy: number): Canvas {
   const moving = reach(canvas, picked)
   if (!moving.size || (!dx && !dy)) return canvas
 
-  const across = Math.round(dx)
-  const down = Math.round(dy)
+  const whole = canvas.nodes.some((node) => moving.has(node.id))
+  const step = whole ? 1 : INK_STEPS
+  const across = Math.round(dx * step) / step
+  const down = Math.round(dy * step) / step
   if (!across && !down) return canvas
 
   return {

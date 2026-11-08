@@ -62,6 +62,23 @@ describe('moving cards', () => {
     expect(movedBy(canvas, [], 40, 40)).toBe(canvas)
   })
 
+  test('moves ink alone by as little as asked, as a page note zoomed far in drags it', () => {
+    const stroke: InkStroke = {
+      id: 's',
+      tool: 'pen',
+      color: 'ink',
+      size: 2,
+      points: [0, 10].map((x) => ({ x, y: 5, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })),
+    }
+    const plane = { ...canvasOf([]), ink: [stroke] }
+    const moved = movedBy(plane, ['s'], 0.31, -0.12)
+
+    expect(moved.ink[0]!.points.map((one) => [one.x, one.y])).toEqual([
+      [0.3, 4.9],
+      [10.3, 4.9],
+    ])
+  })
+
   test('gives back new cards and keeps the untouched ones as they were', () => {
     const moved = movedBy(canvas, ['a'], GRID, 0)
 
