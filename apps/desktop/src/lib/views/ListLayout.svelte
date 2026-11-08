@@ -347,7 +347,7 @@
   class="list"
   bind:this={list}
   role="listbox"
-  tabindex={selected === null ? 0 : -1}
+  tabindex={selected === null && rows.length ? 0 : -1}
   aria-label={view?.name ?? ''}
   onkeydown={keydown}
   onfocus={(event) => {
