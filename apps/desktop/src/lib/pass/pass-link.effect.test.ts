@@ -146,7 +146,21 @@ describe('the secure link page', () => {
     const { hash } = await sealedFor(login)
     const seen = worldAt(hash, () => Promise.reject(new TypeError('offline')))
     expect(await shownLink(mounted(), seen.world)).toBe('offline')
+    expect(seen.replaced).toEqual([])
   })
+
+  test.each([
+    ['busy', 429],
+    ['offline', 503],
+  ] as const)(
+    'keeps the key in the address when %s, so reloading opens it',
+    async (shown, status) => {
+      const { hash } = await sealedFor(login)
+      const seen = worldAt(hash, json({ error: 'not now' }, status))
+      expect(await shownLink(mounted(), seen.world)).toBe(shown)
+      expect(seen.replaced).toEqual([])
+    },
+  )
 
   test('says it was the last view', async () => {
     const { hash, answer } = await sealedFor({ ...blank('note'), title: 'Plan', note: 'x' }, 0)

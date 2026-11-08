@@ -201,9 +201,23 @@ async function answerOf(world: LinkWorld, id: string): Promise<Response | null> 
   }
 }
 
+const TRY_AGAIN: ReadonlySet<LinkShown> = new Set(['offline', 'busy'])
+
 export async function shownLink(root: HTMLElement, world: LinkWorld): Promise<LinkShown> {
   const { pathname, search, hash } = world.location
-  if (hash !== '') world.history.replaceState(null, '', `${pathname}${search}`)
+  const shown = await linkShown(root, world, pathname, hash)
+  if (hash !== '' && !TRY_AGAIN.has(shown)) {
+    world.history.replaceState(null, '', `${pathname}${search}`)
+  }
+  return shown
+}
+
+async function linkShown(
+  root: HTMLElement,
+  world: LinkWorld,
+  pathname: string,
+  hash: string,
+): Promise<LinkShown> {
   const id = linkIdOf(pathname)
   const key = linkKeyIn(hash)
   if (id === null || key === null) return said(root, 'incomplete')
