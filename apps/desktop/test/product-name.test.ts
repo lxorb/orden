@@ -165,6 +165,27 @@ describe('the name a reader sees', () => {
     }
   })
 
+  test('is Orden Pass wherever Pass on the web is named, in every language', () => {
+    const page = readFileSync(join(APP, 'pass.html'), 'utf8')
+    expect(/<title>([^<]*)<\/title>/.exec(page)?.[1]).toBe('Orden Pass')
+    for (const name of ['apple-mobile-web-app-title', 'application-name']) {
+      expect(new RegExp(`<meta name="${name}" content="([^"]*)"`).exec(page)?.[1], name).toBe(
+        'Orden Pass',
+      )
+    }
+    const manifest = JSON.parse(readFileSync(join(APP, 'public/pass.webmanifest'), 'utf8')) as {
+      name: string
+      short_name: string
+    }
+    expect([manifest.name, manifest.short_name]).toEqual(['Orden Pass', 'Orden Pass'])
+    const gate = readFileSync(join(SOURCE, 'lib/pass/web/PassWeb.svelte'), 'utf8')
+    expect(gate).toContain("title={t('Orden Pass')}")
+    for (const file of readdirSync(join(SOURCE, 'locales'))) {
+      const catalogue = readFileSync(join(SOURCE, 'locales', file), 'utf8')
+      expect(/'Orden Pass': '([^']*)'/.exec(catalogue)?.[1], file).toContain('Orden')
+    }
+  })
+
   test('tells an identifier from the name', () => {
     expect(oldNames('Documents/Nib')).toEqual([])
     expect(oldNames('C:\\Users\\a\\AppData\\Local\\Nib\\nib.exe')).toEqual([])

@@ -2920,6 +2920,7 @@ export const my: Dictionary = {
   'Export as JSON': 'JSON အဖြစ် ထုတ်ရန်',
   'The timer has run for {time}': 'အချိန်တိုင်းကိရိယာ {time} ကြာ လည်ပတ်နေသည်',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass ကို သော့ခတ်ရန်',
   'New login': 'ဝင်ရောက်မှု အသစ်',
   'Generate password': 'စကားဝှက် ထုတ်ရန်',

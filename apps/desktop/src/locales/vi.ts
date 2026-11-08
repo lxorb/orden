@@ -2899,6 +2899,7 @@ export const vi: Dictionary = {
   'Export as JSON': 'Xuất dưới dạng JSON',
   'The timer has run for {time}': 'Đồng hồ hẹn giờ đã chạy {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Khoá Pass',
   'New login': 'Đăng nhập mới',
   'Generate password': 'Tạo mật khẩu',

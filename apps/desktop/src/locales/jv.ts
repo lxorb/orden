@@ -2912,6 +2912,7 @@ export const jv: Dictionary = {
   'Export as JSON': 'Ekspor dadi JSON',
   'The timer has run for {time}': 'Timer wis mlaku {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Kunci Pass',
   'New login': 'Login anyar',
   'Generate password': 'Gawe sandhi',

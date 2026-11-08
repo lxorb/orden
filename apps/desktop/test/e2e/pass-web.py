@@ -129,13 +129,85 @@ def named_as_pass(page: Page) -> None:
     if link != "/pass.webmanifest":
         wrong(f"the page links the manifest {link!r}")
     manifest = page.evaluate("() => fetch('/pass.webmanifest').then((answer) => answer.json())")
-    if manifest.get("name") != "Orden Pass" or manifest.get("short_name") != "Pass":
+    if manifest.get("name") != "Orden Pass" or manifest.get("short_name") != "Orden Pass":
         wrong(f"the manifest names {manifest.get('name')!r} / {manifest.get('short_name')!r}")
     for icon in manifest.get("icons", []):
         status = page.evaluate(f"() => fetch({icon['src']!r}).then((answer) => answer.status)")
         if status != 200:
             wrong(f"{icon['src']} answers {status}")
+    named = page.evaluate("() => document.querySelector('meta[name=apple-mobile-web-app-title]')?.content")
+    if named != "Orden Pass":
+        wrong(f"an installed page is called {named!r}")
+    icon = page.evaluate("() => document.querySelector('link[rel=icon]')?.getAttribute('href')")
+    if icon != "/pass.svg":
+        wrong(f"the tab icon is {icon!r}")
+    wait_for(page, has_text(".gate h2", "Orden Pass"), "the sign-in screen called Orden Pass")
     say("named Orden Pass, with its own manifest and icons")
+
+
+TAB = """(scheme) => {
+  const strip = document.createElement('div')
+  const ground = scheme === 'dark' ? '#202124' : '#dee1e6'
+  const tab = scheme === 'dark' ? '#35363a' : '#ffffff'
+  const ink = scheme === 'dark' ? '#e8eaed' : '#202124'
+  strip.style.cssText = `position:fixed;top:0;left:0;z-index:2147483647;display:flex;gap:16px;align-items:center;padding:8px 12px;background:${ground}`
+  for (const size of [16, 32]) {
+    const one = document.createElement('div')
+    one.style.cssText = `display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px 8px 0 0;background:${tab};color:${ink};font:13px system-ui`
+    const image = document.createElement('img')
+    image.src = '/pass.svg'
+    image.width = size
+    image.height = size
+    one.append(image, document.title)
+    strip.append(one)
+  }
+  document.body.append(strip)
+  const image = strip.querySelector('img')
+  const box = () => {
+    const { x, y, width, height } = strip.getBoundingClientRect()
+    return { x, y, width, height }
+  }
+  return new Promise((done) => {
+    if (image.complete) done(box())
+    else image.onload = () => done(box())
+  })
+}"""
+
+
+def looks_in(browser: Browser, worker: harness.Worker, scheme: str) -> None:
+    context = browser.new_context(viewport={"width": 1280, "height": 820}, reduced_motion="reduce", color_scheme=scheme)
+    page = context.new_page()
+    page.goto(worker.origin, wait_until="domcontentloaded")
+    wait_for(page, has_text(".gate h2", "Orden Pass"), f"the sign-in screen in {scheme}")
+    wait_for(page, f"document.querySelector('{DIALOG} input[type=email]')", f"the sign-in sheet in {scheme}")
+    if page.title() != "Orden Pass":
+        wrong(f"the page is called {page.title()!r} in {scheme}")
+    theme = page.evaluate("() => document.documentElement.dataset.theme")
+    if theme != scheme:
+        wrong(f"a {scheme} browser shows the {theme} theme")
+    shot(page, f"00-sign-in-{scheme}")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(500)
+    shot(page, f"00-gate-{scheme}")
+    box = page.evaluate(TAB, scheme)
+    shot(page, f"00-tab-icon-{scheme}", clip=box)
+    corners = page.evaluate(
+        """() => new Promise((done) => {
+          const image = new Image(64, 64)
+          image.onload = () => {
+            const canvas = document.createElement('canvas')
+            canvas.width = canvas.height = 64
+            const drawing = canvas.getContext('2d')
+            drawing.drawImage(image, 0, 0, 64, 64)
+            done([drawing.getImageData(0, 0, 1, 1).data[3], drawing.getImageData(32, 32, 1, 1).data[3]])
+          }
+          image.src = '/pass.svg'
+        })"""
+    )
+    if corners != [0, 255]:
+        wrong(f"the tab icon's corner and middle are {corners} opaque in {scheme}")
+    context.close()
+    say(f"Orden Pass on the sign-in screen and a rounded tab icon in {scheme}")
 
 
 def signed_in(page: Page, worker: harness.Worker) -> None:
@@ -277,6 +349,8 @@ def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session() as browser:
         worker.start(upstream=PASS_HOST)
+        for scheme in ("light", "dark"):
+            looks_in(browser, worker, scheme)
         context = browser.new_context(
             viewport={"width": 1280, "height": 820},
             reduced_motion="reduce",
@@ -298,7 +372,7 @@ def main() -> int:
         offered_a_reload(page)
         on_a_phone(page)
         signed_out(page)
-    return DRIVE.verdict("Pass on its own name: signed in, set up, a login made, locked and opened, the corner without a theme switch and with the face or its initial, a phone")
+    return DRIVE.verdict("Orden Pass on its own name, light and dark, a rounded tab icon: signed in, set up, a login made, locked and opened, the corner without a theme switch and with the face or its initial, a phone")
 
 
 if __name__ == "__main__":

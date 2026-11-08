@@ -3040,6 +3040,7 @@ export const it: Dictionary = {
   'Export as JSON': 'Esporta come JSON',
   'The timer has run for {time}': 'Il timer è attivo da {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Blocca Pass',
   'New login': 'Nuovo login',
   'Generate password': 'Genera password',

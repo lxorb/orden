@@ -2926,6 +2926,7 @@ export const ms: Dictionary = {
   'Export as JSON': 'Eksport sebagai JSON',
   'The timer has run for {time}': 'Pemasa telah berjalan selama {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Kunci Pass',
   'New login': 'Log masuk baharu',
   'Generate password': 'Jana kata laluan',

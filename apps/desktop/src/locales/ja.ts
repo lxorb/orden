@@ -2903,6 +2903,7 @@ export const ja: Dictionary = {
   'Export as JSON': 'JSON として書き出す',
   'The timer has run for {time}': 'タイマーが {time} 動いています',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass をロック',
   'New login': '新しいログイン',
   'Generate password': 'パスワードを生成',

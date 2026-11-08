@@ -2891,6 +2891,7 @@ export const ko: Dictionary = {
   'Export as JSON': 'JSON으로 내보내기',
   'The timer has run for {time}': '타이머가 {time} 동안 실행 중입니다',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass 잠그기',
   'New login': '새 로그인',
   'Generate password': '비밀번호 생성',

@@ -250,11 +250,58 @@ describe('the other places the mark appears', () => {
     const manifest = JSON.parse(
       readFileSync(join(ROOT, 'apps/desktop/public/pass.webmanifest'), 'utf8'),
     ) as { icons: { src: string; sizes: string }[] }
-    expect(manifest.icons.length).toBeGreaterThan(0)
-    for (const icon of manifest.icons) {
+    const drawn = manifest.icons.filter((icon) => icon.src.endsWith('.png'))
+    expect(drawn.length).toBeGreaterThan(0)
+    for (const icon of drawn) {
       const size = Number(icon.sizes.split('x')[0])
       expect(picture(ROOT, 'apps/desktop/public', icon.src.slice(1)).size, icon.src).toBe(size)
     }
+  })
+
+  test('Pass on the web rounds its icon as the Pass mark does in the app', () => {
+    const PUBLIC = join(ROOT, 'apps/desktop/public')
+    const third = /--radius-third:\s*([\d.]+)/.exec(
+      readFileSync(join(ROOT, 'packages/themes/src/tokens.css'), 'utf8'),
+    )?.[1]
+    const svg = readFileSync(join(PUBLIC, 'pass.svg'), 'utf8')
+    const tile = /<rect id="tile" width="(\d+)" height="\1" rx="(\d+)"/.exec(svg)
+    expect(tile, 'pass.svg has a tile').not.toBeNull()
+    expect(Number(tile?.[2]) / Number(tile?.[1])).toBeCloseTo(Number(third), 2)
+
+    const page = readFileSync(join(ROOT, 'apps/desktop/pass.html'), 'utf8')
+    const manifest = JSON.parse(readFileSync(join(PUBLIC, 'pass.webmanifest'), 'utf8')) as {
+      icons: { src: string }[]
+    }
+    const linked = [...page.matchAll(/<link rel="icon" href="\/([^"]+)"/g)].map((one) => one[1])
+    expect(linked).toContain('pass.svg')
+    const rounded = [...linked, ...manifest.icons.map((icon) => icon.src.slice(1))].filter(
+      (file): file is string => !!file?.endsWith('.png'),
+    )
+    expect(rounded.length).toBeGreaterThan(1)
+    for (const file of rounded) {
+      const icon = picture(PUBLIC, file)
+      const last = icon.size - 1
+      const half = Math.floor(icon.size / 2)
+      for (const [x, y] of [
+        [0, 0],
+        [last, 0],
+        [0, last],
+        [last, last],
+      ] as const)
+        expect(icon.alpha(x, y), `${file} corner`).toBe(0)
+      for (const [x, y] of [
+        [half, 0],
+        [0, half],
+        [half, half],
+      ] as const)
+        expect(icon.alpha(x, y), `${file} edge`).toBe(255)
+    }
+
+    const touch = /<link rel="apple-touch-icon" href="\/([^"]+)"/.exec(page)?.[1] ?? ''
+    const ios = picture(PUBLIC, touch)
+    expect(ios.alpha(0, 0), 'iOS rounds the touch icon itself and paints clear corners black').toBe(
+      255,
+    )
   })
 
   test('the Even icons are greyscale', () => {

@@ -3061,6 +3061,7 @@ export const ru: Dictionary = {
   'Export as JSON': 'Экспорт в JSON',
   'The timer has run for {time}': 'Таймер идёт уже {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Заблокировать Pass',
   'New login': 'Новый логин',
   'Generate password': 'Создать пароль',

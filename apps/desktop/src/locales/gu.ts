@@ -2935,6 +2935,7 @@ export const gu: Dictionary = {
   'Export as JSON': 'JSON તરીકે નિકાસ કરો',
   'The timer has run for {time}': 'ટાઇમર {time}થી ચાલે છે',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass લૉક કરો',
   'New login': 'નવું લૉગિન',
   'Generate password': 'પાસવર્ડ બનાવો',

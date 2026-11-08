@@ -2833,6 +2833,7 @@ export const zhHans: Dictionary = {
   'Export as JSON': '导出为 JSON',
   'The timer has run for {time}': '计时器已运行 {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': '锁定 Pass',
   'New login': '新建登录信息',
   'Generate password': '生成密码',

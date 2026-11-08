@@ -2970,6 +2970,7 @@ export const tr: Dictionary = {
   'Export as JSON': 'JSON olarak dışa aktar',
   'The timer has run for {time}': 'Zamanlayıcı {time} süredir çalışıyor',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass’i kilitle',
   'New login': 'Yeni giriş',
   'Generate password': 'Parola oluştur',

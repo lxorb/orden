@@ -2948,6 +2948,7 @@ export const ps: Dictionary = {
   'Export as JSON': 'د JSON په توګه صادر کړئ',
   'The timer has run for {time}': 'ټایمر {time} راهیسې روان دی',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass قلف کول',
   'New login': 'نوې ننوتنه',
   'Generate password': 'پټنوم جوړول',

@@ -2993,6 +2993,7 @@ export const ha: Dictionary = {
   'Export as JSON': 'Fitar a matsayin JSON',
   'The timer has run for {time}': 'Agogon lokaci ya yi aiki na {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Kulle Pass',
   'New login': 'Sabon shiga',
   'Generate password': 'Ƙirƙiri kalmar sirri',

@@ -2994,6 +2994,7 @@ export const ml: Dictionary = {
   'Export as JSON': 'JSON ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'The timer has run for {time}': 'ടൈമർ {time} ആയി പ്രവർത്തിക്കുന്നു',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass ലോക്ക് ചെയ്യുക',
   'New login': 'പുതിയ ലോഗിൻ',
   'Generate password': 'പാസ്‌വേഡ് സൃഷ്ടിക്കുക',

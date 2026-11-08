@@ -3002,6 +3002,7 @@ export const ta: Dictionary = {
   'Export as JSON': 'JSON ஆக ஏற்றுமதி செய்',
   'The timer has run for {time}': 'டைமர் {time} ஆக இயங்குகிறது',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass-ஐப் பூட்டு',
   'New login': 'புதிய உள்நுழைவு',
   'Generate password': 'கடவுச்சொல்லை உருவாக்கு',

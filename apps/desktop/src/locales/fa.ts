@@ -2954,6 +2954,7 @@ export const fa: Dictionary = {
   'Export as JSON': 'برون‌بری به JSON',
   'The timer has run for {time}': 'زمان‌سنج {time} است که روشن است',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'قفل کردن Pass',
   'New login': 'ورود تازه',
   'Generate password': 'ساختن گذرواژه',

@@ -2962,6 +2962,7 @@ export const te: Dictionary = {
   'Export as JSON': 'JSONగా ఎగుమతి చేయండి',
   'The timer has run for {time}': 'టైమర్ {time} నుండి నడుస్తోంది',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass‌ను లాక్ చేయి',
   'New login': 'కొత్త లాగిన్',
   'Generate password': 'పాస్‌వర్డ్ రూపొందించు',

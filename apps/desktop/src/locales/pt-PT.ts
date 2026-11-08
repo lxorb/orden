@@ -3027,6 +3027,7 @@ export const ptPT: Dictionary = {
   'Export as JSON': 'Exportar como JSON',
   'The timer has run for {time}': 'O cronómetro está ligado há {time}',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Bloquear o Pass',
   'New login': 'Novo início de sessão',
   'Generate password': 'Gerar palavra-passe',

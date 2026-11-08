@@ -2866,6 +2866,7 @@ export const th: Dictionary = {
   'Export as JSON': 'ส่งออกเป็น JSON',
   'The timer has run for {time}': 'ตัวจับเวลาทำงานมา {time} แล้ว',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'ล็อก Pass',
   'New login': 'การเข้าสู่ระบบใหม่',
   'Generate password': 'สร้างรหัสผ่าน',

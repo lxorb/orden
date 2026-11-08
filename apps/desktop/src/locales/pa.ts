@@ -2959,6 +2959,7 @@ export const pa: Dictionary = {
   'Export as JSON': 'JSON ਵਜੋਂ ਨਿਰਯਾਤ ਕਰੋ',
   'The timer has run for {time}': 'ਟਾਈਮਰ {time} ਤੋਂ ਚੱਲ ਰਿਹਾ ਹੈ',
   Pass: 'Pass',
+  'Orden Pass': 'Orden Pass',
   'Lock Pass': 'Pass ਲੌਕ ਕਰੋ',
   'New login': 'ਨਵਾਂ ਲੌਗਇਨ',
   'Generate password': 'ਪਾਸਵਰਡ ਬਣਾਓ',
