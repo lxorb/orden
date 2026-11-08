@@ -51,7 +51,7 @@ vi.mock('../export/zip', () => ({
 }))
 vi.mock('../export/save', () => ({ download: () => undefined }))
 
-const { exportPagesPng, exportPagesSvg, pagesPdf, printPages } = await import('./out')
+const { exportPagesPng, exportPagesSvg, pagesPdf, printPages, sheetStyle } = await import('./out')
 
 const SIZES = [
   { width: 816, height: 1056 },
@@ -203,5 +203,19 @@ describe('one page of a paper on two sheets', () => {
     expect(one).not.toContain('0 0 1 rg')
     expect(two).toContain('0 0 1 rg')
     expect(two).not.toContain('1 0 0 rg')
+  })
+})
+
+describe('pages of more than one size, printed', () => {
+  test('give every sheet a paper of its own size', () => {
+    const style = sheetStyle([
+      { width: 816, height: 1056 },
+      { width: 1056, height: 816 },
+    ])
+
+    expect(style).toContain('@page s0{size:816px 1056px;margin:0}')
+    expect(style).toContain('@page s1{size:1056px 816px;margin:0}')
+    expect(style).toContain('.s1{page:s1;width:1056px;height:816px}')
+    expect(style).not.toMatch(/\.sheet\{[^}]*width:/)
   })
 })
