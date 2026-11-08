@@ -1254,6 +1254,12 @@
       return
     }
 
+    if (shortcuts.pressed('edit.select-all', event)) {
+      event.preventDefault()
+      chooseAllWords()
+      return
+    }
+
     if (shortcuts.pressed('edit.undo', event)) {
       event.preventDefault()
       store.undo()
@@ -1283,6 +1289,15 @@
     }
 
     if (event.key === 'Escape') store.clearPicked()
+  }
+
+  function chooseAllWords() {
+    const page = pages[showing - 1]
+    const sheet = page ? host?.querySelector(`.sheet[data-page="${CSS.escape(page.id)}"]`) : null
+    const layer = sheet?.querySelector('.words')
+    const selection = getSelection()
+    selection?.removeAllRanges()
+    if (layer?.textContent.trim()) selection?.selectAllChildren(layer)
   }
 
   function onWords(event: MouseEvent): boolean {

@@ -318,6 +318,7 @@
 
 <div
   class="sheet"
+  data-page={page.id}
   class:ruled={page.pattern !== 'blank'}
   style:left="{page.x}px"
   style:top="{page.y}px"

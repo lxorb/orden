@@ -234,6 +234,21 @@ def drive(browser: Browser) -> None:
         wrong("choosing words drew ink")
     shot(page, "words-chosen")
 
+    page.evaluate("() => getSelection().removeAllRanges()")
+    page.locator(".pages").first.focus()
+    page.keyboard.press(f"{MOD}+a")
+    page.wait_for_timeout(200)
+    whole = page.evaluate(
+        "() => { const s = getSelection(); if (!s.rangeCount) return null;"
+        " const node = s.getRangeAt(0).commonAncestorContainer;"
+        " const element = node.nodeType === 1 ? node : node.parentElement;"
+        " return { text: String(s), inside: !!element?.closest('.pages .sheet .words') } }"
+    )
+    say(f"{MOD}+A in the page note chose {len((whole or {}).get('text', ''))} letters, inside the page: {(whole or {}).get('inside')}")
+    if not whole or not whole["inside"] or "Line 1:" not in whole["text"] or "Line 60:" not in whole["text"]:
+        wrong(f"{MOD}+A in the page note did not choose the page's words alone: {whole and {**whole, 'text': whole['text'][:120]}}")
+    page.evaluate("() => getSelection().removeAllRanges()")
+
     for beyond in (6, 40):
         page.evaluate("() => getSelection().removeAllRanges()")
         line = page.evaluate(SPAN, "Line 4:")
