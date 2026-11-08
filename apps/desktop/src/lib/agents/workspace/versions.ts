@@ -4,6 +4,7 @@ import { type Version, versionsOf, versionText } from '../../versions'
 import { workspace } from '../../workspace.svelte'
 import { notes } from '../docs'
 import { asked } from './asks'
+import { readable } from './guarded'
 import { type Call, done, need, writerOf } from './call'
 import { Refused } from './problem'
 import { judged, onDisk, type Place, placeOf, sharedSource, writableAt } from './spaces'
@@ -17,7 +18,9 @@ function noteOf(call: Call): { place: Place; relative: string; path: string } {
   const place = placeOf(call)
   const asked = judged(need(call, 'path'))
   const relative = notePath(asked) ?? asked
-  return { place, relative, path: onDisk(place, relative) }
+  const path = onDisk(place, relative)
+  readable(path, relative)
+  return { place, relative, path }
 }
 
 export async function listVersions(call: Call): Promise<AgentAnswer> {

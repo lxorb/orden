@@ -77,6 +77,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
   let front: Pane | null = null
   const pad = { text: '', wrote: 0 }
   const refusing = { next: false }
+  const shut = new Set<string>()
 
   const opened = (path: string, caret = 0): Pane => {
     const at = `${SPACE.root}/${path}`
@@ -119,6 +120,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
       return Promise.resolve()
     },
     scheme: () => 'dark',
+    agentsMay: (path) => !shut.has(path),
     draftIn: (tab) => drafts.get(tab) ?? null,
     padText: () => Promise.resolve(pad.text),
     padWrite: (before, edits) => {
@@ -137,6 +139,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     kept,
     pad,
     refusing,
+    shut: (path: string) => shut.add(`${SPACE.root}/${path}`),
     open: opened,
     draft: (tab: string, text: string): Pane => {
       const note = new NoteDoc(

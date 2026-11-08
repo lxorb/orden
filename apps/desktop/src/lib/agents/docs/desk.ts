@@ -28,6 +28,7 @@ export interface Desk {
   padText(): Promise<string>
   padWrite(before: string, edits: readonly Edit[]): Promise<boolean>
   scheme(): 'dark' | 'light'
+  agentsMay(path: string): boolean
 }
 
 export const SCRATCHPAD_TAB = 'scratchpad'
@@ -85,6 +86,16 @@ export function located(desk: Desk, at: NoteAt): Located {
   }
 
   return { space, relative, path: insideSpace(space.root, relative) }
+}
+
+export function reachable(desk: Desk, at: NoteAt): Located {
+  const note = located(desk, at)
+  if (note.draft || note.pad || desk.agentsMay(note.path)) return note
+  throw new DocError(
+    'protected',
+    note.relative,
+    `${note.relative} is protected: the reader has to unlock it and choose Let agents read in its menu`,
+  )
 }
 
 export function openNote(desk: Desk, note: Located): NoteDoc | null {
