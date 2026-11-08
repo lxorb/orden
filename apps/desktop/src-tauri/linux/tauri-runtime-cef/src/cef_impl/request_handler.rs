@@ -429,9 +429,9 @@ wrap_with_args! {
         (self.main_thread)(Box::new(move || {
           let mut http_request = http::Request::builder()
             .method(method)
-            .uri(url.as_str())
+            .uri(request_uri(url.as_str()))
             .body(data)
-            .unwrap();
+            .unwrap_or_default();
           *http_request.headers_mut() = headers;
           // handler is Arc<Box<UriSchemeProtocol>>, so we need to dereference to call it
           (**handler)(&label, http_request, responder);
@@ -649,23 +649,74 @@ fn read_request_body(request: &mut Request) -> Vec<u8> {
 }
 
 fn get_request_headers(request: &mut Request) -> HeaderMap {
-  let mut headers = HeaderMap::new();
-
   let mut map = CefStringMultimap::new();
-
   request.header_map(Some(&mut map));
+  headers_of(map)
+}
 
-  // Iterate through all entries
-  for (name, value) in map {
-    for v in value {
-      headers.append(
-        HeaderName::from_bytes(name.as_bytes()).unwrap(),
-        HeaderValue::from_str(&v).unwrap(),
-      );
+fn headers_of<N, V, I>(pairs: impl IntoIterator<Item = (N, I)>) -> HeaderMap
+where
+  N: AsRef<str>,
+  V: AsRef<str>,
+  I: IntoIterator<Item = V>,
+{
+  let mut headers = HeaderMap::new();
+  for (name, values) in pairs {
+    let Ok(name) = HeaderName::from_bytes(name.as_ref().as_bytes()) else {
+      continue;
+    };
+    for value in values {
+      if let Ok(value) = HeaderValue::from_bytes(value.as_ref().as_bytes()) {
+        headers.append(name.clone(), value);
+      }
     }
   }
-
   headers
+}
+
+fn request_uri(url: &str) -> http::Uri {
+  if let Ok(uri) = url.parse() {
+    return uri;
+  }
+  let mut escaped = String::with_capacity(url.len());
+  for byte in url.bytes() {
+    if byte.is_ascii_alphanumeric() || b"-._~:/?#[]@!$&'()*+,;=%".contains(&byte) {
+      escaped.push(char::from(byte));
+    } else {
+      escaped.push_str(&format!("%{byte:02X}"));
+    }
+  }
+  escaped.parse().unwrap_or_default()
+}
+
+#[cfg(test)]
+mod header_tests {
+  use super::*;
+
+  #[test]
+  fn a_header_the_http_crate_refuses_is_left_out_instead_of_panicking() {
+    let headers = headers_of([
+      ("x-kept", vec!["1"]),
+      ("bad name", vec!["2"]),
+      ("", vec!["3"]),
+      ("x-bad(", vec!["4"]),
+      ("x-values", vec!["caf\u{e9}", "line\nbreak", "ok"]),
+    ]);
+    assert_eq!(headers.len(), 3);
+    assert_eq!(headers["x-kept"], "1");
+    let values: Vec<_> = headers.get_all("x-values").iter().collect();
+    assert_eq!(values.len(), 2);
+    assert_eq!(values[0].as_bytes(), "caf\u{e9}".as_bytes());
+    assert_eq!(values[1], "ok");
+  }
+
+  #[test]
+  fn an_address_the_http_crate_refuses_is_escaped_instead_of_panicking() {
+    let uri = request_uri("orden://localhost/a b\"c<d>|e");
+    assert_eq!(uri.host(), Some("localhost"));
+    assert!(uri.path().starts_with("/a%20b%22c%3Cd%3E"), "{uri}");
+    assert_eq!(request_uri("http://ipc.localhost/plugin%3Ax?y=1").path(), "/plugin%3Ax");
+  }
 }
 
 // ==== Renderer termination boundary ====

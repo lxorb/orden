@@ -11,7 +11,7 @@ use std::{
 };
 
 use dpi::{PhysicalPosition, PhysicalSize};
-use http::{Request, Response as HttpResponse, StatusCode};
+use http::{HeaderName, HeaderValue, Request, Response as HttpResponse, StatusCode};
 use once_cell::sync::Lazy;
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use webview2_com::{Microsoft::Web::WebView2::Win32::*, *};
@@ -1245,7 +1245,12 @@ impl InnerWebView {
       headers.GetCurrentHeader(&mut key, &mut value)?;
 
       let (key, value) = (take_pwstr(key), take_pwstr(value));
-      request = request.header(&key, &value);
+      if let (Ok(key), Ok(value)) = (
+        HeaderName::from_bytes(key.as_bytes()),
+        HeaderValue::from_bytes(value.as_bytes()),
+      ) {
+        request = request.header(key, value);
+      }
 
       headers.MoveNext(&mut has_current)?;
     }
