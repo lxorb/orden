@@ -87,7 +87,8 @@ const orders = new Shelf<string[]>(
 const ORDER = 'order'
 
 function unreachable(error: unknown): boolean {
-  if (error instanceof ApiError) return error.status === 429 || error.status >= 500
+  if (error instanceof ApiError)
+    return [401, 408, 429].includes(error.status) || error.status >= 500
   return true
 }
 
