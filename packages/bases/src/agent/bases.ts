@@ -175,9 +175,12 @@ function named(base: Base, said: Args): number {
   return at
 }
 
+const MOST_OPS = 500
+
 export function editedBase(base: Base, ops: unknown): Base {
   if (!Array.isArray(ops) || !ops.length)
     throw new AgentError('bad_arguments', 'ops is a list of edits')
+  if (ops.length > MOST_OPS) throw new AgentError('bad_arguments', `at most ${MOST_OPS} ops a call`)
   let next: Base = {
     ...base,
     views: [...base.views],

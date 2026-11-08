@@ -18,6 +18,8 @@ export interface AgentEdit {
   doing: Doing
 }
 
+const MOST_EDITS = 500
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -48,6 +50,9 @@ function doingOf(edit: Record<string, unknown>): Doing {
 export function readEdits(value: unknown): AgentEdit[] {
   if (!Array.isArray(value) || !value.length) {
     throw new DocError('bad_edit', value, 'edits is a list of at least one edit')
+  }
+  if (value.length > MOST_EDITS) {
+    throw new DocError('bad_edit', value.length, `at most ${MOST_EDITS} edits a call`)
   }
 
   return value.map((edit: unknown) => {

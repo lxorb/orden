@@ -30,6 +30,10 @@ describe('an edit', () => {
     )
     expect(() => readEdits([{ at: { end: true } }])).toThrow(DocError)
     expect(() => readEdits([])).toThrow('at least one edit')
+    const many = (n: number) =>
+      Array.from({ length: n }, () => ({ at: { end: true }, delete: true }))
+    expect(readEdits(many(500))).toHaveLength(500)
+    expect(() => readEdits(many(501))).toThrow('at most 500 edits')
   })
 
   test('comes off the wire with one line ending', () => {
