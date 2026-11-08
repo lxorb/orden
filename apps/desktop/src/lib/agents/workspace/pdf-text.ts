@@ -51,20 +51,28 @@ export function runsOf(items: readonly unknown[]): Run[] {
 }
 
 export function laidOut(runs: readonly Run[]): { text: string; starts: number[] } {
-  let text = ''
+  const parts: string[] = []
   const starts: number[] = []
+  let length = 0
   let baseline: number | null = null
 
   for (const run of runs) {
     const y = run.transform[5] ?? 0
-    if (baseline !== null && Math.abs(y - baseline) > 0.5 && !/\s$/.test(text)) text += '\n'
-    starts.push(text.length)
-    text += run.str
-    if (run.hasEOL === true) text += '\n'
+    if (baseline !== null && Math.abs(y - baseline) > 0.5 && !/\s$/.test(parts.at(-1) ?? '')) {
+      parts.push('\n')
+      length += 1
+    }
+    starts.push(length)
+    if (run.str) parts.push(run.str)
+    length += run.str.length
+    if (run.hasEOL === true) {
+      parts.push('\n')
+      length += 1
+    }
     baseline = y
   }
 
-  return { text, starts }
+  return { text: parts.join(''), starts }
 }
 
 function folded(text: string): { text: string; at: number[] } {

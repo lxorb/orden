@@ -1,13 +1,13 @@
 import { isPdfTarget } from '@orden/markdown/links'
 import { readable } from './guarded'
 import type { AgentAnswer } from '../../automation/caller'
-import { COLOURS, type Highlight, type Quad } from '../../pdf/highlights'
+import { COLOURS, type Highlight } from '../../pdf/highlights'
 import { marksWritten } from '../../pdf/sheets.svelte'
 import { editHighlights, loadHighlights } from '../../pdf/sidecar'
 import { canWriteAt } from '../../sharing.svelte'
 import { asked } from './asks'
 import { type Call, done, maybe, need, needScope } from './call'
-import { pagesAsked, quadsOver, quoteIn, runsOf } from './pdf-text'
+import { pagesAsked, quadsOver, quoteIn, type Run, runsOf } from './pdf-text'
 import { Refused } from './problem'
 import { judged, onDisk, type Place, placeOf } from './spaces'
 import { namedTab } from './tab-target'
@@ -142,7 +142,7 @@ async function markOf(call: Call, path: string): Promise<Highlight> {
   try {
     const pages =
       Number.isInteger(asked) && asked >= 1 ? [asked] : pagesAsked(null, held.doc.numPages)
-    const found: { page: number; quads: Quad[] }[] = []
+    const found: { page: number; runs: Run[]; from: number; to: number }[] = []
 
     for (const page of pages) {
       if (page > held.doc.numPages)
@@ -151,9 +151,7 @@ async function markOf(call: Call, path: string): Promise<Highlight> {
       const read = await held.doc.getPage(page)
       const runs = runsOf((await read.getTextContent()).items)
       read.cleanup()
-      for (const place of quoteIn(runs, quote)) {
-        found.push({ page, quads: quadsOver(runs, place.from, place.to) })
-      }
+      for (const place of quoteIn(runs, quote)) found.push({ page, runs, ...place })
     }
 
     const [only] = found
@@ -174,7 +172,7 @@ async function markOf(call: Call, path: string): Promise<Highlight> {
       id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       page: only.page,
       text: quote,
-      quads: only.quads,
+      quads: quadsOver(only.runs, only.from, only.to),
       colour,
       created: Date.now(),
     }

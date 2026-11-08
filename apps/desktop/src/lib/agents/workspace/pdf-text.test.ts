@@ -1,3 +1,4 @@
+import { linearly } from '../../../../../../scripts/growth'
 import { describe, expect, test } from 'vitest'
 import { laidOut, pagesAsked, quadsOver, quoteIn, type Run } from './pdf-text'
 import { Refused } from './problem'
@@ -39,6 +40,17 @@ describe('a quote on a page', () => {
     expect(found).toHaveLength(1)
     const [place] = found
     expect(laidOut(runs).text.slice(place?.from, place?.to)).toBe('quick brown fox')
+  })
+
+  test('is looked for on a page of many short lines in time that grows with its runs, not their square', () => {
+    const many = Array.from({ length: 40_000 }, (_, at) => ({
+      str: `word${at % 10}`,
+      transform: [10, 0, 0, 10, 72, at % 2 ? 680 : 700],
+      width: 50,
+      height: 10,
+    }))
+    const found = linearly((count) => quoteIn(many.slice(0, count), 'word9 word0'), 40_000)
+    expect(found).toHaveLength(3999)
   })
 
   test('says every place it is', () => {
