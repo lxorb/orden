@@ -431,6 +431,44 @@ describe('a file explorer', () => {
     ])
   })
 
+  test('a key pressed in a sheet over the list never acts on the files behind it', async () => {
+    await explorer()
+    press('n')
+    press('ArrowDown', { shiftKey: true })
+    press('F2')
+    await settled()
+    const cancel = target.querySelector<HTMLButtonElement>('.many button')
+    cancel?.focus()
+    for (const key of ['Delete', 'Backspace', 'F2', 'a'])
+      cancel?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+    cancel?.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Delete',
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    await settled()
+    expect(changed).toEqual([])
+    expect(target.querySelector('.many')).not.toBeNull()
+    cancel?.click()
+    await settled()
+    press('p')
+    press(' ')
+    await settled()
+    const look = target.querySelector<HTMLElement>('.look')
+    look?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }),
+    )
+    look?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'F2', bubbles: true, cancelable: true }),
+    )
+    await settled()
+    expect(changed).toEqual([])
+    expect(target.querySelector('input.rename')).toBeNull()
+  })
+
   test('draws only the rows of a long folder in columns that can be seen', async () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     const kept = DISK['/home/me/Pictures'] ?? []
