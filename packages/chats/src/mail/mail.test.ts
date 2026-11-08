@@ -667,4 +667,324 @@ describe('a mailbox, end to end against a server', () => {
     expect(bytes).toEqual(fromBase64('iVBORw0KGgo='))
     await connection.close()
   })
+
+  const listening = async (connection: Awaited<ReturnType<typeof mailProvider.connect>>) => {
+    const heard: ProviderEvent[] = []
+    let online: () => void = () => undefined
+    const ready = new Promise<void>((resolve) => (online = resolve))
+    const stop = connection.start((event) => {
+      heard.push(event)
+      if (event.t === 'status' && event.status === 'online') online()
+    })
+    await ready
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    const until = async (found: (events: readonly ProviderEvent[]) => boolean) => {
+      for (let tries = 0; tries < 80 && !found(heard); tries++) {
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      }
+      return found(heard)
+    }
+    return { heard, stop, until }
+  }
+
+  const late = [
+    'From: Lucile <lucile@example.org>',
+    'To: emil@example.org',
+    'Subject: Later',
+    'Date: Thu, 5 Nov 2026 08:00:00 +0000',
+    'Message-ID: <later@example.org>',
+    '',
+    'Later on',
+  ].join('\n')
+
+  test('a mail read or deleted in another app is read or gone here too', async () => {
+    const connection = await mailProvider.connect(config(), host)
+    expect(
+      (await connection.conversations()).find((one) => one.id === 'lunch@example.org'),
+    ).toMatchObject({ unread: 1 })
+    const { heard, stop, until } = await listening(connection)
+    server.mark('INBOX', 1, '\\Seen')
+    server.expunge('INBOX', 2)
+    const settled = await until(
+      (events) =>
+        events.some((event) => event.t === 'gone' && event.conversation === 'news@shop.example') &&
+        events.some(
+          (event) =>
+            event.t === 'conversation' &&
+            event.conversation.id === 'lunch@example.org' &&
+            event.conversation.unread === 0,
+        ),
+    )
+    expect(settled).toBe(true)
+    expect(heard).toContainEqual({
+      t: 'deleted',
+      conversation: 'news@shop.example',
+      message: 'INBOX\n2',
+    })
+    const left = await connection.conversations()
+    expect(left.map((one) => one.id)).toEqual(['lunch@example.org'])
+    expect(left[0]?.unread).toBe(0)
+    stop()
+    await connection.close()
+  })
+
+  test('a mail sent from another app joins its thread here', async () => {
+    const connection = await mailProvider.connect(config(), host)
+    const { stop, until } = await listening(connection)
+    server.deliver(
+      'Sent',
+      [
+        'From: Emil <emil@example.org>',
+        'To: Lucile <lucile@example.org>',
+        'Subject: Re: Lunch',
+        'Date: Mon, 2 Nov 2026 11:00:00 +0000',
+        'Message-ID: <phone@example.org>',
+        'In-Reply-To: <answer@example.org>',
+        'References: <lunch@example.org> <answer@example.org>',
+        '',
+        'From my phone',
+      ].join('\n'),
+      ['\\Seen'],
+    )
+    server.deliver('INBOX', late)
+    expect(
+      await until((events) =>
+        events.some((event) => event.t === 'message' && event.message.text === 'From my phone'),
+      ),
+    ).toBe(true)
+    const page = await connection.history('lunch@example.org', { limit: 10 })
+    expect(page.messages.map((one) => one.text)).toEqual(['At noon?', 'Yes!', 'From my phone'])
+    stop()
+    await connection.close()
+  })
+
+  test('a mailbox the server built anew is read again, not by its old numbers', async () => {
+    const connection = await mailProvider.connect(config(), host)
+    const { stop, until } = await listening(connection)
+    server.rebuild('INBOX')
+    server.deliver('INBOX', late)
+    expect(
+      await until((events) =>
+        events.some((event) => event.t === 'message' && event.message.text === 'Later on'),
+      ),
+    ).toBe(true)
+    const news = await connection.history('news@shop.example', { limit: 5 })
+    expect(news.messages.map((one) => one.text)).toEqual(['Buy'])
+    await connection.markRead?.('news@shop.example', '')
+    const inbox = server.boxes.get('INBOX') ?? []
+    const flagsOf = (id: string) => [
+      ...(inbox.find((one) => latin(one.raw).includes(id))?.flags ?? []),
+    ]
+    expect(flagsOf('<news@shop.example>')).toContain('\\Seen')
+    expect(flagsOf('<lunch@example.org>')).not.toContain('\\Seen')
+    stop()
+    await connection.close()
+  })
+
+  test('a mail in two mailboxes is one message of its thread', async () => {
+    const self = [
+      'From: Emil <emil@example.org>',
+      'To: Emil <emil@example.org>',
+      'Subject: Note to self',
+      'Date: Thu, 5 Nov 2026 09:00:00 +0000',
+      'Message-ID: <self@example.org>',
+      '',
+      'Milk',
+    ].join('\n')
+    server.deliver('INBOX', self)
+    server.deliver('Sent', self, ['\\Seen'])
+    const connection = await mailProvider.connect(config(), host)
+    const page = await connection.history('self@example.org', { limit: 10 })
+    expect(page.messages.map((one) => one.text)).toEqual(['Milk'])
+    await connection.close()
+  })
+
+  test('an answer goes where the mail asks answers to go', async () => {
+    server.deliver(
+      'INBOX',
+      [
+        'From: Club <noreply@club.example>',
+        'Reply-To: "Board, the" <board@club.example>',
+        'To: emil@example.org',
+        'Subject: Meeting',
+        'Date: Thu, 5 Nov 2026 09:00:00 +0000',
+        'Message-ID: <meeting@club.example>',
+        '',
+        'Who comes?',
+      ].join('\n'),
+    )
+    const connection = await mailProvider.connect(config(), host)
+    await connection.send('meeting@club.example', { text: 'Me' })
+    expect(server.sent[0]?.to).toEqual(['board@club.example'])
+    const headers = parseMessage(ascii(server.sent[0]?.data ?? '')).headers
+    expect(addressesOf(headers.get('to')?.[0] ?? '')).toEqual([
+      { name: 'Board, the', address: 'board@club.example' },
+    ])
+    await connection.close()
+  })
+
+  test('a subject sent as raw UTF-8 reads as written', async () => {
+    server.deliver(
+      'INBOX',
+      latin(
+        ascii(
+          [
+            'From: Jürg <juerg@example.org>',
+            'To: emil@example.org',
+            'Subject: Grüße aus Zürich',
+            'Date: Thu, 5 Nov 2026 09:00:00 +0000',
+            'Message-ID: <gruss@example.org>',
+            '',
+            'Hoi',
+          ].join('\n'),
+        ),
+      ),
+    )
+    const connection = await mailProvider.connect(config(), host)
+    const found = (await connection.conversations()).find((one) => one.id === 'gruss@example.org')
+    expect(found?.title).toBe('Grüße aus Zürich')
+    expect(found?.people[0]?.name).toBe('Jürg')
+    await connection.close()
+  })
+})
+
+describe('MIME as mail programs write it', () => {
+  test('a character split across two encoded words is one character', () => {
+    const bytes = ascii('Grüße')
+    const one = toBase64(bytes.subarray(0, 3))
+    const two = toBase64(bytes.subarray(3))
+    expect(decodeWords(`=?UTF-8?B?${one}?=\r\n =?UTF-8?B?${two}?=`)).toBe('Grüße')
+    expect(decodeWords('=?utf-8?Q?a?= b =?utf-8?Q?c?=')).toBe('a b c')
+  })
+
+  test('a header in raw 8-bit reads as UTF-8, or as Latin-1 where it is not', () => {
+    expect(decodeWords(latin(ascii('Grüße')))).toBe('Grüße')
+    expect(decodeWords('caf\xe9')).toBe('café')
+    expect(decodeWords('Grüße')).toBe('Grüße')
+  })
+
+  test('HTML reads as its words: entities, comments, links, and no crash on a broken entity', () => {
+    const parsed = parseMessage(
+      ascii(
+        [
+          'Content-Type: text/html; charset=utf-8',
+          '',
+          '<html><head><title>T</title></head><body>',
+          '<!--[if mso]><xml>96</xml><![endif]-->',
+          '<p>Gr&uuml;&szlig;e,',
+          '  das kostet 5&#x20AC; &amp; &#99999999; &apos;mehr&apos;</p>',
+          '<p><a href="https://club.example/confirm?a=1&amp;b=2">Confirm</a>',
+          '<a href="https://club.example/">https://club.example/</a></p>',
+          '</body></html>',
+        ].join('\r\n'),
+      ),
+    )
+    expect(parsed.text).toBe(
+      "Grüße, das kostet 5€ & � 'mehr'\n\nConfirm (https://club.example/confirm?a=1&b=2) https://club.example/",
+    )
+  })
+
+  test('a part without a name is still a file of the mail', () => {
+    const raw = [
+      'Content-Type: multipart/mixed; boundary=b',
+      '',
+      '--b',
+      'Content-Type: text/plain',
+      '',
+      'See below',
+      '--b',
+      'Content-Type: message/rfc822',
+      '',
+      'Subject: Hello there',
+      '',
+      'Inner',
+      '--b',
+      'Content-Type: image/png',
+      'Content-ID: <logo>',
+      'Content-Transfer-Encoding: base64',
+      '',
+      'iVBORw0KGgo=',
+      '--b',
+      'Content-Type: text/calendar; method=REQUEST',
+      '',
+      'BEGIN:VCALENDAR',
+      '--b--',
+    ].join('\r\n')
+    const parsed = parseMessage(ascii(raw))
+    expect(parsed.text).toBe('See below')
+    expect(parsed.attachments.map((one) => [one.filename, one.type])).toEqual([
+      ['Hello there.eml', 'message/rfc822'],
+      ['image.png', 'image/png'],
+      ['attachment.ics', 'text/calendar'],
+    ])
+  })
+
+  test('a boundary only cuts at the start of a line, not inside another one or a sentence', () => {
+    const raw = [
+      'Content-Type: multipart/mixed; boundary="abc"',
+      '',
+      '--abc',
+      'Content-Type: multipart/alternative; boundary="abc-2"',
+      '',
+      '--abc-2',
+      'Content-Type: text/plain',
+      '',
+      'Plain words, then --abc in the middle of a line',
+      '--abc-2',
+      'Content-Type: text/html',
+      '',
+      '<p>Html words</p>',
+      '--abc-2--',
+      '--abc',
+      'Content-Type: application/pdf; name=a.pdf',
+      '',
+      'PDF',
+      '--abc--',
+    ].join('\r\n')
+    const parsed = parseMessage(ascii(raw))
+    expect(parsed.text).toBe('Plain words, then --abc in the middle of a line')
+    expect(parsed.attachments.map((one) => one.filename)).toEqual(['a.pdf'])
+  })
+
+  test('an answer from Outlook is shown without the history it carries', () => {
+    const outlook = [
+      'Sounds good, see you.',
+      '',
+      '________________________________',
+      'From: Lucile <lucile@example.org>',
+      'Sent: Monday, 2 November 2026 10:00',
+      'To: Emil',
+      'Subject: Lunch',
+      '',
+      'At noon?',
+    ].join('\n')
+    expect(withoutQuote(outlook, true)).toBe('Sounds good, see you.')
+    expect(withoutQuote(outlook)).toContain('At noon?')
+    expect(withoutQuote('Ja.\n\nVon: Lucile\nGesendet: Montag\nAn: Emil\n\nMittag?', true)).toBe(
+      'Ja.',
+    )
+    expect(withoutQuote('Hi\n-----Original Message-----\nold', true)).toBe('Hi')
+  })
+
+  test('a name with a comma or a quote is quoted, and a file name escapes what RFC 5987 keeps out', () => {
+    const bytes = buildMessage({
+      from: { name: 'Vinu, Emil', address: 'emil@example.org' },
+      to: [{ name: 'Lu "Lu" O\'Neil', address: 'lucile@example.org' }],
+      subject: 'Plan',
+      text: 'x',
+      messageId: 'q@example.org',
+      date: new Date(Date.UTC(2026, 10, 6, 12)),
+      attachments: [
+        { name: "Emil's (draft).txt", type: 'text/plain\r\nBcc: x', bytes: ascii('d') },
+      ],
+    })
+    const parsed = parseMessage(bytes)
+    expect(addressesOf(parsed.headers.get('from')?.[0] ?? '')).toEqual([
+      { name: 'Vinu, Emil', address: 'emil@example.org' },
+    ])
+    expect(addressesOf(parsed.headers.get('to')?.[0] ?? '')).toHaveLength(1)
+    expect(latin(bytes)).toContain("filename*=utf-8''Emil%27s%20%28draft%29.txt")
+    expect(latin(bytes)).not.toContain('Bcc')
+    expect(parsed.attachments[0]?.filename).toBe("Emil's (draft).txt")
+  })
 })

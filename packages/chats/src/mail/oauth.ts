@@ -5,6 +5,13 @@ import { type Bearer, linkedMail, SignedOut } from './provider'
 
 const EARLY = 60_000
 
+const ENDED = new Set([
+  'invalid_grant',
+  'interaction_required',
+  'consent_required',
+  'login_required',
+])
+
 export interface OAuthService {
   id: string
   name: string
@@ -157,7 +164,7 @@ async function exchange(
   const ok = sent.status >= 200 && sent.status < 300
   if (!ok || typeof said.access_token !== 'string' || !said.access_token) {
     const code = typeof said.error === 'string' ? said.error : `HTTP ${sent.status}`
-    if (renewing && (sent.status === 400 || sent.status === 401)) {
+    if (renewing && ENDED.has(code)) {
       throw new SignedOut(`${service.name} ended the sign-in (${code}), connect the account again`)
     }
     throw new Error(`${service.name} did not sign in (${code})`)
