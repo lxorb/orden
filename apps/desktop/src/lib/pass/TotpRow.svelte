@@ -47,7 +47,7 @@
       onclick={() => now && void copyField(label, now.code)}
     >
       <span class="label">{label}</span>
-      <span class="value">{shown || '••• •••'}</span>
+      <span class="value" dir="ltr">{shown || '••• •••'}</span>
     </button>
     <svg
       class="ring"

@@ -18,7 +18,7 @@
 
 <div class="copyable">
   {#if label}<span class="label">{label}</span>{/if}
-  <code class="value" class:plain class:off={disabled}>{value}</code>
+  <code class="value" dir="ltr" class:plain class:off={disabled}>{value}</code>
   {#if !plain}<CopyButton {value} {word} {disabled} />{/if}
 </div>
 

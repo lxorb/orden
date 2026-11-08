@@ -1269,8 +1269,18 @@ select option {
 }
 
 textarea,
-input:is(:not([type]), [type='text'], [type='search'], [type='email'], [type='url']) {
+input:is(:not([type]), [type='text'], [type='search']) {
   unicode-bidi: plaintext;
+}
+
+input:is(
+  [type='email'],
+  [type='url'],
+  [type='tel'],
+  [inputmode='numeric'],
+  [autocomplete='one-time-code']
+) {
+  direction: ltr;
 }
 
 input.orden-field,

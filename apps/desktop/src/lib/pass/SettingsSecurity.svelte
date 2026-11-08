@@ -153,7 +153,7 @@
 <h3 class="orden-section">{t('Recovery key')}</h3>
 <div class="card padded">
   {#if recovery}
-    <output class="code">{recovery}</output>
+    <output class="code" dir="ltr">{recovery}</output>
     <div class="buttons">
       <button
         class="orden-chip"

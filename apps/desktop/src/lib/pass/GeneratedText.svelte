@@ -9,7 +9,7 @@
   )
 </script>
 
-<output class="generated" aria-live="polite"
+<output class="generated" dir="ltr" aria-live="polite"
   >{#each pieces as piece, at (at)}<span class={piece.kind}>{piece.char}</span>{/each}</output
 >
 
