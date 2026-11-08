@@ -76,6 +76,15 @@ export function sharpness(width: number, height: number, wanted: number): number
   return Math.min(wanted, SIDE / Math.max(width, height, 1))
 }
 
+export function drawScale(width: number, height: number, density: number): number {
+  const area = width * height * density * density
+  return sharpness(
+    width,
+    height,
+    area > MOST_PIXELS ? density * Math.sqrt(MOST_PIXELS / area) : density,
+  )
+}
+
 export function densityFor(onScreen: number): number {
   return DENSITIES.find((one) => onScreen <= one) ?? SHARP
 }
@@ -289,12 +298,7 @@ async function draw(one: Held, number: number, density: number): Promise<Paper |
   const page = await opened.doc.getPage(number)
   const wanted = page.getViewport({ scale: PDF_TO_CSS })
 
-  const area = wanted.width * wanted.height * density * density
-  const scale = sharpness(
-    wanted.width,
-    wanted.height,
-    area > MOST_PIXELS ? density * Math.sqrt(MOST_PIXELS / area) : density,
-  )
+  const scale = drawScale(wanted.width, wanted.height, density)
   const view = page.getViewport({ scale: PDF_TO_CSS * scale })
 
   const paper = sheetOf(Math.max(1, Math.round(view.width)), Math.max(1, Math.round(view.height)))
