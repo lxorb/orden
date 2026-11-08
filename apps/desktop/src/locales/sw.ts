@@ -3843,4 +3843,7 @@ export const sw: Dictionary = {
     'Hutuma hesabu za kila siku za unachotumia chini ya ID ya nasibu; kamwe si madokezo, majina, njia au unachoandika.',
   'Share anonymous usage data': 'Shiriki data ya matumizi isiyo na jina',
   'Also share anonymous usage data': 'Shiriki pia data ya matumizi isiyo na jina',
+  Unknown: 'Haijulikani',
+  'Unnamed group': 'Kikundi kisicho na jina',
+  'Loading your chats…': 'Inapakia gumzo zako…',
 }

@@ -6,6 +6,7 @@ import type {
   ProviderMessage,
   ProviderPoll,
 } from '../provider'
+import { UNKNOWN } from '../provider'
 import { markdownOf } from './entities'
 import { fullName, idOf, peerId, type Peers, type Where } from './peers'
 import { waveOf } from './voice'
@@ -277,7 +278,7 @@ function systemText(message: tl.RawMessageService, peers: Peers): string {
     ids
       .map((id) => {
         const user = peers.users.get(id)
-        return user ? fullName(user) : String(id)
+        return user ? fullName(user) : UNKNOWN
       })
       .join(', ')
   const action = message.action

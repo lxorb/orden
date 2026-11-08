@@ -3864,4 +3864,7 @@ export const de: Dictionary = {
     'Sendet täglich Zählungen deiner Nutzung unter einer zufälligen ID; nie Notizen, Namen, Pfade oder was du tippst.',
   'Share anonymous usage data': 'Anonyme Nutzungsdaten teilen',
   'Also share anonymous usage data': 'Auch anonyme Nutzungsdaten teilen',
+  Unknown: 'Unbekannt',
+  'Unnamed group': 'Gruppe ohne Namen',
+  'Loading your chats…': 'Deine Chats werden geladen…',
 }

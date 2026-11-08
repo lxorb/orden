@@ -31,6 +31,7 @@ import type {
 } from './api'
 import { conversationKey, conversationKeyOf } from './conversation-key'
 import { sentText, shownText, subjectOf } from './formats'
+import { conversationTitle } from './view/title'
 
 const PAGE = 50
 const JUMP_PAGES = 20
@@ -129,10 +130,6 @@ const CLOSED: ChatAbilities = {
   stickers: false,
   gifs: false,
   formatting: 'plain',
-}
-
-function titleOf(conversation: Conversation): string {
-  return conversation.title ?? conversation.people.map((one) => one.name).join(', ')
 }
 
 interface Pending {
@@ -265,7 +262,7 @@ export class Remote {
       space: '',
       root: null,
       path: null,
-      name: titleOf(found),
+      name: conversationTitle(found),
       role: roleOf(found, source.provider.can),
       members: found.members ?? found.people.length + 1,
       lastSeq: 0,
@@ -328,7 +325,7 @@ export class Remote {
     const subject =
       message.subject &&
       conversation &&
-      subjectOf(message.subject) !== subjectOf(titleOf(conversation))
+      subjectOf(message.subject) !== subjectOf(conversationTitle(conversation))
         ? message.subject
         : undefined
     const poll = message.poll

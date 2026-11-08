@@ -3726,4 +3726,7 @@ export const id: Dictionary = {
     'Mengirim hitungan harian dari yang Anda gunakan dengan ID acak; tidak pernah catatan, nama, jalur, atau apa yang Anda ketik.',
   'Share anonymous usage data': 'Bagikan data penggunaan anonim',
   'Also share anonymous usage data': 'Bagikan juga data penggunaan anonim',
+  Unknown: 'Tidak dikenal',
+  'Unnamed group': 'Grup tanpa nama',
+  'Loading your chats…': 'Memuat obrolan Anda…',
 }

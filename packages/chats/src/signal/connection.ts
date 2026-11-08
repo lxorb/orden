@@ -17,6 +17,7 @@ import type {
   ProviderPoll,
   StickerSet,
 } from '../provider'
+import { UNKNOWN } from '../provider'
 import { borrow, Ended, giveBack, type Notice, type Rpc } from './rpc'
 import { list, maybe, number, numbers, said, text, words, type Said } from './said'
 import { keptFor, type Kept, type RawStore } from './store'
@@ -386,7 +387,7 @@ class SignalConnection implements Connection {
     const known = handle !== '' ? handle : (before?.handle ?? '')
     const person: Person = {
       id: uuid,
-      name: [name, before?.name ?? '', kept, known].find((one) => one !== '') ?? 'Signal user',
+      name: [name, before?.name ?? '', kept, known].find((one) => one !== '') ?? UNKNOWN,
       ...(kept ? { phone: kept } : {}),
       ...(known ? { handle: known } : {}),
     }
@@ -396,7 +397,7 @@ class SignalConnection implements Connection {
 
   private nameOf(uuid: string): string {
     if (uuid === this.me.aci) return 'Note to Self'
-    return this.persons.get(uuid)?.name ?? uuid
+    return this.persons.get(uuid)?.name ?? UNKNOWN
   }
 
   private personOf(uuid: string): Person {

@@ -3712,4 +3712,7 @@ export const am: Dictionary = {
     'የሚጠቀሙትን ዕለታዊ ቆጠራ በዘፈቀደ ID ስር ይልካል፤ ማስታወሻዎች፣ ስሞች፣ መንገዶች ወይም የሚተይቡት ፈጽሞ አይላኩም።',
   'Share anonymous usage data': 'ስም-አልባ የአጠቃቀም መረጃ አጋራ',
   'Also share anonymous usage data': 'ስም-አልባ የአጠቃቀም መረጃም አጋራ',
+  Unknown: 'ያልታወቀ',
+  'Unnamed group': 'ስም የሌለው ቡድን',
+  'Loading your chats…': 'ውይይቶችዎ እየተጫኑ ነው…',
 }

@@ -21,6 +21,8 @@ export interface ConnectHelp {
   steps?: readonly string[]
 }
 
+export const UNKNOWN = 'Unknown'
+
 export interface Person {
   id: string
   name: string

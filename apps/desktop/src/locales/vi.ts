@@ -3694,4 +3694,7 @@ export const vi: Dictionary = {
     'Gửi số đếm hằng ngày về những gì bạn dùng dưới một ID ngẫu nhiên; không bao giờ gửi ghi chú, tên, đường dẫn hay những gì bạn gõ.',
   'Share anonymous usage data': 'Chia sẻ dữ liệu sử dụng ẩn danh',
   'Also share anonymous usage data': 'Chia sẻ cả dữ liệu sử dụng ẩn danh',
+  Unknown: 'Không rõ',
+  'Unnamed group': 'Nhóm không tên',
+  'Loading your chats…': 'Đang tải các cuộc trò chuyện…',
 }

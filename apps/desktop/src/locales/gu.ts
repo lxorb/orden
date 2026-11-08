@@ -3775,4 +3775,7 @@ export const gu: Dictionary = {
     'તમે જે વાપરો છો તેની દૈનિક ગણતરી રેન્ડમ ID હેઠળ મોકલે છે; ક્યારેય નોંધો, નામ, પાથ કે તમે જે લખો છો તે નહીં.',
   'Share anonymous usage data': 'અનામી વપરાશ ડેટા શેર કરો',
   'Also share anonymous usage data': 'અનામી વપરાશ ડેટા પણ શેર કરો',
+  Unknown: 'અજ્ઞાત',
+  'Unnamed group': 'નામ વગરનું ગ્રુપ',
+  'Loading your chats…': 'તમારી ચેટ્સ લોડ થઈ રહી છે…',
 }

@@ -3789,4 +3789,7 @@ export const mr: Dictionary = {
     'तुम्ही जे वापरता त्याची दैनिक गणना यादृच्छिक ID खाली पाठवते; नोट्स, नावे, पथ किंवा तुम्ही जे टाइप करता ते कधीच नाही.',
   'Share anonymous usage data': 'निनावी वापर डेटा शेअर करा',
   'Also share anonymous usage data': 'निनावी वापर डेटाही शेअर करा',
+  Unknown: 'अज्ञात',
+  'Unnamed group': 'नाव नसलेला गट',
+  'Loading your chats…': 'तुमचे चॅट लोड होत आहेत…',
 }

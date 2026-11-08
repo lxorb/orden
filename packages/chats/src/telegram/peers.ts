@@ -1,5 +1,6 @@
 import type { tl } from '@mtcute/core'
 import type { ConversationRole, Person } from '../provider'
+import { UNKNOWN } from '../provider'
 import type { Found } from './client'
 
 export interface Where {
@@ -41,7 +42,7 @@ export function fullName(user: tl.RawUser): string {
   if (name) return name
   if (user.username) return `@${user.username}`
   if (user.phone) return `+${user.phone}`
-  return String(user.id)
+  return UNKNOWN
 }
 
 function usernameOf(user: tl.RawUser | tl.RawChannel): string | undefined {
@@ -123,12 +124,12 @@ export class Peers {
     const id = peerId(peer)
     if (peer._ === 'peerUser') {
       const user = this.users.get(peer.userId)
-      if (!user) return { id, name: id }
+      if (!user) return { id, name: UNKNOWN }
       return personOf(user)
     }
     const group =
       peer._ === 'peerChat' ? this.chats.get(peer.chatId) : this.channels.get(peer.channelId)
-    const person: Person = { id, name: group?.title ?? id }
+    const person: Person = { id, name: group?.title ?? UNKNOWN }
     const handle = group?._ === 'channel' ? usernameOf(group) : undefined
     if (handle) person.handle = handle
     if (group?.photo._ === 'chatPhoto') person.picture = id

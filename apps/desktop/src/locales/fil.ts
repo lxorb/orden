@@ -3870,4 +3870,7 @@ export const fil: Dictionary = {
     'Nagpapadala araw-araw ng bilang ng ginagamit mo sa ilalim ng random na ID; hindi kailanman tala, pangalan, path o tina-type mo.',
   'Share anonymous usage data': 'Magbahagi ng anonymous na data ng paggamit',
   'Also share anonymous usage data': 'Magbahagi rin ng anonymous na data ng paggamit',
+  Unknown: 'Hindi kilala',
+  'Unnamed group': 'Grupong walang pangalan',
+  'Loading your chats…': 'Nilo-load ang iyong mga chat…',
 }

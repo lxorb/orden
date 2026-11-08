@@ -3818,4 +3818,7 @@ export const gsw: Dictionary = {
     'Schickt täglich Zählige vo dem, wo du bruuchsch, under ere zuefällige ID; nie Notize, Näme, Pfäd oder was du tippsch.',
   'Share anonymous usage data': 'Anonymi Nutzigsdate teile',
   'Also share anonymous usage data': 'Au anonymi Nutzigsdate teile',
+  Unknown: 'Unbekannt',
+  'Unnamed group': 'Gruppe ohni Name',
+  'Loading your chats…': 'Dini Chats wärded glade…',
 }

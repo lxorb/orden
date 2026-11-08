@@ -3902,4 +3902,7 @@ export const ptPT: Dictionary = {
     'Envia contagens diárias do que usa com um ID aleatório; nunca notas, nomes, caminhos ou o que escreve.',
   'Share anonymous usage data': 'Partilhar dados de utilização anónimos',
   'Also share anonymous usage data': 'Partilhar também dados de utilização anónimos',
+  Unknown: 'Desconhecido',
+  'Unnamed group': 'Grupo sem nome',
+  'Loading your chats…': 'A carregar as suas conversas…',
 }
