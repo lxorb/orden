@@ -1,5 +1,5 @@
 import { account } from './account.svelte'
-import { api, ApiError } from './api'
+import { api, fromServer } from './api'
 import { isRecord, keepJson, recordOf, stored } from './stored'
 import { passing } from './backoff'
 
@@ -88,8 +88,8 @@ const orders = new Shelf<string[]>(
 const ORDER = 'order'
 
 function unreachable(error: unknown): boolean {
-  if (error instanceof ApiError) return error.status === 401 || passing(error.status)
-  return true
+  if (!fromServer(error)) return true
+  return error.status === 401 || passing(error.status)
 }
 
 async function settled(asking: Promise<unknown>): Promise<boolean> {
