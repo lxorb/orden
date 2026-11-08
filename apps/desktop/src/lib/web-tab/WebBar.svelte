@@ -347,7 +347,7 @@
   }
 
   .site {
-    margin-left: var(--space-1);
+    margin-inline-start: var(--space-1);
   }
 
   .privately {
