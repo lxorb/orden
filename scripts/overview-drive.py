@@ -20,6 +20,7 @@ from typing import Any
 import mss
 import numpy
 from PIL import Image, ImageStat
+import crash_told
 from fresh_app import fresh
 
 COLOUR = (255, 0, 255)
@@ -223,6 +224,7 @@ def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
         try:
             said = json.loads(path.read_text(encoding="utf-8-sig"))
             if said.get("port") and int(said.get("pid") or 0) == pid:
+                crash_told.told(int(said["port"]), secret)
                 return App(int(said["port"]), secret)
         except (OSError, ValueError):
             pass
