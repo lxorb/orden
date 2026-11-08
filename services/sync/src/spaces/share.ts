@@ -88,6 +88,18 @@ export async function roomForAnItem(env: Env, spaceId: string, item: string): Pr
   return held.has(item) || held.size < MOST_ITEMS
 }
 
+export function roomForItem(space: string, item: string, most: string): string {
+  return `(${item} = ''
+          or exists (select 1 from space_members where space_id = ${space} and item = ${item})
+          or exists (select 1 from space_links where space_id = ${space} and item = ${item})
+          or exists (select 1 from guest_members where space_id = ${space} and item = ${item})
+          or (select count(*) from (
+                select item from space_members where space_id = ${space} and item <> ''
+                union select item from space_links where space_id = ${space} and item <> ''
+                union select item from guest_members where space_id = ${space} and item <> ''
+              )) < ${most})`
+}
+
 export const TOO_MANY_ITEMS = 'that is as many notes as one space shares on their own'
 
 interface FaceColumns {
@@ -343,7 +355,7 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   const invited = await context.env.DB.prepare(
     `insert into space_members (space_id, email, item, role, invite_hash, expires_at, created_at)
      select ?1, ?2, ?3, ?4, ?5, ?6, ?7
-      where ${roomForMember('?1', '?2', '?3', '?8')}
+      where ${roomForMember('?1', '?2', '?3', '?8')} and ${roomForItem('?1', '?3', '?9')}
      on conflict(space_id, email, item) do update set
        role = excluded.role,
        invite_hash = excluded.invite_hash,
@@ -358,9 +370,15 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
       now() + INVITE_TTL,
       now(),
       MOST_MEMBERS,
+      MOST_ITEMS,
     )
     .run()
-  if (!invited.meta.changes) return context.json({ error: SPACE_IS_FULL }, 409)
+  if (!invited.meta.changes) {
+    const error = (await roomForAnItem(context.env, space.id, scope.id))
+      ? SPACE_IS_FULL
+      : TOO_MANY_ITEMS
+    return context.json({ error }, 409)
+  }
   await onceShared(context.env, space.id, scope.id)
 
   await context.env.DB.prepare(
@@ -493,13 +511,14 @@ share.put('/:id/share/link', atLeast('owner'), about(), async (context) => {
   const held = await linkOf(context.env, space.id, scope.id)
   const token = held?.token ?? randomToken()
 
-  await context.env.DB.prepare(
+  const linked = await context.env.DB.prepare(
     `insert into space_links (space_id, item, token, role, mode, created_at)
-     values (?1, ?2, ?3, ?4, ?5, ?6)
+     select ?1, ?2, ?3, ?4, ?5, ?6 where ${roomForItem('?1', '?2', '?7')}
      on conflict(space_id, item) do update set role = excluded.role, mode = excluded.mode`,
   )
-    .bind(space.id, scope.id, token, role, mode, now())
+    .bind(space.id, scope.id, token, role, mode, now(), MOST_ITEMS)
     .run()
+  if (!linked.meta.changes) return context.json({ error: TOO_MANY_ITEMS }, 409)
 
   return context.json(await sharing(context.env, space, context.get('user'), scope))
 })

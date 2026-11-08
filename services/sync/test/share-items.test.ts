@@ -515,6 +515,54 @@ describe('the ceilings', () => {
     expect(again.status).toBe(200)
   })
 
+  test('and hold that bound when another file is shared at the same moment', async () => {
+    const holdItems = (many: number) => {
+      const add = env.db.prepare(
+        `insert into space_links (space_id, item, token, role, mode, created_at)
+         values (?, ?, ?, 'read', 'open', 1)`,
+      )
+      for (let at = 0; at < many; at++) add.run(space, `held-${at}`, `token-${at}`)
+    }
+    const items = () =>
+      (
+        env.db
+          .prepare(
+            `select count(*) as n from (select item from space_links where space_id = ?1
+              union select item from space_members where space_id = ?1 and item <> '')`,
+          )
+          .get(space) as { n: number }
+      ).n
+    holdItems(MOST_ITEMS - 1)
+    const quicker = (sql: RegExp) =>
+      env.justBefore(sql, () => {
+        env.db
+          .prepare(
+            `insert into space_links (space_id, item, token, role, mode, created_at)
+             values (?, 'quicker', 'quicker-token', 'read', 'open', 1)`,
+          )
+          .run(space)
+      })
+
+    quicker(/insert into space_links/)
+    const linked = await call(env, `/v1/spaces/${space}/share/link?item=${note}`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'read', mode: 'open' },
+    })
+    expect(linked.status).toBe(409)
+    expect(items()).toBe(MOST_ITEMS)
+
+    env.db.prepare("delete from space_links where item = 'quicker'").run()
+    quicker(/insert into space_members/)
+    const invited = await call(env, `/v1/spaces/${space}/share/invite?item=${note}`, {
+      token: owner,
+      body: { email: FRIEND, role: 'read' },
+    })
+    expect(invited.status).toBe(409)
+    expect(invited.json.error).toBe('that is as many notes as one space shares on their own')
+    expect(items()).toBe(MOST_ITEMS)
+  })
+
   test('and only the owner shares one of a space files', async () => {
     await call(env, `/v1/spaces/${space}/share/invite`, {
       token: owner,

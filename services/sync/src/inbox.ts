@@ -70,12 +70,12 @@ async function heldOf(
   return new Map(results.map((row) => [row.id, itemOf(row)]))
 }
 
-async function fits(env: Env, userId: string, fresh: number): Promise<boolean> {
-  if (!fresh) return true
-  const row = await env.DB.prepare('select count(*) as held from inbox_items where user_id = ?')
-    .bind(userId)
-    .first<{ held: number }>()
-  return (row?.held ?? 0) + fresh <= MOST_INBOX_ITEMS
+function roomFor(user: string, sent: string, most: string): string {
+  return `((select count(*) from inbox_items where user_id = ${user})
+          + (select count(*) from json_each(${sent}) as fresh
+              where not exists (select 1 from inbox_items as kept
+                                 where kept.user_id = ${user}
+                                   and kept.id = json_extract(fresh.value, '$.id'))) <= ${most})`
 }
 
 function together(changes: readonly InboxChange[]): InboxChange[] {
@@ -105,13 +105,20 @@ async function written(
   userId: string,
   plans: readonly Planned[],
   by: string,
-): Promise<{ last: number; lost: string[] }> {
+): Promise<{ last: number; lost: string[] } | 'full'> {
   const many = plans.length
+  const sent = JSON.stringify(plans)
   const results = await env.DB.batch([
+    env.DB.prepare(`select ${roomFor('?1', '?2', '?3')} as room`).bind(
+      userId,
+      sent,
+      MOST_INBOX_ITEMS,
+    ),
     env.DB.prepare(
-      `insert into inbox_cursor (user_id, next) values (?1, ?2 + 1)
+      `insert into inbox_cursor (user_id, next) select ?1, ?2 + 1
+        where ${roomFor('?1', '?3', '?4')}
        on conflict(user_id) do update set next = next + ?2`,
-    ).bind(userId, many),
+    ).bind(userId, many, sent, MOST_INBOX_ITEMS),
     env.DB.prepare(
       `insert into inbox_items (user_id, id, fields, stamps, seq, at, by)
        select ?1, json_extract(value, '$.id'), json_extract(value, '$.fields'),
@@ -119,14 +126,14 @@ async function written(
               (select next from inbox_cursor where user_id = ?1) - ?4
                 + json_extract(value, '$.seq'),
               ?5, ?2
-         from json_each(?3) where true
+         from json_each(?3) where ${roomFor('?1', '?3', '?6')}
        on conflict(user_id, id) do update
          set fields = excluded.fields, stamps = excluded.stamps, seq = excluded.seq,
              at = excluded.at, by = excluded.by
          where inbox_items.seq = (select json_extract(sent.value, '$.was')
                                     from json_each(?3) as sent
                                    where json_extract(sent.value, '$.id') = inbox_items.id)`,
-    ).bind(userId, by, JSON.stringify(plans), many, now()),
+    ).bind(userId, by, sent, many, now(), MOST_INBOX_ITEMS),
     env.DB.prepare(
       `select next - 1 as last,
               (select json_group_array(json_extract(sent.value, '$.id'))
@@ -136,8 +143,9 @@ async function written(
                    where kept.user_id = ?1 and kept.id = json_extract(sent.value, '$.id')
                      and kept.stamps = json_extract(sent.value, '$.stamps'))) as lost
          from inbox_cursor where user_id = ?1`,
-    ).bind(userId, JSON.stringify(plans)),
+    ).bind(userId, sent),
   ])
+  if (!(results[0]?.results[0] as { room?: number } | undefined)?.room) return 'full'
   const row = results.at(-1)?.results[0] as { last?: number; lost?: string } | undefined
   return { last: row?.last ?? many, lost: JSON.parse(row?.lost ?? '[]') as string[] }
 }
@@ -156,12 +164,6 @@ export async function writeInbox(
       userId,
       changes.map((one) => one.id),
     )
-    if (
-      tries === 0 &&
-      !(await fits(env, userId, changes.filter((one) => !held.has(one.id)).length))
-    ) {
-      return 'full'
-    }
     const plans: Planned[] = []
     for (const change of changes) {
       const was = held.get(change.id) ?? null
@@ -176,7 +178,9 @@ export async function writeInbox(
       })
     }
     if (!plans.length) break
-    const { last, lost } = await written(env, userId, plans, by)
+    const done = await written(env, userId, plans, by)
+    if (done === 'full') return 'full'
+    const { last, lost } = done
     cursor = last
     const again = new Set(lost)
     changes = changes.filter((one) => again.has(one.id))

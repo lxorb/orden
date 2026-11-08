@@ -5,8 +5,14 @@ import { Hono } from 'hono'
 import { newId, now } from '../crypto'
 import { within } from '../limits'
 import { NO_SUCH_SPACE } from '../refused'
-import { MOST_MEMBERS, roomForAnItem, roomForMember, TOO_MANY_ITEMS } from '../spaces/share'
-import { allows, onceShared, reachedSpace, refusal } from '../spaces/space'
+import {
+  MOST_MEMBERS,
+  roomForAnItem,
+  roomForItem,
+  roomForMember,
+  TOO_MANY_ITEMS,
+} from '../spaces/share'
+import { allows, MOST_ITEMS, onceShared, reachedSpace, refusal } from '../spaces/space'
 import { blobKey, BYTES, NO_SUCH_FILE } from '../sync2/files'
 import { deviceOf } from '../sync2/device'
 import type { Env, Variables, Whoever } from '../types'
@@ -428,12 +434,15 @@ chats.post('/:chat/note', async (context) => {
     const added = await env.DB.prepare(
       `insert into space_members (space_id, email, item, role, joined_at, created_at)
        select ?1, ?2, ?3, 'read', ?4, ?4
-        where ${roomForMember('?1', '?2', '?3', '?5')}
+        where ${roomForMember('?1', '?2', '?3', '?5')} and ${roomForItem('?1', '?3', '?6')}
        on conflict(space_id, email, item) do nothing`,
     )
-      .bind(dropped.space, one.email, dropped.note, at, MOST_MEMBERS)
+      .bind(dropped.space, one.email, dropped.note, at, MOST_MEMBERS, MOST_ITEMS)
       .run()
     shared += added.meta.changes
+  }
+  if (!shared && results.length && !(await roomForAnItem(env, dropped.space, dropped.note))) {
+    return context.json({ error: TOO_MANY_ITEMS }, 409)
   }
   if (shared) await onceShared(env, dropped.space, dropped.note)
   return context.json({ shared })

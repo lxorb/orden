@@ -18,6 +18,8 @@ const LONGEST_URI = 2048
 
 const MOST_CLIENTS = 5_000
 
+const FULL = failure('temporarily_unavailable', 'this server is not taking new clients right now')
+
 const UNUSED_FOR = 30 * 24 * 60 * 60 * 1000
 const LONGEST_DOCUMENT = 64_000
 
@@ -147,12 +149,7 @@ registration.post('/register', async (context) => {
       many: number
     }>()
 
-    if ((held?.many ?? 0) >= MOST_CLIENTS) {
-      return context.json(
-        failure('temporarily_unavailable', 'this server is not taking new clients right now'),
-        503,
-      )
-    }
+    if ((held?.many ?? 0) >= MOST_CLIENTS) return context.json(FULL, 503)
 
     if (!(await mayRegister(context.env, machineOf(context.req)))) {
       return context.json(
@@ -161,12 +158,13 @@ registration.post('/register', async (context) => {
       )
     }
 
-    await context.env.DB.prepare(
+    const added = await context.env.DB.prepare(
       `insert into oauth_clients (id, name, redirect_uris, secret_hash, created_at, used_at)
-       values (?, ?, ?, ?, ?, ?)`,
+       select ?1, ?2, ?3, ?4, ?5, ?5 where (select count(*) from oauth_clients) < ?6`,
     )
-      .bind(id, name, uris, secret ? await sha256(secret) : null, createdAt, createdAt)
+      .bind(id, name, uris, secret ? await sha256(secret) : null, createdAt, MOST_CLIENTS)
       .run()
+    if (!added.meta.changes) return context.json(FULL, 503)
   }
 
   return context.json(

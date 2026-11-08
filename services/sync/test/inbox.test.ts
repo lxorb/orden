@@ -112,6 +112,32 @@ describe('the inbox an account keeps', () => {
     expect((await write([todo('x7', { text: 'x' })])).status).toBe(200)
   })
 
+  test('lets no to-do past what it keeps when another arrives at the same moment', async () => {
+    const user = env.db.prepare(`select id from users where email = 'a@b.dev'`).get() as {
+      id: string
+    }
+    env.db
+      .prepare(
+        `with recursive n(i) as (select 1 union all select i + 1 from n where i < ?)
+         insert into inbox_items (user_id, id, fields, stamps, seq, at)
+         select ?, 'x' || i, '{}', '{}', i, 1 from n`,
+      )
+      .run(MOST_INBOX_ITEMS - 1, user.id)
+    env.justBefore(/insert into inbox_cursor/, () => {
+      env.db
+        .prepare(
+          `insert into inbox_items (user_id, id, fields, stamps, seq, at)
+           values (?, 'quicker', '{}', '{}', 0, 1)`,
+        )
+        .run(user.id)
+    })
+
+    expect((await write([todo('fresh', { text: 'x' })])).status).toBe(413)
+    expect(
+      env.db.prepare('select count(*) as n from inbox_items where user_id = ?').get(user.id),
+    ).toEqual({ n: MOST_INBOX_ITEMS })
+  })
+
   test('asks to be signed in', async () => {
     expect((await call(env, '/v2/inbox')).status).toBe(401)
   })

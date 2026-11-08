@@ -119,15 +119,10 @@ aiVault.post('/devices', async (context) => {
     return context.json({ error: 'not a device' }, 400)
   }
 
-  const count = await context.env.DB.prepare(
-    'select count(*) as n from ai_devices where user_id = ? and id != ?',
-  )
-    .bind(user, id)
-    .first<{ n: number }>()
-  if ((count?.n ?? 0) >= MOST_DEVICES) return context.json({ error: 'too many devices' }, 409)
-
-  await context.env.DB.prepare(
-    `insert into ai_devices (user_id, id, name, commitment, created_at) values (?1, ?2, ?3, ?4, ?5)
+  const added = await context.env.DB.prepare(
+    `insert into ai_devices (user_id, id, name, commitment, created_at)
+     select ?1, ?2, ?3, ?4, ?5
+      where (select count(*) from ai_devices where user_id = ?1 and id != ?2) < ?6
      on conflict(user_id, id) do update set
        name = excluded.name,
        commitment = case when ai_devices.approved_at is null
@@ -138,8 +133,9 @@ aiVault.post('/devices', async (context) => {
        revealed = case when ai_devices.approved_at is null then null else ai_devices.revealed end,
        pub = case when ai_devices.approved_at is null then null else ai_devices.pub end`,
   )
-    .bind(user, id, name, commitment, now())
+    .bind(user, id, name, commitment, now(), MOST_DEVICES)
     .run()
+  if (!added.meta.changes) return context.json({ error: 'too many devices' }, 409)
   await told(context.env, user, id)
   return context.json({ ok: true })
 })

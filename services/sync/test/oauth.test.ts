@@ -897,6 +897,19 @@ describe('how many clients this server registers', () => {
     expect(refused.status).toBe(503)
     expect(refused.json.error).toBe('temporarily_unavailable')
   })
+
+  test('and holds there when another registers at the same moment', async () => {
+    const insert = env.db.prepare(
+      `insert into oauth_clients (id, name, redirect_uris, created_at, used_at)
+       values (?, ?, '["https://example.com/cb"]', 1, 1)`,
+    )
+    for (let at = 0; at < 4999; at++) insert.run(`c-${at}`, `Client ${at}`)
+    env.justBefore(/insert into oauth_clients/, () => insert.run('quicker', 'Quicker'))
+
+    const refused = await registerFrom('203.0.113.7', 'One more')
+    expect(refused.status).toBe(503)
+    expect(env.db.prepare('select count(*) as n from oauth_clients').get()).toEqual({ n: 5000 })
+  })
 })
 
 describe('how many apps one account connects', () => {
