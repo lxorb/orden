@@ -1388,3 +1388,53 @@ describe('typing in a thread', () => {
     ])
   })
 })
+
+describe('a new forum topic', () => {
+  test('a message in a topic we do not know yet brings the topic with its own name', async () => {
+    const { fake, heard } = await linked()
+    fake.answer('messages.getForumTopicsByID', () => ({
+      _: 'messages.forumTopics',
+      count: 1,
+      pts: 1,
+      topics: [
+        {
+          _: 'forumTopic',
+          id: 9,
+          date: 1,
+          peer: toForum,
+          title: 'Trips',
+          iconColor: 0,
+          topMessage: 9,
+          readInboxMaxId: 0,
+          readOutboxMaxId: 0,
+          unreadCount: 0,
+          unreadMentionsCount: 0,
+          unreadReactionsCount: 0,
+          unreadPollVotesCount: 0,
+          fromId: { _: 'peerUser', userId: 2 },
+          notifySettings: { _: 'peerNotifySettings' },
+        },
+      ],
+      messages: [],
+      chats: [],
+      users: [],
+    }))
+    fake.push({
+      _: 'updateNewChannelMessage',
+      message: text(60, toForum, 2, 'packing list', {
+        replyTo: { _: 'messageReplyHeader', forumTopic: true, replyToMsgId: 9 },
+      }),
+      pts: 1,
+      ptsCount: 1,
+    })
+    await vi.waitFor(() =>
+      expect(heard.filter((one) => one.t === 'conversation').at(-1)).toMatchObject({
+        conversation: { id: 's50t9', title: 'Forum / Trips' },
+      }),
+    )
+    expect(fake.called('messages.getForumTopicsByID')[0]).toMatchObject({ topics: [9] })
+    expect(heard.flatMap((one) => (one.t === 'conversation' ? [one.conversation.id] : []))).toEqual(
+      ['s50t9', 's50t9'],
+    )
+  })
+})
