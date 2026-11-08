@@ -129,6 +129,23 @@ describe('ending a device', () => {
     expect(tablet.socket.closedWith?.code).toBe(1008)
   })
 
+  test('reaches a session that signed in while every other one was being ended', async () => {
+    const laptop = await computer(env, running, 'late@example.com', 'Laptop')
+    const tablet = await computer(env, running, 'late@example.com', 'Tablet')
+    const hide = env.db.prepare('update sessions set user_id = ?1 where id = ?2')
+    env.justBefore(/select id, token_hash from sessions/, () => {
+      hide.run('elsewhere', laptop.session)
+      env.justBefore(/delete from sessions/, () => hide.run(tablet.user, laptop.session))
+    })
+
+    const others = await call<{ ended: number }>(env, '/v1/sessions', {
+      method: 'DELETE',
+      token: tablet.token,
+    })
+    expect(others.json.ended).toBe(1)
+    expect(laptop.socket.closedWith?.code).toBe(1008)
+  })
+
   test('is what signing out does to a socket that never said hello', async () => {
     const token = await signIn(env, 'quiet@example.com')
     const user = (await call(env, '/v1/me', { token })).json.user.id
