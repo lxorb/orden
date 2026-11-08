@@ -309,6 +309,7 @@ class Sync {
   }
 
   async forget(root: string, role: SpaceRole | null) {
+    const token = account.token
     if (V2 && this.local) await this.local.forget(root)
     const spaceId = this.remoteIdFor(root)
     if (spaceId === null) return
@@ -323,10 +324,9 @@ class Sync {
       this.save()
     }
 
-    const token = account.token
     const { endSpace, holder } = await import('./space-owed')
     const accountId = holder()
-    if (!token || !accountId || (!theirs && !mine)) return
+    if (!token || account.token !== token || !accountId || (!theirs && !mine)) return
 
     await endSpace(token, accountId, spaceId, theirs ? 'leave' : 'delete')
   }
@@ -336,7 +336,7 @@ class Sync {
     const spaceId = this.remoteIdFor(root)
     const { holder, sendIcon } = await import('./space-owed')
     const accountId = holder()
-    if (!token || !accountId || spaceId === null) return
+    if (!token || account.token !== token || !accountId || spaceId === null) return
 
     await sendIcon(token, accountId, spaceId, { icon, tint })
     await account.loadSpaces().catch(() => undefined)
@@ -461,7 +461,7 @@ class Sync {
     const token = account.token
     const { holder, sendOrder } = await import('./space-owed')
     const accountId = holder()
-    if (!token || !accountId) return
+    if (!token || account.token !== token || !accountId) return
 
     const order = workspace.spaces
       .map((space) => this.remoteIdFor(space.root))

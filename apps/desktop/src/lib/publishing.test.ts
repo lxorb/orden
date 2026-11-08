@@ -10,6 +10,7 @@ interface World {
   full: boolean
   sheet: string
   blobs: Record<string, string>
+  held: Promise<void> | null
 }
 
 const world = vi.hoisted((): World => ({
@@ -22,6 +23,7 @@ const world = vi.hoisted((): World => ({
   full: false,
   sheet: '',
   blobs: {},
+  held: null,
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -29,8 +31,11 @@ vi.mock('./api', async (importOriginal) => {
 
   const answer = <T>(what: string, value: T): Promise<T> => {
     world.asked.push(what)
-    if (world.refuse) return Promise.reject(new original.ApiError(403, world.refuse))
-    return Promise.resolve(value)
+    const settle = (): Promise<T> =>
+      world.refuse
+        ? Promise.reject(new original.ApiError(403, world.refuse))
+        : Promise.resolve(value)
+    return world.held ? world.held.then(settle) : settle()
   }
 
   return {
@@ -61,6 +66,7 @@ vi.mock('./api', async (importOriginal) => {
       forgetAnswer: (_token: string, id: string, one: string) =>
         answer(`forget ${one} of ${id}`, { ok: true as const }),
       verifyDomain: (_token: string, id: string) => answer(`verify ${id}`, world.domain),
+      signOut: () => Promise.resolve({ ok: true }),
       listSpaces: () => Promise.resolve({ spaces: account.spaces, deleted: [] }),
       putBlob: (_token: string, hash: string, _type: string, bytes: ArrayBuffer) => {
         world.blobs[hash] = new TextDecoder().decode(bytes)
@@ -132,6 +138,7 @@ beforeEach(() => {
   world.full = false
   world.sheet = ''
   world.blobs = {}
+  world.held = null
   theme.files = []
 
   account.token = 'session'
@@ -580,5 +587,73 @@ describe("the site's theme", () => {
 
     expect(sent()).toEqual([])
     expect(world.asked.find((one) => one.startsWith('site '))).toContain('"hash":"held"')
+  })
+})
+
+describe('the Publish sheet when the account changes', () => {
+  const live = () => [remote('space-1', 'owner', { enabled: true, subdomain: 'field' })]
+  const one = { id: 'answer-1', note: 'n', path: 'Say hello.md', at: 1, answers: { a: 'b' } }
+
+  function hold(): () => void {
+    let free: () => void = () => undefined
+    world.held = new Promise((resolve) => (free = resolve))
+    return free
+  }
+
+  function signInAsAnother() {
+    account.token = 'another'
+    account.user = { id: 'u2', email: 'other@example.com', name: 'Ada' }
+    account.spaces = live()
+  }
+
+  test('closes, and keeps nothing of the last account’s site', async () => {
+    account.spaces = live()
+    world.answers = [one]
+    publish.show(local('Notes'))
+    await publish.readAnswers()
+    await publish.publish()
+    expect(publish.answers).toEqual([one])
+    expect(publish.dns).not.toEqual([])
+
+    await account.signOut()
+
+    expect(publish.open).toBe(false)
+    expect(publish.spaceId).toBeNull()
+    expect(publish.answers).toEqual([])
+    expect(publish.kept).toBeNull()
+    expect(publish.dns).toEqual([])
+    expect(publish.status).toBeNull()
+  })
+
+  test('never shows the next account the answers the last one asked for', async () => {
+    account.spaces = live()
+    world.answers = [one]
+    publish.show(local('Notes'))
+    const free = hold()
+    const reading = publish.readAnswers()
+
+    await account.signOut()
+    signInAsAnother()
+    free()
+    await reading
+
+    expect(publish.answers).toEqual([])
+    expect(publish.kept).toBeNull()
+  })
+
+  test('never goes on to publish with the next account what the last one began', async () => {
+    account.spaces = live()
+    publish.show(local('Notes'))
+    publish.subdomain = 'field'
+    const free = hold()
+    const publishing = publish.publish()
+
+    await account.signOut()
+    signInAsAnother()
+    free()
+    await publishing
+
+    expect(world.asked.filter((one) => one.startsWith('publish '))).toEqual([])
+    expect(publish.dns).toEqual([])
   })
 })

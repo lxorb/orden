@@ -56,7 +56,13 @@ class PassSync {
   signedOut(): void {
     this.backfilled = false
     this.state = 'off'
+    this.at = null
+    this.invites = []
     pass.conflict = false
+  }
+
+  private holds(token: string): boolean {
+    return !!account.user && account.token === token
   }
 
   private worldFor(id: string, email: string, token: string): SyncWorld {
@@ -73,10 +79,10 @@ class PassSync {
         pass.tookKeyring(row)
       },
       conflicted: (on) => {
-        pass.conflict = on
+        if (this.holds(token)) pass.conflict = on
       },
       invited: (invites) => {
-        this.invites = invites
+        if (this.holds(token)) this.invites = invites
       },
       distrusted: (problem) => {
         pass.distrusted(problem)
@@ -93,9 +99,11 @@ class PassSync {
       return
     }
     if (pass.state === 'loading') await pass.start()
+    if (!this.holds(token)) return
     this.state = 'syncing'
     try {
       const outcome = await syncOnce(this.worldFor(user.id, user.email, token))
+      if (!this.holds(token)) return
       this.state = outcome
       if (outcome === 'synced') this.at = Date.now()
       if (outcome === 'synced' && pass.state === 'open' && !this.backfilled) {
@@ -103,6 +111,7 @@ class PassSync {
         if ((await pass.backfillTrust()) > 0) void this.refresh()
       }
     } catch (error) {
+      if (!this.holds(token)) return
       log('warn', `pass: sync stopped: ${error instanceof Error ? error.message : String(error)}`)
       this.state = 'offline'
     }

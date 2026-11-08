@@ -1,18 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { AccountDouble } from '../account-double'
 
 const server = vi.hoisted(() => ({
-  signedIn: true,
   set: false,
   tail: '',
   refuse: '',
   models: ['gpt-6-astra', 'gpt-5.6-sol'] as string[],
   asked: [] as string[],
+  held: null as Promise<void> | null,
 }))
 
 vi.mock('../api', () => ({
   api: {
-    setAskKey: (_token: string, key: string) => {
+    setAskKey: async (_token: string, key: string) => {
       server.asked.push(`put ${key}`)
+      await server.held
       if (server.refuse) return Promise.reject(new Error(server.refuse))
 
       server.set = true
@@ -27,19 +29,16 @@ vi.mock('../api', () => ({
       server.tail = ''
       return Promise.resolve({ set: false, tail: '' })
     },
-    askModels: () => {
+    askModels: async () => {
       server.asked.push('models')
+      await server.held
       return Promise.resolve({ models: server.models })
     },
   },
 }))
 
-vi.mock('../account.svelte', () => ({
-  account: {
-    get accountToken() {
-      return server.signedIn ? 'session' : null
-    },
-  },
+vi.mock('../account.svelte', async () => ({
+  account: (await import('../account-double')).accountDouble(),
 }))
 
 vi.mock('../i18n.svelte', () => ({
@@ -60,19 +59,22 @@ vi.mock('../modes.svelte', () => ({
   },
 }))
 
+let account: AccountDouble
 let glassesKey: typeof import('./key.svelte').glassesKey
 let Offered: typeof import('./offered.svelte').Offered
 
 beforeEach(async () => {
-  server.signedIn = true
   server.set = false
   server.tail = ''
   server.refuse = ''
   server.models = ['gpt-6-astra', 'gpt-5.6-sol']
   server.asked = []
+  server.held = null
   chosen.model = ''
 
   vi.resetModules()
+  account = (await import('../account.svelte')).account as unknown as AccountDouble
+  account.signInAs('a')
   glassesKey = (await import('./key.svelte')).glassesKey
   Offered = (await import('./offered.svelte')).Offered
 })
@@ -119,7 +121,7 @@ describe('setting a key', () => {
   })
 
   test('asks for nothing at all with no account behind the machine', async () => {
-    server.signedIn = false
+    account.signOut()
     expect(await glassesKey.put('sk-proj-example-4f2a')).toBe('sign in first')
     expect(server.asked).toEqual([])
   })
@@ -208,5 +210,46 @@ describe('the line under the field', () => {
     expect(glassesKey.set).toBe(false)
     expect(offered.models).toEqual([])
     expect(offered.said).toBe('')
+  })
+})
+
+function hold(): () => void {
+  let free: () => void = () => undefined
+  server.held = new Promise((resolve) => (free = resolve))
+  return free
+}
+
+describe('another account signing in', () => {
+  test('finds no key of the last account’s said to be set', () => {
+    glassesKey.took({ set: true, tail: '4f2a' })
+    account.signInAs('b')
+
+    expect(glassesKey.set).toBe(false)
+    expect(glassesKey.tail).toBe('')
+  })
+
+  test('never takes the models the last account asked for as its own', async () => {
+    glassesKey.took({ set: true, tail: '4f2a' })
+    const free = hold()
+    const offered = new Offered()
+
+    account.signInAs('b')
+    free()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(server.asked).toEqual(['models'])
+    expect(chosen.model).toBe('')
+    expect(offered.models).toEqual([])
+  })
+
+  test('never wears the key the last account was saving', async () => {
+    const free = hold()
+    const putting = glassesKey.put('sk-proj-example-4f2a')
+
+    account.signInAs('b')
+    free()
+    await putting
+
+    expect(glassesKey.set).toBe(false)
   })
 })
