@@ -1318,7 +1318,10 @@
       return
     }
 
-    if (event.key === 'Escape') store.clearPicked()
+    if (event.key === 'Escape') {
+      store.clearPicked()
+      if (chosenIn(host)) getSelection()?.removeAllRanges()
+    }
   }
 
   function chooseAllWords() {

@@ -162,3 +162,20 @@ test('a page note finds only what it draws: a label on a link between its cards 
   expect(rows).toEqual(['kestrel one', 'kestrel two'])
   expect(host.querySelector('.find .count')?.textContent).toBe('1/2')
 })
+
+test('Escape lets go of words chosen on a PDF page', () => {
+  const plane = host.querySelector<HTMLElement>('.pages')
+  if (!plane) throw new Error('no page note')
+  const words = document.createElement('div')
+  words.className = 'words live'
+  words.textContent = 'kestrel over the hill'
+  plane.append(words)
+  const said = words.firstChild
+  if (!said) throw new Error('no words')
+  getSelection()?.setBaseAndExtent(said, 0, said, 'kestrel over the hill'.length)
+  expect(getSelection()?.toString()).toBe('kestrel over the hill')
+
+  press('Escape')
+  expect(getSelection()?.isCollapsed ?? true).toBe(true)
+  words.remove()
+})
