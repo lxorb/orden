@@ -5,21 +5,9 @@ import { door } from '@orden/markdown/door'
 import { fileBytes, sha256 } from '../bytes'
 import { PDF_TO_CSS } from './pages'
 import { streamsIterate } from './streams'
+import { current, decodesImages } from './engine'
 
 type Library = typeof import('pdfjs-dist')
-
-export function current(scope: object = globalThis): boolean {
-  const has = (name: string, member: string) => {
-    const owner: unknown = Reflect.get(scope, name)
-    return (
-      (typeof owner === 'object' || typeof owner === 'function') &&
-      owner !== null &&
-      typeof Reflect.get(owner, member) === 'function'
-    )
-  }
-
-  return has('Promise', 'try') && has('Uint8Array', 'fromBase64') && has('Math', 'sumPrecise')
-}
 
 export const pdfjs: () => Promise<Library> = door(() =>
   (current()
@@ -34,11 +22,6 @@ export const pdfjs: () => Promise<Library> = door(() =>
     return library
   }),
 )
-
-export function decodesImages(agent: string = navigator.userAgent): boolean {
-  const webkit = agent.includes('AppleWebKit/') && !/(Chrome|Chromium|CriOS|Edg)\//.test(agent)
-  return !webkit
-}
 
 let shared: { library: Library; worker: InstanceType<Library['PDFWorker']> } | null = null
 

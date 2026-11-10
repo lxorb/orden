@@ -1,4 +1,8 @@
+import type { PDFPageProxy } from 'pdfjs-dist'
 import type { OpenPdf } from '../pdf/document'
+import { fileBytes } from '../bytes'
+import { mark } from '../trace'
+import { type AwayDraw, closeAway, drawAway, drawsAway, HERE, openAway } from './paper-away'
 import { openBytes, openDocument, pdfjs } from '../pdf/document'
 import { matrixOf, type Transform } from '../pdf/highlights'
 import { type PdfHeading, readOutline } from '../pdf/outline'
@@ -37,6 +41,9 @@ export interface Paper {
 interface Held {
   open: Promise<OpenPdf>
   place: Promise<string | null>
+  bytes: () => Promise<Uint8Array | null>
+  away?: Promise<number | null> | undefined
+  local: boolean
   drawn: Map<string, Promise<Paper | null>>
   recent: string[]
   pixels: Map<string, number>
@@ -225,6 +232,12 @@ function heldOf(at: PaperAt): Held | null {
       (one) => one.path,
       () => null,
     ),
+    bytes: () =>
+      opening.then(
+        (one) => one.copy ?? (one.path ? fileBytes(one.path) : null),
+        () => null,
+      ),
+    local: false,
     drawn: new Map(),
     recent: [],
     pixels: new Map(),
@@ -237,7 +250,9 @@ function heldOf(at: PaperAt): Held | null {
   return made
 }
 
-async function opened(at: PaperAt): Promise<{ pdf: OpenPdf; path: string | null }> {
+async function opened(
+  at: PaperAt,
+): Promise<{ pdf: OpenPdf; path: string | null; copy?: Uint8Array }> {
   const places = paperPlaces(at.file, at.note, at.root)
   let last: unknown = new Error(`${at.file} is nowhere this space can read`)
 
@@ -250,7 +265,10 @@ async function opened(at: PaperAt): Promise<{ pdf: OpenPdf; path: string | null 
   }
 
   const fetched = await fromAccount(at).catch(() => null)
-  if (fetched) return { pdf: await openBytes(fetched), path: null }
+  if (fetched) {
+    const copy = fetched.slice()
+    return { pdf: await openBytes(fetched), path: null, copy }
+  }
 
   throw last instanceof Error ? last : new Error(String(last))
 }
@@ -298,34 +316,84 @@ async function draw(one: Held, number: number, density: number): Promise<Paper |
   const page = await opened.doc.getPage(number)
   const wanted = page.getViewport({ scale: PDF_TO_CSS })
 
-  const scale = drawScale(wanted.width, wanted.height, density)
-  const view = page.getViewport({ scale: PDF_TO_CSS * scale })
+  const scale = PDF_TO_CSS * drawScale(wanted.width, wanted.height, density)
+  const view = page.getViewport({ scale })
+  const image = await rendered(one, page, {
+    number,
+    scale,
+    offsetX: 0,
+    offsetY: 0,
+    width: Math.max(1, Math.round(view.width)),
+    height: Math.max(1, Math.round(view.height)),
+  })
+  if (!image) return null
 
-  const paper = sheetOf(Math.max(1, Math.round(view.width)), Math.max(1, Math.round(view.height)))
-  const ctx = paper?.getContext('2d') ?? null
-  if (!paper || !ctx) {
+  return { image, width: Math.round(wanted.width), height: Math.round(wanted.height) }
+}
+
+function awayOf(one: Held): Promise<number | null> {
+  one.away ??= one
+    .bytes()
+    .then((bytes) => (bytes && !one.gone ? openAway(bytes) : null))
+    .catch(() => null)
+  return one.away
+}
+
+async function rendered(
+  one: Held,
+  page: PDFPageProxy,
+  asked: AwayDraw,
+  signal?: AbortSignal,
+): Promise<ImageBitmap | null> {
+  const doc = one.local || !drawsAway() ? null : await awayOf(one)
+  if (doc !== null) {
+    const drawn = await drawAway(doc, asked, signal)
+    if (drawn !== HERE) {
+      page.cleanup()
+      return drawn
+    }
+    one.local = true
+    mark('paper drawn here')
+  }
+  return await drawnHere(page, asked, signal)
+}
+
+async function drawnHere(
+  page: PDFPageProxy,
+  asked: AwayDraw,
+  signal?: AbortSignal,
+): Promise<ImageBitmap | null> {
+  const sheet = sheetOf(asked.width, asked.height)
+  const ctx = sheet?.getContext('2d') ?? null
+  if (!sheet || !ctx || signal?.aborted) {
     page.cleanup()
     return null
   }
 
+  const task = page.render({
+    canvas: sheet as HTMLCanvasElement,
+    canvasContext: ctx as CanvasRenderingContext2D,
+    viewport: page.getViewport({
+      scale: asked.scale,
+      offsetX: asked.offsetX,
+      offsetY: asked.offsetY,
+    }),
+  })
+  const stop = () => task.cancel()
+  signal?.addEventListener('abort', stop, { once: true })
   try {
-    await page.render({
-      canvas: paper as HTMLCanvasElement,
-      canvasContext: ctx as CanvasRenderingContext2D,
-      viewport: view,
-    }).promise
+    await task.promise
+  } catch {
+    return null
   } finally {
+    signal?.removeEventListener('abort', stop)
     page.cleanup()
   }
+  if (signal?.aborted) return null
 
-  return {
-    image:
-      'transferToImageBitmap' in paper
-        ? paper.transferToImageBitmap()
-        : await createImageBitmap(paper),
-    width: Math.round(wanted.width),
-    height: Math.round(wanted.height),
-  }
+  return 'transferToImageBitmap' in sheet
+    ? sheet.transferToImageBitmap()
+    : await createImageBitmap(sheet)
 }
 
 export interface Part {
@@ -359,42 +427,24 @@ export async function closeUpOf(
     tall,
     Math.min(wanted, Math.sqrt(CLOSE_PIXELS / Math.max(1, wide * tall))),
   )
-  const view = page.getViewport({
-    scale,
-    offsetX: -part.x * whole.width * scale,
-    offsetY: -part.y * whole.height * scale,
-  })
-
-  const sheet = sheetOf(
-    Math.max(1, Math.floor(wide * scale)),
-    Math.max(1, Math.floor(tall * scale)),
+  const image = await rendered(
+    one,
+    page,
+    {
+      number,
+      scale,
+      offsetX: -part.x * whole.width * scale,
+      offsetY: -part.y * whole.height * scale,
+      width: Math.max(1, Math.floor(wide * scale)),
+      height: Math.max(1, Math.floor(tall * scale)),
+    },
+    signal,
   )
-  const ctx = sheet?.getContext('2d') ?? null
-  if (!sheet || !ctx || gone()) {
-    page.cleanup()
+  if (gone()) {
+    image?.close()
     return null
   }
-
-  const task = page.render({
-    canvas: sheet as HTMLCanvasElement,
-    canvasContext: ctx as CanvasRenderingContext2D,
-    viewport: view,
-  })
-  const stop = () => task.cancel()
-  signal.addEventListener('abort', stop, { once: true })
-  try {
-    await task.promise
-  } catch {
-    return null
-  } finally {
-    signal.removeEventListener('abort', stop)
-    page.cleanup()
-  }
-  if (gone()) return null
-
-  return 'transferToImageBitmap' in sheet
-    ? sheet.transferToImageBitmap()
-    : await createImageBitmap(sheet)
+  return image
 }
 
 const READ_AT_ONCE = 20
@@ -564,5 +614,8 @@ function forgetKey(key: string) {
     job.settle(null)
   }
   for (const drawing of one.drawn.values()) void drawing.then((paper) => paper?.image.close())
+  void one.away?.then((doc) => {
+    if (doc !== null) closeAway(doc)
+  })
   void one.open.then((opened) => opened.close()).catch(() => undefined)
 }

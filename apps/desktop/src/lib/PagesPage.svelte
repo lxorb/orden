@@ -60,7 +60,11 @@
   let lost = $state(false)
   let sheet = $state<HTMLCanvasElement>()
 
-  const backed = $derived(!!page.file && !!page.page)
+  const paperFile = $derived(page.file)
+  const paperNumber = $derived(page.page)
+  const sheetWide = $derived(page.width)
+
+  const backed = $derived(!!paperFile && !!paperNumber)
 
   const wanted = $derived(pixelRatio.now / unit)
 
@@ -74,7 +78,24 @@
   let paperWide = $state(0)
   let closeUp = $state.raw<Part | null>(null)
 
+  let lastPart: Part | null = null
+
   const part = $derived.by((): Part | null => {
+    const found = partSeen()
+    if (
+      found &&
+      lastPart?.x === found.x &&
+      found.y === lastPart.y &&
+      found.width === lastPart.width &&
+      found.height === lastPart.height
+    ) {
+      return lastPart
+    }
+    lastPart = found
+    return found
+  })
+
+  function partSeen(): Part | null {
     if (!backed || !paperWide || !seen || !page.width || !page.height) return null
     if (wanted <= (paperWide / page.width) * STRETCH) return null
 
@@ -90,7 +111,7 @@
       width: (right - left) / page.width,
       height: (bottom - top) / page.height,
     }
-  })
+  }
 
   $effect(() => {
     const want = part
@@ -99,17 +120,17 @@
       return
     }
 
-    const file = page.file
-    const at = page.page
+    const file = paperFile
+    const at = paperNumber
     if (!file || !at) return
 
-    const across = page.width * wanted
+    const across = sheetWide * wanted
     paperEdition({ file, note: notePath, root, shared })
     const leaving = new AbortController()
     const timer = setTimeout(() => {
       void closeUpOf({ file, note: notePath, root, shared }, at, want, across, leaving.signal).then(
         (image) => {
-          if (!image) return
+          if (!image?.width) return
           if (leaving.signal.aborted || !close) {
             image.close()
             return
@@ -133,8 +154,8 @@
   $effect(() => {
     if (!backed) return
 
-    const file = page.file
-    const at = page.page
+    const file = paperFile
+    const at = paperNumber
     if (!file || !at) return
 
     const asking = tries
@@ -144,7 +165,8 @@
       (drawn) => {
         if (leaving.signal.aborted || asking !== tries) return
 
-        paper = drawn?.image ?? null
+        if (drawn?.image.width) paper = drawn.image
+        else if (!drawn) paper = null
         lost = !drawn
       },
     )
@@ -165,12 +187,25 @@
   $effect(() => {
     const element = sheet
     const image = paper
-    if (!element || !image) return
+    if (!element || !image?.width) return
 
     element.width = image.width
     element.height = image.height
     element.getContext('2d')?.drawImage(image, 0, 0)
     paperWide = image.width
+  })
+
+  $effect(() => {
+    const element = sheet
+    if (!element) return
+
+    const again = () => {
+      const image = paper
+      if (image?.width) element.getContext('2d')?.drawImage(image, 0, 0)
+      else tries += 1
+    }
+    element.addEventListener('contextrestored', again)
+    return () => element.removeEventListener('contextrestored', again)
   })
 
   onDestroy(() => (paper = null))
@@ -196,9 +231,9 @@
 
   $effect(() => {
     const layer = words
-    const file = page.file
-    const at = page.page
-    const wide = page.width
+    const file = paperFile
+    const at = paperNumber
+    const wide = sheetWide
     if (!wordsWanted || !layer || !file || !at || !wide) return
     paperEdition({ file, note: notePath, root, shared })
 
@@ -263,8 +298,8 @@
   let view = $state.raw<PaperView | null>(null)
 
   $effect(() => {
-    const file = page.file
-    const at = page.page
+    const file = paperFile
+    const at = paperNumber
     if (!marks.length || !file || !at) return
 
     let mine = true

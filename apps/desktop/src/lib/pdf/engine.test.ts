@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { current, decodesImages } from './document'
+import { current, decodesImages } from './engine'
 
 describe('which pdf.js this engine can run', () => {
   const modern = {

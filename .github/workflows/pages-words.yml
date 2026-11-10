@@ -12,6 +12,8 @@ on:
       - apps/desktop/src/lib/pages/**
       - apps/desktop/src/lib/pdf/**
       - scripts/pages-words-drive.py
+      - scripts/pages-steady-drive.py
+      - scripts/heavy_paper.py
       - .github/workflows/pages-words.yml
   workflow_dispatch:
 
@@ -78,3 +80,23 @@ jobs:
               "$RUNNER_TEMP/drive/bin/python" "${drive[@]}"
               ;;
           esac
+
+      - name: A page note over a heavy PDF opens, edits and zooms without holding the window or showing black
+        if: ${{ !cancelled() }}
+        timeout-minutes: 15
+        run: |
+          drive=(scripts/pages-steady-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --shots "$RUNNER_TEMP/pages-steady")
+          case "$RUNNER_OS" in
+            Windows)
+              python -m pip install --quiet pillow
+              python "${drive[@]}"
+              ;;
+            *) "$RUNNER_TEMP/drive/bin/python" "${drive[@]}" ;;
+          esac
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ !cancelled() }}
+        with:
+          name: pages-steady-${{ runner.os }}
+          path: ${{ runner.temp }}/pages-steady
+          if-no-files-found: ignore
