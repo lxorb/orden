@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
-  'All set': 'Alles parat',
-  Personalize: 'Aapasse',
-  Clean: 'Uufgruumt',
-  'Live preview': 'Live-Vorschau',
   'Developer mode': 'Entwicklermodus',
   'Do you write code?': 'Schriibsch du Code?',
   Yes: 'Ja',
@@ -33,9 +29,6 @@ export const gsw: Dictionary = {
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Lesezeiche, Tabs und Verlauf us emne andere Browser mitnäh?',
-  'No thanks': 'Nei danke',
   'Containers stay in Firefox': 'D Container blibe im Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} suecht mit {engine}: Wähl s i de Iistellige, zum au do demit z sueche',
@@ -694,7 +687,8 @@ export const gsw: Dictionary = {
   'Words with {bold} and a {link}.': 'Wörter mit {bold} und emene {link}.',
   bold: 'fett',
   link: 'Link',
-  'Everything is markdown, and nothing else.': 'Alles isch Markdown, und suscht nüt.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Jedi Notiz isch e Markdown-Datei, wo dir ghört, mit To-dos, Bases und Boards grad drin.',
   'One thing': 'Ei Sach',
   Another: 'No eini',
   'could not reach the theme store': 'De Design-Store isch nöd erreichbar gsi',
@@ -3789,4 +3783,51 @@ export const gsw: Dictionary = {
   Unknown: 'Unbekannt',
   'Unnamed group': 'Gruppe ohni Name',
   'Loading your chats…': 'Dini Chats wärded glade…',
+  'Log in or sign up': 'Aamälde oder registriere',
+  'Use without an account': 'Ohni Konto bruuche',
+  'How did you hear about Orden?': 'Wie hesch du vo Orden ghört?',
+  'AI assistant': 'KI-Assistänt',
+  'Friend or colleague': 'Fründin oder Kolleg',
+  'Social media': 'Soziali Medie',
+  'Where?': 'Wo?',
+  'Which browser do you use now?': 'Wele Browser bruuchsch grad?',
+  'Not yet': 'Na nöd',
+  Request: 'Aafröge',
+  'Import from {browser}': 'Us {browser} importiere',
+  'Open tabs': 'Offni Tabs',
+  Imported: 'Importiert',
+  'Bring your notes': 'Bring dini Notize mit',
+  'Here’s how you can import it anyway': 'So chasch sie glich importiere',
+  'Connect your AI': 'Verbind dini KI',
+  'Use an API key': 'API-Schlüssel bruuche',
+  'Welcome to {app}': 'Willkomme bi {app}',
+  'Show me around': 'Zeig mer alles',
+  'Your {app} pages are here': 'Dini {app}-Siite sind da',
+  'Pages became notes, and databases became bases with their views.':
+    'Siite sind Notize worde, Datebanke sind Bases mit ihrne Aasichte worde.',
+  'Your {app} notes are here': 'Dini {app}-Notize sind da',
+  'Still plain Markdown files, and your links work like before.':
+    'Immer no eifachi Markdown-Dateie, und dini Links gönd wie vorher.',
+  'Every note is a file you own.': 'Jedi Notiz isch e Datei, wo dir ghört.',
+  'Everything lives in one space': 'Alles wohnt i eim Bereich',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Notize, To-dos, Websiite und Chats liged nebedenand, so verlürsch nie dr Überblick.',
+  'More than Markdown': 'Meh als Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'To-dos, Bases und Boards stecked grad i dine Notize. Hüt zeigt, was fällig isch.',
+  'To-dos in any note': 'To-dos i jedere Notiz',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Schriib es To-do, wo du wotsch. Hüt sammlet alles, was fällig isch.',
+  'Your {browser} bookmarks': 'Dini Läsezeiche us {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Sie sind i dr Siiteleiste. Websiite gönd als Tabs nebe dine Notize uf.',
+  'Web pages are tabs': 'Websiite sind Tabs',
+  'Browse next to your notes, without switching apps.':
+    'Surf nebe dine Notize, ohni d App z wächsle.',
+  'Ask your AI': 'Frag dini KI',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Chats liged nebe dine Notize und chönd bruuche, was i dim Bereich staht.',
+  'Terminals are tabs too': 'Au Terminals sind Tabs',
+  'Open one next to the notes for your project.': 'Mach eis uf nebe de Notize vo dim Projekt.',
+  'Do this on your computer': 'Mach das am Computer',
 }

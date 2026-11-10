@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
-  'All set': 'Komai ya shirya',
-  Personalize: 'Keɓance',
-  Clean: 'Mai tsabta',
-  'Live preview': 'Samfoti kai tsaye',
   'Developer mode': 'Yanayin mai haɓakawa',
   'Do you write code?': 'Kuna rubuta code?',
   Yes: 'Eh',
@@ -33,9 +29,6 @@ export const ha: Dictionary = {
   'Import from Zen': 'Shigo daga Zen',
   'Containers stay in Zen': 'Kwantenoni suna zama a Zen',
   'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Kawo alamomin shafi, shafuka da tarihinka daga wani burauza?',
-  'No thanks': 'A’a, na gode',
   'Containers stay in Firefox': 'Kwantenoni suna zama a Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} yana bincike da {engine}: zaɓe shi a Saituna don bincike da shi a nan ma',
@@ -697,7 +690,8 @@ export const ha: Dictionary = {
   'Words with {bold} and a {link}.': 'Kalmomi da {bold} da {link}.',
   bold: 'kauri',
   link: 'haɗi',
-  'Everything is markdown, and nothing else.': 'Duk markdown ne, ba wani abu ba.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Kowace bayani fayil ne na Markdown naka, da ayyuka, bases da allunan a cikinsa.',
   'One thing': 'Abu ɗaya',
   Another: 'Wani kuma',
   'could not reach the theme store': 'ba a iya kai wa kantin kamanni ba',
@@ -3815,4 +3809,51 @@ export const ha: Dictionary = {
   Unknown: 'Ba a sani ba',
   'Unnamed group': 'Rukuni marar suna',
   'Loading your chats…': 'Ana loda hirarrakinka…',
+  'Log in or sign up': 'Shiga ko yi rajista',
+  'Use without an account': 'Yi amfani ba tare da asusu ba',
+  'How did you hear about Orden?': 'Ta yaya ka ji labarin Orden?',
+  'AI assistant': 'Mataimakin AI',
+  'Friend or colleague': 'Aboki ko abokin aiki',
+  'Social media': 'Kafofin sada zumunta',
+  'Where?': 'A ina?',
+  'Which browser do you use now?': 'Wane mai bincike kake amfani da shi yanzu?',
+  'Not yet': 'Har yanzu ba',
+  Request: 'Nema',
+  'Import from {browser}': 'Shigo daga {browser}',
+  'Open tabs': 'Shafukan da ke buɗe',
+  Imported: 'An shigo da shi',
+  'Bring your notes': 'Kawo bayananka',
+  'Here’s how you can import it anyway': 'Ga yadda za ka shigo da shi duk da haka',
+  'Connect your AI': 'Haɗa AI ɗinka',
+  'Use an API key': 'Yi amfani da makullin API',
+  'Welcome to {app}': 'Barka da zuwa {app}',
+  'Show me around': 'Nuna min ko’ina',
+  'Your {app} pages are here': 'Shafukan ka na {app} suna nan',
+  'Pages became notes, and databases became bases with their views.':
+    'Shafuka sun zama bayanai, kuma rumbunan bayanai sun zama bases tare da ra’ayoyinsu.',
+  'Your {app} notes are here': 'Bayanan ka na {app} suna nan',
+  'Still plain Markdown files, and your links work like before.':
+    'Har yanzu fayilolin Markdown ne masu sauƙi, kuma hanyoyin haɗinka suna aiki kamar dā.',
+  'Every note is a file you own.': 'Kowane bayani fayil ne naka.',
+  'Everything lives in one space': 'Komai yana cikin wuri ɗaya',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Bayanai, ayyuka, shafukan yanar gizo da hira suna gefe da gefe, don kada ka rasa komai.',
+  'More than Markdown': 'Fiye da Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Ayyuka, bases da allunan suna cikin bayananka. Yau tana nuna abin da ya kamata.',
+  'To-dos in any note': 'Ayyuka a kowane bayani',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Rubuta aiki a ko’ina. Yau tana tattara duk abin da ya kamata.',
+  'Your {browser} bookmarks': 'Alamomin ka na {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Suna cikin gefen shafi. Shafukan yanar gizo suna buɗewa a matsayin shafuka kusa da bayananka.',
+  'Web pages are tabs': 'Shafukan yanar gizo shafuka ne',
+  'Browse next to your notes, without switching apps.':
+    'Bincika kusa da bayananka, ba tare da canza manhaja ba.',
+  'Ask your AI': 'Tambayi AI ɗinka',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Hira suna kusa da bayananka kuma za su iya amfani da abin da ke cikin wurinka.',
+  'Terminals are tabs too': 'Tashoshin umarni ma shafuka ne',
+  'Open one next to the notes for your project.': 'Buɗe ɗaya kusa da bayanan aikinka.',
+  'Do this on your computer': 'Yi wannan a kwamfutarka',
 }

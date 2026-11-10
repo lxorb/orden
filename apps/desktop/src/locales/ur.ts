@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ur: Dictionary = {
-  'All set': 'سب تیار ہے',
-  Personalize: 'اپنی مرضی کے مطابق بنائیں',
-  Clean: 'صاف',
-  'Live preview': 'لائیو پیش منظر',
   'Developer mode': 'ڈیولپر موڈ',
   'Do you write code?': 'کیا آپ کوڈ لکھتے ہیں؟',
   Yes: 'ہاں',
@@ -32,9 +28,6 @@ export const ur: Dictionary = {
   'Import from Zen': 'Zen سے امپورٹ کریں',
   'Containers stay in Zen': 'کنٹینر Zen ہی میں رہتے ہیں',
   'Zen’s tabs could not be read.': 'Zen کے ٹیب پڑھے نہیں جا سکے۔',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'کسی دوسرے براؤزر سے اپنے بُک مارکس، ٹیبز اور ہسٹری لائیں؟',
-  'No thanks': 'نہیں، شکریہ',
   'Containers stay in Firefox': 'کنٹینر Firefox ہی میں رہتے ہیں',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} سے تلاش کرتا ہے: یہاں بھی اس سے تلاش کرنے کے لیے ترتیبات میں اسے منتخب کریں',
@@ -693,7 +686,8 @@ export const ur: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} اور {link} کے ساتھ الفاظ۔',
   bold: 'جلی',
   link: 'لنک',
-  'Everything is markdown, and nothing else.': 'سب کچھ Markdown ہے، اور کچھ نہیں۔',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ہر نوٹ آپ کی اپنی Markdown فائل ہے، جس کے اندر ہی کام، بیس اور بورڈ ہیں۔',
   'One thing': 'ایک چیز',
   Another: 'دوسری',
   'could not reach the theme store': 'تھیم اسٹور تک نہیں پہنچ سکے',
@@ -3759,4 +3753,51 @@ export const ur: Dictionary = {
   Unknown: 'نامعلوم',
   'Unnamed group': 'بے نام گروپ',
   'Loading your chats…': 'آپ کی چیٹس لوڈ ہو رہی ہیں…',
+  'Log in or sign up': 'لاگ اِن کریں یا سائن اپ کریں',
+  'Use without an account': 'اکاؤنٹ کے بغیر استعمال کریں',
+  'How did you hear about Orden?': 'آپ نے Orden کے بارے میں کہاں سے سنا؟',
+  'AI assistant': 'اے آئی معاون',
+  'Friend or colleague': 'دوست یا ساتھی',
+  'Social media': 'سوشل میڈیا',
+  'Where?': 'کہاں؟',
+  'Which browser do you use now?': 'آپ ابھی کون سا براؤزر استعمال کرتے ہیں؟',
+  'Not yet': 'ابھی نہیں',
+  Request: 'درخواست کریں',
+  'Import from {browser}': '{browser} سے درآمد کریں',
+  'Open tabs': 'کھلے ٹیب',
+  Imported: 'درآمد ہو گیا',
+  'Bring your notes': 'اپنے نوٹس لے آئیں',
+  'Here’s how you can import it anyway': 'پھر بھی درآمد کرنے کا طریقہ یہ ہے',
+  'Connect your AI': 'اپنا اے آئی جوڑیں',
+  'Use an API key': 'API کلید استعمال کریں',
+  'Welcome to {app}': '{app} میں خوش آمدید',
+  'Show me around': 'مجھے گھما کر دکھائیں',
+  'Your {app} pages are here': 'آپ کے {app} صفحات یہاں ہیں',
+  'Pages became notes, and databases became bases with their views.':
+    'صفحات نوٹس بن گئے، اور ڈیٹا بیس اپنے منظروں کے ساتھ بیس بن گئے۔',
+  'Your {app} notes are here': 'آپ کے {app} نوٹس یہاں ہیں',
+  'Still plain Markdown files, and your links work like before.':
+    'اب بھی سادہ Markdown فائلیں ہیں، اور آپ کے لنکس پہلے کی طرح کام کرتے ہیں۔',
+  'Every note is a file you own.': 'ہر نوٹ آپ کی اپنی فائل ہے۔',
+  'Everything lives in one space': 'سب کچھ ایک ہی جگہ میں',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'نوٹس، کام، ویب صفحات اور چیٹس ساتھ ساتھ ہیں، تاکہ کچھ نہ چھوٹے۔',
+  'More than Markdown': 'Markdown سے بڑھ کر',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'کام، بیس اور بورڈ آپ کے نوٹس کے اندر ہیں۔ آج وہ دکھاتا ہے جو واجب ہے۔',
+  'To-dos in any note': 'ہر نوٹ میں کام',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'کہیں بھی کام لکھیں۔ آج وہ سب جمع کرتا ہے جو واجب ہے۔',
+  'Your {browser} bookmarks': 'آپ کے {browser} بک مارکس',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'یہ سائیڈ بار میں ہیں۔ ویب صفحات آپ کے نوٹس کے ساتھ ٹیبز میں کھلتے ہیں۔',
+  'Web pages are tabs': 'ویب صفحات ٹیبز ہیں',
+  'Browse next to your notes, without switching apps.':
+    'ایپ بدلے بغیر اپنے نوٹس کے ساتھ براؤز کریں۔',
+  'Ask your AI': 'اپنی AI سے پوچھیں',
+  'Chats sit next to your notes and can use what is in your space.':
+    'چیٹس آپ کے نوٹس کے ساتھ ہیں اور آپ کی جگہ کا مواد استعمال کر سکتی ہیں۔',
+  'Terminals are tabs too': 'ٹرمینل بھی ٹیبز ہیں',
+  'Open one next to the notes for your project.': 'اپنے پروجیکٹ کے نوٹس کے ساتھ ایک کھولیں۔',
+  'Do this on your computer': 'یہ اپنے کمپیوٹر پر کریں',
 }

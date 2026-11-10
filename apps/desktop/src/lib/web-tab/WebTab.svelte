@@ -62,8 +62,6 @@
   import { searchEngine } from './search-engine.svelte'
   import { HISTORY_MARK, isOwnPage } from './own-pages'
   import { clearingAsked } from './clearing-asked.svelte'
-  import { importOffer } from './import-offer.svelte'
-  import { firstVisit } from '../first-visit.svelte'
   import { passBubbles } from '../pass/fill-bubbles.svelte'
   import WebAsk from './WebAsk.svelte'
   import WebDialog from './WebDialog.svelte'
@@ -275,14 +273,6 @@
 
   const choosing = $derived(workspace.isNewTab(tab))
 
-  const offering = $derived(choosing && importOffer.tab === tab.id)
-
-  $effect(() => {
-    if (!isDesktop || firstVisit.fresh || !workspace.isBlankTab(tab)) return
-    if (workspace.panes.at(tab.paneId)?.activeTabId !== tab.id) return
-    untrack(() => importOffer.claim(tab.id))
-  })
-
   $effect(() => {
     if (!own) return
     untrack(() => {
@@ -340,8 +330,6 @@
       unscale()
       window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('keydown', pressed, true)
-
-      importOffer.dropped(tab.id)
 
       const held = pages.peek(tab.id)
       if (held) held.typing = false
@@ -682,12 +670,6 @@
       <p class="waiting" transition:fade={{ duration: dur(140) }}>
         {page.notice}
       </p>
-    {/if}
-
-    {#if offering}
-      {#await import('./ImportOffer.svelte') then offer}
-        <offer.default tab={tab.id} />
-      {/await}
     {/if}
 
     {#if page.blocked}

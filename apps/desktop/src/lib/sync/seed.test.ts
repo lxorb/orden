@@ -172,6 +172,11 @@ function held(): string[] {
     .sort()
 }
 
+const ALL_MARKDOWN = WELCOME.replace(
+  '- Every note is a Markdown file you own, with to-dos, bases and boards right inside',
+  '- Everything is markdown, and nothing else',
+)
+
 describe('the welcome note, on its way to an account', () => {
   test('is never created there while it is untouched', async () => {
     fake.disk.set(`${ROOT}/${WELCOME_NAME}`, WELCOME)
@@ -184,8 +189,17 @@ describe('the welcome note, on its way to an account', () => {
     expect(moved).toBe(false)
   })
 
+  test('nor the one that said everything is markdown', async () => {
+    fake.disk.set(`${ROOT}/${WELCOME_NAME}`, ALL_MARKDOWN)
+    const mirror = newMirror('s-one', ROOT)
+
+    await push(mirror, 'token', NOBODY)
+
+    expect(held()).toEqual([])
+  })
+
   test.each(['Nib', 'nibeditor'])('nor the one a device was seeded with as %s', async (name) => {
-    const earlier = WELCOME.replace('# Welcome to Orden', `# Welcome to ${name}`)
+    const earlier = ALL_MARKDOWN.replace('# Welcome to Orden', `# Welcome to ${name}`)
     expect(earlier).not.toBe(WELCOME)
     fake.disk.set(`${ROOT}/${WELCOME_NAME}`, earlier)
     const mirror = newMirror('s-one', ROOT)

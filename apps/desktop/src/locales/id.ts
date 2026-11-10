@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const id: Dictionary = {
-  'All set': 'Semua siap',
-  Personalize: 'Personalisasi',
-  Clean: 'Bersih',
-  'Live preview': 'Pratinjau langsung',
   'Developer mode': 'Mode pengembang',
   'Do you write code?': 'Apakah Anda menulis kode?',
   Yes: 'Ya',
@@ -32,9 +28,6 @@ export const id: Dictionary = {
   'Import from Zen': 'Impor dari Zen',
   'Containers stay in Zen': 'Kontainer tetap di Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Bawa bookmark, tab, dan riwayat Anda dari browser lain?',
-  'No thanks': 'Tidak, terima kasih',
   'Containers stay in Firefox': 'Kontainer tetap di Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} mencari dengan {engine}: pilih di Pengaturan untuk mencari dengannya di sini juga',
@@ -686,7 +679,8 @@ export const id: Dictionary = {
   'Words with {bold} and a {link}.': 'Kata dengan {bold} dan sebuah {link}.',
   bold: 'tebal',
   link: 'tautan',
-  'Everything is markdown, and nothing else.': 'Semuanya markdown, tidak ada yang lain.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Setiap catatan adalah file Markdown milikmu, dengan tugas, basis, dan papan langsung di dalamnya.',
   'One thing': 'Satu hal',
   Another: 'Satu lagi',
   'could not reach the theme store': 'tidak dapat menghubungi toko tema',
@@ -3696,4 +3690,51 @@ export const id: Dictionary = {
   Unknown: 'Tidak dikenal',
   'Unnamed group': 'Grup tanpa nama',
   'Loading your chats…': 'Memuat obrolan Anda…',
+  'Log in or sign up': 'Masuk atau daftar',
+  'Use without an account': 'Pakai tanpa akun',
+  'How did you hear about Orden?': 'Dari mana Anda tahu Orden?',
+  'AI assistant': 'Asisten AI',
+  'Friend or colleague': 'Teman atau rekan kerja',
+  'Social media': 'Media sosial',
+  'Where?': 'Di mana?',
+  'Which browser do you use now?': 'Browser apa yang Anda pakai sekarang?',
+  'Not yet': 'Belum',
+  Request: 'Minta',
+  'Import from {browser}': 'Impor dari {browser}',
+  'Open tabs': 'Tab terbuka',
+  Imported: 'Diimpor',
+  'Bring your notes': 'Bawa catatan Anda',
+  'Here’s how you can import it anyway': 'Begini cara tetap mengimpornya',
+  'Connect your AI': 'Hubungkan AI Anda',
+  'Use an API key': 'Pakai kunci API',
+  'Welcome to {app}': 'Selamat datang di {app}',
+  'Show me around': 'Tunjukkan sekelilingnya',
+  'Your {app} pages are here': 'Halaman {app} kamu ada di sini',
+  'Pages became notes, and databases became bases with their views.':
+    'Halaman menjadi catatan, dan basis data menjadi basis beserta tampilannya.',
+  'Your {app} notes are here': 'Catatan {app} kamu ada di sini',
+  'Still plain Markdown files, and your links work like before.':
+    'Tetap file Markdown biasa, dan tautanmu berfungsi seperti sebelumnya.',
+  'Every note is a file you own.': 'Setiap catatan adalah file milikmu.',
+  'Everything lives in one space': 'Semua ada dalam satu ruang',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Catatan, tugas, halaman web, dan obrolan berdampingan, jadi tidak ada yang terlewat.',
+  'More than Markdown': 'Lebih dari Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Tugas, basis, dan papan ada di dalam catatanmu. Hari ini menampilkan yang jatuh tempo.',
+  'To-dos in any note': 'Tugas di catatan mana pun',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Tulis tugas di mana saja. Hari ini mengumpulkan semua yang jatuh tempo.',
+  'Your {browser} bookmarks': 'Bookmark {browser} kamu',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Ada di bilah samping. Halaman web terbuka sebagai tab di samping catatanmu.',
+  'Web pages are tabs': 'Halaman web adalah tab',
+  'Browse next to your notes, without switching apps.':
+    'Jelajahi di samping catatanmu, tanpa berganti aplikasi.',
+  'Ask your AI': 'Tanya AI kamu',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Obrolan ada di samping catatanmu dan bisa memakai isi ruangmu.',
+  'Terminals are tabs too': 'Terminal juga tab',
+  'Open one next to the notes for your project.': 'Buka satu di samping catatan proyekmu.',
+  'Do this on your computer': 'Lakukan ini di komputermu',
 }

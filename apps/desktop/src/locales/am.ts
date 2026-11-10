@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
-  'All set': 'ሁሉም ዝግጁ ነው',
-  Personalize: 'ግላዊ አድርግ',
-  Clean: 'ንጹህ',
-  'Live preview': 'ቀጥታ ቅድመ እይታ',
   'Developer mode': 'የገንቢ ሁነታ',
   'Do you write code?': 'ኮድ ይጽፋሉ?',
   Yes: 'አዎ',
@@ -31,9 +27,6 @@ export const am: Dictionary = {
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'ዕልባቶችዎን፣ ትሮችዎን እና ታሪክዎን ከሌላ አሳሽ ያምጡ?',
-  'No thanks': 'አይ፣ አመሰግናለሁ',
   'Containers stay in Firefox': 'ኮንቴይነሮች በFirefox ውስጥ ይቀራሉ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} በ{engine} ይፈልጋል፦ እዚህም በእሱ ለመፈለግ በቅንብሮች ውስጥ ይምረጡት',
@@ -687,7 +680,8 @@ export const am: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} እና {link} ያለባቸው ቃላት።',
   bold: 'ደማቅ',
   link: 'አገናኝ',
-  'Everything is markdown, and nothing else.': 'ሁሉም markdown ነው፣ ሌላ ምንም የለም።',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'እያንዳንዱ ማስታወሻ የእርስዎ የሆነ የMarkdown ፋይል ነው፣ ተግባራት፣ ቤዞች እና ቦርዶች በውስጡ አሉ።',
   'One thing': 'አንድ ነገር',
   Another: 'ሌላ አንድ',
   'could not reach the theme store': 'የገጽታ መሸጫ ላይ መድረስ አልተቻለም',
@@ -3685,4 +3679,50 @@ export const am: Dictionary = {
   Unknown: 'ያልታወቀ',
   'Unnamed group': 'ስም የሌለው ቡድን',
   'Loading your chats…': 'ውይይቶችዎ እየተጫኑ ነው…',
+  'Log in or sign up': 'ይግቡ ወይም ይመዝገቡ',
+  'Use without an account': 'ያለ መለያ ይጠቀሙ',
+  'How did you hear about Orden?': 'ስለ Orden እንዴት ሰሙ?',
+  'AI assistant': 'የAI ረዳት',
+  'Friend or colleague': 'ጓደኛ ወይም የሥራ ባልደረባ',
+  'Social media': 'ማኅበራዊ ሚዲያ',
+  'Where?': 'የት?',
+  'Which browser do you use now?': 'አሁን የትኛውን አሳሽ ይጠቀማሉ?',
+  'Not yet': 'ገና አይደለም',
+  Request: 'ጠይቅ',
+  'Import from {browser}': 'ከ{browser} አስመጣ',
+  'Open tabs': 'የተከፈቱ ትሮች',
+  Imported: 'ገብቷል',
+  'Bring your notes': 'ማስታወሻዎችዎን ያምጡ',
+  'Here’s how you can import it anyway': 'ቢሆንም እንዲህ ማስመጣት ይችላሉ',
+  'Connect your AI': 'AIዎን ያገናኙ',
+  'Use an API key': 'የAPI ቁልፍ ተጠቀም',
+  'Welcome to {app}': 'ወደ {app} እንኳን በደህና መጡ',
+  'Show me around': 'ዙሪያውን አሳዩኝ',
+  'Your {app} pages are here': 'የእርስዎ {app} ገጾች እዚህ አሉ',
+  'Pages became notes, and databases became bases with their views.':
+    'ገጾች ማስታወሻዎች ሆኑ፣ የውሂብ ጎታዎችም ከእይታዎቻቸው ጋር ቤዞች ሆኑ።',
+  'Your {app} notes are here': 'የእርስዎ {app} ማስታወሻዎች እዚህ አሉ',
+  'Still plain Markdown files, and your links work like before.':
+    'አሁንም ቀላል የMarkdown ፋይሎች ናቸው፣ አገናኞችዎም እንደበፊቱ ይሰራሉ።',
+  'Every note is a file you own.': 'እያንዳንዱ ማስታወሻ የእርስዎ ፋይል ነው።',
+  'Everything lives in one space': 'ሁሉም ነገር በአንድ ቦታ',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'ማስታወሻዎች፣ ተግባራት፣ ድረ ገጾች እና ውይይቶች ጎን ለጎን ናቸው፣ ስለዚህ ምንም አያመልጥዎትም።',
+  'More than Markdown': 'ከMarkdown በላይ',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ተግባራት፣ ቤዞች እና ቦርዶች በማስታወሻዎችዎ ውስጥ ናቸው። ዛሬ የደረሱትን ያሳያል።',
+  'To-dos in any note': 'በማንኛውም ማስታወሻ ተግባራት',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ተግባር በየትም ይጻፉ። ዛሬ የደረሱትን ሁሉ ይሰበስባል።',
+  'Your {browser} bookmarks': 'የእርስዎ {browser} ዕልባቶች',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'በጎን አሞሌው ውስጥ ናቸው። ድረ ገጾች ከማስታወሻዎችዎ አጠገብ እንደ ትሮች ይከፈታሉ።',
+  'Web pages are tabs': 'ድረ ገጾች ትሮች ናቸው',
+  'Browse next to your notes, without switching apps.': 'መተግበሪያ ሳይቀይሩ ከማስታወሻዎችዎ አጠገብ ያስሱ።',
+  'Ask your AI': 'AIዎን ይጠይቁ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ውይይቶች ከማስታወሻዎችዎ አጠገብ ናቸው፣ በቦታዎ ያለውንም መጠቀም ይችላሉ።',
+  'Terminals are tabs too': 'ተርሚናሎችም ትሮች ናቸው',
+  'Open one next to the notes for your project.': 'ከፕሮጀክትዎ ማስታወሻዎች አጠገብ አንዱን ይክፈቱ።',
+  'Do this on your computer': 'ይህን በኮምፒውተርዎ ላይ ያድርጉ',
 }

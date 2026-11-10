@@ -13,7 +13,7 @@ export const WELCOME = `# Welcome to Orden
 Your notes live on this device until you sign in
 and turn on syncing, and then they follow you everywhere.
 
-- Everything is markdown, and nothing else
+- Every note is a Markdown file you own, with to-dos, bases and boards right inside
 - **Bold**, *italic*, ==highlight==, \`code\`
 - $E = mc^2$ renders as you type
 
@@ -27,10 +27,15 @@ const hello = 'world'
 | Synced notes | your account |
 `
 
-const AS_NIBEDITOR = WELCOME.replace('# Welcome to Orden', '# Welcome to nibeditor')
-const AS_NIB = WELCOME.replace('# Welcome to Orden', '# Welcome to Nib')
+const ALL_MARKDOWN = WELCOME.replace(
+  '- Every note is a Markdown file you own, with to-dos, bases and boards right inside',
+  '- Everything is markdown, and nothing else',
+)
+const AS_NIBEDITOR = ALL_MARKDOWN.replace('# Welcome to Orden', '# Welcome to nibeditor')
+const AS_NIB = ALL_MARKDOWN.replace('# Welcome to Orden', '# Welcome to Nib')
 
 const EARLIER = [
+  ALL_MARKDOWN,
   AS_NIBEDITOR,
   AS_NIB,
   AS_NIB.replace(

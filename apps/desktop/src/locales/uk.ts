@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
-  'All set': 'Усе готово',
-  Personalize: 'Налаштувати під себе',
-  Clean: 'Чистий',
-  'Live preview': 'Живий перегляд',
   'Developer mode': 'Режим розробника',
   'Do you write code?': 'Ви пишете код?',
   Yes: 'Так',
@@ -33,9 +29,6 @@ export const uk: Dictionary = {
   'Import from Zen': 'Імпорт з Zen',
   'Containers stay in Zen': 'Контейнери залишаються в Zen',
   'Zen’s tabs could not be read.': 'Не вдалося прочитати вкладки Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Перенести закладки, вкладки й історію з іншого браузера?',
-  'No thanks': 'Ні, дякую',
   'Containers stay in Firefox': 'Контейнери залишаються в Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} шукає через {engine}: виберіть його в налаштуваннях, щоб шукати так і тут',
@@ -722,7 +715,8 @@ export const uk: Dictionary = {
   'Words with {bold} and a {link}.': 'Слова з {bold} та {link}.',
   bold: 'жирним',
   link: 'посиланням',
-  'Everything is markdown, and nothing else.': 'Усе - markdown, і нічого більше.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Кожна нотатка - ваш власний файл Markdown, із завданнями, базами й дошками просто всередині.',
   'One thing': 'Одне',
   Another: 'Інше',
   'could not reach the theme store': 'не вдалося зв’язатися з магазином тем',
@@ -3907,4 +3901,52 @@ export const uk: Dictionary = {
   Unknown: 'Невідомо',
   'Unnamed group': 'Група без назви',
   'Loading your chats…': 'Завантаження чатів…',
+  'Log in or sign up': 'Увійдіть або зареєструйтеся',
+  'Use without an account': 'Користуватися без облікового запису',
+  'How did you hear about Orden?': 'Як ви дізналися про Orden?',
+  'AI assistant': 'ШІ-асистент',
+  'Friend or colleague': 'Друг або колега',
+  'Social media': 'Соцмережі',
+  'Where?': 'Де?',
+  'Which browser do you use now?': 'Яким браузером ви користуєтеся зараз?',
+  'Not yet': 'Поки що ні',
+  Request: 'Попросити',
+  'Import from {browser}': 'Імпорт із {browser}',
+  'Open tabs': 'Відкриті вкладки',
+  Imported: 'Імпортовано',
+  'Bring your notes': 'Перенесіть свої нотатки',
+  'Here’s how you can import it anyway': 'Як імпортувати все одно',
+  'Connect your AI': 'Підключіть свій ШІ',
+  'Use an API key': 'Використати ключ API',
+  'Welcome to {app}': 'Ласкаво просимо до {app}',
+  'Show me around': 'Покажіть, що тут є',
+  'Your {app} pages are here': 'Ваші сторінки з {app} тут',
+  'Pages became notes, and databases became bases with their views.':
+    'Сторінки стали нотатками, а бази даних - базами з їхніми поданнями.',
+  'Your {app} notes are here': 'Ваші нотатки з {app} тут',
+  'Still plain Markdown files, and your links work like before.':
+    'Як і раніше, звичайні файли Markdown, і посилання працюють як раніше.',
+  'Every note is a file you own.': 'Кожна нотатка - ваш власний файл.',
+  'Everything lives in one space': 'Усе живе в одному просторі',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Нотатки, завдання, вебсторінки й чати поруч, тож ви нічого не загубите.',
+  'More than Markdown': 'Більше, ніж Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Завдання, бази й дошки просто в нотатках. «Сьогодні» показує, що час зробити.',
+  'To-dos in any note': 'Завдання в будь-якій нотатці',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Пишіть завдання будь-де. «Сьогодні» збирає все, що час зробити.',
+  'Your {browser} bookmarks': 'Ваші закладки з {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Вони на бічній панелі. Вебсторінки відкриваються вкладками поруч із нотатками.',
+  'Web pages are tabs': 'Вебсторінки - це вкладки',
+  'Browse next to your notes, without switching apps.':
+    'Переглядайте сайти поруч із нотатками, не перемикаючи застосунки.',
+  'Ask your AI': 'Запитайте свій ШІ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Чати поруч із нотатками й можуть використовувати те, що є у вашому просторі.',
+  'Terminals are tabs too': 'Термінали теж вкладки',
+  'Open one next to the notes for your project.':
+    'Відкрийте його поруч із нотатками вашого проєкту.',
+  'Do this on your computer': 'Зробіть це на комп’ютері',
 }

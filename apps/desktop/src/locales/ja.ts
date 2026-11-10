@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
-  'All set': '準備完了',
-  Personalize: 'カスタマイズ',
-  Clean: 'クリーン',
-  'Live preview': 'ライブプレビュー',
   'Developer mode': '開発者モード',
   'Do you write code?': 'コードを書きますか？',
   Yes: 'はい',
@@ -32,9 +28,6 @@ export const ja: Dictionary = {
   'Import from Zen': 'Zen から読み込む',
   'Containers stay in Zen': 'コンテナは Zen に残ります',
   'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
-  'Bring your bookmarks, tabs and history from another browser?':
-    '別のブラウザからブックマーク、タブ、履歴を取り込みますか？',
-  'No thanks': '結構です',
   'Containers stay in Firefox': 'コンテナは Firefox に残ります',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} は {engine} で検索します: ここでも使うには設定で選んでください',
@@ -687,7 +680,8 @@ export const ja: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} と {link} のある文章。',
   bold: '太字',
   link: 'リンク',
-  'Everything is markdown, and nothing else.': 'すべては Markdown、それ以外は何もありません。',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'すべてのノートはあなたが所有する Markdown ファイルで、ToDo、ベース、ボードもその中にあります。',
   'One thing': 'ひとつ',
   Another: 'もうひとつ',
   'could not reach the theme store': 'テーマストアに届きませんでした',
@@ -3678,4 +3672,51 @@ export const ja: Dictionary = {
   Unknown: '不明',
   'Unnamed group': '名前のないグループ',
   'Loading your chats…': 'チャットを読み込んでいます…',
+  'Log in or sign up': 'ログインまたは新規登録',
+  'Use without an account': 'アカウントなしで使う',
+  'How did you hear about Orden?': 'Orden をどこで知りましたか？',
+  'AI assistant': 'AI アシスタント',
+  'Friend or colleague': '友人や同僚',
+  'Social media': 'ソーシャルメディア',
+  'Where?': 'どこで？',
+  'Which browser do you use now?': '今どのブラウザを使っていますか？',
+  'Not yet': '未対応',
+  Request: 'リクエスト',
+  'Import from {browser}': '{browser} から読み込む',
+  'Open tabs': '開いているタブ',
+  Imported: '読み込み済み',
+  'Bring your notes': 'ノートを持ってくる',
+  'Here’s how you can import it anyway': 'それでも読み込む方法',
+  'Connect your AI': 'AI をつなぐ',
+  'Use an API key': 'API キーを使う',
+  'Welcome to {app}': '{app} へようこそ',
+  'Show me around': '案内して',
+  'Your {app} pages are here': '{app} のページはここにあります',
+  'Pages became notes, and databases became bases with their views.':
+    'ページはノートに、データベースはビュー付きのベースになりました。',
+  'Your {app} notes are here': '{app} のノートはここにあります',
+  'Still plain Markdown files, and your links work like before.':
+    '今もプレーンな Markdown ファイルで、リンクもこれまでどおり使えます。',
+  'Every note is a file you own.': 'すべてのノートはあなたのファイルです。',
+  'Everything lives in one space': 'すべてがひとつのスペースに',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'ノート、ToDo、ウェブページ、チャットが並ぶので、見失うことがありません。',
+  'More than Markdown': 'Markdown を超えて',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ToDo、ベース、ボードはノートの中にあります。「今日」には期限のものが表示されます。',
+  'To-dos in any note': 'どのノートにも ToDo',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ToDo はどこにでも書けます。「今日」に期限のものがすべて集まります。',
+  'Your {browser} bookmarks': '{browser} のブックマーク',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'サイドバーにあります。ウェブページはノートの横にタブで開きます。',
+  'Web pages are tabs': 'ウェブページはタブ',
+  'Browse next to your notes, without switching apps.':
+    'アプリを切り替えずに、ノートの横で閲覧できます。',
+  'Ask your AI': 'AI に聞く',
+  'Chats sit next to your notes and can use what is in your space.':
+    'チャットはノートの横にあり、スペースの内容を使えます。',
+  'Terminals are tabs too': 'ターミナルもタブ',
+  'Open one next to the notes for your project.': 'プロジェクトのノートの横に開きましょう。',
+  'Do this on your computer': 'これはパソコンで行ってください',
 }

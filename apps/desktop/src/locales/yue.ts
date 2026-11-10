@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
-  'All set': '搞掂晒',
-  Personalize: '個人化',
-  Clean: '簡潔',
-  'Live preview': '即時預覽',
   'Developer mode': '開發人員模式',
   'Do you write code?': '你寫唔寫程式？',
   Yes: '係',
@@ -31,9 +27,6 @@ export const yue: Dictionary = {
   'Import from Zen': '由 Zen 匯入',
   'Containers stay in Zen': '容器留喺 Zen',
   'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
-  'Bring your bookmarks, tabs and history from another browser?':
-    '由另一個瀏覽器帶埋你嘅書籤、分頁同瀏覽記錄過嚟？',
-  'No thanks': '唔使喇，多謝',
   'Containers stay in Firefox': '容器留喺 Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 用 {engine} 搜尋：喺設定揀佢，喺呢度都用佢搜尋',
@@ -682,7 +675,8 @@ export const yue: Dictionary = {
   'Words with {bold} and a {link}.': '含{bold}同{link}嘅文字。',
   bold: '粗體',
   link: '連結',
-  'Everything is markdown, and nothing else.': '一切都係Markdown，別無其他。',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    '每篇筆記都係你擁有嘅Markdown檔案，入面就有待辦、資料庫同看板。',
   'One thing': '一項',
   Another: '另一項',
   'could not reach the theme store': '冇辦法連上主題商店',
@@ -3573,4 +3567,50 @@ export const yue: Dictionary = {
   Unknown: '不明',
   'Unnamed group': '未命名群組',
   'Loading your chats…': '載入緊你嘅傾偈…',
+  'Log in or sign up': '登入或者註冊',
+  'Use without an account': '唔用帳戶都用得',
+  'How did you hear about Orden?': '你喺邊度聽過 Orden？',
+  'AI assistant': 'AI 助手',
+  'Friend or colleague': '朋友或者同事',
+  'Social media': '社交媒體',
+  'Where?': '喺邊度？',
+  'Which browser do you use now?': '你而家用緊邊個瀏覽器？',
+  'Not yet': '仲未支援',
+  Request: '要求',
+  'Import from {browser}': '由 {browser} 匯入',
+  'Open tabs': '開咗嘅分頁',
+  Imported: '匯入咗',
+  'Bring your notes': '帶埋你嘅筆記過嚟',
+  'Here’s how you can import it anyway': '咁樣都可以匯入',
+  'Connect your AI': '連接你嘅 AI',
+  'Use an API key': '用 API 金鑰',
+  'Welcome to {app}': '歡迎嚟到 {app}',
+  'Show me around': '帶我睇下',
+  'Your {app} pages are here': '你嘅 {app} 頁面喺度',
+  'Pages became notes, and databases became bases with their views.':
+    '頁面變成咗筆記，資料庫變成咗有檢視嘅資料庫。',
+  'Your {app} notes are here': '你嘅 {app} 筆記喺度',
+  'Still plain Markdown files, and your links work like before.':
+    '依然係純 Markdown 檔案，連結照用。',
+  'Every note is a file you own.': '每篇筆記都係你擁有嘅檔案。',
+  'Everything lives in one space': '一切都喺一個空間入面',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    '筆記、待辦、網頁同傾偈並排擺放，等你唔會漏低嘢。',
+  'More than Markdown': '唔止 Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    '待辦、資料庫同看板就喺筆記入面。今日會顯示到期嘅事項。',
+  'To-dos in any note': '任何筆記都寫得待辦',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    '喺邊度都寫得待辦。今日會收埋所有到期事項。',
+  'Your {browser} bookmarks': '你嘅 {browser} 書籤',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    '佢哋喺側邊欄。網頁會喺筆記旁邊以分頁開啟。',
+  'Web pages are tabs': '網頁就係分頁',
+  'Browse next to your notes, without switching apps.': '喺筆記旁邊瀏覽，唔使轉 App。',
+  'Ask your AI': '問下你嘅 AI',
+  'Chats sit next to your notes and can use what is in your space.':
+    '傾偈就喺筆記旁邊，可以用你空間入面嘅內容。',
+  'Terminals are tabs too': '終端機都係分頁',
+  'Open one next to the notes for your project.': '喺項目筆記旁邊開一個。',
+  'Do this on your computer': '請喺電腦度做',
 }

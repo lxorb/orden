@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
-  'All set': 'എല്ലാം തയ്യാർ',
-  Personalize: 'വ്യക്തിഗതമാക്കുക',
-  Clean: 'വൃത്തിയുള്ളത്',
-  'Live preview': 'ലൈവ് പ്രിവ്യൂ',
   'Developer mode': 'ഡെവലപ്പർ മോഡ്',
   'Do you write code?': 'നിങ്ങൾ കോഡ് എഴുതാറുണ്ടോ?',
   Yes: 'അതെ',
@@ -33,9 +29,6 @@ export const ml: Dictionary = {
   'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
   'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'മറ്റൊരു ബ്രൗസറിൽ നിന്ന് നിങ്ങളുടെ ബുക്ക്‌മാർക്കുകളും ടാബുകളും ചരിത്രവും കൊണ്ടുവരണോ?',
-  'No thanks': 'വേണ്ട, നന്ദി',
   'Containers stay in Firefox': 'കണ്ടെയ്‌നറുകൾ Firefox-ൽ തന്നെ തുടരും',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} ഉപയോഗിച്ച് തിരയുന്നു: ഇവിടെയും അതുപയോഗിച്ച് തിരയാൻ ക്രമീകരണങ്ങളിൽ അത് തിരഞ്ഞെടുക്കുക',
@@ -700,7 +693,8 @@ export const ml: Dictionary = {
   'Words with {bold} and a {link}.': '{bold}ഉം ഒരു {link}ഉം ഉള്ള വാക്കുകൾ.',
   bold: 'ബോൾഡ്',
   link: 'ലിങ്ക്',
-  'Everything is markdown, and nothing else.': 'എല്ലാം Markdown, മറ്റൊന്നുമല്ല.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ഓരോ കുറിപ്പും നിങ്ങളുടെ സ്വന്തം Markdown ഫയലാണ്, ഉള്ളിൽ തന്നെ ചെയ്യേണ്ടവയും ബേസുകളും ബോർഡുകളും ഉണ്ട്.',
   'One thing': 'ഒരു കാര്യം',
   Another: 'മറ്റൊന്ന്',
   'could not reach the theme store': 'തീം സ്റ്റോറിൽ എത്താനായില്ല',
@@ -3821,4 +3815,52 @@ export const ml: Dictionary = {
   Unknown: 'അജ്ഞാതം',
   'Unnamed group': 'പേരില്ലാത്ത ഗ്രൂപ്പ്',
   'Loading your chats…': 'നിങ്ങളുടെ ചാറ്റുകൾ ലോഡ് ചെയ്യുന്നു…',
+  'Log in or sign up': 'ലോഗിൻ ചെയ്യുക അല്ലെങ്കിൽ സൈൻ അപ്പ് ചെയ്യുക',
+  'Use without an account': 'അക്കൗണ്ട് ഇല്ലാതെ ഉപയോഗിക്കുക',
+  'How did you hear about Orden?': 'Orden-നെക്കുറിച്ച് എവിടെ നിന്ന് അറിഞ്ഞു?',
+  'AI assistant': 'AI സഹായി',
+  'Friend or colleague': 'സുഹൃത്ത് അല്ലെങ്കിൽ സഹപ്രവർത്തകൻ',
+  'Social media': 'സോഷ്യൽ മീഡിയ',
+  'Where?': 'എവിടെ?',
+  'Which browser do you use now?': 'ഇപ്പോൾ ഏത് ബ്രൗസറാണ് ഉപയോഗിക്കുന്നത്?',
+  'Not yet': 'ഇതുവരെയില്ല',
+  Request: 'അഭ്യർഥിക്കുക',
+  'Import from {browser}': '{browser}-ൽ നിന്ന് ഇറക്കുമതി ചെയ്യുക',
+  'Open tabs': 'തുറന്ന ടാബുകൾ',
+  Imported: 'ഇറക്കുമതി ചെയ്തു',
+  'Bring your notes': 'നിങ്ങളുടെ കുറിപ്പുകൾ കൊണ്ടുവരൂ',
+  'Here’s how you can import it anyway': 'എന്നിട്ടും ഇറക്കുമതി ചെയ്യാനുള്ള വഴി ഇതാ',
+  'Connect your AI': 'നിങ്ങളുടെ AI ബന്ധിപ്പിക്കൂ',
+  'Use an API key': 'API കീ ഉപയോഗിക്കുക',
+  'Welcome to {app}': '{app}-ലേക്ക് സ്വാഗതം',
+  'Show me around': 'എനിക്ക് ചുറ്റും കാണിച്ചുതരൂ',
+  'Your {app} pages are here': 'നിങ്ങളുടെ {app} പേജുകൾ ഇവിടെയുണ്ട്',
+  'Pages became notes, and databases became bases with their views.':
+    'പേജുകൾ കുറിപ്പുകളായി, ഡാറ്റാബേസുകൾ അവയുടെ കാഴ്ചകളോടെ ബേസുകളായി.',
+  'Your {app} notes are here': 'നിങ്ങളുടെ {app} കുറിപ്പുകൾ ഇവിടെയുണ്ട്',
+  'Still plain Markdown files, and your links work like before.':
+    'ഇപ്പോഴും ലളിതമായ Markdown ഫയലുകൾ, നിങ്ങളുടെ ലിങ്കുകൾ മുമ്പത്തെപ്പോലെ പ്രവർത്തിക്കും.',
+  'Every note is a file you own.': 'ഓരോ കുറിപ്പും നിങ്ങളുടെ സ്വന്തം ഫയൽ.',
+  'Everything lives in one space': 'എല്ലാം ഒരൊറ്റ സ്പേസിൽ',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'കുറിപ്പുകൾ, ചെയ്യേണ്ടവ, വെബ് പേജുകൾ, ചാറ്റുകൾ അടുത്തടുത്ത്, ഒന്നും നഷ്ടമാകില്ല.',
+  'More than Markdown': 'Markdown-നെക്കാൾ കൂടുതൽ',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ചെയ്യേണ്ടവ, ബേസുകൾ, ബോർഡുകൾ നിങ്ങളുടെ കുറിപ്പുകളിൽ തന്നെ. ഇന്ന് ബാക്കിയുള്ളവ കാണിക്കും.',
+  'To-dos in any note': 'ഏത് കുറിപ്പിലും ചെയ്യേണ്ടവ',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'എവിടെയും ചെയ്യേണ്ടത് എഴുതൂ. ഇന്ന് ബാക്കിയുള്ളതെല്ലാം ശേഖരിക്കും.',
+  'Your {browser} bookmarks': 'നിങ്ങളുടെ {browser} ബുക്ക്മാർക്കുകൾ',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'അവ സൈഡ്ബാറിലുണ്ട്. വെബ് പേജുകൾ നിങ്ങളുടെ കുറിപ്പുകൾക്കരികിൽ ടാബുകളായി തുറക്കും.',
+  'Web pages are tabs': 'വെബ് പേജുകൾ ടാബുകളാണ്',
+  'Browse next to your notes, without switching apps.':
+    'ആപ്പ് മാറാതെ കുറിപ്പുകൾക്കരികിൽ ബ്രൗസ് ചെയ്യൂ.',
+  'Ask your AI': 'നിങ്ങളുടെ AI-യോട് ചോദിക്കൂ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ചാറ്റുകൾ നിങ്ങളുടെ കുറിപ്പുകൾക്കരികിലുണ്ട്, നിങ്ങളുടെ സ്പേസിലുള്ളത് ഉപയോഗിക്കാം.',
+  'Terminals are tabs too': 'ടെർമിനലുകളും ടാബുകളാണ്',
+  'Open one next to the notes for your project.':
+    'നിങ്ങളുടെ പ്രോജക്റ്റ് കുറിപ്പുകൾക്കരികിൽ ഒന്ന് തുറക്കൂ.',
+  'Do this on your computer': 'ഇത് നിങ്ങളുടെ കമ്പ്യൂട്ടറിൽ ചെയ്യൂ',
 }

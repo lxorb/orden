@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
-  'All set': 'هر څه چمتو دي',
-  Personalize: 'شخصي کړئ',
-  Clean: 'پاک',
-  'Live preview': 'ژوندۍ مخکتنه',
   'Developer mode': 'د پراختیا کوونکي حالت',
   'Do you write code?': 'ایا تاسو کوډ لیکئ؟',
   Yes: 'هو',
@@ -31,9 +27,6 @@ export const ps: Dictionary = {
   'Import from Zen': 'له Zen څخه واردول',
   'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',
   'Zen’s tabs could not be read.': 'د Zen ټبونه ونه لوستل شول.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'خپل نښه شوي پاڼې، ټبونه او تاریخچه له بل براوزر څخه راوړئ؟',
-  'No thanks': 'نه، مننه',
   'Containers stay in Firefox': 'کانټینرونه په Firefox کې پاتې کېږي',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} په {engine} لټون کوي: دلته هم ورسره د لټون لپاره یې په امستنو کې وټاکئ',
@@ -691,7 +684,8 @@ export const ps: Dictionary = {
   'Words with {bold} and a {link}.': 'کلمې له {bold} او يوې {link} سره.',
   bold: 'ډبل',
   link: 'تړنه',
-  'Everything is markdown, and nothing else.': 'هر څه markdown دی، بل هيڅ نه.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'هر یادښت ستاسو خپل Markdown فایل دی، دننه یې کارونه، بېسونه او بورډونه شته.',
   'One thing': 'يو شی',
   Another: 'بل يو',
   'could not reach the theme store': 'د بڼو پلورنځي ته ونه رسېدل',
@@ -3760,4 +3754,51 @@ export const ps: Dictionary = {
   Unknown: 'ناپېژندل شوی',
   'Unnamed group': 'بې نومه ډله',
   'Loading your chats…': 'ستاسو چټونه پورته کېږي…',
+  'Log in or sign up': 'ننوځئ یا نوم لیکنه وکړئ',
+  'Use without an account': 'له حساب پرته یې وکاروئ',
+  'How did you hear about Orden?': 'تاسو د Orden په اړه له کومه خبر شوئ؟',
+  'AI assistant': 'د AI مرستیال',
+  'Friend or colleague': 'ملګری یا همکار',
+  'Social media': 'ټولنیزې رسنۍ',
+  'Where?': 'چېرته؟',
+  'Which browser do you use now?': 'تاسو اوس کوم براوزر کاروئ؟',
+  'Not yet': 'لا نه',
+  Request: 'غوښتنه',
+  'Import from {browser}': 'له {browser} څخه راوړل',
+  'Open tabs': 'پرانیستې ټبونه',
+  Imported: 'راوړل شو',
+  'Bring your notes': 'خپل یادښتونه راوړئ',
+  'Here’s how you can import it anyway': 'دا دی چې څنګه یې بیا هم راوړلی شئ',
+  'Connect your AI': 'خپل AI وصل کړئ',
+  'Use an API key': 'د API کیلي وکاروئ',
+  'Welcome to {app}': '{app} ته ښه راغلاست',
+  'Show me around': 'شاوخوا راته وښایاست',
+  'Your {app} pages are here': 'ستاسو د {app} پاڼې دلته دي',
+  'Pages became notes, and databases became bases with their views.':
+    'پاڼې په یادښتونو بدلې شوې، او ډیټابیسونه د خپلو لیدونو سره په بېسونو.',
+  'Your {app} notes are here': 'ستاسو د {app} یادښتونه دلته دي',
+  'Still plain Markdown files, and your links work like before.':
+    'لا هم ساده Markdown فایلونه دي، او ستاسو لینکونه د پخوا په څېر کار کوي.',
+  'Every note is a file you own.': 'هر یادښت ستاسو خپل فایل دی.',
+  'Everything lives in one space': 'هر څه په یوه ځای کې',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'یادښتونه، کارونه، ویب پاڼې او چټونه څنګ په څنګ دي، نو هیڅ شی مو له لاسه نه وځي.',
+  'More than Markdown': 'له Markdown څخه زیات',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'کارونه، بېسونه او بورډونه ستاسو په یادښتونو کې دي. نن هغه ښيي چې وخت یې رسېدلی.',
+  'To-dos in any note': 'په هر یادښت کې کارونه',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'هر چېرې کار ولیکئ. نن هر هغه څه راټولوي چې وخت یې رسېدلی.',
+  'Your {browser} bookmarks': 'ستاسو د {browser} نښې',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'دوی په څنګ پټه کې دي. ویب پاڼې ستاسو د یادښتونو تر څنګ د ټبونو په توګه پرانیستل کېږي.',
+  'Web pages are tabs': 'ویب پاڼې ټبونه دي',
+  'Browse next to your notes, without switching apps.':
+    'د اپ بدلولو پرته د خپلو یادښتونو تر څنګ وګورئ.',
+  'Ask your AI': 'له خپل AI وپوښتئ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'چټونه ستاسو د یادښتونو تر څنګ دي او ستاسو د ځای منځپانګه کارولی شي.',
+  'Terminals are tabs too': 'ټرمینلونه هم ټبونه دي',
+  'Open one next to the notes for your project.': 'د خپلې پروژې د یادښتونو تر څنګ یو پرانیزئ.',
+  'Do this on your computer': 'دا په خپل کمپیوټر وکړئ',
 }

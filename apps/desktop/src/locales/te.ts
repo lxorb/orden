@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
-  'All set': 'అంతా సిద్ధం',
-  Personalize: 'వ్యక్తిగతీకరించండి',
-  Clean: 'శుభ్రంగా',
-  'Live preview': 'లైవ్ ప్రివ్యూ',
   'Developer mode': 'డెవలపర్ మోడ్',
   'Do you write code?': 'మీరు కోడ్ రాస్తారా?',
   Yes: 'అవును',
@@ -33,9 +29,6 @@ export const te: Dictionary = {
   'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
   'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
   'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'వేరే బ్రౌజర్ నుండి మీ బుక్‌మార్క్‌లు, ట్యాబ్‌లు, చరిత్రను తీసుకురావాలా?',
-  'No thanks': 'వద్దు, ధన్యవాదాలు',
   'Containers stay in Firefox': 'కంటైనర్‌లు Firefox లోనే ఉంటాయి',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine}తో వెతుకుతుంది: ఇక్కడ కూడా దానితో వెతకడానికి సెట్టింగ్‌లలో దాన్ని ఎంచుకోండి',
@@ -693,7 +686,8 @@ export const te: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} మరియు ఒక {link} ఉన్న పదాలు.',
   bold: 'బోల్డ్',
   link: 'లింక్',
-  'Everything is markdown, and nothing else.': 'అంతా Markdown, మరేమీ కాదు.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ప్రతి నోట్ మీ స్వంత Markdown ఫైల్, లోపలే పనులు, బేస్‌లు, బోర్డులు ఉంటాయి.',
   'One thing': 'ఒక అంశం',
   Another: 'మరొకటి',
   'could not reach the theme store': 'థీమ్ స్టోర్‌ను చేరుకోలేకపోయింది',
@@ -3784,4 +3778,51 @@ export const te: Dictionary = {
   Unknown: 'తెలియదు',
   'Unnamed group': 'పేరులేని గ్రూప్',
   'Loading your chats…': 'మీ చాట్‌లు లోడ్ అవుతున్నాయి…',
+  'Log in or sign up': 'లాగిన్ అవ్వండి లేదా సైన్ అప్ చేయండి',
+  'Use without an account': 'ఖాతా లేకుండా వాడు',
+  'How did you hear about Orden?': 'Orden గురించి మీకు ఎక్కడ తెలిసింది?',
+  'AI assistant': 'AI సహాయకుడు',
+  'Friend or colleague': 'స్నేహితుడు లేదా సహోద్యోగి',
+  'Social media': 'సోషల్ మీడియా',
+  'Where?': 'ఎక్కడ?',
+  'Which browser do you use now?': 'మీరు ఇప్పుడు ఏ బ్రౌజర్ వాడుతున్నారు?',
+  'Not yet': 'ఇంకా లేదు',
+  Request: 'అభ్యర్థించు',
+  'Import from {browser}': '{browser} నుండి దిగుమతి చేయి',
+  'Open tabs': 'తెరిచిన ట్యాబ్‌లు',
+  Imported: 'దిగుమతి అయింది',
+  'Bring your notes': 'మీ నోట్స్ తీసుకురండి',
+  'Here’s how you can import it anyway': 'అయినా దిగుమతి చేసే మార్గం ఇదిగో',
+  'Connect your AI': 'మీ AIని కనెక్ట్ చేయండి',
+  'Use an API key': 'API కీ వాడు',
+  'Welcome to {app}': '{app}కి స్వాగతం',
+  'Show me around': 'నాకు చుట్టూ చూపించు',
+  'Your {app} pages are here': 'మీ {app} పేజీలు ఇక్కడ ఉన్నాయి',
+  'Pages became notes, and databases became bases with their views.':
+    'పేజీలు నోట్లుగా, డేటాబేస్‌లు వాటి వ్యూలతో బేస్‌లుగా మారాయి.',
+  'Your {app} notes are here': 'మీ {app} నోట్లు ఇక్కడ ఉన్నాయి',
+  'Still plain Markdown files, and your links work like before.':
+    'ఇప్పటికీ సాదా Markdown ఫైళ్లే, మీ లింకులు మునుపటిలాగే పనిచేస్తాయి.',
+  'Every note is a file you own.': 'ప్రతి నోట్ మీ స్వంత ఫైల్.',
+  'Everything lives in one space': 'అంతా ఒకే స్పేస్‌లో',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'నోట్లు, పనులు, వెబ్ పేజీలు, చాట్లు పక్కపక్కనే, కాబట్టి ఏదీ తప్పిపోదు.',
+  'More than Markdown': 'Markdown కంటే ఎక్కువ',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'పనులు, బేస్‌లు, బోర్డులు మీ నోట్లలోనే ఉంటాయి. ఈరోజు గడువైనవి చూపిస్తుంది.',
+  'To-dos in any note': 'ఏ నోట్‌లోనైనా పనులు',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ఎక్కడైనా పని రాయండి. ఈరోజు గడువైనవన్నీ సేకరిస్తుంది.',
+  'Your {browser} bookmarks': 'మీ {browser} బుక్‌మార్క్‌లు',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'అవి సైడ్‌బార్‌లో ఉన్నాయి. వెబ్ పేజీలు మీ నోట్ల పక్కన ట్యాబ్‌లుగా తెరుచుకుంటాయి.',
+  'Web pages are tabs': 'వెబ్ పేజీలు ట్యాబ్‌లు',
+  'Browse next to your notes, without switching apps.':
+    'యాప్ మార్చకుండా మీ నోట్ల పక్కనే బ్రౌజ్ చేయండి.',
+  'Ask your AI': 'మీ AI ని అడగండి',
+  'Chats sit next to your notes and can use what is in your space.':
+    'చాట్లు మీ నోట్ల పక్కన ఉంటాయి, మీ స్పేస్‌లోని వాటిని ఉపయోగించగలవు.',
+  'Terminals are tabs too': 'టెర్మినల్స్ కూడా ట్యాబ్‌లే',
+  'Open one next to the notes for your project.': 'మీ ప్రాజెక్ట్ నోట్ల పక్కన ఒకటి తెరవండి.',
+  'Do this on your computer': 'దీన్ని మీ కంప్యూటర్‌లో చేయండి',
 }

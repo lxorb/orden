@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pa: Dictionary = {
-  'All set': 'ਸਭ ਤਿਆਰ ਹੈ',
-  Personalize: 'ਆਪਣੇ ਮੁਤਾਬਕ ਬਣਾਓ',
-  Clean: 'ਸਾਫ਼',
-  'Live preview': 'ਲਾਈਵ ਝਲਕ',
   'Developer mode': 'ਡਿਵੈਲਪਰ ਮੋਡ',
   'Do you write code?': 'ਕੀ ਤੁਸੀਂ ਕੋਡ ਲਿਖਦੇ ਹੋ?',
   Yes: 'ਹਾਂ',
@@ -32,9 +28,6 @@ export const pa: Dictionary = {
   'Import from Zen': 'Zen ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   'Containers stay in Zen': 'ਕੰਟੇਨਰ Zen ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
   'Zen’s tabs could not be read.': 'Zen ਦੀਆਂ ਟੈਬਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'ਕਿਸੇ ਹੋਰ ਬ੍ਰਾਊਜ਼ਰ ਤੋਂ ਆਪਣੇ ਬੁੱਕਮਾਰਕ, ਟੈਬ ਅਤੇ ਇਤਿਹਾਸ ਲਿਆਉਣੇ ਹਨ?',
-  'No thanks': 'ਨਹੀਂ, ਧੰਨਵਾਦ',
   'Containers stay in Firefox': 'ਕੰਟੇਨਰ Firefox ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} ਨਾਲ ਖੋਜਦਾ ਹੈ: ਇੱਥੇ ਵੀ ਇਸ ਨਾਲ ਖੋਜਣ ਲਈ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਇਸ ਨੂੰ ਚੁਣੋ',
@@ -695,7 +688,8 @@ export const pa: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} ਤੇ ਇੱਕ {link} ਵਾਲੇ ਸ਼ਬਦ।',
   bold: 'ਮੋਟਾ',
   link: 'ਕੜੀ',
-  'Everything is markdown, and nothing else.': 'ਸਭ ਕੁਝ markdown ਹੈ, ਹੋਰ ਕੁਝ ਨਹੀਂ।',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ਹਰ ਨੋਟ ਤੁਹਾਡੀ ਆਪਣੀ Markdown ਫ਼ਾਈਲ ਹੈ, ਅੰਦਰ ਹੀ ਕੰਮ, ਬੇਸ ਅਤੇ ਬੋਰਡ ਹਨ।',
   'One thing': 'ਇੱਕ ਚੀਜ਼',
   Another: 'ਇੱਕ ਹੋਰ',
   'could not reach the theme store': 'ਥੀਮ ਸਟੋਰ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕੇ',
@@ -3775,4 +3769,51 @@ export const pa: Dictionary = {
   Unknown: 'ਅਣਜਾਣ',
   'Unnamed group': 'ਬਿਨਾਂ ਨਾਂ ਦਾ ਗਰੁੱਪ',
   'Loading your chats…': 'ਤੁਹਾਡੀਆਂ ਚੈਟਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ…',
+  'Log in or sign up': 'ਲੌਗ ਇਨ ਕਰੋ ਜਾਂ ਸਾਈਨ ਅੱਪ ਕਰੋ',
+  'Use without an account': 'ਖਾਤੇ ਤੋਂ ਬਿਨਾਂ ਵਰਤੋ',
+  'How did you hear about Orden?': 'ਤੁਹਾਨੂੰ Orden ਬਾਰੇ ਕਿੱਥੋਂ ਪਤਾ ਲੱਗਾ?',
+  'AI assistant': 'ਏਆਈ ਸਹਾਇਕ',
+  'Friend or colleague': 'ਦੋਸਤ ਜਾਂ ਸਹਿਕਰਮੀ',
+  'Social media': 'ਸੋਸ਼ਲ ਮੀਡੀਆ',
+  'Where?': 'ਕਿੱਥੇ?',
+  'Which browser do you use now?': 'ਤੁਸੀਂ ਹੁਣ ਕਿਹੜਾ ਬ੍ਰਾਊਜ਼ਰ ਵਰਤਦੇ ਹੋ?',
+  'Not yet': 'ਹਾਲੇ ਨਹੀਂ',
+  Request: 'ਬੇਨਤੀ ਕਰੋ',
+  'Import from {browser}': '{browser} ਤੋਂ ਲਿਆਓ',
+  'Open tabs': 'ਖੁੱਲ੍ਹੀਆਂ ਟੈਬਾਂ',
+  Imported: 'ਲਿਆਂਦਾ ਗਿਆ',
+  'Bring your notes': 'ਆਪਣੇ ਨੋਟ ਲਿਆਓ',
+  'Here’s how you can import it anyway': 'ਫਿਰ ਵੀ ਲਿਆਉਣ ਦਾ ਤਰੀਕਾ ਇਹ ਹੈ',
+  'Connect your AI': 'ਆਪਣਾ ਏਆਈ ਜੋੜੋ',
+  'Use an API key': 'API ਕੁੰਜੀ ਵਰਤੋ',
+  'Welcome to {app}': '{app} ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ',
+  'Show me around': 'ਮੈਨੂੰ ਘੁਮਾ ਕੇ ਦਿਖਾਓ',
+  'Your {app} pages are here': 'ਤੁਹਾਡੇ {app} ਪੰਨੇ ਇੱਥੇ ਹਨ',
+  'Pages became notes, and databases became bases with their views.':
+    'ਪੰਨੇ ਨੋਟ ਬਣ ਗਏ, ਅਤੇ ਡਾਟਾਬੇਸ ਆਪਣੇ ਵਿਊ ਸਮੇਤ ਬੇਸ ਬਣ ਗਏ।',
+  'Your {app} notes are here': 'ਤੁਹਾਡੇ {app} ਨੋਟ ਇੱਥੇ ਹਨ',
+  'Still plain Markdown files, and your links work like before.':
+    'ਹਾਲੇ ਵੀ ਸਾਦੀਆਂ Markdown ਫ਼ਾਈਲਾਂ, ਅਤੇ ਤੁਹਾਡੇ ਲਿੰਕ ਪਹਿਲਾਂ ਵਾਂਗ ਕੰਮ ਕਰਦੇ ਹਨ।',
+  'Every note is a file you own.': 'ਹਰ ਨੋਟ ਤੁਹਾਡੀ ਆਪਣੀ ਫ਼ਾਈਲ ਹੈ।',
+  'Everything lives in one space': 'ਸਭ ਕੁਝ ਇੱਕ ਸਪੇਸ ਵਿੱਚ',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'ਨੋਟ, ਕੰਮ, ਵੈੱਬ ਪੰਨੇ ਅਤੇ ਚੈਟ ਨਾਲ-ਨਾਲ, ਤਾਂ ਜੋ ਕੁਝ ਨਾ ਛੁੱਟੇ।',
+  'More than Markdown': 'Markdown ਤੋਂ ਵੱਧ',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ਕੰਮ, ਬੇਸ ਅਤੇ ਬੋਰਡ ਤੁਹਾਡੇ ਨੋਟਾਂ ਦੇ ਅੰਦਰ ਹਨ। ਅੱਜ ਦਿਖਾਉਂਦਾ ਹੈ ਕੀ ਬਾਕੀ ਹੈ।',
+  'To-dos in any note': 'ਹਰ ਨੋਟ ਵਿੱਚ ਕੰਮ',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ਕਿਤੇ ਵੀ ਕੰਮ ਲਿਖੋ। ਅੱਜ ਸਭ ਬਾਕੀ ਕੰਮ ਇਕੱਠੇ ਕਰਦਾ ਹੈ।',
+  'Your {browser} bookmarks': 'ਤੁਹਾਡੇ {browser} ਬੁੱਕਮਾਰਕ',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'ਇਹ ਸਾਈਡਬਾਰ ਵਿੱਚ ਹਨ। ਵੈੱਬ ਪੰਨੇ ਤੁਹਾਡੇ ਨੋਟਾਂ ਦੇ ਨਾਲ ਟੈਬਾਂ ਵਿੱਚ ਖੁੱਲ੍ਹਦੇ ਹਨ।',
+  'Web pages are tabs': 'ਵੈੱਬ ਪੰਨੇ ਟੈਬ ਹਨ',
+  'Browse next to your notes, without switching apps.':
+    'ਐਪ ਬਦਲੇ ਬਿਨਾਂ ਆਪਣੇ ਨੋਟਾਂ ਦੇ ਨਾਲ ਬ੍ਰਾਊਜ਼ ਕਰੋ।',
+  'Ask your AI': 'ਆਪਣੇ AI ਨੂੰ ਪੁੱਛੋ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ਚੈਟ ਤੁਹਾਡੇ ਨੋਟਾਂ ਦੇ ਨਾਲ ਹਨ ਅਤੇ ਤੁਹਾਡੀ ਸਪੇਸ ਦੀ ਸਮੱਗਰੀ ਵਰਤ ਸਕਦੀਆਂ ਹਨ।',
+  'Terminals are tabs too': 'ਟਰਮੀਨਲ ਵੀ ਟੈਬ ਹਨ',
+  'Open one next to the notes for your project.': 'ਆਪਣੇ ਪ੍ਰੋਜੈਕਟ ਦੇ ਨੋਟਾਂ ਦੇ ਨਾਲ ਇੱਕ ਖੋਲ੍ਹੋ।',
+  'Do this on your computer': 'ਇਹ ਆਪਣੇ ਕੰਪਿਊਟਰ ਤੇ ਕਰੋ',
 }

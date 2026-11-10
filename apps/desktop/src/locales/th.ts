@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
-  'All set': 'พร้อมแล้ว',
-  Personalize: 'ปรับแต่ง',
-  Clean: 'สะอาดตา',
-  'Live preview': 'แสดงตัวอย่างสด',
   'Developer mode': 'โหมดนักพัฒนา',
   'Do you write code?': 'คุณเขียนโค้ดไหม?',
   Yes: 'ใช่',
@@ -31,9 +27,6 @@ export const th: Dictionary = {
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'นำบุ๊กมาร์ก แท็บ และประวัติจากเบราว์เซอร์อื่นมาไหม',
-  'No thanks': 'ไม่ ขอบคุณ',
   'Containers stay in Firefox': 'คอนเทนเนอร์ยังอยู่ใน Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} ค้นหาด้วย {engine}: เลือกในการตั้งค่าเพื่อค้นหาด้วยสิ่งนั้นที่นี่ด้วย',
@@ -684,7 +677,8 @@ export const th: Dictionary = {
   'Words with {bold} and a {link}.': 'ข้อความที่มี {bold} และ {link}',
   bold: 'ตัวหนา',
   link: 'ลิงก์',
-  'Everything is markdown, and nothing else.': 'ทุกอย่างเป็น Markdown ไม่มีอะไรอื่น',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ทุกโน้ตคือไฟล์ Markdown ของคุณเอง พร้อมสิ่งที่ต้องทำ ฐานข้อมูล และบอร์ดอยู่ข้างใน',
   'One thing': 'อย่างหนึ่ง',
   Another: 'อีกอย่าง',
   'could not reach the theme store': 'ติดต่อร้านธีมไม่ได้',
@@ -3622,4 +3616,50 @@ export const th: Dictionary = {
   Unknown: 'ไม่ทราบ',
   'Unnamed group': 'กลุ่มที่ไม่มีชื่อ',
   'Loading your chats…': 'กำลังโหลดแชทของคุณ…',
+  'Log in or sign up': 'เข้าสู่ระบบหรือสมัครใช้งาน',
+  'Use without an account': 'ใช้โดยไม่มีบัญชี',
+  'How did you hear about Orden?': 'คุณรู้จัก Orden จากที่ไหน?',
+  'AI assistant': 'ผู้ช่วย AI',
+  'Friend or colleague': 'เพื่อนหรือเพื่อนร่วมงาน',
+  'Social media': 'โซเชียลมีเดีย',
+  'Where?': 'ที่ไหน?',
+  'Which browser do you use now?': 'ตอนนี้คุณใช้เบราว์เซอร์ไหน?',
+  'Not yet': 'ยังไม่รองรับ',
+  Request: 'ขอ',
+  'Import from {browser}': 'นำเข้าจาก {browser}',
+  'Open tabs': 'แท็บที่เปิดอยู่',
+  Imported: 'นำเข้าแล้ว',
+  'Bring your notes': 'นำโน้ตของคุณมา',
+  'Here’s how you can import it anyway': 'วิธีนำเข้าได้อยู่ดี',
+  'Connect your AI': 'เชื่อมต่อ AI ของคุณ',
+  'Use an API key': 'ใช้คีย์ API',
+  'Welcome to {app}': 'ยินดีต้อนรับสู่ {app}',
+  'Show me around': 'พาฉันดูรอบ ๆ',
+  'Your {app} pages are here': 'หน้า {app} ของคุณอยู่ที่นี่',
+  'Pages became notes, and databases became bases with their views.':
+    'หน้ากลายเป็นโน้ต และฐานข้อมูลกลายเป็นฐานพร้อมมุมมองของมัน',
+  'Your {app} notes are here': 'โน้ต {app} ของคุณอยู่ที่นี่',
+  'Still plain Markdown files, and your links work like before.':
+    'ยังคงเป็นไฟล์ Markdown ธรรมดา และลิงก์ของคุณใช้ได้เหมือนเดิม',
+  'Every note is a file you own.': 'ทุกโน้ตคือไฟล์ของคุณเอง',
+  'Everything lives in one space': 'ทุกอย่างอยู่ในพื้นที่เดียว',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'โน้ต สิ่งที่ต้องทำ หน้าเว็บ และแชตอยู่เคียงกัน คุณจึงไม่พลาดอะไร',
+  'More than Markdown': 'มากกว่า Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'สิ่งที่ต้องทำ ฐานข้อมูล และบอร์ดอยู่ในโน้ตของคุณ วันนี้แสดงสิ่งที่ถึงกำหนด',
+  'To-dos in any note': 'สิ่งที่ต้องทำในทุกโน้ต',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'เขียนสิ่งที่ต้องทำได้ทุกที่ วันนี้รวบรวมทุกอย่างที่ถึงกำหนด',
+  'Your {browser} bookmarks': 'บุ๊กมาร์ก {browser} ของคุณ',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'อยู่ในแถบด้านข้าง หน้าเว็บเปิดเป็นแท็บข้างโน้ตของคุณ',
+  'Web pages are tabs': 'หน้าเว็บคือแท็บ',
+  'Browse next to your notes, without switching apps.': 'ท่องเว็บข้างโน้ตของคุณ โดยไม่ต้องสลับแอป',
+  'Ask your AI': 'ถาม AI ของคุณ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'แชตอยู่ข้างโน้ตของคุณและใช้สิ่งที่อยู่ในพื้นที่ของคุณได้',
+  'Terminals are tabs too': 'เทอร์มินัลก็เป็นแท็บ',
+  'Open one next to the notes for your project.': 'เปิดหนึ่งอันข้างโน้ตของโปรเจกต์คุณ',
+  'Do this on your computer': 'ทำสิ่งนี้บนคอมพิวเตอร์ของคุณ',
 }

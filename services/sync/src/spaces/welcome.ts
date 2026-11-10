@@ -2,7 +2,7 @@ const EN = `# Welcome to Orden
 
 Your notes live in your account, so they follow you to every device you sign in on.
 
-- Everything is markdown, and nothing else
+- Every note is a Markdown file you own, with to-dos, bases and boards right inside
 - **Bold**, *italic*, ==highlight==, \`code\`
 - $E = mc^2$ renders as you type
 
@@ -20,7 +20,7 @@ const DE = `# Willkommen bei Orden
 
 Deine Notizen liegen in deinem Konto und sind auf jedem Gerät da, an dem du dich anmeldest.
 
-- Alles ist Markdown, und nichts anderes
+- Jede Notiz ist eine Markdown-Datei, die dir gehört, mit To-dos, Bases und Boards direkt darin
 - **Fett**, *kursiv*, ==hervorgehoben==, \`Code\`
 - $E = mc^2$ wird beim Schreiben gesetzt
 
@@ -38,7 +38,7 @@ const GSW = `# Willkomme bi Orden
 
 Dini Notize liege i dim Konto und sind uf jedem Grät da, wo du di aamäldisch.
 
-- Alles isch Markdown, und nüt anders
+- Jedi Notiz isch e Markdown-Datei, wo dir ghört, mit To-dos, Bases und Boards grad drin
 - **Fett**, *kursiv*, ==markiert==, \`Code\`
 - $E = mc^2$ wird gsetzt, während du schriibsch
 
@@ -56,7 +56,7 @@ const FR = `# Bienvenue dans Orden
 
 Vos notes vivent dans votre compte, elles vous suivent donc sur chaque appareil où vous vous connectez.
 
-- Tout est en markdown, et rien d’autre
+- Chaque note est un fichier Markdown qui vous appartient, avec tâches, bases et tableaux directement dedans
 - **Gras**, *italique*, ==surligné==, \`code\`
 - $E = mc^2$ s’affiche pendant que vous écrivez
 
@@ -74,7 +74,7 @@ const JA = `# Orden へようこそ
 
 ノートはアカウントに保存され、サインインしたすべての端末に届きます。
 
-- すべてがマークダウンで、それ以外はありません
+- すべてのノートはあなたが所有する Markdown ファイルで、To-do、ベース、ボードもその中に入っています
 - **太字**、*斜体*、==ハイライト==、\`コード\`
 - $E = mc^2$ は入力しながら表示されます
 

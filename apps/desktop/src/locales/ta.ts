@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
-  'All set': 'எல்லாம் தயார்',
-  Personalize: 'தனிப்பயனாக்கு',
-  Clean: 'சுத்தம்',
-  'Live preview': 'நேரடி முன்னோட்டம்',
   'Developer mode': 'டெவலப்பர் பயன்முறை',
   'Do you write code?': 'நீங்கள் குறியீடு எழுதுவீர்களா?',
   Yes: 'ஆம்',
@@ -33,9 +29,6 @@ export const ta: Dictionary = {
   'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
   'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
   'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'வேறொரு உலாவியிலிருந்து உங்கள் புக்மார்க்குகள், தாவல்கள், வரலாற்றைக் கொண்டுவரவா?',
-  'No thanks': 'வேண்டாம், நன்றி',
   'Containers stay in Firefox': 'கண்டெய்னர்கள் Firefox-இலேயே இருக்கும்',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} மூலம் தேடுகிறது: இங்கேயும் அதைக் கொண்டு தேட அமைப்புகளில் அதைத் தேர்வுசெய்யவும்',
@@ -693,7 +686,8 @@ export const ta: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} மற்றும் ஒரு {link} உள்ள சொற்கள்.',
   bold: 'தடிமன்',
   link: 'இணைப்பு',
-  'Everything is markdown, and nothing else.': 'எல்லாம் Markdown, வேறு எதுவும் இல்லை.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ஒவ்வொரு குறிப்பும் உங்களுக்குச் சொந்தமான Markdown கோப்பு, அதற்குள்ளேயே பணிகள், பேஸ்கள், போர்டுகள் உள்ளன.',
   'One thing': 'ஒரு விஷயம்',
   Another: 'மற்றொன்று',
   'could not reach the theme store': 'தீம் கடையை அணுக முடியவில்லை',
@@ -3835,4 +3829,52 @@ export const ta: Dictionary = {
   Unknown: 'தெரியாதவர்',
   'Unnamed group': 'பெயரில்லாத குழு',
   'Loading your chats…': 'உங்கள் அரட்டைகள் ஏற்றப்படுகின்றன…',
+  'Log in or sign up': 'உள்நுழையவும் அல்லது பதிவுசெய்யவும்',
+  'Use without an account': 'கணக்கு இல்லாமல் பயன்படுத்து',
+  'How did you hear about Orden?': 'Orden பற்றி எங்கே கேள்விப்பட்டீர்கள்?',
+  'AI assistant': 'AI உதவியாளர்',
+  'Friend or colleague': 'நண்பர் அல்லது சக ஊழியர்',
+  'Social media': 'சமூக ஊடகம்',
+  'Where?': 'எங்கே?',
+  'Which browser do you use now?': 'இப்போது எந்த உலாவியைப் பயன்படுத்துகிறீர்கள்?',
+  'Not yet': 'இன்னும் இல்லை',
+  Request: 'கோரு',
+  'Import from {browser}': '{browser} இலிருந்து இறக்கு',
+  'Open tabs': 'திறந்த தாவல்கள்',
+  Imported: 'இறக்கப்பட்டது',
+  'Bring your notes': 'உங்கள் குறிப்புகளைக் கொண்டு வாருங்கள்',
+  'Here’s how you can import it anyway': 'இருந்தாலும் இறக்கும் வழி இதோ',
+  'Connect your AI': 'உங்கள் AI-ஐ இணைக்கவும்',
+  'Use an API key': 'API விசையைப் பயன்படுத்து',
+  'Welcome to {app}': '{app}-க்கு வரவேற்கிறோம்',
+  'Show me around': 'சுற்றிக் காட்டுங்கள்',
+  'Your {app} pages are here': 'உங்கள் {app} பக்கங்கள் இங்கே',
+  'Pages became notes, and databases became bases with their views.':
+    'பக்கங்கள் குறிப்புகளாகின, தரவுத்தளங்கள் அவற்றின் காட்சிகளுடன் பேஸ்களாகின.',
+  'Your {app} notes are here': 'உங்கள் {app} குறிப்புகள் இங்கே',
+  'Still plain Markdown files, and your links work like before.':
+    'இன்னும் எளிய Markdown கோப்புகள், உங்கள் இணைப்புகள் முன்பு போலவே வேலை செய்கின்றன.',
+  'Every note is a file you own.': 'ஒவ்வொரு குறிப்பும் உங்கள் சொந்தக் கோப்பு.',
+  'Everything lives in one space': 'எல்லாம் ஒரே இடத்தில்',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'குறிப்புகள், பணிகள், இணையப் பக்கங்கள், அரட்டைகள் அருகருகே, எதையும் தவறவிட மாட்டீர்கள்.',
+  'More than Markdown': 'Markdown-ஐ விட அதிகம்',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'பணிகள், பேஸ்கள், போர்டுகள் உங்கள் குறிப்புகளுக்குள்ளேயே. இன்று நிலுவையானதைக் காட்டும்.',
+  'To-dos in any note': 'எந்தக் குறிப்பிலும் பணிகள்',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'எங்கும் பணியை எழுதுங்கள். இன்று நிலுவையான அனைத்தையும் சேர்க்கும்.',
+  'Your {browser} bookmarks': 'உங்கள் {browser} புத்தகக்குறிகள்',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'அவை பக்கப்பட்டியில் உள்ளன. இணையப் பக்கங்கள் உங்கள் குறிப்புகளின் அருகே தாவல்களாகத் திறக்கும்.',
+  'Web pages are tabs': 'இணையப் பக்கங்கள் தாவல்கள்',
+  'Browse next to your notes, without switching apps.':
+    'ஆப்பை மாற்றாமல் குறிப்புகளின் அருகே உலாவுங்கள்.',
+  'Ask your AI': 'உங்கள் AI-யிடம் கேளுங்கள்',
+  'Chats sit next to your notes and can use what is in your space.':
+    'அரட்டைகள் உங்கள் குறிப்புகளின் அருகே இருக்கும், உங்கள் இடத்தில் உள்ளதைப் பயன்படுத்தும்.',
+  'Terminals are tabs too': 'டெர்மினல்களும் தாவல்களே',
+  'Open one next to the notes for your project.':
+    'உங்கள் திட்டக் குறிப்புகளின் அருகே ஒன்றைத் திறங்கள்.',
+  'Do this on your computer': 'இதை உங்கள் கணினியில் செய்யுங்கள்',
 }

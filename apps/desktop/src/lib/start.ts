@@ -23,6 +23,7 @@ import { recovery } from './recovery.svelte'
 import { reloading } from './reloading.svelte'
 import { record } from './sync/record.svelte'
 import { hiddenKinds, settings } from './settings.svelte'
+import { gate } from './onboarding/gate.svelte'
 import { startup } from './startup.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, internal, isDesktop, isMobile, platform } from './tauri'
@@ -60,6 +61,7 @@ export function start(): () => void {
   pull.restore()
   hiddenKinds.restore()
   settings.restore()
+  if (!__EVEN_PLUGIN__) gate.restore()
   if (isDesktop && !__EVEN_PLUGIN__) {
     void import('./settings/file').then((file) => file.declare(() => settings.show('general')))
   }
