@@ -234,6 +234,35 @@ describe('preparing a space', () => {
     expect(heard).toEqual(expect.arrayContaining([a, 'early', 'late']))
     expect(row('late')).toMatchObject({ name: 'b.md', path: 'Late/b.md' })
   })
+
+  test('passes a note an old device deleted before the space was prepared, which never gets a name, so a new device hears every note after it', async () => {
+    const first = await made('first.md')
+    const { next } = env.db
+      .prepare('select next from space_cursor where space_id = ?')
+      .get(space) as { next: number }
+    env.db
+      .prepare(
+        `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+         values ('gone-long-ago', ?, 'Old/gone.md', ?, 1, 1, 1, 0, '')`,
+      )
+      .run(space, next)
+    env.db.prepare('update space_cursor set next = ? where space_id = ?').run(next + 1, space)
+    const a = await made('a.md')
+    const b = await made('Work/b.md')
+    await prepare()
+
+    const heard: string[] = []
+    let since = 0
+    for (let page = 0; page < 5; page += 1) {
+      const read = await feed(since)
+      heard.push(...read.items.map((item) => item.id))
+      since = read.cursor
+      if (!read.more) break
+    }
+
+    expect(heard).toEqual(expect.arrayContaining([first, a, b]))
+    expect(row('gone-long-ago').name).toBeNull()
+  })
 })
 
 describe('tree operations', () => {

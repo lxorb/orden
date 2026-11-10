@@ -736,7 +736,7 @@ const FOLDER_COLUMNS =
 const NOTE_COLUMNS = `id, kind, folder_id, name, deleted, seq, doc_seq, updated_by, doc_by, deleted_in,
             placed_seq, placed_by, pos, meta, changes_by, path, epoch`
 
-const KEPT = 'not (deleted = 1 and deleted_at is null)'
+export const KEPT = 'not (deleted = 1 and deleted_at is null)'
 
 async function cursorOf(env: Env, spaceId: string): Promise<number> {
   const cursor = await env.DB.prepare('select next from space_cursor where space_id = ?')

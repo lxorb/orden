@@ -12,6 +12,7 @@ import { deviceOf, whoseId } from './device'
 import { keepDoc, pullDocs, pushDocs, snapshotPage } from './docs'
 import { answer, requestBody } from './envelope'
 import { feedPage } from './feed'
+import { mendedSpace } from './mend'
 import { reproject } from './maps'
 import { applyOps } from './ops'
 import { preparedSpace, prepareSpace } from './prepare'
@@ -63,6 +64,7 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
 v2Spaces.get('/:space/feed', atLeast('read', 'space'), async (context) => {
   const space = spaceOf(context)
   await preparedSpace(context.env, space)
+  if (space.role === 'owner') await mendedSpace(context.env, space, laterOf(context))
   const page = await feedPage(context.env, space.id, cursorIn(context.req.query('since')))
   return answer(context, { ...page, device: await deviceOf(context) })
 })
