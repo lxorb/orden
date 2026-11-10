@@ -34,7 +34,7 @@ const OPTIONS: [&str; 9] = [
     "-o",
     "BatchMode=yes",
     "-o",
-    "ConnectTimeout=15",
+    super::remote::CONNECT_TIMEOUT,
     "-o",
     "ServerAliveInterval=5",
     "-o",

@@ -13,6 +13,8 @@ pub const PREFIX: &str = "ssh:";
 
 const OWN: &str = "n-";
 
+pub(super) const CONNECT_TIMEOUT: &str = "ConnectTimeout=15";
+
 const MOST_HOSTS: usize = 500;
 const MOST_WORDS: usize = 200;
 
@@ -388,6 +390,31 @@ fn ssh_program() -> Option<PathBuf> {
         .find(|one| one.is_file())
 }
 
+fn sets_timeout(resolved: &str) -> bool {
+    resolved.lines().any(|line| {
+        line.strip_prefix("connecttimeout ")
+            .is_some_and(|value| value.trim() != "none")
+    })
+}
+
+fn bounded(program: &Path, args: Vec<String>) -> Vec<String> {
+    let resolved = std::process::Command::new(program)
+        .arg("-G")
+        .args(&args)
+        .stdin(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()
+        .filter(|done| done.status.success());
+    if resolved.is_some_and(|done| sets_timeout(&String::from_utf8_lossy(&done.stdout))) {
+        return args;
+    }
+    ["-o".to_owned(), CONNECT_TIMEOUT.to_owned()]
+        .into_iter()
+        .chain(args)
+        .collect()
+}
+
 pub fn connect(webview: &Webview, id: &str) -> Result<Launch, String> {
     let places = places(webview)?;
     let config = ssh_config::hosts(&places.config, &places.home, &ssh_config::Disk);
@@ -401,6 +428,7 @@ pub fn connect(webview: &Webview, id: &str) -> Result<Launch, String> {
         arguments(&target, places.elsewhere.then_some(places.config.as_path()))
     };
     let program = ssh_program().ok_or_else(|| "no ssh on this machine".to_owned())?;
+    let args = bounded(&program, args);
 
     kept.about.entry(id.to_owned()).or_default().last = Some(crate::clock::now());
     let _ = write_kept(&places.kept, &kept);
@@ -581,6 +609,39 @@ mod tests {
 
         let elsewhere = arguments(&Target::Config("pi"), Some(Path::new("/tmp/config")));
         assert_eq!(elsewhere[..2], ["-F".to_owned(), "/tmp/config".to_owned()]);
+    }
+
+    #[test]
+    fn a_timeout_from_the_ssh_config_is_left_as_it_is() {
+        assert!(!sets_timeout("user emil\nconnecttimeout none\nport 22\n"));
+        assert!(sets_timeout("user emil\nconnecttimeout 60\n"));
+        assert!(!sets_timeout(""));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_host_that_never_answers_is_given_up_on() {
+        let dir = tempfile::tempdir().unwrap();
+        let fake = dir.path().join("ssh");
+        let config = dir.path().join("config");
+        fs::write(
+            &fake,
+            "#!/bin/sh\ngrep -q ConnectTimeout \"$3\" && echo 'connecttimeout 60' || echo 'connecttimeout none'\n",
+        )
+        .unwrap();
+        fs::set_permissions(&fake, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+
+        fs::write(&config, "Host pi\n").unwrap();
+        let args = arguments(&Target::Config("pi"), Some(&config));
+        assert_eq!(bounded(&fake, args.clone())[..2], ["-o", CONNECT_TIMEOUT]);
+
+        fs::write(&config, "Host pi\n    ConnectTimeout 60\n").unwrap();
+        assert_eq!(bounded(&fake, args.clone()), args);
+
+        assert_eq!(
+            bounded(&dir.path().join("gone"), args.clone())[..2],
+            ["-o", CONNECT_TIMEOUT]
+        );
     }
 
     #[test]
