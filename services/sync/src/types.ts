@@ -123,6 +123,7 @@ export interface Space {
   site: string
   sort: string
   prepared_at?: number | null
+  mended_at?: number | null
   deleted_at: number | null
 }
 

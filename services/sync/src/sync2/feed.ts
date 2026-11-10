@@ -1,7 +1,7 @@
 import { FEED_PAGE, type FeedItem, heldName, isEntryId } from '@orden/sync-core'
 import { metaFromText } from '@orden/sync-core/meta'
 import type { Env } from '../types'
-import { kindOfName } from './tree'
+import { KEPT, kindOfName } from './tree'
 import { prepareSpace } from './prepare'
 
 interface Row {
@@ -26,7 +26,7 @@ interface Row {
 const CHANGED = `select * from (
     select id, kind, folder_id as parent, name, deleted, seq, doc_seq, epoch, epoch_base, hash,
            size, updated_by as by, updated_at as at, 0 as folder, pos, meta
-      from notes where space_id = ?1 and seq > ?2
+      from notes where space_id = ?1 and seq > ?2 and (name is not null or ${KEPT})
     union all
     select id, 'folder', parent_id, name, deleted, seq, null, null, null, '', 0, updated_by,
            updated_at, 1, pos, meta

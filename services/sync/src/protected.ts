@@ -127,6 +127,33 @@ async function rewrite(
   return { error: BUSY, status: 503 }
 }
 
+export async function protectLikewise(
+  env: Env,
+  userId: string,
+  spaceId: string,
+  pairs: readonly { from: string; to: string }[],
+): Promise<number> {
+  const wanted = (held: Protected) =>
+    pairs.filter(({ from, to }) => {
+      const ways = held.spaces[spaceId]
+      return ways?.[from] !== undefined && !covers(ways, to)
+    })
+  if (!wanted(await protectedFor(env, userId)).length) return 0
+  let added = 0
+  const next = await rewrite(env, userId, (held) => {
+    const adding = wanted(held)
+    added = adding.length
+    if (!adding.length) return held
+    const ways = { ...held.spaces[spaceId] }
+    for (const { from, to } of adding) {
+      const way = ways[from]
+      if (way && Object.keys(ways).length < MOST_PER_SPACE) ways[to] = way
+    }
+    return { ...held, spaces: { ...held.spaces, [spaceId]: ways } }
+  })
+  return 'error' in next ? 0 : added
+}
+
 export const protectedRoutes = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 protectedRoutes.get('/', async (context) => {
