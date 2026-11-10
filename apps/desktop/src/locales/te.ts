@@ -3797,4 +3797,32 @@ export const te: Dictionary = {
   'Use an API key': 'API కీ వాడు',
   'Welcome to {app}': '{app}కి స్వాగతం',
   'Show me around': 'నాకు చుట్టూ చూపించు',
+  'Your {app} pages are here': 'మీ {app} పేజీలు ఇక్కడ ఉన్నాయి',
+  'Pages became notes, and databases became bases with their views.':
+    'పేజీలు నోట్లుగా, డేటాబేస్‌లు వాటి వ్యూలతో బేస్‌లుగా మారాయి.',
+  'Your {app} notes are here': 'మీ {app} నోట్లు ఇక్కడ ఉన్నాయి',
+  'Still plain Markdown files, and your links work like before.':
+    'ఇప్పటికీ సాదా Markdown ఫైళ్లే, మీ లింకులు మునుపటిలాగే పనిచేస్తాయి.',
+  'Every note is a file you own.': 'ప్రతి నోట్ మీ స్వంత ఫైల్.',
+  'Everything lives in one space': 'అంతా ఒకే స్పేస్‌లో',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'నోట్లు, పనులు, వెబ్ పేజీలు, చాట్లు పక్కపక్కనే, కాబట్టి ఏదీ తప్పిపోదు.',
+  'More than Markdown': 'Markdown కంటే ఎక్కువ',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'పనులు, బేస్‌లు, బోర్డులు మీ నోట్లలోనే ఉంటాయి. ఈరోజు గడువైనవి చూపిస్తుంది.',
+  'To-dos in any note': 'ఏ నోట్‌లోనైనా పనులు',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ఎక్కడైనా పని రాయండి. ఈరోజు గడువైనవన్నీ సేకరిస్తుంది.',
+  'Your {browser} bookmarks': 'మీ {browser} బుక్‌మార్క్‌లు',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'అవి సైడ్‌బార్‌లో ఉన్నాయి. వెబ్ పేజీలు మీ నోట్ల పక్కన ట్యాబ్‌లుగా తెరుచుకుంటాయి.',
+  'Web pages are tabs': 'వెబ్ పేజీలు ట్యాబ్‌లు',
+  'Browse next to your notes, without switching apps.':
+    'యాప్ మార్చకుండా మీ నోట్ల పక్కనే బ్రౌజ్ చేయండి.',
+  'Ask your AI': 'మీ AI ని అడగండి',
+  'Chats sit next to your notes and can use what is in your space.':
+    'చాట్లు మీ నోట్ల పక్కన ఉంటాయి, మీ స్పేస్‌లోని వాటిని ఉపయోగించగలవు.',
+  'Terminals are tabs too': 'టెర్మినల్స్ కూడా ట్యాబ్‌లే',
+  'Open one next to the notes for your project.': 'మీ ప్రాజెక్ట్ నోట్ల పక్కన ఒకటి తెరవండి.',
+  'Do this on your computer': 'దీన్ని మీ కంప్యూటర్‌లో చేయండి',
 }

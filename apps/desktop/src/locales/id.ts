@@ -3709,4 +3709,32 @@ export const id: Dictionary = {
   'Use an API key': 'Pakai kunci API',
   'Welcome to {app}': 'Selamat datang di {app}',
   'Show me around': 'Tunjukkan sekelilingnya',
+  'Your {app} pages are here': 'Halaman {app} kamu ada di sini',
+  'Pages became notes, and databases became bases with their views.':
+    'Halaman menjadi catatan, dan basis data menjadi basis beserta tampilannya.',
+  'Your {app} notes are here': 'Catatan {app} kamu ada di sini',
+  'Still plain Markdown files, and your links work like before.':
+    'Tetap file Markdown biasa, dan tautanmu berfungsi seperti sebelumnya.',
+  'Every note is a file you own.': 'Setiap catatan adalah file milikmu.',
+  'Everything lives in one space': 'Semua ada dalam satu ruang',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Catatan, tugas, halaman web, dan obrolan berdampingan, jadi tidak ada yang terlewat.',
+  'More than Markdown': 'Lebih dari Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Tugas, basis, dan papan ada di dalam catatanmu. Hari ini menampilkan yang jatuh tempo.',
+  'To-dos in any note': 'Tugas di catatan mana pun',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Tulis tugas di mana saja. Hari ini mengumpulkan semua yang jatuh tempo.',
+  'Your {browser} bookmarks': 'Bookmark {browser} kamu',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Ada di bilah samping. Halaman web terbuka sebagai tab di samping catatanmu.',
+  'Web pages are tabs': 'Halaman web adalah tab',
+  'Browse next to your notes, without switching apps.':
+    'Jelajahi di samping catatanmu, tanpa berganti aplikasi.',
+  'Ask your AI': 'Tanya AI kamu',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Obrolan ada di samping catatanmu dan bisa memakai isi ruangmu.',
+  'Terminals are tabs too': 'Terminal juga tab',
+  'Open one next to the notes for your project.': 'Buka satu di samping catatan proyekmu.',
+  'Do this on your computer': 'Lakukan ini di komputermu',
 }

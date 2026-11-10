@@ -3678,4 +3678,32 @@ export const vi: Dictionary = {
   'Use an API key': 'Dùng khóa API',
   'Welcome to {app}': 'Chào mừng đến với {app}',
   'Show me around': 'Dẫn tôi đi xem',
+  'Your {app} pages are here': 'Các trang {app} của bạn ở đây',
+  'Pages became notes, and databases became bases with their views.':
+    'Trang đã thành ghi chú, còn cơ sở dữ liệu thành base cùng các chế độ xem.',
+  'Your {app} notes are here': 'Ghi chú {app} của bạn ở đây',
+  'Still plain Markdown files, and your links work like before.':
+    'Vẫn là tệp Markdown thuần, và liên kết vẫn hoạt động như trước.',
+  'Every note is a file you own.': 'Mỗi ghi chú là một tệp của riêng bạn.',
+  'Everything lives in one space': 'Mọi thứ trong một không gian',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Ghi chú, việc cần làm, trang web và trò chuyện nằm cạnh nhau, nên bạn không bỏ sót gì.',
+  'More than Markdown': 'Hơn cả Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Việc cần làm, base và bảng nằm ngay trong ghi chú. Hôm nay hiện những gì đến hạn.',
+  'To-dos in any note': 'Việc cần làm trong mọi ghi chú',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Viết việc cần làm ở bất cứ đâu. Hôm nay gom mọi thứ đến hạn.',
+  'Your {browser} bookmarks': 'Dấu trang {browser} của bạn',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Chúng ở thanh bên. Trang web mở thành thẻ cạnh ghi chú của bạn.',
+  'Web pages are tabs': 'Trang web là thẻ',
+  'Browse next to your notes, without switching apps.':
+    'Duyệt web cạnh ghi chú, không cần đổi ứng dụng.',
+  'Ask your AI': 'Hỏi AI của bạn',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Trò chuyện nằm cạnh ghi chú và có thể dùng nội dung trong không gian của bạn.',
+  'Terminals are tabs too': 'Terminal cũng là thẻ',
+  'Open one next to the notes for your project.': 'Mở một cái cạnh ghi chú của dự án.',
+  'Do this on your computer': 'Hãy làm việc này trên máy tính',
 }

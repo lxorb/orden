@@ -4,6 +4,7 @@ export const PROGRESS_KEY = 'orden:setup'
 
 class Gate {
   showing = $state(false)
+  guiding = $state(false)
 
   restore() {
     if (isRecord(stored(PROGRESS_KEY))) this.showing = true

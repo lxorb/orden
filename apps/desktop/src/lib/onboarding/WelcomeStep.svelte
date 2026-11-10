@@ -33,7 +33,7 @@
 
 <Screen
   {head}
-  primary={{ label: t('Show me around'), onclick: () => setup.finish() }}
+  primary={{ label: t('Show me around'), onclick: () => setup.showAround() }}
   quiet={{ label: t('Skip'), onclick: () => setup.finish() }}
 >
   {#if setup.issues.length}

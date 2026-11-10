@@ -7,6 +7,7 @@ import {
   markdownStyleFor,
   matching,
   offersApiKey,
+  phoneBringing,
   type Reach,
   shows,
   type Step,
@@ -27,6 +28,9 @@ const reach = (change: Partial<Reach> = {}): Reach => ({
   signedIn: false,
   importable: () => true,
   signIns: true,
+  phone: false,
+  heard: false,
+  connected: false,
   ...change,
 })
 
@@ -79,6 +83,39 @@ describe('the setup', () => {
     expect(shows('ai', answers({ code: 'yes' }), web)).toBe(true)
     expect(shows('ai', answers(), web)).toBe(true)
     expect(shows('ai', answers({ code: 'no' }), reach())).toBe(true)
+  })
+})
+
+describe('the setup on a phone', () => {
+  const phone = (change: Partial<Reach> = {}) => reach({ phone: true, ...change })
+
+  test('asks the same in the same order, without the browser, its import and the code', () => {
+    expect(walk(answers({ browser: 'chrome' }), phone())).toEqual([
+      'account',
+      'appearance',
+      'heard',
+      'notes',
+      'ai',
+      'welcome',
+    ])
+  })
+
+  test('does not ask again how people heard of Orden', () => {
+    expect(walk(answers(), phone({ heard: true }))).not.toContain('heard')
+    expect(walk(answers(), reach({ heard: true }))).toContain('heard')
+  })
+
+  test('skips the AI when one already reaches the account', () => {
+    expect(walk(answers(), phone({ connected: true }))).not.toContain('ai')
+    expect(walk(answers(), phone({ signIns: false }))).toContain('ai')
+  })
+
+  test('brings Notion and Markdown from Files, and leaves the rest to a computer', () => {
+    expect(phoneBringing('notion', 'files')).toBe('files')
+    expect(phoneBringing('markdown', 'folder')).toBe('files')
+    expect(phoneBringing('obsidian', 'vault')).toBe('computer')
+    expect(phoneBringing('apple', 'apple')).toBe('computer')
+    expect(phoneBringing('joplin', null)).toBeNull()
   })
 })
 

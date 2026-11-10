@@ -3796,4 +3796,32 @@ export const tr: Dictionary = {
   'Use an API key': 'API anahtarı kullan',
   'Welcome to {app}': '{app} uygulamasına hoş geldiniz',
   'Show me around': 'Bana etrafı göster',
+  'Your {app} pages are here': '{app} sayfaların burada',
+  'Pages became notes, and databases became bases with their views.':
+    'Sayfalar nota, veritabanları görünümleriyle birlikte tabana dönüştü.',
+  'Your {app} notes are here': '{app} notların burada',
+  'Still plain Markdown files, and your links work like before.':
+    'Hâlâ düz Markdown dosyaları ve bağlantıların eskisi gibi çalışıyor.',
+  'Every note is a file you own.': 'Her not sana ait bir dosyadır.',
+  'Everything lives in one space': 'Her şey tek bir alanda',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Notlar, yapılacaklar, web sayfaları ve sohbetler yan yana, böylece hiçbir şeyi kaçırmazsın.',
+  'More than Markdown': 'Markdown’dan fazlası',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Yapılacaklar, tabanlar ve panolar notlarının içinde. Bugün, zamanı gelenleri gösterir.',
+  'To-dos in any note': 'Her notta yapılacaklar',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'İstediğin yere bir yapılacak yaz. Bugün, zamanı gelen her şeyi toplar.',
+  'Your {browser} bookmarks': '{browser} yer imlerin',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Kenar çubuğundalar. Web sayfaları notlarının yanında sekme olarak açılır.',
+  'Web pages are tabs': 'Web sayfaları sekmedir',
+  'Browse next to your notes, without switching apps.':
+    'Uygulama değiştirmeden notlarının yanında gezin.',
+  'Ask your AI': 'Yapay zekana sor',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Sohbetler notlarının yanında durur ve alanındakileri kullanabilir.',
+  'Terminals are tabs too': 'Terminaller de sekmedir',
+  'Open one next to the notes for your project.': 'Projenin notlarının yanında bir tane aç.',
+  'Do this on your computer': 'Bunu bilgisayarında yap',
 }

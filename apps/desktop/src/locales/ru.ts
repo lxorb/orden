@@ -3923,4 +3923,32 @@ export const ru: Dictionary = {
   'Use an API key': 'Использовать API-ключ',
   'Welcome to {app}': 'Добро пожаловать в {app}',
   'Show me around': 'Покажите, что тут есть',
+  'Your {app} pages are here': 'Ваши страницы из {app} здесь',
+  'Pages became notes, and databases became bases with their views.':
+    'Страницы стали заметками, а базы данных - базами с их представлениями.',
+  'Your {app} notes are here': 'Ваши заметки из {app} здесь',
+  'Still plain Markdown files, and your links work like before.':
+    'По-прежнему обычные файлы Markdown, и ссылки работают как раньше.',
+  'Every note is a file you own.': 'Каждая заметка - ваш собственный файл.',
+  'Everything lives in one space': 'Всё живёт в одном пространстве',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Заметки, задачи, веб-страницы и чаты рядом, так что вы ничего не упустите.',
+  'More than Markdown': 'Больше, чем Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Задачи, базы и доски прямо внутри заметок. «Сегодня» показывает, что пора сделать.',
+  'To-dos in any note': 'Задачи в любой заметке',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Пишите задачу где угодно. «Сегодня» собирает всё, что пора сделать.',
+  'Your {browser} bookmarks': 'Ваши закладки из {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Они на боковой панели. Веб-страницы открываются вкладками рядом с заметками.',
+  'Web pages are tabs': 'Веб-страницы - это вкладки',
+  'Browse next to your notes, without switching apps.':
+    'Смотрите сайты рядом с заметками, не переключая приложения.',
+  'Ask your AI': 'Спросите свой ИИ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Чаты рядом с заметками и могут использовать то, что есть в вашем пространстве.',
+  'Terminals are tabs too': 'Терминалы тоже вкладки',
+  'Open one next to the notes for your project.': 'Откройте его рядом с заметками вашего проекта.',
+  'Do this on your computer': 'Сделайте это на компьютере',
 }

@@ -3922,4 +3922,32 @@ export const pl: Dictionary = {
   'Use an API key': 'Użyj klucza API',
   'Welcome to {app}': 'Witaj w {app}',
   'Show me around': 'Oprowadź mnie',
+  'Your {app} pages are here': 'Twoje strony z {app} są tutaj',
+  'Pages became notes, and databases became bases with their views.':
+    'Strony stały się notatkami, a bazy danych bazami z ich widokami.',
+  'Your {app} notes are here': 'Twoje notatki z {app} są tutaj',
+  'Still plain Markdown files, and your links work like before.':
+    'Nadal zwykłe pliki Markdown, a linki działają jak wcześniej.',
+  'Every note is a file you own.': 'Każda notatka to Twój plik.',
+  'Everything lives in one space': 'Wszystko w jednej przestrzeni',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Notatki, zadania, strony i czaty obok siebie, więc nic Ci nie umknie.',
+  'More than Markdown': 'Więcej niż Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Zadania, bazy i tablice są w Twoich notatkach. Dziś pokazuje, co jest na teraz.',
+  'To-dos in any note': 'Zadania w każdej notatce',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Zapisz zadanie gdziekolwiek. Dziś zbiera wszystko, co jest na teraz.',
+  'Your {browser} bookmarks': 'Twoje zakładki z {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Są na pasku bocznym. Strony otwierają się jako karty obok notatek.',
+  'Web pages are tabs': 'Strony to karty',
+  'Browse next to your notes, without switching apps.':
+    'Przeglądaj obok notatek, bez zmiany aplikacji.',
+  'Ask your AI': 'Zapytaj swoją AI',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Czaty są obok notatek i mogą korzystać z tego, co jest w Twojej przestrzeni.',
+  'Terminals are tabs too': 'Terminale też są kartami',
+  'Open one next to the notes for your project.': 'Otwórz jeden obok notatek do swojego projektu.',
+  'Do this on your computer': 'Zrób to na komputerze',
 }

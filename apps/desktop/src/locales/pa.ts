@@ -3788,4 +3788,32 @@ export const pa: Dictionary = {
   'Use an API key': 'API ਕੁੰਜੀ ਵਰਤੋ',
   'Welcome to {app}': '{app} ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ',
   'Show me around': 'ਮੈਨੂੰ ਘੁਮਾ ਕੇ ਦਿਖਾਓ',
+  'Your {app} pages are here': 'ਤੁਹਾਡੇ {app} ਪੰਨੇ ਇੱਥੇ ਹਨ',
+  'Pages became notes, and databases became bases with their views.':
+    'ਪੰਨੇ ਨੋਟ ਬਣ ਗਏ, ਅਤੇ ਡਾਟਾਬੇਸ ਆਪਣੇ ਵਿਊ ਸਮੇਤ ਬੇਸ ਬਣ ਗਏ।',
+  'Your {app} notes are here': 'ਤੁਹਾਡੇ {app} ਨੋਟ ਇੱਥੇ ਹਨ',
+  'Still plain Markdown files, and your links work like before.':
+    'ਹਾਲੇ ਵੀ ਸਾਦੀਆਂ Markdown ਫ਼ਾਈਲਾਂ, ਅਤੇ ਤੁਹਾਡੇ ਲਿੰਕ ਪਹਿਲਾਂ ਵਾਂਗ ਕੰਮ ਕਰਦੇ ਹਨ।',
+  'Every note is a file you own.': 'ਹਰ ਨੋਟ ਤੁਹਾਡੀ ਆਪਣੀ ਫ਼ਾਈਲ ਹੈ।',
+  'Everything lives in one space': 'ਸਭ ਕੁਝ ਇੱਕ ਸਪੇਸ ਵਿੱਚ',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'ਨੋਟ, ਕੰਮ, ਵੈੱਬ ਪੰਨੇ ਅਤੇ ਚੈਟ ਨਾਲ-ਨਾਲ, ਤਾਂ ਜੋ ਕੁਝ ਨਾ ਛੁੱਟੇ।',
+  'More than Markdown': 'Markdown ਤੋਂ ਵੱਧ',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ਕੰਮ, ਬੇਸ ਅਤੇ ਬੋਰਡ ਤੁਹਾਡੇ ਨੋਟਾਂ ਦੇ ਅੰਦਰ ਹਨ। ਅੱਜ ਦਿਖਾਉਂਦਾ ਹੈ ਕੀ ਬਾਕੀ ਹੈ।',
+  'To-dos in any note': 'ਹਰ ਨੋਟ ਵਿੱਚ ਕੰਮ',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ਕਿਤੇ ਵੀ ਕੰਮ ਲਿਖੋ। ਅੱਜ ਸਭ ਬਾਕੀ ਕੰਮ ਇਕੱਠੇ ਕਰਦਾ ਹੈ।',
+  'Your {browser} bookmarks': 'ਤੁਹਾਡੇ {browser} ਬੁੱਕਮਾਰਕ',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'ਇਹ ਸਾਈਡਬਾਰ ਵਿੱਚ ਹਨ। ਵੈੱਬ ਪੰਨੇ ਤੁਹਾਡੇ ਨੋਟਾਂ ਦੇ ਨਾਲ ਟੈਬਾਂ ਵਿੱਚ ਖੁੱਲ੍ਹਦੇ ਹਨ।',
+  'Web pages are tabs': 'ਵੈੱਬ ਪੰਨੇ ਟੈਬ ਹਨ',
+  'Browse next to your notes, without switching apps.':
+    'ਐਪ ਬਦਲੇ ਬਿਨਾਂ ਆਪਣੇ ਨੋਟਾਂ ਦੇ ਨਾਲ ਬ੍ਰਾਊਜ਼ ਕਰੋ।',
+  'Ask your AI': 'ਆਪਣੇ AI ਨੂੰ ਪੁੱਛੋ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ਚੈਟ ਤੁਹਾਡੇ ਨੋਟਾਂ ਦੇ ਨਾਲ ਹਨ ਅਤੇ ਤੁਹਾਡੀ ਸਪੇਸ ਦੀ ਸਮੱਗਰੀ ਵਰਤ ਸਕਦੀਆਂ ਹਨ।',
+  'Terminals are tabs too': 'ਟਰਮੀਨਲ ਵੀ ਟੈਬ ਹਨ',
+  'Open one next to the notes for your project.': 'ਆਪਣੇ ਪ੍ਰੋਜੈਕਟ ਦੇ ਨੋਟਾਂ ਦੇ ਨਾਲ ਇੱਕ ਖੋਲ੍ਹੋ।',
+  'Do this on your computer': 'ਇਹ ਆਪਣੇ ਕੰਪਿਊਟਰ ਤੇ ਕਰੋ',
 }

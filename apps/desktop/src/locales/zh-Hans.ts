@@ -3593,4 +3593,31 @@ export const zhHans: Dictionary = {
   'Use an API key': '使用 API 密钥',
   'Welcome to {app}': '欢迎使用 {app}',
   'Show me around': '带我看看',
+  'Your {app} pages are here': '你的 {app} 页面在这里',
+  'Pages became notes, and databases became bases with their views.':
+    '页面变成了笔记，数据库变成了带视图的数据库。',
+  'Your {app} notes are here': '你的 {app} 笔记在这里',
+  'Still plain Markdown files, and your links work like before.':
+    '仍然是纯 Markdown 文件，链接照常可用。',
+  'Every note is a file you own.': '每条笔记都是你拥有的文件。',
+  'Everything lives in one space': '一切都在一个空间里',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    '笔记、待办、网页和聊天并排放置，让你不会遗漏。',
+  'More than Markdown': '不止 Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    '待办、数据库和看板就在笔记里。今天显示到期的事项。',
+  'To-dos in any note': '任何笔记都能写待办',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    '在任何地方写待办。今天汇集所有到期事项。',
+  'Your {browser} bookmarks': '你的 {browser} 书签',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    '它们在侧边栏中。网页会在笔记旁以标签页打开。',
+  'Web pages are tabs': '网页就是标签页',
+  'Browse next to your notes, without switching apps.': '在笔记旁浏览，无需切换应用。',
+  'Ask your AI': '问问你的 AI',
+  'Chats sit next to your notes and can use what is in your space.':
+    '聊天就在笔记旁，可以使用你空间中的内容。',
+  'Terminals are tabs too': '终端也是标签页',
+  'Open one next to the notes for your project.': '在项目笔记旁打开一个。',
+  'Do this on your computer': '请在电脑上完成',
 }

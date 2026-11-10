@@ -18,6 +18,7 @@
     stage = 'importing'
     const { bringBrowser } = await import('./bring')
     for (const trouble of await bringBrowser(importer)) setup.tell(trouble)
+    setup.got('browser')
     stage = 'done'
     setTimeout(() => setup.next(), 700)
   }

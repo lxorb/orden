@@ -3827,4 +3827,32 @@ export const sw: Dictionary = {
   'Use an API key': 'Tumia ufunguo wa API',
   'Welcome to {app}': 'Karibu {app}',
   'Show me around': 'Nionyeshe',
+  'Your {app} pages are here': 'Kurasa zako za {app} ziko hapa',
+  'Pages became notes, and databases became bases with their views.':
+    'Kurasa zimekuwa madokezo, na hifadhidata zimekuwa besi pamoja na mionekano yake.',
+  'Your {app} notes are here': 'Madokezo yako ya {app} yako hapa',
+  'Still plain Markdown files, and your links work like before.':
+    'Bado ni faili za kawaida za Markdown, na viungo vyako vinafanya kazi kama awali.',
+  'Every note is a file you own.': 'Kila dokezo ni faili unalomiliki.',
+  'Everything lives in one space': 'Kila kitu kiko katika nafasi moja',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Madokezo, kazi, kurasa za wavuti na gumzo ziko kando kwa kando, hivyo hupotezi chochote.',
+  'More than Markdown': 'Zaidi ya Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Kazi, besi na mbao ziko ndani ya madokezo yako. Leo inaonyesha kinachohitajika.',
+  'To-dos in any note': 'Kazi katika dokezo lolote',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Andika kazi popote. Leo inakusanya kila kinachohitajika.',
+  'Your {browser} bookmarks': 'Alamisho zako za {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Ziko kwenye utepe wa kando. Kurasa za wavuti hufunguka kama vichupo kando ya madokezo yako.',
+  'Web pages are tabs': 'Kurasa za wavuti ni vichupo',
+  'Browse next to your notes, without switching apps.':
+    'Vinjari kando ya madokezo yako, bila kubadilisha programu.',
+  'Ask your AI': 'Uliza AI yako',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Gumzo ziko kando ya madokezo yako na zinaweza kutumia kilicho katika nafasi yako.',
+  'Terminals are tabs too': 'Terminali pia ni vichupo',
+  'Open one next to the notes for your project.': 'Fungua moja kando ya madokezo ya mradi wako.',
+  'Do this on your computer': 'Fanya hivi kwenye kompyuta yako',
 }

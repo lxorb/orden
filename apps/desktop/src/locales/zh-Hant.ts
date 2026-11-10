@@ -3596,4 +3596,31 @@ export const zhHant: Dictionary = {
   'Use an API key': '使用 API 金鑰',
   'Welcome to {app}': '歡迎使用 {app}',
   'Show me around': '帶我看看',
+  'Your {app} pages are here': '你的 {app} 頁面在這裡',
+  'Pages became notes, and databases became bases with their views.':
+    '頁面變成了筆記，資料庫變成了帶檢視的資料庫。',
+  'Your {app} notes are here': '你的 {app} 筆記在這裡',
+  'Still plain Markdown files, and your links work like before.':
+    '仍然是純 Markdown 檔案，連結照常可用。',
+  'Every note is a file you own.': '每則筆記都是你擁有的檔案。',
+  'Everything lives in one space': '一切都在一個空間裡',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    '筆記、待辦、網頁和聊天並排放置，讓你不會遺漏。',
+  'More than Markdown': '不只 Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    '待辦、資料庫和看板就在筆記裡。今天會顯示到期的事項。',
+  'To-dos in any note': '任何筆記都能寫待辦',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    '在任何地方寫待辦。今天彙集所有到期事項。',
+  'Your {browser} bookmarks': '你的 {browser} 書籤',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    '它們在側邊欄中。網頁會在筆記旁以分頁開啟。',
+  'Web pages are tabs': '網頁就是分頁',
+  'Browse next to your notes, without switching apps.': '在筆記旁瀏覽，不必切換 App。',
+  'Ask your AI': '問問你的 AI',
+  'Chats sit next to your notes and can use what is in your space.':
+    '聊天就在筆記旁，可以使用你空間中的內容。',
+  'Terminals are tabs too': '終端機也是分頁',
+  'Open one next to the notes for your project.': '在專案筆記旁開啟一個。',
+  'Do this on your computer': '請在電腦上完成',
 }

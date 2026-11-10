@@ -47,6 +47,10 @@ export function request(key: string): void {
   if (!held.includes(key)) keepJson(REQUESTS_KEY, [...held, key])
 }
 
+export function heardBefore(): boolean {
+  return stored(HEARD_KEY) !== null
+}
+
 export function keepHeard(answer: { id: string; said: string } | null): void {
   keepJson(HEARD_KEY, answer)
 }

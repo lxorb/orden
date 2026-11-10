@@ -3781,4 +3781,32 @@ export const fa: Dictionary = {
   'Use an API key': 'به کار بردن کلید API',
   'Welcome to {app}': 'به {app} خوش آمدید',
   'Show me around': 'دوری به من نشان بده',
+  'Your {app} pages are here': 'صفحه‌های {app} شما اینجاست',
+  'Pages became notes, and databases became bases with their views.':
+    'صفحه‌ها یادداشت شدند و پایگاه‌های داده به پایگاه‌هایی با نماهایشان تبدیل شدند.',
+  'Your {app} notes are here': 'یادداشت‌های {app} شما اینجاست',
+  'Still plain Markdown files, and your links work like before.':
+    'هنوز فایل‌های ساده Markdown هستند و پیوندهایتان مثل قبل کار می‌کنند.',
+  'Every note is a file you own.': 'هر یادداشت فایلی است که مال شماست.',
+  'Everything lives in one space': 'همه چیز در یک فضا',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'یادداشت‌ها، کارها، صفحه‌های وب و گفتگوها کنار هم هستند تا چیزی را گم نکنید.',
+  'More than Markdown': 'فراتر از Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'کارها، پایگاه‌ها و بردها درون یادداشت‌هایتان هستند. «امروز» موارد سررسید را نشان می‌دهد.',
+  'To-dos in any note': 'کار در هر یادداشت',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'هر جا خواستید کاری بنویسید. «امروز» همه موارد سررسید را جمع می‌کند.',
+  'Your {browser} bookmarks': 'نشانک‌های {browser} شما',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'در نوار کناری هستند. صفحه‌های وب کنار یادداشت‌هایتان به شکل زبانه باز می‌شوند.',
+  'Web pages are tabs': 'صفحه‌های وب زبانه‌اند',
+  'Browse next to your notes, without switching apps.':
+    'کنار یادداشت‌هایتان مرور کنید، بدون عوض کردن برنامه.',
+  'Ask your AI': 'از هوش مصنوعی‌تان بپرسید',
+  'Chats sit next to your notes and can use what is in your space.':
+    'گفتگوها کنار یادداشت‌هایتان هستند و می‌توانند از محتوای فضایتان استفاده کنند.',
+  'Terminals are tabs too': 'ترمینال‌ها هم زبانه‌اند',
+  'Open one next to the notes for your project.': 'یکی کنار یادداشت‌های پروژه‌تان باز کنید.',
+  'Do this on your computer': 'این کار را روی رایانه‌تان انجام دهید',
 }

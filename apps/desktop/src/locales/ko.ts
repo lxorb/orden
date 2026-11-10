@@ -3667,4 +3667,31 @@ export const ko: Dictionary = {
   'Use an API key': 'API 키 사용',
   'Welcome to {app}': '{app}에 오신 것을 환영합니다',
   'Show me around': '둘러보기',
+  'Your {app} pages are here': '{app} 페이지가 여기 있습니다',
+  'Pages became notes, and databases became bases with their views.':
+    '페이지는 노트가 되었고, 데이터베이스는 보기가 있는 베이스가 되었습니다.',
+  'Your {app} notes are here': '{app} 노트가 여기 있습니다',
+  'Still plain Markdown files, and your links work like before.':
+    '여전히 평범한 마크다운 파일이며, 링크도 전처럼 작동합니다.',
+  'Every note is a file you own.': '모든 노트는 내가 소유한 파일입니다.',
+  'Everything lives in one space': '모든 것이 하나의 공간에',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    '노트, 할 일, 웹 페이지, 채팅이 나란히 있어 놓치는 일이 없습니다.',
+  'More than Markdown': '마크다운 그 이상',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    '할 일, 베이스, 보드가 노트 안에 있습니다. 오늘에서 기한이 된 항목을 볼 수 있습니다.',
+  'To-dos in any note': '어느 노트에나 할 일',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    '어디서든 할 일을 적으세요. 오늘이 기한이 된 모든 것을 모아 줍니다.',
+  'Your {browser} bookmarks': '{browser} 북마크',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    '사이드바에 있습니다. 웹 페이지는 노트 옆에 탭으로 열립니다.',
+  'Web pages are tabs': '웹 페이지는 탭입니다',
+  'Browse next to your notes, without switching apps.': '앱을 바꾸지 않고 노트 옆에서 탐색하세요.',
+  'Ask your AI': 'AI에게 물어보기',
+  'Chats sit next to your notes and can use what is in your space.':
+    '채팅은 노트 옆에 있으며 공간의 내용을 사용할 수 있습니다.',
+  'Terminals are tabs too': '터미널도 탭입니다',
+  'Open one next to the notes for your project.': '프로젝트 노트 옆에 하나 여세요.',
+  'Do this on your computer': '컴퓨터에서 하세요',
 }

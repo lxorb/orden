@@ -3714,4 +3714,32 @@ export const ms: Dictionary = {
   'Use an API key': 'Guna kunci API',
   'Welcome to {app}': 'Selamat datang ke {app}',
   'Show me around': 'Tunjukkan sekeliling',
+  'Your {app} pages are here': 'Halaman {app} anda ada di sini',
+  'Pages became notes, and databases became bases with their views.':
+    'Halaman menjadi nota, dan pangkalan data menjadi pangkalan dengan paparannya.',
+  'Your {app} notes are here': 'Nota {app} anda ada di sini',
+  'Still plain Markdown files, and your links work like before.':
+    'Masih fail Markdown biasa, dan pautan anda berfungsi seperti dahulu.',
+  'Every note is a file you own.': 'Setiap nota ialah fail milik anda.',
+  'Everything lives in one space': 'Semuanya dalam satu ruang',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Nota, tugasan, halaman web dan sembang bersebelahan, jadi tiada yang tercicir.',
+  'More than Markdown': 'Lebih daripada Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Tugasan, pangkalan dan papan ada dalam nota anda. Hari ini menunjukkan yang perlu dibuat.',
+  'To-dos in any note': 'Tugasan dalam mana-mana nota',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Tulis tugasan di mana-mana. Hari ini mengumpulkan semua yang perlu dibuat.',
+  'Your {browser} bookmarks': 'Penanda buku {browser} anda',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Ia ada di bar sisi. Halaman web dibuka sebagai tab di sebelah nota anda.',
+  'Web pages are tabs': 'Halaman web ialah tab',
+  'Browse next to your notes, without switching apps.':
+    'Layari di sebelah nota anda, tanpa menukar apl.',
+  'Ask your AI': 'Tanya AI anda',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Sembang ada di sebelah nota anda dan boleh menggunakan isi ruang anda.',
+  'Terminals are tabs too': 'Terminal juga tab',
+  'Open one next to the notes for your project.': 'Buka satu di sebelah nota projek anda.',
+  'Do this on your computer': 'Lakukan ini pada komputer anda',
 }

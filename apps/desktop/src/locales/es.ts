@@ -3888,4 +3888,32 @@ export const es: Dictionary = {
   'Use an API key': 'Usar una clave de API',
   'Welcome to {app}': 'Te damos la bienvenida a {app}',
   'Show me around': 'Enséñame cómo va',
+  'Your {app} pages are here': 'Tus páginas de {app} están aquí',
+  'Pages became notes, and databases became bases with their views.':
+    'Las páginas se convirtieron en notas y las bases de datos en bases con sus vistas.',
+  'Your {app} notes are here': 'Tus notas de {app} están aquí',
+  'Still plain Markdown files, and your links work like before.':
+    'Siguen siendo archivos Markdown simples, y tus enlaces funcionan como antes.',
+  'Every note is a file you own.': 'Cada nota es un archivo tuyo.',
+  'Everything lives in one space': 'Todo vive en un solo espacio',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Notas, tareas, páginas web y chats lado a lado, para que nunca pierdas el hilo.',
+  'More than Markdown': 'Más que Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Tareas, bases y tableros viven dentro de tus notas. Hoy muestra lo pendiente.',
+  'To-dos in any note': 'Tareas en cualquier nota',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Escribe una tarea donde quieras. Hoy reúne todo lo pendiente.',
+  'Your {browser} bookmarks': 'Tus marcadores de {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Están en la barra lateral. Las páginas web se abren como pestañas junto a tus notas.',
+  'Web pages are tabs': 'Las páginas web son pestañas',
+  'Browse next to your notes, without switching apps.':
+    'Navega junto a tus notas, sin cambiar de app.',
+  'Ask your AI': 'Pregunta a tu IA',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Los chats están junto a tus notas y pueden usar lo que hay en tu espacio.',
+  'Terminals are tabs too': 'Las terminales también son pestañas',
+  'Open one next to the notes for your project.': 'Abre una junto a las notas de tu proyecto.',
+  'Do this on your computer': 'Hazlo en tu ordenador',
 }

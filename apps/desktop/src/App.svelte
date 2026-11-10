@@ -991,6 +991,11 @@
       <Setup.default />
     {/snippet}
   </Door>
+  <Door open={gate.guiding} load={() => import('./lib/onboarding/Guide.svelte')}>
+    {#snippet children(Guide)}
+      <Guide.default />
+    {/snippet}
+  </Door>
 {/if}
 
 {#if paletteDoor.asked}

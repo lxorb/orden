@@ -3828,4 +3828,32 @@ export const ha: Dictionary = {
   'Use an API key': 'Yi amfani da makullin API',
   'Welcome to {app}': 'Barka da zuwa {app}',
   'Show me around': 'Nuna min ko’ina',
+  'Your {app} pages are here': 'Shafukan ka na {app} suna nan',
+  'Pages became notes, and databases became bases with their views.':
+    'Shafuka sun zama bayanai, kuma rumbunan bayanai sun zama bases tare da ra’ayoyinsu.',
+  'Your {app} notes are here': 'Bayanan ka na {app} suna nan',
+  'Still plain Markdown files, and your links work like before.':
+    'Har yanzu fayilolin Markdown ne masu sauƙi, kuma hanyoyin haɗinka suna aiki kamar dā.',
+  'Every note is a file you own.': 'Kowane bayani fayil ne naka.',
+  'Everything lives in one space': 'Komai yana cikin wuri ɗaya',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Bayanai, ayyuka, shafukan yanar gizo da hira suna gefe da gefe, don kada ka rasa komai.',
+  'More than Markdown': 'Fiye da Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Ayyuka, bases da allunan suna cikin bayananka. Yau tana nuna abin da ya kamata.',
+  'To-dos in any note': 'Ayyuka a kowane bayani',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Rubuta aiki a ko’ina. Yau tana tattara duk abin da ya kamata.',
+  'Your {browser} bookmarks': 'Alamomin ka na {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Suna cikin gefen shafi. Shafukan yanar gizo suna buɗewa a matsayin shafuka kusa da bayananka.',
+  'Web pages are tabs': 'Shafukan yanar gizo shafuka ne',
+  'Browse next to your notes, without switching apps.':
+    'Bincika kusa da bayananka, ba tare da canza manhaja ba.',
+  'Ask your AI': 'Tambayi AI ɗinka',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Hira suna kusa da bayananka kuma za su iya amfani da abin da ke cikin wurinka.',
+  'Terminals are tabs too': 'Tashoshin umarni ma shafuka ne',
+  'Open one next to the notes for your project.': 'Buɗe ɗaya kusa da bayanan aikinka.',
+  'Do this on your computer': 'Yi wannan a kwamfutarka',
 }

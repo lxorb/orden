@@ -2,7 +2,8 @@ import type { BrowserId } from '../import/browsers'
 import { BROWSERS, type Preset, type PresetSetting } from './catalog'
 import { type Answers, firstStep, markdownStyleFor, type Reach, type Step, stepAfter } from './flow'
 import { gate } from './gate.svelte'
-import { keepProgress, readProgress } from './kept'
+import { heardBefore, keepProgress, readProgress } from './kept'
+import { isMobile } from '../tauri'
 import { stepped } from '../usage/tally'
 
 export interface Issue {
@@ -12,6 +13,12 @@ export interface Issue {
 
 const blank = (): Answers => ({ browser: null, notes: null, code: null })
 
+export interface Brought {
+  notes: boolean
+  browser: boolean
+  ai: boolean
+}
+
 class Setup {
   step = $state<Step>('account')
   answers = $state<Answers>(blank())
@@ -20,6 +27,9 @@ class Setup {
   here = $state<ReadonlySet<BrowserId | 'zen'>>(new Set())
   signedIn = $state(false)
   signIns = $state(false)
+  phone = $state(isMobile)
+  connected = $state(false)
+  brought = $state<Brought>({ notes: false, browser: false, ai: false })
 
   get showing(): boolean {
     return gate.showing
@@ -61,7 +71,12 @@ class Setup {
       import('./connect'),
     ])
     this.signIns = (['claude', 'chatgpt', 'gemini'] as const).some((one) => signInKind(one))
-    this.here = await browsersHere()
+    if (this.phone) {
+      const { ai } = await import('../ai/store.svelte')
+      this.connected = ai.accounts.length > 0
+    } else {
+      this.here = await browsersHere()
+    }
   }
 
   get reach(): Reach {
@@ -72,6 +87,9 @@ class Setup {
         return importer !== null && this.here.has(importer)
       },
       signIns: this.signIns,
+      phone: this.phone,
+      heard: heardBefore(),
+      connected: this.connected,
     }
   }
 
@@ -105,10 +123,20 @@ class Setup {
     if (text) this.issues = [...this.issues, { id: ++this.told, text }]
   }
 
+  got(what: keyof Brought) {
+    this.brought = { ...this.brought, [what]: true }
+  }
+
   finish() {
     this.showing = false
     keepProgress('done')
     stepped('setup-finished')
+  }
+
+  showAround() {
+    this.finish()
+    gate.guiding = true
+    stepped('setup-guide')
   }
 
   private keep() {

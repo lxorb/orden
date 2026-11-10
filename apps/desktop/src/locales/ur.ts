@@ -3772,4 +3772,32 @@ export const ur: Dictionary = {
   'Use an API key': 'API کلید استعمال کریں',
   'Welcome to {app}': '{app} میں خوش آمدید',
   'Show me around': 'مجھے گھما کر دکھائیں',
+  'Your {app} pages are here': 'آپ کے {app} صفحات یہاں ہیں',
+  'Pages became notes, and databases became bases with their views.':
+    'صفحات نوٹس بن گئے، اور ڈیٹا بیس اپنے منظروں کے ساتھ بیس بن گئے۔',
+  'Your {app} notes are here': 'آپ کے {app} نوٹس یہاں ہیں',
+  'Still plain Markdown files, and your links work like before.':
+    'اب بھی سادہ Markdown فائلیں ہیں، اور آپ کے لنکس پہلے کی طرح کام کرتے ہیں۔',
+  'Every note is a file you own.': 'ہر نوٹ آپ کی اپنی فائل ہے۔',
+  'Everything lives in one space': 'سب کچھ ایک ہی جگہ میں',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'نوٹس، کام، ویب صفحات اور چیٹس ساتھ ساتھ ہیں، تاکہ کچھ نہ چھوٹے۔',
+  'More than Markdown': 'Markdown سے بڑھ کر',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'کام، بیس اور بورڈ آپ کے نوٹس کے اندر ہیں۔ آج وہ دکھاتا ہے جو واجب ہے۔',
+  'To-dos in any note': 'ہر نوٹ میں کام',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'کہیں بھی کام لکھیں۔ آج وہ سب جمع کرتا ہے جو واجب ہے۔',
+  'Your {browser} bookmarks': 'آپ کے {browser} بک مارکس',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'یہ سائیڈ بار میں ہیں۔ ویب صفحات آپ کے نوٹس کے ساتھ ٹیبز میں کھلتے ہیں۔',
+  'Web pages are tabs': 'ویب صفحات ٹیبز ہیں',
+  'Browse next to your notes, without switching apps.':
+    'ایپ بدلے بغیر اپنے نوٹس کے ساتھ براؤز کریں۔',
+  'Ask your AI': 'اپنی AI سے پوچھیں',
+  'Chats sit next to your notes and can use what is in your space.':
+    'چیٹس آپ کے نوٹس کے ساتھ ہیں اور آپ کی جگہ کا مواد استعمال کر سکتی ہیں۔',
+  'Terminals are tabs too': 'ٹرمینل بھی ٹیبز ہیں',
+  'Open one next to the notes for your project.': 'اپنے پروجیکٹ کے نوٹس کے ساتھ ایک کھولیں۔',
+  'Do this on your computer': 'یہ اپنے کمپیوٹر پر کریں',
 }

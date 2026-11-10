@@ -3,7 +3,7 @@
   import { closeOnBack } from '../backstack.svelte'
   import { t } from '../i18n.svelte'
   import { importPrompt, MAIN_NOTES, NOTES_APPS, type NotesApp } from './catalog'
-  import { matching, requestKey, typedName } from './flow'
+  import { matching, phoneBringing, requestKey, typedName } from './flow'
   import RequestRow from './RequestRow.svelte'
   import Screen from './Screen.svelte'
   import SearchField from './SearchField.svelte'
@@ -30,6 +30,11 @@
     return NOTES_APPS.find((one) => one.id === picked) ?? null
   })
 
+  const way = $derived(
+    chosen === null ? null : setup.phone ? phoneBringing(chosen.id, chosen.bring) : chosen.bring,
+  )
+  const elsewhere = $derived(way === 'computer')
+
   const prompt = $derived(chosen && !chosen.bring ? importPrompt(chosen.name) : '')
 
   function pick(id: string) {
@@ -52,12 +57,14 @@
   async function done() {
     if (!chosen || bringing) return
     const app = chosen.id === UNLISTED ? null : chosen.id
-    if (chosen.bring) {
+    const how = way
+    if (how && how !== 'computer') {
       bringing = true
       const { bringNotes } = await import('./bring')
-      const outcome = await bringNotes(chosen.bring).finally(() => (bringing = false))
+      const outcome = await bringNotes(how).finally(() => (bringing = false))
       if (!outcome.picked) return
       setup.tell(outcome.trouble)
+      setup.got('notes')
     }
     setup.answer({ notes: app })
     await settleMarkdown(app)
@@ -149,6 +156,8 @@
         <pre class="prompt">{prompt}</pre>
       </div>
     </div>
+  {:else if elsewhere}
+    <p class="elsewhere pane-in" role="status">{t('Do this on your computer')}</p>
   {/if}
 </Screen>
 
@@ -157,6 +166,13 @@
     width: 40px;
     height: 40px;
     fill: var(--muted);
+  }
+
+  .elsewhere {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
   }
 
   .ask {

@@ -83,11 +83,6 @@ export async function signInWith(plan: Plan): Promise<Connecting> {
   return { state: 'waiting', id: account.id }
 }
 
-export async function isSignedIn(id: string): Promise<boolean> {
-  const { plans } = await import('../ai/local/status.svelte')
-  return plans.of(id).state === 'in'
-}
-
 async function keyed(account: Account, typed: string): Promise<string | null> {
   const { writeKey } = await import('../ai/keys')
   try {

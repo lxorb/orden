@@ -3834,4 +3834,33 @@ export const ml: Dictionary = {
   'Use an API key': 'API കീ ഉപയോഗിക്കുക',
   'Welcome to {app}': '{app}-ലേക്ക് സ്വാഗതം',
   'Show me around': 'എനിക്ക് ചുറ്റും കാണിച്ചുതരൂ',
+  'Your {app} pages are here': 'നിങ്ങളുടെ {app} പേജുകൾ ഇവിടെയുണ്ട്',
+  'Pages became notes, and databases became bases with their views.':
+    'പേജുകൾ കുറിപ്പുകളായി, ഡാറ്റാബേസുകൾ അവയുടെ കാഴ്ചകളോടെ ബേസുകളായി.',
+  'Your {app} notes are here': 'നിങ്ങളുടെ {app} കുറിപ്പുകൾ ഇവിടെയുണ്ട്',
+  'Still plain Markdown files, and your links work like before.':
+    'ഇപ്പോഴും ലളിതമായ Markdown ഫയലുകൾ, നിങ്ങളുടെ ലിങ്കുകൾ മുമ്പത്തെപ്പോലെ പ്രവർത്തിക്കും.',
+  'Every note is a file you own.': 'ഓരോ കുറിപ്പും നിങ്ങളുടെ സ്വന്തം ഫയൽ.',
+  'Everything lives in one space': 'എല്ലാം ഒരൊറ്റ സ്പേസിൽ',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'കുറിപ്പുകൾ, ചെയ്യേണ്ടവ, വെബ് പേജുകൾ, ചാറ്റുകൾ അടുത്തടുത്ത്, ഒന്നും നഷ്ടമാകില്ല.',
+  'More than Markdown': 'Markdown-നെക്കാൾ കൂടുതൽ',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ചെയ്യേണ്ടവ, ബേസുകൾ, ബോർഡുകൾ നിങ്ങളുടെ കുറിപ്പുകളിൽ തന്നെ. ഇന്ന് ബാക്കിയുള്ളവ കാണിക്കും.',
+  'To-dos in any note': 'ഏത് കുറിപ്പിലും ചെയ്യേണ്ടവ',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'എവിടെയും ചെയ്യേണ്ടത് എഴുതൂ. ഇന്ന് ബാക്കിയുള്ളതെല്ലാം ശേഖരിക്കും.',
+  'Your {browser} bookmarks': 'നിങ്ങളുടെ {browser} ബുക്ക്മാർക്കുകൾ',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'അവ സൈഡ്ബാറിലുണ്ട്. വെബ് പേജുകൾ നിങ്ങളുടെ കുറിപ്പുകൾക്കരികിൽ ടാബുകളായി തുറക്കും.',
+  'Web pages are tabs': 'വെബ് പേജുകൾ ടാബുകളാണ്',
+  'Browse next to your notes, without switching apps.':
+    'ആപ്പ് മാറാതെ കുറിപ്പുകൾക്കരികിൽ ബ്രൗസ് ചെയ്യൂ.',
+  'Ask your AI': 'നിങ്ങളുടെ AI-യോട് ചോദിക്കൂ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ചാറ്റുകൾ നിങ്ങളുടെ കുറിപ്പുകൾക്കരികിലുണ്ട്, നിങ്ങളുടെ സ്പേസിലുള്ളത് ഉപയോഗിക്കാം.',
+  'Terminals are tabs too': 'ടെർമിനലുകളും ടാബുകളാണ്',
+  'Open one next to the notes for your project.':
+    'നിങ്ങളുടെ പ്രോജക്റ്റ് കുറിപ്പുകൾക്കരികിൽ ഒന്ന് തുറക്കൂ.',
+  'Do this on your computer': 'ഇത് നിങ്ങളുടെ കമ്പ്യൂട്ടറിൽ ചെയ്യൂ',
 }

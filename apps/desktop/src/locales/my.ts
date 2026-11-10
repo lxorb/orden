@@ -3713,4 +3713,31 @@ export const my: Dictionary = {
   'Use an API key': 'API ကီး သုံးမည်',
   'Welcome to {app}': '{app} မှ ကြိုဆိုပါတယ်',
   'Show me around': 'လှည့်ပြပေးပါ',
+  'Your {app} pages are here': 'သင်၏ {app} စာမျက်နှာများ ဒီမှာ',
+  'Pages became notes, and databases became bases with their views.':
+    'စာမျက်နှာများ မှတ်စုဖြစ်လာပြီး ဒေတာဘေ့စ်များ ၎င်းတို့၏ မြင်ကွင်းများနှင့် base ဖြစ်လာသည်။',
+  'Your {app} notes are here': 'သင်၏ {app} မှတ်စုများ ဒီမှာ',
+  'Still plain Markdown files, and your links work like before.':
+    'ယခုထိ ရိုးရိုး Markdown ဖိုင်များဖြစ်ပြီး လင့်ခ်များ ယခင်အတိုင်း အလုပ်လုပ်သည်။',
+  'Every note is a file you own.': 'မှတ်စုတိုင်းသည် သင်ပိုင်သော ဖိုင်ဖြစ်သည်။',
+  'Everything lives in one space': 'အားလုံး နေရာတစ်ခုတည်းတွင်',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'မှတ်စု၊ လုပ်ရန်၊ ဝဘ်စာမျက်နှာနှင့် ချတ်များ ဘေးချင်းကပ်ရှိ၍ ဘာမှ လွတ်မသွားပါ။',
+  'More than Markdown': 'Markdown ထက်ပို',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'လုပ်ရန်၊ base နှင့် board များ သင့်မှတ်စုများထဲတွင်ပင် ရှိသည်။ ယနေ့တွင် ကျရောက်သည်များ ပြသည်။',
+  'To-dos in any note': 'မည်သည့်မှတ်စုတွင်မဆို လုပ်ရန်',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'လုပ်ရန်ကို မည်သည့်နေရာတွင်မဆို ရေးပါ။ ယနေ့က ကျရောက်သည်အားလုံး စုစည်းပေးသည်။',
+  'Your {browser} bookmarks': 'သင်၏ {browser} စာညှပ်များ',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'ဘေးဘားတွင် ရှိသည်။ ဝဘ်စာမျက်နှာများ သင့်မှတ်စုဘေးတွင် တဘ်အဖြစ် ဖွင့်သည်။',
+  'Web pages are tabs': 'ဝဘ်စာမျက်နှာများသည် တဘ်များ',
+  'Browse next to your notes, without switching apps.': 'အက်ပ်မပြောင်းဘဲ မှတ်စုဘေးတွင် ကြည့်ရှုပါ။',
+  'Ask your AI': 'သင့် AI ကို မေးပါ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ချတ်များ သင့်မှတ်စုဘေးတွင်ရှိပြီး သင့်နေရာထဲက အရာများကို သုံးနိုင်သည်။',
+  'Terminals are tabs too': 'တာမီနယ်များလည်း တဘ်များ',
+  'Open one next to the notes for your project.': 'သင့်ပရောဂျက်မှတ်စုဘေးတွင် တစ်ခုဖွင့်ပါ။',
+  'Do this on your computer': 'ဒါကို သင့်ကွန်ပျူတာပေါ်တွင် လုပ်ပါ',
 }

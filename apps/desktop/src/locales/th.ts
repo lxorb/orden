@@ -3635,4 +3635,31 @@ export const th: Dictionary = {
   'Use an API key': 'ใช้คีย์ API',
   'Welcome to {app}': 'ยินดีต้อนรับสู่ {app}',
   'Show me around': 'พาฉันดูรอบ ๆ',
+  'Your {app} pages are here': 'หน้า {app} ของคุณอยู่ที่นี่',
+  'Pages became notes, and databases became bases with their views.':
+    'หน้ากลายเป็นโน้ต และฐานข้อมูลกลายเป็นฐานพร้อมมุมมองของมัน',
+  'Your {app} notes are here': 'โน้ต {app} ของคุณอยู่ที่นี่',
+  'Still plain Markdown files, and your links work like before.':
+    'ยังคงเป็นไฟล์ Markdown ธรรมดา และลิงก์ของคุณใช้ได้เหมือนเดิม',
+  'Every note is a file you own.': 'ทุกโน้ตคือไฟล์ของคุณเอง',
+  'Everything lives in one space': 'ทุกอย่างอยู่ในพื้นที่เดียว',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'โน้ต สิ่งที่ต้องทำ หน้าเว็บ และแชตอยู่เคียงกัน คุณจึงไม่พลาดอะไร',
+  'More than Markdown': 'มากกว่า Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'สิ่งที่ต้องทำ ฐานข้อมูล และบอร์ดอยู่ในโน้ตของคุณ วันนี้แสดงสิ่งที่ถึงกำหนด',
+  'To-dos in any note': 'สิ่งที่ต้องทำในทุกโน้ต',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'เขียนสิ่งที่ต้องทำได้ทุกที่ วันนี้รวบรวมทุกอย่างที่ถึงกำหนด',
+  'Your {browser} bookmarks': 'บุ๊กมาร์ก {browser} ของคุณ',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'อยู่ในแถบด้านข้าง หน้าเว็บเปิดเป็นแท็บข้างโน้ตของคุณ',
+  'Web pages are tabs': 'หน้าเว็บคือแท็บ',
+  'Browse next to your notes, without switching apps.': 'ท่องเว็บข้างโน้ตของคุณ โดยไม่ต้องสลับแอป',
+  'Ask your AI': 'ถาม AI ของคุณ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'แชตอยู่ข้างโน้ตของคุณและใช้สิ่งที่อยู่ในพื้นที่ของคุณได้',
+  'Terminals are tabs too': 'เทอร์มินัลก็เป็นแท็บ',
+  'Open one next to the notes for your project.': 'เปิดหนึ่งอันข้างโน้ตของโปรเจกต์คุณ',
+  'Do this on your computer': 'ทำสิ่งนี้บนคอมพิวเตอร์ของคุณ',
 }

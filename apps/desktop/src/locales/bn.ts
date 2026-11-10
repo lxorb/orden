@@ -3770,4 +3770,31 @@ export const bn: Dictionary = {
   'Use an API key': 'API কী ব্যবহার করুন',
   'Welcome to {app}': '{app}-এ স্বাগতম',
   'Show me around': 'আমাকে ঘুরিয়ে দেখান',
+  'Your {app} pages are here': 'আপনার {app} পেজগুলো এখানে',
+  'Pages became notes, and databases became bases with their views.':
+    'পেজগুলো নোট হয়েছে, আর ডেটাবেস তাদের ভিউসহ বেস হয়েছে।',
+  'Your {app} notes are here': 'আপনার {app} নোটগুলো এখানে',
+  'Still plain Markdown files, and your links work like before.':
+    'এখনও সাধারণ Markdown ফাইল, আর আপনার লিংক আগের মতোই কাজ করে।',
+  'Every note is a file you own.': 'প্রতিটি নোট আপনার নিজের ফাইল।',
+  'Everything lives in one space': 'সবকিছু এক স্পেসে',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'নোট, করণীয়, ওয়েব পেজ আর চ্যাট পাশাপাশি, তাই কিছুই হারাবে না।',
+  'More than Markdown': 'Markdown-এর চেয়েও বেশি',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'করণীয়, বেস আর বোর্ড আপনার নোটের ভেতরেই। আজ দেখায় কী বাকি।',
+  'To-dos in any note': 'যেকোনো নোটে করণীয়',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'যেকোনো জায়গায় করণীয় লিখুন। আজ সব বাকি কাজ জড়ো করে।',
+  'Your {browser} bookmarks': 'আপনার {browser} বুকমার্ক',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'এগুলো সাইডবারে আছে। ওয়েব পেজ আপনার নোটের পাশে ট্যাবে খোলে।',
+  'Web pages are tabs': 'ওয়েব পেজ হলো ট্যাব',
+  'Browse next to your notes, without switching apps.': 'অ্যাপ না বদলে নোটের পাশে ব্রাউজ করুন।',
+  'Ask your AI': 'আপনার AI-কে জিজ্ঞেস করুন',
+  'Chats sit next to your notes and can use what is in your space.':
+    'চ্যাট আপনার নোটের পাশে থাকে এবং আপনার স্পেসের জিনিস ব্যবহার করতে পারে।',
+  'Terminals are tabs too': 'টার্মিনালও ট্যাব',
+  'Open one next to the notes for your project.': 'আপনার প্রজেক্টের নোটের পাশে একটি খুলুন।',
+  'Do this on your computer': 'এটি আপনার কম্পিউটারে করুন',
 }

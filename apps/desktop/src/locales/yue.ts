@@ -3586,4 +3586,31 @@ export const yue: Dictionary = {
   'Use an API key': '用 API 金鑰',
   'Welcome to {app}': '歡迎嚟到 {app}',
   'Show me around': '帶我睇下',
+  'Your {app} pages are here': '你嘅 {app} 頁面喺度',
+  'Pages became notes, and databases became bases with their views.':
+    '頁面變成咗筆記，資料庫變成咗有檢視嘅資料庫。',
+  'Your {app} notes are here': '你嘅 {app} 筆記喺度',
+  'Still plain Markdown files, and your links work like before.':
+    '依然係純 Markdown 檔案，連結照用。',
+  'Every note is a file you own.': '每篇筆記都係你擁有嘅檔案。',
+  'Everything lives in one space': '一切都喺一個空間入面',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    '筆記、待辦、網頁同傾偈並排擺放，等你唔會漏低嘢。',
+  'More than Markdown': '唔止 Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    '待辦、資料庫同看板就喺筆記入面。今日會顯示到期嘅事項。',
+  'To-dos in any note': '任何筆記都寫得待辦',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    '喺邊度都寫得待辦。今日會收埋所有到期事項。',
+  'Your {browser} bookmarks': '你嘅 {browser} 書籤',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    '佢哋喺側邊欄。網頁會喺筆記旁邊以分頁開啟。',
+  'Web pages are tabs': '網頁就係分頁',
+  'Browse next to your notes, without switching apps.': '喺筆記旁邊瀏覽，唔使轉 App。',
+  'Ask your AI': '問下你嘅 AI',
+  'Chats sit next to your notes and can use what is in your space.':
+    '傾偈就喺筆記旁邊，可以用你空間入面嘅內容。',
+  'Terminals are tabs too': '終端機都係分頁',
+  'Open one next to the notes for your project.': '喺項目筆記旁邊開一個。',
+  'Do this on your computer': '請喺電腦度做',
 }

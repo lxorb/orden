@@ -35,6 +35,10 @@
 
   const keyOffered = offersApiKey(setup.answers.code)
   const connected = $derived(Object.values(states).includes('in'))
+
+  $effect(() => {
+    if (connected) setup.got('ai')
+  })
   const more = $derived(matching(MORE_AI, query))
   const nothing = $derived(!!query.trim() && !more.length)
 

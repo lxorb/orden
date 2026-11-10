@@ -3694,4 +3694,33 @@ export const jv: Dictionary = {
   'Use an API key': 'Gunakake kunci API',
   'Welcome to {app}': 'Sugeng rawuh ing {app}',
   'Show me around': 'Tuduhna sakubenge',
+  'Your {app} pages are here': 'Kaca {app} sampeyan ana ing kene',
+  'Pages became notes, and databases became bases with their views.':
+    'Kaca dadi cathetan, lan basis data dadi basis karo tampilane.',
+  'Your {app} notes are here': 'Cathetan {app} sampeyan ana ing kene',
+  'Still plain Markdown files, and your links work like before.':
+    'Isih file Markdown biasa, lan pranala sampeyan mlaku kaya biyen.',
+  'Every note is a file you own.': 'Saben cathetan iku file duweke sampeyan.',
+  'Everything lives in one space': 'Kabeh ana ing siji papan',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Cathetan, tugas, kaca web lan obrolan jejeran, dadi ora ana sing keri.',
+  'More than Markdown': 'Luwih saka Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Tugas, basis lan papan ana ing njero cathetan sampeyan. Dina iki nuduhake sing wis wayahe.',
+  'To-dos in any note': 'Tugas ing cathetan apa wae',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Tulisen tugas ing ngendi wae. Dina iki nglumpukake kabeh sing wis wayahe.',
+  'Your {browser} bookmarks': 'Tetenger {browser} sampeyan',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Ana ing bilah pinggir. Kaca web mbukak dadi tab ing sandhinge cathetan sampeyan.',
+  'Web pages are tabs': 'Kaca web iku tab',
+  'Browse next to your notes, without switching apps.':
+    'Jelajah ing sandhinge cathetan, tanpa ganti aplikasi.',
+  'Ask your AI': 'Takon AI sampeyan',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Obrolan ana ing sandhinge cathetan lan bisa nganggo isi papan sampeyan.',
+  'Terminals are tabs too': 'Terminal uga tab',
+  'Open one next to the notes for your project.':
+    'Bukak siji ing sandhinge cathetan proyek sampeyan.',
+  'Do this on your computer': 'Tindakake iki ing komputer sampeyan',
 }

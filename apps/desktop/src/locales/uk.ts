@@ -3920,4 +3920,33 @@ export const uk: Dictionary = {
   'Use an API key': 'Використати ключ API',
   'Welcome to {app}': 'Ласкаво просимо до {app}',
   'Show me around': 'Покажіть, що тут є',
+  'Your {app} pages are here': 'Ваші сторінки з {app} тут',
+  'Pages became notes, and databases became bases with their views.':
+    'Сторінки стали нотатками, а бази даних - базами з їхніми поданнями.',
+  'Your {app} notes are here': 'Ваші нотатки з {app} тут',
+  'Still plain Markdown files, and your links work like before.':
+    'Як і раніше, звичайні файли Markdown, і посилання працюють як раніше.',
+  'Every note is a file you own.': 'Кожна нотатка - ваш власний файл.',
+  'Everything lives in one space': 'Усе живе в одному просторі',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Нотатки, завдання, вебсторінки й чати поруч, тож ви нічого не загубите.',
+  'More than Markdown': 'Більше, ніж Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Завдання, бази й дошки просто в нотатках. «Сьогодні» показує, що час зробити.',
+  'To-dos in any note': 'Завдання в будь-якій нотатці',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Пишіть завдання будь-де. «Сьогодні» збирає все, що час зробити.',
+  'Your {browser} bookmarks': 'Ваші закладки з {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Вони на бічній панелі. Вебсторінки відкриваються вкладками поруч із нотатками.',
+  'Web pages are tabs': 'Вебсторінки - це вкладки',
+  'Browse next to your notes, without switching apps.':
+    'Переглядайте сайти поруч із нотатками, не перемикаючи застосунки.',
+  'Ask your AI': 'Запитайте свій ШІ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Чати поруч із нотатками й можуть використовувати те, що є у вашому просторі.',
+  'Terminals are tabs too': 'Термінали теж вкладки',
+  'Open one next to the notes for your project.':
+    'Відкрийте його поруч із нотатками вашого проєкту.',
+  'Do this on your computer': 'Зробіть це на комп’ютері',
 }

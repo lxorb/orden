@@ -3963,4 +3963,31 @@ export const ar: Dictionary = {
   'Use an API key': 'استخدام مفتاح API',
   'Welcome to {app}': 'أهلًا بك في {app}',
   'Show me around': 'عرّفني بالمكان',
+  'Your {app} pages are here': 'صفحاتك من {app} هنا',
+  'Pages became notes, and databases became bases with their views.':
+    'أصبحت الصفحات ملاحظات، وقواعد البيانات قواعد بطرق عرضها.',
+  'Your {app} notes are here': 'ملاحظاتك من {app} هنا',
+  'Still plain Markdown files, and your links work like before.':
+    'ما زالت ملفات Markdown عادية، وروابطك تعمل كما كانت.',
+  'Every note is a file you own.': 'كل ملاحظة ملف تملكه.',
+  'Everything lives in one space': 'كل شيء في مساحة واحدة',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'الملاحظات والمهام وصفحات الويب والمحادثات جنبًا إلى جنب، فلا يفوتك شيء.',
+  'More than Markdown': 'أكثر من Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'المهام والقواعد واللوحات داخل ملاحظاتك. يعرض «اليوم» ما حان موعده.',
+  'To-dos in any note': 'مهام في أي ملاحظة',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'اكتب مهمة في أي مكان. يجمع «اليوم» كل ما حان موعده.',
+  'Your {browser} bookmarks': 'إشاراتك المرجعية من {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'إنها في الشريط الجانبي. تُفتح صفحات الويب كعلامات تبويب بجانب ملاحظاتك.',
+  'Web pages are tabs': 'صفحات الويب علامات تبويب',
+  'Browse next to your notes, without switching apps.': 'تصفح بجانب ملاحظاتك، دون تبديل التطبيقات.',
+  'Ask your AI': 'اسأل ذكاءك الاصطناعي',
+  'Chats sit next to your notes and can use what is in your space.':
+    'المحادثات بجانب ملاحظاتك ويمكنها استخدام ما في مساحتك.',
+  'Terminals are tabs too': 'الطرفيات علامات تبويب أيضًا',
+  'Open one next to the notes for your project.': 'افتح واحدة بجانب ملاحظات مشروعك.',
+  'Do this on your computer': 'افعل ذلك على حاسوبك',
 }

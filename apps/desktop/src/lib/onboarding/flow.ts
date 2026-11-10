@@ -1,3 +1,5 @@
+import type { Bringing } from './catalog'
+
 export const STEPS = [
   'account',
   'appearance',
@@ -26,6 +28,9 @@ export interface Reach {
   signedIn: boolean
   importable: (browser: string) => boolean
   signIns: boolean
+  phone: boolean
+  heard: boolean
+  connected: boolean
 }
 
 export function offersApiKey(code: Coding): boolean {
@@ -36,15 +41,18 @@ export function shows(step: Step, answers: Answers, reach: Reach): boolean {
   switch (step) {
     case 'account':
       return !reach.signedIn
+    case 'heard':
+      return !(reach.phone && reach.heard)
+    case 'browser':
+    case 'code':
+      return !reach.phone
     case 'import':
-      return answers.browser !== null && reach.importable(answers.browser)
+      return !reach.phone && answers.browser !== null && reach.importable(answers.browser)
     case 'ai':
+      if (reach.phone && reach.connected) return false
       return reach.signIns || offersApiKey(answers.code)
     case 'appearance':
-    case 'heard':
-    case 'browser':
     case 'notes':
-    case 'code':
     case 'welcome':
       return true
   }
@@ -77,6 +85,13 @@ const STYLES: Readonly<Record<string, MarkdownStyle>> = {
 
 export function markdownStyleFor(app: string | null): MarkdownStyle | null {
   return app === null ? null : (STYLES[app] ?? null)
+}
+
+const ON_A_PHONE: ReadonlySet<string> = new Set(['notion', 'markdown'])
+
+export function phoneBringing(app: string, bring: Bringing | null): Bringing | 'computer' | null {
+  if (bring === null) return null
+  return ON_A_PHONE.has(app) ? 'files' : 'computer'
 }
 
 export type KeyedKind = 'anthropic' | 'openai' | 'gemini'

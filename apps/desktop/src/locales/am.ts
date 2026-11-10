@@ -3698,4 +3698,31 @@ export const am: Dictionary = {
   'Use an API key': 'የAPI ቁልፍ ተጠቀም',
   'Welcome to {app}': 'ወደ {app} እንኳን በደህና መጡ',
   'Show me around': 'ዙሪያውን አሳዩኝ',
+  'Your {app} pages are here': 'የእርስዎ {app} ገጾች እዚህ አሉ',
+  'Pages became notes, and databases became bases with their views.':
+    'ገጾች ማስታወሻዎች ሆኑ፣ የውሂብ ጎታዎችም ከእይታዎቻቸው ጋር ቤዞች ሆኑ።',
+  'Your {app} notes are here': 'የእርስዎ {app} ማስታወሻዎች እዚህ አሉ',
+  'Still plain Markdown files, and your links work like before.':
+    'አሁንም ቀላል የMarkdown ፋይሎች ናቸው፣ አገናኞችዎም እንደበፊቱ ይሰራሉ።',
+  'Every note is a file you own.': 'እያንዳንዱ ማስታወሻ የእርስዎ ፋይል ነው።',
+  'Everything lives in one space': 'ሁሉም ነገር በአንድ ቦታ',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'ማስታወሻዎች፣ ተግባራት፣ ድረ ገጾች እና ውይይቶች ጎን ለጎን ናቸው፣ ስለዚህ ምንም አያመልጥዎትም።',
+  'More than Markdown': 'ከMarkdown በላይ',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ተግባራት፣ ቤዞች እና ቦርዶች በማስታወሻዎችዎ ውስጥ ናቸው። ዛሬ የደረሱትን ያሳያል።',
+  'To-dos in any note': 'በማንኛውም ማስታወሻ ተግባራት',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ተግባር በየትም ይጻፉ። ዛሬ የደረሱትን ሁሉ ይሰበስባል።',
+  'Your {browser} bookmarks': 'የእርስዎ {browser} ዕልባቶች',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'በጎን አሞሌው ውስጥ ናቸው። ድረ ገጾች ከማስታወሻዎችዎ አጠገብ እንደ ትሮች ይከፈታሉ።',
+  'Web pages are tabs': 'ድረ ገጾች ትሮች ናቸው',
+  'Browse next to your notes, without switching apps.': 'መተግበሪያ ሳይቀይሩ ከማስታወሻዎችዎ አጠገብ ያስሱ።',
+  'Ask your AI': 'AIዎን ይጠይቁ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ውይይቶች ከማስታወሻዎችዎ አጠገብ ናቸው፣ በቦታዎ ያለውንም መጠቀም ይችላሉ።',
+  'Terminals are tabs too': 'ተርሚናሎችም ትሮች ናቸው',
+  'Open one next to the notes for your project.': 'ከፕሮጀክትዎ ማስታወሻዎች አጠገብ አንዱን ይክፈቱ።',
+  'Do this on your computer': 'ይህን በኮምፒውተርዎ ላይ ያድርጉ',
 }

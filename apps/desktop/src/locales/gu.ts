@@ -3759,4 +3759,32 @@ export const gu: Dictionary = {
   'Use an API key': 'API કી વાપરો',
   'Welcome to {app}': '{app}માં આપનું સ્વાગત છે',
   'Show me around': 'મને ફેરવીને બતાવો',
+  'Your {app} pages are here': 'તમારા {app} પાનાં અહીં છે',
+  'Pages became notes, and databases became bases with their views.':
+    'પાનાં નોંધ બન્યાં, અને ડેટાબેઝ તેમના વ્યૂ સાથે બેઝ બન્યા.',
+  'Your {app} notes are here': 'તમારી {app} નોંધો અહીં છે',
+  'Still plain Markdown files, and your links work like before.':
+    'હજુ પણ સાદી Markdown ફાઇલો, અને તમારી લિંક પહેલાંની જેમ ચાલે છે.',
+  'Every note is a file you own.': 'દરેક નોંધ તમારી પોતાની ફાઇલ છે.',
+  'Everything lives in one space': 'બધું એક જ સ્પેસમાં',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'નોંધો, કાર્યો, વેબ પાનાં અને ચેટ બાજુ-બાજુમાં, જેથી કંઈ ન છૂટે.',
+  'More than Markdown': 'Markdown કરતાં વધુ',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'કાર્યો, બેઝ અને બોર્ડ તમારી નોંધોની અંદર છે. આજ બતાવે છે શું બાકી છે.',
+  'To-dos in any note': 'દરેક નોંધમાં કાર્યો',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ગમે ત્યાં કાર્ય લખો. આજ બધું બાકી ભેગું કરે છે.',
+  'Your {browser} bookmarks': 'તમારા {browser} બુકમાર્ક',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'તે સાઇડબારમાં છે. વેબ પાનાં તમારી નોંધોની બાજુમાં ટૅબમાં ખૂલે છે.',
+  'Web pages are tabs': 'વેબ પાનાં ટૅબ છે',
+  'Browse next to your notes, without switching apps.':
+    'ઍપ બદલ્યા વગર તમારી નોંધોની બાજુમાં બ્રાઉઝ કરો.',
+  'Ask your AI': 'તમારા AI ને પૂછો',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ચેટ તમારી નોંધોની બાજુમાં છે અને તમારી સ્પેસની સામગ્રી વાપરી શકે છે.',
+  'Terminals are tabs too': 'ટર્મિનલ પણ ટૅબ છે',
+  'Open one next to the notes for your project.': 'તમારા પ્રોજેક્ટની નોંધોની બાજુમાં એક ખોલો.',
+  'Do this on your computer': 'આ તમારા કમ્પ્યુટર પર કરો',
 }

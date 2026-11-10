@@ -3691,4 +3691,32 @@ export const ja: Dictionary = {
   'Use an API key': 'API キーを使う',
   'Welcome to {app}': '{app} へようこそ',
   'Show me around': '案内して',
+  'Your {app} pages are here': '{app} のページはここにあります',
+  'Pages became notes, and databases became bases with their views.':
+    'ページはノートに、データベースはビュー付きのベースになりました。',
+  'Your {app} notes are here': '{app} のノートはここにあります',
+  'Still plain Markdown files, and your links work like before.':
+    '今もプレーンな Markdown ファイルで、リンクもこれまでどおり使えます。',
+  'Every note is a file you own.': 'すべてのノートはあなたのファイルです。',
+  'Everything lives in one space': 'すべてがひとつのスペースに',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'ノート、ToDo、ウェブページ、チャットが並ぶので、見失うことがありません。',
+  'More than Markdown': 'Markdown を超えて',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ToDo、ベース、ボードはノートの中にあります。「今日」には期限のものが表示されます。',
+  'To-dos in any note': 'どのノートにも ToDo',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ToDo はどこにでも書けます。「今日」に期限のものがすべて集まります。',
+  'Your {browser} bookmarks': '{browser} のブックマーク',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'サイドバーにあります。ウェブページはノートの横にタブで開きます。',
+  'Web pages are tabs': 'ウェブページはタブ',
+  'Browse next to your notes, without switching apps.':
+    'アプリを切り替えずに、ノートの横で閲覧できます。',
+  'Ask your AI': 'AI に聞く',
+  'Chats sit next to your notes and can use what is in your space.':
+    'チャットはノートの横にあり、スペースの内容を使えます。',
+  'Terminals are tabs too': 'ターミナルもタブ',
+  'Open one next to the notes for your project.': 'プロジェクトのノートの横に開きましょう。',
+  'Do this on your computer': 'これはパソコンで行ってください',
 }

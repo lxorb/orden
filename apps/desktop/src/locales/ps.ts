@@ -3773,4 +3773,32 @@ export const ps: Dictionary = {
   'Use an API key': 'د API کیلي وکاروئ',
   'Welcome to {app}': '{app} ته ښه راغلاست',
   'Show me around': 'شاوخوا راته وښایاست',
+  'Your {app} pages are here': 'ستاسو د {app} پاڼې دلته دي',
+  'Pages became notes, and databases became bases with their views.':
+    'پاڼې په یادښتونو بدلې شوې، او ډیټابیسونه د خپلو لیدونو سره په بېسونو.',
+  'Your {app} notes are here': 'ستاسو د {app} یادښتونه دلته دي',
+  'Still plain Markdown files, and your links work like before.':
+    'لا هم ساده Markdown فایلونه دي، او ستاسو لینکونه د پخوا په څېر کار کوي.',
+  'Every note is a file you own.': 'هر یادښت ستاسو خپل فایل دی.',
+  'Everything lives in one space': 'هر څه په یوه ځای کې',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'یادښتونه، کارونه، ویب پاڼې او چټونه څنګ په څنګ دي، نو هیڅ شی مو له لاسه نه وځي.',
+  'More than Markdown': 'له Markdown څخه زیات',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'کارونه، بېسونه او بورډونه ستاسو په یادښتونو کې دي. نن هغه ښيي چې وخت یې رسېدلی.',
+  'To-dos in any note': 'په هر یادښت کې کارونه',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'هر چېرې کار ولیکئ. نن هر هغه څه راټولوي چې وخت یې رسېدلی.',
+  'Your {browser} bookmarks': 'ستاسو د {browser} نښې',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'دوی په څنګ پټه کې دي. ویب پاڼې ستاسو د یادښتونو تر څنګ د ټبونو په توګه پرانیستل کېږي.',
+  'Web pages are tabs': 'ویب پاڼې ټبونه دي',
+  'Browse next to your notes, without switching apps.':
+    'د اپ بدلولو پرته د خپلو یادښتونو تر څنګ وګورئ.',
+  'Ask your AI': 'له خپل AI وپوښتئ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'چټونه ستاسو د یادښتونو تر څنګ دي او ستاسو د ځای منځپانګه کارولی شي.',
+  'Terminals are tabs too': 'ټرمینلونه هم ټبونه دي',
+  'Open one next to the notes for your project.': 'د خپلې پروژې د یادښتونو تر څنګ یو پرانیزئ.',
+  'Do this on your computer': 'دا په خپل کمپیوټر وکړئ',
 }

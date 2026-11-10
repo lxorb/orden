@@ -3865,4 +3865,32 @@ export const ptBR: Dictionary = {
   'Use an API key': 'Usar uma chave de API',
   'Welcome to {app}': 'Boas-vindas ao {app}',
   'Show me around': 'Me mostre como funciona',
+  'Your {app} pages are here': 'Suas páginas do {app} estão aqui',
+  'Pages became notes, and databases became bases with their views.':
+    'Páginas viraram notas, e bancos de dados viraram bases com suas visualizações.',
+  'Your {app} notes are here': 'Suas notas do {app} estão aqui',
+  'Still plain Markdown files, and your links work like before.':
+    'Continuam arquivos Markdown simples, e seus links funcionam como antes.',
+  'Every note is a file you own.': 'Cada nota é um arquivo seu.',
+  'Everything lives in one space': 'Tudo vive em um só espaço',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Notas, tarefas, páginas web e chats lado a lado, para você nunca se perder.',
+  'More than Markdown': 'Mais que Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Tarefas, bases e quadros ficam dentro das suas notas. Hoje mostra o que vence.',
+  'To-dos in any note': 'Tarefas em qualquer nota',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Escreva uma tarefa em qualquer lugar. Hoje reúne tudo o que vence.',
+  'Your {browser} bookmarks': 'Seus favoritos do {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Estão na barra lateral. Páginas web abrem como abas ao lado das suas notas.',
+  'Web pages are tabs': 'Páginas web são abas',
+  'Browse next to your notes, without switching apps.':
+    'Navegue ao lado das suas notas, sem trocar de app.',
+  'Ask your AI': 'Pergunte à sua IA',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Os chats ficam ao lado das suas notas e podem usar o que está no seu espaço.',
+  'Terminals are tabs too': 'Terminais também são abas',
+  'Open one next to the notes for your project.': 'Abra um ao lado das notas do seu projeto.',
+  'Do this on your computer': 'Faça isso no seu computador',
 }

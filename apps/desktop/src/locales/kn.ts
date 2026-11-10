@@ -3820,4 +3820,33 @@ export const kn: Dictionary = {
   'Use an API key': 'API ಕೀ ಬಳಸಿ',
   'Welcome to {app}': '{app}ಗೆ ಸ್ವಾಗತ',
   'Show me around': 'ನನಗೆ ಸುತ್ತಾಡಿಸಿ ತೋರಿಸಿ',
+  'Your {app} pages are here': 'ನಿಮ್ಮ {app} ಪುಟಗಳು ಇಲ್ಲಿವೆ',
+  'Pages became notes, and databases became bases with their views.':
+    'ಪುಟಗಳು ಟಿಪ್ಪಣಿಗಳಾದವು, ಡೇಟಾಬೇಸ್‌ಗಳು ಅವುಗಳ ವೀಕ್ಷಣೆಗಳೊಂದಿಗೆ ಬೇಸ್‌ಗಳಾದವು.',
+  'Your {app} notes are here': 'ನಿಮ್ಮ {app} ಟಿಪ್ಪಣಿಗಳು ಇಲ್ಲಿವೆ',
+  'Still plain Markdown files, and your links work like before.':
+    'ಈಗಲೂ ಸರಳ Markdown ಫೈಲ್‌ಗಳು, ನಿಮ್ಮ ಲಿಂಕ್‌ಗಳು ಮೊದಲಿನಂತೆಯೇ ಕೆಲಸ ಮಾಡುತ್ತವೆ.',
+  'Every note is a file you own.': 'ಪ್ರತಿ ಟಿಪ್ಪಣಿಯೂ ನಿಮ್ಮದೇ ಫೈಲ್.',
+  'Everything lives in one space': 'ಎಲ್ಲವೂ ಒಂದೇ ಸ್ಪೇಸ್‌ನಲ್ಲಿ',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'ಟಿಪ್ಪಣಿಗಳು, ಕಾರ್ಯಗಳು, ವೆಬ್ ಪುಟಗಳು ಮತ್ತು ಚಾಟ್‌ಗಳು ಪಕ್ಕಪಕ್ಕದಲ್ಲಿ, ಏನೂ ತಪ್ಪುವುದಿಲ್ಲ.',
+  'More than Markdown': 'Markdown ಗಿಂತ ಹೆಚ್ಚು',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ಕಾರ್ಯಗಳು, ಬೇಸ್‌ಗಳು ಮತ್ತು ಬೋರ್ಡ್‌ಗಳು ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳಲ್ಲೇ. ಇಂದು ಬಾಕಿ ಇರುವುದನ್ನು ತೋರಿಸುತ್ತದೆ.',
+  'To-dos in any note': 'ಯಾವುದೇ ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಕಾರ್ಯಗಳು',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ಎಲ್ಲಿಯಾದರೂ ಕಾರ್ಯ ಬರೆಯಿರಿ. ಇಂದು ಬಾಕಿ ಇರುವ ಎಲ್ಲವನ್ನೂ ಸೇರಿಸುತ್ತದೆ.',
+  'Your {browser} bookmarks': 'ನಿಮ್ಮ {browser} ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'ಅವು ಸೈಡ್‌ಬಾರ್‌ನಲ್ಲಿವೆ. ವೆಬ್ ಪುಟಗಳು ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳ ಪಕ್ಕ ಟ್ಯಾಬ್‌ಗಳಾಗಿ ತೆರೆಯುತ್ತವೆ.',
+  'Web pages are tabs': 'ವೆಬ್ ಪುಟಗಳು ಟ್ಯಾಬ್‌ಗಳು',
+  'Browse next to your notes, without switching apps.':
+    'ಆ್ಯಪ್ ಬದಲಿಸದೆ ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳ ಪಕ್ಕ ಬ್ರೌಸ್ ಮಾಡಿ.',
+  'Ask your AI': 'ನಿಮ್ಮ AI ಅನ್ನು ಕೇಳಿ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ಚಾಟ್‌ಗಳು ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳ ಪಕ್ಕದಲ್ಲಿವೆ ಮತ್ತು ನಿಮ್ಮ ಸ್ಪೇಸ್‌ನಲ್ಲಿರುವುದನ್ನು ಬಳಸಬಹುದು.',
+  'Terminals are tabs too': 'ಟರ್ಮಿನಲ್‌ಗಳೂ ಟ್ಯಾಬ್‌ಗಳು',
+  'Open one next to the notes for your project.':
+    'ನಿಮ್ಮ ಪ್ರಾಜೆಕ್ಟ್ ಟಿಪ್ಪಣಿಗಳ ಪಕ್ಕ ಒಂದನ್ನು ತೆರೆಯಿರಿ.',
+  'Do this on your computer': 'ಇದನ್ನು ನಿಮ್ಮ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಮಾಡಿ',
 }

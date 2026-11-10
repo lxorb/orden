@@ -3910,4 +3910,32 @@ export const fr: Dictionary = {
   'Use an API key': 'Utiliser une clé API',
   'Welcome to {app}': 'Bienvenue dans {app}',
   'Show me around': 'Faites-moi visiter',
+  'Your {app} pages are here': 'Vos pages {app} sont ici',
+  'Pages became notes, and databases became bases with their views.':
+    'Les pages sont devenues des notes, et les bases de données des bases avec leurs vues.',
+  'Your {app} notes are here': 'Vos notes {app} sont ici',
+  'Still plain Markdown files, and your links work like before.':
+    'Toujours de simples fichiers Markdown, et vos liens marchent comme avant.',
+  'Every note is a file you own.': 'Chaque note est un fichier à vous.',
+  'Everything lives in one space': 'Tout vit dans un seul espace',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Notes, tâches, pages web et discussions côte à côte, pour ne jamais rien perdre de vue.',
+  'More than Markdown': 'Plus que du Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Tâches, bases et tableaux vivent dans vos notes. Aujourd’hui montre ce qui est dû.',
+  'To-dos in any note': 'Des tâches dans chaque note',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Écrivez une tâche où vous voulez. Aujourd’hui rassemble tout ce qui est dû.',
+  'Your {browser} bookmarks': 'Vos favoris {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Ils sont dans la barre latérale. Les pages web s’ouvrent en onglets à côté de vos notes.',
+  'Web pages are tabs': 'Les pages web sont des onglets',
+  'Browse next to your notes, without switching apps.':
+    'Naviguez à côté de vos notes, sans changer d’app.',
+  'Ask your AI': 'Demandez à votre IA',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Les discussions sont à côté de vos notes et peuvent utiliser le contenu de votre espace.',
+  'Terminals are tabs too': 'Les terminaux aussi sont des onglets',
+  'Open one next to the notes for your project.': 'Ouvrez-en un à côté des notes de votre projet.',
+  'Do this on your computer': 'Faites-le sur votre ordinateur',
 }

@@ -3773,4 +3773,32 @@ export const mr: Dictionary = {
   'Use an API key': 'API की वापरा',
   'Welcome to {app}': '{app} मध्ये स्वागत',
   'Show me around': 'मला फिरून दाखवा',
+  'Your {app} pages are here': 'तुमची {app} पाने इथे आहेत',
+  'Pages became notes, and databases became bases with their views.':
+    'पाने नोंदी झाली, आणि डेटाबेस त्यांच्या दृश्यांसह बेस झाले.',
+  'Your {app} notes are here': 'तुमच्या {app} नोंदी इथे आहेत',
+  'Still plain Markdown files, and your links work like before.':
+    'अजूनही साध्या Markdown फाइल्स, आणि तुमच्या लिंक पूर्वीसारख्याच चालतात.',
+  'Every note is a file you own.': 'प्रत्येक नोंद तुमची स्वतःची फाइल आहे.',
+  'Everything lives in one space': 'सर्व काही एकाच स्पेसमध्ये',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'नोंदी, कामे, वेब पाने आणि चॅट शेजारी-शेजारी, त्यामुळे काहीच सुटत नाही.',
+  'More than Markdown': 'Markdown पेक्षा अधिक',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'कामे, बेस आणि बोर्ड तुमच्या नोंदींमध्येच आहेत. आज बाकी काय ते दाखवते.',
+  'To-dos in any note': 'कोणत्याही नोंदीत कामे',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'कुठेही काम लिहा. आज सर्व बाकी कामे गोळा करते.',
+  'Your {browser} bookmarks': 'तुमचे {browser} बुकमार्क',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'ते साइडबारमध्ये आहेत. वेब पाने तुमच्या नोंदींशेजारी टॅबमध्ये उघडतात.',
+  'Web pages are tabs': 'वेब पाने टॅब आहेत',
+  'Browse next to your notes, without switching apps.':
+    'अ‍ॅप न बदलता तुमच्या नोंदींशेजारी ब्राउझ करा.',
+  'Ask your AI': 'तुमच्या AI ला विचारा',
+  'Chats sit next to your notes and can use what is in your space.':
+    'चॅट तुमच्या नोंदींशेजारी असतात आणि तुमच्या स्पेसमधील मजकूर वापरू शकतात.',
+  'Terminals are tabs too': 'टर्मिनलही टॅब आहेत',
+  'Open one next to the notes for your project.': 'तुमच्या प्रोजेक्टच्या नोंदींशेजारी एक उघडा.',
+  'Do this on your computer': 'हे तुमच्या संगणकावर करा',
 }
