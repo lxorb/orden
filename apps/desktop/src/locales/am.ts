@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
-  'All set': 'ሁሉም ዝግጁ ነው',
-  Personalize: 'ግላዊ አድርግ',
-  Clean: 'ንጹህ',
-  'Live preview': 'ቀጥታ ቅድመ እይታ',
   'Developer mode': 'የገንቢ ሁነታ',
   'Do you write code?': 'ኮድ ይጽፋሉ?',
   Yes: 'አዎ',
@@ -31,9 +27,6 @@ export const am: Dictionary = {
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'ዕልባቶችዎን፣ ትሮችዎን እና ታሪክዎን ከሌላ አሳሽ ያምጡ?',
-  'No thanks': 'አይ፣ አመሰግናለሁ',
   'Containers stay in Firefox': 'ኮንቴይነሮች በFirefox ውስጥ ይቀራሉ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} በ{engine} ይፈልጋል፦ እዚህም በእሱ ለመፈለግ በቅንብሮች ውስጥ ይምረጡት',
@@ -3685,4 +3678,23 @@ export const am: Dictionary = {
   Unknown: 'ያልታወቀ',
   'Unnamed group': 'ስም የሌለው ቡድን',
   'Loading your chats…': 'ውይይቶችዎ እየተጫኑ ነው…',
+  'Log in or sign up': 'ይግቡ ወይም ይመዝገቡ',
+  'Use without an account': 'ያለ መለያ ይጠቀሙ',
+  'How did you hear about Orden?': 'ስለ Orden እንዴት ሰሙ?',
+  'AI assistant': 'የAI ረዳት',
+  'Friend or colleague': 'ጓደኛ ወይም የሥራ ባልደረባ',
+  'Social media': 'ማኅበራዊ ሚዲያ',
+  'Where?': 'የት?',
+  'Which browser do you use now?': 'አሁን የትኛውን አሳሽ ይጠቀማሉ?',
+  'Not yet': 'ገና አይደለም',
+  Request: 'ጠይቅ',
+  'Import from {browser}': 'ከ{browser} አስመጣ',
+  'Open tabs': 'የተከፈቱ ትሮች',
+  Imported: 'ገብቷል',
+  'Bring your notes': 'ማስታወሻዎችዎን ያምጡ',
+  'Here’s how you can import it anyway': 'ቢሆንም እንዲህ ማስመጣት ይችላሉ',
+  'Connect your AI': 'AIዎን ያገናኙ',
+  'Use an API key': 'የAPI ቁልፍ ተጠቀም',
+  'Welcome to {app}': 'ወደ {app} እንኳን በደህና መጡ',
+  'Show me around': 'ዙሪያውን አሳዩኝ',
 }

@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
-  'All set': 'ಎಲ್ಲವೂ ಸಿದ್ಧ',
-  Personalize: 'ವೈಯಕ್ತೀಕರಿಸಿ',
-  Clean: 'ಸ್ವಚ್ಛ',
-  'Live preview': 'ಲೈವ್ ಪೂರ್ವವೀಕ್ಷಣೆ',
   'Developer mode': 'ಡೆವಲಪರ್ ಮೋಡ್',
   'Do you write code?': 'ನೀವು ಕೋಡ್ ಬರೆಯುತ್ತೀರಾ?',
   Yes: 'ಹೌದು',
@@ -33,9 +29,6 @@ export const kn: Dictionary = {
   'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'ಬೇರೆ ಬ್ರೌಸರ್‌ನಿಂದ ನಿಮ್ಮ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು, ಟ್ಯಾಬ್‌ಗಳು ಮತ್ತು ಇತಿಹಾಸವನ್ನು ತರಬೇಕೆ?',
-  'No thanks': 'ಬೇಡ, ಧನ್ಯವಾದಗಳು',
   'Containers stay in Firefox': 'ಕಂಟೇನರ್‌ಗಳು Firefox ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} ಮೂಲಕ ಹುಡುಕುತ್ತದೆ: ಇಲ್ಲಿಯೂ ಅದರಿಂದ ಹುಡುಕಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅದನ್ನು ಆರಿಸಿ',
@@ -3807,4 +3800,23 @@ export const kn: Dictionary = {
   Unknown: 'ಅಪರಿಚಿತ',
   'Unnamed group': 'ಹೆಸರಿಲ್ಲದ ಗುಂಪು',
   'Loading your chats…': 'ನಿಮ್ಮ ಚಾಟ್‌ಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…',
+  'Log in or sign up': 'ಲಾಗ್ ಇನ್ ಮಾಡಿ ಅಥವಾ ಸೈನ್ ಅಪ್ ಮಾಡಿ',
+  'Use without an account': 'ಖಾತೆ ಇಲ್ಲದೆ ಬಳಸಿ',
+  'How did you hear about Orden?': 'Orden ಬಗ್ಗೆ ನಿಮಗೆ ಎಲ್ಲಿಂದ ತಿಳಿಯಿತು?',
+  'AI assistant': 'AI ಸಹಾಯಕ',
+  'Friend or colleague': 'ಸ್ನೇಹಿತ ಅಥವಾ ಸಹೋದ್ಯೋಗಿ',
+  'Social media': 'ಸಾಮಾಜಿಕ ಮಾಧ್ಯಮ',
+  'Where?': 'ಎಲ್ಲಿ?',
+  'Which browser do you use now?': 'ನೀವು ಈಗ ಯಾವ ಬ್ರೌಸರ್ ಬಳಸುತ್ತೀರಿ?',
+  'Not yet': 'ಇನ್ನೂ ಇಲ್ಲ',
+  Request: 'ವಿನಂತಿಸಿ',
+  'Import from {browser}': '{browser} ನಿಂದ ಆಮದು ಮಾಡಿ',
+  'Open tabs': 'ತೆರೆದ ಟ್ಯಾಬ್‌ಗಳು',
+  Imported: 'ಆಮದಾಗಿದೆ',
+  'Bring your notes': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ತನ್ನಿ',
+  'Here’s how you can import it anyway': 'ಆದರೂ ಆಮದು ಮಾಡುವ ಬಗೆ ಇಲ್ಲಿದೆ',
+  'Connect your AI': 'ನಿಮ್ಮ AI ಸಂಪರ್ಕಿಸಿ',
+  'Use an API key': 'API ಕೀ ಬಳಸಿ',
+  'Welcome to {app}': '{app}ಗೆ ಸ್ವಾಗತ',
+  'Show me around': 'ನನಗೆ ಸುತ್ತಾಡಿಸಿ ತೋರಿಸಿ',
 }

@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
-  'All set': 'எல்லாம் தயார்',
-  Personalize: 'தனிப்பயனாக்கு',
-  Clean: 'சுத்தம்',
-  'Live preview': 'நேரடி முன்னோட்டம்',
   'Developer mode': 'டெவலப்பர் பயன்முறை',
   'Do you write code?': 'நீங்கள் குறியீடு எழுதுவீர்களா?',
   Yes: 'ஆம்',
@@ -33,9 +29,6 @@ export const ta: Dictionary = {
   'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
   'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
   'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'வேறொரு உலாவியிலிருந்து உங்கள் புக்மார்க்குகள், தாவல்கள், வரலாற்றைக் கொண்டுவரவா?',
-  'No thanks': 'வேண்டாம், நன்றி',
   'Containers stay in Firefox': 'கண்டெய்னர்கள் Firefox-இலேயே இருக்கும்',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} மூலம் தேடுகிறது: இங்கேயும் அதைக் கொண்டு தேட அமைப்புகளில் அதைத் தேர்வுசெய்யவும்',
@@ -3835,4 +3828,23 @@ export const ta: Dictionary = {
   Unknown: 'தெரியாதவர்',
   'Unnamed group': 'பெயரில்லாத குழு',
   'Loading your chats…': 'உங்கள் அரட்டைகள் ஏற்றப்படுகின்றன…',
+  'Log in or sign up': 'உள்நுழையவும் அல்லது பதிவுசெய்யவும்',
+  'Use without an account': 'கணக்கு இல்லாமல் பயன்படுத்து',
+  'How did you hear about Orden?': 'Orden பற்றி எங்கே கேள்விப்பட்டீர்கள்?',
+  'AI assistant': 'AI உதவியாளர்',
+  'Friend or colleague': 'நண்பர் அல்லது சக ஊழியர்',
+  'Social media': 'சமூக ஊடகம்',
+  'Where?': 'எங்கே?',
+  'Which browser do you use now?': 'இப்போது எந்த உலாவியைப் பயன்படுத்துகிறீர்கள்?',
+  'Not yet': 'இன்னும் இல்லை',
+  Request: 'கோரு',
+  'Import from {browser}': '{browser} இலிருந்து இறக்கு',
+  'Open tabs': 'திறந்த தாவல்கள்',
+  Imported: 'இறக்கப்பட்டது',
+  'Bring your notes': 'உங்கள் குறிப்புகளைக் கொண்டு வாருங்கள்',
+  'Here’s how you can import it anyway': 'இருந்தாலும் இறக்கும் வழி இதோ',
+  'Connect your AI': 'உங்கள் AI-ஐ இணைக்கவும்',
+  'Use an API key': 'API விசையைப் பயன்படுத்து',
+  'Welcome to {app}': '{app}-க்கு வரவேற்கிறோம்',
+  'Show me around': 'சுற்றிக் காட்டுங்கள்',
 }

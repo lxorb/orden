@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pa: Dictionary = {
-  'All set': 'ਸਭ ਤਿਆਰ ਹੈ',
-  Personalize: 'ਆਪਣੇ ਮੁਤਾਬਕ ਬਣਾਓ',
-  Clean: 'ਸਾਫ਼',
-  'Live preview': 'ਲਾਈਵ ਝਲਕ',
   'Developer mode': 'ਡਿਵੈਲਪਰ ਮੋਡ',
   'Do you write code?': 'ਕੀ ਤੁਸੀਂ ਕੋਡ ਲਿਖਦੇ ਹੋ?',
   Yes: 'ਹਾਂ',
@@ -32,9 +28,6 @@ export const pa: Dictionary = {
   'Import from Zen': 'Zen ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   'Containers stay in Zen': 'ਕੰਟੇਨਰ Zen ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
   'Zen’s tabs could not be read.': 'Zen ਦੀਆਂ ਟੈਬਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'ਕਿਸੇ ਹੋਰ ਬ੍ਰਾਊਜ਼ਰ ਤੋਂ ਆਪਣੇ ਬੁੱਕਮਾਰਕ, ਟੈਬ ਅਤੇ ਇਤਿਹਾਸ ਲਿਆਉਣੇ ਹਨ?',
-  'No thanks': 'ਨਹੀਂ, ਧੰਨਵਾਦ',
   'Containers stay in Firefox': 'ਕੰਟੇਨਰ Firefox ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} ਨਾਲ ਖੋਜਦਾ ਹੈ: ਇੱਥੇ ਵੀ ਇਸ ਨਾਲ ਖੋਜਣ ਲਈ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਇਸ ਨੂੰ ਚੁਣੋ',
@@ -3775,4 +3768,23 @@ export const pa: Dictionary = {
   Unknown: 'ਅਣਜਾਣ',
   'Unnamed group': 'ਬਿਨਾਂ ਨਾਂ ਦਾ ਗਰੁੱਪ',
   'Loading your chats…': 'ਤੁਹਾਡੀਆਂ ਚੈਟਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ…',
+  'Log in or sign up': 'ਲੌਗ ਇਨ ਕਰੋ ਜਾਂ ਸਾਈਨ ਅੱਪ ਕਰੋ',
+  'Use without an account': 'ਖਾਤੇ ਤੋਂ ਬਿਨਾਂ ਵਰਤੋ',
+  'How did you hear about Orden?': 'ਤੁਹਾਨੂੰ Orden ਬਾਰੇ ਕਿੱਥੋਂ ਪਤਾ ਲੱਗਾ?',
+  'AI assistant': 'ਏਆਈ ਸਹਾਇਕ',
+  'Friend or colleague': 'ਦੋਸਤ ਜਾਂ ਸਹਿਕਰਮੀ',
+  'Social media': 'ਸੋਸ਼ਲ ਮੀਡੀਆ',
+  'Where?': 'ਕਿੱਥੇ?',
+  'Which browser do you use now?': 'ਤੁਸੀਂ ਹੁਣ ਕਿਹੜਾ ਬ੍ਰਾਊਜ਼ਰ ਵਰਤਦੇ ਹੋ?',
+  'Not yet': 'ਹਾਲੇ ਨਹੀਂ',
+  Request: 'ਬੇਨਤੀ ਕਰੋ',
+  'Import from {browser}': '{browser} ਤੋਂ ਲਿਆਓ',
+  'Open tabs': 'ਖੁੱਲ੍ਹੀਆਂ ਟੈਬਾਂ',
+  Imported: 'ਲਿਆਂਦਾ ਗਿਆ',
+  'Bring your notes': 'ਆਪਣੇ ਨੋਟ ਲਿਆਓ',
+  'Here’s how you can import it anyway': 'ਫਿਰ ਵੀ ਲਿਆਉਣ ਦਾ ਤਰੀਕਾ ਇਹ ਹੈ',
+  'Connect your AI': 'ਆਪਣਾ ਏਆਈ ਜੋੜੋ',
+  'Use an API key': 'API ਕੁੰਜੀ ਵਰਤੋ',
+  'Welcome to {app}': '{app} ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ',
+  'Show me around': 'ਮੈਨੂੰ ਘੁਮਾ ਕੇ ਦਿਖਾਓ',
 }

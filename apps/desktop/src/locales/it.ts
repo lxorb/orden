@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const it: Dictionary = {
-  'All set': 'Tutto pronto',
-  Personalize: 'Personalizza',
-  Clean: 'Pulito',
-  'Live preview': 'Anteprima dal vivo',
   'Developer mode': 'Modalità sviluppatore',
   'Do you write code?': 'Scrivi codice?',
   Yes: 'Sì',
@@ -33,9 +29,6 @@ export const it: Dictionary = {
   'Import from Zen': 'Importa da Zen',
   'Containers stay in Zen': 'I contenitori restano in Zen',
   'Zen’s tabs could not be read.': 'Impossibile leggere le schede di Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Portare segnalibri, schede e cronologia da un altro browser?',
-  'No thanks': 'No, grazie',
   'Containers stay in Firefox': 'I contenitori restano in Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} cerca con {engine}: sceglilo nelle Impostazioni per cercare con quello anche qui',
@@ -3884,4 +3877,23 @@ export const it: Dictionary = {
   Unknown: 'Sconosciuto',
   'Unnamed group': 'Gruppo senza nome',
   'Loading your chats…': 'Caricamento delle tue chat…',
+  'Log in or sign up': 'Accedi o registrati',
+  'Use without an account': 'Usa senza account',
+  'How did you hear about Orden?': 'Come hai conosciuto Orden?',
+  'AI assistant': 'Assistente IA',
+  'Friend or colleague': 'Un amico o un collega',
+  'Social media': 'Social media',
+  'Where?': 'Dove?',
+  'Which browser do you use now?': 'Quale browser usi adesso?',
+  'Not yet': 'Non ancora',
+  Request: 'Richiedi',
+  'Import from {browser}': 'Importa da {browser}',
+  'Open tabs': 'Schede aperte',
+  Imported: 'Importato',
+  'Bring your notes': 'Porta le tue note',
+  'Here’s how you can import it anyway': 'Ecco come importarlo comunque',
+  'Connect your AI': 'Collega la tua IA',
+  'Use an API key': 'Usa una chiave API',
+  'Welcome to {app}': 'Benvenuto in {app}',
+  'Show me around': 'Fammi fare un giro',
 }

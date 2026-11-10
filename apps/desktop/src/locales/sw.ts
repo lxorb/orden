@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
-  'All set': 'Kila kitu kiko tayari',
-  Personalize: 'Binafsisha',
-  Clean: 'Safi',
-  'Live preview': 'Onyesho la moja kwa moja',
   'Developer mode': 'Hali ya msanidi',
   'Do you write code?': 'Je, unaandika msimbo?',
   Yes: 'Ndiyo',
@@ -33,9 +29,6 @@ export const sw: Dictionary = {
   'Import from Zen': 'Ingiza kutoka Zen',
   'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
   'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Leta alamisho, vichupo na historia yako kutoka kivinjari kingine?',
-  'No thanks': 'Hapana, asante',
   'Containers stay in Firefox': 'Kontena zinabaki ndani ya Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} hutafuta kwa {engine}: kichague kwenye Mipangilio ili kutafuta nacho hapa pia',
@@ -3814,4 +3807,23 @@ export const sw: Dictionary = {
   Unknown: 'Haijulikani',
   'Unnamed group': 'Kikundi kisicho na jina',
   'Loading your chats…': 'Inapakia gumzo zako…',
+  'Log in or sign up': 'Ingia au jisajili',
+  'Use without an account': 'Tumia bila akaunti',
+  'How did you hear about Orden?': 'Ulisikiaje kuhusu Orden?',
+  'AI assistant': 'Msaidizi wa AI',
+  'Friend or colleague': 'Rafiki au mfanyakazi mwenzako',
+  'Social media': 'Mitandao ya kijamii',
+  'Where?': 'Wapi?',
+  'Which browser do you use now?': 'Unatumia kivinjari gani sasa?',
+  'Not yet': 'Bado',
+  Request: 'Omba',
+  'Import from {browser}': 'Leta kutoka {browser}',
+  'Open tabs': 'Vichupo vilivyo wazi',
+  Imported: 'Imeletwa',
+  'Bring your notes': 'Leta madokezo yako',
+  'Here’s how you can import it anyway': 'Hivi ndivyo unavyoweza kuileta hata hivyo',
+  'Connect your AI': 'Unganisha AI yako',
+  'Use an API key': 'Tumia ufunguo wa API',
+  'Welcome to {app}': 'Karibu {app}',
+  'Show me around': 'Nionyeshe',
 }

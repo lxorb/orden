@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
-  'All set': 'എല്ലാം തയ്യാർ',
-  Personalize: 'വ്യക്തിഗതമാക്കുക',
-  Clean: 'വൃത്തിയുള്ളത്',
-  'Live preview': 'ലൈവ് പ്രിവ്യൂ',
   'Developer mode': 'ഡെവലപ്പർ മോഡ്',
   'Do you write code?': 'നിങ്ങൾ കോഡ് എഴുതാറുണ്ടോ?',
   Yes: 'അതെ',
@@ -33,9 +29,6 @@ export const ml: Dictionary = {
   'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
   'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'മറ്റൊരു ബ്രൗസറിൽ നിന്ന് നിങ്ങളുടെ ബുക്ക്‌മാർക്കുകളും ടാബുകളും ചരിത്രവും കൊണ്ടുവരണോ?',
-  'No thanks': 'വേണ്ട, നന്ദി',
   'Containers stay in Firefox': 'കണ്ടെയ്‌നറുകൾ Firefox-ൽ തന്നെ തുടരും',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} ഉപയോഗിച്ച് തിരയുന്നു: ഇവിടെയും അതുപയോഗിച്ച് തിരയാൻ ക്രമീകരണങ്ങളിൽ അത് തിരഞ്ഞെടുക്കുക',
@@ -3821,4 +3814,23 @@ export const ml: Dictionary = {
   Unknown: 'അജ്ഞാതം',
   'Unnamed group': 'പേരില്ലാത്ത ഗ്രൂപ്പ്',
   'Loading your chats…': 'നിങ്ങളുടെ ചാറ്റുകൾ ലോഡ് ചെയ്യുന്നു…',
+  'Log in or sign up': 'ലോഗിൻ ചെയ്യുക അല്ലെങ്കിൽ സൈൻ അപ്പ് ചെയ്യുക',
+  'Use without an account': 'അക്കൗണ്ട് ഇല്ലാതെ ഉപയോഗിക്കുക',
+  'How did you hear about Orden?': 'Orden-നെക്കുറിച്ച് എവിടെ നിന്ന് അറിഞ്ഞു?',
+  'AI assistant': 'AI സഹായി',
+  'Friend or colleague': 'സുഹൃത്ത് അല്ലെങ്കിൽ സഹപ്രവർത്തകൻ',
+  'Social media': 'സോഷ്യൽ മീഡിയ',
+  'Where?': 'എവിടെ?',
+  'Which browser do you use now?': 'ഇപ്പോൾ ഏത് ബ്രൗസറാണ് ഉപയോഗിക്കുന്നത്?',
+  'Not yet': 'ഇതുവരെയില്ല',
+  Request: 'അഭ്യർഥിക്കുക',
+  'Import from {browser}': '{browser}-ൽ നിന്ന് ഇറക്കുമതി ചെയ്യുക',
+  'Open tabs': 'തുറന്ന ടാബുകൾ',
+  Imported: 'ഇറക്കുമതി ചെയ്തു',
+  'Bring your notes': 'നിങ്ങളുടെ കുറിപ്പുകൾ കൊണ്ടുവരൂ',
+  'Here’s how you can import it anyway': 'എന്നിട്ടും ഇറക്കുമതി ചെയ്യാനുള്ള വഴി ഇതാ',
+  'Connect your AI': 'നിങ്ങളുടെ AI ബന്ധിപ്പിക്കൂ',
+  'Use an API key': 'API കീ ഉപയോഗിക്കുക',
+  'Welcome to {app}': '{app}-ലേക്ക് സ്വാഗതം',
+  'Show me around': 'എനിക്ക് ചുറ്റും കാണിച്ചുതരൂ',
 }

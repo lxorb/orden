@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
-  'All set': 'พร้อมแล้ว',
-  Personalize: 'ปรับแต่ง',
-  Clean: 'สะอาดตา',
-  'Live preview': 'แสดงตัวอย่างสด',
   'Developer mode': 'โหมดนักพัฒนา',
   'Do you write code?': 'คุณเขียนโค้ดไหม?',
   Yes: 'ใช่',
@@ -31,9 +27,6 @@ export const th: Dictionary = {
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'นำบุ๊กมาร์ก แท็บ และประวัติจากเบราว์เซอร์อื่นมาไหม',
-  'No thanks': 'ไม่ ขอบคุณ',
   'Containers stay in Firefox': 'คอนเทนเนอร์ยังอยู่ใน Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} ค้นหาด้วย {engine}: เลือกในการตั้งค่าเพื่อค้นหาด้วยสิ่งนั้นที่นี่ด้วย',
@@ -3622,4 +3615,23 @@ export const th: Dictionary = {
   Unknown: 'ไม่ทราบ',
   'Unnamed group': 'กลุ่มที่ไม่มีชื่อ',
   'Loading your chats…': 'กำลังโหลดแชทของคุณ…',
+  'Log in or sign up': 'เข้าสู่ระบบหรือสมัครใช้งาน',
+  'Use without an account': 'ใช้โดยไม่มีบัญชี',
+  'How did you hear about Orden?': 'คุณรู้จัก Orden จากที่ไหน?',
+  'AI assistant': 'ผู้ช่วย AI',
+  'Friend or colleague': 'เพื่อนหรือเพื่อนร่วมงาน',
+  'Social media': 'โซเชียลมีเดีย',
+  'Where?': 'ที่ไหน?',
+  'Which browser do you use now?': 'ตอนนี้คุณใช้เบราว์เซอร์ไหน?',
+  'Not yet': 'ยังไม่รองรับ',
+  Request: 'ขอ',
+  'Import from {browser}': 'นำเข้าจาก {browser}',
+  'Open tabs': 'แท็บที่เปิดอยู่',
+  Imported: 'นำเข้าแล้ว',
+  'Bring your notes': 'นำโน้ตของคุณมา',
+  'Here’s how you can import it anyway': 'วิธีนำเข้าได้อยู่ดี',
+  'Connect your AI': 'เชื่อมต่อ AI ของคุณ',
+  'Use an API key': 'ใช้คีย์ API',
+  'Welcome to {app}': 'ยินดีต้อนรับสู่ {app}',
+  'Show me around': 'พาฉันดูรอบ ๆ',
 }

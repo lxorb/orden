@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const id: Dictionary = {
-  'All set': 'Semua siap',
-  Personalize: 'Personalisasi',
-  Clean: 'Bersih',
-  'Live preview': 'Pratinjau langsung',
   'Developer mode': 'Mode pengembang',
   'Do you write code?': 'Apakah Anda menulis kode?',
   Yes: 'Ya',
@@ -32,9 +28,6 @@ export const id: Dictionary = {
   'Import from Zen': 'Impor dari Zen',
   'Containers stay in Zen': 'Kontainer tetap di Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Bawa bookmark, tab, dan riwayat Anda dari browser lain?',
-  'No thanks': 'Tidak, terima kasih',
   'Containers stay in Firefox': 'Kontainer tetap di Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} mencari dengan {engine}: pilih di Pengaturan untuk mencari dengannya di sini juga',
@@ -3696,4 +3689,23 @@ export const id: Dictionary = {
   Unknown: 'Tidak dikenal',
   'Unnamed group': 'Grup tanpa nama',
   'Loading your chats…': 'Memuat obrolan Anda…',
+  'Log in or sign up': 'Masuk atau daftar',
+  'Use without an account': 'Pakai tanpa akun',
+  'How did you hear about Orden?': 'Dari mana Anda tahu Orden?',
+  'AI assistant': 'Asisten AI',
+  'Friend or colleague': 'Teman atau rekan kerja',
+  'Social media': 'Media sosial',
+  'Where?': 'Di mana?',
+  'Which browser do you use now?': 'Browser apa yang Anda pakai sekarang?',
+  'Not yet': 'Belum',
+  Request: 'Minta',
+  'Import from {browser}': 'Impor dari {browser}',
+  'Open tabs': 'Tab terbuka',
+  Imported: 'Diimpor',
+  'Bring your notes': 'Bawa catatan Anda',
+  'Here’s how you can import it anyway': 'Begini cara tetap mengimpornya',
+  'Connect your AI': 'Hubungkan AI Anda',
+  'Use an API key': 'Pakai kunci API',
+  'Welcome to {app}': 'Selamat datang di {app}',
+  'Show me around': 'Tunjukkan sekelilingnya',
 }

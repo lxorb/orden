@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fil: Dictionary = {
-  'All set': 'Handa na ang lahat',
-  Personalize: 'I-personalize',
-  Clean: 'Malinis',
-  'Live preview': 'Live preview',
   'Developer mode': 'Developer mode',
   'Do you write code?': 'Nagsusulat ka ba ng code?',
   Yes: 'Oo',
@@ -32,9 +28,6 @@ export const fil: Dictionary = {
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Dalhin ang iyong mga bookmark, tab at history mula sa ibang browser?',
-  'No thanks': 'Hindi, salamat',
   'Containers stay in Firefox': 'Nananatili sa Firefox ang mga container',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'Naghahanap ang {browser} gamit ang {engine}: piliin ito sa Settings para maghanap gamit ito dito rin',
@@ -3840,4 +3833,23 @@ export const fil: Dictionary = {
   Unknown: 'Hindi kilala',
   'Unnamed group': 'Grupong walang pangalan',
   'Loading your chats…': 'Nilo-load ang iyong mga chat…',
+  'Log in or sign up': 'Mag-log in o mag-sign up',
+  'Use without an account': 'Gamitin nang walang account',
+  'How did you hear about Orden?': 'Paano mo nalaman ang Orden?',
+  'AI assistant': 'AI assistant',
+  'Friend or colleague': 'Kaibigan o katrabaho',
+  'Social media': 'Social media',
+  'Where?': 'Saan?',
+  'Which browser do you use now?': 'Anong browser ang gamit mo ngayon?',
+  'Not yet': 'Wala pa',
+  Request: 'Hilingin',
+  'Import from {browser}': 'Mag-import mula sa {browser}',
+  'Open tabs': 'Mga bukas na tab',
+  Imported: 'Na-import na',
+  'Bring your notes': 'Dalhin ang mga tala mo',
+  'Here’s how you can import it anyway': 'Ganito mo pa rin ito ma-import',
+  'Connect your AI': 'Ikonekta ang AI mo',
+  'Use an API key': 'Gumamit ng API key',
+  'Welcome to {app}': 'Maligayang pagdating sa {app}',
+  'Show me around': 'Ipakita sa akin',
 }

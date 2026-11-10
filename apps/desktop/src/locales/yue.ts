@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
-  'All set': '搞掂晒',
-  Personalize: '個人化',
-  Clean: '簡潔',
-  'Live preview': '即時預覽',
   'Developer mode': '開發人員模式',
   'Do you write code?': '你寫唔寫程式？',
   Yes: '係',
@@ -31,9 +27,6 @@ export const yue: Dictionary = {
   'Import from Zen': '由 Zen 匯入',
   'Containers stay in Zen': '容器留喺 Zen',
   'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
-  'Bring your bookmarks, tabs and history from another browser?':
-    '由另一個瀏覽器帶埋你嘅書籤、分頁同瀏覽記錄過嚟？',
-  'No thanks': '唔使喇，多謝',
   'Containers stay in Firefox': '容器留喺 Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 用 {engine} 搜尋：喺設定揀佢，喺呢度都用佢搜尋',
@@ -3573,4 +3566,23 @@ export const yue: Dictionary = {
   Unknown: '不明',
   'Unnamed group': '未命名群組',
   'Loading your chats…': '載入緊你嘅傾偈…',
+  'Log in or sign up': '登入或者註冊',
+  'Use without an account': '唔用帳戶都用得',
+  'How did you hear about Orden?': '你喺邊度聽過 Orden？',
+  'AI assistant': 'AI 助手',
+  'Friend or colleague': '朋友或者同事',
+  'Social media': '社交媒體',
+  'Where?': '喺邊度？',
+  'Which browser do you use now?': '你而家用緊邊個瀏覽器？',
+  'Not yet': '仲未支援',
+  Request: '要求',
+  'Import from {browser}': '由 {browser} 匯入',
+  'Open tabs': '開咗嘅分頁',
+  Imported: '匯入咗',
+  'Bring your notes': '帶埋你嘅筆記過嚟',
+  'Here’s how you can import it anyway': '咁樣都可以匯入',
+  'Connect your AI': '連接你嘅 AI',
+  'Use an API key': '用 API 金鑰',
+  'Welcome to {app}': '歡迎嚟到 {app}',
+  'Show me around': '帶我睇下',
 }

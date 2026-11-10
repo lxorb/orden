@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHant: Dictionary = {
-  'All set': '一切就緒',
-  Personalize: '個人化',
-  Clean: '簡潔',
-  'Live preview': '即時預覽',
   'Developer mode': '開發者模式',
   'Do you write code?': '你會寫程式嗎？',
   Yes: '是',
@@ -31,9 +27,6 @@ export const zhHant: Dictionary = {
   'Import from Zen': '從 Zen 匯入',
   'Containers stay in Zen': '容器會留在 Zen 中',
   'Zen’s tabs could not be read.': '無法讀取 Zen 的分頁。',
-  'Bring your bookmarks, tabs and history from another browser?':
-    '要從其他瀏覽器帶來書籤、分頁和瀏覽紀錄嗎？',
-  'No thanks': '不用了，謝謝',
   'Containers stay in Firefox': '容器會留在 Firefox 中',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 使用 {engine} 搜尋：在設定中選擇它，即可在這裡也用它搜尋',
@@ -3583,4 +3576,23 @@ export const zhHant: Dictionary = {
   Unknown: '未知',
   'Unnamed group': '未命名群組',
   'Loading your chats…': '正在載入你的聊天…',
+  'Log in or sign up': '登入或註冊',
+  'Use without an account': '不使用帳號',
+  'How did you hear about Orden?': '你是從哪裡知道 Orden 的？',
+  'AI assistant': 'AI 助理',
+  'Friend or colleague': '朋友或同事',
+  'Social media': '社群媒體',
+  'Where?': '在哪裡？',
+  'Which browser do you use now?': '你現在用哪個瀏覽器？',
+  'Not yet': '尚未支援',
+  Request: '請求',
+  'Import from {browser}': '從 {browser} 匯入',
+  'Open tabs': '開啟的分頁',
+  Imported: '已匯入',
+  'Bring your notes': '帶上你的筆記',
+  'Here’s how you can import it anyway': '仍可這樣匯入',
+  'Connect your AI': '連接你的 AI',
+  'Use an API key': '使用 API 金鑰',
+  'Welcome to {app}': '歡迎使用 {app}',
+  'Show me around': '帶我看看',
 }

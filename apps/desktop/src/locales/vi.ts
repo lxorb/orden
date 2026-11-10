@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
-  'All set': 'Đã sẵn sàng',
-  Personalize: 'Cá nhân hóa',
-  Clean: 'Gọn gàng',
-  'Live preview': 'Xem trước trực tiếp',
   'Developer mode': 'Chế độ nhà phát triển',
   'Do you write code?': 'Bạn có viết code không?',
   Yes: 'Có',
@@ -32,9 +28,6 @@ export const vi: Dictionary = {
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Mang dấu trang, thẻ và lịch sử của bạn từ trình duyệt khác sang?',
-  'No thanks': 'Không, cảm ơn',
   'Containers stay in Firefox': 'Các ngăn chứa vẫn ở lại Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} tìm kiếm bằng {engine}: chọn nó trong Cài đặt để tìm bằng nó ở đây nữa',
@@ -3665,4 +3658,23 @@ export const vi: Dictionary = {
   Unknown: 'Không rõ',
   'Unnamed group': 'Nhóm không tên',
   'Loading your chats…': 'Đang tải các cuộc trò chuyện…',
+  'Log in or sign up': 'Đăng nhập hoặc đăng ký',
+  'Use without an account': 'Dùng không cần tài khoản',
+  'How did you hear about Orden?': 'Bạn biết đến Orden từ đâu?',
+  'AI assistant': 'Trợ lý AI',
+  'Friend or colleague': 'Bạn bè hoặc đồng nghiệp',
+  'Social media': 'Mạng xã hội',
+  'Where?': 'Ở đâu?',
+  'Which browser do you use now?': 'Bạn đang dùng trình duyệt nào?',
+  'Not yet': 'Chưa có',
+  Request: 'Yêu cầu',
+  'Import from {browser}': 'Nhập từ {browser}',
+  'Open tabs': 'Các thẻ đang mở',
+  Imported: 'Đã nhập',
+  'Bring your notes': 'Mang ghi chú của bạn sang',
+  'Here’s how you can import it anyway': 'Đây là cách bạn vẫn nhập được',
+  'Connect your AI': 'Kết nối AI của bạn',
+  'Use an API key': 'Dùng khóa API',
+  'Welcome to {app}': 'Chào mừng đến với {app}',
+  'Show me around': 'Dẫn tôi đi xem',
 }

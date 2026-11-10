@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
-  'All set': 'Komai ya shirya',
-  Personalize: 'Keɓance',
-  Clean: 'Mai tsabta',
-  'Live preview': 'Samfoti kai tsaye',
   'Developer mode': 'Yanayin mai haɓakawa',
   'Do you write code?': 'Kuna rubuta code?',
   Yes: 'Eh',
@@ -33,9 +29,6 @@ export const ha: Dictionary = {
   'Import from Zen': 'Shigo daga Zen',
   'Containers stay in Zen': 'Kwantenoni suna zama a Zen',
   'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Kawo alamomin shafi, shafuka da tarihinka daga wani burauza?',
-  'No thanks': 'A’a, na gode',
   'Containers stay in Firefox': 'Kwantenoni suna zama a Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} yana bincike da {engine}: zaɓe shi a Saituna don bincike da shi a nan ma',
@@ -3815,4 +3808,23 @@ export const ha: Dictionary = {
   Unknown: 'Ba a sani ba',
   'Unnamed group': 'Rukuni marar suna',
   'Loading your chats…': 'Ana loda hirarrakinka…',
+  'Log in or sign up': 'Shiga ko yi rajista',
+  'Use without an account': 'Yi amfani ba tare da asusu ba',
+  'How did you hear about Orden?': 'Ta yaya ka ji labarin Orden?',
+  'AI assistant': 'Mataimakin AI',
+  'Friend or colleague': 'Aboki ko abokin aiki',
+  'Social media': 'Kafofin sada zumunta',
+  'Where?': 'A ina?',
+  'Which browser do you use now?': 'Wane mai bincike kake amfani da shi yanzu?',
+  'Not yet': 'Har yanzu ba',
+  Request: 'Nema',
+  'Import from {browser}': 'Shigo daga {browser}',
+  'Open tabs': 'Shafukan da ke buɗe',
+  Imported: 'An shigo da shi',
+  'Bring your notes': 'Kawo bayananka',
+  'Here’s how you can import it anyway': 'Ga yadda za ka shigo da shi duk da haka',
+  'Connect your AI': 'Haɗa AI ɗinka',
+  'Use an API key': 'Yi amfani da makullin API',
+  'Welcome to {app}': 'Barka da zuwa {app}',
+  'Show me around': 'Nuna min ko’ina',
 }

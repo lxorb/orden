@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
-  'All set': '準備完了',
-  Personalize: 'カスタマイズ',
-  Clean: 'クリーン',
-  'Live preview': 'ライブプレビュー',
   'Developer mode': '開発者モード',
   'Do you write code?': 'コードを書きますか？',
   Yes: 'はい',
@@ -32,9 +28,6 @@ export const ja: Dictionary = {
   'Import from Zen': 'Zen から読み込む',
   'Containers stay in Zen': 'コンテナは Zen に残ります',
   'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
-  'Bring your bookmarks, tabs and history from another browser?':
-    '別のブラウザからブックマーク、タブ、履歴を取り込みますか？',
-  'No thanks': '結構です',
   'Containers stay in Firefox': 'コンテナは Firefox に残ります',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} は {engine} で検索します: ここでも使うには設定で選んでください',
@@ -3678,4 +3671,23 @@ export const ja: Dictionary = {
   Unknown: '不明',
   'Unnamed group': '名前のないグループ',
   'Loading your chats…': 'チャットを読み込んでいます…',
+  'Log in or sign up': 'ログインまたは新規登録',
+  'Use without an account': 'アカウントなしで使う',
+  'How did you hear about Orden?': 'Orden をどこで知りましたか？',
+  'AI assistant': 'AI アシスタント',
+  'Friend or colleague': '友人や同僚',
+  'Social media': 'ソーシャルメディア',
+  'Where?': 'どこで？',
+  'Which browser do you use now?': '今どのブラウザを使っていますか？',
+  'Not yet': '未対応',
+  Request: 'リクエスト',
+  'Import from {browser}': '{browser} から読み込む',
+  'Open tabs': '開いているタブ',
+  Imported: '読み込み済み',
+  'Bring your notes': 'ノートを持ってくる',
+  'Here’s how you can import it anyway': 'それでも読み込む方法',
+  'Connect your AI': 'AI をつなぐ',
+  'Use an API key': 'API キーを使う',
+  'Welcome to {app}': '{app} へようこそ',
+  'Show me around': '案内して',
 }

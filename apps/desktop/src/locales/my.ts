@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
-  'All set': 'အားလုံး အသင့်ဖြစ်ပါပြီ',
-  Personalize: 'စိတ်ကြိုက်ပြင်ရန်',
-  Clean: 'ရှင်းလင်း',
-  'Live preview': 'တိုက်ရိုက်အစမ်းကြည့်',
   'Developer mode': 'ဒီဗလပ်ပါမုဒ်',
   'Do you write code?': 'ကုဒ်ရေးပါသလား?',
   Yes: 'ဟုတ်ကဲ့',
@@ -32,9 +28,6 @@ export const my: Dictionary = {
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'အခြားဘရောက်ဇာမှ သင့်စာညှပ်များ၊ တဘ်များနှင့် မှတ်တမ်းကို ယူလာမလား?',
-  'No thanks': 'မလိုပါ၊ ကျေးဇူးပါ',
   'Containers stay in Firefox': 'ကွန်တိန်နာများ Firefox တွင် ကျန်ရစ်သည်',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} သည် {engine} ဖြင့် ရှာသည်- ဤနေရာတွင်လည်း ၎င်းဖြင့် ရှာရန် ဆက်တင်များတွင် ရွေးပါ',
@@ -3700,4 +3693,23 @@ export const my: Dictionary = {
   Unknown: 'မသိ',
   'Unnamed group': 'အမည်မဲ့ အဖွဲ့',
   'Loading your chats…': 'သင့်ချတ်များကို ဖွင့်နေသည်…',
+  'Log in or sign up': 'ဝင်ရောက်ပါ သို့မဟုတ် စာရင်းသွင်းပါ',
+  'Use without an account': 'အကောင့်မပါဘဲ သုံးမည်',
+  'How did you hear about Orden?': 'Orden အကြောင်း ဘယ်ကကြားခဲ့သလဲ?',
+  'AI assistant': 'AI လက်ထောက်',
+  'Friend or colleague': 'သူငယ်ချင်း သို့မဟုတ် လုပ်ဖော်ကိုင်ဖက်',
+  'Social media': 'ဆိုရှယ်မီဒီယာ',
+  'Where?': 'ဘယ်မှာလဲ?',
+  'Which browser do you use now?': 'အခု ဘယ်ဘရောက်ဇာ သုံးနေသလဲ?',
+  'Not yet': 'မရသေးပါ',
+  Request: 'တောင်းဆိုမည်',
+  'Import from {browser}': '{browser} မှ တင်သွင်းမည်',
+  'Open tabs': 'ဖွင့်ထားသော တက်ဘ်များ',
+  Imported: 'တင်သွင်းပြီး',
+  'Bring your notes': 'သင့်မှတ်စုများကို ယူလာပါ',
+  'Here’s how you can import it anyway': 'ဒါပေမဲ့ ဒီလိုတင်သွင်းနိုင်ပါတယ်',
+  'Connect your AI': 'သင့် AI ကို ချိတ်ဆက်ပါ',
+  'Use an API key': 'API ကီး သုံးမည်',
+  'Welcome to {app}': '{app} မှ ကြိုဆိုပါတယ်',
+  'Show me around': 'လှည့်ပြပေးပါ',
 }

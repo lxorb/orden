@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
-  'All set': 'Alles parat',
-  Personalize: 'Aapasse',
-  Clean: 'Uufgruumt',
-  'Live preview': 'Live-Vorschau',
   'Developer mode': 'Entwicklermodus',
   'Do you write code?': 'Schriibsch du Code?',
   Yes: 'Ja',
@@ -33,9 +29,6 @@ export const gsw: Dictionary = {
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Lesezeiche, Tabs und Verlauf us emne andere Browser mitnäh?',
-  'No thanks': 'Nei danke',
   'Containers stay in Firefox': 'D Container blibe im Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} suecht mit {engine}: Wähl s i de Iistellige, zum au do demit z sueche',
@@ -3789,4 +3782,23 @@ export const gsw: Dictionary = {
   Unknown: 'Unbekannt',
   'Unnamed group': 'Gruppe ohni Name',
   'Loading your chats…': 'Dini Chats wärded glade…',
+  'Log in or sign up': 'Aamälde oder registriere',
+  'Use without an account': 'Ohni Konto bruuche',
+  'How did you hear about Orden?': 'Wie hesch du vo Orden ghört?',
+  'AI assistant': 'KI-Assistänt',
+  'Friend or colleague': 'Fründin oder Kolleg',
+  'Social media': 'Soziali Medie',
+  'Where?': 'Wo?',
+  'Which browser do you use now?': 'Wele Browser bruuchsch grad?',
+  'Not yet': 'Na nöd',
+  Request: 'Aafröge',
+  'Import from {browser}': 'Us {browser} importiere',
+  'Open tabs': 'Offni Tabs',
+  Imported: 'Importiert',
+  'Bring your notes': 'Bring dini Notize mit',
+  'Here’s how you can import it anyway': 'So chasch sie glich importiere',
+  'Connect your AI': 'Verbind dini KI',
+  'Use an API key': 'API-Schlüssel bruuche',
+  'Welcome to {app}': 'Willkomme bi {app}',
+  'Show me around': 'Zeig mer alles',
 }

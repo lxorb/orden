@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
-  'All set': '준비 완료',
-  Personalize: '맞춤 설정',
-  Clean: '깔끔하게',
-  'Live preview': '라이브 미리보기',
   'Developer mode': '개발자 모드',
   'Do you write code?': '코드를 작성하시나요?',
   Yes: '예',
@@ -32,9 +28,6 @@ export const ko: Dictionary = {
   'Import from Zen': 'Zen에서 가져오기',
   'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
   'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    '다른 브라우저에서 북마크, 탭, 방문 기록을 가져올까요?',
-  'No thanks': '괜찮습니다',
   'Containers stay in Firefox': '컨테이너는 Firefox에 남습니다',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser}은(는) {engine}(으)로 검색합니다: 여기서도 쓰려면 설정에서 선택하세요',
@@ -3654,4 +3647,23 @@ export const ko: Dictionary = {
   Unknown: '알 수 없음',
   'Unnamed group': '이름 없는 그룹',
   'Loading your chats…': '채팅을 불러오는 중…',
+  'Log in or sign up': '로그인 또는 가입',
+  'Use without an account': '계정 없이 사용',
+  'How did you hear about Orden?': 'Orden을 어떻게 알게 되셨나요?',
+  'AI assistant': 'AI 어시스턴트',
+  'Friend or colleague': '친구나 동료',
+  'Social media': '소셜 미디어',
+  'Where?': '어디에서요?',
+  'Which browser do you use now?': '지금 어떤 브라우저를 쓰시나요?',
+  'Not yet': '아직 안 됨',
+  Request: '요청',
+  'Import from {browser}': '{browser}에서 가져오기',
+  'Open tabs': '열린 탭',
+  Imported: '가져옴',
+  'Bring your notes': '노트 가져오기',
+  'Here’s how you can import it anyway': '그래도 가져오는 방법',
+  'Connect your AI': 'AI 연결하기',
+  'Use an API key': 'API 키 사용',
+  'Welcome to {app}': '{app}에 오신 것을 환영합니다',
+  'Show me around': '둘러보기',
 }

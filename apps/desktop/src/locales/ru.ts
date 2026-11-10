@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ru: Dictionary = {
-  'All set': 'Всё готово',
-  Personalize: 'Настроить под себя',
-  Clean: 'Чистый',
-  'Live preview': 'Живой просмотр',
   'Developer mode': 'Режим разработчика',
   'Do you write code?': 'Вы пишете код?',
   Yes: 'Да',
@@ -33,9 +29,6 @@ export const ru: Dictionary = {
   'Import from Zen': 'Импорт из Zen',
   'Containers stay in Zen': 'Контейнеры остаются в Zen',
   'Zen’s tabs could not be read.': 'Не удалось прочитать вкладки Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Перенести закладки, вкладки и историю из другого браузера?',
-  'No thanks': 'Нет, спасибо',
   'Containers stay in Firefox': 'Контейнеры остаются в Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} ищет через {engine}: выберите его в настройках, чтобы искать так и здесь',
@@ -3910,4 +3903,23 @@ export const ru: Dictionary = {
   Unknown: 'Неизвестно',
   'Unnamed group': 'Группа без названия',
   'Loading your chats…': 'Загрузка чатов…',
+  'Log in or sign up': 'Войдите или зарегистрируйтесь',
+  'Use without an account': 'Пользоваться без аккаунта',
+  'How did you hear about Orden?': 'Как вы узнали об Orden?',
+  'AI assistant': 'ИИ-ассистент',
+  'Friend or colleague': 'Друг или коллега',
+  'Social media': 'Соцсети',
+  'Where?': 'Где?',
+  'Which browser do you use now?': 'Каким браузером вы пользуетесь сейчас?',
+  'Not yet': 'Пока нет',
+  Request: 'Запросить',
+  'Import from {browser}': 'Импорт из {browser}',
+  'Open tabs': 'Открытые вкладки',
+  Imported: 'Импортировано',
+  'Bring your notes': 'Перенесите свои заметки',
+  'Here’s how you can import it anyway': 'Как импортировать всё равно',
+  'Connect your AI': 'Подключите свой ИИ',
+  'Use an API key': 'Использовать API-ключ',
+  'Welcome to {app}': 'Добро пожаловать в {app}',
+  'Show me around': 'Покажите, что тут есть',
 }

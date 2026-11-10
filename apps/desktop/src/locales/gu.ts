@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
-  'All set': 'બધું તૈયાર છે',
-  Personalize: 'વ્યક્તિગત બનાવો',
-  Clean: 'સ્વચ્છ',
-  'Live preview': 'લાઇવ પ્રીવ્યૂ',
   'Developer mode': 'ડેવલપર મોડ',
   'Do you write code?': 'શું તમે કોડ લખો છો?',
   Yes: 'હા',
@@ -32,9 +28,6 @@ export const gu: Dictionary = {
   'Import from Zen': 'Zen માંથી આયાત કરો',
   'Containers stay in Zen': 'કન્ટેનર Zen માં જ રહે છે',
   'Zen’s tabs could not be read.': 'Zen ના ટૅબ વાંચી શકાયા નહીં.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'બીજા બ્રાઉઝરમાંથી તમારા બુકમાર્ક, ટૅબ અને ઇતિહાસ લાવવા છે?',
-  'No thanks': 'ના, આભાર',
   'Containers stay in Firefox': 'કન્ટેનર Firefox માં જ રહે છે',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} વડે શોધે છે: અહીં પણ તેનાથી શોધવા સેટિંગ્સમાં તેને પસંદ કરો',
@@ -3746,4 +3739,23 @@ export const gu: Dictionary = {
   Unknown: 'અજ્ઞાત',
   'Unnamed group': 'નામ વગરનું ગ્રુપ',
   'Loading your chats…': 'તમારી ચેટ્સ લોડ થઈ રહી છે…',
+  'Log in or sign up': 'લૉગ ઇન કરો અથવા સાઇન અપ કરો',
+  'Use without an account': 'ખાતા વિના વાપરો',
+  'How did you hear about Orden?': 'તમને Orden વિશે ક્યાંથી ખબર પડી?',
+  'AI assistant': 'એઆઈ સહાયક',
+  'Friend or colleague': 'મિત્ર અથવા સહકર્મી',
+  'Social media': 'સોશિયલ મીડિયા',
+  'Where?': 'ક્યાં?',
+  'Which browser do you use now?': 'તમે અત્યારે કયું બ્રાઉઝર વાપરો છો?',
+  'Not yet': 'હજી નહીં',
+  Request: 'વિનંતી કરો',
+  'Import from {browser}': '{browser}માંથી આયાત કરો',
+  'Open tabs': 'ખુલ્લી ટૅબ',
+  Imported: 'આયાત થયું',
+  'Bring your notes': 'તમારી નોંધો લાવો',
+  'Here’s how you can import it anyway': 'તો પણ આ રીતે આયાત કરી શકો',
+  'Connect your AI': 'તમારું એઆઈ જોડો',
+  'Use an API key': 'API કી વાપરો',
+  'Welcome to {app}': '{app}માં આપનું સ્વાગત છે',
+  'Show me around': 'મને ફેરવીને બતાવો',
 }

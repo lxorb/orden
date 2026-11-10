@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fr: Dictionary = {
-  'All set': 'Tout est prêt',
-  Personalize: 'Personnaliser',
-  Clean: 'Épuré',
-  'Live preview': 'Aperçu en direct',
   'Developer mode': 'Mode développeur',
   'Do you write code?': 'Vous écrivez du code ?',
   Yes: 'Oui',
@@ -33,9 +29,6 @@ export const fr: Dictionary = {
   'Import from Zen': 'Importer depuis Zen',
   'Containers stay in Zen': 'Les conteneurs restent dans Zen',
   'Zen’s tabs could not be read.': 'Les onglets de Zen n’ont pas pu être lus.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Apporter vos favoris, onglets et historique depuis un autre navigateur ?',
-  'No thanks': 'Non merci',
   'Containers stay in Firefox': 'Les conteneurs restent dans Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} recherche avec {engine} : choisissez-le dans les Réglages pour l’utiliser ici aussi',
@@ -3897,4 +3890,23 @@ export const fr: Dictionary = {
   Unknown: 'Inconnu',
   'Unnamed group': 'Groupe sans nom',
   'Loading your chats…': 'Chargement de vos discussions…',
+  'Log in or sign up': 'Se connecter ou s’inscrire',
+  'Use without an account': 'Utiliser sans compte',
+  'How did you hear about Orden?': 'Comment avez-vous connu Orden ?',
+  'AI assistant': 'Assistant IA',
+  'Friend or colleague': 'Ami ou collègue',
+  'Social media': 'Réseaux sociaux',
+  'Where?': 'Où ?',
+  'Which browser do you use now?': 'Quel navigateur utilisez-vous en ce moment ?',
+  'Not yet': 'Pas encore',
+  Request: 'Demander',
+  'Import from {browser}': 'Importer depuis {browser}',
+  'Open tabs': 'Onglets ouverts',
+  Imported: 'Importé',
+  'Bring your notes': 'Apportez vos notes',
+  'Here’s how you can import it anyway': 'Voici comment l’importer quand même',
+  'Connect your AI': 'Connectez votre IA',
+  'Use an API key': 'Utiliser une clé API',
+  'Welcome to {app}': 'Bienvenue dans {app}',
+  'Show me around': 'Faites-moi visiter',
 }

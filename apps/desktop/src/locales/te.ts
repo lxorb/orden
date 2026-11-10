@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
-  'All set': 'అంతా సిద్ధం',
-  Personalize: 'వ్యక్తిగతీకరించండి',
-  Clean: 'శుభ్రంగా',
-  'Live preview': 'లైవ్ ప్రివ్యూ',
   'Developer mode': 'డెవలపర్ మోడ్',
   'Do you write code?': 'మీరు కోడ్ రాస్తారా?',
   Yes: 'అవును',
@@ -33,9 +29,6 @@ export const te: Dictionary = {
   'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
   'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
   'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'వేరే బ్రౌజర్ నుండి మీ బుక్‌మార్క్‌లు, ట్యాబ్‌లు, చరిత్రను తీసుకురావాలా?',
-  'No thanks': 'వద్దు, ధన్యవాదాలు',
   'Containers stay in Firefox': 'కంటైనర్‌లు Firefox లోనే ఉంటాయి',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine}తో వెతుకుతుంది: ఇక్కడ కూడా దానితో వెతకడానికి సెట్టింగ్‌లలో దాన్ని ఎంచుకోండి',
@@ -3784,4 +3777,23 @@ export const te: Dictionary = {
   Unknown: 'తెలియదు',
   'Unnamed group': 'పేరులేని గ్రూప్',
   'Loading your chats…': 'మీ చాట్‌లు లోడ్ అవుతున్నాయి…',
+  'Log in or sign up': 'లాగిన్ అవ్వండి లేదా సైన్ అప్ చేయండి',
+  'Use without an account': 'ఖాతా లేకుండా వాడు',
+  'How did you hear about Orden?': 'Orden గురించి మీకు ఎక్కడ తెలిసింది?',
+  'AI assistant': 'AI సహాయకుడు',
+  'Friend or colleague': 'స్నేహితుడు లేదా సహోద్యోగి',
+  'Social media': 'సోషల్ మీడియా',
+  'Where?': 'ఎక్కడ?',
+  'Which browser do you use now?': 'మీరు ఇప్పుడు ఏ బ్రౌజర్ వాడుతున్నారు?',
+  'Not yet': 'ఇంకా లేదు',
+  Request: 'అభ్యర్థించు',
+  'Import from {browser}': '{browser} నుండి దిగుమతి చేయి',
+  'Open tabs': 'తెరిచిన ట్యాబ్‌లు',
+  Imported: 'దిగుమతి అయింది',
+  'Bring your notes': 'మీ నోట్స్ తీసుకురండి',
+  'Here’s how you can import it anyway': 'అయినా దిగుమతి చేసే మార్గం ఇదిగో',
+  'Connect your AI': 'మీ AIని కనెక్ట్ చేయండి',
+  'Use an API key': 'API కీ వాడు',
+  'Welcome to {app}': '{app}కి స్వాగతం',
+  'Show me around': 'నాకు చుట్టూ చూపించు',
 }

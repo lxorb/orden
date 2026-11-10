@@ -1,8 +1,7 @@
 import { type Moment, startsFresh } from './fresh-start'
 import { markSeedSpace, markSeeded, wasSeeded } from './seeded'
-import { settings } from './settings.svelte'
 import { madeSpace } from './space-actions'
-import { joinPath } from './tauri'
+import { isMobile, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
 import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from './welcome'
 import { writeFile } from './workspace/write-file'
@@ -20,7 +19,7 @@ class FirstSpace {
       markSeedSpace(space.root)
       const note = await this.welcome(space)
       await this.arrive(space, note)
-      if (note) settings.setup = -1
+      if (note) await beginSetup()
     } finally {
       this.working = false
     }
@@ -41,6 +40,12 @@ class FirstSpace {
     if (note) await workspace.openFirst(note)
     if (!viewport.drawer) workspace.showPanel('tree')
   }
+}
+
+async function beginSetup() {
+  if (isMobile) return
+  const { setup } = await import('./onboarding/setup.svelte')
+  setup.begin(false)
 }
 
 export const firstSpace = new FirstSpace()

@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
-  'All set': 'Her şey hazır',
-  Personalize: 'Kişiselleştir',
-  Clean: 'Sade',
-  'Live preview': 'Canlı önizleme',
   'Developer mode': 'Geliştirici modu',
   'Do you write code?': 'Kod yazıyor musunuz?',
   Yes: 'Evet',
@@ -33,9 +29,6 @@ export const tr: Dictionary = {
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Yer imlerinizi, sekmelerinizi ve geçmişinizi başka bir tarayıcıdan getirmek ister misiniz?',
-  'No thanks': 'Hayır, teşekkürler',
   'Containers stay in Firefox': 'Kapsayıcılar Firefox’ta kalır',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser}, {engine} ile arar: burada da onunla aramak için Ayarlar’dan seçin',
@@ -3783,4 +3776,23 @@ export const tr: Dictionary = {
   Unknown: 'Bilinmiyor',
   'Unnamed group': 'Adsız grup',
   'Loading your chats…': 'Sohbetleriniz yükleniyor…',
+  'Log in or sign up': 'Giriş yapın veya kaydolun',
+  'Use without an account': 'Hesap olmadan kullan',
+  'How did you hear about Orden?': 'Orden’i nereden duydunuz?',
+  'AI assistant': 'Yapay zekâ asistanı',
+  'Friend or colleague': 'Arkadaş veya iş arkadaşı',
+  'Social media': 'Sosyal medya',
+  'Where?': 'Nerede?',
+  'Which browser do you use now?': 'Şu anda hangi tarayıcıyı kullanıyorsunuz?',
+  'Not yet': 'Henüz değil',
+  Request: 'İste',
+  'Import from {browser}': '{browser} tarayıcısından içe aktar',
+  'Open tabs': 'Açık sekmeler',
+  Imported: 'İçe aktarıldı',
+  'Bring your notes': 'Notlarınızı getirin',
+  'Here’s how you can import it anyway': 'Yine de şöyle içe aktarabilirsiniz',
+  'Connect your AI': 'Yapay zekânızı bağlayın',
+  'Use an API key': 'API anahtarı kullan',
+  'Welcome to {app}': '{app} uygulamasına hoş geldiniz',
+  'Show me around': 'Bana etrafı göster',
 }
