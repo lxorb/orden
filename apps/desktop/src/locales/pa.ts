@@ -688,7 +688,8 @@ export const pa: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} ਤੇ ਇੱਕ {link} ਵਾਲੇ ਸ਼ਬਦ।',
   bold: 'ਮੋਟਾ',
   link: 'ਕੜੀ',
-  'Everything is markdown, and nothing else.': 'ਸਭ ਕੁਝ markdown ਹੈ, ਹੋਰ ਕੁਝ ਨਹੀਂ।',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ਹਰ ਨੋਟ ਤੁਹਾਡੀ ਆਪਣੀ Markdown ਫ਼ਾਈਲ ਹੈ, ਅੰਦਰ ਹੀ ਕੰਮ, ਬੇਸ ਅਤੇ ਬੋਰਡ ਹਨ।',
   'One thing': 'ਇੱਕ ਚੀਜ਼',
   Another: 'ਇੱਕ ਹੋਰ',
   'could not reach the theme store': 'ਥੀਮ ਸਟੋਰ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕੇ',

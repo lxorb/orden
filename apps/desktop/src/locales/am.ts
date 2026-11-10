@@ -680,7 +680,8 @@ export const am: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} እና {link} ያለባቸው ቃላት።',
   bold: 'ደማቅ',
   link: 'አገናኝ',
-  'Everything is markdown, and nothing else.': 'ሁሉም markdown ነው፣ ሌላ ምንም የለም።',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'እያንዳንዱ ማስታወሻ የእርስዎ የሆነ የMarkdown ፋይል ነው፣ ተግባራት፣ ቤዞች እና ቦርዶች በውስጡ አሉ።',
   'One thing': 'አንድ ነገር',
   Another: 'ሌላ አንድ',
   'could not reach the theme store': 'የገጽታ መሸጫ ላይ መድረስ አልተቻለም',

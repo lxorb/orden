@@ -693,7 +693,8 @@ export const ml: Dictionary = {
   'Words with {bold} and a {link}.': '{bold}ഉം ഒരു {link}ഉം ഉള്ള വാക്കുകൾ.',
   bold: 'ബോൾഡ്',
   link: 'ലിങ്ക്',
-  'Everything is markdown, and nothing else.': 'എല്ലാം Markdown, മറ്റൊന്നുമല്ല.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ഓരോ കുറിപ്പും നിങ്ങളുടെ സ്വന്തം Markdown ഫയലാണ്, ഉള്ളിൽ തന്നെ ചെയ്യേണ്ടവയും ബേസുകളും ബോർഡുകളും ഉണ്ട്.',
   'One thing': 'ഒരു കാര്യം',
   Another: 'മറ്റൊന്ന്',
   'could not reach the theme store': 'തീം സ്റ്റോറിൽ എത്താനായില്ല',

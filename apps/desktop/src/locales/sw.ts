@@ -691,7 +691,8 @@ export const sw: Dictionary = {
   'Words with {bold} and a {link}.': 'Maneno yenye {bold} na {link}.',
   bold: 'kolezo',
   link: 'kiungo',
-  'Everything is markdown, and nothing else.': 'Kila kitu ni markdown, na si kingine.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Kila dokezo ni faili la Markdown unalomiliki, lenye kazi, besi na mbao ndani yake.',
   'One thing': 'Kitu kimoja',
   Another: 'Kingine',
   'could not reach the theme store': 'duka la mandhari halikufikiwa',

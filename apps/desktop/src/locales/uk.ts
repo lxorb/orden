@@ -715,7 +715,8 @@ export const uk: Dictionary = {
   'Words with {bold} and a {link}.': 'Слова з {bold} та {link}.',
   bold: 'жирним',
   link: 'посиланням',
-  'Everything is markdown, and nothing else.': 'Усе - markdown, і нічого більше.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Кожна нотатка - ваш власний файл Markdown, із завданнями, базами й дошками просто всередині.',
   'One thing': 'Одне',
   Another: 'Інше',
   'could not reach the theme store': 'не вдалося зв’язатися з магазином тем',

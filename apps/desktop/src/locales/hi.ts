@@ -687,7 +687,8 @@ export const hi: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} और एक {link} के साथ शब्द।',
   bold: 'बोल्ड',
   link: 'लिंक',
-  'Everything is markdown, and nothing else.': 'सब कुछ Markdown है, और कुछ नहीं।',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'हर नोट आपकी अपनी Markdown फ़ाइल है, जिसके अंदर ही काम, बेस और बोर्ड हैं।',
   'One thing': 'एक चीज़',
   Another: 'दूसरी',
   'could not reach the theme store': 'थीम स्टोर तक नहीं पहुँच सके',

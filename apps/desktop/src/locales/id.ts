@@ -679,7 +679,8 @@ export const id: Dictionary = {
   'Words with {bold} and a {link}.': 'Kata dengan {bold} dan sebuah {link}.',
   bold: 'tebal',
   link: 'tautan',
-  'Everything is markdown, and nothing else.': 'Semuanya markdown, tidak ada yang lain.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Setiap catatan adalah file Markdown milikmu, dengan tugas, basis, dan papan langsung di dalamnya.',
   'One thing': 'Satu hal',
   Another: 'Satu lagi',
   'could not reach the theme store': 'tidak dapat menghubungi toko tema',

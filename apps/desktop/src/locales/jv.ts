@@ -680,7 +680,8 @@ export const jv: Dictionary = {
   'Words with {bold} and a {link}.': 'Tembung kanthi {bold} lan {link}.',
   bold: 'kandel',
   link: 'pranala',
-  'Everything is markdown, and nothing else.': 'Kabeh markdown, ora ana liyane.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Saben cathetan iku file Markdown duwekmu, kanthi tugas, basis lan papan ing njero.',
   'One thing': 'Siji bab',
   Another: 'Siji maneh',
   'could not reach the theme store': 'ora bisa nggayuh toko tema',

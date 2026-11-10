@@ -686,7 +686,8 @@ export const ta: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} மற்றும் ஒரு {link} உள்ள சொற்கள்.',
   bold: 'தடிமன்',
   link: 'இணைப்பு',
-  'Everything is markdown, and nothing else.': 'எல்லாம் Markdown, வேறு எதுவும் இல்லை.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ஒவ்வொரு குறிப்பும் உங்களுக்குச் சொந்தமான Markdown கோப்பு, அதற்குள்ளேயே பணிகள், பேஸ்கள், போர்டுகள் உள்ளன.',
   'One thing': 'ஒரு விஷயம்',
   Another: 'மற்றொன்று',
   'could not reach the theme store': 'தீம் கடையை அணுக முடியவில்லை',

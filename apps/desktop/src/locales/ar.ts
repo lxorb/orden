@@ -728,7 +728,8 @@ export const ar: Dictionary = {
   'Words with {bold} and a {link}.': 'كلمات فيها {bold} و{link}.',
   bold: 'عريض',
   link: 'رابط',
-  'Everything is markdown, and nothing else.': 'كل شيء Markdown، ولا شيء غيره.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'كل ملاحظة ملف Markdown تملكه، وفيه المهام والقواعد واللوحات.',
   'One thing': 'شيء',
   Another: 'آخر',
   'could not reach the theme store': 'تعذّر الوصول إلى متجر السمات',

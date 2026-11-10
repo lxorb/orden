@@ -680,7 +680,8 @@ export const ms: Dictionary = {
   'Words with {bold} and a {link}.': 'Perkataan dengan {bold} dan satu {link}.',
   bold: 'tebal',
   link: 'pautan',
-  'Everything is markdown, and nothing else.': 'Semuanya markdown, tiada yang lain.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Setiap nota ialah fail Markdown milik anda, dengan tugasan, pangkalan dan papan terus di dalamnya.',
   'One thing': 'Satu perkara',
   Another: 'Satu lagi',
   'could not reach the theme store': 'tidak dapat menghubungi gedung tema',

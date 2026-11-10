@@ -690,7 +690,8 @@ export const ha: Dictionary = {
   'Words with {bold} and a {link}.': 'Kalmomi da {bold} da {link}.',
   bold: 'kauri',
   link: 'haɗi',
-  'Everything is markdown, and nothing else.': 'Duk markdown ne, ba wani abu ba.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Kowace bayani fayil ne na Markdown naka, da ayyuka, bases da allunan a cikinsa.',
   'One thing': 'Abu ɗaya',
   Another: 'Wani kuma',
   'could not reach the theme store': 'ba a iya kai wa kantin kamanni ba',

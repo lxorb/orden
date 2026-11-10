@@ -687,7 +687,8 @@ export const tr: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} ve bir {link} içeren sözcükler.',
   bold: 'kalın',
   link: 'bağlantı',
-  'Everything is markdown, and nothing else.': 'Her şey markdown, başka bir şey değil.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Her not sana ait bir Markdown dosyasıdır; yapılacaklar, tabanlar ve panolar hemen içindedir.',
   'One thing': 'Bir şey',
   Another: 'Bir başka',
   'could not reach the theme store': 'tema mağazasına ulaşılamadı',

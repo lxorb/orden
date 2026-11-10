@@ -716,7 +716,8 @@ export const pl: Dictionary = {
   'Words with {bold} and a {link}.': 'Słowa z {bold} i {link}.',
   bold: 'pogrubieniem',
   link: 'linkiem',
-  'Everything is markdown, and nothing else.': 'Wszystko jest markdownem i niczym więcej.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Każda notatka to Twój własny plik Markdown, z zadaniami, bazami i tablicami w środku.',
   'One thing': 'Jedna rzecz',
   Another: 'Inna',
   'could not reach the theme store': 'brak połączenia ze sklepem motywów',

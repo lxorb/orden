@@ -679,7 +679,8 @@ export const ko: Dictionary = {
   'Words with {bold} and a {link}.': '{bold}와 {link}가 있는 글.',
   bold: '굵게',
   link: '링크',
-  'Everything is markdown, and nothing else.': '모두 마크다운이고 그 밖의 것은 없습니다.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    '모든 노트는 내가 소유한 마크다운 파일이며, 할 일, 베이스, 보드가 바로 안에 있습니다.',
   'One thing': '항목 하나',
   Another: '또 하나',
   'could not reach the theme store': '테마 스토어에 연결할 수 없습니다',

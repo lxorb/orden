@@ -680,7 +680,8 @@ export const vi: Dictionary = {
   'Words with {bold} and a {link}.': 'Chữ có {bold} và một {link}.',
   bold: 'đậm',
   link: 'liên kết',
-  'Everything is markdown, and nothing else.': 'Mọi thứ là Markdown, không gì khác.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Mỗi ghi chú là một tệp Markdown của riêng bạn, có việc cần làm, cơ sở dữ liệu và bảng ngay bên trong.',
   'One thing': 'Một thứ',
   Another: 'Thứ khác',
   'could not reach the theme store': 'không kết nối được kho chủ đề',

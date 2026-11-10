@@ -677,7 +677,8 @@ export const th: Dictionary = {
   'Words with {bold} and a {link}.': 'ข้อความที่มี {bold} และ {link}',
   bold: 'ตัวหนา',
   link: 'ลิงก์',
-  'Everything is markdown, and nothing else.': 'ทุกอย่างเป็น Markdown ไม่มีอะไรอื่น',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ทุกโน้ตคือไฟล์ Markdown ของคุณเอง พร้อมสิ่งที่ต้องทำ ฐานข้อมูล และบอร์ดอยู่ข้างใน',
   'One thing': 'อย่างหนึ่ง',
   Another: 'อีกอย่าง',
   'could not reach the theme store': 'ติดต่อร้านธีมไม่ได้',

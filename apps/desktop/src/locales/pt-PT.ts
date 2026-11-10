@@ -702,7 +702,8 @@ export const ptPT: Dictionary = {
   'Words with {bold} and a {link}.': 'Palavras com {bold} e uma {link}.',
   bold: 'negrito',
   link: 'ligação',
-  'Everything is markdown, and nothing else.': 'Tudo é markdown, e nada mais.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Cada nota é um ficheiro Markdown seu, com tarefas, bases e quadros lá dentro.',
   'One thing': 'Uma coisa',
   Another: 'Outra',
   'could not reach the theme store': 'não foi possível contactar a loja de temas',

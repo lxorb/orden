@@ -686,7 +686,8 @@ export const te: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} మరియు ఒక {link} ఉన్న పదాలు.',
   bold: 'బోల్డ్',
   link: 'లింక్',
-  'Everything is markdown, and nothing else.': 'అంతా Markdown, మరేమీ కాదు.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ప్రతి నోట్ మీ స్వంత Markdown ఫైల్, లోపలే పనులు, బేస్‌లు, బోర్డులు ఉంటాయి.',
   'One thing': 'ఒక అంశం',
   Another: 'మరొకటి',
   'could not reach the theme store': 'థీమ్ స్టోర్‌ను చేరుకోలేకపోయింది',

@@ -692,7 +692,8 @@ export const kn: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} ಮತ್ತು ಒಂದು {link} ಇರುವ ಪದಗಳು.',
   bold: 'ದಪ್ಪ',
   link: 'ಲಿಂಕ್',
-  'Everything is markdown, and nothing else.': 'ಎಲ್ಲವೂ Markdown, ಬೇರೇನೂ ಇಲ್ಲ.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ಪ್ರತಿ ಟಿಪ್ಪಣಿಯೂ ನಿಮ್ಮದೇ Markdown ಫೈಲ್, ಒಳಗೇ ಕಾರ್ಯಗಳು, ಬೇಸ್‌ಗಳು ಮತ್ತು ಬೋರ್ಡ್‌ಗಳು ಇವೆ.',
   'One thing': 'ಒಂದು ಅಂಶ',
   Another: 'ಇನ್ನೊಂದು',
   'could not reach the theme store': 'ಥೀಮ್ ಸ್ಟೋರ್ ತಲುಪಲಾಗಲಿಲ್ಲ',

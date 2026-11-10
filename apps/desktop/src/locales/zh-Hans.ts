@@ -675,7 +675,8 @@ export const zhHans: Dictionary = {
   'Words with {bold} and a {link}.': '带{bold}和{link}的文字。',
   bold: '加粗',
   link: '链接',
-  'Everything is markdown, and nothing else.': '一切都是Markdown，别无其他。',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    '每条笔记都是你拥有的Markdown文件，待办、数据库和看板就在其中。',
   'One thing': '一项',
   Another: '另一项',
   'could not reach the theme store': '无法连接主题商店',

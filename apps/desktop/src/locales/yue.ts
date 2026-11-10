@@ -675,7 +675,8 @@ export const yue: Dictionary = {
   'Words with {bold} and a {link}.': '含{bold}同{link}嘅文字。',
   bold: '粗體',
   link: '連結',
-  'Everything is markdown, and nothing else.': '一切都係Markdown，別無其他。',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    '每篇筆記都係你擁有嘅Markdown檔案，入面就有待辦、資料庫同看板。',
   'One thing': '一項',
   Another: '另一項',
   'could not reach the theme store': '冇辦法連上主題商店',

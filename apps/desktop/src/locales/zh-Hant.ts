@@ -675,7 +675,8 @@ export const zhHant: Dictionary = {
   'Words with {bold} and a {link}.': '含{bold}與{link}的文字。',
   bold: '粗體',
   link: '連結',
-  'Everything is markdown, and nothing else.': '一切都是Markdown，別無其他。',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    '每則筆記都是你擁有的Markdown檔案，待辦、資料庫和看板就在其中。',
   'One thing': '一項',
   Another: '另一項',
   'could not reach the theme store': '無法連上主題商店',

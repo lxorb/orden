@@ -198,6 +198,39 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
   })
 
+  test('nor the one that said everything is markdown, before it named to-dos, bases and boards', () => {
+    const earlier = [
+      '# Welcome to Orden',
+      '',
+      'Your notes live on this device until you sign in',
+      'and turn on syncing, and then they follow you everywhere.',
+      '',
+      '- Everything is markdown, and nothing else',
+      '- **Bold**, *italic*, ==highlight==, `code`',
+      '- $E = mc^2$ renders as you type',
+      '',
+      '```js',
+      "const hello = 'world'",
+      '```',
+      '',
+      '| What | Where |',
+      '| ---- | ----- |',
+      '| Notes | this device |',
+      '| Synced notes | your account |',
+      '',
+    ].join('\n')
+
+    expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
+    expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
+  })
+
+  test('names to-dos, bases and boards now, rather than markdown and nothing else', () => {
+    expect(WELCOME).toContain(
+      '- Every note is a Markdown file you own, with to-dos, bases and boards right inside\n',
+    )
+    expect(WELCOME).not.toContain('nothing else')
+  })
+
   test.each(['Nib', 'nibeditor'])('nor the one written while it was called %s', (name) => {
     const earlier = [
       `# Welcome to ${name}`,

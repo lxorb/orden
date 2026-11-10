@@ -686,7 +686,8 @@ export const fa: Dictionary = {
   'Words with {bold} and a {link}.': 'واژه‌هایی با {bold} و یک {link}.',
   bold: 'سیاه',
   link: 'پیوند',
-  'Everything is markdown, and nothing else.': 'همه چیز markdown است و چیز دیگری نیست.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'هر یادداشت یک فایل Markdown متعلق به شماست، با کارها، پایگاه‌ها و بردها درون آن.',
   'One thing': 'یک چیز',
   Another: 'یکی دیگر',
   'could not reach the theme store': 'فروشگاه پوسته در دسترس نبود',

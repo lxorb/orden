@@ -692,7 +692,8 @@ export const fil: Dictionary = {
   'Words with {bold} and a {link}.': 'Mga salitang may {bold} at isang {link}.',
   bold: 'bold',
   link: 'link',
-  'Everything is markdown, and nothing else.': 'Lahat ay markdown, wala nang iba.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Bawat tala ay isang Markdown file na pag-aari mo, may mga gagawin, base at board sa loob mismo.',
   'One thing': 'Isang bagay',
   Another: 'Isa pa',
   'could not reach the theme store': 'hindi maabot ang tindahan ng tema',

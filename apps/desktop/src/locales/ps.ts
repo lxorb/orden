@@ -684,7 +684,8 @@ export const ps: Dictionary = {
   'Words with {bold} and a {link}.': 'کلمې له {bold} او يوې {link} سره.',
   bold: 'ډبل',
   link: 'تړنه',
-  'Everything is markdown, and nothing else.': 'هر څه markdown دی، بل هيڅ نه.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'هر یادښت ستاسو خپل Markdown فایل دی، دننه یې کارونه، بېسونه او بورډونه شته.',
   'One thing': 'يو شی',
   Another: 'بل يو',
   'could not reach the theme store': 'د بڼو پلورنځي ته ونه رسېدل',

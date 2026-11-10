@@ -686,7 +686,8 @@ export const bn: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} আর একটি {link} সহ শব্দ।',
   bold: 'বোল্ড',
   link: 'লিংক',
-  'Everything is markdown, and nothing else.': 'সবকিছুই Markdown, আর কিছু নয়।',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'প্রতিটি নোট আপনার নিজের একটি Markdown ফাইল, ভেতরেই আছে করণীয়, বেস আর বোর্ড।',
   'One thing': 'একটি জিনিস',
   Another: 'আরেকটি',
   'could not reach the theme store': 'থিম স্টোরে পৌঁছানো গেল না',

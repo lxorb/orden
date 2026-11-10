@@ -685,7 +685,8 @@ export const gu: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} અને એક {link} સાથે શબ્દો.',
   bold: 'જાડું',
   link: 'કડી',
-  'Everything is markdown, and nothing else.': 'બધું markdown છે, બીજું કંઈ નહીં.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'દરેક નોંધ તમારી પોતાની Markdown ફાઇલ છે, જેમાં જ કાર્યો, બેઝ અને બોર્ડ છે.',
   'One thing': 'એક વસ્તુ',
   Another: 'બીજી એક',
   'could not reach the theme store': 'થીમ સ્ટોર સુધી પહોંચી શકાયું નહીં',

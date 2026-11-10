@@ -683,7 +683,8 @@ export const my: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} နှင့် {link} ပါသောစာ။',
   bold: 'စာလုံးထူ',
   link: 'လင့်',
-  'Everything is markdown, and nothing else.': 'အားလုံး Markdown ဖြစ်သည်၊ အခြားမရှိ။',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'မှတ်စုတိုင်းသည် သင်ပိုင်ဆိုင်သော Markdown ဖိုင်ဖြစ်ပြီး လုပ်ရန်များ၊ base များနှင့် board များ အထဲတွင်ပင် ပါဝင်သည်။',
   'One thing': 'တစ်ချက်',
   Another: 'အခြားတစ်ချက်',
   'could not reach the theme store': 'အပြင်အဆင်စတိုးနှင့်မဆက်သွယ်နိုင်',
