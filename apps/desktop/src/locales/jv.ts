@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
-  'All set': 'Kabeh wis siyap',
-  Personalize: 'Atur dhewe',
-  Clean: 'Resik',
-  'Live preview': 'Pratinjau langsung',
   'Developer mode': 'Mode pangembang',
   'Do you write code?': 'Apa sampeyan nulis kode?',
   Yes: 'Iya',
@@ -32,9 +28,6 @@ export const jv: Dictionary = {
   'Import from Zen': 'Impor saka Zen',
   'Containers stay in Zen': 'Kontainer tetep ana ing Zen',
   'Zen’s tabs could not be read.': 'Tab Zen ora bisa diwaca.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Nggawa tetenger, tab lan riwayatmu saka browser liya?',
-  'No thanks': 'Ora, matur nuwun',
   'Containers stay in Firefox': 'Kontainer tetep ana ing Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} nggolèk nganggo {engine}: pilih ing Setelan kanggo nggolèk nganggo kuwi ing kéné uga',
@@ -687,7 +680,8 @@ export const jv: Dictionary = {
   'Words with {bold} and a {link}.': 'Tembung kanthi {bold} lan {link}.',
   bold: 'kandel',
   link: 'pranala',
-  'Everything is markdown, and nothing else.': 'Kabeh markdown, ora ana liyane.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Saben cathetan iku file Markdown duwekmu, kanthi tugas, basis lan papan ing njero.',
   'One thing': 'Siji bab',
   Another: 'Siji maneh',
   'could not reach the theme store': 'ora bisa nggayuh toko tema',
@@ -3681,4 +3675,52 @@ export const jv: Dictionary = {
   Unknown: 'Ora dikenal',
   'Unnamed group': 'Grup tanpa jeneng',
   'Loading your chats…': 'Ngemot obrolanmu…',
+  'Log in or sign up': 'Mlebu utawa ndaftar',
+  'Use without an account': 'Gunakake tanpa akun',
+  'How did you hear about Orden?': 'Saka ngendi sampeyan ngerti Orden?',
+  'AI assistant': 'Asisten AI',
+  'Friend or colleague': 'Kanca utawa kanca kerja',
+  'Social media': 'Media sosial',
+  'Where?': 'Ing ngendi?',
+  'Which browser do you use now?': 'Browser apa sing sampeyan gunakake saiki?',
+  'Not yet': 'Durung',
+  Request: 'Njaluk',
+  'Import from {browser}': 'Impor saka {browser}',
+  'Open tabs': 'Tab sing kabukak',
+  Imported: 'Wis diimpor',
+  'Bring your notes': 'Gawa cathetan sampeyan',
+  'Here’s how you can import it anyway': 'Iki carane tetep ngimpor',
+  'Connect your AI': 'Sambungake AI sampeyan',
+  'Use an API key': 'Gunakake kunci API',
+  'Welcome to {app}': 'Sugeng rawuh ing {app}',
+  'Show me around': 'Tuduhna sakubenge',
+  'Your {app} pages are here': 'Kaca {app} sampeyan ana ing kene',
+  'Pages became notes, and databases became bases with their views.':
+    'Kaca dadi cathetan, lan basis data dadi basis karo tampilane.',
+  'Your {app} notes are here': 'Cathetan {app} sampeyan ana ing kene',
+  'Still plain Markdown files, and your links work like before.':
+    'Isih file Markdown biasa, lan pranala sampeyan mlaku kaya biyen.',
+  'Every note is a file you own.': 'Saben cathetan iku file duweke sampeyan.',
+  'Everything lives in one space': 'Kabeh ana ing siji papan',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Cathetan, tugas, kaca web lan obrolan jejeran, dadi ora ana sing keri.',
+  'More than Markdown': 'Luwih saka Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Tugas, basis lan papan ana ing njero cathetan sampeyan. Dina iki nuduhake sing wis wayahe.',
+  'To-dos in any note': 'Tugas ing cathetan apa wae',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Tulisen tugas ing ngendi wae. Dina iki nglumpukake kabeh sing wis wayahe.',
+  'Your {browser} bookmarks': 'Tetenger {browser} sampeyan',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Ana ing bilah pinggir. Kaca web mbukak dadi tab ing sandhinge cathetan sampeyan.',
+  'Web pages are tabs': 'Kaca web iku tab',
+  'Browse next to your notes, without switching apps.':
+    'Jelajah ing sandhinge cathetan, tanpa ganti aplikasi.',
+  'Ask your AI': 'Takon AI sampeyan',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Obrolan ana ing sandhinge cathetan lan bisa nganggo isi papan sampeyan.',
+  'Terminals are tabs too': 'Terminal uga tab',
+  'Open one next to the notes for your project.':
+    'Bukak siji ing sandhinge cathetan proyek sampeyan.',
+  'Do this on your computer': 'Tindakake iki ing komputer sampeyan',
 }

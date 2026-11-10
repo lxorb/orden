@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
-  'All set': 'Kila kitu kiko tayari',
-  Personalize: 'Binafsisha',
-  Clean: 'Safi',
-  'Live preview': 'Onyesho la moja kwa moja',
   'Developer mode': 'Hali ya msanidi',
   'Do you write code?': 'Je, unaandika msimbo?',
   Yes: 'Ndiyo',
@@ -33,9 +29,6 @@ export const sw: Dictionary = {
   'Import from Zen': 'Ingiza kutoka Zen',
   'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
   'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Leta alamisho, vichupo na historia yako kutoka kivinjari kingine?',
-  'No thanks': 'Hapana, asante',
   'Containers stay in Firefox': 'Kontena zinabaki ndani ya Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} hutafuta kwa {engine}: kichague kwenye Mipangilio ili kutafuta nacho hapa pia',
@@ -698,7 +691,8 @@ export const sw: Dictionary = {
   'Words with {bold} and a {link}.': 'Maneno yenye {bold} na {link}.',
   bold: 'kolezo',
   link: 'kiungo',
-  'Everything is markdown, and nothing else.': 'Kila kitu ni markdown, na si kingine.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Kila dokezo ni faili la Markdown unalomiliki, lenye kazi, besi na mbao ndani yake.',
   'One thing': 'Kitu kimoja',
   Another: 'Kingine',
   'could not reach the theme store': 'duka la mandhari halikufikiwa',
@@ -3814,4 +3808,51 @@ export const sw: Dictionary = {
   Unknown: 'Haijulikani',
   'Unnamed group': 'Kikundi kisicho na jina',
   'Loading your chats…': 'Inapakia gumzo zako…',
+  'Log in or sign up': 'Ingia au jisajili',
+  'Use without an account': 'Tumia bila akaunti',
+  'How did you hear about Orden?': 'Ulisikiaje kuhusu Orden?',
+  'AI assistant': 'Msaidizi wa AI',
+  'Friend or colleague': 'Rafiki au mfanyakazi mwenzako',
+  'Social media': 'Mitandao ya kijamii',
+  'Where?': 'Wapi?',
+  'Which browser do you use now?': 'Unatumia kivinjari gani sasa?',
+  'Not yet': 'Bado',
+  Request: 'Omba',
+  'Import from {browser}': 'Leta kutoka {browser}',
+  'Open tabs': 'Vichupo vilivyo wazi',
+  Imported: 'Imeletwa',
+  'Bring your notes': 'Leta madokezo yako',
+  'Here’s how you can import it anyway': 'Hivi ndivyo unavyoweza kuileta hata hivyo',
+  'Connect your AI': 'Unganisha AI yako',
+  'Use an API key': 'Tumia ufunguo wa API',
+  'Welcome to {app}': 'Karibu {app}',
+  'Show me around': 'Nionyeshe',
+  'Your {app} pages are here': 'Kurasa zako za {app} ziko hapa',
+  'Pages became notes, and databases became bases with their views.':
+    'Kurasa zimekuwa madokezo, na hifadhidata zimekuwa besi pamoja na mionekano yake.',
+  'Your {app} notes are here': 'Madokezo yako ya {app} yako hapa',
+  'Still plain Markdown files, and your links work like before.':
+    'Bado ni faili za kawaida za Markdown, na viungo vyako vinafanya kazi kama awali.',
+  'Every note is a file you own.': 'Kila dokezo ni faili unalomiliki.',
+  'Everything lives in one space': 'Kila kitu kiko katika nafasi moja',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Madokezo, kazi, kurasa za wavuti na gumzo ziko kando kwa kando, hivyo hupotezi chochote.',
+  'More than Markdown': 'Zaidi ya Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Kazi, besi na mbao ziko ndani ya madokezo yako. Leo inaonyesha kinachohitajika.',
+  'To-dos in any note': 'Kazi katika dokezo lolote',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Andika kazi popote. Leo inakusanya kila kinachohitajika.',
+  'Your {browser} bookmarks': 'Alamisho zako za {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Ziko kwenye utepe wa kando. Kurasa za wavuti hufunguka kama vichupo kando ya madokezo yako.',
+  'Web pages are tabs': 'Kurasa za wavuti ni vichupo',
+  'Browse next to your notes, without switching apps.':
+    'Vinjari kando ya madokezo yako, bila kubadilisha programu.',
+  'Ask your AI': 'Uliza AI yako',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Gumzo ziko kando ya madokezo yako na zinaweza kutumia kilicho katika nafasi yako.',
+  'Terminals are tabs too': 'Terminali pia ni vichupo',
+  'Open one next to the notes for your project.': 'Fungua moja kando ya madokezo ya mradi wako.',
+  'Do this on your computer': 'Fanya hivi kwenye kompyuta yako',
 }

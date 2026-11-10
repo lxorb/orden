@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fil: Dictionary = {
-  'All set': 'Handa na ang lahat',
-  Personalize: 'I-personalize',
-  Clean: 'Malinis',
-  'Live preview': 'Live preview',
   'Developer mode': 'Developer mode',
   'Do you write code?': 'Nagsusulat ka ba ng code?',
   Yes: 'Oo',
@@ -32,9 +28,6 @@ export const fil: Dictionary = {
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Dalhin ang iyong mga bookmark, tab at history mula sa ibang browser?',
-  'No thanks': 'Hindi, salamat',
   'Containers stay in Firefox': 'Nananatili sa Firefox ang mga container',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'Naghahanap ang {browser} gamit ang {engine}: piliin ito sa Settings para maghanap gamit ito dito rin',
@@ -699,7 +692,8 @@ export const fil: Dictionary = {
   'Words with {bold} and a {link}.': 'Mga salitang may {bold} at isang {link}.',
   bold: 'bold',
   link: 'link',
-  'Everything is markdown, and nothing else.': 'Lahat ay markdown, wala nang iba.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Bawat tala ay isang Markdown file na pag-aari mo, may mga gagawin, base at board sa loob mismo.',
   'One thing': 'Isang bagay',
   Another: 'Isa pa',
   'could not reach the theme store': 'hindi maabot ang tindahan ng tema',
@@ -3840,4 +3834,52 @@ export const fil: Dictionary = {
   Unknown: 'Hindi kilala',
   'Unnamed group': 'Grupong walang pangalan',
   'Loading your chats…': 'Nilo-load ang iyong mga chat…',
+  'Log in or sign up': 'Mag-log in o mag-sign up',
+  'Use without an account': 'Gamitin nang walang account',
+  'How did you hear about Orden?': 'Paano mo nalaman ang Orden?',
+  'AI assistant': 'AI assistant',
+  'Friend or colleague': 'Kaibigan o katrabaho',
+  'Social media': 'Social media',
+  'Where?': 'Saan?',
+  'Which browser do you use now?': 'Anong browser ang gamit mo ngayon?',
+  'Not yet': 'Wala pa',
+  Request: 'Hilingin',
+  'Import from {browser}': 'Mag-import mula sa {browser}',
+  'Open tabs': 'Mga bukas na tab',
+  Imported: 'Na-import na',
+  'Bring your notes': 'Dalhin ang mga tala mo',
+  'Here’s how you can import it anyway': 'Ganito mo pa rin ito ma-import',
+  'Connect your AI': 'Ikonekta ang AI mo',
+  'Use an API key': 'Gumamit ng API key',
+  'Welcome to {app}': 'Maligayang pagdating sa {app}',
+  'Show me around': 'Ipakita sa akin',
+  'Your {app} pages are here': 'Narito ang iyong mga page sa {app}',
+  'Pages became notes, and databases became bases with their views.':
+    'Naging tala ang mga page, at naging base ang mga database kasama ang mga view nila.',
+  'Your {app} notes are here': 'Narito ang iyong mga tala sa {app}',
+  'Still plain Markdown files, and your links work like before.':
+    'Simpleng Markdown file pa rin, at gumagana ang iyong mga link gaya ng dati.',
+  'Every note is a file you own.': 'Bawat tala ay file na pag-aari mo.',
+  'Everything lives in one space': 'Nasa iisang space ang lahat',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Magkakatabi ang mga tala, gagawin, web page at chat, kaya walang makakaligtaan.',
+  'More than Markdown': 'Higit pa sa Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Nasa loob ng iyong mga tala ang mga gagawin, base at board. Ipinapakita ng Ngayon ang mga dapat nang gawin.',
+  'To-dos in any note': 'Mga gagawin sa anumang tala',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Sumulat ng gagawin kahit saan. Tinitipon ng Ngayon ang lahat ng dapat nang gawin.',
+  'Your {browser} bookmarks': 'Ang iyong mga bookmark sa {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Nasa sidebar sila. Bumubukas ang mga web page bilang tab sa tabi ng iyong mga tala.',
+  'Web pages are tabs': 'Tab ang mga web page',
+  'Browse next to your notes, without switching apps.':
+    'Mag-browse sa tabi ng iyong mga tala, nang hindi lumilipat ng app.',
+  'Ask your AI': 'Tanungin ang iyong AI',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Nasa tabi ng iyong mga tala ang mga chat at magagamit nila ang laman ng iyong space.',
+  'Terminals are tabs too': 'Tab din ang mga terminal',
+  'Open one next to the notes for your project.':
+    'Magbukas ng isa sa tabi ng mga tala ng iyong proyekto.',
+  'Do this on your computer': 'Gawin ito sa iyong computer',
 }

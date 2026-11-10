@@ -124,7 +124,7 @@ export function sampleHtml(full = false): string {
 
   const more = full
     ? `
-<blockquote><p>${t('Everything is markdown, and nothing else.')}</p></blockquote>
+<blockquote><p>${t('Every note is a Markdown file you own, with to-dos, bases and boards right inside.')}</p></blockquote>
 <hr>`
     : ''
 

@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
-  'All set': 'ಎಲ್ಲವೂ ಸಿದ್ಧ',
-  Personalize: 'ವೈಯಕ್ತೀಕರಿಸಿ',
-  Clean: 'ಸ್ವಚ್ಛ',
-  'Live preview': 'ಲೈವ್ ಪೂರ್ವವೀಕ್ಷಣೆ',
   'Developer mode': 'ಡೆವಲಪರ್ ಮೋಡ್',
   'Do you write code?': 'ನೀವು ಕೋಡ್ ಬರೆಯುತ್ತೀರಾ?',
   Yes: 'ಹೌದು',
@@ -33,9 +29,6 @@ export const kn: Dictionary = {
   'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'ಬೇರೆ ಬ್ರೌಸರ್‌ನಿಂದ ನಿಮ್ಮ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು, ಟ್ಯಾಬ್‌ಗಳು ಮತ್ತು ಇತಿಹಾಸವನ್ನು ತರಬೇಕೆ?',
-  'No thanks': 'ಬೇಡ, ಧನ್ಯವಾದಗಳು',
   'Containers stay in Firefox': 'ಕಂಟೇನರ್‌ಗಳು Firefox ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} ಮೂಲಕ ಹುಡುಕುತ್ತದೆ: ಇಲ್ಲಿಯೂ ಅದರಿಂದ ಹುಡುಕಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅದನ್ನು ಆರಿಸಿ',
@@ -699,7 +692,8 @@ export const kn: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} ಮತ್ತು ಒಂದು {link} ಇರುವ ಪದಗಳು.',
   bold: 'ದಪ್ಪ',
   link: 'ಲಿಂಕ್',
-  'Everything is markdown, and nothing else.': 'ಎಲ್ಲವೂ Markdown, ಬೇರೇನೂ ಇಲ್ಲ.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'ಪ್ರತಿ ಟಿಪ್ಪಣಿಯೂ ನಿಮ್ಮದೇ Markdown ಫೈಲ್, ಒಳಗೇ ಕಾರ್ಯಗಳು, ಬೇಸ್‌ಗಳು ಮತ್ತು ಬೋರ್ಡ್‌ಗಳು ಇವೆ.',
   'One thing': 'ಒಂದು ಅಂಶ',
   Another: 'ಇನ್ನೊಂದು',
   'could not reach the theme store': 'ಥೀಮ್ ಸ್ಟೋರ್ ತಲುಪಲಾಗಲಿಲ್ಲ',
@@ -3807,4 +3801,52 @@ export const kn: Dictionary = {
   Unknown: 'ಅಪರಿಚಿತ',
   'Unnamed group': 'ಹೆಸರಿಲ್ಲದ ಗುಂಪು',
   'Loading your chats…': 'ನಿಮ್ಮ ಚಾಟ್‌ಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…',
+  'Log in or sign up': 'ಲಾಗ್ ಇನ್ ಮಾಡಿ ಅಥವಾ ಸೈನ್ ಅಪ್ ಮಾಡಿ',
+  'Use without an account': 'ಖಾತೆ ಇಲ್ಲದೆ ಬಳಸಿ',
+  'How did you hear about Orden?': 'Orden ಬಗ್ಗೆ ನಿಮಗೆ ಎಲ್ಲಿಂದ ತಿಳಿಯಿತು?',
+  'AI assistant': 'AI ಸಹಾಯಕ',
+  'Friend or colleague': 'ಸ್ನೇಹಿತ ಅಥವಾ ಸಹೋದ್ಯೋಗಿ',
+  'Social media': 'ಸಾಮಾಜಿಕ ಮಾಧ್ಯಮ',
+  'Where?': 'ಎಲ್ಲಿ?',
+  'Which browser do you use now?': 'ನೀವು ಈಗ ಯಾವ ಬ್ರೌಸರ್ ಬಳಸುತ್ತೀರಿ?',
+  'Not yet': 'ಇನ್ನೂ ಇಲ್ಲ',
+  Request: 'ವಿನಂತಿಸಿ',
+  'Import from {browser}': '{browser} ನಿಂದ ಆಮದು ಮಾಡಿ',
+  'Open tabs': 'ತೆರೆದ ಟ್ಯಾಬ್‌ಗಳು',
+  Imported: 'ಆಮದಾಗಿದೆ',
+  'Bring your notes': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ತನ್ನಿ',
+  'Here’s how you can import it anyway': 'ಆದರೂ ಆಮದು ಮಾಡುವ ಬಗೆ ಇಲ್ಲಿದೆ',
+  'Connect your AI': 'ನಿಮ್ಮ AI ಸಂಪರ್ಕಿಸಿ',
+  'Use an API key': 'API ಕೀ ಬಳಸಿ',
+  'Welcome to {app}': '{app}ಗೆ ಸ್ವಾಗತ',
+  'Show me around': 'ನನಗೆ ಸುತ್ತಾಡಿಸಿ ತೋರಿಸಿ',
+  'Your {app} pages are here': 'ನಿಮ್ಮ {app} ಪುಟಗಳು ಇಲ್ಲಿವೆ',
+  'Pages became notes, and databases became bases with their views.':
+    'ಪುಟಗಳು ಟಿಪ್ಪಣಿಗಳಾದವು, ಡೇಟಾಬೇಸ್‌ಗಳು ಅವುಗಳ ವೀಕ್ಷಣೆಗಳೊಂದಿಗೆ ಬೇಸ್‌ಗಳಾದವು.',
+  'Your {app} notes are here': 'ನಿಮ್ಮ {app} ಟಿಪ್ಪಣಿಗಳು ಇಲ್ಲಿವೆ',
+  'Still plain Markdown files, and your links work like before.':
+    'ಈಗಲೂ ಸರಳ Markdown ಫೈಲ್‌ಗಳು, ನಿಮ್ಮ ಲಿಂಕ್‌ಗಳು ಮೊದಲಿನಂತೆಯೇ ಕೆಲಸ ಮಾಡುತ್ತವೆ.',
+  'Every note is a file you own.': 'ಪ್ರತಿ ಟಿಪ್ಪಣಿಯೂ ನಿಮ್ಮದೇ ಫೈಲ್.',
+  'Everything lives in one space': 'ಎಲ್ಲವೂ ಒಂದೇ ಸ್ಪೇಸ್‌ನಲ್ಲಿ',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'ಟಿಪ್ಪಣಿಗಳು, ಕಾರ್ಯಗಳು, ವೆಬ್ ಪುಟಗಳು ಮತ್ತು ಚಾಟ್‌ಗಳು ಪಕ್ಕಪಕ್ಕದಲ್ಲಿ, ಏನೂ ತಪ್ಪುವುದಿಲ್ಲ.',
+  'More than Markdown': 'Markdown ಗಿಂತ ಹೆಚ್ಚು',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'ಕಾರ್ಯಗಳು, ಬೇಸ್‌ಗಳು ಮತ್ತು ಬೋರ್ಡ್‌ಗಳು ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳಲ್ಲೇ. ಇಂದು ಬಾಕಿ ಇರುವುದನ್ನು ತೋರಿಸುತ್ತದೆ.',
+  'To-dos in any note': 'ಯಾವುದೇ ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಕಾರ್ಯಗಳು',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'ಎಲ್ಲಿಯಾದರೂ ಕಾರ್ಯ ಬರೆಯಿರಿ. ಇಂದು ಬಾಕಿ ಇರುವ ಎಲ್ಲವನ್ನೂ ಸೇರಿಸುತ್ತದೆ.',
+  'Your {browser} bookmarks': 'ನಿಮ್ಮ {browser} ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'ಅವು ಸೈಡ್‌ಬಾರ್‌ನಲ್ಲಿವೆ. ವೆಬ್ ಪುಟಗಳು ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳ ಪಕ್ಕ ಟ್ಯಾಬ್‌ಗಳಾಗಿ ತೆರೆಯುತ್ತವೆ.',
+  'Web pages are tabs': 'ವೆಬ್ ಪುಟಗಳು ಟ್ಯಾಬ್‌ಗಳು',
+  'Browse next to your notes, without switching apps.':
+    'ಆ್ಯಪ್ ಬದಲಿಸದೆ ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳ ಪಕ್ಕ ಬ್ರೌಸ್ ಮಾಡಿ.',
+  'Ask your AI': 'ನಿಮ್ಮ AI ಅನ್ನು ಕೇಳಿ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ಚಾಟ್‌ಗಳು ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳ ಪಕ್ಕದಲ್ಲಿವೆ ಮತ್ತು ನಿಮ್ಮ ಸ್ಪೇಸ್‌ನಲ್ಲಿರುವುದನ್ನು ಬಳಸಬಹುದು.',
+  'Terminals are tabs too': 'ಟರ್ಮಿನಲ್‌ಗಳೂ ಟ್ಯಾಬ್‌ಗಳು',
+  'Open one next to the notes for your project.':
+    'ನಿಮ್ಮ ಪ್ರಾಜೆಕ್ಟ್ ಟಿಪ್ಪಣಿಗಳ ಪಕ್ಕ ಒಂದನ್ನು ತೆರೆಯಿರಿ.',
+  'Do this on your computer': 'ಇದನ್ನು ನಿಮ್ಮ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಮಾಡಿ',
 }

@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const it: Dictionary = {
-  'All set': 'Tutto pronto',
-  Personalize: 'Personalizza',
-  Clean: 'Pulito',
-  'Live preview': 'Anteprima dal vivo',
   'Developer mode': 'Modalità sviluppatore',
   'Do you write code?': 'Scrivi codice?',
   Yes: 'Sì',
@@ -33,9 +29,6 @@ export const it: Dictionary = {
   'Import from Zen': 'Importa da Zen',
   'Containers stay in Zen': 'I contenitori restano in Zen',
   'Zen’s tabs could not be read.': 'Impossibile leggere le schede di Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Portare segnalibri, schede e cronologia da un altro browser?',
-  'No thanks': 'No, grazie',
   'Containers stay in Firefox': 'I contenitori restano in Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} cerca con {engine}: sceglilo nelle Impostazioni per cercare con quello anche qui',
@@ -708,7 +701,8 @@ export const it: Dictionary = {
   'Words with {bold} and a {link}.': 'Parole in {bold} e un {link}.',
   bold: 'grassetto',
   link: 'link',
-  'Everything is markdown, and nothing else.': 'Tutto è markdown, e nient’altro.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Ogni nota è un file Markdown tuo, con attività, basi e bacheche al suo interno.',
   'One thing': 'Una cosa',
   Another: 'Un’altra',
   'could not reach the theme store': 'impossibile raggiungere lo store dei temi',
@@ -3884,4 +3878,51 @@ export const it: Dictionary = {
   Unknown: 'Sconosciuto',
   'Unnamed group': 'Gruppo senza nome',
   'Loading your chats…': 'Caricamento delle tue chat…',
+  'Log in or sign up': 'Accedi o registrati',
+  'Use without an account': 'Usa senza account',
+  'How did you hear about Orden?': 'Come hai conosciuto Orden?',
+  'AI assistant': 'Assistente IA',
+  'Friend or colleague': 'Un amico o un collega',
+  'Social media': 'Social media',
+  'Where?': 'Dove?',
+  'Which browser do you use now?': 'Quale browser usi adesso?',
+  'Not yet': 'Non ancora',
+  Request: 'Richiedi',
+  'Import from {browser}': 'Importa da {browser}',
+  'Open tabs': 'Schede aperte',
+  Imported: 'Importato',
+  'Bring your notes': 'Porta le tue note',
+  'Here’s how you can import it anyway': 'Ecco come importarlo comunque',
+  'Connect your AI': 'Collega la tua IA',
+  'Use an API key': 'Usa una chiave API',
+  'Welcome to {app}': 'Benvenuto in {app}',
+  'Show me around': 'Fammi fare un giro',
+  'Your {app} pages are here': 'Le tue pagine di {app} sono qui',
+  'Pages became notes, and databases became bases with their views.':
+    'Le pagine sono diventate note e i database basi con le loro viste.',
+  'Your {app} notes are here': 'Le tue note di {app} sono qui',
+  'Still plain Markdown files, and your links work like before.':
+    'Ancora semplici file Markdown, e i tuoi link funzionano come prima.',
+  'Every note is a file you own.': 'Ogni nota è un file tuo.',
+  'Everything lives in one space': 'Tutto vive in un unico spazio',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Note, attività, pagine web e chat stanno fianco a fianco, così non perdi mai il filo.',
+  'More than Markdown': 'Più che Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Attività, basi e bacheche vivono dentro le tue note. Oggi mostra cosa è in scadenza.',
+  'To-dos in any note': 'Attività in ogni nota',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Scrivi un’attività ovunque. Oggi raccoglie tutto ciò che è in scadenza.',
+  'Your {browser} bookmarks': 'I tuoi segnalibri di {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Sono nella barra laterale. Le pagine web si aprono come schede accanto alle tue note.',
+  'Web pages are tabs': 'Le pagine web sono schede',
+  'Browse next to your notes, without switching apps.':
+    'Naviga accanto alle tue note, senza cambiare app.',
+  'Ask your AI': 'Chiedi alla tua IA',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Le chat stanno accanto alle tue note e possono usare ciò che c’è nel tuo spazio.',
+  'Terminals are tabs too': 'Anche i terminali sono schede',
+  'Open one next to the notes for your project.': 'Aprine uno accanto alle note del tuo progetto.',
+  'Do this on your computer': 'Fallo sul tuo computer',
 }

@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
-  'All set': 'كل شيء جاهز',
-  Personalize: 'تخصيص',
-  Clean: 'نظيف',
-  'Live preview': 'معاينة مباشرة',
   'Developer mode': 'وضع المطوّر',
   'Do you write code?': 'هل تكتب الكود؟',
   Yes: 'نعم',
@@ -32,9 +28,6 @@ export const ar: Dictionary = {
   'Import from Zen': 'استيراد من Zen',
   'Containers stay in Zen': 'تبقى الحاويات في Zen',
   'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'هل تريد جلب الإشارات المرجعية وعلامات التبويب والسجل من متصفح آخر؟',
-  'No thanks': 'لا، شكرًا',
   'Containers stay in Firefox': 'تبقى الحاويات في Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'يبحث {browser} باستخدام {engine}: اختره في الإعدادات للبحث به هنا أيضًا',
@@ -735,7 +728,8 @@ export const ar: Dictionary = {
   'Words with {bold} and a {link}.': 'كلمات فيها {bold} و{link}.',
   bold: 'عريض',
   link: 'رابط',
-  'Everything is markdown, and nothing else.': 'كل شيء Markdown، ولا شيء غيره.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'كل ملاحظة ملف Markdown تملكه، وفيه المهام والقواعد واللوحات.',
   'One thing': 'شيء',
   Another: 'آخر',
   'could not reach the theme store': 'تعذّر الوصول إلى متجر السمات',
@@ -3950,4 +3944,50 @@ export const ar: Dictionary = {
   Unknown: 'غير معروف',
   'Unnamed group': 'مجموعة بلا اسم',
   'Loading your chats…': 'جارٍ تحميل محادثاتك…',
+  'Log in or sign up': 'سجّل الدخول أو أنشئ حسابًا',
+  'Use without an account': 'الاستخدام دون حساب',
+  'How did you hear about Orden?': 'كيف سمعت عن Orden؟',
+  'AI assistant': 'مساعد ذكاء اصطناعي',
+  'Friend or colleague': 'صديق أو زميل',
+  'Social media': 'وسائل التواصل الاجتماعي',
+  'Where?': 'أين؟',
+  'Which browser do you use now?': 'أي متصفح تستخدم الآن؟',
+  'Not yet': 'ليس بعد',
+  Request: 'اطلب',
+  'Import from {browser}': 'استيراد من {browser}',
+  'Open tabs': 'علامات التبويب المفتوحة',
+  Imported: 'تم الاستيراد',
+  'Bring your notes': 'أحضر ملاحظاتك',
+  'Here’s how you can import it anyway': 'إليك كيف تستوردها رغم ذلك',
+  'Connect your AI': 'اربط ذكاءك الاصطناعي',
+  'Use an API key': 'استخدام مفتاح API',
+  'Welcome to {app}': 'أهلًا بك في {app}',
+  'Show me around': 'عرّفني بالمكان',
+  'Your {app} pages are here': 'صفحاتك من {app} هنا',
+  'Pages became notes, and databases became bases with their views.':
+    'أصبحت الصفحات ملاحظات، وقواعد البيانات قواعد بطرق عرضها.',
+  'Your {app} notes are here': 'ملاحظاتك من {app} هنا',
+  'Still plain Markdown files, and your links work like before.':
+    'ما زالت ملفات Markdown عادية، وروابطك تعمل كما كانت.',
+  'Every note is a file you own.': 'كل ملاحظة ملف تملكه.',
+  'Everything lives in one space': 'كل شيء في مساحة واحدة',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'الملاحظات والمهام وصفحات الويب والمحادثات جنبًا إلى جنب، فلا يفوتك شيء.',
+  'More than Markdown': 'أكثر من Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'المهام والقواعد واللوحات داخل ملاحظاتك. يعرض «اليوم» ما حان موعده.',
+  'To-dos in any note': 'مهام في أي ملاحظة',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'اكتب مهمة في أي مكان. يجمع «اليوم» كل ما حان موعده.',
+  'Your {browser} bookmarks': 'إشاراتك المرجعية من {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'إنها في الشريط الجانبي. تُفتح صفحات الويب كعلامات تبويب بجانب ملاحظاتك.',
+  'Web pages are tabs': 'صفحات الويب علامات تبويب',
+  'Browse next to your notes, without switching apps.': 'تصفح بجانب ملاحظاتك، دون تبديل التطبيقات.',
+  'Ask your AI': 'اسأل ذكاءك الاصطناعي',
+  'Chats sit next to your notes and can use what is in your space.':
+    'المحادثات بجانب ملاحظاتك ويمكنها استخدام ما في مساحتك.',
+  'Terminals are tabs too': 'الطرفيات علامات تبويب أيضًا',
+  'Open one next to the notes for your project.': 'افتح واحدة بجانب ملاحظات مشروعك.',
+  'Do this on your computer': 'افعل ذلك على حاسوبك',
 }

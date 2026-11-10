@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pl: Dictionary = {
-  'All set': 'Wszystko gotowe',
-  Personalize: 'Personalizuj',
-  Clean: 'Czysty',
-  'Live preview': 'Podgląd na żywo',
   'Developer mode': 'Tryb dewelopera',
   'Do you write code?': 'Piszesz kod?',
   Yes: 'Tak',
@@ -33,9 +29,6 @@ export const pl: Dictionary = {
   'Import from Zen': 'Importuj z Zen',
   'Containers stay in Zen': 'Kontenery zostają w Zen',
   'Zen’s tabs could not be read.': 'Nie udało się odczytać kart Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Przenieść zakładki, karty i historię z innej przeglądarki?',
-  'No thanks': 'Nie, dziękuję',
   'Containers stay in Firefox': 'Kontenery zostają w Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} wyszukuje w {engine}: wybierz to w Ustawieniach, aby wyszukiwać tak również tutaj',
@@ -723,7 +716,8 @@ export const pl: Dictionary = {
   'Words with {bold} and a {link}.': 'Słowa z {bold} i {link}.',
   bold: 'pogrubieniem',
   link: 'linkiem',
-  'Everything is markdown, and nothing else.': 'Wszystko jest markdownem i niczym więcej.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Każda notatka to Twój własny plik Markdown, z zadaniami, bazami i tablicami w środku.',
   'One thing': 'Jedna rzecz',
   Another: 'Inna',
   'could not reach the theme store': 'brak połączenia ze sklepem motywów',
@@ -3909,4 +3903,51 @@ export const pl: Dictionary = {
   Unknown: 'Nieznany',
   'Unnamed group': 'Grupa bez nazwy',
   'Loading your chats…': 'Wczytywanie czatów…',
+  'Log in or sign up': 'Zaloguj się lub załóż konto',
+  'Use without an account': 'Używaj bez konta',
+  'How did you hear about Orden?': 'Skąd wiesz o Orden?',
+  'AI assistant': 'Asystent AI',
+  'Friend or colleague': 'Znajomy lub współpracownik',
+  'Social media': 'Media społecznościowe',
+  'Where?': 'Gdzie?',
+  'Which browser do you use now?': 'Jakiej przeglądarki teraz używasz?',
+  'Not yet': 'Jeszcze nie',
+  Request: 'Poproś',
+  'Import from {browser}': 'Importuj z {browser}',
+  'Open tabs': 'Otwarte karty',
+  Imported: 'Zaimportowano',
+  'Bring your notes': 'Przenieś swoje notatki',
+  'Here’s how you can import it anyway': 'Tak możesz je mimo to zaimportować',
+  'Connect your AI': 'Połącz swoją AI',
+  'Use an API key': 'Użyj klucza API',
+  'Welcome to {app}': 'Witaj w {app}',
+  'Show me around': 'Oprowadź mnie',
+  'Your {app} pages are here': 'Twoje strony z {app} są tutaj',
+  'Pages became notes, and databases became bases with their views.':
+    'Strony stały się notatkami, a bazy danych bazami z ich widokami.',
+  'Your {app} notes are here': 'Twoje notatki z {app} są tutaj',
+  'Still plain Markdown files, and your links work like before.':
+    'Nadal zwykłe pliki Markdown, a linki działają jak wcześniej.',
+  'Every note is a file you own.': 'Każda notatka to Twój plik.',
+  'Everything lives in one space': 'Wszystko w jednej przestrzeni',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Notatki, zadania, strony i czaty obok siebie, więc nic Ci nie umknie.',
+  'More than Markdown': 'Więcej niż Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Zadania, bazy i tablice są w Twoich notatkach. Dziś pokazuje, co jest na teraz.',
+  'To-dos in any note': 'Zadania w każdej notatce',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Zapisz zadanie gdziekolwiek. Dziś zbiera wszystko, co jest na teraz.',
+  'Your {browser} bookmarks': 'Twoje zakładki z {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Są na pasku bocznym. Strony otwierają się jako karty obok notatek.',
+  'Web pages are tabs': 'Strony to karty',
+  'Browse next to your notes, without switching apps.':
+    'Przeglądaj obok notatek, bez zmiany aplikacji.',
+  'Ask your AI': 'Zapytaj swoją AI',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Czaty są obok notatek i mogą korzystać z tego, co jest w Twojej przestrzeni.',
+  'Terminals are tabs too': 'Terminale też są kartami',
+  'Open one next to the notes for your project.': 'Otwórz jeden obok notatek do swojego projektu.',
+  'Do this on your computer': 'Zrób to na komputerze',
 }

@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
-  'All set': 'Đã sẵn sàng',
-  Personalize: 'Cá nhân hóa',
-  Clean: 'Gọn gàng',
-  'Live preview': 'Xem trước trực tiếp',
   'Developer mode': 'Chế độ nhà phát triển',
   'Do you write code?': 'Bạn có viết code không?',
   Yes: 'Có',
@@ -32,9 +28,6 @@ export const vi: Dictionary = {
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Mang dấu trang, thẻ và lịch sử của bạn từ trình duyệt khác sang?',
-  'No thanks': 'Không, cảm ơn',
   'Containers stay in Firefox': 'Các ngăn chứa vẫn ở lại Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} tìm kiếm bằng {engine}: chọn nó trong Cài đặt để tìm bằng nó ở đây nữa',
@@ -687,7 +680,8 @@ export const vi: Dictionary = {
   'Words with {bold} and a {link}.': 'Chữ có {bold} và một {link}.',
   bold: 'đậm',
   link: 'liên kết',
-  'Everything is markdown, and nothing else.': 'Mọi thứ là Markdown, không gì khác.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Mỗi ghi chú là một tệp Markdown của riêng bạn, có việc cần làm, cơ sở dữ liệu và bảng ngay bên trong.',
   'One thing': 'Một thứ',
   Another: 'Thứ khác',
   'could not reach the theme store': 'không kết nối được kho chủ đề',
@@ -3665,4 +3659,51 @@ export const vi: Dictionary = {
   Unknown: 'Không rõ',
   'Unnamed group': 'Nhóm không tên',
   'Loading your chats…': 'Đang tải các cuộc trò chuyện…',
+  'Log in or sign up': 'Đăng nhập hoặc đăng ký',
+  'Use without an account': 'Dùng không cần tài khoản',
+  'How did you hear about Orden?': 'Bạn biết đến Orden từ đâu?',
+  'AI assistant': 'Trợ lý AI',
+  'Friend or colleague': 'Bạn bè hoặc đồng nghiệp',
+  'Social media': 'Mạng xã hội',
+  'Where?': 'Ở đâu?',
+  'Which browser do you use now?': 'Bạn đang dùng trình duyệt nào?',
+  'Not yet': 'Chưa có',
+  Request: 'Yêu cầu',
+  'Import from {browser}': 'Nhập từ {browser}',
+  'Open tabs': 'Các thẻ đang mở',
+  Imported: 'Đã nhập',
+  'Bring your notes': 'Mang ghi chú của bạn sang',
+  'Here’s how you can import it anyway': 'Đây là cách bạn vẫn nhập được',
+  'Connect your AI': 'Kết nối AI của bạn',
+  'Use an API key': 'Dùng khóa API',
+  'Welcome to {app}': 'Chào mừng đến với {app}',
+  'Show me around': 'Dẫn tôi đi xem',
+  'Your {app} pages are here': 'Các trang {app} của bạn ở đây',
+  'Pages became notes, and databases became bases with their views.':
+    'Trang đã thành ghi chú, còn cơ sở dữ liệu thành base cùng các chế độ xem.',
+  'Your {app} notes are here': 'Ghi chú {app} của bạn ở đây',
+  'Still plain Markdown files, and your links work like before.':
+    'Vẫn là tệp Markdown thuần, và liên kết vẫn hoạt động như trước.',
+  'Every note is a file you own.': 'Mỗi ghi chú là một tệp của riêng bạn.',
+  'Everything lives in one space': 'Mọi thứ trong một không gian',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Ghi chú, việc cần làm, trang web và trò chuyện nằm cạnh nhau, nên bạn không bỏ sót gì.',
+  'More than Markdown': 'Hơn cả Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Việc cần làm, base và bảng nằm ngay trong ghi chú. Hôm nay hiện những gì đến hạn.',
+  'To-dos in any note': 'Việc cần làm trong mọi ghi chú',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Viết việc cần làm ở bất cứ đâu. Hôm nay gom mọi thứ đến hạn.',
+  'Your {browser} bookmarks': 'Dấu trang {browser} của bạn',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Chúng ở thanh bên. Trang web mở thành thẻ cạnh ghi chú của bạn.',
+  'Web pages are tabs': 'Trang web là thẻ',
+  'Browse next to your notes, without switching apps.':
+    'Duyệt web cạnh ghi chú, không cần đổi ứng dụng.',
+  'Ask your AI': 'Hỏi AI của bạn',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Trò chuyện nằm cạnh ghi chú và có thể dùng nội dung trong không gian của bạn.',
+  'Terminals are tabs too': 'Terminal cũng là thẻ',
+  'Open one next to the notes for your project.': 'Mở một cái cạnh ghi chú của dự án.',
+  'Do this on your computer': 'Hãy làm việc này trên máy tính',
 }

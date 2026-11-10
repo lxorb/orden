@@ -106,7 +106,7 @@ def main() -> int:
         desk = wintypes.RECT()
         user32.SystemParametersInfoW(0x30, 0, ctypes.byref(desk), 0)
         user32.SetWindowPos(hwnd, None, desk.left, desk.top, min(WIDTH, desk.right - desk.left), min(HEIGHT, desk.bottom - desk.top), 0x0004)
-        app.eval("orden.settings.setup = null; return true")
+        app.eval("orden.setup.finish(); return true")
         under.forward(hwnd)
         time.sleep(3)
         user32.SetCursorPos(desk.right - 2, desk.bottom - 2)

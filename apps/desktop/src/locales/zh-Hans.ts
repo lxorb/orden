@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
-  'All set': '一切就绪',
-  Personalize: '个性化',
-  Clean: '简洁',
-  'Live preview': '实时预览',
   'Developer mode': '开发者模式',
   'Do you write code?': '你写代码吗？',
   Yes: '是',
@@ -31,9 +27,6 @@ export const zhHans: Dictionary = {
   'Import from Zen': '从 Zen 导入',
   'Containers stay in Zen': '容器保留在 Zen 中',
   'Zen’s tabs could not be read.': '无法读取 Zen 的标签页。',
-  'Bring your bookmarks, tabs and history from another browser?':
-    '要从其他浏览器带来书签、标签页和历史记录吗？',
-  'No thanks': '不用了，谢谢',
   'Containers stay in Firefox': '容器保留在 Firefox 中',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 使用 {engine} 搜索：在设置中选择它，即可在这里也用它搜索',
@@ -682,7 +675,8 @@ export const zhHans: Dictionary = {
   'Words with {bold} and a {link}.': '带{bold}和{link}的文字。',
   bold: '加粗',
   link: '链接',
-  'Everything is markdown, and nothing else.': '一切都是Markdown，别无其他。',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    '每条笔记都是你拥有的Markdown文件，待办、数据库和看板就在其中。',
   'One thing': '一项',
   Another: '另一项',
   'could not reach the theme store': '无法连接主题商店',
@@ -3580,4 +3574,50 @@ export const zhHans: Dictionary = {
   Unknown: '未知',
   'Unnamed group': '未命名群组',
   'Loading your chats…': '正在加载你的聊天…',
+  'Log in or sign up': '登录或注册',
+  'Use without an account': '不使用账户',
+  'How did you hear about Orden?': '你是从哪里知道 Orden 的？',
+  'AI assistant': 'AI 助手',
+  'Friend or colleague': '朋友或同事',
+  'Social media': '社交媒体',
+  'Where?': '在哪里？',
+  'Which browser do you use now?': '你现在用哪个浏览器？',
+  'Not yet': '暂不支持',
+  Request: '请求',
+  'Import from {browser}': '从 {browser} 导入',
+  'Open tabs': '打开的标签页',
+  Imported: '已导入',
+  'Bring your notes': '带上你的笔记',
+  'Here’s how you can import it anyway': '仍可这样导入',
+  'Connect your AI': '连接你的 AI',
+  'Use an API key': '使用 API 密钥',
+  'Welcome to {app}': '欢迎使用 {app}',
+  'Show me around': '带我看看',
+  'Your {app} pages are here': '你的 {app} 页面在这里',
+  'Pages became notes, and databases became bases with their views.':
+    '页面变成了笔记，数据库变成了带视图的数据库。',
+  'Your {app} notes are here': '你的 {app} 笔记在这里',
+  'Still plain Markdown files, and your links work like before.':
+    '仍然是纯 Markdown 文件，链接照常可用。',
+  'Every note is a file you own.': '每条笔记都是你拥有的文件。',
+  'Everything lives in one space': '一切都在一个空间里',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    '笔记、待办、网页和聊天并排放置，让你不会遗漏。',
+  'More than Markdown': '不止 Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    '待办、数据库和看板就在笔记里。今天显示到期的事项。',
+  'To-dos in any note': '任何笔记都能写待办',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    '在任何地方写待办。今天汇集所有到期事项。',
+  'Your {browser} bookmarks': '你的 {browser} 书签',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    '它们在侧边栏中。网页会在笔记旁以标签页打开。',
+  'Web pages are tabs': '网页就是标签页',
+  'Browse next to your notes, without switching apps.': '在笔记旁浏览，无需切换应用。',
+  'Ask your AI': '问问你的 AI',
+  'Chats sit next to your notes and can use what is in your space.':
+    '聊天就在笔记旁，可以使用你空间中的内容。',
+  'Terminals are tabs too': '终端也是标签页',
+  'Open one next to the notes for your project.': '在项目笔记旁打开一个。',
+  'Do this on your computer': '请在电脑上完成',
 }

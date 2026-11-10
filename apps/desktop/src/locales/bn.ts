@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const bn: Dictionary = {
-  'All set': 'সব প্রস্তুত',
-  Personalize: 'নিজের মতো সাজান',
-  Clean: 'পরিচ্ছন্ন',
-  'Live preview': 'লাইভ প্রিভিউ',
   'Developer mode': 'ডেভেলপার মোড',
   'Do you write code?': 'আপনি কি কোড লেখেন?',
   Yes: 'হ্যাঁ',
@@ -32,9 +28,6 @@ export const bn: Dictionary = {
   'Import from Zen': 'Zen থেকে ইমপোর্ট',
   'Containers stay in Zen': 'কন্টেইনারগুলো Zen-এ থেকে যায়',
   'Zen’s tabs could not be read.': 'Zen-এর ট্যাবগুলো পড়া গেল না।',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'অন্য ব্রাউজার থেকে আপনার বুকমার্ক, ট্যাব ও ইতিহাস আনবেন?',
-  'No thanks': 'না, ধন্যবাদ',
   'Containers stay in Firefox': 'কন্টেইনারগুলো Firefox-এ থেকে যায়',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} দিয়ে খোঁজে: এখানেও এটি দিয়ে খুঁজতে সেটিংসে এটি বেছে নিন',
@@ -693,7 +686,8 @@ export const bn: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} আর একটি {link} সহ শব্দ।',
   bold: 'বোল্ড',
   link: 'লিংক',
-  'Everything is markdown, and nothing else.': 'সবকিছুই Markdown, আর কিছু নয়।',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'প্রতিটি নোট আপনার নিজের একটি Markdown ফাইল, ভেতরেই আছে করণীয়, বেস আর বোর্ড।',
   'One thing': 'একটি জিনিস',
   Another: 'আরেকটি',
   'could not reach the theme store': 'থিম স্টোরে পৌঁছানো গেল না',
@@ -3757,4 +3751,50 @@ export const bn: Dictionary = {
   Unknown: 'অজানা',
   'Unnamed group': 'নামহীন গ্রুপ',
   'Loading your chats…': 'আপনার চ্যাটগুলো লোড হচ্ছে…',
+  'Log in or sign up': 'লগ ইন বা সাইন আপ করুন',
+  'Use without an account': 'অ্যাকাউন্ট ছাড়া ব্যবহার করুন',
+  'How did you hear about Orden?': 'Orden সম্পর্কে কোথা থেকে জানলেন?',
+  'AI assistant': 'এআই সহকারী',
+  'Friend or colleague': 'বন্ধু বা সহকর্মী',
+  'Social media': 'সোশ্যাল মিডিয়া',
+  'Where?': 'কোথায়?',
+  'Which browser do you use now?': 'আপনি এখন কোন ব্রাউজার ব্যবহার করেন?',
+  'Not yet': 'এখনও নয়',
+  Request: 'অনুরোধ করুন',
+  'Import from {browser}': '{browser} থেকে আমদানি করুন',
+  'Open tabs': 'খোলা ট্যাব',
+  Imported: 'আমদানি হয়েছে',
+  'Bring your notes': 'আপনার নোট নিয়ে আসুন',
+  'Here’s how you can import it anyway': 'তবুও যেভাবে আমদানি করতে পারেন',
+  'Connect your AI': 'আপনার এআই যুক্ত করুন',
+  'Use an API key': 'API কী ব্যবহার করুন',
+  'Welcome to {app}': '{app}-এ স্বাগতম',
+  'Show me around': 'আমাকে ঘুরিয়ে দেখান',
+  'Your {app} pages are here': 'আপনার {app} পেজগুলো এখানে',
+  'Pages became notes, and databases became bases with their views.':
+    'পেজগুলো নোট হয়েছে, আর ডেটাবেস তাদের ভিউসহ বেস হয়েছে।',
+  'Your {app} notes are here': 'আপনার {app} নোটগুলো এখানে',
+  'Still plain Markdown files, and your links work like before.':
+    'এখনও সাধারণ Markdown ফাইল, আর আপনার লিংক আগের মতোই কাজ করে।',
+  'Every note is a file you own.': 'প্রতিটি নোট আপনার নিজের ফাইল।',
+  'Everything lives in one space': 'সবকিছু এক স্পেসে',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'নোট, করণীয়, ওয়েব পেজ আর চ্যাট পাশাপাশি, তাই কিছুই হারাবে না।',
+  'More than Markdown': 'Markdown-এর চেয়েও বেশি',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'করণীয়, বেস আর বোর্ড আপনার নোটের ভেতরেই। আজ দেখায় কী বাকি।',
+  'To-dos in any note': 'যেকোনো নোটে করণীয়',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'যেকোনো জায়গায় করণীয় লিখুন। আজ সব বাকি কাজ জড়ো করে।',
+  'Your {browser} bookmarks': 'আপনার {browser} বুকমার্ক',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'এগুলো সাইডবারে আছে। ওয়েব পেজ আপনার নোটের পাশে ট্যাবে খোলে।',
+  'Web pages are tabs': 'ওয়েব পেজ হলো ট্যাব',
+  'Browse next to your notes, without switching apps.': 'অ্যাপ না বদলে নোটের পাশে ব্রাউজ করুন।',
+  'Ask your AI': 'আপনার AI-কে জিজ্ঞেস করুন',
+  'Chats sit next to your notes and can use what is in your space.':
+    'চ্যাট আপনার নোটের পাশে থাকে এবং আপনার স্পেসের জিনিস ব্যবহার করতে পারে।',
+  'Terminals are tabs too': 'টার্মিনালও ট্যাব',
+  'Open one next to the notes for your project.': 'আপনার প্রজেক্টের নোটের পাশে একটি খুলুন।',
+  'Do this on your computer': 'এটি আপনার কম্পিউটারে করুন',
 }

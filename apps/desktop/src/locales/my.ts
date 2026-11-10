@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
-  'All set': 'အားလုံး အသင့်ဖြစ်ပါပြီ',
-  Personalize: 'စိတ်ကြိုက်ပြင်ရန်',
-  Clean: 'ရှင်းလင်း',
-  'Live preview': 'တိုက်ရိုက်အစမ်းကြည့်',
   'Developer mode': 'ဒီဗလပ်ပါမုဒ်',
   'Do you write code?': 'ကုဒ်ရေးပါသလား?',
   Yes: 'ဟုတ်ကဲ့',
@@ -32,9 +28,6 @@ export const my: Dictionary = {
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'အခြားဘရောက်ဇာမှ သင့်စာညှပ်များ၊ တဘ်များနှင့် မှတ်တမ်းကို ယူလာမလား?',
-  'No thanks': 'မလိုပါ၊ ကျေးဇူးပါ',
   'Containers stay in Firefox': 'ကွန်တိန်နာများ Firefox တွင် ကျန်ရစ်သည်',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} သည် {engine} ဖြင့် ရှာသည်- ဤနေရာတွင်လည်း ၎င်းဖြင့် ရှာရန် ဆက်တင်များတွင် ရွေးပါ',
@@ -690,7 +683,8 @@ export const my: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} နှင့် {link} ပါသောစာ။',
   bold: 'စာလုံးထူ',
   link: 'လင့်',
-  'Everything is markdown, and nothing else.': 'အားလုံး Markdown ဖြစ်သည်၊ အခြားမရှိ။',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'မှတ်စုတိုင်းသည် သင်ပိုင်ဆိုင်သော Markdown ဖိုင်ဖြစ်ပြီး လုပ်ရန်များ၊ base များနှင့် board များ အထဲတွင်ပင် ပါဝင်သည်။',
   'One thing': 'တစ်ချက်',
   Another: 'အခြားတစ်ချက်',
   'could not reach the theme store': 'အပြင်အဆင်စတိုးနှင့်မဆက်သွယ်နိုင်',
@@ -3700,4 +3694,50 @@ export const my: Dictionary = {
   Unknown: 'မသိ',
   'Unnamed group': 'အမည်မဲ့ အဖွဲ့',
   'Loading your chats…': 'သင့်ချတ်များကို ဖွင့်နေသည်…',
+  'Log in or sign up': 'ဝင်ရောက်ပါ သို့မဟုတ် စာရင်းသွင်းပါ',
+  'Use without an account': 'အကောင့်မပါဘဲ သုံးမည်',
+  'How did you hear about Orden?': 'Orden အကြောင်း ဘယ်ကကြားခဲ့သလဲ?',
+  'AI assistant': 'AI လက်ထောက်',
+  'Friend or colleague': 'သူငယ်ချင်း သို့မဟုတ် လုပ်ဖော်ကိုင်ဖက်',
+  'Social media': 'ဆိုရှယ်မီဒီယာ',
+  'Where?': 'ဘယ်မှာလဲ?',
+  'Which browser do you use now?': 'အခု ဘယ်ဘရောက်ဇာ သုံးနေသလဲ?',
+  'Not yet': 'မရသေးပါ',
+  Request: 'တောင်းဆိုမည်',
+  'Import from {browser}': '{browser} မှ တင်သွင်းမည်',
+  'Open tabs': 'ဖွင့်ထားသော တက်ဘ်များ',
+  Imported: 'တင်သွင်းပြီး',
+  'Bring your notes': 'သင့်မှတ်စုများကို ယူလာပါ',
+  'Here’s how you can import it anyway': 'ဒါပေမဲ့ ဒီလိုတင်သွင်းနိုင်ပါတယ်',
+  'Connect your AI': 'သင့် AI ကို ချိတ်ဆက်ပါ',
+  'Use an API key': 'API ကီး သုံးမည်',
+  'Welcome to {app}': '{app} မှ ကြိုဆိုပါတယ်',
+  'Show me around': 'လှည့်ပြပေးပါ',
+  'Your {app} pages are here': 'သင်၏ {app} စာမျက်နှာများ ဒီမှာ',
+  'Pages became notes, and databases became bases with their views.':
+    'စာမျက်နှာများ မှတ်စုဖြစ်လာပြီး ဒေတာဘေ့စ်များ ၎င်းတို့၏ မြင်ကွင်းများနှင့် base ဖြစ်လာသည်။',
+  'Your {app} notes are here': 'သင်၏ {app} မှတ်စုများ ဒီမှာ',
+  'Still plain Markdown files, and your links work like before.':
+    'ယခုထိ ရိုးရိုး Markdown ဖိုင်များဖြစ်ပြီး လင့်ခ်များ ယခင်အတိုင်း အလုပ်လုပ်သည်။',
+  'Every note is a file you own.': 'မှတ်စုတိုင်းသည် သင်ပိုင်သော ဖိုင်ဖြစ်သည်။',
+  'Everything lives in one space': 'အားလုံး နေရာတစ်ခုတည်းတွင်',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'မှတ်စု၊ လုပ်ရန်၊ ဝဘ်စာမျက်နှာနှင့် ချတ်များ ဘေးချင်းကပ်ရှိ၍ ဘာမှ လွတ်မသွားပါ။',
+  'More than Markdown': 'Markdown ထက်ပို',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'လုပ်ရန်၊ base နှင့် board များ သင့်မှတ်စုများထဲတွင်ပင် ရှိသည်။ ယနေ့တွင် ကျရောက်သည်များ ပြသည်။',
+  'To-dos in any note': 'မည်သည့်မှတ်စုတွင်မဆို လုပ်ရန်',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'လုပ်ရန်ကို မည်သည့်နေရာတွင်မဆို ရေးပါ။ ယနေ့က ကျရောက်သည်အားလုံး စုစည်းပေးသည်။',
+  'Your {browser} bookmarks': 'သင်၏ {browser} စာညှပ်များ',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'ဘေးဘားတွင် ရှိသည်။ ဝဘ်စာမျက်နှာများ သင့်မှတ်စုဘေးတွင် တဘ်အဖြစ် ဖွင့်သည်။',
+  'Web pages are tabs': 'ဝဘ်စာမျက်နှာများသည် တဘ်များ',
+  'Browse next to your notes, without switching apps.': 'အက်ပ်မပြောင်းဘဲ မှတ်စုဘေးတွင် ကြည့်ရှုပါ။',
+  'Ask your AI': 'သင့် AI ကို မေးပါ',
+  'Chats sit next to your notes and can use what is in your space.':
+    'ချတ်များ သင့်မှတ်စုဘေးတွင်ရှိပြီး သင့်နေရာထဲက အရာများကို သုံးနိုင်သည်။',
+  'Terminals are tabs too': 'တာမီနယ်များလည်း တဘ်များ',
+  'Open one next to the notes for your project.': 'သင့်ပရောဂျက်မှတ်စုဘေးတွင် တစ်ခုဖွင့်ပါ။',
+  'Do this on your computer': 'ဒါကို သင့်ကွန်ပျူတာပေါ်တွင် လုပ်ပါ',
 }

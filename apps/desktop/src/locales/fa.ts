@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
-  'All set': 'همه چیز آماده است',
-  Personalize: 'شخصی‌سازی',
-  Clean: 'تمیز',
-  'Live preview': 'پیش‌نمایش زنده',
   'Developer mode': 'حالت توسعه‌دهنده',
   'Do you write code?': 'آیا کد می‌نویسید؟',
   Yes: 'بله',
@@ -32,9 +28,6 @@ export const fa: Dictionary = {
   'Import from Zen': 'درون‌آوری از Zen',
   'Containers stay in Zen': 'کانتینرها در Zen می‌مانند',
   'Zen’s tabs could not be read.': 'زبانه‌های Zen خوانده نشدند.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'نشانک‌ها، زبانه‌ها و تاریخچه‌تان را از مرورگر دیگری بیاورید؟',
-  'No thanks': 'نه، ممنون',
   'Containers stay in Firefox': 'کانتینرها در Firefox می‌مانند',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} با {engine} جست‌وجو می‌کند: برای جست‌وجو با آن در اینجا، آن را در تنظیمات انتخاب کنید',
@@ -693,7 +686,8 @@ export const fa: Dictionary = {
   'Words with {bold} and a {link}.': 'واژه‌هایی با {bold} و یک {link}.',
   bold: 'سیاه',
   link: 'پیوند',
-  'Everything is markdown, and nothing else.': 'همه چیز markdown است و چیز دیگری نیست.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'هر یادداشت یک فایل Markdown متعلق به شماست، با کارها، پایگاه‌ها و بردها درون آن.',
   'One thing': 'یک چیز',
   Another: 'یکی دیگر',
   'could not reach the theme store': 'فروشگاه پوسته در دسترس نبود',
@@ -3768,4 +3762,51 @@ export const fa: Dictionary = {
   Unknown: 'ناشناس',
   'Unnamed group': 'گروه بی‌نام',
   'Loading your chats…': 'در حال بارگیری گفتگوهای شما…',
+  'Log in or sign up': 'وارد شوید یا ثبت‌نام کنید',
+  'Use without an account': 'استفاده بدون حساب',
+  'How did you hear about Orden?': 'از کجا با Orden آشنا شدید؟',
+  'AI assistant': 'دستیار هوش مصنوعی',
+  'Friend or colleague': 'دوست یا همکار',
+  'Social media': 'شبکه‌های اجتماعی',
+  'Where?': 'کجا؟',
+  'Which browser do you use now?': 'الان از کدام مرورگر استفاده می‌کنید؟',
+  'Not yet': 'هنوز نه',
+  Request: 'درخواست',
+  'Import from {browser}': 'درون‌ریزی از {browser}',
+  'Open tabs': 'زبانه‌های باز',
+  Imported: 'درون‌ریزی شد',
+  'Bring your notes': 'یادداشت‌هایتان را بیاورید',
+  'Here’s how you can import it anyway': 'این‌طور می‌توانید باز هم درون‌ریزی‌اش کنید',
+  'Connect your AI': 'هوش مصنوعی‌تان را وصل کنید',
+  'Use an API key': 'به کار بردن کلید API',
+  'Welcome to {app}': 'به {app} خوش آمدید',
+  'Show me around': 'دوری به من نشان بده',
+  'Your {app} pages are here': 'صفحه‌های {app} شما اینجاست',
+  'Pages became notes, and databases became bases with their views.':
+    'صفحه‌ها یادداشت شدند و پایگاه‌های داده به پایگاه‌هایی با نماهایشان تبدیل شدند.',
+  'Your {app} notes are here': 'یادداشت‌های {app} شما اینجاست',
+  'Still plain Markdown files, and your links work like before.':
+    'هنوز فایل‌های ساده Markdown هستند و پیوندهایتان مثل قبل کار می‌کنند.',
+  'Every note is a file you own.': 'هر یادداشت فایلی است که مال شماست.',
+  'Everything lives in one space': 'همه چیز در یک فضا',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'یادداشت‌ها، کارها، صفحه‌های وب و گفتگوها کنار هم هستند تا چیزی را گم نکنید.',
+  'More than Markdown': 'فراتر از Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'کارها، پایگاه‌ها و بردها درون یادداشت‌هایتان هستند. «امروز» موارد سررسید را نشان می‌دهد.',
+  'To-dos in any note': 'کار در هر یادداشت',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'هر جا خواستید کاری بنویسید. «امروز» همه موارد سررسید را جمع می‌کند.',
+  'Your {browser} bookmarks': 'نشانک‌های {browser} شما',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'در نوار کناری هستند. صفحه‌های وب کنار یادداشت‌هایتان به شکل زبانه باز می‌شوند.',
+  'Web pages are tabs': 'صفحه‌های وب زبانه‌اند',
+  'Browse next to your notes, without switching apps.':
+    'کنار یادداشت‌هایتان مرور کنید، بدون عوض کردن برنامه.',
+  'Ask your AI': 'از هوش مصنوعی‌تان بپرسید',
+  'Chats sit next to your notes and can use what is in your space.':
+    'گفتگوها کنار یادداشت‌هایتان هستند و می‌توانند از محتوای فضایتان استفاده کنند.',
+  'Terminals are tabs too': 'ترمینال‌ها هم زبانه‌اند',
+  'Open one next to the notes for your project.': 'یکی کنار یادداشت‌های پروژه‌تان باز کنید.',
+  'Do this on your computer': 'این کار را روی رایانه‌تان انجام دهید',
 }

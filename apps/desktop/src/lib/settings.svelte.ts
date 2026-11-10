@@ -41,7 +41,6 @@ class Settings {
   section = $state<Section>('general')
   listing = $state(true)
   historyOpen = $state(false)
-  setup = $state<number | null>(null)
 
   pandoc = $state(false)
 

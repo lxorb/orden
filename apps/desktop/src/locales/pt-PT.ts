@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
-  'All set': 'Tudo pronto',
-  Personalize: 'Personalizar',
-  Clean: 'Limpo',
-  'Live preview': 'Pré-visualização em direto',
   'Developer mode': 'Modo de programador',
   'Do you write code?': 'Escreve código?',
   Yes: 'Sim',
@@ -33,9 +29,6 @@ export const ptPT: Dictionary = {
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contentores ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler os separadores do Zen.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Trazer os seus marcadores, separadores e histórico de outro navegador?',
-  'No thanks': 'Não, obrigado',
   'Containers stay in Firefox': 'Os contentores ficam no Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'O {browser} pesquisa com {engine}: escolha-o nas Definições para pesquisar com ele aqui também',
@@ -709,7 +702,8 @@ export const ptPT: Dictionary = {
   'Words with {bold} and a {link}.': 'Palavras com {bold} e uma {link}.',
   bold: 'negrito',
   link: 'ligação',
-  'Everything is markdown, and nothing else.': 'Tudo é markdown, e nada mais.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Cada nota é um ficheiro Markdown seu, com tarefas, bases e quadros lá dentro.',
   'One thing': 'Uma coisa',
   Another: 'Outra',
   'could not reach the theme store': 'não foi possível contactar a loja de temas',
@@ -3873,4 +3867,51 @@ export const ptPT: Dictionary = {
   Unknown: 'Desconhecido',
   'Unnamed group': 'Grupo sem nome',
   'Loading your chats…': 'A carregar as suas conversas…',
+  'Log in or sign up': 'Inicie sessão ou registe-se',
+  'Use without an account': 'Usar sem conta',
+  'How did you hear about Orden?': 'Como conheceu o Orden?',
+  'AI assistant': 'Assistente de IA',
+  'Friend or colleague': 'Amigo ou colega',
+  'Social media': 'Redes sociais',
+  'Where?': 'Onde?',
+  'Which browser do you use now?': 'Que navegador usa agora?',
+  'Not yet': 'Ainda não',
+  Request: 'Pedir',
+  'Import from {browser}': 'Importar do {browser}',
+  'Open tabs': 'Separadores abertos',
+  Imported: 'Importado',
+  'Bring your notes': 'Traga as suas notas',
+  'Here’s how you can import it anyway': 'Veja como importar mesmo assim',
+  'Connect your AI': 'Ligue a sua IA',
+  'Use an API key': 'Usar uma chave de API',
+  'Welcome to {app}': 'Bem-vindo ao {app}',
+  'Show me around': 'Mostre-me como funciona',
+  'Your {app} pages are here': 'As suas páginas do {app} estão aqui',
+  'Pages became notes, and databases became bases with their views.':
+    'As páginas passaram a notas e as bases de dados a bases com as suas vistas.',
+  'Your {app} notes are here': 'As suas notas do {app} estão aqui',
+  'Still plain Markdown files, and your links work like before.':
+    'Continuam ficheiros Markdown simples, e as suas ligações funcionam como antes.',
+  'Every note is a file you own.': 'Cada nota é um ficheiro seu.',
+  'Everything lives in one space': 'Tudo vive num só espaço',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Notas, tarefas, páginas web e conversas lado a lado, para nunca perder o fio.',
+  'More than Markdown': 'Mais do que Markdown',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Tarefas, bases e quadros vivem dentro das suas notas. Hoje mostra o que vence.',
+  'To-dos in any note': 'Tarefas em qualquer nota',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'Escreva uma tarefa em qualquer sítio. Hoje reúne tudo o que vence.',
+  'Your {browser} bookmarks': 'Os seus marcadores do {browser}',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Estão na barra lateral. As páginas web abrem como separadores ao lado das suas notas.',
+  'Web pages are tabs': 'As páginas web são separadores',
+  'Browse next to your notes, without switching apps.':
+    'Navegue ao lado das suas notas, sem mudar de app.',
+  'Ask your AI': 'Pergunte à sua IA',
+  'Chats sit next to your notes and can use what is in your space.':
+    'As conversas ficam ao lado das suas notas e podem usar o que está no seu espaço.',
+  'Terminals are tabs too': 'Os terminais também são separadores',
+  'Open one next to the notes for your project.': 'Abra um ao lado das notas do seu projeto.',
+  'Do this on your computer': 'Faça isto no seu computador',
 }

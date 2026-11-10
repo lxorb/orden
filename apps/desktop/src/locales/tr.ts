@@ -1,10 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
-  'All set': 'Her şey hazır',
-  Personalize: 'Kişiselleştir',
-  Clean: 'Sade',
-  'Live preview': 'Canlı önizleme',
   'Developer mode': 'Geliştirici modu',
   'Do you write code?': 'Kod yazıyor musunuz?',
   Yes: 'Evet',
@@ -33,9 +29,6 @@ export const tr: Dictionary = {
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
-  'Bring your bookmarks, tabs and history from another browser?':
-    'Yer imlerinizi, sekmelerinizi ve geçmişinizi başka bir tarayıcıdan getirmek ister misiniz?',
-  'No thanks': 'Hayır, teşekkürler',
   'Containers stay in Firefox': 'Kapsayıcılar Firefox’ta kalır',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser}, {engine} ile arar: burada da onunla aramak için Ayarlar’dan seçin',
@@ -694,7 +687,8 @@ export const tr: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} ve bir {link} içeren sözcükler.',
   bold: 'kalın',
   link: 'bağlantı',
-  'Everything is markdown, and nothing else.': 'Her şey markdown, başka bir şey değil.',
+  'Every note is a Markdown file you own, with to-dos, bases and boards right inside.':
+    'Her not sana ait bir Markdown dosyasıdır; yapılacaklar, tabanlar ve panolar hemen içindedir.',
   'One thing': 'Bir şey',
   Another: 'Bir başka',
   'could not reach the theme store': 'tema mağazasına ulaşılamadı',
@@ -3783,4 +3777,51 @@ export const tr: Dictionary = {
   Unknown: 'Bilinmiyor',
   'Unnamed group': 'Adsız grup',
   'Loading your chats…': 'Sohbetleriniz yükleniyor…',
+  'Log in or sign up': 'Giriş yapın veya kaydolun',
+  'Use without an account': 'Hesap olmadan kullan',
+  'How did you hear about Orden?': 'Orden’i nereden duydunuz?',
+  'AI assistant': 'Yapay zekâ asistanı',
+  'Friend or colleague': 'Arkadaş veya iş arkadaşı',
+  'Social media': 'Sosyal medya',
+  'Where?': 'Nerede?',
+  'Which browser do you use now?': 'Şu anda hangi tarayıcıyı kullanıyorsunuz?',
+  'Not yet': 'Henüz değil',
+  Request: 'İste',
+  'Import from {browser}': '{browser} tarayıcısından içe aktar',
+  'Open tabs': 'Açık sekmeler',
+  Imported: 'İçe aktarıldı',
+  'Bring your notes': 'Notlarınızı getirin',
+  'Here’s how you can import it anyway': 'Yine de şöyle içe aktarabilirsiniz',
+  'Connect your AI': 'Yapay zekânızı bağlayın',
+  'Use an API key': 'API anahtarı kullan',
+  'Welcome to {app}': '{app} uygulamasına hoş geldiniz',
+  'Show me around': 'Bana etrafı göster',
+  'Your {app} pages are here': '{app} sayfaların burada',
+  'Pages became notes, and databases became bases with their views.':
+    'Sayfalar nota, veritabanları görünümleriyle birlikte tabana dönüştü.',
+  'Your {app} notes are here': '{app} notların burada',
+  'Still plain Markdown files, and your links work like before.':
+    'Hâlâ düz Markdown dosyaları ve bağlantıların eskisi gibi çalışıyor.',
+  'Every note is a file you own.': 'Her not sana ait bir dosyadır.',
+  'Everything lives in one space': 'Her şey tek bir alanda',
+  'Notes, to-dos, web pages and chats sit side by side, so you never lose track.':
+    'Notlar, yapılacaklar, web sayfaları ve sohbetler yan yana, böylece hiçbir şeyi kaçırmazsın.',
+  'More than Markdown': 'Markdown’dan fazlası',
+  'To-dos, bases and boards live right inside your notes. Today shows what is due.':
+    'Yapılacaklar, tabanlar ve panolar notlarının içinde. Bugün, zamanı gelenleri gösterir.',
+  'To-dos in any note': 'Her notta yapılacaklar',
+  'Write a to-do anywhere. Today collects everything that is due.':
+    'İstediğin yere bir yapılacak yaz. Bugün, zamanı gelen her şeyi toplar.',
+  'Your {browser} bookmarks': '{browser} yer imlerin',
+  'They are in the sidebar. Web pages open as tabs next to your notes.':
+    'Kenar çubuğundalar. Web sayfaları notlarının yanında sekme olarak açılır.',
+  'Web pages are tabs': 'Web sayfaları sekmedir',
+  'Browse next to your notes, without switching apps.':
+    'Uygulama değiştirmeden notlarının yanında gezin.',
+  'Ask your AI': 'Yapay zekana sor',
+  'Chats sit next to your notes and can use what is in your space.':
+    'Sohbetler notlarının yanında durur ve alanındakileri kullanabilir.',
+  'Terminals are tabs too': 'Terminaller de sekmedir',
+  'Open one next to the notes for your project.': 'Projenin notlarının yanında bir tane aç.',
+  'Do this on your computer': 'Bunu bilgisayarında yap',
 }
