@@ -43,7 +43,7 @@ class FirstSpace {
 }
 
 async function beginSetup() {
-  if (isMobile) return
+  if (isMobile || __EVEN_PLUGIN__) return
   const { setup } = await import('./onboarding/setup.svelte')
   setup.begin(false)
 }

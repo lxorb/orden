@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { copyText } from '../clipboard'
+  import CopyButton from '../CopyButton.svelte'
+  import { closeOnBack } from '../backstack.svelte'
   import { t } from '../i18n.svelte'
   import { importPrompt, MAIN_NOTES, NOTES_APPS, type NotesApp } from './catalog'
   import { matching, requestKey, typedName } from './flow'
@@ -15,7 +16,6 @@
   let picked = $state<string | null>(null)
   let query = $state('')
   let bringing = $state(false)
-  let copied = $state(false)
 
   const main = MAIN_NOTES.map((id) => NOTES_APPS.find((one) => one.id === id)).filter(
     (one) => one !== undefined,
@@ -34,7 +34,6 @@
 
   function pick(id: string) {
     picked = id
-    copied = false
   }
 
   function other() {
@@ -48,11 +47,7 @@
     picked = null
   }
 
-  async function copy() {
-    await copyText(prompt)
-    copied = true
-    setTimeout(() => (copied = false), 1600)
-  }
+  $effect(() => closeOnBack(view === 'other', leave))
 
   async function done() {
     if (!chosen || bringing) return
@@ -149,9 +144,7 @@
       <div class="anyway">
         <div class="anyway-head">
           <span>{t('Here’s how you can import it anyway')}</span>
-          <button class="copy" type="button" onclick={() => void copy()}>
-            {copied ? t('Copied') : t('Copy')}
-          </button>
+          <CopyButton value={prompt} />
         </div>
         <pre class="prompt">{prompt}</pre>
       </div>
@@ -186,22 +179,6 @@
     font-size: 14px;
     font-weight: 600;
     color: var(--text-strong);
-  }
-
-  .copy {
-    border: 0;
-    background: none;
-    color: var(--accent);
-    font: inherit;
-    font-size: 13.5px;
-    font-weight: 500;
-    padding: 4px 10px;
-    border-radius: 10px;
-    cursor: pointer;
-  }
-
-  .copy:hover {
-    background: var(--accent-soft);
   }
 
   .prompt {

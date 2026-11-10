@@ -4,6 +4,10 @@
   import Screen from './Screen.svelte'
   import { settleMarkdown, setup } from './setup.svelte'
 
+  const PROMPT = '~/orden'
+  const TYPED = 'git pull'
+  const ANSWERED = 'up to date'
+
   let picked = $state<Coding>(setup.answers.code)
 
   async function done() {
@@ -35,8 +39,9 @@
       onclick={() => (picked = 'yes')}
     >
       <span class="term" dir="ltr" aria-hidden="true"
-        ><span class="p">~/orden</span> git pull<br /><span class="ok">✓</span> up to date<br
-        /><span class="p">~/orden</span> <span class="caret"></span></span
+        ><span class="p">{PROMPT}</span>
+        {TYPED}<br /><span class="ok">✓</span>
+        {ANSWERED}<br /><span class="p">{PROMPT}</span> <span class="caret"></span></span
       >
       <span class="label"><span class="ring" aria-hidden="true"></span>{t('Yes')}</span>
     </button>
@@ -94,11 +99,6 @@
 
   .card[aria-checked='true'] {
     border-color: var(--accent);
-  }
-
-  .card:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
   }
 
   .label {
@@ -198,5 +198,10 @@
     border-radius: 3px;
     border: 1.5px solid var(--accent);
     flex: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .caret {
+      animation: none;
+    }
   }
 </style>

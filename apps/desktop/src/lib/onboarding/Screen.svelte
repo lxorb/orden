@@ -58,7 +58,7 @@
   <div class="actions">
     {#if primary}
       <button
-        class="primary"
+        class="orden-button go"
         type="button"
         disabled={(primary.disabled ?? false) || (primary.busy ?? false)}
         aria-busy={primary.busy}
@@ -69,7 +69,12 @@
       </button>
     {/if}
     {#if quiet}
-      <button class="quiet" type="button" disabled={quiet.disabled} onclick={quiet.onclick}>
+      <button
+        class="orden-button is-quiet skip"
+        type="button"
+        disabled={quiet.disabled}
+        onclick={quiet.onclick}
+      >
         {quiet.label}
       </button>
     {/if}
@@ -154,68 +159,17 @@
     padding-top: 12px;
   }
 
-  .primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+  .go {
     min-width: min(320px, 100%);
     height: 50px;
     padding: 0 28px;
-    border: 0;
     border-radius: 14px;
-    cursor: pointer;
-    background: var(--accent);
-    color: var(--accent-ink);
-    font: inherit;
     font-size: 16px;
-    font-weight: 600;
-    transition:
-      transform 0.2s var(--ease-out),
-      opacity 0.3s var(--ease-out),
-      filter 0.2s;
   }
 
-  .primary:hover {
-    filter: brightness(1.08);
-  }
-
-  .primary:active {
-    transform: scale(0.98);
-  }
-
-  .primary:disabled {
-    opacity: 0.35;
-    cursor: default;
-    filter: none;
-    transform: none;
-  }
-
-  .primary[aria-busy='true'] {
-    opacity: 0.8;
-  }
-
-  .quiet {
-    border: 0;
-    background: none;
+  .skip {
     color: var(--accent);
-    font: inherit;
     font-size: 15px;
-    font-weight: 500;
-    padding: 10px 16px;
-    cursor: pointer;
-    border-radius: 10px;
-  }
-
-  .quiet:hover {
-    background: var(--accent-soft);
-  }
-
-  .back:focus-visible,
-  .primary:focus-visible,
-  .quiet:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
   }
 
   .spin {
@@ -230,6 +184,11 @@
   @keyframes turn {
     to {
       transform: rotate(1turn);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .spin {
+      animation: none;
     }
   }
 </style>

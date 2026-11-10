@@ -610,7 +610,8 @@ class Workspace {
         const { seed } = await import('./web/commands')
         if (await seed()) {
           ;(await import('./first-visit.svelte')).firstVisit.seeded()
-          ;(await import('./onboarding/setup.svelte')).setup.begin(account.signedIn)
+          if (!__EVEN_PLUGIN__)
+            (await import('./onboarding/setup.svelte')).setup.begin(account.signedIn)
         }
       } catch (error) {
         log('warn', `first visit: nothing seeded - ${String(error)}`)

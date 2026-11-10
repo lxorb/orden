@@ -108,7 +108,8 @@
   import PullMark from './lib/PullMark.svelte'
   import type { AppContext } from './lib/shortcuts/registry'
   import { writeNew } from './lib/write-new'
-  import { setup } from './lib/onboarding/setup.svelte'
+  import { gate } from './lib/onboarding/gate.svelte'
+  import Door from './lib/Door.svelte'
 
   if (renamed.showing) void renameNotice.ask()
   if (isDesktop && !__EVEN_PLUGIN__) {
@@ -429,7 +430,7 @@
         workspace,
         search,
         settings,
-        setup,
+        setup: gate,
         modes,
         shortcuts,
         theme,
@@ -984,10 +985,12 @@
 
 <SizeBadge />
 
-{#if !__EVEN_PLUGIN__ && setup.showing}
-  {#await import('./lib/onboarding/Setup.svelte') then Setup}
-    <Setup.default />
-  {/await}
+{#if !__EVEN_PLUGIN__}
+  <Door open={gate.showing} load={() => import('./lib/onboarding/Setup.svelte')}>
+    {#snippet children(Setup)}
+      <Setup.default />
+    {/snippet}
+  </Door>
 {/if}
 
 {#if paletteDoor.asked}

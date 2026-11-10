@@ -134,4 +134,9 @@
   .bar i.full {
     width: 100%;
   }
+  @media (prefers-reduced-motion: reduce) {
+    .importing .dots i {
+      animation: none;
+    }
+  }
 </style>

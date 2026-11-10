@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from '../Icon.svelte'
   import { brandIcon, readIcon } from '../icons'
+  import { hexOf, inkFor, type Rgb, rgbOf } from '../legibility'
 
   interface Props {
     name: string
@@ -10,6 +11,11 @@
   }
 
   const { name, icon, colour, size = 40 }: Props = $props()
+
+  const LIGHT: Rgb = [255, 255, 255]
+  const DARK: Rgb = [17, 20, 26]
+  const ground = $derived(colour ?? '#7a8494')
+  const ink = $derived(hexOf(inkFor(rgbOf(ground) ?? DARK, [LIGHT, DARK])))
 
   const letter = $derived(Array.from(name.trim())[0]?.toLocaleUpperCase() ?? '?')
 </script>
@@ -28,7 +34,8 @@
     style:width="{size * 0.9}px"
     style:height="{size * 0.9}px"
     style:font-size="{size * 0.45}px"
-    style:background={colour ?? '#7a8494'}
+    style:background={ground}
+    style:color={ink}
     aria-hidden="true">{letter}</span
   >
 {/if}
@@ -50,7 +57,6 @@
     place-items: center;
     flex: none;
     border-radius: 25%;
-    color: #fff;
     font-weight: 700;
     line-height: 1;
   }

@@ -92,11 +92,6 @@
     border-color: var(--accent);
   }
 
-  .card:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
   .label {
     display: flex;
     align-items: center;

@@ -115,6 +115,7 @@ export const APP_FOLDERS = [
   'inbox',
   'internal',
   'mobile',
+  'onboarding',
   'online',
   'overview',
   'pages',

@@ -193,12 +193,6 @@
     color: var(--text);
   }
 
-  .field:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -1px;
-    border-color: transparent;
-  }
-
   .muted {
     margin: 0;
     color: var(--muted);
@@ -227,11 +221,6 @@
     color: var(--text);
     font-family: var(--font-ui);
     font-variant-numeric: tabular-nums;
-  }
-
-  .digits input:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -1px;
   }
 
   .link {

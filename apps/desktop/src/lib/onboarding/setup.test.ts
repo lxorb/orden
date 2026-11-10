@@ -15,19 +15,28 @@ async function fresh() {
   return (await import('./setup.svelte')).setup
 }
 
+async function relaunched() {
+  vi.resetModules()
+  const [{ gate }, { setup }] = await Promise.all([
+    import('./gate.svelte'),
+    import('./setup.svelte'),
+  ])
+  gate.restore()
+  if (gate.showing) setup.resume()
+  return setup
+}
+
 beforeEach(() => kept.clear())
 
 describe('the first-launch setup', () => {
   test('stays away from people who used Orden before it existed', async () => {
-    const setup = await fresh()
-    setup.restore()
+    const setup = await relaunched()
     expect(setup.showing).toBe(false)
   })
 
   test('stays away from people who finished it, even on a fresh start', async () => {
     kept.set(KEY, JSON.stringify('done'))
-    const setup = await fresh()
-    setup.restore()
+    const setup = await relaunched()
     setup.begin(false)
     expect(setup.showing).toBe(false)
   })
@@ -52,8 +61,7 @@ describe('the first-launch setup', () => {
     setup.answer({ code: 'no' })
     expect(setup.step).toBe('heard')
 
-    const again = await fresh()
-    again.restore()
+    const again = await relaunched()
     expect(again.showing).toBe(true)
     expect(again.step).toBe('heard')
     expect(again.answers.code).toBe('no')
@@ -79,8 +87,7 @@ describe('the first-launch setup', () => {
     expect(setup.showing).toBe(false)
     expect(kept.get(KEY)).toBe(JSON.stringify('done'))
 
-    const again = await fresh()
-    again.restore()
+    const again = await relaunched()
     again.begin(false)
     expect(again.showing).toBe(false)
   })

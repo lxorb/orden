@@ -49,10 +49,10 @@
           </span>
           <span class="text">{issue.text}</span>
           {#if sent[issue.id] === 'sent'}
-            <span class="pill done" role="status">{t('Report received')}</span>
+            <span class="done" role="status">{t('Report received')}</span>
           {:else}
             <button
-              class="pill"
+              class="orden-chip end"
               type="button"
               disabled={sent[issue.id] === 'sending'}
               aria-busy={sent[issue.id] === 'sending'}
@@ -125,27 +125,24 @@
     flex: 1;
   }
 
-  .pill {
+  .end {
     margin-inline-start: auto;
+    min-width: 74px;
+    min-height: 30px;
+    display: inline-grid;
+    place-items: center;
+  }
+
+  .done {
+    margin-inline-start: auto;
+    min-width: 30px;
     height: 30px;
-    padding: 0 14px;
-    border-radius: 999px;
-    border: 0;
-    cursor: pointer;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font: inherit;
-    font-size: 13.5px;
-    font-weight: 600;
-    white-space: nowrap;
     display: inline-grid;
     place-items: center;
     flex: none;
-  }
-
-  .pill.done {
-    background: color-mix(in srgb, var(--success) 16%, transparent);
     color: var(--success);
-    cursor: default;
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
   }
 </style>

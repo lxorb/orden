@@ -29,6 +29,8 @@
     welcome: WelcomeStep,
   }
 
+  setup.resume()
+
   onMount(() => {
     iconLibrary.load(BRANDS)
     void setup.look()
@@ -36,25 +38,26 @@
 
   const Shown = $derived(SCREENS[setup.step])
   const wide = $derived(setup.step === 'account' || setup.step === 'welcome')
-  const shift = $derived((setup.forward ? 60 : -60) * i18n.factor)
+  const way = $derived(setup.forward ? 1 : -1)
 </script>
 
 <div
   class="setup"
+  data-covers="all"
   class:wide
   data-step={setup.step}
   role="dialog"
   aria-modal="true"
   aria-label="Orden"
   use:trap
-  out:fade={{ duration: dur(500) }}
+  transition:fade={{ duration: dur(500) }}
 >
   <div class="aura" aria-hidden="true"></div>
   {#key setup.step}
     <div
       class="stage"
-      in:fly={{ x: shift, duration: dur(550), delay: dur(80), easing: cubicOut }}
-      out:fly={{ x: -shift, duration: dur(450), easing: cubicOut }}
+      in:fly={{ x: way * 60 * i18n.factor, duration: dur(550), delay: dur(80), easing: cubicOut }}
+      out:fly={{ x: way * -60 * i18n.factor, duration: dur(450), easing: cubicOut }}
     >
       <Shown />
     </div>
@@ -202,7 +205,6 @@
     gap: 12px;
     padding: 13px 16px;
     border: 0;
-    background: none;
     font: inherit;
     font-size: 15px;
     color: var(--text);
@@ -211,10 +213,6 @@
 
   .setup :global(button.o-row) {
     cursor: pointer;
-  }
-
-  .setup :global(button.o-row:hover) {
-    background: var(--surface-2);
   }
 
   .setup :global(.o-toggle) {

@@ -66,11 +66,6 @@
     border-color: var(--accent);
   }
 
-  .tile:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
   .mark {
     width: 40px;
     height: 40px;

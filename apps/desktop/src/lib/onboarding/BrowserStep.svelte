@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
+  import { closeOnBack } from '../backstack.svelte'
   import { t } from '../i18n.svelte'
   import {
     BROWSERS,
@@ -61,6 +62,8 @@
     view = 'main'
     picked = null
   }
+
+  $effect(() => closeOnBack(view === 'other', leave))
 
   async function done() {
     if (picked === CUSTOM) await applyPreset(custom)
@@ -162,7 +165,7 @@
     <div class="o-list pane-in">
       {#each CUSTOM_SETTINGS as setting (setting)}
         <button
-          class="o-row"
+          class="orden-row o-row"
           type="button"
           role="switch"
           aria-checked={custom[setting]}

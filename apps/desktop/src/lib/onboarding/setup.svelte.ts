@@ -1,6 +1,7 @@
 import type { BrowserId } from '../import/browsers'
 import { BROWSERS, type Preset, type PresetSetting } from './catalog'
 import { type Answers, firstStep, markdownStyleFor, type Reach, type Step, stepAfter } from './flow'
+import { gate } from './gate.svelte'
 import { keepProgress, readProgress } from './kept'
 import { stepped } from '../usage/tally'
 
@@ -12,7 +13,6 @@ export interface Issue {
 const blank = (): Answers => ({ browser: null, notes: null, code: null })
 
 class Setup {
-  showing = $state(false)
   step = $state<Step>('account')
   answers = $state<Answers>(blank())
   forward = $state(true)
@@ -21,10 +21,19 @@ class Setup {
   signedIn = $state(false)
   signIns = $state(false)
 
+  get showing(): boolean {
+    return gate.showing
+  }
+
+  set showing(on: boolean) {
+    gate.showing = on
+  }
+
   private trail: Step[] = []
   private told = 0
 
-  restore() {
+  resume() {
+    if (this.trail.length) return
     const kept = readProgress()
     if (kept === null || kept === 'done') return
     this.answers = kept.answers

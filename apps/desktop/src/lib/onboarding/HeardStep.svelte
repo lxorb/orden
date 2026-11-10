@@ -38,7 +38,7 @@
   <div class="list rise" role="radiogroup" aria-label={t('How did you hear about Orden?')}>
     {#each HEARD as one (one.id)}
       <button
-        class="row"
+        class="orden-row reason"
         type="button"
         role="radio"
         aria-checked={picked === one.id}
@@ -79,38 +79,27 @@
     overflow: hidden;
   }
 
-  .row {
+  .reason {
     width: 100%;
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 13px 16px;
     border: 0;
-    background: none;
     text-align: start;
-    cursor: pointer;
     font: inherit;
     font-size: 15px;
     color: var(--text);
     position: relative;
   }
 
-  .row + .row::before {
+  .reason + .reason::before {
     content: '';
     position: absolute;
     top: 0;
     inset-inline: 16px 0;
     height: 1px;
     background: var(--line);
-  }
-
-  .row:hover {
-    background: var(--surface-2);
-  }
-
-  .row:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
   }
 
   .ico {
@@ -151,7 +140,7 @@
     transition: all 0.3s var(--ease-spring);
   }
 
-  .row[aria-checked='true'] .check {
+  .reason[aria-checked='true'] .check {
     opacity: 1;
     transform: none;
   }
@@ -166,11 +155,5 @@
     font: inherit;
     font-size: 16px;
     color: var(--text);
-  }
-
-  .field:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -1px;
-    border-color: transparent;
   }
 </style>

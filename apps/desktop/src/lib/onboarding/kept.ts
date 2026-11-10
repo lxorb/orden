@@ -1,8 +1,8 @@
 import { isRecord, keepJson, stored } from '../stored'
 import type { Answers, Step } from './flow'
 import { isStep } from './flow'
+import { PROGRESS_KEY } from './gate.svelte'
 
-const PROGRESS_KEY = 'orden:setup'
 const REQUESTS_KEY = 'orden:setup-requests'
 const HEARD_KEY = 'orden:setup-heard'
 
