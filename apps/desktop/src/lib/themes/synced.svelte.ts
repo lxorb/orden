@@ -1,7 +1,7 @@
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { api } from '../api'
-import { hub } from '../sync2/hub.svelte'
+import { hub } from '../sync-client/src/api'
 import { theme } from '../theme.svelte'
 import { LookSync } from './look-sync'
 

@@ -848,7 +848,7 @@ describe('a space somebody shared', () => {
 
     expect(fake.remote.calls).toEqual(['createNote Z.md'])
     expect(sync.status).not.toBe('error')
-    const { unsynced } = await import('./sync2/unsynced.svelte')
+    const { unsynced } = await import('./sync-client/src/unsynced.svelte')
     await vi.waitFor(() => expect(unsynced.said).toBe('A too big.md'))
     unsynced.dismiss()
   })
@@ -1753,8 +1753,8 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
         walked = resolve
       })
     })
-    vi.doMock('./sync2/runner.svelte', () => ({ runner: { walkBack } }))
-    await import('./sync2/runner.svelte')
+    vi.doMock('./sync-client/src/runner.svelte', () => ({ runner: { walkBack } }))
+    await import('./sync-client/src/runner.svelte')
     return { walkBack, started, walk: (back: boolean) => walked(back) }
   }
 
@@ -1807,7 +1807,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
     } finally {
       sync.stop()
       v1.restore()
-      vi.doUnmock('./sync2/runner.svelte')
+      vi.doUnmock('./sync-client/src/runner.svelte')
       vi.unstubAllGlobals()
     }
   })
@@ -1831,7 +1831,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
       expect(localStorage.getItem('orden:sync-version')).toBe('2')
     } finally {
       v1.restore()
-      vi.doUnmock('./sync2/runner.svelte')
+      vi.doUnmock('./sync-client/src/runner.svelte')
       vi.unstubAllGlobals()
     }
   })
@@ -1852,7 +1852,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
     } finally {
       sync.stop()
       v1.restore()
-      vi.doUnmock('./sync2/runner.svelte')
+      vi.doUnmock('./sync-client/src/runner.svelte')
       vi.unstubAllGlobals()
     }
   })
@@ -1889,7 +1889,10 @@ describe('an account moved to v2 while this device runs v1', () => {
       expect(passes.mock.calls.length).toBeGreaterThan(1)
       await until(() => !sync.passing)
       const before = passes.mock.calls.length
-      vi.doMock('./sync2/runner.svelte', () => ({ runner }))
+      vi.doMock('./sync-client/src/api', async (importOriginal) => ({
+        ...(await importOriginal<object>()),
+        runner,
+      }))
 
       account.user = { ...account.user!, syncVersion: 2 }
       sync.start()
@@ -1905,7 +1908,7 @@ describe('an account moved to v2 while this device runs v1', () => {
     } finally {
       sync.stop()
       vi.useRealTimers()
-      vi.doUnmock('./sync2/runner.svelte')
+      vi.doUnmock('./sync-client/src/api')
       vi.unstubAllGlobals()
     }
   })

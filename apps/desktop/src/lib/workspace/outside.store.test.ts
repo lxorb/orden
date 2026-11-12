@@ -12,7 +12,7 @@ vi.mock('../native', async (importOriginal) => ({
     return Promise.resolve(undefined)
   },
 }))
-vi.mock('../sync2/lead', () => ({
+vi.mock('../sync-client/src/lead', () => ({
   leadSync: () => Promise.resolve({ release: () => undefined }),
 }))
 vi.mock('../tauri', async (importOriginal) => ({

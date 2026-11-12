@@ -142,6 +142,8 @@ function standsAlone(module, test, problems) {
       ? specifier.split('/').slice(0, 2).join('/')
       : specifier.split('/')[0]
     if (!specifier.startsWith('@orden/') && module.host?.libraries.has(library)) continue
+    const fake = /^@orden\/([a-z0-9-]+)\/(?:sim|fakes)$/.exec(specifier)
+    if (fake && module.dependsOn.includes(fake[1])) continue
     if (specifier.startsWith('@orden/')) {
       problems.push(
         `${module.dir}/${test}: a contract test runs without other modules, but imports '${specifier}' (fake its dependency instead)`,

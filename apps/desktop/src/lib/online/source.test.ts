@@ -15,7 +15,7 @@ vi.mock('../account.svelte', () => ({
   account: { accountToken: 'token', forgetWithSession: () => undefined },
 }))
 vi.mock('../sync.svelte', () => ({ sync: { version: 2 } }))
-vi.mock('../sync2/runner.svelte', () => ({
+vi.mock('../sync-client/src/runner.svelte', () => ({
   runner: {
     idAt: () => Promise.resolve({ id: 'file-1', own: true }),
     kick: () => undefined,

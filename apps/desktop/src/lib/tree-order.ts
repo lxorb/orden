@@ -1,5 +1,7 @@
 import type { Entry } from './workspace.svelte'
 
+type Shown = Pick<Entry, 'name' | 'is_dir' | 'modified' | 'created'>
+
 export type SortMode =
   | 'name'
   | 'name-desc'
@@ -50,7 +52,7 @@ export function byDefault(one: Row, other: Row): number {
   return byName(one.name, other.name)
 }
 
-const TIMES: Partial<Record<SortMode, { of: (entry: Entry) => number; back: boolean }>> = {
+const TIMES: Partial<Record<SortMode, { of: (entry: Shown) => number; back: boolean }>> = {
   'modified-desc': { of: (entry) => entry.modified, back: true },
   'modified-asc': { of: (entry) => entry.modified, back: false },
   'created-desc': { of: (entry) => entry.created, back: true },
@@ -63,12 +65,12 @@ function placesIn(listed: readonly string[]): Map<string, number> {
   return at
 }
 
-function group(entries: readonly Entry[], mode: SortMode, listed: readonly string[]): Entry[] {
+function group<T extends Shown>(entries: readonly T[], mode: SortMode, listed: readonly string[]): T[] {
   const out = [...entries]
 
   if (mode === 'manual') {
     const at = placesIn(listed)
-    const place = (entry: Entry) => at.get(entry.name) ?? Infinity
+    const place = (entry: Shown) => at.get(entry.name) ?? Infinity
     out.sort((one, other) => place(one) - place(other) || byDefault(one, other))
     return out
   }
@@ -84,11 +86,11 @@ function group(entries: readonly Entry[], mode: SortMode, listed: readonly strin
   return out
 }
 
-export function ordered(
-  children: readonly Entry[],
+export function ordered<T extends Shown>(
+  children: readonly T[],
   mode: SortMode,
   listed: readonly string[],
-): Entry[] {
+): T[] {
   if (mode === 'manual') return group(children, mode, listed)
 
   const folders = children.filter((one) => one.is_dir)
@@ -98,7 +100,7 @@ export function ordered(
 }
 
 export function shownNames(
-  children: readonly Entry[],
+  children: readonly Shown[],
   mode: SortMode,
   listed: readonly string[],
 ): string[] {

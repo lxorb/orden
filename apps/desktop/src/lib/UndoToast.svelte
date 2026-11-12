@@ -5,11 +5,10 @@
   import { dur, fly } from './motion'
   import { told } from './said.svelte'
   import { reservedName } from './reserved-name.svelte'
-  import { back } from './sync2/resurrected.svelte'
+  import { back, unsynced } from './sync-client/src/api'
   import { gateNote } from './gate-note.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
-  import { unsynced } from './sync2/unsynced.svelte'
   import { failed } from './views/failed.svelte'
   import { workspace } from './workspace.svelte'
 

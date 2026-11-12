@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { put } from '../sync2/store'
+import { put } from '../sync-client/src/store'
 
 let kept: Map<string, string>
 let answer: boolean
@@ -51,6 +51,7 @@ test('asks the browser to keep what is here once, and not again after it said no
 })
 
 test('the first change still to be sent asks, and a change the account already has does not', async () => {
+  await import('../sync-ports')
   const { openWeb } = await import('./sync-store')
   const store = await openWeb('kept-account')
   await store.write([

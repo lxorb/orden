@@ -2,7 +2,7 @@ import { expect, test, vi } from 'vitest'
 
 const opened: (() => void)[] = []
 
-vi.mock('../../sync2/hub.svelte', () => ({
+vi.mock('../../sync-client/src/hub.svelte', () => ({
   hub: {
     on: () => () => undefined,
     opened: (run: () => void) => {

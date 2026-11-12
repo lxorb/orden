@@ -62,11 +62,11 @@ interface Kit {
 
 async function kit(): Promise<Kit> {
   const at = (file: string) =>
-    new URL(`../../../apps/desktop/src/lib/sync2/${file}`, import.meta.url).href
+    new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate, engine] = await Promise.all([
-    import(/* @vite-ignore */ at('test-device.ts')),
-    import(/* @vite-ignore */ at('migrate.ts')),
-    import(/* @vite-ignore */ at('engine.ts')),
+    import(/* @vite-ignore */ at('test/test-device.ts')),
+    import(/* @vite-ignore */ at('src/migrate.ts')),
+    import(/* @vite-ignore */ at('src/engine.ts')),
   ])
   return { ...(device as object), ...(migrate as object), ...(engine as object) } as Kit
 }
@@ -135,7 +135,7 @@ test('a folder deleted while a new note in it is listed and not pulled comes bac
   await passed(a)
 
   const { readFeed } = (await import(
-    /* @vite-ignore */ new URL('../../../apps/desktop/src/lib/sync2/pass.ts', import.meta.url).href
+    /* @vite-ignore */ new URL('../../../apps/desktop/src/lib/sync-client/src/pass.ts', import.meta.url).href
   )) as { readFeed: (core: unknown, space: unknown, go: () => boolean) => Promise<unknown> }
   await readFeed(b.engine.core, b.engine.core.spaces.get(space), () => true)
   expect(onDisk(b)['f/new.md']).toBeUndefined()

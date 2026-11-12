@@ -1,3 +1,4 @@
+import '../sync-ports'
 import 'fake-indexeddb/auto'
 import { describe, expect, test } from 'vitest'
 import {
@@ -22,8 +23,8 @@ import {
   type SyncStore,
   type WebRow,
   type WrittenRow,
-} from '../sync2/store'
-import { leadSync } from '../sync2/lead'
+} from '../sync-client/src/store'
+import { leadSync } from '../sync-client/src/lead'
 import { forgetWeb, openWeb } from './sync-store'
 
 let accounts = 0

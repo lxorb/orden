@@ -1,0 +1,726 @@
+import { freePath } from '@orden/markdown/paths'
+import {
+  inForeignCopy,
+  hash32,
+  patched,
+  sameMeta,
+  byPosition,
+  applyOp,
+  nameKey,
+  treeState,
+  type OpResult,
+  type Op,
+  type ItemMeta,
+  type MetaPatch,
+  type TreeEntry,
+  type TreeState,
+} from '@orden/sync-core'
+import { isReserved } from '../../naming'
+import { holdsDocument } from './kinds'
+import { emptyKeeping } from './keeping'
+import { emptyOrdering, type Gone, type Keeping, type Ordering, type Outgoing } from './records'
+import type { EntryRow, OutboxRow, SpaceRow } from './store'
+import type { Disk, FileKind, World } from './world'
+
+export interface Outboxed {
+  row: OutboxRow
+  record: Outgoing
+}
+
+export const SEP = '/'
+
+export function folderOf(path: string): string {
+  const at = path.lastIndexOf(SEP)
+  return at < 0 ? '' : path.slice(0, at)
+}
+
+export function nameOf(path: string): string {
+  return path.slice(path.lastIndexOf(SEP) + 1)
+}
+
+export function joined(folder: string, name: string): string {
+  return folder ? `${folder}${SEP}${name}` : name
+}
+
+const FORBIDDEN = '<>:"\\|?*'
+
+function localName(name: string, platform: World['platform']): string {
+  if (platform === 'windows') {
+    let out = Array.from(name, (char) =>
+      char < ' ' || FORBIDDEN.includes(char) ? '_' : char,
+    ).join('')
+    if (isReserved(out)) out = `_${out}`
+    return out.replace(/[. ]+$/, (tail) => '_'.repeat(tail.length))
+  }
+  if (platform === 'mac') return name.replace(/:/g, '_')
+  return name
+}
+
+export function windowsPath(root: string): boolean {
+  return /^[a-zA-Z]:/.test(root) || root.includes('\\')
+}
+
+type Placed = (row: EntryRow, from: string, to: string) => void
+
+function added(map: Map<string, Set<string>>, key: string, id: string) {
+  const ids = map.get(key)
+  if (ids) ids.add(id)
+  else map.set(key, new Set([id]))
+}
+
+function taken(map: Map<string, Set<string>>, key: string, id: string) {
+  const ids = map.get(key)
+  ids?.delete(id)
+  if (ids?.size === 0) map.delete(key)
+}
+
+const watched = new WeakMap<EntryRow, { path: string; maps: Set<Entries> }>()
+
+function watch(row: EntryRow, map: Entries) {
+  const had = watched.get(row)
+  if (had) {
+    had.maps.add(map)
+    return
+  }
+  const slot = { path: row.local_path, maps: new Set([map]) }
+  watched.set(row, slot)
+  Object.defineProperty(row, 'local_path', {
+    configurable: true,
+    enumerable: true,
+    get: () => slot.path,
+    set: (to: string) => {
+      const from = slot.path
+      slot.path = to
+      if (from !== to) for (const one of slot.maps) one.moved(row, from, to)
+    },
+  })
+}
+
+class Entries extends Map<string, EntryRow> {
+  constructor(
+    private readonly placed: Placed,
+    rows: readonly EntryRow[],
+  ) {
+    super()
+    for (const row of rows) this.set(row.id, row)
+  }
+
+  moved(row: EntryRow, from: string, to: string) {
+    if (super.get(row.id) === row) this.placed(row, from, to)
+  }
+
+  override set(id: string, row: EntryRow): this {
+    const had = super.get(id)
+    if (had === row) return this
+    if (had) this.letGo(had)
+    super.set(id, row)
+    watch(row, this)
+    this.placed(row, '', row.local_path)
+    return this
+  }
+
+  override delete(id: string): boolean {
+    const had = super.get(id)
+    if (had) this.letGo(had)
+    return super.delete(id)
+  }
+
+  override clear() {
+    for (const row of super.values()) this.letGo(row)
+    super.clear()
+  }
+
+  private letGo(row: EntryRow) {
+    this.placed(row, row.local_path, '')
+    watched.get(row)?.maps.delete(this)
+  }
+}
+
+export class SpaceState {
+  readonly entries: Map<string, EntryRow>
+  outbox: Outboxed[]
+  ordering: Ordering
+  gone: Gone = new Map()
+  keeping: Keeping = emptyKeeping()
+  lostCheckedAt = -Infinity
+  private shownCache: TreeState | null = null
+  private pathsCache: Map<string, string> | null = null
+  private placedCache: Map<string, { folder: string; names: string[] }> | null = null
+  private readonly holding = new Map<string, Set<string>>()
+  private readonly within = new Map<string, Set<string>>()
+  private readonly keys = new Map<string, string>()
+  private shownAt: { paths: Map<string, string>; keys: Map<string, string[]> } | null = null
+  private namesAt: Map<string | null, { taken: Set<string>; own: Set<string> }> | null = null
+  private loose: Set<string> | null = null
+
+  constructor(
+    public row: SpaceRow,
+    entries: readonly EntryRow[],
+    outbox: readonly Outboxed[],
+    private readonly device: string,
+    private readonly world: Pick<World, 'platform' | 'foldsCase' | 'lazy'>,
+    ordering: Ordering = emptyOrdering(),
+    private readonly lastByMe: (id: string) => boolean = () => false,
+  ) {
+    this.entries = new Entries((row, from, to) => {
+      this.unhold(row.id, from)
+      this.hold(row.id, to)
+      this.loose?.add(row.id)
+    }, entries)
+    this.outbox = [...outbox]
+    this.ordering = ordering
+  }
+
+  get id(): string {
+    return this.row.space_id
+  }
+
+  changed() {
+    this.shownCache = null
+    this.pathsCache = null
+    this.placedCache = null
+    this.namesAt = null
+    this.loose = null
+  }
+
+  looseIds(): ReadonlySet<string> | null {
+    return this.loose
+  }
+
+  settledBut(wanted: Map<string, string>, unsettled: readonly EntryRow[]) {
+    if (this.pathsCache === wanted) this.loose = new Set(unsettled.map((entry) => entry.id))
+  }
+
+  confirmed(): TreeState {
+    const entries: TreeEntry[] = []
+    for (const entry of this.entries.values()) {
+      if (entry.seq === null) continue
+      entries.push({
+        id: entry.id,
+        kind: entry.kind as TreeEntry['kind'],
+        parent: entry.parent,
+        name: entry.name,
+        deleted: entry.deleted,
+        seq: entry.seq,
+        docSeq: 0,
+        ...(this.lastByMe(entry.id) ? { by: this.device } : {}),
+        ...this.positionOf(entry.id),
+        ...this.metaOf(entry.id),
+      })
+    }
+    return treeState(entries, this.row.cursor)
+  }
+
+  private positionOf(id: string): { pos?: string } {
+    const pos = this.ordering.positions.get(id)
+    return pos === undefined ? {} : { pos }
+  }
+
+  private metaOf(id: string): { meta?: ItemMeta } {
+    const meta = this.ordering.meta.get(id)
+    return meta === undefined ? {} : { meta }
+  }
+
+  described(): Map<string, ItemMeta> {
+    const paths = this.paths()
+    const out = new Map<string, ItemMeta>()
+    for (const entry of this.shown().entries.values()) {
+      const path = paths.get(entry.id)
+      if (entry.deleted || entry.meta === undefined || path === undefined) continue
+      out.set(path, entry.meta)
+    }
+    return out
+  }
+
+  shown(): TreeState {
+    if (this.shownCache) return this.shownCache
+    const state = this.confirmed()
+    for (const one of this.outbox) this.showing(state, one)
+    this.shownCache = state
+    return state
+  }
+
+  private showing(state: TreeState, one: Outboxed) {
+    if (one.record.t !== 'op') return
+    const op: Op = { ...one.record.op }
+    if (op.t === 'create') delete op.mergeable
+    applyOp(state, op, { role: 'owner', device: this.device })
+  }
+
+  paths(): Map<string, string> {
+    if (this.pathsCache) return this.pathsCache
+    const shown = this.shown()
+    const children = new Map<string | null, TreeEntry[]>()
+    for (const entry of shown.entries.values()) {
+      if (entry.deleted) continue
+      const list = children.get(entry.parent) ?? []
+      list.push(entry)
+      children.set(entry.parent, list)
+    }
+
+    const out = new Map<string, string>()
+    const names = new Map<string | null, { taken: Set<string>; own: Set<string> }>()
+    const walk = (parent: string | null, folder: string) => {
+      const siblings = (children.get(parent) ?? []).sort((a, b) => (a.id < b.id ? -1 : 1))
+      const taken = new Set<string>()
+      const own = new Set(
+        siblings.map((entry) => this.key(localName(entry.name, this.world.platform))),
+      )
+      names.set(parent, { taken, own })
+      for (const entry of siblings) {
+        const wanted = localName(entry.name, this.world.platform)
+        const name = freePath(
+          wanted,
+          (one) => taken.has(this.key(one)) || (one !== wanted && own.has(this.key(one))),
+        )
+        taken.add(this.key(name))
+        const path = joined(folder, name)
+        out.set(entry.id, path)
+        if (entry.kind === 'folder') walk(entry.id, path)
+      }
+    }
+    walk(null, '')
+    this.pathsCache = out
+    this.namesAt = names
+    return out
+  }
+
+  private pathed(paths: Map<string, string>, shown: TreeState, id: string): boolean {
+    const names = this.namesAt
+    const entry = shown.entries.get(id)
+    if (!names || !entry || entry.deleted || paths.has(id)) return false
+    const folder = entry.parent === null ? '' : paths.get(entry.parent)
+    const place = names.get(entry.parent)
+    if (folder === undefined || (!place && entry.parent !== null)) return false
+    const name = localName(entry.name, this.world.platform)
+    const key = this.key(name)
+    if (place && (place.taken.has(key) || place.own.has(key))) return false
+    const siblings = place ?? { taken: new Set<string>(), own: new Set<string>() }
+    names.set(entry.parent, siblings)
+    siblings.taken.add(key)
+    siblings.own.add(key)
+    if (entry.kind === 'folder') names.set(id, { taken: new Set(), own: new Set() })
+    const path = joined(folder, name)
+    paths.set(id, path)
+    if (this.shownAt?.paths === paths) {
+      const at = this.keyOf(path)
+      const ids = this.shownAt.keys.get(at)
+      if (ids) ids.push(id)
+      else this.shownAt.keys.set(at, [id])
+    }
+    return true
+  }
+
+  placedNames(): Map<string, { folder: string; names: string[] }> {
+    if (this.placedCache) return this.placedCache
+    const shown = this.shown()
+    const paths = this.paths()
+    const groups = new Map<string, { folder: string; rows: TreeEntry[] }>()
+    for (const entry of shown.entries.values()) {
+      if (entry.deleted || entry.pos === undefined || !paths.has(entry.id)) continue
+      const folder = entry.parent === null ? '' : paths.get(entry.parent)
+      if (folder === undefined) continue
+      const group = groups.get(this.key(folder)) ?? { folder, rows: [] }
+      group.rows.push(entry)
+      groups.set(this.key(folder), group)
+    }
+    const out = new Map<string, { folder: string; names: string[] }>()
+    for (const [key, { folder, rows }] of groups) {
+      const names = rows.sort(byPosition).map((entry) => nameOf(paths.get(entry.id) ?? ''))
+      out.set(key, { folder, names })
+    }
+    this.placedCache = out
+    return out
+  }
+
+  childrenAt(folder: string): Map<string, TreeEntry> | null {
+    const parent = this.folderAt(folder)
+    if (parent === undefined) return null
+    const paths = this.paths()
+    const out = new Map<string, TreeEntry>()
+    for (const entry of this.shown().entries.values()) {
+      const path = paths.get(entry.id)
+      if (entry.deleted || entry.parent !== parent || path === undefined) continue
+      out.set(nameOf(path), entry)
+    }
+    return out
+  }
+
+  spelled(name: string): string {
+    return localName(name, this.world.platform)
+  }
+
+  key(path: string): string {
+    return this.world.foldsCase ? nameKey(path) : path.normalize('NFC')
+  }
+
+  get keepsFew(): boolean {
+    return this.world.lazy === true && this.keeping.on && !this.keeping.refused
+  }
+
+  at(path: string): EntryRow | null {
+    const wanted = this.key(path)
+    const held = this.holding.get(wanted)
+    if (held?.size === 1) {
+      const [id] = held
+      const entry = id === undefined ? undefined : this.entries.get(id)
+      if (entry) return entry
+    } else if (held) {
+      for (const entry of this.entries.values()) {
+        if (entry.local_path && this.key(entry.local_path) === wanted) return entry
+      }
+    }
+    if (!this.keepsFew) return null
+    for (const id of this.shownKeys().get(wanted) ?? []) {
+      const entry = this.entries.get(id)
+      if (entry && !entry.local_path && entry.seq !== null && holdsDocument(entry.kind))
+        return entry
+    }
+    return null
+  }
+
+  awaitedAt(path: string): EntryRow | null {
+    for (const id of this.shownKeys().get(this.key(path)) ?? []) {
+      const entry = this.entries.get(id)
+      if (entry?.kind === 'file' && !entry.local_path && entry.seq !== null && this.isLive(id))
+        return entry
+    }
+    return null
+  }
+
+  private keyOf(path: string): string {
+    let key = this.keys.get(path)
+    if (key === undefined) {
+      if (this.keys.size > (this.holding.size + this.within.size) * 4 + 64) this.keys.clear()
+      key = this.key(path)
+      this.keys.set(path, key)
+    }
+    return key
+  }
+
+  heldAt(path: string): EntryRow[] {
+    const out: EntryRow[] = []
+    for (const id of this.holding.get(this.key(path)) ?? []) {
+      const entry = this.entries.get(id)
+      if (entry) out.push(entry)
+    }
+    return out
+  }
+
+  wantedAt(path: string): readonly string[] {
+    return this.shownKeys().get(this.key(path)) ?? []
+  }
+
+  inside(folder: string): EntryRow[] {
+    const out: EntryRow[] = []
+    for (const id of this.within.get(this.key(folder)) ?? []) {
+      const entry = this.entries.get(id)
+      if (entry?.local_path) out.push(entry)
+    }
+    return out
+  }
+
+  private hold(id: string, path: string) {
+    if (!path) return
+    added(this.holding, this.keyOf(path), id)
+    for (let at = folderOf(path); at; at = folderOf(at)) added(this.within, this.keyOf(at), id)
+  }
+
+  private unhold(id: string, path: string) {
+    if (!path) return
+    taken(this.holding, this.keyOf(path), id)
+    for (let at = folderOf(path); at; at = folderOf(at)) taken(this.within, this.keyOf(at), id)
+  }
+
+  private shownKeys(): Map<string, string[]> {
+    const paths = this.paths()
+    if (this.shownAt?.paths === paths) return this.shownAt.keys
+    const keys = new Map<string, string[]>()
+    for (const [id, shown] of paths) {
+      const key = this.keyOf(shown)
+      const ids = keys.get(key)
+      if (ids) ids.push(id)
+      else keys.set(key, [id])
+    }
+    this.shownAt = { paths, keys }
+    return keys
+  }
+
+  folderAt(path: string): string | null | undefined {
+    if (!path) return null
+    const entry = this.at(path)
+    if (entry) return entry.kind === 'folder' && !entry.deleted ? entry.id : undefined
+    for (const id of this.shownKeys().get(this.key(path)) ?? []) {
+      const one = this.entries.get(id)
+      if (one?.kind === 'folder' && !one.local_path && this.isLive(id)) return id
+    }
+    return undefined
+  }
+
+  foreign(id: string): boolean {
+    const path = this.paths().get(id) ?? this.entries.get(id)?.local_path ?? ''
+    return inForeignCopy(path)
+  }
+
+  isLive(id: string): boolean {
+    const entry = this.shown().entries.get(id)
+    return entry !== undefined && !entry.deleted
+  }
+
+  queue(one: Outboxed) {
+    this.outbox.push(one)
+    const shown = this.shownCache
+    const paths = this.pathsCache
+    const names = this.namesAt
+    const loose = this.loose
+    this.changed()
+    if (!shown) return
+    this.showing(shown, one)
+    this.shownCache = shown
+    const op = one.record.t === 'op' ? one.record.op : null
+    if (!paths || !names || (op?.t !== 'create' && op?.t !== 'mkdir')) return
+    this.namesAt = names
+    if (!this.pathed(paths, shown, op.id)) {
+      this.namesAt = null
+      return
+    }
+    this.pathsCache = paths
+    if (loose) this.loose = loose.add(op.id)
+  }
+
+  placedBy(op: Op, before: string | null, after: string | null): boolean {
+    const had = this.ordering.positions.get(op.id)
+    const pos = positionAfter(op, had, before, after)
+    if (pos === had) return false
+    if (pos === undefined) this.ordering.positions.delete(op.id)
+    else this.ordering.positions.set(op.id, pos)
+    this.repositioned = true
+    return true
+  }
+
+  repositioned = false
+
+  describedBy(id: string, patch: MetaPatch) {
+    const had = this.ordering.meta.get(id)
+    const meta = patched(had, patch)
+    if (sameMeta(had, meta)) return
+    if (meta === undefined) this.ordering.meta.delete(id)
+    else this.ordering.meta.set(id, meta)
+    this.repositioned = true
+  }
+
+  heardMeta(id: string, meta: ItemMeta | undefined) {
+    const had = this.ordering.meta.get(id)
+    if (sameMeta(had, meta)) return
+    if (meta === undefined) this.ordering.meta.delete(id)
+    else this.ordering.meta.set(id, meta)
+    this.repositioned = true
+  }
+
+  answered(op: Op, result: OpResult): EntryRow[] {
+    const touched: EntryRow[] = []
+    if ('refused' in result || 'merged' in result) return touched
+    const entry = this.entries.get(op.id)
+    if (!entry) return touched
+    if (op.t === 'delete') {
+      entry.deleted = true
+    } else if (op.t === 'meta') {
+      this.describedBy(op.id, op.meta)
+    } else if ('parent' in result) {
+      this.placedBy(op, entry.parent, result.parent)
+      entry.parent = result.parent
+      entry.name = result.name
+      entry.deleted = false
+    }
+    entry.seq ??= 0
+    touched.push(entry)
+    this.changed()
+    return touched
+  }
+}
+
+function positionAfter(
+  op: Op,
+  had: string | undefined,
+  before: string | null,
+  after: string | null,
+) {
+  if (op.t === 'place') return op.pos
+  if ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined) {
+    return op.pos
+  }
+  if (op.t === 'move' && before !== after) return undefined
+  return had
+}
+
+export interface Settling {
+  disk: Disk
+  join: (root: string, path: string) => string
+  keeps: (id: string) => boolean
+  forget: (id: string) => void
+  busy?: (id: string) => boolean
+}
+
+function aside(path: string, id: string): string {
+  return joined(folderOf(path), `.orden-moving-${hash32(id).toString(36)}`)
+}
+
+export async function settle(space: SpaceState, how: Settling): Promise<EntryRow[]> {
+  const wanted = space.paths()
+  const moved = new Set<EntryRow>()
+  const root = space.row.root
+  const full = (path: string) => how.join(root, path)
+  const moves = async (from: string, to: string, kind: FileKind) => {
+    try {
+      await how.disk.move(full(from), full(to), kind)
+      return true
+    } catch (error) {
+      if (await how.disk.exists(full(from))) return false
+      throw error
+    }
+  }
+  const removes = async (path: string, kind: FileKind) => {
+    try {
+      await how.disk.remove(full(path), kind)
+      return true
+    } catch (error) {
+      if (await how.disk.exists(full(path))) return false
+      throw error
+    }
+  }
+  const makes = async (path: string) => {
+    try {
+      await how.disk.mkdir(full(path))
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const busy = how.busy ?? (() => false)
+  const loose = space.looseIds()
+  const looked = (): EntryRow[] => {
+    if (!loose) return [...space.entries.values()]
+    const out: EntryRow[] = []
+    for (const id of loose) {
+      const entry = space.entries.get(id)
+      if (entry) out.push(entry)
+    }
+    return out
+  }
+  for (const entry of looked()) {
+    if (!entry.local_path || wanted.has(entry.id) || busy(entry.id)) continue
+    if (entry.kind !== 'folder' && how.keeps(entry.id)) continue
+    if (entry.kind === 'folder' && holdsKept(space, entry, how)) continue
+
+    if (!inForeignCopy(entry.local_path) && (await how.disk.exists(full(entry.local_path)))) {
+      const kind = entry.kind === 'folder' ? 'folder' : 'file'
+      if (!(await removes(entry.local_path, kind))) continue
+    }
+    if (entry.kind === 'folder') forgetUnder(space, entry.local_path, moved, how)
+    entry.local_path = ''
+    moved.add(entry)
+    if (entry.kind !== 'folder') how.forget(entry.id)
+  }
+
+  for (let round = 0; round <= space.entries.size; round += 1) {
+    const due = looked()
+      .filter((entry) => {
+        const want = wanted.get(entry.id)
+        if (busy(entry.id)) return false
+        return entry.local_path && want !== undefined && entry.local_path !== want
+      })
+      .sort((a, b) => depth(a.local_path) - depth(b.local_path))
+    if (!due.length) break
+
+    const arriving = new Set(
+      due.filter((one) => one.kind === 'folder').map((one) => space.key(wanted.get(one.id) ?? '')),
+    )
+    const waits = (want: string) => {
+      for (let at = folderOf(want); at; at = folderOf(at)) {
+        if (arriving.has(space.key(at))) return true
+      }
+      return false
+    }
+    let progress = 0
+
+    for (const entry of due) {
+      const want = wanted.get(entry.id)
+      if (want === undefined || entry.local_path === want) continue
+      if (waits(want)) continue
+      const kind = entry.kind === 'folder' ? 'folder' : 'file'
+      if (space.key(want).startsWith(space.key(`${entry.local_path}${SEP}`))) {
+        const out = aside(entry.local_path, entry.id)
+        if (!(await moves(entry.local_path, out, kind))) continue
+        carry(space, entry, out, moved)
+        progress += 1
+        continue
+      }
+      const holder = space.at(want)
+      if (holder && holder !== entry && busy(holder.id)) continue
+      if (holder && holder !== entry) {
+        const out = aside(holder.local_path, holder.id)
+        const holding = holder.kind === 'folder' ? 'folder' : 'file'
+        if (!(await moves(holder.local_path, out, holding))) continue
+        carry(space, holder, out, moved)
+      } else if (!holder && (await how.disk.exists(full(want)))) {
+        continue
+      }
+      if (!(await makes(folderOf(want)))) continue
+      if (!(await moves(entry.local_path, want, kind))) continue
+      carry(space, entry, want, moved)
+      progress += 1
+      if (entry.kind === 'folder') arriving.delete(space.key(want))
+    }
+    if (!progress) break
+  }
+
+  const folders = looked()
+    .filter((entry) => entry.kind === 'folder' && !entry.local_path && wanted.has(entry.id))
+    .sort((a, b) => depth(wanted.get(a.id) ?? '') - depth(wanted.get(b.id) ?? ''))
+  for (const entry of folders) {
+    const want = wanted.get(entry.id)
+    if (want === undefined || entry.local_path) continue
+    if (!(await makes(want))) continue
+    entry.local_path = want
+    moved.add(entry)
+  }
+
+  const unsettled = looked().filter((entry) => {
+    const want = wanted.get(entry.id)
+    if (!entry.local_path) return want !== undefined && entry.kind === 'folder'
+    return want !== entry.local_path
+  })
+  if (moved.size) space.changed()
+  else space.settledBut(wanted, unsettled)
+  return [...moved]
+}
+
+function depth(path: string): number {
+  return path.split(SEP).length
+}
+
+function carry(space: SpaceState, entry: EntryRow, to: string, moved: Set<EntryRow>) {
+  const from = entry.local_path
+  if (entry.kind === 'folder') {
+    for (const one of space.inside(from)) {
+      if (one === entry) continue
+      one.local_path = `${to}${one.local_path.slice(from.length)}`
+      moved.add(one)
+    }
+  }
+  entry.local_path = to
+  moved.add(entry)
+}
+
+function forgetUnder(space: SpaceState, folder: string, moved: Set<EntryRow>, how: Settling) {
+  for (const one of space.inside(folder)) {
+    one.local_path = ''
+    moved.add(one)
+    if (one.kind !== 'folder') how.forget(one.id)
+  }
+}
+
+function holdsKept(space: SpaceState, folder: EntryRow, how: Settling): boolean {
+  return space.inside(folder.local_path).some((one) => one.kind !== 'folder' && how.keeps(one.id))
+}

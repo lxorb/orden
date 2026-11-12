@@ -274,7 +274,7 @@ describe('finding an application on an account that started on the old sync', ()
     const { account } = await import('../account.svelte')
     server.version = now
     server.asked = 0
-    vi.doMock('../sync2/runner.svelte', () => ({
+    vi.doMock('../sync-client/src/runner.svelte', () => ({
       runner: { idAt: () => Promise.resolve({ id: 'app-1', own: true }) },
     }))
     account.token = 'tok'
@@ -282,7 +282,7 @@ describe('finding an application on an account that started on the old sync', ()
     return {
       account,
       done: () => {
-        vi.doUnmock('../sync2/runner.svelte')
+        vi.doUnmock('../sync-client/src/runner.svelte')
         account.token = null
         account.user = null
       },

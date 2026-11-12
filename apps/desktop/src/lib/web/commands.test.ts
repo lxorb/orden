@@ -1,3 +1,4 @@
+import '../sync-ports'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
@@ -1401,7 +1402,7 @@ describe('a note kept away', () => {
 
   test("is not there for the engine's disk, which writes its words where it was listed", async () => {
     const asked = away()
-    const { appWorld } = await import('../sync2/app-world')
+    const { appWorld } = await import('../sync-client/src/app-world')
     const written: string[] = []
     const world = appWorld(() => null, {
       written: (path: string) => void written.push(path),
@@ -1420,7 +1421,7 @@ describe('a note kept away', () => {
   test("is no name in the way of the engine's move, which another device's tree made", async () => {
     const asked = away()
     await write('/Notes/Other.md', 'other')
-    const { appWorld } = await import('../sync2/app-world')
+    const { appWorld } = await import('../sync-client/src/app-world')
     const world = appWorld(() => null, {
       holdingWrites: (_path: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),

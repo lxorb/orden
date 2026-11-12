@@ -1,5 +1,5 @@
 import { invoke, isDesktop } from '../tauri'
-import { hub } from '../sync2/hub.svelte'
+import { hub } from '../sync-client/src/api'
 import { Activity, listenForInput, readSystemInput } from '../web-tab/activity'
 import { keepZone } from './mine'
 

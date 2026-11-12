@@ -1,3 +1,4 @@
+import './sync-ports'
 import { api, type SpaceRole } from './api'
 import { arriving } from './arriving.svelte'
 import { without } from './records'
@@ -35,7 +36,7 @@ export type Status = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
 const VERSION = 'orden:sync-version'
 
-type Runner = (typeof import('./sync2/runner.svelte'))['runner']
+type Runner = (typeof import('./sync-client/src/api'))['runner']
 
 const V2 = !__EVEN_PLUGIN__
 
@@ -152,7 +153,7 @@ class Sync {
     arriving.settled()
     void (async () => {
       await startup.turn('rooms')
-      const { runner } = await import('./sync2/runner.svelte')
+      const { runner } = await import('./sync-client/src/api')
       await known()
       if (mine !== this.generation || !account.user) return
       if (account.user.syncVersion !== 2) {
@@ -185,7 +186,7 @@ class Sync {
     if (!V2 || !isDesktop) return
     void (async () => {
       await startup.turn('rooms')
-      const { runner } = await import('./sync2/runner.svelte')
+      const { runner } = await import('./sync-client/src/api')
       await known()
       if (mine !== this.generation || account.user || account.token) return
       this.local = runner
@@ -198,7 +199,7 @@ class Sync {
     this.local = null
     void (async () => {
       await startup.turn('rooms')
-      const { runner } = await import('./sync2/runner.svelte')
+      const { runner } = await import('./sync-client/src/api')
       await runner.dropLocal()
     })()
   }
@@ -589,7 +590,7 @@ class Sync {
   private notWritten(path: string) {
     if (this.toldUnwritten.has(path)) return
     this.toldUnwritten.add(path)
-    void import('./sync2/unsynced.svelte').then(({ unsynced }) =>
+    void import('./sync-client/src/api').then(({ unsynced }) =>
       unsynced.show(path.split(/[\\/]/).pop() ?? path),
     )
   }
@@ -620,7 +621,7 @@ class Sync {
 
     try {
       const { pull, push } = await import('./sync/pass')
-      const { eachDue } = await import('./sync2/rounds')
+      const { eachDue } = await import('./sync-client/src/api')
       this.respell()
       const mirrors = new Map(Object.values(this.mirrors).map((one) => [one.root, one]))
 

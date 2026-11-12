@@ -5,7 +5,7 @@
   import { diskNear, diskShare, shares } from '@orden/online'
   import { prompt } from '../prompt.svelte'
   import { within } from '../space-paths'
-  import { runner } from '../sync2/runner.svelte'
+  import { runner } from '../sync-client/src/api'
   import { workspace } from '../workspace.svelte'
   import { cityOf } from './calls'
   import { opens, rowsOf, type SessionRow } from './listing'

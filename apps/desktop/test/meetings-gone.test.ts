@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { openerFor } from '../src/lib/openers'
-import { kindOfName } from '../src/lib/sync2/create'
+import { kindOfName } from '../src/lib/sync-client/src/create'
 import { webUrlOf } from '../src/lib/web-tab/note'
 
 const OLD_MEETING = `---

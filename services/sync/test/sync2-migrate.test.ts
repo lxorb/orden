@@ -101,11 +101,11 @@ interface Engine {
 
 async function engine(): Promise<Engine> {
   const at = (file: string) =>
-    new URL(`../../../apps/desktop/src/lib/sync2/${file}`, import.meta.url).href
+    new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate, running] = await Promise.all([
-    import(/* @vite-ignore */ at('test-device.ts')),
-    import(/* @vite-ignore */ at('migrate.ts')),
-    import(/* @vite-ignore */ at('engine.ts')),
+    import(/* @vite-ignore */ at('test/test-device.ts')),
+    import(/* @vite-ignore */ at('src/migrate.ts')),
+    import(/* @vite-ignore */ at('src/engine.ts')),
   ])
   return { ...(device as object), ...(migrate as object), ...(running as object) } as Engine
 }

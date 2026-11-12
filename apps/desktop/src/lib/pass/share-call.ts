@@ -1,6 +1,6 @@
 import { account } from '../account.svelte'
 import { BASE, request } from '../api'
-import { hub } from '../sync2/hub.svelte'
+import { hub } from '../sync-client/src/api'
 import { ShareApi } from './share-api'
 
 export interface Signed {

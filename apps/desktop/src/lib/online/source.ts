@@ -29,7 +29,7 @@ const ASK_EVERY = 250
 const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
 
 async function termIdOf(path: string, until: number): Promise<string | null> {
-  const { runner } = await import('../sync2/runner.svelte')
+  const { runner } = await import('../sync-client/src/api')
   for (;;) {
     const found = await runner.idAt(path)
     const id = 'id' in found ? found.id : null
@@ -39,7 +39,7 @@ async function termIdOf(path: string, until: number): Promise<string | null> {
 }
 
 async function sessionOf(id: string, path: string, until: number): Promise<string | null> {
-  const { runner } = await import('../sync2/runner.svelte')
+  const { runner } = await import('../sync-client/src/api')
   const { invoke } = await import('../tauri')
   const words = await invoke<string>('read_note', { path }).catch(() => null)
   for (;;) {
@@ -308,7 +308,7 @@ export function onlineSource(
   return new OnlineSource(
     path,
     words,
-    async () => (await import('../sync2/hub.svelte')).deviceId(),
+    async () => (await import('../sync-client/src/api')).deviceId(),
     place,
     { pages: isDesktop && viewport.device !== 'phone', native: isNative },
   )

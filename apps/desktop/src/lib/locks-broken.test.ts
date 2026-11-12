@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { leadSync } from './sync2/lead'
+import { leadSync } from './sync-client/src/lead'
 import { heldForLife, holdIfFree, ifFree, inTurn, locksWork } from './locks'
-import { aloneHere } from './sync2/budget'
+import { aloneHere } from './sync-client/src/budget'
 import { oneWriteAt } from './windows'
 import { takeSlot } from './workspace/slot'
 

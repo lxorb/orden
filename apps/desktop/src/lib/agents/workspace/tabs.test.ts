@@ -346,7 +346,7 @@ const listed = vi.fn(() =>
   ]),
 )
 vi.mock('../../online/calls', () => ({ listed }))
-vi.mock('../../sync2/runner.svelte', () => ({
+vi.mock('../../sync-client/src/runner.svelte', () => ({
   runner: { fileOf: (id: string) => (id === 'f1' ? '/s/Work/Build.term' : null) },
 }))
 let making: string | null = null
