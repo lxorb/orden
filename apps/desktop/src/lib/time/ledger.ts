@@ -1,5 +1,4 @@
-import type { TimeChange, TimeEntry } from '@orden/sync-core/time'
-
+import type { TimeChange, TimeEntry } from '@orden/sync-core'
 export interface Row {
   kind: string
   id: string

@@ -5,8 +5,7 @@ import {
   coverPosition,
   coverSrc,
 } from '@orden/markdown/cover'
-import { metaFromText } from '@orden/sync-core/meta'
-
+import { metaFromText } from '@orden/sync-core'
 export function keptCover(meta: string | null | undefined): Cover | null {
   const kept = metaFromText(meta)
   const said = kept?.[COVER_KEY]

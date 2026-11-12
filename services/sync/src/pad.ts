@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import * as Y from 'yjs'
-import { MOST_PAD_BYTES, padBase64, padBytes, padTradeOf, padWire } from '@orden/sync-core/pad'
+import { MOST_PAD_BYTES, padBase64, padBytes, padTradeOf, padWire } from '@orden/sync-core'
 import { now } from './crypto'
 import { mayPushDocuments } from './limits'
 import { NOT_AN_OBJECT, TOO_MANY_CHANGES } from './refused'

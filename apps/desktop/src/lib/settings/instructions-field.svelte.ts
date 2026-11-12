@@ -15,7 +15,7 @@ function inField(words: string): string {
 }
 
 async function merged(base: string, mine: string, theirs: string): Promise<string> {
-  const { merge3 } = await import('@orden/sync-core/merge3')
+  const { merge3 } = await import('@orden/sync-core')
   return merge3(base, mine, theirs).text
 }
 

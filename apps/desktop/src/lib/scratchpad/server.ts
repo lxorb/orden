@@ -1,4 +1,4 @@
-import { padTradeOf, padWire } from '@orden/sync-core/pad'
+import { padTradeOf, padWire } from '@orden/sync-core'
 import { ApiError, request } from '../api'
 import type { PadServer } from './sync'
 

@@ -6,7 +6,7 @@ import {
   rendered,
 } from '@orden/bases/inbox-items'
 import { ACCOUNT_INBOX } from '@orden/bases/inbox'
-import { inboxStamp, MOST_INBOX_CHANGES, type InboxChange } from '@orden/sync-core/inbox'
+import { inboxStamp, MOST_INBOX_CHANGES, type InboxChange } from '@orden/sync-core'
 import { inboxSince, writeInbox } from './inbox'
 import { type Space, spacesFor } from './mcp/tools'
 import { keepReminders } from './push/reminders'

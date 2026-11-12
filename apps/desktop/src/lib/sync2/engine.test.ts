@@ -1,9 +1,15 @@
 import { describe, expect, test, vi } from 'vitest'
 import { SharedDoc } from '@orden/editor'
 import { TEXT } from '@orden/rooms'
-import { hash32 } from '@orden/sync-core/seed'
+import {
+  hash32,
+  frame,
+  unframe,
+  seedUpdate,
+  type DocRefusal,
+  type PushRequest,
+} from '@orden/sync-core'
 import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@orden/sync-core/sim'
-import { type DocRefusal, frame, type PushRequest, unframe } from '@orden/sync-core/wire'
 import { Across } from '../workspace/across'
 import { NoteDoc } from '../workspace/documents.svelte'
 import { Windows } from '../windows'
@@ -16,7 +22,6 @@ import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
 import { GONE_KEPT, numbersRow, wantedRow } from './records'
-import { seedUpdate } from '@orden/sync-core/seed'
 import type { Disk, World } from './world'
 import type { SpaceChange, SpaceNews } from '../space-watch'
 import * as Y from 'yjs'

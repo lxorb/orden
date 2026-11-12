@@ -1,4 +1,4 @@
-import { inForeignCopy } from '@orden/sync-core/foreign'
+import { inForeignCopy } from '@orden/sync-core'
 import { account } from '../account.svelte'
 import { api, fromServer } from '../api'
 import { log } from '../log'

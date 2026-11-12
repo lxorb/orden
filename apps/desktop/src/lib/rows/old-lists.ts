@@ -1,6 +1,6 @@
 import { LIST_KEY, LIST_VALUE, MARKED_KEY, MARKED_VALUE } from '@orden/bases/todo-lists'
 import type { SpaceLinks } from '@orden/scan/note'
-import type { MetaPatch } from '@orden/sync-core/meta'
+import type { MetaPatch } from '@orden/sync-core'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'

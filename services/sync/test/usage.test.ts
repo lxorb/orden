@@ -1,4 +1,4 @@
-import { dayOf } from '@orden/sync-core/usage'
+import { dayOf } from '@orden/sync-core'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, type TestEnv, testEnv } from './harness'
 

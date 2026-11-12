@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { hash32 } from '@orden/sync-core/seed'
-
+import { hash32 } from '@orden/sync-core'
 const crate = vi.hoisted(() => ({
   held: null as null | { account: string; session: import('./store').SyncStore },
   mems: new Map<string, unknown>(),

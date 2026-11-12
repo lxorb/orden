@@ -1,4 +1,4 @@
-import type { Times } from '@orden/sync-core/diverge'
+import type { Times } from '@orden/sync-core'
 import { judge, type Judged, type Shape } from './kinds'
 
 export interface Judging {

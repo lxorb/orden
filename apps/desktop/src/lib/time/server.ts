@@ -1,4 +1,4 @@
-import { timePageOf } from '@orden/sync-core/time'
+import { timePageOf } from '@orden/sync-core'
 import { ApiError, request } from '../api'
 import { isRecord } from '../stored'
 import type { TimeServer } from './exchange'

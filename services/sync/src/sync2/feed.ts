@@ -1,5 +1,4 @@
-import { FEED_PAGE, type FeedItem, heldName, isEntryId } from '@orden/sync-core'
-import { metaFromText } from '@orden/sync-core/meta'
+import { FEED_PAGE, heldName, isEntryId, metaFromText, type FeedItem } from '@orden/sync-core'
 import type { Env } from '../types'
 import { KEPT, kindOfName } from './tree'
 import { prepareSpace } from './prepare'

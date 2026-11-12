@@ -6,7 +6,7 @@ import {
   type TimeChange,
   type TimeEntry,
   type TimePage,
-} from '@orden/sync-core/time'
+} from '@orden/sync-core'
 import { now } from './crypto'
 import { mayChangeTree } from './limits'
 import { NOT_AN_OBJECT, TOO_MANY_CHANGES } from './refused'

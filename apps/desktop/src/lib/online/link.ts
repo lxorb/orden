@@ -6,7 +6,7 @@ import {
   serverFrameOf,
   socketPath,
 } from '@orden/online/wire'
-import { BEAT, DEVICE_PROTOCOL, TOKEN_PROTOCOL } from '@orden/sync-core/wire'
+import { BEAT, DEVICE_PROTOCOL, TOKEN_PROTOCOL } from '@orden/sync-core'
 import { BEAT_EVERY, linkDelay } from '../backoff'
 
 export interface LinkSocket {

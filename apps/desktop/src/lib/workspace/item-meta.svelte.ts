@@ -1,11 +1,11 @@
 import {
-  type ItemMeta,
-  type MetaPatch,
   metaOf,
   metaPatchOf,
   patched,
   sameMeta,
-} from '@orden/sync-core/meta'
+  type ItemMeta,
+  type MetaPatch,
+} from '@orden/sync-core'
 import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
 import { joinPath } from '../tauri'
 import { isRecord, keepJson, stored } from '../stored'

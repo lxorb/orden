@@ -1,4 +1,4 @@
-import { foreignCopy, inForeignCopy } from '@orden/sync-core/foreign'
+import { foreignCopy, inForeignCopy } from '@orden/sync-core'
 import {
   foldsIn,
   insideItsSpace,

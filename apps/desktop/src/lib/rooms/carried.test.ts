@@ -9,7 +9,7 @@ import {
   TEXT,
   unattended,
 } from '@orden/rooms'
-import { ackFrame, epochFrame, NEW_EPOCH } from '@orden/sync-core/wire'
+import { ackFrame, epochFrame, NEW_EPOCH } from '@orden/sync-core'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { Carrying } from './carried'

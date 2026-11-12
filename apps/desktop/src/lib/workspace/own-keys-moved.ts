@@ -1,5 +1,5 @@
 import { oneEdit } from '@orden/markdown/edits'
-import type { MetaPatch } from '@orden/sync-core/meta'
+import type { MetaPatch } from '@orden/sync-core'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { ownKeysTaken } from '../own-keys'

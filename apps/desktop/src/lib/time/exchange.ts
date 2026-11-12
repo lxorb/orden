@@ -1,9 +1,4 @@
-import {
-  MOST_TIME_CHANGES,
-  type TimeChange,
-  timeChangeOf,
-  type TimePage,
-} from '@orden/sync-core/time'
+import { MOST_TIME_CHANGES, timeChangeOf, type TimeChange, type TimePage } from '@orden/sync-core'
 import { changeOf, type Ledger, type Row } from './ledger'
 
 export interface TimeServer {

@@ -1,4 +1,4 @@
-import type { Look } from '@orden/sync-core/look'
+import type { Look } from '@orden/sync-core'
 import { contrastCss } from '@orden/themes/contrast'
 import { everySurface } from '@orden/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'

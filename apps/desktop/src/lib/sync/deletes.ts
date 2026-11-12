@@ -1,5 +1,5 @@
 import { isPagesTarget } from '@orden/markdown/links'
-import { kindOfName } from '@orden/sync-core/tree'
+import { kindOfName } from '@orden/sync-core'
 import type { FileKind } from '../sync2/world'
 
 export function syncDeletes(path: string, kind: FileKind): boolean {

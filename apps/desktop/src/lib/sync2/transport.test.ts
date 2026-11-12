@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { unframe } from '@orden/sync-core/wire'
+import { unframe } from '@orden/sync-core'
 import { testDevice } from './test-device'
 import { readingOver, Refused, remoteFiles } from './transport'
 import { parseQuery } from '@orden/scan/search/query'

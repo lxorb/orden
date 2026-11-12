@@ -1,4 +1,4 @@
-import { BEAT, BEAT_ANSWER } from '@orden/sync-core/wire'
+import { BEAT, BEAT_ANSWER } from '@orden/sync-core'
 import { randomToken } from '../crypto'
 import { note } from '../failed'
 import { askHub } from '../hub/reach'

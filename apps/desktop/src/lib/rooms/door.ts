@@ -1,5 +1,5 @@
 import { awarenessUpdate, forget, isCatchUp, receive, syncStep1, syncUpdate } from '@orden/rooms'
-import { NOW_READS, shutOut, SIGNED_OUT } from '@orden/sync-core/wire'
+import { NOW_READS, shutOut, SIGNED_OUT } from '@orden/sync-core'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { RoomSocket } from './socket'

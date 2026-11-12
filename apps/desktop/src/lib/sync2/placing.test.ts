@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { hash32, seedUpdate } from '@orden/sync-core/seed'
+import { hash32, seedUpdate, frame, unframe } from '@orden/sync-core'
 import { Clock, ReferenceAccount, SEEDED } from '@orden/sync-core/sim'
-import { frame, unframe } from '@orden/sync-core/wire'
 import * as Y from 'yjs'
 import { Engine } from './engine'
 import { placesOf } from './placing'

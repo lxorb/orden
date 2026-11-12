@@ -1,12 +1,13 @@
 import {
-  type CreateOp,
   isEntryId,
   isName,
+  type CreateOp,
   type Op,
   type OpContext,
   type OpResult,
+  type ItemMeta,
+  type MetaPatch,
 } from '@orden/sync-core'
-import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
 import { newId } from '../crypto'
 import type { Env } from '../types'
 import type { Reached } from '../spaces/space'

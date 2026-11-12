@@ -1,6 +1,5 @@
 import { readCanvas } from '@orden/markdown/canvas'
-import { diverge, excerpt, type Excerpt } from '@orden/sync-core/diverge'
-import { pullResponseOf } from '@orden/sync-core/wire'
+import { diverge, excerpt, pullResponseOf, type Excerpt } from '@orden/sync-core'
 import type { HeldAnswer, Held, HeldNotes, Side } from './asking.svelte'
 import type { Core, Holding } from './core'
 import { made } from './create'

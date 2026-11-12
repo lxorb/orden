@@ -1,4 +1,4 @@
-import { frame, unframe } from '@orden/sync-core/wire'
+import { frame, unframe } from '@orden/sync-core'
 import type { Activity, MachineState, SleepReason } from './types'
 import { isLoopbackUrl, isWebUrl } from './urls'
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { foreignCopy } from '@orden/sync-core/foreign'
+  import { foreignCopy } from '@orden/sync-core'
   import CloudOff from 'lucide/dist/esm/icons/cloud-off.mjs'
   import SharedMark from '../SharedMark.svelte'
   import { nameOf } from '../space-paths'

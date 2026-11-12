@@ -173,7 +173,7 @@ export class Across {
       note.onDisk = disk
       return
     }
-    const { mergedOn } = await import('@orden/sync-core/merge3')
+    const { mergedOn } = await import('@orden/sync-core')
     const joined = this.desk.joined(note)
     const mine = unixLines(joined ? joined.text() : note.latest)
     const words = mine === base ? disk : mergedOn(base, mine, disk)

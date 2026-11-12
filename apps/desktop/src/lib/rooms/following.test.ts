@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { emptyCanvas } from '@orden/markdown/canvas'
 import { isEdit, receive, syncUpdate, TEXT } from '@orden/rooms'
-import { NOW_READS } from '@orden/sync-core/wire'
+import { NOW_READS } from '@orden/sync-core'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { PlaneSurface } from '../canvas/shared'

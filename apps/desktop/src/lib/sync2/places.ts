@@ -1,10 +1,20 @@
 import { freePath } from '@orden/markdown/paths'
-import { type OpResult, type Op } from '@orden/sync-core/wire'
-import { inForeignCopy } from '@orden/sync-core/foreign'
-import { hash32 } from '@orden/sync-core/seed'
-import { type ItemMeta, type MetaPatch, patched, sameMeta } from '@orden/sync-core/meta'
-import { byPosition } from '@orden/sync-core/order'
-import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@orden/sync-core/tree'
+import {
+  inForeignCopy,
+  hash32,
+  patched,
+  sameMeta,
+  byPosition,
+  applyOp,
+  nameKey,
+  treeState,
+  type OpResult,
+  type Op,
+  type ItemMeta,
+  type MetaPatch,
+  type TreeEntry,
+  type TreeState,
+} from '@orden/sync-core'
 import { isReserved } from '../naming'
 import { holdsDocument } from './kinds'
 import { emptyKeeping } from './keeping'

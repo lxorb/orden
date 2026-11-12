@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { type InboxChange, type InboxItem, mergedInbox } from '@orden/sync-core/inbox'
+import { mergedInbox, type InboxChange, type InboxItem } from '@orden/sync-core'
 import { AccountInbox } from './account.svelte'
 import type { ClosingDisk } from './disk'
 import { type InboxServer, type Kept, keptOver } from './store'

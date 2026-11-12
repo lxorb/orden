@@ -10,7 +10,7 @@ import {
   type InboxItem,
   type InboxPage,
   type InboxStamps,
-} from '@orden/sync-core/inbox'
+} from '@orden/sync-core'
 import { now } from './crypto'
 import { mayChangeTree } from './limits'
 import { NOT_AN_OBJECT, TOO_MANY_CHANGES } from './refused'

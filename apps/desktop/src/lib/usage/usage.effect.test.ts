@@ -1,4 +1,4 @@
-import { dayOf, usageEventOf, type UsageEvent } from '@orden/sync-core/usage'
+import { dayOf, usageEventOf, type UsageEvent } from '@orden/sync-core'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const HELPING = 'orden:usage-help'

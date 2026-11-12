@@ -1,6 +1,5 @@
 import { TEXT } from '@orden/rooms'
-import { padEdits, type PadAnswer, type PadTrade } from '@orden/sync-core/pad'
-import { textops } from '@orden/sync-core/textops'
+import { padEdits, textops, type PadAnswer, type PadTrade } from '@orden/sync-core'
 import * as Y from 'yjs'
 import type { Edit } from '../search/replace'
 import { joined } from './words'

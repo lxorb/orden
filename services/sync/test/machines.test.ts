@@ -2254,7 +2254,7 @@ describe('the hub’s machine frame', () => {
     expect(laptop.take()).toEqual([{ t: 'machine', state: 'starting' }])
     expect(guest.take()).toEqual([])
 
-    const { hubFrameOf } = await import('@orden/sync-core/wire')
+    const { hubFrameOf } = await import('@orden/sync-core')
     expect(hubFrameOf({ t: 'machine', state: 'awake' })).toEqual({ t: 'machine', state: 'awake' })
     expect(hubFrameOf({ t: 'machine', state: 'melting' })).toBeNull()
 
