@@ -1,10 +1,15 @@
 import { holdsCanvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { TEXT } from '@orden/rooms'
 import { pushPlane, readPlane } from '@orden/rooms/plane'
-import { diverge, type Times, type Verdict } from '@orden/sync-core/diverge'
-import { divergePlane } from '@orden/sync-core/plane-diverge'
-import { seedPlane, seedUpdate } from '@orden/sync-core/seed'
-import { textops } from '@orden/sync-core/textops'
+import {
+  diverge,
+  divergePlane,
+  seedPlane,
+  seedUpdate,
+  textops,
+  type Times,
+  type Verdict,
+} from '@orden/sync-core'
 import * as Y from 'yjs'
 import { settleShortcuts } from '../web-tab/settle'
 

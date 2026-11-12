@@ -1,4 +1,4 @@
-import { TIME_PAGE, type TimeChange, timeChangesOf, type TimeEntry } from '@orden/sync-core/time'
+import { TIME_PAGE, timeChangesOf, type TimeChange, type TimeEntry } from '@orden/sync-core'
 import type { TimeServer } from './exchange'
 
 export class FakeTimeServer implements TimeServer {

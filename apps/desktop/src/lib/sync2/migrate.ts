@@ -10,7 +10,7 @@ import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
 import { project, wrote } from './project'
 import type { Change, EntryRow } from './store'
-import { pullResponseOf, PULL_BATCH, type FeedItem, type Op } from '@orden/sync-core/wire'
+import { pullResponseOf, PULL_BATCH, type FeedItem, type Op } from '@orden/sync-core'
 import * as Y from 'yjs'
 
 export interface V1Space {

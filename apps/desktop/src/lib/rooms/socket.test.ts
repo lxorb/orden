@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { BEAT, BEAT_ANSWER } from '@orden/sync-core/wire'
-
+import { BEAT, BEAT_ANSWER } from '@orden/sync-core'
 class FakeWebSocket {
   static readonly CONNECTING = 0
   static readonly OPEN = 1

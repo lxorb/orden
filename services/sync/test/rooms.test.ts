@@ -6,7 +6,7 @@ import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } fr
 import { pushPlane, readPlane } from '@orden/rooms/plane'
 import * as Y from 'yjs'
 import { sha256 } from '../src/crypto'
-import { BEAT, BEAT_ANSWER, NOW_READS } from '@orden/sync-core/wire'
+import { BEAT, BEAT_ANSWER, NOW_READS } from '@orden/sync-core'
 import { roomsRevoked } from '../src/rooms'
 import { MOST_DOCUMENT_BYTES, TOO_LARGE_IN_A_ROOM } from '../src/rooms/state'
 import { writesOf } from '../src/rooms/kind'

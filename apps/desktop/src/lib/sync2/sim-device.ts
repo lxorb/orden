@@ -1,8 +1,4 @@
-import { byPosition } from '@orden/sync-core/order'
-import { nameKey } from '@orden/sync-core/tree'
-import { hash32, seedUpdate } from '@orden/sync-core/seed'
-import { textops } from '@orden/sync-core/textops'
-import { frame, unframe } from '@orden/sync-core/wire'
+import { byPosition, nameKey, hash32, seedUpdate, textops, frame, unframe } from '@orden/sync-core'
 import type {
   Action,
   Answer,

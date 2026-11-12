@@ -1,5 +1,4 @@
-import { type Look, lookIn } from '@orden/sync-core/look'
-
+import { lookIn, type Look } from '@orden/sync-core'
 export interface LookWorld {
   token(): string | null
   look(): Look

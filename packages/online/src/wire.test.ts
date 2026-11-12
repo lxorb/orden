@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { frame } from '@orden/sync-core/wire'
+import { frame } from '@orden/sync-core'
 import {
   type ClientFrame,
   clientFrameOf,

@@ -1,4 +1,4 @@
-import type { Look } from '@orden/sync-core/look'
+import type { Look } from '@orden/sync-core'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { type AccountDouble, accountDouble } from '../account-double'
 import { LookSync } from './look-sync'

@@ -1,4 +1,4 @@
-import { TIME_ID, TIME_KIND } from '@orden/sync-core/time'
+import { TIME_ID, TIME_KIND } from '@orden/sync-core'
 import { isRecord } from '../stored'
 import type { Activity, Span } from './records'
 

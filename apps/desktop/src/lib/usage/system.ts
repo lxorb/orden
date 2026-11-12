@@ -4,8 +4,7 @@ import {
   type UsageApp,
   type UsageSystem,
   type DailyPing,
-} from '@orden/sync-core/usage'
-
+} from '@orden/sync-core'
 type Common = Omit<DailyPing, 'v' | 'kind' | 'day'>
 
 export interface Seen {

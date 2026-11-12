@@ -1,6 +1,5 @@
 import { uncounted } from '@orden/markdown/paths'
-import { nameKey, type Op } from '@orden/sync-core'
-import { metaFromText } from '@orden/sync-core/meta'
+import { nameKey, metaFromText, type Op } from '@orden/sync-core'
 import { newId, now, sha256 } from '../crypto'
 import { laterOf, pokeSpace } from '../hub/poke'
 import { noteKey } from '../notes'

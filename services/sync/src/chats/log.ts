@@ -1,7 +1,7 @@
 import type { Event, Logged, Message, Post, Who } from '@orden/chats'
 import { MOST_BEHIND, MOST_PAGE, RECEIPTS_UP_TO, TYPING_EVERY } from '@orden/chats/limits'
 import { clientFrameOf, isWho, type Refusal, type ServerFrame } from '@orden/chats/wire'
-import { BEAT, BEAT_ANSWER } from '@orden/sync-core/wire'
+import { BEAT, BEAT_ANSWER } from '@orden/sync-core'
 import { places } from '../bound'
 import { OPEN_HEADER, openAnswer, openIn, sweepOpened } from '../opened'
 import { note } from '../failed'

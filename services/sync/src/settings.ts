@@ -8,7 +8,7 @@ import type { Env, Variables } from './types'
 import { KEEP_DAYS } from './versions'
 import { REMIND_BEFORE } from './push/reminders'
 import { isHours, isKeywords, LONGEST_KEYWORD, MOST_KEYWORDS } from '@orden/chats/notify'
-import { lookWrong } from '@orden/sync-core/look'
+import { lookWrong } from '@orden/sync-core'
 import { askHub } from './hub/reach'
 
 type Check = (value: unknown) => string | null

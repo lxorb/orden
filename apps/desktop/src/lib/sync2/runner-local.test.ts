@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
-import { hash32 } from '@orden/sync-core/seed'
-
+import { hash32 } from '@orden/sync-core'
 const said = vi.hoisted(() => [] as string[])
 const stores = vi.hoisted(() => new Map<string, unknown>())
 vi.mock('./store', async (importOriginal) => {

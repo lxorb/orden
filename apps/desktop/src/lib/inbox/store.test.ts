@@ -1,10 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  type InboxChange,
-  inboxChangesOf,
-  type InboxItem,
-  mergedInbox,
-} from '@orden/sync-core/inbox'
+import { inboxChangesOf, mergedInbox, type InboxChange, type InboxItem } from '@orden/sync-core'
 import { type InboxDisk, type InboxServer, InboxRecords, type Kept, keptOver } from './store'
 
 function memoryDisk(kept = new Map<string, Kept>()): InboxDisk & { kept: Map<string, Kept> } {

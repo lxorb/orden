@@ -1,6 +1,6 @@
 import { appliedEdits } from '@orden/markdown/edits'
 import { frontMatterEdits } from '@orden/markdown/front-matter'
-import type { ItemMeta } from '@orden/sync-core/meta'
+import type { ItemMeta } from '@orden/sync-core'
 import { withOwnKeys } from '../own-keys'
 
 export async function keptText(

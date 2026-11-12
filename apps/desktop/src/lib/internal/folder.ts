@@ -1,5 +1,4 @@
-import { nameKey } from '@orden/sync-core/tree'
-
+import { nameKey } from '@orden/sync-core'
 export interface InternalEntry {
   key: string | null
   made: number

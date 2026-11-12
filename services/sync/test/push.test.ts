@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
-import { inboxStamp } from '@orden/sync-core/inbox'
+import { inboxStamp } from '@orden/sync-core'
 import { base64url, fromBase64url } from '../src/push/keys'
 import {
   MOST_TRIES,

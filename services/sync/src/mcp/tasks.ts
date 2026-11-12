@@ -31,7 +31,7 @@ import {
   STOPPED_VALUE,
   withDates,
 } from '@orden/bases/todo-lists'
-import { type ItemMeta, type MetaPatch, metaFromText } from '@orden/sync-core/meta'
+import { metaFromText, type ItemMeta, type MetaPatch } from '@orden/sync-core'
 import { appliedEdits } from '@orden/markdown/edits'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { taskLine } from '@orden/markdown/task-edits'

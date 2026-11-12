@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { hash32 } from '@orden/sync-core/seed'
+import { hash32 } from '@orden/sync-core'
 import { Engine } from './engine'
 import { carriedIds, carriedRows, isLocal, localFirst, localSpaceId } from './local'
 import { MemoryDisk } from './memory-disk'

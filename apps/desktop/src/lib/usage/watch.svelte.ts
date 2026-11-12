@@ -5,7 +5,7 @@ import {
   usageEventOf,
   type UsageDay,
   type UsageEvent,
-} from '@orden/sync-core/usage'
+} from '@orden/sync-core'
 import { account } from '../account.svelte'
 import { request } from '../api'
 import { systemLocale } from '../region'

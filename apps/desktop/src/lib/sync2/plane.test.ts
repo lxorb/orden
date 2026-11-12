@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { type Canvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { pushPlane, readPlane } from '@orden/rooms/plane'
-import { hash32, seedPlane } from '@orden/sync-core/seed'
+import { hash32, seedPlane } from '@orden/sync-core'
 import * as Y from 'yjs'
 import type { PlaneSurface } from '../canvas/shared'
 import { attachPlane } from './binding'

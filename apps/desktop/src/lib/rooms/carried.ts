@@ -1,6 +1,6 @@
 import { setPeers, type SharedDoc } from '@orden/editor'
 import { readSync, receive, syncStep1Of, syncStep2Of, TEXT } from '@orden/rooms'
-import { DEVICE_PROTOCOL, NEW_EPOCH, roomNews, ROOM_V2 } from '@orden/sync-core/wire'
+import { DEVICE_PROTOCOL, NEW_EPOCH, roomNews, ROOM_V2 } from '@orden/sync-core'
 import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { InkStroke } from '../canvas/format'

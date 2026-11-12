@@ -6,7 +6,7 @@ import {
   type DailyPing,
   type UsageDay,
   type UsageEvent,
-} from '@orden/sync-core/usage'
+} from '@orden/sync-core'
 import { Hono } from 'hono'
 import { byteLength, newId, now, sha256 } from './crypto'
 import { machineOf, within } from './limits'

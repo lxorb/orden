@@ -1,10 +1,4 @@
-import {
-  dayOf,
-  settingName,
-  usageName,
-  type UsageStartup,
-  type UsageVia,
-} from '@orden/sync-core/usage'
+import { dayOf, settingName, usageName, type UsageStartup, type UsageVia } from '@orden/sync-core'
 import { keepJson, stored } from '../stored'
 import { USAGE_DAYS, usageChoice } from './choice.svelte'
 

@@ -1,6 +1,6 @@
 import { mount, untrack } from 'svelte'
 import { door } from '@orden/markdown/door'
-import type { Excerpt } from '@orden/sync-core/diverge'
+import type { Excerpt } from '@orden/sync-core'
 import { message } from '../message'
 import { howFor } from '../new-tab'
 import { overlays } from '../overlays'

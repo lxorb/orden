@@ -1,5 +1,5 @@
 import { isTodoList } from '@orden/bases/todo-lists'
-import { metaFromText } from '@orden/sync-core/meta'
+import { metaFromText } from '@orden/sync-core'
 import { taskHash } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { readTask } from '@orden/markdown/task-line'

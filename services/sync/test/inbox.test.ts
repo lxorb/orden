@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { inboxStamp, INBOX_PAGE, MOST_INBOX_ITEMS, type InboxPage } from '@orden/sync-core/inbox'
+import { inboxStamp, INBOX_PAGE, MOST_INBOX_ITEMS, type InboxPage } from '@orden/sync-core'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

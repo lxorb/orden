@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
 import { TEXT } from '@orden/rooms'
-import { MOST_PAD_BYTES, padTradeOf, padWire } from '@orden/sync-core/pad'
+import { MOST_PAD_BYTES, padTradeOf, padWire } from '@orden/sync-core'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

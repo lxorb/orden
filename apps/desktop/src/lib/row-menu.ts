@@ -1,4 +1,4 @@
-import { foreignCopy } from '@orden/sync-core/foreign'
+import { foreignCopy } from '@orden/sync-core'
 import { folderNote, nestedIn } from './folder-notes'
 import { basesOn, hiddenKinds, type KindName } from './settings.svelte'
 import { kindLabel } from './kind-words'

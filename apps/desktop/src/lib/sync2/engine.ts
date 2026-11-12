@@ -1,7 +1,11 @@
-import { foreignCopy, inForeignCopy } from '@orden/sync-core/foreign'
-import { repositioned } from '@orden/sync-core/order'
-import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
-import type { TreeEntry } from '@orden/sync-core/tree'
+import {
+  foreignCopy,
+  inForeignCopy,
+  repositioned,
+  type ItemMeta,
+  type MetaPatch,
+  type TreeEntry,
+} from '@orden/sync-core'
 import type { EngineEvents, Engine as AskedEngine } from './asking.svelte'
 import { Core } from './core'
 import {

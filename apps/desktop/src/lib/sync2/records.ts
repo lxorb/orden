@@ -1,13 +1,14 @@
 import {
   frame,
+  opOf,
+  unframe,
+  metaOf,
+  isPosition,
   type CreateOp,
   type KeepRequest,
   type Op,
-  opOf,
-  unframe,
-} from '@orden/sync-core/wire'
-import { type ItemMeta, metaOf } from '@orden/sync-core/meta'
-import { isPosition } from '@orden/sync-core/order'
+  type ItemMeta,
+} from '@orden/sync-core'
 import type { MetaRow } from './store'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

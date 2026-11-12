@@ -1,4 +1,4 @@
-import { inboxPageOf } from '@orden/sync-core/inbox'
+import { inboxPageOf } from '@orden/sync-core'
 import { ApiError, request } from '../api'
 import { isRecord } from '../stored'
 import type { InboxServer } from './store'

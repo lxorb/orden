@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { hash32 } from '@orden/sync-core/seed'
+import { hash32 } from '@orden/sync-core'
 import { Clock, Random, ReferenceAccount } from '@orden/sync-core/sim'
 import { GROWS_AT_MOST } from '../../../../../scripts/growth'
 import { Engine } from './engine'

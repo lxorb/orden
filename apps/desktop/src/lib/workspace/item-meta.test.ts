@@ -1,4 +1,4 @@
-import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
+import type { ItemMeta, MetaPatch } from '@orden/sync-core'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { keeping } from './file-ops'
 import { type Describing, ItemMetaStore, STORAGE_KEY } from './item-meta.svelte'

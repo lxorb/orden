@@ -70,7 +70,7 @@ export async function mergedOver(base: string, words: string, disk: string): Pro
       return disk
   }
   if (__EVEN_PLUGIN__) return words
-  const { mergedOn } = await import('@orden/sync-core/merge3')
+  const { mergedOn } = await import('@orden/sync-core')
   return mergedOn(base, words, disk)
 }
 

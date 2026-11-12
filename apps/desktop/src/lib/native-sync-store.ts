@@ -1,4 +1,4 @@
-import { frame, unframe } from '@orden/sync-core/wire'
+import { frame, unframe } from '@orden/sync-core'
 import { invoke } from './native'
 import {
   answerOf,

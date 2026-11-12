@@ -1,5 +1,5 @@
 import { isChatTarget, isPagesTarget, isTermTarget } from '@orden/markdown/links'
-import type { ItemMeta } from '@orden/sync-core/meta'
+import type { ItemMeta } from '@orden/sync-core'
 import type { FileMark } from './file-mark'
 import { folderNote, isFolderNote } from './folder-notes'
 import { brandIcon, ICON_COLOUR_KEY, ICON_KEY, readIcon, siteBrand } from './icons'

@@ -1,4 +1,4 @@
-import { DEVICE_PROTOCOL, shutOut, TOKEN_PROTOCOL } from '@orden/sync-core/wire'
+import { DEVICE_PROTOCOL, shutOut, TOKEN_PROTOCOL } from '@orden/sync-core'
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { BASE } from '../api'

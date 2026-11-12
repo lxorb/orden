@@ -1,8 +1,7 @@
 import { LIST_KEY, LIST_VALUE, STOPPED_VALUE } from '@orden/bases/todo-lists'
 import { appliedEdits } from '@orden/markdown/edits'
 import { frontMatterEdits, frontMatterValue } from '@orden/markdown/front-matter'
-import type { MetaPatch } from '@orden/sync-core/meta'
-
+import type { MetaPatch } from '@orden/sync-core'
 export interface ListTaken {
   meta: MetaPatch
   text: string

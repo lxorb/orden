@@ -1,5 +1,5 @@
 import type { Query } from '@orden/scan/search/query'
-import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
+import type { ItemMeta, MetaPatch } from '@orden/sync-core'
 import type { Change } from '../search/apply'
 import { changeOf } from '../search/replace'
 import { relativeTo, samePath } from '../space-paths'

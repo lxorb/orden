@@ -9,7 +9,7 @@ import {
   type Meta,
   OLD_FOLDER,
 } from '@orden/bases/todo-lists'
-import { metaFromText } from '@orden/sync-core/meta'
+import { metaFromText } from '@orden/sync-core'
 import { pokeNow } from '../hub/poke'
 import { describeById } from '../sync2/ops'
 import { prepareSpace } from '../sync2/prepare'

@@ -1,10 +1,7 @@
 import { recoverLost, sendMade, settleFiles } from './files'
-import { coalesce } from '@orden/sync-core/outbox'
 import {
-  type DocRefusal,
-  type EntryKind,
+  coalesce,
   feedPageOf,
-  type FeedItem,
   OPS_BATCH,
   opsResponseOf,
   PULL_BATCH,
@@ -13,10 +10,13 @@ import {
   PUSH_BATCH,
   PUSH_BYTES,
   pushResponseOf,
+  type DocRefusal,
+  type EntryKind,
+  type FeedItem,
   type Op,
   type PullDoc,
   type PushDoc,
-} from '@orden/sync-core/wire'
+} from '@orden/sync-core'
 import * as Y from 'yjs'
 import { Core, type Holding } from './core'
 import type { Doc } from './docs'

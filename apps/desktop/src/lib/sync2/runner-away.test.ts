@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
-import { hash32 } from '@orden/sync-core/seed'
+import { hash32, frame, unframe } from '@orden/sync-core'
 import { Clock, ReferenceAccount, SEEDED } from '@orden/sync-core/sim'
-import { frame, unframe } from '@orden/sync-core/wire'
 import { Engine } from './engine'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'

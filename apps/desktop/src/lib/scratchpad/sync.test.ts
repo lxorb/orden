@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
-import type { PadTrade } from '@orden/sync-core/pad'
+import type { PadTrade } from '@orden/sync-core'
 import { applied, type Edit } from '../search/replace'
 import { type PadDisk, type PadServer, PadSync, type PadText } from './sync'
 

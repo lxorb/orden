@@ -1,4 +1,4 @@
-import { nameKey } from '@orden/sync-core/tree'
+import { nameKey } from '@orden/sync-core'
 import { busy } from '../busy.svelte'
 import { locksHere, locksWork } from '../locks'
 import { log } from '../log'

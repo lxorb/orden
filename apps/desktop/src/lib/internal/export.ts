@@ -1,4 +1,4 @@
-import type { ItemMeta } from '@orden/sync-core/meta'
+import type { ItemMeta } from '@orden/sync-core'
 import { invoke as crate } from '../native'
 import { joinPath } from '../tauri'
 import { mountOf } from './roots'

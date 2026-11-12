@@ -1,4 +1,4 @@
-import { nameKey } from '@orden/sync-core/tree'
+import { nameKey } from '@orden/sync-core'
 import { placeholderOf } from '../icloud-placeholder'
 import { folderOf } from './places'
 import type { Disk } from './world'

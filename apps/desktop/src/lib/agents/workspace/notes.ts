@@ -1,6 +1,6 @@
 import { frontMatterEdit, isPropertyName } from '@orden/markdown/front-matter'
 import { taskAt } from '@orden/markdown/tasks'
-import { LONGEST_META_VALUE } from '@orden/sync-core/meta'
+import { LONGEST_META_VALUE } from '@orden/sync-core'
 import { flowItem, scalar } from '@orden/markdown/yaml'
 import type { AgentAnswer } from '../../automation/caller'
 import { OWN_KEYS } from '../../own-keys'

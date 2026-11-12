@@ -1,4 +1,4 @@
-import type { Framed } from '@orden/sync-core/wire'
+import type { Framed } from '@orden/sync-core'
 import type { Classify } from './classify'
 import type { Blobs } from './files'
 

@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { between, byPosition, isPosition, spread } from '../src/order'
-import { metaOf, patched, sameMeta } from '../src/meta'
-import { ENTRY_KINDS, isEntryId } from '../src/wire'
+import {
+  between,
+  byPosition,
+  ENTRY_KINDS,
+  isEntryId,
+  isPosition,
+  metaOf,
+  patched,
+  sameMeta,
+  spread,
+} from '../src/api'
 
 describe('order', () => {
   it('always finds a position between two others', () => {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { MOST_TIME_ENTRIES, TIME_PAGE, type TimePage } from '@orden/sync-core/time'
+import { MOST_TIME_ENTRIES, TIME_PAGE, type TimePage } from '@orden/sync-core'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

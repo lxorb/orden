@@ -8,7 +8,7 @@ import {
 import { carriedOwn } from '@orden/bases/inbox'
 import { keptShaped } from '../internal/roots'
 import { hearInternal, listInternal, mountedFor } from '../internal/watch'
-import { inForeignCopy } from '@orden/sync-core/foreign'
+import { inForeignCopy } from '@orden/sync-core'
 import { samePath } from '../space-paths'
 import { syncMark } from '../surfaces.svelte'
 import type { Engine } from './engine'

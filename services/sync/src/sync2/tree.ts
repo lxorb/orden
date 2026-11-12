@@ -4,18 +4,19 @@ import {
   heldName,
   LONGEST_NAME,
   contentChanged,
-  type EntryKind,
   kindOfName,
   nameKey,
+  treeState,
+  metaFromText,
+  metaText,
+  type EntryKind,
   type Op,
   type OpContext,
   type OpResult,
   type TreeEntry,
   type TreeState,
-  treeState,
 } from '@orden/sync-core'
 import { LIST_KEY } from '@orden/bases/todo-lists'
-import { metaFromText, metaText } from '@orden/sync-core/meta'
 import { chunks } from '../bound'
 import { type Moved, rememberMoves } from '../blog/paths'
 import { picturesOfMeta } from '../pictures'

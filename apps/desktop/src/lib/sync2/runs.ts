@@ -1,5 +1,4 @@
-import type { Excerpt } from '@orden/sync-core/diverge'
-
+import type { Excerpt } from '@orden/sync-core'
 interface Run {
   text: string
   marked: boolean

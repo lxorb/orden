@@ -1,10 +1,13 @@
 import { carriedOwn } from '@orden/bases/inbox'
 import { unstacked } from '@orden/markdown/paths'
 import { fileMade } from './files'
-import { inForeignCopy } from '@orden/sync-core/foreign'
-import { kindOfName } from '@orden/sync-core/tree'
-import type { MetaPatch } from '@orden/sync-core/meta'
-import type { EntryKind, Op } from '@orden/sync-core/wire'
+import {
+  inForeignCopy,
+  kindOfName,
+  type MetaPatch,
+  type EntryKind,
+  type Op,
+} from '@orden/sync-core'
 import type { Core } from './core'
 import { MINE } from './docs'
 import { holdsDocument, shapeOf, turn } from './kinds'

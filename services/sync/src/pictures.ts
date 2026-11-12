@@ -2,7 +2,7 @@ import { lexMarkdown, withoutComments } from '@orden/markdown'
 import { coverOf } from '@orden/markdown/cover'
 import { frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { withoutBlockIds } from '@orden/markdown/links'
-import { metaFromText } from '@orden/sync-core/meta'
+import { metaFromText } from '@orden/sync-core'
 import type { Env } from './types'
 
 const FRONT_PICTURES = ['image'] as const

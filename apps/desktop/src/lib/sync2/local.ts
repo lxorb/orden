@@ -1,5 +1,4 @@
-import { applyOp } from '@orden/sync-core/tree'
-import type { Op } from '@orden/sync-core/wire'
+import { applyOp, type Op } from '@orden/sync-core'
 import { holderOf } from '../pages/held'
 import { Core } from './core'
 import { kindOfName, made } from './create'

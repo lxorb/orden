@@ -1,4 +1,4 @@
-import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
+import type { ItemMeta, MetaPatch } from '@orden/sync-core'
 import { COVER_KEY, COVER_POSITION_KEY, coverSrc } from '@orden/markdown/cover'
 import { frontMatterEdits, frontMatterValue } from '@orden/markdown/front-matter'
 import { ICON_COLOUR_KEY, ICON_KEY } from '@orden/scan/note'

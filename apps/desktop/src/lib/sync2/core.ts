@@ -1,4 +1,4 @@
-import type { Times } from '@orden/sync-core/diverge'
+import type { Times } from '@orden/sync-core'
 import { Doc } from './docs'
 import { holdsDocument, shapeOf, type Shape } from './kinds'
 import { SpaceState, type Outboxed } from './places'

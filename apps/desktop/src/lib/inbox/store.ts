@@ -10,7 +10,7 @@ import {
   type InboxHeld,
   type InboxPage,
   type InboxStamps,
-} from '@orden/sync-core/inbox'
+} from '@orden/sync-core'
 import { changesTo, datedChanges, HEAD, type Item, rendered } from '@orden/bases/inbox-items'
 
 export interface InboxServer {
