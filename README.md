@@ -27,10 +27,6 @@
   </a>
 </p>
 
-<p align="center">
-  <img alt="Orden: typing markdown that renders as you type, then a look around the tabs, the file tree and four spaces" src="docs/media/live-preview.gif">
-</p>
-
 If you're also annoyed by all the other Markdown Editors out there, you should probably just use Orden. 
 
 It's extremely fast, lets your favorite LLM edit your notes and syncs everything to the cloud - on any platform. 
