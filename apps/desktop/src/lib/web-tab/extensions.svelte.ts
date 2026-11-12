@@ -1,6 +1,5 @@
 import { keepJson, stored } from '../stored'
 import { invoke, isDesktop, platform } from '../tauri'
-import type { BrowserTheme } from '../themes/browser'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 
 export const runsExtensions = isDesktop && (platform() === 'windows' || platform() === 'linux')
@@ -77,18 +76,11 @@ export const GAP_WORDS: Record<string, string> = {
   hiddenTabs: 'Tabs it hides stay in the tab bar.',
 }
 
-function readDone(
-  value: unknown,
-): { asks: { name: string; gaps: Gaps } } | { theme: BrowserTheme } | null {
+function readAsks(value: unknown): { name: string; gaps: Gaps } | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
   const gaps = readGaps(said.asks)
-  if (gaps) return { asks: { name: typeof said.name === 'string' ? said.name : '', gaps } }
-  const theme = said.theme as Record<string, unknown> | undefined
-  if (typeof theme?.name === 'string' && typeof theme.source === 'string') {
-    return { theme: { name: theme.name, source: theme.source, css: false, pages: '' } }
-  }
-  return null
+  return gaps ? { name: typeof said.name === 'string' ? said.name : '', gaps } : null
 }
 
 export function pinnedOf(list: readonly Extension[]): Extension[] {
@@ -160,15 +152,10 @@ class Extensions {
     this.failed = null
     this.asking = null
     try {
-      const done = readDone(await invoke<unknown>('extensions_install', { link, anyway }))
-      if (done && 'asks' in done) {
-        this.asking = { link, ...done.asks }
+      const asks = readAsks(await invoke<unknown>('extensions_install', { link, anyway }))
+      if (asks) {
+        this.asking = { link, ...asks }
         return false
-      }
-      if (done && 'theme' in done) {
-        const { wearFirefoxTheme } = await import('../themes/kept')
-        await wearFirefoxTheme(done.theme)
-        return true
       }
       await this.load()
       return true

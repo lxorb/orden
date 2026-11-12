@@ -262,17 +262,6 @@ pub enum Done {
         name: String,
         asks: Gaps,
     },
-    Theme {
-        theme: Theme,
-    },
-}
-
-#[derive(Serialize)]
-pub struct Theme {
-    name: String,
-    source: String,
-    css: bool,
-    pages: String,
 }
 
 #[tauri::command]
@@ -307,12 +296,6 @@ pub async fn extensions_install(
 async fn from_amo(app: AppHandle, slug: &str, anyway: bool) -> Result<Done, String> {
     let listing = amo::listing(slug).await?;
     let bytes = amo::file(&listing).await?;
-    if listing.kind == amo::Kind::Theme {
-        return tauri::async_runtime::spawn_blocking(move || theme_in(&bytes))
-            .await
-            .map_err(|error| error.to_string())?
-            .map(|theme| Done::Theme { theme });
-    }
     let (id, _) = firefox::id_and_key(&listing.guid);
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
@@ -337,28 +320,6 @@ async fn from_amo(app: AppHandle, slug: &str, anyway: bool) -> Result<Done, Stri
     })
     .await
     .map_err(|error| error.to_string())?
-}
-
-fn theme_in(bytes: &[u8]) -> Result<Theme, String> {
-    let folder = tempfile::tempdir().map_err(|error| error.to_string())?;
-    let unpacked = folder.path().join("theme");
-    unzip::unzip(bytes, &unpacked)?;
-    let text = std::fs::read_to_string(unpacked.join("manifest.json"))
-        .map_err(|_| "that theme has no manifest".to_string())?;
-    let manifest: serde_json::Value = serde_json::from_str(text.trim_start_matches('\u{feff}'))
-        .map_err(|_| "that theme's manifest cannot be read".to_string())?;
-    let colours = manifest
-        .get("theme")
-        .filter(|one| one.is_object())
-        .ok_or("that theme has no colours")?;
-    Ok(Theme {
-        name: manifest::read(&unpacked)
-            .map(|about| about.name)
-            .unwrap_or_default(),
-        source: colours.to_string(),
-        css: false,
-        pages: String::new(),
-    })
 }
 
 fn listed_as(
@@ -673,22 +634,6 @@ mod tests {
         let said = serde_json::to_value(shown(kept(), folder.path())).expect("a row");
         assert_eq!(said["version"], "1.0");
         assert_eq!(said["picture"], Value::Null);
-    }
-
-    #[test]
-    fn a_firefox_theme_is_its_name_and_its_colours() {
-        let file = super::unzip::tests::zip(&[
-            (
-                "manifest.json",
-                br#"{"manifest_version": 2, "name": "Balanced", "version": "2.1", "theme": {"colors": {"frame": "hsl(220, 72%, 28%)"}}}"#,
-            ),
-            ("META-INF/cose.sig", b"signed"),
-        ]);
-        let theme = super::theme_in(&file).expect("a theme");
-        assert_eq!(theme.name, "Balanced");
-        assert_eq!(theme.source, r#"{"colors":{"frame":"hsl(220, 72%, 28%)"}}"#);
-        let none = super::unzip::tests::zip(&[("manifest.json", br#"{"name": "x"}"#)]);
-        assert!(super::theme_in(&none).is_err());
     }
 
     #[test]

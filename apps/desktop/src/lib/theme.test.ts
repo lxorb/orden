@@ -666,6 +666,23 @@ describe('an installed theme across a restart', () => {
     expect(theme.current).toBe('light')
     expect(theme.installed.has('rose')).toBe(true)
   })
+
+  test('one saved from a browser before is still the Orden theme it was saved as', async () => {
+    const css = `[data-theme=dark] { color-scheme: dark; --bg: #1c1b22; --text: #fbfbfe; }`
+    folder.files.set(
+      'balanced',
+      stamped({ id: 'balanced', name: 'Balanced', author: 'Firefox', version: '1' }, css),
+    )
+    kept.setItem('orden:theme', 'file:balanced')
+
+    theme.init()
+    await theme.reload()
+
+    expect(theme.id).toBe('file:balanced')
+    expect(theme.all.find((one) => one.id === 'file:balanced')?.name).toBe('Balanced')
+    expect(theme.current).toBe('dark')
+    expect(folder.files.get('balanced')).toContain(css)
+  })
 })
 
 describe('a store copy of the contrast theme', () => {

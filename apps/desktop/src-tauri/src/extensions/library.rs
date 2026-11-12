@@ -317,7 +317,7 @@ mod tests {
 mod amo_tests {
     use sha2::{Digest as _, Sha256};
 
-    use super::super::amo::{checked, Kind, Listing};
+    use super::super::amo::{checked, Listing};
     use super::super::firefox::{chromium_version, id_and_key};
     use super::super::unzip::tests::zip;
     use super::{folder_of, read, tidy, unpack_firefox, write, Kept, Store};
@@ -348,7 +348,6 @@ mod amo_tests {
         let listing = Listing {
             guid: "fixture@example.com".into(),
             slug: "fixture".into(),
-            kind: Kind::Extension,
             version: version.into(),
             url: "https://addons.mozilla.org/firefox/downloads/file/1/fixture.xpi".into(),
             hash,

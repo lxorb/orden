@@ -9,7 +9,6 @@
   import CanvasIcon from './CanvasIcon.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
   import FontPicker from './settings/FontPicker.svelte'
-  import BrowserThemes from './settings/BrowserThemes.svelte'
   import ExtensionRows from './settings/ExtensionRows.svelte'
   import { enginesFor } from './web-tab/engines'
   import { CUSTOM, searchEngine } from './web-tab/search-engine.svelte'
@@ -1279,7 +1278,6 @@
       <span class="name">{t('Reload themes and custom CSS')}</span>
       <button class="orden-chip" onclick={() => theme.reload()}>{t('Reload')}</button>
     </div>
-    <BrowserThemes />
   {/if}
 {/snippet}
 
