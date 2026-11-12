@@ -87,6 +87,7 @@ export const LIBRARIES = [
 export const PACKAGES = [
   'autocomplete',
   'bases',
+  'contracts',
   'editor',
   'glasses',
   'lang-html',
@@ -135,7 +136,7 @@ export const APP_FOLDERS = [
   'settings',
   'shortcuts',
   'sync',
-  'sync2',
+  'sync-client',
   'tab-fill',
   'tab-strip',
   'terminal',
