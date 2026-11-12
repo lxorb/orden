@@ -48,7 +48,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
   const holds = entry.is_dir || isMarkdownPath(entry.name)
   const marked = own ?? entry
   const inside = entry.is_dir && nestedIn(entry).length > 0
-  if (!canWriteAt(entry.path)) return readOnlyMenu(entry, own, marked)
+  if (!canWriteAt(entry.path)) return readOnlyMenu(entry, marked)
 
   return [
     ...compareEntry(entry).flatMap((one) => [one, DIVIDER]),
@@ -84,7 +84,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
   ]
 }
 
-function readOnlyMenu(entry: Entry, own: Entry | null, marked: Entry): MenuEntry[] {
+function readOnlyMenu(entry: Entry, marked: Entry): MenuEntry[] {
   return [
     ...compareEntry(entry).flatMap((one) => [one, DIVIDER]),
     ...wallpaperEntry(entry),
