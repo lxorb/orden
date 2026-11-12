@@ -3,17 +3,10 @@ use sha2::{Digest as _, Sha256};
 
 const API: &str = "https://addons.mozilla.org/api/v5/addons/addon";
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Kind {
-    Extension,
-    Theme,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Listing {
     pub guid: String,
     pub slug: String,
-    pub kind: Kind,
     pub version: String,
     pub url: String,
     pub hash: String,
@@ -29,12 +22,12 @@ pub fn address(slug: &str) -> String {
 }
 
 pub fn listing_of(said: &Value) -> Result<Listing, String> {
-    let kind = match said["type"].as_str() {
-        Some("extension") => Kind::Extension,
-        Some("statictheme") => Kind::Theme,
+    match said["type"].as_str() {
+        Some("extension") => {}
+        Some("statictheme") => return Err("that is a theme, not an add-on Orden runs".into()),
         Some(other) => return Err(format!("that is a {other}, not an add-on Orden runs")),
         None => return Err("addons.mozilla.org has no add-on by that name".into()),
-    };
+    }
     let text = |value: &Value| value.as_str().map(str::to_owned);
     let version = &said["current_version"];
     let file = &version["file"];
@@ -56,7 +49,6 @@ pub fn listing_of(said: &Value) -> Result<Listing, String> {
     Ok(Listing {
         guid: text(&said["guid"]).ok_or("addons.mozilla.org did not say the add-on's id")?,
         slug: text(&said["slug"]).unwrap_or_default(),
-        kind,
         version: text(&version["version"]).ok_or("addons.mozilla.org did not say its version")?,
         url,
         hash,
@@ -120,7 +112,7 @@ mod tests {
     use serde_json::json;
     use sha2::{Digest as _, Sha256};
 
-    use super::{address, checked, hex, listing_of, Kind, Listing};
+    use super::{address, checked, hex, listing_of, Listing};
 
     fn answer(kind: &str, hash: &str) -> serde_json::Value {
         json!({
@@ -145,22 +137,21 @@ mod tests {
     fn amo_s_answer_says_the_add_on_and_its_file() {
         let listing = listing_of(&answer("extension", HASH)).expect("a listing");
         assert_eq!(listing.guid, "sponsorBlocker@ajay.app");
-        assert_eq!(listing.kind, Kind::Extension);
         assert_eq!(listing.version, "6.1.7");
         assert_eq!(listing.size, 3);
         assert_eq!(
             listing.hash,
             "0d50e1632c6f15ee15a543e670e1c572974605a5c02622916e08e026803df83f"
         );
-        assert_eq!(
-            listing_of(&answer("statictheme", HASH)).map(|one| one.kind),
-            Ok(Kind::Theme)
-        );
     }
 
     #[test]
     fn what_is_not_an_add_on_with_a_file_is_refused() {
         assert!(listing_of(&answer("dictionary", HASH)).is_err());
+        assert_eq!(
+            listing_of(&answer("statictheme", HASH)).err().as_deref(),
+            Some("that is a theme, not an add-on Orden runs")
+        );
         assert!(listing_of(&json!({ "detail": "Not found." })).is_err());
         assert!(listing_of(&answer("extension", "md5:abc")).is_err());
         let mut plain = answer("extension", HASH);
@@ -175,7 +166,6 @@ mod tests {
         let listing = Listing {
             guid: "a@b".into(),
             slug: "a".into(),
-            kind: Kind::Extension,
             version: "1".into(),
             url: "https://addons.mozilla.org/a.xpi".into(),
             hash,

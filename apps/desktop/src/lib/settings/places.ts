@@ -53,11 +53,6 @@ export function places(): Place[] {
       label: t('Reload themes and custom CSS'),
       text: [t('Custom')],
     })
-    all.push({
-      section: 'appearance',
-      label: t('Import'),
-      text: ['Chrome', 'Firefox', t('Themes')],
-    })
     all.push({ section: 'general', label: t('Default browser'), text: [t('Make default')] })
   }
 

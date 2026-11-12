@@ -61,7 +61,7 @@ function statedIn(sheet: string): Stated[] {
   return found
 }
 
-export function argumentsOf(value: string, from: number): { end: number; comma: number } {
+function argumentsOf(value: string, from: number): { end: number; comma: number } {
   let depth = 0
   let comma = -1
 
@@ -75,7 +75,7 @@ export function argumentsOf(value: string, from: number): { end: number; comma: 
   return { end: value.length, comma }
 }
 
-export function substituted(value: string, known: Map<string, string>, depth = 0): string | null {
+function substituted(value: string, known: Map<string, string>, depth = 0): string | null {
   const start = value.indexOf('var(')
   if (start < 0) return value
   if (depth > 10) return null

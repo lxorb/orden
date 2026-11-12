@@ -30,8 +30,6 @@ mod browser_data;
 #[cfg(desktop)]
 mod browser_profiles;
 #[cfg(desktop)]
-mod browser_themes;
-#[cfg(desktop)]
 mod bundle_name;
 #[cfg(test)]
 mod calls;
@@ -469,7 +467,6 @@ macro_rules! desktop_commands {
             browser_data::read_browser_history,
             browser_data::read_browser_icons,
             safari::read_safari,
-            browser_themes::browser_themes,
             page_style::wear_page_styles,
             launch::take_startup_pages,
             launch::take_startup_pdfs,

@@ -13,11 +13,6 @@ vi.mock('../tauri', async (importOriginal) => ({
     if (command === 'extensions_list' && lists.length) return lists.shift()
     if (command === 'extensions_install' && installs.length) return installs.shift()
     if (command === 'extensions_list') return Promise.resolve([row({ id: 'a', enabled: true })])
-    if (command === 'extensions_install' && String(args?.link).includes('theme')) {
-      return Promise.resolve({
-        theme: { name: 'Balanced', source: '{"colors":{}}', css: false, pages: '' },
-      })
-    }
     if (
       command === 'extensions_install' &&
       args?.anyway !== true &&
@@ -34,14 +29,6 @@ vi.mock('../tauri', async (importOriginal) => ({
       return said === null ? Promise.resolve(undefined) : Promise.reject(said)
     }
     return refuse ? Promise.reject(new Error('no')) : Promise.resolve(undefined)
-  },
-}))
-
-const worn: unknown[] = []
-vi.mock('../themes/kept', () => ({
-  wearFirefoxTheme: (theme: unknown) => {
-    worn.push(theme)
-    return Promise.resolve()
   },
 }))
 
@@ -123,11 +110,6 @@ test('a Firefox add-on that does not run whole waits for the reader, and is inst
     { link, anyway: false },
     { link, anyway: true },
   ])
-})
-
-test('a Firefox theme becomes one of Orden’s rather than an extension', async () => {
-  expect(await extensions.install('https://addons.mozilla.org/firefox/addon/a-theme/')).toBe(true)
-  expect(worn).toEqual([{ name: 'Balanced', source: '{"colors":{}}', css: false, pages: '' }])
 })
 
 test('the bar shows what is on, has a button and is pinned, and runs already', () => {

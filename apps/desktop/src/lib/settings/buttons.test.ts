@@ -26,7 +26,6 @@ const OWN: Record<string, RegExp> = {
   '*': /role="(radio|tab)"/,
   'settings/ExtensionRows.svelte': /class="name"/,
   'remote/RemotePane.svelte': /class="(open|link)"/,
-  'settings/BrowserThemes.svelte': /class="card"/,
   'pass/SettingsImport.svelte': /class="source"/,
 }
 
