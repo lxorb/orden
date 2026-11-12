@@ -1,6 +1,5 @@
 import { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './chats/hush.svelte'
 import { priorities } from './chats/priorities.svelte'
-import { LEVELS, type Level } from '@orden/chats/priority'
 import { i18n, t } from './i18n.svelte'
 import type { Field } from './preferences'
 
@@ -87,7 +86,7 @@ export function chatsFields(): Field[] {
       hint: t(
         'Your AI gives each chat a priority when a message arrives and learns from the ones you change.',
       ),
-      words: ['chat', 'priority', 'urgent', 'important', 'ai', 'sort', 'mail'],
+      words: ['chat', 'priority', 'urgent', 'important', 'ai', 'sort'],
       initial: false,
       get: () => priorities.on,
       set: (on) => priorities.setOn(on),
@@ -98,40 +97,10 @@ export function chatsFields(): Field[] {
       hint: t(
         'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.',
       ),
-      words: ['chat', 'draft', 'reply', 'ai', 'task', 'todo', 'suggest', 'mail'],
+      words: ['chat', 'draft', 'reply', 'ai', 'task', 'todo', 'suggest'],
       initial: false,
       get: () => priorities.drafting,
       set: (on) => priorities.setDrafting(on),
     },
-    ...(priorities.on
-      ? ([
-          {
-            kind: 'select',
-            label: t('Notify for'),
-            hint: t('Which priorities notify you.'),
-            options: [
-              { value: 'urgent', label: t('Urgent') },
-              { value: 'important', label: t('Urgent and important') },
-              { value: 'all', label: t('Everything') },
-              { value: 'none', label: t('Nothing') },
-            ],
-            initial: 'important',
-            get: () => notifyChoice(priorities.notify),
-            set: (value) => priorities.setNotify(notifyLevels(value)),
-          },
-        ] satisfies Field[])
-      : []),
   ]
-}
-
-function notifyChoice(levels: readonly Level[]): string {
-  if (!levels.length) return 'none'
-  if (levels.length === LEVELS.length) return 'all'
-  return levels.includes('important') ? 'important' : 'urgent'
-}
-
-function notifyLevels(choice: string): Level[] {
-  if (choice === 'none') return []
-  if (choice === 'all') return [...LEVELS]
-  return choice === 'urgent' ? ['urgent'] : ['urgent', 'important']
 }

@@ -1,8 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { conversationKey } from './chats/conversation-key'
-import { isRemote } from './chats/remotes'
 import { TAB_KINDS } from './workspace/tab-kinds'
 
 const SOURCE = readFileSync(join(import.meta.dirname, './Pane.svelte'), 'utf8')
@@ -15,7 +13,6 @@ describe('a surface a pane is filled with', () => {
       'applicationSurface',
       'canvasSurface',
       'chatSurface',
-      'connectSurface',
       'emptySurface',
       'explorerSurface',
       'graphSurface',
@@ -28,13 +25,6 @@ describe('a surface a pane is filled with', () => {
       'viewSurface',
       'webSurface',
     ])
-  })
-
-  test("opens another service's conversation in the one chat surface, not a second one", () => {
-    const key = conversationKey({ provider: 'mail', account: 'a', conversation: 'c' })
-    expect(isRemote(key)).toBe(true)
-    expect(isRemote('/spaces/Team/General.chat')).toBe(false)
-    expect(SOURCE).not.toContain('ConversationTab')
   })
 
   test('offers a reload where it could not be fetched, rather than a blank pane', () => {

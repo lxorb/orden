@@ -16,10 +16,6 @@
   import type { Box } from './place'
   import { store } from './source.svelte'
   import { tip } from './tips.svelte'
-  import { menu } from '../../menu.svelte'
-  import { remoteOf } from '../remotes'
-  import { conversationMenu } from './manage'
-  import type { Hit } from '../api'
 
   const {
     page,
@@ -37,38 +33,11 @@
 
   let writing = $state(false)
   let topic = $state('')
-  let showing = $state<{ what: 'pins' | 'found'; at: Box } | null>(null)
-  let looking = $state('')
-  let found = $state.raw<Hit[]>([])
+  let showing = $state<{ at: Box } | null>(null)
   let pinned = $state.raw<Message[]>([])
 
   const meta = $derived(page.view.meta)
-  const canTopic = $derived(may(page.view.role, 'topic', meta.posting) && page.can.topic)
-  const service = $derived(page.service)
-  const remote = $derived(service ? remoteOf(page.id) : null)
-  const conversation = $derived(
-    service ? (remote?.conversation(service.conversation) ?? null) : null,
-  )
-  const managing = $derived(remote && conversation ? conversationMenu(remote, conversation) : [])
-
-  async function lookFor(words: string) {
-    const asked = words.trim()
-    found = asked
-      ? await store()
-          .search(asked, page.id)
-          .catch(() => [])
-      : []
-  }
-
-  function search(element: Element) {
-    if (!service) {
-      page.search()
-      return
-    }
-    looking = ''
-    found = []
-    showing = { what: 'found', at: boxOf(element) }
-  }
+  const canTopic = $derived(may(page.view.role, 'topic', meta.posting))
   const ids = $derived(
     page.members.flatMap((one) => {
       const id = accountOf(one.who)
@@ -101,7 +70,7 @@
 
   async function showPins(element: Element) {
     pinned = await page.pinned()
-    showing = { what: 'pins', at: boxOf(element) }
+    showing = { at: boxOf(element) }
   }
 
   function startTopic() {
@@ -117,11 +86,7 @@
 </script>
 
 <header class="head">
-  <span class="mark"
-    >{#if service}<svg viewBox="0 0 24 24" aria-label={service.name} role="img" class="service"
-        ><path d={service.icon} /></svg
-      >{:else}<ChatMark path={page.entry?.path} />{/if}</span
-  >
+  <span class="mark"><ChatMark path={page.entry?.path} /></span>
   <h2 class="name">{page.entry?.name ?? named ?? ''}</h2>
   {#if writing}
     <!-- svelte-ignore a11y_autofocus -->
@@ -152,95 +117,54 @@
     >
   {/if}
   <span class="grow"></span>
-  {#if page.can.members}
-    <button
-      type="button"
-      class="people"
-      class:on={membersOn}
-      aria-label={t('Members')}
-      aria-pressed={membersOn}
-      use:tip={() => shortcuts.tooltip(t('Members'), 'chat.members')}
-      onclick={onmembers}
-    >
-      <span class="faces" aria-hidden="true">
-        {#each members.slice(0, 3) as one (one.who)}
-          <span class="face"><Avatar face={faceOf(one.who, page.members, space)} size={20} /></span>
-        {/each}
-      </span>
-      <span class="count">{amount(page.view.members.filter((one) => !one.gone).length)}</span>
-    </button>
-  {/if}
-  {#if page.can.pin}
-    <button
-      type="button"
-      class="orden-glyph"
-      aria-label={t('Pinned')}
-      use:tip={() => t('Pinned')}
-      onclick={(event) => void showPins(event.currentTarget)}><Glyph name="pin" /></button
-    >
-  {/if}
-  {#if page.can.mute}
-    <Bell
-      notify={page.entry?.notify ?? null}
-      mutedUntil={page.entry?.mutedUntil ?? null}
-      members={page.entry?.members ?? page.members.length}
-      onchange={(notify: Notify | null, mutedUntil: number | null) =>
-        void store().notifyFor(page.id, notify, mutedUntil)}
-    />
-  {/if}
-  {#if page.can.search}
-    <button
-      type="button"
-      class="orden-glyph"
-      aria-label={t('Search this chat')}
-      use:tip={() => shortcuts.tooltip(t('Search this chat'), 'chat.search')}
-      onclick={(event) => search(event.currentTarget)}><Glyph name="search" /></button
-    >
-  {/if}
-  {#if managing.length}
-    <button
-      type="button"
-      class="orden-glyph"
-      aria-label={t('More')}
-      use:tip={() => t('More')}
-      onclick={(event) => menu.show(event, managing)}><Glyph name="more" /></button
-    >
-  {/if}
+  <button
+    type="button"
+    class="people"
+    class:on={membersOn}
+    aria-label={t('Members')}
+    aria-pressed={membersOn}
+    use:tip={() => shortcuts.tooltip(t('Members'), 'chat.members')}
+    onclick={onmembers}
+  >
+    <span class="faces" aria-hidden="true">
+      {#each members.slice(0, 3) as one (one.who)}
+        <span class="face"><Avatar face={faceOf(one.who, page.members, space)} size={20} /></span>
+      {/each}
+    </span>
+    <span class="count">{amount(page.view.members.length)}</span>
+  </button>
+  <button
+    type="button"
+    class="orden-glyph"
+    aria-label={t('Pinned')}
+    use:tip={() => t('Pinned')}
+    onclick={(event) => void showPins(event.currentTarget)}><Glyph name="pin" /></button
+  >
+  <Bell
+    notify={page.entry?.notify ?? null}
+    mutedUntil={page.entry?.mutedUntil ?? null}
+    members={page.entry?.members ?? page.members.length}
+    onchange={(notify: Notify | null, mutedUntil: number | null) =>
+      void store().notifyFor(page.id, notify, mutedUntil)}
+  />
+  <button
+    type="button"
+    class="orden-glyph"
+    aria-label={t('Search this chat')}
+    use:tip={() => shortcuts.tooltip(t('Search this chat'), 'chat.search')}
+    onclick={() => page.search()}><Glyph name="search" /></button
+  >
 </header>
 
 <Float
   at={showing?.at ?? null}
   end
   width="280px"
-  label={showing?.what === 'pins' ? t('Pinned') : t('Search this chat')}
+  label={t('Pinned')}
   onclose={() => (showing = null)}
 >
   <div class="list orden-scrolls">
-    {#if showing?.what === 'found'}
-      <!-- svelte-ignore a11y_autofocus -->
-      <input
-        class="orden-field look"
-        type="search"
-        aria-label={t('Search this chat')}
-        placeholder={t('Search')}
-        autofocus
-        bind:value={looking}
-        oninput={() => void lookFor(looking)}
-      />
-      {#each found as one (one.message.id)}
-        <button
-          type="button"
-          class="pin"
-          onclick={() => {
-            showing = null
-            void page.jump(one.message.id)
-          }}
-        >
-          <strong>{nameOf(one.message.author, page.members, space)}</strong>
-          <span>{firstLine(one.message.body) || '…'}</span>
-        </button>
-      {/each}
-    {:else if showing?.what === 'pins'}
+    {#if showing}
       {#each pinned as one (one.id)}
         <button
           type="button"
@@ -275,20 +199,6 @@
 
   .mark {
     color: var(--muted);
-  }
-
-  .service {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .look {
-    margin: var(--space-1);
   }
 
   .name {

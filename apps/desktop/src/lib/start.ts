@@ -147,12 +147,12 @@ export function start(): () => void {
     void startup
       .turn('right')
       .then(() => import('./feature-gate.svelte'))
-      .then(({ whenChatsOn }) =>
-        whenChatsOn(
-          () => void import('./chats/start.svelte'),
-          () => void import('./chats/linked').then((one) => one.accounts.stop()),
-        ),
-      )
+      .then(({ whenChatsOn }) => whenChatsOn(() => void import('./chats/start.svelte')))
+    void startup
+      .turn('right')
+      .then(() => import('./chats/retired'))
+      .then((one) => one.forgetRetiredChatsHere())
+      .catch(() => undefined)
   }
 
   if (!__EVEN_PLUGIN__) {

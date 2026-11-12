@@ -190,7 +190,7 @@
     <p>{words}</p>
   </div>
 {/if}{#if gateNote.said}
-  {@const words = t('{name} is turned off, so its tabs were closed', { name: gateNote.said })}
+  {@const words = gateNote.said}
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}

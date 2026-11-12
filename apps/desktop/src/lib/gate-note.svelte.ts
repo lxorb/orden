@@ -6,9 +6,9 @@ class GateNote {
 
   private timer: ReturnType<typeof setTimeout> | undefined
 
-  show(name: string) {
+  show(words: string) {
     if (!__EVEN_PLUGIN__) void undoToastNotice.ask()
-    this.said = name
+    this.said = words
     this.linger()
   }
 

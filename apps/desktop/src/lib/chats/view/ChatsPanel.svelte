@@ -14,134 +14,57 @@
   import { faceOf, nameOf } from './people'
   import { saved } from './saved.svelte'
   import { store } from './source.svelte'
-  import { connected, type Linked } from '../connected.svelte'
-  import { ORDEN } from '../providers/orden'
-  import { newestFirst } from '@orden/chats/provider'
-  import { host } from '../providers/host'
-  import { accounts, openConversation } from '../linked'
-  import { addChat, adding } from './adding.svelte'
-  import SignIn from './SignIn.svelte'
-  import { byPriority, LEVELS, isLevel } from '@orden/chats/priority'
-  import { priorities, rowKey } from '../priorities.svelte'
+  import { byPriority, isLevel, LEVELS, type Level, type Suggestion } from '@orden/chats/priority'
+  import { priorities } from '../priorities.svelte'
   import { startPriorities } from '../prioritise'
   import { levelWord } from '../level-words'
-  import type { Row } from '../connected.svelte'
-  import type { Suggestion } from '@orden/chats/priority'
   import type { Priority } from '@orden/markdown/task-line'
   import { showQuickAdd } from '../../surfaces.svelte'
-  import { conversationKey } from '../conversation-key'
-  import { remoteOf } from '../remotes'
-  import { choosePeople, conversationMenu } from './manage'
-  import { menu } from '../../menu.svelte'
-  import type { Conversation } from '@orden/chats/provider'
-  import { conversationTitle } from './title'
 
   let query = $state('')
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
   let activity = $state.raw<Hit[]>([])
+  let arranged = $state<'all' | 'priority'>('all')
 
   const chats = $derived.by(() => {
-    const byId = new Map(store().list.map((one) => [one.id, one]))
     const asked = query.trim().toLowerCase()
-    return connected
-      .rows()
-      .filter((row) => row.provider === ORDEN)
-      .flatMap((row) => byId.get(row.conversation.id) ?? [])
+    return [...store().list]
+      .sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
   })
-  const offered = $derived(accounts.offered.filter((one) => one.available(host)))
 
-  function signInAgain(provider: string, account: string) {
-    addChat({ provider, account })
-  }
-
-  let arranged = $state<'service' | 'priority'>('service')
-
-  accounts.start()
   startPriorities()
 
   const byLevel = $derived.by(() => {
     if (!priorities.on || arranged !== 'priority') return { pending: [], rest: [] }
-    const asked = query.trim().toLowerCase()
-    const rows = connected
-      .rows()
-      .filter(
-        (row) =>
-          !asked ||
-          titleOf(row).toLowerCase().includes(asked) ||
-          row.conversation.people.some(
-            (person) =>
-              person.name.toLowerCase().includes(asked) ||
-              (person.handle ?? '').toLowerCase().includes(asked),
-          ),
-      )
-      .map((row) => ({ row, level: levelFor(row), since: row.conversation.lastAt }))
+    const ranked = chats.map((entry) => ({
+      entry,
+      level: priorities.levelOf(entry.id),
+      since: entry.lastAt,
+    }))
     return {
-      pending: rows.filter((one) => one.row.conversation.unread > 0).sort(byPriority),
-      rest: rows.filter((one) => one.row.conversation.unread === 0),
+      pending: ranked.filter((one) => one.entry.unread > 0).sort(byPriority),
+      rest: ranked.filter((one) => one.entry.unread === 0),
     }
   })
 
-  function keyOf(row: Row) {
-    return rowKey(row.provider, row.account, row.conversation.id)
-  }
-
-  function levelFor(row: Row) {
-    return priorities.assigned[keyOf(row)]?.level ?? null
-  }
-
-  function titleOf(row: Row) {
-    return conversationTitle(row.conversation)
-  }
-
-  function iconOf(row: Row) {
-    return connected.find(row.provider, row.account)?.provider.icon ?? ORDEN_ICON
-  }
-
-  function openRow(row: Row) {
-    if (row.provider === ORDEN) {
-      open(store().entry(row.conversation.id) ?? undefined)
-      return
-    }
-    openConversation(
-      { provider: row.provider, account: row.account, conversation: row.conversation.id },
-      titleOf(row),
-    )
-  }
-
-  function moved(row: Row, value: string) {
+  function moved(entry: ChatEntry, value: string) {
     if (!isLevel(value)) return
-    priorities.reassign(keyOf(row), value, {
-      title: titleOf(row),
-      from: row.conversation.people.map((person) => person.name).join(', '),
-      words: row.conversation.snippet ?? '',
-    })
+    priorities.reassign(entry.id, value, { title: entry.name ?? '', from: '', words: '' })
   }
 
-  function useDraft(row: Row, reply: string) {
-    priorities.settle(keyOf(row), 'reply')
-    if (row.provider === ORDEN) {
-      store().offer(row.conversation.id, reply)
-      open(store().entry(row.conversation.id) ?? undefined)
-      return
-    }
-    store().offer(
-      conversationKey({
-        provider: row.provider,
-        account: row.account,
-        conversation: row.conversation.id,
-      }),
-      reply,
-    )
-    openRow(row)
+  function useDraft(entry: ChatEntry, reply: string) {
+    priorities.settle(entry.id, 'reply')
+    store().offer(entry.id, reply)
+    open(entry)
   }
 
   function priorityOf(value: number | undefined): Priority | undefined {
     return value === 1 || value === 2 || value === 3 || value === 4 ? value : undefined
   }
 
-  function addTodo(row: Row, todo: NonNullable<Suggestion['todo']>) {
-    priorities.settle(keyOf(row), 'todo')
+  function addTodo(entry: ChatEntry, todo: NonNullable<Suggestion['todo']>) {
+    priorities.settle(entry.id, 'todo')
     const priority = priorityOf(todo.priority)
     showQuickAdd({
       text: todo.title,
@@ -149,41 +72,6 @@
       ...(todo.due ? { due: todo.due } : {}),
       ...(priority ? { fields: { priority } } : {}),
     })
-  }
-
-  let opened = $state<string[]>([])
-
-  async function begin(one: Linked) {
-    const remote = remoteOf(
-      conversationKey({ provider: one.provider.id, account: one.account.id, conversation: '-' }),
-    )
-    if (!remote || !one.connection.begin) return
-    const people = await choosePeople(remote, t('New conversation'))
-    if (!people.length) return
-    const made = await one.connection.begin(people).catch(() => null)
-    if (made)
-      openConversation(
-        { provider: one.provider.id, account: one.account.id, conversation: made.id },
-        conversationTitle(made),
-      )
-  }
-
-  const ORDEN_ICON = 'M4 9h16M4 15h16M10 3 8 21M16 3l-2 18'
-
-  function conversationsOf(one: Linked) {
-    const asked = query.trim().toLowerCase()
-    return one.conversations
-      .filter(
-        (it) =>
-          !asked ||
-          (it.title ?? '').toLowerCase().includes(asked) ||
-          it.people.some(
-            (person) =>
-              person.name.toLowerCase().includes(asked) ||
-              (person.handle ?? '').toLowerCase().includes(asked),
-          ),
-      )
-      .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || newestFirst(a, b))
   }
 
   const mentions = $derived(store().list.reduce((sum, one) => sum + one.mentions, 0))
@@ -201,55 +89,6 @@
 
   const chatOf = (id: string) => store().list.find((one) => one.id === id)
 </script>
-
-{#snippet remoteRow(one: Linked, conversation: Conversation)}
-  {@const muted = conversation.mutedUntil != null && conversation.mutedUntil > now}
-  {@const unread = conversation.unread > 0 && !muted}
-  {@const remote = remoteOf(
-    conversationKey({
-      provider: one.provider.id,
-      account: one.account.id,
-      conversation: conversation.id,
-    }),
-  )}
-  {@const entries = remote ? conversationMenu(remote, conversation) : []}
-  <div class="remote" class:muted>
-    <button
-      type="button"
-      class="orden-row entry"
-      class:unread
-      oncontextmenu={(event) => {
-        if (!entries.length) return
-        event.preventDefault()
-        menu.show(event, entries)
-      }}
-      onclick={() =>
-        openConversation(
-          { provider: one.provider.id, account: one.account.id, conversation: conversation.id },
-          conversationTitle(conversation),
-        )}
-    >
-      <span class="orden-row-label">{conversationTitle(conversation)}</span>
-      {#if conversation.pinned}<span class="orden-row-meta pinned" aria-label={t('Pinned')}
-          ><Glyph name="pin" /></span
-        >{/if}
-      {#if conversation.mentions && !muted}
-        <span class="badge">{amount(conversation.mentions)}</span>
-      {:else if unread}
-        <span class="orden-row-meta count">{amount(conversation.unread)}</span>
-      {/if}
-    </button>
-    {#if entries.length}
-      <button
-        type="button"
-        class="orden-glyph more"
-        aria-label={t('More')}
-        title={t('More')}
-        onclick={(event) => menu.show(event, entries)}><Glyph name="more" /></button
-      >
-    {/if}
-  </div>
-{/snippet}
 
 {#snippet found(chatId: string, message: string, author: Who, line: string)}
   {@const chat = chatOf(chatId)}
@@ -278,9 +117,9 @@
       <button
         type="button"
         role="radio"
-        aria-checked={arranged === 'service'}
-        class:on={arranged === 'service'}
-        onclick={() => (arranged = 'service')}>{t('By service')}</button
+        aria-checked={arranged === 'all'}
+        class:on={arranged === 'all'}
+        onclick={() => (arranged = 'all')}>{t('All')}</button
       >
       <button
         type="button"
@@ -292,30 +131,25 @@
     </div>
   {/if}
 
-  {#snippet ranked(one: { row: Row; level: (typeof LEVELS)[number] | null })}
-    <div class="ranked" class:unread={one.row.conversation.unread > 0}>
-      <button type="button" class="orden-row entry" onclick={() => openRow(one.row)}>
-        <span class="orden-row-mark"
-          ><svg viewBox="0 0 24 24" aria-hidden="true" class="mark"
-            ><path d={iconOf(one.row)} /></svg
-          ></span
-        >
-        <span class="orden-row-label">{titleOf(one.row)}</span>
-        {#if one.row.conversation.unread}<span class="orden-row-meta count"
-            >{amount(one.row.conversation.unread)}</span
+  {#snippet ranked(one: { entry: ChatEntry; level: Level | null })}
+    <div class="ranked" class:unread={one.entry.unread > 0}>
+      <button type="button" class="orden-row entry" onclick={() => open(one.entry)}>
+        <span class="orden-row-mark"><ChatMark path={one.entry.path} /></span>
+        <span class="orden-row-label">{one.entry.name ?? t('Chat')}</span>
+        {#if one.entry.unread}<span class="orden-row-meta count">{amount(one.entry.unread)}</span
           >{/if}
       </button>
       <select
         class="level"
         aria-label={t('Priority')}
         value={one.level ?? ''}
-        onchange={(event) => moved(one.row, event.currentTarget.value)}
+        onchange={(event) => moved(one.entry, event.currentTarget.value)}
       >
         <option value="" disabled>-</option>
         {#each LEVELS as level (level)}<option value={level}>{levelWord(level)}</option>{/each}
       </select>
     </div>
-    {@const suggested = priorities.suggestions[keyOf(one.row)]}
+    {@const suggested = priorities.suggestions[one.entry.id]}
     {#if suggested}
       <div class="suggested">
         {#if suggested.reply}
@@ -323,7 +157,7 @@
           <button
             type="button"
             class="orden-chip"
-            onclick={() => suggested.reply && useDraft(one.row, suggested.reply)}
+            onclick={() => suggested.reply && useDraft(one.entry, suggested.reply)}
             >{t('Use draft')}</button
           >
         {/if}
@@ -332,14 +166,14 @@
           <button
             type="button"
             class="orden-chip"
-            onclick={() => suggested.todo && addTodo(one.row, suggested.todo)}
+            onclick={() => suggested.todo && addTodo(one.entry, suggested.todo)}
             >{t('Add as task')}</button
           >
         {/if}
         <button
           type="button"
           class="orden-chip"
-          onclick={() => priorities.settle(keyOf(one.row), 'all')}>{t('Dismiss')}</button
+          onclick={() => priorities.settle(one.entry.id, 'all')}>{t('Dismiss')}</button
         >
       </div>
     {/if}
@@ -347,11 +181,11 @@
 
   {#if showing === 'chats' && priorities.on && arranged === 'priority'}
     <p class="orden-section">{t('Pending')}</p>
-    {#each byLevel.pending as one (keyOf(one.row))}
+    {#each byLevel.pending as one (one.entry.id)}
       {@render ranked(one)}
     {/each}
     <p class="orden-section">{t('Everything else')}</p>
-    {#each byLevel.rest as one (keyOf(one.row))}
+    {#each byLevel.rest as one (one.entry.id)}
       {@render ranked(one)}
     {/each}
   {:else if showing === 'chats'}
@@ -406,111 +240,6 @@
         {/if}
       </button>
     {/each}
-
-    {#if offered.length || connected.linked.length || accounts.failed.length}
-      <div class="section">
-        <p class="orden-section">{t('Accounts')}</p>
-        {#if offered.length}
-          <button
-            type="button"
-            class="orden-glyph add"
-            aria-label={t('Add a chat account')}
-            title={t('Add a chat account')}
-            onclick={() => addChat()}><Glyph name="attach" /></button
-          >
-        {/if}
-      </div>
-      {#if !adding.busy}<SignIn />{/if}
-      {#each accounts.failed as one (`${one.provider}:${one.account}`)}
-        <p class="orden-row failed" title={one.reason}>
-          <span class="orden-row-label">{one.account}</span>
-          <span class="orden-row-meta">{t('Signed out')}</span>
-          {#if offered.some((it) => it.id === one.provider)}
-            <button
-              type="button"
-              class="orden-glyph add"
-              aria-label={t('Sign in again')}
-              title={t('Sign in again')}
-              onclick={() => signInAgain(one.provider, one.account)}><Glyph name="retry" /></button
-            >
-          {/if}
-        </p>
-      {/each}
-      {#each connected.linked as one (`${one.provider.id}:${one.account.id}`)}
-        {@const waiting = one.conversations.filter(
-          (it) => it.unread > 0 && !(it.mutedUntil != null && it.mutedUntil > now),
-        )}
-        {@const called = waiting.reduce((sum, it) => sum + (it.mentions ?? 0), 0)}
-        <div class="account">
-          <svg viewBox="0 0 24 24" aria-hidden="true" class="mark"
-            ><path d={one.provider.icon} /></svg
-          >
-          <span class="orden-row-label">{one.account.label}</span>
-          {#if called}<span class="badge">{amount(called)}</span>
-          {:else if waiting.length}<span class="orden-row-meta count">{amount(waiting.length)}</span
-            >{/if}
-          {#if 'begin' in one.connection && 'people' in one.connection}
-            <button
-              type="button"
-              class="orden-glyph add"
-              aria-label={t('New conversation')}
-              title={t('New conversation')}
-              onclick={() => void begin(one)}><Glyph name="pencil" /></button
-            >
-          {/if}
-          {#if one.status === 'offline'}<span class="orden-row-meta">{t('Offline')}</span>
-          {:else if one.status === 'signed-out'}<span class="orden-row-meta">{t('Signed out')}</span
-            >
-            {#if offered.some((it) => it.id === one.provider.id)}
-              <button
-                type="button"
-                class="orden-glyph add"
-                aria-label={t('Sign in again')}
-                title={t('Sign in again')}
-                onclick={() => signInAgain(one.provider.id, one.account.id)}
-                ><Glyph name="retry" /></button
-              >
-            {/if}
-          {/if}
-          <button
-            type="button"
-            class="orden-glyph add"
-            aria-label={t('Disconnect')}
-            title={t('Disconnect')}
-            onclick={() => void accounts.disconnect(one.provider.id, one.account.id)}
-            ><Glyph name="close" /></button
-          >
-        </div>
-        {@const listed = conversationsOf(one)}
-        {#each listed.filter((it) => !it.archived) as conversation (conversation.id)}
-          {@render remoteRow(one, conversation)}
-        {/each}
-        {@const archived = listed.filter((it) => it.archived)}
-        {#if archived.length}
-          {@const key = `${one.provider.id}:${one.account.id}`}
-          <button
-            type="button"
-            class="orden-row archived"
-            aria-expanded={opened.includes(key)}
-            onclick={() =>
-              (opened = opened.includes(key)
-                ? opened.filter((it) => it !== key)
-                : [...opened, key])}
-          >
-            <span class="orden-row-mark"
-              ><Glyph name={opened.includes(key) ? 'down' : 'right'} /></span
-            >
-            <span class="orden-row-label">{t('Archived')}</span>
-            <span class="orden-row-meta">{amount(archived.length)}</span>
-          </button>
-          {#if opened.includes(key)}
-            {#each archived as conversation (conversation.id)}
-              {@render remoteRow(one, conversation)}
-            {/each}
-          {/if}
-        {/if}
-      {/each}
-    {/if}
   {:else}
     <button type="button" class="orden-row back" onclick={() => (showing = 'chats')}>
       <span class="orden-row-mark orden-mirror"><Glyph name="left" /></span>
@@ -621,69 +350,6 @@
     background: transparent;
     color: var(--muted);
     font-size: var(--text-xs);
-  }
-
-  .account {
-    --glyph-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    margin: var(--space-2) 0 0;
-    color: var(--muted-strong);
-    font-size: var(--text-sm);
-  }
-
-  .mark {
-    width: var(--icon-md);
-    height: var(--icon-md);
-    flex: none;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .remote {
-    display: flex;
-    align-items: center;
-  }
-
-  .remote .entry {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .remote.muted .entry {
-    opacity: 0.55;
-  }
-
-  .remote .more {
-    --glyph-size: 14px;
-    width: 24px;
-    height: 24px;
-    opacity: 0;
-  }
-
-  .remote:hover .more,
-  .remote .more:focus-visible {
-    opacity: 1;
-  }
-
-  :global([data-touch]) .remote .more {
-    opacity: 1;
-  }
-
-  .pinned {
-    --glyph-size: 12px;
-  }
-
-  .archived {
-    color: var(--muted);
-  }
-
-  .failed {
-    color: var(--muted);
   }
 
   .badge {

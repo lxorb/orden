@@ -54,8 +54,6 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     why: 'the TeX multiplication dot',
   },
   { path: 'apps/desktop/src/lib/import/sources.ts', holds: "'", why: 'a code page table' },
-  { path: 'packages/chats/src/mail/mime.ts', holds: 'middot:', why: 'an HTML entity decoded' },
-  { path: 'packages/chats/src/mail/mime.ts', holds: 'bull:', why: 'an HTML entity decoded' },
   {
     path: 'apps/desktop/src/lib/icons.ts',
     holds: "first === undefined ? '",

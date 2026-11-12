@@ -10,12 +10,8 @@ const RAW = new Set([
   'explorer_write',
   'local_image',
   'remote_image',
-  'mail_socket_write',
-  'wire_socket_send',
   'print_page',
   'print_pdf',
-  'chat_request',
-  'sidecar_write',
 ])
 
 export function invoke<T>(command: string, args?: InvokeArgs, options?: InvokeOptions): Promise<T> {

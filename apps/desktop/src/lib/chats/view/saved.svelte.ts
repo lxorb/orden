@@ -1,6 +1,7 @@
 import type { Message } from '@orden/chats'
 import { account } from '../../account.svelte'
 import { forget, isNumber, isRecord, isString, keepJson, stored } from '../../stored'
+import { isRetiredChat } from '../../workspace/retired-tabs'
 
 const KEY = 'orden:chats-saved'
 
@@ -18,6 +19,7 @@ function read(): SavedMessage[] {
   return said.flatMap((one: unknown) =>
     isRecord(one) &&
     isString(one.chat) &&
+    !isRetiredChat(one.chat) &&
     isString(one.message) &&
     isString(one.author) &&
     isString(one.line) &&

@@ -7,39 +7,24 @@
   "exports": {
     ".": "./src/index.ts",
     "./agent": "./src/agent.ts",
-    "./fake-provider": "./src/fake-provider.ts",
     "./ids": "./src/ids.ts",
     "./limits": "./src/limits.ts",
     "./links": "./src/links.ts",
-    "./mail": "./src/mail/provider.ts",
-    "./mail-fake": "./src/mail/fake-server.ts",
-    "./mail-oauth": "./src/mail/oauth.ts",
-    "./mime": "./src/mail/mime.ts",
     "./mentions": "./src/mentions.ts",
     "./notify": "./src/notify.ts",
     "./pointer": "./src/pointer.ts",
     "./priority": "./src/priority.ts",
-    "./provider": "./src/provider.ts",
     "./reduce": "./src/reduce.ts",
     "./roles": "./src/roles.ts",
     "./search": "./src/search.ts",
-    "./signal": "./src/signal/index.ts",
-    "./slack": "./src/slack/index.ts",
-    "./telegram": "./src/telegram/index.ts",
     "./types": "./src/types.ts",
-    "./whatsapp": "./src/whatsapp/index.ts",
     "./wire": "./src/wire.ts"
   },
   "scripts": {
     "test": "vitest run",
     "check": "tsc --noEmit"
   },
-  "dependencies": {
-    "long": "^5.3.2"
-  },
   "devDependencies": {
-    "@mtcute/core": "^0.32.7",
-    "@whiskeysockets/baileys": "6.7.24",
     "fast-check": "^4.10.2",
     "typescript": "^5.9.3",
     "vitest": "^5.0.0"

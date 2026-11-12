@@ -11,54 +11,11 @@ import type {
   SearchQuery,
   Who,
 } from '@orden/chats'
-import type { Capabilities, ConversationRole, Delivery } from '@orden/chats/provider'
 import type { Refusal } from '@orden/chats/wire'
 
 export interface Shown extends Message {
   sending: boolean
   refused: Refusal | null
-  delivery?: Delivery
-  tally?: readonly number[]
-  system?: boolean
-  forwarded?: boolean
-  subject?: string
-}
-
-export type Formatting = NonNullable<Capabilities['formatting']>
-
-export interface ChatAbilities {
-  files: boolean
-  maxFile: number | null
-  voice: boolean
-  polls: boolean
-  quote: boolean
-  threads: boolean
-  react: 'any' | 'one' | readonly string[] | null
-  editFor: number | null
-  removeFor: number | null
-  removeForMe: boolean
-  pin: boolean
-  vote: boolean
-  markUnread: boolean
-  members: boolean
-  topic: boolean
-  mute: boolean
-  search: boolean
-  link: boolean
-  schedule: boolean
-  unsend: boolean
-  orden: boolean
-  stickers: boolean
-  gifs: boolean
-  formatting: Formatting
-}
-
-export interface Service {
-  provider: string
-  account: string
-  conversation: string
-  icon: string
-  name: string
 }
 
 export interface ChatEntry {
@@ -84,10 +41,6 @@ export interface ChatMember {
   who: Who
   name: string | null
   role: Role
-  rank?: ConversationRole
-  handle?: string
-  bot?: boolean
-  gone?: boolean
 }
 
 export interface Presence {
@@ -105,7 +58,6 @@ export interface Draft {
   preview?: Preview
   alsoToChat?: boolean
   via?: { agent: string }
-  sticker?: string
 }
 
 export interface Scheduled {
@@ -150,9 +102,6 @@ export interface RepliesView extends MessageList {
 
 export interface ChatView extends MessageList {
   readonly chat: string
-  readonly can?: ChatAbilities
-  readonly me?: Who | null
-  readonly service?: Service | undefined
   readonly entry: ChatEntry | null
   readonly meta: Meta
   readonly role: Role | null
@@ -188,7 +137,7 @@ export interface Chats {
   schedule(chat: string, draft: Draft, sendAt: number): Promise<string>
   scheduled(chat: string): Promise<Scheduled[]>
   edit(chat: string, message: string, body: string, files?: FileRef[]): Promise<void>
-  remove(chat: string, message: string, everyone?: boolean): Promise<void>
+  remove(chat: string, message: string): Promise<void>
   react(chat: string, message: string, emoji: string, on: boolean): Promise<void>
   pin(chat: string, message: string, on: boolean): Promise<void>
   vote(chat: string, message: string, answers: number[]): Promise<void>
@@ -214,7 +163,7 @@ export interface Chats {
   noteReach(chat: string, path: string): Promise<{ missing: ChatMember[]; share: boolean } | null>
   shareNote(chat: string, path: string): Promise<boolean>
 
-  upload(bytes: Uint8Array, chat?: string): Promise<string | null>
+  upload(bytes: Uint8Array): Promise<string | null>
   fileUrl(chat: string, hash: string): Promise<string | null>
   readonly fileEpoch: number
   preview(url: string): Promise<Preview | null>

@@ -34,7 +34,6 @@
   import NoteReach from './NoteReach.svelte'
   import { faceOf, nameOf } from './people'
   import Recorder from './Recorder.svelte'
-  import StickerSheet from './StickerSheet.svelte'
   import { store } from './source.svelte'
   import { tip } from './tips.svelte'
   import { laterTimes } from './when'
@@ -69,10 +68,7 @@
   let mention = $state<{ from: number; query: string } | null>(null)
   let mentionLit = $state(0)
   let before: string | null = null
-  const attachments = new Attachments(
-    () => page.id,
-    () => page.can.maxFile,
-  )
+  const attachments = new Attachments()
 
   let offered: string | null = null
   let dropped = $state<string | null>(null)
@@ -217,7 +213,7 @@
       setText('')
       words = ''
     }
-    const question = page.can.orden ? ordenAsked(words) : null
+    const question = ordenAsked(words)
     if (question !== null && !attachments.refs.length) {
       setText('')
       store().keepDraft(draftKey, '')
@@ -318,7 +314,7 @@
       else onescape?.()
       return
     }
-    if (mod && !event.shiftKey && event.key.toLowerCase() === 'z' && empty && page.can.unsend) {
+    if (mod && !event.shiftKey && event.key.toLowerCase() === 'z' && empty) {
       spend()
       void page.unsend().then((back) => {
         if (back !== null && text() === '') setText(back)
@@ -330,7 +326,7 @@
       onrows()
       return
     }
-    if (shortcuts.pressed('chat.record', event) && page.can.voice) {
+    if (shortcuts.pressed('chat.record', event)) {
       spend()
       recording = true
     }
@@ -349,18 +345,11 @@
 
   function attach(event: MouseEvent) {
     menu.show(event, [
-      ...(page.can.files
-        ? [
-            {
-              label: t('File'),
-              run: () =>
-                void chooseFiles({ multiple: true }).then((files) => attachments.add(files)),
-            },
-          ]
-        : []),
-      ...(page.can.stickers ? [{ label: t('Sticker'), run: () => pickSticker('stickers') }] : []),
-      ...(page.can.gifs ? [{ label: t('GIF'), run: () => pickSticker('gifs') }] : []),
-      ...(onpoll && !parent && page.can.polls
+      {
+        label: t('File'),
+        run: () => void chooseFiles({ multiple: true }).then((files) => attachments.add(files)),
+      },
+      ...(onpoll && !parent
         ? [
             DIVIDER,
             {
@@ -394,7 +383,7 @@
   let waiting = $state.raw<Scheduled[]>([])
 
   async function lookWaiting() {
-    if (!parent && page.can.schedule)
+    if (!parent)
       waiting = await store()
         .scheduled(page.id)
         .catch(() => [])
@@ -424,30 +413,12 @@
     )
   }
 
-  let attachButton = $state<HTMLButtonElement>()
-  let stickering = $state<'stickers' | 'gifs' | null>(null)
-
-  function pickSticker(kind: 'stickers' | 'gifs') {
-    stickering = kind
-  }
-
   const typing = $derived(
     page.view.presence.typing.filter((one) => one.who !== page.me && one.parent === parent),
   )
 </script>
 
 <div class="composer" onkeydowncapture={onKey} onpastecapture={onPaste}>
-  {#if stickering && attachButton}
-    <StickerSheet
-      {page}
-      kind={stickering}
-      from={attachButton}
-      onclose={() => {
-        stickering = null
-        focus()
-      }}
-    />
-  {/if}
   {#if mention && choices.length}
     <MentionMenu {choices} lit={mentionLit} members={page.members} {space} onpick={pick} />
   {/if}
@@ -499,18 +470,15 @@
 
   <div class="box orden-field" class:editing={aside?.kind === 'edit'}>
     {#if recording}
-      <Recorder chat={page.id} onsend={sendFile} ondone={() => ((recording = false), focus())} />
+      <Recorder onsend={sendFile} ondone={() => ((recording = false), focus())} />
     {:else}
-      {#if page.can.files || page.can.stickers || page.can.gifs || (onpoll && !parent && page.can.polls)}
-        <button
-          type="button"
-          class="tool"
-          aria-label={t('Attach something')}
-          use:tip={() => t('Attach something')}
-          bind:this={attachButton}
-          onclick={attach}><Glyph name="attach" /></button
-        >
-      {/if}
+      <button
+        type="button"
+        class="tool"
+        aria-label={t('Attach something')}
+        use:tip={() => t('Attach something')}
+        onclick={attach}><Glyph name="attach" /></button
+      >
       <div class="field">
         <div class="editor" bind:this={host}></div>
         {#if empty}
@@ -524,7 +492,7 @@
         use:tip={() => t('Emoji')}
         onclick={(event) => onpicker(event.currentTarget, insert)}><Glyph name="smile" /></button
       >
-      {#if empty && !attachments.list.length && !aside && page.can.voice}
+      {#if empty && !attachments.list.length && !aside}
         <button
           type="button"
           class="tool"
@@ -541,7 +509,7 @@
             disabled={!attachments.ready}
             onclick={() => void send()}><Glyph name="send" /></button
           >
-          {#if !parent && !aside && !attachments.list.length && page.can.schedule}
+          {#if !parent && !aside && !attachments.list.length}
             <button type="button" class="later" aria-label={t('Send later')} onclick={later}
               ><Glyph name="chevron" /></button
             >
@@ -558,7 +526,7 @@
         {amount(waiting.length)}
       </button>
     {/if}
-    {#if parent && !page.service}
+    {#if parent}
       <button
         type="button"
         class="also"

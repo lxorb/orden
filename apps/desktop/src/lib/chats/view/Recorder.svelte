@@ -11,11 +11,9 @@
   import { put } from './attachments.svelte'
 
   const {
-    chat,
     onsend,
     ondone,
   }: {
-    chat?: string
     onsend: (file: FileRef) => void
     ondone: () => void
   } = $props()
@@ -67,7 +65,7 @@
       const { bytes, seconds } = await one.stop()
       const heard = await sound(bytes).catch(() => ({ seconds, wave: undefined }))
       const type = `audio/${one.extension === 'm4a' ? 'mp4' : one.extension}`
-      const hash = await put(new Blob([bytes], { type }), chat)
+      const hash = await put(new Blob([bytes], { type }))
       onsend({
         hash,
         name: `voice.${one.extension}`,

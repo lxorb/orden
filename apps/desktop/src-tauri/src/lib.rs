@@ -37,7 +37,6 @@ mod bundle_name;
 mod calls;
 mod carry;
 #[cfg(desktop)]
-mod chat_request;
 #[cfg(desktop)]
 mod chatgpt;
 #[cfg(desktop)]
@@ -109,7 +108,6 @@ mod links;
 mod linux;
 mod logs;
 #[cfg(desktop)]
-mod mail_socket;
 mod matcher;
 #[cfg(desktop)]
 pub mod mcp;
@@ -119,7 +117,6 @@ mod notes;
 #[cfg(desktop)]
 mod notices;
 #[cfg(desktop)]
-mod oauth_loopback;
 #[cfg(desktop)]
 mod obsidian_vaults;
 #[cfg(desktop)]
@@ -173,6 +170,8 @@ mod quick_add;
 mod regex;
 #[cfg(desktop)]
 mod reminders;
+#[cfg(desktop)]
+mod retired_chats;
 #[cfg(all(desktop, not(feature = "cef")))]
 mod retired_engine;
 #[cfg(desktop)]
@@ -187,7 +186,6 @@ mod shell_menu;
 #[cfg(desktop)]
 mod shortcuts;
 #[cfg(desktop)]
-mod sidecar;
 #[cfg(target_os = "macos")]
 mod siri;
 mod space_watch;
@@ -273,7 +271,6 @@ mod web_worlds;
 #[cfg(desktop)]
 mod window_drag;
 #[cfg(desktop)]
-mod wire_socket;
 #[cfg(desktop)]
 mod zen_profiles;
 
@@ -514,24 +511,6 @@ macro_rules! desktop_commands {
             secrets::secret_read,
             secrets::secret_write,
             secrets::secrets_in_file,
-            mail_socket::mail_socket_open,
-            mail_socket::mail_socket_write,
-            mail_socket::mail_socket_tls,
-            mail_socket::mail_socket_close,
-            oauth_loopback::oauth_loopback_open,
-            oauth_loopback::oauth_loopback_wait,
-            oauth_loopback::oauth_loopback_close,
-            oauth_loopback::oauth_post,
-            chat_request::chat_request,
-            wire_socket::wire_socket_open,
-            wire_socket::wire_socket_send,
-            wire_socket::wire_socket_send_text,
-            wire_socket::wire_socket_close,
-            sidecar::sidecar_ready,
-            sidecar::sidecar_fetch,
-            sidecar::sidecar_open,
-            sidecar::sidecar_write,
-            sidecar::sidecar_close,
             terminal::terminal_shells,
             terminal::pty_spawn,
             terminal::pty_write,
@@ -762,18 +741,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.manage(apps_host::Hosted::default());
 
     #[cfg(desktop)]
-    let builder = builder.manage(mail_socket::MailSockets::default());
-
-    #[cfg(desktop)]
-    let builder = builder.manage(oauth_loopback::Loopbacks::default());
-
-    #[cfg(desktop)]
-    let builder = builder.manage(wire_socket::WireSockets::default());
-
-    #[cfg(desktop)]
-    let builder = builder.manage(sidecar::Held::default());
-
-    #[cfg(desktop)]
     let builder = builder
         .manage(explorer::reach::Explored::default())
         .manage(explorer::watch::Watching::default());
@@ -853,15 +820,6 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
             explorer::watch::window_gone(webview.app_handle(), webview.label());
             if let Some(waiting) = webview.try_state::<endpoint::Waiting>() {
                 waiting.forget(webview.label());
-            }
-            if let Some(sockets) = webview.try_state::<mail_socket::MailSockets>() {
-                sockets.end_where(webview.label());
-            }
-            if let Some(sockets) = webview.try_state::<wire_socket::WireSockets>() {
-                sockets.end_where(webview.label());
-            }
-            if let Some(sidecars) = webview.try_state::<sidecar::Held>() {
-                sidecars.end_where(webview.label());
             }
             ai_cli::page_started(webview.app_handle(), webview.label());
         }
@@ -1049,6 +1007,7 @@ fn ready(
 fn kept_listed(handle: &tauri::AppHandle<Engine>) {
     default_browser::keep_registered(handle);
     ai_cli::keep_enrolled(handle);
+    retired_chats::clear_leftovers(handle);
 }
 
 #[cfg(desktop)]
@@ -1339,20 +1298,12 @@ mod tests {
     const WAITS_IN_WHAT_IT_HANDS_ON: [&str; 2] =
         ["crate::pdf::print_pdf", "crate::updates::check_update"];
 
-    const WAITS_UNTIL_THE_MAIL_REWORK: [&str; 2] = [
-        "crate::mail_socket::mail_socket_tls",
-        "crate::mail_socket::mail_socket_write",
-    ];
-
     #[test]
     fn no_command_on_the_runtime_waits_on_one_of_its_workers() {
         let mut late: Vec<String> = Vec::new();
         for target in TARGETS {
             let own = own_on(target);
-            for excepted in WAITS_IN_WHAT_IT_HANDS_ON
-                .iter()
-                .chain(&WAITS_UNTIL_THE_MAIL_REWORK)
-            {
+            for excepted in WAITS_IN_WHAT_IT_HANDS_ON {
                 assert!(
                     own.workers().iter().any(|one| one == excepted),
                     "{excepted} is no command on the runtime"
@@ -1363,9 +1314,7 @@ mod tests {
                 own.workers()
                     .iter()
                     .filter(|path| {
-                        waits.contains(path)
-                            && !WAITS_IN_WHAT_IT_HANDS_ON.contains(&path.as_str())
-                            && !WAITS_UNTIL_THE_MAIL_REWORK.contains(&path.as_str())
+                        waits.contains(path) && !WAITS_IN_WHAT_IT_HANDS_ON.contains(&path.as_str())
                     })
                     .map(|path| {
                         format!(
