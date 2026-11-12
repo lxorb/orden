@@ -101,7 +101,7 @@ describe('every row', () => {
     for (const entry of rows) {
       const said = labels(entry)
 
-      expect(said[0], entry.path).toBe('Open')
+      expect(said, entry.path).not.toContain('Open')
       expect(said, entry.path).toContain('Rename')
       expect(said.at(-1), entry.path).toBe('Delete')
     }
@@ -125,9 +125,6 @@ describe('every row', () => {
 describe('a note', () => {
   test('can hold a note, and can be copied', () => {
     expect(labels(loose)).toEqual([
-      'Open',
-      'Open in new tab',
-      'Open to the side',
       'New note inside',
       'Rename',
       'Choose an icon',
@@ -179,9 +176,7 @@ describe('a note that holds notes', () => {
 describe('a folder nobody has written a note in', () => {
   test('offers exactly what a note offers, less the cover and the side', () => {
     expect(labels(plain)).toEqual(
-      labels(nested).filter(
-        (one) => one !== 'Set cover' && one !== 'Use as todo list' && one !== 'Open to the side',
-      ),
+      labels(nested).filter((one) => one !== 'Set cover' && one !== 'Use as todo list'),
     )
   })
 })
@@ -199,9 +194,6 @@ describe('a chat', () => {
 describe('a paper', () => {
   test('holds nothing, wears an icon and duplicates as a paper', () => {
     expect(labels(paper)).toEqual([
-      'Open',
-      'Open in new tab',
-      'Open to the side',
       'Rename',
       'Choose an icon',
       'Archive',
@@ -253,9 +245,6 @@ describe('a file the account has a copy of', () => {
     shareable.yes = true
 
     expect(labels(loose)).toEqual([
-      'Open',
-      'Open in new tab',
-      'Open to the side',
       'New note inside',
       'Rename',
       'Choose an icon',
@@ -273,9 +262,6 @@ describe('a file the account has a copy of', () => {
     shareable.yes = true
 
     expect(labels(nested)).toEqual([
-      'Open',
-      'Open in new tab',
-      'Open to the side',
       'New note inside',
       'Rename',
       'Choose an icon',
@@ -293,9 +279,6 @@ describe('a file the account has a copy of', () => {
     shareable.yes = true
 
     expect(labels(paper)).toEqual([
-      'Open',
-      'Open in new tab',
-      'Open to the side',
       'Rename',
       'Choose an icon',
       'Archive',
@@ -332,7 +315,7 @@ describe('a row that is part of a selection of several', () => {
 
   test('while a selection of one is an ordinary row', () => {
     workspace.select('/s/loose.md')
-    expect(labels(loose)[0]).toBe('Open')
+    expect(labels(loose)).not.toContain('Open all')
   })
 })
 
@@ -357,7 +340,7 @@ describe('a space shared to be read', () => {
     try {
       for (const entry of [nested, plain, loose, paper]) {
         const said = labels(entry)
-        expect(said[0], entry.path).toBe('Open')
+        expect(said, entry.path).not.toContain('Open')
         for (const label of WRITING) expect(said, entry.path).not.toContain(label)
       }
     } finally {
@@ -409,12 +392,7 @@ describe('another sync tool’s copy', () => {
   test('offers to compare it with the note it was made of, after the ways to open it', () => {
     const said = labels(clash)
 
-    expect(said.slice(0, 4)).toEqual([
-      'Open',
-      'Open in new tab',
-      'Open to the side',
-      'Compare with original',
-    ])
+    expect(said[0]).toBe('Compare with original')
     expect(said.at(-1)).toBe('Delete')
   })
 
