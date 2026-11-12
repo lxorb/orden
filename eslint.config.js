@@ -3,8 +3,8 @@ import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 import { existsSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { check as checkModules, moduleOf } from './scripts/modules.mjs'
+import { dirname, relative, resolve, sep } from 'node:path'
+import { check as checkModules, moduleOf, ROOT } from './scripts/modules.mjs'
 
 const DIRECTIVE =
   /^\s*(?:eslint(?:-disable|-enable)?(?:-next-line|-line)?\s|global\s|@ts-(?:expect-error|ignore|nocheck|check)\b|@vitest-environment\s|prettier-ignore\b|svelte-ignore\s|@vite-ignore\s*$|[@#]__PURE__\s*$|__[A-Z_]+__\s*$|kept\s*$|\*\s*@(?:public|internal)\s*$|\/\s*<reference\s)/
@@ -140,6 +140,31 @@ const noDeepImports = {
           data: { name: module.name, api: `${module.dir}/${module.api}`, what: specifier },
         })
       }
+    })
+  },
+}
+
+const pendingImports = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      pending:
+        "Module '{{own}}' imports {{what}}, which is not a module yet; reach it through a port or list '{{path}}' under pending in {{file}} until it is extracted.",
+    },
+  },
+  create(context) {
+    return eachImport(context, (node, specifier, own, found) => {
+      if (found.module || !found.file) return
+      if (!found.file.startsWith(ROOT + sep) || found.file.includes(`${sep}node_modules${sep}`))
+        return
+      const path = relative(ROOT, found.file).split(sep).join('/')
+      if (own.pending.some((one) => path === one || path.startsWith(one))) return
+      context.report({
+        node,
+        messageId: 'pending',
+        data: { own: own.name, what: specifier, path, file: own.file },
+      })
     })
   },
 }
@@ -347,6 +372,7 @@ export default tseslint.config(
           'no-copy-append': noCopyAppend,
           'no-deep-imports': noDeepImports,
           'declared-dependencies': declaredDependencies,
+          'pending-imports': pendingImports,
         },
       },
     },
@@ -354,7 +380,12 @@ export default tseslint.config(
   },
   {
     files: MODULE_FILES,
-    rules: { 'orden/no-deep-imports': 'error', 'orden/declared-dependencies': 'error' },
+    ignores: ['**/*.test.ts', '**/test/**'],
+    rules: {
+      'orden/no-deep-imports': 'error',
+      'orden/declared-dependencies': 'error',
+      'orden/pending-imports': 'error',
+    },
   },
   {
     ignores: [
