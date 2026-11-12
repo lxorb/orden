@@ -335,7 +335,7 @@
   })
 
   const enter = (x: number) =>
-    stacked ? { x: x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
+    stacked ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
 
   $effect.pre(() => closeOnBack(stacked && !settings.listing, () => (settings.listing = true)))
 </script>
@@ -563,7 +563,7 @@
               style:background-image={held ? `url("${held}")` : undefined}
               style:background-position="{x * 100}% {y * 100}%"
               title={side.label}
-              aria-label="{'Choose a picture'}: {side.label}"
+              aria-label="Choose a picture: {side.label}"
               onpointerdown={(event) => placing(side, event)}
               onkeydown={(event) => {
                 if (event.key !== 'Enter' && event.key !== ' ') return
@@ -579,7 +579,7 @@
                 type="button"
                 class="orden-glyph drop"
                 title="Remove picture"
-                aria-label="{'Remove picture'}: {side.label}"
+                aria-label="Remove picture: {side.label}"
                 onclick={() => side.remove()}><Cross /></button
               >
             {/if}
