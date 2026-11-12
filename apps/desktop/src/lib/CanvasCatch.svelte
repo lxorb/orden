@@ -1,11 +1,10 @@
 <script lang="ts">
   import { pens } from './canvas/pens.svelte'
   import { tick } from './canvas/tick'
-  import { t } from './i18n.svelte'
 
   const WAYS = [
-    { box: false, word: () => t('Lasso') },
-    { box: true, word: () => t('Rectangle') },
+    { box: false, word: () => 'Lasso' },
+    { box: true, word: () => 'Rectangle' },
   ] as const
 </script>
 
@@ -32,15 +31,15 @@
     type="button"
     class="partly"
     class:on={pens.partly}
-    title={t('Include what it touches')}
-    aria-label={t('Include what it touches')}
+    title="Include what it touches"
+    aria-label="Include what it touches"
     aria-pressed={pens.partly}
     onclick={() => {
       tick()
       pens.catching({ partly: !pens.partly })
     }}
   >
-    {t('Include what it touches')}
+    Include what it touches
   </button>
 </div>
 

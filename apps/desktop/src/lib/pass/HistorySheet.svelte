@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Item } from '@orden/pass/types'
-  import { i18n, message, t } from '../i18n.svelte'
+  import { localDate } from '../region'
+  import { message } from '../message'
   import { prompt } from '../prompt.svelte'
   import Sheet from '../Sheet.svelte'
   import { pass } from './store.svelte'
@@ -32,7 +33,7 @@
   })
 
   const close = () => (ui.sheet = null)
-  const when = (stamp: number) => i18n.when(stamp, { dateStyle: 'medium', timeStyle: 'short' })
+  const when = (stamp: number) => localDate(stamp, { dateStyle: 'medium', timeStyle: 'short' })
 
   async function restored(rev: number) {
     if (!asked) return
@@ -44,9 +45,9 @@
     if (!asked) return
     const sure = await prompt.confirm({
       until: pass.opened,
-      title: t('Clear the history?'),
-      detail: t('The older versions are deleted for good.'),
-      confirmLabel: t('Clear history'),
+      title: 'Clear the history?',
+      detail: 'The older versions are deleted for good.',
+      confirmLabel: 'Clear history',
       danger: true,
     })
     if (!sure) return
@@ -55,29 +56,29 @@
   }
 </script>
 
-<Sheet open={asked !== null} title={t('History')} onclose={close}>
+<Sheet open={asked !== null} title="History" onclose={close}>
   {#if wrong}
     <p class="quiet" role="alert">{wrong}</p>
   {:else if versions === null}
-    <p class="quiet">{t('Reading…')}</p>
+    <p class="quiet">Reading…</p>
   {:else if versions.length === 0}
-    <p class="quiet">{t('No older versions')}</p>
+    <p class="quiet">No older versions</p>
   {:else}
     <div class="versions">
       {#each versions as version (version.rev)}
         <div class="orden-setting version">
           <span class="name">
-            <span class="title">{version.content.title || t('Untitled')}</span>
+            <span class="title">{version.content.title || 'Untitled'}</span>
             <span class="when">{when(version.modified)}</span>
           </span>
           <button class="orden-chip" type="button" onclick={() => void restored(version.rev)}>
-            {t('Restore')}
+            Restore
           </button>
         </div>
       {/each}
     </div>
     <button class="orden-action is-danger" type="button" onclick={() => void cleared()}
-      >{t('Clear history')}</button
+      >Clear history</button
     >
   {/if}
 </Sheet>

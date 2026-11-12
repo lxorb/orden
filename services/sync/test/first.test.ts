@@ -142,36 +142,12 @@ describe('the space a new account is given', () => {
 })
 
 describe('the note a new account is given', () => {
-  test('is in the language the sign-in asked in', async () => {
-    const english = await firstNote(await signInFrom('en@b.dev', 'en-GB,en;q=0.9'))
+  test('is in English whatever language the sign-in asked in', async () => {
     const german = await firstNote(await signInFrom('de@b.dev', 'de-DE,de;q=0.9,en;q=0.8'))
-    const swiss = await firstNote(await signInFrom('gsw@b.dev', 'gsw,de;q=0.9'))
-    const french = await firstNote(await signInFrom('fr@b.dev', 'fr-CH,fr;q=0.9'))
-    const japanese = await firstNote(await signInFrom('ja@b.dev', 'ja,en;q=0.5'))
-
-    expect(german.content).toContain('# Willkommen bei Orden')
-    expect(swiss.content).toContain('# Willkomme bi Orden')
-    expect(french.content).toContain('# Bienvenue dans Orden')
-    expect(japanese.content).toContain('へようこそ')
-
-    const said = [english, german, swiss, french, japanese].map((one) => one.content)
-    expect(new Set(said).size).toBe(said.length)
-  })
-
-  test('keeps its path and its space name in English whatever the language', async () => {
-    const token = await signInFrom('de@b.dev', 'de-CH,de;q=0.9')
-
-    const spaces = await call(env, '/v1/spaces', { token })
-    expect(spaces.json.spaces[0]?.name).toBe('Notes')
-    expect((await firstNote(token)).note.path).toBe('Read me.md')
-  })
-
-  test('is English for a language the app has no words for', async () => {
-    const unknown = await firstNote(await signInFrom('is@b.dev', 'is-IS,is;q=0.9'))
     const none = await firstNote(await signInFrom('bare@b.dev', ''))
 
-    expect(unknown.content).toContain('# Welcome to Orden')
-    expect(unknown.content).toBe(none.content)
+    expect(german.content).toContain('# Welcome to Orden')
+    expect(german.content).toBe(none.content)
   })
 
   test('shows what markdown does here, which is what it is for', async () => {

@@ -2,7 +2,7 @@
   import type { Member } from '@orden/pass/wire'
   import UserMinus from 'lucide/dist/esm/icons/user-minus.mjs'
   import { account } from '../account.svelte'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { prompt } from '../prompt.svelte'
   import { said } from '../said.svelte'
   import Select from '../Select.svelte'
@@ -113,7 +113,7 @@
     void acted(async () => {
       await pass.invite(id, asked, role)
       email = ''
-      said.say(t('Invitation sent to {email}', { email: to }))
+      said.say(`Invitation sent to ${to}`)
     }, 'The invitation could not be sent.')
   }
 
@@ -157,9 +157,9 @@
     if (!vault) return
     const sure = await prompt.confirm({
       until: pass.opened,
-      title: t('Remove {name}?', { name: nameOf(member) }),
-      detail: t('The vault gets a new key. What they kept from before stays readable to them.'),
-      confirmLabel: t('Remove'),
+      title: `Remove ${nameOf(member)}?`,
+      detail: 'The vault gets a new key. What they kept from before stays readable to them.',
+      confirmLabel: 'Remove',
       danger: true,
     })
     if (!sure) return
@@ -183,16 +183,16 @@
     if (!vault) return
     const to = await prompt.choose({
       until: pass.opened,
-      title: t('Transfer ownership to'),
+      title: 'Transfer ownership to',
       options: heirs.map((one) => ({ id: one.email, label: nameOf(one) })),
     })
     if (!to) return
     const heir = heirs.find((one) => one.email === to)
     const sure = await prompt.confirm({
       until: pass.opened,
-      title: t('Make {name} the owner?', { name: heir ? nameOf(heir) : to }),
-      detail: t('You stay a manager of the vault.'),
-      confirmLabel: t('Transfer'),
+      title: `Make ${heir ? nameOf(heir) : to} the owner?`,
+      detail: 'You stay a manager of the vault.',
+      confirmLabel: 'Transfer',
     })
     if (!sure) return
     const id = vault.id
@@ -203,9 +203,9 @@
     if (!vault) return
     const sure = await prompt.confirm({
       until: pass.opened,
-      title: t('Leave {vault}?', { vault: vault.name }),
-      detail: t('Its items leave this device. Somebody who manages it can invite you again.'),
-      confirmLabel: t('Leave'),
+      title: `Leave ${vault.name}?`,
+      detail: 'Its items leave this device. Somebody who manages it can invite you again.',
+      confirmLabel: 'Leave',
       danger: true,
     })
     if (!sure) return
@@ -234,42 +234,38 @@
 {#snippet safety(found: Person | undefined, match: (found: Person) => void)}
   {#if found?.code === null}
     <p class="quiet" data-safety>
-      {t('They have not set up Pass yet. Confirm them here once they have.')}
+      They have not set up Pass yet. Confirm them here once they have.
     </p>
   {:else if found}
     {#if found.known === 'changed'}
       <p class="wrong" role="alert" data-changed>
-        {t('Their key is not the one this device knew. Check their safety code with them again.')}
+        Their key is not the one this device knew. Check their safety code with them again.
       </p>
     {/if}
     <p class="safety" data-safety>
-      <span class="quiet">{t('Safety code')}</span>
+      <span class="quiet">Safety code</span>
       <code dir="ltr">{found.code}</code>
       {#if found.known === 'confirmed'}
-        <span class="quiet" data-matched>{t('Checked')}</span>
+        <span class="quiet" data-matched>Checked</span>
       {:else}
         <button
           class="orden-button is-soft"
           type="button"
           disabled={busy}
-          onclick={() => match(found)}>{t('Codes match')}</button
+          onclick={() => match(found)}>Codes match</button
         >
       {/if}
     </p>
   {/if}
 {/snippet}
 
-<Sheet
-  open={asked !== null}
-  title={vault ? t('Share {vault}', { vault: vault.name }) : t('Share')}
-  onclose={close}
->
+<Sheet open={asked !== null} title={vault ? `Share ${vault.name}` : 'Share'} onclose={close}>
   {#snippet mark()}
     {#if vault}<VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />{/if}
   {/snippet}
   <div class="share">
     {#if !signedIn}
-      <p class="quiet" data-signed-out>{t('Sign in to share')}</p>
+      <p class="quiet" data-signed-out>Sign in to share</p>
     {:else if vault}
       {#if managing}
         <form class="invite" onsubmit={invited}>
@@ -277,42 +273,38 @@
             class="orden-field is-value"
             type="email"
             autocomplete="off"
-            placeholder={t('Email address')}
-            aria-label={t('Email address')}
+            placeholder="Email address"
+            aria-label="Email address"
             bind:value={email}
             data-lands
           />
           <Select
-            label={t('Role')}
+            label="Role"
             value={role}
             options={roles}
             onchange={(next: string) => (role = next as InvitedRole)}
           />
           <button class="orden-button" type="submit" disabled={busy || !EMAIL.test(email.trim())}
-            >{t('Invite')}</button
+            >Invite</button
           >
         </form>
         {@render safety(person, (found) => void matched(found))}
         {#if person?.code}
           <p class="quiet">
             {person.known === 'confirmed'
-              ? t('Pass gives them the vault’s key when you invite them.')
-              : t(
-                  'Read it to them. Only once you press Codes match does Pass give them the vault’s key.',
-                )}
+              ? 'Pass gives them the vault’s key when you invite them.'
+              : 'Read it to them. Only once you press Codes match does Pass give them the vault’s key.'}
           </p>
         {/if}
       {/if}
 
-      <h3 class="orden-section">{t('Members')}</h3>
+      <h3 class="orden-section">Members</h3>
       <div class="card members" aria-busy={reading}>
         {#each members as member (member.email)}
           <div class="member" data-member={member.email}>
             <div class="orden-setting row">
               <span class="who">
-                <span class="name"
-                  >{nameOf(member)}{member.email === me ? ` (${t('you')})` : ''}</span
-                >
+                <span class="name">{nameOf(member)}{member.email === me ? ` (you)` : ''}</span>
                 {#if member.name}<span class="email">{member.email}</span>{/if}
                 <span class="state" data-state={member.state}
                   >{stateName(member.state, managing)}</span
@@ -321,7 +313,7 @@
               {#if changeable(member)}
                 <div class="pick">
                   <Select
-                    label={t('Role of {name}', { name: nameOf(member) })}
+                    label="Role of {nameOf(member)}"
                     value={member.role}
                     options={roles}
                     disabled={busy}
@@ -336,7 +328,7 @@
                   class="orden-chip"
                   type="button"
                   disabled={busy}
-                  onclick={() => void confirmed(member)}>{t('Confirm')}</button
+                  onclick={() => void confirmed(member)}>Confirm</button
                 >
               {/if}
               {#if member.pub !== null && member.email !== me}
@@ -344,7 +336,7 @@
                   class="orden-chip"
                   type="button"
                   aria-pressed={member.email in codes}
-                  onclick={() => void shownCode(member)}>{t('Safety code')}</button
+                  onclick={() => void shownCode(member)}>Safety code</button
                 >
               {/if}
               {#if changeable(member)}
@@ -352,8 +344,8 @@
                   class="orden-glyph"
                   type="button"
                   disabled={busy}
-                  aria-label={t('Remove {name}', { name: nameOf(member) })}
-                  title={t('Remove {name}', { name: nameOf(member) })}
+                  aria-label="Remove {nameOf(member)}"
+                  title="Remove {nameOf(member)}"
                   onclick={() => void removed(member)}
                 >
                   <Glyph icon={UserMinus} />
@@ -367,21 +359,21 @@
             {/if}
           </div>
         {:else}
-          <p class="quiet empty">{reading ? t('Reading…') : t('Only you')}</p>
+          <p class="quiet empty">{reading ? 'Reading…' : 'Only you'}</p>
         {/each}
       </div>
 
       {#if managing}
         <div class="card">
           <SwitchRow
-            label={t('Hide passwords from viewers')}
+            label="Hide passwords from viewers"
             on={vault.hidePasswordsFromViewers}
             disabled={busy}
             onchange={hidden}
           />
         </div>
       {:else if hidesPasswords(vault)}
-        <p class="quiet">{t('Passwords in this vault are hidden from you.')}</p>
+        <p class="quiet">Passwords in this vault are hidden from you.</p>
       {/if}
 
       {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
@@ -392,14 +384,14 @@
             class="orden-button is-quiet"
             type="button"
             disabled={busy || heirs.length === 0}
-            onclick={() => void handedOn()}>{t('Transfer ownership')}</button
+            onclick={() => void handedOn()}>Transfer ownership</button
           >
         {:else}
           <button
             class="orden-button is-quiet danger"
             type="button"
             disabled={busy}
-            onclick={() => void left()}>{t('Leave vault')}</button
+            onclick={() => void left()}>Leave vault</button
           >
         {/if}
       </div>

@@ -1,5 +1,5 @@
 import { SvelteMap } from 'svelte/reactivity'
-import { message } from '../../i18n.svelte'
+import { message } from '../../message'
 import type { Grant, Minted } from '../verbs'
 import type { AgentsCrate, Heard } from './crate'
 import { type Call, readCall } from '../ui/session'

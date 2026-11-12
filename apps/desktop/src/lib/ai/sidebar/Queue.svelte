@@ -3,7 +3,6 @@
   import { cubicOut } from 'svelte/easing'
   import { flip } from 'svelte/animate'
   import Cross from '../../Cross.svelte'
-  import { t } from '../../i18n.svelte'
   import { dur, fly } from '../../motion'
   import { chat } from './chat.svelte'
 
@@ -34,21 +33,21 @@
         <svg class="grip" viewBox="0 0 13 13" aria-hidden="true"
           ><path d="M3.5 4h6M3.5 6.5h6M3.5 9h6" /></svg
         >
-        <button class="words" dir="auto" title={t('Edit')} onclick={() => chat.editQueued(one.id)}
+        <button class="words" dir="auto" title="Edit" onclick={() => chat.editQueued(one.id)}
           >{one.text}</button
         >
         <button
           class="orden-glyph small"
-          title={t('Send into the running answer')}
-          aria-label={t('Send into the running answer')}
+          title="Send into the running answer"
+          aria-label="Send into the running answer"
           onclick={() => chat.steerQueued(one.id)}
         >
           <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
         </button>
         <button
           class="orden-glyph small"
-          title={t('Remove')}
-          aria-label={t('Remove')}
+          title="Remove"
+          aria-label="Remove"
           onclick={() => chat.unqueue(one.id)}
         >
           <Cross />

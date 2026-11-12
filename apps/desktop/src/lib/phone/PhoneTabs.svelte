@@ -2,7 +2,6 @@
   import { account } from '../account.svelte'
   import { chatsUnread } from '../ai/unread.svelte'
   import UnreadDot from '../ai/UnreadDot.svelte'
-  import { t } from '../i18n.svelte'
   import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../panel-marks'
   import { chatsOn, hiddenKinds } from '../settings.svelte'
   import { viewport } from '../viewport.svelte'
@@ -16,10 +15,10 @@
   const PLUS_MARK = 'M12 5v14M5 12h14'
 
   const LOOKS: Record<PhoneTab, { label: () => string; mark: string }> = {
-    tree: { label: () => t('Notes'), mark: NOTES_MARK },
-    tasks: { label: () => t('Tasks'), mark: TASKS_MARK },
-    chats: { label: () => t('Chats'), mark: CHATS_MARK },
-    search: { label: () => t('Search'), mark: SEARCH_MARK },
+    tree: { label: () => 'Notes', mark: NOTES_MARK },
+    tasks: { label: () => 'Tasks', mark: TASKS_MARK },
+    chats: { label: () => 'Chats', mark: CHATS_MARK },
+    search: { label: () => 'Search', mark: SEARCH_MARK },
   }
 
   const tabs = $derived(
@@ -48,11 +47,11 @@
 {#if !viewport.typing}
   <div class="phone">
     {#if on === 'tree' && hiddenKinds.offers('note')}
-      <button class="new" aria-label={t('New note')} onclick={writeNew}>
+      <button class="new" aria-label="New note" onclick={writeNew}>
         <svg viewBox="0 0 24 24"><path d={PLUS_MARK} /></svg>
       </button>
     {/if}
-    <nav class="bar" data-phone-tabs aria-label={t('Panels')}>
+    <nav class="bar" data-phone-tabs aria-label="Panels">
       {#each tabs as tab (tab)}
         <button
           class="tab"
@@ -83,9 +82,9 @@
   .bar {
     display: flex;
     justify-content: space-around;
-    padding: 0 max(var(--space-2), var(--inset-end))
+    padding: 0 max(var(--space-2), var(--inset-right))
       max(var(--space-1), calc(var(--inset-bottom) - var(--keyboard, 0px)))
-      max(var(--space-2), var(--inset-start));
+      max(var(--space-2), var(--inset-left));
     background: var(--bg);
     box-shadow: inset 0 1px var(--line);
   }
@@ -148,7 +147,7 @@
 
   .new {
     position: absolute;
-    inset-inline-end: max(var(--space-4), var(--inset-end));
+    inset-inline-end: max(var(--space-4), var(--inset-right));
     bottom: calc(100% + var(--space-4));
     z-index: var(--z-float);
     width: var(--touch-row);

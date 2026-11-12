@@ -1,5 +1,4 @@
 import { hasModifiers, type Member } from '@orden/chats'
-import { t } from '../../i18n.svelte'
 import type { Row } from '../../palette/rows'
 import { firstLine } from './body'
 import { nameOf } from './people'
@@ -21,7 +20,7 @@ export async function messageHits(words: string): Promise<{ rows: Row[]; only: b
     const listed = await chats.members(chat).catch(() => [])
     members.set(
       chat,
-      listed.map((one) => ({ who: one.who, name: one.name ?? t('Deleted account') })),
+      listed.map((one) => ({ who: one.who, name: one.name ?? 'Deleted account' })),
     )
   }
 

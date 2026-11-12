@@ -1,6 +1,5 @@
 import { foldName } from '@orden/markdown/links'
 
-import { key } from '../i18n.svelte'
 import { encodeTarget } from '../link-rewrite'
 import { folderOf, relativePath } from '../space-paths'
 
@@ -126,10 +125,7 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
   })
 
   if (flattened) {
-    plan.lost.push({
-      text: key('{count} block references were written out as the words they pointed at'),
-      values: { count: flattened },
-    })
+    plan.lost.push(`${flattened} block references were written out as the words they pointed at`)
   }
 
   return plan

@@ -1,21 +1,18 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { extensions, GAP_WORDS, type Gaps } from './extensions.svelte'
 
   const { gaps, asking = false }: { gaps: Gaps; asking?: boolean } = $props()
 </script>
 
 <div class="gaps" role={asking ? 'alert' : undefined}>
-  <p>{t('Not all of it works in Orden:')}</p>
+  <p>Not all of it works in Orden:</p>
   <ul>
     {#each gaps.said.filter((one) => one in GAP_WORDS) as one (one)}
-      <li>{t(GAP_WORDS[one] ?? '')}</li>
+      <li>{GAP_WORDS[one] ?? ''}</li>
     {/each}
     {#if gaps.apis.length}
       <li>
-        {t('Firefox-only parts it uses that don’t run here: {list}', {
-          list: gaps.apis.join(', '),
-        })}
+        Firefox-only parts it uses that don’t run here: {gaps.apis.join(', ')}
       </li>
     {/if}
   </ul>
@@ -23,10 +20,10 @@
     {@const link = extensions.asking.link}
     <div class="choices">
       <button class="orden-chip" onclick={() => void extensions.install(link, true)}>
-        {t('Install anyway')}
+        Install anyway
       </button>
       <button class="orden-chip is-quiet" onclick={() => (extensions.asking = null)}>
-        {t('Cancel')}
+        Cancel
       </button>
     </div>
   {/if}

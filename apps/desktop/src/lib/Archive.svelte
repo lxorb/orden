@@ -8,7 +8,6 @@
   import { fileMark, type FileMark as Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { folderNote, nestedIn } from './folder-notes'
-  import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
   import { dur, slide } from './motion'
@@ -91,10 +90,10 @@
     const path = row.entry.path
 
     return [
-      { label: t('Open'), run: () => void workspace.openRow(path) },
-      { label: t('Open in new tab'), run: () => void workspace.openRow(path, howFor('behind')) },
+      { label: 'Open', run: () => void workspace.openRow(path) },
+      { label: 'Open in new tab', run: () => void workspace.openRow(path, howFor('behind')) },
       DIVIDER,
-      { label: t('Unarchive'), run: () => unarchive(path) },
+      { label: 'Unarchive', run: () => unarchive(path) },
     ]
   }
 
@@ -138,7 +137,7 @@
     ondragleave={() => (dropping = false)}
     ondrop={dropped}
   >
-    {t('Archived')}
+    Archived
     <span class="tail">
       {count}
       <span class="chevron"><Twist open={archiveList.open} /></span>
@@ -201,8 +200,8 @@
 
             <button
               class="end back"
-              title={t('Unarchive')}
-              aria-label={t('Unarchive')}
+              title="Unarchive"
+              aria-label="Unarchive"
               onclick={() => unarchive(row.entry.path)}
             >
               <svg viewBox="0 0 13 13"><path d={UNARCHIVE_MARK} /></svg>

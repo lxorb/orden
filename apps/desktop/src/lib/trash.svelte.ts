@@ -1,6 +1,6 @@
 import { account } from './account.svelte'
 import { api } from './api'
-import { message, plural, t } from './i18n.svelte'
+import { message } from './message'
 import { prompt } from './prompt.svelte'
 import { canWriteAt } from './sharing.svelte'
 import { sync } from './sync.svelte'
@@ -89,7 +89,7 @@ class Trash {
     try {
       listing = await api.trash(token)
     } catch (error) {
-      if (asked === this.asked) this.error = message(error, t('could not reach the server'))
+      if (asked === this.asked) this.error = message(error, 'could not reach the server')
       return []
     }
     if (asked !== this.asked) return []
@@ -99,7 +99,7 @@ class Trash {
       ref: space.id,
       kind: 'space' as const,
       name: space.name,
-      detail: plural(space.notes, { one: '{count} note', other: '{count} notes' }),
+      detail: space.notes === 1 ? '1 note' : `${space.notes} notes`,
       deletedAt: space.deletedAt,
       purgeAt: space.purgeAt,
       source: 'account' as const,
@@ -159,8 +159,8 @@ class Trash {
 
   async purge(item: TrashItem) {
     const sure = await prompt.confirm({
-      title: t('Delete {name}?', { name: item.name }),
-      confirmLabel: t('Delete now'),
+      title: `Delete ${item.name}?`,
+      confirmLabel: 'Delete now',
       danger: true,
     })
     if (!sure) return
@@ -180,9 +180,9 @@ class Trash {
 
   async empty() {
     const sure = await prompt.confirm({
-      title: t('Empty Recently deleted?'),
-      detail: t('Everything in it is gone for good.'),
-      confirmLabel: t('Empty'),
+      title: 'Empty Recently deleted?',
+      detail: 'Everything in it is gone for good.',
+      confirmLabel: 'Empty',
       danger: true,
     })
     if (!sure) return
@@ -207,7 +207,7 @@ class Trash {
     try {
       await work()
     } catch (error) {
-      failed = message(error, t('that did not work'))
+      failed = message(error, 'that did not work')
     }
 
     this.busy = false

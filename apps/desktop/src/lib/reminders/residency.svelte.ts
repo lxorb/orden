@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { keep, storedText } from '../stored'
 import { invoke, isDesktop, platform } from '../tauri'
 import { keptInTray } from '../parting'
@@ -40,9 +39,7 @@ class Residency {
   apply(on = this.on) {
     keptInTray(on ? hide : null)
     if (!hasTray) return
-    void invoke('tray_keep', { on, words: { show: t('Open'), quit: t('Quit') } }).catch(
-      () => undefined,
-    )
+    void invoke('tray_keep', { on, words: { show: 'Open', quit: 'Quit' } }).catch(() => undefined)
   }
 }
 

@@ -13,7 +13,6 @@ import { chooseTarget } from './export/save'
 import { PANDOC_FORMATS, type PandocFormat } from './export-formats'
 import type { PandocPicture } from './import/pandoc-pictures'
 import { paletteCss } from './highlight'
-import { plural } from './i18n.svelte'
 import { mathCss } from './math-fonts'
 import { type PaperInches, pageCss, pageSetupFor, runningDate, withRunningText } from './page-setup'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from './paper'
@@ -318,10 +317,9 @@ export async function exportPandoc(
   })
   if (missing.length) {
     busy.failed(
-      plural(missing.length, {
-        one: '{count} attachment was missing from the export or could not be read',
-        other: '{count} attachments were missing from the export or could not be read',
-      }),
+      missing.length === 1
+        ? '1 attachment was missing from the export or could not be read'
+        : `${missing.length} attachments were missing from the export or could not be read`,
     )
   }
   return target

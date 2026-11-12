@@ -293,7 +293,7 @@ function untilText(iso: string): string {
 }
 
 export function ruleText(rule: Rule): string {
-  const plural = (unit: string) =>
+  const every = (unit: string) =>
     rule.every === 1 ? `every ${unit}` : `every ${rule.every} ${unit}s`
   let text: string
 
@@ -312,14 +312,14 @@ export function ruleText(rule: Rule): string {
   } else if (rule.unit === 'week') {
     const days = [...rule.weekdays].sort((a, b) => mondayFirst(a.day) - mondayFirst(b.day))
     text =
-      plural('week') +
+      every('week') +
       (days.length ? ` on ${days.map((one) => weekdayName(one.day)).join(', ')}` : '')
   } else if (rule.unit === 'year' && rule.months.length) {
     const months = joined(rule.months.map(monthName))
     text =
       (rule.every === 1 ? `every ${months}` : `every ${rule.every} years in ${months}`) + onDays()
   } else {
-    text = plural(rule.unit) + onDays()
+    text = every(rule.unit) + onDays()
   }
 
   if (rule.until) text += ` until ${untilText(rule.until)}`

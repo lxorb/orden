@@ -1,6 +1,5 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
-  import { t } from './i18n.svelte'
   import { overlays } from './overlays'
   import Twist from './Twist.svelte'
   import { workspace } from './workspace.svelte'
@@ -84,7 +83,7 @@
 
   async function keepView() {
     const { prompt } = await import('./prompt.svelte')
-    const name = await prompt.ask({ title: t('Add view to Essentials'), confirmLabel: t('Keep') })
+    const name = await prompt.ask({ title: 'Add view to Essentials', confirmLabel: 'Keep' })
     if (!name) return
 
     workspace.bookmarks.toggle(workspace.bookmarks.forGraph(name, settings))
@@ -98,8 +97,8 @@
         class="orden-field"
         type="text"
         value={settings.filter}
-        placeholder={t('Name, path or tag')}
-        aria-label={t('Filter')}
+        placeholder="Name, path or tag"
+        aria-label="Filter"
         spellcheck="false"
         autocapitalize="off"
         autocorrect="off"
@@ -112,7 +111,7 @@
         aria-checked={settings.orphans}
         onclick={() => workspace.graphSettings.set({ orphans: !settings.orphans })}
       >
-        <span class="orden-row-label">{t('Orphans')}</span>
+        <span class="orden-row-label">Orphans</span>
         <span class="orden-switch" class:on={settings.orphans} aria-hidden="true"></span>
       </button>
 
@@ -122,12 +121,12 @@
         aria-checked={settings.attachments}
         onclick={() => workspace.graphSettings.set({ attachments: !settings.attachments })}
       >
-        <span class="orden-row-label">{t('Attachments')}</span>
+        <span class="orden-row-label">Attachments</span>
         <span class="orden-switch" class:on={settings.attachments} aria-hidden="true"></span>
       </button>
 
       <div class="dial">
-        <span>{t('Depth')}</span>
+        <span>Depth</span>
         <input
           class="orden-slider"
           type="range"
@@ -135,7 +134,7 @@
           max={DEEPEST}
           step="1"
           value={settings.depth}
-          aria-label={t('Depth')}
+          aria-label="Depth"
           style:--fill="{((settings.depth - SHALLOWEST) / (DEEPEST - SHALLOWEST)) * 100}%"
           oninput={(event) =>
             workspace.graphSettings.set({ depth: Number(event.currentTarget.value) })}
@@ -149,8 +148,8 @@
           <button
             class="swatch"
             style:--swatch="var(--canvas-{group.colour})"
-            title={t('Colour {number}', { number: String(group.colour) })}
-            aria-label={t('Colour {number}', { number: String(group.colour) })}
+            title="Colour {String(group.colour)}"
+            aria-label="Colour {String(group.colour)}"
             onclick={() => nextColour(index, group.colour)}
           ></button>
 
@@ -158,20 +157,15 @@
             class="orden-field"
             type="text"
             value={group.query}
-            placeholder={t('Name, path or tag')}
-            aria-label={t('Colour a group')}
+            placeholder="Name, path or tag"
+            aria-label="Colour a group"
             spellcheck="false"
             autocapitalize="off"
             autocorrect="off"
             oninput={(event) => setGroup(index, { query: event.currentTarget.value })}
           />
 
-          <button
-            class="drop"
-            title={t('Remove')}
-            aria-label={t('Remove')}
-            onclick={() => dropGroup(index)}
-          >
+          <button class="drop" title="Remove" aria-label="Remove" onclick={() => dropGroup(index)}>
             <svg viewBox="0 0 13 13"><path d={DROP_MARK} /></svg>
           </button>
         </div>
@@ -180,20 +174,20 @@
       {#if settings.groups.length < MOST_GROUPS}
         <button class="orden-row" onclick={addGroup}>
           <svg class="orden-row-mark" viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
-          <span class="orden-row-label">{t('Colour a group')}</span>
+          <span class="orden-row-label">Colour a group</span>
         </button>
       {/if}
 
       <div class="rule"></div>
 
       <button class="orden-row" aria-expanded={forcing} onclick={() => (forcing = !forcing)}>
-        <span class="orden-row-label">{t('Forces')}</span>
+        <span class="orden-row-label">Forces</span>
         <span class="chevron"><Twist open={forcing} /></span>
       </button>
 
       {#if forcing}
         <div class="dial">
-          <span>{t('Spread')}</span>
+          <span>Spread</span>
           <input
             class="orden-slider"
             type="range"
@@ -201,7 +195,7 @@
             max={MOST_SPREAD}
             step="0.25"
             value={spread}
-            aria-label={t('Spread')}
+            aria-label="Spread"
             style:--fill="{((spread - LEAST_SPREAD) / (MOST_SPREAD - LEAST_SPREAD)) * 100}%"
             oninput={(event) =>
               workspace.graphSettings.set({ spread: Number(event.currentTarget.value) })}
@@ -209,7 +203,7 @@
         </div>
 
         <div class="dial">
-          <span>{t('Link distance')}</span>
+          <span>Link distance</span>
           <input
             class="orden-slider"
             type="range"
@@ -217,7 +211,7 @@
             max={MOST_DISTANCE}
             step="4"
             value={settings.distance}
-            aria-label={t('Link distance')}
+            aria-label="Link distance"
             style:--fill="{((settings.distance - LEAST_DISTANCE) /
               (MOST_DISTANCE - LEAST_DISTANCE)) *
               100}%"
@@ -227,7 +221,7 @@
         </div>
 
         <div class="dial">
-          <span>{t('Push')}</span>
+          <span>Push</span>
           <input
             class="orden-slider"
             type="range"
@@ -235,7 +229,7 @@
             max={MOST_PUSH}
             step="10"
             value={settings.push}
-            aria-label={t('Push')}
+            aria-label="Push"
             style:--fill="{((settings.push - LEAST_PUSH) / (MOST_PUSH - LEAST_PUSH)) * 100}%"
             oninput={(event) =>
               workspace.graphSettings.set({ push: Number(event.currentTarget.value) })}
@@ -248,13 +242,13 @@
           aria-checked={settings.gather}
           onclick={() => workspace.graphSettings.set({ gather: !settings.gather })}
         >
-          <span class="orden-row-label">{t('Gather')}</span>
+          <span class="orden-row-label">Gather</span>
           <span class="orden-switch" class:on={settings.gather} aria-hidden="true"></span>
         </button>
       {/if}
 
       <div class="dial">
-        <span>{t('Lines')}</span>
+        <span>Lines</span>
         <input
           class="orden-slider"
           type="range"
@@ -262,7 +256,7 @@
           max={MOST_LINES}
           step="1"
           value={settings.lines}
-          aria-label={t('Lines')}
+          aria-label="Lines"
           style:--fill="{((settings.lines - LEAST_LINES) / (MOST_LINES - LEAST_LINES)) * 100}%"
           oninput={(event) =>
             workspace.graphSettings.set({ lines: Number(event.currentTarget.value) })}
@@ -270,7 +264,7 @@
       </div>
 
       <div class="dial">
-        <span>{t('Text fade')}</span>
+        <span>Text fade</span>
         <input
           class="orden-slider"
           type="range"
@@ -278,7 +272,7 @@
           max={MOST_FADE}
           step="0.25"
           value={settings.fade}
-          aria-label={t('Text fade')}
+          aria-label="Text fade"
           style:--fill="{((settings.fade - LEAST_FADE) / (MOST_FADE - LEAST_FADE)) * 100}%"
           oninput={(event) =>
             workspace.graphSettings.set({ fade: Number(event.currentTarget.value) })}
@@ -291,7 +285,7 @@
         aria-checked={settings.arrows}
         onclick={() => workspace.graphSettings.set({ arrows: !settings.arrows })}
       >
-        <span class="orden-row-label">{t('Arrows')}</span>
+        <span class="orden-row-label">Arrows</span>
         <span class="orden-switch" class:on={settings.arrows} aria-hidden="true"></span>
       </button>
 
@@ -301,7 +295,7 @@
         aria-checked={settings.sized}
         onclick={() => workspace.graphSettings.set({ sized: !settings.sized })}
       >
-        <span class="orden-row-label">{t('Size by links')}</span>
+        <span class="orden-row-label">Size by links</span>
         <span class="orden-switch" class:on={settings.sized} aria-hidden="true"></span>
       </button>
 
@@ -311,8 +305,8 @@
         <div class="time">
           <button
             class="press"
-            title={playing ? t('Pause') : t('Play')}
-            aria-label={playing ? t('Pause') : t('Play')}
+            title={playing ? 'Pause' : 'Play'}
+            aria-label={playing ? 'Pause' : 'Play'}
             onclick={onplay}
           >
             <svg viewBox="0 0 13 13" class:filled={!playing}>
@@ -327,7 +321,7 @@
             max={span.to}
             step={Math.max(1, Math.round((span.to - span.from) / 400))}
             value={at}
-            aria-label={t('Over time')}
+            aria-label="Over time"
             style:--fill="{((at - span.from) / (span.to - span.from)) * 100}%"
             oninput={(event) => onscrub(Number(event.currentTarget.value))}
           />
@@ -337,11 +331,11 @@
       <div class="rule"></div>
 
       <button class="orden-row" onclick={() => void keepView()}>
-        <span class="orden-row-label">{t('Add view to Essentials')}</span>
+        <span class="orden-row-label">Add view to Essentials</span>
       </button>
 
       <button class="orden-row" onclick={() => workspace.graphSettings.reset()}>
-        <span class="orden-row-label">{t('Reset')}</span>
+        <span class="orden-row-label">Reset</span>
       </button>
     </div>
   {/if}
@@ -349,8 +343,8 @@
   <button
     class="tab"
     class:on={open}
-    title={t('Graph controls')}
-    aria-label={t('Graph controls')}
+    title="Graph controls"
+    aria-label="Graph controls"
     aria-pressed={open}
     onclick={() => onopen(!open)}
   >

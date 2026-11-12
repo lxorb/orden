@@ -6,7 +6,7 @@
   import { limitSentence } from './local/trouble'
   import type { Limit } from './local/heard'
   import type { LocalKind, Provider } from './providers'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { dur, slide } from '../motion'
   import { invoke, openExternal } from '../tauri'
 
@@ -63,8 +63,8 @@
       if (said !== 'stopped') {
         trouble(
           said === 'timed out'
-            ? t('Could not sign in.')
-            : message(new Error(said), t('Could not sign in.')),
+            ? 'Could not sign in.'
+            : message(new Error(said), 'Could not sign in.'),
         )
       }
     } finally {
@@ -74,7 +74,7 @@
 
   async function signOutOfChatgpt() {
     await invoke('chatgpt_sign_out').catch((error: unknown) => {
-      trouble(message(error, t('Could not sign out.')))
+      trouble(message(error, 'Could not sign out.'))
     })
     plans.chatgptLimit = null
     await plans.checkChatgpt()
@@ -83,44 +83,40 @@
   function limitWords(kind: LocalKind | 'chatgpt', limit: Limit | null): string {
     if (!limit || limit.state === 'fine') return ''
     if (limit.state === 'reached') return limitSentence(PLAN_OF[kind], limit)
-    return t('Your {plan} plan is near its limit.', { plan: PLAN_OF[kind] })
+    return `Your ${PLAN_OF[kind]} plan is near its limit.`
   }
 </script>
 
 {#snippet program(kind: LocalKind)}
   {@const plan = plans.of(provider.id)}
   <div class="orden-setting setting">
-    <span class="name">{t('Account')}</span>
+    <span class="name">Account</span>
     <div class="row">
       {#if plan.state === 'unknown' && !plan.program}
-        <span class="hint">{t('Asking…')}</span>
+        <span class="hint">Asking…</span>
       {:else if plan.state === 'missing'}
-        <span class="hint">{t('Not installed')}</span>
+        <span class="hint">Not installed</span>
         <button class="orden-chip" onclick={() => void openExternal(INSTALL[kind])}>
-          {t('Install')}
+          Install
         </button>
         <button
           class="orden-chip is-quiet"
           onclick={() => void plans.check({ id: provider.id, kind })}
         >
-          {t('Check again')}
+          Check again
         </button>
       {:else if plan.state === 'in'}
         <span class="hint" title={plan.account ?? ''}>
-          {plan.plan === 'API key'
-            ? t('API key')
-            : plan.plan
-              ? t('{plan} plan', { plan: plan.plan })
-              : t('Signed in')}
+          {plan.plan === 'API key' ? 'API key' : plan.plan ? `${plan.plan} plan` : 'Signed in'}
         </span>
       {:else if vault.seen[provider.id]}
         <span class="hint">{vault.seen[provider.id]}</span>
         <button class="orden-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
-          {t('Sign in here')}
+          Sign in here
         </button>
       {:else}
         <button class="orden-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
-          {t('Sign in')}
+          Sign in
         </button>
       {/if}
     </div>
@@ -131,22 +127,22 @@
 
 {#snippet chatgpt()}
   <div class="orden-setting setting">
-    <span class="name">{t('Account')}</span>
+    <span class="name">Account</span>
     <div class="row">
       {#if plans.chatgpt}
-        <span class="hint">{plans.chatgpt.email ?? t('Signed in')}</span>
+        <span class="hint">{plans.chatgpt.email ?? 'Signed in'}</span>
         <button class="orden-chip is-quiet" onclick={() => void signOutOfChatgpt()}>
-          {t('Sign out')}
+          Sign out
         </button>
       {:else if plans.chatgpt === null}
-        {#if signingIn}<span class="hint">{t('Asking…')}</span>
+        {#if signingIn}<span class="hint">Asking…</span>
         {:else if vault.seen[provider.id]}<span class="hint">{vault.seen[provider.id]}</span>{/if}
         <button class="orden-chip continue" onclick={() => void continueWithChatgpt()}>
           <ChatGptMark />
-          {t('Continue with ChatGPT')}
+          Continue with ChatGPT
         </button>
       {:else}
-        <span class="hint">{t('Asking…')}</span>
+        <span class="hint">Asking…</span>
       {/if}
     </div>
   </div>
@@ -158,7 +154,7 @@
     <div class="orden-setting setting" transition:slide={{ duration: dur(160) }}>
       <span class="name hint">{limitWords(kind, limit)}</span>
       <button class="orden-chip is-quiet" onclick={() => void openExternal(USAGE_OF[kind])}>
-        {t('Manage usage')}
+        Manage usage
       </button>
     </div>
   {/if}

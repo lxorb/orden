@@ -1,9 +1,7 @@
 import { existsSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { defineConfig, type Plugin, type Rollup } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { englishIn, handedTo, inColumn, serverWords, stringsIn } from './even-catalogues.ts'
-import { KEYS_MARK } from './src/lib/even/catalogue-keys.ts'
 import manifest from './even.app.json'
 
 const LEFT_OUT = new Set([
@@ -65,27 +63,6 @@ export default {
 }
 `
 
-const CATALOGUE = /\/locales\/([\w-]+)\.ts$/
-
-const NOT_DRAWN = new Set([
-  'am',
-  'ar',
-  'bn',
-  'fa',
-  'gu',
-  'hi',
-  'kn',
-  'ml',
-  'mr',
-  'my',
-  'pa',
-  'ps',
-  'ta',
-  'te',
-  'th',
-  'ur',
-])
-
 function twinOf(path: string, importer: string | undefined): string | null {
   if (path.includes('/node_modules/')) return null
   const twin = path.replace(/\.(ts|svelte)$/, '.even.$1')
@@ -100,7 +77,6 @@ const OLDER_FACES = /,\s*url\([^)]+\.(?:woff|ttf)\)\s*format\(["'](?:woff|truety
 function withoutWhatTheGlassesCannotUse() {
   const absent = '\0orden-absent'
   const runner = '\0orden-no-running'
-  const catalogue = '\0orden-no-catalogue:'
   const emoji = '\0orden-slim-emoji:'
   const noFrames = '\0orden-no-frame-script'
 
@@ -118,9 +94,6 @@ function withoutWhatTheGlassesCannotUse() {
       if (!found) return null
 
       const path = found.id.replace(/\\/g, '/')
-      const id = CATALOGUE.exec(path)?.[1]
-      if (id !== undefined && NOT_DRAWN.has(id)) return `${catalogue}${id}`
-
       if (EMOJI_TABLE.test(path)) return `${emoji}${path.replace(/\/index\.js$/, '')}`
 
       if (path.includes(RUNNER)) return runner
@@ -136,64 +109,7 @@ function withoutWhatTheGlassesCannotUse() {
       if (asked === noFrames) return "export default ''\n"
       if (asked.startsWith(emoji)) return SLIM_EMOJI(asked.slice(emoji.length))
 
-      if (asked.startsWith(catalogue)) {
-        const id = asked.slice(catalogue.length)
-        return `export const ${id.replace(/-/g, '_')} = {}\n`
-      }
-
       return null
-    },
-  }
-}
-
-const KEYS_MODULE = resolve(import.meta.dirname, 'src/lib/even/catalogue-keys.ts').replace(
-  /\\/g,
-  '/',
-)
-
-function onlyTheRowsItAsksFor(): Plugin {
-  let keys: string[] | undefined
-
-  const shipped = (chunk: { facadeModuleId: string | null }) =>
-    CATALOGUE.test(chunk.facadeModuleId?.replace(/\\/g, '/') ?? '')
-
-  const keysIn = (chunks: Rollup.RenderedChunk[]) => {
-    const asked = serverWords()
-    const written = new Set<string>()
-    for (const chunk of chunks) {
-      for (const one of Object.values(chunk.modules)) {
-        if (!one.code) continue
-        if (shipped(chunk)) for (const english of englishIn(one.code)) written.add(english)
-        else for (const text of stringsIn(one.code)) asked.add(text)
-      }
-    }
-
-    return [...written].filter((english) => asked.has(english)).sort()
-  }
-
-  const placeholder = new RegExp(`\\[\\s*(["'\`])${KEYS_MARK}\\1\\s*\\]`)
-
-  return {
-    name: 'orden-even-rows',
-    transform(code, id) {
-      if (!CATALOGUE.test(id.replace(/\\/g, '/'))) return null
-
-      return `import { rowsOf as ordenRowsOf } from ${JSON.stringify(KEYS_MODULE)}\n${handedTo(code, 'ordenRowsOf')}`
-    },
-    renderStart() {
-      keys = undefined
-    },
-    renderChunk(code, chunk, _options, meta) {
-      const holdsKeys = Object.keys(chunk.modules).some(
-        (id) => id.replace(/\\/g, '/') === KEYS_MODULE,
-      )
-      if (!holdsKeys && !shipped(chunk)) return null
-
-      keys ??= keysIn(Object.values(meta.chunks))
-      if (shipped(chunk)) return inColumn(code, keys)
-
-      if (!placeholder.test(code)) throw new Error('catalogue-keys.ts has no place for its keys')
-      return code.replace(placeholder, JSON.stringify(keys))
     },
   }
 }
@@ -231,7 +147,6 @@ export default defineConfig({
   plugins: [
     svelte(),
     withoutWhatTheGlassesCannotUse(),
-    onlyTheRowsItAsksFor(),
     whatWentIn(process.env.ORDEN_EVEN_CONTENTS),
   ],
   define: {

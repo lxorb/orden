@@ -90,7 +90,6 @@
     dropOver,
     isTreeDrag,
   } from './drag-paths'
-  import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { followNote } from './open-link'
   import { dur, fade } from './motion'
@@ -459,11 +458,7 @@
   const inked = $derived(new Set(store.canvas.ink.map((stroke) => stroke.id)))
 
   const describes = $derived(
-    t('Canvas: {cards} cards, {links} links, {drawings} drawings', {
-      cards: store.canvas.nodes.length,
-      links: store.canvas.edges.length,
-      drawings: store.canvas.ink.length,
-    }),
+    `Canvas: ${store.canvas.nodes.length} cards, ${store.canvas.edges.length} links, ${store.canvas.ink.length} drawings`,
   )
 
   const lassoed = $derived(store.picked.length > 0 && store.picked.every((id) => inked.has(id)))
@@ -1304,7 +1299,7 @@
         },
         onfind: find,
       }),
-      { title: t('Canvas'), near },
+      { title: 'Canvas', near },
     )
   }
 
@@ -1588,7 +1583,7 @@
   style:cursor
   bind:this={host}
   role="application"
-  aria-roledescription={t('Canvas')}
+  aria-roledescription="Canvas"
   aria-label={describes}
   tabindex="-1"
   onpointerdown={onPointerDown}
@@ -1853,7 +1848,7 @@
 
   {#if bare}
     <p class="hint" transition:fade={{ duration: dur(190) }}>
-      {viewport.touch ? t('Double-tap to write') : t('Double-click to write')}
+      {viewport.touch ? 'Double-tap to write' : 'Double-click to write'}
     </p>
   {/if}
 

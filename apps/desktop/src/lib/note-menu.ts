@@ -1,5 +1,4 @@
 import { appCommands } from './commands'
-import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry } from './menu.svelte'
 import { views } from './views.svelte'
 
@@ -16,7 +15,7 @@ export function noteMenu(paneId: string): MenuEntry[] {
 
   return [
     ...pick(['history', 'print']),
-    ...(__EVEN_PLUGIN__ ? [] : [{ label: t('Export'), asks: true, run: formats }]),
+    ...(__EVEN_PLUGIN__ ? [] : [{ label: 'Export', asks: true, run: formats }]),
     ...GROUPS.flatMap((ids) => [DIVIDER, ...pick(ids)]),
   ]
 }

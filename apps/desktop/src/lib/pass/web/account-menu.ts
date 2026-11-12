@@ -1,5 +1,4 @@
 import { account } from '../../account.svelte'
-import { t } from '../../i18n.svelte'
 import { DIVIDER, menu } from '../../menu.svelte'
 import { pass } from '../store.svelte'
 import type { PassUi } from '../ui.svelte'
@@ -10,11 +9,11 @@ export function showPassAccount(event: MouseEvent, ui: PassUi): void {
   menu.show(
     at,
     [
-      { label: t('Settings'), run: () => void ui.goTo('settings') },
+      { label: 'Settings', run: () => void ui.goTo('settings') },
       DIVIDER,
-      { label: t('Sign out'), run: () => void signOut() },
+      { label: 'Sign out', run: () => void signOut() },
     ],
-    { until: pass.opened, title: account.user?.email ?? t('Account'), up: true },
+    { until: pass.opened, title: account.user?.email ?? 'Account', up: true },
   )
 }
 

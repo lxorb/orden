@@ -1,14 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
   import { dur, fly, scale } from './motion'
   import { renamed } from './renamed.svelte'
   import { told } from './said.svelte'
 
   const STAYS = 6000
 
-  const said = $derived(t('nibeditor is now Orden'))
+  const said = $derived('nibeditor is now Orden')
 
   onMount(() => {
     const gone = () => renamed.dismiss()

@@ -352,15 +352,6 @@ describe('what the app evaluates before it draws anything', () => {
     expect(holds(tail), tail).toBe(true)
   })
 
-  test('and no catalogue of any language', () => {
-    const catalogues = readdirSync(fileURLToPath(new URL('../src/locales/', import.meta.url)))
-    expect(catalogues.length).toBeGreaterThan(30)
-
-    for (const one of catalogues) {
-      expect(holds(`/locales/${one}`), one).toBe(false)
-    }
-  })
-
   test('and nothing of the agents', () => {
     expect([...names].filter((one) => one.includes('/lib/agents/'))).toEqual([])
     expect(holds('/lib/agent-marks.svelte.ts')).toBe(true)

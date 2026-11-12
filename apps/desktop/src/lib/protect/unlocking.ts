@@ -1,6 +1,5 @@
 import { mount, unmount } from 'svelte'
 import { busy } from '../busy.svelte'
-import { t } from '../i18n.svelte'
 import { prompt } from '../prompt.svelte'
 import { workspace } from '../workspace.svelte'
 import { deviceCan, deviceName, deviceSays } from './device'
@@ -32,18 +31,14 @@ async function passwordOpens(typed: string): Promise<boolean> {
 }
 
 const ownerSays = () =>
-  busy.run(t('Waiting for {way}…', { way: deviceName() }), () =>
-    deviceSays(t('Unlock what you protected in Orden')),
-  )
+  busy.run(`Waiting for ${deviceName()}…`, () => deviceSays('Unlock what you protected in Orden'))
 
 const reasonOf = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
 const couldNotAsk = (error: unknown) =>
-  busy.failed(
-    t('{way} could not be asked: {reason}', { way: deviceName(), reason: reasonOf(error) }),
-  )
+  busy.failed(`${deviceName()} could not be asked: ${reasonOf(error)}`)
 
-const turnedAway = () => busy.failed(t('{way} did not confirm it was you', { way: deviceName() }))
+const turnedAway = () => busy.failed(`${deviceName()} did not confirm it was you`)
 
 async function ownerOpens(): Promise<boolean | null> {
   try {
@@ -73,7 +68,7 @@ async function opened(path: string): Promise<boolean> {
   if (!unlocks.shut(locks)) return true
   const open =
     ((await deviceCan()) && (await ownerOpens()) === true) ||
-    (workspace.protection.password !== null && (await asked(false, t('Unlock'))) !== null)
+    (workspace.protection.password !== null && (await asked(false, 'Unlock')) !== null)
   if (open) unlocks.unlock(locks)
   return open
 }
@@ -81,11 +76,11 @@ async function opened(path: string): Promise<boolean> {
 async function wayFor(): Promise<Way | null> {
   if (await deviceCan()) {
     const picked = await prompt.choose({
-      title: t('Protect with'),
-      detail: t('Protected, not encrypted: this only keeps it from being opened by accident.'),
+      title: 'Protect with',
+      detail: 'Protected, not encrypted: this only keeps it from being opened by accident.',
       options: [
         { id: 'device', label: deviceName(), primary: true },
-        { id: 'password', label: t('Password') },
+        { id: 'password', label: 'Password' },
       ],
     })
     if (picked === null) return null
@@ -95,14 +90,14 @@ async function wayFor(): Promise<Way | null> {
     }
   }
   if (workspace.protection.password) return 'password'
-  const chosen = await asked(true, t('Choose a password'))
+  const chosen = await asked(true, 'Choose a password')
   if (chosen === null) return null
   workspace.protection.setPassword(await hashPassword(chosen))
   return 'password'
 }
 
 const cannotProtect = (error: unknown) =>
-  busy.failed(t('That could not be protected: {reason}', { reason: reasonOf(error) }))
+  busy.failed(`That could not be protected: ${reasonOf(error)}`)
 
 export async function protect(root: string, path: string): Promise<void> {
   const way = await wayFor().catch((error: unknown) => {

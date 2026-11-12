@@ -1,5 +1,4 @@
 import { copySelection, cutSelection } from './clipboard'
-import { t } from './i18n.svelte'
 import { showCombination } from './keys'
 import { DIVIDER, type MenuEntry, walkableRows } from './menu-item'
 import { menu, type TextField } from './menu.svelte'
@@ -52,26 +51,26 @@ export function fieldEntries(field: TextField): MenuEntry[] {
 
   return [
     {
-      label: t('Cut'),
+      label: 'Cut',
       hint: shortcuts.hint('fixed.cut'),
       disabled: !selected || locked || secret,
       run: cutSelection,
     },
     {
-      label: t('Copy'),
+      label: 'Copy',
       hint: shortcuts.hint('fixed.copy'),
       disabled: !selected || secret,
       run: copySelection,
     },
     {
-      label: t('Paste'),
+      label: 'Paste',
       hint: shortcuts.hint('fixed.paste'),
       disabled: locked,
       run: () => void pasteInto(field),
     },
     DIVIDER,
     {
-      label: t('Select all'),
+      label: 'Select all',
       hint: showCombination('Mod-a', shortcuts.platform),
       disabled: field.value === '',
       run: () => field.select(),

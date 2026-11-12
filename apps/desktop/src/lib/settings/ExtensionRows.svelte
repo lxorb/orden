@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
-  import { t } from '../i18n.svelte'
   import Switch from '../Switch.svelte'
   import { dur, slide } from '../motion'
   import { workspace } from '../workspace.svelte'
@@ -45,9 +44,9 @@
       <span class="what">
         <span class="named">{one.name}</span>
         {#if one.problem}
-          <small class="warn">{t('Did not load')}</small>
+          <small class="warn">Did not load</small>
         {:else if one.pending}
-          <small>{t('Starts when Orden next opens')}</small>
+          <small>Starts when Orden next opens</small>
         {:else}
           <small>{one.version}</small>
         {/if}
@@ -55,7 +54,7 @@
     </button>
     <Switch
       on={one.enabled}
-      label={t('Turn {name} on or off', { name: one.name })}
+      label="Turn {one.name} on or off"
       onchange={(on: boolean) => void extensions.enable(one.id, on)}
     />
   </div>
@@ -68,7 +67,7 @@
         <ExtensionGaps gaps={one.gaps} />
       {/if}
       {#if one.permissions.length}
-        <ul class="asks" aria-label={t('Permissions')}>
+        <ul class="asks" aria-label="Permissions">
           {#each one.permissions as ask (ask)}
             <li>{ask}</li>
           {/each}
@@ -77,11 +76,11 @@
       <div class="rows">
         {#if one.options}
           <button class="orden-chip is-quiet" onclick={() => void options(one.id)}>
-            {t('Options')}
+            Options
           </button>
         {/if}
         <button class="orden-chip is-quiet danger" onclick={() => void extensions.remove(one.id)}>
-          {t('Remove')}
+          Remove
         </button>
       </div>
     </div>
@@ -93,15 +92,15 @@
     class="orden-field"
     type="url"
     bind:value={link}
-    placeholder={t('Paste a Chrome Web Store or Firefox Add-ons link')}
-    aria-label={t('Paste a Chrome Web Store or Firefox Add-ons link')}
+    placeholder="Paste a Chrome Web Store or Firefox Add-ons link"
+    aria-label="Paste a Chrome Web Store or Firefox Add-ons link"
     spellcheck="false"
     autocomplete="off"
     disabled={extensions.installing !== null}
   />
 </form>
 {#if extensions.failed}
-  <p class="warn">{t(extensions.failed)}</p>
+  <p class="warn">{extensions.failed}</p>
 {:else if extensions.asking}
   <ExtensionGaps gaps={extensions.asking.gaps} asking />
 {/if}

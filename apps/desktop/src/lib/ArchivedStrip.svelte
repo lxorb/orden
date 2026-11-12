@@ -1,7 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { unarchive } from './archiving'
-  import { t } from './i18n.svelte'
   import { dur, slide } from './motion'
   import { ARCHIVE_MARK } from './archive-marks'
 
@@ -14,8 +13,8 @@
   transition:slide={{ duration: dur(150), easing: cubicOut }}
 >
   <svg viewBox="0 0 13 13" aria-hidden="true"><path d={ARCHIVE_MARK} /></svg>
-  <span class="said">{t('Archived')}</span>
-  <button class="back" onclick={() => unarchive(path)}>{t('Unarchive')}</button>
+  <span class="said">Archived</span>
+  <button class="back" onclick={() => unarchive(path)}>Unarchive</button>
 </div>
 
 <style>

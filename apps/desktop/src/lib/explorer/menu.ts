@@ -1,5 +1,4 @@
 import { copyText } from '../clipboard'
-import { t } from '../i18n.svelte'
 import { fileClipboard } from '../list-landing.svelte'
 import { DIVIDER, type MenuEntry } from '../menu-item'
 import { reveal, showLabel } from '../reveal'
@@ -33,32 +32,32 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
   const outside = paths.some((one) => !inASpace(one))
   return [
     {
-      label: t('Open'),
+      label: 'Open',
       run: () => (entry.folder ? void view.go(path) : void openFile(path)),
     },
     ...(!entry.folder && ordenOpens(path)
-      ? [{ label: t('Open with the system app'), run: () => void openWithSystem(path) }]
+      ? [{ label: 'Open with the system app', run: () => void openWithSystem(path) }]
       : []),
-    { label: t(showLabel(platform(), false)), run: () => void reveal(path, { system: true }) },
+    { label: showLabel(platform(), false), run: () => void reveal(path, { system: true }) },
     DIVIDER,
     ...(writes
       ? [
           {
-            label: t('Cut'),
+            label: 'Cut',
             hint: shortcuts.hint('fixed.cut'),
             run: () => fileClipboard.hold(paths, true),
           },
         ]
       : []),
     {
-      label: t('Copy'),
+      label: 'Copy',
       hint: shortcuts.hint('fixed.copy'),
       run: () => fileClipboard.hold(paths, false),
     },
     ...(writes && entry.folder && fileClipboard.paths.length
       ? [
           {
-            label: t('Paste'),
+            label: 'Paste',
             hint: shortcuts.hint('fixed.paste'),
             run: () => void paste(view, path),
           },
@@ -66,11 +65,11 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
       : []),
     ...(other
       ? [
-          { label: t('Copy to the other pane'), run: () => void carry(view, paths, other, 'copy') },
+          { label: 'Copy to the other pane', run: () => void carry(view, paths, other, 'copy') },
           ...(writes
             ? [
                 {
-                  label: t('Move to the other pane'),
+                  label: 'Move to the other pane',
                   run: () => void carry(view, paths, other, 'move'),
                 },
               ]
@@ -80,9 +79,9 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
     DIVIDER,
     ...(writes
       ? [
-          { label: t('Duplicate'), run: () => void duplicate(view, paths) },
+          { label: 'Duplicate', run: () => void duplicate(view, paths) },
           {
-            label: t('Rename'),
+            label: 'Rename',
             hint: shortcuts.hint('tree.rename'),
             run: () => {
               if (paths.length > 1) view.renamingMany = paths
@@ -91,15 +90,15 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
           },
         ]
       : []),
-    { label: t('Copy path'), run: () => void copyText(paths.join('\n')) },
+    { label: 'Copy path', run: () => void copyText(paths.join('\n')) },
     ...(entry.folder && !places.isPinned(path)
-      ? [{ label: t('Pin to Places'), run: () => places.pin(path) }]
+      ? [{ label: 'Pin to Places', run: () => places.pin(path) }]
       : []),
     ...(writes
       ? [
           DIVIDER,
           {
-            label: t('Move to Trash'),
+            label: 'Move to Trash',
             hint: shortcuts.hint('tree.delete'),
             danger: true,
             run: () => void trash(view, paths),
@@ -107,7 +106,7 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
           ...(outside
             ? [
                 {
-                  label: t('Delete for good'),
+                  label: 'Delete for good',
                   hint: shortcuts.hint('explorer.delete'),
                   danger: true,
                   run: () => void removeForGood(view, paths),
@@ -126,14 +125,14 @@ export function roomMenu(view: ExplorerView): MenuEntry[] {
     ...(writes
       ? [
           {
-            label: t('New folder'),
+            label: 'New folder',
             hint: shortcuts.hint('explorer.new-folder'),
             run: () => void newFolder(view),
           },
           ...(fileClipboard.paths.length
             ? [
                 {
-                  label: t('Paste'),
+                  label: 'Paste',
                   hint: shortcuts.hint('fixed.paste'),
                   run: () => void paste(view),
                 },
@@ -143,7 +142,7 @@ export function roomMenu(view: ExplorerView): MenuEntry[] {
         ]
       : []),
     {
-      label: t('Hidden files'),
+      label: 'Hidden files',
       hint: shortcuts.hint('explorer.hidden'),
       checked: explorerPrefs.hidden,
       run: () => explorerPrefs.toggleHidden(),
@@ -151,7 +150,7 @@ export function roomMenu(view: ExplorerView): MenuEntry[] {
     ...(folder
       ? [
           {
-            label: t(showLabel(platform(), false)),
+            label: showLabel(platform(), false),
             run: () => void reveal(folder, { system: true }),
           },
         ]
@@ -161,12 +160,12 @@ export function roomMenu(view: ExplorerView): MenuEntry[] {
 
 function sortKeysOf(view: ExplorerView): { key: SortKey; label: string }[] {
   return [
-    { key: 'name', label: t('Name') },
-    { key: 'modified', label: t('Modified') },
-    { key: 'created', label: t('Created') },
-    { key: 'size', label: t('Size') },
-    { key: 'kind', label: t('Kind') },
-    ...(view.search ? [{ key: 'folder' as const, label: t('Folder') }] : []),
+    { key: 'name', label: 'Name' },
+    { key: 'modified', label: 'Modified' },
+    { key: 'created', label: 'Created' },
+    { key: 'size', label: 'Size' },
+    { key: 'kind', label: 'Kind' },
+    ...(view.search ? [{ key: 'folder' as const, label: 'Folder' }] : []),
   ]
 }
 
@@ -179,7 +178,7 @@ export function sortMenu(view: ExplorerView): MenuEntry[] {
       run: () => explorerPrefs.sortOn(one.key),
     })),
     DIVIDER,
-    { label: t('Ascending'), checked: !down, run: () => explorerPrefs.sortTurned(false) },
-    { label: t('Descending'), checked: down, run: () => explorerPrefs.sortTurned(true) },
+    { label: 'Ascending', checked: !down, run: () => explorerPrefs.sortTurned(false) },
+    { label: 'Descending', checked: down, run: () => explorerPrefs.sortTurned(true) },
   ]
 }

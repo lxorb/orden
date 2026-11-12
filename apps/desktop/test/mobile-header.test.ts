@@ -32,7 +32,7 @@ const PANEL = '<rect x="1" y="2.5" width="12" height="9" rx="1.5" />'
 describe('the button that opens the file list', () => {
   test('is one component, drawn once', () => {
     expect(toggle).toContain(PANEL)
-    expect(toggle).toContain("t('Hide left sidebar')")
+    expect(toggle).toContain("'Hide left sidebar'")
 
     for (const [name, text] of [
       ['lib/Titlebar.svelte', titlebar],
@@ -58,10 +58,10 @@ describe('the button that opens the file list', () => {
   test("the bar's start steps in by a glyph's margin while its button is not seen", () => {
     const style = titlebar.slice(titlebar.indexOf('<style>')).replace(/\s+/g, ' ')
     expect(style).toContain(
-      'padding-inline-start: calc(var(--inset-start) + (var(--row-height) - var(--icon-lg)) / 2);',
+      'padding-inline-start: calc(var(--inset-left) + (var(--row-height) - var(--icon-lg)) / 2);',
     )
     expect(style).toContain(
-      ":global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.orden-said))) { padding-inline-start: var(--inset-start); }",
+      ":global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.orden-said))) { padding-inline-start: var(--inset-left); }",
     )
   })
 
@@ -80,10 +80,10 @@ describe('the button that opens the file list', () => {
 
   test('says which way it is in words rather than by redrawing itself', () => {
     expect(toggle).toContain('aria-pressed={open}')
-    expect(toggle).toContain("t('Hide left sidebar')")
-    expect(toggle).toContain("t('Show left sidebar')")
-    expect(toggle).toContain("t('Hide right sidebar')")
-    expect(toggle).toContain("t('Show right sidebar')")
+    expect(toggle).toContain("'Hide left sidebar'")
+    expect(toggle).toContain("'Show left sidebar'")
+    expect(toggle).toContain("'Hide right sidebar'")
+    expect(toggle).toContain("'Show right sidebar'")
 
     const style = toggle.slice(toggle.indexOf('<style>'))
     for (const shifting of [
@@ -137,7 +137,7 @@ describe('the menu of the whole app', () => {
 
 describe('the search button', () => {
   test('opens the palette, says its key on the tooltip, and is in both bars', () => {
-    expect(titlebar).toContain("title={shortcuts.tooltip(t('Search'), 'app.palette')}")
+    expect(titlebar).toContain("title={shortcuts.tooltip('Search', 'app.palette')}")
     expect(titlebar).toContain('onclick={() => onpalette()}')
     expect(titlebar.match(/\{@render searchGlyph\(\)\}/g) ?? []).toHaveLength(2)
   })

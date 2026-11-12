@@ -14,7 +14,6 @@
   import ArrowUpDown from 'lucide/dist/esm/icons/arrow-up-down.mjs'
   import type { IconNode } from 'lucide'
   import { tick } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { crumbsOf, typedFolder } from './crumbs'
@@ -94,8 +93,8 @@
   }
 </script>
 
-{#snippet glyph(mark: IconNode, mirrored = false)}
-  <svg class:orden-mirror={mirrored} viewBox="0 0 24 24" aria-hidden="true">
+{#snippet glyph(mark: IconNode)}
+  <svg viewBox="0 0 24 24" aria-hidden="true">
     {#each mark as [tag, attrs], index (index)}
       <svelte:element this={tag} {...attrs} />
     {/each}
@@ -105,22 +104,22 @@
 <div class="bar">
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip(t('Back'), 'app.back')}
-    aria-label={t('Back')}
+    title={shortcuts.tooltip('Back', 'app.back')}
+    aria-label="Back"
     disabled={!view.canGoBack}
-    onclick={() => view.back()}>{@render glyph(ArrowLeft, true)}</button
+    onclick={() => view.back()}>{@render glyph(ArrowLeft)}</button
   >
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip(t('Forward'), 'app.forward')}
-    aria-label={t('Forward')}
+    title={shortcuts.tooltip('Forward', 'app.forward')}
+    aria-label="Forward"
     disabled={!view.canGoForward}
-    onclick={() => view.forward()}>{@render glyph(ArrowRight, true)}</button
+    onclick={() => view.forward()}>{@render glyph(ArrowRight)}</button
   >
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip(t('Folder above'), 'explorer.parent')}
-    aria-label={t('Folder above')}
+    title={shortcuts.tooltip('Folder above', 'explorer.parent')}
+    aria-label="Folder above"
     disabled={!view.canGoUp}
     onclick={() => view.up()}>{@render glyph(ArrowUp)}</button
   >
@@ -130,14 +129,14 @@
       bind:this={field}
       bind:value={typed}
       class="orden-field path"
-      aria-label={t('Path')}
+      aria-label="Path"
       spellcheck="false"
       autocomplete="off"
       onkeydown={onkey}
       onblur={() => (typing = false)}
     />
   {:else}
-    <nav class="crumbs" aria-label={t('Path')}>
+    <nav class="crumbs" aria-label="Path">
       {#each crumbs as crumb, index (crumb.path)}
         {#if index > 0}<span class="step" aria-hidden="true">›</span>{/if}
         <button
@@ -152,8 +151,8 @@
       <button
         class="past"
         tabindex="-1"
-        title={shortcuts.tooltip(t('Type a location'), 'explorer.location')}
-        aria-label={t('Type a location')}
+        title={shortcuts.tooltip('Type a location', 'explorer.location')}
+        aria-label="Type a location"
         onclick={() => (typing = true)}
       ></button>
     </nav>
@@ -164,8 +163,8 @@
       bind:this={filterField}
       bind:value={view.filter}
       class="orden-field filter"
-      aria-label={t('Filter')}
-      placeholder={t('Filter')}
+      aria-label="Filter"
+      placeholder="Filter"
       spellcheck="false"
       autocomplete="off"
       onkeydown={filterKey}
@@ -174,46 +173,46 @@
   <button
     class="orden-glyph"
     class:is-on={filtering || !!view.filter || !!view.search}
-    title={shortcuts.tooltip(t('Filter'), 'explorer.filter')}
-    aria-label={t('Filter')}
+    title={shortcuts.tooltip('Filter', 'explorer.filter')}
+    aria-label="Filter"
     onclick={() => (filtering = !filtering)}>{@render glyph(Search)}</button
   >
   <button
     class="orden-glyph sort"
-    title={t('Sort')}
-    aria-label={t('Sort')}
+    title="Sort"
+    aria-label="Sort"
     aria-haspopup="menu"
     onclick={(event) => menu.show(event, sortMenu(view))}>{@render glyph(ArrowUpDown)}</button
   >
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.view === 'list'}
-    title={shortcuts.tooltip(t('List'), 'explorer.list')}
-    aria-label={t('List')}
+    title={shortcuts.tooltip('List', 'explorer.list')}
+    aria-label="List"
     aria-pressed={explorerPrefs.view === 'list'}
     onclick={() => explorerPrefs.show('list')}>{@render glyph(List)}</button
   >
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.view === 'grid'}
-    title={shortcuts.tooltip(t('Grid'), 'explorer.grid')}
-    aria-label={t('Grid')}
+    title={shortcuts.tooltip('Grid', 'explorer.grid')}
+    aria-label="Grid"
     aria-pressed={explorerPrefs.view === 'grid'}
     onclick={() => explorerPrefs.show('grid')}>{@render glyph(LayoutGrid)}</button
   >
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.view === 'columns'}
-    title={shortcuts.tooltip(t('Columns'), 'explorer.columns')}
-    aria-label={t('Columns')}
+    title={shortcuts.tooltip('Columns', 'explorer.columns')}
+    aria-label="Columns"
     aria-pressed={explorerPrefs.view === 'columns'}
     onclick={() => explorerPrefs.show('columns')}>{@render glyph(Columns)}</button
   >
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.hidden}
-    title={shortcuts.tooltip(t('Hidden files'), 'explorer.hidden')}
-    aria-label={t('Hidden files')}
+    title={shortcuts.tooltip('Hidden files', 'explorer.hidden')}
+    aria-label="Hidden files"
     aria-pressed={explorerPrefs.hidden}
     onclick={() => explorerPrefs.toggleHidden()}
     >{@render glyph(explorerPrefs.hidden ? Eye : EyeOff)}</button
@@ -221,16 +220,16 @@
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.places}
-    title={t('Places')}
-    aria-label={t('Places')}
+    title="Places"
+    aria-label="Places"
     aria-pressed={explorerPrefs.places}
     onclick={() => explorerPrefs.togglePlaces()}>{@render glyph(PanelLeft)}</button
   >
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.preview}
-    title={shortcuts.tooltip(t('Preview'), 'explorer.preview')}
-    aria-label={t('Preview')}
+    title={shortcuts.tooltip('Preview', 'explorer.preview')}
+    aria-label="Preview"
     aria-pressed={explorerPrefs.preview}
     onclick={() => explorerPrefs.togglePreview()}>{@render glyph(PanelRight)}</button
   >

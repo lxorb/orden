@@ -1,5 +1,4 @@
 import type { KeyOverrides } from '@orden/editor'
-import { t } from '../i18n.svelte'
 import type { PresetId } from './preset-ids'
 
 export interface Preset {
@@ -72,7 +71,7 @@ const VSCODE: KeyOverrides = {
 }
 
 export const PRESETS: Preset[] = [
-  { id: 'default', label: () => t('Default'), keys: {}, vim: false },
+  { id: 'default', label: () => 'Default', keys: {}, vim: false },
   { id: 'notion', label: () => 'Notion', keys: NOTION, vim: false },
   { id: 'obsidian', label: () => 'Obsidian', keys: OBSIDIAN, vim: false },
   { id: 'vscode', label: () => 'VS Code', keys: VSCODE, vim: false },

@@ -2,7 +2,6 @@ import { flushTableEdits } from '@orden/editor'
 import { freePath } from '@orden/markdown/paths'
 import { SAVE_AT_MOST, SAVE_DELAY, saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
-import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
@@ -202,11 +201,8 @@ export class Saving {
 
     const { sync } = await import('../sync.svelte')
     const error = unread.includes(first)
-      ? t(
-          '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.',
-          { name: first.shown },
-        )
-      : t('{name} could not be written.', { name: first.shown })
+      ? `${first.shown} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.`
+      : `${first.shown} could not be written.`
     this.said = { error, was: sync.status === 'error' ? 'off' : sync.status }
     sync.status = 'error'
     sync.lastError = error

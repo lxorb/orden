@@ -1,4 +1,3 @@
-import { plural, t } from '../i18n.svelte'
 import { setWord } from '../kind-choice'
 import { prompt } from '../prompt.svelte'
 import { NO_PROTECTION_WORD, PROTECTION_WORD, protectionOn } from './gate'
@@ -14,13 +13,12 @@ export async function turnProtection(on: boolean): Promise<void> {
   const count = protection.count
   if (!on && count > 0) {
     const sure = await prompt.confirm({
-      title: t('Turn off protection?'),
-      detail: plural(count, {
-        one: '{count} item is still protected. It stays locked; unprotect it first to remove protection.',
-        other:
-          '{count} items are still protected. They stay locked; unprotect them first to remove protection.',
-      }),
-      confirmLabel: t('Turn off'),
+      title: 'Turn off protection?',
+      detail:
+        count === 1
+          ? '1 item is still protected. It stays locked; unprotect it first to remove protection.'
+          : `${count} items are still protected. They stay locked; unprotect them first to remove protection.`,
+      confirmLabel: 'Turn off',
     })
     if (!sure) return
   }

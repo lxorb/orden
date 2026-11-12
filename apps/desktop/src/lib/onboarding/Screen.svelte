@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { setup } from './setup.svelte'
 
   interface Action {
@@ -44,7 +43,7 @@
     {#if onback !== null || setup.canGoBack}
       <button class="back" type="button" onclick={() => (onback ? onback() : setup.back())}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
-        {t('Back')}
+        Back
       </button>
     {/if}
   </div>

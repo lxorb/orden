@@ -1,4 +1,5 @@
-import { i18n, t } from '../../i18n.svelte'
+import { region } from '../../region'
+import { localDate } from '../../region'
 
 export function dayOf(at: number): string {
   const date = new Date(at)
@@ -7,15 +8,15 @@ export function dayOf(at: number): string {
 }
 
 export function timeOf(at: number): string {
-  return i18n.when(at, { hour: 'numeric', minute: '2-digit' })
+  return localDate(at, { hour: 'numeric', minute: '2-digit' })
 }
 
 export function dayLine(at: number, now = Date.now()): string {
   const day = dayOf(at)
-  if (day === dayOf(now)) return t('Today')
-  if (day === dayOf(now - 24 * 60 * 60 * 1000)) return t('Yesterday')
+  if (day === dayOf(now)) return 'Today'
+  if (day === dayOf(now - 24 * 60 * 60 * 1000)) return 'Yesterday'
   const sameYear = new Date(at).getFullYear() === new Date(now).getFullYear()
-  return i18n.when(at, {
+  return localDate(at, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -36,7 +37,7 @@ export function laterTimes(now: number): number[] {
 
 export function stretch(count: number, unit: 'hour' | 'day' | 'week'): string {
   try {
-    return new Intl.NumberFormat(i18n.language, {
+    return new Intl.NumberFormat(region(), {
       style: 'unit',
       unit,
       unitDisplay: 'long',
@@ -47,5 +48,5 @@ export function stretch(count: number, unit: 'hour' | 'day' | 'week'): string {
 }
 
 export function fullTime(at: number): string {
-  return i18n.when(at, { dateStyle: 'full', timeStyle: 'short' })
+  return localDate(at, { dateStyle: 'full', timeStyle: 'short' })
 }

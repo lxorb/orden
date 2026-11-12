@@ -1,6 +1,5 @@
 <script lang="ts">
   import CloudDownload from 'lucide/dist/esm/icons/cloud-download.mjs'
-  import { t } from './i18n.svelte'
   import { icloud } from './icloud.svelte'
   import { isNative } from './tauri'
   import { keptAway } from './web/away.svelte'
@@ -9,10 +8,10 @@
 
   const said = $derived(
     isNative
-      ? t('In iCloud')
+      ? 'In iCloud'
       : keptAway.offline
-        ? t('Not on this device. It opens once you are online again.')
-        : t('Not on this device'),
+        ? 'Not on this device. It opens once you are online again.'
+        : 'Not on this device',
   )
 
   $effect(() => icloud.listen())

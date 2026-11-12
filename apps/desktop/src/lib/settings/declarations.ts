@@ -1,5 +1,4 @@
 import type { EditorView } from '@orden/editor'
-import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { declaredPanes } from '../preferences'
 import { shortcuts, SHORTCUTS } from '../shortcuts.svelte'
@@ -18,8 +17,8 @@ function shortcutFields(): Field[] {
     {
       kind: 'switch',
       key: 'shortcuts.vim',
-      label: t('Vim keys'),
-      hint: t('Moves and edits in notes with Vim’s keys.'),
+      label: 'Vim keys',
+      hint: 'Moves and edits in notes with Vim’s keys.',
       initial: false,
       get: () => modes.vim,
       set: (on) => modes.setVimKeys(on),
@@ -43,11 +42,11 @@ function searchFields(): Field[] {
       kind: 'select',
       key: 'general.searchEngine',
       open: true,
-      label: t('Search engine'),
-      hint: t('Where words typed into a web tab’s address bar are searched.'),
+      label: 'Search engine',
+      hint: 'Where words typed into a web tab’s address bar are searched.',
       options: [
         ...enginesFor(navigator.language).map((one) => ({ value: one.id, label: one.name })),
-        { value: CUSTOM, label: t('Custom') },
+        { value: CUSTOM, label: 'Custom' },
       ],
       get: () => searchEngine.id,
       set: (id) => searchEngine.choose(id),
@@ -55,8 +54,8 @@ function searchFields(): Field[] {
     {
       kind: 'text',
       key: 'general.searchEngineAddress',
-      label: t('Search engine'),
-      hint: t('The search address, with %s where the words go.'),
+      label: 'Search engine',
+      hint: 'The search address, with %s where the words go.',
       placeholder: 'https://search.example/?q=%s',
       check: (address) => (isEngineAddress(address) ? null : 'is not an address with %s in it'),
       get: () => searchEngine.custom,

@@ -2,7 +2,6 @@ import { api, BASE } from './api'
 import { account } from './account.svelte'
 import { attachmentFolder } from './attachments'
 import { sha256 } from './bytes'
-import { key } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import { modes } from './modes.svelte'
 import { spaceRelative } from './recorder/paths'
@@ -46,7 +45,7 @@ const MOST_BYTES = 24 * 1024 * 1024
 
 export async function storeAttachment(file: File, notePath: string | null): Promise<string | null> {
   if (!notePath) return null
-  if (file.size > MOST_BYTES) throw new Error(key('That file is larger than a note can keep.'))
+  if (file.size > MOST_BYTES) throw new Error('That file is larger than a note can keep.')
 
   const written = await storeBeside(await file.arrayBuffer(), notePath, file.name)
   if (!written) return null

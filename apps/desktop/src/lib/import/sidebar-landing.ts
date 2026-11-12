@@ -1,18 +1,16 @@
 import { busy } from '../busy.svelte'
-import { t } from '../i18n.svelte'
 import { relativeTo } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { readShortcut } from '@orden/scan/shortcut'
 import { type Space, workspace } from '../workspace.svelte'
 import { applyImport } from './apply'
 import { nameKey } from './names'
-import type { Lost, Planned } from './plan'
-import { worthKnowing } from './plan'
+import type { Planned } from './plan'
 import type { SpacePlan } from './sidebar-plan'
 
 export async function landSpaces(
   spaces: readonly SpacePlan[],
-  lost: readonly Lost[],
+  lost: readonly string[],
   none: string,
 ): Promise<Space> {
   const landed: Space[] = []
@@ -23,7 +21,7 @@ export async function landSpaces(
   const [first] = landed
   if (!first) throw new Error(none)
 
-  if (lost.length) busy.failed(lost.map(worthKnowing).join(' '))
+  if (lost.length) busy.failed(lost.join(' '))
   return first
 }
 
@@ -34,7 +32,7 @@ async function landSpace(plan: SpacePlan): Promise<Space | null> {
   const { canWriteAt } = await import('../sharing.svelte')
   if (held && !canWriteAt(held.root)) return null
   const space = held ?? (await workspace.addSpace(plan.name))
-  if (!space) throw new Error(t('That import could not be written.'))
+  if (!space) throw new Error('That import could not be written.')
   if (workspace.activeSpaceId !== space.id) await workspace.selectSpace(space.id)
 
   const root = space.root

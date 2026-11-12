@@ -1,6 +1,5 @@
 import { Facet } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
-import { label } from './labels'
 
 export interface LinkPress extends Modified {
   button: number
@@ -36,7 +35,7 @@ export function bareTarget(written: string, after: string): string {
 export const MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)
 
 export function linkTitle(href: string): string {
-  return `${href}\n${label(MAC ? 'openLinkMac' : 'openLink')}`
+  return `${href}\n${MAC ? '⌘-click to open the link' : 'Ctrl+Click to open the link'}`
 }
 
 export interface Modified {

@@ -410,7 +410,7 @@ describe('from a CSV', () => {
 
   test('nests by indent, a section a heading, a note a comment, priorities as people count', () => {
     const plan = planOf(csvProject('Launch', CSV, 0))
-    expect(plan.lost).toEqual([{ text: 'Some repeating dates stay as words under their tasks' }])
+    expect(plan.lost).toEqual(['Some repeating dates stay as words under their tasks'])
     const note = plan.files[0]
     expect(note?.path).toBe('Projects/Launch.md')
     expect(note?.kind === 'note' ? note.text : '').toBe(

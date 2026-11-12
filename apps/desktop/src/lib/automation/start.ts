@@ -1,5 +1,4 @@
 import { busy } from '../busy.svelte'
-import { t } from '../i18n.svelte'
 import { log } from '../log'
 import { hearHere } from '../own-window'
 import { invoke, isDesktop, isNative, openExternal } from '../tauri'
@@ -169,5 +168,5 @@ async function went(url: string | null, depth: number, outcome: Record<string, s
 
 function refuse(uri: string, why: string) {
   log('warn', `automation: ${why}: ${uri}`)
-  busy.failed(t('that link could not be followed'))
+  busy.failed('that link could not be followed')
 }

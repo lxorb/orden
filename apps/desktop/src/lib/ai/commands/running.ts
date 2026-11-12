@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { readOutside } from '../chat/transcript'
 import type { Goal, GoalState, Thread } from '../chat/types'
 import { tokens } from './account'
@@ -11,17 +10,17 @@ import { tasks } from './tasks.svelte'
 function goalWord(state: GoalState): string {
   switch (state) {
     case 'met':
-      return t('Goal met')
+      return 'Goal met'
     case 'impossible':
-      return t('Goal cannot be met')
+      return 'Goal cannot be met'
     case 'budget_limited':
-      return t('Goal budget spent')
+      return 'Goal budget spent'
     case 'paused':
-      return t('Goal paused')
+      return 'Goal paused'
     case 'cleared':
-      return t('Goal cleared')
+      return 'Goal cleared'
     case 'pursuing':
-      return t('Goal')
+      return 'Goal'
   }
 }
 

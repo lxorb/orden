@@ -1,6 +1,6 @@
 import { untrack } from 'svelte'
 import { accelerator } from '../accelerator'
-import { i18n } from '../i18n.svelte'
+import { region } from '../region'
 import { heldForLife } from '../locks'
 import { log } from '../log'
 import { shortcuts } from '../shortcuts.svelte'
@@ -29,7 +29,7 @@ export function listen(): () => void {
       channel?.postMessage({
         kind: 'world',
         notes: root ? noteNames(root).slice(0, 400) : [],
-        lang: i18n.language,
+        lang: region(),
         smart: quickAdd.smart,
       } satisfies Said)
     } else if (said.kind === 'task') {

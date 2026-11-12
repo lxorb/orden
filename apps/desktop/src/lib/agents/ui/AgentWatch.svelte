@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../../i18n.svelte'
   import Sheet from '../../Sheet.svelte'
   import type { Activity } from './activity.svelte'
   import { hostOf } from './session'
@@ -41,7 +40,7 @@
   <div class="watch">
     <span class="address" dir="ltr">{held?.url ?? ''}</span>
     {#if held?.parked}
-      <p class="quiet">{t('Asleep')}</p>
+      <p class="quiet">Asleep</p>
     {:else if watching.picture}
       <img
         class="page"
@@ -53,11 +52,11 @@
         draggable="false"
       />
     {:else}
-      <p class="quiet">{t('Loading…')}</p>
+      <p class="quiet">Loading…</p>
     {/if}
   </div>
   {#snippet foot()}
-    <button class="orden-chip" onclick={takeOver}>{t('Take over')}</button>
+    <button class="orden-chip" onclick={takeOver}>Take over</button>
   {/snippet}
 </Sheet>
 

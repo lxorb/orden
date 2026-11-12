@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { FileRef } from '@orden/chats'
-  import { amount } from '../../i18n.svelte'
+  import { localNumber } from '../../region'
   import { fitted, gallery, isVideo } from './media'
   import { fileUrl } from './urls.svelte'
 
@@ -61,7 +61,7 @@
         <img src={url(file)} alt="" draggable="false" loading="lazy" decoding="async" />
         {#if isVideo(file)}<span class="play" aria-hidden="true">▶</span>{/if}
         {#if index === grid.shown.length - 1 && grid.more > 0}
-          <span class="more">+{amount(grid.more)}</span>
+          <span class="more">+{localNumber(grid.more)}</span>
         {/if}
       </button>
     {/each}

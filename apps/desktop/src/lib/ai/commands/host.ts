@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { complete } from '../complete'
 import type { Message, Provider } from '../providers'
 import { ai } from '../store.svelte'
@@ -54,7 +53,7 @@ async function directTurn(thread: Thread, text: string, once: Once = {}): Promis
   if (!provider)
     return {
       stop: 'error',
-      error: t('Add an AI provider in Settings first.'),
+      error: 'Add an AI provider in Settings first.',
       turn: null,
       usage: null,
     }
@@ -107,7 +106,7 @@ export function hostOf(panel: Panel): Host {
     },
     async ask(thread, messages, signal) {
       const provider = providerOf(thread.provider)
-      if (!provider) throw new Error(t('Add an AI provider in Settings first.'))
+      if (!provider) throw new Error('Add an AI provider in Settings first.')
       return await complete({
         provider,
         model: thread.model,

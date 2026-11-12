@@ -23,10 +23,10 @@
 
   @keyframes sweep {
     from {
-      transform: translateX(calc(var(--dir) * -100%));
+      transform: translateX(-100%);
     }
     to {
-      transform: translateX(calc(var(--dir) * 300%));
+      transform: translateX(300%);
     }
   }
 

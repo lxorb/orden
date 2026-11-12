@@ -30,7 +30,7 @@
   import { isDesktop } from './tauri'
   import { dragged, dropOver, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
-  import { key, message, t } from './i18n.svelte'
+  import { message } from './message'
   import { keptAway } from './web/away.svelte'
   import { busy } from './busy.svelte'
 
@@ -280,21 +280,21 @@
     if (!file.type.startsWith('image/')) return saveAttachment(file, into)
 
     try {
-      const src = await busy.run(t('Storing the image'), () => storeImage(file, into.path))
+      const src = await busy.run('Storing the image', () => storeImage(file, into.path))
       void usage.refresh()
       return src
     } catch (error) {
       void usage.refresh()
-      settings.error = message(error, key('That image does not fit in your storage.'))
+      settings.error = message(error, 'That image does not fit in your storage.')
       return null
     }
   }
 
   async function saveAttachment(file: File, into: Tab): Promise<string | null> {
     try {
-      return await busy.run(t('Storing the file'), () => storeAttachment(file, into.path))
+      return await busy.run('Storing the file', () => storeAttachment(file, into.path))
     } catch (error) {
-      settings.error = message(error, key('That file could not be kept.'))
+      settings.error = message(error, 'That file could not be kept.')
       return null
     }
   }
@@ -532,8 +532,8 @@
   {:else if tab?.coming}
     <div class="coming" role="status">
       {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
-        ? t('Not on this device. It opens once you are online again.')
-        : t('Loading…')}
+        ? 'Not on this device. It opens once you are online again.'
+        : 'Loading…'}
     </div>
   {:else if tab?.reading}
     {#key tab.id}
@@ -636,7 +636,7 @@
 
 {#snippet unreachable()}
   <div class="coming" role="alert">
-    <button class="orden-button" onclick={() => location.reload()}>{t('Reload')}</button>
+    <button class="orden-button" onclick={() => location.reload()}>Reload</button>
   </div>
 {/snippet}
 

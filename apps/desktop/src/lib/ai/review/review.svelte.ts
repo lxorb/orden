@@ -16,7 +16,6 @@ import {
   undoSomeIn,
 } from '../../agents/docs'
 import { busy } from '../../busy.svelte'
-import { plural, t } from '../../i18n.svelte'
 import { insideSpace, notePath, withinSpace } from '../../space-paths'
 import { dur } from '../../motion'
 import { onDisk } from '../../on-disk'
@@ -63,7 +62,7 @@ interface Redo {
 }
 
 function saidShort(): void {
-  busy.failed(t('Part of this could not be undone'))
+  busy.failed('Part of this could not be undone')
 }
 
 const FADE = 170
@@ -178,7 +177,7 @@ class Review {
 
   async undo(changes: readonly Edit[], token?: string): Promise<number> {
     const { more, short } = await this.take(changes, token)
-    if (more) this.say(plural(more, { one: 'and {count} after it', other: 'and {count} after it' }))
+    if (more) this.say(more === 1 ? 'and 1 after it' : `and ${more} after it`)
     if (short) saidShort()
     return more
   }

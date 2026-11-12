@@ -1,4 +1,3 @@
-import { t } from './i18n.svelte'
 import { invoke, isDesktop } from './tauri'
 
 export interface GlobalKeys {
@@ -34,23 +33,21 @@ export function noteFor(
 ): Note | null {
   const flag = FLAGS[id]
   if (!keys || !flag) return null
-  const taken = { text: t('From other apps: not available, pick another key'), change: false }
+  const taken = { text: 'From other apps: not available, pick another key', change: false }
   if (keys.reach !== 'none' && shown !== null && !reachable) return taken
   if (keys.reach === 'system') return keys.refused.includes(id) ? taken : null
   if (keys.reach === 'none') {
     return {
-      text: t('From other apps: bind {command} in your system settings', {
-        command: `${keys.run} ${flag}`,
-      }),
+      text: `From other apps: bind ${keys.run} ${flag} in your system settings`,
       change: false,
     }
   }
   const given = keys.held[id]
   if (keys.refused.includes(id) || given === '') {
-    return { text: t('From other apps: set in your system settings'), change: keys.change }
+    return { text: 'From other apps: set in your system settings', change: keys.change }
   }
   if (given === undefined || (shown !== null && plain(given) === plain(shown))) return null
-  return { text: t('From other apps: {key}', { key: given }), change: keys.change }
+  return { text: `From other apps: ${given}`, change: keys.change }
 }
 
 class Global {

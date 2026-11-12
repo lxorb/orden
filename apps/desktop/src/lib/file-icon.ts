@@ -9,7 +9,7 @@ import {
 import { oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { isFolderNote } from './folder-notes'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
-import { key, message } from './i18n.svelte'
+import { message } from './message'
 import { changeOf } from './search/replace'
 import { settings } from './settings.svelte'
 import { folderOf, isMarkdownPath } from './space-paths'
@@ -48,7 +48,7 @@ export async function setFileIcon(
   try {
     await workspace.replaceInNotes([changeOf(path, before, [edit])], { anyFile: true })
   } catch (error) {
-    settings.error = message(error, key('That icon could not be written.'))
+    settings.error = message(error, 'That icon could not be written.')
   }
 }
 
@@ -63,7 +63,7 @@ async function withoutOwnKeys(path: string, keys: readonly string[]): Promise<vo
   try {
     await workspace.replaceInNotes([changeOf(path, before, [edit])])
   } catch (error) {
-    settings.error = message(error, key('That icon could not be written.'))
+    settings.error = message(error, 'That icon could not be written.')
   }
 }
 

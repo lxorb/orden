@@ -21,7 +21,7 @@
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../../backstack.svelte'
   import Cross from '../../Cross.svelte'
-  import { i18n, t } from '../../i18n.svelte'
+  import { region } from '../../region'
   import { menu } from '../../menu.svelte'
   import { fade, fly, LAYER } from '../../motion'
   import { overlays } from '../../overlays'
@@ -137,7 +137,7 @@
   async function writeSubtask() {
     const words = subtask.trim()
     if (!words || !row || !writes || writingSubtask) return
-    const read = parseQuickAdd(words, [i18n.language], new Date())
+    const read = parseQuickAdd(words, [region()], new Date())
     const [line] = linesOf({ text: read.text || words, fields: read.fields })
     if (!line) return
     writingSubtask = true
@@ -236,7 +236,7 @@
       ...tags,
       null,
       {
-        label: t('New label'),
+        label: 'New label',
         asks: true,
         run: () => {
           labelling = true
@@ -328,25 +328,22 @@
       <button
         type="button"
         class="orden-glyph"
-        aria-label={t('Previous')}
+        aria-label="Previous"
         disabled={!viewing.can(-1)}
         onclick={() => viewing.step(-1)}><Glyph icon={ChevronUp} /></button
       >
       <button
         type="button"
         class="orden-glyph"
-        aria-label={t('Next')}
+        aria-label="Next"
         disabled={!viewing.can(1)}
         onclick={() => viewing.step(1)}><Glyph icon={ChevronDown} /></button
       >
-      <button type="button" class="orden-glyph" aria-label={t('More')} onclick={moreMenu}
+      <button type="button" class="orden-glyph" aria-label="More" onclick={moreMenu}
         ><Glyph icon={Ellipsis} /></button
       >
-      <button
-        type="button"
-        class="orden-glyph"
-        aria-label={t('Close')}
-        onclick={() => viewing.close()}><Cross /></button
+      <button type="button" class="orden-glyph" aria-label="Close" onclick={() => viewing.close()}
+        ><Cross /></button
       >
     </header>
 
@@ -363,7 +360,7 @@
             class="title"
             class:finished={task.done || task.cancelled}
             bind:value={title}
-            aria-label={t('Task')}
+            aria-label="Task"
             readonly={!writes}
             onfocus={() => (editing = writes)}
             onblur={() => void rename()}
@@ -391,7 +388,7 @@
         <div class="subtasks">
           {#if children.length}
             <p class="orden-section">
-              {t('Sub-tasks')}
+              Sub-tasks
               <span class="count"
                 >{children.filter((one) => one.task?.done).length}/{children.length}</span
               >
@@ -415,8 +412,8 @@
                 bind:value={subtask}
                 class="field"
                 autofocus
-                aria-label={t('Add sub-task')}
-                placeholder={t('Add sub-task')}
+                aria-label="Add sub-task"
+                placeholder="Add sub-task"
                 onkeydown={(event) => {
                   if (event.isComposing) return
                   if (event.key === 'Enter') {
@@ -444,7 +441,7 @@
               }}
             >
               <span class="orden-row-mark"><Glyph icon={Plus} /></span>
-              <span class="orden-row-label">{t('Add sub-task')}</span>
+              <span class="orden-row-label">Add sub-task</span>
             </button>
           {/if}
         </div>
@@ -457,7 +454,7 @@
       </section>
 
       <aside class="side">
-        <p class="orden-section">{t('Note')}</p>
+        <p class="orden-section">Note</p>
         <button
           type="button"
           class="orden-row is-short"
@@ -470,7 +467,7 @@
           <span class="orden-row-label">{row.file.basename}</span>
         </button>
 
-        <p class="orden-section">{t('Start date')}</p>
+        <p class="orden-section">Start date</p>
         <button
           type="button"
           class="orden-row is-short when"
@@ -485,12 +482,12 @@
                   dayWords(starts, today, task.time),
                   task.duration !== undefined && durationLabel(task.duration),
                 ]}
-              />{:else}{t('No date')}{/if}</span
+              />{:else}No date{/if}</span
           >
         </button>
         {#if task.recurrence}<p class="rule">{task.recurrence}</p>{/if}
 
-        <p class="orden-section">{t('Deadline')}</p>
+        <p class="orden-section">Deadline</p>
         <button
           type="button"
           class="orden-row is-short"
@@ -499,11 +496,11 @@
         >
           <span class="orden-row-mark"><Glyph icon={Target} /></span>
           <span class="orden-row-label" class:late={!!deadline && deadline <= today}
-            >{deadline ? dayWords(deadline, today) : t('No deadline')}</span
+            >{deadline ? dayWords(deadline, today) : 'No deadline'}</span
           >
         </button>
 
-        <p class="orden-section">{t('Priority')}</p>
+        <p class="orden-section">Priority</p>
         <button type="button" class="orden-row is-short" disabled={!writes} onclick={priorityMenu}>
           <span class="orden-row-mark" style:color={priorityTone(task.priority)}
             ><Glyph icon={Flag} /></span
@@ -511,14 +508,14 @@
           <span class="orden-row-label">p{Math.min(task.priority, 4)}</span>
         </button>
 
-        <p class="orden-section">{t('Labels')}</p>
+        <p class="orden-section">Labels</p>
         <div class="tags">
           {#each task.tags as tag (tag)}
             <span class="orden-chip tag"
               >#{tag}{#if writes}<button
                   type="button"
                   class="untag"
-                  aria-label={t('Remove')}
+                  aria-label="Remove"
                   onclick={() =>
                     void writeRow(row, {
                       task: { tags: task.tags.filter((one) => one !== tag) },
@@ -531,8 +528,8 @@
               bind:this={labelField}
               bind:value={label}
               class="tag-field"
-              aria-label={t('New label')}
-              placeholder={t('New label')}
+              aria-label="New label"
+              placeholder="New label"
               onkeydown={(event) => {
                 if (event.key === 'Enter' && !event.isComposing) {
                   event.preventDefault()
@@ -550,19 +547,19 @@
             <button
               type="button"
               class="orden-glyph add-tag"
-              aria-label={t('Labels')}
+              aria-label="Labels"
               onclick={labelMenu}><Glyph icon={Hash} /></button
             >
           {/if}
         </div>
 
-        <p class="orden-section">{t('Reminders')}</p>
+        <p class="orden-section">Reminders</p>
         <button type="button" class="orden-row is-short" disabled={!writes} onclick={remindMenu}>
           <span class="orden-row-mark"><Glyph icon={Bell} /></span>
           <span class="orden-row-label"
             >{task.remind.length
               ? task.remind.map((one) => remindLabel(one, today)).join(', ')
-              : t('None')}</span
+              : 'None'}</span
           >
         </button>
       </aside>

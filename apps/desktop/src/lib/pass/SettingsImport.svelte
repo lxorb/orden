@@ -1,7 +1,7 @@
 <script lang="ts">
   import { flushSync } from 'svelte'
   import { guessSource, type Imported, SOURCES, type SourceId } from '@orden/pass/import/index'
-  import { message, plural, t } from '../i18n.svelte'
+  import { message } from '../message'
   import Select from '../Select.svelte'
   import { importedFrom, isSealed } from './import-file'
   import { kindsOf, markOf, stepsOf } from './import-sources'
@@ -90,8 +90,8 @@
   }
 </script>
 
-<h3 class="orden-section">{t('Select your password manager')}</h3>
-<div class="sources" role="group" aria-label={t('Select your password manager')}>
+<h3 class="orden-section">Select your password manager</h3>
+<div class="sources" role="group" aria-label="Select your password manager">
   {#each SOURCES as one (one.id)}
     {@const mark = markOf(one.id)}
     <button
@@ -128,7 +128,7 @@
 
 <div class="card padded">
   <div class="orden-setting">
-    <span class="name">{file?.name ?? t('No file chosen')}</span>
+    <span class="name">{file?.name ?? 'No file chosen'}</span>
     <input
       class="picker"
       type="file"
@@ -136,9 +136,7 @@
       bind:this={picker}
       onchange={(event) => void chosen(event)}
     />
-    <button class="orden-chip" type="button" onclick={() => picker?.click()}
-      >{t('Choose a file')}</button
-    >
+    <button class="orden-chip" type="button" onclick={() => picker?.click()}>Choose a file</button>
   </div>
   {#if sealed && !imported}
     <form
@@ -148,18 +146,16 @@
         void read()
       }}
     >
-      <span class="name">{t('Passphrase')}</span>
+      <span class="name">Passphrase</span>
       <input
         class="orden-field is-value"
         type="password"
         autocomplete="off"
-        placeholder={t('Passphrase')}
-        aria-label={t('Passphrase')}
+        placeholder="Passphrase"
+        aria-label="Passphrase"
         bind:value={passphrase}
       />
-      <button class="orden-chip" type="submit" disabled={busy || passphrase === ''}
-        >{t('Open')}</button
-      >
+      <button class="orden-chip" type="submit" disabled={busy || passphrase === ''}>Open</button>
     </form>
   {/if}
 </div>
@@ -167,31 +163,30 @@
 {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
 
 {#if imported}
-  <h3 class="orden-section">{t('Ready to import')}</h3>
+  <h3 class="orden-section">Ready to import</h3>
   <div class="card padded preview">
     {#each imported.vaults as vault, index (index)}
       <div class="orden-setting">
         <span class="name">{vault.name}</span>
         <span class="text meta"
-          >{plural(vault.items.length, { one: '{count} item', other: '{count} items' })}</span
+          >{vault.items.length === 1 ? '1 item' : `${vault.items.length} items`}</span
         >
       </div>
     {/each}
     {#if imported.skipped.length}
       <p class="meta">
-        {plural(imported.skipped.length, {
-          one: '{count} item cannot be read',
-          other: '{count} items cannot be read',
-        })}
+        {imported.skipped.length === 1
+          ? '1 item cannot be read'
+          : `${imported.skipped.length} items cannot be read`}
       </p>
     {/if}
     <div class="orden-setting">
-      <span class="name">{t('Into')}</span>
+      <span class="name">Into</span>
       <Select
-        label={t('Into')}
+        label="Into"
         value={into}
         options={[
-          { value: 'new', label: t('A new vault for each') },
+          { value: 'new', label: 'A new vault for each' },
           ...pass.vaults.map((one) => ({ value: one.id, label: one.name })),
         ]}
         onchange={(value: string) => (into = value)}
@@ -204,7 +199,7 @@
         disabled={busy || counted === 0}
         onclick={() => void brought()}
       >
-        {plural(counted, { one: 'Import {count} item', other: 'Import {count} items' })}
+        {counted === 1 ? 'Import 1 item' : `Import ${counted} items`}
       </button>
     </div>
   </div>
@@ -213,10 +208,10 @@
 {#if done}
   <div class="card padded report" role="status">
     <p class="added">
-      {plural(done.added, { one: '{count} item imported', other: '{count} items imported' })}
+      {done.added === 1 ? '1 item imported' : `${done.added} items imported`}
     </p>
     {#each done.skipped as one, index (index)}
-      <p class="meta">{one.title || t('Untitled')}: {one.reason}</p>
+      <p class="meta">{one.title || 'Untitled'}: {one.reason}</p>
     {/each}
   </div>
 {/if}

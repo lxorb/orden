@@ -203,7 +203,7 @@ describe('a folder of HTML', () => {
     expect(text).toContain('# Page')
     expect(text).toContain('**bold**')
     expect(text).toContain('- list')
-    expect(plan.lost[0]?.values).toEqual({ count: 1 })
+    expect(plan.lost[0]).toBe('1 pages came as HTML, so their words are kept and their look is not')
   })
 
   test('a link between two pages of an HTML export still finds its note', async () => {

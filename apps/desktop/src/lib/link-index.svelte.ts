@@ -30,7 +30,6 @@ import {
 import { breathe } from './breathe'
 import { buildGraph, type NoteGraph } from './graph'
 import { type Placed, retargetLinks } from './link-rewrite'
-import { t } from './i18n.svelte'
 import { AGENTS_NAME, shownName } from './note-name'
 import type { Hit } from '@orden/scan/search/match'
 import { parseQuery } from '@orden/scan/search/query'
@@ -746,9 +745,9 @@ class Links {
           const { tasksRowsHtml } = await import('./tasks-block')
           const { trustsHtmlAt } = await import('./sharing.svelte')
           const here = path === null || this.root === null ? null : insideSpace(this.root, path)
-          return tasksRowsHtml(code, t('Nothing found'), null, stranger || !trustsHtmlAt(here))
+          return tasksRowsHtml(code, 'Nothing found', null, stranger || !trustsHtmlAt(here))
         }
-        return queryBlock.queryRowsHtml(code, t('Nothing found'))
+        return queryBlock.queryRowsHtml(code, 'Nothing found')
       },
       pressRow: (target) => queryBlock?.pressRow(target) ?? false,
       tasks: listed ? TASKS : undefined,

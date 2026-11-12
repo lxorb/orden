@@ -21,7 +21,7 @@ const PANES = svelteFiles(LIB)
 const styleOf = (source: string) => /<style>([\s\S]*)<\/style>/.exec(source)?.[1] ?? ''
 
 const NOT_VALUES = [
-  /placeholder=\{t\('Search (settings|shortcuts|commands)'\)\}/,
+  /placeholder="Search (settings|shortcuts|commands)"/,
   /class="title"/,
   /rows="12"/,
   /class="slider orden-slider"/,
@@ -97,8 +97,8 @@ describe('Settings > Account', () => {
 
   test('keeps a status in one field, the emoji pressed inside it', () => {
     const status = /<span class="orden-field is-value">([\s\S]*?)<\/span>\n/.exec(markup)?.[1]
-    expect(status).toMatch(/aria-label=\{t\('Emoji'\)\}/)
-    expect(status).toMatch(/aria-label=\{t\('Status'\)\}/)
+    expect(status).toMatch(/aria-label="Emoji"/)
+    expect(status).toMatch(/aria-label="Status"/)
   })
 
   test('asks when a status clears only while there is one', () => {
@@ -108,7 +108,7 @@ describe('Settings > Account', () => {
   })
 
   test('changes and removes a picture with the same kind of button', () => {
-    const picture = markup.slice(markup.indexOf("t('Picture')"), markup.indexOf("t('Pronouns')"))
+    const picture = markup.slice(markup.indexOf('>Picture<'), markup.indexOf('>Pronouns<'))
     const kinds = new Set([...picture.matchAll(/<button\s+class="([^"]+)"/g)].map((hit) => hit[1]))
     expect([...kinds]).toEqual(['orden-chip'])
   })

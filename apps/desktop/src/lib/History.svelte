@@ -7,7 +7,7 @@
   import { scrollbar } from './scrollbar'
   import { canWriteIn } from './sharing.svelte'
   import { readableSize } from './usage.svelte'
-  import { i18n, t } from './i18n.svelte'
+  import { localDate } from './region'
   import { when } from './when'
   import { cubicOut } from 'svelte/easing'
   import { type Tab, workspace } from './workspace.svelte'
@@ -98,7 +98,7 @@
     let said = ''
 
     for (const version of versions) {
-      const month = i18n.when(version.at, { month: 'long', year: 'numeric' })
+      const month = localDate(version.at, { month: 'long', year: 'numeric' })
 
       if (month !== said) {
         out.push({ month })
@@ -137,11 +137,11 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label={t('Version history')}
+    aria-label="Version history"
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     {#if !workspace.active?.path || shut || !versions.length}
-      <p class="empty">{t('No earlier versions yet.')}</p>
+      <p class="empty">No earlier versions yet.</p>
     {:else}
       <ul class="versions" use:scrollbar>
         {#each rows as row (row.month ?? row.version?.at)}
@@ -167,8 +167,8 @@
 
       <div class="preview">
         <div class="faces">
-          <button class:on={comparing} onclick={() => (comparing = true)}>{t('Changes')}</button>
-          <button class:on={!comparing} onclick={() => (comparing = false)}>{t('Text')}</button>
+          <button class:on={comparing} onclick={() => (comparing = true)}>Changes</button>
+          <button class:on={!comparing} onclick={() => (comparing = false)}>Text</button>
 
           {#if comparing && changes.length}
             <span class="tally">
@@ -189,12 +189,12 @@
             {/each}
           </div>
         {:else}
-          <div class="diff same"><p class="empty">{t('No changes')}</p></div>
+          <div class="diff same"><p class="empty">No changes</p></div>
         {/if}
 
         {#if canWriteIn(previewOf?.note)}
           <button class="orden-button" onclick={() => void restore()}>
-            {t('Restore this version')}
+            Restore this version
           </button>
         {/if}
       </div>

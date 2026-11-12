@@ -1,4 +1,4 @@
-import { i18n } from './i18n.svelte'
+import { localDate } from './region'
 
 export function when(stamp: number, dateStyle: 'short' | 'medium', now = new Date()): string {
   const at = new Date(stamp)
@@ -8,6 +8,6 @@ export function when(stamp: number, dateStyle: 'short' | 'medium', now = new Dat
     at.getDate() === now.getDate()
 
   return today
-    ? i18n.when(at, { timeStyle: 'short' })
-    : i18n.when(at, { dateStyle, timeStyle: 'short' })
+    ? localDate(at, { timeStyle: 'short' })
+    : localDate(at, { dateStyle, timeStyle: 'short' })
 }

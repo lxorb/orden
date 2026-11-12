@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { withOrWithout } from '../records'
 import { isRecord, keep, keepJson, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
@@ -43,7 +42,7 @@ function sizeOf(value: unknown): number {
 }
 
 export function shellName(shell: Shell): string {
-  return shell.id === 'cmd' ? t('Command Prompt') : shell.name
+  return shell.id === 'cmd' ? 'Command Prompt' : shell.name
 }
 
 function readShells(value: unknown): Shell[] {

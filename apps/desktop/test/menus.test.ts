@@ -45,30 +45,30 @@ describe('what a space offers', () => {
   const space = moduleBody(read('lib/space-actions.ts'), 'export function spaceMenu(space: Space)')
 
   test('the space itself: its name, its mark, who may reach it', () => {
-    for (const entry of ["t('Rename')", "t('Choose an icon')", "t('Share')", "t('Publish')"]) {
+    for (const entry of ["'Rename'", "'Choose an icon'", "'Share'", "'Publish'"]) {
       expect(space, entry).toContain(entry)
     }
   })
 
   test('publishing stands next to sharing', () => {
-    const share = space.indexOf("t('Share')")
-    const publish = space.indexOf("t('Publish')")
+    const share = space.indexOf("'Share'")
+    const publish = space.indexOf("'Publish'")
 
     expect(publish).toBeGreaterThan(share)
     expect(space.slice(share, publish).match(/label:/g) ?? []).toHaveLength(1)
   })
 
   test('and not what to put in it, which is the file list', () => {
-    expect(space).not.toContain("t('New note')")
+    expect(space).not.toContain("'New note'")
   })
 
   test('a shared space still offers the way out of it', () => {
-    expect(space).toContain("t('Leave space')")
+    expect(space).toContain("'Leave space'")
   })
 
   test('and where it sits, as a step in each direction', () => {
-    expect(space).toContain("t('Move up')")
-    expect(space).toContain("t('Move down')")
+    expect(space).toContain("'Move up'")
+    expect(space).toContain("'Move down'")
   })
 
   test('but not for a space somebody else shared', () => {
@@ -101,8 +101,8 @@ describe('the path a note sits at', () => {
   ].join('\n')
 
   test('is not a row in any menu, on any device', () => {
-    expect(everywhere).not.toContain("t('Reveal in Explorer')")
-    expect(everywhere).not.toContain("t('Copy path')")
+    expect(everywhere).not.toContain("'Reveal in Explorer'")
+    expect(everywhere).not.toContain("'Copy path'")
     expect(everywhere).not.toContain('revealEntry')
     expect(everywhere).not.toContain('copyPathEntry')
   })
@@ -122,7 +122,7 @@ describe('making a folder', () => {
   ].join('\n')
 
   test('is not offered anywhere, under any name', () => {
-    expect(everywhere).not.toContain("t('New folder')")
+    expect(everywhere).not.toContain("'New folder'")
     expect(everywhere).not.toContain('createFolder')
   })
 
@@ -142,23 +142,23 @@ describe('what a row of the file list offers', () => {
   const entries = moduleBody(read('lib/menu.svelte.ts'), 'export function iconEntries(')
 
   test('its name, and where it goes', () => {
-    for (const entry of ["t('Rename')", 'moveEntry(entry)']) {
+    for (const entry of ["'Rename'", 'moveEntry(entry)']) {
       expect(row, entry).toContain(entry)
     }
   })
 
   test('a note inside it, which is how a note comes to hold notes', () => {
-    expect(row).toContain("t('New note inside')")
+    expect(row).toContain("'New note inside'")
     expect(row).toContain('workspace.createInside(entry.path)')
   })
 
   test('its icon, in the same words the rail uses for a space', () => {
     expect(row).toContain('iconEntries(marked.path, entry.is_dir && !own)')
-    expect(entries).toContain("t('Choose an icon')")
+    expect(entries).toContain("'Choose an icon'")
   })
 
   test('and the way back to no icon, only while it wears one', () => {
-    expect(entries).toContain("t('Remove icon')")
+    expect(entries).toContain("'Remove icon'")
     expect(entries).toContain('chosenIcon(path) === null')
   })
 
@@ -178,7 +178,7 @@ describe('what a row of the file list offers', () => {
     const removing = moduleBody(source, 'async function removeRow(')
 
     expect(removing).toContain('prompt.confirm')
-    expect(removing).toContain("t('The notes inside it go too.')")
+    expect(removing).toContain("'The notes inside it go too.'")
     expect(removing).toContain('workspace.remove(entry.path, true)')
   })
 
@@ -234,7 +234,7 @@ describe('what the plus in the tab strip offers', () => {
     expect(plus).toContain('workspace.newTab(paneId)')
     expect(plus).not.toContain('aria-haspopup')
     expect(tabs).not.toContain('new-kinds')
-    expect(tabs).not.toContain("t('New canvas')")
+    expect(tabs).not.toContain("'New canvas'")
   })
 
   test('a press is the new tab, with nothing hung from it', () => {

@@ -12,7 +12,6 @@ import {
   hoverTooltip,
   type Tooltip,
 } from '@codemirror/view'
-import { label } from '../labels'
 import { OrdenWidget } from '../live-preview/widget'
 import { type SharedDoc, sharedOf } from '../shared'
 
@@ -164,7 +163,7 @@ const offer = hoverTooltip(
         for (const keep of [false, true]) {
           const button = bar.appendChild(document.createElement('button'))
           button.type = 'button'
-          button.textContent = label(keep ? 'keep' : 'undo')
+          button.textContent = keep ? 'Keep' : 'Undo'
           button.className = keep ? 'is-keep' : 'is-undo'
           button.addEventListener('mousedown', (event) => {
             event.preventDefault()

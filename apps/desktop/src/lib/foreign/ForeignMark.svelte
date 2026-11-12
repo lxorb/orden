@@ -1,7 +1,6 @@
 <script lang="ts">
   import { foreignCopy } from '@orden/sync-core/foreign'
   import CloudOff from 'lucide/dist/esm/icons/cloud-off.mjs'
-  import { t } from '../i18n.svelte'
   import SharedMark from '../SharedMark.svelte'
   import { nameOf } from '../space-paths'
 
@@ -12,10 +11,7 @@
 
 {#if copy}
   <span class="foreign">
-    <SharedMark
-      label={t('{tool} conflict copy, not synced', { tool: copy.tool })}
-      icon={CloudOff}
-    />
+    <SharedMark label="{copy.tool} conflict copy, not synced" icon={CloudOff} />
   </span>
 {/if}
 

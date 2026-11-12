@@ -1,6 +1,5 @@
 import { addDays, weekday } from '@orden/bases'
 import type { Priority, Remind } from '@orden/markdown/task-line'
-import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu-item'
 import { dayWords, durationLabel, remindLabel } from './labels'
 import { nextMonday } from '../views/days'
@@ -68,17 +67,17 @@ export function dayRows(
     day(today),
     day(addDays(today, 1)),
     ...(weekend > addDays(today, 1) ? [day(weekend)] : []),
-    { ...day(nextMonday(today)), label: t('Next week') },
+    { ...day(nextMonday(today)), label: 'Next week' },
     DIVIDER,
     {
-      label: t('Pick a date…'),
+      label: 'Pick a date…',
       asks: true,
       run: () => void askNative('date', current.due, anchor()).then((due) => due && set({ due })),
     },
     ...(timed
       ? [
           {
-            label: t('Set a time…'),
+            label: 'Set a time…',
             asks: true,
             run: () =>
               void askNative('time', current.time, anchor()).then(
@@ -88,14 +87,14 @@ export function dayRows(
         ]
       : []),
     ...(current.due
-      ? [DIVIDER, { label: t('No date'), run: () => set({ due: null, time: null }) }]
+      ? [DIVIDER, { label: 'No date', run: () => set({ due: null, time: null }) }]
       : []),
   ]
 }
 
 export function priorityRows(current: Priority, set: (priority: Priority) => void): MenuEntry[] {
   return ([1, 2, 3, 4] as const).map((level) => ({
-    label: t('Priority {level}', { level }),
+    label: `Priority ${level}`,
     checked: current === level,
     run: () => set(level),
   }))
@@ -125,7 +124,7 @@ export function remindRows(
   return [
     ...timed.map(toggle),
     toggle(morning),
-    ...(current.length ? [DIVIDER, { label: t('Remove'), run: () => set([]) }] : []),
+    ...(current.length ? [DIVIDER, { label: 'Remove', run: () => set([]) }] : []),
   ]
 }
 
@@ -139,7 +138,7 @@ export function durationRows(
       checked: current === minutes,
       run: () => set(minutes),
     })),
-    ...(current === undefined ? [] : [DIVIDER, { label: t('Remove'), run: () => set(null) }]),
+    ...(current === undefined ? [] : [DIVIDER, { label: 'Remove', run: () => set(null) }]),
   ]
 }
 
@@ -149,7 +148,7 @@ export function whereRows(
   set: (note: string | undefined) => void,
 ): MenuEntry[] {
   return [
-    { label: t('Inbox'), checked: current === undefined, run: () => set(undefined) },
+    { label: 'Inbox', checked: current === undefined, run: () => set(undefined) },
     ...(notes.length ? [DIVIDER] : []),
     ...notes.map((note) => ({
       label: note.split('/').at(-1) ?? note,

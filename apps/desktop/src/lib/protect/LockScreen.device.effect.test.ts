@@ -68,6 +68,8 @@ describe('a lock the device opens', () => {
     owner.can = false
     await show()
     expect(deviceButton()).toBeUndefined()
-    expect(target.textContent).toContain('another device can remove the protection')
+    expect(target.textContent.replace(/\s+/g, ' ')).toContain(
+      'another device can remove the protection',
+    )
   })
 })

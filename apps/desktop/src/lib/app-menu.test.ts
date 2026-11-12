@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import type { MenuGroup, MenuRow } from './menu-item'
 import type { MenuItem } from './menu-item'
-import { de } from '../locales/de'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -26,7 +25,6 @@ const { ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./links')
 const { isSubmenu, walkableRows } = await import('./menu-item')
 const { appCommands } = await import('./commands')
 const { BY_ID } = await import('./shortcuts/registry')
-const { i18n } = await import('./i18n.svelte')
 
 const menu = (): MenuGroup[] => appMenu({ onpalette: () => undefined, onhistory: () => undefined })
 
@@ -238,39 +236,7 @@ describe('the menu, the palette and the shortcut settings agree', () => {
   })
 })
 
-describe('the palette in another language', () => {
-  const inGerman = async <T>(read: () => T): Promise<T> => {
-    const was = i18n.choice
-    i18n.choice = 'de'
-    await i18n.load()
-    try {
-      return read()
-    } finally {
-      i18n.choice = was
-      await i18n.load()
-    }
-  }
-
-  test('says nothing in English', async () => {
-    const english = await inGerman(() =>
-      appCommands()
-        .map((one) => one.label)
-        .filter((label) => /^(Theme|Code theme|Mode|Recent):/.test(label)),
-    )
-
-    expect(english).toEqual([])
-  })
-
-  test('leaves no row standing in its English wording', async () => {
-    const unchanged = await inGerman(() =>
-      appCommands()
-        .map((one) => one.label)
-        .filter((label) => typeof de[label] === 'string' && de[label] !== label),
-    )
-
-    expect(unchanged).toEqual([])
-  })
-
+describe('the palette', () => {
   test('ticks the theme in use rather than writing a word beside it', () => {
     const themes = appCommands().filter((one) => one.id.startsWith('theme:'))
     expect(themes.length).toBeGreaterThan(0)

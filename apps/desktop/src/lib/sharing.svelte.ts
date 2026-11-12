@@ -8,7 +8,7 @@ import {
   type SpaceRole,
 } from './api'
 import { account } from './account.svelte'
-import { message } from './i18n.svelte'
+import { message } from './message'
 import { rooms } from './rooms.svelte'
 import { samePath } from './space-paths'
 import { forget, keepJson, Shared } from './stored'

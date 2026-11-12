@@ -5,10 +5,6 @@ vi.mock('../api', () => ({ api: {} }))
 vi.mock('../account.svelte', () => ({
   account: { accountToken: null, forgetWithSession: () => undefined },
 }))
-vi.mock('../i18n.svelte', () => ({
-  t: (text: string) => text,
-  key: (text: string) => text,
-}))
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()

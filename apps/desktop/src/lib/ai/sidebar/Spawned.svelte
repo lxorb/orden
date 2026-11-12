@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../../i18n.svelte'
   import { chat } from './chat.svelte'
 
   const { threads }: { threads: readonly string[] } = $props()
@@ -22,9 +21,9 @@
     {#each shown as one (one.id)}
       <li>
         <button class="orden-row is-short" onclick={() => void chat.openThread(one.id)}>
-          <span class="orden-row-label">{one.title || t('Untitled')}</span>
+          <span class="orden-row-label">{one.title || 'Untitled'}</span>
           {#if chat.running.includes(one.id)}<span class="dot"></span>{:else}<span
-              class="orden-row-meta">{t('Open')}</span
+              class="orden-row-meta">Open</span
             >{/if}
         </button>
       </li>
@@ -32,7 +31,7 @@
     {#if shown.length < rows.length}
       <li>
         <button class="orden-row is-short" onclick={() => (all = true)}>
-          <span class="orden-row-label">{t('Show all')}</span>
+          <span class="orden-row-label">Show all</span>
           <span class="orden-row-meta">{rows.length}</span>
         </button>
       </li>

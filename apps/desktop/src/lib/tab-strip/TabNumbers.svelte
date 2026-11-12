@@ -23,8 +23,4 @@
     z-index: var(--z-popover);
     transform: translate(-60%, -60%);
   }
-
-  :global(:root[dir='rtl']) .numeral {
-    transform: translate(-40%, -60%);
-  }
 </style>

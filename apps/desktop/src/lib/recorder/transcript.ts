@@ -1,5 +1,4 @@
 import { formatWikilink } from '@orden/markdown/links'
-import { t } from '../i18n.svelte'
 
 export function embedFor(name: string): string {
   return formatWikilink({ target: name, heading: null, block: null, alias: null, embed: true })
@@ -17,11 +16,11 @@ export function languageName(code: string, locale: string): string {
 }
 
 export function writtenBy(model: string): string {
-  return `*${t('Written by {model}', { model })}*`
+  return `*Written by ${model}*`
 }
 
 function heading(language: string): string {
-  return language ? t('Transcript ({language})', { language }) : t('Transcript')
+  return language ? `Transcript (${language})` : 'Transcript'
 }
 
 function quoted(text: string): string {
@@ -58,5 +57,5 @@ function clockOf(at: Date): string {
 }
 
 export function recordingNoteName(at: Date): string {
-  return t('Recording {date} {time}', { date: dayOf(at), time: clockOf(at) })
+  return `Recording ${dayOf(at)} ${clockOf(at)}`
 }

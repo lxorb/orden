@@ -12,7 +12,6 @@ import { inProjects } from './rows/projects'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'
-import { t } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import { canShareItem, canWriteAt, shareThisFile } from './sharing.svelte'
 import { isMarkdownPath, withinSpace } from './space-paths'
@@ -116,7 +115,7 @@ export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
 
   return [
     {
-      label: workspace.bookmarks.has(mark) ? t('Remove from Essentials') : t('Add to Essentials'),
+      label: workspace.bookmarks.has(mark) ? 'Remove from Essentials' : 'Add to Essentials',
       run: () => workspace.bookmarks.toggle(mark),
     },
   ]
@@ -125,7 +124,7 @@ export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
 export function searchAgainEntry(path: string | null | undefined): MenuEntry[] {
   if (!path || !workspace.excluded.names(path)) return []
 
-  return [{ label: t('Search here again'), run: () => workspace.excluded.toggle(path) }]
+  return [{ label: 'Search here again', run: () => workspace.excluded.toggle(path) }]
 }
 
 export function archiveEntry(path: string | null | undefined): MenuEntry[] {
@@ -137,7 +136,7 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
     ? []
     : [
         {
-          label: archived ? t('Unarchive') : t('Archive'),
+          label: archived ? 'Unarchive' : 'Archive',
           run: () =>
             void import('./archiving').then((one) =>
               archived ? one.unarchive(path) : one.archive([path]),
@@ -162,12 +161,12 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
 
   return [
     {
-      label: t('Choose an icon'),
+      label: 'Choose an icon',
       run: () => (mapped ? iconChoice.folder(path) : iconChoice.file(path)),
     },
     ...(chosenIcon(path) === null
       ? []
-      : [{ label: isWebTarget(path) ? t('Reset to site icon') : t('Remove icon'), run: take }]),
+      : [{ label: isWebTarget(path) ? 'Reset to site icon' : 'Remove icon', run: take }]),
   ]
 }
 
@@ -179,13 +178,13 @@ export function coverEntries(path: string | null | undefined): MenuEntry[] {
 
   return [
     {
-      label: there ? t('Change cover') : t('Set cover'),
+      label: there ? 'Change cover' : 'Set cover',
       run: () => void cover().then((one) => one.chooseCover(path)),
     },
     ...(there
       ? [
           {
-            label: t('Remove cover'),
+            label: 'Remove cover',
             run: () => void cover().then((one) => one.removeCover(path)),
           },
         ]
@@ -207,7 +206,7 @@ export function listEntry(path: string | null | undefined): MenuEntry[] {
   const lists = () => import('./rows/todo-lists')
   return [
     {
-      label: listed ? t('Stop using as todo list') : t('Use as todo list'),
+      label: listed ? 'Stop using as todo list' : 'Use as todo list',
       run: () => void lists().then((one) => (listed ? one.unmakeList(path) : one.makeList(path))),
     },
   ]
@@ -218,7 +217,7 @@ export function stackEntries(paneId: string): MenuEntry[] {
 
   return [
     {
-      label: workspace.stacked(paneId) ? t('Unstack tabs') : t('Stack tabs'),
+      label: workspace.stacked(paneId) ? 'Unstack tabs' : 'Stack tabs',
       checked: workspace.stacked(paneId),
       run: () => workspace.toggleStacked(paneId),
     },
@@ -229,5 +228,5 @@ export function stackEntries(paneId: string): MenuEntry[] {
 export function shareEntry(path: string | null | undefined): MenuEntry[] {
   if (!path || !canShareItem(path)) return []
 
-  return [{ label: t('Share'), run: () => void shareThisFile(path) }]
+  return [{ label: 'Share', run: () => void shareThisFile(path) }]
 }

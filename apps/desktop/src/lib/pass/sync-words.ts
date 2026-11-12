@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import type { PassSyncState } from './syncing.svelte'
 
 export function syncWord(state: PassSyncState): string | null {
@@ -6,16 +5,16 @@ export function syncWord(state: PassSyncState): string | null {
     case 'off':
       return null
     case 'syncing':
-      return t('Syncing…')
+      return 'Syncing…'
     case 'synced':
-      return t('Synced')
+      return 'Synced'
     case 'offline':
-      return t('Offline')
+      return 'Offline'
     case 'old-server':
-      return t('This account’s server does not have Pass yet')
+      return 'This account’s server does not have Pass yet'
     case 'conflict':
-      return t('This account already has a Pass')
+      return 'This account already has a Pass'
     case 'other-account':
-      return t('This Pass belongs to another account')
+      return 'This Pass belongs to another account'
   }
 }

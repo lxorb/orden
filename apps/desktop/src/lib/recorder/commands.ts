@@ -1,6 +1,5 @@
 import type { EditorView } from '@orden/editor'
 import { embedKind, parseWikilink } from '@orden/markdown/links'
-import { t } from '../i18n.svelte'
 import { canWriteAt } from '../sharing.svelte'
 import { isMarkdownPath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -26,7 +25,7 @@ export function canRecord(view?: EditorView): boolean {
 }
 
 export function recordLabel(): string {
-  return woken?.on ? t('Stop recording') : t('Record')
+  return woken?.on ? 'Stop recording' : 'Record'
 }
 
 export function recordingAt(view: EditorView, at: number): string | null {

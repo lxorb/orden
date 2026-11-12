@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { keyElsewhere } from '../layer-keys'
   import { shortcuts } from '../shortcuts.svelte'
   import { arrive } from '../slide'
@@ -105,10 +104,10 @@
   {/if}
 
   {#if live.failed}
-    <p class="empty">{t('This base cannot be read')}</p>
+    <p class="empty">This base cannot be read</p>
   {:else}
     {#if live.answer?.partial}
-      <p class="partial" role="status">{t('{name} took too long to answer.', { name: title })}</p>
+      <p class="partial" role="status">{title} took too long to answer.</p>
     {/if}
     {#key layout}
       <div

@@ -1,7 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { t } from '../i18n.svelte'
-  import { steppedKey } from '../direction'
   import ExplorerPreview from './ExplorerPreview.svelte'
   import type { ExplorerView } from './view.svelte'
 
@@ -20,7 +18,7 @@
   }
 
   function onkey(event: KeyboardEvent) {
-    const key = steppedKey(event.key)
+    const key = event.key
     if (event.key === 'Escape' || event.key === ' ') onclose()
     else if (key === 'ArrowRight' || key === 'ArrowDown') step(1)
     else if (key === 'ArrowLeft' || key === 'ArrowUp') step(-1)
@@ -34,7 +32,7 @@
   class="look"
   role="dialog"
   aria-modal="true"
-  aria-label={t('Preview')}
+  aria-label="Preview"
   tabindex="-1"
   bind:this={box}
   onkeydown={onkey}

@@ -1,4 +1,3 @@
-import { t } from './i18n.svelte'
 import type { ThemeSetting } from './themes/settings'
 
 export interface Accent {
@@ -86,14 +85,14 @@ export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<strin
 export function accentSetting(): ThemeSetting {
   return {
     id: 'accent',
-    label: t('Accent'),
-    hint: t('The colour of buttons, links and the selection.'),
+    label: 'Accent',
+    hint: 'The colour of buttons, links and the selection.',
     shared: true,
     kind: 'colour',
     initial: DEFAULT_ACCENT,
     options: ACCENTS.map((one) => ({
       value: one.id,
-      name: t(one.name),
+      name: one.name,
       dark: one.dark,
       light: one.light,
     })),

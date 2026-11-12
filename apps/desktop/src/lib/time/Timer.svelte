@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import { ticking } from './days'
   import { clock, nameOf, tintOf } from './look'
@@ -35,7 +34,7 @@
         checked: one.id === span.activity,
         run: () => time.changeSpan(span.id, { activity: one.id }),
       })),
-      { title: t('Activity') },
+      { title: 'Activity' },
     )
   }
 </script>
@@ -44,15 +43,15 @@
   {#if running}
     <span class="dot" style:background={tintOf(running.activity)}></span>
     <button type="button" class="what" aria-haspopup="menu" onclick={switchMenu}>
-      <span class="name">{nameOf(running.activity, t('No activity'))}</span>
-      <span class="since">{t('Since {time}', { time: clock(running.start) })}</span>
+      <span class="name">{nameOf(running.activity, 'No activity')}</span>
+      <span class="since">Since {clock(running.start)}</span>
     </button>
     <span class="tick" role="timer">{ticking(now - running.start)}</span>
     <button
       type="button"
       class="orden-button is-danger go"
-      aria-label={t('Stop timer')}
-      title={t('Stop timer')}
+      aria-label="Stop timer"
+      title="Stop timer"
       onclick={() => time.stop()}
     >
       <svg viewBox="0 0 12 12" aria-hidden="true"
@@ -63,8 +62,8 @@
     <div class="asking">
       <input
         class="orden-field"
-        aria-label={t('What are you working on?')}
-        placeholder={t('What are you working on?')}
+        aria-label="What are you working on?"
+        placeholder="What are you working on?"
         bind:value={said}
         onfocus={() => (looking = true)}
         onblur={() => setTimeout(() => (looking = false), 150)}
@@ -77,7 +76,7 @@
         }}
       />
       {#if looking && said.trim() && matches.length}
-        <ul class="matches orden-layer" role="listbox" aria-label={t('Activity')}>
+        <ul class="matches orden-layer" role="listbox" aria-label="Activity">
           {#each matches as one (one.id)}
             <li>
               <button
@@ -99,8 +98,8 @@
     <button
       type="button"
       class="orden-button go"
-      aria-label={t('Start timer')}
-      title={t('Start timer')}
+      aria-label="Start timer"
+      title="Start timer"
       disabled={!said.trim()}
       onclick={() => started()}
     >

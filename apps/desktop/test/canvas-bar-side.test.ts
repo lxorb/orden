@@ -17,9 +17,4 @@ describe('the canvas bar against a side', () => {
     expect(rule('.cluster.left')).toContain('flex-direction: row-reverse;')
     expect(rule('.cluster.right')).toContain('flex-direction: row;')
   })
-
-  test('and the same sides where a row starts on the right', () => {
-    expect(rule(":global([dir='rtl']) .cluster.left")).toContain('flex-direction: row;')
-    expect(rule(":global([dir='rtl']) .cluster.right")).toContain('flex-direction: row-reverse;')
-  })
 })

@@ -1,8 +1,8 @@
-import { key } from '../i18n.svelte'
 import { answer, frameWord, method } from '../mobile/bridge'
 import type { Hooks, Listening } from './listening'
 import { speechRecogniser } from './recogniser'
 import { type Field, Spot } from './spot'
+import { systemLocale } from '../region'
 
 interface Result {
   isFinal: boolean
@@ -70,7 +70,7 @@ export class DeviceSession {
     if (!listen) return
     answer('__ordenHeard', (json: string) => this.phoneSaid(json))
     const word = await frameWord()
-    if (!word) throw new Error(key('That microphone could not be opened.'))
+    if (!word) throw new Error('That microphone could not be opened.')
     listen(word, true)
   }
 
@@ -89,7 +89,7 @@ export class DeviceSession {
     if (typeof held.partial === 'string') this.heard(held.partial, false)
     if (typeof held.text === 'string' && held.text.trim()) this.heard(held.text, true)
     if (held.state === 'refused') {
-      this.hooks.trouble(key('That microphone could not be opened.'))
+      this.hooks.trouble('That microphone could not be opened.')
       this.brokenOff()
     } else if (held.state === 'off') {
       this.endedItself()
@@ -98,11 +98,11 @@ export class DeviceSession {
 
   private openWeb(): void {
     const makes = speechRecogniser() as (new () => Recogniser) | undefined
-    if (!makes) throw new Error(key('That microphone could not be opened.'))
+    if (!makes) throw new Error('That microphone could not be opened.')
     const one = new makes()
     one.continuous = true
     one.interimResults = true
-    one.lang = document.documentElement.lang || navigator.language || 'en'
+    one.lang = systemLocale()
 
     one.onresult = (event) => {
       this.restarts = 0
@@ -119,7 +119,7 @@ export class DeviceSession {
     one.onspeechend = () => this.hooks.level(0)
     one.onerror = (event) => {
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        this.hooks.trouble(key('That microphone could not be opened.'))
+        this.hooks.trouble('That microphone could not be opened.')
         this.brokenOff()
       }
     }

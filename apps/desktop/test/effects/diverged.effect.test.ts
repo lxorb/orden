@@ -107,7 +107,6 @@ afterEach(async () => {
   flushSync()
   await vi.waitFor(() => expect(dialog()).toBeNull())
   workspace.tabs = []
-  document.documentElement.dir = 'ltr'
   vi.useRealTimers()
   vi.restoreAllMocks()
 })
@@ -226,15 +225,6 @@ describe('the keyboard', () => {
     keeps()[1]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
     expect(document.activeElement).toBe(keeps()[0])
     keeps()[0]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
-    expect(document.activeElement).toBe(keeps()[1])
-  })
-
-  test('which is mirrored where the interface reads right to left', () => {
-    document.documentElement.dir = 'rtl'
-    inFront('/space/Trip.md')
-    expect(document.activeElement).toBe(keeps()[0])
-
-    keeps()[0]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
     expect(document.activeElement).toBe(keeps()[1])
   })
 

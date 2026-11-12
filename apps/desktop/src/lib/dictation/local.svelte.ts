@@ -1,4 +1,4 @@
-import { key, message } from '../i18n.svelte'
+import { message } from '../message'
 import { forget, keep, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 
@@ -67,7 +67,7 @@ class Local {
       await invoke('dictation_local_fetch', { progress })
       if (this.machine) this.machine = { ...this.machine, installed: true }
     } catch (error) {
-      this.trouble = message(error, key('The speech model could not be downloaded.'))
+      this.trouble = message(error, 'The speech model could not be downloaded.')
     } finally {
       this.fetching = null
     }

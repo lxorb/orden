@@ -21,7 +21,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 const { preferences, resettable } = await import('./preferences')
-const { LANGUAGES } = await import('./i18n.svelte')
 const { theme } = await import('./theme.svelte')
 const { DICTIONARIES } = await import('./spell-languages')
 
@@ -310,39 +309,13 @@ describe('the version', () => {
   })
 })
 
-describe('the language picker', () => {
-  const SAID = 'Machine-translated. Corrections welcome.'
-
-  const row = () => {
-    const one = field('general', 'Language')
-    if (one.kind !== 'select') throw new Error('the language is a dropdown')
-    return one
-  }
-
-  test('offers every language the app has a catalogue for', () => {
-    expect(row().options.map((one) => one.value)).toEqual(LANGUAGES.map((one) => one.id))
-  })
-
-  test('marks every catalogue nobody has read through', () => {
-    const marked = row()
-      .options.filter((one) => one.note)
-      .map((one) => one.value)
-
-    expect(marked).toEqual(LANGUAGES.filter((one) => one.machine).map((one) => one.id))
-    expect(marked.length).toBeGreaterThan(30)
-  })
-
-  test('and leaves the hand-written ones plain', () => {
-    const plain = row()
-      .options.filter((one) => !one.note)
-      .map((one) => one.value)
-
-    expect(plain).toEqual(['system', 'de', 'en', 'fr', 'gsw', 'ja'])
-  })
-
-  test('says the same thing on every marked row, in the caption’s own words', () => {
-    const said = new Set(row().options.flatMap((one) => (one.note ? [one.note] : [])))
-    expect([...said]).toEqual([SAID])
+describe('the language', () => {
+  test('is English, with nothing in the settings to change it', () => {
+    const labels = panes
+      .flatMap((one) => one.groups.flatMap((group) => group.fields))
+      .map((one) => one.label)
+    expect(labels).not.toContain('Language')
+    expect(pane('general').groups.map((group) => group.title)).not.toContain('Language')
   })
 })
 

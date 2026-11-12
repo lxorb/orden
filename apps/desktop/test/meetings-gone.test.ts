@@ -79,13 +79,6 @@ describe('no surface offers to make one', () => {
     expect(offering).toEqual([])
   })
 
-  test('no catalogue keeps its strings', () => {
-    const kept = files(join(APP, 'locales'), (path) => path.endsWith('.ts')).filter((path) =>
-      /^\s*(?:'Meeting notes'|Meeting|'Stop the meeting'):/m.test(read(path)),
-    )
-    expect(kept).toEqual([])
-  })
-
   test('no agent tool offers the kind', () => {
     const tools = read(join(ROOT, 'apps/desktop/src-tauri/src/mcp/tools.json'))
     expect(tools.toLowerCase()).not.toContain('meeting')

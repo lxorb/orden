@@ -1,5 +1,4 @@
 import { mount } from 'svelte'
-import { i18n } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { overlays } from '../overlays'
 import { viewport } from '../viewport.svelte'
@@ -118,7 +117,7 @@ class Hovering {
     const { tab } = aim
     const web = tab.kind === 'web'
     const width = wide()
-    const at = spot(aim.box, width, window.innerWidth, i18n.factor)
+    const at = spot(aim.box, width, window.innerWidth)
     const still = await this.stillFor(aim)
     const facts = !__EVEN_PLUGIN__ && modes.coder ? FACTS_TALL : 0
     const tall = WORDS_TALL + (still ? STILL_TALL : 0) + facts

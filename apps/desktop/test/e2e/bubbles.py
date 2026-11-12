@@ -58,7 +58,7 @@ def sentence_of(page: Page, index: int) -> dict | None:
           }
           const measured = window.__whole(bubble)
           glyph.blur()
-          return { ...measured, rung, rtl: getComputedStyle(glyph).direction === 'rtl',
+          return { ...measured, rung,
                    mark: { left: mark.left, right: mark.right, top: mark.top, bottom: mark.bottom },
                    label: glyph.getAttribute('aria-label').slice(0, 32) }
         }""",
@@ -70,7 +70,7 @@ def placed(one: dict, gap: float, inset: float) -> str | None:
     top = mark["bottom"] + gap if one["side"] != "above" else mark["top"] - gap - box["height"]
     if abs(box["top"] - top) > NEAR:
         return f"its top is {box['top']:.1f}, not {top:.1f}"
-    start = mark["right"] - inset - box["width"] if one["rtl"] else mark["left"] + inset
+    start = mark["left"] + inset
     clamped = min(max(8, start), DRIVE_WIDTH - 8 - box["width"])
     if abs(box["left"] - clamped) > NEAR:
         return f"its left is {box['left']:.1f}, not {clamped:.1f}"
@@ -196,9 +196,8 @@ def names(page: Page, tag: str) -> None:
         shot(page, f"{tag}-reason-{'held' if held else 'plain'}")
     field.press("Escape")
 
-def look(browser: Browser, tag: str, language: str = "en") -> None:
+def look(browser: Browser, tag: str) -> None:
     page = DRIVE.page(browser, viewport={"width": DRIVE_WIDTH, "height": 860})
-    page.context.add_init_script(f"localStorage.setItem('orden:language', {language!r})")
     DRIVE.open(page)
     page.evaluate(f"() => {{ window.__whole = {WHOLE} }}")
     names(page, tag)
@@ -208,15 +207,13 @@ def look(browser: Browser, tag: str, language: str = "en") -> None:
     at_the_foot(page, tag)
     page.evaluate("() => { window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")
     counted += every_sentence(page, tag, ("sync", "account", "ai"))
-    if tag == "light":
-        the_vault_row(page, tag)
+    the_vault_row(page, tag)
     if counted < 30:
         wrong(f"[{tag}] only {counted} sentences were opened")
     page.context.close()
 
 def drive(browser: Browser) -> None:
     look(browser, "light")
-    look(browser, "rtl", language="ar")
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "every bubble is drawn whole, under what it is about"))

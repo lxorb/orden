@@ -1,9 +1,4 @@
-import { expect, test, vi } from 'vitest'
-
-vi.mock('../i18n.svelte', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../i18n.svelte')>()),
-  t: (one: string) => one,
-}))
+import { expect, test } from 'vitest'
 
 const { trailSteps, webRows, zoomed, ZOOMS } = await import('./menu')
 const { Page } = await import('./pages.svelte')

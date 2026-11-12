@@ -9,7 +9,6 @@ import type { Seen } from './rooms/peers'
 import type { PlaneRoom } from './rooms/plane'
 import type { Room } from './rooms/room'
 import { deviceName, ownAccent, personFace, personName } from './rooms/who'
-import { t } from './i18n.svelte'
 import { type Scheme, theme } from './theme.svelte'
 import type { NoteDoc } from './workspace/documents.svelte'
 
@@ -212,7 +211,7 @@ class Rooms {
     }
 
     const who = {
-      name: deviceName(t('Browser')),
+      name: deviceName('Browser'),
       accent: ownAccent(),
       person: personName(),
       ...personFace(),
@@ -222,7 +221,7 @@ class Rooms {
     const refused = () => {
       this.letGo(key)
       this.shut.set(key, { noteId: open.noteId, token })
-      busy.failed(t('This note is as large as a note in a room may get.'))
+      busy.failed('This note is as large as a note in a room may get.')
     }
 
     const shut = (signedOut: boolean) => {

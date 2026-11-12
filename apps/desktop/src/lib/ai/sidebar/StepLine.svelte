@@ -68,7 +68,7 @@
   }
 
   .caret.open {
-    transform: rotate(calc(var(--dir) * 90deg));
+    transform: rotate(90deg);
   }
 
   .verb {

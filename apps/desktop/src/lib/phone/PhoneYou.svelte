@@ -3,7 +3,6 @@
   import { showAccount } from '../account-menu'
   import AccountBadge from '../AccountBadge.svelte'
   import { arriving } from '../arriving.svelte'
-  import { t } from '../i18n.svelte'
   import { dur, fade } from '../motion'
   import { scratchFromDrawer } from '../scratchpad/is.svelte'
   import { showFeedback } from '../surfaces.svelte'
@@ -14,8 +13,8 @@
     showAccount(
       event,
       [
-        { label: t('Scratchpad'), run: scratchFromDrawer },
-        { label: t('Send feedback'), run: showFeedback },
+        { label: 'Scratchpad', run: scratchFromDrawer },
+        { label: 'Send feedback', run: showFeedback },
       ],
       false,
     )
@@ -31,7 +30,7 @@
   class="you"
   class:looking={account.restoring}
   data-phone-you
-  aria-label={who ?? t('Sign in')}
+  aria-label={who ?? 'Sign in'}
   aria-haspopup="menu"
   disabled={account.restoring}
   onclick={show}

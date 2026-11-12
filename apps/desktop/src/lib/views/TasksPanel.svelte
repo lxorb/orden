@@ -1,7 +1,6 @@
 <script lang="ts">
   import { answer, readBase, type Row } from '@orden/bases'
   import { untrack } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { links } from '../link-index.svelte'
   import { DIVIDER, menu } from '../menu.svelte'
   import { rows } from '../rows/rows.svelte'
@@ -141,7 +140,7 @@
       labelMenu(event, row.tag)
       return
     }
-    menu.show(event, [{ label: t('Open in new tab'), run: () => openInTab(row) }])
+    menu.show(event, [{ label: 'Open in new tab', run: () => openInTab(row) }])
   }
 
   let typing = $state(false)
@@ -159,7 +158,7 @@
   }
 
   function labelMenu(event: MouseEvent, tag: string) {
-    const open = { label: t('Open in new tab'), run: () => openInTab(labelRow(tag)) }
+    const open = { label: 'Open in new tab', run: () => openInTab(labelRow(tag)) }
     if (root !== null && !canWriteAt(root)) {
       menu.show(event, [open])
       return
@@ -167,26 +166,24 @@
     menu.show(event, [
       open,
       {
-        label: t('Rename'),
+        label: 'Rename',
         asks: true,
         run: () =>
-          void prompt
-            .ask({ title: t('Rename'), value: tag, confirmLabel: t('Rename') })
-            .then((words) => {
-              const next = words?.trim().replace(/^#+/, '')
-              if (next && next !== tag && !refusedAsTag(next)) void workspace.retagNotes(tag, next)
-            }),
+          void prompt.ask({ title: 'Rename', value: tag, confirmLabel: 'Rename' }).then((words) => {
+            const next = words?.trim().replace(/^#+/, '')
+            if (next && next !== tag && !refusedAsTag(next)) void workspace.retagNotes(tag, next)
+          }),
       },
       DIVIDER,
       {
-        label: t('Delete'),
+        label: 'Delete',
         danger: true,
         asks: true,
         run: () =>
           void prompt
             .confirm({
-              title: t('Delete {name}?', { name: `#${tag}` }),
-              confirmLabel: t('Delete'),
+              title: `Delete #${tag}?`,
+              confirmLabel: 'Delete',
               danger: true,
             })
             .then((sure) => (sure ? void workspace.retagNotes(tag, null) : undefined)),
@@ -239,8 +236,8 @@
         class="field"
         bind:value={words}
         autofocus
-        aria-label={t('Add task')}
-        placeholder={t('Add task')}
+        aria-label="Add task"
+        placeholder="Add task"
         onkeydown={(event) => {
           if (event.isComposing) return
           if (event.key === 'Enter') {
@@ -263,14 +260,14 @@
       <span class="orden-row-mark"
         ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></span
       >
-      <span class="orden-row-label">{t('Add task')}</span>
+      <span class="orden-row-label">Add task</span>
     </button>
   {/if}
 
   {@render row(TODAY_MARK, builtinName('todos'), counts.todos, { kind: 'todos' }, counts.overdue)}
 
   {#if favourites.length}
-    <p class="orden-section">{t('Favorites')}</p>
+    <p class="orden-section">Favorites</p>
     {#each favourites as one (one.path)}
       {#if one.base}
         {@render row(VIEW_MARK, one.name, one.count, { kind: 'base', path: one.path })}
@@ -285,7 +282,7 @@
   {/if}
 
   {#if counts.labels.length}
-    <p class="orden-section">{t('Labels')}</p>
+    <p class="orden-section">Labels</p>
     {#each counts.labels as one (one.tag)}
       {@render row(LABEL_MARK, one.tag, one.count, labelRow(one.tag))}
     {/each}

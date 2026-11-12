@@ -1,4 +1,3 @@
-import { key, t } from '../i18n.svelte'
 import { DEFAULTS, type FontPlace, INTERFACE_ZOOMS, modes } from '../modes.svelte'
 import { isDesktop, platform } from '../tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
@@ -18,22 +17,22 @@ const FONT_FIELDS: readonly {
 }[] = [
   {
     place: 'content',
-    label: key('Note font'),
-    hint: key('The face notes are written in; any font installed here, by its name.'),
+    label: 'Note font',
+    hint: 'The face notes are written in; any font installed here, by its name.',
     own: 'iA Writer Quattro',
     words: ['writing', 'text', 'serif'],
   },
   {
     place: 'ui',
-    label: key('Interface font'),
-    hint: key('The face of menus, lists and settings; any font installed here, by its name.'),
+    label: 'Interface font',
+    hint: 'The face of menus, lists and settings; any font installed here, by its name.',
     own: 'Geist',
     words: ['ui', 'menus', 'sidebar'],
   },
   {
     place: 'mono',
-    label: key('Code font'),
-    hint: key('The face of code and terminals; any monospaced font installed here, by its name.'),
+    label: 'Code font',
+    hint: 'The face of code and terminals; any monospaced font installed here, by its name.',
     own: 'iA Writer Mono S',
     words: ['monospace', 'code', 'terminal'],
   },
@@ -44,7 +43,7 @@ function asChoice(value: string): SchemeChoice {
 }
 
 function themeField(setting: ThemeSetting, owner = theme.id): Field {
-  const label = t(setting.label)
+  const label = setting.label
   const worn = () => owner === theme.id
   const drawer = setting.shared === true ? SHARED : owner
   const get = () => (worn() ? theme.values[setting.id] : theme.keptFor(drawer, setting.id))
@@ -52,7 +51,7 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
     worn() ? theme.set(setting.id, value) : theme.setFor(drawer, setting.id, value)
   const common = {
     label,
-    hint: t(setting.hint),
+    hint: setting.hint,
     initial: setting.initial,
     key: drawer === SHARED ? `appearance.${setting.id}` : `themes.${owner}.${setting.id}`,
   }
@@ -100,7 +99,7 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
       kind: 'swatches',
       options: setting.options.map((one) => ({
         value: one.value,
-        label: t(one.name),
+        label: one.name,
         colour: one[theme.current],
       })),
       initial: setting.initial,
@@ -111,7 +110,7 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
 
   const options = setting.options.map((one) => ({
     value: one.value,
-    label: t(one.label),
+    label: one.label,
     ...(one.disabled ? { disabled: true } : {}),
   }))
 
@@ -137,7 +136,7 @@ export async function themeDeclarations(): Promise<Field[]> {
 
 function pictureField(): Field {
   const sides = (['light', 'dark'] as const).map((scheme): PictureSide => ({
-    label: t(SCHEME_NAMES[scheme]),
+    label: SCHEME_NAMES[scheme],
     current: theme.current === scheme,
     picture: () => wallpaper.of(scheme)?.picture ?? '',
     own: () => wallpaper.owns(scheme),
@@ -149,10 +148,8 @@ function pictureField(): Field {
 
   return {
     kind: 'picture',
-    label: t('Picture'),
-    hint: t(
-      'The picture behind the window, one for light and one for dark; drag it to move its centre.',
-    ),
+    label: 'Picture',
+    hint: 'The picture behind the window, one for light and one for dark; drag it to move its centre.',
     words: ['wallpaper', 'background', 'image', 'photo', 'focal point'],
     get: () => wallpaper.of(theme.current)?.picture ?? '',
     set: (value) => {
@@ -173,31 +170,31 @@ export function appearancePane(): Pane {
   if (zooms) void modes.askInterfaceZoom().catch(() => undefined)
   return {
     id: 'appearance',
-    label: t('Appearance'),
+    label: 'Appearance',
     groups: [
       {
-        title: t('Theme'),
+        title: 'Theme',
         fields: [
           {
             kind: 'select',
             key: 'appearance.style',
             open: true,
-            label: t('Style'),
-            hint: t('The theme Orden is drawn in.'),
+            label: 'Style',
+            hint: 'The theme Orden is drawn in.',
             words: ['theme', 'look'],
-            options: theme.all.map((one) => ({ value: one.id, label: t(one.name) })),
+            options: theme.all.map((one) => ({ value: one.id, label: one.name })),
             get: () => theme.id,
             set: (value) => theme.select(value),
           },
           {
             kind: 'segmented',
             key: 'appearance.mode',
-            label: t('Mode'),
-            hint: t('Light, dark, or whichever the system is in.'),
+            label: 'Mode',
+            hint: 'Light, dark, or whichever the system is in.',
             words: ['dark', 'light', 'night', 'theme'],
             options: SCHEME_CHOICES.map((one) => ({
               value: one,
-              label: t(SCHEME_NAMES[one]),
+              label: SCHEME_NAMES[one],
               disabled: !theme.offers(one),
             })),
             get: () => theme.shown,
@@ -210,20 +207,20 @@ export function appearancePane(): Pane {
       ...(theme.settings.some((one) => one.own === true)
         ? [
             {
-              title: t(theme.active.name),
+              title: theme.active.name,
               fields: [...(theme.id === WALLPAPER_THEME ? [pictureField()] : []), ...ownFields()],
             },
           ]
         : []),
 
       {
-        title: t('Fonts'),
+        title: 'Fonts',
         fields: FONT_FIELDS.map((one): Field => ({
           kind: 'text',
           key: `appearance.${one.place}Font`,
-          label: t(one.label),
+          label: one.label,
           words: ['font', 'typeface', 'family', 'custom font', ...one.words],
-          hint: t(one.hint),
+          hint: one.hint,
           placeholder: one.own,
           font: { mono: one.place === 'mono' },
           initial: '',
@@ -233,13 +230,13 @@ export function appearancePane(): Pane {
       },
 
       {
-        title: t('Pointer'),
+        title: 'Pointer',
         fields: [
           {
             kind: 'switch',
             key: 'appearance.pointingHand',
-            label: t('Pointing hand on buttons'),
-            hint: t('Shows a pointing hand over buttons, as web pages do.'),
+            label: 'Pointing hand on buttons',
+            hint: 'Shows a pointing hand over buttons, as web pages do.',
             words: ['cursor', 'mouse', 'hand', 'click'],
             initial: DEFAULTS.hand,
             get: () => modes.hand,
@@ -248,8 +245,8 @@ export function appearancePane(): Pane {
           {
             kind: 'switch',
             key: 'appearance.paneFollowsPointer',
-            label: t('Active pane follows the pointer'),
-            hint: t('The pane under the pointer becomes the one you work in.'),
+            label: 'Active pane follows the pointer',
+            hint: 'The pane under the pointer becomes the one you work in.',
             words: ['pane', 'split', 'focus follows mouse', 'hover', 'mouse', 'active'],
             initial: true,
             get: () => workspace.device.paneFollowsPointer,
@@ -261,17 +258,17 @@ export function appearancePane(): Pane {
       ...(isDesktop
         ? ([
             {
-              title: t('Window'),
+              title: 'Window',
               fields: [
                 {
                   kind: 'segmented',
                   key: 'appearance.frame',
-                  label: t('Frame'),
-                  hint: t('Orden’s own title bar, or the window frame of your system.'),
+                  label: 'Frame',
+                  hint: 'Orden’s own title bar, or the window frame of your system.',
                   words: ['title bar', 'window'],
                   options: [
-                    { value: 'orden', label: t('Orden’s own') },
-                    { value: 'system', label: t('The system’s') },
+                    { value: 'orden', label: 'Orden’s own' },
+                    { value: 'system', label: 'The system’s' },
                   ],
                   initial: DEFAULTS.frame,
                   get: () => modes.frame,
@@ -281,8 +278,8 @@ export function appearancePane(): Pane {
                   ? ([
                       {
                         kind: 'select',
-                        label: t('Zoom'),
-                        hint: t('How large all of Orden is drawn on this device.'),
+                        label: 'Zoom',
+                        hint: 'How large all of Orden is drawn on this device.',
                         words: ['scale', 'interface', 'ui', 'sidebar', 'bigger', 'smaller'],
                         options: INTERFACE_ZOOMS.map((one) => ({
                           value: String(one),

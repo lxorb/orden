@@ -12,14 +12,8 @@ export interface Anchor {
   bottom: number
 }
 
-export function spot(
-  anchor: Anchor,
-  width: number,
-  room: number,
-  factor: number,
-): { x: number; y: number } {
-  const start = factor > 0 ? anchor.left : anchor.right - width
-  const x = Math.min(Math.max(start, MARGIN), Math.max(MARGIN, room - width - MARGIN))
+export function spot(anchor: Anchor, width: number, room: number): { x: number; y: number } {
+  const x = Math.min(Math.max(anchor.left, MARGIN), Math.max(MARGIN, room - width - MARGIN))
   return { x, y: anchor.bottom + BELOW }
 }
 

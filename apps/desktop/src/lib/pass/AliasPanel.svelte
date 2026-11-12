@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Alias, Item } from '@orden/pass/types'
   import { atLeast } from '@orden/pass/types'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { aliasStats, switchedAlias } from './alias-live'
   import type { AliasStats } from './aliases'
   import { pass } from './store.svelte'
@@ -44,29 +44,27 @@
   }
 </script>
 
-<section class="card" aria-label={t('Alias')}>
+<section class="card" aria-label="Alias">
   <SwitchRow
-    label={t('Forward mail to this alias')}
+    label="Forward mail to this alias"
     on={content.enabled}
     disabled={!editable || busy}
     onchange={(on: boolean) => void switched(on)}
   />
   {#each content.mailboxes as mailbox (mailbox)}
     <div class="line">
-      <span class="label">{t('Forwards to')}</span>
+      <span class="label">Forwards to</span>
       <span class="value">{mailbox}</span>
     </div>
   {/each}
   {#if stats}
     <div class="stats" data-alias-stats>
       <span class="when"
-        >{stats.days === null
-          ? t('All time')
-          : t('Last {days} days', { days: String(stats.days) })}</span
+        >{stats.days === null ? 'All time' : `Last ${String(stats.days)} days`}</span
       >
-      <span><strong>{stats.forwarded}</strong> {t('forwarded')}</span>
-      <span><strong>{stats.replied}</strong> {t('replied')}</span>
-      <span><strong>{stats.blocked}</strong> {t('blocked')}</span>
+      <span><strong>{stats.forwarded}</strong> forwarded</span>
+      <span><strong>{stats.replied}</strong> replied</span>
+      <span><strong>{stats.blocked}</strong> blocked</span>
     </div>
   {/if}
   {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}

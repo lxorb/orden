@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { i18n, key, t } from '../../i18n.svelte'
+  import { region } from '../../region'
   import { dur, fly } from '../../motion'
   import { chat } from './chat.svelte'
   import { hostHere } from './host'
@@ -27,7 +27,7 @@
     )
   })
 
-  const say = (count: number) => tokens(count, i18n.language)
+  const say = (count: number) => tokens(count, region())
 
   const summary = $derived.by(() => {
     if (!bands) return ''
@@ -61,9 +61,9 @@
   }
 
   const ROWS = [
-    ['instructions', key('Instructions')],
-    ['attached', key('Attached')],
-    ['conversation', key('Conversation')],
+    ['instructions', 'Instructions'],
+    ['attached', 'Attached'],
+    ['conversation', 'Conversation'],
   ] as const
 </script>
 
@@ -75,7 +75,7 @@
       aria-haspopup="dialog"
       aria-expanded={open}
       title={summary}
-      aria-label={t('Context')}
+      aria-label="Context"
       onclick={() => (chat.popover = open ? null : 'context')}
     >
       {#if bands.window}
@@ -96,7 +96,7 @@
       <div
         class="tray orden-layer"
         role="dialog"
-        aria-label={t('Context')}
+        aria-label="Context"
         tabindex="-1"
         onkeydown={onKey}
         transition:fly={{ y: 6, duration: dur(150), easing: cubicOut }}
@@ -106,7 +106,7 @@
             >{bands.window ? `${say(bands.used)} / ${say(bands.window)}` : say(bands.used)}</span
           >
           {#if bands.compacts !== null}
-            <span class="at">{t('Compacts at {count}', { count: say(bands.compacts) })}</span>
+            <span class="at">Compacts at {say(bands.compacts)}</span>
           {/if}
         </div>
         {#if bands.window}
@@ -127,19 +127,19 @@
         {#each ROWS as [band, word] (band)}
           <div class="band">
             <span class="swatch {band}"></span>
-            <span class="what">{t(word)}</span>
+            <span class="what">{word}</span>
             <span class="much">{say(bands[band])}</span>
           </div>
         {/each}
         <div class="band">
           <span class="swatch next"></span>
-          <span class="what">{t('Next message')}</span>
+          <span class="what">Next message</span>
           <span class="much">≈ {say(bands.next)}</span>
         </div>
         <button
           class="orden-button is-quiet compact"
           disabled={!head?.kept || chat.busy}
-          onclick={compact}>{t('Compact now')}</button
+          onclick={compact}>Compact now</button
         >
       </div>
     {/if}

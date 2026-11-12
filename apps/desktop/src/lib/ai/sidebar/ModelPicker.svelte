@@ -2,7 +2,7 @@
   import Facts from '../../Facts.svelte'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { i18n, t } from '../../i18n.svelte'
+  import { region } from '../../region'
   import { dur, fly } from '../../motion'
   import { segmented } from '../../slide'
   import { ordered } from '../chat/effort'
@@ -42,7 +42,7 @@
   const label = $derived.by((): string[] => {
     if (!head) return []
     const name = [model?.name, head.model, provider?.name].find(Boolean) ?? ''
-    return head.effort === 'auto' ? [name] : [name, t(effortWord(head.effort))]
+    return head.effort === 'auto' ? [name] : [name, effortWord(head.effort)]
   })
 
   $effect(() => {
@@ -97,11 +97,11 @@
     aria-haspopup="dialog"
     aria-expanded={open}
     disabled={!head || !provider}
-    title={t('Model and effort')}
+    title="Model and effort"
     onclick={toggle}
   >
     <span dir="auto"
-      >{#if label.some(Boolean)}<Facts line parts={label} />{:else}{t('Model')}{/if}</span
+      >{#if label.some(Boolean)}<Facts line parts={label} />{:else}Model{/if}</span
     >
     <svg viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
   </button>
@@ -110,7 +110,7 @@
     <div
       class="pop orden-layer"
       role="dialog"
-      aria-label={t('Model and effort')}
+      aria-label="Model and effort"
       tabindex="-1"
       onkeydown={onKey}
       transition:fly={{ y: 6, duration: dur(150), easing: cubicOut }}
@@ -133,8 +133,8 @@
           class="orden-field filter"
           bind:this={field}
           bind:value={query}
-          placeholder={t('Model')}
-          aria-label={t('Model')}
+          placeholder="Model"
+          aria-label="Model"
           oninput={() => (lit = 0)}
         />
       {:else}
@@ -155,7 +155,7 @@
             }}
           >
             <span class="orden-row-label">{one.name}</span>
-            {#if one.window}<span class="window">{tokens(one.window, i18n.language)}</span>{/if}
+            {#if one.window}<span class="window">{tokens(one.window, region())}</span>{/if}
             <span class="tick" aria-hidden="true">{one.id === head.model ? '✓' : ''}</span>
           </button>
         {/each}
@@ -163,12 +163,12 @@
 
       {#if levels.length > 1}
         <div class="line effort">
-          <span class="what">{t('Effort')}</span>
+          <span class="what">Effort</span>
           <div
             class="orden-segmented levels"
             style:grid-template-columns={`repeat(${columns}, 1fr)`}
             role="radiogroup"
-            aria-label={t('Effort')}
+            aria-label="Effort"
             use:segmented
           >
             {#each levels as level (level)}
@@ -176,7 +176,7 @@
                 type="button"
                 class:on={level === head.effort}
                 aria-pressed={level === head.effort}
-                onclick={() => chat.setEffort(level)}>{t(effortWord(level))}</button
+                onclick={() => chat.setEffort(level)}>{effortWord(level)}</button
               >
             {/each}
           </div>
@@ -185,7 +185,7 @@
 
       {#if model?.fast}
         <button class="line fast" onclick={() => chat.setFast()}>
-          <span class="what">{t('Fast')}</span>
+          <span class="what">Fast</span>
           <span class="orden-switch" class:on={head.fast}></span>
         </button>
       {/if}

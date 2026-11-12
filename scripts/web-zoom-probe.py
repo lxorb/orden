@@ -130,8 +130,6 @@ def main() -> int:
         page_probe.allow_eval(args.identifier)
         time.sleep(1)
         running, app = page_probe.launch(args.exe, args.identifier, unlike=app.port)
-        app.ask("(localStorage.setItem('orden:language', 'en'), location.reload(), 1)")
-        time.sleep(4)
         window = main_window(running.pid)
         sized(window, *scroll_probe.SIZE)
         scroll_probe.to_corner(window)

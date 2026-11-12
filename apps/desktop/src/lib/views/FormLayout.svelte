@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Value } from '@orden/bases'
-  import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import Select from '../Select.svelte'
   import { workspace } from '../workspace.svelte'
@@ -54,7 +53,7 @@
     if (missing.length) return
     sending = true
     try {
-      const name = title.trim() || t('Untitled')
+      const name = title.trim() || 'Untitled'
       const path = await addNote(base, live.at, kit.file, undefined, {
         title: name,
         properties,
@@ -85,12 +84,7 @@
     void send()
   }}
 >
-  <input
-    class="orden-field title"
-    bind:value={title}
-    aria-label={t('Name')}
-    placeholder={t('Untitled')}
-  />
+  <input class="orden-field title" bind:value={title} aria-label="Name" placeholder="Untitled" />
 
   {#each fields as field (field)}
     {@const kind = kindOf(field)}
@@ -116,7 +110,7 @@
           label={propertyName(field)}
           value={typeof values[field] === 'string' ? values[field] : ''}
           options={[
-            { value: '', label: t('None') },
+            { value: '', label: 'None' },
             ...choices.map((one) => ({ value: one, label: one })),
           ]}
           onchange={(next: string) => (values = { ...values, [field]: next })}
@@ -143,7 +137,7 @@
       >
     {/if}
     <span class="spring"></span>
-    <button type="submit" class="orden-button" disabled={sending || !kit.adds}>{t('Send')}</button>
+    <button type="submit" class="orden-button" disabled={sending || !kit.adds}>Send</button>
   </div>
 </form>
 

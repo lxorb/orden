@@ -1,6 +1,5 @@
 import type { Folder, Vault } from '@orden/pass/types'
 import { iconChoice } from '../icon-choice.svelte'
-import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
 import { newId } from './rows'
@@ -10,8 +9,8 @@ import type { PassUi } from './ui.svelte'
 async function newFolder(vault: Vault, parent: string | null): Promise<void> {
   const name = await prompt.ask({
     until: pass.opened,
-    title: t('New folder'),
-    confirmLabel: t('Create'),
+    title: 'New folder',
+    confirmLabel: 'Create',
   })
   if (!name) return
   const folder: Folder = { id: newId(), name, parent }
@@ -22,7 +21,7 @@ async function moveAll(ui: PassUi, vault: Vault): Promise<void> {
   const others = pass.vaults.filter((one) => one.id !== vault.id)
   const to = await prompt.choose({
     until: pass.opened,
-    title: t('Move all items to'),
+    title: 'Move all items to',
     options: others.map((one) => ({ id: one.id, label: one.name })),
   })
   if (!to) return
@@ -33,9 +32,9 @@ async function moveAll(ui: PassUi, vault: Vault): Promise<void> {
 async function deleteVault(ui: PassUi, vault: Vault): Promise<void> {
   const sure = await prompt.confirm({
     until: pass.opened,
-    title: t('Delete {vault}?', { vault: vault.name }),
-    detail: t('Every item in it is deleted for good.'),
-    confirmLabel: t('Delete'),
+    title: `Delete ${vault.name}?`,
+    detail: 'Every item in it is deleted for good.',
+    confirmLabel: 'Delete',
     danger: true,
   })
   if (!sure) return
@@ -46,18 +45,18 @@ async function deleteVault(ui: PassUi, vault: Vault): Promise<void> {
 export function vaultEntries(ui: PassUi, vault: Vault): MenuEntry[] {
   const share = () => (ui.sheet = { kind: 'share', vault: vault.id })
   return [
-    { label: t('Edit vault'), run: () => (ui.sheet = { kind: 'vault', vault: vault.id }) },
-    { label: t('Share'), run: share },
-    { label: t('Manage access'), run: share },
-    { label: t('New folder'), run: () => void newFolder(vault, null) },
+    { label: 'Edit vault', run: () => (ui.sheet = { kind: 'vault', vault: vault.id }) },
+    { label: 'Share', run: share },
+    { label: 'Manage access', run: share },
+    { label: 'New folder', run: () => void newFolder(vault, null) },
     {
-      label: t('Move all items'),
+      label: 'Move all items',
       disabled: pass.vaults.length < 2,
       run: () => void moveAll(ui, vault),
     },
     DIVIDER,
     {
-      label: t('Delete vault'),
+      label: 'Delete vault',
       danger: true,
       disabled: pass.vaults.length < 2,
       run: () => void deleteVault(ui, vault),
@@ -83,9 +82,9 @@ function inside(folders: readonly Folder[], root: string): Set<string> {
 async function renameFolder(vault: Vault, folder: Folder): Promise<void> {
   const name = await prompt.ask({
     until: pass.opened,
-    title: t('Rename folder'),
+    title: 'Rename folder',
     value: folder.name,
-    confirmLabel: t('Rename'),
+    confirmLabel: 'Rename',
   })
   if (!name || name === folder.name) return
   await pass.updateVault(vault.id, {
@@ -96,9 +95,9 @@ async function renameFolder(vault: Vault, folder: Folder): Promise<void> {
 async function deleteFolder(ui: PassUi, vault: Vault, folder: Folder): Promise<void> {
   const sure = await prompt.confirm({
     until: pass.opened,
-    title: t('Delete {folder}?', { folder: folder.name }),
-    detail: t('Its items stay in the vault.'),
-    confirmLabel: t('Delete'),
+    title: `Delete ${folder.name}?`,
+    detail: 'Its items stay in the vault.',
+    confirmLabel: 'Delete',
     danger: true,
   })
   if (!sure) return
@@ -124,10 +123,10 @@ function chooseFolderIcon(vault: Vault, folder: Folder): void {
 
 export function folderEntries(ui: PassUi, vault: Vault, folder: Folder): MenuEntry[] {
   return [
-    { label: t('Rename'), run: () => void renameFolder(vault, folder) },
-    { label: t('Choose an icon'), run: () => chooseFolderIcon(vault, folder) },
-    { label: t('New folder'), run: () => void newFolder(vault, folder.id) },
+    { label: 'Rename', run: () => void renameFolder(vault, folder) },
+    { label: 'Choose an icon', run: () => chooseFolderIcon(vault, folder) },
+    { label: 'New folder', run: () => void newFolder(vault, folder.id) },
     DIVIDER,
-    { label: t('Delete folder'), danger: true, run: () => void deleteFolder(ui, vault, folder) },
+    { label: 'Delete folder', danger: true, run: () => void deleteFolder(ui, vault, folder) },
   ]
 }

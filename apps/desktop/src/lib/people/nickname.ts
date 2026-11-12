@@ -1,6 +1,6 @@
 import { account } from '../account.svelte'
 import { busy } from '../busy.svelte'
-import { key, message, t } from '../i18n.svelte'
+import { message } from '../message'
 import { prompt } from '../prompt.svelte'
 import { sync } from '../sync.svelte'
 import type { Space } from '../workspace.svelte'
@@ -11,10 +11,10 @@ export async function nameHere(space: Space): Promise<void> {
   if (!id || !account.user) return
 
   const given = await prompt.ask({
-    title: t('Your name in {space}', { space: space.name }),
+    title: `Your name in ${space.name}`,
     value: account.user.nicks?.[id] ?? '',
     placeholder: account.name ?? '',
-    confirmLabel: key('Save'),
+    confirmLabel: 'Save',
   })
   if (given === null) return
 

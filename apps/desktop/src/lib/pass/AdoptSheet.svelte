@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import Sheet from '../Sheet.svelte'
   import { pass } from './store.svelte'
   import type { PassUi } from './ui.svelte'
@@ -27,7 +27,7 @@
     wrong = ''
     try {
       if (await pass.adoptAccountPass(password)) close()
-      else wrong = t('That is not the password of this account’s Pass.')
+      else wrong = 'That is not the password of this account’s Pass.'
     } catch (error) {
       wrong = message(error, 'That Pass could not be opened.')
     } finally {
@@ -36,27 +36,26 @@
   }
 </script>
 
-<Sheet {open} title={t('This account already has a Pass')} onclose={close}>
+<Sheet {open} title="This account already has a Pass" onclose={close}>
   <form class="adopt" onsubmit={adopted}>
     <p class="quiet">
-      {t(
-        'Another device made a Pass for this account first. Enter that Pass’s password to use it here; what is on this device moves into a vault of its own.',
-      )}
+      Another device made a Pass for this account first. Enter that Pass’s password to use it here;
+      what is on this device moves into a vault of its own.
     </p>
     <input
       class="orden-field is-value"
       type="password"
       autocomplete="current-password"
-      placeholder={t('Pass password')}
-      aria-label={t('Pass password')}
+      placeholder="Pass password"
+      aria-label="Pass password"
       bind:value={password}
       data-lands
     />
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
     <div class="buttons">
-      <button class="orden-button is-quiet" type="button" onclick={close}>{t('Later')}</button>
+      <button class="orden-button is-quiet" type="button" onclick={close}>Later</button>
       <button class="orden-button" type="submit" disabled={busy || password === ''}
-        >{t('Use that Pass')}</button
+        >Use that Pass</button
       >
     </div>
   </form>

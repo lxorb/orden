@@ -1,6 +1,5 @@
 <script lang="ts">
   import { plans } from '../ai/local/status.svelte'
-  import { t } from '../i18n.svelte'
   import { type Compatible, MORE_AI, type Plan, PLANS } from './catalog'
   import { connectCompatible, connectKey, signInKind, signInWith } from './connect'
   import { keyKindOf, type KeyedKind, matching, offersApiKey, requestKey, typedName } from './flow'
@@ -118,7 +117,7 @@
 {#snippet button(id: string, label: string, press: () => void)}
   {@const now = states[id] ?? 'idle'}
   {#if now === 'in'}
-    <span class="done" role="status" aria-label={t('Connected')}>
+    <span class="done" role="status" aria-label="Connected">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
     </span>
   {:else}
@@ -135,9 +134,9 @@
 {/snippet}
 
 <Screen
-  title={t('Connect your AI')}
-  primary={{ label: t('Continue'), disabled: !connected, onclick: () => setup.next() }}
-  quiet={{ label: t('Skip'), onclick: () => setup.next() }}
+  title="Connect your AI"
+  primary={{ label: 'Continue', disabled: !connected, onclick: () => setup.next() }}
+  quiet={{ label: 'Skip', onclick: () => setup.next() }}
 >
   <div class="o-list rise">
     {#each offered as one (one.id)}
@@ -148,7 +147,7 @@
         <span>{one.name}</span>
         {@render button(
           one.id,
-          signInKind(one.id) ? t('Sign in') : t('Connect'),
+          signInKind(one.id) ? 'Sign in' : 'Connect',
           () => void signIn(one.id),
         )}
       </div>
@@ -164,7 +163,7 @@
             /></svg
           ></span
         >
-        <span>{t('Other')}</span>
+        <span>Other</span>
         <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
       </button>
     {/if}
@@ -175,7 +174,7 @@
       <SearchField
         value={query}
         onvalue={(typed: string) => (query = typed)}
-        label={t('Connect your AI')}
+        label="Connect your AI"
       />
       <div class="o-list more">
         {#each more as one (one.id)}
@@ -185,7 +184,7 @@
                 ><Logo name={one.name} icon={one.icon} colour={one.colour} size={17} /></span
               >
               <span>{one.name}</span>
-              {@render button(one.id, t('Connect'), () => void connect(one))}
+              {@render button(one.id, 'Connect', () => void connect(one))}
             </div>
           {:else}
             <RequestRow
@@ -217,15 +216,15 @@
         oninput={typing}
         class="field"
         type="password"
-        placeholder={t('API key')}
-        aria-label={t('API key')}
+        placeholder="API key"
+        aria-label="API key"
         autocomplete="off"
         spellcheck="false"
       />
     </form>
   {:else if keyOffered}
     <button class="orden-button is-quiet skip" type="button" onclick={() => openKey(null)}
-      >{t('Use an API key')}</button
+      >Use an API key</button
     >
   {/if}
 

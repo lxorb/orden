@@ -3,7 +3,6 @@ import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { installAiRunner } from './ai/ask'
 import { guardDrops } from './drops'
-import { i18n } from './i18n.svelte'
 import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
 import { onTheActivity } from './mobile/bridge'
@@ -52,7 +51,6 @@ export function start(): () => void {
   }
   factsOfLaunch(() => `${workspace.spaces.length} spaces, ${workspace.tabs.length} tabs`)
   viewport.start()
-  i18n.restore()
   theme.init()
   if (!__EVEN_PLUGIN__) void import('./themes/synced.svelte').then((one) => one.syncLook())
   modes.restore()

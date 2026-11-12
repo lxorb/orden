@@ -1,4 +1,3 @@
-import { key, t } from '../i18n.svelte'
 import type { Tab } from '../workspace.svelte'
 import { hasWords, isDraft } from './drafts'
 
@@ -41,15 +40,12 @@ async function askUnsaved(unsaved: readonly Tab[]): Promise<Unsaved> {
 
   const { prompt } = await import('../prompt.svelte')
   const answer = await prompt.choose({
-    title:
-      unsaved.length === 1
-        ? t('Save changes to {name}?', { name: only.shown })
-        : t('Save changes to these tabs?'),
-    detail: t('Unsaved words go to Recently deleted.'),
+    title: unsaved.length === 1 ? `Save changes to ${only.shown}?` : 'Save changes to these tabs?',
+    detail: 'Unsaved words go to Recently deleted.',
     options: [
-      { id: 'keep', label: key('Cancel') },
-      { id: 'discard', label: key('Don’t save') },
-      { id: 'save', label: key('Save'), primary: true },
+      { id: 'keep', label: 'Cancel' },
+      { id: 'discard', label: 'Don’t save' },
+      { id: 'save', label: 'Save', primary: true },
     ],
   })
   return answer === 'save' || answer === 'discard' ? answer : 'keep'

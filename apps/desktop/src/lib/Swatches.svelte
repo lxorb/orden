@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from './i18n.svelte'
   import type { PairField, SwatchOption } from './preferences'
 
   const {
@@ -49,13 +48,13 @@
         class="swatch picked"
         class:active={own}
         class:wheel={!own}
-        title={t('Another colour')}
+        title="Another colour"
         style:--swatch={own ? colour : undefined}
       >
         <input
           type="color"
           value={colour}
-          aria-label={t('Another colour')}
+          aria-label="Another colour"
           oninput={(event) => pick(which, event.currentTarget.value, false)}
           onchange={(event) => pick(which, event.currentTarget.value, true)}
         />

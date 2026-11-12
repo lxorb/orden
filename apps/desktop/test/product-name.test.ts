@@ -21,8 +21,6 @@ const NAMED: Record<string, string[]> = {
   'lib/web/commands.ts': ['Nib'],
 }
 
-const SENT: string[] = ['set an OpenAI key in nibeditor’s settings first']
-
 const renaming = (text: string) => text.includes('Orden')
 
 function literals(code: string): string[] {
@@ -129,12 +127,12 @@ describe('reading a script for its strings', () => {
 })
 
 describe('the name a reader sees', () => {
-  test('is Orden in every string of the app and every catalogue', () => {
+  test('is Orden in every string of the app', () => {
     const offenders: string[] = []
 
     for (const path of sources(SOURCE)) {
       const where = relative(SOURCE, path).replace(/\\/g, '/')
-      const named = [...(NAMED[where] ?? []), ...(where.startsWith('locales/') ? SENT : [])]
+      const named = NAMED[where] ?? []
 
       for (const text of readable(path, readFileSync(path, 'utf8'))) {
         if (named.includes(text) || renaming(text)) continue
@@ -179,11 +177,7 @@ describe('the name a reader sees', () => {
     }
     expect([manifest.name, manifest.short_name]).toEqual(['Orden Pass', 'Orden Pass'])
     const gate = readFileSync(join(SOURCE, 'lib/pass/web/PassWeb.svelte'), 'utf8')
-    expect(gate).toContain("title={t('Orden Pass')}")
-    for (const file of readdirSync(join(SOURCE, 'locales'))) {
-      const catalogue = readFileSync(join(SOURCE, 'locales', file), 'utf8')
-      expect(/'Orden Pass': '([^']*)'/.exec(catalogue)?.[1], file).toContain('Orden')
-    }
+    expect(gate).toContain('title="Orden Pass"')
   })
 
   test('tells an identifier from the name', () => {

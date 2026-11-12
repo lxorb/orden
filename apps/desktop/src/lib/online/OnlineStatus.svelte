@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import Sweep from '../Sweep.svelte'
   import { type Status, statusLine } from './arrival.svelte'
 
@@ -14,11 +13,11 @@
   <p>{statusLine(status)}</p>
   {#if held}
     <button type="button" class="orden-button" onclick={onretry}
-      >{held.taken ? t('Take back') : t('Take over')}</button
+      >{held.taken ? 'Take back' : 'Take over'}</button
     >
   {:else if failed}
     <button type="button" class="orden-button" onclick={onretry}
-      >{gone ? t('New online terminal') : t('Try again')}</button
+      >{gone ? 'New online terminal' : 'Try again'}</button
     >
   {:else}
     <div class="sweep"><Sweep /></div>

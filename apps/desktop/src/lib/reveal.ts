@@ -1,4 +1,3 @@
-import { key } from './i18n.svelte'
 import { hiddenKinds } from './settings.svelte'
 import { isDesktop, platform } from './tauri'
 
@@ -7,7 +6,7 @@ function explorerReveals(): boolean {
 }
 
 export function showLabel(system: string = platform(), ours = explorerReveals()): string {
-  return system === 'macos' && !ours ? key('Show in Finder') : key('Show in folder')
+  return system === 'macos' && !ours ? 'Show in Finder' : 'Show in folder'
 }
 
 export async function reveal(path: string, how: { system?: boolean } = {}): Promise<void> {

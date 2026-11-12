@@ -69,32 +69,6 @@ async () => {
 }
 """
 
-LANGUAGES = """
-() => {
-  const trigger = [...document.querySelectorAll('button.trigger')].find(
-    (one) => one.getAttribute('aria-label') === 'Language',
-  )
-  if (!trigger) return { none: true }
-
-  trigger.click()
-  return new Promise((go) =>
-    requestAnimationFrame(() => {
-      const rows = [...document.querySelectorAll('[role=option]')]
-      const marked = rows.filter((one) => one.querySelector('.mark'))
-      go({
-        rows: rows.length,
-        marked: marked.length,
-        plain: rows
-          .filter((one) => !one.querySelector('.mark'))
-          .map((one) => one.querySelector('.text')?.textContent),
-        says: marked[0]?.querySelector('.mark')?.getAttribute('title') ?? '',
-        reads: marked[0]?.querySelector('.text')?.textContent ?? '',
-      })
-    }),
-  )
-}
-"""
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -290,13 +264,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.wait_for_selector(".sheet .segmented, .sheet", state="visible", timeout=8000)
     shot("settings-appearance")
-
-    page.evaluate(
-        "() => { window.ordenApp.settings.section = 'general'; window.ordenApp.settings.listing = false }"
-    )
-    page.wait_for_timeout(300)
-    say(f"[{name}] the language list: {page.evaluate(LANGUAGES)}")
-    shot("settings-language")
 
     page.evaluate("() => window.ordenApp.settings.hide?.() ?? (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(400)

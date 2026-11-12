@@ -131,7 +131,7 @@ describe('an Apple Journal export', () => {
   })
 
   test('says what a reader has to know: HEIC, and the cards Journal draws', async () => {
-    const said = (await readJournal(anExport())).lost.map((one) => one.text)
+    const said = (await readJournal(anExport())).lost
 
     expect(said.some((one) => one.includes('HEIC'))).toBe(true)
     expect(said.some((one) => one.includes('mood and activity'))).toBe(true)
@@ -148,7 +148,7 @@ describe('an Apple Journal export', () => {
     ])
 
     expect(noteAt(plan, '2026-01-05.md')).toContain('![](assets/IMG%201.jpeg)')
-    expect(plan.lost.find((one) => one.text.includes('missing'))?.values).toEqual({ count: 1 })
+    expect(plan.lost).toContain('1 attachment was missing from the export or could not be read')
   })
 
   test('a map of several places is one of the cards Journal draws', async () => {
@@ -161,7 +161,9 @@ describe('an Apple Journal export', () => {
     ])
 
     expect(noteAt(plan, '2023-12-17.md')).toContain('Old Town Market Place')
-    expect(plan.lost.find((one) => one.text.includes('mood'))?.values).toEqual({ count: 1 })
+    expect(plan.lost).toContain(
+      '1 mood and activity cards are drawings, so only their words come over',
+    )
   })
 
   test('an entry with no date anywhere is still a note', async () => {

@@ -6,7 +6,7 @@
   import { agoShort } from '../../ago'
   import Icon from '../../Icon.svelte'
   import { brandIcon, readIcon } from '../../icons'
-  import { i18n, t } from '../../i18n.svelte'
+  import { region } from '../../region'
   import type { Place } from '../../row-window'
   import type { ThreadHead } from '../chat/types'
   import { providerBrand } from '../provider-brand'
@@ -75,7 +75,7 @@
         >{#if logo}<Icon icon={logo} />{/if}</span
       >
       {#if unread}<UnreadDot />{/if}
-      <span class="title" dir="auto">{head.title || t('Untitled')}</span>
+      <span class="title" dir="auto">{head.title || 'Untitled'}</span>
       {#if head.pinned}
         <svg class="pinned" viewBox="0 0 13 13" aria-hidden="true"><path d={PIN} /></svg>
       {/if}
@@ -84,14 +84,14 @@
   <span class="tail">
     <StateMark {state} />
     <span class="slot">
-      <span class="when">{agoShort(head.updated, i18n.language)}</span>
+      <span class="when">{agoShort(head.updated, region())}</span>
       <span class="acts">
         {#if !archived}
           <button
             class="orden-glyph act"
             class:on={!!head.pinned}
-            title={head.pinned ? t('Unpin') : t('Pin')}
-            aria-label={head.pinned ? t('Unpin') : t('Pin')}
+            title={head.pinned ? 'Unpin' : 'Pin'}
+            aria-label={head.pinned ? 'Unpin' : 'Pin'}
             aria-pressed={!!head.pinned}
             onclick={onpin}
           >
@@ -100,8 +100,8 @@
         {/if}
         <button
           class="orden-glyph act"
-          title={archived ? t('Unarchive') : t('Archive')}
-          aria-label={archived ? t('Unarchive') : t('Archive')}
+          title={archived ? 'Unarchive' : 'Archive'}
+          aria-label={archived ? 'Unarchive' : 'Archive'}
           onclick={onarchive}
         >
           <svg viewBox="0 0 13 13" aria-hidden="true"
@@ -111,8 +111,8 @@
         {#if onmenu}
           <button
             class="orden-glyph act"
-            title={t('More')}
-            aria-label={t('More')}
+            title="More"
+            aria-label="More"
             aria-haspopup="menu"
             onclick={onmenu}
           >

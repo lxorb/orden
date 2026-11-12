@@ -7,7 +7,7 @@ const SOURCES = ['../src/lib/Security.svelte', '../src/lib/DeleteAccount.svelte'
 )
 
 const labels = SOURCES.flatMap((source) =>
-  [...source.matchAll(/<input\b[^>]*?aria-label=\{t\('([^']+)'\)\}[^>]*?one-time-code/g)].map(
+  [...source.matchAll(/<input\b[^>]*?aria-label="([^"]+)"[^>]*?one-time-code/g)].map(
     ([, label]) => label,
   ),
 )

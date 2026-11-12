@@ -8,14 +8,13 @@
   import SharedMark from './SharedMark.svelte'
   import SpaceBadge from './SpaceBadge.svelte'
   import { spacesMenu } from './surfaces.svelte'
-  import { t } from './i18n.svelte'
   import { isShared } from './sharing.svelte'
   import { workspace } from './workspace.svelte'
 
   let open = $state(false)
 
   const here = $derived(workspace.activeSpace)
-  const name = $derived(here?.name ?? t('Spaces'))
+  const name = $derived(here?.name ?? 'Spaces')
 
   const otherSpaces = $derived(
     workspace.spaces.filter((space) => space.id !== here?.id).map((space) => space.name),

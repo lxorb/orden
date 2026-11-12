@@ -1,5 +1,3 @@
-import { i18n, t } from '../i18n.svelte'
-
 export type Around = 'others' | 'right' | 'all'
 
 export function closedAround<T extends { readonly id: string }>(
@@ -18,5 +16,5 @@ export function closedAround<T extends { readonly id: string }>(
 }
 
 export function closeAfterLabel(): string {
-  return i18n.factor > 0 ? t('Close tabs to the right') : t('Close tabs to the left')
+  return 'Close tabs to the right'
 }

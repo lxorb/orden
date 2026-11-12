@@ -1,4 +1,3 @@
-import { plural } from '../i18n.svelte'
 import { folderOf, nameOf, pathKey } from '../space-paths'
 import { joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
@@ -87,7 +86,7 @@ async function movedBack(pairs: Pair[]) {
 }
 
 function carried(pairs: Pair[], how: 'copy' | 'move'): Promise<Transferred> {
-  const label = plural(pairs.length, { one: 'Moving {count} item', other: 'Moving {count} items' })
+  const label = pairs.length === 1 ? 'Moving 1 item' : `Moving ${pairs.length} items`
   return jobs.run(label, (id) => put(id, pairs, how))
 }
 

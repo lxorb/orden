@@ -1,6 +1,5 @@
 import { folderFor } from '../folder-notes'
 import { projectsFolder } from '../rows/projects'
-import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu.svelte'
 import { homeRoot } from '../rows/home.svelte'
 import { INBOX } from '../rows/inbox'
@@ -100,7 +99,7 @@ export function placeEntries(
   if (root === null || !offersPlaces(root)) return []
   const out: MenuEntry[] = [
     {
-      label: t('Inbox'),
+      label: 'Inbox',
       checked: here(inboxNoteAt(root)),
       run: () =>
         void inboxNote().then(

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { ADD_MARK } from './marks'
 
   const {
@@ -45,19 +44,13 @@
     type="button"
     class="count"
     class:badge={circle}
-    aria-label={t('Calculate')}
-    title={t('Calculate')}
+    aria-label="Calculate"
+    title="Calculate"
     onclick={oncount}
     >{count}{#each sums as sum, at (at)}<span class="sum">{sum}</span>{/each}</button
   >
   <span class="spring"></span>
-  <button
-    type="button"
-    class="orden-glyph tool"
-    aria-label={t('More')}
-    title={t('More')}
-    onclick={onmenu}
-  >
+  <button type="button" class="orden-glyph tool" aria-label="More" title="More" onclick={onmenu}>
     <svg viewBox="0 0 13 13" aria-hidden="true" class="dots"
       ><circle cx="3" cy="6.5" r="0.9" /><circle cx="6.5" cy="6.5" r="0.9" /><circle
         cx="10"
@@ -70,8 +63,8 @@
     <button
       type="button"
       class="orden-glyph tool"
-      aria-label={t('New page')}
-      title={t('New page')}
+      aria-label="New page"
+      title="New page"
       onclick={onadd}
     >
       <svg viewBox="0 0 13 13" aria-hidden="true" class="plus"><path d={ADD_MARK} /></svg>

@@ -1,6 +1,5 @@
 import { EditorSelection, type StateCommand } from '@codemirror/state'
 import type { Command, EditorView } from '@codemirror/view'
-import { label, type LabelKey } from '../labels'
 import { redoEdit, undoEdit } from '../shared'
 import {
   attached,
@@ -85,12 +84,6 @@ const ALIGN_PATHS = {
   right: 'M0 2h10M4 5h6M0 8h10',
 } as const
 
-const ALIGN_LABELS = {
-  left: 'alignLeft',
-  center: 'alignCenter',
-  right: 'alignRight',
-} as const
-
 export class TableView {
   readonly dom: HTMLElement
 
@@ -160,13 +153,13 @@ export class TableView {
     this.scroller.append(this.table)
 
     this.alignButtons = {
-      left: this.columnButton('left', ALIGN_PATHS.left, (column) =>
+      left: this.columnButton('Align left', ALIGN_PATHS.left, (column) =>
         this.toggleAlign(column, 'left'),
       ),
-      center: this.columnButton('center', ALIGN_PATHS.center, (column) =>
+      center: this.columnButton('Align center', ALIGN_PATHS.center, (column) =>
         this.toggleAlign(column, 'center'),
       ),
-      right: this.columnButton('right', ALIGN_PATHS.right, (column) =>
+      right: this.columnButton('Align right', ALIGN_PATHS.right, (column) =>
         this.toggleAlign(column, 'right'),
       ),
     }
@@ -331,7 +324,7 @@ export class TableView {
 
       const grip = element('span', 'orden-table-resize')
       grip.contentEditable = 'false'
-      grip.title = label('dragToResize')
+      grip.title = 'Drag to resize'
       grip.addEventListener('mousedown', (event) => this.startResize(event, th, column))
       th.append(grip)
 
@@ -807,14 +800,16 @@ export class TableView {
     const bar = element('div', 'orden-table-rows')
     bar.contentEditable = 'false'
     bar.append(
-      button('orden-table-btn', 'moveRowUp', 'M1 6l4-4 4 4', () => this.moveRowBy(this.barRow, -1)),
-      button('orden-table-btn', 'moveRowDown', 'M1 4l4 4 4-4', () =>
+      button('orden-table-btn', 'Move row up', 'M1 6l4-4 4 4', () =>
+        this.moveRowBy(this.barRow, -1),
+      ),
+      button('orden-table-btn', 'Move row down', 'M1 4l4 4 4-4', () =>
         this.moveRowBy(this.barRow, 1),
       ),
-      button('orden-table-btn', 'insertRow', 'M5 1v8M1 5h8', () =>
+      button('orden-table-btn', 'Insert row', 'M5 1v8M1 5h8', () =>
         this.insertRowAfter(this.barRow),
       ),
-      button('orden-table-btn orden-table-btn-danger', 'deleteRow', 'M1 1l8 8M9 1l-8 8', () =>
+      button('orden-table-btn orden-table-btn-danger', 'Delete row', 'M1 1l8 8M9 1l-8 8', () =>
         this.deleteRow(this.barRow),
       ),
     )
@@ -828,16 +823,20 @@ export class TableView {
       this.alignButtons.left,
       this.alignButtons.center,
       this.alignButtons.right,
-      this.columnButton('moveColumnLeft', 'M6 1L2 5l4 4', (column) =>
+      this.columnButton('Move column left', 'M6 1L2 5l4 4', (column) =>
         this.moveColumnBy(column, -1),
       ),
-      this.columnButton('moveColumnRight', 'M4 1l4 4-4 4', (column) =>
+      this.columnButton('Move column right', 'M4 1l4 4-4 4', (column) =>
         this.moveColumnBy(column, 1),
       ),
-      this.columnButton('sortColumn', 'M2 2h6M2 5h4M2 8h2', (column) => this.sortBy(column)),
-      this.columnButton('insertColumn', 'M5 1v8M1 5h8', (column) => this.insertColumnAfter(column)),
+      this.columnButton('Sort by this column', 'M2 2h6M2 5h4M2 8h2', (column) =>
+        this.sortBy(column),
+      ),
+      this.columnButton('Insert column', 'M5 1v8M1 5h8', (column) =>
+        this.insertColumnAfter(column),
+      ),
       this.columnButton(
-        'deleteColumn',
+        'Delete column',
         'M1 1l8 8M9 1l-8 8',
         (column) => this.deleteColumn(column),
         true,
@@ -847,15 +846,13 @@ export class TableView {
   }
 
   private columnButton(
-    name: LabelKey | 'left' | 'center' | 'right',
+    said: string,
     path: string,
     onPress: (column: number) => void,
     danger = false,
   ): HTMLButtonElement {
-    const key =
-      name in ALIGN_LABELS ? ALIGN_LABELS[name as keyof typeof ALIGN_LABELS] : (name as LabelKey)
     const className = danger ? 'orden-table-btn orden-table-btn-danger' : 'orden-table-btn'
-    return button(className, key, path, () => onPress(this.barColumn))
+    return button(className, said, path, () => onPress(this.barColumn))
   }
 
   private watchColumnHover() {

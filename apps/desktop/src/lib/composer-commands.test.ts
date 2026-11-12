@@ -9,8 +9,6 @@ vi.mock('./sharing.svelte', () => ({
   canWriteIn: (note: { path: string | null } | null) => !note?.path || writable(note.path),
 }))
 
-vi.mock('./i18n.svelte', () => ({ t: (words: string) => words }))
-
 const workspace = vi.hoisted(() => ({
   activeSpace: null as { id: string; name: string; root: string } | null,
   active: null as { path: string | null; note: { path: string | null; shared: null } } | null,

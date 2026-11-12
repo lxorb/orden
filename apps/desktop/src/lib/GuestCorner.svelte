@@ -4,7 +4,7 @@
   import { account } from './account.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { initial } from './icons'
-  import { message, t } from './i18n.svelte'
+  import { message } from './message'
   import { fly, LAYER } from './motion'
   import { overlays } from './overlays'
   import { deviceAccent } from './rooms/who'
@@ -69,16 +69,16 @@
     <div
       class="pop orden-layer"
       role="dialog"
-      aria-label={t('Account')}
+      aria-label="Account"
       transition:fly={{ y: -6, duration: LAYER.rise, easing: cubicOut }}
     >
       <label class="name">
-        <span class="caption">{t('Your name')}</span>
+        <span class="caption">Your name</span>
         <input
           bind:this={field}
           class="orden-field"
           value={name}
-          placeholder={t('Your name')}
+          placeholder="Your name"
           spellcheck="false"
           autocomplete="nickname"
           onchange={(event) => void rename(event.currentTarget.value)}
@@ -87,7 +87,7 @@
       {#if error}
         <p class="error caption" role="alert">{error}</p>
       {/if}
-      <button class="orden-button" onclick={signIn}>{t('Sign in')}</button>
+      <button class="orden-button" onclick={signIn}>Sign in</button>
     </div>
   {/if}
 </div>
@@ -97,14 +97,14 @@
     --face: var(--leave-size);
     position: absolute;
     top: max(var(--space-2), var(--inset-top));
-    inset-inline-end: max(var(--space-2), var(--inset-end));
+    inset-inline-end: max(var(--space-2), var(--inset-right));
     z-index: var(--z-float);
   }
 
   :global([data-touch]) .guest-corner {
     --face: calc(var(--touch-target) * 0.75);
     top: var(--inset-top);
-    inset-inline-end: max(var(--space-1), var(--inset-end));
+    inset-inline-end: max(var(--space-1), var(--inset-right));
   }
 
   .who {

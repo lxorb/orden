@@ -1,6 +1,5 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { plural, t } from '../i18n.svelte'
   import { identifier } from '../identifier'
   import { readableSize } from '../usage.svelte'
   import { when } from '../when'
@@ -98,7 +97,7 @@
   }
 </script>
 
-<section class="preview" class:large aria-label={t('Preview')}>
+<section class="preview" class:large aria-label="Preview">
   <div class="shown">
     {#if media?.shown === 'picture'}
       <img src={media.url} alt={entry?.name ?? ''} draggable="false" />
@@ -119,38 +118,36 @@
     <h3 class="named">{entry ? entry.name.split('/').at(-1) : (view.listing?.path ?? '')}</h3>
     <dl>
       {#if !facts.folder}
-        <dt>{t('Size')}</dt>
+        <dt>Size</dt>
         <dd>{readableSize(facts.size)}</dd>
       {/if}
-      <dt>{t('Modified')}</dt>
+      <dt>Modified</dt>
       <dd>{when(facts.modified, 'medium')}</dd>
       {#if facts.born}
-        <dt>{t('Created')}</dt>
+        <dt>Created</dt>
         <dd>{when(facts.born, 'medium')}</dd>
       {/if}
       {#if facts.mode}
-        <dt>{t('Permissions')}</dt>
+        <dt>Permissions</dt>
         <dd class="mono">{facts.mode}</dd>
       {/if}
       {#if facts.link}
-        <dt>{t('Link to')}</dt>
+        <dt>Link to</dt>
         <dd class="path">{facts.link}</dd>
       {/if}
-      <dt>{t('Path')}</dt>
+      <dt>Path</dt>
       <dd class="path">{facts.path}</dd>
     </dl>
     {#if facts.folder}
       {#if count}
         <p class="count">
-          {t('{files}, {folders}, {size}', {
-            files: plural(count.files, { one: '{count} file', other: '{count} files' }),
-            folders: plural(count.folders, { one: '{count} folder', other: '{count} folders' }),
-            size: readableSize(count.bytes),
-          })}
+          {count.files === 1 ? '1 file' : `${count.files} files`}, {count.folders === 1
+            ? '1 folder'
+            : `${count.folders} folders`}, {readableSize(count.bytes)}
         </p>
       {:else}
         <button type="button" class="orden-button is-quiet" onclick={countNow} disabled={!!counting}
-          >{counting ? t('Counting…') : t('Count what it holds')}</button
+          >{counting ? 'Counting…' : 'Count what it holds'}</button
         >
       {/if}
     {/if}

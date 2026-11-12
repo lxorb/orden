@@ -36,8 +36,7 @@ describe('the arrow', () => {
     expect(body).toContain('⁠<svg')
   })
 
-  test('points along the line, and is turned over the other way', () => {
-    expect(body).toMatch(/<svg class="orden-mirror\b/)
+  test('points along the line', () => {
     expect(body).toContain('d="M6 3h7v7M13 3L5 11"')
   })
 

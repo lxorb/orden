@@ -83,3 +83,13 @@ test('a value the storage has no room to copy stays where it was, to move on a l
   carryKeys(held)
   expect(Object.fromEntries(held.items)).toEqual({ 'orden:workspace': 'big' })
 })
+
+test('a language chosen when Orden spoke more than English is let go', () => {
+  const held = new Held()
+  held.setItem('orden:language', 'de')
+  held.setItem('orden:theme', 'dark')
+
+  carryKeys(held)
+
+  expect(Object.fromEntries(held.items)).toEqual({ 'orden:theme': 'dark' })
+})

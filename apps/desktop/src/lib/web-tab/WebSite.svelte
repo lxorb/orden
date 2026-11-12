@@ -4,7 +4,7 @@
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { shownSite } from './idn'
   import { invoke } from '../tauri'
   import { dur, fly } from '../motion'
@@ -49,24 +49,24 @@
 
   type Role = 'site' | 'intermediate' | 'root'
   const ROLES: Record<Role, () => string> = {
-    site: () => t('Site'),
-    intermediate: () => t('Intermediate'),
-    root: () => t('Root'),
+    site: () => 'Site',
+    intermediate: () => 'Intermediate',
+    root: () => 'Root',
   }
   const role = (link: Link, index: number): Role =>
     index === 0 ? 'site' : link.root ? 'root' : 'intermediate'
 
   const NAMES: Record<Ask, () => string> = {
-    camera: () => t('Camera'),
-    microphone: () => t('Microphone'),
-    location: () => t('Location'),
-    notifications: () => t('Notifications'),
-    clipboard: () => t('Clipboard'),
-    sensors: () => t('Motion sensors'),
-    downloads: () => t('Automatic downloads'),
-    fonts: () => t('Fonts'),
-    midi: () => t('MIDI devices'),
-    windows: () => t('Window management'),
+    camera: () => 'Camera',
+    microphone: () => 'Microphone',
+    location: () => 'Location',
+    notifications: () => 'Notifications',
+    clipboard: () => 'Clipboard',
+    sensors: () => 'Motion sensors',
+    downloads: () => 'Automatic downloads',
+    fonts: () => 'Fonts',
+    midi: () => 'MIDI devices',
+    windows: () => 'Window management',
   }
 
   const https = $derived(url?.startsWith('https:') === true)
@@ -97,7 +97,7 @@
   const secure = $derived(certificate ? certificate.secure : https)
 
   const named = (party: Party) => [party.name, ...party.organization]
-  const day = (when: number) => i18n.when(when, { dateStyle: 'long' })
+  const day = (when: number) => localDate(when, { dateStyle: 'long' })
   const said = $derived(grants.of(site, privately))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
 
@@ -120,7 +120,7 @@
         <svelte:element this={tag} {...attrs} />
       {/each}
     </svg>
-    <span class="said">{secure ? t('Connection is secure') : t('Connection is not secure')}</span>
+    <span class="said">{secure ? 'Connection is secure' : 'Connection is not secure'}</span>
   {/snippet}
 
   {#if https}
@@ -131,12 +131,7 @@
       onclick={() => (showingCertificate = !showingCertificate)}
     >
       {@render how()}
-      <svg
-        class="chevron orden-mirror"
-        class:open={showingCertificate}
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
+      <svg class="chevron" class:open={showingCertificate} viewBox="0 0 24 24" aria-hidden="true">
         {#each ChevronRight as [tag, attrs], index (index)}
           <svelte:element this={tag} {...attrs} />
         {/each}
@@ -147,9 +142,9 @@
   {/if}
 
   {#if showingCertificate}
-    <section class="certificate" aria-label={t('Certificate')}>
+    <section class="certificate" aria-label="Certificate">
       {#if certificate && shown}
-        <ol class="chain" aria-label={t('Certificate chain')}>
+        <ol class="chain" aria-label="Certificate chain">
           {#each certificate.chain as link, index (index)}
             <li style:--depth={index}>
               <button
@@ -167,27 +162,26 @@
         </ol>
         {#if certificate.separately}
           <p class="note">
-            {t(
-              'Read from the site separately: the browser engine does not say which certificate this page came with.',
-            )}
+            Read from the site separately: the browser engine does not say which certificate this
+            page came with.
           </p>
         {/if}
         <dl class="details">
-          <dt>{t('Issued to')}</dt>
+          <dt>Issued to</dt>
           <dd><Facts parts={named(shown.to)} /></dd>
-          <dt>{t('Issued by')}</dt>
+          <dt>Issued by</dt>
           <dd><Facts parts={named(shown.by)} /></dd>
-          <dt>{t('Valid from')}</dt>
+          <dt>Valid from</dt>
           <dd>{day(shown.from)}</dd>
-          <dt>{t('Valid until')}</dt>
+          <dt>Valid until</dt>
           <dd>{day(shown.until)}</dd>
-          <dt>{t('Serial number')}</dt>
+          <dt>Serial number</dt>
           <dd class="hex">{shown.serial}</dd>
-          <dt>{t('SHA-256 fingerprint')}</dt>
+          <dt>SHA-256 fingerprint</dt>
           <dd class="hex">{shown.sha256}</dd>
         </dl>
       {:else if asked}
-        <p class="note">{t('The certificate could not be read.')}</p>
+        <p class="note">The certificate could not be read.</p>
       {/if}
     </section>
   {/if}
@@ -202,7 +196,7 @@
             onclick={() =>
               grants.remember(site, ask, said[ask] === 'allow' ? 'block' : 'allow', privately)}
           >
-            {said[ask] === 'allow' ? t('Allowed') : t('Blocked')}
+            {said[ask] === 'allow' ? 'Allowed' : 'Blocked'}
           </button>
         </li>
       {/each}
@@ -215,7 +209,7 @@
         onclose()
       }}
     >
-      {t('Reset permissions')}
+      Reset permissions
     </button>
   {/if}
 </div>
@@ -276,7 +270,7 @@
   }
 
   .how > .chevron.open {
-    transform: scaleX(var(--dir)) rotate(90deg);
+    transform: rotate(90deg);
   }
 
   .risky,

@@ -1,5 +1,4 @@
 import { account } from '../account.svelte'
-import { t } from '../i18n.svelte'
 import type { OpenHow } from '../new-tab'
 import { termText } from '@orden/online/term'
 import { nameOf, samePath } from '../space-paths'
@@ -63,5 +62,5 @@ async function refused(why: Refused): Promise<void> {
   const title = refusalWords(why)
   if (title === null) return
   const { prompt } = await import('../prompt.svelte')
-  await prompt.choose({ title, options: [{ id: 'ok', label: t('OK'), primary: true }] })
+  await prompt.choose({ title, options: [{ id: 'ok', label: 'OK', primary: true }] })
 }

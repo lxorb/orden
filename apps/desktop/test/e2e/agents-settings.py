@@ -11,7 +11,7 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-LOOKS = [("light", "en"), ("dark", "en"), ("light", "ar")]
+LOOKS = ["light", "dark"]
 
 OPEN = """
 async () => {
@@ -120,8 +120,8 @@ def memory_limit(page, name: str) -> None:
     page.wait_for_timeout(200)
     check(f"[{name}] and taken away again", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 0)
 
-def look(browser, scheme: str, language: str) -> None:
-    name = f"{scheme}-{language}"
+def look(browser, scheme: str) -> None:
+    name = scheme
     page = DRIVE.page(
         browser,
         errors=False,
@@ -132,7 +132,6 @@ def look(browser, scheme: str, language: str) -> None:
         device_scale_factor=2,
     )
     context = page.context
-    context.add_init_script(f"localStorage.setItem('orden:language', {language!r})")
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     page.on("console", lambda said: say(f"[{name}] {said.type}: {said.text[:200]}") if said.type == "error" else None)
@@ -152,11 +151,6 @@ def look(browser, scheme: str, language: str) -> None:
 
     rows = page.locator(".agents .agent").count()
     check(f"[{name}] the list holds the three agents", rows == 3)
-    direction = page.evaluate("() => document.documentElement.dir || 'ltr'")
-    check(
-        f"[{name}] the interface reads {'right to left' if language == 'ar' else 'left to right'}",
-        direction == ("rtl" if language == "ar" else "ltr"),
-    )
     photograph("list")
 
     choose(page, "Codex")
@@ -180,46 +174,45 @@ def look(browser, scheme: str, language: str) -> None:
     page.wait_for_selector(".agents .calls", state="detached")
     quiet(page)
 
-    if language == "en":
-        check(f"[{name}] an MCP client says it manages its own permissions", page.locator(".agents .connected").count() == 1)
-        check(f"[{name}] and has no switch of them", page.locator(".agents .orden-setting:has([role=switch])", has_text="Run scripts in pages").count() == 0)
-        sidebar = page.evaluate("() => { const one = window.agentsFake.pair('Orden Claude'); return { id: one.id, name: one.name } }")
-        page.locator(".agents .back").click()
-        page.wait_for_selector(".agents .agent")
-        quiet(page)
-        choose(page, sidebar["name"])
-        quiet(page)
+    check(f"[{name}] an MCP client says it manages its own permissions", page.locator(".agents .connected").count() == 1)
+    check(f"[{name}] and has no switch of them", page.locator(".agents .orden-setting:has([role=switch])", has_text="Run scripts in pages").count() == 0)
+    sidebar = page.evaluate("() => { const one = window.agentsFake.pair('Orden Claude'); return { id: one.id, name: one.name } }")
+    page.locator(".agents .back").click()
+    page.wait_for_selector(".agents .agent")
+    quiet(page)
+    choose(page, sidebar["name"])
+    quiet(page)
 
-        switch(page, "Run scripts in pages")
-        page.wait_for_timeout(200)
-        grant = page.evaluate(GRANT, sidebar["id"])
-        check(f"[{name}] a switch pressed is in the crate's grant", "browser.script" in grant["scopes"])
+    switch(page, "Run scripts in pages")
+    page.wait_for_timeout(200)
+    grant = page.evaluate(GRANT, sidebar["id"])
+    check(f"[{name}] a switch pressed is in the crate's grant", "browser.script" in grant["scopes"])
 
-        switch(page, "Read your cookies")
-        page.wait_for_timeout(200)
-        switch(page, "Act in your tabs")
-        page.wait_for_timeout(200)
-        grant = page.evaluate(GRANT, sidebar["id"])
-        check(
-            f"[{name}] what needed a scope goes with it",
-            "browser.reader" not in grant["scopes"] and "browser.storage" not in grant["scopes"],
-        )
-        page.locator(".agents .back").click()
-        page.wait_for_selector(".agents .agent")
-        quiet(page)
-        choose(page, "Claude Code")
-        quiet(page)
+    switch(page, "Read your cookies")
+    page.wait_for_timeout(200)
+    switch(page, "Act in your tabs")
+    page.wait_for_timeout(200)
+    grant = page.evaluate(GRANT, sidebar["id"])
+    check(
+        f"[{name}] what needed a scope goes with it",
+        "browser.reader" not in grant["scopes"] and "browser.storage" not in grant["scopes"],
+    )
+    page.locator(".agents .back").click()
+    page.wait_for_selector(".agents .agent")
+    quiet(page)
+    choose(page, "Claude Code")
+    quiet(page)
 
-        field = page.locator(".agents h3:text-is('Sites') + .card .add")
-        field.press_sequentially("https://login.bank2.example/sign-in?next=/")
-        field.press("Enter")
-        page.wait_for_function(
-            "() => !!window.agentsFake.grants.find((one) => one.id === 'claude-code').sites['bank2.example']"
-        )
-        grant = page.evaluate(GRANT, "claude-code")
-        check(f"[{name}] a typed address is kept as its site", grant["sites"].get("bank2.example") == "deny")
+    field = page.locator(".agents h3:text-is('Sites') + .card .add")
+    field.press_sequentially("https://login.bank2.example/sign-in?next=/")
+    field.press("Enter")
+    page.wait_for_function(
+        "() => !!window.agentsFake.grants.find((one) => one.id === 'claude-code').sites['bank2.example']"
+    )
+    grant = page.evaluate(GRANT, "claude-code")
+    check(f"[{name}] a typed address is kept as its site", grant["sites"].get("bank2.example") == "deny")
 
-        memory_limit(page, name)
+    memory_limit(page, name)
 
     body_to(page, "middle")
     photograph("agent-middle")
@@ -229,11 +222,11 @@ def look(browser, scheme: str, language: str) -> None:
     context.close()
 
 def drive(browser) -> None:
-    for scheme, language in LOOKS:
-        look(browser, scheme, language)
+    for scheme in LOOKS:
+        look(browser, scheme)
 
 def main() -> int:
-    return DRIVE.run(drive, "Settings > Agents held in all three looks")
+    return DRIVE.run(drive, "Settings > Agents held in both looks")
 
 if __name__ == "__main__":
     raise SystemExit(main())

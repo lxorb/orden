@@ -10,7 +10,7 @@
   import { citationLinks, citedIn, linkedAnswer } from '../retrieve'
   import type { Part, Turn } from '../chat/types'
   import { copyText } from '../../clipboard'
-  import { i18n, t } from '../../i18n.svelte'
+  import { region } from '../../region'
   import { links } from '../../link-index.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
   import { dur, fly, slide } from '../../motion'
@@ -56,9 +56,7 @@
   const fold = $derived(foldOf(blocks, live))
   let working = $state(false)
   const showWork = $derived(working || chat.unfolded)
-  const worked = $derived(
-    turn.took ? t('Worked for {time}', { time: lasted(turn.took, i18n.language) }) : t('Worked'),
-  )
+  const worked = $derived(turn.took ? `Worked for ${lasted(turn.took, region())}` : 'Worked')
 
   const pictures = new SvelteSet<string>()
   const show = (src: string) => pictures.add(src)
@@ -73,7 +71,7 @@
           : null
         return found === null ? null : { href: found }
       },
-      copy: t('Copy code'),
+      copy: 'Copy code',
       live: still,
       from,
       shown: pictures,
@@ -167,36 +165,36 @@
       checked: one.id === chat.head?.model,
       run: () => chat.retry({ provider: provider.id, id: one.id }),
     }))
-    menu.show(event, [{ label: t('Ask again'), run: () => chat.retry() }, DIVIDER, ...rows], {
-      title: t('Ask again'),
+    menu.show(event, [{ label: 'Ask again', run: () => chat.retry() }, DIVIDER, ...rows], {
+      title: 'Ask again',
     })
   }
 
   function moreMenu(event: MouseEvent) {
     menu.show(event, [
-      ...(answered ? [{ label: t('Save as a note'), run: () => void saveAsNote() }] : []),
-      { label: t('Branch'), run: () => chat.branch(undefined, turn.id) },
+      ...(answered ? [{ label: 'Save as a note', run: () => void saveAsNote() }] : []),
+      { label: 'Branch', run: () => chat.branch(undefined, turn.id) },
     ])
   }
 
   function noticeOf(part: Notice): string {
     switch (part.code) {
       case 'compacted':
-        return t('Compacted')
+        return 'Compacted'
       case 'model':
         return part.text
       case 'steps':
-        return t('Step limit')
+        return 'Step limit'
       case 'max_tokens':
-        return t('Length limit')
+        return 'Length limit'
       case 'refusal':
-        return part.text ? `${t('Declined')}: ${part.text}` : t('Declined')
+        return part.text ? `Declined: ${part.text}` : 'Declined'
       case 'error':
         return part.text
       case 'stopped':
-        return t('Stopped')
+        return 'Stopped'
       case 'no_tools':
-        return t('Without tools')
+        return 'Without tools'
       case 'command':
         return part.text
       case 'tasks':
@@ -236,13 +234,13 @@
     >
       {noticeOf(block.notice)}
       {#if block.notice.code === 'error' && last && !live}
-        <button class="link" onclick={() => chat.retry()}>{t('Ask again')}</button>
+        <button class="link" onclick={() => chat.retry()}>Ask again</button>
         {#if reset?.waiting}
-          {t('Continues at {time}', { time: when(reset.until, 'medium') })}
-          <button class="link" onclick={() => chat.waitForReset(false)}>{t('Cancel')}</button>
+          Continues at {when(reset.until, 'medium')}
+          <button class="link" onclick={() => chat.waitForReset(false)}>Cancel</button>
         {:else if reset}
           <button class="link" onclick={() => chat.waitForReset(true)}>
-            {t('Continue when the limit resets')}
+            Continue when the limit resets
           </button>
         {/if}
       {/if}
@@ -296,12 +294,7 @@
   {#if !live && (answered || (last && !failed))}
     <div class="acts">
       {#if answered}
-        <button
-          class="orden-glyph act"
-          title={t('Copy')}
-          aria-label={t('Copy')}
-          onclick={() => void copy()}
-        >
+        <button class="orden-glyph act" title="Copy" aria-label="Copy" onclick={() => void copy()}>
           <svg viewBox="0 0 13 13">
             {#if copied}
               <path d="M2.8 6.8l2.4 2.4 5-5.4" />
@@ -314,8 +307,8 @@
         </button>
         <button
           class="orden-glyph act"
-          title={t('Insert at the caret')}
-          aria-label={t('Insert at the caret')}
+          title="Insert at the caret"
+          aria-label="Insert at the caret"
           disabled={!view || view.state.readOnly}
           onclick={insert}
         >
@@ -325,8 +318,8 @@
       {#if last && ai.providers.length && !chat.answeredElsewhere}
         <button
           class="orden-glyph act"
-          title={t('Ask again')}
-          aria-label={t('Ask again')}
+          title="Ask again"
+          aria-label="Ask again"
           aria-haspopup="menu"
           onclick={againMenu}
         >
@@ -335,8 +328,8 @@
       {/if}
       <button
         class="orden-glyph act"
-        title={t('More')}
-        aria-label={t('More')}
+        title="More"
+        aria-label="More"
         aria-haspopup="menu"
         onclick={moreMenu}
       >

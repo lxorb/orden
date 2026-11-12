@@ -3,7 +3,6 @@
   import type { Attachment } from '@orden/pass/types'
   import Paperclip from 'lucide/dist/esm/icons/paperclip.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { t } from '../i18n.svelte'
   import { readableSize } from '../usage.svelte'
   import type { Picked } from './attachments'
   import Glyph from './Glyph.svelte'
@@ -31,7 +30,7 @@
   async function took(files: readonly File[]) {
     wrong = null
     const fitting = files.filter((one) => one.size <= MOST_FILE_BYTES)
-    if (fitting.length < files.length) wrong = t('A file can be at most 100 MB.')
+    if (fitting.length < files.length) wrong = 'A file can be at most 100 MB.'
     const read = await Promise.all(
       fitting.map(async (one) => ({
         name: one.name,
@@ -66,7 +65,7 @@
 <section
   class="files"
   class:over
-  aria-label={t('Attachments')}
+  aria-label="Attachments"
   ondragenter={hovered}
   ondragover={hovered}
   ondragleave={() => (over = false)}
@@ -82,8 +81,8 @@
           <button
             class="orden-glyph"
             type="button"
-            aria-label={t('Remove {name}', { name: file.name })}
-            title={t('Remove')}
+            aria-label="Remove {file.name}"
+            title="Remove"
             onclick={() => {
               removing = [...removing, file.id]
               oninput()
@@ -101,8 +100,8 @@
           <button
             class="orden-glyph"
             type="button"
-            aria-label={t('Remove {name}', { name: file.name })}
-            title={t('Remove')}
+            aria-label="Remove {file.name}"
+            title="Remove"
             onclick={() => {
               adding = adding.filter((_, at) => at !== index)
               oninput()
@@ -120,7 +119,7 @@
     type="button"
     onclick={() => picker?.click()}
   >
-    <Glyph icon={Paperclip} />{t('Attach file')}
+    <Glyph icon={Paperclip} />Attach file
   </button>
   {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
 </section>

@@ -1,5 +1,4 @@
 import { busy } from '../../busy.svelte'
-import { t } from '../../i18n.svelte'
 import { shownName } from '../../note-name'
 import { insideSpace, nameOf, samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
@@ -61,7 +60,7 @@ export async function undoFile(
     await workspace.fileCame(back, 'file', undefined, undefined, true)
     await workspace.loadTree()
     if (!samePath(back, insideSpace(root, change.path))) {
-      busy.failed(t('Back as {name}', { name: shownName(nameOf(back)) }))
+      busy.failed(`Back as ${shownName(nameOf(back))}`)
     }
     return true
   } catch {

@@ -169,7 +169,6 @@ describe('which store a key rides in', () => {
     const first = await launch()
     first.installLocal()
     localStorage.setItem('orden:theme', 'dark')
-    localStorage.setItem('orden:language', 'de')
     localStorage.setItem('orden:mirrors', mirrors(20))
     localStorage.setItem('orden:recent', JSON.stringify(['/Notes/One.md', '/Notes/Two.md']))
     await vi.advanceTimersByTimeAsync(1000)
@@ -179,7 +178,6 @@ describe('which store a key rides in', () => {
     second.installLocal()
 
     expect(localStorage.getItem('orden:theme')).toBe('dark')
-    expect(localStorage.getItem('orden:language')).toBe('de')
     expect(localStorage.getItem('orden:mirrors')).toBeNull()
     expect(localStorage.getItem('orden:recent')).toBeNull()
   })

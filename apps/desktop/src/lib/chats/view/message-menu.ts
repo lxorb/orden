@@ -1,6 +1,5 @@
 import { may, type Message, type Role } from '@orden/chats'
 import { copyText } from '../../clipboard'
-import { t } from '../../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../../menu.svelte'
 import { canWriteAt } from '../../sharing.svelte'
 import type { ChatPage } from './chat.svelte'
@@ -24,24 +23,24 @@ export function messageMenu(
   if (message.deleted) return []
   const removing: MenuEntry[] =
     (mine && may(role, 'delete-own', posting)) || may(role, 'delete-any', posting)
-      ? [{ label: t('Delete'), danger: true, run: () => page.remove(message.id) }]
+      ? [{ label: 'Delete', danger: true, run: () => page.remove(message.id) }]
       : []
   return [
-    ...(canPost ? [{ label: t('Reply'), run: gestures.reply }] : []),
-    ...(canPost ? [{ label: t('Quote'), run: gestures.quote }] : []),
+    ...(canPost ? [{ label: 'Reply', run: gestures.reply }] : []),
+    ...(canPost ? [{ label: 'Quote', run: gestures.quote }] : []),
     DIVIDER,
-    { label: t('Copy'), run: () => void copyText(message.body) },
-    { label: t('Copy link'), run: () => void page.copyLink(message) },
+    { label: 'Copy', run: () => void copyText(message.body) },
+    { label: 'Copy link', run: () => void page.copyLink(message) },
     ...(may(role, 'pin', posting)
-      ? [{ label: message.pinned ? t('Unpin') : t('Pin'), run: () => page.pin(message) }]
+      ? [{ label: message.pinned ? 'Unpin' : 'Pin', run: () => page.pin(message) }]
       : []),
-    { label: t('Save'), checked: page.isSaved(message), run: () => page.save(message) },
-    { label: t('Add as task'), run: () => page.addAsTask(message) },
-    ...(canKeep ? [{ label: t('Save as note'), run: () => void page.saveAsNote(message) }] : []),
-    { label: t('Mark unread'), run: () => page.markUnread(message) },
+    { label: 'Save', checked: page.isSaved(message), run: () => page.save(message) },
+    { label: 'Add as task', run: () => page.addAsTask(message) },
+    ...(canKeep ? [{ label: 'Save as note', run: () => void page.saveAsNote(message) }] : []),
+    { label: 'Mark unread', run: () => page.markUnread(message) },
     DIVIDER,
     ...(mine && may(role, 'edit-own', posting) && !message.poll
-      ? [{ label: t('Edit'), run: gestures.edit }]
+      ? [{ label: 'Edit', run: gestures.edit }]
       : []),
     ...removing,
   ]

@@ -1,7 +1,6 @@
 <script lang="ts">
   import Folder from 'lucide/dist/esm/icons/folder.mjs'
   import type { IconNode } from 'lucide'
-  import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import { roving } from '../roving'
   import { nameOf, samePath, within } from '../space-paths'
@@ -60,7 +59,7 @@
   function rowMenu(event: MouseEvent, path: string, pinned: boolean) {
     if (!pinned) return
     event.preventDefault()
-    menu.show(event, [{ label: t('Unpin'), run: () => places.unpin(path) }])
+    menu.show(event, [{ label: 'Unpin', run: () => places.unpin(path) }])
   }
 </script>
 
@@ -74,7 +73,7 @@
 
 <nav
   class="places"
-  aria-label={t('Places')}
+  aria-label="Places"
   use:dropOver={(event) => {
     if (isExplorerDrag(event.dataTransfer)) event.preventDefault()
   }}

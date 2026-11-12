@@ -50,15 +50,10 @@ MEASURE = """
     // that line in the label's direction, not to the last letter in memory.
     range.selectNodeContents(words)
     const line = [...range.getClientRects()].filter((one) => one.width && centre > one.top && centre < one.bottom)
-    const rtl = style.direction === 'rtl'
-    const gap = !line.length
-      ? NaN
-      : rtl
-        ? Math.min(...line.map((one) => one.left)) - drawn.right
-        : drawn.left - Math.max(...line.map((one) => one.right))
+    const gap = !line.length ? NaN : drawn.left - Math.max(...line.map((one) => one.right))
     // Inside the box the words are in, which keeps the end of the line for the glyph.
     const box = mark.parentElement.getBoundingClientRect()
-    const outside = rtl ? box.left - drawn.left : drawn.right - box.right
+    const outside = drawn.right - box.right
     // Glued to the last word: a word joiner straight after it, and not even a space
     // between, which would widen the gap. Svelte's anchors are comments, and no text.
     let before = mark.previousSibling
@@ -179,25 +174,17 @@ def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
         shot(page, f"{tag}-{section}-wrapped-{width}")
     page.evaluate("() => document.getElementById('help-mark-wrap')?.remove()")
 
-def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch: bool = False,
-         scheme: str = "light") -> None:
+def look(browser: Browser, tag: str, scale: int = 1, touch: bool = False, scheme: str = "light") -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860}, device_scale_factor=scale)
-    page.context.add_init_script(
-        f"localStorage.setItem('orden:language', {language!r}); localStorage.setItem('orden:access-choice', 'claude')"
-    )
+    page.context.add_init_script("localStorage.setItem('orden:access-choice', 'claude')")
     DRIVE.open(page)
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     if touch:
         page.evaluate("() => document.documentElement.toggleAttribute('data-touch', true)")
     page.evaluate("() => window.ordenApp.settings.show('general')")
     wait_for(page, "() => !!document.querySelector('[role=\"dialog\"] .explain')", "the settings")
-    direction = page.evaluate("() => getComputedStyle(document.querySelector('[role=\"dialog\"] .explain')).direction")
-    say(f"[{tag}] direction {direction}")
-    if language == "ar" and direction != "rtl":
-        wrong(f"[{tag}] Arabic is drawn {direction}")
-    machine = language in ("ar", "es")
-    panes(page, tag, PANES, ("general",) if machine else ())
-    wrapped(page, tag, "general", ("?", "arrow") if machine else ("?",))
+    panes(page, tag, PANES)
+    wrapped(page, tag, "general", ("?",))
     page.evaluate("() => { window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")
     panes(page, tag, SIGNED_IN, ("ai",))
     wrapped(page, tag, "ai", ("?", "arrow"))
@@ -208,9 +195,6 @@ def drive(browser: Browser) -> None:
     look(browser, "dark", scheme="dark")
     look(browser, "hidpi", scale=2)
     look(browser, "touch", touch=True)
-    look(browser, "rtl", language="ar")
-    look(browser, "german", language="de")
-    look(browser, "spanish", language="es")
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "every mark sits on the middle of the letters of the words it follows"))

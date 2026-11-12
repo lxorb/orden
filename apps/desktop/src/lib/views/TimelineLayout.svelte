@@ -1,7 +1,7 @@
 <script lang="ts">
   import { addDays, cellValue, type Row, rowId, type Value } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import type { RowChange } from '../rows/write'
   import { priorityTone } from '../quick-add/labels'
   import { changeOf } from './columns'
@@ -30,10 +30,10 @@
   let scale = $state<Scale>('week')
 
   const SCALE_NAMES: Record<Scale, string> = {
-    day: t('Days'),
-    week: t('Weeks'),
-    month: t('Months'),
-    quarter: t('Quarters'),
+    day: 'Days',
+    week: 'Weeks',
+    month: 'Months',
+    quarter: 'Quarters',
   }
 
   const rows = $derived(everyRow(live.answer?.groups ?? []))
@@ -60,13 +60,13 @@
     for (let day = span.first; day <= span.last; day = addDays(day, 1)) {
       const date = dateAt(day)
       const first = day.endsWith('-01')
-      if (scale === 'day') out.push({ day, label: i18n.when(date, { day: 'numeric' }) })
+      if (scale === 'day') out.push({ day, label: localDate(date, { day: 'numeric' }) })
       else if (scale === 'week' && date.getDay() === 1)
-        out.push({ day, label: i18n.when(date, { month: 'short', day: 'numeric' }) })
+        out.push({ day, label: localDate(date, { month: 'short', day: 'numeric' }) })
       else if (scale === 'month' && first)
-        out.push({ day, label: i18n.when(date, { month: 'short' }) })
+        out.push({ day, label: localDate(date, { month: 'short' }) })
       else if (scale === 'quarter' && first && date.getMonth() % 3 === 0)
-        out.push({ day, label: i18n.when(date, { month: 'short', year: '2-digit' }) })
+        out.push({ day, label: localDate(date, { month: 'short', year: '2-digit' }) })
     }
     return out
   })

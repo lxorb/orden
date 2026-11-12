@@ -2,7 +2,6 @@ import type { Message } from '@orden/chats'
 import { isWho } from '@orden/chats/wire'
 import { chatLink } from '@orden/chats/links'
 import { storeBeside } from '../../assets'
-import { t } from '../../i18n.svelte'
 import { canWriteAt } from '../../sharing.svelte'
 import { folderOf } from '../../space-paths'
 import { showQuickAdd } from '../../surfaces.svelte'
@@ -38,7 +37,7 @@ export async function saveAsNote(
   const entry = page.entry
   if (!entry?.path || !canWriteAt(entry.path)) return
   const folder = folderOf(entry.path)
-  const name = noteNameOf(message.body, entry.name ?? t('Chat'))
+  const name = noteNameOf(message.body, entry.name ?? 'Chat')
   const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}.md`))
 
   const replies = message.replies

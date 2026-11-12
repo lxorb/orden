@@ -8,7 +8,6 @@
   import ListFilter from 'lucide/dist/esm/icons/list-filter.mjs'
   import Menu from 'lucide/dist/esm/icons/menu.mjs'
   import Search from 'lucide/dist/esm/icons/search.mjs'
-  import { plural, t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import { prompt } from '../prompt.svelte'
   import Glyph from './Glyph.svelte'
@@ -112,9 +111,9 @@
   async function emptyTrash() {
     const sure = await prompt.confirm({
       until: pass.opened,
-      title: t('Empty the trash?'),
-      detail: t('Everything in the trash is deleted for good.'),
-      confirmLabel: t('Empty trash'),
+      title: 'Empty the trash?',
+      detail: 'Everything in the trash is deleted for good.',
+      confirmLabel: 'Empty trash',
       danger: true,
     })
     if (sure) await pass.emptyTrash()
@@ -123,11 +122,8 @@
   async function removePicked(ids: string[]) {
     const sure = await prompt.confirm({
       until: pass.opened,
-      title: plural(ids.length, {
-        one: 'Delete {count} item for good?',
-        other: 'Delete {count} items for good?',
-      }),
-      confirmLabel: t('Delete'),
+      title: ids.length === 1 ? 'Delete 1 item for good?' : `Delete ${ids.length} items for good?`,
+      confirmLabel: 'Delete',
       danger: true,
     })
     if (!sure) return
@@ -152,30 +148,24 @@
       <button
         class="orden-glyph"
         type="button"
-        aria-label={t('Back')}
-        title={t('Back')}
+        aria-label="Back"
+        title="Back"
         onclick={heading.back}
       >
-        <Glyph icon={ArrowLeft} class="orden-mirror" />
+        <Glyph icon={ArrowLeft} />
       </button>
     {:else if stepped}
       <button
         class="orden-glyph"
         type="button"
-        aria-label={t('Back')}
-        title={t('Back')}
+        aria-label="Back"
+        title="Back"
         onclick={() => ui.back()}
       >
-        <Glyph icon={ArrowLeft} class="orden-mirror" />
+        <Glyph icon={ArrowLeft} />
       </button>
     {:else if onside}
-      <button
-        class="orden-glyph"
-        type="button"
-        aria-label={t('Vaults')}
-        title={t('Vaults')}
-        onclick={onside}
-      >
+      <button class="orden-glyph" type="button" aria-label="Vaults" title="Vaults" onclick={onside}>
         <Glyph icon={Menu} />
       </button>
     {/if}
@@ -185,8 +175,8 @@
         type="search"
         bind:this={ui.searchField}
         bind:value={ui.query}
-        placeholder={t('Search in {place}', { place: title })}
-        aria-label={t('Search')}
+        placeholder="Search in {title}"
+        aria-label="Search"
         onkeydown={(event) => {
           if (event.key === 'Escape' && ui.query) {
             event.preventDefault()
@@ -200,39 +190,37 @@
   </header>
 
   {#if picked !== null}
-    <div class="bar picking" role="toolbar" aria-label={t('Selected items')}>
-      <span class="count"
-        >{plural(picked.length, { one: '{count} selected', other: '{count} selected' })}</span
-      >
+    <div class="bar picking" role="toolbar" aria-label="Selected items">
+      <span class="count">{picked.length === 1 ? '1 selected' : `${picked.length} selected`}</span>
       {#if trash}
         <button
           class="orden-button is-quiet"
           type="button"
           disabled={!picked.length}
-          onclick={() => void restorePicked(picked)}>{t('Restore')}</button
+          onclick={() => void restorePicked(picked)}>Restore</button
         >
         <button
           class="orden-button is-quiet danger"
           type="button"
           disabled={!picked.length}
-          onclick={() => void removePicked(picked)}>{t('Delete')}</button
+          onclick={() => void removePicked(picked)}>Delete</button
         >
       {:else}
         <button
           class="orden-button is-quiet"
           type="button"
           disabled={!picked.length}
-          onclick={() => (ui.sheet = { kind: 'move', ids: picked })}>{t('Move')}</button
+          onclick={() => (ui.sheet = { kind: 'move', ids: picked })}>Move</button
         >
         <button
           class="orden-button is-quiet danger"
           type="button"
           disabled={!picked.length}
-          onclick={() => void trashPicked(picked)}>{t('Trash')}</button
+          onclick={() => void trashPicked(picked)}>Trash</button
         >
       {/if}
       <button class="orden-button is-quiet is-soft" type="button" onclick={() => (ui.picked = null)}
-        >{t('Done')}</button
+        >Done</button
       >
     </div>
   {:else}
@@ -257,15 +245,15 @@
         <button
           class="orden-chip is-quiet is-shrinkable danger"
           type="button"
-          onclick={() => void emptyTrash()}>{t('Empty trash')}</button
+          onclick={() => void emptyTrash()}>Empty trash</button
         >
       {/if}
       {#if rows.length && heading === null}
         <button
           class="orden-glyph"
           type="button"
-          aria-label={t('Select items')}
-          title={t('Select items')}
+          aria-label="Select items"
+          title="Select items"
           onclick={() => (ui.picked = [])}
         >
           <Glyph icon={ListChecks} />
@@ -279,7 +267,7 @@
   {/if}
 
   {#if pinned.length}
-    <div class="pinned" role="list" aria-label={t('Pinned')}>
+    <div class="pinned" role="list" aria-label="Pinned">
       {#each pinned as item (item.id)}
         <button
           class="pin"
@@ -289,7 +277,7 @@
           onclick={() => void ui.openItem(item.id)}
         >
           <ItemMark content={item.content} />
-          <span class="pin-name">{item.content.title || t('Untitled')}</span>
+          <span class="pin-name">{item.content.title || 'Untitled'}</span>
         </button>
       {/each}
     </div>
@@ -313,22 +301,22 @@
         {/if}
         <ItemMark content={item.content} />
         <span class="orden-row-label">
-          <span class="name" dir="auto">{item.content.title || t('Untitled')}</span>
+          <span class="name" dir="auto">{item.content.title || 'Untitled'}</span>
           <span class="sub" dir="auto">{subtitleOf(item)}</span>
         </span>
       </button>
     {:else}
       <div class="empty">
         {#if ui.query.trim() !== ''}
-          <p>{t('Nothing matches “{query}”', { query: ui.query.trim() })}</p>
+          <p>Nothing matches “{ui.query.trim()}”</p>
         {:else if trash}
-          <p>{t('The trash is empty')}</p>
+          <p>The trash is empty</p>
         {:else if heading}
-          <p>{t('Nothing here')}</p>
+          <p>Nothing here</p>
         {:else}
-          <p>{t('Nothing here yet')}</p>
+          <p>Nothing here yet</p>
           <button class="orden-button" type="button" onclick={() => void ui.newItem(blank('login'))}
-            >{t('New login')}</button
+            >New login</button
           >
         {/if}
       </div>

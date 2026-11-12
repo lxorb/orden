@@ -17,7 +17,7 @@ import {
   listenOver,
   outsideRows,
 } from '../drag-paths'
-import { i18n, key, plural, t } from '../i18n.svelte'
+import { localDate } from '../region'
 import { identifier } from '../identifier'
 import { notify } from '../notify'
 import { showCombination } from '../keys'
@@ -491,8 +491,8 @@ class Session {
       return
     }
 
-    const when = i18n.when(history.at, { dateStyle: 'medium', timeStyle: 'short' })
-    const words = t('Restored {time}', { time: when })
+    const when = localDate(history.at, { dateStyle: 'medium', timeStyle: 'short' })
+    const words = `Restored ${when}`
 
     this.term.write(history.text, () => {
       const off = tidied(this.left(), false)
@@ -768,7 +768,7 @@ class Session {
     setPty(this.tab.id, null)
 
     if (this.remote) {
-      this.say(t('Could not connect to {host}', { host: this.tab.shown }))
+      this.say(`Could not connect to ${this.tab.shown}`)
       this.wait()
       return
     }
@@ -784,7 +784,7 @@ class Session {
     }
 
     this.exited = -1
-    this.say(t('Could not start {shell}', { shell: this.tab.shown }))
+    this.say(`Could not start ${this.tab.shown}`)
   }
 
   private heard(id: string, what: Said) {
@@ -951,7 +951,7 @@ class Session {
       this.front = new Front(false)
       this.named()
       this.exited = code
-      this.say(t('Exited with code {code}', { code }))
+      this.say(`Exited with code ${code}`)
       return
     }
 
@@ -972,7 +972,7 @@ class Session {
     }
 
     this.exited = code
-    this.say(t('Exited with code {code}', { code }))
+    this.say(`Exited with code ${code}`)
   }
 
   private say(words: string) {
@@ -1276,8 +1276,8 @@ class Session {
       const { prompt } = await import('../prompt.svelte')
       const lines = linesIn(text)
       const sure = await prompt.confirm({
-        title: plural(lines, { one: 'Paste {count} line?', other: 'Paste {count} lines?' }),
-        confirmLabel: key('Paste'),
+        title: lines === 1 ? 'Paste 1 line?' : `Paste ${lines} lines?`,
+        confirmLabel: 'Paste',
       })
       this.focus()
       if (!sure) return
@@ -1341,7 +1341,7 @@ class Session {
     if (pty !== this.pty) return
     const { said, left } = spokenPaths(paths, shell)
     if (said) this.term.paste(said)
-    if (left) busy.failed(t('A name this shell would misread was left out'))
+    if (left) busy.failed('A name this shell would misread was left out')
     this.focus()
   }
 
@@ -1352,20 +1352,20 @@ class Session {
 
     const rows: MenuEntry[] = [
       {
-        label: t('Copy'),
+        label: 'Copy',
         hint: hint('Ctrl-Shift-c', 'Mod-c'),
         disabled: !this.term.hasSelection(),
         run: () => this.copyChosen(),
       },
       {
-        label: t('Paste'),
+        label: 'Paste',
         hint: hint('Ctrl-Shift-v', 'Mod-v'),
         run: () => void this.pasteFromMenu(),
       },
       DIVIDER,
-      { label: t('Select all'), run: () => this.term.selectAll() },
-      { label: t('Find'), hint: shortcuts.hint('edit.find'), run: () => (this.finding = true) },
-      { label: t('Clear'), run: () => this.term.clear() },
+      { label: 'Select all', run: () => this.term.selectAll() },
+      { label: 'Find', hint: shortcuts.hint('edit.find'), run: () => (this.finding = true) },
+      { label: 'Clear', run: () => this.term.clear() },
     ]
 
     menu.show(event, rows)

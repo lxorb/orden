@@ -10,7 +10,6 @@ import {
   squash,
   writtenIcon,
 } from './icons'
-import { key } from './i18n.svelte'
 import { outlineName, plain } from './outline-names'
 
 let tagged: Map<string, string> | null = null
@@ -341,37 +340,37 @@ export const FLAT_COLOUR = 'flat-color-icons'
 export const ICON_SETS: readonly IconSet[] = [
   {
     id: LUCIDE,
-    label: key('Line'),
+    label: 'Line',
     credit: 'Lucide, ISC',
     load: loadLucide,
   },
   {
     id: EMOJI_SET,
-    label: key('Emoji'),
+    label: 'Emoji',
     credit: '',
     load: loadEmoji,
   },
   {
     id: FLAT_COLOUR,
-    label: key('Colour'),
+    label: 'Colour',
     credit: 'Flat Color Icons by Icons8, MIT',
     load: loadFlatColour,
   },
   {
     id: EMOJI_OUTLINE,
-    label: key('One colour'),
+    label: 'One colour',
     credit: 'Fluent Emoji High Contrast by Microsoft, MIT; Noto Emoji by Google, OFL 1.1',
     load: loadOutlines,
   },
   {
     id: SITE_ICONS,
-    label: key('Web icons'),
+    label: 'Web icons',
     credit: '',
     load: async () => (await import('./web-tab/site-icons.svelte')).siteSet(),
   },
   {
     id: BRANDS,
-    label: key('Brands'),
+    label: 'Brands',
     credit: 'Simple Icons, CC0 1.0. Brand names and logos are trademarks of their owners',
     load: loadBrands,
   },

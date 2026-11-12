@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import type { ThemeSetting, ThemeValue } from '../themes/settings'
 import { theme } from '../theme.svelte'
 import {
@@ -19,45 +18,37 @@ const FIT_NAMES: Record<Fit, string> = {
 
 export function wallpaperSettings(): ThemeSetting[] {
   return [
-    range('blur', t('Blur'), t('How much the picture is blurred.'), 0, 60, 28, 'px'),
+    range('blur', 'Blur', 'How much the picture is blurred.', 0, 60, 28, 'px'),
     {
-      ...range('dim', t('Dim'), t('How much the picture is darkened.'), 0, 90, 10, '%'),
+      ...range('dim', 'Dim', 'How much the picture is darkened.', 0, 90, 10, '%'),
       paint: (value) => ({ '--orden-dim': `${String(value)}%` }),
     },
     range(
       'saturation',
-      t('Saturation'),
-      t('How vivid the colours of the picture are.'),
+      'Saturation',
+      'How vivid the colours of the picture are.',
       0,
       200,
       100,
       '%',
     ),
-    range(
-      'tint',
-      t('Tint'),
-      t('How strongly the tint colour lies over the picture.'),
-      0,
-      100,
-      0,
-      '%',
-    ),
+    range('tint', 'Tint', 'How strongly the tint colour lies over the picture.', 0, 100, 0, '%'),
     tintColourSetting('tint-colour', () => Number(theme.values.tint ?? 0) > 0),
-    range('grain', t('Grain'), t('Adds a film grain over the picture.'), 0, 100, 0, '%'),
+    range('grain', 'Grain', 'Adds a film grain over the picture.', 0, 100, 0, '%'),
     {
       id: 'fit',
-      label: t('Fit'),
-      hint: t('How the picture fills the window.'),
+      label: 'Fit',
+      hint: 'How the picture fills the window.',
       own: true,
       kind: 'choice',
-      options: FITS.map((value) => ({ value, label: t(FIT_NAMES[value]) })),
+      options: FITS.map((value) => ({ value, label: FIT_NAMES[value] })),
       initial: 'fill',
       paint: () => ({}),
     },
     {
       id: 'empty',
-      label: t('Empty panes'),
-      hint: t('An empty pane shows the picture rather than paper.'),
+      label: 'Empty panes',
+      hint: 'An empty pane shows the picture rather than paper.',
       own: true,
       kind: 'switch',
       initial: true,

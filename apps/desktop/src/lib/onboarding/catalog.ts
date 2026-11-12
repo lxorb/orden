@@ -1,5 +1,4 @@
 import type { BrowserId } from '../import/browsers'
-import { key } from '../i18n.svelte'
 
 export interface Brand {
   id: string
@@ -13,10 +12,10 @@ export type PresetSetting = 'fitTabs' | 'iconTabs' | 'byUse' | 'swipe'
 export type Preset = Partial<Record<PresetSetting, boolean>>
 
 export const SETTING_NAMES: Record<PresetSetting, string> = {
-  fitTabs: key('Tabs as wide as their names'),
-  iconTabs: key('Show other tabs as icons'),
-  byUse: key('Ctrl+Tab in order of use'),
-  swipe: key('Swipe between pages'),
+  fitTabs: 'Tabs as wide as their names',
+  iconTabs: 'Show other tabs as icons',
+  byUse: 'Ctrl+Tab in order of use',
+  swipe: 'Swipe between pages',
 }
 
 export const CUSTOM_SETTINGS: readonly PresetSetting[] = ['fitTabs', 'iconTabs', 'byUse', 'swipe']
@@ -141,11 +140,11 @@ export const MORE_AI: readonly Compatible[] = [
 ]
 
 export const HEARD = [
-  { id: 'ai', name: key('AI assistant') },
-  { id: 'friend', name: key('Friend or colleague') },
-  { id: 'search', name: key('Search') },
-  { id: 'social', name: key('Social media') },
-  { id: 'other', name: key('Other') },
+  { id: 'ai', name: 'AI assistant' },
+  { id: 'friend', name: 'Friend or colleague' },
+  { id: 'search', name: 'Search' },
+  { id: 'social', name: 'Social media' },
+  { id: 'other', name: 'Other' },
 ] as const
 
 export type Heard = (typeof HEARD)[number]['id']

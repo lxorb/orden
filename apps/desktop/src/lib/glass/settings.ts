@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { isDesktop, platform } from '../tauri'
 import { theme } from '../theme.svelte'
 import type { ThemeSetting, ThemeValue } from '../themes/settings'
@@ -36,20 +35,20 @@ export function glassSettings(): ThemeSetting[] {
       ? ([
           {
             id: 'material',
-            label: t('Material'),
-            hint: t('What Windows draws behind the window: Mica, Acrylic, or no blur.'),
+            label: 'Material',
+            hint: 'What Windows draws behind the window: Mica, Acrylic, or no blur.',
             own: true,
             reapplies: true,
             kind: 'choice',
-            options: Object.entries(MATERIALS).map(([value, name]) => ({ value, label: t(name) })),
+            options: Object.entries(MATERIALS).map(([value, name]) => ({ value, label: name })),
             initial: 'mica-alt',
             paint: () => ({}),
           },
           {
             ...rangeSetting(
               'opacity',
-              t('Opacity'),
-              t('How much of the window’s own colour lies over what is behind it.'),
+              'Opacity',
+              'How much of the window’s own colour lies over what is behind it.',
               0,
               100,
               Math.round(DIALS.opacity * 100),
@@ -61,8 +60,8 @@ export function glassSettings(): ThemeSetting[] {
       : []),
     {
       id: 'follow',
-      label: t('Follow the page'),
-      hint: t('The frame takes its colour from what is open.'),
+      label: 'Follow the page',
+      hint: 'The frame takes its colour from what is open.',
       own: true,
       kind: 'switch',
       initial: true,
@@ -70,8 +69,8 @@ export function glassSettings(): ThemeSetting[] {
     },
     rangeSetting(
       'tint',
-      t('Tint'),
-      t('How strongly the frame is coloured.'),
+      'Tint',
+      'How strongly the frame is coloured.',
       0,
       100,
       Math.round(DIALS.strength * 100),
@@ -79,19 +78,19 @@ export function glassSettings(): ThemeSetting[] {
     ),
     {
       id: 'pair',
-      label: t('Tint colour'),
-      hint: t('The colours the frame takes where nothing open has a colour of its own.'),
+      label: 'Tint colour',
+      hint: 'The colours the frame takes where nothing open has a colour of its own.',
       own: true,
       kind: 'colour',
       initial: DAWN.id,
       options: [
         ...PAIRS.map((pair) => ({
           value: pair.id,
-          name: t(pair.name),
+          name: pair.name,
           dark: swatchOf(pair, 'dark'),
           light: swatchOf(pair, 'light'),
         })),
-        { value: ACCENT_PAIR, name: t('Accent'), dark: 'var(--accent)', light: 'var(--accent)' },
+        { value: ACCENT_PAIR, name: 'Accent', dark: 'var(--accent)', light: 'var(--accent)' },
       ],
       pair: {
         accepts: isOwn,
@@ -102,8 +101,8 @@ export function glassSettings(): ThemeSetting[] {
     },
     {
       id: 'tab',
-      label: t('Coloured tab'),
-      hint: t('A web tab takes the colour of its page.'),
+      label: 'Coloured tab',
+      hint: 'A web tab takes the colour of its page.',
       own: true,
       kind: 'switch',
       initial: true,

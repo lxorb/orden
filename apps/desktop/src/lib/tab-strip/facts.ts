@@ -33,17 +33,14 @@ export function watchFacts(tab: Tab, said: (lines: string[][]) => void): () => v
   let timer: ReturnType<typeof setTimeout> | undefined
   let release: (() => void) | null = null
   const read = async () => {
-    const [{ t }, { readableSize }] = await Promise.all([
-      import('../i18n.svelte'),
-      import('../usage.svelte'),
-    ])
+    const { readableSize } = await import('../usage.svelte')
     const lines: string[][] = []
     if (tab.kind === 'application') {
       const { appSessionIfAny } = await import('../apps/session.svelte')
       const session = appSessionIfAny(tab)
       if (session) {
         release ??= session.picture.hold()
-        if (session.hostName) lines.push([t('Running on {device}', { device: session.hostName })])
+        if (session.hostName) lines.push([`Running on ${session.hostName}`])
         const usage = session.picture.usage
         if (usage) lines.push(usageLine(usage, readableSize))
         const stats = session.picture.stats

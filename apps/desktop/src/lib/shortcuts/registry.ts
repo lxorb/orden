@@ -8,7 +8,6 @@ import {
 } from '@orden/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../export/offer'
 import { revealPanel, stepRegionFocus } from '../focus'
-import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
@@ -49,19 +48,19 @@ export type Category =
   | 'fixed'
 
 export const CATEGORIES: { id: Category; label: () => string }[] = [
-  { id: 'file', label: () => t('File') },
-  { id: 'edit', label: () => t('Edit') },
-  { id: 'format', label: () => t('Format') },
-  { id: 'paragraph', label: () => t('Paragraph') },
-  { id: 'view', label: () => t('View') },
-  { id: 'panel', label: () => t('File list') },
-  { id: 'canvas', label: () => t('Canvas') },
-  { id: 'pages', label: () => t('Pages') },
-  { id: 'table', label: () => t('Tables') },
-  { id: 'picture', label: () => t('Pictures') },
-  { id: 'explorer', label: () => t('File explorer') },
-  { id: 'pass', label: () => t('Pass') },
-  { id: 'fixed', label: () => t('Fixed keys') },
+  { id: 'file', label: () => 'File' },
+  { id: 'edit', label: () => 'Edit' },
+  { id: 'format', label: () => 'Format' },
+  { id: 'paragraph', label: () => 'Paragraph' },
+  { id: 'view', label: () => 'View' },
+  { id: 'panel', label: () => 'File list' },
+  { id: 'canvas', label: () => 'Canvas' },
+  { id: 'pages', label: () => 'Pages' },
+  { id: 'table', label: () => 'Tables' },
+  { id: 'picture', label: () => 'Pictures' },
+  { id: 'explorer', label: () => 'File explorer' },
+  { id: 'pass', label: () => 'Pass' },
+  { id: 'fixed', label: () => 'Fixed keys' },
 ]
 
 export interface AppContext {
@@ -89,99 +88,99 @@ export interface Shortcut {
 }
 
 const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
-  'format.bold': ['format', () => t('Bold')],
-  'format.italic': ['format', () => t('Italic')],
-  'format.underline': ['format', () => t('Underline')],
-  'format.code': ['format', () => t('Code')],
-  'format.strikethrough': ['format', () => t('Strikethrough')],
-  'format.highlight': ['format', () => t('Highlight')],
-  'format.link': ['format', () => t('Link')],
-  'format.image': ['format', () => t('Image')],
-  'format.clear': ['format', () => t('Clear formatting')],
-  'format.comment': ['format', () => t('Comment')],
+  'format.bold': ['format', () => 'Bold'],
+  'format.italic': ['format', () => 'Italic'],
+  'format.underline': ['format', () => 'Underline'],
+  'format.code': ['format', () => 'Code'],
+  'format.strikethrough': ['format', () => 'Strikethrough'],
+  'format.highlight': ['format', () => 'Highlight'],
+  'format.link': ['format', () => 'Link'],
+  'format.image': ['format', () => 'Image'],
+  'format.clear': ['format', () => 'Clear formatting'],
+  'format.comment': ['format', () => 'Comment'],
 
-  'paragraph.body': ['paragraph', () => t('Paragraph')],
-  'paragraph.heading-1': ['paragraph', () => t('Heading {level}', { level: 1 })],
-  'paragraph.heading-2': ['paragraph', () => t('Heading {level}', { level: 2 })],
-  'paragraph.heading-3': ['paragraph', () => t('Heading {level}', { level: 3 })],
-  'paragraph.heading-4': ['paragraph', () => t('Heading {level}', { level: 4 })],
-  'paragraph.heading-5': ['paragraph', () => t('Heading {level}', { level: 5 })],
-  'paragraph.heading-6': ['paragraph', () => t('Heading {level}', { level: 6 })],
-  'paragraph.heading-up': ['paragraph', () => t('One heading level up')],
-  'paragraph.heading-down': ['paragraph', () => t('One heading level down')],
-  'paragraph.table': ['paragraph', () => t('Table')],
-  'paragraph.code-block': ['paragraph', () => t('Code block')],
-  'paragraph.math-block': ['paragraph', () => t('Math block')],
-  'paragraph.chart': ['paragraph', () => t('Chart')],
-  'paragraph.quote': ['paragraph', () => t('Quote')],
-  'paragraph.ordered-list': ['paragraph', () => t('Numbered list')],
-  'paragraph.bullet-list': ['paragraph', () => t('Bulleted list')],
-  'paragraph.rule': ['paragraph', () => t('Horizontal rule')],
-  'paragraph.task-list': ['paragraph', () => t('Task list')],
-  'paragraph.task': ['paragraph', () => t('Tick the task')],
-  'paragraph.callout': ['paragraph', () => t('Callout')],
-  'paragraph.footnote': ['paragraph', () => t('Footnote')],
-  'paragraph.toc': ['paragraph', () => t('Table of contents')],
+  'paragraph.body': ['paragraph', () => 'Paragraph'],
+  'paragraph.heading-1': ['paragraph', () => 'Heading 1'],
+  'paragraph.heading-2': ['paragraph', () => 'Heading 2'],
+  'paragraph.heading-3': ['paragraph', () => 'Heading 3'],
+  'paragraph.heading-4': ['paragraph', () => 'Heading 4'],
+  'paragraph.heading-5': ['paragraph', () => 'Heading 5'],
+  'paragraph.heading-6': ['paragraph', () => 'Heading 6'],
+  'paragraph.heading-up': ['paragraph', () => 'One heading level up'],
+  'paragraph.heading-down': ['paragraph', () => 'One heading level down'],
+  'paragraph.table': ['paragraph', () => 'Table'],
+  'paragraph.code-block': ['paragraph', () => 'Code block'],
+  'paragraph.math-block': ['paragraph', () => 'Math block'],
+  'paragraph.chart': ['paragraph', () => 'Chart'],
+  'paragraph.quote': ['paragraph', () => 'Quote'],
+  'paragraph.ordered-list': ['paragraph', () => 'Numbered list'],
+  'paragraph.bullet-list': ['paragraph', () => 'Bulleted list'],
+  'paragraph.rule': ['paragraph', () => 'Horizontal rule'],
+  'paragraph.task-list': ['paragraph', () => 'Task list'],
+  'paragraph.task': ['paragraph', () => 'Tick the task'],
+  'paragraph.callout': ['paragraph', () => 'Callout'],
+  'paragraph.footnote': ['paragraph', () => 'Footnote'],
+  'paragraph.toc': ['paragraph', () => 'Table of contents'],
 
-  'view.fold': ['view', () => t('Fold')],
-  'view.fold-all': ['view', () => t('Fold everything')],
-  'view.fold-more': ['view', () => t('Fold more')],
-  'view.fold-less': ['view', () => t('Fold less')],
-  'view.unfold-all': ['view', () => t('Unfold everything')],
+  'view.fold': ['view', () => 'Fold'],
+  'view.fold-all': ['view', () => 'Fold everything'],
+  'view.fold-more': ['view', () => 'Fold more'],
+  'view.fold-less': ['view', () => 'Fold less'],
+  'view.unfold-all': ['view', () => 'Unfold everything'],
 
-  'edit.indent': ['edit', () => t('Indent')],
-  'edit.outdent': ['edit', () => t('Outdent')],
-  'edit.run-fence': ['edit', () => t('Run this code block')],
-  'edit.select-word': ['edit', () => t('Select the word, then the next')],
-  'edit.select-line': ['edit', () => t('Select the line')],
-  'edit.select-all-occurrences': ['edit', () => t('Select every one like it')],
-  'edit.expand-selection': ['edit', () => t('Expand the selection')],
-  'edit.shrink-selection': ['edit', () => t('Shrink the selection')],
-  'edit.cursor-above': ['edit', () => t('Add a cursor above')],
-  'edit.cursor-below': ['edit', () => t('Add a cursor below')],
-  'edit.copy-markdown': ['edit', () => t('Copy as markdown')],
-  'edit.paste-plain': ['edit', () => t('Paste as plain text')],
-  'edit.undo': ['edit', () => t('Undo')],
-  'edit.redo': ['edit', () => t('Redo')],
-  'edit.redo.alt': ['edit', () => t('Redo')],
-  'edit.select-all': ['edit', () => t('Select all')],
-  'edit.find': ['edit', () => t('Find')],
-  'edit.replace': ['edit', () => t('Replace')],
-  'edit.find-next': ['edit', () => t('Find next')],
-  'edit.find-next.alt': ['edit', () => t('Find next')],
-  'edit.find-previous': ['edit', () => t('Find previous')],
-  'edit.find-previous.alt': ['edit', () => t('Find previous')],
-  'edit.goto-line': ['edit', () => t('Go to line')],
-  'edit.move-line-up': ['edit', () => t('Move the line up')],
-  'edit.move-line-down': ['edit', () => t('Move the line down')],
-  'edit.copy-line-up': ['edit', () => t('Copy the line up')],
-  'edit.copy-line-down': ['edit', () => t('Copy the line down')],
-  'edit.insert-line-above': ['edit', () => t('Insert a line above')],
-  'edit.delete-line': ['edit', () => t('Delete the line')],
-  'edit.join-lines': ['edit', () => t('Join the lines')],
-  'edit.sort-lines': ['edit', () => t('Sort the lines')],
-  'edit.reverse-lines': ['edit', () => t('Reverse the lines')],
-  'edit.upper-case': ['edit', () => t('Upper case')],
-  'edit.lower-case': ['edit', () => t('Lower case')],
-  'edit.title-case': ['edit', () => t('Title case')],
-  'edit.duplicate-block': ['edit', () => t('Duplicate the block')],
-  'edit.move-block-up': ['edit', () => t('Move the block up')],
-  'edit.move-block-down': ['edit', () => t('Move the block down')],
-  'edit.follow-link': ['edit', () => t('Follow the link')],
+  'edit.indent': ['edit', () => 'Indent'],
+  'edit.outdent': ['edit', () => 'Outdent'],
+  'edit.run-fence': ['edit', () => 'Run this code block'],
+  'edit.select-word': ['edit', () => 'Select the word, then the next'],
+  'edit.select-line': ['edit', () => 'Select the line'],
+  'edit.select-all-occurrences': ['edit', () => 'Select every one like it'],
+  'edit.expand-selection': ['edit', () => 'Expand the selection'],
+  'edit.shrink-selection': ['edit', () => 'Shrink the selection'],
+  'edit.cursor-above': ['edit', () => 'Add a cursor above'],
+  'edit.cursor-below': ['edit', () => 'Add a cursor below'],
+  'edit.copy-markdown': ['edit', () => 'Copy as markdown'],
+  'edit.paste-plain': ['edit', () => 'Paste as plain text'],
+  'edit.undo': ['edit', () => 'Undo'],
+  'edit.redo': ['edit', () => 'Redo'],
+  'edit.redo.alt': ['edit', () => 'Redo'],
+  'edit.select-all': ['edit', () => 'Select all'],
+  'edit.find': ['edit', () => 'Find'],
+  'edit.replace': ['edit', () => 'Replace'],
+  'edit.find-next': ['edit', () => 'Find next'],
+  'edit.find-next.alt': ['edit', () => 'Find next'],
+  'edit.find-previous': ['edit', () => 'Find previous'],
+  'edit.find-previous.alt': ['edit', () => 'Find previous'],
+  'edit.goto-line': ['edit', () => 'Go to line'],
+  'edit.move-line-up': ['edit', () => 'Move the line up'],
+  'edit.move-line-down': ['edit', () => 'Move the line down'],
+  'edit.copy-line-up': ['edit', () => 'Copy the line up'],
+  'edit.copy-line-down': ['edit', () => 'Copy the line down'],
+  'edit.insert-line-above': ['edit', () => 'Insert a line above'],
+  'edit.delete-line': ['edit', () => 'Delete the line'],
+  'edit.join-lines': ['edit', () => 'Join the lines'],
+  'edit.sort-lines': ['edit', () => 'Sort the lines'],
+  'edit.reverse-lines': ['edit', () => 'Reverse the lines'],
+  'edit.upper-case': ['edit', () => 'Upper case'],
+  'edit.lower-case': ['edit', () => 'Lower case'],
+  'edit.title-case': ['edit', () => 'Title case'],
+  'edit.duplicate-block': ['edit', () => 'Duplicate the block'],
+  'edit.move-block-up': ['edit', () => 'Move the block up'],
+  'edit.move-block-down': ['edit', () => 'Move the block down'],
+  'edit.follow-link': ['edit', () => 'Follow the link'],
 
-  'table.below': ['table', () => t('Into the table below')],
-  'table.above': ['table', () => t('Into the table above')],
-  'table.ahead': ['table', () => t('Forward into the table')],
-  'table.behind': ['table', () => t('Back into the table')],
-  'table.delete': ['table', () => t('Forward into the table instead of deleting')],
-  'table.backspace': ['table', () => t('Back into the table instead of deleting')],
+  'table.below': ['table', () => 'Into the table below'],
+  'table.above': ['table', () => 'Into the table above'],
+  'table.ahead': ['table', () => 'Forward into the table'],
+  'table.behind': ['table', () => 'Back into the table'],
+  'table.delete': ['table', () => 'Forward into the table instead of deleting'],
+  'table.backspace': ['table', () => 'Back into the table instead of deleting'],
 
-  'image.select-behind': ['picture', () => t('Select the picture behind')],
-  'image.select-ahead': ['picture', () => t('Select the picture ahead')],
-  'image.edit': ['picture', () => t('Edit the picture’s markdown')],
-  'image.leave': ['picture', () => t('Leave the selected picture')],
-  'image.step-up': ['picture', () => t('Step off the picture upwards')],
-  'image.step-down': ['picture', () => t('Step off the picture downwards')],
+  'image.select-behind': ['picture', () => 'Select the picture behind'],
+  'image.select-ahead': ['picture', () => 'Select the picture ahead'],
+  'image.edit': ['picture', () => 'Edit the picture’s markdown'],
+  'image.leave': ['picture', () => 'Leave the selected picture'],
+  'image.step-up': ['picture', () => 'Step off the picture upwards'],
+  'image.step-down': ['picture', () => 'Step off the picture downwards'],
 }
 
 const EDITOR_SPECS: BindingSpec[] = [
@@ -225,16 +224,16 @@ function runPrint() {
 const onMac = () => isDesktop && platform() === 'macos'
 
 const PANE_WAYS: readonly [Toward, string, () => string][] = [
-  ['left', 'h', () => t('Pane to the left')],
-  ['down', 'j', () => t('Pane below')],
-  ['up', 'k', () => t('Pane above')],
-  ['right', 'l', () => t('Pane to the right')],
+  ['left', 'h', () => 'Pane to the left'],
+  ['down', 'j', () => 'Pane below'],
+  ['up', 'k', () => 'Pane above'],
+  ['right', 'l', () => 'Pane to the right'],
 ]
 
 const APP_ENTRIES: Shortcut[] = [
   {
     id: 'app.new',
-    label: () => t('New note'),
+    label: () => 'New note',
     category: 'file',
     scope: 'app',
     key: 'Mod-Alt-n',
@@ -244,7 +243,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.new-kind',
-    label: () => t('New tab'),
+    label: () => 'New tab',
     category: 'file',
     scope: 'app',
     key: 'Mod-t',
@@ -252,7 +251,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.new-window',
-    label: () => t('New window'),
+    label: () => 'New window',
     category: 'file',
     scope: 'app',
     key: null,
@@ -261,7 +260,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.new-private',
-    label: () => t('New private tab'),
+    label: () => 'New private tab',
     category: 'file',
     scope: 'app',
     key: 'Mod-Shift-n',
@@ -273,7 +272,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.random-note',
-    label: () => t('Random note'),
+    label: () => 'Random note',
     category: 'file',
     scope: 'app',
     key: null,
@@ -281,7 +280,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.close',
-    label: () => t('Close note'),
+    label: () => 'Close note',
     category: 'file',
     scope: 'app',
     key: 'Mod-w',
@@ -296,7 +295,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.close-window',
-    label: () => t('Close window'),
+    label: () => 'Close window',
     category: 'file',
     scope: 'app',
     key: 'Mod-Shift-w',
@@ -305,7 +304,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.back',
-    label: () => t('Back'),
+    label: () => 'Back',
     category: 'view',
     scope: 'app',
     key: 'Alt-ArrowLeft',
@@ -314,7 +313,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'web.address',
-    label: () => t('Address'),
+    label: () => 'Address',
     category: 'view',
     scope: 'panel',
     key: 'Mod-l',
@@ -322,7 +321,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'web.devtools',
-    label: () => t('Developer tools'),
+    label: () => 'Developer tools',
     category: 'view',
     scope: 'panel',
     key: 'F12',
@@ -330,7 +329,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'web.devtools.alt',
-    label: () => t('Developer tools'),
+    label: () => 'Developer tools',
     category: 'view',
     scope: 'panel',
     key: 'Mod-Shift-i',
@@ -340,7 +339,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'web.history',
-    label: () => t('History'),
+    label: () => 'History',
     category: 'view',
     scope: 'panel',
     key: 'Mod-h',
@@ -349,7 +348,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'web.clear-data',
-    label: () => t('Delete browsing data'),
+    label: () => 'Delete browsing data',
     category: 'view',
     scope: 'panel',
     key: 'Mod-Shift-Delete',
@@ -358,7 +357,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'web.mute',
-    label: () => t('Mute site'),
+    label: () => 'Mute site',
     category: 'view',
     scope: 'panel',
     key: null,
@@ -366,7 +365,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.forward',
-    label: () => t('Forward'),
+    label: () => 'Forward',
     category: 'view',
     scope: 'app',
     key: 'Alt-ArrowRight',
@@ -375,7 +374,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.reopen',
-    label: () => t('Reopen closed tab'),
+    label: () => 'Reopen closed tab',
     category: 'file',
     scope: 'app',
     key: 'Mod-Shift-t',
@@ -391,7 +390,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.close-all',
-    label: () => t('Close all tabs'),
+    label: () => 'Close all tabs',
     category: 'file',
     scope: 'app',
     key: null,
@@ -399,7 +398,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.duplicate-tab',
-    label: () => t('Duplicate tab'),
+    label: () => 'Duplicate tab',
     category: 'file',
     scope: 'app',
     key: null,
@@ -407,7 +406,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.settings',
-    label: () => t('Settings'),
+    label: () => 'Settings',
     category: 'file',
     scope: 'app',
     key: 'Mod-,',
@@ -415,7 +414,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.keys',
-    label: () => t('Keyboard shortcuts'),
+    label: () => 'Keyboard shortcuts',
     category: 'file',
     scope: 'app',
     key: 'Mod-Shift-/',
@@ -424,7 +423,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.print',
-    label: () => t('Print'),
+    label: () => 'Print',
     category: 'file',
     scope: 'app',
     key: 'Mod-p',
@@ -440,7 +439,7 @@ const APP_ENTRIES: Shortcut[] = [
   })),
   {
     id: 'app.next-note',
-    label: () => t('Next note'),
+    label: () => 'Next note',
     category: 'view',
     scope: 'app',
     key: 'Mod-Tab',
@@ -449,7 +448,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.previous-note',
-    label: () => t('Previous note'),
+    label: () => 'Previous note',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-Tab',
@@ -458,7 +457,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.next-note.alt',
-    label: () => t('Next note'),
+    label: () => 'Next note',
     category: 'view',
     scope: 'app',
     key: 'Mod-PageDown',
@@ -468,7 +467,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.previous-note.alt',
-    label: () => t('Previous note'),
+    label: () => 'Previous note',
     category: 'view',
     scope: 'app',
     key: 'Mod-PageUp',
@@ -478,7 +477,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.move-tab-left',
-    label: () => t('Move tab left'),
+    label: () => 'Move tab left',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-PageUp',
@@ -486,7 +485,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.move-tab-right',
-    label: () => t('Move tab right'),
+    label: () => 'Move tab right',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-PageDown',
@@ -494,7 +493,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.deselect-tab',
-    label: () => t('Deselect tab'),
+    label: () => 'Deselect tab',
     category: 'view',
     scope: 'app',
     key: 'Mod-d',
@@ -502,7 +501,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.deselect-all',
-    label: () => t('Deselect all tabs'),
+    label: () => 'Deselect all tabs',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-d',
@@ -510,7 +509,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tabs.rename',
-    label: () => t('Rename'),
+    label: () => 'Rename',
     category: 'view',
     scope: 'panel',
     key: 'F2',
@@ -518,7 +517,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'pane.split-right',
-    label: () => t('Split right'),
+    label: () => 'Split right',
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-ArrowRight',
@@ -526,7 +525,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'pane.split-down',
-    label: () => t('Split down'),
+    label: () => 'Split down',
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-ArrowDown',
@@ -534,7 +533,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'pane.move-tab',
-    label: () => t('Move to other pane'),
+    label: () => 'Move to other pane',
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-Shift-ArrowRight',
@@ -542,7 +541,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'pane.focus-next',
-    label: () => t('Other pane'),
+    label: () => 'Other pane',
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-o',
@@ -559,7 +558,7 @@ const APP_ENTRIES: Shortcut[] = [
   })),
   {
     id: 'app.tab-overview',
-    label: () => t('Tabs'),
+    label: () => 'Tabs',
     category: 'view',
     scope: 'app',
     key: 'Alt Alt',
@@ -567,7 +566,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.palette',
-    label: () => t('Command palette'),
+    label: () => 'Command palette',
     category: 'view',
     scope: 'app',
     key: 'Shift Shift',
@@ -575,7 +574,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.palette.alt',
-    label: () => t('Command palette'),
+    label: () => 'Command palette',
     category: 'view',
     scope: 'app',
     key: null,
@@ -584,7 +583,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.palette.open',
-    label: () => t('Command palette'),
+    label: () => 'Command palette',
     category: 'view',
     scope: 'app',
     key: 'Mod-o',
@@ -593,7 +592,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.commands',
-    label: () => t('Commands'),
+    label: () => 'Commands',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-p',
@@ -601,7 +600,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.commands.alt',
-    label: () => t('Commands'),
+    label: () => 'Commands',
     category: 'view',
     scope: 'app',
     key: null,
@@ -610,7 +609,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.quick-add',
-    label: () => t('Add task'),
+    label: () => 'Add task',
     category: 'file',
     scope: 'app',
     key: 'Ctrl-Alt-Space',
@@ -618,7 +617,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tasks.quick-add',
-    label: () => t('Add task'),
+    label: () => 'Add task',
     category: 'file',
     scope: 'panel',
     key: 'q',
@@ -627,7 +626,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.sidebar',
-    label: () => t('Left sidebar'),
+    label: () => 'Left sidebar',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-l',
@@ -635,7 +634,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.right-sidebar',
-    label: () => t('Right sidebar'),
+    label: () => 'Right sidebar',
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-b',
@@ -643,7 +642,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.files',
-    label: () => t('Files'),
+    label: () => 'Files',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-e',
@@ -651,7 +650,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.reveal',
-    label: () => t('Show in the file list'),
+    label: () => 'Show in the file list',
     category: 'panel',
     scope: 'app',
     key: null,
@@ -659,7 +658,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.fold-list',
-    label: () => t('Collapse the file list'),
+    label: () => 'Collapse the file list',
     category: 'panel',
     scope: 'app',
     key: null,
@@ -667,7 +666,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.outline',
-    label: () => t('Outline'),
+    label: () => 'Outline',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-o',
@@ -675,7 +674,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.search',
-    label: () => t('Search this space'),
+    label: () => 'Search this space',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-f',
@@ -683,7 +682,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.refresh',
-    label: () => t('Reload'),
+    label: () => 'Reload',
     category: 'view',
     scope: 'app',
     key: null,
@@ -692,7 +691,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.links',
-    label: () => t('Links'),
+    label: () => 'Links',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-b',
@@ -703,7 +702,7 @@ const APP_ENTRIES: Shortcut[] = [
     : [
         {
           id: 'app.tasks',
-          label: () => t('Tasks'),
+          label: () => 'Tasks',
           category: 'view',
           scope: 'app',
           key: 'Mod-Shift-y',
@@ -711,7 +710,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'app.chats',
-          label: () => t('Chats'),
+          label: () => 'Chats',
           category: 'view',
           scope: 'app',
           key: 'Mod-Shift-u',
@@ -720,7 +719,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'app.time',
-          label: () => t('Time tracker'),
+          label: () => 'Time tracker',
           category: 'view',
           scope: 'app',
           key: null,
@@ -729,7 +728,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'time.tab',
-          label: () => t('Open time tracker'),
+          label: () => 'Open time tracker',
           category: 'view',
           scope: 'app',
           key: null,
@@ -738,7 +737,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'time.start',
-          label: () => t('Start timer'),
+          label: () => 'Start timer',
           category: 'view',
           scope: 'app',
           key: null,
@@ -747,7 +746,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'time.stop',
-          label: () => t('Stop timer'),
+          label: () => 'Stop timer',
           category: 'view',
           scope: 'app',
           key: null,
@@ -756,7 +755,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'chat.jump-new',
-          label: () => t('New messages'),
+          label: () => 'New messages',
           category: 'view',
           scope: 'panel',
           key: 'Mod-j',
@@ -764,7 +763,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'chat.record',
-          label: () => t('Voice message'),
+          label: () => 'Voice message',
           category: 'view',
           scope: 'panel',
           key: 'Mod-Shift-m',
@@ -772,7 +771,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'chat.search',
-          label: () => t('Search this chat'),
+          label: () => 'Search this chat',
           category: 'view',
           scope: 'panel',
           key: 'Mod-f',
@@ -780,7 +779,7 @@ const APP_ENTRIES: Shortcut[] = [
         } satisfies Shortcut,
         {
           id: 'chat.members',
-          label: () => t('Members'),
+          label: () => 'Members',
           category: 'view',
           scope: 'panel',
           key: 'Mod-u',
@@ -789,7 +788,7 @@ const APP_ENTRIES: Shortcut[] = [
       ]),
   {
     id: 'app.ask',
-    label: () => t('Ask'),
+    label: () => 'Ask',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-a',
@@ -799,7 +798,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.ask-selection',
-    label: () => t('Selection to the AI panel'),
+    label: () => 'Selection to the AI panel',
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-k',
@@ -809,7 +808,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.quick-question',
-    label: () => t('Quick question'),
+    label: () => 'Quick question',
     category: 'view',
     scope: 'app',
     key: 'Mod Mod',
@@ -817,7 +816,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.reload',
-    label: () => t('Reload Orden'),
+    label: () => 'Reload Orden',
     category: 'view',
     scope: 'app',
     key: 'Mod-r',
@@ -825,7 +824,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.scratchpad',
-    label: () => t('Scratchpad'),
+    label: () => 'Scratchpad',
     category: 'view',
     scope: 'app',
     key: 'Mod-n',
@@ -833,7 +832,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.scratchpad.alt',
-    label: () => t('Scratchpad'),
+    label: () => 'Scratchpad',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-x',
@@ -842,7 +841,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'agents.stop',
-    label: () => t('Stop agents'),
+    label: () => 'Stop agents',
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-Shift-k',
@@ -854,7 +853,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.region-next',
-    label: () => t('Next section'),
+    label: () => 'Next section',
     category: 'view',
     scope: 'app',
     key: 'F6',
@@ -862,7 +861,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.region-previous',
-    label: () => t('Previous section'),
+    label: () => 'Previous section',
     category: 'view',
     scope: 'app',
     key: 'Shift-F6',
@@ -870,7 +869,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'space.previous',
-    label: () => t('Previous space'),
+    label: () => 'Previous space',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-,',
@@ -878,7 +877,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'space.next',
-    label: () => t('Next space'),
+    label: () => 'Next space',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-.',
@@ -886,7 +885,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'space.switcher',
-    label: () => t('Spaces'),
+    label: () => 'Spaces',
     category: 'view',
     scope: 'app',
     key: 'Mod-Space',
@@ -895,7 +894,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'space.switcher.alt',
-    label: () => t('Spaces'),
+    label: () => 'Spaces',
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-Space',
@@ -905,7 +904,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.explorer',
-    label: () => t('File explorer'),
+    label: () => 'File explorer',
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-e',
@@ -920,7 +919,7 @@ const APP_ENTRIES: Shortcut[] = [
     : [
         {
           id: 'app.pass',
-          label: () => t('Pass'),
+          label: () => 'Pass',
           category: 'view',
           scope: 'app',
           key: 'Mod-Alt-v',
@@ -930,7 +929,7 @@ const APP_ENTRIES: Shortcut[] = [
       ]),
   {
     id: 'app.graph',
-    label: () => t('Graph'),
+    label: () => 'Graph',
     category: 'view',
     scope: 'app',
     key: null,
@@ -938,7 +937,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.source',
-    label: () => t('Source mode'),
+    label: () => 'Source mode',
     category: 'view',
     scope: 'app',
     key: 'Mod-/',
@@ -946,7 +945,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.focus',
-    label: () => t('Focus mode'),
+    label: () => 'Focus mode',
     category: 'view',
     scope: 'app',
     key: 'F8',
@@ -955,7 +954,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.typewriter',
-    label: () => t('Typewriter mode'),
+    label: () => 'Typewriter mode',
     category: 'view',
     scope: 'app',
     key: 'F9',
@@ -964,7 +963,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.reading',
-    label: () => t('Reading'),
+    label: () => 'Reading',
     category: 'view',
     scope: 'app',
     key: 'Mod-e',
@@ -972,7 +971,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.present',
-    label: () => t('Present'),
+    label: () => 'Present',
     category: 'view',
     scope: 'app',
     key: 'F5',
@@ -981,7 +980,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.read-only',
-    label: () => t('Read-only'),
+    label: () => 'Read-only',
     category: 'view',
     scope: 'app',
     key: 'F10',
@@ -990,7 +989,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.fullscreen',
-    label: () => t('Fullscreen'),
+    label: () => 'Fullscreen',
     category: 'view',
     scope: 'app',
     key: 'F11',
@@ -999,7 +998,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.fill-tab',
-    label: () => t('Full window'),
+    label: () => 'Full window',
     category: 'view',
     scope: 'app',
     key: 'Shift-F11',
@@ -1008,7 +1007,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.zoom-in',
-    label: () => t('Zoom in'),
+    label: () => 'Zoom in',
     category: 'view',
     scope: 'app',
     key: 'Mod-=',
@@ -1016,7 +1015,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.zoom-out',
-    label: () => t('Zoom out'),
+    label: () => 'Zoom out',
     category: 'view',
     scope: 'app',
     key: 'Mod--',
@@ -1024,7 +1023,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.zoom-reset',
-    label: () => t('Actual size'),
+    label: () => 'Actual size',
     category: 'view',
     scope: 'app',
     key: 'Mod-0',
@@ -1034,11 +1033,11 @@ const APP_ENTRIES: Shortcut[] = [
 
 const LAST = 8
 
-const noteAt = (index: number) => t('Note {number}', { number: index + 1 })
+const noteAt = (index: number) => `Note ${index + 1}`
 
 const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
   id: `app.note-${index + 1}`,
-  label: () => (index === LAST ? t('Last note') : noteAt(index)),
+  label: () => (index === LAST ? 'Last note' : noteAt(index)),
   category: 'view' as const,
   scope: 'app' as const,
   key: `Mod-Alt-${index + 1}`,
@@ -1053,7 +1052,7 @@ const ALT_NUMBERED: Shortcut[] = Array.from({ length: 10 }, (_unused, index): Sh
 
   return {
     id: ninth ? 'app.note-ninth' : `app.note-${at === 'last' ? LAST + 1 : digit}.alt`,
-    label: () => (at === 'last' ? t('Last note') : noteAt(at)),
+    label: () => (at === 'last' ? 'Last note' : noteAt(at)),
     category: 'view',
     scope: 'app',
     key: `Alt-${digit}`,
@@ -1072,7 +1071,7 @@ export function showTab(at: number | 'last') {
 const PANEL_ENTRIES: Shortcut[] = [
   {
     id: 'tree.select-all',
-    label: () => t('Select every file'),
+    label: () => 'Select every file',
     category: 'panel',
     scope: 'panel',
     key: 'Mod-a',
@@ -1080,7 +1079,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.deselect',
-    label: () => t('Clear the selection'),
+    label: () => 'Clear the selection',
     category: 'panel',
     scope: 'panel',
     key: 'Escape',
@@ -1088,7 +1087,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.delete',
-    label: () => t('Delete the selected files'),
+    label: () => 'Delete the selected files',
     category: 'panel',
     scope: 'panel',
     key: 'Delete',
@@ -1097,7 +1096,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.delete.alt',
-    label: () => t('Delete the selected files'),
+    label: () => 'Delete the selected files',
     category: 'panel',
     scope: 'panel',
     key: 'Backspace',
@@ -1107,7 +1106,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.down',
-    label: () => t('Next file'),
+    label: () => 'Next file',
     category: 'panel',
     scope: 'panel',
     key: 'ArrowDown',
@@ -1115,7 +1114,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.up',
-    label: () => t('Previous file'),
+    label: () => 'Previous file',
     category: 'panel',
     scope: 'panel',
     key: 'ArrowUp',
@@ -1123,7 +1122,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.into',
-    label: () => t('Show what it holds'),
+    label: () => 'Show what it holds',
     category: 'panel',
     scope: 'panel',
     key: 'ArrowRight',
@@ -1131,7 +1130,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.out',
-    label: () => t('Hide what it holds'),
+    label: () => 'Hide what it holds',
     category: 'panel',
     scope: 'panel',
     key: 'ArrowLeft',
@@ -1139,7 +1138,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.open',
-    label: () => t('Open'),
+    label: () => 'Open',
     category: 'panel',
     scope: 'panel',
     key: 'Enter',
@@ -1147,7 +1146,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.rename',
-    label: () => t('Rename'),
+    label: () => 'Rename',
     category: 'panel',
     scope: 'panel',
     key: 'F2',
@@ -1156,7 +1155,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.extend-down',
-    label: () => t('Select down'),
+    label: () => 'Select down',
     category: 'panel',
     scope: 'panel',
     key: 'Shift-ArrowDown',
@@ -1164,7 +1163,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.extend-up',
-    label: () => t('Select up'),
+    label: () => 'Select up',
     category: 'panel',
     scope: 'panel',
     key: 'Shift-ArrowUp',
@@ -1172,7 +1171,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.toggle',
-    label: () => t('Select or deselect'),
+    label: () => 'Select or deselect',
     category: 'panel',
     scope: 'panel',
     key: 'Mod-Shift-Enter',
@@ -1180,7 +1179,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.duplicate',
-    label: () => t('Duplicate'),
+    label: () => 'Duplicate',
     category: 'panel',
     scope: 'panel',
     key: null,
@@ -1188,7 +1187,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.move-up',
-    label: () => t('Move up'),
+    label: () => 'Move up',
     category: 'panel',
     scope: 'panel',
     key: 'Alt-ArrowUp',
@@ -1196,7 +1195,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.move-down',
-    label: () => t('Move down'),
+    label: () => 'Move down',
     category: 'panel',
     scope: 'panel',
     key: 'Alt-ArrowDown',
@@ -1204,7 +1203,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'list.menu',
-    label: () => t('Menu for this row'),
+    label: () => 'Menu for this row',
     category: 'panel',
     scope: 'panel',
     key: 'Shift-F10',
@@ -1212,7 +1211,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'list.menu.alt',
-    label: () => t('Menu for this row'),
+    label: () => 'Menu for this row',
     category: 'panel',
     scope: 'panel',
     key: 'ContextMenu',
@@ -1223,44 +1222,44 @@ const PANEL_ENTRIES: Shortcut[] = [
 
 const CANVAS_ENTRIES: Shortcut[] = (
   [
-    ['canvas.tool.select', () => t('Select'), 'v'],
-    ['canvas.tool.hand', () => t('Pan'), 'h'],
-    ['canvas.tool.draw', () => t('Draw'), 'd'],
-    ['canvas.tool.erase', () => t('Erase'), 'e'],
-    ['canvas.tool.lasso', () => t('Lasso'), 'q'],
-    ['canvas.tool.text', () => t('Card'), 'c'],
-    ['canvas.tool.words', () => t('Text'), 'w'],
-    ['canvas.tool.file', () => t('Note'), 'n'],
-    ['canvas.tool.picture', () => t('Picture'), 'i'],
-    ['canvas.tool.link', () => t('Link'), 'k'],
-    ['canvas.tool.group', () => t('Frame'), 'f'],
-    ['canvas.tool.rect', () => t('Rectangle'), 'r'],
-    ['canvas.tool.ellipse', () => t('Oval'), 'o'],
-    ['canvas.tool.rhombus', () => t('Diamond'), 'm'],
-    ['canvas.tool.triangle', () => t('Triangle'), 't'],
-    ['canvas.tool.line', () => t('Line'), 'l'],
-    ['canvas.tool.arrow', () => t('Arrow'), 'a'],
-    ['canvas.tool.elbow', () => t('Elbow'), 'b'],
-    ['canvas.write', () => t('Write in what is picked'), 'Enter'],
-    ['canvas.group', () => t('Group'), 'g'],
-    ['canvas.ungroup', () => t('Ungroup'), 'u'],
-    ['canvas.delete', () => t('Delete what is picked'), 'Delete'],
-    ['canvas.duplicate', () => t('Duplicate'), 'Mod-d'],
-    ['canvas.fit', () => t('Fit the canvas'), 'Mod-Alt-0'],
-    ['canvas.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
-    ['canvas.zoom.out', () => t('Zoom out'), 'Mod-Alt--'],
-    ['canvas.zoom.actual', () => t('Actual size'), null],
-    ['canvas.upright', () => t('Turn upright'), 'Mod-Alt-r'],
-    ['canvas.frame', () => t('Zoom to what is picked'), 'Mod-1'],
-    ['canvas.find', () => t('Find on the canvas'), 'Mod-f'],
-    ['canvas.front', () => t('Bring to front'), 'Mod-Shift-]'],
-    ['canvas.forward', () => t('Bring forward'), 'Mod-]'],
-    ['canvas.back', () => t('Send to back'), 'Mod-Shift-['],
-    ['canvas.backward', () => t('Send backward'), 'Mod-['],
-    ['canvas.nudge.left', () => t('Nudge left'), 'ArrowLeft'],
-    ['canvas.nudge.right', () => t('Nudge right'), 'ArrowRight'],
-    ['canvas.nudge.up', () => t('Nudge up'), 'ArrowUp'],
-    ['canvas.nudge.down', () => t('Nudge down'), 'ArrowDown'],
+    ['canvas.tool.select', () => 'Select', 'v'],
+    ['canvas.tool.hand', () => 'Pan', 'h'],
+    ['canvas.tool.draw', () => 'Draw', 'd'],
+    ['canvas.tool.erase', () => 'Erase', 'e'],
+    ['canvas.tool.lasso', () => 'Lasso', 'q'],
+    ['canvas.tool.text', () => 'Card', 'c'],
+    ['canvas.tool.words', () => 'Text', 'w'],
+    ['canvas.tool.file', () => 'Note', 'n'],
+    ['canvas.tool.picture', () => 'Picture', 'i'],
+    ['canvas.tool.link', () => 'Link', 'k'],
+    ['canvas.tool.group', () => 'Frame', 'f'],
+    ['canvas.tool.rect', () => 'Rectangle', 'r'],
+    ['canvas.tool.ellipse', () => 'Oval', 'o'],
+    ['canvas.tool.rhombus', () => 'Diamond', 'm'],
+    ['canvas.tool.triangle', () => 'Triangle', 't'],
+    ['canvas.tool.line', () => 'Line', 'l'],
+    ['canvas.tool.arrow', () => 'Arrow', 'a'],
+    ['canvas.tool.elbow', () => 'Elbow', 'b'],
+    ['canvas.write', () => 'Write in what is picked', 'Enter'],
+    ['canvas.group', () => 'Group', 'g'],
+    ['canvas.ungroup', () => 'Ungroup', 'u'],
+    ['canvas.delete', () => 'Delete what is picked', 'Delete'],
+    ['canvas.duplicate', () => 'Duplicate', 'Mod-d'],
+    ['canvas.fit', () => 'Fit the canvas', 'Mod-Alt-0'],
+    ['canvas.zoom.in', () => 'Zoom in', 'Mod-Alt-='],
+    ['canvas.zoom.out', () => 'Zoom out', 'Mod-Alt--'],
+    ['canvas.zoom.actual', () => 'Actual size', null],
+    ['canvas.upright', () => 'Turn upright', 'Mod-Alt-r'],
+    ['canvas.frame', () => 'Zoom to what is picked', 'Mod-1'],
+    ['canvas.find', () => 'Find on the canvas', 'Mod-f'],
+    ['canvas.front', () => 'Bring to front', 'Mod-Shift-]'],
+    ['canvas.forward', () => 'Bring forward', 'Mod-]'],
+    ['canvas.back', () => 'Send to back', 'Mod-Shift-['],
+    ['canvas.backward', () => 'Send backward', 'Mod-['],
+    ['canvas.nudge.left', () => 'Nudge left', 'ArrowLeft'],
+    ['canvas.nudge.right', () => 'Nudge right', 'ArrowRight'],
+    ['canvas.nudge.up', () => 'Nudge up', 'ArrowUp'],
+    ['canvas.nudge.down', () => 'Nudge down', 'ArrowDown'],
   ] as const
 ).map(([id, label, key]) => ({
   id,
@@ -1273,11 +1272,11 @@ const CANVAS_ENTRIES: Shortcut[] = (
 
 const PAGES_ENTRIES: Shortcut[] = (
   [
-    ['pages.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
-    ['pages.zoom.out', () => t('Zoom out'), 'Mod-Alt--'],
-    ['pages.fit', () => t('Fit width'), 'Mod-Alt-0'],
-    ['pages.fit.page', () => t('Fit page'), null],
-    ['pages.add', () => t('Add a page'), null],
+    ['pages.zoom.in', () => 'Zoom in', 'Mod-Alt-='],
+    ['pages.zoom.out', () => 'Zoom out', 'Mod-Alt--'],
+    ['pages.fit', () => 'Fit width', 'Mod-Alt-0'],
+    ['pages.fit.page', () => 'Fit page', null],
+    ['pages.add', () => 'Add a page', null],
   ] as const
 ).map(([id, label, key]) => ({
   id,
@@ -1300,14 +1299,14 @@ for (const entry of CANVAS_ENTRIES) {
 
 const WEB_ENTRIES: Shortcut[] = (
   [
-    ['web.address.alt', () => t('Address'), 'Alt-d', null],
-    ['web.reload', () => t('Reload'), 'F5', 'Mod-r'],
-    ['web.reload.alt', () => t('Reload'), 'Mod-r', null],
-    ['web.fresh', () => t('Hard reload'), 'Mod-Shift-r', undefined],
-    ['web.fresh.alt', () => t('Hard reload'), 'Mod-F5', null],
-    ['web.stop', () => t('Stop'), 'Escape', undefined],
-    ['web.back', () => t('Back'), null, 'Mod-['],
-    ['web.forward', () => t('Forward'), null, 'Mod-]'],
+    ['web.address.alt', () => 'Address', 'Alt-d', null],
+    ['web.reload', () => 'Reload', 'F5', 'Mod-r'],
+    ['web.reload.alt', () => 'Reload', 'Mod-r', null],
+    ['web.fresh', () => 'Hard reload', 'Mod-Shift-r', undefined],
+    ['web.fresh.alt', () => 'Hard reload', 'Mod-F5', null],
+    ['web.stop', () => 'Stop', 'Escape', undefined],
+    ['web.back', () => 'Back', null, 'Mod-['],
+    ['web.forward', () => 'Forward', null, 'Mod-]'],
   ] as const
 ).map(([id, label, key, mac]) => ({
   id,
@@ -1322,13 +1321,13 @@ const WEB_ENTRIES: Shortcut[] = (
 
 const AI_ENTRIES: Shortcut[] = (
   [
-    ['ai.mode', () => t('Next mode'), 'Shift-Tab'],
-    ['ai.model', () => t('Model and effort'), 'Alt-p'],
-    ['ai.effort', () => t('Next effort'), 'Alt-t'],
-    ['ai.steer', () => t('Send into the running answer'), 'Mod-Enter'],
-    ['ai.stop', () => t('Stop the answer'), 'Escape'],
-    ['ai.unfold', () => t('Open every step'), 'Mod-o'],
-    ['ai.new', () => t('New chat'), 'Mod-n'],
+    ['ai.mode', () => 'Next mode', 'Shift-Tab'],
+    ['ai.model', () => 'Model and effort', 'Alt-p'],
+    ['ai.effort', () => 'Next effort', 'Alt-t'],
+    ['ai.steer', () => 'Send into the running answer', 'Mod-Enter'],
+    ['ai.stop', () => 'Stop the answer', 'Escape'],
+    ['ai.unfold', () => 'Open every step', 'Mod-o'],
+    ['ai.new', () => 'New chat', 'Mod-n'],
   ] as const
 ).map(([id, label, key]) => ({
   id,
@@ -1342,7 +1341,7 @@ const AI_ENTRIES: Shortcut[] = (
 const FIELD_ENTRIES: Shortcut[] = [
   {
     id: 'field.dictate',
-    label: () => t('Dictate'),
+    label: () => 'Dictate',
     category: 'edit',
     scope: 'panel',
     key: 'Alt-v',
@@ -1352,7 +1351,7 @@ const FIELD_ENTRIES: Shortcut[] = [
 
 CANVAS_ENTRIES.push({
   id: 'canvas.delete.alt',
-  label: () => t('Delete what is picked'),
+  label: () => 'Delete what is picked',
   category: 'canvas',
   scope: 'panel',
   key: 'Backspace',
@@ -1399,102 +1398,102 @@ function moveTab(direction: number) {
 export const FIXED_ENTRIES: Shortcut[] = [
   {
     id: 'fixed.cut',
-    label: () => t('Cut'),
+    label: () => 'Cut',
     category: 'fixed',
     scope: 'fixed',
     key: 'Mod-x',
-    why: () => t('The clipboard belongs to the system.'),
+    why: () => 'The clipboard belongs to the system.',
   },
   {
     id: 'fixed.copy',
-    label: () => t('Copy'),
+    label: () => 'Copy',
     category: 'fixed',
     scope: 'fixed',
     key: 'Mod-c',
-    why: () => t('The clipboard belongs to the system.'),
+    why: () => 'The clipboard belongs to the system.',
   },
   {
     id: 'fixed.paste',
-    label: () => t('Paste'),
+    label: () => 'Paste',
     category: 'fixed',
     scope: 'fixed',
     key: 'Mod-v',
-    why: () => t('The clipboard belongs to the system.'),
+    why: () => 'The clipboard belongs to the system.',
   },
   {
     id: 'fixed.caret',
-    label: () => t('Moving the caret'),
+    label: () => 'Moving the caret',
     category: 'fixed',
     scope: 'fixed',
     key: null,
-    why: () => t('The arrow keys, Home, End, Page up and Page down belong to the text.'),
+    why: () => 'The arrow keys, Home, End, Page up and Page down belong to the text.',
   },
   {
     id: 'fixed.delete',
-    label: () => t('Deleting a character'),
+    label: () => 'Deleting a character',
     category: 'fixed',
     scope: 'fixed',
     key: null,
-    why: () => t('Backspace and Delete belong to the text.'),
+    why: () => 'Backspace and Delete belong to the text.',
   },
   {
     id: 'fixed.newline',
-    label: () => t('New line'),
+    label: () => 'New line',
     category: 'fixed',
     scope: 'fixed',
     key: 'Enter',
-    why: () => t('Enter closes a code block and carries a list on.'),
+    why: () => 'Enter closes a code block and carries a list on.',
   },
   {
     id: 'fixed.tab',
-    label: () => t('Indent with Tab'),
+    label: () => 'Indent with Tab',
     category: 'fixed',
     scope: 'fixed',
     key: 'Tab',
-    why: () => t('Tab moves on through the app as well as indenting.'),
+    why: () => 'Tab moves on through the app as well as indenting.',
   },
   {
     id: 'fixed.escape',
-    label: () => t('Escape'),
+    label: () => 'Escape',
     category: 'fixed',
     scope: 'fixed',
     key: 'Escape',
-    why: () => t('Escape closes whatever is open.'),
+    why: () => 'Escape closes whatever is open.',
   },
   {
     id: 'fixed.lists',
-    label: () => t('Moving through a list'),
+    label: () => 'Moving through a list',
     category: 'fixed',
     scope: 'fixed',
     key: null,
-    why: () => t('The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.'),
+    why: () => 'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.',
   },
   {
     id: 'fixed.quit',
-    label: () => t('Quit'),
+    label: () => 'Quit',
     category: 'fixed',
     scope: 'fixed',
     key: 'Alt-F4',
     mac: 'Mod-q',
-    why: () => t('Your system takes this key before the app sees it.'),
+    why: () => 'Your system takes this key before the app sees it.',
   },
 ]
 
 const EXPLORER_ENTRIES: Shortcut[] = (
   [
-    ['explorer.parent', () => t('Folder above'), 'Backspace', 'Mod-ArrowUp'],
-    ['explorer.parent.alt', () => t('Folder above'), 'Alt-ArrowUp', 'Alt-ArrowUp'],
-    ['explorer.location', () => t('Type a location'), 'Mod-l', 'Mod-Shift-g'],
-    ['explorer.hidden', () => t('Hidden files'), 'Mod-h', 'Mod-Shift-h'],
-    ['explorer.new-folder', () => t('New folder'), 'Mod-Shift-n', 'Mod-Shift-n'],
-    ['explorer.delete', () => t('Delete for good'), 'Shift-Delete', 'Mod-Alt-Backspace'],
-    ['explorer.filter', () => t('Filter'), 'Mod-f', 'Mod-f'],
-    ['explorer.search', () => t('Search below this folder'), 'Mod-Shift-f', 'Mod-Shift-f'],
-    ['explorer.look', () => t('Quick look'), 'Space', 'Space'],
-    ['explorer.preview', () => t('Preview'), 'Alt-p', 'Mod-Alt-p'],
-    ['explorer.list', () => t('List'), 'Mod-1', 'Mod-1'],
-    ['explorer.grid', () => t('Grid'), 'Mod-2', 'Mod-2'],
-    ['explorer.columns', () => t('Columns'), 'Mod-3', 'Mod-3'],
+    ['explorer.parent', () => 'Folder above', 'Backspace', 'Mod-ArrowUp'],
+    ['explorer.parent.alt', () => 'Folder above', 'Alt-ArrowUp', 'Alt-ArrowUp'],
+    ['explorer.location', () => 'Type a location', 'Mod-l', 'Mod-Shift-g'],
+    ['explorer.hidden', () => 'Hidden files', 'Mod-h', 'Mod-Shift-h'],
+    ['explorer.new-folder', () => 'New folder', 'Mod-Shift-n', 'Mod-Shift-n'],
+    ['explorer.delete', () => 'Delete for good', 'Shift-Delete', 'Mod-Alt-Backspace'],
+    ['explorer.filter', () => 'Filter', 'Mod-f', 'Mod-f'],
+    ['explorer.search', () => 'Search below this folder', 'Mod-Shift-f', 'Mod-Shift-f'],
+    ['explorer.look', () => 'Quick look', 'Space', 'Space'],
+    ['explorer.preview', () => 'Preview', 'Alt-p', 'Mod-Alt-p'],
+    ['explorer.list', () => 'List', 'Mod-1', 'Mod-1'],
+    ['explorer.grid', () => 'Grid', 'Mod-2', 'Mod-2'],
+    ['explorer.columns', () => 'Columns', 'Mod-3', 'Mod-3'],
   ] as const
 ).map(([id, label, key, mac]) => ({
   id,
@@ -1510,8 +1509,8 @@ const EXPLORER_ENTRIES: Shortcut[] = (
 const PASS_KEYS: readonly (readonly [string, () => string, string])[] = __EVEN_PLUGIN__
   ? []
   : [
-      ['pass.search', () => t('Search Pass'), 'Mod-f'],
-      ['pass.new-login', () => t('New login'), 'Mod-n'],
+      ['pass.search', () => 'Search Pass', 'Mod-f'],
+      ['pass.new-login', () => 'New login', 'Mod-n'],
     ]
 
 const PASS_ENTRIES: Shortcut[] = PASS_KEYS.map(([id, label, key]) => ({

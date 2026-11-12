@@ -1,7 +1,6 @@
 import { isAccountInbox } from '@orden/bases/inbox'
 import { untrack } from 'svelte'
 import type { Row } from '@orden/bases'
-import { t } from '../i18n.svelte'
 import { answer, wordSaid } from '../mobile/bridge'
 import { modes } from '../modes.svelte'
 import { hearHere } from '../own-window'
@@ -68,7 +67,7 @@ function hidden(row: Row): string | null {
   const root = pressHost.rootOf(row.space)
   if (root === null || !workspace.protection.covering(insideSpace(root, row.path)).length)
     return null
-  return t('A protected note has a reminder')
+  return 'A protected note has a reminder'
 }
 
 const ringer = new Ringer({

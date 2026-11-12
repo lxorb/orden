@@ -4,7 +4,6 @@
   import { untrack } from 'svelte'
   import { Heights } from '../chats/view/window'
   import { without } from '../records'
-  import { t } from '../i18n.svelte'
   import { ListView, tokenRow } from '../row-window.svelte'
   import Twist from '../Twist.svelte'
   import { shortcuts } from '../shortcuts.svelte'
@@ -380,7 +379,7 @@
             <input
               class="orden-field naming"
               value={section}
-              aria-label={t('Rename')}
+              aria-label="Rename"
               use:focusSoon
               onkeydown={(event) => named(event, (words) => renameSection(kit, section, words))}
               onblur={(event) => {
@@ -412,8 +411,8 @@
               type="button"
               class="more"
               tabindex="-1"
-              aria-label={t('More')}
-              title={t('More')}
+              aria-label="More"
+              title="More"
               onclick={(event) =>
                 sectionMenu(event, kit, section, item.count, () => (renaming = section))}
               ><Glyph icon={Ellipsis} /></button
@@ -424,7 +423,7 @@
               type="button"
               class="orden-chip is-quiet act"
               onclick={(event) => scheduleDeadline(item.group.rows, event.currentTarget, kit)}
-              >{t('Reschedule')}</button
+              >Reschedule</button
             >
           {/if}
         </div>
@@ -490,8 +489,8 @@
     {#if naming}
       <input
         class="orden-field naming end"
-        placeholder={t('Section')}
-        aria-label={t('Add section')}
+        placeholder="Section"
+        aria-label="Add section"
         use:focusSoon
         onkeydown={(event) => named(event, (words) => addSection(kit, words))}
         onblur={(event) => {
@@ -501,7 +500,7 @@
       />
     {:else}
       <button type="button" class="add-section" onclick={() => (naming = true)}>
-        <span class="rule" aria-hidden="true"></span>{t('Add section')}<span
+        <span class="rule" aria-hidden="true"></span>Add section<span
           class="rule"
           aria-hidden="true"
         ></span>

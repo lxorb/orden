@@ -1,7 +1,7 @@
 import { accentColour } from '../accents'
 import { chooseFiles, PICTURES } from '../choose-files'
 import { fileBytes } from '../bytes'
-import { key, message } from '../i18n.svelte'
+import { message } from '../message'
 import { settings } from '../settings.svelte'
 import { forget, keepJson } from '../stored'
 import { theme } from '../theme.svelte'
@@ -106,7 +106,7 @@ class Wallpaper {
       if (theme.id !== WALLPAPER_THEME) theme.select(WALLPAPER_THEME)
       return true
     } catch (error) {
-      settings.error = message(error, key('That picture could not be read.'))
+      settings.error = message(error, 'That picture could not be read.')
       return false
     }
   }

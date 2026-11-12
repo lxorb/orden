@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { type LocalKind, isLocal, type Provider, type ProviderKind } from '../providers'
 import { anthropic } from './anthropic'
 import { always, type Answers, crateAnswers } from './approvals'
@@ -136,7 +135,7 @@ export function createApiEngine(setup: Setup): Engine {
 
   function providerOf(thread: Thread): Provider {
     const provider = setup.provider(thread.provider)
-    if (!provider || !apiOf(provider.kind)) throw new Error(t('That provider is not set up yet.'))
+    if (!provider || !apiOf(provider.kind)) throw new Error('That provider is not set up yet.')
     return provider
   }
 
@@ -310,7 +309,7 @@ export function createApiEngine(setup: Setup): Engine {
           ending === 'end' &&
           !turn.parts.some((part) => part.kind === 'text' || part.kind === 'tool')
         ) {
-          throw new Error(t('The model did not answer.'))
+          throw new Error('The model did not answer.')
         }
         if (ending === 'pause') continue
         if (ending === 'tool') {
@@ -497,7 +496,7 @@ const built = new WeakMap<Setup, Engine>()
 export async function engineFor(kind: ProviderKind, setup: Setup): Promise<Engine> {
   if (isLocal(kind)) {
     const load = localEngines[kind]
-    if (!load) throw new Error(t('That provider is not set up yet.'))
+    if (!load) throw new Error('That provider is not set up yet.')
     const mine = localBuilt.get(kind) ?? new WeakMap<Setup, Engine>()
     localBuilt.set(kind, mine)
     const kept = mine.get(setup)

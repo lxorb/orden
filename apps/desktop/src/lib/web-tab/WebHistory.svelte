@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { i18n, t } from '../i18n.svelte'
+  import { region } from '../region'
+  import { localDate } from '../region'
   import { menu } from '../menu.svelte'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { dayName, historyRows, hostOf, onScreen, type HistoryRow } from './history-list'
@@ -77,9 +78,9 @@
   function rowMenu(event: MouseEvent, visit: Visit) {
     event.preventDefault()
     menu.show(event, [
-      { label: t('Open in new tab'), run: () => onopen(visit.url, 'behind') },
-      { label: t('More from this site'), run: () => (typed = hostOf(visit.url)) },
-      { label: t('Remove from history'), run: () => remove(visit) },
+      { label: 'Open in new tab', run: () => onopen(visit.url, 'behind') },
+      { label: 'More from this site', run: () => (typed = hostOf(visit.url)) },
+      { label: 'Remove from history', run: () => remove(visit) },
     ])
   }
 
@@ -123,8 +124,8 @@
       type="search"
       bind:this={field}
       bind:value={typed}
-      placeholder={t('Search history')}
-      aria-label={t('Search history')}
+      placeholder="Search history"
+      aria-label="Search history"
       spellcheck="false"
       autocapitalize="off"
       autocomplete="off"
@@ -139,7 +140,7 @@
         }
       }}
     />
-    <button class="orden-button is-quiet" onclick={onclear}>{t('Delete browsing data')}</button>
+    <button class="orden-button is-quiet" onclick={onclear}>Delete browsing data</button>
   </div>
 
   <div
@@ -158,9 +159,9 @@
           {@const visit = visitOf(row)}
           {#if visit === null}
             <p class="day" style:top={`${String(index * rowHeight)}px`}>
-              {dayName(dayAt(row), now, i18n.language, {
-                today: t('Today'),
-                yesterday: t('Yesterday'),
+              {dayName(dayAt(row), now, region(), {
+                today: 'Today',
+                yesterday: 'Yesterday',
               })}
             </p>
           {:else}
@@ -177,7 +178,7 @@
                 oncontextmenu={(event) => rowMenu(event, visit)}
                 onkeydown={(event) => rowKey(event, visit, index)}
               >
-                <span class="orden-row-meta when">{i18n.when(visit.last, CLOCK)}</span>
+                <span class="orden-row-meta when">{localDate(visit.last, CLOCK)}</span>
                 <span class="orden-row-mark">
                   {#if mark}<img src={mark} alt="" draggable="false" />{/if}
                 </span>
@@ -186,8 +187,8 @@
               </button>
               <button
                 class="orden-glyph gone"
-                title={t('Remove from history')}
-                aria-label={t('Remove from history')}
+                title="Remove from history"
+                aria-label="Remove from history"
                 onclick={() => remove(visit)}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -201,7 +202,7 @@
         {/each}
       </div>
     {:else if typed}
-      <p class="none">{t('Nothing found')}</p>
+      <p class="none">Nothing found</p>
     {/if}
   </div>
 </div>

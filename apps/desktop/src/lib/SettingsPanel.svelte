@@ -16,7 +16,8 @@
   import Switch from './Switch.svelte'
   import Outward from './Outward.svelte'
   import Icon from './Icon.svelte'
-  import { i18n, message, plural, t } from './i18n.svelte'
+  import { localDate } from './region'
+  import { message } from './message'
   import AiPane from './AiPane.svelte'
   import { SEARCH_MARK } from './panel-marks'
   import Security from './Security.svelte'
@@ -91,7 +92,7 @@
       ...SHORTCUTS.map((one): Place => ({
         section: 'shortcuts',
         label: one.label(),
-        text: [shortcuts.hint(one.id) ?? '', t('Shortcuts')],
+        text: [shortcuts.hint(one.id) ?? '', 'Shortcuts'],
       })),
     ]
 
@@ -225,7 +226,7 @@
 
   const presetChoices = $derived([
     ...PRESETS.map((one) => ({ value: one.id, label: one.label() })),
-    ...(shortcuts.preset === 'custom' ? [{ value: 'custom', label: t('Custom') }] : []),
+    ...(shortcuts.preset === 'custom' ? [{ value: 'custom', label: 'Custom' }] : []),
   ])
 
   async function choosePreset(id: string) {
@@ -234,9 +235,9 @@
 
     if (shortcuts.preset === 'custom') {
       const sure = await prompt.confirm({
-        title: t('Replace your own keys?'),
-        detail: t('The keys you changed go back to what this keyboard says.'),
-        confirmLabel: t('Replace'),
+        title: 'Replace your own keys?',
+        detail: 'The keys you changed go back to what this keyboard says.',
+        confirmLabel: 'Replace',
       })
       if (!sure) return
     }
@@ -334,7 +335,7 @@
   })
 
   const enter = (x: number) =>
-    stacked ? { x: x * i18n.factor, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
+    stacked ? { x: x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
 
   $effect.pre(() => closeOnBack(stacked && !settings.listing, () => (settings.listing = true)))
 </script>
@@ -345,12 +346,12 @@
   class:phone={stacked}
   bind:clientWidth={width}
   role="region"
-  aria-label={t('Settings')}
+  aria-label="Settings"
   data-region="editor"
 >
   {#if stacked && !settings.listing}
     <header class="bar">
-      <button class="orden-glyph" aria-label={t('Back')} onclick={() => (settings.listing = true)}>
+      <button class="orden-glyph" aria-label="Back" onclick={() => (settings.listing = true)}>
         <svg class="orden-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
       </button>
 
@@ -361,14 +362,14 @@
   {#if !stacked || settings.listing}
     <nav data-scrolls use:scrollbar in:fly={enter(-24)}>
       {#if !stacked}
-        <h1>{t('Settings')}</h1>
+        <h1>Settings</h1>
       {/if}
 
       <label class="orden-field search">
         <svg class="orden-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
         <input
           bind:value={query}
-          placeholder={t('Search settings')}
+          placeholder="Search settings"
           spellcheck="false"
           autocapitalize="off"
           autocorrect="off"
@@ -412,7 +413,7 @@
     >
       {#if query && !stacked}
         <div class="pane">
-          <h2>{t('Search settings')}</h2>
+          <h2>Search settings</h2>
           {@render results()}
         </div>
       {:else}
@@ -427,7 +428,7 @@
       {/if}
 
       {#if settings.error}
-        <p class="hint bad" transition:slide={{ duration: dur(160) }}>{t(settings.error)}</p>
+        <p class="hint bad" transition:slide={{ duration: dur(160) }}>{settings.error}</p>
       {/if}
     </div>
   {/if}
@@ -457,7 +458,7 @@
       {/each}
     </div>
   {:else}
-    <p class="note">{t('Nothing matches.')}</p>
+    <p class="note">Nothing matches.</p>
   {/if}
 {/snippet}
 
@@ -562,7 +563,7 @@
               style:background-image={held ? `url("${held}")` : undefined}
               style:background-position="{x * 100}% {y * 100}%"
               title={side.label}
-              aria-label="{t('Choose a picture')}: {side.label}"
+              aria-label="{'Choose a picture'}: {side.label}"
               onpointerdown={(event) => placing(side, event)}
               onkeydown={(event) => {
                 if (event.key !== 'Enter' && event.key !== ' ') return
@@ -577,8 +578,8 @@
               <button
                 type="button"
                 class="orden-glyph drop"
-                title={t('Remove picture')}
-                aria-label="{t('Remove picture')}: {side.label}"
+                title="Remove picture"
+                aria-label="{'Remove picture'}: {side.label}"
                 onclick={() => side.remove()}><Cross /></button
               >
             {/if}
@@ -646,13 +647,13 @@
 {/snippet}
 
 {#snippet browserRow()}
-  <h3>{t('Browser')}</h3>
+  <h3>Browser</h3>
   <div class="card">
     <div class="orden-setting setting">
       <span class="name"
         ><span class="what"
-          >{t('Default browser')}<Hint
-            text={t('Makes Orden the browser that links from other programs open in.')}
+          >Default browser<Hint
+            text="Makes Orden the browser that links from other programs open in."
           /></span
         ></span
       >
@@ -661,8 +662,8 @@
     <div class="orden-setting setting">
       <span class="name"
         ><span class="what"
-          >{t('Search engine')}<Hint
-            text={t('Where words typed into a web tab’s address bar are searched.')}
+          >Search engine<Hint
+            text="Where words typed into a web tab’s address bar are searched."
           /></span
         ></span
       >
@@ -671,13 +672,13 @@
           value={customising ? CUSTOM : searchEngine.id}
           options={[
             ...enginesFor(navigator.language).map((one) => ({ value: one.id, label: one.name })),
-            { value: CUSTOM, label: t('Custom') },
+            { value: CUSTOM, label: 'Custom' },
           ]}
           onchange={(value: string) => {
             customising = value === CUSTOM && !searchEngine.custom
             searchEngine.choose(value)
           }}
-          label={t('Search engine')}
+          label="Search engine"
           plain={viewport.touch}
         />
       </div>
@@ -686,9 +687,7 @@
       <label class="orden-setting setting" transition:slide={{ duration: dur(160) }}>
         <span class="name"
           ><span class="what"
-            >{t('Address')}<Hint
-              text={t('The search address, with %s where the words go.')}
-            /></span
+            >Address<Hint text="The search address, with %s where the words go." /></span
           ></span
         >
         <input
@@ -709,7 +708,7 @@
     {/if}
   </div>
   {#if runsExtensions}
-    <h3>{t('Extensions')}</h3>
+    <h3>Extensions</h3>
     <div class="card">
       <ExtensionRows />
     </div>
@@ -753,33 +752,31 @@
 
     {#if resettable(current)}
       <div class="card">
-        <button class="orden-action" onclick={() => resetPane(current)}
-          >{t('Reset to defaults')}</button
-        >
+        <button class="orden-action" onclick={() => resetPane(current)}>Reset to defaults</button>
       </div>
     {/if}
   {:else if settings.section === 'account'}
     {#if account.user}
-      <h3>{t('Account')}</h3>
+      <h3>Account</h3>
       <div class="card">
         <label class="orden-setting setting">
           <span class="name"
             ><span class="what"
-              >{t('Display name')}<Hint
-                text={t('The name the others see on what you share and in chats.')}
+              >Display name<Hint
+                text="The name the others see on what you share and in chats."
               /></span
             ></span
           >
           <input
             class="orden-field is-value"
             value={account.user.name ?? ''}
-            placeholder={t('Your name')}
+            placeholder="Your name"
             spellcheck="false"
             onchange={(event) => void rename(event.currentTarget.value)}
           />
         </label>
         <div class="orden-setting setting">
-          <span class="name">{t('Email')}</span>
+          <span class="name">Email</span>
           <span class="orden-field is-value is-read">{account.user.email}</span>
         </div>
       </div>
@@ -790,7 +787,7 @@
         {/await}
       {/if}
 
-      <h3>{t('Storage')}</h3>
+      <h3>Storage</h3>
       <div class="card">
         <div class="stack">
           <div
@@ -807,20 +804,14 @@
             ></div>
           </div>
           <p class="hint">
-            {t('{used} of {limit} used.', {
-              used: readableSize(usage.used),
-              limit: readableSize(usage.limit),
-            })}
+            {readableSize(usage.used)} of {readableSize(usage.limit)} used.
           </p>
           <p class="hint">
-            {plural(workspace.spaces.length, {
-              one: '{count} space syncs to your account.',
-              other: '{count} spaces sync to your account.',
-            })}
+            {workspace.spaces.length === 1
+              ? '1 space syncs to your account.'
+              : `${workspace.spaces.length} spaces sync to your account.`}
             {#if sync.lastSyncedAt}
-              {t('Last synced {time}.', {
-                time: i18n.when(sync.lastSyncedAt, { timeStyle: 'medium' }),
-              })}
+              Last synced {localDate(sync.lastSyncedAt, { timeStyle: 'medium' })}.
             {/if}
           </p>
         </div>
@@ -834,8 +825,7 @@
           onclick={() =>
             __EVEN_PLUGIN__
               ? void account.signOut('asked')
-              : void import('./ai/vault/leaving').then((one) => one.signOut())}
-          >{t('Sign out')}</button
+              : void import('./ai/vault/leaving').then((one) => one.signOut())}>Sign out</button
         >
         {#if leaving}
           {#await import('./DeleteAccount.svelte') then flow}
@@ -843,34 +833,30 @@
           {/await}
         {:else}
           <button class="orden-action is-danger" onclick={() => (leaving = true)}
-            >{t('Delete account')}</button
+            >Delete account</button
           >
         {/if}
       </div>
     {:else if account.guest}
-      <h3>{t('Account')}</h3>
+      <h3>Account</h3>
       <div class="card">
         <label class="orden-setting setting">
-          <span class="name">{t('Your name')}</span>
+          <span class="name">Your name</span>
           <input
             class="orden-field is-value"
             value={account.guest.name}
-            placeholder={t('Your name')}
+            placeholder="Your name"
             spellcheck="false"
             onchange={(event) => void rename(event.currentTarget.value)}
           />
         </label>
       </div>
-      <p class="hint caption">{t('What the others in this space see.')}</p>
+      <p class="hint caption">What the others in this space see.</p>
 
-      <button class="orden-button" onclick={() => (account.open = true)}>
-        {t('Sign in')}
-      </button>
+      <button class="orden-button" onclick={() => (account.open = true)}> Sign in </button>
     {:else}
-      <p class="lead">{t('Not signed in')}</p>
-      <button class="orden-button" onclick={() => (account.open = true)}>
-        {t('Sign in')}
-      </button>
+      <p class="lead">Not signed in</p>
+      <button class="orden-button" onclick={() => (account.open = true)}> Sign in </button>
     {/if}
   {:else if settings.section === 'shortcuts'}
     {@render keyboard()}
@@ -913,8 +899,8 @@
     <div class="orden-setting setting">
       <span class="name"
         ><span class="what"
-          >{t('Shortcuts')}<Hint
-            text={t('Which app’s keys Orden follows; any key below can still be changed.')}
+          >Shortcuts<Hint
+            text="Which app’s keys Orden follows; any key below can still be changed."
           /></span
         ></span
       >
@@ -923,7 +909,7 @@
           value={shortcuts.preset}
           options={presetChoices}
           onchange={(value: string) => void choosePreset(value)}
-          label={t('Shortcuts')}
+          label="Shortcuts"
           plain={viewport.touch}
         />
       </div>
@@ -932,8 +918,8 @@
     {@render row({
       kind: 'switch',
       key: 'shortcuts.vim',
-      label: t('Vim keys'),
-      hint: t('Moves and edits in notes with Vim’s keys.'),
+      label: 'Vim keys',
+      hint: 'Moves and edits in notes with Vim’s keys.',
       get: () => modes.vim,
       set: (on) => modes.setVimKeys(on),
     })}
@@ -943,7 +929,7 @@
     <svg class="orden-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
     <input
       bind:value={keyFilter}
-      placeholder={t('Search shortcuts')}
+      placeholder="Search shortcuts"
       spellcheck="false"
       autocapitalize="off"
       autocorrect="off"
@@ -969,11 +955,11 @@
                 <span class="what"
                   >{entry.label()}{#if entry.why}<Hint text={entry.why()} />{/if}</span
                 >
-                {#if entry.alias}<small>{t('Second key')}</small>{/if}
+                {#if entry.alias}<small>Second key</small>{/if}
                 {#if warning}<small class="caution">{warning}</small>{/if}
                 {#if reach}<small class="reach"
                     >{reach.text}{#if reach.change}
-                      <button class="link" onclick={() => globalKeys.change()}>{t('Change')}</button
+                      <button class="link" onclick={() => globalKeys.change()}>Change</button
                       >{/if}</small
                   >{/if}
                 {#if rebind.turnedDown?.id === entry.id}<small class="warn"
@@ -989,17 +975,17 @@
                   class:listening={rebind.listening === entry.id}
                   class:none={!key}
                   title={rebind.listening === entry.id
-                    ? t('Esc stops recording, Backspace takes the key away.')
+                    ? 'Esc stops recording, Backspace takes the key away.'
                     : undefined}
                   onclick={() => rebind.listen(entry.id)}
                 >
-                  {rebind.listening === entry.id ? t('Press a key…') : (shown(key) ?? t('Not set'))}
+                  {rebind.listening === entry.id ? 'Press a key…' : (shown(key) ?? 'Not set')}
                 </button>
                 <button
                   class="orden-glyph revert"
                   disabled={!shortcuts.changed(entry.id)}
-                  title={t('Reset')}
-                  aria-label={t('Reset')}
+                  title="Reset"
+                  aria-label="Reset"
                   onclick={() => shortcuts.reset(entry.id)}
                 >
                   <svg viewBox="0 0 16 16">
@@ -1012,16 +998,13 @@
             {#if rebind.clash?.id === entry.id}
               <div class="clash" transition:slide={{ duration: dur(160) }}>
                 <span>
-                  {t('{key} already runs {name}.', {
-                    key: shown(rebind.clash.key) ?? '',
-                    name: rebind.clash.holders.map((one) => one.label()).join(', '),
-                  })}
+                  {shown(rebind.clash.key) ?? ''} already runs {rebind.clash.holders
+                    .map((one) => one.label())
+                    .join(', ')}.
                 </span>
-                <button class="orden-chip" onclick={() => rebind.takeOver()}
-                  >{t('Take it over')}</button
-                >
+                <button class="orden-chip" onclick={() => rebind.takeOver()}>Take it over</button>
                 <button class="orden-chip is-quiet" onclick={() => (rebind.clash = null)}
-                  >{t('Cancel')}</button
+                  >Cancel</button
                 >
               </div>
             {/if}
@@ -1029,14 +1012,12 @@
         </div>
       </section>
     {:else}
-      <p class="note">{t('Nothing matches.')}</p>
+      <p class="note">Nothing matches.</p>
     {/each}
   </div>
 
   <div class="card">
-    <button class="orden-action" onclick={() => shortcuts.resetAll()}
-      >{t('Reset all shortcuts')}</button
-    >
+    <button class="orden-action" onclick={() => shortcuts.resetAll()}>Reset all shortcuts</button>
   </div>
 {/snippet}
 
@@ -1054,9 +1035,9 @@
 {/snippet}
 
 {#snippet phone()}
-  <p class="lead">{t('The bar sits over the keyboard on a phone.')}</p>
+  <p class="lead">The bar sits over the keyboard on a phone.</p>
 
-  <h3>{t('On the bar')}</h3>
+  <h3>On the bar</h3>
   <div class="card">
     {#each toolbar.ids as id, at (id)}
       <div
@@ -1079,8 +1060,8 @@
         <button
           class="orden-glyph revert"
           disabled={at === 0}
-          title={t('Move up')}
-          aria-label={t('Move up')}
+          title="Move up"
+          aria-label="Move up"
           onclick={() => toolbar.move(at, at - 1)}
         >
           <svg viewBox="0 0 16 16"><path d="M4.5 9.5L8 6l3.5 3.5" /></svg>
@@ -1088,38 +1069,38 @@
         <button
           class="orden-glyph revert"
           disabled={at === toolbar.ids.length - 1}
-          title={t('Move down')}
-          aria-label={t('Move down')}
+          title="Move down"
+          aria-label="Move down"
           onclick={() => toolbar.move(at, at + 1)}
         >
           <svg viewBox="0 0 16 16"><path d="M4.5 6.5L8 10l3.5-3.5" /></svg>
         </button>
         <button
           class="orden-glyph revert"
-          title={t('Take it off')}
-          aria-label={t('Take it off')}
+          title="Take it off"
+          aria-label="Take it off"
           onclick={() => toolbar.remove(id)}
         >
           <Cross />
         </button>
       </div>
     {:else}
-      <p class="note">{t('Nothing on the bar.')}</p>
+      <p class="note">Nothing on the bar.</p>
     {/each}
   </div>
 
   <div class="card">
     <button class="orden-action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
-      {t('Reset the bar')}
+      Reset the bar
     </button>
   </div>
 
-  <h3>{t('Everything else')}</h3>
+  <h3>Everything else</h3>
   <label class="orden-field search">
     <svg class="orden-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
     <input
       bind:value={barFilter}
-      placeholder={t('Search commands')}
+      placeholder="Search commands"
       spellcheck="false"
       autocapitalize="off"
       autocorrect="off"
@@ -1135,8 +1116,8 @@
           <span class="name">{entry.label()}</span>
           <button
             class="orden-glyph revert"
-            title={t('Put it on the bar')}
-            aria-label={t('Put it on the bar')}
+            title="Put it on the bar"
+            aria-label="Put it on the bar"
             onclick={() => toolbar.add(entry.id)}
           >
             <svg viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" /></svg>
@@ -1145,28 +1126,24 @@
       {/each}
     </div>
   {:else}
-    <p class="note">{t('Nothing matches.')}</p>
+    <p class="note">Nothing matches.</p>
   {/each}
 {/snippet}
 
 {#snippet glassesExtras()}
-  <h3>{t('Questions')}</h3>
+  <h3>Questions</h3>
   <div class="card">
     {#if glassesKey.set && !replacingKey}
       <div class="orden-setting setting keyed">
         <span class="name"
           ><span class="what"
-            >{t('OpenAI key')}<Hint
-              text={t('The OpenAI key the glasses ask their questions with.')}
-            /></span
+            >OpenAI key<Hint text="The OpenAI key the glasses ask their questions with." /></span
           ></span
         >
         <div class="row">
-          <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
-          <button class="orden-chip" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
-          <button class="orden-chip is-quiet" onclick={() => void offered.remove()}
-            >{t('Remove')}</button
-          >
+          <span class="hint">set, ends in …{glassesKey.tail}</span>
+          <button class="orden-chip" onclick={() => (replacingKey = true)}>Replace</button>
+          <button class="orden-chip is-quiet" onclick={() => void offered.remove()}>Remove</button>
         </div>
       </div>
     {:else}
@@ -1174,9 +1151,7 @@
       <label class="orden-setting setting">
         <span class="name"
           ><span class="what"
-            >{t('OpenAI key')}<Hint
-              text={t('The OpenAI key the glasses ask their questions with.')}
-            /></span
+            >OpenAI key<Hint text="The OpenAI key the glasses ask their questions with." /></span
           ></span
         >
         <input
@@ -1199,9 +1174,7 @@
       <div class="orden-setting setting">
         <span class="name"
           ><span class="what"
-            >{t('Model')}<Hint
-              text={t('The model that answers what you ask on the glasses.')}
-            /></span
+            >Model<Hint text="The model that answers what you ask on the glasses." /></span
           ></span
         >
         <div class="orden-setting-value">
@@ -1209,7 +1182,7 @@
             value={modes.glassesModel}
             options={offered.models.map((one) => ({ value: one, label: one }))}
             onchange={(value: string) => modes.setGlassesModel(value)}
-            label={t('Model')}
+            label="Model"
             plain={viewport.touch}
           />
         </div>
@@ -1217,17 +1190,17 @@
       <div class="orden-setting setting">
         <span class="name"
           ><span class="what"
-            >{t('Reasoning')}<Hint
-              text={t('How long the model thinks before it answers; longer is slower.')}
+            >Reasoning<Hint
+              text="How long the model thinks before it answers; longer is slower."
             /></span
           ></span
         >
         <div class="orden-setting-value">
           <Select
             value={modes.glassesEffort}
-            options={EFFORT_WORDS.map((one) => ({ value: one.value, label: t(one.label) }))}
+            options={EFFORT_WORDS.map((one) => ({ value: one.value, label: one.label }))}
             onchange={(value: string) => modes.setGlassesEffort(value)}
-            label={t('Reasoning')}
+            label="Reasoning"
             plain={viewport.touch}
           />
         </div>
@@ -1236,22 +1209,20 @@
   </div>
 
   <p class="hint caption">
-    {#if offered.said}{offered.said}{:else}{t(
-        'Kept encrypted on your account, and never shown again.',
-      )}{/if}
+    {#if offered.said}{offered.said}{:else}Kept encrypted on your account, and never shown again.{/if}
   </p>
 {/snippet}
 
 {#snippet themeTools()}
   <div class="orden-setting setting">
-    <span class="name">{t('Themes')}</span>
-    <button class="orden-chip" onclick={() => store.show()}>{t('Browse')}</button>
+    <span class="name">Themes</span>
+    <button class="orden-chip" onclick={() => store.show()}>Browse</button>
   </div>
 
   {#if isDesktop}
     <div class="orden-setting setting">
-      <span class="name">{t('Reload themes and custom CSS')}</span>
-      <button class="orden-chip" onclick={() => theme.reload()}>{t('Reload')}</button>
+      <span class="name">Reload themes and custom CSS</span>
+      <button class="orden-chip" onclick={() => theme.reload()}>Reload</button>
     </div>
   {/if}
 {/snippet}
@@ -1673,9 +1644,8 @@
 
   .slider.floored::-webkit-slider-runnable-track {
     background:
-      linear-gradient(var(--line-strong), var(--line-strong)) var(--dir-start) / var(--least) 100%
-        no-repeat,
-      linear-gradient(var(--accent), var(--accent)) var(--dir-start) / var(--fill) 100% no-repeat,
+      linear-gradient(var(--line-strong), var(--line-strong)) left / var(--least) 100% no-repeat,
+      linear-gradient(var(--accent), var(--accent)) left / var(--fill) 100% no-repeat,
       var(--surface-3);
   }
 

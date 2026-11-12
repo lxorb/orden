@@ -1,6 +1,5 @@
 import { busy } from '../busy.svelte'
 import { pageBytes } from '../bytes'
-import { t } from '../i18n.svelte'
 import { type PaperInches, pageSetupFor, paperInches } from '../page-setup'
 import { DEFAULT_PAGE_SETUP } from '../paper'
 import { invoke } from '../tauri'
@@ -18,7 +17,7 @@ export async function writtenPdf(
     await invoke('print_pdf', { bytes: await pageBytes(html), output: target, page })
     return true
   } catch {
-    busy.failed(t('The file could not be written, so it goes to the print dialog'))
+    busy.failed('The file could not be written, so it goes to the print dialog')
     return false
   }
 }

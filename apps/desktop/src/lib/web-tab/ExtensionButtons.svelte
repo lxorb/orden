@@ -2,7 +2,6 @@
   import { cubicOut } from 'svelte/easing'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
-  import { t } from '../i18n.svelte'
   import { dur, scale } from '../motion'
   import { extensions, pinnedOf } from './extensions.svelte'
 
@@ -51,7 +50,7 @@
   <button
     class="orden-chip add"
     disabled={extensions.installing !== null}
-    title={t('Add extension')}
+    title="Add extension"
     onclick={(event) => onadd(event.currentTarget)}
     transition:scale={{ start: 0.6, duration: dur(160), easing: cubicOut }}
   >
@@ -60,15 +59,15 @@
         <svelte:element this={tag} {...attrs} />
       {/each}
     </svg>
-    {t('Add')}
+    Add
   </button>
 {/if}
 
 <button
   class="orden-glyph"
   data-opens="extensions"
-  title={t('Extensions')}
-  aria-label={t('Extensions')}
+  title="Extensions"
+  aria-label="Extensions"
   aria-haspopup="dialog"
   onclick={(event) => onlist(event.currentTarget)}
 >

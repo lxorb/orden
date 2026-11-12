@@ -1,6 +1,6 @@
 import { storeBeside } from '../assets'
 import { busy } from '../busy.svelte'
-import { key, message, t } from '../i18n.svelte'
+import { message } from '../message'
 import { links } from '../link-index.svelte'
 import { reloading } from '../reloading.svelte'
 import { settings } from '../settings.svelte'
@@ -55,11 +55,11 @@ class Recorder {
 
     try {
       const path = await noteToRecordInto()
-      if (!path) throw new Error(key('Open a space to record into.'))
+      if (!path) throw new Error('Open a space to record into.')
       this.path = path
 
       this.held = await record({
-        full: () => this.failed(t('That is as much as one recording may hold.')),
+        full: () => this.failed('That is as much as one recording may hold.'),
       })
 
       this.ticking = setInterval(() => {
@@ -71,7 +71,7 @@ class Recorder {
       this.on = false
       this.held = null
       this.stopAsked = false
-      settings.error = message(error, key('That microphone could not be opened.'))
+      settings.error = message(error, 'That microphone could not be opened.')
     }
   }
 
@@ -99,15 +99,15 @@ class Recorder {
     clearInterval(this.ticking)
 
     try {
-      await busy.run(t('Saving the recording'), async () => {
+      await busy.run('Saving the recording', async () => {
         const file = await held.stop()
         this.elapsed = file.seconds
 
-        if (!path) throw new Error(key('Open a space to record into.'))
+        if (!path) throw new Error('Open a space to record into.')
         await this.keep(path, file.bytes, held.extension)
       })
     } catch (error) {
-      settings.error = message(error, key('That recording could not be saved.'))
+      settings.error = message(error, 'That recording could not be saved.')
     } finally {
       this.saving = false
       void workspace.writesSettled()
@@ -116,12 +116,12 @@ class Recorder {
 
   private async keep(path: string, bytes: ArrayBuffer, extension: string) {
     if (bytes.byteLength > MOST_BYTES) {
-      throw new Error(key('That is as much as one recording may hold.'))
+      throw new Error('That is as much as one recording may hold.')
     }
-    if (!mayRecordInto(path)) throw new Error(key('That recording could not be saved.'))
+    if (!mayRecordInto(path)) throw new Error('That recording could not be saved.')
 
     const written = await storeBeside(bytes, path, recordingName(this.started, extension))
-    if (!written) throw new Error(key('That recording could not be saved.'))
+    if (!written) throw new Error('That recording could not be saved.')
 
     const root = workspace.rootHolding(path)
     const relative = root ? spaceRelative(root, path, written) : null

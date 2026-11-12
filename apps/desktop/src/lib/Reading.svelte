@@ -1,7 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte'
   import FindBar from './FindBar.svelte'
-  import { t } from './i18n.svelte'
   import { keyElsewhere } from './layer-keys'
   import { menu } from './menu.svelte'
   import { modes } from './modes.svelte'
@@ -365,13 +364,13 @@
       event,
       [
         {
-          label: t('Copy'),
+          label: 'Copy',
           hint: shortcuts.hint('fixed.copy'),
           disabled: (getSelection()?.toString() ?? '') === '',
           run: () => void navigator.clipboard.writeText(getSelection()?.toString() ?? ''),
         },
         {
-          label: t('Leave reading'),
+          label: 'Leave reading',
           hint: shortcuts.hint('app.reading'),
           run: () => workspace.toggleReading(tab.id),
         },

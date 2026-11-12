@@ -15,11 +15,7 @@ describe('the room left for the traffic lights', () => {
     expect(titlebar).not.toMatch(/header\.lights\s*\{\s*padding-inline-start/)
   })
 
-  test('is in the bar while the words run right to left, sidebar open or not', () => {
-    expect(titlebar).toContain("i18n.direction === 'rtl'")
-  })
-
   test('is in the sidebar’s head only while that head is at the window’s left', () => {
-    expect(sidebar).toMatch(/:global\(\[data-lights\]:not\(\[dir='rtl'\]\)\) \.head/)
+    expect(sidebar).toMatch(/:global\(\[data-lights\]\) \.head/)
   })
 })

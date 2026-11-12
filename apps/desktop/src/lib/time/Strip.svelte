@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { HOUR, MINUTE, piecesIn } from './days'
   import { bucketsOf } from './lanes'
   import { clock, nameOf, tintOf } from './look'
@@ -48,7 +48,7 @@
           style:left={at(piece.from)}
           style:width={wide(piece.to - piece.from)}
           style:background={tintOf(piece.span.activity)}
-          title="{nameOf(piece.span.activity, t('No activity'))}, {clock(piece.from)}–{clock(
+          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(
             piece.to,
           )}"
         ></span>
@@ -82,7 +82,7 @@
             ? '0 0'
             : (mark - from) / whole > 0.92
               ? '-100% 0'
-              : '-50% 0'}>{i18n.when(mark, { hour: 'numeric' })}</span
+              : '-50% 0'}>{localDate(mark, { hour: 'numeric' })}</span
         >
       {/each}
     </div>

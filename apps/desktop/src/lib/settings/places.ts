@@ -1,90 +1,87 @@
 import { account } from '../account.svelte'
 import { reach } from '../agents/settings/reach.svelte'
-import { t } from '../i18n.svelte'
 import type { Place } from '../settings-search'
 import { isDesktop } from '../tauri'
 
 export function places(): Place[] {
   const all: Place[] = [
-    { section: 'account', label: t('Display name'), text: [] },
-    { section: 'account', label: t('Email'), text: [account.user?.email ?? ''] },
-    { section: 'account', label: t('Storage'), text: [] },
-    { section: 'account', label: account.user ? t('Sign out') : t('Sign in'), text: [] },
+    { section: 'account', label: 'Display name', text: [] },
+    { section: 'account', label: 'Email', text: [account.user?.email ?? ''] },
+    { section: 'account', label: 'Storage', text: [] },
+    { section: 'account', label: account.user ? 'Sign out' : 'Sign in', text: [] },
     {
       section: 'account',
-      label: t('Signing in'),
+      label: 'Signing in',
       text: [
-        t('Two-factor authentication'),
+        'Two-factor authentication',
         '2FA',
         'two-factor',
         'TOTP',
         'authenticator',
-        t('Recovery codes left'),
+        'Recovery codes left',
       ],
     },
-    { section: 'account', label: t('Signed in on'), text: [t('End every other session')] },
-    ...(account.user
-      ? [{ section: 'account' as const, label: t('Delete account'), text: [] }]
-      : []),
+    { section: 'account', label: 'Signed in on', text: ['End every other session'] },
+    ...(account.user ? [{ section: 'account' as const, label: 'Delete account', text: [] }] : []),
     {
       section: 'sync',
-      label: t('When the same note was written twice'),
-      text: [t('Keep both copies'), t('Let the newest win'), t('Ask me each time')],
+      label: 'When the same note was written twice',
+      text: ['Keep both copies', 'Let the newest win', 'Ask me each time'],
     },
     {
       section: 'sync',
-      label: t('History on the account'),
-      text: [t('Keep versions'), t('A month'), t('A year')],
+      label: 'History on the account',
+      text: ['Keep versions', 'A month', 'A year'],
     },
-    { section: 'sync', label: t('What synced'), text: [] },
-    { section: 'sync', label: t('Go back'), text: [t('This space, as it was')] },
+    { section: 'sync', label: 'What synced', text: [] },
+    { section: 'sync', label: 'Go back', text: ['This space, as it was'] },
     ...(__EVEN_PLUGIN__
       ? []
-      : [{ section: 'space' as const, label: t('Agent instructions'), text: ['AGENTS.md'] }]),
-    { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },
-    { section: 'editor', label: t('Reset to defaults'), text: [] },
-    { section: 'shortcuts', label: t('Vim keys'), text: ['vim'] },
-    { section: 'markdown', label: t('Reset to defaults'), text: [] },
+      : [{ section: 'space' as const, label: 'Agent instructions', text: ['AGENTS.md'] }]),
+    { section: 'appearance', label: 'Themes', text: ['Browse', 'Install'] },
+    { section: 'editor', label: 'Reset to defaults', text: [] },
+    { section: 'shortcuts', label: 'Vim keys', text: ['vim'] },
+    { section: 'markdown', label: 'Reset to defaults', text: [] },
   ]
 
   if (isDesktop) {
     all.push({
       section: 'appearance',
-      label: t('Reload themes and custom CSS'),
-      text: [t('Custom')],
+      label: 'Reload themes and custom CSS',
+      text: ['Custom'],
     })
-    all.push({ section: 'general', label: t('Default browser'), text: [t('Make default')] })
+    all.push({ section: 'general', label: 'Default browser', text: ['Make default'] })
   }
 
   if (!__EVEN_PLUGIN__ && reach.offered) {
     all.push({
       section: 'ai',
-      label: t('Agents'),
-      text: ['MCP', 'orden mcp', 'Claude Code', 'Codex', 'token', t('Create a token')],
+      label: 'Agents',
+      text: ['MCP', 'orden mcp', 'Claude Code', 'Codex', 'token', 'Create a token'],
     })
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {
     all.push({
       section: 'remote',
-      label: t('Add host'),
-      text: ['SSH', 'ssh config', t('Remote'), t('Open config')],
+      label: 'Add host',
+      text: ['SSH', 'ssh config', 'Remote', 'Open config'],
     })
   }
 
   if (!__EVEN_PLUGIN__ && account.user) {
     all.push({
       section: 'online',
-      label: t('Online terminal'),
-      text: [t('Machine'), t('Start'), t('Stop'), t('Hours'), 'CPU'],
+      label: 'Online terminal',
+      text: ['Machine', 'Start', 'Stop', 'Hours', 'CPU'],
     })
   }
 
   if (account.user) {
     all.push({
       section: 'ai',
-      label: t('LLM access'),
-      text: ['MCP', 'Claude', 'ChatGPT', 'token', t('Connect'), t('Create a token')],
+      label: 'LLM access',
+      text: ['MCP', 'Claude', 'ChatGPT', 'token', 'Connect', 'Create a token'],
     })
   }
 

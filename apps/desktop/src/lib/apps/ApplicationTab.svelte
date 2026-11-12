@@ -15,7 +15,6 @@
   import { refreshRate, Settling } from './view'
   import { onMount, untrack } from 'svelte'
   import { account } from '../account.svelte'
-  import { t } from '../i18n.svelte'
   import { heldLine } from '../online/arrival.svelte'
   import { settings } from '../settings.svelte'
   import Sweep from '../Sweep.svelte'
@@ -131,88 +130,84 @@
   })
 
   const status = $derived(session.status)
-  const device = $derived(session.hostName || t('another device'))
+  const device = $derived(session.hostName || 'another device')
   const line = $derived.by(() => {
     switch (status.is) {
       case 'reading':
       case 'connecting':
-        return t('Connecting…')
+        return 'Connecting…'
       case 'damaged':
-        return t('This application’s file is damaged')
+        return 'This application’s file is damaged'
       case 'unread':
         return unreadLine(status.why)
       case 'signed-out':
-        return t('Sign in to use this application.')
+        return 'Sign in to use this application.'
       case 'syncing':
-        return t('Waiting for this application’s file to sync…')
+        return 'Waiting for this application’s file to sync…'
       case 'unsynced':
-        return t('This application’s file has not reached your account yet. Still trying…')
+        return 'This application’s file has not reached your account yet. Still trying…'
       case 'not-running':
-        return t('Sync has not started on this device yet. Still trying…')
+        return 'Sync has not started on this device yet. Still trying…'
       case 'untaken':
-        return t('Sync has not taken in this application’s file yet. Still trying…')
+        return 'Sync has not taken in this application’s file yet. Still trying…'
       case 'outside':
-        return t('This application’s file is in a space that does not sync to your account.')
+        return 'This application’s file is in a space that does not sync to your account.'
       case 'old-sync':
-        return t('Your account is still on the old sync, which cannot carry applications.')
+        return 'Your account is still on the old sync, which cannot carry applications.'
       case 'shared':
-        return t(
-          'An application runs only from a space of your own: this space is shared with you.',
-        )
+        return 'An application runs only from a space of your own: this space is shared with you.'
       case 'unserved':
-        return t('Your account’s server does not run applications yet.')
+        return 'Your account’s server does not run applications yet.'
       case 'unreachable':
-        return t('Cannot reach your account’s server. Still trying…')
+        return 'Cannot reach your account’s server. Still trying…'
       case 'gone':
-        return t('The computer this application runs on is no longer signed in to your account.')
+        return 'The computer this application runs on is no longer signed in to your account.'
       case 'away':
-        return t('Waiting for {device}', { device })
+        return `Waiting for ${device}`
       case 'held':
         return heldLine(status.holder)
       case 'here':
         if (status.why) return notStarted(status.why, device)
-        if (status.state === 'running') return t('Running on {device}', { device })
-        if (status.state === 'starting') return t('Starting on {device}…', { device })
+        if (status.state === 'running') return `Running on ${device}`
+        if (status.state === 'starting') return `Starting on ${device}…`
         if (status.state === 'exited' && status.code !== null)
-          return t('Exited with code {code}', { code: String(status.code) })
-        return t('Not running on {device}', { device })
+          return `Exited with code ${String(status.code)}`
+        return `Not running on ${device}`
     }
   })
   function unreadLine(why: Unread): string {
     switch (why) {
       case 'away':
-        return t('Not on this device. It opens once you are online again.')
+        return 'Not on this device. It opens once you are online again.'
       case 'missing':
-        return t('This application’s file is no longer there.')
+        return 'This application’s file is no longer there.'
       case 'denied':
-        return t('Orden is not allowed to read this application’s file.')
+        return 'Orden is not allowed to read this application’s file.'
       case 'locked':
-        return t('Another program is holding this application’s file. Close it, then try again.')
+        return 'Another program is holding this application’s file. Close it, then try again.'
       case 'unread':
-        return t('This file could not be read.')
+        return 'This file could not be read.'
     }
   }
 
   function notStarted(why: NotStarted, device: string): string {
     switch (why) {
       case 'isolation':
-        return t('{device} cannot run an application on a display of its own yet.', { device })
+        return `${device} cannot run an application on a display of its own yet.`
       case 'display':
-        return t('{device} needs Xvfb to run an application.', { device })
+        return `${device} needs Xvfb to run an application.`
       case 'permission':
-        return t('{device} needs Screen Recording and Accessibility.', { device })
+        return `${device} needs Screen Recording and Accessibility.`
       case 'refused':
-        return t('{device} did not allow this program.', { device })
+        return `${device} did not allow this program.`
       case 'missing':
-        return t('{device} does not have this application.', { device })
+        return `${device} does not have this application.`
       case 'handed':
-        return t('It was already open on {device}, and opened there instead.', { device })
+        return `It was already open on ${device}, and opened there instead.`
       case 'packaged':
-        return t('{device} cannot start a Store application on a desktop of its own.', {
-          device,
-        })
+        return `${device} cannot start a Store application on a desktop of its own.`
       case 'failed':
-        return t('It did not start on {device}.', { device })
+        return `It did not start on ${device}.`
     }
   }
 
@@ -223,13 +218,13 @@
   function noPicture(picture: PictureStatus, device: string): string | null {
     switch (picture.is) {
       case 'lost':
-        return t('The picture cannot reach this device.')
+        return 'The picture cannot reach this device.'
       case 'cannot':
         return picture.why === 'encoder'
-          ? t('{device} needs ffmpeg to send its picture.', { device })
-          : t('The picture could not be sent.')
+          ? `${device} needs ffmpeg to send its picture.`
+          : 'The picture could not be sent.'
       case 'unsupported':
-        return t('This device cannot show the picture.')
+        return 'This device cannot show the picture.'
       case 'off':
       case 'connecting':
       case 'showing':
@@ -405,14 +400,12 @@
         type="button"
         class="orden-button"
         aria-pressed={overlay}
-        onclick={() => (overlay = !overlay)}>{t('Stream stats')}</button
+        onclick={() => (overlay = !overlay)}>Stream stats</button
       >
       <button type="button" class="orden-button" onclick={() => session.run('restart')}
-        >{t('Restart')}</button
+        >Restart</button
       >
-      <button type="button" class="orden-button" onclick={() => session.run('stop')}
-        >{t('Stop')}</button
-      >
+      <button type="button" class="orden-button" onclick={() => session.run('stop')}>Stop</button>
     </div>
   {/if}
   {#if showing && overlay}
@@ -424,21 +417,21 @@
         <span>{figure(stats?.fps)} fps</span>
         <span>{figure(stats?.bitrate == null ? null : stats.bitrate / 1e6, 1)} Mb/s</span>
       </p>
-      <p>{t('Glass to glass')} {figure(session.picture.latency)} ms</p>
+      <p>Glass to glass {figure(session.picture.latency)} ms</p>
       <p>
-        <span>{t('Round trip')} {figure(stats?.rtt)} ms</span>
+        <span>Round trip {figure(stats?.rtt)} ms</span>
         <span>{stats?.route ?? '–'}</span>
       </p>
-      <p>{t('Frame pacing')} ±{figure(stats?.pacing, 1)} ms</p>
+      <p>Frame pacing ±{figure(stats?.pacing, 1)} ms</p>
       <p>
-        <span>{t('Dropped')} {stats?.dropped ?? 0}</span>
-        <span>{t('Lost')} {stats?.lost ?? 0}</span>
+        <span>Dropped {stats?.dropped ?? 0}</span>
+        <span>Lost {stats?.lost ?? 0}</span>
       </p>
       <p>
         <span>{stats?.codec ?? '–'}</span>
         <span
           >{encoder?.name ?? '–'}
-          {#if encoder}({encoder.hardware ? t('Hardware') : t('Software')}){/if}</span
+          {#if encoder}({encoder.hardware ? 'Hardware' : 'Software'}){/if}</span
         >
       </p>
     </div>
@@ -446,29 +439,27 @@
   <div class="status" role="status" hidden={showing}>
     <p>{line}</p>
     {#if status.is === 'here' && session.hostPlatform === 'windows' && status.state !== 'running'}
-      <p class="quiet">{t('On Windows, some games and GPU-drawn applications show no picture.')}</p>
+      <p class="quiet">On Windows, some games and GPU-drawn applications show no picture.</p>
     {/if}
     {#if status.is === 'away'}
-      <p class="quiet">{t('Orden must be open there, signed in, with developer mode on.')}</p>
+      <p class="quiet">Orden must be open there, signed in, with developer mode on.</p>
     {:else if status.is === 'here' && status.unanswered}
-      <p class="quiet">{t('{device} did not answer.', { device })}</p>
+      <p class="quiet">{device} did not answer.</p>
     {/if}
     {#if status.is === 'signed-out'}
-      <button type="button" class="orden-button" onclick={() => account.ask()}
-        >{t('Sign in')}</button
-      >
+      <button type="button" class="orden-button" onclick={() => account.ask()}>Sign in</button>
     {:else if again}
       {#if status.is === 'outside'}
         <button type="button" class="orden-button" onclick={() => settings.show('sync')}
-          >{t('Sync settings')}</button
+          >Sync settings</button
         >
       {/if}
       <button type="button" class="orden-button is-quiet" onclick={() => session.retry()}
-        >{t('Try again')}</button
+        >Try again</button
       >
     {:else if status.is === 'held'}
       <button type="button" class="orden-button" onclick={() => session.take()}
-        >{status.holder.taken ? t('Take back') : t('Take over')}</button
+        >{status.holder.taken ? 'Take back' : 'Take over'}</button
       >
     {:else if status.is === 'here' && status.state === 'running'}
       {#if pictureLine}
@@ -478,16 +469,12 @@
       {/if}
       <div class="row">
         <button type="button" class="orden-button" onclick={() => session.run('restart')}
-          >{t('Restart')}</button
+          >Restart</button
         >
-        <button type="button" class="orden-button" onclick={() => session.run('stop')}
-          >{t('Stop')}</button
-        >
+        <button type="button" class="orden-button" onclick={() => session.run('stop')}>Stop</button>
       </div>
     {:else if status.is === 'here' && status.why !== 'isolation' && (status.state !== 'starting' || status.unanswered)}
-      <button type="button" class="orden-button" onclick={() => session.run('start')}
-        >{t('Start')}</button
-      >
+      <button type="button" class="orden-button" onclick={() => session.run('start')}>Start</button>
     {:else if waiting}
       <div class="sweep"><Sweep /></div>
     {/if}

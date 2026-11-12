@@ -3,7 +3,7 @@
   import { api, type RemoteSession, type SecondState } from './api'
   import Copyable from './Copyable.svelte'
   import CopyButton from './CopyButton.svelte'
-  import { i18n, t } from './i18n.svelte'
+  import { localDate } from './region'
   import { dur, fade } from './motion'
 
   let factor = $state<SecondState | null>(null)
@@ -65,7 +65,7 @@
       secret = await api.beginSecond(token)
       codes = null
     } catch (error) {
-      wrong = error instanceof Error ? error.message : t('That did not work.')
+      wrong = error instanceof Error ? error.message : 'That did not work.'
     } finally {
       busy = false
     }
@@ -84,7 +84,7 @@
       code = ''
       await look()
     } catch (error) {
-      wrong = error instanceof Error ? error.message : t('That code is not right.')
+      wrong = error instanceof Error ? error.message : 'That code is not right.'
     } finally {
       busy = false
     }
@@ -103,7 +103,7 @@
       codes = null
       await look()
     } catch (error) {
-      wrong = error instanceof Error ? error.message : t('That code is not right.')
+      wrong = error instanceof Error ? error.message : 'That code is not right.'
     } finally {
       busy = false
     }
@@ -121,7 +121,7 @@
       code = ''
       await look()
     } catch (error) {
-      wrong = error instanceof Error ? error.message : t('That code is not right.')
+      wrong = error instanceof Error ? error.message : 'That code is not right.'
     } finally {
       busy = false
     }
@@ -144,58 +144,52 @@
   }
 
   const when = (stamp: number | null) =>
-    stamp === null ? t('Never') : i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
+    stamp === null ? 'Never' : localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
 </script>
 
-<h3>{t('Signing in')}</h3>
+<h3>Signing in</h3>
 
 {#if factor?.possible === false}
-  <p class="hint">{t('This service cannot keep a second factor.')}</p>
+  <p class="hint">This service cannot keep a second factor.</p>
 {:else}
   <div class="card">
     <div class="orden-setting setting">
-      <span class="name">{t('Two-factor authentication')}</span>
+      <span class="name">Two-factor authentication</span>
       {#if factor?.on}
-        <span class="text">{t('On')}</span>
+        <span class="text">On</span>
       {:else}
-        <button class="orden-chip" disabled={busy} onclick={() => void begin()}
-          >{t('Turn on')}</button
-        >
+        <button class="orden-chip" disabled={busy} onclick={() => void begin()}>Turn on</button>
       {/if}
     </div>
   </div>
 
   {#if secret}
     <div class="card" transition:fade={{ duration: dur(130) }}>
-      <p class="hint">{t('Scan this with your authenticator app, then type its code.')}</p>
+      <p class="hint">Scan this with your authenticator app, then type its code.</p>
       {#if square}
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         <figure class="square">{@html square}</figure>
       {/if}
-      <Copyable value={secret.secret} label={t('Secret')} />
+      <Copyable value={secret.secret} label="Secret" />
       <div class="orden-setting setting">
-        <span class="name">{t('Code from the app')}</span>
+        <span class="name">Code from the app</span>
         <input
           class="orden-field is-value narrow"
           bind:value={code}
           placeholder="000000"
-          aria-label={t('Code from the app')}
+          aria-label="Code from the app"
           inputmode="numeric"
           autocomplete="one-time-code"
           spellcheck="false"
         />
-        <button class="orden-chip" disabled={busy} onclick={() => void confirm()}
-          >{t('Confirm')}</button
-        >
+        <button class="orden-chip" disabled={busy} onclick={() => void confirm()}>Confirm</button>
       </div>
     </div>
   {/if}
 
   {#if codes}
     <div class="card" transition:fade={{ duration: dur(130) }}>
-      <p class="note">
-        {t('Keep these somewhere safe. Each works once, and they are not shown again.')}
-      </p>
+      <p class="note">Keep these somewhere safe. Each works once, and they are not shown again.</p>
       <ul class="codes" dir="ltr">
         {#each codes as one (one)}
           <li>{one}</li>
@@ -208,26 +202,26 @@
   {#if factor?.on}
     <div class="card">
       <div class="orden-setting setting">
-        <span class="name">{t('Recovery codes left')}</span>
+        <span class="name">Recovery codes left</span>
         <span class="text">{factor.codesLeft}</span>
       </div>
       <div class="orden-setting setting">
-        <span class="name">{t('Code to change sign-in')}</span>
+        <span class="name">Code to change sign-in</span>
         <input
           class="orden-field is-value"
           bind:value={code}
           placeholder="000000"
-          aria-label={t('Code to change sign-in')}
+          aria-label="Code to change sign-in"
           inputmode="numeric"
           autocomplete="one-time-code"
           spellcheck="false"
         />
       </div>
       <button class="orden-action" disabled={busy} onclick={() => void freshCodes()}>
-        {t('New recovery codes')}
+        New recovery codes
       </button>
       <button class="orden-action is-danger" disabled={busy} onclick={() => void turnOff()}>
-        {t('Turn off')}
+        Turn off
       </button>
     </div>
   {/if}
@@ -237,18 +231,18 @@
   <p class="hint bad">{wrong}</p>
 {/if}
 
-<h3>{t('Signed in on')}</h3>
+<h3>Signed in on</h3>
 
 <div class="card">
   {#each sessions as session (session.id)}
     <div class="orden-setting setting">
       <span class="name">
-        {session.name || t('A device')}
-        {#if session.current}<small>{t('this one')}</small>{/if}
+        {session.name || 'A device'}
+        {#if session.current}<small>this one</small>{/if}
       </span>
       <span class="text">{when(session.lastUsedAt)}</span>
       {#if !session.current}
-        <button class="orden-chip" onclick={() => void end(session)}>{t('End')}</button>
+        <button class="orden-chip" onclick={() => void end(session)}>End</button>
       {/if}
     </div>
   {/each}
@@ -256,7 +250,7 @@
 
 {#if sessions.length > 1}
   <button class="orden-action is-danger" onclick={() => void endOthers()}>
-    {t('End every other session')}
+    End every other session
   </button>
 {/if}
 

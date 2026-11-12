@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../backstack.svelte'
-  import { i18n, t } from '../i18n.svelte'
+  import { region } from '../region'
   import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { trap } from '../trap'
@@ -38,11 +38,11 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label={t('Add task')}
+    aria-label="Add task"
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <QuickAdd
-      langs={[i18n.language]}
+      langs={[region()]}
       {notes}
       tags={links.spaceTags.map((one) => one.tag)}
       headingsOf={(note: string) => (root ? headingsOf(root, note) : [])}

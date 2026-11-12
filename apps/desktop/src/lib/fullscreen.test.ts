@@ -276,7 +276,7 @@ describe('the shell', () => {
 
   test('there are four ways back', () => {
     expect(app).toContain('{#await fullscreenWayOut() then WayOut}')
-    expect(wayOut).toContain("t('Leave fullscreen')")
+    expect(wayOut).toContain('title="Leave fullscreen"')
     expect(wayOut).toContain('onclick={() => void fullscreen.leave()}')
     expect(app).toContain("if (event.key === 'Escape' && fullscreen.on) {")
     expect(app).toContain('closeOnBack(fullscreen.on, () => void fullscreen.leave())')

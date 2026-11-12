@@ -1,9 +1,9 @@
 <script lang="ts">
+  import { localDate } from '../region'
   import CloudOff from 'lucide/dist/esm/icons/cloud-off.mjs'
   import Cloud from 'lucide/dist/esm/icons/cloud.mjs'
   import RefreshCw from 'lucide/dist/esm/icons/refresh-cw.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
-  import { i18n, t } from '../i18n.svelte'
   import Glyph from './Glyph.svelte'
   import { pass } from './store.svelte'
   import { passSync } from './syncing.svelte'
@@ -30,7 +30,7 @@
   })
   const at = $derived(
     state === 'synced' && passSync.at !== null
-      ? t('Last synced {time}', { time: i18n.when(passSync.at, { timeStyle: 'short' }) })
+      ? `Last synced ${localDate(passSync.at, { timeStyle: 'short' })}`
       : undefined,
   )
 </script>

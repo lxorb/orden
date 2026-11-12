@@ -2,7 +2,6 @@
   import type { SharedItem } from './api'
   import { fileMark } from './file-mark'
   import FileMark from './FileMark.svelte'
-  import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { menu } from './menu.svelte'
   import { roving } from './roving'
@@ -35,7 +34,7 @@
       event,
       [
         {
-          label: t('Remove from your list'),
+          label: 'Remove from your list',
           danger: true,
           run: () => void sharedWithYou.leave(item),
         },
@@ -56,7 +55,7 @@
   }
 
   function aboutArchived(event: MouseEvent, space: Space) {
-    menu.show(event, [{ label: t('Unarchive'), run: () => void bringBack(space) }], {
+    menu.show(event, [{ label: 'Unarchive', run: () => void bringBack(space) }], {
       title: space.name,
     })
   }
@@ -76,7 +75,7 @@
   class="orden-layer spaces"
   data-spaces-open
   role="menu"
-  aria-label={t('Spaces')}
+  aria-label="Spaces"
   onkeydowncapture={typing.press}
   use:trap
   use:roving={{
@@ -109,21 +108,21 @@
     <span class="orden-badge is-quiet" aria-hidden="true">
       <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
     </span>
-    <span class="orden-row-label">{t('New space')}</span>
+    <span class="orden-row-label">New space</span>
   </button>
 
   {#if archived.length}
     <hr />
 
-    <div class="held" role="group" aria-label={t('Archived')} data-archived-spaces>
-      <p class="from" aria-hidden="true">{t('Archived')}</p>
+    <div class="held" role="group" aria-label="Archived" data-archived-spaces>
+      <p class="from" aria-hidden="true">Archived</p>
 
       {#each archived as space (space.id)}
         <div class="line" role="none">
           <button
             class="orden-row"
             role="menuitem"
-            title={t('Unarchive')}
+            title="Unarchive"
             onclick={() => void bringBack(space)}
             oncontextmenu={(event) => aboutArchived(event, space)}
             use:longPress={(event) => aboutArchived(event, space)}
@@ -162,7 +161,7 @@
                 <FileMark mark={fileMark(item.path)} />
               </span>
               <span class="orden-row-label">{item.name}</span>
-              <SharedMark label={t('Shared with you')} />
+              <SharedMark label="Shared with you" />
             </button>
 
             <RowMore onclick={(event: MouseEvent) => aboutShared(event, item)} />

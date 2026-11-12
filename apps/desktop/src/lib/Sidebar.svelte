@@ -11,7 +11,6 @@
   import { movesSection } from './sections'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { landsIn } from './move-targets'
   import { shortcuts } from './shortcuts.svelte'
@@ -190,7 +189,6 @@
         workspace.panes.fills === null &&
         overlays.depth === 0,
       width: () => window.innerWidth,
-      rtl: () => getComputedStyle(document.documentElement).direction === 'rtl',
       top: () => column?.getBoundingClientRect().top ?? 0,
       over: (x, y) => {
         const box = aside?.getBoundingClientRect()
@@ -250,17 +248,17 @@
   }
 
   const PANELS: { id: Panel; label: string; path: string }[] = [
-    { id: 'tree', label: t('Files'), path: FILES_MARK },
-    { id: 'outline', label: t('Outline'), path: OUTLINE_MARK },
+    { id: 'tree', label: 'Files', path: FILES_MARK },
+    { id: 'outline', label: 'Outline', path: OUTLINE_MARK },
     ...(__EVEN_PLUGIN__
       ? []
       : [
-          { id: 'tasks' as const, label: t('Tasks'), path: TASKS_MARK },
-          { id: 'chats' as const, label: t('Chats'), path: CHATS_MARK },
-          { id: 'time' as const, label: t('Time tracker'), path: TIME_MARK },
+          { id: 'tasks' as const, label: 'Tasks', path: TASKS_MARK },
+          { id: 'chats' as const, label: 'Chats', path: CHATS_MARK },
+          { id: 'time' as const, label: 'Time tracker', path: TIME_MARK },
         ]),
-    { id: 'links', label: t('Links'), path: LINKS_MARK },
-    { id: 'ask', label: t('Ask'), path: ASK_MARK },
+    { id: 'links', label: 'Links', path: LINKS_MARK },
+    { id: 'ask', label: 'Ask', path: ASK_MARK },
   ]
 
   $effect(() => {
@@ -274,7 +272,7 @@
     )
 
     const pads: { id: Panel | 'scratchpad'; label: string; path: string }[] = padHere
-      ? [{ id: 'scratchpad', label: t('Scratchpad'), path: SCRATCHPAD_MARK }]
+      ? [{ id: 'scratchpad', label: 'Scratchpad', path: SCRATCHPAD_MARK }]
       : []
     const panelsHere: { id: Panel | 'scratchpad'; label: string; path: string }[] = held.flatMap(
       (id) =>
@@ -322,7 +320,7 @@
         hint: shortcuts.hint(commandOf(item.id)),
         run: () => choose(item.id),
       })),
-      { title: t('More') },
+      { title: 'More' },
     )
   }
 
@@ -459,14 +457,14 @@
 
     return [
       {
-        label: t('Move'),
+        label: 'Move',
         run: () => {
           void (async () => {
             const { prompt } = await import('./prompt.svelte')
             const to = await prompt.find({
-              title: t('Move after'),
+              title: 'Move after',
               options: targets.map((one) => ({ id: one.id, label: one.label })),
-              placeholder: t('Heading'),
+              placeholder: 'Heading',
             })
             if (to !== null) onmovesection?.(at, Number(to))
           })()
@@ -542,8 +540,8 @@
     data-region={side === 'right' ? 'right' : undefined}
     data-sidebar
     aria-label={side === 'right'
-      ? t('Right sidebar')
-      : t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
+      ? 'Right sidebar'
+      : `${workspace.activeSpace?.name ?? 'Space'} panel`}
     class:resizing={size.dragging}
     class:right={side === 'right'}
   >
@@ -552,12 +550,12 @@
       class="edge"
       role="separator"
       aria-orientation="vertical"
-      aria-label={t('Panel width')}
+      aria-label="Panel width"
       aria-valuemin={size.narrowest}
       aria-valuemax={size.widest}
       aria-valuenow={Math.round(size.pixels ?? asideWidth) || size.narrowest}
       tabindex="0"
-      title={t('Drag to resize')}
+      title="Drag to resize"
       onpointerdown={(event) => size.start(event, aside)}
       ondblclick={() => size.reset()}
       onkeydown={onEdgeKey}
@@ -594,7 +592,7 @@
             },
           }}
           role="tablist"
-          aria-label={t('Panels')}
+          aria-label="Panels"
           use:segmented
         >
           {#each strip.drawn as item (item.id)}
@@ -604,7 +602,7 @@
               role="tab"
               title={shortcuts.tooltip(item.label, commandOf(item.id))}
               aria-label={item.id === 'ask' && chatsUnread.any
-                ? t('{title}, unread', { title: item.label })
+                ? `${item.label}, unread`
                 : item.label}
               aria-selected={showing === item.id}
               onclick={(event) => {
@@ -640,8 +638,8 @@
               role="tab"
               aria-selected="false"
               aria-haspopup="menu"
-              title={t('More')}
-              aria-label={t('More')}
+              title="More"
+              aria-label="More"
               onclick={showBehind}
             >
               <svg viewBox="0 0 13 13"><path d={MORE_MARK} /></svg>
@@ -655,7 +653,7 @@
           <card.default
             hint="graph"
             side="below"
-            text={t('See how your notes connect.')}
+            text="See how your notes connect."
             when={worthAGraph(links.graph)}
             onpress={() => workspace.openGraph()}
           />
@@ -667,9 +665,7 @@
           <card.default
             hint="palette"
             side="below"
-            text={t('Press {key} to find anything, notes and commands alike.', {
-              key: paletteKey,
-            })}
+            text="Press {paletteKey} to find anything, notes and commands alike."
             when={!viewport.touch}
           />
         {/await}
@@ -681,8 +677,8 @@
             <button
               class="orden-glyph tool"
               class:active={held}
-              title={held ? t('Follow the open note') : t('Stay on this note')}
-              aria-label={held ? t('Follow the open note') : t('Stay on this note')}
+              title={held ? 'Follow the open note' : 'Stay on this note'}
+              aria-label={held ? 'Follow the open note' : 'Stay on this note'}
               aria-pressed={held}
               onclick={() => workspace.holdPanel(held ? null : (workspace.panelTab?.id ?? null))}
             >
@@ -693,13 +689,13 @@
             {#if graphing}
               <button
                 class="orden-glyph depth"
-                title={t('Depth')}
-                aria-label={t('Depth')}
+                title="Depth"
+                aria-label="Depth"
                 onclick={() =>
                   workspace.graphSettings.set({
                     depth: depth >= DEEPEST ? SHALLOWEST : depth + 1,
                   })}
-                transition:fly={{ x: 10 * i18n.factor, duration: dur(130), easing: cubicOut }}
+                transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
               >
                 {depth}
               </button>
@@ -707,8 +703,8 @@
             <button
               class="orden-glyph tool"
               class:active={graphing}
-              title={t('Graph')}
-              aria-label={t('Graph')}
+              title="Graph"
+              aria-label="Graph"
               aria-pressed={graphing}
               onclick={() => (graphing = !graphing)}
             >
@@ -720,18 +716,18 @@
           {#if workspace.unfolded}
             <button
               class="orden-glyph tool"
-              title={shortcuts.tooltip(t('Collapse the file list'), 'app.fold-list')}
-              aria-label={t('Collapse the file list')}
+              title={shortcuts.tooltip('Collapse the file list', 'app.fold-list')}
+              aria-label="Collapse the file list"
               onclick={() => workspace.foldList()}
-              transition:fly={{ x: 10 * i18n.factor, duration: dur(130), easing: cubicOut }}
+              transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
             >
               <svg viewBox="0 0 13 13"><path d={FOLD_MARK} /></svg>
             </button>
           {/if}
           <button
             class="orden-glyph tool"
-            title={t('Order of the files')}
-            aria-label={t('Order of the files')}
+            title="Order of the files"
+            aria-label="Order of the files"
             aria-haspopup="menu"
             onclick={showOrder}
           >
@@ -741,10 +737,10 @@
         {#if showing === 'search'}
           <button
             class="orden-glyph tool"
-            title={t('Sort')}
-            aria-label={t('Sort')}
+            title="Sort"
+            aria-label="Sort"
             aria-haspopup="menu"
-            onclick={(event) => showTabMenu(event, 'search', t('Search'))}
+            onclick={(event) => showTabMenu(event, 'search', 'Search')}
           >
             <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
           </button>
@@ -752,8 +748,8 @@
         {#if showing === 'ask'}
           <button
             class="orden-glyph tool fresh"
-            title={t('New chat')}
-            aria-label={t('New chat')}
+            title="New chat"
+            aria-label="New chat"
             onclick={() => {
               if (!__EVEN_PLUGIN__)
                 void import('./ai/sidebar/chat.svelte').then((one) => one.chat.newThread())
@@ -763,8 +759,8 @@
           </button>
           <button
             class="orden-glyph tool"
-            title={shortcuts.tooltip(t('Chats'), 'app.ask')}
-            aria-label={t('Chats')}
+            title={shortcuts.tooltip('Chats', 'app.ask')}
+            aria-label="Chats"
             onclick={() => {
               if (!__EVEN_PLUGIN__)
                 void import('./ai/sidebar/chat.svelte').then((one) => one.chat.showThreads())
@@ -795,13 +791,12 @@
             {#if listing}
               <Bookmarks onsearch={runBookmarked} />
 
-              <p class="orden-section">{t('Files')}</p>
+              <p class="orden-section">Files</p>
 
               <Tree tree={listing} />
 
               {#if !workspace.files.length && !arriving.coming.size && hiddenKinds.offers('note') && canWriteAt(workspace.activeSpace?.root ?? '')}
-                <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button
-                >
+                <button class="empty" onclick={() => workspace.createNote()}>New note</button>
               {/if}
 
               {#if !__EVEN_PLUGIN__ && workspace.archive.any}
@@ -822,7 +817,7 @@
                 ondrop={dropOnRoot}
               ></div>
             {:else}
-              <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
+              <button class="empty" onclick={() => newSpace()}>Create a space</button>
             {/if}
           {:else if showing === 'outline'}
             {#if pages.current}
@@ -871,7 +866,7 @@
             {/if}
 
             {#if workspace.footnotes.length}
-              <p class="orden-section">{t('Footnotes')}<span>{workspace.footnotes.length}</span></p>
+              <p class="orden-section">Footnotes<span>{workspace.footnotes.length}</span></p>
               <ul>
                 {#each workspace.footnotes as note (note.id)}
                   <li>
@@ -955,11 +950,11 @@
   }
 
   :global(:root:not([data-touch], [data-drawer])) .column.shut:not(.moving, .right, .peek) aside {
-    transform: translateX(calc(var(--dir) * (-100% - var(--card-inset) - var(--space-6))));
+    transform: translateX(calc(-100% - var(--card-inset) - var(--space-6)));
   }
 
   :global(:root:not([data-touch], [data-drawer])) .column.right.shut:not(.moving, .peek) aside {
-    transform: translateX(calc(var(--dir) * (100% + var(--card-inset) + var(--space-6))));
+    transform: translateX(calc(100% + var(--card-inset) + var(--space-6)));
   }
 
   .column.shut.floating {
@@ -1069,7 +1064,7 @@
     padding: 0 var(--space-1);
   }
 
-  :global([data-lights]:not([dir='rtl'])) .head {
+  :global([data-lights]) .head {
     padding-inline-start: var(--traffic-lights);
   }
 
@@ -1226,7 +1221,7 @@
 
   @media (hover: hover) {
     .heading:hover {
-      transform: translateX(calc(var(--dir) * 2px));
+      transform: translateX(2px);
     }
   }
 
@@ -1305,7 +1300,7 @@
   @keyframes dock {
     from {
       opacity: 0;
-      transform: translateX(calc(var(--dir) * -12px));
+      transform: translateX(-12px);
     }
   }
 

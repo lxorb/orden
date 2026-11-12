@@ -43,10 +43,6 @@
     transform: translate(40%, 40%);
   }
 
-  :global(:root[dir='rtl']) .place {
-    transform: translate(-40%, 40%);
-  }
-
   b {
     color: var(--text-strong);
     font-weight: var(--weight-strong);

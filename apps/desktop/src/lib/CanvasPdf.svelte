@@ -10,7 +10,6 @@
     type Part,
   } from './pages/paper'
   import FileMark from './FileMark.svelte'
-  import { t } from './i18n.svelte'
   import { pixelRatio } from './pixel-ratio.svelte'
 
   const {
@@ -175,7 +174,7 @@
     {/if}
   </div>
   {#if lost}
-    <span class="missing">{t('The paper could not be read')}</span>
+    <span class="missing">The paper could not be read</span>
   {/if}
   <span class="name"><FileMark mark="pdf" /><span>{name}</span></span>
 </div>

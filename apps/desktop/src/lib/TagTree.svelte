@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
   import { roving } from './roving'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { longPress } from './longpress'
@@ -22,8 +21,8 @@
     return [
       ...(writes
         ? [
-            { label: t('Rename tag'), run: () => void renameTag(node) },
-            { label: t('Delete tag'), danger: true, run: () => void removeTag(node) },
+            { label: 'Rename tag', run: () => void renameTag(node) },
+            { label: 'Delete tag', danger: true, run: () => void removeTag(node) },
           ]
         : []),
       ...(label ? [DIVIDER, { label, run: () => void workspace.undoFileAction() }] : []),

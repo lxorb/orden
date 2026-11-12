@@ -616,7 +616,7 @@ describe('the sentence behind a setting', () => {
 
 describe('saying Copied for a moment', () => {
   test('happens in one place, so it is one length of a moment', () => {
-    const says = components.filter((one) => one.text.includes("t('Copied')")).map((one) => one.name)
+    const says = components.filter((one) => one.text.includes("'Copied'")).map((one) => one.name)
     expect(says).toEqual(['lib/CopyButton.svelte'])
   })
 })

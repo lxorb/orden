@@ -1,7 +1,5 @@
-import { key } from '../i18n.svelte'
-
 export const EXPORT_FORMATS = [
-  { id: 'txt', label: key('Plain text'), extension: 'txt' },
+  { id: 'txt', label: 'Plain text', extension: 'txt' },
   { id: 'md', label: 'Markdown', extension: 'md' },
   { id: 'textbundle', label: 'TextBundle', extension: 'textbundle' },
   { id: 'rtf', label: 'RTF', extension: 'rtf' },
@@ -16,8 +14,8 @@ export const EXPORT_FORMATS = [
 type ExportFormat = (typeof EXPORT_FORMATS)[number]['id']
 
 export const EXPORT_VARIANTS = [
-  { id: 'md-assets', label: key('Markdown with the pictures'), extension: 'md' },
-  { id: 'html-bare', label: key('HTML without styles'), extension: 'html' },
+  { id: 'md-assets', label: 'Markdown with the pictures', extension: 'md' },
+  { id: 'html-bare', label: 'HTML without styles', extension: 'html' },
 ] as const
 
 type ExportVariant = (typeof EXPORT_VARIANTS)[number]['id']

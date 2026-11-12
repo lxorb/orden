@@ -3,7 +3,6 @@
   import { cubicOut } from 'svelte/easing'
   import FindBar from '../FindBar.svelte'
   import Outward from '../Outward.svelte'
-  import { t } from '../i18n.svelte'
   import { dur, fly } from '../motion'
   import { hostOf } from '@orden/online/urls'
   import OnlineStatus from '../online/OnlineStatus.svelte'
@@ -52,11 +51,11 @@
 
   {#if session.offline}
     <div class="bar offline" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
-      <button type="button" onclick={() => session.reconnect()}>{t('Reconnect')}</button>
+      <button type="button" onclick={() => session.reconnect()}>Reconnect</button>
     </div>
   {:else if session.resumable !== null}
     <div class="bar" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
-      <button type="button" onclick={() => session.resume()}>{t('Resume')}</button>
+      <button type="button" onclick={() => session.resume()}>Resume</button>
     </div>
   {:else if session.offered !== null}
     <div class="bar" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>

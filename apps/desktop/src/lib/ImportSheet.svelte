@@ -2,10 +2,9 @@
   import { dropOver } from './drag-paths'
 
   import Facts from './Facts.svelte'
-  import { key, plural, t } from './i18n.svelte'
   import { importing, onMac } from './importing.svelte'
   import { droppedFiles, pickFiles } from './import/picking'
-  import { type FormatId, worthKnowing } from './import/plan'
+  import type { FormatId } from './import/plan'
   import { dur, fade } from './motion'
   import { settings } from './settings.svelte'
   import { segmented } from './slide'
@@ -25,10 +24,10 @@
     tomboy: 'Tomboy',
     'apple-notes': 'Apple Notes',
     journal: 'Apple Journal',
-    table: key('A table'),
-    markdown: key('Markdown files'),
-    pandoc: key('A document'),
-    'pdf-pages': key('A PDF, as pages to write on'),
+    table: 'A table',
+    markdown: 'Markdown files',
+    pandoc: 'A document',
+    'pdf-pages': 'A PDF, as pages to write on',
     todoist: 'Todoist',
   }
 
@@ -38,12 +37,12 @@
   const counts = $derived(importing.counts)
 
   const said = $derived([
-    plural(counts.notes, { one: '{count} note', other: '{count} notes' }),
-    counts.files ? plural(counts.files, { one: '{count} file', other: '{count} files' }) : '',
+    counts.notes === 1 ? '1 note' : `${counts.notes} notes`,
+    counts.files ? (counts.files === 1 ? '1 file' : `${counts.files} files`) : '',
   ])
 
   const target = $derived(
-    [importing.spaceName, importing.under].filter(Boolean).join(' / ') || t('This space'),
+    [importing.spaceName, importing.under].filter(Boolean).join(' / ') || 'This space',
   )
 
   const ready = $derived(
@@ -70,7 +69,7 @@
   }
 </script>
 
-<Sheet open={importing.open} title={t('Import')} onclose={() => importing.close()}>
+<Sheet open={importing.open} title="Import" onclose={() => importing.close()}>
   {#if importing.error}
     <p class="wrong">{importing.error}</p>
   {/if}
@@ -95,12 +94,12 @@
       </svg>
       <span class="name">
         {importing.stage === 'reading'
-          ? t('Reading')
+          ? 'Reading'
           : viewport.touch
-            ? t('Choose an export')
-            : t('Drop an export here')}
+            ? 'Choose an export'
+            : 'Drop an export here'}
       </span>
-      <span class="hint">{t('A zip, a folder, or a file another app wrote')}</span>
+      <span class="hint">A zip, a folder, or a file another app wrote</span>
     </button>
 
     {#if onMac()}
@@ -112,13 +111,13 @@
             onclick={() => void importing.readMac()}
             disabled={importing.stage === 'reading'}
           >
-            {t('Read them from this Mac')}
+            Read them from this Mac
           </button>
         </div>
         {#if importing.noAccess}
-          <p class="hint">{t('Turn Orden on under Full Disk Access, then ask again.')}</p>
+          <p class="hint">Turn Orden on under Full Disk Access, then ask again.</p>
           <button class="orden-chip" onclick={() => void importing.openAccess()}>
-            {t('Open the setting')}
+            Open the setting
           </button>
         {/if}
       </div>
@@ -131,7 +130,7 @@
           class="field"
           type="password"
           bind:value={token}
-          aria-label={t('API token')}
+          aria-label="API token"
           autocomplete="off"
           spellcheck="false"
           onkeydown={(event) => {
@@ -143,7 +142,7 @@
           onclick={() => void readTodoist()}
           disabled={!token.trim() || importing.stage === 'reading'}
         >
-          {t('Read')}
+          Read
         </button>
       </div>
       <button
@@ -152,38 +151,35 @@
         aria-checked={withDone}
         onclick={() => (withDone = !withDone)}
       >
-        <span class="orden-row-label">{t('Done tasks too')}</span>
+        <span class="orden-row-label">Done tasks too</span>
         <span class="orden-switch" class:on={withDone} aria-hidden="true"></span>
       </button>
     </div>
 
     <p class="note">
-      {t(
-        'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.',
-      )}
+      Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away
+      from the Mac it is on, what to drop is a folder an exporter wrote.
     </p>
   {:else}
     <div class="card" in:fade={{ duration: dur(130) }}>
       <div class="row">
-        <span class="name">{importing.format ? t(FORMATS[importing.format]) : ''}</span>
+        <span class="name">{importing.format ? FORMATS[importing.format] : ''}</span>
         <span class="hint"><Facts parts={said} /></span>
       </div>
     </div>
 
     {#if importing.needsPandoc}
       {#if settings.pandoc}
-        <p class="note">{t('Pandoc reads this one, from the file on your disk.')}</p>
+        <p class="note">Pandoc reads this one, from the file on your disk.</p>
         <button class="orden-button" onclick={() => void importing.readWithPandoc()}>
-          {t('Read it with pandoc')}
+          Read it with pandoc
         </button>
       {:else}
-        <p class="note">
-          {t('Only pandoc reads this one, and it is not installed on this machine.')}
-        </p>
+        <p class="note">Only pandoc reads this one, and it is not installed on this machine.</p>
       {/if}
     {:else}
       {#if importing.format === 'table'}
-        <div class="orden-segmented" role="radiogroup" aria-label={t('Rows')} use:segmented>
+        <div class="orden-segmented" role="radiogroup" aria-label="Rows" use:segmented>
           <button
             type="button"
             role="radio"
@@ -191,7 +187,7 @@
             class:on={importing.rows === 'table'}
             onclick={() => importing.setRows('table')}
           >
-            {t('As a table')}
+            As a table
           </button>
           <button
             type="button"
@@ -200,22 +196,22 @@
             class:on={importing.rows === 'notes'}
             onclick={() => importing.setRows('notes')}
           >
-            {t('One note per row')}
+            One note per row
           </button>
         </div>
       {/if}
 
       <div class="card">
         <div class="row">
-          <span class="name">{t('Into')}</span>
+          <span class="name">Into</span>
           <button class="orden-chip" onclick={() => void importing.chooseTarget()}>{target}</button>
         </div>
         <div class="row">
-          <span class="name">{t('Under')}</span>
+          <span class="name">Under</span>
           <input
             class="field"
             bind:value={importing.folder}
-            aria-label={t('Under')}
+            aria-label="Under"
             spellcheck="false"
           />
         </div>
@@ -223,36 +219,32 @@
 
       {#if plan?.lost.length}
         <div class="card">
-          <h3>{t('Worth knowing')}</h3>
-          {#each plan.lost as line (line.text)}
-            <p class="hint">{worthKnowing(line)}</p>
+          <h3>Worth knowing</h3>
+          {#each plan.lost as line (line)}
+            <p class="hint">{line}</p>
           {/each}
         </div>
       {/if}
 
       {#if importing.stage === 'done'}
         <p class="note">
-          {plural(counts.notes, {
-            one: '{count} note arrived.',
-            other: '{count} notes arrived.',
-          })}
+          {counts.notes === 1 ? '1 note arrived.' : `${counts.notes} notes arrived.`}
         </p>
         {#if importing.stepped}
           <p class="hint">
-            {plural(importing.stepped, {
-              one: '{count} name was taken, so that file stepped aside.',
-              other: '{count} names were taken, so those files stepped aside.',
-            })}
+            {importing.stepped === 1
+              ? '1 name was taken, so that file stepped aside.'
+              : `${importing.stepped} names were taken, so those files stepped aside.`}
           </p>
         {/if}
-        <button class="orden-button" onclick={() => importing.close()}>{t('Done')}</button>
+        <button class="orden-button" onclick={() => importing.close()}>Done</button>
       {:else}
         <button class="orden-button" disabled={!ready} onclick={() => void importing.run()}>
-          {importing.stage === 'writing' ? t('Importing') : t('Import')}
+          {importing.stage === 'writing' ? 'Importing' : 'Import'}
         </button>
         {#if importing.stage === 'writing'}
           <p class="hint" transition:fade={{ duration: dur(130) }}>
-            {t('{at} of {count}', { at: importing.written, count: plan?.files.length ?? 0 })}
+            {importing.written} of {plan?.files.length ?? 0}
           </p>
         {/if}
       {/if}

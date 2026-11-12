@@ -1,6 +1,5 @@
 <script lang="ts">
   import HatGlasses from 'lucide/dist/esm/icons/hat-glasses.mjs'
-  import { t } from '../i18n.svelte'
   import { dur, fade } from '../motion'
 
   const { large = false }: { large?: boolean } = $props()
@@ -11,10 +10,10 @@
   class:large
   viewBox="0 0 24 24"
   role="img"
-  aria-label={t('Private')}
+  aria-label="Private"
   transition:fade={{ duration: dur(140) }}
 >
-  <title>{t('Private')}</title>
+  <title>Private</title>
   {#each HatGlasses as [tag, attrs], at (at)}
     <svelte:element this={tag} {...attrs} />
   {/each}

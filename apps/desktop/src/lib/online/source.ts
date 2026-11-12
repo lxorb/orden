@@ -10,7 +10,6 @@ import {
 import { account } from '../account.svelte'
 import { ApiError, BASE } from '../api'
 import { toBase64 } from '../bytes'
-import { t } from '../i18n.svelte'
 import type { Said, Source } from '../terminal/source'
 import { isDesktop, isNative } from '../tauri'
 import { viewport } from '../viewport.svelte'
@@ -212,10 +211,10 @@ export class OnlineSource implements Source {
         this.pictures.get(frame.id)?.(frame.path)
         return
       case 'note':
-        if (frame.note === 'restore') said({ note: t('Your home folder could not be restored') })
+        if (frame.note === 'restore') said({ note: 'Your home folder could not be restored' })
         else if (!this.diskSaid) {
           this.diskSaid = true
-          said({ note: t('Your machine’s disk is almost full') })
+          said({ note: 'Your machine’s disk is almost full' })
         }
         return
       case 'held':

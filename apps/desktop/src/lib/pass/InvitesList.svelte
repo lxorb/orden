@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { VaultMeta } from '@orden/pass/types'
   import type { Invite } from '@orden/pass/wire'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { said } from '../said.svelte'
   import { roleName } from './share-words'
   import { pass } from './store.svelte'
@@ -40,12 +40,12 @@
     if (busy !== null) return
     busy = invite.vault
     wrong = ''
-    const name = metas[invite.vault]?.name ?? t('the vault')
+    const name = metas[invite.vault]?.name ?? 'the vault'
     try {
       if (accept) await pass.acceptInvite(invite)
       else await pass.declineInvite(invite.vault)
       passSync.invites = passSync.invites.filter((one) => one.vault !== invite.vault)
-      said.say(accept ? t('You joined {vault}', { vault: name }) : t('Invitation declined'))
+      said.say(accept ? `You joined ${name}` : 'Invitation declined')
       void passSync.refresh()
     } catch (error) {
       wrong = message(error, 'The invitation could not be answered.')
@@ -56,27 +56,22 @@
 </script>
 
 {#if invites.length}
-  <section class="invites" aria-label={t('Invitations')}>
-    <h3 class="orden-section">{t('Invitations')}</h3>
+  <section class="invites" aria-label="Invitations">
+    <h3 class="orden-section">Invitations</h3>
     {#each invites as invite (invite.vault)}
       {@const meta = metas[invite.vault] ?? null}
       <div class="invite" data-invite={invite.vault}>
         {#if meta}<VaultMark color={meta.color} icon={meta.icon} mark={meta.mark} />{/if}
         <span class="what">
-          <span class="name">{meta?.name ?? t('A shared vault')}</span>
-          <span class="meta"
-            >{t('{from} invited you: {role}', {
-              from: fromOf(invite),
-              role: roleName(invite.role),
-            })}</span
-          >
+          <span class="name">{meta?.name ?? 'A shared vault'}</span>
+          <span class="meta">{fromOf(invite)} invited you: {roleName(invite.role)}</span>
           {#if codes[invite.vault]}
             <span class="meta" data-inviter-code
-              >{t('Their safety code: {code}', { code: codes[invite.vault] ?? '' })}</span
+              >Their safety code: {codes[invite.vault] ?? ''}</span
             >
           {/if}
           {#if invite.key === null}
-            <span class="meta">{t('Waiting for them to confirm you')}</span>
+            <span class="meta">Waiting for them to confirm you</span>
           {/if}
         </span>
         <div class="buttons">
@@ -84,13 +79,13 @@
             class="orden-button is-quiet is-soft"
             type="button"
             disabled={busy !== null}
-            onclick={() => void answered(invite, false)}>{t('Decline')}</button
+            onclick={() => void answered(invite, false)}>Decline</button
           >
           <button
             class="orden-button"
             type="button"
             disabled={busy !== null || invite.key === null}
-            onclick={() => void answered(invite, true)}>{t('Accept')}</button
+            onclick={() => void answered(invite, true)}>Accept</button
           >
         </div>
       </div>

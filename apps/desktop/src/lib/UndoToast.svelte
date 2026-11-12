@@ -1,7 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { plural, t } from './i18n.svelte'
   import { focusEditor } from './focus'
   import { dur, fly } from './motion'
   import { told } from './said.svelte'
@@ -15,14 +14,14 @@
   import { workspace } from './workspace.svelte'
 
   const word = $derived({
-    delete: t('Deleted'),
-    move: t('Moved'),
-    archive: t('Archived'),
-    unarchive: t('Unarchived'),
-    done: t('Completed'),
-    scheduled: t('Scheduled'),
-    moved: t('Moved'),
-    deleted: t('Deleted'),
+    delete: 'Deleted',
+    move: 'Moved',
+    archive: 'Archived',
+    unarchive: 'Unarchived',
+    done: 'Completed',
+    scheduled: 'Scheduled',
+    moved: 'Moved',
+    deleted: 'Deleted',
   })
 
   undoToast.know(workspace.undone.stack)
@@ -37,7 +36,7 @@
   })
 
   function toldUndo(kind: keyof typeof word) {
-    return told(undoToast.batch.length ? `${word[kind]}. ${t('Undo')}` : '')
+    return told(undoToast.batch.length ? `${word[kind]}. Undo` : '')
   }
 
   const turn = $derived(
@@ -139,23 +138,23 @@
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(t("AGENTS is this space's agent instructions"))}
+    {@attach told("AGENTS is this space's agent instructions")}
     {@attach kept('reserved')}
   >
-    <p>{t("AGENTS is this space's agent instructions")}</p>
-    <button class="undo" onclick={() => reservedName.open()}>{t('Open')}</button>
+    <p>AGENTS is this space's agent instructions</p>
+    <button class="undo" onclick={() => reservedName.open()}>Open</button>
   </div>
 {:else if failed.retry}
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(`${failed.undoing ? t('Not undone') : t('Not moved')}. ${t('Retry')}`)}
+    {@attach told(`${failed.undoing ? 'Not undone' : 'Not moved'}. Retry`)}
     {@attach kept('failed')}
   >
-    <p>{failed.undoing ? t('Not undone') : t('Not moved')}</p>
-    <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
+    <p>{failed.undoing ? 'Not undone' : 'Not moved'}</p>
+    <button class="undo" onclick={() => failed.again()}>Retry</button>
     {#if failed.skip}
-      <button class="undo" onclick={() => failed.giveUp()}>{t('Skip')}</button>
+      <button class="undo" onclick={() => failed.giveUp()}>Skip</button>
     {/if}
   </div>
 {:else if undoToast.kind}
@@ -166,21 +165,18 @@
     {@attach kept('undo', undoToast)}
   >
     <p>{word[undoToast.kind]}</p>
-    <button class="undo" onclick={() => void undoToast.undo(workspace)}>{t('Undo')}</button>
+    <button class="undo" onclick={() => void undoToast.undo(workspace)}>Undo</button>
   </div>
 {:else if unread.shown}
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(t('That file could not be read'))}
+    {@attach told('That file could not be read')}
   >
-    <p>{t('That file could not be read')}</p>
+    <p>That file could not be read</p>
   </div>
 {/if}{#if back.said}
-  {@const words = t('{name} is back: {device} was writing in it', {
-    name: back.said.name,
-    device: back.said.device,
-  })}
+  {@const words = `${back.said.name} is back: ${back.said.device} was writing in it`}
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
@@ -201,10 +197,8 @@
   </div>
 {/if}{#if unsynced.said}
   {@const about =
-    unsynced.many > 1
-      ? plural(unsynced.many, { one: '{count} file', other: '{count} files' })
-      : unsynced.said}
-  {@const words = t('Changes to {name} are not syncing', { name: about })}
+    unsynced.many > 1 ? (unsynced.many === 1 ? '1 file' : `${unsynced.many} files`) : unsynced.said}
+  {@const words = `Changes to ${about} are not syncing`}
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}

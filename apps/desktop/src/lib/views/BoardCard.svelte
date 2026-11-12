@@ -1,7 +1,6 @@
 <script lang="ts">
   import { cellValue, type Row } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
-  import { t } from '../i18n.svelte'
   import { cardLine, type CardLine } from './board'
   import { toneColour, valueText } from './chips'
   import { draggable } from './drag.svelte'
@@ -132,7 +131,7 @@
           ontick={() => kit.tick(row)}
           disabled={!kit.writes(row)}
         />{/if}
-      <span class="name">{title || t('Untitled')}</span>
+      <span class="name">{title || 'Untitled'}</span>
     </div>
     {#if row.task}
       {#if lines.props}
@@ -154,8 +153,8 @@
     type="button"
     class="orden-glyph menu"
     tabindex="-1"
-    aria-label={t('More')}
-    title={t('More')}
+    aria-label="More"
+    title="More"
     onmousedown={(event) => {
       if (event.button !== 0) return
       event.preventDefault()
@@ -321,15 +320,6 @@
     --under-menu: calc(var(--row-height-sm) + 3px);
     mask-image: linear-gradient(
       to left,
-      transparent var(--under-menu),
-      #000 calc(var(--under-menu) + var(--space-3))
-    );
-  }
-
-  :global(:root[dir='rtl']) .card:is(:hover, :focus-within) .title,
-  :global(:root[dir='rtl'][data-touch]) .card .title {
-    mask-image: linear-gradient(
-      to right,
       transparent var(--under-menu),
       #000 calc(var(--under-menu) + var(--space-3))
     );

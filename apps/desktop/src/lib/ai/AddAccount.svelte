@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import Sheet from '../Sheet.svelte'
   import {
     type Adding,
@@ -93,19 +92,13 @@
   {#if brand}<ProviderMark account={{ kind: brand.mark, name: '' }} />{/if}
 {/snippet}
 
-<Sheet
-  {open}
-  title={t('Add an AI account')}
-  width="30rem"
-  {...brand ? { mark: badge } : {}}
-  {onclose}
->
+<Sheet {open} title="Add an AI account" width="30rem" {...brand ? { mark: badge } : {}} {onclose}>
   {#if !maker}
     <div class="tiles" data-step="maker">
       {#each makers as one (one.id)}
         <button type="button" class="tile" data-maker={one.id} onclick={() => choose(one.id)}>
           <ProviderMark account={{ kind: one.mark, name: '' }} />
-          <span class="tile-name">{t(one.name)}</span>
+          <span class="tile-name">{one.name}</span>
         </button>
       {/each}
     </div>
@@ -114,7 +107,7 @@
       {#each roads as one (one)}
         <button type="button" class="road" data-road={one} onclick={() => (road = one)}>
           <ProviderMark account={{ kind: one, name: '' }} />
-          <span class="tile-name">{t(ROAD_NAMES[one])}</span>
+          <span class="tile-name">{ROAD_NAMES[one]}</span>
         </button>
       {/each}
     </div>
@@ -129,20 +122,20 @@
       }}
     >
       {#if hint}
-        <p class="tile-hint">{t(hint)}</p>
+        <p class="tile-hint">{hint}</p>
       {/if}
       {#if road === 'compatible'}
         <label class="field">
-          <span>{t('Name')}</span>
+          <span>Name</span>
           <input
             class="orden-field"
             bind:value={name}
-            placeholder={t(KIND_NAMES.compatible)}
+            placeholder={KIND_NAMES.compatible}
             spellcheck="false"
           />
         </label>
         <label class="field">
-          <span>{t('Base URL')}</span>
+          <span>Base URL</span>
           <!-- svelte-ignore a11y_autofocus -->
           <input
             class="orden-field"
@@ -157,13 +150,13 @@
       {/if}
       {#if keyed(road)}
         <label class="field">
-          <span>{t('API key')}</span>
+          <span>API key</span>
           <!-- svelte-ignore a11y_autofocus -->
           <input
             class="orden-field"
             type="password"
             bind:value={typed}
-            placeholder={road === 'compatible' ? t('Optional') : road === 'gemini' ? 'AIza' : 'sk-'}
+            placeholder={road === 'compatible' ? 'Optional' : road === 'gemini' ? 'AIza' : 'sk-'}
             spellcheck="false"
             autocomplete="off"
             autofocus={road !== 'compatible'}
@@ -172,9 +165,9 @@
       {/if}
       {#if trouble}<p class="wrong">{trouble}</p>{/if}
       <div class="actions">
-        <button type="button" class="orden-button is-quiet" onclick={back}>{t('Back')}</button>
+        <button type="button" class="orden-button is-quiet" onclick={back}>Back</button>
         <button type="submit" class="orden-button" disabled={!ready}>
-          {road === 'chatgpt' ? t('Continue with ChatGPT') : t('Add')}
+          {road === 'chatgpt' ? 'Continue with ChatGPT' : 'Add'}
         </button>
       </div>
     </form>
@@ -182,7 +175,7 @@
 
   {#if maker && !road}
     <div class="actions">
-      <button type="button" class="orden-button is-quiet" onclick={back}>{t('Back')}</button>
+      <button type="button" class="orden-button is-quiet" onclick={back}>Back</button>
     </div>
   {/if}
 </Sheet>

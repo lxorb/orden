@@ -12,18 +12,17 @@ LOOK = """() => [...document.querySelectorAll('.tabs')].map((strip) => {
   const pane = document.querySelector(`[data-pane="${id}"]`)
   const tab = strip.querySelector('.tab.active')
   const fill = tab?.querySelector('.fill')
-  const rtl = document.documentElement.dir === 'rtl'
   const foot = (side) => (fill ? getComputedStyle(fill, side).display !== 'none' : false)
   const box = (one) => one?.getBoundingClientRect()
   const style = pane ? getComputedStyle(pane) : null
   return {
     id,
     first: tab === strip.querySelector('.tab'),
-    start: rtl ? box(pane)?.right : box(pane)?.left,
-    fill: fill ? (rtl ? box(fill).right : box(fill).left) : null,
-    ahead: foot(rtl ? '::after' : '::before'),
-    behind: foot(rtl ? '::before' : '::after'),
-    corner: style ? parseFloat(rtl ? style.borderTopRightRadius : style.borderTopLeftRadius) : null,
+    start: box(pane)?.left,
+    fill: fill ? box(fill).left : null,
+    ahead: foot('::before'),
+    behind: foot('::after'),
+    corner: style ? parseFloat(style.borderTopLeftRadius) : null,
   }
 })"""
 
@@ -105,13 +104,6 @@ def drive(browser: Browser) -> None:
         flush(f"{mode}, column, the lower pane's own strip", strips(page)[lower], squared=False)
         DRIVE.shot(page, f"{mode}-column")
         page.close()
-
-    page = opened(browser, "localStorage.setItem('orden:language', 'ar')")
-    wait_for(page, "document.documentElement.dir === 'rtl'", "the words running from the right")
-    _first, second = split(page, "row")
-    flush("right to left, row, the second strip", strips(page)[second], squared=True)
-    DRIVE.shot(page, "rtl-row")
-    page.close()
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the first tab with nothing ahead of it stands at its pane's edge"))

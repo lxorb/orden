@@ -34,7 +34,7 @@ function space(
   tabs: ReturnType<typeof session> | null = session(),
 ) {
   const sidebar = chromiumSidebar(tabs, bookmarks, 'Chrome', WORDS)
-  return sidebarImport(sidebar, NOW, { text: 'none' }).spaces[0]
+  return sidebarImport(sidebar, NOW, 'none').spaces[0]
 }
 
 describe("Chrome's tabs and bookmarks as Orden's", () => {
@@ -86,7 +86,7 @@ describe("Chrome's tabs and bookmarks as Orden's", () => {
       },
     }
     const sidebar = chromiumSidebar(null, BOOKMARKS, 'Chrome', WORDS, account)
-    const chrome = sidebarImport(sidebar, NOW, { text: 'none' }).spaces[0]
+    const chrome = sidebarImport(sidebar, NOW, 'none').spaces[0]
     expect(chrome?.order.Bookmarks).toEqual([
       'Bookmarks bar',
       'Other bookmarks',

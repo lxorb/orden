@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { t } from '../i18n.svelte'
   import {
     BROWSERS,
     type Brand,
@@ -97,13 +96,13 @@
 {/snippet}
 
 <Screen
-  title={t('Which browser do you use now?')}
+  title="Which browser do you use now?"
   onback={view === 'other' ? leave : null}
-  primary={{ label: t('Continue'), disabled: picked === null, onclick: () => void done() }}
-  quiet={{ label: t('Skip'), onclick: skip }}
+  primary={{ label: 'Continue', disabled: picked === null, onclick: () => void done() }}
+  quiet={{ label: 'Skip', onclick: skip }}
 >
   {#if view === 'main'}
-    <div class="o-grid rise" role="radiogroup" aria-label={t('Which browser do you use now?')}>
+    <div class="o-grid rise" role="radiogroup" aria-label="Which browser do you use now?">
       {#each main as one (one.id)}
         <Tile
           name={one.name}
@@ -113,17 +112,17 @@
           onpick={() => (picked = one.id)}
         />
       {/each}
-      <Tile name={t('Other')} checked={false} glyph={globe} onpick={other} />
+      <Tile name="Other" checked={false} glyph={globe} onpick={other} />
     </div>
   {:else}
     <div class="o-pane pane-in">
       <SearchField
         value={query}
         onvalue={(typed: string) => (query = typed)}
-        label={t('Which browser do you use now?')}
+        label="Which browser do you use now?"
       />
       <div class="o-scroll">
-        <div class="o-grid" role="radiogroup" aria-label={t('Which browser do you use now?')}>
+        <div class="o-grid" role="radiogroup" aria-label="Which browser do you use now?">
           {#each known as one (one.id)}
             <Tile
               name={one.name}
@@ -137,7 +136,7 @@
             <Tile
               name={one.name}
               colour={one.colour}
-              later={t('Not yet')}
+              later="Not yet"
               checked={picked === one.id}
               onpick={() => (picked = one.id)}
             />
@@ -145,13 +144,13 @@
           {#if nothing}
             <Tile
               name={typedName(query)}
-              later={t('Request')}
+              later="Request"
               checked={picked === UNLISTED}
               onpick={() => (picked = UNLISTED)}
             />
           {/if}
           <Tile
-            name={t('Custom')}
+            name="Custom"
             checked={picked === CUSTOM}
             glyph={sliders}
             onpick={() => (picked = CUSTOM)}
@@ -171,7 +170,7 @@
           aria-checked={custom[setting]}
           onclick={() => (custom = { ...custom, [setting]: !custom[setting] })}
         >
-          <span>{t(SETTING_NAMES[setting])}</span>
+          <span>{SETTING_NAMES[setting]}</span>
           <span class="o-toggle" aria-hidden="true"></span>
         </button>
       {/each}
@@ -190,8 +189,8 @@
     {#each chips as [setting, on] (setting)}
       <span class="chip">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-        {t(SETTING_NAMES[setting])}
-        <kbd>{on ? t('On') : t('Off')}</kbd>
+        {SETTING_NAMES[setting]}
+        <kbd>{on ? 'On' : 'Off'}</kbd>
       </span>
     {/each}
   </div>

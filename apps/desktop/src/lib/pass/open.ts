@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import { passOn } from '../settings.svelte'
@@ -17,7 +16,7 @@ export function openPass(intent: PassIntent | null = null): Tab | null {
     workspace.activate(open.id)
     return open
   }
-  return workspace.openUnsaved('pass', writeView(FIRST_VIEW), t('Pass'))
+  return workspace.openUnsaved('pass', writeView(FIRST_VIEW), 'Pass')
 }
 
 export async function lockPass(): Promise<void> {

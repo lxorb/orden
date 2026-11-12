@@ -1,12 +1,10 @@
-import { key, t } from '../../i18n.svelte'
-
-const OPENING = key('Opening')
-const READING = key('Reading')
-const PRESSING = key('Pressing')
-const TYPING = key('Typing')
-const WRITING = key('Writing')
-const WAITING = key('Waiting')
-const RUNNING = key('Running')
+const OPENING = 'Opening'
+const READING = 'Reading'
+const PRESSING = 'Pressing'
+const TYPING = 'Typing'
+const WRITING = 'Writing'
+const WAITING = 'Waiting'
+const RUNNING = 'Running'
 
 const WORDS: Readonly<Record<string, string>> = {
   browser_tabs: READING,
@@ -32,13 +30,13 @@ const WORDS: Readonly<Record<string, string>> = {
   browser_dialog: PRESSING,
   browser_downloads: READING,
   browser_storage: READING,
-  browser_close: key('Closing'),
+  browser_close: 'Closing',
   browser_show: OPENING,
-  browser_takeover: key('Waiting for you'),
+  browser_takeover: 'Waiting for you',
   get_context: READING,
   list_spaces: READING,
   list_notes: READING,
-  search_notes: key('Searching'),
+  search_notes: 'Searching',
   list_backlinks: READING,
   read_note: READING,
   list_versions: READING,
@@ -63,7 +61,7 @@ const WORDS: Readonly<Record<string, string>> = {
   capture_to_note: WRITING,
   attach_agent_log: WRITING,
   move_file: WRITING,
-  trash_file: key('Deleting'),
+  trash_file: 'Deleting',
   create_folder: WRITING,
   workspace_tabs: OPENING,
   bookmarks: WRITING,
@@ -73,19 +71,19 @@ const WORDS: Readonly<Record<string, string>> = {
   run_terminal: RUNNING,
   read_terminal: READING,
   type_terminal: TYPING,
-  files: key('Files'),
+  files: 'Files',
   process: RUNNING,
-  http: key('Web requests'),
+  http: 'Web requests',
   system: OPENING,
-  system_clipboard: key('Clipboard'),
-  ask_reader: key('Questions'),
-  note_editor: key('Editor'),
-  application_tabs: key('Application'),
-  explorer_tabs: key('File explorer'),
+  system_clipboard: 'Clipboard',
+  ask_reader: 'Questions',
+  note_editor: 'Editor',
+  application_tabs: 'Application',
+  explorer_tabs: 'File explorer',
   recently_deleted: WRITING,
   list_chats: READING,
   read_chat: READING,
-  search_chats: key('Searching'),
+  search_chats: 'Searching',
   draft_message: WRITING,
   post_message: WRITING,
   react: WRITING,
@@ -93,5 +91,5 @@ const WORDS: Readonly<Record<string, string>> = {
 
 export function wordFor(verb: string): string | null {
   const word = WORDS[verb]
-  return word === undefined ? null : t(word)
+  return word ?? null
 }

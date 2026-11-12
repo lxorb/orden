@@ -6,7 +6,7 @@
   import Folder from 'lucide/dist/esm/icons/folder-input.mjs'
   import Tag from 'lucide/dist/esm/icons/tag.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { amount, t } from '../i18n.svelte'
+  import { localNumber } from '../region'
   import { menu } from '../menu.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import Glyph from '../quick-add/Glyph.svelte'
@@ -30,35 +30,31 @@
 </script>
 
 <div class="holder">
-  <div
-    class="orden-bar bar"
-    role="toolbar"
-    aria-label={t('{count} selected', { count: amount(rows.length) })}
-  >
-    <span class="count">{t('{count} selected', { count: amount(rows.length) })}</span>
+  <div class="orden-bar bar" role="toolbar" aria-label="{localNumber(rows.length)} selected">
+    <span class="count">{localNumber(rows.length)} selected</span>
     <button
       type="button"
-      title={shortcuts.tooltip(t('Schedule'), 'tasks.schedule')}
-      aria-label={t('Schedule')}
+      title={shortcuts.tooltip('Schedule', 'tasks.schedule')}
+      aria-label="Schedule"
       onclick={(event) => scheduleRows(rows, boxOf(event), kit, onclear)}
       ><Glyph icon={Calendar} /></button
     >
     <button
       type="button"
-      title={shortcuts.tooltip(t('Move to'), 'tasks.move')}
-      aria-label={t('Move to')}
+      title={shortcuts.tooltip('Move to', 'tasks.move')}
+      aria-label="Move to"
       onclick={(event) => menu.show(event, moveEntries(rows))}><Glyph icon={Folder} /></button
     >
     <button
       type="button"
-      title={shortcuts.tooltip(t('Labels'), 'tasks.labels')}
-      aria-label={t('Labels')}
+      title={shortcuts.tooltip('Labels', 'tasks.labels')}
+      aria-label="Labels"
       onclick={(event) => menu.show(event, labelEntries(rows))}><Glyph icon={Tag} /></button
     >
     <button
       type="button"
-      title={shortcuts.tooltip(t('Priority'), 'tasks.priority')}
-      aria-label={t('Priority')}
+      title={shortcuts.tooltip('Priority', 'tasks.priority')}
+      aria-label="Priority"
       onclick={(event) =>
         menu.show(
           event,
@@ -67,11 +63,11 @@
     >
     <button
       type="button"
-      title={shortcuts.tooltip(t('More'), 'tasks.more')}
-      aria-label={t('More')}
+      title={shortcuts.tooltip('More', 'tasks.more')}
+      aria-label="More"
       onclick={(event) => taskMenu(event, rows, kit)}><Glyph icon={Ellipsis} /></button
     >
-    <button type="button" title={t('Cancel')} aria-label={t('Cancel')} onclick={onclear}
+    <button type="button" title="Cancel" aria-label="Cancel" onclick={onclear}
       ><Glyph icon={X} /></button
     >
   </div>

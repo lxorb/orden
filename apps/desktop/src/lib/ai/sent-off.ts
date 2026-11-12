@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { dur, stillness } from '../motion'
 import { workspace } from '../workspace.svelte'
 
@@ -93,7 +92,7 @@ function spark(size: number, glow: boolean): SVGSVGElement {
 function say(from: DOMRect): void {
   const line = document.createElement('div')
   line.setAttribute('role', 'status')
-  line.textContent = t('Started in the AI panel')
+  line.textContent = 'Started in the AI panel'
   Object.assign(line.style, {
     position: 'fixed',
     top: `${from.bottom + 6}px`,

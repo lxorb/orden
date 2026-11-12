@@ -130,13 +130,5 @@ def drive(browser: Any) -> None:
     page.set_viewport_size({"width": 900, "height": 600})
     check(page, "07-narrow")
 
-    rtl = DRIVE.page(browser, viewport={"width": 1280, "height": 760})
-    rtl.add_init_script("localStorage.setItem('orden:language', 'ar')")
-    DRIVE.open(rtl)
-    DRIVE.seed(rtl, "# Plan\n\nWhat we are doing.\n")
-    DRIVE.open_note(rtl, "Plan")
-    rtl.evaluate(f"() => {ws}.split('row')")
-    check(rtl, "08-right-to-left")
-
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

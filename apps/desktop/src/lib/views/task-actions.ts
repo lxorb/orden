@@ -1,6 +1,5 @@
 import type { Priority, Row } from '@orden/bases'
 import { copyText } from '../clipboard'
-import { t } from '../i18n.svelte'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { rows as store } from '../rows/rows.svelte'
 import { insideSpace, samePath } from '../space-paths'
@@ -86,7 +85,7 @@ export function prioritise(rows: readonly Row[], priority: Priority): Promise<bo
 
 export function priorityEntries(current: number, set: (priority: Priority) => void): MenuEntry[] {
   return ([1, 2, 3, 4] as const).map((level) => ({
-    label: t('Priority {level}', { level }),
+    label: `Priority ${level}`,
     checked: current === level,
     run: () => set(level),
   }))
@@ -161,26 +160,26 @@ export function taskMenu(
   const open = tasks.some((row) => !row.task?.done && !row.task?.cancelled)
   const at = 'clientX' in event ? pointBox(event) : event
   const items: MenuEntry[] = [
-    ...(select ? [{ label: t('Select'), run: select }, DIVIDER] : []),
-    { label: open ? t('Complete') : t('Reopen'), run: () => void tickRows(tasks, kit.live.today) },
-    { label: t('Schedule'), asks: true, run: () => scheduleRows(tasks, at, kit) },
+    ...(select ? [{ label: 'Select', run: select }, DIVIDER] : []),
+    { label: open ? 'Complete' : 'Reopen', run: () => void tickRows(tasks, kit.live.today) },
+    { label: 'Schedule', asks: true, run: () => scheduleRows(tasks, at, kit) },
     ...(tasks.every((row) => row.task?.recurrence) && open
       ? [
-          { label: t('Skip'), run: () => void skipRows(tasks, kit.live.today) },
-          { label: t('Complete forever'), run: () => void finishRows(tasks) },
+          { label: 'Skip', run: () => void skipRows(tasks, kit.live.today) },
+          { label: 'Complete forever', run: () => void finishRows(tasks) },
         ]
       : []),
-    more(t('Priority'), () =>
+    more('Priority', () =>
       priorityEntries(one ? task.priority : 0, (priority) => void prioritise(tasks, priority)),
     ),
-    more(t('Labels'), () => labelEntries(tasks)),
-    ...(offersPlaces(tasksRoot(tasks)) ? [more(t('Move to'), () => moveEntries(tasks))] : []),
+    more('Labels', () => labelEntries(tasks)),
+    ...(offersPlaces(tasksRoot(tasks)) ? [more('Move to', () => moveEntries(tasks))] : []),
     DIVIDER,
-    { label: t('Duplicate'), run: () => void duplicateRows(tasks) },
-    { label: t('Copy link'), run: () => void copyLinks(tasks) },
-    ...(one ? [{ label: t('Open in note'), run: () => kit.open(first, 'aside') }] : []),
+    { label: 'Duplicate', run: () => void duplicateRows(tasks) },
+    { label: 'Copy link', run: () => void copyLinks(tasks) },
+    ...(one ? [{ label: 'Open in note', run: () => kit.open(first, 'aside') }] : []),
     DIVIDER,
-    { label: t('Delete'), danger: true, run: () => void deleteRows(tasks) },
+    { label: 'Delete', danger: true, run: () => void deleteRows(tasks) },
   ]
   menu.show('clientX' in event ? event : pointEvent(event), items)
 }

@@ -1,5 +1,4 @@
 import { account } from '../account.svelte'
-import { t } from '../i18n.svelte'
 import { show, unshow } from '../notify'
 import { deviceActivity } from '../people/here'
 import { people } from '../people/people.svelte'
@@ -63,9 +62,9 @@ const world: NoticeWorld = {
 }
 
 const notices = new ChatNotices(world, () => ({
-  hidden: t('New message'),
-  reply: t('Reply'),
-  send: t('Send'),
+  hidden: 'New message',
+  reply: 'Reply',
+  send: 'Send',
 }))
 
 chats.heard((chat, messages) => {

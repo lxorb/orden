@@ -12,7 +12,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { appearancePane } = await import('./appearance-pane')
 const { places } = await import('./places')
-const { t } = await import('../i18n.svelte')
 
 const LIB = join(import.meta.dirname, '..')
 const PANEL = readFileSync(join(LIB, 'SettingsPanel.svelte'), 'utf8')
@@ -24,7 +23,7 @@ const snippet = (name: string) => {
 }
 
 const named = (source: string) =>
-  [...source.matchAll(/<span class="name">\{t\('([^']+)'\)\}<\/span>/g)].map((hit) => hit[1])
+  [...source.matchAll(/<span class="name">([^<{]+)<\/span>/g)].map((hit) => hit[1])
 
 function* sources(folder: string): Generator<string> {
   for (const entry of readdirSync(folder, { withFileTypes: true })) {
@@ -37,7 +36,7 @@ function* sources(folder: string): Generator<string> {
 describe('the Theme group in Appearance', () => {
   test('starts with Style and Mode', () => {
     const [theme] = appearancePane().groups
-    expect(theme?.title).toBe(t('Theme'))
+    expect(theme?.title).toBe('Theme')
     expect(theme?.fields.slice(0, 2).map((one) => one.key)).toEqual([
       'appearance.style',
       'appearance.mode',
@@ -53,9 +52,9 @@ describe('the Theme group in Appearance', () => {
 
   test('leaves no group of its own for themes, custom CSS or import', () => {
     const titles = appearancePane().groups.map((one) => one.title)
-    for (const gone of ['Themes', 'Custom', 'Import']) expect(titles).not.toContain(t(gone))
+    for (const gone of ['Themes', 'Custom', 'Import']) expect(titles).not.toContain(gone)
     expect(snippet('appearanceExtras')).toBe('')
-    expect(PANEL).not.toContain(`<h3>{t('Custom')}</h3>`)
+    expect(PANEL).not.toContain('<h3>Custom</h3>')
   })
 
   test('is found by Settings search, and each link lands on a row that carries its name', () => {
@@ -71,7 +70,7 @@ describe('the Theme group in Appearance', () => {
     expect(existsSync(join(LIB, 'settings/BrowserThemes.svelte'))).toBe(false)
     expect(existsSync(join(LIB, 'themes/browser.ts'))).toBe(false)
     expect(existsSync(join(TAURI, 'browser_themes.rs'))).toBe(false)
-    expect(places().filter((one) => one.label === t('Import'))).toEqual([])
+    expect(places().filter((one) => one.label === 'Import')).toEqual([])
     const gone = /browser_themes|BrowserTheme|wearFirefoxTheme|userChrome|statictheme.*Theme/
     for (const path of [...sources(LIB), ...sources(TAURI)]) {
       if (path === import.meta.filename) continue

@@ -91,7 +91,6 @@ vi.mock('../account.svelte', () => ({
   }),
 }))
 vi.mock('../theme.svelte', () => ({ theme: { current: 'dark' } }))
-vi.mock('../i18n.svelte', () => ({ t: (text: string) => text, key: (text: string) => text }))
 
 const said: string[] = []
 

@@ -7,7 +7,7 @@
     type WifiSecurity,
   } from '@orden/pass/types'
   import { canMakeSshKey, newSshKey, sshPublicOf } from '@orden/pass/ssh'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import Select from '../Select.svelte'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
@@ -74,7 +74,7 @@
 {#if content.kind === 'ssh'}
   <EditCard>
     <EditField
-      label={t('Private key')}
+      label="Private key"
       icon={FIELD_ICONS.privateKey}
       bind:value={content.privateKey}
       kind="multiline"
@@ -85,7 +85,7 @@
       }}
     />
     <EditField
-      label={t('Public key')}
+      label="Public key"
       icon={FIELD_ICONS.publicKey}
       bind:value={content.publicKey}
       kind="multiline"
@@ -101,21 +101,21 @@
       disabled={generating}
       onclick={() => void generate()}
     >
-      {content.privateKey.trim() === '' ? t('Generate key') : t('Generate a new key')}
+      {content.privateKey.trim() === '' ? 'Generate key' : 'Generate a new key'}
     </button>
   {/if}
   {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
 {:else if content.kind === 'wifi'}
   <EditCard>
     <EditField
-      label={t('Network name')}
+      label="Network name"
       icon={FIELD_ICONS.network}
       bind:value={content.ssid}
       {oninput}
     />
-    <PasswordField {ui} label={t('Password')} bind:value={content.password} onchange={oninput} />
+    <PasswordField {ui} label="Password" bind:value={content.password} onchange={oninput} />
     <div class="security orden-edit-row">
-      <span class="label">{t('Security')}</span>
+      <span class="label">Security</span>
       <Select
         plain
         value={content.security}

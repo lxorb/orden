@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { readKey } from './keys'
 import {
   askUrl,
@@ -33,10 +32,10 @@ export async function complete(ask: Ask): Promise<string> {
   }
 
   const provider: Provider = { ...ask.provider, model: ask.model }
-  if (!usable(provider)) throw new Error(t('That provider is not set up yet.'))
+  if (!usable(provider)) throw new Error('That provider is not set up yet.')
 
   const apiKey = await keyFor(provider)
-  if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
+  if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')
 
   const streaming = !!ask.stream || provider.kind === 'chatgpt' || provider.kind === 'gemini'
 
@@ -47,7 +46,7 @@ export async function complete(ask: Ask): Promise<string> {
     ...(ask.signal ? { signal: ask.signal } : {}),
   }).catch((error: unknown) => {
     if (wasStopped(error)) throw error
-    throw new Error(t('Could not reach {url}', { url: askUrl(provider) }))
+    throw new Error(`Could not reach ${askUrl(provider)}`)
   })
 
   if (!response.ok) throw new Error(await refusal(response, provider))
@@ -76,8 +75,8 @@ async function refusal(response: Response, provider: Provider): Promise<string> 
   const said = troubleIn(body)
   if (said) return said
 
-  if (response.status === 401 || response.status === 403) return t('That key was refused.')
-  return t('The provider answered {status}.', { status: response.status })
+  if (response.status === 401 || response.status === 403) return 'That key was refused.'
+  return `The provider answered ${response.status}.`
 }
 
 async function planSaid(provider: Provider, status: number, body: unknown): Promise<string | null> {
@@ -154,14 +153,14 @@ async function streamed(
 
 export async function listModels(provider: Provider, signal?: AbortSignal): Promise<string[]> {
   const apiKey = await keyFor(provider)
-  if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
+  if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')
 
   const response = await fetch(modelsUrl(provider), {
     headers: headersFor(provider, apiKey),
     ...(signal ? { signal } : {}),
   }).catch((error: unknown) => {
     if (wasStopped(error)) throw error
-    throw new Error(t('Could not reach {url}', { url: modelsUrl(provider) }))
+    throw new Error(`Could not reach ${modelsUrl(provider)}`)
   })
 
   if (!response.ok) throw new Error(await refusal(response, provider))

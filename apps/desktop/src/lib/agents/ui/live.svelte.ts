@@ -4,7 +4,6 @@ import { revealPanel } from '../../focus'
 import { notify, unshow } from '../../notify'
 import { agentMarks } from '../../agent-marks.svelte'
 import { unlend } from '../../web-tab/lending'
-import { t } from '../../i18n.svelte'
 import { shortcuts } from '../../shortcuts.svelte'
 import { accelerator } from '../../accelerator'
 import { Activity } from './activity.svelte'
@@ -68,13 +67,13 @@ export function started(source: Source = crate): Activity {
     $effect(() => {
       const system = key === null ? null : accelerator(key, shortcuts.platform)
       const words = {
-        show: t('Open'),
-        stop: t('Stop agents'),
-        quit: t('Quit'),
-        stopped: t('Agents stopped'),
-        closed: t('Agent tabs closed'),
-        hidden: t('Orden is still running for your agents'),
-        pairing: t('{client} wants to connect'),
+        show: 'Open',
+        stop: 'Stop agents',
+        quit: 'Quit',
+        stopped: 'Agents stopped',
+        closed: 'Agent tabs closed',
+        hidden: 'Orden is still running for your agents',
+        pairing: '{client} wants to connect',
       }
       untrack(() => void source.shell(system, words).catch(() => undefined))
     })

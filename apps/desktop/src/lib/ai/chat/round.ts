@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { sseEvents } from '../stream'
 import {
   nearest,
@@ -85,8 +84,7 @@ export async function round(
       adjusted(next.adjusted)
     }
   }
-  if (!response.body)
-    throw new Error(t('The provider answered {status}.', { status: response.status }))
+  if (!response.body) throw new Error(`The provider answered ${response.status}.`)
 
   const reader = wire.reader(ask.model.window)
   let usage: Usage | null = null
@@ -105,7 +103,7 @@ export async function round(
     if (said.changed.length) heard(reader.parts, said.changed, model)
   }
   if (!reader.finished(saidDone)) {
-    throw new Error(t('The connection closed before the answer was finished.'))
+    throw new Error('The connection closed before the answer was finished.')
   }
   return { answer: reader.answer(), parts: reader.parts, usage, model }
 }

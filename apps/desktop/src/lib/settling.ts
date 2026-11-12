@@ -1,5 +1,4 @@
 import { account } from './account.svelte'
-import { t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
 import { MIRRORS_KEY, savedRecord } from './sync/mirror'
 import { rootedAt } from './space-paths'
@@ -22,10 +21,10 @@ export async function settleLocalNotes(): Promise<void> {
     if (!asksOnReturn(base, met.length > 0)) return
 
     const answer = await prompt.choose({
-      title: t('This device already has notes.'),
+      title: 'This device already has notes.',
       options: [
-        { id: 'merge', label: t('Merge'), primary: true },
-        { id: 'apart', label: t('Keep separate') },
+        { id: 'merge', label: 'Merge', primary: true },
+        { id: 'apart', label: 'Keep separate' },
       ],
     })
     if (answer === 'merge') return

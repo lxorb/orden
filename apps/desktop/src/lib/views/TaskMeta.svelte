@@ -11,7 +11,7 @@
   import Target from 'lucide/dist/esm/icons/target.mjs'
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
   import User from 'lucide/dist/esm/icons/user.mjs'
-  import { amount, t } from '../i18n.svelte'
+  import { localNumber } from '../region'
   import Glyph from '../quick-add/Glyph.svelte'
   import { durationLabel } from '../quick-add/labels'
   import { theme } from '../theme.svelte'
@@ -46,7 +46,7 @@
   <Glyph icon={place.inbox ? Inbox : Hash} />
   {#if elsewhere}<span class="space">{elsewhere}</span>{/if}
   <span class="name"
-    >{place.inbox ? t('Inbox') : place.name}{#if place.section}<span class="sep" aria-hidden="true"
+    >{place.inbox ? 'Inbox' : place.name}{#if place.section}<span class="sep" aria-hidden="true"
         >›</span
       >{place.section}{/if}</span
   >
@@ -57,25 +57,26 @@
     <span class="bit" style:color={TONES[one.tone]}
       ><Glyph
         icon={one.repeat && !one.text ? Repeat : Calendar}
-      />{one.text}{#if one.repeat && one.text}<span class="repeat" aria-label={t('Repeat')}
+      />{one.text}{#if one.repeat && one.text}<span class="repeat" aria-label="Repeat"
           ><Glyph icon={Repeat} /></span
         >{/if}</span
     >
   {:else if one.kind === 'deadline'}
-    <span class="bit" class:late={one.late} title={t('Deadline')}
-      ><Glyph icon={Target} />{one.text}{#if one.repeat}<span
-          class="repeat"
-          aria-label={t('Repeat')}><Glyph icon={Repeat} /></span
+    <span class="bit" class:late={one.late} title="Deadline"
+      ><Glyph icon={Target} />{one.text}{#if one.repeat}<span class="repeat" aria-label="Repeat"
+          ><Glyph icon={Repeat} /></span
         >{/if}</span
     >
   {:else if one.kind === 'duration'}
     <span class="bit"><Glyph icon={Timer} />{durationLabel(one.minutes)}</span>
   {:else if one.kind === 'remind'}
-    <span class="bit" aria-label={t('Reminder')}><Glyph icon={Bell} /></span>
+    <span class="bit" aria-label="Reminder"><Glyph icon={Bell} /></span>
   {:else if one.kind === 'subtasks'}
-    <span class="bit"><Glyph icon={ListTree} />{amount(one.done)}/{amount(one.total)}</span>
+    <span class="bit"
+      ><Glyph icon={ListTree} />{localNumber(one.done)}/{localNumber(one.total)}</span
+    >
   {:else if one.kind === 'comments'}
-    <span class="bit"><Glyph icon={Message} />{amount(one.count)}</span>
+    <span class="bit"><Glyph icon={Message} />{localNumber(one.count)}</span>
   {:else if one.kind === 'tag'}
     <span class="bit tag" style:color={labelColour(one.tag, theme.current)}
       ><Glyph icon={Tag} />{one.tag}</span
@@ -86,7 +87,7 @@
 {/each}
 {#if where}
   {#if onwhere}
-    <button type="button" class="where" onclick={onwhere} tabindex="-1" title={t('Open')}
+    <button type="button" class="where" onclick={onwhere} tabindex="-1" title="Open"
       >{@render placed()}</button
     >
   {:else}

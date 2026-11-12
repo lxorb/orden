@@ -1,5 +1,5 @@
 import type { DownReason } from '@orden/online/wire'
-import { i18n, t } from '../i18n.svelte'
+import { localDate } from '../region'
 import type { Machine } from '../terminal/source'
 import { refusalWords } from './words'
 
@@ -33,30 +33,30 @@ export function statusLine(status: Status): string {
   if ('held' in status) return status.held
   switch (status.waiting) {
     case 'starting':
-      return t('Starting machine…')
+      return 'Starting machine…'
     case 'restoring':
-      return t('Restoring…')
+      return 'Restoring…'
     case 'connecting':
-      return t('Connecting…')
+      return 'Connecting…'
   }
 }
 
 export function heldLine(holder: Holder, now = Date.now()): string {
-  const device = holder.by || t('another device')
-  if (holder.taken) return t('Taken over by {device}', { device })
-  const day = (at: number) => i18n.when(at, { dateStyle: 'short' })
+  const device = holder.by || 'another device'
+  if (holder.taken) return `Taken over by ${device}`
+  const day = (at: number) => localDate(at, { dateStyle: 'short' })
   const today = day(holder.since) === day(now)
-  const time = i18n.when(
+  const time = localDate(
     holder.since,
     today ? { timeStyle: 'short' } : { dateStyle: 'medium', timeStyle: 'short' },
   )
-  return t('Open on {device} since {time}', { device, time })
+  return `Open on ${device} since ${time}`
 }
 
 function downWords(reason: DownReason | undefined): string {
   const refused =
     reason === 'allowance' || reason === 'budget' || reason === 'off' || reason === 'flag'
-  return (refused ? refusalWords(reason) : null) ?? t('Your machine could not start')
+  return (refused ? refusalWords(reason) : null) ?? 'Your machine could not start'
 }
 
 export class Arrival {

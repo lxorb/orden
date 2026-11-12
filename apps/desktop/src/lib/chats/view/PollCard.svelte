@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Who } from '@orden/chats'
   import type { Shown } from '../api'
-  import { amount, i18n } from '../../i18n.svelte'
+  import { localDate, localNumber } from '../../region'
   import type { ChatPage } from './chat.svelte'
   import Glyph from './Glyph.svelte'
   import { nameOf } from './people'
@@ -54,13 +54,13 @@
       >
         <span class="fill" style:width="{((tally[index] ?? 0) / most) * 100}%"></span>
         <span class="words">{answer}</span>
-        <span class="count">{amount(tally[index] ?? 0)}</span>
+        <span class="count">{localNumber(tally[index] ?? 0)}</span>
       </button>
     {/each}
     {#if poll.ends !== undefined}
       <p class="ends" class:ended>
         <Glyph name="clock" />
-        {i18n.when(poll.ends, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+        {localDate(poll.ends, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
       </p>
     {/if}
   </div>

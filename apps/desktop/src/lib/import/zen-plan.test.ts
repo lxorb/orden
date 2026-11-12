@@ -102,7 +102,7 @@ describe("Zen's spaces as Orden's", () => {
   test('leaves pages that are not on the web, and says containers stay', () => {
     const all = spaces().flatMap((one) => one.files.map((file) => file.path))
     expect(all.some((path) => path.startsWith('Settings'))).toBe(false)
-    expect(zenImport(session(), NOW).lost).toEqual([{ text: 'Containers stay in Zen' }])
+    expect(zenImport(session(), NOW).lost).toEqual(['Containers stay in Zen'])
   })
 
   test('steps a name aside rather than writing one tab over another', () => {

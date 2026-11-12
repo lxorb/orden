@@ -7,7 +7,6 @@
   import { dur, fade } from './motion'
   import { settings } from './settings.svelte'
   import { showFeedback } from './surfaces.svelte'
-  import { t } from './i18n.svelte'
   import { isNative, openExternal } from './tauri'
   import { viewport } from './viewport.svelte'
   import { shortcuts } from './shortcuts.svelte'
@@ -36,14 +35,14 @@
   <button
     class="who"
     class:looking={account.restoring}
-    title={who ?? t('Sign in')}
-    aria-label={who ?? t('Sign in')}
+    title={who ?? 'Sign in'}
+    aria-label={who ?? 'Sign in'}
     disabled={account.restoring}
     aria-haspopup="menu"
     onclick={onwho}
   >
     <AccountBadge />
-    <span class="orden-row-label">{who ?? t('Sign in')}</span>
+    <span class="orden-row-label">{who ?? 'Sign in'}</span>
   </button>
 
   {#if arriving.showing}
@@ -56,8 +55,8 @@
     {#if !isNative && !__EVEN_PLUGIN__ && !viewport.touch}
       <button
         class="orden-glyph act"
-        title={t('Download the app')}
-        aria-label={t('Download the app')}
+        title="Download the app"
+        aria-label="Download the app"
         onclick={() => void openExternal(DOWNLOAD_URL)}
       >
         <svg viewBox="0 0 14 14"><path d="M7 1.5v7.5M3.8 6l3.2 3.2L10.2 6M2 12.5h10" /></svg>
@@ -66,8 +65,8 @@
 
     <button
       class="orden-glyph act"
-      title={t('Send feedback')}
-      aria-label={t('Send feedback')}
+      title="Send feedback"
+      aria-label="Send feedback"
       onclick={showFeedback}
     >
       <svg class="bug" viewBox="0 0 14 14"
@@ -80,8 +79,8 @@
     {#if theming && !viewport.touch}
       <button
         class="orden-glyph act"
-        title={t('Themes')}
-        aria-label={t('Themes')}
+        title="Themes"
+        aria-label="Themes"
         aria-haspopup="dialog"
         onclick={pick}
       >
@@ -102,8 +101,8 @@
         class="orden-glyph act"
         class:is-on={pad.on}
         aria-pressed={pad.on}
-        title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
-        aria-label={t('Scratchpad')}
+        title={shortcuts.tooltip('Scratchpad', 'app.scratchpad')}
+        aria-label="Scratchpad"
         onclick={scratchFromDrawer}
       >
         <svg viewBox="0 0 13 13"><path d={SCRATCHPAD_MARK} /></svg>
@@ -112,8 +111,8 @@
 
     <button
       class="orden-glyph act"
-      title={shortcuts.tooltip(t('Settings'), 'app.settings')}
-      aria-label={t('Settings')}
+      title={shortcuts.tooltip('Settings', 'app.settings')}
+      aria-label="Settings"
       onclick={onsettings}
     >
       <svg class="gear" viewBox="0 0 24 24">

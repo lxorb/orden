@@ -1,7 +1,7 @@
 <script lang="ts">
   import Facts from '../../Facts.svelte'
   import { cubicOut } from 'svelte/easing'
-  import { i18n, t } from '../../i18n.svelte'
+  import { region } from '../../region'
   import Cross from '../../Cross.svelte'
   import { chooseFiles } from '../../choose-files'
   import { links } from '../../link-index.svelte'
@@ -125,12 +125,12 @@
   function candidates(): Mention[] {
     const out: Mention[] = []
     if (views.chosen > 0)
-      out.push({ kind: 'selection', id: 'selection', label: t('Selection'), word: 'selection' })
+      out.push({ kind: 'selection', id: 'selection', label: 'Selection', word: 'selection' })
     for (const tab of workspace.tabs) {
       if (tab.kind === 'web') out.push({ kind: 'tab', id: tab.id, label: tab.shown, word: 'tab' })
     }
-    out.push({ kind: 'web', id: 'web', label: t('Web search'), word: 'web' })
-    out.push({ kind: 'scratchpad', id: 'scratchpad', label: t('Scratchpad'), word: 'scratchpad' })
+    out.push({ kind: 'web', id: 'web', label: 'Web search', word: 'web' })
+    out.push({ kind: 'scratchpad', id: 'scratchpad', label: 'Scratchpad', word: 'scratchpad' })
     if (home) {
       for (const note of workspace.notes) out.push(mentionOf(note))
       for (const folder of folders()) out.push(mentionOf(folder))
@@ -335,23 +335,21 @@
   }
 
   function tooMuchText(name: string) {
-    chat.trouble = t('{name} was not added: a message takes up to 4 MB of text in all.', { name })
+    chat.trouble = `${name} was not added: a message takes up to 4 MB of text in all.`
   }
 
   function take(file: File) {
-    const name = file.name || t('Picture')
+    const name = file.name || 'Picture'
     const refused = () => {
-      chat.trouble = t('{name} was not added: a chat takes pictures, and text files up to 2 MB.', {
-        name,
-      })
+      chat.trouble = `${name} was not added: a chat takes pictures, and text files up to 2 MB.`
     }
     const unread = () => {
-      chat.trouble = t('{name} could not be read.', { name })
+      chat.trouble = `${name} could not be read.`
     }
     if (file.type.startsWith('image/')) {
       const held = chat.chips.filter((one) => one.kind === 'picture').length
       if (held + drawing >= MOST_CHAT_PICTURES) {
-        chat.trouble = t('{name} was not added: a message takes up to 20 pictures.', { name })
+        chat.trouble = `${name} was not added: a message takes up to 20 pictures.`
         return
       }
       drawing++
@@ -392,11 +390,9 @@
     }
     const text = longPaste(event)
     if (text === null) return
-    const name = t('Text')
+    const name = 'Text'
     if (text.length > 2_000_000) {
-      chat.trouble = t('{name} was not added: a chat takes pictures, and text files up to 2 MB.', {
-        name,
-      })
+      chat.trouble = `${name} was not added: a chat takes pictures, and text files up to 2 MB.`
       return
     }
     if (text.length > textRoom()) {
@@ -415,12 +411,12 @@
 
   function modeMenu(event: MouseEvent) {
     const row = (mode: Mode) => ({
-      label: t(modeWord(mode)),
+      label: modeWord(mode),
       checked: head?.mode === mode,
       run: () => chat.setMode(mode),
     })
     menu.show(event, [...MODES.filter((one) => one !== 'plan').map(row), DIVIDER, row('plan')], {
-      title: t('Permissions'),
+      title: 'Permissions',
     })
   }
 
@@ -430,17 +426,17 @@
 
   function toggleWeb() {
     if (searching) chat.chips = chat.chips.filter((one) => one.kind !== 'web')
-    else addChip({ kind: 'web', id: 'web', label: t('Web search'), word: 'web' })
+    else addChip({ kind: 'web', id: 'web', label: 'Web search', word: 'web' })
   }
 
   function plusMenu(event: MouseEvent) {
     menu.show(event, [
-      { label: t('Add photos and files'), asks: true, run: chooseAndTake },
+      { label: 'Add photos and files', asks: true, run: chooseAndTake },
       DIVIDER,
-      { label: t('Web search'), checked: searching, run: toggleWeb },
-      ...(canDictate() ? [{ label: t('Dictate'), run: () => void dictation.toggle(true) }] : []),
-      { label: t('Mention'), run: () => typeAt('@') },
-      { label: t('Commands'), disabled: !!chat.text.trim(), run: () => typeAt('/') },
+      { label: 'Web search', checked: searching, run: toggleWeb },
+      ...(canDictate() ? [{ label: 'Dictate', run: () => void dictation.toggle(true) }] : []),
+      { label: 'Mention', run: () => typeAt('@') },
+      { label: 'Commands', disabled: !!chat.text.trim(), run: () => typeAt('/') },
     ])
   }
 
@@ -508,11 +504,8 @@
   {#if chat.changing}
     <div class="editing" transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}>
       <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
-      <button
-        class="drop"
-        aria-label={t('Cancel')}
-        title={t('Cancel')}
-        onclick={() => chat.cancelEdit()}><Cross small /></button
+      <button class="drop" aria-label="Cancel" title="Cancel" onclick={() => chat.cancelEdit()}
+        ><Cross small /></button
       >
     </div>
   {/if}
@@ -535,18 +528,15 @@
           ><Facts
             line
             parts={[
-              minutes(now - goal.started, i18n.language),
+              minutes(now - goal.started, region()),
               `${goal.turns}/${goal.budget.turns}`,
-              tokens(goal.tokens, i18n.language),
+              tokens(goal.tokens, region()),
             ]}
           /></span
         >
       </button>
-      <button
-        class="drop"
-        aria-label={t('Remove')}
-        title={t('Remove')}
-        onclick={() => void clearGoal()}><Cross small /></button
+      <button class="drop" aria-label="Remove" title="Remove" onclick={() => void clearGoal()}
+        ><Cross small /></button
       >
     </div>
     {#if reasoning && goal.reason}
@@ -578,8 +568,8 @@
               <span class="name" dir="auto">{front.name}</span>
               <button
                 class="drop"
-                aria-label={t('Remove')}
-                title={t('Remove')}
+                aria-label="Remove"
+                title="Remove"
                 onclick={() => chat.drop(front.key)}><Cross small /></button
               >
             </span>
@@ -590,8 +580,8 @@
               <span class="name quoted">{selection.trim().slice(0, 40)}</span>
               <button
                 class="drop"
-                aria-label={t('Remove')}
-                title={t('Remove')}
+                aria-label="Remove"
+                title="Remove"
                 onclick={() => chat.drop(selectionKey)}><Cross small /></button
               >
             </span>
@@ -601,7 +591,7 @@
               class="chip"
               class:refused={chip.kind === 'picture' && chat.model?.images === false}
               title={chip.kind === 'picture' && chat.model?.images === false
-                ? t('This model takes no pictures')
+                ? 'This model takes no pictures'
                 : chip.label}
               transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
             >
@@ -618,8 +608,8 @@
               <span class="name" dir="auto">{chip.label}</span>
               <button
                 class="drop"
-                aria-label={t('Remove')}
-                title={t('Remove')}
+                aria-label="Remove"
+                title="Remove"
                 onclick={() => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip)))}
                 ><Cross small /></button
               >
@@ -635,8 +625,8 @@
         use:dictating={voiceField}
         data-entry
         rows="1"
-        placeholder={t('Ask anything, @ to add, / for more')}
-        aria-label={t('Ask about this space')}
+        placeholder="Ask anything, @ to add, / for more"
+        aria-label="Ask about this space"
         onkeydown={onKey}
         oninput={onInput}
         onclick={onInput}
@@ -647,8 +637,8 @@
       <div class="controls">
         <button
           class="orden-glyph plus"
-          title={t('Add')}
-          aria-label={t('Add')}
+          title="Add"
+          aria-label="Add"
           aria-haspopup="menu"
           disabled={!head}
           onclick={plusMenu}
@@ -658,16 +648,14 @@
         <button
           class="mode"
           title={mode === 'full'
-            ? t(
-                'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting',
-              )
-            : shortcuts.tooltip(t('Next mode'), 'ai.mode')}
+            ? 'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting'
+            : shortcuts.tooltip('Next mode', 'ai.mode')}
           aria-haspopup="menu"
           onclick={modeMenu}
           disabled={!head}
         >
           <ModeMark {mode} />
-          <span>{t(modeWord(mode))}</span>
+          <span>{modeWord(mode)}</span>
           <svg class="caret" viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
         </button>
         <span class="gap"></span>
@@ -677,7 +665,7 @@
           <DictateButton owner={voiceField} />
         {/if}
         {#if button === 'stop'}
-          <button class="go" title={t('Stop')} aria-label={t('Stop')} onclick={() => chat.stop()}>
+          <button class="go" title="Stop" aria-label="Stop" onclick={() => chat.stop()}>
             <svg viewBox="0 0 13 13"
               ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
             >
@@ -685,8 +673,8 @@
         {:else if button === 'send'}
           <button
             class="go"
-            title={t('Send')}
-            aria-label={t('Send')}
+            title="Send"
+            aria-label="Send"
             disabled={!chat.text.trim() && !chat.chips.length}
             onclick={() => void submit()}
           >

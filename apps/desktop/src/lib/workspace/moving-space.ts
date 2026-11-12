@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { log } from '../log'
 import { isAgentsName } from '../note-name'
 import { nameOf, samePath } from '../space-paths'
@@ -55,7 +54,7 @@ export async function reopening(draft: Draft): Promise<Draft | null> {
   if (!ws.shownSpaces.some((one) => one.id === owner)) {
     if (draft.path === null) return { ...draft, space: ws.activeSpaceId ?? undefined }
     const { busy } = await import('../busy.svelte')
-    busy.failed(t('Its space is archived'))
+    busy.failed('Its space is archived')
     return null
   }
   if (draft.path !== null && !draft.dirty) {

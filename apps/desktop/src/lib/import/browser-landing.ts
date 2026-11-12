@@ -1,4 +1,3 @@
-import { key, t } from '../i18n.svelte'
 import type { Space } from '../workspace.svelte'
 import { arcSidebar } from './arc'
 import { bringHistory, droppedLine, folderWords, takeEngine, withMarks } from './browser-extras'
@@ -6,7 +5,6 @@ import { BROWSER_NAMES, browserFile, type BrowserId, type BrowserProfile } from 
 import { chromiumSidebar } from './chromium'
 import { firefoxSidebar } from './firefox'
 import { unmozLz4 } from './mozlz4'
-import type { Lost } from './plan'
 import { type BrowserEngine, chromiumEngine, mozillaEngine, safariEngine } from './search-engines'
 import type { Sidebar } from './sidebar'
 import { landSpaces } from './sidebar-landing'
@@ -18,18 +16,18 @@ import { invoke } from '../tauri'
 interface Read {
   sidebar: Sidebar
   engine: BrowserEngine | null
-  lost: Lost[]
+  lost: string[]
 }
 
-const CONTAINERS: Lost = { text: key('Containers stay in Firefox') }
+const CONTAINERS = 'Containers stay in Firefox'
 
-const SAVED: Lost = { text: key('Saved tab groups and the reading list stay in {browser}') }
-const WORKSPACES: Lost = { text: key('{browser}’s workspaces come in as one space') }
-const KEPT: Partial<Record<BrowserId, Lost>> = {
+const SAVED = (browser: string) => `Saved tab groups and the reading list stay in ${browser}`
+const WORKSPACES = (browser: string) => `${browser}’s workspaces come in as one space`
+const KEPT: Partial<Record<BrowserId, (browser: string) => string>> = {
   chrome: SAVED,
   chromium: SAVED,
   brave: SAVED,
-  edge: { text: key('Workspaces and collections stay in Edge') },
+  edge: () => 'Workspaces and collections stay in Edge',
   vivaldi: WORKSPACES,
   opera: WORKSPACES,
   'opera-gx': WORKSPACES,
@@ -39,7 +37,7 @@ export async function landBrowser(profile: BrowserProfile, several: boolean): Pr
   const browser = BROWSER_NAMES[profile.browser]
   const name = several ? `${browser} (${profile.name})` : browser
   const firefox = profile.browser === 'firefox'
-  const nothing = t('Nothing could be read out of {browser}.', { browser })
+  const nothing = `Nothing could be read out of ${browser}.`
   const read = await readProfile(profile, name)
   if (!read) throw new Error(nothing)
 
@@ -50,7 +48,7 @@ export async function landBrowser(profile: BrowserProfile, several: boolean): Pr
     ...lost,
     ...read.lost,
     ...droppedLine(sidebar),
-    ...(kept ? [{ ...kept, values: { browser } }] : []),
+    ...(kept ? [kept(browser)] : []),
     ...(await takeEngine(read.engine, browser)),
   ]
   const first = await landSpaces(spaces, lines, nothing)
@@ -116,13 +114,10 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
   )
 
   if (!session && !bookmarks && !account) return null
-  const lost: Lost[] =
+  const lost =
     !session && locked
       ? [
-          {
-            text: key('{browser} keeps its open tabs locked, so only its bookmarks came.'),
-            values: { browser: BROWSER_NAMES[profile.browser] },
-          },
+          `${BROWSER_NAMES[profile.browser]} keeps its open tabs locked, so only its bookmarks came.`,
         ]
       : []
   return {
@@ -139,7 +134,7 @@ async function readArc(profile: BrowserProfile): Promise<Read | null> {
   const arc = arcSidebar(said, profile.path.split(/[\\/]/).pop() ?? 'Default')
   if (!arc) return null
 
-  const lost: Lost[] = arc.stayed ? [{ text: key('Easels and notes stay in Arc') }] : []
+  const lost = arc.stayed ? ['Easels and notes stay in Arc'] : []
   return { sidebar: arc.sidebar, engine: await preferencesEngine(profile), lost }
 }
 
@@ -167,9 +162,7 @@ async function readSafari(name: string): Promise<Read | null> {
     if (error === NO_ACCESS || (error instanceof Error && error.message === NO_ACCESS)) {
       await invoke('open_full_disk_access').catch(() => undefined)
       throw new Error(
-        t(
-          'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.',
-        ),
+        'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.',
         { cause: error },
       )
     }

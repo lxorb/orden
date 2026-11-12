@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { dayOf, daysAfter, HOUR, MINUTE, piecesIn, wholeOf } from './days'
   import { bucketsOf, hoursShown, stacked } from './lanes'
   import { clock, length, nameOf, tintOf } from './look'
@@ -67,7 +67,7 @@
       class:today={column.day === dayOf(now)}
       onclick={() => onpick(column.day, null)}
     >
-      <span class="name">{i18n.when(column.day, { weekday: 'short', day: 'numeric' })}</span>
+      <span class="name">{localDate(column.day, { weekday: 'short', day: 'numeric' })}</span>
       <span class="total">{column.whole ? length(column.whole) : ''}</span>
     </button>
   {/each}
@@ -105,13 +105,13 @@
           style:top={top(column.day, piece.from)}
           style:height={tall(piece.to - piece.from)}
           style:--tint={tintOf(piece.span.activity)}
-          title="{nameOf(piece.span.activity, t('No activity'))}, {clock(piece.from)}–{clock(
+          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(
             piece.to,
           )}"
           onclick={() => onpick(column.day, piece.span.id)}
         >
           {#if (piece.to - piece.from) / HOUR >= 0.6}
-            <span class="what">{nameOf(piece.span.activity, t('No activity'))}</span>
+            <span class="what">{nameOf(piece.span.activity, 'No activity')}</span>
             <span class="long">{length(piece.to - piece.from)}</span>
           {/if}
         </button>

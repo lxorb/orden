@@ -15,7 +15,7 @@
   import { normalizeUrl } from '@orden/pass/urls'
   import { untrack } from 'svelte'
   import Cross from '../Cross.svelte'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import Select from '../Select.svelte'
   import AddField from './AddField.svelte'
   import AliasEdit from './AliasEdit.svelte'
@@ -76,7 +76,7 @@
 
   const vaults = $derived(pass.vaults.map((one) => ({ value: one.id, label: one.name })))
   const folders = $derived([
-    { value: '', label: t('No folder') },
+    { value: '', label: 'No folder' },
     ...folderOptions(pass.vaults.find((one) => one.id === vault)?.folders ?? []).map((one) => ({
       value: one.id,
       label: `${' '.repeat(one.depth)}${one.name}`,
@@ -154,21 +154,15 @@
   {onkeydown}
 >
   <div class="head">
-    <button
-      type="button"
-      class="orden-glyph"
-      aria-label={t('Cancel')}
-      title={t('Cancel')}
-      onclick={cancel}
-    >
+    <button type="button" class="orden-glyph" aria-label="Cancel" title="Cancel" onclick={cancel}>
       <Cross />
     </button>
-    <h2 class="heading">{isNew ? t('New item') : t('Edit item')}</h2>
+    <h2 class="heading">{isNew ? 'New item' : 'Edit item'}</h2>
     <div class="place">
       <Select
         value={vault}
         options={vaults}
-        label={t('Vault')}
+        label="Vault"
         onchange={(next: string) => {
           vault = next
           folder = null
@@ -180,13 +174,13 @@
         <Select
           value={folder ?? ''}
           options={folders}
-          label={t('Folder')}
+          label="Folder"
           onchange={(next: string) => (folder = next === '' ? null : next)}
         />
       </div>
     {/if}
     <button type="submit" class="orden-button save" disabled={!canSave} aria-busy={saving}>
-      {isNew ? t('Create') : t('Save')}
+      {isNew ? 'Create' : 'Save'}
     </button>
   </div>
 
@@ -195,10 +189,10 @@
 
     <EditCard>
       <EditField
-        label={t('Title')}
+        label="Title"
         bind:value={draft.title}
         big
-        placeholder={t('Untitled')}
+        placeholder="Untitled"
         oninput={touched}
       />
     </EditCard>
@@ -238,7 +232,7 @@
 
     <EditCard>
       <EditField
-        label={t('Note')}
+        label="Note"
         icon={FIELD_ICONS.note}
         bind:value={draft.note}
         kind="multiline"

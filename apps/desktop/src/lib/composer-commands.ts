@@ -1,6 +1,5 @@
 import type { EditorView } from '@orden/editor'
 import type { Command } from './commands'
-import { t } from './i18n.svelte'
 import type { MenuEntry } from './menu.svelte'
 import { shownName } from './note-name'
 import { canWriteAt, canWriteIn } from './sharing.svelte'
@@ -21,7 +20,7 @@ async function askForNote(exclude: string): Promise<string | null> {
 
   if (!options.length) return null
 
-  return prompt.find({ title: t('Merge into'), options, placeholder: t('Note') })
+  return prompt.find({ title: 'Merge into', options, placeholder: 'Note' })
 }
 
 function hasSelection(view?: EditorView): boolean {
@@ -54,7 +53,7 @@ export function composerCommands(view?: EditorView): Command[] {
   return [
     {
       id: 'merge-into',
-      label: t('Merge into…'),
+      label: 'Merge into…',
       disabled: !canMerge(path, view),
       run: () => {
         if (path) void merge(path)
@@ -62,7 +61,7 @@ export function composerCommands(view?: EditorView): Command[] {
     },
     {
       id: 'split-at-caret',
-      label: t('Split at caret'),
+      label: 'Split at caret',
       disabled: !canWrite(path, view) || !hasRest(view),
       run: () => {
         if (view) void workspace.splitAtCaret(view.state.selection.main.head)
@@ -70,7 +69,7 @@ export function composerCommands(view?: EditorView): Command[] {
     },
     {
       id: 'extract-selection',
-      label: t('Extract selection'),
+      label: 'Extract selection',
       disabled: !canWrite(path, view) || !hasSelection(view),
       run: () => {
         if (!view) return

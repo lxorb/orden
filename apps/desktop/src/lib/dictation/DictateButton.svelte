@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import EngineChooser from './EngineChooser.svelte'
   import { HOLD } from './keys'
@@ -20,10 +19,10 @@
 
   const title = $derived(
     hearing === 'finishing'
-      ? t('Writing down what you said')
+      ? 'Writing down what you said'
       : hearing === 'idle'
-        ? shortcuts.tooltip(t('Dictate'), 'field.dictate')
-        : t('Stop dictating'),
+        ? shortcuts.tooltip('Dictate', 'field.dictate')
+        : 'Stop dictating',
   )
 
   function down(event: PointerEvent) {

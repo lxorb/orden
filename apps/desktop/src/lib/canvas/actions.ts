@@ -48,7 +48,6 @@ import type { Keystroke } from '../keys'
 import { shortcuts } from '../shortcuts.svelte'
 import { accountAddress, storeImage } from '../assets'
 import { chooseFiles, PICTURES } from '../choose-files'
-import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
 import { busy } from '../busy.svelte'
@@ -302,7 +301,7 @@ export const run = {
     notePath: string | null,
   ): Promise<string[]> {
     if (store.readOnly) return []
-    const label = t('Storing the image')
+    const label = 'Storing the image'
     const stored = await busy
       .run(label, () => storeImage(file, notePath))
       .catch((error: unknown) => {
@@ -335,16 +334,16 @@ export const run = {
     try {
       const doc = await task.promise.catch(() => null)
       if (!doc?.numPages) {
-        busy.failed(t('That file could not be read'))
+        busy.failed('That file could not be read')
         return []
       }
 
       const mode = await prompt.choose({
-        title: t('Import PDF'),
-        detail: t('Choose how to add the pages to the canvas.'),
+        title: 'Import PDF',
+        detail: 'Choose how to add the pages to the canvas.',
         options: [
-          { id: 'single', label: t('Single page'), primary: true },
-          { id: 'all', label: t('All pages') },
+          { id: 'single', label: 'Single page', primary: true },
+          { id: 'all', label: 'All pages' },
         ],
       })
       if (!mode) return []
@@ -355,11 +354,11 @@ export const run = {
           doc.numPages === 1
             ? '1'
             : await prompt.find({
-                title: t('Choose a page'),
-                placeholder: t('Search'),
+                title: 'Choose a page',
+                placeholder: 'Search',
                 options: Array.from({ length: doc.numPages }, (_, index) => ({
                   id: String(index + 1),
-                  label: t('Page {number}', { number: index + 1 }),
+                  label: `Page ${index + 1}`,
                 })),
               })
         if (!selected) return []
@@ -373,7 +372,7 @@ export const run = {
 
       const made: Parameters<typeof withNode>[1][] = []
       let below: number | null = null
-      const label = t('Import PDF')
+      const label = 'Import PDF'
       try {
         await busy.run(label, async () => {
           for (const number of pages) {
@@ -677,7 +676,7 @@ async function askLabel(store: CanvasStore, id: string) {
       ? (node.label ?? '')
       : (store.canvas.edges.find((one) => one.id === id)?.label ?? '')
 
-  const answer = await prompt.ask({ title: t('Name this'), value: was, confirmLabel: key('Save') })
+  const answer = await prompt.ask({ title: 'Name this', value: was, confirmLabel: 'Save' })
   if (answer !== null) store.edit(withLabel(store.canvas, id, answer))
 }
 
@@ -800,9 +799,9 @@ async function putDown(
     }
     case 'link': {
       const url = await prompt.ask({
-        title: t('Which address'),
-        placeholder: t('Address'),
-        confirmLabel: key('Add'),
+        title: 'Which address',
+        placeholder: 'Address',
+        confirmLabel: 'Add',
       })
       if (url) putLink(store, url, box)
       return
@@ -812,8 +811,8 @@ async function putDown(
       if (!root) return
 
       const chosen = await prompt.find({
-        title: t('Which note'),
-        placeholder: t('Search'),
+        title: 'Which note',
+        placeholder: 'Search',
         options: workspace.shownFiles.flatMap((one) => {
           const relative = withinSpace(root, one.path)
           return relative ? [{ id: relative, label: relative }] : []
@@ -864,51 +863,51 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   const arranging = arrangeRows(store, several, many)
 
   return sections(
-    locked ? [{ label: t('Unlock'), run: () => run.unlock(store, locked) }] : [],
+    locked ? [{ label: 'Unlock', run: () => run.unlock(store, locked) }] : [],
     view.bare
       ? [
-          { label: t('Card'), run: () => void place(store, 'text', at, putting) },
-          { label: t('Note'), run: () => void place(store, 'file', at, putting) },
-          { label: t('Picture'), run: () => void place(store, 'picture', at, putting) },
-          { label: t('Link'), run: () => void place(store, 'link', at, putting) },
-          { label: t('Frame'), run: () => void place(store, 'group', at, putting) },
+          { label: 'Card', run: () => void place(store, 'text', at, putting) },
+          { label: 'Note', run: () => void place(store, 'file', at, putting) },
+          { label: 'Picture', run: () => void place(store, 'picture', at, putting) },
+          { label: 'Link', run: () => void place(store, 'link', at, putting) },
+          { label: 'Frame', run: () => void place(store, 'group', at, putting) },
         ]
       : [],
     picked
       ? [
-          { label: t('Duplicate'), run: () => run.duplicate(store) },
-          { label: t('Delete'), danger: true, run: () => run.remove(store) },
+          { label: 'Duplicate', run: () => run.duplicate(store) },
+          { label: 'Delete', danger: true, run: () => run.remove(store) },
           ...(onCard
-            ? [{ label: t('Turn into a note'), run: () => void run.toNote(store, view.path) }]
+            ? [{ label: 'Turn into a note', run: () => void run.toNote(store, view.path) }]
             : []),
-          { label: t('Group'), run: () => run.group(store) },
-          ...(onFrame ? [{ label: t('Ungroup'), run: () => run.ungroup(store) }] : []),
-          ...(onNode ? [{ label: t('Lock'), run: () => run.lock(store) }] : []),
+          { label: 'Group', run: () => run.group(store) },
+          ...(onFrame ? [{ label: 'Ungroup', run: () => run.ungroup(store) }] : []),
+          ...(onNode ? [{ label: 'Lock', run: () => run.lock(store) }] : []),
           {
-            label: t('Arrange'),
+            label: 'Arrange',
             more: () => Promise.resolve(arranging),
-            run: () => view.again(arranging, t('Arrange')),
+            run: () => view.again(arranging, 'Arrange'),
           },
         ]
       : [],
     onEdge
       ? [
-          { label: t('Arrow at the end'), run: () => run.ends(store, false, true) },
-          { label: t('Arrow at the start'), run: () => run.ends(store, true, false) },
-          { label: t('Arrows at both ends'), run: () => run.ends(store, true, true) },
-          { label: t('No arrows'), run: () => run.ends(store, false, false) },
+          { label: 'Arrow at the end', run: () => run.ends(store, false, true) },
+          { label: 'Arrow at the start', run: () => run.ends(store, true, false) },
+          { label: 'Arrows at both ends', run: () => run.ends(store, true, true) },
+          { label: 'No arrows', run: () => run.ends(store, false, false) },
         ]
       : [],
     [
-      { label: t('Find on the canvas'), run: view.onfind },
-      { label: t('Fit the canvas'), run: () => store.fit(view.width, view.height) },
+      { label: 'Find on the canvas', run: view.onfind },
+      { label: 'Fit the canvas', run: () => store.fit(view.width, view.height) },
       ...(turnOf(store.camera)
-        ? [{ label: t('Turn upright'), run: () => void upright(store, view) }]
+        ? [{ label: 'Turn upright', run: () => void upright(store, view) }]
         : []),
       ...(picked
         ? [
             {
-              label: t('Zoom to what is picked'),
+              label: 'Zoom to what is picked',
               run: () => store.frame(view.width, view.height),
             },
           ]
@@ -916,16 +915,16 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
       ...(picked || view.narrowed
         ? [
             {
-              label: view.narrowed ? t('Show the whole canvas') : t('Narrow to what is picked'),
+              label: view.narrowed ? 'Show the whole canvas' : 'Narrow to what is picked',
               run: view.onnarrow,
             },
           ]
         : []),
     ],
     [
-      { label: t('Export as PNG'), run: () => void exportAs(store, view, 'png') },
-      { label: t('Export as SVG'), run: () => void exportAs(store, view, 'svg') },
-      { label: t('Export as PDF'), run: () => void exportAs(store, view, 'pdf') },
+      { label: 'Export as PNG', run: () => void exportAs(store, view, 'png') },
+      { label: 'Export as SVG', run: () => void exportAs(store, view, 'svg') },
+      { label: 'Export as PDF', run: () => void exportAs(store, view, 'pdf') },
     ],
   )
 }
@@ -933,25 +932,25 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
 function arrangeRows(store: CanvasStore, several: boolean, many: boolean): MenuEntry[] {
   return sections(
     [
-      { label: t('Bring to front'), run: () => run.order(store, 'front') },
-      { label: t('Bring forward'), run: () => run.order(store, 'forward') },
-      { label: t('Send backward'), run: () => run.order(store, 'backward') },
-      { label: t('Send to back'), run: () => run.order(store, 'back') },
+      { label: 'Bring to front', run: () => run.order(store, 'front') },
+      { label: 'Bring forward', run: () => run.order(store, 'forward') },
+      { label: 'Send backward', run: () => run.order(store, 'backward') },
+      { label: 'Send to back', run: () => run.order(store, 'back') },
     ],
     several
       ? [
-          { label: t('Align left'), run: () => run.align(store, 'left') },
-          { label: t('Align centre'), run: () => run.align(store, 'centre') },
-          { label: t('Align right'), run: () => run.align(store, 'right') },
-          { label: t('Align top'), run: () => run.align(store, 'top') },
-          { label: t('Align middle'), run: () => run.align(store, 'middle') },
-          { label: t('Align bottom'), run: () => run.align(store, 'bottom') },
+          { label: 'Align left', run: () => run.align(store, 'left') },
+          { label: 'Align centre', run: () => run.align(store, 'centre') },
+          { label: 'Align right', run: () => run.align(store, 'right') },
+          { label: 'Align top', run: () => run.align(store, 'top') },
+          { label: 'Align middle', run: () => run.align(store, 'middle') },
+          { label: 'Align bottom', run: () => run.align(store, 'bottom') },
         ]
       : [],
     many
       ? [
-          { label: t('Spread across'), run: () => run.distribute(store, 'x') },
-          { label: t('Spread down'), run: () => run.distribute(store, 'y') },
+          { label: 'Spread across', run: () => run.distribute(store, 'x') },
+          { label: 'Spread down', run: () => run.distribute(store, 'y') },
         ]
       : [],
   )

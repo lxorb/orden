@@ -4,7 +4,7 @@
   import type { Shown } from '../api'
   import { cubicOut } from 'svelte/easing'
   import { downloadStarted } from '../../downloads/started'
-  import { amount, t } from '../../i18n.svelte'
+  import { localNumber } from '../../region'
   import { dur, fly } from '../../motion'
   import { followHref } from '../../open-link'
   import Avatar from '../../people/Avatar.svelte'
@@ -103,7 +103,7 @@
       if (!next.edited) return
       const mark = document.createElement('span')
       mark.className = 'edited'
-      mark.textContent = t('Edited')
+      mark.textContent = 'Edited'
       const last = node.lastElementChild
       if (last?.tagName === 'P') last.append(' ', mark)
       else node.append(mark)
@@ -178,11 +178,11 @@
           <span class="via" use:tip={() => message.via?.agent ?? ''}>✦</span>
         {/if}
         <time use:tip={() => fullTime(message.at)}>{timeOf(message.at)}</time>
-        {#if message.pinned}<span class="pinned" aria-label={t('Pinned')}><Glyph name="pin" /></span
+        {#if message.pinned}<span class="pinned" aria-label="Pinned"><Glyph name="pin" /></span
           >{/if}
       </div>
     {:else if message.pinned}
-      <span class="pinned corner" aria-label={t('Pinned')}><Glyph name="pin" /></span>
+      <span class="pinned corner" aria-label="Pinned"><Glyph name="pin" /></span>
     {/if}
 
     {#if message.quote !== undefined}
@@ -196,7 +196,7 @@
           <strong>{nameOf(quoted.author, page.members, space)}</strong>
           <span
             >{quoted.deleted
-              ? t('Deleted')
+              ? 'Deleted'
               : firstLine(quoted.body) || (quoted.files[0]?.name ?? '')}</span
           >
         {:else}
@@ -206,7 +206,7 @@
     {/if}
 
     {#if message.deleted}
-      <p class="deleted">{t('Deleted')}</p>
+      <p class="deleted">Deleted</p>
     {:else}
       {#if message.body}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -295,21 +295,21 @@
     {#if message.replies > 0 && !inReplies}
       <button type="button" class="replies" onclick={() => onreply(message)}>
         <Glyph name="replies" />
-        <span class="count">{amount(message.replies)}</span>
+        <span class="count">{localNumber(message.replies)}</span>
         {#if message.lastReplyAt}<span class="last">{timeOf(message.lastReplyAt)}</span>{/if}
       </button>
     {/if}
 
     {#if pending}
-      <span class="sending" aria-label={t('Sending')}><Glyph name="clock" /></span>
+      <span class="sending" aria-label="Sending"><Glyph name="clock" /></span>
     {/if}
     {#if message.refused}
       <span class="refused">
         <button type="button" class="orden-chip" onclick={() => page.retry(message.id)}
-          >{t('Try again')}</button
+          >Try again</button
         >
         <button type="button" class="orden-chip is-quiet" onclick={() => page.discard(message.id)}
-          >{t('Delete')}</button
+          >Delete</button
         >
       </span>
     {/if}

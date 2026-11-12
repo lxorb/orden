@@ -5,7 +5,6 @@
   import { paintsOver } from '../themes/settings'
   import Swatches from '../Swatches.svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { t } from '../i18n.svelte'
   import { fade, fly, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
@@ -51,7 +50,7 @@
 
   const shown = $derived.by(() => {
     const term = picking.query.trim().toLowerCase()
-    return term ? theme.all.filter((one) => t(one.name).toLowerCase().includes(term)) : theme.all
+    return term ? theme.all.filter((one) => one.name.toLowerCase().includes(term)) : theme.all
   })
 
   let browsing = $state(false)
@@ -80,17 +79,13 @@
     const at = picking.at
     if (viewport.touch || !at) return null
 
-    const rtl = document.documentElement.dir === 'rtl'
     const tall = window.innerHeight
     const above = at.top > tall / 2
     return {
       above,
-      left: rtl
-        ? `clamp(8px, calc(${at.x + 24}px - var(--picker-width)), calc(100vw - var(--picker-width) - 8px))`
-        : `clamp(8px, ${at.x - 24}px, calc(100vw - var(--picker-width) - 8px))`,
+      left: `clamp(8px, ${at.x - 24}px, calc(100vw - var(--picker-width) - 8px))`,
       y: above ? tall - at.top + 6 : at.bottom + 6,
       room: above ? at.top - 14 : tall - at.bottom - 14,
-      rtl,
     }
   })
 
@@ -154,12 +149,11 @@
   }
 
   function onKeydown(event: KeyboardEvent) {
-    const rtl = document.documentElement.dir === 'rtl'
     const steps: Record<string, number> = {
       ArrowDown: COLUMNS,
       ArrowUp: -COLUMNS,
-      ArrowRight: rtl ? -1 : 1,
-      ArrowLeft: rtl ? 1 : -1,
+      ArrowRight: 1,
+      ArrowLeft: -1,
     }
     const step = steps[event.key]
 
@@ -198,7 +192,6 @@
     class:orden-screen={place === null && !viewport.touch}
     class:sheet={viewport.touch}
     class:above={place?.above}
-    class:rtl={place?.rtl}
     data-seeing={seeing}
     style:left={place?.left}
     style:top={place && !place.above ? `${place.y}px` : undefined}
@@ -209,7 +202,7 @@
     use:pullsAway={viewport.touch ? () => picking.close() : null}
     role="dialog"
     aria-modal="true"
-    aria-label={t('Themes')}
+    aria-label="Themes"
     tabindex="-1"
     transition:arriving
   >
@@ -221,7 +214,7 @@
           value={picking.query}
           oninput={(event) => typed(event.currentTarget.value)}
           onkeydown={onKeydown}
-          placeholder={t('Search themes')}
+          placeholder="Search themes"
           spellcheck="false"
           autocapitalize="off"
           autocorrect="off"
@@ -229,7 +222,7 @@
           aria-expanded="true"
           aria-controls="orden-theme-cards"
           aria-activedescendant={cursor >= 0 ? `orden-theme-${cursor}` : undefined}
-          aria-label={t('Search themes')}
+          aria-label="Search themes"
           data-lands
         />
       </div>
@@ -238,7 +231,7 @@
         class="orden-segmented modes"
         role="radiogroup"
         tabindex="-1"
-        aria-label={t('Mode')}
+        aria-label="Mode"
         use:segmented
         onpointerleave={() => picking.point('scheme', null)}
       >
@@ -246,8 +239,8 @@
           <button
             type="button"
             class:on={choice === keptScheme}
-            title={t(SCHEME_NAMES[choice])}
-            aria-label={t(SCHEME_NAMES[choice])}
+            title={SCHEME_NAMES[choice]}
+            aria-label={SCHEME_NAMES[choice]}
             aria-pressed={choice === keptScheme}
             disabled={!theme.offers(choice)}
             onpointermove={() => theme.offers(choice) && picking.point('scheme', choice)}
@@ -279,7 +272,7 @@
       style:--columns={COLUMNS}
       role="listbox"
       tabindex="-1"
-      aria-label={t('Themes')}
+      aria-label="Themes"
       data-scrolls
       use:scrollbar={shown.length}
       onpointerleave={() => {
@@ -308,7 +301,7 @@
             desk={one.translucent === true}
             pictured={one.pictured === true}
           />
-          <span class="name">{t(one.name)}</span>
+          <span class="name">{one.name}</span>
         </button>
       {/each}
 
@@ -329,7 +322,7 @@
         <span class="more">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" /></svg>
         </span>
-        <span class="name">{t('Browse')}</span>
+        <span class="name">Browse</span>
       </button>
     </div>
 
@@ -337,10 +330,10 @@
       <Swatches
         options={ACCENTS.map((one) => ({
           value: one.id,
-          label: t(one.name),
+          label: one.name,
           colour: one[theme.current],
         }))}
-        label={t('Accent')}
+        label="Accent"
         chosen={picking.kept.accent}
         onchoose={(id: string) => picking.keepAccent(id)}
         onpoint={(id: string | null) => picking.point('accent', id)}
@@ -409,14 +402,6 @@
 
   .picker.above {
     transform-origin: bottom left;
-  }
-
-  .picker.rtl {
-    transform-origin: top right;
-  }
-
-  .picker.above.rtl {
-    transform-origin: bottom right;
   }
 
   .head {

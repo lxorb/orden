@@ -1,5 +1,4 @@
 import { account } from '../../account.svelte'
-import { i18n } from '../../i18n.svelte'
 import { collectErrors } from '../../log'
 import { reloading } from '../../reloading.svelte'
 import { settings } from '../../settings.svelte'
@@ -13,7 +12,6 @@ import { startPassSync } from '../syncing.svelte'
 export function startPassWeb(): () => void {
   collectErrors()
   viewport.start()
-  i18n.restore()
   theme.init()
   void import('../../themes/synced.svelte').then((one) => one.syncLook())
   shortcuts.restore()

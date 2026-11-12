@@ -1,20 +1,19 @@
 import type { EditorState } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
 import { isTabFile, linkTarget, type Wikilink } from '@orden/markdown/links'
-import { label } from '../labels'
 import { type LinkPress, MAC, modifier } from '../links'
 import { linkAt } from './at'
 import { jumpFor, noteIndex, type NoteJump, noteOpener } from './notes'
 
 const HOW = {
-  open: { mac: 'openNoteMac', other: 'openNote' },
-  create: { mac: 'createNoteMac', other: 'createNote' },
-  file: { mac: 'openLinkMac', other: 'openLink' },
+  open: { mac: '⌘-click to open the note', other: 'Ctrl+Click to open the note' },
+  create: { mac: '⌘-click to create the note', other: 'Ctrl+Click to create the note' },
+  file: { mac: '⌘-click to open the link', other: 'Ctrl+Click to open the link' },
 } as const
 
 export function noteLinkTitle(link: Wikilink, missing: boolean): string {
   const wording = isTabFile(link.target) ? HOW.file : HOW[missing ? 'create' : 'open']
-  return `${linkTarget(link)}\n${label(MAC ? wording.mac : wording.other)}`
+  return `${linkTarget(link)}\n${MAC ? wording.mac : wording.other}`
 }
 
 export function jumpAt(state: EditorState, pos: number): NoteJump | null {

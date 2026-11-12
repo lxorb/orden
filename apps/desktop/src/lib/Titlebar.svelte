@@ -1,7 +1,6 @@
 <script lang="ts">
   import { swipeOpens } from './swipe-opens'
   import { chrome } from './glass/chrome.svelte'
-  import { i18n, t } from './i18n.svelte'
   import { keepFocus } from './focus'
   import { modes } from './modes.svelte'
   import { SEARCH_MARK } from './panel-marks'
@@ -66,12 +65,8 @@
     workspace.restored && !workspace.spaces.length && !workspace.tabs.length,
   )
 
-  const cornered = $derived(
-    lights && (i18n.direction === 'rtl' || !(workspace.panel && !viewport.drawer)),
-  )
-  const bare = $derived(
-    !(isDesktop && !mac && modes.frame === 'orden') && !(cornered && i18n.direction === 'rtl'),
-  )
+  const cornered = $derived(lights && !(workspace.panel && !viewport.drawer))
+  const bare = $derived(!(isDesktop && !mac && modes.frame === 'orden'))
 
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
 
@@ -85,7 +80,7 @@
   let endWide = $state(0)
   const overPanes = $derived(endWide - wide + (panes || wide))
 
-  const title = $derived(pad.on ? t('Scratchpad') : (workspace.active?.shown ?? 'Orden'))
+  const title = $derived(pad.on ? 'Scratchpad' : (workspace.active?.shown ?? 'Orden'))
   const showing = $derived(viewport.touch && pad.on ? null : workspace.active)
 
   async function minimize() {
@@ -102,8 +97,8 @@
   <button
     class="orden-glyph search"
     data-overview-keeps
-    title={shortcuts.tooltip(t('Search'), 'app.palette')}
-    aria-label={t('Search notes and commands')}
+    title={shortcuts.tooltip('Search', 'app.palette')}
+    aria-label="Search notes and commands"
     onpointerdown={keepFocus}
     onmousedown={keepFocus}
     onclick={() => onpalette()}
@@ -118,8 +113,8 @@
     data-overview-keeps
     class:is-on={tabOverview.open}
     aria-pressed={tabOverview.open}
-    title={shortcuts.tooltip(t('Tabs'), 'app.tab-overview')}
-    aria-label={t('Tabs')}
+    title={shortcuts.tooltip('Tabs', 'app.tab-overview')}
+    aria-label="Tabs"
     onpointerdown={keepFocus}
     onmousedown={keepFocus}
     onclick={() => toggleTabOverview()}
@@ -156,10 +151,10 @@
   {#if isDesktop && !mac}
     {#if modes.frame === 'orden'}
       <div class="controls" data-overview-keeps>
-        <button onclick={minimize} aria-label={t('Minimize')}>
+        <button onclick={minimize} aria-label="Minimize">
           <svg viewBox="0 0 10 10"><path d="M0 5h10" /></svg>
         </button>
-        <button onclick={toggleMaximize} aria-label={maximized ? t('Restore') : t('Maximize')}>
+        <button onclick={toggleMaximize} aria-label={maximized ? 'Restore' : 'Maximize'}>
           {#if maximized}
             <svg viewBox="0 0 10 10"><path d="M2.5 0.5h7v7M0.5 2.5h7v7h-7z" /></svg>
           {:else}
@@ -169,8 +164,8 @@
         <button
           class="close"
           onclick={closeWindow}
-          title={shortcuts.tooltip(t('Close'), 'app.close-window')}
-          aria-label={t('Close')}
+          title={shortcuts.tooltip('Close', 'app.close-window')}
+          aria-label="Close"
         >
           <svg viewBox="0 0 10 10"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" /></svg>
         </button>
@@ -188,7 +183,7 @@
           <card.default
             hint="drawer"
             side="below"
-            text={t('Swipe in from the edge to see your notes.')}
+            text="Swipe in from the edge to see your notes."
             onpress={() => workspace.toggleSidebar()}
           />
         {/await}
@@ -208,14 +203,14 @@
     : `max(0px, calc(var(--space-1) + var(--lights-start, 0px) + ${leadWide}px - var(--card-inset)))`}
   style:--strip-end={viewport.touch
     ? undefined
-    : `max(0px, calc(${overPanes}px + var(--lights-end, 0px) - var(--card-inset)))`}
+    : `max(0px, calc(${overPanes}px - var(--card-inset)))`}
 >
   {#if viewport.touch}
     {#if phone && !listless}
       <button
         class="orden-glyph back"
         data-phone-back
-        aria-label={t('Back')}
+        aria-label="Back"
         onclick={() => workspace.toggleSidebar()}
       >
         <svg viewBox="0 0 13 13"><path d={BACK_MARK} /></svg>
@@ -228,7 +223,7 @@
       {#if showing}<TabMark tab={showing} />{:else if pad.on}<FileMark mark="note" />{/if}
       <span class="name">{title}</span>
       {#if showing && isDraft(showing.note)}
-        <button class="orden-glyph" aria-label={t('Save')} onclick={() => askPlace(showing.id)}
+        <button class="orden-glyph" aria-label="Save" onclick={() => askPlace(showing.id)}
           ><UnsavedDot pressable /></button
         >
       {/if}
@@ -239,7 +234,7 @@
         <button
           class="orden-glyph more"
           data-phone-more
-          aria-label={t('More')}
+          aria-label="More"
           aria-haspopup="menu"
           onclick={showMore}
         >
@@ -294,11 +289,6 @@
   header.lights {
     padding-left: var(--traffic-lights);
     --lights-start: var(--traffic-lights);
-  }
-
-  :global([dir='rtl']) header.lights {
-    --lights-start: 0px;
-    --lights-end: var(--traffic-lights);
   }
 
   .lead,
@@ -422,8 +412,8 @@
     height: auto;
     background: none;
     padding-top: var(--inset-top);
-    padding-inline-end: var(--inset-end);
-    padding-inline-start: calc(var(--inset-start) + (var(--row-height) - var(--icon-lg)) / 2);
+    padding-inline-end: var(--inset-right);
+    padding-inline-start: calc(var(--inset-left) + (var(--row-height) - var(--icon-lg)) / 2);
   }
 
   .more svg {
@@ -432,15 +422,14 @@
   }
 
   .back svg {
-    transform: scaleX(var(--dir));
     stroke-width: 1.4;
   }
 
   :global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.orden-said))) {
-    padding-inline-start: var(--inset-start);
+    padding-inline-start: var(--inset-left);
   }
 
   :global([data-touch]) header:has(> [data-phone-back]) {
-    padding-inline-start: var(--inset-start);
+    padding-inline-start: var(--inset-left);
   }
 </style>

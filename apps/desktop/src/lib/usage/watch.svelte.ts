@@ -8,7 +8,7 @@ import {
 } from '@orden/sync-core/usage'
 import { account } from '../account.svelte'
 import { request } from '../api'
-import { i18n } from '../i18n.svelte'
+import { systemLocale } from '../region'
 import { log } from '../log'
 import { keepJson, stored } from '../stored'
 import { isMobile, isNative } from '../tauri'
@@ -56,7 +56,7 @@ function common() {
     native,
     mobile: isMobile,
     agent: navigator.userAgent,
-    language: i18n.language,
+    language: systemLocale(),
     width: window.screen.width,
     signedIn: account.signedIn,
   })

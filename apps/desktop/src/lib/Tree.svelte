@@ -14,7 +14,6 @@
     nestedIn,
     renameSteps,
   } from './folder-notes'
-  import { t } from './i18n.svelte'
   import { staysOn } from './caret'
   import { focusList } from './focus'
   import { menu } from './menu.svelte'
@@ -55,7 +54,6 @@
   import { ListView, tokenFloor, tokenRow } from './row-window.svelte'
   import { folderOf, samePath } from './space-paths'
   import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from './tree-flat'
-  import { steppedKey } from './direction'
   import { onTwist, treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './viewport.svelte'
   import type { Entry } from './workspace.svelte'
@@ -277,7 +275,7 @@
 
   function walkKey(event: KeyboardEvent): string | null {
     for (const [id, key] of TREE_MOVES) {
-      if (shortcuts.pressed(id, event)) return steppedKey(key)
+      if (shortcuts.pressed(id, event)) return key
     }
 
     return null
@@ -918,7 +916,7 @@
 <ul
   bind:this={list}
   role="tree"
-  aria-label={t('Files')}
+  aria-label="Files"
   aria-multiselectable="true"
   onkeydown={onKey}
   onfocusin={onFocus}
@@ -1040,10 +1038,10 @@
       {#if !__EVEN_PLUGIN__ && entry.evicted}
         {#await import('./CloudMark.svelte') then mark}<mark.default path={entry.path} />{/await}
       {/if}
-      {#if othersIn(opens)}<SharedMark label={t('Also open elsewhere')} />
+      {#if othersIn(opens)}<SharedMark label="Also open elsewhere" />
       {:else if isSharedItem(opens)}<SharedMark />{/if}
       {#if workspace.protection.any && workspace.activeSpace && workspace.protection.marked(workspace.activeSpace.root, entry.path)}<SharedMark
-          label={t('Protected')}
+          label="Protected"
           icon={LOCK_MARK}
         />{/if}
       {#if syncMark.asked}{#await syncMark.asked then Held}<Held path={opens} />{/await}{/if}

@@ -3,7 +3,6 @@
   import { cubicOut } from 'svelte/easing'
   import Thinking from '../Thinking.svelte'
   import { copyText } from '../../clipboard'
-  import { t } from '../../i18n.svelte'
   import { dur, fade, fly } from '../../motion'
   import type { Place } from '../../row-window'
   import { scrollbar } from '../../scrollbar'
@@ -154,20 +153,20 @@
   <div class="talk" bind:this={talk} use:scrollbar use:slides={sideways} onscroll={onScroll}>
     {#if !ready}
       <p class="empty-text">
-        {t('Add an AI provider in Settings first.')}
-        <button class="link" onclick={() => settings.show('ai')}>{t('Settings › AI')}</button>
+        Add an AI provider in Settings first.
+        <button class="link" onclick={() => settings.show('ai')}>Settings › AI</button>
       </p>
     {/if}
 
     {#if parent}
       <button class="orden-row is-short up" onclick={() => void chat.openThread(parent.id)}>
-        <span class="orden-row-label">↰ {parent.title || t('Untitled')}</span>
+        <span class="orden-row-label">↰ {parent.title || 'Untitled'}</span>
       </button>
     {/if}
 
     {#if hello && recent.length}
       <div class="home" in:fade={{ duration: dur(150) }}>
-        <h2 class="heading">{t('Chats')}</h2>
+        <h2 class="heading">Chats</h2>
         <ul class="recent" onpointerleave={() => (pointed = -1)}>
           <ChatWindow heads={recent}>
             {#snippet row(one: ThreadHead, index: number, place: Place)}
@@ -187,7 +186,7 @@
           {#if here === 'side' && !all && chats.length > recent.length}
             <li>
               <button class="orden-row is-short all" onclick={() => (all = true)}>
-                <span class="orden-row-label">{t('Show all')}</span>
+                <span class="orden-row-label">Show all</span>
                 <span class="orden-row-meta">{chats.length}</span>
               </button>
             </li>
@@ -218,8 +217,8 @@
               <span class="tools">
                 <button
                   class="orden-glyph tool"
-                  title={t('Copy')}
-                  aria-label={t('Copy')}
+                  title="Copy"
+                  aria-label="Copy"
                   onclick={() => void copy(turn.id, words)}
                 >
                   <svg viewBox="0 0 13 13">
@@ -235,16 +234,16 @@
                 {#if !running}
                   <button
                     class="orden-glyph tool"
-                    title={t('Edit')}
-                    aria-label={t('Edit')}
+                    title="Edit"
+                    aria-label="Edit"
                     onclick={() => chat.startEdit(turn.id)}
                   >
                     <svg viewBox="0 0 13 13"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
                   </button>
                   <button
                     class="orden-glyph tool"
-                    title={t('Rewind')}
-                    aria-label={t('Rewind')}
+                    title="Rewind"
+                    aria-label="Rewind"
                     onclick={() => chat.rewind(turn.id)}
                   >
                     <svg viewBox="0 0 13 13"
@@ -296,8 +295,8 @@
   {#if !atEnd && turns.length}
     <button
       class="down orden-layer"
-      title={t('Scroll to the end')}
-      aria-label={t('Scroll to the end')}
+      title="Scroll to the end"
+      aria-label="Scroll to the end"
       onclick={down}
       transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
     >

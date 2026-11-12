@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { prompt } from '../prompt.svelte'
   import Select from '../Select.svelte'
   import Swatches from '../Swatches.svelte'
@@ -29,9 +28,9 @@
 
   const groups = $derived(groupsOf(remote.hosts, remote.kept))
   const groupChoices = $derived([
-    { value: '', label: t('No group') },
+    { value: '', label: 'No group' },
     ...groups.map((group) => ({ value: group, label: group })),
-    { value: NEW, label: t('New group') },
+    { value: NEW, label: 'New group' },
   ])
 
   async function grouped(value: string) {
@@ -39,15 +38,15 @@
       about({ group: value || undefined })
       return
     }
-    const named = await prompt.ask({ title: t('New group'), confirmLabel: t('Add') })
+    const named = await prompt.ask({ title: 'New group', confirmLabel: 'Add' })
     if (named?.trim()) about({ group: named.trim() })
   }
 
   const colours = $derived([
-    { value: '', label: t('No colour'), colour: 'var(--line-strong)' },
+    { value: '', label: 'No colour', colour: 'var(--line-strong)' },
     ...COLOURS.map((one) => ({
       value: one,
-      label: t('Colour {number}', { number: one }),
+      label: `Colour ${one}`,
       colour: `var(--canvas-${one})`,
     })),
   ])
@@ -57,7 +56,7 @@
   function placed(typed: string, field: HTMLInputElement) {
     const wanted = destinationOf(typed)
     if (!wanted) {
-      problem = t('Not an address')
+      problem = 'Not an address'
       field.value = host.detail ?? host.hostname ?? ''
       return
     }
@@ -77,7 +76,7 @@
   }
 
   async function remove() {
-    const sure = await prompt.confirm({ title: host.name, confirmLabel: t('Remove'), danger: true })
+    const sure = await prompt.confirm({ title: host.name, confirmLabel: 'Remove', danger: true })
     if (!sure) return
     onback()
     await remote.keep((kept) => withoutOwn(kept, host.id))
@@ -85,9 +84,8 @@
 </script>
 
 <header class="who">
-  <button class="orden-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
-    <svg class="orden-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg
-    >
+  <button class="orden-glyph back" aria-label="Back" title="Back" onclick={onback}>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
   </button>
   <HostMark colour={host.colour} />
   <span class="name">
@@ -95,7 +93,7 @@
       <input
         class="title"
         value={host.name}
-        aria-label={t('Name')}
+        aria-label="Name"
         spellcheck="false"
         autocomplete="off"
         onchange={(event) => renamed(event.currentTarget.value, event.currentTarget)}
@@ -108,14 +106,14 @@
 
 <div class="card">
   <label class="orden-setting">
-    <span class="name">{t('Address')}</span>
+    <span class="name">Address</span>
     {#if host.own}
       <input
         class="orden-field is-value address"
         value={host.hostname
           ? said({ user: host.user, hostname: host.hostname, port: host.port })
           : ''}
-        aria-label={t('Address')}
+        aria-label="Address"
         spellcheck="false"
         autocomplete="off"
         onchange={(event) => placed(event.currentTarget.value, event.currentTarget)}
@@ -126,11 +124,11 @@
   </label>
 
   <div class="orden-setting">
-    <span class="name">{t('Colour')}</span>
+    <span class="name">Colour</span>
     <div class="orden-setting-value is-wrapping">
       <Swatches
         options={colours}
-        label={t('Colour')}
+        label="Colour"
         chosen={host.colour ?? ''}
         onchoose={(value: string) => about({ colour: (value || undefined) as About['colour'] })}
       />
@@ -138,10 +136,10 @@
   </div>
 
   <div class="orden-setting">
-    <span class="name">{t('Group')}</span>
+    <span class="name">Group</span>
     <Select
       plain
-      label={t('Group')}
+      label="Group"
       value={host.group ?? ''}
       options={groupChoices}
       onchange={(value: string) => void grouped(value)}
@@ -150,8 +148,8 @@
 
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="orden-setting pressable" onclick={() => about({ pinned: !host.pinned })}>
-    <span class="name">{t('Pin')}</span>
-    <Switch on={host.pinned} label={t('Pin')} onchange={(on: boolean) => about({ pinned: on })} />
+    <span class="name">Pin</span>
+    <Switch on={host.pinned} label="Pin" onchange={(on: boolean) => about({ pinned: on })} />
   </div>
 </div>
 
@@ -161,12 +159,11 @@
 
 <div class="card">
   {#if host.own}
-    <button class="orden-action is-danger" onclick={() => void remove()}>{t('Remove')}</button>
+    <button class="orden-action is-danger" onclick={() => void remove()}>Remove</button>
   {:else if remote.file}
     <button
       class="orden-action"
-      onclick={() => void invoke('remote_config_open').catch(() => undefined)}
-      >{t('Open config')}</button
+      onclick={() => void invoke('remote_config_open').catch(() => undefined)}>Open config</button
     >
   {/if}
 </div>

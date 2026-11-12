@@ -9,7 +9,7 @@ function sourceFiles(dir: string, found: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) {
-      if (name !== 'locales') sourceFiles(path, found)
+      sourceFiles(path, found)
     } else if (/\.(svelte|ts)$/.test(name) && !name.endsWith('.test.ts')) {
       found.push(path)
     }

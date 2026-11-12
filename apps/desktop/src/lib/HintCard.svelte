@@ -2,7 +2,6 @@
   import { cubicOut } from 'svelte/easing'
   import Cross from './Cross.svelte'
   import { type Hint, hints } from './hints.svelte'
-  import { t } from './i18n.svelte'
   import { hang } from './portal'
   import { dur, fly } from './motion'
 
@@ -51,7 +50,7 @@
     transition:fly={{ y: side === 'above' ? 4 : -4, duration: dur(180), easing: cubicOut }}
   >
     <button class="say" onclick={press}>{text}</button>
-    <button class="orden-glyph shut" aria-label={t('Dismiss')} onclick={() => hints.dismiss(hint)}>
+    <button class="orden-glyph shut" aria-label="Dismiss" onclick={() => hints.dismiss(hint)}>
       <Cross small />
     </button>
   </div>

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import SettingsAliases from './SettingsAliases.svelte'
   import SettingsExport from './SettingsExport.svelte'
   import SettingsGeneral from './SettingsGeneral.svelte'
@@ -15,23 +14,23 @@
   function tabName(one: SettingsTab): string {
     switch (one) {
       case 'general':
-        return t('General')
+        return 'General'
       case 'security':
-        return t('Security')
+        return 'Security'
       case 'aliases':
-        return t('Aliases')
+        return 'Aliases'
       case 'import':
-        return t('Import')
+        return 'Import'
       case 'export':
-        return t('Export')
+        return 'Export'
     }
   }
 </script>
 
-<section class="settings" aria-label={t('Settings')}>
+<section class="settings" aria-label="Settings">
   <header class="head">
-    <h2 class="title">{t('Settings')}</h2>
-    <div class="orden-segmented tabs" role="tablist" aria-label={t('Settings')}>
+    <h2 class="title">Settings</h2>
+    <div class="orden-segmented tabs" role="tablist" aria-label="Settings">
       {#each SETTINGS_TABS as one (one)}
         <button
           type="button"

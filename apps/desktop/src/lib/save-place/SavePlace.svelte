@@ -3,7 +3,6 @@
   import { cubicOut } from 'svelte/easing'
   import FileMark from '../FileMark.svelte'
   import { rank } from '../fuzzy'
-  import { t } from '../i18n.svelte'
   import { LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { selectAll } from '../select-all'
@@ -109,7 +108,7 @@
   bind:this={bubble}
   class="orden-layer bubble"
   role="dialog"
-  aria-label={t('Save')}
+  aria-label="Save"
   style:top="{at.top}px"
   style:left="{at.left}px"
   style:width="{WIDTH}px"
@@ -121,7 +120,7 @@
       class="orden-field"
       bind:this={named}
       bind:value={name}
-      aria-label={t('Name')}
+      aria-label="Name"
       spellcheck="false"
       use:selectAll
     />
@@ -131,7 +130,7 @@
       <input
         class="orden-field"
         bind:value={query}
-        aria-label={t('Save to')}
+        aria-label="Save to"
         spellcheck="false"
         onkeydown={onListKey}
         oninput={() => (cursor = 0)}
@@ -161,7 +160,7 @@
       <button
         type="button"
         class="orden-field where"
-        aria-label={t('Save to')}
+        aria-label="Save to"
         onclick={() => (choosing = true)}
       >
         {#if place.space}
@@ -177,7 +176,7 @@
     {/if}
 
     <div class="row">
-      <button type="submit" class="orden-button">{t('Save')}</button>
+      <button type="submit" class="orden-button">Save</button>
     </div>
   </form>
 </div>

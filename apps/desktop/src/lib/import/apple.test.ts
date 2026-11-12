@@ -122,7 +122,7 @@ describe("Apple Notes off the Mac's own database", () => {
   })
 
   test('says what Notes keeps to itself, with the counts', async () => {
-    const said = (await planFor(read())).lost.map((one) => one.text)
+    const said = (await planFor(read())).lost
 
     expect(said.some((one) => one.includes('behind a password'))).toBe(true)
     expect(said.some((one) => one.includes('Recently Deleted'))).toBe(true)

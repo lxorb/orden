@@ -1,7 +1,6 @@
 <script lang="ts">
   import CopyButton from '../CopyButton.svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { t } from '../i18n.svelte'
   import { importPrompt, MAIN_NOTES, NOTES_APPS, type NotesApp } from './catalog'
   import { matching, phoneBringing, requestKey, typedName } from './flow'
   import RequestRow from './RequestRow.svelte'
@@ -83,18 +82,18 @@
 {/snippet}
 
 <Screen
-  title={t('Bring your notes')}
+  title="Bring your notes"
   onback={view === 'other' ? leave : null}
   primary={{
-    label: bringing ? t('Importing') : t('Continue'),
+    label: bringing ? 'Importing' : 'Continue',
     disabled: chosen === null,
     busy: bringing,
     onclick: () => void done(),
   }}
-  quiet={{ label: t('Skip'), disabled: bringing, onclick: () => setup.next() }}
+  quiet={{ label: 'Skip', disabled: bringing, onclick: () => setup.next() }}
 >
   {#if view === 'main'}
-    <div class="o-grid rise" role="radiogroup" aria-label={t('Bring your notes')}>
+    <div class="o-grid rise" role="radiogroup" aria-label="Bring your notes">
       {#each main as one (one.id)}
         <Tile
           name={one.name}
@@ -104,23 +103,23 @@
           onpick={() => pick(one.id)}
         />
       {/each}
-      <Tile name={t('Other')} checked={false} glyph={more} onpick={other} />
+      <Tile name="Other" checked={false} glyph={more} onpick={other} />
     </div>
   {:else}
     <div class="o-pane pane-in">
       <SearchField
         value={query}
         onvalue={(typed: string) => (query = typed)}
-        label={t('Bring your notes')}
+        label="Bring your notes"
       />
       <div class="o-scroll">
-        <div class="o-grid" role="radiogroup" aria-label={t('Bring your notes')}>
+        <div class="o-grid" role="radiogroup" aria-label="Bring your notes">
           {#each shown as one (one.id)}
             <Tile
               name={one.name}
               icon={one.icon}
               colour={one.colour}
-              later={one.bring ? '' : t('Not yet')}
+              later={one.bring ? '' : 'Not yet'}
               checked={picked === one.id}
               onpick={() => pick(one.id)}
             />
@@ -128,7 +127,7 @@
           {#if nothing}
             <Tile
               name={typedName(query)}
-              later={t('Request')}
+              later="Request"
               checked={picked === UNLISTED}
               onpick={() => pick(UNLISTED)}
             />
@@ -150,14 +149,14 @@
       </div>
       <div class="anyway">
         <div class="anyway-head">
-          <span>{t('Here’s how you can import it anyway')}</span>
+          <span>Here’s how you can import it anyway</span>
           <CopyButton value={prompt} />
         </div>
         <pre class="prompt">{prompt}</pre>
       </div>
     </div>
   {:else if elsewhere}
-    <p class="elsewhere pane-in" role="status">{t('Do this on your computer')}</p>
+    <p class="elsewhere pane-in" role="status">Do this on your computer</p>
   {/if}
 </Screen>
 

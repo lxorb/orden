@@ -1,5 +1,6 @@
 import { documentOf, type EditorView, type SharedDoc } from '@orden/editor'
-import { i18n, message, t } from '../i18n.svelte'
+import { systemLocale } from '../region'
+import { message } from '../message'
 import { complete, wasStopped } from './complete'
 import { defaultLanguage, nameOfLanguage, rewriteMessages, stillThere, type Verb } from './rewrite'
 import { rewriteSheet } from '../surfaces.svelte'
@@ -33,7 +34,7 @@ class Rewriting {
     this.verb = null
     this.running = false
     this.trouble = null
-    this.language = defaultLanguage(i18n.language)
+    this.language = defaultLanguage(systemLocale())
     this.open = true
   }
 
@@ -44,7 +45,7 @@ class Rewriting {
     this.trouble = null
 
     if (!provider) {
-      this.trouble = t('Add an AI provider in Settings first.')
+      this.trouble = 'Add an AI provider in Settings first.'
       return
     }
 
@@ -64,7 +65,7 @@ class Rewriting {
     })
       .catch((error: unknown) => {
         if (this.stopper !== stopper || wasStopped(error)) return
-        this.trouble = message(error, t('The model did not answer.'))
+        this.trouble = message(error, 'The model did not answer.')
       })
       .finally(() => {
         if (this.stopper === stopper) this.running = false
@@ -81,7 +82,7 @@ class Rewriting {
         ? stillThere(view.state.doc.toString(), place, this.before)
         : null
     if (!now) {
-      this.trouble = t('The words chosen are no longer in the note, so nothing was replaced.')
+      this.trouble = 'The words chosen are no longer in the note, so nothing was replaced.'
       return
     }
 

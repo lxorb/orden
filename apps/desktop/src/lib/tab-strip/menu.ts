@@ -1,6 +1,5 @@
 import { agentMarks } from '../agent-marks.svelte'
 import { copyText } from '../clipboard'
-import { plural, t } from '../i18n.svelte'
 import { archiveEntry, DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
 import { bookmarkAll, webDataEntry } from '../row-menu'
 import { shortcuts } from '../shortcuts.svelte'
@@ -34,15 +33,15 @@ function agentEntries(tab: Tab): MenuEntry[] {
 
   return [
     worn.stopped
-      ? { label: t('Resume'), run: () => act(tab.id, 'resume') }
-      : { label: t('Stop'), run: () => act(tab.id, 'stop') },
+      ? { label: 'Resume', run: () => act(tab.id, 'resume') }
+      : { label: 'Stop', run: () => act(tab.id, 'stop') },
     DIVIDER,
   ]
 }
 
 function keepEntry(tab: Tab): MenuEntry[] {
   if (tab.id !== workspace.previewTabId) return []
-  return [{ label: t('Keep open'), run: () => workspace.keep(tab.id) }]
+  return [{ label: 'Keep open', run: () => workspace.keep(tab.id) }]
 }
 
 function paneEntries(tab: Tab): MenuEntry[] {
@@ -50,28 +49,28 @@ function paneEntries(tab: Tab): MenuEntry[] {
 
   if (workspace.canSplit('row', tab.id)) {
     entries.push({
-      label: t('Split right'),
+      label: 'Split right',
       hint: shortcuts.hint('pane.split-right'),
       run: () => workspace.split('row', tab.id),
     })
   }
   if (workspace.canSplit('column', tab.id)) {
     entries.push({
-      label: t('Split down'),
+      label: 'Split down',
       hint: shortcuts.hint('pane.split-down'),
       run: () => workspace.split('column', tab.id),
     })
   }
   if (workspace.canMoveToOtherPane(tab.id)) {
     entries.push({
-      label: t('Move to other pane'),
+      label: 'Move to other pane',
       hint: shortcuts.hint('pane.move-tab'),
       run: () => moveToOtherPane(tab.id),
     })
   }
   if (!viewport.touch) {
     entries.push({
-      label: workspace.panes.fills === null ? t('Full window') : t('Leave full window'),
+      label: workspace.panes.fills === null ? 'Full window' : 'Leave full window',
       hint: shortcuts.hint('app.fill-tab'),
       run: () => void toggleFill(tab.id),
     })
@@ -85,7 +84,7 @@ function readingEntry(tab: Tab): MenuEntry[] {
 
   return [
     {
-      label: tab.reading ? t('Leave reading') : t('Reading'),
+      label: tab.reading ? 'Leave reading' : 'Reading',
       hint: shortcuts.hint('app.reading'),
       run: () => workspace.toggleReading(tab.id),
     },
@@ -99,19 +98,19 @@ function pageEntries(tab: Tab): MenuEntry[] {
   const url = pages.addressOf(tab.id) ?? tab.address ?? null
   return [
     {
-      label: t('Reload'),
+      label: 'Reload',
       disabled: url === null,
       run: () => void pages.step(tab.id, 'reload'),
     },
     {
-      label: t('Copy link'),
+      label: 'Copy link',
       disabled: url === null,
       run: () => {
         if (url !== null) void copyText(url)
       },
     },
     {
-      label: pages.of(tab.id).muted ? t('Unmute site') : t('Mute site'),
+      label: pages.of(tab.id).muted ? 'Unmute site' : 'Mute site',
       hint: shortcuts.hint('web.mute'),
       disabled: url === null,
       run: () => void muting(tab.id),
@@ -132,7 +131,7 @@ function shellEntries(tab: Tab): MenuEntry[] {
   if (isOnlineTab(tab)) {
     return [
       {
-        label: t('Open another'),
+        label: 'Open another',
         run: () => void import('../online/open').then(({ openOnline }) => openOnline(true)),
       },
       ...terminalIconRows(tab),
@@ -144,7 +143,7 @@ function shellEntries(tab: Tab): MenuEntry[] {
   const beside = { folder: spec?.folder ?? null, beside: tab.id }
   return [
     {
-      label: t('Open another'),
+      label: 'Open another',
       run: () => void openTerminal(spec?.shell, beside),
       more: () => shellRows((shell) => void openTerminal(shell.id, beside)),
     },
@@ -158,7 +157,7 @@ function tabEntries(tab: Tab): MenuEntry[] {
     ...(renamesFromTab(tab)
       ? [
           {
-            label: t('Rename'),
+            label: 'Rename',
             hint: shortcuts.hint('tabs.rename'),
             run: () => renameFromTab(tab.id),
           },
@@ -167,7 +166,7 @@ function tabEntries(tab: Tab): MenuEntry[] {
     ...(workspace.canDuplicateTab(tab) && tab.kind !== 'terminal'
       ? [
           {
-            label: t('Duplicate'),
+            label: 'Duplicate',
             hint: shortcuts.hint('app.duplicate-tab'),
             run: () => duplicateTab(tab.id),
           },
@@ -184,7 +183,7 @@ function inListEntry(tab: Tab): MenuEntry[] {
 
   return [
     {
-      label: t('Show in the file list'),
+      label: 'Show in the file list',
       hint: shortcuts.hint('app.reveal'),
       run: () => workspace.revealNote(path),
     },
@@ -196,7 +195,7 @@ function reopenEntry(): MenuEntry[] {
 
   return [
     {
-      label: t('Reopen closed tab'),
+      label: 'Reopen closed tab',
       hint: shortcuts.hint('app.reopen'),
       run: () => void workspace.reopenClosed(),
     },
@@ -206,12 +205,12 @@ function reopenEntry(): MenuEntry[] {
 function closeEntries(tab: Tab): MenuEntry[] {
   return [
     {
-      label: t('Close'),
+      label: 'Close',
       hint: shortcuts.hint('app.close'),
       run: () => void workspace.closeAsking(tab.id),
     },
     {
-      label: t('Close others'),
+      label: 'Close others',
       disabled: workspace.closesAround(tab.id, 'others') === 0,
       run: () => void workspace.closeAround(tab.id, 'others'),
     },
@@ -222,7 +221,7 @@ function closeEntries(tab: Tab): MenuEntry[] {
       run: () => void workspace.closeAround(tab.id, 'right'),
     },
     {
-      label: t('Close all'),
+      label: 'Close all',
       hint: shortcuts.hint('app.close-all'),
       disabled: workspace.closesAround(tab.id, 'all') === 0,
       run: () => void workspace.closeAround(tab.id, 'all'),
@@ -234,7 +233,7 @@ function closeEntries(tab: Tab): MenuEntry[] {
 function saveEntry(tab: Tab): MenuEntry[] {
   if (!isUnsaved(tab.note)) return []
 
-  return [{ label: t('Save'), hint: shortcuts.saveHint, run: () => askPlace(tab.id) }, DIVIDER]
+  return [{ label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(tab.id) }, DIVIDER]
 }
 
 function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
@@ -249,7 +248,7 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
     ...(web.length
       ? [
           {
-            label: t('Reload'),
+            label: 'Reload',
             run: () => {
               for (const one of web) void pages.step(one.id, 'reload')
             },
@@ -260,7 +259,7 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
     ...(copies
       ? [
           {
-            label: t('Duplicate'),
+            label: 'Duplicate',
             hint: shortcuts.hint('app.duplicate-tab'),
             run: () => duplicateMany(ids),
           },
@@ -270,12 +269,12 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
     ...movedToSpace(tabs),
     DIVIDER,
     {
-      label: t('Close'),
+      label: 'Close',
       hint: shortcuts.hint('app.close'),
       run: () => void workspace.closeMany(ids),
     },
     {
-      label: t('Close others'),
+      label: 'Close others',
       disabled: others.length === 0,
       run: () => void workspace.closeMany(others.map((one) => one.id)),
     },
@@ -286,7 +285,7 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
       run: () => void workspace.closeAround(last, 'right'),
     },
     {
-      label: t('Close all'),
+      label: 'Close all',
       hint: shortcuts.hint('app.close-all'),
       disabled: workspace.closesAround(last, 'all') === 0,
       run: () => void workspace.closeAround(last, 'all'),
@@ -296,7 +295,7 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
       ? [
           DIVIDER,
           {
-            label: t('Move to other pane'),
+            label: 'Move to other pane',
             hint: shortcuts.hint('pane.move-tab'),
             run: () => moveManyToOtherPane(ids),
           },
@@ -312,7 +311,7 @@ function pickOf(tab: Tab, paneId: string): Tab[] {
 
 export function tabMenuTitle(tab: Tab, paneId: string): string {
   const many = pickOf(tab, paneId).length
-  return many ? plural(many, { one: '{count} tab', other: '{count} tabs' }) : tab.shown
+  return many ? (many === 1 ? '1 tab' : `${many} tabs`) : tab.shown
 }
 
 export function trailMenu(tab: Tab): MenuEntry[] {

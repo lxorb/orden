@@ -1,20 +1,19 @@
-import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry } from './menu.svelte'
 import { SORT_MODES, type SortMode } from './tree-order'
 import { workspace } from './workspace.svelte'
 
 const WORDS: Record<SortMode, () => string> = {
-  name: () => t('Name, A to Z'),
-  'name-desc': () => t('Name, Z to A'),
-  'modified-desc': () => t('Modified, newest first'),
-  'modified-asc': () => t('Modified, oldest first'),
-  'created-desc': () => t('Created, newest first'),
-  'created-asc': () => t('Created, oldest first'),
-  manual: () => t('Manual'),
+  name: () => 'Name, A to Z',
+  'name-desc': () => 'Name, Z to A',
+  'modified-desc': () => 'Modified, newest first',
+  'modified-asc': () => 'Modified, oldest first',
+  'created-desc': () => 'Created, newest first',
+  'created-asc': () => 'Created, oldest first',
+  manual: () => 'Manual',
 }
 
 export function orderTitle(): string {
-  return t('Order of the files')
+  return 'Order of the files'
 }
 
 export function orderMenu(): MenuEntry[] {

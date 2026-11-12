@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { answer, frameWord, method } from '../mobile/bridge'
 import { invoke, isMobile, platform } from '../tauri'
 
@@ -11,9 +10,9 @@ export function deviceName(): string {
     case 'ios':
       return 'Face ID'
     case 'android':
-      return t('Screen lock')
+      return 'Screen lock'
     default:
-      return t('System password')
+      return 'System password'
   }
 }
 

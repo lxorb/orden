@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../../i18n.svelte'
   import { dur, fly } from '../../motion'
   import { asking, type ReaderAsk } from './asking.svelte'
 
@@ -31,12 +30,10 @@
 
   <div class="rows">
     <button class="orden-button is-quiet" onclick={() => asking.answer(question.id, null)}>
-      {t('Dismiss')}
+      Dismiss
     </button>
     {#if question.kind === 'text'}
-      <button class="orden-button" onclick={() => asking.answer(question.id, typed)}>
-        {t('Send')}
-      </button>
+      <button class="orden-button" onclick={() => asking.answer(question.id, typed)}> Send </button>
     {:else}
       {#each question.choices as choice (choice)}
         <button class="orden-button" onclick={() => asking.answer(question.id, choice)}>

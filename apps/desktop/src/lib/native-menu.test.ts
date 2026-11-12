@@ -113,7 +113,6 @@ function sources(over: Partial<MenuBarSources> = {}): MenuBarSources {
     keyFor: (command) => KEYS[command] ?? null,
     isWindowCommand: (command) => command.startsWith('app.'),
     words: WORDS,
-    english: false,
     ...over,
   }
 }
@@ -227,8 +226,8 @@ describe('the strip', () => {
       '[Services] Services',
       '---',
       '[Hide] Hide Orden',
-      '[HideOthers] Hide others',
-      '[ShowAll] Show all',
+      '[HideOthers] Hide Others',
+      '[ShowAll] Show All',
       '---',
       '[Quit] Quit Orden',
     ])
@@ -242,26 +241,26 @@ describe('the strip', () => {
   test('File has the making and closing rows around the in-window menu’s', () => {
     const file = menu(bar(), 'file')
     expect(read(file)).toEqual([
-      'New note',
-      'New tab',
+      'New Note',
+      'New Tab',
       '---',
       'Print',
       '---',
-      'Version history',
+      'Version History',
       '---',
-      'Close note',
+      'Close Note',
     ])
-    expect(itemIn(file, 'New tab').accelerator).toBe('Cmd+T')
-    expect(itemIn(file, 'Close note').accelerator).toBe('Cmd+W')
+    expect(itemIn(file, 'New Tab').accelerator).toBe('Cmd+T')
+    expect(itemIn(file, 'Close Note').accelerator).toBe('Cmd+W')
   })
 
   test('and no doubled rule where the in-window menu has nothing under File', () => {
     const groups = GROUPS.map((one) => (one.id === 'file' ? { ...one, rows: [] } : one))
     expect(read(menu(bar({ groups }), 'file'))).toEqual([
-      'New note',
-      'New tab',
+      'New Note',
+      'New Tab',
       '---',
-      'Close note',
+      'Close Note',
     ])
   })
 
@@ -272,8 +271,8 @@ describe('the strip', () => {
       '---',
       '[Copy] Copy',
       '[Paste] Paste',
-      'Paste as plain text',
-      'Select all',
+      'Paste as Plain Text',
+      'Select All',
     ])
   })
 
@@ -285,11 +284,11 @@ describe('the strip', () => {
       standIn: 'undo',
     })
     expect(itemIn(edit, 'Redo')).toMatchObject({ accelerator: 'Cmd+Shift+Z', standIn: 'redo' })
-    expect(itemIn(edit, 'Select all')).toMatchObject({
+    expect(itemIn(edit, 'Select All')).toMatchObject({
       accelerator: 'Cmd+A',
       standIn: 'selectAll',
     })
-    expect(itemIn(edit, 'Paste as plain text').standIn).toBeUndefined()
+    expect(itemIn(edit, 'Paste as Plain Text').standIn).toBeUndefined()
   })
 
   test('which serve whatever has the keyboard, so the note cannot grey them', () => {
@@ -303,7 +302,7 @@ describe('the strip', () => {
     }
     const edit = menu(bar({ groups: [greyed] }), 'edit')
     expect(itemIn(edit, 'Undo')).toMatchObject({ enabled: true, anywhere: true })
-    expect(itemIn(edit, 'Paste as plain text')).toMatchObject({ enabled: false, anywhere: false })
+    expect(itemIn(edit, 'Paste as Plain Text')).toMatchObject({ enabled: false, anywhere: false })
   })
 
   test('Window is the system’s, with walking the tabs in it', () => {
@@ -313,17 +312,17 @@ describe('the strip', () => {
       '[Minimize] Minimize',
       '[Maximize] Zoom',
       '---',
-      'Next note',
+      'Next Note',
       '---',
-      '[BringAllToFront] Bring all to front',
+      '[BringAllToFront] Bring All to Front',
     ])
-    expect(itemIn(window, 'Next note').accelerator).toBe('Ctrl+Tab')
+    expect(itemIn(window, 'Next Note').accelerator).toBe('Ctrl+Tab')
   })
 
   test('Help is the system’s, and opens with the list of keys', () => {
     const help = menu(bar(), 'help')
     expect(help.role).toBe('help')
-    expect(read(help)).toEqual(['Keyboard shortcuts', '---', 'Source code'])
+    expect(read(help)).toEqual(['Keyboard Shortcuts', '---', 'Source Code'])
   })
 
   test('keeps the ticks, the greys and the nesting', () => {
@@ -336,7 +335,7 @@ describe('the strip', () => {
       checked: false,
       accelerator: 'Cmd+Ctrl+F',
     })
-    expect(itemIn(menu(bar(), 'file'), 'Version history').enabled).toBe(false)
+    expect(itemIn(menu(bar(), 'file'), 'Version History').enabled).toBe(false)
   })
 
   test('gives no row a key a system row holds', () => {
@@ -355,9 +354,9 @@ describe('the strip', () => {
   })
 
   test('knows a row of the window’s from a row of the note’s', () => {
-    expect(itemIn(menu(bar(), 'file'), 'Close note').anywhere).toBe(true)
+    expect(itemIn(menu(bar(), 'file'), 'Close Note').anywhere).toBe(true)
     expect(itemIn(menu(bar(), 'format'), 'Bold').anywhere).toBe(false)
-    expect(itemIn(menu(bar(), 'file'), 'Version history')).toMatchObject({
+    expect(itemIn(menu(bar(), 'file'), 'Version History')).toMatchObject({
       anywhere: true,
       key: null,
     })
@@ -376,7 +375,7 @@ describe('the strip', () => {
       anywhere: true,
       enabled: true,
     })
-    expect(itemIn(view, 'Hard reload')).toMatchObject({
+    expect(itemIn(view, 'Hard Reload')).toMatchObject({
       accelerator: 'Cmd+Shift+R',
       enabled: false,
     })
@@ -442,11 +441,11 @@ describe('the strip, changed', () => {
     const after = bar({
       groups: GROUPS.map((one) => (one.id === 'view' ? view : one.id === 'file' ? file : one)),
       keyFor: (command) => (command === 'format.bold' ? 'Mod-Shift-b' : (KEYS[command] ?? null)),
-      words: { ...WORDS, quit: 'Orden beenden' },
+      words: { ...WORDS, quit: 'Leave Orden' },
     })
 
     expect(changesBetween(before, after)).toEqual([
-      { id: 'orden.quit', text: 'Orden beenden' },
+      { id: 'orden.quit', text: 'Leave Orden' },
       { id: 'file.5', enabled: true },
       { id: 'format.0', accelerator: 'Cmd+Shift+B' },
       { id: 'view.0', checked: true },
@@ -587,17 +586,9 @@ describe('the words a Mac writes its menus in', () => {
     expect(titled('Heading 1')).toBe('Heading 1')
   })
 
-  test('in English the strip is in title case', () => {
-    const file = menu(bar({ english: true }), 'file')
-
-    expect(read(file)).toContain('Close Note')
-    expect(read(menu(bar({ english: true }), 'window'))).toContain(
-      '[BringAllToFront] Bring All to Front',
-    )
-  })
-
-  test('and in any other language as the language writes it', () => {
-    expect(read(menu(bar(), 'file'))).toContain('Close note')
+  test('the strip is in title case', () => {
+    expect(read(menu(bar(), 'file'))).toContain('Close Note')
+    expect(read(menu(bar(), 'window'))).toContain('[BringAllToFront] Bring All to Front')
   })
 
   test('a row that asks first ends in an ellipsis', () => {
@@ -629,8 +620,8 @@ describe('the words a Mac writes its menus in', () => {
     expect(find?.kind === 'submenu' && read(find)).toEqual([
       'Find…',
       'Replace…',
-      'Find next',
-      'Find previous',
+      'Find Next',
+      'Find Previous',
     ])
   })
 })

@@ -71,8 +71,7 @@ describe('where a flight lands', () => {
   })
 
   test('and with no glyph, in the corner at the end of the strip', () => {
-    expect(cornerOf({ width: 1000, height: 600 }, false)).toEqual({ x: 968, y: 32 })
-    expect(cornerOf({ width: 1000, height: 600 }, true)).toEqual({ x: 32, y: 32 })
+    expect(cornerOf({ width: 1000, height: 600 })).toEqual({ x: 968, y: 32 })
   })
 })
 

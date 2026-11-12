@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { CardSize, RowKinds } from '@orden/bases'
-  import { t } from '../i18n.svelte'
   import type { MenuEntry } from '../menu.svelte'
   import { segmented } from '../slide'
   import { viewport } from '../viewport.svelte'
@@ -46,14 +45,14 @@
   ])
 
   const SIZES: Record<CardSize, string> = {
-    small: t('Small'),
-    medium: t('Medium'),
-    large: t('Large'),
+    small: 'Small',
+    medium: 'Medium',
+    large: 'Large',
   }
   const KINDS: readonly { kind: RowKinds; label: string }[] = [
-    { kind: 'notes', label: t('Notes') },
-    { kind: 'tasks', label: t('Tasks') },
-    { kind: 'both', label: t('Both') },
+    { kind: 'notes', label: 'Notes' },
+    { kind: 'tasks', label: 'Tasks' },
+    { kind: 'both', label: 'Both' },
   ]
 
   function pick(next: Layout) {
@@ -110,7 +109,7 @@
 {/snippet}
 
 <div class="settings">
-  <p class="orden-section">{t('Layout')}</p>
+  <p class="orden-section">Layout</p>
   <div class="layouts">
     {#each offered as one (one)}
       <button
@@ -124,12 +123,12 @@
   </div>
 
   {#if groups}
-    <p class="orden-section">{t('Group')}</p>
+    <p class="orden-section">Group</p>
     <ArrangeBuilder {kit} part="group" />
   {/if}
 
   {#if board}
-    {@render setting(t('Colour columns'), view?.orden.colourColumns !== false, () =>
+    {@render setting('Colour columns', view?.orden.colourColumns !== false, () =>
       kit.change((one, at) =>
         setViewOrden(
           one,
@@ -139,13 +138,13 @@
         ),
       ),
     )}
-    {@render setting(t('Hide empty groups'), view?.orden.hideEmpty === true, () =>
+    {@render setting('Hide empty groups', view?.orden.hideEmpty === true, () =>
       kit.change((one, at) =>
         setViewOrden(one, at, 'hideEmpty', view?.orden.hideEmpty ? undefined : true),
       ),
     )}
-    <p class="orden-section">{t('Card size')}</p>
-    <div class="orden-segmented" role="radiogroup" aria-label={t('Card size')} use:segmented>
+    <p class="orden-section">Card size</p>
+    <div class="orden-segmented" role="radiogroup" aria-label="Card size" use:segmented>
       {#each CARD_SIZES as size (size)}
         {@const on =
           sizeOf(view?.orden.cardSize, (view?.orden.rows ?? 'notes') === 'notes') === size}
@@ -162,8 +161,8 @@
   {/if}
 
   {#if kit.spec.builtin === undefined}
-    <p class="orden-section">{t('Rows')}</p>
-    <div class="orden-segmented" role="radiogroup" aria-label={t('Rows')} use:segmented>
+    <p class="orden-section">Rows</p>
+    <div class="orden-segmented" role="radiogroup" aria-label="Rows" use:segmented>
       {#each KINDS as one (one.kind)}
         <button
           type="button"
@@ -179,7 +178,7 @@
     </div>
   {/if}
 
-  <p class="orden-section">{board ? t('Shown on cards') : t('Properties')}</p>
+  <p class="orden-section">{board ? 'Shown on cards' : 'Properties'}</p>
   <div class="shown">
     {#each listed as one (one)}
       {@const on = live.columns.includes(one)}
@@ -206,7 +205,7 @@
   </div>
 
   {#if more().some(Boolean)}
-    <p class="orden-section">{t('More')}</p>
+    <p class="orden-section">More</p>
     {#each more() as entry, at (at)}
       {#if entry}
         <button

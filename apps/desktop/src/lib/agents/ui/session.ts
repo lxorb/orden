@@ -1,4 +1,4 @@
-import { i18n } from '../../i18n.svelte'
+import { localDate } from '../../region'
 import { nameOf } from '../../space-paths'
 import { wordFor } from './words'
 
@@ -78,9 +78,9 @@ export function hostOf(url: string): string {
 export function sessionMarkdown(name: string, calls: readonly Call[]): string {
   const ordered = [...calls].reverse()
   const first = ordered[0]
-  const day = first ? i18n.when(first.at, { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  const day = first ? localDate(first.at, { day: 'numeric', month: 'long', year: 'numeric' }) : ''
   const lines = ordered.map((call) => {
-    const time = i18n.when(call.at, { hour: '2-digit', minute: '2-digit' })
+    const time = localDate(call.at, { hour: '2-digit', minute: '2-digit' })
     const word = wordFor(call.verb) ?? call.verb
     const link =
       call.path !== null

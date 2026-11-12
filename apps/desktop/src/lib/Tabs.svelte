@@ -17,7 +17,6 @@
     mayCarryAddress,
   } from './drag-paths'
   import { chrome } from './glass/chrome.svelte'
-  import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { menu } from './menu.svelte'
   import { middleOpens, tabAsk } from './new-tab'
@@ -97,7 +96,7 @@
     if (!tab.canGoBack) return
     event.preventDefault()
     void here(import('./tab-strip/menu')).then(({ trailMenu }) =>
-      menu.show(event, trailMenu(tab), { title: t('Back') }),
+      menu.show(event, trailMenu(tab), { title: 'Back' }),
     )
   }
 
@@ -357,9 +356,7 @@
     if (!strip) return 0
 
     const box = strip.getBoundingClientRect()
-    return i18n.factor > 0
-      ? clientX - box.left - lead + strip.scrollLeft
-      : box.right - lead - clientX - strip.scrollLeft
+    return clientX - box.left - lead + strip.scrollLeft
   }
 
   $effect(() =>
@@ -393,11 +390,11 @@
     untrack(() => {
       const box = layout.boxes[id]
       if (!box) return
-      const at = node.scrollLeft * i18n.factor
+      const at = node.scrollLeft
       const to = revealed(at, stripWidth, span, box.x, box.x + box.width + lead + LEAD)
       if (Math.abs(to - at) < 1) return
       node.scrollTo({
-        left: to * i18n.factor,
+        left: to,
         behavior: stillness() || resizing ? 'instant' : 'smooth',
       })
     })
@@ -410,7 +407,6 @@
         sized.map((one) => one.id),
         by,
         () => strip?.getBoundingClientRect() ?? null,
-        () => i18n.factor,
       )
     }
 
@@ -443,7 +439,7 @@
 
     const width = widths[sized.findIndex((one) => one.id === drag.tabId)] ?? 0
     const grab = press.grab - (block?.strip.before ?? 0)
-    const left = i18n.factor > 0 ? drag.pointer.x - grab : drag.pointer.x + grab - width
+    const left = drag.pointer.x - grab
     const target = landing?.kind === 'strip' ? stripOf(landing.paneId) : undefined
 
     return { left, top: target ? target.top() : drag.pointer.y - grabY, width }
@@ -740,7 +736,7 @@
       if (along === 0) return
 
       event.preventDefault()
-      node.scrollLeft += along * i18n.factor
+      node.scrollLeft += along
     }
 
     node.addEventListener('wheel', turned, { passive: false })
@@ -800,25 +796,25 @@
     <div class="steps">
       <button
         class="step"
-        title={shortcuts.tooltip(t('Back'), 'app.back')}
-        aria-label={t('Back')}
+        title={shortcuts.tooltip('Back', 'app.back')}
+        aria-label="Back"
         disabled={!walking.canGoBack}
         onclick={(event) => workspace.goBack(walking.id, tabAsk(event))}
         use:middleOpens={(event) => workspace.goBack(walking.id, tabAsk(event))}
         oncontextmenu={(event) => showTrail(event, walking)}
         use:longPress={(event) => showTrail(event, walking)}
       >
-        <svg class="orden-mirror" viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
+        <svg viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
       </button>
       <button
         class="step"
-        title={shortcuts.tooltip(t('Forward'), 'app.forward')}
-        aria-label={t('Forward')}
+        title={shortcuts.tooltip('Forward', 'app.forward')}
+        aria-label="Forward"
         disabled={!walking.canGoForward}
         onclick={(event) => workspace.goForward(walking.id, tabAsk(event))}
         use:middleOpens={(event) => workspace.goForward(walking.id, tabAsk(event))}
       >
-        <svg class="orden-mirror" viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
+        <svg viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
       </button>
     </div>
   {/if}
@@ -897,7 +893,7 @@
           style:--web-ground={chrome.barOf(tab.id)?.colour}
           style:--terminal-paper={tab.kind === 'terminal' ? chrome.terminal : null}
           style:width="{box.width}px"
-          style:transform="translateX({box.x * i18n.factor}px)"
+          style:transform="translateX({box.x}px)"
           style:--w="{box.width}px"
           onpointerenter={(event) => {
             if (event.pointerType !== 'mouse') return
@@ -908,7 +904,7 @@
             if (hovered === tab.id) hovered = null
             card(tab, null)
           }}
-          in:arrive={{ id: tab.id, x: box.x * i18n.factor }}
+          in:arrive={{ id: tab.id, x: box.x }}
           out:leave
         >
           <span class="fill" aria-hidden="true"></span>
@@ -964,7 +960,7 @@
                 class:hidden={!parts.title}
                 viewBox="0 0 14 12"
                 role="img"
-                aria-label={t('Reading')}
+                aria-label="Reading"
                 transition:fade={{ duration: dur(140) }}
               >
                 <path d="M7 3.2v7.3M7 3.2C5.6 2 3.9 1.6 1.5 1.6v7.3c2.4 0 4.1.4 5.5 1.6" />
@@ -992,7 +988,7 @@
               </Door>
             {/if}
             {#if tab.note.shared && parts.title}
-              <SharedMark label={t('Shared with you')} />
+              <SharedMark label="Shared with you" />
             {/if}
             {#if syncMark.asked && parts.title}
               {#await syncMark.asked then Held}<Held path={tab.path} />{/await}
@@ -1001,8 +997,8 @@
               <span
                 class="here"
                 role="img"
-                aria-label={t('Also open elsewhere')}
-                title={t('Also open elsewhere')}
+                aria-label="Also open elsewhere"
+                title="Also open elsewhere"
               >
                 {#each faces as one (one.key)}
                   <span
@@ -1030,8 +1026,8 @@
             <button
               class="shut"
               class:hidden={!parts.close || !crossTakes(tab.id, opened, settledOpen)}
-              title={shortcuts.tooltip(t('Close'), 'app.close')}
-              aria-label={t('Close')}
+              title={shortcuts.tooltip('Close', 'app.close')}
+              aria-label="Close"
               onclick={(event) => closeTab(tab, pointerOf(event))}
             >
               <Cross small />
@@ -1043,9 +1039,9 @@
       {#if plus}
         <button
           class="new"
-          title={shortcuts.tooltip(t('New tab'), 'app.new-kind')}
-          aria-label={t('New tab')}
-          style:transform="translateX({(layout.end + PLUS_GAP) * i18n.factor}px)"
+          title={shortcuts.tooltip('New tab', 'app.new-kind')}
+          aria-label="New tab"
+          style:transform="translateX({layout.end + PLUS_GAP}px)"
           onclick={() => workspace.newTab(paneId)}
         >
           <svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg>
@@ -1063,8 +1059,8 @@
     <button
       class="link"
       class:on={pane?.linked}
-      title={pane?.linked ? t('Scroll on its own') : t('Scroll together')}
-      aria-label={pane?.linked ? t('Scroll on its own') : t('Scroll together')}
+      title={pane?.linked ? 'Scroll on its own' : 'Scroll together'}
+      aria-label={pane?.linked ? 'Scroll on its own' : 'Scroll together'}
       aria-pressed={!!pane?.linked}
       onclick={() => workspace.toggleLink(paneId)}
     >
@@ -1079,8 +1075,8 @@
   {#if walking?.kind === 'note'}
     <button
       class="orden-glyph more"
-      title={t('More')}
-      aria-label={t('More')}
+      title="More"
+      aria-label="More"
       aria-haspopup="menu"
       onclick={showNoteMenu}
     >
@@ -1303,21 +1299,13 @@
     inset-inline-start: -1px;
   }
 
-  :global(:root:not([dir='rtl'])) .tabs.flush .tab.first.active .fill::before,
-  :global(:root[dir='rtl']) .tabs.flush .tab.first.active .fill::after {
+  .tabs.flush .tab.first.active .fill::before {
     display: none;
   }
 
-  :global(:root:not([dir='rtl'])) .tabs.flush .tab.first.active .edge::before {
+  .tabs.flush .tab.first.active .edge::before {
     right: auto;
     left: -1px;
-    width: 1px;
-    height: var(--tab-foot);
-  }
-
-  :global(:root[dir='rtl']) .tabs.flush .tab.first.active .edge::after {
-    left: auto;
-    right: -1px;
     width: 1px;
     height: var(--tab-foot);
   }
@@ -1441,8 +1429,7 @@
     margin-inline-start: 6px;
   }
 
-  .pick:dir(rtl) .label:dir(ltr),
-  .pick:dir(ltr) .label:dir(rtl) {
+  .pick .label:dir(rtl) {
     margin-inline: 0 6px;
   }
 

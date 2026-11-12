@@ -2,7 +2,6 @@ import { attachmentFolder } from '../attachments'
 import { busy } from '../busy.svelte'
 import { fromBase64 } from '../bytes'
 import { appCommands } from '../commands'
-import { t } from '../i18n.svelte'
 import { applyImport } from '../import/apply'
 import { putPicture, writeAtCaret } from '../insert-picture'
 import { log } from '../log'
@@ -209,12 +208,12 @@ async function ask(
   if (root !== null && !into && !words) return 'new'
 
   const chosen = await prompt.choose({
-    title: t('Shared'),
+    title: 'Shared',
     detail: summary(arrived),
     options: [
-      ...(root !== null ? [{ id: 'new', label: t('New note'), primary: true }] : []),
-      ...(into ? [{ id: 'here', label: t('Add to {name}', { name: into.shown }) }] : []),
-      ...(root !== null && words ? [{ id: 'task', label: t('As a task') }] : []),
+      ...(root !== null ? [{ id: 'new', label: 'New note', primary: true }] : []),
+      ...(into ? [{ id: 'here', label: `Add to ${into.shown}` }] : []),
+      ...(root !== null && words ? [{ id: 'task', label: 'As a task' }] : []),
     ],
   })
 
@@ -251,7 +250,7 @@ async function intoANewNote(
   const plan = sharedPlan(arrived, bytes, new Date(), folder)
   if (!plan.files.length) return
 
-  const landed = await busy.run(t('Importing'), () => applyImport(plan, { root, folder: '' }))
+  const landed = await busy.run('Importing', () => applyImport(plan, { root, folder: '' }))
 
   const first = landed.paths[0]
   if (first) await workspace.openEntry(first)

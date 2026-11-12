@@ -1,6 +1,5 @@
 <script lang="ts">
   import { exportCommands } from '../commands'
-  import { t } from '../i18n.svelte'
   import Sheet from '../Sheet.svelte'
   import Switch from '../Switch.svelte'
   import { picker } from './picker.svelte'
@@ -35,7 +34,7 @@
   }
 </script>
 
-<Sheet open={picker.open} title={t('Export')} onclose={() => picker.close()}>
+<Sheet open={picker.open} title="Export" onclose={() => picker.close()}>
   {#each shelves as shelf (shelf.id)}
     <section class="shelf" aria-label={shelf.label}>
       <h3>{shelf.label}</h3>
@@ -80,9 +79,7 @@
     {#if setup}
       <button class="orden-button is-quiet" onclick={setUp}>{setup.label}</button>
     {/if}
-    <button class="orden-button go" disabled={!chosen} onclick={() => go(chosen)}>
-      {t('Export')}
-    </button>
+    <button class="orden-button go" disabled={!chosen} onclick={() => go(chosen)}> Export </button>
   {/snippet}
 </Sheet>
 

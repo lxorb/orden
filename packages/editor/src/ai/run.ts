@@ -7,7 +7,6 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { fenceCode, fenceLanguage } from '../fence'
-import { label } from '../labels'
 import { enclosingNamed } from '../nodes'
 import { answerParts, answerSpan, isAiLanguage, mentionsNote } from './block'
 
@@ -127,12 +126,6 @@ export function asksMoved(before: EditorState, after: EditorState): boolean {
 
 let counter = 0
 
-function fill(text: string, values: Record<string, string>): string {
-  return text.replace(/\{(\w+)\}/g, (whole, name: string) =>
-    Object.hasOwn(values, name) ? (values[name] ?? whole) : whole,
-  )
-}
-
 function today(): string {
   const now = new Date()
   const two = (value: number) => String(value).padStart(2, '0')
@@ -180,7 +173,7 @@ function beginAnswer(view: AiView, id: number, model: string) {
   const found = aiFenceAt(view.state, live.from)
   if (!found) return
 
-  const { head, tail } = answerParts(fill(label('aiAnswered'), { model, date: today() }))
+  const { head, tail } = answerParts(`answered by ${model}, ${today()}`)
   const existing = answerSpan(view.state.doc.toString().split('\n'), found.closeLine)
   const span = existing ?? { from: found.to, to: found.to }
   const lead = existing ? '' : '\n\n'

@@ -1,10 +1,9 @@
 import { escapeText, plainWords } from '@orden/markdown/escapes'
 import { plainTaskWords } from '@orden/markdown/task-line'
-import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'
 import { Names, safeName, titleFrom } from './names'
-import type { ImportPlan, Lost, Planned } from './plan'
+import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
 const ASSETS = 'assets'
@@ -27,7 +26,7 @@ interface KeepNote {
 export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> {
   const names = new Names()
   const written: Planned[] = []
-  const lost: Lost[] = []
+  const lost: string[] = []
   const attachments = new Map<string, Source>()
   const copied = new Map<Source, string>()
   let trashed = 0
@@ -108,37 +107,31 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
   }
 
   if (trashed) {
-    lost.push({
-      text: key('{count} notes were in the bin and stay there'),
-      values: { count: trashed },
-    })
+    lost.push(`${trashed} notes were in the bin and stay there`)
   }
 
   if (archived) {
-    lost.push({
-      text: key('{count} archived notes are in a folder called Archive'),
-      values: { count: archived },
-    })
+    lost.push(`${archived} archived notes are in a folder called Archive`)
   }
 
   if (unreadable) {
-    lost.push({
-      text: key('{count} files could not be read, so they were left out'),
-      one: '{count} file could not be read, so it was left out',
-      values: { count: unreadable },
-    })
+    lost.push(
+      unreadable === 1
+        ? '1 file could not be read, so it was left out'
+        : `${unreadable} files could not be read, so they were left out`,
+    )
   }
 
   if (missing) {
-    lost.push({
-      text: key('{count} attachments were missing from the export or could not be read'),
-      one: '{count} attachment was missing from the export or could not be read',
-      values: { count: missing },
-    })
+    lost.push(
+      missing === 1
+        ? '1 attachment was missing from the export or could not be read'
+        : `${missing} attachments were missing from the export or could not be read`,
+    )
   }
 
   if (colours) {
-    lost.push({ text: key('The colours a note had are not kept') })
+    lost.push('The colours a note had are not kept')
   }
 
   return { format: 'keep', files: written, lost }

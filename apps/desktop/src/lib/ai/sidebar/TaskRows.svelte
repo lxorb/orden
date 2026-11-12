@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../../i18n.svelte'
   import { dur, fly } from '../../motion'
   import { insideSpace } from '../../space-paths'
   import { TaskTurns } from '../../task-turns'
@@ -79,7 +78,7 @@
           class:p3={one.priority === 3}
           role="checkbox"
           aria-checked={isDone(one)}
-          aria-label={t('Done')}
+          aria-label="Done"
           onclick={() => tick(one)}
         ></button>
         <button class="words" title={one.space} onclick={() => open(one)}>{one.text}</button>

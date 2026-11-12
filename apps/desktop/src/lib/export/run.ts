@@ -9,7 +9,6 @@ import {
   prepareFences,
   renderNote,
 } from '../export'
-import { t } from '../i18n.svelte'
 import { pageSetupFor, paperInches, type PaperTwips, paperTwips, runningDate } from '../page-setup'
 import { DEFAULT_PAGE_SETUP } from '../paper'
 import { nameOf } from '../space-paths'
@@ -43,10 +42,10 @@ const MOST_PIXELS = 16384
 
 function labelFor(id: Exportable): string {
   const format = EXPORT_FORMATS.find((one) => one.id === id)
-  if (format) return t(format.label)
+  if (format) return format.label
 
   const variant = EXPORT_VARIANTS.find((one) => one.id === id)
-  return variant ? t(variant.label) : id
+  return variant ? variant.label : id
 }
 
 async function pageOf(note: Note, options: RunOptions, pictures?: readonly Picture[]) {
@@ -105,7 +104,7 @@ async function exportPicture(
   })
 
   const first = pages[0]
-  if (!first) throw new Error(t('Nothing came out of that export'))
+  if (!first) throw new Error('Nothing came out of that export')
   if (pages.length === 1) return deliver(note.name, id, labelFor(id), { bytes: first, mime })
 
   const file = fileNameFor(note.name, id)

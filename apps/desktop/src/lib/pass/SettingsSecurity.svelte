@@ -1,7 +1,6 @@
 <script lang="ts">
   import { pinIn } from '@orden/pass/device'
   import { deliver } from '../export/save'
-  import { t } from '../i18n.svelte'
   import { deviceName } from '../protect/device'
   import Select from '../Select.svelte'
   import ChangePassword from './ChangePassword.svelte'
@@ -26,9 +25,9 @@
   let busy = $state(false)
 
   const ways = $derived<{ value: LockWay; label: string }[]>([
-    ...(pass.canPin ? [{ value: 'pin' as const, label: t('PIN') }] : []),
+    ...(pass.canPin ? [{ value: 'pin' as const, label: 'PIN' }] : []),
     ...(pass.canDevice ? [{ value: 'device' as const, label: deviceName() }] : []),
-    { value: 'password', label: t('Pass password') },
+    { value: 'password', label: 'Pass password' },
   ])
 
   async function chooseWay(way: LockWay) {
@@ -38,20 +37,20 @@
       return
     }
     choosingPin = false
-    if (!(await pass.useLock(way))) wrong = t('This device could not keep the key.')
+    if (!(await pass.useLock(way))) wrong = 'This device could not keep the key.'
   }
 
   async function keptPin(event: SubmitEvent) {
     event.preventDefault()
     const chosen = pinIn(pin)
     if (chosen === null) {
-      wrong = t('A PIN is 4 to 12 digits')
+      wrong = 'A PIN is 4 to 12 digits'
       return
     }
     busy = true
     const ok = await pass.useLock('pin', chosen)
     busy = false
-    if (!ok) wrong = t('This device could not keep the key.')
+    if (!ok) wrong = 'This device could not keep the key.'
     else {
       choosingPin = false
       pin = ''
@@ -65,7 +64,7 @@
     busy = false
     recoveryPassword = ''
     if (made === null) {
-      wrong = t('Wrong password')
+      wrong = 'Wrong password'
       return
     }
     wrong = ''
@@ -74,16 +73,16 @@
   }
 
   function downloaded(code: string) {
-    const text = `${t('Orden Pass recovery key')}\n\n${code}\n`
-    void deliver(t('Orden Pass recovery key'), 'txt', t('Text'), { text, mime: 'text/plain' })
+    const text = `Orden Pass recovery key\n\n${code}\n`
+    void deliver('Orden Pass recovery key', 'txt', 'Text', { text, mime: 'text/plain' })
   }
 </script>
 
 <div class="card">
   <div class="orden-setting row">
-    <span class="name">{t('Unlock with')}</span>
+    <span class="name">Unlock with</span>
     <Select
-      label={t('Unlock with')}
+      label="Unlock with"
       value={choosingPin ? 'pin' : pass.settings.lock}
       options={ways}
       onchange={(value: string) => void chooseWay(value as LockWay)}
@@ -91,37 +90,36 @@
   </div>
   {#if choosingPin}
     <form class="orden-setting row" onsubmit={keptPin}>
-      <span class="name">{t('New PIN')}</span>
+      <span class="name">New PIN</span>
       <input
         class="orden-field is-value"
         type="password"
         inputmode="numeric"
         autocomplete="off"
-        placeholder={t('New PIN')}
-        aria-label={t('New PIN')}
+        placeholder="New PIN"
+        aria-label="New PIN"
         bind:value={pin}
       />
-      <button class="orden-chip" type="submit" disabled={busy || pin === ''}>{t('Use PIN')}</button>
+      <button class="orden-chip" type="submit" disabled={busy || pin === ''}>Use PIN</button>
     </form>
     <p class="hint">
-      {t(
-        'A PIN keeps out someone at this device. It does not stop a program running as you, which could read the seal and try every PIN.',
-      )}
+      A PIN keeps out someone at this device. It does not stop a program running as you, which could
+      read the seal and try every PIN.
     </p>
   {/if}
   <div class="orden-setting row">
-    <span class="name">{t('Lock after')}</span>
+    <span class="name">Lock after</span>
     <Select
-      label={t('Lock after')}
+      label="Lock after"
       value={String(pass.settings.relockAfter)}
       options={RELOCK_AFTER.map((one) => ({ value: String(one), label: relockWord(one) }))}
       onchange={(value: string) => pass.setSetting('relockAfter', Number(value) as RelockAfter)}
     />
   </div>
   <div class="orden-setting row">
-    <span class="name">{t('Clear clipboard after')}</span>
+    <span class="name">Clear clipboard after</span>
     <Select
-      label={t('Clear clipboard after')}
+      label="Clear clipboard after"
       value={String(pass.settings.clipboardClear)}
       options={CLIPBOARD_CLEAR.map((one) => ({ value: String(one), label: clearWord(one) }))}
       onchange={(value: string) =>
@@ -131,26 +129,25 @@
 </div>
 {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
 
-<h3 class="orden-section">{t('Pass password')}</h3>
+<h3 class="orden-section">Pass password</h3>
 <div class="card padded">
   {#if changing}
     <ChangePassword ondone={() => (changing = false)} oncancel={() => (changing = false)} />
   {:else}
     <div class="orden-setting">
-      <span class="name">{t('It encrypts everything in Pass.')}</span>
+      <span class="name">It encrypts everything in Pass.</span>
       <button class="orden-chip" type="button" onclick={() => (changing = true)}
-        >{t('Change Pass password')}</button
+        >Change Pass password</button
       >
     </div>
     <p class="hint" data-old-secrets>
-      {t(
-        'The keys inside Pass stay the same, so the old password still opens a copy of Pass somebody kept from before.',
-      )}
+      The keys inside Pass stay the same, so the old password still opens a copy of Pass somebody
+      kept from before.
     </p>
   {/if}
 </div>
 
-<h3 class="orden-section">{t('Recovery key')}</h3>
+<h3 class="orden-section">Recovery key</h3>
 <div class="card padded">
   {#if recovery}
     <output class="code" dir="ltr">{recovery}</output>
@@ -158,40 +155,38 @@
       <button
         class="orden-chip"
         type="button"
-        onclick={() => recovery && void copyField(t('Recovery key'), recovery)}>{t('Copy')}</button
+        onclick={() => recovery && void copyField('Recovery key', recovery)}>Copy</button
       >
       <button class="orden-chip" type="button" onclick={() => recovery && downloaded(recovery)}
-        >{t('Download')}</button
+        >Download</button
       >
       <button class="orden-button" type="button" onclick={() => (recovery = null)}
-        >{t('I saved it')}</button
+        >I saved it</button
       >
     </div>
   {:else if askingRecovery}
     <form class="orden-setting" onsubmit={madeRecovery}>
-      <span class="name">{t('Pass password')}</span>
+      <span class="name">Pass password</span>
       <input
         class="orden-field is-value"
         type="password"
         autocomplete="current-password"
-        placeholder={t('Pass password')}
-        aria-label={t('Pass password')}
+        placeholder="Pass password"
+        aria-label="Pass password"
         bind:value={recoveryPassword}
       />
       <button class="orden-chip" type="submit" disabled={busy || recoveryPassword === ''}
-        >{t('Make a new key')}</button
+        >Make a new key</button
       >
     </form>
   {:else}
     <div class="orden-setting">
-      <span class="name">{t('A new key stops the old one from opening Pass here.')}</span>
+      <span class="name">A new key stops the old one from opening Pass here.</span>
       <button class="orden-chip" type="button" onclick={() => (askingRecovery = true)}
-        >{t('New recovery key')}</button
+        >New recovery key</button
       >
     </div>
-    <p class="hint">
-      {t('The old key still opens a copy of Pass somebody kept from before.')}
-    </p>
+    <p class="hint">The old key still opens a copy of Pass somebody kept from before.</p>
   {/if}
 </div>
 

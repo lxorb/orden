@@ -4,7 +4,6 @@
   import { tick } from 'svelte'
   import type { Property } from '@orden/markdown/properties'
   import type { ListItem } from '@orden/markdown/property-edits'
-  import { t } from '../i18n.svelte'
   import PropertyValue from '../properties/PropertyValue.svelte'
   import { valueText } from './chips'
   import {
@@ -156,7 +155,7 @@
       <input
         class="edit"
         value={row.task.text}
-        aria-label={t('Task')}
+        aria-label="Task"
         use:focusIt
         onkeydown={(event) => {
           stopOnKeys(event)
@@ -191,7 +190,7 @@
     {#if editor === 'priority' && row.task}
       <select
         class="edit"
-        aria-label={t('Priority')}
+        aria-label="Priority"
         value={String(row.task.priority)}
         use:focusIt
         onchange={(event) => write(Number(event.currentTarget.value))}
@@ -202,7 +201,7 @@
     {:else if editor === 'status' && row.task}
       <select
         class="edit"
-        aria-label={t('Status')}
+        aria-label="Status"
         value={row.task.status}
         use:focusIt
         onchange={(event) => kit.drop(row, event.currentTarget.value, 'task.status')}
@@ -214,7 +213,7 @@
       <input
         class="edit"
         type="date"
-        aria-label={t('Date')}
+        aria-label="Date"
         value={dayIn(value) ?? ''}
         use:focusIt
         onchange={(event) => write(event.currentTarget.value || null)}
@@ -223,7 +222,7 @@
       <input
         class="edit"
         type="time"
-        aria-label={t('Time')}
+        aria-label="Time"
         value={typeof value === 'string' ? value : ''}
         use:focusIt
         onchange={(event) => write(event.currentTarget.value || null)}
@@ -234,7 +233,7 @@
         type="number"
         min="0"
         step="5"
-        aria-label={t('Duration')}
+        aria-label="Duration"
         value={row.task?.duration ?? ''}
         use:focusIt
         onchange={(event) =>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Alias } from '@orden/pass/types'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import Select from '../Select.svelte'
   import { defaultAsk } from './alias-make'
   import type { AliasAsk, AliasOptions } from './aliases'
@@ -90,12 +90,12 @@
 
 {#if fresh && options}
   <EditCard>
-    <EditField label={t('Prefix')} bind:value={prefix} placeholder="shop" {oninput} />
+    <EditField label="Prefix" bind:value={prefix} placeholder="shop" {oninput} />
     <div class="choose orden-edit-row">
-      <span class="label">{t('Suffix')}</span>
+      <span class="label">Suffix</span>
       <Select
         plain
-        label={t('Suffix')}
+        label="Suffix"
         value={suffix}
         options={suffixes}
         onchange={(value: string) => {
@@ -106,10 +106,10 @@
     </div>
     {#if mailboxes.length}
       <div class="choose orden-edit-row">
-        <span class="label">{t('Forwards to')}</span>
+        <span class="label">Forwards to</span>
         <Select
           plain
-          label={t('Forwards to')}
+          label="Forwards to"
           value={mailbox}
           options={mailboxes}
           onchange={(value: string) => {
@@ -122,30 +122,30 @@
     <p class="preview" data-alias-preview>{cleanPrefix}{suffixLabel}</p>
   </EditCard>
   <EditCard>
-    <EditField label={t('Display name')} bind:value={content.name} {oninput} />
+    <EditField label="Display name" bind:value={content.name} {oninput} />
   </EditCard>
 {:else}
   {#if fresh}
     <p class="hint" role={wrong ? 'alert' : null}>
       {wrong ??
         (looking
-          ? t('Asking the alias service…')
-          : t('Connect an alias service in Settings > Aliases to make new addresses here.'))}
+          ? 'Asking the alias service…'
+          : 'Connect an alias service in Settings > Aliases to make new addresses here.')}
     </p>
   {/if}
   <EditCard>
     <EditField
-      label={t('Alias address')}
+      label="Alias address"
       icon={FIELD_ICONS.alias}
       bind:value={content.address}
       inputmode="email"
       placeholder="name@example.com"
       {oninput}
     />
-    <EditField label={t('Display name')} bind:value={content.name} {oninput} />
+    <EditField label="Display name" bind:value={content.name} {oninput} />
     {#if content.provider === 'manual'}
       <SwitchRow
-        label={t('Forward mail to this alias')}
+        label="Forward mail to this alias"
         on={content.enabled}
         onchange={(on: boolean) => {
           content.enabled = on

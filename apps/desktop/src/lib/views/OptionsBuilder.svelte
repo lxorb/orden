@@ -1,7 +1,6 @@
 <script lang="ts">
   import { inBase, type SelectOption } from '@orden/bases'
   import Cross from '../Cross.svelte'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { writeEach } from './act'
   import { bare } from './columns'
@@ -19,10 +18,10 @@
   const id = $derived(live.base?.orden.id?.property === key ? live.base.orden.id : null)
 
   const GROUPS = [
-    { value: '', label: t('None') },
-    { value: 'todo', label: t('To do') },
-    { value: 'doing', label: t('Doing') },
-    { value: 'done', label: t('Done') },
+    { value: '', label: 'None' },
+    { value: 'todo', label: 'To do' },
+    { value: 'doing', label: 'Doing' },
+    { value: 'done', label: 'Done' },
   ]
 
   function write(next: SelectOption[]) {
@@ -39,9 +38,9 @@
   }
 
   function add() {
-    let value = t('New option')
+    let value = 'New option'
     for (let count = 2; options.some((one) => one.value === value); count++)
-      value = t('New option {count}', { count })
+      value = `New option ${count}`
     write([...options, { value, tone: String((options.length % 6) + 1) }])
   }
 
@@ -77,11 +76,11 @@
 
 {#if id}
   <label class="row prefix">
-    <span class="key">{t('Prefix')}</span>
+    <span class="key">Prefix</span>
     <input
       class="orden-field"
       value={id.prefix}
-      aria-label={t('Prefix')}
+      aria-label="Prefix"
       onchange={(event) => prefix(event.currentTarget.value)}
     />
   </label>
@@ -102,11 +101,11 @@
         <input
           class="orden-field"
           value={option.value}
-          aria-label={t('Value')}
+          aria-label="Value"
           onchange={(event) => rename(at, event.currentTarget.value)}
         />
         <Select
-          label={t('Status')}
+          label="Status"
           value={option.group ?? ''}
           options={GROUPS}
           onchange={(group: string) => {
@@ -119,8 +118,8 @@
         <button
           type="button"
           class="orden-glyph"
-          title={t('Remove')}
-          aria-label={t('Remove')}
+          title="Remove"
+          aria-label="Remove"
           onclick={() => write(options.filter((_, index) => index !== at))}><Cross small /></button
         >
       </div>
@@ -128,7 +127,7 @@
   </div>
 
   <button type="button" class="orden-row is-short adder" onclick={add}>
-    <span class="orden-row-label">{t('Add')}</span>
+    <span class="orden-row-label">Add</span>
   </button>
 {/if}
 

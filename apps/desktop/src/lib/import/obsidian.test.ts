@@ -103,9 +103,7 @@ describe('an Obsidian vault', () => {
     ])
 
     expect(plan.files.map((one) => one.path).sort()).toEqual(['.obsidian/app.json', 'Home.md'])
-    expect(plan.lost).toEqual([
-      { text: '{count} files are in iCloud rather than on this Mac', values: { count: 2 } },
-    ])
+    expect(plan.lost).toEqual(['2 files are in iCloud rather than on this Mac'])
   })
 })
 

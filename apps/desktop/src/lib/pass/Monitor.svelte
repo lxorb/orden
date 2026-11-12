@@ -10,7 +10,7 @@
   import ShieldAlert from 'lucide/dist/esm/icons/shield-alert.mjs'
   import ShieldOff from 'lucide/dist/esm/icons/shield-off.mjs'
   import Smartphone from 'lucide/dist/esm/icons/smartphone.mjs'
-  import { message, plural, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { fetcher } from './breach-fetch'
   import { flagName } from './flag-words'
   import Glyph from './Glyph.svelte'
@@ -108,25 +108,25 @@
       flag: 'weak',
       icon: ShieldAlert,
       ids: found.weak,
-      line: t('Easy to guess. Change them to generated ones.'),
+      line: 'Easy to guess. Change them to generated ones.',
     },
     {
       flag: 'reused',
       icon: Repeat,
       ids: [...found.reused.keys()],
-      line: t('Used for more than one login.'),
+      line: 'Used for more than one login.',
     },
     {
       flag: 'inactive2fa',
       icon: Smartphone,
       ids: found.inactive2fa,
-      line: t('These sites offer two-factor authentication.'),
+      line: 'These sites offer two-factor authentication.',
     },
     {
       flag: 'excluded',
       icon: EyeOff,
       ids: found.excluded,
-      line: t('Left out of Monitor.'),
+      line: 'Left out of Monitor.',
     },
   ])
 
@@ -145,9 +145,9 @@
   {/if}
 {/snippet}
 
-<section class="monitor" aria-label={t('Monitor')} data-scrolls>
+<section class="monitor" aria-label="Monitor" data-scrolls>
   <header class="head">
-    <h2 class="title">{t('Monitor')}</h2>
+    <h2 class="title">Monitor</h2>
   </header>
 
   <div class="cards">
@@ -163,13 +163,13 @@
           <span class="name">{flagName('compromised')}</span>
           <span class="line">
             {#if !pass.settings.checkBreaches}
-              {t('Check your passwords against known data breaches.')}
+              Check your passwords against known data breaches.
             {:else if checking}
-              {t('Checking…')}
+              Checking…
             {:else if wrong}
               {wrong}
             {:else}
-              {t('Found in a data breach. Change them now.')}
+              Found in a data breach. Change them now.
             {/if}
           </span>
         </span>
@@ -178,10 +178,10 @@
         {/if}
       </button>
       {#if !pass.settings.checkBreaches}
-        <button class="orden-button check" type="button" onclick={turnOn}>{t('Check')}</button>
+        <button class="orden-button check" type="button" onclick={turnOn}>Check</button>
       {:else if wrong}
         <button class="orden-chip check" type="button" onclick={() => void check()}>
-          {t('Try again')}
+          Try again
         </button>
       {/if}
     </div>
@@ -201,19 +201,19 @@
             <span class="line">{card.line}</span>
           </span>
           {@render counted(card.ids.length)}
-          {#if card.ids.length}<Glyph icon={ChevronRight} class="chevron orden-mirror" />{/if}
+          {#if card.ids.length}<Glyph icon={ChevronRight} class="chevron" />{/if}
         </button>
       </div>
     {/each}
   </div>
 
-  <h3 class="orden-section">{t('Dark web monitoring')}</h3>
+  <h3 class="orden-section">Dark web monitoring</h3>
   <div class="card dark">
     <div class="press is-static">
       <span class="mark"><Glyph icon={Radar} /></span>
       <span class="words">
-        <span class="name">{t('Email addresses in breaches')}</span>
-        <span class="line">{t('Needs a Have I Been Pwned API key.')}</span>
+        <span class="name">Email addresses in breaches</span>
+        <span class="line">Needs a Have I Been Pwned API key.</span>
       </span>
     </div>
     {#if keyRead && key === ''}
@@ -222,11 +222,11 @@
           class="orden-field is-value"
           type="password"
           autocomplete="off"
-          placeholder={t('API key')}
-          aria-label={t('API key')}
+          placeholder="API key"
+          aria-label="API key"
           bind:value={typedKey}
         />
-        <button class="orden-button" type="submit" disabled={!typedKey.trim()}>{t('Save')}</button>
+        <button class="orden-button" type="submit" disabled={!typedKey.trim()}>Save</button>
       </form>
     {:else if key !== ''}
       <div class="emails">
@@ -239,23 +239,25 @@
             {:else if said}
               <span class="text" class:bad={said.length > 0}>
                 {said.length
-                  ? plural(said.length, { one: '{count} breach', other: '{count} breaches' })
-                  : t('No breaches')}
+                  ? said.length === 1
+                    ? '1 breach'
+                    : `${said.length} breaches`
+                  : 'No breaches'}
               </span>
             {/if}
           </div>
         {:else}
-          <p class="quiet">{t('No email addresses in your logins')}</p>
+          <p class="quiet">No email addresses in your logins</p>
         {/each}
         <div class="buttons">
           <button class="orden-button is-quiet" type="button" onclick={() => void forgetKey()}
-            >{t('Remove key')}</button
+            >Remove key</button
           >
           <button
             class="orden-button"
             type="button"
             disabled={!emails.length}
-            onclick={() => void lookUp()}>{t('Check')}</button
+            onclick={() => void lookUp()}>Check</button
           >
         </div>
       </div>

@@ -1,6 +1,5 @@
 import { ACCENTS } from './accents'
 import { CONTENT_INITIAL, CONTENT_LEVELS, type ContentLevel } from './content-ground'
-import { t } from './i18n.svelte'
 import type { ThemeSetting } from './themes/settings'
 
 const NAMES: Record<ContentLevel, string> = {
@@ -12,13 +11,11 @@ const NAMES: Record<ContentLevel, string> = {
 export function contentSetting(): ThemeSetting {
   return {
     id: 'content',
-    label: t('Content'),
-    hint: t(
-      'How much of what is behind the window shows under notes and terminals; the words always stay readable.',
-    ),
+    label: 'Content',
+    hint: 'How much of what is behind the window shows under notes and terminals; the words always stay readable.',
     own: true,
     kind: 'choice',
-    options: CONTENT_LEVELS.map((value) => ({ value, label: t(NAMES[value]) })),
+    options: CONTENT_LEVELS.map((value) => ({ value, label: NAMES[value] })),
     initial: CONTENT_INITIAL,
     paint: () => ({}),
   }
@@ -57,16 +54,16 @@ export const ACCENT_SWATCH = 'accent'
 export function tintColourSetting(id: string, when: () => boolean): ThemeSetting {
   return {
     id,
-    label: t('Tint colour'),
-    hint: t('The colour laid over the picture.'),
+    label: 'Tint colour',
+    hint: 'The colour laid over the picture.',
     own: true,
     kind: 'colour',
     initial: ACCENT_SWATCH,
     options: [
-      { value: ACCENT_SWATCH, name: t('Accent'), dark: 'var(--accent)', light: 'var(--accent)' },
+      { value: ACCENT_SWATCH, name: 'Accent', dark: 'var(--accent)', light: 'var(--accent)' },
       ...ACCENTS.map((one) => ({
         value: one.id,
-        name: t(one.name),
+        name: one.name,
         dark: one.dark,
         light: one.light,
       })),

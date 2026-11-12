@@ -43,8 +43,6 @@ vi.mock('./prompt.svelte', () => ({
   },
 }))
 
-vi.mock('./i18n.svelte', () => ({ t: (text: string) => text }))
-
 vi.mock('./workspace.svelte', () => ({
   workspace: {
     spaces: [

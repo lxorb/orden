@@ -1,5 +1,4 @@
 import { copyText } from '../clipboard'
-import { t } from '../i18n.svelte'
 import { isDesktop } from '../tauri'
 import { webChannel } from '../updater'
 import { updates } from '../updates.svelte'
@@ -14,7 +13,7 @@ class Version {
   channel(): string | null {
     const channel = isDesktop ? updates.channel : webChannel
     if (channel === null) return null
-    return channel === 'unstable' ? t('Unstable') : t('Stable')
+    return channel === 'unstable' ? 'Unstable' : 'Stable'
   }
 
   private which(): string {
@@ -41,11 +40,11 @@ export const version = new Version()
 export function versionField(): Field {
   return {
     kind: 'value',
-    label: t('Version'),
-    hint: t('The version of Orden that is running; press to copy it.'),
+    label: 'Version',
+    hint: 'The version of Orden that is running; press to copy it.',
     words: ['version', 'about', 'build', 'release', 'number', 'installed'],
-    get: () => (version.copied ? t('Copied') : version.said()),
-    does: t('Copy'),
+    get: () => (version.copied ? 'Copied' : version.said()),
+    does: 'Copy',
     press: () => void version.copy(),
   }
 }

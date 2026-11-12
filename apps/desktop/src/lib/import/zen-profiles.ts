@@ -1,5 +1,4 @@
 import { fromBase64 } from '../bytes'
-import { t } from '../i18n.svelte'
 import { invoke, isDesktop } from '../tauri'
 import { unmozLz4 } from './mozlz4'
 import { type BrowserEngine, mozillaEngine } from './search-engines'
@@ -42,7 +41,7 @@ export async function zenSession(profile: ZenProfile, words: FolderWords): Promi
     }
   }
 
-  throw new Error(t('Zen’s tabs could not be read.'))
+  throw new Error('Zen’s tabs could not be read.')
 }
 
 async function fileOf(profile: ZenProfile, file: string): Promise<unknown> {

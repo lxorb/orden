@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { t } from './i18n.svelte'
-
   const { onclick }: { onclick: (event: MouseEvent) => void } = $props()
 </script>
 
@@ -8,8 +6,8 @@
   class="orden-glyph more"
   role="menuitem"
   aria-haspopup="menu"
-  title={t('More')}
-  aria-label={t('More')}
+  title="More"
+  aria-label="More"
   {onclick}
 >
   <svg viewBox="0 0 13 13"

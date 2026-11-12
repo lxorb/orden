@@ -130,7 +130,6 @@ export { renderNote } from './wikilink/preview'
 export { setBlocks, type SlashBlock } from './slash'
 export { embedClicks, htmlFrameDocument, loadEmbed } from './web-frame'
 export { setSnippets, snippets } from './snippets'
-export { englishLabel, LABEL_KEYS, type LabelKey, setLabels } from './labels'
 export {
   setCloseBrackets,
   setCodeLineNumbers,

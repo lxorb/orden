@@ -1,5 +1,4 @@
 import { agentMarks } from '../agent-marks.svelte'
-import { key, t } from '../i18n.svelte'
 import { keepJson, stored } from '../stored'
 import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
@@ -50,10 +49,10 @@ class Hidden {
     this.asking ??= import('../prompt.svelte')
       .then(({ prompt }) =>
         prompt.choose({
-          title: t('Hidden tabs'),
+          title: 'Hidden tabs',
           options: [
-            { id: 'run', label: key('Keep running'), primary: true },
-            { id: 'pause', label: key('Pause') },
+            { id: 'run', label: 'Keep running', primary: true },
+            { id: 'pause', label: 'Pause' },
           ],
         }),
       )

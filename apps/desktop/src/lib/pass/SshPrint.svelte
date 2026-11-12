@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { SshKey } from '@orden/pass/types'
   import { sshFingerprint, sshPublicOf } from '@orden/pass/ssh'
-  import { t } from '../i18n.svelte'
   import FieldRow from './FieldRow.svelte'
 
   const { content }: { content: SshKey } = $props()
@@ -22,7 +21,7 @@
 
 {#if print}
   <section class="card">
-    <FieldRow label={t('Fingerprint')} value={print} mono />
+    <FieldRow label="Fingerprint" value={print} mono />
   </section>
 {/if}
 

@@ -1365,63 +1365,6 @@ def main() -> int:
             )
             page.screenshot(path=str(OUT / "phone-spaces.png"))
 
-            page.evaluate("localStorage.setItem('orden:language', 'th')")
-            page.wait_for_timeout(700)
-            page.reload()
-            page.wait_for_timeout(1800)
-            page.evaluate("window.__gesture('hold')")
-            page.wait_for_timeout(500)
-            held = page.evaluate("window.__bands()")
-            asked = held.get("ordenBody", "")
-            report.ok(
-                "a reader whose script the firmware cannot draw gets an English panel",
-                "Switch space" in asked and "Settings" in asked,
-                asked.replace("\n", " | ")[:80],
-            )
-            report.ok(
-                "and not one box on it",
-                "□" not in asked,
-                asked.replace("\n", " | ")[:80],
-            )
-            page.evaluate("window.__gesture('double')")
-            page.wait_for_timeout(400)
-
-            def panel_in(language: str) -> dict:
-                page.evaluate("([one]) => localStorage.setItem('orden:language', one)", [language])
-                page.wait_for_timeout(700)
-                page.reload()
-                page.wait_for_timeout(1800)
-                page.evaluate("window.__gesture('hold')")
-                page.wait_for_timeout(300)
-                for _one in range(3):
-                    page.evaluate("window.__gesture('down')")
-                page.evaluate("window.__gesture('tap')")
-                page.wait_for_timeout(500)
-                bands = page.evaluate("window.__bands()")
-                screens.append(
-                    {"name": f"settings-{language}", "lineNumbers": True, **naming(bands)}
-                )
-                page.evaluate("window.__gesture('double')")
-                page.evaluate("window.__gesture('double')")
-                page.wait_for_timeout(500)
-                return bands
-
-            rows_de = panel_in("de").get("ordenBody", "")
-            report.ok(
-                "a reader in German reads the panel in German",
-                "Zeilennummern" in rows_de and "□" not in rows_de,
-                rows_de.replace(chr(10), " | ")[:90],
-            )
-
-            rows_yue = panel_in("yue").get("ordenBody", "")
-            report.ok(
-                "and a reader in Cantonese reads it in Cantonese, box free",
-                "空行" in rows_yue and "□" not in rows_yue,
-                rows_yue.replace(chr(10), " | ")[:90],
-            )
-
-            page.evaluate("localStorage.removeItem('orden:language')")
-
             astray = [one for one in missing if "sketch.png" not in one]
             report.ok("asks the server for nothing that is not there", not astray, "; ".join(astray[:3]))
             loose = [one for one in errors if "404" not in one]

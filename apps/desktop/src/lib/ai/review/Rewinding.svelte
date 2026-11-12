@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../../i18n.svelte'
   import { dur, fly } from '../../motion'
   import type { Thread } from '../chat/types'
   import Rewind from './Rewind.svelte'
@@ -17,7 +16,7 @@
 {:else if redo}
   <div class="redo" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
     <button class="orden-chip is-quiet" onclick={() => void review.putBack(thread, panel)}
-      >{t('Redo')}</button
+      >Redo</button
     >
   </div>
 {/if}

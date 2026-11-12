@@ -1,7 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
-  import { t } from './i18n.svelte'
   import { fade, LAYER, scale } from './motion'
   import { overlays } from './overlays'
   import { roving } from './roving'
@@ -36,7 +35,7 @@
     style:--rows={workspace.shownSpaces.length}
     data-spaces-open
     role="menu"
-    aria-label={t('Spaces')}
+    aria-label="Spaces"
     use:trap
     use:roving={{ current: '.is-on', wrap: true, held: true }}
     onkeydowncapture={typing.press}

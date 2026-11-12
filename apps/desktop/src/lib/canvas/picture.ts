@@ -23,7 +23,7 @@ import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
 import { type Faces, faceOf, NO_FACES, pdfFaces } from './faces'
 import { assetPath, invoke, isDesktop } from '../tauri'
-import { message, t } from '../i18n.svelte'
+import { message } from '../message'
 import { settings } from '../settings.svelte'
 
 const PADDING = 32
@@ -431,7 +431,7 @@ export async function exportCanvasPng(drawing: Drawing) {
   const { svg, whole } = await readySvg(drawing, chosenPalette(drawing), true)
   const blob = await svgToPng(svg, whole).catch(() => null)
   if (!blob) {
-    message(new Error('that drawing could not be turned into a picture'), t('Nothing here'))
+    message(new Error('that drawing could not be turned into a picture'), 'Nothing here')
     return
   }
 

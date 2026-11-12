@@ -81,12 +81,7 @@ vi.mock('./api', async (importOriginal) => {
   }
 })
 
-vi.mock('./i18n.svelte', () => ({
-  t: (text: string) => text,
-  key: (text: string) => text,
-  plural: (count: number, forms: { one?: string; other: string }) =>
-    (count === 1 ? (forms.one ?? forms.other) : forms.other).replace('{count}', String(count)),
-  amount: (value: number) => String(value),
+vi.mock('./message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))

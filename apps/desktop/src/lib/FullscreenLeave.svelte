@@ -1,14 +1,13 @@
 <script lang="ts">
   import { fullscreen } from './fullscreen.svelte'
-  import { t } from './i18n.svelte'
 </script>
 
 <button
   class="leave"
   data-covers
   class:idle={fullscreen.idle}
-  title={t('Leave fullscreen')}
-  aria-label={t('Leave fullscreen')}
+  title="Leave fullscreen"
+  aria-label="Leave fullscreen"
   onclick={() => void fullscreen.leave()}
 >
   <svg viewBox="0 0 16 16">
@@ -20,7 +19,7 @@
   .leave {
     position: absolute;
     top: max(var(--space-2), var(--inset-top));
-    inset-inline-end: max(var(--space-2), var(--inset-end));
+    inset-inline-end: max(var(--space-2), var(--inset-right));
     z-index: var(--z-float);
     display: grid;
     place-items: center;

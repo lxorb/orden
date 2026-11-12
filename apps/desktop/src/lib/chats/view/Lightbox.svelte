@@ -3,7 +3,6 @@
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../../backstack.svelte'
   import { downloadStarted } from '../../downloads/started'
-  import { t } from '../../i18n.svelte'
   import { fade, LAYER, scale } from '../../motion'
   import { overlays } from '../../overlays'
   import Glyph from './Glyph.svelte'
@@ -104,28 +103,22 @@
         href={fileUrl(chat, file.hash)}
         download={file.name}
         onclick={(event) => downloadStarted(file.name, { element: event.currentTarget })}
-        aria-label={t('Save')}
-        title={t('Save')}><Glyph name="save" /></a
+        aria-label="Save"
+        title="Save"><Glyph name="save" /></a
       >
     {/if}
-    <button type="button" class="orden-glyph" aria-label={t('Close')} onclick={onclose}
+    <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}
       ><Glyph name="close" /></button
     >
   </div>
   {#if index > 0}
-    <button
-      type="button"
-      class="orden-glyph side left"
-      aria-label={t('Previous')}
-      onclick={() => go(-1)}><Glyph name="left" /></button
+    <button type="button" class="orden-glyph side left" aria-label="Previous" onclick={() => go(-1)}
+      ><Glyph name="left" /></button
     >
   {/if}
   {#if index < files.length - 1}
-    <button
-      type="button"
-      class="orden-glyph side right"
-      aria-label={t('Next')}
-      onclick={() => go(1)}><Glyph name="right" /></button
+    <button type="button" class="orden-glyph side right" aria-label="Next" onclick={() => go(1)}
+      ><Glyph name="right" /></button
     >
   {/if}
 </div>

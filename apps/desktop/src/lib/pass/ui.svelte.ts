@@ -1,6 +1,5 @@
 import type { Flag } from '@orden/pass/monitor'
 import type { Content, Item } from '@orden/pass/types'
-import { t } from '../i18n.svelte'
 import { prompt } from '../prompt.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import type { Scope } from './list'
@@ -62,8 +61,8 @@ export class PassUi {
     if (this.editing && this.dirty) {
       const sure = await prompt.confirm({
         until: pass.opened,
-        title: t('Discard your changes?'),
-        confirmLabel: t('Discard'),
+        title: 'Discard your changes?',
+        confirmLabel: 'Discard',
         danger: true,
       })
       if (!sure) return false

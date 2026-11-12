@@ -4,7 +4,6 @@
   import CircleAlert from 'lucide/dist/esm/icons/circle-alert.mjs'
   import FolderOpen from 'lucide/dist/esm/icons/folder-open.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { t } from '../i18n.svelte'
   import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
   import { showLabel } from '../reveal'
@@ -13,7 +12,7 @@
   const { onclose }: { onclose: () => void } = $props()
 
   const rows = $derived([...downloads.list].reverse())
-  const showWords = $derived(t(showLabel()))
+  const showWords = $derived(showLabel())
 
   function fraction(one: Download): number | null {
     return one.total === null ? null : Math.min(1, one.received / one.total)
@@ -32,7 +31,7 @@
   bind:this={bubble}
   class="downloads orden-bubble is-pressable"
   role="dialog"
-  aria-label={t('Downloads')}
+  aria-label="Downloads"
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
 >
   <ul>
@@ -60,7 +59,7 @@
                 <span class="done" style:transform={`scaleX(${String(share ?? 0.3)})`}></span>
               </span>
             {:else if one.state === 'failed'}
-              <span class="said">{t('Failed')}</span>
+              <span class="said">Failed</span>
             {/if}
           </span>
         </button>
@@ -68,8 +67,8 @@
         {#if one.state === 'going'}
           <button
             class="orden-glyph"
-            title={t('Cancel')}
-            aria-label={t('Cancel')}
+            title="Cancel"
+            aria-label="Cancel"
             onclick={() => void downloads.cancel(one.id)}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -190,10 +189,6 @@
     background: var(--accent);
     transform-origin: left;
     transition: transform var(--dur-base) var(--ease-out);
-  }
-
-  :global([dir='rtl']) .done {
-    transform-origin: right;
   }
 
   .sweeping .done {

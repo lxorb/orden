@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { amount, t } from '../../i18n.svelte'
+  import { localNumber } from '../../region'
   import { workspace } from '../../workspace.svelte'
   import { hiddenKinds } from '../../settings.svelte'
   import { canWriteAt } from '../../sharing.svelte'
@@ -109,24 +109,24 @@
 <div class="chats">
   <label class="orden-field find">
     <Glyph name="hash" />
-    <input bind:value={query} type="search" aria-label={t('Search')} placeholder={t('Search')} />
+    <input bind:value={query} type="search" aria-label="Search" placeholder="Search" />
   </label>
 
   {#if showing === 'chats' && priorities.on}
-    <div class="orden-segmented arranged" role="radiogroup" aria-label={t('Chats')}>
+    <div class="orden-segmented arranged" role="radiogroup" aria-label="Chats">
       <button
         type="button"
         role="radio"
         aria-checked={arranged === 'all'}
         class:on={arranged === 'all'}
-        onclick={() => (arranged = 'all')}>{t('All')}</button
+        onclick={() => (arranged = 'all')}>All</button
       >
       <button
         type="button"
         role="radio"
         aria-checked={arranged === 'priority'}
         class:on={arranged === 'priority'}
-        onclick={() => (arranged = 'priority')}>{t('By priority')}</button
+        onclick={() => (arranged = 'priority')}>By priority</button
       >
     </div>
   {/if}
@@ -135,13 +135,14 @@
     <div class="ranked" class:unread={one.entry.unread > 0}>
       <button type="button" class="orden-row entry" onclick={() => open(one.entry)}>
         <span class="orden-row-mark"><ChatMark path={one.entry.path} /></span>
-        <span class="orden-row-label">{one.entry.name ?? t('Chat')}</span>
-        {#if one.entry.unread}<span class="orden-row-meta count">{amount(one.entry.unread)}</span
+        <span class="orden-row-label">{one.entry.name ?? 'Chat'}</span>
+        {#if one.entry.unread}<span class="orden-row-meta count"
+            >{localNumber(one.entry.unread)}</span
           >{/if}
       </button>
       <select
         class="level"
-        aria-label={t('Priority')}
+        aria-label="Priority"
         value={one.level ?? ''}
         onchange={(event) => moved(one.entry, event.currentTarget.value)}
       >
@@ -158,7 +159,7 @@
             type="button"
             class="orden-chip"
             onclick={() => suggested.reply && useDraft(one.entry, suggested.reply)}
-            >{t('Use draft')}</button
+            >Use draft</button
           >
         {/if}
         {#if suggested.todo}
@@ -166,25 +167,24 @@
           <button
             type="button"
             class="orden-chip"
-            onclick={() => suggested.todo && addTodo(one.entry, suggested.todo)}
-            >{t('Add as task')}</button
+            onclick={() => suggested.todo && addTodo(one.entry, suggested.todo)}>Add as task</button
           >
         {/if}
         <button
           type="button"
           class="orden-chip"
-          onclick={() => priorities.settle(one.entry.id, 'all')}>{t('Dismiss')}</button
+          onclick={() => priorities.settle(one.entry.id, 'all')}>Dismiss</button
         >
       </div>
     {/if}
   {/snippet}
 
   {#if showing === 'chats' && priorities.on && arranged === 'priority'}
-    <p class="orden-section">{t('Pending')}</p>
+    <p class="orden-section">Pending</p>
     {#each byLevel.pending as one (one.entry.id)}
       {@render ranked(one)}
     {/each}
-    <p class="orden-section">{t('Everything else')}</p>
+    <p class="orden-section">Everything else</p>
     {#each byLevel.rest as one (one.entry.id)}
       {@render ranked(one)}
     {/each}
@@ -198,23 +198,24 @@
       }}
     >
       <span class="orden-row-mark"><Glyph name="mention" /></span>
-      <span class="orden-row-label">{t('Activity')}</span>
-      {#if mentions}<span class="badge">{amount(mentions)}</span>{/if}
+      <span class="orden-row-label">Activity</span>
+      {#if mentions}<span class="badge">{localNumber(mentions)}</span>{/if}
     </button>
     <button type="button" class="orden-row" onclick={() => (showing = 'saved')}>
       <span class="orden-row-mark"><Glyph name="saved" /></span>
-      <span class="orden-row-label">{t('Saved')}</span>
-      {#if saved.list.length}<span class="orden-row-meta">{amount(saved.list.length)}</span>{/if}
+      <span class="orden-row-label">Saved</span>
+      {#if saved.list.length}<span class="orden-row-meta">{localNumber(saved.list.length)}</span
+        >{/if}
     </button>
 
     <div class="section">
-      <p class="orden-section">{t('Chats')}</p>
+      <p class="orden-section">Chats</p>
       {#if workspace.activeSpace && hiddenKinds.offers('chat') && canWriteAt(workspace.activeSpace.root)}
         <button
           type="button"
           class="orden-glyph add"
-          aria-label={t('New chat')}
-          title={t('New chat')}
+          aria-label="New chat"
+          title="New chat"
           onclick={() => void makeChat()}><Glyph name="attach" /></button
         >
       {/if}
@@ -232,18 +233,18 @@
         onclick={() => open(chat)}
       >
         <span class="orden-row-mark"><ChatMark path={chat.path} /></span>
-        <span class="orden-row-label">{chat.name ?? t('Chat')}</span>
+        <span class="orden-row-label">{chat.name ?? 'Chat'}</span>
         {#if chat.mentions && !muted}
-          <span class="badge">{amount(chat.mentions)}</span>
+          <span class="badge">{localNumber(chat.mentions)}</span>
         {:else if unread}
-          <span class="orden-row-meta count">{amount(chat.unread)}</span>
+          <span class="orden-row-meta count">{localNumber(chat.unread)}</span>
         {/if}
       </button>
     {/each}
   {:else}
     <button type="button" class="orden-row back" onclick={() => (showing = 'chats')}>
       <span class="orden-row-mark orden-mirror"><Glyph name="left" /></span>
-      <span class="orden-row-label">{showing === 'activity' ? t('Activity') : t('Saved')}</span>
+      <span class="orden-row-label">{showing === 'activity' ? 'Activity' : 'Saved'}</span>
     </button>
     {#if showing === 'activity'}
       {#each activity as one (`${one.chat}:${one.message.id}`)}

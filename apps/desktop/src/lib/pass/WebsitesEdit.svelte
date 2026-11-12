@@ -2,7 +2,6 @@
   import { MATCH_RULES, type MatchRule, type Website } from '@orden/pass/types'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
   import Cross from '../Cross.svelte'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { FIELD_ICONS } from './field-icons'
   import { matchLabel } from './field-words'
@@ -32,7 +31,7 @@
 <div class="websites orden-edit-row">
   <span class="mark"><Glyph icon={FIELD_ICONS.website} /></span>
   <div class="list">
-    <span class="label">{t('Websites')}</span>
+    <span class="label">Websites</span>
     {#each websites as website, at (at)}
       <div class="site">
         <input
@@ -42,7 +41,7 @@
           inputmode="url"
           autocomplete="off"
           spellcheck="false"
-          aria-label={t('Website')}
+          aria-label="Website"
           {oninput}
         />
         <div class="rule">
@@ -50,7 +49,7 @@
             plain
             value={website.match}
             options={rules}
-            label={t('Fill on')}
+            label="Fill on"
             onchange={(value: string) => {
               website.match = ruleOf(value)
               oninput()
@@ -60,8 +59,8 @@
         <button
           type="button"
           class="orden-glyph"
-          aria-label={t('Remove')}
-          title={t('Remove')}
+          aria-label="Remove"
+          title="Remove"
           onclick={() => remove(at)}
         >
           <Cross />
@@ -70,7 +69,7 @@
     {/each}
     <button type="button" class="orden-button is-quiet add" onclick={add}>
       <Glyph icon={Plus} />
-      <span>{t('Add website')}</span>
+      <span>Add website</span>
     </button>
   </div>
 </div>

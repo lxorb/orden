@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { chartFigure, chartSvg, readChart, setChartLocale } from './chart'
+import { chartFigure, chartSvg, readChart } from './chart'
 import { renderMarkdown } from './index'
 
 const SALES = `type: bar
@@ -238,10 +238,10 @@ describe('a chart in a note', () => {
 describe('the language the numbers are written in', () => {
   const THOUSANDS = 'series:\n  - title: Sales\n    data: [1234.5, 2000]\n'
 
-  test('English, where nobody has said otherwise', () => {
+  test('the system’s, where nobody has said otherwise', () => {
     const svg = chartSvg(readChart(THOUSANDS)!)
-    expect(svg).toContain('<title>Sales: 1,234.5</title>')
-    expect(svg).toContain('>1,000<')
+    expect(svg).toContain(`<title>Sales: ${new Intl.NumberFormat().format(1234.5)}</title>`)
+    expect(svg).toContain(`>${new Intl.NumberFormat().format(1000)}<`)
   })
 
   test('and the one the caller names', () => {
@@ -252,7 +252,7 @@ describe('the language the numbers are written in', () => {
 
   test('through the block a fence becomes', () => {
     expect(chartFigure(THOUSANDS, { locale: 'de' })).toContain('1.234,5')
-    expect(chartFigure(THOUSANDS)).toContain('1,234.5')
+    expect(chartFigure(THOUSANDS, { locale: 'en-US' })).toContain('1,234.5')
   })
 
   test('through a render option, which reaches a chart inside the note', () => {
@@ -262,21 +262,6 @@ describe('the language the numbers are written in', () => {
     expect(renderMarkdown(fence, { locale: 'de', escapeHtml: true, toc: true })).toContain(
       '1.234,5',
     )
-  })
-
-  test('or once, for every caller that names none', () => {
-    try {
-      setChartLocale('de')
-      expect(chartFigure(THOUSANDS)).toContain('1.234,5')
-      expect(chartFigure(THOUSANDS, { locale: 'en-US' })).toContain('1,234.5')
-    } finally {
-      setChartLocale('')
-    }
-  })
-
-  test('and English again when what it is handed is nothing', () => {
-    setChartLocale('')
-    expect(chartFigure(THOUSANDS)).toContain('1,234.5')
   })
 })
 

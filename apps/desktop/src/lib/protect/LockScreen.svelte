@@ -1,7 +1,6 @@
 <script lang="ts">
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import Icon from '../Icon.svelte'
-  import { t } from '../i18n.svelte'
   import { nameOf } from '../space-paths'
   import { workspace } from '../workspace.svelte'
   import { deviceCan, deviceName } from './device'
@@ -46,12 +45,12 @@
   }
 </script>
 
-<div class="locked" data-region="editor" role="group" aria-label={t('Protected')}>
+<div class="locked" data-region="editor" role="group" aria-label="Protected">
   <span class="mark" aria-hidden="true"><Icon icon={null} fallback={Lock} /></span>
   <p class="name">{nameOf(path)}</p>
   {#if device}
     <button class="orden-button" class:is-quiet={password} disabled={busy} onclick={byDevice}>
-      {t('Use {way}', { way: deviceName() })}
+      Use {deviceName()}
     </button>
   {/if}
   {#if password}
@@ -62,27 +61,24 @@
         class="orden-field"
         type="password"
         autocomplete="current-password"
-        placeholder={t('Password')}
-        aria-label={t('Password')}
+        placeholder="Password"
+        aria-label="Password"
         aria-invalid={wrong}
         oninput={() => (wrong = false)}
       />
-      <button class="orden-button" type="submit" disabled={busy || !typed}>{t('Unlock')}</button>
+      <button class="orden-button" type="submit" disabled={busy || !typed}>Unlock</button>
     </form>
   {/if}
   {#if wrong}
-    <p class="wrong" role="alert">{t('Wrong password')}</p>
+    <p class="wrong" role="alert">Wrong password</p>
   {/if}
   {#if (wrong || !password) && !device}
     <p class="note">
-      {t(
-        'Forgot it? The file is still in the space’s folder, and another device can remove the protection.',
-      )}
+      Forgot it? The file is still in the space’s folder, and another device can remove the
+      protection.
     </p>
   {/if}
-  <p class="note">
-    {t('Protected, not encrypted: this only keeps it from being opened by accident.')}
-  </p>
+  <p class="note">Protected, not encrypted: this only keeps it from being opened by accident.</p>
 </div>
 
 <style>

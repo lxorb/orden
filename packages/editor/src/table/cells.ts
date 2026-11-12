@@ -1,5 +1,4 @@
 import type { EditorView } from '@codemirror/view'
-import { label, type LabelKey } from '../labels'
 import { pressedByKey } from '../press'
 import { selectionIn } from './caret'
 import { renderInline } from './inline'
@@ -54,12 +53,12 @@ function icon(path: string): SVGSVGElement {
   return svg
 }
 
-export function button(className: string, key: LabelKey, path: string, onPress: () => void) {
+export function button(className: string, said: string, path: string, onPress: () => void) {
   const node = document.createElement('button')
   node.className = className
   node.type = 'button'
-  node.title = label(key)
-  node.setAttribute('aria-label', label(key))
+  node.title = said
+  node.setAttribute('aria-label', said)
   node.append(icon(path))
   node.addEventListener('mousedown', (event) => {
     event.preventDefault()

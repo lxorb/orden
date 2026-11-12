@@ -52,8 +52,8 @@ export function landing(glyphs: readonly Glyph[], tab: string | null): Glyph | n
   )
 }
 
-export function cornerOf(window: { width: number; height: number }, rtl: boolean): Point {
-  return { x: rtl ? CORNER : window.width - CORNER, y: CORNER }
+export function cornerOf(window: { width: number; height: number }): Point {
+  return { x: window.width - CORNER, y: CORNER }
 }
 
 export function flightMs(from: Point, to: Point): number {

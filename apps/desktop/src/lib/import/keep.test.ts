@@ -98,8 +98,7 @@ describe('a Google Keep export', () => {
     ])
 
     expect(plan.files.map((one) => one.path)).toEqual(['Here.md'])
-    expect(plan.lost[0]?.text).toContain('bin')
-    expect(plan.lost[0]?.values).toEqual({ count: 1 })
+    expect(plan.lost[0]).toBe('1 notes were in the bin and stay there')
   })
 
   test('an archived note goes to a folder called Archive, and says so', async () => {
@@ -108,7 +107,7 @@ describe('a Google Keep export', () => {
     ])
 
     expect(plan.files[0]?.path).toBe('Archive/Old.md')
-    expect(plan.lost.some((one) => one.text.includes('Archive'))).toBe(true)
+    expect(plan.lost.some((one) => one.includes('Archive'))).toBe(true)
   })
 
   test('a colour is mentioned rather than kept', async () => {
@@ -116,7 +115,7 @@ describe('a Google Keep export', () => {
       file('Keep/A.json', keepNote({ title: 'A', textContent: 'x', color: 'TEAL' })),
     ])
 
-    expect(plan.lost.some((one) => one.text.includes('colours'))).toBe(true)
+    expect(plan.lost.some((one) => one.includes('colours'))).toBe(true)
   })
 
   test('a note with no title is named after what it says', async () => {
@@ -181,7 +180,7 @@ describe('what a real Takeout does', () => {
       file('Keep/Voice.json', keepNote({ title: 'Voice', attachments: [{ filePath: 'a.3gp' }] })),
     ])
 
-    expect(plan.lost.find((one) => one.text.includes('missing'))?.values).toEqual({ count: 1 })
+    expect(plan.lost).toContain('1 attachment was missing from the export or could not be read')
   })
 
   test('a note cut short is counted, while Takeout’s own JSON is not', async () => {
@@ -192,9 +191,7 @@ describe('what a real Takeout does', () => {
     ])
 
     expect(plan.files.map((one) => one.path)).toEqual(['Here.md'])
-    expect(plan.lost.find((one) => one.text.includes('could not be read'))?.values).toEqual({
-      count: 1,
-    })
+    expect(plan.lost).toContain('1 file could not be read, so it was left out')
     expect(noteAt(plan, 'Here.md')).toContain('line 1\nline 2')
   })
 

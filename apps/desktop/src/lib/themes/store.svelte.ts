@@ -1,4 +1,4 @@
-import { message, t } from '../i18n.svelte'
+import { message } from '../message'
 import { log } from '../log'
 import { isBuiltIn, theme } from '../theme.svelte'
 import { keepJson, stored, stringList } from '../stored'
@@ -192,10 +192,10 @@ class Store {
   }
 
   action(one: StoreTheme): string {
-    if (this.updatable(one)) return t('Update')
-    if (this.using(one.id)) return t('In use')
-    if (this.installed(one.id)) return t('Use')
-    return t('Install')
+    if (this.updatable(one)) return 'Update'
+    if (this.using(one.id)) return 'In use'
+    if (this.installed(one.id)) return 'Use'
+    return 'Install'
   }
 }
 

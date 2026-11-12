@@ -1,6 +1,5 @@
 <script lang="ts">
   import Hint from '../Hint.svelte'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { segmented } from '../slide'
   import Twist from '../Twist.svelte'
@@ -88,27 +87,27 @@
   let filterOpen = $state(false)
 
   const GROUP_NAMES: Record<Grouping, string> = {
-    default: t('Default'),
-    none: t('None'),
-    note: t('Project'),
-    section: t('Section'),
-    date: t('Start date'),
-    deadline: t('Deadline'),
-    priority: t('Priority'),
-    tag: t('Label'),
-    due: t('Date'),
-    status: t('Status'),
+    default: 'Default',
+    none: 'None',
+    note: 'Project',
+    section: 'Section',
+    date: 'Start date',
+    deadline: 'Deadline',
+    priority: 'Priority',
+    tag: 'Label',
+    due: 'Date',
+    status: 'Status',
   }
   const SORT_NAMES: Record<Sorting, string> = {
-    default: t('Default'),
-    smart: t('Smart'),
-    manual: t('Manual'),
-    name: t('Name'),
-    date: t('Start date'),
-    deadline: t('Deadline'),
-    priority: t('Priority'),
-    note: t('Note'),
-    created: t('Created'),
+    default: 'Default',
+    smart: 'Smart',
+    manual: 'Manual',
+    name: 'Name',
+    date: 'Start date',
+    deadline: 'Deadline',
+    priority: 'Priority',
+    note: 'Note',
+    created: 'Created',
   }
   const ANY = ''
 
@@ -174,7 +173,7 @@
 </script>
 
 {#snippet dot(on: boolean)}
-  {#if on}<span class="dot" aria-label={t('Changed')}></span>{/if}
+  {#if on}<span class="dot" aria-label="Changed"></span>{/if}
 {/snippet}
 
 {#snippet fold(name: string, count: number, open: boolean, toggle: () => void)}
@@ -187,7 +186,7 @@
 
 <div class="display">
   <div class="top">
-    <div class="orden-segmented" role="radiogroup" aria-label={t('Layout')} use:segmented>
+    <div class="orden-segmented" role="radiogroup" aria-label="Layout" use:segmented>
       {#each LAYOUTS as one (one)}
         <button
           type="button"
@@ -201,9 +200,7 @@
       {/each}
     </div>
     <Hint
-      text={t(
-        'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.',
-      )}
+      text="Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view."
     />
   </div>
 
@@ -219,26 +216,26 @@
       kit.change((base, at) => withCompleted(base, at, !view?.orden.showCompleted))
     }}
   >
-    <span class="name">{t('Completed tasks')}</span>
+    <span class="name">Completed tasks</span>
     <span class="orden-switch" class:on={view?.orden.showCompleted === true} aria-hidden="true"
     ></span>
   </div>
 
-  {@render fold(t('Sort'), changed.sort, sortOpen, () => (sortOpen = !sortOpen))}
+  {@render fold('Sort', changed.sort, sortOpen, () => (sortOpen = !sortOpen))}
   {#if sortOpen}
     <div class="pair">
-      <span class="name">{t('Grouping')}{@render dot(groupingSet)}</span>
+      <span class="name">Grouping{@render dot(groupingSet)}</span>
       <Select
-        label={t('Grouping')}
+        label="Grouping"
         value={groupingShown}
         options={groupings.map((one) => ({ value: one, label: GROUP_NAMES[one] }))}
         onchange={group}
       />
     </div>
     <div class="pair">
-      <span class="name">{t('Sorting')}{@render dot(sortingSet)}</span>
+      <span class="name">Sorting{@render dot(sortingSet)}</span>
       <Select
-        label={t('Sorting')}
+        label="Sorting"
         value={sortingShown}
         options={sortings.map((one) => ({ value: one, label: SORT_NAMES[one] }))}
         onchange={sort}
@@ -247,8 +244,8 @@
         <button
           type="button"
           class="orden-glyph"
-          aria-label={sorting.down ? t('Descending') : t('Ascending')}
-          title={sorting.down ? t('Descending') : t('Ascending')}
+          aria-label={sorting.down ? 'Descending' : 'Ascending'}
+          title={sorting.down ? 'Descending' : 'Ascending'}
           onclick={() =>
             kit.change((base, at) => withSorting(base, at, sortingShown, !sorting.down, original))}
         >
@@ -260,16 +257,16 @@
     </div>
   {/if}
 
-  {@render fold(t('Filter'), changed.filter, filterOpen, () => (filterOpen = !filterOpen))}
+  {@render fold('Filter', changed.filter, filterOpen, () => (filterOpen = !filterOpen))}
   {#if filterOpen}
     {#if spaces.length > 1 || only.space !== undefined}
       <div class="pair">
-        <span class="name">{t('Space')}{@render dot(only.space !== undefined)}</span>
+        <span class="name">Space{@render dot(only.space !== undefined)}</span>
         <Select
-          label={t('Space')}
+          label="Space"
           value={only.space ?? ANY}
           options={[
-            { value: ANY, label: t('All') },
+            { value: ANY, label: 'All' },
             ...spaces.map((name) => ({ value: name, label: name })),
           ]}
           onchange={(next: string) => narrow({ space: next })}
@@ -278,12 +275,12 @@
     {/if}
     {#if notes.length > 1 || only.project !== undefined}
       <div class="pair">
-        <span class="name">{t('Project')}{@render dot(only.project !== undefined)}</span>
+        <span class="name">Project{@render dot(only.project !== undefined)}</span>
         <Select
-          label={t('Project')}
+          label="Project"
           value={only.project ?? ANY}
           options={[
-            { value: ANY, label: t('All') },
+            { value: ANY, label: 'All' },
             ...notes.map((one) => ({ value: one.path, label: one.name })),
           ]}
           onchange={(next: string) => narrow({ project: next })}
@@ -291,12 +288,12 @@
       </div>
     {/if}
     <div class="pair">
-      <span class="name">{t('Priority')}{@render dot(only.priority !== undefined)}</span>
+      <span class="name">Priority{@render dot(only.priority !== undefined)}</span>
       <Select
-        label={t('Priority')}
+        label="Priority"
         value={only.priority === undefined ? ANY : String(only.priority)}
         options={[
-          { value: ANY, label: t('All') },
+          { value: ANY, label: 'All' },
           ...[1, 2, 3, 4].map((level) => ({ value: String(level), label: `p${level}` })),
         ]}
         onchange={(next: string) => narrow({ priority: next })}
@@ -304,12 +301,12 @@
     </div>
     {#if labels.length || only.label !== undefined}
       <div class="pair">
-        <span class="name">{t('Label')}{@render dot(only.label !== undefined)}</span>
+        <span class="name">Label{@render dot(only.label !== undefined)}</span>
         <Select
-          label={t('Label')}
+          label="Label"
           value={only.label ?? ANY}
           options={[
-            { value: ANY, label: t('All') },
+            { value: ANY, label: 'All' },
             ...labels.map((tag) => ({ value: tag, label: `#${tag}` })),
           ]}
           onchange={(next: string) => narrow({ label: next })}
@@ -318,45 +315,45 @@
     {/if}
     {#if kit.spec.builtin !== 'todos' || only.date !== undefined}
       <div class="pair">
-        <span class="name">{t('Date')}{@render dot(only.date !== undefined)}</span>
+        <span class="name">Date{@render dot(only.date !== undefined)}</span>
         <Select
-          label={t('Date')}
+          label="Date"
           value={only.date ?? ANY}
           options={[
-            { value: ANY, label: t('All') },
-            { value: 'overdue', label: t('Overdue') },
-            { value: 'today', label: t('Today') },
-            { value: 'week', label: t('This week') },
-            { value: 'none', label: t('No date') },
+            { value: ANY, label: 'All' },
+            { value: 'overdue', label: 'Overdue' },
+            { value: 'today', label: 'Today' },
+            { value: 'week', label: 'This week' },
+            { value: 'none', label: 'No date' },
           ]}
           onchange={(next: string) => narrow({ date: next })}
         />
       </div>
     {/if}
     <div class="pair">
-      <span class="name">{t('Created')}{@render dot(only.created !== undefined)}</span>
+      <span class="name">Created{@render dot(only.created !== undefined)}</span>
       <Select
-        label={t('Created')}
+        label="Created"
         value={only.created ?? ANY}
         options={[
-          { value: ANY, label: t('All') },
-          { value: 'today', label: t('Today') },
-          { value: 'week', label: t('Last 7 days') },
-          { value: 'month', label: t('Last 30 days') },
+          { value: ANY, label: 'All' },
+          { value: 'today', label: 'Today' },
+          { value: 'week', label: 'Last 7 days' },
+          { value: 'month', label: 'Last 30 days' },
         ]}
         onchange={(next: string) => narrow({ created: next })}
       />
     </div>
     {#if shared || only.assignee !== undefined}
       <div class="pair">
-        <span class="name">{t('Assignee')}{@render dot(only.assignee !== undefined)}</span>
+        <span class="name">Assignee{@render dot(only.assignee !== undefined)}</span>
         <Select
-          label={t('Assignee')}
+          label="Assignee"
           value={only.assignee ?? ANY}
           options={[
-            { value: ANY, label: t('All') },
-            { value: ASSIGNED_TO_ME, label: t('Assigned to me') },
-            { value: UNASSIGNED, label: t('Unassigned') },
+            { value: ANY, label: 'All' },
+            { value: ASSIGNED_TO_ME, label: 'Assigned to me' },
+            { value: UNASSIGNED, label: 'Unassigned' },
             ...assignees.map((name) => ({ value: name, label: name })),
           ]}
           onchange={(next: string) => narrow({ assignee: next })}
@@ -369,7 +366,7 @@
     type="button"
     class="orden-chip is-quiet reset"
     disabled={changed.total === 0}
-    onclick={resetAll}>{t('Reset all')}</button
+    onclick={resetAll}>Reset all</button
   >
 </div>
 

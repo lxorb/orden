@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { readKey } from '../keys'
 import { headersFor, type Provider, reachable, troubleIn, usable } from '../providers'
 import { sseJson } from '../stream'
@@ -30,10 +29,10 @@ async function headers(
   extra: Record<string, string> = {},
 ): Promise<Record<string, string>> {
   if (!usable({ ...provider, model: provider.model || '-' })) {
-    throw new Error(t('That provider is not set up yet.'))
+    throw new Error('That provider is not set up yet.')
   }
   const apiKey = await keyFor(provider)
-  if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
+  if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')
   return { ...headersFor(provider, apiKey), ...extra }
 }
 
@@ -51,7 +50,7 @@ export async function request(
     ...(signal ? { signal } : {}),
   }).catch((error: unknown) => {
     if (wasStopped(error)) throw error
-    throw new Error(t('Could not reach {url}', { url }))
+    throw new Error(`Could not reach ${url}`)
   })
   if (!response.ok) throw await refusalOf(response, provider)
   return response
@@ -76,9 +75,9 @@ export async function refusalIn(
   const said = troubleIn(body)
   if (said) return new Refused(said, status, param, code)
   if (status === 401 || status === 403) {
-    return new Refused(t('That key was refused.'), status, param, code)
+    return new Refused('That key was refused.', status, param, code)
   }
-  return new Refused(t('The provider answered {status}.', { status }), status, param, code)
+  return new Refused(`The provider answered ${status}.`, status, param, code)
 }
 
 function detailsIn(body: unknown): { param: string; code: string } {

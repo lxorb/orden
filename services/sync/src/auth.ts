@@ -94,11 +94,7 @@ export async function openSession(env: Env, userId: string, device = ''): Promis
   return token
 }
 
-export async function accountFor(
-  env: Env,
-  address: string,
-  accepted: string | undefined,
-): Promise<User> {
+export async function accountFor(env: Env, address: string): Promise<User> {
   const held = await env.DB.prepare('select id, email, name, created_at from users where email = ?')
     .bind(address)
     .first<User>()
@@ -121,7 +117,7 @@ export async function accountFor(
 
   if (wrote.meta.changes > 0) {
     try {
-      await makeFirstSpace(env, account.id, accepted)
+      await makeFirstSpace(env, account.id)
     } catch {
       // An account is worth more than the note it opens with, so a store that
       // baulks here does not cost somebody their sign-in. Nothing tries again:
@@ -200,14 +196,13 @@ export async function verifyCode(
   env: Env,
   address: string,
   code: string,
-  accepted: string | undefined,
 ): Promise<{ user: User } | { error: string; status: 400 | 429 }> {
   const checked = await checkCode(env, address, code)
   if ('error' in checked) return checked
 
   if (!(await spendCode(env, address))) return { error: WRONG_CODE, status: 400 }
 
-  return { user: await accountFor(env, address, accepted) }
+  return { user: await accountFor(env, address) }
 }
 
 export async function checkCode(
@@ -285,12 +280,7 @@ auth.post('/verify', async (context) => {
   const held = body.text('guest', TOKEN_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const verified = await verifyCode(
-    context.env,
-    normaliseEmail(email ?? ''),
-    code ?? '',
-    context.req.header('accept-language'),
-  )
+  const verified = await verifyCode(context.env, normaliseEmail(email ?? ''), code ?? '')
 
   if ('error' in verified) return context.json({ error: verified.error }, verified.status)
   const { user } = verified

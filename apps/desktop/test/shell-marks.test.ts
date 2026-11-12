@@ -99,7 +99,7 @@ describe('the mark that says shared', () => {
 
   test('and says it in a word as well, for a reader who cannot see it', () => {
     expect(named('lib/SharedMark.svelte').text).toMatch(/aria-label=\{label\}/)
-    expect(named('lib/SharedMark.svelte').text).toMatch(/t\('Shared'\)/)
+    expect(named('lib/SharedMark.svelte').text).toMatch(/'Shared'/)
   })
 
   test('and nothing draws a dot for it any more', () => {
@@ -141,7 +141,7 @@ describe('the mark that says shared', () => {
     expect(switcher.text).toContain("import SharedMark from './SharedMark.svelte'")
     expect(switcher.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text.match(/<SharedMark \/>/g)).toHaveLength(1)
-    expect(row.text).toContain("<SharedMark icon={Eye} label={t('Read-only')} />")
+    expect(row.text).toContain('<SharedMark icon={Eye} label="Read-only" />')
     expect(declarations(switcher.style)).not.toMatch(/\.with\b/)
   })
 })

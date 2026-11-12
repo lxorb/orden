@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
-import { message } from '../../i18n.svelte'
+import { message } from '../../message'
 import { foldsIn, pathKeyAs, samePath } from '../../space-paths'
 import { joinPath } from '../../tauri'
 import type { Tab } from '../../workspace.svelte'

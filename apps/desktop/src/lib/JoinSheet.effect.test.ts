@@ -17,10 +17,6 @@ const store = vi.hoisted(() => ({
 }))
 vi.mock('./joining.svelte', () => ({ joining: store }))
 vi.mock('./account.svelte', () => ({ account: { open: false } }))
-vi.mock('./i18n.svelte', () => ({
-  t: (text: string, values: Record<string, string> = {}) =>
-    text.replace(/\{(\w+)\}/g, (_whole, key: string) => values[key] ?? key),
-}))
 
 const { overlays } = await import('./overlays')
 const JoinSheet = (await import('./JoinSheet.svelte')).default

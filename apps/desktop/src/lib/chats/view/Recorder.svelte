@@ -2,7 +2,7 @@
   import type { FileRef } from '@orden/chats'
   import { MOST_VOICE_SECONDS } from '@orden/chats/limits'
   import { onMount } from 'svelte'
-  import { message as errorWords, t } from '../../i18n.svelte'
+  import { message as errorWords } from '../../message'
   import { record, type Recording } from '../../recorder/microphone'
   import { shortcuts } from '../../shortcuts.svelte'
   import Glyph from './Glyph.svelte'
@@ -35,7 +35,7 @@
         recording = one
         started = performance.now()
       })
-      .catch((error: unknown) => (refused = errorWords(error, t('Record'))))
+      .catch((error: unknown) => (refused = errorWords(error, 'Record')))
     const keys = (event: KeyboardEvent) => {
       if (event.key === 'Escape') cancel()
       else if (event.key === 'Enter' || shortcuts.pressed('chat.record', event)) void send()
@@ -75,7 +75,7 @@
         ...(heard.wave ? { wave: heard.wave } : {}),
       })
     } catch (error) {
-      refused = errorWords(error, t('Record'))
+      refused = errorWords(error, 'Record')
       return
     } finally {
       sending = false
@@ -93,20 +93,20 @@
 <div class="recorder" role="status">
   {#if refused}
     <span class="refused">{refused}</span>
-    <button type="button" class="orden-glyph" aria-label={t('Close')} onclick={ondone}
+    <button type="button" class="orden-glyph" aria-label="Close" onclick={ondone}
       ><Glyph name="close" /></button
     >
   {:else}
     <span class="dot" aria-hidden="true"></span>
     <span class="time">{clock(started ? (now - started) / 1000 : 0)}</span>
     <span class="grow"></span>
-    <button type="button" class="orden-glyph" aria-label={t('Delete')} onclick={cancel}
+    <button type="button" class="orden-glyph" aria-label="Delete" onclick={cancel}
       ><Glyph name="close" /></button
     >
     <button
       type="button"
       class="send"
-      aria-label={t('Send')}
+      aria-label="Send"
       disabled={sending || !started}
       onclick={() => void send()}><Glyph name="send" /></button
     >

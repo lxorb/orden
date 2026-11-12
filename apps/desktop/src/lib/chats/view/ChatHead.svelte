@@ -2,7 +2,7 @@
   import type { Message, Notify } from '@orden/chats'
   import { may } from '@orden/chats'
   import { LONGEST_TOPIC } from '@orden/chats/limits'
-  import { amount, t } from '../../i18n.svelte'
+  import { localNumber } from '../../region'
   import Avatar from '../../people/Avatar.svelte'
   import Bell from '../Bell.svelte'
   import { people } from '../../people/people.svelte'
@@ -94,7 +94,7 @@
       class="topic-field"
       bind:value={topic}
       maxlength={LONGEST_TOPIC}
-      aria-label={t('Topic')}
+      aria-label="Topic"
       autofocus
       onblur={() => {
         if (writing) keepTopic()
@@ -113,7 +113,7 @@
       class="topic"
       class:empty={!meta.topic}
       disabled={!canTopic}
-      onclick={startTopic}>{meta.topic || (canTopic ? t('Topic') : '')}</button
+      onclick={startTopic}>{meta.topic || (canTopic ? 'Topic' : '')}</button
     >
   {/if}
   <span class="grow"></span>
@@ -121,9 +121,9 @@
     type="button"
     class="people"
     class:on={membersOn}
-    aria-label={t('Members')}
+    aria-label="Members"
     aria-pressed={membersOn}
-    use:tip={() => shortcuts.tooltip(t('Members'), 'chat.members')}
+    use:tip={() => shortcuts.tooltip('Members', 'chat.members')}
     onclick={onmembers}
   >
     <span class="faces" aria-hidden="true">
@@ -131,13 +131,13 @@
         <span class="face"><Avatar face={faceOf(one.who, page.members, space)} size={20} /></span>
       {/each}
     </span>
-    <span class="count">{amount(page.view.members.length)}</span>
+    <span class="count">{localNumber(page.view.members.length)}</span>
   </button>
   <button
     type="button"
     class="orden-glyph"
-    aria-label={t('Pinned')}
-    use:tip={() => t('Pinned')}
+    aria-label="Pinned"
+    use:tip={() => 'Pinned'}
     onclick={(event) => void showPins(event.currentTarget)}><Glyph name="pin" /></button
   >
   <Bell
@@ -150,19 +150,13 @@
   <button
     type="button"
     class="orden-glyph"
-    aria-label={t('Search this chat')}
-    use:tip={() => shortcuts.tooltip(t('Search this chat'), 'chat.search')}
+    aria-label="Search this chat"
+    use:tip={() => shortcuts.tooltip('Search this chat', 'chat.search')}
     onclick={() => page.search()}><Glyph name="search" /></button
   >
 </header>
 
-<Float
-  at={showing?.at ?? null}
-  end
-  width="280px"
-  label={t('Pinned')}
-  onclose={() => (showing = null)}
->
+<Float at={showing?.at ?? null} end width="280px" label="Pinned" onclose={() => (showing = null)}>
   <div class="list orden-scrolls">
     {#if showing}
       {#each pinned as one (one.id)}

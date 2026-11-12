@@ -1,4 +1,3 @@
-import { key } from '../i18n.svelte'
 import { log } from '../log'
 import { keep, stored, storedText } from '../stored'
 import {
@@ -41,9 +40,9 @@ const TRIES = 3
 export type Feature = 'ask' | 'block' | 'rewrite'
 
 export const FEATURES: readonly { id: Feature; label: string }[] = [
-  { id: 'ask', label: key('Ask') },
-  { id: 'block', label: key('AI block') },
-  { id: 'rewrite', label: key('Rewrite') },
+  { id: 'ask', label: 'Ask' },
+  { id: 'block', label: 'AI block' },
+  { id: 'rewrite', label: 'Rewrite' },
 ]
 
 function isStale(error: unknown): boolean {

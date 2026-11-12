@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { dur, fade } from '../motion'
   import { isDesktop } from '../tauri'
   import { trap } from '../trap'
@@ -116,12 +115,10 @@
           {/each}
         </span>
         {#if !last}
-          <button class="orden-button is-quiet small" type="button" onclick={end}>
-            {t('Skip')}
-          </button>
+          <button class="orden-button is-quiet small" type="button" onclick={end}> Skip </button>
         {/if}
         <button class="orden-button small" type="button" data-lands onclick={next}>
-          {last ? t('Done') : t('Next')}
+          {last ? 'Done' : 'Next'}
         </button>
       </div>
     </div>

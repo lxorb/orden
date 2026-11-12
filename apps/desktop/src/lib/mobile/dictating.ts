@@ -1,8 +1,8 @@
 import type { EditorView } from '@orden/editor'
 import { busy } from '../busy.svelte'
-import { t } from '../i18n.svelte'
 import { writeAtCaret } from '../insert-picture'
 import { log } from '../log'
+import { systemLocale } from '../region'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { answer, frameWord, method } from './bridge'
@@ -70,7 +70,7 @@ function start(view: EditorView): void {
   const one = new makes()
   one.continuous = true
   one.interimResults = false
-  one.lang = document.documentElement.lang || 'en'
+  one.lang = systemLocale()
 
   one.onresult = (event: Heard) => {
     for (let at = event.resultIndex; at < event.results.length; at++) {
@@ -155,7 +155,7 @@ function before(view: EditorView): string {
 
 function hold(): void {
   busy.start(
-    t('Listening'),
+    'Listening',
     () =>
       new Promise<void>((resolve) => {
         release = resolve

@@ -6,7 +6,6 @@
   import { feedback } from './feedback.svelte'
   import { MOST_PICTURES, type Picture, picturesAmong } from './feedback-pictures'
   import { pictureOf } from './pictures-away'
-  import { t } from './i18n.svelte'
   import { fade, LAYER, scale } from './motion'
   import { followHref } from './open-link'
   import { overlays } from './overlays'
@@ -54,11 +53,11 @@
     if (!given.length) return
     pictureError = null
     const room = MOST_PICTURES - pictures.length
-    if (given.length > room) pictureError = t('That is more than 4 images.')
+    if (given.length > room) pictureError = 'That is more than 4 images.'
     for (const file of given.slice(0, Math.max(0, room))) {
       const picture = await pictureOf(file).catch(() => null)
       if (!picture) {
-        pictureError = t('That file could not be used as an image.')
+        pictureError = 'That file could not be used as an image.'
         continue
       }
       if (pictures.length < MOST_PICTURES) pictures = [...pictures, picture]
@@ -95,7 +94,7 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label={t('Send feedback')}
+    aria-label="Send feedback"
     tabindex="-1"
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
     use:dropOver={(event) => {
@@ -109,9 +108,9 @@
   >
     {#if received}
       <div class="received" role="status">
-        <p class="title">{t('Report received')}</p>
+        <p class="title">Report received</p>
         {#if received.url}
-          <p class="detail">{t('Your report reached us. You can follow it here:')}</p>
+          <p class="detail">Your report reached us. You can follow it here:</p>
           <a
             class="link"
             href={received.url}
@@ -119,13 +118,11 @@
               event.preventDefault()
               followHref(received.url ?? '', event)
               feedback.close()
-            }}>{t('View your report')}</a
+            }}>View your report</a
           >
         {/if}
         <div class="row">
-          <button type="button" class="orden-button" onclick={() => feedback.close()}
-            >{t('Done')}</button
-          >
+          <button type="button" class="orden-button" onclick={() => feedback.close()}>Done</button>
         </div>
       </div>
     {:else}
@@ -135,13 +132,13 @@
           void send()
         }}
       >
-        <p class="title">{t('Send feedback')}</p>
+        <p class="title">Send feedback</p>
 
         <!-- svelte-ignore a11y_autofocus -->
         <textarea
           bind:value={text}
-          placeholder={t('Describe the issue')}
-          aria-label={t('Describe the issue')}
+          placeholder="Describe the issue"
+          aria-label="Describe the issue"
           rows="6"
           autofocus
           disabled={sending}
@@ -161,8 +158,8 @@
                 <button
                   type="button"
                   class="remove"
-                  title={t('Remove image')}
-                  aria-label={t('Remove image')}
+                  title="Remove image"
+                  aria-label="Remove image"
                   disabled={sending}
                   onclick={() => remove(picture.id)}
                 >
@@ -179,7 +176,7 @@
             class="orden-chip is-quiet"
             disabled={sending || pictures.length >= MOST_PICTURES}
             onclick={() => void chooseFiles({ accept: 'image/*', multiple: true }).then(add)}
-            >{t('Add images')}</button
+            >Add images</button
           >
         </div>
 
@@ -188,24 +185,23 @@
         {/if}
 
         <p class="detail">
-          {t(
-            'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.',
-          )}
+          This report includes your description, Orden’s version, your platform and the recent app
+          log, with file paths removed.
         </p>
 
         {#if error}
           <p class="error" role="alert">
-            {t('Not sent. Your text is kept, so you can try again.')}
+            Not sent. Your text is kept, so you can try again.
             {error}
           </p>
         {/if}
 
         <div class="row">
           <button type="button" class="orden-button is-quiet" onclick={() => feedback.close()}
-            >{t('Cancel')}</button
+            >Cancel</button
           >
           <button type="submit" class="orden-button" disabled={!text.trim() || sending}>
-            {t('Send')}
+            Send
           </button>
         </div>
       </form>

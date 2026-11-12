@@ -8,7 +8,6 @@
   import Message from 'lucide/dist/esm/icons/message-square.mjs'
   import Pencil from 'lucide/dist/esm/icons/pencil.mjs'
   import Sparkles from 'lucide/dist/esm/icons/sparkles.mjs'
-  import { t } from '../i18n.svelte'
   import Glyph from '../quick-add/Glyph.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import Twist from '../Twist.svelte'
@@ -139,7 +138,7 @@
       class:finished={task.done || task.cancelled}
       class:toned={tone !== null}
       class:blocked={blocker !== null}
-      title={blocker === null ? undefined : t('Blocked by {task}', { task: blocker })}
+      title={blocker === null ? undefined : `Blocked by ${blocker}`}
       style:--row-tone={tone}
       style:--depth={depth}
       style:--lines={lines}
@@ -166,7 +165,7 @@
             type="button"
             class="twist"
             tabindex="-1"
-            aria-label={twist === 'open' ? t('Collapse') : t('Expand')}
+            aria-label={twist === 'open' ? 'Collapse' : 'Expand'}
             aria-expanded={twist === 'open'}
             onclick={(event) => {
               event.stopPropagation()
@@ -186,8 +185,8 @@
               type="button"
               class="act"
               tabindex="-1"
-              aria-label={t('Edit')}
-              title={shortcuts.tooltip(t('Edit'), 'tasks.edit')}
+              aria-label="Edit"
+              title={shortcuts.tooltip('Edit', 'tasks.edit')}
               onclick={(event) => {
                 event.stopPropagation()
                 onselect?.()
@@ -199,16 +198,16 @@
             type="button"
             class="act"
             tabindex="-1"
-            aria-label={t('Schedule')}
-            title={shortcuts.tooltip(t('Schedule'), 'tasks.schedule')}
+            aria-label="Schedule"
+            title={shortcuts.tooltip('Schedule', 'tasks.schedule')}
             onclick={schedule}><Glyph icon={Calendar} /></button
           >
           <button
             type="button"
             class="act"
             tabindex="-1"
-            aria-label={t('Comment')}
-            title={shortcuts.tooltip(t('Comment'), 'tasks.comment')}
+            aria-label="Comment"
+            title={shortcuts.tooltip('Comment', 'tasks.comment')}
             onclick={(event) => {
               event.stopPropagation()
               onselect?.()
@@ -220,8 +219,8 @@
               type="button"
               class="act"
               tabindex="-1"
-              aria-label={t('Do with AI')}
-              title={t('Do with AI')}
+              aria-label="Do with AI"
+              title="Do with AI"
               onclick={(event) => {
                 event.stopPropagation()
                 onselect?.()
@@ -236,8 +235,8 @@
             type="button"
             class="act"
             tabindex="-1"
-            aria-label={t('More')}
-            title={shortcuts.tooltip(t('More'), 'tasks.more')}
+            aria-label="More"
+            title={shortcuts.tooltip('More', 'tasks.more')}
             onclick={more}><Glyph icon={Ellipsis} /></button
           >
         </span>

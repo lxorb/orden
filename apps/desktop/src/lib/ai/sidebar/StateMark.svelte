@@ -1,6 +1,5 @@
 <script lang="ts">
   import { accentColour } from '../../accents'
-  import { t } from '../../i18n.svelte'
   import { theme } from '../../theme.svelte'
   import { type SessionState, STATE_COLOURS, STATE_MARKS, STATE_WORDS } from '../session-state'
 
@@ -12,7 +11,7 @@
   class:turning={state === 'running'}
   viewBox="0 0 13 13"
   style:color={accentColour(STATE_COLOURS[state], theme.current)}
-  aria-hidden="true"><title>{t(STATE_WORDS[state])}</title><path d={STATE_MARKS[state]} /></svg
+  aria-hidden="true"><title>{STATE_WORDS[state]}</title><path d={STATE_MARKS[state]} /></svg
 >
 
 <style>

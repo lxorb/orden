@@ -1,5 +1,4 @@
 import type { PanelSide } from './workspace.svelte'
-import { readingFactor } from './direction'
 import { forget, isNumber, keepJson, stored } from './stored'
 import { viewport } from './viewport.svelte'
 
@@ -41,7 +40,7 @@ export class SidebarWidth {
   }
 
   private get towards(): number {
-    return (this.side === 'right' ? -1 : 1) * readingFactor()
+    return this.side === 'right' ? -1 : 1
   }
 
   dragging = $state(false)

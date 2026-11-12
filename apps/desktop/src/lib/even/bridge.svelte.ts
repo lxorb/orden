@@ -7,7 +7,6 @@ import type { Field } from '../preferences'
 import { fileMark } from '../file-mark'
 import { modes } from '../modes.svelte'
 import { shownName } from '../note-name'
-import { panelWord } from './panel-words'
 import { quietFor, waitFor } from './pace'
 import { Panel } from './screen'
 import { connectGlasses, type Glasses, type Input } from './sdk'
@@ -30,7 +29,7 @@ const STEERING = 500
 type Folds = ((path: string) => boolean) | null
 
 function saying(field: Field): string {
-  if (field.kind === 'switch') return field.get() ? panelWord('On') : panelWord('Off')
+  if (field.kind === 'switch') return field.get() ? 'On' : 'Off'
   if (field.kind === 'slider') return `${String(field.get())}${field.unit ?? ''}`
   if (field.kind === 'text') return field.get() || field.placeholder
   if (field.kind === 'value') return field.get()
@@ -204,7 +203,7 @@ class Bridge {
 
   private world(): World {
     return {
-      space: () => workspace.activeSpace?.name ?? panelWord('Notes'),
+      space: () => workspace.activeSpace?.name ?? 'Notes',
       contents: () => rowsOf(workspace.tree, null),
       spaces: () =>
         workspace.shownSpaces.map((one) => ({
@@ -236,28 +235,28 @@ class Bridge {
 
   private words(): Words {
     return {
-      spaces: panelWord('Spaces'),
-      notes: panelWord('Notes'),
-      switchSpace: panelWord('Switch space'),
-      changeNote: panelWord('Change note'),
-      voiceOn: panelWord('Voice on'),
-      voiceOff: panelWord('Voice off'),
-      thinking: panelWord('Thinking'),
-      nothingHere: panelWord('Nothing here'),
-      noAnswer: panelWord('No answer'),
-      settings: panelWord('Settings'),
-      reset: panelWord('Reset glasses settings'),
-      done: panelWord('Done'),
-      today: panelWord('Today'),
+      spaces: 'Spaces',
+      notes: 'Notes',
+      switchSpace: 'Switch space',
+      changeNote: 'Change note',
+      voiceOn: 'Voice on',
+      voiceOff: 'Voice off',
+      thinking: 'Thinking',
+      nothingHere: 'Nothing here',
+      noAnswer: 'No answer',
+      settings: 'Settings',
+      reset: 'Reset glasses settings',
+      done: 'Done',
+      today: 'Today',
     }
   }
 
   private settings(): Settings {
-    const found = (id: string) => glassesSettings(panelWord).find((one) => one.id === id)
+    const found = (id: string) => glassesSettings().find((one) => one.id === id)
 
     return {
       rows: () =>
-        glassesSettings(panelWord)
+        glassesSettings()
           .filter((one) => one.onGlasses)
           .map((one) => ({ id: one.id, label: one.field.label, value: saying(one.field) })),
 
@@ -629,7 +628,7 @@ class Bridge {
   private async addSpoken(words: string): Promise<void> {
     const { addTask } = await import('../task-actions')
     const added = await addTask(words).catch(() => null)
-    if (added) this.flash(panelWord('Done'))
+    if (added) this.flash('Done')
   }
 
   private async ask(question: string): Promise<void> {
@@ -642,7 +641,7 @@ class Bridge {
 
     const token = account.accountToken
     if (!token) {
-      this.act(shell.answered(question, panelWord('Sign in to ask a question.')))
+      this.act(shell.answered(question, 'Sign in to ask a question.'))
       return
     }
 

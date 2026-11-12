@@ -4,7 +4,6 @@
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import EyeOff from 'lucide/dist/esm/icons/eye-off.mjs'
   import Cross from '../Cross.svelte'
-  import { t } from '../i18n.svelte'
   import Glyph from './Glyph.svelte'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
@@ -54,8 +53,8 @@
       <input
         class="label is-named"
         bind:value={label}
-        aria-label={t('Field name')}
-        placeholder={t('Field name')}
+        aria-label="Field name"
+        placeholder="Field name"
         oninput={() => oninput?.()}
       />
     {:else}
@@ -94,8 +93,8 @@
     <button
       type="button"
       class="orden-glyph"
-      aria-label={shown ? t('Hide') : t('Show')}
-      title={shown ? t('Hide') : t('Show')}
+      aria-label={shown ? 'Hide' : 'Show'}
+      title={shown ? 'Hide' : 'Show'}
       onclick={() => (shown = !shown)}
     >
       <Glyph icon={shown ? EyeOff : Eye} />
@@ -106,8 +105,8 @@
     <button
       type="button"
       class="orden-glyph"
-      aria-label={t('Remove')}
-      title={t('Remove')}
+      aria-label="Remove"
+      title="Remove"
       onclick={() => onremove()}
     >
       <Cross />

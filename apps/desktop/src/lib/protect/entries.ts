@@ -1,5 +1,4 @@
 import { busy } from '../busy.svelte'
-import { t } from '../i18n.svelte'
 import type { IconNode } from 'lucide'
 import type { MenuItem } from '../menu-item'
 import { samePath, within } from '../space-paths'
@@ -13,11 +12,7 @@ const unlocking = () =>
     : import('./unlocking')
 
 const failed = (error: unknown) =>
-  busy.failed(
-    t('That did not work: {reason}', {
-      reason: error instanceof Error ? error.message : String(error),
-    }),
-  )
+  busy.failed(`That did not work: ${error instanceof Error ? error.message : String(error)}`)
 
 export const LOCK_MARK: IconNode = [
   ['rect', { width: '18', height: '11', x: '3', y: '11', rx: '2', ry: '2' }],
@@ -42,10 +37,10 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
   const lock: ProtectRow[] =
     locks.length && !unlocks.shut(locks)
       ? [
-          { id: 'lock', label: t('Lock'), run: () => unlocks.close(locks) },
+          { id: 'lock', label: 'Lock', run: () => unlocks.close(locks) },
           {
             id: 'agents',
-            label: t('Let agents read'),
+            label: 'Let agents read',
             checked: agents,
             run: () => unlocks.letAgents(locks, !agents),
           },
@@ -57,7 +52,7 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
       ...lock,
       {
         id: 'unprotect',
-        label: t('Remove protection'),
+        label: 'Remove protection',
         run: () => void unlocking().then((one) => one.unprotect(root, path), failed),
       },
     ]
@@ -66,7 +61,7 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
   return [
     {
       id: 'protect',
-      label: samePath(root, path) ? t('Protect space') : t('Protect'),
+      label: samePath(root, path) ? 'Protect space' : 'Protect',
       run: () => void unlocking().then((one) => one.protect(root, path), failed),
     },
   ]
@@ -74,6 +69,6 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
 
 export function lockAllEntry(): ProtectRow[] {
   return unlocks.any
-    ? [{ id: 'lock-all', label: t('Lock protected items'), run: () => unlocks.lockAll() }]
+    ? [{ id: 'lock-all', label: 'Lock protected items', run: () => unlocks.lockAll() }]
     : []
 }

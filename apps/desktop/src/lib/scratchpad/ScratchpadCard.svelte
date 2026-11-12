@@ -12,8 +12,6 @@
   import { onMount } from 'svelte'
   import { SAVE_DELAY } from '../backoff'
   import { pickedLink } from '../composer'
-  import { readingFactor } from '../direction'
-  import { t } from '../i18n.svelte'
   import { adrift, pressedThrough } from '../keyboard-home'
   import { links } from '../link-index.svelte'
   import { modes } from '../modes.svelte'
@@ -136,8 +134,7 @@
     const from = event.clientX
     const was = shown.width
     resizing = true
-    const move = (one: PointerEvent) =>
-      shown.resize(fit(was - (one.clientX - from) * readingFactor()))
+    const move = (one: PointerEvent) => shown.resize(fit(was - (one.clientX - from)))
     const done = () => {
       resizing = false
       edge.removeEventListener('pointermove', move)
@@ -150,7 +147,7 @@
     const step = { ArrowLeft: 16, ArrowRight: -16 }[event.key]
     if (step === undefined) return
     event.preventDefault()
-    shown.resize(fit(shown.width + step * readingFactor()))
+    shown.resize(fit(shown.width + step))
   }
 </script>
 
@@ -162,12 +159,12 @@
       class="edge"
       role="separator"
       aria-orientation="vertical"
-      aria-label={t('Panel width')}
+      aria-label="Panel width"
       aria-valuemin={NARROWEST}
       aria-valuemax={WIDEST}
       aria-valuenow={shown.width}
       tabindex="0"
-      title={t('Drag to resize')}
+      title="Drag to resize"
       onpointerdown={grab}
       ondblclick={() => shown.resize(WIDTH)}
       onkeydown={onEdgeKey}

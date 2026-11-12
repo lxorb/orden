@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { leftByAnother, leftGone } from '../left-spaces'
 import { log } from '../log'
 import { prompt } from '../prompt.svelte'
@@ -28,13 +27,12 @@ export async function unsentRoots(
 
 export async function leaveUnsent(): Promise<boolean> {
   const answer = await prompt.choose({
-    title: t('Some changes have not reached your account yet'),
-    detail: t(
+    title: 'Some changes have not reached your account yet',
+    detail:
       'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.',
-    ),
     options: [
-      { id: 'stay', label: t('Cancel') },
-      { id: 'leave', label: t('Sign out'), danger: true },
+      { id: 'stay', label: 'Cancel' },
+      { id: 'leave', label: 'Sign out', danger: true },
     ],
   })
   return answer === 'leave'

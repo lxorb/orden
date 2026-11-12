@@ -23,7 +23,6 @@ const { paletteCommands } = await import('../commands')
 const { preferences } = await import('../preferences')
 const { places } = await import('../settings/places')
 const { sectionGroups } = await import('../settings/sections')
-const { t } = await import('../i18n.svelte')
 const { rank, recentFirst } = await import('../fuzzy')
 const { shownName } = await import('../note-name')
 const { candidates } = await import('./kinds')
@@ -79,7 +78,7 @@ const WORLD = world({
     visit('https://docs.rs/tauri/latest/tauri/', 'tauri - Rust', { visits: 3 }),
     visit('https://www.polybox.ethz.ch/', 'polybox', { visits: 2 }),
   ],
-  settings: settingsOf(sectionGroups().flat(), preferences(), places(), t('Settings')),
+  settings: settingsOf(sectionGroups().flat(), preferences(), places(), 'Settings'),
   now: NOW,
 })
 
@@ -133,7 +132,6 @@ const CASES: [string, string, 1 | 3][] = [
   ['font', 'setting Text size', 1],
   ['text size', 'setting Text size', 1],
   ['line width', 'setting Line width', 1],
-  ['language', 'setting Language', 1],
   ['vim', 'setting Vim keys', 1],
   ['ligatures', 'setting Ligatures', 1],
   ['dark', 'setting Mode', 3],

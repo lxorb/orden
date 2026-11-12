@@ -3,7 +3,7 @@
   import { may } from '@orden/chats'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { amount, i18n, t } from '../../i18n.svelte'
+  import { localNumber } from '../../region'
   import { dur, fly } from '../../motion'
   import { menu } from '../../menu.svelte'
   import type { ChatPage } from './chat.svelte'
@@ -79,8 +79,8 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <aside
   class="replies"
-  aria-label={t('Replies')}
-  transition:fly={{ x: 24 * i18n.factor, duration: dur(190), easing: cubicOut }}
+  aria-label="Replies"
+  transition:fly={{ x: 24, duration: dur(190), easing: cubicOut }}
   onkeydown={(event) => {
     if (event.key === 'Escape' && !event.defaultPrevented) {
       event.preventDefault()
@@ -90,9 +90,9 @@
 >
   <header class="top">
     <Glyph name="replies" />
-    <span class="title">{t('Replies')}</span>
-    <span class="count">{amount(replies.messages.length)}</span>
-    <button type="button" class="orden-glyph" aria-label={t('Close')} onclick={onclose}
+    <span class="title">Replies</span>
+    <span class="count">{localNumber(replies.messages.length)}</span>
+    <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}
       ><Glyph name="close" /></button
     >
   </header>
@@ -117,7 +117,7 @@
         onmenu={showMenu}
         {onfiles}
       />
-      <div class="rule" role="separator"><span>{amount(replies.messages.length)}</span></div>
+      <div class="rule" role="separator"><span>{localNumber(replies.messages.length)}</span></div>
     {/if}
     {#each items as item (item.key)}
       <MessageRow

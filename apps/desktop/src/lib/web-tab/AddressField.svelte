@@ -26,7 +26,6 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
   import FileMark from '../FileMark.svelte'
-  import { t } from '../i18n.svelte'
   import { overlays } from '../overlays'
   import Suggest from '../Suggest.svelte'
   import { frecency } from '../frecency'
@@ -342,9 +341,9 @@
     autocapitalize="off"
     autocorrect="off"
     autocomplete="off"
-    placeholder={t('Address')}
+    placeholder="Address"
     role="combobox"
-    aria-label={t('Address')}
+    aria-label="Address"
     aria-autocomplete="both"
     aria-expanded={listing}
     aria-controls="{id}-pages"
@@ -362,7 +361,7 @@
   {#if listing}
     <Suggest
       id="{id}-pages"
-      label={t('Address')}
+      label="Address"
       values={rows.map(valueOf)}
       {typed}
       {active}
@@ -377,7 +376,7 @@
       }}
       marks={(value: string, text: string) =>
         byValue.get(value)?.kind === 'note' ? pieces(text, typed) : null}
-      badge={(value: string) => (byValue.get(value)?.kind === 'note' ? t('Saved') : '')}
+      badge={(value: string) => (byValue.get(value)?.kind === 'note' ? 'Saved' : '')}
       lead={site}
       onchoose={(value: string) => choose(value)}
     />

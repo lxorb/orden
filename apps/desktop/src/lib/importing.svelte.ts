@@ -1,5 +1,5 @@
 import { busy } from './busy.svelte'
-import { message, t } from './i18n.svelte'
+import { message } from './message'
 import { applyImport } from './import/apply'
 import { keepPictures, type PandocPicture } from './import/pandoc-pictures'
 import { counts, type Counts, type FormatId, type ImportPlan } from './import/plan'
@@ -90,7 +90,7 @@ class Importing {
 
       if (!this.format) {
         this.stage = 'waiting'
-        this.error = t('Nothing in there can be read as notes.')
+        this.error = 'Nothing in there can be read as notes.'
         return
       }
 
@@ -98,7 +98,7 @@ class Importing {
       await this.reread()
     } catch (error) {
       this.stage = 'waiting'
-      this.error = message(error, t('That export could not be read.'))
+      this.error = message(error, 'That export could not be read.')
     }
   }
 
@@ -124,11 +124,11 @@ class Importing {
       this.noAccess = answered === apple.NO_ACCESS
 
       if (this.noAccess) {
-        this.error = t('macOS keeps those notes behind Full Disk Access.')
+        this.error = 'macOS keeps those notes behind Full Disk Access.'
       } else if (answered === apple.NO_DATABASE) {
-        this.error = t('There are no notes in Apple Notes on this Mac.')
+        this.error = 'There are no notes in Apple Notes on this Mac.'
       } else {
-        this.error = message(error, t('Those notes could not be read.'))
+        this.error = message(error, 'Those notes could not be read.')
       }
     }
   }
@@ -150,7 +150,7 @@ class Importing {
       this.stage = 'ready'
     } catch (error) {
       this.stage = 'waiting'
-      this.error = message(error, t('Todoist could not be reached.'))
+      this.error = message(error, 'Todoist could not be reached.')
     }
   }
 
@@ -167,7 +167,7 @@ class Importing {
     this.stage = 'ready'
 
     if (tooMuch(counts(plan).bytes)) {
-      this.error = t('That export is too big to read in one go.')
+      this.error = 'That export is too big to read in one go.'
     }
   }
 
@@ -180,7 +180,7 @@ class Importing {
 
     const root = await this.pandocRoot()
     const home = rootedAt(workspace.spaces, root)?.id ?? null
-    if (root === null && imported.pictures.length) busy.failed(t('That picture could not be read.'))
+    if (root === null && imported.pictures.length) busy.failed('That picture could not be read.')
     const markdown =
       root === null
         ? imported.markdown
@@ -214,7 +214,7 @@ class Importing {
       (bytes, name) => storeBeside(bytes.slice().buffer, notePath, name),
     )
     void workspace.loadTree()
-    if (lost) busy.failed(t('That picture could not be read.'))
+    if (lost) busy.failed('That picture could not be read.')
     return markdown
   }
 
@@ -233,7 +233,7 @@ class Importing {
     }).filter((target) => canWriteAt(target.id))
 
     const { prompt } = await import('./prompt.svelte')
-    const into = await prompt.find({ title: t('Import into'), options: [...targets] })
+    const into = await prompt.find({ title: 'Import into', options: [...targets] })
     if (!into) return
 
     const space = workspace.spaces.find(
@@ -265,7 +265,7 @@ class Importing {
       this.stage = 'done'
     } catch (error) {
       this.stage = 'ready'
-      this.error = message(error, t('That import could not be written.'))
+      this.error = message(error, 'That import could not be written.')
     }
   }
 }

@@ -18,8 +18,7 @@ beforeEach(() => {
     rightToLeft: false,
     may: () => room.allowed,
     width: () => WIDTH,
-    rtl: () => room.rightToLeft,
-    over: (x) => (room.rightToLeft ? x >= WIDTH - LIST : x <= LIST),
+    over: (x) => x <= LIST,
     busy: () => room.busied,
   }
   peek = new EdgePeek()
@@ -72,14 +71,6 @@ describe('the pointer at the edge', () => {
     at(0)
     vi.advanceTimersByTime(GRACE * 2)
     expect(peek.out).toBe(false)
-  })
-
-  test('is the right edge where the window reads right to left', () => {
-    room.rightToLeft = true
-    at(0)
-    expect(peek.out).toBe(false)
-    at(WIDTH - 1)
-    expect(peek.out).toBe(true)
   })
 })
 
@@ -190,12 +181,12 @@ describe('the left side', () => {
       rule(
         ':global(:root:not([data-touch], [data-drawer])) .column.shut:not(.moving, .right, .peek) aside',
       ),
-    ).toMatch(/transform: translateX\(calc\(var\(--dir\) \* \(-100%/)
+    ).toMatch(/transform: translateX\(calc\(-100%/)
     expect(
       rule(
         ':global(:root:not([data-touch], [data-drawer])) .column.right.shut:not(.moving, .peek) aside',
       ),
-    ).toMatch(/transform: translateX\(calc\(var\(--dir\) \* \(100%/)
+    ).toMatch(/transform: translateX\(calc\(100%/)
     expect(rule('.column.shut.floating.peek aside')).toMatch(/transform: none;/)
     const effect = sidebar.slice(sidebar.indexOf('let floating = $state(false)'))
     expect(effect.slice(0, effect.indexOf('/** Whether a row is being carried'))).not.toMatch(

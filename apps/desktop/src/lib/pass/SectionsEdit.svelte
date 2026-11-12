@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { FieldKind, Section } from '@orden/pass/types'
   import Cross from '../Cross.svelte'
-  import { t } from '../i18n.svelte'
   import AddField from './AddField.svelte'
   import FieldsEdit from './FieldsEdit.svelte'
   import { newField } from './new-field'
@@ -12,7 +11,7 @@
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
 
   function addSection() {
-    sections = [...sections, newSection(t('New section'))]
+    sections = [...sections, newSection('New section')]
     oninput()
   }
 
@@ -28,15 +27,15 @@
       <input
         class="name"
         bind:value={section.name}
-        placeholder={t('Section name')}
-        aria-label={t('Section name')}
+        placeholder="Section name"
+        aria-label="Section name"
         {oninput}
       />
       <button
         type="button"
         class="orden-glyph"
-        aria-label={t('Remove section')}
-        title={t('Remove section')}
+        aria-label="Remove section"
+        title="Remove section"
         onclick={() => removeSection(section.id)}
       >
         <Cross />
@@ -56,7 +55,7 @@
   </div>
 {/each}
 <button type="button" class="orden-button is-quiet is-soft add" onclick={addSection}>
-  {t('Add section')}
+  Add section
 </button>
 
 <style>

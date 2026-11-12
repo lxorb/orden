@@ -11,7 +11,6 @@ export interface Moved {
 export interface Room {
   may: () => boolean
   width: () => number
-  rtl: () => boolean
   top?: () => number
   over: (x: number, y: number) => boolean
   busy: () => boolean
@@ -38,8 +37,7 @@ export class EdgePeek {
     const room = this.room
     if (!room) return
 
-    const right = room.rtl()
-    const edge = right ? event.clientX >= room.width() - 1 - EDGE : event.clientX <= EDGE
+    const edge = event.clientX <= EDGE
     const beside = event.clientY >= (room.top?.() ?? 0)
 
     if (this.out) {

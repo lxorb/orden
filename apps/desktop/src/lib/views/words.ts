@@ -1,5 +1,5 @@
 import { addDays, groupName, isWhen, placeOfKey, type Value } from '@orden/bases'
-import { i18n, key, t } from '../i18n.svelte'
+import { localDate } from '../region'
 import { dateAt } from './days'
 import { bare } from './columns'
 import { dayWords } from '@orden/editor/task-days'
@@ -8,16 +8,16 @@ import type { Builtin } from './spec'
 import { dayIn } from './values'
 
 const BUILTIN_NAMES: Record<Builtin, string> = {
-  todos: key('Tasks'),
-  inbox: key('Inbox'),
-  today: key('Today'),
-  upcoming: key('Upcoming'),
-  logbook: key('Completed'),
-  project: key('Project'),
-  label: key('Label'),
+  todos: 'Tasks',
+  inbox: 'Inbox',
+  today: 'Today',
+  upcoming: 'Upcoming',
+  logbook: 'Completed',
+  project: 'Project',
+  label: 'Label',
 }
 
-export const builtinName = (builtin: Builtin): string => t(BUILTIN_NAMES[builtin])
+export const builtinName = (builtin: Builtin): string => BUILTIN_NAMES[builtin]
 
 export const LAYOUTS = [
   'list',
@@ -32,14 +32,14 @@ export const LAYOUTS = [
 export type Layout = (typeof LAYOUTS)[number]
 
 const LAYOUT_NAMES: Record<Layout, string> = {
-  list: key('List'),
-  table: key('Table'),
-  cards: key('Cards'),
-  kanban: key('Board'),
-  calendar: key('Calendar'),
-  timeline: key('Timeline'),
-  chart: key('Chart'),
-  form: key('Form'),
+  list: 'List',
+  table: 'Table',
+  cards: 'Cards',
+  kanban: 'Board',
+  calendar: 'Calendar',
+  timeline: 'Timeline',
+  chart: 'Chart',
+  form: 'Form',
 }
 
 export function layoutOf(type: string): Layout {
@@ -47,48 +47,48 @@ export function layoutOf(type: string): Layout {
   return LAYOUTS.find((one) => one === type) ?? 'table'
 }
 
-export const layoutName = (layout: Layout): string => t(LAYOUT_NAMES[layout])
+export const layoutName = (layout: Layout): string => LAYOUT_NAMES[layout]
 
 const STATUS_NAMES: Record<string, string> = {
-  ' ': key('To do'),
-  '/': key('Doing'),
-  x: key('Done'),
-  X: key('Done'),
-  '-': key('Cancelled'),
+  ' ': 'To do',
+  '/': 'Doing',
+  x: 'Done',
+  X: 'Done',
+  '-': 'Cancelled',
 }
 
 const FIELD_NAMES: Record<string, string> = {
-  'file.name': key('Name'),
-  'file.basename': key('Note'),
-  'file.path': key('Note'),
-  'file.folder': key('Under'),
-  'file.mtime': key('Modified'),
-  'file.ctime': key('Created'),
-  'file.size': key('Size'),
-  'file.tags': key('Tags'),
-  'file.space': key('Space'),
-  'task.text': key('Task'),
-  'task.status': key('Status'),
-  'task.done': key('Done'),
-  'task.due': key('Due'),
-  'task.date': key('Start date'),
-  'task.scheduled': key('Scheduled'),
-  'task.start': key('Start'),
-  'task.deadline': key('Deadline'),
-  'task.time': key('Time'),
-  'task.duration': key('Duration'),
-  'task.priority': key('Priority'),
-  'task.tags': key('Tags'),
-  'task.assignee': key('Assignee'),
-  'task.section': key('Section'),
-  'task.recurrence': key('Repeat'),
-  'task.completed': key('Done'),
+  'file.name': 'Name',
+  'file.basename': 'Note',
+  'file.path': 'Note',
+  'file.folder': 'Under',
+  'file.mtime': 'Modified',
+  'file.ctime': 'Created',
+  'file.size': 'Size',
+  'file.tags': 'Tags',
+  'file.space': 'Space',
+  'task.text': 'Task',
+  'task.status': 'Status',
+  'task.done': 'Done',
+  'task.due': 'Due',
+  'task.date': 'Start date',
+  'task.scheduled': 'Scheduled',
+  'task.start': 'Start',
+  'task.deadline': 'Deadline',
+  'task.time': 'Time',
+  'task.duration': 'Duration',
+  'task.priority': 'Priority',
+  'task.tags': 'Tags',
+  'task.assignee': 'Assignee',
+  'task.section': 'Section',
+  'task.recurrence': 'Repeat',
+  'task.completed': 'Done',
 }
 
 export function propertyName(property: string, displayName?: string): string {
   if (displayName) return displayName
   const known = FIELD_NAMES[property]
-  if (known) return t(known)
+  if (known) return known
   return bare(property).replace(/^(formula|button)\./, '')
 }
 
@@ -114,18 +114,18 @@ export function groupLabel(
   today: string,
   names?: NoteNames,
 ): string {
-  if (property === 'formula.overdue') return value === true ? t('Overdue') : t('Today')
-  if (value === 'overdue') return t('Overdue')
+  if (property === 'formula.overdue') return value === true ? 'Overdue' : 'Today'
+  if (value === 'overdue') return 'Overdue'
   if (isWhen(property)) {
-    if (value === 'today') return t('Today')
-    if (value === 'tomorrow') return t('Tomorrow')
-    if (value === 'later') return t('Later')
-    if (value === null || value === '') return t('No date')
+    if (value === 'today') return 'Today'
+    if (value === 'tomorrow') return 'Tomorrow'
+    if (value === 'later') return 'Later'
+    if (value === null || value === '') return 'No date'
   }
-  if (value === null || value === '') return t('None')
+  if (value === null || value === '') return 'None'
   if (property === 'task.status' && typeof value === 'string') {
     const known = STATUS_NAMES[value]
-    return known ? t(known) : value
+    return known ?? value
   }
   if (property === 'task.priority' && typeof value === 'number') return priorityName(value)
   if (typeof value === 'boolean') return value ? '✓' : '–'
@@ -148,52 +148,52 @@ function noteLabel(key: string, names: NoteNames | undefined): string {
 
 export function dayHead(value: Value, today: string): string {
   const day = dayIn(value)
-  if (day === null) return value === 'overdue' ? t('Overdue') : groupName(value)
-  const date = i18n.when(dateAt(day), { weekday: 'short', day: 'numeric', month: 'short' })
+  if (day === null) return value === 'overdue' ? 'Overdue' : groupName(value)
+  const date = localDate(dateAt(day), { weekday: 'short', day: 'numeric', month: 'short' })
   const near = dayWords(day, today)
   return day === today || day === addDays(today, 1) ? `${near}, ${date}` : date
 }
 
-export const statusName = (status: string): string => t(STATUS_NAMES[status] ?? 'To do')
+export const statusName = (status: string): string => STATUS_NAMES[status] ?? 'To do'
 
 const CHART_NAMES: Record<ChartKind, string> = {
-  bar: key('Bars'),
-  hbar: key('Bars across'),
-  line: key('Line'),
-  donut: key('Donut'),
-  number: key('A number'),
+  bar: 'Bars',
+  hbar: 'Bars across',
+  line: 'Line',
+  donut: 'Donut',
+  number: 'A number',
 }
 
-export const chartName = (kind: ChartKind): string => t(CHART_NAMES[kind])
+export const chartName = (kind: ChartKind): string => CHART_NAMES[kind]
 
 const MEASURE_NAMES: Record<Measure, string> = {
-  count: key('Count'),
-  sum: key('Sum'),
-  average: key('Average'),
-  earliest: key('Earliest'),
-  latest: key('Latest'),
+  count: 'Count',
+  sum: 'Sum',
+  average: 'Average',
+  earliest: 'Earliest',
+  latest: 'Latest',
 }
 
-export const measureName = (measure: Measure): string => t(MEASURE_NAMES[measure])
+export const measureName = (measure: Measure): string => MEASURE_NAMES[measure]
 
 const SUMMARY_NAMES: Record<string, string> = {
-  Average: key('Average'),
-  Min: key('Min'),
-  Max: key('Max'),
-  Sum: key('Sum'),
-  Range: key('Range'),
-  Median: key('Median'),
-  Stddev: key('Stddev'),
-  Earliest: key('Earliest'),
-  Latest: key('Latest'),
-  Checked: key('Ticked'),
-  Unchecked: key('Not ticked'),
-  Empty: key('Without a value'),
-  Filled: key('With a value'),
-  Unique: key('Unique'),
+  Average: 'Average',
+  Min: 'Min',
+  Max: 'Max',
+  Sum: 'Sum',
+  Range: 'Range',
+  Median: 'Median',
+  Stddev: 'Stddev',
+  Earliest: 'Earliest',
+  Latest: 'Latest',
+  Checked: 'Ticked',
+  Unchecked: 'Not ticked',
+  Empty: 'Without a value',
+  Filled: 'With a value',
+  Unique: 'Unique',
 }
 
 export const summaryName = (name: string): string => {
   const known = SUMMARY_NAMES[name]
-  return known ? t(known) : name
+  return known ?? name
 }

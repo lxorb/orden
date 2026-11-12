@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { localDate } from '../region'
   import Facts from '../Facts.svelte'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -10,7 +11,6 @@
   import { reach } from '../agents/settings/reach.svelte'
   import { closeOnBack } from '../backstack.svelte'
   import { connectors } from '../connectors.svelte'
-  import { i18n, t } from '../i18n.svelte'
   import { dur, slide } from '../motion'
   import { settings } from '../settings.svelte'
   import { arrive, segmented } from '../slide'
@@ -68,7 +68,7 @@
     antigravity: () => 'Antigravity',
     claude: () => 'Claude',
     chatgpt: () => 'ChatGPT',
-    other: () => t('Other'),
+    other: () => 'Other',
   }
 
   function pick(one: Choice) {
@@ -78,13 +78,11 @@
 
   const when = (at: number | null | undefined) =>
     at === null || at === undefined
-      ? t('Not used yet.')
-      : t('Last used {time}.', {
-          time: i18n.when(at, { dateStyle: 'short', timeStyle: 'medium' }),
-        })
+      ? 'Not used yet.'
+      : `Last used ${localDate(at, { dateStyle: 'short', timeStyle: 'medium' })}.`
 
   const access = (readOnly: boolean) =>
-    readOnly ? t('Reads your notes.') : t('Reads and writes your notes.')
+    readOnly ? 'Reads your notes.' : 'Reads and writes your notes.'
 
   const anything = $derived(
     listed.length > 0 ||
@@ -135,7 +133,7 @@
       {#if agent && pane}
         <AgentDetail {pane} grant={agent} onback={() => (chosen = null)} />
       {:else}
-        <h3>{t('Access')}</h3>
+        <h3>Access</h3>
         {#if anything}
           <div class="card">
             {#each listed as grant (grant.id)}
@@ -152,7 +150,7 @@
                     />
                   </small>
                 </span>
-                <svg class="chevron orden-mirror" viewBox="0 0 16 16" aria-hidden="true"
+                <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"
                   ><path d="M6 3l5 5-5 5" /></svg
                 >
               </button>
@@ -170,7 +168,7 @@
                     <small>{access(one.readOnly)} {when(one.lastUsedAt)}</small>
                   </span>
                   <button class="orden-chip is-quiet" onclick={() => connectors.disconnect(one.id)}>
-                    {t('Disconnect')}
+                    Disconnect
                   </button>
                 </div>
               {/each}
@@ -180,9 +178,9 @@
                   class="orden-setting connected"
                   transition:slide={{ duration: dur(180), easing: cubicOut }}
                 >
-                  <AgentMark name={t('Pasted token')} />
+                  <AgentMark name="Pasted token" />
                   <span class="name">
-                    {t('Pasted token')}
+                    Pasted token
                     <small
                       >{access(connectors.token.readOnly)}
                       {when(connectors.token.lastUsedAt)}</small
@@ -193,7 +191,7 @@
                     disabled={connectors.busy}
                     onclick={() => connectors.revokeToken()}
                   >
-                    {t('Revoke')}
+                    Revoke
                   </button>
                 </div>
               {/if}
@@ -207,16 +205,14 @@
             <div class="orden-setting pressable" onclick={enroll}>
               <span class="name"
                 ><span class="orden-named"
-                  >{t('Agents on this computer connect on their own')}<Hint
-                    text={t(
-                      'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.',
-                    )}
+                  >Agents on this computer connect on their own<Hint
+                    text="Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up."
                   /></span
                 ></span
               >
               <Switch
                 on={enrolled}
-                label={t('Agents on this computer connect on their own')}
+                label="Agents on this computer connect on their own"
                 onchange={enroll}
               />
             </div>
@@ -229,12 +225,12 @@
               class="orden-setting agent"
               onclick={() => void invoke('open_shortcuts').catch(() => undefined)}
             >
-              <AgentMark name={t('Apple Shortcuts')} />
+              <AgentMark name="Apple Shortcuts" />
               <span class="name">
-                {t('Apple Shortcuts')}
-                <small>{t('Add task')}</small>
+                Apple Shortcuts
+                <small>Add task</small>
               </span>
-              <svg class="chevron orden-mirror" viewBox="0 0 16 16" aria-hidden="true"
+              <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"
                 ><path d="M5 11l6-6M6 5h5v5" /></svg
               >
             </button>
@@ -242,7 +238,7 @@
         {/if}
 
         {#if choice && (!local || pane?.ready)}
-          <h3>{anything ? t('Connect another') : t('Connect')}</h3>
+          <h3>{anything ? 'Connect another' : 'Connect'}</h3>
           <div class="orden-segmented" role="tablist" use:segmented>
             {#each offered as one (one)}
               <button

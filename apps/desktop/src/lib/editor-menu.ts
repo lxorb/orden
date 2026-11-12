@@ -44,7 +44,6 @@ import { copyPicture } from './copy-picture'
 import { countText } from './counts'
 import { linkTo } from './composer'
 import { composerEntries } from './composer-commands'
-import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
 import { modes } from './modes.svelte'
 import { webHref } from './open-link'
@@ -75,25 +74,25 @@ async function paste(view: EditorView) {
 function blockName(kind: BlockKind): string {
   switch (kind) {
     case 'heading':
-      return t('Heading')
+      return 'Heading'
     case 'paragraph':
-      return t('Paragraph')
+      return 'Paragraph'
     case 'list':
-      return t('List item')
+      return 'List item'
     case 'quote':
-      return t('Quote')
+      return 'Quote'
     case 'code':
-      return t('Code block')
+      return 'Code block'
     case 'table':
-      return t('Table')
+      return 'Table'
     case 'math':
-      return t('Equation')
+      return 'Equation'
     case 'front-matter':
-      return t('Front matter')
+      return 'Front matter'
     case 'rule':
-      return t('Horizontal rule')
+      return 'Horizontal rule'
     case 'block':
-      return t('Block')
+      return 'Block'
   }
 }
 
@@ -122,25 +121,22 @@ function blockEntries(
     {
       label:
         spans.length > 1
-          ? t('{blocks} blocks, {count} words', { blocks: spans.length, count: words })
-          : t('{kind}, {count} words', {
-              kind: blockName(first?.kind ?? 'block'),
-              count: words,
-            }),
+          ? `${spans.length} blocks, ${words} words`
+          : `${blockName(first?.kind ?? 'block')}, ${words} words`,
       disabled: true,
       run: () => undefined,
     },
-    { label: t('Turn into'), run: () => void turnInto(view, at) },
+    { label: 'Turn into', run: () => void turnInto(view, at) },
     DIVIDER,
-    { label: t('Indent'), run: () => indentBlocks(view, at) },
-    { label: t('Outdent'), run: () => outdentBlocks(view, at) },
-    { label: t('Move up'), run: () => moveBlocks(view, at, -1) },
-    { label: t('Move down'), run: () => moveBlocks(view, at, 1) },
+    { label: 'Indent', run: () => indentBlocks(view, at) },
+    { label: 'Outdent', run: () => outdentBlocks(view, at) },
+    { label: 'Move up', run: () => moveBlocks(view, at, -1) },
+    { label: 'Move down', run: () => moveBlocks(view, at, 1) },
     ...calloutEntries(view),
     DIVIDER,
-    { label: t('Duplicate'), run: () => duplicateBlocks(view, at) },
+    { label: 'Duplicate', run: () => duplicateBlocks(view, at) },
     {
-      label: t('Copy link'),
+      label: 'Copy link',
       disabled: !name,
       run: () => {
         const targets = name ? blockTargets(view, at) : []
@@ -160,7 +156,7 @@ function blockEntries(
         )
       },
     },
-    { label: t('Delete'), danger: true, run: () => deleteBlocks(view, at) },
+    { label: 'Delete', danger: true, run: () => deleteBlocks(view, at) },
     ...blockBookmark(view, at, path),
   ]
 }
@@ -172,12 +168,12 @@ function calloutEntries(view: EditorView): MenuEntry[] {
   return [
     DIVIDER,
     {
-      label: t('Foldable'),
+      label: 'Foldable',
       checked: sign !== '',
       run: () => runCommand(view, setCalloutSign('+')),
     },
     {
-      label: t('Starts folded'),
+      label: 'Starts folded',
       checked: sign === '-',
       run: () => runCommand(view, setCalloutSign('-')),
     },
@@ -185,20 +181,20 @@ function calloutEntries(view: EditorView): MenuEntry[] {
 }
 
 const SHAPES: readonly { shape: BlockShape; label: () => string }[] = [
-  { shape: 'heading1', label: () => t('Heading {level}', { level: 1 }) },
-  { shape: 'heading2', label: () => t('Heading {level}', { level: 2 }) },
-  { shape: 'heading3', label: () => t('Heading {level}', { level: 3 }) },
-  { shape: 'paragraph', label: () => t('Paragraph') },
-  { shape: 'bullet', label: () => t('Bulleted list') },
-  { shape: 'numbered', label: () => t('Numbered list') },
-  { shape: 'task', label: () => t('Task list') },
-  { shape: 'quote', label: () => t('Quote') },
+  { shape: 'heading1', label: () => 'Heading 1' },
+  { shape: 'heading2', label: () => 'Heading 2' },
+  { shape: 'heading3', label: () => 'Heading 3' },
+  { shape: 'paragraph', label: () => 'Paragraph' },
+  { shape: 'bullet', label: () => 'Bulleted list' },
+  { shape: 'numbered', label: () => 'Numbered list' },
+  { shape: 'task', label: () => 'Task list' },
+  { shape: 'quote', label: () => 'Quote' },
 ]
 
 async function turnInto(view: EditorView, at: number) {
   const { prompt } = await import('./prompt.svelte')
   const chosen = await prompt.find({
-    title: t('Turn into'),
+    title: 'Turn into',
     options: SHAPES.map((one) => ({ id: one.shape, label: one.label() })),
   })
 
@@ -230,9 +226,9 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
 
   return [
     held
-      ? { label: t('Remove from Essentials'), run: () => workspace.bookmarks.toggle(held) }
+      ? { label: 'Remove from Essentials', run: () => workspace.bookmarks.toggle(held) }
       : {
-          label: spans.length > 1 ? t('Add blocks to Essentials') : t('Add block to Essentials'),
+          label: spans.length > 1 ? 'Add blocks to Essentials' : 'Add block to Essentials',
           run: () => {
             const said = blocksFor(view, at).map((one) =>
               firstWords(view.state.doc.sliceString(one.from, one.to)),
@@ -262,7 +258,7 @@ function sendEntry(view: EditorView): MenuEntry[] {
       sendSelection(note, view.state.doc.toString(), range.from, range.to),
     )
   }
-  return [{ label: t('Send to chat'), run }]
+  return [{ label: 'Send to chat', run }]
 }
 
 function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry[] {
@@ -272,19 +268,19 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
 
   const clipboard: MenuEntry[] = [
     {
-      label: t('Cut'),
+      label: 'Cut',
       hint: shortcuts.hint('fixed.cut'),
       disabled: !selected || locked,
       run: cutSelection,
     },
     {
-      label: t('Copy'),
+      label: 'Copy',
       hint: shortcuts.hint('fixed.copy'),
       disabled: !selected,
       run: copySelection,
     },
     {
-      label: t('Paste'),
+      label: 'Paste',
       hint: shortcuts.hint('fixed.paste'),
       disabled: locked,
       run: () => {
@@ -300,7 +296,7 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
       ...clipboard,
       DIVIDER,
       {
-        label: t('Leave read-only'),
+        label: 'Leave read-only',
         hint: shortcuts.hint('app.read-only'),
         run: () => modes.toggleReadOnly(view),
       },
@@ -311,53 +307,53 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
     ...clipboard,
     ...block,
     ...(selected
-      ? [DIVIDER, { label: t('Rewrite…'), run: () => void rewrite(view) }, ...sendEntry(view)]
+      ? [DIVIDER, { label: 'Rewrite…', run: () => void rewrite(view) }, ...sendEntry(view)]
       : []),
     DIVIDER,
-    { label: t('Bold'), hint: shortcuts.hint('format.bold'), run: run(toggleWrap('**')) },
-    { label: t('Italic'), hint: shortcuts.hint('format.italic'), run: run(toggleWrap('*')) },
-    { label: t('Code'), hint: shortcuts.hint('format.code'), run: run(toggleWrap('`')) },
-    { label: t('Link'), hint: shortcuts.hint('format.link'), run: run(insertLink) },
+    { label: 'Bold', hint: shortcuts.hint('format.bold'), run: run(toggleWrap('**')) },
+    { label: 'Italic', hint: shortcuts.hint('format.italic'), run: run(toggleWrap('*')) },
+    { label: 'Code', hint: shortcuts.hint('format.code'), run: run(toggleWrap('`')) },
+    { label: 'Link', hint: shortcuts.hint('format.link'), run: run(insertLink) },
     {
-      label: t('Clear formatting'),
+      label: 'Clear formatting',
       hint: shortcuts.hint('format.clear'),
       run: run(clearFormatting),
     },
     DIVIDER,
-    { label: t('Quote'), hint: shortcuts.hint('paragraph.quote'), run: run(toggleQuote) },
+    { label: 'Quote', hint: shortcuts.hint('paragraph.quote'), run: run(toggleQuote) },
     {
-      label: t('Bulleted list'),
+      label: 'Bulleted list',
       hint: shortcuts.hint('paragraph.bullet-list'),
       run: run(toggleBulletList),
     },
     {
-      label: t('Numbered list'),
+      label: 'Numbered list',
       hint: shortcuts.hint('paragraph.ordered-list'),
       run: run(toggleOrderedList),
     },
     {
-      label: t('Table'),
+      label: 'Table',
       hint: shortcuts.hint('paragraph.table'),
       run: () => {
         if (view) insertTableToEdit(view)
       },
     },
     {
-      label: t('Code block'),
+      label: 'Code block',
       hint: shortcuts.hint('paragraph.code-block'),
       run: run(insertCodeFence),
     },
     {
-      label: t('Horizontal rule'),
+      label: 'Horizontal rule',
       hint: shortcuts.hint('paragraph.rule'),
       run: run(insertHorizontalRule),
     },
-    { label: t('Page break'), run: run(insertPageBreak) },
+    { label: 'Page break', run: run(insertPageBreak) },
     DIVIDER,
     ...composerEntries(view),
     DIVIDER,
     {
-      label: modes.sourceIn(view) ? t('Leave source mode') : t('Source mode'),
+      label: modes.sourceIn(view) ? 'Leave source mode' : 'Source mode',
       hint: shortcuts.hint('app.source'),
       run: () => modes.toggleSource(view),
     },
@@ -368,7 +364,7 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
   if (!view || at === null || view.state.readOnly || !canTranscribe()) return []
   if (!recordingAt(view, at)) return []
 
-  return [DIVIDER, { label: t('Transcribe'), run: () => void transcribeEmbed(view, at) }]
+  return [DIVIDER, { label: 'Transcribe', run: () => void transcribeEmbed(view, at) }]
 }
 
 function linkEntries(
@@ -388,15 +384,15 @@ function linkEntries(
   return [
     ...(jump ? noteEntries(jump, path ?? null) : []),
     ...(href && webHref(href) !== null
-      ? [{ label: t('Open in the browser'), run: () => void openExternal(href) }]
+      ? [{ label: 'Open in the browser', run: () => void openExternal(href) }]
       : []),
-    ...(href ? [{ label: t('Copy link address'), run: () => void copyText(href) }] : []),
+    ...(href ? [{ label: 'Copy link address', run: () => void copyText(href) }] : []),
     ...(view && parts
       ? [
-          { label: t('Edit link'), run: () => runCommand(view, editLink(parts.from)) },
+          { label: 'Edit link', run: () => runCommand(view, editLink(parts.from)) },
           ...(parts.words === null
             ? []
-            : [{ label: t('Remove link'), run: () => runCommand(view, removeLink(parts.from)) }]),
+            : [{ label: 'Remove link', run: () => runCommand(view, removeLink(parts.from)) }]),
         ]
       : []),
     DIVIDER,
@@ -405,16 +401,16 @@ function linkEntries(
 
 function noteEntries(jump: NoteJump, from: string | null): MenuEntry[] {
   return [
-    { label: t('Open in new tab'), run: () => void workspace.followLink(jump, 'behind', from) },
+    { label: 'Open in new tab', run: () => void workspace.followLink(jump, 'behind', from) },
     ...(viewport.touch
       ? []
       : [
           {
-            label: t('Open to the side'),
+            label: 'Open to the side',
             run: () => void workspace.followLink(jump, 'aside', from),
           },
         ]),
-    { label: t('Copy link'), run: () => void copyText(linkOf(jump)) },
+    { label: 'Copy link', run: () => void copyText(linkOf(jump)) },
   ]
 }
 
@@ -436,15 +432,15 @@ function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEn
 
   return [
     {
-      label: t('Copy picture'),
+      label: 'Copy picture',
       run: () => void copyPicture(pictureUrl(view.state, picture)).catch(() => undefined),
     },
-    { label: t('Open picture'), run: () => showPicture(view, picture) },
+    { label: 'Open picture', run: () => showPicture(view, picture) },
     ...(view.state.readOnly
       ? []
       : [
           {
-            label: t('Delete picture'),
+            label: 'Delete picture',
             danger: true,
             run: () => runCommand(view, deletePicture(picture)),
           },

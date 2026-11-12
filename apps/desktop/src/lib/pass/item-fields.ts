@@ -1,6 +1,5 @@
 import type { Content, Field, Section } from '@orden/pass/types'
 import { IDENTITY_FIELDS } from '@orden/pass/types'
-import { t } from '../i18n.svelte'
 import { HIDDEN_IDENTITY, identityFieldName, identityGroupName } from './identity-words'
 
 interface ShownField {
@@ -26,7 +25,7 @@ function present(fields: ShownField[]): ShownField[] {
 function extraOf(field: Field): ShownField {
   return {
     id: field.id,
-    label: field.name || t('Field'),
+    label: field.name || 'Field',
     value: field.value,
     kind: field.kind,
     ...(field.kind === 'hidden' ? { mono: true } : {}),
@@ -45,32 +44,32 @@ function mainOf(content: Content): ShownField[] {
   switch (content.kind) {
     case 'login':
       return [
-        { id: 'email', label: t('Email'), value: content.email, kind: 'text' },
-        { id: 'username', label: t('Username'), value: content.username, kind: 'text' },
+        { id: 'email', label: 'Email', value: content.email, kind: 'text' },
+        { id: 'username', label: 'Username', value: content.username, kind: 'text' },
         {
           id: 'password',
-          label: t('Password'),
+          label: 'Password',
           value: content.password,
           kind: 'hidden',
           strength: true,
         },
-        { id: 'totp', label: t('2FA code'), value: content.totp, kind: 'totp' },
+        { id: 'totp', label: '2FA code', value: content.totp, kind: 'totp' },
       ]
     case 'alias':
-      return [{ id: 'address', label: t('Alias address'), value: content.address, kind: 'text' }]
+      return [{ id: 'address', label: 'Alias address', value: content.address, kind: 'text' }]
     case 'card':
       return [
-        { id: 'holder', label: t('Name on card'), value: content.holder, kind: 'text' },
-        { id: 'number', label: t('Card number'), value: content.number, kind: 'hidden' },
-        { id: 'expiry', label: t('Expiration date'), value: content.expiry, kind: 'text' },
-        { id: 'code', label: t('Security code'), value: content.code, kind: 'hidden' },
-        { id: 'pin', label: t('PIN'), value: content.pin, kind: 'hidden' },
+        { id: 'holder', label: 'Name on card', value: content.holder, kind: 'text' },
+        { id: 'number', label: 'Card number', value: content.number, kind: 'hidden' },
+        { id: 'expiry', label: 'Expiration date', value: content.expiry, kind: 'text' },
+        { id: 'code', label: 'Security code', value: content.code, kind: 'hidden' },
+        { id: 'pin', label: 'PIN', value: content.pin, kind: 'hidden' },
       ]
     case 'ssh':
       return [
         {
           id: 'public',
-          label: t('Public key'),
+          label: 'Public key',
           value: content.publicKey,
           kind: 'text',
           mono: true,
@@ -78,7 +77,7 @@ function mainOf(content: Content): ShownField[] {
         },
         {
           id: 'private',
-          label: t('Private key'),
+          label: 'Private key',
           value: content.privateKey,
           kind: 'hidden',
           multiline: true,
@@ -86,8 +85,8 @@ function mainOf(content: Content): ShownField[] {
       ]
     case 'wifi':
       return [
-        { id: 'ssid', label: t('Network name'), value: content.ssid, kind: 'text' },
-        { id: 'password', label: t('Password'), value: content.password, kind: 'hidden' },
+        { id: 'ssid', label: 'Network name', value: content.ssid, kind: 'text' },
+        { id: 'password', label: 'Password', value: content.password, kind: 'hidden' },
       ]
     case 'note':
     case 'identity':

@@ -1,6 +1,7 @@
 import { untrack } from 'svelte'
 import { answerThreadSpaces } from '../../automation/caller'
-import { i18n, message, t } from '../../i18n.svelte'
+import { region } from '../../region'
+import { message } from '../../message'
 import { owes, writing } from '../../parting'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
@@ -835,7 +836,7 @@ class Chat implements Panel {
     const { text, chips, around, once } = send
     const provider = ai.provider(thread.provider)
     if (!provider) {
-      const words = t('Add an AI provider in Settings first.')
+      const words = 'Add an AI provider in Settings first.'
       if (thread === this.open) {
         this.trouble = words
         if (!send.settle) this.giveBack(text)
@@ -872,7 +873,7 @@ class Chat implements Panel {
       ended = await this.sendDraft(thread, provider, draft, stopper)
       if (readOutside(thread.turns)) ended = { ...ended, outside: true }
     } catch (error) {
-      const words = message(error, t('The model did not answer.'))
+      const words = message(error, 'The model did not answer.')
       ended = { stop: 'error', error: words, turn: null, usage: null }
       if (thread === this.open) {
         this.trouble = words
@@ -1196,7 +1197,7 @@ class Chat implements Panel {
     if (!draft) return
     const provider = ai.provider(thread.provider)
     if (!provider) {
-      if (thread === this.open) this.trouble = t('Add an AI provider in Settings first.')
+      if (thread === this.open) this.trouble = 'Add an AI provider in Settings first.'
       return
     }
     const taken = thread.turns.splice(at)
@@ -1227,7 +1228,7 @@ class Chat implements Panel {
       .catch((error: unknown) => {
         stop = 'error'
         if (thread.turns.length === at) thread.turns.push(...taken)
-        if (thread === this.open) this.trouble = message(error, t('The model did not answer.'))
+        if (thread === this.open) this.trouble = message(error, 'The model did not answer.')
       })
       .finally(() => void this.ended(thread, stopper, true, stop))
   }
@@ -1294,19 +1295,17 @@ class Chat implements Panel {
     if (cost && storedText(SWITCH_KEY) !== 'never') {
       const name = info?.name ?? model
       const detail = [
-        t('The next message sends the whole conversation again: about {count} more tokens.', {
-          count: tokens(cost.tokens, i18n.language),
-        }),
-        ...(cost.compacts ? [t('It is too long for this model, so it is compacted first.')] : []),
+        `The next message sends the whole conversation again: about ${tokens(cost.tokens, region())} more tokens.`,
+        ...(cost.compacts ? ['It is too long for this model, so it is compacted first.'] : []),
       ].join(' ')
       const answer = await prompt.chooseTicking({
-        title: t('Switch to {model}?', { model: name }),
+        title: `Switch to ${name}?`,
         detail,
         options: [
-          { id: 'switch', label: t('Switch'), primary: true },
-          { id: 'cancel', label: t('Cancel'), lands: true },
+          { id: 'switch', label: 'Switch', primary: true },
+          { id: 'cancel', label: 'Cancel', lands: true },
         ],
-        tick: t("Don't ask again"),
+        tick: "Don't ask again",
       })
       if (answer?.id !== 'switch') return false
       if (answer.ticked) keep(SWITCH_KEY, 'never')
@@ -1391,7 +1390,7 @@ class Chat implements Panel {
       .then((engine) => engine.compact(thread, focus))
       .catch((error: unknown) => {
         stop = 'error'
-        this.trouble = message(error, t('The model did not answer.'))
+        this.trouble = message(error, 'The model did not answer.')
       })
       .then(() => this.ended(thread, stopper, false, stop))
   }
@@ -1415,7 +1414,7 @@ class Chat implements Panel {
   async rename(name?: string, id = this.open?.id): Promise<void> {
     const thread = id ? await this.held(id) : null
     if (!thread) return
-    const named = name ?? (await prompt.ask({ title: t('Rename'), value: thread.title }))
+    const named = name ?? (await prompt.ask({ title: 'Rename', value: thread.title }))
     if (!named?.trim()) return
     thread.title = named.trim()
     this.changedHead(thread)
@@ -1463,7 +1462,7 @@ class Chat implements Panel {
   async exportThread(): Promise<void> {
     const thread = this.open
     if (!thread?.turns.length) return
-    await this.noteFrom(threadMarkdown(thread, t('Untitled')))
+    await this.noteFrom(threadMarkdown(thread, 'Untitled'))
   }
 
   async noteFrom(text: string): Promise<void> {
@@ -1475,9 +1474,9 @@ class Chat implements Panel {
       await workspace.open(path)
       return
     }
-    const why = root ? t('you can only read this space') : t('no such space')
+    const why = root ? 'you can only read this space' : 'no such space'
     const { hostOf } = await import('../commands/host')
-    hostOf(this).line(thread, `${t('Save as a note')}: ${why}`)
+    hostOf(this).line(thread, `Save as a note: ${why}`)
   }
 
   archive(id = this.open?.id): void {
@@ -1510,8 +1509,8 @@ class Chat implements Panel {
   async remove(id = this.open?.id): Promise<void> {
     if (!id) return
     const sure = await prompt.confirm({
-      title: t('Delete this chat?'),
-      confirmLabel: t('Delete'),
+      title: 'Delete this chat?',
+      confirmLabel: 'Delete',
       danger: true,
     })
     if (!sure) return

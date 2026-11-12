@@ -1,5 +1,5 @@
 import { Names, safeName } from './names'
-import type { Lost, Planned } from './plan'
+import type { Planned } from './plan'
 import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar'
 import { zenIcon, zenTint } from './zen-icons'
 import { isWebAddress } from '../web-tab/address'
@@ -18,12 +18,16 @@ export interface SpacePlan {
 
 interface SidebarImport {
   spaces: SpacePlan[]
-  lost: Lost[]
+  lost: string[]
 }
 
 const LONGEST_MARK = 64 * 1024
 
-export function sidebarImport(session: Sidebar, now: Date, containers: Lost | null): SidebarImport {
+export function sidebarImport(
+  session: Sidebar,
+  now: Date,
+  containers: string | null,
+): SidebarImport {
   const first = session.spaces[0]
   const homeOf = (tab: SidebarTab): string | undefined => {
     const own = session.spaces.find((space) => space.id === tab.space)

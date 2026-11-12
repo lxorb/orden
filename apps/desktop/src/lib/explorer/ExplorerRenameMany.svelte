@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { nameOf, within } from '../space-paths'
   import { renameMany } from './changes'
   import { inASpace } from './open'
@@ -57,13 +56,13 @@
   class="many"
   role="dialog"
   aria-modal="true"
-  aria-label={t('Rename')}
+  aria-label="Rename"
   tabindex="-1"
   onkeydown={onkey}
 >
   <div class="fields">
     <label>
-      <span>{t('Find')}</span>
+      <span>Find</span>
       <input
         bind:this={first}
         bind:value={find}
@@ -73,12 +72,12 @@
       />
     </label>
     <label>
-      <span>{t('Replace with')}</span>
+      <span>Replace with</span>
       <input bind:value={replace} class="orden-field" type="text" spellcheck="false" />
     </label>
     <label class="tick">
       <input type="checkbox" bind:checked={numbered} />
-      <span>{t('Add numbers')}</span>
+      <span>Add numbers</span>
     </label>
   </div>
   <ol class="names">
@@ -90,12 +89,12 @@
     {/each}
   </ol>
   <div class="buttons">
-    <button type="button" class="orden-button is-quiet" onclick={onclose}>{t('Cancel')}</button>
+    <button type="button" class="orden-button is-quiet" onclick={onclose}>Cancel</button>
     <button
       type="button"
       class="orden-button"
       disabled={!changed || clashes.size > 0}
-      onclick={apply}>{t('Rename')}</button
+      onclick={apply}>Rename</button
     >
   </div>
 </div>

@@ -1,5 +1,5 @@
 import type { Row, TaskRow, Value } from '@orden/bases'
-import { amount } from '../i18n.svelte'
+import { localNumber } from '../region'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
 import { plain } from './inline'
 import { dayWords } from '@orden/editor/task-days'
@@ -14,8 +14,8 @@ export interface Chip {
 function minutesText(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
-  if (!hours) return `${amount(rest)}m`
-  return rest ? `${amount(hours)}h ${amount(rest)}m` : `${amount(hours)}h`
+  if (!hours) return `${localNumber(rest)}m`
+  return rest ? `${localNumber(hours)}h ${localNumber(rest)}m` : `${localNumber(hours)}h`
 }
 
 export function chipsOf(task: TaskRow, today: string, dated = true): Chip[] {
@@ -42,7 +42,7 @@ export function chipsOf(task: TaskRow, today: string, dated = true): Chip[] {
 export function valueText(value: Value, today: string): string {
   if (value === null) return ''
   if (typeof value === 'string') return value
-  if (typeof value === 'number') return amount(value)
+  if (typeof value === 'number') return localNumber(value)
   if (typeof value === 'boolean') return value ? '✓' : ''
   if (Array.isArray(value))
     return value

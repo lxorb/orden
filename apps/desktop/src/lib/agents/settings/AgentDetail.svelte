@@ -1,9 +1,9 @@
 <script lang="ts">
+  import { localDate } from '../../region'
   import Facts from '../../Facts.svelte'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import Cross from '../../Cross.svelte'
   import Switch from '../../Switch.svelte'
-  import { i18n, t } from '../../i18n.svelte'
   import { prompt } from '../../prompt.svelte'
   import Select from '../../Select.svelte'
   import { workspace } from '../../workspace.svelte'
@@ -88,9 +88,9 @@
 
   async function remove() {
     const sure = await prompt.confirm({
-      title: t('Remove {name}?', { name: grant.name }),
-      detail: t('Its token stops working.'),
-      confirmLabel: t('Remove'),
+      title: `Remove ${grant.name}?`,
+      detail: 'Its token stops working.',
+      confirmLabel: 'Remove',
       danger: true,
     })
     if (!sure) return
@@ -115,16 +115,15 @@
 {/snippet}
 
 <header class="who">
-  <button class="orden-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
-    <svg class="orden-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg
-    >
+  <button class="orden-glyph back" aria-label="Back" title="Back" onclick={onback}>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
   </button>
   <AgentMark name={grant.name} />
   <span class="name">
     <input
       class="title"
       value={grant.name}
-      aria-label={t('Name')}
+      aria-label="Name"
       spellcheck="false"
       autocomplete="off"
       onchange={(event) => {
@@ -137,7 +136,7 @@
       <Facts
         parts={[
           grant.client !== grant.name && grant.client,
-          t('Added {date}', { date: i18n.when(grant.created, { dateStyle: 'medium' }) }),
+          `Added ${localDate(grant.created, { dateStyle: 'medium' })}`,
         ]}
       />
     </small>
@@ -151,20 +150,17 @@
         <svelte:element this={tag} {...attrs} />
       {/each}
     </svg>
-    {t(
-      'It reads your notes and browses signed in as you, so a page could try to make it send them out.',
-    )}
+    It reads your notes and browses signed in as you, so a page could try to make it send them out.
   </p>
 {/if}
 
-<h3>{t('Activity')}</h3>
+<h3>Activity</h3>
 <AgentLog {pane} {grant} />
 
 {#if !sidebars(grant)}
   <p class="connected">
-    {t(
-      'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.',
-    )}
+    It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces,
+    blocked sites and limits below still hold.
   </p>
 {/if}
 
@@ -179,7 +175,7 @@
     {#if group.id === 'scripts' && grant.scopes.includes('browser.script')}
       <Words
         words={grant.scripts}
-        placeholder={t('Add a site')}
+        placeholder="Add a site"
         parse={siteTyped}
         onadd={listing('scripts', true)}
         onremove={listing('scripts', false)}
@@ -188,10 +184,8 @@
     {#if group.id === 'terminal' && grant.scopes.includes('terminal')}
       <Words
         words={grant.programs}
-        placeholder={t('Add a program')}
-        hint={t(
-          'A program on this list runs without asking, and can do anything that program can do.',
-        )}
+        placeholder="Add a program"
+        hint="A program on this list runs without asking, and can do anything that program can do."
         parse={programTyped}
         onadd={listing('programs', true)}
         onremove={listing('programs', false)}
@@ -200,9 +194,9 @@
   </div>
 {/each}
 
-<h3>{t('Spaces')}</h3>
+<h3>Spaces</h3>
 <div class="card">
-  {@render toggle(t('Every space'), grant.spaces === 'all', () => {
+  {@render toggle('Every space', grant.spaces === 'all', () => {
     change((one) => withEverySpace(one, one.spaces !== 'all', spaceNames))
   })}
   {#if grant.spaces !== 'all'}
@@ -214,7 +208,7 @@
   {/if}
 </div>
 
-<h3>{t('Sites')}</h3>
+<h3>Sites</h3>
 <div class="card">
   {#each sites as { site, rule, always } (site)}
     <div class="orden-setting site">
@@ -225,7 +219,7 @@
             {#each always as category (category)}
               <button
                 class="orden-tag"
-                title={t('Remove')}
+                title="Remove"
                 onclick={() => {
                   change((one) => withoutAlways(one, site, category))
                 }}
@@ -250,8 +244,8 @@
         </div>
         <button
           class="orden-glyph is-danger"
-          aria-label={t('Remove')}
-          title={t('Remove')}
+          aria-label="Remove"
+          title="Remove"
           onclick={() => {
             change((one) => withSite(one, site, null))
           }}
@@ -263,14 +257,14 @@
   {/each}
   <Words
     words={[]}
-    placeholder={t('Add a site')}
+    placeholder="Add a site"
     parse={siteTyped}
     onadd={addSite}
     onremove={() => undefined}
   />
 </div>
 
-<h3>{t('Limits')}</h3>
+<h3>Limits</h3>
 <div class="card">
   {#each LIMIT_NAMES as limit (limit)}
     <div class="orden-setting sliding">
@@ -299,7 +293,7 @@
 </div>
 
 <div class="card">
-  <button class="orden-action is-danger" onclick={() => void remove()}>{t('Remove')}</button>
+  <button class="orden-action is-danger" onclick={() => void remove()}>Remove</button>
 </div>
 
 <style>

@@ -1,6 +1,5 @@
 import { destination, htmlToMarkdown } from '@orden/markdown/from-html'
 
-import { key } from '../i18n.svelte'
 import { folderPlan, isJunk } from './folder'
 import { dayOf } from './meta'
 import { Names, safeName } from './names'
@@ -76,25 +75,19 @@ export async function readJournal(sources: readonly Source[]): Promise<ImportPla
   })
 
   if (heic) {
-    plan.lost.push({
-      text: key('{count} pictures came as HEIC, which nothing but Apple shows'),
-      values: { count: heic },
-    })
+    plan.lost.push(`${heic} pictures came as HEIC, which nothing but Apple shows`)
   }
 
   if (drawn) {
-    plan.lost.push({
-      text: key('{count} mood and activity cards are drawings, so only their words come over'),
-      values: { count: drawn },
-    })
+    plan.lost.push(`${drawn} mood and activity cards are drawings, so only their words come over`)
   }
 
   if (missing) {
-    plan.lost.push({
-      text: key('{count} attachments were missing from the export or could not be read'),
-      one: '{count} attachment was missing from the export or could not be read',
-      values: { count: missing },
-    })
+    plan.lost.push(
+      missing === 1
+        ? '1 attachment was missing from the export or could not be read'
+        : `${missing} attachments were missing from the export or could not be read`,
+    )
   }
 
   return plan

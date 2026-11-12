@@ -1,5 +1,4 @@
 import { TAG_NAME } from '@orden/markdown/tags'
-import { t } from '../../i18n.svelte'
 import type { Query } from '@orden/scan/search/query'
 import { within } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
@@ -65,7 +64,7 @@ async function run(
 function answered(task: string, ended: Ended | null): string {
   const words = ended ? answerOf(ended).trim() : ''
   const failed = !ended || ended.stop === 'error'
-  return `↳ ${task}\n\n${failed ? (ended?.error ?? t('The model did not answer.')) : words}`
+  return `↳ ${task}\n\n${failed ? (ended?.error ?? 'The model did not answer.') : words}`
 }
 
 export function fork(host: Host, parent: Thread, prompt: string): void {
@@ -153,7 +152,7 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
     workspace.spaces.find((one) => one.id === parent.space)?.root ?? workspace.activeSpace?.root
   const targets = batchTargets(instruction)
   if (!root || (!targets.folders.length && !targets.tags.length)) {
-    host.line(parent, t('Name a folder or a tag'))
+    host.line(parent, 'Name a folder or a tag')
     return
   }
   const notes = await batchNotes(root, targets)

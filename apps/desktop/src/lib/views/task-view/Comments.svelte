@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Row } from '@orden/bases'
-  import { i18n, t } from '../../i18n.svelte'
+  import { localDate } from '../../region'
   import Cross from '../../Cross.svelte'
   import { workspace } from '../../workspace.svelte'
   import { noteText } from '../../workspace/note-text'
@@ -43,7 +43,7 @@
     if (Number.isNaN(date.getTime())) return at
     const [hours = 0, minutes = 0] = time.split(':').map(Number)
     date.setHours(hours, minutes)
-    return i18n.when(date, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    return localDate(date, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
   }
 
   let sending = false
@@ -65,7 +65,7 @@
 
 <div class="comments">
   {#if comments.length}
-    <p class="orden-section">{t('Comments')}</p>
+    <p class="orden-section">Comments</p>
   {/if}
   {#each comments as one (one.line)}
     <div class="comment">
@@ -74,8 +74,8 @@
       {#if writable}<button
           type="button"
           class="orden-glyph gone"
-          aria-label={t('Delete')}
-          title={t('Delete')}
+          aria-label="Delete"
+          title="Delete"
           onclick={() => void deleteComment(row, one.line)}><Cross /></button
         >{/if}
     </div>
@@ -89,8 +89,8 @@
         use:grow={words}
         class="composer"
         rows="1"
-        aria-label={t('Comment')}
-        placeholder={t('Comment')}
+        aria-label="Comment"
+        placeholder="Comment"
         onkeydown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
             event.preventDefault()

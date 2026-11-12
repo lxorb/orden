@@ -78,10 +78,7 @@ vi.mock('../shortcuts.svelte', () => ({
     tooltip: (name: string) => name,
   },
 }))
-vi.mock('../i18n.svelte', () => ({
-  t: (text: string, values: Record<string, string> = {}) =>
-    text.replace(/\{(\w+)\}/g, (_whole, key: string) => values[key] ?? key),
-  key: (text: string) => text,
+vi.mock('../message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))

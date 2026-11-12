@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
@@ -70,26 +69,26 @@ export function sectionMenu(
     void rewriteNotes([{ path, after }], said)
 
   const items: MenuEntry[] = [
-    { label: t('Rename'), run: rename },
+    { label: 'Rename', run: rename },
     {
-      label: t('Add section'),
+      label: 'Add section',
       asks: true,
       run: () =>
         void prompt
-          .ask({ title: t('Add section'), confirmLabel: t('Add') })
+          .ask({ title: 'Add section', confirmLabel: 'Add' })
           .then((words) => (words ? addSection(kit, words, name) : undefined)),
     },
     DIVIDER,
-    { label: t('Move up'), run: () => write((text) => movedSection(text, name, true)) },
-    { label: t('Move down'), run: () => write((text) => movedSection(text, name, false)) },
+    { label: 'Move up', run: () => write((text) => movedSection(text, name, true)) },
+    { label: 'Move down', run: () => write((text) => movedSection(text, name, false)) },
     {
-      label: t('Duplicate'),
-      run: () => write((text) => duplicatedSection(text, name, t('{name} (copy)', { name }))),
+      label: 'Duplicate',
+      run: () => write((text) => duplicatedSection(text, name, `${name} (copy)`)),
     },
     ...(offersPlaces(workspace.rootHolding(path))
       ? [
           {
-            label: t('Move to'),
+            label: 'Move to',
             run: () => undefined,
             more: () =>
               Promise.resolve(
@@ -105,7 +104,7 @@ export function sectionMenu(
     ...extra,
     DIVIDER,
     {
-      label: t('Delete'),
+      label: 'Delete',
       danger: true,
       asks: count > 0,
       run: () => void deleteSection(path, name, count),
@@ -138,9 +137,9 @@ async function moveSection(from: string, name: string, to: string): Promise<bool
 async function deleteSection(path: string, name: string, count: number): Promise<void> {
   if (count > 0) {
     const sure = await prompt.confirm({
-      title: t('Delete {name}?', { name }),
-      detail: t('Its tasks are deleted with it.'),
-      confirmLabel: t('Delete'),
+      title: `Delete ${name}?`,
+      detail: 'Its tasks are deleted with it.',
+      confirmLabel: 'Delete',
       danger: true,
     })
     if (!sure) return

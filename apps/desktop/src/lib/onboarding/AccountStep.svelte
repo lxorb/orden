@@ -1,6 +1,5 @@
 <script lang="ts">
   import { account } from '../account.svelte'
-  import { t } from '../i18n.svelte'
   import { joining } from '../joining.svelte'
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
@@ -83,17 +82,17 @@
 {/snippet}
 
 <Screen
-  title={t('Log in or sign up')}
+  title="Log in or sign up"
   {head}
   primary={asking || signed
     ? null
     : {
-        label: account.busy ? t('Sending') : t('Continue'),
+        label: account.busy ? 'Sending' : 'Continue',
         disabled: !typed,
         busy: account.busy,
         onclick: send,
       }}
-  quiet={signed ? null : { label: t('Use without an account'), onclick: () => setup.next() }}
+  quiet={signed ? null : { label: 'Use without an account', onclick: () => setup.next() }}
 >
   {#if signed}
     <svg class="tick" viewBox="0 0 24 24" aria-hidden="true">
@@ -103,9 +102,9 @@
     <div class="stack">
       <p class="muted">
         {#if account.step === 'second'}
-          {t('Now the code from your authenticator app')}
+          Now the code from your authenticator app
         {:else}
-          {t('Code sent to')} <strong>{account.email}</strong>
+          Code sent to <strong>{account.email}</strong>
         {/if}
       </p>
       <div class="digits" dir="ltr">
@@ -118,7 +117,7 @@
             inputmode="numeric"
             autocomplete={index === 0 ? 'one-time-code' : 'off'}
             maxlength="6"
-            aria-label={t('Digit {number}', { number: index + 1 })}
+            aria-label="Digit {index + 1}"
           />
         {/each}
       </div>
@@ -129,9 +128,7 @@
           disabled={account.resendIn > 0 || account.busy}
           onclick={() => account.requestCode()}
         >
-          {account.resendIn > 0
-            ? t('Resend in {seconds}s', { seconds: account.resendIn })
-            : t('Send a new code')}
+          {account.resendIn > 0 ? `Resend in ${account.resendIn}s` : 'Send a new code'}
         </button>
       {/if}
     </div>
@@ -149,14 +146,14 @@
         class="field"
         type="email"
         autocomplete="email"
-        placeholder={t('Email address')}
-        aria-label={t('Email address')}
+        placeholder="Email address"
+        aria-label="Email address"
         spellcheck="false"
       />
     </form>
   {/if}
   {#if account.error && !signed}
-    <p class="error" role="alert">{t(account.error)}</p>
+    <p class="error" role="alert">{account.error}</p>
   {/if}
 </Screen>
 

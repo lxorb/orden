@@ -1,11 +1,9 @@
 import { plainWords } from '@orden/markdown/escapes'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 
-import { key } from '../i18n.svelte'
-
 import { dayOf, noteText, type Meta } from './meta'
 import { nameKey, Names, safeName, titleFrom } from './names'
-import type { ImportPlan, Lost, Planned } from './plan'
+import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 import { closingOf, element, tagsIn, textOf, textsOf, unescapeXml } from './xml'
 
@@ -94,13 +92,11 @@ export async function readTomboy(sources: readonly Source[]): Promise<ImportPlan
     }
   })
 
-  const lost: Lost[] = unreadable
+  const lost = unreadable
     ? [
-        {
-          text: key('{count} files could not be read, so they were left out'),
-          one: '{count} file could not be read, so it was left out',
-          values: { count: unreadable },
-        },
+        unreadable === 1
+          ? '1 file could not be read, so it was left out'
+          : `${unreadable} files could not be read, so they were left out`,
       ]
     : []
 

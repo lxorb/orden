@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { workspace } from '../workspace.svelte'
 import { plainOrigin } from './address'
 import { clipNote, clipSource } from './note'
@@ -20,8 +19,8 @@ export async function clipPage(
   const root = workspace.spaces.find((one) => one.id === space)?.root
   const path = root ? await workspace.noteFrom(await clipNote(page, new Date()), root) : null
   if (path === null) {
-    const why = root ? t('you can only read this space') : t('no such space')
-    pages.of(tabId).notice = `${t('Save as a note')}: ${why}`
+    const why = root ? 'you can only read this space' : 'no such space'
+    pages.of(tabId).notice = `Save as a note: ${why}`
   }
   return path
 }

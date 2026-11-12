@@ -4,7 +4,7 @@
   import Download from 'lucide/dist/esm/icons/download.mjs'
   import Paperclip from 'lucide/dist/esm/icons/paperclip.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { prompt } from '../prompt.svelte'
   import { readableSize } from '../usage.svelte'
   import { savedAttachment } from './attachment-save'
@@ -36,9 +36,9 @@
   async function remove(id: string, name: string) {
     const sure = await prompt.confirm({
       until: pass.opened,
-      title: t('Remove {name}?', { name }),
-      detail: t('The file is deleted from this item.'),
-      confirmLabel: t('Remove'),
+      title: `Remove ${name}?`,
+      detail: 'The file is deleted from this item.',
+      confirmLabel: 'Remove',
       danger: true,
     })
     if (!sure) return
@@ -52,8 +52,8 @@
 </script>
 
 {#if item.attachments.length}
-  <section class="card" aria-label={t('Attachments')}>
-    <h3 class="orden-section">{t('Attachments')}</h3>
+  <section class="card" aria-label="Attachments">
+    <h3 class="orden-section">Attachments</h3>
     {#each item.attachments as file (file.id)}
       <div class="line" data-file={file.name}>
         <Glyph icon={Paperclip} />
@@ -62,8 +62,8 @@
         <button
           class="orden-glyph"
           type="button"
-          aria-label={t('Download {name}', { name: file.name })}
-          title={t('Download')}
+          aria-label="Download {file.name}"
+          title="Download"
           aria-busy={busy === file.id}
           disabled={busy !== null}
           onclick={() => void download(file.id)}
@@ -74,8 +74,8 @@
           <button
             class="orden-glyph"
             type="button"
-            aria-label={t('Remove {name}', { name: file.name })}
-            title={t('Remove')}
+            aria-label="Remove {file.name}"
+            title="Remove"
             onclick={() => void remove(file.id, file.name)}
           >
             <Glyph icon={X} />

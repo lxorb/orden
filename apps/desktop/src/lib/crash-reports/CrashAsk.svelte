@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../i18n.svelte'
   import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { trap } from '../trap'
@@ -13,7 +12,7 @@
 
   let helping = $state(usageChoice.helping)
 
-  const words = $derived(t('Send crash reports to help improve Orden'))
+  const words = $derived('Send crash reports to help improve Orden')
 
   const go = () => {
     if (!crashReports.asking) return
@@ -42,9 +41,9 @@
     </label>
     <label class="tick">
       <input type="checkbox" class="orden-checkbox" bind:checked={helping} />
-      <span>{t('Also share anonymous usage data')}</span>
+      <span>Also share anonymous usage data</span>
     </label>
-    <button type="button" class="orden-button" data-lands onclick={go}>{t('Continue')}</button>
+    <button type="button" class="orden-button" data-lands onclick={go}>Continue</button>
   </div>
 {/if}
 

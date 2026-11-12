@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from './i18n.svelte'
   import { pull, REACH } from './pull.svelte'
   import { stillness } from './motion'
   import { nameFor } from './toolbar.svelte'
@@ -8,7 +7,7 @@
   const at = $derived(waiting ? REACH : pull.at)
   const ready = $derived(pull.ready)
   const said = $derived(
-    pull.refreshing ? t('Syncing') : pull.failed ? t('Sync failed') : nameFor('app.refresh'),
+    pull.refreshing ? 'Syncing' : pull.failed ? 'Sync failed' : nameFor('app.refresh'),
   )
   const part = $derived(Math.min(1, at / REACH))
   const still = stillness()

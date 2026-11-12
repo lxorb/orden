@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Member } from '@orden/chats'
-  import { t } from '../../i18n.svelte'
   import { dur, fade } from '../../motion'
   import Avatar from '../../people/Avatar.svelte'
   import type { ChatMember } from '../api'
@@ -54,7 +53,7 @@
     </span>
     {#if reach.share}
       <button type="button" class="orden-button is-quiet" disabled={sharing} onclick={share}
-        >{t('Share')}</button
+        >Share</button
       >
     {/if}
   </div>

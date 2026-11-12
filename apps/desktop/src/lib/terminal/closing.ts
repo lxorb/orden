@@ -1,5 +1,4 @@
 import { termOf } from '@orden/online/term'
-import { key, t } from '../i18n.svelte'
 import { isOnlineTab } from '../online/path'
 import { invoke } from '../tauri'
 import type { Tab } from '../workspace.svelte'
@@ -19,15 +18,12 @@ export async function mayEnd(
 
   const { prompt } = await import('../prompt.svelte')
   const answer = await prompt.choose({
-    title:
-      loose.length === 1 ? t('End {name}?', { name: one.shown }) : t('End these online terminals?'),
-    detail: t('Saved nowhere, a session kept running is found again in Settings, {pane}.', {
-      pane: t('Online terminal'),
-    }),
+    title: loose.length === 1 ? `End ${one.shown}?` : 'End these online terminals?',
+    detail: `Saved nowhere, a session kept running is found again in Settings, Online terminal.`,
     options: [
-      { id: 'cancel', label: key('Cancel') },
-      { id: 'end', label: key('End'), danger: true },
-      { id: 'keep', label: key('Keep running'), primary: true },
+      { id: 'cancel', label: 'Cancel' },
+      { id: 'end', label: 'End', danger: true },
+      { id: 'keep', label: 'Keep running', primary: true },
     ],
   })
   if (answer !== 'keep' && answer !== 'end') return false
@@ -70,9 +66,9 @@ async function mayStop(closing: readonly Tab[]): Promise<boolean> {
   return prompt.confirm({
     title:
       asking.length === 1
-        ? t('Stop what is running in {name}?', { name: only.shown })
-        : t('Stop what is running in these terminals?'),
-    confirmLabel: key('Stop'),
+        ? `Stop what is running in ${only.shown}?`
+        : 'Stop what is running in these terminals?',
+    confirmLabel: 'Stop',
     danger: true,
   })
 }

@@ -3,7 +3,6 @@ import { EditorState, type TransactionSpec } from '@codemirror/state'
 import { afterEach, describe, expect, test } from 'vitest'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
-import { setLabels } from '../labels'
 import { ANSWER_CLOSE, ANSWER_OPEN } from './block'
 import {
   aiExtension,
@@ -248,17 +247,15 @@ describe('asking', () => {
     expect(askAiFence({ state: readOnly, dispatch: () => undefined }, fence!)).toBe(false)
   })
 
-  test('says who answered in the words the app gave it', async () => {
-    setLabels({ aiAnswered: 'von {model} am {date} beantwortet' })
+  test('says who answered, and when', async () => {
     const runner = held()
     const view = new Fake(PLAIN)
     askAiFence(view, aiFenceAt(view.state, PLAIN.indexOf('Just'))!)
     runner.ask.started('m')
     runner.finish()
     await settled(view)
-    setLabels({})
 
-    expect(view.text).toContain(`*von m am ${dated()} beantwortet*`)
+    expect(view.text).toContain(`*answered by m, ${dated()}*`)
   })
 })
 

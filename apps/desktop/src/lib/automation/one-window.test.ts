@@ -48,7 +48,6 @@ vi.mock('../tauri', () => ({
 vi.mock('../web-tab/handed', () => ({ hearPages: () => Promise.resolve(() => undefined) }))
 vi.mock('../pdf/handed', () => ({ hearPdfs: () => Promise.resolve(() => undefined) }))
 vi.mock('../busy.svelte', () => ({ busy: { failed: () => undefined } }))
-vi.mock('../i18n.svelte', () => ({ t: (words: string) => words }))
 vi.mock('../log', () => ({ log: () => undefined }))
 vi.mock('./caller', () => ({ callerOf: () => undefined }))
 vi.mock('./verbs', () => ({

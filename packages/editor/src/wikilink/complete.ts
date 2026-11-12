@@ -1,7 +1,6 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import type { EditorView } from '@codemirror/view'
 import { blocksOf, foldName } from '@orden/markdown/links'
-import { label } from '../labels'
 import { blockNamer } from './block-namer'
 import {
   fuzzy,
@@ -64,7 +63,7 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
   const rows: Completion[] = []
   const folder = folderOf(note.path)
   const archived = note.archived === true
-  const detail = archived ? label('archived') : folder
+  const detail = archived ? 'Archived' : folder
 
   if (archived ? foldName(note.name) === needle : !needle || matches(note, needle)) {
     rows.push({

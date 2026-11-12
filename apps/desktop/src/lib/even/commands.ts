@@ -1,5 +1,3 @@
-import { key } from '../i18n.svelte'
-
 export type Command =
   | { kind: 'next' }
   | { kind: 'back' }
@@ -125,13 +123,13 @@ const PHRASES: readonly Phrase[] = [
     id: 'voice-on',
     words: ['voice', 'commands', 'on'],
     of: () => ({ kind: 'voice', on: true }),
-    label: key('Turn the microphone on'),
+    label: 'Turn the microphone on',
   },
   {
     id: 'voice-off',
     words: ['voice', 'commands', 'off'],
     of: () => ({ kind: 'voice', on: false }),
-    label: key('Turn the microphone off'),
+    label: 'Turn the microphone off',
   },
   { id: 'voice-on-short', words: ['voice', 'on'], of: () => ({ kind: 'voice', on: true }) },
   { id: 'voice-off-short', words: ['voice', 'off'], of: () => ({ kind: 'voice', on: false }) },
@@ -140,26 +138,26 @@ const PHRASES: readonly Phrase[] = [
     takes: true,
     words: ['switch', 'space', 'to'],
     of: (rest) => named('switchSpace', rest),
-    label: key('Go to a space by name'),
+    label: 'Go to a space by name',
   },
   {
     id: 'switch-note-to',
     takes: true,
     words: ['switch', 'note', 'to'],
     of: (rest) => named('switchNote', rest),
-    label: key('Go to a note by name'),
+    label: 'Go to a note by name',
   },
   {
     id: 'spaces',
     words: ['switch', 'space'],
     of: () => ({ kind: 'spaces' }),
-    label: key('Open the spaces'),
+    label: 'Open the spaces',
   },
   {
     id: 'notes',
     words: ['switch', 'note'],
     of: () => ({ kind: 'notes' }),
-    label: key('Open the notes'),
+    label: 'Open the notes',
   },
   { id: 'spaces-view', words: ['spaces', 'view'], of: () => ({ kind: 'spaces' }) },
   { id: 'notes-view', words: ['notes', 'view'], of: () => ({ kind: 'notes' }) },
@@ -168,14 +166,14 @@ const PHRASES: readonly Phrase[] = [
     takes: true,
     words: ['open', 'page'],
     of: (rest) => counted('page', rest),
-    label: key('Go to a page'),
+    label: 'Go to a page',
   },
   {
     id: 'line',
     takes: true,
     words: ['go', 'to', 'line'],
     of: (rest) => counted('line', rest),
-    label: key('Go to a line'),
+    label: 'Go to a line',
   },
   {
     id: 'page-alias',
@@ -188,14 +186,14 @@ const PHRASES: readonly Phrase[] = [
     takes: true,
     words: ['question'],
     of: (rest) => (rest ? { kind: 'question', asked: rest } : null),
-    label: key('Ask a question'),
+    label: 'Ask a question',
   },
   {
     id: 'task',
     takes: true,
     words: ['task'],
     of: (rest) => (rest ? { kind: 'task', said: rest } : null),
-    label: key('Add a task'),
+    label: 'Add a task',
   },
   {
     id: 'task-de',
@@ -203,13 +201,13 @@ const PHRASES: readonly Phrase[] = [
     words: ['aufgabe'],
     of: (rest) => (rest ? { kind: 'task', said: rest } : null),
   },
-  { id: 'next', words: ['next'], of: () => ({ kind: 'next' }), label: key('Next page') },
-  { id: 'back', words: ['back'], of: () => ({ kind: 'back' }), label: key('Previous page') },
+  { id: 'next', words: ['next'], of: () => ({ kind: 'next' }), label: 'Next page' },
+  { id: 'back', words: ['back'], of: () => ({ kind: 'back' }), label: 'Previous page' },
   {
     id: 'close',
     words: ['close'],
     of: () => ({ kind: 'close' }),
-    label: key('Close what is open'),
+    label: 'Close what is open',
   },
 ]
 

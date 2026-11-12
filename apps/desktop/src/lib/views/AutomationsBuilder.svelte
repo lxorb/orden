@@ -1,7 +1,6 @@
 <script lang="ts">
   import { type Automation, readAutomations, withAutomations } from '@orden/bases'
   import Cross from '../Cross.svelte'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { bare, knownProperties } from './columns'
   import type { Kit } from './kit'
@@ -49,7 +48,7 @@
         class="switch"
         role="switch"
         aria-checked={!automation.off}
-        aria-label={t('On')}
+        aria-label="On"
         onclick={() => {
           const next = { ...automation }
           if (automation.off) Reflect.deleteProperty(next, 'off')
@@ -58,10 +57,10 @@
         }}><span class="orden-switch" class:on={!automation.off} aria-hidden="true"></span></button
       >
       <Select
-        label={t('Automations')}
+        label="Automations"
         value={'added' in when ? ADDED : when.property}
         options={[
-          { value: ADDED, label: t('Row added') },
+          { value: ADDED, label: 'Row added' },
           ...keys.map((one) => ({ value: one, label: one })),
         ]}
         onchange={(next: string) =>
@@ -74,7 +73,7 @@
         <input
           class="orden-field"
           value={when.is ?? ''}
-          aria-label={t('Value')}
+          aria-label="Value"
           placeholder="="
           onchange={(event) => {
             const is = event.currentTarget.value.trim()
@@ -90,8 +89,8 @@
       <button
         type="button"
         class="orden-glyph"
-        title={t('Remove')}
-        aria-label={t('Remove')}
+        title="Remove"
+        aria-label="Remove"
         onclick={() => write(automations.filter((_, index) => index !== at))}
         ><Cross small /></button
       >
@@ -101,7 +100,7 @@
       <div class="row then">
         <span class="mark" aria-hidden="true">→</span>
         <Select
-          label={t('Property')}
+          label="Property"
           value={key}
           options={(keys.includes(key) ? keys : [key, ...keys]).map((one) => ({
             value: one,
@@ -116,7 +115,7 @@
         <input
           class="orden-field"
           {value}
-          aria-label={t('Value')}
+          aria-label="Value"
           onchange={(event) =>
             change(at, {
               ...automation,
@@ -126,8 +125,8 @@
         <button
           type="button"
           class="orden-glyph"
-          title={t('Remove')}
-          aria-label={t('Remove')}
+          title="Remove"
+          aria-label="Remove"
           onclick={() =>
             change(at, {
               ...automation,
@@ -146,7 +145,7 @@
           change(at, { ...automation, set: { ...automation.set, [key]: '' } })
         }}
       >
-        <span class="orden-row-label">{t('Add')}</span>
+        <span class="orden-row-label">Add</span>
       </button>
     </div>
     <div class="row then">
@@ -154,15 +153,15 @@
       <input
         class="orden-field"
         value={automation.move ?? ''}
-        aria-label={t('Move to')}
-        placeholder={t('Move to')}
+        aria-label="Move to"
+        placeholder="Move to"
         onchange={(event) => change(at, said(automation, 'move', event.currentTarget.value))}
       />
       <input
         class="orden-field"
         value={automation.notify ?? ''}
-        aria-label={t('Notifications')}
-        placeholder={t('Notifications')}
+        aria-label="Notifications"
+        placeholder="Notifications"
         onchange={(event) => change(at, said(automation, 'notify', event.currentTarget.value))}
       />
     </div>
@@ -170,7 +169,7 @@
 {/each}
 
 <button type="button" class="orden-row is-short adder" onclick={add}>
-  <span class="orden-row-label">{t('Add')}</span>
+  <span class="orden-row-label">Add</span>
 </button>
 
 <style>

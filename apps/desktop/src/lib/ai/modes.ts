@@ -1,5 +1,3 @@
-import { key } from '../i18n.svelte'
-
 export type Mode = 'approve' | 'auto' | 'full' | 'plan'
 
 export const MODES: readonly Mode[] = ['approve', 'auto', 'full', 'plan']
@@ -9,10 +7,10 @@ const CYCLE: readonly Mode[] = ['approve', 'auto', 'plan']
 export const FIRST_MODE: Mode = 'approve'
 
 const WORDS: Record<Mode, string> = {
-  approve: key('Approve'),
-  auto: key('Auto'),
-  full: key('Full permissions'),
-  plan: key('Plan'),
+  approve: 'Approve',
+  auto: 'Auto',
+  full: 'Full permissions',
+  plan: 'Plan',
 }
 
 export function modeWord(mode: Mode): string {

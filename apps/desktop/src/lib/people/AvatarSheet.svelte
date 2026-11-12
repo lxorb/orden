@@ -1,7 +1,7 @@
 <script lang="ts">
   import { dropOver } from '../drag-paths'
   import { onMount } from 'svelte'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import Sheet from '../Sheet.svelte'
   import {
     clampOffset,
@@ -201,7 +201,7 @@
   }}
 />
 
-<Sheet open title={t('Profile picture')} {onclose}>
+<Sheet open title="Profile picture" {onclose}>
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="stage"
@@ -220,7 +220,7 @@
       class="window"
       style:--view="{VIEW}px"
       role="img"
-      aria-label={t('Profile picture')}
+      aria-label="Profile picture"
       onpointerdown={pressed}
       onpointermove={moved}
       onpointerup={lifted}
@@ -243,7 +243,7 @@
     </div>
 
     {#if stream}
-      <button class="orden-button shutter" onclick={() => void shutter()}>{t('Take photo')}</button>
+      <button class="orden-button shutter" onclick={() => void shutter()}>Take photo</button>
     {:else}
       <div class="controls">
         <input
@@ -253,15 +253,15 @@
           max={MOST_ZOOM}
           step="0.01"
           value={crop.zoom}
-          aria-label={t('Zoom')}
+          aria-label="Zoom"
           style:--fill="{((crop.zoom - 1) / (MOST_ZOOM - 1)) * 100}%"
           disabled={!picture}
           oninput={(event) => zoomTo(clampZoom(Number(event.currentTarget.value)))}
         />
         <button
           class="orden-glyph"
-          title={t('Rotate')}
-          aria-label={t('Rotate')}
+          title="Rotate"
+          aria-label="Rotate"
           disabled={!picture}
           onclick={turn}
         >
@@ -277,7 +277,7 @@
 
   {#snippet foot()}
     <button class="orden-button" disabled={!picture || busy || !!stream} onclick={() => void keep()}
-      >{t('Keep')}</button
+      >Keep</button
     >
   {/snippet}
 </Sheet>

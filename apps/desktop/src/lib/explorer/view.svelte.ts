@@ -1,4 +1,4 @@
-import { message, t } from '../i18n.svelte'
+import { message } from '../message'
 import { afterQuiet } from '../timing'
 import { isDesktop, joinPath } from '../tauri'
 import type { Tab } from '../workspace/documents.svelte'
@@ -331,7 +331,7 @@ function inTime(asked: Promise<Listing>): Promise<Listing> {
 
 function why(error: unknown, folder: string): string {
   return error instanceof Unanswered
-    ? t('{device} did not answer.', { device: folderName(folder) })
+    ? `${folderName(folder)} did not answer.`
     : message(error, 'could not read this folder')
 }
 

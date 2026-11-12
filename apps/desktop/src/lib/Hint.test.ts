@@ -70,7 +70,7 @@ describe('where the panel draws it', () => {
       (one) => one !== '<Hint text={field.hint} />' && one !== '<Hint text={entry.why()} />',
     )
     expect(written.length).toBeGreaterThan(5)
-    for (const one of written) expect(one).toMatch(/^<Hint text=\{t\('[^']+\.'\)\} \/>$/)
+    for (const one of written) expect(one).toMatch(/^<Hint text="[^"]+\." \/>$/)
   })
 
   test('through the snippet every kind of row renders its name with', () => {

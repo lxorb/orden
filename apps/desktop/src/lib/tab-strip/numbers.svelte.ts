@@ -1,5 +1,4 @@
 import { mount, untrack } from 'svelte'
-import { i18n } from '../i18n.svelte'
 import { shortcuts } from '../shortcuts.svelte'
 import { tabOverview } from '../surfaces.svelte'
 import { invoke, isDesktop } from '../tauri'
@@ -159,7 +158,7 @@ class Numbers {
       const box = (face?.getClientRects().length ? face : pick).getBoundingClientRect()
       if (box.right < seen.left || box.left > seen.right) return []
 
-      return [{ id: tab.id, label, x: i18n.factor > 0 ? box.right : box.left, y: box.bottom }]
+      return [{ id: tab.id, label, x: box.right, y: box.bottom }]
     })
   }
 
@@ -170,7 +169,7 @@ class Numbers {
         const box = tile.getBoundingClientRect()
         if (!label || !box.width || box.right <= 0 || box.left >= innerWidth) return []
         if (box.bottom <= 0 || box.top >= innerHeight) return []
-        const x = i18n.factor > 0 ? box.right : box.left
+        const x = box.right
         return [{ id: `essential:${label}`, label, x, y: box.bottom }]
       },
     )

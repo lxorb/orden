@@ -9,7 +9,6 @@ import { untrack } from 'svelte'
 import { account } from './account.svelte'
 import { startup } from './startup.svelte'
 import { rooms } from './rooms.svelte'
-import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { invoke, isDesktop, joinPath } from './tauri'
 import {
@@ -408,7 +407,7 @@ class Sync {
     } catch (error) {
       if (mine === this.generation) {
         this.status = 'error'
-        this.lastError = error instanceof Error ? error.message : t('sync failed')
+        this.lastError = error instanceof Error ? error.message : 'sync failed'
       }
     }
 
@@ -712,7 +711,7 @@ class Sync {
       }
 
       this.status = 'error'
-      this.lastError = error instanceof Error ? error.message : t('sync failed')
+      this.lastError = error instanceof Error ? error.message : 'sync failed'
     } finally {
       this.running = false
     }

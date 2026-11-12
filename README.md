@@ -143,7 +143,6 @@ A `.deb` or an `.rpm` install, from a repository or from one file, also updates 
 - Built-in **MCP** so your favorite LLM reads and writes your notes
 - **Themes** from a store, or your own CSS
 - A plugin for **Even Realities G2** glasses
-- **Translated** into German, French, Swiss German and Japanese
 
 ## Motivation
 

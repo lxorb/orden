@@ -1,6 +1,5 @@
 <script lang="ts">
   import { readReverse, readRollup, type Rollup, ROLLUPS, rollupFormula } from '@orden/bases'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { relationsOf } from './columns'
   import { freeFormulaName, setColumns, setFormula } from './edit'
@@ -39,7 +38,7 @@
   })
 
   const NAMES: Record<Rollup, string> = {
-    count: t('Count'),
+    count: 'Count',
     filled: summaryName('Filled'),
     unique: summaryName('Unique'),
     sum: summaryName('Sum'),
@@ -49,7 +48,7 @@
     max: summaryName('Max'),
     range: summaryName('Range'),
     checked: summaryName('Checked'),
-    percent: t('Percent ticked'),
+    percent: 'Percent ticked',
   }
 
   let relation = $state('')
@@ -95,7 +94,7 @@
 
 <div class="rows">
   <Select
-    label={t('Rollup')}
+    label="Rollup"
     value={relation}
     options={relations}
     onchange={(next: string) => {
@@ -104,9 +103,9 @@
     }}
   />
   <Select
-    label={t('Property')}
+    label="Property"
     value={property}
-    options={[{ value: '', label: t('Notes') }, ...keys.map((one) => ({ value: one, label: one }))]}
+    options={[{ value: '', label: 'Notes' }, ...keys.map((one) => ({ value: one, label: one }))]}
     onchange={(next: string) => {
       property = next
       if (!next) calc = 'count'
@@ -114,7 +113,7 @@
     }}
   />
   <Select
-    label={t('Summary')}
+    label="Summary"
     value={calc}
     options={(property ? ROLLUPS : (['count'] as const)).map((one) => ({
       value: one,

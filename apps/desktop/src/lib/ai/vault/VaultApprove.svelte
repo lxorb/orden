@@ -2,7 +2,6 @@
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { accentFor } from '../../accents'
-  import { t } from '../../i18n.svelte'
   import { initial } from '../../icons'
   import { dur, fly } from '../../motion'
   import { overlays } from '../../overlays'
@@ -33,7 +32,7 @@
   <div
     class="approve orden-bubble is-pressable orden-host"
     role="dialog"
-    aria-label={t('{device} wants your AI accounts', { device })}
+    aria-label="{device} wants your AI accounts"
     tabindex="-1"
     bind:this={card}
     transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
@@ -45,14 +44,14 @@
         style:--badge-ink="var(--accent-ink)"
         aria-hidden="true">{initial(device)}</span
       >
-      <span class="device">{t('{device} wants your AI accounts', { device })}</span>
+      <span class="device">{device} wants your AI accounts</span>
       <span class="digits">{asking.digits}</span>
     </p>
     <div class="rows">
       <button class="orden-button is-quiet" onclick={() => void vault.deny(asking.id)}>
-        {t('Don’t allow')}
+        Don’t allow
       </button>
-      <button class="orden-button" onclick={() => void vault.allow(asking.id)}>{t('Allow')}</button>
+      <button class="orden-button" onclick={() => void vault.allow(asking.id)}>Allow</button>
     </div>
   </div>
 {/if}
