@@ -99,14 +99,6 @@ def hears(channel, kind):
     )
     return f"window.__{name}"
 
-heard = hears("orden:presenter", "here")
-opened = run("window.__TAURI_INTERNALS__.invoke('presenter_open', {}).then(() => 'opened', (error) => String(error))")
-print(f"globals: the presenter's window: {opened}")
-if opened != "opened":
-    fail(f"the presenter's window was not opened: {opened}")
-elif not until(heard):
-    fail("the presenter's window was never heard: it is not in the app's profile")
-
 heard = hears("orden-quick-add", "hello")
 subprocess.run([APP, "--quick-add"], check=False, timeout=30, capture_output=True)
 if not until(heard):

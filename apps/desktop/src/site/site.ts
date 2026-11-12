@@ -89,7 +89,7 @@ async function preview(href: string): Promise<string | null> {
     const write = page.querySelector('#write')
     if (!write) return null
 
-    for (const gone of write.querySelectorAll('nav, footer, .back, .present, .find, .toc')) {
+    for (const gone of write.querySelectorAll('nav, footer, .back, .find, .toc')) {
       gone.remove()
     }
 

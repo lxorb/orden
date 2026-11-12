@@ -159,8 +159,6 @@ pub mod window_thread {
 #[cfg(desktop)]
 mod presence;
 #[cfg(desktop)]
-mod presenter;
-#[cfg(desktop)]
 mod printed;
 mod query;
 #[cfg(desktop)]
@@ -394,7 +392,6 @@ macro_rules! desktop_commands {
             hotkeys::global_keys_change,
             quick_add::quick_add_hide,
             quick_add::quick_add_tall,
-            presenter::presenter_open,
             agents::shell::tray_keep,
             reminders::reminders_set,
             reminders::reminders_taken,
@@ -1745,10 +1742,7 @@ mod tests {
     fn a_command_that_builds_a_webview_says_async() {
         let own = own();
         let builds = own.reaching(&BUILDS, &BUILT_OFF_THE_CALLBACK);
-        assert!(
-            builds.contains("crate::presenter::built_window")
-                && builds.contains("crate::launch::open_window")
-        );
+        assert!(builds.contains("crate::launch::open_window"));
 
         let late: Vec<&String> = own
             .commands()

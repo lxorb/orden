@@ -381,19 +381,6 @@ fn convert(
     format: &str,
     place: Option<&Place>,
 ) -> Result<Vec<String>, String> {
-    let deck = format == "revealjs";
-    if deck {
-        match extracts_safely() {
-            Copying::Safe => {}
-            Copying::Unsafe => return Err(DECK_REFUSAL.to_string()),
-            Copying::Unknown(why) => {
-                return Err(format!(
-                    "The deck was not written, since it could not be checked that pandoc copies its pictures safely: {why}"
-                ))
-            }
-        }
-    }
-
     if !carries_pictures(format) {
         let mut command = pandoc();
         command
@@ -418,19 +405,11 @@ fn convert(
 
     let pictures = tempfile::tempdir()
         .map_err(|error| format!("there was no folder to gather the pictures in: {error}"))?;
-    let mut missing = vetted(&mut tree, place, pictures.path(), deck);
+    let mut missing = vetted(&mut tree, place, pictures.path());
 
     let mut command = pandoc();
     command.args(["--from", "json", "--to", format, "--standalone"]);
     command.arg(joined("--resource-path=", pictures.path().as_os_str()));
-    if deck {
-        let beside = target
-            .parent()
-            .ok_or_else(|| format!("{} is not in a folder", target.display()))?;
-        let stem = target.file_stem().unwrap_or_default();
-        command.current_dir(beside);
-        command.arg(joined("--extract-media=", &joined_name(stem, "_files")));
-    }
     command.arg("--output").arg(target);
 
     let result = piped(command, tree.to_string())?;
@@ -450,18 +429,7 @@ fn carries_pictures(format: &str) -> bool {
     let name = format.split(['+', '-']).next().unwrap_or(format);
     matches!(
         name,
-        "odt"
-            | "docx"
-            | "pptx"
-            | "icml"
-            | "html"
-            | "html4"
-            | "html5"
-            | "revealjs"
-            | "slidy"
-            | "slideous"
-            | "dzslides"
-            | "s5"
+        "odt" | "docx" | "pptx" | "icml" | "html" | "html4" | "html5"
     )
 }
 
@@ -500,12 +468,7 @@ fn piped(mut command: Command, input: String) -> Result<std::process::Output, St
     }
 }
 
-fn vetted(
-    tree: &mut serde_json::Value,
-    place: Option<&Place>,
-    into: &Path,
-    deck: bool,
-) -> Vec<String> {
+fn vetted(tree: &mut serde_json::Value, place: Option<&Place>, into: &Path) -> Vec<String> {
     let mut refused = Vec::new();
     let mut copied: Vec<(PathBuf, String)> = Vec::new();
     vet(
@@ -520,7 +483,6 @@ fn vetted(
             Some(name)
         },
         &mut refused,
-        deck,
     );
     refused
 }
@@ -529,14 +491,13 @@ fn vet(
     node: &mut serde_json::Value,
     judge: &mut dyn FnMut(&str) -> Option<String>,
     refused: &mut Vec<String>,
-    deck: bool,
 ) {
     use serde_json::Value;
 
     match node {
         Value::Array(items) => {
             for item in items {
-                vet(item, judge, refused, deck);
+                vet(item, judge, refused);
             }
         }
         Value::Object(fields) => {
@@ -545,56 +506,34 @@ fn vet(
                 .and_then(Value::as_str)
                 .unwrap_or_default()
                 .to_string();
-            let content = fields.get_mut("c");
-            match (kind.as_str(), content) {
-                ("Image", Some(content)) => {
-                    let link = content
-                        .get(2)
-                        .and_then(|target| target.get(0))
-                        .and_then(Value::as_str)
-                        .unwrap_or_default()
-                        .to_string();
-                    if let Some(name) = judge(&link) {
-                        if let Some(target) = content.get_mut(2).and_then(|one| one.get_mut(0)) {
-                            *target = Value::String(name);
-                        }
-                    } else {
-                        refused.push(link);
-                        let alt = content
-                            .get(1)
-                            .cloned()
-                            .unwrap_or_else(|| Value::Array(Vec::new()));
-                        *node = serde_json::json!({ "t": "Span", "c": [["", [], []], alt] });
+            if let ("Image", Some(content)) = (kind.as_str(), fields.get_mut("c")) {
+                let link = content
+                    .get(2)
+                    .and_then(|target| target.get(0))
+                    .and_then(Value::as_str)
+                    .unwrap_or_default()
+                    .to_string();
+                if let Some(name) = judge(&link) {
+                    if let Some(target) = content.get_mut(2).and_then(|one| one.get_mut(0)) {
+                        *target = Value::String(name);
                     }
+                } else {
+                    refused.push(link);
+                    let alt = content
+                        .get(1)
+                        .cloned()
+                        .unwrap_or_else(|| Value::Array(Vec::new()));
+                    *node = serde_json::json!({ "t": "Span", "c": [["", [], []], alt] });
                 }
-                ("RawInline" | "RawBlock", Some(Value::Array(raw))) if deck => {
-                    let html = raw
-                        .first()
-                        .and_then(Value::as_str)
-                        .is_some_and(|format| format.starts_with("html") || format == "revealjs");
-                    let text = raw.get(1).and_then(Value::as_str).unwrap_or_default();
-                    if html && loads(text) {
-                        refused.push(text.trim().chars().take(80).collect());
-                        raw[1] = Value::String(String::new());
-                    }
-                }
-                _ => {}
             }
             if let Value::Object(fields) = node {
                 for value in fields.values_mut() {
-                    vet(value, judge, refused, deck);
+                    vet(value, judge, refused);
                 }
             }
         }
         _ => {}
     }
-}
-
-fn loads(html: &str) -> bool {
-    let html = html.to_ascii_lowercase();
-    ["src", "poster", "data="]
-        .iter()
-        .any(|one| html.contains(one))
 }
 
 fn admitted(link: &str, place: &Place) -> Option<PathBuf> {
@@ -666,17 +605,9 @@ fn copied_in(real: &Path, into: &Path) -> Option<String> {
     Some(free)
 }
 
-const DECK_REFUSAL: &str = "Exporting a deck needs pandoc 3.1.6 or newer: this pandoc can be made to write a deck's pictures outside the deck's folder";
-
 fn joined(option: &str, value: &std::ffi::OsStr) -> std::ffi::OsString {
     let mut out = std::ffi::OsString::from(option);
     out.push(value);
-    out
-}
-
-fn joined_name(stem: &std::ffi::OsStr, end: &str) -> std::ffi::OsString {
-    let mut out = stem.to_os_string();
-    out.push(end);
     out
 }
 
@@ -717,7 +648,7 @@ mod tests {
     use super::{
         admitted, carries_pictures, complaint, convert, extracts_safely, import_from, is_format,
         left_out, not_found, pandoc, pandoc_runs, read_refusal, reading, vetted, wrote_outside,
-        Copying, Imported, Place, DECK_REFUSAL, PICTURES_LEFT_OUT,
+        Copying, Imported, Place, PICTURES_LEFT_OUT,
     };
     #[cfg(unix)]
     use super::{copying, PATIENCE};
@@ -908,25 +839,6 @@ mod tests {
             out.write_all(&bytes).expect("written");
         }
         out.finish().expect("a docx");
-    }
-
-    #[test]
-    fn a_deck_writes_no_picture_outside_its_folder() {
-        if !pandoc_here() {
-            return;
-        }
-        let elsewhere = tempfile::tempdir().expect("a folder");
-        let inner = elsewhere.path().join("inner");
-        fs::create_dir(&inner).expect("a folder");
-        let note = "Text\n\n![](data://image/png;base64,aGVsbG8=;.lua+%2f%2e%2e%2f%2e%2e%2f%2e%2e%2fescaped%2elua)\n";
-
-        let made = convert(note, &inner.join("Deck.html"), "revealjs", None);
-
-        match extracts_safely() {
-            Copying::Safe => assert!(made.is_ok(), "{made:?}"),
-            _ => assert!(made.is_err(), "{made:?}"),
-        }
-        assert!(!wrote_outside(elsewhere.path(), &inner), "{made:?}");
     }
 
     #[cfg(unix)]
@@ -1172,7 +1084,7 @@ mod tests {
         let into = tempfile::tempdir().expect("a folder");
         let mut tree = tree_of(&["dot.png", absolute.as_str(), "./dot.png"], &climbing);
 
-        let refused = vetted(&mut tree, Some(&shared.place()), into.path(), false);
+        let refused = vetted(&mut tree, Some(&shared.place()), into.path());
 
         assert_eq!(refused, [absolute.clone(), climbing.clone()]);
         assert_eq!(targets(&tree), ["dot.png", "dot.png"]);
@@ -1184,7 +1096,7 @@ mod tests {
 
         let mut tree = tree_of(&["dot.png"], "dot.png");
         let nowhere = tempfile::tempdir().expect("a folder");
-        assert_eq!(vetted(&mut tree, None, nowhere.path(), false).len(), 2);
+        assert_eq!(vetted(&mut tree, None, nowhere.path()).len(), 2);
         assert!(targets(&tree).is_empty());
         assert!(names_in(nowhere.path()).is_empty());
     }
@@ -1202,7 +1114,7 @@ mod tests {
         ];
         let mut tree = tree_of(&links[..4], links[4]);
 
-        let refused = vetted(&mut tree, Some(&shared.place()), into.path(), false);
+        let refused = vetted(&mut tree, Some(&shared.place()), into.path());
 
         assert_eq!(refused, links);
         assert!(targets(&tree).is_empty());
@@ -1217,7 +1129,7 @@ mod tests {
         let into = tempfile::tempdir().expect("a folder");
         let mut tree = tree_of(&["dot.png", "other/dot.png"], "dot.png");
 
-        let refused = vetted(&mut tree, Some(&shared.place()), into.path(), false);
+        let refused = vetted(&mut tree, Some(&shared.place()), into.path());
 
         assert!(refused.is_empty(), "{refused:?}");
         assert_eq!(targets(&tree), ["dot.png", "dot-2.png", "dot.png"]);
@@ -1228,30 +1140,8 @@ mod tests {
     }
 
     #[test]
-    fn raw_html_that_loads_a_file_is_left_out_of_a_deck() {
-        let raw = |text: &str| {
-            serde_json::json!({
-                "pandoc-api-version": [1, 23],
-                "meta": {},
-                "blocks": [{ "t": "RawBlock", "c": ["html", text] }]
-            })
-        };
-        let into = tempfile::tempdir().expect("a folder");
-        let mut deck = raw("<img src=\"/home/me/.ssh/id_rsa\">");
-        assert_eq!(vetted(&mut deck, None, into.path(), true).len(), 1);
-        assert!(!deck.to_string().contains("id_rsa"));
-
-        let mut words = raw("<b>bold</b>");
-        assert!(vetted(&mut words, None, into.path(), true).is_empty());
-        assert!(words.to_string().contains("<b>bold</b>"));
-
-        let mut odt = raw("<img src=\"x.png\">");
-        assert!(vetted(&mut odt, None, into.path(), false).is_empty());
-    }
-
-    #[test]
     fn knows_which_formats_carry_pictures() {
-        for format in ["odt", "revealjs", "docx", "html5", "odt+native_numbering"] {
+        for format in ["odt", "docx", "html5", "odt+native_numbering"] {
             assert!(carries_pictures(format), "{format}");
         }
         for format in [
@@ -1315,29 +1205,6 @@ mod tests {
     }
 
     #[test]
-    fn a_deck_copies_no_file_from_outside_the_space() {
-        if !pandoc_here() || extracts_safely() != Copying::Safe {
-            return;
-        }
-        let shared = shared();
-        let [absolute, climbing] = shared.links();
-        let elsewhere = tempfile::tempdir().expect("a folder");
-        let target = elsewhere.path().join("Deck.html");
-        let note = format!(
-            "# One\n\n![a dot](dot.png)\n\n![k]({absolute})\n\n![k]({climbing})\n\n<img src=\"{absolute}\">\n"
-        );
-
-        let missing =
-            convert(&note, &target, "revealjs", Some(&shared.place())).expect("converted");
-
-        assert_eq!(missing.len(), 3, "{missing:?}");
-        assert_eq!(names_in(&elsewhere.path().join("Deck_files")), ["dot.png"]);
-        let html = fs::read_to_string(&target).expect("a deck");
-        assert!(!html.contains("id_rsa"), "{html}");
-        assert!(html.contains("Deck_files/dot.png"), "{html}");
-    }
-
-    #[test]
     fn the_formats_without_pictures_are_still_written() {
         if !pandoc_here() {
             return;
@@ -1378,36 +1245,6 @@ mod tests {
             names.iter().any(|one| one.starts_with("Pictures/")),
             "{names:?}"
         );
-    }
-
-    #[test]
-    fn a_deck_saved_elsewhere_still_shows_its_pictures() {
-        if !pandoc_here() {
-            return;
-        }
-        let (note, elsewhere) = note_and_elsewhere();
-        let target = elsewhere.path().join("Deck.html");
-
-        let made = convert(WITH_PICTURE, &target, "revealjs", Some(&alone(note.path())));
-        match extracts_safely() {
-            Copying::Safe => {}
-            Copying::Unsafe => {
-                assert_eq!(made, Err(DECK_REFUSAL.to_string()));
-                assert!(DECK_REFUSAL.contains("3.1.6"));
-                assert!(!target.exists());
-                return;
-            }
-            Copying::Unknown(why) => {
-                assert!(made.is_err_and(|said| said.contains(&why) && !said.contains("3.1.6")));
-                return;
-            }
-        }
-        let missing = made.expect("converted");
-
-        assert!(missing.is_empty(), "{missing:?}");
-        let html = fs::read_to_string(&target).expect("a deck");
-        assert!(html.contains("Deck_files/dot.png"), "{html}");
-        assert!(elsewhere.path().join("Deck_files/dot.png").is_file());
     }
 
     #[test]
@@ -1468,15 +1305,7 @@ mod tests {
 
     #[test]
     fn takes_the_formats_the_window_asks_for() {
-        for format in [
-            "odt",
-            "latex",
-            "mediawiki",
-            "rst",
-            "textile",
-            "opml",
-            "revealjs",
-        ] {
+        for format in ["odt", "latex", "mediawiki", "rst", "textile", "opml"] {
             assert!(is_format(format), "{format}");
         }
         assert!(is_format("markdown+tex_math_dollars"));

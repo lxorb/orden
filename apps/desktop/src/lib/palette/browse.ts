@@ -10,7 +10,7 @@ const GROUPS: readonly { title: () => string; ids: readonly string[] }[] = [
   },
   {
     title: () => 'View',
-    ids: ['reading', 'read-only', 'present', 'source', 'focus', 'typewriter'],
+    ids: ['reading', 'read-only', 'source', 'focus', 'typewriter'],
   },
   {
     title: () => 'Create',

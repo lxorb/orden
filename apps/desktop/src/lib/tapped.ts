@@ -1,6 +1,5 @@
 import { DoubleTap, type Modifier, tapOf } from './double-tap'
 import { shortcuts } from './shortcuts.svelte'
-import { present } from './slides/present.svelte'
 import { type AppContext, SHORTCUTS } from './shortcuts/registry'
 import { fromPage } from './web-tab/keys'
 import { ran } from './usage/tally'
@@ -71,7 +70,7 @@ export function runTap(key: Modifier, context: AppContext): boolean {
 export function hear(context: () => AppContext, target: Window = window): () => void {
   const unlisten = listenForTaps(target)
   const unhear = hearTaps((key) => {
-    if (!present.on) runTap(key, { ...context(), tapped: true })
+    runTap(key, { ...context(), tapped: true })
   })
 
   return () => {

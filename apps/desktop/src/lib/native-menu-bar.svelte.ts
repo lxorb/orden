@@ -31,7 +31,6 @@ import {
 } from './native-menu'
 import { shortcuts } from './shortcuts.svelte'
 import { type AppContext, BY_ID, runEntry } from './shortcuts/registry'
-import { present } from './slides/present.svelte'
 import { appMenuRows } from './surfaces.svelte'
 import { takeKeyboard } from './take-keyboard'
 import { currentWindow, invoke } from './tauri'
@@ -106,8 +105,6 @@ function signature(context: MenuBarContext): unknown[] {
     modes.alwaysOnTop,
     modes.highlightTone,
     fullscreen.on,
-    present.on,
-    present.available,
     account.user,
     viewport.touch,
     hiddenKinds.shown.join(),

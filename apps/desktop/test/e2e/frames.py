@@ -50,19 +50,6 @@ console.log('the fence ran')
 ```
 """
 
-DECK = """# Deck
-
-<div id="dial">nothing yet</div>
-<script>
-document.getElementById('dial').textContent = 'it ran'
-document.body.style.height = '300px'
-</script>
-
----
-
-# The end
-"""
-
 SEED = """
 async ([note, name]) => {
   const ws = window.ordenApp.workspace
@@ -295,7 +282,6 @@ def drive(browser: Browser) -> None:
     if said != expected:
         wrong(f"the block's scripts did not run the way a page runs them: {said}")
 
-    slides(page)
     page.context.close()
 
 def ran_by_then(page: Page, card: str) -> None:
@@ -321,25 +307,6 @@ def block_frame(page: Page) -> Frame | None:
             continue
 
     return None
-
-def slides(page: Page) -> None:
-    say(f"the space holds {page.evaluate(SEED, [DECK, 'Deck'])}")
-    page.wait_for_timeout(600)
-    page.evaluate("() => window.ordenApp.present.start()")
-    wait_for(page, "document.querySelector('.deck .stage .embed-html')", "the deck's block")
-    page.wait_for_timeout(400)
-    page.click(".deck .stage .embed-html")
-    ran_by_then(page, ".deck .stage .embed-html")
-
-    ran = page.evaluate(FRAME, ".deck .stage .embed-html")
-    say(f"[slide] {json.dumps(ran)}")
-    shot(page, "06-slide-running")
-    if not ran:
-        wrong("a press on the slide's block ran nothing")
-    elif ran["asked"].strip() not in {"300px", "301px"}:
-        wrong(f"the slide's block asked for {ran['asked']!r}, so its script did not run")
-
-    page.evaluate("() => window.ordenApp.present.stop()")
 
 def main() -> int:
     global engine, ORIGIN
@@ -377,7 +344,7 @@ def main() -> int:
         return 1
 
     print(
-        "\na tag is a card, a block runs in a sandbox and on a slide, a fence still"
+        "\na tag is a card, a block runs in a sandbox, a fence still"
         f" runs, and the policy complained about nothing in {' or '.join(engines)}",
         flush=True,
     )

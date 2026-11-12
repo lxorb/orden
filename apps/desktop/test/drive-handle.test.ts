@@ -54,7 +54,6 @@ describe('the handle a drive reads the app through', () => {
     'modes',
     'overlays',
     'pages',
-    'present',
     'pull',
     'rooms',
     'search',

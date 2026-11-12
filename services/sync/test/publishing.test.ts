@@ -317,13 +317,6 @@ describe('a published note', () => {
 
       expect(answer.text).toContain(`${WRAPPED}<br>`)
     })
-
-    test('is a break on a slide whatever the account says, because a slide is a poster', async () => {
-      const answer = await call(env, '/everything?slides', { host: HOST })
-
-      expect(answer.status).toBe(200)
-      expect(answer.text).toContain(`${WRAPPED}<br>`)
-    })
   })
 })
 

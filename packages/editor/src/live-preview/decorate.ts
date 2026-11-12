@@ -135,7 +135,6 @@ class Decorator {
         this.taskMarker(node)
         return true
       case 'HorizontalRule':
-        if (this.slideBreak(node)) this.markLines(node, 'orden-slide-break', true)
         this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from))
         return true
       case 'Image':
@@ -611,13 +610,6 @@ class Decorator {
       if (number < first || number > last) continue
       this.addLineAttrs(line.from, { 'data-code-number': String(number - first + 1) })
     }
-  }
-
-  private slideBreak(node: SyntaxNode): boolean {
-    const line = this.state.doc.lineAt(node.from)
-    if (!/^(?:-{3,}|\*{3,})[ \t]*$/.test(line.text)) return false
-
-    return line.number === 1 || this.state.doc.line(line.number - 1).text.trim() === ''
   }
 
   private markLines(

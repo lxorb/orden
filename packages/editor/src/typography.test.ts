@@ -2,7 +2,6 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { frontMatter } from '@orden/markdown'
-import { isDeck } from '@orden/markdown/slide-breaks'
 import { inCodeSpan, keepsStraightQuotes, smartReplacement, typingBreak } from './typography'
 import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
@@ -91,15 +90,14 @@ describe('a line that is a break rather than a sentence', () => {
     expect(typingBreak('    --')).toBe(false)
   })
 
-  test('the rule a deck is broken on, typed rather than commanded', () => {
+  test('a rule typed rather than commanded stays a rule', () => {
     const note = `# One
 
 ${typed('---')}
 
 # Two
 `
-    expect(note).toContain('---')
-    expect(isDeck(note)).toBe(true)
+    expect(note).toContain('\n---\n')
   })
 
   test('front matter can be opened by typing its fence', () => {

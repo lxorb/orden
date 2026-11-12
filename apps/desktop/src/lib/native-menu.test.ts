@@ -520,8 +520,8 @@ describe('the windows that have a strip of their own', () => {
     expect(documentWindows(['main', 'orden-2', 'orden-17'])).toBe(3)
   })
 
-  test('and not the presenter, a print, or anything else', () => {
-    expect(documentWindows(['main', 'orden-presenter', 'print-3', 'orden-', 'orden-2a'])).toBe(1)
+  test('and not the quick add, a print, or anything else', () => {
+    expect(documentWindows(['main', 'orden-quick-add', 'print-3', 'orden-', 'orden-2a'])).toBe(1)
     expect(documentWindows([])).toBe(0)
   })
 })
@@ -581,7 +581,6 @@ describe('the words a Mac writes its menus in', () => {
 
   test('and a word someone else spelled is left as it is', () => {
     expect(titled('Export as ePub')).toBe('Export as ePub')
-    expect(titled('Present with reveal.js')).toBe('Present with reveal.js')
     expect(titled('Read-only')).toBe('Read-Only')
     expect(titled('Heading 1')).toBe('Heading 1')
   })

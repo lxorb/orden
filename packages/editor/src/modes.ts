@@ -46,7 +46,6 @@ const readOnly = new Compartment()
 const headingNumbers = new Compartment()
 const codeLineNumbers = new Compartment()
 const direction = new Compartment()
-const deck = new Compartment()
 
 function editorClass(name: string): Extension {
   return EditorView.editorAttributes.of({ class: name })
@@ -191,7 +190,6 @@ export function modeExtensions(length = 0): Extension {
     headingNumbers.of(headingNumbersFor(false)),
     codeLineNumbers.of(codeLineNumbersFor(false)),
     direction.of(directionFor(false)),
-    deck.of(deckFor(false)),
     vimExtensions(),
   ]
 }
@@ -234,8 +232,6 @@ const codeLineNumbersFor = once((on: boolean): Extension =>
 )
 
 const bracketsFor = once((on: boolean): Extension => (on ? wrapSelection() : []))
-
-const deckFor = once((on: boolean): Extension => (on ? editorClass('orden-deck') : []))
 
 const RIGHT_TO_LEFT =
   /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFC\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u
@@ -433,10 +429,6 @@ export function setHeadingNumbers(view: EditorView, on: boolean) {
 
 export function setCodeLineNumbers(view: EditorView, on: boolean) {
   view.dispatch({ effects: codeLineNumbers.reconfigure(codeLineNumbersFor(on)) })
-}
-
-export function setDeck(view: EditorView, on: boolean) {
-  view.dispatch({ effects: deck.reconfigure(deckFor(on)) })
 }
 
 export function setMeasure(view: EditorView, rem: number) {

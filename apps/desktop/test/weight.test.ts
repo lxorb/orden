@@ -223,7 +223,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/PublishSheet.svelte', 'the publish sheet'],
     ['/lib/ImportSheet.svelte', 'the import sheet'],
     ['/lib/IconPicker.svelte', 'the icon picker'],
-    ['/lib/Slides.svelte', 'the deck'],
     ['/lib/rooms/room.ts', "a note's room"],
     ['/lib/rooms/plane.ts', "a canvas's room"],
     ['/rooms/src/index.ts', 'the room protocol'],
@@ -306,7 +305,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/run/panel.ts', 'what it prints into'],
     ['/editor/src/wikilink/complete.ts', 'the rows `[[` offers'],
     ['/lib/search/match.ts', 'the matcher'],
-    ['/markdown/src/slides.ts', "a deck's renderer"],
     ['/lib/preview-card.ts', 'the editor in a link card'],
     ['/lib/reading/drawn.ts', 'a paper or a plane drawn in a note'],
     ['/lib/query-block.ts', "a query fence's rows"],
@@ -347,7 +345,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/drawer.svelte.ts', 'the drawers as the markup reads them'],
     ['/editor/src/run/door.ts', 'the door the Run button knocks on'],
     ['/editor/src/wikilink/block-namer.ts', 'the facet every editor is built with'],
-    ['/markdown/src/slide-breaks.ts', 'whether a note is a deck'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })
@@ -418,7 +415,6 @@ describe('what the app evaluates before it draws anything', () => {
 
 describe('what reading a note fetches', () => {
   const READING = join(import.meta.dirname, '../src/lib/reading/render.ts')
-  const SLIDES = join(import.meta.dirname, '../src/lib/slides/render.ts')
   const EXPORTER = join(import.meta.dirname, '../src/lib/export.ts')
   const RENDERER = join(import.meta.dirname, '../../../packages/markdown/src/index.ts')
 
@@ -444,10 +440,7 @@ describe('what reading a note fetches', () => {
 
   const exporter = newBytes(eagerGraph(EXPORTER).files)
 
-  for (const [what, surface] of [
-    ['the reading view', READING],
-    ['the slides', SLIDES],
-  ] as const) {
+  for (const [what, surface] of [['the reading view', READING]] as const) {
     test(`${what} does not fetch the exporter to render a note`, () => {
       const ahead = eagerGraph(waitedFor(surface))
       const reached = ahead.files.map((one) => one.replace(/\\/g, '/'))

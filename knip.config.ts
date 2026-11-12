@@ -61,8 +61,6 @@ export default {
         'index.html',
         'even.html',
         'src/even.ts',
-        'presenter.html',
-        'src/presenter.ts',
         'quick-add.html',
         'src/quick-add.ts',
         'handoff.html',

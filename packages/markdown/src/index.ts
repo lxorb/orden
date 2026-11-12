@@ -53,7 +53,6 @@ export interface RenderOptions {
   cover?: boolean | Cover
   escapeHtml?: boolean
   toc?: boolean
-  fragments?: boolean
   code?: (code: string, language: string) => string | null
   blockAnchors?: boolean
   resolveLink?: LinkResolver
@@ -197,8 +196,6 @@ function bareAddress(this: Tokenizer, src: string, tokens?: Token[]): Tokens.Lin
   }
 }
 
-const FRAGMENT = /^[ \t]*\+/
-
 function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
   marked.use(
@@ -228,12 +225,10 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
     renderer: {
       listitem(token: Tokens.ListItem) {
         const html = defaults.listitem.call(this, token)
-        const waits = options.fragments === true && FRAGMENT.test(token.raw)
-        if (!token.task && !waits) return html
+        if (!token.task) return html
 
         const classes = token.checked ? 'task-list-item is-done' : 'task-list-item'
-        const attributes = [token.task ? ` class="${classes}"` : '', waits ? ' data-fragment' : '']
-        return html.replace(/^<li>/, `<li${attributes.join('')}>`)
+        return html.replace(/^<li>/, `<li class="${classes}">`)
       },
 
       link(token: Tokens.Link) {
@@ -361,7 +356,6 @@ export function lexMarkdown(source: string): Token[] {
 function needsOwn(options: RenderOptions): boolean {
   return (
     options.toc === true ||
-    options.fragments === true ||
     options.code !== undefined ||
     options.resolveLink !== undefined ||
     options.resolveNoteHref !== undefined ||
@@ -376,7 +370,6 @@ function inside(options: RenderOptions): RenderOptions {
   const rest = { ...options }
   delete rest.resolveEmbed
   delete rest.toc
-  delete rest.fragments
   delete rest.cover
   delete rest.blockAnchors
   return rest

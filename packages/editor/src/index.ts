@@ -32,7 +32,6 @@ export {
   insertHorizontalRule,
   insertMathBlock,
   insertPageBreak,
-  insertSlideBreak,
   insertTable,
   insertToc,
   setCalloutSign,
@@ -133,7 +132,6 @@ export { setSnippets, snippets } from './snippets'
 export {
   setCloseBrackets,
   setCodeLineNumbers,
-  setDeck,
   setEquationNumbers,
   setFocusMode,
   setHeadingNumbers,

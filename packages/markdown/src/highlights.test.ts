@@ -82,7 +82,7 @@ describe('whether a single newline breaks the line', () => {
     }
   })
 
-  test('is overruled by a caller that says outright, which is what a deck does', () => {
+  test('is overruled by a caller that says outright', () => {
     expect(renderMarkdown('one\ntwo\n', { breaks: true })).toContain('<br>')
 
     setHardBreaks(true)

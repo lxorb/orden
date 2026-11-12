@@ -3,7 +3,7 @@ import { DIVIDER, type MenuEntry } from './menu.svelte'
 import { views } from './views.svelte'
 
 const GROUPS: readonly (readonly string[])[] = [
-  ['read-only', 'reading', 'present'],
+  ['read-only', 'reading'],
   ['source', 'focus', 'typewriter'],
   ['view.fold', 'view.fold-all', 'view.fold-more', 'view.fold-less', 'view.unfold-all'],
 ]

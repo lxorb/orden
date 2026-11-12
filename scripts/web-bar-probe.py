@@ -88,7 +88,6 @@ def bar(app) -> object:
         """JSON.stringify({
   glyph: document.querySelectorAll('.webbar .orden-glyph')[2]?.getAttribute('aria-label'),
   focused: document.activeElement?.getAttribute('aria-label') ?? null,
-  presenting: !!document.querySelector('.deck, .present'),
 })"""
     )
 

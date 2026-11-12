@@ -58,10 +58,7 @@ const SCREEN = new Set([
   'move-tab-pane',
   'new',
   'new-website',
-  'next-slide',
   'pin',
-  'present',
-  'previous-slide',
   'print',
   'random-note',
   'reading',
@@ -103,12 +100,10 @@ const WRITES = new Set([
   'convert-syntax',
   'extract-selection',
   'merge-into',
-  'new-slide',
   'page-break',
   'picture',
   'reformat',
   'save',
-  'slide-break',
   'split-at-caret',
 ])
 

@@ -148,7 +148,6 @@ describe('the name a reader sees', () => {
   test('is Orden in the pages the app is served in and on its manifests', () => {
     for (const name of [
       'index.html',
-      'presenter.html',
       'quick-add.html',
       'even.html',
       'handoff.html',

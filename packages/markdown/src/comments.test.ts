@@ -145,8 +145,8 @@ describe('a comment on the page', () => {
     expect(html).not.toContain('hidden')
   })
 
-  test('leaves a deck’s speaker notes alone', () => {
-    const html = renderMarkdown('# Slide\n\n<!-- gone -->\n\nNote: said out loud\n')
+  test('leaves a line that only starts with Note: alone', () => {
+    const html = renderMarkdown('# One\n\n<!-- gone -->\n\nNote: said out loud\n')
     expect(html).not.toContain('gone')
     expect(html).toContain('said out loud')
   })

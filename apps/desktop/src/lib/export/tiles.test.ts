@@ -3,14 +3,12 @@ import { PANDOC_FORMATS } from '../export-formats'
 import { type ExportKind, offeredBy } from './offer'
 import { commandFor, SETUP, shelved } from './tiles'
 
-const KINDS: ExportKind[] = ['note', 'deck', 'canvas', 'pages', 'file']
+const KINDS: ExportKind[] = ['note', 'canvas', 'pages', 'file']
 
 const choicesFor = (kind: ExportKind, pandoc: boolean) => [
   ...offeredBy(kind).map((id) => ({ id: `export-${id}`, label: id, run: () => undefined })),
-  ...(kind === 'note' || kind === 'deck'
-    ? [{ id: SETUP, label: SETUP, run: () => undefined }]
-    : []),
-  ...(pandoc && (kind === 'note' || kind === 'deck')
+  ...(kind === 'note' ? [{ id: SETUP, label: SETUP, run: () => undefined }] : []),
+  ...(pandoc && kind === 'note'
     ? PANDOC_FORMATS.map((one) => ({ id: `export-${one.id}`, label: one.id, run: () => undefined }))
     : []),
 ]

@@ -1104,7 +1104,7 @@ describe('a page note’s zoom', () => {
     expect(registry.shortcuts.conflicts('pages.fit', 'Mod-Alt-0')).toEqual([])
   })
 
-  test("is a browser's over a page, and leaves Present its F5", () => {
+  test("is a browser's over a page", () => {
     const { shortcuts } = registry
     const keys = {
       'web.reload': 'F5',
@@ -1123,7 +1123,6 @@ describe('a page note’s zoom', () => {
       expect(shortcuts.keyFor(id), id).toBe(key)
     }
 
-    expect(shortcuts.keyFor('app.present')).toBe('F5')
     expect(shortcuts.conflicts('web.reload', 'F5')).toEqual([])
     const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
     expect(defaultKeyFor(found('web.reload'), 'mac')).toBe('Mod-r')
@@ -1180,7 +1179,6 @@ describe('on a Mac', () => {
   const MAC: [id: string, mac: string | null, elsewhere: string][] = [
     ['app.fullscreen', 'Mod-Ctrl-f', 'F11'],
     ['app.fill-tab', 'Mod-Ctrl-Shift-f', 'Shift-F11'],
-    ['app.present', 'Mod-Alt-p', 'F5'],
     ['app.focus', 'Mod-Ctrl-o', 'F8'],
     ['app.typewriter', 'Mod-Ctrl-t', 'F9'],
     ['app.read-only', 'Mod-Ctrl-r', 'F10'],
@@ -1267,7 +1265,6 @@ describe('on a Mac', () => {
     const { appCommands } = await import('./commands')
 
     expect(shortcuts.hint('app.fullscreen')).toBe('⌃⌘F')
-    expect(shortcuts.hint('app.present')).toBe('⌥⌘P')
     expect(shortcuts.hint('app.note-1')).toBe('⌘1')
     expect(shortcuts.hint('paragraph.heading-1')).toBe('⌥⌘1')
     expect(shortcuts.hint('format.code')).toBe('⌃`')

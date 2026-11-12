@@ -13,7 +13,6 @@
   import PaneTree from './lib/PaneTree.svelte'
   import FirstScreen from './lib/FirstScreen.svelte'
   import Sidebar from './lib/Sidebar.svelte'
-  import { present } from './lib/slides/present.svelte'
   import SizeBadge from './lib/SizeBadge.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
   import { watchTextSize } from './lib/text-size'
@@ -69,7 +68,6 @@
     rewriteSheet,
     shareSheet,
     signInSheet,
-    slidesStage,
     firstSpaceDoor,
     menuBarDoor,
     undoToastNotice,
@@ -154,11 +152,6 @@
       macMenuKey = one.macMenuKey
     })
   }
-  const presenting = $derived(
-    workspace.tabs.find(
-      (tab) => tab.id === present.tabId && !workspace.protection.locked(tab.path),
-    ) ?? null,
-  )
   const canWriteHere = $derived(canWriteIn(workspace.active?.note))
   const filled = $derived(workspace.panes.fills !== null)
   const bare = $derived(fullscreen.on || alone.on)
@@ -311,10 +304,6 @@
     })
   })
 
-  $effect(() => {
-    if (present.on && !presenting) present.stop()
-  })
-
   $effect(() => paintCodePalette(modes.codeTheme))
 
   $effect(() => {
@@ -418,7 +407,6 @@
         fullscreen,
         iconChoice,
         overlays,
-        present,
         pages,
         rooms,
         share,
@@ -645,7 +633,6 @@
       const may = takesCaret(showing ? { kind: showing.kind, reading: showing.reading } : null, {
         overlaid: overlays.depth > 0,
         renaming: workspace.naming !== null,
-        presenting: present.on,
         touch: viewport.touch,
       })
 
@@ -675,8 +662,6 @@
       })
       return
     }
-
-    if (present.on && !shortcuts.pressed('app.present', event)) return
 
     if (!shortcuts.handle(event, appContext())) shortcuts.writeKey(event)
   }
@@ -965,12 +950,6 @@
     }}
   />
 {/snippet}
-
-{#if presenting}
-  {#await slidesStage() then Slides}
-    <Slides tab={presenting} />
-  {/await}
-{/if}
 
 <PullMark />
 

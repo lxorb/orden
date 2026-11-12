@@ -116,7 +116,7 @@ OWN_SCRIPT = "/s/"
 
 THEME_LINE = "orden:site-theme"
 
-CHROME = re.compile(r"^(?:p\.back|p\.by|p\.present|footer)$")
+CHROME = re.compile(r"^(?:p\.back|p\.by|footer)$")
 
 PROPERTIES = "div.properties"
 

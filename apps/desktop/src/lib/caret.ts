@@ -22,7 +22,6 @@ export interface Showing {
 export interface Claims {
   overlaid: boolean
   renaming: boolean
-  presenting: boolean
   touch: boolean
 }
 
@@ -44,5 +43,5 @@ export function keyboardStays(): boolean {
 
 export function takesCaret(showing: Showing | null, claims: Claims): boolean {
   if (showing?.kind !== 'note' || showing.reading) return false
-  return !claims.overlaid && !claims.renaming && !claims.presenting && !claims.touch
+  return !claims.overlaid && !claims.renaming && !claims.touch
 }

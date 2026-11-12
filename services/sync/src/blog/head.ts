@@ -22,7 +22,6 @@ export interface Head {
   icon?: boolean
   noindex?: boolean
   sheets?: readonly string[]
-  style?: string
 }
 
 function tag(name: string, content: string | undefined): string {
@@ -63,7 +62,6 @@ export function headOf(head: Head, sheets: readonly string[]): string {
       ? '<link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/favicon.svg">'
       : '',
     ...sheets.map((href) => `<link rel="stylesheet" href="${escape(href)}">`),
-    head.style ? `<style>${head.style}</style>` : '',
   ]
     .filter(Boolean)
     .join('\n')

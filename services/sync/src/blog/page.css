@@ -16,29 +16,19 @@ body {
   color: var(--muted);
 }
 
-#write .back,
-#write .present {
+#write .back {
+  margin: 0 0 1.6em;
   font-family: var(--font-ui);
   font-size: var(--text-row);
 }
 
-#write .back {
-  margin: 0 0 1.6em;
-}
-
-#write .present {
-  margin: 2.4em 0 0;
-}
-
 #write .back a,
-#write .present a,
 #write footer a {
   color: var(--muted);
   border-bottom: 0;
 }
 
 #write .back a:hover,
-#write .present a:hover,
 #write footer a:hover {
   color: var(--accent);
 }

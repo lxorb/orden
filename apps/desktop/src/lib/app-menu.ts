@@ -35,7 +35,6 @@ import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-ite
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'
-import { present } from './slides/present.svelte'
 import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
 import { isDesktop, isNative, openExternal } from './tauri'
 import { updates } from './updates.svelte'
@@ -255,7 +254,7 @@ export function appMenu(context: Context): MenuGroup[] {
         DIVIDER,
         ...blocks('picture', 'record', 'paragraph.footnote', 'paragraph.toc'),
         DIVIDER,
-        ...blocks('paragraph.rule', 'slide-break', 'page-break'),
+        ...blocks('paragraph.rule', 'page-break'),
       ],
     },
 
@@ -344,13 +343,6 @@ export function appMenu(context: Context): MenuGroup[] {
           checked: !!workspace.active?.reading,
           disabled: workspace.active?.kind !== 'note',
           run: () => workspace.toggleReading(),
-        },
-        {
-          label: 'Present',
-          ...keyed('app.present'),
-          checked: present.on,
-          disabled: !present.on && !present.available,
-          run: () => present.toggle(),
         },
         {
           label: 'Read-only',

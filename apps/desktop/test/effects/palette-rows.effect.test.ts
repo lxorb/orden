@@ -107,18 +107,6 @@ test('the `/` menu is read without writing, mid-typing', async () => {
   expect(derived(() => blockRows().length)).toBeGreaterThan(10)
 })
 
-test('the export rows still answer what the note has just become', async () => {
-  await typed()
-  const note = workspace.active?.note
-  if (!note) throw new Error('nothing opened')
-
-  const end = note.live.text.length
-  note.live.edit([{ from: end, to: end, insert: '\n\n---\n\nTwo' }])
-
-  const ids = derived(() => exportCommands().map((command) => command.id))
-  expect(ids).toContain('export-slides-html')
-})
-
 test('the palette opens on the commands, mid-typing', async () => {
   await typed()
 
