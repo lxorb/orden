@@ -14,6 +14,12 @@
       "type": "array",
       "uniqueItems": true,
       "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    },
+    "pending": {
+      "description": "Repo paths of code that is not a module yet and that this module still imports; shrinks to nothing as modules are extracted.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string" }
     }
   }
 }

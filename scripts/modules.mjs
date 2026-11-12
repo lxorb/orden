@@ -60,10 +60,35 @@ export function findModules(root = ROOT) {
       lang,
       api: json.api ?? (lang === 'rust' ? 'src/lib.rs' : 'src/api.ts'),
       dependsOn: Array.isArray(json.dependsOn) ? json.dependsOn : [],
+      pending: Array.isArray(json.pending) ? json.pending : [],
+      host: enclosingPackage(dir, root),
       json,
       broken,
     }
   })
+}
+
+function enclosingPackage(dir, root) {
+  for (let at = dir; at.startsWith(root); at = dirname(at)) {
+    const manifest = join(at, 'package.json')
+    if (at !== root && existsSync(manifest)) {
+      try {
+        const parsed = JSON.parse(readFileSync(manifest, 'utf8'))
+        return {
+          name: typeof parsed.name === 'string' ? parsed.name : null,
+          dir: at,
+          libraries: new Set([
+            ...Object.keys(parsed.dependencies ?? {}),
+            ...Object.keys(parsed.devDependencies ?? {}),
+          ]),
+        }
+      } catch {
+        return null
+      }
+    }
+    if (at === root) break
+  }
+  return null
 }
 
 function workspacePackages(root) {
@@ -113,6 +138,10 @@ function standsAlone(module, test, problems) {
       continue
     }
     if (specifier === own || specifier === '@orden/contracts') continue
+    const library = specifier.startsWith('@')
+      ? specifier.split('/').slice(0, 2).join('/')
+      : specifier.split('/')[0]
+    if (!specifier.startsWith('@orden/') && module.host?.libraries.has(library)) continue
     if (specifier.startsWith('@orden/')) {
       problems.push(
         `${module.dir}/${test}: a contract test runs without other modules, but imports '${specifier}' (fake its dependency instead)`,
@@ -137,7 +166,7 @@ export function check(root = ROOT) {
     }
     const { json } = module
     for (const key of Object.keys(json)) {
-      if (!['name', 'layer', 'lang', 'api', 'dependsOn'].includes(key)) {
+      if (!['name', 'layer', 'lang', 'api', 'dependsOn', 'pending'].includes(key)) {
         problems.push(`${module.file}: unknown field '${key}'`)
       }
     }
@@ -159,6 +188,16 @@ export function check(root = ROOT) {
       problems.push(`${module.file}: 'dependsOn' must be a list of module names`)
     } else if (new Set(json.dependsOn).size !== json.dependsOn.length) {
       problems.push(`${module.file}: 'dependsOn' names a module twice`)
+    }
+    if (json.pending !== undefined) {
+      if (!Array.isArray(json.pending) || json.pending.some((one) => typeof one !== 'string')) {
+        problems.push(`${module.file}: 'pending' must be a list of repo paths not yet extracted`)
+      } else {
+        for (const path of json.pending) {
+          if (!existsSync(join(root, path)))
+            problems.push(`${module.file}: pending path '${path}' does not exist; drop it`)
+        }
+      }
     }
     const folder = module.dir.split('/').at(-1)
     if (folder !== json.name)
@@ -223,6 +262,14 @@ export function check(root = ROOT) {
       }
     }
     if (module.test) standsAlone(module, module.test, problems)
+    for (const path of module.pending) {
+      const inside = moduleOf(join(root, path), [...byName.values()])
+      if (inside && inside !== module) {
+        problems.push(
+          `${module.file}: pending path '${path}' is inside module '${inside.name}'; import its api and declare the dependency instead`,
+        )
+      }
+    }
   }
   const state = new Map()
   const trail = []
@@ -271,7 +318,14 @@ function runContracts(root) {
           ]
         : [
             'pnpm',
-            ['--filter', module.packageName ?? module.name, 'exec', 'vitest', 'run', module.test],
+            [
+              '--filter',
+              module.packageName ?? module.host?.name ?? module.name,
+              'exec',
+              'vitest',
+              'run',
+              relative(module.host?.dir ?? module.absolute, join(module.absolute, module.test)),
+            ],
           ]
     console.log(`\n== ${module.name}: ${module.dir}/${module.test}`)
     const ran = spawnSync(command[0], command[1], {
