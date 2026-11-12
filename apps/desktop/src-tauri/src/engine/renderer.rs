@@ -151,7 +151,7 @@ mod tests {
     fn only_the_app_s_own_origin_is_given_the_channel() {
         assert!(own_origin("http://tauri.localhost/"));
         assert!(own_origin("http://tauri.localhost/quick-add.html"));
-        assert!(own_origin("http://tauri.localhost/presenter.html?x=1#y"));
+        assert!(own_origin("http://tauri.localhost/quick-add.html?x=1#y"));
         for other in [
             "https://docs.google.com/spreadsheets/d/x/edit",
             "http://tauri.localhost.evil.example/",

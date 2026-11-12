@@ -14,17 +14,13 @@ import {
 
 const TEN = EXPORT_FORMATS.map((format) => format.id)
 const VARIANTS = EXPORT_VARIANTS.map((variant) => variant.id)
-const KINDS: ExportKind[] = ['note', 'deck', 'canvas', 'file', 'none']
+const KINDS: ExportKind[] = ['note', 'canvas', 'file', 'none']
 
-const DECK = '# One\n\ntext\n\n---\n\n# Two\n\nmore\n'
+const RULED = '# One\n\ntext\n\n---\n\n# Two\n\nmore\n'
 
 describe('what each kind of document goes out as', () => {
   test('gives a note the ten formats and the two variants', () => {
     expect(offeredBy('note')).toEqual([...TEN, ...VARIANTS])
-  })
-
-  test('gives a deck the same, plus the slides the deck code writes', () => {
-    expect(offeredBy('deck')).toEqual([...TEN, 'slides-html', 'slides-pdf', ...VARIANTS])
   })
 
   test('gives a canvas the three its own picture code draws', () => {
@@ -45,11 +41,9 @@ describe('what each kind of document goes out as', () => {
     expect(offeredBy('none')).toEqual([])
   })
 
-  test('keeps the ten in the list own fixed order for the kinds that have them', () => {
-    for (const kind of ['note', 'deck'] as const) {
-      const ten = offeredBy(kind).filter((id) => TEN.some((one) => one === id))
-      expect(ten, kind).toEqual(TEN)
-    }
+  test('keeps the ten in the list own fixed order', () => {
+    const ten = offeredBy('note').filter((id) => TEN.some((one) => one === id))
+    expect(ten).toEqual(TEN)
   })
 
   test('offers a row at most once per kind', () => {
@@ -66,29 +60,27 @@ describe('which kind the thing on screen is', () => {
   })
 
   test('is a note for a note', () => {
-    expect(exportKindOf({ kind: 'note', path: '/s/a.md', text: '# Head\n' })).toBe('note')
+    expect(exportKindOf({ kind: 'note', path: '/s/a.md' })).toBe('note')
   })
 
-  test('is a deck for a note with slide breaks in it', () => {
-    expect(exportKindOf({ kind: 'note', path: '/s/talk.md', text: DECK })).toBe('deck')
+  test('is a note for a note with horizontal rules in it, which no longer make a deck', () => {
+    expect(exportKindOf({ kind: 'note', path: '/s/talk.md' })).toBe('note')
   })
 
   test('is a canvas for a canvas', () => {
-    expect(exportKindOf({ kind: 'canvas', path: '/s/b.canvas', text: '{"nodes":[]}' })).toBe(
-      'canvas',
-    )
+    expect(exportKindOf({ kind: 'canvas', path: '/s/b.canvas' })).toBe('canvas')
   })
 
   test('is a file for a paper with a path to read its bytes off', () => {
-    expect(exportKindOf({ kind: 'pdf', path: '/s/paper.pdf', text: '' })).toBe('file')
+    expect(exportKindOf({ kind: 'pdf', path: '/s/paper.pdf' })).toBe('file')
   })
 
   test('is nothing for a paper with no path behind it', () => {
-    expect(exportKindOf({ kind: 'pdf', path: null, text: '' })).toBe('none')
+    expect(exportKindOf({ kind: 'pdf', path: null })).toBe('none')
   })
 
   test('is nothing for the graph of a space', () => {
-    expect(exportKindOf({ kind: 'graph', path: null, text: '' })).toBe('none')
+    expect(exportKindOf({ kind: 'graph', path: null })).toBe('none')
   })
 })
 
@@ -200,9 +192,12 @@ describe('the menu, the palette and the shortcut settings', () => {
     expect(offeredIds()).toEqual([...offeredBy('note')])
   })
 
-  test('offer a deck the slides as well', async () => {
-    await only(() => workspace.openBlank('Talk.md', DECK))
-    expect(offeredIds()).toEqual([...offeredBy('deck')])
+  test('offer a note with rules in it, once a deck, what any note gets, its text kept', async () => {
+    await only(() => workspace.openBlank('Talk.md', RULED))
+    expect(workspace.active?.kind).toBe('note')
+    expect(workspace.active?.note.latest).toBe(RULED)
+    expect(offeredIds()).toEqual([...offeredBy('note')])
+    expect(offeredIds().some((id) => id.startsWith('slides'))).toBe(false)
   })
 
   test('offer a canvas its three, and nothing a note has', async () => {
@@ -229,7 +224,7 @@ describe('the menu, the palette and the shortcut settings', () => {
   test('show the same rows in the same order in the menu as in the palette', async () => {
     for (const open of [
       () => workspace.openBlank('Note.md', '# Head\n'),
-      () => workspace.openBlank('Talk.md', DECK),
+      () => workspace.openBlank('Talk.md', RULED),
       () => workspace.openCanvas('/space/board.canvas'),
       () => workspace.openPdf('/space/paper.pdf'),
     ]) {
@@ -242,7 +237,7 @@ describe('the menu, the palette and the shortcut settings', () => {
     const bound = new Set(SHORTCUTS.map((one) => one.id))
 
     for (const open of [
-      () => workspace.openBlank('Talk.md', DECK),
+      () => workspace.openBlank('Talk.md', RULED),
       () => workspace.openCanvas('/space/board.canvas'),
       () => workspace.openPdf('/space/paper.pdf'),
     ]) {
@@ -257,7 +252,7 @@ describe('the menu, the palette and the shortcut settings', () => {
   test('leave a key for a format this document has not got nothing to run', async () => {
     await only(() => workspace.openCanvas('/space/board.canvas'))
 
-    for (const id of ['docx', 'epub', 'txt', 'slides-html']) {
+    for (const id of ['docx', 'epub', 'txt']) {
       expect(
         exportCommands().find((command) => command.id === `export-${id}`),
         id,

@@ -312,8 +312,6 @@ export const fullscreenWayOut = held(() => import('./FullscreenLeave.svelte'))
 
 export const guestCorner = held(() => import('./GuestCorner.svelte'))
 
-export const slidesStage = held(() => import('./Slides.svelte'))
-
 export const menuBarDoor = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no menu bar in the Even Realities plugin'))

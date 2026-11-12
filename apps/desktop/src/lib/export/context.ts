@@ -32,9 +32,7 @@ export function openTarget(): Target {
   }
 }
 
-export async function look(): Promise<
-  Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>
-> {
+async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>> {
   const chosen = { accent: theme.accent, codeTheme: modes.codeTheme }
   if (settings.exportAppearance !== 'app') return { ...chosen, scheme: settings.exportAppearance }
 

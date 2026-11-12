@@ -36,11 +36,6 @@ const CRATE: Record<string, string> = {
 }
 const FULL_SCREEN = ['core:window:allow-set-fullscreen', 'core:window:allow-is-fullscreen']
 
-const PRESENTING: Record<string, string> = {
-  'availableMonitors()': 'core:window:allow-available-monitors',
-  'currentMonitor()': 'core:window:allow-current-monitor',
-}
-
 const TAKING = ['core:window:allow-set-focus', 'core:webview:allow-set-webview-focus']
 
 function sources(): [string, string][] {
@@ -77,19 +72,8 @@ describe('window permissions', () => {
     expect(missing, `ungranted or unmapped: ${missing.join(', ')}`).toEqual([])
   })
 
-  test('every call presenting makes is granted, and it makes each of them', () => {
-    const source = read('../src/lib/slides/presenter.ts')
-
-    const missing = Object.entries(PRESENTING).filter(
-      ([call, permission]) =>
-        !source.includes(call) || !capabilities.permissions.includes(permission),
-    )
-
-    expect(missing.map(([call]) => call)).toEqual([])
-  })
-
   test('no page builds a window: the crate builds them, in the interface’s profile', () => {
-    expect(read('../src/lib/slides/presenter.ts')).not.toContain('new WebviewWindow(')
+    expect(sources().filter(([, text]) => text.includes('new WebviewWindow('))).toEqual([])
     expect(capabilities.permissions).not.toContain('core:webview:allow-create-webview-window')
   })
 
@@ -124,11 +108,7 @@ describe('window permissions', () => {
   })
 
   test('nothing is granted that the app never calls', () => {
-    const used = new Set([
-      ...Object.values(NEEDS),
-      ...Object.values(PRESENTING),
-      APPEARANCE.permission,
-    ])
+    const used = new Set([...Object.values(NEEDS), APPEARANCE.permission])
     const stale = capabilities.permissions
       .filter((one) => one.startsWith('core:window:') || one.startsWith('core:webview:allow-'))
       .filter((one) => one !== 'core:window:allow-start-dragging')
@@ -243,15 +223,6 @@ describe('webview labels', () => {
         `${label} is granted nothing`,
       ).toBe(true)
     }
-  })
-
-  test('the presenter window is granted nothing, because it calls nothing', () => {
-    const label = /const LABEL = '([^']+)'/.exec(read('../src/lib/slides/presenter.ts'))?.[1]
-    expect(label).toBe('orden-presenter')
-
-    expect((capabilities.webviews ?? []).some((pattern) => matches(pattern, label ?? ''))).toBe(
-      false,
-    )
   })
 
   test('the phone has one window and names it', () => {

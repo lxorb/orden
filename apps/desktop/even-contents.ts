@@ -134,7 +134,6 @@ export const APP_FOLDERS = [
   'search',
   'settings',
   'shortcuts',
-  'slides',
   'sync',
   'sync2',
   'tab-fill',

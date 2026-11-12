@@ -58,7 +58,7 @@ TYPED = """
 async () => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
-  const path = await ws.noteFrom('# Deck\\n\\nthe first slide\\n\\n', root)
+  const path = await ws.noteFrom('# Ruled\\n\\nthe first part\\n\\n', root)
   await ws.openEntry(path)
   return path
 }
@@ -117,16 +117,13 @@ def shoot(browser: Browser, scheme: str) -> None:
         if typed != "---":
             raise SystemExit(f"[{scheme}] typing three hyphens gave {typed!r}, not '---'")
 
-        page.keyboard.type("\n\nthe second slide\n")
+        page.keyboard.type("\n\nthe second part\n")
         page.wait_for_timeout(300)
 
         written = page.evaluate("() => window.orden.state.doc.toString()")
         say(f"[{scheme}] the note now reads {written!r}")
         if "\n---\n" not in written:
             raise SystemExit(f"[{scheme}] no rule survived in {written!r}")
-
-        worn = page.evaluate("() => !!document.querySelector('.cm-editor.orden-deck')")
-        say(f"[{scheme}] the editor wears the deck class: {worn}")
     finally:
         page.context.close()
 

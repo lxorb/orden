@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { linearly } from '../../../scripts/growth'
 import { renderMarkdown } from './index'
-import { deckOf } from './slides'
 
 describe('emphasis nothing closes', () => {
   const quick = (source: (size: number) => string, size: number) =>
@@ -20,10 +19,6 @@ describe('emphasis nothing closes', () => {
     const html = renderMarkdown(`${'*a '.repeat(5000)}${'a* '.repeat(5000)}`)
     expect(html.split('<em>').length - 1).toBe(32)
   })
-
-  test('in a deck, too', () => {
-    linearly((n) => deckOf(`+ ${'*a '.repeat(n)}\n\n---\n\n+ b`), 8_000)
-  }, 60_000)
 })
 
 describe('emphasis that closes, again and again', () => {

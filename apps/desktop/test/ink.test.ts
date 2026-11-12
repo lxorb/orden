@@ -132,7 +132,7 @@ describe('the stylesheets', () => {
   test('write on an accent in the ink, never in a white of their own', () => {
     const sources = [
       ...files(SOURCE, /\.svelte$/),
-      ...files(THEMES, /^(base|document|editor|slides|tokens)\.css$/),
+      ...files(THEMES, /^(base|document|editor|tokens)\.css$/),
     ]
 
     const white = sources

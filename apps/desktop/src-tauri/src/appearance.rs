@@ -1,12 +1,7 @@
 use tauri::{AppHandle, Manager, Window};
 
-pub(crate) const PRESENTER: &str = "orden-presenter";
-
 fn ours(app: &AppHandle) -> Vec<Window> {
-    app.windows()
-        .into_values()
-        .filter(|window| window.label() != PRESENTER)
-        .collect()
+    app.windows().into_values().collect()
 }
 
 pub fn own_frame<R: tauri::Runtime, M: Manager<R>>(
@@ -62,10 +57,6 @@ pub fn set_translucency(
     dark: bool,
     kind: Option<String>,
 ) -> Result<&'static str, String> {
-    if window.label() == PRESENTER {
-        return Err("the presenter's window keeps the system's own".to_string());
-    }
-
     if !on {
         material::clear(&window);
         return Ok("");

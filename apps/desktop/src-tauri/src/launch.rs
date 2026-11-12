@@ -466,9 +466,9 @@ mod tests {
         assert!(is_document_window("main"));
         assert!(is_document_window("orden-2"));
         assert!(is_document_window("orden-12"));
-        assert!(!is_document_window("orden-presenter"));
+        assert!(!is_document_window("orden-quick-add"));
         assert!(!is_document_window("orden-"));
-        assert!(!is_document_window("orden-presenter-2"));
+        assert!(!is_document_window("orden-2a"));
         assert!(!is_document_window("web-1"));
     }
 

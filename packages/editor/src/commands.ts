@@ -575,27 +575,6 @@ export const insertFootnote: StateCommand = ({ state, dispatch }) => {
 
 export const insertComment = toggleWrap('<!-- ', ' -->')
 
-export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
-  const at = state.selection.main.to
-  const line = state.doc.lineAt(at)
-  const emptyHere = line.text.slice(0, at - line.from).trim() === ''
-  const above = line.number > 1 ? state.doc.line(line.number - 1) : null
-  const emptyAbove = above === null || above.text.trim() === ''
-
-  const lead = emptyHere ? (emptyAbove ? '' : '\n') : '\n\n'
-  const insert = `${lead}---\n\n`
-
-  dispatch(
-    state.update({
-      changes: { from: at, insert },
-      selection: { anchor: at + insert.length },
-      scrollIntoView: true,
-      userEvent: 'input',
-    }),
-  )
-  return true
-}
-
 export const insertPageBreak = insertBlock(() => ({
   text: '<div style="page-break-after: always;"></div>\n',
   caret: 45,

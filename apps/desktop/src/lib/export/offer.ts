@@ -1,13 +1,10 @@
-import { isDeck } from '@orden/markdown/slide-breaks'
 import { type TabKind, TAB_KINDS } from '../workspace/tab-kinds'
 import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'
 
-export type ExportKind = 'note' | 'deck' | 'canvas' | 'pages' | 'file' | 'none'
+export type ExportKind = 'note' | 'canvas' | 'pages' | 'file' | 'none'
 
 export const EXPORT_EXTRAS = [
   { id: 'svg', label: 'Export as SVG' },
-  { id: 'slides-html', label: 'Export slides as HTML' },
-  { id: 'slides-pdf', label: 'Export slides as PDF' },
   { id: 'copy', label: 'Save a copy' },
 ] as const
 
@@ -18,7 +15,6 @@ const VARIANTS = EXPORT_VARIANTS.map((variant) => variant.id)
 
 const OFFERS: Record<ExportKind, readonly ExportId[]> = {
   note: [...FORMATS, ...VARIANTS],
-  deck: [...FORMATS, 'slides-html', 'slides-pdf', ...VARIANTS],
   canvas: ['png', 'svg', 'pdf'],
   pages: ['pdf', 'png', 'svg'],
   file: ['copy'],
@@ -37,7 +33,6 @@ export const EXPORT_KEYS: readonly ExportId[] = [
 export interface Open {
   kind: TabKind
   path: string | null
-  text: string
 }
 
 export function exportKindOf(open: Open | null): ExportKind {
@@ -45,7 +40,7 @@ export function exportKindOf(open: Open | null): ExportKind {
 
   switch (TAB_KINDS[open.kind].exports) {
     case 'note':
-      return isDeck(open.text) ? 'deck' : 'note'
+      return 'note'
 
     case 'canvas':
       return 'canvas'

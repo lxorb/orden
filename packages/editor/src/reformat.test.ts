@@ -184,7 +184,7 @@ describe('what Format document must not touch', () => {
 })
 
 describe('bullets that mean something', () => {
-  test('a plus stays a plus: a deck reads it as a click', () => {
+  test('a plus stays a plus', () => {
     expect(reformat('+ x\n+ y\n')).toBe('+ x\n+ y\n')
   })
 
@@ -241,7 +241,7 @@ describe('words that open a note under a rule', () => {
 
   test.each([
     '---\n\nMy essay intro.\n\n---\n\nSecond part.\n',
-    '---\n# Slide one\n\n- a\n\n---\n\n# Slide two\n',
+    '---\n# Part one\n\n- a\n\n---\n\n# Part two\n',
     '---\nMy essay intro.\n\n---\n\nSecond part.\n',
     '---\n# Heading\n---\nwords\n',
     '---\n- item: one\n---\n',

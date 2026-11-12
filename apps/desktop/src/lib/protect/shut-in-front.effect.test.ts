@@ -15,7 +15,6 @@ const { settings } = await import('../settings.svelte')
 const { menu } = await import('../menu.svelte')
 const { DIVIDER } = await import('../menu-item')
 const History = (await import('../History.svelte')).default
-const { present } = await import('../slides/present.svelte')
 type MenuItem = import('../menu-item').MenuItem
 
 const ROOT = '/space'
@@ -93,14 +92,5 @@ describe('a shut note in front', () => {
     expect(document.querySelector('[role=dialog]')).toBeNull()
     void unmount(shown)
     target.remove()
-  })
-  test('is not presented', () => {
-    vi.spyOn(workspace, 'tabs', 'get').mockReturnValue([workspace.active] as never)
-    vi.spyOn(workspace, 'activeTabId', 'get').mockReturnValue('diary')
-    expect(present.available).toBe(false)
-    present.start('diary')
-    expect(present.on).toBe(false)
-    unlocks.unlock([LOCK])
-    expect(present.available).toBe(true)
   })
 })

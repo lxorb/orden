@@ -11,7 +11,7 @@ describe("a note's dots", () => {
   test('hold the rows of the app menu that are about the note, in groups', () => {
     expect(labels(noteMenu(workspace.panes.focusedId))).toEqual([
       ...['Version history', 'Export', '-'],
-      ...['Read-only', 'Reading', 'Present', '-'],
+      ...['Read-only', 'Reading', '-'],
       ...['Source mode', 'Focus mode', 'Typewriter mode', '-'],
       ...['Fold', 'Fold everything', 'Fold more', 'Fold less', 'Unfold everything'],
     ])

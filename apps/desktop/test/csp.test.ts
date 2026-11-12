@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { DECK_LAYOUT_SCRIPT } from '@orden/markdown/deck'
 import { CSP, META_CSP } from '../src/csp'
 
 const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8')
@@ -22,7 +21,6 @@ const INDEX = read('../index.html')
 
 const PAGES: Record<string, string> = {
   'index.html': INDEX,
-  'presenter.html': read('../presenter.html'),
   'quick-add.html': read('../quick-add.html'),
   'even.html': read('../even.html'),
   'handoff.html': read('../handoff.html'),
@@ -84,7 +82,6 @@ describe('the content policy', () => {
     const hashOf = (text: string) =>
       `'sha256-${createHash('sha256').update(text.replace(/\r\n?/g, '\n')).digest('base64')}'`
     const frames = hashOf(read('../../../packages/editor/src/frame-script.js'))
-    const deck = hashOf(DECK_LAYOUT_SCRIPT)
     const pages = Object.values(PAGES).flatMap((page) =>
       [...page.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((found) =>
         hashOf(found[1] ?? ''),
@@ -95,7 +92,7 @@ describe('the content policy', () => {
     const named = line(META_CSP, 'script-src')
       .split(' ')
       .filter((one) => one.startsWith("'sha256-"))
-    expect(named.sort()).toEqual([...new Set([...pages, frames, deck])].sort())
+    expect(named.sort()).toEqual([...new Set([...pages, frames])].sort())
   })
 
   test('carries a frame script that stays one element', () => {

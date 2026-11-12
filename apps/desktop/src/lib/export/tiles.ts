@@ -9,7 +9,6 @@ import Globe from 'lucide/dist/esm/icons/globe.mjs'
 import Hash from 'lucide/dist/esm/icons/hash.mjs'
 import Image from 'lucide/dist/esm/icons/image.mjs'
 import Package from 'lucide/dist/esm/icons/package.mjs'
-import Presentation from 'lucide/dist/esm/icons/presentation.mjs'
 import Type from 'lucide/dist/esm/icons/type.mjs'
 import type { IconNode } from 'lucide'
 import type { MenuItem } from '../menu-item'
@@ -18,14 +17,13 @@ import { EXPORT_FORMATS } from './formats'
 
 export const SETUP = 'page-setup'
 
-type Shelf = 'documents' | 'text' | 'web' | 'pictures' | 'slides' | 'other'
+type Shelf = 'documents' | 'text' | 'web' | 'pictures' | 'other'
 
 const SHELVES: readonly { id: Shelf; label: string }[] = [
   { id: 'documents', label: 'Documents' },
   { id: 'text', label: 'Text' },
   { id: 'web', label: 'Web' },
   { id: 'pictures', label: 'Pictures' },
-  { id: 'slides', label: 'Presentation' },
   { id: 'other', label: 'Other' },
 ]
 
@@ -56,8 +54,6 @@ const KINDS: Record<string, Kind> = {
   png: { shelf: 'pictures', icon: Image },
   jpg: { shelf: 'pictures', icon: Image },
   svg: { shelf: 'pictures', icon: FileImage, name: 'SVG' },
-  'slides-pdf': { shelf: 'slides', icon: Presentation, name: 'PDF' },
-  'slides-html': { shelf: 'slides', icon: Presentation, name: 'HTML' },
   copy: { shelf: 'other', icon: Copy, name: 'Save a copy' },
 }
 

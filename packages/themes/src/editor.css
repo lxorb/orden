@@ -734,16 +734,6 @@
   );
 }
 
-.orden-deck .orden-slide-break .orden-rule {
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--accent-line) 6%,
-    var(--accent-line) 94%,
-    transparent
-  );
-}
-
 .cm-line.orden-table {
   font-family: var(--font-mono);
   font-size: 0.88em;

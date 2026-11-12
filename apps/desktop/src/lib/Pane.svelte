@@ -14,7 +14,6 @@
     replaceEverywhere,
     replaceHere,
     selectEveryMatch,
-    setDeck,
     setFind,
     setReadOnlyMode,
   } from '@orden/editor'
@@ -22,7 +21,6 @@
   import Door from './Door.svelte'
   import { whileHere } from './while-here'
   import { alone } from './alone.svelte'
-  import { isDeck } from '@orden/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
   import { type Pane, panesIn, topRow } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
@@ -260,14 +258,6 @@
     if (!current) return
 
     setReadOnlyMode(current, modes.readOnly || !canWriteIn(note))
-  })
-
-  $effect(() => {
-    const current = view
-    const words = tab?.doc
-    if (!current || words === undefined) return
-
-    setDeck(current, isDeck(words))
   })
 
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {

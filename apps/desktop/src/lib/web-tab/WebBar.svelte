@@ -15,7 +15,6 @@
   import { overlays } from '../overlays'
   import { shortcuts } from '../shortcuts.svelte'
   import { showTab } from '../shortcuts/registry'
-  import { present } from '../slides/present.svelte'
   import AddressField from './AddressField.svelte'
   import PrivateMark from './PrivateMark.svelte'
   import ExtensionButtons from './ExtensionButtons.svelte'
@@ -99,7 +98,7 @@
     page.seen = true
 
     const key = (event: KeyboardEvent) => {
-      if (!focused || overlays.depth > 0 || present.on) return
+      if (!focused || overlays.depth > 0) return
 
       const said = barKey(event, shortcuts)
       if (!said || (said.to === 'zoom' && !page.live)) return

@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest'
 
 const SOURCE = fileURLToPath(new URL('..', import.meta.url))
 const DRAWS =
-  /import \{[^}]*\b(?:readingHtml|deckHtml|fileSource)\b[^}]*\} from '[./]+(?:\w+\/)*(?:reading|slides|canvas)\/render'/
+  /import \{[^}]*\b(?:readingHtml|fileSource)\b[^}]*\} from '[./]+(?:\w+\/)*(?:reading|canvas)\/render'/
 
 function views(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -18,7 +18,7 @@ function views(dir: string): string[] {
 describe('a view that draws what a note embeds', () => {
   test('draws again when a lock opens or shuts', () => {
     const drawing = views(SOURCE).filter((path) => DRAWS.test(readFileSync(path, 'utf8')))
-    expect(drawing.length).toBeGreaterThan(3)
+    expect(drawing.length).toBeGreaterThan(2)
     const deaf = drawing
       .filter((path) => !readFileSync(path, 'utf8').includes('links.locksSeen()'))
       .map((path) => relative(SOURCE, path).replace(/\\/g, '/'))

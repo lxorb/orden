@@ -15,7 +15,6 @@ import { showQuickAdd, toggleTabOverview } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/is.svelte'
 import { chatsOn, hiddenKinds, passOn, settings, timeOn } from '../settings.svelte'
 import { stepSpace } from '../space-actions'
-import { present } from '../slides/present.svelte'
 import { picks } from '../tab-strip/drag.svelte'
 import { closeWindow, invoke, isDesktop, platform } from '../tauri'
 import type { Platform } from '../keys'
@@ -968,15 +967,6 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-e',
     run: () => workspace.toggleReading(),
-  },
-  {
-    id: 'app.present',
-    label: () => 'Present',
-    category: 'view',
-    scope: 'app',
-    key: 'F5',
-    mac: 'Mod-Alt-p',
-    run: () => present.toggle(),
   },
   {
     id: 'app.read-only',

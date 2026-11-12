@@ -19,7 +19,6 @@ import {
   insertLink,
   insertMathBlock,
   insertPageBreak,
-  insertSlideBreak,
   insertTableToEdit,
   insertLineAbove,
   insertToc,
@@ -50,8 +49,6 @@ import {
   unfoldEverything,
   upperCase,
 } from '@orden/editor'
-import { deckOf, slideAt } from '@orden/markdown/slides'
-import { present } from './slides/present.svelte'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { turnedOff } from './kind-choice'
@@ -60,12 +57,11 @@ import { paletteName } from './highlight'
 import { links } from './link-index.svelte'
 import type { MenuItem } from './menu-item'
 import { EXPORT_FORMATS, type Exportable } from './export/formats'
-import { frontShut, look, openTarget, renderOptions } from './export/context'
+import { frontShut, openTarget, renderOptions } from './export/context'
 import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
 import type { RunOptions } from './export/run'
 import { PANDOC_FORMATS } from './export-formats'
 import { canPrint, printable, printOpen } from './export/print'
-import { imagePath } from './images'
 import { canDictate, dictating, toggleDictation } from './mobile/dictation'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
 import { canRecord, record, recordLabel } from './recorder/commands'
@@ -127,27 +123,13 @@ export function exportCommands(): Command[] {
     frontShut() ? rows.map((one) => ({ ...one, disabled: true })) : rows
 
   const open = note()
-  const kind = exportKindOf(
-    open ? { kind: open.kind, path: open.path, text: open.note.latest } : null,
-  )
+  const kind = exportKindOf(open ? { kind: open.kind, path: open.path } : null)
 
   const options = (): Promise<RunOptions> => renderOptions(target())
 
   const noteOut = async (id: Exportable) => {
     const m = await import('./export/run')
     await m.runExport(id, target(), await options())
-  }
-
-  const slidesOut = async (id: 'slides-html' | 'slides-pdf') => {
-    const m = await import('./slides/file')
-    const deck = { text: source(), path: note()?.path ?? null, trusted: target().trusted }
-    const options = {
-      resolveImage: (src: string) => imagePath(src, note()?.path, source()) ?? src,
-      ...(await look()),
-    }
-
-    if (id === 'slides-html') await m.exportDeck(deck, name(), options)
-    else await m.exportDeckPdf(deck, name(), options)
   }
 
   const drawingOut = async (id: ExportId) => {
@@ -199,7 +181,6 @@ export function exportCommands(): Command[] {
       async () => {
         if (kind === 'canvas') await drawingOut(id)
         else if (kind === 'pages') await pagesOut(id)
-        else if (id === 'slides-html' || id === 'slides-pdf') await slidesOut(id)
         else if (id === 'copy') await copyOut()
         else if (isNoteFormat(id)) await noteOut(id)
       },
@@ -208,7 +189,7 @@ export function exportCommands(): Command[] {
 
   const offered = offeredBy(kind)
   const nothing = offered.length === 0
-  const asNote = kind === 'note' || kind === 'deck' || nothing
+  const asNote = kind === 'note' || nothing
 
   const commands: Command[] = (nothing ? offeredBy('note') : offered).map((id) => ({
     id: `export-${id}`,
@@ -600,40 +581,6 @@ async function askWhichLayoutToDelete() {
   if (chosen) workspace.layouts.remove(chosen)
 }
 
-function slideCommands(view?: EditorView): Command[] {
-  return [
-    {
-      id: 'present',
-      label: present.on ? 'Leave presenting' : 'Present',
-      hint: shortcuts.hint('app.present'),
-      disabled: !present.on && !present.available,
-      run: () => present.toggle(),
-    },
-    {
-      id: 'new-slide',
-      label: 'New slide',
-      disabled: !view || view.state.readOnly,
-      run: () => {
-        if (!view) return
-        insertSlideBreak({ state: view.state, dispatch: (one) => view.dispatch(one) })
-        view.focus()
-      },
-    },
-    {
-      id: 'next-slide',
-      label: 'Next slide',
-      disabled: !view || !present.available,
-      run: () => view && stepSlide(view, 1),
-    },
-    {
-      id: 'previous-slide',
-      label: 'Previous slide',
-      disabled: !view || !present.available,
-      run: () => view && stepSlide(view, -1),
-    },
-  ]
-}
-
 function foldingCommands(view?: EditorView): Command[] {
   const fold = (id: string, label: string, command: StateCommand): Command => ({
     id,
@@ -776,7 +723,6 @@ const BLOCKS: Block[] = [
   block('paragraph.toc', () => 'Table of contents', insertToc),
   block('format.comment', () => 'Comment', insertComment),
   block('paragraph.rule', () => 'Horizontal rule', insertHorizontalRule),
-  block('slide-break', () => 'New slide', insertSlideBreak),
   block('page-break', () => 'Page break', insertPageBreak),
 ]
 
@@ -798,21 +744,6 @@ export function blockCommands(view?: EditorView): Command[] {
 
 export function blockRows(): SlashBlock[] {
   return BLOCKS.map((one) => ({ label: one.label(), run: one.apply }))
-}
-
-function stepSlide(view: EditorView, direction: number) {
-  const slides = deckOf(view.state.doc.toString())
-  if (slides.length < 2) return
-
-  const here = slideAt(slides, view.state.selection.main.head)
-  const wanted = slides[Math.max(0, Math.min(here + direction, slides.length - 1))]
-  if (!wanted) return
-
-  view.dispatch({
-    selection: { anchor: wanted.from },
-    effects: EditorView.scrollIntoView(wanted.from, { y: 'start', yMargin: 72 }),
-  })
-  view.focus()
 }
 
 function moveCommand(): Command | null {
@@ -1249,7 +1180,6 @@ export function appCommands(view?: EditorView): Command[] {
     },
 
     ...blockCommands(view),
-    ...slideCommands(view),
     ...foldingCommands(view),
     ...lineCommands(view),
     {

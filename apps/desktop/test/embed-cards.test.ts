@@ -10,7 +10,6 @@ function source(path: string): string {
 
 const DOCUMENT_CSS = source('packages/themes/src/document.css')
 const CANVAS_NODE = source('apps/desktop/src/lib/CanvasNode.svelte')
-const SLIDES = source('apps/desktop/src/lib/Slides.svelte')
 const READING = source('apps/desktop/src/lib/Reading.svelte')
 const WEB_WIDGET = source('packages/editor/src/live-preview/web.ts')
 
@@ -41,21 +40,10 @@ describe('the rules a web card is drawn with', () => {
 })
 
 describe('the press that loads the frame', () => {
-  test('is the one loader in @orden/editor, on all four surfaces', () => {
+  test('is the one loader in @orden/editor, on all three surfaces', () => {
     expect(WEB_WIDGET).toContain('embedClicks')
     expect(CANVAS_NODE).toContain('embedClicks')
     expect(CANVAS_NODE).toContain('use:embeds')
     expect(READING).toContain('loadEmbed')
-    expect(SLIDES).toContain('loadEmbed')
-  })
-
-  test('is asked before a deck reads the card as a link or turns the slide', () => {
-    const press = SLIDES.indexOf('loadEmbed')
-    const anchor = SLIDES.indexOf("closest('a')")
-    const turn = SLIDES.indexOf('else onwards()')
-
-    expect(press).toBeGreaterThan(-1)
-    expect(press).toBeLessThan(anchor)
-    expect(press).toBeLessThan(turn)
   })
 })

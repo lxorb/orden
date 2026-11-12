@@ -17,22 +17,8 @@ function rules(css: string): { selector: string; body: string }[] {
 
 const SHEET = rules(readFileSync(EDITOR, 'utf8'))
 
-describe('the rule that breaks a slide', () => {
-  test('is styled at all, so the deck still says where it breaks', () => {
-    const found = SHEET.filter((one) => one.selector.includes('orden-slide-break'))
-    expect(found.length).toBeGreaterThan(0)
-  })
-
-  test('changes the colour of the hairline and nothing else', () => {
-    for (const one of SHEET) {
-      if (!one.selector.includes('orden-slide-break')) continue
-
-      expect(one.selector, one.selector).not.toMatch(/::?(before|after)\b/)
-      expect(one.body, one.selector).not.toMatch(/\bcontent\s*:/)
-    }
-  })
-
-  test('and no line in the editor draws a bead in its margin', () => {
+describe('the horizontal rule', () => {
+  test('no line in the editor draws a bead in its margin', () => {
     for (const one of SHEET) {
       if (!/\.cm-line[^,{]*::?(before|after)\b/.test(one.selector)) continue
 

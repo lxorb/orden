@@ -15,7 +15,6 @@ import {
 import table from './front-matter-table.json'
 import { addProperty, renameProperty, writeProperty } from './property-edits'
 import { renderMarkdown } from './index'
-import { bodyStart } from './slide-breaks'
 
 const TABLE = table as [string, boolean][]
 
@@ -23,8 +22,9 @@ describe('what counts as front matter', () => {
   test.each(TABLE)('%j is a block: %s', (note, block) => {
     expect(frontMatterBlock(note) !== null).toBe(block)
     expect(opensFrontMatter(note)).toBe(block)
-    expect(bodyStart(note)).toBe(frontMatterBlock(note)?.to ?? 0)
-    expect(stripFrontMatter(note)).toBe(frontMatterBlock(note) ? note.slice(bodyStart(note)) : note)
+    expect(stripFrontMatter(note)).toBe(
+      frontMatterBlock(note) ? note.slice(frontMatterBlock(note)?.to ?? 0) : note,
+    )
   })
 
   test('an indented fence inside a block scalar does not close the block', () => {

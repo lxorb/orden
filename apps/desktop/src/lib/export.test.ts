@@ -410,7 +410,7 @@ describe('naming the document', () => {
 describe('pandoc formats', () => {
   test('cover the rest of what Typora offers', () => {
     const ids = PANDOC_FORMATS.map((format) => format.id)
-    for (const expected of ['odt', 'latex', 'mediawiki', 'rst', 'textile', 'opml', 'revealjs']) {
+    for (const expected of ['odt', 'latex', 'mediawiki', 'rst', 'textile', 'opml']) {
       expect(ids).toContain(expected)
     }
   })

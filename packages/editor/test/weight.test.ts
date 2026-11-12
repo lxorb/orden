@@ -32,36 +32,7 @@ const names = (files: readonly string[]) =>
   files.map((one) => one.split(/[\\/]/).pop() ?? one).sort()
 
 describe('what showing a note loads', () => {
-  test('the deck reader is six modules and the markdown lexer', () => {
-    const { files, packages } = graphOf(resolve(MARKDOWN, 'slides.ts'))
-
-    expect([...packages].sort()).toEqual(['marked'])
-    expect(names(files)).toEqual([
-      'blocks.ts',
-      'fences.ts',
-      'front-matter-lines.ts',
-      'slide-breaks.ts',
-      'slides.ts',
-      'starts.ts',
-    ])
-  })
-
-  test('while whether a note is a deck is a line scan and no lexer', () => {
-    const { files, packages } = graphOf(resolve(MARKDOWN, 'slide-breaks.ts'))
-
-    expect([...packages]).toEqual([])
-    expect(names(files)).toEqual(['fences.ts', 'front-matter-lines.ts', 'slide-breaks.ts'])
-  })
-
-  test('and no formula engine, no chemistry pack and no emoji table', () => {
-    const { packages } = graphOf(resolve(MARKDOWN, 'slides.ts'))
-
-    for (const heavy of ['katex', 'katex/contrib/mhchem', 'node-emoji']) {
-      expect(packages, heavy).not.toContain(heavy)
-    }
-  })
-
-  test('and the renderer asks for them rather than importing them', () => {
+  test('no formula engine, no chemistry pack and no emoji table: the renderer asks for them', () => {
     const { packages, files } = graphOf(resolve(MARKDOWN, 'index.ts'))
 
     for (const heavy of ['katex', 'katex/contrib/mhchem', 'node-emoji']) {
@@ -70,13 +41,11 @@ describe('what showing a note loads', () => {
     expect(names(files)).toContain('engines.ts')
   })
 
-  test('and the one module that does import them is not reached from either', () => {
-    for (const entry of ['index.ts', 'slides.ts']) {
-      const { files } = graphOf(resolve(MARKDOWN, entry))
+  test('and the one module that does import them is not reached from the renderer', () => {
+    const { files } = graphOf(resolve(MARKDOWN, 'index.ts'))
 
-      expect(names(files), entry).not.toContain('maths.ts')
-      expect(names(files), entry).not.toContain('eager.ts')
-    }
+    expect(names(files)).not.toContain('maths.ts')
+    expect(names(files)).not.toContain('eager.ts')
   })
 
   test('and the HTML grammar is a door, not an import', () => {

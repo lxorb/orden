@@ -16,7 +16,6 @@ import {
   insertFootnote,
   insertLink,
   insertHorizontalRule,
-  insertSlideBreak,
   insertMathBlock,
   insertTable,
   insertToc,
@@ -130,11 +129,6 @@ describe('a block that holds its lines', () => {
 
   test('and under a quote, which a line of it does not end', () => {
     expect(run(insertHorizontalRule, '> on|e\n> two\n\nb')).toBe('> one\n> two\n\n---\n\n\nb')
-  })
-
-  test('a slide break goes after the selection and keeps it', () => {
-    expect(run(insertSlideBreak, 'abc [def] ghi')).toBe('abc def\n\n---\n\n ghi')
-    expect(run(insertSlideBreak, 'abc |def')).toBe('abc \n\n---\n\ndef')
   })
 
   test('a line moved with part of a table selected goes nowhere', () => {

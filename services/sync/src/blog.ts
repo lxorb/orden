@@ -7,13 +7,10 @@ import {
   renderMarkdown,
   type Wikilink,
 } from '@orden/markdown'
-import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@orden/markdown/deck'
 import { diagramAlt, diagramFigure, diagramKey, isDiagram } from '@orden/markdown/diagrams'
 import { objectIn } from './body'
 import '@orden/markdown/eager'
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@orden/markdown/links'
-import { isDeck } from '@orden/markdown/slide-breaks'
-import { deckOf } from '@orden/markdown/slides'
 import { blogFence } from './blog/code'
 import { feed, type FeedPage, moment, newestFirst, robots, rss, sitemap } from './blog/feed'
 import { answersFrom, formHtml, formOf } from './blog/form'
@@ -27,7 +24,7 @@ import { linkedFrom, type Listed } from './blog/nav'
 import { legacyPathsOf, pageOf, pathsOf, rememberedNote } from './blog/paths'
 import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
 import { type Around, aside, bar, contents, counter, ownFiles, underneath } from './blog/shell'
-import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
+import { PAGE_CSS, PAGE_CSS_PATH } from './blog/style'
 import { askInChunks, places } from './bound'
 import { blogRootOf, sameOriginPath } from './hosts'
 import { machineOf, mayGuess, maySendAnswer, mayTakeAnswer } from './limits'
@@ -388,55 +385,6 @@ ${shell.right ?? ''}
 
 function counterUrl(tag: string): string {
   return /src="([^"]+)"/.exec(tag)?.[1] ?? 'https://example.invalid'
-}
-
-function deckPage(head: Head, body: string): Response {
-  const nonce = crypto.randomUUID().replace(/-/g, '')
-
-  const html = `<!doctype html>
-<html lang="en"><head>
-${headOf(
-  {
-    ...head,
-    style: `.deck .stage{--stage-width:${DECK_WIDTH}px;--stage-height:${DECK_HEIGHT}px}${DECK_PAGE_CSS}`,
-  },
-  [PAGE_CSS_PATH, SLIDES_CSS_PATH],
-)}${mathLink(body)}
-</head><body class="deck-page">${body}
-<script nonce="${nonce}">${DECK_SCRIPT}</script>
-</body></html>`
-
-  return new Response(html, {
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'private, max-age=60',
-      'content-security-policy': csp({ nonce }),
-      'referrer-policy': 'strict-origin-when-cross-origin',
-      'x-content-type-options': 'nosniff',
-    },
-  })
-}
-
-const SLIDES_QUERY = 'slides'
-
-function presentLink(source: string): string {
-  return isDeck(source) ? `<p class="present"><a href="?${SLIDES_QUERY}">Present</a></p>` : ''
-}
-
-function publishedDeck(source: string, options: Parameters<typeof renderMarkdown>[1]): string {
-  return deckBody(
-    deckOf(source).map((slide) => ({
-      html: renderMarkdown(slide.markdown, {
-        ...options,
-        breaks: true,
-        cover: false,
-        fragments: true,
-      }),
-      shape: slide.shape,
-      vertical: slide.vertical,
-      fragments: slide.fragments,
-    })),
-  )
 }
 
 function hardBreaksIn(raw: string | null | undefined): boolean {
@@ -816,7 +764,6 @@ async function served(
   site: Site,
 ): Promise<Response> {
   if (url.pathname === PAGE_CSS_PATH) return sheet(PAGE_CSS)
-  if (url.pathname === SLIDES_CSS_PATH) return sheet(SLIDES_CSS)
   if (url.pathname === MATH_CSS_PATH) return sheet(MATH_CSS)
   if (url.pathname === SITE_JS_PATH) return sheet(SITE_JS, 'text/javascript')
 
@@ -825,7 +772,6 @@ async function served(
 
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')
   const heading = space.blog_title ?? space.name
-  const slides = url.searchParams.has(SLIDES_QUERY)
   const preview = said((name) => request.headers.get(name), 'preview') === '1'
 
   if (slug === 'favicon.svg') return favicon(space, site)
@@ -937,13 +883,11 @@ async function served(
       feed: false,
     })
 
-    if (slides && isDeck(source)) return deckPage(head, publishedDeck(source, reading))
-
     const headings: Heading[] = []
     const rendered = renderMarkdown(source, { footnotes: true, toc: true, headings, ...reading })
     head.image ??= firstPicture(rendered, url.origin)
 
-    return page(head, withByline(rendered, author) + presentLink(source), env, {
+    return page(head, withByline(rendered, author), env, {
       shell: {
         theme,
         own,
@@ -1136,8 +1080,6 @@ async function served(
     date: found.front.date,
   })
 
-  if (slides && isDeck(source)) return deckPage(head, publishedDeck(source, reading))
-
   const headings: Heading[] = []
   const rendered = renderMarkdown(source, { footnotes: true, toc: true, headings, ...reading })
   head.image ??= firstPicture(rendered, url.origin)
@@ -1150,7 +1092,7 @@ async function served(
 
   return page(
     head,
-    `<p class="back"><a href="/">← ${escape(heading)}</a></p>${withByline(rendered, author)}${presentLink(source)}`,
+    `<p class="back"><a href="/">← ${escape(heading)}</a></p>${withByline(rendered, author)}`,
     env,
     {
       shell: {
