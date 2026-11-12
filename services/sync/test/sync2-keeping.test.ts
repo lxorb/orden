@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { frame, unframe } from '@orden/sync-core'
 import { parseQuery } from '@orden/scan/search/query'
 import type { IndexedNote } from '@orden/scan/wire'
-import app from '../src/index'
+import app from '../src'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { type Live, live } from './sync2'
 

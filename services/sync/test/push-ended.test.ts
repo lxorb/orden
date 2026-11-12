@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
-import { sha256 } from '../src/crypto'
-import { forgetAccess } from '../src/push/fcm'
-import { sendDue } from '../src/push/reminders'
+import { sha256 } from '../src/sync-server/src/crypto'
+import { forgetAccess } from '../src/sync-server/src/push/fcm'
+import { sendDue } from '../src/sync-server/src/push/reminders'
 import { call, type TestEnv, testEnv } from './harness'
 import { computer, type Hubs, hubs } from './hub-fakes'
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { pokeSpace } from '../src/hub/poke'
+import { pokeSpace } from '../src/sync-server/src/hub/poke'
 import { type TestEnv, testEnv } from './harness'
 import { type Computer, computer, connect, type Hubs, hubs } from './hub-fakes'
 

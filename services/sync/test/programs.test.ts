@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { programMayReach } from '../src/programs'
+import { programMayReach } from '../src/sync-server/src/programs'
 
 interface ProgramView {
   token?: string

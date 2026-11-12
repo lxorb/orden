@@ -85,7 +85,7 @@ describe('no surface offers to make one', () => {
   })
 
   test('the account offers no meeting summary', () => {
-    const routes = read(join(ROOT, 'services/sync/src/ask/index.ts'))
+    const routes = read(join(ROOT, 'services/sync/src/sync-server-machines/src/ask/index.ts'))
     expect(routes).not.toContain("'/summary'")
   })
 })

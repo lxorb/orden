@@ -1,6 +1,6 @@
-import type { RoomKind } from '../src/rooms/kind'
-import { NoteRoom } from '../src/rooms/room'
-import type { Env } from '../src/types'
+import type { RoomKind } from '../src/sync-server/src/rooms/kind'
+import { NoteRoom } from '../src/sync-server/src/rooms/room'
+import type { Env } from '../src/sync-server/src/types'
 
 class Pair {
   constructor(

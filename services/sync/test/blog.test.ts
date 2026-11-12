@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { asIsland, slugFor } from '../src/blog'
-import { FRONT_REV } from '../src/blog/front'
+import { asIsland, slugFor } from '../src/sync-server-blog/src/blog'
+import { FRONT_REV } from '../src/sync-server/src/site/front'
 import { call, file, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -1303,7 +1303,7 @@ describe('what a writer commented out', () => {
     const feed = await call(env, '/feed.xml', { host: 'field.nibeditor.com' })
     expect(feed.text).not.toContain('hidden-inline')
 
-    const { fillFronts } = await import('../src/blog/fill')
+    const { fillFronts } = await import('../src/sync-server/src/site/fill')
     await fillFronts(env, null)
 
     expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({
@@ -1320,7 +1320,7 @@ describe('what a writer commented out', () => {
     await addNote('Post.md', `![](https://nibeditor.com/i/${hash}.png)`)
     env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
 
-    const { fillFronts } = await import('../src/blog/fill')
+    const { fillFronts } = await import('../src/sync-server/src/site/fill')
     await fillFronts(env, null)
 
     expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
@@ -1332,7 +1332,7 @@ describe('what a writer commented out', () => {
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
     env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
 
-    const { fillFronts } = await import('../src/blog/fill')
+    const { fillFronts } = await import('../src/sync-server/src/site/fill')
     await fillFronts(env, null)
 
     expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
@@ -1342,7 +1342,7 @@ describe('what a writer commented out', () => {
     await addNote('Post.md', POST)
     env.db.exec("update notes set front_rev = 1 where path = 'Post.md'; drop table note_pictures")
 
-    const { fillFronts } = await import('../src/blog/fill')
+    const { fillFronts } = await import('../src/sync-server/src/site/fill')
     await fillFronts(env, null)
 
     expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({

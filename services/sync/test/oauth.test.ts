@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { expireClients } from '../src/oauth/clients'
+import { expireClients } from '../src/sync-server-chats/src/oauth/clients'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { readGraph } from '../src/spaces/graph'
+import { readGraph } from '../src/sync-server/src/spaces/graph'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

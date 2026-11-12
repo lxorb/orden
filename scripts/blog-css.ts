@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ROOT = new URL('../', import.meta.url)
 const THEMES = new URL('packages/themes/src/', ROOT)
-const BLOG = new URL('services/sync/src/blog/', ROOT)
+const BLOG = new URL('services/sync/src/sync-server-blog/src/', ROOT)
 
 const KATEX = new URL(
   '.',

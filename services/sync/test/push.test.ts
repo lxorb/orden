@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
 import { inboxStamp } from '@orden/sync-core'
-import { base64url, fromBase64url } from '../src/push/keys'
+import { base64url, fromBase64url } from '../src/sync-server/src/push/keys'
 import {
   MOST_TRIES,
   remindersIn,
   sendDue,
   SHUT_TITLE,
   TRY_AGAIN_AFTER,
-} from '../src/push/reminders'
-import { forgetAccess } from '../src/push/fcm'
-import { encrypted } from '../src/push/webpush'
+} from '../src/sync-server/src/push/reminders'
+import { forgetAccess } from '../src/sync-server/src/push/fcm'
+import { encrypted } from '../src/sync-server/src/push/webpush'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

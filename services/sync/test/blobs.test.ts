@@ -2,7 +2,7 @@ import { diagramKey } from '@orden/markdown/diagrams'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { createHash } from 'node:crypto'
 import { call, file, mail, signIn, testEnv, type TestEnv } from './harness'
-import { QUOTA } from '../src/storage'
+import { QUOTA } from '../src/sync-server/src/storage'
 
 let env: TestEnv
 let token: string
@@ -675,8 +675,8 @@ describe('a writer who deletes their account', () => {
       id: string
       email: string
     }
-    const { eraseAccount } = await import('../src/erase')
-    const { sweepLeftovers } = await import('../src/leftovers')
+    const { eraseAccount } = await import('../src/sync-server/src/erase')
+    const { sweepLeftovers } = await import('../src/sync-server/src/leftovers')
     await eraseAccount(env, { id: writer.id, email: writer.email, name: null, created_at: 1 })
     await sweepLeftovers(env)
 

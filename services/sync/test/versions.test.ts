@@ -9,9 +9,9 @@ import {
   MOST_VERSION_BYTES,
   sweepVersions,
   versionKey,
-} from '../src/versions'
-import { MOST_BOUND } from '../src/bound'
-import { sha256 } from '../src/crypto'
+} from '../src/sync-server/src/versions'
+import { MOST_BOUND } from '../src/sync-server/src/bound'
+import { sha256 } from '../src/sync-server/src/crypto'
 
 interface VersionView {
   versions?: { at: number; size: number; by: string; hash?: string }[]

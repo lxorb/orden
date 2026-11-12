@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { PULL_BYTES, type PullAnswer, type PullResponse } from '@orden/sync-core'
 import * as Y from 'yjs'
-import { ROOM_PATIENCE } from '../src/rooms'
+import { ROOM_PATIENCE } from '../src/sync-server/src/rooms'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { framed, type FramedAnswer, live } from './sync2'
 

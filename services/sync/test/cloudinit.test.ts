@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { cloudInit, sshKeyOf } from '../src/machines/cloudinit'
+import { cloudInit, sshKeyOf } from '../src/sync-server-machines/src/machines/cloudinit'
 
 const SECRET = 'f'.repeat(64)
 const TUNNEL = 'eyJhIjoiYWNjb3VudCIsInQiOiJ0dW5uZWwiLCJzIjoic2VjcmV0In0='

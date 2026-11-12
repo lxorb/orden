@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { purgeExpired } from '../src/trash'
-import { MOST_BOUND } from '../src/bound'
+import { purgeExpired } from '../src/sync-server/src/trash'
+import { MOST_BOUND } from '../src/sync-server/src/bound'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

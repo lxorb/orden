@@ -1,7 +1,7 @@
 import { MOST_FILE_PARTS, MOST_SEALED_PART } from '@orden/pass/file-sizes'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { sweepLeftovers } from '../src/leftovers'
-import { QUOTA, usedBytes } from '../src/storage'
+import { sweepLeftovers } from '../src/sync-server/src/leftovers'
+import { QUOTA, usedBytes } from '../src/sync-server/src/storage'
 import { call, type TestEnv, testEnv } from './harness'
 import { anId, pass, passCall, type Person, person, sharedVault } from './pass-fakes'
 

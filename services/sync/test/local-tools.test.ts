@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { CHAT_TOOLS } from '../src/mcp/chats'
-import { TASK_TOOLS } from '../src/mcp/tasks'
-import { TOOLS as NOTE_TOOLS } from '../src/mcp/tools'
+import { CHAT_TOOLS } from '../src/sync-server-machines/src/mcp/chats'
+import { TASK_TOOLS } from '../src/sync-server-machines/src/mcp/tasks'
+import { TOOLS as NOTE_TOOLS } from '../src/sync-server-machines/src/mcp/tools'
 
 const TOOLS = [...NOTE_TOOLS, ...TASK_TOOLS, ...CHAT_TOOLS]
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { said } from '../src/said'
+import { said } from '../src/sync-server/src/said'
 import { call, type TestEnv, testEnv } from './harness'
 
 describe('a header an app from before the rename sends', () => {

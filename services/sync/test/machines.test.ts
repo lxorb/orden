@@ -1,13 +1,13 @@
 import { mayType } from '@orden/online'
 import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { sha256 } from '../src/crypto'
-import { askMachine } from '../src/machines/ask'
+import { sha256 } from '../src/sync-server/src/crypto'
+import { askMachine } from '../src/sync-server-machines/src/machines/ask'
 import { HOLD_GRACE, HOLD_QUIET, MOST_SOCKETS, PING_EVERY, QUIET_FOR } from '@orden/online/wire'
-import { Machine, resumeOf } from '../src/machines/machine'
-import { reachAgain } from '../src/machines/reach'
-import { eraseAccount } from '../src/erase'
-import { purgeExpired } from '../src/trash'
+import { Machine, resumeOf } from '../src/sync-server-machines/src/machines/machine'
+import { reachAgain } from '../src/sync-server-machines/src/machines/reach'
+import { eraseAccount } from '../src/sync-server/src/erase'
+import { purgeExpired } from '../src/sync-server/src/trash'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import {
   doorway,
@@ -22,8 +22,8 @@ import {
 
 const DEVICE = 'device-laptop'
 
-vi.mock('../src/machines/refuse', async (real) => ({
-  ...(await real<typeof import('../src/machines/refuse')>()),
+vi.mock('../src/sync-server-machines/src/machines/refuse', async (real) => ({
+  ...(await real<typeof import('../src/sync-server-machines/src/machines/refuse')>()),
   refusedSocket: (error: string, protocol: string) =>
     new Response(null, {
       status: 200,
@@ -2093,7 +2093,7 @@ describe('a machine on a server of its own', () => {
     expect(door.asked.at(-1)?.headers.get('x-orden-wake')).toBe('budget')
 
     env.db.prepare('delete from machine_usage').run()
-    const { budgetLeft, mayCost } = await import('../src/machines/budget')
+    const { budgetLeft, mayCost } = await import('../src/sync-server-machines/src/machines/budget')
     expect(await budgetLeft(env, 30, Date.now())).toBeCloseTo(30)
     expect(await mayCost(env, 30, Date.now(), 14.5, 'EUR')).toBe(true)
     expect(await mayCost(env, 30, Date.now(), 25, 'EUR')).toBe(false)
@@ -2102,7 +2102,7 @@ describe('a machine on a server of its own', () => {
   })
 
   test('a start the host refuses for the budget tells the socket and sleeps', async () => {
-    const { HostRefused } = await import('../src/machines/hetzner-host')
+    const { HostRefused } = await import('../src/sync-server-machines/src/machines/hetzner-host')
     const running = await server()
     running.host.start = () => Promise.reject(new HostRefused('budget'))
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -2112,7 +2112,7 @@ describe('a machine on a server of its own', () => {
 
   test('without its secrets a Hetzner machine is refused as off, and the admin is told why', async () => {
     const bare = testEnv({ MACHINES: door.MACHINES })
-    const { whyNotWake } = await import('../src/machines/gate')
+    const { whyNotWake } = await import('../src/sync-server-machines/src/machines/gate')
     bare.db.prepare("update online_service set value = 'on' where key = 'online'").run()
     bare.db
       .prepare("insert into users (id, email, created_at, online) values ('u1', 'a@b.ch', 1, 1)")
@@ -2123,7 +2123,7 @@ describe('a machine on a server of its own', () => {
       )
       .run()
     expect(await whyNotWake(bare, 'u1', Date.now())).toBe('off')
-    const { hetznerMissing } = await import('../src/machines/hetzner-host')
+    const { hetznerMissing } = await import('../src/sync-server-machines/src/machines/hetzner-host')
     expect(hetznerMissing(bare)).toEqual([
       'HETZNER_TOKEN',
       'MACHINE_TUNNEL_TOKEN',
@@ -2269,7 +2269,7 @@ describe('the hub’s machine frame', () => {
 
 describe('the dev host', () => {
   test('drives a ordend on this computer and refuses any other address', async () => {
-    const { DevHost } = await import('../src/machines/host')
+    const { DevHost } = await import('../src/sync-server-machines/src/machines/host')
     const local = testEnv({ MACHINE_DEV_ORDEND: 'http://127.0.0.1:7680', MACHINE_DEV_SECRET: 's' })
     const remote = testEnv({ MACHINE_DEV_ORDEND: 'http://203.0.113.9:7680' })
     expect(DevHost.of(local)).toBeInstanceOf(DevHost)

@@ -2,7 +2,7 @@ import { blank } from '@orden/pass/envelope'
 import type { Content, Item, Login, Role, Vault, VaultMeta } from '@orden/pass/types'
 import type { Invite, ItemRow, LinkRow, Member } from '@orden/pass/wire'
 import { expect } from 'vitest'
-import app from '../src/index'
+import app from '../src'
 import type { TestEnv } from './harness'
 import type { Person } from './pass-fakes'
 

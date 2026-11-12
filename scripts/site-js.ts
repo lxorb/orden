@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ROOT = new URL('../', import.meta.url)
 const ENTRY = fileURLToPath(new URL('apps/desktop/src/site/site.ts', ROOT))
-const TARGET = fileURLToPath(new URL('services/sync/src/blog/script.ts', ROOT))
+const TARGET = fileURLToPath(new URL('services/sync/src/sync-server-blog/src/script.ts', ROOT))
 
 async function bundle(): Promise<string> {
   const vite = (await import(

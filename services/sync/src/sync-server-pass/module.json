@@ -1,0 +1,5 @@
+{
+  "name": "sync-server-pass",
+  "layer": "foundation",
+  "dependsOn": ["pass", "sync-server"]
+}

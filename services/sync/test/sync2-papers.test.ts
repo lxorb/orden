@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import app from '../src/index'
+import app from '../src'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { type Live, live } from './sync2'
 

@@ -1,5 +1,5 @@
 import { frame, type Framed, unframe } from '@orden/sync-core'
-import app from '../src/index'
+import app from '../src'
 import { call, mail, signIn, type TestEnv } from './harness'
 import { running } from './room'
 

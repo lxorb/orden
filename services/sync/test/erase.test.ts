@@ -1,6 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { ERASED, eraseAccount, finishErasing } from '../src/erase'
+import '../src/wiring'
+import { erased, eraseAccount, finishErasing } from '../src/sync-server/src/erase'
 import { type TestEnv, testEnv } from './harness'
 import { hubs } from './hub-fakes'
 
@@ -49,9 +50,9 @@ describe('the list of what is erased', () => {
   afterEach(() => env.close())
 
   test('names every table the schema has, or says why a table holds nothing', () => {
-    const erased = new Set(ERASED.map(([table]) => table))
+    const erasedTables = new Set(erased().map(([table]) => table))
     const unaccounted = tables(env.db).filter(
-      (table) => !erased.has(table) && !(table in HOLDS_NOTHING),
+      (table) => !erasedTables.has(table) && !(table in HOLDS_NOTHING),
     )
 
     expect(unaccounted).toEqual([])
@@ -59,7 +60,11 @@ describe('the list of what is erased', () => {
 
   test('and names no table the schema does not have', () => {
     const there = new Set(tables(env.db))
-    expect(ERASED.map(([table]) => table).filter((table) => !there.has(table))).toEqual([])
+    expect(
+      erased()
+        .map(([table]) => table)
+        .filter((table) => !there.has(table)),
+    ).toEqual([])
     expect(Object.keys(HOLDS_NOTHING).filter((table) => !there.has(table))).toEqual([])
   })
 
@@ -545,7 +550,7 @@ describe('deleting one of two accounts', () => {
     for (let n = 1; n <= 200; n++) stuck.run(`issues/${String(n)}`)
     env.db.prepare("insert into leftovers (what, since) values ('hubs/gone-user', 1)").run()
 
-    const { sweepLeftovers } = await import('../src/leftovers')
+    const { sweepLeftovers } = await import('../src/sync-server/src/leftovers')
     await sweepLeftovers(env)
     await sweepLeftovers(env)
 
@@ -572,7 +577,7 @@ describe('deleting one of two accounts', () => {
     expect(listed.many).toBeGreaterThan(0)
 
     bucket.delete = real
-    const { sweepLeftovers } = await import('../src/leftovers')
+    const { sweepLeftovers } = await import('../src/sync-server/src/leftovers')
     await sweepLeftovers(env)
 
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })

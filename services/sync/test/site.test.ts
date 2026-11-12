@@ -1,8 +1,8 @@
 import { parser as xml } from '@lezer/xml'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { frontOf } from '../src/blog/front'
-import { SITE_ROUNDS } from '../src/blog/gate'
-import { publishes } from '../src/blog/site'
+import { frontOf } from '../src/sync-server/src/site/front'
+import { SITE_ROUNDS } from '../src/sync-server/src/site/gate'
+import { publishes } from '../src/sync-server/src/site/site'
 import { call, file, type ShareView, signIn, testEnv, type TestEnv } from './harness'
 
 function broken(text: string): string[] {

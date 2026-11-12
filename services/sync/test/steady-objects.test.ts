@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
-import { AccountHub, AppRelay, ChatLog, NoteRoom } from '../src/index'
-import { Machine } from '../src/machines/machine'
-import type { Env } from '../src/types'
+import { AccountHub, AppRelay, ChatLog, NoteRoom } from '../src'
+import { Machine } from '../src/sync-server-machines/src/machines/machine'
+import type { Env } from '../src/sync-server/src/types'
 import { HubState } from './hub-fakes'
 
 const WRANGLER = fileURLToPath(new URL('../wrangler.jsonc', import.meta.url))

@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-core'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
-import { sweepChats } from '../src/chats/sweep'
-import { sweepLeftovers } from '../src/leftovers'
-import { purgeExpired } from '../src/trash'
+import { sweepChats } from '../src/sync-server-chats/src/chats/sweep'
+import { sweepLeftovers } from '../src/sync-server/src/leftovers'
+import { purgeExpired } from '../src/sync-server/src/trash'
 import { call, mail, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { FakeSocket } from './room'
 import { framed, type Live, live } from './sync2'
@@ -978,7 +978,7 @@ describe('what a purge stops paying for', () => {
     expect(env.db.prepare('select hash from unused_blobs').all()).toEqual([{ hash }])
 
     env.db.prepare('update notes set front_rev = 2 where id = ?').run(old)
-    const { sweepUnused } = await import('../src/unused')
+    const { sweepUnused } = await import('../src/sync-server/src/unused')
     expect(await sweepUnused(env)).toBe(1)
     expect((await call(env, `/i/${hash}.png`)).status).toBe(404)
   })

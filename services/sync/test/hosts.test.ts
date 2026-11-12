@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import worker from '../src/index'
-import { blogRootOf, blogRoots, isOwnOrigin, originAt, origins } from '../src/hosts'
-import { isMachineHost, machineDomain } from '../src/machines/hetzner-host'
+import worker from '../src'
+import { blogRootOf, blogRoots, isOwnOrigin, originAt, origins } from '../src/sync-server/src/hosts'
+import { isMachineHost, machineDomain } from '../src/sync-server-machines/src/machines/hetzner-host'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

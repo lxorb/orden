@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { frame, unframe } from '@orden/sync-core'
-import { sha256 } from '../src/crypto'
-import { keepVersionNow } from '../src/versions'
-import app from '../src/index'
+import { sha256 } from '../src/sync-server/src/crypto'
+import { keepVersionNow } from '../src/sync-server/src/versions'
+import app from '../src'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { type Live, live } from './sync2'
 

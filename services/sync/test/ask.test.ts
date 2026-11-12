@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { opened, sealed } from '../src/ask/key'
+import { opened, sealed } from '../src/sync-server/src/ai-key'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 import type { ShareView } from './harness'
 

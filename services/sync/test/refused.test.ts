@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import * as refused from '../src/refused'
+import * as refused from '../src/sync-server/src/refused'
 
 describe('what the service refuses with', () => {
   test('is these words, in these bytes', () => {
@@ -33,7 +33,7 @@ describe('what the service refuses with', () => {
   })
 })
 
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
+const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
 
 const GENERATED = new Set(['style.ts', 'math.ts', 'script.ts'])
 

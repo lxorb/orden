@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { FeedPage, OpsResponse } from '@orden/sync-core'
-import { sha256 } from '../src/crypto'
-import { noteKey } from '../src/notes'
+import { sha256 } from '../src/sync-server/src/crypto'
+import { noteKey } from '../src/sync-server/src/notes'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { live } from './sync2'
 

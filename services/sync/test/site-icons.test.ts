@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, signIn, testEnv, type TestEnv } from './harness'
-import { MOST_SITES, siteOf } from '../src/site-icons'
+import { MOST_SITES, siteOf } from '../src/sync-server/src/site-icons'
 
 let env: TestEnv
 let token: string

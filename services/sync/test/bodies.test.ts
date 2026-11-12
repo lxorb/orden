@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, signIn, testEnv, type TestEnv } from './harness'
-import { listIn, MOST_BODY_BYTES, objectBody, objectIn } from '../src/body'
-import { MAX_NOTE_BYTES } from '../src/notes'
+import { listIn, MOST_BODY_BYTES, objectBody, objectIn } from '../src/sync-server/src/body'
+import { MAX_NOTE_BYTES } from '../src/sync-server/src/notes'
 
 let env: TestEnv
 let token: string

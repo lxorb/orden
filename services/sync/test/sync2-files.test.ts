@@ -542,7 +542,7 @@ describe('a copy kept under a hash it is not the bytes of', () => {
     const diagram = 'a'.repeat(64)
     await plant(diagram)
 
-    const { sweepMisnamed } = await import('../src/sync2/files')
+    const { sweepMisnamed } = await import('../src/sync-server/src/sync2/files')
     expect(await sweepMisnamed(env)).toBe(1)
 
     expect(await env.NOTES.get(`blobs/${hash}`)).toBeNull()

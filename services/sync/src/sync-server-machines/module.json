@@ -1,0 +1,14 @@
+{
+  "name": "sync-server-machines",
+  "layer": "foundation",
+  "dependsOn": [
+    "bases",
+    "chats",
+    "markdown",
+    "online",
+    "rooms",
+    "sync-core",
+    "sync-server",
+    "sync-server-chats"
+  ]
+}

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { picturesOf } from '../src/pictures'
+import { picturesOf } from '../src/sync-server/src/pictures'
 import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 
 const HASH = 'ab'.repeat(32)

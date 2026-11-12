@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { isIcon, isTint } from '../src/spaces/icons'
+import { isIcon, isTint } from '../src/sync-server/src/spaces/icons'
 import { call, mail, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

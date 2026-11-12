@@ -81,7 +81,7 @@ export default {
       ignoreBinaries: ['screencapture', 'osascript'],
     },
     'services/sync': {
-      entry: ['src/machines/entry.ts'],
+      entry: ['src/entry.ts'],
       ignoreDependencies: ['cloudflare'],
     },
     'services/machine': {

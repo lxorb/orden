@@ -1,6 +1,6 @@
 import { serverFrameOf } from '@orden/online/wire'
 import { expect, test } from 'vitest'
-import { REFUSED_CLOSE, refuse } from '../src/machines/refuse'
+import { REFUSED_CLOSE, refuse } from '../src/sync-server-machines/src/machines/refuse'
 
 test('a refused socket is accepted, says why and closes', () => {
   const did: string[] = []

@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { carry } from '../src/machines/bundle'
-import { HetznerError } from '../src/machines/hetzner'
-import { Hetzner } from '../src/machines/hetzner'
+import { carry } from '../src/sync-server-machines/src/machines/bundle'
+import { HetznerError } from '../src/sync-server-machines/src/machines/hetzner'
+import { Hetzner } from '../src/sync-server-machines/src/machines/hetzner'
 import {
   HetznerHost,
   HostRefused,
   isMachineHost,
   namesOf,
   type Setup,
-} from '../src/machines/hetzner-host'
-import { Tunnels } from '../src/machines/tunnel'
+} from '../src/sync-server-machines/src/machines/hetzner-host'
+import { Tunnels } from '../src/sync-server-machines/src/machines/tunnel'
 import { Cloud } from './hetzner-cloud'
 import { signIn, type TestEnv, testEnv } from './harness'
 
