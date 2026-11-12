@@ -585,7 +585,8 @@ export async function freshDevice(
     list: (at) => {
       const listed: { path: string; dir: boolean }[] = []
       for (const folder of disk.folders) {
-        if (folder.startsWith(`${at}/`)) listed.push({ path: folder.slice(at.length + 1), dir: true })
+        if (folder.startsWith(`${at}/`))
+          listed.push({ path: folder.slice(at.length + 1), dir: true })
       }
       for (const file of disk.files.keys()) {
         if (file.startsWith(`${at}/`)) listed.push({ path: file.slice(at.length + 1), dir: false })

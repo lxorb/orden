@@ -215,9 +215,13 @@ export function appWorld(token: () => string | null, telling: Telling): World {
     async ancestor(id, hash) {
       const session = token()
       if (!session) return null
-      const { versions } = await remote().noteVersions(session, id).catch(() => ({ versions: [] }))
+      const { versions } = await remote()
+        .noteVersions(session, id)
+        .catch(() => ({ versions: [] }))
       for (const version of versions.slice(0, 20)) {
-        const body = await remote().noteVersion(session, id, version.at).catch(() => null)
+        const body = await remote()
+          .noteVersion(session, id, version.at)
+          .catch(() => null)
         if (body && (await sha256(body.content.replace(/\r\n?/g, '\n'))) === hash)
           return body.content
         if (body && (await sha256(body.content)) === hash) return body.content

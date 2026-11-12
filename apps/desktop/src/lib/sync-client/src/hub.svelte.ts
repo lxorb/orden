@@ -301,9 +301,11 @@ export class Hub {
 
   private shut(): void {
     const token = this.token
-    void account().recheck().then(() => {
-      if (token && this.token === token && account().token === token) this.again()
-    })
+    void account()
+      .recheck()
+      .then(() => {
+        if (token && this.token === token && account().token === token) this.again()
+      })
   }
 
   private again(): void {

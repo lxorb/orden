@@ -71,7 +71,9 @@ describe('the module stands on its own', () => {
     const reaching: string[] = []
     for (const file of sources(join(import.meta.dirname, '../src'))) {
       const text = readFileSync(file, 'utf8')
-      for (const match of text.matchAll(/from\s+'(\.\.\/\.\.\/[^']+)'|import\('(\.\.\/\.\.\/[^']+)'\)/g)) {
+      for (const match of text.matchAll(
+        /from\s+'(\.\.\/\.\.\/[^']+)'|import\('(\.\.\/\.\.\/[^']+)'\)/g,
+      )) {
         const target = (match[1] ?? match[2] ?? '').slice('../../'.length)
         if (SHELL.some((one) => target === one || target.startsWith(one)))
           reaching.push(`${file.slice(file.lastIndexOf('/') + 1)} -> ${target}`)
@@ -146,7 +148,10 @@ describe('a name made twice', () => {
   test('a numbered twin goes back to its name once the original is gone with the same bytes', () => {
     expect(
       madeTwice(
-        space([row('a', 'Photo.png', '', 'p1', true), row('b', 'Photo 2.png', 'Photo 2.png', 'p1')]),
+        space([
+          row('a', 'Photo.png', '', 'p1', true),
+          row('b', 'Photo 2.png', 'Photo 2.png', 'p1'),
+        ]),
       ),
     ).toEqual([{ from: 'Photo 2.png', to: 'Photo.png' }])
   })

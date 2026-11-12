@@ -7,8 +7,8 @@ import { workspace } from './ports'
 import type { Engine } from './engine'
 
 export function ownRoots(accountId: string | null): string[] {
-  return workspace().spaces
-    .map((space) => space.root)
+  return workspace()
+    .spaces.map((space) => space.root)
     .filter((root) => !leftByAnother(root, accountId))
 }
 

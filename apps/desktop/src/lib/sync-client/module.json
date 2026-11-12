@@ -1,15 +1,7 @@
 {
   "name": "sync-client",
   "layer": "foundation",
-  "dependsOn": [
-    "contracts",
-    "sync-core",
-    "markdown",
-    "rooms",
-    "editor",
-    "scan",
-    "bases"
-  ],
+  "dependsOn": ["contracts", "sync-core", "markdown", "rooms", "editor", "scan", "bases"],
   "pending": [
     "apps/desktop/src/lib/SharedMark.svelte",
     "apps/desktop/src/lib/Sheet.svelte",

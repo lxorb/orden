@@ -135,7 +135,10 @@ test('a folder deleted while a new note in it is listed and not pulled comes bac
   await passed(a)
 
   const { readFeed } = (await import(
-    /* @vite-ignore */ new URL('../../../apps/desktop/src/lib/sync-client/src/pass.ts', import.meta.url).href
+    /* @vite-ignore */ new URL(
+      '../../../apps/desktop/src/lib/sync-client/src/pass.ts',
+      import.meta.url,
+    ).href
   )) as { readFeed: (core: unknown, space: unknown, go: () => boolean) => Promise<unknown> }
   await readFeed(b.engine.core, b.engine.core.spaces.get(space), () => true)
   expect(onDisk(b)['f/new.md']).toBeUndefined()

@@ -2,7 +2,8 @@ import type { SyncFileOp } from '@orden/contracts'
 
 export interface Owing {
   id: string
-  what: { kind: 'wrote'; path: string; text: string } | { kind: 'op'; op: SyncFileOp; entry?: string }
+  what:
+    { kind: 'wrote'; path: string; text: string } | { kind: 'op'; op: SyncFileOp; entry?: string }
 }
 
 const MOST_OWED = 1_000

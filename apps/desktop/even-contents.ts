@@ -3,6 +3,7 @@ export const LIBRARIES = [
   'clsx',
   'lucide',
   'perfect-freehand',
+  'diff-match-patch-es',
   'uqr',
   '@evenrealities/even_hub_sdk',
   '@evenrealities/pretext',
@@ -122,6 +123,7 @@ export const APP_FOLDERS = [
   'pages',
   'palette',
   'pdf',
+  'people',
   'protect',
   'quick-add',
   'reading',
@@ -177,7 +179,7 @@ export function partOf(file: string): Part {
 }
 
 export const BUDGETS: Record<Part, number> = {
-  code: 6_269_600,
+  code: 6_600_000,
   styles: 298_700,
   fonts: 260_000,
   pages: 40_000,
