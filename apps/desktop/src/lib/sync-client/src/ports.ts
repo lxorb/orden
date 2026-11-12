@@ -17,11 +17,11 @@ function need<Name extends PortName>(name: Name): PortMap[Name] {
   return found.value
 }
 
-export const host = () => need('sync.host')
+const host = () => need('sync.host')
 
-export const storage = () => need('sync.storage')
+const storage = () => need('sync.storage')
 
-export const clock = () => need('sync.clock')
+const clock = () => need('sync.clock')
 
 export const account = () => need('sync.account')
 
