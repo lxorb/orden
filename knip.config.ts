@@ -45,6 +45,7 @@ export default {
     },
     'packages/bases': {},
     'packages/chats': {},
+    'packages/contracts': {},
     'packages/editor': { ignoreDependencies: ['turndown'] },
     'packages/glasses': {},
     'packages/markdown': {},

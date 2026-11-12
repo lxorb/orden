@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orden.so/schema/module.json",
+  "title": "Orden module",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "layer", "dependsOn"],
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "layer": { "enum": ["foundation", "shell", "content", "features", "native"] },
+    "lang": { "enum": ["ts", "rust"], "default": "ts" },
+    "api": { "type": "string", "pattern": "^src/[a-z0-9_/-]+\\.(ts|rs)$" },
+    "dependsOn": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    }
+  }
+}
