@@ -21,15 +21,11 @@ const MARKED = [
 
 const SPOKEN = ['en', 'de']
 
-export function quickWords(
-  langs: readonly string[],
-  now: Date,
-  notes: readonly string[] = [],
-): ReadWords {
+export function quickWords(langs: readonly string[], now: Date): ReadWords {
   return (said) => {
     const written = readTask(`- [ ] ${said}`)
     const words = written?.text ?? said.trim()
-    const quick = parseQuickAdd(words, [...langs, ...SPOKEN], now, { notes })
+    const quick = parseQuickAdd(words, [...langs, ...SPOKEN], now)
     const fields: TaskFields = taskOf({ text: quick.text, fields: quick.fields })
     if (written) {
       for (const key of MARKED) {
@@ -42,10 +38,6 @@ export function quickWords(
       fields.dependsOn = written.dependsOn
       fields.fields = written.fields
     }
-    return {
-      fields,
-      ...(quick.note === undefined ? {} : { note: quick.note }),
-      ...(quick.heading === undefined ? {} : { heading: quick.heading }),
-    }
+    return { fields }
   }
 }

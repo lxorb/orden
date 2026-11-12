@@ -3,7 +3,6 @@ import type { QuickFields } from '@orden/bases/language'
 export { type Entry, linesOf, placeIn } from '@orden/bases/tasks'
 
 export interface Prefill {
-  note?: string
   tags?: string[]
   due?: string
   text?: string

@@ -47,7 +47,7 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void stored.delete(key),
 })
 
-const { bringIn, copyRows } = await import('./copying')
+const { copyRows } = await import('./copying')
 const { ItemMetaStore } = await import('./item-meta.svelte')
 const { Protection } = await import('../protect/protection.svelte')
 
@@ -131,7 +131,7 @@ describe('a copied note in a base that numbers its rows', () => {
 })
 
 describe('a copy keeps what Orden keeps about the item', () => {
-  test('a copied todo list is still a list, with its icon and done days', async () => {
+  test('a copied note keeps its metadata, icon and all', async () => {
     disk.clear()
     disk.set('/s/Groceries.md', '- [x] Milk\n')
     meta.set('/s/Groceries.md', { 'todo-list': 'yes', icon: 'cart', 'done-on': 'abc:20261101' })
@@ -195,30 +195,5 @@ describe('a copy keeps what Orden keeps about the item', () => {
     expect(protection.covering('/t/Diary.md')).toEqual([
       { root: '/t', key: 'Diary.md', way: 'password' },
     ])
-  })
-})
-
-describe('a note dropped in from outside', () => {
-  test('that says it is a todo list is one by its metadata, the key out of its words (#1344)', async () => {
-    disk.clear()
-    const ws = rig([])
-    const picked = (name: string, text: string) => ({
-      name,
-      arrayBuffer: async () => new TextEncoder().encode(text).buffer,
-    })
-
-    await bringIn(
-      ws as never,
-      [
-        picked('Errands.md', '---\ntodo-list: yes\n---\n- [x] Post it ✅ 2026-11-01\n'),
-        picked('Plain.md', '---\ntitle: Plain\n---\n- [ ] Read\n'),
-      ],
-      '/s/In',
-    )
-
-    expect(disk.get('/s/In/Errands.md')).toBe('- [x] Post it ✅ 2026-11-01\n')
-    expect(disk.get('/s/In/Plain.md')).toBe('---\ntitle: Plain\n---\n- [ ] Read\n')
-    expect(meta.of('/s/In/Errands.md')).toEqual({ 'todo-list': 'yes' })
-    expect(meta.of('/s/In/Plain.md')).toBeNull()
   })
 })

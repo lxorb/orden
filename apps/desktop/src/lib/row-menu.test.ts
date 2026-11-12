@@ -119,7 +119,6 @@ describe('a note', () => {
       'Rename',
       'Choose an icon',
       'Set cover',
-      'Use as todo list',
       'Archive',
       'Protect',
       'Duplicate',
@@ -165,9 +164,7 @@ describe('a note that holds notes', () => {
 
 describe('a folder nobody has written a note in', () => {
   test('offers exactly what a note offers, less the cover and the side', () => {
-    expect(labels(plain)).toEqual(
-      labels(nested).filter((one) => one !== 'Set cover' && one !== 'Use as todo list'),
-    )
+    expect(labels(plain)).toEqual(labels(nested).filter((one) => one !== 'Set cover'))
   })
 })
 
@@ -239,7 +236,6 @@ describe('a file the account has a copy of', () => {
       'Rename',
       'Choose an icon',
       'Set cover',
-      'Use as todo list',
       'Archive',
       'Protect',
       'Share',
@@ -256,7 +252,6 @@ describe('a file the account has a copy of', () => {
       'Rename',
       'Choose an icon',
       'Set cover',
-      'Use as todo list',
       'Archive',
       'Protect',
       'Share',

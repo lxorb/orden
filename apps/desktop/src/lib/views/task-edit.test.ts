@@ -1,7 +1,7 @@
 import { taskRowsOfText } from '@orden/bases/tasks'
 import { changedTask } from '@orden/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
-import { changeOf, editorRoot, prefillFor } from './task-edit'
+import { changeOf, prefillFor } from './task-edit'
 
 function task(line: string) {
   const found = taskRowsOfText('Notes', 'A.md', line)[0]?.task
@@ -127,19 +127,5 @@ describe('a task in quick add’s field and back', () => {
     const fields = { tags: [], remind: [], ...prefillFor(one, null).fields }
     delete fields.deadline
     expect(changedTask(line, changeOf(one, { text: 'Pay rent', fields }))).toBe('- [ ] Pay rent')
-  })
-})
-
-describe("the notes a task's editor offers", () => {
-  const spaces = [
-    { name: 'Home', root: '/s/Home' },
-    { name: 'Work', root: '/s/Work' },
-  ]
-
-  test("are the task's own space's, or the space it is added into, not the one on screen (#1478)", () => {
-    expect(editorRoot(undefined, { space: 'Home' }, spaces, '/s/Work')).toBe('/s/Home')
-    expect(editorRoot('/s/Home', null, spaces, '/s/Work')).toBe('/s/Home')
-    expect(editorRoot(undefined, null, spaces, '/s/Work')).toBe('/s/Work')
-    expect(editorRoot(undefined, { space: 'Gone' }, spaces, '/s/Work')).toBe('/s/Work')
   })
 })

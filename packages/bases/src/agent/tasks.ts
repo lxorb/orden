@@ -213,8 +213,6 @@ export type ReadWords = (text: string) => Read
 
 export interface Read {
   fields: TaskFields
-  note?: string
-  heading?: string
 }
 
 export const writtenFields: ReadWords = (text) => ({

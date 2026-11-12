@@ -1,6 +1,5 @@
 import { ACCOUNT_INBOX, type Base, type Context, isInboxPath, type Row } from '@orden/bases'
 import { readable, seen } from './guarded'
-import { meansInbox } from '@orden/bases/inbox'
 import {
   AgentError,
   clockOf,
@@ -17,9 +16,7 @@ import {
   readAt,
   readBase,
   rowPlace,
-  taskBlock,
   taskChange,
-  taskIn,
   withProperties,
   writeBase,
 } from '@orden/bases/agent'
@@ -30,7 +27,7 @@ import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import { modes } from '../../modes.svelte'
 import { onDisk as there } from '../../on-disk'
 import { reachedByOthersIn } from '../../sharing.svelte'
-import { folderOf, insideSpace, nameOf, rootedAt } from '../../space-paths'
+import { folderOf, nameOf, rootedAt } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
@@ -178,25 +175,17 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const front = placeOf(call)
   const { rows } = await import('../../rows/rows.svelte')
   const { region } = await import('../../region')
-  const { listNamed, listsIn, makeList } = await import('../../rows/todo-lists')
-  const names = listsIn(front.space.root).map((path) => path.replace(/.md$/i, ''))
-  const read = (() => {
+  const { fields } = (() => {
     try {
-      return newTask(call.args, quickWords([region()], new Date(), names))
+      return newTask(call.args, quickWords([region()], new Date()))
     } catch (error) {
       refused(error)
     }
   })()
-  const { fields } = read
-  const named = maybe(call, 'note') ?? read.note ?? null
-  const place = named === null ? await inboxPlace(call, front) : front
+  const place = await inboxPlace(call, front)
   const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? ACCOUNT_INBOX
-  const chosen = named === null ? inbox : await namedOrInbox(place, named)
-  const path = chosen === inbox || meansInbox(chosen) ? chosen : listNamed(place.space.root, chosen)
-  if (path === null)
-    refused(new AgentError('bad_arguments', 'note names no to-do list there can be'))
-  const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, path)
-  const under = maybe(call, 'under') ?? read.heading
+  const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, inbox)
+  const under = maybe(call, 'under') ?? undefined
   const line = taskLine(fields)
 
   const question = await asked(call, null, `Add a task to ${note.relative}`)
@@ -217,39 +206,10 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
         return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
       }),
   )
-  makeList(insideSpace(place.space.root, note.relative))
   return done({ at: `${note.relative}#${placedAt}:${hash}`, space: place.space.name })
 }
 
-const ANCHORED = /#\d+:[0-9a-z]+$/
-
-async function listNote(
-  call: Call,
-  path: string,
-  listing: boolean,
-): Promise<{ path: string; todo_list: boolean; space: string }> {
-  const place = placeOf(call)
-  const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, path)
-  const root = place.space.root
-  if (!listing && isInboxPath(note.relative))
-    throw new Refused('bad_arguments', `${note.relative} is the inbox, always a to-do list`)
-  const full = insideSpace(root, note.relative)
-  if ((await workspace.noteText(full)) === null && !(await there(full)))
-    throw new Refused('no_such_file', `there is no ${note.relative} in ${place.space.name}`)
-  const { makeList, unmakeList } = await import('../../rows/todo-lists')
-  if (listing) makeList(full)
-  else unmakeList(full)
-  return { path: note.relative, todo_list: listing, space: place.space.name }
-}
-
 export async function updateTask(call: Call): Promise<AgentAnswer> {
-  const listing = typeof call.args.todo_list === 'boolean' ? call.args.todo_list : undefined
-  const named = typeof call.args.at === 'string' ? call.args.at.trim() : ''
-  if (listing !== undefined && !ANCHORED.test(named)) {
-    const question = await asked(call, null, `Change whether ${named} is a to-do list`)
-    if (question) return question
-    return done(await listNote(call, named, listing))
-  }
   const place = placeOf(call)
   const anchor = (() => {
     try {
@@ -258,6 +218,8 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
       refused(error)
     }
   })()
+  if (!isInboxPath(anchor.path))
+    throw new Refused('bad_arguments', `${anchor.path} is a note: its checkboxes are not to-dos`)
   const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, anchor.path)
   const moveTo = call.args.move_to
   const ticking = 'done' in call.args ? flag(call, 'done') : undefined
@@ -296,21 +258,10 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
     if (moveTo !== undefined && moveTo !== null) {
       said = { ...said, ...(await moved(call, place, note, readAt(said.at), moveTo)) }
     }
-    const listed = listing === undefined ? {} : await listNote(call, anchor.path, listing)
-    return done({ ...said, ...listed, space: place.space.name })
+    return done({ ...said, space: place.space.name })
   } catch (error) {
     refused(error)
   }
-}
-
-async function namedOrInbox(place: Place, named: string): Promise<string> {
-  if (!meansInbox(named)) return named
-  const { rows } = await import('../../rows/rows.svelte')
-  const theirs = rows
-    .of(place.space.name)
-    .some((row) => row.kind === 'note' && meansInbox(row.path))
-  if (theirs) return named
-  return rows.inboxes().find((one) => one.space === place.space.name)?.path ?? ACCOUNT_INBOX
 }
 
 async function moved(
@@ -320,56 +271,20 @@ async function moved(
   anchor: { line: number; hash: string },
   moveTo: unknown,
 ): Promise<{ at: string }> {
-  const target = typeof moveTo === 'string' ? { note: moveTo } : moveTo
-  if (typeof target !== 'object' || target === null) {
-    throw new Refused('bad_arguments', 'move_to is {note?, under?}')
+  if (typeof moveTo !== 'object' || moveTo === null) {
+    throw new Refused('bad_arguments', 'move_to is {under?}')
   }
-  const { note: wanted, under } = target as { note?: unknown; under?: unknown }
+  const { under } = moveTo as { under?: unknown }
   const heading = typeof under === 'string' && under.trim() ? under.trim() : undefined
-  const into =
-    typeof wanted === 'string' && wanted.trim()
-      ? writableNote(call, await namedOrInbox(place, wanted.trim()))
-      : from
-
-  if (into.relative === from.relative) {
-    const line = await rewritten(call, from, (text) => {
-      const result = movedTask(
-        { text, space: place.space.name, path: from.relative, anchor },
-        null,
-        heading,
-      )
-      return { text: result.source, said: result.line }
-    })
-    return { at: `${from.relative}#${line}:${anchor.hash}` }
-  }
-
-  const source = await notes.readNote(at(from), ['text'])
-  const words = source.text ?? ''
-  const block = taskBlock(
-    words,
-    taskIn(words, place.space.name, from.relative, anchor).anchor?.line ?? 0,
-  )
-  const line = await madeOrChanged(
-    into.place,
-    into.relative,
-    async () => {
-      const placed = placeIn('', block.lines, heading)
-      await made(into.place, into.relative, appliedEdits('', [placedEdit(placed)]), null)
-      return placed.line
-    },
-    () =>
-      rewritten(call, into, (text) => {
-        const placed = placeIn(text, block.lines, heading)
-        return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
-      }),
-  )
-  await notes.writeNote(
-    writerOf(call),
-    at(from),
-    words.slice(0, block.from) + words.slice(block.to),
-    source.rev,
-  )
-  return { at: `${into.relative}#${line}:${anchor.hash}` }
+  const line = await rewritten(call, from, (text) => {
+    const result = movedTask(
+      { text, space: place.space.name, path: from.relative, anchor },
+      null,
+      heading,
+    )
+    return { text: result.source, said: result.line }
+  })
+  return { at: `${from.relative}#${line}:${anchor.hash}` }
 }
 
 export async function queryBase(call: Call): Promise<AgentAnswer> {

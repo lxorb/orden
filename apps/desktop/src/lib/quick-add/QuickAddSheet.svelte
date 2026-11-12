@@ -5,16 +5,12 @@
   import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { trap } from '../trap'
-  import { workspace } from '../workspace.svelte'
   import { quickAdd } from './asked.svelte'
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
   import { links } from '../link-index.svelte'
   import { ai } from '../ai/store.svelte'
-  import { addTask, headingsOf, noteNames } from './write'
-
-  const root = $derived(workspace.activeSpace?.root ?? null)
-  const notes = $derived(quickAdd.open && root ? noteNames(root) : [])
+  import { addTask } from './write'
 
   $effect(() => (quickAdd.open ? overlays.show(() => quickAdd.hide()) : undefined))
   $effect(() => closeOnBack(quickAdd.open, () => quickAdd.hide()))
@@ -43,9 +39,7 @@
   >
     <QuickAdd
       langs={[region()]}
-      {notes}
       tags={links.spaceTags.map((one) => one.tag)}
-      headingsOf={(note: string) => (root ? headingsOf(root, note) : [])}
       provider={ai.providerFor('ask')}
       prefill={quickAdd.prefill}
       smart={quickAdd.smart}

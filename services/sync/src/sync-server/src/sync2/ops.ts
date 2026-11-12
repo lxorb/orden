@@ -253,25 +253,6 @@ export async function moveByPath(
   return value
 }
 
-export async function describeById(
-  env: Env,
-  spaceId: string,
-  device: string | undefined,
-  id: string,
-  meta: MetaPatch,
-): Promise<Changed<OpResult>> {
-  const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
-  const op: Op = { op: newId(), t: 'meta', id, meta, seen: SAW_EVERYTHING }
-  return await changeTree(
-    env,
-    spaceId,
-    device,
-    (tree) => tree.apply(op, context),
-    [],
-    reachOf([op]),
-  )
-}
-
 export async function deleteById(
   env: Env,
   spaceId: string,

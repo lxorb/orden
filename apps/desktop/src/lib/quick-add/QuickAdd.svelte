@@ -6,8 +6,6 @@
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar.mjs'
   import Flag from 'lucide/dist/esm/icons/flag.mjs'
-  import Hash from 'lucide/dist/esm/icons/heading.mjs'
-  import Inbox from 'lucide/dist/esm/icons/inbox.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
   import Sparkles from 'lucide/dist/esm/icons/sparkles.mjs'
   import Tag from 'lucide/dist/esm/icons/tag.mjs'
@@ -35,11 +33,10 @@
   import Glyph from './Glyph.svelte'
   import { dayWords, durationLabel, priorityTone } from './labels'
   import Picker from './Picker.svelte'
-  import { dayRows, durationRows, priorityRows, remindRows, tagRows, whereRows } from './pickers'
+  import { dayRows, durationRows, priorityRows, remindRows, tagRows } from './pickers'
 
   const {
     langs,
-    notes = [],
     tags = [],
     prefill = {},
     smart = true,
@@ -48,12 +45,10 @@
     onclose,
     oncancel,
     onpicking,
-    headingsOf,
     provider = null,
     dictates = true,
   }: {
     langs: readonly string[]
-    notes?: readonly string[]
     tags?: readonly string[]
     prefill?: Prefill
     smart?: boolean
@@ -62,7 +57,6 @@
     onclose: () => void
     oncancel?: () => void
     onpicking?: (open: boolean) => void
-    headingsOf?: (note: string) => readonly string[]
     provider?: Provider | null
     dictates?: boolean
   } = $props()
@@ -79,7 +73,6 @@
     duration?: number | null
     deadline?: string | null
     tags?: string[]
-    note?: string | null
   }>({})
 
   let input = $state<HTMLInputElement>()
@@ -93,7 +86,7 @@
   const today = $derived(todayOf())
   const read = $derived(
     smart
-      ? parseQuickAdd(text, langs, new Date(), { keep, escaped, notes })
+      ? parseQuickAdd(text, langs, new Date(), { keep, escaped })
       : { text: text.trim(), fields: { tags: [], remind: [] }, chips: [] },
   )
   const pieces = $derived(piecesOf(text, read.chips))
@@ -127,29 +120,13 @@
     return out
   })
 
-  const placeOf = (said: { note?: string; heading?: string }) => ({
-    note: picked.note === null ? undefined : (picked.note ?? said.note ?? prefill.note),
-    heading:
-      picked.note !== undefined
-        ? undefined
-        : said.note !== undefined
-          ? said.heading
-          : (said.heading ?? prefill.heading),
-  })
-
-  const note = $derived(placeOf(read).note)
-
   onMount(() => input?.focus())
 
   let spoken = $state<HTMLInputElement | HTMLTextAreaElement>()
 
   const voiceField: Dictates = {
     field: () => spoken ?? input,
-    words: () => [
-      ...(note ? [note.split('/').at(-1) ?? note] : []),
-      ...tags.slice(0, 12),
-      ...notes.slice(0, 12).map((one) => one.split('/').at(-1) ?? one),
-    ],
+    words: () => tags.slice(0, 12),
   }
 
   $effect(() => {
@@ -172,12 +149,6 @@
   const token = $derived(smart && caret >= 0 ? tokenAt(text, caret) : null)
   const offered = $derived.by((): string[] => {
     if (!token || token.from === dismissed) return []
-    if (token.sign === '>') return suggestions(token.query, notes)
-    if (token.sign === '/') {
-      const start = text.lastIndexOf('>', token.from)
-      const note = start === -1 ? '' : text.slice(start + 1, token.from).replace(/^"|"$/g, '')
-      return note && headingsOf ? suggestions(token.query, headingsOf(note)) : []
-    }
     return suggestions(token.query, tags)
   })
   $effect.pre(() => {
@@ -335,28 +306,11 @@
     )
   }
 
-  function askWhere(event: MouseEvent) {
-    ask(
-      event,
-      whereRows(note, notes.slice(0, 12), (chosen) => {
-        dropChip('where')
-        picked = { ...picked, note: chosen ?? null }
-        input?.focus()
-      }),
-    )
-  }
-
-  function entryOf(
-    said: string,
-    own: QuickFields,
-    from: { note?: string; heading?: string } = read,
-  ): Entry | null {
+  function entryOf(said: string, own: QuickFields): Entry | null {
     if (!said) return null
     const entry: Entry = { text: said, fields: own }
     if (description?.trim()) entry.description = description
-    const place = placeOf(from)
-    if (place.note !== undefined) entry.note = place.note
-    if (place.heading !== undefined) entry.heading = place.heading
+    if (prefill.heading !== undefined) entry.heading = prefill.heading
     return entry
   }
 
@@ -393,14 +347,13 @@
     const typed = text
     thinking = true
     const { askedEntry } = await import('./ai-entry')
-    const made = await askedEntry(asked, text.trim(), tags, notes).catch(() => null)
+    const made = await askedEntry(asked, text.trim(), tags).catch(() => null)
     thinking = false
     if (!made) return submit(false)
     const own = { ...fields, ...made.fields, remind: fields.remind }
     own.tags = [...new Set([...fields.tags, ...made.fields.tags])]
     const entry = entryOf(made.text, own)
     if (!entry) return
-    if (note === undefined && made.note !== undefined) entry.note = made.note
     await handOver(entry, false, typed)
   }
 
@@ -411,11 +364,11 @@
     sending = true
     try {
       for (const [index, line] of lines.entries()) {
-        const said = smart ? parseQuickAdd(line, langs, new Date(), { notes }) : null
+        const said = smart ? parseQuickAdd(line, langs, new Date()) : null
         const own: QuickFields = said
           ? { ...fields, ...said.fields, tags: [...new Set([...fields.tags, ...said.fields.tags])] }
           : fields
-        const entry = entryOf(said ? said.text || line : line, own, said ?? {})
+        const entry = entryOf(said ? said.text || line : line, own)
         if (entry && (await onsubmit(entry, false)) === false) {
           pasted = lines.slice(index)
           return
@@ -533,9 +486,7 @@
             onmousedown={keepFocus}
             onclick={() => take(one)}
           >
-            <span class="orden-row-mark"
-              ><Glyph icon={token?.sign === '>' ? Inbox : token?.sign === '/' ? Hash : Tag} /></span
-            >
+            <span class="orden-row-mark"><Glyph icon={Tag} /></span>
             <span class="orden-row-label">{one}</span>
           </button>
         {/each}
@@ -572,12 +523,6 @@
     </div>
   {:else}
     <div class="controls">
-      {#if mode === 'add'}
-        <button type="button" class="control" onclick={askWhere}>
-          <Glyph icon={Inbox} />
-          <span class="where">{note ? (note.split('/').at(-1) ?? note) : 'Inbox'}</span>
-        </button>
-      {/if}
       <span class="gap"></span>
       <button
         type="button"
@@ -801,13 +746,6 @@
     transition:
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
-  }
-
-  .where {
-    overflow: hidden;
-    max-width: 10em;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .control:hover {

@@ -11,7 +11,7 @@ import { type Clock, clockOf, dayAt, timeAt, whenAt } from './when'
 import { bare, type Word, wordsOf } from './words'
 
 export type ChipKind =
-  'when' | 'repeat' | 'priority' | 'where' | 'tag' | 'assignee' | 'remind' | 'deadline' | 'duration'
+  'when' | 'repeat' | 'priority' | 'tag' | 'assignee' | 'remind' | 'deadline' | 'duration'
 
 export interface Chip {
   kind: ChipKind
@@ -34,15 +34,12 @@ export interface QuickFields {
 export interface QuickAdd {
   text: string
   fields: QuickFields
-  note?: string
-  heading?: string
   chips: Chip[]
 }
 
 export interface QuickAddOptions {
   keep?: readonly { from: number; to: number }[]
   escaped?: readonly { from: number; to: number }[]
-  notes?: readonly string[]
 }
 
 const GRAMMARS: Record<string, Grammar> = { en: EN, 'en-us': EN_US, de: DE }
@@ -68,51 +65,6 @@ interface Found {
 const TAG = new RegExp(String.raw`^[#@%](${TAG_NAME})$`, 'u')
 const PERSON = /^\+([\p{L}][\p{L}\p{N}\-_.]*)$/u
 const PRIORITY = /^p([1-4])$/i
-
-function whereAt(words: readonly Word[], at: number, notes: readonly string[]): Found | null {
-  const first = words[at]?.raw ?? ''
-  if (!first.startsWith('>') || first.length < 2) return null
-
-  let end = at + 1
-  let name = first.slice(1)
-  if (name.startsWith('"')) {
-    while (!name.endsWith('"') || name.length < 2) {
-      const next = words[end]
-      if (!next) return null
-      name = `${name} ${next.raw}`
-      end++
-    }
-    name = name.slice(1, -1)
-  } else {
-    for (let count = Math.min(words.length - at, 8); count > 1; count--) {
-      const said = [name, ...words.slice(at + 1, at + count).map((one) => one.raw)].join(' ')
-      if (notes.some((note) => note.toLowerCase() === said.toLowerCase())) {
-        name = said
-        end = at + count
-        break
-      }
-    }
-  }
-  if (name.trim() === '') return null
-
-  let heading: string | undefined
-  const slash = words[end]?.raw ?? ''
-  if (slash.startsWith('/') && slash.length > 1) {
-    heading = slash.slice(1)
-    end++
-  }
-  const note = name.trim()
-  return {
-    kind: 'where',
-    at,
-    end,
-    apply(into) {
-      into.note = note
-      if (heading === undefined) delete into.heading
-      else into.heading = heading
-    },
-  }
-}
 
 function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Found | null {
   const first = words[at]
@@ -226,18 +178,9 @@ function wordAt(words: readonly Word[], at: number): Found | null {
   return null
 }
 
-function foundAt(
-  words: readonly Word[],
-  at: number,
-  g: Grammar,
-  clock: Clock,
-  notes: readonly string[],
-): Found | null {
+function foundAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Found | null {
   const marked =
-    whereAt(words, at, notes) ??
-    wordAt(words, at) ??
-    remindAt(words, at, g, clock) ??
-    deadlineAt(words, at, g, clock)
+    wordAt(words, at) ?? remindAt(words, at, g, clock) ?? deadlineAt(words, at, g, clock)
   if (marked) return marked
 
   const repeat = repeatAt(words, at, g, clock)
@@ -310,13 +253,12 @@ export function parseQuickAdd(
   const clock = clockOf(now)
   const escaped = options.escaped ?? []
   const keep = [...(options.keep ?? []), ...escaped]
-  const notes = options.notes ?? []
 
   const found: Found[] = []
   for (let at = 0; at < words.length;) {
     let best: Found | null = null
     for (const g of grammars) {
-      const one = foundAt(words, at, g, clock, notes)
+      const one = foundAt(words, at, g, clock)
       if (one && (!best || one.end > best.end)) best = one
     }
     const from = words[at]?.from ?? 0

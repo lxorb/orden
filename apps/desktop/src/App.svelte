@@ -457,12 +457,10 @@
               import('./lib/rows/rows.svelte'),
               import('./lib/views/open'),
               import('./lib/workspace/write-file'),
-              import('./lib/rows/todo-lists'),
-            ]).then(([{ rows }, views, { writeFile }, { makeList }]) => ({
+            ]).then(([{ rows }, views, { writeFile }]) => ({
               rows,
               ...views,
               writeFile,
-              makeList,
             })),
           chats: () =>
             __EVEN_PLUGIN__

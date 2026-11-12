@@ -243,11 +243,8 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
 
 async function withKept(note: Note): Promise<Note> {
   if (note.path === null) return note
-  const [{ isListed }, { keptText }] = await Promise.all([
-    import('../rows/todo-lists'),
-    import('./kept'),
-  ])
-  const source = await keptText(note.source, workspace.itemMeta.of(note.path), isListed(note.path))
+  const { withOwnKeys } = await import('../own-keys')
+  const source = withOwnKeys(note.source, workspace.itemMeta.of(note.path))
   return source === note.source ? note : { ...note, source }
 }
 

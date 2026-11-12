@@ -261,7 +261,6 @@ class Importing {
 
       this.stepped = landed.stepped
       await inboxFrom(plan, root, landed.paths)
-      if (plan.format === 'todoist') await listsFrom(landed.paths)
       this.stage = 'done'
     } catch (error) {
       this.stage = 'ready'
@@ -274,11 +273,6 @@ function landing(): string | null {
   const open = workspace.activeSpace?.root ?? null
   if (open !== null && canWriteAt(open)) return open
   return workspace.spaces.find((space) => canWriteAt(space.root))?.root ?? null
-}
-
-async function listsFrom(paths: readonly string[]) {
-  const { makeList } = await import('./rows/todo-lists')
-  for (const path of paths) if (/\.md$/i.test(path)) makeList(path)
 }
 
 async function inboxFrom(plan: ImportPlan, root: string, paths: readonly string[]) {

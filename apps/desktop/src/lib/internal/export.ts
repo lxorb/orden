@@ -69,21 +69,14 @@ async function freeFolder(picked: string, name: string): Promise<string> {
 
 type MetaOf = (path: string) => ItemMeta | null
 
-type ListedOf = (path: string) => boolean
-
-async function bytesOut(
-  file: { path: string; read: () => Promise<Uint8Array> },
-  metaOf: MetaOf,
-  listedOf: ListedOf,
-) {
+async function bytesOut(file: { path: string; read: () => Promise<Uint8Array> }, metaOf: MetaOf) {
   const bytes = await file.read()
   if (!/\.(md|markdown)$/i.test(file.path)) return bytes
   const meta = metaOf(file.path)
-  const listed = listedOf(file.path)
-  if (!meta && !listed) return bytes
-  const { keptText } = await import('../export/kept')
+  if (!meta) return bytes
+  const { withOwnKeys } = await import('../own-keys')
   const text = new TextDecoder().decode(bytes)
-  const written = await keptText(text, meta, listed)
+  const written = withOwnKeys(text, meta)
   return written === text ? bytes : new TextEncoder().encode(written)
 }
 
@@ -100,14 +93,13 @@ export async function exportSpaceTo(
   name: string,
   picked: string,
   metaOf: MetaOf = () => null,
-  listedOf: ListedOf = () => false,
   inbox: string | null = null,
 ): Promise<string> {
   const into = await freeFolder(picked, name)
   const files = await filesOf(root)
   for (const file of files) {
     const path = joinPath(into, file.path)
-    await crate('write_bytes', { path, bytes: await bytesOut(file, metaOf, listedOf) })
+    await crate('write_bytes', { path, bytes: await bytesOut(file, metaOf) })
   }
   if (inbox !== null && inbox !== '') {
     const path = joinPath(into, inboxName(files))
@@ -120,7 +112,6 @@ export async function exportSpace(
   root: string,
   name: string,
   metaOf: MetaOf = () => null,
-  listedOf: ListedOf = () => false,
   inbox: string | null = null,
 ): Promise<string | null> {
   const given = (await import('../dialog-answer')).dialogAnswer()
@@ -128,5 +119,5 @@ export async function exportSpace(
     ? await given(true)
     : await (await import('@tauri-apps/plugin-dialog')).open({ directory: true })
   if (typeof picked !== 'string') return null
-  return exportSpaceTo(root, name, picked, metaOf, listedOf, inbox)
+  return exportSpaceTo(root, name, picked, metaOf, inbox)
 }

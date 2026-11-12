@@ -1,3 +1,4 @@
+import { isInboxPath } from '@orden/bases/inbox'
 import type { TaskOut } from '@orden/bases/tasks'
 import { modes } from './modes.svelte'
 import { changeOf } from './search/replace'
@@ -13,28 +14,20 @@ export async function addTask(
 ): Promise<{ path: string; line: number } | null> {
   const said = text.trim()
   if (!said) return null
-  const into = options.root === undefined ? {} : { root: options.root }
   if (options.typed === false) {
     const write = await import('./quick-add/write')
-    return write.addTask({ text: said, fields: { tags: [], remind: [] } }, into)
+    return write.addTask({ text: said, fields: { tags: [], remind: [] } })
   }
   const [{ parseQuickAdd }, { region }, write] = await Promise.all([
     import('@orden/bases/language'),
     import('./region'),
     import('./quick-add/write'),
   ])
-  const root = options.root ?? workspace.activeSpace?.root
-  const notes = root === undefined ? {} : { notes: write.noteNames(root) }
-  const read = parseQuickAdd(said, [region()], new Date(), notes)
-  return write.addTask(
-    {
-      text: read.text || said,
-      fields: read.fields,
-      ...(read.note === undefined ? {} : { note: read.note }),
-      ...(read.heading === undefined ? {} : { heading: read.heading }),
-    },
-    into,
-  )
+  const read = parseQuickAdd(said, [region()], new Date())
+  return write.addTask({
+    text: read.text || said,
+    fields: read.fields,
+  })
 }
 
 export async function tickTask(at: string, space: string, done: boolean): Promise<Ticked | null> {
@@ -74,12 +67,11 @@ export async function tickTask(at: string, space: string, done: boolean): Promis
 }
 
 async function dated(root: string, relative: string, space: string, before: string, after: string) {
-  const [{ clockOf, taskRowsOfText }, { datesChanged }, { listedAt }] = await Promise.all([
+  if (!isInboxPath(relative)) return
+  const [{ clockOf, taskRowsOfText }, { datesChanged }] = await Promise.all([
     import('@orden/bases/tasks'),
-    import('@orden/bases/todo-lists'),
-    import('./rows/todo-lists'),
+    import('@orden/bases/done-dates'),
   ])
-  if (!listedAt(root, relative)) return
   const path = insideSpace(root, relative)
   const rows = (text: string) => taskRowsOfText(space, relative, text)
   const meta = workspace.itemMeta.of(path, root)

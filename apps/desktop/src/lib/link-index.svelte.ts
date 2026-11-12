@@ -1,3 +1,4 @@
+import { isInboxPath } from '@orden/bases/inbox'
 import {
   type FileDrawing,
   type NoteIndex,
@@ -558,12 +559,6 @@ class Links {
     this.read.set(relative, content)
   }
 
-  private listed: (root: string, relative: string) => boolean = () => false
-
-  listsBy(listed: (root: string, relative: string) => boolean) {
-    this.listed = listed
-  }
-
   hearSaves(hear: (path: string, content: string, arrived: boolean) => void): () => void {
     hearing.add(hear)
     return () => hearing.delete(hear)
@@ -725,7 +720,7 @@ class Links {
       this.handed.clear()
     }
 
-    const listed = path !== null && this.root !== null && this.listed(this.root, path)
+    const listed = path !== null && isInboxPath(path)
     const key = `${listed ? 'listed\n' : ''}${stranger ? 'stranger\n' : (path ?? '')}`
     const known = this.handed.get(key)
     if (known) return known

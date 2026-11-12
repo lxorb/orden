@@ -1,10 +1,10 @@
+import { isInboxPath } from '@orden/bases/inbox'
 import type { ScannedNote, SpaceLinks } from '@orden/scan/note'
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
 import { AGENTS_NAME } from '../note-name'
 import { homeRoot } from '../rows/home.svelte'
 import { INBOX } from '../rows/inbox'
-import { listedAt } from '../rows/todo-lists'
 import { insideSpace, samePath, within } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
@@ -61,7 +61,7 @@ export async function todayHere(): Promise<{ at: string; space: string; text: st
       .filter((note) => /\.(md|markdown)$/i.test(note.path))
       .filter((note) => !samePath(note.path, AGENTS_NAME, space.root))
       .filter((note) => !shut(space.root, note.path))
-      .filter((note) => listedAt(space.root, note.path))
+      .filter((note) => isInboxPath(note.path))
     for (const note of notes) {
       rows.push(...scannedTaskRows(space.name, note.path, note.tasks ?? (await read(note.path))))
     }

@@ -25,7 +25,6 @@
 
   let plain = $state<Prefill | null>(null)
   let editing = $state<QuickPrefill | null>(null)
-  let into = $state<string | undefined>()
   let words = $state('')
   let field = $state<HTMLInputElement>()
 
@@ -65,7 +64,6 @@
       queueMicrotask(() => field?.focus())
       return
     }
-    into = prefill.root
     editing = quick(prefill)
   }
 
@@ -127,7 +125,7 @@
       </button>
     {/if}
     {#if editing}
-      <TaskEditor {kit} prefill={editing} root={into} {onsize} onclose={close} />
+      <TaskEditor {kit} prefill={editing} {onsize} onclose={close} />
     {/if}
   </div>
 {/if}

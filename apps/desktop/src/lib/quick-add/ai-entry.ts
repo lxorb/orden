@@ -6,15 +6,12 @@ import type { Message, Provider } from '../ai/providers'
 import { isPriority } from '../views/drop'
 import type { Entry } from './entry'
 
-const NOTES = 100
-
 const ASK =
-  'Turn the reader’s sentence into one task. Reply with one JSON object and nothing else: {"text": the task in a few words, in the sentence’s language, "tags": the labels from the list given that fit, or [], "start": the first day it can be done on (YYYY-MM-DD) or null, "deadline": the day it must be done by (YYYY-MM-DD) or null, "priority": 1 urgent, 2 high, 3 medium or 4 none, "note": the note from the list given it belongs in, or null}.'
+  'Turn the reader’s sentence into one task. Reply with one JSON object and nothing else: {"text": the task in a few words, in the sentence’s language, "tags": the labels from the list given that fit, or [], "start": the first day it can be done on (YYYY-MM-DD) or null, "deadline": the day it must be done by (YYYY-MM-DD) or null, "priority": 1 urgent, 2 high, 3 medium or 4 none}.'
 
 export function entryMessages(
   said: string,
   tags: readonly string[],
-  notes: readonly string[],
   today: string,
   zone: string,
 ): Message[] {
@@ -22,19 +19,14 @@ export function entryMessages(
     weekday: 'long',
     timeZone: 'UTC',
   })
-  const context = `Today is ${day}, ${today}, in ${zone}.\nLabels: ${JSON.stringify(tags)}\nNotes: ${JSON.stringify(notes.slice(0, NOTES))}`
+  const context = `Today is ${day}, ${today}, in ${zone}.\nLabels: ${JSON.stringify(tags)}`
   return [
     { role: 'system', content: ASK },
     { role: 'user', content: `${context}\n\n${said}` },
   ]
 }
 
-export function entryFrom(
-  reply: string,
-  said: string,
-  tags: readonly string[],
-  notes: readonly string[],
-): Entry {
+export function entryFrom(reply: string, said: string, tags: readonly string[]): Entry {
   const json = reply.slice(reply.indexOf('{'), reply.lastIndexOf('}') + 1)
   const read = JSON.parse(json) as Record<string, unknown>
   const named = Array.isArray(read.tags)
@@ -46,18 +38,16 @@ export function entryFrom(
   if (typeof read.priority === 'number' && isPriority(read.priority))
     fields.priority = read.priority
   const text = typeof read.text === 'string' && read.text.trim() ? read.text.trim() : said
-  const note = notes.find((one) => one === read.note)
-  return { text, fields, ...(note === undefined ? {} : { note }) }
+  return { text, fields }
 }
 
 export async function askedEntry(
   provider: Provider,
   said: string,
   tags: readonly string[],
-  notes: readonly string[],
 ): Promise<Entry> {
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const messages = entryMessages(said, tags, notes, todayOf(), zone)
+  const messages = entryMessages(said, tags, todayOf(), zone)
   const reply = await complete({ provider, model: provider.model, messages })
-  return entryFrom(reply, said, tags, notes)
+  return entryFrom(reply, said, tags)
 }

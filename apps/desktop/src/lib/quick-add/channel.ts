@@ -7,7 +7,7 @@ export const ANSWERING = 'orden-quick-add-answering'
 
 export type Said =
   | { kind: 'hello' }
-  | { kind: 'world'; notes: string[]; lang: string; smart: boolean }
+  | { kind: 'world'; lang: string; smart: boolean }
   | { kind: 'task'; id: string; entry: Entry; open: boolean }
   | { kind: 'added'; id: string; ok: boolean }
 
@@ -40,20 +40,15 @@ function isEntry(value: unknown): value is Entry {
     ) &&
     optional(fields.priority, (one) => one === 1 || one === 2 || one === 3 || one === 4) &&
     optional(fields.duration, (one) => typeof one === 'number' && one > 0) &&
-    ['description', 'note', 'heading'].every((key) => optional(value[key], isString))
+    ['description', 'heading'].every((key) => optional(value[key], isString))
   )
 }
 
 export function heard(value: unknown): Said | null {
   if (!isRecord(value)) return null
   if (value.kind === 'hello') return { kind: 'hello' }
-  if (
-    value.kind === 'world' &&
-    strings(value.notes) &&
-    isString(value.lang) &&
-    typeof value.smart === 'boolean'
-  ) {
-    return { kind: 'world', notes: value.notes, lang: value.lang, smart: value.smart }
+  if (value.kind === 'world' && isString(value.lang) && typeof value.smart === 'boolean') {
+    return { kind: 'world', lang: value.lang, smart: value.smart }
   }
   if (
     value.kind === 'task' &&

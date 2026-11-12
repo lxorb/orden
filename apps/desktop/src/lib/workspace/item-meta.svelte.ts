@@ -28,7 +28,6 @@ interface Kept {
   unsent: Record<string, MetaPatch>
   adopted: boolean
   moved: boolean
-  lists: boolean
 }
 
 function itemsOf(value: unknown): Record<string, ItemMeta> {
@@ -57,7 +56,6 @@ function read(): Record<string, Kept> {
     unsent: patchesOf(one.unsent),
     adopted: one.adopted === true,
     moved: one.moved === true,
-    lists: one.lists === true,
   }))
 }
 
@@ -96,7 +94,7 @@ function itemsUnder(items: Record<string, ItemMeta>, at: string, root: string) {
   return out
 }
 
-const EMPTY: Kept = { items: {}, unsent: {}, adopted: false, moved: false, lists: false }
+const EMPTY: Kept = { items: {}, unsent: {}, adopted: false, moved: false }
 
 export class ItemMetaStore {
   private spaces = $state<Record<string, Kept>>(read())
@@ -134,16 +132,6 @@ export class ItemMetaStore {
   markMoved(root: string) {
     if (this.kept(root).moved) return
     this.spaces = { ...this.spaces, [root]: { ...this.kept(root), moved: true } }
-    this.write()
-  }
-
-  listsMarked(root: string): boolean {
-    return this.kept(root).lists
-  }
-
-  markListsMarked(root: string) {
-    if (this.kept(root).lists) return
-    this.spaces = { ...this.spaces, [root]: { ...this.kept(root), lists: true } }
     this.write()
   }
 

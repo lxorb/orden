@@ -6,37 +6,11 @@ import {
   datesOf,
   datesText,
   DONE_KEY,
-  inOldFolder,
-  isTodoList,
-  LIST_KEY,
-  LIST_VALUE,
   withDates,
   writtenDates,
-} from './todo-lists'
+} from './done-dates'
 
 const rows = (text: string) => rowsOfText('Mine', 'Errands.md', text)
-
-describe('a todo list (#1229)', () => {
-  test('is the inbox, the note chosen as the inbox, or a note Orden made one', () => {
-    expect(isTodoList('.Inbox.md', null)).toBe(true)
-    expect(isTodoList('Lists/Inbox.md', null, 'Lists/Inbox.md')).toBe(true)
-    expect(isTodoList('Errands.md', { [LIST_KEY]: LIST_VALUE })).toBe(true)
-  })
-
-  test('is a note in Projects carrying no mark, until the space is marked (#1333)', () => {
-    expect(inOldFolder('Projects/Garden.md', null, false)).toBe(true)
-    expect(inOldFolder('projects/Work/Hiring.md', { icon: 'star' }, false)).toBe(true)
-    expect(inOldFolder('Projects/Garden.md', null, true)).toBe(false)
-    expect(inOldFolder('Projects/Garden.md', { [LIST_KEY]: 'no' }, false)).toBe(false)
-    expect(inOldFolder('Garden.md', null, false)).toBe(false)
-    expect(inOldFolder('Projects/plan.canvas', null, false)).toBe(false)
-  })
-
-  test('is never a note by where it is, the Projects folder included', () => {
-    expect(isTodoList('Projects/Errands.md', null)).toBe(false)
-    expect(isTodoList('Notes/Meeting.md', { icon: 'star' })).toBe(false)
-  })
-})
 
 describe('done dates kept as the list’s metadata (#1228)', () => {
   const today = '2026-11-06'

@@ -1,5 +1,4 @@
 import { INBOX_KEY } from '@orden/bases/inbox'
-import { LIST_KEY, LIST_VALUE } from '@orden/bases/todo-lists'
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { accountInbox } from '../inbox/account.svelte'
@@ -56,7 +55,7 @@ async function moveIn(root: string): Promise<void> {
   const moved = await carriedFrom(path, how, false)
   if (moved === 'waiting') return
   if (moved === 'carried') {
-    workspace.itemMeta.set(path, { [INBOX_KEY]: null, [LIST_KEY]: LIST_VALUE }, root)
+    workspace.itemMeta.set(path, { [INBOX_KEY]: null }, root)
   }
   for (const [relative, meta] of items) {
     if (meta[INBOX_KEY] !== undefined && !samePath(relative, picked, root)) {

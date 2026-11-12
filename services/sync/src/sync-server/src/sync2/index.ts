@@ -3,7 +3,6 @@ import { indexRequestOf, searchRequestOf } from '@orden/scan/wire'
 import { Hono } from 'hono'
 import { laterOf, pokeSpace } from '../hub/poke'
 import { mayChangeTree, mayKeepVersions, mayPushDocuments } from '../limits'
-import { remindRelisted } from '../push/relisted'
 import { NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY, TOO_MANY_CHANGES } from '../refused'
 import { atLeast, refusal, spaceOf } from '../spaces/space'
 import type { Env, Variables } from '../types'
@@ -56,7 +55,6 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
     await reproject(context.env, space.id, done.tree)
     await pokeSpace(context.env, laterOf(context), space.id, done.cursor, device)
   }
-  await remindRelisted(context.env, space.id, done.relisted).catch(() => undefined)
 
   return answer(context, { results: done.value, cursor: done.cursor })
 })

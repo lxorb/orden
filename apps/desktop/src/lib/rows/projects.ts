@@ -1,14 +1,5 @@
 import { without } from '../records'
-import {
-  insideItsSpace,
-  insideSpace,
-  isMarkdownPath,
-  movedTo,
-  pathKey,
-  relativeTo,
-  samePath,
-  within,
-} from '../space-paths'
+import { insideItsSpace, insideSpace, movedTo, pathKey, relativeTo, samePath } from '../space-paths'
 import { forget, isRecord, isString, keepJson, stored } from '../stored'
 import type { KeptByPath } from '../workspace/file-ops'
 
@@ -39,10 +30,6 @@ export function projectsOf(root: string): string {
   const all = read()
   const key = keyOf(all, root)
   return (key === undefined ? undefined : all[key]) ?? PROJECTS
-}
-
-export function inProjects(root: string, relative: string): boolean {
-  return isMarkdownPath(relative) && !!within(projectsOf(root), relative, root)
 }
 
 export function projectsFolder(root: string): string {

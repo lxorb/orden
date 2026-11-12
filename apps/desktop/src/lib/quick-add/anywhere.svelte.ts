@@ -5,10 +5,9 @@ import { heldForLife } from '../locks'
 import { log } from '../log'
 import { shortcuts } from '../shortcuts.svelte'
 import { invoke } from '../tauri'
-import { workspace } from '../workspace.svelte'
 import { quickAdd } from './asked.svelte'
 import { addingOnce, ANSWERING, CHANNEL, heard, type Said } from './channel'
-import { addTask, noteNames } from './write'
+import { addTask } from './write'
 
 export function listen(): () => void {
   const stopping = new AbortController()
@@ -25,10 +24,8 @@ export function listen(): () => void {
 
   const answer = (said: Said) => {
     if (said.kind === 'hello') {
-      const root = workspace.activeSpace?.root
       channel?.postMessage({
         kind: 'world',
-        notes: root ? noteNames(root).slice(0, 400) : [],
         lang: region(),
         smart: quickAdd.smart,
       } satisfies Said)
