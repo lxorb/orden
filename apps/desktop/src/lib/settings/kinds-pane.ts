@@ -5,7 +5,6 @@ import { kindName } from '../kind-words'
 import { kindLines, newKinds } from '../new-kinds'
 import { gated, hiddenKinds } from '../settings.svelte'
 import type { Field, Group, Pane } from './fields'
-import { among } from './hold'
 
 function kindGroups(): Group[] {
   const titles = { write: t('Notes'), run: t('Terminal'), web: t('Web') }
@@ -15,7 +14,6 @@ function kindGroups(): Group[] {
     fields: line.map((one): Field => ({
       kind: 'switch',
       key: `kinds.${one.kind}`,
-      store: { ...among(hiddenKinds, 'hidden', one.kind), shared: 'hiddenKinds' },
       label: kindName(one.kind),
       hint: t('Offers this type when you make something new; off only takes it out of that list.'),
       words: ['type', 'kind', 'new', 'new tab', 'ctrl+t', 'create', 'hide', 'show', one.kind],

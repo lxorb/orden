@@ -447,15 +447,6 @@ vi.mock('../../settings/declarations', () => ({
         get: () => rows.accent,
         set: (value: string) => (rows.accent = value),
       },
-      {
-        kind: 'switch',
-        key: 'appearance.frame',
-        label: 'Frame',
-        hint: 'The window frame.',
-        declared: '/etc/orden/settings.json',
-        get: (): boolean => true,
-        set: () => undefined,
-      },
       ...['en', 'de'].map((member) => ({
         kind: 'switch',
         key: 'spelling.languages',
@@ -984,18 +975,12 @@ describe('what asks the reader first', () => {
     expect(await call('read_setting', { key: 'appearance' })).toMatchObject({
       result: {
         pane: 'appearance',
-        settings: [
-          { key: 'appearance.accent', value: 'violet' },
-          { key: 'appearance.frame', value: true },
-        ],
+        settings: [{ key: 'appearance.accent', value: 'violet' }],
       },
     })
     expect(
       await call('write_setting', { key: 'appearance.accent', value: 'orange' }),
     ).toMatchObject({ code: 'bad_arguments' })
-    expect(await call('write_setting', { key: 'appearance.frame', value: false })).toMatchObject({
-      code: 'read_only',
-    })
 
     answer = { status: 'ok', result: {} }
     expect(await call('write_setting', { key: 'editor.focusMode', value: true })).toMatchObject({

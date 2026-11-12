@@ -1,26 +1,8 @@
 import { plural, t } from '../i18n.svelte'
 import { setWord } from '../kind-choice'
 import { prompt } from '../prompt.svelte'
-import { hiddenKinds } from '../settings.svelte'
-import type { Store } from '../settings/hold'
-import { NO_PROTECTION_WORD, PROTECTION_WORD, protectionIn, protectionOn } from './gate'
+import { NO_PROTECTION_WORD, PROTECTION_WORD, protectionOn } from './gate'
 import { protection } from './protection.svelte'
-
-const listOf = (whole: unknown): readonly string[] =>
-  Array.isArray(whole) ? whole.filter((one): one is string => typeof one === 'string') : []
-
-export function protectionStore(): Store {
-  return {
-    on: hiddenKinds,
-    name: 'hidden',
-    shared: 'hiddenKinds',
-    take: (whole) => protectionIn(listOf(whole)),
-    put: (whole, there) => [
-      ...listOf(whole).filter((one) => one !== PROTECTION_WORD && one !== NO_PROTECTION_WORD),
-      there ? PROTECTION_WORD : NO_PROTECTION_WORD,
-    ],
-  }
-}
 
 function turned(on: boolean): void {
   setWord(on ? NO_PROTECTION_WORD : PROTECTION_WORD, false)

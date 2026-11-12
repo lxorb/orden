@@ -1,5 +1,4 @@
 import { ApiError, BASE, request } from '../api'
-import { shareable } from '../settings/held'
 import { isRecord, isString, parsed } from '../stored'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
 import type { GraphSettings } from '../workspace/graph-settings.svelte'
@@ -378,7 +377,7 @@ export const routes = {
     request<{ settings: AccountSettings }>('/v1/settings', {
       method: 'PATCH',
       token,
-      body: shareable(patch),
+      body: patch,
     }),
 
   setAskKey: (token: string, key: string) =>

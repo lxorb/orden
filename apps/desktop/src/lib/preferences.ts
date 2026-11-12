@@ -9,7 +9,6 @@ import { appearancePane } from './settings/appearance-pane'
 import { exportPane } from './settings/export-pane'
 import { experimentalPane } from './settings/experimental-pane'
 import type { Field, Pane } from './settings/fields'
-import { declared } from './settings/declared.svelte'
 import { changed } from './usage/tally'
 
 export type {
@@ -28,7 +27,7 @@ export function preferences(view?: EditorView): Pane[] {
     ...pane,
     groups: pane.groups.map((group) => ({
       ...group,
-      fields: group.fields.map((one) => tallied(declared.lock(one))),
+      fields: group.fields.map(tallied),
     })),
   }))
 }

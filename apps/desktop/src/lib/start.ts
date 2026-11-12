@@ -62,9 +62,6 @@ export function start(): () => void {
   hiddenKinds.restore()
   settings.restore()
   if (!__EVEN_PLUGIN__) gate.restore()
-  if (isDesktop && !__EVEN_PLUGIN__) {
-    void import('./settings/file').then((file) => file.declare(() => settings.show('general')))
-  }
   const settling = setTimeout(() => {
     startup.settled = true
     if (!__EVEN_PLUGIN__) void import('./hints.svelte').then(({ hints }) => hints.settle())

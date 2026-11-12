@@ -24,7 +24,6 @@ test('the stylesheet is the rounded frame, the only one', () => {
 
 test('nothing offers another frame: no setting, no file of its choices', () => {
   expect(read('./theme.svelte.ts')).not.toMatch(/cornersSetting|'\.\/corners'/)
-  expect(read('../../../../packaging/nix/settings-schema.json')).not.toContain('appearance.corners')
 })
 
 test('every surface on the frame reads its tokens rather than a corner of its own', () => {
@@ -85,8 +84,5 @@ test('every pane is a card rounded at all four corners, with no setting that squ
   const app = read('../App.svelte')
   expect(app).not.toMatch(/grounded|flushBottom/)
   expect(read('./modes.svelte.ts')).not.toContain('flushBottom: boolean')
-  expect(read('../../../../packaging/nix/settings-schema.json')).not.toContain(
-    'appearance.flushBottom',
-  )
   expect(read('./web-tab/WebTab.svelte')).toContain('cardCorner(hole)')
 })

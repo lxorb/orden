@@ -152,7 +152,7 @@ async function rows(): Promise<Field[]> {
 }
 
 async function declaredSetting(key: string, all: Field[]): Promise<Setting | null> {
-  const { refusal, schemaOf } = await import('../../settings/file-schema')
+  const { refusal, schemaOf } = await import('../../settings/schema')
   const named = all.filter((one) => one.key === key)
   const schema = schemaOf(named)[key]
   const [first] = named
@@ -167,9 +167,6 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
     ...(schema.enum ? { choices: schema.enum } : {}),
     read,
     write: (value) => {
-      const held = named.find((one) => one.declared)
-      if (held)
-        throw new Refused('read_only', `${key} is set by the settings file at ${held.declared}`)
       if (named.some((one) => one.kind === 'value' || one.kind === 'picture')) {
         throw new Refused('read_only', `${key} is chosen in Settings, not written`)
       }

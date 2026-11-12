@@ -18,7 +18,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'slider',
             key: 'editor.textSize',
-            store: { on: modes, name: 'zoom' },
             label: t('Text size'),
             hint: t('How large the text of notes is.'),
             words: ['font', 'zoom', 'bigger', 'smaller'],
@@ -33,7 +32,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'slider',
             key: 'editor.lineSpacing',
-            store: { on: modes, name: 'lineHeight' },
             label: t('Line spacing'),
             hint: t('The space between the lines of a note.'),
             words: ['line height', 'leading'],
@@ -47,7 +45,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'slider',
             key: 'editor.lineWidth',
-            store: { on: modes, name: 'width' },
             label: t('Line width'),
             hint: t('How wide a line of a note grows before it wraps.'),
             words: ['column', 'wide', 'readable width'],
@@ -67,7 +64,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             key: 'editor.closeBrackets',
-            store: { on: modes, name: 'closeBrackets' },
             label: t('Close brackets and quotes'),
             hint: t('Typing an opening bracket or quote adds the closing one too.'),
             words: ['auto pair', 'autoclose'],
@@ -78,7 +74,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             key: 'editor.typewriterMode',
-            store: { on: modes, name: 'typewriter' },
             label: t('Typewriter mode'),
             hint: t('Keeps the line you are writing in the middle of the screen.'),
             words: ['centre', 'center', 'scroll'],
@@ -89,7 +84,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             key: 'editor.focusMode',
-            store: { on: modes, name: 'focus' },
             label: t('Focus mode'),
             hint: t('Dims everything but the paragraph you are writing in.'),
             words: ['zen', 'distraction free', 'dim'],
@@ -100,7 +94,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             key: 'editor.ligatures',
-            store: { on: modes, name: 'ligatures', shared: 'ligatures' },
             label: t('Ligatures'),
             hint: t('Joins pairs such as -> or != into one sign, in code only or everywhere.'),
             words: ['font'],
@@ -116,7 +109,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             key: 'editor.attachments',
-            store: { on: modes, name: 'attachments', shared: 'attachments' },
             label: t('Attachments'),
             hint: t('Where a picture or file you paste or drop into a note is saved.'),
             words: ['images', 'pictures', 'paste', 'assets'],
@@ -137,7 +129,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             key: 'editor.canvasRotation',
-            store: { on: modes, name: 'canvasTurns', shared: 'canvasTurns' },
             label: t('Rotate a canvas with two fingers'),
             hint: t('Turning two fingers on a touchpad or screen rotates the canvas.'),
             words: ['canvas', 'rotate', 'turn', 'two fingers', 'pinch', 'concepts', 'trackpad'],
@@ -148,7 +139,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             key: 'editor.canvasRotationSnaps',
-            store: { on: modes, name: 'canvasTurnSnaps', shared: 'canvasTurnSnaps' },
             label: t('Snap the rotation to right angles'),
             hint: t('A rotation that ends near a right angle settles on it.'),
             words: ['canvas', 'rotate', 'turn', 'snap', 'upright', 'right angle', 'straight'],
@@ -164,7 +154,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             key: 'editor.newPages',
-            store: { on: modes, name: 'pagesPaper' },
             label: t('New pages'),
             hint: t('The paper size a new page note starts with.'),
             options: [
@@ -184,7 +173,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             key: 'editor.noteName',
-            store: { on: settings, name: 'noteIdFormat' },
             label: t('Name'),
             hint: t('How the name of a new unique note is made from the date and time.'),
             options: ID_FORMATS.map((format) => ({
@@ -203,7 +191,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             key: 'editor.newLinks',
-            store: { on: modes, name: 'linkFormat', shared: 'linkFormat' },
             label: t('New links'),
             hint: t(
               'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.',
@@ -226,7 +213,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             key: 'editor.codeHighlighting',
-            store: { on: modes, name: 'codeTheme' },
             label: t('Highlighting'),
             hint: t('The colours code in a note is highlighted in.'),
             words: ['syntax', 'code colours', 'code colors'],
@@ -238,7 +224,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             key: 'editor.codeLineNumbers',
-            store: { on: modes, name: 'lineNumbers' },
             label: t('Line numbers'),
             hint: t('Numbers the lines of code blocks.'),
             words: ['gutter'],

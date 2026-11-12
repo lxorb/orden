@@ -1,8 +1,5 @@
 import type { Field } from './fields'
 
-const PLATFORMS = ['linux', 'macos', 'windows'] as const
-export type Platform = (typeof PLATFORMS)[number]
-
 type Value = boolean | number | string
 
 export interface SettingSchema {
@@ -12,7 +9,6 @@ export interface SettingSchema {
   max?: number
   default?: Value | string[]
   description: string
-  platforms?: Platform[]
 }
 
 export type Schema = Record<string, SettingSchema>
@@ -69,17 +65,6 @@ function gathered(one: SettingSchema, other: SettingSchema, key: string): Settin
   }
 }
 
-function across(one: SettingSchema, other: SettingSchema, key: string): SettingSchema {
-  if (one.type !== other.type) throw new Error(`settings key ${key} is two types`)
-  const both: SettingSchema = { ...one }
-  if (one.enum && other.enum) both.enum = [...new Set([...one.enum, ...other.enum])]
-  else delete both.enum
-  if (JSON.stringify(one.default) !== JSON.stringify(other.default)) delete both.default
-  if (one.min !== undefined && other.min !== undefined) both.min = Math.min(one.min, other.min)
-  if (one.max !== undefined && other.max !== undefined) both.max = Math.max(one.max, other.max)
-  return both
-}
-
 export function schemaOf(fields: Field[]): Schema {
   const found = new Map<string, SettingSchema>()
   for (const field of fields) {
@@ -87,26 +72,6 @@ export function schemaOf(fields: Field[]): Schema {
     if (!setting || !field.key) continue
     const there = found.get(field.key)
     found.set(field.key, there ? gathered(there, setting, field.key) : setting)
-  }
-  return sorted(found)
-}
-
-export function mergedSchema(each: Record<Platform, Schema>): Schema {
-  const found = new Map<string, SettingSchema>()
-  const where = new Map<string, Platform[]>()
-  for (const platform of PLATFORMS) {
-    for (const [key, setting] of Object.entries(each[platform])) {
-      const there = found.get(key)
-      found.set(key, there ? across(there, setting, key) : setting)
-      const platforms = where.get(key)
-      if (platforms) platforms.push(platform)
-      else where.set(key, [platform])
-    }
-  }
-  for (const [key, platforms] of where) {
-    if (platforms.length === PLATFORMS.length) continue
-    const setting = found.get(key)
-    if (setting) found.set(key, { ...setting, platforms })
   }
   return sorted(found)
 }
