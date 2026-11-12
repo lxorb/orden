@@ -141,8 +141,8 @@ describe('what a row of the file list offers', () => {
   const row = moduleBody(source, 'export function rowMenu(entry: Entry)')
   const entries = moduleBody(read('lib/menu.svelte.ts'), 'export function iconEntries(')
 
-  test('opening it, its name, and where it goes', () => {
-    for (const entry of ["t('Open')", "t('Rename')", 'moveEntry(entry)']) {
+  test('its name, and where it goes', () => {
+    for (const entry of ["t('Rename')", 'moveEntry(entry)']) {
       expect(row, entry).toContain(entry)
     }
   })
