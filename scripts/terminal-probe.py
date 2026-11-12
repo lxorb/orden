@@ -7,7 +7,7 @@ of ConPTY, through the channel, onto the screen, and keystrokes back - is a ques
 the real thing. The unit tests hold the pieces; this holds them together.
 
 What it checks, through the app's own automation endpoint with `eval` turned on (which is
-the window itself, and so reaches what the window reaches; see docs/terminal.md):
+the window itself, and so reaches what the window reaches):
 
 * **Command Prompt** opens in a tab, types `echo hi` through xterm.js's own input, and
   `hi` comes back on a line of its own. `cd ..` is said back as OSC 9;9, and the tab's

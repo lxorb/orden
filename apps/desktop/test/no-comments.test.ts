@@ -12,7 +12,6 @@ const SKIPPED = new Set([
   '.wrangler',
   '.svelte-kit',
   'graphify-out',
-  'docs',
   'patches',
   'shots',
   'tauri-runtime-cef',

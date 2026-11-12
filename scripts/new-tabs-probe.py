@@ -11,7 +11,7 @@ What it checks, through the app's own automation endpoint:
 * **Ctrl+Shift+P** opens the palette on the commands - `>` in the field, the caret after
   it - in the packaged window, and again over a web tab, which is the case a page could
   have swallowed. A page that has the keyboard keeps its own keys, as it does for every
-  other chord; see docs/web-tabs.md.
+  other chord.
 * **Ctrl+T** opens the chooser, with the keyboard on the first row.
 * **Every kind** - a plane, a deck of pages, a website - opens as a tab with no file in
   the space and no row in the list.
@@ -20,7 +20,7 @@ What it checks, through the app's own automation endpoint:
 
 The page is served from here, on a port of its own, so nothing is asked of anybody's
 network. The space is made in a temp folder named by `ORDEN_SPACES_DIR`, so the run
-touches nothing of anybody's; see docs/automation.md.
+touches nothing of anybody's.
 
     python scripts/new-tabs-probe.py --exe apps/desktop/src-tauri/target/release/orden.exe
 

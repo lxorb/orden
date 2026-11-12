@@ -20,7 +20,7 @@ What it checks, through the app's own automation endpoint:
   file under the name is what Proton Drive kept as a "Name clash" copy, once per save.
 
 The spaces are made in a temp folder named by `ORDEN_SPACES_DIR`, so the run touches
-nothing of anybody's; see docs/automation.md. Every launch goes through `run_probe`,
+nothing of anybody's. Every launch goes through `run_probe`,
 off the screen and without the keyboard; see probe_app.py.
 
     npx vite build --mode drive                     # in apps/desktop

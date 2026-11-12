@@ -1,4 +1,4 @@
-# ordend on a server of its own (docs/online-terminal.md 4.15): started at boot, started
+# ordend on a server of its own: started at boot, started
 # again whenever it ends - a crash, the kernel's OOM killer, its own watchdog
 # (src/watchdog.ts), or the Restart the owner or the health path asks for - and brought
 # up to date with the Worker's own build first (orden-update). Never given up on: the

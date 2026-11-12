@@ -127,7 +127,7 @@ const USAGE = `orden - drive the running Orden
   Every verb takes --space to work in a space other than the one that is open.
   --json answers as JSON rather than as words. Anything that changes a note needs
   --yes, and eval is off until this installation's endpoint file says otherwise.
-  nib is the same command. See docs/automation.md.`
+  nib is the same command.`
 
 async function main() {
   const argv = process.argv.slice(2)

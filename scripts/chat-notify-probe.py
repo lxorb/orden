@@ -1,7 +1,7 @@
 """A chat's notification as Windows holds it: the crate's toast is raised under the app's
 own id, with the words, the chat's tag, Orden's group and the field to answer in; a second
 one for the same chat replaces the first; the page takes it back; and nothing of it is
-left once the app has gone (docs/chats.md 4.11, src-tauri/src/notices.rs).
+left once the app has gone (src-tauri/src/notices.rs).
 
 Windows only. The page is asked through its own bridge, over the DevTools protocol
 (`Runtime.evaluate`, never a key or a click; see scripts/devtools.py), the way the chats'

@@ -1,6 +1,5 @@
 {
   "proves": "the stop cancels a call in flight at once and pauses the agent until the reader gives it back",
-  "doc": "9.5",
   "steps": [
     {
       "call": "browser_open",

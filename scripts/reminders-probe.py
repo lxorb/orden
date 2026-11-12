@@ -1,5 +1,5 @@
 """A reminder handed to Windows' own schedule: the toast is registered, under the app's id,
-to ring with Orden not running (docs/tasks.md 5.10 and 7.3).
+to ring with Orden not running.
 
 Windows only. What it proves, end to end through the packaged app: a space with a task
 that asks to be reminded is read, the reminders store plans it and hands the plan to the

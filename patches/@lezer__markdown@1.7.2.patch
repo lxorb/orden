@@ -6,7 +6,7 @@ index 24325c8bd1340397080d209d9c6b0ff9cc0f60fb..f09cb428da74781030a38841a5aaf2bd
      */
      parse(cx: InlineContext, next: number, pos: number): number;
      /**
-+    Patched (pnpm patch, see docs/patches.md): the characters, all
++    Patched (pnpm patch): the characters, all
 +    ASCII, at which `parse` can return anything but -1. When given,
 +    it is not asked at any other.
 +    */
@@ -23,7 +23,7 @@ index 24325c8bd1340397080d209d9c6b0ff9cc0f60fb..f09cb428da74781030a38841a5aaf2bd
      */
      parse(cx: InlineContext, next: number, pos: number): number;
      /**
-+    Patched (pnpm patch, see docs/patches.md): the characters, all
++    Patched (pnpm patch): the characters, all
 +    ASCII, at which `parse` can return anything but -1. When given,
 +    it is not asked at any other.
 +    */
@@ -40,7 +40,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..184b2850aefa0fa773280362b5f42035
          return -1;
      return count < 3 ? -1 : 1;
  }
-+// Patched (pnpm patch, see docs/patches.md): lists and quotes are read 100 deep at
++// Patched (pnpm patch): lists and quotes are read 100 deep at
 +// most. Each one deeper reads the rest of its line again, so a line of `- - - …`
 +// twenty thousand long took seconds; past that depth the line is a paragraph's.
 +const NEST_DEEPEST = 100;
@@ -96,7 +96,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..184b2850aefa0fa773280362b5f42035
      */
      parseInline(text, offset) {
          let cx = new InlineContext(this, text, offset);
-+        // Patched (pnpm patch, see docs/patches.md): a parser that names the characters
++        // Patched (pnpm patch): a parser that names the characters
 +        // it starts at is asked only at those, so plain text is not offered to all twenty.
 +        let table = this.inlineTable || (this.inlineTable = inlineTable(this.inlineParsers));
          outer: for (let pos = offset; pos < cx.end;) {
@@ -166,7 +166,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..184b2850aefa0fa773280362b5f42035
              return -1;
          // Scanning back to the next link/image start marker
 -        for (let i = cx.parts.length - 1; i >= 0; i--) {
-+        // Patched (pnpm patch, see docs/patches.md): as far down as the last
++        // Patched (pnpm patch): as far down as the last
 +        // scan that found none, as cmark's `openers_bottom`: no marker below it
 +        // can come back, and every `]` read the line back to its start again.
 +        let bottom = Math.min(cx.linkBottom, cx.parts.length);
@@ -327,7 +327,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..184b2850aefa0fa773280362b5f42035
                  let pos = absPos - cx.offset;
                  if (pos && /\w/.test(cx.text[pos - 1]))
                      return -1;
-+                // Patched (pnpm patch, see docs/patches.md): only `www.`, `http`, `mailto:`
++                // Patched (pnpm patch): only `www.`, `http`, `mailto:`
 +                // and `xmpp:` start here without an `@` at most a hundred characters on, and
 +                // the next `@` is looked up once, not read for at every word.
 +                if (next != 119 && next != 104 && next != 109 && next != 120) {

@@ -87,7 +87,6 @@ class EveryScenario(unittest.TestCase):
             with self.subTest(scenario=path.stem):
                 scenario = json.loads(path.read_text(encoding="utf-8"))
                 self.assertTrue(scenario.get("proves"), "says what it proves")
-                self.assertTrue(scenario.get("doc"), "names the sections it proves")
                 for step in scenario["steps"]:
                     self.assertEqual(len(STEPS & step.keys()), 1, step)
                 self.assertLessEqual(set(needed(scenario)), VERBS)

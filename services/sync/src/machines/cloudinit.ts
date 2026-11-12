@@ -70,7 +70,7 @@ ${block([key])}`)
   ].join('; ')
 
   return `#cloud-config
-# An Orden online terminal machine (docs/online-terminal.md 4.15).
+# An Orden online terminal machine.
 hostname: orden
 disable_root: true
 ssh_pwauth: false

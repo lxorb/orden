@@ -1,6 +1,5 @@
 {
   "proves": "a press by ref lands on a page that was scrolled, and where a press by ref is refused as covered, a press at a point in the tab lands where the element shows (#373)",
-  "doc": "5.2",
   "steps": [
     {
       "call": "browser_open",

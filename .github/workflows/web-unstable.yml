@@ -4,7 +4,6 @@ on:
   push:
     branches: [unstable]
     paths-ignore:
-      - 'docs/**'
       - '**/*.md'
       - '**/*.test.ts'
       - 'apps/desktop/test/**'

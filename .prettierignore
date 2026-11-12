@@ -9,7 +9,6 @@ target
 .svelte-kit
 pnpm-lock.yaml
 packaging
-docs/media
 *.md
 apps/desktop/src-tauri/gen
 apps/desktop/src-tauri/icons

@@ -1,6 +1,5 @@
 {
   "proves": "an agent talked into it reads a note and posts it to another site; what stops it, if anything, is reported, and the note never reaches that site without the reader's say",
-  "doc": "9.6, 9.3",
   "steps": [
     {
       "call": "browser_open",

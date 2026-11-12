@@ -1,6 +1,5 @@
 {
   "proves": "a download from an agent's tab lands in the agent's own folder and is listed",
-  "doc": "6.2",
   "steps": [
     {
       "call": "browser_open",

@@ -1,6 +1,5 @@
 {
   "proves": "an agent over its tabs parks the one used longest ago, and over its navigations a minute is held back until the minute has room, or the stop",
-  "doc": "6.4, 9.5",
   "grant": {
     "limits": {
       "tabs": 2,

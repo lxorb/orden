@@ -9,7 +9,7 @@ index 1326e31224422c49602aeef5d504322ab4516409..c8936f6ba5e8ef70a98687110e21307e
 -    selectionsAfter) {
 -        this.changes = changes;
 +    selectionsAfter, 
-+    // Patched (pnpm patch, see docs/patches.md): the changes of a run
++    // Patched (pnpm patch): the changes of a run
 +    // of joined events, held as a stack of composed runs whose lengths
 +    // halve towards its top and composed only when read, so joining n
 +    // events takes n log n time and memory, not n squared.
@@ -80,7 +80,7 @@ index 471b4b863c1f42ad3da846ca8ca25108627fba4e..67911d23f5054f09e4106c3313a76fa9
 -    selectionsAfter) {
 -        this.changes = changes;
 +    selectionsAfter, 
-+    // Patched (pnpm patch, see docs/patches.md): the changes of a run
++    // Patched (pnpm patch): the changes of a run
 +    // of joined events, held as a stack of composed runs whose lengths
 +    // halve towards its top and composed only when read, so joining n
 +    // events takes n log n time and memory, not n squared.

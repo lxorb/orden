@@ -1,6 +1,6 @@
 """The agent scenarios, run against a probe build. Windows only.
 
-Each file in `scenarios/` is one promise of docs/agent-native.md, written as the calls an
+Each file in `scenarios/` is one promise to an agent, written as the calls an
 agent makes and what must come back, and what the sites must have seen: the fake agent
 (fake_agent.py) makes the calls, the sites (pages.py) say what happened, and the family
 watch in scripts/probe_app.py ends the run the moment anything of the app or of the
@@ -24,7 +24,7 @@ The exe is a probe build, as scripts/probe_app.py says. A scenario ends as one o
 
 `--launch-cost N` launches the probe N times with no agent and N times with one set up,
 alternately, with the app's own launch trace on, and compares the two: an agent that is
-configured and not connected must cost the launch nothing (docs/agent-native.md 11).
+configured and not connected must cost the launch nothing.
 """
 
 from __future__ import annotations

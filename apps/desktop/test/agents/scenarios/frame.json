@@ -1,6 +1,5 @@
 {
   "proves": "an element inside a frame from another site, which runs in a process of its own, is in the snapshot with a frame ref and is pressed as trusted input",
-  "doc": "5.2, 3",
   "steps": [
     {
       "call": "browser_open",

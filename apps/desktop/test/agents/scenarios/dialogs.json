@@ -1,6 +1,5 @@
 {
   "proves": "alert, confirm, prompt, two alerts in a row and beforeunload are each held and reported on the next answer until browser_dialog answers them, and none reaches the screen",
-  "doc": "6.2",
   "steps": [
     {
       "call": "browser_open",

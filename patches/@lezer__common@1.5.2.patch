@@ -20,7 +20,7 @@ index e9a36ce6254bda9de2311ee582d53370c7afc879..cbf1a17c15a11658f831d0d4ab4c0100
              let props = Object.assign(Object.create(null), inner.target.props);
 -            props[NodeProp.mounted.id] = new MountedTree(done, inner.overlay, inner.parser, inner.bracketed);
 +            let mount = new MountedTree(done, inner.overlay, inner.parser, inner.bracketed);
-+            // Patched (pnpm patch, see docs/patches.md): an inner parse that was stopped may end
++            // Patched (pnpm patch): an inner parse that was stopped may end
 +            // before its node does, so a later parse never takes its last node as finished.
 +            if (inner.stopped)
 +                mount.stopped = true;
@@ -46,7 +46,7 @@ index e9a36ce6254bda9de2311ee582d53370c7afc879..cbf1a17c15a11658f831d0d4ab4c0100
              }
 -            else {
 -                break;
-+            // Patched (pnpm patch, see docs/patches.md): the child holding `pos` is a
++            // Patched (pnpm patch): the child holding `pos` is a
 +            // buffer, or none holds it. Each later call read the children from the first
 +            // again, so a long paragraph checked its nodes in quadratic time; go on to the
 +            // first child after it, or past this node.
@@ -94,7 +94,7 @@ index 8b29bb351cae09b8f8a594858e4ed12f877fd4f3..481196e6e15df89a5b9d0562ada2e6f2
              let props = Object.assign(Object.create(null), inner.target.props);
 -            props[NodeProp.mounted.id] = new MountedTree(done, inner.overlay, inner.parser, inner.bracketed);
 +            let mount = new MountedTree(done, inner.overlay, inner.parser, inner.bracketed);
-+            // Patched (pnpm patch, see docs/patches.md): an inner parse that was stopped may end
++            // Patched (pnpm patch): an inner parse that was stopped may end
 +            // before its node does, so a later parse never takes its last node as finished.
 +            if (inner.stopped)
 +                mount.stopped = true;
@@ -120,7 +120,7 @@ index 8b29bb351cae09b8f8a594858e4ed12f877fd4f3..481196e6e15df89a5b9d0562ada2e6f2
              }
 -            else {
 -                break;
-+            // Patched (pnpm patch, see docs/patches.md): the child holding `pos` is a
++            // Patched (pnpm patch): the child holding `pos` is a
 +            // buffer, or none holds it. Each later call read the children from the first
 +            // again, so a long paragraph checked its nodes in quadratic time; go on to the
 +            // first child after it, or past this node.

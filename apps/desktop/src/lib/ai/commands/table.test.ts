@@ -1,52 +1,7 @@
-import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import type { ProviderKind } from '../providers'
 import { availability } from './available'
 import { GOAL_CLEAR, ROWS, takenNames } from './table'
-
-const DOC = readFileSync(new URL('../../../../../../docs/ai-sidebar.md', import.meta.url), 'utf8')
-
-function section(from: string, to: string): string[] {
-  const start = DOC.indexOf(from)
-  const end = DOC.indexOf(to, start + from.length)
-  expect(start, from).toBeGreaterThan(-1)
-  return DOC.slice(start, end < 0 ? undefined : end).split('\n')
-}
-
-const cells = (line: string) =>
-  line
-    .split(/(?<!\\)\|/)
-    .slice(1, -1)
-    .map((one) => one.trim().replace(/\\\|/g, '|'))
-
-const ticked = (cell: string) => [...cell.matchAll(/`([^`]+)`/g)].map((found) => found[1] ?? '')
-
-interface DocRow {
-  name: string
-  args: string
-  synonyms: string[]
-  argSynonyms: string[]
-}
-
-const DOC_ROWS: DocRow[] = section('### 3.1', '### 3.7')
-  .filter((line) => line.startsWith('| `/'))
-  .map((line) => {
-    const [command = '', synonyms = ''] = cells(line)
-    const [written = ''] = ticked(command)
-    const [name = '', ...args] = written.slice(1).split(' ')
-    const words = ticked(synonyms)
-    return {
-      name,
-      args: args.join(' '),
-      synonyms: words.filter((one) => one.startsWith('/')).map((one) => one.slice(1)),
-      argSynonyms: words.filter((one) => !one.startsWith('/')),
-    }
-  })
-
-const EXCLUDED: string[] = section('### 3.7', '\n---')
-  .filter((line) => line.startsWith('| `/'))
-  .flatMap((line) => ticked(cells(line)[0] ?? ''))
-  .map((one) => one.slice(1))
 
 const KINDS: readonly ProviderKind[] = [
   'anthropic',
@@ -58,39 +13,19 @@ const KINDS: readonly ProviderKind[] = [
 ]
 
 describe('the command table', () => {
-  test('holds the counts the document states', () => {
-    expect(DOC).toContain('**63 commands** and **46 synonyms**')
-    expect(DOC_ROWS).toHaveLength(63)
-    expect(DOC_ROWS.flatMap((one) => one.synonyms)).toHaveLength(46)
+  test('holds 63 commands and 46 synonyms', () => {
     expect(ROWS).toHaveLength(63)
     expect(ROWS.flatMap((one) => one.synonyms)).toHaveLength(46)
   })
 
-  test('registers every row of section 3, in its order, with its synonyms and arguments', () => {
-    expect(ROWS.map((one) => one.name)).toEqual(DOC_ROWS.map((one) => one.name))
-    for (const row of DOC_ROWS) {
-      const ours = ROWS.find((one) => one.name === row.name)
-      expect(ours?.synonyms, row.name).toEqual(row.synonyms)
-      expect(ours?.args ?? '', row.name).toBe(row.args)
-    }
-  })
-
-  test("takes /goal clear's other words as the document lists them", () => {
-    const goal = DOC_ROWS.find((one) => one.name === 'goal')
-    expect(goal?.argSynonyms[0]).toBe('clear')
-    expect(GOAL_CLEAR).toEqual(goal?.argSynonyms)
+  test("takes clear first among /goal clear's words", () => {
+    expect(GOAL_CLEAR[0]).toBe('clear')
   })
 
   test('takes no name or synonym twice', () => {
     const every = ROWS.flatMap((one) => [one.name, ...one.synonyms])
     expect(new Set(every).size).toBe(every.length)
     expect(takenNames().size).toBe(every.length)
-  })
-
-  test('registers nothing section 3.7 leaves out', () => {
-    expect(EXCLUDED.length).toBeGreaterThan(80)
-    const taken = takenNames()
-    expect(EXCLUDED.filter((one) => taken.has(one))).toEqual([])
   })
 
   test('gives every row a few words for the menu', () => {

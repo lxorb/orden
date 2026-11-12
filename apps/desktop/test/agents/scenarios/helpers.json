@@ -1,6 +1,5 @@
 {
   "proves": "an agent starts a helper on the reader's AI account and gets its answer back, the same through orden mcp as through the endpoint, and a model nobody offers is refused with the ones there are",
-  "doc": "docs/ai.md Helpers; docs/agent-native.md 10",
   "grant": {
     "scopes": [
       "context",

@@ -8,7 +8,7 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..83d813c97f479ed5f33c8eb7b93c94cd
 @@ -78 +78,335 @@
  //# sourceMappingURL=marked.esm.js.map
 +
-+// Patched (pnpm patch, see docs/patches.md): emphasis that cannot close is
++// Patched (pnpm patch): emphasis that cannot close is
 +// turned away before emStrong walks the rest of the paragraph for its closer.
 +//
 +// The walk takes each run of * or _ that could open and looks for the run that
@@ -144,7 +144,7 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..83d813c97f479ed5f33c8eb7b93c94cd
 +  return token
 +}
 +
-+// Patched (pnpm patch, see docs/patches.md): a link's destination is read as
++// Patched (pnpm patch): a link's destination is read as
 +// cmark reads it before the link rule is run, and the rule only over the link.
 +//
 +// The rule's destination is `[^ \t\n\x00-\x1f]+`, which runs to the next space
@@ -244,7 +244,7 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..83d813c97f479ed5f33c8eb7b93c94cd
 +  return link.call(this, end === src.length ? src : src.slice(0, end))
 +}
 +
-+// Patched (pnpm patch, see docs/patches.md): the text rule asks whether an address
++// Patched (pnpm patch): the text rule asks whether an address
 +// such as `a@b.c` starts after each character it stops at, once per paragraph.
 +//
 +// The rule stops in front of every mark another rule could start at, and at each
@@ -323,7 +323,7 @@ index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..83d813c97f479ed5f33c8eb7b93c94cd
 +  return { type: 'text', raw, text: raw, escaped: this.lexer.state.inRawBlock }
 +}
 +
-+// Patched (pnpm patch, see docs/patches.md): lists and quotes are read 100 deep at
++// Patched (pnpm patch): lists and quotes are read 100 deep at
 +// most, as the editor reads them. Each one deeper reads the rest of its line again,
 +// so a line of `- - - …` twenty thousand long took seconds; past that depth the
 +// line is a paragraph's.

@@ -1,6 +1,5 @@
 {
   "proves": "an agent reaches any of the reader's web tabs, in another space too, and keeps it whatever the reader does there: the reader's press and words in the same page take nothing from it, the agent's keys into a password field the reader is in ask first, as the grant's mode says (#1072), and the keyboard never moves",
-  "doc": "7.3",
   "steps": [
     {
       "reader_eval": "orden.workspace.openPage('{site}/together'); await new Promise((go) => setTimeout(go, 2000)); return orden.workspace.activeTabId",

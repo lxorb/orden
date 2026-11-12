@@ -1,6 +1,5 @@
 {
   "proves": "a denied site cannot be opened, and a page that sends itself there is stopped before the site sees it",
-  "doc": "9.2",
   "steps": [
     {
       "call": "browser_open",
