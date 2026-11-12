@@ -15,7 +15,7 @@
   import RequestRow from './RequestRow.svelte'
   import Screen from './Screen.svelte'
   import SearchField from './SearchField.svelte'
-  import { applyPreset, currentSettings, presetOf, setup } from './setup.svelte'
+  import { applyPreset, currentSettings, presetOf, setup } from './setup-state.svelte'
   import Tile from './Tile.svelte'
 
   const UNLISTED = 'unlisted'

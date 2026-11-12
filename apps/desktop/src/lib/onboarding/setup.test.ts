@@ -12,14 +12,14 @@ vi.stubGlobal('localStorage', {
 
 async function fresh() {
   vi.resetModules()
-  return (await import('./setup.svelte')).setup
+  return (await import('./setup-state.svelte')).setup
 }
 
 async function relaunched() {
   vi.resetModules()
   const [{ gate }, { setup }] = await Promise.all([
     import('./gate.svelte'),
-    import('./setup.svelte'),
+    import('./setup-state.svelte'),
   ])
   gate.restore()
   if (gate.showing) setup.resume()

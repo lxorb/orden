@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Coding } from './flow'
   import Screen from './Screen.svelte'
-  import { settleMarkdown, setup } from './setup.svelte'
+  import { settleMarkdown, setup } from './setup-state.svelte'
 
   const PROMPT = '~/orden'
   const TYPED = 'git pull'

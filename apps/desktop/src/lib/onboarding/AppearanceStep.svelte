@@ -2,7 +2,7 @@
   import { untrack } from 'svelte'
   import { theme, type SchemeChoice } from '../theme.svelte'
   import Screen from './Screen.svelte'
-  import { setup } from './setup.svelte'
+  import { setup } from './setup-state.svelte'
 
   const was = untrack(() => theme.scheme)
 

@@ -6,7 +6,7 @@
   import RequestRow from './RequestRow.svelte'
   import Screen from './Screen.svelte'
   import SearchField from './SearchField.svelte'
-  import { settleMarkdown, setup } from './setup.svelte'
+  import { settleMarkdown, setup } from './setup-state.svelte'
   import Tile from './Tile.svelte'
 
   const UNLISTED = 'unlisted'

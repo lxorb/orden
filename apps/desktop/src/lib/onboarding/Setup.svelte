@@ -13,7 +13,7 @@
   import HeardStep from './HeardStep.svelte'
   import ImportStep from './ImportStep.svelte'
   import NotesStep from './NotesStep.svelte'
-  import { setup } from './setup.svelte'
+  import { setup } from './setup-state.svelte'
   import WelcomeStep from './WelcomeStep.svelte'
 
   const SCREENS = {

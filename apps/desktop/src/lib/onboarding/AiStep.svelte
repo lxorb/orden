@@ -7,7 +7,7 @@
   import RequestRow from './RequestRow.svelte'
   import Screen from './Screen.svelte'
   import SearchField from './SearchField.svelte'
-  import { setup } from './setup.svelte'
+  import { setup } from './setup-state.svelte'
 
   type State = 'idle' | 'busy' | 'waiting' | 'in'
 
