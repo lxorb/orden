@@ -24,7 +24,6 @@ beforeEach(async () => {
   home = (await call(env, '/v1/spaces', { token, body: { name: 'Home' } })).json.space.id
   await note('Diary/Today.md', '# Today\n- [ ] Call her\nthe secret words\n')
   await note('Plans.md', '# Plans\n- [ ] Ship it\nsee [[Today]] and the secret words\n')
-  env.db.prepare('update notes set meta = ? where space_id = ?').run('{"todo-list":"yes"}', home)
   await call(env, `/v1/protected/spaces/${home}`, {
     method: 'PUT',
     token,
@@ -53,9 +52,7 @@ describe('an agent reaching the account', () => {
     expect(found).toContain('Plans.md')
     expect(found).not.toContain('Diary')
     expect(await tool('list_backlinks', { space: 'Home', path: 'Plans.md' })).not.toContain('Diary')
-    const tasks = await tool('list_tasks', { space: 'Home' })
-    expect(tasks).toContain('Ship it')
-    expect(tasks).not.toContain('Call her')
+    expect(await tool('list_tasks', { space: 'Home' })).not.toContain('Call her')
   })
 
   test('cannot write into it', async () => {
@@ -66,19 +63,15 @@ describe('an agent reaching the account', () => {
 
   test('cannot reach into it through the to-do tools', async () => {
     const before = await tool('read_note', { space: 'Home', path: 'Plans.md' })
-    expect(await tool('add_task', { space: 'Home', text: 'Peek', note: 'Diary/Today' })).toContain(
-      'is protected',
-    )
     expect(
       await tool('update_task', { space: 'Home', at: 'Diary/Today.md#1:abc', done: true }),
-    ).toContain('is protected')
-    expect(
-      await tool('update_task', { space: 'Home', at: 'Diary/Today.md', todo_list: false }),
-    ).toContain('is protected')
+    ).toContain('is a note')
     expect(await tool('query_base', { space: 'Home', path: 'Diary/Tasks.base' })).toContain(
       'is protected',
     )
-    expect(await tool('list_tasks', { space: 'Home' })).not.toContain('Peek')
+    expect(await tool('read_note', { space: 'Home', path: 'Diary/Today.md' })).toContain(
+      'is protected',
+    )
     expect(await tool('read_note', { space: 'Home', path: 'Plans.md' })).toBe(before)
   })
 })

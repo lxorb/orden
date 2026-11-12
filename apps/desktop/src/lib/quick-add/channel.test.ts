@@ -17,7 +17,7 @@ describe('what the global window and the app say', () => {
       id: 'a3',
       ok: false,
     })
-    expect(heard({ kind: 'world', notes: ['Inbox'], lang: 'de', smart: true })?.kind).toBe('world')
+    expect(heard({ kind: 'world', lang: 'de', smart: true })?.kind).toBe('world')
   })
 
   test('and nothing else is', () => {
@@ -34,7 +34,7 @@ describe('what the global window and the app say', () => {
         open: true,
       }),
     ).toBeNull()
-    expect(heard({ kind: 'world', notes: 'Inbox', lang: 'de', smart: true })).toBeNull()
+    expect(heard({ kind: 'world', lang: 5, smart: true })).toBeNull()
   })
 })
 

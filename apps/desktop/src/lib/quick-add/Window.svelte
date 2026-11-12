@@ -5,7 +5,6 @@
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
 
-  let notes = $state<string[]>([])
   let langs = $state<string[]>([navigator.language])
   let smart = $state(true)
   let shown = $state(0)
@@ -22,7 +21,6 @@
       return
     }
     if (said?.kind !== 'world') return
-    notes = said.notes
     langs = [said.lang]
     smart = said.smart
   }
@@ -57,7 +55,6 @@
   {#key shown}
     <QuickAdd
       {langs}
-      {notes}
       {smart}
       dictates={false}
       onsubmit={added}

@@ -16,7 +16,7 @@
     "./scan": "./src/scan.ts",
     "./tasks": "./src/agent/light.ts",
     "./tasks-query": "./src/tasks-query.ts",
-    "./todo-lists": "./src/todo-lists.ts",
+    "./done-dates": "./src/done-dates.ts",
     "./types": "./src/types.ts"
   },
   "scripts": {

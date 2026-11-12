@@ -10,7 +10,6 @@ import { rememberOldPaths } from './site/paths'
 import { keepWords } from './site/words'
 import { hooks } from './hooks'
 import { keepPictures } from './pictures'
-import { keepReminders } from './push/reminders'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
 import {
@@ -169,7 +168,6 @@ export async function addNote(
 
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
   await keepPictures(env, note, content)
-  await keepReminders(env, note, content).catch(() => undefined)
   await hooks()
     .chats.linkPointer(env, note, content)
     .catch(() => undefined)
@@ -213,7 +211,6 @@ async function placeNote(
   await keepVersion(env, note, content, by).catch(() => undefined)
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
   await keepPictures(env, note, content)
-  await keepReminders(env, note, content).catch(() => undefined)
   await hooks()
     .chats.linkPointer(env, note, content)
     .catch(() => undefined)
@@ -346,7 +343,6 @@ export async function saveNote(
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
   await keepPictures(env, updated, content)
-  await keepReminders(env, updated, content).catch(() => undefined)
   await hooks()
     .chats.linkPointer(env, updated, content)
     .catch(() => undefined)

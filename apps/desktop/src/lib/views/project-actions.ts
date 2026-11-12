@@ -3,7 +3,6 @@ import { projectsFolder } from '../rows/projects'
 import type { MenuEntry } from '../menu.svelte'
 import { homeRoot } from '../rows/home.svelte'
 import { INBOX } from '../rows/inbox'
-import { listsIn, makeList } from '../rows/todo-lists'
 import { inboxNote } from '../rows/inbox-note'
 import { isAgentsName } from '../note-name'
 import { canWriteAt } from '../sharing.svelte'
@@ -41,7 +40,6 @@ async function made(folder: string, words: string, template?: string): Promise<s
   await writeFile(path, text)
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
-  makeList(path)
   return path
 }
 
@@ -97,7 +95,7 @@ export function placeEntries(
   root: string | null = workspace.activeSpace?.root ?? null,
 ): MenuEntry[] {
   if (root === null || !offersPlaces(root)) return []
-  const out: MenuEntry[] = [
+  return [
     {
       label: 'Inbox',
       checked: here(inboxNoteAt(root)),
@@ -108,32 +106,6 @@ export function placeEntries(
         ),
     },
   ]
-  const inbox = inboxNoteAt(root)
-  const lists = listsIn(root)
-    .map((relative) => insideSpace(root, relative))
-    .filter((note) => !samePath(note, inbox))
-  const named = (note: string) => nameOf(note).replace(/\.md$/i, '')
-  const seen = new Map<string, number>()
-  for (const note of lists) {
-    const key = named(note).toLowerCase()
-    seen.set(key, (seen.get(key) ?? 0) + 1)
-  }
-  const folder = projectsFolder(root)
-  const placeOf = (note: string) => {
-    const under = within(folder, note)
-    return under !== null && under !== '' ? under : (within(root, note) ?? note)
-  }
-  const labelOf = (note: string) =>
-    (seen.get(named(note).toLowerCase()) ?? 0) < 2
-      ? named(note)
-      : placeOf(note).replace(/\.md$/i, '').split('/').join(' / ')
-  const labelled = lists
-    .map((note) => ({ note, label: labelOf(note) }))
-    .sort((a, b) => a.label.localeCompare(b.label))
-  for (const { note, label } of labelled) {
-    out.push({ label, checked: here(note), run: () => go(note) })
-  }
-  return out
 }
 
 export function projectAt(note: string): { note: string; folder: string | null } {

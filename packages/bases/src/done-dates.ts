@@ -1,39 +1,17 @@
 import { changedTask, type TaskChange } from '@orden/markdown/task-edits'
-import { isInboxPath } from './inbox'
 import { taskRowsOfText } from './task-rows'
 import type { Row } from './types'
 
-export const LIST_KEY = 'todo-list'
-export const LIST_VALUE = 'yes'
-export const STOPPED_VALUE = 'no'
 export const DONE_KEY = 'done-on'
 export const CANCELLED_KEY = 'cancelled-on'
-export const MARKED_KEY = 'todo-lists'
-export const MARKED_VALUE = 'marked'
-export const OLD_FOLDER = 'Projects'
 
-export const LIST_KEYS: ReadonlySet<string> = new Set([LIST_KEY, DONE_KEY, CANCELLED_KEY])
+export const DATE_KEYS: ReadonlySet<string> = new Set([DONE_KEY, CANCELLED_KEY])
 
 const LONGEST = 2048
 
 export type Meta = Readonly<Record<string, string>> | null | undefined
 
 export type DatesPatch = Record<string, string | null>
-
-const key = (path: string) =>
-  path.replace(/\\/g, '/').replace(/^\/+/, '').normalize('NFC').toLowerCase()
-
-export function isTodoList(path: string, meta: Meta, inbox?: string): boolean {
-  if (isInboxPath(path)) return true
-  if (inbox !== undefined && key(path) === key(inbox)) return true
-  return meta?.[LIST_KEY] === LIST_VALUE
-}
-
-export function inOldFolder(path: string, meta: Meta, folderMarked: boolean): boolean {
-  if (folderMarked || meta?.[LIST_KEY] !== undefined) return false
-  const parts = path.replace(/\\/g, '/').replace(/^\/+/, '').split('/')
-  return parts.length > 1 && key(parts[0] ?? '') === key(OLD_FOLDER) && /\.md$/i.test(path)
-}
 
 const ENTRY = /^([0-9a-z]{1,13}):(?:(\d{4})(\d{2})(\d{2})|-)$/
 

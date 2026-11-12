@@ -559,30 +559,3 @@ describe('a space shared to be read', () => {
     expect(recorded).toEqual([])
   })
 })
-
-describe('an exported todo list brought back in (#1344)', () => {
-  test('is a list again, its key moved out of its words and its done days kept', async () => {
-    const plan = planOf([
-      note('Errands.md', '---\ntodo-list: yes\n---\n- [x] Post it ✅ 2026-11-01\n- [ ] Buy milk\n'),
-      note('Old.md', '---\ntodo-list: no\ntitle: Old\n---\n- [ ] Call Sam\n'),
-      note('Plain.md', '---\ntitle: Plain\n---\n- [ ] Read\n'),
-    ])
-
-    await applyImport(plan, { root: '/Space', folder: 'In' })
-
-    expect(said.get('/Space/In/Errands.md')).toBe('- [x] Post it ✅ 2026-11-01\n- [ ] Buy milk\n')
-    expect(said.get('/Space/In/Old.md')).toBe('---\ntitle: Old\n---\n- [ ] Call Sam\n')
-    expect(said.get('/Space/In/Plain.md')).toBe('---\ntitle: Plain\n---\n- [ ] Read\n')
-    expect(described).toEqual([
-      ['/Space/In/Errands.md', { 'todo-list': 'yes' }],
-      ['/Space/In/Old.md', { 'todo-list': 'no' }],
-    ])
-    expect(recorded).toEqual([
-      expect.objectContaining({
-        wrote: expect.objectContaining({
-          '/Space/In/Errands.md': await sha256('- [x] Post it ✅ 2026-11-01\n- [ ] Buy milk\n'),
-        }),
-      }),
-    ])
-  })
-})

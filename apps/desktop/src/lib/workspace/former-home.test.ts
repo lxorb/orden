@@ -1,4 +1,3 @@
-import { isTodoList } from '@orden/bases/todo-lists'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
@@ -173,7 +172,7 @@ describe.each([
 ])('an older profile on %s brought to this build', (_, profile) => {
   const now = profile.join(profile.base.to, 'Spaces', 'Work')
 
-  test('keeps every todo list, the chosen inbox and the Projects folder', async () => {
+  test('keeps every item’s metadata, the chosen inbox and the Projects folder', async () => {
     oldProfile(profile)
     homes.said = [profile.base]
 
@@ -181,12 +180,11 @@ describe.each([
 
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md']) {
-      expect(isTodoList(path, meta.itemsOf(now)[path])).toBe(true)
+      expect(meta.itemsOf(now)[path]).toBeDefined()
     }
     expect(meta.valueOf(profile.join(now, 'Projects', 'Plan.md'), 'done-on', now)).toBe(
       'k3:20261101',
     )
-    expect(meta.listsMarked(now)).toBe(true)
     expect(pickedInbox(now, [])).toBe('Lists/Groceries.md')
     expect(projectsOf(now)).toBe('Areas')
     expect(localStorage.getItem('orden:theme')).toBe('dark')
@@ -204,7 +202,7 @@ describe.each([
 
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md', 'Inbox today.md']) {
-      expect(isTodoList(path, meta.itemsOf(now)[path])).toBe(true)
+      expect(meta.itemsOf(now)[path]).toBeDefined()
     }
     const session = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
       spaces: unknown[]
@@ -236,7 +234,7 @@ describe('a browser profile an early start made beside the old one', () => {
     expect(homes.dumped).toBeNull()
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md', 'Inbox today.md']) {
-      expect(isTodoList(path, meta.itemsOf(now)[path])).toBe(true)
+      expect(meta.itemsOf(now)[path]).toBeDefined()
     }
     expect(pickedInbox(now, [])).toBe('Lists/Groceries.md')
     expect(localStorage.getItem('orden:font')).toBe('Lato')

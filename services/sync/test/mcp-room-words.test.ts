@@ -25,16 +25,10 @@ afterEach(() => env.close())
 async function made(path: string, content: string): Promise<string> {
   const answer = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   const id: string = answer.json.note.id
-  env.db.prepare('update notes set meta = ? where id = ?').run('{"todo-list":"yes"}', id)
   return id
 }
 
 const prepare = () => call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
-
-async function body(id: string): Promise<string> {
-  const object = await env.NOTES.get(`spaces/${space}/${id}`)
-  return object ? await object.text() : ''
-}
 
 async function tool(name: string, args: Record<string, unknown>): Promise<string> {
   const answer = await call<RpcView>(env, '/mcp', {
@@ -72,269 +66,6 @@ async function typed(id: string, words: string, known: string): Promise<void> {
   device.seq = answer?.seq ?? device.seq
 }
 
-function afterItsRead(id: string, work: () => Promise<void>) {
-  const get = env.NOTES.get.bind(env.NOTES)
-  let done = false
-  env.NOTES.get = async (key: string) => {
-    const object = await get(key)
-    if (!done && key === `spaces/${space}/${id}`) {
-      done = true
-      await work()
-    }
-    return object
-  }
-}
-
-function keystroke(id: string, words: string): void {
-  const doc = (rooms.of(id).room as never as { state: { doc: Y.Doc } }).state.doc
-  doc.getText(TEXT).insert(doc.getText(TEXT).length, words)
-}
-
-describe('add_task on a note with a room', () => {
-  test('keeps words the room holds and has not settled', async () => {
-    const id = await made('Plan.md', 'one\n')
-    await prepare()
-    await rooms.settle()
-    await typed(id, 'typed\n', 'one\n')
-
-    const answer = JSON.parse(await tool('add_task', { note: 'Plan', text: 'from mcp' }))
-    await rooms.settle()
-
-    expect(answer.path).toBe('Plan.md')
-    expect(await body(id)).toBe('one\ntyped\n\n- [ ] from mcp\n')
-  })
-
-  test('keeps words settled between its read and its write', async () => {
-    const id = await made('Plan.md', 'one\n')
-    await prepare()
-    await rooms.settle()
-    afterItsRead(id, async () => {
-      await typed(id, 'typed\n', 'one\n')
-      await rooms.settle()
-    })
-
-    await tool('add_task', { note: 'Plan', text: 'from mcp' })
-
-    expect(await body(id)).toContain('typed\n')
-    expect(await body(id)).toContain('- [ ] from mcp')
-  })
-
-  test('keeps a keystroke that lands while the room reads the row', async () => {
-    const id = await made('Plan.md', 'one\n')
-    await prepare()
-    await rooms.settle()
-    const looking = /^select \* from notes where space_id = \? and path = \?/
-    let fired = false
-    env.justBefore(looking, () => {
-      env.justBefore(looking, () => {
-        env.justBefore(/^select \* from notes where id = \?$/, () => {
-          fired = true
-          keystroke(id, 'typed\n')
-        })
-      })
-    })
-
-    await tool('add_task', { note: 'Plan', text: 'from mcp' })
-    await rooms.settle()
-
-    expect(fired).toBe(true)
-    expect(await body(id)).toContain('typed\n')
-    expect(await body(id)).toContain('- [ ] from mcp')
-  })
-
-  test('says so, and takes nothing, where the note will not hold still', async () => {
-    const id = await made('Plan.md', 'one\n')
-    await prepare()
-    await rooms.settle()
-    const get = env.NOTES.get.bind(env.NOTES)
-    let busy = false
-    env.NOTES.get = async (key: string) => {
-      const object = await get(key)
-      if (key === `spaces/${space}/${id}` && !busy) {
-        busy = true
-        await typed(id, 'x\n', 'one\n')
-        await rooms.settle()
-        busy = false
-      }
-      return object
-    }
-
-    const answer = await tool('add_task', { note: 'Plan', text: 'from mcp' })
-
-    expect(answer).toMatch(/changed while I was writing it/)
-    busy = true
-    expect(await body(id)).toMatch(/^one\n(x\n)+$/)
-  })
-})
-
-describe('update_task on a note with a room', () => {
-  test('keeps words the room holds and has not settled', async () => {
-    const id = await made('Plan.md', '- [ ] Ship\n')
-    await prepare()
-    await rooms.settle()
-    const { tasks } = JSON.parse(await tool('list_tasks', {}))
-    await typed(id, 'typed\n', '- [ ] Ship\n')
-
-    await tool('update_task', { at: tasks[0].at, done: true })
-    await rooms.settle()
-
-    const words = await body(id)
-    expect(words).toContain('typed\n')
-    expect(words).toMatch(/- \[x\] Ship/)
-  })
-
-  test('a move keeps words typed in either note, and the task lands once', async () => {
-    const from = await made('Plan.md', '- [ ] Ship\nkeep\n')
-    const into = await made('Later.md', 'later\n')
-    await prepare()
-    await rooms.settle()
-    const { tasks } = JSON.parse(await tool('list_tasks', {}))
-    await typed(from, 'typed here\n', '- [ ] Ship\nkeep\n')
-    await typed(into, 'typed there\n', 'later\n')
-    let armed = true
-    const get = env.NOTES.get.bind(env.NOTES)
-    env.NOTES.get = async (key: string) => {
-      const object = await get(key)
-      if (armed && key === `spaces/${space}/${from}` && (await body(into)).includes('Ship')) {
-        armed = false
-        await typed(from, 'late\n', '')
-        await rooms.settle()
-      }
-      return object
-    }
-
-    const answer = JSON.parse(
-      await tool('update_task', { at: tasks[0].at, move_to: { note: 'Later' } }),
-    )
-    await rooms.settle()
-
-    expect(answer.at).toMatch(/^Later\.md#/)
-    const left = await body(from)
-    const landed = await body(into)
-    expect(left).not.toContain('Ship')
-    expect(left).toContain('typed here\n')
-    expect(landed.match(/Ship/g)).toHaveLength(1)
-    expect(landed).toContain('typed there\n')
-  })
-})
-
-describe('a move whose note will not let go', () => {
-  function writtenIn(from: string, into: string, change: (at: number) => Promise<void>) {
-    const get = env.NOTES.get.bind(env.NOTES)
-    let busy = false
-    let at = 0
-    env.NOTES.get = async (key: string) => {
-      const object = await get(key)
-      if (busy || key !== `spaces/${space}/${from}`) return object
-      busy = true
-      const there = await get(`spaces/${space}/${into}`)
-      if ((await there?.text())?.includes('Ship')) await change(at++)
-      busy = false
-      return object
-    }
-  }
-
-  test('says it is in both, and which to take it out of', async () => {
-    const start = '- [ ] Ship\n'
-    const from = await made('Plan.md', start)
-    const into = await made('Later.md', 'later\n')
-    await prepare()
-    await rooms.settle()
-    const { tasks } = JSON.parse(await tool('list_tasks', {}))
-    writtenIn(from, into, async () => {
-      await typed(from, 'x\n', start)
-      await rooms.settle()
-    })
-
-    const answer = await tool('update_task', { at: tasks[0].at, move_to: { note: 'Later' } })
-
-    expect(answer).toMatch(/Later\.md/)
-    expect(answer).toMatch(/still in Plan\.md/)
-    expect(answer).toMatch(/not move it again/)
-  })
-
-  test('says so where the task was edited there meanwhile, and stays', async () => {
-    const start = '- [ ] Ship\n'
-    const from = await made('Plan.md', start)
-    const into = await made('Later.md', 'later\n')
-    const { tasks } = JSON.parse(await tool('list_tasks', {}))
-    writtenIn(from, into, async (at) => {
-      if (at > 0) return
-      const version = (
-        env.db.prepare('select version from notes where id = ?').get(from) as { version: number }
-      ).version
-      await call(env, `/v1/notes/${from}`, {
-        token,
-        method: 'PUT',
-        body: { content: '- [ ] Ship it today\n', baseVersion: version },
-      })
-    })
-
-    const answer = JSON.parse(
-      await tool('update_task', { at: tasks[0].at, move_to: { note: 'Later' } }),
-    )
-
-    expect(answer.at).toMatch(/^Later\.md#/)
-    expect(answer.left).toMatch(/Plan\.md/)
-    expect(await body(from)).toBe('- [ ] Ship it today\n')
-    expect(await body(into)).toContain('Ship')
-  })
-})
-
-describe('a note that starts with a byte order mark', () => {
-  test.each([false, true])('takes a task, on a room: %s', async (room) => {
-    const id = await made('Bom.md', '\uFEFF- [ ] First\n')
-    if (room) {
-      await prepare()
-      await rooms.settle()
-    }
-
-    const answer = await tool('add_task', { note: 'Bom', text: 'from mcp' })
-
-    expect(answer).not.toMatch(/changed while/)
-    const row = env.db.prepare('select hash from notes where id = ?').get(id)
-    expect(row).toBeTruthy()
-    expect(await body(id)).toContain('- [ ] First')
-    expect(await body(id)).toContain('- [ ] from mcp')
-  })
-})
-
-describe('two add_tasks to a note not there yet', () => {
-  test('both land, in one note', async () => {
-    const answers = await Promise.all([
-      tool('add_task', { note: 'Fresh', text: 'one' }),
-      tool('add_task', { note: 'Fresh', text: 'two' }),
-    ])
-
-    expect(answers.every((answer) => answer.startsWith('{'))).toBe(true)
-    const rows = env.db.prepare("select id from notes where path like '%Fresh%'").all() as {
-      id: string
-    }[]
-    expect(rows).toHaveLength(1)
-    const words = await body(rows[0]?.id ?? '')
-    expect(words).toContain('- [ ] one')
-    expect(words).toContain('- [ ] two')
-  })
-
-  test('both land on a space whose tree is rows', async () => {
-    await prepare()
-    const answers = await Promise.all([
-      tool('add_task', { note: 'Fresh', text: 'one' }),
-      tool('add_task', { note: 'Fresh', text: 'two' }),
-    ])
-    await rooms.settle()
-
-    expect(answers.every((answer) => answer.startsWith('{'))).toBe(true)
-    const rows = env.db.prepare("select id from notes where path like '%Fresh%'").all() as {
-      id: string
-    }[]
-    expect(rows).toHaveLength(1)
-    const words = await body(rows[0]?.id ?? '')
-    expect(words).toContain('- [ ] one')
-    expect(words).toContain('- [ ] two')
-  })
-})
-
 describe('a room whose settle is refused', () => {
   async function refusing() {
     const id = await made('Plan.md', 'one\n')
@@ -363,12 +94,6 @@ describe('a room whose settle is refused', () => {
     expect(doc.getText(TEXT).toJSON()).toBe('one\ntyped\n')
   })
 
-  test('answers a task tool that it could not write, not that the note moved', async () => {
-    await refusing()
-
-    expect(await tool('add_task', { note: 'Plan', text: 'x' })).toMatch(/could not be written/)
-  })
-
   test('a real conflict is still one', async () => {
     const id = await made('Other.md', 'one\n')
     await prepare()
@@ -382,51 +107,6 @@ describe('a room whose settle is refused', () => {
     })
 
     expect(saved.status).toBe(409)
-  })
-})
-
-describe('add_task on a v1 note', () => {
-  test('keeps a save made between its read and its write', async () => {
-    const id = await made('Plan.md', 'one\n')
-    const note = () =>
-      env.db.prepare('select version from notes where id = ?').get(id) as { version: number }
-    afterItsRead(id, async () => {
-      await call(env, `/v1/notes/${id}`, {
-        token,
-        method: 'PUT',
-        body: { content: 'one\nsaved\n', baseVersion: note().version },
-      })
-    })
-
-    await tool('add_task', { note: 'Plan', text: 'from mcp' })
-
-    expect(await body(id)).toContain('saved\n')
-    expect(await body(id)).toContain('- [ ] from mcp')
-  })
-
-  test('does not read the bytes of the version before as the row that says the next', async () => {
-    const id = await made('Plan.md', 'one\n')
-    const hash = 'a'.repeat(64)
-    env.db.prepare('update notes set version = 2, hash = ? where id = ?').run(hash, id)
-
-    const answer = await tool('add_task', { note: 'Plan', text: 'from mcp' })
-
-    expect(answer).toMatch(/changed while I was writing it/)
-    expect(await body(id)).toBe('one\n')
-  })
-
-  test('does not write over a note that arrived where there was none', async () => {
-    const id = await made('Other.md', 'theirs\n')
-    const looking = /^select \* from notes where space_id = \? and path = \?/
-    env.justBefore(looking, () => {
-      env.justBefore(looking, () => {
-        env.db.prepare("update notes set path = 'Projects/Fresh.md' where id = ?").run(id)
-      })
-    })
-
-    await tool('add_task', { note: 'Fresh', text: 'from mcp' })
-
-    expect(await body(id)).toBe('theirs\n\n- [ ] from mcp\n')
   })
 })
 
@@ -466,14 +146,6 @@ describe('write_note to a new path', () => {
       'Saved plan.md 2/child.md.',
     )
     expect(await tool('read_note', { path: 'plan.md 2/child.md' })).toBe('x')
-  })
-})
-
-describe('a task aimed at what is not a note', () => {
-  test.each(['board.canvas', 'book.pages'])('add_task to %s is refused', async (path) => {
-    const answer = await tool('add_task', { note: path, text: 'from mcp' })
-    expect(answer).toMatch(/not a note/)
-    expect(env.db.prepare('select count(*) as n from notes').get()).toEqual({ n: 1 })
   })
 })
 

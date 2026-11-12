@@ -2233,14 +2233,11 @@ class Workspace {
         ([{ moveOwnKeysSoon }]) => moveOwnKeysSoon(root, this, !!account.token),
         unfetched,
       )
-      void Promise.all([import('./rows/old-lists'), account.looked]).then(
-        ([{ markOldListsSoon }]) => {
-          for (const one of [root, ...this.shownSpaces.map((space) => space.root)]) {
-            markOldListsSoon(one, !account.token, this)
-          }
-        },
-        unfetched,
-      )
+      void import('./rows/unlisted').then(({ dropListKeys }) => {
+        for (const one of [root, ...this.shownSpaces.map((space) => space.root)]) {
+          dropListKeys(one, this.itemMeta)
+        }
+      }, unfetched)
       void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
       const listed = this.files
       const tree = this.tree

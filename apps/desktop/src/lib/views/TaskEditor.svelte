@@ -6,35 +6,29 @@
   import { quickAdd } from '../quick-add/asked.svelte'
   import type { Entry, Prefill } from '../quick-add/entry'
   import QuickAdd from '../quick-add/QuickAdd.svelte'
-  import { addTask, headingsOf, noteNames } from '../quick-add/write'
+  import { addTask } from '../quick-add/write'
   import { workspace } from '../workspace.svelte'
   import { noteText } from '../workspace/note-text'
   import { editTask } from './act'
   import { type Kit, notePath } from './kit'
   import { descriptionOf } from './task-body'
-  import { changeOf, editorRoot, prefillFor } from './task-edit'
+  import { changeOf, prefillFor } from './task-edit'
   import { labelsOf } from './task-meta'
 
   const {
     kit,
     row = null,
     prefill = {},
-    root: into,
     onclose,
     onsize,
   }: {
     kit: Kit
     row?: Row | null
     prefill?: Prefill
-    root?: string | undefined
     onclose: () => void
     onsize?: ((tall: number) => void) | undefined
   } = $props()
 
-  const root = $derived(
-    editorRoot(into, row, workspace.spaces, workspace.activeSpace?.root ?? null),
-  )
-  const notes = $derived(root ? noteNames(root) : [])
   const tags = $derived(labelsOf(kit.live.rows))
 
   let start = $state<Prefill | null>(null)
@@ -67,7 +61,7 @@
 
   async function submit(entry: Entry, open: boolean) {
     if (!row?.task) {
-      await addTask(entry, into === undefined ? { open } : { open, root: into })
+      await addTask(entry, { open })
       if (open) onclose()
       return
     }
@@ -89,9 +83,7 @@
   {#if start}
     <QuickAdd
       langs={[region()]}
-      {notes}
       {tags}
-      headingsOf={(note: string) => (root ? headingsOf(root, note) : [])}
       provider={ai.providerFor('ask')}
       prefill={start}
       smart={quickAdd.smart}

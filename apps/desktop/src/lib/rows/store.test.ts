@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { type Row, todayOf } from '@orden/bases'
 import { scanNote, type ScannedNote, type SpaceLinks } from '@orden/scan/note'
+import { isInboxPath } from '@orden/bases/inbox'
 import { scanRows } from '@orden/bases/scan'
 import { type Host, type RowsChange, RowsStore } from './store'
 
@@ -533,14 +534,14 @@ describe('the rows a view shows', () => {
   })
 })
 
-describe('the rows of a todo list and of a note (#1229, #1228)', () => {
+describe('the rows of the inbox and of a note (#1229, #1228, #2103)', () => {
   function listed(disk: Record<string, string>, now?: () => number) {
-    const meta = new Map<string, Record<string, string>>([['Errands.md', { 'todo-list': 'yes' }]])
+    const meta = new Map<string, Record<string, string>>()
     const dated: [string, Record<string, string | null>][] = []
     const made = rig(disk, null, [], {
       ...(now ? { now } : {}),
       meta: (_root, path) => meta.get(path) ?? null,
-      list: (_root, path, said) => path === '.Inbox.md' || said?.['todo-list'] === 'yes',
+      list: (_root, path) => isInboxPath(path),
       dated: (_root, path, patch) => {
         dated.push([path, patch])
         const now = Object.entries({ ...meta.get(path), ...patch }).filter(
@@ -554,7 +555,7 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
 
   test('a checkbox in a note is no task, and one in a list is', async () => {
     const { store, answer, settled } = listed({
-      [`${WORK}/Errands.md`]: '- [ ] Post the letter\n',
+      [`${WORK}/.Inbox.md`]: '- [ ] Post the letter\n',
       [`${WORK}/Meeting.md`]: '- [ ] Ask about the budget\n',
       [`${WORK}/Projects/Notes.md`]: '- [ ] Not a todo either\n',
     })
@@ -562,25 +563,25 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
     await settled()
     answer(WORK)
     await settled()
-    expect(tasks(store.of())).toEqual(['Work:Errands.md:Post the letter'])
+    expect(tasks(store.of())).toEqual(['Work:.Inbox.md:Post the letter'])
     store.saved(`${WORK}/Meeting.md`, '- [x] Ask about the budget\n')
-    expect(tasks(store.of())).toEqual(['Work:Errands.md:Post the letter'])
+    expect(tasks(store.of())).toEqual(['Work:.Inbox.md:Post the letter'])
   })
 
   test('ticking a todo keeps its date as the list’s metadata, its words untouched', async () => {
     const { store, answer, settled, dated, disk } = listed({
-      [`${WORK}/Errands.md`]: '- [ ] Post the letter\n',
+      [`${WORK}/.Inbox.md`]: '- [ ] Post the letter\n',
       [`${WORK}/Meeting.md`]: '- [ ] Ask about the budget\n',
     })
     store.spacesAre([{ root: WORK, name: 'Work' }])
     await settled()
     answer(WORK)
     await settled()
-    disk.set(`${WORK}/Errands.md`, '- [x] Post the letter\n')
-    store.saved(`${WORK}/Errands.md`, '- [x] Post the letter\n')
+    disk.set(`${WORK}/.Inbox.md`, '- [x] Post the letter\n')
+    store.saved(`${WORK}/.Inbox.md`, '- [x] Post the letter\n')
     store.saved(`${WORK}/Meeting.md`, '- [x] Ask about the budget\n')
-    expect(dated.map(([path]) => path)).toEqual(['Errands.md'])
-    store.described(`${WORK}/Errands.md`)
+    expect(dated.map(([path]) => path)).toEqual(['.Inbox.md'])
+    store.described(`${WORK}/.Inbox.md`)
     await settled()
     const done = store.of().find((row) => row.task?.text === 'Post the letter')
     expect(done?.task?.completed).toBe(todayOf(new Date(42)))
@@ -588,10 +589,10 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
   })
 
   test('ticking a todo reads its rows once with the day it took, not again from disk', async () => {
-    const path = `${WORK}/Errands.md`
+    const path = `${WORK}/.Inbox.md`
     const reads: string[] = []
     const holder: { store?: RowsStore } = {}
-    const meta = new Map<string, Record<string, string>>([['Errands.md', { 'todo-list': 'yes' }]])
+    const meta = new Map<string, Record<string, string>>()
     const { store, answer, settled, disk, heard } = rig(
       { [path]: '- [ ] Post the letter\n' },
       null,
@@ -602,7 +603,7 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
           return Promise.resolve(disk.get(at) ?? null)
         },
         meta: (_root, at) => meta.get(at) ?? null,
-        list: (_root, _at, said) => said?.['todo-list'] === 'yes',
+        list: (_root, at) => isInboxPath(at),
         dated: (root, at, patch) => {
           const now = Object.entries({ ...meta.get(at), ...patch }).filter(
             (one): one is [string, string] => one[1] !== null,
@@ -630,7 +631,7 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
   })
 
   test('a todo ticked on another device takes no day here: the device that ticked it keeps it', async () => {
-    const path = `${WORK}/Errands.md`
+    const path = `${WORK}/.Inbox.md`
     const { store, answer, settled, dated, disk } = listed({
       [path]: '- [ ] Post the letter\n- [ ] Call mom\n',
     })
@@ -648,7 +649,7 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
   })
 
   test('two todos with the same words keep their own dates, ticked here or on another device (#1401)', async () => {
-    const path = `${WORK}/Errands.md`
+    const path = `${WORK}/.Inbox.md`
     const first = new Date(2026, 10, 1, 12).getTime()
     const later = new Date(2026, 10, 5, 12).getTime()
     let clock = first
@@ -674,17 +675,16 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
     expect(days).toEqual([todayOf(new Date(later)), todayOf(new Date(first))])
   })
 
-  test('a done todo moved to another list keeps the day it was done, not the day it moved', async () => {
-    const from = `${WORK}/Errands.md`
-    const to = `${WORK}/Groceries.md`
+  test('a done todo moved to another inbox file keeps the day it was done, not the day it moved', async () => {
+    const from = `${WORK}/.Inbox.md`
+    const to = `${WORK}/.orden-inbox.md`
     const first = new Date(2026, 10, 1, 12).getTime()
     const later = new Date(2026, 10, 5, 12).getTime()
     let clock = first
-    const { store, answer, settled, disk, meta } = listed(
+    const { store, answer, settled, disk } = listed(
       { [from]: '- [ ] Buy soil\n- [x] Weed\n', [to]: '- [ ] Milk\n' },
       () => clock,
     )
-    meta.set('Groceries.md', { 'todo-list': 'yes' })
     store.spacesAre([{ root: WORK, name: 'Work' }])
     await settled()
     answer(WORK)
@@ -703,13 +703,15 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
     await settled()
 
     const moved = store.of().find((row) => row.task?.text === 'Buy soil')
-    expect(moved?.path).toBe('Groceries.md')
+    expect(moved?.path).toBe('.orden-inbox.md')
     expect(moved?.task?.completed).toBe(todayOf(new Date(first)))
     disk.set(to, '- [x] Buy soil\n- [ ] Milk\n- [x] Weed\n')
     store.saved(to, '- [x] Buy soil\n- [ ] Milk\n- [x] Weed\n')
     store.described(to)
     await settled()
-    const typed = store.of().find((row) => row.path === 'Groceries.md' && row.task?.text === 'Weed')
+    const typed = store
+      .of()
+      .find((row) => row.path === '.orden-inbox.md' && row.task?.text === 'Weed')
     expect(typed?.task?.completed).toBe(todayOf(new Date(later)))
   })
 })

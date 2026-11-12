@@ -30,11 +30,6 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-vi.mock('./rows/todo-lists', async (original) => ({
-  ...(await original<typeof import('./rows/todo-lists')>()),
-  listedAt: (_root: string, path: string) => path === 'Plan.md',
-}))
-
 const share = vi.hoisted(() => ({ readOnly: false }))
 vi.mock('./sharing.svelte', () => ({
   canWriteAt: () => !share.readOnly,
@@ -123,13 +118,16 @@ describe("the reader's own task actions", () => {
   })
 
   test('a tick keeps its day in the list itself, so a device with no rows store dates it too, and taken back drops it', async () => {
-    files.set('/s/Home/Plan.md', `# Plan\n- [ ] Post the letter 📅 ${today}\n`)
+    files.set('/s/Home/.Inbox.md', `- [ ] Post the letter 📅 ${today}\n`)
     const { tasks } = await listed()
-    const ticked = await tickTask(tasks[0]?.at ?? '', 'Home', true)
+    const at = tasks.find((one) => one.text === 'Post the letter')?.at ?? ''
+    const ticked = await tickTask(at, 'Home', true)
     const day = today.replace(/-/g, '')
-    expect(metas.get('/s/Home/Plan.md')?.['done-on']).toBe(`${taskHash('Post the letter')}:${day}`)
+    expect(metas.get('/s/Home/.Inbox.md')?.['done-on']).toBe(
+      `${taskHash('Post the letter')}:${day}`,
+    )
     expect(await ticked?.back()).toBe(true)
-    expect(metas.get('/s/Home/Plan.md')?.['done-on']).toBeUndefined()
+    expect(metas.get('/s/Home/.Inbox.md')?.['done-on']).toBeUndefined()
   })
 
   test('nothing ticked in a space shared to be read', async () => {

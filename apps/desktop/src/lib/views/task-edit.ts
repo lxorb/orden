@@ -4,17 +4,6 @@ import { editedWords, shownWords, unescapedAt } from '@orden/markdown/escapes'
 import { deadlineField, deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { changeFor } from './schedule/schedule'
 
-export function editorRoot(
-  into: string | undefined,
-  row: { space: string } | null,
-  spaces: readonly { name: string; root: string }[],
-  active: string | null,
-): string | null {
-  if (into !== undefined) return into
-  if (row === null) return active
-  return spaces.find((one) => one.name === row.space)?.root ?? active
-}
-
 export function prefillFor(task: TaskRow, description: string | null): Prefill {
   const due = startOf(task, task.dueReads) ?? task.scheduled
   const deadline = deadlineOf(task, task.dueReads)

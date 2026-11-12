@@ -6,7 +6,7 @@ import { scanRows } from '@orden/bases/scan'
 import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space-paths'
 import { type FileOp } from '../workspace/file-ops'
 import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
-import { datesChanged, type DatesPatch, withDates } from '@orden/bases/todo-lists'
+import { datesChanged, type DatesPatch, withDates } from '@orden/bases/done-dates'
 import { todayOf } from '@orden/bases'
 
 export interface SpaceName {
@@ -33,8 +33,8 @@ export interface Host {
   now(): number
   own?(root: string): readonly string[]
   vault(root: string): Promise<boolean>
+  list?(root: string, path: string): boolean
   meta?(root: string, path: string): Readonly<Record<string, string>> | null
-  list?(root: string, path: string, meta: Readonly<Record<string, string>> | null): boolean
   dated?(root: string, path: string, patch: DatesPatch): void
 }
 
@@ -249,9 +249,12 @@ export class RowsStore {
   private rowsIn(held: Held, read: NoteRead): Row[] {
     if (samePath(read.path, AGENTS_NAME, held.root)) return []
     const meta = this.host.meta?.(held.root, read.path) ?? null
-    const listed = this.host.list?.(held.root, read.path, meta) ?? true
     const rows = withDates(
-      rowsOf(held.name, { ...read, tasks: listed ? read.tasks : [], meta }),
+      rowsOf(held.name, {
+        ...read,
+        tasks: (this.host.list?.(held.root, read.path) ?? true) ? read.tasks : [],
+        meta,
+      }),
       meta,
     )
     if (held.vault) for (const row of rows) if (row.task) row.task.dueReads = 'deadline'

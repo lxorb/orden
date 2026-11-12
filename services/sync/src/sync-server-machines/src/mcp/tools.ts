@@ -1,4 +1,3 @@
-import { clockOf } from '@orden/bases/agent'
 import { untrusted } from '@orden/chats/agent'
 import { isAccountInbox } from '@orden/bases/inbox'
 import { findLinks } from '@orden/markdown'
@@ -29,7 +28,6 @@ import {
   type Shut,
 } from '../../../sync-server/src/api'
 export { type Space, spacesFor }
-import { dated, zoneOf } from './dated'
 import type { TokenRow } from './tokens'
 const MOST_NOTES = 1000
 const MOST_MATCHES = 50
@@ -303,21 +301,15 @@ async function writeNote(
   space: Space,
   args: Record<string, unknown>,
   device: string | undefined,
-  user: string,
 ): Promise<string> {
   const path = cleanPath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'
-  const held = await noteRead(env, space.id, path)
   const put = await putNote(env, space, path, asked ?? '', device)
   if (put === MOVED) return changedWhileWriting(path)
   if (typeof put === 'string') return put
-  if (held && held !== MOVED) {
-    const { today } = clockOf(new Date(), await zoneOf(env, user))
-    await dated(env, space, put.path, held.words, asked ?? '', held.note, today)
-  }
   return `Saved ${put.path}.`
 }
 
@@ -467,7 +459,7 @@ export async function callTool(
       const path = cleanPath(text(args, 'path') ?? '')
       if (path && (await shutFor(env, userId))(space.id, path)) return PROTECTED(path)
 
-      return writeNote(env, space, args, token.device, userId)
+      return writeNote(env, space, args, token.device)
     }
 
     default:

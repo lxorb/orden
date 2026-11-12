@@ -4,7 +4,6 @@ import { describe, expect, test, vi } from 'vitest'
 const held = vi.hoisted(() => ({
   disk: new Map<string, string>(),
   locked: new Set<string>(),
-  lists: new Set<string>(),
   scans: [] as string[],
   saves: [] as ((path: string, content: string) => void)[],
   ops: [] as (() => void)[],
@@ -36,10 +35,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../rows/todo-lists', () => ({
-  listedAt: (root: string, path: string) => held.lists.has(`${root}/${path}`),
-}))
-
 vi.mock('../rows/inbox', () => ({ INBOX: '.orden-inbox.md' }))
 
 vi.mock('../rows/home.svelte', () => ({ homeRoot: () => '/home' }))
@@ -66,26 +61,22 @@ vi.mock('../workspace.svelte', () => ({
 const { todayHere } = await import('./today-tasks')
 
 describe("the glasses' Today", () => {
-  test("lists every shown space's todos due today, as Todos does, and nothing of a shut note", async () => {
+  test("lists every shown space's inbox todos due today, as Todos does, and no checkbox of a note (#2103)", async () => {
     held.disk.set('/home/.orden-inbox.md', '- [ ] Call Mum 📅 2020-01-01\n')
     held.disk.set('/work/.orden-inbox.md', '- [ ] Call Mum 📅 2020-01-01\n')
     held.disk.set('/home/Shop.md', '- [ ] Milk 📅 2020-01-02\n')
     held.disk.set('/home/Diary.md', '- [ ] Only a checkbox 📅 2020-01-01\n')
     held.disk.set('/work/Projects/Launch.md', '- [ ] Send the slides 📅 2020-01-03\n')
     held.disk.set('/work/Secret.md', '- [ ] Hidden plan 📅 2020-01-01\n')
-    held.lists.add('/home/Shop.md')
-    held.lists.add('/work/Projects/Launch.md')
-    held.lists.add('/work/Secret.md')
     held.locked.add('/work/Secret.md')
 
     const texts = (await todayHere()).map((one) => `${one.space}: ${one.text}`).sort()
 
-    expect(texts).toEqual(['Home: Call Mum', 'Home: Milk', 'Work: Send the slides'])
+    expect(texts).toEqual(['Home: Call Mum', 'Work: Call Mum'])
   })
 
   test('scans a space that is not open once, and again only after a save in it or a file moves', async () => {
-    held.disk.set('/work/Plan.md', '- [ ] First 📅 2020-01-01\n')
-    held.lists.add('/work/Plan.md')
+    held.disk.set('/work/.orden-inbox.md', '- [ ] First 📅 2020-01-01\n')
     for (const moved of held.ops) moved()
     held.scans.length = 0
     const texts = async () => (await todayHere()).map((one) => one.text)
@@ -98,13 +89,15 @@ describe("the glasses' Today", () => {
     await todayHere()
     expect(held.scans).toEqual(['/work'])
 
-    held.disk.set('/work/Plan.md', '- [ ] Second 📅 2020-01-01\n')
-    for (const hear of held.saves) hear('/work/Plan.md', '')
+    held.disk.set('/work/.orden-inbox.md', '- [ ] Second 📅 2020-01-01\n')
+    for (const hear of held.saves) hear('/work/.orden-inbox.md', '')
     expect(await texts()).toContain('Second')
     expect(held.scans).toEqual(['/work', '/work'])
 
-    held.disk.set('/work/Moved.md', '- [ ] Third 📅 2020-01-01\n')
-    held.lists.add('/work/Moved.md')
+    held.disk.set(
+      '/work/.orden-inbox.md',
+      '- [ ] Second 📅 2020-01-01\n- [ ] Third 📅 2020-01-01\n',
+    )
     for (const moved of held.ops) moved()
     expect(await texts()).toContain('Third')
     expect(held.scans).toEqual(['/work', '/work', '/work'])

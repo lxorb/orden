@@ -75,7 +75,7 @@ import { askQuickly } from './ai/quick-door'
 import { switchableAccounts, switchAccount } from './ai/switching'
 import { toggleScratchpad } from './scratchpad/is.svelte'
 import { canPublish, canShare, canShareItem, canWriteAt, shareThisFile } from './sharing.svelte'
-import { archiveEntry, DIVIDER, listEntry } from './menu.svelte'
+import { archiveEntry, DIVIDER } from './menu.svelte'
 import { lockAllEntry, protectEntries } from './protect/entries'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
@@ -369,12 +369,6 @@ function protectCommands(): Command[] {
     id: `protect.${row.id}`,
     ownWindow: true,
   }))
-}
-
-function listCommand(): Command[] {
-  return listEntry(workspace.active?.path).flatMap((entry) =>
-    entry === DIVIDER ? [] : [{ id: 'todo-list', label: entry.label, run: entry.run }],
-  )
 }
 
 function archiveCommand(): Command[] {
@@ -806,10 +800,7 @@ function spaceCommands(): Command[] {
               busy.start(
                 'Exporting',
                 async () => {
-                  const [{ exportSpace }, { listedAt }] = await Promise.all([
-                    import('./internal/export'),
-                    import('./rows/todo-lists'),
-                  ])
+                  const { exportSpace } = await import('./internal/export')
                   const items = workspace.itemMeta.itemsOf(space.root)
                   const metaOf = (path: string) => items[path] ?? null
                   const { homeRoot } = await import('./rows/home.svelte')
@@ -822,13 +813,7 @@ function spaceCommands(): Command[] {
                           .text()
                           .catch(() => null)
                       : null
-                  await exportSpace(
-                    space.root,
-                    space.name,
-                    metaOf,
-                    (path) => listedAt(space.root, path, metaOf(path)),
-                    inbox,
-                  )
+                  await exportSpace(space.root, space.name, metaOf, inbox)
                 },
                 'export-space',
               ),
@@ -1045,7 +1030,6 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.closeActive(),
     },
     ...archiveCommand(),
-    ...listCommand(),
     ...protectCommands(),
     ...tabCommands(),
     {

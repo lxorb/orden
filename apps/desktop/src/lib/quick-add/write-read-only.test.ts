@@ -35,11 +35,7 @@ vi.mock('../workspace.svelte', () => ({
     notes: [{ path: `${SPACE}/Plan.md`, name: 'Plan.md' }],
     recent: [],
     rootHolding: (path: string) => (path.startsWith(`${MINE}/`) ? MINE : SPACE),
-    itemMeta: {
-      listsMarked: () => true,
-      of: (path: string) => (path === `${SPACE}/Plan.md` ? { 'todo-list': 'yes' } : null),
-      set: () => undefined,
-    },
+    itemMeta: { of: () => null, set: () => undefined },
     loadTree: () => Promise.resolve(),
     fileCame: () => Promise.resolve(),
   },
@@ -73,8 +69,8 @@ vi.mock('../rows/inbox-note', () => ({
 
 const { addTask } = await import('./write')
 
-function entry(note?: string) {
-  return { text: 'Call Ada', fields: { remind: [], tags: [] }, ...(note ? { note } : {}) }
+function entry() {
+  return { text: 'Call Ada', fields: { remind: [], tags: [] } }
 }
 
 beforeEach(() => {
@@ -102,15 +98,6 @@ describe('a task added', () => {
     expect(made).toEqual([`${MINE}/.orden-inbox.md`])
   })
 
-  test('sent to `>Inbox` by name goes into the inbox, and makes no Inbox.md (#1044)', async () => {
-    expect(await addTask(entry('Inbox'))).toEqual({
-      path: `${SPACE}/.orden-inbox.md`,
-      line: expect.any(Number),
-    })
-    expect(written).toEqual([`${SPACE}/.orden-inbox.md`])
-    expect(made).toEqual([`${SPACE}/.orden-inbox.md`])
-  })
-
   test('goes nowhere where no space takes it, and makes no inbox anywhere', async () => {
     readOnly.add(SPACE)
     readOnly.add(MINE)
@@ -118,25 +105,6 @@ describe('a task added', () => {
     expect(await addTask(entry())).toBeNull()
     expect(written).toEqual([])
     expect(made).toEqual([])
-  })
-
-  test('makes no note a `>` names there either, nor elsewhere', async () => {
-    readOnly.add(SPACE)
-
-    expect(await addTask(entry('Later'))).toBeNull()
-    expect(await addTask(entry('Plan'))).toBeNull()
-    expect(made).toEqual([])
-    expect(written).toEqual([])
-  })
-
-  test('handed a space shared to be read, goes into the one inbox of the account', async () => {
-    readOnly.add(SPACE)
-
-    expect(await addTask(entry(), { root: SPACE })).toEqual({
-      path: `${MINE}/.orden-inbox.md`,
-      line: expect.any(Number),
-    })
-    expect(written).toEqual([`${MINE}/.orden-inbox.md`])
   })
 })
 
@@ -161,22 +129,6 @@ describe('a task that names no note (#1153)', () => {
     front.root = MINE
     expect(await addTask(entry())).toEqual({
       path: `${SPACE}/.orden-inbox.md`,
-      line: expect.any(Number),
-    })
-  })
-
-  test('and one handed a space by its add button goes into the one inbox too', async () => {
-    shared.add(SPACE)
-    expect(await addTask(entry(), { root: SPACE })).toEqual({
-      path: `${MINE}/.orden-inbox.md`,
-      line: expect.any(Number),
-    })
-  })
-
-  test('and one sent to a note goes into the note of the space in front', async () => {
-    shared.add(SPACE)
-    expect(await addTask(entry('Plan'))).toEqual({
-      path: `${SPACE}/Plan.md`,
       line: expect.any(Number),
     })
   })

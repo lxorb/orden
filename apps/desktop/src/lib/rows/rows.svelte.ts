@@ -1,5 +1,5 @@
 import type { Row } from '@orden/bases'
-import { isAccountInbox } from '@orden/bases/inbox'
+import { isAccountInbox, isInboxPath } from '@orden/bases/inbox'
 import { untrack } from 'svelte'
 import { breathe } from '../breathe'
 import { links } from '../link-index.svelte'
@@ -13,10 +13,8 @@ import '../inbox/start.svelte'
 import { INBOX } from './inbox'
 import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
-import { hearOldLists } from './old-lists'
 import { homeRoot } from './home.svelte'
 import { type RowsListener, RowsStore } from './store'
-import { listedAt, notesAwayBy } from './todo-lists'
 import { isVault } from './vault'
 import { type RowChange, writeRow } from './write'
 
@@ -34,7 +32,7 @@ const store = new RowsStore({
   vault: isVault,
   meta: (root, path) =>
     isAccountInbox(path) ? null : (workspace.itemMeta.itemsOf(root)[path] ?? null),
-  list: (root, path, meta) => listedAt(root, path, meta),
+  list: (_root, path) => isInboxPath(path),
   dated: (root, path, patch) => {
     if (!isAccountInbox(path)) workspace.itemMeta.set(insideSpace(root, path), patch, root)
   },
@@ -42,10 +40,6 @@ const store = new RowsStore({
 
 links.hearSaves((path, content, arrived) => store.saved(path, content, !arrived))
 workspace.itemMeta.hear((path) => store.described(path))
-hearOldLists((paths) => {
-  for (const path of paths) store.described(path)
-})
-links.listsBy((root, relative) => listedAt(root, relative))
 links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
 workspace.fileOps.follow(keeping(projectFolders))
@@ -56,13 +50,6 @@ if (!__EVEN_PLUGIN__) {
     (change) => void (moving ??= import('./inbox-moving.svelte')).then((one) => one.heard(change)),
   )
 }
-
-notesAwayBy((root) =>
-  store
-    .of(root)
-    .filter((row) => row.kind === 'note')
-    .map((row) => row.path),
-)
 
 $effect.root(() => {
   $effect(() => {

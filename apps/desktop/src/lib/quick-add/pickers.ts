@@ -142,22 +142,6 @@ export function durationRows(
   ]
 }
 
-export function whereRows(
-  current: string | undefined,
-  notes: readonly string[],
-  set: (note: string | undefined) => void,
-): MenuEntry[] {
-  return [
-    { label: 'Inbox', checked: current === undefined, run: () => set(undefined) },
-    ...(notes.length ? [DIVIDER] : []),
-    ...notes.map((note) => ({
-      label: note.split('/').at(-1) ?? note,
-      checked: current?.toLowerCase() === note.toLowerCase(),
-      run: () => set(note),
-    })),
-  ]
-}
-
 export function tagRows(
   current: readonly string[],
   known: readonly string[],

@@ -41,7 +41,6 @@ function draw(props: Record<string, unknown> = {}) {
     target,
     props: {
       langs: ['en'],
-      notes: ['Projects/Launch'],
       tags: ['errand'],
       onsubmit: () => true,
       onclose: () => undefined,
@@ -102,7 +101,7 @@ describe('quick add', () => {
     )
     await settle()
     expect(voice.asking?.field()).toBe(line)
-    expect(voice.asking?.words?.()).toEqual(expect.arrayContaining(['errand', 'Launch']))
+    expect(voice.asking?.words?.()).toEqual(expect.arrayContaining(['errand']))
   })
 
   test('and in its description, once that is where the typing is', async () => {

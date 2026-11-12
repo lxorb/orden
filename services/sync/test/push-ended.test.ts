@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
 import { sha256 } from '../src/sync-server/src/crypto'
+import { writeInboxText } from '../src/sync-server/src/inbox-text'
 import { forgetAccess } from '../src/sync-server/src/push/fcm'
 import { sendDue } from '../src/sync-server/src/push/reminders'
 import { call, type TestEnv, testEnv } from './harness'
@@ -76,19 +77,8 @@ async function setUp() {
     expect(registered.status).toBe(200)
   }
 
-  const space = (await call(env, '/v1/spaces', { token: laptop.token, body: { name: 'Work' } }))
-    .json.space.id
-  const made = await call(env, `/v1/spaces/${space}/notes`, {
-    token: laptop.token,
-    body: { path: 'Plan.md', content: '' },
-  })
-  const note = (made.json as { note: { id: string; version: number } }).note
-  env.db.prepare('update notes set meta = ? where id = ?').run('{"todo-list":"yes"}', note.id)
-  await call(env, `/v1/notes/${note.id}`, {
-    method: 'PUT',
-    token: laptop.token,
-    body: { content: TASK, baseVersion: note.version },
-  })
+  await call(env, '/v1/spaces', { token: laptop.token, body: { name: 'Work' } })
+  await writeInboxText(env, laptop.user, TASK, new Date().toISOString().slice(0, 10))
   return { phone, laptop }
 }
 

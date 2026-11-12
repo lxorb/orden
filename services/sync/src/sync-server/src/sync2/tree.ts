@@ -16,7 +16,6 @@ import {
   type TreeEntry,
   type TreeState,
 } from '@orden/sync-core'
-import { LIST_KEY } from '@orden/bases/todo-lists'
 import { chunks } from '../bound'
 import { type Moved, rememberMoves } from '../site/paths'
 import { picturesOfMeta } from '../pictures'
@@ -366,16 +365,6 @@ export class Tree {
       ) {
         out.add(entry.id)
       }
-    }
-    return out
-  }
-
-  relisted(): string[] {
-    const out: string[] = []
-    for (const entry of this.state.entries.values()) {
-      const before = this.before.get(entry.id)
-      if (entry.kind === 'folder' || entry.deleted || !before) continue
-      if (entry.meta?.[LIST_KEY] !== before.meta?.[LIST_KEY]) out.push(entry.id)
     }
     return out
   }
@@ -1002,7 +991,6 @@ export interface Changed<T> {
   value: T
   cursor: number
   changed: boolean
-  relisted: string[]
   tree: Tree
 }
 
@@ -1023,7 +1011,7 @@ export async function changeTree<T>(
     if (opIds.length) tree.remember(await answeredBefore(env, spaceId, opIds))
     const value = await work(tree)
     const batch = tree.statements(env)
-    if (!batch) return { value, cursor: tree.state.cursor, changed: false, relisted: [], tree }
+    if (!batch) return { value, cursor: tree.state.cursor, changed: false, tree }
 
     try {
       await env.DB.batch(batch)
@@ -1032,7 +1020,6 @@ export async function changeTree<T>(
         value,
         cursor: tree.state.cursor,
         changed: tree.state.cursor >= tree.next,
-        relisted: tree.relisted(),
         tree,
       }
     } catch (error) {

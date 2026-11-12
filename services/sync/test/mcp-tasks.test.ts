@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { taskHash } from '@orden/bases'
+import { writeInboxText } from '../src/inbox-text'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 import { running } from './room'
 
@@ -27,9 +27,6 @@ beforeEach(async () => {
   for (const [path, content] of notes) {
     await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   }
-  env.db
-    .prepare("update notes set meta = ? where space_id = ? and path in ('Thesis.md', 'Shop.md')")
-    .run('{"todo-list":"yes"}', space)
 })
 
 afterEach(() => env.close())
@@ -74,50 +71,16 @@ async function basesTurned(on: boolean) {
 
 const read = async (key: string, path: string) => tool(key, 'read_note', { space: 'Work', path })
 
+async function inboxIs(text: string) {
+  const user = (
+    env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string }
+  ).user_id
+  await writeInboxText(env, user, text, today)
+}
+
+const THESIS = `- [ ] Write the intro #writing ⏫ 📅 ${today}\n  - [ ] Outline\n- [ ] Read 🔁 every day 📅 ${today}\n`
+
 describe('the to-dos, with Orden closed', () => {
-  test("a todo ticked or moved through the connector keeps its done day in its list's metadata", async () => {
-    const key = await connector()
-    await call(env, `/v1/spaces/${space}/notes`, {
-      token,
-      body: { path: 'Errands.md', content: '- [x] Post the letter\n' },
-    })
-    const posted = taskHash('Post the letter')
-    env.db
-      .prepare("update notes set meta = ? where space_id = ? and path = 'Errands.md'")
-      .run(JSON.stringify({ 'todo-list': 'yes', 'done-on': `${posted}:20200101` }), space)
-    const metaOf = async (path: string) => {
-      const id = (env.db.prepare('select id from notes where path = ?').get(path) as { id: string })
-        .id
-      const page = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
-      const items = (page.json as unknown as { items: { id: string; meta?: object }[] }).items
-      return items.find((one) => one.id === id)?.meta as Record<string, string> | undefined
-    }
-
-    await json(key, 'update_task', {
-      space: 'Work',
-      at: `Shop.md#1:${taskHash('Milk')}`,
-      done: true,
-    })
-    const day = today.replace(/-/g, '')
-    expect((await metaOf('Shop.md'))?.['done-on']).toBe(`${taskHash('Milk')}:${day}`)
-
-    await json(key, 'update_task', {
-      space: 'Work',
-      at: `Errands.md#0:${posted}`,
-      move_to: { note: 'Shop' },
-    })
-    expect(await read(key, 'Shop.md')).toContain('- [x] Post the letter')
-    expect((await metaOf('Shop.md'))?.['done-on']).toContain(`${posted}:20200101`)
-    expect((await metaOf('Shop.md'))?.['done-on']).toContain(`${taskHash('Milk')}:${day}`)
-
-    await tool(key, 'write_note', {
-      space: 'Work',
-      path: 'Thesis.md',
-      content: `# Thesis\n- [ ] Write the intro #writing ⏫ 📅 ${today}\n  - [x] Outline\n- [ ] Read 🔁 every day 📅 ${today}\n`,
-    })
-    expect((await metaOf('Thesis.md'))?.['done-on']).toBe(`${taskHash('Outline')}:${day}`)
-  })
-
   test("the connector's days are the days of the account's time zone, not of UTC", async () => {
     const at = new Date()
     at.setUTCHours(23, 30, 0, 0)
@@ -128,33 +91,7 @@ describe('the to-dos, with Orden closed', () => {
     try {
       env.db.prepare('update users set zone = ?').run('Pacific/Auckland')
       const key = await connector()
-      const metaOf = async (path: string) => {
-        const row = env.db.prepare('select id from notes where path = ?').get(path) as {
-          id: string
-        }
-        const page = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
-        const items = (page.json as unknown as { items: { id: string; meta?: object }[] }).items
-        return items.find((one) => one.id === row.id)?.meta as Record<string, string> | undefined
-      }
-      const local = next(1)
-
-      await json(key, 'update_task', {
-        space: 'Work',
-        at: `Shop.md#1:${taskHash('Milk')}`,
-        done: true,
-      })
-      expect((await metaOf('Shop.md'))?.['done-on']).toBe(
-        `${taskHash('Milk')}:${local.replace(/-/g, '')}`,
-      )
-
-      await tool(key, 'write_note', {
-        space: 'Work',
-        path: 'Thesis.md',
-        content: `# Thesis\n- [ ] Write the intro 📅 ${local}\n  - [x] Outline\n- [ ] Read 📅 ${today}\n`,
-      })
-      expect((await metaOf('Thesis.md'))?.['done-on']).toBe(
-        `${taskHash('Outline')}:${local.replace(/-/g, '')}`,
-      )
+      await inboxIs(`- [ ] Write the intro 📅 ${next(1)}\n`)
 
       const added = await json(key, 'add_task', { space: 'Work', text: 'Call mum tomorrow' })
       const line = (await read(key, added.path as string))
@@ -177,7 +114,7 @@ describe('the to-dos, with Orden closed', () => {
     })
     env.db
       .prepare("update notes set meta = ? where space_id = ? and path = 'Inbox.md'")
-      .run('{"todo-list":"yes","inbox":"yes"}', space)
+      .run('{"inbox":"yes"}', space)
 
     const added = await json(key, 'add_task', { space: 'Work', text: 'Water the plants' })
     expect(added.at).toMatch(/^\.orden-inbox\.md#/)
@@ -185,9 +122,6 @@ describe('the to-dos, with Orden closed', () => {
     expect(await read(key, '.orden-inbox.md')).toContain('- [ ] Water the plants')
     const inbox = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
     expect(inbox.tasks.map((one) => one.text)).toEqual(['Water the plants'])
-    expect(
-      await tool(key, 'update_task', { space: 'Work', at: '.orden-inbox.md', todo_list: false }),
-    ).toContain('is the inbox')
     const items = env.db.prepare('select count(*) as many from inbox_items').get() as {
       many: number
     }
@@ -196,8 +130,8 @@ describe('the to-dos, with Orden closed', () => {
 
   test('a limit is a whole number of tasks, one or more', async () => {
     const key = await connector()
-    await tool(key, 'add_task', { space: 'Work', note: 'one.md', text: 'first' })
-    await tool(key, 'add_task', { space: 'Work', note: 'one.md', text: 'second' })
+    await tool(key, 'add_task', { space: 'Work', text: 'first' })
+    await tool(key, 'add_task', { space: 'Work', text: 'second' })
     for (const limit of [-1, 0, 1.5, 'two']) {
       expect(await tool(key, 'list_tasks', { limit })).toContain('limit is a whole number')
     }
@@ -224,25 +158,27 @@ describe('the to-dos, with Orden closed', () => {
   })
 
   test('Today, and a Todoist filter', async () => {
+    await inboxIs(THESIS)
     const key = await connector(true)
     await call(env, '/v1/settings', { method: 'PATCH', token, body: { undatedInToday: false } })
     const listed = await json(key, 'list_tasks', { view: 'today' })
     expect(listed.tasks.map((one) => one.text)).toEqual(['Write the intro', 'Read'])
     const writing = await json(key, 'list_tasks', { filter: '#writing' })
-    expect(writing.tasks).toMatchObject([{ text: 'Write the intro', space: 'Work', priority: 2 }])
+    expect(writing.tasks).toMatchObject([{ text: 'Write the intro', priority: 2 }])
   })
 
   test('Today with the tasks that have no start date, unless the account says not (#408, #2017)', async () => {
+    await inboxIs(`${THESIS}- [ ] Milk\n`)
     const key = await connector(true)
-    const undated = ['Write the intro', 'Milk', 'Outline', 'Read']
+    const undated = ['Write the intro', 'Outline', 'Read', 'Milk']
     const untouched = await json(key, 'list_tasks', { view: 'today' })
-    expect(untouched.tasks.map((one) => one.text)).toEqual(undated)
+    expect(untouched.tasks.map((one) => one.text).sort()).toEqual([...undated].sort())
     await call(env, '/v1/settings', { method: 'PATCH', token, body: { undatedInToday: false } })
     const off = await json(key, 'list_tasks', { view: 'today' })
     expect(off.tasks.map((one) => one.text)).toEqual(['Write the intro', 'Read'])
     await call(env, '/v1/settings', { method: 'PATCH', token, body: { undatedInToday: true } })
     const on = await json(key, 'list_tasks', { view: 'today' })
-    expect(on.tasks.map((one) => one.text)).toEqual(undated)
+    expect(on.tasks.map((one) => one.text).sort()).toEqual([...undated].sort())
   })
 
   test("a task added to the account's inbox, kept as records and read back as lines", async () => {
@@ -257,61 +193,39 @@ describe('the to-dos, with Orden closed', () => {
     const { tasks } = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
     expect(tasks.map((one) => one.text)).toEqual(['Call the bank'])
 
-    await json(key, 'add_task', { space: 'Work', text: 'Post the letter', note: 'Inbox' })
+    await json(key, 'add_task', { space: 'Work', text: 'Post the letter', fields: { priority: 1 } })
     expect(await read(key, '.orden-inbox.md')).toBe(
-      '- [ ] Call the bank 📅 2026-10-06\n- [ ] Post the letter\n',
+      '- [ ] Call the bank 📅 2026-10-06\n- [ ] Post the letter 🔺\n',
     )
     expect(await read(key, 'Inbox.md')).not.toContain('Post the letter')
-
-    const { tasks: inbox } = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
-    const letter = inbox.find((one) => one.text === 'Post the letter')
-    const moved = await json(key, 'update_task', {
-      space: 'Work',
-      at: letter?.at,
-      move_to: { note: 'Shop' },
-    })
-    expect(await read(key, 'Shop.md')).toContain('- [ ] Post the letter')
-    expect(await read(key, '.orden-inbox.md')).not.toContain('Post the letter')
-    await json(key, 'update_task', { space: 'Work', at: moved.at, move_to: { note: 'Inbox' } })
-    expect(await read(key, '.orden-inbox.md')).toContain('- [ ] Post the letter')
-    expect(await read(key, 'Shop.md')).not.toContain('Post the letter')
-    expect(await read(key, 'Inbox.md')).not.toContain('Post the letter')
-
-    await json(key, 'add_task', {
-      space: 'Work',
-      text: 'Eggs',
-      note: 'Shop',
-      fields: { priority: 1 },
-    })
-    expect(await read(key, 'Shop.md')).toBe('# Shop\n- [ ] Milk\n- [ ] Eggs 🔺\n')
   })
 
-  test('a recurring task ticked writes its next line, a task moved takes its sub-task', async () => {
+  test('a recurring task ticked writes its next line, and its sub-task stays under it', async () => {
+    await inboxIs(THESIS)
     const key = await connector()
     const { tasks } = await json(key, 'list_tasks', { space: 'Work' })
     const recurring = tasks.find((one) => one.text === 'Read')
     const ticked = await json(key, 'update_task', { space: 'Work', at: recurring?.at, done: true })
-    expect(ticked.next).toMatch(/^Thesis\.md#3:/)
-    const after = (await read(key, 'Thesis.md')).split('\n')
-    expect(after[3]).toMatch(/^- \[ \] Read 🔁 every day 📅 /)
-    expect(after[4]).toBe(`- [x] Read 🔁 every day 📅 ${today}`)
-
-    const intro = tasks.find((one) => one.text === 'Write the intro')
-    await json(key, 'update_task', { space: 'Work', at: intro?.at, move_to: { note: 'Shop' } })
-    expect(await read(key, 'Shop.md')).toBe(
-      `# Shop\n- [ ] Milk\n- [ ] Write the intro #writing ⏫ 📅 ${today}\n  - [ ] Outline\n`,
-    )
-    expect(await read(key, 'Thesis.md')).not.toContain('Outline')
+    expect(ticked.next).toMatch(/^\.orden-inbox\.md#2:/)
+    const after = (await read(key, '.orden-inbox.md')).split('\n')
+    expect(after[0]).toBe(`- [ ] Write the intro #writing ⏫ 📅 ${today}`)
+    expect(after[1]).toBe('  - [ ] Outline')
+    expect(after[2]).toMatch(/^- \[ \] Read 🔁 every day 📅 /)
+    expect(after[3]).toMatch(/^- \[x\] Read 🔁 every day 📅 .* ✅ /)
   })
 
-  test('refused in sentences: a token that only reads, an anchor that is gone, a bad date', async () => {
+  test('refused in sentences: a token that only reads, an anchor that is gone, a bad date, a note', async () => {
+    await inboxIs(THESIS)
     expect(await tool(await connector(true), 'add_task', { space: 'Work', text: 'x' })).toContain(
       'only read',
     )
     const key = await connector()
     expect(
-      await tool(key, 'update_task', { space: 'Work', at: 'Thesis.md#1:zzz', done: true }),
+      await tool(key, 'update_task', { space: 'Work', at: '.orden-inbox.md#1:zzz', done: true }),
     ).toContain('not in the note any more')
+    expect(
+      await tool(key, 'update_task', { space: 'Work', at: 'Thesis.md#1:zzz', done: true }),
+    ).toContain('is a note')
     const { tasks } = await json(key, 'list_tasks', { space: 'Work' })
     expect(
       await tool(key, 'update_task', { space: 'Work', at: tasks[0]?.at, due: 'soon' }),
@@ -319,7 +233,7 @@ describe('the to-dos, with Orden closed', () => {
     expect(await tool(key, 'list_tasks', { space: 'Nowhere' })).toContain('No space')
   })
 
-  test('a checkbox in a note that is no to-do list is never a to-do, and takes none (#1229)', async () => {
+  test('a checkbox in a note is never a to-do, and a task never lands in a note (#1229, #2103)', async () => {
     const key = await connector()
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -327,115 +241,28 @@ describe('the to-dos, with Orden closed', () => {
     })
     const { tasks } = await json(key, 'list_tasks', { space: 'Work' })
     expect(tasks.map((one) => one.text)).not.toContain('Ask about the budget')
-    expect(await tool(key, 'add_task', { space: 'Work', note: 'Meeting', text: 'x' })).toContain(
-      'not a to-do list',
-    )
-    const made = await json(key, 'add_task', { space: 'Work', note: 'Errands', text: 'Post it' })
-    expect(made.path).toBe('Projects/Errands.md')
-    const again = await json(key, 'list_tasks', { space: 'Work' })
-    expect(again.tasks.map((one) => one.text)).toContain('Post it')
+    expect(tasks.map((one) => one.text)).not.toContain('Milk')
+    const made = await json(key, 'add_task', { space: 'Work', note: 'Meeting', text: 'Post it' })
+    expect(made.path).toBe('.orden-inbox.md')
+    expect(await read(key, 'Meeting.md')).toBe('- [ ] Ask about the budget\n')
+    expect(await read(key, 'Shop.md')).toBe('# Shop\n- [ ] Milk\n')
   })
 
-  test('a Projects note from before lists were marked is one until a device marks the space (#1370)', async () => {
-    const key = await connector()
-    await call(env, `/v1/spaces/${space}/notes`, {
-      token,
-      body: { path: 'Projects/Garden.md', content: '- [ ] Plant the tulips\n' },
-    })
-    const texts = async () =>
-      (await json(key, 'list_tasks', { space: 'Work' })).tasks.map((one) => one.text)
-    expect(await texts()).toContain('Plant the tulips')
-    const made = await json(key, 'add_task', { space: 'Work', note: 'Garden', text: 'Buy soil' })
-    expect(made.path).toBe('Projects/Garden.md')
-
-    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
-    env.db
-      .prepare("update folders set meta = ? where space_id = ? and name = 'Projects'")
-      .run('{"todo-lists":"marked"}', space)
-    expect(await texts()).not.toContain('Plant the tulips')
-  })
-
-  test('a Projects folder chosen in Settings, marked at any depth, marks the space and holds new lists', async () => {
-    const key = await connector()
-    for (const [path, content] of [
-      ['Projects/Garden.md', '- [ ] Plant the tulips\n'],
-      ['Areas/Plans/Trip.md', '- [ ] Book the train\n'],
-    ]) {
-      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
-    }
-    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
-    env.db
-      .prepare("update notes set meta = ? where space_id = ? and path = 'Areas/Plans/Trip.md'")
-      .run('{"todo-list":"yes"}', space)
-    env.db
-      .prepare("update folders set meta = ? where space_id = ? and name = 'Plans'")
-      .run('{"todo-lists":"marked"}', space)
-
-    const texts = (await json(key, 'list_tasks', { space: 'Work' })).tasks.map((one) => one.text)
-    expect(texts).toContain('Book the train')
-    expect(texts).not.toContain('Plant the tulips')
-    const made = await json(key, 'add_task', { space: 'Work', note: 'Errands', text: 'Post it' })
-    expect(made.path).toBe('Areas/Plans/Errands.md')
-    const again = await json(key, 'list_tasks', { space: 'Work' })
-    expect(again.tasks.map((one) => one.text)).toContain('Post it')
-  })
-
-  test('a note made a to-do list by its path and a note again, as a device hears it', async () => {
+  test('a reminder is kept from the inbox, never from a checkbox in a note (#2103)', async () => {
     const key = await connector()
     await call(env, '/v2/push/targets', {
       token,
       body: { kind: 'fcm', token: 'phone-token', zone: 'Europe/Zurich' },
     })
-    await call(env, `/v1/spaces/${space}/notes`, {
-      token,
-      body: {
-        path: 'Meeting.md',
-        content: '- [ ] Ask about the budget [remind:: 2099-01-05 09:00]\n- [ ] Book a room\n',
-      },
-    })
-    const id = (
-      env.db.prepare("select id from notes where path = 'Meeting.md'").get() as { id: string }
-    ).id
-    const texts = async () =>
-      (await json(key, 'list_tasks', { space: 'Work' })).tasks.map((one) => one.text)
-    const heard = async () => {
-      const page = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
-      const items = (page.json as unknown as { items: { id: string; meta?: object }[] }).items
-      return items.find((one) => one.id === id)?.meta
-    }
     const reminders = () => env.db.prepare('select id from push_reminders').all().length
-
-    expect(await texts()).not.toContain('Ask about the budget')
+    await tool(key, 'write_note', {
+      space: 'Work',
+      path: 'Meeting.md',
+      content: '- [ ] Ask about the budget [remind:: 2099-01-05 09:00]\n',
+    })
     expect(reminders()).toBe(0)
-    const room = `Meeting.md#1:${taskHash('Book a room')}`
-    expect(
-      await json(key, 'update_task', { space: 'Work', at: room, done: true, todo_list: true }),
-    ).toMatchObject({ at: room, path: 'Meeting.md', todo_list: true, space: 'Work' })
-    expect(await read(key, 'Meeting.md')).toContain('- [x] Book a room')
-    expect(await texts()).toContain('Ask about the budget')
-    expect(await heard()).toEqual({ 'todo-list': 'yes' })
+    await json(key, 'add_task', { space: 'Work', text: 'Book a room [remind:: 2099-01-05 09:00]' })
     expect(reminders()).toBe(1)
-
-    expect(
-      await json(key, 'update_task', { space: 'Work', at: 'Meeting', todo_list: false }),
-    ).toEqual({ path: 'Meeting.md', todo_list: false, space: 'Work' })
-    expect(await texts()).not.toContain('Ask about the budget')
-    expect(await heard()).toEqual({ 'todo-list': 'no' })
-    expect(reminders()).toBe(0)
-
-    expect(
-      await tool(key, 'update_task', { space: 'Work', at: '.Inbox.md', todo_list: false }),
-    ).toContain('always a to-do list')
-    expect(
-      await tool(key, 'update_task', { space: 'Work', at: 'Nowhere', todo_list: true }),
-    ).toContain('No note at Nowhere.md')
-    expect(
-      await tool(await connector(true), 'update_task', {
-        space: 'Work',
-        at: 'Shop',
-        todo_list: false,
-      }),
-    ).toContain('only read')
   })
 
   test('a space shared to read is listed and never written', async () => {
@@ -446,7 +273,6 @@ describe('the to-dos, with Orden closed', () => {
       token: owner,
       body: { path: 'Club.md', content: '- [ ] Meet\n' },
     })
-    env.db.prepare('update notes set meta = ? where space_id = ?').run('{"todo-list":"yes"}', id)
     await call(env, `/v1/spaces/${id}/share/invite`, {
       token: owner,
       body: { email: 'a@b.dev', role: 'read' },
@@ -455,7 +281,7 @@ describe('the to-dos, with Orden closed', () => {
     const key = await connector()
     const listed = await tool(key, 'list_tasks', { space: 'Club' })
     const inside = /^<untrusted source="shared space Club">\n(.*)\n<\/untrusted>$/s.exec(listed)
-    expect(JSON.parse(inside?.[1] ?? 'null').tasks).toMatchObject([{ text: 'Meet' }])
+    expect(JSON.parse(inside?.[1] ?? 'null').tasks).toEqual([])
     expect(await tool(key, 'add_task', { space: 'Club', text: 'Sneak' })).toContain(
       'shared with you to read',
     )

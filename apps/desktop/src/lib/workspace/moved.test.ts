@@ -129,16 +129,15 @@ describe('restating a record kept under both the old and the new folder', () => 
     localStorage.setItem(
       'orden:item-meta',
       JSON.stringify({
-        [`${OLD}/Notes`]: { items: { 'a.md': { 'todo-list': 'yes' } }, lists: true },
-        [`${NEW}/Notes`]: { items: { 'b.md': { 'todo-list': 'yes' } }, lists: false },
+        [`${OLD}/Notes`]: { items: { 'a.md': { icon: 'a' } } },
+        [`${NEW}/Notes`]: { items: { 'b.md': { icon: 'b' } } },
       }),
     )
 
     expect(restate(OLD, NEW)).toBe(1)
     expect(JSON.parse(localStorage.getItem('orden:item-meta')!)).toEqual({
       [`${NEW}/Notes`]: {
-        items: { 'a.md': { 'todo-list': 'yes' }, 'b.md': { 'todo-list': 'yes' } },
-        lists: false,
+        items: { 'a.md': { icon: 'a' }, 'b.md': { icon: 'b' } },
       },
     })
   })

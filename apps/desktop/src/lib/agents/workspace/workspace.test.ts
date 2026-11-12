@@ -90,8 +90,6 @@ const tabs = [
 
 const marks: Record<string, { kind: string; path: string; text: string }[]> = {}
 
-const lists = new Set(['/s/Home/Soup.md'])
-
 const workspace = {
   spaces: [work, home, secret],
   get notes() {
@@ -101,12 +99,7 @@ const workspace = {
   },
   rootHolding: (path: string) =>
     [work, home, secret].find((one) => path.startsWith(`${one.root}/`))?.root ?? null,
-  itemMeta: {
-    listsMarked: () => true,
-    of: (path: string) => (lists.has(path) ? { 'todo-list': 'yes' } : null),
-    set: (path: string, patch: Record<string, string | null>) =>
-      patch['todo-list'] === 'yes' ? lists.add(path) : lists.delete(path),
-  },
+  itemMeta: { of: () => null, set: () => undefined },
   get shownSpaces() {
     return this.spaces
   },
@@ -494,6 +487,7 @@ vi.mock('../../terminal/shells.svelte', () => ({
 
 vi.mock('../../rows/rows.svelte', async () => {
   const { rowsOfText } = await import('@orden/bases/rows')
+  const { isInboxPath } = await import('@orden/bases/inbox')
   const spaces = [work, home, secret]
   return {
     rows: {
@@ -507,6 +501,7 @@ vi.mock('../../rows/rows.svelte', async () => {
         return [...files]
           .filter(([at]) => at.startsWith(`${space.root}/`) && at.endsWith('.md'))
           .flatMap(([at, text]) => rowsOfText(space.name, at.slice(space.root.length + 1), text))
+          .filter((row) => row.kind !== 'task' || isInboxPath(row.path))
       },
       inboxes: () => spaces.map((one) => ({ space: one.name, path: '.Inbox.md' })),
     },
@@ -1620,8 +1615,8 @@ describe('to-dos and bases', () => {
 
   beforeEach(() => {
     files.set(
-      '/s/Work/Thesis.md',
-      '# Thesis\n- [ ] Write the intro 📅 2026-01-02\n- [ ] Read 🔁 every day 📅 2026-01-01\n',
+      '/s/Work/.orden-inbox.md',
+      '- [ ] Write the intro 📅 2026-01-02\n- [ ] Read 🔁 every day 📅 2026-01-01\n- [ ] Buy milk #shop\n',
     )
     files.set('/s/Home/Soup.md', '# Soup\n\n- [ ] Buy milk #shop\n')
     files.set('/s/Secret/Diary.md', '# Diary\n- [ ] Hidden 📅 2026-01-01\n')
@@ -1640,10 +1635,10 @@ describe('to-dos and bases', () => {
 
   test('a view, and the filter language Todoist has', async () => {
     const today = await call('list_tasks', { view: 'today', space: 'Work' })
-    expect((today as { result: { tasks: unknown[] } }).result.tasks).toHaveLength(2)
+    expect((today as { result: { tasks: unknown[] } }).result.tasks).toHaveLength(3)
     const shop = await call('list_tasks', { filter: '#shop' })
     expect(shop).toMatchObject({
-      result: { total: 1, tasks: [{ text: 'Buy milk', space: 'Home' }] },
+      result: { total: 1, tasks: [{ text: 'Buy milk', space: 'Work' }] },
     })
     expect(await call('list_tasks', { filter: '(' })).toMatchObject({ code: 'bad_arguments' })
   })
@@ -1698,8 +1693,8 @@ describe('to-dos and bases', () => {
     expect(added).toHaveLength(2)
   })
 
-  test('a task sent to the Inbox by name goes there, and makes no Inbox.md (#1044)', async () => {
-    await call('add_task', { space: 'Home', text: 'Call mum', note: 'Inbox' })
+  test('a task goes into the inbox, and makes no Inbox.md (#1044)', async () => {
+    await call('add_task', { space: 'Home', text: 'Call mum' })
     expect(files.get('/s/Home/.Inbox.md')).toBe('- [ ] Call mum\n')
     expect(files.has('/s/Home/Inbox.md')).toBe(false)
   })
@@ -1739,44 +1734,33 @@ describe('to-dos and bases', () => {
     const todos = await call('list_tasks', { view: 'todos' })
     const tasks = (todos as { result: { tasks: { text: string; space: string }[] } }).result.tasks
     expect(tasks.map((one) => `${one.space} ${one.text}`).sort()).toEqual([
-      'Home Buy milk',
+      'Work Buy milk',
       'Work Read',
       'Work Write the intro',
     ])
   })
 
-  test('a task added under a heading of a note, as the agent writes any edit', async () => {
-    await call('add_task', { space: 'Home', note: 'Soup', under: 'Soup', text: 'Buy leeks' })
-    expect(written()).toEqual(['# Soup\n\n- [ ] Buy milk #shop\n- [ ] Buy leeks\n'])
+  test('a task added under a heading of the inbox, as the agent writes any edit', async () => {
+    await call('add_task', { space: 'Home', under: 'Later', text: 'Buy leeks' })
+    expect(files.get('/s/Home/.Inbox.md')).toBe('## Later\n- [ ] Buy leeks\n')
   })
 
-  test('a task sent to a note that is no to-do list makes one in Projects, the note untouched (#1229)', async () => {
+  test('a task never goes into a note, and the note’s checkboxes are no to-dos (#2103)', async () => {
     files.set('/s/Home/Meeting.md', '- [ ] Ask about the budget\n')
     const added = await call('add_task', { space: 'Home', note: 'Meeting', text: 'Book a room' })
     expect(added).toMatchObject({
-      result: { at: expect.stringMatching(/^Projects\/Meeting\.md#0:/) as unknown },
+      result: { at: expect.stringMatching(/^\.Inbox\.md#0:/) as unknown },
     })
     expect(files.get('/s/Home/Meeting.md')).toBe('- [ ] Ask about the budget\n')
-    expect(lists.has('/s/Home/Projects/Meeting.md')).toBe(true)
-    files.delete('/s/Home/Meeting.md')
-  })
-
-  test('a note made a to-do list by its path, and a note again, never the inbox', async () => {
-    files.set('/s/Home/Meeting.md', '- [ ] Ask about the budget\n')
+    const { taskHash } = await import('@orden/bases')
     expect(
-      await call('update_task', { space: 'Home', at: 'Meeting.md', todo_list: true }),
-    ).toMatchObject({ result: { path: 'Meeting.md', todo_list: true, space: 'Home' } })
-    expect(lists.has('/s/Home/Meeting.md')).toBe(true)
-    await call('update_task', { space: 'Home', at: 'Meeting', todo_list: false })
-    expect(lists.has('/s/Home/Meeting.md')).toBe(false)
-    expect(
-      await call('update_task', { space: 'Home', at: '.Inbox.md', todo_list: false }),
+      await call('update_task', {
+        space: 'Home',
+        at: `Meeting.md#0:${taskHash('Ask about the budget')}`,
+        done: true,
+      }),
     ).toMatchObject({ code: 'bad_arguments' })
-    expect(
-      await call('update_task', { space: 'Home', at: 'Nowhere', todo_list: true }),
-    ).toMatchObject({ code: 'no_such_file' })
-    expect(lists.has('/s/Home/Nowhere.md')).toBe(false)
-    expect(docs.writeNote).not.toHaveBeenCalled()
+    expect(files.get('/s/Home/Meeting.md')).toBe('- [ ] Ask about the budget\n')
     files.delete('/s/Home/Meeting.md')
   })
 
@@ -1786,55 +1770,30 @@ describe('to-dos and bases', () => {
     const ticked = await call('update_task', { space: 'Work', at, done: true })
     expect(ticked).toMatchObject({
       result: {
-        at: expect.stringMatching(/^Thesis\.md#3:/) as unknown,
-        next: expect.stringMatching(/^Thesis\.md#2:/) as unknown,
+        at: expect.stringMatching(/^\.orden-inbox\.md#2:/) as unknown,
+        next: expect.stringMatching(/^\.orden-inbox\.md#1:/) as unknown,
       },
     })
     expect(written()).toHaveLength(1)
-    expect(written()[0]?.split('\n')[2]).toMatch(/^- \[ \] Read 🔁 every day 📅 \d{4}-\d{2}-\d{2}$/)
+    expect(written()[0]?.split('\n')[1]).toMatch(/^- \[ \] Read 🔁 every day 📅 \d{4}-\d{2}-\d{2}$/)
   })
 
-  test('a field changed, and a task moved to another note with what is under it', async () => {
+  test('a field changed, and a task moved under a heading of the inbox', async () => {
     const { taskHash } = await import('@orden/bases')
-    const at = `Thesis.md#1:${taskHash('Write the intro')}`
+    const at = `.orden-inbox.md#0:${taskHash('Write the intro')}`
     await call('update_task', { space: 'Work', at, priority: 1, due: '' })
-    expect(written()[0]?.split('\n')[1]).toBe('- [ ] Write the intro 🔺')
+    expect(written()[0]?.split('\n')[0]).toBe('- [ ] Write the intro 🔺')
 
     docs.writeNote.mockClear()
-    await call('update_task', { space: 'Work', at, move_to: { note: 'Plan', under: 'Later' } })
-    expect(written()).toEqual([
-      '# Plan\n\n## Later\n- [ ] Write the intro 📅 2026-01-02\n',
-      '# Thesis\n- [ ] Read 🔁 every day 📅 2026-01-01\n',
-    ])
-  })
-
-  test('a task moved out of the inbox into a note and back, and no Inbox.md (#1044)', async () => {
-    const { taskHash } = await import('@orden/bases')
-    files.set('/s/Home/.Inbox.md', '- [ ] Call mum\n')
-    const hash = taskHash('Call mum')
-    const out = await call('update_task', {
-      space: 'Home',
-      at: `.Inbox.md#0:${hash}`,
-      move_to: { note: 'Soup' },
-    })
-    expect(out).toMatchObject({ result: { at: expect.stringMatching(/^Soup\.md#/) as unknown } })
-    expect(written()).toEqual(['# Soup\n\n- [ ] Buy milk #shop\n- [ ] Call mum\n', ''])
-
-    docs.writeNote.mockClear()
-    files.set('/s/Home/Soup.md', '# Soup\n\n- [ ] Buy milk #shop\n- [ ] Call mum\n')
-    files.set('/s/Home/.Inbox.md', '')
-    await call('update_task', {
-      space: 'Home',
-      at: `Soup.md#3:${hash}`,
-      move_to: { note: 'Inbox' },
-    })
-    expect(written()).toEqual(['- [ ] Call mum\n', '# Soup\n\n- [ ] Buy milk #shop\n'])
-    expect(files.has('/s/Home/Inbox.md')).toBe(false)
+    await call('update_task', { space: 'Work', at, move_to: { under: 'Later' } })
+    expect(written()).toHaveLength(1)
+    expect(written()[0]).toContain('## Later\n- [ ] Write the intro 📅 2026-01-02')
+    expect(written()[0]?.startsWith('- [ ] Read 🔁 every day')).toBe(true)
   })
 
   test('a comment written under the task, with its tag, in one edit', async () => {
     const { taskHash } = await import('@orden/bases')
-    const at = `Thesis.md#1:${taskHash('Write the intro')}`
+    const at = `.orden-inbox.md#0:${taskHash('Write the intro')}`
     await call('update_task', {
       space: 'Work',
       at,
@@ -1843,8 +1802,8 @@ describe('to-dos and bases', () => {
     })
     expect(written()).toHaveLength(1)
     const lines = written()[0]?.split('\n') ?? []
-    expect(lines[1]).toMatch(/^- \[ \] Write the intro .*#needs-input/)
-    expect(lines[2]).toMatch(/^ {2}- .*Which chapter is the intro for\?/)
+    expect(lines[0]).toMatch(/^- \[ \] Write the intro .*#needs-input/)
+    expect(lines[1]).toMatch(/^ {2}- .*Which chapter is the intro for\?/)
   })
 
   test('a space the grant does not reach, an anchor that is not there', async () => {
@@ -1852,8 +1811,11 @@ describe('to-dos and bases', () => {
       await call('update_task', { space: 'Secret', at: 'Diary.md#1:x', done: true }),
     ).toMatchObject({ code: 'no_such_space' })
     expect(
-      await call('update_task', { space: 'Work', at: 'Thesis.md#1:zzz', done: true }),
+      await call('update_task', { space: 'Work', at: '.orden-inbox.md#1:zzz', done: true }),
     ).toMatchObject({ code: 'not_found' })
+    expect(
+      await call('update_task', { space: 'Work', at: 'Thesis.md#1:zzz', done: true }),
+    ).toMatchObject({ code: 'bad_arguments' })
     expect(await call('update_task', { space: 'Work', at: 'nothing' })).toMatchObject({
       code: 'bad_arguments',
     })

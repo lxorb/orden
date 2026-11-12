@@ -121,15 +121,15 @@ providePort('sync.workspace', {
   notesDescribed: async (root) => {
     const { moveOwnKeysSoon } = await import('./workspace/own-keys-moved')
     moveOwnKeysSoon(root, workspace, true)
-    const { markOldListsSoon } = await import('./rows/old-lists')
-    markOldListsSoon(root, true, workspace)
+    const { dropListKeys } = await import('./rows/unlisted')
+    dropListKeys(root, workspace.itemMeta)
     const { keepSetextMarked } = await import('./workspace/setext')
     keepSetextMarked(workspace, root)
   },
   spaceUnpaired: async (root) => {
-    const { markOldListsSoon } = await import('./rows/old-lists')
+    const { dropListKeys } = await import('./rows/unlisted')
     const { moveOwnKeysSoon } = await import('./workspace/own-keys-moved')
-    markOldListsSoon(root, true, workspace)
+    dropListKeys(root, workspace.itemMeta)
     moveOwnKeysSoon(root, workspace, false)
   },
   hearWrites: (hearing) => hearWrites(hearing),

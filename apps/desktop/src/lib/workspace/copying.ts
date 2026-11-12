@@ -147,7 +147,7 @@ export async function bringIn(
 
       const path = rest.length ? joinPath(at.path, rest.join('/')) : at.path
       const bytes = new Uint8Array(await file.arrayBuffer())
-      if (readsWords(path)) await wordsIn(ws, path, new TextDecoder().decode(bytes))
+      if (readsWords(path)) await wordsIn(path, new TextDecoder().decode(bytes))
       else await writeBytes(path, bytes)
 
       if (!rest.length && isPdfTarget(path)) {
@@ -161,8 +161,6 @@ export async function bringIn(
   return [...landed.values()].map((one) => one.path)
 }
 
-async function wordsIn(ws: Copies, path: string, words: string): Promise<void> {
-  const taken = isMarkdownPath(path) ? (await import('../import/listed')).listKeyTaken(words) : null
-  await writeFile(path, taken?.text ?? words)
-  if (taken) ws.itemMeta.set(path, taken.meta)
+async function wordsIn(path: string, words: string): Promise<void> {
+  await writeFile(path, words)
 }

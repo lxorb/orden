@@ -3,16 +3,12 @@ import {
   PROTECTED,
   shutFor,
   objectIn,
-  pokeNow,
   homeSpace,
   inboxText,
   writeInboxText,
   cleanPath,
   MOVED,
-  remindRelisted,
   blobKey,
-  describeById,
-  prepareSpace,
   type Shut,
   type Env,
   type Note,
@@ -39,16 +35,7 @@ import {
 } from '@orden/bases/agent'
 import { rowsOfText } from '@orden/bases/rows'
 import { taskHash } from '@orden/bases'
-import { ACCOUNT_INBOX, isAccountInbox, isInboxPath, meansInbox } from '@orden/bases/inbox'
-import {
-  CANCELLED_KEY,
-  DONE_KEY,
-  LIST_KEY,
-  LIST_VALUE,
-  STOPPED_VALUE,
-  withDates,
-} from '@orden/bases/todo-lists'
-import { metaFromText, type ItemMeta, type MetaPatch } from '@orden/sync-core'
+import { ACCOUNT_INBOX, isAccountInbox, isInboxPath } from '@orden/bases/inbox'
 import { appliedEdits } from '@orden/markdown/edits'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { taskLine } from '@orden/markdown/task-edits'
@@ -63,7 +50,7 @@ import {
   spaceSource,
   spacesFor,
 } from './tools'
-import { dated, listsBy, zoneOf } from './dated'
+import { zoneOf } from './zone'
 import type { TokenRow } from './tokens'
 
 const MOST_READ = 2000
@@ -86,14 +73,13 @@ export const TASK_TOOLS = [
   {
     name: 'add_task',
     description:
-      "Add a to-do line to the space's inbox, or to the to-do list `note` (one list_tasks shows) under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
+      "Add a to-do line to the space's inbox under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
     inputSchema: {
       type: 'object',
       properties: {
         space: string,
         text: string,
         fields: { type: 'object' },
-        note: string,
         under: string,
       },
       required: ['space', 'text'],
@@ -102,7 +88,7 @@ export const TASK_TOOLS = [
   {
     name: 'update_task',
     description:
-      'Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `""` takes a field off, priority is 1 (p1) to 4, `move_to` {note?, under?} moves it with its sub-tasks. `todo_list` true makes the note of `at` (its path will do) a to-do list, false a note again.',
+      'Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `""` takes a field off, priority is 1 (p1) to 4, `move_to` {under} moves it with its sub-tasks under a heading.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -122,8 +108,7 @@ export const TASK_TOOLS = [
         duration: string,
         assignee: string,
         tags: { type: 'array', items: string },
-        move_to: { type: 'object', properties: { note: string, under: string } },
-        todo_list: { type: 'boolean' },
+        move_to: { type: 'object', properties: { under: string } },
       },
       required: ['space', 'at'],
     },
@@ -205,7 +190,6 @@ async function rowsOf(
     const held = (await notesOf(env, space)).filter(
       (one) => MARKDOWN.test(one.path) && !shut(space.id, one.path),
     )
-    const { listed: listedBy } = await listsBy(env, space.id)
     if (held.length > left) partial = true
     const reading = held.slice(0, Math.max(0, left))
     left -= reading.length
@@ -213,58 +197,12 @@ async function rowsOf(
       const batch = reading.slice(at, at + AT_ONCE)
       const bodies = await Promise.all(batch.map((one) => noteBody(env, space.id, one.id)))
       batch.forEach((one, index) => {
-        const meta = metaFromText(one.meta)
-        const listed = listedBy(one.path, meta)
         const read = rowsOfText(space.name, one.path, bodies[index] ?? '')
-        rows.push(...withDates(read, meta).filter((row) => listed || row.kind !== 'task'))
+        rows.push(...read.filter((row) => row.kind !== 'task'))
       })
     }
   }
   return { rows, partial }
-}
-
-interface Place {
-  path: string
-  made?: ItemMeta
-}
-
-const LISTED: ItemMeta = { [LIST_KEY]: LIST_VALUE }
-
-const STOPPED: MetaPatch = { [LIST_KEY]: STOPPED_VALUE, [DONE_KEY]: null, [CANCELLED_KEY]: null }
-
-const keyOf = (path: string) => path.normalize('NFC').toLowerCase()
-
-async function placeNamed(env: Env, space: Writable, named: string | undefined): Promise<Place> {
-  if (named === undefined) return { path: ACCOUNT_INBOX }
-  const path = notePath(named)
-  const { results } = await env.DB.prepare(
-    `select path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
-      order by path limit ?`,
-  )
-    .bind(space.id, MOST_READ)
-    .all<{ path: string; meta: string | null }>()
-  const there = results.find((one) => keyOf(one.path) === keyOf(path))
-  if (there === undefined && meansInbox(named)) return { path: ACCOUNT_INBOX }
-  const lists = await listsBy(env, space.id)
-  const listed = (one: { path: string; meta: string | null }) =>
-    lists.listed(one.path, metaFromText(one.meta))
-  if (there !== undefined) {
-    if (listed(there)) return { path: there.path }
-    throw new Said(
-      `${there.path} is a note, not a to-do list: its checkboxes are not to-dos. Leave note out for the inbox, or name a to-do list.`,
-    )
-  }
-  const name = path.split('/').pop() ?? path
-  const list = results.find(
-    (one) => listed(one) && keyOf(one.path.split('/').pop() ?? '') === keyOf(name),
-  )
-  if (list) return { path: list.path }
-  const taken = new Set(results.map((one) => keyOf(one.path)))
-  const stem = name.replace(MARKDOWN, '')
-  for (let count = 1; ; count++) {
-    const made = `${lists.home}/${count === 1 ? stem : `${stem} ${count}`}.md`
-    if (!taken.has(keyOf(made))) return { path: made, made: LISTED }
-  }
 }
 
 function mayReach(space: Writable, path: string): void {
@@ -326,7 +264,6 @@ async function written(
   path: string,
   words: string,
   read: Note | null,
-  made?: ItemMeta,
 ): Promise<string> {
   if (isAccountInbox(path)) {
     const put = await writeInboxText(env, space.me, words, contextNow(space.zone).today)
@@ -334,7 +271,7 @@ async function written(
     return ACCOUNT_INBOX
   }
   mayReach(space, path)
-  const put = await putNote(env, space, path, words, undefined, read, made)
+  const put = await putNote(env, space, path, words, undefined, read)
   if (put === MOVED) throw new Moved(path)
   if (typeof put === 'string') throw new Said(put)
   return put.path
@@ -457,21 +394,18 @@ async function addTaskTo(
   space: Writable,
   args: Args,
 ): Promise<{ at: string; space: string; path: string }> {
-  const read = newTask(args, quickWords(['en', 'de'], wallClock(new Date(), space.zone)))
-  const { fields } = read
-  const place = await placeNamed(env, space, words(args, 'note') ?? read.note)
-  const path = place.path
+  const { fields } = newTask(args, quickWords(['en', 'de'], wallClock(new Date(), space.zone)))
+  const path = ACCOUNT_INBOX
   return await edits(async () => {
     const held = await readOf(env, space, path)
     const before = held?.words ?? ''
-    const placed = placeIn(before, [taskLine(fields)], words(args, 'under') ?? read.heading)
+    const placed = placeIn(before, [taskLine(fields)], words(args, 'under'))
     const landed = await written(
       env,
       space,
       path,
       appliedEdits(before, [placedEdit(placed)]),
       held?.note ?? null,
-      place.made,
     )
     return {
       at: `${landed}#${placed.line}:${taskHash(fields.text)}`,
@@ -481,56 +415,14 @@ async function addTaskTo(
   })
 }
 
-const ANCHORED = /#\d+:[0-9a-z]+$/
-
-async function listNote(
-  env: Env,
-  space: Writable,
-  asked: string,
-  listing: boolean,
-): Promise<{ path: string; todo_list: boolean; space: string }> {
-  const path = notePath(asked)
-  mayReach(space, path)
-  if (!listing && isInboxPath(path)) throw new Said(`${path} is the inbox, always a to-do list.`)
-  const note = await env.DB.prepare(
-    "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
-  )
-    .bind(space.id, path)
-    .first<{ id: string }>()
-  if (!note) throw new Said(`No note at ${path}.`)
-  const held = await env.DB.prepare('select prepared_at from spaces where id = ?')
-    .bind(space.id)
-    .first<{ prepared_at: number | null }>()
-  if (!held?.prepared_at) await prepareSpace(env, space.id)
-  const done = await describeById(env, space.id, undefined, note.id, listing ? LISTED : STOPPED)
-  if ('refused' in done.value) throw new Said(changedWhileWriting(path))
-  if (done.changed) await pokeNow(env, space.id, done.cursor)
-  await remindRelisted(env, space.id, done.relisted).catch(() => undefined)
-  return { path, todo_list: listing, space: space.name }
-}
-
 async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
-  const space = await writableSpace(env, token, args, seen)
-  const listing = typeof args.todo_list === 'boolean' ? args.todo_list : undefined
-  if (listing === undefined) return await changed(env, space, args)
-  const at = words(args, 'at') ?? ''
-  if (!ANCHORED.test(at)) return await listNote(env, space, at, listing)
-  const said = await changed(env, space, args)
-  return { ...said, ...(await listNote(env, space, readAt(at).path, listing)) }
-}
-
-function daysOf(space: Writable, path: string, text: string, note: Note | null, hash: string) {
-  const meta = note ? metaFromText(note.meta) : undefined
-  const row = withDates(rowsOfText(space.name, path, text), meta).find(
-    (one) => one.anchor?.hash === hash,
-  )
-  return (_: string, cancelled: boolean) =>
-    (cancelled ? row?.task?.cancelledOn : row?.task?.completed) ?? undefined
+  return await changed(env, await writableSpace(env, token, args, seen), args)
 }
 
 async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
   const anchor = readAt(args.at)
   const path = notePath(anchor.path)
+  if (!isInboxPath(path)) throw new Said(`${path} is a note: its checkboxes are not to-dos.`)
   const done = typeof args.done === 'boolean' ? args.done : undefined
   const change = taskChange(args)
   const today = contextNow(space.zone).today
@@ -541,72 +433,29 @@ async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
     const said = { at: edited.at, ...(edited.next ? { next: edited.next } : {}), space: space.name }
     return { held, edited, said }
   }
-  const taken = (edited: { text: string; at: string }) => {
-    const block = taskBlock(
-      edited.text,
-      taskIn(edited.text, space.name, path, readAt(edited.at)).anchor?.line ?? 0,
-    )
-    return { block, source: edited.text.slice(0, block.from) + edited.text.slice(block.to) }
-  }
   const moveTo = args.move_to
   if (moveTo === undefined || moveTo === null) {
     return await edits(async () => {
       const { held, edited, said } = await editing()
       if (edited.text === held.words) return said
       await written(env, space, path, edited.text, held.note)
-      if (held.note) await dated(env, space, path, held.words, edited.text, held.note, today)
       return said
     })
   }
 
-  const target = typeof moveTo === 'object' ? (moveTo as Args) : { note: moveTo }
-  const place =
-    typeof target.note === 'string' && target.note.trim()
-      ? await placeNamed(env, space, target.note)
-      : { path }
-  const into = place.path
-  const under = words(target, 'under')
-  const placedIn = await edits(async () => {
+  const under = typeof moveTo === 'object' ? words(moveTo as Args, 'under') : undefined
+  return await edits(async () => {
     const { held, edited, said } = await editing()
-    const { block, source } = taken(edited)
-    const there =
-      into === path ? { words: source, note: held.note } : await readOf(env, space, into)
-    const before = there?.words ?? ''
-    const placed = placeIn(before, block.lines, under)
-    const after = appliedEdits(before, [placedEdit(placed)])
-    const landed = await written(env, space, into, after, there?.note ?? null, place.made)
-    const hash = readAt(edited.at).hash
-    const note = there?.note ?? (await readOf(env, space, into).catch(() => null))?.note
-    if (note) {
-      const was = into === path ? held.words : before
-      const days = daysOf(space, path, held.words, held.note, hash)
-      await dated(env, space, into, was, after, note, today, days)
-    }
-    return { said, at: `${landed}#${placed.line}:${hash}` }
-  })
-  if (into === path) return { ...placedIn.said, at: placedIn.at }
-
-  const left = await edits(async () => {
-    let read
-    try {
-      read = await editing()
-    } catch (error) {
-      if (error instanceof AgentError) {
-        return `The task is no longer in ${path} as it was. If it was edited there, it is in both: check ${path}.`
-      }
-      throw error
-    }
-    const rest = taken(read.edited).source
-    await written(env, space, path, rest, read.held.note)
-    if (read.held.note) await dated(env, space, path, read.held.words, rest, read.held.note, today)
-    return null
-  }).catch((error: unknown) => {
-    if (!(error instanceof Said)) throw error
-    throw new Said(
-      `The task is in ${into} now and still in ${path}: ${error.message} Take it out of ${path}, and do not move it again.`,
+    const block = taskBlock(
+      edited.text,
+      taskIn(edited.text, space.name, path, readAt(edited.at)).anchor?.line ?? 0,
     )
+    const source = edited.text.slice(0, block.from) + edited.text.slice(block.to)
+    const placed = placeIn(source, block.lines, under)
+    const after = appliedEdits(source, [placedEdit(placed)])
+    const landed = await written(env, space, path, after, held.note)
+    return { ...said, at: `${landed}#${placed.line}:${readAt(edited.at).hash}` }
   })
-  return { ...placedIn.said, at: placedIn.at, ...(left ? { left } : {}) }
 }
 
 async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
