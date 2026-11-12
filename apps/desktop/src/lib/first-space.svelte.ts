@@ -44,7 +44,7 @@ class FirstSpace {
 
 async function beginSetup() {
   if (__EVEN_PLUGIN__) return
-  const { setup } = await import('./onboarding/setup.svelte')
+  const { setup } = await import('./onboarding/setup-state.svelte')
   setup.begin(false)
 }
 

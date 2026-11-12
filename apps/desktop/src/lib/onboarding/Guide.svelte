@@ -6,7 +6,7 @@
   import { BROWSERS, NOTES_APPS } from './catalog'
   import { gate } from './gate.svelte'
   import { type Box, guideCards, placeCard, shownBox, targetOf } from './guide'
-  import { setup } from './setup.svelte'
+  import { setup } from './setup-state.svelte'
 
   const WAIT = 600
   const SWAP = 180

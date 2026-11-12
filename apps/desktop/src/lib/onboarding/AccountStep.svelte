@@ -3,7 +3,7 @@
   import { joining } from '../joining.svelte'
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
-  import { setup } from './setup.svelte'
+  import { setup } from './setup-state.svelte'
 
   const LENGTH = 6
   const blank = () => Array.from({ length: LENGTH }, () => '')

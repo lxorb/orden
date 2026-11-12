@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import { setup } from './setup.svelte'
+  import { setup } from './setup-state.svelte'
 
   interface Action {
     label: string

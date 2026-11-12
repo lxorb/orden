@@ -3,7 +3,7 @@
   import Logo from './Logo.svelte'
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
-  import { setup } from './setup.svelte'
+  import { setup } from './setup-state.svelte'
 
   const browser = $derived(BROWSERS.find((one) => one.id === setup.answers.browser) ?? null)
 

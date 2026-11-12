@@ -2,7 +2,7 @@
   import { HEARD, type Heard } from './catalog'
   import { keepHeard } from './kept'
   import Screen from './Screen.svelte'
-  import { setup } from './setup.svelte'
+  import { setup } from './setup-state.svelte'
 
   let picked = $state<Heard | null>(null)
   let where = $state('')
