@@ -54,7 +54,7 @@ index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..5f8c2c617634ff513318b377cc17daee
 +    $dispatch(...specs) {
 +        if (this.$batch === undefined || this.$flushing)
 +            return this.$view.dispatch(...specs);
-+        // Patched (pnpm patch, see docs/patches.md): every state of a batch
++        // Patched (pnpm patch): every state of a batch
 +        // but its first and its last leaves the parse for later, so a command
 +        // over every line parses once rather than once for each line.
 +        var later = this.$batch.length > 0;
@@ -567,7 +567,7 @@ index f0b243a40e4c4605811a774078a5a25d1fa5ae54..2a3355593814bb0bc6ecbb568024ce7e
 +    $dispatch(...specs) {
 +        if (this.$batch === undefined || this.$flushing)
 +            return this.$view.dispatch(...specs);
-+        // Patched (pnpm patch, see docs/patches.md): every state of a batch
++        // Patched (pnpm patch): every state of a batch
 +        // but its first and its last leaves the parse for later, so a command
 +        // over every line parses once rather than once for each line.
 +        var later = this.$batch.length > 0;

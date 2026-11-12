@@ -96,7 +96,6 @@ export default tseslint.config(
       '.claude/**',
       'packaging/**',
       'apps/desktop/src-tauri/gen/**',
-      'docs/**',
       'apps/desktop/src-tauri/src/extensions/firefox/browser-polyfill.js',
     ],
   },

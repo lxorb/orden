@@ -1,5 +1,5 @@
 #!/bin/sh
-# The machine's browser (docs/online-terminal.md 4.13): `xdg-open`, `sensible-browser`,
+# The machine's browser: `xdg-open`, `sensible-browser`,
 # `x-www-browser`, `www-browser` and `$BROWSER` are all this. A machine has no screen,
 # so an address a program asks a browser for - a sign-in, a pull request, docs - opens on
 # its owner's computer, in Orden, through `ordend` (src/opener.ts). Only web addresses; a file

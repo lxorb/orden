@@ -14,7 +14,6 @@ from playwright.sync_api import sync_playwright
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "apps" / "desktop" / "dist-even"
 OUT = ROOT / "target" / "even-e2e"
-DOCS = ROOT / "docs" / "even"
 
 CHROME_HOME = pathlib.Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
 
@@ -1456,14 +1455,8 @@ def main() -> int:
         finally:
             browser.close()
 
-    DOCS.mkdir(parents=True, exist_ok=True)
-    for one in sorted(OUT.glob("*.png")):
-        if one.name == "debug.png":
-            continue
-        (DOCS / one.name).write_bytes(one.read_bytes())
-
     report.say("")
-    report.say(f"pictures in {OUT}, and in {DOCS}")
+    report.say(f"pictures in {OUT}")
     report.show()
     return 1 if report.bad else 0
 

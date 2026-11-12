@@ -9,7 +9,7 @@ const mark = (x, y) => (inSquircle(x, y) ? (onBars(x, y) ? INK : GROUND) : null)
 
 const ground = (x, y) => (inSquircle(x, y) ? GROUND : null)
 
-const out = process.argv[2] ?? join('docs', 'even')
+const out = process.argv[2] ?? join('target', 'even')
 mkdirSync(out, { recursive: true })
 
 for (const size of [24, 256]) {

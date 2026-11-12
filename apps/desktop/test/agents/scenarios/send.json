@@ -1,6 +1,5 @@
 {
   "proves": "Send on a compose form answers needs_approval and sends nothing",
-  "doc": "9.3",
   "steps": [
     {
       "call": "browser_open",

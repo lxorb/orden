@@ -6,7 +6,7 @@ index 68d14f396f563ca15f51a55eec3c943b64ca14c0..e0661b2a93f5e341cdc72462d1601000
      */
      takeTree() {
          let pos, tree;
-+        // Patched (pnpm patch, see docs/patches.md): a mixed parse still in its outer
++        // Patched (pnpm patch): a mixed parse still in its outer
 +        // language reports no progress, so it was stopped at 0, its outer tree ended open
 +        // after the block it had just read, and the next parse read that block again. The
 +        // outer parse is stopped where it is instead; only the inner parses wait.
@@ -24,7 +24,7 @@ index 68d14f396f563ca15f51a55eec3c943b64ca14c0..e0661b2a93f5e341cdc72462d1601000
 +            }
 +        }
          if (this.parse && (pos = this.parse.parsedPos) >= this.treeLen) {
-+            // Patched (pnpm patch, see docs/patches.md): a mixed parse whose outer language read
++            // Patched (pnpm patch): a mixed parse whose outer language read
 +            // the whole document keeps that tree whole for the next parse, which reads no block
 +            // of it again; only the inner parses past `pos` are open.
 +            let whole = this.parse.baseParse === null &&
@@ -44,7 +44,7 @@ index 68d14f396f563ca15f51a55eec3c943b64ca14c0..e0661b2a93f5e341cdc72462d1601000
      return common.TreeFragment.applyChanges(fragments, [{ fromA: from, toA: to, fromB: from, toB: to }]);
  }
 +/**
-+Patched (pnpm patch, see docs/patches.md): a transaction with this
++Patched (pnpm patch): a transaction with this
 +annotation leaves the parse to the next one without it, or to the
 +parse worker. Its state holds an empty tree, and the changes since the
 +last parse are applied to that parse's fragments once, when the next
@@ -151,7 +151,7 @@ index 1873fde2b33afaf2e35c88a0098cc46ad167a949..821e4c41e8d57137fd5b7da0e6c4ea43
      */
      takeTree() {
          let pos, tree;
-+        // Patched (pnpm patch, see docs/patches.md): a mixed parse still in its outer
++        // Patched (pnpm patch): a mixed parse still in its outer
 +        // language reports no progress, so it was stopped at 0, its outer tree ended open
 +        // after the block it had just read, and the next parse read that block again. The
 +        // outer parse is stopped where it is instead; only the inner parses wait.
@@ -169,7 +169,7 @@ index 1873fde2b33afaf2e35c88a0098cc46ad167a949..821e4c41e8d57137fd5b7da0e6c4ea43
 +            }
 +        }
          if (this.parse && (pos = this.parse.parsedPos) >= this.treeLen) {
-+            // Patched (pnpm patch, see docs/patches.md): a mixed parse whose outer language read
++            // Patched (pnpm patch): a mixed parse whose outer language read
 +            // the whole document keeps that tree whole for the next parse, which reads no block
 +            // of it again; only the inner parses past `pos` are open.
 +            let whole = this.parse.baseParse === null &&
@@ -189,7 +189,7 @@ index 1873fde2b33afaf2e35c88a0098cc46ad167a949..821e4c41e8d57137fd5b7da0e6c4ea43
      return TreeFragment.applyChanges(fragments, [{ fromA: from, toA: to, fromB: from, toB: to }]);
  }
 +/**
-+Patched (pnpm patch, see docs/patches.md): a transaction with this
++Patched (pnpm patch): a transaction with this
 +annotation leaves the parse to the next one without it, or to the
 +parse worker. Its state holds an empty tree, and the changes since the
 +last parse are applied to that parse's fragments once, when the next

@@ -18,8 +18,6 @@ const layout = read(ANDROID, 'res', 'layout', 'widget_notes.xml')
 const provider = read(ANDROID, 'res', 'xml', 'widget_notes.xml')
 const proguard = read(HERE, '..', 'src-tauri', 'gen', 'android', 'app', 'proguard-rules.pro')
 
-const mobile = read(HERE, '..', '..', '..', 'docs', 'mobile.md')
-
 const lockLayout = () => read(ANDROID, 'res', 'layout', 'widget_notes_lock.xml')
 
 const rowsIn = (text: string) =>
@@ -180,9 +178,8 @@ describe('the quick settings tiles', () => {
     expect(new Set(sent)).toEqual(new Set([...list.matchAll(/'([\w.-]+)'/g)].map((one) => one[1])))
   })
 
-  test('and nothing written beside them claims a switch that is not there', () => {
+  test('and the manifest claims no switch that is not there', () => {
     expect(manifest).not.toContain('android:enabled')
-    expect(mobile).not.toContain('android:enabled')
   })
 })
 
@@ -255,11 +252,6 @@ describe('the lock screen widget', () => {
     expect(widgets).toContain('WIDGET_CATEGORY_KEYGUARD')
     expect(widgets).toContain('R.layout.widget_notes_lock')
     expect(widgets).toContain('override fun onAppWidgetOptionsChanged')
-  })
-
-  test('is written down, with which phones actually show it', () => {
-    expect(mobile).toMatch(/lock screen/i)
-    expect(mobile).toContain('keyguard')
   })
 })
 

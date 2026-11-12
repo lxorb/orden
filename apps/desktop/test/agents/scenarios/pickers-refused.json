@@ -1,6 +1,5 @@
 {
   "proves": "the verbs never open a picker of the engine's own: a press on a list, a date or a colour field and the keys that open one are refused, the values are set through the page, and no window of the engine's appears",
-  "doc": "6.2, 6.5",
   "steps": [
     {
       "call": "browser_open",

@@ -1,6 +1,5 @@
 {
   "proves": "Delete on a site answers needs_approval and deletes nothing",
-  "doc": "9.3",
   "steps": [
     {
       "call": "browser_open",

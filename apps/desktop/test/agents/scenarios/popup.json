@@ -1,6 +1,5 @@
 {
   "proves": "a sign-in popup becomes another tab of the agent's, off every screen, and still reaches its opener",
-  "doc": "6.2",
   "steps": [
     {
       "call": "browser_open",

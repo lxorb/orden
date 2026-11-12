@@ -9,7 +9,7 @@ index 1021312cb249ef4c52559c82500ce061e9d66b17..0b1acfd0b41bc7ab81b7cc64de192069
 -        this.changes = ChangeSet.empty(this.startState.doc.length);
 -        for (let tr of transactions)
 -            this.changes = this.changes.compose(tr.changes);
-+        // Patched (pnpm patch, see docs/patches.md): the changes of many
++        // Patched (pnpm patch): the changes of many
 +        // transactions are composed in pairs, then pairs of pairs, rather than
 +        // each onto the whole of those before it, which took time that grows
 +        // with the square of their number for a vim command over every line.
@@ -127,7 +127,7 @@ index 1021312cb249ef4c52559c82500ce061e9d66b17..0b1acfd0b41bc7ab81b7cc64de192069
 +        let cursors = [], { from, to } = view.viewport, many = state.selection.ranges.length > 64;
          for (let r of state.selection.ranges) {
              let prim = r == state.selection.main;
-+            // Patched (pnpm patch, see docs/patches.md): with many carets, only those in the
++            // Patched (pnpm patch): with many carets, only those in the
 +            // viewport are measured, not every one in the note on every redraw.
 +            if (many && !prim && (r.head < from || r.head > to))
 +                continue;

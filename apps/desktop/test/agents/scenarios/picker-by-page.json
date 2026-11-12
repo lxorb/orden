@@ -1,6 +1,5 @@
 {
   "proves": "a picker the page opens itself on an agent's ordinary press (showPicker on a button) puts no engine window on any screen, and where the engine put it is reported",
-  "doc": "6.5",
   "idle": 60,
   "steps": [
     {

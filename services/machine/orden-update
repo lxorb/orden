@@ -1,6 +1,6 @@
 #!/bin/bash
 # ordend as the Worker hands it out now, put in place before every start of ordend on a
-# server of its own (docs/online-terminal.md 4.15; ordend.service's ExecStartPre). The
+# server of its own (ordend.service's ExecStartPre). The
 # Worker serves the bundle it was deployed with and says its SHA-256; the bundle is
 # fetched, checked against it, and its files installed (install.sh --files). Never in
 # the way: anything that fails leaves the ordend that is there, and ordend starts.

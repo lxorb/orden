@@ -1,6 +1,5 @@
 {
   "proves": "an agent reads a note as it is on screen and edits it by anchor, and a note of the reader's own space comes back unmarked",
-  "doc": "8.1, 8.2",
   "steps": [
     {
       "call": "read_note",

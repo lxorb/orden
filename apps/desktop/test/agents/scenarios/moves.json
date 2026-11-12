@@ -1,6 +1,5 @@
 {
   "proves": "a button under a pseudo-element is judged as the button, and what a page shows under the pointer when it arrives is judged again before the press",
-  "doc": "9.3",
   "steps": [
     {
       "call": "browser_open",

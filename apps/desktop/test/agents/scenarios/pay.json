@@ -1,6 +1,5 @@
 {
   "proves": "a press on Place order in a card form answers needs_approval and orders nothing, and the reader's Allow lets the same press through",
-  "doc": "9.3",
   "steps": [
     {
       "call": "browser_open",

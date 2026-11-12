@@ -13,7 +13,7 @@ ORIGIN = DRIVE.origin
 APP = harness.APP
 ROOT = harness.ROOT
 
-SHOT = ROOT / "docs" / "media" / "screenshot.png"
+SHOT = DRIVE.shots / "screenshot.png"
 
 SIZE = {"width": 1000, "height": 700}
 SCALE = 2

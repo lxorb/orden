@@ -1,6 +1,5 @@
 {
   "proves": "keys pressed into an agent's page through the engine arrive trusted, and neither the window in front nor the app's focus moves, whether the app's keyboard is nowhere yet or in a page of the reader's",
-  "doc": "3, 7.2",
   "steps": [
     {
       "call": "browser_open",

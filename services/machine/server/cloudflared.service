@@ -1,4 +1,4 @@
-# The machine's one way in (docs/online-terminal.md 4.15): a Cloudflare Tunnel dialled
+# The machine's one way in: a Cloudflare Tunnel dialled
 # out to Cloudflare, so the server's firewall lets nothing in at all. Its token is this
 # machine's tunnel's alone, written by cloud-init into a file only root reads.
 [Unit]
