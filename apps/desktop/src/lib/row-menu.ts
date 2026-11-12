@@ -51,10 +51,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
   if (!canWriteAt(entry.path)) return readOnlyMenu(entry, own, marked)
 
   return [
-    { label: t('Open'), run: () => void workspace.openRow(entry.path) },
-    ...openElsewhere(entry, own),
-    ...compareEntry(entry),
-    DIVIDER,
+    ...compareEntry(entry).flatMap((one) => [one, DIVIDER]),
     ...(holds && hiddenKinds.offers('note')
       ? [
           {
@@ -89,10 +86,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
 
 function readOnlyMenu(entry: Entry, own: Entry | null, marked: Entry): MenuEntry[] {
   return [
-    { label: t('Open'), run: () => void workspace.openRow(entry.path) },
-    ...openElsewhere(entry, own),
-    ...compareEntry(entry),
-    DIVIDER,
+    ...compareEntry(entry).flatMap((one) => [one, DIVIDER]),
     ...wallpaperEntry(entry),
     ...webDataEntry(entry),
     ...searchAgainEntry(entry.path),
@@ -136,19 +130,6 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
       disabled: count === 0,
       run: () => void workspace.removeMany(paths),
     },
-  ]
-}
-
-function openElsewhere(entry: Entry, own: Entry | null): MenuEntry[] {
-  const behind = {
-    label: t('Open in new tab'),
-    run: () => void workspace.openRow(entry.path, howFor('behind')),
-  }
-  if (viewport.touch || (entry.is_dir && !own)) return [behind]
-
-  return [
-    behind,
-    { label: t('Open to the side'), run: () => void workspace.openAside(own?.path ?? entry.path) },
   ]
 }
 
