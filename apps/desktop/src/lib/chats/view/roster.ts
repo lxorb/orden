@@ -2,14 +2,13 @@ import type { Who } from '@orden/chats'
 import type { Presence } from '../../people/face'
 import type { ChatMember } from '../api'
 
-const RANKS = ['owner', 'admin', 'member', 'bot'] as const
+const RANKS = ['owner', 'member', 'bot'] as const
 
 export type Rank = (typeof RANKS)[number]
 
 export interface Listed {
   who: Who
   name: string
-  handle: string | null
   rank: Rank
   presence: Presence | null
 }
@@ -22,8 +21,7 @@ export interface Group {
 export type Line = { kind: 'group'; rank: Rank; count: number } | { kind: 'member'; member: Listed }
 
 function rankOf(member: ChatMember): Rank {
-  if (member.bot || member.who.startsWith('program:')) return 'bot'
-  if (member.rank) return member.rank
+  if (member.who.startsWith('program:')) return 'bot'
   return member.role === 'owner' ? 'owner' : 'member'
 }
 
@@ -32,15 +30,12 @@ export function listedOf(
   name: (who: Who) => string,
   presence: (who: Who) => Presence | null,
 ): Listed[] {
-  return members
-    .filter((one) => !one.gone)
-    .map((one) => ({
-      who: one.who,
-      name: name(one.who),
-      handle: one.handle ?? null,
-      rank: rankOf(one),
-      presence: presence(one.who),
-    }))
+  return members.map((one) => ({
+    who: one.who,
+    name: name(one.who),
+    rank: rankOf(one),
+    presence: presence(one.who),
+  }))
 }
 
 function fold(text: string): string {
@@ -50,7 +45,7 @@ function fold(text: string): string {
 function matches(member: Listed, filter: string): boolean {
   const wanted = fold(filter.trim())
   if (!wanted) return true
-  return [member.name, member.handle ?? ''].some((one) => fold(one).includes(wanted))
+  return fold(member.name).includes(wanted)
 }
 
 const ORDER: Record<Presence, number> = { active: 0, away: 1, offline: 2 }

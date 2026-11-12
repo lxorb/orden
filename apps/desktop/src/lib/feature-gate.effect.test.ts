@@ -55,13 +55,10 @@ describe('a feature turned on and off while the app runs', () => {
     expect(ran).toBe(1)
   })
 
-  test('Chats closes its tabs, a restored one too, and stops when turned off', () => {
+  test('Chats closes its tabs, a restored one too, when turned off', () => {
     const said: string[] = []
     workspace.openView('', 'Team', '/space/Team.chat', {}, 'channel')
-    whenChatsOn(
-      () => void said.push('run'),
-      () => void said.push('off'),
-    )
+    whenChatsOn(() => void said.push('run'))
     flushSync()
     expect(workspace.tabs.some((one) => one.kind === 'channel')).toBe(false)
     expect(said).toEqual([])
@@ -76,6 +73,6 @@ describe('a feature turned on and off while the app runs', () => {
     setWord(CHATS_WORD, false)
     flushSync()
     expect(workspace.tabs.some((one) => one.kind === 'channel')).toBe(false)
-    expect(said).toEqual(['run', 'off'])
+    expect(said).toEqual(['run'])
   })
 })

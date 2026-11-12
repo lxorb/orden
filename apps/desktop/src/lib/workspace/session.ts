@@ -8,6 +8,7 @@ import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'
 import { PANELS } from './panels'
+import { isRetiredTab } from './retired-tabs'
 import { isTabKind } from './tab-kinds'
 
 const VERSION = 2
@@ -127,7 +128,7 @@ function readFolds(value: unknown): readonly FoldLines[] | null {
 }
 
 export function readDraft(value: unknown): Draft | null {
-  if (!isRecord(value)) return null
+  if (!isRecord(value) || isRetiredTab(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
   const { folds, page, zoom, address, space, source, apart, base } = value

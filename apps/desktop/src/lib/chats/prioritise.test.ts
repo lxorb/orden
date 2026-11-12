@@ -1,12 +1,11 @@
 // @vitest-environment jsdom
-import type { ProviderEvent, ProviderMessage } from '@orden/chats/provider'
+import type { Message } from '@orden/chats'
 import { expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({
-  hear: null as null | ((provider: string, account: string, event: ProviderEvent) => void),
+  hear: null as null | ((chat: string, messages: readonly Message[]) => void),
   asked: 0,
   read: 0,
-  told: [] as string[],
   newest: 0,
 }))
 
@@ -18,84 +17,65 @@ vi.mock('../ai/complete', () => ({
   },
 }))
 vi.mock('../ai/store.svelte', () => ({ ai: { providerFor: () => ({ model: 'small' }) } }))
-vi.mock('../notify', () => ({
-  show: (notice: { body: string }) => world.told.push(notice.body),
-  unshow: () => undefined,
-}))
-vi.mock('./linked', () => ({ openConversation: () => undefined }))
-vi.mock('./providers/orden', () => ({
-  ORDEN: 'orden',
-  ordenConnection: () => ({ start: () => () => undefined }),
-}))
-vi.mock('./view/source.svelte', () => ({ store: () => ({ entry: () => null }) }))
 
-const said = (at: number): ProviderMessage => ({
-  id: `m${String(at)}`,
-  conversation: 'c',
-  author: { id: 'lucile', name: 'Lucile' },
-  at,
-  text: `message ${String(at)}`,
-  attachments: [],
-  mine: false,
-})
+const said = (at: number, author = 'user:lucile'): Message =>
+  ({
+    id: `m${String(at)}`,
+    seq: at,
+    author,
+    at,
+    body: `message ${String(at)}`,
+    files: [],
+    deleted: false,
+  }) as unknown as Message
 
-vi.mock('./connected.svelte', () => ({
-  connected: {
-    hear: (listener: NonNullable<typeof world.hear>) => {
-      const before = world.hear
-      world.hear = (provider, account, event) => {
-        before?.(provider, account, event)
-        listener(provider, account, event)
-      }
+vi.mock('./view/source.svelte', () => ({
+  store: () => ({
+    me: 'user:me',
+    entry: () => ({ name: 'Lunch' }),
+    heard: (listener: NonNullable<typeof world.hear>) => {
+      world.hear = listener
       return () => undefined
     },
-    find: () => ({
-      conversations: [{ id: 'c', title: 'Lucile', people: [] }],
-      connection: {
-        history: async () => {
-          world.read++
-          await new Promise((resolve) => setTimeout(resolve, 1))
-          return {
-            messages: Array.from({ length: world.newest }, (_, at) => said(at + 1)),
-          }
-        },
-      },
-    }),
-  },
+    history: async () => {
+      world.read++
+      await new Promise((resolve) => setTimeout(resolve, 1))
+      return Array.from({ length: world.newest }, (_, at) => said(at + 1))
+    },
+  }),
 }))
 
 const { priorities } = await import('./priorities.svelte')
 const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../settings.svelte')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
-const { startPriorities } = await import('./prioritise')
+const { heardOf, startPriorities } = await import('./prioritise')
 
-test('a burst of messages in one chat is weighed once, not once a message', async () => {
+test('a burst of messages in one Orden chat is weighed once, not once a message', async () => {
   priorities.setOn(true)
   startPriorities()
 
   for (let at = 1; at <= 20; at++) {
     world.newest = at
-    world.hear?.('mail', 'me', { t: 'message', message: said(at) })
+    world.hear?.('c', [said(at)])
   }
-  await vi.waitFor(() => expect(world.told).toHaveLength(1))
+  await vi.waitFor(() => expect(priorities.levelOf('c')).toBe('urgent'))
   await new Promise((resolve) => setTimeout(resolve, 50))
 
   expect(world.asked).toBeLessThanOrEqual(2)
   expect(world.read).toBeLessThanOrEqual(2)
-  expect(world.told).toEqual(['Lucile: message 20'])
-  expect(priorities.levelOf('mail\nme\nc')).toBe('urgent')
 })
 
-test('without priorities a message from another service is still told, and its own words show', async () => {
-  priorities.setOn(false)
-  startPriorities()
-  world.told.length = 0
-  world.hear?.('mail', 'me', { t: 'message', message: { ...said(99), text: 'are you in?' } })
-  await vi.waitFor(() => expect(world.told).toEqual(['Lucile: are you in?']))
-  world.hear?.('mail', 'me', {
-    t: 'message',
-    message: { ...said(100), text: 'not this', mine: true },
-  })
+test('only my own words arriving ask nothing', async () => {
+  const before = world.read
+  world.hear?.('c', [said(30, 'user:me')])
   await new Promise((resolve) => setTimeout(resolve, 20))
-  expect(world.told).toEqual(['Lucile: are you in?'])
+  expect(world.read).toBe(before)
+})
+
+test('a deleted message says nothing, and mine is marked as mine', () => {
+  const gone = { ...said(1), deleted: true } as Message
+  expect(heardOf([gone, said(2, 'user:me')], 'user:me')).toEqual([
+    { from: 'user:lucile', words: '', mine: false, at: 1 },
+    { from: 'user:me', words: 'message 2', mine: true, at: 2 },
+  ])
 })

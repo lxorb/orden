@@ -4,19 +4,16 @@
   import { closeOnBack } from '../../backstack.svelte'
   import { copyText } from '../../clipboard'
   import { amount, i18n, t } from '../../i18n.svelte'
-  import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
+  import { menu, type MenuEntry } from '../../menu.svelte'
   import { dur, fly } from '../../motion'
   import { overlays } from '../../overlays'
   import Avatar from '../../people/Avatar.svelte'
   import { showProfile } from '../../people/card.svelte'
   import { people } from '../../people/people.svelte'
   import { viewport } from '../../viewport.svelte'
-  import { openConversation } from '../linked'
-  import { remoteOf } from '../remotes'
   import type { ChatPage } from './chat.svelte'
   import { mentionText } from './compose'
   import Glyph from './Glyph.svelte'
-  import { memberMenu } from './manage'
   import { membersOpen } from './members-open.svelte'
   import { accountOf, faceOf, nameOf } from './people'
   import { grouped, linesOf, type Listed, listedOf, placed, type Rank, visible } from './roster'
@@ -43,15 +40,9 @@
   let top = $state(0)
   let height = $state(0)
 
-  const service = $derived(page.service)
-  const remote = $derived(service ? remoteOf(page.id) : null)
-  const conversation = $derived(
-    service ? (remote?.conversation(service.conversation) ?? null) : null,
-  )
   const width = membersOpen.width
 
   function presenceOf(who: Who) {
-    if (service) return page.view.presence.here.includes(who) ? 'active' : null
     const id = accountOf(who)
     return id ? (people.of(id)?.presence ?? null) : null
   }
@@ -72,7 +63,6 @@
 
   const RANK_WORDS: Record<Rank, () => string> = {
     owner: () => t('Owners'),
-    admin: () => t('Admins'),
     member: () => t('Members'),
     bot: () => t('Bots'),
   }
@@ -80,37 +70,9 @@
   $effect(() => (sheet ? overlays.show(onclose, () => [panel]) : undefined))
   $effect(() => closeOnBack(sheet, onclose))
 
-  function personOf(who: Who): string | null {
-    return who.startsWith('guest:') ? who.slice(6) : null
-  }
-
-  function canMessage(who: Who): boolean {
-    return !!service && who !== page.me && !!remote?.connection?.begin && !!personOf(who)
-  }
-
-  async function message(who: Who, name: string) {
-    const person = personOf(who)
-    const connection = remote?.connection
-    if (!service || !person || !connection?.begin) return
-    const made = await connection.begin([person]).catch(() => null)
-    if (made)
-      openConversation(
-        { provider: service.provider, account: service.account, conversation: made.id },
-        made.title ?? name,
-      )
-  }
-
   function press(event: MouseEvent, member: Listed) {
     const id = accountOf(member.who)
-    if (!service) {
-      if (id && event.currentTarget instanceof Element) showProfile(id, event.currentTarget, space)
-      return
-    }
-    if (canMessage(member.who)) {
-      void message(member.who, member.name)
-      return
-    }
-    showMenu(event, member)
+    if (id && event.currentTarget instanceof Element) showProfile(id, event.currentTarget, space)
   }
 
   function showMenu(event: MouseEvent, member: Listed) {
@@ -119,19 +81,13 @@
     const one = page.members.find((it) => it.who === member.who)
     if (one && member.who !== page.me && page.view.role !== 'read')
       entries.push({ label: t('Mention'), run: () => onmention(mentionText(one)) })
-    if (canMessage(member.who))
-      entries.push({ label: t('Send message'), run: () => void message(member.who, member.name) })
     const id = accountOf(member.who)
-    if (!service && id && event.currentTarget instanceof Element) {
+    if (id && event.currentTarget instanceof Element) {
       const from = event.currentTarget
       entries.push({ label: t('Profile'), run: () => showProfile(id, from, space) })
     }
     entries.push({ label: t('Copy name'), run: () => void copyText(member.name) })
-    const handle = member.handle
-    if (handle) entries.push({ label: t('Copy address'), run: () => void copyText(handle) })
-    const held = remote && conversation ? remote.memberOf(conversation.id, member.who) : null
-    const ruling = held && remote && conversation ? memberMenu(remote, conversation, held) : []
-    menu.show(event, ruling.length ? [...entries, DIVIDER, ...ruling] : entries)
+    menu.show(event, entries)
   }
 
   function onEdgeKey(event: KeyboardEvent) {
@@ -228,9 +184,6 @@
               />
               <span class="words">
                 <span class="name">{row.member.name}</span>
-                {#if row.member.handle && row.member.handle !== row.member.name}
-                  <span class="handle">{row.member.handle}</span>
-                {/if}
               </span>
             </button>
           {/if}
@@ -379,8 +332,7 @@
     min-width: 0;
   }
 
-  .name,
-  .handle {
+  .name {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -390,11 +342,6 @@
   .name {
     color: var(--text-strong);
     font-size: var(--text-row);
-  }
-
-  .handle {
-    color: var(--muted);
-    font-size: var(--text-sm);
   }
 
   .none {

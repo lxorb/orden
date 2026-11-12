@@ -51,6 +51,7 @@ import { mark, markPainted } from './trace'
 import { afterQuiet, waited } from './timing'
 import { GIVE_UP } from './parting'
 import { isRecord, keepJson, stored } from './stored'
+import { holdsRetiredTab } from './workspace/retired-tabs'
 import { WELCOME_PATH } from './welcome'
 import {
   arrangementIn,
@@ -622,9 +623,13 @@ class Workspace {
     const slot = (await slots?.takeSlot().catch(() => 0)) ?? 0
     this.sessionKey = slots?.sessionOf(slot) ?? STORAGE_KEY
     this.slot = slot
+    const kept = stored(this.sessionKey)
     const state =
-      readSession(stored(this.sessionKey)) ??
-      (slot === 0 || !slots ? null : slots.freshWindow(stored(STORAGE_KEY)))
+      readSession(kept) ?? (slot === 0 || !slots ? null : slots.freshWindow(stored(STORAGE_KEY)))
+    if (isRecord(kept) && holdsRetiredTab(kept.layout))
+      void import('./gate-note.svelte').then(({ gateNote }) =>
+        gateNote.show('Chats from other services are gone, so their tabs were closed'),
+      )
     this.layouts.restore()
     this.arriving = state && arrangementIn(state)
 
@@ -1249,8 +1254,7 @@ class Workspace {
       | 'explorer'
       | 'pass'
       | 'time'
-      | 'settings'
-      | 'connect',
+      | 'settings',
     text: string,
     name = UNTITLED,
     beside: string | null = null,
@@ -1450,7 +1454,7 @@ class Workspace {
   }
 
   private onlyOne(kept: Tab) {
-    if (!viewport.touch || kept.kind === 'settings' || kept.kind === 'connect') return
+    if (!viewport.touch || kept.kind === 'settings') return
 
     for (const other of this.tabs) {
       if (other.id === kept.id || !this.panes.at(other.paneId)) continue
@@ -1552,21 +1556,6 @@ class Workspace {
   get settingsShown(): boolean {
     const tab = this.settingsTab
     return tab !== null && this.panes.at(tab.paneId)?.activeTabId === tab.id
-  }
-
-  openConnect() {
-    const open = this.connectTab
-    if (open) this.activate(open.id)
-    else this.openUnsaved('connect', '', t('Add a chat account'))
-  }
-
-  closeConnect() {
-    const open = this.connectTab
-    if (open) this.close(open.id, false)
-  }
-
-  get connectTab(): Tab | null {
-    return this.singleHere('connect')
   }
 
   openChat() {
@@ -2624,10 +2613,6 @@ class Workspace {
 
   private async mayClose(closing: readonly Tab[]): Promise<boolean> {
     if (__EVEN_PLUGIN__) return true
-    if (closing.some((tab) => tab.kind === 'connect')) {
-      const { mayLeave } = await import('./chats/view/adding.svelte')
-      if (!(await mayLeave())) return false
-    }
     if (closing.some(unsaved)) {
       const { mayLose } = await import('./workspace/closing-unsaved')
       if (!(await mayLose(this, closing))) return false

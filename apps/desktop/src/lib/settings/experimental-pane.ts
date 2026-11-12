@@ -87,18 +87,7 @@ function clipboardFields(): Field[] {
 
 function chatFields(): Field[] {
   if (!chatsOn()) return []
-  return [
-    {
-      kind: 'value',
-      label: t('Chat accounts'),
-      hint: t('Connect mail, Telegram, Slack, WhatsApp or Signal, one step at a time.'),
-      words: ['account', 'connect', 'add', 'mail', 'telegram', 'slack', 'whatsapp', 'signal'],
-      get: () => t('Add'),
-      does: t('Add a chat account'),
-      press: () => void import('../chats/view/adding.svelte').then((one) => one.addChat()),
-    },
-    ...(isMobile ? [] : chatsFields()),
-  ]
+  return isMobile ? [] : chatsFields()
 }
 
 function glassesFields(): Field[] {

@@ -1,16 +1,12 @@
 // @vitest-environment jsdom
-import type { ProviderMessage } from '@orden/chats/provider'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { Priorities, rowKey } from './priorities.svelte'
+import { type Heard, Priorities } from './priorities.svelte'
 
-const said = (text: string, at: number, mine = false): ProviderMessage => ({
-  id: `m${at}`,
-  conversation: 'c',
-  author: { id: mine ? 'me' : 'lucile', name: mine ? 'Me' : 'Lucile' },
-  at,
-  text,
-  attachments: [],
+const said = (words: string, at: number, mine = false): Heard => ({
+  from: mine ? 'Me' : 'Lucile',
+  words,
   mine,
+  at,
 })
 
 beforeEach(() => localStorage.clear())
@@ -24,7 +20,6 @@ describe('chat priorities', () => {
       return Promise.resolve('urgent')
     })
     expect(priorities.on).toBe(false)
-    expect(priorities.notify).toEqual(['urgent', 'important'])
     expect(await priorities.heard('k', 'Lunch', [said('fire!', 1)])).toBeNull()
     expect(asked).toBe(0)
   })
@@ -37,7 +32,7 @@ describe('chat priorities', () => {
       return Promise.resolve('Important.')
     })
     priorities.setOn(true)
-    const key = rowKey('mail', 'a@x.org', 'c')
+    const key = 'c'
     expect(await priorities.heard(key, 'Lunch', [said('at noon?', 5)])).toBe('important')
     expect(await priorities.heard(key, 'Lunch', [said('at noon?', 5)])).toBe('important')
     expect(asks).toHaveLength(1)
@@ -53,18 +48,28 @@ describe('chat priorities', () => {
       return Promise.resolve('unimportant')
     })
     priorities.setOn(true)
-    const key = rowKey('mail', 'a@x.org', 'c')
+    const key = 'c'
     priorities.reassign(key, 'urgent', { title: 'Server down', from: 'Ops', words: 'prod is down' })
     expect(priorities.levelOf(key)).toBe('urgent')
-    await priorities.heard(rowKey('mail', 'a@x.org', 'd'), 'Other', [said('hi', 9)])
+    await priorities.heard('d', 'Other', [said('hi', 9)])
     expect(last).toContain('"Server down" from Ops: "prod is down" -> urgent')
     expect(new Priorities().lessons).toHaveLength(1)
   })
 
-  test('the levels that notify are kept in their order', () => {
+  test("an Orden chat's level kept before is read back under the chat, and other services' go", () => {
+    localStorage.setItem(
+      'orden:chat-priorities',
+      JSON.stringify({
+        on: true,
+        assigned: {
+          'orden\norden\nc': { level: 'urgent', by: 'ai', at: 1 },
+          'mail\na@x.org\nd': { level: 'important', by: 'ai', at: 2 },
+        },
+      }),
+    )
     const priorities = new Priorities()
-    priorities.setNotify(['important', 'urgent', 'unimportant'])
-    expect(new Priorities().notify).toEqual(['urgent', 'important', 'unimportant'])
+    expect(priorities.assigned).toEqual({ c: { level: 'urgent', by: 'ai', at: 1 } })
+    expect(priorities.levelOf('c')).toBe('urgent')
   })
 })
 
@@ -78,7 +83,7 @@ describe('drafts and actions', () => {
       style = messages[0]?.content ?? ''
       return Promise.resolve('{"reply":"jo, 12i","todo":{"title":"Book a table","priority":2}}')
     })
-    const key = rowKey('mail', 'a@x.org', 'c')
+    const key = 'c'
     expect(await priorities.suggest(key, 'Lunch', [said('noon?', 3)], [], '2026-11-06')).toBeNull()
     priorities.setDrafting(true)
     const found = await priorities.suggest(

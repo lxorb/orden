@@ -37,6 +37,7 @@ import { ChatEngine, type Remote } from './engine'
 import * as http from './http'
 import { chatName, findPointers, makePointer, type Place, readPointer } from './pointers'
 import { forgetMoves, keepOwnPointer, ownPointer, ownPointers, startedFor } from './places'
+import { isRetiredChat } from '../workspace/retired-tabs'
 import { type Host, View } from './view.svelte'
 
 const RECEIPTS = 'orden:chat-receipts'
@@ -119,7 +120,11 @@ class ChatsStore implements Chats {
     if (this.account !== id) return
     this.cache = cache
     this.engine = engine
-    for (const one of await cache.drafts().catch(() => [])) this.drafts.set(one.chat, one.text)
+    for (const one of await cache.drafts().catch(() => [])) {
+      if (isRetiredChat(one.chat))
+        void cache.write([{ t: 'undraft', chat: one.chat }]).catch(() => undefined)
+      else this.drafts.set(one.chat, one.text)
+    }
 
     this.stops.push(
       engine.listen((change) => {

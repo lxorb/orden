@@ -33,7 +33,8 @@ export function whenOn(
       untrack(() => {
         for (const tab of open) workspace.close(tab.id, false)
         if (left) off()
-        else if (open.length) gateNote.show(gate.name())
+        else if (open.length)
+          gateNote.show(t('{name} is turned off, so its tabs were closed', { name: gate.name() }))
       })
     })
   })
@@ -47,9 +48,8 @@ export function whenPassOn(run: () => void, off: () => void): void {
   whenOn({ on: passOn, kind: 'pass', name: () => t('Password manager') }, run, off)
 }
 
-export function whenChatsOn(run: () => void, off: () => void): void {
-  whenOn({ on: chatsOn, kind: 'channel', name: () => t('Chats') }, run, off)
-  whenOn({ on: chatsOn, kind: 'connect', name: () => t('Chats') })
+export function whenChatsOn(run: () => void): void {
+  whenOn({ on: chatsOn, kind: 'channel', name: () => t('Chats') }, run)
 }
 
 export function whenAppsOn(): void {

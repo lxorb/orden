@@ -21,7 +21,7 @@
   const counts = $derived(
     (poll?.answers ?? []).map((_, index) => voters.filter(([, chose]) => chose.includes(index))),
   )
-  const tally = $derived(message.tally ? [...message.tally] : counts.map((one) => one.length))
+  const tally = $derived(counts.map((one) => one.length))
   const most = $derived(tally.reduce((high, one) => Math.max(high, one), 1))
 
   function choose(index: number) {

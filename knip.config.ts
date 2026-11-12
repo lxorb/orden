@@ -74,9 +74,8 @@ export default {
         'src/lib/pass/test-device.ts',
         'src/site/site.ts',
         'src/lib/ai/review/index.ts',
-        'src/lib/chats/providers/node/*.ts',
       ],
-      ignoreDependencies: ['katex', 'axe-core', 'buffer', 'events'],
+      ignoreDependencies: ['katex', 'axe-core'],
       ignoreBinaries: ['jq'],
     },
     'apps/cli': {

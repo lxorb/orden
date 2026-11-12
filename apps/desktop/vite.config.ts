@@ -7,7 +7,6 @@ import { emojiOutlines } from './emoji-outlines'
 import manifest from './even.app.json'
 import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
-import { whatsappShims } from './node-shims.config'
 
 const host = process.env.TAURI_DEV_HOST
 
@@ -49,8 +48,7 @@ const everyPage = {
 }
 
 export default defineConfig(({ command, mode }) => ({
-  plugins: [whatsappShims(), svelte(), emojiOutlines()],
-  optimizeDeps: { rolldownOptions: { plugins: [whatsappShims()] } },
+  plugins: [svelte(), emojiOutlines()],
   define: {
     __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
     __EVEN_PLUGIN__: 'false',

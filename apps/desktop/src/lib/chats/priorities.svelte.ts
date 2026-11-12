@@ -1,53 +1,49 @@
 import {
   type Assigned,
   isLevel,
-  LEVELS,
   type Lesson,
   type Level,
   levelIn,
-  NOTIFY_DEFAULT,
   priorityAsk,
   type Said,
   type Suggestion,
   suggestionAsk,
   suggestionIn,
 } from '@orden/chats/priority'
-import type { ProviderMessage } from '@orden/chats/provider'
 import { isNumber, isRecord, isString, keepJson, stored } from '../stored'
 
 const KEY = 'orden:chat-priorities'
 const MOST_LESSONS = 50
+const OWN_ROW = 'orden\norden\n'
 
 export type Asker = (messages: { role: 'system' | 'user'; content: string }[]) => Promise<string>
 
-export function rowKey(provider: string, account: string, conversation: string): string {
-  return `${provider}\n${account}\n${conversation}`
+export interface Heard extends Said {
+  at: number
 }
 
 interface Kept {
   on: boolean
   drafting: boolean
-  notify: Level[]
   assigned: Record<string, Assigned>
   lessons: Lesson[]
 }
 
+function chatOfKey(key: string): string | null {
+  if (key.startsWith(OWN_ROW)) return key.slice(OWN_ROW.length)
+  return key.includes('\n') ? null : key
+}
+
 function keptOf(value: unknown): Kept {
-  const kept: Kept = {
-    on: false,
-    drafting: false,
-    notify: [...NOTIFY_DEFAULT],
-    assigned: {},
-    lessons: [],
-  }
+  const kept: Kept = { on: false, drafting: false, assigned: {}, lessons: [] }
   if (!isRecord(value)) return kept
   kept.on = value.on === true
   kept.drafting = value.drafting === true
-  if (Array.isArray(value.notify)) kept.notify = value.notify.filter(isLevel)
   if (isRecord(value.assigned)) {
     for (const [key, one] of Object.entries(value.assigned)) {
-      if (isRecord(one) && isLevel(one.level) && isNumber(one.at)) {
-        kept.assigned[key] = {
+      const chat = chatOfKey(key)
+      if (chat && isRecord(one) && isLevel(one.level) && isNumber(one.at)) {
+        kept.assigned[chat] = {
           level: one.level,
           by: one.by === 'reader' ? 'reader' : 'ai',
           at: one.at,
@@ -71,7 +67,6 @@ function keptOf(value: unknown): Kept {
 
 export class Priorities {
   on = $state(false)
-  notify = $state.raw<readonly Level[]>(NOTIFY_DEFAULT)
   assigned = $state.raw<Readonly<Record<string, Assigned>>>({})
   lessons = $state.raw<readonly Lesson[]>([])
   drafting = $state(false)
@@ -82,7 +77,6 @@ export class Priorities {
     const kept = keptOf(stored(KEY))
     this.on = kept.on
     this.drafting = kept.drafting
-    this.notify = kept.notify
     this.assigned = kept.assigned
     this.lessons = kept.lessons
   }
@@ -95,7 +89,6 @@ export class Priorities {
     keepJson(KEY, {
       on: this.on,
       drafting: this.drafting,
-      notify: [...this.notify],
       assigned: { ...this.assigned },
       lessons: [...this.lessons],
     } satisfies Kept)
@@ -113,78 +106,65 @@ export class Priorities {
   }
 
   async suggest(
-    key: string,
+    chat: string,
     title: string,
-    newest: readonly ProviderMessage[],
+    newest: readonly Heard[],
     mine: readonly string[],
     today: string,
   ): Promise<Suggestion | null> {
     const last = newest.at(-1)
     const asker = this.ask()
     if (!this.drafting || !asker || !last || last.mine) return null
-    if ((this.suggestions[key]?.at ?? -1) >= last.at) return this.suggestions[key] ?? null
-    const said: Said[] = newest.map((one) => ({
-      from: one.author.name,
-      words: one.subject && !one.text ? one.subject : one.text,
-      mine: one.mine,
-    }))
-    const found = suggestionIn(await asker(suggestionAsk(title, said, mine, today)))
+    if ((this.suggestions[chat]?.at ?? -1) >= last.at) return this.suggestions[chat] ?? null
+    const found = suggestionIn(await asker(suggestionAsk(title, newest, mine, today)))
     if (!found) return null
-    this.suggestions = { ...this.suggestions, [key]: { ...found, at: last.at } }
+    this.suggestions = { ...this.suggestions, [chat]: { ...found, at: last.at } }
     return found
   }
 
-  settle(key: string, part: 'reply' | 'todo' | 'all'): void {
-    const held = this.suggestions[key]
+  settle(chat: string, part: 'reply' | 'todo' | 'all'): void {
+    const held = this.suggestions[chat]
     if (!held) return
     const next = {
       ...held,
       ...(part === 'reply' ? { reply: null } : {}),
       ...(part === 'todo' ? { todo: null } : {}),
     }
-    const rest = Object.fromEntries(Object.entries(this.suggestions).filter(([one]) => one !== key))
+    const rest = Object.fromEntries(
+      Object.entries(this.suggestions).filter(([one]) => one !== chat),
+    )
     this.suggestions =
-      part === 'all' || (!next.reply && !next.todo) ? rest : { ...rest, [key]: next }
+      part === 'all' || (!next.reply && !next.todo) ? rest : { ...rest, [chat]: next }
   }
 
-  setNotify(levels: readonly Level[]): void {
-    this.notify = LEVELS.filter((level) => levels.includes(level))
+  levelOf(chat: string): Level | null {
+    return this.assigned[chat]?.level ?? null
+  }
+
+  private assign(chat: string, one: Assigned): void {
+    this.assigned = { ...this.assigned, [chat]: one }
     this.keep()
   }
 
-  levelOf(key: string): Level | null {
-    return this.assigned[key]?.level ?? null
-  }
-
-  private assign(key: string, one: Assigned): void {
-    this.assigned = { ...this.assigned, [key]: one }
-    this.keep()
-  }
-
-  reassign(key: string, level: Level, about: { title: string; from: string; words: string }): void {
-    this.assign(key, { level, by: 'reader', at: this.assigned[key]?.at ?? Date.now() })
+  reassign(
+    chat: string,
+    level: Level,
+    about: { title: string; from: string; words: string },
+  ): void {
+    this.assign(chat, { level, by: 'reader', at: this.assigned[chat]?.at ?? Date.now() })
     this.lessons = [...this.lessons, { ...about, level }].slice(-MOST_LESSONS)
     this.keep()
   }
 
-  async heard(
-    key: string,
-    title: string,
-    newest: readonly ProviderMessage[],
-  ): Promise<Level | null> {
+  async heard(chat: string, title: string, newest: readonly Heard[]): Promise<Level | null> {
     const last = newest.at(-1)
     const asker = this.ask()
     if (!this.on || !asker || !last || last.mine) return null
-    const held = this.assigned[key]
+    const held = this.assigned[chat]
     if (held && held.at >= last.at) return held.level
-    const said: Said[] = newest.map((one) => ({
-      from: one.author.name,
-      words: one.subject && !one.text ? one.subject : one.text,
-      mine: one.mine,
-    }))
-    const level = levelIn(await asker(priorityAsk(title, said, this.lessons)))
+    const level = levelIn(await asker(priorityAsk(title, newest, this.lessons)))
     if (!level) return null
-    this.assign(key, { level, by: 'ai', at: last.at })
+    this.assign(chat, { level, by: 'ai', at: last.at })
     return level
   }
 }

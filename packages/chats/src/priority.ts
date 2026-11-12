@@ -83,9 +83,6 @@ export function byPriority(a: Waiting, b: Waiting): number {
   return rank(a) - rank(b) || (a.since ?? Infinity) - (b.since ?? Infinity)
 }
 
-export const NOTIFY_DEFAULT: readonly Level[] = ['urgent', 'important']
-export const VIBRATE: readonly Level[] = ['urgent']
-
 export interface Suggestion {
   reply: string | null
   todo: { title: string; priority?: number; tags?: string[]; due?: string } | null
