@@ -50,29 +50,7 @@ pub fn this_run() -> bool {
 }
 
 fn chosen(config: &Path) -> bool {
-    declared(config).unwrap_or_else(|| {
-        !std::fs::read_to_string(config.join(FILE)).is_ok_and(|said| said.trim() == "off")
-    })
-}
-
-const KEY: &str = "general.hardwareAcceleration";
-
-fn declared(config: &Path) -> Option<bool> {
-    let text = std::fs::read_to_string(config.join(crate::themes::SETTINGS_FILE)).ok()?;
-    let file: serde_json::Value = serde_json::from_str(&text).ok()?;
-    find(&file, KEY)?.as_bool()
-}
-
-fn find<'a>(value: &'a serde_json::Value, key: &str) -> Option<&'a serde_json::Value> {
-    let object = value.as_object()?;
-    if let Some(found) = object.get(key) {
-        return Some(found);
-    }
-    key.match_indices('.').find_map(|(at, _)| {
-        object
-            .get(&key[..at])
-            .and_then(|inner| find(inner, &key[at + 1..]))
-    })
+    !std::fs::read_to_string(config.join(FILE)).is_ok_and(|said| said.trim() == "off")
 }
 
 pub fn seen() -> Option<&'static Seen> {
@@ -178,26 +156,6 @@ mod tests {
         assert!(chosen(config.path()));
         std::fs::write(config.path().join(FILE), "").unwrap();
         assert!(chosen(config.path()), "half a file is on");
-    }
-
-    #[test]
-    fn the_settings_file_decides_where_it_says() {
-        let config = tempfile::tempdir().unwrap();
-        let file = config.path().join(crate::themes::SETTINGS_FILE);
-        std::fs::write(config.path().join(FILE), "off").unwrap();
-
-        std::fs::write(&file, r#"{ "general": { "hardwareAcceleration": true } }"#).unwrap();
-        assert!(chosen(config.path()));
-        std::fs::write(&file, r#"{ "general.hardwareAcceleration": false }"#).unwrap();
-        std::fs::remove_file(config.path().join(FILE)).unwrap();
-        assert!(!chosen(config.path()));
-
-        std::fs::write(&file, r#"{ "editor": { "textSize": 1.1 } }"#).unwrap();
-        assert!(chosen(config.path()), "nothing said is the reader's own");
-        std::fs::write(&file, "{ not json").unwrap();
-        assert!(chosen(config.path()));
-        std::fs::write(&file, r#"{ "general": { "hardwareAcceleration": "off" } }"#).unwrap();
-        assert!(chosen(config.path()), "not a switch is not a decision");
     }
 
     #[test]

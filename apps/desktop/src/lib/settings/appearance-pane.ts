@@ -3,12 +3,11 @@ import { DEFAULTS, type FontPlace, INTERFACE_ZOOMS, modes } from '../modes.svelt
 import { isDesktop, platform } from '../tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
 import { appSettings, builtIns, type SchemeChoice, theme } from '../theme.svelte'
-import { type ChosenSettings, SHARED, type ThemeSetting, type ThemeValue } from '../themes/settings'
+import { SHARED, type ThemeSetting, type ThemeValue } from '../themes/settings'
 import { WALLPAPER_THEME } from '../wallpaper/held'
 import { wallpaper } from '../wallpaper/wallpaper.svelte'
 import { workspace } from '../workspace.svelte'
 import type { PictureSide, PairField, Field, Group, Pane } from './fields'
-import { part } from './hold'
 
 const FONT_FIELDS: readonly {
   place: FontPlace
@@ -56,15 +55,6 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
     hint: t(setting.hint),
     initial: setting.initial,
     key: drawer === SHARED ? `appearance.${setting.id}` : `themes.${owner}.${setting.id}`,
-    store: {
-      on: theme,
-      name: 'chosen',
-      take: (whole: unknown) => (whole as ChosenSettings)[drawer]?.[setting.id],
-      put: (whole: unknown, value: unknown) => {
-        const chosen = whole as ChosenSettings
-        return { ...chosen, [drawer]: { ...chosen[drawer], [setting.id]: value as ThemeValue } }
-      },
-    },
   }
 
   if (setting.kind === 'range') {
@@ -191,7 +181,6 @@ export function appearancePane(): Pane {
           {
             kind: 'select',
             key: 'appearance.style',
-            store: { on: theme, name: 'id' },
             open: true,
             label: t('Style'),
             hint: t('The theme Orden is drawn in.'),
@@ -203,7 +192,6 @@ export function appearancePane(): Pane {
           {
             kind: 'segmented',
             key: 'appearance.mode',
-            store: { on: theme, name: 'scheme' },
             label: t('Mode'),
             hint: t('Light, dark, or whichever the system is in.'),
             words: ['dark', 'light', 'night', 'theme'],
@@ -233,7 +221,6 @@ export function appearancePane(): Pane {
         fields: FONT_FIELDS.map((one): Field => ({
           kind: 'text',
           key: `appearance.${one.place}Font`,
-          store: part(modes, 'fonts', one.place),
           label: t(one.label),
           words: ['font', 'typeface', 'family', 'custom font', ...one.words],
           hint: t(one.hint),
@@ -251,7 +238,6 @@ export function appearancePane(): Pane {
           {
             kind: 'switch',
             key: 'appearance.pointingHand',
-            store: { on: modes, name: 'hand' },
             label: t('Pointing hand on buttons'),
             hint: t('Shows a pointing hand over buttons, as web pages do.'),
             words: ['cursor', 'mouse', 'hand', 'click'],
@@ -262,7 +248,6 @@ export function appearancePane(): Pane {
           {
             kind: 'switch',
             key: 'appearance.paneFollowsPointer',
-            store: { on: workspace.device, name: 'paneFollowsPointer' },
             label: t('Active pane follows the pointer'),
             hint: t('The pane under the pointer becomes the one you work in.'),
             words: ['pane', 'split', 'focus follows mouse', 'hover', 'mouse', 'active'],
@@ -281,7 +266,6 @@ export function appearancePane(): Pane {
                 {
                   kind: 'segmented',
                   key: 'appearance.frame',
-                  store: { on: modes, name: 'frame' },
                   label: t('Frame'),
                   hint: t('Orden’s own title bar, or the window frame of your system.'),
                   words: ['title bar', 'window'],

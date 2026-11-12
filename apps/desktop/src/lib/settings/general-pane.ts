@@ -6,7 +6,7 @@ import { crashReports } from '../crash-reports/choice.svelte'
 import { usageChoice } from '../usage/choice.svelte'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { protectionOn } from '../protect/gate'
-import { protectionStore, turnProtection } from '../protect/protection-setting'
+import { turnProtection } from '../protect/protection-setting'
 import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../protect/unlocked.svelte'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from '../recovery'
 import { recovery } from '../recovery.svelte'
@@ -67,7 +67,6 @@ function terminalGroup(): Group {
       {
         kind: 'select',
         key: 'general.shell',
-        store: { on: shells, name: 'preferred' },
         open: true,
         label: t('Shell'),
         hint: t('The shell a new terminal starts.'),
@@ -78,7 +77,6 @@ function terminalGroup(): Group {
       {
         kind: 'slider',
         key: 'general.terminalTextSize',
-        store: { on: shells, name: 'size' },
         label: t('Text size'),
         hint: t('How large the text in terminals is.'),
         min: SIZES.least,
@@ -92,7 +90,6 @@ function terminalGroup(): Group {
       {
         kind: 'switch',
         key: 'general.terminalThemed',
-        store: { on: shells, name: 'themed' },
         label: t('Colours follow the theme'),
         hint: t('Paints terminals in the theme’s colours; off keeps one fixed palette.'),
         words: ['colour', 'color', 'palette', 'ansi', 'theme', 'dark', 'light'],
@@ -103,7 +100,6 @@ function terminalGroup(): Group {
       {
         kind: 'switch',
         key: 'general.restoreTerminalHistory',
-        store: { on: shells, name: 'restoring' },
         label: t('Restore history'),
         hint: t(
           'Brings back what each terminal showed after Orden restarts; off forgets it on quit.',
@@ -116,7 +112,6 @@ function terminalGroup(): Group {
       {
         kind: 'select',
         key: 'general.warnBeforeQuitting',
-        store: { on: shells, name: 'warning' },
         label: t('Warn before quitting'),
         hint: t(
           'Asks before Orden quits with terminals open: always, or only while something runs in one.',
@@ -140,7 +135,6 @@ export function relockField(): Field {
   return {
     kind: 'select',
     key: 'general.relockAfter',
-    store: { on: unlocks, name: 'relock' },
     label: t('Lock again after'),
     hint: t('How long Orden may be in the background before what you protected locks again.'),
     words: ['protect', 'lock', 'password', 'timeout'],
@@ -169,7 +163,6 @@ function gpuGroup(): Group {
       {
         kind: 'switch',
         key: 'general.hardwareAcceleration',
-        store: { on: gpu, name: 'on' },
         label: t('Hardware acceleration'),
         hint: t(
           'Draws the app on the graphics card; turn it off if the window flickers or stays blank.',
@@ -178,9 +171,6 @@ function gpuGroup(): Group {
         initial: true,
         get: () => gpu.on,
         set: (on) => void gpu.set(on),
-        declare: (on: boolean) => {
-          gpu.on = on
-        },
       },
     ],
   }
@@ -193,7 +183,6 @@ function privacyGroup(): Group {
       {
         kind: 'switch',
         key: 'general.crashReports',
-        store: { on: crashReports, name: 'on' },
         label: t('Send crash and freeze reports'),
         hint: t(
           'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.',
@@ -206,7 +195,6 @@ function privacyGroup(): Group {
       {
         kind: 'switch',
         key: 'general.usageData',
-        store: { on: usageChoice, name: 'helping' },
         label: t('Share anonymous usage data'),
         hint: t(
           'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.',
@@ -241,7 +229,6 @@ function dnsGroups(): Group[] {
     {
       kind: 'select',
       key: 'general.dns',
-      store: { on: dns, name: 'choice' },
       label: t('DNS'),
       hint: t(
         'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.',
@@ -264,7 +251,6 @@ function dnsGroups(): Group[] {
     fields.push({
       kind: 'text',
       key: 'general.dnsProvider',
-      store: { on: dns, name: 'custom' },
       label: t('Provider'),
       hint: dns.refused ?? t('The address of a DNS over HTTPS server, starting with https://'),
       words: ['dns', 'doh', 'template', 'server', 'custom'],
@@ -301,7 +287,6 @@ function remindersGroup(): Group {
       {
         kind: 'select',
         key: 'general.remindBefore',
-        store: { on: modes, name: 'remindBefore', shared: 'remindBefore' },
         label: t('Automatic'),
         hint: t('How long before a task’s time it reminds you, unless the task says otherwise.'),
         words: ['reminder', 'notification', 'alarm', 'due', 'time', 'before'],
@@ -323,7 +308,6 @@ function remindersGroup(): Group {
             {
               kind: 'switch',
               key: 'general.stayInTray',
-              store: { on: residency, name: 'choice' },
               label: t('Stay in the tray'),
               hint: t(
                 'Keeps Orden running in the tray after its window closes, so reminders still ring.',
@@ -394,7 +378,6 @@ export function generalPane(): Pane {
           {
             kind: 'select',
             key: 'general.keepVersionEvery',
-            store: { on: recovery, name: 'every', shared: 'recoveryEvery' },
             label: t('Keep a version every'),
             hint: t(
               'How often a note you are editing is saved as a version you can go back to in History.',
@@ -411,7 +394,6 @@ export function generalPane(): Pane {
           {
             kind: 'select',
             key: 'general.keepVersionsFor',
-            store: { on: recovery, name: 'days', shared: 'recoveryDays' },
             label: t('Keep versions for'),
             hint: t('How long those versions are kept before they are deleted.'),
             options: KEEP_DAYS.map((days) => ({
@@ -434,7 +416,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch' as const,
                   key: 'general.protection',
-                  store: protectionStore(),
                   label: t('Use protection'),
                   hint: t(
                     'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.',
@@ -454,7 +435,6 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             key: 'general.ctrlTabByUse',
-            store: { on: tabCycle, name: 'byUse' },
             label: t('Ctrl+Tab in order of use'),
             hint: t(
               'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.',
@@ -467,7 +447,6 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             key: 'general.unloadTabs',
-            store: { on: unloadTabs, name: 'on' },
             label: t('Unload tabs from their menu'),
             hint: t(
               'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.',
@@ -483,7 +462,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   key: 'general.iconTabs',
-                  store: { on: iconTabs, name: 'on' },
                   label: t('Show other tabs as icons'),
                   hint: t(
                     'Every tab but the one in front shows only its icon; pointing at one shows its name.',
@@ -496,7 +474,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   key: 'general.fitTabs',
-                  store: { on: fitTabs, name: 'on' },
                   label: t('Tabs as wide as their names'),
                   hint: t(
                     'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.',
@@ -509,7 +486,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'slider',
                   key: 'general.tabPreviewDelay',
-                  store: { on: previewDelay, name: 'ms' },
                   label: t('Tab preview delay'),
                   hint: t('How long the pointer rests on a tab before its preview shows.'),
                   words: ['hover', 'card', 'tooltip', 'preview', 'tabs'],
@@ -528,7 +504,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   key: 'general.swipeBetweenPages',
-                  store: { on: swipeChoice, name: 'on' },
                   label: t('Swipe between pages'),
                   hint: t('Two fingers sideways on the touchpad go back and forward.'),
                   words: ['swipe', 'gesture', 'touchpad', 'trackpad', 'back', 'forward', 'history'],
@@ -542,7 +517,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'segmented',
                   key: 'general.hiddenTabs',
-                  store: { on: hiddenTabs, name: 'choice' },
                   label: t('Hidden tabs'),
                   hint: t(
                     'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.',
@@ -560,7 +534,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'select',
                   key: 'general.memorySaver',
-                  store: { on: saver, name: 'mode' },
                   label: t('Memory saver'),
                   hint: t(
                     'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.',
@@ -589,7 +562,6 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             key: 'general.smartDates',
-            store: { on: quickAdd, name: 'smart' },
             label: t('Smart dates'),
             hint: t(
               'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.',
@@ -620,7 +592,6 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             key: 'general.undatedInToday',
-            store: { on: modes, name: 'undatedInToday', shared: 'undatedInToday' },
             label: t('Show tasks without a start date in Today'),
             hint: t(
               'Today also lists the tasks that have no start date; off shows only those dated today or earlier.',
@@ -635,7 +606,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   key: 'general.addTaskFromAnyApp',
-                  store: { on: quickAdd, name: 'anywhere' },
                   label: t('From any app'),
                   hint: t('The Add task shortcut works even while another app is in front.'),
                   words: ['tasks', 'quick add', 'global', 'hotkey', 'shortcut', 'system'],
@@ -656,7 +626,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch' as const,
                   key: 'general.developerMode',
-                  store: { on: modes, name: 'developer', shared: 'developer' },
                   label: t('Developer mode'),
                   hint: t('Shows terminals and the other tools for writing code.'),
                   words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
@@ -676,7 +645,6 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch' as const,
                   key: 'general.silentMode',
-                  store: { on: modes, name: 'silent', shared: 'silent' },
                   label: t('Silent mode'),
                   hint: t('Hides the tips Orden shows while you get to know it.'),
                   words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
@@ -694,7 +662,6 @@ export function generalPane(): Pane {
           {
             kind: 'select',
             key: 'general.language',
-            store: { on: i18n, name: 'choice' },
             label: t('Language'),
             hint: t('The language Orden’s menus and settings are in.'),
             options: languageOptions(),

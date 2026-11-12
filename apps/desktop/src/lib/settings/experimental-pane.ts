@@ -21,7 +21,6 @@ import {
 import { isDesktop, isMobile } from '../tauri'
 import { clipboardSharing } from './apps-clipboard.svelte'
 import type { Field, Group, Pane } from './fields'
-import { among } from './hold'
 
 async function turnExperimental(on: boolean): Promise<void> {
   if (!on) {
@@ -54,7 +53,6 @@ function featureGroup(one: Feature): Group {
       {
         kind: 'switch',
         key: `experimental.${one.key}`,
-        store: { ...among(hiddenKinds, 'hidden', one.word), shared: 'hiddenKinds' },
         label: one.label,
         hint: one.hint,
         words: ['experimental', ...one.words],
@@ -183,7 +181,6 @@ export function experimentalPane(): Pane {
           {
             kind: 'switch',
             key: 'experimental.enabled',
-            store: { ...among(hiddenKinds, 'hidden', EXPERIMENTAL_WORD), shared: 'hiddenKinds' },
             label: t('Enable experimental features'),
             hint: t('Lets you turn on the features below, which are still being built.'),
             words: ['experimental', 'beta', 'preview', 'labs', 'unstable', 'early'],

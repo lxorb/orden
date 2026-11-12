@@ -14,7 +14,6 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.showMarkdown',
-            store: { on: modes, name: 'quietMarks', shared: 'quietMarks' },
             label: t('Show markdown while writing'),
             hint: t(
               'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.',
@@ -27,7 +26,6 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.openInSource',
-            store: { on: modes, name: 'opensInSource' },
             label: t('Open notes in source mode'),
             hint: t('Notes open as plain markdown text rather than formatted.'),
             words: ['source mode', 'raw', 'plain text', 'default editing mode'],
@@ -38,7 +36,6 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.strictCommonMark',
-            store: { on: modes, name: 'strict' },
             label: t('Strict CommonMark'),
             hint: t('Only the standard markdown rules, no tables, task lists or footnotes.'),
             initial: DEFAULTS.strict,
@@ -48,7 +45,6 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.smartPunctuation',
-            store: { on: modes, name: 'punctuation' },
             label: t('Smart punctuation'),
             hint: t('Turns straight quotes and dashes into typographic ones as you type.'),
             initial: DEFAULTS.punctuation,
@@ -58,7 +54,6 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.newlineBreaks',
-            store: { on: modes, name: 'hardBreaks', shared: 'hardBreaks' },
             label: t('A single newline breaks the line'),
             hint: t(
               'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.',
@@ -75,7 +70,6 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.numberHeadings',
-            store: { on: modes, name: 'numbers' },
             label: t('Number headings'),
             hint: t('Puts 1., 1.1, 1.2 in front of headings.'),
             initial: DEFAULTS.numbers,
@@ -85,7 +79,6 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.numberEquations',
-            store: { on: modes, name: 'equationNumbers' },
             label: t('Number equations'),
             hint: t('Numbers display equations so you can refer to them.'),
             initial: DEFAULTS.equationNumbers,
@@ -100,7 +93,6 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.rightToLeft',
-            store: { on: modes, name: 'rtl' },
             label: t('Right to left'),
             hint: t('Writes notes from right to left, for Arabic, Hebrew and other such scripts.'),
             initial: DEFAULTS.rtl,

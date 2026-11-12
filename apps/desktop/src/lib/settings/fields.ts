@@ -1,5 +1,4 @@
 import type { IconNode } from 'lucide'
-import type { Store } from './hold'
 
 export interface PictureSide {
   label: string
@@ -19,10 +18,7 @@ interface Common {
   icon?: IconNode
   key?: string
   member?: string
-  store?: Store
-  declare?: (value: never) => void
   check?: (value: string) => string | null
-  declared?: string
 }
 
 export interface SwatchOption {

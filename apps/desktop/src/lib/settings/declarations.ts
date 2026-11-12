@@ -7,16 +7,17 @@ import { enginesFor, isEngineAddress } from '../web-tab/engines'
 import { CUSTOM, searchEngine } from '../web-tab/search-engine.svelte'
 import { themeDeclarations } from './appearance-pane'
 import { relockField } from './general-pane'
-import { shortcutKey } from './declared.svelte'
 import type { Field } from './fields'
-import { part } from './hold'
+
+function shortcutKey(id: string): string {
+  return `shortcuts.${id.replaceAll('.', '-')}`
+}
 
 function shortcutFields(): Field[] {
   return [
     {
       kind: 'switch',
       key: 'shortcuts.vim',
-      store: { on: modes, name: 'vim', shared: 'vim' },
       label: t('Vim keys'),
       hint: t('Moves and edits in notes with Vim’s keys.'),
       initial: false,
@@ -26,7 +27,6 @@ function shortcutFields(): Field[] {
     ...SHORTCUTS.filter((one) => one.scope !== 'fixed' && !one.alias).map((one): Field => ({
       kind: 'text',
       key: shortcutKey(one.id),
-      store: { ...part(shortcuts, 'overrides', one.id), shared: 'shortcuts' },
       label: one.label(),
       hint: `The key that runs ${one.label()}, as the keys file writes it; empty for none.`,
       placeholder: '',
@@ -42,7 +42,6 @@ function searchFields(): Field[] {
     {
       kind: 'select',
       key: 'general.searchEngine',
-      store: part(searchEngine, 'choice', 'id'),
       open: true,
       label: t('Search engine'),
       hint: t('Where words typed into a web tab’s address bar are searched.'),
@@ -56,7 +55,6 @@ function searchFields(): Field[] {
     {
       kind: 'text',
       key: 'general.searchEngineAddress',
-      store: part(searchEngine, 'choice', 'custom'),
       label: t('Search engine'),
       hint: t('The search address, with %s where the words go.'),
       placeholder: 'https://search.example/?q=%s',

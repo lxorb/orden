@@ -454,56 +454,6 @@
           isId = id: builtins.stringLength id <= 39 && builtins.match "[a-z0-9][a-z0-9-]*" id != null;
           stylesheet = types.either types.lines types.path;
           file = value: if builtins.isString value then { text = value; } else { source = value; };
-
-          schema = builtins.fromJSON (
-            builtins.readFile (
-              if builtins.pathExists ./settings-schema.json then
-                ./settings-schema.json
-              else
-                ./packaging/nix/settings-schema.json
-            )
-          );
-          oneOf = setting: if setting ? enum then types.enum setting.enum else types.str;
-          typeOf =
-            setting:
-            if setting.type == "list" then
-              types.listOf (oneOf setting)
-            else if setting.type == "boolean" then
-              types.bool
-            else if setting.type == "number" then
-              (
-                if setting ? min && setting ? max then
-                  types.numbers.between setting.min setting.max
-                else
-                  types.number
-              )
-            else
-              oneOf setting;
-          optionOf =
-            setting:
-            mkOption {
-              type = types.nullOr (typeOf setting);
-              default = null;
-              description =
-                let
-                  initial = " Orden's own default: ${builtins.toJSON setting.default}.";
-                  only = " Only on ${lib.concatStringsSep ", " (setting.platforms or [ ])}.";
-                in
-                setting.description
-                + lib.optionalString (setting ? default) initial
-                + lib.optionalString (setting ? platforms) only;
-            };
-          settingsOptions = lib.foldl' lib.recursiveUpdate { } (
-            lib.mapAttrsToList (
-              key: setting: lib.setAttrByPath (lib.splitString "." key) (optionOf setting)
-            ) schema
-          );
-          pruned =
-            attrs:
-            lib.filterAttrs (_: value: value != null && value != { }) (
-              lib.mapAttrs (_: value: if builtins.isAttrs value then pruned value else value) attrs
-            );
-          declared = pruned cfg.settings;
         in
         {
           options.programs.orden = {
@@ -541,8 +491,6 @@
               '';
             };
 
-            settings = settingsOptions;
-
             snippets = mkOption {
               type = types.nullOr (types.attrsOf types.str);
               default = null;
@@ -576,59 +524,9 @@
               // lib.optionalAttrs (cfg.customCss != null) { "${folder}/custom.css" = file cfg.customCss; }
               // lib.optionalAttrs (cfg.snippets != null) {
                 "${folder}/snippets.json".text = builtins.toJSON cfg.snippets;
-              }
-              // lib.optionalAttrs (declared != { }) {
-                "${folder}/settings.json".text = builtins.toJSON declared;
               };
           };
         };
-
-      checks = forEach (
-        pkgs:
-        let
-          inherit (pkgs) lib;
-          stand-ins = {
-            options = {
-              home.packages = lib.mkOption { type = lib.types.listOf lib.types.package; };
-              xdg.configFile = lib.mkOption { type = lib.types.attrsOf lib.types.attrs; };
-              assertions = lib.mkOption { type = lib.types.listOf lib.types.attrs; };
-            };
-          };
-          evaluated = lib.evalModules {
-            modules = [
-              self.homeManagerModules.default
-              stand-ins
-              {
-                _module.args.pkgs = pkgs;
-                programs.orden = {
-                  enable = true;
-                  package = pkgs.hello;
-                  settings = {
-                    editor.textSize = 1.1;
-                    editor.focusMode = true;
-                    appearance.mode = "dark";
-                    general.dns = "quad9";
-                    spelling.languages = [
-                      "de-DE"
-                      "en-US"
-                    ];
-                    themes.wallpaper.blur = 12;
-                    themes.glass.material = "mica";
-                    shortcuts.app-focus = "Mod-Alt-f";
-                  };
-                };
-              }
-            ];
-          };
-          written = evaluated.config.xdg.configFile."so.orden.Orden/settings.json".text;
-          expected = ''{"appearance":{"mode":"dark"},"editor":{"focusMode":true,"textSize":1.1},"general":{"dns":"quad9"},"shortcuts":{"app-focus":"Mod-Alt-f"},"spelling":{"languages":["de-DE","en-US"]},"themes":{"glass":{"material":"mica"},"wallpaper":{"blur":12}}}'';
-        in
-        {
-          settings-file =
-            assert lib.assertMsg (written == expected) "settings.json is ${written}";
-            pkgs.runCommand "orden-settings-file" { } "touch $out";
-        }
-      );
 
       apps = forEach (pkgs: {
         default = {

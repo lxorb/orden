@@ -11,7 +11,6 @@ import {
   toggled,
 } from '../spell-languages'
 import type { Field, Group, Pane } from './fields'
-import { among } from './hold'
 
 function dictionaryGroups(view: EditorView | undefined): Group[] {
   if (!choosable) return []
@@ -24,7 +23,6 @@ function dictionaryGroups(view: EditorView | undefined): Group[] {
         kind: 'switch',
         key: 'spelling.languages',
         member: one.id,
-        store: among(modes, 'spellLanguages', one.id),
         label: one.name,
         words: ['dictionary', 'language', 'spellcheck', one.id],
         hint: t('Words are checked against this dictionary as well as every other one that is on.'),
@@ -63,7 +61,6 @@ export function spellingPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'spelling.check',
-            store: { on: modes, name: 'spellcheck' },
             label: t('Check spelling'),
             words: ['spellcheck', 'spell check', 'typos'],
             hint: t('Underlines misspelled words as you write.'),

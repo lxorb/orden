@@ -15,7 +15,7 @@ const { hiddenKinds } = await import('../settings.svelte')
 const { unlocks } = await import('./unlocked.svelte')
 const { protectEntries } = await import('./entries')
 const { NO_PROTECTION_WORD, PROTECTION_WORD, protectionOn } = await import('./gate')
-const { protectionStore, turnProtection } = await import('./protection-setting')
+const { turnProtection } = await import('./protection-setting')
 const { generalPane } = await import('../settings/general-pane')
 
 const ROOT = '/space'
@@ -96,17 +96,5 @@ describe('Use protection (#2013)', () => {
     await turnProtection(false)
     expect(asked.details).toEqual([])
     expect(hiddenKinds.hidden).toEqual([NO_PROTECTION_WORD])
-  })
-
-  test('is one word in the account’s synced list, read and written by the settings file', () => {
-    const store = protectionStore()
-    expect(store.shared).toBe('hiddenKinds')
-    expect(store.take?.(['note'])).toBe(false)
-    expect(store.take?.([PROTECTION_WORD])).toBe(true)
-    expect(store.put?.(['note', NO_PROTECTION_WORD], true)).toEqual(['note', PROTECTION_WORD])
-    expect(store.put?.([PROTECTION_WORD], false)).toEqual([NO_PROTECTION_WORD])
-    workspace.protection.set(ROOT, DIARY, 'password')
-    expect(store.take?.([])).toBe(true)
-    expect(store.take?.([NO_PROTECTION_WORD])).toBe(false)
   })
 })
