@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { QUOTA } from '../src/storage'
+import { QUOTA } from '../src/sync-server/src/storage'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

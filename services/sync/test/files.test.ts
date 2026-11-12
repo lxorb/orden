@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { readSpaceFiles } from '../src/spaces/files'
+import { readSpaceFiles } from '../src/sync-server/src/spaces/files'
 import { call, file, mail, signIn, testEnv, type ShareView, type TestEnv } from './harness'
 
 let env: TestEnv

@@ -1,9 +1,9 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { eraseAccount } from '../src/erase'
-import { guestMayReach } from '../src/guests'
-import { sweepPassLinks } from '../src/pass'
-import { programMayReach } from '../src/programs'
+import { eraseAccount } from '../src/sync-server/src/erase'
+import { guestMayReach } from '../src/sync-server/src/guests'
+import { sweepPassLinks } from '../src/sync-server-pass/src'
+import { programMayReach } from '../src/sync-server/src/programs'
 import { call, type TestEnv, testEnv } from './harness'
 import { connect, hubs } from './hub-fakes'
 import {

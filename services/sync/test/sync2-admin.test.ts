@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { atLeastVersion } from '../src/sync2/gate'
+import { atLeastVersion } from '../src/sync-server/src/sync2/gate'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
 interface Blocker {

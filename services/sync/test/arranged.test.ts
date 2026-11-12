@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { isName, readArranged } from '../src/spaces/arranged'
+import { isName, readArranged } from '../src/sync-server/src/spaces/arranged'
 import { call, mail, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

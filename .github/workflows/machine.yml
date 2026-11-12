@@ -9,7 +9,7 @@ on:
       - services/machine/**
       - packages/online/**
       - packages/sync-core/src/frame.ts
-      - services/sync/src/machines/**
+      - services/sync/src/sync-server-machines/src/machines/**
       - services/sync/wrangler.jsonc
       - services/sync/migrations/**
       - scripts/online-e2e.mjs

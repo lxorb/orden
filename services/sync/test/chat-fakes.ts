@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite'
 import type { ServerFrame } from '@orden/chats/wire'
-import { ChatLog, type Person } from '../src/chats/log'
-import type { Env } from '../src/types'
+import { ChatLog, type Person } from '../src/sync-server-chats/src/chats/log'
+import type { Env } from '../src/sync-server/src/types'
 
 class Pair {
   constructor(

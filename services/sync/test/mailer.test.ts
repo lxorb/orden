@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { mailer, sender } from '../src/email'
-import type { EmailSender, Env } from '../src/types'
+import { mailer, sender } from '../src/sync-server/src/email'
+import type { EmailSender, Env } from '../src/sync-server/src/types'
 
 afterEach(() => {
   vi.restoreAllMocks()

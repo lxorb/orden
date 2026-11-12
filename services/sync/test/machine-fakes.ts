@@ -1,8 +1,8 @@
 import type { MachineHost } from '@orden/online'
 import { linkFrame, type MachineFrame, type OrdendFrame } from '@orden/online/wire'
 import { unframe } from '@orden/sync-core'
-import { Machine, type Viewer } from '../src/machines/machine'
-import type { Env } from '../src/types'
+import { Machine, type Viewer } from '../src/sync-server-machines/src/machines/machine'
+import type { Env } from '../src/sync-server/src/types'
 import { HubState } from './hub-fakes'
 
 class FakeLink {

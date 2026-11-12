@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { subprotocol } from '@orden/rooms'
-import { spacesFor } from '../src/mcp/tools'
-import { MOST_ITEMS } from '../src/spaces/space'
-import { purgeExpired } from '../src/trash'
+import { spacesFor } from '../src/sync-server-machines/src/mcp/tools'
+import { MOST_ITEMS } from '../src/sync-server/src/spaces/space'
+import { purgeExpired } from '../src/sync-server/src/trash'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 import { doorway } from './room'
 

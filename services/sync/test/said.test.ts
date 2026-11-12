@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
-import { sha256 } from '../src/crypto'
-import { MOST_ASKED } from '../src/notes'
+import { sha256 } from '../src/sync-server/src/crypto'
+import { MOST_ASKED } from '../src/sync-server/src/notes'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
 interface Said {

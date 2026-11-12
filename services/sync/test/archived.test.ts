@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { readArchived } from '../src/spaces/archived'
+import { readArchived } from '../src/sync-server/src/spaces/archived'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

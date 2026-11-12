@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest'
-import { steadyDb } from '../src/steady'
+import { steadyDb } from '../src/sync-server/src/steady'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
 let env: TestEnv | null = null

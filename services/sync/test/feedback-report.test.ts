@@ -1,9 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { eraseAccount } from '../src/erase'
-import { jpegWithout, MOST_IMAGES, pictureOf, pngWithout, sniffed } from '../src/feedback-images'
-import { issueBody } from '../src/feedback-issues'
-import { reportPage, standing } from '../src/feedback-page'
-import { sweepLeftovers } from '../src/leftovers'
+import { eraseAccount } from '../src/sync-server/src/erase'
+import {
+  jpegWithout,
+  MOST_IMAGES,
+  pictureOf,
+  pngWithout,
+  sniffed,
+} from '../src/sync-server/src/feedback-images'
+import { issueBody } from '../src/sync-server/src/feedback-issues'
+import { reportPage, standing } from '../src/sync-server/src/feedback-page'
+import { sweepLeftovers } from '../src/sync-server/src/leftovers'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
 let env: TestEnv

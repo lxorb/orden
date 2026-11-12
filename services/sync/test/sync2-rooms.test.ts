@@ -553,7 +553,7 @@ describe('the bulk read and the kept side', () => {
   test('a kept side past the account’s ceiling on versions is refused where it is written', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
-    const { MOST_VERSION_BYTES } = await import('../src/versions')
+    const { MOST_VERSION_BYTES } = await import('../src/sync-server/src/versions')
     env.db.prepare('update note_versions set size = 0').run()
     env.db
       .prepare('update note_versions set size = ? where note_id = ?')

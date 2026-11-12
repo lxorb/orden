@@ -1,9 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { asked, hasWords } from '../src/blog/find'
-import { answersFrom, asCsv, formOf, formHtml } from '../src/blog/form'
-import { around, backlinks, inOrder, type Listed, navigation } from '../src/blog/nav'
-import { plainWords } from '../src/blog/words'
-import worker from '../src/index'
+import { asked, hasWords } from '../src/sync-server-blog/src/find'
+import { answersFrom, asCsv, formOf, formHtml } from '../src/sync-server/src/site/form'
+import {
+  around,
+  backlinks,
+  inOrder,
+  type Listed,
+  navigation,
+} from '../src/sync-server-blog/src/nav'
+import { plainWords } from '../src/sync-server/src/site/words'
+import worker from '../src'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 function page(path: string, front: Listed['front'] = {}): Listed {

@@ -5,9 +5,9 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { codeBlocks } from '@orden/markdown'
 import { diagramKey } from '@orden/markdown/diagrams'
 import { blogMath, blogStyle } from '../../../scripts/blog-css'
-import { COLOURED } from '../src/blog/code'
-import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from '../src/blog/math'
-import { PAGE_CSS, PAGE_CSS_PATH } from '../src/blog/style'
+import { COLOURED } from '../src/sync-server-blog/src/code'
+import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from '../src/sync-server-blog/src/math'
+import { PAGE_CSS, PAGE_CSS_PATH } from '../src/sync-server-blog/src/style'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 const HERE = join(fileURLToPath(import.meta.url), '..')
@@ -112,7 +112,7 @@ function fetched(html: string, sheets: readonly string[]): string[] {
 
 describe('the stylesheet a page is served with', () => {
   test('is the one the generator writes from the themes package', () => {
-    const target = join(HERE, '../src/blog/style.ts')
+    const target = join(HERE, '../src/sync-server-blog/src/style.ts')
     expect(readFileSync(target, 'utf8')).toBe(blogStyle())
   })
 
@@ -159,7 +159,7 @@ describe('the stylesheet a page is served with', () => {
 
 describe("the sheet an equation is set with, and KaTeX's faces", () => {
   test('are the ones the generator writes from the katex package', () => {
-    const target = join(HERE, '../src/blog/math.ts')
+    const target = join(HERE, '../src/sync-server-blog/src/math.ts')
     expect(readFileSync(target, 'utf8')).toBe(blogMath())
   })
 

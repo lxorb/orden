@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
-import worker from '../src/index'
+import worker from '../src'
 import { call, mail, signIn, type TestEnv, testEnv } from './harness'
-import { sha256 } from '../src/crypto'
+import { sha256 } from '../src/sync-server/src/crypto'
 import {
   base32,
   codeAt,
@@ -14,8 +14,8 @@ import {
   recoveryCost,
   recoveryHash,
   resealBorrowed,
-} from '../src/second'
-import { opened } from '../src/ask/key'
+} from '../src/sync-server/src/second'
+import { opened } from '../src/sync-server/src/ai-key'
 
 async function nightly(env: TestEnv): Promise<void> {
   const waiting: Promise<unknown>[] = []
@@ -52,7 +52,7 @@ describe('what a recovery code costs to hash', () => {
   })
 
   test('and nothing a running Worker can reach says otherwise', async () => {
-    const module: Record<string, unknown> = await import('../src/second')
+    const module: Record<string, unknown> = await import('../src/sync-server/src/second')
 
     expect(Object.keys(module)).not.toContain('costRecoveryLess')
     const setters = Object.entries(module).filter(

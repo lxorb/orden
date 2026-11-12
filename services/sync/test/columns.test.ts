@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, signIn, testEnv, type TestEnv } from './harness'
-import { fits, MOST_BYTES } from '../src/spaces/columns'
-import { staysInside } from '../src/spaces/paths'
+import { fits, MOST_BYTES } from '../src/sync-server/src/spaces/columns'
+import { staysInside } from '../src/sync-server/src/spaces/paths'
 
 let env: TestEnv
 let token: string

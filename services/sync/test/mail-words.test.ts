@@ -5,7 +5,7 @@ import {
   inviteMessage,
   leavingMessage,
   requestMessage,
-} from '../src/email'
+} from '../src/sync-server/src/email'
 
 const SENT = {
   code: codeMessage('123456'),

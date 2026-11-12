@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { sha256 } from '../src/crypto'
+import { sha256 } from '../src/sync-server/src/crypto'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { connect, type HubSocket, type Hubs, hubs, send } from './hub-fakes'
 

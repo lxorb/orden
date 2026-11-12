@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { addNote as makeNote, saveNote } from '../src/notes'
+import { addNote as makeNote, saveNote } from '../src/sync-server/src/notes'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

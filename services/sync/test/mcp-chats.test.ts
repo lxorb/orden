@@ -1,7 +1,7 @@
 import { chatText } from '@orden/chats'
 import { resultsOf } from '@orden/chats/wire'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { MOST_BOUND } from '../src/bound'
+import { MOST_BOUND } from '../src/sync-server/src/bound'
 import { chatLogs, fire } from './chat-fakes'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 import { hubs } from './hub-fakes'

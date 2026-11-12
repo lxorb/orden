@@ -1,7 +1,7 @@
 import type { ItemRow, Version } from '@orden/pass/wire'
 import { MOST_ITEM_BYTES, MOST_ITEMS, MOST_VAULTS, MOST_VERSIONS } from '@orden/pass/wire'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { QUOTA, usedBytes } from '../src/storage'
+import { QUOTA, usedBytes } from '../src/sync-server/src/storage'
 import { type TestEnv, testEnv } from './harness'
 import { anId, pass, passCall, type Person, person, sealed, sharedVault } from './pass-fakes'
 

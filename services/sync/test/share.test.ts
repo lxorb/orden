@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-core'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
-import { MOST_MEMBERS } from '../src/spaces/share'
+import { MOST_MEMBERS } from '../src/sync-server/src/spaces/share'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 import { framed, live } from './sync2'
 

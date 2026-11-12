@@ -1,77 +1,116 @@
+import './wiring'
 import { type Context, Hono, type MiddlewareHandler } from 'hono'
-import { SIGN_IN, SIGN_IN_TO_DO_THAT } from './refused'
+import {
+  SIGN_IN,
+  SIGN_IN_TO_DO_THAT,
+  account,
+  left,
+  accountById,
+  auth,
+  presentUser,
+  requireWhoever,
+  sessions,
+  readBody,
+  blobs,
+  publicBlobs,
+  hostnameOf,
+  spaceForHost,
+  blogRootOf,
+  isAppHost,
+  isOwnOrigin,
+  passHost,
+  serveApp,
+  servePage,
+  servePass,
+  switchChannel,
+  cleanPersonName,
+  NAME_LIMIT,
+  failed,
+  programMayReach,
+  people,
+  ownProfile,
+  presentOwnProfile,
+  push,
+  sendDue,
+  fillFronts,
+  sweepLeftovers,
+  finishErasing,
+  forgetHalfDone,
+  resealBorrowed,
+  second,
+  sweepAnswers,
+  sweepVersions,
+  expireGuests,
+  guestMayReach,
+  presentGuest,
+  renameGuest,
+  notes,
+  rooms,
+  devices,
+  hubDoor,
+  siteIcons,
+  settings,
+  protectedRoutes,
+  v2Docs,
+  v2Spaces,
+  sweepMisnamed,
+  v2Blobs,
+  v2Files,
+  v2Maps,
+  sweepTreeOps,
+  spaces,
+  join,
+  crashes,
+  sweepCrashes,
+  usage,
+  feedback,
+  openWaitingIssues,
+  recheckDomains,
+  expireRequests,
+  sharedWithMe,
+  themes,
+  time,
+  inbox,
+  pad,
+  purgeExpired,
+  trash,
+  QUOTA,
+  usedBytes,
+  steadyEnv,
+  SAID,
+  type Env,
+  type Variables,
+  type Whoever,
+} from './sync-server/src/api'
 import { cors } from 'hono/cors'
-import { account, left } from './account'
-import { ask } from './ask'
-import { accountById, auth, presentUser, requireWhoever, sessions } from './auth'
-import { readBody } from './body'
-import { blobs, publicBlobs } from './blobs'
-import { hostnameOf, serveBlog, spaceForHost } from './blog'
-import { blogRootOf, isAppHost, isOwnOrigin, passHost } from './hosts'
-import { serveApp, servePage, servePass, switchChannel } from './channel'
-import { cleanPersonName, NAME_LIMIT } from './crypto'
-import { failed } from './failed'
-import { bearer } from './mcp/tokens'
-import { programMayReach } from './programs'
-import { people, ownProfile } from './people/routes'
-import { presentOwnProfile } from './people/profile'
-import { push } from './push/targets'
-import { sendDue } from './push/reminders'
-import { fillFronts } from './blog/fill'
-import { sweepLeftovers } from './leftovers'
-import { finishErasing } from './erase'
-import { forgetHalfDone, resealBorrowed, second } from './second'
-import { sweepAnswers } from './spaces/answers'
-import { sweepVersions } from './versions'
-import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
-import { mcp, mcpAdmin } from './mcp'
-import { notes } from './notes'
-import { chatDoor } from './chats/door'
-import { chats } from './chats/routes'
-import { sweepChats } from './chats/sweep'
-import { oauth, oauthMetadata } from './oauth'
-import { expireClients } from './oauth/clients'
-import { rooms } from './rooms'
-import { devices } from './hub/devices'
-import { aiVault } from './ai/vault'
-import { openLink, pass, sweepPassLinks } from './pass'
-import { servePassLink } from './pass/link-page'
-import { hubDoor } from './hub/door'
-import { onlineAdmin } from './machines/admin'
-import { sweepAudit } from './machines/audit'
-import { machineBundle } from './machines/bundle'
-import { onlineDoor } from './machines/door'
-import { appCatalogues } from './apps/catalogue'
-import { appsDoor } from './apps/door'
-import { appIce } from './apps/ice'
-import { isMachineHost, machineDomain } from './machines/hetzner-host'
-import { online } from './machines/routes'
-import { siteIcons } from './site-icons'
-import { settings } from './settings'
-import { protectedRoutes } from './protected'
-import { v2Docs, v2Spaces } from './sync2'
-import { syncAdmin } from './sync2/admin'
-import { sweepMisnamed, v2Blobs, v2Files } from './sync2/files'
-import { v2Maps } from './sync2/maps'
-import { sweepTreeOps } from './sync2/tree'
-import { spaces } from './spaces'
-import { join } from './spaces/join'
-import { crashes, sweepCrashes } from './crashes'
-import { usage } from './usage'
-import { feedback } from './feedback'
-import { openWaitingIssues } from './feedback-issues'
-import { recheckDomains } from './spaces/proof'
-import { expireRequests, sharedWithMe } from './spaces/share'
-import { themes } from './themes'
-import { time } from './time'
-import { inbox } from './inbox'
-import { pad } from './pad'
-import { purgeExpired, trash } from './trash'
-import { QUOTA, usedBytes } from './storage'
-import { steadyEnv } from './steady'
-import type { Env, Variables, Whoever } from './types'
-import { SAID } from './said'
-
+import {
+  ask,
+  bearer,
+  mcp,
+  mcpAdmin,
+  aiVault,
+  onlineAdmin,
+  sweepAudit,
+  machineBundle,
+  onlineDoor,
+  appCatalogues,
+  appsDoor,
+  appIce,
+  isMachineHost,
+  machineDomain,
+  online,
+  syncAdmin,
+} from './sync-server-machines/src/api'
+import { serveBlog } from './sync-server-blog/src/api'
+import {
+  chatDoor,
+  chats,
+  sweepChats,
+  oauth,
+  oauthMetadata,
+  expireClients,
+} from './sync-server-chats/src/api'
+import { openLink, pass, sweepPassLinks, servePassLink } from './sync-server-pass/src/api'
 const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 app.onError(failed)
@@ -364,7 +403,7 @@ function serve(request: Request, env: Env, context?: ExecutionContext) {
 
 export default { fetch: serve, scheduled }
 
-export { NoteRoom } from './rooms/room'
-export { AccountHub } from './hub/hub'
-export { ChatLog } from './chats/log'
-export { AppRelay } from './apps/relay'
+export { NoteRoom } from './sync-server/src/api'
+export { AccountHub } from './sync-server/src/api'
+export { ChatLog } from './sync-server-chats/src/api'
+export { AppRelay } from './sync-server-machines/src/api'

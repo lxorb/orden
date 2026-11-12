@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { carry } from '../src/machines/bundle'
+import { carry } from '../src/sync-server-machines/src/machines/bundle'
 import { call, type TestEnv, testEnv } from './harness'
 
 const BYTES = new TextEncoder().encode('install.sh and ordend, gzipped')

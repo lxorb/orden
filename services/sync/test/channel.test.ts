@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest'
-import { serveApp, switchChannel } from '../src/channel'
+import { serveApp, switchChannel } from '../src/sync-server/src/channel'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 function assets(files: Record<string, string>): { fetch(request: Request): Promise<Response> } {

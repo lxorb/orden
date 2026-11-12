@@ -17,7 +17,7 @@ COPY dist/ordend.cjs dist/hold.cjs /tmp/machine/dist/
 RUN bash /tmp/machine/install.sh && rm -rf /tmp/machine
 
 # The Sandbox SDK's shim, which the home's backups to R2 and their restores run through
-# (services/sync/src/machines/host.ts); its tag is the pinned @cloudflare/sandbox's.
+# (services/sync/src/sync-server-machines/src/machines/host.ts); its tag is the pinned @cloudflare/sandbox's.
 COPY --from=docker.io/cloudflare/sandbox:1.0.0 /usr/local/bin/sandbox-shim /usr/local/bin/sandbox-shim
 
 COPY entrypoint.sh /usr/local/bin/orden-entrypoint

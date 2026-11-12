@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { EmailSender } from '../src/types'
+import type { EmailSender } from '../src/sync-server/src/types'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
