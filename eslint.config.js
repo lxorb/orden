@@ -2,6 +2,9 @@ import js from '@eslint/js'
 import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
+import { existsSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { check as checkModules, moduleOf } from './scripts/modules.mjs'
 
 const DIRECTIVE =
   /^\s*(?:eslint(?:-disable|-enable)?(?:-next-line|-line)?\s|global\s|@ts-(?:expect-error|ignore|nocheck|check)\b|@vitest-environment\s|prettier-ignore\b|svelte-ignore\s|@vite-ignore\s*$|[@#]__PURE__\s*$|__[A-Z_]+__\s*$|kept\s*$|\*\s*@(?:public|internal)\s*$|\/\s*<reference\s)/
@@ -77,6 +80,91 @@ const noCopyAppend = {
         }
       },
     }
+  },
+}
+
+const MODULES = checkModules().modules.filter((one) => one.lang === 'ts')
+
+const MODULE_FILES = MODULES.map((one) => `${one.dir}/**/*.{ts,svelte}`)
+
+const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '.js', '/index.ts']
+
+function moduleOfSpecifier(from, specifier) {
+  if (specifier.startsWith('.')) {
+    const target = resolve(dirname(from), specifier)
+    const file = ENDINGS.map((one) => target + one).find((one) => existsSync(one)) ?? target
+    return { module: moduleOf(file, MODULES), file, subpath: null }
+  }
+  if (!specifier.startsWith('@orden/')) return null
+  const [, name, ...rest] = specifier.split('/')
+  const module = MODULES.find((one) => one.packageName === `@orden/${name}`) ?? null
+  return { module, file: null, subpath: rest.length > 0 ? rest.join('/') : null, name }
+}
+
+function eachImport(context, seen) {
+  const from = context.filename
+  const own = moduleOf(from, MODULES)
+  if (!own) return {}
+  const look = (node, specifier) => {
+    if (typeof specifier !== 'string') return
+    const found = moduleOfSpecifier(from, specifier)
+    if (!found) return
+    seen(node, specifier, own, found)
+  }
+  return {
+    ImportDeclaration: (node) => look(node, node.source.value),
+    ExportNamedDeclaration: (node) => node.source && look(node, node.source.value),
+    ExportAllDeclaration: (node) => look(node, node.source.value),
+    ImportExpression: (node) => node.source.type === 'Literal' && look(node, node.source.value),
+  }
+}
+
+const noDeepImports = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      deep: "Import module '{{name}}' through its api ({{api}}), not {{what}}.",
+    },
+  },
+  create(context) {
+    return eachImport(context, (node, specifier, own, found) => {
+      const { module } = found
+      if (!module || module === own) return
+      const api = resolve(module.absolute, module.api)
+      const past = found.file ? found.file !== api : found.subpath !== null
+      if (past) {
+        context.report({
+          node,
+          messageId: 'deep',
+          data: { name: module.name, api: `${module.dir}/${module.api}`, what: specifier },
+        })
+      }
+    })
+  },
+}
+
+const declaredDependencies = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      undeclared:
+        "Module '{{own}}' imports '{{target}}' without naming it in {{file}}; add it to dependsOn or drop the import.",
+    },
+  },
+  create(context) {
+    return eachImport(context, (node, specifier, own, found) => {
+      const target = found.module?.name ?? found.name ?? null
+      if (!target || target === own.name) return
+      if (!own.dependsOn.includes(target)) {
+        context.report({
+          node,
+          messageId: 'undeclared',
+          data: { own: own.name, target, file: own.file },
+        })
+      }
+    })
   },
 }
 
@@ -257,10 +345,16 @@ export default tseslint.config(
           'no-comments': noComments,
           'no-spread-math': noSpreadMath,
           'no-copy-append': noCopyAppend,
+          'no-deep-imports': noDeepImports,
+          'declared-dependencies': declaredDependencies,
         },
       },
     },
     rules: { 'orden/no-comments': 'error' },
+  },
+  {
+    files: MODULE_FILES,
+    rules: { 'orden/no-deep-imports': 'error', 'orden/declared-dependencies': 'error' },
   },
   {
     ignores: [

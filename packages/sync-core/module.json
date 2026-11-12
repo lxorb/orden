@@ -1,0 +1,6 @@
+{
+  "name": "sync-core",
+  "layer": "foundation",
+  "api": "src/index.ts",
+  "dependsOn": ["markdown", "rooms"]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "contracts",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": []
+}

@@ -65,6 +65,12 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
+      - name: Module boundaries
+        run: node scripts/modules.mjs --check
+
+      - name: Contract tests, each module alone
+        run: node scripts/modules.mjs --contracts
+
       - name: Prettier
         run: pnpm format:check
 
@@ -281,6 +287,14 @@ jobs:
       - name: Format
         run: |
           cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
+
+      - name: The contracts crate, alone
+        if: runner.os == 'Linux'
+        run: |
+          M=apps/desktop/src-tauri/crates/contracts/Cargo.toml
+          cargo fmt --manifest-path $M --check
+          cargo clippy --manifest-path $M --all-targets -- -D warnings
+          cargo test --manifest-path $M
 
       - name: Clippy
         run: |
