@@ -633,7 +633,9 @@ class Runner {
 
   async sentBeforeLeaving(): Promise<boolean> {
     if (isNative()) return true
-    await workspace().writeNow().catch(() => undefined)
+    await workspace()
+      .writeNow()
+      .catch(() => undefined)
     const engine = this.engine
     if (!engine) {
       await Promise.race([this.passNow().catch(() => false), waited(SIGN_OUT_WAITS)])
@@ -658,7 +660,9 @@ class Runner {
     else leaveSpaces(accountId, roots)
     let sent: string[] = []
     if (engine && !this.local && !isNative() && !keepHere) {
-      await workspace().writesSettled().catch(() => undefined)
+      await workspace()
+        .writesSettled()
+        .catch(() => undefined)
       const unsent = await unsentRoots(engine, roots, (id) => this.firstDone(engine, id))
       sent = roots.filter((root) => !unsent.includes(root))
     }
@@ -966,8 +970,8 @@ class Runner {
 
   private async unpairedHeard(core: Engine['core']) {
     const synced = [...core.spaces.values()].map((space) => space.row.root)
-    const unpaired = workspace().shownSpaces
-      .map((space) => space.root)
+    const unpaired = workspace()
+      .shownSpaces.map((space) => space.root)
       .filter((root) => !synced.some((one) => samePath(one, root)))
     if (!unpaired.length) return
     for (const root of unpaired) await workspace().spaceUnpaired(root)
@@ -1142,7 +1146,9 @@ class Runner {
 
     const done = (async () => {
       if (op.op === 'created') {
-        const document = op.key ? workspace().documents.find((one) => one.key === op.key) : undefined
+        const document = op.key
+          ? workspace().documents.find((one) => one.key === op.key)
+          : undefined
         const text =
           op.kind === 'folder' || !holdsDocument(kindOfName(op.path))
             ? undefined
@@ -1199,7 +1205,9 @@ class Runner {
     const name = workspace().spaces.find((one) => samePath(one.root, root))?.name ?? nameOf(root)
     if (!token || !accountId || listed?.role !== 'owner' || !name || listed.name === name) return
     await sendName(token, accountId, spaceId, name)
-    await account().loadSpaces().catch(() => undefined)
+    await account()
+      .loadSpaces()
+      .catch(() => undefined)
   }
 
   remoteIdFor(root: string): string | null {

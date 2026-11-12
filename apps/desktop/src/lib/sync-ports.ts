@@ -22,11 +22,11 @@ providePort('sync.host', {
 })
 
 providePort('sync.storage', {
-  text: (key) => storedText(key),
+  text: (name) => storedText(name),
   json: (key) => stored(key),
-  keepText: (key, value) => keep(key, value),
+  keepText: (name, value) => keep(name, value),
   keepJson: (key, value) => keepJson(key, value),
-  forget: (key) => forget(key),
+  forget: (name) => forget(name),
 })
 
 providePort('sync.clock', {

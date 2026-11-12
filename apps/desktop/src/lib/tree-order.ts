@@ -65,7 +65,11 @@ function placesIn(listed: readonly string[]): Map<string, number> {
   return at
 }
 
-function group<T extends Shown>(entries: readonly T[], mode: SortMode, listed: readonly string[]): T[] {
+function group<T extends Shown>(
+  entries: readonly T[],
+  mode: SortMode,
+  listed: readonly string[],
+): T[] {
   const out = [...entries]
 
   if (mode === 'manual') {
