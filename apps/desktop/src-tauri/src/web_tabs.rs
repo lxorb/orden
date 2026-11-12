@@ -481,31 +481,10 @@ pub enum Step {
     Stop,
 }
 
-pub(crate) fn allowed(url: &Url) -> bool {
-    if url.scheme() == "view-source" {
-        return url
-            .as_str()
-            .strip_prefix("view-source:")
-            .and_then(|inner| Url::parse(inner).ok())
-            .is_some_and(|inner| inner.scheme() != "view-source" && allowed(&inner));
-    }
-
-    if !matches!(url.scheme(), "http" | "https") {
-        return false;
-    }
-
-    !app_host(url.host_str().unwrap_or_default())
-}
-
-pub(crate) fn app_host(host: &str) -> bool {
-    matches!(
-        host.trim_end_matches('.').to_ascii_lowercase().as_str(),
-        "tauri.localhost" | "ipc.localhost" | "asset.localhost" | "nib.localhost"
-    )
-}
+pub(crate) use orden_web_engine::{allowed, app_host};
 
 pub(crate) fn tab_may_open(url: &Url) -> bool {
-    allowed(url) || crate::extensions::ours(url)
+    orden_web_engine::tab_may_open(url, &crate::extensions::ours)
 }
 
 #[cfg_attr(
@@ -513,14 +492,7 @@ pub(crate) fn tab_may_open(url: &Url) -> bool {
     allow(dead_code, reason = "only WKWebView asks about a frame's navigation")
 )]
 pub(crate) fn frame_may_open(url: &Url) -> bool {
-    match url.scheme() {
-        "about" => matches!(url.path(), "blank" | "srcdoc"),
-        "data" => true,
-        "blob" => {
-            Url::parse(url.path()).is_ok_and(|inner| inner.scheme() != "blob" && allowed(&inner))
-        }
-        _ => tab_may_open(url),
-    }
+    orden_web_engine::frame_may_open(url, &crate::extensions::ours)
 }
 
 pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
@@ -549,28 +521,18 @@ fn handed_over(url: &Url) -> Option<String> {
     tab_may_open(url).then(|| url.to_string())
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum Becomes {
-    Tab(String),
-    Window,
-    Blocked(String),
-    Nothing,
-}
+pub(crate) use orden_web_engine::Becomes;
 
 pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Becomes {
-    if said {
-        return handed_over(url).map_or(Becomes::Nothing, Becomes::Tab);
-    }
-    if unasked {
-        return handed_over(url).map_or(Becomes::Nothing, Becomes::Blocked);
-    }
-    if crate::extensions::ours(url) {
-        return Becomes::Tab(url.to_string());
-    }
-    if sized || blank(url) || signs_in(url) {
-        return Becomes::Window;
-    }
-    handed_over(url).map_or(Becomes::Nothing, Becomes::Tab)
+    orden_web_engine::becomes(
+        url,
+        orden_web_engine::Asked {
+            sized,
+            said,
+            unasked,
+        },
+        &crate::extensions::ours,
+    )
 }
 
 pub(crate) fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str) {
@@ -583,59 +545,6 @@ pub(crate) fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str)
         behind: false,
     };
     let _ = app.emit_to(window, BLOCKED, payload);
-}
-
-const SIGNING_IN: &[&str] = &[
-    "auth",
-    "authorize",
-    "authorization",
-    "authenticate",
-    "oidc",
-    "openid",
-    "saml",
-    "saml2",
-    "sso",
-    "signin",
-    "login",
-    "logon",
-    "consent",
-    "3ds",
-    "threeds",
-    "challenge",
-];
-
-const SIGNING_IN_HOSTS: &[&str] = &[
-    "accounts", "account", "auth", "login", "sso", "id", "secure",
-];
-
-fn signs_in(url: &Url) -> bool {
-    let words = |text: &str| {
-        text.to_ascii_lowercase()
-            .split(|one: char| !one.is_ascii_alphanumeric())
-            .filter(|word| !word.is_empty())
-            .map(str::to_string)
-            .collect::<Vec<_>>()
-    };
-    let host = url.host_str().unwrap_or_default();
-    let first = host
-        .split('.')
-        .next()
-        .unwrap_or_default()
-        .to_ascii_lowercase();
-    let path = words(url.path());
-    let said = |word: &str| SIGNING_IN.contains(&word) || word.starts_with("oauth");
-    SIGNING_IN_HOSTS.contains(&first.as_str())
-        || path.iter().any(|word| said(word))
-        || path.windows(2).any(|pair| {
-            matches!(
-                (pair[0].as_str(), pair[1].as_str()),
-                ("sign" | "log", "in" | "on")
-            )
-        })
-}
-
-fn blank(url: &Url) -> bool {
-    url.scheme() == "about" && url.path() == "blank"
 }
 
 #[cfg(not(feature = "cef"))]

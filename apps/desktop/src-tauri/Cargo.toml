@@ -44,6 +44,7 @@ tauri-utils = "2"
 serde_json = "1"
 
 [dependencies]
+orden-web-engine = { path = "crates/web-engine" }
 tauri = { version = "2", features = ["protocol-asset", "unstable"] }
 tauri-plugin-opener = "2"
 tauri-plugin-os = "2"

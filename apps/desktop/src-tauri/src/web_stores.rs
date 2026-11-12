@@ -7,24 +7,11 @@
 )]
 pub(crate) const STORES: &str = "web-stores";
 
-const LONGEST: usize = 160;
-
 pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
-    let Some(name) = asked.filter(|one| !one.is_empty()) else {
-        return Ok(None);
-    };
-
-    let fine = name.len() <= LONGEST
-        && (name.starts_with("note_") || name.starts_with("space_") || name.starts_with("site_"))
-        && name.bytes().all(|byte| {
-            byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'-' | b'_')
-        })
-        && !name.ends_with('_');
-
-    if fine {
-        Ok(Some(name))
-    } else {
-        Err("that is not a store a web tab can be in".into())
+    match orden_web_engine::StoreName::parse(asked) {
+        Ok(Some(_)) => Ok(asked.filter(|name| !name.is_empty())),
+        Ok(None) => Ok(None),
+        Err(refused) => Err(refused.message),
     }
 }
 
@@ -44,7 +31,8 @@ pub(crate) fn identifier(name: &str) -> [u8; 16] {
 
 #[cfg(test)]
 mod tests {
-    use super::{identifier, named, LONGEST};
+    use super::{identifier, named};
+    use orden_web_engine::LONGEST_STORE_NAME as LONGEST;
 
     #[test]
     fn no_name_is_the_shared_store() {

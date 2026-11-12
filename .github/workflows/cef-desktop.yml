@@ -1,0 +1,101 @@
+name: cef-desktop
+
+on:
+  workflow_dispatch:
+    inputs:
+      step:
+        description: check (cargo check under the CEF manifest) or test (clippy and the tests too)
+        default: check
+  push:
+    branches: ['tmp/ci-cef*']
+
+concurrency:
+  group: cef-desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  manifest:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+          components: clippy, rustfmt
+
+      - name: The desktop manifest
+        run: |
+          node scripts/linux-manifest.mjs --check
+          bash scripts/linux-cef.sh
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          workspaces: |
+            apps/desktop/src-tauri
+          key: cef-${{ matrix.target }}
+          save-if: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @orden/desktop build
+
+      - name: Check
+        id: check
+        continue-on-error: true
+        run: |
+          cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml --target ${{ matrix.target }} --all-targets --message-format short 2>&1 | tee check.log
+
+      - name: Clippy and tests
+        if: ${{ inputs.step == 'test' && steps.check.outcome == 'success' }}
+        run: |
+          cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --target ${{ matrix.target }} --all-targets -- -D warnings
+          cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --target ${{ matrix.target }}
+
+      - name: What the check said
+        if: always()
+        run: |
+          echo "## ${{ matrix.target }}" >>"$GITHUB_STEP_SUMMARY"
+          grep -cE '^error' check.log | sed 's/^/errors: /' >>"$GITHUB_STEP_SUMMARY" || true
+          grep -E '^error' check.log | sed -E 's/^error(\[E[0-9]+\])?: //' | sort | uniq -c | sort -rn | head -40 >>"$GITHUB_STEP_SUMMARY" || true
+
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cef-check-${{ matrix.target }}
+          path: check.log
+          if-no-files-found: ignore
+
+      - name: The manifest put back
+        if: always()
+        run: bash scripts/linux-cef.sh back
+
+      - name: The check's verdict
+        if: steps.check.outcome != 'success'
+        run: exit 1

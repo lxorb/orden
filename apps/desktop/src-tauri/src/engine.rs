@@ -9,19 +9,13 @@ use crate::paths::{config_dir, made};
 const ROOT: &str = "web";
 
 #[cfg(feature = "cef")]
-const ROOT: &str = "chromium";
+const ROOT: &str = orden_web_engine::ROOT;
 
 #[cfg(feature = "cef")]
-const STORE_PROFILE: &str = "store-";
+const STORE_PROFILE: &str = orden_web_engine::STORE_PROFILE;
 
-#[cfg_attr(
-    not(feature = "cef"),
-    allow(
-        dead_code,
-        reason = "only Orden's own Chromium has profiles to name; the name is kept beside the layout it belongs to"
-    )
-)]
-const APP_PROFILE: &str = "app";
+#[cfg(feature = "cef")]
+const APP_PROFILE: &str = orden_web_engine::APP_PROFILE;
 
 #[cfg(all(not(feature = "cef"), target_os = "macos"))]
 const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
@@ -43,54 +37,47 @@ pub(crate) fn browser_args(_app: &AppHandle) -> String {
     }
 }
 
-#[cfg_attr(not(any(test, feature = "cef")), allow(dead_code))]
-pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
-    "TouchpadOverscrollHistoryNavigation",
-    "overscroll-history-navigation",
-    "0",
-);
-
 #[cfg(feature = "cef")]
 pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
+    use orden_web_engine::{debug_port, switches, with_extensions, LOAD_EXTENSION_OFF};
     use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy};
 
-    let sandbox = match from_run("ORDEN_CEF_SANDBOX").unwrap_or_default().as_str() {
-        "required" => SandboxPolicy::Required,
-        "disabled" | "off" => SandboxPolicy::Disabled,
-        _ => SandboxPolicy::Auto,
+    let sandbox = match orden_web_engine::SandboxPolicy::parse(
+        &from_run("ORDEN_CEF_SANDBOX").unwrap_or_default(),
+    ) {
+        orden_web_engine::SandboxPolicy::Required => SandboxPolicy::Required,
+        orden_web_engine::SandboxPolicy::Disabled => SandboxPolicy::Disabled,
+        orden_web_engine::SandboxPolicy::Auto => SandboxPolicy::Auto,
     };
-    let debugging = from_run("ORDEN_CEF_DEBUG_PORT")
-        .and_then(|port| port.parse::<u16>().ok())
-        .filter(|port| *port >= 1024)
-        .map_or(RemoteDebugging::Disabled, |port| RemoteDebugging::Port {
+    let debugging = debug_port(from_run("ORDEN_CEF_DEBUG_PORT").as_deref()).map_or(
+        RemoteDebugging::Disabled,
+        |port| RemoteDebugging::Port {
             port,
             allowed_origins: Vec::new(),
-        });
+        },
+    );
 
-    let (swipe_feature, swipe_switch, swipe_off) = ENGINE_SWIPE;
     let mut asked = switches(&from_run("ORDEN_CEF_ARGS").unwrap_or_default());
     let firefox = cef_root()
         .and_then(|root| Some(root.parent()?.join("extensions")))
         .map(|root| crate::extensions::library::firefox_folders(&root))
         .unwrap_or_default();
-    let loading = loaded(&mut asked, &firefox);
+    let loading = with_extensions(&mut asked, &firefox);
+    let settings = orden_web_engine::EngineSettings::default()
+        .with_switches([(
+            crate::page_scale::SWITCH.0.to_owned(),
+            Some(crate::page_scale::SWITCH.1.to_owned()),
+        )])
+        .with_switches(asked);
     let mut engine = Cef::default()
         .sandbox(sandbox)
-        .deep_link_schemes(["orden", "nib"])
+        .deep_link_schemes(settings.deep_link_schemes.clone())
         .on_unhosted_tab(crate::extensions::tabs::opened)
-        .disable_features([swipe_feature])
-        .command_line_args([(swipe_switch, Some(swipe_off))])
-        .command_line_args([(
-            crate::page_scale::SWITCH.0,
-            Some(crate::page_scale::SWITCH.1),
-        )])
-        .command_line_args(asked)
+        .disable_features(settings.disabled_features.clone())
+        .enable_features(settings.enabled_features.clone())
+        .command_line_args(settings.switches.clone())
         .devtools(DevToolsPolicy::Allowed)
         .remote_debugging(debugging);
-    #[cfg(any(target_os = "linux", windows))]
-    {
-        engine = engine.enable_features([OVERLAY_BARS]);
-    }
     if loading {
         engine = engine.disable_features([LOAD_EXTENSION_OFF]);
     }
@@ -113,46 +100,9 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
 }
 
 #[cfg(feature = "cef")]
-const LOAD_EXTENSION_OFF: &str = "DisableLoadExtensionCommandLineSwitch";
-
-#[cfg(any(feature = "cef", test))]
-fn loaded(asked: &mut Vec<(String, Option<String>)>, folders: &[PathBuf]) -> bool {
-    const SWITCH: &str = "load-extension";
-    let ours: Vec<String> = folders
-        .iter()
-        .map(|folder| folder.to_string_lossy().into_owned())
-        .collect();
-    if let Some((_, value)) = asked
-        .iter_mut()
-        .find(|(key, _)| key.trim_start_matches('-') == SWITCH)
-    {
-        let mut all: Vec<String> = value.iter().cloned().collect();
-        all.extend(ours);
-        *value = Some(all.join(","));
-        return true;
-    }
-    if ours.is_empty() {
-        return false;
-    }
-    asked.push((SWITCH.to_owned(), Some(ours.join(","))));
-    true
-}
-
-#[cfg(feature = "cef")]
 fn from_run(name: &str) -> Option<String> {
-    read_by(cfg!(debug_assertions), name)
+    orden_web_engine::from_run(cfg!(debug_assertions), name)
 }
-
-#[cfg(any(feature = "cef", test))]
-fn read_by(drive: bool, name: &str) -> Option<String> {
-    drive.then(|| std::env::var(name).ok()).flatten()
-}
-
-#[cfg(all(feature = "cef", target_os = "linux"))]
-const OVERLAY_BARS: &str = "OverlayScrollbar";
-
-#[cfg(all(feature = "cef", windows))]
-const OVERLAY_BARS: &str = "FluentOverlayScrollbar";
 
 #[cfg(feature = "cef")]
 fn cef_root() -> Option<PathBuf> {
@@ -163,19 +113,6 @@ fn cef_root() -> Option<PathBuf> {
         .and_then(|said| said.get("identifier")?.as_str().map(str::to_owned))
         .or_else(|| config.get("identifier")?.as_str().map(str::to_owned))?;
     Some(dirs::config_dir()?.join(identifier).join(ROOT))
-}
-
-#[cfg(any(feature = "cef", test))]
-fn switches(written: &str) -> Vec<(String, Option<String>)> {
-    written
-        .split(',')
-        .map(str::trim)
-        .filter(|one| !one.is_empty())
-        .map(|one| match one.split_once('=') {
-            Some((key, value)) => (key.to_owned(), Some(value.to_owned())),
-            None => (format!("--{}", one.trim_start_matches('-')), None),
-        })
-        .collect()
 }
 
 #[cfg(desktop)]
@@ -277,46 +214,12 @@ pub(crate) fn add_child<R: Runtime>(
 }
 
 #[cfg(desktop)]
-thread_local! {
-    static BUILDING: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
-    static AFTER: std::cell::RefCell<Vec<Box<dyn FnOnce()>>> =
-        const { std::cell::RefCell::new(Vec::new()) };
-}
-
-#[cfg(desktop)]
 pub(crate) fn one_at_a_time<T>(build: impl FnOnce() -> tauri::Result<T>) -> tauri::Result<T> {
-    if BUILDING.get() > 0 {
-        return Err(tauri::Error::FailedToReceiveMessage);
-    }
-    BUILDING.set(1);
-    let made = build();
-    BUILDING.set(0);
-    loop {
-        let waiting = AFTER.with_borrow_mut(std::mem::take);
-        if waiting.is_empty() {
-            break;
-        }
-        for one in waiting {
-            one();
-        }
-    }
-    made
+    orden_web_engine::one_at_a_time(|| tauri::Error::FailedToReceiveMessage, build)
 }
 
 #[cfg(desktop)]
-pub(crate) fn once_built(then: impl FnOnce() + 'static) {
-    if BUILDING.get() > 0 {
-        AFTER.with_borrow_mut(|after| after.push(Box::new(then)));
-    } else {
-        then();
-    }
-}
-
-#[cfg(desktop)]
-thread_local! {
-    static HANDED: std::cell::RefCell<Vec<Box<dyn FnOnce()>>> =
-        const { std::cell::RefCell::new(Vec::new()) };
-}
+pub(crate) use orden_web_engine::{handed_out, once_built};
 
 #[cfg(desktop)]
 macro_rules! with_platform {
@@ -326,34 +229,6 @@ macro_rules! with_platform {
 }
 #[cfg(desktop)]
 pub(crate) use with_platform;
-
-#[cfg(desktop)]
-pub(crate) fn handed_out<P: 'static>(
-    with_webview: impl FnOnce(Box<dyn FnOnce(P) + Send>) -> tauri::Result<()>,
-    then: impl FnOnce(P) + Send + 'static,
-) -> tauri::Result<()> {
-    use std::sync::atomic::{AtomicBool, Ordering};
-    use std::sync::Arc;
-
-    let caller = std::thread::current().id();
-    let waiting = Arc::new(AtomicBool::new(true));
-    let inside = Arc::clone(&waiting);
-    let before = HANDED.with_borrow(Vec::len);
-    let asked = with_webview(Box::new(move |platform| {
-        if std::thread::current().id() == caller && inside.load(Ordering::Acquire) {
-            HANDED.with_borrow_mut(|handed| handed.push(Box::new(move || then(platform))));
-        } else {
-            then(platform);
-        }
-    }));
-    waiting.store(false, Ordering::Release);
-    let handed =
-        HANDED.with_borrow_mut(|handed| (handed.len() > before).then(|| handed.pop()).flatten());
-    if let Some(handed) = handed {
-        handed();
-    }
-    asked
-}
 
 pub(crate) fn take_ui_window(
     context: &mut tauri::Context,
@@ -424,9 +299,7 @@ pub(crate) fn own_profile<M: tauri::Manager<crate::Engine>>(
 #[cfg(feature = "cef")]
 static OWN_PROFILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
 
-pub(crate) fn internal(url: &str) -> bool {
-    url.starts_with("data:") && url.contains("data-tauri-cef-internal")
-}
+pub(crate) use orden_web_engine::internal;
 
 #[cfg(feature = "cef")]
 pub(crate) mod devtools;
@@ -435,70 +308,9 @@ pub(crate) mod renderer;
 
 #[cfg(test)]
 mod tests {
-    use super::{handed_out, internal, APP_PROFILE, ROOT};
-    use std::sync::{Arc, Mutex};
+    #[cfg(all(windows, not(feature = "cef")))]
+    use orden_web_engine::ENGINE_SWIPE;
 
-    #[test]
-    fn a_page_handed_inline_is_used_once_the_runtime_lets_go() {
-        let lock = Arc::new(Mutex::new(()));
-        let held = Arc::clone(&lock);
-        let ran = Arc::new(Mutex::new(None));
-        let saw = Arc::clone(&ran);
-        let asked = handed_out(
-            |f: Box<dyn FnOnce(u8) + Send>| {
-                let _runtime = held.lock().expect("the runtime's lock");
-                f(7);
-                Ok(())
-            },
-            move |platform| {
-                let free = lock.try_lock().is_ok();
-                *saw.lock().expect("saw") = Some((platform, free));
-            },
-        );
-        assert!(asked.is_ok());
-        assert_eq!(*ran.lock().expect("ran"), Some((7, true)));
-    }
-
-    #[test]
-    fn a_page_handed_later_is_used_where_it_is_handed() {
-        let (said, heard) = std::sync::mpsc::channel();
-        let elsewhere = said.clone();
-        handed_out(
-            |f: Box<dyn FnOnce(u8) + Send>| {
-                std::thread::spawn(move || f(1));
-                Ok(())
-            },
-            move |platform| {
-                let _ = elsewhere.send((platform, std::thread::current().id()));
-            },
-        )
-        .expect("asked");
-        let (platform, on) = heard.recv().expect("handed");
-        assert_eq!(platform, 1);
-        assert_ne!(on, std::thread::current().id());
-
-        let kept = Arc::new(Mutex::new(None::<Box<dyn FnOnce(u8) + Send>>));
-        let keeping = Arc::clone(&kept);
-        handed_out(
-            move |f: Box<dyn FnOnce(u8) + Send>| {
-                *keeping.lock().expect("kept") = Some(f);
-                Ok(())
-            },
-            move |platform| {
-                let _ = said.send((platform, std::thread::current().id()));
-            },
-        )
-        .expect("asked");
-        assert!(heard.try_recv().is_err(), "nothing ran yet");
-        let later = kept.lock().expect("kept").take().expect("posted");
-        later(2);
-        assert_eq!(
-            heard.try_recv().expect("handed"),
-            (2, std::thread::current().id())
-        );
-    }
-
-    #[cfg(desktop)]
     #[test]
     fn a_page_asked_for_while_another_is_built_waits_for_it_and_never_builds_inside_it() {
         use std::cell::RefCell;
@@ -670,17 +482,6 @@ mod tests {
     }
 
     #[test]
-    fn the_engine_s_own_first_page_is_nobody_s_address() {
-        assert!(internal(concat!(
-            "data:text/html;charset=utf-8,%3C!doctype%20html%3E",
-            "%3Chtml%20data-tauri-cef-internal%3D%22initial-load%22%3E"
-        )));
-        assert!(!internal("about:blank"));
-        assert!(!internal("https://example.com/?q=data-tauri-cef-internal"));
-        assert!(!internal("data:text/html,<p>a page somebody made</p>"));
-    }
-
-    #[test]
     fn the_engine_is_the_manifest_s() {
         let read =
             |path: &str| std::fs::read_to_string(crate::app_dir().join(path)).expect("a manifest");
@@ -697,58 +498,13 @@ mod tests {
         }
     }
 
-    #[test]
-    fn the_command_line_reads_pairs_and_bare_keys() {
-        assert_eq!(
-            super::switches("enable-logging=stderr, no-sandbox ,,v=1"),
-            vec![
-                ("enable-logging".to_owned(), Some("stderr".to_owned())),
-                ("--no-sandbox".to_owned(), None),
-                ("v".to_owned(), Some("1".to_owned())),
-            ]
-        );
-        assert_eq!(
-            super::switches("--noerrdialogs"),
-            vec![("--noerrdialogs".to_owned(), None)]
-        );
-        assert!(super::switches("").is_empty());
-    }
-
-    #[test]
-    fn the_firefox_add_ons_join_what_a_run_loads() {
-        use std::path::PathBuf;
-        let ours = [
-            PathBuf::from("/c/extensions/a/1"),
-            PathBuf::from("/c/extensions/b/2"),
-        ];
-        let mut asked = super::switches("load-extension=/run/x,v=1");
-        assert!(super::loaded(&mut asked, &ours));
-        assert_eq!(
-            asked[0],
-            (
-                "load-extension".to_owned(),
-                Some("/run/x,/c/extensions/a/1,/c/extensions/b/2".to_owned())
-            )
-        );
-        let mut none = super::switches("v=1");
-        assert!(!super::loaded(&mut none, &[]));
-        assert_eq!(none.len(), 1);
-        assert!(super::loaded(&mut none, &ours[..1]));
-        assert_eq!(
-            none[1],
-            (
-                "load-extension".to_owned(),
-                Some("/c/extensions/a/1".to_owned())
-            )
-        );
-    }
-
     #[cfg(feature = "cef")]
     #[test]
     fn a_feature_list_a_run_asks_for_joins_the_engine_s_own() {
-        let engine = tauri_runtime_cef::Cef::default().command_line_args(super::switches(
-            "disable-features=DisableLoadExtensionCommandLineSwitch,enable-features=Probe,v=1",
-        ));
+        let engine =
+            tauri_runtime_cef::Cef::default().command_line_args(orden_web_engine::switches(
+                "disable-features=DisableLoadExtensionCommandLineSwitch,enable-features=Probe,v=1",
+            ));
         let said = format!("{engine:?}");
         let switches = said.split("disabled_features").next().unwrap_or_default();
         assert!(!switches.contains("features"), "{said}");
@@ -758,12 +514,6 @@ mod tests {
             "{said}"
         );
         assert!(said.contains(r#"enabled_features: ["Probe"]"#), "{said}");
-    }
-
-    #[test]
-    fn a_build_that_ships_reads_nothing_from_its_environment() {
-        assert_eq!(super::read_by(false, "PATH"), None);
-        assert!(super::read_by(true, "PATH").is_some());
     }
 
     #[test]
@@ -781,14 +531,6 @@ mod tests {
             .find(|line| line.contains("scripts/linux-cef.sh tauri build"))
             .expect("the release's Linux build");
         assert!(!linux.contains("--debug"), "{linux}");
-    }
-
-    #[test]
-    fn the_engine_s_swipe_is_named_the_way_chromium_reads_it() {
-        let (feature, switch, value) = super::ENGINE_SWIPE;
-        assert_eq!(feature, "TouchpadOverscrollHistoryNavigation");
-        assert_eq!(switch, "overscroll-history-navigation");
-        assert_eq!(value, "0", "the history navigation that is none");
     }
 
     #[cfg(all(windows, not(feature = "cef")))]
@@ -813,7 +555,7 @@ mod tests {
         ] {
             assert!(off.contains(&feature), "{feature} is not switched off");
         }
-        let (swipe, switch, value) = super::ENGINE_SWIPE;
+        let (swipe, switch, value) = ENGINE_SWIPE;
         assert!(
             off.contains(&swipe),
             "the engine's touchpad swipe is not off"
@@ -834,21 +576,5 @@ mod tests {
                 .any(|one| one == wanted),
             "the engine's swipe is not switched off"
         );
-    }
-
-    #[test]
-    fn a_profile_is_a_direct_child_of_the_user_data_directory() {
-        assert!(!APP_PROFILE.contains('/'), "a profile is one folder name");
-        assert!(!APP_PROFILE.contains('\\'));
-        assert!(!ROOT.is_empty());
-        assert_ne!(APP_PROFILE, ROOT, "the interface is not the whole of it");
-    }
-
-    #[cfg(feature = "cef")]
-    #[test]
-    fn a_store_s_profile_is_never_the_interface_s() {
-        let named = format!("{}{}", super::STORE_PROFILE, "space_1");
-        assert_ne!(named, APP_PROFILE);
-        assert!(!named.contains('/') && !named.contains('\\'));
     }
 }

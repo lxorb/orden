@@ -35,6 +35,7 @@ tauri-utils = "=3.0.0-alpha.4"
 serde_json = "1"
 
 [dependencies]
+orden-web-engine = { path = "crates/web-engine" }
 tauri = { version = "=3.0.0-alpha.5", features = ["protocol-asset", "unstable", "custom-protocol"] }
 tauri-runtime-cef = { version = "=3.0.0-alpha.6", features = ["unstable"] }
 tauri-runtime = "=3.0.0-alpha.4"
