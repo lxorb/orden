@@ -3,7 +3,6 @@
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { agentMarks } from '../../agent-marks.svelte'
-  import { t } from '../../i18n.svelte'
   import { menu } from '../../menu.svelte'
   import { dur, fly } from '../../motion'
   import type { Place } from '../../row-window'
@@ -61,14 +60,14 @@
 
   function rowMenu(event: MouseEvent, one: ThreadHead) {
     menu.show(event, [
-      { label: t('Rename'), asks: true, run: () => void chat.rename(undefined, one.id) },
+      { label: 'Rename', asks: true, run: () => void chat.rename(undefined, one.id) },
       one.pinned
-        ? { label: t('Unpin'), run: () => void chat.pin(one.id, false) }
-        : { label: t('Pin'), run: () => void chat.pin(one.id) },
+        ? { label: 'Unpin', run: () => void chat.pin(one.id, false) }
+        : { label: 'Pin', run: () => void chat.pin(one.id) },
       one.archived
-        ? { label: t('Unarchive'), run: () => chat.unarchive(one.id) }
-        : { label: t('Archive'), run: () => chat.archive(one.id) },
-      { label: t('Delete'), danger: true, run: () => void chat.remove(one.id) },
+        ? { label: 'Unarchive', run: () => chat.unarchive(one.id) }
+        : { label: 'Archive', run: () => chat.archive(one.id) },
+      { label: 'Delete', danger: true, run: () => void chat.remove(one.id) },
     ])
   }
 
@@ -126,7 +125,7 @@
     {#if rail}
       <button
         class="new"
-        title={shortcuts.tooltip(t('New chat'), 'ai.new')}
+        title={shortcuts.tooltip('New chat', 'ai.new')}
         onclick={() => chat.newThread()}
       >
         <svg viewBox="0 0 13 13" aria-hidden="true"
@@ -134,7 +133,7 @@
             d="M10.9 6.9v3.1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.1a1 1 0 0 1 1-1h3.1M9.3 1.8l1.9 1.9-4.6 4.6-2.5.6.6-2.5z"
           /></svg
         >
-        <span>{t('New chat')}</span>
+        <span>New chat</span>
       </button>
     {/if}
     <div class="find orden-field">
@@ -144,8 +143,8 @@
       <input
         bind:this={field}
         bind:value={chat.listQuery}
-        placeholder={t('Search chats')}
-        aria-label={t('Search chats')}
+        placeholder="Search chats"
+        aria-label="Search chats"
         onkeydown={onKey}
         oninput={() => (lit = 0)}
       />
@@ -163,18 +162,18 @@
         <ChatWindow bind:this={upper} heads={active} role="group" row={chatRow} />
       {/if}
       {#if shownArchived.length}
-        <li class="group archived" role="presentation">{t('Archived')}</li>
+        <li class="group archived" role="presentation">Archived</li>
         <ChatWindow bind:this={lower} heads={shownArchived} role="group" row={archivedRow} />
       {/if}
     {:else}
       <li class="empty" role="presentation">
-        {chat.listQuery ? t('No matches') : t('No chats yet')}
+        {chat.listQuery ? 'No matches' : 'No chats yet'}
       </li>
     {/if}
     {#if archived.length && !archivedShown}
       <li role="presentation">
         <button class="orden-row is-short shown-archived" onclick={() => (archivedShown = true)}>
-          <span class="orden-row-label">{t('Archived')}</span>
+          <span class="orden-row-label">Archived</span>
           <span class="orden-row-meta">{archived.length}</span>
         </button>
       </li>

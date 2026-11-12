@@ -1,7 +1,8 @@
 <script lang="ts">
   import { cellValue, type Row, rowId, type TaskChange } from '@orden/bases'
   import { untrack } from 'svelte'
-  import { i18n, t } from '../i18n.svelte'
+  import { region } from '../region'
+  import { localDate } from '../region'
   import { linkModifier } from '@orden/editor'
   import {
     type CalendarMode,
@@ -32,7 +33,7 @@
 
   const first = $derived.by(() => {
     try {
-      const locale = new Intl.Locale(i18n.language) as Intl.Locale & {
+      const locale = new Intl.Locale(region()) as Intl.Locale & {
         getWeekInfo?: () => { firstDay?: number }
       }
       return (locale.getWeekInfo?.().firstDay ?? 1) % 7
@@ -54,15 +55,15 @@
 
   const title = $derived(
     mode === 'month'
-      ? i18n.when(dateAt(anchor), { month: 'long', year: 'numeric' })
-      : i18n.when(dateAt(days[0] ?? anchor), { month: 'long', year: 'numeric' }),
+      ? localDate(dateAt(anchor), { month: 'long', year: 'numeric' })
+      : localDate(dateAt(days[0] ?? anchor), { month: 'long', year: 'numeric' }),
   )
 
   const MODE_NAMES: Record<CalendarMode, string> = {
-    month: t('Month'),
-    week: t('Week'),
-    days3: t('3 days'),
-    day: t('Day'),
+    month: 'Month',
+    week: 'Week',
+    days3: '3 days',
+    day: 'Day',
   }
 
   const HOUR = 44
@@ -154,7 +155,7 @@
     <button
       type="button"
       class="orden-glyph"
-      aria-label={t('Back')}
+      aria-label="Back"
       onclick={() => (anchor = stepped(mode, anchor, -1))}
     >
       <svg viewBox="0 0 13 13"><path d="M8 2.5 4 6.5l4 4" /></svg>
@@ -162,14 +163,14 @@
     <button
       type="button"
       class="orden-glyph"
-      aria-label={t('Forward')}
+      aria-label="Forward"
       onclick={() => (anchor = stepped(mode, anchor, 1))}
     >
       <svg viewBox="0 0 13 13"><path d="m5 2.5 4 4-4 4" /></svg>
     </button>
     <span class="title">{title}</span>
     <button type="button" class="orden-chip is-quiet" onclick={() => (anchor = live.today)}
-      >{t('Today')}</button
+      >Today</button
     >
     <span class="spring"></span>
     <div class="orden-segmented modes" role="tablist">
@@ -199,7 +200,7 @@
         {#if mode === 'month'}
           <div class="weekdays">
             {#each days.slice(0, 7) as day (day)}
-              <span>{i18n.when(dateAt(day), { weekday: 'short' })}</span>
+              <span>{localDate(dateAt(day), { weekday: 'short' })}</span>
             {/each}
           </div>
           <div class="month" style:--weeks={days.length / 7}>
@@ -233,7 +234,7 @@
             <span class="gutter"></span>
             {#each days as day (day)}
               <div class="column-head" class:today={day === live.today}>
-                <span>{i18n.when(dateAt(day), { weekday: 'short' })}</span>
+                <span>{localDate(dateAt(day), { weekday: 'short' })}</span>
                 <span class="number">{Number(day.slice(8))}</span>
               </div>
             {/each}

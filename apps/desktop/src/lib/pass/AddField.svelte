@@ -1,7 +1,6 @@
 <script lang="ts">
   import { FIELD_KINDS, type FieldKind } from '@orden/pass/types'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
-  import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import { fieldKindLabel } from './field-words'
   import Glyph from './Glyph.svelte'
@@ -20,7 +19,7 @@
 
 <button type="button" class="orden-button is-quiet add" onclick={show}>
   <Glyph icon={Plus} />
-  <span>{label ?? t('Add field')}</span>
+  <span>{label ?? 'Add field'}</span>
 </button>
 
 <style>

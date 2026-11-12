@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../../i18n.svelte'
   import { agentOpen } from '../../ai/sidebar/agent-open.svelte'
   import { chat } from '../../ai/sidebar/chat.svelte'
   import { asking } from './asking.svelte'
@@ -36,7 +35,7 @@
 </script>
 
 {#if rows.length}
-  <li class="group" role="presentation">{t('Agents')}</li>
+  <li class="group" role="presentation">Agents</li>
   {#each rows as one (one.agent)}
     <li role="presentation">
       <button
@@ -53,11 +52,10 @@
           {/if}
         </span>
         {#if one.asks}
-          <span class="asks" title={t('Waiting for you')}>{one.asks}</span>
+          <span class="asks" title="Waiting for you">{one.asks}</span>
         {/if}
         {#if one.connected}
-          <span class="connected" role="img" title={t('Connected')} aria-label={t('Connected')}
-          ></span>
+          <span class="connected" role="img" title="Connected" aria-label="Connected"></span>
         {/if}
       </button>
     </li>

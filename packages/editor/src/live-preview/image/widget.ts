@@ -1,7 +1,6 @@
 import { EditorSelection } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { imageResolver } from '../../images'
-import { label as uiLabel } from '../../labels'
 import { OrdenWidget } from '../widget'
 import { openLightbox } from './lightbox'
 import {
@@ -141,7 +140,7 @@ export class ImageWidget extends OrdenWidget {
 
     const missing = document.createElement('span')
     missing.className = 'orden-image-missing'
-    missing.title = uiLabel('imageNotFound')
+    missing.title = 'Image not found'
     const path = document.createElement('span')
     missing.append(icon(ICONS.missing), path)
     box.append(missing)
@@ -150,7 +149,7 @@ export class ImageWidget extends OrdenWidget {
       const handle = document.createElement('span')
       handle.className = 'orden-image-handle'
       handle.dataset.corner = corner
-      handle.title = uiLabel('dragToResize')
+      handle.title = 'Drag to resize'
       handle.addEventListener('pointerdown', (event) =>
         this.startResize(event, view, frame, handle),
       )
@@ -237,7 +236,7 @@ export class ImageWidget extends OrdenWidget {
     showSize(parts.size, image.zoom, natural)
     const plain = image.zoom === 100 && !image.width
     parts.size.disabled = plain
-    parts.size.title = plain ? '' : uiLabel('resetSize')
+    parts.size.title = plain ? '' : 'Reset size'
     return true
   }
 
@@ -256,9 +255,9 @@ export class ImageWidget extends OrdenWidget {
     const alt = document.createElement('input')
     alt.className = 'orden-image-alt'
     alt.type = 'text'
-    alt.placeholder = uiLabel('describeImage')
+    alt.placeholder = 'Describe the image'
     alt.spellcheck = false
-    alt.setAttribute('aria-label', uiLabel('describeImage'))
+    alt.setAttribute('aria-label', 'Describe the image')
 
     let held: { image: ImageSpan; text: string } | null = null
     const stillThere = () => {
@@ -330,30 +329,30 @@ export class ImageWidget extends OrdenWidget {
       view.focus()
     })
 
-    button('orden-image-open', uiLabel('openImage'), icon(ICONS.open), (image) => {
+    button('orden-image-open', 'Open image', icon(ICONS.open), (image) => {
       const picture = partsOf(frame)?.image
       if (picture && !frame.classList.contains('is-broken')) {
         openLightbox(view, picture.src, image.alt)
       }
     })
 
-    const copy = button('orden-image-copy', uiLabel('copyLink'), icon(ICONS.link), (image) => {
+    const copy = button('orden-image-copy', 'Copy link', icon(ICONS.link), (image) => {
       navigator.clipboard
         .writeText(image.src)
         .then(() => {
           copy.classList.add('is-copied')
-          copy.title = uiLabel('copied')
+          copy.title = 'Copied'
           copy.replaceChildren(icon(ICONS.copied))
           window.setTimeout(() => {
             copy.classList.remove('is-copied')
-            copy.title = uiLabel('copyLink')
+            copy.title = 'Copy link'
             copy.replaceChildren(icon(ICONS.link))
           }, 1400)
         })
         .catch(() => undefined)
     })
 
-    button('orden-image-source', uiLabel('editMarkdown'), icon(ICONS.source), (image) => {
+    button('orden-image-source', 'Edit markdown', icon(ICONS.source), (image) => {
       view.focus()
       view.dispatch({
         selection: EditorSelection.cursor(sourceCaret(view.state, image)),
@@ -362,9 +361,7 @@ export class ImageWidget extends OrdenWidget {
       })
     })
 
-    button('orden-image-delete', uiLabel('deleteImage'), icon(ICONS.trash), (image) =>
-      remove(view, image),
-    )
+    button('orden-image-delete', 'Delete image', icon(ICONS.trash), (image) => remove(view, image))
 
     return { tools, alt, size }
   }

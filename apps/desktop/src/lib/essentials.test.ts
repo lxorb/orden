@@ -85,10 +85,9 @@ describe('where a tile let go of lands', () => {
     expect(slotFor(3, 1, true)).toBe(2)
   })
 
-  test('the far half of a tile is read the way the page runs', () => {
-    expect(pastMiddle(80, 0, 100, false)).toBe(true)
-    expect(pastMiddle(20, 0, 100, false)).toBe(false)
-    expect(pastMiddle(20, 0, 100, true)).toBe(true)
+  test('the far half of a tile is its right half', () => {
+    expect(pastMiddle(80, 0, 100)).toBe(true)
+    expect(pastMiddle(20, 0, 100)).toBe(false)
   })
 })
 

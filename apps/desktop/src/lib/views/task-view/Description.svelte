@@ -2,7 +2,6 @@
   import { createEditor, type EditorView, modeEffects } from '@orden/editor'
   import { onMount } from 'svelte'
   import { pickedLink } from '../../composer'
-  import { t } from '../../i18n.svelte'
   import { links } from '../../link-index.svelte'
   import { modes } from '../../modes.svelte'
   import { followHref, followNoteFrom } from '../../open-link'
@@ -90,7 +89,7 @@
 >
   <div class="host" bind:this={host}></div>
   {#if empty && !focused}
-    <span class="placeholder" aria-hidden="true">{t('Description')}</span>
+    <span class="placeholder" aria-hidden="true">Description</span>
   {/if}
 </div>
 

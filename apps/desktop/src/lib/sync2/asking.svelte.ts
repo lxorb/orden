@@ -1,7 +1,7 @@
 import { mount, untrack } from 'svelte'
 import { door } from '@orden/markdown/door'
 import type { Excerpt } from '@orden/sync-core/diverge'
-import { message, t } from '../i18n.svelte'
+import { message } from '../message'
 import { howFor } from '../new-tab'
 import { overlays } from '../overlays'
 import { syncMark, undoToastNotice } from '../surfaces.svelte'
@@ -177,7 +177,7 @@ class Asking {
       if (this.open === note.id) this.open = null
       if (answer === 'both' && copy) await workspace.openRow(copy, howFor('behind'))
     } catch (error) {
-      this.wrong = message(error, t('That did not work.'))
+      this.wrong = message(error, 'That did not work.')
     } finally {
       this.answering = null
     }

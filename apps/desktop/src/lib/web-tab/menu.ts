@@ -1,5 +1,4 @@
 import { copyText } from '../clipboard'
-import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { shortcuts } from '../shortcuts.svelte'
 import { openExternal } from '../tauri'
@@ -54,27 +53,27 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
   const has = url !== null && isWebAddress(url)
 
   return [
-    { label: t('New tab'), run: actions.newTab },
+    { label: 'New tab', run: actions.newTab },
     ...(actions.newPrivate
       ? [
           {
-            label: t('New private tab'),
+            label: 'New private tab',
             hint: shortcuts.hint('app.new-private'),
             run: actions.newPrivate,
           },
         ]
       : []),
     DIVIDER,
-    { label: t('History'), hint: shortcuts.hint('web.history'), run: actions.history },
-    { label: t('Essentials'), run: actions.bookmarks },
+    { label: 'History', hint: shortcuts.hint('web.history'), run: actions.history },
+    { label: 'Essentials', run: actions.bookmarks },
     {
-      label: t('Delete browsing data…'),
+      label: 'Delete browsing data…',
       hint: shortcuts.hint('web.clear-data'),
       run: actions.clearData,
     },
     DIVIDER,
     {
-      label: t('Zoom out'),
+      label: 'Zoom out',
       disabled: !has || zoom <= SMALLEST,
       keep: true,
       run: () => actions.zoom(zoomed(zoom, false)),
@@ -86,29 +85,29 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
       run: () => actions.zoom(1),
     },
     {
-      label: t('Zoom in'),
+      label: 'Zoom in',
       disabled: !has || zoom >= LARGEST,
       keep: true,
       run: () => actions.zoom(zoomed(zoom, true)),
     },
-    { label: t('Full screen'), run: actions.fullScreen },
+    { label: 'Full screen', run: actions.fullScreen },
     DIVIDER,
-    { label: t('Print…'), disabled: !has, run: actions.print },
+    { label: 'Print…', disabled: !has, run: actions.print },
     ...(actions.find
-      ? [{ label: t('Find'), hint: shortcuts.hint('edit.find'), disabled: !has, run: actions.find }]
+      ? [{ label: 'Find', hint: shortcuts.hint('edit.find'), disabled: !has, run: actions.find }]
       : []),
     DIVIDER,
-    { label: t('Save as a note'), disabled: !has, run: actions.save },
-    { label: t('Share…'), disabled: !has, run: actions.share },
+    { label: 'Save as a note', disabled: !has, run: actions.save },
+    { label: 'Share…', disabled: !has, run: actions.share },
     {
-      label: t('Copy link'),
+      label: 'Copy link',
       disabled: !has,
       run: () => {
         if (url !== null) void copyText(url)
       },
     },
-    { label: t('Open in the browser'), disabled: !has, run: () => void openExternal(url ?? '') },
+    { label: 'Open in the browser', disabled: !has, run: () => void openExternal(url ?? '') },
     DIVIDER,
-    { label: t('Settings'), run: actions.settings },
+    { label: 'Settings', run: actions.settings },
   ]
 }

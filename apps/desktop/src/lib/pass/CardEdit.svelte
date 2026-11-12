@@ -1,6 +1,5 @@
 <script lang="ts">
   import { CARD_BRANDS, type Card, type CardBrand } from '@orden/pass/types'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
@@ -31,14 +30,9 @@
 </script>
 
 <EditCard>
+  <EditField label="Name on card" icon={FIELD_ICONS.holder} bind:value={content.holder} {oninput} />
   <EditField
-    label={t('Name on card')}
-    icon={FIELD_ICONS.holder}
-    bind:value={content.holder}
-    {oninput}
-  />
-  <EditField
-    label={t('Card number')}
+    label="Card number"
     icon={FIELD_ICONS.number}
     bind:value={content.number}
     inputmode="numeric"
@@ -46,7 +40,7 @@
     oninput={numberTyped}
   />
   <div class="brand orden-edit-row">
-    <span class="label">{t('Card type')}</span>
+    <span class="label">Card type</span>
     <Select
       plain
       value={content.brand}
@@ -58,15 +52,15 @@
     />
   </div>
   <EditField
-    label={t('Expiration date')}
+    label="Expiration date"
     icon={FIELD_ICONS.expiry}
     bind:value={content.expiry}
     inputmode="numeric"
-    placeholder={t('MM/YY')}
+    placeholder="MM/YY"
     oninput={expiryTyped}
   />
   <EditField
-    label={t('Security code')}
+    label="Security code"
     icon={FIELD_ICONS.code}
     bind:value={content.code}
     kind="hidden"
@@ -74,7 +68,7 @@
     {oninput}
   />
   <EditField
-    label={t('PIN')}
+    label="PIN"
     icon={FIELD_ICONS.pin}
     bind:value={content.pin}
     kind="hidden"

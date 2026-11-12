@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../i18n.svelte'
   import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
   import { takeKeyboard } from '../take-keyboard'
@@ -20,13 +19,13 @@
     if (!bubble) return ''
     switch (bubble.kind) {
       case 'choose':
-        return t('Fill from Pass')
+        return 'Fill from Pass'
       case 'unlock':
-        return t('Pass is locked')
+        return 'Pass is locked'
       case 'save':
-        return bubble.update ? t('Update password?') : t('Save login?')
+        return bubble.update ? 'Update password?' : 'Save login?'
       case 'signing':
-        return t('Signing in')
+        return 'Signing in'
     }
   })
 
@@ -61,7 +60,7 @@
           data-pass-choice={one.id}
           onclick={() => void autofill.choose(tab, one.id)}
         >
-          <span class="title">{one.title || t('Untitled')}</span>
+          <span class="title">{one.title || 'Untitled'}</span>
           {#if one.subtitle}<span class="subtitle">{one.subtitle}</span>{/if}
         </button>
       {/each}
@@ -80,64 +79,60 @@
 >
   {#if bubble?.kind === 'choose'}
     <p class="what"><strong>{bubble.site}</strong></p>
-    {@render choices(bubble.tab, t('Logins'), bubble.logins)}
+    {@render choices(bubble.tab, 'Logins', bubble.logins)}
     {#if bubble.fields.length > 0}
       <p class="which" data-pass-fields>
-        {t('Fills {fields}', { fields: bubble.fields.map(roleWord).join(', ') })}
+        Fills {bubble.fields.map(roleWord).join(', ')}
       </p>
     {/if}
-    {@render choices(bubble.tab, t('Cards'), bubble.cards)}
-    {@render choices(bubble.tab, t('Identities'), bubble.identities)}
+    {@render choices(bubble.tab, 'Cards', bubble.cards)}
+    {@render choices(bubble.tab, 'Identities', bubble.identities)}
     {#if bubble.logins.length + bubble.cards.length + bubble.identities.length === 0}
-      <p class="which">{t('Nothing in Pass for this site yet.')}</p>
+      <p class="which">Nothing in Pass for this site yet.</p>
     {/if}
     <div class="rows">
-      <button class="orden-button is-quiet" onclick={() => opened(bubble.tab)}>
-        {t('Open Pass')}
-      </button>
+      <button class="orden-button is-quiet" onclick={() => opened(bubble.tab)}> Open Pass </button>
       {#if bubble.alias}
         <button class="orden-button is-quiet" onclick={() => void autofill.alias(bubble.tab)}>
-          {t('Use an alias')}
+          Use an alias
         </button>
       {/if}
       {#if bubble.generate}
         <button class="orden-button" onclick={() => void autofill.generate(bubble.tab)}>
-          {t('Generate password')}
+          Generate password
         </button>
       {/if}
     </div>
   {:else if bubble?.kind === 'unlock'}
-    <p class="what">{t('Pass is locked')}</p>
-    <p class="which">{t('Unlock Pass to fill this page.')}</p>
+    <p class="what">Pass is locked</p>
+    <p class="which">Unlock Pass to fill this page.</p>
     <div class="rows">
-      <button class="orden-button" onclick={() => opened(bubble.tab)}>{t('Unlock Pass')}</button>
+      <button class="orden-button" onclick={() => opened(bubble.tab)}>Unlock Pass</button>
     </div>
   {:else if bubble?.kind === 'save'}
     <p class="what">
-      <strong>{bubble.update ? t('Update password?') : t('Save login?')}</strong>
+      <strong>{bubble.update ? 'Update password?' : 'Save login?'}</strong>
     </p>
     <p class="which">
-      {bubble.username
-        ? t('{name} on {site}', { name: bubble.username, site: bubble.site })
-        : bubble.site}
+      {bubble.username ? `${bubble.username} on ${bubble.site}` : bubble.site}
     </p>
     <div class="rows">
       {#if !bubble.update}
         <button class="orden-button is-quiet" onclick={() => autofill.never(bubble.tab)}>
-          {t('Never for this site')}
+          Never for this site
         </button>
       {/if}
       <button class="orden-button is-quiet" onclick={() => autofill.dismiss(bubble.tab)}>
-        {t('Not now')}
+        Not now
       </button>
       <button class="orden-button" onclick={() => void autofill.save(bubble.tab)}>
-        {bubble.update ? t('Update') : t('Save')}
+        {bubble.update ? 'Update' : 'Save'}
       </button>
     </div>
   {:else if bubble?.kind === 'signing'}
-    <p class="what">{t('Signing in as {name}…', { name: bubble.name })}</p>
+    <p class="what">Signing in as {bubble.name}…</p>
     <div class="rows">
-      <button class="orden-button" onclick={() => autofill.stop(bubble.tab)}>{t('Stop')}</button>
+      <button class="orden-button" onclick={() => autofill.stop(bubble.tab)}>Stop</button>
     </div>
   {/if}
 </div>

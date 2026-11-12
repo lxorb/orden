@@ -6,7 +6,6 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from '@codemirror/view'
-import { label } from '../labels'
 import { OrdenWidget } from '../live-preview/widget'
 import { landing, moveBlock } from './move'
 import { blockAt, blocksIn, type BlockSpan } from './span'
@@ -108,7 +107,7 @@ class BlockHandleWidget extends OrdenWidget {
     const mark = document.createElement('button')
     mark.type = 'button'
     mark.className = 'orden-block-handle'
-    mark.setAttribute('aria-label', label('blockHandle'))
+    mark.setAttribute('aria-label', 'Move this block')
     mark.tabIndex = -1
     mark.append(grip())
 

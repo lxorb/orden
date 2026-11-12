@@ -1,6 +1,5 @@
 import { carriedRows, draggedBookmark, isBookmarkDrag, isTreeDrag } from './drag-paths'
 import { chorded } from './keys'
-import { reading } from './direction'
 import type { OpenHow } from './new-tab'
 import { moving } from './list-landing.svelte'
 import { canWriteAt } from './sharing.svelte'
@@ -177,9 +176,8 @@ export function slotFor(from: number | null, target: number, after: boolean): nu
   return at + (after ? 1 : 0)
 }
 
-export function pastMiddle(x: number, left: number, right: number, rtl: boolean): boolean {
-  const middle = (left + right) / 2
-  return rtl ? x < middle : x > middle
+export function pastMiddle(x: number, left: number, right: number): boolean {
+  return x > (left + right) / 2
 }
 
 export function stepInGrid(
@@ -236,8 +234,8 @@ function landingNear(
   if (!near || !box) return null
 
   const after = near.classList.contains('tile')
-    ? pastMiddle(x, box.left, box.right, reading() === 'rtl')
-    : pastMiddle(y, box.top, box.bottom, false)
+    ? pastMiddle(x, box.left, box.right)
+    : pastMiddle(y, box.top, box.bottom)
   return { at: Number(near.dataset.at), after }
 }
 

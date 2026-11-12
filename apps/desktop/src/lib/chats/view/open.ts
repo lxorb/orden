@@ -6,7 +6,6 @@ import { chatsOn } from '../../settings.svelte'
 import { canWriteAt } from '../../sharing.svelte'
 import { nameOf as fileName, samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
-import { t } from '../../i18n.svelte'
 import { store } from './source.svelte'
 
 const jumps = new Map<string, string>()
@@ -19,7 +18,7 @@ export function takeJump(path: string): string | undefined {
 
 export function chatsAreOn(): boolean {
   if (chatsOn()) return true
-  busy.failed(t('Chats are off. Turn them on in Settings.'))
+  busy.failed('Chats are off. Turn them on in Settings.')
   return false
 }
 
@@ -48,7 +47,7 @@ export async function openChatLink(href: string, how: OpenHow = {}): Promise<voi
   }
   const path = chats.entry(link.chat)?.path
   if (path) openChat(path, how, link.message)
-  else busy.failed(t('that link could not be followed'))
+  else busy.failed('that link could not be followed')
 }
 
 const hearers = new Set<(path: string) => void>()
@@ -75,12 +74,12 @@ export async function makeChat(folder?: string, named?: string): Promise<void> {
     if (workspace.startNaming('chat', dir)) return
   }
 
-  const name = chatName(named ?? workspace.freeName(dir, `${t('Chat')}.chat`))
+  const name = chatName(named ?? workspace.freeName(dir, `Chat.chat`))
   const path = await store()
     .make(dir, name)
     .catch(() => null)
   if (!path) {
-    busy.failed(t('{name} could not be written.', { name }))
+    busy.failed(`${name} could not be written.`)
     return
   }
   openChat(path)

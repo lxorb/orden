@@ -2,7 +2,6 @@
   import type { Property } from '@orden/markdown/properties'
   import { type ListItem, withItem, withoutItem } from '@orden/markdown/property-edits'
   import Cross from '../Cross.svelte'
-  import { t } from '../i18n.svelte'
 
   const {
     property,
@@ -74,8 +73,8 @@
         {#if writable && property.kind === 'list'}
           <button
             class="chip-off"
-            title={t('Remove')}
-            aria-label={t('Remove')}
+            title="Remove"
+            aria-label="Remove"
             onclick={() => {
               if (onchip) return onchip({ remove: at })
               const items = withoutItem(property, item)
@@ -88,8 +87,8 @@
     {#if writable && property.kind === 'list'}
       <input
         class="field add"
-        placeholder={t('Add')}
-        aria-label={t('Add')}
+        placeholder="Add"
+        aria-label="Add"
         list={offered.length ? `${uid}-offered` : undefined}
         use:focusOnMount
         onkeydown={(event) => {

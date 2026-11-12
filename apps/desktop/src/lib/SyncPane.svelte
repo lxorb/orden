@@ -1,7 +1,7 @@
 <script lang="ts">
   import { account } from './account.svelte'
   import { api } from './api'
-  import { amount, plural, t } from './i18n.svelte'
+  import { localNumber } from './region'
   import { when } from './when'
   import Facts from './Facts.svelte'
   import { log } from './log'
@@ -86,9 +86,9 @@
   const passes = $derived(asking.engine ? logged : record.passes.slice(0, SHOWN))
 
   const rules = [
-    { value: 'both', label: t('Keep both copies') },
-    { value: 'newest', label: t('Let the newest win') },
-    { value: 'ask', label: t('Ask me each time') },
+    { value: 'both', label: 'Keep both copies' },
+    { value: 'newest', label: 'Let the newest win' },
+    { value: 'ask', label: 'Ask me each time' },
   ]
 
   const spaceId = $derived(
@@ -116,7 +116,7 @@
         at,
       }
     } catch (error) {
-      wrong = error instanceof Error ? error.message : t('That did not work.')
+      wrong = error instanceof Error ? error.message : 'That did not work.'
     }
   }
 
@@ -144,10 +144,10 @@
       }
 
       asked = left > 0 ? { notes: left, paths: [], more: false, at } : null
-      if (left > 0) wrong = t('That did not work.')
+      if (left > 0) wrong = 'That did not work.'
       sync.nudge()
     } catch (error) {
-      wrong = error instanceof Error ? error.message : t('That did not work.')
+      wrong = error instanceof Error ? error.message : 'That did not work.'
     } finally {
       rolling = false
     }
@@ -179,20 +179,20 @@
   }
 
   const horizons = [
-    { value: String(KEEP_MONTH), label: t('A month') },
-    { value: String(KEEP_YEAR), label: t('A year') },
+    { value: String(KEEP_MONTH), label: 'A month' },
+    { value: String(KEEP_YEAR), label: 'A year' },
   ]
 </script>
 
 {#if !asking.engine}
-  <h3>{t('When the same note was written twice')}</h3>
+  <h3>When the same note was written twice</h3>
 
   <div class="card">
     <div class="orden-setting setting">
       <span class="name"
         ><span class="orden-named"
-          >{t('On two devices')}<Hint
-            text={t('What happens when one note was changed on two devices before they synced.')}
+          >On two devices<Hint
+            text="What happens when one note was changed on two devices before they synced."
           /></span
         ></span
       >
@@ -201,25 +201,23 @@
           value={modes.conflicts}
           options={rules}
           onchange={(value: string) => modes.setConflicts(value)}
-          label={t('On two devices')}
+          label="On two devices"
         />
       </div>
     </div>
   </div>
 
-  <p class="hint">
-    {t('Nothing is ever thrown away: what does not win is kept as a version.')}
-  </p>
+  <p class="hint">Nothing is ever thrown away: what does not win is kept as a version.</p>
 {/if}
 
-<h3>{t('History on the account')}</h3>
+<h3>History on the account</h3>
 
 <div class="card">
   <div class="orden-setting setting">
     <span class="name"
       ><span class="orden-named"
-        >{t('Keep versions')}<Hint
-          text={t('How far back the account keeps earlier versions of your notes.')}
+        >Keep versions<Hint
+          text="How far back the account keeps earlier versions of your notes."
         /></span
       ></span
     >
@@ -228,14 +226,14 @@
         value={String(modes.keepVersions)}
         options={horizons}
         onchange={(value: string) => modes.setKeepVersions(Number(value))}
-        label={t('Keep versions')}
+        label="Keep versions"
       />
     </div>
   </div>
 </div>
 
 {#if asking.engine && asking.held.length}
-  <h3>{t('Waiting for you')}</h3>
+  <h3>Waiting for you</h3>
 
   <div class="card" transition:fade={{ duration: dur(130) }}>
     {#each asking.held as note (note.id)}
@@ -246,7 +244,7 @@
     {/each}
   </div>
 {:else if !asking.engine && record.clashes.length}
-  <h3>{t('Waiting for you')}</h3>
+  <h3>Waiting for you</h3>
 
   <div class="card" transition:fade={{ duration: dur(130) }}>
     {#each record.clashes as clash (clash.path)}
@@ -254,15 +252,11 @@
         <span class="name">{shortPath(clash.path)}</span>
         <span class="hint">{when(clash.at, 'short')}</span>
         <div class="answers">
-          <button class="orden-chip" onclick={() => void settle(clash, 'mine')}>
-            {t('Keep mine')}
-          </button>
+          <button class="orden-chip" onclick={() => void settle(clash, 'mine')}> Keep mine </button>
           <button class="orden-chip" onclick={() => void settle(clash, 'theirs')}>
-            {t('Take theirs')}
+            Take theirs
           </button>
-          <button class="orden-chip" onclick={() => void settle(clash, 'both')}>
-            {t('Keep both')}
-          </button>
+          <button class="orden-chip" onclick={() => void settle(clash, 'both')}> Keep both </button>
         </div>
       </div>
     {/each}
@@ -270,20 +264,20 @@
 {/if}
 
 {#if copies.count && !copiesGone}
-  <h3 transition:fade={{ duration: dur(130) }}>{t('Conflict copies from other apps')}</h3>
+  <h3 transition:fade={{ duration: dur(130) }}>Conflict copies from other apps</h3>
 
   <div class="card" transition:fade={{ duration: dur(130) }}>
     <button class="orden-action held" disabled={removing} onclick={() => void removeCopies()}>
-      <span class="name">{t('Remove from sync')}</span>
-      <span class="hint">{amount(copies.count)}</span>
+      <span class="name">Remove from sync</span>
+      <span class="hint">{localNumber(copies.count)}</span>
     </button>
   </div>
 {/if}
 
-<h3>{t('What synced')}</h3>
+<h3>What synced</h3>
 
 {#if !passes.length}
-  <p class="hint">{t('Nothing here.')}</p>
+  <p class="hint">Nothing here.</p>
 {:else}
   <div class="card">
     {#each passes as pass, at (at)}
@@ -291,13 +285,13 @@
         <span class="at">{when(pass.at, 'short')}</span>
         <span class="what">
           {#if pass.failed}
-            {t(pass.failed)}
+            {pass.failed}
           {:else}
             <Facts
               parts={[
-                pass.pulled ? t('{count} down', { count: pass.pulled }) : '',
-                pass.pushed ? t('{count} up', { count: pass.pushed }) : '',
-                pass.clashed ? t('{count} waiting', { count: pass.clashed }) : '',
+                pass.pulled ? `${pass.pulled} down` : '',
+                pass.pushed ? `${pass.pushed} up` : '',
+                pass.clashed ? `${pass.clashed} waiting` : '',
               ]}
             />
           {/if}
@@ -309,19 +303,19 @@
 
   {#if !asking.engine}
     <div class="card">
-      <button class="orden-action" onclick={() => record.clear()}>{t('Clear the list')}</button>
+      <button class="orden-action" onclick={() => record.clear()}>Clear the list</button>
     </div>
   {/if}
 {/if}
 
-<h3>{t('Go back')}</h3>
+<h3>Go back</h3>
 
 <div class="card">
   <div class="orden-setting setting">
     <span class="name"
       ><span class="orden-named"
-        >{t('This space, as it was')}<Hint
-          text={t('How far back Go back takes this space; it says first what would change.')}
+        >This space, as it was<Hint
+          text="How far back Go back takes this space; it says first what would change."
         /></span
       ></span
     >
@@ -330,13 +324,13 @@
         value={String(chosen)}
         options={back.map((one) => ({
           value: String(one),
-          label: plural(one, { one: '{count} day ago', other: '{count} days ago' }),
+          label: one === 1 ? '1 day ago' : `${one} days ago`,
         }))}
         onchange={(value: string) => {
           days = Number(value)
           asked = null
         }}
-        label={t('This space, as it was')}
+        label="This space, as it was"
       />
     </div>
   </div>
@@ -345,17 +339,16 @@
 {#if asked}
   <p class="note" transition:fade={{ duration: dur(130) }}>
     {asked.notes
-      ? plural(asked.notes, {
-          one: '{count} note would go back to what it said then.',
-          other: '{count} notes would go back to what they said then.',
-        })
-      : t('Nothing has changed since then.')}
+      ? asked.notes === 1
+        ? '1 note would go back to what it said then.'
+        : `${asked.notes} notes would go back to what they said then.`
+      : 'Nothing has changed since then.'}
   </p>
 {/if}
 
 {#if rolled !== null}
   <p class="note">
-    {plural(rolled, { one: '{count} note went back.', other: '{count} notes went back.' })}
+    {rolled === 1 ? '1 note went back.' : `${rolled} notes went back.`}
   </p>
 {/if}
 
@@ -366,11 +359,11 @@
 <div class="card">
   {#if asked?.notes}
     <button class="orden-action is-danger" disabled={rolling} onclick={() => void roll()}>
-      {rolling ? t('Going back') : t('Go back')}
+      {rolling ? 'Going back' : 'Go back'}
     </button>
   {:else}
     <button class="orden-action" disabled={!spaceId} onclick={() => void look()}>
-      {t('What would change?')}
+      What would change?
     </button>
   {/if}
 </div>

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import type { PageNode } from './canvas/format'
-  import { t } from './i18n.svelte'
   import {
     closeUpOf,
     densityFor,
@@ -399,7 +398,7 @@
     ></span>
   {/each}
   {#if lost}
-    <span class="missing">{t('The paper could not be read')}</span>
+    <span class="missing">The paper could not be read</span>
   {/if}
   <span class="number">{number}</span>
 </div>

@@ -1,5 +1,4 @@
 import { account } from './account.svelte'
-import { t } from './i18n.svelte'
 import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -17,14 +16,14 @@ export function showAccount(event: MouseEvent, more: MenuEntry[] = [], up = true
   menu.show(
     at,
     [
-      { label: t('Account'), run: () => settings.show('account') },
-      { label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
+      { label: 'Account', run: () => settings.show('account') },
+      { label: 'Settings', hint: shortcuts.hint('app.settings'), run: () => settings.show() },
       ...more,
       DIVIDER,
       account.user
-        ? { label: t('Sign out'), run: leave }
-        : { label: t('Sign in'), run: () => (account.open = true) },
+        ? { label: 'Sign out', run: leave }
+        : { label: 'Sign in', run: () => (account.open = true) },
     ],
-    { title: account.user?.email ?? t('Account'), up },
+    { title: account.user?.email ?? 'Account', up },
   )
 }

@@ -1,15 +1,12 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../i18n.svelte'
   import { dur, fly } from '../motion'
   import { told } from '../said.svelte'
   import { settings } from '../settings.svelte'
   import { keysMoved } from './keys-moved.svelte'
 
   const words = $derived(
-    t(
-      'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.',
-    ),
+    'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.',
   )
 </script>
 
@@ -21,7 +18,7 @@
   >
     <p>{words}</p>
     <div class="actions">
-      <button class="quiet" onclick={() => keysMoved.dismiss()}>{t('Dismiss')}</button>
+      <button class="quiet" onclick={() => keysMoved.dismiss()}>Dismiss</button>
       <button
         class="link"
         onclick={() => {
@@ -29,7 +26,7 @@
           settings.show('ai')
         }}
       >
-        {t('Settings › AI')}
+        Settings › AI
       </button>
     </div>
   </div>

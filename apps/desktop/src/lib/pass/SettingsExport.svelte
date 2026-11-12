@@ -1,6 +1,6 @@
 <script lang="ts">
   import { deliver } from '../export/save'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { segmented } from '../slide'
   import { pass } from './store.svelte'
 
@@ -15,9 +15,9 @@
   let saved = $state('')
 
   const FORMATS: { id: Format; label: () => string }[] = [
-    { id: 'sealed', label: () => t('Encrypted') },
-    { id: 'json', label: () => t('JSON') },
-    { id: 'csv', label: () => t('CSV') },
+    { id: 'sealed', label: () => 'Encrypted' },
+    { id: 'json', label: () => 'JSON' },
+    { id: 'csv', label: () => 'CSV' },
   ]
 
   const ready = $derived(
@@ -37,7 +37,7 @@
         format === 'sealed' ? passphrase : undefined,
       )
       if (!made) {
-        wrong = t('Wrong password')
+        wrong = 'Wrong password'
         return
       }
       const dot = made.name.lastIndexOf('.')
@@ -46,7 +46,7 @@
       const mime = format === 'csv' ? 'text/csv' : 'application/json'
       const label = FORMATS.find((one) => one.id === format)?.label() ?? ''
       const where = await deliver(stem, extension, label, { text: made.text, mime })
-      if (where) saved = t('Saved')
+      if (where) saved = 'Saved'
       password = ''
     } catch (error) {
       wrong = message(error, 'Pass could not be exported.')
@@ -58,9 +58,9 @@
 
 <form class="card padded" onsubmit={exported}>
   <p class="meta">
-    {t('Only the vaults you own are exported. A vault shared with you stays with its owner.')}
+    Only the vaults you own are exported. A vault shared with you stays with its owner.
   </p>
-  <div class="orden-segmented" role="radiogroup" aria-label={t('Format')} use:segmented>
+  <div class="orden-segmented" role="radiogroup" aria-label="Format" use:segmented>
     {#each FORMATS as one (one.id)}
       <button
         type="button"
@@ -78,30 +78,28 @@
       class="orden-field is-value"
       type="password"
       autocomplete="new-password"
-      placeholder={t('Passphrase for the file')}
-      aria-label={t('Passphrase for the file')}
+      placeholder="Passphrase for the file"
+      aria-label="Passphrase for the file"
       bind:value={passphrase}
     />
     <input
       class="orden-field is-value"
       type="password"
       autocomplete="new-password"
-      placeholder={t('Type it again')}
-      aria-label={t('Type it again')}
+      placeholder="Type it again"
+      aria-label="Type it again"
       aria-invalid={again !== '' && again !== passphrase}
       bind:value={again}
     />
   {:else}
-    <p class="warn">
-      {t('This file is not encrypted. Anyone who has it can read every password.')}
-    </p>
+    <p class="warn">This file is not encrypted. Anyone who has it can read every password.</p>
   {/if}
   <input
     class="orden-field is-value"
     type="password"
     autocomplete="current-password"
-    placeholder={t('Pass password')}
-    aria-label={t('Pass password')}
+    placeholder="Pass password"
+    aria-label="Pass password"
     bind:value={password}
     oninput={() => (wrong = '')}
   />
@@ -109,7 +107,7 @@
   {#if saved}<p class="meta" role="status">{saved}</p>{/if}
   <div class="buttons">
     <button class="orden-button" type="submit" disabled={!ready || busy} aria-busy={busy}
-      >{t('Export')}</button
+      >Export</button
     >
   </div>
 </form>

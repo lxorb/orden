@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cellValue, compile, GLOBALS } from '@orden/bases'
-  import { t } from '../i18n.svelte'
   import { valueText } from './chips'
   import { knownProperties } from './columns'
   import { freeFormulaName, setColumns, setFormula } from './edit'
@@ -66,7 +65,7 @@
       kit.change((one) => setFormula(one, name, source))
       return
     }
-    const fresh = freeFormulaName(base, t('Formula'))
+    const fresh = freeFormulaName(base, 'Formula')
     made = fresh
     const columns = [...live.columns, `formula.${fresh}`]
     kit.change((one, at) => setColumns(setFormula(one, fresh, source), at, columns))
@@ -90,7 +89,7 @@
   <input
     class="orden-field"
     value={name}
-    aria-label={t('Name')}
+    aria-label="Name"
     onchange={(event) => rename(event.currentTarget.value)}
   />
 {/if}
@@ -99,7 +98,7 @@
   class="orden-field expression"
   class:wrong={!reads}
   value={typed}
-  aria-label={t('Formula')}
+  aria-label="Formula"
   placeholder={EXAMPLE}
   spellcheck="false"
   oninput={(event) => {

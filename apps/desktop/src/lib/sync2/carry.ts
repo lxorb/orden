@@ -1,7 +1,6 @@
 import type { Awareness } from 'y-protocols/awareness'
 import { account } from '../account.svelte'
 import { busy } from '../busy.svelte'
-import { t } from '../i18n.svelte'
 import { rooms } from '../rooms.svelte'
 import type { Carrying } from '../rooms/carried'
 import type { Who } from '../rooms/door'
@@ -47,7 +46,7 @@ export async function carry(
     },
     refused: () => {
       uncarry(key)
-      busy.failed(t('This note is as large as a note in a room may get.'))
+      busy.failed('This note is as large as a note in a room may get.')
     },
     shut: (signedOut: boolean) => {
       uncarry(key)
@@ -87,7 +86,7 @@ const NOBODY = { announce: () => undefined }
 
 export function whoHere(): Who {
   return {
-    name: deviceName(t('Browser')),
+    name: deviceName('Browser'),
     accent: deviceAccent(),
     person: personName(),
     ...personFace(),

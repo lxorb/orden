@@ -7,7 +7,6 @@ import {
   type Value,
 } from '@orden/bases'
 import { copyText } from '../clipboard'
-import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { workspace } from '../workspace.svelte'
 import { asOneUndo, deleteRows, duplicateRows, linkToRow, writeEach } from './act'
@@ -18,12 +17,12 @@ import { notePath, type Kit } from './kit'
 import { clearedInBase, optionsAt, renamedInBase } from './options'
 
 const TONES: readonly { tone: string; label: () => string }[] = [
-  { tone: '1', label: () => t('Red') },
-  { tone: '2', label: () => t('Orange') },
-  { tone: '3', label: () => t('Yellow') },
-  { tone: '4', label: () => t('Green') },
-  { tone: '5', label: () => t('Teal') },
-  { tone: '6', label: () => t('Violet') },
+  { tone: '1', label: () => 'Red' },
+  { tone: '2', label: () => 'Orange' },
+  { tone: '3', label: () => 'Yellow' },
+  { tone: '4', label: () => 'Green' },
+  { tone: '5', label: () => 'Teal' },
+  { tone: '6', label: () => 'Violet' },
 ]
 
 function writeOptions(kit: Kit, property: string, next: SelectOption[]) {
@@ -129,13 +128,13 @@ export function columnEntries(ask: ColumnAsk): MenuEntry[] {
   const valued = group.key !== null && name !== ''
   return [
     ...(ask.extra ?? []),
-    ...(option || unlisted ? [{ label: t('Rename'), run: ask.rename }] : []),
+    ...(option || unlisted ? [{ label: 'Rename', run: ask.rename }] : []),
     ...(option
       ? [
-          grouped(event, t('Colour'), () =>
+          grouped(event, 'Colour', () =>
             Promise.resolve([
               {
-                label: t('None'),
+                label: 'None',
                 checked: option.tone === undefined,
                 run: () => toneOption(kit, property, name, null),
               },
@@ -150,10 +149,10 @@ export function columnEntries(ask: ColumnAsk): MenuEntry[] {
       : []),
     ...(unlisted && valued
       ? [
-          { label: t('Add as option'), run: () => addAsOption(kit, property, name) },
+          { label: 'Add as option', run: () => addAsOption(kit, property, name) },
           ...(options.length
             ? [
-                grouped(event, t('Merge into'), () =>
+                grouped(event, 'Merge into', () =>
                   Promise.resolve(
                     options.map((one) => ({
                       label: one.value,
@@ -166,13 +165,13 @@ export function columnEntries(ask: ColumnAsk): MenuEntry[] {
         ]
       : []),
     {
-      label: t('Hide'),
+      label: 'Hide',
       run: () => kit.change((one, view) => setHidden(one, view, name, true)),
     },
     DIVIDER,
-    { label: t('Move left'), disabled: at <= 0, run: () => ask.move(-1) },
+    { label: 'Move left', disabled: at <= 0, run: () => ask.move(-1) },
     {
-      label: t('Move right'),
+      label: 'Move right',
       disabled: at === -1 || at >= names.length - 1,
       run: () => ask.move(1),
     },
@@ -180,7 +179,7 @@ export function columnEntries(ask: ColumnAsk): MenuEntry[] {
       ? [
           DIVIDER,
           {
-            label: t('Delete option'),
+            label: 'Delete option',
             danger: true,
             run: () => deleteOption(kit, property, name),
           },
@@ -205,12 +204,12 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
   const { kit, event, row, targets } = ask
   const path = notePath(row)
   return [
-    { label: t('Open'), run: () => kit.choose(row) },
-    { label: t('Open in new tab'), run: () => kit.open(row, 'tab') },
+    { label: 'Open', run: () => kit.choose(row) },
+    { label: 'Open in new tab', run: () => kit.open(row, 'tab') },
     DIVIDER,
     ...(targets.length
       ? [
-          grouped(event, t('Move to'), () =>
+          grouped(event, 'Move to', () =>
             Promise.resolve(
               targets.map((one) => ({
                 label: one.name,
@@ -223,14 +222,14 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
         ]
       : []),
     {
-      label: t('Duplicate'),
+      label: 'Duplicate',
       run: () => {
         if (row.task) void duplicateRows([row])
         else if (path) void workspace.duplicate(path)
       },
     },
     {
-      label: t('Copy link'),
+      label: 'Copy link',
       run: () => {
         if (row.task) void linkToRow(row).then((link) => (link ? copyText(link) : undefined))
         else void copyText(noteLink(row))
@@ -238,7 +237,7 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
     },
     DIVIDER,
     {
-      label: t('Delete'),
+      label: 'Delete',
       danger: true,
       run: () => {
         if (row.task) void deleteRows([row])

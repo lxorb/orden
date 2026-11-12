@@ -1,5 +1,4 @@
 import type { HtmlOptions } from '../export'
-import { t } from '../i18n.svelte'
 import { imagePath } from '../images'
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
@@ -21,7 +20,7 @@ export interface Target {
 export const frontShut = (): boolean => workspace.protection.locked(workspace.active?.path)
 
 export function openTarget(): Target {
-  if (frontShut()) throw new Error(t('Protected'))
+  if (frontShut()) throw new Error('Protected')
   workspace.wordsNow()
   const note = workspace.active
 

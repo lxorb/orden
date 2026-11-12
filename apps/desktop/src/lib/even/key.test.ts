@@ -41,11 +41,6 @@ vi.mock('../account.svelte', async () => ({
   account: (await import('../account-double')).accountDouble(),
 }))
 
-vi.mock('../i18n.svelte', () => ({
-  t: (text: string) => text,
-  key: (text: string) => text,
-}))
-
 const chosen = vi.hoisted(() => ({ model: '' }))
 
 vi.mock('../modes.svelte', () => ({

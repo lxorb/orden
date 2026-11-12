@@ -23,7 +23,6 @@
   import { pickedLink } from './composer'
   import { EditorStates } from './editor-states'
   import { firstScreen } from './first-screen.svelte'
-  import { t } from './i18n.svelte'
   import { keptCoverOf, setCoverPosition } from './kept-cover'
   import { mark } from './trace'
   import { modes } from './modes.svelte'
@@ -172,7 +171,7 @@
   })
 
   $effect(() => {
-    view?.contentDOM.setAttribute('aria-label', t('The note'))
+    view?.contentDOM.setAttribute('aria-label', 'The note')
   })
 
   $effect(() => {

@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { inTurn } from '../locks'
 import { notify } from '../notify'
 import { keepJson, stored } from '../stored'
@@ -27,12 +26,10 @@ function look(): void {
   const due = dueOf(time.goals, counted(time.spans, time.rules), Date.now(), told)
   for (const one of due) {
     told.add(one.key)
-    const name = time.activity(one.activity)?.name ?? t('No activity')
+    const name = time.activity(one.activity)?.name ?? 'No activity'
     notify(
       name,
-      one.kind === 'goal'
-        ? t('Goal reached')
-        : t('The timer has run for {time}', { time: lasting(one.ms) }),
+      one.kind === 'goal' ? 'Goal reached' : `The timer has run for ${lasting(one.ms)}`,
       `time-${one.key}`,
     )
   }

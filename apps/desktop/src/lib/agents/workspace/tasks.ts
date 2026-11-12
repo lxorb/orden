@@ -177,12 +177,12 @@ async function inboxPlace(call: Call, place: Place): Promise<Place> {
 export async function addTask(call: Call): Promise<AgentAnswer> {
   const front = placeOf(call)
   const { rows } = await import('../../rows/rows.svelte')
-  const { i18n } = await import('../../i18n.svelte')
+  const { region } = await import('../../region')
   const { listNamed, listsIn, makeList } = await import('../../rows/todo-lists')
   const names = listsIn(front.space.root).map((path) => path.replace(/.md$/i, ''))
   const read = (() => {
     try {
-      return newTask(call.args, quickWords([i18n.language], new Date(), names))
+      return newTask(call.args, quickWords([region()], new Date(), names))
     } catch (error) {
       refused(error)
     }

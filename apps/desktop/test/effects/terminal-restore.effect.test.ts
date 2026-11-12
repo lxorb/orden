@@ -141,8 +141,8 @@ const HISTORY = {
   text: 'PS C:\\work> npm run build\r\nfailed: 3 errors\r\nPS C:\\work> ',
 }
 
-const { i18n } = await import('../../src/lib/i18n.svelte')
-const when = i18n.when(HISTORY.at, { dateStyle: 'medium', timeStyle: 'short' })
+const { localDate } = await import('../../src/lib/region')
+const when = localDate(HISTORY.at, { dateStyle: 'medium', timeStyle: 'short' })
 
 function restored(key: string): InstanceType<typeof Tab> {
   const words = JSON.stringify({ shell: 'pwsh', folder: 'C:\\work', key })

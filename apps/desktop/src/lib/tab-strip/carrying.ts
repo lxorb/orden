@@ -1,5 +1,4 @@
 import { dropTarget, targetFor } from '../drop-target.svelte'
-import { i18n } from '../i18n.svelte'
 import { dur } from '../motion'
 import { workspace } from '../workspace.svelte'
 import { isUnsaved } from '../workspace/drafts'
@@ -90,7 +89,7 @@ export function flyHome(
     if (!node || !box) return
 
     const rect = node.getBoundingClientRect()
-    const x = box.x * i18n.factor
+    const x = box.x
     node.animate(
       [
         { transform: `translate(${x + from.left - rect.left}px, ${from.top - top - rect.top}px)` },

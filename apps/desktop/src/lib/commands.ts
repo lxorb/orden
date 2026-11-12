@@ -57,7 +57,6 @@ import { busy } from './busy.svelte'
 import { turnedOff } from './kind-choice'
 import { composerCommands } from './composer-commands'
 import { paletteName } from './highlight'
-import { key, t } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import type { MenuItem } from './menu-item'
 import { EXPORT_FORMATS, type Exportable } from './export/formats'
@@ -196,7 +195,7 @@ export function exportCommands(): Command[] {
 
   const run = (id: ExportId) => () =>
     busy.start(
-      t('Exporting'),
+      'Exporting',
       async () => {
         if (kind === 'canvas') await drawingOut(id)
         else if (kind === 'pages') await pagesOut(id)
@@ -222,7 +221,7 @@ export function exportCommands(): Command[] {
   if (asNote) {
     commands.push({
       id: 'page-setup',
-      label: t('Page setup for export'),
+      label: 'Page setup for export',
       run: () => settings.show('export'),
     })
   }
@@ -234,11 +233,11 @@ export function exportCommands(): Command[] {
   for (const format of PANDOC_FORMATS) {
     commands.push({
       id: `export-${format.id}`,
-      label: t('Export as {format}', { format: t(format.label) }),
+      label: `Export as ${format.label}`,
       disabled: nothing,
       run: () =>
         busy.start(
-          t('Exporting'),
+          'Exporting',
           async () => {
             const m = await import('./export')
             await m.exportPandoc(source(), name(), format.id, note()?.path ?? null)
@@ -259,10 +258,10 @@ function exportPicker(): Command[] {
   return [
     {
       id: 'export',
-      label: t('Export…'),
+      label: 'Export…',
       also: [
         ...formats.map((one) => one.label),
-        ...[...EXPORT_FORMATS, ...PANDOC_FORMATS].map((one) => t(one.label)),
+        ...[...EXPORT_FORMATS, ...PANDOC_FORMATS].map((one) => one.label),
       ],
       disabled: formats.every((one) => one.disabled),
       run: () => void import('./export/picker.svelte').then(({ picker }) => picker.show()),
@@ -281,7 +280,7 @@ function importCommand(): Command | null {
 
   return {
     id: 'import',
-    label: t('Import'),
+    label: 'Import',
     run: () => {
       void import('./importing.svelte').then(({ importing }) => importing.show())
     },
@@ -294,7 +293,7 @@ function migrateCommands(): Command[] {
   return [
     {
       id: 'import-obsidian',
-      label: t('Import from Obsidian'),
+      label: 'Import from Obsidian',
       run: () => {
         settings.show('import')
         void import('./migrating.svelte').then(({ migrating }) => migrating.obsidian())
@@ -302,7 +301,7 @@ function migrateCommands(): Command[] {
     },
     {
       id: 'import-notion',
-      label: t('Import from Notion'),
+      label: 'Import from Notion',
       run: () => {
         void import('./migrating.svelte').then(({ migrating }) => migrating.files())
       },
@@ -311,7 +310,7 @@ function migrateCommands(): Command[] {
       ? [
           {
             id: 'import-zen',
-            label: t('Import from Zen'),
+            label: 'Import from Zen',
             run: () => {
               settings.show('import')
               void import('./migrating.svelte').then(({ migrating }) => migrating.zen())
@@ -356,7 +355,7 @@ function agentUndoRows(): Command[] {
 
   return touchedBy(path).map((agent) => ({
     id: `agent-undo:${agent.id}`,
-    label: t('Undo edits by {name}', { name: agent.name }),
+    label: `Undo edits by ${agent.name}`,
     run: () => void import('./agents/docs').then((docs) => docs.undoAgentIn(agent, path)),
   }))
 }
@@ -367,7 +366,7 @@ function agentRows(): Command[] {
   return [
     {
       id: 'agents',
-      label: t('Agents'),
+      label: 'Agents',
       run: () => {
         revealPanel('ask')
         void import('./ai/sidebar/chat.svelte').then(({ chat }) => chat.showThreads())
@@ -375,7 +374,7 @@ function agentRows(): Command[] {
     },
     {
       id: 'agents-stop',
-      label: t('Stop agents'),
+      label: 'Stop agents',
       hint: shortcuts.hint('agents.stop'),
       ownWindow: true,
       run: () => void import('./agents/ui/index').then((ui) => ui.stopAgents()),
@@ -417,35 +416,35 @@ function tabCommands(): Command[] {
     },
     {
       id: 'close-all',
-      label: t('Close all tabs'),
+      label: 'Close all tabs',
       hint: shortcuts.hint('app.close-all'),
       disabled: workspace.closesAround(id, 'all') === 0,
       run: () => void workspace.closeAround(id, 'all'),
     },
     {
       id: 'deselect-tab',
-      label: t('Deselect tab'),
+      label: 'Deselect tab',
       hint: shortcuts.hint('app.deselect-tab'),
       disabled: !tab,
       run: () => workspace.deselect(),
     },
     {
       id: 'deselect-all',
-      label: t('Deselect all tabs'),
+      label: 'Deselect all tabs',
       hint: shortcuts.hint('app.deselect-all'),
       disabled: !workspace.tabs.some((one) => workspace.panes.at(one.paneId)),
       run: () => workspace.deselectAll(),
     },
     {
       id: 'duplicate-tab',
-      label: t('Duplicate tab'),
+      label: 'Duplicate tab',
       hint: shortcuts.hint('app.duplicate-tab'),
       disabled: !tab || !workspace.canDuplicateTab(tab),
       run: () => void tabOps().then((ops) => ops.duplicateTab(id)),
     },
     {
       id: 'rename',
-      label: t('Rename'),
+      label: 'Rename',
       disabled:
         !tab || !workspace.canRenameFromTab(tab) || (tab.path !== null && !canWriteAt(tab.path)),
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
@@ -454,7 +453,7 @@ function tabCommands(): Command[] {
       ? [
           {
             id: 'move-to-space',
-            label: t('Move to space'),
+            label: 'Move to space',
             run: () => void toSpace().then((one) => one.askSpace([id])),
           },
         ]
@@ -470,10 +469,10 @@ function webCommands(): Command[] {
 
   const page = pages.of(tab.id)
   const rows: [Step, string, string][] = [
-    ['reload', t('Reload'), 'web.reload'],
-    ['fresh', t('Hard reload'), 'web.fresh'],
+    ['reload', 'Reload', 'web.reload'],
+    ['fresh', 'Hard reload', 'web.fresh'],
   ]
-  if (page.loading) rows.push(['stop', t('Stop'), 'web.stop'])
+  if (page.loading) rows.push(['stop', 'Stop', 'web.stop'])
   return [
     ...rows.map(([step, label, key]) => ({
       id: `web-${step}`,
@@ -483,26 +482,26 @@ function webCommands(): Command[] {
     })),
     {
       id: 'web-find',
-      label: t('Find'),
+      label: 'Find',
       hint: shortcuts.hint('edit.find'),
       run: () => (page.find.open = true),
     },
     {
       id: 'web-mute',
-      label: page.muted ? t('Unmute site') : t('Mute site'),
+      label: page.muted ? 'Unmute site' : 'Mute site',
       hint: shortcuts.hint('web.mute'),
       run: () => void import('./web-tab/mute').then((one) => one.muteSite(tab.id, !page.muted)),
     },
     {
       id: 'web-clear-data',
-      label: t('Delete browsing data'),
+      label: 'Delete browsing data',
       hint: shortcuts.hint('web.clear-data'),
       run: () =>
         void import('./web-tab/clearing-asked.svelte').then((one) => one.clearingAsked.ask(tab.id)),
     },
     {
       id: 'web-devtools',
-      label: t('Developer tools'),
+      label: 'Developer tools',
       hint: shortcuts.hint('web.devtools'),
       run: () => void invoke('web_devtools', { tab: tab.id }).catch(() => undefined),
     },
@@ -515,42 +514,42 @@ function paneCommands(): Command[] {
   return [
     {
       id: 'split-right',
-      label: t('Split right'),
+      label: 'Split right',
       hint: shortcuts.hint('pane.split-right'),
       disabled: !workspace.canSplit('row'),
       run: () => workspace.split('row'),
     },
     {
       id: 'split-down',
-      label: t('Split down'),
+      label: 'Split down',
       hint: shortcuts.hint('pane.split-down'),
       disabled: !workspace.canSplit('column'),
       run: () => workspace.split('column'),
     },
     {
       id: 'move-tab-pane',
-      label: t('Move to other pane'),
+      label: 'Move to other pane',
       hint: shortcuts.hint('pane.move-tab'),
       disabled: !workspace.canMoveToOtherPane(workspace.activeTabId ?? ''),
       run: () => void tabOps().then((ops) => ops.moveToOtherPane(workspace.activeTabId ?? '')),
     },
     {
       id: 'focus-pane',
-      label: t('Other pane'),
+      label: 'Other pane',
       hint: shortcuts.hint('pane.focus-next'),
       disabled: workspace.panes.count < 2,
       run: () => workspace.panes.focusNext(),
     },
     {
       id: 'stack-tabs',
-      label: workspace.stacked() ? t('Unstack tabs') : t('Stack tabs'),
+      label: workspace.stacked() ? 'Unstack tabs' : 'Stack tabs',
       checked: workspace.stacked(),
       disabled: !workspace.canStack(),
       run: () => workspace.toggleStacked(),
     },
     {
       id: 'close-pane',
-      label: t('Close this pane'),
+      label: 'Close this pane',
       disabled: workspace.panes.count < 2,
       run: () => void workspace.closePane(),
     },
@@ -565,17 +564,17 @@ function layoutCommands(): Command[] {
   return [
     {
       id: 'save-layout',
-      label: t('Save layout'),
+      label: 'Save layout',
       run: () => void askForLayoutName(),
     },
     ...saved.map((one) => ({
       id: `layout:${one.name}`,
-      label: t('Layout: {name}', { name: one.name }),
+      label: `Layout: ${one.name}`,
       run: () => void workspace.useLayout(one.name),
     })),
     {
       id: 'delete-layout',
-      label: t('Delete a layout'),
+      label: 'Delete a layout',
       disabled: !saved.length,
       run: () => void askWhichLayoutToDelete(),
     },
@@ -584,9 +583,9 @@ function layoutCommands(): Command[] {
 
 async function askForLayoutName() {
   const name = await prompt.ask({
-    title: t('Name this layout'),
-    placeholder: t('Reading'),
-    confirmLabel: key('Save'),
+    title: 'Name this layout',
+    placeholder: 'Reading',
+    confirmLabel: 'Save',
   })
 
   if (name) workspace.saveLayout(name)
@@ -594,7 +593,7 @@ async function askForLayoutName() {
 
 async function askWhichLayoutToDelete() {
   const chosen = await prompt.find({
-    title: t('Delete a layout'),
+    title: 'Delete a layout',
     options: workspace.layouts.all.map((one) => ({ id: one.name, label: one.name })),
   })
 
@@ -605,14 +604,14 @@ function slideCommands(view?: EditorView): Command[] {
   return [
     {
       id: 'present',
-      label: present.on ? t('Leave presenting') : t('Present'),
+      label: present.on ? 'Leave presenting' : 'Present',
       hint: shortcuts.hint('app.present'),
       disabled: !present.on && !present.available,
       run: () => present.toggle(),
     },
     {
       id: 'new-slide',
-      label: t('New slide'),
+      label: 'New slide',
       disabled: !view || view.state.readOnly,
       run: () => {
         if (!view) return
@@ -622,13 +621,13 @@ function slideCommands(view?: EditorView): Command[] {
     },
     {
       id: 'next-slide',
-      label: t('Next slide'),
+      label: 'Next slide',
       disabled: !view || !present.available,
       run: () => view && stepSlide(view, 1),
     },
     {
       id: 'previous-slide',
-      label: t('Previous slide'),
+      label: 'Previous slide',
       disabled: !view || !present.available,
       run: () => view && stepSlide(view, -1),
     },
@@ -649,11 +648,11 @@ function foldingCommands(view?: EditorView): Command[] {
   })
 
   return [
-    fold('view.fold', t('Fold'), toggleFold),
-    fold('view.fold-all', t('Fold everything'), foldHeadings),
-    fold('view.fold-more', t('Fold more'), foldMore),
-    fold('view.fold-less', t('Fold less'), foldLess),
-    fold('view.unfold-all', t('Unfold everything'), unfoldEverything),
+    fold('view.fold', 'Fold', toggleFold),
+    fold('view.fold-all', 'Fold everything', foldHeadings),
+    fold('view.fold-more', 'Fold more', foldMore),
+    fold('view.fold-less', 'Fold less', foldLess),
+    fold('view.unfold-all', 'Unfold everything', unfoldEverything),
   ]
 }
 
@@ -676,28 +675,28 @@ function lineCommands(view?: EditorView): Command[] {
   })
 
   return [
-    row('edit.expand-selection', t('Expand the selection'), expandSelection, false),
-    row('edit.shrink-selection', t('Shrink the selection'), shrinkSelection, false),
-    row('edit.select-word', t('Select the word, then the next'), selectWord, false),
-    row('edit.insert-line-above', t('Insert a line above'), insertLineAbove),
-    row('edit.delete-line', t('Delete the line'), deleteLine),
-    row('edit.join-lines', t('Join the lines'), joinLines),
-    row('edit.sort-lines', t('Sort the lines'), sortLines),
-    row('edit.reverse-lines', t('Reverse the lines'), reverseLines),
-    row('edit.upper-case', t('Upper case'), upperCase),
-    row('edit.lower-case', t('Lower case'), lowerCase),
-    row('edit.title-case', t('Title case'), titleCase),
-    row('edit.duplicate-block', t('Duplicate the block'), duplicateBlock),
-    row('edit.move-block-up', t('Move the block up'), moveBlockUp),
-    row('edit.move-block-down', t('Move the block down'), moveBlockDown),
-    row('edit.undo', t('Undo'), undoEdit),
-    row('edit.redo', t('Redo'), redoEdit),
-    row('format.inline-math', t('Inline math'), toggleWrap('$')),
-    row('format.superscript', t('Superscript'), toggleWrap('^')),
-    row('format.subscript', t('Subscript'), toggleWrap('~')),
-    row('edit.paste-plain', t('Paste as plain text'), pastePlain),
-    row('edit.find-next', t('Find next'), findNext, false),
-    row('edit.find-previous', t('Find previous'), findPrevious, false),
+    row('edit.expand-selection', 'Expand the selection', expandSelection, false),
+    row('edit.shrink-selection', 'Shrink the selection', shrinkSelection, false),
+    row('edit.select-word', 'Select the word, then the next', selectWord, false),
+    row('edit.insert-line-above', 'Insert a line above', insertLineAbove),
+    row('edit.delete-line', 'Delete the line', deleteLine),
+    row('edit.join-lines', 'Join the lines', joinLines),
+    row('edit.sort-lines', 'Sort the lines', sortLines),
+    row('edit.reverse-lines', 'Reverse the lines', reverseLines),
+    row('edit.upper-case', 'Upper case', upperCase),
+    row('edit.lower-case', 'Lower case', lowerCase),
+    row('edit.title-case', 'Title case', titleCase),
+    row('edit.duplicate-block', 'Duplicate the block', duplicateBlock),
+    row('edit.move-block-up', 'Move the block up', moveBlockUp),
+    row('edit.move-block-down', 'Move the block down', moveBlockDown),
+    row('edit.undo', 'Undo', undoEdit),
+    row('edit.redo', 'Redo', redoEdit),
+    row('format.inline-math', 'Inline math', toggleWrap('$')),
+    row('format.superscript', 'Superscript', toggleWrap('^')),
+    row('format.subscript', 'Subscript', toggleWrap('~')),
+    row('edit.paste-plain', 'Paste as plain text', pastePlain),
+    row('edit.find-next', 'Find next', findNext, false),
+    row('edit.find-previous', 'Find previous', findPrevious, false),
   ]
 }
 
@@ -724,30 +723,30 @@ function block(id: string, label: () => string, command: StateCommand): Block {
 
 const BLOCKS: Block[] = [
   ...[1, 2, 3, 4, 5, 6].map((level) =>
-    block(`paragraph.heading-${level}`, () => t('Heading {level}', { level }), setHeading(level)),
+    block(`paragraph.heading-${level}`, () => `Heading ${level}`, setHeading(level)),
   ),
-  block('paragraph.body', () => t('Paragraph'), setHeading(0)),
-  block('paragraph.heading-up', () => t('One heading level up'), shiftHeading(1)),
-  block('paragraph.heading-down', () => t('One heading level down'), shiftHeading(-1)),
+  block('paragraph.body', () => 'Paragraph', setHeading(0)),
+  block('paragraph.heading-up', () => 'One heading level up', shiftHeading(1)),
+  block('paragraph.heading-down', () => 'One heading level down', shiftHeading(-1)),
   {
     id: 'paragraph.table',
-    label: () => t('Table'),
+    label: () => 'Table',
     apply: (view) => {
       if (view) insertTableToEdit(view)
     },
   },
-  block('paragraph.code-block', () => t('Code block'), insertCodeFence),
-  block('paragraph.quote', () => t('Quote'), toggleQuote),
-  block('paragraph.math-block', () => t('Math block'), insertMathBlock),
-  block('paragraph.chart', () => t('Chart'), insertChart),
-  block('ai-block', () => t('AI block'), insertAiBlock),
-  block('paragraph.callout', () => t('Callout'), insertCallout),
-  block('paragraph.bullet-list', () => t('Bulleted list'), toggleBulletList),
-  block('paragraph.ordered-list', () => t('Numbered list'), toggleOrderedList),
-  block('paragraph.task-list', () => t('Task list'), toggleTaskList),
+  block('paragraph.code-block', () => 'Code block', insertCodeFence),
+  block('paragraph.quote', () => 'Quote', toggleQuote),
+  block('paragraph.math-block', () => 'Math block', insertMathBlock),
+  block('paragraph.chart', () => 'Chart', insertChart),
+  block('ai-block', () => 'AI block', insertAiBlock),
+  block('paragraph.callout', () => 'Callout', insertCallout),
+  block('paragraph.bullet-list', () => 'Bulleted list', toggleBulletList),
+  block('paragraph.ordered-list', () => 'Numbered list', toggleOrderedList),
+  block('paragraph.task-list', () => 'Task list', toggleTaskList),
   {
     id: 'picture',
-    label: () => t('Picture'),
+    label: () => 'Picture',
     apply: (view) => {
       if (view) void insertPicture(view)
     },
@@ -755,7 +754,7 @@ const BLOCKS: Block[] = [
   },
   {
     id: 'photo',
-    label: () => t('Photo'),
+    label: () => 'Photo',
     apply: (view) => {
       if (view) void takePhoto(view)
     },
@@ -764,7 +763,7 @@ const BLOCKS: Block[] = [
   },
   {
     id: 'dictate',
-    label: () => (dictating() ? t('Stop') : t('Dictate')),
+    label: () => (dictating() ? 'Stop' : 'Dictate'),
     apply: (view) => {
       if (view) void toggleDictation(view)
     },
@@ -772,13 +771,13 @@ const BLOCKS: Block[] = [
     byHand: true,
   },
   { id: 'record', label: recordLabel, apply: () => void record(), ready: canRecord, byHand: true },
-  block('format.link', () => t('Link'), insertLink),
-  block('paragraph.footnote', () => t('Footnote'), insertFootnote),
-  block('paragraph.toc', () => t('Table of contents'), insertToc),
-  block('format.comment', () => t('Comment'), insertComment),
-  block('paragraph.rule', () => t('Horizontal rule'), insertHorizontalRule),
-  block('slide-break', () => t('New slide'), insertSlideBreak),
-  block('page-break', () => t('Page break'), insertPageBreak),
+  block('format.link', () => 'Link', insertLink),
+  block('paragraph.footnote', () => 'Footnote', insertFootnote),
+  block('paragraph.toc', () => 'Table of contents', insertToc),
+  block('format.comment', () => 'Comment', insertComment),
+  block('paragraph.rule', () => 'Horizontal rule', insertHorizontalRule),
+  block('slide-break', () => 'New slide', insertSlideBreak),
+  block('page-break', () => 'Page break', insertPageBreak),
 ]
 
 export function blockCommands(view?: EditorView): Command[] {
@@ -839,10 +838,10 @@ function moveCommand(): Command | null {
 
   return {
     id: 'move-note',
-    label: t('Move this note'),
+    label: 'Move this note',
     run: () =>
       void prompt
-        .find({ title: t('Move to'), options: [...targets] })
+        .find({ title: 'Move to', options: [...targets] })
         .then((into) => (into ? moved(into) : undefined)),
   }
 }
@@ -858,23 +857,23 @@ function spaceCommands(): Command[] {
     ...(workspace.shownSpaces.length > 1
       ? workspace.shownSpaces.map((one) => ({
           id: `space:${one.id}`,
-          label: t('Space: {name}', { name: one.name }),
+          label: `Space: ${one.name}`,
           checked: one.id === space.id,
           run: () => void workspace.showSpace(one.id),
         }))
       : []),
-    { id: 'new-space', label: t('New space'), run: () => void newSpace() },
+    { id: 'new-space', label: 'New space', run: () => void newSpace() },
     ...(canShare(space)
-      ? [{ id: 'share', label: t('Share this space'), run: () => void shareSpace(space) }]
+      ? [{ id: 'share', label: 'Share this space', run: () => void shareSpace(space) }]
       : []),
     ...(isDesktop && !__EVEN_PLUGIN__ && internal.routed?.('read_tree', { root: space.root })
       ? [
           {
             id: 'export-space',
-            label: t('Export this space as Markdown and folders'),
+            label: 'Export this space as Markdown and folders',
             run: () =>
               busy.start(
-                t('Exporting'),
+                'Exporting',
                 async () => {
                   const [{ exportSpace }, { listedAt }] = await Promise.all([
                     import('./internal/export'),
@@ -909,7 +908,7 @@ function spaceCommands(): Command[] {
       ? [
           {
             id: 'share-note',
-            label: t('Share this note'),
+            label: 'Share this note',
             run: () => void shareThisFile(workspace.active?.path ?? ''),
           },
         ]
@@ -918,7 +917,7 @@ function spaceCommands(): Command[] {
       ? [
           {
             id: 'publish',
-            label: t('Publish this space as a blog'),
+            label: 'Publish this space as a blog',
             run: () => publishSpace(space),
           },
         ]
@@ -938,7 +937,7 @@ function sendToChatCommand(view?: EditorView): Command[] {
         : sendToChat(note),
     )
   }
-  return [{ id: 'send-to-chat', label: t('Send to chat'), run }]
+  return [{ id: 'send-to-chat', label: 'Send to chat', run }]
 }
 
 export function tidies(path: string | null): boolean {
@@ -957,7 +956,7 @@ export function appCommands(view?: EditorView): Command[] {
       ? [
           {
             id: 'save',
-            label: t('Save'),
+            label: 'Save',
             hint: shortcuts.saveHint,
             run: () => askPlace(unsaved.id),
           },
@@ -965,7 +964,7 @@ export function appCommands(view?: EditorView): Command[] {
       : []),
     {
       id: 'new',
-      label: t('New note'),
+      label: 'New note',
       hint: shortcuts.hint('app.new'),
       run: () => workspace.openBlank(),
     },
@@ -974,7 +973,7 @@ export function appCommands(view?: EditorView): Command[] {
       : [
           {
             id: 'quick-add',
-            label: t('Add task'),
+            label: 'Add task',
             hint: shortcuts.hint('app.quick-add'),
             run: () => showQuickAdd(),
           },
@@ -982,19 +981,19 @@ export function appCommands(view?: EditorView): Command[] {
     ...sendToChatCommand(view),
     {
       id: 'new-unique',
-      label: t('New unique note'),
+      label: 'New unique note',
       disabled: readOnly,
       run: () => void workspace.createUniqueNote(settings.noteIdFormat),
     },
     {
       id: 'new-canvas',
-      label: t('New canvas'),
+      label: 'New canvas',
       disabled: readOnly,
       run: () => void workspace.createCanvas(),
     },
     {
       id: 'new-pages',
-      label: t('New page note'),
+      label: 'New page note',
       disabled: readOnly,
       run: () => void workspace.createPages(),
     },
@@ -1002,7 +1001,7 @@ export function appCommands(view?: EditorView): Command[] {
       ? [
           {
             id: 'new-database',
-            label: t('New database'),
+            label: 'New database',
             disabled: readOnly,
             run: () => void import('./views/new-database').then((one) => one.createDatabase()),
           },
@@ -1010,7 +1009,7 @@ export function appCommands(view?: EditorView): Command[] {
       : []),
     {
       id: 'new-from-template',
-      label: t('New note from template'),
+      label: 'New note from template',
       disabled: readOnly,
       run: () => void import('./views/templates').then((one) => one.pickTemplate()),
     },
@@ -1019,13 +1018,13 @@ export function appCommands(view?: EditorView): Command[] {
       : [
           {
             id: 'new-web-note',
-            label: t('New web note'),
+            label: 'New web note',
             disabled: readOnly,
             run: () => void workspace.createWebsite(),
           },
           {
             id: 'new-website',
-            label: t('Open a website'),
+            label: 'Open a website',
             run: () => workspace.openWebsite(),
           },
         ]),
@@ -1033,13 +1032,13 @@ export function appCommands(view?: EditorView): Command[] {
       ? [
           {
             id: 'new-terminal',
-            label: t('New terminal'),
+            label: 'New terminal',
             ownWindow: true,
             run: () => void import('./terminal/open').then(({ openTerminal }) => openTerminal()),
           },
           {
             id: 'new-remote',
-            label: t('Remote'),
+            label: 'Remote',
             ownWindow: true,
             run: () =>
               void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.toggle()),
@@ -1051,20 +1050,20 @@ export function appCommands(view?: EditorView): Command[] {
       : [
           {
             id: 'new-online-terminal',
-            label: t('New online terminal'),
+            label: 'New online terminal',
             ownWindow: true,
             run: () => void import('./online/open').then(({ openOnline }) => openOnline()),
           },
           {
             id: 'start-online-machine',
-            label: t('Start online machine'),
+            label: 'Start online machine',
             ownWindow: true,
             run: () =>
               void import('./online/machine.svelte').then(({ machine }) => machine.startStop(true)),
           },
           {
             id: 'stop-online-machine',
-            label: t('Stop online machine'),
+            label: 'Stop online machine',
             ownWindow: true,
             run: () =>
               void import('./online/machine.svelte').then(({ machine }) =>
@@ -1076,7 +1075,7 @@ export function appCommands(view?: EditorView): Command[] {
       ? [
           {
             id: 'convert-website-notes',
-            label: t('Convert website notes'),
+            label: 'Convert website notes',
             disabled: readOnly,
             run: () => void workspace.convertWebsites(),
           },
@@ -1084,7 +1083,7 @@ export function appCommands(view?: EditorView): Command[] {
       : []),
     {
       id: 'random-note',
-      label: t('Random note'),
+      label: 'Random note',
       hint: shortcuts.hint('app.random-note'),
       disabled: !randomChoices().length,
       run: () => openRandomNote(),
@@ -1093,7 +1092,7 @@ export function appCommands(view?: EditorView): Command[] {
     ...migrateCommands(),
     {
       id: 'convert-syntax',
-      label: t('Convert syntax'),
+      label: 'Convert syntax',
       disabled: readOnly,
       run: () => void import('./convert-syntax').then((m) => m.convertSyntax()),
     },
@@ -1101,16 +1100,16 @@ export function appCommands(view?: EditorView): Command[] {
       ? [
           {
             id: 'print',
-            label: t('Print'),
+            label: 'Print',
             hint: shortcuts.hint('app.print'),
             disabled: !printable(workspace.active?.kind) || frontShut(),
-            run: () => busy.start(t('Printing'), () => printOpen(), 'print'),
+            run: () => busy.start('Printing', () => printOpen(), 'print'),
           },
         ]
       : []),
     {
       id: 'close',
-      label: t('Close note'),
+      label: 'Close note',
       hint: shortcuts.hint('app.close'),
       run: () => void workspace.closeActive(),
     },
@@ -1120,90 +1119,90 @@ export function appCommands(view?: EditorView): Command[] {
     ...tabCommands(),
     {
       id: 'back',
-      label: t('Back'),
+      label: 'Back',
       hint: shortcuts.hint('app.back'),
       disabled: !workspace.active?.canGoBack,
       run: () => workspace.goBack(),
     },
     {
       id: 'forward',
-      label: t('Forward'),
+      label: 'Forward',
       hint: shortcuts.hint('app.forward'),
       disabled: !workspace.active?.canGoForward,
       run: () => workspace.goForward(),
     },
     {
       id: 'reopen',
-      label: t('Reopen closed tab'),
+      label: 'Reopen closed tab',
       hint: shortcuts.hint('app.reopen'),
       disabled: !workspace.closed.any,
       run: () => void workspace.reopenClosed(),
     },
-    { id: 'space', label: t('New space'), run: () => void newSpace() },
+    { id: 'space', label: 'New space', run: () => void newSpace() },
     ...webCommands(),
     ...paneCommands(),
     ...layoutCommands(),
     {
       id: 'new-window',
-      label: t('New window'),
+      label: 'New window',
       hint: shortcuts.hint('app.new-window'),
       disabled: !isDesktop,
       run: () => void invoke('new_window').catch(() => undefined),
     },
     {
       id: 'close-window',
-      label: t('Close window'),
+      label: 'Close window',
       hint: shortcuts.hint('app.close-window'),
       disabled: !isDesktop,
       run: () => void closeWindow(),
     },
     {
       id: 'new-private',
-      label: t('New private tab'),
+      label: 'New private tab',
       hint: shortcuts.hint('app.new-private'),
       disabled: !isDesktop || viewport.touch,
       run: () => void import('./web-tab/private').then(({ openPrivate }) => openPrivate()),
     },
     {
       id: 'web-history',
-      label: t('Browsing history'),
+      label: 'Browsing history',
       hint: shortcuts.hint('web.history'),
       disabled: viewport.touch,
       run: () => void import('./web-tab/history-open').then((one) => one.openHistory()),
     },
     {
       id: 'undo-file',
-      label: workspace.undoLabel ?? t('Undo the last file change'),
+      label: workspace.undoLabel ?? 'Undo the last file change',
       disabled: !workspace.undoLabel,
       run: () => void workspace.undoFileAction(),
     },
     {
       id: 'redo-file',
-      label: t('Redo the last file change'),
+      label: 'Redo the last file change',
       disabled: !workspace.canRedo,
       run: () => void workspace.redoFileAction(),
     },
     {
       id: 'settings',
-      label: t('Settings'),
+      label: 'Settings',
       hint: shortcuts.hint('app.settings'),
       run: () => settings.show(),
     },
     {
       id: 'feedback',
-      label: t('Send feedback'),
+      label: 'Send feedback',
       also: ['feedback', 'bug', 'report'],
       run: showFeedback,
     },
     {
       id: 'shortcuts',
-      label: t('Shortcuts'),
+      label: 'Shortcuts',
       hint: shortcuts.hint('app.keys'),
       run: () => settings.show('shortcuts'),
     },
     {
       id: 'history',
-      label: t('Version history'),
+      label: 'Version history',
       disabled: !workspace.active?.path || frontShut(),
       run: () => (settings.historyOpen = true),
     },
@@ -1214,7 +1213,7 @@ export function appCommands(view?: EditorView): Command[] {
       : [
           {
             id: 'copy-uri',
-            label: t('Copy link to this note'),
+            label: 'Copy link to this note',
             disabled: !workspace.active?.path,
             run: () => void import('./automation/link').then((m) => m.copyNoteLink()),
           },
@@ -1223,25 +1222,23 @@ export function appCommands(view?: EditorView): Command[] {
     ...exportPicker(),
     ...exportCommands(),
     ...spaceCommands(),
-    { id: 'llm', label: t('Connect an LLM to your notes'), run: () => settings.show('llm') },
+    { id: 'llm', label: 'Connect an LLM to your notes', run: () => settings.show('llm') },
 
     account.user
       ? {
           id: 'signout',
-          label: account.user.email
-            ? t('Sign out {email}', { email: account.user.email })
-            : t('Sign out'),
+          label: account.user.email ? `Sign out ${account.user.email}` : 'Sign out',
           byHand: true,
           run: () =>
             __EVEN_PLUGIN__
               ? void account.signOut('asked')
               : void import('./ai/vault/leaving').then((one) => one.signOut()),
         }
-      : { id: 'signin', label: t('Sign in'), run: () => (account.open = true) },
+      : { id: 'signin', label: 'Sign in', run: () => (account.open = true) },
 
     {
       id: 'reformat',
-      label: t('Tidy up this note'),
+      label: 'Tidy up this note',
       disabled: !view || view.state.readOnly || !tidies(workspace.active?.path ?? null),
       run: () =>
         view &&
@@ -1257,32 +1254,32 @@ export function appCommands(view?: EditorView): Command[] {
     ...lineCommands(view),
     {
       id: 'reading',
-      label: workspace.active?.reading ? t('Leave reading') : t('Reading'),
+      label: workspace.active?.reading ? 'Leave reading' : 'Reading',
       hint: shortcuts.hint('app.reading'),
       disabled: workspace.active?.kind !== 'note',
       run: () => workspace.toggleReading(),
     },
     {
       id: 'read-only',
-      label: modes.readOnly ? t('Leave read-only') : t('Read-only'),
+      label: modes.readOnly ? 'Leave read-only' : 'Read-only',
       hint: shortcuts.hint('app.read-only'),
       run: () => modes.toggleReadOnly(view),
     },
     {
       id: 'source',
-      label: modes.sourceIn(view) ? t('Leave source mode') : t('Source mode'),
+      label: modes.sourceIn(view) ? 'Leave source mode' : 'Source mode',
       hint: shortcuts.hint('app.source'),
       run: () => modes.toggleSource(view),
     },
     {
       id: 'focus',
-      label: modes.focus ? t('Leave focus mode') : t('Focus mode'),
+      label: modes.focus ? 'Leave focus mode' : 'Focus mode',
       hint: shortcuts.hint('app.focus'),
       run: () => modes.toggleFocus(view),
     },
     {
       id: 'typewriter',
-      label: modes.typewriter ? t('Leave typewriter mode') : t('Typewriter mode'),
+      label: modes.typewriter ? 'Leave typewriter mode' : 'Typewriter mode',
       hint: shortcuts.hint('app.typewriter'),
       run: () => modes.toggleTypewriter(view),
     },
@@ -1291,7 +1288,7 @@ export function appCommands(view?: EditorView): Command[] {
       : [
           {
             id: 'full-window',
-            label: workspace.panes.fills === null ? t('Full window') : t('Leave full window'),
+            label: workspace.panes.fills === null ? 'Full window' : 'Leave full window',
             hint: shortcuts.hint('app.fill-tab'),
             disabled: workspace.panes.fills === null && !workspace.activeTabId,
             run: () => void toggleFill(),
@@ -1299,7 +1296,7 @@ export function appCommands(view?: EditorView): Command[] {
         ]),
     {
       id: 'fullscreen',
-      label: fullscreen.on ? t('Leave fullscreen') : t('Fullscreen'),
+      label: fullscreen.on ? 'Leave fullscreen' : 'Fullscreen',
       hint: shortcuts.hint('app.fullscreen'),
       run: () => void fullscreen.toggle(workspace.panes),
     },
@@ -1307,7 +1304,7 @@ export function appCommands(view?: EditorView): Command[] {
       ? [
           {
             id: 'always-on-top',
-            label: t('Always on top'),
+            label: 'Always on top',
             checked: modes.alwaysOnTop,
             run: () => modes.toggleAlwaysOnTop(),
           },
@@ -1316,55 +1313,55 @@ export function appCommands(view?: EditorView): Command[] {
 
     {
       id: 'punctuation',
-      label: modes.punctuation ? t('Use straight quotes') : t('Use curly quotes'),
+      label: modes.punctuation ? 'Use straight quotes' : 'Use curly quotes',
       run: () => modes.togglePunctuation(view),
     },
     {
       id: 'numbers',
-      label: modes.numbers ? t('Stop numbering headings') : t('Number headings'),
+      label: modes.numbers ? 'Stop numbering headings' : 'Number headings',
       run: () => modes.toggleNumbers(view),
     },
 
     {
       id: 'line-numbers',
-      label: modes.lineNumbers ? t('Hide code line numbers') : t('Show code line numbers'),
+      label: modes.lineNumbers ? 'Hide code line numbers' : 'Show code line numbers',
       run: () => modes.toggleLineNumbers(view),
     },
     {
       id: 'rtl',
-      label: modes.rtl ? t('Write left to right') : t('Write right to left'),
+      label: modes.rtl ? 'Write left to right' : 'Write right to left',
       run: () => modes.toggleRightToLeft(view),
     },
     {
       id: 'strict',
-      label: modes.strict ? t('Allow extended markdown') : t('Strict CommonMark only'),
+      label: modes.strict ? 'Allow extended markdown' : 'Strict CommonMark only',
       run: () => modes.toggleStrict(view),
     },
     {
       id: 'equation-numbers',
-      label: modes.equationNumbers ? t('Stop numbering equations') : t('Number equations'),
+      label: modes.equationNumbers ? 'Stop numbering equations' : 'Number equations',
       run: () => modes.toggleEquationNumbers(view),
     },
-    { id: 'wider', label: t('Wider writing area'), run: () => modes.stepWidth(1, view) },
-    { id: 'narrower', label: t('Narrower writing area'), run: () => modes.stepWidth(-1, view) },
-    { id: 'looser', label: t('Looser line spacing'), run: () => modes.stepLineHeight(1, view) },
-    { id: 'tighter', label: t('Tighter line spacing'), run: () => modes.stepLineHeight(-1, view) },
+    { id: 'wider', label: 'Wider writing area', run: () => modes.stepWidth(1, view) },
+    { id: 'narrower', label: 'Narrower writing area', run: () => modes.stepWidth(-1, view) },
+    { id: 'looser', label: 'Looser line spacing', run: () => modes.stepLineHeight(1, view) },
+    { id: 'tighter', label: 'Tighter line spacing', run: () => modes.stepLineHeight(-1, view) },
 
     {
       id: 'zoom-in',
-      label: t('Zoom in'),
+      label: 'Zoom in',
       hint: shortcuts.hint('app.zoom-in'),
       run: () => workspace.zoomPage('in') || modes.stepZoom(1),
     },
     {
       id: 'zoom-out',
-      label: t('Zoom out'),
+      label: 'Zoom out',
       hint: shortcuts.hint('app.zoom-out'),
       run: () => workspace.zoomPage('out') || modes.stepZoom(-1),
     },
     {
       id: 'zoom-reset',
-      label: t('Actual size'),
+      label: 'Actual size',
       hint: shortcuts.hint('app.zoom-reset'),
       run: () => workspace.zoomPage('reset') || modes.resetZoom(),
     },
@@ -1373,7 +1370,7 @@ export function appCommands(view?: EditorView): Command[] {
       ? [
           {
             id: 'window-frame',
-            label: t('Window frame'),
+            label: 'Window frame',
             run: () => modes.setFrame(modes.frame === 'system' ? 'orden' : 'system'),
           },
         ]
@@ -1381,24 +1378,24 @@ export function appCommands(view?: EditorView): Command[] {
 
     {
       id: 'themes',
-      label: t('Switch theme'),
+      label: 'Switch theme',
       run: () => void import('./theme-picker/picking.svelte').then((one) => one.pickTheme()),
     },
     ...theme.all.map((item) => ({
       id: `theme:${item.id}`,
-      label: t('Theme: {name}', { name: t(item.name) }),
+      label: `Theme: ${item.name}`,
       checked: item.id === theme.id,
       run: () => theme.select(item.id),
     })),
     ...switchableAccounts().map((one) => ({
       id: `ai-account:${one.id}`,
-      label: t('AI account: {name}', { name: one.label }),
+      label: `AI account: ${one.label}`,
       checked: one.active,
       run: () => switchAccount(one.id),
     })),
     ...SCHEME_CHOICES.map((choice) => ({
       id: `scheme:${choice}`,
-      label: t('Mode: {name}', { name: t(SCHEME_NAMES[choice]) }),
+      label: `Mode: ${SCHEME_NAMES[choice]}`,
       checked: choice === theme.shown,
       disabled: !theme.offers(choice),
       run: () => theme.setScheme(choice),
@@ -1407,13 +1404,13 @@ export function appCommands(view?: EditorView): Command[] {
       ? []
       : theme.accents.map((swatch) => ({
           id: `accent:${swatch.id}`,
-          label: t('Accent: {name}', { name: t(swatch.name) }),
+          label: `Accent: ${swatch.name}`,
           checked: swatch.id === theme.accent,
           run: () => theme.setAccent(swatch.id),
         }))),
     ...CODE_PALETTES.map((palette) => ({
       id: `code-theme:${palette.id}`,
-      label: t('Code theme: {name}', { name: paletteName(palette) }),
+      label: `Code theme: ${paletteName(palette)}`,
       checked: palette.id === modes.codeTheme,
       run: () => modes.setCodeTheme(palette.id, view),
     })),
@@ -1421,70 +1418,68 @@ export function appCommands(view?: EditorView): Command[] {
       ? [
           {
             id: 'themes-folder',
-            label: t('Open themes folder'),
+            label: 'Open themes folder',
             run: () => void openThemesFolder(),
           },
         ]
       : []),
     ...(isNative
       ? [
-          { id: 'custom-css', label: t('Edit custom CSS'), run: () => void openCustomCss() },
-          { id: 'snippets', label: t('Edit snippets'), run: () => void openSnippets() },
+          { id: 'custom-css', label: 'Edit custom CSS', run: () => void openCustomCss() },
+          { id: 'snippets', label: 'Edit snippets', run: () => void openSnippets() },
         ]
       : []),
-    ...(isDesktop
-      ? [{ id: 'logs', label: t('Open the log file'), run: () => void openLog() }]
-      : []),
+    ...(isDesktop ? [{ id: 'logs', label: 'Open the log file', run: () => void openLog() }] : []),
     {
       id: 'update',
-      label: t('Check for updates'),
+      label: 'Check for updates',
       disabled: !isDesktop,
       run: () => void updates.check(),
     },
-    { id: 'whats-new', label: t('What is new'), run: () => void openExternal(RELEASES_URL) },
-    { id: 'report-issue', label: t('Report an issue'), run: () => void openExternal(ISSUES_URL) },
-    { id: 'source-code', label: t('Source code'), run: () => void openExternal(SOURCE_URL) },
+    { id: 'whats-new', label: 'What is new', run: () => void openExternal(RELEASES_URL) },
+    { id: 'report-issue', label: 'Report an issue', run: () => void openExternal(ISSUES_URL) },
+    { id: 'source-code', label: 'Source code', run: () => void openExternal(SOURCE_URL) },
     {
       id: 'sidebar',
-      label: workspace.panel ? t('Hide left sidebar') : t('Show left sidebar'),
+      label: workspace.panel ? 'Hide left sidebar' : 'Show left sidebar',
       hint: shortcuts.hint('app.sidebar'),
       run: () => workspace.toggleSidebar(),
     },
     {
       id: 'files',
-      label: t('Files'),
+      label: 'Files',
       hint: shortcuts.hint('app.files'),
       run: () => revealPanel('tree'),
     },
     {
       id: 'reveal',
-      label: t('Show in the file list'),
+      label: 'Show in the file list',
       hint: shortcuts.hint('app.reveal'),
       disabled: !workspace.active?.path,
       run: () => workspace.revealNote(),
     },
     {
       id: 'fold-list',
-      label: t('Collapse the file list'),
+      label: 'Collapse the file list',
       hint: shortcuts.hint('app.fold-list'),
       disabled: !workspace.unfolded,
       run: () => workspace.foldList(),
     },
     {
       id: 'outline-panel',
-      label: t('Outline'),
+      label: 'Outline',
       hint: shortcuts.hint('app.outline'),
       run: () => revealPanel('outline'),
     },
     {
       id: 'search-space',
-      label: t('Search this space'),
+      label: 'Search this space',
       hint: shortcuts.hint('app.search'),
       run: () => revealPanel('search'),
     },
     {
       id: 'links-panel',
-      label: t('Links'),
+      label: 'Links',
       hint: shortcuts.hint('app.links'),
       run: () => revealPanel('links'),
     },
@@ -1493,46 +1488,46 @@ export function appCommands(view?: EditorView): Command[] {
       : [
           {
             id: 'ask-panel',
-            label: t('Ask'),
+            label: 'Ask',
             hint: shortcuts.hint('app.ask'),
             run: () => revealPanel('ask'),
           },
         ]),
     {
       id: 'quick-question',
-      label: t('Quick question'),
+      label: 'Quick question',
       hint: shortcuts.hint('app.quick-question'),
       run: () => askQuickly(),
     },
     {
       id: 'reload-app',
-      label: t('Reload Orden'),
+      label: 'Reload Orden',
       hint: shortcuts.hint('app.reload'),
       run: () => location.reload(),
     },
     {
       id: 'scratchpad',
-      label: t('Scratchpad'),
+      label: 'Scratchpad',
       hint: shortcuts.hint('app.scratchpad'),
       run: () => toggleScratchpad(),
     },
     {
       id: 'right-sidebar',
-      label: workspace.openOn('right') ? t('Hide right sidebar') : t('Show right sidebar'),
+      label: workspace.openOn('right') ? 'Hide right sidebar' : 'Show right sidebar',
       hint: shortcuts.hint('app.right-sidebar'),
       disabled: !workspace.right.length,
       run: () => workspace.toggleSidebar('right'),
     },
     {
       id: 'hold-panel',
-      label: workspace.held ? t('Follow the open note') : t('Stay on this note'),
+      label: workspace.held ? 'Follow the open note' : 'Stay on this note',
       checked: workspace.held,
       disabled: workspace.holdablePanel === null,
       run: () => workspace.holdPanel(workspace.held ? null : (workspace.panelTab?.id ?? null)),
     },
     {
       id: 'graph',
-      label: t('Graph'),
+      label: 'Graph',
       hint: shortcuts.hint('app.graph'),
       run: () => workspace.openGraph(),
     },
@@ -1541,23 +1536,23 @@ export function appCommands(view?: EditorView): Command[] {
       : [
           {
             id: 'pass',
-            label: t('Pass'),
+            label: 'Pass',
             hint: shortcuts.hint('app.pass'),
             run: () => void import('./pass/open').then((one) => one.openPass()),
           },
           {
             id: 'pass-lock',
-            label: t('Lock Pass'),
+            label: 'Lock Pass',
             run: () => void import('./pass/open').then((one) => one.lockPass()),
           },
           {
             id: 'pass-new-login',
-            label: t('New login'),
+            label: 'New login',
             run: () => void import('./pass/open').then((one) => one.openPass('new-login')),
           },
           {
             id: 'pass-generate',
-            label: t('Generate password'),
+            label: 'Generate password',
             run: () => void import('./pass/open').then((one) => one.openPass('generator')),
           },
         ]),
@@ -1566,7 +1561,7 @@ export function appCommands(view?: EditorView): Command[] {
       : [
           {
             id: 'todos',
-            label: t('Tasks'),
+            label: 'Tasks',
             hint: shortcuts.hint('app.tasks'),
             run: () => void import('./todos-entry').then(({ showTodos }) => showTodos()),
           },
@@ -1574,19 +1569,19 @@ export function appCommands(view?: EditorView): Command[] {
             ? [
                 {
                   id: 'time-tab',
-                  label: t('Open time tracker'),
+                  label: 'Open time tracker',
                   hint: shortcuts.hint('time.tab'),
                   run: () => void import('./time/open').then(({ openTime }) => openTime()),
                 },
                 {
                   id: 'time-start',
-                  label: t('Start timer'),
+                  label: 'Start timer',
                   hint: shortcuts.hint('time.start'),
                   run: () => void import('./time/commands').then(({ startTimer }) => startTimer()),
                 },
                 {
                   id: 'time-stop',
-                  label: t('Stop timer'),
+                  label: 'Stop timer',
                   hint: shortcuts.hint('time.stop'),
                   run: () => void import('./time/commands').then(({ stopTimer }) => stopTimer()),
                 },
@@ -1595,45 +1590,45 @@ export function appCommands(view?: EditorView): Command[] {
         ]),
     {
       id: 'region-next',
-      label: t('Next section'),
+      label: 'Next section',
       hint: shortcuts.hint('app.region-next'),
       run: () => void stepRegionFocus(1),
     },
     {
       id: 'region-previous',
-      label: t('Previous section'),
+      label: 'Previous section',
       hint: shortcuts.hint('app.region-previous'),
       run: () => void stepRegionFocus(-1),
     },
     {
       id: 'spaces',
-      label: t('Spaces'),
+      label: 'Spaces',
       hint: shortcuts.hint('space.switcher'),
       run: () => spacePicker.toggle(),
     },
     {
       id: 'tab-overview',
-      label: t('Tabs'),
+      label: 'Tabs',
       hint: shortcuts.hint('app.tab-overview'),
       run: toggleTabOverview,
     },
     {
       id: 'space-next',
-      label: t('Next space'),
+      label: 'Next space',
       hint: shortcuts.hint('space.next'),
       disabled: workspace.shownSpaces.length < 2,
       run: () => stepSpace(1),
     },
     {
       id: 'space-previous',
-      label: t('Previous space'),
+      label: 'Previous space',
       hint: shortcuts.hint('space.previous'),
       disabled: workspace.shownSpaces.length < 2,
       run: () => stepSpace(-1),
     },
     {
       id: 'keys',
-      label: t('Keyboard shortcuts'),
+      label: 'Keyboard shortcuts',
       hint: shortcuts.hint('app.keys'),
       run: () => settings.show('shortcuts'),
     },

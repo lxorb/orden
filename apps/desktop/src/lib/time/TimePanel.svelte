@@ -1,6 +1,5 @@
 <script lang="ts">
   import Facts from '../Facts.svelte'
-  import { t } from '../i18n.svelte'
   import { counted, isOwn } from './counted'
   import { dayOf, daysAfter, MINUTE, near, piecesIn, totalsOf, wholeOf } from './days'
   import { hoursShown } from './lanes'
@@ -40,7 +39,7 @@
   const whole = $derived(wholeOf(pieces))
   const recent = $derived(time.latest().slice(0, 5))
   const empty = $derived(!time.activities.length && !time.spans.some(isOwn))
-  const starters = $derived([t('Work'), t('Study'), t('Reading'), t('Break')])
+  const starters = $derived(['Work', 'Study', 'Reading', 'Break'])
 
   const inFront = $derived.by(() => {
     const fresh = near(time.spans, now - 2 * MINUTE, Infinity).filter(
@@ -74,9 +73,7 @@
 
   {#if empty}
     <p class="hello">
-      {t(
-        'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.',
-      )}
+      Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.
     </p>
     <div class="starters">
       {#each starters as name (name)}
@@ -86,7 +83,7 @@
       {/each}
     </div>
   {:else}
-    <p class="orden-section">{t('Recent')}</p>
+    <p class="orden-section">Recent</p>
     <ul>
       {#each recent as one (one.id)}
         {@const on = time.running.some((span) => span.activity === one.id)}
@@ -95,7 +92,7 @@
             type="button"
             class="orden-row is-short"
             class:is-on={on}
-            title={t('Start timer')}
+            title="Start timer"
             onclick={() => time.start(one.id)}
           >
             <span class="dot" style:background={tintOf(one.id)}></span>
@@ -109,14 +106,14 @@
       {/each}
     </ul>
 
-    <p class="orden-section">{t('Today')}<span>{length(whole)}</span></p>
+    <p class="orden-section">Today<span>{length(whole)}</span></p>
     <div class="today">
       <Strip from={shown[0]} to={shown[1]} spans={own} minutes={minutes.list} {now} hours />
     </div>
   {/if}
 
   <button type="button" class="orden-button is-quiet open" onclick={() => openTime()}
-    >{t('Open time tracker')}</button
+    >Open time tracker</button
   >
 </div>
 

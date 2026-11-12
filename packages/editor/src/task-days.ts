@@ -1,5 +1,3 @@
-import { label } from './labels'
-
 const languageOf = () =>
   typeof document === 'undefined' ? undefined : document.documentElement.lang || undefined
 
@@ -32,9 +30,9 @@ export function todayHere(): string {
 export function dayWords(iso: string, today: string, time?: string): string {
   const ahead = dayNumber(iso) - dayNumber(today)
   let day: string
-  if (ahead === 0) day = label('today')
-  else if (ahead === 1) day = label('tomorrow')
-  else if (ahead === -1) day = label('yesterday')
+  if (ahead === 0) day = 'Today'
+  else if (ahead === 1) day = 'Tomorrow'
+  else if (ahead === -1) day = 'Yesterday'
   else if (ahead > 1 && ahead < 7) day = said(iso, { weekday: 'short' })
   else if (iso.slice(0, 4) === today.slice(0, 4))
     day = said(iso, { day: 'numeric', month: 'short' })

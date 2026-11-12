@@ -2,7 +2,7 @@ import type { TaskHelp } from '@orden/editor'
 import { dayWords, todayHere } from '@orden/editor/task-days'
 import { tick, todayOf } from '@orden/bases'
 import { parseQuickAdd } from '@orden/bases/language'
-import { i18n } from '../i18n.svelte'
+import { region } from '../region'
 import { quickAdd } from './asked.svelte'
 import { pickField } from './task-pick'
 
@@ -13,7 +13,7 @@ export const TASK_HELP: TaskHelp = {
 
   dayAtEnd(text) {
     if (!quickAdd.smart) return null
-    const read = parseQuickAdd(text, [i18n.language], new Date())
+    const read = parseQuickAdd(text, [region()], new Date())
     const end = text.trimEnd().length
     const chip = read.chips.find((one) => one.kind === 'when' && one.to === end)
     const { due, time } = read.fields

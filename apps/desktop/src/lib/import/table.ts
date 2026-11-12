@@ -1,10 +1,9 @@
 import { plainWords } from '@orden/markdown/escapes'
-import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { type Base, writeBase } from '@orden/bases'
 import { dayOf, freeKey, noteText, type Meta, propertyName, titleHeading } from './meta'
 import { Names, safeName, withoutNotionId } from './names'
-import type { ImportPlan, Lost, Planned } from './plan'
+import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
 export type Rows = 'table' | 'notes'
@@ -21,7 +20,7 @@ export async function readTable(
 ): Promise<ImportPlan> {
   const names = new Names()
   const files: Planned[] = []
-  const lost: Lost[] = []
+  const lost: string[] = []
 
   const paths = new Set(sources.map((one) => one.path.toLowerCase()))
 
@@ -61,7 +60,7 @@ export async function readTable(
   }
 
   if (!files.length) {
-    lost.push({ text: key('There are no rows in this file.') })
+    lost.push('There are no rows in this file.')
   }
 
   return { format: 'table', files, lost }

@@ -3,7 +3,6 @@ import { OrdenWidget } from './widget'
 import { EditorView } from '@codemirror/view'
 import { iconElement } from '../icon'
 import { fenceCodeAt } from '../fence'
-import { label as uiLabel } from '../labels'
 import { pressedByKey } from '../press'
 import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/door'
 import { isAiLanguage } from '../ai/block'
@@ -45,7 +44,7 @@ export class CheckboxWidget extends OrdenWidget {
     box.type = 'checkbox'
     box.className = 'orden-checkbox'
     box.checked = this.checked
-    box.setAttribute('aria-label', uiLabel('taskDone'))
+    box.setAttribute('aria-label', 'Done')
 
     box.addEventListener('mousedown', (event) => {
       event.preventDefault()
@@ -163,7 +162,7 @@ export class FenceHeaderWidget extends OrdenWidget {
     const label = document.createElement('button')
     label.className = 'orden-fence-language'
     label.type = 'button'
-    label.title = uiLabel('setLanguage')
+    label.title = 'Set the language'
     label.textContent = this.language || 'plain'
     if (!this.language) label.classList.add('orden-fence-unset')
 
@@ -183,8 +182,8 @@ export class FenceHeaderWidget extends OrdenWidget {
     const copy = document.createElement('button')
     copy.className = 'orden-fence-copy'
     copy.type = 'button'
-    copy.title = uiLabel('copy')
-    copy.setAttribute('aria-label', uiLabel('copyCode'))
+    copy.title = 'Copy'
+    copy.setAttribute('aria-label', 'Copy code')
 
     const draw = (paths: string[]) => {
       copy.replaceChildren()
@@ -210,12 +209,12 @@ export class FenceHeaderWidget extends OrdenWidget {
         .writeText(fenceCodeAt(view.state, this.blockFrom))
         .then(() => {
           copy.classList.add('orden-fence-copied')
-          copy.title = uiLabel('copied')
+          copy.title = 'Copied'
           draw(TICK)
 
           window.setTimeout(() => {
             copy.classList.remove('orden-fence-copied')
-            copy.title = uiLabel('copy')
+            copy.title = 'Copy'
             draw(SHEETS)
           }, 1400)
         })
@@ -285,7 +284,7 @@ export class FenceHeaderWidget extends OrdenWidget {
   }
 
   private runButton(view: EditorView): HTMLElement {
-    return this.glyphButton(uiLabel('run'), uiLabel('runCode'), 'M4 2.6l7 4.4-7 4.4z', () => {
+    return this.glyphButton('Run', 'Run the code', 'M4 2.6l7 4.4-7 4.4z', () => {
       const fence = runnableFenceAt(view.state, this.blockFrom)
       if (fence) runFence(view, fence)
     })
@@ -293,12 +292,10 @@ export class FenceHeaderWidget extends OrdenWidget {
 
   private askButton(view: EditorView): HTMLElement {
     if (this.asking) {
-      return this.glyphButton(uiLabel('stop'), uiLabel('stop'), 'M4 4h6v6H4z', () =>
-        stopAskAt(view, this.blockFrom),
-      )
+      return this.glyphButton('Stop', 'Stop', 'M4 4h6v6H4z', () => stopAskAt(view, this.blockFrom))
     }
 
-    return this.glyphButton(uiLabel('ask'), uiLabel('askModel'), 'M4 2.6l7 4.4-7 4.4z', () => {
+    return this.glyphButton('Ask', 'Ask the model', 'M4 2.6l7 4.4-7 4.4z', () => {
       const fence = aiFenceAt(view.state, this.blockFrom)
       if (fence) askAiFence(view, fence)
     })
@@ -308,7 +305,7 @@ export class FenceHeaderWidget extends OrdenWidget {
     const field = document.createElement('input')
     field.className = 'orden-fence-language-input'
     field.value = this.language
-    field.placeholder = uiLabel('fenceLanguage')
+    field.placeholder = 'language'
     field.spellcheck = false
 
     const written = view.state.sliceDoc(this.infoFrom, this.infoTo)

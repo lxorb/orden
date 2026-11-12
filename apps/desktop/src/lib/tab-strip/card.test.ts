@@ -5,16 +5,12 @@ describe("the card's place", () => {
   const anchor = { left: 100, right: 300, bottom: 38 }
 
   test('is under the tab, from its leading edge', () => {
-    expect(spot(anchor, 256, 1200, 1)).toEqual({ x: 100, y: 42 })
-  })
-
-  test('from its trailing edge in a language that reads the other way', () => {
-    expect(spot(anchor, 256, 1200, -1)).toEqual({ x: 44, y: 42 })
+    expect(spot(anchor, 256, 1200)).toEqual({ x: 100, y: 42 })
   })
 
   test('and inside the window', () => {
-    expect(spot({ left: 1100, right: 1190, bottom: 38 }, 256, 1200, 1).x).toBe(936)
-    expect(spot({ left: 2, right: 60, bottom: 38 }, 256, 1200, -1).x).toBe(8)
+    expect(spot({ left: 1100, right: 1190, bottom: 38 }, 256, 1200).x).toBe(936)
+    expect(spot({ left: 2, right: 60, bottom: 38 }, 256, 1200).x).toBe(8)
   })
 })
 

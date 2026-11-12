@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from './i18n.svelte'
   import KindCard from './KindCard.svelte'
   import { kindLines, offeredKinds, type NewKindRow, showOthers } from './new-kinds'
   import { kindOfLetter, letterIsOurs } from './new-kind-keys'
@@ -85,7 +84,7 @@
   data-new-here={paneId}
   use:roving={{ across: !viewport.touch, rows: 'button', wrap: true }}
   role="group"
-  aria-label={t('New tab')}
+  aria-label="New tab"
 >
   {#each lines as line (line[0]?.line)}
     <div class="line">

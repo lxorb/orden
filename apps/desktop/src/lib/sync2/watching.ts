@@ -9,7 +9,6 @@ import { carriedOwn } from '@orden/bases/inbox'
 import { keptShaped } from '../internal/roots'
 import { hearInternal, listInternal, mountedFor } from '../internal/watch'
 import { inForeignCopy } from '@orden/sync-core/foreign'
-import { t } from '../i18n.svelte'
 import { samePath } from '../space-paths'
 import { syncMark } from '../surfaces.svelte'
 import type { Engine } from './engine'
@@ -49,10 +48,8 @@ function limitReached(): void {
   toldOfLimit = true
   void import('../notify').then(({ notify }) =>
     notify(
-      t('Some changes may not be noticed'),
-      t(
-        'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.',
-      ),
+      'Some changes may not be noticed',
+      'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.',
       'watch-limit',
     ),
   )

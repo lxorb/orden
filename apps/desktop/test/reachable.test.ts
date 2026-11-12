@@ -30,11 +30,11 @@ describe('the window buttons', () => {
   test.each(['Minimize', 'Maximize', 'Restore', 'Close'])(
     'draw %s only where there is a window to press it on',
     (label) => {
-      const asked = `t('${label}')`
-      expect(titlebar, label).toContain(asked)
-      expect(desktop, label).toContain(asked)
+      const asked = new RegExp(`["']${label}["']`, 'g')
+      expect(titlebar, label).toMatch(asked)
+      expect(desktop, label).toMatch(asked)
 
-      expect(titlebar.split(asked).length - 1).toBe(desktop.split(asked).length - 1)
+      expect(titlebar.match(asked)?.length).toBe(desktop.match(asked)?.length)
     },
   )
 

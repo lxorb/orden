@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { i18n, t } from '../../i18n.svelte'
+  import { region } from '../../region'
   import { dur, slide } from '../../motion'
   import { workspace } from '../../workspace.svelte'
   import { insideSpace } from '../../space-paths'
@@ -19,17 +19,13 @@
   const open = $derived(opened || chat.unfolded)
 
   const verb = $derived.by(() => {
-    if (part.kind === 'thinking') return t('Thought')
+    if (part.kind === 'thinking') return 'Thought'
     const known = verbOf(part.verb)
-    return known ? t(known) : bareName(part.verb)
+    return known ?? bareName(part.verb)
   })
 
   const object = $derived(
-    part.kind === 'thinking'
-      ? part.ms
-        ? seconds(part.ms, i18n.language)
-        : ''
-      : objectOf(part.args),
+    part.kind === 'thinking' ? (part.ms ? seconds(part.ms, region()) : '') : objectOf(part.args),
   )
 
   const going = $derived(live && (part.kind === 'thinking' ? !part.ms : part.state === 'running'))

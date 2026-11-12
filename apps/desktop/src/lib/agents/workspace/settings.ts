@@ -1,6 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { ACCENTS } from '../../accents'
-import { CATALOGUE_IDS, i18n } from '../../i18n.svelte'
 import { LINK_FORMATS } from '../../link-format'
 import { LINE_HEIGHTS, modes, WIDTHS } from '../../modes.svelte'
 import { theme } from '../../theme.svelte'
@@ -87,14 +86,6 @@ const SETTINGS: Record<string, Setting> = {
         'accent',
       )
       return () => theme.setAccent(id)
-    },
-  },
-  language: {
-    about: 'the language the app speaks, or system',
-    read: () => i18n.choice,
-    write: (value) => {
-      const id = oneOf(value, ['system', ...CATALOGUE_IDS], 'language')
-      return () => i18n.select(id)
     },
   },
   spellcheck: toggled(

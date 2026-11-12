@@ -6,7 +6,7 @@ import {
   readRollup,
   reverseFormula,
 } from '@orden/bases'
-import { i18n, t } from '../i18n.svelte'
+import { region } from '../region'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { writeEach } from './act'
 import {
@@ -37,7 +37,7 @@ function formatName(format: string): string {
     const code = format.slice(9)
     try {
       return (
-        new Intl.NumberFormat(i18n.language, { style: 'currency', currency: code })
+        new Intl.NumberFormat(region(), { style: 'currency', currency: code })
           .formatToParts(0)
           .find((part) => part.type === 'currency')?.value ?? code
       )
@@ -47,17 +47,17 @@ function formatName(format: string): string {
   }
   switch (format) {
     case 'number':
-      return t('Number with separators')
+      return 'Number with separators'
     case 'percent':
-      return t('Percent')
+      return 'Percent'
     case 'progress':
-      return t('Progress')
+      return 'Progress'
     case 'url':
-      return t('Web address')
+      return 'Web address'
     case 'email':
-      return t('Email')
+      return 'Email'
     default:
-      return t('Phone')
+      return 'Phone'
   }
 }
 
@@ -91,7 +91,7 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
     ? []
     : [
         {
-          label: t('Unique ID'),
+          label: 'Unique ID',
           run: () => {
             if (live.locked) {
               live.refused++
@@ -118,9 +118,9 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
     ...others,
     DIVIDER,
     ...reverse,
-    { label: t('Formula'), run: () => (live.builder = { kind: 'formula' }) },
-    { label: t('Rollup'), run: () => (live.builder = { kind: 'rollup' }) },
-    { label: t('Button'), run: () => (live.builder = { kind: 'button' }) },
+    { label: 'Formula', run: () => (live.builder = { kind: 'formula' }) },
+    { label: 'Rollup', run: () => (live.builder = { kind: 'rollup' }) },
+    { label: 'Button', run: () => (live.builder = { kind: 'button' }) },
     ...ids,
   ]
 }
@@ -157,18 +157,18 @@ export function columnMenu(
 
   return [
     {
-      label: t('Ascending'),
+      label: 'Ascending',
       run: () => kit.change((b, i) => setSort(b, i, [{ property: column, direction: 'ASC' }])),
     },
     {
-      label: t('Descending'),
+      label: 'Descending',
       run: () => kit.change((b, i) => setSort(b, i, [{ property: column, direction: 'DESC' }])),
     },
     DIVIDER,
-    grouped(event, t('Summary'), () =>
+    grouped(event, 'Summary', () =>
       Promise.resolve([
         {
-          label: t('None'),
+          label: 'None',
           checked: !view?.summaries[column],
           run: () => kit.change((b, i) => setSummary(b, i, column, null)),
         },
@@ -179,12 +179,12 @@ export function columnMenu(
         })),
       ]),
     ),
-    grouped(event, t('Add a column'), () => Promise.resolve(additions(kit, columns))),
+    grouped(event, 'Add a column', () => Promise.resolve(additions(kit, columns))),
     DIVIDER,
     ...(note
       ? [
           {
-            label: t('Options'),
+            label: 'Options',
             checked: optionsAt(base, column).length > 0,
             run: () => {
               if (!optionsAt(base, column).length && base.orden.id?.property !== bare(column)) {
@@ -198,10 +198,10 @@ export function columnMenu(
       : []),
     ...(note || formula !== undefined
       ? [
-          grouped(event, t('Format'), () =>
+          grouped(event, 'Format', () =>
             Promise.resolve([
               {
-                label: t('None'),
+                label: 'None',
                 checked: format === undefined,
                 run: () => kit.change((b) => setProperty(b, keyOf(column), { format: undefined })),
               },
@@ -217,7 +217,7 @@ export function columnMenu(
     ...(formula !== undefined
       ? [
           {
-            label: t('Edit'),
+            label: 'Edit',
             run: () =>
               (live.builder = {
                 kind: readRollup(formula) !== null ? 'rollup' : 'formula',
@@ -227,12 +227,12 @@ export function columnMenu(
         ]
       : []),
     ...(isButton(column)
-      ? [{ label: t('Edit'), run: () => (live.builder = { kind: 'button', column }) }]
+      ? [{ label: 'Edit', run: () => (live.builder = { kind: 'button', column }) }]
       : []),
     ...(view?.type === 'form' && note
       ? [
           {
-            label: t('Required'),
+            label: 'Required',
             checked: view.orden.required?.includes(bare(column)) === true,
             run: () =>
               kit.change((b, i) => {
@@ -248,19 +248,19 @@ export function columnMenu(
       ? [
           place < frozen
             ? {
-                label: t('Unfreeze'),
+                label: 'Unfreeze',
                 run: () => kit.change((b, i) => setViewOrden(b, i, 'freeze', undefined)),
               }
             : {
-                label: t('Freeze up to here'),
+                label: 'Freeze up to here',
                 run: () => kit.change((b, i) => setViewOrden(b, i, 'freeze', place + 1)),
               },
         ]
       : []),
     DIVIDER,
-    { label: t('Rename'), run: () => (live.builder = { kind: 'name', column }) },
+    { label: 'Rename', run: () => (live.builder = { kind: 'name', column }) },
     {
-      label: t('Hide'),
+      label: 'Hide',
       disabled: columns.length < 2,
       run: () =>
         kit.change((b, i) =>

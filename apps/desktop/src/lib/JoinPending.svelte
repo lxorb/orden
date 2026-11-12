@@ -1,16 +1,12 @@
 <script lang="ts">
   import Cross from './Cross.svelte'
   import { joining } from './joining.svelte'
-  import { t } from './i18n.svelte'
 
-  const who = $derived(joining.invitation?.from ?? t('Somebody'))
+  const who = $derived(joining.invitation?.from ?? 'Somebody')
   const said = $derived(
     joining.step === 'waiting'
-      ? t('Waiting for {who}', { who })
-      : t('{who} shared {space} with you', {
-          who,
-          space: joining.invitation?.note ?? joining.invitation?.space ?? '',
-        }),
+      ? `Waiting for ${who}`
+      : `${who} shared ${joining.invitation?.note ?? joining.invitation?.space ?? ''} with you`,
   )
 </script>
 
@@ -24,8 +20,8 @@
       <button
         type="button"
         class="orden-glyph"
-        aria-label={t('Dismiss')}
-        title={t('Dismiss')}
+        aria-label="Dismiss"
+        title="Dismiss"
         onclick={() => joining.dismiss()}
       >
         <Cross />

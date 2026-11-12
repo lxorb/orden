@@ -18,14 +18,14 @@ export async function addTask(
     const write = await import('./quick-add/write')
     return write.addTask({ text: said, fields: { tags: [], remind: [] } }, into)
   }
-  const [{ parseQuickAdd }, { i18n }, write] = await Promise.all([
+  const [{ parseQuickAdd }, { region }, write] = await Promise.all([
     import('@orden/bases/language'),
-    import('./i18n.svelte'),
+    import('./region'),
     import('./quick-add/write'),
   ])
   const root = options.root ?? workspace.activeSpace?.root
   const notes = root === undefined ? {} : { notes: write.noteNames(root) }
-  const read = parseQuickAdd(said, [i18n.language], new Date(), notes)
+  const read = parseQuickAdd(said, [region()], new Date(), notes)
   return write.addTask(
     {
       text: read.text || said,

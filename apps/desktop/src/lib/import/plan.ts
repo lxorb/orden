@@ -1,5 +1,3 @@
-import { plural, t } from '../i18n.svelte'
-
 export type FormatId =
   | 'notion'
   | 'evernote'
@@ -23,23 +21,10 @@ export type Planned =
   | { kind: 'note'; path: string; text: string }
   | { kind: 'file'; path: string; bytes: Uint8Array; pages?: true }
 
-export interface Lost {
-  text: string
-  one?: string
-  values?: Record<string, string | number>
-}
-
-export function worthKnowing(line: Lost): string {
-  const count = line.values?.count
-  if (line.one === undefined || typeof count !== 'number') return t(line.text, line.values)
-
-  return plural(count, { one: line.one, other: line.text }, line.values)
-}
-
 export interface ImportPlan {
   format: FormatId
   files: Planned[]
-  lost: Lost[]
+  lost: string[]
   inbox?: string
 }
 

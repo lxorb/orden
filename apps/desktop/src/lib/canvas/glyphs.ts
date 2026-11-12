@@ -39,7 +39,6 @@ import type { IconNode } from 'lucide'
 
 import { type InkTool } from './format'
 import { type Tool } from './pointer'
-import { t } from '../i18n.svelte'
 import { shortcuts } from '../shortcuts.svelte'
 
 export interface Mark {
@@ -60,37 +59,37 @@ export const ABOUT: ToolMark[] = [
   {
     id: 'select',
     icon: MousePointer2,
-    title: () => t('Select'),
+    title: () => 'Select',
     key: 'canvas.tool.select',
   },
-  { id: 'hand', icon: Hand, title: () => t('Pan'), key: 'canvas.tool.hand' },
+  { id: 'hand', icon: Hand, title: () => 'Pan', key: 'canvas.tool.hand' },
 ]
 
 export const WORDS: ToolMark = {
   id: 'words',
   icon: Type,
-  title: () => t('Text'),
+  title: () => 'Text',
   key: 'canvas.tool.words',
 }
 
 export const RUBBING: ToolMark[] = [
-  { id: 'erase', icon: Eraser, title: () => t('Erase'), key: 'canvas.tool.erase' },
-  { id: 'lasso', icon: Lasso, title: () => t('Lasso'), key: 'canvas.tool.lasso' },
+  { id: 'erase', icon: Eraser, title: () => 'Erase', key: 'canvas.tool.erase' },
+  { id: 'lasso', icon: Lasso, title: () => 'Lasso', key: 'canvas.tool.lasso' },
 ]
 
 export const PLACING: ToolMark[] = [
-  { id: 'text', icon: StickyNote, title: () => t('Card'), key: 'canvas.tool.text' },
-  { id: 'file', icon: FileText, title: () => t('Note'), key: 'canvas.tool.file' },
-  { id: 'picture', icon: Image, title: () => t('Picture'), key: 'canvas.tool.picture' },
-  { id: 'link', icon: Link2, title: () => t('Link'), key: 'canvas.tool.link' },
-  { id: 'group', icon: Frame, title: () => t('Frame'), key: 'canvas.tool.group' },
-  { id: 'rect', icon: Square, title: () => t('Rectangle'), key: 'canvas.tool.rect' },
-  { id: 'ellipse', icon: Circle, title: () => t('Oval'), key: 'canvas.tool.ellipse' },
-  { id: 'rhombus', icon: Diamond, title: () => t('Diamond'), key: 'canvas.tool.rhombus' },
-  { id: 'triangle', icon: Triangle, title: () => t('Triangle'), key: 'canvas.tool.triangle' },
-  { id: 'line', icon: Slash, title: () => t('Line'), key: 'canvas.tool.line' },
-  { id: 'arrow', icon: ArrowUpRight, title: () => t('Arrow'), key: 'canvas.tool.arrow' },
-  { id: 'elbow', icon: CornerDownRight, title: () => t('Elbow'), key: 'canvas.tool.elbow' },
+  { id: 'text', icon: StickyNote, title: () => 'Card', key: 'canvas.tool.text' },
+  { id: 'file', icon: FileText, title: () => 'Note', key: 'canvas.tool.file' },
+  { id: 'picture', icon: Image, title: () => 'Picture', key: 'canvas.tool.picture' },
+  { id: 'link', icon: Link2, title: () => 'Link', key: 'canvas.tool.link' },
+  { id: 'group', icon: Frame, title: () => 'Frame', key: 'canvas.tool.group' },
+  { id: 'rect', icon: Square, title: () => 'Rectangle', key: 'canvas.tool.rect' },
+  { id: 'ellipse', icon: Circle, title: () => 'Oval', key: 'canvas.tool.ellipse' },
+  { id: 'rhombus', icon: Diamond, title: () => 'Diamond', key: 'canvas.tool.rhombus' },
+  { id: 'triangle', icon: Triangle, title: () => 'Triangle', key: 'canvas.tool.triangle' },
+  { id: 'line', icon: Slash, title: () => 'Line', key: 'canvas.tool.line' },
+  { id: 'arrow', icon: ArrowUpRight, title: () => 'Arrow', key: 'canvas.tool.arrow' },
+  { id: 'elbow', icon: CornerDownRight, title: () => 'Elbow', key: 'canvas.tool.elbow' },
 ]
 
 export const PEN_ICONS: Record<InkTool, IconNode> = {
@@ -104,13 +103,13 @@ export const PEN_ICONS: Record<InkTool, IconNode> = {
 }
 
 export const PEN_NAMES: Record<InkTool, () => string> = {
-  pen: () => t('Pen'),
-  fountain: () => t('Fountain pen'),
-  pencil: () => t('Pencil'),
-  marker: () => t('Marker'),
-  highlighter: () => t('Highlighter'),
-  brush: () => t('Brush'),
-  calligraphy: () => t('Calligraphy'),
+  pen: () => 'Pen',
+  fountain: () => 'Fountain pen',
+  pencil: () => 'Pencil',
+  marker: () => 'Marker',
+  highlighter: () => 'Highlighter',
+  brush: () => 'Brush',
+  calligraphy: () => 'Calligraphy',
 }
 
 export const MARKS = {

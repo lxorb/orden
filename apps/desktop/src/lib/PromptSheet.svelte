@@ -7,7 +7,6 @@
   import { rank } from './fuzzy'
   import { offsetOf, type Rows, windowFor } from './row-window'
   import { ListView, measuredRow } from './row-window.svelte'
-  import { t } from './i18n.svelte'
   import { prompt } from './prompt.svelte'
   import { selectAll } from './select-all'
   import SpaceMark from './SpaceMark.svelte'
@@ -194,7 +193,7 @@
             </ul>
           </div>
         {:else}
-          <p class="detail">{t('Nothing found')}</p>
+          <p class="detail">Nothing found</p>
         {/if}
       {:else if prompt.detail}
         <p class="detail">{prompt.detail}</p>
@@ -218,16 +217,16 @@
               data-lands={option.lands || (prompt.tick && option.primary) ? '' : undefined}
               onclick={() => prompt.pick(option.id)}
             >
-              {t(option.label)}
+              {option.label}
             </button>
           {/each}
         {:else if prompt.mode === 'find'}
           <button type="button" class="orden-button is-quiet" onclick={() => prompt.dismiss()}
-            >{t('Cancel')}</button
+            >Cancel</button
           >
         {:else}
           <button type="button" class="orden-button is-quiet" onclick={() => prompt.dismiss()}
-            >{t('Cancel')}</button
+            >Cancel</button
           >
           <button
             type="submit"
@@ -236,7 +235,7 @@
             disabled={prompt.mode === 'text' && !prompt.value.trim()}
             data-lands={prompt.mode === 'confirm' && prompt.lands ? '' : undefined}
           >
-            {t(prompt.confirmLabel)}
+            {prompt.confirmLabel}
           </button>
         {/if}
       </div>

@@ -1,7 +1,6 @@
 <script lang="ts">
   import Facts from './Facts.svelte'
   import { fileMark } from './file-mark'
-  import { t } from './i18n.svelte'
   import { shownName } from './note-name'
   import { nameOf } from './space-paths'
   import { isShared, share } from './sharing.svelte'
@@ -17,8 +16,8 @@
   import { dur, fade, scale } from './motion'
 
   const ROLES = $derived([
-    { value: 'write', label: t('can edit') },
-    { value: 'read', label: t('can view') },
+    { value: 'write', label: 'can edit' },
+    { value: 'read', label: 'can view' },
   ])
 
   const who = $derived(share.who)
@@ -37,8 +36,8 @@
   }
 
   function subtitle(person: Member): (string | null | false)[] {
-    if (person.guest) return [person.email, t('Guest')]
-    return [person.email, person.pending && t('Invited')]
+    if (person.guest) return [person.email, 'Guest']
+    return [person.email, person.pending && 'Invited']
   }
 
   const keyOf = (person: Member | Waiting) => `person:${person.guest ?? person.email ?? ''}`
@@ -66,8 +65,8 @@
   function menuFor(person: Member) {
     return [
       ...ROLES,
-      ...(person.pending && person.email ? [{ value: 'resend', label: t('Resend') }] : []),
-      { value: 'remove', label: t('Remove'), danger: true },
+      ...(person.pending && person.email ? [{ value: 'resend', label: 'Resend' }] : []),
+      { value: 'remove', label: 'Remove', danger: true },
     ]
   }
 
@@ -99,7 +98,7 @@
   {/await}
 {/snippet}
 
-<Sheet open={share.open} title={t('Share {name}', { name: subject })} onclose={() => share.close()}>
+<Sheet open={share.open} title="Share {subject}" onclose={() => share.close()}>
   {#snippet mark()}
     {#if item}
       <FileMark mark={fileMark(item.path)} path={item.path} />
@@ -113,7 +112,7 @@
   {/if}
 
   {#if item && alreadyInTheSpace}
-    <p class="note">{t('Everyone in the space already has it.')}</p>
+    <p class="note">Everyone in the space already has it.</p>
   {/if}
 
   <div class="card">
@@ -131,8 +130,8 @@
         oninput={() => (share.wrongAddress = false)}
         type="text"
         inputmode="email"
-        placeholder={t('Add people by email')}
-        aria-label={t('Add people by email')}
+        placeholder="Add people by email"
+        aria-label="Add people by email"
         spellcheck="false"
         autocapitalize="off"
         autocomplete="off"
@@ -142,7 +141,7 @@
           value={share.role}
           options={ROLES}
           onchange={(role: string) => (share.role = role as GivenRole)}
-          label={t('Role')}
+          label="Role"
           plain
         />
       </div>
@@ -150,20 +149,18 @@
         <button
           type="submit"
           class="send"
-          aria-label={t('Invite')}
-          title={t('Invite')}
+          aria-label="Invite"
+          title="Invite"
           disabled={share.busy}
           transition:scale={{ duration: dur(130), start: 0.6 }}
         >
-          <svg class="orden-mirror" viewBox="0 0 14 14"><path d="M2.5 7h9M7.6 3l4 4-4 4" /></svg>
+          <svg viewBox="0 0 14 14"><path d="M2.5 7h9M7.6 3l4 4-4 4" /></svg>
         </button>
       {/if}
     </form>
 
     {#if share.wrongAddress}
-      <p class="hint bad" transition:fade={{ duration: dur(130) }}>
-        {t('enter a valid email address')}
-      </p>
+      <p class="hint bad" transition:fade={{ duration: dur(130) }}>enter a valid email address</p>
     {/if}
 
     {#if !who}
@@ -181,7 +178,7 @@
       </div>
     {:else}
       {#if who.requests.length}
-        <h3>{t('Waiting')}</h3>
+        <h3>Waiting</h3>
         {#each who.requests as person (keyOf(person))}
           <div
             class="row person asking"
@@ -191,38 +188,38 @@
             {@render face(faceOf(person, name(person)), pressFor(person))}
             <span class="name">
               {name(person)}
-              <small>{person.email ?? t('Guest')}</small>
+              <small>{person.email ?? 'Guest'}</small>
             </span>
             <button
               class="orden-chip"
               disabled={share.busy}
               onclick={() => void share.accept(person)}
             >
-              {t('Accept')}
+              Accept
             </button>
             <button
               class="orden-chip is-quiet"
               disabled={share.busy}
               onclick={() => void share.decline(person)}
             >
-              {t('Decline')}
+              Decline
             </button>
           </div>
         {/each}
       {/if}
 
-      <h3>{t('Who has access')}</h3>
+      <h3>Who has access</h3>
 
       <div class="row person">
         {@render face(faceOf(who.owner, called(who.owner)), pressFor(who.owner))}
         <span class="name">
           <span class="named"
             ><bdi class="who">{called(who.owner)}</bdi>
-            <small class="you">{t('(you)')}</small></span
+            <small class="you">(you)</small></span
           >
           <small>{who.owner.email}</small>
         </span>
-        <span class="fixed">{t('Owner')}</span>
+        <span class="fixed">Owner</span>
       </div>
 
       {#each who.members as person (keyOf(person))}
@@ -243,7 +240,7 @@
               value={person.role}
               options={menuFor(person)}
               onchange={(choice: string) => chose(person, choice)}
-              label={t('Role')}
+              label="Role"
               plain
               disabled={share.busy}
             />
@@ -260,7 +257,7 @@
         role="switch"
         tabindex="0"
         aria-checked={!!link}
-        aria-label={t('Link')}
+        aria-label="Link"
         onclick={toggleLink}
         onkeydown={(event) => {
           if (event.key !== ' ' && event.key !== 'Enter') return
@@ -268,7 +265,7 @@
           toggleLink()
         }}
       >
-        <span class="name">{t('Link')}</span>
+        <span class="name">Link</span>
         <span class="dot" class:on={!!link} aria-hidden="true"></span>
         <span class="orden-switch" class:on={!!link} aria-hidden="true"></span>
       </div>
@@ -283,14 +280,14 @@
               <path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18" />
             </svg>
           </span>
-          <span class="name">{t('Anyone with the link')}</span>
+          <span class="name">Anyone with the link</span>
           <div class="pick">
             <Select
               value={link?.role ?? 'read'}
               options={ROLES}
               onchange={(role: string) =>
                 void share.setLink(role as GivenRole, link?.mode ?? 'approval')}
-              label={t('Role')}
+              label="Role"
               plain
               disabled={!link || share.busy}
             />
@@ -302,7 +299,7 @@
           role="switch"
           tabindex={link ? 0 : -1}
           aria-checked={link?.mode === 'approval'}
-          aria-label={t('Ask first')}
+          aria-label="Ask first"
           onclick={toggleAsking}
           onkeydown={(event) => {
             if (event.key !== ' ' && event.key !== 'Enter') return
@@ -311,12 +308,12 @@
           }}
         >
           <span class="under" aria-hidden="true"></span>
-          <span class="name asks">{t('Ask first')}</span>
+          <span class="name asks">Ask first</span>
           <span class="orden-switch" class:on={link?.mode === 'approval'} aria-hidden="true"></span>
         </div>
 
         <div class="row">
-          <Copyable value={link?.url ?? ''} word={t('Copy link')} disabled={!link} />
+          <Copyable value={link?.url ?? ''} word="Copy link" disabled={!link} />
         </div>
 
         <button
@@ -324,7 +321,7 @@
           disabled={!link || share.busy}
           onclick={() => link && void share.reset(link.role, link.mode)}
         >
-          {t('Reset link')}
+          Reset link
         </button>
       </div>
     </div>

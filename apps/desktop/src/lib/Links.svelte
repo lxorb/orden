@@ -4,7 +4,6 @@
   import { account } from './account.svelte'
   import { chatsOn } from './settings.svelte'
   import { graphSurface, held } from './surfaces.svelte'
-  import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
   import { workspace } from './workspace.svelte'
@@ -88,7 +87,7 @@
 </script>
 
 {#if !path}
-  <p class="empty-text">{t('No note is open')}</p>
+  <p class="empty-text">No note is open</p>
 {:else if graph}
   {#await graphSurface() then Graph}
     <Graph
@@ -99,22 +98,22 @@
     />
   {/await}
 {:else}
-  {@render heading(t('Backlinks'), backlinks.length)}
+  {@render heading('Backlinks', backlinks.length)}
   {#if backlinks.length}
     {@render hits(backlinks)}
   {:else}
-    <p class="empty-text">{t('Nothing links here yet')}</p>
+    <p class="empty-text">Nothing links here yet</p>
   {/if}
 
-  {@render heading(t('Links out'), outgoing.length)}
+  {@render heading('Links out', outgoing.length)}
   {#if outgoing.length}
     <HitList rows={outgoing} onpick={openTarget} />
   {:else}
-    <p class="empty-text">{t('This note links nowhere yet')}</p>
+    <p class="empty-text">This note links nowhere yet</p>
   {/if}
 
   {#if mentions.length}
-    {@render heading(t('Mentions'), mentions.length)}
+    {@render heading('Mentions', mentions.length)}
     {@render hits(mentions)}
   {/if}
 
@@ -125,7 +124,7 @@
   {/if}
 
   {#if links.scanning}
-    <p class="empty-text">{t('Reading the space…')}</p>
+    <p class="empty-text">Reading the space…</p>
   {/if}
 {/if}
 

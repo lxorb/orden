@@ -1,6 +1,5 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { theme, type SchemeChoice } from '../theme.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup.svelte'
@@ -8,9 +7,9 @@
   const was = untrack(() => theme.scheme)
 
   const LOOKS: { id: SchemeChoice; name: string }[] = [
-    { id: 'light', name: t('Light') },
-    { id: 'dark', name: t('Dark') },
-    { id: 'system', name: t('Auto') },
+    { id: 'light', name: 'Light' },
+    { id: 'dark', name: 'Dark' },
+    { id: 'system', name: 'Auto' },
   ]
 
   function skip() {
@@ -27,11 +26,11 @@
 {/snippet}
 
 <Screen
-  title={t('Appearance')}
-  primary={{ label: t('Continue'), onclick: () => setup.next() }}
-  quiet={{ label: t('Skip'), onclick: skip }}
+  title="Appearance"
+  primary={{ label: 'Continue', onclick: () => setup.next() }}
+  quiet={{ label: 'Skip', onclick: skip }}
 >
-  <div class="cards rise" role="radiogroup" aria-label={t('Appearance')}>
+  <div class="cards rise" role="radiogroup" aria-label="Appearance">
     {#each LOOKS as look (look.id)}
       <button
         class="card"

@@ -2,7 +2,7 @@
   import type { Row } from '@orden/bases'
   import { ai } from '../ai/store.svelte'
   import { onMount } from 'svelte'
-  import { i18n } from '../i18n.svelte'
+  import { region } from '../region'
   import { quickAdd } from '../quick-add/asked.svelte'
   import type { Entry, Prefill } from '../quick-add/entry'
   import QuickAdd from '../quick-add/QuickAdd.svelte'
@@ -88,7 +88,7 @@
 >
   {#if start}
     <QuickAdd
-      langs={[i18n.language]}
+      langs={[region()]}
       {notes}
       {tags}
       headingsOf={(note: string) => (root ? headingsOf(root, note) : [])}

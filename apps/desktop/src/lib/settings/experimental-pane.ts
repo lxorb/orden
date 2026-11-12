@@ -1,6 +1,5 @@
 import { chatsFields } from '../chats-settings'
 import { glassesGroups, wordFields } from '../even/settings'
-import { t } from '../i18n.svelte'
 import { setWord } from '../kind-choice'
 import { prompt } from '../prompt.svelte'
 import {
@@ -29,9 +28,9 @@ async function turnExperimental(on: boolean): Promise<void> {
   }
   if (experimentalOn()) return
   const sure = await prompt.confirm({
-    title: t('Turn on experimental features?'),
-    detail: t('You will 100% experience bugs. Only go on if you know what you are doing.'),
-    confirmLabel: t('Turn on'),
+    title: 'Turn on experimental features?',
+    detail: 'You will 100% experience bugs. Only go on if you know what you are doing.',
+    confirmLabel: 'Turn on',
     danger: true,
   })
   if (sure) setWord(EXPERIMENTAL_WORD, true)
@@ -71,10 +70,8 @@ function clipboardFields(): Field[] {
   return [
     {
       kind: 'switch',
-      label: t('Share the clipboard with applications'),
-      hint: t(
-        'An application on another of your computers pastes what you copied here, and what it copies comes here.',
-      ),
+      label: 'Share the clipboard with applications',
+      hint: 'An application on another of your computers pastes what you copied here, and what it copies comes here.',
       words: ['clipboard', 'copy', 'paste', 'application', 'remote'],
       initial: true,
       get: () => clipboardSharing.on,
@@ -97,18 +94,16 @@ function features(): Feature[] {
   const glasses: Feature = {
     key: 'glasses',
     word: GLASSES_WORD,
-    label: t('Glasses'),
-    hint: t('Shows your notes and tasks on Even Realities glasses and takes spoken commands.'),
+    label: 'Glasses',
+    hint: 'Shows your notes and tasks on Even Realities glasses and takes spoken commands.',
     words: ['glasses', 'even', 'realities', 'g2', 'smart glasses', 'hud', 'voice'],
     more: glassesFields,
   }
   const bases: Feature = {
     key: 'databases',
     word: BASES_WORD,
-    label: t('Databases'),
-    hint: t(
-      'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.',
-    ),
+    label: 'Databases',
+    hint: 'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.',
     words: ['database', 'databases', 'base', 'bases', 'table', 'board', 'kanban', 'notion'],
   }
   if (__EVEN_PLUGIN__) return [glasses, bases]
@@ -117,20 +112,16 @@ function features(): Feature[] {
     {
       key: 'chats',
       word: CHATS_WORD,
-      label: t('Chats'),
-      hint: t(
-        'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.',
-      ),
+      label: 'Chats',
+      hint: 'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.',
       words: ['chat', 'chats', 'messages', 'mail', 'telegram', 'slack', 'whatsapp', 'signal'],
       more: chatFields,
     },
     {
       key: 'applications',
       word: APPS_WORD,
-      label: t('Applications'),
-      hint: t(
-        'Adds applications, programs on another of your computers that you see and use in a tab.',
-      ),
+      label: 'Applications',
+      hint: 'Adds applications, programs on another of your computers that you see and use in a tab.',
       words: ['application', 'applications', 'app', 'remote', 'desktop', 'stream'],
       more: clipboardFields,
     },
@@ -139,10 +130,8 @@ function features(): Feature[] {
           {
             key: 'explorer',
             word: EXPLORER_WORD,
-            label: t('File explorer'),
-            hint: t(
-              'Adds a file explorer for the folders on this computer, and Show in folder opens it.',
-            ),
+            label: 'File explorer',
+            hint: 'Adds a file explorer for the folders on this computer, and Show in folder opens it.',
             words: ['explorer', 'files', 'folders', 'finder', 'show in folder'],
           },
         ]
@@ -150,19 +139,15 @@ function features(): Feature[] {
     {
       key: 'passwordManager',
       word: PASS_WORD,
-      label: t('Password manager'),
-      hint: t(
-        'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.',
-      ),
+      label: 'Password manager',
+      hint: 'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.',
       words: ['pass', 'password', 'passwords', 'vault', 'autofill', 'login', 'keychain'],
     },
     {
       key: 'timeTracker',
       word: TIME_WORD,
-      label: t('Time tracker'),
-      hint: t(
-        'Adds a timer and records the app, site and tab in front and how busy the computer is.',
-      ),
+      label: 'Time tracker',
+      hint: 'Adds a timer and records the app, site and tab in front and how busy the computer is.',
       words: ['time', 'tracking', 'timer', 'hours', 'activity', 'screen time', 'toggl'],
     },
     bases,
@@ -173,16 +158,16 @@ function features(): Feature[] {
 export function experimentalPane(): Pane {
   return {
     id: 'experimental',
-    label: t('Experimental'),
+    label: 'Experimental',
     groups: [
       {
-        title: t('Experimental'),
+        title: 'Experimental',
         fields: [
           {
             kind: 'switch',
             key: 'experimental.enabled',
-            label: t('Enable experimental features'),
-            hint: t('Lets you turn on the features below, which are still being built.'),
+            label: 'Enable experimental features',
+            hint: 'Lets you turn on the features below, which are still being built.',
             words: ['experimental', 'beta', 'preview', 'labs', 'unstable', 'early'],
             initial: false,
             get: () => experimentalOn(),

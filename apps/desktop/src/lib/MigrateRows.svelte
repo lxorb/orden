@@ -2,7 +2,6 @@
   import { untrack } from 'svelte'
   import FolderOpen from 'lucide/dist/esm/icons/folder-open.mjs'
   import Globe from 'lucide/dist/esm/icons/globe.mjs'
-  import { t } from './i18n.svelte'
   import Icon from './Icon.svelte'
   import { brandIcon, type IconNode, readIcon } from './icons'
   import { BROWSER_LOGOS, ZEN_LOGO } from './import/browsers'
@@ -35,14 +34,14 @@
         aria-busy={migrating.working}
         onclick={() => void migrating.vault(vault)}
       >
-        {t('Import')}
+        Import
       </button>
     </div>
   {/each}
 
   <div class="orden-setting">
     {@render mark(null, FolderOpen)}
-    <span class="name">{t('Import a folder')}</span>
+    <span class="name">Import a folder</span>
     <span class="pair">
       <button
         class="orden-chip is-quiet"
@@ -51,7 +50,7 @@
         aria-busy={migrating.working}
         onclick={() => migrating.back()}
       >
-        {t('Back')}
+        Back
       </button>
       <button
         class="orden-chip"
@@ -60,7 +59,7 @@
         aria-busy={migrating.working}
         onclick={() => void migrating.folder()}
       >
-        {t('Import')}
+        Import
       </button>
     </span>
   </div>
@@ -76,7 +75,7 @@
         aria-busy={migrating.working}
         onclick={() => void migrating.zenProfile(profile)}
       >
-        {t('Import')}
+        Import
       </button>
     </div>
   {/each}
@@ -90,7 +89,7 @@
       aria-busy={migrating.working}
       onclick={() => migrating.back()}
     >
-      {t('Back')}
+      Back
     </button>
   </div>
 {:else if migrating.browserProfiles}
@@ -105,7 +104,7 @@
         aria-busy={migrating.working}
         onclick={() => void migrating.browserProfile(profile)}
       >
-        {t('Import')}
+        Import
       </button>
     </div>
   {/each}
@@ -119,16 +118,16 @@
       aria-busy={migrating.working}
       onclick={() => migrating.back()}
     >
-      {t('Back')}
+      Back
     </button>
   </div>
 {:else}
   {#if takingOver.offered}
     <div class="orden-setting">
       {@render mark(null, Globe)}
-      <span class="name">{t('Notes from nibeditor.com')}</span>
+      <span class="name">Notes from nibeditor.com</span>
       {#if takingOver.state === 'nothing'}
-        <span class="value">{t('Nothing there')}</span>
+        <span class="value">Nothing there</span>
       {:else}
         <button
           class="orden-chip"
@@ -137,7 +136,7 @@
           aria-busy={takingOver.state === 'asking' || migrating.working}
           onclick={() => takingOver.bring()}
         >
-          {t('Import')}
+          Import
         </button>
       {/if}
     </div>
@@ -154,7 +153,7 @@
         aria-busy={migrating.working}
         onclick={() => void migrating.obsidian()}
       >
-        {t('Import')}
+        Import
       </button>
     </div>
   {/if}
@@ -169,7 +168,7 @@
       aria-busy={migrating.working}
       onclick={() => void migrating.files()}
     >
-      {t('Import')}
+      Import
     </button>
   </div>
 
@@ -184,7 +183,7 @@
         aria-busy={migrating.working}
         onclick={() => void migrating.zen()}
       >
-        {t('Import')}
+        Import
       </button>
     </div>
   {/if}
@@ -200,14 +199,14 @@
         aria-busy={migrating.working}
         onclick={() => void migrating.browser(found)}
       >
-        {t('Import')}
+        Import
       </button>
     </div>
   {/each}
 
   <div class="orden-setting">
     {@render mark(null, FolderOpen)}
-    <span class="name">{t('Another app')}</span>
+    <span class="name">Another app</span>
     <span class="pair">
       <button
         class="orden-chip"
@@ -216,7 +215,7 @@
         aria-busy={migrating.working}
         onclick={() => void migrating.files()}
       >
-        {t('Import')}
+        Import
       </button>
       {#if folders}
         <button
@@ -226,7 +225,7 @@
           aria-busy={migrating.working}
           onclick={() => void migrating.folder()}
         >
-          {t('Import a folder')}
+          Import a folder
         </button>
       {/if}
     </span>

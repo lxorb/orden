@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { de } from '../locales/de'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -84,15 +83,6 @@ describe('every row', () => {
     for (const entry of rows) {
       for (const label of labels(entry)) {
         expect(label.toLowerCase(), entry.path).not.toContain('folder')
-      }
-    }
-  })
-
-  test('and the word is gone from the dictionaries too', () => {
-    for (const entry of rows) {
-      for (const label of labels(entry)) {
-        const said = (de as Record<string, unknown>)[label]
-        expect(typeof said === 'string' ? said : '', entry.path).not.toContain('Ordner')
       }
     }
   })

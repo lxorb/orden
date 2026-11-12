@@ -2,7 +2,7 @@
   import Facts from '../../Facts.svelte'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { i18n, t } from '../../i18n.svelte'
+  import { localDate } from '../../region'
   import { dur, slide } from '../../motion'
   import { afterQuiet } from '../../timing'
   import { workspace } from '../../workspace.svelte'
@@ -69,7 +69,7 @@
   }
 
   function timeOf(at: number): string {
-    return i18n.when(at, { hour: '2-digit', minute: '2-digit' })
+    return localDate(at, { hour: '2-digit', minute: '2-digit' })
   }
 </script>
 
@@ -86,8 +86,8 @@
     </div>
     <button
       class="orden-glyph"
-      title={stopped ? t('Continue') : t('Stop')}
-      aria-label={stopped ? t('Continue') : t('Stop')}
+      title={stopped ? 'Continue' : 'Stop'}
+      aria-label={stopped ? 'Continue' : 'Stop'}
       onclick={() => void (stopped ? activity.resume(agent) : activity.stop(agent))}
     >
       {#if stopped}
@@ -140,7 +140,7 @@
     </ol>
     {#if !all && calls.length > FIRST}
       <button class="orden-row is-short more" onclick={() => (all = true)}>
-        <span class="orden-row-label">{t('Show all')}</span>
+        <span class="orden-row-label">Show all</span>
       </button>
     {/if}
   {/if}
@@ -148,12 +148,12 @@
   <div class="acts">
     {#if calls.length}
       <button class="orden-chip" onclick={() => void activity.addToNote(agent)}>
-        {front === null ? t('Save as a note') : t('Add to {name}', { name: front })}
+        {front === null ? 'Save as a note' : `Add to ${front}`}
       </button>
     {/if}
     {#if undoable}
       <button class="orden-chip" onclick={() => void activity.undo(agent)}>
-        {t('Undo edits by {name}', { name })}
+        Undo edits by {name}
       </button>
     {/if}
   </div>

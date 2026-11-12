@@ -9,7 +9,6 @@
   import { howFor, type OpenHow, type TabAsk, tabAsk } from './new-tab'
   import { type Camera, framing, graphPoint, nodeAt, wheelPixels, zoomed } from './camera'
   import { type GraphColours, paint, radiusOf } from './graph-paint'
-  import { t } from './i18n.svelte'
   import { stillness } from './motion'
   import { parseQuery } from '@orden/scan/search/query'
   import { relativeTo } from './space-paths'
@@ -620,7 +619,7 @@
   <canvas
     bind:this={canvas}
     class:panning
-    aria-label={t('Graph')}
+    aria-label="Graph"
     onpointerdown={onPointerDown}
     onpointermove={onPointerMove}
     onpointerup={onPointerUp}

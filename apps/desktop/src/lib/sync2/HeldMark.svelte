@@ -8,7 +8,6 @@
 </script>
 
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import SharedMark from '../SharedMark.svelte'
   import { asking } from './asking.svelte'
 
@@ -16,5 +15,5 @@
 </script>
 
 {#if asking.isHeld(path)}
-  <SharedMark label={t('Waiting for you')} icon={VERSIONS} />
+  <SharedMark label="Waiting for you" icon={VERSIONS} />
 {/if}

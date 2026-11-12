@@ -1,4 +1,3 @@
-import { reading } from './direction'
 import { dur } from './motion'
 import { afterQuiet, onceAFrame } from './timing'
 
@@ -74,10 +73,7 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
   const draw = () => {
     const visible = scroller.clientHeight
     const top = scroller.offsetTop
-    const end =
-      reading() === 'rtl'
-        ? scroller.offsetLeft
-        : host.clientWidth - scroller.offsetLeft - scroller.clientWidth
+    const end = host.clientWidth - scroller.offsetLeft - scroller.clientWidth
     const shape = thumbFor({
       content: scroller.scrollHeight,
       visible,

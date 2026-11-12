@@ -6,7 +6,6 @@ import {
   type Installed,
 } from '@orden/online/apps'
 import { account } from '../account.svelte'
-import { t } from '../i18n.svelte'
 import { canWriteAt } from '../sharing.svelte'
 import { nameOf } from '../space-paths'
 import { joinPath } from '../tauri'
@@ -31,15 +30,15 @@ export async function makeApplication(): Promise<Tab | null> {
   const computers = (listed?.devices ?? []).filter((one) => mayHost(one.platform))
   if (!computers.length) {
     await prompt.choose({
-      title: t('None of your devices can run an application yet'),
-      options: [{ id: 'ok', label: t('OK'), primary: true }],
+      title: 'None of your devices can run an application yet',
+      options: [{ id: 'ok', label: 'OK', primary: true }],
     })
     return null
   }
 
   const host = await prompt.choose({
-    title: t('Where does it run?'),
-    options: hostChoices(computers, (device) => t('{device} (this device)', { device })),
+    title: 'Where does it run?',
+    options: hostChoices(computers, (device) => `${device} (this device)`),
   })
   if (!host) return null
 
@@ -48,15 +47,15 @@ export async function makeApplication(): Promise<Tab | null> {
   let run: AppRun | null = null
   if (installed.length) {
     const picked = await prompt.find({
-      title: t('What does it run?'),
-      placeholder: t('Find an application'),
+      title: 'What does it run?',
+      placeholder: 'Find an application',
       options: [
         ...installed.map((one) => ({
           id: one.id,
           label: one.name,
           ...(one.icon ? { picture: one.icon } : { mark: 'application' as const }),
         })),
-        { id: ANOTHER, label: t('Another program…') },
+        { id: ANOTHER, label: 'Another program…' },
       ],
     })
     if (picked === null) return null
@@ -68,9 +67,9 @@ export async function makeApplication(): Promise<Tab | null> {
     const line = await prompt.ask({
       title:
         installed.length || here
-          ? t('What does it run?')
-          : t('{device} has not listed its applications yet. What does it run?', { device }),
-      placeholder: t('A program’s path, and its arguments'),
+          ? 'What does it run?'
+          : `${device} has not listed its applications yet. What does it run?`,
+      placeholder: 'A program’s path, and its arguments',
     })
     const program = line === null ? null : programOf(line)
     if (!program) return null
@@ -79,7 +78,7 @@ export async function makeApplication(): Promise<Tab | null> {
 
   const name =
     (run.kind === 'installed' ? run.name : nameOf(run.path).replace(/\.(exe|app)$/i, '')) ||
-    t('Application')
+    'Application'
   const path = joinPath(root, await workspace.freeNameOnDisk(root, `${name}.application`))
   await writeFile(path, appFileText({ v: 1, host, run }))
   await workspace.fileCame(path, 'file')

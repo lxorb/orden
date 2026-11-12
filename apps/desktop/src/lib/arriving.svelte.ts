@@ -1,5 +1,4 @@
 import { SvelteSet } from 'svelte/reactivity'
-import { t } from './i18n.svelte'
 import { afterQuiet } from './timing'
 
 const STUCK = 6000
@@ -16,11 +15,8 @@ class Arriving {
 
   readonly said = $derived(
     this.total === null || this.total === 0
-      ? t('Syncing')
-      : t('{done} of {total}', {
-          done: Math.min(this.done, this.total),
-          total: this.total,
-        }),
+      ? 'Syncing'
+      : `${Math.min(this.done, this.total)} of ${this.total}`,
   )
 
   get coming(): ReadonlySet<string> {

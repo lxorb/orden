@@ -1,6 +1,3 @@
-import { panelDrawable } from '../even/panel-words'
-import { CATALOGUES_URL, i18n, plural, t } from '../i18n.svelte'
-import { languageOptions, machineSaid } from '../language-options'
 import { method } from '../mobile/bridge'
 import { crashReports } from '../crash-reports/choice.svelte'
 import { usageChoice } from '../usage/choice.svelte'
@@ -29,7 +26,6 @@ import { hiddenTabs } from '../workspace/hidden-tabs.svelte'
 import { quickAdd } from '../quick-add/asked.svelte'
 import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
-import { glassesOn } from '../settings.svelte'
 import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
 import { dns, PROVIDER_NAMES } from './dns.svelte'
@@ -43,14 +39,12 @@ function twoWayFields(): Field[] {
     .map((command): Field => ({
       kind: 'select',
       label: bothName(command),
-      hint: t(
-        'Whether this key goes to Orden or to the program in the terminal, or asks each time.',
-      ),
+      hint: 'Whether this key goes to Orden or to the program in the terminal, or asks each time.',
       words: ['shortcut', 'key', 'shell', 'conflict', 'ask'],
       options: [
-        { value: 'ask', label: t('Always ask') },
+        { value: 'ask', label: 'Always ask' },
         { value: 'app', label: BY_ID.get(command)?.label() ?? command },
-        { value: 'shell', label: t('Terminal') },
+        { value: 'shell', label: 'Terminal' },
       ],
       initial: 'ask',
       get: () => shells.ways[command] ?? 'ask',
@@ -62,14 +56,14 @@ function terminalGroup(): Group {
   void shells.ask()
 
   return {
-    title: t('Terminal'),
+    title: 'Terminal',
     fields: [
       {
         kind: 'select',
         key: 'general.shell',
         open: true,
-        label: t('Shell'),
-        hint: t('The shell a new terminal starts.'),
+        label: 'Shell',
+        hint: 'The shell a new terminal starts.',
         options: shells.list.map((one) => ({ value: one.id, label: shellName(one) })),
         get: () => shells.chosen?.id ?? '',
         set: (id) => shells.choose(id),
@@ -77,8 +71,8 @@ function terminalGroup(): Group {
       {
         kind: 'slider',
         key: 'general.terminalTextSize',
-        label: t('Text size'),
-        hint: t('How large the text in terminals is.'),
+        label: 'Text size',
+        hint: 'How large the text in terminals is.',
         min: SIZES.least,
         max: SIZES.most,
         step: 1,
@@ -90,8 +84,8 @@ function terminalGroup(): Group {
       {
         kind: 'switch',
         key: 'general.terminalThemed',
-        label: t('Colours follow the theme'),
-        hint: t('Paints terminals in the theme’s colours; off keeps one fixed palette.'),
+        label: 'Colours follow the theme',
+        hint: 'Paints terminals in the theme’s colours; off keeps one fixed palette.',
         words: ['colour', 'color', 'palette', 'ansi', 'theme', 'dark', 'light'],
         initial: true,
         get: () => shells.themed,
@@ -100,10 +94,8 @@ function terminalGroup(): Group {
       {
         kind: 'switch',
         key: 'general.restoreTerminalHistory',
-        label: t('Restore history'),
-        hint: t(
-          'Brings back what each terminal showed after Orden restarts; off forgets it on quit.',
-        ),
+        label: 'Restore history',
+        hint: 'Brings back what each terminal showed after Orden restarts; off forgets it on quit.',
         words: ['scrollback', 'session', 'restart', 'privacy'],
         initial: true,
         get: () => shells.restoring,
@@ -112,15 +104,13 @@ function terminalGroup(): Group {
       {
         kind: 'select',
         key: 'general.warnBeforeQuitting',
-        label: t('Warn before quitting'),
-        hint: t(
-          'Asks before Orden quits with terminals open: always, or only while something runs in one.',
-        ),
+        label: 'Warn before quitting',
+        hint: 'Asks before Orden quits with terminals open: always, or only while something runs in one.',
         words: ['quit', 'close', 'exit', 'confirm', 'running', 'process', 'claude'],
         options: [
-          { value: 'always', label: t('Always') },
-          { value: 'running', label: t('When something runs') },
-          { value: 'never', label: t('Never') },
+          { value: 'always', label: 'Always' },
+          { value: 'running', label: 'When something runs' },
+          { value: 'never', label: 'Never' },
         ],
         initial: 'running',
         get: () => shells.warning,
@@ -135,17 +125,17 @@ export function relockField(): Field {
   return {
     kind: 'select',
     key: 'general.relockAfter',
-    label: t('Lock again after'),
-    hint: t('How long Orden may be in the background before what you protected locks again.'),
+    label: 'Lock again after',
+    hint: 'How long Orden may be in the background before what you protected locks again.',
     words: ['protect', 'lock', 'password', 'timeout'],
     options: RELOCK_MINUTES.map((minutes) => ({
       value: String(minutes),
       label:
         minutes === NEVER
-          ? t('Only when Orden closes')
+          ? 'Only when Orden closes'
           : minutes === 0
-            ? t('Right away')
-            : t('{count} min', { count: minutes }),
+            ? 'Right away'
+            : `${minutes} min`,
     })),
     initial: String(DEFAULT_RELOCK),
     get: () => String(unlocks.relock),
@@ -157,16 +147,14 @@ function gpuGroup(): Group {
   void gpu.ask()
 
   return {
-    title: t('Hardware acceleration'),
+    title: 'Hardware acceleration',
     ...(gpu.line ? { caption: { text: gpu.line } } : {}),
     fields: [
       {
         kind: 'switch',
         key: 'general.hardwareAcceleration',
-        label: t('Hardware acceleration'),
-        hint: t(
-          'Draws the app on the graphics card; turn it off if the window flickers or stays blank.',
-        ),
+        label: 'Hardware acceleration',
+        hint: 'Draws the app on the graphics card; turn it off if the window flickers or stays blank.',
         words: ['gpu', 'graphics', 'software', 'rendering', 'cpu', 'restart'],
         initial: true,
         get: () => gpu.on,
@@ -178,15 +166,13 @@ function gpuGroup(): Group {
 
 function privacyGroup(): Group {
   return {
-    title: t('Privacy'),
+    title: 'Privacy',
     fields: [
       {
         kind: 'switch',
         key: 'general.crashReports',
-        label: t('Send crash and freeze reports'),
-        hint: t(
-          'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.',
-        ),
+        label: 'Send crash and freeze reports',
+        hint: 'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.',
         words: ['crash', 'freeze', 'hang', 'report', 'diagnostics', 'telemetry', 'privacy'],
         initial: true,
         get: () => crashReports.on,
@@ -195,10 +181,8 @@ function privacyGroup(): Group {
       {
         kind: 'switch',
         key: 'general.usageData',
-        label: t('Share anonymous usage data'),
-        hint: t(
-          'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.',
-        ),
+        label: 'Share anonymous usage data',
+        hint: 'Sends daily counts of what you use under a random ID; never notes, names, paths or what you type.',
         words: ['analytics', 'telemetry', 'usage', 'statistics', 'improve', 'privacy'],
         initial: false,
         get: () => usageChoice.helping,
@@ -214,11 +198,9 @@ function dnsGroups(): Group[] {
   if (!dns.offered) {
     return [
       {
-        title: t('DNS'),
+        title: 'DNS',
         caption: {
-          text: t(
-            'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.',
-          ),
+          text: 'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.',
         },
         fields: [],
       },
@@ -229,18 +211,16 @@ function dnsGroups(): Group[] {
     {
       kind: 'select',
       key: 'general.dns',
-      label: t('DNS'),
-      hint: t(
-        'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.',
-      ),
+      label: 'DNS',
+      hint: 'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.',
       words: ['dns', 'doh', 'dns over https', 'secure dns', 'resolver', 'server', 'privacy'],
       options: [
-        { value: 'system', label: t('The system’s') },
-        { value: 'automatic', label: t('The system’s, over HTTPS where it can') },
+        { value: 'system', label: 'The system’s' },
+        { value: 'automatic', label: 'The system’s, over HTTPS where it can' },
         { value: 'cloudflare', label: PROVIDER_NAMES.cloudflare },
         { value: 'google', label: PROVIDER_NAMES.google },
         { value: 'quad9', label: PROVIDER_NAMES.quad9 },
-        { value: 'custom', label: t('Another provider') },
+        { value: 'custom', label: 'Another provider' },
       ],
       initial: 'automatic',
       get: () => dns.choice,
@@ -251,8 +231,8 @@ function dnsGroups(): Group[] {
     fields.push({
       kind: 'text',
       key: 'general.dnsProvider',
-      label: t('Provider'),
-      hint: dns.refused ?? t('The address of a DNS over HTTPS server, starting with https://'),
+      label: 'Provider',
+      hint: dns.refused ?? 'The address of a DNS over HTTPS server, starting with https://',
       words: ['dns', 'doh', 'template', 'server', 'custom'],
       placeholder: 'https://dns.example/dns-query',
       initial: '',
@@ -260,7 +240,7 @@ function dnsGroups(): Group[] {
       set: (value) => void dns.provide(value),
     })
   }
-  return [{ title: t('DNS'), fields }]
+  return [{ title: 'DNS', fields }]
 }
 
 function projectFolderChoices(root: string): { value: string; label: string }[] {
@@ -279,25 +259,20 @@ function remindersGroup(): Group {
   const ask = method('askExactAlarms')
 
   return {
-    title: t('Reminders'),
+    title: 'Reminders',
     ...(isDesktop && platform() === 'linux'
-      ? { caption: { text: t('Reminders ring while Orden is open') } }
+      ? { caption: { text: 'Reminders ring while Orden is open' } }
       : {}),
     fields: [
       {
         kind: 'select',
         key: 'general.remindBefore',
-        label: t('Automatic'),
-        hint: t('How long before a task’s time it reminds you, unless the task says otherwise.'),
+        label: 'Automatic',
+        hint: 'How long before a task’s time it reminds you, unless the task says otherwise.',
         words: ['reminder', 'notification', 'alarm', 'due', 'time', 'before'],
         options: REMIND_BEFORE.map((minutes) => ({
           value: String(minutes),
-          label:
-            minutes < 0
-              ? t('Off')
-              : minutes === 0
-                ? t('At the time')
-                : t('{count} min', { count: minutes }),
+          label: minutes < 0 ? 'Off' : minutes === 0 ? 'At the time' : `${minutes} min`,
         })),
         initial: String(DEFAULTS.remindBefore),
         get: () => String(modes.remindBefore),
@@ -308,10 +283,8 @@ function remindersGroup(): Group {
             {
               kind: 'switch',
               key: 'general.stayInTray',
-              label: t('Stay in the tray'),
-              hint: t(
-                'Keeps Orden running in the tray after its window closes, so reminders still ring.',
-              ),
+              label: 'Stay in the tray',
+              hint: 'Keeps Orden running in the tray after its window closes, so reminders still ring.',
               words: ['tray', 'background', 'menu bar', 'close', 'quit', 'reminder'],
               get: () => residency.on,
               set: (on) => residency.set(on),
@@ -322,10 +295,8 @@ function remindersGroup(): Group {
         ? ([
             {
               kind: 'switch',
-              label: t('Exact alarms'),
-              hint: t(
-                'Lets reminders ring at the exact minute rather than when the phone gets round to it.',
-              ),
+              label: 'Exact alarms',
+              hint: 'Lets reminders ring at the exact minute rather than when the phone gets round to it.',
               words: ['alarm', 'reminder', 'exact', 'battery'],
               get: () => exact(),
               set: () => ask(),
@@ -336,31 +307,18 @@ function remindersGroup(): Group {
   }
 }
 
-function caption(): { caption?: { text: string; url: string } } {
-  const said = [
-    i18n.machine ? machineSaid() : '',
-    glassesOn() && !panelDrawable() ? t('The glasses show English.') : '',
-  ].filter(Boolean)
-
-  if (!said.length) return {}
-  return { caption: { text: said.join(' '), url: CATALOGUES_URL } }
-}
-
 function keptGroup(): Group {
   keptForGood.look()
   return {
-    title: t('Storage'),
+    title: 'Storage',
     fields: [
       {
         kind: 'value',
-        label: t('Persistent storage'),
-        hint: t(
-          'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.',
-        ),
+        label: 'Persistent storage',
+        hint: 'Whether this browser keeps what Orden holds here, unsent changes too, when it runs short of space. Press to ask it again.',
         words: ['storage', 'offline', 'persist', 'evict', 'quota', 'browser', 'kept'],
-        get: () =>
-          keptForGood.held === null ? '…' : keptForGood.held ? t('Allowed') : t('Blocked'),
-        does: t('Try again'),
+        get: () => (keptForGood.held === null ? '…' : keptForGood.held ? 'Allowed' : 'Blocked'),
+        does: 'Try again',
         press: () => void keptForGood.again(),
       },
     ],
@@ -370,22 +328,20 @@ function keptGroup(): Group {
 export function generalPane(): Pane {
   return {
     id: 'general',
-    label: t('General'),
+    label: 'General',
     groups: [
       {
-        title: t('Recovery'),
+        title: 'Recovery',
         fields: [
           {
             kind: 'select',
             key: 'general.keepVersionEvery',
-            label: t('Keep a version every'),
-            hint: t(
-              'How often a note you are editing is saved as a version you can go back to in History.',
-            ),
+            label: 'Keep a version every',
+            hint: 'How often a note you are editing is saved as a version you can go back to in History.',
             words: ['backup', 'history', 'snapshot'],
             options: SNAPSHOT_MINUTES.map((minutes) => ({
               value: String(minutes),
-              label: minutes ? t('{count} min', { count: minutes }) : t('Off'),
+              label: minutes ? `${minutes} min` : 'Off',
             })),
             initial: String(DEFAULT_MINUTES),
             get: () => String(recovery.every),
@@ -394,11 +350,11 @@ export function generalPane(): Pane {
           {
             kind: 'select',
             key: 'general.keepVersionsFor',
-            label: t('Keep versions for'),
-            hint: t('How long those versions are kept before they are deleted.'),
+            label: 'Keep versions for',
+            hint: 'How long those versions are kept before they are deleted.',
             options: KEEP_DAYS.map((days) => ({
               value: String(days),
-              label: plural(days, { one: '{count} day', other: '{count} days' }),
+              label: days === 1 ? '1 day' : `${days} days`,
             })),
             initial: String(DEFAULT_DAYS),
             get: () => String(recovery.days),
@@ -411,15 +367,13 @@ export function generalPane(): Pane {
         ? []
         : [
             {
-              title: t('Protection'),
+              title: 'Protection',
               fields: [
                 {
                   kind: 'switch' as const,
                   key: 'general.protection',
-                  label: t('Use protection'),
-                  hint: t(
-                    'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.',
-                  ),
+                  label: 'Use protection',
+                  hint: 'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.',
                   words: ['protect', 'lock', 'password', 'private', 'hide'],
                   initial: false,
                   get: () => protectionOn(),
@@ -430,15 +384,13 @@ export function generalPane(): Pane {
             } satisfies Group,
           ]),
       {
-        title: t('Tabs'),
+        title: 'Tabs',
         fields: [
           {
             kind: 'switch',
             key: 'general.ctrlTabByUse',
-            label: t('Ctrl+Tab in order of use'),
-            hint: t(
-              'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.',
-            ),
+            label: 'Ctrl+Tab in order of use',
+            hint: 'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.',
             words: ['tabs', 'recent', 'switcher'],
             initial: false,
             get: () => tabCycle.byUse,
@@ -447,10 +399,8 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             key: 'general.unloadTabs',
-            label: t('Unload tabs from their menu'),
-            hint: t(
-              'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.',
-            ),
+            label: 'Unload tabs from their menu',
+            hint: 'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.',
             words: ['unload', 'discard', 'sleep', 'memory', 'ram', 'free', 'tabs'],
             initial: false,
             get: () => unloadTabs.on,
@@ -462,10 +412,8 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   key: 'general.iconTabs',
-                  label: t('Show other tabs as icons'),
-                  hint: t(
-                    'Every tab but the one in front shows only its icon; pointing at one shows its name.',
-                  ),
+                  label: 'Show other tabs as icons',
+                  hint: 'Every tab but the one in front shows only its icon; pointing at one shows its name.',
                   words: ['icon', 'compact', 'pinned', 'title', 'tabs'],
                   initial: true,
                   get: () => iconTabs.on,
@@ -474,10 +422,8 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   key: 'general.fitTabs',
-                  label: t('Tabs as wide as their names'),
-                  hint: t(
-                    'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.',
-                  ),
+                  label: 'Tabs as wide as their names',
+                  hint: 'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.',
                   words: ['width', 'wide', 'narrow', 'compact', 'fit', 'title', 'tabs'],
                   initial: true,
                   get: () => fitTabs.on,
@@ -486,8 +432,8 @@ export function generalPane(): Pane {
                 {
                   kind: 'slider',
                   key: 'general.tabPreviewDelay',
-                  label: t('Tab preview delay'),
-                  hint: t('How long the pointer rests on a tab before its preview shows.'),
+                  label: 'Tab preview delay',
+                  hint: 'How long the pointer rests on a tab before its preview shows.',
                   words: ['hover', 'card', 'tooltip', 'preview', 'tabs'],
                   min: PREVIEW_DELAY.least,
                   max: PREVIEW_DELAY.most,
@@ -504,8 +450,8 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   key: 'general.swipeBetweenPages',
-                  label: t('Swipe between pages'),
-                  hint: t('Two fingers sideways on the touchpad go back and forward.'),
+                  label: 'Swipe between pages',
+                  hint: 'Two fingers sideways on the touchpad go back and forward.',
                   words: ['swipe', 'gesture', 'touchpad', 'trackpad', 'back', 'forward', 'history'],
                   initial: true,
                   get: () => swipeChoice.on,
@@ -517,15 +463,13 @@ export function generalPane(): Pane {
                 {
                   kind: 'segmented',
                   key: 'general.hiddenTabs',
-                  label: t('Hidden tabs'),
-                  hint: t(
-                    'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.',
-                  ),
+                  label: 'Hidden tabs',
+                  hint: 'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.',
                   words: ['spaces', 'background', 'pause', 'sleep', 'freeze', 'audio'],
                   options: [
-                    { value: 'run', label: t('Keep running') },
-                    { value: 'pause', label: t('Pause') },
-                    { value: 'ask', label: t('Ask') },
+                    { value: 'run', label: 'Keep running' },
+                    { value: 'pause', label: 'Pause' },
+                    { value: 'ask', label: 'Ask' },
                   ],
                   initial: 'ask',
                   get: () => hiddenTabs.choice,
@@ -534,16 +478,14 @@ export function generalPane(): Pane {
                 {
                   kind: 'select',
                   key: 'general.memorySaver',
-                  label: t('Memory saver'),
-                  hint: t(
-                    'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.',
-                  ),
+                  label: 'Memory saver',
+                  hint: 'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.',
                   words: ['memory', 'ram', 'discard', 'sleep', 'reload', 'performance'],
                   options: [
-                    { value: 'off', label: t('Off') },
-                    { value: 'moderate', label: t('Moderate') },
-                    { value: 'balanced', label: t('Balanced') },
-                    { value: 'maximum', label: t('Maximum') },
+                    { value: 'off', label: 'Off' },
+                    { value: 'moderate', label: 'Moderate' },
+                    { value: 'balanced', label: 'Balanced' },
+                    { value: 'maximum', label: 'Maximum' },
                   ],
                   initial: 'off',
                   get: () => saver.mode,
@@ -557,15 +499,13 @@ export function generalPane(): Pane {
         ],
       },
       {
-        title: t('Add task'),
+        title: 'Add task',
         fields: [
           {
             kind: 'switch',
             key: 'general.smartDates',
-            label: t('Smart dates'),
-            hint: t(
-              'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.',
-            ),
+            label: 'Smart dates',
+            hint: 'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.',
             words: ['tasks', 'quick add', 'natural language', 'parse', 'todoist'],
             initial: true,
             get: () => quickAdd.smart,
@@ -575,10 +515,8 @@ export function generalPane(): Pane {
             ? ([
                 {
                   kind: 'select',
-                  label: t('Projects folder'),
-                  hint: t(
-                    'The folder of this space whose folders the Tasks panel lists as projects.',
-                  ),
+                  label: 'Projects folder',
+                  hint: 'The folder of this space whose folders the Tasks panel lists as projects.',
                   words: ['tasks', 'projects', 'folder', 'todoist'],
                   options: projectFolderChoices(workspace.activeSpace.root),
                   get: () => projectsOf(workspace.activeSpace?.root ?? ''),
@@ -592,10 +530,8 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             key: 'general.undatedInToday',
-            label: t('Show tasks without a start date in Today'),
-            hint: t(
-              'Today also lists the tasks that have no start date; off shows only those dated today or earlier.',
-            ),
+            label: 'Show tasks without a start date in Today',
+            hint: 'Today also lists the tasks that have no start date; off shows only those dated today or earlier.',
             words: ['tasks', 'today', 'start date', 'undated', 'no date', 'todoist'],
             initial: DEFAULTS.undatedInToday,
             get: () => modes.undatedInToday,
@@ -606,8 +542,8 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   key: 'general.addTaskFromAnyApp',
-                  label: t('From any app'),
-                  hint: t('The Add task shortcut works even while another app is in front.'),
+                  label: 'From any app',
+                  hint: 'The Add task shortcut works even while another app is in front.',
                   words: ['tasks', 'quick add', 'global', 'hotkey', 'shortcut', 'system'],
                   initial: true,
                   get: () => quickAdd.anywhere,
@@ -621,13 +557,13 @@ export function generalPane(): Pane {
         ? []
         : [
             {
-              title: t('Code'),
+              title: 'Code',
               fields: [
                 {
                   kind: 'switch' as const,
                   key: 'general.developerMode',
-                  label: t('Developer mode'),
-                  hint: t('Shows terminals and the other tools for writing code.'),
+                  label: 'Developer mode',
+                  hint: 'Shows terminals and the other tools for writing code.',
                   words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
                   initial: true,
                   get: () => modes.coder,
@@ -640,13 +576,13 @@ export function generalPane(): Pane {
         ? []
         : [
             {
-              title: t('Hints'),
+              title: 'Hints',
               fields: [
                 {
                   kind: 'switch' as const,
                   key: 'general.silentMode',
-                  label: t('Silent mode'),
-                  hint: t('Hides the tips Orden shows while you get to know it.'),
+                  label: 'Silent mode',
+                  hint: 'Hides the tips Orden shows while you get to know it.',
                   words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
                   initial: DEFAULTS.silent,
                   get: () => modes.silent,
@@ -655,21 +591,6 @@ export function generalPane(): Pane {
               ],
             },
           ]),
-      {
-        title: t('Language'),
-        ...caption(),
-        fields: [
-          {
-            kind: 'select',
-            key: 'general.language',
-            label: t('Language'),
-            hint: t('The language Orden’s menus and settings are in.'),
-            options: languageOptions(),
-            get: () => i18n.choice,
-            set: (value) => i18n.select(value),
-          },
-        ],
-      },
 
       ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
 
@@ -684,20 +605,18 @@ export function generalPane(): Pane {
       ...(!__EVEN_PLUGIN__ && isDesktop ? [privacyGroup()] : []),
 
       {
-        title: t('Updates'),
+        title: 'Updates',
         fields: [
           ...(isDesktop
             ? ([
                 {
                   kind: 'segmented',
-                  label: t('Release channel'),
+                  label: 'Release channel',
                   words: ['beta', 'updates', 'nightly'],
-                  hint: t(
-                    'Stable follows released versions; Unstable follows edge builds and can break.',
-                  ),
+                  hint: 'Stable follows released versions; Unstable follows edge builds and can break.',
                   options: [
-                    { value: 'stable', label: t('Stable') },
-                    { value: 'unstable', label: t('Unstable') },
+                    { value: 'stable', label: 'Stable' },
+                    { value: 'unstable', label: 'Unstable' },
                   ],
                   initial: 'stable',
                   get: () => updates.channel,
@@ -709,14 +628,12 @@ export function generalPane(): Pane {
             ? ([
                 {
                   kind: 'segmented',
-                  label: t('Web version'),
+                  label: 'Web version',
                   words: ['beta', 'updates', 'nightly', 'channel', 'edge'],
-                  hint: t(
-                    'Stable is the released web app; Unstable is the newest build and can break.',
-                  ),
+                  hint: 'Stable is the released web app; Unstable is the newest build and can break.',
                   options: [
-                    { value: 'stable', label: t('Stable') },
-                    { value: 'unstable', label: t('Unstable') },
+                    { value: 'stable', label: 'Stable' },
+                    { value: 'unstable', label: 'Unstable' },
                   ],
                   initial: 'stable',
                   get: () => webChannel ?? 'stable',

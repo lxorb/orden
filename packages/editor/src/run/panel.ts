@@ -6,7 +6,6 @@ import {
   StateField,
 } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
-import { label } from '../labels'
 import { pressedByKey } from '../press'
 import { OrdenWidget } from '../live-preview/widget'
 import type { RunLine } from './protocol'
@@ -143,10 +142,6 @@ export function formatElapsed(ms: number): string {
   return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`
 }
 
-function fill(text: string, name: string, value: string | number): string {
-  return text.replace(`{${name}}`, String(value))
-}
-
 class RunPanelWidget extends OrdenWidget {
   constructor(private readonly panel: RunPanel) {
     super()
@@ -198,7 +193,7 @@ class RunPanelWidget extends OrdenWidget {
       const stop = document.createElement('button')
       stop.className = 'orden-run-stop'
       stop.type = 'button'
-      stop.textContent = label('stop')
+      stop.textContent = 'Stop'
       const halt = () =>
         view.dispatch({
           effects: closeRun.of({
@@ -219,8 +214,8 @@ class RunPanelWidget extends OrdenWidget {
     const dismiss = document.createElement('button')
     dismiss.className = 'orden-run-dismiss'
     dismiss.type = 'button'
-    dismiss.title = label('dismiss')
-    dismiss.setAttribute('aria-label', label('dismiss'))
+    dismiss.title = 'Dismiss'
+    dismiss.setAttribute('aria-label', 'Dismiss')
     dismiss.append(cross())
     const drop = () => view.dispatch({ effects: dropRun.of(panel.run) })
     dismiss.addEventListener('mousedown', (event) => {
@@ -243,7 +238,7 @@ class RunPanelWidget extends OrdenWidget {
       if (line.level === 'result') {
         const tag = document.createElement('span')
         tag.className = 'orden-run-tag'
-        tag.textContent = label('result')
+        tag.textContent = 'Result'
         row.append(tag)
       }
 
@@ -254,7 +249,7 @@ class RunPanelWidget extends OrdenWidget {
     if (panel.truncated) {
       const note = document.createElement('div')
       note.className = 'orden-run-note'
-      note.textContent = fill(label('outputTruncated'), 'count', MAX_RUN_LINES)
+      note.textContent = `Only the first ${MAX_RUN_LINES} lines are kept`
       output.append(note)
     }
 
@@ -267,10 +262,10 @@ class RunPanelWidget extends OrdenWidget {
 
   private stateText(): string {
     const panel = this.panel
-    if (panel.status === 'running') return label('running')
-    if (panel.status === 'stopped') return label('stopped')
+    if (panel.status === 'running') return 'Running…'
+    if (panel.status === 'stopped') return 'Stopped'
     if (panel.status === 'timeout') {
-      return fill(label('timedOut'), 'seconds', Math.round(panel.elapsed / 1000))
+      return `Timed out after ${Math.round(panel.elapsed / 1000)} s`
     }
     return ''
   }

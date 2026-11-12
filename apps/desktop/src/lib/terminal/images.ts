@@ -1,7 +1,6 @@
 import { type ImageKind, MOST_IMAGE } from '@orden/online/wire'
 import { busy } from '../busy.svelte'
 import { fileBytes } from '../bytes'
-import { t } from '../i18n.svelte'
 import { imageKindAt, imageKindOf, spokenPaths } from './paste'
 import type { Source } from './source'
 
@@ -41,7 +40,7 @@ export async function carried(
   if (!image || !pictures.length) return null
 
   try {
-    const paths = await busy.run(t('Sending the image'), async () => {
+    const paths = await busy.run('Sending the image', async () => {
       const paths: string[] = []
       for (const picture of pictures) {
         const bytes = await picture.bytes()
@@ -51,10 +50,10 @@ export async function carried(
       return paths
     })
     const { said, left } = spokenPaths(paths, shell)
-    if (left) busy.failed(t('A name this shell would misread was left out'))
+    if (left) busy.failed('A name this shell would misread was left out')
     return said || null
   } catch {
-    busy.failed(t('Could not send the image'))
+    busy.failed('Could not send the image')
     return null
   }
 }

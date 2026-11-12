@@ -2,7 +2,6 @@
   import type { Snippet } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
-  import { t } from './i18n.svelte'
   import { overlays } from './overlays'
   import { scrollbar } from './scrollbar'
   import { fade, LAYER, scale } from './motion'
@@ -49,7 +48,7 @@
         <span class="orden-badge" aria-hidden="true">{@render mark()}</span>
       {/if}
       <h2 class="title">{title}</h2>
-      <button class="orden-glyph shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
+      <button class="orden-glyph shut" aria-label="Close" title="Close" onclick={onclose}>
         <Cross />
       </button>
     </div>

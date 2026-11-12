@@ -2,7 +2,7 @@
   import { tooLongToParse, type VimMode } from '@orden/editor'
   import { countText } from './counts'
   import { chrome } from './glass/chrome.svelte'
-  import { amount, t } from './i18n.svelte'
+  import { localNumber } from './region'
   import { VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/showing.svelte'
   import { views } from './views.svelte'
@@ -32,11 +32,11 @@
   const chosen = $derived(asked && views.chosen > 0 ? countText(views.selectedText()) : null)
 
   const said = (part: number | undefined, whole: number) =>
-    part === undefined ? amount(whole) : `${amount(part)}/${amount(whole)}`
+    part === undefined ? localNumber(whole) : `${localNumber(part)}/${localNumber(whole)}`
 </script>
 
 {#if vimMode}
-  <span class="mode" class:writing={vimMode !== 'normal'}>{t(VIM_WORDS[vimMode])}</span>
+  <span class="mode" class:writing={vimMode !== 'normal'}>{VIM_WORDS[vimMode]}</span>
 {/if}
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -47,29 +47,27 @@
   data-region="status"
   data-chrome="bottom"
   tabindex="0"
-  aria-label={t('What this note is')}
+  aria-label="What this note is"
   onpointerenter={() => (looking = true)}
   onpointerleave={() => (looking = false)}
   onfocus={() => (held = true)}
   onblur={() => (held = false)}
 >
   {#if reading}
-    <span class="reading">{t('Read-only')}</span>
+    <span class="reading">Read-only</span>
   {/if}
   {#if plain}
-    <span
-      class="reading"
-      title={t('Shown as plain text, so typing stays instant in a note this long')}
-      >{t('No preview')}</span
+    <span class="reading" title="Shown as plain text, so typing stays instant in a note this long"
+      >No preview</span
     >
   {/if}
   {#if paper}
-    <span class="page">{t('{at} / {count}', { at: paper.at, count: paper.count })}</span>
+    <span class="page">{paper.at} / {paper.count}</span>
   {/if}
   {#if counts}
     <span>{said(chosen?.words, counts.words)}w</span>
     <span>{said(chosen?.characters, counts.characters)}c</span>
-    <span>{amount(counts.lines)}l</span>
+    <span>{localNumber(counts.lines)}l</span>
     <span>{counts.minutes}m</span>
   {/if}
 </footer>

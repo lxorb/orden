@@ -133,14 +133,6 @@
   --inset-bottom: env(safe-area-inset-bottom, 0px);
   --inset-left: env(safe-area-inset-left, 0px);
 
-  --inset-start: var(--inset-left);
-  --inset-end: var(--inset-right);
-
-  --dir: 1;
-
-  --dir-start: left;
-  --dir-end: right;
-
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -174,27 +166,6 @@
   --z-lightbox: 70;
   --z-stage: 200;
   --z-carried: 1000;
-}
-
-:root[lang|='ur'] {
-  --font-arabic:
-    'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', 'Noto Naskh Arabic',
-    'Tahoma';
-  --leading-row: 2.05;
-  --leading-content: 2.15;
-}
-
-:root[lang|='ur']:not([data-touch]) {
-  --row-height: 34px;
-  --row-height-sm: 30px;
-}
-
-:root[dir='rtl'] {
-  --inset-start: var(--inset-right);
-  --inset-end: var(--inset-left);
-  --dir: -1;
-  --dir-start: right;
-  --dir-end: left;
 }
 
 [data-touch] {

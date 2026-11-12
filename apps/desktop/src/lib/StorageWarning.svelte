@@ -1,17 +1,11 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
   import { settings } from './settings.svelte'
   import { readableSize, usage } from './usage.svelte'
   import { dur, fly } from './motion'
   import { told } from './said.svelte'
 
-  const words = $derived(
-    t('{used} of {limit} used.', {
-      used: readableSize(usage.used),
-      limit: readableSize(usage.limit),
-    }),
-  )
+  const words = $derived(`${readableSize(usage.used)} of ${readableSize(usage.limit)} used.`)
 </script>
 
 {#if usage.warning}
@@ -23,7 +17,7 @@
     <p>{words}</p>
 
     <div class="actions">
-      <button class="quiet" onclick={() => (usage.dismissed = true)}>{t('Dismiss')}</button>
+      <button class="quiet" onclick={() => (usage.dismissed = true)}>Dismiss</button>
       <button
         class="link"
         onclick={() => {
@@ -31,7 +25,7 @@
           settings.show('account')
         }}
       >
-        {t('Manage storage')}
+        Manage storage
       </button>
     </div>
   </div>

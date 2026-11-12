@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { userStep } from '../chat/transcript'
 import type {
   Draft,
@@ -115,7 +114,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
 
   function providerOf(thread: Thread): Provider {
     const provider = setup.provider(thread.provider)
-    if (provider?.kind !== kind) throw new Error(t('That provider is not set up yet.'))
+    if (provider?.kind !== kind) throw new Error('That provider is not set up yet.')
     return provider
   }
 
@@ -146,10 +145,9 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       )
     } catch (error) {
       const said = error instanceof Error ? error.message : String(error)
-      throw new Error(
-        said === 'missing' ? t('{name} is not installed.', { name: KIND_NAMES[kind] }) : said,
-        { cause: error },
-      )
+      throw new Error(said === 'missing' ? `${KIND_NAMES[kind]} is not installed.` : said, {
+        cause: error,
+      })
     }
     const live: Live = {
       session,
@@ -291,7 +289,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
             heard,
             { code: 1, timedOut: false, stopped: false, err: '' },
             !!answered,
-          ) ?? t('The model did not answer.')
+          ) ?? 'The model did not answer.'
         close('error', words)
       }
 
@@ -411,7 +409,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           }
           const words =
             troubleOf(KIND_NAMES[kind], PLANS[kind], heard, said.end, !!answered) ??
-            t('The model did not answer.')
+            'The model did not answer.'
           close('error', words)
         }
       }

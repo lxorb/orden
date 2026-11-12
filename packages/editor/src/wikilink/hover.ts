@@ -8,7 +8,6 @@ import {
   type TooltipView,
 } from '@codemirror/view'
 import { isTabFile, linkTarget, sectionOf } from '@orden/markdown/links'
-import { label } from '../labels'
 import { modifierHeld } from '../links'
 import { type LinkSpan, linkAt } from './at'
 import { noteIndex, resolveLink } from './notes'
@@ -82,7 +81,7 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
 
     const body = document.createElement('div')
     body.className = 'orden-note-preview-body orden-write'
-    body.textContent = label('loadingNote')
+    body.textContent = 'Loading…'
     dom.append(body)
 
     let release: (() => void) | null = null
@@ -119,12 +118,12 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
     })
 
     if (path === null) {
-      body.textContent = label('noteNotFound')
+      body.textContent = 'Note not found'
       return { dom }
     }
 
     if (view.state.facet(noteIndex).locked?.(path)) {
-      body.textContent = label('protectedNote')
+      body.textContent = 'Protected'
       return { dom }
     }
 
@@ -137,7 +136,7 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
         if (!showing()) return
         const section = source === null ? null : sectionOf(source, link)
         if (source === null || section === null) {
-          body.textContent = label('noteNotFound')
+          body.textContent = 'Note not found'
           return
         }
 
@@ -159,7 +158,7 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
         if (showing()) body.innerHTML = html
       })
       .catch(() => {
-        if (showing()) body.textContent = label('noteNotFound')
+        if (showing()) body.textContent = 'Note not found'
       })
 
     return {

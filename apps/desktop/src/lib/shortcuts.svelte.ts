@@ -1,7 +1,6 @@
 import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@orden/editor'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
-import { t } from './i18n.svelte'
 import {
   currentPlatform,
   type Keystroke,
@@ -99,7 +98,7 @@ class Shortcuts {
 
   tooltip(label: string, id: string | null = null): string {
     const key = id !== null && !viewport.touch ? this.hint(id) : undefined
-    return key ? t('{label} ({key})', { label, key }) : label
+    return key ? `${label} (${key})` : label
   }
 
   conflicts(id: string, key: string): Shortcut[] {
@@ -128,33 +127,30 @@ class Shortcuts {
 
     const taken = (list: string[]) => list.some((one) => sameCombination(one, key, this.platform))
     if (taken(SYSTEM_KEYS[this.platform]))
-      return t('Your system takes this key before the app sees it.')
+      return 'Your system takes this key before the app sees it.'
     const said = key.trim().toLowerCase().split(/\s+/).join(' ')
     if (DICTATION_TAPS[this.platform].some((one) => one.toLowerCase() === said))
-      return t('macOS can start dictation with this key too.')
+      return 'macOS can start dictation with this key too.'
     if (!isNative && taken(BROWSER_KEYS))
-      return t('Your browser takes this key before the app sees it.')
+      return 'Your browser takes this key before the app sees it.'
 
     return null
   }
 
   refuse(key: string, row?: string): string | null {
     const combination = parseCombination(key, this.platform)
-    if (!combination) return t('That is not a key combination.')
-    if (combination.meta && this.platform !== 'mac') return t('That is not a key combination.')
+    if (!combination) return 'That is not a key combination.'
+    if (combination.meta && this.platform !== 'mac') return 'That is not a key combination.'
 
     const bare = !combination.ctrl && !combination.meta && !combination.alt
     const typing = TYPING_KEYS.has(combination.key) && !this.inAList(row) && !this.ownKey(row, key)
     if (bare && (combination.key.length === 1 || typing)) {
-      return this.platform === 'mac' ? t('Hold ⌃, ⌥ or ⌘ as well.') : t('Hold Ctrl or Alt as well.')
+      return this.platform === 'mac' ? 'Hold ⌃, ⌥ or ⌘ as well.' : 'Hold Ctrl or Alt as well.'
     }
 
     const fixed = this.fixedHolder(key)
     if (fixed && !this.inAList(row) && !this.ownKey(row, key)) {
-      return t('{key} already runs {name}.', {
-        key: showCombination(key, this.platform),
-        name: fixed.label(),
-      })
+      return `${showCombination(key, this.platform)} already runs ${fixed.label()}.`
     }
 
     return null

@@ -31,7 +31,6 @@ import { frontShut } from './export/context'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
 import { canPrint, printable, printOpen } from './export/print'
-import { t } from './i18n.svelte'
 import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -125,23 +124,23 @@ export function appMenu(context: Context): MenuGroup[] {
   return [
     {
       id: 'file',
-      label: t('File'),
+      label: 'File',
       rows: [
-        { label: t('Export'), rows: exportRows() },
+        { label: 'Export', rows: exportRows() },
         ...(canPrint
           ? [
               {
-                label: t('Print'),
+                label: 'Print',
                 ...keyed('app.print'),
                 asks: true,
                 disabled: !printable(workspace.active?.kind) || frontShut(),
-                run: () => busy.start(t('Printing'), () => printOpen(), 'print'),
+                run: () => busy.start('Printing', () => printOpen(), 'print'),
               },
             ]
           : []),
         DIVIDER,
         {
-          label: t('Version history'),
+          label: 'Version history',
           asks: true,
           disabled: !hasNote || frontShut(),
           run: () => context.onhistory(),
@@ -151,62 +150,62 @@ export function appMenu(context: Context): MenuGroup[] {
 
     {
       id: 'edit',
-      label: t('Edit'),
+      label: 'Edit',
       rows: [
         {
-          label: t('Undo'),
+          label: 'Undo',
           ...keyed('edit.undo'),
           disabled: !writable,
           run: () => view && undoEdit(view),
         },
         {
-          label: t('Redo'),
+          label: 'Redo',
           ...keyed('edit.redo'),
           disabled: !writable,
           run: () => view && redoEdit(view),
         },
         DIVIDER,
         {
-          label: t('Cut'),
+          label: 'Cut',
           ...keyed('fixed.cut'),
           disabled: !selected || !writable,
           run: cutSelection,
         },
         {
-          label: t('Copy'),
+          label: 'Copy',
           ...keyed('fixed.copy'),
           disabled: !selected,
           run: copySelection,
         },
         {
-          label: t('Paste'),
+          label: 'Paste',
           ...keyed('fixed.paste'),
           disabled: !writable,
           run: onView(pasteHere),
         },
         {
-          label: t('Paste as plain text'),
+          label: 'Paste as plain text',
           ...keyed('edit.paste-plain'),
           disabled: !writable,
           run: onView(pastePlain),
         },
         DIVIDER,
         {
-          label: t('Select all'),
+          label: 'Select all',
           ...keyed('edit.select-all'),
           disabled: !view,
           run: () => view?.dispatch({ selection: { anchor: 0, head: view.state.doc.length } }),
         },
         DIVIDER,
         {
-          label: t('Find'),
+          label: 'Find',
           ...keyed('edit.find'),
           asks: true,
           disabled: !view,
           run: onView(openFind),
         },
         {
-          label: t('Replace'),
+          label: 'Replace',
           ...keyed('edit.replace'),
           asks: true,
           disabled: !writable,
@@ -216,20 +215,20 @@ export function appMenu(context: Context): MenuGroup[] {
           ? []
           : [
               {
-                label: t('Find next'),
+                label: 'Find next',
                 ...keyed('edit.find-next'),
                 disabled: !view,
                 run: onView(findNext),
               },
               {
-                label: t('Find previous'),
+                label: 'Find previous',
                 ...keyed('edit.find-previous'),
                 disabled: !view,
                 run: onView(findPrevious),
               },
             ]),
         {
-          label: t('Search'),
+          label: 'Search',
           ...keyed('app.search'),
           run: () => workspace.showPanel('search'),
         },
@@ -238,7 +237,7 @@ export function appMenu(context: Context): MenuGroup[] {
 
     {
       id: 'paragraph',
-      label: t('Paragraph'),
+      label: 'Paragraph',
       rows: [
         ...blocks('paragraph.heading-1', 'paragraph.heading-2', 'paragraph.heading-3'),
         ...blocks('paragraph.heading-4', 'paragraph.heading-5', 'paragraph.heading-6'),
@@ -262,37 +261,37 @@ export function appMenu(context: Context): MenuGroup[] {
 
     {
       id: 'format',
-      label: t('Format'),
+      label: 'Format',
       rows: [
         {
-          label: t('Bold'),
+          label: 'Bold',
           ...keyed('format.bold'),
           disabled: !writable,
           run: () => run(view, toggleWrap('**')),
         },
         {
-          label: t('Italic'),
+          label: 'Italic',
           ...keyed('format.italic'),
           disabled: !writable,
           run: () => run(view, toggleWrap('*')),
         },
         {
-          label: t('Strikethrough'),
+          label: 'Strikethrough',
           ...keyed('format.strikethrough'),
           disabled: !writable,
           run: () => run(view, toggleWrap('~~')),
         },
         {
-          label: t('Highlight'),
+          label: 'Highlight',
           ...keyed('format.highlight'),
           disabled: !writable,
           run: () => run(view, highlightSelection),
         },
         {
-          label: t('Highlight colour'),
+          label: 'Highlight colour',
           disabled: !writable,
           rows: HIGHLIGHT_COLOURS.map((colour) => ({
-            label: t(colour.name),
+            label: colour.name,
             checked: colour.tone === modes.highlightTone,
             run: () => {
               modes.setHighlightTone(colour.tone)
@@ -302,25 +301,25 @@ export function appMenu(context: Context): MenuGroup[] {
         },
         DIVIDER,
         {
-          label: t('Code'),
+          label: 'Code',
           ...keyed('format.code'),
           disabled: !writable,
           run: () => run(view, toggleWrap('`')),
         },
-        { label: t('Inline math'), disabled: !writable, run: () => run(view, toggleWrap('$')) },
-        { label: t('Superscript'), disabled: !writable, run: () => run(view, toggleWrap('^')) },
-        { label: t('Subscript'), disabled: !writable, run: () => run(view, toggleWrap('~')) },
+        { label: 'Inline math', disabled: !writable, run: () => run(view, toggleWrap('$')) },
+        { label: 'Superscript', disabled: !writable, run: () => run(view, toggleWrap('^')) },
+        { label: 'Subscript', disabled: !writable, run: () => run(view, toggleWrap('~')) },
         DIVIDER,
         {
-          label: t('Link'),
+          label: 'Link',
           ...keyed('format.link'),
           disabled: !writable,
           run: () => run(view, insertLink),
         },
-        edit('format.comment', t('Comment'), insertComment),
+        edit('format.comment', 'Comment', insertComment),
         DIVIDER,
         {
-          label: t('Clear formatting'),
+          label: 'Clear formatting',
           ...keyed('format.clear'),
           disabled: !writable,
           run: () => run(view, clearFormatting),
@@ -330,55 +329,55 @@ export function appMenu(context: Context): MenuGroup[] {
 
     {
       id: 'view',
-      label: t('View'),
+      label: 'View',
       rows: [
         {
-          label: t('Command palette'),
+          label: 'Command palette',
           ...keyed('app.palette'),
           asks: true,
           run: () => context.onpalette(),
         },
         DIVIDER,
         {
-          label: t('Reading'),
+          label: 'Reading',
           ...keyed('app.reading'),
           checked: !!workspace.active?.reading,
           disabled: workspace.active?.kind !== 'note',
           run: () => workspace.toggleReading(),
         },
         {
-          label: t('Present'),
+          label: 'Present',
           ...keyed('app.present'),
           checked: present.on,
           disabled: !present.on && !present.available,
           run: () => present.toggle(),
         },
         {
-          label: t('Read-only'),
+          label: 'Read-only',
           ...keyed('app.read-only'),
           checked: modes.readOnly,
           run: () => modes.toggleReadOnly(view),
         },
         {
-          label: t('Source mode'),
+          label: 'Source mode',
           ...keyed('app.source'),
           checked: modes.sourceIn(view),
           run: () => modes.toggleSource(view),
         },
         {
-          label: t('Typewriter mode'),
+          label: 'Typewriter mode',
           ...keyed('app.typewriter'),
           checked: modes.typewriter,
           run: () => modes.toggleTypewriter(view),
         },
         {
-          label: t('Focus mode'),
+          label: 'Focus mode',
           ...keyed('app.focus'),
           checked: modes.focus,
           run: () => modes.toggleFocus(view),
         },
         {
-          label: t('Fullscreen'),
+          label: 'Fullscreen',
           ...keyed('app.fullscreen'),
           checked: fullscreen.on,
           run: () => void fullscreen.toggle(workspace.panes),
@@ -387,7 +386,7 @@ export function appMenu(context: Context): MenuGroup[] {
           ? []
           : [
               {
-                label: t('Full window'),
+                label: 'Full window',
                 ...keyed('app.fill-tab'),
                 checked: workspace.panes.fills !== null,
                 disabled: workspace.panes.fills === null && !workspace.activeTabId,
@@ -397,7 +396,7 @@ export function appMenu(context: Context): MenuGroup[] {
         ...(isDesktop
           ? [
               {
-                label: t('Always on top'),
+                label: 'Always on top',
                 checked: modes.alwaysOnTop,
                 run: () => modes.toggleAlwaysOnTop(),
               },
@@ -408,19 +407,19 @@ export function appMenu(context: Context): MenuGroup[] {
           ? []
           : [
               {
-                label: t('Split right'),
+                label: 'Split right',
                 ...keyed('pane.split-right'),
                 disabled: !workspace.canSplit('row'),
                 run: () => workspace.split('row'),
               },
               {
-                label: t('Split down'),
+                label: 'Split down',
                 ...keyed('pane.split-down'),
                 disabled: !workspace.canSplit('column'),
                 run: () => workspace.split('column'),
               },
               {
-                label: t('Other pane'),
+                label: 'Other pane',
                 ...keyed('pane.focus-next'),
                 disabled: workspace.panes.count < 2,
                 run: () => workspace.panes.focusNext(),
@@ -428,62 +427,62 @@ export function appMenu(context: Context): MenuGroup[] {
               DIVIDER,
             ]),
         {
-          label: t('Left sidebar'),
+          label: 'Left sidebar',
           ...keyed('app.sidebar'),
           checked: !!workspace.panel,
           run: () => workspace.toggleSidebar(),
         },
         {
-          label: t('Right sidebar'),
+          label: 'Right sidebar',
           ...keyed('app.right-sidebar'),
           checked: !!workspace.openOn('right'),
           disabled: !workspace.right.length,
           run: () => workspace.toggleSidebar('right'),
         },
         {
-          label: t('Files'),
+          label: 'Files',
           ...keyed('app.files'),
           run: () => workspace.showPanel('tree'),
         },
-        { label: t('Outline'), run: () => workspace.showPanel('outline') },
+        { label: 'Outline', run: () => workspace.showPanel('outline') },
         ...(viewport.touch
           ? []
-          : [{ label: t('Ask'), ...keyed('app.ask'), run: () => workspace.showPanel('ask') }]),
+          : [{ label: 'Ask', ...keyed('app.ask'), run: () => workspace.showPanel('ask') }]),
         DIVIDER,
-        { label: t('Fold'), ...keyed('view.fold'), run: () => run(view, toggleFold) },
+        { label: 'Fold', ...keyed('view.fold'), run: () => run(view, toggleFold) },
         {
-          label: t('Fold everything'),
+          label: 'Fold everything',
           ...keyed('view.fold-all'),
           run: () => run(view, foldHeadings),
         },
         {
-          label: t('Fold more'),
+          label: 'Fold more',
           ...keyed('view.fold-more'),
           run: () => run(view, foldMore),
         },
         {
-          label: t('Fold less'),
+          label: 'Fold less',
           ...keyed('view.fold-less'),
           run: () => run(view, foldLess),
         },
         {
-          label: t('Unfold everything'),
+          label: 'Unfold everything',
           ...keyed('view.unfold-all'),
           run: () => run(view, unfoldEverything),
         },
         DIVIDER,
         {
-          label: t('Zoom in'),
+          label: 'Zoom in',
           ...keyed('app.zoom-in'),
           run: () => workspace.zoomPage('in') || modes.stepZoom(1),
         },
         {
-          label: t('Zoom out'),
+          label: 'Zoom out',
           ...keyed('app.zoom-out'),
           run: () => workspace.zoomPage('out') || modes.stepZoom(-1),
         },
         {
-          label: t('Actual size'),
+          label: 'Actual size',
           ...keyed('app.zoom-reset'),
           run: () => workspace.zoomPage('reset') || modes.resetZoom(),
         },
@@ -492,10 +491,10 @@ export function appMenu(context: Context): MenuGroup[] {
 
     {
       id: 'help',
-      label: t('Help'),
+      label: 'Help',
       rows: [
         {
-          label: account.user ? t('Sign out') : t('Sign in'),
+          label: account.user ? 'Sign out' : 'Sign in',
           asks: !account.user,
           run: () =>
             account.user
@@ -506,14 +505,14 @@ export function appMenu(context: Context): MenuGroup[] {
         },
         DIVIDER,
         ...(isDesktop
-          ? [{ label: t('Check for updates'), asks: true, run: () => void updates.check() }]
+          ? [{ label: 'Check for updates', asks: true, run: () => void updates.check() }]
           : []),
         ...(isNative
           ? []
-          : [{ label: t('Download the app'), run: () => void openExternal(DOWNLOAD_URL) }]),
-        { label: t('What is new'), run: () => void openExternal(RELEASES_URL) },
-        { label: t('Report an issue'), run: () => void openExternal(ISSUES_URL) },
-        { label: t('Source code'), run: () => void openExternal(SOURCE_URL) },
+          : [{ label: 'Download the app', run: () => void openExternal(DOWNLOAD_URL) }]),
+        { label: 'What is new', run: () => void openExternal(RELEASES_URL) },
+        { label: 'Report an issue', run: () => void openExternal(ISSUES_URL) },
+        { label: 'Source code', run: () => void openExternal(SOURCE_URL) },
       ],
     },
   ]

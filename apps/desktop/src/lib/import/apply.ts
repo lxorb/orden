@@ -1,7 +1,6 @@
 import { freePath } from '@orden/markdown/paths'
 
 import { insideOnly } from '../automation/inside'
-import { key } from '../i18n.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { holderOf, pairOf, paperOf } from '../pages/held'
@@ -92,9 +91,9 @@ function judged(files: readonly Planned[]): Planned[] {
   })
 }
 
-const UNWRITABLE = key('That import could not be written.')
+const UNWRITABLE = 'That import could not be written.'
 
-const ESCAPING = key('That import would have landed outside the space, so nothing was written.')
+const ESCAPING = 'That import would have landed outside the space, so nothing was written.'
 
 async function restampedOnDisk(
   plan: Written,

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import type { Coding } from './flow'
   import Screen from './Screen.svelte'
   import { settleMarkdown, setup } from './setup.svelte'
@@ -26,11 +25,11 @@
 </script>
 
 <Screen
-  title={t('Do you write code?')}
-  primary={{ label: t('Continue'), disabled: picked === null, onclick: () => void done() }}
-  quiet={{ label: t('Skip'), onclick: skip }}
+  title="Do you write code?"
+  primary={{ label: 'Continue', disabled: picked === null, onclick: () => void done() }}
+  quiet={{ label: 'Skip', onclick: skip }}
 >
-  <div class="cards rise" role="radiogroup" aria-label={t('Do you write code?')}>
+  <div class="cards rise" role="radiogroup" aria-label="Do you write code?">
     <button
       class="card"
       type="button"
@@ -43,7 +42,7 @@
         {TYPED}<br /><span class="ok">✓</span>
         {ANSWERED}<br /><span class="p">{PROMPT}</span> <span class="caret"></span></span
       >
-      <span class="label"><span class="ring" aria-hidden="true"></span>{t('Yes')}</span>
+      <span class="label"><span class="ring" aria-hidden="true"></span>Yes</span>
     </button>
     <button
       class="card"
@@ -58,7 +57,7 @@
         <span class="todo"><b></b><i style:width="55%"></i></span>
         <i style:width="80%"></i>
       </span>
-      <span class="label"><span class="ring" aria-hidden="true"></span>{t('No')}</span>
+      <span class="label"><span class="ring" aria-hidden="true"></span>No</span>
     </button>
   </div>
 </Screen>

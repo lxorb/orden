@@ -1,7 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import Cross from './Cross.svelte'
-  import { t } from './i18n.svelte'
   import { type Channel, restartToUpdate } from './updater'
   import { dur, fly } from './motion'
   import { log } from './log'
@@ -79,45 +78,38 @@
   class:is-told={command !== null}
   transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
   {@attach told(
-    managed
-      ? t('Orden {version} is available.', { version })
-      : t('Orden {version} is ready to install.', { version }),
+    managed ? `Orden ${version} is available.` : `Orden ${version} is ready to install.`,
   )}
   {@attach heldBy}
 >
   {#if command}
-    <p>{t('To update, run this in a terminal:')}</p>
+    <p>To update, run this in a terminal:</p>
     {#await import('./Copyable.svelte') then { default: Copyable }}
       <Copyable value={command} />
     {/await}
 
     <div class="actions">
-      <button class="orden-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
+      <button class="orden-button is-quiet" onclick={ondismiss}>Later</button>
     </div>
   {:else if system}
-    <p>{t('Orden {version} is available.', { version })}</p>
+    <p>Orden {version} is available.</p>
 
     <div class="actions">
-      <button class="orden-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
-      <button class="orden-button" disabled={restarting} onclick={restart}>{t('Update')}</button>
+      <button class="orden-button is-quiet" onclick={ondismiss}>Later</button>
+      <button class="orden-button" disabled={restarting} onclick={restart}>Update</button>
     </div>
   {:else if news}
-    <p>{t('Orden {version} is available.', { version })}</p>
-    <button
-      class="orden-glyph shut"
-      aria-label={t('Dismiss')}
-      title={t('Dismiss')}
-      onclick={ondismiss}
-    >
+    <p>Orden {version} is available.</p>
+    <button class="orden-glyph shut" aria-label="Dismiss" title="Dismiss" onclick={ondismiss}>
       <Cross />
     </button>
   {:else}
-    <p>{t('Orden {version} is ready to install.', { version })}</p>
+    <p>Orden {version} is ready to install.</p>
 
     <div class="actions">
-      <button class="orden-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
+      <button class="orden-button is-quiet" onclick={ondismiss}>Later</button>
       <button class="orden-button" disabled={restarting} onclick={restart}
-        >{moving ? t('Move to Applications') : t('Restart now')}</button
+        >{moving ? 'Move to Applications' : 'Restart now'}</button
       >
     </div>
   {/if}

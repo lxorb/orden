@@ -1,7 +1,6 @@
-import { key } from '../i18n.svelte'
 import { DECLARES, type ThemeSetting, WRITES } from './settings'
 
-const OFFERED = key('One of this theme’s own settings, offered by its author.')
+const OFFERED = 'One of this theme’s own settings, offered by its author.'
 
 const MOST_SETTINGS = 6
 const MOST_OPTIONS = 12

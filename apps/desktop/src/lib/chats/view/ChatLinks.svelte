@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../../i18n.svelte'
   import FileMark from '../../FileMark.svelte'
   import { nameOf as fileName, relativeTo, withoutExtension } from '../../space-paths'
   import { workspace } from '../../workspace.svelte'
@@ -40,7 +39,7 @@
 </script>
 
 {#if hits.length}
-  <p class="orden-section">{t('Chats')}<span>{hits.length}</span></p>
+  <p class="orden-section">Chats<span>{hits.length}</span></p>
   {#each hits as hit (hit.message.id)}
     <button type="button" class="orden-row" onclick={() => open(hit)}>
       <FileMark mark="chat" path={store().entry(hit.chat)?.path ?? undefined} />

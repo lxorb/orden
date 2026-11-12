@@ -1,7 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import FileMark from '../../FileMark.svelte'
-  import { t } from '../../i18n.svelte'
   import { dur, fly } from '../../motion'
   import { pages, siteMark } from '../../web-tab/pages.svelte'
   import { workspace } from '../../workspace.svelte'
@@ -59,23 +58,23 @@
   <div class="rows">
     {#if approval.category === 'takeover'}
       {#if approval.tab !== undefined}
-        <button class="orden-button is-quiet" onclick={goThere}>{t('Open')}</button>
+        <button class="orden-button is-quiet" onclick={goThere}>Open</button>
       {/if}
       <button class="orden-button" disabled={answering} onclick={() => void answer(true)}>
-        {t('Done')}
+        Done
       </button>
     {:else}
       <button class="orden-button is-quiet" disabled={answering} onclick={() => void answer(false)}>
-        {t('Don’t allow')}
+        Don’t allow
       </button>
       <button class="orden-button" disabled={answering} onclick={() => void answer(true)}>
-        {t('Allow')}
+        Allow
       </button>
     {/if}
   </div>
   {#if (site !== null || chat) && approval.category !== 'takeover' && approval.category !== 'showing'}
     <button class="always" disabled={answering} onclick={() => void answer(true, true)}>
-      {chat ? t('Always in this chat') : t('Always on this site')}
+      {chat ? 'Always in this chat' : 'Always on this site'}
     </button>
   {/if}
 </div>

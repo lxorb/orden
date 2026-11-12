@@ -1,11 +1,10 @@
 import { fromBase64 } from '../bytes'
-import { key } from '../i18n.svelte'
 import { htmlToMarkdown } from '@orden/markdown/from-html'
 
 import { dayOf, noteText, type Meta } from './meta'
 import { md5 } from './md5'
 import { Names, safeName, titleFrom } from './names'
-import type { ImportPlan, Lost, Planned } from './plan'
+import type { ImportPlan, Planned } from './plan'
 import { encodeTarget } from './rewrite'
 import type { Source } from './sources'
 import { closingOf, element, elements, plainText, textOf, textsOf } from './xml'
@@ -33,7 +32,7 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
   const files = sources.filter((one) => /\.enex$/i.test(one.path))
   const names = new Names()
   const written: Planned[] = []
-  const lost: Lost[] = []
+  const lost: string[] = []
   let encrypted = 0
   let reminders = 0
   let missing = 0
@@ -109,25 +108,19 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
   }
 
   if (encrypted) {
-    lost.push({
-      text: key('{count} passages are encrypted, and nothing can read them without Evernote'),
-      values: { count: encrypted },
-    })
+    lost.push(`${encrypted} passages are encrypted, and nothing can read them without Evernote`)
   }
 
   if (reminders) {
-    lost.push({
-      text: key('{count} notes had a reminder, which the export does not carry'),
-      values: { count: reminders },
-    })
+    lost.push(`${reminders} notes had a reminder, which the export does not carry`)
   }
 
   if (missing) {
-    lost.push({
-      text: key('{count} attachments were missing from the export or could not be read'),
-      one: '{count} attachment was missing from the export or could not be read',
-      values: { count: missing },
-    })
+    lost.push(
+      missing === 1
+        ? '1 attachment was missing from the export or could not be read'
+        : `${missing} attachments were missing from the export or could not be read`,
+    )
   }
 
   return { format: 'evernote', files: written, lost }

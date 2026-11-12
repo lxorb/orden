@@ -10,7 +10,6 @@
 
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { links } from '../link-index.svelte'
   import { AGENTS_NAME } from '../note-name'
   import { onDisk } from '../on-disk'
@@ -89,7 +88,7 @@
   <div class="card">
     <label class="orden-setting setting tall">
       <span class="name"
-        >{t('Agent instructions')}{#if name}<small>{name}</small>{/if}</span
+        >Agent instructions{#if name}<small>{name}</small>{/if}</span
       >
       <textarea
         bind:this={box}

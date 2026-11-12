@@ -23,12 +23,8 @@ export function isFinger(pointer: string): boolean {
   return pointer !== 'pen'
 }
 
-function alongLine(x: number, factor: number): number {
-  return factor === 1 ? x : window.innerWidth - x
-}
-
-export function fromEdge(x: number, factor: number, sign: number): number {
-  return alongLine(x, factor * sign)
+export function fromEdge(x: number, sign: number): number {
+  return sign === 1 ? x : window.innerWidth - x
 }
 
 export function opensDrawer(x: number, edge: number, anywhere: boolean): boolean {

@@ -8,7 +8,7 @@
   import ExternalLink from 'lucide/dist/esm/icons/external-link.mjs'
   import Pin from 'lucide/dist/esm/icons/pin.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
-  import { i18n, plural, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { iconChoice } from '../icon-choice.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
   import { dur, fade } from '../motion'
@@ -66,18 +66,17 @@
   function flagWord(flag: Flag): string {
     switch (flag) {
       case 'compromised':
-        return t('This password was found in a data breach')
+        return 'This password was found in a data breach'
       case 'weak':
-        return t('This password is weak')
+        return 'This password is weak'
       case 'reused':
-        return plural(reusedWith, {
-          one: 'This password is used for {count} other login',
-          other: 'This password is used for {count} other logins',
-        })
+        return reusedWith === 1
+          ? 'This password is used for 1 other login'
+          : `This password is used for ${reusedWith} other logins`
       case 'inactive2fa':
-        return t('This site offers two-factor authentication')
+        return 'This site offers two-factor authentication'
       case 'excluded':
-        return t('Left out of Monitor')
+        return 'Left out of Monitor'
     }
   }
 
@@ -90,19 +89,19 @@
   }
 
   const when = (stamp: number | null) =>
-    stamp === null ? t('Never') : i18n.when(stamp, { dateStyle: 'medium', timeStyle: 'short' })
+    stamp === null ? 'Never' : localDate(stamp, { dateStyle: 'medium', timeStyle: 'short' })
 
   async function moveToTrash() {
     await pass.trash([item.id])
-    said.say(t('Moved to trash'))
+    said.say('Moved to trash')
   }
 
   async function removeForGood() {
     const sure = await prompt.confirm({
       until: pass.opened,
-      title: t('Delete {title} for good?', { title: content.title || t('Untitled') }),
-      detail: t('This cannot be undone.'),
-      confirmLabel: t('Delete'),
+      title: `Delete ${content.title || 'Untitled'} for good?`,
+      detail: 'This cannot be undone.',
+      confirmLabel: 'Delete',
       danger: true,
     })
     if (!sure) return
@@ -119,7 +118,7 @@
   function shareEntries(): Promise<MenuEntry[]> {
     return Promise.resolve([
       {
-        label: t('Create secure link'),
+        label: 'Create secure link',
         run: () => (ui.sheet = { kind: 'link', item: item.id }),
       },
     ])
@@ -128,9 +127,7 @@
   function shareShown(from: Element) {
     const box = from.getBoundingClientRect()
     const at = new MouseEvent('contextmenu', { clientX: box.right, clientY: box.bottom })
-    void shareEntries().then((rows) =>
-      menu.show(at, rows, { until: pass.opened, title: t('Share') }),
-    )
+    void shareEntries().then((rows) => menu.show(at, rows, { until: pass.opened, title: 'Share' }))
   }
 
   function chooseIcon() {
@@ -147,36 +144,36 @@
   function entries(from: Element): MenuEntry[] {
     if (trashed) {
       return [
-        { label: t('Restore'), run: () => void pass.restore([item.id]) },
-        { label: t('Delete permanently'), danger: true, run: () => void removeForGood() },
+        { label: 'Restore', run: () => void pass.restore([item.id]) },
+        { label: 'Delete permanently', danger: true, run: () => void removeForGood() },
       ]
     }
     return [
       {
-        label: item.pinned ? t('Unpin') : t('Pin'),
+        label: item.pinned ? 'Unpin' : 'Pin',
         run: () => void pass.pin(item.id, !item.pinned),
       },
-      { label: t('Move to…'), run: () => (ui.sheet = { kind: 'move', ids: [item.id] }) },
+      { label: 'Move to…', run: () => (ui.sheet = { kind: 'move', ids: [item.id] }) },
       ...(sealed
         ? []
         : [
-            { label: t('Duplicate'), run: () => void duplicated() },
-            { label: t('History'), run: () => (ui.sheet = { kind: 'history', item: item.id }) },
+            { label: 'Duplicate', run: () => void duplicated() },
+            { label: 'History', run: () => (ui.sheet = { kind: 'history', item: item.id }) },
           ]),
       ...(content.kind === 'custom' && linkable
-        ? [{ label: t('Choose an icon'), run: () => chooseIcon() }]
+        ? [{ label: 'Choose an icon', run: () => chooseIcon() }]
         : []),
-      ...(linkable ? [{ label: t('Share'), more: shareEntries, run: () => shareShown(from) }] : []),
+      ...(linkable ? [{ label: 'Share', more: shareEntries, run: () => shareShown(from) }] : []),
       ...(content.kind === 'login'
         ? [
             {
-              label: item.monitored ? t('Exclude from Monitor') : t('Include in Monitor'),
+              label: item.monitored ? 'Exclude from Monitor' : 'Include in Monitor',
               run: () => void pass.monitor(item.id, !item.monitored),
             },
           ]
         : []),
       DIVIDER,
-      { label: t('Move to trash'), danger: true, run: () => void moveToTrash() },
+      { label: 'Move to trash', danger: true, run: () => void moveToTrash() },
     ]
   }
 </script>
@@ -187,18 +184,18 @@
       <button
         class="orden-glyph"
         type="button"
-        aria-label={t('Back')}
-        title={t('Back')}
+        aria-label="Back"
+        title="Back"
         onclick={() => ui.back()}
       >
-        <Glyph icon={ArrowLeft} class="orden-mirror" />
+        <Glyph icon={ArrowLeft} />
       </button>
     {/if}
     <ItemMark {content} big />
     <div class="named">
       <h2 class="title">
-        <span class="words" dir="auto">{content.title || t('Untitled')}</span>
-        {#if item.pinned}<span class="pinned" title={t('Pinned')}><Glyph icon={Pin} /></span>{/if}
+        <span class="words" dir="auto">{content.title || 'Untitled'}</span>
+        {#if item.pinned}<span class="pinned" title="Pinned"><Glyph icon={Pin} /></span>{/if}
       </h2>
       {#if vault}
         <span class="vault"
@@ -215,18 +212,18 @@
           type="button"
           onclick={() => void pass.restore([item.id])}
         >
-          {t('Restore')}
+          Restore
         </button>
       {:else}
         <button class="orden-button" type="button" onclick={() => void ui.edit(item.id)}
-          >{t('Edit')}</button
+          >Edit</button
         >
       {/if}
       <button
         class="orden-glyph"
         type="button"
-        aria-label={t('More')}
-        title={t('More')}
+        aria-label="More"
+        title="More"
         onclick={(event) => menu.show(event, entries(event.currentTarget), { until: pass.opened })}
       >
         <Glyph icon={Ellipsis} />
@@ -275,10 +272,10 @@
     {#if content.kind === 'wifi' && !sealed}
       <section class="card">
         <button class="line is-pressable" type="button" onclick={() => (showingQr = !showingQr)}>
-          <span>{showingQr ? t('Hide QR code') : t('Show QR code')}</span>
+          <span>{showingQr ? 'Hide QR code' : 'Show QR code'}</span>
         </button>
         {#if qr}
-          <div class="qr" aria-label={t('QR code to join {network}', { network: content.ssid })}>
+          <div class="qr" aria-label="QR code to join {content.ssid}">
             <!-- eslint-disable-next-line svelte/no-at-html-tags -- the square uqr drew from the network's own name and password -->
             {@html qr}
           </div>
@@ -288,7 +285,7 @@
 
     {#if content.kind === 'login' && content.websites.length}
       <section class="card">
-        <h3 class="orden-section">{t('Websites')}</h3>
+        <h3 class="orden-section">Websites</h3>
         {#each content.websites as website, index (index)}
           <button
             class="line is-pressable site"
@@ -308,7 +305,7 @@
 
     {#if note}
       <section class="card">
-        <h3 class="orden-section">{t('Note')}</h3>
+        <h3 class="orden-section">Note</h3>
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note rendered with every tag of its own escaped -->
         <div class="note orden-rendered" onclick={linkPressed}>{@html note}</div>
@@ -319,16 +316,16 @@
 
     <dl class="times">
       <div>
-        <dt>{t('Modified')}</dt>
+        <dt>Modified</dt>
         <dd>{when(item.modified)}</dd>
       </div>
       <div>
-        <dt>{t('Created')}</dt>
+        <dt>Created</dt>
         <dd>{when(item.created)}</dd>
       </div>
       {#if content.kind === 'login'}
         <div>
-          <dt>{t('Last used')}</dt>
+          <dt>Last used</dt>
           <dd>{when(item.used)}</dd>
         </div>
       {/if}

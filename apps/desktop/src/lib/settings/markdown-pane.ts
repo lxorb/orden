@@ -1,23 +1,20 @@
 import type { EditorView } from '@orden/editor'
-import { t } from '../i18n.svelte'
 import { DEFAULTS, modes } from '../modes.svelte'
 import type { Pane } from './fields'
 
 export function markdownPane(view: EditorView | undefined): Pane {
   return {
     id: 'markdown',
-    label: t('Markdown'),
+    label: 'Markdown',
     groups: [
       {
-        title: t('Syntax'),
+        title: 'Syntax',
         fields: [
           {
             kind: 'switch',
             key: 'markdown.showMarkdown',
-            label: t('Show markdown while writing'),
-            hint: t(
-              'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.',
-            ),
+            label: 'Show markdown while writing',
+            hint: 'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.',
             words: ['syntax', 'marks', 'wysiwyg', 'rich text'],
             initial: true,
             get: () => !modes.quietMarks,
@@ -26,8 +23,8 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.openInSource',
-            label: t('Open notes in source mode'),
-            hint: t('Notes open as plain markdown text rather than formatted.'),
+            label: 'Open notes in source mode',
+            hint: 'Notes open as plain markdown text rather than formatted.',
             words: ['source mode', 'raw', 'plain text', 'default editing mode'],
             initial: DEFAULTS.opensInSource,
             get: () => modes.opensInSource,
@@ -36,8 +33,8 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.strictCommonMark',
-            label: t('Strict CommonMark'),
-            hint: t('Only the standard markdown rules, no tables, task lists or footnotes.'),
+            label: 'Strict CommonMark',
+            hint: 'Only the standard markdown rules, no tables, task lists or footnotes.',
             initial: DEFAULTS.strict,
             get: () => modes.strict,
             set: () => modes.toggleStrict(view),
@@ -45,8 +42,8 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.smartPunctuation',
-            label: t('Smart punctuation'),
-            hint: t('Turns straight quotes and dashes into typographic ones as you type.'),
+            label: 'Smart punctuation',
+            hint: 'Turns straight quotes and dashes into typographic ones as you type.',
             initial: DEFAULTS.punctuation,
             get: () => modes.punctuation,
             set: () => modes.togglePunctuation(view),
@@ -54,10 +51,8 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.newlineBreaks',
-            label: t('A single newline breaks the line'),
-            hint: t(
-              'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.',
-            ),
+            label: 'A single newline breaks the line',
+            hint: 'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.',
             initial: DEFAULTS.hardBreaks,
             get: () => modes.hardBreaks,
             set: () => modes.toggleHardBreaks(),
@@ -65,13 +60,13 @@ export function markdownPane(view: EditorView | undefined): Pane {
         ],
       },
       {
-        title: t('Numbering'),
+        title: 'Numbering',
         fields: [
           {
             kind: 'switch',
             key: 'markdown.numberHeadings',
-            label: t('Number headings'),
-            hint: t('Puts 1., 1.1, 1.2 in front of headings.'),
+            label: 'Number headings',
+            hint: 'Puts 1., 1.1, 1.2 in front of headings.',
             initial: DEFAULTS.numbers,
             get: () => modes.numbers,
             set: () => modes.toggleNumbers(view),
@@ -79,8 +74,8 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'markdown.numberEquations',
-            label: t('Number equations'),
-            hint: t('Numbers display equations so you can refer to them.'),
+            label: 'Number equations',
+            hint: 'Numbers display equations so you can refer to them.',
             initial: DEFAULTS.equationNumbers,
             get: () => modes.equationNumbers,
             set: () => modes.toggleEquationNumbers(view),
@@ -88,13 +83,13 @@ export function markdownPane(view: EditorView | undefined): Pane {
         ],
       },
       {
-        title: t('Direction'),
+        title: 'Direction',
         fields: [
           {
             kind: 'switch',
             key: 'markdown.rightToLeft',
-            label: t('Right to left'),
-            hint: t('Writes notes from right to left, for Arabic, Hebrew and other such scripts.'),
+            label: 'Right to left',
+            hint: 'Writes notes from right to left, for Arabic, Hebrew and other such scripts.',
             initial: DEFAULTS.rtl,
             get: () => modes.rtl,
             set: () => modes.toggleRightToLeft(view),

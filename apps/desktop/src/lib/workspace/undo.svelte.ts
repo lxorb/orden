@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import type { Edit } from '../search/replace'
 import type { Bookmark } from './bookmarks.svelte'
 
@@ -213,40 +212,38 @@ function labelOf(action: FileAction | undefined): string | null {
 
   switch (action.kind) {
     case 'move':
-      return t('Undo moving {name}', { name: shownName(nameOf(action.to)) })
+      return `Undo moving ${shownName(nameOf(action.to))}`
     case 'rename':
-      return t('Undo renaming {name}', { name: shownName(nameOf(action.to)) })
+      return `Undo renaming ${shownName(nameOf(action.to))}`
     case 'delete':
-      return t('Undo deleting {name}', { name: shownName(nameOf(action.path)) })
+      return `Undo deleting ${shownName(nameOf(action.path))}`
     case 'merge':
-      return t('Undo merging {name}', { name: shownName(nameOf(action.from)) })
+      return `Undo merging ${shownName(nameOf(action.from))}`
     case 'split':
-      return t('Undo splitting {name}', { name: shownName(nameOf(action.from)) })
+      return `Undo splitting ${shownName(nameOf(action.from))}`
     case 'extract':
-      return t('Undo extracting from {name}', { name: shownName(nameOf(action.from)) })
+      return `Undo extracting from ${shownName(nameOf(action.from))}`
     case 'replace':
-      return t('Undo the replacement')
+      return 'Undo the replacement'
     case 'import':
-      return t('Undo the import')
+      return 'Undo the import'
     case 'copy':
-      return t('Undo the copy')
+      return 'Undo the copy'
     case 'archive':
-      return t('Undo archiving {name}', { name: shownName(nameOf(action.archived[0] ?? '')) })
+      return `Undo archiving ${shownName(nameOf(action.archived[0] ?? ''))}`
     case 'unarchive':
-      return t('Undo unarchiving {name}', {
-        name: shownName(nameOf(action.restored.at(-1) ?? '')),
-      })
+      return `Undo unarchiving ${shownName(nameOf(action.restored.at(-1) ?? ''))}`
     case 'create':
-      return t('Undo making {name}', { name: shownName(nameOf(action.path)) })
+      return `Undo making ${shownName(nameOf(action.path))}`
     case 'outside':
       return outsideLabel(action.steps)
     case 'keep':
-      return t('Undo the move')
+      return 'Undo the move'
     case 'many': {
       const [first] = action.steps
       if (!action.steps.every((one) => one.kind === first?.kind)) return labelOf(first)
-      if (first?.kind === 'delete') return t('Undo the deletion')
-      if (first?.kind === 'move') return t('Undo the move')
+      if (first?.kind === 'delete') return 'Undo the deletion'
+      if (first?.kind === 'move') return 'Undo the move'
       return labelOf(first)
     }
   }
@@ -283,21 +280,19 @@ function outsideLabel(steps: readonly OutsideStep[]): string | null {
   switch (step.op) {
     case 'moved': {
       const [only, ...more] = step.pairs
-      if (!only || more.length) return t('Undo the move')
+      if (!only || more.length) return 'Undo the move'
       return samePath(folderOf(only.from), folderOf(only.to))
-        ? t('Undo renaming {name}', { name: nameOf(only.to) })
-        : t('Undo moving {name}', { name: nameOf(only.to) })
+        ? `Undo renaming ${nameOf(only.to)}`
+        : `Undo moving ${nameOf(only.to)}`
     }
     case 'copied':
-      return t('Undo the copy')
+      return 'Undo the copy'
     case 'made':
-      return t('Undo making {name}', { name: nameOf(step.path) })
+      return `Undo making ${nameOf(step.path)}`
     case 'trashed':
     case 'replaced': {
       const [only, ...more] = step.tickets
-      return only && !more.length
-        ? t('Undo deleting {name}', { name: nameOf(only.path) })
-        : t('Undo the deletion')
+      return only && !more.length ? `Undo deleting ${nameOf(only.path)}` : 'Undo the deletion'
     }
   }
 }

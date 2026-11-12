@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import type { Space } from '../workspace.svelte'
 import { bringHistory, droppedLine, folderWords, takeEngine, withMarks } from './browser-extras'
 import { landSpaces } from './sidebar-landing'
@@ -15,7 +14,7 @@ export async function landZen(profile: ZenProfile): Promise<Space> {
   const first = await landSpaces(
     spaces,
     [...lost, ...droppedLine(sidebar), ...engine],
-    t('Zen’s tabs could not be read.'),
+    'Zen’s tabs could not be read.',
   )
   await bringHistory('zen', profile.path)
   return first

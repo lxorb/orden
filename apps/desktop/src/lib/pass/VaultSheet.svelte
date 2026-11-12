@@ -2,7 +2,7 @@
   import type { VaultColor, VaultIcon } from '@orden/pass/types'
   import { VAULT_COLORS } from '@orden/pass/types'
   import { iconChoice } from '../icon-choice.svelte'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import Sheet from '../Sheet.svelte'
   import { theme } from '../theme.svelte'
   import { vaultColour } from './icons'
@@ -72,24 +72,24 @@
   }
 </script>
 
-<Sheet open={asked !== null} title={editing ? t('Edit vault') : t('New vault')} onclose={close}>
+<Sheet open={asked !== null} title={editing ? 'Edit vault' : 'New vault'} onclose={close}>
   {#snippet mark()}<VaultMark {color} {icon} mark={picked} />{/snippet}
   <form class="vault-form" onsubmit={kept}>
     <input
       class="orden-field is-value"
-      placeholder={t('Name')}
-      aria-label={t('Name')}
+      placeholder="Name"
+      aria-label="Name"
       bind:value={name}
       data-lands
     />
     <input
       class="orden-field is-value"
-      placeholder={t('Description')}
-      aria-label={t('Description')}
+      placeholder="Description"
+      aria-label="Description"
       bind:value={description}
     />
-    <div class="orden-section">{t('Colour')}</div>
-    <div class="dots" role="radiogroup" aria-label={t('Colour')}>
+    <div class="orden-section">Colour</div>
+    <div class="dots" role="radiogroup" aria-label="Colour">
       {#each VAULT_COLORS as one (one)}
         <button
           type="button"
@@ -104,20 +104,20 @@
         ></button>
       {/each}
     </div>
-    <div class="orden-section">{t('Icon')}</div>
+    <div class="orden-section">Icon</div>
     <button
       type="button"
       class="orden-row chooser"
       onclick={() => iconChoice.pass(picked ?? null, (chosen) => (picked = chosen ?? undefined))}
     >
       <VaultMark {color} {icon} mark={picked} />
-      <span class="orden-row-label">{t('Choose an icon')}</span>
+      <span class="orden-row-label">Choose an icon</span>
     </button>
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
     <div class="buttons">
-      <button class="orden-button is-quiet" type="button" onclick={close}>{t('Cancel')}</button>
+      <button class="orden-button is-quiet" type="button" onclick={close}>Cancel</button>
       <button class="orden-button" type="submit" disabled={!name.trim() || busy}>
-        {editing ? t('Save') : t('Create vault')}
+        {editing ? 'Save' : 'Create vault'}
       </button>
     </div>
   </form>

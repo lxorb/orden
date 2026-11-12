@@ -1,7 +1,7 @@
 import { api, fromServer, type Invitation, type Joined } from './api'
 import { account } from './account.svelte'
 import { passing, pollDelay } from './backoff'
-import { message, t } from './i18n.svelte'
+import { message } from './message'
 import { deviceName } from './rooms/who'
 import { forget, keep, storedText } from './stored'
 import { sync } from './sync.svelte'
@@ -129,14 +129,14 @@ class Joining {
     } catch (error) {
       if (this.token !== token) return
       if (!refused(error)) {
-        this.error = message(error, t('could not reach the server'))
+        this.error = message(error, 'could not reach the server')
         if (this.step === 'waiting') {
           if (!this.asking) this.later()
         } else if (this.step !== 'asking') this.step = 'unreached'
         return
       }
 
-      this.error = message(error, t('Ask for another one.'))
+      this.error = message(error, 'Ask for another one.')
       this.stopAsking()
       this.closed = false
       this.step = 'gone'
@@ -249,7 +249,7 @@ class Joining {
   }
 
   private unreached(error: unknown) {
-    this.error = message(error, t('could not reach the server'))
+    this.error = message(error, 'could not reach the server')
     this.step = 'unreached'
   }
 
@@ -271,7 +271,7 @@ class Joining {
       } catch (error) {
         if (this.token !== token) return
         if (!(fromServer(error) && error.status === 404)) {
-          this.error = message(error, t('Try again'))
+          this.error = message(error, 'Try again')
           this.closed = false
           this.laterOnce()
           return

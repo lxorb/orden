@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Group, Value } from '@orden/bases'
   import { untrack } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { ADD_MARK } from './marks'
   import { addNote } from './add'
   import type { Kit } from './kit'
@@ -88,8 +87,8 @@
       class="field"
       bind:this={field}
       bind:value={words}
-      aria-label={t('New page')}
-      placeholder={t('Untitled')}
+      aria-label="New page"
+      placeholder="Untitled"
       onkeydown={(event) => {
         if (event.key === 'Enter') {
           event.preventDefault()
@@ -107,7 +106,7 @@
 {:else}
   <button type="button" class="new" data-new-page onclick={open}>
     <svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>
-    {t('New page')}
+    New page
   </button>
 {/if}
 

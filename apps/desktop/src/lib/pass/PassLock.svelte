@@ -1,6 +1,5 @@
 <script lang="ts">
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
-  import { plural, t } from '../i18n.svelte'
   import { deviceName } from '../protect/device'
   import Gate from './Gate.svelte'
   import { pass, PIN_TRIES, type Unlock } from './store.svelte'
@@ -60,20 +59,20 @@
   const wrongWord = $derived.by(() => {
     switch (way) {
       case 'pin':
-        return t('Wrong PIN')
+        return 'Wrong PIN'
       case 'recovery':
-        return t('That recovery key does not open Pass')
+        return 'That recovery key does not open Pass'
       case 'password':
       case 'device':
-        return t('Wrong password')
+        return 'Wrong password'
     }
   })
 </script>
 
-<Gate icon={Lock} title={t('Pass is locked')}>
+<Gate icon={Lock} title="Pass is locked">
   {#if way === 'device'}
     <button class="orden-button" type="button" disabled={busy} onclick={() => void opened()}>
-      {t('Use {way}', { way: deviceName() })}
+      Use {deviceName()}
     </button>
   {:else}
     <form class:shake={shaking} onsubmit={opened} onanimationend={() => (shaking = false)}>
@@ -85,21 +84,13 @@
         inputmode={way === 'pin' ? 'numeric' : undefined}
         autocomplete={way === 'password' ? 'current-password' : 'off'}
         spellcheck="false"
-        placeholder={way === 'pin'
-          ? t('PIN')
-          : way === 'recovery'
-            ? t('Recovery key')
-            : t('Pass password')}
-        aria-label={way === 'pin'
-          ? t('PIN')
-          : way === 'recovery'
-            ? t('Recovery key')
-            : t('Pass password')}
+        placeholder={way === 'pin' ? 'PIN' : way === 'recovery' ? 'Recovery key' : 'Pass password'}
+        aria-label={way === 'pin' ? 'PIN' : way === 'recovery' ? 'Recovery key' : 'Pass password'}
         aria-invalid={wrong}
         oninput={() => (wrong = false)}
       />
       <button class="orden-button" type="submit" disabled={busy || typed === ''} aria-busy={busy}>
-        {busy ? t('Unlocking…') : t('Unlock')}
+        {busy ? 'Unlocking…' : 'Unlock'}
       </button>
     </form>
   {/if}
@@ -111,22 +102,20 @@
   {/if}
   {#if way === 'pin' && pass.pinTries < PIN_TRIES}
     <p class="tries">
-      {plural(pass.pinTries, { one: '{count} try left', other: '{count} tries left' })}
+      {pass.pinTries === 1 ? '1 try left' : `${pass.pinTries} tries left`}
     </p>
   {/if}
   {#if way !== 'password'}
-    <button class="orden-action" type="button" onclick={() => use('password')}
-      >{t('Use password')}</button
-    >
+    <button class="orden-action" type="button" onclick={() => use('password')}>Use password</button>
   {/if}
   {#if way === 'password' && pass.settings.lock !== 'password'}
     <button class="orden-action" type="button" onclick={() => use(pass.settings.lock)}>
-      {pass.settings.lock === 'pin' ? t('Use PIN') : t('Use {way}', { way: deviceName() })}
+      {pass.settings.lock === 'pin' ? 'Use PIN' : `Use ${deviceName()}`}
     </button>
   {/if}
   {#if way !== 'recovery'}
     <button class="orden-action" type="button" onclick={() => use('recovery')}
-      >{t('Use recovery key')}</button
+      >Use recovery key</button
     >
   {/if}
 </Gate>

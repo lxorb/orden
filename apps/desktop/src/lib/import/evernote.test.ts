@@ -118,8 +118,9 @@ describe('an Evernote export', () => {
     const plan = await readEvernote([file('A.enex', enex(secret))])
 
     expect(noteAt(plan, 'Secret.md')).toContain('…')
-    expect(plan.lost[0]?.values).toEqual({ count: 1 })
-    expect(plan.lost[0]?.text).toContain('encrypted')
+    expect(plan.lost[0]).toBe(
+      '1 passages are encrypted, and nothing can read them without Evernote',
+    )
   })
 
   test('an attachment with no name of its own is named after its bytes', async () => {
@@ -197,8 +198,7 @@ describe('an Evernote export that is not quite what the format says', () => {
 
     expect(noteAt(plan, 'Damaged.md')).toContain('Kept')
     expect(noteAt(plan, 'Trip to Iceland.md')).toContain('![](assets/glacier.png)')
-    expect(plan.lost.map((one) => one.values)).toEqual([{ count: 1 }])
-    expect(plan.lost[0]?.text).toContain('attachments')
+    expect(plan.lost).toEqual(['1 attachment was missing from the export or could not be read'])
   })
 
   test('a picture whose attachment the export left out is counted', async () => {
@@ -211,7 +211,7 @@ describe('an Evernote export that is not quite what the format says', () => {
       ),
     ])
 
-    expect(plan.lost.map((one) => one.values)).toEqual([{ count: 1 }])
+    expect(plan.lost).toEqual(['1 attachment was missing from the export or could not be read'])
   })
 
   test('an attachment named with a hash or a percent sign is still what its link reaches', async () => {
@@ -266,7 +266,7 @@ describe('an Evernote export that is not quite what the format says', () => {
 
     const plan = await readEvernote([file('A.enex', enex(`${none}\n${one}`))])
 
-    expect(plan.lost.map((found) => found.values)).toEqual([{ count: 1 }])
+    expect(plan.lost).toEqual(['1 notes had a reminder, which the export does not carry'])
   })
 
   test('one picture in two notes is one file', async () => {

@@ -1,6 +1,5 @@
 <script lang="ts">
   import Sheet from '../Sheet.svelte'
-  import { t } from '../i18n.svelte'
 
   const {
     choosing,
@@ -56,8 +55,8 @@
         type="password"
         autofocus
         autocomplete={choosing ? 'new-password' : 'current-password'}
-        placeholder={choosing ? t('New password') : t('Password')}
-        aria-label={choosing ? t('New password') : t('Password')}
+        placeholder={choosing ? 'New password' : 'Password'}
+        aria-label={choosing ? 'New password' : 'Password'}
         bind:value={typed}
         oninput={() => (wrong = false)}
       />
@@ -66,23 +65,21 @@
           class="field"
           type="password"
           autocomplete="new-password"
-          placeholder={t('Repeat it')}
-          aria-label={t('Repeat it')}
+          placeholder="Repeat it"
+          aria-label="Repeat it"
           bind:value={again}
         />
       {/if}
       {#if wrong}
-        <p class="hint bad" role="alert">{t('Wrong password')}</p>
+        <p class="hint bad" role="alert">Wrong password</p>
       {:else if choosing && again && typed !== again}
-        <p class="hint bad">{t('The two don’t match')}</p>
+        <p class="hint bad">The two don’t match</p>
       {/if}
     </div>
-    <p class="note">
-      {t('Protected, not encrypted: this only keeps it from being opened by accident.')}
-    </p>
+    <p class="note">Protected, not encrypted: this only keeps it from being opened by accident.</p>
     <div class="actions">
       <button class="orden-button" type="submit" disabled={!ready || busy}>
-        {choosing ? t('Protect') : t('Unlock')}
+        {choosing ? 'Protect' : 'Unlock'}
       </button>
     </div>
   </form>

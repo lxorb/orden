@@ -1,7 +1,6 @@
 <script lang="ts">
   import CanvasIcon from './CanvasIcon.svelte'
   import { MARKS } from './canvas/glyphs'
-  import { t } from './i18n.svelte'
 
   const {
     value,
@@ -33,8 +32,8 @@
 
   <button
     type="button"
-    title={t('Less')}
-    aria-label={t('Less')}
+    title="Less"
+    aria-label="Less"
     disabled={value <= least}
     onclick={() => by(-1)}
   >
@@ -55,8 +54,8 @@
 
   <button
     type="button"
-    title={t('More')}
-    aria-label={t('More')}
+    title="More"
+    aria-label="More"
     disabled={value >= most}
     onclick={() => by(1)}
   >

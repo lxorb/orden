@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { invoke } from '../tauri'
 import { ptyOf, runningTabs } from '../terminal/running'
 import type { Warning } from '../terminal/shells.svelte'
@@ -63,7 +62,7 @@ async function threadRows(window: string): Promise<Row[]> {
       window,
       kind: 'thread',
       id: thread.id,
-      name: thread.title || t('Untitled'),
+      name: thread.title || 'Untitled',
       busy: true,
       ...(program ? { doc: '', running: { name: null, program, host: null, colour: null } } : {}),
     }

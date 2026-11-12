@@ -11,7 +11,6 @@
     isWhen,
   } from '@orden/bases'
   import { tick, untrack } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { menu, type MenuEntry } from '../menu.svelte'
   import { prompt } from '../prompt.svelte'
   import { shortcuts } from '../shortcuts.svelte'
@@ -184,14 +183,12 @@
 
   const nothing = $derived(
     property && !project && !days
-      ? t('No {property}', {
-          property: propertyName(property, base ? displayName(base, property) : undefined),
-        })
-      : t('None'),
+      ? `No ${propertyName(property, base ? displayName(base, property) : undefined)}`
+      : 'None',
   )
 
   function columnName(group: Group): string {
-    if (project && sectionOf(group) === null) return t('None')
+    if (project && sectionOf(group) === null) return 'None'
     if (days) return dayHead(group.key, live.today)
     if (isWhen(property)) return groupLabel(property, group.key, live.today)
     if (group.key === null || group.key === '') return nothing
@@ -241,7 +238,7 @@
   function columnMenu(event: MouseEvent, group: Group) {
     const name = groupName(group.key)
     const hide = {
-      label: t('Hide'),
+      label: 'Hide',
       run: () => kit.change((one, at) => setHidden(one, at, name, true)),
     }
     const section = sectionOf(group)
@@ -251,7 +248,7 @@
         kit,
         section,
         group.rows.length,
-        () => ask(t('Rename'), section, (words) => renameSection(kit, section, words)),
+        () => ask('Rename', section, (words) => renameSection(kit, section, words)),
         [hide],
       )
       return
@@ -305,7 +302,7 @@
       event,
       [
         {
-          label: t('Count'),
+          label: 'Count',
           checked: !Object.keys(summaries).length,
           run: () =>
             kit.change((next, at) =>
@@ -314,7 +311,7 @@
         },
         ...offered,
       ],
-      { title: t('Calculate') },
+      { title: 'Calculate' },
     )
   }
 
@@ -433,7 +430,7 @@
       index,
     }
     pending = [...pending.filter((one) => one.card !== card), moving]
-    announce(t('{card} moved to {group}', { card: titleOf(row), group: columnName(group) }))
+    announce(`${titleOf(row)} moved to ${columnName(group)}`)
     const others = ids.filter((one) => one !== id).length
     const stored = (view?.orden.order?.[name]?.length ?? 0) > 0
     const keepOrder = !sorted && (stored || index < others)
@@ -483,12 +480,12 @@
       new MouseEvent('contextmenu', { clientX: where.x, clientY: where.y }),
       [
         {
-          label: t('Remove sort'),
+          label: 'Remove sort',
           run: () => shuffle(name, order, true),
         },
-        { label: t('Cancel'), run: () => undefined },
+        { label: 'Cancel', run: () => undefined },
       ],
-      { title: t('Remove sort?') },
+      { title: 'Remove sort?' },
     )
   }
 
@@ -695,7 +692,7 @@
     const dy = event.clientY - from.y
     if (Math.abs(dx) < 64 || !claimsGesture(dx, dy)) return
     const at = phoneColumn ? shownGroups.indexOf(phoneColumn) : -1
-    const forward = dx < 0 !== (document.documentElement.dir === 'rtl')
+    const forward = dx < 0
     const next = shownGroups[at + (forward ? 1 : -1)]
     if (next) showing = groupName(next.key)
   }
@@ -750,7 +747,7 @@
       <input
         class="orden-field"
         value={name}
-        aria-label={t('Rename')}
+        aria-label="Rename"
         onkeydown={(event) => {
           if (event.key === 'Enter') event.currentTarget.blur()
           if (event.key === 'Escape') {
@@ -847,7 +844,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="board" class:laned={lanes.length > 0} class:phone bind:this={board} onkeydown={keydown}>
   {#if phone && !lanes.length}
-    <div class="strip" role="tablist" aria-label={t('Groups')}>
+    <div class="strip" role="tablist" aria-label="Groups">
       {#each shownGroups as group (groupName(group.key))}
         {@const tone = toneOfGroup(group)}
         <button
@@ -900,18 +897,16 @@
     <button
       type="button"
       class="add-column"
-      onclick={() => ask(t('Add section'), '', (words) => addSection(kit, words))}
-      ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>{t(
-        'Add section',
-      )}</button
+      onclick={() => ask('Add section', '', (words) => addSection(kit, words))}
+      ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>Add section</button
     >
   {:else if groupable && !phone}
     {#if naming}
       <div class="add-column field">
         <input
           class="orden-field"
-          aria-label={t('New group')}
-          placeholder={t('New group')}
+          aria-label="New group"
+          placeholder="New group"
           onkeydown={(event) => {
             if (event.key === 'Enter') event.currentTarget.blur()
             if (event.key === 'Escape') {
@@ -928,22 +923,20 @@
       </div>
     {:else}
       <button type="button" class="add-column" onclick={() => (naming = true)}
-        ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>{t(
-          'New group',
-        )}</button
+        ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>New group</button
       >
     {/if}
   {/if}
 
   {#if hiddenGroups.length && !phone}
-    <div class="hidden" role="group" aria-label={t('Hidden groups')}>
-      <p class="hidden-head">{t('Hidden groups')}</p>
+    <div class="hidden" role="group" aria-label="Hidden groups">
+      <p class="hidden-head">Hidden groups</p>
       {#each hiddenGroups as group (groupName(group.key))}
         {@const tone = toneOfGroup(group)}
         <button
           type="button"
           class="hidden-row"
-          title={t('Show again')}
+          title="Show again"
           use:droppable={(row) => carryTo(row, group, undefined, group.rows.length, null)}
           onclick={() => kit.change((one, at) => setHidden(one, at, groupName(group.key), false))}
         >

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Item } from '@orden/pass/types'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { said } from '../said.svelte'
   import ItemMark from './ItemMark.svelte'
   import { pass } from './store.svelte'
@@ -30,7 +30,7 @@
     try {
       await pass.restoreDeleted(item)
       gone = gone.filter((one) => one.id !== item.id)
-      said.say(t('Restored {title}', { title: item.content.title || t('Untitled') }))
+      said.say(`Restored ${item.content.title || 'Untitled'}`)
     } catch (error) {
       wrong = message(error, 'The item could not be restored.')
     } finally {
@@ -40,21 +40,21 @@
 </script>
 
 {#if gone.length}
-  <section class="gone" aria-label={t('Deleted on another device')}>
-    <h3 class="orden-section">{t('Deleted on another device')}</h3>
+  <section class="gone" aria-label="Deleted on another device">
+    <h3 class="orden-section">Deleted on another device</h3>
     {#each gone as item (item.id)}
       <div class="one" data-gone={item.id}>
         <ItemMark content={item.content} />
-        <span class="name">{item.content.title || t('Untitled')}</span>
+        <span class="name">{item.content.title || 'Untitled'}</span>
         <button
           class="orden-button is-soft"
           type="button"
           disabled={busy}
-          onclick={() => void restored(item)}>{t('Restore')}</button
+          onclick={() => void restored(item)}>Restore</button
         >
       </div>
     {/each}
-    <p class="quiet">{t('Kept on this device for 30 days, without attachments.')}</p>
+    <p class="quiet">Kept on this device for 30 days, without attachments.</p>
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
   </section>
 {/if}

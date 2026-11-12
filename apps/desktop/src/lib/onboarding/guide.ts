@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import type { Coding } from './flow'
 
 export type Target = 'sidebar' | 'note' | 'tasks' | 'list' | 'tabs'
@@ -32,16 +31,16 @@ function brought(app: { id: string; name: string }): Card {
   if (app.id === 'notion') {
     return {
       at: 'note',
-      title: t('Your {app} pages are here', { app: app.name }),
-      text: t('Pages became notes, and databases became bases with their views.'),
+      title: `Your ${app.name} pages are here`,
+      text: 'Pages became notes, and databases became bases with their views.',
     }
   }
   return {
     at: 'note',
-    title: t('Your {app} notes are here', { app: app.name }),
+    title: `Your ${app.name} notes are here`,
     text: MARKDOWN_LIKE.has(app.id)
-      ? t('Still plain Markdown files, and your links work like before.')
-      : t('Every note is a file you own.'),
+      ? 'Still plain Markdown files, and your links work like before.'
+      : 'Every note is a file you own.',
   }
 }
 
@@ -49,8 +48,8 @@ export function guideCards(came: Came): Card[] {
   const cards: Card[] = [
     {
       at: 'sidebar',
-      title: t('Everything lives in one space'),
-      text: t('Notes, to-dos, web pages and chats sit side by side, so you never lose track.'),
+      title: 'Everything lives in one space',
+      text: 'Notes, to-dos, web pages and chats sit side by side, so you never lose track.',
     },
   ]
   if (came.notes) cards.push(brought(came.notes))
@@ -58,41 +57,39 @@ export function guideCards(came: Came): Card[] {
     came.notes && MARKDOWN_LIKE.has(came.notes.id)
       ? {
           at: 'tasks',
-          title: t('More than Markdown'),
-          text: t(
-            'To-dos, bases and boards live right inside your notes. Today shows what is due.',
-          ),
+          title: 'More than Markdown',
+          text: 'To-dos, bases and boards live right inside your notes. Today shows what is due.',
         }
       : {
           at: 'tasks',
-          title: t('To-dos in any note'),
-          text: t('Write a to-do anywhere. Today collects everything that is due.'),
+          title: 'To-dos in any note',
+          text: 'Write a to-do anywhere. Today collects everything that is due.',
         },
   )
   cards.push(
     came.browser
       ? {
           at: 'list',
-          title: t('Your {browser} bookmarks', { browser: came.browser }),
-          text: t('They are in the sidebar. Web pages open as tabs next to your notes.'),
+          title: `Your ${came.browser} bookmarks`,
+          text: 'They are in the sidebar. Web pages open as tabs next to your notes.',
         }
       : {
           at: 'tabs',
-          title: t('Web pages are tabs'),
-          text: t('Browse next to your notes, without switching apps.'),
+          title: 'Web pages are tabs',
+          text: 'Browse next to your notes, without switching apps.',
         },
   )
   if (came.ai) {
     cards.push({
       at: 'tabs',
-      title: t('Ask your AI'),
-      text: t('Chats sit next to your notes and can use what is in your space.'),
+      title: 'Ask your AI',
+      text: 'Chats sit next to your notes and can use what is in your space.',
     })
   } else if (came.code === 'yes' && came.terminals) {
     cards.push({
       at: 'tabs',
-      title: t('Terminals are tabs too'),
-      text: t('Open one next to the notes for your project.'),
+      title: 'Terminals are tabs too',
+      text: 'Open one next to the notes for your project.',
     })
   }
   return cards.slice(0, MOST)

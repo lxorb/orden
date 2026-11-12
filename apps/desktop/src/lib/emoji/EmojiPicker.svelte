@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { windowFor } from '../row-window'
   import { emojiData, type EmojiData, findEmoji } from './data'
   import { emojiRecent } from './recent.svelte'
@@ -111,8 +110,8 @@
         bind:this={field}
         bind:value={query}
         type="search"
-        aria-label={t('Search')}
-        placeholder={t('Search')}
+        aria-label="Search"
+        placeholder="Search"
         onkeydown={onKey}
         oninput={() => (lit = 0)}
       />
@@ -120,14 +119,14 @@
     <button
       type="button"
       class="orden-glyph tone"
-      aria-label={t('Skin tone')}
-      title={t('Skin tone')}
+      aria-label="Skin tone"
+      title="Skin tone"
       aria-expanded={toning}
       onclick={() => (toning = !toning)}>{inTone('👋', emojiRecent.tone, new Set(['👋']))}</button
     >
   </div>
   {#if toning}
-    <div class="tones" role="radiogroup" aria-label={t('Skin tone')}>
+    <div class="tones" role="radiogroup" aria-label="Skin tone">
       {#each TONES as _, tone (tone)}
         <button
           type="button"
@@ -152,11 +151,11 @@
     onscroll={() => (top = scroller?.scrollTop ?? 0)}
   >
     {#if failed}
-      <p class="empty">{t('That set is not here')}</p>
+      <p class="empty">That set is not here</p>
     {:else if !data}
-      <p class="empty">{t('Loading…')}</p>
+      <p class="empty">Loading…</p>
     {:else if !cells.length}
-      <p class="empty">{t('Nothing found')}</p>
+      <p class="empty">Nothing found</p>
     {:else}
       <div style:height="{shown.above}px"></div>
       {#each rows.slice(shown.first, shown.last + 1) as row, index (shown.first + index)}

@@ -1,5 +1,4 @@
 import { fromBase64 } from '../bytes'
-import { t } from '../i18n.svelte'
 import { invoke, isDesktop } from '../tauri'
 import type { Source } from './sources'
 import { tooMuch } from './sources'
@@ -26,7 +25,7 @@ export async function vaults(): Promise<Vault[]> {
 export async function vaultSources(vault: Vault): Promise<Source[]> {
   const files = await invoke<VaultFile[]>('obsidian_vault_files', { vault: vault.path })
   const bytes = files.reduce((sum, one) => sum + one.size, 0)
-  if (tooMuch(bytes)) throw new Error(t('That export is too big to read in one go.'))
+  if (tooMuch(bytes)) throw new Error('That export is too big to read in one go.')
 
   return files.map((file) => {
     let held: Promise<Uint8Array> | null = null
@@ -34,7 +33,7 @@ export async function vaultSources(vault: Vault): Promise<Source[]> {
       (held ??= invoke<string>('read_obsidian_file', { vault: vault.path, path: file.path }).then(
         fromBase64,
         () => {
-          throw new Error(t('{name} could not be read.', { name: file.path }))
+          throw new Error(`${file.path} could not be read.`)
         },
       ))
 

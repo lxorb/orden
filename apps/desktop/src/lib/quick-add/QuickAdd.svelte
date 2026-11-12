@@ -18,7 +18,6 @@
   import { canDictate } from '../dictation/engines.svelte'
   import { dictating } from '../dictation/keys'
   import type { Dictates } from '../dictation/voice.svelte'
-  import { t } from '../i18n.svelte'
   import { longPaste } from '../long-paste'
   import type { Provider } from '../ai/providers'
   import type { MenuEntry } from '../menu-item'
@@ -513,15 +512,15 @@
       onscroll={follow}
       onselect={follow}
       onkeyup={follow}
-      placeholder={t('Add task')}
-      aria-label={t('Add task')}
+      placeholder="Add task"
+      aria-label="Add task"
       spellcheck="false"
       autocomplete="off"
       aria-autocomplete="list"
       aria-expanded={offered.length > 0}
     />
     {#if offered.length}
-      <div class="suggest" data-covers role="listbox" aria-label={t('Add task')}>
+      <div class="suggest" data-covers role="listbox" aria-label="Add task">
         {#each offered as one, index (one)}
           <button
             type="button"
@@ -552,14 +551,14 @@
       class="words"
       onfocus={() => (spoken = words)}
       rows="2"
-      placeholder={t('Description')}
+      placeholder="Description"
       onkeydown={wordsKey}
-      aria-label={t('Description')}></textarea>
+      aria-label="Description"></textarea>
   {/if}
 
   {#if pasted}
     <div class="pasted" role="group">
-      <button type="button" class="control" onclick={() => (pasted = null)}>{t('Cancel')}</button>
+      <button type="button" class="control" onclick={() => (pasted = null)}>Cancel</button>
       <span class="gap"></span>
       <button
         type="button"
@@ -567,18 +566,16 @@
         onclick={() => {
           text = pasted?.join(' ') ?? text
           pasted = null
-        }}>{t('One task')}</button
+        }}>One task</button
       >
-      <button type="button" class="add" onclick={() => void submitEach()}
-        >{t('One per line')}</button
-      >
+      <button type="button" class="add" onclick={() => void submitEach()}>One per line</button>
     </div>
   {:else}
     <div class="controls">
       {#if mode === 'add'}
         <button type="button" class="control" onclick={askWhere}>
           <Glyph icon={Inbox} />
-          <span class="where">{note ? (note.split('/').at(-1) ?? note) : t('Inbox')}</span>
+          <span class="where">{note ? (note.split('/').at(-1) ?? note) : 'Inbox'}</span>
         </button>
       {/if}
       <span class="gap"></span>
@@ -587,7 +584,7 @@
         class="control"
         class:set={fields.due !== undefined}
         onclick={askDay}
-        aria-label={fields.due === undefined ? t('Start date') : undefined}
+        aria-label={fields.due === undefined ? 'Start date' : undefined}
       >
         <Glyph icon={fields.recurrence ? Repeat : Calendar} />
         {#if fields.due !== undefined}<span>{dayWords(fields.due, today, fields.time)}</span>{/if}
@@ -597,7 +594,7 @@
         class="control"
         class:set={fields.deadline !== undefined}
         onclick={askDeadline}
-        aria-label={fields.deadline === undefined ? t('Deadline') : undefined}
+        aria-label={fields.deadline === undefined ? 'Deadline' : undefined}
       >
         <Glyph icon={Target} />
         {#if fields.deadline !== undefined}<span>{dayWords(fields.deadline, today)}</span>{/if}
@@ -608,7 +605,7 @@
         class:set={(fields.priority ?? 4) < 4}
         style:color={priorityTone(fields.priority ?? 4)}
         onclick={askPriority}
-        aria-label={t('Priority')}
+        aria-label="Priority"
       >
         <Glyph icon={Flag} />
       </button>
@@ -617,7 +614,7 @@
         class="control"
         class:set={fields.tags.length > 0}
         onclick={askTags}
-        aria-label={t('Labels')}
+        aria-label="Labels"
       >
         <Glyph icon={Tag} />
         {#if fields.tags.length}<span>{fields.tags.length}</span>{/if}
@@ -627,7 +624,7 @@
         class="control"
         class:set={fields.remind.length > 0}
         onclick={askRemind}
-        aria-label={t('Reminder')}
+        aria-label="Reminder"
       >
         <Glyph icon={Bell} />
         {#if fields.remind.length > 1}<span>{fields.remind.length}</span>{/if}
@@ -637,13 +634,13 @@
         class="control"
         class:set={fields.duration !== undefined}
         onclick={askDuration}
-        aria-label={fields.duration === undefined ? t('Duration') : undefined}
+        aria-label={fields.duration === undefined ? 'Duration' : undefined}
       >
         <Glyph icon={Timer} />
         {#if fields.duration !== undefined}<span>{durationLabel(fields.duration)}</span>{/if}
       </button>
       {#if oncancel}
-        <button type="button" class="control cancel" onclick={oncancel}>{t('Cancel')}</button>
+        <button type="button" class="control cancel" onclick={oncancel}>Cancel</button>
       {/if}
       {#if provider && mode === 'add'}
         <button
@@ -651,7 +648,7 @@
           class="control"
           disabled={!read.text || thinking}
           onclick={() => void submitAi(provider)}
-          title={t('Add with AI')}
+          title="Add with AI"
         >
           <Glyph icon={Sparkles} />
         </button>
@@ -660,7 +657,7 @@
         <DictateButton owner={voiceField} below />
       {/if}
       <button type="button" class="add" disabled={!read.text} onclick={() => void submit(false)}
-        >{mode === 'edit' ? t('Save') : t('Add')}</button
+        >{mode === 'edit' ? 'Save' : 'Add'}</button
       >
     </div>
   {/if}

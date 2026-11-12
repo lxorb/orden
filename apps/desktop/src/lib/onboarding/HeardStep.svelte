@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { HEARD, type Heard } from './catalog'
   import { keepHeard } from './kept'
   import Screen from './Screen.svelte'
@@ -31,11 +30,11 @@
 </script>
 
 <Screen
-  title={t('How did you hear about Orden?')}
-  primary={{ label: t('Continue'), disabled: picked === null, onclick: done }}
-  quiet={{ label: t('Skip'), onclick: () => setup.next() }}
+  title="How did you hear about Orden?"
+  primary={{ label: 'Continue', disabled: picked === null, onclick: done }}
+  quiet={{ label: 'Skip', onclick: () => setup.next() }}
 >
-  <div class="list rise" role="radiogroup" aria-label={t('How did you hear about Orden?')}>
+  <div class="list rise" role="radiogroup" aria-label="How did you hear about Orden?">
     {#each HEARD as one (one.id)}
       <button
         class="orden-row reason"
@@ -49,7 +48,7 @@
             ><path d={one.id === 'other' ? DOTS : ICONS[one.id]} /></svg
           >
         </span>
-        <span>{t(one.name)}</span>
+        <span>{one.name}</span>
         <svg class="check" viewBox="0 0 24 24" aria-hidden="true"
           ><path d="M5 12.5l4.5 4.5L19 7.5" /></svg
         >
@@ -62,8 +61,8 @@
       bind:value={where}
       class="field"
       type="text"
-      placeholder={t('Where?')}
-      aria-label={t('Where?')}
+      placeholder="Where?"
+      aria-label="Where?"
     />
   {/if}
 </Screen>

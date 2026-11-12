@@ -1,6 +1,5 @@
 import { nameKey } from '@orden/sync-core/tree'
 import { busy } from '../busy.svelte'
-import { t } from '../i18n.svelte'
 import { locksHere, locksWork } from '../locks'
 import { log } from '../log'
 import { invoke as crate } from '../native'
@@ -338,9 +337,9 @@ export async function convertAll(ws: Twins): Promise<void> {
   for (const space of [...ws.spaces]) {
     if (mountOf(space.root) || done.has(space.root)) continue
     const name = space.name
-    await busy.run(t('Moving {name} into Orden’s storage', { name }), () =>
+    await busy.run(`Moving ${name} into Orden’s storage`, () =>
       convertSpace(ws, space.id, {
-        progress: (did, total) => busy.tell(t('{done} of {total}', { done: did, total })),
+        progress: (did, total) => busy.tell(`${did} of ${total}`),
         failed: () => failed.push(name),
       }),
     )
@@ -348,10 +347,7 @@ export async function convertAll(ws: Twins): Promise<void> {
   }
   if (failed.length) {
     busy.failed(
-      t(
-        'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.',
-        { names: failed.join(', ') },
-      ),
+      `Could not move ${failed.join(', ')} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.`,
       FAILED_SHOWN,
     )
   }

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { MEMORABLE_WORDS, RANDOM_LENGTH, SEPARATORS } from '@orden/pass/generate'
   import RefreshCw from 'lucide/dist/esm/icons/refresh-cw.mjs'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import Sheet from '../Sheet.svelte'
   import { segmented } from '../slide'
@@ -33,11 +32,11 @@
   function modeName(mode: GeneratorMode): string {
     switch (mode) {
       case 'random':
-        return t('Random')
+        return 'Random'
       case 'memorable':
-        return t('Memorable')
+        return 'Memorable'
       case 'username':
-        return t('Username')
+        return 'Username'
     }
   }
 
@@ -59,7 +58,7 @@
   }
 
   function copy() {
-    void copyField(prefs.mode === 'username' ? t('Username') : t('Password'), result)
+    void copyField(prefs.mode === 'username' ? 'Username' : 'Password', result)
   }
 </script>
 
@@ -87,20 +86,15 @@
 {/snippet}
 
 {#snippet foot()}
-  <button type="button" class="orden-button is-quiet is-soft" onclick={copy}>{t('Copy')}</button>
+  <button type="button" class="orden-button is-quiet is-soft" onclick={copy}>Copy</button>
   {#if asked?.use}
-    <button type="button" class="orden-button use" data-lands onclick={use}>{t('Use')}</button>
+    <button type="button" class="orden-button use" data-lands onclick={use}>Use</button>
   {/if}
 {/snippet}
 
-<Sheet {open} title={t('Generate password')} onclose={close} {foot}>
+<Sheet {open} title="Generate password" onclose={close} {foot}>
   <div class="generator">
-    <div
-      class="orden-segmented"
-      role="radiogroup"
-      aria-label={t('Generate password')}
-      use:segmented
-    >
+    <div class="orden-segmented" role="radiogroup" aria-label="Generate password" use:segmented>
       {#each MODES as mode (mode)}
         <button
           type="button"
@@ -117,8 +111,8 @@
       <button
         type="button"
         class="orden-glyph"
-        aria-label={t('Regenerate')}
-        title={t('Regenerate')}
+        aria-label="Regenerate"
+        title="Regenerate"
         onclick={() => turn++}
       >
         <Glyph icon={RefreshCw} />
@@ -129,35 +123,35 @@
     <div class="card">
       {#if prefs.mode === 'random'}
         {@render slider(
-          t('Characters'),
+          'Characters',
           prefs.random.length,
           RANDOM_LENGTH,
           (next) => (prefs.random.length = next),
         )}
         <SwitchRow
-          label={t('Capital letters')}
+          label="Capital letters"
           on={prefs.random.upper}
           onchange={(on: boolean) => (prefs.random.upper = on)}
         />
         <SwitchRow
-          label={t('Numbers')}
+          label="Numbers"
           on={prefs.random.digits}
           onchange={(on: boolean) => (prefs.random.digits = on)}
         />
         <SwitchRow
-          label={t('Symbols')}
+          label="Symbols"
           on={prefs.random.symbols}
           onchange={(on: boolean) => (prefs.random.symbols = on)}
         />
       {:else if prefs.mode === 'memorable'}
         {@render slider(
-          t('Words'),
+          'Words',
           prefs.memorable.words,
           MEMORABLE_WORDS,
           (next) => (prefs.memorable.words = next),
         )}
         <div class="choice">
-          <span class="name">{t('Separator')}</span>
+          <span class="name">Separator</span>
           <Select
             plain
             value={prefs.memorable.separator}
@@ -169,24 +163,24 @@
           />
         </div>
         <SwitchRow
-          label={t('Capitalize')}
+          label="Capitalize"
           on={prefs.memorable.capitalize}
           onchange={(on: boolean) => (prefs.memorable.capitalize = on)}
         />
         <SwitchRow
-          label={t('Include numbers')}
+          label="Include numbers"
           on={prefs.memorable.numbers}
           onchange={(on: boolean) => (prefs.memorable.numbers = on)}
         />
       {:else}
         {@render slider(
-          t('Words'),
+          'Words',
           prefs.username.words,
           MEMORABLE_WORDS,
           (next) => (prefs.username.words = next),
         )}
         <div class="choice">
-          <span class="name">{t('Separator')}</span>
+          <span class="name">Separator</span>
           <Select
             plain
             value={prefs.username.separator}
@@ -200,17 +194,17 @@
           />
         </div>
         <SwitchRow
-          label={t('Capitalize')}
+          label="Capitalize"
           on={prefs.username.capitalize}
           onchange={(on: boolean) => (prefs.username.capitalize = on)}
         />
         <SwitchRow
-          label={t('Include numbers')}
+          label="Include numbers"
           on={prefs.username.numbers}
           onchange={(on: boolean) => (prefs.username.numbers = on)}
         />
         <SwitchRow
-          label={t('Letters as numbers')}
+          label="Letters as numbers"
           on={prefs.username.leet}
           onchange={(on: boolean) => (prefs.username.leet = on)}
         />

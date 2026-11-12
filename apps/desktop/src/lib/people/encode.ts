@@ -1,4 +1,3 @@
-import { key } from '../i18n.svelte'
 import { sourceSquare, turned, type Crop } from './crop'
 
 const SMALL = 96
@@ -70,7 +69,7 @@ async function encodedSmall(canvas: HTMLCanvasElement): Promise<Encoded> {
     if (carriesMetadata(new Uint8Array(bytes))) throw new Error('a picture kept its metadata')
     return { bytes, type: kept.type === 'image/webp' ? 'image/webp' : 'image/jpeg' }
   }
-  throw new Error(key('that picture is too big'))
+  throw new Error('that picture is too big')
 }
 
 function blobOf(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {

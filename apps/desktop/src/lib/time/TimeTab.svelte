@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { menu } from '../menu.svelte'
   import { segmented } from '../slide'
   import type { Tab } from '../workspace/documents.svelte'
@@ -71,10 +71,10 @@
   )
 
   const titled = $derived.by(() => {
-    if (view === 'day') return i18n.when(day, { weekday: 'long', day: 'numeric', month: 'long' })
+    if (view === 'day') return localDate(day, { weekday: 'long', day: 'numeric', month: 'long' })
     if (view === 'reports' && period === 'month')
-      return i18n.when(range[0], { month: 'long', year: 'numeric' })
-    return `${i18n.when(range[0], { day: 'numeric', month: 'short' })} – ${i18n.when(daysAfter(range[1], -1), { day: 'numeric', month: 'short', year: 'numeric' })}`
+      return localDate(range[0], { month: 'long', year: 'numeric' })
+    return `${localDate(range[0], { day: 'numeric', month: 'short' })} – ${localDate(daysAfter(range[1], -1), { day: 'numeric', month: 'short', year: 'numeric' })}`
   })
 
   function step(by: number) {
@@ -92,14 +92,14 @@
 
   function showMenu(event: MouseEvent) {
     void import('./menu').then(({ trackingMenu }) =>
-      menu.show(event, trackingMenu(), { title: t('Time tracker') }),
+      menu.show(event, trackingMenu(), { title: 'Time tracker' }),
     )
   }
 
   const VIEWS = $derived([
-    ['day', t('Day')],
-    ['week', t('Week')],
-    ['reports', t('Reports')],
+    ['day', 'Day'],
+    ['week', 'Week'],
+    ['reports', 'Reports'],
   ] as const)
 </script>
 
@@ -109,7 +109,7 @@
   </div>
 
   <div class="bar">
-    <div class="orden-segmented" role="radiogroup" aria-label={t('Time tracker')} use:segmented>
+    <div class="orden-segmented" role="radiogroup" aria-label="Time tracker" use:segmented>
       {#each VIEWS as [id, label] (id)}
         <button
           type="button"
@@ -124,8 +124,8 @@
       {/each}
     </div>
     {#if view === 'reports'}
-      <div class="orden-segmented" role="radiogroup" aria-label={t('Reports')} use:segmented>
-        {#each [['week', t('Week')], ['month', t('Month')]] as const as [id, label] (id)}
+      <div class="orden-segmented" role="radiogroup" aria-label="Reports" use:segmented>
+        {#each [['week', 'Week'], ['month', 'Month']] as const as [id, label] (id)}
           <button
             type="button"
             role="radio"
@@ -137,13 +137,11 @@
       </div>
     {/if}
     <div class="moving">
-      <button type="button" class="orden-chip" aria-label={t('Previous')} onclick={() => step(-1)}
+      <button type="button" class="orden-chip" aria-label="Previous" onclick={() => step(-1)}
         >‹</button
       >
       <span class="title">{titled}</span>
-      <button type="button" class="orden-chip" aria-label={t('Next')} onclick={() => step(1)}
-        >›</button
-      >
+      <button type="button" class="orden-chip" aria-label="Next" onclick={() => step(1)}>›</button>
       {#if !current}
         <button
           type="button"
@@ -151,15 +149,15 @@
           onclick={() => {
             day = dayOf(Date.now())
             picked = null
-          }}>{t('Today')}</button
+          }}>Today</button
         >
       {/if}
     </div>
     <button
       type="button"
       class="orden-chip more"
-      aria-label={t('More')}
-      title={t('More')}
+      aria-label="More"
+      title="More"
       aria-haspopup="menu"
       onclick={showMenu}>⋯</button
     >
@@ -179,7 +177,7 @@
             {picked}
             onpick={(next: Picked | null) => (picked = next)}
           />
-          <p class="hint">{t('Drag across the day to see what happened in that time.')}</p>
+          <p class="hint">Drag across the day to see what happened in that time.</p>
           {#if entries.length}
             <ul class="entries">
               {#each entries as piece (piece.span.id)}
@@ -198,7 +196,7 @@
                     <span class="dot" style:background={tintOf(piece.span.activity)}></span>
                     <span class="orden-row-label named"
                       ><span class="name" dir="auto"
-                        >{nameOf(piece.span.activity, t('No activity'))}</span
+                        >{nameOf(piece.span.activity, 'No activity')}</span
                       >{#if piece.span.note}<span class="note" dir="auto">{piece.span.note}</span
                         >{/if}</span
                     >
@@ -227,7 +225,7 @@
           {:else}
             <Inside
               picked={{ from: range[0], to: range[1], span: null }}
-              title={i18n.when(day, { weekday: 'short', day: 'numeric', month: 'short' })}
+              title={localDate(day, { weekday: 'short', day: 'numeric', month: 'short' })}
               spans={time.spans}
               minutes={minutes.list}
               {now}

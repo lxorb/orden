@@ -1,6 +1,5 @@
 <script lang="ts">
   import { copyText } from './clipboard'
-  import { t } from './i18n.svelte'
 
   const SAID_FOR = 1600
 
@@ -31,7 +30,7 @@
 </script>
 
 <button class="copy" class:wide class:done={said} {disabled} onclick={() => void copy()}>
-  {said ? t('Copied') : word || t('Copy')}
+  {said ? 'Copied' : word || 'Copy'}
 </button>
 
 <style>

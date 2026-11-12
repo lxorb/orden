@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Canvas } from './canvas/format'
   import { type Found, matches } from './canvas/find'
-  import { t } from './i18n.svelte'
   import Cross from './Cross.svelte'
   import { shortcuts } from './shortcuts.svelte'
 
@@ -9,7 +8,7 @@
     canvas,
     hits,
     asked = 0,
-    label = t('Find on the canvas'),
+    label = 'Find on the canvas',
     onterm,
     onpick,
     onclose,
@@ -98,13 +97,13 @@
 
   <span class="count">{found.length ? `${Math.max(at + 1, 1)}/${found.length}` : ''}</span>
 
-  <button type="button" aria-label={t('Previous')} title={t('Previous')} onclick={() => go(-1)}>
+  <button type="button" aria-label="Previous" title="Previous" onclick={() => go(-1)}>
     <svg viewBox="0 0 14 14"><path d="M4 8.5 7 5.5l3 3" /></svg>
   </button>
-  <button type="button" aria-label={t('Next')} title={t('Next')} onclick={() => go(1)}>
+  <button type="button" aria-label="Next" title="Next" onclick={() => go(1)}>
     <svg viewBox="0 0 14 14"><path d="M4 5.5 7 8.5l3-3" /></svg>
   </button>
-  <button type="button" class="shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
+  <button type="button" class="shut" aria-label="Close" title="Close" onclick={onclose}>
     <Cross />
   </button>
 </div>

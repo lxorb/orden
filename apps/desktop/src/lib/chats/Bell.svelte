@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Notify } from '@orden/chats'
   import { DIVIDER, type MenuEntry, menu } from '../menu.svelte'
-  import { plural, t } from '../i18n.svelte'
   import { askToShow } from '../notify'
   import { MUTE_HOURS, mutedUntil as muteFor, ringOf } from './bell'
 
@@ -27,18 +26,16 @@
   const muted = $derived(mutedUntil !== null && mutedUntil > now)
 
   function length(hours: number): string {
-    return hours < 24
-      ? t('{count} h', { count: hours })
-      : plural(hours / 24, { one: '{count} day', other: '{count} days' })
+    return hours < 24 ? `${hours} h` : hours / 24 === 1 ? '1 day' : `${hours / 24} days`
   }
 
   function open(event: MouseEvent) {
     askToShow()
     const level = ringOf(notify, null, members, now)
     const levels: [Notify, string][] = [
-      ['all', t('All')],
-      ['mentions', t('Mentions')],
-      ['nothing', t('Nothing')],
+      ['all', 'All'],
+      ['mentions', 'Mentions'],
+      ['nothing', 'Nothing'],
     ]
     const rows: MenuEntry[] = levels.map(([value, label]) => ({
       label,
@@ -46,9 +43,9 @@
       run: () => onchange(value, mutedUntil),
     }))
     const mute: MenuEntry = muted
-      ? { label: t('Unmute'), run: () => onchange(notify, null) }
+      ? { label: 'Unmute', run: () => onchange(notify, null) }
       : {
-          label: t('Mute'),
+          label: 'Mute',
           run: () => onchange(notify, muteFor(null, Date.now())),
           more: () =>
             Promise.resolve(
@@ -65,8 +62,8 @@
 <button
   class="orden-glyph"
   aria-haspopup="menu"
-  title={t('Notifications')}
-  aria-label={t('Notifications')}
+  title="Notifications"
+  aria-label="Notifications"
   onclick={open}
 >
   <svg viewBox="0 0 24 24" aria-hidden="true">

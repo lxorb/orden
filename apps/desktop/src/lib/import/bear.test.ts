@@ -104,10 +104,10 @@ describe('a Bear backup', () => {
     ])
 
     expect(plan.files.map((one) => one.path).sort()).toEqual(['Archive/Old.md', 'Kept.md'])
-    expect(plan.lost.map((one) => [one.text, one.values])).toEqual([
-      ['{count} notes were in the bin and stay there', { count: 1 }],
-      ['{count} notes are behind a password, which nothing but Bear can open', { count: 1 }],
-      ['{count} archived notes are in a folder called Archive', { count: 1 }],
+    expect(plan.lost).toEqual([
+      '1 notes were in the bin and stay there',
+      '1 notes are behind a password, which nothing but Bear can open',
+      '1 archived notes are in a folder called Archive',
     ])
   })
 

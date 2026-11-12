@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import type { Palette, StoreTheme } from './registry'
 import { closes } from './validate'
 
@@ -117,19 +116,16 @@ export function paletteCss(themes: StoreTheme[]): string {
 }
 
 export function sampleHtml(full = false): string {
-  const sentence = t('Words with {bold} and a {link}.', {
-    bold: `<strong>${t('bold')}</strong>`,
-    link: `<a>${t('link')}</a>`,
-  })
+  const sentence = `Words with <strong>bold</strong> and a <a>link</a>.`
 
   const more = full
     ? `
-<blockquote><p>${t('Every note is a Markdown file you own, with to-dos, bases and boards right inside.')}</p></blockquote>
+<blockquote><p>Every note is a Markdown file you own, with to-dos, bases and boards right inside.</p></blockquote>
 <hr>`
     : ''
 
-  return `<h2>${t('A note')}</h2>
+  return `<h2>A note</h2>
 <p>${sentence}</p>
-<ul><li>${t('One thing')}</li><li>${t('Another')}</li></ul>
+<ul><li>One thing</li><li>Another</li></ul>
 <pre><code>const ink = 'on glass'</code></pre>${more}`
 }

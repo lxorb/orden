@@ -1,7 +1,5 @@
 <script lang="ts">
   import { alone } from './alone.svelte'
-  import { steppedKey } from './direction'
-  import { t } from './i18n.svelte'
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
   import { clamped, type Frame, paneIn, type Split, tracks } from './workspace/pane-tree'
@@ -77,7 +75,7 @@
       End: 1,
       [row ? 'ArrowLeft' : 'ArrowUp']: split.fraction - STEP,
       [row ? 'ArrowRight' : 'ArrowDown']: split.fraction + STEP,
-    }[steppedKey(event.key)]
+    }[event.key]
 
     if (event.key === 'Enter' || event.key === ' ') workspace.panes.equalise(split.id)
     else if (to === undefined) return
@@ -108,12 +106,12 @@
           class="divider"
           role="separator"
           aria-orientation={split.along === 'row' ? 'vertical' : 'horizontal'}
-          aria-label={t('Pane size')}
+          aria-label="Pane size"
           aria-valuemin={ends(split)[0]}
           aria-valuemax={ends(split)[1]}
           aria-valuenow={Math.round(split.fraction * 100)}
           tabindex="0"
-          title={t('Drag to resize')}
+          title="Drag to resize"
           onpointerdown={(event) => grab(event, split)}
           ondblclick={() => workspace.panes.equalise(split.id)}
           onkeydown={(event) => nudge(event, split)}

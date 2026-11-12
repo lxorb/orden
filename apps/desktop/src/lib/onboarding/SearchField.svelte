@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { t } from '../i18n.svelte'
 
   interface Props {
     value: string
@@ -26,7 +25,7 @@
     {value}
     oninput={(event) => onvalue(event.currentTarget.value)}
     type="search"
-    placeholder={t('Search')}
+    placeholder="Search"
     autocomplete="off"
     aria-label={label}
   />

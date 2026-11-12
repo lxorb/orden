@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cellValue, type Row, rowId } from '@orden/bases'
-  import { t } from '../i18n.svelte'
   import { droppable } from './drag.svelte'
   import type { Kit } from './kit'
   import { everyRow } from './list-items'
@@ -38,7 +37,7 @@
   {/each}
   {#if days.undated.length}
     <p class="orden-section" use:droppable={(row) => kit.drop(row, null, property)}>
-      {t('No date')}<span>{days.undated.length}</span>
+      No date<span>{days.undated.length}</span>
     </p>
     {#each days.undated as row (`${row.space}:${rowId(row)}`)}
       <RowLine {row} {kit} />

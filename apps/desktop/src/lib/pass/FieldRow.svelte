@@ -2,7 +2,6 @@
   import Copy from 'lucide/dist/esm/icons/copy.mjs'
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import EyeOff from 'lucide/dist/esm/icons/eye-off.mjs'
-  import { t } from '../i18n.svelte'
   import { copyField } from './copied'
   import Glyph from './Glyph.svelte'
   import StrengthMeter from './StrengthMeter.svelte'
@@ -32,7 +31,7 @@
 
 <div class="field" data-field={label} data-sealed={sealed || undefined}>
   {#if sealed}
-    <span class="tap" title={t('Hidden from viewers')}>
+    <span class="tap" title="Hidden from viewers">
       <span class="label">{label}</span>
       <span class="value is-mono">{dots}</span>
     </span>
@@ -40,7 +39,7 @@
     <button
       class="tap"
       type="button"
-      title={t('Copy {field}', { field: label })}
+      title="Copy {label}"
       onclick={() => void copyField(label, value)}
     >
       <span class="label">{label}</span>
@@ -59,8 +58,8 @@
       class="orden-glyph"
       type="button"
       aria-pressed={shown}
-      aria-label={shown ? t('Hide') : t('Show')}
-      title={shown ? t('Hide') : t('Show')}
+      aria-label={shown ? 'Hide' : 'Show'}
+      title={shown ? 'Hide' : 'Show'}
       onclick={() => (shown = !shown)}
     >
       <Glyph icon={shown ? EyeOff : Eye} />
@@ -70,8 +69,8 @@
     <button
       class="orden-glyph"
       type="button"
-      aria-label={t('Copy {field}', { field: label })}
-      title={t('Copy {field}', { field: label })}
+      aria-label="Copy {label}"
+      title="Copy {label}"
       onclick={() => void copyField(label, value)}
     >
       <Glyph icon={Copy} />

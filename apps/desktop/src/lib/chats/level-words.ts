@@ -1,15 +1,14 @@
 import type { Level } from '@orden/chats/priority'
-import { t } from '../i18n.svelte'
 
 export function levelWord(level: Level): string {
   switch (level) {
     case 'urgent':
-      return t('Urgent')
+      return 'Urgent'
     case 'important':
-      return t('Important')
+      return 'Important'
     case 'if-time':
-      return t('If time')
+      return 'If time'
     case 'unimportant':
-      return t('Unimportant')
+      return 'Unimportant'
   }
 }

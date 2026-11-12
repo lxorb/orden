@@ -19,7 +19,6 @@
     takesTint,
     writtenIcon,
   } from './icons'
-  import { t } from './i18n.svelte'
   import { dur, fade, LAYER, scale } from './motion'
   import { overlays } from './overlays'
   import { segmented } from './slide'
@@ -124,10 +123,10 @@
       !siteSet || twins
         ? []
         : [
-            { head: t('Web icons') },
+            { head: 'Web icons' },
             ...(siteRow.length
               ? runs(siteRow.map((one) => one.name))
-              : [{ note: t('Sites you visit will appear here') }]),
+              : [{ note: 'Sites you visit will appear here' }]),
           ]
 
     return [
@@ -290,7 +289,7 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label={t('Choose an icon')}
+    aria-label="Choose an icon"
     style:--cell="{cell}px"
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
@@ -299,7 +298,7 @@
       bind:this={field}
       bind:value={query}
       onkeydown={onKey}
-      placeholder={t('Search icons - work, journal, money…')}
+      placeholder="Search icons - work, journal, money…"
       spellcheck="false"
       autocapitalize="off"
       autocorrect="off"
@@ -330,11 +329,11 @@
       onscroll={() => (top = scroller?.scrollTop ?? 0)}
     >
       {#if absent}
-        <p class="empty">{t('That set is not here')}</p>
+        <p class="empty">That set is not here</p>
       {:else if !held}
-        <p class="empty">{t('Loading…')}</p>
+        <p class="empty">Loading…</p>
       {:else if !cells.length}
-        <p class="empty">{t('Nothing found')}</p>
+        <p class="empty">Nothing found</p>
       {:else}
         <div class="tall" style:height="{rows.length * cell}px">
           {#each rows.slice(shown.from, shown.to) as row, index (shown.from + index)}
@@ -367,7 +366,7 @@
     </div>
 
     {#if !iconLibrary.absent[EMOJI_OUTLINE]}
-      <div class="orden-segmented variant" role="radiogroup" aria-label={t('Emoji')} use:segmented>
+      <div class="orden-segmented variant" role="radiogroup" aria-label="Emoji" use:segmented>
         <button
           type="button"
           role="radio"
@@ -375,7 +374,7 @@
           class:on={!outlined}
           onclick={() => (outlined = false)}
         >
-          {t('Colour')}
+          Colour
         </button>
         <button
           type="button"
@@ -384,17 +383,17 @@
           class:on={outlined}
           onclick={() => (outlined = true)}
         >
-          {t('One colour')}
+          One colour
         </button>
       </div>
     {/if}
 
     {#if target.kind !== 'pass'}
-      <div class="tints" role="group" aria-label={t('Colour')}>
+      <div class="tints" role="group" aria-label="Colour">
         <button
           type="button"
           class="tint plain"
-          aria-label={t('Plain')}
+          aria-label="Plain"
           aria-pressed={tint === null}
           class:on={tint === null}
           onclick={() => paint(null)}
@@ -414,9 +413,7 @@
     {/if}
 
     <button class="clear" onclick={() => chose(null)}>
-      {target.kind === 'space'
-        ? t('Use the first letter instead')
-        : t('Use the plain mark instead')}
+      {target.kind === 'space' ? 'Use the first letter instead' : 'Use the plain mark instead'}
     </button>
 
     <p class="credit">{pickerCredit()}</p>

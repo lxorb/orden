@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Row, Value } from '@orden/bases'
-  import { t } from '../i18n.svelte'
   import { linkModifier } from '@orden/editor'
   import Twist from '../Twist.svelte'
   import { blockerOf, chipsOf } from './chips'
@@ -57,7 +56,7 @@
   class:finished={!!task && (task.done || task.cancelled)}
   class:toned={tone !== null}
   class:blocked={blocker !== null}
-  title={blocker === null ? undefined : t('Blocked by {task}', { task: blocker })}
+  title={blocker === null ? undefined : `Blocked by ${blocker}`}
   style:--row-tone={tone}
   style:--depth={depth}
   role="option"
@@ -72,7 +71,7 @@
       type="button"
       class="twist"
       tabindex="-1"
-      aria-label={twist === 'open' ? t('Collapse') : t('Expand')}
+      aria-label={twist === 'open' ? 'Collapse' : 'Expand'}
       aria-expanded={twist === 'open'}
       onclick={(event) => {
         event.stopPropagation()
@@ -96,13 +95,7 @@
     </span>
   {/if}
   {#if where}
-    <button
-      type="button"
-      class="orden-row-meta where"
-      onclick={open}
-      tabindex="-1"
-      title={t('Open')}
-    >
+    <button type="button" class="orden-row-meta where" onclick={open} tabindex="-1" title="Open">
       {#if elsewhere}<span class="space">{elsewhere}</span>{/if}
       {row.kind === 'task' ? row.file.basename : row.file.folder}{#if section}<span
           class="sep"

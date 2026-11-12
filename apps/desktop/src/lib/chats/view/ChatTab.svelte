@@ -4,7 +4,6 @@
   import { carriedFiles, carriesFiles, draggedTab, dropOver, isTreeDrag } from '../../drag-paths'
   import { pages } from '../../web-tab/pages.svelte'
   import EmojiPicker from '../../emoji/EmojiPicker.svelte'
-  import { t } from '../../i18n.svelte'
   import { shortcuts } from '../../shortcuts.svelte'
   import { samePath } from '../../space-paths'
   import { viewport } from '../../viewport.svelte'
@@ -266,7 +265,7 @@
   {/if}
 </div>
 
-<Float at={picking?.at ?? null} end label={t('Emoji')} onclose={() => (picking = null)}>
+<Float at={picking?.at ?? null} end label="Emoji" onclose={() => (picking = null)}>
   <EmojiPicker
     onpick={(emoji: string) => {
       picking?.pick(emoji)

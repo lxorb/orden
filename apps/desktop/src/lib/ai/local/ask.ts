@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { identifier } from '../../identifier'
 import { Channel } from '../../native'
 import { invoke, isDesktop } from '../../tauri'
@@ -63,12 +62,12 @@ class Listening {
 function startError(error: unknown, kind: LocalKind): Error {
   const said = error instanceof Error ? error.message : String(error)
   if (said === 'missing')
-    return new Error(t('{name} is not installed.', { name: KIND_NAMES[kind] }), { cause: error })
+    return new Error(`${KIND_NAMES[kind]} is not installed.`, { cause: error })
   return new Error(said, { cause: error })
 }
 
 export async function askLocal(ask: Ask & { provider: { kind: LocalKind } }): Promise<string> {
-  if (!isDesktop) throw new Error(t('Only in the desktop app.'))
+  if (!isDesktop) throw new Error('Only in the desktop app.')
   if (ask.signal?.aborted) throw stopped()
   const { kind } = ask.provider
   return kind === 'claude-code' ? await askClaude(ask) : await askInSession(kind, ask)

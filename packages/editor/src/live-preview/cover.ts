@@ -2,7 +2,6 @@ import type { EditorView } from '@codemirror/view'
 import { COVER_MIDDLE, COVER_POSITION_KEY, type Cover, coverOf } from '@orden/markdown/cover'
 import { frontMatterEdit } from '@orden/markdown/front-matter'
 import { imageResolver } from '../images'
-import { label } from '../labels'
 import { applied, clearOfBlock } from './front-matter'
 import { coverMover, keptCover } from './kept-cover'
 import { OrdenWidget } from './widget'
@@ -67,8 +66,8 @@ export class CoverWidget extends OrdenWidget {
     handle.className = 'orden-cover-drag'
     handle.tabIndex = 0
     handle.setAttribute('role', 'slider')
-    handle.title = label('dragCover')
-    handle.setAttribute('aria-label', label('dragCover'))
+    handle.title = 'Drag to reposition'
+    handle.setAttribute('aria-label', 'Drag to reposition')
     handle.setAttribute('aria-valuemin', '0')
     handle.setAttribute('aria-valuemax', '100')
     handle.setAttribute('aria-orientation', 'vertical')

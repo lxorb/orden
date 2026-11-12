@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { complete } from '../complete'
 import type { Message } from '../providers'
 import { ai } from '../store.svelte'
@@ -24,12 +23,12 @@ function transcriptOf(turns: readonly Turn[]): string {
 
 export async function summarized(thread: Thread, turns: readonly Turn[]): Promise<string> {
   const provider = ai.provider(thread.provider)
-  if (!provider) throw new Error(t('That provider is not set up yet.'))
+  if (!provider) throw new Error('That provider is not set up yet.')
   const messages: Message[] = [
     { role: 'system', content: KEEP },
     { role: 'user', content: transcriptOf(turns) },
   ]
   const summary = await complete({ provider, model: thread.model, messages })
-  if (!summary.trim()) throw new Error(t('No answer'))
+  if (!summary.trim()) throw new Error('No answer')
   return summary.trim()
 }

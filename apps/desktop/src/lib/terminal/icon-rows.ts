@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { iconChoice } from '../icon-choice.svelte'
 import { iconEntries, type MenuEntry } from '../menu.svelte'
 import { isOnlineTab } from '../online/path'
@@ -12,11 +11,11 @@ export function terminalIconRows(tab: Tab): MenuEntry[] {
   const spec = readSpec(tab.doc)
   if (!spec) return []
   return [
-    { label: t('Choose an icon'), run: () => iconChoice.terminal(tab.id) },
+    { label: 'Choose an icon', run: () => iconChoice.terminal(tab.id) },
     ...(spec.icon
       ? [
           {
-            label: t('Remove icon'),
+            label: 'Remove icon',
             run: () =>
               void import('../icon-target').then((one) => one.setTerminalIcon(tab.id, null, null)),
           },

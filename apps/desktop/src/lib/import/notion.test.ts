@@ -74,7 +74,7 @@ describe('a Notion export', () => {
     expect(base.views[0]?.order).toEqual(['file.name', 'note.status', 'note.due'])
     expect(base.properties['note.status']?.displayName).toBe('Status')
     expect(noteAt(plan, 'Tasks/Two.md')).toContain('due: 2026-10-10')
-    expect(plan.lost[0]?.text).toContain('saved views')
+    expect(plan.lost[0]).toBe('1 saved view is left out, and every row is in the table')
   })
 
   test('a row is written as what its column holds', async () => {

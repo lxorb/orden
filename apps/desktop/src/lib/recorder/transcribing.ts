@@ -1,6 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { busy } from '../busy.svelte'
-import { i18n, key, message, t } from '../i18n.svelte'
+import { region } from '../region'
+import { message } from '../message'
 import { links } from '../link-index.svelte'
 import { settings } from '../settings.svelte'
 import { assetUrl, joinPath } from '../tauri'
@@ -27,21 +28,21 @@ export async function transcribeInto(view: EditorView, at: number, target: strin
   const line = view.state.doc.lineAt(at)
 
   try {
-    const words = await busy.run(t('Turning the recording into words'), async () => {
+    const words = await busy.run('Turning the recording into words', async () => {
       const bytes = await bytesOf(target, note?.path ?? null)
-      if (!bytes) throw new Error(key('That recording is not in this space.'))
+      if (!bytes) throw new Error('That recording is not in this space.')
 
       return wordsInFile(bytes)
     })
 
     if (!words.text) {
-      settings.error = t('Nothing could be heard in that recording.')
+      settings.error = 'Nothing could be heard in that recording.'
       return
     }
 
     const said = transcriptCallout(
       words.text,
-      words.language ? languageName(words.language, i18n.language) : '',
+      words.language ? languageName(words.language, region()) : '',
       transcribedBy(),
     )
 
@@ -50,6 +51,6 @@ export async function transcribeInto(view: EditorView, at: number, target: strin
       userEvent: 'input.complete',
     })
   } catch (error) {
-    settings.error = message(error, key('That recording could not be turned into words.'))
+    settings.error = message(error, 'That recording could not be turned into words.')
   }
 }

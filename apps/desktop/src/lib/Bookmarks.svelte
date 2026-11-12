@@ -9,7 +9,6 @@
   import { fileMark, type FileMark as Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { folderNote } from './folder-notes'
-  import { t } from './i18n.svelte'
   import { bookmarkEntry, DIVIDER, iconEntries, type MenuEntry, menu } from './menu.svelte'
   import { dur, scale } from './motion'
   import Twist from './Twist.svelte'
@@ -282,7 +281,7 @@
     workspace.bookmarks.move(from, row.at)
   }
 
-  const titleOf = (row: Row) => (row.mark.kind === 'search' ? t('Search') : row.label)
+  const titleOf = (row: Row) => (row.mark.kind === 'search' ? 'Search' : row.label)
 
   function rowMenu(row: Row, unloading: MenuEntry[] = []): MenuEntry[] {
     const group = row.mark.kind === 'group'
@@ -293,26 +292,26 @@
 
     return [
       ...(row.mark.kind === 'note' && row.path
-        ? [{ label: t('Open in new tab'), run: () => pressed(row, 'front') }, DIVIDER]
+        ? [{ label: 'Open in new tab', run: () => pressed(row, 'front') }, DIVIDER]
         : []),
       ...(unloading.length ? [...unloading, DIVIDER] : []),
       ...(icons.length ? [...icons, DIVIDER] : []),
       ...(group
         ? [
-            { label: t('Rename'), run: () => void renameGroup(row.mark) },
-            { label: t('Remove group'), run: () => workspace.bookmarks.remove(row.mark) },
+            { label: 'Rename', run: () => void renameGroup(row.mark) },
+            { label: 'Remove group', run: () => workspace.bookmarks.remove(row.mark) },
           ]
         : bookmarkEntry(row.mark)),
       ...(row.mark.parent
         ? [
             {
-              label: t('Out of the group'),
+              label: 'Out of the group',
               run: () => workspace.bookmarks.moveInto(row.mark, null),
             },
           ]
         : []),
       DIVIDER,
-      { label: t('New group'), run: () => void newGroup() },
+      { label: 'New group', run: () => void newGroup() },
     ]
   }
 
@@ -331,16 +330,16 @@
 
   async function newGroup() {
     const { prompt } = await import('./prompt.svelte')
-    const name = await prompt.ask({ title: t('New group'), confirmLabel: t('Make') })
+    const name = await prompt.ask({ title: 'New group', confirmLabel: 'Make' })
     if (name) workspace.bookmarks.addGroup(name)
   }
 
   async function renameGroup(mark: Bookmark) {
     const { prompt } = await import('./prompt.svelte')
     const name = await prompt.ask({
-      title: t('Rename'),
+      title: 'Rename',
       value: mark.text,
-      confirmLabel: t('Rename'),
+      confirmLabel: 'Rename',
     })
     if (name) workspace.bookmarks.rename(mark, name)
   }
@@ -390,7 +389,7 @@
         class:is-taking={(landing?.at ?? null) !== null && !tiles.length}
         class:is-floating={!tiles.length}
         data-bookmark-drop
-        aria-label={t('Essentials')}
+        aria-label="Essentials"
         onkeydown={(event) => hands?.gridKey(event)}
         use:dropOver={(event) => (hands ? hands.overGrid(event) : early(event))}
         ondragleave={(event) => hands?.leaving(event)}
@@ -427,7 +426,7 @@
     {/if}
 
     {#if rows.length}
-      <p class="orden-section">{t('Essentials')}</p>
+      <p class="orden-section">Essentials</p>
 
       <ul class="list">
         {#each rows as row (`${row.mark.kind}:${row.mark.path}:${row.mark.text}`)}

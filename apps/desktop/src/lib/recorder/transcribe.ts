@@ -3,7 +3,7 @@ import { account } from '../account.svelte'
 import { roomDelay } from '../backoff'
 import { transcriberNow } from '../ai/hears'
 import type { Provider } from '../ai/providers'
-import { key, message, t } from '../i18n.svelte'
+import { message } from '../message'
 import { waited } from '../timing'
 import { mono, pieces, RATE, resampled, wavOf } from './wav'
 
@@ -54,7 +54,7 @@ async function heardByProvider(
   const { headersWithoutType, heardUrl, reachable, troubleIn } = await import('../ai/providers')
 
   const apiKey = await readKey(provider)
-  if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
+  if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')
 
   let refused: Error | null = null
 
@@ -72,7 +72,7 @@ async function heardByProvider(
       signal: AbortSignal.timeout(HEARD_WITHIN),
     }).catch(() => null)
 
-    if (!response) throw new Error(t('Could not reach {url}', { url: heardUrl(provider) }))
+    if (!response) throw new Error(`Could not reach ${heardUrl(provider)}`)
 
     const said = await response.text().catch(() => '')
 
@@ -88,7 +88,7 @@ async function heardByProvider(
     return wordsIn(said)
   }
 
-  throw refused ?? new Error(t('The provider answered {status}.', { status: 0 }))
+  throw refused ?? new Error('The provider answered 0.')
 }
 
 function wordsIn(body: string): Words {
@@ -120,8 +120,8 @@ function refusal(
   const said = troubleIn(parsed(body))
   if (said) return said
 
-  if (status === 401 || status === 403) return t('That key was refused.')
-  return t('The provider answered {status}.', { status })
+  if (status === 401 || status === 403) return 'That key was refused.'
+  return `The provider answered ${status}.`
 }
 
 function parsed(body: string): unknown {
@@ -145,7 +145,7 @@ export async function heardPiece(
   const provider = hearing.road === 'account' ? null : transcriberNow()
   const token = account.accountToken
   if (!provider && (!token || hearing.road === 'provider')) {
-    throw new Error(key('Add an AI provider or sign in to turn speech into words.'))
+    throw new Error('Add an AI provider or sign in to turn speech into words.')
   }
 
   const prompt = hearing.prompt ?? ''
@@ -164,12 +164,12 @@ export async function heardPiece(
     }
   }
 
-  throw new Error(message(trouble, key('That recording could not be turned into words.')))
+  throw new Error(message(trouble, 'That recording could not be turned into words.'))
 }
 
 export async function wordsInFile(bytes: ArrayBuffer): Promise<Words> {
   if (bytes.byteLength > MOST_DECODED) {
-    throw new Error(key('That recording is too long to turn into words in one go.'))
+    throw new Error('That recording is too long to turn into words in one go.')
   }
 
   const samples = await decoded(bytes)

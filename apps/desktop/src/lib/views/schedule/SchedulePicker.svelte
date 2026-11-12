@@ -17,7 +17,8 @@
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../../backstack.svelte'
   import Cross from '../../Cross.svelte'
-  import { i18n, t } from '../../i18n.svelte'
+  import { region } from '../../region'
+  import { localDate } from '../../region'
   import type { IconNode } from '../../icons'
   import { fade, fly, LAYER } from '../../motion'
   import { overlays } from '../../overlays'
@@ -66,11 +67,11 @@
     besideBox(asked.at, size, { width: window.innerWidth, height: window.innerHeight }),
   )
 
-  const preview = $derived(typedWhen(typed, [i18n.language], new Date()))
+  const preview = $derived(typedWhen(typed, [region()], new Date()))
 
   const first = $derived.by(() => {
     try {
-      const locale = new Intl.Locale(i18n.language) as Intl.Locale & {
+      const locale = new Intl.Locale(region()) as Intl.Locale & {
         getWeekInfo?: () => { firstDay?: number }
       }
       return (locale.getWeekInfo?.().firstDay ?? 1) % 7
@@ -80,25 +81,23 @@
   })
   const days = $derived(daysShown('month', month, first))
   const weekdays = $derived(
-    days.slice(0, 7).map((day) => i18n.when(dateAt(day), { weekday: 'narrow' })),
+    days.slice(0, 7).map((day) => localDate(dateAt(day), { weekday: 'narrow' })),
   )
-  const monthName = $derived(i18n.when(dateAt(month), { month: 'long', year: 'numeric' }))
+  const monthName = $derived(localDate(dateAt(month), { month: 'long', year: 'numeric' }))
 
   const QUICK: Record<QuickDay, { icon: IconNode; label: string }> = {
-    today: { icon: Calendar, label: t('Today') },
-    tomorrow: { icon: Sun, label: t('Tomorrow') },
-    later: { icon: Briefcase, label: t('Later this week') },
-    weekend: { icon: Sofa, label: t('This weekend') },
-    'next-weekend': { icon: Sofa, label: t('Next weekend') },
-    'next-week': { icon: ArrowRight, label: t('Next week') },
+    today: { icon: Calendar, label: 'Today' },
+    tomorrow: { icon: Sun, label: 'Tomorrow' },
+    later: { icon: Briefcase, label: 'Later this week' },
+    weekend: { icon: Sofa, label: 'This weekend' },
+    'next-weekend': { icon: Sofa, label: 'Next weekend' },
+    'next-week': { icon: ArrowRight, label: 'Next week' },
   }
   const quick = $derived(quickDays(today))
   const rows: { icon: IconNode; label: string; day: string | null; skip?: true }[] = $derived([
-    ...(asked.skip
-      ? [{ icon: SkipForward, label: t('Skip'), day: null, skip: true as const }]
-      : []),
+    ...(asked.skip ? [{ icon: SkipForward, label: 'Skip', day: null, skip: true as const }] : []),
     ...quick.map((one) => ({ ...QUICK[one.kind], day: one.day })),
-    ...(due ? [{ icon: CircleSlash, label: t('No date'), day: null }] : []),
+    ...(due ? [{ icon: CircleSlash, label: 'No date', day: null }] : []),
   ])
 
   function choose(row: (typeof rows)[number]) {
@@ -114,15 +113,15 @@
     const at = dateAt(day)
     switch (kind) {
       case 'daily':
-        return t('Every day')
+        return 'Every day'
       case 'weekdays':
-        return t('Every weekday')
+        return 'Every weekday'
       case 'weekly':
-        return t('Every week on {day}', { day: i18n.when(at, { weekday: 'long' }) })
+        return `Every week on ${localDate(at, { weekday: 'long' })}`
       case 'monthly':
-        return t('Every month on day {day}', { day: Number(day.slice(8, 10)) })
+        return `Every month on day ${Number(day.slice(8, 10))}`
       case 'yearly':
-        return t('Every year on {date}', { date: i18n.when(at, { day: 'numeric', month: 'long' }) })
+        return `Every year on ${localDate(at, { day: 'numeric', month: 'long' })}`
     }
   }
   const repeatDay = $derived(due ?? today)
@@ -198,7 +197,7 @@
   class="scheduler orden-layer"
   class:sheet={phone}
   role="dialog"
-  aria-label={t('Date')}
+  aria-label="Date"
   tabindex="-1"
   style:left={phone ? undefined : `${place.left}px`}
   style:top={phone ? undefined : `${place.top}px`}
@@ -210,8 +209,8 @@
       bind:this={field}
       bind:value={typed}
       class="field"
-      placeholder={t('Type a date')}
-      aria-label={t('Type a date')}
+      placeholder="Type a date"
+      aria-label="Type a date"
       spellcheck="false"
       autocomplete="off"
       onfocus={() => (cursor = -1)}
@@ -240,7 +239,7 @@
         <span class="orden-row-label">{row.label}</span>
         {#if row.day}
           <span class="orden-row-meta"
-            >{i18n.when(dateAt(row.day), {
+            >{localDate(dateAt(row.day), {
               weekday: 'short',
               ...(row.day > addDays(today, 6) ? { day: 'numeric', month: 'short' } : {}),
             })}</span
@@ -256,22 +255,20 @@
       <button
         type="button"
         class="orden-glyph step"
-        aria-label={t('Previous month')}
-        onclick={() => (month = addMonths(month, -1))}
-        ><Glyph icon={ChevronLeft} class="orden-mirror" /></button
+        aria-label="Previous month"
+        onclick={() => (month = addMonths(month, -1))}><Glyph icon={ChevronLeft} /></button
       >
       <button
         type="button"
         class="orden-glyph step today-dot"
-        aria-label={t('Today')}
+        aria-label="Today"
         onclick={() => (month = `${today.slice(0, 8)}01`)}><span class="dot"></span></button
       >
       <button
         type="button"
         class="orden-glyph step"
-        aria-label={t('Next month')}
-        onclick={() => (month = addMonths(month, 1))}
-        ><Glyph icon={ChevronRight} class="orden-mirror" /></button
+        aria-label="Next month"
+        onclick={() => (month = addMonths(month, 1))}><Glyph icon={ChevronRight} /></button
       >
     </div>
     <div class="grid" role="grid">
@@ -286,7 +283,7 @@
           class:past={day < today}
           class:today={day === today}
           class:picked={day === due}
-          aria-label={i18n.when(dateAt(day), { dateStyle: 'full' })}
+          aria-label={localDate(dateAt(day), { dateStyle: 'full' })}
           aria-pressed={day === due}
           onclick={() => pick({ due: day })}
           >{Number(day.slice(8, 10))}{#if (asked.load.get(day) ?? 0) > 0}<span
@@ -310,7 +307,7 @@
         <Glyph icon={Clock} />
         <Facts
           parts={[
-            time === undefined ? t('Time') : timeWords(time),
+            time === undefined ? 'Time' : timeWords(time),
             duration !== undefined && durationLabel(duration),
           ]}
         />
@@ -325,7 +322,7 @@
         <Glyph icon={Repeat} />
         <span
           >{recurrence === undefined
-            ? t('Repeat')
+            ? 'Repeat'
             : repeatKind
               ? repeatLabel(repeatKind, repeatDay)
               : recurrence}</span
@@ -341,19 +338,19 @@
           type="time"
           class="time"
           value={time ?? ''}
-          aria-label={t('Time')}
+          aria-label="Time"
           onchange={(event) => keep({ time: event.currentTarget.value || null })}
         />
         {#if time !== undefined}
           <button
             type="button"
             class="orden-glyph"
-            aria-label={t('No time')}
+            aria-label="No time"
             onclick={() => keep({ time: null })}><Cross /></button
           >
         {/if}
       </div>
-      <div class="durations" role="group" aria-label={t('Duration')}>
+      <div class="durations" role="group" aria-label="Duration">
         {#each DURATIONS as minutes (minutes)}
           <button
             type="button"
@@ -387,7 +384,7 @@
           role="menuitem"
           onclick={() => pick({ due: repeatDay, recurrence: null })}
         >
-          <span class="orden-row-label">{t('No repeat')}</span>
+          <span class="orden-row-label">No repeat</span>
         </button>
       {/if}
     </div>

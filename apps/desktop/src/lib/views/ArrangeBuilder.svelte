@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Sort } from '@orden/bases'
   import Cross from '../Cross.svelte'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { displayName, knownProperties } from './columns'
   import { setGroup, setSort, setSubGroup } from './edit'
@@ -33,8 +32,8 @@
   <button
     type="button"
     class="orden-glyph"
-    title={sort.direction === 'ASC' ? t('Ascending') : t('Descending')}
-    aria-label={sort.direction === 'ASC' ? t('Ascending') : t('Descending')}
+    title={sort.direction === 'ASC' ? 'Ascending' : 'Descending'}
+    aria-label={sort.direction === 'ASC' ? 'Ascending' : 'Descending'}
     onclick={flip}
   >
     <svg viewBox="0 0 13 13" class:down={sort.direction === 'DESC'}
@@ -47,7 +46,7 @@
   {#each view?.sort ?? [] as sort, at (at)}
     <div class="row">
       <Select
-        label={t('Sort')}
+        label="Sort"
         value={sort.property}
         options={options(sort.property)}
         onchange={(property: string) =>
@@ -71,8 +70,8 @@
       <button
         type="button"
         class="orden-glyph"
-        title={t('Remove')}
-        aria-label={t('Remove')}
+        title="Remove"
+        aria-label="Remove"
         onclick={() =>
           kit.change((base, index) =>
             setSort(
@@ -95,16 +94,16 @@
         ]),
       )}
   >
-    <span class="orden-row-label">{t('Add a sort')}</span>
+    <span class="orden-row-label">Add a sort</span>
   </button>
 {:else}
   {@const group = view?.groupBy}
   {@const sub = view?.orden.subGroupBy}
   <div class="row">
     <Select
-      label={t('Group')}
+      label="Group"
       value={group?.property ?? NONE}
-      options={[{ value: NONE, label: t('None') }, ...options(group?.property)]}
+      options={[{ value: NONE, label: 'None' }, ...options(group?.property)]}
       onchange={(property: string) =>
         kit.change((base, index) =>
           setGroup(
@@ -123,9 +122,9 @@
   {#if group}
     <div class="row">
       <Select
-        label={t('Then by')}
+        label="Then by"
         value={sub?.property ?? NONE}
-        options={[{ value: NONE, label: t('None') }, ...options(sub?.property)]}
+        options={[{ value: NONE, label: 'None' }, ...options(sub?.property)]}
         onchange={(property: string) =>
           kit.change((base, index) =>
             setSubGroup(

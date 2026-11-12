@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Field } from '@orden/pass/types'
   import { totpIn } from '@orden/pass/totp'
-  import { t } from '../i18n.svelte'
   import EditField from './EditField.svelte'
   import { fieldKindIcon } from './field-icons'
   import { fieldShape } from './new-field'
@@ -12,7 +11,7 @@
 
   function wrong(field: Field): string | null {
     return field.kind === 'totp' && field.value.trim() !== '' && totpIn(field.value) === null
-      ? t('This is not a 2FA secret or setup address.')
+      ? 'This is not a 2FA secret or setup address.'
       : null
   }
 

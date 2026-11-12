@@ -2,7 +2,6 @@
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import { onDestroy } from 'svelte'
   import { account } from '../../account.svelte'
-  import { t } from '../../i18n.svelte'
   import { menu } from '../../menu.svelte'
   import { overlays } from '../../overlays'
   import { prompt } from '../../prompt.svelte'
@@ -60,9 +59,9 @@
       <PassTab tab={null} focused {corner} />
     {/key}
   {:else}
-    <Gate icon={KeyRound} title={t('Orden Pass')}>
+    <Gate icon={KeyRound} title="Orden Pass">
       <button class="orden-button" type="button" onclick={() => (account.open = true)}>
-        {t('Sign in')}
+        Sign in
       </button>
     </Gate>
   {/if}
@@ -70,9 +69,7 @@
 
 {#if reloading.offered}
   <div class="reload" role="alert">
-    <button class="orden-button" type="button" onclick={() => location.reload()}
-      >{t('Reload')}</button
-    >
+    <button class="orden-button" type="button" onclick={() => location.reload()}>Reload</button>
   </div>
 {/if}
 

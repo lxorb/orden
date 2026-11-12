@@ -1,6 +1,7 @@
 <script lang="ts">
   import Facts from '../Facts.svelte'
-  import { i18n, t } from '../i18n.svelte'
+  import { region } from '../region'
+  import { localDate, localNumber } from '../region'
   import { diskNear, diskShare, shares } from '@orden/online'
   import { prompt } from '../prompt.svelte'
   import { within } from '../space-paths'
@@ -32,7 +33,7 @@
     ),
   )
 
-  const when = (stamp: number) => i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
+  const when = (stamp: number) => localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
 
   const detail = (row: SessionRow) =>
     [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null)
@@ -45,8 +46,8 @@
 
   async function end(row: SessionRow) {
     const sure = await prompt.confirm({
-      title: t('End {name}?', { name: row.name ?? t('Terminal') }),
-      confirmLabel: t('End'),
+      title: `End ${row.name ?? 'Terminal'}?`,
+      confirmLabel: 'End',
       danger: true,
     })
     if (sure) await sessions.end(row.listed)
@@ -57,12 +58,12 @@
   const awake = $derived(state === 'awake' || state === 'starting')
   const server = $derived(known?.machine?.host === 'hetzner')
 
-  const gb = (value: number) => `${i18n.amount(Math.round(value))} GB`
+  const gb = (value: number) => `${localNumber(Math.round(value))} GB`
 
   function bytes(value: number): string {
     const [amount, unit] = value >= 1e9 ? [value / 1e9, 'GB'] : [value / 1e6, 'MB']
     const shown = amount < 10 ? Math.round(amount * 10) / 10 : Math.round(amount)
-    return `${i18n.amount(shown)} ${unit}`
+    return `${localNumber(shown)} ${unit}`
   }
 
   const spec = $derived.by(() => {
@@ -71,32 +72,32 @@
     const parts = [
       about.type.toUpperCase(),
       ...(about.location ? [cityOf(about.location)] : []),
-      t('{cores} vCPU', { cores: i18n.amount(about.cores) }),
+      `${localNumber(about.cores)} vCPU`,
       gb(about.memoryGb),
       gb(about.diskGb),
     ]
     if (about.price !== null && about.currency) {
-      const price = new Intl.NumberFormat(i18n.language, {
+      const price = new Intl.NumberFormat(region(), {
         style: 'currency',
         currency: about.currency,
       }).format(about.price)
-      parts.push(t('{price} a month', { price }))
+      parts.push(`${price} a month`)
     }
     return parts.map((part) => part.replaceAll(' ', '\u00a0'))
   })
 
   const stateWords = $derived(
     state === 'awake'
-      ? t('Awake')
+      ? 'Awake'
       : state === 'starting'
-        ? t('Starting')
+        ? 'Starting'
         : state === 'stopping'
-          ? t('Stopping')
-          : t('Asleep'),
+          ? 'Stopping'
+          : 'Asleep',
   )
 
   const hours = (seconds: number) =>
-    i18n.amount(Math.round(seconds / (seconds < 36_000 ? 360 : 3600)) / (seconds < 36_000 ? 10 : 1))
+    localNumber(Math.round(seconds / (seconds < 36_000 ? 360 : 3600)) / (seconds < 36_000 ? 10 : 1))
 
   const share = $derived(known ? shares(known.used, known.limit) : null)
 
@@ -106,7 +107,7 @@
     disk
       ? [
           {
-            label: t('Disk'),
+            label: 'Disk',
             share: diskShare(disk),
             near: diskNear(disk),
             words: `${bytes(disk.used)} / ${bytes(disk.total)}`,
@@ -121,25 +122,25 @@
       : known && share
         ? [
             {
-              label: t('Hours'),
+              label: 'Hours',
               share: share.awakeS,
               near: machine.near,
               words: `${hours(known.used.awakeS)} / ${hours(known.limit.awakeS)} h`,
             },
             {
-              label: t('CPU'),
+              label: 'CPU',
               share: share.cpuS,
               near: false,
               words: `${hours(known.used.cpuS)} / ${hours(known.limit.cpuS)} h`,
             },
             {
-              label: t('Home'),
+              label: 'Home',
               share: share.homeBytes,
               near: false,
               words: `${bytes(known.used.homeBytes)} / ${bytes(known.limit.homeBytes)}`,
             },
             {
-              label: t('Web'),
+              label: 'Web',
               share: share.egressBytes,
               near: false,
               words: `${bytes(known.used.egressBytes)} / ${bytes(known.limit.egressBytes)}`,
@@ -163,7 +164,7 @@
     <div class="card">
       <div class="orden-setting setting">
         <span class="name">
-          {t('Machine')}
+          Machine
           {#if spec}<small><Facts parts={spec} /></small>{/if}
         </span>
         <div class="row">
@@ -172,7 +173,7 @@
             class="orden-chip"
             disabled={machine.busy || state === 'stopping' || (server && state === 'starting')}
             onclick={() => void machine.startStop(!awake)}
-            >{awake ? (server ? t('Restart') : t('Stop')) : t('Start')}</button
+            >{awake ? (server ? 'Restart' : 'Stop') : 'Start'}</button
           >
         </div>
       </div>
@@ -185,14 +186,14 @@
         {@const file = files.get(row.key) ?? null}
         <div class="orden-setting setting">
           <span class="name">
-            {row.name ?? t('Terminal')}
+            {row.name ?? 'Terminal'}
             {#if detail(row).length}<small><Facts parts={detail(row)} /></small>{/if}
           </span>
           <div class="row">
             {#if file}
-              <button class="orden-chip" onclick={() => void open(file)}>{t('Open')}</button>
+              <button class="orden-chip" onclick={() => void open(file)}>Open</button>
             {/if}
-            <button class="orden-chip" onclick={() => void end(row)}>{t('End')}</button>
+            <button class="orden-chip" onclick={() => void end(row)}>End</button>
           </div>
         </div>
       {/each}
@@ -225,7 +226,7 @@
     </div>
     {#if known && !server}
       <p class="hint caption">
-        {t('Starts again {date}', { date: i18n.when(known.resets, { dateStyle: 'medium' }) })}
+        Starts again {localDate(known.resets, { dateStyle: 'medium' })}
       </p>
     {/if}
   {/if}

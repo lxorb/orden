@@ -1,6 +1,5 @@
 import type { Role } from '@orden/pass/types'
 import type { MemberState } from '@orden/pass/wire'
-import { t } from '../i18n.svelte'
 import type { InvitedRole } from './share'
 
 export const INVITED_ROLES: readonly InvitedRole[] = ['viewer', 'editor', 'manager']
@@ -8,23 +7,23 @@ export const INVITED_ROLES: readonly InvitedRole[] = ['viewer', 'editor', 'manag
 export function roleName(role: Role): string {
   switch (role) {
     case 'viewer':
-      return t('Can view')
+      return 'Can view'
     case 'editor':
-      return t('Can edit')
+      return 'Can edit'
     case 'manager':
-      return t('Can manage')
+      return 'Can manage'
     case 'owner':
-      return t('Owner')
+      return 'Owner'
   }
 }
 
 export function stateName(state: MemberState, managing: boolean): string {
   switch (state) {
     case 'pending':
-      return t('Pending')
+      return 'Pending'
     case 'confirm':
-      return managing ? t('Waiting for you to confirm') : t('Waiting to be confirmed')
+      return managing ? 'Waiting for you to confirm' : 'Waiting to be confirmed'
     case 'active':
-      return t('Active')
+      return 'Active'
   }
 }

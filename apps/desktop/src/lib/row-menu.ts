@@ -2,7 +2,6 @@ import { foreignCopy } from '@orden/sync-core/foreign'
 import { folderNote, nestedIn } from './folder-notes'
 import { basesOn, hiddenKinds, type KindName } from './settings.svelte'
 import { kindLabel } from './kind-words'
-import { key, plural, t } from './i18n.svelte'
 import {
   archiveEntry,
   coverEntries,
@@ -33,7 +32,7 @@ export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntr
   const path = entry.path
   return [
     {
-      label: t('Web data'),
+      label: 'Web data',
       keep: true,
       run: () => void import('./web-tab/own-data').then((one) => one.showWebData(path)),
     },
@@ -55,14 +54,14 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...(holds && hiddenKinds.offers('note')
       ? [
           {
-            label: t('New note inside'),
+            label: 'New note inside',
             run: () => void workspace.createInside(entry.path),
             more: () => Promise.resolve(newFileRows(entry.path)),
           },
         ]
       : []),
     DIVIDER,
-    { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
+    { label: 'Rename', run: () => workspace.startRenaming(entry.path) },
     ...moveEntry(entry),
     ...iconEntries(marked.path, entry.is_dir && !own),
     ...coverEntries(marked.path),
@@ -74,13 +73,13 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...protectEntries(entry.path),
     ...shareEntry(marked.path),
     {
-      label: t('Duplicate'),
+      label: 'Duplicate',
       hint: shortcuts.hint('tree.duplicate'),
       run: () => void workspace.duplicate(entry.path),
     },
     ...revealEntry(entry),
     DIVIDER,
-    { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
+    { label: 'Delete', danger: true, run: () => void removeRow(entry, marked, inside) },
   ]
 }
 
@@ -101,7 +100,7 @@ function wallpaperEntry(entry: Entry): MenuEntry[] {
 
   return [
     {
-      label: t('Use as wallpaper'),
+      label: 'Use as wallpaper',
       run: () =>
         void import('./wallpaper/wallpaper.svelte').then(({ wallpaper }) =>
           wallpaper.takeFrom(entry.path),
@@ -114,18 +113,18 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
   if (!workspace.isSelected(entry.path) || workspace.selection.length < 2) return null
   const paths = [...workspace.selection]
   if (!paths.every((path) => canWriteAt(path))) {
-    return [{ label: t('Open all'), run: () => void openAll(paths) }]
+    return [{ label: 'Open all', run: () => void openAll(paths) }]
   }
   const count = workspace.deletable(paths).length
 
   return [
-    { label: t('Open all'), run: () => void openAll(paths) },
+    { label: 'Open all', run: () => void openAll(paths) },
     DIVIDER,
-    ...(viewport.touch ? [{ label: t('Move'), run: () => void moveAllTo(paths) }] : []),
+    ...(viewport.touch ? [{ label: 'Move', run: () => void moveAllTo(paths) }] : []),
     ...archiveAll(paths),
     DIVIDER,
     {
-      label: plural(count, { one: 'Delete {count} item', other: 'Delete {count} items' }),
+      label: count === 1 ? 'Delete 1 item' : `Delete ${count} items`,
       danger: true,
       disabled: count === 0,
       run: () => void workspace.removeMany(paths),
@@ -138,7 +137,7 @@ function compareEntry(entry: Entry): MenuEntry[] {
   const original = copy && entryAt(workspace.tree, joinPath(folderOf(entry.path), copy.original))
   if (!original || original.is_dir) return []
 
-  return [{ label: t('Compare with original'), run: () => void compare(original.path, entry.path) }]
+  return [{ label: 'Compare with original', run: () => void compare(original.path, entry.path) }]
 }
 
 async function compare(original: string, copy: string) {
@@ -165,7 +164,7 @@ export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
   const all = marks.every((mark) => workspace.bookmarks.has(mark))
   return [
     {
-      label: all ? t('Remove from Essentials') : t('Add to Essentials'),
+      label: all ? 'Remove from Essentials' : 'Add to Essentials',
       run: () => workspace.bookmarks.toggleAll(marks),
     },
   ]
@@ -180,7 +179,7 @@ function archiveAll(paths: readonly string[]): MenuEntry[] {
     ? []
     : [
         {
-          label: t('Archive'),
+          label: 'Archive',
           run: () => void import('./archiving').then(({ archive }) => archive(paths)),
         },
       ]
@@ -196,7 +195,7 @@ function moveEntry(entry: Entry): MenuEntry[] {
   }).filter((target) => canWriteAt(target.id))
   if (!targets.length) return []
 
-  return [{ label: t('Move'), run: () => void moveTo(entry, targets) }]
+  return [{ label: 'Move', run: () => void moveTo(entry, targets) }]
 }
 
 async function moveAllTo(paths: readonly string[]) {
@@ -216,13 +215,13 @@ async function moveAllTo(paths: readonly string[]) {
   )
 
   const { prompt } = await import('./prompt.svelte')
-  const into = await prompt.find({ title: t('Move to'), options: targets })
+  const into = await prompt.find({ title: 'Move to', options: targets })
   if (into) await workspace.moveMany([...paths], into)
 }
 
 async function moveTo(entry: Entry, targets: readonly MoveTarget[]) {
   const { prompt } = await import('./prompt.svelte')
-  const into = await prompt.find({ title: t('Move to'), options: [...targets] })
+  const into = await prompt.find({ title: 'Move to', options: [...targets] })
 
   if (into) await workspace.moveMany([entry.path], into)
 }
@@ -240,9 +239,9 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
 
   const { prompt } = await import('./prompt.svelte')
   const sure = await prompt.confirm({
-    title: t('Delete {name}?', { name: rowName(marked.name, marked.is_dir) }),
-    detail: t('The notes inside it go too.'),
-    confirmLabel: key('Delete'),
+    title: `Delete ${rowName(marked.name, marked.is_dir)}?`,
+    detail: 'The notes inside it go too.',
+    confirmLabel: 'Delete',
     danger: true,
   })
 
@@ -260,12 +259,9 @@ export async function refuseDeleting(paths: readonly string[]) {
 
   const { prompt } = await import('./prompt.svelte')
   const show = await prompt.confirm({
-    title: t('Nothing archived is deleted'),
-    detail: plural(held, {
-      one: '{count} archived item inside',
-      other: '{count} archived items inside',
-    }),
-    confirmLabel: key('Show them'),
+    title: 'Nothing archived is deleted',
+    detail: held === 1 ? '1 archived item inside' : `${held} archived items inside`,
+    confirmLabel: 'Show them',
   })
 
   if (show) {
@@ -278,7 +274,7 @@ function revealEntry(entry: Entry): MenuEntry[] {
   if (!isDesktop) return []
   return [
     {
-      label: t(showLabel()),
+      label: showLabel(),
       run: () => void import('./reveal').then((one) => one.reveal(entry.path)),
     },
   ]
@@ -312,7 +308,7 @@ export function newFileRows(inside?: string): MenuEntry[] {
       ? []
       : [
           {
-            label: t('New database'),
+            label: 'New database',
             run: () => void import('./views/new-database').then((one) => one.createDatabase()),
           },
         ]),

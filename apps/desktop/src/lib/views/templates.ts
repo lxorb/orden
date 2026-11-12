@@ -1,5 +1,4 @@
 import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
-import { t } from '../i18n.svelte'
 import { menu } from '../menu.svelte'
 import { rows } from '../rows/rows.svelte'
 import { folderOf, insideSpace, relativeTo, samePath, within } from '../space-paths'
@@ -97,6 +96,6 @@ export async function pickTemplate(): Promise<void> {
   menu.show(
     at,
     found.map((one) => ({ label: one.name.replace(/\.md$/i, ''), run: () => void make(one.path) })),
-    { title: t('New note from template') },
+    { title: 'New note from template' },
   )
 }

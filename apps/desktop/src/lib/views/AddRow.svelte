@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Group } from '@orden/bases'
   import { untrack } from 'svelte'
-  import { t } from '../i18n.svelte'
   import type { Prefill as QuickPrefill } from '../quick-add/entry'
   import { relativeTo, withoutExtension } from '../space-paths'
   import { workspace } from '../workspace.svelte'
@@ -32,7 +31,7 @@
 
   const property = $derived(kit.live.view?.groupBy?.property)
   const notes = $derived((kit.live.view?.orden.rows ?? 'notes') === 'notes')
-  const label = $derived(notes ? t('New note') : t('Add task'))
+  const label = $derived(notes ? 'New note' : 'Add task')
 
   function quick(prefill: Prefill): QuickPrefill {
     const root = prefill.root ?? workspace.activeSpace?.root
@@ -101,8 +100,8 @@
           bind:this={field}
           bind:value={words}
           class="field"
-          aria-label={t('Add task')}
-          placeholder={t('Add task')}
+          aria-label="Add task"
+          placeholder="Add task"
           onkeydown={(event) => {
             if (event.isComposing) return
             if (event.key === 'Enter') {

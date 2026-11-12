@@ -1,7 +1,6 @@
 <script lang="ts">
   import { account } from './account.svelte'
   import { arriving } from './arriving.svelte'
-  import { t } from './i18n.svelte'
   import Sweep from './Sweep.svelte'
   import { dur, fade } from './motion'
   import { workspace } from './workspace.svelte'
@@ -33,7 +32,7 @@
         transition:fade={{ duration: dur(130) }}
         onclick={() => arriving.giveUp()}
       >
-        {t('Continue')}
+        Continue
       </button>
     {/if}
   </div>

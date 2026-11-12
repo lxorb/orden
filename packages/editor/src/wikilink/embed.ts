@@ -11,7 +11,6 @@ import {
 } from '@orden/markdown/links'
 import { iconElement } from '../icon'
 import { imageResolver } from '../images'
-import { label } from '../labels'
 import { pressedByKey } from '../press'
 import { openLightbox } from '../live-preview/image/lightbox'
 import { BaseWidget } from '../live-preview/render'
@@ -89,7 +88,7 @@ export class EmbedWidget extends OrdenWidget {
     const missing = () => {
       frame.classList.remove('orden-embed-loading')
       frame.classList.add('orden-embed-missing')
-      body.textContent = label('noteNotFound')
+      body.textContent = 'Note not found'
     }
 
     if (this.path === null) {
@@ -99,7 +98,7 @@ export class EmbedWidget extends OrdenWidget {
 
     if (view.state.facet(noteIndex).locked?.(this.path)) {
       frame.classList.add('orden-embed-missing')
-      body.textContent = label('protectedNote')
+      body.textContent = 'Protected'
       return frame
     }
 

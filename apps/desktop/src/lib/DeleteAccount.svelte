@@ -3,13 +3,14 @@
 
   import { account } from './account.svelte'
   import { fromServer, request } from './api'
-  import { i18n, key, message, t } from './i18n.svelte'
+  import { region } from './region'
+  import { message } from './message'
   import { dur, fade } from './motion'
 
   const { onend }: { onend: () => void } = $props()
 
   const shared = $derived(
-    new Intl.ListFormat(i18n.language).format(
+    new Intl.ListFormat(region()).format(
       account.spaces.filter((one) => one.role === 'owner' && one.shared).map((one) => one.name),
     ),
   )
@@ -89,8 +90,8 @@
         await account.recheck()
         account.error =
           gone === false
-            ? key('Signed out elsewhere; the account was not deleted. Sign in again to delete it.')
-            : key('Signed out; sign in again to see whether the account is still there.')
+            ? 'Signed out elsewhere; the account was not deleted. Sign in again to delete it.'
+            : 'Signed out; sign in again to see whether the account is still there.'
         account.open = true
         onend()
         return
@@ -139,13 +140,13 @@
       }}
     >
       <label class="orden-setting setting">
-        <span class="name">{t('Code sent to')} <strong>{account.user?.email}</strong></span>
+        <span class="name">Code sent to <strong>{account.user?.email}</strong></span>
         <input
           class="orden-field is-value code"
           bind:this={field}
           bind:value={code}
           placeholder="000000"
-          aria-label={t('Code')}
+          aria-label="Code"
           inputmode="numeric"
           autocomplete="one-time-code"
           spellcheck="false"
@@ -153,12 +154,12 @@
       </label>
       {#if second}
         <label class="orden-setting setting" transition:fade={{ duration: dur(130) }}>
-          <span class="name">{t('App code to delete')}</span>
+          <span class="name">App code to delete</span>
           <input
             class="orden-field is-value code"
             bind:value={fromApp}
             placeholder="000000"
-            aria-label={t('App code to delete')}
+            aria-label="App code to delete"
             inputmode="numeric"
             autocomplete="one-time-code"
             spellcheck="false"
@@ -172,24 +173,22 @@
           disabled={busy || resendIn > 0}
           onclick={() => void mail()}
         >
-          {resendIn > 0 ? t('Resend in {seconds}s', { seconds: resendIn }) : t('Send a new code')}
+          {resendIn > 0 ? `Resend in ${resendIn}s` : 'Send a new code'}
         </button>
-        <button type="button" class="orden-chip is-quiet" onclick={onend}>{t('Cancel')}</button>
-        <button type="submit" class="orden-chip" disabled={busy || !code.trim()}>
-          {t('Continue')}
-        </button>
+        <button type="button" class="orden-chip is-quiet" onclick={onend}>Cancel</button>
+        <button type="submit" class="orden-chip" disabled={busy || !code.trim()}> Continue </button>
       </div>
     </form>
   {:else}
     {#if shared}
       <p class="hint" transition:fade={{ duration: dur(130) }}>
-        {t('Also gone for everyone in {spaces}.', { spaces: shared })}
+        Also gone for everyone in {shared}.
       </p>
     {/if}
     <button class="orden-action is-danger" disabled={busy} onclick={() => void leave()}>
-      {t('Delete now')}
+      Delete now
     </button>
-    <button class="orden-action" disabled={busy} onclick={onend}>{t('Cancel')}</button>
+    <button class="orden-action" disabled={busy} onclick={onend}>Cancel</button>
   {/if}
 
   {#if wrong}

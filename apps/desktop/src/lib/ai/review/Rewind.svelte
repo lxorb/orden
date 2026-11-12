@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { message, t } from '../../i18n.svelte'
+  import { message } from '../../message'
   import { dur, fly } from '../../motion'
   import type { Thread } from '../chat/types'
   import { checkpoints } from './changes'
@@ -24,11 +24,11 @@
   const rows = $derived(plan ? plan.choices.length : messages.length)
 
   const LABELS: Record<Choice, () => string> = {
-    both: () => t('Restore notes and conversation'),
-    conversation: () => t('Restore conversation'),
-    notes: () => t('Restore notes'),
-    'summarize-from': () => t('Summarize from here'),
-    'summarize-to': () => t('Summarize up to here'),
+    both: () => 'Restore notes and conversation',
+    conversation: () => 'Restore conversation',
+    notes: () => 'Restore notes',
+    'summarize-from': () => 'Summarize from here',
+    'summarize-to': () => 'Summarize up to here',
   }
 
   onMount(() => {
@@ -59,7 +59,7 @@
     try {
       await review.rewind(thread, picked, choice, sheet.panel)
     } catch (error) {
-      trouble = message(error, t('The model did not answer.'))
+      trouble = message(error, 'The model did not answer.')
     } finally {
       busy = false
     }
@@ -94,7 +94,7 @@
 <div
   class="rewind"
   role="dialog"
-  aria-label={t('Rewind')}
+  aria-label="Rewind"
   tabindex="0"
   bind:this={root}
   onkeydown={keys}
@@ -103,7 +103,7 @@
 >
   {#if plan}
     <button class="orden-row is-short is-quiet asked" onclick={back}>
-      <svg class="orden-mirror back" viewBox="0 0 13 13" aria-hidden="true"
+      <svg class="back" viewBox="0 0 13 13" aria-hidden="true"
         ><path d="M8 3.2L4.7 6.5 8 9.8" /></svg
       >
       <span class="orden-row-label">{plan.turn.draft?.text ?? ''}</span>
@@ -127,7 +127,7 @@
       </button>
     {/each}
     {#if plan.lasting}
-      <p class="lasting">{t('Pages, terminals and moves are not undone')}</p>
+      <p class="lasting">Pages, terminals and moves are not undone</p>
     {/if}
     {#if trouble}
       <p class="trouble">{trouble}</p>

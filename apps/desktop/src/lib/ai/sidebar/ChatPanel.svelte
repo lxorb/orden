@@ -2,7 +2,6 @@
   import { door } from '@orden/markdown/door'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { i18n, t } from '../../i18n.svelte'
   import { menu } from '../../menu.svelte'
   import { dur, fly } from '../../motion'
   import { hearAgain } from '../../shortcuts/registry'
@@ -49,15 +48,15 @@
   function titleMenu(event: MouseEvent) {
     const thread = chat.thread
     menu.show(event, [
-      { label: t('Rename'), asks: true, run: () => void chat.rename() },
+      { label: 'Rename', asks: true, run: () => void chat.rename() },
       ...(thread
-        ? [{ label: t('Follow'), checked: following(thread), run: () => toggleFollow(thread) }]
+        ? [{ label: 'Follow', checked: following(thread), run: () => toggleFollow(thread) }]
         : []),
-      { label: t('Branch'), run: () => chat.branch() },
-      { label: t('Save as a note'), run: () => void chat.exportThread() },
-      ...(wide ? [] : [{ label: t('Open in new tab'), run: chatToTab }]),
-      { label: t('Archive'), run: () => chat.archive() },
-      { label: t('Delete'), danger: true, run: () => void chat.remove() },
+      { label: 'Branch', run: () => chat.branch() },
+      { label: 'Save as a note', run: () => void chat.exportThread() },
+      ...(wide ? [] : [{ label: 'Open in new tab', run: chatToTab }]),
+      { label: 'Archive', run: () => chat.archive() },
+      { label: 'Delete', danger: true, run: () => void chat.remove() },
     ])
   }
 
@@ -107,10 +106,7 @@
   ondrop={dropRows}
 >
   {#if wide && railed}
-    <aside
-      class="shelf"
-      transition:fly={{ x: -12 * i18n.factor, duration: dur(150), easing: cubicOut }}
-    >
+    <aside class="shelf" transition:fly={{ x: -12, duration: dur(150), easing: cubicOut }}>
       <Threads rail />
     </aside>
   {/if}
@@ -121,8 +117,8 @@
         {#if wide}
           <button
             class="orden-glyph"
-            title={t('Chats')}
-            aria-label={t('Chats')}
+            title="Chats"
+            aria-label="Chats"
             aria-pressed={railed}
             onclick={toggleRail}
           >
@@ -136,18 +132,16 @@
         {#if !wide && head?.kept && !listing}
           <button
             class="orden-glyph"
-            title={t('Back')}
-            aria-label={t('Back')}
+            title="Back"
+            aria-label="Back"
             onclick={() => chat.newThread()}
           >
-            <svg class="orden-mirror" viewBox="0 0 13 13" aria-hidden="true"
-              ><path d="M8 3.2L4.7 6.5 8 9.8" /></svg
-            >
+            <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8 3.2L4.7 6.5 8 9.8" /></svg>
           </button>
         {/if}
         {#if head?.kept && !listing && session === null}
           <button class="title" onclick={titleMenu} aria-haspopup="menu">
-            <span>{head.title || t('Untitled')}</span>
+            <span>{head.title || 'Untitled'}</span>
             <svg viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
           </button>
         {/if}
@@ -155,8 +149,8 @@
         {#if wide && !railed}
           <button
             class="orden-glyph"
-            title={shortcuts.tooltip(t('New chat'), 'ai.new')}
-            aria-label={t('New chat')}
+            title={shortcuts.tooltip('New chat', 'ai.new')}
+            aria-label="New chat"
             onclick={() => chat.newThread()}
           >
             <svg viewBox="0 0 13 13" aria-hidden="true"
@@ -176,13 +170,11 @@
         <header class="top">
           <button
             class="orden-glyph"
-            title={t('Back')}
-            aria-label={t('Back')}
+            title="Back"
+            aria-label="Back"
             onclick={() => chat.showThreads()}
           >
-            <svg class="orden-mirror" viewBox="0 0 13 13" aria-hidden="true"
-              ><path d="M8 3.2L4.7 6.5 8 9.8" /></svg
-            >
+            <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8 3.2L4.7 6.5 8 9.8" /></svg>
           </button>
         </header>
       {/if}

@@ -8,20 +8,19 @@ import Image from 'lucide/dist/esm/icons/image.mjs'
 import Library from 'lucide/dist/esm/icons/library.mjs'
 import Monitor from 'lucide/dist/esm/icons/monitor.mjs'
 import Music from 'lucide/dist/esm/icons/music.mjs'
-import { t } from '../i18n.svelte'
 import { listPlaces, type Place, type PlaceKind } from './commands'
 import { pins } from './pins.svelte'
 
 const SHOWN: Record<PlaceKind, { name: () => string; mark: IconNode }> = {
-  home: { name: () => t('Home'), mark: House },
-  desktop: { name: () => t('Desktop'), mark: Monitor },
-  documents: { name: () => t('Documents'), mark: FileText },
-  downloads: { name: () => t('Downloads'), mark: Download },
-  pictures: { name: () => t('Pictures'), mark: Image },
-  music: { name: () => t('Music'), mark: Music },
-  videos: { name: () => t('Videos'), mark: Clapperboard },
-  spaces: { name: () => t('Spaces'), mark: Library },
-  root: { name: () => t('Computer'), mark: HardDrive },
+  home: { name: () => 'Home', mark: House },
+  desktop: { name: () => 'Desktop', mark: Monitor },
+  documents: { name: () => 'Documents', mark: FileText },
+  downloads: { name: () => 'Downloads', mark: Download },
+  pictures: { name: () => 'Pictures', mark: Image },
+  music: { name: () => 'Music', mark: Music },
+  videos: { name: () => 'Videos', mark: Clapperboard },
+  spaces: { name: () => 'Spaces', mark: Library },
+  root: { name: () => 'Computer', mark: HardDrive },
   disk: { name: () => '', mark: HardDrive },
 }
 

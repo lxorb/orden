@@ -49,8 +49,7 @@ vi.mock('./account.svelte', () => ({
   account: { accountToken: 'session', forgetWithSession: () => undefined },
 }))
 
-vi.mock('./i18n.svelte', () => ({
-  t: (text: string) => text,
+vi.mock('./message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))

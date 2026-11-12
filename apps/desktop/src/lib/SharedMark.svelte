@@ -1,9 +1,8 @@
 <script lang="ts">
   import type { IconNode } from 'lucide'
   import Users from 'lucide/dist/esm/icons/users.mjs'
-  import { t } from './i18n.svelte'
 
-  const { label = t('Shared'), icon = Users }: { label?: string; icon?: IconNode } = $props()
+  const { label = 'Shared', icon = Users }: { label?: string; icon?: IconNode } = $props()
 </script>
 
 <span class="shared" title={label} aria-label={label} role="img">

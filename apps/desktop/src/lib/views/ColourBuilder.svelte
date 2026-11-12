@@ -1,7 +1,6 @@
 <script lang="ts">
   import { type ColourRule, colourExpression, colourRules } from '@orden/bases'
   import Cross from '../Cross.svelte'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { displayName, holdsOf, knownProperties } from './columns'
   import { setViewOrden } from './edit'
@@ -30,9 +29,9 @@
     '>': '>',
     '<=': '≤',
     '>=': '≥',
-    contains: t('contains'),
-    empty: t('is empty'),
-    filled: t('is not empty'),
+    contains: 'contains',
+    empty: 'is empty',
+    filled: 'is not empty',
     tag: '#',
   }
 
@@ -59,8 +58,8 @@
     <button
       type="button"
       class="orden-glyph"
-      title={t('Remove')}
-      aria-label={t('Remove')}
+      title="Remove"
+      aria-label="Remove"
       onclick={() => write([])}><Cross small /></button
     >
   </div>
@@ -75,7 +74,7 @@
         <code class="kept">{rule.when}</code>
       {:else if 'property' in shown}
         <Select
-          label={t('Property')}
+          label="Property"
           value={shown.property}
           options={(properties.includes(shown.property)
             ? properties
@@ -88,7 +87,7 @@
             change(at, { ...rule, when: expressionOf({ ...shown, property }, holds) })}
         />
         <Select
-          label={t('Compare')}
+          label="Compare"
           value={shown.op}
           options={OPERATORS.map((one) => ({ value: one, label: OPERATOR_NAMES[one] }))}
           onchange={(op: string) => {
@@ -100,7 +99,7 @@
           <input
             class="orden-field"
             value={shown.value}
-            aria-label={t('Value')}
+            aria-label="Value"
             onchange={(event) =>
               change(at, {
                 ...rule,
@@ -114,15 +113,15 @@
       <button
         type="button"
         class="orden-glyph"
-        title={t('Remove')}
-        aria-label={t('Remove')}
+        title="Remove"
+        aria-label="Remove"
         onclick={() => write(rules.filter((_, index) => index !== at))}><Cross small /></button
       >
     </div>
   {/each}
 
   <button type="button" class="orden-row is-short adder" onclick={add}>
-    <span class="orden-row-label">{t('Add')}</span>
+    <span class="orden-row-label">Add</span>
   </button>
 {/if}
 

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { focusEditor } from '../focus'
-  import { t } from '../i18n.svelte'
   import { selectAll } from '../select-all'
   import type { Tab } from '../workspace/documents.svelte'
 
@@ -31,7 +30,7 @@
   autocapitalize="off"
   autocorrect="off"
   enterkeyhint="done"
-  aria-label={t('Name')}
+  aria-label="Name"
   use:selectAll
   onblur={() => leave(true)}
   onpointerdown={(event) => event.stopPropagation()}

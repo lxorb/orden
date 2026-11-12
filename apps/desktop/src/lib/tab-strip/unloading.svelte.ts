@@ -1,6 +1,5 @@
 import { tick } from 'svelte'
 import { agentMarks } from '../agent-marks.svelte'
-import { i18n, t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu-item'
 import { keep, storedText } from '../stored'
 import { pages } from '../web-tab/pages.svelte'
@@ -59,12 +58,9 @@ async function mayLose(tabs: readonly Tab[]): Promise<boolean> {
   const [only] = tabs
   const { prompt } = await import('../prompt.svelte')
   return prompt.confirm({
-    title:
-      tabs.length === 1 && only
-        ? t('Unload {name}?', { name: only.shown })
-        : t('Unload these tabs?'),
-    detail: t('Anything typed into a page and not sent, or still being sent, is lost.'),
-    confirmLabel: t('Unload'),
+    title: tabs.length === 1 && only ? `Unload ${only.shown}?` : 'Unload these tabs?',
+    detail: 'Anything typed into a page and not sent, or still being sent, is lost.',
+    confirmLabel: 'Unload',
   })
 }
 
@@ -105,19 +101,19 @@ export async function unload(tab: Tab, which: Unloading): Promise<void> {
 }
 
 function afterLabel(): string {
-  return i18n.factor > 0 ? t('Unload tabs to the right') : t('Unload tabs to the left')
+  return 'Unload tabs to the right'
 }
 
 export function unloadEntries(tab: Tab): MenuEntry[] {
   if (!unloadTabs.on) return []
 
   const rows: MenuEntry[] = []
-  if (mayUnload(tab)) rows.push({ label: t('Unload tab'), run: () => void unload(tab, 'tab') })
+  if (mayUnload(tab)) rows.push({ label: 'Unload tab', run: () => void unload(tab, 'tab') })
   if (tab.essential !== null) return rows
 
   rows.push(
     {
-      label: t('Unload other tabs'),
+      label: 'Unload other tabs',
       disabled: unloadsAround(tab, 'others').length === 0,
       run: () => void unload(tab, 'others'),
     },

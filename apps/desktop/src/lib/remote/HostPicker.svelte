@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { tick } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { i18n, t } from '../i18n.svelte'
+  import { region } from '../region'
   import { longPress } from '../longpress'
   import { menu } from '../menu.svelte'
   import { fade, LAYER, scale } from '../motion'
@@ -85,7 +85,7 @@
   })
 
   const relative = $derived(
-    new Intl.RelativeTimeFormat(i18n.language, { style: 'narrow', numeric: 'auto' }),
+    new Intl.RelativeTimeFormat(region(), { style: 'narrow', numeric: 'auto' }),
   )
 
   function ago(at: number): string {
@@ -97,20 +97,20 @@
     event.preventDefault()
     menu.show(event, [
       {
-        label: host.pinned ? t('Unpin') : t('Pin'),
+        label: host.pinned ? 'Unpin' : 'Pin',
         run: () =>
           void remote.keep((kept) => ({
             ...kept,
             about: { ...kept.about, [host.id]: { ...kept.about[host.id], pinned: !host.pinned } },
           })),
       },
-      { label: t('Settings'), run: () => hostPicker.manage() },
+      { label: 'Settings', run: () => hostPicker.manage() },
     ])
   }
 
   function aboutGroup(event: MouseEvent, group: string) {
     event.preventDefault()
-    menu.show(event, [{ label: t('Open all'), run: () => hostPicker.chooseGroup(group) }])
+    menu.show(event, [{ label: 'Open all', run: () => hostPicker.chooseGroup(group) }])
   }
 </script>
 
@@ -128,7 +128,7 @@
     style:--heads={placed.filter((one) => one.head).length}
     style:--parts={placed.filter((one) => one.parted).length}
     role="menu"
-    aria-label={t('Remote')}
+    aria-label="Remote"
     bind:this={box}
     use:trap
     use:roving={{ current: '.is-on', wrap: true }}
@@ -142,7 +142,7 @@
           <span>{head}</span><button
             class="all"
             tabindex="-1"
-            onclick={() => hostPicker.chooseGroup(head)}>{t('Open all')}</button
+            onclick={() => hostPicker.chooseGroup(head)}>Open all</button
           >
         </p>
       {/if}
@@ -183,7 +183,7 @@
     {#if empty}
       <button class="orden-row" role="menuitem" onclick={() => hostPicker.manage()}>
         <HostMark />
-        <span class="orden-row-label">{t('Add host')}</span>
+        <span class="orden-row-label">Add host</span>
       </button>
     {/if}
   </div>

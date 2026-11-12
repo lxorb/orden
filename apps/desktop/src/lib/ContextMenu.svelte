@@ -1,7 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { steppedKey } from './direction'
-  import { t } from './i18n.svelte'
   import { type Spelling, spelled } from './list-keys'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './overlays'
@@ -163,7 +161,7 @@
 
     const standing = list[at]
     const item = entries[Number(standing?.dataset.at)]
-    if (standing && item?.more && steppedKey(event.key) === 'ArrowRight') {
+    if (standing && item?.more && event.key === 'ArrowRight') {
       event.preventDefault()
       showMore(item, standing)
       return
@@ -231,7 +229,7 @@
     onkeydown={onKey}
     role="menu"
     tabindex="-1"
-    aria-label={menu.title ?? t('Menu')}
+    aria-label={menu.title ?? 'Menu'}
   >
     {#if sheet}
       <div class="grip" aria-hidden="true"></div>
@@ -267,9 +265,7 @@
             {#if item.hint && !viewport.touch}<kbd>{item.hint}</kbd>{/if}
             {#if item.more}
               <span class="more" data-more aria-hidden="true">
-                <svg class="orden-mirror" viewBox="0 0 16 16"
-                  ><path d="M6 3.5l4.5 4.5L6 12.5" /></svg
-                >
+                <svg viewBox="0 0 16 16"><path d="M6 3.5l4.5 4.5L6 12.5" /></svg>
               </span>
             {/if}
           </button>

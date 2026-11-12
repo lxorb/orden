@@ -1,10 +1,9 @@
-import { key } from '../i18n.svelte'
 import { relativePath } from '../space-paths'
 import { convertTags, outsideCode } from './convert'
 import { isHidden } from './folder'
 import { dayOf, type Meta } from './meta'
 import { readPlain } from './plain'
-import type { ImportPlan, Lost } from './plan'
+import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 
 const ARCHIVE = 'Archive'
@@ -22,7 +21,7 @@ interface Info {
 export async function readBear(sources: readonly Source[]): Promise<ImportPlan> {
   const unwrapped = withoutBackupFolder(sources)
   const infos = await bundleInfos(unwrapped)
-  const lost: Lost[] = []
+  const lost: string[] = []
   let trashed = 0
   let archived = 0
   let locked = 0
@@ -59,22 +58,13 @@ export async function readBear(sources: readonly Source[]): Promise<ImportPlan> 
   })
 
   if (trashed) {
-    lost.push({
-      text: key('{count} notes were in the bin and stay there'),
-      values: { count: trashed },
-    })
+    lost.push(`${trashed} notes were in the bin and stay there`)
   }
   if (locked) {
-    lost.push({
-      text: key('{count} notes are behind a password, which nothing but Bear can open'),
-      values: { count: locked },
-    })
+    lost.push(`${locked} notes are behind a password, which nothing but Bear can open`)
   }
   if (archived) {
-    lost.push({
-      text: key('{count} archived notes are in a folder called Archive'),
-      values: { count: archived },
-    })
+    lost.push(`${archived} archived notes are in a folder called Archive`)
   }
 
   plan.lost.push(...lost)

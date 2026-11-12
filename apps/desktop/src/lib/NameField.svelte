@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
   import { hang } from './portal'
   import { dur, fly } from './motion'
   import { type NameFault, nameFault, nameToCommit } from './naming'
@@ -51,17 +50,17 @@
   function reasonFor(reason: NameFault | null): string | null {
     switch (reason) {
       case 'separator':
-        return t('A name cannot hold a slash')
+        return 'A name cannot hold a slash'
       case 'illegal':
-        return t('A name cannot hold that character')
+        return 'A name cannot hold that character'
       case 'trailing':
-        return t('A name cannot end with a dot')
+        return 'A name cannot end with a dot'
       case 'reserved':
-        return t('Windows keeps this name for itself')
+        return 'Windows keeps this name for itself'
       case 'taken':
-        return t('That name is taken')
+        return 'That name is taken'
       case 'agents':
-        return t("AGENTS is this space's agent instructions")
+        return "AGENTS is this space's agent instructions"
       case 'empty':
       case null:
         return null
@@ -115,7 +114,7 @@
     autocapitalize="off"
     autocorrect="off"
     enterkeyhint="done"
-    aria-label={t('Name')}
+    aria-label="Name"
     aria-invalid={amiss}
     bind:this={field}
     use:caret

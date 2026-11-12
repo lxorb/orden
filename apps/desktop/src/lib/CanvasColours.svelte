@@ -1,7 +1,6 @@
 <script lang="ts">
   import { DOTS } from './canvas/palette'
   import { tick } from './canvas/tick'
-  import { t } from './i18n.svelte'
 
   const {
     colour,
@@ -31,8 +30,8 @@
       type="button"
       class="dot"
       class:on={colour === dot.colour}
-      title={t('Colour {number}', { number: dot.colour })}
-      aria-label={t('Colour {number}', { number: dot.colour })}
+      title="Colour {dot.colour}"
+      aria-label="Colour {dot.colour}"
       aria-pressed={colour === dot.colour}
       style:--dot={dot.css}
       onclick={() => choose(dot.colour)}
@@ -45,8 +44,8 @@
       class="dot"
       class:bare={!bare}
       class:on={colour === null}
-      title={bare?.title ?? t('No colour')}
-      aria-label={bare?.title ?? t('No colour')}
+      title={bare?.title ?? 'No colour'}
+      aria-label={bare?.title ?? 'No colour'}
       aria-pressed={colour === null}
       style:--dot={bare?.css}
       onclick={() => choose(null)}
@@ -54,11 +53,11 @@
   {/if}
 
   {#if wheel}
-    <label class="dot wheel" title={t('Another colour')}>
+    <label class="dot wheel" title="Another colour">
       <input
         type="color"
         value={colour?.startsWith('#') ? colour : '#7c5cff'}
-        aria-label={t('Another colour')}
+        aria-label="Another colour"
         oninput={(event) => choose(event.currentTarget.value)}
       />
     </label>
@@ -69,8 +68,8 @@
       type="button"
       class="dot"
       class:on={colour === one}
-      title={t('The colour you used before')}
-      aria-label={t('The colour you used before')}
+      title="The colour you used before"
+      aria-label="The colour you used before"
       aria-pressed={colour === one}
       style:--dot={one}
       onclick={() => choose(one)}

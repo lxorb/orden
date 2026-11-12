@@ -1,30 +1,29 @@
 import type { ClipboardClear, Pause, RelockAfter } from './settings'
-import { plural, t } from '../i18n.svelte'
 
 export function relockWord(after: RelockAfter): string {
-  if (after === 0) return t('When Orden closes')
-  return plural(after, { one: '{count} minute', other: '{count} minutes' })
+  if (after === 0) return 'When Orden closes'
+  return after === 1 ? '1 minute' : `${after} minutes`
 }
 
 export function clearWord(after: ClipboardClear): string {
-  if (after === 0) return t('Never')
-  if (after < 60) return plural(after, { one: '{count} second', other: '{count} seconds' })
-  return plural(after / 60, { one: '{count} minute', other: '{count} minutes' })
+  if (after === 0) return 'Never'
+  if (after < 60) return `${after} seconds`
+  return after === 60 ? '1 minute' : `${after / 60} minutes`
 }
 
 export function pauseWord(pause: Pause): string {
   switch (pause) {
     case 'autofill':
-      return t('Autofill')
+      return 'Autofill'
     case 'totp':
-      return t('Autofill 2FA codes')
+      return 'Autofill 2FA codes'
     case 'suggest':
-      return t('Suggestions')
+      return 'Suggestions'
     case 'save':
-      return t('Offer to save logins')
+      return 'Offer to save logins'
     case 'passkeys':
-      return t('Passkeys')
+      return 'Passkeys'
     case 'autoLogin':
-      return t('Sign in automatically')
+      return 'Sign in automatically'
   }
 }

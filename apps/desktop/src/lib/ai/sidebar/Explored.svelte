@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../../i18n.svelte'
   import { dur, slide } from '../../motion'
   import type { Part } from '../chat/types'
   import { chat } from './chat.svelte'
@@ -19,7 +18,7 @@
 
 <div class="row">
   <StepLine
-    verb={t('Explored')}
+    verb="Explored"
     object={what.join(', ')}
     {open}
     {going}

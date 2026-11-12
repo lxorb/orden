@@ -4,7 +4,6 @@
   import PinOff from 'lucide/dist/esm/icons/pin-off.mjs'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import Settings from 'lucide/dist/esm/icons/settings.mjs'
-  import { t } from '../i18n.svelte'
   import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
@@ -43,7 +42,7 @@
   class="extensions orden-bubble is-pressable"
   style:right="{right}px"
   role="dialog"
-  aria-label={t('Extensions')}
+  aria-label="Extensions"
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
 >
   {#if extensions.list.length}
@@ -71,8 +70,8 @@
             <button
               class="orden-glyph"
               class:is-on={one.pinned}
-              title={one.pinned ? t('Unpin') : t('Pin')}
-              aria-label={one.pinned ? t('Unpin') : t('Pin')}
+              title={one.pinned ? 'Unpin' : 'Pin'}
+              aria-label={one.pinned ? 'Unpin' : 'Pin'}
               aria-pressed={one.pinned}
               onclick={() => void extensions.pin(one.id, !one.pinned)}
             >
@@ -93,8 +92,8 @@
       class="orden-field"
       type="url"
       bind:value={link}
-      placeholder={t('Paste a Chrome Web Store or Firefox Add-ons link')}
-      aria-label={t('Paste a Chrome Web Store or Firefox Add-ons link')}
+      placeholder="Paste a Chrome Web Store or Firefox Add-ons link"
+      aria-label="Paste a Chrome Web Store or Firefox Add-ons link"
       spellcheck="false"
       autocomplete="off"
       disabled={extensions.installing !== null}
@@ -103,7 +102,7 @@
   {#if extensions.installing}
     <span class="line sweeping"><span class="done"></span></span>
   {:else if extensions.failed}
-    <p class="said">{t(extensions.failed)}</p>
+    <p class="said">{extensions.failed}</p>
   {:else if extensions.asking}
     <ExtensionGaps gaps={extensions.asking.gaps} asking />
   {/if}
@@ -120,7 +119,7 @@
         <svelte:element this={tag} {...attrs} />
       {/each}
     </svg>
-    <span class="words">{t('Manage extensions')}</span>
+    <span class="words">Manage extensions</span>
   </button>
 </div>
 

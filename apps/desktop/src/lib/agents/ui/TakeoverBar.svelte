@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../../i18n.svelte'
   import { dur, slide } from '../../motion'
   import { started } from './live.svelte'
   import Spark from './Spark.svelte'
@@ -20,7 +19,7 @@
     <Spark colour={activity.colourOf(approval.agent)} paused />
   {/if}
   <span class="reason">{reason}</span>
-  <button class="orden-button" onclick={done}>{t('Done')}</button>
+  <button class="orden-button" onclick={done}>Done</button>
 </div>
 
 <style>

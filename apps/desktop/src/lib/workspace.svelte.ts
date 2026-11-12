@@ -36,7 +36,6 @@ import {
   within,
   withinSpace,
 } from './space-paths'
-import { t } from './i18n.svelte'
 import { busy } from './busy.svelte'
 import { AGENTS_NAME, isAgentsName, nameFromContent, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
@@ -270,7 +269,7 @@ class Workspace {
     tab.note = this.document({
       kind: 'web',
       path: null,
-      name: url ? plainOrigin(url) : t('New tab'),
+      name: url ? plainOrigin(url) : 'New tab',
       text: '',
       dirty: false,
       home: this.spaceOf(keeper.note),
@@ -1332,7 +1331,7 @@ class Workspace {
     const here = (this.spaces.find((one) => one.id === home) ?? this.activeSpace)?.root
     if (here !== undefined) return here
 
-    const made = await this.addSpace(t('Notes'))
+    const made = await this.addSpace('Notes')
     return made?.root ?? null
   }
 
@@ -1518,7 +1517,7 @@ class Workspace {
       const note = this.document({
         kind: 'graph',
         path: null,
-        name: t('Graph'),
+        name: 'Graph',
         text: '',
         dirty: false,
       })
@@ -1540,7 +1539,7 @@ class Workspace {
       this.activate(open.id)
       return
     }
-    this.openUnsaved('settings', '', t('Settings'))
+    this.openUnsaved('settings', '', 'Settings')
   }
 
   closeSettings() {
@@ -1562,7 +1561,7 @@ class Workspace {
     const was = this.singleHere('chat')
     if (was) this.panes.activate(was.paneId, was.id)
     else {
-      const doc = { kind: 'chat', path: null, name: t('Ask'), text: '', dirty: false } as const
+      const doc = { kind: 'chat', path: null, name: 'Ask', text: '', dirty: false } as const
       this.add(new Tab(this.document(doc), this.panes.focusedId))
     }
     this.persist()
@@ -1853,7 +1852,7 @@ class Workspace {
     const file = this.document({
       kind: 'web',
       path: null,
-      name: t('New tab'),
+      name: 'New tab',
       text: '',
       dirty: false,
       home: this.activeSpaceId,
@@ -2117,7 +2116,7 @@ class Workspace {
       case 'view': {
         if (__EVEN_PLUGIN__) return
         if (!basesOn()) {
-          busy.failed(t('Databases are off. Turn them on in Settings.'))
+          busy.failed('Databases are off. Turn them on in Settings.')
           return
         }
         const { openBaseFile } = await import('./views/open')

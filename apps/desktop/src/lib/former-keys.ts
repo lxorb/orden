@@ -3,6 +3,8 @@ const RENAMED: readonly (readonly [string, string])[] = [
   ['nib.', 'orden.'],
 ]
 
+const GONE: readonly string[] = ['orden:language']
+
 function renamedOf(key: string | null): string | null {
   const pair = key === null ? undefined : RENAMED.find(([old]) => key.startsWith(old))
   return key !== null && pair ? pair[1] + key.slice(pair[0].length) : null
@@ -26,6 +28,8 @@ export function carryKeys(storage: Storage): void {
     }
     storage.removeItem(key)
   }
+
+  for (const key of GONE) storage.removeItem(key)
 }
 
 try {

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { BROWSERS } from './catalog'
   import Logo from './Logo.svelte'
   import Mark from './Mark.svelte'
@@ -10,7 +9,7 @@
 
   let stage = $state<'asking' | 'importing' | 'done'>('asking')
 
-  const BROUGHT = [t('Bookmarks'), t('Open tabs'), t('History')]
+  const BROUGHT = ['Bookmarks', 'Open tabs', 'History']
 
   async function bring() {
     const importer = browser?.importer
@@ -35,15 +34,15 @@
 {/snippet}
 
 <Screen
-  title={t('Import from {browser}', { browser: browser?.name ?? '' })}
+  title="Import from {browser?.name ?? ''}"
   {head}
   primary={{
-    label: stage === 'done' ? t('Imported') : stage === 'importing' ? t('Importing') : t('Import'),
+    label: stage === 'done' ? 'Imported' : stage === 'importing' ? 'Importing' : 'Import',
     busy: stage === 'importing',
     disabled: stage === 'done',
     onclick: () => void bring(),
   }}
-  quiet={{ label: t('Not now'), disabled: stage !== 'asking', onclick: () => setup.next() }}
+  quiet={{ label: 'Not now', disabled: stage !== 'asking', onclick: () => setup.next() }}
 >
   <ul class="o-list rise">
     {#each BROUGHT as one (one)}

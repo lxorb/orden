@@ -7,7 +7,6 @@
   import { shownColour } from './canvas/palette'
   import { LEAST_WIDTH, MOST_WIDTH } from './canvas/pens.svelte'
   import { tick } from './canvas/tick'
-  import { t } from './i18n.svelte'
   import { overlays } from './overlays'
 
   const {
@@ -105,7 +104,7 @@
           least={LEAST_WIDTH}
           most={MOST_WIDTH}
           step={0.5}
-          label={t('Width')}
+          label="Width"
           reading={String(size)}
           onvalue={(next: number) => onsize(next, run)}
         />
@@ -119,8 +118,8 @@
       class="swatch"
       class:on={colouring}
       class:bare={colour === null}
-      title={t('Colour')}
-      aria-label={t('Colour')}
+      title="Colour"
+      aria-label="Colour"
       aria-pressed={colouring}
       style:--dot={shownColour(colour ?? undefined) ?? 'transparent'}
       onclick={() => {
@@ -132,8 +131,8 @@
 
     <button
       type="button"
-      title={t('Duplicate')}
-      aria-label={t('Duplicate')}
+      title="Duplicate"
+      aria-label="Duplicate"
       onclick={() => {
         tick()
         onduplicate()
@@ -145,8 +144,8 @@
     {#if grouping}
       <button
         type="button"
-        title={grouping === 'group' ? t('Group') : t('Ungroup')}
-        aria-label={grouping === 'group' ? t('Group') : t('Ungroup')}
+        title={grouping === 'group' ? 'Group' : 'Ungroup'}
+        aria-label={grouping === 'group' ? 'Group' : 'Ungroup'}
         onclick={() => {
           tick()
           ongroup()
@@ -159,8 +158,8 @@
     <button
       type="button"
       class="gone"
-      title={t('Delete')}
-      aria-label={t('Delete')}
+      title="Delete"
+      aria-label="Delete"
       onclick={() => {
         tick()
         ondelete()
@@ -171,8 +170,8 @@
 
     <button
       type="button"
-      title={t('More')}
-      aria-label={t('More')}
+      title="More"
+      aria-label="More"
       onclick={(event) => {
         tick()
         colouring = false

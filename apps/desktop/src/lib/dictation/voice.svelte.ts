@@ -1,4 +1,4 @@
-import { key, message } from '../i18n.svelte'
+import { message } from '../message'
 import { settings } from '../settings.svelte'
 import { engines } from './engines.svelte'
 import type { Hooks, Listening } from './listening'
@@ -71,7 +71,7 @@ class Voice {
       if (this.finishAsked()) void this.finish()
     } catch (error) {
       if (this.session === session) this.reset()
-      this.say(owner, message(error, key('That microphone could not be opened.')))
+      this.say(owner, message(error, 'That microphone could not be opened.'))
     }
   }
 

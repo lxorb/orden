@@ -286,7 +286,7 @@ describe('what is not a Tomboy note', () => {
     ])
 
     expect(plan.files.map((one) => one.path)).toEqual(['Here.md'])
-    expect(plan.lost[0]?.values).toEqual({ count: 2 })
+    expect(plan.lost[0]).toBe('2 files could not be read, so they were left out')
   })
 })
 

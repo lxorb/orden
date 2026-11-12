@@ -1,11 +1,11 @@
 import { pageSizes } from '../pdf/document'
 import { isJunk, Names, safeParts } from './names'
-import type { ImportPlan, Lost, Planned } from './plan'
+import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
 export async function readPdfPages(sources: readonly Source[]): Promise<ImportPlan> {
   const files: Planned[] = []
-  const lost: Lost[] = []
+  const lost: string[] = []
   const names = new Names()
 
   for (const source of sources) {
@@ -21,10 +21,7 @@ export async function readPdfPages(sources: readonly Source[]): Promise<ImportPl
     }
 
     files.push({ kind: 'file', path: name, bytes })
-    lost.push({
-      text: '{name} could not be read as a PDF, so it arrived as the file only.',
-      values: { name },
-    })
+    lost.push(`${name} could not be read as a PDF, so it arrived as the file only.`)
   }
 
   return { format: 'pdf-pages', files, lost }

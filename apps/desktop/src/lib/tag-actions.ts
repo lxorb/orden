@@ -1,4 +1,4 @@
-import { key, message, t } from './i18n.svelte'
+import { message } from './message'
 import { settings } from './settings.svelte'
 import { isTagName } from '@orden/markdown/tags'
 import { liftedFrom, renamedTo, type TagNode } from './tag-tree'
@@ -6,7 +6,7 @@ import { workspace } from './workspace.svelte'
 
 export function refusedAsTag(name: string): boolean {
   if (isTagName(name)) return false
-  settings.error = t('That tag could not be renamed.')
+  settings.error = 'That tag could not be renamed.'
   return true
 }
 
@@ -14,9 +14,9 @@ export async function renameTag(node: TagNode) {
   const { prompt } = await import('./prompt.svelte')
 
   const typed = await prompt.ask({
-    title: t('Rename {tag}', { tag: node.name }),
+    title: `Rename ${node.name}`,
     value: node.name,
-    confirmLabel: key('Rename'),
+    confirmLabel: 'Rename',
   })
   if (typed === null) return
 
@@ -27,7 +27,7 @@ export async function renameTag(node: TagNode) {
   try {
     await workspace.retagNotes(node.path, to)
   } catch (error) {
-    settings.error = message(error, key('That tag could not be renamed.'))
+    settings.error = message(error, 'That tag could not be renamed.')
   }
 }
 
@@ -36,11 +36,11 @@ export async function removeTag(node: TagNode) {
   const up = liftedFrom(node.path)
 
   const answer = await prompt.choose({
-    title: t('Delete {tag}?', { tag: node.name }),
+    title: `Delete ${node.name}?`,
     options: [
-      ...(up ? [{ id: 'up', label: t('Move up to {tag}', { tag: up }), primary: true }] : []),
-      { id: 'away', label: key('Remove from every note'), danger: true },
-      { id: 'cancel', label: key('Cancel') },
+      ...(up ? [{ id: 'up', label: `Move up to ${up}`, primary: true }] : []),
+      { id: 'away', label: 'Remove from every note', danger: true },
+      { id: 'cancel', label: 'Cancel' },
     ],
   })
 
@@ -49,6 +49,6 @@ export async function removeTag(node: TagNode) {
   try {
     await workspace.retagNotes(node.path, answer === 'up' ? up : null)
   } catch (error) {
-    settings.error = message(error, key('That tag could not be deleted.'))
+    settings.error = message(error, 'That tag could not be deleted.')
   }
 }

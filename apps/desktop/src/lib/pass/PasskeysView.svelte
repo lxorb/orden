@@ -4,7 +4,7 @@
   import { atLeast } from '@orden/pass/types'
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { prompt } from '../prompt.svelte'
   import Glyph from './Glyph.svelte'
   import { pass } from './store.svelte'
@@ -17,9 +17,9 @@
   async function remove(id: string, site: string) {
     const sure = await prompt.confirm({
       until: pass.opened,
-      title: t('Remove the passkey for {site}?', { site }),
-      detail: t('You will no longer be able to sign in with it.'),
-      confirmLabel: t('Remove'),
+      title: `Remove the passkey for ${site}?`,
+      detail: 'You will no longer be able to sign in with it.',
+      confirmLabel: 'Remove',
       danger: true,
     })
     if (!sure) return
@@ -31,18 +31,18 @@
 </script>
 
 {#if content.passkeys.length}
-  <section class="card" aria-label={t('Passkeys')}>
-    <h3 class="orden-section">{t('Passkeys')}</h3>
+  <section class="card" aria-label="Passkeys">
+    <h3 class="orden-section">Passkeys</h3>
     {#each content.passkeys as key (key.id)}
       <div class="line" data-passkey={key.rpId}>
         <Glyph icon={KeyRound} />
         <span class="words">
-          <span class="user">{key.userName || key.userDisplayName || t('Passkey')}</span>
+          <span class="user">{key.userName || key.userDisplayName || 'Passkey'}</span>
           <span class="meta"
             ><Facts
               parts={[
                 key.rpName || key.rpId,
-                key.created ? i18n.when(key.created, { dateStyle: 'medium' }) : '',
+                key.created ? localDate(key.created, { dateStyle: 'medium' }) : '',
               ]}
             /></span
           >
@@ -51,8 +51,8 @@
           <button
             class="orden-glyph"
             type="button"
-            aria-label={t('Remove the passkey for {site}', { site: key.rpId })}
-            title={t('Remove')}
+            aria-label="Remove the passkey for {key.rpId}"
+            title="Remove"
             onclick={() => void remove(key.id, key.rpName || key.rpId)}
           >
             <Glyph icon={X} />

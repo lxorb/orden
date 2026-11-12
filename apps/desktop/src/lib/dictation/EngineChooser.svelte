@@ -1,7 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { transcriberNow } from '../ai/hears'
-  import { t } from '../i18n.svelte'
   import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
   import { type Engine, engines, whereTo } from './engines.svelte'
@@ -38,40 +37,35 @@
     if (engine === 'auto') {
       const fallback = engines.offered().find((one) => one === 'provider' || one === 'account')
       return {
-        name: t('Auto'),
+        name: 'Auto',
         where: fallback
-          ? t('On this computer once its {size} speech model is here; until then {road}', {
-              size: size(),
-              road: said(fallback).name,
-            })
+          ? `On this computer once its ${size()} speech model is here; until then ${said(fallback).name}`
           : here(),
       }
     }
-    if (engine === 'local') return { name: t('This computer'), where: here() }
+    if (engine === 'local') return { name: 'This computer', where: here() }
     if (engine === 'device') {
       return {
-        name: t('This device'),
-        where: t(
-          'Audio goes to this device’s speech recognition, which may use its maker’s servers',
-        ),
+        name: 'This device',
+        where: 'Audio goes to this device’s speech recognition, which may use its maker’s servers',
       }
     }
     if (engine === 'account') {
       return {
-        name: t('Orden account'),
-        where: t('Audio goes to Orden and Cloudflare, and is not kept'),
+        name: 'Orden account',
+        where: 'Audio goes to Orden and Cloudflare, and is not kept',
       }
     }
     const provider = transcriberNow()
     const to = provider ? whereTo(provider) : { local: false, host: '' }
     return {
-      name: provider?.name ?? t('Your AI provider'),
-      where: to.local ? t('Stays on this computer') : t('Audio goes to {host}', { host: to.host }),
+      name: provider?.name ?? 'Your AI provider',
+      where: to.local ? 'Stays on this computer' : `Audio goes to ${to.host}`,
     }
   }
 
   function here(): string {
-    return t('Stays on this computer. Downloads a {size} speech model once', { size: size() })
+    return `Stays on this computer. Downloads a ${size()} speech model once`
   }
 
   function size(): string {
@@ -93,10 +87,10 @@
   style:bottom={place.bottom}
   style:--most={place.most}
   role="dialog"
-  aria-label={t('Dictate with')}
+  aria-label="Dictate with"
   transition:fly={{ y: below ? -4 : 4, duration: dur(130), easing: cubicOut }}
 >
-  <p class="head">{t('Dictate with')}</p>
+  <p class="head">Dictate with</p>
   {#each engines.offered() as engine (engine)}
     {@const one = said(engine)}
     <button

@@ -324,13 +324,6 @@ function mathLink(body: string): string {
   return body.includes('class="katex') ? `\n<link rel="stylesheet" href="${MATH_CSS_PATH}">` : ''
 }
 
-const PAGE_LANGUAGE = 'en'
-
-const RIGHT_TO_LEFT_PAGES = ['ar', 'fa', 'ps', 'ur']
-const PAGE_DIRECTION = RIGHT_TO_LEFT_PAGES.includes(PAGE_LANGUAGE.split('-')[0] ?? '')
-  ? 'rtl'
-  : 'ltr'
-
 interface Furniture {
   bar?: string
   left?: string
@@ -360,7 +353,7 @@ function page(
 
   const scripts = !options.locked
   const html = `<!doctype html>
-<html lang="${PAGE_LANGUAGE}" dir="${PAGE_DIRECTION}"><head>
+<html lang="en"><head>
 ${headOf(head, sheets)}${mathLink(body)}
 ${scripts ? `<script>${THEME_JS}</script>` : ''}
 ${scripts ? `<script defer src="${SITE_JS_PATH}"></script>` : ''}
@@ -401,7 +394,7 @@ function deckPage(head: Head, body: string): Response {
   const nonce = crypto.randomUUID().replace(/-/g, '')
 
   const html = `<!doctype html>
-<html lang="${PAGE_LANGUAGE}" dir="${PAGE_DIRECTION}"><head>
+<html lang="en"><head>
 ${headOf(
   {
     ...head,
@@ -924,7 +917,6 @@ async function served(
       code: fencesOf(only.id, url, request, await diagramsIn(env, space, source)),
       breaks,
       cover: keptCover(only.meta) ?? true,
-      locale: PAGE_LANGUAGE,
       resolveLink: linkResolver([], files),
       resolveNoteHref: noteHrefResolver(only.path, [], files),
       resolveEmbed: await embedded(env, space, [only], source),
@@ -1124,7 +1116,6 @@ async function served(
     code: fencesOf(note.id, url, request, await diagramsIn(env, space, source)),
     breaks,
     cover: keptCover(note.meta) ?? true,
-    locale: PAGE_LANGUAGE,
     resolveLink: linkResolver(pageList, files),
     resolveNoteHref: noteHrefResolver(note.path, pageList, files),
     resolveEmbed: await embedded(

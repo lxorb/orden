@@ -2,18 +2,15 @@
   import { cubicOut } from 'svelte/easing'
   import { account } from './account.svelte'
   import { joining } from './joining.svelte'
-  import { t } from './i18n.svelte'
   import { dur, fade, LAYER, scale } from './motion'
   import { overlays } from './overlays'
   import { trap } from './trap'
 
   const invitation = $derived(joining.invitation)
-  const who = $derived(invitation?.from ?? t('Somebody'))
+  const who = $derived(invitation?.from ?? 'Somebody')
 
   const shared = $derived(
-    invitation
-      ? t('{who} shared {space} with you', { who, space: invitation.note ?? invitation.space })
-      : null,
+    invitation ? `${who} shared ${invitation.note ?? invitation.space} with you` : null,
   )
 
   function close() {
@@ -33,7 +30,7 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label={shared ?? t('Shared with you')}
+    aria-label={shared ?? 'Shared with you'}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     {#if shared}
@@ -52,33 +49,33 @@
           bind:value={joining.told}
           type="text"
           autocomplete="name"
-          placeholder={t('Your name')}
-          aria-label={t('Your name')}
+          placeholder="Your name"
+          aria-label="Your name"
           spellcheck="false"
           autofocus
           required
         />
         <button class="orden-button" type="submit" disabled={joining.busy || !joining.told.trim()}>
-          {joining.busy ? t('Asking') : t('Ask to join')}
+          {joining.busy ? 'Asking' : 'Ask to join'}
         </button>
       </form>
     {:else if joining.step === 'waiting'}
       <p class="quiet">
         <span class="pulse"></span>
-        {t('Waiting for {who}', { who })}
+        Waiting for {who}
       </p>
       <div class="actions">
         <button type="button" class="orden-button is-quiet" onclick={() => void joining.cancel()}
-          >{t('Cancel')}</button
+          >Cancel</button
         >
         <button type="button" class="orden-button is-quiet" onclick={() => joining.close()}
-          >{t('Close')}</button
+          >Close</button
         >
       </div>
     {:else if joining.step === 'declined'}
-      <p class="quiet">{t('{who} did not let you in', { who })}</p>
+      <p class="quiet">{who} did not let you in</p>
       <button type="button" class="orden-button is-quiet" onclick={() => joining.dismiss()}
-        >{t('Done')}</button
+        >Done</button
       >
     {:else if joining.step === 'unreached'}
       <div class="actions">
@@ -86,14 +83,14 @@
           type="button"
           class="orden-button"
           disabled={joining.busy}
-          onclick={() => void joining.retry()}>{t('Try again')}</button
+          onclick={() => void joining.retry()}>Try again</button
         >
         <button type="button" class="orden-button is-quiet" onclick={() => joining.dismiss()}
-          >{t('Close')}</button
+          >Close</button
         >
       </div>
     {:else}
-      <p class="quiet">{t('That link does not open anything')}</p>
+      <p class="quiet">That link does not open anything</p>
       <button
         class="orden-button"
         type="button"
@@ -102,7 +99,7 @@
           account.open = true
         }}
       >
-        {t('Sign in')}
+        Sign in
       </button>
     {/if}
 

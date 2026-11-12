@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Folder, Vault } from '@orden/pass/types'
   import FolderMark from 'lucide/dist/esm/icons/folder.mjs'
-  import { plural } from '../i18n.svelte'
   import Sheet from '../Sheet.svelte'
   import Glyph from './Glyph.svelte'
   import { pass } from './store.svelte'
@@ -45,7 +44,7 @@
 
 <Sheet
   open={asked !== null}
-  title={plural(asked?.ids.length ?? 0, { one: 'Move {count} item', other: 'Move {count} items' })}
+  title={(asked?.ids.length ?? 0) === 1 ? 'Move 1 item' : `Move ${asked?.ids.length ?? 0} items`}
   onclose={close}
 >
   <div class="targets">

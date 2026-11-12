@@ -12,7 +12,6 @@
   import FileMark from './FileMark.svelte'
   import { frecency } from './frecency'
   import { recentFirst } from './fuzzy'
-  import { t } from './i18n.svelte'
   import Icon from './Icon.svelte'
   import { links } from './link-index.svelte'
   import { middleOpens } from './new-tab'
@@ -91,7 +90,7 @@
   const commands = $derived(open ? paletteCommands(view) : [])
 
   const settingRows = $derived(
-    open ? settingsOf(sectionGroups().flat(), preferences(view), places(), t('Settings')) : [],
+    open ? settingsOf(sectionGroups().flat(), preferences(view), places(), 'Settings') : [],
   )
 
   const tabs = $derived(
@@ -265,7 +264,7 @@
       case 'make':
         return shownName(row.make.name)
       case 'agents':
-        return t("AGENTS is this space's agent instructions")
+        return "AGENTS is this space's agent instructions"
       case 'address':
         return row.address
       case 'place':
@@ -301,7 +300,7 @@
       case 'host':
         return row.host.detail
       case 'group':
-        return t('Open all')
+        return 'Open all'
       case 'message':
         return row.where
       case 'command':
@@ -526,7 +525,7 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label={t('Search notes and commands')}
+    aria-label="Search notes and commands"
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <div class="field orden-field">
@@ -534,7 +533,7 @@
         bind:this={input}
         bind:value={query}
         onkeydown={onKeydown}
-        placeholder={t('Search')}
+        placeholder="Search"
         spellcheck="false"
         autocapitalize="off"
         autocorrect="off"
@@ -542,10 +541,10 @@
         aria-expanded={results.length > 0}
         aria-controls="orden-palette-list"
         aria-activedescendant={results.length ? `orden-palette-${cursor}` : undefined}
-        aria-label={t('Search notes and commands')}
+        aria-label="Search notes and commands"
       />
       {#if viewport.touch}
-        <button type="button" class="give" onclick={dismiss}>{t('Cancel')}</button>
+        <button type="button" class="give" onclick={dismiss}>Cancel</button>
       {/if}
     </div>
 
@@ -556,7 +555,7 @@
         use:wholeRows={results}
         id="orden-palette-list"
         role="listbox"
-        aria-label={t('Search notes and commands')}
+        aria-label="Search notes and commands"
       >
         {#each results as row, index (`${row.kind}:${label(row)}:${index}`)}
           {@const where = whereOf(row)}
@@ -582,9 +581,7 @@
                 {#if row.command.checked}
                   <span class="mark tick">✓</span>
                 {:else}
-                  <span class="mark quiet orden-mirror"
-                    ><Icon icon={null} fallback={ChevronRight} /></span
-                  >
+                  <span class="mark quiet"><Icon icon={null} fallback={ChevronRight} /></span>
                 {/if}
               {:else if row.kind === 'note'}
                 <FileMark mark={fileMark(row.entry.name)} path={row.entry.path} />
@@ -643,9 +640,9 @@
         {/each}
       </ul>
     {:else if mode === 'headings' && !headings.length}
-      <p class="nothing">{t('No headings in this note')}</p>
+      <p class="nothing">No headings in this note</p>
     {:else if term}
-      <p class="nothing">{t('Nothing found')}</p>
+      <p class="nothing">Nothing found</p>
     {/if}
   </div>
 {/if}
@@ -742,8 +739,7 @@
     padding-inline-start: calc(var(--depth) * var(--space-3));
   }
 
-  [role='option']:dir(rtl) .orden-row-label:dir(ltr),
-  [role='option']:dir(ltr) .orden-row-label:dir(rtl) {
+  [role='option'] .orden-row-label:dir(rtl) {
     padding-inline: 0 calc(var(--depth) * var(--space-3));
   }
 

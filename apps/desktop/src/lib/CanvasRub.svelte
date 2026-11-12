@@ -2,13 +2,12 @@
   import CanvasDial from './CanvasDial.svelte'
   import { LEAST_RUB, MOST_RUB, pens } from './canvas/pens.svelte'
   import { tick } from './canvas/tick'
-  import { t } from './i18n.svelte'
 
   const { onerase }: { onerase: () => void } = $props()
 
   const WAYS = [
-    { whole: true, word: () => t('Stroke'), title: () => t('A whole stroke at a touch') },
-    { whole: false, word: () => t('Area'), title: () => t('Only what is under the nib') },
+    { whole: true, word: () => 'Stroke', title: () => 'A whole stroke at a touch' },
+    { whole: false, word: () => 'Area', title: () => 'Only what is under the nib' },
   ] as const
 
   const wide = $derived(pens.whole ? pens.strokeRub : pens.rub)
@@ -43,7 +42,7 @@
       least={LEAST_RUB}
       most={MOST_RUB}
       step={2}
-      label={t('Width')}
+      label="Width"
       reading={String(wide)}
       onvalue={(rub: number) => pens.rubbing(pens.whole ? { strokeRub: rub } : { rub })}
     />
@@ -52,14 +51,14 @@
   <button
     type="button"
     class="all"
-    title={t('Erase everything drawn')}
-    aria-label={t('Erase everything drawn')}
+    title="Erase everything drawn"
+    aria-label="Erase everything drawn"
     onclick={() => {
       tick()
       onerase()
     }}
   >
-    {t('Everything')}
+    Everything
   </button>
 </div>
 

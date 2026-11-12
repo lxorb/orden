@@ -5,7 +5,7 @@
   import Glyph from '../chats/view/Glyph.svelte'
   import type { Box } from '../chats/view/place'
   import Cross from '../Cross.svelte'
-  import { key, message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { menu } from '../menu.svelte'
   import { portal } from '../portal'
   import Select from '../Select.svelte'
@@ -29,12 +29,12 @@
   const camera = typeof navigator !== 'undefined' && (viewport.touch || !!navigator.mediaDevices)
 
   const CLEAR_WORDS: Record<Clears, string> = {
-    '30m': key('30 minutes'),
-    '1h': key('1 hour'),
-    '4h': key('4 hours'),
-    today: key('Today'),
-    week: key('This week'),
-    never: key('Never'),
+    '30m': '30 minutes',
+    '1h': '1 hour',
+    '4h': '4 hours',
+    today: 'Today',
+    week: 'This week',
+    never: 'Never',
   }
 
   async function kept(work: () => Promise<void>) {
@@ -77,10 +77,10 @@
     menu.show(
       new MouseEvent('contextmenu', { clientX: box.left, clientY: box.bottom }),
       [
-        { label: t('Choose a picture'), asks: true, run: () => void choose() },
-        { label: t('Take photo'), asks: true, run: takePhoto },
+        { label: 'Choose a picture', asks: true, run: () => void choose() },
+        { label: 'Take photo', asks: true, run: takePhoto },
       ],
-      { title: t('Picture') },
+      { title: 'Picture' },
     )
   }
 
@@ -96,7 +96,7 @@
 </script>
 
 {#if user}
-  <h3>{t('Profile')}</h3>
+  <h3>Profile</h3>
   <div class="card">
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
@@ -118,15 +118,15 @@
       />
       <span class="name"
         ><span class="orden-named"
-          >{t('Picture')}<Hint text={t('The picture the others see beside your name.')} /></span
+          >Picture<Hint text="The picture the others see beside your name." /></span
         ></span
       >
       <span class="ends">
         <button class="orden-chip" aria-haspopup={camera ? 'menu' : undefined} onclick={change}
-          >{t('Change')}</button
+          >Change</button
         >
         {#if user.avatar}
-          <button class="orden-chip" onclick={() => void kept(removeFace)}>{t('Remove')}</button>
+          <button class="orden-chip" onclick={() => void kept(removeFace)}>Remove</button>
         {/if}
       </span>
     </div>
@@ -134,15 +134,13 @@
     <label class="orden-setting setting">
       <span class="name"
         ><span class="orden-named"
-          >{t('Pronouns')}<Hint
-            text={t('Shown to the others beside your name, such as she/her.')}
-          /></span
+          >Pronouns<Hint text="Shown to the others beside your name, such as she/her." /></span
         ></span
       >
       <input
         class="orden-field is-value"
         value={user.pronouns ?? ''}
-        placeholder={t('Optional')}
+        placeholder="Optional"
         maxlength="40"
         spellcheck="false"
         onchange={(event) =>
@@ -153,16 +151,14 @@
     <label class="orden-setting setting is-tall">
       <span class="name"
         ><span class="orden-named"
-          >{t('Bio')}<Hint
-            text={t('A few words about you that the others see on your profile.')}
-          /></span
+          >Bio<Hint text="A few words about you that the others see on your profile." /></span
         ></span
       >
       <textarea
         class="orden-field is-value"
         rows="3"
         maxlength="190"
-        placeholder={t('A few words about you')}
+        placeholder="A few words about you"
         value={user.bio ?? ''}
         onchange={(event) => void kept(() => changeProfile({ bio: event.currentTarget.value }))}
       ></textarea>
@@ -171,8 +167,8 @@
     <div class="orden-setting setting is-tall">
       <span class="name"
         ><span class="orden-named"
-          >{t('Status')}<Hint
-            text={t('What you are up to, shown to the others beside your name until it clears.')}
+          >Status<Hint
+            text="What you are up to, shown to the others beside your name until it clears."
           /></span
         ></span
       >
@@ -180,24 +176,24 @@
         <button
           type="button"
           class="orden-glyph"
-          aria-label={t('Emoji')}
-          title={t('Emoji')}
+          aria-label="Emoji"
+          title="Emoji"
           onclick={(event) => pickEmoji(event.currentTarget)}
           >{#if status?.emoji}{status.emoji}{:else}<Glyph name="smile" />{/if}</button
         >
         <input
           value={status?.text ?? ''}
           maxlength="100"
-          aria-label={t('Status')}
-          placeholder={t('What’s happening?')}
+          aria-label="Status"
+          placeholder="What’s happening?"
           onchange={(event) => withStatus({ text: event.currentTarget.value })}
         />
         {#if [status?.emoji, status?.text].some(Boolean)}
           <button
             type="button"
             class="orden-glyph"
-            aria-label={t('Clear')}
-            title={t('Clear')}
+            aria-label="Clear"
+            title="Clear"
             onclick={() => withStatus({ emoji: '', text: '' })}><Cross /></button
           >
         {/if}
@@ -207,7 +203,7 @@
     {#if picking}
       {#await Promise.all( [import('../chats/view/Float.svelte'), import('../emoji/EmojiPicker.svelte')] ) then [float, picker]}
         <div use:portal>
-          <float.default at={picking} label={t('Emoji')} onclose={() => (picking = null)}>
+          <float.default at={picking} label="Emoji" onclose={() => (picking = null)}>
             <picker.default
               onpick={(emoji: string) => {
                 picking = null
@@ -223,14 +219,14 @@
       <div class="orden-setting setting">
         <span class="name"
           ><span class="orden-named"
-            >{t('Clear after')}<Hint text={t('When your status is taken away again.')} /></span
+            >Clear after<Hint text="When your status is taken away again." /></span
           ></span
         >
         <div class="orden-setting-value">
           <Select
             value={clears}
-            options={CLEARS.map((one) => ({ value: one, label: t(CLEAR_WORDS[one]) }))}
-            label={t('Clear after')}
+            options={CLEARS.map((one) => ({ value: one, label: CLEAR_WORDS[one] }))}
+            label="Clear after"
             plain={viewport.touch}
             onchange={(value: string) => {
               clears = value as Clears
@@ -248,14 +244,14 @@
     >
       <span class="name"
         ><span class="orden-named"
-          >{t('Do not disturb')}<Hint
-            text={t('Silences chat notifications and shows the others you are busy.')}
+          >Do not disturb<Hint
+            text="Silences chat notifications and shows the others you are busy."
           /></span
         ></span
       >
       <Switch
         on={status?.quiet ?? false}
-        label={t('Do not disturb')}
+        label="Do not disturb"
         onchange={(on: boolean) => withStatus({ quiet: on })}
       />
     </div>
@@ -267,14 +263,14 @@
     >
       <span class="name"
         ><span class="orden-named"
-          >{t('Appear offline')}<Hint
-            text={t('The others see you as offline even while you are here.')}
+          >Appear offline<Hint
+            text="The others see you as offline even while you are here."
           /></span
         ></span
       >
       <Switch
         on={user.hidden ?? false}
-        label={t('Appear offline')}
+        label="Appear offline"
         onchange={(on: boolean) => void kept(() => changeProfile({ hidden: on }))}
       />
     </div>

@@ -214,16 +214,6 @@ describe('the home screen widget', () => {
   test('is offered to the home screen', () => {
     expect(provider).toContain('home_screen')
   })
-
-  test('says its own words in both languages the app has', () => {
-    const english = read(ANDROID, 'res', 'values', 'strings.xml')
-    const german = read(ANDROID, 'res', 'values-de', 'strings.xml')
-    const names = (text: string) => [...text.matchAll(/<string name="(\w+)"/g)].map((one) => one[1])
-
-    expect(names(german)).toEqual(
-      names(english).filter((one) => one !== 'app_name' && one !== 'main_activity_title'),
-    )
-  })
 })
 
 describe('the lock screen widget', () => {

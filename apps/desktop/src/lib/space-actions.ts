@@ -1,6 +1,5 @@
 import { account } from './account.svelte'
 import { iconChoice } from './icon-choice.svelte'
-import { key, t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
 import {
@@ -21,9 +20,9 @@ const archiving = () => import('./space-archive')
 
 export async function newSpace(): Promise<Space | undefined> {
   const name = await prompt.ask({
-    title: t('Name the space'),
-    placeholder: t('Journal'),
-    confirmLabel: key('Create'),
+    title: 'Name the space',
+    placeholder: 'Journal',
+    confirmLabel: 'Create',
   })
 
   return name ? madeSpace(name) : undefined
@@ -80,45 +79,41 @@ export function spaceMenu(space: Space): MenuEntry[] {
   const theirs = roleOf(space.root) !== 'owner'
 
   return trim([
-    ...(theirs ? [] : [{ label: t('Rename'), run: () => void renameSpace(space) }]),
+    ...(theirs ? [] : [{ label: 'Rename', run: () => void renameSpace(space) }]),
     ...(canWriteAt(space.root)
-      ? [{ label: t('Choose an icon'), run: () => iconChoice.space(space.id) }]
+      ? [{ label: 'Choose an icon', run: () => iconChoice.space(space.id) }]
       : []),
     ...(__EVEN_PLUGIN__
       ? []
-      : [{ label: t('Settings'), run: () => settings.show('space', space.root) }]),
-    ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
-    ...(canPublish(space) ? [{ label: t('Publish'), run: () => publishSpace(space) }] : []),
+      : [{ label: 'Settings', run: () => settings.show('space', space.root) }]),
+    ...(canShare(space) ? [{ label: 'Share', run: () => void shareSpace(space) }] : []),
+    ...(canPublish(space) ? [{ label: 'Publish', run: () => publishSpace(space) }] : []),
     ...(!__EVEN_PLUGIN__ && canTrustAgain(space)
-      ? [{ label: t('Trust this space again'), run: () => void trustAgain(space) }]
+      ? [{ label: 'Trust this space again', run: () => void trustAgain(space) }]
       : []),
     ...(!__EVEN_PLUGIN__ && (theirs || isShared(space.root))
       ? [
           {
-            label: t('Nickname'),
+            label: 'Nickname',
             run: () => void import('./people/nickname').then((one) => one.nameHere(space)),
           },
         ]
       : []),
     ...protectEntries(space.root),
     DIVIDER,
-    ...(canNudge(space, -1)
-      ? [{ label: t('Move up'), run: () => void nudgeSpace(space, -1) }]
-      : []),
-    ...(canNudge(space, 1)
-      ? [{ label: t('Move down'), run: () => void nudgeSpace(space, 1) }]
-      : []),
+    ...(canNudge(space, -1) ? [{ label: 'Move up', run: () => void nudgeSpace(space, -1) }] : []),
+    ...(canNudge(space, 1) ? [{ label: 'Move down', run: () => void nudgeSpace(space, 1) }] : []),
     DIVIDER,
     ...(workspace.shownSpaces.length > 1 && !workspace.archivedSpaces.has(space.root)
       ? [
           {
-            label: t('Archive'),
+            label: 'Archive',
             run: () => void archiving().then((one) => one.archiveSpace(space)),
           },
         ]
       : []),
     {
-      label: theirs ? t('Leave space') : t('Delete space'),
+      label: theirs ? 'Leave space' : 'Delete space',
       danger: true,
       run: () => void deleteSpace(space),
     },
@@ -152,13 +147,11 @@ export async function deleteSpace(space: Space) {
   const theirs = role !== 'owner'
 
   const sure = await prompt.confirm({
-    title: theirs
-      ? t('Leave {name}?', { name: space.name })
-      : t('Delete {name}?', { name: space.name }),
+    title: theirs ? `Leave ${space.name}?` : `Delete ${space.name}?`,
     detail: theirs
-      ? t('It stays with everybody else. Its notes go from your computer.')
-      : t('Every note in this space is deleted from your computer.'),
-    confirmLabel: theirs ? key('Leave') : key('Delete'),
+      ? 'It stays with everybody else. Its notes go from your computer.'
+      : 'Every note in this space is deleted from your computer.',
+    confirmLabel: theirs ? 'Leave' : 'Delete',
     danger: true,
   })
 

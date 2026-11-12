@@ -4,7 +4,6 @@
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import { onMount, type Snippet, untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { t } from '../i18n.svelte'
   import { dur, fade } from '../motion'
   import { reloading } from '../reloading.svelte'
   import { shortcuts } from '../shortcuts.svelte'
@@ -181,8 +180,8 @@
   {:else if pass.mustChangePassword}
     <Gate
       icon={KeyRound}
-      title={t('Choose a new Pass password')}
-      line={t('You opened Pass with your recovery key.')}
+      title="Choose a new Pass password"
+      line="You opened Pass with your recovery key."
     >
       <ChangePassword ondone={() => undefined} />
     </Gate>
@@ -212,11 +211,11 @@
               <button
                 class="orden-glyph"
                 type="button"
-                aria-label={t('Back')}
-                title={t('Back')}
+                aria-label="Back"
+                title="Back"
                 onclick={() => (ui.column = 'side')}
               >
-                <Glyph icon={ArrowLeft} class="orden-mirror" />
+                <Glyph icon={ArrowLeft} />
               </button>
               <div class="wide-body">{@render wideColumn()}</div>
             </div>

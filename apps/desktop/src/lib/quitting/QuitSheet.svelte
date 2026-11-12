@@ -2,7 +2,6 @@
   import { cubicOut } from 'svelte/easing'
   import Spark from '../agents/ui/Spark.svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { key, t } from '../i18n.svelte'
   import { fade, LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import TerminalMark from '../terminal/TerminalMark.svelte'
@@ -14,17 +13,17 @@
 
   const title = $derived(
     quitAsk.why === 'quit'
-      ? t('Quit {name}?', { name: NAME })
+      ? `Quit ${NAME}?`
       : quitAsk.why === 'restart'
-        ? t('Restart {name}?', { name: NAME })
-        : t('Close window?'),
+        ? `Restart ${NAME}?`
+        : 'Close window?',
   )
   const going = $derived(
     quitAsk.why === 'quit'
-      ? key('Quit anyway')
+      ? 'Quit anyway'
       : quitAsk.why === 'restart'
-        ? key('Restart anyway')
-        : key('Close anyway'),
+        ? 'Restart anyway'
+        : 'Close anyway',
   )
 
   const stay = () => quitAsk.answer('stay')
@@ -46,7 +45,7 @@
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <p class="title">{title}</p>
-    <p class="detail">{t('Running processes will stop.')}</p>
+    <p class="detail">Running processes will stop.</p>
 
     <ul class="rows">
       {#each quitAsk.rows as row (`${row.window}:${row.id}`)}
@@ -70,15 +69,13 @@
 
     <div class="row">
       <TickBox
-        label={t("Don't ask again")}
+        label="Don't ask again"
         checked={quitAsk.never}
         onchange={(on: boolean) => (quitAsk.never = on)}
       />
-      <button type="button" class="orden-button is-quiet" data-lands onclick={stay}
-        >{t('Cancel')}</button
-      >
+      <button type="button" class="orden-button is-quiet" data-lands onclick={stay}>Cancel</button>
       <button type="button" class="orden-button is-danger" onclick={() => quitAsk.answer('go')}
-        >{t(going)}</button
+        >{going}</button
       >
     </div>
   </div>

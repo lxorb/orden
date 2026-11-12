@@ -3,7 +3,6 @@ import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { BASE } from '../api'
 import { BEAT_EVERY, roomDelay } from '../backoff'
-import { t } from '../i18n.svelte'
 import { heldForLife } from '../locks'
 import { madeDeviceId } from './made-device'
 import { invoke, isDesktop, platform } from '../tauri'
@@ -343,7 +342,7 @@ async function deviceName(): Promise<string> {
     if (typeof named === 'string' && named.trim()) return named.trim()
   }
   const { deviceName: platformName } = await import('../rooms/who')
-  return platformName(t('Browser'))
+  return platformName('Browser')
 }
 
 function ticking(ms: number, tick: () => void): () => void {

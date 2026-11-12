@@ -1,4 +1,4 @@
-import { key, message } from '../i18n.svelte'
+import { message } from '../message'
 import { heardPiece } from '../recorder/transcribe'
 import { RATE, wavOf } from '../recorder/wav'
 import { type Capture, capture } from './capture'
@@ -53,7 +53,7 @@ export async function listen(
 export async function hearsHere(words: readonly string[]): Promise<Hears> {
   if (!local.ready) {
     void local.fetch()
-    throw new Error(key('The speech model is still downloading.'))
+    throw new Error('The speech model is still downloading.')
   }
   await local.open()
   const { invoke } = await import('../native')
@@ -200,7 +200,7 @@ export class Session {
     } catch (error) {
       if (this.dropped) return
       this.spot.show(this.saidNow(), false)
-      this.hooks.trouble(message(error, key('That recording could not be turned into words.')))
+      this.hooks.trouble(message(error, 'That recording could not be turned into words.'))
     } finally {
       if (!this.dropped) this.spot.release()
     }

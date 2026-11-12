@@ -80,14 +80,13 @@ afterEach(() => {
 })
 
 describe('the web’s recogniser', () => {
-  test('listens on, with partial words, in the app’s language', async () => {
-    document.documentElement.lang = 'de'
+  test('listens on, with partial words, in the system’s language', async () => {
     const one = new DeviceSession(field, hooks())
     await one.open()
     expect(made[0]).toMatchObject({
       continuous: true,
       interimResults: true,
-      lang: 'de',
+      lang: new Intl.DateTimeFormat().resolvedOptions().locale,
       started: 1,
     })
   })

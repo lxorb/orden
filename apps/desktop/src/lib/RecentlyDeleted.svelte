@@ -2,7 +2,7 @@
   import Facts from './Facts.svelte'
   import { cubicOut } from 'svelte/easing'
   import { relativeStep } from './ago'
-  import { i18n, plural, t } from './i18n.svelte'
+  import { region } from './region'
   import { settings } from './settings.svelte'
   import { trash, type TrashItem } from './trash.svelte'
   import { rowName } from './note-name'
@@ -17,7 +17,7 @@
   const spaces = $derived(trash.items.filter((item) => item.kind === 'space'))
   const notes = $derived(trash.items.filter((item) => item.kind !== 'space'))
 
-  const relative = $derived(new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' }))
+  const relative = $derived(new Intl.RelativeTimeFormat(region(), { numeric: 'auto' }))
 
   function ago(at: number): string {
     const step = relativeStep(Date.now() - at)
@@ -31,9 +31,9 @@
   function meta(item: TrashItem): string[] {
     return [
       item.detail,
-      t('deleted {when}', { when: ago(item.deletedAt) }),
-      plural(daysLeft(item), { one: 'gone in {count} day', other: 'gone in {count} days' }),
-      item.source === 'device' ? t('on this device') : '',
+      `deleted ${ago(item.deletedAt)}`,
+      daysLeft(item) === 1 ? 'gone in 1 day' : `gone in ${daysLeft(item)} days`,
+      item.source === 'device' ? 'on this device' : '',
     ]
   }
 </script>
@@ -51,40 +51,38 @@
           disabled={trash.busy || !trash.restorable(item)}
           onclick={() => void trash.restore(item)}
         >
-          {t('Restore')}
+          Restore
         </button>
         <button class="quiet danger" disabled={trash.busy} onclick={() => void trash.purge(item)}>
-          {t('Delete now')}
+          Delete now
         </button>
       </div>
     {/each}
   </div>
 {/snippet}
 
-<p class="hint">
-  {t('Deleted notes and spaces wait here for 14 days, then they are gone for good.')}
-</p>
+<p class="hint">Deleted notes and spaces wait here for 14 days, then they are gone for good.</p>
 
 {#if trash.error}
   <p class="hint bad">{trash.error}</p>
 {/if}
 
 {#if trash.loaded && !trash.items.length}
-  <p class="hint empty">{t('Nothing here.')}</p>
+  <p class="hint empty">Nothing here.</p>
 {:else if trash.items.length}
   <div class="top">
     <button class="quiet danger" disabled={trash.busy} onclick={() => void trash.empty()}>
-      {t('Empty')}
+      Empty
     </button>
   </div>
 
   {#if spaces.length}
-    <h3>{t('Spaces')}</h3>
+    <h3>Spaces</h3>
     {@render rows(spaces)}
   {/if}
 
   {#if notes.length}
-    <h3>{t('Notes')}</h3>
+    <h3>Notes</h3>
     {@render rows(notes)}
   {/if}
 {/if}

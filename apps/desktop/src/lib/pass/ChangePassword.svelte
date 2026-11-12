@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { pass } from './store.svelte'
   import StrengthMeter from './StrengthMeter.svelte'
 
@@ -35,8 +34,8 @@
       class="orden-field"
       type="password"
       autocomplete="current-password"
-      placeholder={t('Current Pass password')}
-      aria-label={t('Current Pass password')}
+      placeholder="Current Pass password"
+      aria-label="Current Pass password"
       aria-invalid={wrong}
       bind:value={old}
       oninput={() => (wrong = false)}
@@ -46,8 +45,8 @@
     class="orden-field"
     type="password"
     autocomplete="new-password"
-    placeholder={t('New Pass password')}
-    aria-label={t('New Pass password')}
+    placeholder="New Pass password"
+    aria-label="New Pass password"
     bind:value={password}
   />
   <StrengthMeter {password} />
@@ -55,24 +54,24 @@
     class="orden-field"
     type="password"
     autocomplete="new-password"
-    placeholder={t('Type it again')}
-    aria-label={t('Type it again')}
+    placeholder="Type it again"
+    aria-label="Type it again"
     aria-invalid={differ}
     bind:value={again}
   />
   {#if short}
-    <p class="wrong" role="alert">{t('At least {count} characters', { count: LEAST })}</p>
+    <p class="wrong" role="alert">At least {LEAST} characters</p>
   {:else if differ}
-    <p class="wrong" role="alert">{t('The two passwords differ')}</p>
+    <p class="wrong" role="alert">The two passwords differ</p>
   {:else if wrong}
-    <p class="wrong" role="alert">{t('Wrong password')}</p>
+    <p class="wrong" role="alert">Wrong password</p>
   {/if}
   <div class="buttons">
     {#if oncancel}
-      <button class="orden-button is-quiet" type="button" onclick={oncancel}>{t('Cancel')}</button>
+      <button class="orden-button is-quiet" type="button" onclick={oncancel}>Cancel</button>
     {/if}
     <button class="orden-button" type="submit" disabled={busy || !ready} aria-busy={busy}>
-      {t('Change password')}
+      Change password
     </button>
   </div>
 </form>

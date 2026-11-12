@@ -3,7 +3,7 @@ import { encodeTarget } from '@orden/markdown/links'
 import { storeImage } from './assets'
 import { busy } from './busy.svelte'
 import { chooseFiles, PICTURES } from './choose-files'
-import { key, message, t } from './i18n.svelte'
+import { message } from './message'
 import { settings } from './settings.svelte'
 import { usage } from './usage.svelte'
 import { viewport } from './viewport.svelte'
@@ -32,12 +32,12 @@ export async function putPicture(view: EditorView, file: File): Promise<void> {
   if (!note) return
 
   try {
-    const src = await busy.run(t('Storing the image'), () => storeImage(file, note.path))
+    const src = await busy.run('Storing the image', () => storeImage(file, note.path))
     void usage.refresh()
     if (src) writeAtCaret(view, `![${alt(file.name)}](${encodeTarget(src)})`)
   } catch (error) {
     void usage.refresh()
-    settings.error = message(error, key('That image does not fit in your storage.'))
+    settings.error = message(error, 'That image does not fit in your storage.')
   }
 }
 

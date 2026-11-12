@@ -1,11 +1,9 @@
 import { foldName } from '@orden/markdown/links'
 import { asWords } from '@orden/markdown/words'
 
-import { key } from '../i18n.svelte'
-
 import { dayOf, noteText, type Meta } from './meta'
 import { Names, safeName } from './names'
-import type { ImportPlan, Lost, Planned } from './plan'
+import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
 const JOURNALS = 'Journals'
@@ -58,7 +56,7 @@ interface Graph {
 export async function readRoam(sources: readonly Source[]): Promise<ImportPlan> {
   const names = new Names()
   const written: Planned[] = []
-  const lost: Lost[] = []
+  const lost: string[] = []
   let flattened = 0
 
   for (const source of sources) {
@@ -98,10 +96,7 @@ export async function readRoam(sources: readonly Source[]): Promise<ImportPlan> 
   }
 
   if (flattened) {
-    lost.push({
-      text: key('{count} block references were written out as the words they pointed at'),
-      values: { count: flattened },
-    })
+    lost.push(`${flattened} block references were written out as the words they pointed at`)
   }
 
   return { format: 'roam', files: written, lost }

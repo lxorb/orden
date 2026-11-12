@@ -1,7 +1,6 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
-  import { i18n, t } from './i18n.svelte'
   import { cubicOut } from 'svelte/easing'
   import { account } from './account.svelte'
   import { joining } from './joining.svelte'
@@ -79,7 +78,7 @@
     if (event.key === 'ArrowRight' && index < LENGTH - 1) boxes[index + 1]?.focus()
   }
 
-  const heading = $derived(t('Sign in'))
+  const heading = $derived('Sign in')
 
   function close() {
     account.open = false
@@ -105,17 +104,14 @@
   >
     {#if joining.invitation}
       <p class="shared">
-        {t('{who} shared {space} with you', {
-          who: joining.invitation.from ?? t('Somebody'),
-          space: joining.invitation.space,
-        })}
+        {joining.invitation.from ?? 'Somebody'} shared {joining.invitation.space} with you
       </p>
     {/if}
 
     {#if account.step === 'email'}
       <h2 class="heading">{heading}</h2>
       <form
-        in:fly={{ x: -14 * i18n.factor, duration: dur(200), easing: cubicOut }}
+        in:fly={{ x: -14, duration: dur(200), easing: cubicOut }}
         onsubmit={(event) => {
           event.preventDefault()
           void account.requestCode()
@@ -127,17 +123,17 @@
           type="email"
           autocomplete="email"
           placeholder="you@example.com"
-          aria-label={t('Email address')}
+          aria-label="Email address"
           spellcheck="false"
           required
         />
         <button class="orden-button" type="submit" disabled={account.busy}>
-          {account.busy ? t('Sending') : t('Continue')}
+          {account.busy ? 'Sending' : 'Continue'}
         </button>
       </form>
     {:else if account.step === 'second'}
-      <div class="code" in:fly={{ x: 14 * i18n.factor, duration: dur(200), easing: cubicOut }}>
-        <p class="sent">{t('Now the code from your authenticator app')}</p>
+      <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
+        <p class="sent">Now the code from your authenticator app</p>
 
         <div class="digits" dir="ltr">
           {#each digits as digit, index (index)}
@@ -149,7 +145,7 @@
               inputmode="numeric"
               autocomplete={index === 0 ? 'one-time-code' : 'off'}
               maxlength="6"
-              aria-label={t('Digit {number}', { number: index + 1 })}
+              aria-label="Digit {index + 1}"
               style:animation-delay="{index * 32}ms"
             />
           {/each}
@@ -166,25 +162,23 @@
               bind:value={recovery}
               type="text"
               dir="ltr"
-              placeholder={t('Recovery code')}
-              aria-label={t('Recovery code')}
+              placeholder="Recovery code"
+              aria-label="Recovery code"
               spellcheck="false"
               autocapitalize="off"
               autocorrect="off"
             />
-            <button class="orden-button" type="submit" disabled={account.busy}
-              >{t('Continue')}</button
-            >
+            <button class="orden-button" type="submit" disabled={account.busy}>Continue</button>
           </form>
         {:else}
           <button class="link" type="button" onclick={() => (recovering = true)}>
-            {t('Use a recovery code')}
+            Use a recovery code
           </button>
         {/if}
       </div>
     {:else}
-      <div class="code" in:fly={{ x: 14 * i18n.factor, duration: dur(200), easing: cubicOut }}>
-        <p class="sent">{t('Code sent to')} <strong>{account.email}</strong></p>
+      <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
+        <p class="sent">Code sent to <strong>{account.email}</strong></p>
 
         <div class="digits" dir="ltr">
           {#each digits as digit, index (index)}
@@ -196,7 +190,7 @@
               inputmode="numeric"
               autocomplete={index === 0 ? 'one-time-code' : 'off'}
               maxlength="6"
-              aria-label={t('Digit {number}', { number: index + 1 })}
+              aria-label="Digit {index + 1}"
               style:animation-delay="{index * 32}ms"
             />
           {/each}
@@ -208,15 +202,13 @@
           disabled={account.resendIn > 0 || account.busy}
           onclick={() => account.requestCode()}
         >
-          {account.resendIn > 0
-            ? t('Resend in {seconds}s', { seconds: account.resendIn })
-            : t('Send a new code')}
+          {account.resendIn > 0 ? `Resend in ${account.resendIn}s` : 'Send a new code'}
         </button>
       </div>
     {/if}
 
     {#if account.error}
-      <p class="error" transition:fly={{ y: -6, duration: dur(160) }}>{t(account.error)}</p>
+      <p class="error" transition:fly={{ y: -6, duration: dur(160) }}>{account.error}</p>
     {/if}
   </div>
 {/if}

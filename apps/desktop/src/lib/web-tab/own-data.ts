@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { menu } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
 import { canWriteAt } from '../sharing.svelte'
@@ -42,7 +41,7 @@ async function namedElsewhere(path: string, own: string): Promise<boolean> {
 export async function showWebData(path: string): Promise<void> {
   const text = await textOf(path)
   const now: Where = readWebFile(path, text)?.own ? 'separate' : 'global'
-  const said: Record<Where, string> = { global: t('Global'), separate: t('Separate') }
+  const said: Record<Where, string> = { global: 'Global', separate: 'Separate' }
   menu.replace(
     WHERE.map((where) => ({
       label: said[where],
@@ -63,9 +62,9 @@ async function choose(path: string, where: Where): Promise<void> {
   const shared = was !== null && where === 'global' && (await namedElsewhere(path, was))
   if (where === 'global' && !shared) {
     const sure = await prompt.confirm({
-      title: t('Share this note’s web data again?'),
-      detail: t('What its pages are signed in to on this computer is deleted.'),
-      confirmLabel: t('Share again'),
+      title: 'Share this note’s web data again?',
+      detail: 'What its pages are signed in to on this computer is deleted.',
+      confirmLabel: 'Share again',
       danger: true,
     })
     if (!sure) return
@@ -78,7 +77,7 @@ async function choose(path: string, where: Where): Promise<void> {
   workspace.documentAt(path)?.replace(content, false)
   await writeFile(path, content)
 
-  const said = own ? t('This note keeps its own web data now') : t('Back on the shared web data')
+  const said = own ? 'This note keeps its own web data now' : 'Back on the shared web data'
   for (const tab of workspace.tabs) {
     if (tab.kind !== 'web') continue
     const copy = !shared && tab.path === null && was !== null && tab.apart === was

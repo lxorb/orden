@@ -46,8 +46,7 @@ function move(one: HTMLElement, edge: Edge, going: boolean): Promise<unknown> {
   if (typeof one.animate !== 'function') return Promise.resolve()
 
   const [across, down] = AWAY[edge]
-  const turned = document.documentElement.dir === 'rtl' ? -1 : 1
-  const away = `translate(${across * turned * TRAVEL}px, ${down * TRAVEL}px)`
+  const away = `translate(${across * TRAVEL}px, ${down * TRAVEL}px)`
   const here = { opacity: 1, transform: 'none' }
   const there = { opacity: 0, transform: away }
 

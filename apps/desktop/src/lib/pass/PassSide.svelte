@@ -17,7 +17,6 @@
   import { account } from '../account.svelte'
   import Icon from '../Icon.svelte'
   import { readIcon } from '../icons'
-  import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import SharedMark from '../SharedMark.svelte'
   import Glyph from './Glyph.svelte'
@@ -108,17 +107,17 @@
   {/each}
 {/snippet}
 
-<nav class="side" aria-label={t('Pass')}>
+<nav class="side" aria-label="Pass">
   <div class="top">
     <button class="orden-button new" type="button" aria-haspopup="menu" onclick={newItem}>
       <Glyph icon={Plus} />
-      <span class="grow">{t('New item')}</span>
+      <span class="grow">New item</span>
       <Glyph icon={ChevronDown} />
     </button>
   </div>
 
   <div class="scroll" data-scrolls>
-    <h3 class="orden-section">{t('Vaults')}</h3>
+    <h3 class="orden-section">Vaults</h3>
     <button
       class="orden-row"
       class:is-on={isOn({ kind: 'all' })}
@@ -126,7 +125,7 @@
       onclick={() => chosen({ kind: 'all' })}
     >
       <Glyph icon={Inbox} class="orden-row-mark" />
-      <span class="orden-row-label">{t('All items')}</span>
+      <span class="orden-row-label">All items</span>
       <span class="orden-row-meta">{live.length}</span>
     </button>
     {#each pass.vaults as vault (vault.id)}
@@ -149,8 +148,8 @@
         <button
           class="orden-glyph more"
           type="button"
-          aria-label={t('Vault options')}
-          title={t('Vault options')}
+          aria-label="Vault options"
+          title="Vault options"
           onclick={(event) => menu.show(event, vaultEntries(ui, vault), { until: pass.opened })}
         >
           <Glyph icon={Ellipsis} />
@@ -164,7 +163,7 @@
       onclick={() => (ui.sheet = { kind: 'vault', vault: null })}
     >
       <Glyph icon={Plus} class="orden-row-mark" />
-      <span class="orden-row-label">{t('New vault')}</span>
+      <span class="orden-row-label">New vault</span>
     </button>
 
     <div class="gap"></div>
@@ -176,12 +175,12 @@
       onclick={() => chosen({ kind: 'trash' })}
     >
       <Glyph icon={Trash} class="orden-row-mark" />
-      <span class="orden-row-label">{t('Trash')}</span>
+      <span class="orden-row-label">Trash</span>
       {#if trashed}<span class="orden-row-meta">{trashed}</span>{/if}
     </button>
 
     {#if shared}
-      <h3 class="orden-section">{t('Shared')}</h3>
+      <h3 class="orden-section">Shared</h3>
       <button
         class="orden-row"
         class:is-on={isOn({ kind: 'shared-with-me' })}
@@ -189,7 +188,7 @@
         onclick={() => chosen({ kind: 'shared-with-me' })}
       >
         <Glyph icon={UsersRound} class="orden-row-mark" />
-        <span class="orden-row-label">{t('Shared with me')}</span>
+        <span class="orden-row-label">Shared with me</span>
         {#if invited}<span class="orden-row-meta invited" data-invites>{invited}</span>{/if}
       </button>
       <button
@@ -199,7 +198,7 @@
         onclick={() => chosen({ kind: 'shared-by-me' })}
       >
         <Glyph icon={Share} class="orden-row-mark" />
-        <span class="orden-row-label">{t('Shared by me')}</span>
+        <span class="orden-row-label">Shared by me</span>
       </button>
       <button
         class="orden-row"
@@ -208,7 +207,7 @@
         onclick={() => void ui.goTo('links').then(() => onchosen?.())}
       >
         <Glyph icon={Link} class="orden-row-mark" />
-        <span class="orden-row-label">{t('Secure links')}</span>
+        <span class="orden-row-label">Secure links</span>
       </button>
     {/if}
 
@@ -221,7 +220,7 @@
       onclick={() => void ui.goTo('monitor').then(() => onchosen?.())}
     >
       <Glyph icon={ShieldCheck} class="orden-row-mark" />
-      <span class="orden-row-label">{t('Monitor')}</span>
+      <span class="orden-row-label">Monitor</span>
       {#if issues}<span class="orden-row-meta issues">{issues}</span>{/if}
     </button>
   </div>
@@ -236,12 +235,12 @@
         onclick={() => void ui.goTo('settings').then(() => onchosen?.())}
       >
         <Glyph icon={Settings} class="orden-row-mark" />
-        <span class="orden-row-label">{t('Settings')}</span>
+        <span class="orden-row-label">Settings</span>
       </button>
     {/if}
     <button class="orden-row" type="button" onclick={() => pass.lock()}>
       <Glyph icon={Lock} class="orden-row-mark" />
-      <span class="orden-row-label">{t('Lock')}</span>
+      <span class="orden-row-label">Lock</span>
     </button>
   </div>
   {#if corner}{@render corner(ui)}{/if}

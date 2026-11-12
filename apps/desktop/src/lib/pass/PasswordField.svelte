@@ -3,7 +3,6 @@
   import EyeOff from 'lucide/dist/esm/icons/eye-off.mjs'
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import WandSparkles from 'lucide/dist/esm/icons/wand-sparkles.mjs'
-  import { t } from '../i18n.svelte'
   import Glyph from './Glyph.svelte'
   import StrengthMeter from './StrengthMeter.svelte'
   import type { PassUi } from './ui.svelte'
@@ -50,8 +49,8 @@
     <button
       type="button"
       class="orden-glyph"
-      aria-label={shown ? t('Hide') : t('Show')}
-      title={shown ? t('Hide') : t('Show')}
+      aria-label={shown ? 'Hide' : 'Show'}
+      title={shown ? 'Hide' : 'Show'}
       onclick={() => (shown = !shown)}
     >
       <Glyph icon={shown ? EyeOff : Eye} />
@@ -59,8 +58,8 @@
     <button
       type="button"
       class="orden-glyph"
-      aria-label={t('Generate password')}
-      title={t('Generate password')}
+      aria-label="Generate password"
+      title="Generate password"
       onclick={generate}
     >
       <Glyph icon={WandSparkles} />

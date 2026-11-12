@@ -1,6 +1,5 @@
 <script lang="ts">
   import { type Base, writeBase } from '@orden/bases'
-  import { t } from '../i18n.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
   import { ORDER_MARK } from '../panel-marks'
   import { segmented } from '../slide'
@@ -64,9 +63,9 @@
 
   type Tool = 'filter' | 'sort' | 'group'
   const TOOLS = [
-    { id: 'filter', mark: FILTER_MARK, label: t('Filter') },
-    { id: 'sort', mark: ORDER_MARK, label: t('Sort') },
-    { id: 'group', mark: GROUP_MARK, label: t('Group') },
+    { id: 'filter', mark: FILTER_MARK, label: 'Filter' },
+    { id: 'sort', mark: ORDER_MARK, label: 'Sort' },
+    { id: 'group', mark: GROUP_MARK, label: 'Group' },
   ] as const
 
   let open = $state<Tool | 'display' | 'settings' | 'chip-filter' | 'chip-sort' | null>(null)
@@ -82,19 +81,19 @@
   const notes = $derived((view?.orden.rows ?? 'notes') === 'notes')
 
   const BUILDERS: Record<Builder['kind'], string> = {
-    colour: t('Colour'),
-    automations: t('Automations'),
-    rollup: t('Rollup'),
-    button: t('Button'),
-    options: t('Options'),
-    formula: t('Formula'),
-    name: t('Rename'),
+    colour: 'Colour',
+    automations: 'Automations',
+    rollup: 'Rollup',
+    button: 'Button',
+    options: 'Options',
+    formula: 'Formula',
+    name: 'Rename',
   }
 
   const HEIGHTS = [
-    { lines: 1, label: t('Short') },
-    { lines: 2, label: t('Medium') },
-    { lines: 4, label: t('Tall') },
+    { lines: 1, label: 'Short' },
+    { lines: 2, label: 'Medium' },
+    { lines: 4, label: 'Tall' },
   ]
 
   function linkTo(path: string): string {
@@ -108,7 +107,7 @@
   ): Promise<MenuEntry[]> {
     const found = await templates()
     return [
-      { label: t('Blank'), checked: chosen === undefined, run: () => pick(null) },
+      { label: 'Blank', checked: chosen === undefined, run: () => pick(null) },
       ...found.map((one) => ({
         label: one.name.replace(/\.md$/i, ''),
         checked: chosen === linkTo(one.path),
@@ -121,7 +120,7 @@
     if (!notes || !base) return
     event.preventDefault()
     void templateRows(undefined, (link) => kit.add(undefined, link)).then((items) =>
-      menu.show(event, items, { title: t('New note') }),
+      menu.show(event, items, { title: 'New note' }),
     )
   }
   let renaming = $state(false)
@@ -142,18 +141,18 @@
     return [
       ...(project
         ? [
-            { label: t('Rename'), run: () => (renaming = true) },
+            { label: 'Rename', run: () => (renaming = true) },
             {
-              label: t('Add section'),
+              label: 'Add section',
               asks: true,
               run: () =>
                 void prompt
-                  .ask({ title: t('Add section'), confirmLabel: t('Add section') })
+                  .ask({ title: 'Add section', confirmLabel: 'Add section' })
                   .then((words) => (words?.trim() ? addSection(kit, words) : undefined)),
             },
-            { label: t('Open in note'), run: () => void workspace.open(project.path) },
+            { label: 'Open in note', run: () => void workspace.open(project.path) },
             {
-              label: t('Save as CSV'),
+              label: 'Save as CSV',
               run: () =>
                 void import('./todoist-csv').then((one) =>
                   one.saveProjectCsv(project.path, project.name),
@@ -173,18 +172,18 @@
           ]
         : []),
       ...(kit.writable && !project && (kit.spec.builtin === undefined || views.length > 1)
-        ? [{ label: t('Rename'), run: () => (renaming = true) }]
+        ? [{ label: 'Rename', run: () => (renaming = true) }]
         : []),
       ...(kit.writable
         ? [
-            { label: t('New view'), run: () => kit.change((one, at) => addView(one, at, 'table')) },
-            { label: t('Duplicate view'), run: () => kit.change((one, at) => addView(one, at)) },
+            { label: 'New view', run: () => kit.change((one, at) => addView(one, at, 'table')) },
+            { label: 'Duplicate view', run: () => kit.change((one, at) => addView(one, at)) },
           ]
         : []),
       ...(kit.writable && views.length > 1
         ? [
             {
-              label: t('Delete view'),
+              label: 'Delete view',
               danger: true,
               run: () => kit.change((one, at) => removeView(one, at)),
             },
@@ -194,7 +193,7 @@
         ? [
             DIVIDER,
             {
-              label: t('Copy to a base'),
+              label: 'Copy to a base',
               run: () => void copyToBase(writeBase(base), named),
             },
           ]
@@ -207,13 +206,13 @@
     if (!kit.writable) return csvRows()
     return [
       {
-        label: t('Colour'),
+        label: 'Colour',
         checked: view?.orden.colour !== undefined,
         run: () => (live.builder = { kind: 'colour' }),
       },
       ...(layout === 'table'
         ? [
-            grouped(event, t('Row height'), () =>
+            grouped(event, 'Row height', () =>
               Promise.resolve(
                 HEIGHTS.map((one) => ({
                   label: one.label,
@@ -230,7 +229,7 @@
       ...(kit.file !== null
         ? [
             {
-              label: t('Automations'),
+              label: 'Automations',
               checked: Array.isArray(base.orden.kept.automations),
               run: () => (live.builder = { kind: 'automations' }),
             },
@@ -238,7 +237,7 @@
         : []),
       ...(notes
         ? [
-            grouped(event, t('Default template'), () =>
+            grouped(event, 'Default template', () =>
               templateRows(view?.orden.template ?? base.orden.template, (link) =>
                 kit.change((b, at) => setViewOrden(b, at, 'template', link ?? undefined)),
               ),
@@ -249,7 +248,7 @@
       ...csvRows(),
       DIVIDER,
       {
-        label: view?.orden.locked ? t('Unlock view') : t('Lock view'),
+        label: view?.orden.locked ? 'Unlock view' : 'Lock view',
         run: () =>
           kit.change(
             (b, at) => setViewOrden(b, at, 'locked', view?.orden.locked ? undefined : true),
@@ -259,7 +258,7 @@
       ...(kit.file !== null
         ? [
             {
-              label: base.orden.locked ? t('Unlock base') : t('Lock base'),
+              label: base.orden.locked ? 'Unlock base' : 'Lock base',
               run: () =>
                 kit.change(
                   (b) => setBaseOrden(b, 'locked', base.orden.locked ? undefined : true),
@@ -273,8 +272,8 @@
 
   function csvRows(): MenuEntry[] {
     return [
-      { label: t('Copy as CSV'), run: () => void copyCsv(live) },
-      { label: t('Save as CSV'), run: () => void saveCsv(live, named) },
+      { label: 'Copy as CSV', run: () => void copyCsv(live) },
+      { label: 'Save as CSV', run: () => void saveCsv(live, named) },
     ]
   }
 
@@ -318,7 +317,7 @@
             }, last + 1)
             .catch(() => undefined),
       })),
-      { title: t('New view') },
+      { title: 'New view' },
     )
   }
 
@@ -332,9 +331,9 @@
       [
         ...(kit.writable
           ? [
-              { label: t('Rename'), run: () => (naming = at) },
+              { label: 'Rename', run: () => (naming = at) },
               {
-                label: t('Duplicate view'),
+                label: 'Duplicate view',
                 run: () => void kit.changed((b) => addView(b, at), at + 1).catch(() => undefined),
               },
             ]
@@ -342,7 +341,7 @@
         ...(file !== null && one?.name
           ? [
               {
-                label: t('Copy link'),
+                label: 'Copy link',
                 run: () => {
                   const root = workspace.activeSpace?.root ?? ''
                   void copyText(`![[${relativeTo(root, file)}#${one.name}]]`)
@@ -354,7 +353,7 @@
           ? [
               DIVIDER,
               {
-                label: t('Delete view'),
+                label: 'Delete view',
                 danger: true,
                 run: () => {
                   const showing = live.at
@@ -415,8 +414,8 @@
         class="orden-glyph lock"
         class:shake={live.refused > 0}
         disabled={!kit.writable}
-        title={t('Unlock view')}
-        aria-label={t('Unlock view')}
+        title="Unlock view"
+        aria-label="Unlock view"
         onclick={() =>
           kit.change(
             (b, at) => setBaseOrden(setViewOrden(b, at, 'locked', undefined), 'locked', undefined),
@@ -437,8 +436,8 @@
       <input
         type="search"
         value={live.typed}
-        aria-label={t('Search')}
-        placeholder={t('Search')}
+        aria-label="Search"
+        placeholder="Search"
         oninput={(event) => live.search(event.currentTarget.value)}
         onkeydown={(event) => {
           if (event.key === 'Escape' && live.typed) {
@@ -485,21 +484,21 @@
       class:set={displayChanged > 0}
       class:open={open === 'display'}
       data-opens-popover
-      title={t('Display')}
-      aria-label={displayChanged ? `${t('Display')}: ${displayChanged}` : t('Display')}
+      title="Display"
+      aria-label={displayChanged ? `Display: ${displayChanged}` : 'Display'}
       aria-expanded={open === 'display'}
       onclick={() => toggle('display')}
     >
       <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
-      {#if !kit.compact}<span class="display-word">{t('Display')}</span>{/if}
+      {#if !kit.compact}<span class="display-word">Display</span>{/if}
       {#if displayChanged}<span class="display-count">{displayChanged}</span>{/if}
     </button>
     {#if viewport.device === 'phone'}
-      <Sheet open={open === 'display'} title={t('Display')} onclose={() => (open = null)}>
+      <Sheet open={open === 'display'} title="Display" onclose={() => (open = null)}>
         <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
       </Sheet>
     {:else}
-      <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
+      <Popover open={open === 'display'} label="Display" onclose={() => (open = null)}>
         <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
       </Popover>
     {/if}
@@ -510,8 +509,8 @@
     <button
       type="button"
       class="orden-glyph"
-      title={notes ? t('New note') : t('Add task')}
-      aria-label={notes ? t('New note') : t('Add task')}
+      title={notes ? 'New note' : 'Add task'}
+      aria-label={notes ? 'New note' : 'Add task'}
       onclick={onadd}
       oncontextmenu={plusMenu}
     >
@@ -546,13 +545,13 @@
       <h1 class="title">{title}</h1>
     {/if}
     <div class="bar">
-      <div class="tabs" role="tablist" aria-label={t('Views')}>
+      <div class="tabs" role="tablist" aria-label="Views">
         {#each base?.views ?? [] as one, at (at)}
           {#if naming === at}
             <input
               class="orden-field rename"
               value={one.name}
-              aria-label={t('Rename')}
+              aria-label="Rename"
               use:focusSoon
               onkeydown={(event) => {
                 if (event.key === 'Enter') event.currentTarget.blur()
@@ -597,8 +596,8 @@
           <button
             type="button"
             class="orden-glyph"
-            title={t('New view')}
-            aria-label={t('New view')}
+            title="New view"
+            aria-label="New view"
             onclick={addTab}
           >
             <svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>
@@ -616,8 +615,8 @@
             class="orden-glyph"
             class:open={open === 'settings'}
             data-opens-popover
-            title={t('Settings')}
-            aria-label={t('Settings')}
+            title="Settings"
+            aria-label="Settings"
             aria-expanded={open === 'settings'}
             onclick={() => toggle('settings')}
           >
@@ -629,7 +628,7 @@
               /></svg
             >
           </button>
-          <Popover open={open === 'settings'} label={t('Settings')} onclose={() => (open = null)}>
+          <Popover open={open === 'settings'} label="Settings" onclose={() => (open = null)}>
             <ViewSettings
               {kit}
               more={(event?: MouseEvent) => {
@@ -647,7 +646,7 @@
     {#if active.filter || active.sort}
       <div class="chips">
         {#if active.sort}{@render chip('chip-sort', sortWords, 'sort')}{/if}
-        {#if active.filter}{@render chip('chip-filter', t('Filter'), 'filter')}{/if}
+        {#if active.filter}{@render chip('chip-filter', 'Filter', 'filter')}{/if}
       </div>
     {/if}
   </div>
@@ -657,7 +656,7 @@
       <input
         class="orden-field rename"
         value={project ? named : (view?.name ?? '')}
-        aria-label={t('Rename')}
+        aria-label="Rename"
         use:focusSoon
         onkeydown={(event) => {
           if (event.key === 'Enter') event.currentTarget.blur()
@@ -690,7 +689,7 @@
     {@render lock()}
 
     {#if !tasky && kit.writable}
-      <div class="orden-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
+      <div class="orden-segmented layouts" role="tablist" aria-label="Layout" use:segmented>
         {#each offered as one (one)}
           <button
             type="button"

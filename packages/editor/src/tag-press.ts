@@ -1,6 +1,5 @@
 import { Facet, type EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { label } from './labels'
 import { MAC, modifier } from './links'
 
 export type TagOpener = (tag: string) => void
@@ -11,7 +10,7 @@ export const tagOpener = Facet.define<TagOpener, TagOpener | null>({
 
 export function tagTitle(state: EditorState): string | null {
   if (!state.facet(tagOpener)) return null
-  return label(MAC ? 'searchTagMac' : 'searchTag')
+  return MAC ? '⌘-click to search the tag' : 'Ctrl+Click to search the tag'
 }
 
 export const tagClicks = EditorView.domEventHandlers({

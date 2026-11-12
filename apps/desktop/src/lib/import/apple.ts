@@ -1,5 +1,4 @@
 import { fromBase64 } from '../bytes'
-import { key } from '../i18n.svelte'
 import { folderPlan } from './folder'
 import { dayOf, type Meta } from './meta'
 import { Names, safeParts } from './names'
@@ -74,38 +73,23 @@ function lost(read: AppleNotes): ImportPlan['lost'] {
   const lines: ImportPlan['lost'] = []
 
   if (read.locked) {
-    lines.push({
-      text: key('{count} notes are behind a password, which nothing but Notes can open'),
-      values: { count: read.locked },
-    })
+    lines.push(`${read.locked} notes are behind a password, which nothing but Notes can open`)
   }
 
   if (read.binned) {
-    lines.push({
-      text: key('{count} notes are in Recently Deleted, and stay there'),
-      values: { count: read.binned },
-    })
+    lines.push(`${read.binned} notes are in Recently Deleted, and stay there`)
   }
 
   if (read.drawn) {
-    lines.push({
-      text: key('{count} drawings and scans have no picture on this Mac'),
-      values: { count: read.drawn },
-    })
+    lines.push(`${read.drawn} drawings and scans have no picture on this Mac`)
   }
 
   if (read.tables) {
-    lines.push({
-      text: key('{count} tables inside notes do not come over'),
-      values: { count: read.tables },
-    })
+    lines.push(`${read.tables} tables inside notes do not come over`)
   }
 
   if (read.missing) {
-    lines.push({
-      text: key('{count} attachments are in iCloud rather than on this Mac'),
-      values: { count: read.missing },
-    })
+    lines.push(`${read.missing} attachments are in iCloud rather than on this Mac`)
   }
 
   return lines

@@ -19,7 +19,6 @@ import {
   stopShutting,
 } from './fold-motion'
 import { iconElement } from './icon'
-import { label } from './labels'
 import { OrdenWidget } from './live-preview/widget'
 
 export type FoldLines = readonly [head: number, last: number]
@@ -297,7 +296,7 @@ class FoldWidget extends OrdenWidget {
     if (!(hinge instanceof HTMLElement)) return false
 
     hinge.dataset.folded = String(this.folded)
-    hinge.setAttribute('aria-label', label(this.folded ? 'unfold' : 'fold'))
+    hinge.setAttribute('aria-label', this.folded ? 'Unfold' : 'Fold')
     return true
   }
 
@@ -310,7 +309,7 @@ class FoldWidget extends OrdenWidget {
     hinge.type = 'button'
     hinge.className = 'orden-fold-hinge'
     hinge.dataset.folded = String(this.folded)
-    hinge.setAttribute('aria-label', label(this.folded ? 'unfold' : 'fold'))
+    hinge.setAttribute('aria-label', this.folded ? 'Unfold' : 'Fold')
     hinge.tabIndex = -1
     hinge.append(chevron())
 
@@ -344,7 +343,7 @@ class FoldWidget extends OrdenWidget {
 function placeholder(view: EditorView, onclick: (event: Event) => void): HTMLElement {
   const more = document.createElement('span')
   more.className = 'orden-folded'
-  more.setAttribute('aria-label', label('unfold'))
+  more.setAttribute('aria-label', 'Unfold')
   more.textContent = '⋯'
 
   more.addEventListener('click', (event) => {

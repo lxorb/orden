@@ -2,7 +2,6 @@
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { accentFor } from '../../accents'
-  import { t } from '../../i18n.svelte'
   import { initial } from '../../icons'
   import { dur, fly } from '../../motion'
   import { overlays } from '../../overlays'
@@ -46,12 +45,11 @@
         style:--badge-ink="var(--accent-ink)"
         aria-hidden="true">{initial(client)}</span
       >
-      <span class="client">{t('{client} wants to connect', { client })}</span>
+      <span class="client">{client} wants to connect</span>
     </p>
     <div class="rows">
-      <button class="orden-button is-quiet" onclick={() => answer(false)}>{t('Don’t allow')}</button
-      >
-      <button class="orden-button" onclick={() => answer(true)}>{t('Allow')}</button>
+      <button class="orden-button is-quiet" onclick={() => answer(false)}>Don’t allow</button>
+      <button class="orden-button" onclick={() => answer(true)}>Allow</button>
     </div>
   </div>
 {/if}

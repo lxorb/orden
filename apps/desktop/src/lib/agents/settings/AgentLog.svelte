@@ -1,6 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { i18n, plural, t } from '../../i18n.svelte'
+  import { region } from '../../region'
+  import { localDate } from '../../region'
   import { dur, slide } from '../../motion'
   import { prompt } from '../../prompt.svelte'
   import { workspace } from '../../workspace.svelte'
@@ -22,10 +23,10 @@
   const front = $derived(workspace.active?.kind === 'note' ? workspace.active.shown : null)
 
   const span = $derived(
-    new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }),
+    new Intl.DateTimeFormat(region(), { dateStyle: 'medium', timeStyle: 'short' }),
   )
   const spanOf = (session: Session) => span.formatRange(session.start, session.end)
-  const timeOf = (at: number) => i18n.when(at, { hour: '2-digit', minute: '2-digit' })
+  const timeOf = (at: number) => localDate(at, { hour: '2-digit', minute: '2-digit' })
 
   async function earlier() {
     shown += FIRST
@@ -38,8 +39,8 @@
 
   async function clear() {
     const sure = await prompt.confirm({
-      title: t('Clear what {name} did?', { name: grant.name }),
-      confirmLabel: t('Clear'),
+      title: `Clear what ${grant.name} did?`,
+      confirmLabel: 'Clear',
       danger: true,
     })
     if (sure) await pane.clearLog(grant.id)
@@ -57,10 +58,10 @@
       <span class="name">
         {spanOf(session)}
         <small>
-          {plural(session.calls.length, { one: '{count} call', other: '{count} calls' })}
+          {session.calls.length === 1 ? '1 call' : `${session.calls.length} calls`}
         </small>
       </span>
-      <svg class="chevron orden-mirror" class:open viewBox="0 0 16 16" aria-hidden="true"
+      <svg class="chevron" class:open viewBox="0 0 16 16" aria-hidden="true"
         ><path d="M6 3l5 5-5 5" /></svg
       >
     </button>
@@ -77,19 +78,19 @@
           {/each}
         </ol>
         <button class="orden-chip keep" onclick={() => void keep(session)}>
-          {front === null ? t('Save as a note') : t('Add to {name}', { name: front })}
+          {front === null ? 'Save as a note' : `Add to ${front}`}
         </button>
       </div>
     {/if}
   {:else}
-    <p class="hint">{t('Not used yet.')}</p>
+    <p class="hint">Not used yet.</p>
   {/each}
 
   {#if sessions.length > shown || pane.earlier}
-    <button class="orden-action" onclick={() => void earlier()}>{t('Show earlier')}</button>
+    <button class="orden-action" onclick={() => void earlier()}>Show earlier</button>
   {/if}
   {#if sessions.length}
-    <button class="orden-action is-danger" onclick={() => void clear()}>{t('Clear')}</button>
+    <button class="orden-action is-danger" onclick={() => void clear()}>Clear</button>
   {/if}
 </div>
 
@@ -99,7 +100,7 @@
   }
 
   .session .chevron.open {
-    transform: scaleX(var(--dir)) rotate(90deg);
+    transform: rotate(90deg);
   }
 
   .calls {

@@ -1,4 +1,3 @@
-import { key } from '../i18n.svelte'
 import { bestContainer, extensionOf } from './container'
 
 const HANDOVER = 5_000
@@ -15,7 +14,7 @@ export async function openMicrophone(): Promise<MediaStream> {
       }),
       new Promise<never>((_resolve, reject) => {
         ran = window.setTimeout(
-          () => reject(new Error(key('That microphone could not be opened.'))),
+          () => reject(new Error('That microphone could not be opened.')),
           PATIENCE,
         )
       }),

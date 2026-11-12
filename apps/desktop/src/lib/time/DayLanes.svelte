@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { isOwn } from './counted'
   import { HOUR, MINUTE, piecesIn } from './days'
   import { type Band, bandsOf, bucketsOf, type Picked, stacked } from './lanes'
@@ -40,10 +40,10 @@
   const lanes = $derived(
     (
       [
-        ['app', t('Apps')],
-        ['site', t('Websites')],
-        ['space', t('Spaces')],
-        ['tab', t('Tabs')],
+        ['app', 'Apps'],
+        ['site', 'Websites'],
+        ['space', 'Spaces'],
+        ['tab', 'Tabs'],
       ] as const
     ).map(([lane, label]): { lane: Lane; label: string; bands: Band[] } => ({
       lane,
@@ -132,12 +132,12 @@
 <div class="day" dir="ltr">
   <div class="labels" aria-hidden="true">
     <span class="axis"></span>
-    <span class="said-label">{t('You said')}</span>
+    <span class="said-label">You said</span>
     {#each lanes as lane (lane.lane)}
       <span class="lane-label">{lane.label}</span>
     {/each}
-    <span class="busy-label">{t('Active')}</span>
-    <span class="system-label">{t('System')}</span>
+    <span class="busy-label">Active</span>
+    <span class="system-label">System</span>
   </div>
 
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -156,7 +156,7 @@
   >
     <div class="axis">
       {#each hours as hour (hour)}
-        <span style:left={at(hour)}>{i18n.when(hour, { hour: 'numeric' })}</span>
+        <span style:left={at(hour)}>{localDate(hour, { hour: 'numeric' })}</span>
       {/each}
     </div>
 
@@ -172,12 +172,12 @@
           style:top="{(row / rows) * 100}%"
           style:height="{100 / rows}%"
           style:--tint={tintOf(piece.span.activity)}
-          title="{nameOf(piece.span.activity, t('No activity'))}, {clock(piece.from)}–{clock(
+          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(
             piece.to,
           )}"
         >
           {#if pixels(piece.to - piece.from) > 40}
-            <span class="name" dir="auto">{nameOf(piece.span.activity, t('No activity'))}</span>
+            <span class="name" dir="auto">{nameOf(piece.span.activity, 'No activity')}</span>
             {#if rows === 1 && pixels(piece.to - piece.from) > 52}
               <span class="long">{length(piece.to - piece.from)}</span>
             {/if}
@@ -239,9 +239,9 @@
   </div>
 
   <div class="legend" aria-hidden="true">
-    <span><i class="cpu"></i>{t('CPU')}</span>
-    <span><i class="memory"></i>{t('Memory')}</span>
-    <span><i class="battery"></i>{t('Battery')}</span>
+    <span><i class="cpu"></i>CPU</span>
+    <span><i class="memory"></i>Memory</span>
+    <span><i class="battery"></i>Battery</span>
   </div>
 </div>
 

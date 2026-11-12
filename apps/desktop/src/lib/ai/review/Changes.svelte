@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../../i18n.svelte'
   import { dur, slide } from '../../motion'
   import { insideSpace } from '../../space-paths'
   import { workspace } from '../../workspace.svelte'
@@ -76,9 +75,9 @@
         </button>
         <span class="pair">
           <button class="orden-chip is-quiet" onclick={() => void review.undo(note.changes)}
-            >{t('Undo')}</button
+            >Undo</button
           >
-          <button class="orden-chip" onclick={() => review.keep(note.changes)}>{t('Keep')}</button>
+          <button class="orden-chip" onclick={() => review.keep(note.changes)}>Keep</button>
         </span>
       </div>
       {#each open ? note.changes : [] as change (change.id)}
@@ -92,15 +91,15 @@
             }}
           >
             <span class="orden-row-label" class:is-gone={!change.spots.some((one) => one.inserted)}
-              >{workspace.protection.locked(note.path) ? t('Protected') : snippetOf(change)}</span
+              >{workspace.protection.locked(note.path) ? 'Protected' : snippetOf(change)}</span
             >
             <Tally added={change.added} removed={change.removed} />
           </button>
           <span class="pair">
             <button class="orden-chip is-quiet" onclick={() => void review.undo([change])}
-              >{t('Undo')}</button
+              >Undo</button
             >
-            <button class="orden-chip" onclick={() => review.keep([change])}>{t('Keep')}</button>
+            <button class="orden-chip" onclick={() => review.keep([change])}>Keep</button>
           </span>
         </div>
       {/each}
@@ -119,9 +118,9 @@
       {/if}
       <span class="pair">
         <button class="orden-chip is-quiet" onclick={() => void review.undoFiles(thread, [file])}
-          >{t('Undo')}</button
+          >Undo</button
         >
-        <button class="orden-chip" onclick={() => review.keepFiles([file])}>{t('Keep')}</button>
+        <button class="orden-chip" onclick={() => review.keepFiles([file])}>Keep</button>
       </span>
     </div>
   {/each}

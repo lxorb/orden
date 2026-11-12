@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../../i18n.svelte'
   import { alwaysOffered, crateAnswers, sayAlways } from '../chat/approvals'
   import type { Part, Thread } from '../chat/types'
   import Asked from './Asked.svelte'
@@ -23,18 +22,18 @@
   <Asked {part} />
   <div class="answers">
     <button class="orden-button" disabled={answering} onclick={() => void answer(true)}
-      >{t('Approve')}</button
+      >Approve</button
     >
     {#if thread && alwaysOffered(part.result?.category)}
       <button
         class="orden-button is-quiet"
         disabled={answering}
-        title={t('Always in this thread')}
-        onclick={() => void answer(true, true)}>{t('Always')}</button
+        title="Always in this thread"
+        onclick={() => void answer(true, true)}>Always</button
       >
     {/if}
     <button class="orden-button is-quiet" disabled={answering} onclick={() => void answer(false)}
-      >{t('Deny')}</button
+      >Deny</button
     >
   </div>
 </div>

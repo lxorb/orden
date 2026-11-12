@@ -1,6 +1,6 @@
 import { api } from './api'
 import { account } from './account.svelte'
-import { message } from './i18n.svelte'
+import { message } from './message'
 import { isRecord, keep, keepJson, stored, storedText } from './stored'
 
 const STORAGE_KEY = 'orden:llm'

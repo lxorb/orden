@@ -52,7 +52,7 @@ async () => {
 """
 
 HOLD = """
-([path, name, kind, rtl]) => {
+([path, name, kind]) => {
   const hour = 60 * 60 * 1000
   const now = Date.now()
   const card = (text, colour) => JSON.stringify({
@@ -67,15 +67,10 @@ HOLD = """
     text,
     marks: words.map((word) => [text.indexOf(word), text.indexOf(word) + word.length]),
   })
-  const words = rtl
-    ? {
-        mine: marked('نلتقي عند الظهر يوم الجمعة في المحطة القديمة.', ['عند الظهر', 'الجمعة', 'القديمة']),
-        theirs: marked('نلتقي في الواحدة يوم السبت في المحطة الجديدة.', ['في الواحدة', 'السبت', 'الجديدة']),
-      }
-    : {
-        mine: marked('We meet at noon on Friday, at the old station.', ['noon', 'Friday', 'old']),
-        theirs: marked('We meet at one on Saturday, at the new station by the river.', ['one', 'Saturday', 'new', 'by the river']),
-      }
+  const words = {
+    mine: marked('We meet at noon on Friday, at the old station.', ['noon', 'Friday', 'old']),
+    theirs: marked('We meet at one on Saturday, at the new station by the river.', ['one', 'Saturday', 'new', 'by the river']),
+  }
   const side = (who, at) => ({
     device: who === 'mine' ? 'Laptop' : 'iPhone',
     at: now - at * hour,
@@ -119,7 +114,7 @@ def axe(page: Page, name: str) -> None:
         if one["impact"] in ("serious", "critical") and one["id"] not in KNOWN:
             wrong(f"axe on {name}: {one['impact']} {one['id']} x{one['nodes']} {one['where']}")
 
-def window(browser: Browser, scheme: str, size: dict, phone: bool = False, language: str = "") -> Page:
+def window(browser: Browser, scheme: str, size: dict, phone: bool = False) -> Page:
     context = browser.new_context(
         viewport=size,
         color_scheme=scheme,
@@ -130,8 +125,6 @@ def window(browser: Browser, scheme: str, size: dict, phone: bool = False, langu
     )
     page = context.new_page()
     page.add_init_script(HIDE_CARET)
-    if language:
-        page.add_init_script(f"localStorage.setItem('orden:language', {json.dumps(language)})")
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.on(
         "console",
@@ -145,8 +138,8 @@ def window(browser: Browser, scheme: str, size: dict, phone: bool = False, langu
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     return page
 
-def held_up(page: Page, path: str, name: str, kind: str = "note", rtl: bool = False) -> None:
-    page.evaluate(HOLD, [path, name, kind, rtl])
+def held_up(page: Page, path: str, name: str, kind: str = "note") -> None:
+    page.evaluate(HOLD, [path, name, kind])
     wait_for(page, "document.querySelector('[role=dialog] .sides')", f"the question about {name}")
 
 def sheet(page: Page, name: str, phone: bool = False) -> None:
@@ -223,23 +216,6 @@ def phone(browser: Browser) -> None:
             wrong(f"phone-{scheme}: the two cards are not one over the other")
         page.context.close()
 
-def arabic(browser: Browser) -> None:
-    page = window(browser, "light", DESKTOP, language="ar")
-    wait_for(page, "document.documentElement.dir === 'rtl'", "the interface reading right to left")
-    path = page.evaluate(SEED)
-    held_up(page, path, "Plan", rtl=True)
-    shot(page, "desktop-arabic")
-    axe(page, "desktop-arabic")
-    order = page.evaluate(
-        """() => {
-          const [mine, theirs] = [...document.querySelectorAll('.side')].map((card) => card.getBoundingClientRect())
-          return { mine: mine.left, theirs: theirs.left }
-        }"""
-    )
-    if order["mine"] <= order["theirs"]:
-        wrong(f"arabic: this device's card is not on the right: {order}")
-    page.context.close()
-
 def canvas(browser: Browser) -> None:
     page = window(browser, "light", DESKTOP)
     page.evaluate(SEED)
@@ -256,12 +232,11 @@ def main() -> int:
         desktop(browser)
         dark(browser)
         phone(browser)
-        arabic(browser)
         canvas(browser)
 
     (SHOTS / "axe.json").write_text(json.dumps(axe_table, indent=2), encoding="utf-8")
 
-    return DRIVE.verdict("the question comes up over the held note, reads either way, and says nothing it need not")
+    return DRIVE.verdict("the question comes up over the held note and says nothing it need not")
 
 if __name__ == "__main__":
     raise SystemExit(main())

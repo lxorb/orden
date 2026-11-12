@@ -25,7 +25,6 @@
   import { shownColour } from './canvas/palette'
   import { cardWriting } from './canvas/writing'
   import { pickedLink } from './composer'
-  import { t } from './i18n.svelte'
   import { links } from './link-index.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { followHref } from './open-link'
@@ -270,7 +269,7 @@
     {@const shown = fileShown(node.file)}
     {#if shown === 'picture'}
       {#if broken}
-        <p class="missing">{t('Nothing here')}</p>
+        <p class="missing">Nothing here</p>
       {:else}
         <img
           class="picture"
@@ -303,7 +302,7 @@
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
       <div class="card page embed orden-rendered" use:embeds>{@html html}</div>
     {:else}
-      <p class="missing">{t('Nothing here')}</p>
+      <p class="missing">Nothing here</p>
     {/if}
   {:else if node.type === 'link'}
     <div class="card link">

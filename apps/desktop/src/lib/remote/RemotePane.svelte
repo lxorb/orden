@@ -2,7 +2,6 @@
   import Facts from '../Facts.svelte'
   import { closeOnBack } from '../backstack.svelte'
   import { dropOver } from '../drag-paths'
-  import { t } from '../i18n.svelte'
   import { prompt } from '../prompt.svelte'
   import { arrive } from '../slide'
   import { invoke } from '../tauri'
@@ -25,15 +24,15 @@
   async function add() {
     problem = ''
     const typed = await prompt.ask({
-      title: t('Add host'),
+      title: 'Add host',
       placeholder: 'user@host:22',
-      confirmLabel: t('Add'),
+      confirmLabel: 'Add',
     })
     if (typed === null) return
 
     const wanted = destinationOf(typed)
     if (!wanted) {
-      problem = t('Not an address')
+      problem = 'Not an address'
       return
     }
     const made = await remote.make(wanted)
@@ -105,8 +104,8 @@
               <button
                 class="orden-glyph"
                 disabled={at === 0}
-                title={t('Move up')}
-                aria-label={t('Move up')}
+                title="Move up"
+                aria-label="Move up"
                 onclick={() => move(at, at - 1)}
               >
                 <svg viewBox="0 0 16 16"><path d="M4.5 9.5L8 6l3.5 3.5" /></svg>
@@ -114,8 +113,8 @@
               <button
                 class="orden-glyph"
                 disabled={at === remote.hosts.length - 1}
-                title={t('Move down')}
-                aria-label={t('Move down')}
+                title="Move down"
+                aria-label="Move down"
                 onclick={() => move(at, at + 1)}
               >
                 <svg viewBox="0 0 16 16"><path d="M4.5 6.5L8 10l3.5-3.5" /></svg>
@@ -126,12 +125,12 @@
             <span class="orden-setting-mark plus" aria-hidden="true"
               ><svg viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" /></svg></span
             >
-            <span class="name">{t('Add host')}</span>
+            <span class="name">Add host</span>
           </button>
         </div>
 
         {#if remote.file}
-          <button class="link" onclick={() => void openConfig()}>{t('Open config')}</button>
+          <button class="link" onclick={() => void openConfig()}>Open config</button>
         {/if}
       {/if}
 

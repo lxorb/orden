@@ -5,7 +5,7 @@
   import { onMount, untrack } from 'svelte'
   import { chooseFiles } from '../../choose-files'
   import { pickedLink } from '../../composer'
-  import { amount, i18n, t } from '../../i18n.svelte'
+  import { localDate, localNumber } from '../../region'
   import { links } from '../../link-index.svelte'
   import { DIVIDER, menu } from '../../menu.svelte'
   import { modes } from '../../modes.svelte'
@@ -207,7 +207,7 @@
       return
     }
     if (!words.trim() && !attachments.refs.length) return
-    const long = asFile(words, t('Text'))
+    const long = asFile(words, 'Text')
     if (long) {
       if (!(await attachments.took(long))) return
       setText('')
@@ -224,11 +224,11 @@
     if (/(?:^|\s)@(?:here|everyone)\b/.test(words) && page.members.length > ASK_EVERYONE_PAST) {
       const { prompt } = await import('../../prompt.svelte')
       const said = await prompt.choose({
-        title: t('Send'),
+        title: 'Send',
         detail: words.slice(0, 200),
         options: [
-          { id: 'send', label: t('Send'), primary: true },
-          { id: 'no', label: t('Cancel') },
+          { id: 'send', label: 'Send', primary: true },
+          { id: 'no', label: 'Cancel' },
         ],
       })
       if (said !== 'send') return
@@ -336,7 +336,7 @@
     const files = [...(event.clipboardData?.files ?? [])]
     const long = files.length
       ? null
-      : asFile(event.clipboardData?.getData('text/plain') ?? '', t('Text'))
+      : asFile(event.clipboardData?.getData('text/plain') ?? '', 'Text')
     if (!files.length && !long) return
     event.preventDefault()
     event.stopPropagation()
@@ -346,14 +346,14 @@
   function attach(event: MouseEvent) {
     menu.show(event, [
       {
-        label: t('File'),
+        label: 'File',
         run: () => void chooseFiles({ multiple: true }).then((files) => attachments.add(files)),
       },
       ...(onpoll && !parent
         ? [
             DIVIDER,
             {
-              label: t('Poll'),
+              label: 'Poll',
               run: () => onpoll((poll) => page.post('', { poll })),
             },
           ]
@@ -368,7 +368,7 @@
     menu.show(
       event,
       times.map((when) => ({
-        label: i18n.when(when, { weekday: 'long', hour: 'numeric', minute: '2-digit' }),
+        label: localDate(when, { weekday: 'long', hour: 'numeric', minute: '2-digit' }),
         run: () => {
           page.schedule(words, when)
           setText('')
@@ -376,7 +376,7 @@
           setTimeout(() => void lookWaiting(), 300)
         },
       })),
-      { title: t('Send later') },
+      { title: 'Send later' },
     )
   }
 
@@ -395,12 +395,12 @@
     menu.show(
       event,
       waiting.map((one) => ({
-        label: `${i18n.when(one.sendAt, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}  ${firstLine(one.post.body)}`,
+        label: `${localDate(one.sendAt, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}  ${firstLine(one.post.body)}`,
         run: () => undefined,
         more: () =>
           Promise.resolve([
             {
-              label: t('Delete'),
+              label: 'Delete',
               danger: true,
               run: () => {
                 page.remove(one.post.message)
@@ -409,7 +409,7 @@
             },
           ]),
       })),
-      { title: t('Scheduled') },
+      { title: 'Scheduled' },
     )
   }
 
@@ -428,7 +428,7 @@
       <Glyph name={aside.kind === 'edit' ? 'pencil' : 'quote'} />
       <span class="aside-words">
         {#if aside.kind === 'edit'}
-          {t('Edit')}
+          Edit
         {:else}
           <strong>{nameOf(aside.message.author, page.members, space)}</strong>
           {aside.message.body.split('\n')[0]}
@@ -437,7 +437,7 @@
       <button
         type="button"
         class="orden-glyph"
-        aria-label={t('Cancel')}
+        aria-label="Cancel"
         onclick={() => (page.aside = null)}><Glyph name="close" /></button
       >
     </div>
@@ -460,7 +460,7 @@
           <button
             type="button"
             class="chip-off"
-            aria-label={t('Remove')}
+            aria-label="Remove"
             onclick={() => attachments.remove(one.id)}><Glyph name="close" /></button
           >
         </span>
@@ -475,8 +475,8 @@
       <button
         type="button"
         class="tool"
-        aria-label={t('Attach something')}
-        use:tip={() => t('Attach something')}
+        aria-label="Attach something"
+        use:tip={() => 'Attach something'}
         onclick={attach}><Glyph name="attach" /></button
       >
       <div class="field">
@@ -488,16 +488,16 @@
       <button
         type="button"
         class="tool"
-        aria-label={t('Emoji')}
-        use:tip={() => t('Emoji')}
+        aria-label="Emoji"
+        use:tip={() => 'Emoji'}
         onclick={(event) => onpicker(event.currentTarget, insert)}><Glyph name="smile" /></button
       >
       {#if empty && !attachments.list.length && !aside}
         <button
           type="button"
           class="tool"
-          aria-label={t('Voice message')}
-          use:tip={() => shortcuts.tooltip(t('Voice message'), 'chat.record')}
+          aria-label="Voice message"
+          use:tip={() => shortcuts.tooltip('Voice message', 'chat.record')}
           onclick={() => (recording = true)}><Glyph name="mic" /></button
         >
       {:else}
@@ -505,12 +505,12 @@
           <button
             type="button"
             class="send"
-            aria-label={t('Send')}
+            aria-label="Send"
             disabled={!attachments.ready}
             onclick={() => void send()}><Glyph name="send" /></button
           >
           {#if !parent && !aside && !attachments.list.length}
-            <button type="button" class="later" aria-label={t('Send later')} onclick={later}
+            <button type="button" class="later" aria-label="Send later" onclick={later}
               ><Glyph name="chevron" /></button
             >
           {/if}
@@ -521,9 +521,9 @@
 
   <div class="foot">
     {#if waiting.length}
-      <button type="button" class="waiting" aria-label={t('Scheduled')} onclick={showWaiting}>
+      <button type="button" class="waiting" aria-label="Scheduled" onclick={showWaiting}>
         <Glyph name="clock" />
-        {amount(waiting.length)}
+        {localNumber(waiting.length)}
       </button>
     {/if}
     {#if parent}
@@ -535,7 +535,7 @@
         onclick={() => (alsoToChat = !alsoToChat)}
       >
         <span class="tick" class:on={alsoToChat} aria-hidden="true"></span>
-        {t('Also send to {chat}', { chat: page.entry?.name ?? '' })}
+        Also send to {page.entry?.name ?? ''}
       </button>
     {/if}
     {#if typing.length}

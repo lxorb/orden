@@ -10,7 +10,6 @@ import {
   SETTLE_MIN,
   settleOpen,
 } from './swipe'
-import { readingFactor } from './direction'
 import { fullscreen } from './fullscreen.svelte'
 import { dur } from './motion'
 import { isThumbCarrying } from './views/drag.svelte'
@@ -30,7 +29,6 @@ export function followDrawers(host: HTMLElement): () => void {
   let lastX = 0
   let lastAt = 0
   let velocity = 0
-  let factor = 1
   let pointer = 'touch'
   let moving: Drawer | null = null
   let could: Drawer[] = []
@@ -63,9 +61,8 @@ export function followDrawers(host: HTMLElement): () => void {
 
     if (fullscreen.on) return
 
-    factor = readingFactor()
     const atEdge = [drawer, rightDrawer].some(
-      (one) => one.there && fromEdge(touch.clientX, factor, one.sign) <= edge,
+      (one) => one.there && fromEdge(touch.clientX, one.sign) <= edge,
     )
     const under = document.elementFromPoint(touch.clientX, touch.clientY)
     if (ownsGesture(under, host, atEdge)) return
@@ -81,8 +78,7 @@ export function followDrawers(host: HTMLElement): () => void {
       out.width = width
     } else {
       could = [drawer, rightDrawer].filter(
-        (one) =>
-          one.there && opensDrawer(fromEdge(touch.clientX, factor, one.sign), edge, anywhere),
+        (one) => one.there && opensDrawer(fromEdge(touch.clientX, one.sign), edge, anywhere),
       )
       if (!could.length) return
 
@@ -102,7 +98,7 @@ export function followDrawers(host: HTMLElement): () => void {
     const touch = single(event)
     if (!candidate || !touch) return
 
-    const along = (touch.clientX - startX) * factor
+    const along = touch.clientX - startX
     const dy = touch.clientY - startY
 
     if (!claimed) {
@@ -146,7 +142,7 @@ export function followDrawers(host: HTMLElement): () => void {
     if (!ready || !width || !moving) return
 
     const elapsed = event.timeStamp - lastAt
-    if (elapsed > 0) velocity = ((touch.clientX - lastX) / elapsed) * factor * moving.sign
+    if (elapsed > 0) velocity = ((touch.clientX - lastX) / elapsed) * moving.sign
     lastX = touch.clientX
     lastAt = event.timeStamp
 

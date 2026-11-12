@@ -139,11 +139,11 @@ describe('the hand-written panes the search knows about', () => {
   const source = readFileSync(join(import.meta.dirname, './settings/places.ts'), 'utf8')
 
   test('name how long the account keeps a note’s history', () => {
-    expect(source).toContain("label: t('History on the account')")
-    expect(source).toContain("t('Keep versions')")
+    expect(source).toContain("label: 'History on the account'")
+    expect(source).toContain("'Keep versions'")
   })
 
   test('and the rescue under it, which is the one nobody wants to hunt for', () => {
-    expect(source).toContain("label: t('Go back')")
+    expect(source).toContain("label: 'Go back'")
   })
 })

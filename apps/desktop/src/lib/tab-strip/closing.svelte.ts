@@ -13,7 +13,6 @@ export class ClosingWidths {
     order: readonly string[],
     by: 'mouse' | 'touch',
     rect: () => Rect | null,
-    factor: () => number,
   ) {
     if (this.widths) return
 
@@ -28,7 +27,7 @@ export class ClosingWidths {
 
     const moved = (event: PointerEvent) => {
       const box = rect()
-      if (!box || !near(box, event.clientX, event.clientY, factor())) this.letGo()
+      if (!box || !near(box, event.clientX, event.clientY)) this.letGo()
     }
     const left = () => this.letGo()
 

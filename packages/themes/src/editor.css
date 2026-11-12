@@ -883,7 +883,7 @@
   padding-inline-end: 4px;
   display: grid;
   grid-template-columns: repeat(2, 17px);
-  transform: translate(calc(var(--dir) * 4px), -50%);
+  transform: translate(4px, -50%);
 }
 
 .orden-table-rows.is-shown,
@@ -1148,7 +1148,7 @@
 
 .orden-toc a:hover {
   color: var(--accent);
-  transform: translateX(calc(var(--dir) * 2px));
+  transform: translateX(2px);
 }
 
 .orden-toc-empty::before {

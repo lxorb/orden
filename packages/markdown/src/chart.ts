@@ -207,20 +207,12 @@ function round(value: number): string {
   return (Math.round(value * 100) / 100).toString()
 }
 
-const ENGLISH = 'en-US'
-
-let tongue = ENGLISH
-
-export function setChartLocale(tag: string): void {
-  tongue = tag || ENGLISH
-}
-
 export interface ChartOptions {
   locale?: string | undefined
 }
 
 function sayer(options?: ChartOptions): (value: number) => string {
-  const format = new Intl.NumberFormat(options?.locale ?? tongue)
+  const format = new Intl.NumberFormat(options?.locale)
   return (value) =>
     format.format(Math.abs(value) > 1e15 ? value : Math.round(value * 100) / 100 + 0)
 }

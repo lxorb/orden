@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onDestroy, tick, untrack } from 'svelte'
-  import { t } from './lib/i18n.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
   import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
@@ -145,7 +144,7 @@
 
   const writingIn = $derived(padOver ? (pad.view ?? view) : view)
 
-  const fabLabel = $derived(hiddenKinds.offers('note') ? t('New note') : t('New tab'))
+  const fabLabel = $derived(hiddenKinds.offers('note') ? 'New note' : 'New tab')
 
   let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
   let macMenuKey: typeof import('./lib/system-menu').macMenuKey = () => false
@@ -721,9 +720,9 @@
 
   $effect(() => {
     const status = sync.status
-    if (status === 'syncing') said.say(t('Syncing'))
-    else if (status === 'error') said.say(sync.lastError ?? t('Sync failed'))
-    else if (status === 'offline') said.say(t('Offline'))
+    if (status === 'syncing') said.say('Syncing')
+    else if (status === 'error') said.say(sync.lastError ?? 'Sync failed')
+    else if (status === 'offline') said.say('Offline')
   })
 </script>
 
@@ -775,7 +774,7 @@
         class:settling={drawer.settle !== null}
         style:transform={drawer.at === null || viewport.narrow
           ? undefined
-          : `translateX(calc(var(--dir) * ${drawer.at - drawer.width}px))`}
+          : `translateX(${drawer.at - drawer.width}px)`}
         style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
         ontransitionend={(event) => drawer.arrived(event)}
       >
@@ -794,7 +793,7 @@
       class:settling={drawer.settle !== null}
       style:transform={drawer.at === null || !viewport.narrow
         ? undefined
-        : `translateX(calc(var(--dir) * ${drawer.at}px))`}
+        : `translateX(${drawer.at}px)`}
       style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
       style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
@@ -858,7 +857,7 @@
             class:settling={rightDrawer.settle !== null}
             style:transform={rightDrawer.at === null
               ? undefined
-              : `translateX(calc(var(--dir) * ${rightDrawer.width - rightDrawer.at}px))`}
+              : `translateX(${rightDrawer.width - rightDrawer.at}px)`}
             style:--settle={rightDrawer.settle === null ? undefined : `${rightDrawer.settle}ms`}
             ontransitionend={(event) => rightDrawer.arrived(event)}
           >
@@ -952,7 +951,7 @@
     {/if}
     {#if reloading.offered}
       <div class="reload" role="alert">
-        <button class="orden-button" onclick={() => location.reload()}>{t('Reload')}</button>
+        <button class="orden-button" onclick={() => location.reload()}>Reload</button>
       </div>
     {/if}
   </div>
@@ -1187,8 +1186,8 @@
   }
 
   .notices:has(> :global(*)) {
-    padding: var(--space-2) max(var(--space-4), var(--inset-end))
-      calc(var(--space-3) + var(--inset-bottom)) max(var(--space-4), var(--inset-start));
+    padding: var(--space-2) max(var(--space-4), var(--inset-right))
+      calc(var(--space-3) + var(--inset-bottom)) max(var(--space-4), var(--inset-left));
   }
 
   main.tabbed .notices:has(> :global(*)) {
@@ -1197,7 +1196,7 @@
 
   main:has(:global(.fab)) .notices:has(> :global(*)) {
     padding-inline-end: calc(
-      max(var(--space-4), var(--inset-end)) + var(--touch-row) + var(--space-2)
+      max(var(--space-4), var(--inset-right)) + var(--touch-row) + var(--space-2)
     );
   }
 
@@ -1221,7 +1220,7 @@
 
   .fab {
     position: absolute;
-    inset-inline-end: max(var(--space-4), var(--inset-end));
+    inset-inline-end: max(var(--space-4), var(--inset-right));
     bottom: calc(var(--space-4) + var(--inset-bottom));
     z-index: var(--z-float);
     width: var(--touch-row);
@@ -1251,7 +1250,7 @@
   }
 
   :global([data-touch]) .panels {
-    padding-inline-start: var(--inset-start);
+    padding-inline-start: var(--inset-left);
   }
 
   :global([data-drawer]) .panels {
@@ -1259,7 +1258,7 @@
     inset-block: 0 var(--keyboard, 0px);
     inset-inline: 0 auto;
     z-index: var(--z-drawer);
-    transform: translateX(calc(var(--dir) * -100%));
+    transform: translateX(-100%);
     transition:
       transform var(--dur-base) var(--ease-out),
       box-shadow var(--dur-base) var(--ease-out);
@@ -1310,7 +1309,7 @@
   :global([data-drawer]) .panels.right {
     inset-block: 0;
     inset-inline: auto 0;
-    transform: translateX(calc(var(--dir) * 100%));
+    transform: translateX(100%);
   }
 
   :global([data-drawer]) .panels.right.open {
@@ -1324,7 +1323,7 @@
     transition:
       transform var(--dur-base) var(--ease-out),
       box-shadow var(--dur-base) var(--ease-out);
-    transform: translateX(calc(var(--dir) * 100%));
+    transform: translateX(100%);
   }
 
   :global([data-drawer]) .panels:not(.open, .dragging, .settling),
@@ -1357,7 +1356,7 @@
     position: relative;
     z-index: var(--z-lifted);
     background: var(--bg);
-    box-shadow: calc(var(--dir) * -16px) 0 40px rgb(0 0 0 / calc(0.3 * var(--shade)));
+    box-shadow: -16px 0 40px rgb(0 0 0 / calc(0.3 * var(--shade)));
     transition:
       transform var(--dur-base) var(--ease-out),
       box-shadow var(--dur-base) var(--ease-out);
@@ -1365,7 +1364,7 @@
   }
 
   :global([data-drawer][data-narrow]) .document.open {
-    transform: translateX(calc(var(--dir) * 100%));
+    transform: translateX(100%);
     --shade: 0;
   }
 

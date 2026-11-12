@@ -46,7 +46,6 @@ import {
 } from '@orden/glasses/choices'
 import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
-import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, keepJson, stored, stringList } from './stored'
 import { currentWindow, invoke, isDesktop } from './tauri'
 import { theme } from './theme.svelte'
@@ -148,10 +147,10 @@ interface Saved {
 }
 
 export const VIM_WORDS: Record<VimMode, string> = {
-  normal: key('NORMAL'),
-  insert: key('INSERT'),
-  visual: key('VISUAL'),
-  replace: key('REPLACE'),
+  normal: 'NORMAL',
+  insert: 'INSERT',
+  visual: 'VISUAL',
+  replace: 'REPLACE',
 }
 
 function clamp(value: number, steps: readonly number[]): number {

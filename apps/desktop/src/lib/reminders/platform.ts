@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { frameWord, method, NoWord } from '../mobile/bridge'
 import { notify } from '../notify'
 import { parsed } from '../stored'
@@ -14,12 +13,12 @@ function untilTomorrow(at: number): number {
 
 function words() {
   return {
-    done: t('Done'),
-    snooze: t('Snooze'),
-    minutes: t('{count} min', { count: 15 }),
-    hour: t('{count} min', { count: 60 }),
-    tomorrow: t('Tomorrow'),
-    channel: t('Reminders'),
+    done: 'Done',
+    snooze: 'Snooze',
+    minutes: '15 min',
+    hour: '60 min',
+    tomorrow: 'Tomorrow',
+    channel: 'Reminders',
   }
 }
 

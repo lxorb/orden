@@ -1,5 +1,4 @@
 import { shownWords } from '@orden/markdown/escapes'
-import { t } from '../i18n.svelte'
 import { shownName } from '../note-name'
 import { insideSpace } from '../space-paths'
 import { afterQuiet } from '../timing'
@@ -75,13 +74,13 @@ function widgetState(today: TodayRow[]): WidgetState {
     : []
 
   return {
-    title: workspace.activeSpace?.name ?? t('Notes'),
-    empty: t('Nothing here'),
+    title: workspace.activeSpace?.name ?? 'Notes',
+    empty: 'Nothing here',
     notes: widgetRows(
       workspace.notes.filter((one) => !workspace.archive.has(one.path)),
       kept,
     ),
-    today: { title: t('Today'), empty: '', tasks: today },
+    today: { title: 'Today', empty: '', tasks: today },
   }
 }
 

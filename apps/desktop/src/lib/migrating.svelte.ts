@@ -1,7 +1,7 @@
 import { busy } from './busy.svelte'
 import { firstVisit } from './first-visit.svelte'
-import { message, t } from './i18n.svelte'
-import { type FormatId, worthKnowing } from './import/plan'
+import { message } from './message'
+import type { FormatId } from './import/plan'
 import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
 import { insideFolder, pickedFolder, sourcesFrom, type Picked, type Source } from './import/sources'
 import type { BrowserProfile, FoundBrowser } from './import/browsers'
@@ -65,7 +65,7 @@ class Migrating {
     const [only] = found
     if (found.length > 1) this.profiles = found
     else if (only) await this.zenProfile(only)
-    else busy.failed(t('Zen’s tabs could not be read.'))
+    else busy.failed('Zen’s tabs could not be read.')
   }
 
   async zenProfile(profile: ZenProfile) {
@@ -123,11 +123,11 @@ class Migrating {
     this.working = true
 
     try {
-      await busy.run(t('Importing'), async () => {
+      await busy.run('Importing', async () => {
         try {
           await task()
         } catch (error) {
-          busy.failed(message(error, t('That import could not be written.')))
+          busy.failed(message(error, 'That import could not be written.'))
         }
       })
     } finally {
@@ -152,18 +152,18 @@ export async function importAsSpace(
   ])
 
   const format = await detect(sources)
-  if (!format) throw new Error(t('Nothing in there can be read as notes.'))
+  if (!format) throw new Error('Nothing in there can be read as notes.')
 
   const carried = await carriedBy(format, sources)
   const plan = await spelledAs(carried?.linkFormat, () => readAs(format, sources))
   const shown = plan.files.some((one) => !one.path.split('/').some((part) => part.startsWith('.')))
   if (!shown) {
-    const said = [t('Nothing in there can be read as notes.'), ...plan.lost.map(worthKnowing)]
+    const said = ['Nothing in there can be read as notes.', ...plan.lost]
     throw new Error(said.join(' '))
   }
 
   const space = await workspace.addSpace(typeof name === 'string' ? name : await name(format))
-  if (!space) throw new Error(t('That import could not be written.'))
+  if (!space) throw new Error('That import could not be written.')
 
   await applyImport(plan, { root: space.root, folder: '' })
 
@@ -173,7 +173,7 @@ export async function importAsSpace(
   }
 
   await workspace.loadTree()
-  if (plan.lost.length) busy.failed(plan.lost.map(worthKnowing).join(' '))
+  if (plan.lost.length) busy.failed(plan.lost.join(' '))
   return space
 }
 

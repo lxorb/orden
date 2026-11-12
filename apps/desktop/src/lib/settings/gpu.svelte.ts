@@ -1,4 +1,3 @@
-import { key, t } from '../i18n.svelte'
 import { prompt } from '../prompt.svelte'
 import { invoke } from '../tauri'
 import { restartToUpdate } from '../updater'
@@ -17,8 +16,8 @@ class Gpu {
     this.on = on
     await invoke('gpu_choose', { on })
     const now = await prompt.confirm({
-      title: t('Restart {name}?', { name: 'Orden' }),
-      confirmLabel: key('Restart now'),
+      title: `Restart Orden?`,
+      confirmLabel: 'Restart now',
     })
     if (now) await restartToUpdate(false)
   }

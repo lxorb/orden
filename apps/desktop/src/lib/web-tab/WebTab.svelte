@@ -6,7 +6,6 @@
   import Door from '../Door.svelte'
   import { fullscreen } from '../fullscreen.svelte'
   import { chrome, landed } from '../glass/chrome.svelte'
-  import { t } from '../i18n.svelte'
   import { keyElsewhere } from '../layer-keys'
   import { menu } from '../menu.svelte'
   import { dur, fade } from '../motion'
@@ -277,7 +276,7 @@
     if (!own) return
     untrack(() => {
       page.url = address
-      page.title = t('History')
+      page.title = 'History'
       page.icon = HISTORY_MARK
     })
   })
@@ -291,9 +290,7 @@
     const now = apart
     untrack(() => {
       if (page.own === now || !page.live) return
-      const said = now
-        ? t('This note keeps its own web data now')
-        : t('Back on the shared web data')
+      const said = now ? 'This note keeps its own web data now' : 'Back on the shared web data'
       void pages.rehouse(tab.id, now, said)
     })
   })
@@ -545,7 +542,7 @@
       label: visited.titleOf(book, url) || shownAddress(url),
       run: () => void pages.step(tab.id, forward ? 'forward' : 'back', by),
     }))
-    menu.show(event, rows, { title: forward ? t('Forward') : t('Back') })
+    menu.show(event, rows, { title: forward ? 'Forward' : 'Back' })
   }
 
   function zoomTo(factor: number) {
@@ -605,8 +602,8 @@
         if (!url) {
           const why = unopened(said)
           if (why === 'own page') actions.history()
-          else if (why === 'file') page.notice = t('That file could not be read')
-          else if (why === 'link') page.notice = t('that link could not be followed')
+          else if (why === 'file') page.notice = 'That file could not be read'
+          else if (why === 'link') page.notice = 'that link could not be followed'
           return
         }
 
@@ -623,7 +620,7 @@
       onnote={(path: string) =>
         void import('./web-notes').then((one) => one.openWebNote(workspace, tab, path))}
       onmenu={(event: MouseEvent) =>
-        menu.show(event, webRows(page, page.zoom, actions), { title: t('Website') })}
+        menu.show(event, webRows(page, page.zoom, actions), { title: 'Website' })}
       onsite={() => {
         showingSite = !showingSite
         showingDownloads = false
@@ -674,14 +671,14 @@
 
     {#if page.blocked}
       <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
-        <p>{t('Pop-up blocked')}</p>
+        <p>Pop-up blocked</p>
         <button class="orden-button is-quiet" onclick={() => pages.openBlocked(tab.id)}>
-          {t('Open')}
+          Open
         </button>
         <button
           class="orden-glyph"
-          aria-label={t('Close')}
-          title={t('Close')}
+          aria-label="Close"
+          title="Close"
           onclick={() => (page.blocked = null)}
         >
           <Cross small />
@@ -691,14 +688,14 @@
 
     {#if page.unplayable}
       <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
-        <p>{t("This media can't play here")}</p>
+        <p>This media can't play here</p>
         <button class="orden-button is-quiet" onclick={() => void openExternal(page.at ?? address)}>
-          {t('Open in the browser')}
+          Open in the browser
         </button>
         <button
           class="orden-glyph"
-          aria-label={t('Close')}
-          title={t('Close')}
+          aria-label="Close"
+          title="Close"
           onclick={() => (page.unplayable = false)}
         >
           <Cross small />
@@ -787,10 +784,10 @@
       {/if}
       <div class="rows">
         <button class="orden-button" onclick={() => void pages.step(tab.id, 'reload')}>
-          {t('Reload')}
+          Reload
         </button>
         <button class="orden-button is-quiet" onclick={() => void openExternal(address)}>
-          {t('Open in the browser')}
+          Open in the browser
         </button>
       </div>
     </div>
@@ -844,14 +841,14 @@
               page.framing = 'frame'
             }}
           >
-            {t('Show it here')}
+            Show it here
           </button>
           <button class="orden-button is-quiet" onclick={() => void openExternal(address)}>
-            {t('Open in the browser')}
+            Open in the browser
           </button>
         </div>
       {:else}
-        <p class="site">{t('Address')}</p>
+        <p class="site">Address</p>
       {/if}
     </div>
   {/if}

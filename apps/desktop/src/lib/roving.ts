@@ -1,4 +1,3 @@
-import { steppedKey } from './direction'
 import { focusEditor } from './focus'
 import { chorded } from './keys'
 import { spelled, type Spelling } from './list-keys'
@@ -115,7 +114,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     const count = long ? long.count() : rows.length
     const own = bare ? event.key : null
     const pressed = ENDS.has(event.key) ? own : settings.keyOf ? settings.keyOf(event) : own
-    const key = pressed === null ? null : steppedKey(pressed)
+    const key = pressed
 
     const moves = settings.across ? ACROSS : DOWN
     const move = key === null ? undefined : moves[key]

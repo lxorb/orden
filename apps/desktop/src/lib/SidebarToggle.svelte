@@ -1,7 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte'
   import { intoSide } from './focus'
-  import { t } from './i18n.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { type PanelSide, workspace } from './workspace.svelte'
 
@@ -19,11 +18,11 @@
   const label = $derived(
     side === 'left'
       ? open
-        ? t('Hide left sidebar')
-        : t('Show left sidebar')
+        ? 'Hide left sidebar'
+        : 'Show left sidebar'
       : open
-        ? t('Hide right sidebar')
-        : t('Show right sidebar'),
+        ? 'Hide right sidebar'
+        : 'Show right sidebar',
   )
 
   let opened = false

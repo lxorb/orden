@@ -3,10 +3,7 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:f
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { undrawable } from '@orden/glasses'
-import { serverWords, stringsIn } from '../../../even-catalogues'
 import {
   APP_FOLDERS,
   BUDGETS,
@@ -17,7 +14,6 @@ import {
   sourceOf,
 } from '../../../even-contents'
 import manifest from '../../../even.app.json'
-import type { Dictionary } from '../i18n.svelte'
 
 const app = resolve(import.meta.dirname, '../../..')
 const staged = mkdtempSync(join(tmpdir(), 'orden-even-'))
@@ -38,15 +34,6 @@ function walk(dir: string): string[] {
 
 let files: { name: string; text: string }[] = []
 
-const WRITTEN = import.meta.glob<Record<string, Dictionary>>('../../locales/*.ts')
-const languageOf = (path: string) => /([\w-]+)\.ts$/.exec(path)?.[1] ?? path
-
-const catalogues = new Map<string, string>()
-
-const KEYS_CHUNK = /^catalogue-keys-[\w-]{8}\.js$/
-
-let asked = new Set<string>()
-
 beforeAll(() => {
   execFileSync(
     'pnpm',
@@ -66,20 +53,6 @@ beforeAll(() => {
   files = walk(staged)
     .filter((one) => /\.(js|css|html|json|webmanifest)$/.test(one))
     .map((one) => ({ name: one.slice(staged.length + 1), text: readFileSync(one, 'utf8') }))
-
-  const code = files.filter((one) => one.name.endsWith('.js'))
-  for (const path of Object.keys(WRITTEN)) {
-    const id = languageOf(path)
-    const chunk = code.find((one) => new RegExp(`^${id}-[\\w-]{8}\\.js$`).test(basename(one.name)))
-    if (chunk) catalogues.set(id, chunk.name)
-  }
-  const shipping = new Set(catalogues.values())
-  for (const one of code) if (KEYS_CHUNK.test(basename(one.name))) shipping.add(one.name)
-  asked = serverWords()
-  for (const one of code) {
-    if (shipping.has(one.name)) continue
-    for (const text of stringsIn(one.text)) asked.add(text)
-  }
 }, 300_000)
 
 afterAll(() => {
@@ -280,12 +253,9 @@ describe('the bundle a package is made of', () => {
   })
 
   test('weighs what each part of it may', () => {
-    const parts: Record<Part, number> = { code: 0, catalogues: 0, styles: 0, fonts: 0, pages: 0 }
-    const catalogue = new Set(catalogues.values())
+    const parts: Record<Part, number> = { code: 0, styles: 0, fonts: 0, pages: 0 }
     for (const path of walk(staged)) {
-      const name = path.slice(staged.length + 1)
-      const words = catalogue.has(name) || KEYS_CHUNK.test(basename(name))
-      parts[partOf(name, words)] += statSync(path).size
+      parts[partOf(path.slice(staged.length + 1))] += statSync(path).size
     }
 
     const over = Object.entries(parts)
@@ -300,84 +270,8 @@ describe('the bundle a package is made of', () => {
     expect(names.filter((one) => one.startsWith('KaTeX_')).length).toBeGreaterThan(10)
   })
 
-  test('writes the English its catalogues share once', () => {
-    const keys = files.filter((one) => KEYS_CHUNK.test(basename(one.name)))
-    expect(keys).toHaveLength(1)
-    const german = files.find((one) => one.name === catalogues.get('de'))
-    expect(keys[0]?.text).toContain('Add task')
-    expect(german?.text).toContain('Aufgabe hinzufügen')
-    expect(german?.text).not.toContain('Add task')
-  })
-
   test('is small enough for the platform to be comfortable with', () => {
     const bytes = walk(staged).reduce((sum, one) => sum + statSync(one).size, 0)
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
-  })
-
-  test('ships the catalogues the firmware can draw, and only those', () => {
-    const where = resolve(app, 'src/locales')
-    const catalogues = readdirSync(where).filter((one) => one.endsWith('.ts'))
-    expect(catalogues.length).toBeGreaterThan(30)
-
-    const chunks = files.map((one) => one.name.split(/[\\/]/).at(-1) ?? '')
-    const wrong: string[] = []
-
-    for (const name of catalogues) {
-      const id = name.replace('.ts', '')
-      const share = undrawable(readFileSync(resolve(where, name), 'utf8'))
-      const shipped = chunks.some((one) => new RegExp(`^${id}-[\\w-]+\\.js$`).test(one))
-
-      if (share > 0.1 && shipped) wrong.push(`${id} is ${(share * 100).toFixed(1)}% boxes, shipped`)
-      if (share <= 0.1 && !shipped) wrong.push(`${id} is drawable and is not in the package`)
-    }
-
-    expect(wrong.join('\n')).toBe('')
-  }, 240_000)
-
-  describe('the rows of each catalogue it ships', () => {
-    const shipped: { id: string; file: string; rows: Dictionary; written: Dictionary }[] = []
-
-    beforeAll(async () => {
-      const read = async (from: Promise<Record<string, Dictionary>>) =>
-        Object.values(await from)[0] ?? {}
-
-      const loading = Object.entries(WRITTEN).flatMap(([path, load]) => {
-        const id = languageOf(path)
-        const file = catalogues.get(id)
-        if (!file) return []
-        const url = pathToFileURL(join(staged, file)).href
-        const both = Promise.all([
-          read(import(url) as Promise<Record<string, Dictionary>>),
-          read(load()),
-        ])
-        return [both.then(([rows, written]) => ({ id, file, rows, written }))]
-      })
-      shipped.push(...(await Promise.all(loading)))
-    })
-
-    test('are all found', () => {
-      expect(shipped.length).toBeGreaterThan(20)
-    })
-
-    test('hold every row the plugin can ask for, as it is written', () => {
-      const missing = shipped.flatMap(({ id, rows, written }) =>
-        Object.keys(written)
-          .filter((english) => asked.has(english))
-          .filter((english) => JSON.stringify(rows[english]) !== JSON.stringify(written[english]))
-          .map((english) => `${id}: ${english}`),
-      )
-
-      expect(missing.slice(0, 12).join('\n')).toBe('')
-    })
-
-    test('and not one it cannot', () => {
-      const unused = shipped.flatMap(({ id, rows }) =>
-        Object.keys(rows)
-          .filter((english) => !asked.has(english))
-          .map((english) => `${id}: ${english}`),
-      )
-
-      expect(unused.slice(0, 12).join('\n')).toBe('')
-    })
   })
 })

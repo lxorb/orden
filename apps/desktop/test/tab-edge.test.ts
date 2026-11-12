@@ -199,9 +199,7 @@ describe('the open tab', () => {
     expect(TABS).toMatch(/const lead = \$derived\(flush \? 0 : LEAD\)/)
     expect(TABS).toContain('style:--lead="{lead}px"')
     expect(rule('.tabs.flush .tab.first .fill')).toMatch(/inset-inline-start: 0;/)
-    expect(TABS).toMatch(
-      /:global\(:root:not\(\[dir='rtl'\]\)\) \.tabs\.flush \.tab\.first\.active \.fill::before,\s+:global\(:root\[dir='rtl'\]\) \.tabs\.flush \.tab\.first\.active \.fill::after \{\s+display: none;/,
-    )
+    expect(TABS).toMatch(/\.tabs\.flush \.tab\.first\.active \.fill::before \{\s+display: none;/)
     const pane = readFileSync(join(import.meta.dirname, '../src/lib/Pane.svelte'), 'utf8')
     expect(pane).toContain('class:straight={!stripped && flushFirst(pane.id)}')
     expect(pane).toMatch(/\.pane\.straight \{\s+border-start-start-radius: 0;/)

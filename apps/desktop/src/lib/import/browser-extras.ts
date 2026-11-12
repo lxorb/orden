@@ -1,6 +1,4 @@
-import { key, t } from '../i18n.svelte'
 import { invoke } from '../tauri'
-import type { Lost } from './plan'
 import type { BrowserEngine } from './search-engines'
 import type { Sidebar } from './sidebar'
 import { type FolderWords, isObject, text } from './sidebar-made'
@@ -46,7 +44,7 @@ export async function bringHistory(browser: Browser, profile: string): Promise<v
   visited.brought(webData.history(), rows)
 }
 
-export async function takeEngine(engine: BrowserEngine | null, browser: string): Promise<Lost[]> {
+export async function takeEngine(engine: BrowserEngine | null, browser: string): Promise<string[]> {
   if (!engine) return []
   const { CUSTOM, searchEngine } = await import('../web-tab/search-engine.svelte')
   const same =
@@ -60,37 +58,30 @@ export async function takeEngine(engine: BrowserEngine | null, browser: string):
     else searchEngine.setCustom(engine.custom)
     return []
   }
-  return [
-    {
-      text: key('{browser} searches with {engine}: choose it in Settings to search with it here'),
-      values: { browser, engine: engine.name },
-    },
-  ]
+  return [`${browser} searches with ${engine.name}: choose it in Settings to search with it here`]
 }
 
-export function droppedLine(sidebar: Sidebar): Lost[] {
+export function droppedLine(sidebar: Sidebar): string[] {
   const count = sidebar.dropped ?? 0
   if (!count) return []
   return [
-    {
-      text: key('{count} pages not on the web stay behind'),
-      one: '{count} page not on the web stays behind',
-      values: { count },
-    },
+    count === 1
+      ? '1 page not on the web stays behind'
+      : `${count} pages not on the web stay behind`,
   ]
 }
 
 export function folderWords(): FolderWords {
   return {
-    bookmarks: t('Bookmarks'),
-    savedGroups: t('Saved groups'),
-    group: t('Tab group'),
-    toolbar: t('Bookmarks toolbar'),
-    bar: t('Bookmarks bar'),
-    menu: t('Bookmarks menu'),
-    other: t('Other bookmarks'),
-    mobile: t('Mobile bookmarks'),
-    favorites: t('Favorites'),
-    readingList: t('Reading List'),
+    bookmarks: 'Bookmarks',
+    savedGroups: 'Saved groups',
+    group: 'Tab group',
+    toolbar: 'Bookmarks toolbar',
+    bar: 'Bookmarks bar',
+    menu: 'Bookmarks menu',
+    other: 'Other bookmarks',
+    mobile: 'Mobile bookmarks',
+    favorites: 'Favorites',
+    readingList: 'Reading List',
   }
 }

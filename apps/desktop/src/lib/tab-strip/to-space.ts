@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu-item'
 import { canWriteAt } from '../sharing.svelte'
 import { type Space, type Tab, workspace } from '../workspace.svelte'
@@ -28,7 +27,7 @@ export async function toSpace(ids: readonly string[], space: string): Promise<vo
 export async function whichSpace(spaces: readonly Space[]): Promise<string | null> {
   const { prompt } = await import('../prompt.svelte')
   return prompt.find({
-    title: t('Move to space'),
+    title: 'Move to space',
     options: spaces.map((one) => ({
       id: one.id,
       label: one.name,
@@ -50,7 +49,7 @@ export function spaceEntry(tabs: readonly Tab[]): MenuEntry[] {
   const move = (space: string) => void toSpace(ids, space)
   return [
     {
-      label: t('Move to space'),
+      label: 'Move to space',
       asks: true,
       run: () => void whichSpace(spaces).then((space) => space && move(space)),
       more: () =>

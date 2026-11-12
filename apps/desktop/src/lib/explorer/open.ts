@@ -1,5 +1,4 @@
 import { fileMark } from '../file-mark'
-import { t } from '../i18n.svelte'
 import { nameOf, within } from '../space-paths'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
@@ -14,7 +13,7 @@ export async function openExplorer(folder?: string, activate = true): Promise<Ta
   return workspace.openUnsaved(
     'explorer',
     words,
-    at ? folderName(at) : t('File explorer'),
+    at ? folderName(at) : 'File explorer',
     null,
     activate,
   )

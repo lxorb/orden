@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { type Family, installedFamilies, isInstalled, offered } from '../font-families'
   import { overlays } from '../overlays'
   import { hang } from '../portal'
@@ -136,7 +135,7 @@
 </span>
 
 {#if missing}
-  <small class="missing">{t('Not installed on this device, so the app’s own face is used.')}</small>
+  <small class="missing">Not installed on this device, so the app’s own face is used.</small>
 {/if}
 
 <style>

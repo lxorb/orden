@@ -20,7 +20,6 @@ import { fileBytes } from '../bytes'
 import { chooseTarget, download, writeFile } from '../export/save'
 import { zipOf } from '../export/zip'
 import { PDF_TO_CSS } from '../pdf/pages'
-import { t } from '../i18n.svelte'
 import { isDesktop } from '../tauri'
 import { paperPlaces } from './held'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
@@ -28,7 +27,7 @@ import { cssColour, paperIsLocked, paperPicture, paperUnder, sharpness, svgToPng
 import { escapeAll } from '@orden/markdown/html'
 
 function saidLocked(): void {
-  busy.failed(t('This PDF is locked by its owner'))
+  busy.failed('This PDF is locked by its owner')
 }
 
 export interface PagesOut {

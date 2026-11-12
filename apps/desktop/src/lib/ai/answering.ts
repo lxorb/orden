@@ -1,7 +1,7 @@
 import type { AiAsk } from '@orden/editor'
 import { TexDelimiters } from '@orden/markdown/streamed'
 import { busy } from '../busy.svelte'
-import { message, t } from '../i18n.svelte'
+import { message } from '../message'
 import { complete, wasStopped } from './complete'
 import { ai } from './store.svelte'
 
@@ -19,7 +19,7 @@ function noteContext(note: string): string {
 export async function answer(ask: AiAsk, signal: AbortSignal) {
   const provider = ai.providerFor('block')
   if (!provider) {
-    busy.failed(t('Add an AI provider in Settings first.'))
+    busy.failed('Add an AI provider in Settings first.')
     throw new Error('no provider')
   }
 
@@ -52,10 +52,10 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
     })
     write(spelling.end())
 
-    if (!began.yet) busy.failed(t('The model did not answer.'))
+    if (!began.yet) busy.failed('The model did not answer.')
   } catch (error) {
     if (began.yet) write(spelling.end())
-    if (!wasStopped(error)) busy.failed(message(error, t('The model did not answer.')))
+    if (!wasStopped(error)) busy.failed(message(error, 'The model did not answer.'))
     throw error
   }
 }

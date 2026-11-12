@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { atClock, clockOf, dayOf, daysAfter } from './days'
   import { type Picked, type Stretch, within } from './lanes'
   import { clock, length, nameOf, placeTint, tintOf } from './look'
@@ -36,10 +35,10 @@
   const groups = $derived(
     (
       [
-        ['app', t('Apps')],
-        ['site', t('Websites')],
-        ['space', t('Spaces')],
-        ['tab', t('Tabs')],
+        ['app', 'Apps'],
+        ['site', 'Websites'],
+        ['space', 'Spaces'],
+        ['tab', 'Tabs'],
       ] as const
     )
       .map(([lane, label]) => ({ lane, label, list: found.places[lane].slice(0, 5) }))
@@ -75,12 +74,12 @@
     <div class="entry">
       <select
         class="orden-field"
-        aria-label={t('Activity')}
+        aria-label="Activity"
         value={entry.activity ?? ''}
         onchange={(event) =>
           time.changeSpan(entry.id, { activity: event.currentTarget.value || null })}
       >
-        <option value="">{t('No activity')}</option>
+        <option value="">No activity</option>
         {#each time.activities.filter((one) => !one.archived || one.id === entry.activity) as one (one.id)}
           <option value={one.id}>{one.name}</option>
         {/each}
@@ -89,14 +88,14 @@
         <input
           class="orden-field"
           type="time"
-          aria-label={t('Start time')}
+          aria-label="Start time"
           value={clockOf(entry.start)}
           onchange={(event) => moved('start', event.currentTarget.value)}
         />
         <input
           class="orden-field"
           type="time"
-          aria-label={t('End time')}
+          aria-label="End time"
           value={entry.end === null ? '' : clockOf(entry.end)}
           disabled={entry.end === null}
           onchange={(event) => moved('end', event.currentTarget.value)}
@@ -104,8 +103,8 @@
       </div>
       <input
         class="orden-field"
-        aria-label={t('Note')}
-        placeholder={t('Note')}
+        aria-label="Note"
+        placeholder="Note"
         value={entry.note}
         onchange={(event) => time.changeSpan(entry.id, { note: event.currentTarget.value })}
       />
@@ -113,7 +112,7 @@
         <button
           type="button"
           class="orden-chip"
-          onclick={() => entry.activity && time.start(entry.activity)}>{t('Continue')}</button
+          onclick={() => entry.activity && time.start(entry.activity)}>Continue</button
         >
         <button
           type="button"
@@ -121,12 +120,12 @@
           onclick={() => {
             time.removeSpan(entry.id)
             onpick({ ...picked, span: null })
-          }}>{t('Delete')}</button
+          }}>Delete</button
         >
       </div>
     </div>
   {:else if !whole}
-    <p class="orden-section">{t('Record this as')}</p>
+    <p class="orden-section">Record this as</p>
     <div class="chips">
       {#each time.latest().slice(0, 8) as one (one.id)}
         <button
@@ -139,11 +138,11 @@
     </div>
   {/if}
 
-  <p class="orden-section">{t('Active')}<span>{length(found.active)}</span></p>
+  <p class="orden-section">Active<span>{length(found.active)}</span></p>
   <div
     class="orden-meter"
     role="meter"
-    aria-label={t('Active')}
+    aria-label="Active"
     aria-valuemin="0"
     aria-valuemax="100"
     aria-valuenow={Math.round(share(found.active) * 100)}
@@ -152,12 +151,12 @@
   </div>
 
   {#if found.said.length && !entry}
-    <p class="orden-section">{t('You said')}<span>{length(found.saidMs)}</span></p>
+    <p class="orden-section">You said<span>{length(found.saidMs)}</span></p>
     <ul>
       {#each found.said as total (total.activity)}
         <li>
           <span class="dot" style:background={tintOf(total.activity)}></span>
-          <span class="label" dir="auto">{nameOf(total.activity, t('No activity'))}</span>
+          <span class="label" dir="auto">{nameOf(total.activity, 'No activity')}</span>
           <span class="meta">{length(total.ms)}</span>
         </li>
       {/each}
@@ -184,7 +183,7 @@
   {/each}
 
   {#if loose.length && whole}
-    <p class="orden-section">{t('Not said')}</p>
+    <p class="orden-section">Not said</p>
     <ul>
       {#each loose as stretch (stretch.from)}
         <li>

@@ -1,6 +1,5 @@
 import { account } from '../account.svelte'
 import { modes } from '../modes.svelte'
-import { t } from '../i18n.svelte'
 import type { Section } from '../settings.svelte'
 import { isDesktop } from '../tauri'
 import { viewport } from '../viewport.svelte'
@@ -44,34 +43,32 @@ export const ICONS: Record<string, string> = {
 export function sectionGroups(): Item[][] {
   return [
     [
-      { id: 'general', label: t('General') },
-      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'space' as Section, label: t('Space') }]),
-      { id: 'editor', label: t('Editor') },
-      { id: 'kinds', label: t('Note types') },
-      { id: 'shortcuts', label: t('Shortcuts') },
-      ...(viewport.touch || modes.mobileSeen
-        ? [{ id: 'mobile' as Section, label: t('Mobile') }]
-        : []),
-      { id: 'spelling', label: t('Spelling') },
-      { id: 'markdown', label: t('Markdown') },
-      { id: 'appearance', label: t('Appearance') },
-      { id: 'ai', label: t('AI') },
+      { id: 'general', label: 'General' },
+      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'space' as Section, label: 'Space' }]),
+      { id: 'editor', label: 'Editor' },
+      { id: 'kinds', label: 'Note types' },
+      { id: 'shortcuts', label: 'Shortcuts' },
+      ...(viewport.touch || modes.mobileSeen ? [{ id: 'mobile' as Section, label: 'Mobile' }] : []),
+      { id: 'spelling', label: 'Spelling' },
+      { id: 'markdown', label: 'Markdown' },
+      { id: 'appearance', label: 'Appearance' },
+      { id: 'ai', label: 'AI' },
       ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
-        ? [{ id: 'remote' as Section, label: t('Remote') }]
+        ? [{ id: 'remote' as Section, label: 'Remote' }]
         : []),
       ...(!__EVEN_PLUGIN__ && account.user && modes.coder
-        ? [{ id: 'online' as Section, label: t('Online terminal') }]
+        ? [{ id: 'online' as Section, label: 'Online terminal' }]
         : []),
-      { id: 'experimental', label: t('Experimental') },
+      { id: 'experimental', label: 'Experimental' },
     ],
     [
-      { id: 'account', label: t('Account') },
-      ...(account.user ? [{ id: 'sync' as Section, label: t('Sync') }] : []),
+      { id: 'account', label: 'Account' },
+      ...(account.user ? [{ id: 'sync' as Section, label: 'Sync' }] : []),
     ],
     [
-      { id: 'trash', label: t('Recently deleted') },
-      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'import' as Section, label: t('Import') }]),
-      { id: 'export', label: t('Export') },
+      { id: 'trash', label: 'Recently deleted' },
+      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'import' as Section, label: 'Import' }]),
+      { id: 'export', label: 'Export' },
     ],
   ]
 }

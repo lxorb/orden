@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { FileRef } from '@orden/chats'
   import { WAVE_BARS } from '@orden/chats/limits'
-  import { message as errorWords, t } from '../../i18n.svelte'
+  import { message as errorWords } from '../../message'
   import { clock, seekAt } from './media'
   import Glyph from './Glyph.svelte'
   import { fileUrl } from './urls.svelte'
@@ -68,7 +68,7 @@
       const { wordsInFile } = await import('../../recorder/transcribe')
       words = (await wordsInFile(bytes)).text
     } catch (error) {
-      words = errorWords(error, t('Transcribe'))
+      words = errorWords(error, 'Transcribe')
     } finally {
       hearing = false
     }
@@ -76,7 +76,7 @@
 </script>
 
 <div class="voice">
-  <button type="button" class="play" aria-label={playing ? t('Pause') : t('Play')} onclick={toggle}>
+  <button type="button" class="play" aria-label={playing ? 'Pause' : 'Play'} onclick={toggle}>
     <Glyph name={playing ? 'pause' : 'play'} filled />
   </button>
   <div
@@ -109,7 +109,7 @@
     type="button"
     class="words"
     class:busy={hearing}
-    aria-label={t('Transcribe')}
+    aria-label="Transcribe"
     onclick={() => void transcribe()}><Glyph name="words" /></button
   >
   <audio

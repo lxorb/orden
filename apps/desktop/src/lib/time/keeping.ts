@@ -1,13 +1,12 @@
 import { chooseFiles } from '../choose-files'
 import { deliver } from '../export/save'
-import { t } from '../i18n.svelte'
 import { time } from './time.svelte'
 import { csvOf, jsonOf, recordsIn } from './written'
 
 const NAME = 'Time'
 
 export async function exportCsv(): Promise<void> {
-  await deliver(NAME, 'csv', t('Spreadsheet'), {
+  await deliver(NAME, 'csv', 'Spreadsheet', {
     text: csvOf(time.spans, time.activities, Date.now()),
     mime: 'text/csv',
   })

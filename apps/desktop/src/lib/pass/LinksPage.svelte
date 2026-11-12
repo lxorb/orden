@@ -3,7 +3,7 @@
   import Link from 'lucide/dist/esm/icons/link.mjs'
   import Trash from 'lucide/dist/esm/icons/trash-2.mjs'
   import { account } from '../account.svelte'
-  import { message, plural, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { said } from '../said.svelte'
   import Gate from './Gate.svelte'
   import Glyph from './Glyph.svelte'
@@ -59,33 +59,33 @@
   function sweep() {
     void acted(async () => {
       const gone = await removeExpired()
-      said.say(plural(gone, { one: '{count} link removed', other: '{count} links removed' }))
+      said.say(gone === 1 ? '1 link removed' : `${gone} links removed`)
     })
   }
 </script>
 
 {#if !signedIn}
-  <Gate icon={Link} title={t('Secure links')} line={t('Sign in to share')}>
+  <Gate icon={Link} title="Secure links" line="Sign in to share">
     <span></span>
   </Gate>
 {:else if rows !== null && rows.length === 0 && !wrong}
-  <Gate icon={Link} title={t('Secure links')} line={t('No secure links yet')}>
+  <Gate icon={Link} title="Secure links" line="No secure links yet">
     <span></span>
   </Gate>
 {:else}
-  <section class="links" aria-label={t('Secure links')} data-scrolls>
+  <section class="links" aria-label="Secure links" data-scrolls>
     <header class="head">
-      <h2 class="title">{t('Secure links')}</h2>
+      <h2 class="title">Secure links</h2>
       <button class="orden-chip" type="button" disabled={busy || expired === 0} onclick={sweep}
-        >{t('Remove all expired links')}</button
+        >Remove all expired links</button
       >
     </header>
     <p class="quiet">
-      {t('A link’s key is never kept, so a link cannot be copied again. Make a new one instead.')}
+      A link’s key is never kept, so a link cannot be copied again. Make a new one instead.
     </p>
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
     {#if rows === null}
-      <p class="quiet">{t('Reading…')}</p>
+      <p class="quiet">Reading…</p>
     {:else}
       <div class="card" role="list">
         {#each rows as link (link.id)}
@@ -94,11 +94,9 @@
           <div class="orden-setting row" role="listitem" data-link={link.id} class:is-over={over}>
             {#if item}<ItemMark content={item.content} />{/if}
             <span class="what">
-              <span class="name"
-                >{item ? item.content.title || t('Untitled') : t('Deleted item')}</span
-              >
+              <span class="name">{item ? item.content.title || 'Untitled' : 'Deleted item'}</span>
               <span class="meta">
-                <span data-expires>{over ? t('Expired') : expiresIn(link.expires, now)}</span>
+                <span data-expires>{over ? 'Expired' : expiresIn(link.expires, now)}</span>
                 <span data-views>{viewsWord(link)}</span>
               </span>
             </span>
@@ -106,8 +104,8 @@
               class="orden-glyph"
               type="button"
               disabled={busy}
-              aria-label={t('Remove link')}
-              title={t('Remove link')}
+              aria-label="Remove link"
+              title="Remove link"
               onclick={() => removed(link)}
             >
               <Glyph icon={Trash} />

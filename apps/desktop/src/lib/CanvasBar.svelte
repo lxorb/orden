@@ -25,7 +25,6 @@
   import { shortcuts } from './shortcuts.svelte'
   import { tools } from './canvas/tools.svelte'
   import { closeOnBack } from './backstack.svelte'
-  import { t } from './i18n.svelte'
   import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
 
@@ -256,8 +255,8 @@
     <button
       type="button"
       class="tab"
-      title={t('The pens')}
-      aria-label={t('The pens')}
+      title="The pens"
+      aria-label="The pens"
       onclick={() => {
         tick()
         pens.fold(false)
@@ -285,7 +284,7 @@
           <CanvasColours
             colour={nib.colour === DEFAULT_INK ? null : nib.colour}
             recent={pens.recent}
-            bare={{ css: 'var(--text-strong)', title: t('The ink of the page') }}
+            bare={{ css: 'var(--text-strong)', title: 'The ink of the page' }}
             oncolour={(colour: string | null) => pens.set({ colour: colour ?? DEFAULT_INK })}
           />
         {/if}
@@ -298,8 +297,8 @@
           class="grip"
           class:grabbed
           role="separator"
-          aria-label={t('Move the bar')}
-          title={t('Move the bar')}
+          aria-label="Move the bar"
+          title="Move the bar"
           onpointerdown={onGripDown}
           onpointermove={onGripMove}
           onpointerup={onGripUp}
@@ -319,8 +318,8 @@
         {#snippet arrows()}
           <button
             type="button"
-            title={shortcuts.tooltip(t('Undo'), 'edit.undo')}
-            aria-label={t('Undo')}
+            title={shortcuts.tooltip('Undo', 'edit.undo')}
+            aria-label="Undo"
             disabled={!canundo}
             onclick={() => {
               tick()
@@ -332,8 +331,8 @@
 
           <button
             type="button"
-            title={shortcuts.tooltip(t('Redo'), 'edit.redo')}
-            aria-label={t('Redo')}
+            title={shortcuts.tooltip('Redo', 'edit.redo')}
+            aria-label="Redo"
             disabled={!canredo}
             onclick={() => {
               tick()
@@ -401,8 +400,8 @@
             type="button"
             class:on={open === 'put' || putting !== undefined}
             class:deeper={putting !== undefined}
-            title={putting ? hinted(putting) : t('Add')}
-            aria-label={putting ? putting.title() : t('Add')}
+            title={putting ? hinted(putting) : 'Add'}
+            aria-label={putting ? putting.title() : 'Add'}
             aria-pressed={open === 'put'}
             onclick={(event) => {
               tick()
@@ -417,8 +416,8 @@
           type="button"
           class="swatch"
           class:on={open === 'colour'}
-          title={t('Colour')}
-          aria-label={t('Colour')}
+          title="Colour"
+          aria-label="Colour"
           aria-pressed={open === 'colour'}
           style:--dot={swatch}
           onclick={(event) => {
@@ -436,8 +435,8 @@
           <button
             type="button"
             class="actual"
-            title={t('Actual size')}
-            aria-label={t('Actual size')}
+            title="Actual size"
+            aria-label="Actual size"
             onclick={() => {
               tick()
               onactual?.()
@@ -495,14 +494,6 @@
   .cluster.right {
     right: calc(var(--space-2) + var(--inset-right, 0px));
     flex-direction: row;
-  }
-
-  :global([dir='rtl']) .cluster.left {
-    flex-direction: row;
-  }
-
-  :global([dir='rtl']) .cluster.right {
-    flex-direction: row-reverse;
   }
 
   .cluster {
@@ -625,10 +616,6 @@
 
   .cluster.standing .scroller {
     --along: to bottom;
-  }
-
-  :global([dir='rtl']) .scroller {
-    --along: to left;
   }
 
   button {

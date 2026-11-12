@@ -10,9 +10,7 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../i18n.svelte', () => ({
-  t: (text: string) => text,
-  key: (text: string) => text,
+vi.mock('../message', () => ({
   message: (_error: unknown, fallback: string) => fallback,
 }))
 

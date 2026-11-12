@@ -10,7 +10,6 @@
   import { DEFAULT_INK, shownInk } from './canvas/palette'
   import { LEAST_WIDTH, MOST_WIDTH, type Nib, nibFor, pens } from './canvas/pens.svelte'
   import { tick } from './canvas/tick'
-  import { t } from './i18n.svelte'
 
   const { nib }: { nib: Nib } = $props()
 
@@ -67,7 +66,7 @@
     least={LEAST_WIDTH}
     most={MOST_WIDTH}
     step={0.5}
-    label={t('Width')}
+    label="Width"
     reading={String(nib.size)}
     onvalue={(size: number) => pens.set({ size })}
   />
@@ -77,7 +76,7 @@
     least={0.05}
     most={1}
     step={0.05}
-    label={t('Opacity')}
+    label="Opacity"
     reading="{Math.round(nib.opacity * 100)}%"
     onvalue={(opacity: number) => pens.set({ opacity })}
   />
@@ -85,7 +84,7 @@
   <CanvasColours
     colour={shown}
     recent={pens.recent}
-    bare={{ css: 'var(--text-strong)', title: t('The ink of the page') }}
+    bare={{ css: 'var(--text-strong)', title: 'The ink of the page' }}
     oncolour={setColour}
   />
 
@@ -93,8 +92,8 @@
     <button
       type="button"
       class:on={pens.straighten}
-      title={t('Straighten')}
-      aria-label={t('Straighten')}
+      title="Straighten"
+      aria-label="Straighten"
       aria-pressed={pens.straighten}
       onclick={() => {
         tick()
@@ -102,15 +101,15 @@
       }}
     >
       <CanvasIcon node={MARKS.straight} />
-      <span>{t('Straighten')}</span>
+      <span>Straighten</span>
     </button>
 
     {#if hand.penSeen}
       <button
         type="button"
         class:on={hand.fingerDraws}
-        title={t('Finger draws')}
-        aria-label={t('Finger draws')}
+        title="Finger draws"
+        aria-label="Finger draws"
         aria-pressed={hand.fingerDraws}
         onclick={() => {
           tick()
@@ -118,7 +117,7 @@
         }}
       >
         <CanvasIcon node={MARKS.finger} />
-        <span>{t('Finger draws')}</span>
+        <span>Finger draws</span>
       </button>
     {/if}
   </div>

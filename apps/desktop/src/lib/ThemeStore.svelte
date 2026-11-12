@@ -2,7 +2,6 @@
   import Facts from './Facts.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { cubicOut } from 'svelte/easing'
-  import { plural, t } from './i18n.svelte'
   import { overlays } from './overlays'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
@@ -103,8 +102,8 @@
   }
 
   const ORDERS = $derived([
-    { value: 'newest', label: t('Newest') },
-    { value: 'name', label: t('Name') },
+    { value: 'newest', label: 'Newest' },
+    { value: 'name', label: 'Name' },
   ])
 </script>
 
@@ -121,7 +120,7 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label={store.chosen?.name ?? t('Themes')}
+    aria-label={store.chosen?.name ?? 'Themes'}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <header role="presentation">
@@ -132,33 +131,33 @@
             store.opened = null
             previewing = null
           }}
-          aria-label={t('Back')}
+          aria-label="Back"
         >
-          <svg class="orden-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
+          <svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
         </button>
         <p class="title">{store.chosen.name}</p>
       {:else}
         <input
           class="find"
           bind:value={store.query}
-          placeholder={t('Search themes')}
+          placeholder="Search themes"
           spellcheck="false"
           autocapitalize="off"
           autocorrect="off"
-          aria-label={t('Search themes')}
+          aria-label="Search themes"
         />
         <div class="sort">
           <Select
             value={store.order}
             options={ORDERS}
             onchange={(value: string) => (store.order = value === 'name' ? 'name' : 'newest')}
-            label={t('Sort')}
+            label="Sort"
             plain={viewport.touch}
           />
         </div>
       {/if}
 
-      <button class="orden-glyph shut" onclick={() => store.close()} aria-label={t('Close')}>
+      <button class="orden-glyph shut" onclick={() => store.close()} aria-label="Close">
         <Cross />
       </button>
     </header>
@@ -203,7 +202,7 @@
           {/each}
         </div>
       {:else}
-        <p class="note">{store.error ? t(store.error) : t('Nothing matches.')}</p>
+        <p class="note">{store.error ?? 'Nothing matches.'}</p>
       {/if}
     </div>
   </div>
@@ -211,7 +210,7 @@
 
 {#snippet mark(one: StoreTheme)}
   {#if store.updatable(one)}
-    <svg class="state up" viewBox="0 0 16 16" role="img" aria-label={t('Update')}
+    <svg class="state up" viewBox="0 0 16 16" role="img" aria-label="Update"
       ><path d="M8 12.5V4M4.5 7.5L8 4l3.5 3.5" /></svg
     >
   {:else if store.installed(one.id)}
@@ -220,8 +219,7 @@
       class:using={store.using(one.id)}
       viewBox="0 0 16 16"
       role="img"
-      aria-label={store.using(one.id) ? t('In use') : t('Installed')}
-      ><path d="M3.5 8.5l3 3 6-7" /></svg
+      aria-label={store.using(one.id) ? 'In use' : 'Installed'}><path d="M3.5 8.5l3 3 6-7" /></svg
     >
   {/if}
 {/snippet}
@@ -249,7 +247,7 @@
               class:at={variant === scheme}
               onclick={() => (previewing = variant)}
             >
-              {variant === 'light' ? t('Light') : t('Dark')}
+              {variant === 'light' ? 'Light' : 'Dark'}
             </button>
           {/each}
         </div>
@@ -279,33 +277,32 @@
           <button
             class="orden-button"
             disabled={store.using(one.id) || store.working !== null}
-            onclick={() => store.use(one.id)}>{store.using(one.id) ? t('In use') : t('Use')}</button
+            onclick={() => store.use(one.id)}>{store.using(one.id) ? 'In use' : 'Use'}</button
           >
           <button
             class="orden-button is-quiet"
             disabled={store.working !== null}
-            onclick={() => void store.remove(one.id)}>{t('Remove')}</button
+            onclick={() => void store.remove(one.id)}>Remove</button
           >
         {:else}
           <button
             class="orden-button"
             disabled={store.working !== null}
             onclick={() => void store.install(one)}
-            >{store.updatable(one) ? t('Update') : t('Install')}</button
+            >{store.updatable(one) ? 'Update' : 'Install'}</button
           >
         {/if}
       </div>
 
       {#if store.error}
-        <p class="note bad">{t(store.error)}</p>
+        <p class="note bad">{store.error}</p>
       {/if}
 
       {#if store.refused.id === one.id && store.refused.notes.length}
         <p class="note">
-          {plural(store.refused.notes.length, {
-            one: '{count} thing in this theme was left out.',
-            other: '{count} things in this theme were left out.',
-          })}
+          {store.refused.notes.length === 1
+            ? '1 thing in this theme was left out.'
+            : `${store.refused.notes.length} things in this theme were left out.`}
         </p>
       {/if}
     </div>

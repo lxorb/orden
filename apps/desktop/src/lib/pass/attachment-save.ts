@@ -1,6 +1,5 @@
 import type { Attachment } from '@orden/pass/types'
 import { deliver } from '../export/save'
-import { t } from '../i18n.svelte'
 
 function nameParts(name: string): { stem: string; extension: string } {
   const dot = name.lastIndexOf('.')
@@ -13,5 +12,5 @@ export async function savedAttachment(
   bytes: Uint8Array,
 ): Promise<string | null> {
   const { stem, extension } = nameParts(attachment.name)
-  return await deliver(stem, extension, t('File'), { bytes, mime: attachment.type })
+  return await deliver(stem, extension, 'File', { bytes, mime: attachment.type })
 }

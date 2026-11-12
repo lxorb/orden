@@ -1,7 +1,6 @@
 import { type FoldLines, SharedDoc } from '@orden/editor'
 import type { Camera } from '../camera'
 import { identifier } from '../identifier'
-import { t } from '../i18n.svelte'
 import { draftName, shownName, TITLE_CHARS } from '../note-name'
 import { oneEdit } from '@orden/markdown/edits'
 import { applied, appliedToFile, type Edit, flatEdits } from '../search/replace'
@@ -118,9 +117,7 @@ export class NoteDoc {
     return this.kind === 'note' ? this.firstWords : null
   }
 
-  readonly shown = $derived(
-    this.unnamed ? (this.titleWords ?? t('Untitled')) : shownName(this.name),
-  )
+  readonly shown = $derived(this.unnamed ? (this.titleWords ?? 'Untitled') : shownName(this.name))
 
   get blank(): boolean {
     const text = this.live.text
@@ -341,7 +338,7 @@ export class Tab {
   }
 
   get shown(): string {
-    if (this.nowhere) return t('New tab')
+    if (this.nowhere) return 'New tab'
     return this.running?.name ?? this.note.shown
   }
 

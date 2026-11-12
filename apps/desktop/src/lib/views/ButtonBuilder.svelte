@@ -2,7 +2,6 @@
   import { BUTTON, type Button, readButtons, withButton } from '@orden/bases'
   import { appCommands } from '../commands'
   import Cross from '../Cross.svelte'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { bare, knownProperties } from './columns'
   import { setColumns } from './edit'
@@ -60,8 +59,8 @@
 <input
   class="orden-field"
   value={name}
-  aria-label={t('Name')}
-  placeholder={t('Button')}
+  aria-label="Name"
+  placeholder="Button"
   onchange={(event) => rename(event.currentTarget.value)}
 />
 
@@ -69,7 +68,7 @@
   {#each sets as [key, value], at (at)}
     <div class="row">
       <Select
-        label={t('Property')}
+        label="Property"
         value={key}
         options={(keys.includes(key) ? keys : [key, ...keys]).map((one) => ({
           value: one,
@@ -83,14 +82,14 @@
       <input
         class="orden-field"
         {value}
-        aria-label={t('Value')}
+        aria-label="Value"
         onchange={(event) => write({ set: { ...button.set, [key]: event.currentTarget.value } })}
       />
       <button
         type="button"
         class="orden-glyph"
-        title={t('Remove')}
-        aria-label={t('Remove')}
+        title="Remove"
+        aria-label="Remove"
         onclick={() => write({ set: Object.fromEntries(sets.filter(([k]) => k !== key)) })}
         ><Cross small /></button
       >
@@ -104,26 +103,26 @@
       write({ set: { ...button.set, [key]: '' } })
     }}
   >
-    <span class="orden-row-label">{t('Add')}</span>
+    <span class="orden-row-label">Add</span>
   </button>
 
   <input
     class="orden-field"
     value={button.task ?? ''}
-    aria-label={t('Add task')}
-    placeholder={t('Add task')}
+    aria-label="Add task"
+    placeholder="Add task"
     onchange={(event) => write({ task: event.currentTarget.value })}
   />
   <Select
-    label={t('Command')}
+    label="Command"
     value={button.command ?? ''}
-    options={[{ value: '', label: t('Command') }, ...commands]}
+    options={[{ value: '', label: 'Command' }, ...commands]}
     onchange={(command: string) => write({ command })}
   />
   <input
     class="orden-field"
     value={button.open ?? ''}
-    aria-label={t('Address')}
+    aria-label="Address"
     placeholder="https://"
     onchange={(event) => write({ open: event.currentTarget.value })}
   />

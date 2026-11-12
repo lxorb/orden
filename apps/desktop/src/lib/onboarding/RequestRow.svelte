@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { hasRequested, request } from './kept'
   import Logo from './Logo.svelte'
 
@@ -24,11 +23,11 @@
   <Logo {name} {icon} {colour} size={28} />
   <span class="name">{name}</span>
   {#if sent}
-    <span class="done" role="status" aria-label={t('Done')}>
+    <span class="done" role="status" aria-label="Done">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
     </span>
   {:else}
-    <button class="orden-chip end" type="button" onclick={ask}>{t('Request')}</button>
+    <button class="orden-chip end" type="button" onclick={ask}>Request</button>
   {/if}
 </div>
 

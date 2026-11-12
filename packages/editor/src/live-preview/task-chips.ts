@@ -7,7 +7,6 @@ import {
   type Priority,
   type TaskFields,
 } from '@orden/markdown/task-line'
-import { label } from '../labels'
 import { dayWords, timeWords, todayHere } from '../task-days'
 import { deadlineOf, type DueReads, startOf } from '@orden/markdown/task-dates'
 import { noteIndex } from '../wikilink/notes'
@@ -89,7 +88,7 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
   }
   if (fields.assignee) out.push({ field: 'assignee', text: `+${fields.assignee}` })
   if (fields.completed !== undefined) {
-    out.push({ field: 'done', text: label('taskDoneOn').replace('{date}', day(fields.completed)) })
+    out.push({ field: 'done', text: `done ${day(fields.completed)}` })
   }
   return out
 }

@@ -1,11 +1,10 @@
 <script lang="ts">
   import Copy from 'lucide/dist/esm/icons/copy.mjs'
   import { code, totpIn, type TotpCode } from '@orden/pass/totp'
-  import { t } from '../i18n.svelte'
   import { copyField } from './copied'
   import Glyph from './Glyph.svelte'
 
-  const { secret, label = t('2FA code') }: { secret: string; label?: string } = $props()
+  const { secret, label = '2FA code' }: { secret: string; label?: string } = $props()
 
   const totp = $derived(totpIn(secret))
   let now = $state<TotpCode | null>(null)
@@ -43,7 +42,7 @@
     <button
       class="tap"
       type="button"
-      title={t('Copy {field}', { field: label })}
+      title="Copy {label}"
       onclick={() => now && void copyField(label, now.code)}
     >
       <span class="label">{label}</span>
@@ -69,8 +68,8 @@
     <button
       class="orden-glyph"
       type="button"
-      aria-label={t('Copy {field}', { field: label })}
-      title={t('Copy {field}', { field: label })}
+      aria-label="Copy {label}"
+      title="Copy {label}"
       onclick={() => now && void copyField(label, now.code)}
     >
       <Glyph icon={Copy} />
@@ -78,7 +77,7 @@
   {:else}
     <div class="tap">
       <span class="label">{label}</span>
-      <span class="wrong">{t('This 2FA secret cannot be read')}</span>
+      <span class="wrong">This 2FA secret cannot be read</span>
     </div>
   {/if}
 </div>

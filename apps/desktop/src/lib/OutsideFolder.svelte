@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
   import { importing } from './importing.svelte'
   import { dur, fly } from './motion'
   import { told } from './said.svelte'
@@ -16,16 +15,10 @@
 
   const words = $derived(
     [
-      t(
-        'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.',
-        { folder },
-      ),
+      `Orden no longer opens ${folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.`,
       ...(left.length
         ? [
-            t(
-              'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.',
-              { names: left.join(', ') },
-            ),
+            `Not copied yet, so still only in that folder: ${left.join(', ')}. Orden tries again the next time it starts.`,
           ]
         : []),
     ].join(' '),
@@ -40,7 +33,7 @@
   >
     <p>{words}</p>
     <div class="actions">
-      <button class="quiet" onclick={() => (showing = false)}>{t('Dismiss')}</button>
+      <button class="quiet" onclick={() => (showing = false)}>Dismiss</button>
       <button
         class="link"
         onclick={() => {
@@ -48,7 +41,7 @@
           importing.show()
         }}
       >
-        {t('Import')}
+        Import
       </button>
     </div>
   </div>

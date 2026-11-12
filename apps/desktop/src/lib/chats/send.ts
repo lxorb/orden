@@ -1,7 +1,6 @@
 import { may } from '@orden/chats'
 import { account } from '../account.svelte'
 import { hiddenKinds } from '../settings.svelte'
-import { t } from '../i18n.svelte'
 import { prompt } from '../prompt.svelte'
 import { nameOf, samePath, within, withoutExtension } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -30,11 +29,11 @@ export async function sendToChat(
     .sort((a, b) => ours(a.root) - ours(b.root))
 
   const chosen = await prompt.find({
-    title: t('Send to chat'),
-    placeholder: t('Chat'),
+    title: 'Send to chat',
+    placeholder: 'Chat',
     options: [
       ...open.map((one) => ({ id: one.id, label: one.name ?? '', mark: 'chat' as const })),
-      ...(space && hiddenKinds.offers('chat') ? [{ id: NEW, label: t('New chat') }] : []),
+      ...(space && hiddenKinds.offers('chat') ? [{ id: NEW, label: 'New chat' }] : []),
     ],
   })
   if (!chosen) return
@@ -42,7 +41,7 @@ export async function sendToChat(
   let chat = chosen
   let path = open.find((one) => one.id === chosen)?.path ?? null
   if (chosen === NEW && space) {
-    path = await chats.make(space.root, t('Chat'))
+    path = await chats.make(space.root, 'Chat')
     chat = (path ? await chats.chatAt(path) : null) ?? ''
   }
   if (!path || !chat) return

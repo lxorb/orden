@@ -6,7 +6,6 @@
   import CopyButton from '../CopyButton.svelte'
   import Outward from '../Outward.svelte'
   import Switch from '../Switch.svelte'
-  import { t } from '../i18n.svelte'
   import { openExternal } from '../tauri'
   import { dur, fly, slide } from '../motion'
 
@@ -45,70 +44,65 @@
     {#if client === 'claude'}
       <ol class="steps">
         <li>
-          <p>{t('In Claude, open Settings → Connectors and click Add custom connector.')}</p>
+          <p>In Claude, open Settings → Connectors and click Add custom connector.</p>
           <button class="link" onclick={() => void openExternal(CLAUDE_CONNECTORS)}
-            >{t('Open Claude’s connectors')}<Outward /></button
+            >Open Claude’s connectors<Outward /></button
           >
         </li>
         <li>
-          <p>{t('Fill in the two fields and click Add.')}</p>
-          <Copyable label={t('Name')} value="Orden" />
+          <p>Fill in the two fields and click Add.</p>
+          <Copyable label="Name" value="Orden" />
           <Copyable label="URL" value={MCP_URL} />
         </li>
         <li>
-          <p>{t('Click Connect and sign in with your Orden email.')}</p>
+          <p>Click Connect and sign in with your Orden email.</p>
         </li>
       </ol>
 
       <button class="disclose" aria-expanded={showCode} onclick={() => (showCode = !showCode)}>
         {@render chevron(showCode)}
-        {t('Using Claude Code instead?')}
+        Using Claude Code instead?
       </button>
       {#if showCode}
         <div class="disclosed" transition:slide={{ duration: dur(180), easing: cubicOut }}>
-          <Copyable label={t('Command')} value={CLAUDE_CODE} />
-          <p class="hint">
-            {t('Run it in a terminal, then type /mcp in Claude Code to sign in.')}
-          </p>
+          <Copyable label="Command" value={CLAUDE_CODE} />
+          <p class="hint">Run it in a terminal, then type /mcp in Claude Code to sign in.</p>
         </div>
       {/if}
     {:else if client === 'chatgpt'}
       <ol class="steps">
         <li>
-          <p>{t('In ChatGPT, open Settings → Plugins and click the plus button.')}</p>
+          <p>In ChatGPT, open Settings → Plugins and click the plus button.</p>
           <button class="link" onclick={() => void openExternal(CHATGPT_PLUGINS)}>
-            {t('Open ChatGPT’s plugins')}
+            Open ChatGPT’s plugins
           </button>
           <p class="hint">
-            {t(
-              'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.',
-            )}
+            No Plugins section or no plus button? Turn on Developer mode first, under Settings →
+            Security and login.
           </p>
         </li>
         <li>
-          <p>{t('Fill in the form and click Create.')}</p>
-          <Copyable label={t('Name')} value="Orden" />
-          <Copyable label={t('Server URL')} value={MCP_URL} />
-          <Copyable label={t('Authentication')} value="OAuth" plain />
+          <p>Fill in the form and click Create.</p>
+          <Copyable label="Name" value="Orden" />
+          <Copyable label="Server URL" value={MCP_URL} />
+          <Copyable label="Authentication" value="OAuth" plain />
           <p class="hint">
-            {t(
-              'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.',
-            )}
+            Leave the advanced OAuth settings as they are and tick “I understand and want to
+            continue”.
           </p>
         </li>
         <li>
-          <p>{t('Sign in with your Orden email when ChatGPT asks.')}</p>
-          <p class="hint">{t('To use it in a chat, type @ and pick Orden.')}</p>
+          <p>Sign in with your Orden email when ChatGPT asks.</p>
+          <p class="hint">To use it in a chat, type @ and pick Orden.</p>
         </li>
       </ol>
     {:else}
       <div class="steps-wrap">
         <p class="note">
-          {t(
-            'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.',
-          )}
+          Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers
+          itself and opens Orden’s sign-in page.
         </p>
-        <Copyable label={t('Server URL')} value={MCP_URL} />
+        <Copyable label="Server URL" value={MCP_URL} />
 
         <button
           class="disclose"
@@ -116,25 +110,23 @@
           onclick={() => (showConfig = !showConfig)}
         >
           {@render chevron(showConfig)}
-          {t('Show config')}
+          Show config
         </button>
         {#if showConfig}
           <div class="disclosed" transition:slide={{ duration: dur(180), easing: cubicOut }}>
-            <p class="hint">{t('For a client that takes a JSON block instead of a URL.')}</p>
+            <p class="hint">For a client that takes a JSON block instead of a URL.</p>
             <pre>{config()}</pre>
             <CopyButton value={config()} wide />
 
             <p class="hint spaced">
-              {t(
-                'A client that cannot sign in can be given a token instead. It is shown only once.',
-              )}
+              A client that cannot sign in can be given a token instead. It is shown only once.
             </p>
             <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
             <div class="switch" onclick={() => connectors.setReadOnly(!connectors.readOnly)}>
-              <span class="name">{t('Let it write to my notes, not only read them')}</span>
+              <span class="name">Let it write to my notes, not only read them</span>
               <Switch
                 on={!connectors.readOnly}
-                label={t('Let it write to my notes, not only read them')}
+                label="Let it write to my notes, not only read them"
                 onchange={(on: boolean) => connectors.setReadOnly(!on)}
               />
             </div>
@@ -150,7 +142,7 @@
                 disabled={connectors.busy}
                 onclick={() => connectors.createToken()}
               >
-                {connectors.token?.exists ? t('Replace the token') : t('Create a token')}
+                {connectors.token?.exists ? 'Replace the token' : 'Create a token'}
               </button>
             {/if}
             {#if connectors.error}
@@ -293,7 +285,6 @@
     width: 12px;
     height: 12px;
     fill: none;
-    transform: scaleX(var(--dir));
     stroke: currentColor;
     stroke-width: 1.5;
     stroke-linecap: round;
@@ -302,7 +293,7 @@
   }
 
   .chevron.open {
-    transform: scaleX(var(--dir)) rotate(90deg);
+    transform: rotate(90deg);
   }
 
   .disclosed,

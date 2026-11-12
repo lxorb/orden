@@ -1,15 +1,14 @@
 import { isDeck } from '@orden/markdown/slide-breaks'
-import { key, t } from '../i18n.svelte'
 import { type TabKind, TAB_KINDS } from '../workspace/tab-kinds'
 import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'
 
 export type ExportKind = 'note' | 'deck' | 'canvas' | 'pages' | 'file' | 'none'
 
 export const EXPORT_EXTRAS = [
-  { id: 'svg', label: key('Export as SVG') },
-  { id: 'slides-html', label: key('Export slides as HTML') },
-  { id: 'slides-pdf', label: key('Export slides as PDF') },
-  { id: 'copy', label: key('Save a copy') },
+  { id: 'svg', label: 'Export as SVG' },
+  { id: 'slides-html', label: 'Export slides as HTML' },
+  { id: 'slides-pdf', label: 'Export slides as PDF' },
+  { id: 'copy', label: 'Save a copy' },
 ] as const
 
 export type ExportId = Exportable | (typeof EXPORT_EXTRAS)[number]['id']
@@ -68,8 +67,8 @@ export function isNoteFormat(id: ExportId): id is Exportable {
 
 export function labelOf(id: ExportId): string {
   const extra = EXPORT_EXTRAS.find((one) => one.id === id)
-  if (extra) return t(extra.label)
+  if (extra) return extra.label
 
   const format = [...EXPORT_FORMATS, ...EXPORT_VARIANTS].find((one) => one.id === id)
-  return format ? t('Export as {format}', { format: t(format.label) }) : id
+  return format ? `Export as ${format.label}` : id
 }

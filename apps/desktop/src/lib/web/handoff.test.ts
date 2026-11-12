@@ -115,7 +115,7 @@ describe('the new address, given it', () => {
     at(now)
     const fresh = await opened('orden', 2, notesShape)
     await write(fresh, 'files', { path: '/Notes/Read me.md', content: '# Welcome to Orden' })
-    now.local.set('orden:language', 'de')
+    now.local.set('orden:accent', 'teal')
 
     await unpack(handoff)
 
@@ -128,7 +128,7 @@ describe('the new address, given it', () => {
     ])
     fresh.close()
     expect(now.local.get('orden:session')).toBe('{"token":"t"}')
-    expect(now.local.get('orden:language')).toBe('de')
+    expect(now.local.get('orden:accent')).toBe('teal')
   })
 
   test('lists what came over, when the old address had no listing of its own', async () => {

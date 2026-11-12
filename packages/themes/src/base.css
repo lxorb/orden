@@ -160,8 +160,8 @@ select option {
   max-width: var(--measure);
   margin: 0 auto;
   padding: var(--space-7) var(--space-5) 45vh;
-  padding-inline-start: max(var(--space-5), var(--inset-start));
-  padding-inline-end: max(var(--space-5), var(--inset-end));
+  padding-inline-start: max(var(--space-5), var(--inset-left));
+  padding-inline-end: max(var(--space-5), var(--inset-right));
   font-family: var(--font-content);
   font-size: var(--text-content);
   line-height: var(--leading-content);
@@ -821,10 +821,6 @@ select option {
   font-size: var(--text-sm);
 }
 
-:root[dir='rtl'] .orden-mirror {
-  transform: scaleX(-1);
-}
-
 .orden-mark {
   white-space: nowrap;
 }
@@ -997,7 +993,7 @@ select option {
 
 .orden-switch.on::after {
   background: var(--accent-ink);
-  transform: translateX(calc(var(--dir) * 16px));
+  transform: translateX(16px);
 }
 
 .orden-switch.off {
@@ -1015,7 +1011,7 @@ select option {
 }
 
 [data-touch] .orden-switch.on::after {
-  transform: translateX(calc(var(--dir) * 20px));
+  transform: translateX(20px);
 }
 
 .orden-button {
@@ -1609,7 +1605,7 @@ select:focus-visible,
   height: 4px;
   border-radius: 2px;
   background:
-    linear-gradient(var(--accent), var(--accent)) var(--dir-start) / var(--fill) 100% no-repeat,
+    linear-gradient(var(--accent), var(--accent)) left / var(--fill) 100% no-repeat,
     var(--surface-3);
 }
 
@@ -2074,7 +2070,7 @@ select:focus-visible,
 
 #write .toc a:hover {
   color: var(--accent);
-  transform: translateX(calc(var(--dir) * 2px));
+  transform: translateX(2px);
 }
 
 #write .math-block,
@@ -2296,7 +2292,7 @@ figure.query {
 
   .orden-slider::-webkit-slider-runnable-track {
     background:
-      linear-gradient(Highlight, Highlight) var(--dir-start) / var(--fill) 100% no-repeat,
+      linear-gradient(Highlight, Highlight) left / var(--fill) 100% no-repeat,
       GrayText;
   }
 

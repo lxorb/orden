@@ -1,7 +1,7 @@
 <script lang="ts">
   import Select from '../Select.svelte'
   import Sheet from '../Sheet.svelte'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { isDesktop } from '../tauri'
   import { viewport } from '../viewport.svelte'
   import { clearData, DEFAULT_RANGE, type Range } from './clearing'
@@ -22,24 +22,24 @@
   let wrong = $state<string | null>(null)
 
   const RANGES: { value: Range; label: () => string }[] = [
-    { value: 'quarter', label: () => t('Last 15 minutes') },
-    { value: 'hour', label: () => t('Last hour') },
-    { value: 'day', label: () => t('Last 24 hours') },
-    { value: 'week', label: () => t('Last 7 days') },
-    { value: 'month', label: () => t('Last 4 weeks') },
-    { value: 'all', label: () => t('All time') },
+    { value: 'quarter', label: () => 'Last 15 minutes' },
+    { value: 'hour', label: () => 'Last hour' },
+    { value: 'day', label: () => 'Last 24 hours' },
+    { value: 'week', label: () => 'Last 7 days' },
+    { value: 'month', label: () => 'Last 4 weeks' },
+    { value: 'all', label: () => 'All time' },
   ]
 
   const kinds = $derived([
-    { label: t('Browsing history'), on: history, set: (on: boolean) => (history = on) },
+    { label: 'Browsing history', on: history, set: (on: boolean) => (history = on) },
     ...(isDesktop
       ? [
           {
-            label: t('Cookies and other site data'),
+            label: 'Cookies and other site data',
             on: site,
             set: (on: boolean) => (site = on),
           },
-          { label: t('Cached images and files'), on: cache, set: (on: boolean) => (cache = on) },
+          { label: 'Cached images and files', on: cache, set: (on: boolean) => (cache = on) },
         ]
       : []),
   ])
@@ -64,12 +64,12 @@
 </script>
 
 <div class="holder" use:portal>
-  <Sheet open title={t('Delete browsing data')} {onclose}>
+  <Sheet open title="Delete browsing data" {onclose}>
     {#if wrong}<p class="wrong">{wrong}</p>{/if}
 
     <div class="card">
       <div class="row">
-        <span class="name">{t('Time range')}</span>
+        <span class="name">Time range</span>
         <div class="pick">
           <Select
             value={range}
@@ -78,7 +78,7 @@
               const chosen = RANGES.find((one) => one.value === value)
               if (chosen) range = chosen.value
             }}
-            label={t('Time range')}
+            label="Time range"
             plain={viewport.touch}
           />
         </div>
@@ -106,13 +106,13 @@
     </div>
 
     {#snippet foot()}
-      <button class="orden-button is-quiet" onclick={onclose}>{t('Cancel')}</button>
+      <button class="orden-button is-quiet" onclick={onclose}>Cancel</button>
       <button
         class="orden-button is-danger"
         disabled={busy || !(history || site || cache)}
         onclick={() => void go()}
       >
-        {t('Delete data')}
+        Delete data
       </button>
     {/snippet}
   </Sheet>

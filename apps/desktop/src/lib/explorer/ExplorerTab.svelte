@@ -1,7 +1,7 @@
 <script lang="ts">
+  import { localNumber } from '../region'
   import { keyElsewhere } from '../layer-keys'
   import { onMount, untrack } from 'svelte'
-  import { i18n, plural, t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { fileClipboard } from '../list-landing.svelte'
   import { readableSize } from '../usage.svelte'
@@ -49,15 +49,13 @@
   })
 
   const counted = $derived.by(() => {
-    const all = plural(view.rows.length, { one: '{count} item', other: '{count} items' })
+    const all = view.rows.length === 1 ? '1 item' : `${view.rows.length} items`
     const picked = view.rows.filter((one) => view.picked.names.has(one.name))
     if (!picked.length) return all
     const size = readableSize(picked.reduce((sum, one) => sum + one.size, 0))
-    return plural(
-      picked.length,
-      { one: '{all}, {count} selected ({size})', other: '{all}, {count} selected ({size})' },
-      { all, size },
-    )
+    return picked.length === 1
+      ? `${all}, 1 selected (${size})`
+      : `${all}, ${picked.length} selected (${size})`
   })
 
   function onkey(event: KeyboardEvent & { currentTarget: HTMLElement }) {
@@ -156,7 +154,7 @@
       </div>
       <span class="far">{readableSize(job.bytes)} / {readableSize(job.total)}</span>
       <button type="button" class="orden-button is-quiet" onclick={() => jobs.cancel(job.id)}
-        >{t('Cancel')}</button
+        >Cancel</button
       >
     </div>
   {/each}
@@ -164,11 +162,9 @@
     {#if view.said}
       <span class="said">{view.said}</span>
     {:else if view.search && !view.search.done}
-      <span class="cut">{t('Searching…')}</span>
+      <span class="cut">Searching…</span>
     {:else if view.listing?.cut}
-      <span class="cut"
-        >{t('Only the first {count} are shown.', { count: i18n.amount(100_000) })}</span
-      >
+      <span class="cut">Only the first {localNumber(100_000)} are shown.</span>
     {/if}
     <span>{counted}</span>
   </div>

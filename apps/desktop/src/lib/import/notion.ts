@@ -1,6 +1,5 @@
 import { htmlToMarkdown } from '@orden/markdown/from-html'
 
-import { key } from '../i18n.svelte'
 import { folderPlan, isJunk } from './folder'
 import { dayOf, freeKey, type Meta, noteText, propertyName, type Property } from './meta'
 import { hasNotionId, Names, safeName, safeParts, withoutNotionId } from './names'
@@ -98,11 +97,11 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
   }
 
   if (views) {
-    plan.lost.push({
-      text: key('{count} saved views are left out, and every row is in the table'),
-      one: '{count} saved view is left out, and every row is in the table',
-      values: { count: views },
-    })
+    plan.lost.push(
+      views === 1
+        ? '1 saved view is left out, and every row is in the table'
+        : `${views} saved views are left out, and every row is in the table`,
+    )
   }
 
   return plan
@@ -426,10 +425,7 @@ async function readNotionHtml(sources: readonly Source[]): Promise<ImportPlan> {
   })
 
   if (pages) {
-    plan.lost.push({
-      text: key('{count} pages came as HTML, so their words are kept and their look is not'),
-      values: { count: pages },
-    })
+    plan.lost.push(`${pages} pages came as HTML, so their words are kept and their look is not`)
   }
 
   return plan

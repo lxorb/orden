@@ -1,7 +1,6 @@
 import { csvText, type Row } from '@orden/bases'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { deliver } from '../export/save'
-import { t } from '../i18n.svelte'
 import { rows as store } from '../rows/rows.svelte'
 import { relativeTo, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -86,5 +85,5 @@ export async function saveProjectCsv(note: string, name: string): Promise<void> 
   const tasks = store.of(space.name).filter((row) => row.task && samePath(row.path, relative))
   const text = (await noteText(workspace, note)) ?? ''
   const csv = todoistCsv(tasks, text)
-  await deliver(name, 'csv', t('Spreadsheet'), { text: csv, mime: 'text/csv' })
+  await deliver(name, 'csv', 'Spreadsheet', { text: csv, mime: 'text/csv' })
 }

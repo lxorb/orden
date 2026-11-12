@@ -20,7 +20,7 @@ const WORDS: FolderWords = {
 }
 
 const NOW = new Date('2026-10-18T08:00:00.000Z')
-const CONTAINERS = { text: 'Containers stay in Firefox' }
+const CONTAINERS = 'Containers stay in Firefox'
 
 function planned(session: unknown = SESSION, bookmarks: unknown = BOOKMARKS) {
   return sidebarImport(firefoxSidebar(session, bookmarks, 'Firefox', WORDS), NOW, CONTAINERS)

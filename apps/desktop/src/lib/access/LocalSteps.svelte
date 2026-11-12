@@ -2,7 +2,6 @@
   import { cubicOut } from 'svelte/easing'
   import Copyable from '../Copyable.svelte'
   import CopyButton from '../CopyButton.svelte'
-  import { t } from '../i18n.svelte'
   import { dur, slide } from '../motion'
   import { type McpClient, mcpLine } from '../agents/mcp'
   import type { AgentsPane } from '../agents/settings/pane.svelte'
@@ -31,9 +30,8 @@
 {#if line !== null}
   {#if client === 'antigravity'}
     <p class="hint">
-      {t(
-        'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.',
-      )}
+      In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP
+      Servers → View raw config, and add this entry to it.
     </p>
     <pre>{line}</pre>
     <CopyButton value={line} wide />
@@ -41,23 +39,23 @@
     <pre>{line}</pre>
     <CopyButton value={line} wide />
   {:else}
-    <Copyable label={t('Command')} value={line} />
+    <Copyable label="Command" value={line} />
   {/if}
 {/if}
 
 {#if client === 'other'}
   <button class="disclose" aria-expanded={making} onclick={fold}>
-    <svg class="chevron orden-mirror" class:open={making} viewBox="0 0 16 16" aria-hidden="true"
+    <svg class="chevron" class:open={making} viewBox="0 0 16 16" aria-hidden="true"
       ><path d="M6 3l5 5-5 5" /></svg
     >
-    {t('A client on another machine?')}
+    A client on another machine?
   </button>
 
   {#if making}
     <div class="made" transition:slide={{ duration: dur(180), easing: cubicOut }}>
       {#if pane.minted}
         <Copyable value={pane.minted.token} />
-        <p class="hint">{t('Shown only once.')}</p>
+        <p class="hint">Shown only once.</p>
       {:else}
         <form
           class="make"
@@ -69,14 +67,12 @@
           <input
             class="named"
             bind:value={name}
-            placeholder={t('Name')}
-            aria-label={t('Name')}
+            placeholder="Name"
+            aria-label="Name"
             spellcheck="false"
             autocomplete="off"
           />
-          <button class="orden-chip" type="submit" disabled={!name.trim()}
-            >{t('Create a token')}</button
-          >
+          <button class="orden-chip" type="submit" disabled={!name.trim()}>Create a token</button>
         </form>
       {/if}
     </div>
@@ -129,12 +125,11 @@
     width: 12px;
     height: 12px;
     stroke: currentColor;
-    transform: scaleX(var(--dir));
     transition: transform var(--dur-fast) var(--ease-out);
   }
 
   .disclose .chevron.open {
-    transform: scaleX(var(--dir)) rotate(90deg);
+    transform: rotate(90deg);
   }
 
   .made {

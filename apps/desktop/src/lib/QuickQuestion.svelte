@@ -12,7 +12,6 @@
   import { closeOnBack } from './backstack.svelte'
   import { copyText } from './clipboard'
   import Cross from './Cross.svelte'
-  import { t } from './i18n.svelte'
   import { links } from './link-index.svelte'
   import { dur, fade, fly, LAYER, scale } from './motion'
   import { followHref, followNote, MIDDLE, opensLink } from './open-link'
@@ -69,11 +68,9 @@
   function onPaste(event: ClipboardEvent) {
     const text = longPaste(event)
     if (text === null) return
-    const name = t('Text')
+    const name = 'Text'
     if (text.length > 2_000_000) {
-      quick.refuse(
-        t('{name} was not added: a chat takes pictures, and text files up to 2 MB.', { name }),
-      )
+      quick.refuse(`${name} was not added: a chat takes pictures, and text files up to 2 MB.`)
       return
     }
     quick.take(name, text)
@@ -113,7 +110,7 @@
           : null
         return found === null ? null : { href: found }
       },
-      copy: t('Copy code'),
+      copy: 'Copy code',
       live,
       from,
       shown: pictures,
@@ -151,7 +148,7 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label={t('Quick question')}
+    aria-label="Quick question"
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     {#if quick.ready}
@@ -163,8 +160,8 @@
           use:dictating={voiceField}
           data-lands
           rows="1"
-          placeholder={t('Ask')}
-          aria-label={t('Quick question')}
+          placeholder="Ask"
+          aria-label="Quick question"
           spellcheck="false"
           onpaste={onPaste}
           onkeydown={onKey}></textarea>
@@ -174,7 +171,7 @@
         {/if}
 
         {#if quick.running}
-          <button class="go" title={t('Stop')} aria-label={t('Stop')} onclick={() => quick.stop()}>
+          <button class="go" title="Stop" aria-label="Stop" onclick={() => quick.stop()}>
             <svg viewBox="0 0 13 13"
               ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
             >
@@ -182,8 +179,8 @@
         {:else}
           <button
             class="go"
-            title={t('Ask')}
-            aria-label={t('Ask')}
+            title="Ask"
+            aria-label="Ask"
             disabled={!quick.question.trim() && !quick.texts.length}
             onclick={() => void quick.ask()}
           >
@@ -201,8 +198,8 @@
               <span class="what" dir="auto">{context.name}</span>
               <button
                 class="drop"
-                title={t('Remove')}
-                aria-label={t('Remove')}
+                title="Remove"
+                aria-label="Remove"
                 onclick={() => {
                   quick.drop()
                   field?.focus()
@@ -218,8 +215,8 @@
               <span class="what" dir="auto">{one.label}</span>
               <button
                 class="drop"
-                title={t('Remove')}
-                aria-label={t('Remove')}
+                title="Remove"
+                aria-label="Remove"
                 onclick={() => {
                   quick.dropText(one.id)
                   field?.focus()
@@ -233,14 +230,14 @@
       {/if}
     {:else}
       <p class="empty-text">
-        {t('Add an AI provider in Settings first.')}
+        Add an AI provider in Settings first.
         <button
           class="link"
           data-lands
           onclick={() => {
             quick.close()
             settings.show('ai')
-          }}>{t('Settings › AI')}</button
+          }}>Settings › AI</button
         >
       </p>
     {/if}
@@ -274,8 +271,8 @@
           <div class="acts" in:fade={{ duration: dur(120) }}>
             <button
               class="orden-glyph act"
-              title={t('Continue in the panel')}
-              aria-label={t('Continue in the panel')}
+              title="Continue in the panel"
+              aria-label="Continue in the panel"
               onclick={() => void quick.continueInPanel()}
             >
               <svg viewBox="0 0 13 13"
@@ -295,8 +292,8 @@
           <div class="acts" in:fade={{ duration: dur(120) }}>
             <button
               class="orden-glyph act"
-              title={t('Add to note')}
-              aria-label={t('Add to note')}
+              title="Add to note"
+              aria-label="Add to note"
               onclick={() => void quick.addToNote(dollarMaths(done.text))}
             >
               <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg
@@ -304,8 +301,8 @@
             </button>
             <button
               class="orden-glyph act"
-              title={t('Copy')}
-              aria-label={t('Copy')}
+              title="Copy"
+              aria-label="Copy"
               onclick={() => void copy(dollarMaths(done.text))}
             >
               <svg viewBox="0 0 13 13">
@@ -321,8 +318,8 @@
             {#if workspace.offers('ask')}
               <button
                 class="orden-glyph act"
-                title={t('Continue in the panel')}
-                aria-label={t('Continue in the panel')}
+                title="Continue in the panel"
+                aria-label="Continue in the panel"
                 onclick={() => void quick.continueInPanel()}
               >
                 <svg viewBox="0 0 13 13"

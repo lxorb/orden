@@ -1,4 +1,4 @@
-import { i18n, t } from '../../i18n.svelte'
+import { localDate } from '../../region'
 import { invoke } from '../../tauri'
 import { isLocal, KIND_NAMES, type Provider } from '../providers'
 import type { Thread } from '../chat/types'
@@ -23,28 +23,28 @@ async function plansOf() {
 }
 
 export async function status(thread: Thread | null, provider: Provider | null): Promise<string> {
-  if (!provider) return t('Add an AI provider in Settings first.')
+  if (!provider) return 'Add an AI provider in Settings first.'
   let plan: string | null = null
   let account: string | null = null
   if (isLocal(provider.kind)) {
     const now = await (await plansOf()).check({ id: provider.id, kind: provider.kind })
     plan = now.plan
-    account = now.account ?? (now.state === 'out' ? t('Signed out') : null)
+    account = now.account ?? (now.state === 'out' ? 'Signed out' : null)
   } else if (provider.kind === 'chatgpt') {
     const plans = await plansOf()
     await plans.checkChatgpt()
-    account = plans.chatgpt?.email ?? t('Signed out')
+    account = plans.chatgpt?.email ?? 'Signed out'
   }
   return rows([
     [
-      t('Provider'),
+      'Provider',
       `${KIND_NAMES[provider.kind]}${provider.name !== KIND_NAMES[provider.kind] ? `, ${provider.name}` : ''}`,
     ],
-    [t('Model'), [thread?.model ?? provider.model, thread?.effort].filter(Boolean).join(', ')],
-    [t('Mode'), thread?.mode],
-    [t('Account'), [plan, account].filter(Boolean).join(', ')],
-    [t('Agents'), `Orden ${provider.name}`],
-    [t('Version'), __APP_VERSION__],
+    ['Model', [thread?.model ?? provider.model, thread?.effort].filter(Boolean).join(', ')],
+    ['Mode', thread?.mode],
+    ['Account', [plan, account].filter(Boolean).join(', ')],
+    ['Agents', `Orden ${provider.name}`],
+    ['Version', __APP_VERSION__],
   ])
 }
 
@@ -55,34 +55,31 @@ export async function usage(thread: Thread | null, provider: Provider | null): P
   if (provider && isLocal(provider.kind)) limit = (await plansOf()).of(provider.id).limit
   else if (provider?.kind === 'chatgpt') limit = (await plansOf()).chatgptLimit
   const until = limit?.until
-    ? i18n.when(limit.until, { dateStyle: 'medium', timeStyle: 'short' })
+    ? localDate(limit.until, { dateStyle: 'medium', timeStyle: 'short' })
     : limit?.untilWords
   const standing =
     limit && limit.state !== 'fine'
-      ? [limit.state === 'reached' ? t('At its limit') : t('Near its limit'), until]
+      ? [limit.state === 'reached' ? 'At its limit' : 'Near its limit', until]
       : []
   return (
     rows([
-      [t('This thread'), spent ? `↑ ${tokens(spent.input)} ↓ ${tokens(spent.output)}` : null],
-      [
-        t('Window'),
-        thread && window ? `${tokens(filled(thread.usage))} / ${tokens(window)}` : null,
-      ],
-      [t('Cost'), spent?.cost !== undefined ? `$${spent.cost.toFixed(4)}` : null],
-      [t('Account'), standing.filter(Boolean).join(', ')],
+      ['This thread', spent ? `↑ ${tokens(spent.input)} ↓ ${tokens(spent.output)}` : null],
+      ['Window', thread && window ? `${tokens(filled(thread.usage))} / ${tokens(window)}` : null],
+      ['Cost', spent?.cost !== undefined ? `$${spent.cost.toFixed(4)}` : null],
+      ['Account', standing.filter(Boolean).join(', ')],
     ]) || '∅'
   )
 }
 
 export async function doctor(provider: Provider | null): Promise<string> {
-  if (!provider) return t('Add an AI provider in Settings first.')
-  const out: [string, string | null][] = [[t('Provider'), KIND_NAMES[provider.kind]]]
+  if (!provider) return 'Add an AI provider in Settings first.'
+  const out: [string, string | null][] = [['Provider', KIND_NAMES[provider.kind]]]
   if (isLocal(provider.kind)) {
     const now = await (await plansOf()).check({ id: provider.id, kind: provider.kind })
-    out.push([t('Program'), now.program ?? t('Not installed')])
-    out.push([t('Signed in'), now.state === 'in' ? '✓' : now.state === 'out' ? '✕' : '?'])
+    out.push(['Program', now.program ?? 'Not installed'])
+    out.push(['Signed in', now.state === 'in' ? '✓' : now.state === 'out' ? '✕' : '?'])
   } else if (provider.baseUrl) {
-    out.push([t('Address'), provider.baseUrl])
+    out.push(['Address', provider.baseUrl])
   }
   const listed = await engineFor(provider.kind, { provider: () => provider })
     .then((engine) => engine.models(provider))
@@ -90,7 +87,7 @@ export async function doctor(provider: Provider | null): Promise<string> {
       (models) => `✓ ${models.length}`,
       (error: unknown) => `✕ ${error instanceof Error ? error.message : String(error)}`,
     )
-  out.push([t('Models'), listed])
+  out.push(['Models', listed])
   return rows(out)
 }
 

@@ -1,6 +1,5 @@
 import { oneEdit } from '@orden/markdown/edits'
 
-import { plural, t } from './i18n.svelte'
 import { converted } from './import/convert'
 import { protection } from './protect/protection.svelte'
 import type { Change } from './search/apply'
@@ -40,10 +39,10 @@ export async function convertSyntax() {
     !open?.path || !isMarkdownPath(open.path)
       ? 'space'
       : await prompt.choose({
-          title: t('Convert syntax'),
+          title: 'Convert syntax',
           options: [
-            { id: 'note', label: t('In this note'), primary: true },
-            { id: 'space', label: t('In the whole space') },
+            { id: 'note', label: 'In this note', primary: true },
+            { id: 'space', label: 'In the whole space' },
           ],
         })
 
@@ -58,16 +57,16 @@ export async function convertSyntax() {
 
   if (!rewrites) {
     await prompt.confirm({
-      title: t('Nothing here needs converting.'),
-      confirmLabel: t('Close'),
+      title: 'Nothing here needs converting.',
+      confirmLabel: 'Close',
     })
     return
   }
 
   const sure = await prompt.confirm({
-    title: plural(rewrites, { one: 'Rewrite {count} thing?', other: 'Rewrite {count} things?' }),
-    detail: plural(changes.length, { one: 'In {count} note.', other: 'In {count} notes.' }),
-    confirmLabel: t('Rewrite'),
+    title: rewrites === 1 ? 'Rewrite 1 thing?' : `Rewrite ${rewrites} things?`,
+    detail: changes.length === 1 ? 'In 1 note.' : `In ${changes.length} notes.`,
+    confirmLabel: 'Rewrite',
   })
 
   if (sure) await workspace.replaceInNotes(changes)

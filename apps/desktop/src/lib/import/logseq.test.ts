@@ -107,7 +107,7 @@ describe('a Logseq graph', () => {
     ])
 
     expect(noteAt(plan, 'Other.md')).toContain('As noted: The quarter closed ahead of plan')
-    expect(plan.lost[0]?.values).toEqual({ count: 1 })
+    expect(plan.lost[0]).toBe('1 block references were written out as the words they pointed at')
   })
 
   test('a reference to a block nothing exported is left as it was', async () => {
@@ -235,7 +235,7 @@ describe('a Logseq graph', () => {
     const text = noteAt(plan, 'Other.md')
     expect(text).toContain('- The quarter closed ahead of plan\n- ![[Source]]\n- as noted\n')
     expect(text).toContain('[[Source|the source]]')
-    expect(plan.lost[0]?.values).toEqual({ count: 2 })
+    expect(plan.lost[0]).toBe('2 block references were written out as the words they pointed at')
   })
 
   test("a block's fold and a picture's size are Logseq's own and do not come", async () => {

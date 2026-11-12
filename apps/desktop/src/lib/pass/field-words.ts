@@ -7,7 +7,6 @@ import type {
   MatchRule,
   WifiSecurity,
 } from '@orden/pass/types'
-import { t } from '../i18n.svelte'
 
 export const IDENTITY_FIRST: Record<IdentityGroup, readonly IdentityKey[]> = {
   personal: ['fullName', 'email', 'phone'],
@@ -19,28 +18,28 @@ export const IDENTITY_FIRST: Record<IdentityGroup, readonly IdentityKey[]> = {
 export function fieldKindLabel(kind: FieldKind): string {
   switch (kind) {
     case 'text':
-      return t('Text')
+      return 'Text'
     case 'hidden':
-      return t('Hidden')
+      return 'Hidden'
     case 'totp':
-      return t('2FA code')
+      return '2FA code'
     case 'date':
-      return t('Date')
+      return 'Date'
   }
 }
 
 export function matchLabel(rule: MatchRule): string {
   switch (rule) {
     case 'domain':
-      return t('Site and its subdomains')
+      return 'Site and its subdomains'
     case 'host':
-      return t('Exact host')
+      return 'Exact host'
     case 'exact':
-      return t('Exact address')
+      return 'Exact address'
     case 'prefix':
-      return t('Starts with')
+      return 'Starts with'
     case 'never':
-      return t('Never')
+      return 'Never'
   }
 }
 
@@ -55,7 +54,7 @@ export function securityLabel(security: WifiSecurity): string {
     case 'wep':
       return 'WEP'
     case 'none':
-      return t('None')
+      return 'None'
   }
 }
 
@@ -70,7 +69,7 @@ export function brandLabel(brand: CardBrand): string {
     case 'discover':
       return 'Discover'
     case 'other':
-      return t('Other')
+      return 'Other'
   }
 }
 
@@ -87,20 +86,20 @@ export function brandOf(number: string): CardBrand | null {
 export function separatorLabel(separator: Separator | 'none'): string {
   switch (separator) {
     case 'none':
-      return t('None')
+      return 'None'
     case 'hyphen':
-      return t('Hyphens')
+      return 'Hyphens'
     case 'space':
-      return t('Spaces')
+      return 'Spaces'
     case 'period':
-      return t('Periods')
+      return 'Periods'
     case 'comma':
-      return t('Commas')
+      return 'Commas'
     case 'underscore':
-      return t('Underscores')
+      return 'Underscores'
     case 'digit':
-      return t('Numbers')
+      return 'Numbers'
     case 'digitOrSymbol':
-      return t('Numbers and symbols')
+      return 'Numbers and symbols'
   }
 }

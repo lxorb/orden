@@ -15,7 +15,7 @@ import { tasks } from './tasks.svelte'
 import { planDay, showTasks } from './todos'
 import type { CommandContext, Panel, PanelCommand } from './types'
 import { explain, review, rewrite, summarize } from './words'
-import { message, t } from '../../i18n.svelte'
+import { message } from '../../message'
 import { FIRST_MODE, noMoreThan } from '../modes'
 
 interface ReviewCommands {
@@ -213,7 +213,7 @@ async function guarded(host: Host, context: CommandContext, run: Run | undefined
   try {
     await run?.(context, host)
   } catch (error) {
-    if (context.thread) host.line(context.thread, message(error, t('The model did not answer.')))
+    if (context.thread) host.line(context.thread, message(error, 'The model did not answer.'))
   }
 }
 
@@ -249,7 +249,7 @@ export function commands(panel: Panel): readonly PanelCommand[] {
     name: row.name,
     synonyms: [...row.synonyms],
     ...(row.args ? { args: row.args } : {}),
-    description: t(row.description),
+    description: row.description,
     source: 'orden',
     available: (kind) => availability(row.name, kind, ready),
     run: (context) => guarded(host, context, RUNS[row.name]),

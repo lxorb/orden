@@ -1,6 +1,5 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { i18n, t } from './i18n.svelte'
   import { shownName } from './note-name'
   import { ARCHIVE_MARK } from './archive-marks'
   import { SEARCH_MARK } from './panel-marks'
@@ -250,13 +249,13 @@
         onblur={() => (focused = false)}
         onkeydown={onKeydown}
         placeholder={focused && !search.text
-          ? t('path: tag: file: -word "…" /re/')
-          : t('Search this space')}
+          ? 'path: tag: file: -word "…" /re/'
+          : 'Search this space'}
         spellcheck="false"
         autocapitalize="off"
         autocorrect="off"
         role="combobox"
-        aria-label={t('Search this space')}
+        aria-label="Search this space"
         aria-expanded={suggestions.length > 0}
         aria-controls="orden-search-values"
         aria-activedescendant={suggestions.length ? `orden-search-values-${active}` : undefined}
@@ -264,10 +263,7 @@
       />
 
       {#if search.asks && search.hits.length}
-        <span
-          class="found"
-          transition:fly={{ x: 6 * i18n.factor, duration: dur(130), easing: cubicOut }}
-        >
+        <span class="found" transition:fly={{ x: 6, duration: dur(130), easing: cubicOut }}>
           {search.hits.length}
         </span>
       {/if}
@@ -277,11 +273,11 @@
         <button
           class="star"
           class:on={kept}
-          title={kept ? t('Remove from Essentials') : t('Add to Essentials')}
-          aria-label={kept ? t('Remove from Essentials') : t('Add to Essentials')}
+          title={kept ? 'Remove from Essentials' : 'Add to Essentials'}
+          aria-label={kept ? 'Remove from Essentials' : 'Add to Essentials'}
           aria-pressed={kept}
           onclick={() => workspace.bookmarks.toggle(searchMark)}
-          transition:fly={{ x: 6 * i18n.factor, duration: dur(130), easing: cubicOut }}
+          transition:fly={{ x: 6, duration: dur(130), easing: cubicOut }}
         >
           <svg viewBox="0 0 13 13"><path d={STAR} /></svg>
         </button>
@@ -290,7 +286,7 @@
       {#if suggestions.length}
         <Suggest
           id="orden-search-values"
-          label={t('Values')}
+          label="Values"
           values={suggestions}
           typed={asking?.typed ?? ''}
           {active}
@@ -303,8 +299,8 @@
       <button
         class="swap"
         class:active={search.replacing}
-        title={t('Replace')}
-        aria-label={t('Replace')}
+        title="Replace"
+        aria-label="Replace"
         aria-pressed={search.replacing}
         onclick={() => search.toggleReplace()}
       >
@@ -316,8 +312,8 @@
       <button
         class="swap"
         class:active={search.archived}
-        title={t('Archived')}
-        aria-label={t('Archived')}
+        title="Archived"
+        aria-label="Archived"
         aria-pressed={search.archived}
         onclick={() => search.showArchived(!search.archived)}
       >
@@ -336,14 +332,14 @@
           if (event.key === 'Escape') search.closeReplace()
           if (event.key === 'Enter') void search.replace()
         }}
-        placeholder={t('Replace with')}
+        placeholder="Replace with"
         spellcheck="false"
         autocapitalize="off"
         autocorrect="off"
       />
 
       <button class="apply" disabled={!search.chosen.length} onclick={() => void search.replace()}>
-        {t('Replace')}<span class="count">{search.chosen.length}</span>
+        Replace<span class="count">{search.chosen.length}</span>
       </button>
     </div>
   {/if}
@@ -363,11 +359,11 @@
     {#each groups as group, index (`${group.path}:${index}`)}
       <li class="group">
         <div class="orden-section note">
-          {#if group.loose}<span class="guess" title={t('Close match')}>~</span
+          {#if group.loose}<span class="guess" title="Close match">~</span
             >{/if}{#if group.archived}<svg
               class="archived"
               viewBox="0 0 13 13"
-              aria-label={t('Archived')}><path d={ARCHIVE_MARK} /></svg
+              aria-label="Archived"><path d={ARCHIVE_MARK} /></svg
             >{/if}{shownName(group.name)}
         </div>
 
@@ -406,7 +402,7 @@
               {/each}
 
               {#if hit.page !== undefined}
-                <span class="orden-row-meta">{t('Page {page}', { page: hit.page })}</span>
+                <span class="orden-row-meta">Page {hit.page}</span>
               {/if}
             </button>
           </div>
@@ -415,7 +411,7 @@
     {/each}
   </ul>
 {:else if search.asks && !search.running}
-  <p class="empty-text">{t('Nothing found')}</p>
+  <p class="empty-text">Nothing found</p>
 {:else if !search.text.trim() && tags.length}
   <TagTree nodes={tags} />
 {/if}

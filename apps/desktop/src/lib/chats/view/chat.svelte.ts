@@ -1,7 +1,6 @@
 import type { FileRef, Member, Message, Poll, Preview, Who } from '@orden/chats'
 import { chatLink } from '@orden/chats/links'
 import { copyText } from '../../clipboard'
-import { t } from '../../i18n.svelte'
 import { paletteWords } from '../../surfaces.svelte'
 import type { ChatEntry, ChatView, Shown } from '../api'
 import { trimmed } from './compose'
@@ -45,7 +44,7 @@ export class ChatPage {
   }
 
   readonly members: Member[] = $derived.by(() =>
-    this.view.members.map((one) => ({ who: one.who, name: one.name ?? t('Deleted account') })),
+    this.view.members.map((one) => ({ who: one.who, name: one.name ?? 'Deleted account' })),
   )
 
   get ready(): boolean {

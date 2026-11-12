@@ -1,7 +1,6 @@
 <script lang="ts">
   import Cross from '../../Cross.svelte'
   import Hint from '../../Hint.svelte'
-  import { t } from '../../i18n.svelte'
 
   const {
     words,
@@ -38,7 +37,7 @@
   {#if words.length}
     <div class="list">
       {#each words as word (word)}
-        <button class="orden-tag" title={t('Remove')} onclick={() => onremove(word)}>
+        <button class="orden-tag" title="Remove" onclick={() => onremove(word)}>
           {word}<Cross small />
         </button>
       {/each}

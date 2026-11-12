@@ -40,13 +40,4 @@ describe("a note's properties (#1210)", () => {
     const sheets = files(THEMES, (path) => path.endsWith('.css'))
     expect(sheets.filter((path) => read(path).includes('.orden-propert'))).toEqual([])
   })
-
-  test('no catalogue keeps their strings', () => {
-    const kept = files(join(APP, 'locales'), (path) => path.endsWith('.ts')).filter((path) =>
-      /^\s*(?:'Add a property'|'Front matter: \{name\}'|'Properties draws the rows):/m.test(
-        read(path),
-      ),
-    )
-    expect(kept).toEqual([])
-  })
 })

@@ -32,7 +32,7 @@ import { rank } from '@orden/pass/urls'
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { forgetKey, keysAreGuarded, readSecret, writeSecret } from '../ai/keys'
-import { message, t } from '../i18n.svelte'
+import { message } from '../message'
 import { deviceCan, deviceSays } from '../protect/device'
 import { passOn } from '../settings.svelte'
 import { adoptedChange } from './adopt'
@@ -247,7 +247,7 @@ export class PassStore {
     await writeKeyring(row)
     this.keyring = row
     this.hold(emptyHeld(made.opened), [], [])
-    await this.serial(() => this.makeVault({ name: t('Personal'), color: 'purple', icon: 'home' }))
+    await this.serial(() => this.makeVault({ name: 'Personal', color: 'purple', icon: 'home' }))
     return made.recovery
   }
 
@@ -270,7 +270,7 @@ export class PassStore {
   }
 
   distrusted(problem: TrustProblem): void {
-    this.trustProblem = t(trustWords(problem))
+    this.trustProblem = trustWords(problem)
   }
 
   async backfillTrust(): Promise<number> {
@@ -305,7 +305,7 @@ export class PassStore {
     }
     if (way === 'pin' ? !this.canPin : !this.canDevice) return false
     if (way === 'pin' && (pin === undefined || pinIn(pin) === null)) return false
-    if (way === 'device' && !(await deviceSays(t('Unlock Pass')))) return false
+    if (way === 'device' && !(await deviceSays('Unlock Pass'))) return false
     try {
       const secret = await ensuredDeviceSecret()
       const seal = await sealForDevice(opened.root, secret, way === 'pin' ? pin : undefined, pinKdf)
@@ -469,7 +469,7 @@ export class PassStore {
 
   duplicate(id: string): Promise<Item> {
     const item = this.item(id)
-    const content = { ...item.content, title: t('Copy of {title}', { title: item.content.title }) }
+    const content = { ...item.content, title: `Copy of ${item.content.title}` }
     return this.create(item.vault, content, item.folder)
   }
 
@@ -751,7 +751,7 @@ export class PassStore {
       const local = await this.localOpened(password)
       if (!local) return false
       const before = { vaults: await readVaults(), items: await readItems() }
-      const name = t('From this device')
+      const name = 'From this device'
       await write(await adoptedChange(before, local.items, local.vaults, opened, name))
       const row: KeyringRow = { keyring: account.keyring, rev: account.rev, pending: false }
       await writeKeyring(row)
@@ -915,7 +915,7 @@ export class PassStore {
   private async openedByDevice(keyring: Keyring): Promise<Opened | null> {
     const device = this.device
     if (device?.seal.way !== 'device') return null
-    if (!(await deviceSays(t('Unlock Pass')))) return null
+    if (!(await deviceSays('Unlock Pass'))) return null
     const secret = await deviceSecret()
     if (!secret) return null
     return await openedWith(

@@ -1,4 +1,4 @@
-import { message, t } from '../i18n.svelte'
+import { message } from '../message'
 import type { Account } from '../ai/accounts'
 import type { LocalKind, ProviderKind } from '../ai/providers'
 import { invoke, isDesktop, openExternal } from '../tauri'
@@ -47,7 +47,7 @@ async function withModel(account: Account): Promise<void> {
 
 export async function signInWith(plan: Plan): Promise<Connecting> {
   const kind = signInKind(plan)
-  if (!kind) return { state: 'failed', said: t('Could not sign in.') }
+  if (!kind) return { state: 'failed', said: 'Could not sign in.' }
   const { plans } = await import('../ai/local/status.svelte')
 
   if (kind === 'chatgpt') {
@@ -63,8 +63,8 @@ export async function signInWith(plan: Plan): Promise<Connecting> {
         state: 'failed',
         said:
           said === 'stopped' || said === 'timed out'
-            ? t('Could not sign in.')
-            : message(new Error(said), t('Could not sign in.')),
+            ? 'Could not sign in.'
+            : message(new Error(said), 'Could not sign in.'),
       }
     }
   }
@@ -75,7 +75,7 @@ export async function signInWith(plan: Plan): Promise<Connecting> {
   if (standing.state === 'in') return { state: 'in', id: account.id }
   if (standing.state === 'missing' || !standing.program) {
     void openExternal(INSTALL[local])
-    return { state: 'failed', said: t('Not installed') }
+    return { state: 'failed', said: 'Not installed' }
   }
   const { signIn } = await import('../ai/local/signin')
   await signIn(local, standing.program, standing.home)
@@ -90,7 +90,7 @@ async function keyed(account: Account, typed: string): Promise<string | null> {
     await withModel(account)
     return null
   } catch (error) {
-    return message(error, t('that key could not be saved'))
+    return message(error, 'that key could not be saved')
   }
 }
 
@@ -116,6 +116,6 @@ export async function connectCompatible(
     return null
   } catch (error) {
     ai.remove(account.id)
-    return message(error, t('Could not read the models.'))
+    return message(error, 'Could not read the models.')
   }
 }

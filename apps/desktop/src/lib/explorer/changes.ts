@@ -1,5 +1,5 @@
 import { freePath } from '@orden/markdown/paths'
-import { message, plural, t } from '../i18n.svelte'
+import { message } from '../message'
 import type { Picked as Brought } from '../import/sources'
 import { fileClipboard } from '../list-landing.svelte'
 import { prompt } from '../prompt.svelte'
@@ -59,11 +59,11 @@ export async function newFolder(view: ExplorerView) {
     let path: string
     if (inASpace(folder)) {
       const all = view.listing?.entries.map((one) => one.name) ?? []
-      path = joinPath(folder, freeName(takenNames(all), t('New folder')))
+      path = joinPath(folder, freeName(takenNames(all), 'New folder'))
       await invoke('create_folder', { path })
       await workspace.loadTree()
     } else {
-      path = await makeIn(folder, t('New folder'), false)
+      path = await makeIn(folder, 'New folder', false)
       record([{ op: 'made', path }])
     }
     await view.reload()
@@ -122,12 +122,10 @@ export async function removeForGood(view: ExplorerView, paths: readonly string[]
   if (inside.length) await trash(view, inside)
   if (!outside.length) return
   const sure = await prompt.confirm({
-    title: plural(outside.length, {
-      one: 'Delete {count} item for good?',
-      other: 'Delete {count} items for good?',
-    }),
-    detail: t('This cannot be undone.'),
-    confirmLabel: t('Delete for good'),
+    title:
+      outside.length === 1 ? 'Delete 1 item for good?' : `Delete ${outside.length} items for good?`,
+    detail: 'This cannot be undone.',
+    confirmLabel: 'Delete for good',
     danger: true,
   })
   if (!sure) return
@@ -199,8 +197,12 @@ async function across(
 ): Promise<string[]> {
   const label =
     how === 'move'
-      ? plural(sources.length, { one: 'Moving {count} item', other: 'Moving {count} items' })
-      : plural(sources.length, { one: 'Copying {count} item', other: 'Copying {count} items' })
+      ? sources.length === 1
+        ? 'Moving 1 item'
+        : `Moving ${sources.length} items`
+      : sources.length === 1
+        ? 'Copying 1 item'
+        : `Copying ${sources.length} items`
   let done: Transferred
   try {
     done = await jobs.run(label, (id) => transfer(id, sources, folder, how, clash, staying))
@@ -227,15 +229,14 @@ async function clashFor(sources: readonly string[], folder: string): Promise<Cla
   const answer = await prompt.choose({
     title:
       only !== undefined && !more.length
-        ? t('{name} is already here', { name: only })
-        : plural(names.length, {
-            one: '{count} name is already here',
-            other: '{count} names are already here',
-          }),
+        ? `${only} is already here`
+        : names.length === 1
+          ? '1 name is already here'
+          : `${names.length} names are already here`,
     options: [
-      { id: 'keep', label: t('Keep both'), lands: true },
-      { id: 'replace', label: t('Replace'), danger: true },
-      { id: 'skip', label: t('Skip') },
+      { id: 'keep', label: 'Keep both', lands: true },
+      { id: 'replace', label: 'Replace', danger: true },
+      { id: 'skip', label: 'Skip' },
     ],
   })
   return answer === 'keep' || answer === 'replace' || answer === 'skip' ? answer : null
@@ -282,7 +283,7 @@ function broughtFile(path: string, under: string): Brought {
     ...(nested ? { webkitRelativePath: under } : {}),
     arrayBuffer: async () => {
       const read = await peekAt(path, MOST_BROUGHT)
-      if (read.cut) throw new Error(t('This file is too large to bring into a space.'))
+      if (read.cut) throw new Error('This file is too large to bring into a space.')
       return read.bytes.slice().buffer
     },
   }

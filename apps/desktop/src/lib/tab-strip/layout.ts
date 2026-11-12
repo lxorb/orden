@@ -248,11 +248,13 @@ export function holds(strip: Rect, x: number, y: number, magnetism: number): boo
 
 const CLOSING_SLOP = { below: 40, past: 60 } as const
 
-export function near(strip: Rect, x: number, y: number, factor: number): boolean {
-  const left = strip.left - (factor < 0 ? CLOSING_SLOP.past : 0)
-  const right = strip.right + (factor < 0 ? 0 : CLOSING_SLOP.past)
-
-  return x >= left && x <= right && y >= strip.top && y <= strip.bottom + CLOSING_SLOP.below
+export function near(strip: Rect, x: number, y: number): boolean {
+  return (
+    x >= strip.left &&
+    x <= strip.right + CLOSING_SLOP.past &&
+    y >= strip.top &&
+    y <= strip.bottom + CLOSING_SLOP.below
+  )
 }
 
 export function keptWidths(

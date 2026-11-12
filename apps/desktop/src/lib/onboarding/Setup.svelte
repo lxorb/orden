@@ -3,7 +3,6 @@
   import { cubicOut } from 'svelte/easing'
   import { iconLibrary } from '../icon-library.svelte'
   import { BRANDS } from '../icons'
-  import { i18n } from '../i18n.svelte'
   import { dur, fade, fly } from '../motion'
   import { trap } from '../trap'
   import AccountStep from './AccountStep.svelte'
@@ -56,8 +55,8 @@
   {#key setup.step}
     <div
       class="stage"
-      in:fly={{ x: way * 60 * i18n.factor, duration: dur(550), delay: dur(80), easing: cubicOut }}
-      out:fly={{ x: way * -60 * i18n.factor, duration: dur(450), easing: cubicOut }}
+      in:fly={{ x: way * 60, duration: dur(550), delay: dur(80), easing: cubicOut }}
+      out:fly={{ x: way * -60, duration: dur(450), easing: cubicOut }}
     >
       <Shown />
     </div>
@@ -244,7 +243,7 @@
   }
 
   .setup :global([aria-checked='true'] > .o-toggle::after) {
-    transform: translateX(calc(18px * var(--dir, 1)));
+    transform: translateX(18px);
   }
 
   @media (max-width: 640px) {

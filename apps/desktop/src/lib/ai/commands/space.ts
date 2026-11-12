@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { canWriteAt } from '../../sharing.svelte'
 import { samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
@@ -20,7 +19,7 @@ export async function memory(host: Host, thread: Thread | null, args: string): P
   const word = args.trim().toLowerCase()
   if (word === 'on' || word === 'off') {
     setRemembers(word === 'on')
-    if (thread) host.line(thread, `${t('Memory')}: ${word === 'on' ? '✓' : '✕'}`)
+    if (thread) host.line(thread, `Memory: ${word === 'on' ? '✓' : '✕'}`)
     return
   }
   const root = rootOf(thread)
@@ -99,7 +98,7 @@ export async function agents(host: Host, thread: Thread | null, args: string): P
   const root = rootOfSpace(open.space)
   const profile = root ? await foundNamed('agent', name, root) : null
   if (!profile) {
-    host.line(open, t('No such agent'))
+    host.line(open, 'No such agent')
     return
   }
   held.agent = profile.name
@@ -123,7 +122,7 @@ export async function outputStyle(host: Host, thread: Thread | null, args: strin
     return
   }
   if (!all.includes(name)) {
-    host.line(open, t('No such style'))
+    host.line(open, 'No such style')
     return
   }
   if (name === 'default') delete held.style

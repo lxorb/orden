@@ -11,7 +11,6 @@
   import { keepFocus } from './focus'
   import { tick } from 'svelte'
   import CanvasIcon from './CanvasIcon.svelte'
-  import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { roving } from './roving'
   import { type AppContext, runEntry } from './shortcuts/registry'
@@ -176,8 +175,8 @@
     class="swatch"
     class:on
     class:bare={colour.tone === null}
-    title={t(colour.name)}
-    aria-label={t(colour.name)}
+    title={colour.name}
+    aria-label={colour.name}
     aria-pressed={on}
     style:--dot={dotFor(colour.tone)}
     onpointerdown={keepFocus}
@@ -191,7 +190,7 @@
     {#each HIGHLIGHT_COLOURS as colour (colour.name)}
       {@render dot(colour, colour.tone === modes.highlight.tone, () => pick(colour))}
     {/each}
-    {@render press(t('Highlight colour'), '×', () => void showColours(false))}
+    {@render press('Highlight colour', '×', () => void showColours(false))}
   {:else}
     {#each held as id (id)}
       {@render press(nameFor(id), markFor(id), () => act(id), glyphFor(id), lowMark(id), id)}
@@ -207,7 +206,7 @@
   <div
     class="orden-bar docked"
     role="toolbar"
-    aria-label={t('Format')}
+    aria-label="Format"
     bind:this={bar}
     bind:offsetHeight={viewport.covered}
     use:roving={keys}
@@ -219,7 +218,7 @@
   <div
     class="orden-bar orden-bar-at"
     role="toolbar"
-    aria-label={t('Format')}
+    aria-label="Format"
     bind:this={bar}
     use:roving={keys}
     style:left="{at.x}px"

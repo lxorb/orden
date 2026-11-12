@@ -1,6 +1,5 @@
 <script lang="ts">
   import { feedback } from '../feedback.svelte'
-  import { t } from '../i18n.svelte'
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup.svelte'
@@ -8,9 +7,7 @@
   const NAME = 'Orden'
   const HOLE = '\uE000'
 
-  const [before = '', after = ''] = $derived(
-    t('Welcome to {app}', { app: HOLE }).split(/\u2068?\uE000\u2069?/u),
-  )
+  const [before = '', after = ''] = $derived(`Welcome to ${HOLE}`.split(/\u2068?\uE000\u2069?/u))
 
   let sent = $state<Record<number, 'sending' | 'sent'>>({})
 
@@ -33,8 +30,8 @@
 
 <Screen
   {head}
-  primary={{ label: t('Show me around'), onclick: () => setup.showAround() }}
-  quiet={{ label: t('Skip'), onclick: () => setup.finish() }}
+  primary={{ label: 'Show me around', onclick: () => setup.showAround() }}
+  quiet={{ label: 'Skip', onclick: () => setup.finish() }}
 >
   {#if setup.issues.length}
     <div class="o-list issues rise">
@@ -49,7 +46,7 @@
           </span>
           <span class="text">{issue.text}</span>
           {#if sent[issue.id] === 'sent'}
-            <span class="done" role="status">{t('Report received')}</span>
+            <span class="done" role="status">Report received</span>
           {:else}
             <button
               class="orden-chip end"
@@ -58,7 +55,7 @@
               aria-busy={sent[issue.id] === 'sending'}
               onclick={() => void report(issue.id, issue.text)}
             >
-              {t('Send feedback')}
+              Send feedback
             </button>
           {/if}
         </div>

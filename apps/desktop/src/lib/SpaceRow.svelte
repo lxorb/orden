@@ -1,7 +1,6 @@
 <script lang="ts">
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import { account } from './account.svelte'
-  import { t } from './i18n.svelte'
   import { pieces } from './palette/pieces'
   import SharedMark from './SharedMark.svelte'
   import { isShared, roleOf } from './sharing.svelte'
@@ -39,7 +38,7 @@
   {#await import('./people/Faces.svelte') then faces}<faces.default ids={others} />{/await}
 {/if}
 {#if reads}
-  <SharedMark icon={Eye} label={t('Read-only')} />
+  <SharedMark icon={Eye} label="Read-only" />
 {:else if isShared(space.root)}
   <SharedMark />
 {/if}

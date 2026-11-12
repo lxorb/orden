@@ -1,9 +1,7 @@
 import type { AttachmentFolder } from '../attachments'
-import { key } from '../i18n.svelte'
 import type { LinkFormat } from '../link-format'
 import type { Carried } from './carry'
 import { isJunk } from './folder'
-import type { Lost } from './plan'
 import type { Source } from './sources'
 
 const SETTINGS = /^(?:[^/]+\/)?\.obsidian\//
@@ -42,7 +40,7 @@ export function leftInVault(path: string): boolean {
 
 const IN_ICLOUD = /^\.[^/]+\.icloud$/
 
-export function lostInVault(sources: readonly Source[]): Lost[] {
+export function lostInVault(sources: readonly Source[]): string[] {
   const away = sources.filter((one) => {
     const parts = one.path.split('/')
     const name = parts.pop() ?? ''
@@ -50,12 +48,7 @@ export function lostInVault(sources: readonly Source[]): Lost[] {
   }).length
   if (!away) return []
 
-  return [
-    {
-      text: key('{count} files are in iCloud rather than on this Mac'),
-      values: { count: away },
-    },
-  ]
+  return [`${away} files are in iCloud rather than on this Mac`]
 }
 
 export async function obsidianCarries(sources: readonly Source[]): Promise<Carried> {

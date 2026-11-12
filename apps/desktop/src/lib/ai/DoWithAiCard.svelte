@@ -1,6 +1,5 @@
 <script lang="ts">
   import Hint from '../Hint.svelte'
-  import { key, t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { viewport } from '../viewport.svelte'
   import { type Mode, MODES, modeWord } from './modes'
@@ -22,16 +21,16 @@
 
   const TOOL_WORDS: Record<TaskTool, { label: string; hint: string }> = {
     browser: {
-      label: key('Use the browser'),
-      hint: key('Lets a task done with AI open web pages and act on them.'),
+      label: 'Use the browser',
+      hint: 'Lets a task done with AI open web pages and act on them.',
     },
     notes: {
-      label: key('Look through notes'),
-      hint: key('Lets a task done with AI search and read your other notes, beside its own.'),
+      label: 'Look through notes',
+      hint: 'Lets a task done with AI search and read your other notes, beside its own.',
     },
     edits: {
-      label: key('Change other notes'),
-      hint: key('Lets a task done with AI write, move and delete notes other than the task.'),
+      label: 'Change other notes',
+      hint: 'Lets a task done with AI write, move and delete notes other than the task.',
     },
   }
 
@@ -46,8 +45,8 @@
   <div class="orden-setting setting">
     <span class="name"
       ><span class="orden-named"
-        >{t('Do with AI')}<Hint
-          text={t('Whether a task done with AI asks before each change or makes them on its own.')}
+        >Do with AI<Hint
+          text="Whether a task done with AI asks before each change or makes them on its own."
         /></span
       ></span
     >
@@ -56,10 +55,10 @@
         value={tasked}
         options={MODES.filter((one) => one !== 'plan').map((one) => ({
           value: one,
-          label: t(modeWord(one)),
+          label: modeWord(one),
         }))}
         onchange={(value: string) => rememberTaskMode((tasked = value as Mode))}
-        label={t('Do with AI')}
+        label="Do with AI"
         plain={viewport.touch}
       />
     </div>
@@ -67,10 +66,8 @@
   <label class="orden-setting setting asking">
     <span class="name"
       ><span class="orden-named"
-        >{t('Instructions')}<Hint
-          text={t(
-            'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.',
-          )}
+        >Instructions<Hint
+          text="What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment."
         /></span
       ></span
     >
@@ -86,14 +83,14 @@
   </label>
 </div>
 
-<h3>{t('Permissions')}</h3>
+<h3>Permissions</h3>
 <div class="card" data-permissions>
   {#each TASK_TOOLS as tool (tool)}
     {@const words = TOOL_WORDS[tool]}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="orden-setting setting pressable" onclick={() => turnTaskTool(tool)}>
       <span class="name"
-        ><span class="orden-named">{t(words.label)}<Hint text={t(words.hint)} /></span></span
+        ><span class="orden-named">{words.label}<Hint text={words.hint} /></span></span
       >
       <span
         class="orden-switch"
@@ -101,7 +98,7 @@
         role="switch"
         tabindex="0"
         aria-checked={taskTools[tool]}
-        aria-label={t(words.label)}
+        aria-label={words.label}
         onkeydown={(event) => {
           if (event.key !== ' ' && event.key !== 'Enter') return
           event.preventDefault()

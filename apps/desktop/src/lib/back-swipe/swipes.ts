@@ -1,6 +1,5 @@
 import { mount, unmount } from 'svelte'
 import { overlays } from '../overlays'
-import { reading } from '../direction'
 import { dur } from '../motion'
 import { isDesktop, isMobile } from '../tauri'
 import { viewport } from '../viewport.svelte'
@@ -56,8 +55,7 @@ let settling = 0
 const pad = { known: false, down: false }
 
 export function wayOf(side: Side): 'back' | 'forward' {
-  const back: Side = reading() === 'rtl' ? 'right' : 'left'
-  return side === back ? 'back' : 'forward'
+  return side === 'left' ? 'back' : 'forward'
 }
 
 function goes(tab: Tab): Record<Side, boolean> {

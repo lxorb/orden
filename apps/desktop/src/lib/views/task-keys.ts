@@ -1,43 +1,42 @@
-import { t } from '../i18n.svelte'
 import { BY_ID, CATEGORIES, SHORTCUTS, type Shortcut } from '../shortcuts/registry'
 
 const TASK_ENTRIES: Shortcut[] = (
   [
-    ['tasks.next', () => t('Next task'), 'j'],
-    ['tasks.previous', () => t('Previous task'), 'k'],
-    ['tasks.open', () => t('Open'), 'Enter'],
-    ['tasks.note', () => t('Open in note'), 'o'],
-    ['tasks.complete', () => t('Complete'), 'e'],
-    ['tasks.complete.alt', () => t('Complete'), 'Mod-Enter'],
-    ['tasks.complete.alt2', () => t('Complete'), 'Space'],
-    ['tasks.schedule', () => t('Schedule'), 't'],
-    ['tasks.undate', () => t('Remove date'), 'Shift-t'],
-    ['tasks.priority', () => t('Priority'), 'y'],
-    ['tasks.p1', () => t('Priority {level}', { level: 1 }), '1'],
-    ['tasks.p2', () => t('Priority {level}', { level: 2 }), '2'],
-    ['tasks.p3', () => t('Priority {level}', { level: 3 }), '3'],
-    ['tasks.p4', () => t('Priority {level}', { level: 4 }), '4'],
-    ['tasks.labels', () => t('Labels'), 'l'],
-    ['tasks.move', () => t('Move to'), 'v'],
-    ['tasks.more', () => t('More'), '.'],
-    ['tasks.comment', () => t('Comment'), 'c'],
-    ['tasks.select', () => t('Select'), 'x'],
-    ['tasks.edit', () => t('Edit'), 'Mod-e'],
-    ['tasks.indent', () => t('Indent'), 'Mod-]'],
-    ['tasks.indent.alt', () => t('Indent'), 'Tab'],
-    ['tasks.outdent', () => t('Outdent'), 'Mod-['],
-    ['tasks.outdent.alt', () => t('Outdent'), 'Shift-Tab'],
-    ['tasks.up', () => t('Move up'), 'Mod-ArrowUp'],
-    ['tasks.up.alt', () => t('Move up'), 'Alt-ArrowUp'],
-    ['tasks.down', () => t('Move down'), 'Mod-ArrowDown'],
-    ['tasks.down.alt', () => t('Move down'), 'Alt-ArrowDown'],
-    ['tasks.subtasks', () => t('Sub-tasks'), 'Shift-e'],
-    ['tasks.delete', () => t('Delete'), 'Shift-Delete'],
-    ['tasks.link', () => t('Copy link'), 'Mod-Shift-c'],
-    ['tasks.add', () => t('Add task'), 'a'],
-    ['tasks.add-top', () => t('Add task at the top'), 'Shift-a'],
-    ['tasks.week-back', () => t('Previous week'), 'Shift-ArrowLeft'],
-    ['tasks.week-on', () => t('Next week'), 'Shift-ArrowRight'],
+    ['tasks.next', () => 'Next task', 'j'],
+    ['tasks.previous', () => 'Previous task', 'k'],
+    ['tasks.open', () => 'Open', 'Enter'],
+    ['tasks.note', () => 'Open in note', 'o'],
+    ['tasks.complete', () => 'Complete', 'e'],
+    ['tasks.complete.alt', () => 'Complete', 'Mod-Enter'],
+    ['tasks.complete.alt2', () => 'Complete', 'Space'],
+    ['tasks.schedule', () => 'Schedule', 't'],
+    ['tasks.undate', () => 'Remove date', 'Shift-t'],
+    ['tasks.priority', () => 'Priority', 'y'],
+    ['tasks.p1', () => 'Priority 1', '1'],
+    ['tasks.p2', () => 'Priority 2', '2'],
+    ['tasks.p3', () => 'Priority 3', '3'],
+    ['tasks.p4', () => 'Priority 4', '4'],
+    ['tasks.labels', () => 'Labels', 'l'],
+    ['tasks.move', () => 'Move to', 'v'],
+    ['tasks.more', () => 'More', '.'],
+    ['tasks.comment', () => 'Comment', 'c'],
+    ['tasks.select', () => 'Select', 'x'],
+    ['tasks.edit', () => 'Edit', 'Mod-e'],
+    ['tasks.indent', () => 'Indent', 'Mod-]'],
+    ['tasks.indent.alt', () => 'Indent', 'Tab'],
+    ['tasks.outdent', () => 'Outdent', 'Mod-['],
+    ['tasks.outdent.alt', () => 'Outdent', 'Shift-Tab'],
+    ['tasks.up', () => 'Move up', 'Mod-ArrowUp'],
+    ['tasks.up.alt', () => 'Move up', 'Alt-ArrowUp'],
+    ['tasks.down', () => 'Move down', 'Mod-ArrowDown'],
+    ['tasks.down.alt', () => 'Move down', 'Alt-ArrowDown'],
+    ['tasks.subtasks', () => 'Sub-tasks', 'Shift-e'],
+    ['tasks.delete', () => 'Delete', 'Shift-Delete'],
+    ['tasks.link', () => 'Copy link', 'Mod-Shift-c'],
+    ['tasks.add', () => 'Add task', 'a'],
+    ['tasks.add-top', () => 'Add task at the top', 'Shift-a'],
+    ['tasks.week-back', () => 'Previous week', 'Shift-ArrowLeft'],
+    ['tasks.week-on', () => 'Next week', 'Shift-ArrowRight'],
   ] as const
 ).map(([id, label, key]) => ({
   id,
@@ -50,7 +49,7 @@ const TASK_ENTRIES: Shortcut[] = (
 }))
 
 if (!BY_ID.has('tasks.next')) {
-  CATEGORIES.splice(-1, 0, { id: 'tasks', label: () => t('Tasks') })
+  CATEGORIES.splice(-1, 0, { id: 'tasks', label: () => 'Tasks' })
   for (const one of TASK_ENTRIES) {
     SHORTCUTS.push(one)
     BY_ID.set(one.id, one)

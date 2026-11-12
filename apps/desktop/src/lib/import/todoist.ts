@@ -2,11 +2,10 @@ import { parseRule, ruleText } from '@orden/bases'
 import { taskLine } from '@orden/markdown/task-edits'
 import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@orden/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
-import { key } from '../i18n.svelte'
 import { readCsv } from './csv'
 import { dayOf } from './meta'
 import { safeName } from './names'
-import type { ImportPlan, Lost, Planned } from './plan'
+import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
 interface Project {
@@ -247,11 +246,11 @@ export function planOf(account: Account, into = 'Projects'): ImportPlan & { inbo
     files.push({ kind: 'note', path, text: lines.length ? `${lines.join('\n')}\n` : '' })
   }
 
-  const lost: Lost[] = kept.words ? [{ text: WORDS }] : []
+  const lost = kept.words ? [WORDS] : []
   return { format: 'todoist', files, lost, ...(inbox ? { inbox } : {}) }
 }
 
-const WORDS = key('Some repeating dates stay as words under their tasks')
+const WORDS = 'Some repeating dates stay as words under their tasks'
 
 const ELSEWHERE = '\0elsewhere'
 
@@ -426,8 +425,8 @@ async function pages(get: Fetch, token: string, path: string, list = 'results'):
   return out
 }
 
-const REFUSED = key('Todoist did not take that token.')
-const UNREACHABLE = key('Todoist could not be reached.')
+const REFUSED = 'Todoist did not take that token.'
+const UNREACHABLE = 'Todoist could not be reached.'
 
 function dueOf(due: unknown): Pick<Task, 'due' | 'time' | 'zone' | 'repeats'> {
   if (!isRecord(due)) return {}

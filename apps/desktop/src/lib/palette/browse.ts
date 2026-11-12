@@ -1,24 +1,23 @@
 import type { Command } from '../commands'
-import { t } from '../i18n.svelte'
 import type { Row } from './rows'
 
 export const RECENT = 8
 
 const GROUPS: readonly { title: () => string; ids: readonly string[] }[] = [
   {
-    title: () => t('This note'),
+    title: () => 'This note',
     ids: ['rename', 'move-note', 'share-note', 'copy-uri', 'history', 'print', 'reveal'],
   },
   {
-    title: () => t('View'),
+    title: () => 'View',
     ids: ['reading', 'read-only', 'present', 'source', 'focus', 'typewriter'],
   },
   {
-    title: () => t('Create'),
+    title: () => 'Create',
     ids: ['new', 'new-canvas', 'new-pages', 'new-from-template', 'new-terminal'],
   },
   {
-    title: () => t('Help'),
+    title: () => 'Help',
     ids: ['feedback'],
   },
 ]

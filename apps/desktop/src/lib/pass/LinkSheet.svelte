@@ -2,7 +2,7 @@
   import { MOST_LINK_VIEWS } from '@orden/pass/wire'
   import Copy from 'lucide/dist/esm/icons/copy.mjs'
   import { account } from '../account.svelte'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import { said } from '../said.svelte'
   import Select from '../Select.svelte'
   import Sheet from '../Sheet.svelte'
@@ -64,49 +64,47 @@
   async function copied() {
     if (url === null) return
     await pass.copy(url)
-    said.say(t('Link copied'))
+    said.say('Link copied')
   }
 </script>
 
-<Sheet open={asked !== null} title={t('Create secure link')} onclose={close}>
+<Sheet open={asked !== null} title="Create secure link" onclose={close}>
   <div class="link">
     {#if !signedIn}
-      <p class="quiet" data-signed-out>{t('Sign in to share')}</p>
+      <p class="quiet" data-signed-out>Sign in to share</p>
     {:else if !item || !vault || !mayEdit(vault)}
-      <p class="quiet">{t('Only editors of the vault can make secure links.')}</p>
+      <p class="quiet">Only editors of the vault can make secure links.</p>
     {:else if url !== null}
       <p class="quiet">
-        {t('Anybody with this link can see {title}. It is shown only now.', {
-          title: item.content.title || t('Untitled'),
-        })}
+        Anybody with this link can see {item.content.title || 'Untitled'}. It is shown only now.
       </p>
       <div class="made">
         <input
           class="orden-field is-value is-mono"
           readonly
           value={url}
-          aria-label={t('Secure link')}
+          aria-label="Secure link"
           data-link-url
           onfocus={(event) => event.currentTarget.select()}
         />
         <button class="orden-button" type="button" onclick={() => void copied()}>
           <Glyph icon={Copy} />
-          {t('Copy')}
+          Copy
         </button>
       </div>
       <div class="buttons">
-        <button class="orden-button is-quiet" type="button" onclick={close}>{t('Done')}</button>
+        <button class="orden-button is-quiet" type="button" onclick={close}>Done</button>
       </div>
     {:else}
       <form class="form" onsubmit={made}>
         <p class="quiet">
-          {t('Anybody with the link sees this item without an account. Its attachments stay out.')}
+          Anybody with the link sees this item without an account. Its attachments stay out.
         </p>
         <div class="orden-setting row">
-          <span class="name">{t('Expires after')}</span>
+          <span class="name">Expires after</span>
           <div class="pick">
             <Select
-              label={t('Expires after')}
+              label="Expires after"
               value={String(expires)}
               options={lives}
               onchange={(next: string) => (expires = Number(next))}
@@ -114,26 +112,26 @@
           </div>
         </div>
         <label class="orden-setting row">
-          <span class="name">{t('Max views')}</span>
+          <span class="name">Max views</span>
           <input
             class="orden-field is-value views"
             type="text"
             inputmode="numeric"
             autocomplete="off"
-            placeholder={t('Unlimited')}
-            aria-label={t('Max views')}
+            placeholder="Unlimited"
+            aria-label="Max views"
             bind:value={views}
           />
         </label>
         {#if !fits}
           <p class="wrong" role="alert">
-            {t('Choose 1 to {most} views, or leave it empty.', { most: MOST_LINK_VIEWS })}
+            Choose 1 to {MOST_LINK_VIEWS} views, or leave it empty.
           </p>
         {/if}
         {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
         <div class="buttons">
-          <button class="orden-button is-quiet" type="button" onclick={close}>{t('Cancel')}</button>
-          <button class="orden-button" type="submit" disabled={busy || !fits}>{t('Create')}</button>
+          <button class="orden-button is-quiet" type="button" onclick={close}>Cancel</button>
+          <button class="orden-button" type="submit" disabled={busy || !fits}>Create</button>
         </div>
       </form>
     {/if}

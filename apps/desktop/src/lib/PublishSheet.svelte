@@ -1,6 +1,6 @@
 <script lang="ts">
   import { domainNotice } from './domain-status'
-  import { i18n, t } from './i18n.svelte'
+  import { localDate } from './region'
   import { publish } from './publishing.svelte'
   import { segmented } from './slide'
   import { shownName } from './note-name'
@@ -27,19 +27,17 @@
   const showing = $derived(publish.space?.id === workspace.activeSpaceId)
 
   const noteChoices = $derived([
-    { value: '', label: t('The whole space') },
+    { value: '', label: 'The whole space' },
     ...(showing
       ? workspace.notes.map((note) => ({
           value: publish.relativeTo(note.path),
-          label: t('Only {name}', { name: shownName(note.name) }),
+          label: `Only ${shownName(note.name)}`,
         }))
       : publish.note
         ? [
             {
               value: publish.note,
-              label: t('Only {name}', {
-                name: shownName(nameOf(publish.note)),
-              }),
+              label: `Only ${shownName(nameOf(publish.note))}`,
             },
           ]
         : []),
@@ -49,7 +47,7 @@
 
   const SHOWN_ANSWERS = 20
 
-  const when = (stamp: number) => i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
+  const when = (stamp: number) => localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
 
   async function saveAnswers() {
     const csv = await publish.answersCsv()
@@ -57,7 +55,7 @@
 
     const name = `${publish.space?.name ?? 'answers'} answers`
     if (isDesktop) {
-      const target = await chooseTarget(name, 'csv', t('Spreadsheet'))
+      const target = await chooseTarget(name, 'csv', 'Spreadsheet')
       if (target) await writeFile(target, csv)
       return
     }
@@ -125,7 +123,7 @@
 
 <Sheet
   open={publish.open}
-  title={t('Publish {name}', { name: publish.space?.name ?? '' })}
+  title="Publish {publish.space?.name ?? ''}"
   onclose={() => publish.close()}
 >
   {#snippet mark()}
@@ -138,12 +136,12 @@
       disabled={!publish.confirmed || !publish.ready}
       onclick={() => void publish.publish(siteIcon(markBox))}
     >
-      {published ? t('Update') : t('Publish')}
+      {published ? 'Update' : 'Publish'}
     </button>
   {/snippet}
 
   {#if publish.error}
-    <p class="wrong">{t(publish.error)}</p>
+    <p class="wrong">{publish.error}</p>
   {/if}
 
   <label class="danger-check">
@@ -151,17 +149,17 @@
     <span>
       <strong>
         {everything
-          ? t('Everything in this space becomes public.')
-          : t('The folders you choose become public.')}
+          ? 'Everything in this space becomes public.'
+          : 'The folders you choose become public.'}
       </strong>
-      {t('Anyone with the address can read what is published, drafts included.')}
+      Anyone with the address can read what is published, drafts included.
     </span>
   </label>
 
   <fieldset disabled={!publish.confirmed}>
     <div class="card">
       <div class="row">
-        <span class="name">{t('What to publish')}</span>
+        <span class="name">What to publish</span>
         <div class="pick">
           <Select
             value={publish.note}
@@ -169,7 +167,7 @@
             onchange={(value: string) => {
               publish.note = value
             }}
-            label={t('What to publish')}
+            label="What to publish"
             plain={viewport.touch}
           />
         </div>
@@ -177,20 +175,20 @@
     </div>
 
     {#if !publish.note}
-      <h3>{t('Which notes')}</h3>
+      <h3>Which notes</h3>
 
       <div class="card">
         <div class="row">
-          <span class="name">{t('Notes outside a rule')}</span>
+          <span class="name">Notes outside a rule</span>
           <div class="pick">
             <Select
               value={publish.rules.otherwise}
               options={[
-                { value: 'all', label: t('Are published') },
-                { value: 'none', label: t('Stay private') },
+                { value: 'all', label: 'Are published' },
+                { value: 'none', label: 'Stay private' },
               ]}
               onchange={(value: string) => publish.otherwise(value === 'none' ? 'none' : 'all')}
-              label={t('Notes outside a rule')}
+              label="Notes outside a rule"
               plain={viewport.touch}
             />
           </div>
@@ -206,9 +204,9 @@
                 <Select
                   value={ruleFor(folder)}
                   options={[
-                    { value: '', label: t('Follows the rule') },
-                    { value: 'in', label: t('Published') },
-                    { value: 'out', label: t('Private') },
+                    { value: '', label: 'Follows the rule' },
+                    { value: 'in', label: 'Published' },
+                    { value: 'out', label: 'Private' },
                   ]}
                   onchange={(value: string) => setRule(folder, value)}
                   label={folder}
@@ -224,9 +222,9 @@
         <p class="note" transition:slide={{ duration: dur(160) }}>
           <Facts
             parts={[
-              t('{count} pages', { count: changes.pages }),
-              changes.adds.length ? t('{count} new', { count: changes.adds.length }) : '',
-              changes.removes.length ? t('{count} gone', { count: changes.removes.length }) : '',
+              `${changes.pages} pages`,
+              changes.adds.length ? `${changes.adds.length} new` : '',
+              changes.removes.length ? `${changes.removes.length} gone` : '',
               changes.bytes ? readableSize(changes.bytes) : '',
             ]}
           />
@@ -240,16 +238,16 @@
               <li class="gone">{shownName(path)}</li>
             {/each}
             {#if changes.more || changes.adds.length + changes.removes.length > SHOWN * 2}
-              <li class="rest">{t('and more')}</li>
+              <li class="rest">and more</li>
             {/if}
           </ul>
         {/if}
       {/if}
     {/if}
 
-    <h3>{t('Address')}</h3>
+    <h3>Address</h3>
     {#if offerDomain}
-      <div class="orden-segmented" role="radiogroup" aria-label={t('Address')} use:segmented>
+      <div class="orden-segmented" role="radiogroup" aria-label="Address" use:segmented>
         <button
           type="button"
           role="radio"
@@ -257,7 +255,7 @@
           class:on={publish.address === 'subdomain'}
           onclick={() => (publish.address = 'subdomain')}
         >
-          {t('On orden.so')}
+          On orden.so
         </button>
         <button
           type="button"
@@ -266,7 +264,7 @@
           class:on={publish.address === 'domain'}
           onclick={() => (publish.address = 'domain')}
         >
-          {t('Your own domain')}
+          Your own domain
         </button>
       </div>
     {/if}
@@ -285,14 +283,14 @@
           <span class="suffix">.orden.so</span>
         </div>
         {#if publish.availability.checking}
-          <span class="hint">{t('checking…')}</span>
+          <span class="hint">checking…</span>
         {:else if publish.availability.available === true}
-          <span class="hint ok">{t('available')}</span>
+          <span class="hint ok">available</span>
         {:else if publish.availability.available === false}
-          <span class="hint bad">{t(publish.availability.reason ?? '')}</span>
+          <span class="hint bad">{publish.availability.reason ?? ''}</span>
         {/if}
         {#if published && blog?.domain}
-          <span class="hint">{t('Switching gives up {name}.', { name: blog.domain })}</span>
+          <span class="hint">Switching gives up {blog.domain}.</span>
         {/if}
       </div>
     {:else}
@@ -306,14 +304,14 @@
         />
         {#if published && blog?.subdomain}
           <span class="hint">
-            {t('Switching gives up {name}.', { name: `${blog.subdomain}.orden.so` })}
+            Switching gives up {blog.subdomain}.orden.so.
           </span>
         {/if}
         {#if records.length}
           <div class="scrolls">
             <table class="dns">
               <thead>
-                <tr><th>{t('Type')}</th><th>{t('Name')}</th><th>{t('Value')}</th></tr>
+                <tr><th>Type</th><th>Name</th><th>Value</th></tr>
               </thead>
               <tbody>
                 {#each records as record (record.name + record.type)}
@@ -328,53 +326,53 @@
           </div>
           {#each records as record (record.name + record.type)}
             {#if record.note}
-              <span class="hint">{t(record.note)}</span>
+              <span class="hint">{record.note}</span>
             {/if}
           {/each}
-          <span class="hint">{t('Add these at your registrar, then verify.')}</span>
+          <span class="hint">Add these at your registrar, then verify.</span>
           <button
             class="orden-action"
             disabled={publish.busy || !blog?.domain}
             onclick={() => void publish.verifyDomain()}
           >
-            {t('Verify')}
+            Verify
           </button>
         {/if}
         {#if notice}
           <span class="hint" class:ok={notice.tone === 'ok'} class:bad={notice.tone === 'bad'}>
-            {t(notice.text)}
-            {#if notice.detail}{t(notice.detail)}{/if}
+            {notice.text}
+            {#if notice.detail}{notice.detail}{/if}
           </span>
         {/if}
       </div>
     {/if}
 
-    <h3>{t('How it appears')}</h3>
+    <h3>How it appears</h3>
 
     <div class="card">
       <label class="row">
-        <span class="name">{t('Description')}</span>
+        <span class="name">Description</span>
         <input
           class="field wide"
           bind:value={publish.description}
-          placeholder={t('What this site is')}
+          placeholder="What this site is"
           spellcheck="false"
         />
       </label>
       <div class="row">
-        <span class="name">{t('Tab icon')}</span>
+        <span class="name">Tab icon</span>
         <span class="mark orden-badge" bind:this={markBox}>
           <SpaceMark id={publish.space?.id ?? null} name={publish.space?.name ?? ''} />
         </span>
       </div>
       <div class="row">
-        <span class="name">{t('Theme')}</span>
+        <span class="name">Theme</span>
         <div class="pick">
           <Select
             value={publish.themeName}
-            options={[{ value: '', label: t('The app’s own') }, ...publish.themes]}
+            options={[{ value: '', label: 'The app’s own' }, ...publish.themes]}
             onchange={(value: string) => (publish.themeName = value)}
-            label={t('Theme')}
+            label="Theme"
             plain={viewport.touch}
           />
         </div>
@@ -384,18 +382,18 @@
     {#if changes && (changes.dressing.css || changes.dressing.js)}
       <p class="hint">
         {changes.dressing.css && changes.dressing.js
-          ? t('publish.css and publish.js in this space dress the site.')
+          ? 'publish.css and publish.js in this space dress the site.'
           : changes.dressing.css
-            ? t('publish.css in this space dresses the site.')
-            : t('publish.js in this space runs on the site.')}
+            ? 'publish.css in this space dresses the site.'
+            : 'publish.js in this space runs on the site.'}
       </p>
     {/if}
 
-    <h3>{t('Visits')}</h3>
+    <h3>Visits</h3>
 
     <div class="card">
       <label class="row">
-        <span class="name">{t('Counter script')}</span>
+        <span class="name">Counter script</span>
         <input
           class="field wide"
           bind:value={publish.counter}
@@ -406,7 +404,7 @@
       </label>
       {#if publish.counter}
         <label class="row">
-          <span class="name">{t('Site name it expects')}</span>
+          <span class="name">Site name it expects</span>
           <input
             class="field"
             bind:value={publish.counterDomain}
@@ -419,23 +417,21 @@
     </div>
 
     <p class="hint">
-      {t(
-        'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.',
-      )}
+      The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.
     </p>
 
-    <h3>{t('Password')}</h3>
+    <h3>Password</h3>
 
     <div class="card">
       <label class="row">
         <span class="name">
-          {publish.hasPassword ? t('Set a new one') : t('Ask for a password')}
+          {publish.hasPassword ? 'Set a new one' : 'Ask for a password'}
         </span>
         <input
           class="field"
           type="password"
           bind:value={publish.password}
-          placeholder={publish.hasPassword ? '••••••' : t('No password')}
+          placeholder={publish.hasPassword ? '••••••' : 'No password'}
           autocomplete="new-password"
         />
       </label>
@@ -445,7 +441,7 @@
           disabled={publish.busy}
           onclick={() => void publish.removePassword()}
         >
-          {t('Remove the password')}
+          Remove the password
         </button>
       {/if}
     </div>
@@ -453,7 +449,7 @@
 
   {#if published && liveAt}
     <p class="note" transition:slide={{ duration: dur(180) }}>
-      {t('Live at')}
+      Live at
       <a
         href="https://{liveAt}"
         onclick={(event) => {
@@ -464,15 +460,10 @@
     </p>
 
     {#if publish.answers.length}
-      <h3>{t('Answers')}</h3>
+      <h3>Answers</h3>
       {#if publish.kept}
         <p class="hint" class:bad={publish.kept.full}>
-          <Facts
-            parts={[
-              t('Kept for {days}', { days: t('{count} days', { count: publish.kept.days }) }),
-              publish.kept.full && t('Full'),
-            ]}
-          />
+          <Facts parts={[`Kept for ${publish.kept.days} days`, publish.kept.full && 'Full']} />
         </p>
       {/if}
 
@@ -490,23 +481,19 @@
                 )}
               />
             </span>
-            <button class="orden-chip" onclick={() => void publish.forget(one)}
-              >{t('Delete')}</button
-            >
+            <button class="orden-chip" onclick={() => void publish.forget(one)}>Delete</button>
           </div>
         {/each}
       </div>
 
       <div class="card">
-        <button class="orden-action" onclick={() => void saveAnswers()}>
-          {t('Save as CSV')}
-        </button>
+        <button class="orden-action" onclick={() => void saveAnswers()}> Save as CSV </button>
       </div>
     {/if}
 
     <div class="card">
       <button class="orden-action is-danger" onclick={() => void publish.unpublish()}>
-        {t('Stop publishing')}
+        Stop publishing
       </button>
     </div>
   {/if}

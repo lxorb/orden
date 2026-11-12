@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from '../i18n.svelte'
   import { displayName } from './columns'
   import { setDisplayName } from './edit'
   import type { Kit } from './kit'
@@ -15,7 +14,7 @@
   class="orden-field"
   value={base ? (displayName(base, column) ?? '') : ''}
   placeholder={propertyName(column)}
-  aria-label={t('Rename')}
+  aria-label="Rename"
   autofocus
   onchange={(event) => {
     const words = event.currentTarget.value

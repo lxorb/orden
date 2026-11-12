@@ -22,8 +22,7 @@ vi.mock('../native', () => ({
     onmessage: ((value: unknown) => void) | null = null
   },
 }))
-vi.mock('../i18n.svelte', () => ({
-  key: (text: string) => text,
+vi.mock('../message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))

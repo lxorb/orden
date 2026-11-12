@@ -2,7 +2,6 @@
   import { rewriting } from './ai/rewriting.svelte'
   import { languageNames, VERBS } from './ai/rewrite'
   import { diffCount, lineDiff, trimmed } from './diff'
-  import { t } from './i18n.svelte'
   import { dur, fade } from './motion'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
@@ -15,7 +14,7 @@
   const counted = $derived(diffCount(difference))
 </script>
 
-<Sheet open={rewriting.open} title={t('Rewrite')} onclose={() => rewriting.close()}>
+<Sheet open={rewriting.open} title="Rewrite" onclose={() => rewriting.close()}>
   <div class="card">
     <div class="verbs">
       {#each VERBS as verb (verb.id)}
@@ -24,14 +23,14 @@
           class:is-on={rewriting.verb === verb.id}
           onclick={() => rewriting.run(verb.id)}
         >
-          {t(verb.label)}
+          {verb.label}
         </button>
       {/each}
     </div>
 
     {#if rewriting.verb === 'translate'}
       <div class="row" transition:fade={{ duration: dur(130) }}>
-        <span class="name">{t('Language')}</span>
+        <span class="name">Language</span>
         <div class="pick">
           <Select
             value={rewriting.language}
@@ -40,7 +39,7 @@
               rewriting.language = value
               rewriting.run('translate')
             }}
-            label={t('Language')}
+            label="Language"
             plain={viewport.touch}
           />
         </div>
@@ -63,17 +62,16 @@
       {/each}
     </div>
   {:else if rewriting.running}
-    <p class="hint">{t('Rewriting…')}</p>
+    <p class="hint">Rewriting…</p>
   {:else if rewriting.verb && !rewriting.trouble}
-    <p class="hint">{t('No changes')}</p>
+    <p class="hint">No changes</p>
   {/if}
 
   {#if answer}
     <div class="answers">
-      <button class="orden-button is-quiet" onclick={() => rewriting.close()}>{t('Discard')}</button
-      >
+      <button class="orden-button is-quiet" onclick={() => rewriting.close()}>Discard</button>
       <button class="orden-button" disabled={rewriting.running} onclick={() => rewriting.accept()}>
-        {t('Replace')}
+        Replace
       </button>
     </div>
   {/if}

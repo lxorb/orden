@@ -1,6 +1,6 @@
 import type { BrowserId } from '../import/browsers'
 import { busy } from '../busy.svelte'
-import { message, t } from '../i18n.svelte'
+import { message } from '../message'
 import type { FormatId } from '../import/plan'
 import type { Picked, Source } from '../import/sources'
 import { isDesktop } from '../tauri'
@@ -19,12 +19,12 @@ interface Read {
 async function running(task: () => Promise<boolean>): Promise<Outcome> {
   let picked = false
   let trouble: string | null = null
-  await busy.run(t('Importing'), async () => {
+  await busy.run('Importing', async () => {
     try {
       picked = await task()
     } catch (error) {
       picked = true
-      trouble = message(error, t('That import could not be written.'))
+      trouble = message(error, 'That import could not be written.')
     }
     trouble ??= busy.trouble
   })
@@ -81,13 +81,13 @@ async function macNotes(): Promise<boolean> {
   const plan = await apple.readMacNotes().catch((error: unknown) => {
     const said = typeof error === 'string' ? error : error instanceof Error ? error.message : ''
     if (said === apple.NO_ACCESS)
-      throw new Error(t('macOS keeps those notes behind Full Disk Access.'))
+      throw new Error('macOS keeps those notes behind Full Disk Access.')
     if (said === apple.NO_DATABASE)
-      throw new Error(t('There are no notes in Apple Notes on this Mac.'))
-    throw new Error(message(error, t('Those notes could not be read.')))
+      throw new Error('There are no notes in Apple Notes on this Mac.')
+    throw new Error(message(error, 'Those notes could not be read.'))
   })
   const space = await workspace.addSpace('Apple Notes')
-  if (!space) throw new Error(t('That import could not be written.'))
+  if (!space) throw new Error('That import could not be written.')
   await applyImport(plan, { root: space.root, folder: '' })
   await workspace.loadTree()
   await arrive(space)

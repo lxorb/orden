@@ -9,7 +9,6 @@ import type {
 import { account } from './account.svelte'
 import { fullscreen } from './fullscreen.svelte'
 import { hiddenKinds } from './settings.svelte'
-import { i18n, t } from './i18n.svelte'
 import type { MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
 import {
@@ -72,17 +71,17 @@ async function close(objects: { close(): Promise<void> }[]): Promise<void> {
 function words(): MenuBarWords {
   return {
     app: NAME,
-    about: t('About {name}', { name: NAME }),
-    services: t('Services'),
-    hide: t('Hide {name}', { name: NAME }),
-    hideOthers: t('Hide others'),
-    showAll: t('Show all'),
-    quit: t('Quit {name}', { name: NAME }),
-    window: t('Window'),
-    minimize: t('Minimize'),
-    zoom: t('Zoom'),
-    bringAllToFront: t('Bring all to front'),
-    find: t('Find'),
+    about: `About ${NAME}`,
+    services: 'Services',
+    hide: `Hide ${NAME}`,
+    hideOthers: 'Hide others',
+    showAll: 'Show all',
+    quit: `Quit ${NAME}`,
+    window: 'Window',
+    minimize: 'Minimize',
+    zoom: 'Zoom',
+    bringAllToFront: 'Bring all to front',
+    find: 'Find',
   }
 }
 
@@ -91,7 +90,7 @@ function signature(context: MenuBarContext): unknown[] {
 
   return [
     context.view,
-    t('File'),
+    'File',
     shortcuts.overrides,
     workspace.activeTabId,
     active?.kind,
@@ -130,7 +129,7 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
   return {
     opening: [
       ...(hiddenKinds.offers('note') ? [entryRow('app.new', context)] : []),
-      entryRow('app.new-kind', context, { label: t('New tab') }),
+      entryRow('app.new-kind', context, { label: 'New tab' }),
       entryRow('app.new-window', context),
       ...(hiddenKinds.offers('private') ? [entryRow('app.new-private', context)] : []),
     ],
@@ -232,7 +231,6 @@ class MenuBar {
       keyFor: (command) => shortcuts.keyFor(command),
       isWindowCommand: (command) => BY_ID.get(command)?.scope === 'app' || RELOADING.has(command),
       words: words(),
-      english: i18n.language === 'en',
     })
     const entries = this.owned(described.entries)
 

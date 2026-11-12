@@ -1,5 +1,3 @@
-import { key } from '../i18n.svelte'
-
 export type LocalKind = 'claude-code' | 'codex' | 'gemini-cli'
 
 export type ProviderKind = 'anthropic' | 'openai' | 'gemini' | 'compatible' | 'chatgpt' | LocalKind
@@ -29,7 +27,7 @@ export const KIND_NAMES: Record<ProviderKind, string> = {
   anthropic: 'Claude',
   openai: 'OpenAI',
   gemini: 'Gemini',
-  compatible: key('OpenAI-compatible'),
+  compatible: 'OpenAI-compatible',
   chatgpt: 'ChatGPT',
   'claude-code': 'Claude Code',
   codex: 'Codex',

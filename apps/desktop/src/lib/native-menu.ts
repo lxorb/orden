@@ -79,7 +79,6 @@ export interface MenuBarSources {
   keyFor(command: string): string | null
   isWindowCommand(command: string): boolean
   words: MenuBarWords
-  english: boolean
 }
 
 export interface MenuBar {
@@ -274,7 +273,7 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
   const { groups, words } = sources
   const runs = new Map<string, () => void>()
   const claim = claimer()
-  const say = (text: string) => (sources.english ? titled(text) : text)
+  const say = titled
 
   const item = (row: MenuItem, id: string): NativeItem => {
     const key = row.command ? chordFor((one) => sources.keyFor(one), row.command) : null

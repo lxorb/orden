@@ -1,11 +1,9 @@
 <script lang="ts">
   import { carried, dropOver } from '../drag-paths'
   import { tick, untrack } from 'svelte'
-  import { t } from '../i18n.svelte'
   import { spelled, type Spelling } from '../list-keys'
   import { shortcuts } from '../shortcuts.svelte'
   import { readableSize } from '../usage.svelte'
-  import { steppedKey } from '../direction'
   import { isPicturePath, nameOf, folderOf, samePath } from '../space-paths'
   import { menu } from '../menu.svelte'
   import { when } from '../when'
@@ -151,7 +149,7 @@
     const key = extend ?? plain ?? (event.altKey ? null : event.key)
     const how: How = event.shiftKey ? 'range' : event.ctrlKey || event.metaKey ? 'move' : 'one'
     if (explorerPrefs.view === 'columns' && key && !event.shiftKey) {
-      const side = steppedKey(key)
+      const side = key
       const entry = at === null ? null : rows[at]
       if (side === 'ArrowRight' && entry?.folder) {
         event.preventDefault()
@@ -164,7 +162,7 @@
         return
       }
     }
-    const to = key ? stepped(steppedKey(key), at, count, columns, page()) : null
+    const to = key ? stepped(key, at, count, columns, page()) : null
     if (to !== null) {
       event.preventDefault()
       landOn(to, how)
@@ -351,18 +349,18 @@
   }
 
   function kindOf(entry: Entry): string {
-    if (entry.folder) return t('Folder')
+    if (entry.folder) return 'Folder'
     const ending = endingOf(entry.name)
-    return ending ? ending.toUpperCase() : t('File')
+    return ending ? ending.toUpperCase() : 'File'
   }
 
   const columnsShown = $derived<{ key: SortKey; at: string; label: string }[]>([
-    { key: 'name', at: 'name', label: t('Name') },
-    { key: 'modified', at: 'modified', label: t('Modified') },
-    { key: 'size', at: 'size', label: t('Size') },
+    { key: 'name', at: 'name', label: 'Name' },
+    { key: 'modified', at: 'modified', label: 'Modified' },
+    { key: 'size', at: 'size', label: 'Size' },
     view.search
-      ? { key: 'folder', at: 'kind', label: t('Folder') }
-      : { key: 'kind', at: 'kind', label: t('Kind') },
+      ? { key: 'folder', at: 'kind', label: 'Folder' }
+      : { key: 'kind', at: 'kind', label: 'Kind' },
   ])
 </script>
 
@@ -386,7 +384,7 @@
     role="listbox"
     tabindex="-1"
     aria-multiselectable="true"
-    aria-label={view.folder ?? t('File explorer')}
+    aria-label={view.folder ?? 'File explorer'}
     bind:this={scroller}
     bind:clientHeight={height}
     bind:clientWidth={width}
@@ -405,7 +403,7 @@
     {#if view.wrong}
       <p class="said">{view.wrong}</p>
     {:else if view.listing && !rows.length}
-      <p class="said">{t('This folder is empty.')}</p>
+      <p class="said">This folder is empty.</p>
     {/if}
     <div class="room" bind:this={room} style:height="{lines * lineHeight}px">
       {#if band && banded}
@@ -460,7 +458,7 @@
                 <input
                   class="orden-field rename"
                   value={view.search ? nameOf(entry.name) : entry.name}
-                  aria-label={t('Rename')}
+                  aria-label="Rename"
                   spellcheck="false"
                   autocomplete="off"
                   use:naming

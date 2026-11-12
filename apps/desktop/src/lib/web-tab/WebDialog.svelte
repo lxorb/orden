@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../i18n.svelte'
   import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
   import { takeKeyboard } from '../take-keyboard'
@@ -40,9 +39,7 @@
     {#if icon && marked}
       <img class="mark" src={icon} alt="" draggable="false" onerror={() => (marked = false)} />
     {/if}
-    <strong
-      >{dialog.kind === 'leave' ? t('Leave {name}?', { name: dialog.site }) : dialog.site}</strong
-    >
+    <strong>{dialog.kind === 'leave' ? `Leave ${dialog.site}?` : dialog.site}</strong>
   </p>
   {#if dialog.kind !== 'leave' && dialog.message}
     <p class="said">{dialog.message}</p>
@@ -62,7 +59,7 @@
   <div class="rows">
     {#if dialog.kind !== 'alert'}
       <button class="orden-button is-quiet" onclick={() => dialogs.answer(dialog, false)}>
-        {t('Cancel')}
+        Cancel
       </button>
     {/if}
     <button
@@ -70,7 +67,7 @@
       bind:this={answering}
       onclick={() => dialogs.answer(dialog, true, text)}
     >
-      {dialog.kind === 'leave' ? t('Leave') : t('OK')}
+      {dialog.kind === 'leave' ? 'Leave' : 'OK'}
     </button>
   </div>
 </div>

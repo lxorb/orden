@@ -1,6 +1,5 @@
 <script lang="ts">
   import CanvasColours from '../CanvasColours.svelte'
-  import { t } from '../i18n.svelte'
   import { overlays } from '../overlays'
   import { toneColour } from './chips'
 
@@ -27,8 +26,8 @@
     class="dot"
     class:none={colour === null}
     style:--dot={colour}
-    title={t('Colour')}
-    aria-label={t('Colour')}
+    title="Colour"
+    aria-label="Colour"
     aria-expanded={open}
     onclick={() => (open = !open)}
   ></button>

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from './i18n.svelte'
   import { dur, fade } from './motion'
 
   const { muted = false }: { muted?: boolean } = $props()
@@ -9,7 +8,7 @@
   class="sound"
   viewBox="0 0 14 14"
   role="img"
-  aria-label={muted ? t('Muted') : t('Playing audio')}
+  aria-label={muted ? 'Muted' : 'Playing audio'}
   transition:fade={{ duration: dur(140) }}
 >
   <path d="M2.5 5.2h2L7.6 2.8v8.4L4.5 8.8h-2z" />

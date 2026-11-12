@@ -1,6 +1,6 @@
 <script lang="ts">
   import AtSign from 'lucide/dist/esm/icons/at-sign.mjs'
-  import { message, t } from '../i18n.svelte'
+  import { message } from '../message'
   import Select from '../Select.svelte'
   import type { AliasAccount } from './alias-account'
   import type { AliasOptions, AliasService } from './aliases'
@@ -59,7 +59,7 @@
     wrong = null
     try {
       const boxes = await aliasClient(provider, key.trim()).mailboxes()
-      said = t('Connected. {count} mailboxes.', { count: String(boxes.length) })
+      said = `Connected. ${String(boxes.length)} mailboxes.`
       return true
     } catch (error) {
       wrong = message(error, 'The alias service could not be reached.')
@@ -98,16 +98,14 @@
     <div class="orden-setting row">
       <span class="mark"><Glyph icon={AtSign} /></span>
       <span class="name">{NAMES[account.provider]}</span>
-      <button class="orden-chip" type="button" onclick={() => void disconnect()}
-        >{t('Disconnect')}</button
-      >
+      <button class="orden-chip" type="button" onclick={() => void disconnect()}>Disconnect</button>
     </div>
     {#if options}
       {#if options.mailboxes.length}
         <div class="orden-setting row">
-          <span class="name">{t('Default mailbox')}</span>
+          <span class="name">Default mailbox</span>
           <Select
-            label={t('Default mailbox')}
+            label="Default mailbox"
             value={account.mailbox ?? options.mailboxes.find((one) => one.isDefault)?.id ?? ''}
             options={options.mailboxes.map((one) => ({ value: one.id, label: one.email }))}
             onchange={(value: string) => void chose({ mailbox: value })}
@@ -116,9 +114,9 @@
       {/if}
       {#if options.suffixes.length}
         <div class="orden-setting row">
-          <span class="name">{t('Default domain')}</span>
+          <span class="name">Default domain</span>
           <Select
-            label={t('Default domain')}
+            label="Default domain"
             value={options.suffixes.find((one) => one.label === account?.suffix)?.label ??
               options.suffixes[0]?.label ??
               ''}
@@ -132,9 +130,9 @@
 {:else if read}
   <form class="card" onsubmit={(event) => void connect(event)}>
     <div class="orden-setting row">
-      <span class="name">{t('Alias service')}</span>
+      <span class="name">Alias service</span>
       <Select
-        label={t('Alias service')}
+        label="Alias service"
         value={provider}
         options={providers}
         onchange={(value: string) => (provider = value === 'addy' ? 'addy' : 'simplelogin')}
@@ -145,23 +143,21 @@
         class="orden-field is-value"
         type="password"
         autocomplete="off"
-        placeholder={t('API key')}
-        aria-label={t('API key')}
+        placeholder="API key"
+        aria-label="API key"
         bind:value={key}
       />
       <button
         class="orden-chip"
         type="button"
         disabled={!key.trim() || testing}
-        onclick={() => void test()}>{t('Test connection')}</button
+        onclick={() => void test()}>Test connection</button
       >
-      <button class="orden-button" type="submit" disabled={!key.trim() || testing}
-        >{t('Connect')}</button
-      >
+      <button class="orden-button" type="submit" disabled={!key.trim() || testing}>Connect</button>
     </div>
   </form>
   <p class="line">
-    {t('Aliases hide your email address: mail sent to an alias is forwarded to your mailbox.')}
+    Aliases hide your email address: mail sent to an alias is forwarded to your mailbox.
   </p>
 {/if}
 {#if said}<p class="line" role="status">{said}</p>{/if}

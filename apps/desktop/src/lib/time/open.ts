@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import { timeOn } from '../settings.svelte'
@@ -12,5 +11,5 @@ export function openTime(spec: Spec = { view: 'day', day: null }): Tab | null {
     workspace.activate(open.id)
     return open
   }
-  return workspace.openUnsaved('time', writeSpec(spec), t('Time tracker'))
+  return workspace.openUnsaved('time', writeSpec(spec), 'Time tracker')
 }

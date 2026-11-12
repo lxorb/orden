@@ -1,4 +1,3 @@
-import { key } from '../i18n.svelte'
 import type { Stop, ThreadHead } from './chat/types'
 
 export type SessionState =
@@ -137,13 +136,13 @@ export function beside<T extends { id: string }>(
 }
 
 export const STATE_WORDS: Record<SessionState, string> = {
-  running: key('Working'),
-  waiting: key('Waiting'),
-  error: key('Failed'),
-  'needs-input': key('Needs input'),
-  done: key('Done'),
-  interrupted: key('Interrupted'),
-  archived: key('Archived'),
+  running: 'Working',
+  waiting: 'Waiting',
+  error: 'Failed',
+  'needs-input': 'Needs input',
+  done: 'Done',
+  interrupted: 'Interrupted',
+  archived: 'Archived',
 }
 
 export const STATE_MARKS: Record<SessionState, string> = {

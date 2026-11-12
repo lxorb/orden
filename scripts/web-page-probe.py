@@ -363,8 +363,6 @@ def main() -> int:
         time.sleep(1)
         running, app = launch(args.exe, args.identifier, unlike=app.port)
 
-        app.ask("(localStorage.setItem('orden:language', 'en'), location.reload(), 1)")
-        time.sleep(4)
         app.act("open", {"path": "Idea.md", "space": SPACE})
         time.sleep(2)
 

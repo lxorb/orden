@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { localDate, localNumber } from './region'
   import { onMount } from 'svelte'
   import { accountName, vendorName } from './ai/account-words'
   import { type Account, repeatable, vendorOf } from './ai/accounts'
@@ -15,7 +16,7 @@
   import { firstModel, isLocal, offeredKinds, type Provider } from './ai/providers'
   import { glassesKey } from './even/key.svelte'
   import { NoWord, wordSaid } from './mobile/bridge'
-  import { i18n, message, t } from './i18n.svelte'
+  import { message } from './message'
   import { dur, slide } from './motion'
   import Select from './Select.svelte'
   import { invoke, isDesktop } from './tauri'
@@ -89,7 +90,7 @@
       await writeKey(provider.id, typed)
       await look(provider.id)
     } catch (error) {
-      const said = message(error, t('that key could not be saved'))
+      const said = message(error, 'that key could not be saved')
       trouble = { ...trouble, [provider.id]: said }
       return said
     }
@@ -101,7 +102,7 @@
     try {
       await forgetKey(provider.id)
     } catch (error) {
-      trouble = { ...trouble, [provider.id]: message(error, t('that key could not be saved')) }
+      trouble = { ...trouble, [provider.id]: message(error, 'that key could not be saved') }
     }
     await look(provider.id)
   }
@@ -117,7 +118,7 @@
       const now = ai.accounts.find((one) => one.id === provider.id)
       if (now && !now.model && first) ai.update(provider.id, { model: first })
     } catch (error) {
-      trouble = { ...trouble, [provider.id]: message(error, t('Could not read the models.')) }
+      trouble = { ...trouble, [provider.id]: message(error, 'Could not read the models.') }
     }
   }
 
@@ -134,8 +135,8 @@
         const said = error instanceof Error ? error.message : String(error)
         if (said === 'stopped') return ''
         return said === 'timed out'
-          ? t('Could not sign in.')
-          : message(new Error(said), t('Could not sign in.'))
+          ? 'Could not sign in.'
+          : message(new Error(said), 'Could not sign in.')
       }
     }
     const made = ai.add(kind)
@@ -159,15 +160,11 @@
 
   function weekWords(week: Weekly): { used: string; resets: string } {
     return {
-      used: t('{percent} used this week', {
-        percent: i18n.amount(week.used / 100, { style: 'percent', maximumFractionDigits: 0 }),
-      }),
+      used: `${localNumber(week.used / 100, { style: 'percent', maximumFractionDigits: 0 })} used this week`,
       resets:
         week.resets === null
           ? ''
-          : t('Resets {when}', {
-              when: i18n.when(week.resets, { weekday: 'long', hour: '2-digit', minute: '2-digit' }),
-            }),
+          : `Resets ${localDate(week.resets, { weekday: 'long', hour: '2-digit', minute: '2-digit' })}`,
     }
   }
 
@@ -176,7 +173,7 @@
     if (!isLocal(kind) && kind !== 'chatgpt') void drop(provider)
     if (!__EVEN_PLUGIN__ && isLocal(kind) && provider.own) {
       void invoke('ai_cli_forget', { tool: kind, account: provider.id }).catch((error: unknown) => {
-        trouble = { ...trouble, [provider.id]: message(error, t('Could not sign out.')) }
+        trouble = { ...trouble, [provider.id]: message(error, 'Could not sign out.') }
       })
     }
     usage.forget(provider.id)
@@ -186,19 +183,19 @@
   async function removeDevice(id: string, name: string) {
     const { prompt } = await import('./prompt.svelte')
     const sure = await prompt.confirm({
-      title: t('Remove {name}?', { name }),
-      detail: t('The device can no longer read your AI accounts, and the others get a new key.'),
-      confirmLabel: t('Remove'),
+      title: `Remove ${name}?`,
+      detail: 'The device can no longer read your AI accounts, and the others get a new key.',
+      confirmLabel: 'Remove',
       danger: true,
     })
     if (sure) await vault.remove(id).catch(() => false)
   }
 
   function engineName(engine: Engine): string {
-    if (engine === 'auto') return t('Auto')
-    if (engine === 'local') return t('This computer')
-    if (engine === 'account') return t('Orden account')
-    if (engine === 'device') return t('This device')
+    if (engine === 'auto') return 'Auto'
+    if (engine === 'local') return 'This computer'
+    if (engine === 'account') return 'Orden account'
+    if (engine === 'device') return 'This device'
     return ai.transcriber?.name ?? ''
   }
 
@@ -209,7 +206,7 @@
   }
 </script>
 
-<h3>{t('Accounts')}</h3>
+<h3>Accounts</h3>
 
 {#if !keysAreGuarded()}
   <div class="card">
@@ -217,22 +214,21 @@
     <div class="orden-setting setting" onclick={() => void keepBrowserInVault(!browserVault.on)}>
       <span class="name"
         ><span class="orden-named"
-          >{t('Keep this browser’s keys in the vault')}<Hint
-            text={t('Syncs this browser’s AI keys with your other devices through the vault.')}
+          >Keep this browser’s keys in the vault<Hint
+            text="Syncs this browser’s AI keys with your other devices through the vault."
           /></span
         ></span
       >
       <Switch
         on={browserVault.on}
-        label={t('Keep this browser’s keys in the vault')}
+        label="Keep this browser’s keys in the vault"
         onchange={(on: boolean) => void keepBrowserInVault(on)}
       />
     </div>
   </div>
   <p class="hint caption">
-    {t(
-      'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.',
-    )}
+    Then every device’s keys are kept in this browser’s storage, where a script that got into the
+    page could read them.
   </p>
 {/if}
 
@@ -240,11 +236,11 @@
   <div class="card" transition:slide={{ duration: dur(160) }}>
     <div class="orden-setting setting">
       <span class="name">
-        {t('{device} offers this device your AI vault', { device: vault.offeredBy })}
+        {vault.offeredBy} offers this device your AI vault
       </span>
       <div class="row">
         {#if vault.digits}<span class="hint digits">{vault.digits}</span>{/if}
-        <button class="orden-chip" onclick={() => void vault.join()}>{t('Join')}</button>
+        <button class="orden-chip" onclick={() => void vault.join()}>Join</button>
       </div>
     </div>
   </div>
@@ -254,15 +250,13 @@
   <div class="card" transition:slide={{ duration: dur(160) }}>
     <div class="orden-setting setting">
       <span class="name">
-        {vault.standing === 'waiting' ? t('Allow this device on another one') : t('Start over')}
+        {vault.standing === 'waiting' ? 'Allow this device on another one' : 'Start over'}
       </span>
       <div class="row">
         {#if vault.standing === 'waiting'}
           <span class="hint digits">{vault.digits || '…'}</span>
         {:else}
-          <button class="orden-chip" onclick={() => void vault.startOver()}
-            >{t('Start over')}</button
-          >
+          <button class="orden-chip" onclick={() => void vault.startOver()}>Start over</button>
         {/if}
       </div>
     </div>
@@ -270,15 +264,15 @@
 {/if}
 
 {#if vault.standing === 'open' && vault.allowed.length}
-  <h3>{t('Devices with your AI vault')}</h3>
+  <h3>Devices with your AI vault</h3>
   {#each vault.allowed as one (one.id)}
     <div class="card boxed" data-device={one.id} transition:slide={{ duration: dur(160) }}>
       <div class="orden-setting setting">
         <span class="name">{one.name}</span>
         <div class="row">
-          {#if one.mine}<span class="hint">{t('This device')}</span>{/if}
+          {#if one.mine}<span class="hint">This device</span>{/if}
           <button class="orden-chip is-quiet" onclick={() => void removeDevice(one.id, one.name)}
-            >{t('Remove')}</button
+            >Remove</button
           >
         </div>
       </div>
@@ -303,14 +297,13 @@
         >
         <div class="row">
           {#if fallback}
-            <span class="hint on">{t('Default')}</span>
+            <span class="hint on">Default</span>
           {:else}
             <button class="orden-chip" onclick={() => ai.setDefault(provider.id)}
-              >{t('Make default')}</button
+              >Make default</button
             >
           {/if}
-          <button class="orden-chip is-quiet" onclick={() => forget(provider)}>{t('Remove')}</button
-          >
+          <button class="orden-chip is-quiet" onclick={() => forget(provider)}>Remove</button>
         </div>
       </div>
 
@@ -322,7 +315,7 @@
 
       {#if provider.kind !== 'compatible' && siblings > 1}
         <label class="orden-setting setting">
-          <span class="name">{t('Name')}</span>
+          <span class="name">Name</span>
           <input
             class="orden-field is-value"
             value={provider.name}
@@ -335,18 +328,18 @@
 
       {#if provider.kind === 'compatible'}
         <label class="orden-setting setting">
-          <span class="name">{t('Name')}</span>
+          <span class="name">Name</span>
           <input
             class="orden-field is-value"
             value={provider.name}
-            placeholder={t('OpenAI-compatible')}
+            placeholder="OpenAI-compatible"
             spellcheck="false"
             onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
           />
         </label>
 
         <label class="orden-setting setting">
-          <span class="name">{t('Base URL')}</span>
+          <span class="name">Base URL</span>
           <input
             class="orden-field is-value"
             value={provider.baseUrl ?? ''}
@@ -367,12 +360,11 @@
         <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
       {:else}
         <div class="orden-setting setting">
-          <span class="name">{t('API key')}</span>
+          <span class="name">API key</span>
           {#if keyed[provider.id]}
             <div class="row">
-              <span class="hint">{t('Set')}</span>
-              <button class="orden-chip is-quiet" onclick={() => void drop(provider)}
-                >{t('Remove')}</button
+              <span class="hint">Set</span>
+              <button class="orden-chip is-quiet" onclick={() => void drop(provider)}>Remove</button
               >
             </div>
           {:else}
@@ -381,7 +373,7 @@
               type="password"
               value=""
               placeholder={provider.kind === 'compatible'
-                ? t('Optional')
+                ? 'Optional'
                 : provider.kind === 'gemini'
                   ? 'AIza'
                   : 'sk-'}
@@ -420,7 +412,7 @@
       {/if}
 
       {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
-        <p class="hint">{t('Using ChatGPT plan')}</p>
+        <p class="hint">Using ChatGPT plan</p>
       {/if}
       {#if trouble[provider.id]}
         <p class="hint bad">{trouble[provider.id]}</p>
@@ -428,13 +420,13 @@
     </div>
   {/each}
 {:else}
-  <p class="hint">{t('No providers yet.')}</p>
+  <p class="hint">No providers yet.</p>
 {/if}
 
 {#if addable.length}
   <div class="card">
     <button class="orden-action adding" data-add-account onclick={() => (adding = true)}>
-      {t('Add')}
+      Add
     </button>
   </div>
 {/if}
@@ -442,26 +434,24 @@
 <AddAccount open={adding} offered={addable} onadd={add} onclose={() => (adding = false)} />
 
 {#if ai.vendors.length > 1}
-  <h3 transition:slide={{ duration: dur(160) }}>{t('Used for')}</h3>
+  <h3 transition:slide={{ duration: dur(160) }}>Used for</h3>
   <div class="card" transition:slide={{ duration: dur(160) }}>
     {#each FEATURES as feature (feature.id)}
       <div class="orden-setting setting">
         <span class="name"
           ><span class="orden-named"
-            >{t(feature.label)}<Hint
-              text={t('Which of your AI accounts this feature asks.')}
-            /></span
+            >{feature.label}<Hint text="Which of your AI accounts this feature asks." /></span
           ></span
         >
         <div class="orden-setting-value">
           <Select
             value={ai.uses[feature.id] ?? ''}
             options={[
-              { value: '', label: t('Default') },
+              { value: '', label: 'Default' },
               ...ai.vendors.map((one) => ({ value: one, label: named(one) })),
             ]}
             onchange={(value: string) => ai.use(feature.id, value)}
-            label={t(feature.label)}
+            label={feature.label}
             plain={viewport.touch}
           />
         </div>
@@ -471,26 +461,24 @@
 {/if}
 
 {#if canDictate()}
-  <h3>{t('Dictation')}</h3>
+  <h3>Dictation</h3>
   <div class="card">
     <div class="orden-setting setting">
       <span class="name"
         ><span class="orden-named"
-          >{t('Dictate with')}<Hint
-            text={t('Where your voice goes to be turned into words.')}
-          /></span
+          >Dictate with<Hint text="Where your voice goes to be turned into words." /></span
         ></span
       >
       <div class="orden-setting-value">
         <Select
           value={engines.chosen ?? ''}
           options={[
-            { value: '', label: t('Ask on first use') },
+            { value: '', label: 'Ask on first use' },
             ...engines.offered().map((one) => ({ value: one, label: engineName(one) })),
           ]}
           onchange={(value: string) =>
             engines.choose(engines.offered().find((one) => one === value) ?? null)}
-          label={t('Dictate with')}
+          label="Dictate with"
           plain={viewport.touch}
         />
       </div>
@@ -499,31 +487,23 @@
       <div class="orden-setting setting">
         <span class="name"
           ><span class="orden-named"
-            >{t('Speech model')}<Hint
-              text={t('{model}, on this computer. Nothing you say leaves it.', {
-                model: local.machine?.model.name ?? '',
-              })}
+            >Speech model<Hint
+              text="{local.machine?.model.name ?? ''}, on this computer. Nothing you say leaves it."
             /></span
           ></span
         >
         <div class="orden-setting-value">
           {#if local.fetching}
             <span class="caption"
-              >{t('Downloading {percent}%', {
-                percent: Math.floor(
-                  (100 * local.fetching.done) / Math.max(1, local.fetching.total),
-                ),
-              })}</span
+              >Downloading {Math.floor(
+                (100 * local.fetching.done) / Math.max(1, local.fetching.total),
+              )}%</span
             >
           {:else if local.ready}
-            <button class="orden-chip is-quiet" onclick={() => void local.remove()}
-              >{t('Remove')}</button
-            >
+            <button class="orden-chip is-quiet" onclick={() => void local.remove()}>Remove</button>
           {:else}
             <button class="orden-chip" onclick={() => void local.fetch()}
-              >{t('Download ({size})', {
-                size: `${Math.round((local.machine?.model.bytes ?? 0) / 1e6)} MB`,
-              })}</button
+              >Download ({Math.round((local.machine?.model.bytes ?? 0) / 1e6)} MB)</button
             >
           {/if}
         </div>
@@ -544,27 +524,27 @@
 {#if vault.standing !== 'open' && (!keysAreGuarded() || vault.standing === 'off')}
   <p class="hint caption">
     {#if !keysAreGuarded()}
-      {t('This browser holds the keys in its own storage.')}
+      This browser holds the keys in its own storage.
     {:else}
-      {t('Sign in to have them on every device.')}
+      Sign in to have them on every device.
     {/if}
   </p>
 {/if}
 {#if inFile}
   <p class="hint caption" role="note">
-    {t('No keyring was found on this device, so your keys are kept in a file only you can read.')}
+    No keyring was found on this device, so your keys are kept in a file only you can read.
   </p>
 {/if}
 
 {#if glassesKey.set}
-  <h3>{t('OpenAI key')}</h3>
+  <h3>OpenAI key</h3>
   <div class="card">
     <div class="orden-setting setting">
-      <span class="name">{t('Used by the glasses')}</span>
-      <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
+      <span class="name">Used by the glasses</span>
+      <span class="hint">set, ends in …{glassesKey.tail}</span>
     </div>
   </div>
-  <p class="hint caption">{t('Kept encrypted on your account, and never shown again.')}</p>
+  <p class="hint caption">Kept encrypted on your account, and never shown again.</p>
 {/if}
 
 <style>

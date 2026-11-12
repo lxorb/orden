@@ -1,7 +1,6 @@
 import { cellValue, csvText, csvValue, isButton, sheetSafe } from '@orden/bases'
 import { copyText } from '../clipboard'
 import { deliver } from '../export/save'
-import { t } from '../i18n.svelte'
 import { displayName } from './columns'
 import { everyRow } from './list-items'
 import type { LiveView } from './live.svelte'
@@ -26,5 +25,5 @@ export async function copyCsv(live: LiveView): Promise<void> {
 
 export async function saveCsv(live: LiveView, name: string): Promise<void> {
   const csv = viewCsv(live)
-  if (csv !== null) await deliver(name, 'csv', t('Spreadsheet'), { text: csv, mime: 'text/csv' })
+  if (csv !== null) await deliver(name, 'csv', 'Spreadsheet', { text: csv, mime: 'text/csv' })
 }

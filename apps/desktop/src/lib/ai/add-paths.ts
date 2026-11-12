@@ -1,4 +1,3 @@
-import { key } from '../i18n.svelte'
 import { KIND_NAMES, type ProviderKind } from './providers'
 
 export interface Adding {
@@ -30,7 +29,7 @@ const ROADS: Record<Maker, readonly ProviderKind[]> = {
   compatible: ['compatible'],
 }
 
-const KEYED = key('API key')
+const KEYED = 'API key'
 
 export const ROAD_NAMES: Record<ProviderKind, string> = {
   'claude-code': KIND_NAMES['claude-code'],
@@ -44,13 +43,13 @@ export const ROAD_NAMES: Record<ProviderKind, string> = {
 }
 
 export const ROAD_HINTS: Record<ProviderKind, string> = {
-  'claude-code': key('Uses your Claude plan through Claude Code on this computer.'),
-  chatgpt: key('Sign in with your ChatGPT plan.'),
-  codex: key('Uses your ChatGPT plan through Codex on this computer.'),
-  'gemini-cli': key('Uses your Google account through Gemini CLI on this computer.'),
-  anthropic: key('Paid by use on your API account.'),
-  openai: key('Paid by use on your API account.'),
-  gemini: key('Paid by use on your API account.'),
+  'claude-code': 'Uses your Claude plan through Claude Code on this computer.',
+  chatgpt: 'Sign in with your ChatGPT plan.',
+  codex: 'Uses your ChatGPT plan through Codex on this computer.',
+  'gemini-cli': 'Uses your Google account through Gemini CLI on this computer.',
+  anthropic: 'Paid by use on your API account.',
+  openai: 'Paid by use on your API account.',
+  gemini: 'Paid by use on your API account.',
   compatible: '',
 }
 

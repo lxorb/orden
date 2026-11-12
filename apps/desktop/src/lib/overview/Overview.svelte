@@ -1,7 +1,6 @@
 <script lang="ts">
   import { tick as laidOut, untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { key, t } from '../i18n.svelte'
   import { chorded } from '../keys'
   import { stillness } from '../motion'
   import { overlays } from '../overlays'
@@ -1320,8 +1319,8 @@
       }
       const space = workspace.spaces.find((one) => one.id === landing.key)?.name ?? ''
       const sure = await prompt.confirm({
-        title: t('Move to {space}?', { space }),
-        confirmLabel: key('Move'),
+        title: `Move to ${space}?`,
+        confirmLabel: 'Move',
       })
       if (!sure) return
     }
@@ -1616,7 +1615,7 @@
     bind:this={canvasNode}
     role="dialog"
     aria-modal="true"
-    aria-label={t('Tabs')}
+    aria-label="Tabs"
     tabindex="-1"
     use:trap
     use:wheeled
@@ -1635,15 +1634,15 @@
         <Select
           value={all ? 'all' : 'this'}
           options={[
-            { value: 'all', label: t('All spaces') },
-            { value: 'this', label: t('This space') },
+            { value: 'all', label: 'All spaces' },
+            { value: 'this', label: 'This space' },
           ]}
           onchange={(value) => showAll(value === 'all')}
-          label={t('Spaces')}
+          label="Spaces"
         />
       {/if}
       <button class="orden-button is-quiet tidy" type="button" onclick={() => void tidy()}
-        >{t('Tidy up')}</button
+        >Tidy up</button
       >
     </div>
 
@@ -1698,8 +1697,8 @@
         class:is-held={heldIds.has(tab.id)}
         type="button"
         tabindex="-1"
-        title={t('Close')}
-        aria-label={t('Close')}
+        title="Close"
+        aria-label="Close"
         onpointerdown={(event) => event.stopPropagation()}
         onclick={(event) => shut(event, tab)}
         use:closing={tab.id}
@@ -1747,11 +1746,11 @@
   }
 
   :global(html[data-overview='slide'] [data-chrome='start']) {
-    translate: calc(var(--dir, 1) * -100% * var(--overview-slide, 0)) 0;
+    translate: calc(-100% * var(--overview-slide, 0)) 0;
   }
 
   :global(html[data-overview='slide'] [data-chrome='end']) {
-    translate: calc(var(--dir, 1) * 100% * var(--overview-slide, 0)) 0;
+    translate: calc(100% * var(--overview-slide, 0)) 0;
   }
 
   :global(

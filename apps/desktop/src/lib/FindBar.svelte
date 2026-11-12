@@ -5,7 +5,6 @@
   import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'
   import Regex from 'lucide/dist/esm/icons/regex.mjs'
   import WholeWord from 'lucide/dist/esm/icons/whole-word.mjs'
-  import { t } from './i18n.svelte'
   import { dur, fly } from './motion'
   import { SEARCH_MARK } from './panel-marks'
   import { arrive } from './slide'
@@ -65,11 +64,11 @@
 
   const tally = $derived.by(() => {
     if (!query) return ''
-    if (slow) return t('Pattern too slow to search')
-    if (!count) return t('No matches')
+    if (slow) return 'Pattern too slow to search'
+    if (!count) return 'No matches'
 
     const of = capped ? `${count}+` : `${count}`
-    return t('{at} of {count}', { at: current < 0 ? 1 : current + 1, count: of })
+    return `${current < 0 ? 1 : current + 1} of ${of}`
   })
 
   function flip(which: keyof FindFlags) {
@@ -105,8 +104,8 @@
         class:flagged={!!flags}
         type="text"
         value={query}
-        placeholder={t('Find')}
-        aria-label={t('Find')}
+        placeholder="Find"
+        aria-label="Find"
         spellcheck="false"
         autocapitalize="off"
         autocorrect="off"
@@ -120,8 +119,8 @@
           <button
             class="flag"
             class:on={flags.caseSensitive}
-            title={t('Match case')}
-            aria-label={t('Match case')}
+            title="Match case"
+            aria-label="Match case"
             aria-pressed={flags.caseSensitive}
             onclick={() => flip('caseSensitive')}
           >
@@ -134,8 +133,8 @@
           <button
             class="flag"
             class:on={flags.wholeWord}
-            title={t('Whole word')}
-            aria-label={t('Whole word')}
+            title="Whole word"
+            aria-label="Whole word"
             aria-pressed={flags.wholeWord}
             onclick={() => flip('wholeWord')}
           >
@@ -148,8 +147,8 @@
           <button
             class="flag"
             class:on={flags.regexp}
-            title={t('Regular expression')}
-            aria-label={t('Regular expression')}
+            title="Regular expression"
+            aria-label="Regular expression"
             aria-pressed={flags.regexp}
             onclick={() => flip('regexp')}
           >
@@ -170,8 +169,8 @@
 
       <button
         class="orden-glyph act"
-        title={shortcuts.tooltip(t('Previous'), 'edit.find-previous')}
-        aria-label={t('Previous')}
+        title={shortcuts.tooltip('Previous', 'edit.find-previous')}
+        aria-label="Previous"
         disabled={!count}
         onclick={() => onstep(-1)}
       >
@@ -179,8 +178,8 @@
       </button>
       <button
         class="orden-glyph act"
-        title={shortcuts.tooltip(t('Next'), 'edit.find-next')}
-        aria-label={t('Next')}
+        title={shortcuts.tooltip('Next', 'edit.find-next')}
+        aria-label="Next"
         disabled={!count}
         onclick={() => onstep(1)}
       >
@@ -191,8 +190,8 @@
         <button
           class="orden-glyph act"
           class:on={replacing}
-          title={shortcuts.tooltip(t('Replace'), 'edit.replace')}
-          aria-label={t('Replace')}
+          title={shortcuts.tooltip('Replace', 'edit.replace')}
+          aria-label="Replace"
           aria-expanded={replacing}
           onclick={() => onreplacing?.(!replacing)}
         >
@@ -206,8 +205,8 @@
 
       <button
         class="orden-glyph act shut"
-        title={shortcuts.tooltip(t('Close'), 'fixed.escape')}
-        aria-label={t('Close')}
+        title={shortcuts.tooltip('Close', 'fixed.escape')}
+        aria-label="Close"
         onclick={onclose}
       >
         <Cross />
@@ -223,8 +222,8 @@
           class="orden-field"
           type="text"
           value={replacement}
-          placeholder={t('Replace with')}
-          aria-label={t('Replace with')}
+          placeholder="Replace with"
+          aria-label="Replace with"
           spellcheck="false"
           autocapitalize="off"
           autocorrect="off"
@@ -244,10 +243,8 @@
         />
       </div>
 
-      <button class="apply" disabled={!count} onclick={() => onreplace?.()}>{t('Replace')}</button>
-      <button class="apply" disabled={!count} onclick={() => onreplaceall?.()}
-        >{t('Replace all')}</button
-      >
+      <button class="apply" disabled={!count} onclick={() => onreplace?.()}>Replace</button>
+      <button class="apply" disabled={!count} onclick={() => onreplaceall?.()}>Replace all</button>
     </div>
   {/if}
 </div>

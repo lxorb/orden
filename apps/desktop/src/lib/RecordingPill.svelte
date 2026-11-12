@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { t } from './i18n.svelte'
   import { recorder } from './recorder/recording.svelte'
   import { spanOf } from './recorder/transcript'
 </script>
@@ -9,8 +8,8 @@
     <span class="dot"></span>
     <span class="clock">{spanOf(recorder.elapsed)}</span>
     <button
-      title={t('Stop recording')}
-      aria-label={t('Stop recording')}
+      title="Stop recording"
+      aria-label="Stop recording"
       disabled={!recorder.on}
       onclick={() => recorder.toggle()}
     >

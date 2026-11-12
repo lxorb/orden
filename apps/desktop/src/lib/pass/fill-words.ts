@@ -1,57 +1,56 @@
-import { t } from '../i18n.svelte'
 import type { FieldRole } from './channel'
 
 export function roleWord(role: FieldRole): string {
   switch (role) {
     case 'username':
-      return t('Username')
+      return 'Username'
     case 'email':
-      return t('Email')
+      return 'Email'
     case 'password':
-      return t('Password')
+      return 'Password'
     case 'new-password':
-      return t('New password')
+      return 'New password'
     case 'totp':
-      return t('2FA code')
+      return '2FA code'
     case 'cc-name':
-      return t('Name on card')
+      return 'Name on card'
     case 'cc-number':
-      return t('Card number')
+      return 'Card number'
     case 'cc-exp':
-      return t('Expiry date')
+      return 'Expiry date'
     case 'cc-exp-month':
-      return t('Expiry month')
+      return 'Expiry month'
     case 'cc-exp-year':
-      return t('Expiry year')
+      return 'Expiry year'
     case 'cc-csc':
-      return t('Security code')
+      return 'Security code'
     case 'given-name':
-      return t('First name')
+      return 'First name'
     case 'additional-name':
-      return t('Middle name')
+      return 'Middle name'
     case 'family-name':
-      return t('Last name')
+      return 'Last name'
     case 'name':
-      return t('Full name')
+      return 'Full name'
     case 'tel':
-      return t('Phone')
+      return 'Phone'
     case 'street-address':
-      return t('Street')
+      return 'Street'
     case 'address-line2':
-      return t('Floor or apartment')
+      return 'Floor or apartment'
     case 'postal-code':
-      return t('ZIP or postal code')
+      return 'ZIP or postal code'
     case 'address-level2':
-      return t('City')
+      return 'City'
     case 'address-level1':
-      return t('State or province')
+      return 'State or province'
     case 'country':
-      return t('Country')
+      return 'Country'
     case 'organization':
-      return t('Organization')
+      return 'Organization'
     case 'bday':
-      return t('Birthdate')
+      return 'Birthdate'
     case 'unknown':
-      return t('Other')
+      return 'Other'
   }
 }

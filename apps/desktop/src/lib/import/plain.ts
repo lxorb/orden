@@ -1,7 +1,6 @@
 import { plainWords } from '@orden/markdown/escapes'
 import { htmlToMarkdown } from '@orden/markdown/from-html'
 
-import { key } from '../i18n.svelte'
 import { folderPlan, isJunk, isNoteFile } from './folder'
 import type { Meta } from './meta'
 import { keptName, Names, safeName, safeParts, withoutNotionId } from './names'
@@ -111,10 +110,7 @@ export async function readPlain(
   })
 
   if (html) {
-    plan.lost.push({
-      text: key('{count} pages came as HTML, so their words are kept and their look is not'),
-      values: { count: html },
-    })
+    plan.lost.push(`${html} pages came as HTML, so their words are kept and their look is not`)
   }
 
   return plan

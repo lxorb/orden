@@ -1,7 +1,7 @@
 <script lang="ts">
   import Facts from '../Facts.svelte'
   import { ACCENTS } from '../accents'
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { menu } from '../menu.svelte'
   import { prompt } from '../prompt.svelte'
   import { type Place, placesOf } from './counted'
@@ -51,9 +51,9 @@
   const groups = $derived(
     (
       [
-        ['app', t('Apps')],
-        ['site', t('Websites')],
-        ['space', t('Spaces')],
+        ['app', 'Apps'],
+        ['site', 'Websites'],
+        ['space', 'Spaces'],
       ] as const
     )
       .map(([lane, label]) => ({ lane, label, list: placesOf(seen, lane).slice(0, 8) }))
@@ -84,22 +84,22 @@
           })),
         null,
         {
-          label: t('No activity'),
+          label: 'No activity',
           checked: was === null,
           run: () => time.countAs(lane, place.key, null),
         },
       ],
-      { title: `${t('Count as')}: ${place.name}` },
+      { title: `Count as: ${place.name}` },
     )
   }
 
   async function askGoal(activity: Activity, per: Per) {
     const was = time.goalFor(activity.id, per)
     const said = await prompt.ask({
-      title: per === 'day' ? t('Daily goal') : t('Weekly goal'),
+      title: per === 'day' ? 'Daily goal' : 'Weekly goal',
       value: was ? lasting(was.ms) : '',
       placeholder: '1:30',
-      confirmLabel: t('Save'),
+      confirmLabel: 'Save',
     })
     if (said !== null) time.setGoal(activity.id, per, lengthIn(said))
   }
@@ -111,32 +111,32 @@
       event,
       [
         {
-          label: t('Rename'),
+          label: 'Rename',
           run: () =>
             void prompt
-              .ask({ title: t('Rename'), value: activity.name, confirmLabel: t('Rename') })
+              .ask({ title: 'Rename', value: activity.name, confirmLabel: 'Rename' })
               .then((next) => {
                 if (next?.trim()) time.changeActivity(activity.id, { name: next })
               }),
         },
         ...ACCENTS.map((accent) => ({
-          label: t(accent.name),
+          label: accent.name,
           checked: activity.tint === accent.id,
           run: () => time.changeActivity(activity.id, { tint: accent.id }),
         })),
         null,
         ...(['day', 'week'] as const).map((per) => ({
-          label: per === 'day' ? t('Daily goal') : t('Weekly goal'),
+          label: per === 'day' ? 'Daily goal' : 'Weekly goal',
           checked: time.goalFor(activity.id, per) !== null,
           run: () => void askGoal(activity, per),
         })),
         null,
         {
-          label: t('Archive'),
+          label: 'Archive',
           checked: activity.archived,
           run: () => time.changeActivity(activity.id, { archived: !activity.archived }),
         },
-        { label: t('Delete'), danger: true, run: () => time.removeActivity(activity.id) },
+        { label: 'Delete', danger: true, run: () => time.removeActivity(activity.id) },
       ],
       { title: activity.name },
     )
@@ -146,20 +146,20 @@
 <div class="reports">
   <div class="cards">
     <div class="card">
-      <span class="what">{t('You said')}</span>
+      <span class="what">You said</span>
       <span class="much">{length(whole)}</span>
     </div>
     <div class="card">
-      <span class="what">{t('Active')}</span>
+      <span class="what">Active</span>
       <span class="much">{length(active)}</span>
     </div>
     <div class="card">
-      <span class="what">{t('Daily average')}</span>
+      <span class="what">Daily average</span>
       <span class="much">{length(whole / passed)}</span>
     </div>
   </div>
 
-  <div class="chart" role="img" aria-label={t('You said')}>
+  <div class="chart" role="img" aria-label="You said">
     {#each days as one (one.day)}
       <button type="button" class="column" title={length(one.whole)} onclick={() => onday(one.day)}>
         <span class="stack" style:height="{(one.whole / longest) * 100}%">
@@ -168,16 +168,16 @@
           {/each}
         </span>
         <span class="day"
-          >{i18n.when(one.day, days.length > 7 ? { day: 'numeric' } : { weekday: 'short' })}</span
+          >{localDate(one.day, days.length > 7 ? { day: 'numeric' } : { weekday: 'short' })}</span
         >
       </button>
     {/each}
   </div>
 
   <section class="activities">
-    <p class="orden-section">{t('Activity')}</p>
+    <p class="orden-section">Activity</p>
     {#if !totals.length}
-      <p class="none">{t('Nothing recorded yet.')}</p>
+      <p class="none">Nothing recorded yet.</p>
     {/if}
     <ul>
       {#each totals as total (total.activity)}
@@ -193,7 +193,7 @@
           >
             <span class="dot" style:background={tintOf(total.activity)}></span>
             <span class="orden-row-label">
-              <span class="name" dir="auto">{nameOf(total.activity, t('No activity'))}</span>
+              <span class="name" dir="auto">{nameOf(total.activity, 'No activity')}</span>
               {#if made.length}<span class="made"><Facts line parts={made} /></span>{/if}
             </span>
             <span class="bar"
@@ -222,7 +222,7 @@
                 type="button"
                 class="orden-row is-short"
                 aria-haspopup="menu"
-                title={t('Count as')}
+                title="Count as"
                 onclick={(event) => placeMenu(event, group.lane, place)}
                 oncontextmenu={(event) => placeMenu(event, group.lane, place)}
               >

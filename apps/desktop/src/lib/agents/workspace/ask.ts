@@ -1,5 +1,4 @@
 import type { AgentAnswer } from '../../automation/caller'
-import { t } from '../../i18n.svelte'
 import { show } from '../../notify'
 import { agentOpen } from '../../ai/sidebar/agent-open.svelte'
 import { revealPanel } from '../../focus'
@@ -79,7 +78,7 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
       ? {
           reply: {
             placeholder: question.placeholder ?? '',
-            send: t('Send'),
+            send: 'Send',
             replied: (words: string) => asking.answer(question.id, words),
           },
         }

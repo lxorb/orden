@@ -1,5 +1,6 @@
 import { accentColour, accentFor } from '../accents'
-import { i18n } from '../i18n.svelte'
+import { region } from '../region'
+import { localDate } from '../region'
 import { theme } from '../theme.svelte'
 import { MINUTE } from './days'
 import { time } from './time.svelte'
@@ -15,7 +16,7 @@ export const placeTint = (key: string): string => accentFor(key, theme.current)
 export const nameOf = (activity: string | null, none: string): string =>
   time.activity(activity)?.name ?? none
 
-export const clock = (at: number): string => i18n.when(at, { hour: '2-digit', minute: '2-digit' })
+export const clock = (at: number): string => localDate(at, { hour: '2-digit', minute: '2-digit' })
 
 const units = new Map<string, [Intl.NumberFormat, Intl.NumberFormat]>()
 
@@ -32,7 +33,7 @@ function unitsFor(language: string): [Intl.NumberFormat, Intl.NumberFormat] {
 
 export function length(ms: number): string {
   const minutes = Math.round(Math.max(0, ms) / MINUTE)
-  const [hours, mins] = unitsFor(i18n.language)
+  const [hours, mins] = unitsFor(region())
   if (minutes < 60) return mins.format(minutes)
   const rest = minutes % 60
   const whole = hours.format(Math.floor(minutes / 60))

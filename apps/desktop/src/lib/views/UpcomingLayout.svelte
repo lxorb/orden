@@ -1,7 +1,7 @@
 <script lang="ts">
   import { addDays, groupName } from '@orden/bases'
   import { untrack } from 'svelte'
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { dateAt } from './days'
   import { droppable } from './drag.svelte'
   import type { Kit } from './kit'
@@ -16,7 +16,7 @@
   const live = $derived(kit.live)
   let from = $state(untrack(() => kit.live.today))
   const week = $derived(Array.from({ length: 7 }, (_, step) => addDays(from, step)))
-  const month = $derived(i18n.when(dateAt(from), { month: 'long', year: 'numeric' }))
+  const month = $derived(localDate(dateAt(from), { month: 'long', year: 'numeric' }))
 
   const counts = $derived(dayCounts(live.answer?.groups ?? []))
 
@@ -60,7 +60,7 @@
   bind:this={host}
   tabindex="-1"
   role="group"
-  aria-label={t('Upcoming')}
+  aria-label="Upcoming"
   onkeydown={keydown}
 >
   <div class="top">
@@ -71,11 +71,11 @@
       onclick={() => {
         from = live.today
         show(live.today)
-      }}>{t('Today')}</button
+      }}>Today</button
     >
   </div>
   <div class="strip">
-    <button type="button" class="orden-glyph" aria-label={t('Back')} onclick={() => step(-1)}>
+    <button type="button" class="orden-glyph" aria-label="Back" onclick={() => step(-1)}>
       <svg viewBox="0 0 13 13"><path d="M8 2.5 4 6.5l4 4" /></svg>
     </button>
     {#each week as day (day)}
@@ -87,12 +87,12 @@
         use:droppable={(row) => kit.drop(row, day, 'task.date')}
         onclick={() => show(day)}
       >
-        <span class="weekday">{i18n.when(dateAt(day), { weekday: 'short' })}</span>
+        <span class="weekday">{localDate(dateAt(day), { weekday: 'short' })}</span>
         <span class="number">{Number(day.slice(8))}</span>
         <span class="count">{counts.get(day) ?? ''}</span>
       </button>
     {/each}
-    <button type="button" class="orden-glyph" aria-label={t('Forward')} onclick={() => step(1)}>
+    <button type="button" class="orden-glyph" aria-label="Forward" onclick={() => step(1)}>
       <svg viewBox="0 0 13 13"><path d="m5 2.5 4 4-4 4" /></svg>
     </button>
   </div>

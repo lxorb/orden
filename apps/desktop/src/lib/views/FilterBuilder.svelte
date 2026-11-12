@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fromTodoist } from '@orden/bases'
-  import { i18n, t } from '../i18n.svelte'
+  import { region } from '../region'
   import Cross from '../Cross.svelte'
   import Select from '../Select.svelte'
   import { displayName, holdsOf, knownProperties } from './columns'
@@ -36,9 +36,9 @@
     '>': '>',
     '<=': '≤',
     '>=': '≥',
-    contains: t('contains'),
-    empty: t('is empty'),
-    filled: t('is not empty'),
+    contains: 'contains',
+    empty: 'is empty',
+    filled: 'is not empty',
     tag: '#',
   }
 
@@ -62,7 +62,7 @@
     const words = typed.trim()
     if (!words) return
     try {
-      const [first] = fromTodoist(words, { lang: i18n.language, today: live.today })
+      const [first] = fromTodoist(words, { lang: region(), today: live.today })
       if (first !== undefined) {
         kit.change((base, at) => setFilter(base, at, first))
         typed = ''
@@ -79,7 +79,7 @@
 <div class="orden-field query">
   <input
     bind:value={typed}
-    aria-label={t('Filter')}
+    aria-label="Filter"
     placeholder={EXAMPLE}
     onkeydown={(event) => {
       if (event.key === 'Enter' && !event.isComposing) {
@@ -98,7 +98,7 @@
     aria-pressed={view?.orden.showCompleted === true}
     onclick={() =>
       kit.change((base, at) => setShowCompleted(base, at, view?.orden.showCompleted !== true))}
-    >{t('Show completed')}</button
+    >Show completed</button
   >
 {/if}
 
@@ -109,14 +109,14 @@
       role="tab"
       class:on={rows.join === 'and'}
       aria-selected={rows.join === 'and'}
-      onclick={() => write({ ...rows, join: 'and' })}>{t('All')}</button
+      onclick={() => write({ ...rows, join: 'and' })}>All</button
     >
     <button
       type="button"
       role="tab"
       class:on={rows.join === 'or'}
       aria-selected={rows.join === 'or'}
-      onclick={() => write({ ...rows, join: 'or' })}>{t('Any of them')}</button
+      onclick={() => write({ ...rows, join: 'or' })}>Any of them</button
     >
   </div>
 {/if}
@@ -127,7 +127,7 @@
       <code class="kept">{describe(row.kept)}</code>
     {:else if 'property' in row}
       <Select
-        label={t('Property')}
+        label="Property"
         value={row.property}
         options={(properties.includes(row.property)
           ? properties
@@ -139,7 +139,7 @@
         onchange={(property: string) => changeRow(at, { ...row, property })}
       />
       <Select
-        label={t('Compare')}
+        label="Compare"
         value={row.op}
         options={OPERATORS.map((one) => ({ value: one, label: OPERATOR_NAMES[one] }))}
         onchange={(op: string) => {
@@ -151,7 +151,7 @@
         <input
           class="orden-field value"
           value={row.value}
-          aria-label={t('Value')}
+          aria-label="Value"
           onchange={(event) => changeRow(at, { ...row, value: event.currentTarget.value })}
         />
       {/if}
@@ -159,8 +159,8 @@
     <button
       type="button"
       class="orden-glyph"
-      title={t('Remove')}
-      aria-label={t('Remove')}
+      title="Remove"
+      aria-label="Remove"
       onclick={() => write({ ...rows, rows: rows.rows.filter((_, index) => index !== at) })}
       ><Cross small /></button
     >
@@ -168,7 +168,7 @@
 {/each}
 
 <button type="button" class="orden-row is-short adder" onclick={add}>
-  <span class="orden-row-label">{t('Add a filter')}</span>
+  <span class="orden-row-label">Add a filter</span>
 </button>
 
 <style>

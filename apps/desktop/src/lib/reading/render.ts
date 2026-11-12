@@ -2,7 +2,6 @@ import { renderMarkdown, type Wikilink } from '@orden/markdown'
 import { escapeAll } from '@orden/markdown/html'
 import { mapSources } from '@orden/markdown/sources'
 import type { TagHref } from '@orden/markdown/tags'
-import { t } from '../i18n.svelte'
 import { keptCoverOf } from '../kept-cover'
 import { links } from '../link-index.svelte'
 import { notePicture } from '../note-images'
@@ -44,8 +43,8 @@ export async function readingHtml(
     prepareFences(note.text, scheme, {
       query: async (code, language) =>
         language === 'tasks' && !__EVEN_PLUGIN__
-          ? (await import('../tasks-block')).tasksRowsHtml(code, t('Nothing found'), root, !trusted)
-          : queryRowsHtml(code, t('Nothing found'), root),
+          ? (await import('../tasks-block')).tasksRowsHtml(code, 'Nothing found', root, !trusted)
+          : queryRowsHtml(code, 'Nothing found', root),
       base: true,
     }),
     prepareEmbeds(note.text, (target) => links.embedNote(target, note.path)),

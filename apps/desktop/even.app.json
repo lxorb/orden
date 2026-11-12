@@ -21,5 +21,5 @@
       "desc": "Hear the same commands through the phone, where it listens better."
     }
   ],
-  "supported_languages": ["en", "de", "fr", "ja"]
+  "supported_languages": ["en"]
 }

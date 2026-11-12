@@ -12,8 +12,6 @@ say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
 SCALE = 2
 
-ARABIC = {"Noto Naskh Arabic", "Noto Naskh Arabic UI", "Geeza Pro", "Segoe UI", "Noto Sans Arabic", "Tahoma"}
-
 LABELS = [
     ("a segmented button", ".sheet .orden-segmented button"),
     ("a pane in Settings", ".sheet nav button"),
@@ -53,43 +51,37 @@ LINES = """
 }
 """
 
-def look(browser, language: str) -> None:
+def look(browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, device_scale_factor=SCALE)
-    page.context.add_init_script(f"localStorage.setItem('orden:language', {language!r})")
     DRIVE.open(page)
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
     quiet(page)
     page.wait_for_timeout(600)
-    shot(page, f"{language}-settings")
+    shot(page, "settings")
 
     for what, selector in LABELS:
         found = page.locator(selector)
         if not found.count():
-            wrong(f"[{language}] nothing to measure for {what}: {selector}")
+            wrong(f"nothing to measure for {what}: {selector}")
             continue
         label = found.first.inner_text().strip()
         face = drawn_with(page, selector)
         lines = page.evaluate(LINES, [selector, face])
         stack, own = lines["stack"], lines["own"]
-        say(f"[{language}] {what} {label!r}: drawn with {face}, stands on {stack}, its own line {own}")
-        if language == "ar" and face not in ARABIC:
-            wrong(f"[ar] {what} {label!r} is drawn with {face}, not one of the Arabic faces")
-        if language == "en" and (abs(stack[0] - own[0]) > 0.5 or abs(stack[1] - own[1]) > 0.5):
-            wrong(f"[en] {what} {label!r} stands on a line of {stack}, not its own face's {own}")
+        say(f"{what} {label!r}: drawn with {face}, stands on {stack}, its own line {own}")
+        if abs(stack[0] - own[0]) > 0.5 or abs(stack[1] - own[1]) > 0.5:
+            wrong(f"{what} {label!r} stands on a line of {stack}, not its own face's {own}")
         read = ink(found.first.screenshot())
         if read is not None:
             top, bottom, height = read
-            say(
-                f"[{language}]   ink {top / SCALE:.1f} px from the top, {(height - 1 - bottom) / SCALE:.1f} from the bottom"
-            )
-        shot(page, f"{language}-{what.replace(' ', '-')}", clip=found.first.bounding_box())
+            say(f"  ink {top / SCALE:.1f} px from the top, {(height - 1 - bottom) / SCALE:.1f} from the bottom")
+        shot(page, what.replace(" ", "-"), clip=found.first.bounding_box())
     page.context.close()
 
 def main() -> int:
     with DRIVE.session() as browser:
-        for language in ("en", "ar"):
-            look(browser, language)
-    return DRIVE.verdict("a label in Latin stands on its own face's line, and Arabic finds its face")
+        look(browser)
+    return DRIVE.verdict("a label in Latin stands on its own face's line")
 
 if __name__ == "__main__":
     raise SystemExit(main())

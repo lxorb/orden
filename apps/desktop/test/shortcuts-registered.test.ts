@@ -65,7 +65,7 @@ describe('the menus and the palette', () => {
         name: path.slice(APP.length).replace(/\\/g, '/'),
         text: readFileSync(path, 'utf8'),
       }))
-      .filter((one) => /hint: '[^']/.test(one.text))
+      .filter((one) => /hint: '(?:Ctrl|Cmd|Alt|Shift|Mod|Meta|Option)[+-][^' ]*'/.test(one.text))
       .map((one) => one.name)
 
     expect(guilty).toEqual([])

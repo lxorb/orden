@@ -1,5 +1,4 @@
 import { COMPACTIONS, DEFAULT_COMPACTION, type Marks } from '@orden/glasses/choices'
-import { key, t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import type { Field, Group } from '../preferences'
 import { resetFields } from '../reset-fields'
@@ -13,26 +12,23 @@ export interface Setting {
 }
 
 const COMPACTION_WORDS: Record<string, string> = {
-  none: key('Every line break'),
-  collapse: key('One break between blocks'),
-  aggressive: key('As little as possible'),
+  none: 'Every line break',
+  collapse: 'One break between blocks',
+  aggressive: 'As little as possible',
 }
 
 const MARK_WORDS: { id: keyof Marks; label: string }[] = [
-  { id: 'fence', label: key('Code fences') },
-  { id: 'code', label: key('Inline code') },
-  { id: 'heading', label: key('Heading hashes') },
-  { id: 'link', label: key('Links') },
-  { id: 'bold', label: key('Bold') },
-  { id: 'italic', label: key('Italic') },
-  { id: 'strike', label: key('Strikethrough') },
-  { id: 'highlight', label: key('Highlight') },
+  { id: 'fence', label: 'Code fences' },
+  { id: 'code', label: 'Inline code' },
+  { id: 'heading', label: 'Heading hashes' },
+  { id: 'link', label: 'Links' },
+  { id: 'bold', label: 'Bold' },
+  { id: 'italic', label: 'Italic' },
+  { id: 'strike', label: 'Strikethrough' },
+  { id: 'highlight', label: 'Highlight' },
 ]
 
-type Say = (text: string) => string
-
 function chooser(
-  say: Say,
   label: string,
   hint: string,
   values: readonly string[],
@@ -45,17 +41,17 @@ function chooser(
     kind: 'select',
     label,
     hint,
-    options: values.map((value) => ({ value, label: say(words[value] ?? value) })),
+    options: values.map((value) => ({ value, label: words[value] ?? value })),
     initial,
     get,
     set,
   }
 }
 
-export function glassesSettings(say: Say = t): Setting[] {
-  const reading = say('Reading')
-  const marked = say('Markdown on the panel')
-  const voice = say('Voice')
+export function glassesSettings(): Setting[] {
+  const reading = 'Reading'
+  const marked = 'Markdown on the panel'
+  const voice = 'Voice'
 
   return [
     {
@@ -64,16 +60,16 @@ export function glassesSettings(say: Say = t): Setting[] {
       onGlasses: true,
       field: {
         kind: 'select',
-        label: say('New page at'),
-        hint: t('Which headings start a new page on the glasses.'),
+        label: 'New page at',
+        hint: 'Which headings start a new page on the glasses.',
         options: [
-          { value: '1', label: say('H1') },
-          { value: '2', label: say('H2 and above') },
-          { value: '3', label: say('H3 and above') },
-          { value: '4', label: say('H4 and above') },
-          { value: '5', label: say('H5 and above') },
-          { value: '6', label: say('Every heading') },
-          { value: '0', label: say('Never') },
+          { value: '1', label: 'H1' },
+          { value: '2', label: 'H2 and above' },
+          { value: '3', label: 'H3 and above' },
+          { value: '4', label: 'H4 and above' },
+          { value: '5', label: 'H5 and above' },
+          { value: '6', label: 'Every heading' },
+          { value: '0', label: 'Never' },
         ],
         initial: '2',
         get: () => String(modes.glassesBreak),
@@ -86,8 +82,8 @@ export function glassesSettings(say: Say = t): Setting[] {
       onGlasses: true,
       field: {
         kind: 'switch',
-        label: say('Line numbers'),
-        hint: t('Shows line numbers on the glasses.'),
+        label: 'Line numbers',
+        hint: 'Shows line numbers on the glasses.',
         initial: true,
         get: () => modes.glassesLineNumbers,
         set: (on) => modes.setGlassesLineNumbers(on),
@@ -98,9 +94,8 @@ export function glassesSettings(say: Say = t): Setting[] {
       group: reading,
       onGlasses: true,
       field: chooser(
-        say,
-        say('Blank lines'),
-        t('How many blank lines the glasses keep between blocks.'),
+        'Blank lines',
+        'How many blank lines the glasses keep between blocks.',
         COMPACTIONS,
         COMPACTION_WORDS,
         DEFAULT_COMPACTION,
@@ -114,8 +109,8 @@ export function glassesSettings(say: Say = t): Setting[] {
       onGlasses: true,
       field: {
         kind: 'switch',
-        label: say(one.label),
-        hint: t('Shows this markdown mark on the glasses rather than hiding it.'),
+        label: one.label,
+        hint: 'Shows this markdown mark on the glasses rather than hiding it.',
         initial: MARKS_INITIAL[one.id],
         get: () => modes.glassesMarks[one.id],
         set: (on) => modes.setGlassesMark(one.id, on),
@@ -128,8 +123,8 @@ export function glassesSettings(say: Say = t): Setting[] {
       onGlasses: true,
       field: {
         kind: 'switch',
-        label: say('Voice commands'),
-        hint: t('Lets you run commands on the glasses by speaking.'),
+        label: 'Voice commands',
+        hint: 'Lets you run commands on the glasses by speaking.',
         initial: false,
         get: () => modes.glassesVoice,
         set: (on) => modes.setGlassesVoice(on),
@@ -163,8 +158,8 @@ export function glassesGroups(): Group[] {
 export function wordFields(): Field[] {
   return commandWords().map((one): Field => ({
     kind: 'text',
-    label: t(one.label),
-    hint: t('What you say to run this command; left empty, the phrase shown is used.'),
+    label: one.label,
+    hint: 'What you say to run this command; left empty, the phrase shown is used.',
     placeholder: one.said,
     initial: '',
     get: () => modes.glassesWords[one.id] ?? '',

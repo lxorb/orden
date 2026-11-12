@@ -81,7 +81,6 @@
   } from './pages/pull'
   import { inSight } from './pages/sight'
   import { PagesStore } from './pages/store.svelte'
-  import { t } from './i18n.svelte'
   import { rooms } from './rooms.svelte'
   import { said } from './said.svelte'
   import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
@@ -834,7 +833,7 @@
       chosen
         ? [
             {
-              label: t('Copy'),
+              label: 'Copy',
               hint: shortcuts.hint('fixed.copy'),
               run: () => void copyText(chosen),
             },
@@ -843,17 +842,17 @@
       ink
         ? [
             {
-              label: t('Duplicate'),
+              label: 'Duplicate',
               hint: shortcuts.hint('canvas.duplicate'),
               run: duplicatePicked,
             },
-            { label: t('Delete'), danger: true, run: deletePicked },
+            { label: 'Delete', danger: true, run: deletePicked },
           ]
         : [],
       page && writable
         ? [
             {
-              label: t('Add a page after this'),
+              label: 'Add a page after this',
               run: () => {
                 const at = store.addPage(page.id)
                 if (at) store.glideTo(at)
@@ -862,11 +861,11 @@
           ]
         : [],
       [
-        { label: t('Fit width'), run: () => store.fitAgain() },
-        { label: t('Fit page'), run: () => store.fitPage() },
+        { label: 'Fit width', run: () => store.fitAgain() },
+        { label: 'Fit page', run: () => store.fitPage() },
         { label: '100%', run: () => store.zoomTo(1) },
       ],
-      [command('export-pdf', t('Export as PDF')), command('print', t('Print'))],
+      [command('export-pdf', 'Export as PDF'), command('print', 'Print')],
     ]
     return groups
       .filter((one) => one.length)
@@ -875,7 +874,7 @@
 
   function showMenu(event: MouseEvent) {
     menu.show(event, pagesMenu(planeAt(event)), {
-      title: t('Pages'),
+      title: 'Pages',
       near: viewport.touch,
     })
   }
@@ -1236,7 +1235,7 @@
     if (over) store.camera = store.held({ ...camera, y: camera.y + over / camera.scale })
     store.glideTo(number)
     tick()
-    said.say(t('Page {number}', { number }))
+    said.say(`Page ${number}`)
   }
 
   function fall() {
@@ -1427,8 +1426,8 @@
   bind:this={host}
   tabindex="0"
   role="application"
-  aria-roledescription={t('Pages')}
-  aria-label={t('{count} pages', { count: pages.length })}
+  aria-roledescription="Pages"
+  aria-label="{pages.length} pages"
   {onpointerdown}
   {onpointermove}
   {onpointerup}
@@ -1534,7 +1533,7 @@
       {canvas}
       hits={found}
       asked={askedFind}
-      label={t('Find')}
+      label="Find"
       onterm={seek}
       onpick={pickFound}
       onclose={stopFinding}

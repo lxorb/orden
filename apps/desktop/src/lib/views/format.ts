@@ -1,5 +1,5 @@
 import type { Value } from '@orden/bases'
-import { i18n } from '../i18n.svelte'
+import { localNumber } from '../region'
 
 export const FORMATS = [
   'number',
@@ -22,9 +22,9 @@ export interface Shown {
 
 function number(value: number, options: Intl.NumberFormatOptions): string {
   try {
-    return i18n.amount(value, options)
+    return localNumber(value, options)
   } catch {
-    return i18n.amount(value)
+    return localNumber(value)
   }
 }
 

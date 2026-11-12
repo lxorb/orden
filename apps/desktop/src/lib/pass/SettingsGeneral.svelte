@@ -1,7 +1,6 @@
 <script lang="ts">
   import { hostOf } from '@orden/pass/urls'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import Glyph from './Glyph.svelte'
   import { pauseWord } from './settings-words'
@@ -19,13 +18,13 @@
     | 'showUsernameField'
 
   const FLAGS: { key: Flag; label: () => string }[] = [
-    { key: 'autofill', label: () => t('Autofill') },
-    { key: 'autofillTotp', label: () => t('Autofill 2FA codes') },
-    { key: 'copyTotpAfterFill', label: () => t('Copy 2FA code after autofill') },
-    { key: 'suggest', label: () => t('Suggest passwords and aliases') },
-    { key: 'autosave', label: () => t('Offer to save logins') },
-    { key: 'autoLogin', label: () => t('Sign in automatically') },
-    { key: 'showUsernameField', label: () => t('Show username field') },
+    { key: 'autofill', label: () => 'Autofill' },
+    { key: 'autofillTotp', label: () => 'Autofill 2FA codes' },
+    { key: 'copyTotpAfterFill', label: () => 'Copy 2FA code after autofill' },
+    { key: 'suggest', label: () => 'Suggest passwords and aliases' },
+    { key: 'autosave', label: () => 'Offer to save logins' },
+    { key: 'autoLogin', label: () => 'Sign in automatically' },
+    { key: 'showUsernameField', label: () => 'Show username field' },
   ]
 
   const settings = $derived(pass.settings)
@@ -73,12 +72,12 @@
 
 <div class="card">
   <div class="orden-setting row">
-    <span class="name">{t('Default vault')}</span>
+    <span class="name">Default vault</span>
     <Select
-      label={t('Default vault')}
+      label="Default vault"
       value={settings.defaultVault ?? ''}
       options={[
-        { value: '', label: t('The vault you are in') },
+        { value: '', label: 'The vault you are in' },
         ...pass.vaults.map((one) => ({ value: one.id, label: one.name })),
       ]}
       onchange={(value: string) => pass.setSetting('defaultVault', value === '' ? null : value)}
@@ -86,7 +85,7 @@
   </div>
 </div>
 
-<h3 class="orden-section">{t('Excluded sites')}</h3>
+<h3 class="orden-section">Excluded sites</h3>
 <div class="card">
   {#each sites as [site, pausedFor] (site)}
     <div class="site">
@@ -95,8 +94,8 @@
         <button
           class="orden-glyph"
           type="button"
-          aria-label={t('Remove {site}', { site })}
-          title={t('Remove {site}', { site })}
+          aria-label="Remove {site}"
+          title="Remove {site}"
           onclick={() => unpaused(site)}
         >
           <Glyph icon={X} />
@@ -117,10 +116,10 @@
     <input
       class="orden-field is-value"
       placeholder="example.com"
-      aria-label={t('Site to exclude')}
+      aria-label="Site to exclude"
       bind:value={typed}
     />
-    <button class="orden-chip" type="submit" disabled={!typed.trim()}>{t('Exclude')}</button>
+    <button class="orden-chip" type="submit" disabled={!typed.trim()}>Exclude</button>
   </form>
 </div>
 

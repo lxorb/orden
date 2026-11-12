@@ -6,7 +6,6 @@
     LONGEST_QUESTION,
     MOST_ANSWERS,
   } from '@orden/chats/limits'
-  import { t } from '../../i18n.svelte'
   import Sheet from '../../Sheet.svelte'
   import { segmented } from '../../slide'
   import { stretch } from './when'
@@ -19,7 +18,7 @@
     { label: stretch(1, 'day'), after: 24 * HOUR },
     { label: stretch(3, 'day'), after: 72 * HOUR },
     { label: stretch(1, 'week'), after: 7 * 24 * HOUR },
-    { label: t('Never'), after: null },
+    { label: 'Never', after: null },
   ] as const
 
   let question = $state('')
@@ -47,15 +46,15 @@
   }
 </script>
 
-<Sheet open title={t('Poll')} {onclose}>
+<Sheet open title="Poll" {onclose}>
   <div class="poll">
     <!-- svelte-ignore a11y_autofocus -->
     <input
       class="orden-field"
       bind:value={question}
       maxlength={LONGEST_QUESTION}
-      placeholder={t('Question')}
-      aria-label={t('Question')}
+      placeholder="Question"
+      aria-label="Question"
       autofocus
     />
     {#each answers as answer, index (index)}
@@ -63,8 +62,8 @@
         class="orden-field"
         value={answer}
         maxlength={LONGEST_ANSWER}
-        placeholder={t('Answer')}
-        aria-label={t('Answer')}
+        placeholder="Answer"
+        aria-label="Answer"
         oninput={(event) => typed(index, event.currentTarget.value)}
         onkeydown={(event) => {
           if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) send()
@@ -78,10 +77,10 @@
       aria-checked={several}
       onclick={() => (several = !several)}
     >
-      <span>{t('Several answers')}</span>
+      <span>Several answers</span>
       <span class="orden-switch" class:on={several} aria-hidden="true"></span>
     </button>
-    <div class="orden-segmented" role="radiogroup" aria-label={t('Poll')} use:segmented>
+    <div class="orden-segmented" role="radiogroup" aria-label="Poll" use:segmented>
       {#each ENDS as one (one.label)}
         <button
           type="button"
@@ -91,9 +90,7 @@
         >
       {/each}
     </div>
-    <button type="button" class="orden-button send" disabled={!ready} onclick={send}
-      >{t('Send')}</button
-    >
+    <button type="button" class="orden-button send" disabled={!ready} onclick={send}>Send</button>
   </div>
 </Sheet>
 

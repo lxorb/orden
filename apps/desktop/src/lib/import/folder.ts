@@ -1,6 +1,6 @@
 import type { Meta } from './meta'
 import { keptText, noteText } from './meta'
-import type { FormatId, ImportPlan, Lost, Planned } from './plan'
+import type { FormatId, ImportPlan, Planned } from './plan'
 import { canvasFollowed, ExportFiles, isCanvas, rewriteLinks } from './rewrite'
 import type { Source } from './sources'
 
@@ -22,7 +22,7 @@ interface Placement {
 export interface FolderOptions {
   format: FormatId
   place: (source: Source) => Placement
-  lost?: readonly Lost[]
+  lost?: readonly string[]
 }
 
 export async function folderPlan(

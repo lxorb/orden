@@ -143,19 +143,14 @@ describe('where a drag may start', () => {
 })
 
 describe('how far a touch is from a drawer’s own edge', () => {
-  test('reading one way: the near drawer counts from the left, the far one from the right', () => {
-    expect(fromEdge(40, 1, 1)).toBe(40)
-    expect(fromEdge(40, 1, -1)).toBe(SCREEN - 40)
-  })
-
-  test('and the other way round, both edges swap with the reading', () => {
-    expect(fromEdge(40, -1, 1)).toBe(SCREEN - 40)
-    expect(fromEdge(40, -1, -1)).toBe(40)
+  test('the near drawer counts from the left, the far one from the right', () => {
+    expect(fromEdge(40, 1)).toBe(40)
+    expect(fromEdge(40, -1)).toBe(SCREEN - 40)
   })
 
   test('so one edge rule covers both sides of a tablet', () => {
-    expect(opensDrawer(fromEdge(SCREEN - 8, 1, -1), 32, false)).toBe(true)
-    expect(opensDrawer(fromEdge(SCREEN / 2, 1, -1), 32, false)).toBe(false)
+    expect(opensDrawer(fromEdge(SCREEN - 8, -1), 32, false)).toBe(true)
+    expect(opensDrawer(fromEdge(SCREEN / 2, -1), 32, false)).toBe(false)
   })
 })
 

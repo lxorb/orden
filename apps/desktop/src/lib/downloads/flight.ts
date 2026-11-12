@@ -1,5 +1,4 @@
 import FileIcon from 'lucide/dist/esm/icons/file.mjs'
-import { t } from '../i18n.svelte'
 import { calm, dur, stillness } from '../motion'
 import { said } from '../said.svelte'
 import { lastPress, type Origin, type Press } from './started'
@@ -170,7 +169,7 @@ export async function started(
   from: Origin,
   press: Press | null = lastPress(),
 ): Promise<void> {
-  said.say(t('Downloading {name}', { name }))
+  said.say(`Downloading ${name}`)
   const element = shown(from.element)
   await settled()
   const cuts = await engineCuts()
@@ -204,12 +203,7 @@ export async function started(
     now: performance.now(),
     area: areaOf(),
   })
-  const end = target
-    ? middleOf(target.box)
-    : cornerOf(
-        { width: innerWidth, height: innerHeight },
-        getComputedStyle(document.documentElement).direction === 'rtl',
-      )
+  const end = target ? middleOf(target.box) : cornerOf({ width: innerWidth, height: innerHeight })
 
   listen()
   const card = flyer(start, cuts)

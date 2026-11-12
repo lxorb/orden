@@ -1,6 +1,5 @@
 import { type Base, writeBase } from '@orden/bases'
 import { folderNotePath } from '../folder-notes'
-import { t } from '../i18n.svelte'
 import { basesOn } from '../settings.svelte'
 import { samePath } from '../space-paths'
 import { joinPath } from '../tauri'
@@ -32,9 +31,9 @@ function databaseBase(status: string, view: string, shown: string): Base {
       properties: {
         [status]: {
           options: [
-            { value: t('Not started'), group: 'todo' },
-            { value: t('In progress'), group: 'doing', tone: '5' },
-            { value: t('Done'), group: 'done', tone: '4' },
+            { value: 'Not started', group: 'todo' },
+            { value: 'In progress', group: 'doing', tone: '5' },
+            { value: 'Done', group: 'done', tone: '4' },
           ],
           kept: {},
         },
@@ -46,7 +45,7 @@ function databaseBase(status: string, view: string, shown: string): Base {
 }
 
 export function databaseNote(): string {
-  const base = databaseBase('status', t('Board'), t('Status'))
+  const base = databaseBase('status', 'Board', 'Status')
   return `\`\`\`base\n${writeBase(base).trimEnd()}\n\`\`\`\n`
 }
 
@@ -61,9 +60,9 @@ async function freeFolder(dir: string, wanted: string): Promise<string> {
 }
 
 export function databaseName(named: string | undefined): string {
-  const typed = (named ?? t('Board')).trim().replace(/\.md$/i, '')
+  const typed = (named ?? 'Board').trim().replace(/\.md$/i, '')
   const wanted = typed.replace(/[\\/:*?"<>|]/g, '-').trim()
-  return /^\.*$/.test(wanted) ? t('Board') : wanted
+  return /^\.*$/.test(wanted) ? 'Board' : wanted
 }
 
 export async function createDatabase(folder?: string, named?: string): Promise<void> {

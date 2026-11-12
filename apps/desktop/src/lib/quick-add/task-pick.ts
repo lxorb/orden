@@ -8,16 +8,15 @@ import {
 } from '@orden/markdown/task-dates'
 import type { TaskChange } from '@orden/markdown/task-edits'
 import type { TaskFields } from '@orden/markdown/task-line'
-import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from '../menu.svelte'
 import { dayRows, durationRows, priorityRows, remindRows } from './pickers'
 
 const RULES: [string, () => string][] = [
-  ['every day', () => t('Every day')],
-  ['every weekday', () => t('Every weekday')],
-  ['every week', () => t('Every week')],
-  ['every month', () => t('Every month')],
-  ['every year', () => t('Every year')],
+  ['every day', () => 'Every day'],
+  ['every weekday', () => 'Every weekday'],
+  ['every week', () => 'Every week'],
+  ['every month', () => 'Every month'],
+  ['every year', () => 'Every year'],
 ]
 
 function repeatRows(current: string | undefined, set: (rule: string | null) => void): MenuEntry[] {
@@ -27,7 +26,7 @@ function repeatRows(current: string | undefined, set: (rule: string | null) => v
       checked: current === rule,
       run: () => set(rule),
     })),
-    ...(current ? [DIVIDER, { label: t('Remove'), run: () => set(null) }] : []),
+    ...(current ? [DIVIDER, { label: 'Remove', run: () => set(null) }] : []),
   ]
 }
 

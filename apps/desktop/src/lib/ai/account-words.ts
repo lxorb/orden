@@ -1,4 +1,3 @@
-import { t } from '../i18n.svelte'
 import { type Account, CLAUDE, GEMINI, OPENAI, type Vendor } from './accounts'
 import { KIND_NAMES, type ProviderKind } from './providers'
 
@@ -19,9 +18,9 @@ export function vendorName(vendor: Vendor, accounts: readonly Account[]): string
   if (vendor === GEMINI) return KIND_NAMES.gemini
   const named = accounts.find((one) => one.id === vendor)?.name
   if (named) return named
-  return t(KIND_NAMES.compatible)
+  return KIND_NAMES.compatible
 }
 
 export function accountName(account: Account): string {
-  return account.name || t(ROADS[account.kind])
+  return account.name || ROADS[account.kind]
 }

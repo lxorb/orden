@@ -167,10 +167,10 @@ export function sourceOf(module: string): string | null {
   return folder ? `folder ${folder[1]}` : null
 }
 
-export type Part = 'catalogues' | 'code' | 'fonts' | 'styles' | 'pages'
+export type Part = 'code' | 'fonts' | 'styles' | 'pages'
 
-export function partOf(file: string, catalogue: boolean): Part {
-  if (file.endsWith('.js')) return catalogue ? 'catalogues' : 'code'
+export function partOf(file: string): Part {
+  if (file.endsWith('.js')) return 'code'
   if (file.endsWith('.css')) return 'styles'
   if (/\.(woff2?|ttf)$/.test(file)) return 'fonts'
   return 'pages'
@@ -178,7 +178,6 @@ export function partOf(file: string, catalogue: boolean): Part {
 
 export const BUDGETS: Record<Part, number> = {
   code: 6_269_600,
-  catalogues: 1_059_500,
   styles: 298_700,
   fonts: 260_000,
   pages: 40_000,

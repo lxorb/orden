@@ -344,7 +344,7 @@ join.delete('/:token', async (context) => {
 async function redeemInvitation(context: Reply, found: Leads) {
   if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
 
-  const user = await accountFor(context.env, found.email, context.req.header('accept-language'))
+  const user = await accountFor(context.env, found.email)
 
   await claimWhatWasGuested(context.env, user, null)
 

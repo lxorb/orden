@@ -1,4 +1,4 @@
-import { i18n } from './i18n.svelte'
+import { systemLocale } from './region'
 import { invoke, isDesktop, platform } from './tauri'
 
 interface Dictionary {
@@ -56,7 +56,7 @@ export function inForceNow(chosen: readonly string[]): string[] {
   const preferred = machineLanguages()
   return inForce(
     chosen.map((one) => (KNOWN.has(one) ? one : dictionaryFor(one, preferred))),
-    i18n.language,
+    systemLocale(),
     preferred,
   )
 }

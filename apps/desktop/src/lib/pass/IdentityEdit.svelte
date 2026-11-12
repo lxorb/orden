@@ -5,7 +5,6 @@
     type IdentityGroup,
     type IdentityKey,
   } from '@orden/pass/types'
-  import { t } from '../i18n.svelte'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
   import { IDENTITY_FIRST } from './field-words'
@@ -40,9 +39,7 @@
       />
     {/each}
     {#if shown.length < IDENTITY_FIELDS[group].length}
-      <button type="button" class="more" onclick={() => (opened[group] = true)}>
-        {t('Add more')}
-      </button>
+      <button type="button" class="more" onclick={() => (opened[group] = true)}> Add more </button>
     {/if}
   </EditCard>
 {/each}

@@ -1,4 +1,3 @@
-import { key, plural, t } from '../i18n.svelte'
 import { identifier } from '../identifier'
 import { hostShell, writeSpec } from '../terminal/spec'
 import { workspace } from '../workspace.svelte'
@@ -38,9 +37,9 @@ export async function openAll(ids: readonly string[]): Promise<void> {
   if (ids.length >= ASK_FROM) {
     const { prompt } = await import('../prompt.svelte')
     const sure = await prompt.confirm({
-      title: t('Open all'),
-      detail: plural(ids.length, { one: '{count} tab', other: '{count} tabs' }),
-      confirmLabel: key('Open all'),
+      title: 'Open all',
+      detail: ids.length === 1 ? '1 tab' : `${ids.length} tabs`,
+      confirmLabel: 'Open all',
     })
     if (!sure) return
   }

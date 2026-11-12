@@ -279,16 +279,11 @@ describe('closing tabs with the pointer', () => {
   })
 
   test('until the pointer is forty below the strip or sixty past its end', () => {
-    expect(near(rect, 400, 38 + 40, 1)).toBe(true)
-    expect(near(rect, 400, 38 + 41, 1)).toBe(false)
-    expect(near(rect, 860, 20, 1)).toBe(true)
-    expect(near(rect, 861, 20, 1)).toBe(false)
-    expect(near(rect, 400, -1, 1)).toBe(false)
-  })
-
-  test('where the end is the left, the slop is on the left', () => {
-    expect(near(rect, -60, 20, -1)).toBe(true)
-    expect(near(rect, 860, 20, -1)).toBe(false)
+    expect(near(rect, 400, 38 + 40)).toBe(true)
+    expect(near(rect, 400, 38 + 41)).toBe(false)
+    expect(near(rect, 860, 20)).toBe(true)
+    expect(near(rect, 861, 20)).toBe(false)
+    expect(near(rect, 400, -1)).toBe(false)
   })
 })
 

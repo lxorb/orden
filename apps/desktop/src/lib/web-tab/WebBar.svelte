@@ -9,7 +9,6 @@
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import RotateCw from 'lucide/dist/esm/icons/rotate-cw.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { t } from '../i18n.svelte'
   import { longPress } from '../longpress'
   import { dur, scale } from '../motion'
   import { middleOpens } from '../new-tab'
@@ -157,15 +156,15 @@
 >
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip(t('Back'), 'app.back')}
-    aria-label={t('Back')}
+    title={shortcuts.tooltip('Back', 'app.back')}
+    aria-label="Back"
     disabled={!page.back}
     onclick={(event) => onstep('back', event)}
     use:middleOpens={(event) => onstep('back', event)}
     oncontextmenu={(event) => onhistory(false, event)}
     use:longPress={(event) => onhistory(false, event)}
   >
-    <svg class="orden-mirror" viewBox="0 0 24 24" aria-hidden="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowLeft as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />
       {/each}
@@ -174,15 +173,15 @@
 
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip(t('Forward'), 'app.forward')}
-    aria-label={t('Forward')}
+    title={shortcuts.tooltip('Forward', 'app.forward')}
+    aria-label="Forward"
     disabled={!page.forward}
     onclick={(event) => onstep('forward', event)}
     use:middleOpens={(event) => onstep('forward', event)}
     oncontextmenu={(event) => onhistory(true, event)}
     use:longPress={(event) => onhistory(true, event)}
   >
-    <svg class="orden-mirror" viewBox="0 0 24 24" aria-hidden="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowRight as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />
       {/each}
@@ -192,9 +191,9 @@
   <button
     class="orden-glyph"
     title={page.loading
-      ? shortcuts.tooltip(t('Stop'), 'web.stop')
-      : shortcuts.tooltip(t('Reload'), 'web.reload')}
-    aria-label={page.loading ? t('Stop') : t('Reload')}
+      ? shortcuts.tooltip('Stop', 'web.stop')
+      : shortcuts.tooltip('Reload', 'web.reload')}
+    aria-label={page.loading ? 'Stop' : 'Reload'}
     onclick={(event) => onstep(page.loading ? 'stop' : 'reload', event)}
     use:middleOpens={(event) => onstep('reload', event)}
   >
@@ -214,8 +213,8 @@
   <button
     class="orden-glyph site"
     data-opens="site"
-    title={t('Site information')}
-    aria-label={t('Site information')}
+    title="Site information"
+    aria-label="Site information"
     aria-haspopup="dialog"
     disabled={page.url === null || !isWebAddress(page.url)}
     onclick={onsite}
@@ -257,8 +256,8 @@
       data-opens="downloads"
       data-tab={tab}
       class:is-on={progress !== null}
-      title={t('Downloads')}
-      aria-label={t('Downloads')}
+      title="Downloads"
+      aria-label="Downloads"
       aria-haspopup="dialog"
       onclick={ondownloads}
       transition:scale={{ start: 0.6, duration: dur(160), easing: cubicOut }}
@@ -287,13 +286,7 @@
     </button>
   {/if}
 
-  <button
-    class="orden-glyph"
-    title={t('More')}
-    aria-label={t('More')}
-    aria-haspopup="menu"
-    onclick={onmenu}
-  >
+  <button class="orden-glyph" title="More" aria-label="More" aria-haspopup="menu" onclick={onmenu}>
     <svg viewBox="0 0 24 24" aria-hidden="true">
       {#each Ellipsis as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />

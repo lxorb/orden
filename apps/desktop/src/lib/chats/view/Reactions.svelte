@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Message } from '@orden/chats'
   import { backOut } from 'svelte/easing'
-  import { amount, t } from '../../i18n.svelte'
+  import { localNumber } from '../../region'
   import { dur, scale } from '../../motion'
   import type { ChatPage } from './chat.svelte'
   import Glyph from './Glyph.svelte'
@@ -42,15 +42,15 @@
         in:scale={{ start: 0.8, duration: dur(160), easing: backOut }}
       >
         <span class="emoji">{emoji}</span>
-        <span class="count">{amount(who.length)}</span>
+        <span class="count">{localNumber(who.length)}</span>
       </button>
     {/each}
     {#if canReact}
       <button
         type="button"
         class="chip more"
-        aria-label={t('Add reaction')}
-        use:tip={() => t('Add reaction')}
+        aria-label="Add reaction"
+        use:tip={() => 'Add reaction'}
         onclick={(event) => onmore(event.currentTarget)}><Glyph name="react" /></button
       >
     {/if}

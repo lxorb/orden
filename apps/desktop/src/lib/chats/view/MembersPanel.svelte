@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../../backstack.svelte'
   import { copyText } from '../../clipboard'
-  import { amount, i18n, t } from '../../i18n.svelte'
+  import { localNumber } from '../../region'
   import { menu, type MenuEntry } from '../../menu.svelte'
   import { dur, fly } from '../../motion'
   import { overlays } from '../../overlays'
@@ -62,9 +62,9 @@
   )
 
   const RANK_WORDS: Record<Rank, () => string> = {
-    owner: () => t('Owners'),
-    member: () => t('Members'),
-    bot: () => t('Bots'),
+    owner: () => 'Owners',
+    member: () => 'Members',
+    bot: () => 'Bots',
   }
 
   $effect(() => (sheet ? overlays.show(onclose, () => [panel]) : undefined))
@@ -80,13 +80,13 @@
     const entries: MenuEntry[] = []
     const one = page.members.find((it) => it.who === member.who)
     if (one && member.who !== page.me && page.view.role !== 'read')
-      entries.push({ label: t('Mention'), run: () => onmention(mentionText(one)) })
+      entries.push({ label: 'Mention', run: () => onmention(mentionText(one)) })
     const id = accountOf(member.who)
     if (id && event.currentTarget instanceof Element) {
       const from = event.currentTarget
-      entries.push({ label: t('Profile'), run: () => showProfile(id, from, space) })
+      entries.push({ label: 'Profile', run: () => showProfile(id, from, space) })
     }
-    entries.push({ label: t('Copy name'), run: () => void copyText(member.name) })
+    entries.push({ label: 'Copy name', run: () => void copyText(member.name) })
     menu.show(event, entries)
   }
 
@@ -108,8 +108,8 @@
   class:sheet
   class:resizing={width.dragging}
   style:--members-width={sheet || width.pixels === null ? undefined : `${width.pixels}px`}
-  aria-label={t('Members')}
-  transition:fly={{ x: 24 * i18n.factor, duration: dur(190), easing: cubicOut }}
+  aria-label="Members"
+  transition:fly={{ x: 24, duration: dur(190), easing: cubicOut }}
   onkeydown={(event) => {
     if (event.key === 'Escape' && !event.defaultPrevented) {
       event.preventDefault()
@@ -123,12 +123,12 @@
       class="edge"
       role="separator"
       aria-orientation="vertical"
-      aria-label={t('Panel width')}
+      aria-label="Panel width"
       aria-valuemin={width.narrowest}
       aria-valuemax={width.widest}
       aria-valuenow={Math.round(width.pixels ?? panel?.clientWidth ?? width.narrowest)}
       tabindex="0"
-      title={t('Drag to resize')}
+      title="Drag to resize"
       onpointerdown={(event) => width.start(event, panel)}
       ondblclick={() => width.reset()}
       onkeydown={onEdgeKey}
@@ -138,8 +138,8 @@
     <input
       class="orden-field look"
       type="search"
-      aria-label={t('Filter')}
-      placeholder={t('Filter')}
+      aria-label="Filter"
+      placeholder="Filter"
       bind:value={filter}
       onkeydown={(event) => {
         if (event.key === 'Escape' && filter) {
@@ -148,7 +148,7 @@
         }
       }}
     />
-    <button type="button" class="orden-glyph" aria-label={t('Close')} onclick={onclose}
+    <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}
       ><Glyph name="close" /></button
     >
   </header>
@@ -164,7 +164,7 @@
           {#if 'group' in row}
             <h3 class="group" style:top="{row.top}px" style:height="{row.height}px">
               <span class="group-name">{RANK_WORDS[row.group.rank]()}</span>
-              <span class="group-count">{amount(row.group.count)}</span>
+              <span class="group-count">{localNumber(row.group.count)}</span>
             </h3>
           {:else}
             <button
@@ -190,7 +190,7 @@
         {/each}
       </div>
     {:else if filter.trim()}
-      <p class="none">{t('No matches')}</p>
+      <p class="none">No matches</p>
     {/if}
   </div>
 </aside>

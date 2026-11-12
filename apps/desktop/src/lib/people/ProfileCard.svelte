@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../backstack.svelte'
-  import { i18n, t } from '../i18n.svelte'
+  import { localDate } from '../region'
   import { fly, LAYER } from '../motion'
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
@@ -23,7 +23,7 @@
     const zone = person?.zone
     const here = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (!zone || mine || !farApart(zone, here, now)) return null
-    return i18n.when(now, { timeStyle: 'short', timeZone: zone })
+    return localDate(now, { timeStyle: 'short', timeZone: zone })
   })
 
   const pieces = $derived(
@@ -95,19 +95,17 @@
           <span>{status.text}</span>
           {#if status.until}
             <span class="soft">
-              {t('until {time}', {
-                time: i18n.when(status.until, {
-                  weekday: 'short',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                }),
+              until {localDate(status.until, {
+                weekday: 'short',
+                hour: 'numeric',
+                minute: '2-digit',
               })}
             </span>
           {/if}
         </div>
       {/if}
       {#if theirTime}
-        <div class="soft time">{t('{time} local time', { time: theirTime })}</div>
+        <div class="soft time">{theirTime} local time</div>
       {/if}
       {#if pieces.length}
         <p class="bio">
@@ -130,7 +128,7 @@
           onclick={() => {
             close()
             settings.show('account')
-          }}>{t('Edit profile')}</button
+          }}>Edit profile</button
         >
       {/if}
     </div>

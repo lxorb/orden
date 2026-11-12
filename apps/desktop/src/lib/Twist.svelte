@@ -9,7 +9,6 @@
     width: 100%;
     height: 100%;
     flex: none;
-    transform: scaleX(var(--dir));
     fill: none;
     stroke: currentColor;
     stroke-width: 1.5;
@@ -19,6 +18,6 @@
   }
 
   .turn.open {
-    transform: scaleX(var(--dir)) rotate(90deg);
+    transform: rotate(90deg);
   }
 </style>

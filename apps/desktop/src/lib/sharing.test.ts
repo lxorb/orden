@@ -188,7 +188,7 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-vi.mock('./i18n.svelte', () => ({
+vi.mock('./message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))

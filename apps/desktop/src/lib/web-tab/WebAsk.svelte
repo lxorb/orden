@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { t } from '../i18n.svelte'
   import { shownSite } from './idn'
   import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
@@ -13,16 +12,16 @@
   const { asking, icon }: { asking: Asking; icon: string | null } = $props()
 
   const WANTS: Record<Asking['ask'], () => string> = {
-    camera: () => t('Use your camera'),
-    microphone: () => t('Use your microphone'),
-    location: () => t('Know your location'),
-    notifications: () => t('Show notifications'),
-    clipboard: () => t('See text and images copied to the clipboard'),
-    sensors: () => t('Use your motion sensors'),
-    downloads: () => t('Download multiple files'),
-    fonts: () => t('Use fonts installed on your device'),
-    midi: () => t('Use your MIDI devices'),
-    windows: () => t('Manage windows on all your displays'),
+    camera: () => 'Use your camera',
+    microphone: () => 'Use your microphone',
+    location: () => 'Know your location',
+    notifications: () => 'Show notifications',
+    clipboard: () => 'See text and images copied to the clipboard',
+    sensors: () => 'Use your motion sensors',
+    downloads: () => 'Download multiple files',
+    fonts: () => 'Use fonts installed on your device',
+    midi: () => 'Use your MIDI devices',
+    windows: () => 'Manage windows on all your displays',
   }
 
   let marked = $state(true)
@@ -48,15 +47,15 @@
     {#if icon && marked}
       <img class="mark" src={icon} alt="" draggable="false" onerror={() => (marked = false)} />
     {/if}
-    <span><strong>{shownSite(asking.site)}</strong> {t('wants to')}</span>
+    <span><strong>{shownSite(asking.site)}</strong> wants to</span>
   </p>
   <p class="which">{WANTS[asking.ask]()}</p>
 
   <div class="rows">
     <button class="orden-button is-quiet" onclick={() => grants.answer(asking, false)}>
-      {t('Don’t allow')}
+      Don’t allow
     </button>
-    <button class="orden-button" onclick={() => grants.answer(asking, true)}>{t('Allow')}</button>
+    <button class="orden-button" onclick={() => grants.answer(asking, true)}>Allow</button>
   </div>
 </div>
 

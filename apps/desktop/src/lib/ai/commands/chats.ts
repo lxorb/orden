@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { chatsOn } from '../../settings.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { Thread } from '../chat/types'
@@ -63,7 +62,7 @@ async function chatInFront(): Promise<string | null> {
 
 function chatsOff(host: Host, thread: Thread): boolean {
   if (chatsOn()) return false
-  host.line(thread, t('Chats are off. Turn them on in Settings.'))
+  host.line(thread, 'Chats are off. Turn them on in Settings.')
   return true
 }
 
@@ -71,7 +70,7 @@ export async function reply(host: Host, thread: Thread, args: string): Promise<v
   if (chatsOff(host, thread)) return
   const chat = await chatInFront()
   if (!chat) {
-    host.line(thread, t('Open a chat first'))
+    host.line(thread, 'Open a chat first')
     return
   }
   await draftReply(host.panel, thread, chat, args)
@@ -91,7 +90,7 @@ export async function catchup(host: Host, thread: Thread, args: string): Promise
     (one) => one !== null,
   )
   if (!parts.length) {
-    host.line(thread, t('Nothing unread'))
+    host.line(thread, 'Nothing unread')
     return
   }
   await sendWith(host.panel, thread, CATCHUP, parts)

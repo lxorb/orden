@@ -1,6 +1,6 @@
 <script lang="ts">
   import { groupName } from '@orden/bases'
-  import { amount, t } from '../i18n.svelte'
+  import { localNumber } from '../region'
   import Select from '../Select.svelte'
   import {
     CHART_KINDS,
@@ -60,7 +60,7 @@
   const said = (at: number) => {
     const one = points[at]
     if (!one) return ''
-    return one.day ? dayWords(one.day, live.today) : amount(Math.round(one.value * 100) / 100)
+    return one.day ? dayWords(one.day, live.today) : localNumber(Math.round(one.value * 100) / 100)
   }
 
   const set = (key: string, value: unknown) =>
@@ -89,7 +89,7 @@
     </div>
     <span class="pick">
       <Select
-        label={t('Measure')}
+        label="Measure"
         value={settings?.measure ?? 'count'}
         options={MEASURES.map((one) => ({ value: one, label: measureName(one) }))}
         onchange={(value: string) => set('measure', value)}
@@ -98,7 +98,7 @@
     {#if settings && settings.measure !== 'count'}
       <span class="pick">
         <Select
-          label={t('Property')}
+          label="Property"
           value={settings.of ?? ''}
           options={numeric.map((one) => ({
             value: one,
@@ -114,8 +114,7 @@
         class="orden-chip"
         class:is-on={settings.cumulative}
         aria-pressed={settings.cumulative}
-        onclick={() => set('cumulative', settings.cumulative ? undefined : true)}
-        >{t('Cumulative')}</button
+        onclick={() => set('cumulative', settings.cumulative ? undefined : true)}>Cumulative</button
       >
     {/if}
   </div>
@@ -124,7 +123,7 @@
     <div class="number">
       {total?.day
         ? dayWords(total.day, live.today)
-        : amount(Math.round((total?.value ?? 0) * 100) / 100)}
+        : localNumber(Math.round((total?.value ?? 0) * 100) / 100)}
     </div>
   {:else if settings?.kind === 'donut'}
     <div class="donut">
@@ -133,7 +132,7 @@
           <path d={path} fill={tone(at)}><title>{label(at)}: {said(at)}</title></path>
         {/each}
         <text class="middle" x="0" y="8" text-anchor="middle"
-          >{amount(live.answer?.total ?? 0)}</text
+          >{localNumber(live.answer?.total ?? 0)}</text
         >
       </svg>
       <ul class="legend">

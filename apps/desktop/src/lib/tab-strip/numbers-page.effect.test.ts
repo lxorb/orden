@@ -14,7 +14,6 @@ vi.mock('@tauri-apps/api/window', () => ({
 }))
 vi.mock('../surfaces.svelte', () => ({ tabOverview: { open: false } }))
 vi.mock('../viewport.svelte', () => ({ viewport: { touch: false } }))
-vi.mock('../i18n.svelte', () => ({ i18n: { factor: 1 } }))
 vi.mock('../shortcuts.svelte', () => ({
   shortcuts: { keyFor: () => null, platform: 'win' },
 }))

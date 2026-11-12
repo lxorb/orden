@@ -1,13 +1,12 @@
-import { key, LANGUAGES } from '../i18n.svelte'
 import type { Message } from './providers'
 
 export type Verb = 'shorter' | 'longer' | 'grammar' | 'translate'
 
 export const VERBS: { id: Verb; label: string }[] = [
-  { id: 'shorter', label: key('Shorter') },
-  { id: 'longer', label: key('Longer') },
-  { id: 'grammar', label: key('Fix grammar') },
-  { id: 'translate', label: key('Translate') },
+  { id: 'shorter', label: 'Shorter' },
+  { id: 'longer', label: 'Longer' },
+  { id: 'grammar', label: 'Fix grammar' },
+  { id: 'translate', label: 'Translate' },
 ]
 
 function instruction(verb: Verb, language: string): string {
@@ -36,15 +35,58 @@ export function rewriteMessages(verb: Verb, language: string, selection: string)
   ]
 }
 
+const LANGUAGES: readonly { id: string; name: string }[] = [
+  { id: 'id', name: 'Bahasa Indonesia' },
+  { id: 'ms', name: 'Bahasa Melayu' },
+  { id: 'jv', name: 'Basa Jawa' },
+  { id: 'de', name: 'Deutsch' },
+  { id: 'en', name: 'English' },
+  { id: 'es', name: 'Español' },
+  { id: 'fil', name: 'Filipino' },
+  { id: 'fr', name: 'Français' },
+  { id: 'ha', name: 'Hausa' },
+  { id: 'it', name: 'Italiano' },
+  { id: 'sw', name: 'Kiswahili' },
+  { id: 'pl', name: 'Polski' },
+  { id: 'pt-BR', name: 'Português (Brasil)' },
+  { id: 'pt-PT', name: 'Português (Portugal)' },
+  { id: 'gsw', name: 'Schwiizerdütsch' },
+  { id: 'vi', name: 'Tiếng Việt' },
+  { id: 'tr', name: 'Türkçe' },
+  { id: 'ru', name: 'Русский' },
+  { id: 'uk', name: 'Українська' },
+  { id: 'ur', name: 'اردو' },
+  { id: 'ar', name: 'العربية' },
+  { id: 'ps', name: 'پښتو' },
+  { id: 'fa', name: 'فارسی' },
+  { id: 'am', name: 'አማርኛ' },
+  { id: 'mr', name: 'मराठी' },
+  { id: 'hi', name: 'हिन्दी' },
+  { id: 'bn', name: 'বাংলা' },
+  { id: 'pa', name: 'ਪੰਜਾਬੀ' },
+  { id: 'gu', name: 'ગુજરાતી' },
+  { id: 'ta', name: 'தமிழ்' },
+  { id: 'te', name: 'తెలుగు' },
+  { id: 'kn', name: 'ಕನ್ನಡ' },
+  { id: 'ml', name: 'മലയാളം' },
+  { id: 'th', name: 'ไทย' },
+  { id: 'my', name: 'မြန်မာ' },
+  { id: 'ko', name: '한국어' },
+  { id: 'ja', name: '日本語' },
+  { id: 'zh-Hans', name: '简体中文' },
+  { id: 'yue', name: '粵語' },
+  { id: 'zh-Hant', name: '繁體中文' },
+  { id: 'zh-Hant-HK', name: '繁體中文（香港）' },
+]
+
 export function languageNames(): { id: string; name: string }[] {
-  return LANGUAGES.filter((one) => one.id !== 'system').map((one) => ({
-    id: one.id,
-    name: one.name,
-  }))
+  return [...LANGUAGES]
 }
 
-export function defaultLanguage(appLanguage: string): string {
-  const found = languageNames().find((one) => one.id === appLanguage)
+export function defaultLanguage(region: string): string {
+  const base = region.split('-')[0]
+  const found =
+    LANGUAGES.find((one) => one.id === region) ?? LANGUAGES.find((one) => one.id === base)
   return found?.id ?? 'en'
 }
 

@@ -62,7 +62,7 @@ describe('a Roam export', () => {
     const plan = await readRoam([file('graph.json', GRAPH)])
 
     expect(noteAt(plan, 'Journals/2026-09-11.md')).toContain('As I said in First thought')
-    expect(plan.lost[0]?.values).toEqual({ count: 1 })
+    expect(plan.lost[0]).toBe('1 block references were written out as the words they pointed at')
   })
 
   test('a JSON that is not a Roam graph is not read as one', async () => {

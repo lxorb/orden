@@ -1,5 +1,4 @@
 import type { Source, SourceId } from '@orden/pass/import/index'
-import { t } from '../i18n.svelte'
 
 export interface SourceMark {
   letters: string
@@ -60,10 +59,8 @@ export function kindsOf(source: Source): string {
 
 export function stepsOf(source: Source): string {
   if (source.id === 'csv') {
-    return t(
-      'Export a CSV file whose first row names its columns, such as name, url, username, password and note.',
-    )
+    return 'Export a CSV file whose first row names its columns, such as name, url, username, password and note.'
   }
   const { place, format } = PLACES[source.id]
-  return t('In {app}, open {place} and export as {format}.', { app: source.name, place, format })
+  return `In ${source.name}, open ${place} and export as ${format}.`
 }

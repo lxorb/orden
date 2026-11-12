@@ -1,7 +1,6 @@
 import { CODE_PALETTES } from '@orden/editor'
 import { describe, expect, test } from 'vitest'
-import { highlightCode, loadParsers, paletteCss, paletteName } from './highlight'
-import { i18n } from './i18n.svelte'
+import { highlightCode, loadParsers, paletteCss } from './highlight'
 
 describe('loading parsers', () => {
   test('finds a language by name or alias', async () => {
@@ -115,18 +114,4 @@ describe('the palette stylesheet', () => {
     expect(css).toContain('#write .hl-comment { color: var(--muted); }')
     expect(css).toContain('.hl-invalid')
   })
-})
-
-test('names the palette that follows the theme in the reader’s language, and keeps the others’ own names', async () => {
-  const was = i18n.choice
-  i18n.choice = 'de'
-  await i18n.load()
-  try {
-    const names = CODE_PALETTES.map(paletteName)
-    expect(names[0]).toBe('Dem Design folgen')
-    expect(names.slice(1)).toEqual(CODE_PALETTES.slice(1).map((one) => one.name))
-  } finally {
-    i18n.choice = was
-    await i18n.load()
-  }
 })

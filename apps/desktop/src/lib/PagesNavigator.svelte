@@ -5,7 +5,6 @@
   import { paintSketch } from './canvas/paint'
   import { readPalette } from './canvas/palette'
   import { carryPage, draggedPage, dropOver, isPageDrag } from './drag-paths'
-  import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
   import { densityFor, paperOf } from './pages/paper'
@@ -285,14 +284,14 @@
 
   function showMenu(event: MouseEvent, page: PageNode, at: number) {
     if (!store || store.readOnly) return
-    menu.show(event, pageMenu(page), { title: t('Page {number}', { number: at + 1 }) })
+    menu.show(event, pageMenu(page), { title: `Page ${at + 1}` })
   }
 
   function pageMenu(page: PageNode): MenuEntry[] {
     return [
-      { label: t('Add a page after this'), run: () => add(page.id) },
+      { label: 'Add a page after this', run: () => add(page.id) },
       {
-        label: t('Delete this page'),
+        label: 'Delete this page',
         danger: true,
         disabled: pages.length < 2,
         run: () => {
@@ -302,7 +301,7 @@
       },
       DIVIDER,
       ...PAPER_NAMES.map((paper) => ({
-        label: t(PAPER_WORDS[paper]),
+        label: PAPER_WORDS[paper],
         disabled: page.paper === paper,
         run: () => {
           const canvas = store?.canvas
@@ -311,7 +310,7 @@
       })),
       DIVIDER,
       ...PATTERNS.map((pattern) => ({
-        label: t(WORDS[pattern]),
+        label: WORDS[pattern],
         disabled: page.pattern === pattern,
         run: () => {
           const canvas = store?.canvas
@@ -390,7 +389,7 @@
             class:above={over === at && above}
             class:below={over === at && !above}
             draggable="true"
-            aria-label={t('Page {number}', { number: at + 1 })}
+            aria-label="Page {at + 1}"
             aria-current={at + 1 === on ? 'true' : undefined}
             onclick={() => store.turnTo(at + 1)}
             oncontextmenu={(event) => showMenu(event, page, at)}
@@ -419,7 +418,7 @@
     {#if store.canAdd}
       <button class="add" onclick={() => add(null)}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-        {t('Add a page')}
+        Add a page
       </button>
     {/if}
   </div>

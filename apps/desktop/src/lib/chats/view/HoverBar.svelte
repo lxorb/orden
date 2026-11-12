@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Message } from '@orden/chats'
-  import { t } from '../../i18n.svelte'
   import { dur, fade } from '../../motion'
   import { emojiRecent } from '../../emoji/recent.svelte'
   import Glyph from './Glyph.svelte'
@@ -45,30 +44,22 @@
     <button
       type="button"
       class="one"
-      aria-label={t('Add reaction')}
-      use:tip={() => t('Add reaction')}
+      aria-label="Add reaction"
+      use:tip={() => 'Add reaction'}
       onclick={(event) => onpicker(event.currentTarget)}><Glyph name="react" /></button
     >
-    <button
-      type="button"
-      class="one"
-      aria-label={t('Reply')}
-      use:tip={() => t('Reply')}
-      onclick={onreply}><Glyph name="reply" /></button
+    <button type="button" class="one" aria-label="Reply" use:tip={() => 'Reply'} onclick={onreply}
+      ><Glyph name="reply" /></button
     >
-    <button
-      type="button"
-      class="one"
-      aria-label={t('Quote')}
-      use:tip={() => t('Quote')}
-      onclick={onquote}><Glyph name="quote" /></button
+    <button type="button" class="one" aria-label="Quote" use:tip={() => 'Quote'} onclick={onquote}
+      ><Glyph name="quote" /></button
     >
   {/if}
   <button
     type="button"
     class="one"
-    aria-label={t('More')}
-    use:tip={() => t('More')}
+    aria-label="More"
+    use:tip={() => 'More'}
     onclick={(event) => onmenu(event)}><Glyph name="more" /></button
   >
 </div>

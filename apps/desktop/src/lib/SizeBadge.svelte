@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
   import { dur, fade, scale } from './motion'
   import { modes } from './modes.svelte'
 
@@ -37,7 +36,7 @@
     in:scale={{ duration: dur(140), start: 0.94, easing: cubicOut }}
     out:fade={{ duration: dur(180) }}
   >
-    {t('{percent}% text', { percent })}
+    {percent}% text
   </div>
 {/if}
 

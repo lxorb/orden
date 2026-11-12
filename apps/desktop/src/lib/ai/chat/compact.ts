@@ -1,4 +1,3 @@
-import { t } from '../../i18n.svelte'
 import { compactUrl, type Provider } from '../providers'
 import { sseJson } from '../stream'
 import { ANTHROPIC_COMPACT_BETA } from './catalogue'
@@ -160,6 +159,6 @@ async function ownSummary(
     signal ?? new AbortController().signal,
   )
   const summary = result.parts.flatMap((one) => (one.kind === 'text' ? [one.text] : [])).join('')
-  if (!summary.trim()) throw new Error(t('No answer'))
+  if (!summary.trim()) throw new Error('No answer')
   return { kind: 'summary', model: job.model.id, summary }
 }

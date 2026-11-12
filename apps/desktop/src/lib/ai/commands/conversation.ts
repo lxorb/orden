@@ -1,5 +1,4 @@
 import { copyText } from '../../clipboard'
-import { t } from '../../i18n.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { AutoCompact, Thread, Turn } from '../chat/types'
 import { compactsAt } from '../chat/usage'
@@ -63,8 +62,8 @@ export async function exportThread(host: Host, thread: Thread, name: string): Pr
   const path = root ? await workspace.noteFrom(markdownOf(thread, named), root) : null
   if (path) await workspace.open(path)
   else {
-    const why = root ? t('you can only read this space') : t('no such space')
-    host.line(thread, `${t('Save as a note')}: ${why}`)
+    const why = root ? 'you can only read this space' : 'no such space'
+    host.line(thread, `Save as a note: ${why}`)
   }
 }
 

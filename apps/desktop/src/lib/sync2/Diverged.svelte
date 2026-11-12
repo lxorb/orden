@@ -1,7 +1,5 @@
 <script lang="ts">
   import { tick } from 'svelte'
-  import { steppedKey } from '../direction'
-  import { t } from '../i18n.svelte'
   import Sheet from '../Sheet.svelte'
   import { withinSpace } from '../space-paths'
   import { readableSize } from '../usage.svelte'
@@ -34,7 +32,7 @@
 
   function stepping(node: HTMLElement) {
     const step = (event: KeyboardEvent) => {
-      const key = steppedKey(event.key)
+      const key = event.key
       if (key !== 'ArrowLeft' && key !== 'ArrowRight') return
       const keeps = [...node.querySelectorAll<HTMLButtonElement>('.keep')]
       const next = keeps[key === 'ArrowRight' ? 1 : 0]
@@ -104,7 +102,7 @@
       disabled={asking.answering !== null && asking.answering !== 'both'}
       onclick={(event) => keep(event, 'both')}
     >
-      {t('Keep both')}
+      Keep both
     </button>
   {/snippet}
 </Sheet>
@@ -114,7 +112,7 @@
   <section class="card side" aria-labelledby={head}>
     <header id={head}>
       <span class="device">
-        {whose === 'mine' ? t('This {device}', { device: side.device }) : side.device}
+        {whose === 'mine' ? `This ${side.device}` : side.device}
       </span>
       <time datetime={new Date(side.at).toISOString()}>{when(side.at, 'short')}</time>
     </header>
@@ -145,7 +143,7 @@
       data-lands={whose === newer ? '' : undefined}
       onclick={(event) => keep(event, whose)}
     >
-      {t('Keep')}
+      Keep
     </button>
   </section>
 {/snippet}
