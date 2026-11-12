@@ -21,11 +21,15 @@ import {
   noteId,
   notePath,
   ok,
+  portOf,
+  portProvided,
+  providePort,
   spaceId,
   TAB_KINDS,
   unixLines,
   unwrapOr,
   userId,
+  whenPortProvided,
   type Result,
   type SpaceId,
 } from '@orden/contracts'
@@ -180,5 +184,45 @@ describe('shell extension points', () => {
     expect(isEventName('orden://open-url')).toBe(true)
     expect(isEventName('orden://')).toBe(false)
     expect(isEventName('https://open-url')).toBe(false)
+  })
+})
+
+describe('ports', () => {
+  it('answers a missing port with a result, not a throw, and the bound one once provided', () => {
+    expect(portProvided('sync.clock')).toBe(false)
+    const missing = portOf('sync.clock')
+    expect(missing.ok).toBe(false)
+    if (!missing.ok) expect(missing.error.kind).toBe('missing')
+
+    const heard: number[] = []
+    whenPortProvided('sync.clock', (clock) => heard.push(clock.now()))
+    expect(heard).toEqual([])
+    const unbind = providePort('sync.clock', { now: () => 7, waited: () => Promise.resolve() })
+    expect(heard).toEqual([7])
+    whenPortProvided('sync.clock', (clock) => heard.push(clock.now() + 1))
+    expect(heard).toEqual([7, 8])
+    expect(
+      unwrapOr(
+        mapResult(portOf('sync.clock'), (clock) => clock.now()),
+        0,
+      ),
+    ).toBe(7)
+
+    unbind()
+    expect(portProvided('sync.clock')).toBe(false)
+  })
+
+  it('lets a later binding replace an earlier one, and an old unbind leave the new one alone', () => {
+    const first = providePort('sync.clock', { now: () => 1, waited: () => Promise.resolve() })
+    const second = providePort('sync.clock', { now: () => 2, waited: () => Promise.resolve() })
+    first()
+    expect(
+      unwrapOr(
+        mapResult(portOf('sync.clock'), (clock) => clock.now()),
+        0,
+      ),
+    ).toBe(2)
+    second()
+    expect(portProvided('sync.clock')).toBe(false)
   })
 })

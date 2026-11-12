@@ -436,7 +436,7 @@
       import('./lib/publishing.svelte'),
       import('./lib/ai/store.svelte'),
       import('./lib/ai/rewriting.svelte'),
-      import('./lib/sync2/fake-engine.svelte'),
+      import('./lib/sync-client/test/fake-engine.svelte'),
       import('./lib/agents/settings/fake'),
       import('./lib/wallpaper/wallpaper.svelte'),
       import('./lib/themes/store.svelte'),

@@ -1,3 +1,4 @@
+import '../../src/lib/sync-ports'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -14,7 +15,7 @@ Element.prototype.animate = () =>
   }) as unknown as Animation
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { connectFake } = await import('../../src/lib/sync2/fake-engine.svelte')
+const { connectFake } = await import('../../src/lib/sync-client/test/fake-engine.svelte')
 const SyncPane = (await import('../../src/lib/SyncPane.svelte')).default
 
 const PLAN = {

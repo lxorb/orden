@@ -1,7 +1,5 @@
-import { movedTo, samePath } from '../space-paths'
-import type { Core } from '../sync2/core'
-import type { Change } from '../sync2/store'
-import { forget, isRecord, isString, keepJson, stored } from '../stored'
+import { movedTo } from '../space-paths'
+import { isRecord, isString, keepJson, stored } from '../stored'
 
 export const ROOTS_MOVED = 'orden:roots-moved'
 
@@ -30,17 +28,4 @@ export function movedRoot(root: string, moves: readonly RootMoved[]): string | n
     if (now !== null) return now
   }
   return null
-}
-
-export async function followRoots(core: Pick<Core, 'spaces' | 'rootMoved' | 'commit'>) {
-  const moves = rootsMoved()
-  if (!moves.length) return
-  const changes: Change[] = []
-  for (const space of core.spaces.values()) {
-    const to = movedRoot(space.row.root, moves)
-    const taken = [...core.spaces.values()].some((one) => samePath(one.row.root, to ?? ''))
-    if (to !== null && !taken) changes.push(...core.rootMoved(space.id, to))
-  }
-  if (changes.length) await core.commit(changes)
-  forget(ROOTS_MOVED)
 }

@@ -311,7 +311,7 @@ async function appWorld(): Promise<{
     import('../account.svelte'),
     import('../api'),
     import('../online/link'),
-    import('../sync2/hub.svelte'),
+    import('../sync-client/src/api'),
     import('../workspace.svelte'),
     import('../native'),
     import('../tauri'),

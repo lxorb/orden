@@ -1,3 +1,4 @@
+import '../sync-ports'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const sent: { command: string; path: string; content: string }[] = []

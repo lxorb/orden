@@ -13,7 +13,7 @@ import {
   type Query,
   type SyncStore,
   type TableName,
-} from '../sync2/store'
+} from '../sync-client/src/api'
 import { databaseName } from './carry-database'
 import { FORMER_NAME } from './store'
 import { keptForGood } from './kept-for-good.svelte'

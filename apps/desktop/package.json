@@ -29,6 +29,7 @@
     "@orden/pass": "workspace:*",
     "@orden/rooms": "workspace:*",
     "@orden/scan": "workspace:*",
+    "@orden/contracts": "workspace:*",
     "@orden/sync-core": "workspace:*",
     "@orden/themes": "workspace:*",
     "@tauri-apps/api": "^2.11.1",

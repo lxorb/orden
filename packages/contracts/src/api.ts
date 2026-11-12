@@ -110,3 +110,33 @@ export {
   type TabKindTraits,
   type TabPanel,
 } from './shell'
+export {
+  type PortMap,
+  type PortName,
+  portOf,
+  portProvided,
+  providePort,
+  whenPortProvided,
+} from './ports'
+export type {
+  SyncAccountPort,
+  SyncApiPort,
+  SyncClockPort,
+  SyncDescribing,
+  SyncFileDoer,
+  SyncFileKind,
+  SyncFileOp,
+  SyncHostPort,
+  SyncNote,
+  SyncOpenNote,
+  SyncPorts,
+  SyncPositioned,
+  SyncRemoteNote,
+  SyncRemoteSpace,
+  SyncRootMove,
+  SyncSpace,
+  SyncStoragePort,
+  SyncUser,
+  SyncWorkspacePort,
+  SyncWriteHearing,
+} from './sync-client'

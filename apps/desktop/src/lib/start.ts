@@ -179,7 +179,7 @@ export function start(): () => void {
 
   if (!__EVEN_PLUGIN__) {
     void startup.turn('rooms').then(() =>
-      import('./sync2/connect.svelte').then(({ connect }) => {
+      import('./sync-client/src/api').then(({ connect }) => {
         connect()
       }),
     )

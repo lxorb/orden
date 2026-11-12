@@ -109,6 +109,9 @@ importers:
       '@orden/chats':
         specifier: workspace:*
         version: link:../../packages/chats
+      '@orden/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@orden/editor':
         specifier: workspace:*
         version: link:../../packages/editor

@@ -1,3 +1,4 @@
+import '../sync-ports'
 import { expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))

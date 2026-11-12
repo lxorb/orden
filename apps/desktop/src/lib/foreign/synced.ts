@@ -5,7 +5,7 @@ import { log } from '../log'
 import { stored } from '../stored'
 import { type Mirror, savedRecord } from '../sync/mirror'
 import { STORAGE_KEY, sync } from '../sync.svelte'
-import type { Engine, ForeignCopies } from '../sync2/asking.svelte'
+import type { Engine, ForeignCopies } from '../sync-client/src/api'
 
 export interface Synced {
   count: number

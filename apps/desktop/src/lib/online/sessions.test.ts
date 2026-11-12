@@ -13,7 +13,7 @@ vi.mock('./calls', () => ({
     return Promise.resolve()
   },
 }))
-vi.mock('../sync2/hub.svelte', () => ({
+vi.mock('../sync-client/src/hub.svelte', () => ({
   hub: {
     on: (type: string, listener: () => void) => {
       listeners.set(type, listener)

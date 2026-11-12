@@ -14,7 +14,7 @@ const server = vi.hoisted(() => ({
 vi.mock('../api', () => ({ BASE: '', request: () => Promise.resolve({}) }))
 vi.mock('../log', () => ({ log: () => undefined }))
 vi.mock('../settings.svelte', () => ({ passOn: () => true }))
-vi.mock('../sync2/hub.svelte', () => ({ hub: { device: 'device' } }))
+vi.mock('../sync-client/src/hub.svelte', () => ({ hub: { device: 'device' } }))
 vi.mock('./device-rows', () => ({ deviceRows: {} }))
 vi.mock('./sync', () => ({ PassApi: vi.fn() }))
 vi.mock('./synced', () => ({ invitesOf: () => Promise.resolve([]) }))

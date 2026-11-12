@@ -13,7 +13,7 @@ import { syncMark } from '../surfaces.svelte'
 import { invoke, joinPath } from '../tauri'
 import { settleShortcuts } from '../web-tab/settle'
 import { isUntouchedWelcome } from '../welcome'
-import { syncDeletes } from './deletes'
+import { syncDeletes } from '../sync-client/src/api'
 import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
 import {

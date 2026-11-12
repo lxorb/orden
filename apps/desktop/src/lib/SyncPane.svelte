@@ -13,8 +13,7 @@
   import { sync } from './sync.svelte'
   import { nameOf, rootedAt } from './space-paths'
   import { syncedCopies } from './foreign/synced'
-  import { asking, type Engine } from './sync2/asking.svelte'
-  import { scan } from './sync2/store'
+  import { asking, scan, type Engine } from './sync-client/src/api'
   import { workspace } from './workspace.svelte'
   import Hint from './Hint.svelte'
 

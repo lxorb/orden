@@ -3,12 +3,12 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { hash32, seedUpdate, frame, unframe } from '@orden/sync-core'
 import { Clock, ReferenceAccount, SEEDED } from '@orden/sync-core/sim'
 import * as Y from 'yjs'
-import { Engine } from '../sync2/engine'
-import { MemoryDisk } from '../sync2/memory-disk'
-import { MemoryStore } from '../sync2/memory-store'
-import { numbersRow, wantedRow } from '../sync2/records'
-import { put, type Change } from '../sync2/store'
-import type { Disk, World } from '../sync2/world'
+import { Engine } from '../sync-client/src/engine'
+import { MemoryDisk } from '../sync-client/src/memory-disk'
+import { MemoryStore } from '../sync-client/src/memory-store'
+import { numbersRow, wantedRow } from '../sync-client/src/records'
+import { put, type Change } from '../sync-client/src/store'
+import type { Disk, World } from '../sync-client/src/world'
 import { readsAsText, webInvoke } from '../web/commands'
 import { mountRows } from '../web/store'
 import { InternalFolder } from './folder'
@@ -160,7 +160,7 @@ describe('the engine over a space Orden keeps', () => {
   })
 
   test('hears its folder in place of the crate: a file made, words written, a folder renamed', async () => {
-    const { watchFolders } = await import('../sync2/watching')
+    const { watchFolders } = await import('../sync-client/src/watching')
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const root = '/internal-w'
     await kept(root)
@@ -231,7 +231,7 @@ describe('the engine over a space Orden keeps', () => {
   })
 
   test("keeps the space's inbox as a document only its store holds: carried, never listed or walked", async () => {
-    const { watchFolders } = await import('../sync2/watching')
+    const { watchFolders } = await import('../sync-client/src/watching')
     const { listInternal } = await import('./watch')
     const { searchInternal } = await import('./search')
     const { parseQuery } = await import('@orden/scan/search/query')
@@ -267,7 +267,7 @@ describe('the engine over a space Orden keeps', () => {
   })
 
   test("hands a kept space the launch has not mounted yet to neither the crate's watch nor its scan", async () => {
-    const { watchFolders } = await import('../sync2/watching')
+    const { watchFolders } = await import('../sync-client/src/watching')
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const root = '/spaces/.orden/Later/Later'
     const here = await device(account, 'd0', root, new MemoryDisk())

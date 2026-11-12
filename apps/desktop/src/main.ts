@@ -1,5 +1,6 @@
 import './lib/former-keys'
 import './lib/renamed.svelte'
+import './lib/sync-ports'
 import '@orden/themes'
 import { mount } from 'svelte'
 import App from './App.svelte'

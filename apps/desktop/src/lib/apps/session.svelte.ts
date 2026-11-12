@@ -11,7 +11,7 @@ import { account } from '../account.svelte'
 import { BASE } from '../api'
 import { pageWorld } from '../online/link'
 import type { Holder } from '../online/arrival.svelte'
-import type { IdAt } from '../sync2/runner.svelte'
+import type { IdAt } from '../sync-client/src/api'
 import { untrack } from 'svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
@@ -161,7 +161,7 @@ const sessionWorld: SessionWorld = {
         BASE,
         () => account.accountToken,
         async () => {
-          const { deviceId } = await import('../sync2/hub.svelte')
+          const { deviceId } = await import('../sync-client/src/api')
           return deviceId()
         },
       ),
@@ -488,7 +488,7 @@ export async function find(path: string, until: number): Promise<Found> {
     await account.reread()
     if (onOldSync()) return { none: 'old-sync' }
   }
-  const { runner } = await import('../sync2/runner.svelte')
+  const { runner } = await import('../sync-client/src/api')
   for (;;) {
     const found = await runner.idAt(path)
     if ('id' in found || Date.now() >= until) return found

@@ -1,4 +1,4 @@
-import { hub } from '../sync2/hub.svelte'
+import { hub } from '../sync-client/src/api'
 import { endSession, type Listed, listed } from './calls'
 
 class OnlineSessions {
