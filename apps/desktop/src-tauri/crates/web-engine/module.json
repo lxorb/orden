@@ -1,0 +1,6 @@
+{
+  "name": "web-engine",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["contracts"]
+}

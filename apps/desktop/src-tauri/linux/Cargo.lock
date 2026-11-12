@@ -4195,6 +4195,7 @@ dependencies = [
  "objc2-ui-kit",
  "objc2-user-notifications",
  "objc2-web-kit",
+ "orden-web-engine",
  "percent-encoding",
  "plist",
  "png 0.18.1",
@@ -4240,6 +4241,18 @@ dependencies = [
  "zbus 5.19.0",
  "zeroize",
  "zip",
+]
+
+[[package]]
+name = "orden-contracts"
+version = "0.1.0"
+
+[[package]]
+name = "orden-web-engine"
+version = "0.1.0"
+dependencies = [
+ "orden-contracts",
+ "url",
 ]
 
 [[package]]

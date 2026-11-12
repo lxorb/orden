@@ -288,13 +288,16 @@ jobs:
         run: |
           cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
 
-      - name: The contracts crate, alone
+      - name: The module crates, each alone
         if: runner.os == 'Linux'
         run: |
-          M=apps/desktop/src-tauri/crates/contracts/Cargo.toml
-          cargo fmt --manifest-path $M --check
-          cargo clippy --manifest-path $M --all-targets -- -D warnings
-          cargo test --manifest-path $M
+          for M in apps/desktop/src-tauri/crates/*/Cargo.toml; do
+            echo "::group::$M"
+            cargo fmt --manifest-path $M --check
+            cargo clippy --manifest-path $M --all-targets -- -D warnings
+            cargo test --manifest-path $M
+            echo "::endgroup::"
+          done
 
       - name: Clippy
         run: |
