@@ -298,8 +298,9 @@ fn window_builder<'a>(
         .initialization_script(crate::old_home::script())
         .title("Orden")
         .inner_size(1180.0, 760.0)
-        .min_inner_size(520.0, 400.0)
-        .disable_drag_drop_handler();
+        .min_inner_size(520.0, 400.0);
+    #[cfg(not(all(target_os = "macos", feature = "cef")))]
+    let builder = builder.disable_drag_drop_handler();
 
     #[cfg(not(target_os = "macos"))]
     let builder = builder.transparent(true);
