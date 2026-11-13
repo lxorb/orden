@@ -83,8 +83,9 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
         .decorations(false)
         .always_on_top(true)
         .skip_taskbar(true)
-        .visible(false)
-        .disable_drag_drop_handler();
+        .visible(false);
+    #[cfg(not(all(target_os = "macos", feature = "cef")))]
+    let builder = builder.disable_drag_drop_handler();
 
     #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.additional_browser_args(&crate::engine::browser_args(app));
