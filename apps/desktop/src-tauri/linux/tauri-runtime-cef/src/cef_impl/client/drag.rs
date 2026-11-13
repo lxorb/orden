@@ -57,10 +57,17 @@ const DRAG_DROP_INIT_SCRIPT: &str = r#"
     window.addEventListener(eventName, handler, { capture: true });
   };
 
+  const carriesFiles = (event) =>
+    !!event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
+
   listen("dragenter", (event) => {
     if (!entered) {
       entered = true;
       send("enter", event);
+    }
+    if (carriesFiles(event)) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
     }
   });
 
@@ -68,6 +75,13 @@ const DRAG_DROP_INIT_SCRIPT: &str = r#"
     if (!entered) {
       entered = true;
       send("enter", event);
+    }
+    // A drop is only delivered where the page accepted the drag over it; the host decides
+    // what a dropped file does, so every file drag is accepted here (macOS ends a drag the
+    // page did not accept with a leave, and no drop ever reaches the host).
+    if (carriesFiles(event)) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
     }
     send("over", event);
   });
@@ -133,12 +147,39 @@ fn collect_drag_data_paths(drag_data: &mut DragData) -> Vec<PathBuf> {
     }
   }
 
+  // macOS hands a dragged file over as a `file:` link rather than as a path, so the link
+  // is read before the bare file name is.
+  let link = CefStringUtf16::from(&drag_data.link_url()).to_string();
+  if let Some(path) = file_url_path(&link) {
+    return vec![path];
+  }
+
+  let mut names = CefStringList::new();
+  if drag_data.file_names(Some(&mut names)) != 0 {
+    let names = names
+      .into_iter()
+      .filter(|name| !name.is_empty())
+      .map(PathBuf::from)
+      .collect::<Vec<_>>();
+    if !names.is_empty() {
+      return names;
+    }
+  }
+
   let file_name = CefStringUtf16::from(&drag_data.file_name()).to_string();
   if file_name.is_empty() {
     Vec::new()
   } else {
     vec![PathBuf::from(file_name)]
   }
+}
+
+fn file_url_path(link: &str) -> Option<PathBuf> {
+  let url = url::Url::parse(link).ok()?;
+  if url.scheme() != "file" {
+    return None;
+  }
+  url.to_file_path().ok()
 }
 
 wrap_drag_handler! {
