@@ -28,7 +28,6 @@ import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
-import { dns, PROVIDER_NAMES } from './dns.svelte'
 import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
 import { keptForGood } from '../web/kept-for-good.svelte'
@@ -190,57 +189,6 @@ function privacyGroup(): Group {
       },
     ],
   }
-}
-
-function dnsGroups(): Group[] {
-  void dns.ask()
-  if (!dns.answered) return []
-  if (!dns.offered) {
-    return [
-      {
-        title: 'DNS',
-        caption: {
-          text: 'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.',
-        },
-        fields: [],
-      },
-    ]
-  }
-
-  const fields: Field[] = [
-    {
-      kind: 'select',
-      key: 'general.dns',
-      label: 'DNS',
-      hint: 'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.',
-      words: ['dns', 'doh', 'dns over https', 'secure dns', 'resolver', 'server', 'privacy'],
-      options: [
-        { value: 'system', label: 'The system’s' },
-        { value: 'automatic', label: 'The system’s, over HTTPS where it can' },
-        { value: 'cloudflare', label: PROVIDER_NAMES.cloudflare },
-        { value: 'google', label: PROVIDER_NAMES.google },
-        { value: 'quad9', label: PROVIDER_NAMES.quad9 },
-        { value: 'custom', label: 'Another provider' },
-      ],
-      initial: 'automatic',
-      get: () => dns.choice,
-      set: (value) => void dns.choose(value),
-    },
-  ]
-  if (dns.choice === 'custom') {
-    fields.push({
-      kind: 'text',
-      key: 'general.dnsProvider',
-      label: 'Provider',
-      hint: dns.refused ?? 'The address of a DNS over HTTPS server, starting with https://',
-      words: ['dns', 'doh', 'template', 'server', 'custom'],
-      placeholder: 'https://dns.example/dns-query',
-      initial: '',
-      get: () => dns.custom,
-      set: (value) => void dns.provide(value),
-    })
-  }
-  return [{ title: 'DNS', fields }]
 }
 
 function projectFolderChoices(root: string): { value: string; label: string }[] {
@@ -599,8 +547,6 @@ export function generalPane(): Pane {
       ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform())
         ? [gpuGroup()]
         : []),
-
-      ...(!__EVEN_PLUGIN__ && isDesktop ? dnsGroups() : []),
 
       ...(!__EVEN_PLUGIN__ && isDesktop ? [privacyGroup()] : []),
 

@@ -15,13 +15,8 @@ vi.doMock('../tauri', async (actual) => ({
   isNative: true,
   isMobile: false,
   platform: () => 'linux',
-  invoke: (command: string) =>
-    command === 'dns_chosen'
-      ? Promise.resolve({ choice: 'custom', custom: '' })
-      : new Promise(() => undefined),
+  invoke: () => new Promise(() => undefined),
 }))
-const { dns } = await import('./dns.svelte')
-await dns.ask()
 const { declarations } = await import('./declarations')
 const { schemaOf } = await import('./schema')
 const schema = schemaOf(await declarations())
@@ -36,8 +31,6 @@ describe('the settings’ schema', () => {
         'appearance.monoFont',
         'themes.glass.tint',
         'themes.wallpaper.blur',
-        'general.dns',
-        'general.dnsProvider',
         'general.searchEngine',
         'kinds.terminal',
         'shortcuts.vim',

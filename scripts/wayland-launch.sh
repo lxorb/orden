@@ -210,31 +210,6 @@ PAGE
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-dns_name=probe.test
-dns_provider=https://127.0.0.1:8443/dns-query
-if [ "${DNS:-0}" = 1 ]; then
-  mkdir -p "$out/site" "$out/doh"
-  printf '<!doctype html><title>reached by name</title><p>reached by name</p>' > "$out/site/index.html"
-  python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
-  site_pid=$!
-  (
-    cd "$out/doh"
-    openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj "/CN=Orden run authority" \
-      -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign" \
-      -keyout ca.key -out ca.pem 2> /dev/null
-    openssl req -newkey rsa:2048 -nodes -subj "/CN=127.0.0.1" -keyout doh.key -out doh.csr 2> /dev/null
-    printf 'subjectAltName=IP:127.0.0.1\nextendedKeyUsage=serverAuth\n' > doh.ext
-    openssl x509 -req -in doh.csr -CA ca.pem -CAkey ca.key -CAcreateserial -days 2 \
-      -extfile doh.ext -out doh.pem 2> /dev/null
-  )
-  mkdir -p "$HOME/.pki/nssdb"
-  certutil -d "sql:$HOME/.pki/nssdb" -N --empty-password 2> /dev/null || true
-  certutil -d "sql:$HOME/.pki/nssdb" -A -t "C,," -n "Orden run authority" -i "$out/doh/ca.pem"
-  python3 "$here/doh-server.py" 8443 "$out/doh/doh.pem" "$out/doh/doh.key" "$dns_name" "$out/doh/asked.txt" > "$out/doh/server.log" 2>&1 &
-  doh_pid=$!
-  endpoint
-  set -- "$@" "http://$dns_name:8765/"
-fi
 if [ "${DOWNLOAD:-0}" = 1 ]; then
   mkdir -p "$out/downloads"
   ORDEN_DOWNLOADS_DIR="$(cd "$out/downloads" && pwd)"
@@ -410,29 +385,6 @@ fi
 if [ "$status" = 0 ] && [ "${CERT:-0}" = 1 ]; then
   sleep 3
   python3 "$here/cert-drive.py" "$out" "${CERT_HOST:-example.com}" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${DNS:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/dns-drive.py" "$out" choose "$dns_name" "$dns_provider" "$out/doh/asked.txt" || status=1
-  if [ "$status" = 0 ]; then
-    sleep 10
-    kill -TERM "$app_pid" 2>/dev/null || true
-    for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
-    kill -KILL "$app_pid" 2>/dev/null || true
-    wait "$app_pid" 2>/dev/null || true
-    : > "$out/doh/asked.txt"
-    endpoint
-    "${command[@]}" > "$out/orden-again.log" 2>&1 &
-    app_pid=$!
-    if wait_for_views 1; then
-      sleep 3
-      python3 "$here/dns-drive.py" "$out" again "$dns_name" "$dns_provider" "$out/doh/asked.txt" || status=1
-    else
-      echo "::error::no window mapped when started again"
-      status=1
-    fi
-  fi
 fi
 
 if [ "$status" = 0 ] && [ "${DOWNLOAD:-0}" = 1 ]; then
@@ -743,7 +695,6 @@ kill "$app_pid" 2>/dev/null || true
 wait "$app_pid" 2>/dev/null || true
 [ -n "$portal_pid" ] && kill "$portal_pid" 2>/dev/null || true
 [ -n "$site_pid" ] && kill "$site_pid" 2>/dev/null || true
-[ -n "${doh_pid:-}" ] && kill "$doh_pid" 2>/dev/null || true
 [ -n "$pointer_pid" ] && kill "$pointer_pid" 2>/dev/null || true
 kill "$sway_pid" 2>/dev/null || true
 
