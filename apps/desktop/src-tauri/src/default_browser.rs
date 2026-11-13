@@ -212,13 +212,14 @@ mod platform {
     }
 
     pub fn make_default(app: &AppHandle) -> Result<(), String> {
+        #[cfg(feature = "cef")]
+        use tauri::Manager as _;
+
         let exe =
             std::env::current_exe().map_err(|error| format!("could not find Orden: {error}"))?;
         let name = app.package_info().name.clone();
         write(CURRENT_USER, &registration(&name, &exe.to_string_lossy()))?;
 
-        #[cfg(feature = "cef")]
-        use tauri::Manager as _;
         let page = format!("ms-settings:defaultapps?registeredAppUser={name}");
         app.run_on_main_thread(move || {
             let _ = tauri_plugin_opener::open_url(page, None::<&str>);
