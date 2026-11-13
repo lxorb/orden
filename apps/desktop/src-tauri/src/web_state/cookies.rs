@@ -208,7 +208,7 @@ pub(crate) mod engine {
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod engine {
     use tauri::webview::cookie;
     use tauri::Webview;

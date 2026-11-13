@@ -48,7 +48,10 @@ pub fn dropped_readable(path: &str) -> Option<PathBuf> {
 }
 
 #[cfg_attr(
-    not(any(target_os = "macos", all(windows, not(feature = "cef")))),
+    not(any(
+        all(target_os = "macos", not(feature = "cef")),
+        all(windows, not(feature = "cef"))
+    )),
     allow(dead_code)
 )]
 pub(crate) fn kept_dropped(paths: Vec<PathBuf>) {
@@ -106,7 +109,7 @@ pub fn dropped_paths(app: AppHandle) -> Vec<String> {
         .collect()
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
 pub fn arm() {
     wry::hear_dropped_paths(kept_dropped);
 }

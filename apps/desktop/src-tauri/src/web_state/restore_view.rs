@@ -88,7 +88,7 @@ impl Drop for Hidden {
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 mod engine {
     use tauri::{Url, Webview};
     use webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL;
@@ -147,7 +147,7 @@ mod engine {
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod engine {
     use objc2::rc::Retained;
     use objc2_foundation::{NSString, NSURL};

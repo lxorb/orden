@@ -10,12 +10,12 @@ pub fn first_window(app: &tauri::AppHandle) {
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 pub fn let_through(webview: &tauri::Webview) {
     let _ = webview.with_webview(|platform| pinch_zoom_on(&platform));
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the page's settings are WebView2's own, reached through its COM interfaces"
@@ -37,10 +37,10 @@ fn pinch_zoom_on(platform: &tauri::webview::PlatformWebview) {
     }
 }
 
-#[cfg(not(windows))]
+#[cfg(not(all(windows, not(feature = "cef"))))]
 pub fn let_through(_webview: &tauri::Webview) {}
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 pub fn web_page(platform: &tauri::webview::PlatformWebview, _app: &tauri::AppHandle, _label: &str) {
     pinch_zoom_on(platform);
 }
@@ -59,8 +59,16 @@ pub fn web_page(platform: &tauri::webview::PlatformWebview, _app: &tauri::AppHan
     }
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(feature = "cef", target_os = "linux"))]
 pub use gestures::web_page;
+
+#[cfg(all(feature = "cef", not(target_os = "linux")))]
+pub fn web_page(
+    _platform: &tauri::webview::PlatformWebview,
+    _app: &tauri::AppHandle,
+    _label: &str,
+) {
+}
 
 #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
 pub fn web_page(
@@ -70,29 +78,57 @@ pub fn web_page(
 ) {
 }
 
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
 const CONTROL: u32 = 0x0008;
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
 const TURN_PER_E: f64 = 600.0;
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code)
+)]
 const SPEED: u32 = 4000;
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code)
+)]
 const STILL: f64 = 1e-4;
 
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
 pub fn is_pinch(keys: u32, ctrl_held: bool, fingers: u32, from_touch: bool) -> bool {
     keys & CONTROL != 0 && (!ctrl_held || fingers >= 2 || from_touch)
 }
 
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
 pub fn scale_of_turn(turn: i16) -> f64 {
     (f64::from(turn) / TURN_PER_E).exp()
 }
 
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code)
+)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Asked {
     pub at: (f64, f64),
     pub scale: f64,
 }
 
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code)
+)]
 impl Asked {
     pub fn params(self) -> Value {
         json!({
@@ -105,6 +141,13 @@ impl Asked {
     }
 }
 
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code)
+)]
 #[derive(Debug)]
 pub struct Owed {
     flying: bool,
@@ -122,6 +165,13 @@ impl Default for Owed {
     }
 }
 
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code)
+)]
 impl Owed {
     pub fn gather(&mut self, by: f64, at: (f64, f64)) {
         if by.is_finite() && by > 0.0 {
@@ -148,7 +198,7 @@ impl Owed {
     }
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(feature = "cef", target_os = "linux"))]
 mod gestures {
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex, OnceLock, PoisonError};
@@ -196,7 +246,7 @@ mod gestures {
     }
 
     pub fn web_page(platform: &tauri::webview::PlatformWebview, app: &AppHandle, label: &str) {
-        let Some(page) = crate::web_keys::x11_window(platform) else {
+        let Some(page) = crate::host::x11_page(platform) else {
             return;
         };
         let Some(pinches) = pinches() else {

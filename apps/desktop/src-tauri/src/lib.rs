@@ -87,6 +87,8 @@ mod handover;
 mod highlights;
 mod history;
 #[cfg(desktop)]
+mod host;
+#[cfg(desktop)]
 mod hotkeys;
 #[cfg(desktop)]
 mod kept;
@@ -647,7 +649,7 @@ pub fn run() {
     web_visual::arm_visuals();
     #[cfg(all(target_os = "macos", not(feature = "cef")))]
     page_carry::mac::arm();
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
     dropped_paths::arm();
     #[cfg(not(feature = "cef"))]
     run_on(tauri::Builder::default());
@@ -857,7 +859,6 @@ fn hearing(handle: &tauri::AppHandle) {
 fn engine_started(handle: &tauri::AppHandle<Engine>) {
     #[cfg(target_os = "linux")]
     chromium_pump::start(handle);
-    #[cfg(target_os = "linux")]
     page_scale::start(handle);
     extensions::tabs::start(handle);
 }

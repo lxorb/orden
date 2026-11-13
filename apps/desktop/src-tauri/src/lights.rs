@@ -23,6 +23,8 @@ fn spot(
 
 #[cfg(target_os = "macos")]
 pub fn hold(window: &tauri::WebviewWindow) {
+    #[cfg(feature = "cef")]
+    use tauri::Manager as _;
     let Ok(pointer) = window.ns_window() else {
         return;
     };
@@ -38,6 +40,8 @@ pub fn hold(window: &tauri::WebviewWindow) {
 
 #[cfg(target_os = "macos")]
 pub fn refresh(window: &tauri::Window) {
+    #[cfg(feature = "cef")]
+    use tauri::Manager as _;
     let Ok(pointer) = window.ns_window() else {
         return;
     };

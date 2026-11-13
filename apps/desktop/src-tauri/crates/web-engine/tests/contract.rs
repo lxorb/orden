@@ -8,9 +8,10 @@ use orden_contracts::{FailureKind, Outcome};
 use orden_web_engine::{
     allowed, app_host, becomes, debug_port, embed_allowed, frame_may_open, from_run, handed_out,
     internal, once_built, one_at_a_time, overlay_scrollbars, signs_in, switches, tab_may_open,
-    with_extensions, Asked, Becomes, Cookie, Download, Embed, EngineSettings, NoExtensions, Outbox,
-    Picture, Profiles, SandboxPolicy, Sending, StoreName, Url, WebEngine, WebPage, APP_PROFILE,
-    ENGINE_SWIPE, LONGEST_STORE_NAME, LOWEST_DEBUG_PORT, ROOT, STORE_PROFILE,
+    with_extensions, Asked, Becomes, Cookie, Download, Edge, Embed, EngineSettings, NativeWindow,
+    NoExtensions, Outbox, Picture, Plain, Profiles, SandboxPolicy, Sending, StoreName, Url,
+    WebEngine, WebPage, WindowSystem, APP_PROFILE, ENGINE_SWIPE, LONGEST_STORE_NAME,
+    LOWEST_DEBUG_PORT, ROOT, STORE_PROFILE,
 };
 
 struct FakePage {
@@ -698,4 +699,37 @@ fn a_page_asked_for_while_another_is_built_waits_for_it_and_never_builds_inside_
     let ran = Rc::clone(&now);
     once_built(move || *ran.borrow_mut() = true);
     assert!(*now.borrow());
+}
+
+#[test]
+fn the_edges_are_the_ewmh_s_and_a_missing_edge_is_a_move() {
+    let edges = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+    for (code, edge) in edges.iter().enumerate() {
+        let parsed = Edge::parse(Some(edge)).expect(edge);
+        assert_eq!(u64::from(parsed.ewmh()), code as u64);
+        assert!(!parsed.is_move());
+    }
+    let moving = Edge::parse(None).expect("a move");
+    assert!(moving.is_move());
+    assert_eq!(moving.ewmh(), 8);
+    assert_eq!(Edge::parse(Some("north")), None);
+    assert_eq!(NativeWindow(0x3a0_0007).as_x11(), Some(0x3a0_0007));
+    assert_eq!(NativeWindow(0).as_x11(), None);
+    assert_eq!(NativeWindow(u64::MAX).as_x11(), None);
+}
+
+#[test]
+fn a_plain_window_system_leaves_moves_to_the_platform_and_refuses_nothing_else() {
+    let system = Plain;
+    assert_eq!(system.name(), "plain");
+    let refused = system
+        .move_resize(NativeWindow(1), Edge::Move, None)
+        .expect_err("left to the platform");
+    assert_eq!(refused.kind, FailureKind::Unsupported);
+    assert_eq!(refused.module, "web-engine");
+    assert!(system.frame(NativeWindow(1), 2.0).is_ok());
+    assert!(system.float(NativeWindow(1)).is_ok());
+    system.bare(NativeWindow(1));
+    system.hide(NativeWindow(1));
+    assert_eq!(system.desktop_scale(), None);
 }
