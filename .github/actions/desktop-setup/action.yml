@@ -28,8 +28,7 @@ runs:
         toolchain: stable
         targets: ${{ inputs.rust-targets || inputs.target }}
 
-    - name: The desktop manifest, CEF on Linux and macOS
-      if: runner.os != 'Windows'
+    - name: The desktop manifest
       shell: bash
       run: bash scripts/linux-cef.sh
 

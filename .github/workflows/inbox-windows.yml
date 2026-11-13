@@ -50,7 +50,9 @@ jobs:
             app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
             echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
           else
-            pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --no-bundle --config "$config"
+            bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --no-bundle \
+              --ignore-version-mismatches --config "$config"
+            bash scripts/cef-beside.sh apps/desktop/src-tauri/target/${{ matrix.target }}/release
             echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden.exe" >>"$GITHUB_ENV"
           fi
       - name: Two windows, one inbox
