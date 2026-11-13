@@ -3,7 +3,6 @@
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
   import Flag from 'lucide/dist/esm/icons/flag.mjs'
-  import Folder from 'lucide/dist/esm/icons/folder-input.mjs'
   import Tag from 'lucide/dist/esm/icons/tag.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { localNumber } from '../region'
@@ -12,14 +11,7 @@
   import Glyph from '../quick-add/Glyph.svelte'
   import type { Kit } from './kit'
   import type { Box } from './schedule/scheduling.svelte'
-  import {
-    labelEntries,
-    moveEntries,
-    prioritise,
-    priorityEntries,
-    scheduleRows,
-    taskMenu,
-  } from './task-actions'
+  import { labelEntries, prioritise, priorityEntries, scheduleRows, taskMenu } from './task-actions'
 
   const { rows, kit, onclear }: { rows: readonly Row[]; kit: Kit; onclear: () => void } = $props()
 
@@ -38,12 +30,6 @@
       aria-label="Schedule"
       onclick={(event) => scheduleRows(rows, boxOf(event), kit, onclear)}
       ><Glyph icon={Calendar} /></button
-    >
-    <button
-      type="button"
-      title={shortcuts.tooltip('Move to', 'tasks.move')}
-      aria-label="Move to"
-      onclick={(event) => menu.show(event, moveEntries(rows))}><Glyph icon={Folder} /></button
     >
     <button
       type="button"

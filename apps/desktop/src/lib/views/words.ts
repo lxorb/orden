@@ -13,7 +13,6 @@ const BUILTIN_NAMES: Record<Builtin, string> = {
   today: 'Today',
   upcoming: 'Upcoming',
   logbook: 'Completed',
-  project: 'Project',
   label: 'Label',
 }
 

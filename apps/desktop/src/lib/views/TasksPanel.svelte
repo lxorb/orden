@@ -13,8 +13,8 @@
   import { kitFor } from './kit'
   import ListLayout from './ListLayout.svelte'
   import { LiveView } from './live.svelte'
-  import { ADD_MARK, LABEL_MARK, PROJECT_MARK, TODAY_MARK, VIEW_MARK } from './marks'
-  import { openByPath, panelCounts } from './panel'
+  import { ADD_MARK, LABEL_MARK, TODAY_MARK, VIEW_MARK } from './marks'
+  import { panelCounts } from './panel'
   import { choose, chosenIn, openInTab, type PanelRow, sameRow, specOf } from './panel-press'
   import { fileSource, panelSource } from './source'
   import { refusedAsTag } from '../tag-actions'
@@ -46,23 +46,18 @@
   const space = $derived(workspace.activeSpace)
   const root = $derived(space?.root ?? null)
   const writes = $derived(homeRoot() !== null)
-  const openIn = $derived(openByPath(counts.notes, space?.name))
 
   const favourites = $derived.by(() => {
     if (root === null || !space) return []
     return workspace.bookmarks.list.flatMap((mark) => {
       if (mark.kind !== 'note') return []
+      if (!/\.base$/i.test(mark.path) || !basesOn()) return []
       const path = insideSpace(root, mark.path)
-      const isBase = /\.base$/i.test(mark.path)
-      const holds = openIn.has(mark.path)
-      if (isBase ? !basesOn() : !holds) return []
       return [
         {
           path,
-          relative: mark.path,
-          base: isBase,
-          name: mark.path.replace(/^.*\//, '').replace(/\.(md|base)$/i, ''),
-          count: isBase ? baseCount(path) : (openIn.get(mark.path) ?? 0),
+          name: mark.path.replace(/^.*\//, '').replace(/\.base$/i, ''),
+          count: baseCount(path),
         },
       ]
     })
@@ -70,7 +65,7 @@
 
   let read = $state<Record<string, ReturnType<typeof readBase> | null>>({})
   $effect(() => {
-    const paths = favourites.filter((one) => one.base).map((one) => one.path)
+    const paths = favourites.map((one) => one.path)
     untrack(() => {
       for (const path of paths) {
         if (path in read) continue
@@ -269,15 +264,7 @@
   {#if favourites.length}
     <p class="orden-section">Favorites</p>
     {#each favourites as one (one.path)}
-      {#if one.base}
-        {@render row(VIEW_MARK, one.name, one.count, { kind: 'base', path: one.path })}
-      {:else if space}
-        {@render row(PROJECT_MARK, one.name, one.count, {
-          kind: 'project',
-          space: space.name,
-          path: one.relative,
-        })}
-      {/if}
+      {@render row(VIEW_MARK, one.name, one.count, { kind: 'base', path: one.path })}
     {/each}
   {/if}
 

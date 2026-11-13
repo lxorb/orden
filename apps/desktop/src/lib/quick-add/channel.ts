@@ -40,7 +40,7 @@ function isEntry(value: unknown): value is Entry {
     ) &&
     optional(fields.priority, (one) => one === 1 || one === 2 || one === 3 || one === 4) &&
     optional(fields.duration, (one) => typeof one === 'number' && one > 0) &&
-    ['description', 'heading'].every((key) => optional(value[key], isString))
+    optional(value.description, isString)
   )
 }
 

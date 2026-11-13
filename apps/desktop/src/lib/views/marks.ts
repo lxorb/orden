@@ -19,7 +19,6 @@ export const GROUP_MARK = 'M1.5 2.2h10M1.5 4.6h6.5M1.5 8.3h10M1.5 10.7h6.5'
 
 export const TODAY_MARK = 'M6.5 1.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM6.5 3.8v2.7l1.8 1.2'
 export const VIEW_MARK = LAYOUT_MARKS.table
-export const PROJECT_MARK = 'M6.5 1.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10z'
 export const LABEL_MARK = 'M4.8 1.8 3.8 11.2M9.2 1.8l-1 9.4M1.8 4.6h9.6M1.4 8.4h9.6'
 export const ADD_MARK = 'M6.5 2v9M2 6.5h9'
 

@@ -35,7 +35,6 @@ WRITE = """async ([files]) => {
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
   }
   await ws.loadTree()
 }"""
@@ -255,7 +254,7 @@ def board_on(browser, width, height, name):
 def task_row_on_phone(browser):
     context, page, cdp = setup(browser, 390, 844)
     today = datetime.date.today().isoformat()
-    DRIVE.seed(page, f"# Errands\n\n- [ ] one thing 📅 {today}\n- [ ] another thing 📅 {today}\n", lists=True)
+    DRIVE.todos(page, f"- [ ] one thing 📅 {today}\n- [ ] another thing 📅 {today}\n")
     page.evaluate("window.tasks.openBuiltin('today')")
     wait_for(page, "() => document.querySelectorAll('[data-row]').length >= 2", "the task rows")
     page.wait_for_timeout(400)

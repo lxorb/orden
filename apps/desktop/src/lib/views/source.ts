@@ -16,15 +16,7 @@ import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
-import {
-  EVERY_SPACE,
-  keepProjectView,
-  keepTodosView,
-  projectView,
-  renamedTo,
-  takeOverTodosView,
-  todosView,
-} from './kept-views'
+import { EVERY_SPACE, keepTodosView, renamedTo, takeOverTodosView, todosView } from './kept-views'
 import type { Shown, Source } from './live.svelte'
 import { followSpaceTabs, unscoped } from './space-follow'
 import { asShipped, readSpec, type ViewSpec, writeSpec } from './spec'
@@ -56,10 +48,6 @@ function madeBase(spec: ViewSpec): Base {
       const kept = spec.space === undefined ? everyTodosView() : todosView(spec.space)
       return kept === undefined ? shippedBase(spec) : readBase(kept)
     }
-    case 'project':
-      return builtinView('project', {
-        note: { space: spec.space ?? '', path: spec.path ?? '' },
-      })
     case 'label':
       return builtinView('label', {
         tag: spec.tag ?? '',
@@ -122,7 +110,6 @@ export function fileSource(path: string, view?: string, self?: () => Row | undef
 }
 
 function keepChange(spec: ViewSpec, yaml: string): void {
-  if (spec.builtin === 'project') keepProjectView(spec.space ?? '', spec.path ?? '', yaml)
   if (spec.builtin === 'todos') {
     const shipped = writeBase(whenAs(shippedBase(spec), false))
     keepTodosView(spec.space ?? EVERY_SPACE, yaml === shipped ? undefined : yaml)
@@ -184,9 +171,7 @@ export function tabSource(tab: Tab): Source {
 }
 
 export function panelSource(spec: ViewSpec): Source {
-  const kept =
-    spec.builtin === 'project' ? projectView(spec.space ?? '', spec.path ?? '') : undefined
-  let now: ViewSpec = kept === undefined ? spec : { ...spec, yaml: kept }
+  let now: ViewSpec = spec
   return {
     scope: null,
     load: () => Promise.resolve(builtinBase(now)),

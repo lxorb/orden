@@ -114,14 +114,6 @@ describe('the list', () => {
     expect(stop(TASKS)).toBe('0')
     expect(stop([])).toBe('-1')
   })
-
-  test('puts a sub-task under its parent in a project', () => {
-    const base = builtinView('project', { note: { space: 'Notes', path: 'Errands.md' } })
-    const html = render(ListLayout, { props: { kit: kitOf(base, TASKS), where: false } }).body
-    expect(html.indexOf('Call the bank')).toBeLessThan(html.indexOf('Find the card'))
-    expect(html).toContain('--depth: 1')
-    expect(html).toContain('aria-expanded="true"')
-  })
 })
 
 describe('the table', () => {

@@ -1,6 +1,5 @@
 import { addDays, type Group, groupName, type Row, rowId } from '@orden/bases'
 import { dayIn } from './values'
-import { isTitle } from './sections'
 
 export type Item =
   | { kind: 'head'; id: string; group: Group; count: number; folded: boolean }
@@ -17,7 +16,6 @@ export type Item =
 export interface ListOptions {
   grouped: boolean
   bareNone?: boolean
-  title?: string
   folded: ReadonlySet<string>
   shut: ReadonlySet<string>
   hidden?: readonly string[]
@@ -104,13 +102,7 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
     const name = groupName(group.key)
     if (options.hidden?.includes(name)) continue
     const folded = options.folded.has(name)
-    const bare =
-      options.bareNone === true &&
-      (group.key === null ||
-        group.key === '' ||
-        (options.title !== undefined &&
-          typeof group.key === 'string' &&
-          isTitle(group.key, options.title)))
+    const bare = options.bareNone === true && (group.key === null || group.key === '')
     if (options.grouped && !bare) {
       out.push({ kind: 'head', id: `head:${name}`, group, count: group.rows.length, folded })
       if (folded) continue
@@ -174,26 +166,6 @@ export function withEveryDay(groups: readonly Group[], from: string, through: st
     if (day > through) out.push(group)
   }
   return out
-}
-
-export function withEverySection(
-  groups: readonly Group[],
-  headings: readonly string[],
-  title: string,
-): Group[] {
-  const named = new Map<string, Group>()
-  const out: Group[] = []
-  for (const group of groups) {
-    const key = group.key
-    if (typeof key === 'string' && key && !isTitle(key, title)) named.set(key, group)
-    else out.push(group)
-  }
-  for (const heading of new Set(headings)) {
-    if (isTitle(heading, title)) continue
-    out.push(named.get(heading) ?? { key: heading, rows: [], summaries: {} })
-    named.delete(heading)
-  }
-  return [...out, ...named.values()]
 }
 
 export function withinDays(groups: readonly Group[], from: string, through: string): Group[] {

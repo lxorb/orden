@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -32,22 +32,13 @@ ERRANDS = """# Errands
 - [ ] Water the plants 📅 {today}
 """
 
-WRITE = """async ([files]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) {
-    await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
-  }
-  await ws.loadTree()
-}"""
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words)?.task ?? null"
 
 NOTE = """async () => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  return await window.ordenApp.workspace.noteText(`${root}/Errands.md`)
+  return await window.ordenApp.workspace.noteText(await window.tasks.rows.inbox())
 }"""
 
 PHONE_AGENT = (
@@ -59,7 +50,7 @@ def seed(page: Page) -> None:
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
-    page.evaluate(WRITE, [[["Errands.md", ERRANDS.format(**days)]]])
+    page.evaluate(WRITE, [[[None, ERRANDS.format(**days)]]])
     wait_for(page, f"() => !!({TASK})('Water the plants')", "the seeded rows")
     page.evaluate("window.tasks.openBuiltin('today')")
     wait_for(page, "document.querySelector('.view-tab .task')", "Today's rows")
@@ -166,7 +157,7 @@ def the_view(page: Page) -> None:
     wait_for(page, "document.querySelector('.sheet .title')", "the task view")
     wait_for(page, "document.querySelector('.sheet .description .cm-content')", "the description's editor")
     text = page.locator(".sheet").inner_text()
-    for wanted in ["Errands", "Calls", "Their number is on the back", "Find the old card", "#admin"]:
+    for wanted in ["Their number is on the back", "Find the old card", "#admin"]:
         if wanted not in text:
             wrong(f"the task view does not say {wanted}")
     shot(page, "01-view")
@@ -228,15 +219,6 @@ def the_view(page: Page) -> None:
 
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.sheet')", "the view put away")
-    page.evaluate(
-        "async () => { const ws = window.ordenApp.workspace; await ws.open(ws.activeSpace.root.replace(/[\\\\/]+$/, '') + '/Errands.md') }"
-    )
-    wait_for(page, "document.querySelector('.cm-content .orden-comment-chips')", "the comment's chip in the note")
-    shown = page.locator(".cm-content .orden-comment-chips").first.inner_text()
-    say(f"[comment chip] {shown!r}")
-    if "[at::" in page.locator(".cm-content").inner_text():
-        wrong("the comment's stamp is drawn as its raw field")
-    shot(page, "02c-comment-in-note")
     page.evaluate("window.tasks.openBuiltin('today')")
     wait_for(page, "document.querySelector('.view-tab .task')", "Today again")
     page.locator(f"{row('Call the bank again')} .words").click()

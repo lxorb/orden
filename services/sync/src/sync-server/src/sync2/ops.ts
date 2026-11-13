@@ -6,7 +6,6 @@ import {
   type OpContext,
   type OpResult,
   type ItemMeta,
-  type MetaPatch,
 } from '@orden/sync-core'
 import { newId } from '../crypto'
 import type { Env } from '../types'

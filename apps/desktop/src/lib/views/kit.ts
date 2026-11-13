@@ -79,8 +79,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
         const to = file ?? workspace.activeSpace?.root
         return to === undefined || canWriteAt(to)
       }
-      const prefill = prefillOf(spec, live.today, undefined, narrowing(live.view))
-      const to = prefill.path ?? prefill.root ?? homeRoot()
+      const to = homeRoot()
       return to !== null && canWriteAt(to)
     },
     open(row, how = 'aside') {

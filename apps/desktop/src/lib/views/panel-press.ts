@@ -1,9 +1,8 @@
-import { openBaseFile, openLabel, openProject, openTodos } from './open'
+import { openBaseFile, openLabel, openTodos } from './open'
 import type { ViewSpec } from './spec'
 
 export type PanelRow =
   | { kind: 'todos'; space?: string }
-  | { kind: 'project'; space: string; path: string }
   | { kind: 'label'; tag: string; space?: string }
   | { kind: 'base'; path: string }
 
@@ -42,8 +41,6 @@ export function specOf(row: PanelRow): ViewSpec | null {
   switch (row.kind) {
     case 'todos':
       return row.space === undefined ? { builtin: 'todos' } : { builtin: 'todos', space: row.space }
-    case 'project':
-      return { builtin: 'project', space: row.space, path: row.path }
     case 'label':
       return row.space === undefined
         ? { builtin: 'label', tag: row.tag }
@@ -58,9 +55,6 @@ export function openInTab(row: PanelRow): void {
   switch (row.kind) {
     case 'todos':
       openTodos(row.space, how)
-      return
-    case 'project':
-      openProject(row.space, row.path, undefined, how)
       return
     case 'label':
       if (row.space === undefined) openLabel(row.tag, how)

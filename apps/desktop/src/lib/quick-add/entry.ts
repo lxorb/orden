@@ -7,7 +7,6 @@ export interface Prefill {
   due?: string
   text?: string
   description?: string
-  heading?: string
   fields?: Partial<QuickFields>
   escaped?: { from: number; to: number }[]
   keep?: { from: number; to: number }[]

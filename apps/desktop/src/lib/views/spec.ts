@@ -1,6 +1,6 @@
 import { isRecord, isString, parsed } from '../stored'
 
-const BUILTINS = ['todos', 'inbox', 'today', 'upcoming', 'logbook', 'project', 'label'] as const
+const BUILTINS = ['todos', 'inbox', 'today', 'upcoming', 'logbook', 'label'] as const
 export type Builtin = (typeof BUILTINS)[number]
 
 export interface ViewSpec {

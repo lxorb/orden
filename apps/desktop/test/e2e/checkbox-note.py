@@ -14,12 +14,12 @@ SEED = """async () => {
   window.tasks = await window.ordenApp.tasks()
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  await window.tasks.writeFile(`${root}/Errands.md`, '# Errands\\n\\n- [ ] Post the letter\\n')
-  window.tasks.makeList(`${root}/Errands.md`)
+  const inbox = await window.tasks.rows.inbox()
+  await window.tasks.writeFile(inbox, '- [ ] Post the letter\\n')
   await window.tasks.writeFile(`${root}/Meeting.md`, '# Meeting\\n\\n- [ ] Ask about the budget\\n')
   await window.tasks.writeFile(`${root}/Projects/Notes.md`, '- [ ] Not a todo either\\n')
   await ws.loadTree()
-  return root
+  return inbox
 }"""
 
 TEXT = "async (path) => await window.ordenApp.workspace.noteText(path)"
@@ -30,8 +30,8 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
-    root: str = page.evaluate(SEED)
-    wait_for(page, f"() => !!({TASK})('Post the letter')", "the list's todo")
+    inbox: str = page.evaluate(SEED)
+    wait_for(page, f"() => !!({TASK})('Post the letter')", "the inbox's todo")
     page.wait_for_timeout(500)
     for words in ("Ask about the budget", "Not a todo either"):
         if page.evaluate(TASK, words) is not None:
@@ -41,7 +41,7 @@ def drive(browser: Browser) -> None:
     shown = page.evaluate(WORDS)
     say(f"[todos] {json.dumps(shown)}")
     if shown != ["Post the letter"]:
-        wrong(f"Todos shows {shown}, not the list's one todo")
+        wrong(f"Todos shows {shown}, not the inbox's one todo")
 
     DRIVE.open_note(page, "Meeting")
     wait_for(page, "!!document.querySelector('.orden-checkbox')", "the note's checkbox")
@@ -63,10 +63,10 @@ def drive(browser: Browser) -> None:
         "() => window.tasks.rows.of().some((one) => one.task?.text === 'Post the letter' && one.task.done && one.task.completed)",
         "the todo done, with its date",
     )
-    errands = page.evaluate(TEXT, f"{root}/Errands.md")
-    say(f"[errands] {errands!r}")
-    if errands != "# Errands\n\n- [x] Post the letter\n":
-        wrong(f"ticking a todo changed its words: {errands!r}")
+    inbox_text = page.evaluate(TEXT, inbox)
+    say(f"[inbox] {inbox_text!r}")
+    if "- [x] Post the letter" not in (inbox_text or ""):
+        wrong(f"ticking a todo did not tick it in the inbox: {inbox_text!r}")
     done = page.evaluate(TASK, "Post the letter")
     today = page.evaluate("() => { const at = new Date(); const two = (v) => String(v).padStart(2, '0'); return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}` }")
     if not done or done.get("completed") != today:
@@ -75,4 +75,4 @@ def drive(browser: Browser) -> None:
     page.close()
 
 if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a checkbox in a note is a checkbox, and a todo keeps its words"))
+    raise SystemExit(DRIVE.run(drive, "a checkbox in a note is a checkbox, and a todo of the inbox is ticked there"))

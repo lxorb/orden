@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -18,15 +18,6 @@ HOME = """- [ ] Fix the tap
 - [ ] Mow the lawn
 """
 
-WRITE = """async ([files]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) {
-    await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
-  }
-  await ws.loadTree()
-}"""
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words) ?? null"
 
@@ -39,10 +30,10 @@ def day(task: dict) -> object:
 def seed(page: Page) -> None:
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
-    page.evaluate(WRITE, [[["Projects/Home.md", HOME]]])
+    page.evaluate(WRITE, [[[None, HOME]]])
     wait_for(page, f"() => !!({TASK})('Mow the lawn')", "the seeded rows")
-    page.evaluate("window.tasks.openProject(window.ordenApp.workspace.activeSpace.name, 'Projects/Home.md')")
-    wait_for(page, "document.querySelector('.view-tab .task')", "the project's tasks")
+    page.evaluate("window.tasks.openTodos()")
+    wait_for(page, "document.querySelector('.view-tab .task')", "the tasks")
     quiet(page)
 
 def add_in_place(page: Page) -> None:
@@ -51,12 +42,10 @@ def add_in_place(page: Page) -> None:
     wait_for(page, "document.activeElement?.matches('.view-tab .editor .quick input.field')", "the field in place")
     page.keyboard.type("Plant tulips tomorrow p2", delay=10)
     page.keyboard.press("Enter")
-    wait_for(page, f"() => !!({TASK})('Plant tulips')", "the task in the note")
+    wait_for(page, f"() => !!({TASK})('Plant tulips')", "the task in the inbox")
     tulips = found(page, "Plant tulips") or {}
     task = tulips.get("task") or {}
     if isinstance(task, dict):
-        if task.get("section") != ["Garden"]:
-            wrong(f"the task did not land under its section: {task.get('section')}")
         if task.get("priority") != 2 or not day(task):
             wrong("the words were not read for their priority and day")
     if not page.locator(".view-tab .editor").count():

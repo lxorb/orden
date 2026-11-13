@@ -4,7 +4,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -33,15 +33,6 @@ ERRANDS = """# Errands
 - [ ] Dentist 📅 {later}
 """
 
-WRITE = """async ([files]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) {
-    await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
-  }
-  await ws.loadTree()
-}"""
 
 WORDS = "() => [...document.querySelectorAll('.view-tab .task .words')].map((one) => one.textContent.trim())"
 HEADS = "() => [...document.querySelectorAll('.view-tab .head .fold:not(.display .fold)')].map((one) => one.textContent.trim())"
@@ -50,7 +41,7 @@ def seed(page: Page) -> dict[str, str]:
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
-    page.evaluate(WRITE, [[["Errands.md", ERRANDS.format(**days)]]])
+    page.evaluate(WRITE, [[[None, ERRANDS.format(**days)]]])
     wait_for(
         page,
         "() => window.tasks.rows.of().some((one) => one.task?.text === 'Dentist')",

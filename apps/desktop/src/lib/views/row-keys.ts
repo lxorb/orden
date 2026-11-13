@@ -10,7 +10,6 @@ export type RowKey =
   | { kind: 'priority'; priority: 1 | 2 | 3 | 4 }
   | { kind: 'priorities' }
   | { kind: 'labels' }
-  | { kind: 'project' }
   | { kind: 'more' }
   | { kind: 'comment' }
   | { kind: 'pick' }
@@ -39,7 +38,6 @@ const ROW_KEYS: readonly (readonly [string, RowKey])[] = [
   ['tasks.p3', { kind: 'priority', priority: 3 }],
   ['tasks.p4', { kind: 'priority', priority: 4 }],
   ['tasks.labels', { kind: 'labels' }],
-  ['tasks.move', { kind: 'project' }],
   ['tasks.more', { kind: 'more' }],
   ['tasks.comment', { kind: 'comment' }],
   ['tasks.select', { kind: 'pick' }],

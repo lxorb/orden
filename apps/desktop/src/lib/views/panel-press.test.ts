@@ -3,7 +3,6 @@ import { describe, expect, test, vi } from 'vitest'
 const opened = vi.hoisted(() => [] as unknown[][])
 vi.mock('./open', () => ({
   openTodos: (...args: unknown[]) => opened.push(['todos', ...args]),
-  openProject: (...args: unknown[]) => opened.push(['project', ...args]),
   openLabel: (...args: unknown[]) => opened.push(['label', ...args]),
   openBaseFile: (...args: unknown[]) => opened.push(['base', ...args]),
 }))
@@ -24,11 +23,6 @@ describe('a press on a row of the Tasks panel', () => {
     expect(sameRow({ kind: 'label', tag: 'home' }, { kind: 'label', tag: 'work' })).toBe(false)
     expect(sameRow(null, { kind: 'todos' })).toBe(false)
     expect(specOf({ kind: 'todos', space: 'Notes' })).toEqual({ builtin: 'todos', space: 'Notes' })
-    expect(specOf({ kind: 'project', space: 'Notes', path: 'Home.md' })).toEqual({
-      builtin: 'project',
-      space: 'Notes',
-      path: 'Home.md',
-    })
     expect(specOf({ kind: 'label', tag: 'home' })).toEqual({ builtin: 'label', tag: 'home' })
     expect(specOf({ kind: 'base', path: '/s/Bugs.base' })).toBeNull()
   })
@@ -42,7 +36,7 @@ describe('a press on a row of the Tasks panel', () => {
   })
 
   test('what was chosen in one space goes back to Todos in another', () => {
-    const row = { kind: 'project', space: 'Notes', path: 'Home.md' } as const
+    const row = { kind: 'label', tag: 'home', space: 'Notes' } as const
     const here = { id: 'n', name: 'Notes', root: '/s/Notes' }
     expect(chosenIn({ row, in: here }, here)).toBe(row)
     expect(chosenIn({ row, in: here }, { id: 'w', name: 'Work', root: '/s/Work' })).toEqual({
@@ -58,9 +52,6 @@ describe('a press on a row of the Tasks panel', () => {
       tag: 'a',
       space: 'Field',
     })
-    expect(
-      chosenIn({ row: { kind: 'project', space: 'Notes', path: 'H.md' }, in: was }, now),
-    ).toEqual({ kind: 'project', space: 'Field', path: 'H.md' })
     expect(chosenIn({ row: { kind: 'base', path: '/s/Notes/B.base' }, in: was }, now)).toEqual({
       kind: 'todos',
     })
@@ -69,12 +60,10 @@ describe('a press on a row of the Tasks panel', () => {
   test('asked for a tab, opens one that is kept, never a preview a press replaces', () => {
     opened.length = 0
     openInTab({ kind: 'todos', space: 'Notes' })
-    openInTab({ kind: 'project', space: 'Notes', path: 'Home.md' })
     openInTab({ kind: 'label', tag: 'home' })
     openInTab({ kind: 'base', path: '/s/Bugs.base' })
     expect(opened).toEqual([
       ['todos', 'Notes', { preview: false }],
-      ['project', 'Notes', 'Home.md', undefined, { preview: false }],
       ['label', 'home', { preview: false }],
       ['base', '/s/Bugs.base', { preview: false }],
     ])

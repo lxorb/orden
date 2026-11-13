@@ -186,8 +186,8 @@ describe('from the account', () => {
     const plan = planOf(await readTodoistAccount(get, 'secret', { completed: true, now: NOW }))
     expect(plan.files.map((one) => one.path)).toEqual([
       'Inbox.md',
-      'Projects/Work/Work.md',
-      'Projects/Work/Thesis.md',
+      'Work/Work.md',
+      'Work/Thesis.md',
     ])
     expect(plan.inbox).toBe('Inbox.md')
     expect(asked.every((one) => one.auth === 'Bearer secret')).toBe(true)
@@ -197,7 +197,7 @@ describe('from the account', () => {
   test('a task with all it carries, priority turned round, sub-task under it', async () => {
     const { get } = recorded()
     const plan = planOf(await readTodoistAccount(get, 'secret', { now: NOW }))
-    const work = plan.files.find((one) => one.path === 'Projects/Work/Work.md')
+    const work = plan.files.find((one) => one.path === 'Work/Work.md')
     expect(work?.kind === 'note' ? work.text : '').toBe(
       [
         '- [ ] Call the bank [time:: 16:00] [duration:: 30m] [deadline:: 2026-10-10] [remind:: 15m, 2026-10-06 09:00] [assignee:: Lucile] #admin #phone-calls 🔺 🛫 2026-10-06',
@@ -306,7 +306,7 @@ describe('from the account', () => {
 
   test("a project's description over its tasks, a link a comment points to, reminders that are still set at their zone's time", async () => {
     const plan = planOf(await readTodoistAccount(answering, 'secret'))
-    const home = plan.files.find((one) => one.path === 'Projects/Home.md')
+    const home = plan.files.find((one) => one.path === 'Home.md')
     expect(home?.kind === 'note' ? home.text : '').toBe(
       [
         'Everything about the flat.',
@@ -322,7 +322,7 @@ describe('from the account', () => {
     const plan = planOf(
       await readTodoistAccount(answering, 'secret', { completed: true, now: NOW }),
     )
-    const kept = plan.files.find((one) => one.path === 'Projects/Todoist.md')
+    const kept = plan.files.find((one) => one.path === 'Todoist.md')
     expect(kept?.kind === 'note' ? kept.text : '').toBe('- [x] Pack the boxes ✅ 2026-10-01\n')
   })
 })
@@ -385,7 +385,7 @@ describe('a task done and a comment posted in the evening, west of Greenwich', (
 
   test("are dated by that evening's day, not by the UTC day after it", async () => {
     const plan = planOf(await readTodoistAccount(late, 'secret', { completed: true, now: NOW }))
-    const home = plan.files.find((one) => one.path === 'Projects/Home.md')
+    const home = plan.files.find((one) => one.path === 'Home.md')
     const text = home?.kind === 'note' ? home.text : ''
     expect(text).toContain('  2026-10-01: The plumber said')
     expect(text).toContain('- [x] Pack the boxes ✅ 2026-09-30')
@@ -412,7 +412,7 @@ describe('from a CSV', () => {
     const plan = planOf(csvProject('Launch', CSV, 0))
     expect(plan.lost).toEqual(['Some repeating dates stay as words under their tasks'])
     const note = plan.files[0]
-    expect(note?.path).toBe('Projects/Launch.md')
+    expect(note?.path).toBe('Launch.md')
     expect(note?.kind === 'note' ? note.text : '').toBe(
       [
         '- [ ] Plan the launch #work [duration:: 1h] [deadline:: 2026-10-09] 🔺 🛫 2026-10-06',
@@ -437,7 +437,7 @@ describe('from a CSV', () => {
       sourceOf('Work [2203306141].csv', encoded(CSV)),
       sourceOf('readme.txt', encoded('not a project')),
     ])
-    expect(plan.files.map((one) => one.path)).toEqual(['Inbox.md', 'Projects/Work.md'])
+    expect(plan.files.map((one) => one.path)).toEqual(['Inbox.md', 'Work.md'])
     expect(plan.inbox).toBe('Inbox.md')
   })
 

@@ -6,7 +6,6 @@ import { writeSpec } from '../views/spec'
 import { noteBehind } from './protection.svelte'
 
 const SOURCE = fileURLToPath(new URL('..', import.meta.url))
-const SPACES = [{ name: 'Space', root: '/space' }]
 
 function views(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -17,22 +16,15 @@ function views(dir: string): string[] {
 }
 
 describe('a tab shown over a protected note', () => {
-  test('is the note itself, or a project view of it', () => {
+  test('is the note itself, never a task view', () => {
     const view = (spec: Parameters<typeof writeSpec>[0]) => ({
       kind: 'view',
       path: null,
       doc: writeSpec(spec),
     })
-    expect(noteBehind({ kind: 'note', path: '/space/Diary.md', doc: '' }, SPACES)).toBe(
-      '/space/Diary.md',
-    )
-    expect(
-      noteBehind(view({ builtin: 'project', space: 'Space', path: 'Work/Plan.md' }), SPACES),
-    ).toBe('/space/Work/Plan.md')
-    expect(noteBehind(view({ builtin: 'todos', space: 'Space' }), SPACES)).toBeNull()
-    expect(
-      noteBehind(view({ builtin: 'project', space: 'Gone', path: 'Plan.md' }), SPACES),
-    ).toBeNull()
+    expect(noteBehind({ kind: 'note', path: '/space/Diary.md' })).toBe('/space/Diary.md')
+    expect(noteBehind(view({ builtin: 'todos', space: 'Space' }))).toBeNull()
+    expect(noteBehind(view({ builtin: 'label', space: 'Space', tag: 'x' }))).toBeNull()
   })
 
   test('is locked by the note behind it, not by its own path alone', () => {

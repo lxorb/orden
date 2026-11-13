@@ -1,9 +1,8 @@
-import { type Base, placeOfKey, readBase, writeBase } from '@orden/bases'
+import { type Base, readBase, writeBase } from '@orden/bases'
 import { isRecord, keepJson, stored, stringList } from '../stored'
 import type { ViewSpec } from './spec'
 
 const FOLDS = 'orden:view-folds'
-const PROJECTS = 'orden:project-views'
 const TODOS = 'orden:todos-views'
 const RENAMES = 'orden:space-renames'
 
@@ -13,7 +12,6 @@ const MOST = 200
 
 export function viewKey(spec: ViewSpec, file: string | null): string | null {
   if (file !== null) return `file:${file}`
-  if (spec.builtin === 'project') return `project:${spec.space ?? ''}/${spec.path ?? ''}`
   if (spec.builtin === 'label') return `label:${spec.tag ?? ''}`
   if (spec.builtin === 'todos') return `todos:${spec.space ?? ''}`
   return spec.builtin ?? null
@@ -37,17 +35,6 @@ export function keepFolds(key: string | null, folded: ReadonlySet<string>): void
   keepJson(FOLDS, Object.fromEntries(kept))
 }
 
-export function projectView(space: string, path: string): string | undefined {
-  const words = read(PROJECTS)[`${space}/${path}`]
-  return typeof words === 'string' ? words : undefined
-}
-
-export function keepProjectView(space: string, path: string, words: string): void {
-  const all = read(PROJECTS)
-  all[`${space}/${path}`] = words
-  keepJson(PROJECTS, all)
-}
-
 export function todosView(space: string): string | undefined {
   const words = read(TODOS)[space]
   return typeof words === 'string' ? words : undefined
@@ -63,11 +50,7 @@ export function takeOverTodosView(words: string): void {
   keepJson(TODOS, { [EVERY_SPACE]: words })
 }
 
-function foldOf(key: string, space: string): string | null {
-  if (key === `todos:${space}`) return ''
-  const project = `project:${space}/`
-  return key.startsWith(project) ? key.slice(project.length) : null
-}
+const foldOf = (key: string, space: string) => key === `todos:${space}`
 
 export function followSpaceViews(
   from: string,
@@ -83,13 +66,10 @@ export function followSpaceViews(
     if (typeof every === 'string') next[EVERY_SPACE] = follow(every)
     keepJson(TODOS, next)
   }
-  followProjectViews(from, (path) => path, follow, to)
   const folds = read(FOLDS)
-  const moved = Object.entries(folds).map(([key, groups]): [string, unknown] => {
-    const rest = foldOf(key, from)
-    if (rest === null) return [key, groups]
-    return [rest === '' ? `todos:${to}` : `project:${to}/${rest}`, groups]
-  })
+  const moved = Object.entries(folds).map(([key, groups]): [string, unknown] =>
+    foldOf(key, from) ? [`todos:${to}`, groups] : [key, groups],
+  )
   if (moved.some(([key], at) => key !== Object.keys(folds)[at]))
     keepJson(FOLDS, Object.fromEntries(moved))
 }
@@ -104,9 +84,7 @@ export function unnarrowed(words: string, space: string): string {
   const views = base.views.map((view) => {
     const only = view.orden.kept.only
     if (!isRecord(only)) return view
-    const project = typeof only.project === 'string' ? placeOfKey(only.project).space : null
-    const gone = (key: string) =>
-      (key === 'space' && only.space === space) || (key === 'project' && project === space)
+    const gone = (key: string) => key === 'space' && only.space === space
     if (!Object.keys(only).some(gone)) return view
     const rest = without(only, gone)
     const kept = without(view.orden.kept, (key) => key === 'only')
@@ -127,11 +105,8 @@ export function forgetSpaceViews(space: string): void {
       ...without(todos, (one) => one === space),
       ...(left === every ? {} : { [EVERY_SPACE]: left }),
     })
-  const projects = read(PROJECTS)
-  const under = (key: string) => key.startsWith(`${space}/`)
-  if (Object.keys(projects).some(under)) keepJson(PROJECTS, without(projects, under))
   const folds = read(FOLDS)
-  const folded = (key: string) => foldOf(key, space) !== null
+  const folded = (key: string) => foldOf(key, space)
   if (Object.keys(folds).some(folded)) keepJson(FOLDS, without(folds, folded))
   const renames = read(RENAMES)
   const named = Object.fromEntries(
@@ -158,27 +133,4 @@ export function renamedTo(space: string): string | undefined {
     now = at
   }
   return now
-}
-
-export function followProjectViews(
-  space: string,
-  moved: (path: string) => string | null,
-  follow: (words: string, from: string, to: string) => string,
-  into = space,
-): void {
-  const all = read(PROJECTS)
-  const out: Record<string, unknown> = {}
-  let changed = false
-  for (const [key, words] of Object.entries(all)) {
-    const path = key.startsWith(`${space}/`) ? key.slice(space.length + 1) : null
-    const now = path === null ? null : moved(path)
-    const stays = now === path && into === space
-    if (path === null || now === null || stays || typeof words !== 'string') {
-      out[key] = words
-      continue
-    }
-    out[`${into}/${now}`] = follow(words, path, now)
-    changed = true
-  }
-  if (changed) keepJson(PROJECTS, out)
 }

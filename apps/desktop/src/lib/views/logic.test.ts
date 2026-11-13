@@ -41,8 +41,8 @@ const context = (rows: Parameters<typeof contextFor>[0]['rows']) =>
 
 describe('a view tab’s words', () => {
   test('say which view, read back checked', () => {
-    const words = writeSpec({ builtin: 'project', space: 'Notes', path: 'Errands.md' })
-    expect(readSpec(words)).toEqual({ builtin: 'project', space: 'Notes', path: 'Errands.md' })
+    const words = writeSpec({ builtin: 'label', space: 'Notes', tag: 'home' })
+    expect(readSpec(words)).toEqual({ builtin: 'label', space: 'Notes', tag: 'home' })
     expect(readSpec('not json')).toBeNull()
     expect(readSpec(JSON.stringify({ builtin: 'nonsense', view: 3 }))).toEqual({})
   })
@@ -229,8 +229,8 @@ describe('a drop into a group', () => {
     })
     expect(dropInto('formula.overdue', true, bank, TODAY)).toBeNull()
     expect(dropInto('task.priority', 1, bank, TODAY)).toEqual({ change: { task: { priority: 1 } } })
-    expect(dropInto('task.section', 'Shop', bank, TODAY)).toEqual({ move: { heading: 'Shop' } })
-    expect(dropInto('file.path', 'Thesis.md', bank, TODAY)).toEqual({ move: { path: 'Thesis.md' } })
+    expect(dropInto('task.section', 'Shop', bank, TODAY)).toBeNull()
+    expect(dropInto('file.path', 'Thesis.md', bank, TODAY)).toBeNull()
     expect(dropInto('note.status', 'Done', noteRow('Bug.md', 'status: To do'), TODAY)).toEqual({
       change: { note: { status: 'Done' } },
     })
@@ -406,7 +406,7 @@ describe('selecting rows', () => {
     expect([...withPicked(one, order, 'a', 'gone')].sort()).toEqual(['a', 'b'])
   })
 
-  test('a project carried onto another lands on the half it is over', async () => {
+  test('a column carried onto another lands on the half it is over', async () => {
     const { landsAfter } = await import('./reorder-drag')
     expect(landsAfter(5, 0, 28)).toBe(false)
     expect(landsAfter(20, 0, 28)).toBe(true)
@@ -834,7 +834,6 @@ describe('the keys of a row', () => {
     expect(on('2')).toEqual({ kind: 'priority', priority: 2 })
     expect(on('y')).toEqual({ kind: 'priorities' })
     expect(on('l')).toEqual({ kind: 'labels' })
-    expect(on('v')).toEqual({ kind: 'project' })
     expect(on('.')).toEqual({ kind: 'more' })
     expect(on('x')).toEqual({ kind: 'pick' })
     expect(on('Escape')).toEqual({ kind: 'unpick' })
@@ -874,7 +873,7 @@ describe('a line’s words', () => {
 })
 
 describe('the panel', () => {
-  test('counts every space’s Todos as its view answers it, and the notes and labels', () => {
+  test('counts every space’s Todos as its view answers it, and the labels', () => {
     const rows = [
       taskRow('Inbox.md', '- [ ] Idea'),
       taskRow('Errands.md', '- [ ] Late #admin [deadline:: 2026-10-01]'),
@@ -885,11 +884,6 @@ describe('the panel', () => {
     const counts = panelCounts(rows, TODAY, 'Notes')
     expect(counts).toMatchObject({ todos: 3, overdue: true })
     expect(panelCounts(rows, TODAY, 'Elsewhere').todos).toBe(3)
-    expect(counts.notes.map((one) => `${one.name} ${one.count}`).sort()).toEqual([
-      'Errands 2',
-      'Inbox 1',
-      'Thesis 1',
-    ])
     expect(counts.labels).toEqual([{ tag: 'admin', count: 2 }])
   })
 
@@ -900,7 +894,6 @@ describe('the panel', () => {
     ]
     expect(panelCounts(rows, TODAY, 'Mine').labels.map((one) => one.tag)).toEqual(['both', 'mine'])
     expect(panelCounts(rows, TODAY, 'Mine').labels[0]?.count).toBe(1)
-    expect(panelCounts(rows, TODAY, 'Mine').notes).toHaveLength(2)
   })
 
   test('a label of one space shows that space’s rows', () => {

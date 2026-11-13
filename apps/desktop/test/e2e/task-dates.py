@@ -4,7 +4,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -33,15 +33,6 @@ INBOX = """- [ ] Inbox now
 - [ ] Inbox later 🛫 {later}
 """
 
-WRITE = """async ([files]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) {
-    await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
-  }
-  await ws.loadTree()
-}"""
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words)?.task ?? null"
 
@@ -77,7 +68,7 @@ def drive(browser: Browser) -> None:
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
     page.evaluate(
-        WRITE, [[["Errands.md", ERRANDS.format(**days)], ["Inbox.md", INBOX.format(**days)]]]
+        WRITE, [[[None, ERRANDS.format(**days)], [None, INBOX.format(**days)]]]
     )
     wait_for(
         page,
@@ -88,10 +79,10 @@ def drive(browser: Browser) -> None:
     open_builtin(page, "today")
     today = words_in(page)
     say(f"[today] {json.dumps(today)}")
-    for wanted in ("Old date", "Late deadline", "Begun, due soon"):
+    for wanted in ("Old date", "Late deadline", "Begun, due soon", "Undated"):
         if wanted not in today:
-            wrong(f"Today does not hold {wanted!r}, whose start date has come")
-    for unwanted in ("Not yet", "Undated", "Inbox later"):
+            wrong(f"Today does not hold {wanted!r}, whose start date has come or is none")
+    for unwanted in ("Not yet", "Inbox later"):
         if unwanted in today:
             wrong(f"Today holds {unwanted!r}")
     late = page.evaluate(
@@ -135,8 +126,8 @@ def drive(browser: Browser) -> None:
         wrong("the Tasks count is not in the danger tone while a deadline has passed")
 
     open_builtin(page, "today")
-    if page.evaluate("window.ordenApp.modes.undatedInToday"):
-        wrong("Today starts out holding the tasks with no start date")
+    if not page.evaluate("window.ordenApp.modes.undatedInToday"):
+        wrong("Today starts out without the tasks that have no start date")
     page.evaluate("window.ordenApp.modes.setUndatedInToday(true)")
     DRIVE.waited(
         page,

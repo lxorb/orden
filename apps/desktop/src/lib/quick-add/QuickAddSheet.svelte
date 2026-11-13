@@ -9,8 +9,17 @@
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
   import { links } from '../link-index.svelte'
+  import { rows } from '../rows/rows.svelte'
+  import { labelsOf } from '../views/task-meta'
   import { ai } from '../ai/store.svelte'
   import { addTask } from './write'
+
+  let labels = $state<string[]>([])
+  $effect(() => {
+    if (!quickAdd.open) return
+    labels = labelsOf(rows.shown())
+    return rows.settled(() => (labels = labelsOf(rows.shown())))
+  })
 
   $effect(() => (quickAdd.open ? overlays.show(() => quickAdd.hide()) : undefined))
   $effect(() => closeOnBack(quickAdd.open, () => quickAdd.hide()))
@@ -39,7 +48,7 @@
   >
     <QuickAdd
       langs={[region()]}
-      tags={links.spaceTags.map((one) => one.tag)}
+      tags={[...new Set([...links.spaceTags.map((one) => one.tag), ...labels])]}
       provider={ai.providerFor('ask')}
       prefill={quickAdd.prefill}
       smart={quickAdd.smart}

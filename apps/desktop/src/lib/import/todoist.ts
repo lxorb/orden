@@ -173,7 +173,7 @@ interface Kept {
 
 const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order
 
-export function planOf(account: Account, into = 'Projects'): ImportPlan & { inbox?: string } {
+export function planOf(account: Account): ImportPlan & { inbox?: string } {
   const kept: Kept = { words: 0, written: new Set() }
   const projects = new Map(account.projects.map((one) => [one.id, one]))
   const parents = new Set(account.projects.flatMap((one) => (one.parent ? [one.parent] : [])))
@@ -188,8 +188,7 @@ export function planOf(account: Account, into = 'Projects'): ImportPlan & { inbo
     const name = safeName(project.name) || 'Todoist'
     if (project.inbox) return name
     const folder = folderOf(project)
-    const at = parents.has(project.id) ? `${folder}/${name}` : folder
-    return into ? `${into}/${at}` : at
+    return parents.has(project.id) ? `${folder}/${name}` : folder
   }
 
   const children = new Map<string, Task[]>()

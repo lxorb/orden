@@ -1,4 +1,4 @@
-import { type Base, type Filter, placeOfKey, readBase, type View, writeBase } from '@orden/bases'
+import { type Base, type Filter, readBase, type View, writeBase } from '@orden/bases'
 import { isRecord } from '../stored'
 import { followSpaceViews, forgetSpaceViews, spaceRenamed, unnarrowed } from './kept-views'
 import { readSpec, writeSpec } from './spec'
@@ -22,14 +22,8 @@ function refiltered(filter: Filter, from: string, to: string): Filter {
 function narrowedTo(view: View, from: string, to: string): View {
   const only = view.orden.kept.only
   if (!isRecord(only)) return view
-  const project = typeof only.project === 'string' ? placeOfKey(only.project) : null
-  const inSpace = project?.space === from
-  if (only.space !== from && !inSpace) return view
-  const next = {
-    ...only,
-    ...(only.space === from ? { space: to } : {}),
-    ...(inSpace ? { project: `${to}//${project.path}` } : {}),
-  }
+  if (only.space !== from) return view
+  const next = { ...only, space: to }
   return { ...view, orden: { ...view.orden, kept: { ...view.orden.kept, only: next } } }
 }
 

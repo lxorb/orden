@@ -2,8 +2,6 @@
   import type { Group } from '@orden/bases'
   import { untrack } from 'svelte'
   import type { Prefill as QuickPrefill } from '../quick-add/entry'
-  import { relativeTo, withoutExtension } from '../space-paths'
-  import { workspace } from '../workspace.svelte'
   import { addTyped, type Prefill, prefillOf } from './add'
   import { narrowing } from './display'
   import type { Kit } from './kit'
@@ -33,14 +31,7 @@
   const label = $derived(notes ? 'New note' : 'Add task')
 
   function quick(prefill: Prefill): QuickPrefill {
-    const root = prefill.root ?? workspace.activeSpace?.root
-    const note =
-      prefill.path !== undefined && root !== undefined
-        ? withoutExtension(relativeTo(root, prefill.path))
-        : undefined
     return {
-      ...(note === undefined ? {} : { note }),
-      ...(prefill.heading === undefined ? {} : { heading: prefill.heading }),
       ...(prefill.due === undefined ? {} : { due: prefill.due }),
       ...(prefill.tags === undefined ? {} : { tags: prefill.tags }),
       fields: {

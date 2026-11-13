@@ -14,29 +14,11 @@
   import BulkBar from './BulkBar.svelte'
   import { droppable, type Point } from './drag.svelte'
   import type { Kit } from './kit'
-  import {
-    EMPTY,
-    listItems,
-    foldKey,
-    toggled,
-    withEveryDay,
-    withEverySection,
-    withPicked,
-  } from './list-items'
+  import { EMPTY, listItems, foldKey, toggled, withEveryDay, withPicked } from './list-items'
   import { parentOf } from './columns'
   import { hearPressesAway } from './pressed-away'
   import { rowKey } from './row-keys'
   import { foldsOf, keepFolds, viewKey } from './kept-views'
-  import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
-  import Glyph from '../quick-add/Glyph.svelte'
-  import {
-    addSection,
-    projectOf,
-    renameSection,
-    sectionMenu,
-    sectionsHere,
-  } from './section-actions'
-  import { focusSoon } from './focus-soon'
   import './task-keys'
   import RowLine from './RowLine.svelte'
   import { runKey, scheduleDeadline } from './task-actions'
@@ -47,14 +29,12 @@
   const {
     kit,
     dated = true,
-    where = true,
     days,
     onnearend,
     reveal,
   }: {
     kit: Kit
     dated?: boolean
-    where?: boolean
     days?: { from: string; through: string } | undefined
     onnearend?: (() => void) | undefined
     reveal?: { id: string; asked: number } | undefined
@@ -70,9 +50,6 @@
     folded = toggled(folded, name)
     keepFolds(kept, folded)
   }
-  const project = $derived(property === 'task.section' ? projectOf(kit) : null)
-  let renaming = $state<string | null>(null)
-  let naming = $state(false)
   let shut = $state.raw<ReadonlySet<string>>(EMPTY)
   let selected = $state<string | null>(null)
   let editing = $state<string | null>(null)
@@ -85,17 +62,10 @@
     listItems(
       days
         ? withEveryDay(live.answer?.groups ?? [], days.from, days.through)
-        : project
-          ? withEverySection(
-              live.answer?.groups ?? [],
-              sectionsHere(project.relative),
-              project.name,
-            )
-          : (live.answer?.groups ?? []),
+        : (live.answer?.groups ?? []),
       {
         grouped: property !== undefined,
         bareNone: property === 'task.section',
-        ...(project ? { title: project.name } : {}),
         folded,
         shut,
         hidden: view?.orden.hidden ?? [],
@@ -114,17 +84,6 @@
     pickedFrom = id
   }
 
-  function named(event: KeyboardEvent, write: (words: string) => void) {
-    event.stopPropagation()
-    if (event.key !== 'Enter' && event.key !== 'Escape') return
-    event.preventDefault()
-    const field = event.currentTarget
-    const words = field instanceof HTMLInputElement ? field.value : ''
-    renaming = null
-    naming = false
-    if (event.key === 'Enter' && words.trim()) write(words)
-  }
-
   function unpick() {
     picked = EMPTY
     pickedFrom = null
@@ -138,11 +97,11 @@
   const countsOf = (row: Row) => countsIn(subtasks, row)
 
   const lines = $derived.by(() => {
-    const [on, today, placed, counts] = [dated, live.today, where, subtasks]
+    const [on, today, counts] = [dated, live.today, subtasks]
     return items.map((item) => {
       const task = item.kind === 'row' ? item.row.task : undefined
       if (!task || item.kind !== 'row') return 1
-      return lineCount(task, hasMeta(task, on, countsIn(counts, item.row), today), placed)
+      return lineCount(task, hasMeta(task, on, countsIn(counts, item.row), today), true)
     })
   })
 
@@ -370,54 +329,22 @@
     >
       {#if item.kind === 'head'}
         {@const name = groupName(item.group.key)}
-        {@const section = project && typeof item.group.key === 'string' ? item.group.key : null}
         <div
           class="orden-section head"
           use:droppable={(row, _at, _box, from) => kit.drop(row, item.group.key, undefined, from)}
         >
-          {#if section !== null && renaming === section}
-            <input
-              class="orden-field naming"
-              value={section}
-              aria-label="Rename"
-              use:focusSoon
-              onkeydown={(event) => named(event, (words) => renameSection(kit, section, words))}
-              onblur={(event) => {
-                if (renaming === section) renameSection(kit, section, event.currentTarget.value)
-                renaming = null
-              }}
-            />
-          {:else}
-            <button
-              type="button"
-              class="fold"
-              aria-expanded={!item.folded}
-              onclick={() => fold(name)}
-              oncontextmenu={(event) => {
-                if (section === null) return
-                event.preventDefault()
-                sectionMenu(event, kit, section, item.count, () => (renaming = section))
-              }}
-            >
-              <span class="twist"><Twist open={!item.folded} /></span>
-              {days
-                ? dayHead(item.group.key, live.today)
-                : groupLabel(property, item.group.key, live.today, names)}
-              {#if item.count}<span class="count">{item.count}</span>{/if}
-            </button>
-          {/if}
-          {#if section !== null && renaming !== section}
-            <button
-              type="button"
-              class="more"
-              tabindex="-1"
-              aria-label="More"
-              title="More"
-              onclick={(event) =>
-                sectionMenu(event, kit, section, item.count, () => (renaming = section))}
-              ><Glyph icon={Ellipsis} /></button
-            >
-          {/if}
+          <button
+            type="button"
+            class="fold"
+            aria-expanded={!item.folded}
+            onclick={() => fold(name)}
+          >
+            <span class="twist"><Twist open={!item.folded} /></span>
+            {days
+              ? dayHead(item.group.key, live.today)
+              : groupLabel(property, item.group.key, live.today, names)}
+            {#if item.count}<span class="count">{item.count}</span>{/if}
+          </button>
           {#if ((property === 'formula.overdue' && item.group.key === true) || item.group.key === 'overdue') && item.count}
             <button
               type="button"
@@ -439,7 +366,6 @@
               {row}
               {kit}
               {dated}
-              {where}
               from={key}
               lines={lines[shown.first + index] ?? 1}
               card
@@ -466,7 +392,6 @@
               {kit}
               from={key}
               {dated}
-              {where}
               depth={item.depth}
               twist={item.twist}
               ontwist={() => (shut = toggled(shut, foldKey(row)))}
@@ -485,28 +410,6 @@
       {/if}
     </div>
   {/each}
-  {#if project}
-    {#if naming}
-      <input
-        class="orden-field naming end"
-        placeholder="Section"
-        aria-label="Add section"
-        use:focusSoon
-        onkeydown={(event) => named(event, (words) => addSection(kit, words))}
-        onblur={(event) => {
-          if (naming) addSection(kit, event.currentTarget.value)
-          naming = false
-        }}
-      />
-    {:else}
-      <button type="button" class="add-section" onclick={() => (naming = true)}>
-        <span class="rule" aria-hidden="true"></span>Add section<span
-          class="rule"
-          aria-hidden="true"
-        ></span>
-      </button>
-    {/if}
-  {/if}
 </div>
 {#if pickedRows.length}
   <div class="bulk" bind:this={bulk}>
@@ -604,68 +507,6 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-  }
-
-  .more {
-    display: grid;
-    place-items: center;
-    width: var(--row-height-sm);
-    height: var(--row-height-sm);
-    margin-inline-start: auto;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-row);
-    background: none;
-    color: var(--muted);
-    opacity: 0;
-    transition: opacity var(--dur-fast) var(--ease-out);
-  }
-
-  .head:hover .more,
-  .more:focus-visible {
-    opacity: 1;
-  }
-
-  :global([data-touch]) .more {
-    opacity: 1;
-  }
-
-  .naming {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .naming.end {
-    flex: none;
-    margin: var(--space-3) var(--space-2);
-  }
-
-  .add-section {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    margin: var(--space-3) 0;
-    padding: var(--space-1) var(--space-2);
-    border: none;
-    background: none;
-    color: var(--accent);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    opacity: 0.55;
-    transition: opacity var(--dur-fast) var(--ease-out);
-  }
-
-  .add-section:hover,
-  .add-section:focus-visible {
-    opacity: 1;
-  }
-
-  .rule {
-    flex: 1;
-    height: 1px;
-    background: currentColor;
   }
 
   .act {

@@ -13,17 +13,12 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 ARRANGE = """async () => {
   const ws = window.ordenApp.workspace
   const notes = ws.activeSpace
-  const write = async (root, path, text) => {
-    const at = `${root.replace(/[\\\\/]+$/, '')}/${path}`
-    await window.tasks.writeFile(at, text)
-    window.tasks.makeList(at)
-  }
-  await write(notes.root, 'Errands.md', '# Errands\\n\\n- [ ] Call the bank\\n')
+  const inbox = await window.tasks.rows.inbox()
+  await window.tasks.writeFile(inbox, '- [ ] Call the bank\\n- [ ] Water the plants\\n')
   const home = await ws.addSpace('Home')
-  await write(home.root, 'Garden.md', '# Garden\\n\\n- [ ] Water the plants\\n')
   await ws.showSpace(home.id)
   await ws.loadTree()
-  return { notes: notes.id, home: home.id, first: notes.name, firstRoot: notes.root }
+  return { notes: notes.id, home: home.id, first: notes.name, inbox }
 }"""
 
 LISTED = "() => [...document.querySelectorAll('.tasks .chosen .task .words')].map((one) => one.textContent.trim()).sort()"
@@ -85,16 +80,15 @@ def drive(browser: Browser) -> None:
 
     card = page.locator(".tasks .chosen .task:has(.words:text-is('Call the bank'))")
     card.locator(".box[role=checkbox]").first.click()
-    root = ids["firstRoot"].rstrip("/\\")
     DRIVE.waited(
         page,
         "() => window.tasks.rows.of().some((one) => one.task?.text === 'Call the bank' && one.task.done)",
-        "the first space's task ticked from Home",
+        "the inbox's task ticked from Home",
     )
-    text = page.evaluate(f"async () => await window.ordenApp.workspace.noteText({json.dumps(root + '/Errands.md')})")
+    text = page.evaluate(f"async () => await window.ordenApp.workspace.noteText({json.dumps(ids['inbox'])})")
     say(f"[ticked] {text!r}")
     if "- [x] Call the bank" not in (text or ""):
-        wrong("ticking the first space's task from Home did not write its note")
+        wrong("ticking the task from Home did not write the inbox")
     if page.evaluate("() => window.ordenApp.workspace.activeSpace?.name") != "Home":
         wrong("ticking a task of another space switched the space")
     DRIVE.shot(page, "03-ticked")

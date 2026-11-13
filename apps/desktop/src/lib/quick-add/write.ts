@@ -30,7 +30,7 @@ async function addOne(entry: Entry): Promise<{ path: string; line: number } | nu
   } catch (error) {
     return toldIfUnreadable(error)
   }
-  const placed = placeIn(before, linesOf(entry), entry.heading)
+  const placed = placeIn(before, linesOf(entry))
   await replaceInNotes(workspace, [
     changeOf(path, before, [{ from: placed.at, to: placed.at, insert: placed.insert }]),
   ])

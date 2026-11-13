@@ -25,8 +25,6 @@ import { saver } from '../web-tab/saver.svelte'
 import { hiddenTabs } from '../workspace/hidden-tabs.svelte'
 import { quickAdd } from '../quick-add/asked.svelte'
 import { isHiddenTabs } from '../workspace/sets'
-import { projectsOf, setProjects } from '../rows/projects'
-import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
 import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
@@ -189,17 +187,6 @@ function privacyGroup(): Group {
       },
     ],
   }
-}
-
-function projectFolderChoices(root: string): { value: string; label: string }[] {
-  const here = projectsOf(root)
-  const names =
-    workspace.tree?.children
-      .filter((one) => one.is_dir && !one.name.startsWith('.'))
-      .map((one) => one.name) ?? []
-  return [...new Set([here, ...names])]
-    .sort((a, b) => a.localeCompare(b))
-    .map((one) => ({ value: one, label: one }))
 }
 
 function remindersGroup(): Group {
@@ -459,22 +446,6 @@ export function generalPane(): Pane {
             get: () => quickAdd.smart,
             set: (on) => quickAdd.setSmart(on),
           },
-          ...(workspace.activeSpace
-            ? ([
-                {
-                  kind: 'select',
-                  label: 'Projects folder',
-                  hint: 'The folder of this space whose folders the Tasks panel lists as projects.',
-                  words: ['tasks', 'projects', 'folder', 'todoist'],
-                  options: projectFolderChoices(workspace.activeSpace.root),
-                  get: () => projectsOf(workspace.activeSpace?.root ?? ''),
-                  set: (value) => {
-                    const root = workspace.activeSpace?.root
-                    if (root !== undefined) setProjects(root, value)
-                  },
-                },
-              ] satisfies Field[])
-            : []),
           {
             kind: 'switch',
             key: 'general.undatedInToday',

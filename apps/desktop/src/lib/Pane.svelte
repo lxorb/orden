@@ -84,7 +84,7 @@
 
   const tab = $derived(workspace.showing(pane.id))
   const scrollKept = $derived(scrollKeyOf(tab, workspace.windowSlot))
-  const behind = $derived(tab ? noteBehind(tab, workspace.spaces) : null)
+  const behind = $derived(tab ? noteBehind(tab) : null)
   const locked = $derived(workspace.protection.locked(behind))
 
   const attachments = $derived(workspace.graphSettings.here.attachments)

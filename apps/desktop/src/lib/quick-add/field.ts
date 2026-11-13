@@ -55,13 +55,13 @@ export function pastedLines(text: string): string[] {
 }
 
 export interface Token {
-  sign: '#' | '@' | '%' | '>' | '/'
+  sign: '#' | '@' | '%'
   query: string
   from: number
   to: number
 }
 
-const SIGNS = new Set(['#', '@', '%', '>', '/'])
+const SIGNS = new Set(['#', '@', '%'])
 
 export function tokenAt(text: string, caret: number): Token | null {
   let from = caret
@@ -69,8 +69,6 @@ export function tokenAt(text: string, caret: number): Token | null {
   const word = text.slice(from, caret)
   const sign = word.charAt(0)
   if (!SIGNS.has(sign)) return null
-  const slash = sign === '>' ? word.lastIndexOf('/') : -1
-  if (slash > 0) return { sign: '/', query: word.slice(slash + 1), from: from + slash, to: caret }
   if (!/\s/u.test(text.charAt(caret)) && caret < text.length) return null
   return { sign: sign as Token['sign'], query: word.slice(1), from, to: caret }
 }
