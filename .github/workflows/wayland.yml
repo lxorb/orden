@@ -96,7 +96,7 @@ jobs:
       - name: The .deb, sway, Mesa and a session bus
         run: |
           sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus poppler-utils python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder libnss3-tools
+          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus poppler-utils python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder
       - name: The .deb runs as orden, and as nib for the release after the rename
         run: |
           test -x /usr/bin/orden
@@ -192,15 +192,6 @@ jobs:
         env:
           OUT: wayland-out/cert
           CERT: '1'
-        run: |
-          pkill -f /usr/share/Orden/orden || true
-          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
-      - name: The pages' DNS chosen in Settings, over HTTPS, under sway
-        if: always()
-        env:
-          OUT: wayland-out/dns
-          DNS: '1'
         run: |
           pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"

@@ -174,8 +174,6 @@ mod safari;
 mod search;
 #[cfg(any(desktop, target_os = "ios"))]
 mod secrets;
-#[cfg(desktop)]
-mod secure_dns;
 #[cfg(target_os = "windows")]
 mod shell_menu;
 #[cfg(desktop)]
@@ -441,8 +439,6 @@ macro_rules! desktop_commands {
             crashes::crash_drill,
             kept::kept_write,
             kept::kept_forget,
-            secure_dns::dns_chosen,
-            secure_dns::dns_choose,
             gpu::gpu_line,
             page_scale::page_scale_seen,
             page_scale::interface_zoom_chosen,
@@ -863,7 +859,6 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
     chromium_pump::start(handle);
     #[cfg(target_os = "linux")]
     page_scale::start(handle);
-    secure_dns::start(handle);
     extensions::tabs::start(handle);
 }
 
@@ -872,6 +867,9 @@ fn first_of_all(handle: &tauri::AppHandle) {
     crashes::start(handle);
     trace::mark("crash reports");
     paths::decide_spaces(handle);
+    if let Ok(config) = paths::config_dir(handle) {
+        let _ = std::fs::remove_file(config.join("dns.json"));
+    }
 }
 
 fn ready(

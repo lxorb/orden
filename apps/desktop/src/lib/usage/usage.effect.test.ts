@@ -41,7 +41,7 @@ describe('the day’s tally', () => {
   test('counts nothing until usage data is turned on', async () => {
     const { ran, changed, storedTallies, saveTallies } = await load()
     ran('print', 'palette')
-    changed('general.dns', 'cloudflare')
+    changed('general.searchEngine', 'duckduckgo')
     saveTallies()
     expect(storedTallies()).toEqual({})
   })
@@ -66,14 +66,14 @@ describe('the day’s tally', () => {
     localStorage.setItem(HELPING, 'true')
     const { changed, storedTallies, saveTallies } = await load()
     changed('general.crashReports', false)
-    changed('general.dns', 'cloudflare')
+    changed('general.searchEngine', 'duckduckgo')
     changed('general.shell', '/home/anna/bin/fish')
     changed('general.searchEngineAddress', 'https://search.example/?q=%s')
     changed('appearance.monoFont', 'Anna’s Font')
     saveTallies()
     expect(storedTallies()[TODAY]?.settings).toEqual({
       'general.crashReports': { off: 1 },
-      'general.dns': { cloudflare: 1 },
+      'general.searchEngine': { duckduckgo: 1 },
       'general.shell': { other: 1 },
       'general.searchEngineAddress': { other: 1 },
       'appearance.monoFont': { other: 1 },
