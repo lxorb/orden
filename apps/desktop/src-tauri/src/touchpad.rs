@@ -122,7 +122,7 @@ pub fn start(app: &tauri::AppHandle) {
 #[cfg(windows)]
 static ON_THE_PAD: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 pub fn fingers() -> u32 {
     ON_THE_PAD.load(std::sync::atomic::Ordering::Relaxed)
 }

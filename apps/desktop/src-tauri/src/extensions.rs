@@ -10,14 +10,14 @@ mod amo;
 mod crx;
 mod fetch;
 mod firefox;
-#[cfg(any(windows, test))]
+#[cfg(any(all(windows, not(feature = "cef")), test))]
 mod given;
 pub mod library;
 pub mod link;
 mod manifest;
 pub mod popup;
 mod unzip;
-#[cfg(any(windows, test))]
+#[cfg(any(all(windows, not(feature = "cef")), test))]
 pub mod welcome;
 
 #[cfg(feature = "cef")]
