@@ -29,7 +29,10 @@ const PLATFORMS = [
   ]),
 ]
 
-const MAC_KEYS = ['darwin-universal', 'darwin-aarch64', 'darwin-x86_64']
+const MACS = [
+  { key: 'darwin-aarch64', match: (path) => /macos-arm64/.test(path) },
+  { key: 'darwin-x86_64', match: (path) => /macos-x64/.test(path) },
+]
 
 const [, , tag, version, root] = process.argv
 if (!tag || !version || !root) {
@@ -62,15 +65,14 @@ for (const { key, match } of PLATFORMS) {
   }
 }
 
-const mac = files.find((path) => path.endsWith('.app.tar.gz.sig'))
-if (mac) {
-  const bundle = mac.slice(0, -'.sig'.length)
-  const entry = {
-    signature: readFileSync(mac, 'utf8').trim(),
+for (const { key, match } of MACS) {
+  const signature = files.find((path) => match(path) && path.endsWith('.app.tar.gz.sig'))
+  if (!signature) continue
+  const bundle = signature.slice(0, -'.sig'.length)
+  platforms[key] = {
+    signature: readFileSync(signature, 'utf8').trim(),
     url: `https://github.com/${REPO}/releases/download/${tag}/${bundle.split('/').pop()}`,
   }
-
-  for (const key of MAC_KEYS) platforms[key] = entry
 }
 
 if (!Object.keys(platforms).length) {

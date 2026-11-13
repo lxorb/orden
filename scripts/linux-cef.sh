@@ -44,8 +44,8 @@ case "${1:-use}" in
     sharun=https://raw.githubusercontent.com/FabianLars/Anylinux-AppImages/3e280d1b2270fecfcb2c2c823b490c782ecf1277/useful-tools/lib
     export ANYLINUX_LIB_SOURCE="${ANYLINUX_LIB_SOURCE:-$sharun/anylinux.c}"
     export GTK_CLASS_FIX_SOURCE="${GTK_CLASS_FIX_SOURCE:-$sharun/gtk-class-fix.c}"
-    case "${1:-}" in
-      build | bundle)
+    case "$(uname -s):${1:-}" in
+      Linux:build | Linux:bundle)
         lib="/usr/lib/$(uname -m)-linux-gnu"
         files=""
         for module in libsoftokn3.so libfreeblpriv3.so libfreebl3.so libnssckbi.so libnssdbm3.so; do

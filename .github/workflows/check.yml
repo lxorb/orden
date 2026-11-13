@@ -256,8 +256,8 @@ jobs:
           toolchain: stable
           components: clippy, rustfmt
 
-      - name: Linux's manifest
-        if: runner.os == 'Linux'
+      - name: The desktop manifest, CEF on Linux and macOS
+        if: runner.os != 'Windows'
         run: |
           node scripts/linux-manifest.mjs --check
           bash scripts/linux-cef.sh

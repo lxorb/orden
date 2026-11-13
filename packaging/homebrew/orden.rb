@@ -1,9 +1,16 @@
 cask "orden" do
   version "0.21.0"
-  sha256 "25ee0e6d2ab8229006c0375d0d682d7b207b9cb235cf42049a8743755d4baf27"
+  sha256 arm:   "25ee0e6d2ab8229006c0375d0d682d7b207b9cb235cf42049a8743755d4baf27",
+         intel: "25ee0e6d2ab8229006c0375d0d682d7b207b9cb235cf42049a8743755d4baf27"
 
-  url "https://github.com/lxorb/orden/releases/download/v#{version}/Orden-#{version}-macos-universal.dmg",
-      verified: "github.com/lxorb/orden/"
+  on_arm do
+    url "https://github.com/lxorb/orden/releases/download/v#{version}/Orden-#{version}-macos-arm64.dmg",
+        verified: "github.com/lxorb/orden/"
+  end
+  on_intel do
+    url "https://github.com/lxorb/orden/releases/download/v#{version}/Orden-#{version}-macos-x64.dmg",
+        verified: "github.com/lxorb/orden/"
+  end
   name "Orden"
   name "nibeditor"
   desc "Markdown editor that styles formatting in place instead of showing syntax"
@@ -26,7 +33,7 @@ cask "orden" do
     "~/Library/HTTPStorages/so.orden.Orden",
     "~/Library/Preferences/so.orden.Orden.plist",
     "~/Library/Saved Application State/so.orden.Orden.savedState",
-    "~/Library/WebKit/so.orden.Orden",
+    "~/Library/Caches/so.orden.Orden.helper",
   ]
 
   caveats <<~EOS

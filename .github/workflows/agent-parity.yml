@@ -61,7 +61,8 @@ jobs:
               echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden" >>"$GITHUB_ENV"
               ;;
             macOS)
-              pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --bundles app --config "$config"
+              bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --bundles app \
+                --ignore-version-mismatches --config "$config"
               app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
               echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
               ;;
