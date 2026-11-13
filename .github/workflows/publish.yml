@@ -220,14 +220,15 @@ jobs:
           renames=$(cat cask_renames.json 2>/dev/null || echo '{}')
           jq --indent 2 '. + {"nib": "orden"}' <<<"$renames" > cask_renames.json
 
-          dmg="Orden-$VERSION-macos-universal.dmg"
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl --pattern "$dmg"
-          sha=$(sha256sum "dl/$dmg" | cut -d' ' -f1)
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl --pattern "Orden-$VERSION-macos-*.dmg"
+          arm=$(sha256sum "dl/Orden-$VERSION-macos-arm64.dmg" | cut -d' ' -f1)
+          intel=$(sha256sum "dl/Orden-$VERSION-macos-x64.dmg" | cut -d' ' -f1)
           rm -r dl
 
           sed -i -E "s|^(  version )\".*\"$|\\1\"$VERSION\"|" Casks/orden.rb
-          sed -i -E "s|^(  sha256 )\".*\"$|\\1\"$sha\"|" Casks/orden.rb
-          grep -E '^  (version|sha256) ' Casks/orden.rb
+          sed -i -E "s|^(  sha256 arm: +)\".*\",$|\\1\"$arm\",|" Casks/orden.rb
+          sed -i -E "s|^( +intel: )\".*\"$|\\1\"$intel\"|" Casks/orden.rb
+          grep -E '^  (version|sha256) |intel:' Casks/orden.rb
 
       - name: Commit
         run: |

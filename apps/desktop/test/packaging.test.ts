@@ -1043,7 +1043,8 @@ describe('the packaging bump', () => {
     'windows-arm64-setup.exe',
     'windows-x64.msi',
     'windows-arm64.msi',
-    'macos-universal.dmg',
+    'macos-arm64.dmg',
+    'macos-x64.dmg',
   ]
   const moved = [
     'nix/flake.nix',
@@ -1116,7 +1117,8 @@ describe('the packaging bump', () => {
       expect(text('chocolatey/tools/chocolateyinstall.ps1')).toContain(
         hex(version, 'windows-arm64.msi').toUpperCase(),
       )
-      expect(text('homebrew/orden.rb')).toContain(hex(version, 'macos-universal.dmg'))
+      expect(text('homebrew/orden.rb')).toContain(hex(version, 'macos-arm64.dmg'))
+      expect(text('homebrew/orden.rb')).toContain(hex(version, 'macos-x64.dmg'))
       before = version
     }
   })

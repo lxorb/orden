@@ -153,7 +153,8 @@ edit('chocolatey/tools/chocolateyinstall.ps1', [
 
 edit('homebrew/orden.rb', [
   [/^( {2}version )"[^"]*"$/m, `$1"${version}"`],
-  [/^( {2}sha256 )"[0-9a-f]{64}"$/m, `$1"${digest(file('macos-universal', '.dmg'))}"`],
+  [/^( {2}sha256 arm: {3})"[0-9a-f]{64}",$/m, `$1"${digest(file('macos-arm64', '.dmg'))}",`],
+  [/^( {9}intel: )"[0-9a-f]{64}"$/m, `$1"${digest(file('macos-x64', '.dmg'))}"`],
 ])
 
 for (const [path, text] of pending) writeFileSync(join(ROOT, 'packaging', path), text)
