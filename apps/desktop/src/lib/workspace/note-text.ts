@@ -151,7 +151,6 @@ export interface Keeping {
   snapshot?: boolean
   source?: string
   undoable?: boolean
-  together?: boolean
   anyFile?: boolean
   throughLocks?: boolean
 }
@@ -179,7 +178,7 @@ export async function replaceInNotes(
     (change) =>
       canWriteAt(change.path) && (keeping.throughLocks === true || !protection.locked(change.path)),
   )
-  if (!writable.length || (keeping.together && writable.length < notes.length)) return 0
+  if (!writable.length) return 0
 
   const done: Undone[] = []
 

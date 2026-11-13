@@ -1,5 +1,5 @@
 import { isInboxPath } from '@orden/bases/inbox'
-import type { MetaPatch } from '@orden/sync-core/meta'
+import type { MetaPatch } from '@orden/sync-core'
 import type { ItemMetaStore } from '../workspace/item-meta.svelte'
 
 const OLD_KEYS = ['todo-list', 'todo-lists', 'done-on', 'cancelled-on']

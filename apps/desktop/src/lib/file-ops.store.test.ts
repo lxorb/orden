@@ -427,17 +427,6 @@ describe('a move into another space', () => {
     expect(workspace.arranged.of(HOME)).toEqual({ Work: ['Notes.md', 'Deep'] })
   })
 
-  test('keeps an open project about its note, in the space it went to', async () => {
-    const HOME = await twoSpaces()
-    const { openProject } = await import('./views/open')
-    const { readSpec } = await import('./views/spec')
-    const tab = openProject('Notes', 'Work/Notes.md')
-
-    await workspace.move(`${ROOT}/Work`, HOME)
-
-    expect(readSpec(tab.doc)).toEqual({ builtin: 'project', space: 'Home', path: 'Work/Notes.md' })
-  })
-
   test('keeps the bookmarks, in the space they went to', async () => {
     const HOME = await twoSpaces()
     workspace.bookmarks.put(ROOT, [

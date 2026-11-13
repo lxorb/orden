@@ -5,7 +5,6 @@ import { blockIds, freeBlockId } from '@orden/markdown/links'
 import { taskLine as lineWords } from '@orden/markdown/task-edits'
 import type { TaskFields } from '@orden/markdown/task-line'
 import { rows } from '../rows/rows.svelte'
-import { canWriteAt } from '../sharing.svelte'
 import { changed, type RowChange } from '../rows/write'
 import type { Change } from '../search/apply'
 import { changeOf } from '../search/replace'
@@ -16,14 +15,12 @@ import { type Said, undoToast } from '../undo-toast.svelte'
 import { dayOf, nowOf } from './days'
 import type { Drop } from './drop'
 import {
-  cutBlock,
   duplicatedBlock,
   indentedBlock,
   lineOfAnchor,
   movedBeside,
   movedBlock,
   editedLines,
-  movedUnder,
   outermost,
   withLines,
   withoutBlock,
@@ -57,29 +54,8 @@ async function rewrite(
   return replaced([changeOf(path, before, [edit])], said)
 }
 
-export async function rewriteNotes(
-  edits: readonly { path: string; after: (before: string) => string | null }[],
-  said?: Said,
-  together = false,
-): Promise<boolean> {
-  const changes = []
-  for (const { path, after } of edits) {
-    const before = await noteText(workspace, path)
-    if (before === null) continue
-    const next = after(before)
-    const edit = next === null ? null : oneEdit(before, next)
-    if (edit) changes.push(changeOf(path, before, [edit]))
-  }
-  if (!changes.length) return false
-  return replaced(changes, said, together)
-}
-
-async function replaced(
-  changes: readonly Change[],
-  said?: Said,
-  together = false,
-): Promise<boolean> {
-  if (!(await replaceInNotes(workspace, changes, { together }))) return false
+async function replaced(changes: readonly Change[], said?: Said): Promise<boolean> {
+  if (!(await replaceInNotes(workspace, changes))) return false
   const last = workspace.undone.last
   if (said && last) undoToast.tell(last, said, workspace.undone.stack)
   return true
@@ -284,36 +260,6 @@ export function duplicateRows(many: readonly Row[]): Promise<boolean> {
   )
 }
 
-export async function moveRowsTo(many: readonly Row[], target: string): Promise<boolean> {
-  const from = many.map(pathOf).filter((path) => path !== null)
-  if (![target, ...from].every((path) => canWriteAt(path))) return false
-  const was = await noteText(workspace, target)
-  if (was === null) return false
-  let there = was
-  const changes = []
-  for (const [path, inNote] of byNote(many)) {
-    if (samePath(path, target)) continue
-    const before = await noteText(workspace, path)
-    if (before === null) continue
-    let rest = before
-    const blocks: string[][] = []
-    for (const { anchor } of outermost(before, inNote)) {
-      const cut = cutBlock(rest, anchor)
-      if (!cut) continue
-      rest = cut.rest
-      blocks.unshift(cut.block)
-    }
-    const leave = oneEdit(before, rest)
-    if (!leave) continue
-    changes.push(changeOf(path, before, [leave]))
-    there = withLines(there, blocks.flat())
-  }
-  const arrive = oneEdit(was, there)
-  if (arrive) changes.push(changeOf(target, was, [arrive]))
-  if (!changes.length) return false
-  return replaced(changes, 'moved', true)
-}
-
 export async function linkToRow(row: Row): Promise<string | null> {
   const anchor = row.anchor
   const path = pathOf(row)
@@ -338,55 +284,14 @@ export async function indentRow(row: Row, deeper: boolean): Promise<boolean> {
   return rewrite(path, (before) => indentedBlock(before, anchor, deeper))
 }
 
-async function moveRowTo(row: Row, to: { path?: string; heading?: string }): Promise<boolean> {
-  const anchor = row.anchor
-  const from = pathOf(row)
-  if (!anchor || from === null) return false
-
-  const target = to.path === undefined ? null : targetOf(row, to.path)
-  if (target === null || samePath(target, from)) {
-    if (to.heading === undefined) return false
-    const heading = to.heading
-    return rewrite(from, (before) => movedUnder(before, anchor, heading), 'moved')
-  }
-
-  const [before, there] = await Promise.all([
-    noteText(workspace, from),
-    noteText(workspace, target),
-  ])
-  if (before === null) return false
-  const cut = cutBlock(before, anchor)
-  if (!cut) return false
-  const after = withLines(there ?? '', cut.block, to.heading)
-
-  const changes = []
-  const leave = oneEdit(before, cut.rest)
-  const arrive = oneEdit(there ?? '', after)
-  if (leave) changes.push(changeOf(from, before, [leave]))
-  if (arrive) changes.push(changeOf(target, there ?? '', [arrive]))
-  return replaced(changes, 'moved')
-}
-
-function targetOf(row: Row, named: string): string | null {
-  const space = workspace.spaces.find((one) => one.name === row.space)
-  if (!space) return null
-  const all = rows.of(row.space)
-  const found =
-    all.find((one) => one.kind === 'note' && samePath(one.path, named)) ??
-    all.find((one) => one.kind === 'note' && one.file.basename === named)
-  return found ? insideSpace(space.root, found.path) : null
-}
-
 export function dropRow(row: Row, drop: Drop): Promise<boolean> {
   if ('tick' in drop) return tickRow(row)
-  if ('move' in drop) return moveRowTo(row, drop.move)
   return writeRow(row, drop.change)
 }
 
 export async function addTask(
   path: string,
   fields: Partial<TaskFields> & { text: string },
-  heading?: string,
 ): Promise<boolean> {
   const line = lineWords(
     {
@@ -402,7 +307,7 @@ export async function addTask(
     },
     '- ',
   )
-  return rewrite(path, (before) => withLines(before, [line], heading))
+  return rewrite(path, (before) => withLines(before, [line]))
 }
 
 export async function pressRow(row: Row, change: RowChange, task?: string): Promise<boolean> {

@@ -2,8 +2,6 @@ import type { Priority, Row } from '@orden/bases'
 import { copyText } from '../clipboard'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { rows as store } from '../rows/rows.svelte'
-import { insideSpace, samePath } from '../space-paths'
-import { workspace } from '../workspace.svelte'
 import {
   deleteRows,
   duplicateRows,
@@ -11,13 +9,11 @@ import {
   indentRow,
   linkToRow,
   moveRow,
-  moveRowsTo,
   skipRows,
   tickRows,
   writeEach,
 } from './act'
 import type { Kit } from './kit'
-import { offersPlaces, placeEntries } from './project-actions'
 import type { RowKey } from './row-keys'
 import { deadlineField, deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { changeFor, loadByDay } from './schedule/schedule'
@@ -124,24 +120,6 @@ export function labelEntries(rows: readonly Row[]): MenuEntry[] {
   })
 }
 
-function tasksRoot(rows: readonly Row[]): string | null {
-  const tasks = rows.filter((row) => row.task)
-  const space = tasks[0]?.space
-  if (space === undefined || tasks.some((row) => row.space !== space)) return null
-  return workspace.spaces.find((one) => one.name === space)?.root ?? null
-}
-
-export function moveEntries(rows: readonly Row[]): MenuEntry[] {
-  const tasks = rows.filter((row) => row.task)
-  const root = tasksRoot(tasks)
-  if (root === null) return []
-  return placeEntries(
-    (path) => void moveRowsTo(tasks, path),
-    (note) => tasks.every((row) => samePath(insideSpace(root, row.path), note)),
-    root,
-  )
-}
-
 function more(label: string, entries: () => MenuEntry[]): MenuEntry {
   return { label, run: () => undefined, more: () => Promise.resolve(entries()) }
 }
@@ -173,7 +151,6 @@ export function taskMenu(
       priorityEntries(one ? task.priority : 0, (priority) => void prioritise(tasks, priority)),
     ),
     more('Labels', () => labelEntries(tasks)),
-    ...(offersPlaces(tasksRoot(tasks)) ? [more('Move to', () => moveEntries(tasks))] : []),
     DIVIDER,
     { label: 'Duplicate', run: () => void duplicateRows(tasks) },
     { label: 'Copy link', run: () => void copyLinks(tasks) },
@@ -235,9 +212,6 @@ function runTaskKey(kit: Kit, rows: readonly Row[], key: RowKey, at: Box): boole
       return true
     case 'labels':
       menuAt(at, labelEntries(tasks))
-      return true
-    case 'project':
-      menuAt(at, moveEntries(tasks))
       return true
     case 'more':
       taskMenu(at, tasks, kit)

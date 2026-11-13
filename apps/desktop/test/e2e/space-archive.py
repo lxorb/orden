@@ -20,10 +20,8 @@ async () => {
   await ws.addSpace('Work')
   await ws.noteFrom('# Plan\\n\\nThe plan.\\n', ws.activeSpace.root)
   await ws.addSpace('Old')
-  const trip = await ws.noteFrom(`# Trip\\n\\nThe mountains, and a lighthouse.\\n\\n- [ ] Pack the bags 🛫 ${today}\\n`, ws.activeSpace.root)
+  await ws.noteFrom('# Trip\\n\\nThe mountains, and a lighthouse.\\n', ws.activeSpace.root)
   await ws.loadTree()
-  window.tasks = await window.ordenApp.tasks()
-  if (trip) window.tasks.makeList(trip)
   if (ws.panel !== 'tree') ws.showPanel('tree')
   return ws.spaces.map((one) => one.name)
 }
@@ -39,8 +37,6 @@ ARCHIVED_ROWS = """() => [...document.querySelectorAll('[data-archived-spaces] .
 
 PICKER_ROWS = """() => [...document.querySelectorAll('.picker .orden-row-label')]
   .map((one) => one.textContent.trim())"""
-
-TASK = "() => window.tasks.rows.of().some((one) => one.task?.text === 'Pack the bags')"
 
 FOUND = """async () => {
   const { search, workspace } = window.ordenApp
@@ -75,7 +71,6 @@ def drive(browser: Browser) -> None:
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
     say(f"the spaces: {page.evaluate(SEED)}")
-    wait_for(page, TASK, "the task in the rows")
     if page.evaluate(HERE) != "Old":
         wrong(f"the drive is in {page.evaluate(HERE)!r}, not Old")
 
@@ -110,7 +105,6 @@ def drive(browser: Browser) -> None:
     if "Old" in page.evaluate(PALETTE):
         wrong("the lists of spaces still hold Old")
 
-    wait_for(page, f"!({TASK})()", "the task out of the rows", 15)
     hits = page.evaluate(FOUND)
     say(f"the search for Old's word: {hits} hits")
     if hits:
@@ -128,7 +122,6 @@ def drive(browser: Browser) -> None:
     if rows[-1:] != ["Old"] or archived:
         wrong(f"Old did not come back where it was: {rows}, archived {archived}")
     closed(page)
-    wait_for(page, TASK, "the task back in the rows", 15)
     hits = page.evaluate(FOUND)
     say(f"the search in Old again: {hits} hits")
     if not hits:

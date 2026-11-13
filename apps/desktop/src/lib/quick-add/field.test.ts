@@ -53,11 +53,10 @@ describe('a paste of several lines', () => {
 })
 
 describe('a word that asks for a suggestion', () => {
-  test('is a label after # @ %, a note after >, a heading after the note', () => {
+  test('is a label after # @ %', () => {
     expect(tokenAt('Call mum #fa', 12)).toEqual({ sign: '#', query: 'fa', from: 9, to: 12 })
     expect(tokenAt('Buy @', 5)).toEqual({ sign: '@', query: '', from: 4, to: 5 })
-    expect(tokenAt('Fix tap >Ho', 11)).toEqual({ sign: '>', query: 'Ho', from: 8, to: 11 })
-    expect(tokenAt('Fix tap >Home/Ki', 16)).toEqual({ sign: '/', query: 'Ki', from: 13, to: 16 })
+    expect(tokenAt('Fix tap >Ho', 11)).toBeNull()
     expect(tokenAt('Call mum', 8)).toBeNull()
     expect(tokenAt('#family call', 3)).toBeNull()
   })

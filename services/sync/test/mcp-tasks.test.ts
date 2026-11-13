@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { writeInboxText } from '../src/inbox-text'
+import { writeInboxText } from '../src/sync-server/src/inbox-text'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 import { running } from './room'
 

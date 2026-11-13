@@ -7,11 +7,9 @@ import type { SpaceLinks } from '@orden/scan/note'
 import { insideSpace, samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
-import { keeping } from '../workspace/file-ops'
 import { readText } from '../workspace/in-turn'
 import '../inbox/start.svelte'
 import { INBOX } from './inbox'
-import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
 import { homeRoot } from './home.svelte'
 import { type RowsListener, RowsStore } from './store'
@@ -42,7 +40,6 @@ links.hearSaves((path, content, arrived) => store.saved(path, content, !arrived)
 workspace.itemMeta.hear((path) => store.described(path))
 links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
-workspace.fileOps.follow(keeping(projectFolders))
 
 if (!__EVEN_PLUGIN__) {
   let moving: Promise<typeof import('./inbox-moving.svelte')> | null = null

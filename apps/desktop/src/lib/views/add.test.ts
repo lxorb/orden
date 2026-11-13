@@ -179,41 +179,34 @@ describe('a task added in a group of Todos', () => {
   const todos = { builtin: 'todos' as const, space: 'Mine' }
   const today = '2026-10-13'
 
-  test('is due today or tomorrow, wears the label, or goes into the project', () => {
+  test('is due today or tomorrow, or wears the label', () => {
     on.root = '/s/Private'
-    const root = '/s/Private'
     expect(prefillOf(todos, today, { property: 'formula.when', key: 'today' })).toEqual({
-      root,
       deadline: today,
     })
     expect(prefillOf(todos, today, { property: 'formula.when', key: 'tomorrow' })).toEqual({
-      root,
       deadline: '2026-10-14',
     })
-    expect(prefillOf(todos, today, { property: 'formula.when', key: null })).toEqual({ root })
+    expect(prefillOf(todos, today, { property: 'formula.when', key: null })).toEqual({})
     expect(prefillOf(todos, today, { property: 'task.tags', key: 'home' })).toEqual({
-      root,
       tags: ['home'],
     })
-    expect(prefillOf(todos, today, { property: 'file.path', key: 'Errands.md' })).toEqual({
-      root,
-      path: '/s/Private/Errands.md',
-    })
+    expect(prefillOf(todos, today, { property: 'file.path', key: 'Errands.md' })).toEqual({})
   })
 
-  test('in a tab of another space goes to the one inbox, by the add row', async () => {
+  test('in a tab of another space goes to the one inbox', async () => {
     added.length = 0
     const prefill = prefillOf(todos, today)
-    expect(openQuickAdd(prefill)).toBe(false)
+    expect(openQuickAdd(prefill)).toBe(true)
     await addTyped('Pay', prefill)
     expect(added).toEqual(['/s/Private/Inbox.md'])
   })
 
-  test('of one space goes to its inbox though it is the open one (#1153)', async () => {
+  test('of one space goes to the one inbox though it is the open one (#1153)', async () => {
     on.root = '/s/Private'
     added.length = 0
     const prefill = prefillOf(todos, today)
-    expect(openQuickAdd(prefill)).toBe(false)
+    expect(openQuickAdd(prefill)).toBe(true)
     await addTyped('Pay', prefill)
     expect(added).toEqual(['/s/Private/Inbox.md'])
   })
@@ -223,32 +216,8 @@ describe('a task added in a group of Todos', () => {
     expect(openQuickAdd({})).toBe(true)
   })
 
-  test('of every space narrowed to one goes to that space’s inbox (#1153)', () => {
-    expect(prefillOf({ builtin: 'todos' }, today, undefined, { space: 'Mine' })).toEqual({
-      root: '/s/Private',
-    })
-  })
-
-  test('of every space in a note’s group goes into that note of its own space (#1157)', () => {
-    on.root = '/s/Shared'
-    expect(
-      prefillOf({ builtin: 'todos' }, today, { property: 'file.path', key: 'Mine//Errands.md' }),
-    ).toEqual({ root: '/s/Private', path: '/s/Private/Errands.md' })
-    expect(
-      prefillOf({ builtin: 'todos' }, today, { property: 'file.path', key: 'Gone//Errands.md' }),
-    ).toEqual({})
-  })
-
-  test('in a project of another space says that space, so the add row writes there', () => {
-    on.root = '/s/Shared'
-    expect(prefillOf({ builtin: 'project', space: 'Mine', path: 'Errands.md' }, today)).toEqual({
-      root: '/s/Private',
-      path: '/s/Private/Errands.md',
-    })
-    on.root = '/s/Private'
-    expect(prefillOf({ builtin: 'project', space: 'Mine', path: 'Errands.md' }, today)).toEqual({
-      path: '/s/Private/Errands.md',
-    })
+  test('of every space narrowed to one still goes to the one inbox (#1153, #2103)', () => {
+    expect(prefillOf({ builtin: 'todos' }, today, undefined, { space: 'Mine' })).toEqual({})
   })
 
   test('a label of another space too, and with two of that name, nowhere it could not know', async () => {
@@ -298,9 +267,6 @@ describe('a task added from the add row of a group of Todos or Upcoming (#1248)'
     expect(
       prefillOf({ builtin: 'todos' }, today, { property: 'task.tags', key: 'work' }, only),
     ).toEqual({ tags: ['home', 'work'], priority: 1, due: today, assignee: 'Emil' })
-    expect(
-      prefillOf({ builtin: 'todos' }, today, undefined, { project: 'Mine//Errands.md' }),
-    ).toEqual({ root: '/s/Private', path: '/s/Private/Errands.md' })
     expect(prefillOf({ builtin: 'todos' }, today, undefined, { assignee: ':none' })).toEqual({})
   })
 })

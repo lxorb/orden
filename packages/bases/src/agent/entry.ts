@@ -9,7 +9,6 @@ export interface Entry {
   text: string
   fields: QuickFields
   description?: string
-  heading?: string
 }
 
 export function taskOf(entry: Entry): TaskFields {

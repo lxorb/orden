@@ -1,7 +1,6 @@
 import {
   type Base,
   isWhen,
-  placeOfKey,
   type Row,
   SMART_SORT,
   type View,
@@ -12,24 +11,13 @@ import {
 } from '@orden/bases'
 
 export type Grouping =
-  | 'default'
-  | 'none'
-  | 'note'
-  | 'section'
-  | 'date'
-  | 'deadline'
-  | 'priority'
-  | 'tag'
-  | 'due'
-  | 'status'
+  'default' | 'none' | 'date' | 'deadline' | 'priority' | 'tag' | 'due' | 'status'
 export type Sorting =
-  'default' | 'smart' | 'manual' | 'name' | 'date' | 'deadline' | 'priority' | 'note' | 'created'
+  'default' | 'smart' | 'manual' | 'name' | 'date' | 'deadline' | 'priority' | 'created'
 
 export const GROUPINGS: readonly Grouping[] = [
   'default',
   'none',
-  'note',
-  'section',
   'date',
   'deadline',
   'priority',
@@ -45,21 +33,10 @@ export const SORTINGS: readonly Sorting[] = [
   'date',
   'deadline',
   'priority',
-  'note',
   'created',
 ]
 
-export function groupingsFor(project: boolean): Grouping[] {
-  return [
-    'none',
-    ...(project ? (['section'] as const) : []),
-    'priority',
-    'tag',
-    'due',
-    ...(project ? [] : (['note'] as const)),
-    'status',
-  ]
-}
+export const GROUPS_OFFERED: readonly Grouping[] = ['none', 'priority', 'tag', 'due', 'status']
 
 export const SORTS_OFFERED: readonly Sorting[] = [
   'smart',
@@ -71,8 +48,6 @@ export const SORTS_OFFERED: readonly Sorting[] = [
 ]
 
 const BY: Partial<Record<Grouping | Sorting, string>> = {
-  note: 'file.basename',
-  section: 'task.section',
   date: 'task.date',
   deadline: 'task.deadline',
   priority: 'task.priority',
@@ -82,7 +57,6 @@ const BY: Partial<Record<Grouping | Sorting, string>> = {
 
 const GROUP_BY: Partial<Record<Grouping, string>> = {
   ...BY,
-  note: 'file.path',
   tag: 'task.tags',
   due: 'formula.when',
   status: 'task.status',
@@ -92,7 +66,6 @@ export interface Only {
   priority?: 1 | 2 | 3 | 4
   label?: string
   date?: 'overdue' | 'today' | 'week' | 'none'
-  project?: string
   created?: 'today' | 'week' | 'month'
   assignee?: string
   space?: string
@@ -115,25 +88,6 @@ export function spacesIn(rows: readonly Row[], order: readonly string[]): string
     return index === -1 ? order.length : index
   }
   return [...seen].sort((a, b) => at(a) - at(b) || a.localeCompare(b))
-}
-
-export function notesIn(rows: readonly Row[]): { path: string; name: string }[] {
-  const tasks = rows.filter((row) => row.task)
-  const many = tasks.some((row) => row.space !== tasks[0]?.space)
-  const seen = new Map<string, { space: string; name: string }>()
-  for (const row of tasks)
-    seen.set(many ? `${row.space}//${row.path}` : row.path, {
-      space: row.space,
-      name: row.file.basename,
-    })
-  const named = new Map<string, number>()
-  for (const { name } of seen.values()) named.set(name, (named.get(name) ?? 0) + 1)
-  return [...seen]
-    .map(([path, { space, name }]) => ({
-      path,
-      name: many && (named.get(name) ?? 0) > 1 ? `${name} (${space})` : name,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
@@ -160,7 +114,6 @@ export function groupingOf(view: View, original: View | null): Grouping {
   if (original && same(view.groupBy, original.groupBy)) return 'default'
   const by = view.groupBy?.property
   if (by === undefined) return 'none'
-  if (by === 'file.basename') return 'note'
   if (isWhen(by)) return 'due'
   return GROUPINGS.find((one) => GROUP_BY[one] === by) ?? 'none'
 }
@@ -188,7 +141,6 @@ export function withGrouping(
       }
       const property = grouping === 'due' ? `formula.${whenName(base)}` : GROUP_BY[grouping]
       if (property === undefined) return next
-      if (grouping === 'section') orden.groupOrder = 'rows'
       if (grouping === 'due') orden.groups = [...WHEN_GROUPS]
       next.groupBy = { property, direction: 'ASC' }
       return next
@@ -282,7 +234,6 @@ export function onlyOf(view: View): Only {
   const priority = priorityOf(Reflect.get(kept, 'priority'))
   const label: unknown = Reflect.get(kept, 'label')
   const date = dateOf(Reflect.get(kept, 'date'))
-  const project: unknown = Reflect.get(kept, 'project')
   const created: unknown = Reflect.get(kept, 'created')
   const assignee: unknown = Reflect.get(kept, 'assignee')
   const space: unknown = Reflect.get(kept, 'space')
@@ -290,7 +241,6 @@ export function onlyOf(view: View): Only {
     ...(typeof space === 'string' && space ? { space } : {}),
     ...(created === 'today' || created === 'week' || created === 'month' ? { created } : {}),
     ...(typeof assignee === 'string' && assignee ? { assignee } : {}),
-    ...(typeof project === 'string' && project ? { project } : {}),
     ...(priority === undefined ? {} : { priority }),
     ...(typeof label === 'string' && label ? { label } : {}),
     ...(date === undefined ? {} : { date }),
@@ -315,11 +265,6 @@ export function onlyFilter(only: Only): string | null {
   else if (only.date === 'today') parts.push('task.date == today()')
   else if (only.date === 'week') parts.push('task.date >= today() && task.date <= today() + "6d"')
   else if (only.date === 'none') parts.push('!task.date')
-  if (only.project !== undefined) {
-    const { space, path } = placeOfKey(only.project)
-    if (space !== null) parts.push(`file.space == ${JSON.stringify(space)}`)
-    parts.push(`file.path == ${JSON.stringify(path)}`)
-  }
   if (only.created === 'today') parts.push('task.created == today()')
   else if (only.created === 'week') parts.push('task.created >= today() - "6d"')
   else if (only.created === 'month') parts.push('task.created >= today() - "29d"')
@@ -339,15 +284,13 @@ const narrowed = new WeakMap<Base, Map<number, Base>>()
 export function displayed(base: Base, at: number): Base {
   const view = base.views[at]
   const extra = view ? onlyFilter(onlyOf(view)) : null
-  const byName = view?.groupBy?.property === 'file.basename' ? view.groupBy : null
-  if (!view || (extra === null && !byName)) return base
+  if (!view || extra === null) return base
   let kept = narrowed.get(base)
   const known = kept?.get(at)
   if (known) return known
   const made = withView(base, at, (one) => ({
     ...one,
-    ...(extra === null ? {} : { filters: view.filters ? { and: [view.filters, extra] } : extra }),
-    ...(byName ? { groupBy: { ...byName, property: GROUP_BY.note ?? 'file.path' } } : {}),
+    filters: view.filters ? { and: [view.filters, extra] } : extra,
   }))
   if (!kept) narrowed.set(base, (kept = new Map<number, Base>()))
   kept.set(at, made)

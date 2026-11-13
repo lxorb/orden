@@ -4,7 +4,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -86,23 +86,14 @@ And as a board:
 Words after them.
 """
 
-WRITE = """async ([files]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) {
-    await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
-  }
-  await ws.loadTree()
-}"""
 
 def seed(page: Page) -> dict[str, str]:
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
     files = [
-        ["Errands.md", ERRANDS.format(**days)],
-        ["Thesis.md", THESIS.format(**days)],
+        [None, ERRANDS.format(**days)],
+        [None, THESIS.format(**days)],
         ["Bugs/Sync.md", SYNC.format(**days)],
         ["Bugs/Glass.md", GLASS.format(**days)],
         ["Bugs.base", BASE],
@@ -274,15 +265,18 @@ def the_big_board(browser: Browser) -> None:
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     lines = "\n".join(f"- [ ] Card number {at} #big" for at in range(2000))
-    page.evaluate(WRITE, [[["Big.md", f"# Big\n\n{lines}\n"]]])
+    page.evaluate(WRITE, [[[None, f"{lines}\n"]]])
     wait_for(
         page,
         "() => window.tasks.rows.of().filter((one) => one.task?.tags.includes('big')).length === 2000",
         "two thousand rows",
     )
-    page.evaluate(
-        """() => window.tasks.openProject(window.ordenApp.workspace.activeSpace.name, 'Big.md', 'kanban')"""
-    )
+    page.evaluate("window.tasks.openTodos()")
+    wait_for(page, "document.querySelector('.view-tab .task, .view-tab .card')", "Tasks")
+    page.locator(".view-tab .display-button").first.click()
+    wait_for(page, "document.querySelector('.pop .display')", "the Display popover")
+    page.locator(".pop .orden-segmented [role=radio]", has_text="Board").click()
+    page.keyboard.press("Escape")
     wait_for(page, "document.querySelector('.view-tab .card')", "the big board")
     quiet(page)
     measured = page.evaluate(

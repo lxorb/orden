@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -30,15 +30,6 @@ ERRANDS = """# Errands
 - [ ] Buy stamps 📅 {today}
 """
 
-WRITE = """async ([files]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) {
-    await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
-  }
-  await ws.loadTree()
-}"""
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words) ?? null"
 
@@ -48,7 +39,7 @@ def seed(page: Page) -> dict[str, str]:
     days: dict[str, str] = page.evaluate(DAYS)
     page.evaluate(
         WRITE,
-        [[["Errands.md", ERRANDS.format(**days)], ["Projects/Home.md", "- [ ] Fix the tap\n"]]],
+        [[[None, ERRANDS.format(**days)]]],
     )
     wait_for(
         page,
@@ -130,38 +121,12 @@ def selection(page: Page) -> None:
         "one undo taking all three back",
     )
 
-    page.locator(".view-tab [role=toolbar] button[aria-label='Move to']").click()
-    wait_for(page, "document.querySelector('.menu [role=menuitem]')", "the projects")
-    shot(page, "03-move-to")
-    page.locator(".menu [role=menuitem]", has_text="Home").click()
-    wait_for(
-        page,
-        f"() => ['Call the bank', 'Water the plants', 'Pay the dentist'].every((w) => ({TASK})(w)?.path === 'Projects/Home.md')",
-        "the three moved into Home",
-    )
-    if page.evaluate(f"({TASK})('Buy stamps')?.path") != "Errands.md":
-        wrong("a task not selected moved")
-    page.keyboard.press("Control+z")
-    wait_for(
-        page,
-        f"() => ['Call the bank', 'Water the plants', 'Pay the dentist'].every((w) => ({TASK})(w)?.path === 'Errands.md')",
-        "one undo bringing them back",
-    )
-
     open_today(page)
     page.locator(f"{row('Buy stamps')} .words").click(modifiers=["Control"])
     wait_for(page, "document.querySelector('.view-tab [role=toolbar]')", "the bar for one")
     page.locator(row("Buy stamps")).focus()
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.view-tab [role=toolbar]')", "Escape letting it go")
-
-    page.keyboard.press("v")
-    wait_for(page, "document.querySelector('.menu [role=menuitem]')", "v's projects")
-    items = page.locator(".menu [role=menuitem]").all_inner_texts()
-    say(f"[v] {items}")
-    if not any("Inbox" in one for one in items) or not any("Home" in one for one in items):
-        wrong("v does not offer the Inbox and the projects")
-    page.keyboard.press("Escape")
 
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"

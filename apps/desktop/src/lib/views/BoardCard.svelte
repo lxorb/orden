@@ -136,11 +136,7 @@
     {#if row.task}
       {#if lines.props}
         <div class="line meta">
-          <TaskMeta
-            {row}
-            meta={metaOf(row.task, live.today, true, undefined)}
-            where={kit.spec.builtin !== 'project'}
-          />
+          <TaskMeta {row} meta={metaOf(row.task, live.today, true, undefined)} />
         </div>
       {/if}
     {:else}

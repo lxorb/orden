@@ -17,7 +17,6 @@ const TASK_ENTRIES: Shortcut[] = (
     ['tasks.p3', () => 'Priority 3', '3'],
     ['tasks.p4', () => 'Priority 4', '4'],
     ['tasks.labels', () => 'Labels', 'l'],
-    ['tasks.move', () => 'Move to', 'v'],
     ['tasks.more', () => 'More', '.'],
     ['tasks.comment', () => 'Comment', 'c'],
     ['tasks.select', () => 'Select', 'x'],

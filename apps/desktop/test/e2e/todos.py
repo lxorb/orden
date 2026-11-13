@@ -4,7 +4,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -35,15 +35,6 @@ ERRANDS = """# Errands
 - [x] Bread ✅ {yesterday}
 """
 
-WRITE = """async ([files]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) {
-    await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
-  }
-  await ws.loadTree()
-}"""
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words)?.task ?? null"
 
@@ -56,7 +47,7 @@ def seed(page: Page) -> None:
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
-    page.evaluate(WRITE, [[["Errands.md", ERRANDS.format(**days)]]])
+    page.evaluate(WRITE, [[[None, ERRANDS.format(**days)]]])
     wait_for(page, f"() => !!({TASK})('Read a book')", "the seeded rows")
 
 def texts(page: Page, selector: str) -> list[str]:
@@ -101,7 +92,7 @@ def the_one_view(page: Page) -> None:
             wrong(f"the panel still has {gone}")
     heads = texts(page, ".view-tab .head .fold")
     say(f"[groups] {json.dumps(heads, ensure_ascii=False)}")
-    wanted = ["Overdue", "Today", "Tomorrow", "Later", "No date"]
+    wanted = ["Overdue", "Today", "Tomorrow", "Later"]
     if [one.split()[0] if one.split()[0] != "No" else "No date" for one in heads] != wanted:
         wrong(f"Todos is grouped {heads}, not {wanted}")
     words = texts(page, ".view-tab .task .words")

@@ -1,11 +1,10 @@
 import type { Base, Filter, View } from './types'
 
 export type BuiltinName =
-  'todos' | 'inbox' | 'today' | 'upcoming' | 'logbook' | 'project' | 'label' | 'assigned'
+  'todos' | 'inbox' | 'today' | 'upcoming' | 'logbook' | 'label' | 'assigned'
 
 export interface BuiltinParams {
   inboxes?: { space: string; path: string }[]
-  note?: { space: string; path: string }
   tag?: string
   space?: string
   undated?: boolean
@@ -131,17 +130,6 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
         },
         { day: 'if(task.completed, task.completed, task.cancelledOn)' },
       )
-    case 'project': {
-      const note = params.note
-      return base({
-        type: 'list',
-        name: note ? note.path.replace(/^.*\//, '').replace(/\.md$/i, '') : 'Project',
-        filters: note ? inNote(note.space, note.path) : 'false',
-        sort: [],
-        groupBy: { property: 'task.section', direction: 'ASC' },
-        orden: { rows: 'tasks', groupOrder: 'rows', kept: {} },
-      })
-    }
     case 'label': {
       const tag = quote(params.tag ?? '')
       const tagged = `if(task, task.started && task.hasTag(${tag}), file.hasTag(${tag}))`

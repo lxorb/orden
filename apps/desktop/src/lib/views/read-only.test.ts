@@ -129,8 +129,7 @@ vi.mock('./automate', () => ({ planned: () => planning.plan }))
 
 const { noteRow, taskRow } = await import('./fixture')
 const { kitFor } = await import('./kit')
-const { moveRowsTo, tickRow, writeEach } = await import('./act')
-const { offersPlaces, placeEntries } = await import('./project-actions')
+const { tickRow, writeEach } = await import('./act')
 const { addNote } = await import('./add')
 const { heard, readHeld, repeatTemplates, settledRuns } = await import('./running')
 const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../settings.svelte')
@@ -464,45 +463,8 @@ describe("a task's view, in a space shared to be read", () => {
   })
 })
 
-describe('a move with one end in a space shared to be read', () => {
-  const mine = () => taskRow(PLAN, TASK, 3, { space: 'Mine' })
-
-  test('does not take a task of mine into their note, and keeps it in mine', async () => {
-    expect(await moveRowsTo([mine()], `${THEIRS.root}/${PLAN}`)).toBe(false)
-    expect(written).toEqual([])
-    expect(disk.get(`${MINE.root}/${PLAN}`)).toContain(TASK)
-  })
-
-  test('does not copy one of theirs into mine', async () => {
-    disk.set(`${MINE.root}/Inbox.md`, '')
-    expect(await moveRowsTo([theirTask()], `${MINE.root}/Inbox.md`)).toBe(false)
-    expect(written).toEqual([])
-    expect(disk.get(`${MINE.root}/Inbox.md`)).toBe('')
-  })
-
-  test('offers no place in a space shared to be read', () => {
-    expect(offersPlaces()).toBe(false)
-    expect(placeEntries(() => undefined)).toEqual([])
-  })
-})
-
 describe('the Tasks panel, in a space shared to be read', () => {
   const reading = { lang: 'en', today: '2026-10-24' } as never
-
-  test('makes no project, at the top, inside another or beside one', async () => {
-    const { addProject, addProjectBeside, addSubproject } = await import('./project-actions')
-    const parent = { note: `${THEIRS.root}/Projects/Garden.md`, folder: null }
-    expect(await addProject(THEIRS.root, 'Secret')).toBeNull()
-    expect(await addSubproject(parent, 'Beds')).toBeNull()
-    expect(await addProjectBeside(parent, 'Shed', true)).toBeNull()
-    expect(written).toEqual([])
-  })
-
-  test("while one is still made in the reader's own", async () => {
-    const { addProject } = await import('./project-actions')
-    expect(await addProject(MINE.root, 'Mine')).not.toBeNull()
-    expect(written).toHaveLength(1)
-  })
 
   test('saves no filter, new or over the one it was read from', async () => {
     const { saveFilter } = await import('./filters')

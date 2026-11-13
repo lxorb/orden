@@ -36,7 +36,7 @@
   } = $props()
 
   const how = $derived(TAB_KINDS[tab.kind].preview)
-  const locked = $derived(workspace.protection.locked(noteBehind(tab, workspace.spaces)))
+  const locked = $derived(workspace.protection.locked(noteBehind(tab)))
 
   const START = 6000
 

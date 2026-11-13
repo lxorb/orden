@@ -195,13 +195,12 @@ describe('lines pasted as a task each', () => {
     flushSync()
   }
 
-  test('each becomes a task, under the heading the field was opened on', async () => {
+  test('each becomes a task', async () => {
     const handed: Entry[] = []
     shown = mount(QuickAdd, {
       target: document.body,
       props: {
         langs: ['en'],
-        prefill: { heading: 'Soon' },
         onsubmit: (entry: Entry) => {
           handed.push(entry)
           return true
@@ -215,10 +214,6 @@ describe('lines pasted as a task each', () => {
     document.querySelector<HTMLButtonElement>('.pasted .add')?.click()
     await settled()
 
-    expect(handed.map((one) => [one.text, one.heading])).toEqual([
-      ['Milk', 'Soon'],
-      ['Call Ada', 'Soon'],
-      ['Sketch the plan', 'Soon'],
-    ])
+    expect(handed.map((one) => one.text)).toEqual(['Milk', 'Call Ada', 'Sketch the plan'])
   })
 })

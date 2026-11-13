@@ -33,9 +33,6 @@
   import { copyText } from '../clipboard'
   import { displayName } from './columns'
   import ViewSettings from './ViewSettings.svelte'
-  import { projectAt, renameProject } from './project-actions'
-  import { addSection, projectOf } from './section-actions'
-  import { prompt } from '../prompt.svelte'
   import { type Layout, LAYOUTS, layoutName, layoutOf, propertyName } from './words'
 
   const {
@@ -69,7 +66,6 @@
   ] as const
 
   let open = $state<Tool | 'display' | 'settings' | 'chip-filter' | 'chip-sort' | null>(null)
-  const project = $derived(projectOf(kit))
   const tasky = $derived(kit.spec.builtin !== undefined || view?.orden.rows === 'tasks')
   const tabbed = $derived(kit.spec.builtin === undefined)
   const displayChanged = $derived.by(() => {
@@ -139,28 +135,6 @@
   function viewRows(base: Base): MenuEntry[] {
     const views = base.views
     return [
-      ...(project
-        ? [
-            { label: 'Rename', run: () => (renaming = true) },
-            {
-              label: 'Add section',
-              asks: true,
-              run: () =>
-                void prompt
-                  .ask({ title: 'Add section', confirmLabel: 'Add section' })
-                  .then((words) => (words?.trim() ? addSection(kit, words) : undefined)),
-            },
-            { label: 'Open in note', run: () => void workspace.open(project.path) },
-            {
-              label: 'Save as CSV',
-              run: () =>
-                void import('./todoist-csv').then((one) =>
-                  one.saveProjectCsv(project.path, project.name),
-                ),
-            },
-            DIVIDER,
-          ]
-        : []),
       ...(views.length > 1
         ? [
             ...views.map((one, at) => ({
@@ -171,7 +145,7 @@
             DIVIDER,
           ]
         : []),
-      ...(kit.writable && !project && (kit.spec.builtin === undefined || views.length > 1)
+      ...(kit.writable && (kit.spec.builtin === undefined || views.length > 1)
         ? [{ label: 'Rename', run: () => (renaming = true) }]
         : []),
       ...(kit.writable
@@ -655,7 +629,7 @@
     {#if renaming}
       <input
         class="orden-field rename"
-        value={project ? named : (view?.name ?? '')}
+        value={view?.name ?? ''}
         aria-label="Rename"
         use:focusSoon
         onkeydown={(event) => {
@@ -670,10 +644,7 @@
           if (!renaming) return
           const name = event.currentTarget.value
           renaming = false
-          if (project) {
-            if (name.trim() && name.trim() !== project.name)
-              void renameProject(projectAt(project.path), name)
-          } else kit.change((one, at) => renameView(one, at, name))
+          kit.change((one, at) => renameView(one, at, name))
         }}
       />
     {:else}

@@ -1,4 +1,4 @@
-import type { Env } from '../types'
+import type { Env } from '../../../sync-server/src/api'
 
 export async function zoneOf(env: Env, user: string): Promise<string> {
   const row = await env.DB.prepare('select zone from users where id = ?')

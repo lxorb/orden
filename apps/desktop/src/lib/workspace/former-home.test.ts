@@ -84,7 +84,6 @@ async function start(): Promise<boolean> {
 }
 const { ItemMetaStore } = await import('./item-meta.svelte')
 const { pickedInbox } = await import('../rows/inbox')
-const { projectsOf } = await import('../rows/projects')
 const { ROOTS_MOVED } = await import('./roots-moved')
 
 interface Profile {
@@ -127,7 +126,6 @@ function oldProfile({ base, join }: Profile) {
     }),
   )
   localStorage.setItem('orden:inbox', JSON.stringify({ [root]: 'Lists/Groceries.md' }))
-  localStorage.setItem('orden:projects', JSON.stringify({ [root]: 'Areas' }))
   localStorage.setItem(
     'orden:workspace',
     JSON.stringify({ spaces: [{ root, name: 'Work' }], active: root }),
@@ -172,7 +170,7 @@ describe.each([
 ])('an older profile on %s brought to this build', (_, profile) => {
   const now = profile.join(profile.base.to, 'Spaces', 'Work')
 
-  test('keeps every item’s metadata, the chosen inbox and the Projects folder', async () => {
+  test('keeps every item’s metadata and the chosen inbox', async () => {
     oldProfile(profile)
     homes.said = [profile.base]
 
@@ -186,7 +184,6 @@ describe.each([
       'k3:20261101',
     )
     expect(pickedInbox(now, [])).toBe('Lists/Groceries.md')
-    expect(projectsOf(now)).toBe('Areas')
     expect(localStorage.getItem('orden:theme')).toBe('dark')
     expect(localStorage.getItem('orden:item-meta')).not.toContain('former.app.id')
     expect(asked).toContainEqual({ command: 'rehome_snapshots', args: profile.base })

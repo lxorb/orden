@@ -2,7 +2,6 @@ import { deadlineField, deadlineOf, startField, startOf } from '@orden/markdown/
 import {
   addDays,
   groupName,
-  placeOfKey,
   type Priority,
   type Row,
   type TaskChange,
@@ -13,8 +12,7 @@ import type { RowChange } from '../rows/write'
 import { bare, isNoteProperty } from './columns'
 import { dayIn } from './values'
 
-export type Drop =
-  { change: RowChange } | { tick: true } | { move: { path?: string; heading?: string } }
+export type Drop = { change: RowChange } | { tick: true }
 
 type DateField = 'due' | 'scheduled' | 'start' | 'deadline'
 const DATE_FIELDS: readonly string[] = ['due', 'scheduled', 'start', 'deadline']
@@ -72,10 +70,6 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
     return { change: { task: { assignee: typeof key === 'string' && key ? key : null } } }
   }
 
-  if (field === 'section') {
-    return typeof key === 'string' ? { move: { heading: key } } : null
-  }
-
   return null
 }
 
@@ -111,12 +105,6 @@ export function dropInto(
   if (property === 'formula.day') {
     const task = row.task
     return task && !task.done && !task.cancelled ? taskDrop('date', key, row, today) : null
-  }
-
-  if ((property === 'file.path' || property === 'file.basename') && row.kind === 'task') {
-    if (typeof key !== 'string' || !key) return null
-    const { space, path } = property === 'file.path' ? placeOfKey(key) : { space: null, path: key }
-    return space === null || space === row.space ? { move: { path } } : null
   }
 
   if (!isNoteProperty(property)) return null

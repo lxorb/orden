@@ -186,16 +186,6 @@ describe('the built-in views', () => {
     ])
   })
 
-  test("a project: its tasks under its headings, in the note's order", () => {
-    const project = builtinView('project', { note: { space: 'Notes', path: 'Errands.md' } })
-    expect(project.views[0]?.name).toBe('Errands')
-    expect(keyed(answer(project, 0, rows, context))).toEqual([
-      ['Health', ['Gym', 'Dentist']],
-      ['Admin', ['Taxes']],
-      [null, ['Review PR', 'Fix the bug']],
-    ])
-  })
-
   test('a label: tasks and notes that carry the tag', () => {
     const label = builtinView('label', { tag: 'work' })
     const result = answer(label, 0, rows, context)
@@ -220,18 +210,9 @@ describe('the built-in views', () => {
   })
 
   test('each one copies to a base file that reads back the same', () => {
-    for (const name of [
-      'inbox',
-      'today',
-      'upcoming',
-      'logbook',
-      'project',
-      'label',
-      'assigned',
-    ] as const) {
+    for (const name of ['inbox', 'today', 'upcoming', 'logbook', 'label', 'assigned'] as const) {
       const base = builtinView(name, {
         tag: 'x',
-        note: { space: 'S', path: 'N.md' },
         inboxes: [{ space: 'S', path: 'Inbox.md' }],
       })
       expect(readBase(writeBase(base))).toEqual(base)

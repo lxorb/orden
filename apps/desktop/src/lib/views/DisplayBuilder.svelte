@@ -10,9 +10,8 @@
     type Grouping,
     GROUPINGS,
     groupingOf,
-    groupingsFor,
+    GROUPS_OFFERED,
     type Only,
-    notesIn,
     onlyOf,
     shippedGrouping,
     shippedSorting,
@@ -51,11 +50,9 @@
   const sorting = $derived(view ? sortingOf(view, original) : UNSORTED)
   const only = $derived(view ? onlyOf(view) : {})
   const labels = $derived(labelsOf(live.rows))
-  const project = $derived(kit.spec.builtin === 'project')
-  const notes = $derived(project ? [] : notesIn(live.rows))
   const assignees = $derived(assigneesOf(live.rows))
   const spaces = $derived(
-    kit.spec.space === undefined && kit.spec.builtin !== 'project'
+    kit.spec.space === undefined
       ? spacesIn(
           live.rows,
           workspace.shownSpaces.map((one) => one.name),
@@ -73,7 +70,7 @@
   const sortingSet = $derived(original !== null && sortingShown !== shippedSorting(original))
 
   const groupings = $derived.by(() => {
-    const offered: Grouping[] = groupingsFor(project)
+    const offered: Grouping[] = [...GROUPS_OFFERED]
     if (!offered.includes(groupingShown)) offered.push(groupingShown)
     return offered
   })
@@ -89,8 +86,6 @@
   const GROUP_NAMES: Record<Grouping, string> = {
     default: 'Default',
     none: 'None',
-    note: 'Project',
-    section: 'Section',
     date: 'Start date',
     deadline: 'Deadline',
     priority: 'Priority',
@@ -106,7 +101,6 @@
     date: 'Start date',
     deadline: 'Deadline',
     priority: 'Priority',
-    note: 'Note',
     created: 'Created',
   }
   const ANY = ''
@@ -142,10 +136,6 @@
       const day = change.date
       if (day === 'overdue' || day === 'today' || day === 'week' || day === 'none') next.date = day
       else delete next.date
-    }
-    if (change.project !== undefined) {
-      if (change.project === ANY) delete next.project
-      else next.project = change.project
     }
     if (change.created !== undefined) {
       const when = change.created
@@ -270,20 +260,6 @@
             ...spaces.map((name) => ({ value: name, label: name })),
           ]}
           onchange={(next: string) => narrow({ space: next })}
-        />
-      </div>
-    {/if}
-    {#if notes.length > 1 || only.project !== undefined}
-      <div class="pair">
-        <span class="name">Project{@render dot(only.project !== undefined)}</span>
-        <Select
-          label="Project"
-          value={only.project ?? ANY}
-          options={[
-            { value: ANY, label: 'All' },
-            ...notes.map((one) => ({ value: one.path, label: one.name })),
-          ]}
-          onchange={(next: string) => narrow({ project: next })}
         />
       </div>
     {/if}

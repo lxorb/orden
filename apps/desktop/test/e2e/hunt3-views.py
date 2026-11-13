@@ -161,7 +161,7 @@ def drive_block_links(page: Page) -> None:
         wrong(f"the link to a block of another note did not land on it: {shown}")
 
 def drive_ticks(page: Page) -> None:
-    DRIVE.seed(page, "# Y note\n\n- [ ] Alpha 🔁 every day 📅 2026-11-04\n- [ ] Bravo\n", lists=True)
+    inbox = DRIVE.todos(page, "- [ ] Alpha 🔁 every day 📅 2026-11-04\n- [ ] Bravo\n")
     DRIVE.seed(page, "# Fence note\n\n```tasks\nnot done\n```\n")
     page.wait_for_timeout(1000)
     DRIVE.open_note(page, "Fence note")
@@ -182,9 +182,8 @@ def drive_ticks(page: Page) -> None:
     say(f"[hashes] {done}")
     page.wait_for_timeout(1200)
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
-    DRIVE.open_note(page, "Y note")
-    words = page.evaluate("() => window.ordenApp.workspace.active.doc")
-    say(f"[Y note] {words!r}")
+    words = page.evaluate("async (path) => await window.ordenApp.workspace.noteText(path)", inbox)
+    say(f"[inbox] {words!r}")
     if words is not None:
         lines = words.split("\n")
         if not any(line.startswith("- [x] Bravo") for line in lines):

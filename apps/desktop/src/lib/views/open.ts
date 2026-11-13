@@ -1,13 +1,8 @@
-import { writeBase } from '@orden/bases'
 import type { OpenHow } from '../new-tab'
 import { nameOf, samePath } from '../space-paths'
 import { basesOn } from '../settings.svelte'
 import { workspace } from '../workspace.svelte'
 import { type Builtin, readSpec, sameView, type ViewSpec, writeSpec } from './spec'
-import { setLayout } from './edit'
-import { keepProjectView, projectView } from './kept-views'
-import './project-follow'
-import { builtinBase } from './source'
 import { builtinName } from './words'
 
 function openAlready(spec: ViewSpec, path: string | null) {
@@ -41,21 +36,6 @@ export function openTodos(space?: string, how: OpenHow = {}) {
 /** @public */
 export function openBuiltin(builtin: Builtin, how: OpenHow = {}) {
   return openSpec({ builtin }, builtinName(builtin), null, how)
-}
-
-export function openProject(space: string, path: string, layout?: string, how: OpenHow = {}) {
-  const name = nameOf(path).replace(/\.md$/i, '')
-  const kept = layout === undefined ? projectView(space, path) : undefined
-  const spec: ViewSpec = { builtin: 'project', space, path, ...(kept ? { yaml: kept } : {}) }
-  const tab = openSpec(spec, name, null, how)
-  if (layout) {
-    const now = readSpec(tab.doc) ?? spec
-    const yaml = writeBase(setLayout(builtinBase(now), 0, layout))
-    tab.note.replace(writeSpec({ ...now, yaml }), false)
-    keepProjectView(space, path, yaml)
-    workspace.scheduleSession()
-  }
-  return tab
 }
 
 export function openLabel(tag: string, how: OpenHow = {}, space?: string) {

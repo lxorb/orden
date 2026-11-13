@@ -5,7 +5,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -19,12 +19,10 @@ NOTE = """# Errands
 - [ ] Bare
 """
 
-WRITE = """async ([path, text]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  await window.tasks.writeFile(`${root}/${path}`, text)
-  window.tasks.makeList(`${root}/${path}`)
-  await ws.loadTree()
+
+RESET = """async (text) => {
+  const inbox = await window.tasks.rows.inbox()
+  await window.tasks.writeFile(inbox, text)
 }"""
 
 TODAY = """() => {
@@ -120,7 +118,7 @@ def carried(page: Page) -> None:
     carry(page, rows.nth(0), page.locator(".view-tab .orden-section.head").last)
     if DRIVE.waited(page, f"() => ({TAGS})()?.join() === 'c'", "a taken off, c kept"):
         say(f"[carried] {page.evaluate(TAGS)}")
-    page.evaluate(WRITE, ["Errands.md", NOTE.format(today=page.evaluate(TODAY))])
+    page.evaluate(RESET, NOTE.format(today=page.evaluate(TODAY)))
     wait_for(page, f"() => ({TAGS})()?.join() === 'a,b'", "both labels back")
     quiet(page)
 
@@ -178,7 +176,7 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
     handles(page)
-    page.evaluate(WRITE, ["Errands.md", NOTE.format(today=page.evaluate(TODAY))])
+    page.evaluate(WRITE, [[[None, NOTE.format(today=page.evaluate(TODAY))]]])
     wait_for(page, f"() => ({TAGS})()?.join() === 'a,b'", "the seeded rows")
     the_grouping(page)
     after_a_reload(page)

@@ -310,7 +310,6 @@
     if (!said) return null
     const entry: Entry = { text: said, fields: own }
     if (description?.trim()) entry.description = description
-    if (prefill.heading !== undefined) entry.heading = prefill.heading
     return entry
   }
 

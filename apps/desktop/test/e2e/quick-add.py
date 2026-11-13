@@ -24,9 +24,6 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
     DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n\n## Today\n\n## Later\n")
-    page.evaluate(
-        "async () => (await window.ordenApp.tasks()).makeList(window.ordenApp.workspace.notes.find((one) => one.name === 'Plan.md').path)"
-    )
     DRIVE.open_note(page, "Plan")
 
     page.keyboard.press("Control+o")
@@ -76,27 +73,6 @@ def drive(browser: Browser) -> None:
     shot(page, "02b-suggest")
     page.keyboard.press("Tab")
     wait_for(page, f"document.querySelector('{FIELD}')?.value === 'Water the plants #family '", "the label taken")
-    page.keyboard.type(">Pl", delay=15)
-    wait_for(
-        page,
-        "[...document.querySelectorAll('.sheet .quick .suggest [role=option]')].some((one) => one.textContent.includes('Plan'))",
-        "the note offered",
-    )
-    page.keyboard.press("Enter")
-    wait_for(page, f"document.querySelector('{FIELD}')?.value.endsWith('>Plan ')", "the note taken, not the task added")
-    page.keyboard.press("Backspace")
-    page.keyboard.type("/To", delay=15)
-    wait_for(
-        page,
-        "[...document.querySelectorAll('.sheet .quick .suggest [role=option]')].some((one) => one.textContent.includes('Today'))",
-        "the note's heading offered",
-    )
-    page.keyboard.press("Escape")
-    wait_for(page, "!document.querySelector('.sheet .quick .suggest')", "the suggestions put away, the field kept")
-    if not page.locator(FIELD).count():
-        wrong("Escape over the suggestions closed quick add")
-    page.locator(FIELD).fill("")
-
     typed(page, "Pay rent friday p2")
     page.keyboard.press("Enter")
     wait_for(page, f"document.querySelector('{FIELD}')?.value === ''", "the second task added")

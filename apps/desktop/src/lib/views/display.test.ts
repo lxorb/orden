@@ -1,7 +1,6 @@
 import { answer, builtinView, isWhen, readBase, WHEN } from '@orden/bases'
 import { taskRowsOfText } from '@orden/bases/tasks'
 import { describe, expect, test } from 'vitest'
-import { linearly } from '../../../../../scripts/growth'
 import { contextFor } from './context'
 import {
   ASSIGNED_TO_ME,
@@ -10,7 +9,6 @@ import {
   groupingOf,
   shippedGrouping,
   shippedSorting,
-  notesIn,
   onlyFilter,
   onlyOf,
   sortingOf,
@@ -21,7 +19,6 @@ import {
   UNASSIGNED,
 } from './display'
 import { dropInto } from './drop'
-import { groupLabel, noteNames } from './words'
 
 const TODAY = '2026-10-13'
 const ROWS = taskRowsOfText(
@@ -62,12 +59,6 @@ describe('the Display menu', () => {
     expect(withSorting(byName, 0, 'manual', false, original).views[0]?.sort).toEqual([])
   })
 
-  test('a note grouped by its headings keeps them in the order they are written', () => {
-    const view = withGrouping(today, 0, 'section', original).views[0]
-    expect(view?.groupBy?.property).toBe('task.section')
-    expect(view?.orden.groupOrder).toBe('rows')
-  })
-
   test('done tasks stay in the view, or go', () => {
     expect(words(withCompleted(today, 0, true))).toContain('Bread')
     expect(words(today)).not.toContain('Bread')
@@ -87,143 +78,7 @@ describe('the Display menu', () => {
     const view = narrowed.views[0]
     if (!view) throw new Error('no view')
     expect(onlyOf(view)).toEqual({ priority: 2 })
-    expect(words(withOnly(today, 0, { project: 'Errands.md' }))).toHaveLength(3)
-    expect(words(withOnly(today, 0, { project: 'Elsewhere.md' }))).toEqual([])
-    expect(notesIn(ROWS)).toEqual([{ path: 'Errands.md', name: 'Errands' }])
     expect(withOnly(narrowed, 0, {}).views[0]?.orden.kept.only).toBeUndefined()
-  })
-
-  test('narrowed to a note of one space, leaves out the note of that path in another', () => {
-    const both = [...ROWS, ...taskRowsOfText('Work', 'Errands.md', '- [ ] Ship it 📅 2026-10-13')]
-    const notes = notesIn(both)
-    expect(notes).toHaveLength(2)
-    const at = { rows: both, today: TODAY, now: `${TODAY}T09:00:00` }
-    const shown = notes.map((one) =>
-      answer(displayed(withOnly(today, 0, { project: one.path }), 0), 0, both, contextFor(at))
-        .groups.flatMap((group) => group.rows.map((row) => row.space))
-        .filter((space, index, all) => all.indexOf(space) === index),
-    )
-    expect(shown.sort()).toEqual([['Notes'], ['Work']])
-  })
-})
-
-describe('a view grouped by note', () => {
-  const rows = [
-    ...taskRowsOfText('Notes', 'Alpha/Tasks.md', '- [ ] Alpha one 📅 2026-10-13'),
-    ...taskRowsOfText('Notes', 'Beta/Tasks.md', '- [ ] Beta one 📅 2026-10-13'),
-    ...taskRowsOfText('Notes', 'Inbox.md', '- [ ] Inbox one 📅 2026-10-13'),
-  ]
-  const today = builtinView('today')
-  const byNote = withGrouping(today, 0, 'note', today.views[0] ?? null)
-  const context = contextFor({ rows, today: TODAY, now: `${TODAY}T09:00:00` })
-  const groups = answer(displayed(byNote, 0), 0, rows, context).groups
-  const keys = groups.map((group) => group.key)
-
-  test('keeps notes of the same name in other folders apart', () => {
-    expect(groupingOf(byNote.views[0] ?? today.views[0]!, today.views[0] ?? null)).toBe('note')
-    expect(groups.map((group) => group.rows.map((row) => row.task?.text))).toEqual([
-      ['Inbox one'],
-      ['Alpha one'],
-      ['Beta one'],
-    ])
-  })
-
-  test('names each group by its note, with the folder where two names clash', () => {
-    const property = byNote.views[0]?.groupBy?.property
-    const names = noteNames(keys)
-    expect(keys.map((key) => groupLabel(property, key, TODAY, names))).toEqual([
-      'Inbox',
-      'Tasks (Alpha)',
-      'Tasks (Beta)',
-    ])
-  })
-
-  test('a task dropped on a group moves to that note, not one of the same name', () => {
-    const property = byNote.views[0]?.groupBy?.property ?? ''
-    const inbox = rows[2]!
-    expect(dropInto(property, keys[2] ?? null, inbox, TODAY)).toEqual({
-      move: { path: 'Beta/Tasks.md' },
-    })
-  })
-
-  test('a view saved grouped by note name is shown grouped by note', () => {
-    const view = byNote.views[0]
-    if (!view) throw new Error('no view')
-    const saved = {
-      ...byNote,
-      views: [{ ...view, groupBy: { property: 'file.basename', direction: 'ASC' as const } }],
-    }
-    expect(displayed(saved, 0).views[0]?.groupBy?.property).toBe('file.path')
-    expect(answer(displayed(saved, 0), 0, rows, context).groups).toHaveLength(3)
-  })
-
-  test('names two thousand groups at once without asking each of every other', () => {
-    const many = Array.from(
-      { length: 2000 },
-      (_, at) => `Folder ${Math.floor(at / 1000)}/Note ${at % 1000}.md`,
-    )
-    const said = linearly((count) => {
-      const some = many.slice(0, count)
-      const names = noteNames(some)
-      return some.map((key) => groupLabel('file.path', key, TODAY, names))
-    }, 2000)
-    expect(said[0]).toBe('Note 0 (Folder 0)')
-    expect(said).toHaveLength(2000)
-  })
-})
-
-describe('Todos grouped by note across two spaces (#1157)', () => {
-  const rows = [
-    ...taskRowsOfText('Work', '.Inbox.md', '- [ ] Work one'),
-    ...taskRowsOfText('Home', '.Inbox.md', '- [ ] Home one'),
-    ...taskRowsOfText('Home', 'Garden.md', '- [ ] Water the plants'),
-  ]
-  const todos = builtinView('todos')
-  const byNote = withGrouping(todos, 0, 'note', todos.views[0] ?? null)
-  const property = byNote.views[0]?.groupBy?.property ?? ''
-  const context = contextFor({ rows, today: TODAY, now: `${TODAY}T09:00:00` })
-  const groups = answer(displayed(byNote, 0), 0, rows, context).groups
-  const keys = groups.map((group) => group.key)
-
-  test('keeps two spaces’ notes of one path apart, each named with its space', () => {
-    expect(
-      groups.map((group) => group.rows.map((row) => `${row.space} ${row.task?.text}`)),
-    ).toEqual([['Home Home one'], ['Work Work one'], ['Home Water the plants']])
-    const names = noteNames(keys)
-    expect(keys.map((key) => groupLabel(property, key, TODAY, names))).toEqual([
-      '.Inbox (Home)',
-      '.Inbox (Work)',
-      'Garden',
-    ])
-  })
-
-  test('a task dropped on a group moves to that note in its own space only', () => {
-    const garden = rows[2]!
-    expect(dropInto(property, keys[0] ?? null, garden, TODAY)).toEqual({
-      move: { path: '.Inbox.md' },
-    })
-    expect(dropInto(property, keys[1] ?? null, garden, TODAY)).toBeNull()
-  })
-
-  test('one space’s groups are keyed by path alone, as before', () => {
-    const one = rows.filter((row) => row.space === 'Home')
-    const alone = answer(displayed(byNote, 0), 0, one, context).groups
-    expect(alone.map((group) => group.key)).toEqual(['.Inbox.md', 'Garden.md'])
-  })
-
-  test('Display narrowed to one space or one note keeps the keys it had across both', () => {
-    const narrowedTo = (only: Parameters<typeof withOnly>[2]) =>
-      answer(displayed(withOnly(byNote, 0, only), 0), 0, rows, context).groups.map(
-        (group) => group.key,
-      )
-    expect(narrowedTo({ space: 'Home' })).toEqual(['Home//.Inbox.md', 'Home//Garden.md'])
-    expect(narrowedTo({ project: 'Work//.Inbox.md' })).toEqual(['Work//.Inbox.md'])
-  })
-
-  test('a task ticked out of sight leaves the keys alone', () => {
-    const ticked = [rows[0]!, ...taskRowsOfText('Home', 'Garden.md', '- [x] Done')]
-    const shown = answer(displayed(byNote, 0), 0, ticked, context).groups
-    expect(shown.map((group) => group.key)).toEqual(['Work//.Inbox.md'])
   })
 })
 

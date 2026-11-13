@@ -4,7 +4,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -39,15 +39,6 @@ ERRANDS = """# Errands
 - [ ] Stretch 🔁 every day 📅 {today}
 """
 
-WRITE = """async ([files]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) {
-    await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
-  }
-  await ws.loadTree()
-}"""
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words)?.task ?? null"
 
@@ -58,7 +49,7 @@ def seed(page: Page) -> dict[str, str]:
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
-    page.evaluate(WRITE, [[["Errands.md", ERRANDS.format(**days)]]])
+    page.evaluate(WRITE, [[[None, ERRANDS.format(**days)]]])
     wait_for(
         page,
         "() => window.tasks.rows.of().some((one) => one.task?.text === 'Pay the dentist')",
@@ -78,7 +69,7 @@ def the_row(page: Page) -> None:
     bank = row(page, "Call the bank")
     text = page.locator(bank).inner_text()
     say(f"[row] {json.dumps(text, ensure_ascii=False)}")
-    for wanted in ["Their number is on the back", "1/2", "admin", "Errands", "Calls"]:
+    for wanted in ["Their number is on the back", "1/2", "admin"]:
         if wanted not in text:
             wrong(f"the bank's row does not say {wanted}")
     if page.locator(f"{bank} .meta .bit").count() < 3:

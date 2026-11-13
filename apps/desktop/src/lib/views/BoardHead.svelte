@@ -9,7 +9,6 @@
     muted = false,
     circle = false,
     about,
-    carries = false,
     canAdd = true,
     onmenu,
     oncount,
@@ -22,7 +21,6 @@
     muted?: boolean
     circle?: boolean
     about?: string | undefined
-    carries?: boolean
     canAdd?: boolean
     onmenu: (event: MouseEvent) => void
     oncount: (event: MouseEvent) => void
@@ -31,7 +29,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="head" class:carries class:circled={circle} oncontextmenu={onmenu}>
+<div class="head" class:circled={circle} oncontextmenu={onmenu}>
   {#if circle}
     <span class="circle" style:--pill={tone} aria-hidden="true"></span>
     <span class="name plain">{name}</span>
@@ -82,10 +80,6 @@
     padding: 0 var(--space-2) 0 var(--space-3);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-  }
-
-  .head.carries {
-    cursor: grab;
   }
 
   .tag {

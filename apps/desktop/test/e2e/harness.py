@@ -702,6 +702,27 @@ class _Closing:
         sys.stdout.flush()
         os._exit(code)
 
+WRITE = """async ([files]) => {
+  const ws = window.ordenApp.workspace
+  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
+  const inbox = await window.tasks.rows.inbox()
+  let todos = (await ws.noteText(inbox)) ?? ''
+  for (const [path, text] of files) {
+    if (path === null) todos += text
+    else await window.tasks.writeFile(`${root}/${path}`, text)
+  }
+  if (todos) await window.tasks.writeFile(inbox, todos)
+  await ws.loadTree()
+}"""
+
+WRITE_TODOS = """async (text) => {
+  const tasks = await window.ordenApp.tasks()
+  const inbox = await tasks.rows.inbox()
+  const before = (await window.ordenApp.workspace.noteText(inbox)) ?? ''
+  await tasks.writeFile(inbox, before + text)
+  return inbox
+}"""
+
 class Drive:
 
     def __init__(
@@ -881,26 +902,23 @@ class Drive:
             "() => new Promise((go) => requestAnimationFrame(() => requestAnimationFrame(() => go())))"
         )
 
-    def seed(
-        self, page: Any, *texts: str, folder: str | None = None, lists: bool = False
-    ) -> list[str]:
+    def seed(self, page: Any, *texts: str, folder: str | None = None) -> list[str]:
         return page.evaluate(  # type: ignore[no-any-return]
             """
-            async ([texts, folder, lists]) => {
+            async ([texts, folder]) => {
               const ws = window.ordenApp.workspace
               const root = ws.activeSpace.root
               const into = folder ? `${root.replace(/\\/+$/, '')}/${folder}` : root
-              const tasks = lists ? await window.ordenApp.tasks() : null
-              for (const text of texts) {
-                const path = await ws.noteFrom(text, into)
-                if (path && tasks) tasks.makeList(path)
-              }
+              for (const text of texts) await ws.noteFrom(text, into)
               await ws.loadTree()
               return ws.notes.map((one) => one.name)
             }
             """,
-            [list(texts), folder, lists],
+            [list(texts), folder],
         )
+
+    def todos(self, page: Any, text: str) -> str:
+        return page.evaluate(WRITE_TODOS, text)  # type: ignore[no-any-return]
 
     def open_note(self, page: Any, starts: str, patience: float = PATIENCE) -> None:
         page.evaluate(

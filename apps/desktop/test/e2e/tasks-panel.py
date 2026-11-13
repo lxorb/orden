@@ -4,7 +4,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import Drive, WRITE
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -15,17 +15,9 @@ ERRANDS = """# Errands
 - [ ] Call the bank #admin
 - [ ] Water the plants #home
 - [ ] Read a book
+- [ ] Plant the bulbs #garden
 """
 
-WRITE = """async ([files]) => {
-  const ws = window.ordenApp.workspace
-  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) {
-    await window.tasks.writeFile(`${root}/${path}`, text)
-    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
-  }
-  await ws.loadTree()
-}"""
 
 TABS = "() => window.ordenApp.workspace.tabs.length"
 
@@ -51,9 +43,8 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
-    page.evaluate(WRITE, [[["Errands.md", ERRANDS]]])
+    page.evaluate(WRITE, [[[None, ERRANDS]]])
     wait_for(page, "() => window.tasks.rows.of().some((one) => one.task?.text === 'Read a book')", "the rows")
-    page.evaluate("window.ordenApp.workspace.bookmarks.toggle({ kind: 'note', path: 'Errands.md', text: '' })")
     page.evaluate("window.ordenApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .chosen .task')", "the chosen list in the panel")
     tabs = page.evaluate(TABS)
@@ -61,9 +52,8 @@ def drive(browser: Browser) -> None:
 
     for name, wanted in (
         ("admin", ["Call the bank"]),
-        ("Errands", ["Call the bank", "Water the plants", "Read a book"]),
         ("home", ["Water the plants"]),
-        ("Tasks", ["Call the bank", "Water the plants", "Read a book"]),
+        ("Tasks", ["Call the bank", "Water the plants", "Read a book", "Plant the bulbs"]),
     ):
         row(page, name).click()
         DRIVE.waited(page, f"() => document.querySelector('.tasks .orden-row[aria-pressed=true] .orden-row-label')?.textContent.trim() === {json.dumps(name)}", f"{name} chosen")
@@ -106,7 +96,7 @@ def drive(browser: Browser) -> None:
             wrong("the tab Ctrl and a press opened is a preview")
     row(page, "home").click(button="middle")
     DRIVE.waited(page, f"() => ({TABS})() === {tabs + 2}", "the middle button opening a tab")
-    row(page, "Errands").click(button="right")
+    row(page, "garden").click(button="right")
     page.locator(".orden-menu [role=menuitem], [role=menu] [role=menuitem]", has_text="Open in new tab").first.click()
     DRIVE.waited(page, f"() => ({TABS})() === {tabs + 3}", "Open in new tab opening a tab")
     shot(page, "02-opened")

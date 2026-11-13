@@ -12,7 +12,6 @@
   } from '@orden/bases'
   import { tick, untrack } from 'svelte'
   import { menu, type MenuEntry } from '../menu.svelte'
-  import { prompt } from '../prompt.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { viewport } from '../viewport.svelte'
   import { asOneUndo, dropRow } from './act'
@@ -56,7 +55,7 @@
     setSummary,
   } from './edit'
   import { failed } from './failed.svelte'
-  import { laneKeys, withEveryDay, withEverySection, withinDays } from './list-items'
+  import { laneKeys, withEveryDay, withinDays } from './list-items'
   import type { Kit } from './kit'
   import { holdsLists, optionsAt } from './options'
   import { priorityTone } from '../quick-add/labels'
@@ -65,16 +64,7 @@
   import { rowKey } from './row-keys'
   import { runKey } from './task-actions'
   import { dayHead, groupLabel, noteNames, propertyName, summaryName } from './words'
-  import {
-    addSection,
-    projectOf,
-    renameSection,
-    placeSection,
-    sectionMenu,
-    sectionsHere,
-  } from './section-actions'
   import { reorderDrag } from './reorder-drag'
-  import { isTitle } from './sections'
   import { ADD_MARK } from './marks'
   import { focusSoon } from './focus-soon'
 
@@ -102,7 +92,6 @@
   const carries = $derived(droppableBy(property, kinds))
   const coloured = $derived(view?.orden.colourColumns !== false)
   const phone = $derived(viewport.device === 'phone')
-  const project = $derived(property === 'task.section' ? projectOf(kit) : null)
   const options = $derived(base && property ? optionsAt(base, property) : [])
   const lists = $derived(property?.startsWith('note.') ? holdsLists(live.rows, property) : false)
 
@@ -110,15 +99,13 @@
   let shuffled = $state<{ column: string; order: string[] } | null>(null)
 
   const answered = $derived(
-    project
-      ? withEverySection(live.answer?.groups ?? [], sectionsHere(project.relative), project.name)
-      : days
-        ? withinDays(
-            withEveryDay(live.answer?.groups ?? [], days.from, days.through),
-            days.from,
-            days.through,
-          )
-        : (live.answer?.groups ?? []),
+    days
+      ? withinDays(
+          withEveryDay(live.answer?.groups ?? [], days.from, days.through),
+          days.from,
+          days.through,
+        )
+      : (live.answer?.groups ?? []),
   )
   const groups = $derived.by(() => {
     const placed = withPending(answered, pending)
@@ -175,20 +162,13 @@
   )
   const height = $derived(cardHeight(lines, viewport.touch))
 
-  function sectionOf(group: Group): string | null {
-    const key = group.key
-    if (!project || typeof key !== 'string' || !key || isTitle(key, project.name)) return null
-    return key
-  }
-
   const nothing = $derived(
-    property && !project && !days
+    property && !days
       ? `No ${propertyName(property, base ? displayName(base, property) : undefined)}`
       : 'None',
   )
 
   function columnName(group: Group): string {
-    if (project && sectionOf(group) === null) return 'None'
     if (days) return dayHead(group.key, live.today)
     if (isWhen(property)) return groupLabel(property, group.key, live.today)
     if (group.key === null || group.key === '') return nothing
@@ -241,19 +221,7 @@
       label: 'Hide',
       run: () => kit.change((one, at) => setHidden(one, at, name, true)),
     }
-    const section = sectionOf(group)
-    if (section !== null) {
-      sectionMenu(
-        event,
-        kit,
-        section,
-        group.rows.length,
-        () => ask('Rename', section, (words) => renameSection(kit, section, words)),
-        [hide],
-      )
-      return
-    }
-    if (!property || project || days) {
+    if (!property || days) {
       menu.show(event, [hide], { title: columnName(group) })
       return
     }
@@ -319,12 +287,6 @@
     return Object.keys(view?.summaries ?? {})
       .map((one) => valueText(group.summaries[one] ?? null, live.today))
       .filter(Boolean)
-  }
-
-  function ask(title: string, value: string, write: (words: string) => void) {
-    void prompt
-      .ask({ title, value, confirmLabel: title })
-      .then((words) => (words?.trim() ? write(words) : undefined))
   }
 
   let pickedFrom: { column: string; lane: string | null } | null = null
@@ -719,7 +681,7 @@
       }),
     )
   }
-  const groupable = $derived(!project && !days && grows && property?.startsWith('note.') === true)
+  const groupable = $derived(!days && grows && property?.startsWith('note.') === true)
 </script>
 
 {#snippet card(row: Row, group: Group, lane: string | null)}
@@ -741,7 +703,6 @@
 
 {#snippet head(group: Group)}
   {@const name = groupName(group.key)}
-  {@const section = sectionOf(group)}
   {#if renaming === name}
     <div class="head-field">
       <input
@@ -767,13 +728,11 @@
   {:else}
     <div
       use:reorderDrag={{
-        id: project ? (section ?? '') : name,
-        among: project ? 'section' : 'column',
+        id: name,
+        among: 'column',
         across: true,
         place: (moving, target, after) =>
-          project
-            ? placeSection(kit, moving, target, after)
-            : kit.change((one, at) => placeColumn(one, at, names, moving, target, after)),
+          kit.change((one, at) => placeColumn(one, at, names, moving, target, after)),
       }}
     >
       <BoardHead
@@ -783,7 +742,6 @@
         sums={sumsOf(group)}
         muted={unlisted(group)}
         circle={!notes}
-        carries={!project || section !== null}
         canAdd={pages}
         onmenu={(event: MouseEvent) => columnMenu(event, group)}
         oncount={countMenu}
@@ -799,14 +757,12 @@
 {#snippet column(group: Group, laneKey: Value | undefined, rows: readonly Row[])}
   {@const name = groupName(group.key)}
   {@const lane = laneKey === undefined ? null : groupName(laneKey)}
-  {@const section = laneKey === undefined ? sectionOf(group) : null}
   {@const tone = toneOfGroup(group)}
   <div
     class="column"
     class:washed={tone !== null && notes}
     class:closed={!carries}
     style:--wash={tone}
-    data-section={section ?? undefined}
     data-column={name}
     data-lane={lane ?? undefined}
     data-column-key={laneKey === undefined ? name : undefined}
@@ -893,14 +849,7 @@
     {/each}
   {/if}
 
-  {#if project && grows && !phone}
-    <button
-      type="button"
-      class="add-column"
-      onclick={() => ask('Add section', '', (words) => addSection(kit, words))}
-      ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>Add section</button
-    >
-  {:else if groupable && !phone}
+  {#if groupable && !phone}
     {#if naming}
       <div class="add-column field">
         <input
