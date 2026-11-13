@@ -64,10 +64,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         .unwrap_or_default();
     let loading = with_extensions(&mut asked, &firefox);
     let settings = orden_web_engine::EngineSettings::default()
-        .with_switches([(
-            crate::page_scale::SWITCH.0.to_owned(),
-            Some(crate::page_scale::SWITCH.1.to_owned()),
-        )])
+        .with_switches(crate::page_scale::switches())
         .with_switches(asked);
     let mut engine = Cef::default()
         .sandbox(sandbox)
