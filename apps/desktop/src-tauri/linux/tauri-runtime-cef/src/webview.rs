@@ -2279,6 +2279,21 @@ cef::wrap_dev_tools_message_observer! {
       };
       callback(result);
 
+      // Dropping the registration here would unregister, and so release, this very
+      // observer while it is still on the stack; the UI thread lets go of it afterwards.
+      let mut task = LetGoOfRegistrationTask::new(self.registration.clone());
+      cef::post_task(sys::cef_thread_id_t::TID_UI.into(), Some(&mut task));
+    }
+  }
+}
+
+wrap_task! {
+  struct LetGoOfRegistrationTask {
+    registration: Arc<Mutex<Option<cef::Registration>>>,
+  }
+
+  impl Task {
+    fn execute(&self) {
       let _ = self.registration.lock().unwrap().take();
     }
   }

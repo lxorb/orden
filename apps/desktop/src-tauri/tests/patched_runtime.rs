@@ -133,3 +133,24 @@ fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
     let engine = read(&Path::new(env!("CARGO_MANIFEST_DIR")).join("src/engine.rs"));
     assert!(engine.contains(".on_unhosted_tab(crate::extensions::tabs::opened)"));
 }
+
+#[test]
+fn the_eval_observer_never_lets_go_of_its_own_registration_from_inside_its_callback() {
+    let source = read(&root().join("src/webview.rs"));
+    let start = source
+        .find("struct EvalScriptWithCallbackDevToolsObserver")
+        .expect("the eval observer");
+    let body = &source[start..];
+    let end = body.find("\n}\n").expect("the observer's end");
+    let observer = &body[..end];
+    assert!(
+        !observer.contains("self.registration.lock().unwrap().take()"),
+        "the observer drops the registration that keeps it alive while it is still running"
+    );
+    assert!(
+        observer.contains("LetGoOfRegistrationTask::new(self.registration.clone())")
+            && observer.contains("cef::post_task("),
+        "the registration is let go of by a task on the UI thread, after the callback returned"
+    );
+    assert!(source.contains("struct LetGoOfRegistrationTask"));
+}
