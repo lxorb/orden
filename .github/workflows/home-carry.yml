@@ -57,10 +57,14 @@ jobs:
           for side in old new; do
             id=${!side}
             config='{"identifier":"'"$id"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-            pnpm --filter @orden/desktop exec tauri build --target x86_64-pc-windows-msvc --no-bundle --config "$config"
-            exe=$(ls -S apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/*.exe | head -1)
+            bash scripts/linux-cef.sh tauri build --target x86_64-pc-windows-msvc --no-bundle \
+              --ignore-version-mismatches --config "$config"
+            built=apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release
+            bash scripts/cef-beside.sh "$built"
             mkdir -p "$RUNNER_TEMP/$side"
-            cp "$exe" "$RUNNER_TEMP/$side/orden-$side.exe"
+            cp "$built"/*.dll "$built"/*.pak "$built"/*.dat "$built"/*.bin "$built"/*.json "$RUNNER_TEMP/$side/"
+            cp -R "$built/locales" "$RUNNER_TEMP/$side/"
+            cp "$built/orden.exe" "$RUNNER_TEMP/$side/orden-$side.exe"
           done
 
       - name: An older profile brought to this build keeps its todos

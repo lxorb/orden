@@ -70,7 +70,8 @@ jobs:
         run: |
           printf '{"identifier":"%s","version":"99.0.0","plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}' \
             "$IDENTIFIER" > probe.json
-          pnpm --filter @orden/desktop exec tauri build --no-bundle --config ../../probe.json
+          bash scripts/linux-cef.sh tauri build --no-bundle --ignore-version-mismatches --config ../../probe.json
+          bash scripts/cef-beside.sh apps/desktop/src-tauri/target/release
 
       - name: Through the endpoint
         run: |

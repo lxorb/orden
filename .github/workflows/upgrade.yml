@@ -65,12 +65,8 @@ jobs:
         shell: bash
         run: |
           config="{\"version\":\"$NEW\",\"bundle\":{\"createUpdaterArtifacts\":false}}"
-          if [ "$RUNNER_OS" = macOS ]; then
-            bash scripts/linux-cef.sh tauri build --bundles ${{ matrix.bundles }} \
-              --ignore-version-mismatches --config "$config"
-          else
-            pnpm --filter @orden/desktop exec tauri build --bundles ${{ matrix.bundles }} --config "$config"
-          fi
+          bash scripts/linux-cef.sh tauri build --bundles ${{ matrix.bundles }} \
+            --ignore-version-mismatches --config "$config"
 
       - name: Pack the app
         if: runner.os == 'macOS'

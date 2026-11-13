@@ -256,8 +256,7 @@ jobs:
           toolchain: stable
           components: clippy, rustfmt
 
-      - name: The desktop manifest, CEF on Linux and macOS
-        if: runner.os != 'Windows'
+      - name: The desktop manifest
         run: |
           node scripts/linux-manifest.mjs --check
           bash scripts/linux-cef.sh
@@ -309,12 +308,6 @@ jobs:
           export LD_LIBRARY_PATH="$PWD/apps/desktop/src-tauri/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
-      - name: The window's thread, alone
-        if: runner.os == 'Windows'
-        timeout-minutes: 10
-        run: |
-          cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --test window_thread -- --ignored
-
       - name: Latency, alone
         if: runner.os == 'Linux'
         timeout-minutes: 10
@@ -348,7 +341,9 @@ jobs:
         run: |
           source scripts/edge-profile.sh
           config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-          pnpm --filter @orden/desktop exec tauri build --target x86_64-pc-windows-msvc --no-bundle --config "$config"
+          bash scripts/linux-cef.sh tauri build --target x86_64-pc-windows-msvc --no-bundle \
+            --ignore-version-mismatches --config "$config"
+          bash scripts/cef-beside.sh apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release
 
       - name: Notepad, hosted and shown
         run: |

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       step:
-        description: 'check (cargo check under the CEF manifest), test (clippy and the tests too) or launch (a debug app started on macOS, its logs kept)'
+        description: 'check (cargo check under the CEF manifest), test (clippy and the tests too) or launch (an app started on macOS, or installed from the NSIS setup and started on Windows, its logs kept)'
         default: check
       window:
         description: "for launch, the main window's shape: mac (the Mac config) or frameless (decorations off, transparent, as on Linux and Windows)"
@@ -137,7 +137,60 @@ jobs:
           tail -60 launch/stderr.log || true
           tail -40 launch/stdout.log || true
 
-      - if: ${{ always() && inputs.step == 'launch' && runner.os == 'macOS' }}
+      - name: The installers, one installed and its app started and left for a minute
+        if: ${{ inputs.step == 'launch' && runner.os == 'Windows' }}
+        timeout-minutes: 40
+        env:
+          IDENTIFIER: so.orden.Orden.probe.launch
+          RUST_BACKTRACE: '1'
+          ORDEN_CEF_ARGS: enable-logging=stderr,v=1
+        run: |
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          case "${{ inputs.started }}" in
+            *release*) profile=release; debug="" ;;
+            *) profile=debug; debug="--debug" ;;
+          esac
+          bash scripts/linux-cef.sh tauri build $debug --target ${{ matrix.target }} --bundles nsis,msi \
+            --ignore-version-mismatches --config "$config"
+          bundle=apps/desktop/src-tauri/target/${{ matrix.target }}/$profile/bundle
+          mkdir -p launch
+          {
+            echo "### installers"
+            ls -l "$bundle"/nsis/*.exe "$bundle"/msi/*.msi | awk '{ printf "%s %.1f MB\n", $NF, $5 / 1048576 }'
+          } | tee -a launch/installers.txt >>"$GITHUB_STEP_SUMMARY"
+          setup=$(ls "$bundle"/nsis/*-setup.exe | head -1)
+          home="$RUNNER_TEMP/orden-installed"
+          "$setup" /S /D="$(cygpath -w "$home")"
+          for _ in $(seq 1 60); do
+            [ -f "$home/orden.exe" ] && [ -f "$home/libcef.dll" ] && break
+            sleep 5
+          done
+          ls -l "$home" | head -60
+          ls "$home/locales" | head -10
+          exe="$home/orden.exe"
+          spaces=$(mktemp -d)
+          ORDEN_SPACES_DIR="$spaces" "$exe" >launch/stdout.log 2>launch/stderr.log &
+          pid=$!
+          sleep 75
+          support="$(cygpath -u "$APPDATA")/$IDENTIFIER"
+          export ORDEN_ENDPOINT="$support/automation.json"
+          ls -la "$support" 2>/dev/null | head -20 || true
+          node apps/cli/orden.mjs verbs 2>&1 | head -5 || true
+          if kill -0 "$pid" 2>/dev/null; then
+            echo "alive after 75s"
+            tasklist //V | grep -i -E 'orden|bootstrap' > launch/processes.txt || true
+            kill "$pid" || true
+            sleep 5
+            taskkill //IM orden.exe //T //F >/dev/null 2>&1 || true
+          else
+            echo "not running after 75s"
+          fi
+          [ -d "$support" ] && { find "$support" -maxdepth 3 | sort > launch/support.txt; cp "$support"/*.log launch/ 2>/dev/null || true; cp "$support"/chromium/cef.log launch/ 2>/dev/null || true; cp -R "$support/crash-reports" launch/ 2>/dev/null || true; }
+          cp -R "$(cygpath -u "$LOCALAPPDATA")/CrashDumps" launch/ 2>/dev/null || true
+          tail -60 launch/stderr.log || true
+          tail -40 launch/stdout.log || true
+
+      - if: ${{ always() && inputs.step == 'launch' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: cef-launch-${{ matrix.target }}
