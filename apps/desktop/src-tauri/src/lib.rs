@@ -105,7 +105,6 @@ mod links;
 #[cfg(target_os = "linux")]
 mod linux;
 mod logs;
-#[cfg(desktop)]
 mod matcher;
 #[cfg(desktop)]
 pub mod mcp;

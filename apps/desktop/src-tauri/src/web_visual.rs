@@ -490,7 +490,6 @@ unsafe extern "system" fn page_window_heard(
             }
         }
         #[allow(clippy::cast_possible_truncation)]
-        #[allow(clippy::cast_possible_truncation)]
         WM_GETOBJECT if lparam.0 as i32 == UiaRootObjectId => match reading::of(key, window) {
             Some(provider) => unsafe {
                 UiaReturnRawElementProvider(window, wparam, lparam, &provider)
