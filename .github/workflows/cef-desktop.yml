@@ -166,7 +166,7 @@ jobs:
           } | tee -a launch/installers.txt >>"$GITHUB_STEP_SUMMARY"
           setup=$(ls "$bundle"/nsis/*-setup.exe | head -1)
           home="$RUNNER_TEMP/orden-installed"
-          "$setup" /S /D="$(cygpath -w "$home")"
+          MSYS_NO_PATHCONV=1 timeout 600 "$setup" /S /D="$(cygpath -w "$home")"
           for _ in $(seq 1 60); do
             [ -f "$home/orden.exe" ] && [ -f "$home/libcef.dll" ] && break
             sleep 5
