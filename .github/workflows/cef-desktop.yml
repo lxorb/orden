@@ -4,8 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       step:
-        description: check (cargo check under the CEF manifest) or test (clippy and the tests too)
+        description: 'check (cargo check under the CEF manifest), test (clippy and the tests too) or launch (a debug app started on macOS, its logs kept)'
         default: check
+      window:
+        description: "for launch, the main window's shape: mac (the Mac config) or frameless (decorations off, transparent, as on Linux and Windows)"
+        default: mac
+      started:
+        description: 'for launch, how the app is started: exec (the binary, from the job) or open (LaunchServices, as a person does), and debug or release'
+        default: exec debug
   push:
     branches: ['tmp/ci-cef*']
 
@@ -77,6 +83,66 @@ jobs:
         run: |
           cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --target ${{ matrix.target }} --all-targets -- -D warnings
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --target ${{ matrix.target }}
+
+      - name: A debug app, started and left for a minute
+        if: ${{ inputs.step == 'launch' && runner.os == 'macOS' }}
+        timeout-minutes: 30
+        env:
+          IDENTIFIER: so.orden.Orden.probe.launch
+          RUST_BACKTRACE: '1'
+          ORDEN_CEF_ARGS: enable-logging=stderr,v=1
+        run: |
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          if [ "${{ inputs.window }}" = frameless ]; then
+            config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}},"app":{"windows":[{"title":"Orden","width":700,"height":450,"minWidth":520,"minHeight":400,"decorations":false,"transparent":true,"dragDropEnabled":false,"visible":false}]}}'
+          fi
+          case "${{ inputs.started }}" in
+            *release*) profile=release; debug="" ;;
+            *) profile=debug; debug="--debug" ;;
+          esac
+          bash scripts/linux-cef.sh tauri build $debug --target ${{ matrix.target }} --bundles app \
+            --ignore-version-mismatches --config "$config"
+          app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/$profile/bundle/macos/*.app | head -1)
+          find "$app" -maxdepth 3 | sort | head -60
+          codesign -dv --entitlements - "$app" 2>&1 | head -30 || true
+          exe="$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)"
+          spaces=$(mktemp -d)
+          mkdir -p launch
+          case "${{ inputs.started }}" in
+            open*)
+              open "$app"
+              sleep 75
+              pid=$(pgrep -f "$app/Contents/MacOS/" | head -1 || true)
+              ;;
+            *)
+              ORDEN_SPACES_DIR="$spaces" "$exe" >launch/stdout.log 2>launch/stderr.log &
+              pid=$!
+              sleep 75
+              ;;
+          esac
+          support="$HOME/Library/Application Support/$IDENTIFIER"
+          export ORDEN_ENDPOINT="$support/automation.json"
+          ls -la "$support" 2>/dev/null | head -20 || true
+          node apps/cli/orden.mjs verbs 2>&1 | head -5 || true
+          if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            echo "alive after 75s"
+            sample "$pid" 5 -file launch/sample.txt || true
+            ps -o pid,ppid,stat,command -ax | grep -i -E 'orden|Helper' | grep -v grep > launch/processes.txt || true
+            kill "$pid" || true
+          else
+            echo "not running after 75s"
+          fi
+          [ -d "$support" ] && { find "$support" -maxdepth 3 | sort > launch/support.txt; cp "$support"/*.log launch/ 2>/dev/null || true; cp "$support"/chromium/cef.log launch/ 2>/dev/null || true; cp -R "$support/crash-reports" launch/ 2>/dev/null || true; }
+          ls ~/Library/Logs/DiagnosticReports 2>/dev/null | grep -i orden | while read -r f; do cp ~/Library/Logs/DiagnosticReports/"$f" launch/; done || true
+          tail -60 launch/stderr.log || true
+          tail -40 launch/stdout.log || true
+
+      - if: ${{ always() && inputs.step == 'launch' && runner.os == 'macOS' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cef-launch-${{ matrix.target }}
+          path: launch
+          if-no-files-found: ignore
 
       - name: What the check said
         if: always()
