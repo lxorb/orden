@@ -92,7 +92,13 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
     }
 }
 
-#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code)
+)]
 pub fn told(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
     if !down || repeat || held.ctrl {
         return None;
@@ -129,6 +135,13 @@ fn digit(vk: u32) -> Option<(&'static str, &'static str)> {
     DIGITS.get(at).copied()
 }
 
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code)
+)]
 fn named(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
     const LETTERS: [(&str, &str, &str); 26] = [
         ("a", "A", "KeyA"),
@@ -223,7 +236,14 @@ fn take(window: &str, chords: Vec<Chord>) {
     taken.push((window.to_owned(), chords));
 }
 
-#[cfg_attr(not(any(windows, feature = "cef", test)), allow(dead_code))]
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux"),
+        test
+    )),
+    allow(dead_code)
+)]
 fn app_chords(window: &str) -> Vec<Chord> {
     TAKEN
         .read()
@@ -234,7 +254,10 @@ fn app_chords(window: &str) -> Vec<Chord> {
         .unwrap_or_default()
 }
 
-#[cfg_attr(not(any(feature = "cef", test)), allow(dead_code))]
+#[cfg_attr(
+    not(any(all(feature = "cef", target_os = "linux"), test)),
+    allow(dead_code)
+)]
 fn every_chord() -> Vec<Chord> {
     TAKEN
         .read()
@@ -244,7 +267,13 @@ fn every_chord() -> Vec<Chord> {
         .collect()
 }
 
-#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code)
+)]
 fn app_s(vk: u32, held: Held, down: bool, repeat: bool, taken: &[Chord]) -> Option<Pressed> {
     if !down || !taken.contains(&Chord { vk, held }) {
         return None;
@@ -259,7 +288,7 @@ fn app_s(vk: u32, held: Held, down: bool, repeat: bool, taken: &[Chord]) -> Opti
     })
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
 fn heard_raw(
     vk: u32,
     held: Held,
@@ -298,12 +327,15 @@ fn tells_alt(_app: &tauri::AppHandle) -> bool {
     true
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(feature = "cef", target_os = "linux"))]
 fn tells_alt(app: &tauri::AppHandle) -> bool {
     grabbed::retake(app)
 }
 
-#[cfg(not(any(windows, feature = "cef")))]
+#[cfg(not(any(
+    all(windows, not(feature = "cef")),
+    all(feature = "cef", target_os = "linux")
+)))]
 fn tells_alt(_app: &tauri::AppHandle) -> bool {
     false
 }
@@ -382,7 +414,7 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
     }
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
 pub fn reloading(vk: u32, held: Held) -> Option<Pressed> {
     if held.alt {
         return None;
@@ -402,7 +434,7 @@ pub fn reloading(vk: u32, held: Held) -> Option<Pressed> {
     }
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
 pub fn vk_of(keyval: u32) -> Option<u32> {
     match keyval {
         0x61..=0x7A => Some(keyval - 0x20),
@@ -424,15 +456,24 @@ pub fn vk_of(keyval: u32) -> Option<u32> {
 pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
 fn page_took_focus(mode: u8, detail: u8) -> bool {
     !matches!(mode, 1 | 2) && !matches!(detail, 5..=7)
 }
 
-#[cfg(feature = "cef")]
-pub use grabbed::{focus_in, listen, x11_window};
+#[cfg(all(feature = "cef", target_os = "linux"))]
+pub use grabbed::{focus_in, listen};
 
-#[cfg(feature = "cef")]
+#[cfg(all(feature = "cef", not(target_os = "linux")))]
+pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
+}
+
+#[cfg(all(feature = "cef", not(target_os = "linux")))]
+pub fn focus_in(_pages: &[u32]) -> Option<u32> {
+    None
+}
+
+#[cfg(all(feature = "cef", target_os = "linux"))]
 mod grabbed {
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex, OnceLock, PoisonError};
@@ -789,23 +830,12 @@ mod grabbed {
         grabs.raw
     }
 
-    pub fn x11_window(webview: &tauri::webview::PlatformWebview) -> Option<u32> {
-        use cef::{ImplBrowser as _, ImplBrowserHost as _};
-
-        webview
-            .downcast_ref::<tauri_runtime_cef::Webview>()
-            .and_then(|view| view.browser().host())
-            .map(|host| host.window_handle())
-            .and_then(|handle| u32::try_from(handle).ok())
-            .filter(|handle| *handle != 0)
-    }
-
     pub fn focus_in(pages: &[u32]) -> Option<u32> {
         GRABS.get()?.as_ref()?.focused(pages)
     }
 
     pub fn listen(webview: &tauri::webview::PlatformWebview, app: AppHandle, window: String) {
-        let Some(page) = x11_window(webview) else {
+        let Some(page) = crate::host::x11_page(webview) else {
             return;
         };
         let Some(grabs) = grabs(&app) else { return };

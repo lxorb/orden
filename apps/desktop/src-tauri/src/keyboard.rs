@@ -91,10 +91,20 @@ fn now() -> u64 {
     u64::try_from(START.elapsed().as_millis()).unwrap_or(u64::MAX)
 }
 
+#[cfg_attr(
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
+    allow(dead_code, reason = "a Mac's engine says it to the app's page itself")
+)]
 pub const IN_PAGE: &str = "orden://keyboard-in-page";
 
 #[cfg_attr(
-    not(any(windows, feature = "cef")),
+    not(any(
+        all(windows, not(feature = "cef")),
+        all(feature = "cef", target_os = "linux")
+    )),
     allow(dead_code, reason = "a Mac's engine says it to the app's page itself")
 )]
 pub fn page_took(app: &AppHandle, window: &str, page: &str) {
@@ -138,20 +148,20 @@ pub fn window_came_back(app: &AppHandle, window: &str) {
 }
 
 pub fn no_hidden_menu<R: tauri::Runtime>(window: &tauri::Window<R>) {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(feature = "cef")))]
     watching::no_hidden_menu(window);
-    #[cfg(not(windows))]
+    #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = window;
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 fn left(window: &str) {
     if let Some(page) = native::holding(window) {
         homes(|all| all.page_took(window, &page));
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 fn returned(window: &str) {
     let home = homes(|all| all.home(window).map(str::to_string));
     if crate::placement::away().is_some() {
@@ -291,7 +301,7 @@ enum KeyMenu {
     WindowMenu,
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 mod watching {
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -680,7 +690,7 @@ mod native {
     static PAGES: Mutex<Vec<(String, String, u32)>> = Mutex::new(Vec::new());
 
     pub fn page(_app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
-        let Some(x11) = crate::web_keys::x11_window(platform) else {
+        let Some(x11) = crate::host::x11_page(platform) else {
             return;
         };
         let mut pages = PAGES.lock().unwrap_or_else(PoisonError::into_inner);
@@ -695,6 +705,7 @@ mod native {
             .retain(|(one, _, _)| one != label);
     }
 
+    #[cfg(target_os = "linux")]
     pub fn x11_took(app: &AppHandle, x11: u32) {
         let found = PAGES
             .lock()
@@ -757,7 +768,7 @@ mod native {
 }
 
 pub use native::page;
-#[cfg(feature = "cef")]
+#[cfg(all(feature = "cef", target_os = "linux"))]
 pub use native::x11_took;
 
 #[cfg(test)]

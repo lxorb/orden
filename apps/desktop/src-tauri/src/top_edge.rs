@@ -33,6 +33,8 @@ mod strip {
         reason = "a window's size and style are heard through a Win32 subclass, which only the Win32 API installs"
     )]
     pub fn mind<R: Runtime>(window: &Window<R>) {
+        #[cfg(feature = "cef")]
+        use tauri::Manager as _;
         let Ok(hwnd) = window.hwnd() else {
             return;
         };

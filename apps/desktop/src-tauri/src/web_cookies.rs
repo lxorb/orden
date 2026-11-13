@@ -1,10 +1,10 @@
 #[cfg(any(windows, feature = "cef"))]
 use crate::web_state::cookies::Cookie;
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 mod twins;
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'static) {
     use std::cell::Cell;
     use std::rc::Rc;
@@ -71,7 +71,7 @@ fn asks(all: &[Cookie], now: f64) -> Vec<(&'static str, serde_json::Value)> {
         .filter(|one| one.expires.is_none())
         .map(|one| ("Network.setCookie", to_devtools(one, now)));
 
-    #[cfg(windows)]
+    #[cfg(all(windows, not(feature = "cef")))]
     {
         use crate::web_state::cookies::engine::deleting;
         twins::of(all)
@@ -79,11 +79,11 @@ fn asks(all: &[Cookie], now: f64) -> Vec<(&'static str, serde_json::Value)> {
             .chain(kept)
             .collect()
     }
-    #[cfg(not(windows))]
+    #[cfg(not(all(windows, not(feature = "cef"))))]
     kept.collect()
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the cookie store is reached through WKWebView's Objective-C interface, from the pointer wry hands out"
@@ -145,7 +145,7 @@ pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'st
     unsafe { store.getAllCookies(&handler) };
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "a cookie's properties are a dictionary whose values the type system does not check"
@@ -317,7 +317,7 @@ mod tests {
         );
     }
 
-    #[cfg(windows)]
+    #[cfg(all(windows, not(feature = "cef")))]
     #[test]
     fn a_partitioned_session_cookie_is_kept_in_its_partition() {
         use super::twins::tests::cookie;
@@ -345,7 +345,7 @@ mod tests {
         assert_eq!(sid["expires"], 1000.0 + KEPT_FOR);
     }
 
-    #[cfg(windows)]
+    #[cfg(all(windows, not(feature = "cef")))]
     #[test]
     fn a_twin_is_taken_away_and_the_partitioned_cookie_kept() {
         use super::twins::tests::cookie;
@@ -368,7 +368,7 @@ mod tests {
         assert_eq!(kept["partitionKey"]["topLevelSite"], "https://news.example");
     }
 
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
     #[test]
     #[allow(
         unsafe_code,

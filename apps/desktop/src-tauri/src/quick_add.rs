@@ -55,7 +55,9 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
         None => match quick_window(app) {
             Ok(window) => {
                 #[cfg(feature = "cef")]
-                crate::linux::float(&window);
+                if let Some(id) = crate::host::window_id(&window.as_ref().window()) {
+                    let _ = crate::host::system().float(id);
+                }
                 window
             }
             Err(_) => return,

@@ -837,7 +837,7 @@ fn page_built(
         PhysicalSize::new(width, height),
     )
     .map_err(|error| format!("that page could not be opened: {error}"))?;
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
     crate::web_cut::under::lower(window, &view);
     crate::page_style::worn(&view);
     crate::page_scheme::wear(&view);
@@ -1011,14 +1011,14 @@ fn windows_asked(
     let asking = tab.to_string();
     let holder = holder.to_string();
     builder.on_new_window(move |url: Url, features| {
-        #[cfg(windows)]
+        #[cfg(all(windows, not(feature = "cef")))]
         let hushed = crate::extensions::welcome::taken(&asking, &url);
         let heard = crate::web_opens::heard(&asking, &url);
         let said = heard.said;
         if heard.ours {
             return NewWindowResponse::Deny;
         }
-        #[cfg(windows)]
+        #[cfg(all(windows, not(feature = "cef")))]
         if hushed {
             return NewWindowResponse::Deny;
         }
@@ -1179,7 +1179,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             session::keep(store.as_deref(), &platform);
             #[cfg(all(windows, not(feature = "cef")))]
             crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
-            #[cfg(windows)]
+            #[cfg(all(windows, not(feature = "cef")))]
             crate::extensions::welcome::listen(&platform, store.as_deref(), &named);
             crate::web_keys::listen(&platform, asking.clone(), window.clone());
             crate::keyboard::page(&asking, &platform, &label, &window);
@@ -1373,9 +1373,12 @@ pub fn web_place(
         crate::web_visual::visual_corner(&view, corner.unwrap_or(0.0), scale);
         crate::web_visual::visual_opacity(&view, opacity.unwrap_or(1.0));
     }
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
     crate::web_cut::under::opacity(&view, opacity.unwrap_or(1.0));
-    #[cfg(not(any(all(windows, not(feature = "cef")), target_os = "macos")))]
+    #[cfg(not(any(
+        all(windows, not(feature = "cef")),
+        all(target_os = "macos", not(feature = "cef"))
+    )))]
     let _ = opacity;
     if visible {
         let _doing = crate::stall::doing("web_place: cut");

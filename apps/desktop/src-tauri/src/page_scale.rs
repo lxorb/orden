@@ -4,13 +4,13 @@ pub const SWITCH: (&str, &str) = ("--force-device-scale-factor", "1");
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("page_scale.js");
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
-fn scale_of_dpi(xft_dpi: i32) -> Option<f64> {
+#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
+pub(crate) fn scale_of_dpi(xft_dpi: i32) -> Option<f64> {
     (xft_dpi > 0).then(|| (f64::from(xft_dpi) / 1024.0 / 96.0).clamp(0.5, 4.0))
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
-fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
+#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
+pub(crate) fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     let big = *data.first()? == b'B';
     let word = |at: usize| -> Option<u32> {
         let bytes: [u8; 4] = data.get(at..at + 4)?.try_into().ok()?;
@@ -110,8 +110,6 @@ mod engine {
     use std::collections::HashMap;
     use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
 
-    use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
-
     const FILE: &str = "interface-zoom";
 
     static CHOSEN: Mutex<f64> = Mutex::new(1.0);
@@ -160,31 +158,7 @@ mod engine {
     }
 
     fn read() -> Option<f64> {
-        let (x, screen) = x11rb::connect(None).ok()?;
-        let atom = |name: &str| {
-            x.intern_atom(false, name.as_bytes())
-                .ok()?
-                .reply()
-                .ok()
-                .map(|reply| reply.atom)
-        };
-        let owner = x
-            .get_selection_owner(atom(&format!("_XSETTINGS_S{screen}"))?)
-            .ok()?
-            .reply()
-            .ok()?
-            .owner;
-        if owner == x11rb::NONE {
-            return None;
-        }
-        let settings = atom("_XSETTINGS_SETTINGS")?;
-        let data = x
-            .get_property(false, owner, settings, AtomEnum::ANY, 0, u32::MAX / 4)
-            .ok()?
-            .reply()
-            .ok()?
-            .value;
-        super::scale_of_dpi(super::xsettings_int(&data, "Xft/DPI")?)
+        crate::host::system().desktop_scale()
     }
 
     static SAID: LazyLock<Mutex<HashMap<String, f64>>> = LazyLock::new(Mutex::default);

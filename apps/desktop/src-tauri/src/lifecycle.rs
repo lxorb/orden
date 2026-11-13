@@ -422,6 +422,8 @@ mod asked_to_quit {
     }
 
     pub fn answer(app: &AppHandle, yes: bool) -> bool {
+        #[cfg(feature = "cef")]
+        use tauri::Manager as _;
         if !WAITING.swap(false, Ordering::SeqCst) {
             return false;
         }

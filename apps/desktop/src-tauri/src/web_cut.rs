@@ -4,7 +4,7 @@ use std::sync::{LazyLock, Mutex, PoisonError};
 use serde::Deserialize;
 use tauri::Webview;
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
 pub mod under;
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
@@ -84,7 +84,10 @@ pub const CUTS: bool = cfg!(any(
 pub enum Layering {
     Cuts(bool),
     #[cfg_attr(
-        not(any(all(windows, not(feature = "cef")), target_os = "macos")),
+        not(any(
+            all(windows, not(feature = "cef")),
+            all(target_os = "macos", not(feature = "cef"))
+        )),
         allow(
             dead_code,
             reason = "only the system's engines on Windows and a Mac draw a page under the app yet"
@@ -98,7 +101,7 @@ pub fn layering(label: &str) -> Layering {
     if crate::web_visual::is_drawn_under(label) {
         return Layering::Under("under");
     }
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
     if under::under(label) {
         return Layering::Under("under");
     }
@@ -116,7 +119,7 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
 
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: f64) {
     if !CUTS {
-        #[cfg(target_os = "macos")]
+        #[cfg(all(target_os = "macos", not(feature = "cef")))]
         under::cut(view, cut.as_ref());
         engine::round(view, corner);
         return;
@@ -145,7 +148,7 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
 
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
     under::forget(label);
 }
 
@@ -225,7 +228,7 @@ mod engine {
 
     pub fn shape(view: &Webview, shape: Shape) {
         let _ = view.with_webview(move |platform| {
-            let Some(window) = crate::web_keys::x11_window(&platform) else {
+            let Some(window) = crate::host::x11_page(&platform) else {
                 return;
             };
             let Some(x) = X.as_ref() else {
@@ -373,7 +376,7 @@ mod engine {
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod engine {
     use objc2::msg_send;
     use objc2::rc::Retained;
@@ -412,7 +415,7 @@ mod engine {
 #[cfg(not(any(
     all(windows, not(feature = "cef")),
     all(target_os = "linux", feature = "cef"),
-    target_os = "macos"
+    all(target_os = "macos", not(feature = "cef"))
 )))]
 mod engine {
     use tauri::Webview;

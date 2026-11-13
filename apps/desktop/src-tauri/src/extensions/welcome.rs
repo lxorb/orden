@@ -35,10 +35,10 @@ pub fn stray(window: Seen, browser: u32, before: &[isize]) -> bool {
         && !before.contains(&window.handle)
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 pub use engine::{adding, listen, taken};
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 mod engine {
     use std::cell::RefCell;
     use std::collections::BTreeMap;

@@ -38,7 +38,7 @@ impl Key {
     }
 
     #[cfg_attr(
-        not(target_os = "macos"),
+        not(all(target_os = "macos", not(feature = "cef"))),
         allow(dead_code, reason = "only a Mac's engine is handed keys as NSEvents")
     )]
     pub fn mac(&self) -> (u16, String, String) {
@@ -109,7 +109,7 @@ impl Key {
 }
 
 #[cfg_attr(
-    not(target_os = "macos"),
+    not(all(target_os = "macos", not(feature = "cef"))),
     allow(dead_code, reason = "only a Mac's engine is handed keys as NSEvents")
 )]
 fn ansi(code: &str) -> u16 {
