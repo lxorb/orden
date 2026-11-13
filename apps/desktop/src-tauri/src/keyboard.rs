@@ -245,7 +245,7 @@ pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
 }
 
 #[cfg_attr(
-    not(windows),
+    any(not(windows), feature = "cef"),
     allow(dead_code, reason = "a window's messages are Windows' own")
 )]
 #[derive(Debug, PartialEq, Eq)]
@@ -256,7 +256,7 @@ enum Moment {
 }
 
 #[cfg_attr(
-    not(windows),
+    any(not(windows), feature = "cef"),
     allow(dead_code, reason = "a window's messages are Windows' own")
 )]
 fn moment(message: u32, wparam: usize) -> Moment {
@@ -273,7 +273,7 @@ fn moment(message: u32, wparam: usize) -> Moment {
 }
 
 #[cfg_attr(
-    not(windows),
+    any(not(windows), feature = "cef"),
     allow(dead_code, reason = "a window's messages are Windows' own")
 )]
 fn key_menu(message: u32, wparam: usize, lparam: isize) -> KeyMenu {
@@ -292,7 +292,7 @@ fn key_menu(message: u32, wparam: usize, lparam: isize) -> KeyMenu {
 
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(
-    not(windows),
+    any(not(windows), feature = "cef"),
     allow(dead_code, reason = "a window's messages are Windows' own")
 )]
 enum KeyMenu {

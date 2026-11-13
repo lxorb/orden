@@ -21,7 +21,7 @@ pub struct Pressed {
 }
 
 impl Pressed {
-    #[cfg_attr(not(windows), allow(dead_code))]
+    #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
     pub fn keeps_page(&self) -> bool {
         self.code == "F11"
     }

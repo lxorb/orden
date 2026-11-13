@@ -3731,7 +3731,6 @@ dependencies = [
  "sha2 0.10.9",
  "str0m",
  "syn 2.0.119",
- "tar",
  "tauri",
  "tauri-build",
  "tauri-plugin-deep-link",

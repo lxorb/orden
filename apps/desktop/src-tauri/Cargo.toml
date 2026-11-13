@@ -80,7 +80,6 @@ dirs = "6"
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
-tar = "0.4"
 ring = "0.17"
 tokio = { version = "1", default-features = false, features = ["time", "sync"] }
 libloading = "0.8"

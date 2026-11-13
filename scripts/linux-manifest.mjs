@@ -86,7 +86,7 @@ const DROPPED = new Set([
   '[target.\'cfg(any(target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))\'.dependencies]',
   '[patch.crates-io]',
 ])
-const NOT_LINUX = ['wry']
+const NOT_LINUX = ['wry', 'webview2-com']
 
 const PATCHED = [['tauri-runtime-cef', 'linux/tauri-runtime-cef']]
 

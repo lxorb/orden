@@ -18,7 +18,7 @@ pub struct Heard {
 }
 
 impl Heard {
-    #[cfg_attr(not(any(windows, test)), allow(dead_code))]
+    #[cfg_attr(not(any(all(windows, not(feature = "cef")), test)), allow(dead_code))]
     pub const UNHEARD: Self = Self {
         ours: false,
         said: None,
@@ -29,7 +29,7 @@ impl Heard {
 const WAITING: usize = 64;
 
 #[derive(Debug)]
-#[cfg_attr(not(any(windows, test)), allow(dead_code))]
+#[cfg_attr(not(any(all(windows, not(feature = "cef")), test)), allow(dead_code))]
 pub struct Waiting<T> {
     tabs: HashMap<String, VecDeque<(String, T)>>,
 }
@@ -42,7 +42,7 @@ impl<T> Default for Waiting<T> {
     }
 }
 
-#[cfg_attr(not(any(windows, test)), allow(dead_code))]
+#[cfg_attr(not(any(all(windows, not(feature = "cef")), test)), allow(dead_code))]
 impl<T> Waiting<T> {
     pub fn heard(&mut self, tab: &str, uri: &str, what: T) {
         let waiting = self.tabs.entry(tab.to_string()).or_default();
@@ -65,7 +65,7 @@ impl<T> Waiting<T> {
     }
 }
 
-#[cfg_attr(not(any(windows, test)), allow(dead_code))]
+#[cfg_attr(not(any(all(windows, not(feature = "cef")), test)), allow(dead_code))]
 fn same_address(heard: &str, url: &str) -> bool {
     heard == url || tauri::Url::parse(heard).is_ok_and(|heard| heard.as_str() == url)
 }
