@@ -2,6 +2,23 @@
 pub const SWITCH: (&str, &str) = ("--force-device-scale-factor", "1");
 
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
+pub const CHROMIUM_SCALES_ITSELF: bool = !cfg!(target_os = "linux");
+
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+pub fn switches() -> Vec<(String, Option<String>)> {
+    if CHROMIUM_SCALES_ITSELF {
+        Vec::new()
+    } else {
+        vec![(SWITCH.0.to_owned(), Some(SWITCH.1.to_owned()))]
+    }
+}
+
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+fn zoom_is_off(ratio: f64, native: f64, zoom: f64) -> bool {
+    (ratio / native - zoom).abs() > 0.01
+}
+
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("page_scale.js");
 
 #[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
@@ -163,21 +180,51 @@ mod engine {
 
     static SAID: LazyLock<Mutex<HashMap<String, f64>>> = LazyLock::new(Mutex::default);
 
+    static NATIVE: LazyLock<Mutex<HashMap<String, f64>>> = LazyLock::new(Mutex::default);
+
+    fn native_of(window: &str) -> f64 {
+        NATIVE
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get(window)
+            .copied()
+            .unwrap_or(1.0)
+    }
+
+    fn native_read(window: &tauri::Window<crate::Engine>) -> f64 {
+        if super::CHROMIUM_SCALES_ITSELF {
+            window
+                .scale_factor()
+                .ok()
+                .filter(|scale| scale.is_finite() && *scale > 0.0)
+                .unwrap_or(1.0)
+        } else {
+            1.0
+        }
+    }
+
     pub fn heard(webview: &tauri::Webview<crate::Engine>, ratio: f64) {
-        let window = webview.window().label().to_owned();
+        let window = webview.window();
+        let native = native_read(&window);
+        let label = window.label().to_owned();
+        NATIVE
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(label.clone(), native);
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .insert(window, ratio);
+            .insert(label, ratio);
         let scale = desktop() * in_force();
-        if (ratio - scale).abs() > 0.01 {
+        if super::zoom_is_off(ratio, native, scale) {
             let _ = webview.set_zoom(scale);
         }
     }
 
     pub fn zooming(window: &str) {
+        let ratio = native_of(window) * desktop() * in_force();
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .insert(window.to_owned(), desktop() * in_force());
+            .insert(window.to_owned(), ratio);
     }
 
     pub fn of(window: &tauri::Window<crate::Engine>) -> f64 {
@@ -185,7 +232,7 @@ mod engine {
             .unwrap_or_else(PoisonError::into_inner)
             .get(window.label())
             .copied()
-            .unwrap_or_else(|| desktop() * in_force())
+            .unwrap_or_else(|| native_of(window.label()) * desktop() * in_force())
     }
 }
 
@@ -196,7 +243,12 @@ pub fn start(app: &tauri::AppHandle<crate::Engine>) {
         app,
         "info",
         &format!(
-            "scale: the desktop's is {scale:.3}; Chromium's is 1, and the pages are zoomed to it"
+            "scale: the desktop's is {scale:.3}; {}",
+            if CHROMIUM_SCALES_ITSELF {
+                "Chromium follows the display's own"
+            } else {
+                "Chromium's is 1, and the pages are zoomed to it"
+            }
         ),
     );
 }
@@ -250,7 +302,26 @@ pub fn web(factor: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{scale_of_dpi, xsettings_int, zoom_of, RUNGS, SCRIPT};
+    use super::{
+        scale_of_dpi, switches, xsettings_int, zoom_is_off, zoom_of, CHROMIUM_SCALES_ITSELF, RUNGS,
+        SCRIPT, SWITCH,
+    };
+
+    #[test]
+    fn chromium_keeps_its_own_scale_outside_linux() {
+        let forced = switches().iter().any(|(name, _)| name == SWITCH.0);
+        assert_eq!(forced, cfg!(target_os = "linux"));
+        assert_eq!(CHROMIUM_SCALES_ITSELF, !cfg!(target_os = "linux"));
+    }
+
+    #[test]
+    fn a_retina_page_at_its_zoom_is_left_alone() {
+        assert!(!zoom_is_off(2.0, 2.0, 1.0));
+        assert!(!zoom_is_off(2.5, 2.0, 1.25));
+        assert!(zoom_is_off(2.0, 2.0, 1.25));
+        assert!(!zoom_is_off(1.25, 1.0, 1.25));
+        assert!(zoom_is_off(1.0, 1.0, 1.25));
+    }
 
     #[test]
     fn a_zoom_is_the_nearest_rung() {
