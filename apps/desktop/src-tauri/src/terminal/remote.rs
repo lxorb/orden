@@ -419,19 +419,22 @@ pub fn connect(webview: &Webview, id: &str) -> Result<Launch, String> {
     let places = places(webview)?;
     let config = ssh_config::hosts(&places.config, &places.home, &ssh_config::Disk);
 
-    let _writing = WRITING
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-    let mut kept = read_kept(&places.kept);
     let args = {
+        let kept = read_kept(&places.kept);
         let target = target(id, &config, &kept).ok_or_else(|| format!("no host {id} here"))?;
         arguments(&target, places.elsewhere.then_some(places.config.as_path()))
     };
     let program = ssh_program().ok_or_else(|| "no ssh on this machine".to_owned())?;
     let args = bounded(&program, args);
 
-    kept.about.entry(id.to_owned()).or_default().last = Some(crate::clock::now());
-    let _ = write_kept(&places.kept, &kept);
+    {
+        let _writing = WRITING
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut kept = read_kept(&places.kept);
+        kept.about.entry(id.to_owned()).or_default().last = Some(crate::clock::now());
+        let _ = write_kept(&places.kept, &kept);
+    }
 
     Ok(Launch {
         program,
