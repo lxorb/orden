@@ -53,22 +53,44 @@ const DRAG_DROP_INIT_SCRIPT: &str = r#"
     }).catch(() => {});
   };
 
+  // Only the browser's own drag events are relayed: the host's answer comes back as
+  // events the page makes itself, which must neither be relayed again nor taken.
   const listen = (eventName, handler) => {
-    window.addEventListener(eventName, handler, { capture: true });
+    window.addEventListener(
+      eventName,
+      (event) => {
+        if (event.isTrusted) {
+          handler(event);
+        }
+      },
+      { capture: true },
+    );
   };
 
   const carriesFiles = (event) =>
     !!event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
+
+  // A drag that carries files is the host's: it is relayed, accepted, and kept from the
+  // page's own listeners, which hear the host's drag events instead, as on every platform
+  // where the window and not the page receives the drag.
+  const taken = (event) => {
+    if (!carriesFiles(event)) {
+      return false;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "copy";
+    }
+    return true;
+  };
 
   listen("dragenter", (event) => {
     if (!entered) {
       entered = true;
       send("enter", event);
     }
-    if (carriesFiles(event)) {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "copy";
-    }
+    taken(event);
   });
 
   listen("dragover", (event) => {
@@ -76,13 +98,7 @@ const DRAG_DROP_INIT_SCRIPT: &str = r#"
       entered = true;
       send("enter", event);
     }
-    // A drop is only delivered where the page accepted the drag over it; the host decides
-    // what a dropped file does, so every file drag is accepted here (macOS ends a drag the
-    // page did not accept with a leave, and no drop ever reaches the host).
-    if (carriesFiles(event)) {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "copy";
-    }
+    taken(event);
     send("over", event);
   });
 
@@ -92,6 +108,7 @@ const DRAG_DROP_INIT_SCRIPT: &str = r#"
     }
     entered = false;
     send("drop", event);
+    taken(event);
   });
 
   listen("dragleave", (event) => {
@@ -100,6 +117,9 @@ const DRAG_DROP_INIT_SCRIPT: &str = r#"
     if (entered && (x <= 0 || y <= 0 || x >= window.innerWidth || y >= window.innerHeight)) {
       entered = false;
       send("leave", event);
+    }
+    if (carriesFiles(event)) {
+      event.stopImmediatePropagation();
     }
   });
 })();
