@@ -67,6 +67,12 @@ jobs:
           key: cef-${{ matrix.target }}
           save-if: ${{ github.event_name == 'workflow_dispatch' }}
 
+      - name: The CEF distribution and ffmpeg, on Windows
+        if: runner.os == 'Windows'
+        run: |
+          bash scripts/linux-cef.sh cef
+          choco install ffmpeg -y --no-progress
+
       - name: Frontend
         run: |
           pnpm install --frozen-lockfile

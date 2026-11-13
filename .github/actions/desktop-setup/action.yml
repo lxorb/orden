@@ -47,7 +47,7 @@ runs:
         sudo apt-get install -y libgtk-4-dev libdbus-1-dev libnss3 cmake ninja-build patchelf xdg-utils squashfs-tools
 
     - name: The CEF distribution
-      if: runner.os == 'Linux'
+      if: runner.os != 'macOS'
       shell: bash
       run: bash scripts/linux-cef.sh cef
 

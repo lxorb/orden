@@ -71,22 +71,29 @@ case "${1:-use}" in
     ;;
   cef)
     dir="${2:-$HOME/.cache/orden-cef}"
-    case "$(uname -m)" in
-      x86_64) platform=linux64 ;;
-      aarch64) platform=linuxarm64 ;;
-      *) echo "no CEF for $(uname -m)" >&2; exit 1 ;;
+    case "$(uname -s):$(uname -m)" in
+      MINGW* | MSYS* | CYGWIN*)
+        case "${RUNNER_ARCH:-${PROCESSOR_ARCHITECTURE:-}}" in
+          ARM64) platform=windowsarm64 ;;
+          *) platform=windows64 ;;
+        esac
+        ;;
+      *:x86_64) platform=linux64 ;;
+      *:aarch64) platform=linuxarm64 ;;
+      *) echo "no CEF for $(uname -s) $(uname -m)" >&2; exit 1 ;;
     esac
     lock_version=$(sed -n '/^name = "cef"$/{n;s/^version = "\(.*\)"$/\1/p}' "$app/linux/Cargo.lock" | head -1)
     engine="${lock_version#*+}"
     if [ ! -f "$dir/archive.json" ] || ! grep -q "cef_binary_$engine+" "$dir/archive.json"; then
-      read -r name sha1 < <(curl -fsSL https://cef-builds.spotifycdn.com/index.json | python3 -c '
-import json, sys
-platform, engine = sys.argv[1], sys.argv[2]
-for one in json.load(sys.stdin)[platform]["versions"]:
-    if one["cef_version"].split("+")[0] == engine:
-        archive = next(f for f in one["files"] if f["type"] == "minimal")
-        print(archive["name"], archive["sha1"])
-        break
+      read -r name sha1 < <(curl -fsSL https://cef-builds.spotifycdn.com/index.json | node -e '
+const [platform, engine] = process.argv.slice(1);
+let text = "";
+process.stdin.on("data", (chunk) => (text += chunk));
+process.stdin.on("end", () => {
+  const one = JSON.parse(text)[platform].versions.find((v) => v.cef_version.split("+")[0] === engine);
+  const archive = one && one.files.find((f) => f.type === "minimal");
+  if (archive) console.log(archive.name, archive.sha1);
+});
 ' "$platform" "$engine") || true
       [ -n "${name:-}" ] || { echo "the CEF index has no $engine for $platform" >&2; exit 1; }
       work=$(mktemp -d)
@@ -101,9 +108,18 @@ for one in json.load(sys.stdin)[platform]["versions"]:
       cp -a "$root"/include "$root"/cmake "$root"/libcef_dll "$root"/CMakeLists.txt "$dir"/
       printf '{"type":"minimal","name":"%s","sha1":"%s"}\n' "$name" "$sha1" > "$dir/archive.json"
     fi
-    for angle in libEGL.so libGLESv2.so; do
-      [ -e "$dir/$angle" ] || cc -shared -o "$dir/$angle" -x c /dev/null
-    done
+    case "$platform" in
+      windows*)
+        for angle in libEGL.dll libGLESv2.dll; do
+          [ -e "$dir/$angle" ] || : >"$dir/$angle"
+        done
+        ;;
+      *)
+        for angle in libEGL.so libGLESv2.so; do
+          [ -e "$dir/$angle" ] || cc -shared -o "$dir/$angle" -x c /dev/null
+        done
+        ;;
+    esac
     echo "CEF_PATH=$dir" >>"${GITHUB_ENV:-/dev/null}"
     echo "CEF $engine for $platform in $dir"
     ;;
