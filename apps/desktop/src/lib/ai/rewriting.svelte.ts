@@ -1,10 +1,9 @@
 import { documentOf, type EditorView, type SharedDoc } from '@orden/editor'
 import { systemLocale } from '../platform/src/api'
 import { message } from '../ui-kit/src/api'
-import { complete, wasStopped } from './complete'
+import { complete, wasStopped, ai } from '../ai-providers/src/api'
 import { defaultLanguage, nameOfLanguage, rewriteMessages, stillThere, type Verb } from './rewrite'
 import { rewriteSheet } from '../surfaces.svelte'
-import { ai } from './store.svelte'
 
 class Rewriting {
   open = $state(false)

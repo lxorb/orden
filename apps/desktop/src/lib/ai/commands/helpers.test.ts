@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Turn } from '../chat/types'
+import type { Turn } from '../../ai-providers/src/chat/types'
 import { autocompactIn, markdownOf, nthAnswer } from './conversation'
 import { batchTargets, researchPrompt } from './helpers'
 import { languageIn } from './words'

@@ -32,7 +32,7 @@
   import { commandIn, commandsFor, matching, rowNamed } from './seams'
   import Suggest from './Suggest.svelte'
   import { grow } from '../../grow'
-  import { MODES, FIRST_MODE, type Mode, modeWord } from '../modes'
+  import { MODES, FIRST_MODE, type Mode, modeWord } from '../../ai-providers/src/api'
 
   let field = $state<HTMLTextAreaElement>()
   let caret = $state(0)

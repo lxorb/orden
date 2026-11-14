@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { baseEffort, partsAsSteps, stepsOf, untrusted, userStep } from './transcript'
-import type { Thread, Turn } from './types'
+import type { Thread, Turn } from '../../ai-providers/src/chat/types'
 
 const you = (id: string, text: string, effort: Turn['effort'] = 'high'): Turn => ({
   id,

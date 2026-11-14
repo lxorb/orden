@@ -86,7 +86,7 @@ import { revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { spacePicker } from './space-picker.svelte'
 import { askQuickly } from './ai/quick-door'
-import { switchableAccounts, switchAccount } from './ai/switching'
+import { switchableAccounts, switchAccount } from './ai-providers/src/api'
 import { toggleScratchpad } from './scratchpad/src/api'
 import {
   canPublish,
@@ -1169,7 +1169,7 @@ export function appCommands(view?: EditorView): Command[] {
           run: () =>
             __EVEN_PLUGIN__
               ? void account.signOut('asked')
-              : void import('./ai/vault/leaving').then((one) => one.signOut()),
+              : void import('./ai-providers/src/api').then((one) => one.signOut()),
         }
       : { id: 'signin', label: 'Sign in', run: () => (account.open = true) },
 

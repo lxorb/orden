@@ -19,8 +19,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 let apiKey = ''
-vi.mock('../../../ai/keys', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../ai/keys')>()),
+vi.mock('../../../ai-providers/src/api', async (original) => ({
+  ...(await original<typeof import('../../../ai-providers/src/api')>()),
   readKey: () => Promise.resolve(apiKey),
 }))
 
@@ -81,8 +81,8 @@ vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
 })
 
 const { account } = await import('../../../accounts/src/account.svelte')
-const { ai } = await import('../../../ai/store.svelte')
-const { canTranscribe } = await import('../../../ai/hears')
+const { ai } = await import('../../../ai-providers/src/store.svelte')
+const { canTranscribe } = await import('../../../ai-providers/src/hears')
 const { heardPiece, transcribedBy, WHISPER } = await import('./transcribe')
 
 const wav = new Uint8Array(new ArrayBuffer(2048))

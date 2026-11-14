@@ -1,5 +1,5 @@
 import { invoke, isDesktop } from '../../platform/src/api'
-import type { Thread } from './types'
+import type { Thread } from '../../ai-providers/src/api'
 
 interface Asked {
   id: string

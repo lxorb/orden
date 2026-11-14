@@ -9,14 +9,15 @@ const world = vi.hoisted(() => ({
   newest: 0,
 }))
 
-vi.mock('../../ai/complete', () => ({
+vi.mock('../../ai-providers/src/api', async (original) => ({
+  ...(await original<typeof import('../../ai-providers/src/api')>()),
   complete: async () => {
     world.asked++
     await new Promise((resolve) => setTimeout(resolve, 5))
     return 'urgent'
   },
+  ai: { providerFor: () => ({ model: 'small' }) },
 }))
-vi.mock('../../ai/store.svelte', () => ({ ai: { providerFor: () => ({ model: 'small' }) } }))
 
 const said = (at: number, author = 'user:lucile'): Message =>
   ({

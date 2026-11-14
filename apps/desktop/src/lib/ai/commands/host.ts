@@ -1,9 +1,15 @@
-import { complete } from '../complete'
-import type { Message, Provider } from '../providers'
-import { ai } from '../store.svelte'
+import { complete, ai } from '../../ai-providers/src/api'
+import type { Message, Provider } from '../../ai-providers/src/api'
 import { engineFor, type Setup } from '../chat/engine'
 import { keepThread } from '../chat/threads'
-import type { Draft, EngineEvent, NoticeCode, Thread, Turn, Usage } from '../chat/types'
+import type {
+  Draft,
+  EngineEvent,
+  NoticeCode,
+  Thread,
+  Turn,
+  Usage,
+} from '../../ai-providers/src/api'
 import { added } from '../chat/usage'
 import { instructionsFor } from './instructions'
 import type { Ended, Once, Panel } from './types'

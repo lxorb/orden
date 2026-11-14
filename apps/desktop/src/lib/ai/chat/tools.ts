@@ -1,7 +1,7 @@
 import { isDesktop, invoke } from '../../platform/src/api'
-import type { Provider } from '../providers'
-import { READER_TABS } from './choices'
-import type { Mode, ToolOutput } from './types'
+import type { Provider } from '../../ai-providers/src/api'
+import { READER_TABS } from '../../ai-providers/src/api'
+import type { Mode, ToolOutput } from '../../ai-providers/src/api'
 import { record, text, type ToolDef } from './wire'
 
 export interface Tools {

@@ -38,7 +38,7 @@ import {
 } from '@orden/editor/menu'
 import { account } from './accounts/src/api'
 import { chatsOn } from './settings.svelte'
-import { canTranscribe } from './ai/hears'
+import { canTranscribe } from './ai-providers/src/api'
 import { copySelection, copyText, cutSelection } from './ui-controls/src/api'
 import { copyPicture } from './copy-picture'
 import { countText } from './counts'

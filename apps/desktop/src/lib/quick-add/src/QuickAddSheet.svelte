@@ -8,7 +8,7 @@
   import QuickAdd from './QuickAdd.svelte'
   import { links } from '../../link-index.svelte'
   import { dayOf, labelsOf, todos } from '../../tasks-model/src/api'
-  import { ai } from '../../ai/store.svelte'
+  import { ai } from '../../ai-providers/src/api'
   import { addTask } from './write'
 
   const labels = $derived(labelsOf(todos.todos, { onlySpace: false, space: null, today: dayOf() }))

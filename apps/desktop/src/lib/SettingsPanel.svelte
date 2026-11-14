@@ -824,7 +824,7 @@
           onclick={() =>
             __EVEN_PLUGIN__
               ? void account.signOut('asked')
-              : void import('./ai/vault/leaving').then((one) => one.signOut())}>Sign out</button
+              : void import('./ai-providers/src/api').then((one) => one.signOut())}>Sign out</button
         >
         {#if leaving}
           {#await import('./accounts-ui/src/api') then ui}

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { answeringAt, onSend, watching } from './sends'
-import type { Engine, Thread } from './types'
+import type { Engine, Thread } from '../../ai-providers/src/chat/types'
 
 function fakeEngine(): Engine & { extra: () => string } {
   return {

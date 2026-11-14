@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import type { Thread } from '../chat/types'
+import type { Thread } from '../../ai-providers/src/chat/types'
 import type { Host } from './host'
 
 vi.mock('../../task-actions', () => ({

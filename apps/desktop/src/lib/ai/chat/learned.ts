@@ -1,6 +1,6 @@
 import { isBoolean, isNumber, isRecord, keepJson, recordOf, stored } from '../../platform/src/api'
 import { isEffort } from './effort'
-import type { Effort } from './types'
+import type { Effort } from '../../ai-providers/src/api'
 
 const STORAGE_KEY = 'orden:ai-chat'
 

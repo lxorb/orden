@@ -1,5 +1,5 @@
-import type { ModelInfo } from '../chat/types'
-import type { Provider } from '../providers'
+import type { ModelInfo } from '../../ai-providers/src/api'
+import type { Provider } from '../../ai-providers/src/api'
 
 export interface Offered {
   provider: Provider

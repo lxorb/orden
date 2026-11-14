@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { plans } from '../ai/local/status.svelte'
+  import { type LocalPlans, localCli } from '../ai-providers/src/api'
   import { type Compatible, MORE_AI, type Plan, PLANS } from './catalog'
   import { connectCompatible, connectKey, signInKind, signInWith } from './connect'
   import { keyKindOf, type KeyedKind, matching, offersApiKey, requestKey, typedName } from './flow'
@@ -10,6 +10,9 @@
   import { setup } from './setup-state.svelte'
 
   type State = 'idle' | 'busy' | 'waiting' | 'in'
+
+  let plans = $state.raw<LocalPlans | null>(null)
+  if (!__EVEN_PLUGIN__) void localCli().then((one) => (plans = one.plans))
 
   const FROM_KEY: Record<KeyedKind, Plan> = {
     anthropic: 'claude',
@@ -43,7 +46,7 @@
 
   $effect(() => {
     for (const [plan, id] of Object.entries(waitingOn)) {
-      if (plans.of(id).state === 'in') {
+      if (plans?.of(id).state === 'in') {
         states = { ...states, [plan]: 'in' }
         waitingOn = Object.fromEntries(Object.entries(waitingOn).filter(([one]) => one !== plan))
       }

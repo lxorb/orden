@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '../automation/caller'
-import { type Mode, modeOfGrant } from '../ai/modes'
+import { type Mode, modeOfGrant } from '../ai-providers/src/api'
 import type { Scope } from '../agents/src/api'
 import { type Call, done } from './call'
 import { answerOf, Refused } from './problem'

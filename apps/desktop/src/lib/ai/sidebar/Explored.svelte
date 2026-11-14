@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { dur, slide } from '../../platform/src/api'
-  import type { Part } from '../chat/types'
+  import type { Part } from '../../ai-providers/src/api'
   import { chat } from './chat.svelte'
   import PartRow from './PartRow.svelte'
   import StepLine from './StepLine.svelte'

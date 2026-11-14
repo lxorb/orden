@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { sseJson, sseLines } from '../../stream'
+import { sseJson, sseLines } from '../../../ai-providers/src/api'
 
 function streamText(name: string): string {
   return readFileSync(new URL(`./${name}.sse`, import.meta.url), 'utf8')

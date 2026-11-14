@@ -1,4 +1,4 @@
-import type { Thread } from '../chat/types'
+import type { Thread } from '../../ai-providers/src/api'
 import type { Host } from './host'
 import { sendHere } from './host'
 

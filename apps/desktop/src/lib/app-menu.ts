@@ -502,7 +502,7 @@ export function appMenu(context: Context): MenuGroup[] {
             account.user
               ? __EVEN_PLUGIN__
                 ? void account.signOut('asked')
-                : void import('./ai/vault/leaving').then((one) => one.signOut())
+                : void import('./ai-providers/src/api').then((one) => one.signOut())
               : (account.open = true),
         },
         DIVIDER,

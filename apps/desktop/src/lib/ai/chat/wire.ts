@@ -1,6 +1,6 @@
-import type { Provider } from '../providers'
+import type { Provider } from '../../ai-providers/src/api'
 import type { Call, Step } from './transcript'
-import type { Effort, ModelInfo, Part, ToolOutput, Usage } from './types'
+import type { Effort, ModelInfo, Part, ToolOutput, Usage } from '../../ai-providers/src/api'
 
 export interface ToolDef {
   name: string

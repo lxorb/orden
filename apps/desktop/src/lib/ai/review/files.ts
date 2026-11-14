@@ -1,4 +1,4 @@
-import type { Part, Turn } from '../chat/types'
+import type { Part, Turn } from '../../ai-providers/src/api'
 
 export type FileChange =
   | { id: string; kind: 'moved'; from: string; path: string; space?: string }

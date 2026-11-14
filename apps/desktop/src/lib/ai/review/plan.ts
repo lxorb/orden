@@ -1,4 +1,4 @@
-import type { Part, Thread, Turn } from '../chat/types'
+import type { Part, Thread, Turn } from '../../ai-providers/src/api'
 import { type Change, changesSince, checkpoints } from './changes'
 import { answerOf, type FileChange, fileChangeOf, spaceOfCall, verbOf } from './files'
 

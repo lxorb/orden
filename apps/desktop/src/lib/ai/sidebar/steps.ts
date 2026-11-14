@@ -1,4 +1,4 @@
-import type { Part } from '../chat/types'
+import type { Part } from '../../ai-providers/src/api'
 import { verbOf } from './verbs'
 
 type Notice = Extract<Part, { kind: 'notice' }>

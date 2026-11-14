@@ -1,0 +1,22 @@
+{
+  "name": "ai-providers",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "crate",
+    "platform",
+    "sync-client",
+    "theme",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/Icon.svelte",
+    "apps/desktop/src/lib/identifier.ts",
+    "apps/desktop/src/lib/pairing.ts",
+    "apps/desktop/src/lib/said.svelte.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/when.ts"
+  ]
+}

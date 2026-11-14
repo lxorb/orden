@@ -35,7 +35,7 @@ const { anythingRuns } = await import('../../src/lib/parting')
 type Tab = import('../../src/lib/workspace.svelte').Tab
 await Promise.all([
   import('../../src/lib/ai/chat/sends'),
-  import('../../src/lib/ai/store.svelte'),
+  import('../../src/lib/ai-providers/src/store.svelte'),
   import('../../src/lib/ai/sidebar/chat.svelte'),
 ])
 

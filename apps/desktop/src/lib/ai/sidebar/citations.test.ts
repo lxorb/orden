@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Attachment, Turn } from '../chat/types'
+import type { Attachment, Turn } from '../../ai-providers/src/chat/types'
 import { cites, passageAttachments, sourcesFor, sourcesIn } from './citations'
 
 const passages = [

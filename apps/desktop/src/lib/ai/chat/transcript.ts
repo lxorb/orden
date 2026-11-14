@@ -9,7 +9,7 @@ import type {
   Thread,
   ToolOutput,
   Turn,
-} from './types'
+} from '../../ai-providers/src/api'
 
 export type Step =
   | { role: 'user'; text: string; images: { mime: string; data: string }[] }

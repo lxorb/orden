@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { events } from './recorded/read'
 import { itemsOf, responses } from './responses'
-import type { ModelInfo } from './types'
+import type { ModelInfo } from '../../ai-providers/src/chat/types'
 import type { Ask } from './wire'
 
 const MODEL: ModelInfo = {

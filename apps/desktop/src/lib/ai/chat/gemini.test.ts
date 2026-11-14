@@ -1,16 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('../keys', () => ({ readKey: () => Promise.resolve('AIza-test') }))
+vi.mock('../../ai-providers/src/keys', async (original) => ({
+  ...(await original<typeof import('../../ai-providers/src/keys')>()),
+  readKey: () => Promise.resolve('AIza-test'),
+}))
 
 const { createApiEngine } = await import('./engine')
 const { forgetLearnt } = await import('./learned')
 const { newThread } = await import('./threads')
 const { catalogue } = await import('./catalogue')
 const { contentsOf, gemini, UNSIGNED } = await import('./gemini')
-const { complete } = await import('../complete')
+const { complete } = await import('../../ai-providers/src/complete')
 
-import type { Provider } from '../providers'
-import type { EngineEvent, ModelInfo, Thread, ToolOutput } from './types'
+import type { Provider } from '../../ai-providers/src/providers'
+import type { EngineEvent, ModelInfo, Thread, ToolOutput } from '../../ai-providers/src/chat/types'
 import type { Tools } from './tools'
 import type { Ask } from './wire'
 

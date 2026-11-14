@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { newThread } from '../chat/threads'
-import type { Thread } from '../chat/types'
+import type { Thread } from '../../ai-providers/src/chat/types'
 import type { NoteCommand } from './notes'
 import type { Ended, Panel, PanelCommand } from './types'
 

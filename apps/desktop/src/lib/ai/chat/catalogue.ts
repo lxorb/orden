@@ -1,9 +1,15 @@
-import { isLocal, modelsUrl, NOT_CHAT, type Provider, talkable } from '../providers'
-import { sseJson } from '../stream'
+import {
+  isLocal,
+  modelsUrl,
+  NOT_CHAT,
+  type Provider,
+  talkable,
+  sseJson,
+} from '../../ai-providers/src/api'
 import { ordered, SCALE } from './effort'
 import { learnt } from './learned'
 import { request } from './request'
-import type { Effort, ModelInfo } from './types'
+import type { Effort, ModelInfo } from '../../ai-providers/src/api'
 
 export const ANTHROPIC_COMPACT_BETA = 'compact-2026-09-04'
 

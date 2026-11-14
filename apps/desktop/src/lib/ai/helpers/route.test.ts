@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import type { ModelInfo } from '../chat/types'
-import type { Provider } from '../providers'
+import type { ModelInfo } from '../../ai-providers/src/chat/types'
+import type { Provider } from '../../ai-providers/src/providers'
 import { type Offered, routed } from './route'
 
 const model = (id: string, name = id): ModelInfo => ({

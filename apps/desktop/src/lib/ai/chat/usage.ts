@@ -1,4 +1,4 @@
-import type { AutoCompact, Draft, Usage } from './types'
+import type { AutoCompact, Draft, Usage } from '../../ai-providers/src/api'
 
 export function noUsage(window: number | null): Usage {
   return { input: 0, cached: 0, output: 0, reasoning: 0, window }

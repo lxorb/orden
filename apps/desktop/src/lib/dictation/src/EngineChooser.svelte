@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { transcriberNow } from '../../ai/hears'
+  import { transcriberNow } from '../../ai-providers/src/api'
   import { dur, fly } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
   import { type Engine, engines, whereTo } from './engines.svelte'

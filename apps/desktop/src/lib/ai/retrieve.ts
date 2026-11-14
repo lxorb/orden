@@ -3,7 +3,7 @@ import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import { searchSpace } from '../search/src/api'
 import { waited } from '../platform/src/api'
-import type { Message } from './providers'
+import type { Message } from '../ai-providers/src/api'
 
 export interface Passage {
   path: string

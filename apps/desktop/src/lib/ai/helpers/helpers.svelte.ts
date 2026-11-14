@@ -1,6 +1,6 @@
 import { keepThread, newThread } from '../chat/threads'
 import { untrusted } from '../chat/transcript'
-import type { Effort, Mode, Thread } from '../chat/types'
+import type { Effort, Mode, Thread } from '../../ai-providers/src/api'
 import { tasks } from '../commands/tasks.svelte'
 import type { Ended } from '../commands/types'
 import { type Offered, routed } from './route'

@@ -1,5 +1,5 @@
 import type { Passage } from '../retrieve'
-import type { Attachment, Draft, Turn } from '../chat/types'
+import type { Attachment, Draft, Turn } from '../../ai-providers/src/api'
 
 export interface Source {
   path: string

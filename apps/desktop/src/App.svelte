@@ -111,8 +111,8 @@
   if (renamed.showing) void renameNotice.ask()
   if (isDesktop && !__EVEN_PLUGIN__) {
     setTimeout(() => {
-      void import('./lib/ai/keys-moved.svelte')
-        .then(({ keysMoved }) => keysMoved.check())
+      void import('./lib/ai-providers/src/api')
+        .then((one) => one.checkKeysMoved())
         .then((say) => (say ? keysMovedNotice.ask() : undefined))
     }, 3000)
   }
@@ -434,7 +434,7 @@
     void Promise.all([
       import('./lib/import/src/api').then((one) => one.importingStore()),
       import('./lib/publishing/src/api'),
-      import('./lib/ai/store.svelte'),
+      import('./lib/ai-providers/src/api'),
       import('./lib/ai/rewriting.svelte'),
       import('./lib/sync-client/test/fake-engine.svelte'),
       import('./lib/agents/src/api').then((one) => one.agentStandIn()),
@@ -483,13 +483,11 @@
           aiVault: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))
-              : Promise.all([import('./lib/ai/vault/start.svelte'), import('./lib/ai/keys')]).then(
-                  ([{ vault }, keys]) => ({
-                    vault,
-                    writeKey: keys.writeKey,
-                    readSecret: keys.readSecret,
-                  }),
-                ),
+              : import('./lib/ai-providers/src/api').then(({ vault, writeKey, readSecret }) => ({
+                  vault,
+                  writeKey,
+                  readSecret,
+                })),
           importing,
           publish,
           rewriting,

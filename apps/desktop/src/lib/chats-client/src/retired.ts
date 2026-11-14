@@ -83,7 +83,7 @@ async function sealedNames(): Promise<string[]> {
 
 export async function forgetRetiredChatsHere(): Promise<void> {
   if (typeof indexedDB === 'undefined' || storedText(CLEARED) !== null) return
-  const { forgetKey } = await import('../../ai/keys')
+  const { forgetKey } = await import('../../ai-providers/src/api')
   await forgetRetiredChats({
     forgetSecret: (name) => forgetKey(name, true),
     sealedNames,

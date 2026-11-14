@@ -2,15 +2,16 @@ import { describe, expect, test, vi } from 'vitest'
 
 const KEY = process.env.ORDEN_OPENAI_LIVE_KEY ?? ''
 
-vi.mock('../keys', () => ({
+vi.mock('../../ai-providers/src/keys', async (original) => ({
+  ...(await original<typeof import('../../ai-providers/src/keys')>()),
   readKey: () => Promise.resolve(process.env.ORDEN_OPENAI_LIVE_KEY ?? ''),
 }))
 
 const { createApiEngine } = await import('./engine')
 const { newThread } = await import('./threads')
 
-import type { Provider } from '../providers'
-import type { EngineEvent, Thread } from './types'
+import type { Provider } from '../../ai-providers/src/providers'
+import type { EngineEvent, Thread } from '../../ai-providers/src/chat/types'
 import type { Tools } from './tools'
 
 const PROVIDERS: Provider[] = [

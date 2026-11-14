@@ -50,7 +50,8 @@ vi.mock('./channel', () => ({
   },
 }))
 
-vi.mock('../../ai/keys', () => ({
+vi.mock('../../ai-providers/src/api', async (original) => ({
+  ...(await original<typeof import('../../ai-providers/src/api')>()),
   keysAreGuarded: () => false,
   readSecret: () => Promise.resolve(null),
   writeSecret: () => Promise.resolve(),

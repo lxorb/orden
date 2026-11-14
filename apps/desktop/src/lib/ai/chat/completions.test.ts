@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { chatMessagesOf, completions } from './completions'
 import { events } from './recorded/read'
-import type { ModelInfo } from './types'
+import type { ModelInfo } from '../../ai-providers/src/chat/types'
 import type { Ask } from './wire'
 
 const MODEL: ModelInfo = {

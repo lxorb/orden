@@ -1,8 +1,7 @@
 import type { AiAsk } from '@orden/editor'
 import { TexDelimiters } from '@orden/markdown/streamed'
 import { busy, message } from '../ui-kit/src/api'
-import { complete, wasStopped } from './complete'
-import { ai } from './store.svelte'
+import { complete, wasStopped, ai } from '../ai-providers/src/api'
 
 const SYSTEM = [
   'You are answering inside a markdown note, and your answer is written straight',

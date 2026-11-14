@@ -14,7 +14,7 @@ import { workspace } from '../../workspace.svelte'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import { writeFile } from '../../workspace/write-file'
 import { answeringAt, onSend, onSent } from '../chat/sends'
-import type { Thread, Turn } from '../chat/types'
+import type { Thread, Turn } from '../../ai-providers/src/api'
 import { cutForEdit } from './branches'
 import {
   agentsOf,
@@ -533,7 +533,7 @@ class Review {
 async function rewound(thread: Thread): Promise<void> {
   const setup = Object.values(import.meta.glob<SetupModule>('../sidebar/setup.ts'))[0]
   if (!setup) return
-  const { ai } = await import('../store.svelte')
+  const { ai } = await import('../../ai-providers/src/api')
   const provider = ai.provider(thread.provider)
   if (!provider) return
   const engine = await (await setup()).engineOf(provider.kind).catch(() => null)
@@ -541,7 +541,9 @@ async function rewound(thread: Thread): Promise<void> {
 }
 
 interface SetupModule {
-  engineOf(kind: import('../providers').ProviderKind): Promise<import('../chat/types').Engine>
+  engineOf(
+    kind: import('../../ai-providers/src/api').ProviderKind,
+  ): Promise<import('../../ai-providers/src/api').Engine>
 }
 
 export const review = new Review()

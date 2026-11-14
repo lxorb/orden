@@ -4,6 +4,7 @@
   "dependsOn": [
     "contracts",
     "accounts",
+    "ai-providers",
     "crate",
     "editor",
     "markdown",
@@ -12,9 +13,6 @@
     "ui-kit"
   ],
   "pending": [
-    "apps/desktop/src/lib/ai/hears.ts",
-    "apps/desktop/src/lib/ai/keys.ts",
-    "apps/desktop/src/lib/ai/providers.ts",
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/reloading.svelte.ts",

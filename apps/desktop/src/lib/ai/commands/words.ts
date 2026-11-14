@@ -2,7 +2,7 @@ import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
 import { languageNames, type Verb } from '../rewrite'
-import type { Thread } from '../chat/types'
+import type { Thread } from '../../ai-providers/src/api'
 import { type Host, sendHere } from './host'
 
 export function languageIn(

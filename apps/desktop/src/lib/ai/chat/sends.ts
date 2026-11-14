@@ -1,5 +1,5 @@
 import { runs } from '../../parting'
-import type { Engine, Thread } from './types'
+import type { Engine, Thread } from '../../ai-providers/src/api'
 
 interface Send {
   thread: string

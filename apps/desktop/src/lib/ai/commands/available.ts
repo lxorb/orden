@@ -1,4 +1,4 @@
-import type { ProviderKind } from '../providers'
+import type { ProviderKind } from '../../ai-providers/src/api'
 
 const FAST: readonly ProviderKind[] = ['anthropic', 'openai', 'codex']
 

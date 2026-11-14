@@ -1,7 +1,6 @@
-import { complete } from '../complete'
-import type { Message } from '../providers'
-import { ai } from '../store.svelte'
-import type { Thread, Turn } from '../chat/types'
+import { complete, ai } from '../../ai-providers/src/api'
+import type { Message } from '../../ai-providers/src/api'
+import type { Thread, Turn } from '../../ai-providers/src/api'
 
 const KEEP =
   'Summarize this part of a conversation so it can be continued from the summary alone. Keep every note path, page address, decision, change made and still to make, and the reader’s requests, in their own words where they matter. Reply with the summary only.'

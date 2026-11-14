@@ -1,4 +1,4 @@
-import { conversationUrl } from '../providers'
+import { conversationUrl } from '../../ai-providers/src/api'
 import { wireEffort } from './effort'
 import { learnt } from './learned'
 import { outputText, type Call, type Step } from './transcript'
@@ -13,7 +13,7 @@ import {
   text,
   type Wire,
 } from './wire'
-import type { Part, ToolOutput, Usage } from './types'
+import type { Part, ToolOutput, Usage } from '../../ai-providers/src/api'
 
 type Message = Record<string, unknown>
 

@@ -1,4 +1,4 @@
-import type { Thread, Turn } from '../chat/types'
+import type { Thread, Turn } from '../../ai-providers/src/api'
 import { checkpoints } from './changes'
 import { review, type ReviewPanel } from './review.svelte'
 

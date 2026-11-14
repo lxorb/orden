@@ -1,6 +1,13 @@
-import { readKey } from '../keys'
-import { headersFor, type Provider, reachable, troubleIn, usable } from '../providers'
-import { sseJson } from '../stream'
+import {
+  chatgptPlan,
+  readKey,
+  headersFor,
+  type Provider,
+  reachable,
+  troubleIn,
+  usable,
+  sseJson,
+} from '../../ai-providers/src/api'
 
 export class Refused extends Error {
   constructor(
@@ -20,7 +27,7 @@ export function wasStopped(error: unknown): boolean {
 
 async function keyFor(provider: Provider): Promise<string> {
   if (provider.kind !== 'chatgpt') return await readKey(provider)
-  const { planToken } = await import('../chatgpt')
+  const { planToken } = await chatgptPlan()
   return await planToken()
 }
 
@@ -68,7 +75,7 @@ export async function refusalIn(
 ): Promise<Refused> {
   const { param, code } = detailsIn(body)
   if (provider.kind === 'chatgpt') {
-    const { planRefusal } = await import('../chatgpt')
+    const { planRefusal } = await chatgptPlan()
     const plan = planRefusal(status, body)
     if (plan) return new Refused(plan, status, param, code)
   }
