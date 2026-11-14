@@ -1,0 +1,6 @@
+{
+  "name": "tasks-model",
+  "layer": "content",
+  "dependsOn": ["contracts", "sync-core"],
+  "pending": ["apps/desktop/src/lib/held-database.ts"]
+}
