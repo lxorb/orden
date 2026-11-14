@@ -54,7 +54,7 @@ function windowMethods(): string[] {
 }
 
 const APPEARANCE = {
-  file: '../src/lib/theme.svelte.ts',
+  file: '../src/lib/theme/src/theme.svelte.ts',
   calls: ['getCurrentWindow().setTheme('],
   permission: 'core:window:allow-set-theme',
 }

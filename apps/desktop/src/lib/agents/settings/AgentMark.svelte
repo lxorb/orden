@@ -1,7 +1,7 @@
 <script lang="ts">
   import { accentFor } from '../../accents'
   import { initial } from '../../icons'
-  import { theme } from '../../theme.svelte'
+  import { theme } from '../../theme/src/api'
 
   const { name }: { name: string } = $props()
 </script>

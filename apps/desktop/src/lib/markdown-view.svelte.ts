@@ -5,7 +5,7 @@ import { dollarMaths, settled } from '@orden/markdown/streamed'
 import { fenceFrom } from './before-render'
 import { drawDiagram } from './diagrams'
 import { loadParsers, type Parser } from './highlight'
-import { theme, type Scheme } from './theme.svelte'
+import { theme, type Scheme } from './theme/src/api'
 
 let version = $state(0)
 let bumping = false

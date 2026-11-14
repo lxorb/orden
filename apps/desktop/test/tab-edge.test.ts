@@ -6,9 +6,15 @@ import { glassCss } from '@orden/themes/glass'
 import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
 import { ACCENTS } from '../src/lib/accents'
-import { frameFor, type Material, type Scheme, type Sides, spanUnder } from '../src/lib/glass/tint'
+import type { Scheme } from '@orden/contracts'
+import {
+  frameFor,
+  type Material,
+  type Sides,
+  spanUnder,
+} from '../src/lib/theme-looks/src/glass/tint'
 import { over, ratio, type Rgb, rgbOf, type Span } from '../src/lib/legibility'
-import { floorFor, paletteOf, sheetColour } from '../src/lib/wallpaper/floors'
+import { floorFor, paletteOf, sheetColour } from '../src/lib/theme-looks/src/wallpaper/floors'
 
 const FLOOR = 1.5
 

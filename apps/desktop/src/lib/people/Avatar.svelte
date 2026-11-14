@@ -3,7 +3,7 @@
   import { accentFor } from '../accents'
   import { faceUrl } from '../api'
   import { initial } from '../icons'
-  import { theme } from '../theme.svelte'
+  import { theme } from '../theme/src/api'
   import type { Face, Presence } from './face'
 
   const {

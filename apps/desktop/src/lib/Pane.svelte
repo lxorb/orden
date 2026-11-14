@@ -32,7 +32,7 @@
   import { keptAway } from './web/away.svelte'
   import { busy } from './busy.svelte'
 
-  import { chrome } from './glass/chrome.svelte'
+  import { chrome } from './theme/src/api'
   import { without } from './graph'
   import { links } from './link-index.svelte'
   import { modes } from './modes.svelte'

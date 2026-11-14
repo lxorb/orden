@@ -23,7 +23,7 @@ test('the stylesheet is the rounded frame, the only one', () => {
 })
 
 test('nothing offers another frame: no setting, no file of its choices', () => {
-  expect(read('./theme.svelte.ts')).not.toMatch(/cornersSetting|'\.\/corners'/)
+  expect(read('./theme/src/theme.svelte.ts')).not.toMatch(/cornersSetting|'\.\/corners'/)
 })
 
 test('every surface on the frame reads its tokens rather than a corner of its own', () => {

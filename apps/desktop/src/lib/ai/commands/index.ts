@@ -201,7 +201,7 @@ const RUNS: Record<string, Run> = {
   doctor: (context, host) => report(host, context, doctor(host.panel.provider ?? null)),
   config: () => settingsAt('ai'),
   keybindings: () => settingsAt('shortcuts'),
-  theme: async () => (await import('../../theme-picker/picking.svelte')).pickTheme(),
+  theme: async () => (await import('../../theme-looks/src/api')).pickTheme(),
   vim: async () => {
     const { modes } = await import('../../modes.svelte')
     modes.setVimKeys(!modes.vim)

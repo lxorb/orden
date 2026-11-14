@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import '../../src/lib/theme-ports'
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
@@ -56,10 +57,10 @@ window.matchMedia = (query: string) =>
   }) as unknown as MediaQueryList
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { theme } = await import('../../src/lib/theme.svelte')
+const { theme } = await import('../../src/lib/theme/src/theme.svelte')
 const { viewport } = await import('../../src/lib/viewport.svelte')
-const { chrome } = await import('../../src/lib/glass/chrome.svelte')
-const { grounds } = await import('../../src/lib/glass/grounds.svelte')
+const { chrome } = await import('../../src/lib/theme/src/chrome.svelte')
+const { grounds } = await import('../../src/lib/theme-looks/src/glass/grounds.svelte')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default
 
 const BLACK = 'https://black.example/'
@@ -273,7 +274,7 @@ test('the next launch opens on the colour it was left on, before anything is wor
   chrome.sleep()
   vi.resetModules()
   localStorage.setItem('orden:glass-chrome', kept ?? '')
-  const fresh = (await import('../../src/lib/glass/chrome.svelte')).chrome
+  const fresh = (await import('../../src/lib/theme/src/chrome.svelte')).chrome
   fresh.wake('light')
   expect(tint()).toBe('#0f0f0f')
   expect(fresh.theme).toBe('dark')
@@ -291,7 +292,7 @@ test('the next launch opens on the pair it was left on', async () => {
   expect(pair()).toBeNull()
   vi.resetModules()
   localStorage.setItem('orden:glass-chrome', kept ?? '')
-  const fresh = (await import('../../src/lib/glass/chrome.svelte')).chrome
+  const fresh = (await import('../../src/lib/theme/src/chrome.svelte')).chrome
   fresh.wake('light')
   expect(pair()).toEqual(['#d2e7fc', '#eed7f2'])
   fresh.sleep()

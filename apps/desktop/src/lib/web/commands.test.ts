@@ -146,7 +146,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { MOST_NOTE_BYTES, SCANNED_AT_ONCE, TOO_LARGE, seed, webInvoke } = await import('./commands')
-const { stamped, stampOf } = await import('../themes/stamp')
+const { stamped, stampOf } = await import('../theme/src/stamp')
 const { forgetSeedStore, rememberSeedIn, seedSpaceRoot } = await import('../seeded')
 const { WELCOME, WELCOME_PATH } = await import('../welcome')
 const { openerFor } = await import('../openers')

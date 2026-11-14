@@ -6,7 +6,7 @@ import { keptCoverOf } from '../kept-cover'
 import { links } from '../link-index.svelte'
 import { notePicture } from '../note-images'
 import { queryRowsHtml } from '../query-block'
-import type { Scheme } from '../theme.svelte'
+import type { Scheme } from '../theme/src/api'
 
 export interface Note {
   text: string

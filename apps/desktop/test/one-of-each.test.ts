@@ -234,7 +234,7 @@ describe('the ring a keyboard leaves', () => {
       'lib/agents/ui/PairingBubble.svelte',
       'lib/ai/vault/VaultApprove.svelte',
       'lib/pass/PassFill.svelte',
-      'lib/theme-picker/ThemePicker.svelte',
+      'lib/theme-looks/src/picker/ThemePicker.svelte',
       'lib/web-tab/WebAsk.svelte',
     ])
   })

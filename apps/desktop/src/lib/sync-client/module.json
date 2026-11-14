@@ -10,7 +10,8 @@
     "scan",
     "bases",
     "collab",
-    "collab-rooms"
+    "collab-rooms",
+    "theme"
   ],
   "pending": [
     "apps/desktop/src/lib/SharedMark.svelte",
@@ -51,7 +52,6 @@
     "apps/desktop/src/lib/space-watch.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/sync/",
-    "apps/desktop/src/lib/theme.svelte.ts",
     "apps/desktop/src/lib/timing.ts",
     "apps/desktop/src/lib/tree-order.ts",
     "apps/desktop/src/lib/undo-toast.svelte.ts",

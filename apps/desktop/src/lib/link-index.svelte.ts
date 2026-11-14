@@ -885,7 +885,7 @@ class Links {
   private async shownHtml(source: string, from: string | null, root = this.root): Promise<string> {
     const [{ readingHtml }, { theme }, { trustsHtmlAt }] = await Promise.all([
       import('./reading/render'),
-      import('./theme.svelte'),
+      import('./theme/src/api'),
       import('./sharing.svelte'),
     ])
 

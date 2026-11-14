@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import '../theme-ports'
 
 const held = new Map<string, string>()
 vi.stubGlobal('localStorage', {

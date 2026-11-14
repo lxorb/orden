@@ -7,7 +7,7 @@ import { without } from '../../records'
 import { roomKindOf } from './kind'
 import type { PlaneRoom, Room, Seen } from '../../collab-rooms/src/api'
 import { deviceName, ownAccent, personFace, personName } from './who'
-import { type Scheme, theme } from '../../theme.svelte'
+import { type Scheme, theme } from '../../theme/src/api'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 
 interface Open {

@@ -1,6 +1,6 @@
 import { sequenceToMermaid } from '@orden/editor'
 import { flowSource, keepSafeLinks } from '@orden/editor/flow'
-import type { Scheme } from './theme.svelte'
+import type { Scheme } from './theme/src/api'
 
 const FONT = "'Geist', ui-sans-serif, system-ui, 'Segoe UI', sans-serif"
 

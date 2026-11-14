@@ -16,7 +16,7 @@
     isTreeDrag,
     mayCarryAddress,
   } from './drag-paths'
-  import { chrome } from './glass/chrome.svelte'
+  import { chrome } from './theme/src/api'
   import { longPress } from './longpress'
   import { menu } from './menu.svelte'
   import { middleOpens, tabAsk } from './new-tab'

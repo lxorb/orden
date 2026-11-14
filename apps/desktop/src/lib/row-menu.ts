@@ -100,7 +100,7 @@ function wallpaperEntry(entry: Entry): MenuEntry[] {
     {
       label: 'Use as wallpaper',
       run: () =>
-        void import('./wallpaper/wallpaper.svelte').then(({ wallpaper }) =>
+        void import('./theme-looks/src/api').then(({ wallpaper }) =>
           wallpaper.takeFrom(entry.path),
         ),
     },

@@ -19,7 +19,9 @@ vi.mock('../workspace.svelte', () => ({
 }))
 vi.mock('../sharing.svelte', () => ({ trustsHtmlIn: () => world.trusts }))
 vi.mock('../settings.svelte', () => ({ settings: { page: undefined, exportAppearance: 'light' } }))
-vi.mock('../theme.svelte', () => ({ theme: { accent: 'violet', active: { path: null } } }))
+vi.mock('../theme/src/theme.svelte', () => ({
+  theme: { accent: 'violet', active: { path: null } },
+}))
 vi.mock('../modes.svelte', () => ({ modes: { codeTheme: 'auto' } }))
 vi.mock('../link-index.svelte', () => ({
   links: {

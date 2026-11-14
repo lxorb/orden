@@ -5,7 +5,7 @@
   import { initial } from '../../icons'
   import { dur, fly } from '../../motion'
   import { overlays } from '../../overlays'
-  import { theme } from '../../theme.svelte'
+  import { theme } from '../../theme/src/api'
   import type { Vault } from './vault.svelte'
 
   const { vault }: { vault: Vault } = $props()

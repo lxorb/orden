@@ -1,6 +1,6 @@
 <script lang="ts">
   import { accentColour } from '../../accents'
-  import { theme } from '../../theme.svelte'
+  import { theme } from '../../theme/src/api'
   import { type SessionState, STATE_COLOURS, STATE_MARKS, STATE_WORDS } from '../session-state'
 
   const { state }: { state: SessionState } = $props()

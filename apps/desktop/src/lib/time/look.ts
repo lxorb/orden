@@ -1,7 +1,7 @@
 import { accentColour, accentFor } from '../accents'
 import { region } from '../region'
 import { localDate } from '../region'
-import { theme } from '../theme.svelte'
+import { theme } from '../theme/src/api'
 import { MINUTE } from './days'
 import { time } from './time.svelte'
 

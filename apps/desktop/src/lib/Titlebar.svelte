@@ -1,6 +1,6 @@
 <script lang="ts">
   import { swipeOpens } from './swipe-opens'
-  import { chrome } from './glass/chrome.svelte'
+  import { chrome } from './theme/src/api'
   import { keepFocus } from './focus'
   import { modes } from './modes.svelte'
   import { SEARCH_MARK } from './panel-marks'

@@ -14,7 +14,7 @@
   import { localNumber } from '../region'
   import Glyph from '../quick-add/Glyph.svelte'
   import { durationLabel } from '../quick-add/labels'
-  import { theme } from '../theme.svelte'
+  import { theme } from '../theme/src/api'
   import { labelColour, type Meta, placeOf } from './task-meta'
 
   const {

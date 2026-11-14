@@ -2,7 +2,7 @@
   import { accentColour } from './accents'
   import { iconLibrary } from './icon-library.svelte'
   import { type IconNode, readTint, takesTint, type WrittenIcon } from './icons'
-  import { theme } from './theme.svelte'
+  import { theme } from './theme/src/api'
 
   const {
     icon,

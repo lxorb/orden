@@ -13,7 +13,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { followHref, MIDDLE, opensLink } from './open-link'
   import { tabAsk } from './new-tab'
-  import { theme } from './theme.svelte'
+  import { theme } from './theme/src/api'
   import { workspace, type Tab } from './workspace.svelte'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
   import {

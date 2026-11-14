@@ -8,7 +8,7 @@
   import { fly, LAYER } from './motion'
   import { overlays } from './overlays'
   import { deviceAccent } from './collab/src/api'
-  import { theme } from './theme.svelte'
+  import { theme } from './theme/src/api'
   import { viewport } from './viewport.svelte'
 
   let open = $state(false)

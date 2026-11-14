@@ -5,7 +5,7 @@
   import Cross from '../Cross.svelte'
   import Door from '../Door.svelte'
   import { fullscreen } from '../fullscreen.svelte'
-  import { chrome, landed } from '../glass/chrome.svelte'
+  import { chrome, landed } from '../theme/src/api'
   import { keyElsewhere } from '../layer-keys'
   import { menu } from '../menu.svelte'
   import { dur, fade } from '../motion'

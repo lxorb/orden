@@ -17,7 +17,7 @@ import {
 import type { InkStroke } from '../../canvas/format'
 import type { Point } from '../../canvas/geometry'
 import type { PlaneSurface } from '../../canvas/shared'
-import type { Scheme } from '../../theme.svelte'
+import type { Scheme } from '../../theme/src/api'
 import type { LiveNote } from './ports'
 
 const LEADER = 'leader'

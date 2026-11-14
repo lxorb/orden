@@ -1,7 +1,8 @@
 import { err, failure, ok, type Result } from './result'
 import type { SyncPorts } from './sync-client'
+import type { ThemePorts } from './theme'
 
-export type PortMap = SyncPorts
+export type PortMap = SyncPorts & ThemePorts
 
 export type PortName = keyof PortMap
 
