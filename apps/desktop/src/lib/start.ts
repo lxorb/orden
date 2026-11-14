@@ -263,12 +263,14 @@ export function start(): () => void {
       .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))
   }
 
+  const reporting = !import.meta.env.DEV && !__DRIVEABLE__
+
   let stopCrashes: (() => void) | null = null
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void startup
       .turn('rooms')
       .then(() => import('./crash-reports/src/api'))
-      .then((one) => one.watchCrashes(!import.meta.env.DEV))
+      .then((one) => one.watchCrashes(reporting))
       .then((stop) => (stopCrashes = stop))
   }
 
@@ -277,7 +279,7 @@ export function start(): () => void {
     void startup
       .turn('rooms')
       .then(() => import('./usage/src/api'))
-      .then((one) => one.watchUsage(!import.meta.env.DEV))
+      .then((one) => one.watchUsage(reporting))
       .then((stop) => (stopUsage = stop))
   }
 
