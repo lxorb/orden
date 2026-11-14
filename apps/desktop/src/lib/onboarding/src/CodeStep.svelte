@@ -11,7 +11,7 @@
 
   async function done() {
     if (picked === null) return
-    const { modes } = await import('../modes.svelte')
+    const { modes } = await import('../../modes.svelte')
     modes.setDeveloper(picked === 'yes')
     await settleMarkdown(setup.answers.notes)
     setup.answer({ code: picked })

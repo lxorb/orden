@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { bringing } from './bring'
   import { BROWSERS } from './catalog'
   import Logo from './Logo.svelte'
   import Mark from './Mark.svelte'
@@ -15,8 +16,7 @@
     const importer = browser?.importer
     if (!importer || stage !== 'asking') return
     stage = 'importing'
-    const { bringBrowser } = await import('./bring')
-    for (const trouble of await bringBrowser(importer)) setup.tell(trouble)
+    for (const trouble of await bringing().browser(importer)) setup.tell(trouble)
     setup.got('browser')
     stage = 'done'
     setTimeout(() => setup.next(), 700)

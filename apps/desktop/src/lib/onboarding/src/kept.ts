@@ -1,4 +1,4 @@
-import { isRecord, keepJson, stored } from '../platform/src/api'
+import { isRecord, keepJson, stored } from '../../platform/src/api'
 import type { Answers, Step } from './flow'
 import { isStep } from './flow'
 import { PROGRESS_KEY } from './gate.svelte'

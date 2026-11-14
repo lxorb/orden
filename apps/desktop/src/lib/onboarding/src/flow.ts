@@ -1,4 +1,4 @@
-import type { Bringing } from './catalog'
+import type { NotesFrom } from '@orden/contracts'
 
 export const STEPS = [
   'account',
@@ -89,7 +89,7 @@ export function markdownStyleFor(app: string | null): MarkdownStyle | null {
 
 const ON_A_PHONE: ReadonlySet<string> = new Set(['notion', 'markdown'])
 
-export function phoneBringing(app: string, bring: Bringing | null): Bringing | 'computer' | null {
+export function phoneBringing(app: string, bring: NotesFrom | null): NotesFrom | 'computer' | null {
   if (bring === null) return null
   return ON_A_PHONE.has(app) ? 'files' : 'computer'
 }

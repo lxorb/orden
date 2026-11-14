@@ -1,29 +1,19 @@
-import { busy, message, viewport } from './ui-kit/src/api'
-import { firstVisit } from './first-visit.svelte'
-import type { FormatId } from './import/src/api'
-import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
-import {
-  applyImport,
-  carriedBy,
-  detect,
-  folderNameFor,
-  foundBrowsers,
-  insideFolder,
-  landBrowser,
-  landZen,
-  pickedFolder,
-  readAs,
-  type Source,
-  sourcesFrom,
-  vaults,
-  vaultSources,
-  zenProfiles,
-} from './import/src/api'
-import type { BrowserProfile, FoundBrowser } from './import/src/api'
-import type { Vault } from './import/src/api'
-import type { ZenProfile } from './import/src/api'
-import { isDesktop } from './platform/src/api'
-import { type Space, workspace } from './workspace.svelte'
+import { busy, message, viewport } from '../../ui-kit/src/api'
+import { firstVisit } from '../../first-visit.svelte'
+import { type LinkFormat, linkWriting, setLinkWriting } from '../../link-format'
+import { isDesktop } from '../../platform/src/api'
+import { type Space, workspace } from '../../workspace.svelte'
+import { applyImport } from './apply'
+import { landBrowser } from './browser-landing'
+import { type BrowserProfile, type FoundBrowser, foundBrowsers } from './browsers'
+import { carriedBy } from './carry'
+import { folderNameFor } from './folder-name'
+import type { FormatId } from './plan'
+import { detect, readAs } from './read'
+import { insideFolder, pickedFolder, type Source, sourcesFrom } from './sources'
+import { type Vault, vaults, vaultSources } from './vaults'
+import { landZen } from './zen-landing'
+import { type ZenProfile, zenProfiles } from './zen-profiles'
 
 class Migrating {
   working = $state(false)
@@ -92,24 +82,48 @@ class Migrating {
     })
   }
 
-  async folder() {
-    const { pickFolder } = await import('./picking')
-    const picked = await pickFolder()
-    const name = pickedFolder(picked)
-    if (!name) return
-
-    await this.bringing(async () => ({ name, sources: await sourcesFrom(insideFolder(picked)) }))
+  async onlyVault(): Promise<boolean> {
+    const found = isDesktop ? await vaults() : []
+    const [only] = found
+    if (found.length !== 1 || !only) return this.folder()
+    await this.vault(only)
+    return true
   }
 
-  async files() {
-    const { pickFiles } = await import('./picking')
+  async folder(): Promise<boolean> {
+    const { pickFolder } = await import('../../picking')
+    const picked = await pickFolder()
+    const name = pickedFolder(picked)
+    if (!name) return false
+
+    await this.bringing(async () => ({ name, sources: await sourcesFrom(insideFolder(picked)) }))
+    return true
+  }
+
+  async files(): Promise<boolean> {
+    const { pickFiles } = await import('../../picking')
     const picked = await pickFiles()
-    if (!picked.length) return
+    if (!picked.length) return false
 
     await this.bringing(async () => ({
       name: (format) => folderNameFor(picked, format),
       sources: await sourcesFrom(picked),
     }))
+    return true
+  }
+
+  async appleNotes() {
+    await this.running(async () => {
+      const apple = await import('./apple')
+      const plan = await apple.readMacNotes().catch((error: unknown) => {
+        throw new Error(apple.notesFault(error).said)
+      })
+      const space = await workspace.addSpace('Apple Notes')
+      if (!space) throw new Error('That import could not be written.')
+      await applyImport(plan, { root: space.root, folder: '' })
+      await workspace.loadTree()
+      await arrive(space)
+    })
   }
 
   private async bringing(
@@ -165,7 +179,7 @@ export async function importAsSpace(
   await applyImport(plan, { root: space.root, folder: '' })
 
   if (carried) {
-    const { carryOver } = await import('./carry-over')
+    const { carryOver } = await import('../../carry-over')
     await carryOver(carried)
   }
 

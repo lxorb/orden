@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { account } from '../accounts/src/api'
-  import { joining } from '../sharing/src/api'
+  import { account } from '../../accounts/src/api'
+  import { joining } from '../../sharing/src/api'
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
@@ -41,7 +41,7 @@
         return
       }
       signed = true
-      void import('../settling').then(({ settleLocalNotes }) =>
+      void import('../../settling').then(({ settleLocalNotes }) =>
         settleLocalNotes().then(() => joining.walkThrough()),
       )
       setTimeout(() => setup.next(), 900)

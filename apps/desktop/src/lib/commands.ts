@@ -292,6 +292,9 @@ function importCommand(): Command | null {
   }
 }
 
+const migrate = () =>
+  import('./import/src/api').then((one) => one.migratingStore()).then((one) => one.migrating)
+
 function migrateCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
 
@@ -301,14 +304,14 @@ function migrateCommands(): Command[] {
       label: 'Import from Obsidian',
       run: () => {
         settings.show('import')
-        void import('./migrating.svelte').then(({ migrating }) => migrating.obsidian())
+        void migrate().then((migrating) => migrating.obsidian())
       },
     },
     {
       id: 'import-notion',
       label: 'Import from Notion',
       run: () => {
-        void import('./migrating.svelte').then(({ migrating }) => migrating.files())
+        void migrate().then((migrating) => migrating.files())
       },
     },
     ...(isDesktop
@@ -318,7 +321,7 @@ function migrateCommands(): Command[] {
             label: 'Import from Zen',
             run: () => {
               settings.show('import')
-              void import('./migrating.svelte').then(({ migrating }) => migrating.zen())
+              void migrate().then((migrating) => migrating.zen())
             },
           },
         ]

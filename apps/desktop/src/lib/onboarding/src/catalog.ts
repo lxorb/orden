@@ -1,4 +1,4 @@
-import type { BrowserId } from '../import/src/api'
+import type { Importer, NotesFrom } from '@orden/contracts'
 
 export interface Brand {
   id: string
@@ -26,7 +26,7 @@ const LIKE_ZEN: Preset = { iconTabs: true, byUse: true }
 
 export interface Browser extends Brand {
   preset: Preset | null
-  importer: BrowserId | 'zen' | null
+  importer: Importer | null
 }
 
 const browser = (
@@ -35,7 +35,7 @@ const browser = (
   icon: string | null,
   colour: string | null,
   preset: Preset | null,
-  importer: BrowserId | 'zen' | null = null,
+  importer: Importer | null = null,
 ): Browser => ({ id, name, icon, colour, preset, importer })
 
 export const BROWSERS: readonly Browser[] = [
@@ -66,10 +66,8 @@ export const LATER_BROWSERS: readonly Brand[] = [
   { id: 'yandex', name: 'Yandex', icon: null, colour: '#FC3F1D' },
 ]
 
-export type Bringing = 'vault' | 'folder' | 'files' | 'apple'
-
 export interface NotesApp extends Brand {
-  bring: Bringing | null
+  bring: NotesFrom | null
 }
 
 const app = (
@@ -77,7 +75,7 @@ const app = (
   name: string,
   icon: string | null,
   colour: string | null,
-  bring: Bringing | null,
+  bring: NotesFrom | null,
 ): NotesApp => ({ id, name, icon, colour, bring })
 
 export const NOTES_APPS: readonly NotesApp[] = [

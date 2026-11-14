@@ -148,6 +148,7 @@ import {
   websiteConverting,
 } from './web-tab/src/api'
 import { agentMarks } from './agent-marks.svelte'
+import { beginSetup } from './onboarding/src/api'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
 import { settingsTab } from './settings/tab-hook'
 
@@ -633,8 +634,7 @@ class Workspace {
         const { seed } = await import('./web/commands')
         if (await seed()) {
           ;(await import('./first-visit.svelte')).firstVisit.seeded()
-          if (!__EVEN_PLUGIN__)
-            (await import('./onboarding/setup-state.svelte')).setup.begin(account.signedIn)
+          await beginSetup(account.signedIn)
         }
       } catch (error) {
         log('warn', `first visit: nothing seeded - ${String(error)}`)

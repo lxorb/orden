@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
-  import { dur, fade } from '../platform/src/api'
-  import { isDesktop } from '../platform/src/api'
-  import { trap } from '../ui-controls/src/api'
+  import { dur, fade } from '../../platform/src/api'
+  import { isDesktop } from '../../platform/src/api'
+  import { trap } from '../../ui-controls/src/api'
   import { BROWSERS, NOTES_APPS } from './catalog'
   import { gate } from './gate.svelte'
   import { type Box, guideCards, placeCard, shownBox, targetOf } from './guide'

@@ -15,11 +15,14 @@
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
+    "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/attachments.ts",
+    "apps/desktop/src/lib/carry-over.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/dialog-answer.ts",
     "apps/desktop/src/lib/drag-paths.ts",
+    "apps/desktop/src/lib/first-visit.svelte.ts",
     "apps/desktop/src/lib/link-format.ts",
     "apps/desktop/src/lib/link-rewrite.ts",
     "apps/desktop/src/lib/move-targets.ts",
@@ -27,6 +30,7 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
+    "apps/desktop/src/lib/web/taking-over.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/write-file.ts"
   ]

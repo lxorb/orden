@@ -1,6 +1,7 @@
 import { type Moment, startsFresh } from './fresh-start'
 import { markSeedSpace, markSeeded, wasSeeded } from './seeded'
 import { madeSpace } from './space-actions'
+import { beginSetup } from './onboarding/src/api'
 import { joinPath } from './platform/src/api'
 import { viewport } from './ui-kit/src/api'
 import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from './welcome'
@@ -19,7 +20,7 @@ class FirstSpace {
       markSeedSpace(space.root)
       const note = await this.welcome(space)
       await this.arrive(space, note)
-      if (note) await beginSetup()
+      if (note) await beginSetup(false)
     } finally {
       this.working = false
     }
@@ -40,12 +41,6 @@ class FirstSpace {
     if (note) await workspace.openFirst(note)
     if (!viewport.drawer) workspace.showPanel('tree')
   }
-}
-
-async function beginSetup() {
-  if (__EVEN_PLUGIN__) return
-  const { setup } = await import('./onboarding/setup-state.svelte')
-  setup.begin(false)
 }
 
 export const firstSpace = new FirstSpace()

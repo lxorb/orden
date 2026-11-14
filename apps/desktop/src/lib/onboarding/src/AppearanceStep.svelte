@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { theme, type SchemeChoice } from '../theme/src/api'
+  import { theme, type SchemeChoice } from '../../theme/src/api'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
 

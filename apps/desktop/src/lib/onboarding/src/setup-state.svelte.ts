@@ -1,10 +1,11 @@
-import type { BrowserId } from '../import/src/api'
+import type { Importer } from '@orden/contracts'
+import { bringing } from './bring'
 import { BROWSERS, type Preset, type PresetSetting } from './catalog'
 import { type Answers, firstStep, markdownStyleFor, type Reach, type Step, stepAfter } from './flow'
 import { gate } from './gate.svelte'
 import { heardBefore, keepProgress, readProgress } from './kept'
-import { isMobile } from '../platform/src/api'
-import { stepped } from '../usage/src/api'
+import { isMobile } from '../../platform/src/api'
+import { stepped } from '../../usage/src/api'
 
 export interface Issue {
   id: number
@@ -24,7 +25,7 @@ class Setup {
   answers = $state<Answers>(blank())
   forward = $state(true)
   issues = $state<Issue[]>([])
-  here = $state<ReadonlySet<BrowserId | 'zen'>>(new Set())
+  here = $state<ReadonlySet<Importer>>(new Set())
   signedIn = $state(false)
   signIns = $state(false)
   phone = $state(isMobile)
@@ -66,16 +67,13 @@ class Setup {
   }
 
   async look() {
-    const [{ browsersHere }, { signInKind }] = await Promise.all([
-      import('./bring'),
-      import('./connect'),
-    ])
+    const { signInKind } = await import('./connect')
     this.signIns = (['claude', 'chatgpt', 'gemini'] as const).some((one) => signInKind(one))
     if (this.phone) {
-      const { ai } = await import('../ai-providers/src/api')
+      const { ai } = await import('../../ai-providers/src/api')
       this.connected = ai.accounts.length > 0
     } else {
-      this.here = await browsersHere()
+      this.here = await bringing().here()
     }
   }
 
@@ -152,9 +150,9 @@ export function presetOf(browser: string | null): Preset | null {
 
 export async function applyPreset(preset: Preset): Promise<void> {
   const [{ fitTabs, iconTabs }, { tabCycle }, { swipeChoice }] = await Promise.all([
-    import('../tab-strip/icon-tabs.svelte'),
-    import('../tab-cycle.svelte'),
-    import('../back-swipe/src/api'),
+    import('../../tab-strip/icon-tabs.svelte'),
+    import('../../tab-cycle.svelte'),
+    import('../../back-swipe/src/api'),
   ])
   const setters: Record<PresetSetting, (on: boolean) => void> = {
     fitTabs: (on) => fitTabs.set(on),
@@ -169,9 +167,9 @@ export async function applyPreset(preset: Preset): Promise<void> {
 
 export async function currentSettings(): Promise<Record<PresetSetting, boolean>> {
   const [{ fitTabs, iconTabs }, { tabCycle }, { swipeChoice }] = await Promise.all([
-    import('../tab-strip/icon-tabs.svelte'),
-    import('../tab-cycle.svelte'),
-    import('../back-swipe/src/api'),
+    import('../../tab-strip/icon-tabs.svelte'),
+    import('../../tab-cycle.svelte'),
+    import('../../back-swipe/src/api'),
   ])
   return {
     fitTabs: fitTabs.on,
@@ -184,6 +182,6 @@ export async function currentSettings(): Promise<Record<PresetSetting, boolean>>
 export async function settleMarkdown(app: string | null): Promise<void> {
   const style = markdownStyleFor(app)
   if (!style) return
-  const { modes } = await import('../modes.svelte')
+  const { modes } = await import('../../modes.svelte')
   if ((style === 'clean') !== modes.quietMarks) modes.toggleQuietMarks()
 }
