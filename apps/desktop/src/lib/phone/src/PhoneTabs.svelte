@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { account } from '../accounts/src/api'
-  import { chatsUnread } from '../ai/unread.svelte'
-  import UnreadDot from '../ai/UnreadDot.svelte'
-  import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../panel-marks'
-  import { chatsOn, hiddenKinds } from '../settings.svelte'
-  import { viewport } from '../ui-kit/src/api'
-  import { workspace } from '../workspace.svelte'
-  import { writeNew } from '../write-new'
-  import { PHONE_TABS, type PhoneTab } from '../workspace/panels'
+  import { account } from '../../accounts/src/api'
+  import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../../panel-marks'
+  import { chatsOn, hiddenKinds } from '../../settings.svelte'
+  import { UnreadDot, viewport } from '../../ui-kit/src/api'
+  import { workspace } from '../../workspace.svelte'
+  import { writeNew } from '../../write-new'
+  import { PHONE_TABS, type PhoneTab } from '../../workspace/panels'
+
+  const { unread = false }: { unread?: boolean } = $props()
 
   const NOTES_MARK =
     'M3.5 1.5h4l3 3v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM7.5 1.5v3h3M4.5 7.5h4M4.5 9.5h2.5'
@@ -62,7 +62,7 @@
         >
           <span class="mark">
             <svg viewBox="0 0 13 13"><path d={LOOKS[tab].mark} /></svg>
-            {#if tab === 'chats' && chatsUnread.any}
+            {#if tab === 'chats' && unread}
               <UnreadDot corner />
             {/if}
           </span>

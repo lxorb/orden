@@ -122,7 +122,7 @@ describe('the mark that says shared', () => {
       'lib/JoinPending.svelte',
       'lib/JoinSheet.svelte',
       'lib/Tabs.svelte',
-      'lib/ai/UnreadDot.svelte',
+      'lib/ui-kit/src/UnreadDot.svelte',
     ])
   })
 

@@ -12,7 +12,7 @@ const RUNG =
 
 const NEVER_OVER_A_PAGE: Record<string, string> = {
   'App.svelte .fab': 'a touch screen only, which builds no native page',
-  'lib/phone/PhoneTabs.svelte .new': 'a phone only, which builds no native page',
+  'lib/phone/src/PhoneTabs.svelte .new': 'a phone only, which builds no native page',
   'App.svelte .notices': 'the row itself; each card in it is a layer of the registry',
   'App.svelte .notices.over': 'the same row, over a drawer: see .notices and .panels',
   'App.svelte .notices.above': 'the same row, over the tab overview: see .notices',

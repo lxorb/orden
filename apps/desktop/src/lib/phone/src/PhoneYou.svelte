@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { account } from '../accounts/src/api'
-  import { showAccount } from '../account-menu'
-  import { AccountBadge } from '../accounts/src/api'
-  import { arriving } from '../arriving.svelte'
-  import { dur, fade } from '../platform/src/api'
-  import { scratchFromDrawer } from '../scratchpad/src/api'
-  import { showFeedback } from '../surfaces.svelte'
+  import { account, AccountBadge } from '../../accounts/src/api'
+  import { showAccount } from '../../account-menu'
+  import { arriving } from '../../arriving.svelte'
+  import { dur, fade } from '../../platform/src/api'
+  import { showFeedback } from '../../surfaces.svelte'
+
+  const { scratchpad }: { scratchpad: () => void } = $props()
 
   const who = $derived(account.name)
 
@@ -13,7 +13,7 @@
     showAccount(
       event,
       [
-        { label: 'Scratchpad', run: scratchFromDrawer },
+        { label: 'Scratchpad', run: scratchpad },
         { label: 'Send feedback', run: showFeedback },
       ],
       false,

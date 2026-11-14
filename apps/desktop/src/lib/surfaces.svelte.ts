@@ -145,13 +145,12 @@ export const takeoverBar = held(() =>
 
 export const searchPanel = held(() => import('./SearchPanel.svelte'))
 
-export const phoneTabsBar = held(() =>
-  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./phone/PhoneTabs.svelte'),
-)
+const phone = () =>
+  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./phone/src/api')
 
-export const phoneYou = held(() =>
-  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./phone/PhoneYou.svelte'),
-)
+export const phoneTabsBar = held(() => phone().then((one) => one.loadPhoneTabs()))
+
+export const phoneYou = held(() => phone().then((one) => one.loadPhoneYou()))
 
 export const settingsSurface = held(() => import('./SettingsPanel.svelte'))
 

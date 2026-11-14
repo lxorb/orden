@@ -39,9 +39,9 @@
 
   function showMore(event: MouseEvent) {
     const from = event.currentTarget as HTMLElement
-    void (__EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./phone/note-more')).then(
-      (one) => one.showNoteMore(from),
-    )
+    void (__EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./phone/src/api'))
+      .then((one) => one.noteMore())
+      .then((one) => one.showNoteMore(from))
   }
 
   $effect(() => {
