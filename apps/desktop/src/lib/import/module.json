@@ -23,7 +23,6 @@
     "apps/desktop/src/lib/link-format.ts",
     "apps/desktop/src/lib/link-rewrite.ts",
     "apps/desktop/src/lib/move-targets.ts",
-    "apps/desktop/src/lib/pages/held.ts",
     "apps/desktop/src/lib/picking.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",

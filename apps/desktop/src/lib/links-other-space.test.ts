@@ -201,7 +201,7 @@ test("an export of a note of another space writes its links to that space's note
 })
 
 test('a card on a canvas of another space shows the note of that space', async () => {
-  const { fileSource } = await import('./canvas/render')
+  const { fileSource } = await import('./plane/src/render')
   await expect(fileSource('Plan.md', '/home/me/A/Board.canvas')).resolves.toMatchObject({
     text: '# Plan of A\n',
   })

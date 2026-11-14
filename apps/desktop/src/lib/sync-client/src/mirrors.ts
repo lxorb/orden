@@ -14,9 +14,8 @@ import {
   saidHand,
   type Who,
 } from '../../collab-rooms/src/api'
-import type { InkStroke } from '../../canvas/format'
-import type { Point } from '../../canvas/geometry'
-import type { PlaneSurface } from '../../canvas/shared'
+import type { InkStroke } from '@orden/markdown/canvas'
+import { type PlaneSurface, type Point } from '@orden/markdown/plane'
 import type { Scheme } from '../../theme/src/api'
 import type { LiveNote } from './ports'
 

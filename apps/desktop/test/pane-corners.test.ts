@@ -32,13 +32,17 @@ describe('the note’s corners', () => {
   })
 
   test('none of them is placed against the window', () => {
-    for (const path of ['lib/StatusBar.svelte', 'lib/PagesZoom.svelte', 'lib/CanvasBar.svelte']) {
+    for (const path of [
+      'lib/StatusBar.svelte',
+      'lib/PagesZoom.svelte',
+      'lib/canvas/src/CanvasBar.svelte',
+    ]) {
       expect(read(path), path).not.toMatch(/position:\s*fixed/)
     }
   })
 
   test('a bar docked to an edge finds the edge in its own frame, not the window’s', () => {
-    const bar = read('lib/CanvasBar.svelte')
+    const bar = read('lib/canvas/src/CanvasBar.svelte')
     expect(bar).not.toMatch(/nearestDock\([^)]*window\.inner/)
     expect(bar).toContain('frameOf(cluster)')
   })

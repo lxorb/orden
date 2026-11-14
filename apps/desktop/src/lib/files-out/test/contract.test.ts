@@ -1,7 +1,15 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { claimName, fileNameFor, stemOf } from '../src/api'
+import {
+  claimName,
+  fileNameFor,
+  localSources,
+  SHEET_POLICY,
+  stemOf,
+  swapSources,
+  zipOf,
+} from '../src/api'
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
 const ROOT = join(HERE, '../../../../..')
@@ -51,5 +59,39 @@ describe('names', () => {
     expect(claimName('a.png', taken)).toBe('a 2.png')
     expect(claimName('a.png', taken)).toBe('a 3.png')
     expect(taken.has('a 3.png')).toBe(true)
+  })
+})
+
+describe('the writers', () => {
+  test('find the pictures a page reads from disk and leave the web ones alone', () => {
+    expect(
+      localSources(
+        '<img src="a.png"><img src="https://orden.so/b.png"><img src="data:image/png;base64,AA">',
+      ),
+    ).toEqual(['a.png'])
+  })
+
+  test('swap the pictures asked for and leave the page alone when none are', () => {
+    const page = '<img src="a.png"><img src="b.png">'
+    expect(swapSources(page, new Map([['a.png', 'data:x']]))).toBe(
+      '<img src="data:x"><img src="b.png">',
+    )
+    expect(swapSources(page, new Map())).toBe(page)
+  })
+
+  test('let a printed sheet show the app assets and run no script', () => {
+    expect(SHEET_POLICY).toContain('img-src * data: blob: asset:')
+    expect(SHEET_POLICY).toContain("script-src 'none'")
+  })
+
+  test('pack a zip file holding every entry', async () => {
+    const bytes = await zipOf([
+      { path: 'note.md', body: '# Hello' },
+      { path: 'a.png', body: new Uint8Array([1, 2, 3]) },
+    ])
+    expect(String.fromCharCode(bytes[0] ?? 0, bytes[1] ?? 0)).toBe('PK')
+    const text = new TextDecoder().decode(bytes)
+    expect(text).toContain('note.md')
+    expect(text).toContain('a.png')
   })
 })

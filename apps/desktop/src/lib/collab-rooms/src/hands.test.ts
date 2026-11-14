@@ -3,7 +3,7 @@ import { Awareness } from 'y-protocols/awareness'
 import { awarenessUpdate, receive } from '@orden/rooms'
 import { planeOf } from '@orden/rooms/plane'
 import * as Y from 'yjs'
-import type { InkStroke } from '../../canvas/format'
+import type { InkStroke } from '@orden/markdown/canvas'
 import { HAND, handsIn, saidHand } from './hands'
 
 function pair() {

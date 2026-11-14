@@ -23,10 +23,7 @@ export async function printOpen(): Promise<void> {
   const open = openOut()
 
   if (kind === 'canvas') {
-    const [{ drawingOf }, { printCanvas }] = await Promise.all([
-      import('./canvas/drawing'),
-      import('./canvas/picture'),
-    ])
+    const { drawingOf, printCanvas } = await import('./plane/src/api')
     await printCanvas(drawingOf(open))
     return
   }

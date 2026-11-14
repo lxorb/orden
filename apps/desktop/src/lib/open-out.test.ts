@@ -23,7 +23,7 @@ vi.mock('./export/src/context', () => ({
   }),
   renderOptions: () => Promise.resolve({}),
 }))
-vi.mock('./canvas/picture', () => ({
+vi.mock('./plane/src/picture', () => ({
   printCanvas: (drawing: unknown) => {
     world.printed.push(drawing)
     return Promise.resolve()
@@ -36,7 +36,7 @@ vi.mock('./pages/out', () => ({
     return Promise.resolve()
   },
 }))
-vi.mock('./canvas/drawing', () => ({
+vi.mock('./plane/src/drawing', () => ({
   drawingOf: (open: unknown) => open,
 }))
 

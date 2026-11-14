@@ -1,6 +1,7 @@
 import type { AgentAnswer } from '../automation/caller'
 import { readable as guarded } from './guarded'
-import { type Canvas, merged, readCanvas as parse, stamped, writeCanvas } from '../canvas/format'
+import { type Canvas, readCanvas as parse, writeCanvas } from '@orden/markdown/canvas'
+import { merged, stamped } from '@orden/markdown/canvas-merge'
 import { canWriteAt } from '../sharing/src/api'
 import { invoke } from '../platform/src/api'
 import { writeFile } from '../workspace/write-file'
@@ -76,7 +77,7 @@ async function drawnAt(target: Target) {
   const open = openAs(target)
   if (!open) return null
 
-  const { CanvasStore } = await import('../canvas/store.svelte')
+  const { CanvasStore } = await import('../canvas/src/api')
   return CanvasStore.drawing(open, workspace.tabs)
 }
 

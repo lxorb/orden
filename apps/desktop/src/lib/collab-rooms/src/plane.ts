@@ -1,6 +1,5 @@
-import type { Canvas, InkStroke } from '../../canvas/format'
-import type { Point } from '../../canvas/geometry'
-import type { PlaneSurface, SharedPlane } from '../../canvas/shared'
+import type { Canvas, InkStroke } from '@orden/markdown/canvas'
+import { type PlaneSurface, type Point, type SharedPlane } from '@orden/markdown/plane'
 import { HAND, handsIn, saidHand } from './hands'
 import { type Entering, JoinedRoom } from './joined'
 import { PlaneBinding } from './plane-bind'

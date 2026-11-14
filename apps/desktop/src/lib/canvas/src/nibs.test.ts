@@ -1,0 +1,81 @@
+import { describe, expect, test } from 'vitest'
+import { INK_TOOLS } from '@orden/markdown/canvas'
+import { INK_STYLES, outlineOf } from '../../plane/src/api'
+import { samplePath, sampleStroke } from './nibs'
+import { LEAST_WIDTH, MOST_WIDTH, nibFor } from './pens.svelte'
+
+describe('the line a pen would write', () => {
+  test('is written with the pen it is shown for', () => {
+    const nib = { ...nibFor('marker', '#ff0000'), size: 7, opacity: 0.4 }
+    const stroke = sampleStroke(nib, 200, 60)
+
+    expect(stroke.tool).toBe('marker')
+    expect(stroke.color).toBe('#ff0000')
+    expect(stroke.size).toBe(7)
+    expect(stroke.opacity).toBe(0.4)
+  })
+
+  test('stays inside the box it is drawn in, at any width the dial allows', () => {
+    for (const size of [LEAST_WIDTH, 1, 3, 8, 18, MOST_WIDTH]) {
+      for (const tool of INK_TOOLS) {
+        const ring = outlineOf(sampleStroke({ ...nibFor(tool), size }, 240, 64))
+
+        for (const point of ring) {
+          expect(point.x, `${tool} at ${size}`).toBeGreaterThanOrEqual(0)
+          expect(point.x, `${tool} at ${size}`).toBeLessThanOrEqual(240)
+          expect(point.y, `${tool} at ${size}`).toBeGreaterThanOrEqual(0)
+          expect(point.y, `${tool} at ${size}`).toBeLessThanOrEqual(64)
+        }
+      }
+    }
+  })
+
+  test('is pressed the way a hand presses: light in, heavy in the middle, light out', () => {
+    const points = sampleStroke(nibFor('fountain'), 200, 60).points
+    const first = points[0]
+    const middle = points[Math.floor(points.length / 2)]
+    const last = points[points.length - 1]
+
+    expect(first && middle && last).toBeTruthy()
+    expect(middle?.pressure ?? 0).toBeGreaterThan(first?.pressure ?? 1)
+    expect(middle?.pressure ?? 0).toBeGreaterThan(last?.pressure ?? 1)
+  })
+
+  test('turns enough for a flat nib to show both of its widths', () => {
+    const ys = sampleStroke(nibFor('calligraphy'), 200, 60).points.map((one) => one.y)
+    const swing = Math.max(...ys) - Math.min(...ys)
+
+    expect(swing).toBeGreaterThan(20)
+  })
+
+  test('is a closed path, curved the way the plane paints it', () => {
+    const d = samplePath(nibFor('pen'), 200, 60)
+
+    expect(d.startsWith('M')).toBe(true)
+    expect(d).toContain('Q')
+    expect(d.endsWith('Z')).toBe(true)
+  })
+
+  test('is fatter for a fatter pen', () => {
+    const thickest = (size: number) => {
+      const ring = outlineOf(sampleStroke({ ...nibFor('pen'), size }, 200, 60))
+      let most = 0
+
+      for (let x = 20; x < 180; x += 4) {
+        const band = ring.filter((one) => one.x >= x && one.x < x + 4).map((one) => one.y)
+        if (band.length > 1) most = Math.max(most, Math.max(...band) - Math.min(...band))
+      }
+
+      return most
+    }
+
+    expect(thickest(20)).toBeGreaterThan(thickest(8))
+    expect(thickest(8)).toBeGreaterThan(thickest(2))
+  })
+
+  test('a highlighter comes out translucent without anybody asking', () => {
+    expect(sampleStroke(nibFor('highlighter'), 200, 60).opacity).toBe(
+      INK_STYLES.highlighter.opacity,
+    )
+  })
+})

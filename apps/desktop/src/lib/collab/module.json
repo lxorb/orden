@@ -12,7 +12,6 @@
     "ui-kit"
   ],
   "pending": [
-    "apps/desktop/src/lib/canvas/shared.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts"
   ]

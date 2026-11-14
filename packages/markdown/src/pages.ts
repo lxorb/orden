@@ -387,3 +387,15 @@ function inkOwnerOf<T extends Box>(
   const height = ys.reduce((high, one) => Math.max(high, one)) - y
   return ownerOf({ x, y, width, height }, column)
 }
+
+export function paperOf(pages: string): string {
+  return `${pages}.pdf`
+}
+
+export function holderOf(path: string): string | null {
+  return /\.pages\.pdf$/i.test(path) ? path.slice(0, -'.pdf'.length) : null
+}
+
+export function pairOf(path: string): string | null {
+  return holderOf(path) ?? (/\.pages$/i.test(path) ? paperOf(path) : null)
+}

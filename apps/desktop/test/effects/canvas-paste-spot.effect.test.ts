@@ -1,9 +1,9 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import Canvas from '../../src/lib/Canvas.svelte'
+import Canvas from '../../src/lib/canvas/src/Canvas.svelte'
 import { graphPoint } from '../../src/lib/camera'
-import { blankCanvas, readCanvas } from '../../src/lib/canvas/format'
-import { tools } from '../../src/lib/canvas/tools.svelte'
+import { blankCanvas, readCanvas } from '@orden/markdown/canvas'
+import { tools } from '../../src/lib/canvas/src/tools.svelte'
 import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
 
 Element.prototype.animate = () =>

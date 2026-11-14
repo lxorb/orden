@@ -6,7 +6,7 @@
   import Swatches from './Swatches.svelte'
   import { account } from './accounts/src/api'
   import { arrive, segmented } from './ui-kit/src/api'
-  import CanvasIcon from './CanvasIcon.svelte'
+  import { Glyph } from './ui-controls/src/api'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
   import FontPicker from './settings/FontPicker.svelte'
   import ExtensionRows from './settings/ExtensionRows.svelte'
@@ -1024,7 +1024,7 @@
   {@const glyph = glyphFor(id)}
   <span class="mark">
     {#if glyph}
-      <CanvasIcon node={glyph} />
+      <Glyph node={glyph} />
     {:else if lowMark(id)}
       <span class="low">{markFor(id)}</span>
     {:else}

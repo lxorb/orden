@@ -9,6 +9,7 @@ import {
   GROWTH,
   GUTTER,
   grown,
+  holderOf,
   laidOut,
   lowestOf,
   moved,
@@ -18,6 +19,7 @@ import {
   pageCount,
   pagesFromPdf,
   pageShowing,
+  paperOf,
   pagesOf,
   pdfPage,
   removed,
@@ -670,5 +672,18 @@ describe('a page out of a PDF', () => {
   test('counts its pages', () => {
     expect(pageCount(pagesFromPdf('Paper.pdf', [{ width: 1, height: 1 }]))).toBe(1)
     expect(pageCount(emptyCanvas())).toBe(0)
+  })
+})
+
+describe('the paper a page note holds', () => {
+  test('is the note with .pdf after it', () => {
+    expect(paperOf('/s/Lecture 4.pages')).toBe('/s/Lecture 4.pages.pdf')
+  })
+
+  test('names the note it belongs to, and nothing else does', () => {
+    expect(holderOf('/s/Lecture 4.pages.pdf')).toBe('/s/Lecture 4.pages')
+    expect(holderOf('/s/Lecture 4.PAGES.PDF')).toBe('/s/Lecture 4.PAGES')
+    expect(holderOf('/s/Lecture 4.pdf')).toBeNull()
+    expect(holderOf('/s/Lecture 4.pages')).toBeNull()
   })
 })

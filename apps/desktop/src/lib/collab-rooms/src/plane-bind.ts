@@ -1,8 +1,8 @@
 import { merged } from '@orden/markdown/canvas-merge'
 import { planeIsEmpty, pushPlane, readPlane, rootsOf } from '@orden/rooms/plane'
 import * as Y from 'yjs'
-import type { Canvas } from '../../canvas/format'
-import type { PlaneSurface } from '../../canvas/shared'
+import type { Canvas } from '@orden/markdown/canvas'
+import type { PlaneSurface } from '@orden/markdown/plane'
 import { moved } from './bind'
 import { HERE } from './door'
 

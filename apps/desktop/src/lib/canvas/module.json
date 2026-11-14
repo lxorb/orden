@@ -1,0 +1,40 @@
+{
+  "name": "canvas",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "collab",
+    "editor",
+    "markdown",
+    "pdf",
+    "plane",
+    "platform",
+    "sharing",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/FileMark.svelte",
+    "apps/desktop/src/lib/alone.svelte.ts",
+    "apps/desktop/src/lib/assets.ts",
+    "apps/desktop/src/lib/breathe.ts",
+    "apps/desktop/src/lib/camera.ts",
+    "apps/desktop/src/lib/choose-files.ts",
+    "apps/desktop/src/lib/composer.ts",
+    "apps/desktop/src/lib/drag-paths.ts",
+    "apps/desktop/src/lib/layer-keys.ts",
+    "apps/desktop/src/lib/link-index.svelte.ts",
+    "apps/desktop/src/lib/menu.svelte.ts",
+    "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/open-link.ts",
+    "apps/desktop/src/lib/own-window.ts",
+    "apps/desktop/src/lib/pane-corners.svelte.ts",
+    "apps/desktop/src/lib/parting.ts",
+    "apps/desktop/src/lib/pixel-ratio.svelte.ts",
+    "apps/desktop/src/lib/shortcuts.svelte.ts",
+    "apps/desktop/src/lib/trust.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts"
+  ]
+}

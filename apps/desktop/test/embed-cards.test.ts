@@ -9,7 +9,7 @@ function source(path: string): string {
 }
 
 const DOCUMENT_CSS = source('packages/themes/src/document.css')
-const CANVAS_NODE = source('apps/desktop/src/lib/CanvasNode.svelte')
+const CANVAS_NODE = source('apps/desktop/src/lib/canvas/src/CanvasNode.svelte')
 const READING = source('apps/desktop/src/lib/Reading.svelte')
 const WEB_WIDGET = source('packages/editor/src/live-preview/web.ts')
 

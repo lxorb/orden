@@ -473,7 +473,7 @@ describe('a PDF changed by another program', () => {
   const AT = { file: 'Paper.pdf', note: '/s/Paper.pages', root: '/s' }
 
   test('tells the page notes drawing it to draw it again, and nothing for its highlights', async () => {
-    const { paperEdition } = await import('./pages/paper')
+    const { paperEdition } = await import('./pdf/src/api')
     const before = paperEdition(AT)
 
     await heardChange({ kind: 'modified', path: '/s/Paper.pdf.highlights.json', ...stat })

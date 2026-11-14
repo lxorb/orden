@@ -106,7 +106,7 @@ async function selectionIn(tab: Tab): Promise<unknown> {
       return inNote(tab)
 
     case 'drawing': {
-      const { CanvasStore } = await import('../canvas/store.svelte')
+      const { CanvasStore } = await import('../canvas/src/api')
       const drawn = CanvasStore.drawing(tab.note, workspace.tabs)
       return drawn ? { picked: drawn.picked } : null
     }
@@ -297,7 +297,7 @@ async function newTab(call: Call): Promise<AgentAnswer> {
     }
 
     case 'canvas': {
-      const { blankCanvas } = await import('../canvas/format')
+      const { blankCanvas } = await import('@orden/markdown/canvas')
       return answered(view.openUnsaved(call, 'canvas', blankCanvas()))
     }
 

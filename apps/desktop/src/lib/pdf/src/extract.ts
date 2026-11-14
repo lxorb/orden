@@ -1,6 +1,6 @@
 import { isPagesTarget, isPdfTarget } from '@orden/markdown/links'
 import { breathe } from '../../breathe'
-import { holderOf } from '../../pages/held'
+import { holderOf } from '@orden/markdown/pages'
 import { pathKey, invoke } from '../../platform/src/api'
 import { startup } from '../../startup.svelte'
 import { mark } from '../../trace'

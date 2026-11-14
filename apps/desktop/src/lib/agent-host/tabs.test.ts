@@ -228,7 +228,7 @@ const drawn = {
   canvas: { nodes: [card], edges: [], ink: [] },
   edit: vi.fn(),
 }
-vi.mock('../canvas/store.svelte', () => ({
+vi.mock('../canvas/src/store.svelte', () => ({
   CanvasStore: { drawing: (note: unknown) => (note === tabs[2]?.note ? drawn : null) },
 }))
 

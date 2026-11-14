@@ -672,7 +672,7 @@ describe('a canvas showing a file that moves', () => {
 
 describe('a note renamed while a canvas showing it is open and drawn on', () => {
   test('keeps the new path on the card, on screen and in the file', async () => {
-    const { CanvasStore } = await import('./canvas/store.svelte')
+    const { CanvasStore } = await import('./canvas/src/store.svelte')
     const text = { id: 'a', type: 'text', text: 'a', x: 0, y: 0, width: 250, height: 60 }
     const file = { id: 'f', type: 'file', file: 'Plan.md', x: 0, y: 200, width: 250, height: 60 }
     disk.current?.files.set(
@@ -714,7 +714,7 @@ describe('a note renamed while a canvas showing it is open and drawn on', () => 
 describe('a note renamed while a canvas showing it is drawn on and not yet written', () => {
   const card = { x: 0, y: 0, width: 250, height: 60 }
   async function drawn(plane: object) {
-    const { CanvasStore } = await import('./canvas/store.svelte')
+    const { CanvasStore } = await import('./canvas/src/store.svelte')
     disk.current?.files.set(`${ROOT}/Board.canvas`, JSON.stringify(plane))
     await indexed()
     await vi.waitFor(() =>
@@ -828,7 +828,7 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
       }
     ).nodes
   async function opened(plane: object) {
-    const { CanvasStore } = await import('./canvas/store.svelte')
+    const { CanvasStore } = await import('./canvas/src/store.svelte')
     disk.current?.files.set(`${ROOT}/Board.canvas`, JSON.stringify(plane))
     await indexed()
     await vi.waitFor(() =>

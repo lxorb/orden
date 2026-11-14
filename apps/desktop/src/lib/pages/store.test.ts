@@ -20,7 +20,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
 const { PagesStore, PEEK } = await import('./store.svelte')
 const { blankPages, GUTTER, pagesOf } = await import('@orden/markdown/pages')
-const { readCanvas } = await import('../canvas/format')
+const { readCanvas } = await import('@orden/markdown/canvas')
 
 const A4 = { width: 794, height: 1123 }
 

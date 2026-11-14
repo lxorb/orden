@@ -82,7 +82,7 @@ async function wornBy(path: string, content: string): Promise<Worn> {
 async function holdsItsPaper(path: string): Promise<boolean> {
   const [{ onDisk }, { paperOf }] = await Promise.all([
     import('./platform/src/api'),
-    import('./pages/held'),
+    import('@orden/markdown/pages'),
   ])
   return onDisk(paperOf(path))
 }

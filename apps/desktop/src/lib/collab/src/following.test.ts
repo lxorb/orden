@@ -4,7 +4,7 @@ import { isEdit, receive, syncUpdate, TEXT } from '@orden/rooms'
 import { NOW_READS } from '@orden/sync-core'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
-import type { PlaneSurface } from '../../canvas/shared'
+import type { PlaneSurface } from '@orden/markdown/plane'
 
 const sockets = vi.hoisted(() => {
   interface Wire {

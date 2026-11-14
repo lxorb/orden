@@ -1,4 +1,4 @@
-import type { Entry } from './zip'
+import type { ZipEntry as Entry } from '../../files-out/src/api'
 import type { Picture } from './pictures'
 import { toMarkdown } from './markdown'
 import { type FoundLink } from '@orden/markdown/links'

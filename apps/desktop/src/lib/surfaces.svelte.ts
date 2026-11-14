@@ -47,7 +47,7 @@ export function latched<T>(load: () => Promise<{ default: T }>): {
 export const canvasSurface = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no canvas in the Even Realities plugin'))
-    : import('./Canvas.svelte'),
+    : import('./canvas/src/api').then((one) => one.loadCanvas()),
 )
 
 export const graphSurface = held(() => import('./Graph.svelte'))

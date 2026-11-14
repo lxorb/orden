@@ -1,10 +1,8 @@
 import type { Awareness } from 'y-protocols/awareness'
 import type * as Y from 'yjs'
-import { packed, strokeOf } from '@orden/markdown/canvas'
+import { type InkStroke, packed, strokeOf } from '@orden/markdown/canvas'
 import { accentColour } from '../../theme/src/api'
-import type { InkStroke } from '../../canvas/format'
-import type { Point } from '../../canvas/geometry'
-import type { Hand } from '../../canvas/shared'
+import { type Hand, type Point } from '@orden/markdown/plane'
 import { isRecord } from '../../platform/src/api'
 import { type Seen, whoElse } from './peers'
 

@@ -1,5 +1,5 @@
 import { isPagesTarget } from '@orden/markdown/links'
-import { holderOf, paperOf } from '../../pages/held'
+import { holderOf, paperOf } from '@orden/markdown/pages'
 import { type Hit, Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import type { PapersHeld } from '@orden/scan/search/warmth'

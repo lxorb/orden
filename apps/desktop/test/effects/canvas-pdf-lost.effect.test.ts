@@ -3,8 +3,8 @@ import { afterEach, expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({ readable: false, asked: [] as number[] }))
 
-vi.mock('../../src/lib/pages/paper', async (actual) => {
-  const real = await actual<typeof import('../../src/lib/pages/paper')>()
+vi.mock('../../src/lib/pdf/src/api', async (actual) => {
+  const real = await actual<typeof import('../../src/lib/pdf/src/api')>()
   return {
     ...real,
     holdPaper: () => () => undefined,
@@ -20,7 +20,7 @@ vi.mock('../../src/lib/pages/paper', async (actual) => {
   }
 })
 
-const CanvasPdf = (await import('../../src/lib/CanvasPdf.svelte')).default
+const CanvasPdf = (await import('../../src/lib/canvas/src/CanvasPdf.svelte')).default
 
 let close: (() => void) | undefined
 

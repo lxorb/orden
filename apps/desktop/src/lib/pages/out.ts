@@ -6,23 +6,38 @@ import {
   type PageNode,
   type Pattern,
   readCanvas,
-} from '../canvas/format'
-import { INK_STYLES, inkOpacity, outlineOf } from '../canvas/ink'
-import { inkColour, type Palette } from '../canvas/paint'
-import { DEFAULT_INK, paletteOf } from '../canvas/palette'
-import { drawnNode, inlinedSvg, styles } from '../canvas/picture'
-import { type Faces, pdfFaces } from '../canvas/faces'
-import { inkSvg } from '../canvas/svg'
-import { type Box } from '../canvas/geometry'
+} from '@orden/markdown/canvas'
+import { INK_STYLES, inkOpacity, outlineOf } from '../plane/src/api'
+import { inkColour, type Palette } from '../plane/src/api'
+import { DEFAULT_INK, paletteOf } from '../plane/src/api'
+import { drawnNode, inlinedSvg, styles } from '../plane/src/api'
+import { type Faces, pdfFaces } from '../plane/src/api'
+import { inkSvg } from '../plane/src/api'
+import { type Box } from '../plane/src/api'
 import { busy } from '../ui-kit/src/api'
 import { pngData } from '../png-off'
 import { fileBytes, isDesktop } from '../platform/src/api'
-import { exporters } from '../export/src/api'
-import { chooseTarget, download, writeFile } from '../files-out/src/api'
-import { PDF_TO_CSS } from '../pdf/src/api'
-import { paperPlaces } from './held'
+import {
+  chooseTarget,
+  download,
+  printInFrame,
+  printsInFrame,
+  writeFile,
+  zipOf,
+} from '../files-out/src/api'
+import {
+  cssColour,
+  loading,
+  paperIsLocked,
+  paperPicture,
+  paperPlaces,
+  paperUnder,
+  PDF_TO_CSS,
+  pdfjs,
+  sharpness,
+  svgToPng,
+} from '../pdf/src/api'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
-import { cssColour, paperIsLocked, paperPicture, paperUnder, sharpness, svgToPng } from './raster'
 import { escapeAll } from '@orden/markdown/html'
 
 function saidLocked(): void {
@@ -259,7 +274,6 @@ export async function exportPagesSvg(given: PagesOut): Promise<string | undefine
       body: await inlinedSvg(pageSvg(out, page, at + 1, false, await paperBehind(out, page))),
     })
   }
-  const { zipOf } = await exporters()
   const zip = await zipOf(entries)
 
   return handOver(`${name} pages`, 'zip', 'ZIP', zip, 'application/zip')
@@ -285,7 +299,6 @@ export async function exportPagesPng(given: PagesOut): Promise<string | undefine
 
   if (!entries.length) return
 
-  const { zipOf } = await exporters()
   return handOver(`${name} pages`, 'zip', 'ZIP', await zipOf(entries), 'application/zip')
 }
 
@@ -655,10 +668,6 @@ export async function printPages(out: PagesOut): Promise<void> {
   const bytes = await pagesPdf(out)
   if (!bytes) return
 
-  const [{ loading, pdfjs }, { printInFrame, printsInFrame }] = await Promise.all([
-    import('../pdf/src/api'),
-    exporters(),
-  ])
   const linked = printsInFrame()
   const library = await pdfjs()
   const task = loading(library, bytes)

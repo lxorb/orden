@@ -19,7 +19,7 @@ import {
   assetType,
   isReserved,
 } from '../platform/src/api'
-import { holderOf, paperOf } from '../pages/held'
+import { holderOf, paperOf } from '@orden/markdown/pages'
 import { staleSnapshots } from '../recovery'
 import { markedPlane, type PlaneMarks, planeMarks } from '@orden/scan/canvas'
 import { scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { portOf } from '@orden/contracts'
   import { tick } from 'svelte'
   import { Sheet } from '../../ui-controls/src/api'
   import { withinSpace } from '../../platform/src/api'
@@ -46,36 +47,21 @@
 
   function planeOf(node: HTMLElement, text: string) {
     void (async () => {
+      const port = portOf('canvas.pictures')
+      if (!port.ok) return
       const path = shown?.path ?? null
       const space = path
         ? workspace().spaces.find((one) => withinSpace(one.root, path) !== null)
         : null
-      const [{ drawingOf }, { canvasSvg }, { pdfFaces }] = await Promise.all([
-        import('../../canvas/drawing'),
-        import('../../canvas/picture'),
-        import('../../canvas/faces'),
-      ])
-      const drawing = drawingOf({
+      const svg = await port.value.svg({
         text,
         name: shown?.name ?? '',
         path: space && path ? withinSpace(space.root, path) : null,
         root: space?.root ?? null,
+        note: path,
       })
-      const faces = await pdfFaces(drawing.canvas.nodes, { note: path, root: drawing.root })
       await tick()
-      if (!node.isConnected) return
-      node.innerHTML = canvasSvg(
-        drawing.canvas,
-        drawing.palette,
-        drawing.path,
-        drawing.root,
-        true,
-        false,
-        faces,
-      )
-      const picture = node.firstElementChild
-      picture?.removeAttribute('width')
-      picture?.removeAttribute('height')
+      if (svg !== null && node.isConnected) node.innerHTML = svg
     })()
   }
 </script>

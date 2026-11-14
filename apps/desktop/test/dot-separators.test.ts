@@ -19,7 +19,7 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     why: 'the bullet list button draws a bullet',
   },
   {
-    path: 'apps/desktop/src/lib/canvas/picture.ts',
+    path: 'apps/desktop/src/lib/plane/src/picture.ts',
     holds: '[-*+]',
     why: 'a markdown list item drawn with its bullet',
   },

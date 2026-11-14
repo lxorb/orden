@@ -24,7 +24,7 @@ import {
 import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
-import { holderOf } from '../../pages/held'
+import { holderOf } from '@orden/markdown/pages'
 import { claimed, waitsForBytes } from './files'
 import { foldIn } from './ingest'
 import { away, awayUnder, keepingChange, type LettingGo, trim, used, usedChanges } from './keeping'

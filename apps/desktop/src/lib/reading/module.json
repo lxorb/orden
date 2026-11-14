@@ -4,9 +4,6 @@
   "dependsOn": ["contracts", "editor", "markdown", "pdf", "platform", "scan", "theme"],
   "pending": [
     "apps/desktop/src/lib/before-render.ts",
-    "apps/desktop/src/lib/canvas/drawing.ts",
-    "apps/desktop/src/lib/canvas/faces.ts",
-    "apps/desktop/src/lib/canvas/picture.ts",
     "apps/desktop/src/lib/kept-cover.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/note-images.ts",

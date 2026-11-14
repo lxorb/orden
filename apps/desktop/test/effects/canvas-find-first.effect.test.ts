@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
-import CanvasFind from '../../src/lib/CanvasFind.svelte'
-import { emptyCanvas } from '../../src/lib/canvas/format'
+import CanvasFind from '../../src/lib/canvas/src/CanvasFind.svelte'
+import { emptyCanvas } from '@orden/markdown/canvas'
 
 let close: (() => void) | undefined
 
@@ -66,7 +66,7 @@ test('the first Shift+Enter goes to the last card found', () => {
 })
 
 test('words a card breaks across two lines are found as the card shows them', async () => {
-  const { matches } = await import('../../src/lib/canvas/find')
+  const { matches } = await import('../../src/lib/canvas/src/find')
   const card = {
     id: 'two',
     type: 'text' as const,

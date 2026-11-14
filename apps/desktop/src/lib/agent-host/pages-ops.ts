@@ -6,7 +6,7 @@ import {
   removed as pageRemoved,
   settled,
 } from '@orden/markdown/pages'
-import type { Canvas, CanvasNode, PageNode } from '../canvas/format'
+import type { Canvas, CanvasNode, PageNode } from '@orden/markdown/canvas'
 import { Refused } from './problem'
 
 const MARGIN = 40

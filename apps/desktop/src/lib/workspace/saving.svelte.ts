@@ -1,3 +1,4 @@
+import { flushHeldEdits } from '@orden/contracts'
 import { flushTableEdits } from '@orden/editor'
 import { freePath } from '@orden/markdown/paths'
 import {
@@ -14,7 +15,6 @@ import {
   joinPath,
   afterQuiet,
 } from '../platform/src/api'
-import { flushCardEdits } from '../canvas/writing'
 import { links } from '../link-index.svelte'
 import { owesLast, surfacesToWords, writeOwed } from '../parting'
 import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
@@ -117,7 +117,7 @@ export class Saving {
 
   wordsNow() {
     flushTableEdits()
-    flushCardEdits()
+    flushHeldEdits()
     surfacesToWords()
     this.flush()
   }
@@ -149,7 +149,7 @@ export class Saving {
 
   async writeNow(): Promise<void> {
     flushTableEdits()
-    flushCardEdits()
+    flushHeldEdits()
     writeOwed()
 
     const tab = this.ws.active
@@ -364,7 +364,7 @@ export class Saving {
   }
 
   private async claim(note: NoteDoc, folder: string, file: string): Promise<string | null> {
-    const { pairOf } = await import('../pages/held')
+    const { pairOf } = await import('@orden/markdown/pages')
     const { holdIfFree } = await import('../platform/src/api')
     const found: string[] = []
     for (;;) {

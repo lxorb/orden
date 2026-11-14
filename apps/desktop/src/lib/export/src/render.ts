@@ -1,25 +1,18 @@
 import { escapeAll } from '@orden/markdown/html'
 import { CODE_PALETTES } from '@orden/editor'
 import { type EmbeddedNote, frontMatterValue, renderMarkdown, type Wikilink } from '@orden/markdown'
-import { sourcesOf } from '@orden/markdown/sources'
 import { exportCss, themeCss } from '@orden/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../../theme/src/api'
 import { busy } from '../../ui-kit/src/api'
-import { pageBytes, assetPath, invoke, isDesktop, platform } from '../../platform/src/api'
+import { invoke, isDesktop } from '../../platform/src/api'
 import { type Fence, prepareEmbeds, prepareFences } from '../../before-render'
 import { titleOf } from './document'
-import { inlinePictures, type Picture, swapSources } from './pictures'
-import { chooseTarget } from '../../files-out/src/api'
+import { inlinePictures, type Picture } from './pictures'
+import { chooseTarget, CONTENT_POLICY, inlineImages } from '../../files-out/src/api'
 import { PANDOC_FORMATS, type PandocFormat } from '../../export-formats/src/api'
 import { paletteCss } from '../../highlight'
 import { mathCss } from '../../math-fonts'
-import {
-  type PaperInches,
-  pageCss,
-  pageSetupFor,
-  runningDate,
-  withRunningText,
-} from '../../page-setup'
+import { pageCss, pageSetupFor, runningDate, withRunningText } from '../../page-setup'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from '../../paper'
 import type { Scheme } from '../../theme/src/api'
 
@@ -37,23 +30,6 @@ export interface HtmlOptions {
   embed?: (link: Wikilink) => string | EmbeddedNote | null
   escapeHtml?: boolean
 }
-
-const contentPolicy = (pictures: string) =>
-  [
-    "default-src 'none'",
-    "script-src 'none'",
-    "object-src 'none'",
-    "base-uri 'none'",
-    "form-action 'none'",
-    "style-src * 'unsafe-inline'",
-    `img-src * data: blob:${pictures}`,
-    `media-src * data: blob:${pictures}`,
-    'font-src * data:',
-  ].join('; ')
-
-const CONTENT_POLICY = contentPolicy('')
-
-export const SHEET_POLICY = contentPolicy(' asset: http://asset.localhost')
 
 function declarations(tokens: Record<string, string>): string {
   return Object.entries(tokens)
@@ -138,36 +114,6 @@ ${page}</body>
 `
 }
 
-export function localSources(html: string): string[] {
-  return sourcesOf(html, (src) => assetPath(src) !== null || !/^(data:|https?:|\/\/)/i.test(src))
-}
-
-export async function inlineImages(
-  html: string,
-  resolve: (src: string) => string,
-): Promise<string> {
-  const sources = localSources(html)
-  if (!sources.length) return html
-
-  return swapSources(html, await assetsOf(sources, resolve))
-}
-
-export async function assetsOf(
-  sources: readonly string[],
-  resolve: (src: string) => string,
-): Promise<Map<string, string>> {
-  const inlined = new Map<string, string>()
-
-  await Promise.all(
-    sources.map(async (src) => {
-      const data = await invoke<string>('read_asset', { path: resolve(src) }).catch(() => null)
-      if (data) inlined.set(src, data)
-    }),
-  )
-
-  return inlined
-}
-
 export async function renderNote(
   source: string,
   name: string,
@@ -182,64 +128,6 @@ export async function renderNote(
   if (pictures) return inlinePictures(html, pictures)
 
   return options.resolveImage ? inlineImages(html, options.resolveImage) : html
-}
-
-export function printsInFrame(): boolean {
-  return !(isDesktop && platform() === 'macos')
-}
-
-export function printInFrame(html: string | Blob, page?: PaperInches): Promise<void> {
-  if (!printsInFrame()) {
-    return pageBytes(html)
-      .then((bytes) => invoke('print_page', { bytes, page: page ?? null }))
-      .then(
-        () => undefined,
-        () => undefined,
-      )
-  }
-
-  return new Promise((resolve) => {
-    const from = document.activeElement
-
-    const frame = document.createElement('iframe')
-    frame.setAttribute('aria-hidden', 'true')
-    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;'
-
-    const link = typeof html === 'string' ? null : URL.createObjectURL(html)
-
-    let done = false
-    const finish = () => {
-      if (done) return
-      done = true
-
-      const ours = document.activeElement === frame
-      frame.remove()
-      if (link) URL.revokeObjectURL(link)
-      if (ours && from instanceof HTMLElement && from.isConnected) from.focus()
-
-      resolve()
-    }
-
-    const show = async () => {
-      const inner = frame.contentWindow
-      if (!inner) {
-        finish()
-        return
-      }
-
-      await inner.document.fonts.ready.catch(() => undefined)
-      inner.addEventListener('afterprint', finish, { once: true })
-      inner.focus()
-      inner.print()
-      window.setTimeout(finish, 5 * 60 * 1000)
-    }
-
-    frame.addEventListener('load', () => void show().catch(finish))
-
-    if (link) frame.src = link
-    else if (typeof html === 'string') frame.srcdoc = html
-    document.body.append(frame)
-  })
 }
 
 export async function pandocAvailable(): Promise<boolean> {
