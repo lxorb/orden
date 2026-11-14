@@ -28,7 +28,7 @@
   const who = $derived(account.name)
 
   const pick = (event: MouseEvent) =>
-    void import('./theme-picker/picking.svelte').then((one) => one.pickTheme(event))
+    void import('./theme-looks/src/api').then((one) => one.pickTheme(event))
 </script>
 
 <div class="foot" data-region="foot">

@@ -28,7 +28,7 @@
   import { swipeOpens } from './lib/swipe-opens'
   import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
   import { alone } from './lib/alone.svelte'
-  import { chrome } from './lib/glass/chrome.svelte'
+  import { chrome } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { recovery } from './lib/recovery.svelte'
@@ -90,7 +90,7 @@
   import { usage } from './lib/usage.svelte'
   import { invoke, isDesktop, isNative, platform } from './lib/tauri'
   import { storedText } from './lib/stored'
-  import { theme } from './lib/theme.svelte'
+  import { theme } from './lib/theme/src/api'
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { sidebarKey, used } from './lib/workspace/undo.svelte'
@@ -438,8 +438,7 @@
       import('./lib/ai/rewriting.svelte'),
       import('./lib/sync-client/test/fake-engine.svelte'),
       import('./lib/agents/settings/fake'),
-      import('./lib/wallpaper/wallpaper.svelte'),
-      import('./lib/themes/store.svelte'),
+      import('./lib/theme-looks/src/api'),
     ]).then(
       ([
         { importing },
@@ -448,8 +447,7 @@
         { rewriting },
         sync2,
         { standIn },
-        { wallpaper },
-        { store },
+        { wallpaper, store },
       ]) => {
         Object.assign((window as unknown as { ordenApp: object }).ordenApp, {
           tasks: () =>

@@ -41,7 +41,7 @@
   import { destinationOf, type Host, hostFor, said } from './remote/hosts'
   import { relativeTo, samePath } from './space-paths'
   import TabMark from './TabMark.svelte'
-  import { theme } from './theme.svelte'
+  import { theme } from './theme/src/api'
   import { canWriteAt } from './sharing.svelte'
   import { joinPath } from './tauri'
   import { trap } from './trap'

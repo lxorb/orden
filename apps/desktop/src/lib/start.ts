@@ -28,7 +28,7 @@ import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, internal, isDesktop, isMobile, platform } from './tauri'
 import { waited } from './timing'
 import { factsOfLaunch, mark } from './trace'
-import { theme } from './theme.svelte'
+import { theme } from './theme/src/api'
 import { pull } from './pull.svelte'
 import { toolbar } from './toolbar.svelte'
 import { trash } from './trash.svelte'
@@ -46,13 +46,13 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('doors')
-      .then(async () => (await import('./themes/store.svelte')).store.keepUp())
+      .then(async () => (await import('./theme-looks/src/api')).store.keepUp())
       .catch((error: unknown) => log('warn', `themes: ${String(error)}`))
   }
   factsOfLaunch(() => `${workspace.spaces.length} spaces, ${workspace.tabs.length} tabs`)
   viewport.start()
   theme.init()
-  if (!__EVEN_PLUGIN__) void import('./themes/synced.svelte').then((one) => one.syncLook())
+  if (!__EVEN_PLUGIN__) void import('./theme-looks/src/api').then((one) => one.syncLook())
   modes.restore()
   shortcuts.restore()
   toolbar.restore()

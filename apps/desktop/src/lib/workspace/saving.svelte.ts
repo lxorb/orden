@@ -466,7 +466,7 @@ export class Saving {
 
     if (/\.css$|snippets\.json$/.test(path)) {
       const { settings } = await import('../settings.svelte')
-      const { theme } = await import('../theme.svelte')
+      const { theme } = await import('../theme/src/api')
       await Promise.all([settings.loadSnippets(), theme.reload()])
     }
 

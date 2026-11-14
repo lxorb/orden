@@ -21,7 +21,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 const { preferences, resettable } = await import('./preferences')
-const { theme } = await import('./theme.svelte')
+const { theme } = await import('./theme/src/theme.svelte')
 const { DICTIONARIES } = await import('./spell-languages')
 
 const panes = preferences()

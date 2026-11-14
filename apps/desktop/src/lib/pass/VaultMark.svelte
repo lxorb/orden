@@ -2,7 +2,7 @@
   import type { VaultColor, VaultIcon } from '@orden/pass/types'
   import Icon from '../Icon.svelte'
   import { readIcon } from '../icons'
-  import { theme } from '../theme.svelte'
+  import { theme } from '../theme/src/api'
   import Glyph from './Glyph.svelte'
   import { VAULT_ICON_MARKS, vaultColour } from './icons'
 

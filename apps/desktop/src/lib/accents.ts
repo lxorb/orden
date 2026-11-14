@@ -1,4 +1,4 @@
-import type { ThemeSetting } from './themes/settings'
+import type { ThemeSetting } from './theme/src/api'
 
 export interface Accent {
   id: string

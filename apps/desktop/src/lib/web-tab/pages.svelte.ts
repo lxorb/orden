@@ -1,4 +1,4 @@
-import { landed } from '../glass/chrome.svelte'
+import { landed } from '../theme/src/api'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import { isExtensionPage, isWebAddress, originKey } from './address'

@@ -5,21 +5,23 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 import { overlays } from '../../src/lib/overlays'
 import SidebarFoot from '../../src/lib/SidebarFoot.svelte'
 import { settings } from '../../src/lib/settings.svelte'
-import { theme } from '../../src/lib/theme.svelte'
-import { store } from '../../src/lib/themes/store.svelte'
-import { picking, pickTheme } from '../../src/lib/theme-picker/picking.svelte'
+import { theme } from '../../src/lib/theme/src/theme.svelte'
+import { store } from '../../src/lib/theme-looks/src/gallery/store.svelte'
+import { picking, pickTheme } from '../../src/lib/theme-looks/src/picker/picking.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
+import '../../src/lib/theme-ports'
 
 await Promise.all([
   import('@orden/themes/glass'),
-  import('../../src/lib/glass/settings'),
-  import('../../src/lib/glass/follow.svelte'),
-  import('../../src/lib/wallpaper/sheet'),
-  import('../../src/lib/wallpaper/settings'),
-  import('../../src/lib/wallpaper/wallpaper.svelte'),
-  import('../../src/lib/material'),
-  import('../../src/lib/themes/declared'),
-  import('../../src/lib/theme-picker/ThemePicker.svelte'),
+  import('../../src/lib/theme-looks/src/api'),
+  import('../../src/lib/theme-looks/src/glass/settings'),
+  import('../../src/lib/theme-looks/src/glass/follow.svelte'),
+  import('../../src/lib/theme-looks/src/wallpaper/sheet'),
+  import('../../src/lib/theme-looks/src/wallpaper/settings'),
+  import('../../src/lib/theme-looks/src/wallpaper/wallpaper.svelte'),
+  import('../../src/lib/theme/src/material'),
+  import('../../src/lib/theme/src/declared'),
+  import('../../src/lib/theme-looks/src/picker/ThemePicker.svelte'),
   import('@orden/themes/tokens.css?raw'),
 ])
 

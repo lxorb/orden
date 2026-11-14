@@ -10,7 +10,7 @@
   import { readingHtml, unreadableHtml } from '../reading/render'
   import { trustsHtmlIn } from '../sharing.svelte'
   import TabMark from '../TabMark.svelte'
-  import { theme } from '../theme.svelte'
+  import { theme } from '../theme/src/api'
   import { pages } from '../web-tab/pages.svelte'
   import { type Tab, workspace } from '../workspace.svelte'
   import { noteBehind } from '../protect/protection.svelte'

@@ -13,7 +13,7 @@
   import { parseQuery } from '@orden/scan/search/query'
   import { relativeTo } from './space-paths'
   import { pixelRatio } from './pixel-ratio.svelte'
-  import { theme } from './theme.svelte'
+  import { theme } from './theme/src/api'
   import { workspace } from './workspace.svelte'
   import { MOST_GROUPS } from './workspace/graph-settings.svelte'
 

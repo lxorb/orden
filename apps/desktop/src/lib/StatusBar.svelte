@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tooLongToParse, type VimMode } from '@orden/editor'
   import { countText } from './counts'
-  import { chrome } from './glass/chrome.svelte'
+  import { chrome } from './theme/src/api'
   import { localNumber } from './region'
   import { VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/showing.svelte'

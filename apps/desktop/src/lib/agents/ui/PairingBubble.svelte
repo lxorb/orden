@@ -7,7 +7,7 @@
   import { overlays } from '../../overlays'
   import { takeKeyboard } from '../../take-keyboard'
   import { isDesktop } from '../../tauri'
-  import { theme } from '../../theme.svelte'
+  import { theme } from '../../theme/src/api'
   import type { Activity } from './activity.svelte'
 
   const { activity }: { activity: Activity } = $props()

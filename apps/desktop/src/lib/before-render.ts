@@ -6,7 +6,7 @@ import { escapeAll } from '@orden/markdown/html'
 import { embedKind } from '@orden/markdown/links'
 import { drawDiagram } from './diagrams'
 import { loadParsers, type Parser } from './highlight'
-import type { Scheme } from './theme.svelte'
+import type { Scheme } from './theme/src/api'
 
 export type Fence = (code: string, language: string) => string | null
 

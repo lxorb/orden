@@ -1,7 +1,7 @@
 {
   "name": "collab",
   "layer": "foundation",
-  "dependsOn": ["contracts", "collab-rooms", "editor", "markdown"],
+  "dependsOn": ["contracts", "collab-rooms", "editor", "markdown", "theme"],
   "pending": [
     "apps/desktop/src/lib/accents.ts",
     "apps/desktop/src/lib/account.svelte.ts",
@@ -13,7 +13,6 @@
     "apps/desktop/src/lib/records.ts",
     "apps/desktop/src/lib/stored.ts",
     "apps/desktop/src/lib/tauri.ts",
-    "apps/desktop/src/lib/theme.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts"
   ]
 }

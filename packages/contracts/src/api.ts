@@ -74,10 +74,15 @@ export {
   type ChosenSettings,
   isScheme,
   isSchemeChoice,
+  type OwnPair,
   type Scheme,
   type SchemeChoice,
   SCHEMES,
   type ThemeInfo,
+  type ThemeLooksPort,
+  type ThemePorts,
+  type ThemeSetting,
+  type ThemeSwatch,
   type ThemeValue,
 } from './theme'
 export {

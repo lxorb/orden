@@ -4,7 +4,7 @@
   import { iconChoice } from '../icon-choice.svelte'
   import { message } from '../message'
   import Sheet from '../Sheet.svelte'
-  import { theme } from '../theme.svelte'
+  import { theme } from '../theme/src/api'
   import { vaultColour } from './icons'
   import { pass } from './store.svelte'
   import type { PassUi } from './ui.svelte'

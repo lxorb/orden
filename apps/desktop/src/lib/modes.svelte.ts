@@ -48,7 +48,7 @@ import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
 import { isNumber, isRecord, isString, keepJson, stored, stringList } from './stored'
 import { currentWindow, invoke, isDesktop } from './tauri'
-import { theme } from './theme.svelte'
+import { theme } from './theme/src/api'
 import { opening } from './workspace/documents.svelte'
 
 const STORAGE_KEY = 'orden:modes'

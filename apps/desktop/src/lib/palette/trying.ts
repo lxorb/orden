@@ -1,4 +1,4 @@
-import type { SchemeChoice } from '../theme.svelte'
+import type { SchemeChoice } from '../theme/src/api'
 import type { Row } from './rows'
 
 export interface Look {

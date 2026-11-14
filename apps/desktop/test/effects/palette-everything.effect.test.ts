@@ -33,7 +33,7 @@ globalThis.ResizeObserver = NoLayout
 
 const { default: Palette } = await import('../../src/lib/Palette.svelte')
 const { modes } = await import('../../src/lib/modes.svelte')
-const { theme } = await import('../../src/lib/theme.svelte')
+const { theme } = await import('../../src/lib/theme/src/theme.svelte')
 const { overlays } = await import('../../src/lib/overlays')
 
 let target: HTMLElement

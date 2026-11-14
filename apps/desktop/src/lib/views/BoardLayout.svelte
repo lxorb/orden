@@ -59,7 +59,7 @@
   import type { Kit } from './kit'
   import { holdsLists, optionsAt } from './options'
   import { priorityTone } from '../quick-add/labels'
-  import { theme } from '../theme.svelte'
+  import { theme } from '../theme/src/api'
   import { labelColour } from './task-meta'
   import { rowKey } from './row-keys'
   import { runKey } from './task-actions'

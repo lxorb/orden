@@ -17,7 +17,7 @@ import { mathCss } from './math-fonts'
 import { type PaperInches, pageCss, pageSetupFor, runningDate, withRunningText } from './page-setup'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from './paper'
 import { assetPath, invoke, isDesktop, platform } from './tauri'
-import type { Scheme } from './theme.svelte'
+import type { Scheme } from './theme/src/api'
 
 export { PANDOC_FORMATS, type PandocFormat } from './export-formats'
 export { type Drawer, type Fence, prepareEmbeds, prepareFences } from './before-render'

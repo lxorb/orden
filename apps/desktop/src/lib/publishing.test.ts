@@ -106,7 +106,7 @@ vi.mock('./message', () => ({
 import { account } from './account.svelte'
 import { publish } from './publishing.svelte'
 import { canPublish } from './sharing.svelte'
-import { theme } from './theme.svelte'
+import { theme } from './theme/src/theme.svelte'
 import type { RemoteSpace } from './api'
 
 function remote(id: string, role: 'owner' | 'write' | 'read', blog = {}): RemoteSpace {

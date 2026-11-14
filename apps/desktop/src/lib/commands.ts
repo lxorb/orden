@@ -87,8 +87,8 @@ import { toggleFill } from './tab-fill/fill'
 import { fullscreen } from './fullscreen.svelte'
 import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
 import { closeWindow, internal, invoke, isDesktop, isNative, openExternal } from './tauri'
-import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
-import { theme } from './theme.svelte'
+import { SCHEME_CHOICES, SCHEME_NAMES } from './theme-looks/src/api'
+import { theme } from './theme/src/api'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 import { isMarkdownPath, samePath } from './space-paths'
@@ -1293,7 +1293,7 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'themes',
       label: 'Switch theme',
-      run: () => void import('./theme-picker/picking.svelte').then((one) => one.pickTheme()),
+      run: () => void import('./theme-looks/src/api').then((one) => one.pickTheme()),
     },
     ...theme.all.map((item) => ({
       id: `theme:${item.id}`,

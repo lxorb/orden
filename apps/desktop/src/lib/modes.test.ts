@@ -1141,7 +1141,7 @@ describe('translucency, which the glass theme is now', () => {
 
   async function restartedAsking() {
     vi.resetModules()
-    const { theme } = await import('./theme.svelte')
+    const { theme } = await import('./theme/src/theme.svelte')
     const adopt = vi.spyOn(theme, 'adoptTranslucency').mockImplementation(() => undefined)
     ;(await import('./modes.svelte')).modes.restore()
     return adopt

@@ -9,8 +9,8 @@ import {
   type SiteSettings,
 } from './api'
 import { invoke } from './tauri'
-import { theme } from './theme.svelte'
-import { carriedCss } from './themes/carried'
+import { theme } from './theme/src/api'
+import { carriedCss } from './theme/src/api'
 import { account } from './account.svelte'
 import { sha256 } from './bytes'
 import { isDomainStatus, keepAsking } from './domain-status'
@@ -208,7 +208,7 @@ class Publish {
       .catch(() => '')
     if (!css) return kept
 
-    const { pageSheet } = await import('./themes/page-sheet')
+    const { pageSheet } = await import('./theme-looks/src/api')
     const bytes = new TextEncoder().encode(pageSheet(css))
     const hash = await sha256(bytes)
     if (kept?.hash === hash) return kept
