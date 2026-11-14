@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { EditorView } from '@orden/editor'
-import CanvasNode from '../../src/lib/CanvasNode.svelte'
-import { flushCardEdits } from '../../src/lib/canvas/writing'
+import CanvasNode from '../../src/lib/canvas/src/CanvasNode.svelte'
+import { flushHeldEdits } from '@orden/contracts'
 
 Element.prototype.animate = () =>
   ({
@@ -93,10 +93,10 @@ test('the words in a card can be asked for before the caret has left it', () => 
   view.dispatch({ changes: { from: view.state.doc.length, insert: ' and more' } })
   expect(given).toEqual([])
 
-  flushCardEdits()
+  flushHeldEdits()
   expect(given).toEqual(['one and more'])
 
-  flushCardEdits()
+  flushHeldEdits()
   expect(given).toEqual(['one and more'])
 })
 

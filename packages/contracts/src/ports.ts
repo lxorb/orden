@@ -1,6 +1,7 @@
 import { err, failure, ok, type Result } from './result'
 import type { AgentPorts } from './agents'
 import type { ChatPorts } from './chats'
+import type { HeldEditPort, NotePorts } from './note'
 import type { PreviewPorts } from './previews'
 import type { QuittingPorts } from './quitting'
 import type { SharingPorts } from './sharing'
@@ -12,6 +13,7 @@ import { NO_WEB_PAGES, type WebPagesPort, type WebPorts } from './web'
 
 export type PortMap = AgentPorts &
   ChatPorts &
+  NotePorts &
   PreviewPorts &
   QuittingPorts &
   SharingPorts &
@@ -61,6 +63,10 @@ export function whenPortProvided<Name extends PortName>(
   const uses = waiting.get(name) ?? []
   uses.push(use as (port: unknown) => void)
   waiting.set(name, uses)
+}
+
+export function flushHeldEdits(): void {
+  ;(provided.get('edits.held') as HeldEditPort | undefined)?.flush()
 }
 
 export function webPages(): WebPagesPort {

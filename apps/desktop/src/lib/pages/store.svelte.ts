@@ -10,10 +10,16 @@ import {
   settled,
 } from '@orden/markdown/pages'
 import { type Camera, clampScale, PAPER_CLOSEST, zoomed } from '../camera'
-import { type Canvas, canvasRuns, type PageNode, readCanvas, takeParsed } from '../canvas/format'
-import { strokeBox } from '../canvas/ink'
-import type { KeptView } from '../canvas/place'
-import { CanvasStore } from '../canvas/store.svelte'
+import {
+  type Canvas,
+  canvasRuns,
+  type PageNode,
+  readCanvas,
+  takeParsed,
+} from '@orden/markdown/canvas'
+import { strokeBox } from '../plane/src/api'
+import type { KeptView } from '../canvas/src/api'
+import { CanvasStore } from '../canvas/src/api'
 import type { Highlight, PdfHeading } from '../pdf/src/api'
 import { stillness } from '../platform/src/api'
 import type { Tab } from '../workspace/documents.svelte'

@@ -1,25 +1,12 @@
-import { mapSources, sourcesOf } from '@orden/markdown/sources'
-import { fileBytes, parseDataUri, toBase64, isReserved } from '../../platform/src/api'
-import { claimName } from '../../files-out/src/api'
+import { sourcesOf } from '@orden/markdown/sources'
+import { fileBytes, mimeOfPath, parseDataUri, toBase64, isReserved } from '../../platform/src/api'
+import { claimName, swapSources } from '../../files-out/src/api'
 
 export interface Picture {
   src: string
   name: string
   mime: string
   bytes: Uint8Array
-}
-
-const MIMES: Record<string, string> = {
-  png: 'image/png',
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  gif: 'image/gif',
-  webp: 'image/webp',
-  svg: 'image/svg+xml',
-  bmp: 'image/bmp',
-  avif: 'image/avif',
-  tif: 'image/tiff',
-  tiff: 'image/tiff',
 }
 
 const SUFFIXES: Record<string, string> = {
@@ -38,8 +25,8 @@ export function isRemote(src: string): boolean {
 }
 
 export function mimeOf(src: string, fallback = 'image/png'): string {
-  const extension = /\.([a-z0-9]+)(?:[?#]|$)/i.exec(src)?.[1]?.toLowerCase()
-  return (extension === undefined ? undefined : MIMES[extension]) ?? fallback
+  const found = mimeOfPath(src)
+  return found?.startsWith('image/') ? found : fallback
 }
 
 export function suffixFor(mime: string): string {
@@ -113,12 +100,6 @@ export async function readPictures(
       const wanted = usable ? named : `picture.${suffixFor(one.mime)}`
       return { ...one, name: claimName(wanted, taken) }
     })
-}
-
-export function swapSources(html: string, wanted: ReadonlyMap<string, string>): string {
-  if (!wanted.size) return html
-
-  return mapSources(html, (src) => wanted.get(src) ?? null)
 }
 
 export function inlinePictures(html: string, pictures: readonly Picture[]): string {

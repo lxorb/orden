@@ -1,7 +1,7 @@
 import { freePath } from '@orden/markdown/paths'
 
 import { insideOnly, log, onDisk, joinPath, sha256 } from '../../platform/src/api'
-import { holderOf, pairOf, paperOf } from '../../pages/held'
+import { holderOf, pairOf, paperOf } from '@orden/markdown/pages'
 import { workspace } from '../../workspace.svelte'
 import { writeBytes, writeFile } from '../../workspace/write-file'
 

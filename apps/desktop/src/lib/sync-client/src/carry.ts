@@ -4,9 +4,8 @@ import { busy } from '../../ui-kit/src/api'
 import { deviceAccent, deviceName, personFace, personName, rooms } from '../../collab/src/api'
 import type { Carrying, Seen, Who } from '../../collab-rooms/src/api'
 import { theme } from '../../theme/src/api'
-import type { InkStroke } from '../../canvas/format'
-import type { Point } from '../../canvas/geometry'
-import type { PlaneSurface } from '../../canvas/shared'
+import type { InkStroke } from '@orden/markdown/canvas'
+import { type PlaneSurface, type Point } from '@orden/markdown/plane'
 
 export interface Carry {
   noteId: string

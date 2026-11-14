@@ -55,7 +55,15 @@ export {
   type ItemMeta,
   type MetaPatch,
 } from './item'
-export { type Heading, type NoteContent, type NoteStart, UNTITLED, unixLines } from './note'
+export {
+  type Heading,
+  type HeldEditPort,
+  type NoteContent,
+  type NotePorts,
+  type NoteStart,
+  UNTITLED,
+  unixLines,
+} from './note'
 export {
   type Account,
   type Avatar,
@@ -117,6 +125,7 @@ export {
   type TabPanel,
 } from './shell'
 export {
+  flushHeldEdits,
   type PortMap,
   type PortName,
   portOf,
@@ -128,7 +137,14 @@ export {
 export type { AgentPorts, AgentWritesPort } from './agents'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
 export type { PandocPicture, PickedFile } from './files'
-export type { PreviewedTab, PreviewPorts, ScreenPreview, TerminalPreviewPort } from './previews'
+export type {
+  PlanePicturePort,
+  PlaneShown,
+  PreviewedTab,
+  PreviewPorts,
+  ScreenPreview,
+  TerminalPreviewPort,
+} from './previews'
 export type { TerminalLinesPort, TerminalPorts, TerminalShell } from './terminal'
 export type {
   EngineTaken,

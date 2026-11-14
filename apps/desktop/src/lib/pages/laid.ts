@@ -1,4 +1,4 @@
-import type { CanvasNode } from '../canvas/format'
+import type { CanvasNode } from '@orden/markdown/canvas'
 
 export interface Run {
   text: string
@@ -22,9 +22,9 @@ export async function laidOut(
   const laid = new Map<string, Run[]>()
   if (!cards.length || typeof document === 'undefined') return laid
 
-  const [{ mount, tick, unmount }, { default: Card }] = await Promise.all([
+  const [{ mount, tick, unmount }, { CanvasNode: Card }] = await Promise.all([
     import('svelte'),
-    import('../CanvasNode.svelte'),
+    import('../canvas/src/api'),
   ])
 
   const stage = document.createElement('div')

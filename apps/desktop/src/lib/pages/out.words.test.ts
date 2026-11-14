@@ -9,7 +9,7 @@ import {
   StandardFonts,
 } from 'pdf-lib'
 import { added, emptyPages } from '@orden/markdown/pages'
-import { type Canvas, type CanvasNode, type PageNode, writeCanvas } from '../canvas/format'
+import { type Canvas, type CanvasNode, type PageNode, writeCanvas } from '@orden/markdown/canvas'
 
 vi.mock('../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(null) }))
 const raster = vi.hoisted(() => ({
@@ -52,7 +52,7 @@ vi.mock('./laid', () => ({
   },
   localFaces: () => '',
 }))
-vi.mock('./raster', () => ({
+vi.mock('../pdf/src/raster', () => ({
   svgToPng: (svg: string) => {
     raster.drawn.push(svg)
     return Promise.resolve(raster.refuse ? null : raster.png)

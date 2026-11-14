@@ -8,8 +8,8 @@ import {
   readPictures,
   sourcesIn,
   suffixFor,
-  swapSources,
 } from './pictures'
+import { swapSources } from '../../files-out/src/api'
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 1, 2, 3])
 

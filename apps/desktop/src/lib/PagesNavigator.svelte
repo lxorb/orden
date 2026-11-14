@@ -1,13 +1,18 @@
 <script lang="ts">
   import { moved, removed, reshaped } from '@orden/markdown/pages'
-  import type { Canvas } from './canvas/format'
-  import { PAPER_NAMES, PATTERNS, type PageNode, type Paper, type Pattern } from './canvas/format'
-  import { paintSketch } from './canvas/paint'
-  import { readPalette } from './canvas/palette'
+  import {
+    type Canvas,
+    type PageNode,
+    type Paper,
+    PAPER_NAMES,
+    type Pattern,
+    PATTERNS,
+  } from '@orden/markdown/canvas'
+  import { paintSketch, readPalette } from './plane/src/api'
   import { carryPage, draggedPage, dropOver, isPageDrag } from './drag-paths'
   import { longPress } from './longpress'
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
-  import { densityFor, paperOf } from './pages/paper'
+  import { densityFor, paperOf } from './pdf/src/api'
   import {
     sameSheet,
     type SheetDrawn,

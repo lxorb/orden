@@ -12,7 +12,7 @@ import {
   afterQuiet,
   windows,
 } from '../platform/src/api'
-import { sheetArrived } from '../pdf/src/api'
+import { paperRewritten, sheetArrived } from '../pdf/src/api'
 import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../space-watch'
 import { sync } from '../sync.svelte'
 import { type Leadership, leadSync } from '../sync-client/src/api'
@@ -100,7 +100,7 @@ export async function heardChange(change: SpaceChange): Promise<void> {
   if (!change.dir) sheetArrived(change.path)
   if (!change.dir && change.kind !== 'removed' && /\.pdf$/i.test(change.path)) {
     const path = change.path
-    void import('../pages/paper').then(({ paperRewritten }) => paperRewritten(path))
+    paperRewritten(path)
   }
   if (change.kind === 'removed') return gone(change.path, change.dir)
   if (change.kind === 'renamed') {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CanvasColours from '../../CanvasColours.svelte'
+  import { CanvasColours } from '../../ui-controls/src/api'
   import { overlays } from '../../ui-kit/src/api'
   import { toneColour } from './chips'
 

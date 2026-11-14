@@ -6,9 +6,8 @@ import {
   readCanvas,
   writeCanvas,
 } from '@orden/markdown/canvas'
-import { pagesFromPdf, pagesOf } from '@orden/markdown/pages'
+import { holderOf, pagesFromPdf, pagesOf, paperOf } from '@orden/markdown/pages'
 import { folderOf, nameOf, placesOf, samePath, joinPath } from '../platform/src/api'
-import { holderOf, paperOf } from './held'
 
 type Sizes = (path: string) => Promise<{ width: number; height: number }[]>
 

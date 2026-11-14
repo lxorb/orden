@@ -3,7 +3,7 @@ import { merged, stamped } from '@orden/markdown/canvas-merge'
 import { pushPlane, readPlane, seedPlane } from '@orden/rooms/plane'
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
-import { movedBy } from '../canvas/edits'
+import { movedBy } from '../plane/src/edits'
 import { applied, readable } from './canvas-ops'
 import { Refused } from './problem'
 

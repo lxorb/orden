@@ -1,12 +1,13 @@
 {
   "name": "pdf",
   "layer": "content",
-  "dependsOn": ["contracts", "markdown", "platform", "scan", "sharing"],
+  "dependsOn": ["contracts", "markdown", "platform", "scan", "sharing", "sync-client"],
   "pending": [
     "apps/desktop/src/lib/breathe.ts",
     "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/pages/held.ts",
+    "apps/desktop/src/lib/png-off.ts",
     "apps/desktop/src/lib/startup.svelte.ts",
+    "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/trace.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
   ]

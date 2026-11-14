@@ -1,6 +1,6 @@
 import { documentOf, type EditorView } from '@orden/editor'
 import { account } from '../../accounts/src/api'
-import type { PlaneSurface } from '../../canvas/shared'
+import type { PlaneSurface } from '@orden/markdown/plane'
 import { busy } from '../../ui-kit/src/api'
 import { sha256, without } from '../../platform/src/api'
 import { roomKindOf } from './kind'

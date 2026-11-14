@@ -17,7 +17,6 @@
     "ui-kit"
   ],
   "pending": [
-    "apps/desktop/src/lib/CanvasColours.svelte",
     "apps/desktop/src/lib/automation/acts.ts",
     "apps/desktop/src/lib/commands.ts",
     "apps/desktop/src/lib/drawer.svelte.ts",

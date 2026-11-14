@@ -952,7 +952,7 @@ class Workspace {
       (await invoke<string>('read_note', { path }).catch(() => null))
     if (text === null) return null
     if (draft.kind === 'canvas' || draft.kind === 'pages') {
-      const { parseAhead } = await import('./canvas/format')
+      const { parseAhead } = await import('@orden/markdown/canvas')
       if (!parseAhead(text)) return unread(path).then(() => null)
     }
 
@@ -1256,7 +1256,7 @@ class Workspace {
   }
 
   async newCanvas() {
-    const { blankCanvas } = await import('./canvas/format')
+    const { blankCanvas } = await import('@orden/markdown/canvas')
     this.openUnsaved('canvas', blankCanvas())
   }
 
@@ -1746,7 +1746,7 @@ class Workspace {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     if (text === null) return unread(path).then(() => null)
 
-    const { parseAhead } = await import('./canvas/format')
+    const { parseAhead } = await import('@orden/markdown/canvas')
     if (!parseAhead(text)) return unread(path).then(() => null)
     await nextTask()
 
@@ -2025,7 +2025,7 @@ class Workspace {
   private async openDeck(path: string, page: number | null, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     if (text === null) return unread(path).then(() => null)
-    const { parseAhead } = await import('./canvas/format')
+    const { parseAhead } = await import('@orden/markdown/canvas')
     if (!parseAhead(text)) return unread(path).then(() => null)
 
     const file = this.document({
@@ -3262,7 +3262,7 @@ class Workspace {
     if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('canvas', dir)) return
 
-    const { blankCanvas } = await import('./canvas/format')
+    const { blankCanvas } = await import('@orden/markdown/canvas')
 
     const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.canvas))
     const content = blankCanvas()
@@ -3317,7 +3317,7 @@ class Workspace {
   }
 
   async freeNameOnDisk(dir: string, wanted: string): Promise<string> {
-    const { pairOf } = await import('./pages/held')
+    const { pairOf } = await import('@orden/markdown/pages')
     const found: string[] = []
     for (;;) {
       const listed = this.nameTaken(dir)

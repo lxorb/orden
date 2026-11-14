@@ -1,18 +1,23 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import type { PageNode } from './canvas/format'
+  import type { PageNode } from '@orden/markdown/canvas'
   import {
+    boxOf,
     closeUpOf,
+    COLOURS,
     densityFor,
-    type Part,
+    type Highlight,
     paperEdition,
     paperOf,
     type PaperView,
+    type Part,
+    spansOver,
+    toViewport,
     viewOf,
     type Words,
     wordsInto,
-  } from './pages/paper'
-  import { boxOf, COLOURS, type Highlight, toViewport, spansOver, wordsOfRuns } from './pdf/src/api'
+    wordsOfRuns,
+  } from './pdf/src/api'
   import { wordsEnd } from './pages/words-end'
   import { pixelRatio } from './pixel-ratio.svelte'
 

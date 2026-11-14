@@ -1,5 +1,5 @@
 {
   "name": "ui-controls",
   "layer": "foundation",
-  "dependsOn": ["contracts", "platform", "theme", "ui-kit"]
+  "dependsOn": ["contracts", "markdown", "platform", "theme", "ui-kit"]
 }

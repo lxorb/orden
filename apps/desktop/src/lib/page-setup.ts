@@ -1,3 +1,4 @@
+import type { PaperInches } from './files-out/src/api'
 import { escapeAll } from '@orden/markdown/html'
 import { frontMatter, frontMatterValue } from '@orden/markdown'
 import { DEFAULT_PAGE_SETUP, type PageSetup, type Paper, PAPER_SIZES } from './paper'
@@ -121,13 +122,6 @@ function localDay(at: Date): string {
 
 export function runningDate(source: string, given?: string, now = new Date()): string {
   return given ?? frontMatterValue(source, 'date') ?? localDay(now)
-}
-
-export interface PaperInches {
-  width: number
-  height: number
-  margin: number
-  landscape: boolean
 }
 
 export function paperInches(setup: PageSetup): PaperInches {

@@ -1,5 +1,5 @@
 import { applyOp, type Op } from '@orden/sync-core'
-import { holderOf } from '../../pages/held'
+import { holderOf } from '@orden/markdown/pages'
 import { Core } from './core'
 import { kindOfName, made } from './create'
 import { holdsDocument, unixLines } from './kinds'

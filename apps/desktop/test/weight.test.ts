@@ -194,8 +194,8 @@ describe('what the app evaluates before it draws anything', () => {
   })
 
   test.each([
-    ['/lib/Canvas.svelte', 'the canvas'],
-    ['/lib/canvas/ink.ts', "the canvas's ink"],
+    ['/lib/canvas/src/Canvas.svelte', 'the canvas'],
+    ['/lib/plane/src/ink.ts', "the canvas's ink"],
     ['/lib/Graph.svelte', 'the graph'],
     ['/lib/graph-layout.ts', "the graph's layout"],
     ['/lib/Pages.svelte', 'the pages surface'],
@@ -266,7 +266,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/import/src/apply.ts', 'the import writer'],
     ['/lib/import/src/names.ts', 'the names it gives'],
     ['/lib/scan-canvas.ts', 'a plane, read into the index'],
-    ['/lib/canvas/format.ts', "the app's side of the format"],
     ['/markdown/src/canvas.ts', 'the format itself'],
     ['/markdown/src/canvas-merge.ts', 'the merge two devices settle on'],
     ['/lib/rows/rows.svelte.ts', 'the rows of every space'],

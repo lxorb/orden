@@ -1,13 +1,4 @@
-export {
-  lentMoved,
-  loading,
-  openBytes,
-  openDocument,
-  type OpenPdf,
-  pageSizes,
-  pdfjs,
-  warmPdf,
-} from './document'
+export { lentMoved, loading, openDocument, pageSizes, pdfjs, warmPdf } from './document'
 export { placesOnPaper, runsOfItems, spansOver, textOfRuns, wordsOfRuns } from './find'
 export {
   boxOf,
@@ -19,18 +10,35 @@ export {
   matrixOf,
   type Quad,
   toViewport,
-  type Transform,
 } from './highlights'
 export { type PdfHeading, readOutline } from './outline'
 export { PDF_TO_CSS, sheetFor } from './pages'
-export type { AwayDraw } from './paper-away'
+export {
+  closeUpOf,
+  densityFor,
+  drawScale,
+  holdPaper,
+  outlineOf,
+  type Paper,
+  paperAhead,
+  paperEdition,
+  paperIsLocked,
+  paperOf,
+  paperPathOf,
+  paperPlaces,
+  paperRewritten,
+  PapersHeld,
+  type PaperView,
+  type Part,
+  sharpness,
+  textsOf,
+  viewOf,
+  type Words,
+  wordsInto,
+} from './paper'
+export { cssColour, paperPicture, paperUnder, svgToPng } from './raster'
 export { marksFromOutside, marksWritten, sheetArrived } from './sheets.svelte'
 export { editHighlights, loadHighlights } from './sidecar'
-
-export const paperAway = () =>
-  __EVEN_PLUGIN__ || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined'
-    ? null
-    : import('./paper-away')
 
 export const papers = () => import('./papers')
 

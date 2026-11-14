@@ -10,7 +10,7 @@
   import type { IconNode } from 'lucide'
   import { keepFocus } from './focus'
   import { tick } from 'svelte'
-  import CanvasIcon from './CanvasIcon.svelte'
+  import { Glyph } from './ui-controls/src/api'
   import { modes } from './modes.svelte'
   import { roving } from './roving'
   import { type AppContext, runEntry } from './shortcuts/registry'
@@ -161,7 +161,7 @@
     onclick={act}
   >
     {#if glyph}
-      <CanvasIcon node={glyph} />
+      <Glyph node={glyph} />
     {:else if low}
       <span class="low">{label}</span>
     {:else}

@@ -1,6 +1,6 @@
-import type { InkStroke, PageNode } from '../canvas/format'
-import { strokeBox } from '../canvas/ink'
-import { sharpness } from './paper'
+import type { InkStroke, PageNode } from '@orden/markdown/canvas'
+import { strokeBox } from '../plane/src/api'
+import { sharpness } from '../pdf/src/api'
 
 export interface Sheet {
   width: number

@@ -12,9 +12,6 @@
     "theme"
   ],
   "pending": [
-    "apps/desktop/src/lib/canvas/format.ts",
-    "apps/desktop/src/lib/canvas/geometry.ts",
-    "apps/desktop/src/lib/canvas/shared.ts",
     "apps/desktop/src/lib/sync/conflicts.ts",
     "apps/desktop/src/lib/sync/record.svelte.ts",
     "apps/desktop/src/lib/sync/write-down.ts"

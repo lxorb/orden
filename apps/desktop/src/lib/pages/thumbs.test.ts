@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { InkStroke, PageNode } from '../canvas/format'
+import type { InkStroke, PageNode } from '@orden/markdown/canvas'
 import { sameSheet, sheetDrawn, shelvesOf, shownOf, thumbSize } from './thumbs'
 
 const A4 = { width: 794, height: 1123 }

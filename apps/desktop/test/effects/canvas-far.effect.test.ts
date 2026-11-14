@@ -2,8 +2,8 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
 const made: string[] = []
-vi.mock('../../src/lib/canvas/render', async (actual) => {
-  const real = await actual<typeof import('../../src/lib/canvas/render')>()
+vi.mock('../../src/lib/plane/src/render', async (actual) => {
+  const real = await actual<typeof import('../../src/lib/plane/src/render')>()
   return {
     ...real,
     cardHtml: (...args: Parameters<typeof real.cardHtml>) => {
@@ -13,8 +13,8 @@ vi.mock('../../src/lib/canvas/render', async (actual) => {
   }
 })
 
-const Canvas = (await import('../../src/lib/Canvas.svelte')).default
-const { emptyCanvas, writeCanvas } = await import('../../src/lib/canvas/format')
+const Canvas = (await import('../../src/lib/canvas/src/Canvas.svelte')).default
+const { emptyCanvas, writeCanvas } = await import('@orden/markdown/canvas')
 const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
 
 let close: (() => void) | undefined

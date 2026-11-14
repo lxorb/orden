@@ -1,13 +1,2 @@
-export {
-  assetsOf,
-  exportPandoc,
-  inlineImages,
-  localSources,
-  pandocAvailable,
-  printInFrame,
-  printsInFrame,
-  SHEET_POLICY,
-} from './render'
+export { exportPandoc, pandocAvailable } from './render'
 export { runExport } from './run'
-export { printWithPictures, wholeSheet } from './sheet'
-export { zipOf } from './zip'

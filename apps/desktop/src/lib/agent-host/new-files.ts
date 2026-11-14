@@ -1,7 +1,7 @@
 import { isCanvasTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../automation/caller'
 import { shownName, onDisk as exists, nameOf } from '../platform/src/api'
-import { pairOf } from '../pages/held'
+import { pairOf } from '@orden/markdown/pages'
 import { canWriteAt } from '../sharing/src/api'
 import { isWebAddress } from '@orden/scan/web-address'
 import { workspace } from '../workspace.svelte'
@@ -30,7 +30,7 @@ export function fileKindOf(call: Call): FileKind {
 async function firstWords(call: Call, kind: Exclude<FileKind, 'note'>, name: string) {
   switch (kind) {
     case 'canvas': {
-      const { blankCanvas, readCanvas, writeCanvas } = await import('../canvas/format')
+      const { blankCanvas, readCanvas, writeCanvas } = await import('@orden/markdown/canvas')
       const sent = text(call, 'content')
       return sent?.trim() ? writeCanvas(readCanvas(sent)) : blankCanvas()
     }

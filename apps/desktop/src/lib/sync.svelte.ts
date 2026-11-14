@@ -675,20 +675,23 @@ class Sync {
         },
       )
 
-      void import('./pages/carrying').then(({ carryNow, mirroredPages }) =>
-        carryNow(
-          () => mirroredPages(Object.values(this.mirrors), (id) => this.reads(id)),
-          (note, failed) =>
-            record.wrote({
-              at: Date.now(),
-              space: note.space,
-              pulled: 0,
-              pushed: 0,
-              clashed: 0,
-              failed,
-            }),
-        ),
-      )
+      void import('./sync-client/src/api')
+        .then((one) => one.papersCarrying())
+        .then(({ carryNow, mirroredPages }) =>
+          carryNow(
+            () =>
+              mirroredPages(Object.values(this.mirrors), workspace.spaces, (id) => this.reads(id)),
+            (note, failed) =>
+              record.wrote({
+                at: Date.now(),
+                space: note.space,
+                pulled: 0,
+                pushed: 0,
+                clashed: 0,
+                failed,
+              }),
+          ),
+        )
 
       if (shown) await workspace.loadTree()
 

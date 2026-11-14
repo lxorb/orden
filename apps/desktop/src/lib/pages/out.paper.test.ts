@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { decodePDFRawStream, type PDFArray, PDFDocument, type PDFRawStream } from 'pdf-lib'
 import { emptyPages, pagesFromPdf } from '@orden/markdown/pages'
-import { busy } from '../ui-kit/src/busy.svelte'
-import type { Canvas, PageNode } from '../canvas/format'
+import { busy } from '../ui-kit/src/api'
+import type { Canvas, PageNode } from '@orden/markdown/canvas'
 
 const PIXEL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=='
@@ -15,10 +15,15 @@ const held = vi.hoisted(() => ({
   at: [] as unknown[],
   locked: false,
   zipped: [] as { path: string; body: unknown }[],
+  printed: 0,
 }))
 
-vi.mock('../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(held.bytes) }))
-vi.mock('./raster', () => ({
+vi.mock('../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/api')>()),
+  fileBytes: () => Promise.resolve(held.bytes),
+}))
+vi.mock('../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../pdf/src/api')>()),
   svgToPng: async (
     svg: string,
     _width: number,
@@ -43,13 +48,18 @@ vi.mock('./raster', () => ({
     return Promise.resolve(number <= 2 ? { width: 1, page: number } : null)
   },
 }))
-vi.mock('../export/src/zip', () => ({
+vi.mock('../files-out/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../files-out/src/api')>()),
   zipOf: (entries: { path: string; body: unknown }[]) => {
     held.zipped = entries
     return Promise.resolve(new Uint8Array())
   },
+  download: () => undefined,
+  printInFrame: () => {
+    held.printed++
+    return Promise.resolve()
+  },
 }))
-vi.mock('../files-out/src/save', () => ({ download: () => undefined }))
 
 const { exportPagesPng, exportPagesSvg, pagesPdf, printPages, sheetStyle } = await import('./out')
 
@@ -108,6 +118,7 @@ afterEach(() => {
   held.at = []
   held.locked = false
   held.zipped = []
+  held.printed = 0
   busy.clear()
 })
 
@@ -155,12 +166,10 @@ describe('a paper locked by its owner', () => {
 
   test('and is not printed', async () => {
     held.bytes = await ownerLocked()
-    const printing = vi.fn()
-    vi.doMock('../export/src/render', () => ({ printInFrame: printing }))
 
     await printPages(out(paperNote()))
 
-    expect(printing).not.toHaveBeenCalled()
+    expect(held.printed).toBe(0)
     expect(busy.trouble).toBe(WORD)
   })
 

@@ -172,12 +172,8 @@ export function exportCommands(): Command[] {
   }
 
   const drawingOut = async (id: ExportId) => {
-    const [picture, { drawingOf }] = await Promise.all([
-      import('./canvas/picture'),
-      import('./canvas/drawing'),
-    ])
-
-    const drawing = drawingOf(openOut())
+    const picture = await import('./plane/src/api')
+    const drawing = picture.drawingOf(openOut())
 
     if (id === 'png') await picture.exportCanvasPng(drawing)
     else if (id === 'svg') await picture.exportCanvasSvg(drawing)

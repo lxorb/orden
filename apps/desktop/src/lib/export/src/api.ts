@@ -1,5 +1,5 @@
 export { frontShut, openTarget, renderOptions } from './context'
-export { printNote, writtenPdf } from './print'
+export { printNote } from './print'
 export { picker } from './picker.svelte'
 export type { RunOptions } from './run'
 

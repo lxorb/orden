@@ -4,10 +4,10 @@ import {
   DEFAULT_HEIGHT,
   DEFAULT_WIDTH,
   freshId,
+  FURTHEST,
   type Side,
-} from '../canvas/format'
-import { connected, movedBy, removed, withLabel, withNode, withText } from '../canvas/edits'
-import { FURTHEST } from '@orden/markdown/canvas'
+} from '@orden/markdown/canvas'
+import { connected, movedBy, removed, withLabel, withNode, withText } from '../plane/src/api'
 import { settled } from '@orden/markdown/pages'
 import { hasPages, pageIn, pageOperation, placeOnPage } from './pages-ops'
 import { Refused } from './problem'

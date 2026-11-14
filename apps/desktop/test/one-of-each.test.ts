@@ -228,11 +228,11 @@ describe('the ring a keyboard leaves', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/Canvas.svelte',
       'lib/ContextMenu.svelte',
       'lib/Reading.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
+      'lib/canvas/src/Canvas.svelte',
       'lib/pass-ui/src/PassFill.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',
       'lib/web-tab/src/WebAsk.svelte',
@@ -542,7 +542,10 @@ describe('how a surface swaps what it is showing', () => {
       .map((one) => one.name)
       .sort()
 
-    expect(without).toEqual(['lib/CanvasCatch.svelte', 'lib/CanvasRub.svelte'])
+    expect(without).toEqual([
+      'lib/canvas/src/CanvasCatch.svelte',
+      'lib/canvas/src/CanvasRub.svelte',
+    ])
   })
 })
 

@@ -37,7 +37,7 @@ import {
   type LiveNote,
 } from './ports'
 import { appWorld, lettingGo, readingFor, type Telling } from './app-world'
-import type { PlaneSurface } from '../../canvas/shared'
+import type { PlaneSurface } from '@orden/markdown/plane'
 import type { Watched } from './watching'
 import { rooms } from '../../collab/src/api'
 import { theme } from '../../theme/src/api'
@@ -57,7 +57,7 @@ import { forgetMadeDeviceId, madeDeviceId } from './made-device'
 import { Owed, type Owing, takeOwed } from './owed'
 import { placesOf } from './placing'
 import { type Holding, spend } from '../../sync/holding'
-import type { Carried } from '../../pages/carried'
+import type { Carried } from './papers-carried'
 import { holdsDocument, joinsAs, shapeOf, turn, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
@@ -854,7 +854,7 @@ class Runner {
         this.status = 'idle'
         return
       }
-      void import('../../pages/carrying').then(({ carryNow }) =>
+      void import('./papers-carrying').then(({ carryNow }) =>
         carryNow(
           () => pageNotes(engine),
           (note, failed) => void engine.said(note.space, failed),

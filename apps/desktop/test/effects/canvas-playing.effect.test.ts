@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
 
-const Canvas = (await import('../../src/lib/Canvas.svelte')).default
-const { emptyCanvas, writeCanvas } = await import('../../src/lib/canvas/format')
+const Canvas = (await import('../../src/lib/canvas/src/Canvas.svelte')).default
+const { emptyCanvas, writeCanvas } = await import('@orden/markdown/canvas')
 const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
 
 let close: (() => void) | undefined

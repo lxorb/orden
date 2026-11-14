@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import type { PageNode } from '../../src/lib/canvas/format'
+  import type { PageNode } from '@orden/markdown/canvas'
   import PagesPage from '../../src/lib/PagesPage.svelte'
 
   const { first }: { first: PageNode } = $props()

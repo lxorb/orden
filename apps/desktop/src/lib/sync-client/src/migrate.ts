@@ -1,4 +1,4 @@
-import { holderOf } from '../../pages/held'
+import { holderOf } from '@orden/markdown/pages'
 import type { Mirror, Moving, Tracked, Untold } from '../../sync/mirror'
 import type { Core } from './core'
 import { kindOfName, made, moved } from './create'

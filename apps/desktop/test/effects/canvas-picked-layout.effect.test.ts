@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-const CanvasPicked = (await import('../../src/lib/CanvasPicked.svelte')).default
+const CanvasPicked = (await import('../../src/lib/canvas/src/CanvasPicked.svelte')).default
 const { at } = await import('./canvas-picked-world.svelte')
 
 const read: string[] = []

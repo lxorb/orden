@@ -4,7 +4,7 @@ import { CORPUS } from './corpus'
 import { documentOf, picturesIn } from './document'
 import type { Picture } from './pictures'
 import { bundleFiles, packEntries } from './textbundle'
-import { zipOf } from './zip'
+import { zipOf } from '../../files-out/src/api'
 
 const PICTURES: Picture[] = [
   {

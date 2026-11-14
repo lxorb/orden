@@ -1,0 +1,21 @@
+{
+  "name": "plane",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "files-out",
+    "markdown",
+    "pdf",
+    "platform",
+    "reading",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/assets.ts",
+    "apps/desktop/src/lib/camera.ts",
+    "apps/desktop/src/lib/engines.svelte.ts",
+    "apps/desktop/src/lib/link-index.svelte.ts",
+    "apps/desktop/src/lib/settings.svelte.ts"
+  ]
+}

@@ -1,12 +1,28 @@
 <script lang="ts">
   import { keyElsewhere } from './layer-keys'
   import { untrack } from 'svelte'
-  import CanvasBar from './CanvasBar.svelte'
-  import CanvasFind from './CanvasFind.svelte'
-  import CanvasHands from './CanvasHands.svelte'
-  import CanvasInk from './CanvasInk.svelte'
-  import CanvasNode from './CanvasNode.svelte'
-  import CanvasPicked from './CanvasPicked.svelte'
+  import {
+    CanvasBar,
+    CanvasFind,
+    CanvasHands,
+    CanvasInk,
+    CanvasNode,
+    CanvasPicked,
+    FORGIVING,
+    type Found,
+    freeScroll,
+    hand,
+    holdFreeScroll,
+    inks,
+    matches,
+    pens,
+    putWords,
+    RightPan,
+    type Tool,
+    toolPressed,
+    tools,
+    wordsAt,
+  } from './canvas/src/api'
   import PagesPage from './PagesPage.svelte'
   import PagesSlot from './PagesSlot.svelte'
   import PagesZoom from './PagesZoom.svelte'
@@ -19,52 +35,48 @@
     pinching,
     turnOf,
   } from './camera'
-  import { putWords, toolPressed, wordsAt } from './canvas/actions'
-  import {
-    coloured,
-    copied,
-    movedBy,
-    pickedBox,
-    removed,
-    rubbedOut,
-    sized,
-    withText,
-  } from './canvas/edits'
-  import { freshId, type InkPoint, type InkStroke } from './canvas/format'
-  import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
-  import { hand } from './canvas/hand.svelte'
   import {
     cardsInLasso,
+    coloured,
+    Contacts,
+    copied,
+    DEFAULT_INK,
+    hovering,
     leadPoint,
+    movedBy,
     penFelt,
+    penKind,
+    pickedBox,
+    type Point,
+    readPalette,
+    removed,
     rubbedBetween,
+    rubbedOut,
+    sized,
     strokesInLasso,
+    Stylus,
     tidied,
-  } from './canvas/ink'
-  import { DEFAULT_INK, readPalette } from './canvas/palette'
-  import { pens } from './canvas/pens.svelte'
-  import { FORGIVING, inks, type Tool } from './canvas/pointer'
-  import { tick } from './canvas/tick'
-  import { tools } from './canvas/tools.svelte'
-  import { type Point } from './canvas/geometry'
+    withText,
+  } from './plane/src/api'
+  import { freshId, type InkPoint, type InkStroke } from '@orden/markdown/canvas'
+  import { copyText, tick } from './ui-controls/src/api'
   import { pageAt } from '@orden/markdown/pages'
   import { longPress } from './longpress'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
-  import { stillness } from './platform/src/api'
-  import { type Found, matches } from './canvas/find'
+  import { samePath, stillness } from './platform/src/api'
   import {
-    PapersHeld,
+    type Highlight,
+    loadHighlights,
+    marksFromOutside,
     outlineOf,
     paperAhead,
     paperEdition,
     paperPathOf,
+    PapersHeld,
+    placesOnPaper,
     textsOf,
-  } from './pages/paper'
+  } from './pdf/src/api'
   import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './pages/choose'
-  import { RightPan } from './canvas/right-pan'
-  import { freeScroll, holdFreeScroll } from './canvas/free-scroll'
-  import { copyText } from './ui-controls/src/api'
-  import { placesOnPaper, type Highlight, marksFromOutside, loadHighlights } from './pdf/src/api'
   import {
     began,
     dragged,
@@ -85,7 +97,6 @@
 
   import { pages as pagesState } from './pages/showing.svelte'
   import { viewport } from './ui-kit/src/api'
-  import { samePath } from './platform/src/api'
   import { workspace, type Tab } from './workspace.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()

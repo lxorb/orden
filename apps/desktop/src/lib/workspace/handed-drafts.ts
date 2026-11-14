@@ -8,9 +8,9 @@ import {
   within,
   invoke,
 } from '../platform/src/api'
-import { CanvasStore } from '../canvas/store.svelte'
+import { CanvasStore } from '../canvas/src/api'
 import { asDraft, paperNamed, paperOutside } from '../pages/from-pdf'
-import { paperOf } from '../pages/held'
+import { paperOf } from '@orden/markdown/pages'
 import { pageSizes } from '../pdf/src/api'
 import { type NoteDoc, type Tab, UNTITLED } from './documents.svelte'
 import { isDraft } from './drafts'

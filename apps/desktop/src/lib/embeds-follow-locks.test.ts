@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest'
 
 const SOURCE = fileURLToPath(new URL('.', import.meta.url))
 const DRAWS =
-  /import \{[^}]*\b(?:readingHtml|fileSource)\b[^}]*\} from '[./]+(?:\w+\/)*(?:reading\/src\/api|canvas\/render)'/
+  /import \{[^}]*\b(?:readingHtml|fileSource)\b[^}]*\} from '[./]+(?:\w+\/)*(?:reading\/src\/api|plane\/src\/api)'/
 
 function views(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

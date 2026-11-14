@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { decodePDFRawStream, degrees, type PDFArray, PDFDocument, type PDFRawStream } from 'pdf-lib'
 import { emptyPages, pagesFromPdf } from '@orden/markdown/pages'
-import type { Canvas, PageNode } from '../canvas/format'
+import type { Canvas, PageNode } from '@orden/markdown/canvas'
 
 const paper = vi.hoisted(() => ({ bytes: null as Uint8Array | null }))
 
