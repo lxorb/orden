@@ -1,3 +1,4 @@
+import { type BackendPort, portOf } from '@orden/contracts'
 import { assetRoute, assetStorePath } from './asset-route'
 
 const PHONES = new Set<string>(['android', 'ios'])
@@ -35,16 +36,18 @@ export const internal: {
   flush: (() => Promise<void>) | null
 } = { routed: null, file: null, flush: null }
 
+function backend(name: 'backend.web' | 'backend.internal'): BackendPort {
+  const port = portOf(name)
+  if (!port.ok) throw new Error(port.error.message)
+  return port.value
+}
+
 const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
 
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
-  if (!isNative) {
-    const { webInvoke } = await import('../../web/commands')
-    return webInvoke<T>(command, args)
-  }
+  if (!isNative) return backend('backend.web').invoke<T>(command, args)
   if (internal.routed?.(command, args) || (isDesktop && SPACE_COMMANDS.has(command))) {
-    const { internalInvoke } = await import('../../internal/route')
-    return internalInvoke<T>(command, args)
+    return backend('backend.internal').invoke<T>(command, args)
   }
 
   const call = ++calls

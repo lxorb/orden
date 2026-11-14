@@ -1,6 +1,5 @@
 {
   "name": "platform",
   "layer": "foundation",
-  "dependsOn": ["contracts", "crate", "markdown"],
-  "pending": ["apps/desktop/src/lib/internal/route.ts", "apps/desktop/src/lib/web/commands.ts"]
+  "dependsOn": ["contracts", "crate", "markdown"]
 }
