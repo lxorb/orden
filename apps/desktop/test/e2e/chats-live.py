@@ -22,6 +22,8 @@ SPACE = "Team"
 
 LIVE = 15
 SYNCED = 60
+OFFLINE: set[str] = set()
+UNLOADED = ("Failed to fetch dynamically imported module", "Unable to preload CSS")
 
 class Worker(harness.Worker):
     def __init__(self) -> None:
@@ -45,6 +47,12 @@ def came(page: Page, script: str, what: str, arg: object = None, patience: float
         return None
     return time.monotonic() - start
 
+def heard(label: str, error: str) -> None:
+    if label in OFFLINE and error.startswith(UNLOADED):
+        say(f"[{label}] offline, a part of the app could not load: {error[:160]}")
+    else:
+        wrong(f"[{label}] page error: {error}")
+
 def signed_in(browser: Browser, token: str, label: str) -> tuple[BrowserContext, Page]:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     context.add_init_script(CHATS_ON)
@@ -56,22 +64,22 @@ def signed_in(browser: Browser, token: str, label: str) -> tuple[BrowserContext,
         if message.type == "error"
         else None,
     )
-    page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
+    page.on("pageerror", lambda error: heard(label, str(error)))
     page.goto(ORIGIN, wait_until="domcontentloaded")
     wait(page, "() => !!window.ordenApp && window.ordenApp.account.signedIn", f"[{label}] the session", patience=40)
     return context, page
 
 def show_space(page: Page, label: str, space_id: str) -> str:
-    name = wait(
+    root = wait(
         page,
         "(id) => { const space = window.ordenApp.workspace.spaces.find("
         "  (one) => window.ordenApp.sync.remoteIdFor(one.root) === id);"
-        " if (!space) return null; window.ordenApp.workspace.showSpace(space.id); return space.name }",
+        " if (!space) return null; window.ordenApp.workspace.showSpace(space.id); return space.root }",
         f"[{label}] the shared space",
         space_id,
         patience=SYNCED,
     )
-    return str(name)
+    return str(root)
 
 CHAT_PATH = """
 async (name) => {
@@ -102,7 +110,12 @@ def open_chat(page: Page, label: str, name: str) -> dict[str, str]:
         say(f"[{label}] looked again: {json.dumps(again)}")
         raise
     page.evaluate(OPEN, found["path"])
-    wait(page, "() => !!document.querySelector('.chat-tab .timeline, .chat-tab .waiting, .chat-tab .main')", f"[{label}] the chat's tab")
+    wait(
+        page,
+        "() => !!document.querySelector('.chat-tab .timeline, .chat-tab .waiting, .chat-tab .main')",
+        f"[{label}] the chat's tab",
+        patience=SYNCED,
+    )
     return found  # type: ignore[no-any-return]
 
 def rows_with(page: Page, words: str) -> int:
@@ -126,7 +139,16 @@ def type_in(page: Page, words: str, where: str = ".chat-tab .main .composer .cm-
 def row_of(page: Page, words: str):  # noqa: ANN201 - a locator
     return page.locator(".chat-tab .main .message", has=page.locator(".body", has_text=words)).first
 
-def everywhere(owner: Page, chat: dict[str, str]) -> None:
+def offered(page: Page, words: str, what: str) -> None:
+    wait(
+        page,
+        "(words) => [...document.querySelectorAll('#orden-palette-list .orden-row')]"
+        ".some((one) => one.textContent.includes(words))",
+        what,
+        words,
+    )
+
+def everywhere(owner: Page, root: str) -> None:
     owner.keyboard.press("Escape")
     owner.keyboard.press("Control+o")
     owner.keyboard.type("second draft", delay=10)
@@ -184,10 +206,11 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     came(owner, "() => !!document.querySelector('.chat-tab .message.flash')", "[Emil] the task's link, opening the message")
 
     owner.evaluate(
-        "async () => { const { writeFile } = await window.ordenApp.tasks();"
-        " await writeFile('/Team/Plan.md', '# Plan\\n\\nThe figures go in on Friday.\\n');"
-        " await window.ordenApp.workspace.fileCame('/Team/Plan.md', 'file');"
-        " await window.ordenApp.workspace.loadTree() }"
+        "async (path) => { const { writeFile } = await window.ordenApp.tasks();"
+        " await writeFile(path, '# Plan\\n\\nThe figures go in on Friday.\\n');"
+        " await window.ordenApp.workspace.fileCame(path, 'file');"
+        " await window.ordenApp.workspace.loadTree() }",
+        f"{root}/Plan.md",
     )
     tree = "() => { const walk = (e) => e ? [e.path, ...(e.children ?? []).flatMap(walk)] : []; return walk(window.ordenApp.workspace.tree) }"
     try:
@@ -201,8 +224,20 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     plan.click()
     owner.keyboard.press("Control+Shift+P")
     owner.keyboard.type("Send to chat", delay=10)
+    offered(owner, "Send to chat", "[Emil] Send to chat in the palette")
     owner.keyboard.press("Enter")
+    wait(
+        owner,
+        "() => document.activeElement?.matches(\"[role=dialog] input[placeholder='Chat']\")",
+        "[Emil] the chats to send to",
+        patience=SYNCED,
+    )
     owner.keyboard.type("Chat", delay=10)
+    wait(
+        owner,
+        "() => [...document.querySelectorAll('[role=dialog] .found-row')].some((one) => one.textContent.includes('Chat'))",
+        "[Emil] the chat to send to",
+    )
     owner.keyboard.press("Enter")
     came(
         owner,
@@ -301,7 +336,10 @@ def main() -> int:
         member_context, member = signed_in(browser, tokens[MEMBER], "Lucile")
         _, reader = signed_in(browser, tokens[READER], "Mia")
 
-        show_space(owner, "Emil", space["id"])
+        root = show_space(owner, "Emil", space["id"])
+        if root != f"/{SPACE}":
+            roots = owner.evaluate("() => window.ordenApp.workspace.spaces.map((one) => one.root)")
+            say(f"[Emil] the shared space came in at {root}, among {roots}")
         wait(owner, "async () => (await window.ordenApp.chats()).chats.ready", "[Emil] the chats' store", patience=40)
         owner.evaluate("async () => (await window.ordenApp.chats()).makeChat()")
         field = owner.locator("input[aria-label='Name']")
@@ -408,6 +446,7 @@ def main() -> int:
         )
         if took is not None:
             say(f"Lucile's panel showed the chat read after {took:.2f}s")
+        OFFLINE.add("Lucile")
         member_context.set_offline(True)
         member.evaluate("() => window.dispatchEvent(new Event('offline'))")
         type_in(member, "Sent while offline")
@@ -420,6 +459,7 @@ def main() -> int:
         DRIVE.shot(member, "lucile-offline")
         member.wait_for_timeout(3000)
         member_context.set_offline(False)
+        OFFLINE.discard("Lucile")
         member.evaluate("() => window.dispatchEvent(new Event('online'))")
         took = came(owner, has_row("Sent while offline"), "[Emil] the message sent offline", patience=40)
         if took is not None:
@@ -459,7 +499,7 @@ def main() -> int:
             say(f"the account refused Mia's post: {result['refused']}")
         DRIVE.shot(reader, "mia-reads")
 
-        everywhere(owner, chat)
+        everywhere(owner, root)
 
         deleted(worker, tokens, owner, member)
 
