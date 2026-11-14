@@ -1,5 +1,5 @@
 import { hasModifiers, type Member } from '@orden/chats'
-import type { Row } from '../../../palette/rows'
+import type { PaletteMessage } from '@orden/contracts'
 import { firstLine } from './body'
 import { nameOf } from './people'
 import { store } from './source.svelte'
@@ -9,7 +9,9 @@ const ALONE = 50
 
 const LINE = 140
 
-export async function messageHits(words: string): Promise<{ rows: Row[]; only: boolean }> {
+export async function messageHits(
+  words: string,
+): Promise<{ rows: PaletteMessage[]; only: boolean }> {
   const chats = store()
   if (!chats.ready || !chats.me) return { rows: [], only: false }
   const only = hasModifiers(chats.parse(words))
@@ -24,14 +26,13 @@ export async function messageHits(words: string): Promise<{ rows: Row[]; only: b
     )
   }
 
-  const rows = hits.flatMap(({ chat, message }): Row[] => {
+  const rows = hits.flatMap(({ chat, message }): PaletteMessage[] => {
     const entry = chats.entry(chat)
     if (!entry?.path || message.deleted) return []
     const who = nameOf(message.author, members.get(chat) ?? [], entry.space)
     const line = firstLine(message.body).trim() || (message.files[0]?.name ?? '')
     return [
       {
-        kind: 'message',
         chat,
         id: message.id,
         path: entry.path,

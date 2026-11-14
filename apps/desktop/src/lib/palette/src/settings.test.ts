@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Pane } from '../preferences'
+import type { Pane } from '../../preferences'
 import { settingsOf, settingValue } from './settings'
 
 let size = 16

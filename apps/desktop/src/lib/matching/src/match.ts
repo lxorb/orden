@@ -1,5 +1,5 @@
 import { foldName } from '@orden/markdown/links'
-import { walked } from '../ui-kit/src/api'
+import { walked } from '../../ui-kit/src/api'
 
 const startsWord = (haystack: string, at: number) =>
   at === 0 || /[\s/\\_.-]/.test(haystack.charAt(at - 1))

@@ -75,8 +75,52 @@ export interface PaletteVisits {
   opened(tab: string, typed: string, url: string): void
 }
 
+export interface PaletteHost {
+  readonly id: string
+  readonly name: string
+  readonly also: readonly string[]
+  readonly detail: string | null
+  readonly group: string | null
+  readonly colour: string | null
+}
+
+export interface PaletteDestination {
+  readonly user: string | null
+  readonly hostname: string
+  readonly port: number | null
+}
+
+export interface PaletteHosts {
+  list(): Promise<readonly PaletteHost[]>
+  wanted(term: string): { readonly wanted: PaletteDestination; readonly said: string } | null
+  open(id: string): void
+  openAll(ids: readonly string[]): void
+  connect(wanted: PaletteDestination): void
+}
+
+export interface PaletteMessage {
+  readonly chat: string
+  readonly id: string
+  readonly path: string
+  readonly line: string
+  readonly where: readonly string[]
+}
+
+export interface PaletteOpenHow {
+  activate?: boolean
+  preview?: boolean
+  beside?: boolean
+}
+
+export interface PaletteMessages {
+  hits(words: string): Promise<{ readonly rows: readonly PaletteMessage[]; readonly only: boolean }>
+  open(path: string, message: string, how: PaletteOpenHow): void
+}
+
 export interface PaletteKinds {
   readonly visits: PaletteVisits
+  readonly hosts: PaletteHosts
+  readonly messages: PaletteMessages
 }
 
 export type PaletteKindId = keyof PaletteKinds
@@ -87,7 +131,20 @@ export const NO_VISITS: PaletteVisits = {
   opened: () => undefined,
 }
 
-const NONE: PaletteKinds = { visits: NO_VISITS }
+export const NO_HOSTS: PaletteHosts = {
+  list: () => Promise.resolve([]),
+  wanted: () => null,
+  open: () => undefined,
+  openAll: () => undefined,
+  connect: () => undefined,
+}
+
+export const NO_MESSAGES: PaletteMessages = {
+  hits: () => Promise.resolve({ rows: [], only: false }),
+  open: () => undefined,
+}
+
+const NONE: PaletteKinds = { visits: NO_VISITS, hosts: NO_HOSTS, messages: NO_MESSAGES }
 
 const kindLoads = new Map<PaletteKindId, () => Promise<PaletteKinds[PaletteKindId]>>()
 const kindsLoaded = new Map<PaletteKindId, PaletteKinds[PaletteKindId]>()

@@ -19,7 +19,8 @@ class NoLayout {
 globalThis.ResizeObserver = NoLayout
 
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
-const { default: Palette } = await import('../../src/lib/Palette.svelte')
+const { default: Palette } = await (await import('../../src/lib/palette/src/api')).loadPalette()
+await (await import('@orden/contracts')).registered()
 
 Element.prototype.animate = () =>
   ({

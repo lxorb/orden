@@ -51,7 +51,8 @@ Element.prototype.scrollIntoView = () => undefined
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { appCommands, blockRows, exportCommands } = await import('../../src/lib/commands')
-const { default: Palette } = await import('../../src/lib/Palette.svelte')
+const { default: Palette } = await (await import('../../src/lib/palette/src/api')).loadPalette()
+await (await import('@orden/contracts')).registered()
 
 async function typed() {
   await workspace.open('/space/One.md')

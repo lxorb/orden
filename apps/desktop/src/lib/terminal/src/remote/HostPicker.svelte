@@ -7,7 +7,7 @@
   import { menu } from '../../../menu.svelte'
   import { fade, LAYER, scale } from '../../../platform/src/api'
   import { overlays } from '../../../ui-kit/src/api'
-  import { pieces } from '../../../palette/pieces'
+  import { pieces } from '../../../matching/src/api'
   import { roving } from '../../../roving'
   import { isNumber } from '../../../space-pick'
   import SpacePlace from '../../../SpacePlace.svelte'

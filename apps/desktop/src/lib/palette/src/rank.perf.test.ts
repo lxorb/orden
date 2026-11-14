@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
-import { growth } from '../../../../../scripts/growth'
+import { growth } from '../../../../../../scripts/growth'
+import { LONGEST, MOST, ranked } from '../../matching/src/api'
 import { candidates } from './kinds'
-import { LONGEST, MOST, ranked } from './rank'
 import { command, file, setting, visit, world } from './world.fixture'
 
 const CLOCKED = process.env.ORDEN_PERF === '1'

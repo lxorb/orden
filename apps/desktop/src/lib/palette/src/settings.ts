@@ -1,6 +1,6 @@
-import type { Field, Pane } from '../preferences'
-import type { Place } from '../settings-search'
-import type { Section } from '../settings.svelte'
+import type { Field, Pane } from '../../preferences'
+import type { Place } from '../../settings-search'
+import type { Section } from '../../settings.svelte'
 
 export interface Setting {
   section: Section

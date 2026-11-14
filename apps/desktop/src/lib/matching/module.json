@@ -1,0 +1,5 @@
+{
+  "name": "matching",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "markdown", "ui-kit"]
+}

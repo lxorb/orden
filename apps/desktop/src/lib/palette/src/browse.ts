@@ -1,4 +1,4 @@
-import type { Command } from '../commands'
+import type { Command } from '../../commands'
 import type { Row } from './rows'
 
 export const RECENT = 8

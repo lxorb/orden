@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Field } from '../preferences'
+import type { Field } from '../../preferences'
 import { choose, type Hands } from './choose'
 import type { Row } from './rows'
 import { command, file, ROOT, setting, tab } from './world.fixture'

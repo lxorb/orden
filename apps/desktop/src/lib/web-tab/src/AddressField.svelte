@@ -30,7 +30,7 @@
   import Suggest from '../../Suggest.svelte'
   import { frecency } from '../../frecency'
   import { links } from '../../link-index.svelte'
-  import { pieces } from '../../palette/pieces'
+  import { pieces } from '../../matching/src/api'
   import { dotCom, type HalfTyped } from '@orden/scan/typed'
   import { shownAddress } from '@orden/scan/visits'
   import { visited } from './visited'

@@ -2,7 +2,7 @@
   import type { Snippet } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from './platform/src/api'
-  import type { Piece } from './palette/pieces'
+  import type { Piece } from './matching/src/api'
 
   const {
     values,

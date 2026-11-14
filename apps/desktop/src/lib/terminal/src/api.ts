@@ -1,3 +1,4 @@
+import './shell-parts'
 import type * as Closing from './closing'
 import type * as OnlineOpen from './online/open'
 import type * as Previews from './previews'

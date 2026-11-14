@@ -3,6 +3,7 @@ import { loadRewriteSheet } from './ai-chat/src/api'
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
 import { door } from '@orden/markdown/door'
 import { registered } from '@orden/contracts'
+import { loadPalette } from './palette/src/api'
 import { warmCalls } from './accounts/src/api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'
@@ -299,7 +300,7 @@ export const spacesMenu = held(() => import('./SpaceMenu.svelte'))
 export const promptSheet = latched(() => import('./PromptSheet.svelte'))
 
 export const paletteDoor = latched(() =>
-  Promise.all([import('./Palette.svelte'), registered()]).then(([one]) => one),
+  Promise.all([loadPalette(), registered()]).then(([one]) => one),
 )
 
 export const paletteWords = $state<{ words: string | null }>({ words: null })

@@ -117,12 +117,12 @@ describe('the row a list is made of', () => {
       'lib/Bookmarks.svelte',
       'lib/ContextMenu.svelte',
       'lib/HitList.svelte',
-      'lib/Palette.svelte',
       'lib/SearchPanel.svelte',
       'lib/SettingsPanel.svelte',
       'lib/Sidebar.svelte',
       'lib/TagTree.svelte',
       'lib/Tree.svelte',
+      'lib/palette/src/Palette.svelte',
     ]
 
     const missing = lists.filter(
@@ -335,12 +335,12 @@ describe('the switch', () => {
 
     expect(wearing).toEqual([
       'lib/GraphControls.svelte',
-      'lib/Palette.svelte',
       'lib/ShareSheet.svelte',
       'lib/ai-sidebar/src/DoWithAiCard.svelte',
       'lib/ai-sidebar/src/ModelPicker.svelte',
       'lib/chats-client/src/view/PollSheet.svelte',
       'lib/import/src/ImportSheet.svelte',
+      'lib/palette/src/Palette.svelte',
       'lib/pass-ui/src/SwitchRow.svelte',
       'lib/ui-controls/src/Switch.svelte',
       'lib/views/src/AutomationsBuilder.svelte',

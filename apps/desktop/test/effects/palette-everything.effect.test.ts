@@ -31,7 +31,8 @@ class NoLayout {
 
 globalThis.ResizeObserver = NoLayout
 
-const { default: Palette } = await import('../../src/lib/Palette.svelte')
+const { default: Palette } = await (await import('../../src/lib/palette/src/api')).loadPalette()
+await (await import('@orden/contracts')).registered()
 const { modes } = await import('../../src/lib/modes.svelte')
 const { theme } = await import('../../src/lib/theme/src/theme.svelte')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
