@@ -36,8 +36,9 @@ globalThis.ResizeObserver = class {
 
 const { Disk } = await import('../disk')
 const { noteIndex, resolveNote } = await import('../../../../packages/editor/src/wikilink/notes')
-const { default: ScratchpadCard } = await import('../../src/lib/scratchpad/ScratchpadCard.svelte')
-const { scratchpad } = await import('../../src/lib/scratchpad/pad')
+const { loadScratchpadCard, pad } = await import('../../src/lib/scratchpad/src/api')
+const { default: ScratchpadCard } = await loadScratchpadCard()
+const scratchpad = await pad()
 const { links } = await import('../../src/lib/link-index.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')

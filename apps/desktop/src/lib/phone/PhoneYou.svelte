@@ -4,7 +4,7 @@
   import { AccountBadge } from '../accounts/src/api'
   import { arriving } from '../arriving.svelte'
   import { dur, fade } from '../platform/src/api'
-  import { scratchFromDrawer } from '../scratchpad/is.svelte'
+  import { scratchFromDrawer } from '../scratchpad/src/api'
   import { showFeedback } from '../surfaces.svelte'
 
   const who = $derived(account.name)

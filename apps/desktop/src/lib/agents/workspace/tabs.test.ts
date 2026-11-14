@@ -199,8 +199,9 @@ const trash = {
 vi.mock('../../trash.svelte', () => ({ trash }))
 
 const showPad = vi.fn()
-vi.mock('../../scratchpad/pad', () => ({
-  scratchpad: { where: () => Promise.resolve('/app/Scratchpad.md'), show: showPad },
+vi.mock('../../scratchpad/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../scratchpad/src/api')>()),
+  pad: () => Promise.resolve({ where: () => Promise.resolve('/app/Scratchpad.md'), show: showPad }),
 }))
 
 const docs = {

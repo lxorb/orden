@@ -160,7 +160,7 @@ const {
   toggleScratchpad,
   closeScratchpad,
   scratchFromDrawer,
-} = await import('./scratchpad/is.svelte')
+} = await import('./scratchpad/src/api')
 type Entry = import('./workspace.svelte').Entry
 
 async function preview(path: string) {

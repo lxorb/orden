@@ -118,7 +118,7 @@ import type { Picked } from './import/sources'
 import { type Binning, type FileAction, FileActions, type Kept } from './workspace/undo.svelte'
 import { fetchAcross, inFileTurn, meetAcross } from './workspace/in-turn'
 import { writeFile } from './workspace/write-file'
-import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
+import { isScratchpad, pad as padNow, shown as pad } from './scratchpad/src/api'
 import { outermost, Selection } from './workspace/selection.svelte'
 import {
   folderFor,
@@ -2341,8 +2341,7 @@ class Workspace {
   async open(asked: string, options: OpenHow & { blank?: boolean; asNote?: boolean } = {}) {
     const path = this.spelled(asked)
     if (isScratchpad(path) && !options.asNote && !this.opened.at(path)) {
-      const { scratchpad } = await import('./scratchpad/pad')
-      scratchpad.show()
+      ;(await padNow()).show()
       return
     }
     if (this.instructionsAt(path) && !this.opened.at(path)) {

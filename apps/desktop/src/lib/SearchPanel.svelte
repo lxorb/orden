@@ -15,7 +15,7 @@
   import Suggest from './Suggest.svelte'
   import { nodesIn, tagTree } from './tag-tree'
   import TagTree from './TagTree.svelte'
-  import { isScratchpad } from './scratchpad/is.svelte'
+  import { isScratchpad, pad } from './scratchpad/src/api'
   import { canWriteAt } from './sharing/src/api'
   import { type Entry, workspace } from './workspace.svelte'
   import { dur, fly } from './platform/src/api'
@@ -221,8 +221,7 @@
     }
 
     if (isScratchpad(hit.path)) {
-      const { scratchpad } = await import('./scratchpad/pad')
-      scratchpad.show(hit.line)
+      ;(await pad()).show(hit.line)
       return
     }
 

@@ -1,5 +1,5 @@
 import type { PadDisk } from './sync'
-import { heldDatabase } from '../held-database'
+import { heldDatabase } from '../../held-database'
 
 const NAME = 'orden-pad'
 const KEPT = 'kept'

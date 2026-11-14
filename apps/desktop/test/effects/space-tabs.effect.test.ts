@@ -28,7 +28,7 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 await import('../../src/lib/workspace/sets.svelte')
 const { deleteSpace } = await import('../../src/lib/workspace/space-changes')
 const { pane } = await import('../../src/lib/workspace/pane-tree')
-const { shown: pad } = await import('../../src/lib/scratchpad/is.svelte')
+const { shown: pad } = await import('../../src/lib/scratchpad/src/api')
 
 const PLAN = '/spaces/Work/Plan.md'
 const IDEAS = '/spaces/Work/Ideas.md'

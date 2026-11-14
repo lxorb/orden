@@ -178,7 +178,7 @@ describe('the paper a note is written on', () => {
   })
 
   test('is the page itself, whole, under the scratchpad', () => {
-    expect(ruleOf('lib/scratchpad/ScratchpadCard.svelte', 'card')).toContain(
+    expect(ruleOf('lib/scratchpad/src/ScratchpadCard.svelte', 'card')).toContain(
       'background: var(--bg);',
     )
   })
@@ -244,7 +244,7 @@ describe('what a side shows', () => {
   }
 
   test('finds the panels', () => {
-    expect(shown).toContain('lib/scratchpad/ScratchpadCard.svelte')
+    expect(shown).toContain('lib/scratchpad/src/ScratchpadCard.svelte')
     expect(shown).toContain('lib/tasks-views/src/TodosPanel.svelte')
     expect(shown).toContain('lib/ai/sidebar/ChatPanel.svelte')
   })

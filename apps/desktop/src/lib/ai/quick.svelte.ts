@@ -231,8 +231,8 @@ class Quick {
       return
     }
 
-    const { scratchpad } = await import('../scratchpad/pad')
-    await scratchpad.append(text)
+    const { pad } = await import('../scratchpad/src/api')
+    await (await pad()).append(text)
     this.close()
   }
 }

@@ -179,7 +179,9 @@ export function start(): () => void {
   }
 
   if (!__EVEN_PLUGIN__) {
-    void startup.turn('right').then(() => import('./scratchpad/start.svelte'))
+    void startup
+      .turn('right')
+      .then(() => import('./scratchpad/src/api').then((one) => one.wakeScratchpad()))
   }
 
   if (!__EVEN_PLUGIN__) {

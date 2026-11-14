@@ -11,7 +11,7 @@
   import { viewport } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts.svelte'
   import { SCRATCHPAD_MARK } from './panel-marks'
-  import { scratchFromDrawer, shown as pad } from './scratchpad/is.svelte'
+  import { scratchFromDrawer, shown as pad } from './scratchpad/src/api'
 
   const {
     theming = true,

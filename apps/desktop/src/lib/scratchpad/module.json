@@ -1,0 +1,20 @@
+{
+  "name": "scratchpad",
+  "layer": "features",
+  "dependsOn": ["contracts", "accounts", "editor", "platform", "rooms", "sync-core", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/composer.ts",
+    "apps/desktop/src/lib/focus.ts",
+    "apps/desktop/src/lib/held-database.ts",
+    "apps/desktop/src/lib/keyboard-home.ts",
+    "apps/desktop/src/lib/link-index.svelte.ts",
+    "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/open-link.ts",
+    "apps/desktop/src/lib/parting.ts",
+    "apps/desktop/src/lib/search/replace.ts",
+    "apps/desktop/src/lib/shortcuts.svelte.ts",
+    "apps/desktop/src/lib/unread.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/write-file.ts"
+  ]
+}

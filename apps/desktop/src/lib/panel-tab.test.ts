@@ -4,7 +4,9 @@ const asked = vi.hoisted(() => [] as string[])
 
 vi.mock('./todos-entry', () => ({ showTodos: () => asked.push('todos') }))
 vi.mock('./ai/sidebar/reveal', () => ({ chatToTab: () => asked.push('chat') }))
-vi.mock('./scratchpad/pad', () => ({ scratchpad: { asNote: () => asked.push('pad') } }))
+vi.mock('./scratchpad/src/api', () => ({
+  pad: () => Promise.resolve({ asNote: () => asked.push('pad') }),
+}))
 vi.mock('./workspace.svelte', () => ({ workspace: { movePanel: () => undefined } }))
 vi.mock('./search.svelte', () => ({ search: { ordering: {}, setSort: () => undefined } }))
 

@@ -71,8 +71,8 @@ test('a session’s scratchpad tab comes back, and is the scratchpad while it is
   expect(workspace.active?.path).toBe(PAD)
   expect(workspace.documentAt(PAD)?.text).toBe('Old words\nNot yet written\n')
 
-  const { shown } = await import('../../src/lib/scratchpad/is.svelte')
-  const { scratchpad } = await import('../../src/lib/scratchpad/pad')
+  const { pad, shown } = await import('../../src/lib/scratchpad/src/api')
+  const scratchpad = await pad()
   vi.spyOn(scratchpad, 'where').mockResolvedValue(PAD)
 
   workspace.activate(workspace.tabs[0]?.id ?? '')

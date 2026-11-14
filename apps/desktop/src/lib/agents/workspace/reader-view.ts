@@ -87,7 +87,7 @@ export async function openChat(path: string): Promise<void> {
 
 export async function showScratchpad(call: Call): Promise<AgentAnswer> {
   const front = asksFront(call, 'opening in front')
-  const { scratchpad } = await import('../../scratchpad/pad')
+  const scratchpad = await import('../../scratchpad/src/api').then((one) => one.pad())
   scratchpad.show(null, front)
   return done({ scratchpad: true })
 }

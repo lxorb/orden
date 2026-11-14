@@ -87,7 +87,7 @@ import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { spacePicker } from './space-picker.svelte'
 import { askQuickly } from './ai/quick-door'
 import { switchableAccounts, switchAccount } from './ai/switching'
-import { toggleScratchpad } from './scratchpad/is.svelte'
+import { toggleScratchpad } from './scratchpad/src/api'
 import {
   canPublish,
   canShare,
