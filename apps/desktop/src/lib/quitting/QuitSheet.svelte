@@ -4,8 +4,8 @@
   import { closeOnBack } from '../ui-kit/src/api'
   import { fade, LAYER, scale } from '../platform/src/api'
   import { overlays } from '../ui-kit/src/api'
-  import TerminalMark from '../terminal/TerminalMark.svelte'
   import TickBox from '../TickBox.svelte'
+  import { terminalMark } from '../surfaces.svelte'
   import { trap } from '../ui-controls/src/api'
   import { quitAsk } from './state.svelte'
 
@@ -57,7 +57,9 @@
             onclick={() => quitAsk.answer(row)}
           >
             {#if row.running}
-              <TerminalMark tab={{ doc: row.doc ?? '', running: row.running }} />
+              {#await terminalMark() then TerminalMark}
+                <TerminalMark tab={{ doc: row.doc ?? '', running: row.running }} />
+              {/await}
             {:else}
               <Spark colour="currentColor" turning />
             {/if}

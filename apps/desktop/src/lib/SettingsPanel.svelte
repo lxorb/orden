@@ -871,11 +871,11 @@
       {/await}
     {/if}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'online'}
-    {#await import('./online/OnlinePane.svelte') then pane}
+    {#await import('./terminal/src/api').then((one) => one.loadOnlinePane()) then pane}
       <pane.default />
     {/await}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'remote'}
-    {#await import('./remote/RemotePane.svelte') then pane}
+    {#await import('./terminal/src/api').then((one) => one.loadRemotePane()) then pane}
       <pane.default />
     {/await}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'space'}

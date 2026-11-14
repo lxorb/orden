@@ -6,7 +6,7 @@ import {
   TITLE_CHARS,
   isMarkdownPath,
 } from '../platform/src/api'
-import { isOnlineTab } from '../online/path'
+import { isOnlineTab } from '../online-terms/src/api'
 import { holdsWords, type NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
 import { TAB_KINDS } from './tab-kinds'
 

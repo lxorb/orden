@@ -50,7 +50,7 @@ export function watchFacts(tab: Tab, said: (lines: string[][]) => void): () => v
         }
       }
     } else {
-      const { usageOfTab } = await import('../terminal/sessions.svelte')
+      const { usageOfTab } = await import('../terminal/src/api')
       const usage = await usageOfTab(tab)
       if (usage) lines.push(usageLine(usage, readableSize))
     }

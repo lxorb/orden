@@ -25,7 +25,7 @@ const OWN: Record<string, RegExp> = {
   'SettingsPanel.svelte': /class="(thumb|key|link)"/,
   '*': /role="(radio|tab)"/,
   'settings/ExtensionRows.svelte': /class="name"/,
-  'remote/RemotePane.svelte': /class="(open|link)"/,
+  'terminal/src/remote/RemotePane.svelte': /class="(open|link)"/,
   'pass/SettingsImport.svelte': /class="source"/,
 }
 

@@ -29,8 +29,8 @@ Element.prototype.animate = () =>
 
 const { quitAsked, mayStop } = await import('../../src/lib/quitting/ask')
 const { quitAsk } = await import('../../src/lib/quitting/state.svelte')
-const { setPty } = await import('../../src/lib/terminal/running')
-const { shells } = await import('../../src/lib/terminal/shells.svelte')
+const { setPty } = await import('../../src/lib/terminal/src/running')
+const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { anythingRuns } = await import('../../src/lib/parting')
 type Tab = import('../../src/lib/workspace.svelte').Tab

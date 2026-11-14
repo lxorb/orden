@@ -51,8 +51,8 @@ Object.defineProperty(document, 'fonts', {
 
 const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
-const { shells } = await import('../../src/lib/terminal/shells.svelte')
+const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
+const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { flushSync } = await import('svelte')
 const { written } = await import('../../src/lib/parting')
 

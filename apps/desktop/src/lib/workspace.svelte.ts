@@ -2133,7 +2133,7 @@ class Workspace {
         if (!__EVEN_PLUGIN__) (await import('./chats/view/open')).openChat(path, options)
         return
       case 'term':
-        if (!__EVEN_PLUGIN__) (await import('./online/open')).openTerm(path, options)
+        if (!__EVEN_PLUGIN__) await (await import('./terminal/src/api')).openTerm(path, options)
         return
       case 'application':
         if (!__EVEN_PLUGIN__) (await import('./apps/src/api')).openApplication(path, options)
@@ -2607,7 +2607,7 @@ class Workspace {
       if (!(await mayLose(this, closing))) return false
     }
     if (!closing.some((tab) => tab.kind === 'terminal')) return true
-    const { mayEnd } = await import('./terminal/closing')
+    const { mayEnd } = await import('./terminal/src/api')
     return mayEnd(closing, this.tabs)
   }
 

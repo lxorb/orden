@@ -3,8 +3,8 @@ import { seen } from './guarded'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo, within } from '../../platform/src/api'
 import type { Section } from '../../settings.svelte'
-import { isOnlineTab } from '../../online/path'
-import { shellRunning } from '../../terminal/running'
+import { renameTerminal, shellRunning, shells } from '../../terminal/src/api'
+import { isOnlineTab } from '../../online-terms/src/api'
 import { views } from '../../views.svelte'
 import { isWebAddress } from '../../web-tab/address'
 import { hostOf } from '../../web-tab/web-data'
@@ -275,7 +275,6 @@ async function newTab(call: Call): Promise<AgentAnswer> {
     }
 
     case 'terminal': {
-      const { shells } = await import('../../terminal/shells.svelte')
       const list = await shells.ask()
       const named = maybe(call, 'shell')?.toLowerCase() ?? null
       const shell =
@@ -339,7 +338,6 @@ async function renameTab(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   if (tab.kind === 'terminal') {
-    const { renameTerminal } = await import('../../terminal/rename')
     await renameTerminal(tab, name)
   } else {
     tab.note.name = name

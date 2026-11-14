@@ -146,13 +146,13 @@ Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { readSpec, writeSpec } = await import('../../src/lib/terminal/spec')
-const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
+const { readSpec, writeSpec } = await import('../../src/lib/terminal/src/spec')
+const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { tabMenu } = await import('../../src/lib/tab-strip/menu')
-const { renameTerminal } = await import('../../src/lib/terminal/rename')
+const { renameTerminal } = await import('../../src/lib/terminal/src/rename')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default
 await import('../../src/lib/tab-strip/TabNameField.svelte')
-await import('../../src/lib/terminal/TerminalMark.svelte')
+await import('../../src/lib/terminal/src/TerminalMark.svelte')
 await import('../../src/lib/tab-strip/ops')
 
 let target: HTMLElement

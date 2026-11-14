@@ -2586,7 +2586,7 @@ describe('a new tab', () => {
   })
 
   test('and the host picker it opened, put away, gives the choice up', async () => {
-    const { hostPicker } = await import('./remote/picker.svelte')
+    const { hostPicker } = await import('./terminal/src/remote/picker.svelte')
     workspace.newTab()
     const chosenOn = workspace.active
     if (!chosenOn) throw new Error('no new tab')

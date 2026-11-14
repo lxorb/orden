@@ -225,7 +225,7 @@ vi.mock('../../canvas/store.svelte', () => ({
   CanvasStore: { drawing: (note: unknown) => (note === tabs[2]?.note ? drawn : null) },
 }))
 
-vi.mock('../../terminal/shells.svelte', () => ({
+vi.mock('../../terminal/src/shells.svelte', () => ({
   shells: {
     ask: () =>
       Promise.resolve([
@@ -241,17 +241,17 @@ const openTerminal = vi.fn((shell: string, _where: unknown) => {
   tabs.push(made)
   return Promise.resolve(made)
 })
-vi.mock('../../terminal/open', () => ({ openTerminal }))
+vi.mock('../../terminal/src/open', () => ({ openTerminal }))
 
 const renameTerminal = vi.fn((_tab: unknown, _name: string) => Promise.resolve())
-vi.mock('../../terminal/rename', () => ({ renameTerminal }))
+vi.mock('../../terminal/src/rename', () => ({ renameTerminal }))
 
 const running = new Set<string>()
-vi.mock('../../terminal/running', () => ({
+vi.mock('../../terminal/src/running', () => ({
   shellRunning: (id: string) => running.has(id),
 }))
 
-vi.mock('../../terminal/history', () => ({
+vi.mock('../../terminal/src/history', () => ({
   historyOf: () =>
     Promise.resolve({ cols: 80, rows: 24, at: 7, text: '\x1b[32mbuilt\x1b[0m\r\nok\r\n' }),
 }))
@@ -290,7 +290,7 @@ const online = {
   ended: false,
   again: 0,
 }
-vi.mock('../../terminal/sessions.svelte', () => ({
+vi.mock('../../terminal/src/sessions.svelte', () => ({
   sessionOf: (tab: { id: string; path: string | null; doc: string }) => {
     const isOnline = tab.path?.endsWith('.term') === true || tab.doc.startsWith('{"v":1')
     return {
@@ -338,7 +338,7 @@ const machine = {
   refused: null as string | null,
   refresh: vi.fn(() => Promise.resolve()),
 }
-vi.mock('../../online/machine.svelte', () => ({ machine }))
+vi.mock('../../terminal/src/online/machine.svelte', () => ({ machine }))
 const session = { createdAt: 1, space: 'work', trashed: false, title: null, alive: null, at: 2 }
 const listed = vi.fn(() =>
   Promise.resolve([
@@ -346,7 +346,7 @@ const listed = vi.fn(() =>
     { ...session, term: null, session: 's_new', path: null, program: null, alive: true },
   ]),
 )
-vi.mock('../../online/calls', () => ({ listed }))
+vi.mock('../../terminal/src/online/calls', () => ({ listed }))
 vi.mock('../../sync-client/src/runner.svelte', () => ({
   runner: { fileOf: (id: string) => (id === 'f1' ? '/s/Work/Build.term' : null) },
 }))
@@ -360,7 +360,7 @@ const madeOnline = vi.fn((_beside: string | null, _activate: boolean) => {
   tabs.push(made)
   return Promise.resolve(made)
 })
-vi.mock('../../online/open', () => ({ madeOnline }))
+vi.mock('../../terminal/src/online/open', () => ({ madeOnline }))
 
 const { runAgentVerb } = await import('./index')
 

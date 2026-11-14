@@ -8,8 +8,8 @@ import {
   type View,
 } from '@orden/online/apps'
 import { account, BASE } from '../../accounts/src/api'
-import { pageWorld } from '../../online/link'
-import type { Holder } from '../../online/arrival.svelte'
+import { pageWorld } from '../../online-link/src/api'
+import type { Holder } from '../../online-link/src/api'
 import type { IdAt } from '../../sync-client/src/api'
 import { untrack } from 'svelte'
 import type { Tab } from '../../workspace/documents.svelte'

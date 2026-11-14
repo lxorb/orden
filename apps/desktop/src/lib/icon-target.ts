@@ -1,7 +1,7 @@
 import { chosenIcon, chosenTint } from './chosen-icon'
 import { setFileIcon } from './file-icon'
 import type { IconTarget } from './icon-choice.svelte'
-import { readSpec, writeSpec } from './terminal/spec'
+import { readSpec, writeSpec } from './terminal/src/api'
 import { workspace } from './workspace.svelte'
 
 function terminalTab(id: string) {

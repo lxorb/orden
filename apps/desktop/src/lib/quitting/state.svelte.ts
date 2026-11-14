@@ -1,4 +1,4 @@
-import { shells } from '../terminal/shells.svelte'
+import { shells } from '../terminal/src/api'
 import type { Row, Why } from './rows'
 
 type Answer = 'go' | 'stay' | Row

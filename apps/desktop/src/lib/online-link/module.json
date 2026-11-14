@@ -1,0 +1,5 @@
+{
+  "name": "online-link",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "online", "platform", "sync-core"]
+}

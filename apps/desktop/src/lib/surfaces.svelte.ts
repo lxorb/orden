@@ -93,9 +93,7 @@ export const webSurface = held(() =>
 )
 
 export const terminalSurface = held(() =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no terminal in the Even Realities plugin'))
-    : import('./terminal/TerminalTab.svelte'),
+  import('./terminal/src/api').then((one) => one.loadTerminalTab()),
 )
 
 export const applicationSurface = held(() =>
@@ -251,9 +249,7 @@ export const soundMark = held(() => import('./SoundMark.svelte'))
 export const privateMark = held(() => import('./web-tab/PrivateMark.svelte'))
 
 export const terminalMark = held(() =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no terminal in the Even Realities plugin'))
-    : import('./terminal/TerminalMark.svelte'),
+  import('./terminal/src/api').then((one) => one.loadTerminalMark()),
 )
 
 export const tabNameField = held(() => import('./tab-strip/TabNameField.svelte'))
@@ -279,9 +275,7 @@ export function toggleTabOverview(): void {
 }
 
 export const hostPickerDialog = latched(() =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no remote in the Even Realities plugin'))
-    : import('./remote/HostPicker.svelte'),
+  import('./terminal/src/api').then((one) => one.loadHostPicker()),
 )
 
 export const spacesMenu = held(() => import('./SpaceMenu.svelte'))

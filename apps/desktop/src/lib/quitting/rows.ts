@@ -1,6 +1,6 @@
 import { invoke } from '../platform/src/api'
-import { ptyOf, runningTabs } from '../terminal/running'
-import type { Warning } from '../terminal/shells.svelte'
+import { ptyOf, runningTabs } from '../terminal/src/api'
+import type { Warning } from '../terminal/src/api'
 import { type Tab, workspace } from '../workspace.svelte'
 
 export type Why = 'quit' | 'window' | 'restart'

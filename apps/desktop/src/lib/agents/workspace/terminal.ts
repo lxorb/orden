@@ -1,6 +1,6 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { Channel } from '../../crate/src/api'
-import { shells } from '../../terminal/shells.svelte'
+import { shells } from '../../terminal/src/api'
 import { identifier } from '../../identifier'
 import { invoke, platform } from '../../platform/src/api'
 import { asked } from './asks'

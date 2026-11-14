@@ -1,6 +1,6 @@
 import type { Command } from '../commands'
 import type { FileMark } from '../file-mark'
-import type { Destination, Host } from '../remote/hosts'
+import type { Destination, Host } from '../terminal/src/api'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
 import type { TabKind } from '../workspace/documents.svelte'
 import type { Entry } from '../workspace.svelte'

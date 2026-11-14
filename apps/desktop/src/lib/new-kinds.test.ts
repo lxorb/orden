@@ -18,7 +18,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const online = vi.hoisted(() => ({ made: null as string[] | null }))
-vi.mock('./online/open', () => ({
+vi.mock('./terminal/src/online/open', () => ({
   openOnline: () => {
     online.made?.push('online')
     return Promise.resolve(null)

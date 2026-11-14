@@ -1,5 +1,5 @@
 import type { OpenHow, Press, TabAsk } from '../new-tab'
-import type { Destination } from '../remote/hosts'
+import type { Destination } from '../terminal/src/api'
 import { howFor, linkAsk, tabAsk } from '../new-tab'
 import type { Section } from '../settings.svelte'
 import type { NoteToMake } from './new-note'

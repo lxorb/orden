@@ -131,13 +131,13 @@ Object.defineProperty(document, 'fonts', {
 })
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { readSpec, writeSpec } = await import('../../src/lib/terminal/spec')
-const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
-const { openRemote } = await import('../../src/lib/remote/open')
-const { shells } = await import('../../src/lib/terminal/shells.svelte')
-const { renameTerminal } = await import('../../src/lib/terminal/rename')
+const { readSpec, writeSpec } = await import('../../src/lib/terminal/src/spec')
+const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
+const { openRemote } = await import('../../src/lib/terminal/src/remote/open')
+const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
+const { renameTerminal } = await import('../../src/lib/terminal/src/rename')
 const { setTerminalIcon } = await import('../../src/lib/icon-target')
-const TerminalTab = (await import('../../src/lib/terminal/TerminalTab.svelte')).default
+const TerminalTab = (await import('../../src/lib/terminal/src/TerminalTab.svelte')).default
 
 const spawns = () => asked.filter((one) => one.command === 'pty_spawn')
 

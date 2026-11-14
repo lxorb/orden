@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { Said } from '../../src/lib/terminal/source'
+import type { Said } from '../../src/lib/terminal/src/source'
 
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
@@ -20,8 +20,8 @@ vi.mock('../../src/lib/crate/src/native', () => ({
 let said: ((what: Said) => void) | null = null
 const sent: string[] = []
 
-vi.mock('../../src/lib/online/source', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/online/source')>()),
+vi.mock('../../src/lib/terminal/src/online/source', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/terminal/src/online/source')>()),
   onlineSource: () => ({
     remote: true,
     start: (_cols: number, _rows: number, hear: (what: Said) => void) => {
@@ -134,9 +134,9 @@ Object.defineProperty(document, 'fonts', {
 })
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
-const { openTerm } = await import('../../src/lib/online/open')
-const { statusLine } = await import('../../src/lib/online/arrival.svelte')
+const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
+const { openTerm } = await import('../../src/lib/terminal/src/online/open')
+const { statusLine } = await import('../../src/lib/terminal/src/online/arrival.svelte')
 
 let place: HTMLElement
 

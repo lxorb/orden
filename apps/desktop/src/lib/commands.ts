@@ -958,14 +958,16 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'new-terminal',
             label: 'New terminal',
             ownWindow: true,
-            run: () => void import('./terminal/open').then(({ openTerminal }) => openTerminal()),
+            run: () => void import('./terminal/src/api').then(({ openTerminal }) => openTerminal()),
           },
           {
             id: 'new-remote',
             label: 'Remote',
             ownWindow: true,
             run: () =>
-              void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.toggle()),
+              void import('./terminal/src/api')
+                .then((one) => one.hostPicking())
+                .then(({ hostPicker }) => hostPicker.toggle()),
           },
         ]
       : []),
@@ -976,23 +978,25 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'new-online-terminal',
             label: 'New online terminal',
             ownWindow: true,
-            run: () => void import('./online/open').then(({ openOnline }) => openOnline()),
+            run: () => void import('./terminal/src/api').then(({ openOnline }) => openOnline()),
           },
           {
             id: 'start-online-machine',
             label: 'Start online machine',
             ownWindow: true,
             run: () =>
-              void import('./online/machine.svelte').then(({ machine }) => machine.startStop(true)),
+              void import('./terminal/src/api')
+                .then((one) => one.onlineMachine())
+                .then(({ machine }) => machine.startStop(true)),
           },
           {
             id: 'stop-online-machine',
             label: 'Stop online machine',
             ownWindow: true,
             run: () =>
-              void import('./online/machine.svelte').then(({ machine }) =>
-                machine.startStop(false),
-              ),
+              void import('./terminal/src/api')
+                .then((one) => one.onlineMachine())
+                .then(({ machine }) => machine.startStop(false)),
           },
         ]),
     ...(links.websiteNotes

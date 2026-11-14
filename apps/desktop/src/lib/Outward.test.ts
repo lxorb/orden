@@ -65,7 +65,7 @@ describe('every link that leaves the app', () => {
     for (const one of [
       rule(read('./SettingsPanel.svelte'), '.hint.caption .link'),
       rule(read('./access/AccountSteps.svelte'), '.link'),
-      rule(read('./terminal/TerminalTab.svelte'), '.bar .words'),
+      rule(read('./terminal/src/TerminalTab.svelte'), '.bar .words'),
     ]) {
       expect(one).not.toMatch(/display: (inline-)?flex|align-items|gap:/)
       expect(one).not.toMatch(/padding(-inline)?(-end)?:/)

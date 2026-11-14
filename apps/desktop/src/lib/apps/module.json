@@ -6,6 +6,7 @@
     "accounts",
     "crate",
     "online",
+    "online-link",
     "platform",
     "sharing",
     "sync-client",
@@ -15,8 +16,6 @@
   "pending": [
     "apps/desktop/src/lib/Sweep.svelte",
     "apps/desktop/src/lib/new-tab.ts",
-    "apps/desktop/src/lib/online/arrival.svelte.ts",
-    "apps/desktop/src/lib/online/link.ts",
     "apps/desktop/src/lib/png-off.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/settings/apps-clipboard.svelte.ts",

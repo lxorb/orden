@@ -1,14 +1,20 @@
 import { agentMarks } from '../agent-marks.svelte'
 import { copyText } from '../ui-controls/src/api'
-import { archiveEntry, DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
+import {
+  archiveEntry,
+  DIVIDER,
+  iconEntries,
+  shareEntry,
+  stackEntries,
+  type MenuEntry,
+} from '../menu.svelte'
+import { iconChoice } from '../icon-choice.svelte'
 import { bookmarkAll, webDataEntry } from '../row-menu'
 import { shortcuts } from '../shortcuts.svelte'
 import { shownName, nameOf, withinSpace } from '../platform/src/api'
 import { toggleFill } from '../tab-fill/fill'
-import { terminalIconRows } from '../terminal/icon-rows'
-import { openTerminal, shellRows } from '../terminal/open'
-import { readSpec } from '../terminal/spec'
-import { isOnlineTab } from '../online/path'
+import { openTerminal, shellRows, readSpec, openOnline } from '../terminal/src/api'
+import { isOnlineTab } from '../online-terms/src/api'
 import { pages } from '../web-tab/pages.svelte'
 import { viewport } from '../ui-kit/src/api'
 import { workspace, type Tab } from '../workspace.svelte'
@@ -131,9 +137,9 @@ function shellEntries(tab: Tab): MenuEntry[] {
     return [
       {
         label: 'Open another',
-        run: () => void import('../online/open').then(({ openOnline }) => openOnline(true)),
+        run: () => void openOnline(true),
       },
-      ...terminalIconRows(tab),
+      ...iconEntries(tab.path),
       DIVIDER,
     ]
   }
@@ -146,7 +152,22 @@ function shellEntries(tab: Tab): MenuEntry[] {
       run: () => void openTerminal(spec?.shell, beside),
       more: () => shellRows((shell) => void openTerminal(shell.id, beside)),
     },
-    ...terminalIconRows(tab),
+    ...(spec
+      ? [
+          { label: 'Choose an icon', run: () => iconChoice.terminal(tab.id) },
+          ...(spec.icon
+            ? [
+                {
+                  label: 'Remove icon',
+                  run: () =>
+                    void import('../icon-target').then((one) =>
+                      one.setTerminalIcon(tab.id, null, null),
+                    ),
+                },
+              ]
+            : []),
+        ]
+      : []),
     DIVIDER,
   ]
 }

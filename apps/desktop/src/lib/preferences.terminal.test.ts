@@ -15,7 +15,7 @@ vi.mock('./platform/src/tauri', async (actual) => ({
 }))
 
 const { preferences } = await import('./preferences')
-const { shells } = await import('./terminal/shells.svelte')
+const { shells } = await import('./terminal/src/shells.svelte')
 const { shortcuts } = await import('./shortcuts.svelte')
 
 function row(label: string) {

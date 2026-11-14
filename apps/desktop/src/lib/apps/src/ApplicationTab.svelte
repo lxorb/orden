@@ -15,7 +15,7 @@
   import { refreshRate, Settling } from './view'
   import { onMount, untrack } from 'svelte'
   import { account } from '../../accounts/src/api'
-  import { heldLine } from '../../online/arrival.svelte'
+  import { heldLine } from '../../online-link/src/api'
   import { settings } from '../../settings.svelte'
   import Sweep from '../../Sweep.svelte'
   import type { Tab } from '../../workspace.svelte'

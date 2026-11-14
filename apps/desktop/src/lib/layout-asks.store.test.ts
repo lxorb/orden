@@ -8,7 +8,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => disk.current!.invoke(command, args),
 }))
-vi.mock('./terminal/closing', () => ({
+vi.mock('./terminal/src/closing', () => ({
   mayEnd: (closing: readonly { kind: string; id: string }[]) => {
     asked.tabs.push(closing.filter((tab) => tab.kind === 'terminal').map((tab) => tab.id))
     return Promise.resolve(asked.answer)

@@ -1,9 +1,10 @@
 import { err, failure, ok, type Result } from './result'
+import type { PreviewPorts } from './previews'
 import type { SharingPorts } from './sharing'
 import type { SyncPorts } from './sync-client'
 import type { ThemePorts } from './theme'
 
-export type PortMap = SharingPorts & SyncPorts & ThemePorts
+export type PortMap = PreviewPorts & SharingPorts & SyncPorts & ThemePorts
 
 export type PortName = keyof PortMap
 

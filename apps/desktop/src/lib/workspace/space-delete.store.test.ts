@@ -20,7 +20,7 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
 }))
 
 const ending = vi.hoisted(() => ({ answer: true, asked: [] as string[][] }))
-vi.mock('../terminal/closing', () => ({
+vi.mock('../terminal/src/closing', () => ({
   mayEnd: (tabs: readonly { kind: string }[]) => {
     ending.asked.push(tabs.map((one) => one.kind))
     return Promise.resolve(ending.answer)
