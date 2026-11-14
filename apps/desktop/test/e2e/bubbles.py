@@ -33,12 +33,12 @@ WHOLE = """
 }
 """
 
-GLYPHS = "() => [...document.querySelectorAll('[role=\"dialog\"] .explain button')].length"
+GLYPHS = "() => [...document.querySelectorAll('[role=\"region\"][aria-label=\"Settings\"] .explain button')].length"
 
 def sentence_of(page: Page, index: int) -> dict | None:
     return page.evaluate(
         """async ([index, whole]) => {
-          const glyph = document.querySelectorAll('[role="dialog"] .explain button')[index]
+          const glyph = document.querySelectorAll('[role="region"][aria-label="Settings"] .explain button')[index]
           if (!glyph) return null
           glyph.scrollIntoView({ block: 'center' })
           glyph.focus()
@@ -50,9 +50,9 @@ def sentence_of(page: Page, index: int) -> dict | None:
           // Measured where it rests, not part of the way through its rise.
           await Promise.all(bubble.getAnimations().map((one) => one.finished.catch(() => null)))
           const mark = glyph.closest('.explain').getBoundingClientRect()
-          const dialog = glyph.closest('[role="dialog"]')
+          const sheet = glyph.closest('[role="region"][aria-label="Settings"]')
           let rung = 0
-          for (let up = dialog; up; up = up.parentElement) {
+          for (let up = sheet; up; up = up.parentElement) {
             const z = parseInt(getComputedStyle(up).zIndex, 10)
             if (getComputedStyle(up).position !== 'static' && !Number.isNaN(z)) rung = z
           }
@@ -110,7 +110,7 @@ def every_sentence(page: Page, tag: str, sections: tuple[str, ...]) -> int:
 def the_vault_row(page: Page, tag: str) -> None:
     page.evaluate("() => window.ordenApp.settings.show('ai')")
     page.wait_for_timeout(500)
-    glyph = page.locator("[role=switch]", has_text="vault").first.locator(".explain button")
+    glyph = page.locator(".orden-setting", has_text="vault").first.locator(".explain button")
     glyph.hover()
     wait_for(page, "() => !!document.querySelector('.orden-bubble.sentence')", "the vault's sentence")
     page.wait_for_timeout(250)
@@ -126,7 +126,7 @@ def at_the_foot(page: Page, tag: str) -> None:
     page.wait_for_timeout(500)
     one = page.evaluate(
         """async (whole) => {
-          const glyphs = [...document.querySelectorAll('[role="dialog"] .explain button')]
+          const glyphs = [...document.querySelectorAll('[role="region"][aria-label="Settings"] .explain button')]
           const glyph = glyphs[glyphs.length - 1]
           let pane = glyph.parentElement
           while (pane && !(pane.scrollHeight > pane.clientHeight + 4 &&
@@ -202,7 +202,7 @@ def look(browser: Browser, tag: str) -> None:
     page.evaluate(f"() => {{ window.__whole = {WHOLE} }}")
     names(page, tag)
     page.evaluate("() => window.ordenApp.settings.show('general')")
-    wait_for(page, "() => !!document.querySelector('[role=\"dialog\"] .explain')", "the settings")
+    wait_for(page, "() => !!document.querySelector('[role=\"region\"][aria-label=\"Settings\"] .explain')", "the settings")
     counted = every_sentence(page, tag, ("general", "editor", "markdown", "appearance", "ai", "spelling"))
     at_the_foot(page, tag)
     page.evaluate("() => { window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")

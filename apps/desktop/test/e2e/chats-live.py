@@ -168,15 +168,15 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     )
     DRIVE.shot(owner, "emil-quick-add")
     owner.keyboard.press("Enter")
-    inbox = wait(
+    task = wait(
         owner,
-        "async () => { const { rows } = await window.ordenApp.tasks();"
-        " const text = await window.ordenApp.workspace.noteText(await rows.inbox());"
-        " return text && text.includes('orden://chat/') ? text : null }",
-        "[Emil] the task in the inbox, with its link",
+        "async () => { const { todos } = await window.ordenApp.tasks();"
+        " const one = todos.todos.find((todo) => todo.description.includes('orden://chat/'));"
+        " return one ? `${one.title}\\n${one.description}` : null }",
+        "[Emil] the task in the todos, with its link",
     )
-    link = next((word for word in inbox.replace("(", " ").replace(")", " ").split() if word.startswith("orden://chat/")), "")
-    say(f"the task landed in the inbox: {inbox.strip().splitlines()[-2:]}")
+    link = next((word for word in task.replace("(", " ").replace(")", " ").split() if word.startswith("orden://chat/")), "")
+    say(f"the task landed in the todos: {task.strip().splitlines()[-2:]}")
     owner.keyboard.press("Escape")
     came(owner, "() => !document.querySelector('.orden-scrim')", "[Emil] quick add put away")
     owner.evaluate("() => window.ordenApp.workspace.closeActive()")

@@ -144,11 +144,11 @@ def drive(browser: Browser) -> None:
         page,
         "a settings dropdown",
         lambda: dropdown.click(),
-        ".sheet [role=listbox]",
+        ".orden-layer.list[role=listbox]",
         empty_spot(page, ".sheet", 0.5, 0.06),
         still=".sheet",
     )
-    page.keyboard.press("Escape")
+    page.evaluate("() => { window.ordenApp.settings.open = false }")
     DRIVE.wait_for(page, "!document.querySelector('.sheet')", "the settings to close")
 
     page.evaluate(
