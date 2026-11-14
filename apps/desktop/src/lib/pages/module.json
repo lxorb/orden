@@ -1,0 +1,34 @@
+{
+  "name": "pages",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "canvas",
+    "collab",
+    "files-out",
+    "markdown",
+    "pdf",
+    "plane",
+    "platform",
+    "sharing",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/camera.ts",
+    "apps/desktop/src/lib/commands.ts",
+    "apps/desktop/src/lib/drag-paths.ts",
+    "apps/desktop/src/lib/layer-keys.ts",
+    "apps/desktop/src/lib/longpress.ts",
+    "apps/desktop/src/lib/menu.svelte.ts",
+    "apps/desktop/src/lib/pixel-ratio.svelte.ts",
+    "apps/desktop/src/lib/png-off.ts",
+    "apps/desktop/src/lib/roving.ts",
+    "apps/desktop/src/lib/row-window.svelte.ts",
+    "apps/desktop/src/lib/said.svelte.ts",
+    "apps/desktop/src/lib/shortcuts.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts",
+    "apps/desktop/src/lib/workspace/write-file.ts"
+  ]
+}

@@ -17,9 +17,9 @@
     type Words,
     wordsInto,
     wordsOfRuns,
-  } from './pdf/src/api'
-  import { wordsEnd } from './pages/words-end'
-  import { pixelRatio } from './pixel-ratio.svelte'
+  } from '../../pdf/src/api'
+  import { wordsEnd } from './words-end'
+  import { pixelRatio } from '../../pixel-ratio.svelte'
 
   const {
     page,

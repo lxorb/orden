@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { decodePDFRawStream, type PDFArray, PDFDocument, type PDFRawStream } from 'pdf-lib'
 import { emptyPages, pagesFromPdf } from '@orden/markdown/pages'
-import { busy } from '../ui-kit/src/api'
+import { busy } from '../../ui-kit/src/api'
 import type { Canvas, PageNode } from '@orden/markdown/canvas'
 
 const PIXEL =
@@ -18,12 +18,12 @@ const held = vi.hoisted(() => ({
   printed: 0,
 }))
 
-vi.mock('../platform/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/api')>()),
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   fileBytes: () => Promise.resolve(held.bytes),
 }))
-vi.mock('../pdf/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../pdf/src/api')>()),
+vi.mock('../../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   svgToPng: async (
     svg: string,
     _width: number,
@@ -48,8 +48,8 @@ vi.mock('../pdf/src/api', async (importOriginal) => ({
     return Promise.resolve(number <= 2 ? { width: 1, page: number } : null)
   },
 }))
-vi.mock('../files-out/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../files-out/src/api')>()),
+vi.mock('../../files-out/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../files-out/src/api')>()),
   zipOf: (entries: { path: string; body: unknown }[]) => {
     held.zipped = entries
     return Promise.resolve(new Uint8Array())

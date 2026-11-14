@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { emptyPages } from '@orden/markdown/pages'
-import Pages from '../../src/lib/Pages.svelte'
+import Pages from '../../src/lib/pages/src/Pages.svelte'
 import { writeCanvas } from '@orden/markdown/canvas'
 import { CanvasStore } from '../../src/lib/canvas/src/store.svelte'
 import { tools } from '../../src/lib/canvas/src/tools.svelte'

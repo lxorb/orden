@@ -35,7 +35,7 @@
   import { recovery } from './lib/recovery.svelte'
   import { reloading } from './lib/reloading.svelte'
   import { hasStatusBar } from './lib/regions'
-  import { pages } from './lib/pages/showing.svelte'
+  import { pages } from './lib/pages/src/api'
   import { inRooms, rooms } from './lib/collab/src/api'
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'

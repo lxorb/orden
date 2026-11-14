@@ -11,7 +11,7 @@ import {
 import { added, emptyPages } from '@orden/markdown/pages'
 import { type Canvas, type CanvasNode, type PageNode, writeCanvas } from '@orden/markdown/canvas'
 
-vi.mock('../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(null) }))
+vi.mock('../../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(null) }))
 const raster = vi.hoisted(() => ({
   drawn: [] as string[],
   refuse: false,
@@ -52,7 +52,7 @@ vi.mock('./laid', () => ({
   },
   localFaces: () => '',
 }))
-vi.mock('../pdf/src/raster', () => ({
+vi.mock('../../pdf/src/raster', () => ({
   svgToPng: (svg: string) => {
     raster.drawn.push(svg)
     return Promise.resolve(raster.refuse ? null : raster.png)
@@ -62,7 +62,7 @@ vi.mock('../pdf/src/raster', () => ({
   paperPicture: (at: { file: string }) =>
     Promise.resolve(at.file === 'Reading.pdf' ? 'data:image/png;base64,UEFHRQ==' : null),
 }))
-vi.mock('../link-index.svelte', () => ({
+vi.mock('../../link-index.svelte', () => ({
   links: {
     version: 1,
     index: (path: string | null) => ({ notes: [], path, read: () => Promise.resolve(null) }),

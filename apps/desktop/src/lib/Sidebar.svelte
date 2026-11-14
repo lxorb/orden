@@ -37,7 +37,7 @@
   import { arrive, leave, segmented } from './ui-kit/src/api'
   import { splitTabs, tabsShown } from './workspace/panels'
   import { headingAt, lineOf } from './outline'
-  import { pages } from './pages/showing.svelte'
+  import { pages } from './pages/src/api'
   import {
     archiveSection,
     askPanel,

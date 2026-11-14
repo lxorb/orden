@@ -28,6 +28,6 @@ export async function printOpen(): Promise<void> {
     return
   }
 
-  const out = await import('./pages/out')
+  const out = await (await import('./pages/src/api')).pagesOut()
   await out.printPages(out.pagesOutOf(open))
 }

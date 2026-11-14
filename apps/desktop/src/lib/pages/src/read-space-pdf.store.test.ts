@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
+const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
 const readOnly = vi.hoisted(() => new Set<string>())
 
-vi.mock('../platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -13,14 +13,14 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../sharing/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../sharing/src/sharing.svelte')>()),
+vi.mock('../../sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../sharing/src/sharing.svelte')>()),
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-vi.mock('../pdf/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../pdf/src/api')>()),
+vi.mock('../../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   pageSizes: () =>
     Promise.resolve([
       { width: 794, height: 1123 },
@@ -28,11 +28,12 @@ vi.mock('../pdf/src/api', async (importOriginal) => ({
     ]),
 }))
 
-const { Disk, memoryStorage } = await import('../../../test/disk')
+const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('../workspace.svelte')
+await import('../../pdf/src/api')
+const { workspace } = await import('../../workspace.svelte')
 
 const ROOT = '/theirs'
 const PAPER = `${ROOT}/paper.pdf`
@@ -55,7 +56,7 @@ const BESIDE = JSON.stringify({
   orden: { version: 1, pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
 })
 
-function current(): import('../../../test/disk').Disk {
+function current(): import('../../../../test/disk').Disk {
   if (!disk.current) throw new Error('no disk')
   return disk.current
 }
