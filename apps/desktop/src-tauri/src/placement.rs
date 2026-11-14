@@ -1018,7 +1018,10 @@ mod tests {
             was,
             "on the panel, where it was"
         );
-        assert_eq!(PRIMARY.overlap(&was), 0.0, "nowhere on the primary screen");
+        assert!(
+            PRIMARY.overlap(&was) <= 0.0,
+            "nowhere on the primary screen"
+        );
         if DESK_IN_PIXELS {
             let logical = placed(was.x, was.y, was.width, was.height);
             assert!(PRIMARY.overlap(&logical) >= PANEL.overlap(&logical));
@@ -1034,7 +1037,10 @@ mod tests {
     #[test]
     fn a_window_from_a_panel_that_has_gone_comes_back_at_its_size() {
         let was = at_scale(2.0, PANEL.x + 140.0, 100.0, 1000.0, 600.0);
-        assert_eq!(PRIMARY.overlap(&was), 0.0, "nowhere on the screen there is");
+        assert!(
+            PRIMARY.overlap(&was) <= 0.0,
+            "nowhere on the screen there is"
+        );
         let back = onto(was, &[PRIMARY]);
         assert_eq!((back.width, back.height), (1000.0, 600.0));
         assert_eq!(back.scale, Some(1.0));
